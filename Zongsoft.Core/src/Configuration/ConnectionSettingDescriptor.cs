@@ -28,11 +28,16 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
 public class ConnectionSettingDescriptor : IEquatable<string>
 {
+	#region 常量定义
+	private static readonly Type DEFAULT_TYPE = typeof(string);
+	#endregion
+
 	#region 静态字段
 	/// <summary>获取分组标识描述器。</summary>
 	public static readonly ConnectionSettingDescriptor Group = new(nameof(Group), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Group, Properties.Resources.ConnectionSettingDescriptor_Group_Description);
@@ -63,15 +68,46 @@ public class ConnectionSettingDescriptor : IEquatable<string>
 	#endregion
 
 	#region 构造函数
-	public ConnectionSettingDescriptor(string name, object defaultValue = null, string label = null, string description = null) : this(name, null, typeof(string), false, defaultValue, label, description) { }
-	public ConnectionSettingDescriptor(string name, bool required, object defaultValue = null, string label = null, string description = null) : this(name, null, typeof(string), required, defaultValue, label, description) { }
-	public ConnectionSettingDescriptor(string name, Type type, object defaultValue = null, string label = null, string description = null) : this(name, null, type, false, defaultValue, label, description) { }
-	public ConnectionSettingDescriptor(string name, Type type, bool required, object defaultValue = null, string label = null, string description = null) : this(name, null, type, required, defaultValue, label, description) { }
+	public ConnectionSettingDescriptor(string name, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, object defaultValue, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, bool required, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, bool required, object defaultValue, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, required, defaultValue, label, description, dependencies) { }
 
-	public ConnectionSettingDescriptor(string name, string alias, object defaultValue = null, string label = null, string description = null) : this(name, alias, typeof(string), false, defaultValue, label, description) { }
-	public ConnectionSettingDescriptor(string name, string alias, bool required, object defaultValue = null, string label = null, string description = null) : this(name, alias, typeof(string), required, defaultValue, label, description) { }
-	public ConnectionSettingDescriptor(string name, string alias, Type type, object defaultValue = null, string label = null, string description = null) : this(name, alias, type, false, defaultValue, label, description) { }
-	public ConnectionSettingDescriptor(string name, string alias, Type type, bool required, object defaultValue = null, string label = null, string description = null)
+	public ConnectionSettingDescriptor(string name, Type type, string label = null, string description = null) : this(name, null, type, false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, Type type, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, type, false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, Type type, object defaultValue, string label = null, string description = null) : this(name, null, type, false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, Type type, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, type, false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, Type type, bool required, string label = null, string description = null) : this(name, null, type, required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, Type type, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, type, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, Type type, bool required, object defaultValue, string label = null, string description = null) : this(name, null, type, required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, Type type, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, type, required, defaultValue, label, description, dependencies) { }
+
+	public ConnectionSettingDescriptor(string name, string alias, string label = null, string description = null) : this(name, alias, DEFAULT_TYPE, false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, alias, DEFAULT_TYPE, false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, object defaultValue, string label = null, string description = null) : this(name, alias, DEFAULT_TYPE, false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, alias, DEFAULT_TYPE, false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, bool required, string label = null, string description = null) : this(name, alias, DEFAULT_TYPE, required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, alias, DEFAULT_TYPE, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, bool required, object defaultValue, string label = null, string description = null) : this(name, alias, DEFAULT_TYPE, required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, alias, DEFAULT_TYPE, required, defaultValue, label, description, dependencies) { }
+
+	public ConnectionSettingDescriptor(string name, string alias, Type type, string label = null, string description = null) : this(name, alias, type, false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, Type type, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, alias, type, false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, Type type, object defaultValue, string label = null, string description = null) : this(name, alias, type, false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, Type type, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, alias, type, false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, Type type, bool required, string label = null, string description = null) : this(name, alias, type, required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, Type type, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, alias, type, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, Type type, bool required, object defaultValue, string label = null, string description = null) : this(name, alias, type, required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, Type type, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, alias, type, required, defaultValue, label, description, dependencies) { }
+
+	public ConnectionSettingDescriptor(string name, Type type, bool required, string label = null, string description = null, IEnumerable<Dependency> dependencies = null) : this(name, null, type, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, Type type, bool required, object defaultValue, string label = null, string description = null, IEnumerable<Dependency> dependencies = null) : this(name, null, type, required, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, Type type, bool required, string label = null, string description = null, IEnumerable<Dependency> dependencies = null) : this(name, alias, type, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, Type type, bool required, object defaultValue, string label = null, string description = null, IEnumerable<Dependency> dependencies = null)
 	{
 		this.Name = name ?? throw new ArgumentNullException(nameof(name));
 		this.Alias = string.Equals(name, alias, StringComparison.OrdinalIgnoreCase) ? null : alias;
@@ -82,6 +118,12 @@ public class ConnectionSettingDescriptor : IEquatable<string>
 		this.Description = description;
 		this.Options = new();
 		this.Dependencies = new();
+
+		if(dependencies != null)
+		{
+			foreach(var dependency in dependencies)
+				this.Dependencies.Add(dependency);
+		}
 
 		if(type != null && type.IsEnum)
 		{
@@ -178,15 +220,5 @@ public class ConnectionSettingDescriptor : IEquatable<string>
 	{
 		protected override string GetKeyForItem(Dependency dependency) => dependency.Name;
 	}
-	#endregion
-}
-
-public class ConnectionSettingDescriptor<T> : ConnectionSettingDescriptor
-{
-	#region 构造函数
-	public ConnectionSettingDescriptor(string name, T defaultValue = default, string label = null, string description = null) : base(name, typeof(T), defaultValue, label, description) { }
-	public ConnectionSettingDescriptor(string name, bool required, T defaultValue = default, string label = null, string description = null) : base(name, typeof(T), required, defaultValue, label, description) { }
-	public ConnectionSettingDescriptor(string name, string alias, T defaultValue = default, string label = null, string description = null) : base(name, alias, typeof(T), defaultValue, label, description) { }
-	public ConnectionSettingDescriptor(string name, string alias, bool required, T defaultValue = default, string label = null, string description = null) : base(name, alias, typeof(T), required, defaultValue, label, description) { }
 	#endregion
 }

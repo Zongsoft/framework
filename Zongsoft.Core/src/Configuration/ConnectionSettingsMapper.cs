@@ -31,93 +31,92 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
 {
-	public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
+	#region 私有变量
+	private bool _initialized = false;
+	private readonly Dictionary<string, string> _mapping = new(StringComparer.OrdinalIgnoreCase);
+	#endregion
+
+	#region 构造函数
+	protected ConnectionSettingsMapper(IConnectionSettingsDriver driver)
 	{
-		#region 私有变量
-		private bool _initialized = false;
-		private readonly Dictionary<string, string> _mapping = new(StringComparer.OrdinalIgnoreCase);
-		#endregion
+		this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
+	}
+	#endregion
 
-		#region 构造函数
-		protected ConnectionSettingsMapper(IConnectionSettingsDriver driver)
-		{
-			this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
-		}
-		#endregion
+	#region 公共属性
+	public IConnectionSettingsDriver Driver { get; }
+	#endregion
 
-		#region 公共属性
-		public IConnectionSettingsDriver Driver { get; }
-		#endregion
+	#region 初始化器
+	private void Initialize()
+	{
+		if(_initialized)
+			return;
 
-		#region 初始化器
-		private void Initialize()
+		lock(_mapping)
 		{
 			if(_initialized)
 				return;
 
-			lock(_mapping)
+			var descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
+				.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+				.GetValue(null);
+
+			if(descriptors != null)
 			{
-				if(_initialized)
-					return;
-
-				var descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
-					.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-					.GetValue(null);
-
-				if(descriptors != null)
+				foreach(var descriptor in descriptors)
 				{
-					foreach(var descriptor in descriptors)
-					{
-						if(string.IsNullOrEmpty(descriptor.Alias))
-							continue;
+					if(string.IsNullOrEmpty(descriptor.Alias))
+						continue;
 
-						_mapping.Add(descriptor.Name, descriptor.Alias);
-					}
+					_mapping.Add(descriptor.Name, descriptor.Alias);
 				}
-
-				_initialized = true;
-			}
-		}
-		#endregion
-
-		#region 公共方法
-		public bool Map(string name, IDictionary<string, string> values, out object result)
-		{
-			this.Initialize();
-
-			if(_mapping.ContainsKey(name) && values.ContainsKey(name))
-				return this.OnMap(name, values, out result);
-
-			result = default;
-			return false;
-		}
-
-		public string Map(string name, object value, IDictionary<string, string> values)
-		{
-			this.Initialize();
-			return _mapping.ContainsKey(name) ? this.OnMap(name, value, values) : null;
-		}
-		#endregion
-
-		#region 保护方法
-		protected virtual string OnMap(string name, object value, IDictionary<string, string> values)
-		{
-			return Common.Convert.TryConvertValue<string>(value, out var result) ? result : null;
-		}
-
-		protected virtual bool OnMap(string name, IDictionary<string, string> values, out object value)
-		{
-			if(values.TryGetValue(name, out var text))
-			{
-				value = text;
-				return true;
 			}
 
-			value = null;
-			return false;
+			_initialized = true;
 		}
-		#endregion
 	}
+	#endregion
+
+	#region 公共方法
+	public bool Map(string name, IDictionary<string, string> values, out object result)
+	{
+		this.Initialize();
+
+		if(_mapping.ContainsKey(name) && values.ContainsKey(name))
+			return this.OnMap(name, values, out result);
+
+		result = default;
+		return false;
+	}
+
+	public string Map(string name, object value, IDictionary<string, string> values)
+	{
+		this.Initialize();
+		return _mapping.ContainsKey(name) ? this.OnMap(name, value, values) : null;
+	}
+	#endregion
+
+	#region 保护方法
+	protected virtual string OnMap(string name, object value, IDictionary<string, string> values)
+	{
+		return Common.Convert.TryConvertValue<string>(value, out var result) ? result : null;
+	}
+
+	protected virtual bool OnMap(string name, IDictionary<string, string> values, out object value)
+	{
+		if(values.TryGetValue(name, out var text))
+		{
+			value = text;
+			return true;
+		}
+
+		value = null;
+		return false;
+	}
+	#endregion
 }

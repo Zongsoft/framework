@@ -31,107 +31,106 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TModel>, IConnectionSettingsModeler
 {
-	public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TModel>, IConnectionSettingsModeler
+	#region 私有变量
+	private bool _initialized = false;
+	private ConnectionSettingDescriptorCollection _descriptors;
+	private readonly Dictionary<string, MemberInfo> _members = new(StringComparer.OrdinalIgnoreCase);
+	#endregion
+
+	#region 构造函数
+	public ConnectionSettingsModeler(IConnectionSettingsDriver driver)
 	{
-		#region 私有变量
-		private bool _initialized = false;
-		private ConnectionSettingDescriptorCollection _descriptors;
-		private readonly Dictionary<string, MemberInfo> _members = new(StringComparer.OrdinalIgnoreCase);
-		#endregion
+		this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
+	}
+	#endregion
 
-		#region 构造函数
-		public ConnectionSettingsModeler(IConnectionSettingsDriver driver)
-		{
-			this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
-		}
-		#endregion
+	#region 公共属性
+	public IConnectionSettingsDriver Driver { get; }
+	#endregion
 
-		#region 公共属性
-		public IConnectionSettingsDriver Driver { get; }
-		#endregion
+	#region 初始化器
+	private void Initialize()
+	{
+		if(_initialized)
+			return;
 
-		#region 初始化器
-		private void Initialize()
+		lock(_members)
 		{
 			if(_initialized)
 				return;
 
-			lock(_members)
+			var members = typeof(TModel).GetMembers(BindingFlags.Instance | BindingFlags.Public);
+			_descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
+				.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+				.GetValue(null);
+
+			for(int i = 0; i < members.Length; i++)
 			{
-				if(_initialized)
-					return;
-
-				var members = typeof(TModel).GetMembers(BindingFlags.Instance | BindingFlags.Public);
-				_descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
-					.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-					.GetValue(null);
-
-				for(int i = 0; i < members.Length; i++)
+				var usabled = members[i].MemberType switch
 				{
-					var usabled = members[i].MemberType switch
+					MemberTypes.Field => !((FieldInfo)members[i]).IsInitOnly,
+					MemberTypes.Property => ((PropertyInfo)members[i]).CanWrite,
+					_ => false,
+				};
+
+				if(usabled)
+				{
+					_members.TryAdd(members[i].Name, members[i]);
+
+					if(_descriptors != null && _descriptors.Count > 0 && _descriptors.TryGetValue(members[i].Name, out var descriptor))
 					{
-						MemberTypes.Field => !((FieldInfo)members[i]).IsInitOnly,
-						MemberTypes.Property => ((PropertyInfo)members[i]).CanWrite,
-						_ => false,
-					};
+						_members.TryAdd(descriptor.Name, members[i]);
 
-					if(usabled)
-					{
-						_members.TryAdd(members[i].Name, members[i]);
-
-						if(_descriptors != null && _descriptors.Count > 0 && _descriptors.TryGetValue(members[i].Name, out var descriptor))
-						{
-							_members.TryAdd(descriptor.Name, members[i]);
-
-							if(!string.IsNullOrEmpty(descriptor.Alias))
-								_members.TryAdd(descriptor.Alias, members[i]);
-						}
+						if(!string.IsNullOrEmpty(descriptor.Alias))
+							_members.TryAdd(descriptor.Alias, members[i]);
 					}
 				}
-
-				_initialized = true;
-			}
-		}
-		#endregion
-
-		#region 公共方法
-		object IConnectionSettingsModeler.Model(IConnectionSettings settings) => this.Model(settings);
-		public TModel Model(IConnectionSettings settings)
-		{
-			if(settings == null)
-				throw new ArgumentNullException(nameof(settings));
-
-			if(!this.Driver.IsDriver(settings.Driver?.Name))
-				throw new InvalidOperationException($"The specified '{settings}' connection settings is not a {this.Driver.Name} configuration.");
-
-			this.Initialize();
-			var model = this.CreateModel(settings);
-
-			foreach(var setting in settings)
-			{
-				var type = _descriptors != null && _descriptors.TryGetValue(setting.Key, out var descriptor) ? descriptor.Type : null;
-				var value = type == null ? settings[setting.Key] : Common.Convert.ConvertValue(settings[setting.Key], type);
-				this.OnModel(ref model, setting.Key, value);
 			}
 
-			return model;
+			_initialized = true;
 		}
-		#endregion
-
-		#region 保护方法
-		protected virtual TModel CreateModel(IConnectionSettings settings) => Activator.CreateInstance<TModel>();
-		protected virtual bool OnModel(ref TModel model, string name, object value)
-		{
-			if(_members.TryGetValue(name, out var member))
-			{
-				Reflection.Reflector.SetValue(member, ref model, value);
-				return true;
-			}
-
-			return false;
-		}
-		#endregion
 	}
+	#endregion
+
+	#region 公共方法
+	object IConnectionSettingsModeler.Model(IConnectionSettings settings) => this.Model(settings);
+	public TModel Model(IConnectionSettings settings)
+	{
+		if(settings == null)
+			throw new ArgumentNullException(nameof(settings));
+
+		if(!this.Driver.IsDriver(settings.Driver?.Name))
+			throw new InvalidOperationException($"The specified '{settings}' connection settings is not a {this.Driver.Name} configuration.");
+
+		this.Initialize();
+		var model = this.CreateModel(settings);
+
+		foreach(var setting in settings)
+		{
+			var type = _descriptors != null && _descriptors.TryGetValue(setting.Key, out var descriptor) ? descriptor.Type : null;
+			var value = type == null ? settings[setting.Key] : Common.Convert.ConvertValue(settings[setting.Key], type);
+			this.OnModel(ref model, setting.Key, value);
+		}
+
+		return model;
+	}
+	#endregion
+
+	#region 保护方法
+	protected virtual TModel CreateModel(IConnectionSettings settings) => Activator.CreateInstance<TModel>();
+	protected virtual bool OnModel(ref TModel model, string name, object value)
+	{
+		if(_members.TryGetValue(name, out var member))
+		{
+			Reflection.Reflector.SetValue(member, ref model, value);
+			return true;
+		}
+
+		return false;
+	}
+	#endregion
 }

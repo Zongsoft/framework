@@ -30,43 +30,42 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public class ConnectionSettingsCollection() : KeyedCollection<string, ConnectionSettings>(StringComparer.OrdinalIgnoreCase)
 {
-	public class ConnectionSettingsCollection() : KeyedCollection<string, ConnectionSettings>(StringComparer.OrdinalIgnoreCase)
+	#region 成员字段
+	private string _default = string.Empty;
+	#endregion
+
+	#region 公共属性
+	public string Default
 	{
-		#region 成员字段
-		private string _default = string.Empty;
-		#endregion
-
-		#region 公共属性
-		public string Default
-		{
-			get => _default;
-			set => _default = value ?? string.Empty;
-		}
-
-		public new ConnectionSettings this[string name] => base[string.IsNullOrEmpty(name) ? _default : name];
-		#endregion
-
-		#region 公共方法
-		public ConnectionSettings GetDefault() => this.TryGetValue(_default, out var setting) ? setting : null;
-		public bool Contains(string name, string driver) => string.IsNullOrEmpty(driver) ?
-			this.Contains(name ?? string.Empty) :
-			this.TryGetValue(name, driver, out _);
-
-		public new bool TryGetValue(string name, out ConnectionSettings result) => base.TryGetValue(string.IsNullOrEmpty(name) ? _default : name, out result);
-		public bool TryGetValue(string name, string driver, out ConnectionSettings settings)
-		{
-			if(this.TryGetValue(name, out settings) && settings != null && !string.IsNullOrEmpty(driver))
-				settings = string.Equals(settings.Driver?.Name, driver, StringComparison.OrdinalIgnoreCase) ||
-				         (settings.Driver != null && settings.Driver.IsDriver(driver))? settings : null;
-
-			return settings != null;
-		}
-		#endregion
-
-		#region 重写方法
-		protected override string GetKeyForItem(ConnectionSettings settings) => settings.Name;
-		#endregion
+		get => _default;
+		set => _default = value ?? string.Empty;
 	}
+
+	public new ConnectionSettings this[string name] => base[string.IsNullOrEmpty(name) ? _default : name];
+	#endregion
+
+	#region 公共方法
+	public ConnectionSettings GetDefault() => this.TryGetValue(_default, out var setting) ? setting : null;
+	public bool Contains(string name, string driver) => string.IsNullOrEmpty(driver) ?
+		this.Contains(name ?? string.Empty) :
+		this.TryGetValue(name, driver, out _);
+
+	public new bool TryGetValue(string name, out ConnectionSettings result) => base.TryGetValue(string.IsNullOrEmpty(name) ? _default : name, out result);
+	public bool TryGetValue(string name, string driver, out ConnectionSettings settings)
+	{
+		if(this.TryGetValue(name, out settings) && settings != null && !string.IsNullOrEmpty(driver))
+			settings = string.Equals(settings.Driver?.Name, driver, StringComparison.OrdinalIgnoreCase) ||
+			         (settings.Driver != null && settings.Driver.IsDriver(driver))? settings : null;
+
+		return settings != null;
+	}
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(ConnectionSettings settings) => settings.Name;
+	#endregion
 }

@@ -29,69 +29,66 @@
 
 using System;
 
-using Zongsoft.Services;
+namespace Zongsoft.Configuration;
 
-namespace Zongsoft.Configuration
+public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()
 {
-	public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()
+	#region 单例字段
+	internal static readonly IConnectionSettingsDriver Unnamed = new UnnamedDriver();
+	#endregion
+
+	#region 静态构造
+	static ConnectionSettingsDriver() => Descriptors = new();
+	#endregion
+
+	#region 静态属性
+	public static TDescriptors Descriptors { get; }
+	#endregion
+
+	#region 构造函数
+	public ConnectionSettingsDriver(string name, string description = null) : this(name, null, null, description) { }
+	public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null) : this(name, mapper, null, description) { }
+	public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, IConnectionSettingsModeler modeler, string description = null)
 	{
-		#region 单例字段
-		internal static readonly IConnectionSettingsDriver Unnamed = new UnnamedDriver();
-		#endregion
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-		#region 静态构造
-		static ConnectionSettingsDriver() => Descriptors = new();
-		#endregion
-
-		#region 静态属性
-		public static TDescriptors Descriptors { get; }
-		#endregion
-
-		#region 构造函数
-		public ConnectionSettingsDriver(string name, string description = null) : this(name, null, null, description) { }
-		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null) : this(name, mapper, null, description) { }
-		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, IConnectionSettingsModeler modeler, string description = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			this.Name = name;
-			this.Mapper = mapper;
-			this.Modeler = modeler;
-			this.Description = description;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name { get; }
-		public string Description { get; set; }
-		public IConnectionSettingsMapper Mapper { get; init; }
-		public IConnectionSettingsModeler Modeler { get; init; }
-		#endregion
-
-		#region 公共方法
-		public ConnectionSettings Create(string connectionString) => new(this.Name, connectionString) { Driver = this };
-		public ConnectionSettings Create(string name, string connectionString) => new(name, connectionString) { Driver = this };
-		#endregion
-
-		#region 重写方法
-		public bool Equals(IConnectionSettingsDriver other) => other != null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
-		public override bool Equals(object obj) => obj is IConnectionSettingsDriver other && this.Equals(other);
-		public override int GetHashCode() => string.IsNullOrEmpty(this.Name) ? 0 : this.Name.ToUpperInvariant().GetHashCode();
-		public override string ToString() => this.Name;
-		#endregion
-
-		#region 嵌套子类
-		private sealed class UnnamedDriver() : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>("?") { }
-		#endregion
+		this.Name = name;
+		this.Mapper = mapper;
+		this.Modeler = modeler;
+		this.Description = description;
 	}
+	#endregion
 
-	public class ConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>
-	{
-		#region 构造函数
-		public ConnectionSettingsDriver(string name, string description = null) : base(name, null, null, description) { }
-		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null) : base(name, mapper, null, description) { }
-		public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, IConnectionSettingsModeler modeler, string description = null) : base(name, mapper, modeler, description) { }
-		#endregion
-	}
+	#region 公共属性
+	public string Name { get; }
+	public string Description { get; set; }
+	public IConnectionSettingsMapper Mapper { get; init; }
+	public IConnectionSettingsModeler Modeler { get; init; }
+	#endregion
+
+	#region 公共方法
+	public ConnectionSettings Create(string connectionString) => new(this.Name, connectionString) { Driver = this };
+	public ConnectionSettings Create(string name, string connectionString) => new(name, connectionString) { Driver = this };
+	#endregion
+
+	#region 重写方法
+	public bool Equals(IConnectionSettingsDriver other) => other != null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+	public override bool Equals(object obj) => obj is IConnectionSettingsDriver other && this.Equals(other);
+	public override int GetHashCode() => string.IsNullOrEmpty(this.Name) ? 0 : this.Name.ToUpperInvariant().GetHashCode();
+	public override string ToString() => this.Name;
+	#endregion
+
+	#region 嵌套子类
+	private sealed class UnnamedDriver() : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>("?") { }
+	#endregion
+}
+
+public class ConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>
+{
+	#region 构造函数
+	public ConnectionSettingsDriver(string name, string description = null) : base(name, null, null, description) { }
+	public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null) : base(name, mapper, null, description) { }
+	public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, IConnectionSettingsModeler modeler, string description = null) : base(name, mapper, modeler, description) { }
+	#endregion
 }

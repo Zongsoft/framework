@@ -32,11 +32,10 @@ using System.Collections.ObjectModel;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public class ConnectionSettingsDriverCollection() : KeyedCollection<string, IConnectionSettingsDriver>(StringComparer.OrdinalIgnoreCase), IServiceProvider<IConnectionSettingsDriver>
 {
-	public class ConnectionSettingsDriverCollection() : KeyedCollection<string, IConnectionSettingsDriver>(StringComparer.OrdinalIgnoreCase), IServiceProvider<IConnectionSettingsDriver>
-	{
-		protected override string GetKeyForItem(IConnectionSettingsDriver driver) => driver.Name;
-		IConnectionSettingsDriver IServiceProvider<IConnectionSettingsDriver>.GetService(string name) => this.TryGetValue(name, out var driver) ? driver : null;
-	}
+	protected override string GetKeyForItem(IConnectionSettingsDriver driver) => driver.Name;
+	IConnectionSettingsDriver IServiceProvider<IConnectionSettingsDriver>.GetService(string name) => this.TryGetValue(name, out var driver) ? driver : null;
 }
