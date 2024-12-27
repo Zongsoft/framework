@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Serialization
 {
-	public class TextSerializationOptions : SerializationOptions
+	public class TextSerializationOptions(Action<object> configure = null) : SerializationOptions(configure)
 	{
 		#region 公共属性
 		/// <summary>获取或设置一个值，指示序列化后的文本是否保持缩进风格。</summary>

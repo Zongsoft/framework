@@ -35,6 +35,7 @@ namespace Zongsoft.Serialization
 {
 	public static class SerializerExtension
 	{
+		#region 反序列化
 		public static object Deserialize(this ISerializer serializer, byte[] buffer, SerializationOptions options = null) => Deserialize(serializer, buffer, 0, -1, options);
 		public static object Deserialize(this ISerializer serializer, byte[] buffer, Type type, SerializationOptions options = null) => Deserialize(serializer, buffer, 0, -1, type, options);
 
@@ -50,8 +51,10 @@ namespace Zongsoft.Serialization
 		public static T Deserialize<T>(this ISerializer serializer, byte[] buffer, int offset, int count, SerializationOptions options = null) => count > 0 ?
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer, offset, count), options) :
 			serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer), options);
+		#endregion
 
-		public static JsonSerializerOptions GetOptions() => new()
+		#region 选项处理
+		internal static JsonSerializerOptions GetOptions() => new()
 		{
 			NumberHandling = JsonNumberHandling.AllowReadingFromString,
 			Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -73,7 +76,7 @@ namespace Zongsoft.Serialization
 			},
 		};
 
-		public static JsonSerializerOptions ToOptions(this SerializationOptions options)
+		internal static JsonSerializerOptions ToOptions(this SerializationOptions options)
 		{
 			if(options == null)
 				return GetOptions();
@@ -88,7 +91,7 @@ namespace Zongsoft.Serialization
 			else if(options.IgnoreZero)
 				ignores = JsonIgnoreCondition.WhenWritingDefault;
 
-			return new JsonSerializerOptions()
+			var result = new JsonSerializerOptions()
 			{
 				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 				PropertyNameCaseInsensitive = true,
@@ -111,9 +114,14 @@ namespace Zongsoft.Serialization
 					new Json.DictionaryConverterFactory(),
 				},
 			};
+
+			//进行选项配置
+			options.Configure?.Invoke(result);
+
+			return result;
 		}
 
-		public static JsonSerializerOptions ToOptions(this TextSerializationOptions options)
+		internal static JsonSerializerOptions ToOptions(this TextSerializationOptions options)
 		{
 			if(options == null)
 				return GetOptions();
@@ -137,7 +145,7 @@ namespace Zongsoft.Serialization
 			else if(options.IgnoreZero)
 				ignores = JsonIgnoreCondition.WhenWritingDefault;
 
-			return new JsonSerializerOptions()
+			var result = new JsonSerializerOptions()
 			{
 				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 				PropertyNameCaseInsensitive = true,
@@ -163,6 +171,17 @@ namespace Zongsoft.Serialization
 					new Json.DictionaryConverterFactory(),
 				},
 			};
+
+			if(options.Typed)
+			{
+				result.Converters.Add(Json.ObjectConverter.Factory);
+			}
+
+			//进行选项配置
+			options.Configure?.Invoke(result);
+
+			return result;
 		}
+		#endregion
 	}
 }

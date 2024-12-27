@@ -211,13 +211,15 @@ public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 
 	private sealed class Json
 	{
-		public string Serialize(object obj)
+		private readonly TextSerializationOptions TypedOptions = new TextSerializationOptions() { Typed = true };
+
+		public string Serialize(object obj, bool typed = false)
 		{
 			var target = obj is NLua.LuaTable table ? Utility.ToDictionary(table) : obj;
-			return Serializer.Json.Serialize(target);
+			return Serializer.Json.Serialize(target, typed ? TypedOptions : null);
 		}
 
-		public object Deserialize(string json) => Serializer.Json.Deserialize<Dictionary<string, object>>(json);
+		public object Deserialize(string json, bool typed = false) => Serializer.Json.Deserialize<Dictionary<string, object>>(json, typed ? TypedOptions : null);
 	}
 	#endregion
 }

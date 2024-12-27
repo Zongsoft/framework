@@ -28,12 +28,15 @@
  */
 
 using System;
-using System.Linq;
 
 namespace Zongsoft.Serialization
 {
 	public class SerializationOptions
 	{
+		#region 构造函数
+		public SerializationOptions(Action<object> configure = null) => this.Configure = configure;
+		#endregion
+
 		#region 成员字段
 		private int _maximumDepth;
 		#endregion
@@ -46,7 +49,7 @@ namespace Zongsoft.Serialization
 			set => _maximumDepth = Math.Max(0, value);
 		}
 
-		/// <summary>获取或设置一个值，指示是否忽略空值(null)。</summary>
+		/// <summary>获取或设置一个值，指示是否忽略空值(<c>null</c>)。</summary>
 		public bool IgnoreNull { get; set; }
 
 		/// <summary>获取或设置一个值，指示是否忽略空集和空字符串。</summary>
@@ -57,6 +60,9 @@ namespace Zongsoft.Serialization
 
 		/// <summary>获取或设置一个值，指示是否包含字段。</summary>
 		public bool IncludeFields { get; set; }
+
+		/// <summary>获取或设置配置器。</summary>
+		public Action<object> Configure { get; set; }
 		#endregion
 
 		#region 公共方法
