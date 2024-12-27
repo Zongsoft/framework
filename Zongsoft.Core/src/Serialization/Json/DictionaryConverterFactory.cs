@@ -35,16 +35,18 @@ using System.Text.Json.Serialization;
 
 namespace Zongsoft.Serialization.Json;
 
-public class DictionaryConverterFactory : JsonConverterFactory
+public class DictionaryConverterFactory(TextSerializationOptions options) : JsonConverterFactory
 {
+	private readonly TextSerializationOptions _options = options;
+
 	public override bool CanConvert(Type type) => type == typeof(Hashtable) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>));
 	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => type.IsGenericType ?
-		(JsonConverter)Activator.CreateInstance(typeof(GenericDictionaryConverter<,>).MakeGenericType(type.GenericTypeArguments[0], type.GenericTypeArguments[1])) :
-		ClassicDictionaryConverter.Instance;
+		(JsonConverter)Activator.CreateInstance(typeof(GenericDictionaryConverter<,>).MakeGenericType(type.GenericTypeArguments[0], type.GenericTypeArguments[1]), _options) :
+		new ClassicDictionaryConverter(_options);
 
-	private class ClassicDictionaryConverter : JsonConverter<IDictionary>
+	private class ClassicDictionaryConverter(TextSerializationOptions options) : JsonConverter<IDictionary>
 	{
-		public static readonly ClassicDictionaryConverter Instance = new();
+		private readonly TextSerializationOptions _options = options;
 
 		public override IDictionary Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
@@ -92,17 +94,34 @@ public class DictionaryConverterFactory : JsonConverterFactory
 			}
 
 			writer.WriteStartObject();
+
 			foreach(DictionaryEntry entry in dictionary)
 			{
 				writer.WritePropertyName(entry.Key.ToString(), options);
-				ObjectConverter.Default.Write(writer, entry.Value, options);
+
+				if(entry.Value == null || Convert.IsDBNull(entry.Value))
+					writer.WriteNullValue();
+				else if(_options.Typified)
+					ObjectConverter.Default.Write(writer, entry.Value, options);
+				else
+				{
+					var converter = options.GetConverter(Data.Model.GetModelType(entry.Value.GetType()));
+
+					if(converter == null)
+						ObjectConverter.Default.Write(writer, entry.Value, options);
+					else
+						converter.Write(writer, entry.Value, options);
+				}
 			}
+
 			writer.WriteEndObject();
 		}
 	}
 
-	private class GenericDictionaryConverter<TKey, TValue> : JsonConverter<IDictionary<TKey, TValue>>
+	private class GenericDictionaryConverter<TKey, TValue>(TextSerializationOptions options) : JsonConverter<IDictionary<TKey, TValue>>
 	{
+		private readonly TextSerializationOptions _options = options;
+
 		private delegate TValue Reader(ref Utf8JsonReader reader, JsonSerializerOptions options);
 
 		private readonly Reader _reader = typeof(TValue) == typeof(object) ?
@@ -155,11 +174,26 @@ public class DictionaryConverterFactory : JsonConverterFactory
 			}
 
 			writer.WriteStartObject();
+
 			foreach(var entry in dictionary)
 			{
 				writer.WritePropertyName(entry.Key.ToString(), options);
-				ObjectConverter.Default.Write(writer, entry.Value, options);
+
+				if(entry.Value == null || Convert.IsDBNull(entry.Value))
+					writer.WriteNullValue();
+				else if(_options.Typified)
+					ObjectConverter.Default.Write(writer, entry.Value, options);
+				else
+				{
+					var converter = options.GetConverter(Data.Model.GetModelType(entry.Value.GetType()));
+
+					if(converter == null)
+						ObjectConverter.Default.Write(writer, entry.Value, options);
+					else
+						converter.Write(writer, entry.Value, options);
+				}
 			}
+
 			writer.WriteEndObject();
 		}
 	}

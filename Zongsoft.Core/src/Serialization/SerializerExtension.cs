@@ -29,7 +29,6 @@
 
 using System;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Zongsoft.Serialization
 {
@@ -54,134 +53,18 @@ namespace Zongsoft.Serialization
 		#endregion
 
 		#region 选项处理
-		internal static JsonSerializerOptions GetOptions() => new()
-		{
-			NumberHandling = JsonNumberHandling.AllowReadingFromString,
-			Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-			PropertyNameCaseInsensitive = true,
-			IgnoreReadOnlyProperties = false,
-			IncludeFields = true,
-			Converters =
-			{
-				new Json.TypeConverter(),
-				new Json.DateOnlyConverter(),
-				new Json.TimeOnlyConverter(),
-				new Json.TimeSpanConverter(),
-				new JsonStringEnumConverter(),
-				new Json.ModelConverterFactory(),
-				new Json.RangeConverterFactory(),
-				new Json.MixtureConverterFactory(),
-				new Json.DataDictionaryConverterFactory(),
-				new Json.DictionaryConverterFactory(),
-			},
-		};
-
 		internal static JsonSerializerOptions ToOptions(this SerializationOptions options)
 		{
 			if(options == null)
-				return GetOptions();
+				return TextSerializationOptions.Default.JsonOptions;
 
 			if(options is TextSerializationOptions text)
-				return ToOptions(text);
+				return text.JsonOptions;
 
-			var ignores = JsonIgnoreCondition.Never;
-
-			if(options.IgnoreNull)
-				ignores = JsonIgnoreCondition.WhenWritingNull;
-			else if(options.IgnoreZero)
-				ignores = JsonIgnoreCondition.WhenWritingDefault;
-
-			var result = new JsonSerializerOptions()
-			{
-				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-				PropertyNameCaseInsensitive = true,
-				MaxDepth = options.MaximumDepth,
-				NumberHandling = JsonNumberHandling.AllowReadingFromString,
-				DefaultIgnoreCondition = ignores,
-				IgnoreReadOnlyProperties = false,
-				IncludeFields = options.IncludeFields,
-				Converters =
-				{
-					new Json.TypeConverter(),
-					new Json.DateOnlyConverter(),
-					new Json.TimeOnlyConverter(),
-					new Json.TimeSpanConverter(),
-					new JsonStringEnumConverter(),
-					new Json.ModelConverterFactory(),
-					new Json.RangeConverterFactory(),
-					new Json.MixtureConverterFactory(),
-					new Json.DataDictionaryConverterFactory(),
-					new Json.DictionaryConverterFactory(),
-				},
-			};
-
-			//进行选项配置
-			options.Configure?.Invoke(result);
-
-			return result;
+			return options.ToTextOptions().JsonOptions;
 		}
 
-		internal static JsonSerializerOptions ToOptions(this TextSerializationOptions options)
-		{
-			if(options == null)
-				return GetOptions();
-
-			JsonNamingPolicy naming = null;
-
-			switch(options.NamingConvention)
-			{
-				case SerializationNamingConvention.Camel:
-					naming = JsonNamingPolicy.CamelCase;
-					break;
-				case SerializationNamingConvention.Pascal:
-					naming = Json.NamingConvention.Pascal;
-					break;
-			}
-
-			var ignores = JsonIgnoreCondition.Never;
-
-			if(options.IgnoreNull)
-				ignores = JsonIgnoreCondition.WhenWritingNull;
-			else if(options.IgnoreZero)
-				ignores = JsonIgnoreCondition.WhenWritingDefault;
-
-			var result = new JsonSerializerOptions()
-			{
-				Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-				PropertyNameCaseInsensitive = true,
-				MaxDepth = options.MaximumDepth,
-				WriteIndented = options.Indented,
-				NumberHandling = JsonNumberHandling.AllowReadingFromString,
-				DefaultIgnoreCondition = ignores,
-				IgnoreReadOnlyProperties = false,
-				PropertyNamingPolicy = naming,
-				DictionaryKeyPolicy = naming,
-				IncludeFields = options.IncludeFields,
-				Converters =
-				{
-					new Json.TypeConverter(),
-					new Json.DateOnlyConverter(),
-					new Json.TimeOnlyConverter(),
-					new Json.TimeSpanConverter(),
-					new JsonStringEnumConverter(naming),
-					new Json.ModelConverterFactory(),
-					new Json.RangeConverterFactory(),
-					new Json.MixtureConverterFactory(),
-					new Json.DataDictionaryConverterFactory(),
-					new Json.DictionaryConverterFactory(),
-				},
-			};
-
-			if(options.Typed)
-			{
-				result.Converters.Add(Json.ObjectConverter.Factory);
-			}
-
-			//进行选项配置
-			options.Configure?.Invoke(result);
-
-			return result;
-		}
+		internal static JsonSerializerOptions ToOptions(this TextSerializationOptions options) => (options ?? TextSerializationOptions.Default).JsonOptions;
 		#endregion
 	}
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,47 +28,119 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Serialization
 {
-	public class TextSerializationOptions(Action<object> configure = null) : SerializationOptions(configure)
+	public partial class TextSerializationOptions : SerializationOptions, IEquatable<TextSerializationOptions>
 	{
+		#region 单例字段
+		public static readonly TextSerializationOptions Default = new(true) { IncludeFields = true };
+		#endregion
+
+		#region 成员字段
+		private bool _indented;
+		private bool _typified;
+		private SerializationNamingConvention _naming;
+		#endregion
+
+		#region 构造函数
+		public TextSerializationOptions(Action<object> configure = null) : base(configure) { }
+		public TextSerializationOptions(bool immutable, Action<object> configure = null) : base(immutable, configure) { }
+		#endregion
+
 		#region 公共属性
 		/// <summary>获取或设置一个值，指示序列化后的文本是否保持缩进风格。</summary>
-		public bool Indented { get; set; }
+		public bool Indented
+		{
+			get => _indented;
+			set => _indented = this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : value;
+		}
 
-		/// <summary>获取或设置一个值，指示序列化的文本是否保持强类型信息。</summary>
-		public bool Typed { get; set; }
+		/// <summary>获取或设置一个值，指示序列化的对象是否写入类型信息。</summary>
+		public bool Typified
+		{
+			get => _typified;
+			set => _typified = this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : value;
+		}
 
 		/// <summary>获取或设置一个值，指示序列化成员的命名转换方式。</summary>
-		public SerializationNamingConvention NamingConvention { get; set; }
+		public SerializationNamingConvention NamingConvention
+		{
+			get => _naming;
+			set => _naming = this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : value;
+		}
+		#endregion
+
+		#region 重写方法
+		public bool Equals(TextSerializationOptions other) => other is not null && base.Equals(other) &&
+			_indented == other._indented &&
+			_typified == other._typified &&
+			_naming == other._naming;
+
+		public override bool Equals(object obj) => obj is TextSerializationOptions other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(base.GetHashCode(), _indented, _typified, _naming);
+		public override string ToString() => $"{base.ToString()} casing:{_naming.ToString().ToLowerInvariant()};{(_typified ? " typified;" : null)}{(_indented ? " indented;" : null)}";
 		#endregion
 
 		#region 静态方法
-		public static TextSerializationOptions Camel(string ignores = null)
+		private const uint IMMUTABLE_FLAG      = 0x80_00_00_00;
+		private const uint TYPIFIED_FLAG       = 0x40_00_00_00;
+		private const uint INDENTED_FLAG       = 0x20_00_00_00;
+		private const uint NAMING_CAMEL_FLAG   = 0x01_00_00_00;
+		private const uint NAMING_PASCAL_FLAG  = 0x02_00_00_00;
+		private const uint INCLUDE_FIELDS_FLAG = 0x00_01_00_00;
+
+		private static readonly ConcurrentDictionary<uint, TextSerializationOptions> _options = new();
+
+		public static TextSerializationOptions Camel(string ignores = null) => Camel(false, ignores);
+		public static TextSerializationOptions Camel(bool typified, string ignores = null)
 		{
-			var options = new TextSerializationOptions()
+			var flags = IMMUTABLE_FLAG | NAMING_CAMEL_FLAG;
+			flags |= typified ? TYPIFIED_FLAG : 0;
+			flags |= GetIgnoring(ignores);
+
+			return _options.GetOrAdd(flags, (key, state) =>
 			{
-				NamingConvention = SerializationNamingConvention.Camel,
-			};
+				var options = new TextSerializationOptions()
+				{
+					Typified = state.typified,
+					NamingConvention = SerializationNamingConvention.Camel,
+				};
 
-			if(ignores != null && ignores.Length > 0)
-				options.Ignores(ignores);
+				//设置忽略项
+				options.Ignores(state.ignores);
 
-			return options;
+				//使构建的选项不能变更
+				options.Immutable = true;
+
+				return options;
+			}, (typified, ignores));
 		}
 
-		public static TextSerializationOptions Pascal(string ignores = null)
+		public static TextSerializationOptions Pascal(string ignores = null) => Pascal(false, ignores);
+		public static TextSerializationOptions Pascal(bool typified, string ignores = null)
 		{
-			var options = new TextSerializationOptions()
+			var flags = IMMUTABLE_FLAG | NAMING_PASCAL_FLAG;
+			flags |= typified ? TYPIFIED_FLAG : 0;
+			flags |= GetIgnoring(ignores);
+
+			return _options.GetOrAdd(flags, (key, state) =>
 			{
-				NamingConvention = SerializationNamingConvention.Pascal,
-			};
+				var options = new TextSerializationOptions()
+				{
+					Typified = state.typified,
+					NamingConvention = SerializationNamingConvention.Pascal,
+				};
 
-			if(ignores != null && ignores.Length > 0)
-				options.Ignores(ignores);
+				//设置忽略项
+				options.Ignores(state.ignores);
 
-			return options;
+				//使构建的选项不能变更
+				options.Immutable = true;
+
+				return options;
+			}, (typified, ignores));
 		}
 		#endregion
 	}

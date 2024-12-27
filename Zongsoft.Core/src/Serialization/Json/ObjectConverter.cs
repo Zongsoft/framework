@@ -244,7 +244,7 @@ public class ObjectConverter : JsonConverter<object>
 		}
 	}
 
-	internal static  object GetNumber(ref Utf8JsonReader reader)
+	internal static object GetNumber(ref Utf8JsonReader reader)
 	{
 		if(reader.TryGetInt32(out var integer))
 			return integer;

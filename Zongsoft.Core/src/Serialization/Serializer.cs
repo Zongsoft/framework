@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -55,21 +55,14 @@ namespace Zongsoft.Serialization
 		private class JsonSerializerWrapper : ITextSerializer
 		{
 			#region 单例字段
-			public static readonly JsonSerializerWrapper Instance = new JsonSerializerWrapper();
+			public static readonly JsonSerializerWrapper Instance = new();
 			#endregion
 
-			#region 默认配置
-			private static readonly JsonSerializerOptions DefaultOptions = SerializerExtension.GetOptions();
-			#endregion
-
-			#region 构造函数
-			private JsonSerializerWrapper()
+			#region 私有构造
+			private JsonSerializerWrapper() => this.Options = new TextSerializationOptions()
 			{
-				this.Options = new TextSerializationOptions()
-				{
-					IncludeFields = true,
-				};
-			}
+				IncludeFields = true,
+			};
 			#endregion
 
 			#region 公共属性
@@ -100,9 +93,9 @@ namespace Zongsoft.Serialization
 
 			public ValueTask<object> DeserializeAsync(Stream stream, CancellationToken cancellation = default) => this.DeserializeAsync(stream, typeof(Dictionary<string, object>), null, cancellation);
 			public ValueTask<object> DeserializeAsync(Stream stream, SerializationOptions options, CancellationToken cancellation = default) => this.DeserializeAsync(stream, typeof(Dictionary<string, object>), options, cancellation);
-			public ValueTask<object> DeserializeAsync(Stream stream, Type type, CancellationToken cancellation = default) => JsonSerializer.DeserializeAsync(stream, type, SerializerExtension.GetOptions(), cancellation);
+			public ValueTask<object> DeserializeAsync(Stream stream, Type type, CancellationToken cancellation = default) => JsonSerializer.DeserializeAsync(stream, type, TextSerializationOptions.Default.JsonOptions, cancellation);
 			public ValueTask<object> DeserializeAsync(Stream stream, Type type, SerializationOptions options, CancellationToken cancellation = default) => JsonSerializer.DeserializeAsync(stream, type, options.ToOptions(), cancellation);
-			public ValueTask<T> DeserializeAsync<T>(Stream stream, CancellationToken cancellation = default) => JsonSerializer.DeserializeAsync<T>(stream, SerializerExtension.GetOptions(), cancellation);
+			public ValueTask<T> DeserializeAsync<T>(Stream stream, CancellationToken cancellation = default) => JsonSerializer.DeserializeAsync<T>(stream, TextSerializationOptions.Default.JsonOptions, cancellation);
 			public ValueTask<T> DeserializeAsync<T>(Stream stream, SerializationOptions options, CancellationToken cancellation = default) => JsonSerializer.DeserializeAsync<T>(stream, options.ToOptions(), cancellation);
 
 			public ValueTask<object> DeserializeAsync(ReadOnlySpan<byte> buffer, CancellationToken cancellation = default) => this.DeserializeAsync(buffer, typeof(Dictionary<string, object>), null, cancellation);
