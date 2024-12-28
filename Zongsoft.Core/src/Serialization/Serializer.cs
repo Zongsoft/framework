@@ -59,15 +59,11 @@ namespace Zongsoft.Serialization
 			#endregion
 
 			#region 私有构造
-			private JsonSerializerWrapper() => this.Options = new TextSerializationOptions()
-			{
-				IncludeFields = true,
-			};
+			private JsonSerializerWrapper() => this.Options = new();
 			#endregion
 
 			#region 公共属性
-			public TextSerializationOptions Options { get; }
-			SerializationOptions ISerializer.Options => this.Options;
+			public TextSerializationOptionsBuilder Options { get; }
 			#endregion
 
 			#region 反序列化

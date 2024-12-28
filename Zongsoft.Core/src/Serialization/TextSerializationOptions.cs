@@ -72,6 +72,10 @@ namespace Zongsoft.Serialization
 		}
 		#endregion
 
+		#region 公共方法
+		public TextSerializationOptions Immutate() { this.Immutable = true; return this; }
+		#endregion
+
 		#region 重写方法
 		public bool Equals(TextSerializationOptions other) => other is not null && base.Equals(other) &&
 			_indented == other._indented &&
@@ -81,67 +85,6 @@ namespace Zongsoft.Serialization
 		public override bool Equals(object obj) => obj is TextSerializationOptions other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(base.GetHashCode(), _indented, _typified, _naming);
 		public override string ToString() => $"{base.ToString()} casing:{_naming.ToString().ToLowerInvariant()};{(_typified ? " typified;" : null)}{(_indented ? " indented;" : null)}";
-		#endregion
-
-		#region 静态方法
-		private const uint IMMUTABLE_FLAG      = 0x80_00_00_00;
-		private const uint TYPIFIED_FLAG       = 0x40_00_00_00;
-		private const uint INDENTED_FLAG       = 0x20_00_00_00;
-		private const uint NAMING_CAMEL_FLAG   = 0x01_00_00_00;
-		private const uint NAMING_PASCAL_FLAG  = 0x02_00_00_00;
-		private const uint INCLUDE_FIELDS_FLAG = 0x00_01_00_00;
-
-		private static readonly ConcurrentDictionary<uint, TextSerializationOptions> _options = new();
-
-		public static TextSerializationOptions Camel(string ignores = null) => Camel(false, ignores);
-		public static TextSerializationOptions Camel(bool typified, string ignores = null)
-		{
-			var flags = IMMUTABLE_FLAG | NAMING_CAMEL_FLAG;
-			flags |= typified ? TYPIFIED_FLAG : 0;
-			flags |= GetIgnoring(ignores);
-
-			return _options.GetOrAdd(flags, (key, state) =>
-			{
-				var options = new TextSerializationOptions()
-				{
-					Typified = state.typified,
-					NamingConvention = SerializationNamingConvention.Camel,
-				};
-
-				//设置忽略项
-				options.Ignores(state.ignores);
-
-				//使构建的选项不能变更
-				options.Immutable = true;
-
-				return options;
-			}, (typified, ignores));
-		}
-
-		public static TextSerializationOptions Pascal(string ignores = null) => Pascal(false, ignores);
-		public static TextSerializationOptions Pascal(bool typified, string ignores = null)
-		{
-			var flags = IMMUTABLE_FLAG | NAMING_PASCAL_FLAG;
-			flags |= typified ? TYPIFIED_FLAG : 0;
-			flags |= GetIgnoring(ignores);
-
-			return _options.GetOrAdd(flags, (key, state) =>
-			{
-				var options = new TextSerializationOptions()
-				{
-					Typified = state.typified,
-					NamingConvention = SerializationNamingConvention.Pascal,
-				};
-
-				//设置忽略项
-				options.Ignores(state.ignores);
-
-				//使构建的选项不能变更
-				options.Immutable = true;
-
-				return options;
-			}, (typified, ignores));
-		}
 		#endregion
 	}
 }

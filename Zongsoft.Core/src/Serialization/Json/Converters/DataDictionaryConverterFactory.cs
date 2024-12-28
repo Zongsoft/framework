@@ -29,34 +29,32 @@
 
 using System;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Collections.Generic;
 
-namespace Zongsoft.Serialization;
+using Zongsoft.Data;
 
-public static class JsonWriterExtension
+namespace Zongsoft.Serialization.Json.Converters;
+
+public class DataDictionaryConverterFactory : JsonConverterFactory
 {
-	public static void WritePropertyName(this Utf8JsonWriter writer, string name, JsonSerializerOptions options)
+	public override bool CanConvert(Type type) => typeof(IDataDictionary).IsAssignableFrom(type);
+	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => new DataDictionaryConverter();
+
+	private class DataDictionaryConverter : JsonConverter<IDataDictionary>
 	{
-		if(options != null && options.PropertyNamingPolicy != null)
-			name = options.PropertyNamingPolicy.ConvertName(name);
-
-		writer.WritePropertyName(name);
-	}
-
-	public static void WriteObject(this Utf8JsonWriter writer, object value, JsonSerializerOptions options)
-	{
-		var type = Data.Model.GetModelType(value);
-
-		//如果属性值是异步流，则必须将其作为同步流处理（因为JSON序列化器的Serialize方法只支持同步流）
-		if(Collections.Enumerable.IsAsyncEnumerable(value, out var elementType))
+		public override IDataDictionary Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
-			type = typeof(IEnumerable<>).MakeGenericType(elementType);
-
-			//如果属性值未实现同步流接口，则必须将其用同步器进行包装
-			if(!type.IsAssignableFrom(value.GetType()))
-				value = Collections.Enumerable.Enumerate(value, elementType);
+			var data = ObjectConverter.Default.Read(ref reader, typeof(IDictionary<string, object>), options);
+			return data == null ? null : DataDictionary.GetDictionary(data);
 		}
 
-		JsonSerializer.Serialize(writer, value, type, options);
+		public override void Write(Utf8JsonWriter writer, IDataDictionary value, JsonSerializerOptions options)
+		{
+			if(value == null || value.Data == null)
+				writer.WriteNullValue();
+			else
+				ObjectConverter.Default.Write(writer, value.Data, options);
+		}
 	}
 }

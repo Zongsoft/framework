@@ -86,25 +86,25 @@ partial class TextSerializationOptions
 			IncludeFields = this.IncludeFields,
 			Converters =
 			{
-				new Json.TypeConverter(),
-				new Json.DateOnlyConverter(),
-				new Json.TimeOnlyConverter(),
-				new Json.TimeSpanConverter(),
+				new Json.Converters.TypeConverter(),
+				new Json.Converters.DateOnlyConverter(),
+				new Json.Converters.TimeOnlyConverter(),
+				new Json.Converters.TimeSpanConverter(),
 				new JsonStringEnumConverter(naming),
-				new Json.ModelConverterFactory(),
-				new Json.RangeConverterFactory(),
-				new Json.MixtureConverterFactory(),
-				new Json.DataDictionaryConverterFactory(),
-				new Json.DictionaryConverterFactory(this),
+				new Json.Converters.ModelConverterFactory(),
+				new Json.Converters.RangeConverterFactory(),
+				new Json.Converters.MixtureConverterFactory(),
+				new Json.Converters.DataDictionaryConverterFactory(),
+				new Json.Converters.DictionaryConverterFactory(this),
 			},
 		};
 
 		if(_typified)
-			result.Converters.Add(Json.ObjectConverter.Factory);
+			result.Converters.Add(Json.Converters.ObjectConverter.Factory);
 
 		#if NET8_0_OR_GREATER
-		//if(this.Immutable)
-		//	result.MakeReadOnly();
+		if(this.Immutable)
+			result.MakeReadOnly(true);
 		#endif
 
 		//进行选项配置

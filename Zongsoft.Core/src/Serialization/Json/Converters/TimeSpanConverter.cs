@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,45 +31,18 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Zongsoft.Serialization.Json;
+namespace Zongsoft.Serialization.Json.Converters;
 
-public class ByteArrayConverter : JsonConverter<byte[]>
+public class TimeSpanConverter : JsonConverter<TimeSpan>
 {
-	public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		if(reader.TokenType == JsonTokenType.Null)
-			return null;
+		if(reader.TokenType == JsonTokenType.Number)
+			return TimeSpan.FromSeconds(reader.GetDouble());
 
-		if(reader.TokenType == JsonTokenType.String)
-			return reader.GetBytesFromBase64();
-
-		if(reader.TokenType == JsonTokenType.StartArray)
-		{
-			var list = new System.Collections.Generic.List<byte>();
-
-			while(reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-			{
-				list.Add(reader.GetByte());
-			}
-
-			return list.ToArray();
-		}
-
-		return null;
+		var text = reader.GetString();
+		return Common.TimeSpanUtility.TryParse(text, out var value) ? value : throw new InvalidOperationException($"The '{text}' value is an invalid TimeSpan type format.");
 	}
 
-	public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
-	{
-		if(value == null)
-			writer.WriteNullValue();
-		else
-		{
-			writer.WriteStartArray();
-
-			for(int i = 0; i < value.Length; i++)
-				writer.WriteNumberValue(value[i]);
-
-			writer.WriteEndArray();
-		}
-	}
+	public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString());
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,26 +31,45 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Zongsoft.Serialization.Json;
+namespace Zongsoft.Serialization.Json.Converters;
 
-public class TypeConverter : JsonConverter<Type>
+public class ByteArrayConverter : JsonConverter<byte[]>
 {
-	public override Type Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		if(reader.TokenType == JsonTokenType.Null)
 			return null;
 
 		if(reader.TokenType == JsonTokenType.String)
-			return Zongsoft.Common.TypeAlias.Parse(reader.GetString());
+			return reader.GetBytesFromBase64();
+
+		if(reader.TokenType == JsonTokenType.StartArray)
+		{
+			var list = new System.Collections.Generic.List<byte>();
+
+			while(reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+			{
+				list.Add(reader.GetByte());
+			}
+
+			return list.ToArray();
+		}
 
 		return null;
 	}
 
-	public override void Write(Utf8JsonWriter writer, Type value, JsonSerializerOptions options)
+	public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
 	{
 		if(value == null)
 			writer.WriteNullValue();
 		else
-			writer.WriteStringValue(Zongsoft.Common.TypeAlias.GetAlias(value));
+		{
+			writer.WriteStartArray();
+
+			for(int i = 0; i < value.Length; i++)
+				writer.WriteNumberValue(value[i]);
+
+			writer.WriteEndArray();
+		}
 	}
 }

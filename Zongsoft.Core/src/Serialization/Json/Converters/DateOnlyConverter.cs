@@ -31,18 +31,16 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Zongsoft.Serialization.Json;
+namespace Zongsoft.Serialization.Json.Converters;
 
-public class TimeSpanConverter : JsonConverter<TimeSpan>
+public class DateOnlyConverter : JsonConverter<DateOnly>
 {
-	public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	public override DateOnly Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.TokenType switch
 	{
-		if(reader.TokenType == JsonTokenType.Number)
-			return TimeSpan.FromSeconds(reader.GetDouble());
+		JsonTokenType.Number => DateOnly.FromDayNumber(reader.GetInt32()),
+		JsonTokenType.String => DateOnly.Parse(reader.GetString()),
+		_ => throw new JsonException($"Unable to convert '{reader.TokenType}' JSON node to '{nameof(DateOnly)}' type."),
+	};
 
-		var text = reader.GetString();
-		return Common.TimeSpanUtility.TryParse(text, out var value) ? value : throw new InvalidOperationException($"The '{text}' value is an invalid TimeSpan type format.");
-	}
-
-	public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString());
+	public override void Write(Utf8JsonWriter writer, DateOnly value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString("yyyy-MM-dd"));
 }

@@ -83,9 +83,9 @@ namespace Zongsoft.Collections
 							break;
 						case JsonTokenType.Number:
 							if(type == null)
-								parameters.SetValue(name, Serialization.Json.ObjectConverter.GetNumber(ref reader));
+								parameters.SetValue(name, Serialization.Json.Converters.ObjectConverter.GetNumber(ref reader));
 							else
-								parameters.SetValue(type, Serialization.Json.ObjectConverter.GetNumber(ref reader));
+								parameters.SetValue(type, Serialization.Json.Converters.ObjectConverter.GetNumber(ref reader));
 							break;
 						case JsonTokenType.String:
 							if(type == null)
@@ -119,7 +119,7 @@ namespace Zongsoft.Collections
 					else
 						writer.WritePropertyName(parameter.Key.ToString());
 
-					Serialization.Json.ObjectConverter.Default.Write(writer, parameter.Value, options);
+					Serialization.Json.Converters.ObjectConverter.Default.Write(writer, parameter.Value, options);
 				}
 
 				writer.WriteEndObject();
@@ -152,7 +152,7 @@ namespace Zongsoft.Collections
 						else if(name == "$value")
 						{
 							if(reader.Read())
-								return Serialization.Json.ObjectConverter.GetValue(ref reader, type, options);
+								return Serialization.Json.Converters.ObjectConverter.GetValue(ref reader, type, options);
 						}
 					}
 				}

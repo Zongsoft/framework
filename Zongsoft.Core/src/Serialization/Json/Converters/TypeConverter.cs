@@ -30,31 +30,27 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Collections.Generic;
 
-using Zongsoft.Data;
+namespace Zongsoft.Serialization.Json.Converters;
 
-namespace Zongsoft.Serialization.Json;
-
-public class DataDictionaryConverterFactory : JsonConverterFactory
+public class TypeConverter : JsonConverter<Type>
 {
-	public override bool CanConvert(Type type) => typeof(IDataDictionary).IsAssignableFrom(type);
-	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => new DataDictionaryConverter();
-
-	private class DataDictionaryConverter : JsonConverter<IDataDictionary>
+	public override Type Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		public override IDataDictionary Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
-		{
-			var data = ObjectConverter.Default.Read(ref reader, typeof(IDictionary<string, object>), options);
-			return data == null ? null : DataDictionary.GetDictionary(data);
-		}
+		if(reader.TokenType == JsonTokenType.Null)
+			return null;
 
-		public override void Write(Utf8JsonWriter writer, IDataDictionary value, JsonSerializerOptions options)
-		{
-			if(value == null || value.Data == null)
-				writer.WriteNullValue();
-			else
-				ObjectConverter.Default.Write(writer, value.Data, options);
-		}
+		if(reader.TokenType == JsonTokenType.String)
+			return Zongsoft.Common.TypeAlias.Parse(reader.GetString());
+
+		return null;
+	}
+
+	public override void Write(Utf8JsonWriter writer, Type value, JsonSerializerOptions options)
+	{
+		if(value == null)
+			writer.WriteNullValue();
+		else
+			writer.WriteStringValue(Zongsoft.Common.TypeAlias.GetAlias(value));
 	}
 }

@@ -32,7 +32,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Collections.Generic;
 
-namespace Zongsoft.Serialization.Json;
+namespace Zongsoft.Serialization.Json.Converters;
 
 public class ObjectConverter : JsonConverter<object>
 {

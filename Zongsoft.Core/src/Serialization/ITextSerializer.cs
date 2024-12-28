@@ -35,7 +35,7 @@ namespace Zongsoft.Serialization
 {
 	public interface ITextSerializer : ISerializer
 	{
-		new TextSerializationOptions Options { get; }
+		TextSerializationOptionsBuilder Options { get; }
 
 		string Serialize(object graph, TextSerializationOptions options = null);
 		string Serialize(object graph, Type type, TextSerializationOptions options = null);

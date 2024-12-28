@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,18 +29,25 @@
 
 using System;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Zongsoft.Serialization.Json;
 
-public class DateOnlyConverter : JsonConverter<DateOnly>
+public static class JsonElementExtension
 {
-	public override DateOnly Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.TokenType switch
+	public static T[] GetArray<T>(this JsonElement element, Func<JsonElement, T> elementor)
 	{
-		JsonTokenType.Number => DateOnly.FromDayNumber(reader.GetInt32()),
-		JsonTokenType.String => DateOnly.Parse(reader.GetString()),
-		_ => throw new JsonException($"Unable to convert '{reader.TokenType}' JSON node to '{nameof(DateOnly)}' type."),
-	};
+		if(element.ValueKind != JsonValueKind.Array)
+			return null;
 
-	public override void Write(Utf8JsonWriter writer, DateOnly value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString("yyyy-MM-dd"));
+		var index = 0;
+		var array = new T[element.GetArrayLength()];
+		var iterator = element.EnumerateArray();
+
+		while(iterator.MoveNext())
+		{
+			array[index++] = elementor(iterator.Current);
+		}
+
+		return array;
+	}
 }

@@ -31,7 +31,7 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Zongsoft.Serialization.Json;
+namespace Zongsoft.Serialization.Json.Converters;
 
 public class RangeConverterFactory : JsonConverterFactory
 {
