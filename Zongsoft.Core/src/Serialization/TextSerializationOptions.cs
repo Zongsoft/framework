@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Serialization
 {

@@ -58,7 +58,7 @@ namespace Zongsoft.Security
 				return null;
 
 			var type = principal.GetType();
-			var result = new Result();
+			var result = new Dictionary<string, object>();
 
 			if(type != typeof(ClaimsPrincipal) && type != typeof(GenericPrincipal))
 			{
