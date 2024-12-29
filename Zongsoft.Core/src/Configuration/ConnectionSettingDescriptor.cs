@@ -222,3 +222,24 @@ public class ConnectionSettingDescriptor : IEquatable<string>
 	}
 	#endregion
 }
+
+public class ConnectionSettingDescriptor<T> : ConnectionSettingDescriptor
+{
+	public ConnectionSettingDescriptor(string name, string label = null, string description = null) : base(name, null, typeof(T), false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, IEnumerable<Dependency> dependencies, string label = null, string description = null) : base(name, null, typeof(T), false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, object defaultValue, string label = null, string description = null) : base(name, null, typeof(T), false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : base(name, null, typeof(T), false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, bool required, string label = null, string description = null) : base(name, null, typeof(T), required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : base(name, null, typeof(T), required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, bool required, object defaultValue, string label = null, string description = null) : base(name, null, typeof(T), required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : base(name, null, typeof(T), required, defaultValue, label, description, dependencies) { }
+
+	public ConnectionSettingDescriptor(string name, string alias, string label = null, string description = null) : base(name, alias, typeof(T), false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, IEnumerable<Dependency> dependencies, string label = null, string description = null) : base(name, alias, typeof(T), false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, object defaultValue, string label = null, string description = null) : base(name, alias, typeof(T), false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : base(name, alias, typeof(T), false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, bool required, string label = null, string description = null) : base(name, alias, typeof(T), required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : base(name, alias, typeof(T), required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(string name, string alias, bool required, object defaultValue, string label = null, string description = null) : base(name, alias, typeof(T), required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(string name, string alias, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : base(name, alias, typeof(T), required, defaultValue, label, description, dependencies) { }
+}

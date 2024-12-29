@@ -81,10 +81,10 @@ public sealed class TDengineConnectionSettingDescriptorCollection : ConnectionSe
 	public readonly static ConnectionSettingDescriptor<int> Port = new(nameof(Port), nameof(TDengineConnectionStringBuilder.Port), 6030, ConnectionSettingDescriptor.Port.Label, ConnectionSettingDescriptor.Port.Description);
 	public readonly static ConnectionSettingDescriptor<string> Database = new(nameof(Database), "DB", null, ConnectionSettingDescriptor.Database.Label, ConnectionSettingDescriptor.Database.Description);
 	public readonly static ConnectionSettingDescriptor<TDengineConnectionProtocol> Protocol = new(nameof(Protocol), nameof(TDengineConnectionStringBuilder.Protocol), TDengineConnectionProtocol.Native);
-	public readonly static ConnectionSettingDescriptor<string> Timezone = new(nameof(Timezone), nameof(TDengineConnectionStringBuilder.Timezone), null, null, null);
-	public readonly static ConnectionSettingDescriptor<string> Token = new(nameof(Token), nameof(TDengineConnectionStringBuilder.Token), null, null, null);
-	public readonly static ConnectionSettingDescriptor<bool> AutoReconnect = new(nameof(AutoReconnect), nameof(TDengineConnectionStringBuilder.AutoReconnect), true, null, null);
-	public readonly static ConnectionSettingDescriptor<bool> EnableCompression = new(nameof(EnableCompression), nameof(TDengineConnectionStringBuilder.EnableCompression), true, null, null);
+	public readonly static ConnectionSettingDescriptor<string> Timezone = new(nameof(Timezone), nameof(TDengineConnectionStringBuilder.Timezone), null, null);
+	public readonly static ConnectionSettingDescriptor<string> Token = new(nameof(Token), nameof(TDengineConnectionStringBuilder.Token), null, null);
+	public readonly static ConnectionSettingDescriptor<bool> AutoReconnect = new(nameof(AutoReconnect), nameof(TDengineConnectionStringBuilder.AutoReconnect), (object)true);
+	public readonly static ConnectionSettingDescriptor<bool> EnableCompression = new(nameof(EnableCompression), nameof(TDengineConnectionStringBuilder.EnableCompression), (object)true);
 
 	public TDengineConnectionSettingDescriptorCollection()
 	{

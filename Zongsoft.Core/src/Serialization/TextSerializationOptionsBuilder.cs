@@ -47,6 +47,10 @@ public class TextSerializationOptionsBuilder
 	private static readonly ConcurrentDictionary<uint, TextSerializationOptions> _options = new();
 	#endregion
 
+	#region 公共属性
+	public TextSerializationOptions Default => TextSerializationOptions.Default;
+	#endregion
+
 	#region 公共方法
 	public TextSerializationOptions Indented(string ignores = null) => Indented(false, ignores);
 	public TextSerializationOptions Indented(bool typified, string ignores = null)

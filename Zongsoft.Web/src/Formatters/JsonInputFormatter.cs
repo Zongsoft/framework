@@ -51,7 +51,7 @@ namespace Zongsoft.Web.Formatters
 		#region 构造函数
 		public JsonInputFormatter(Serialization.TextSerializationOptions options = null)
 		{
-			_options = options ?? Serialization.Serializer.Json.Options;
+			_options = options ?? Serialization.TextSerializationOptions.Default;
 
 			SupportedEncodings.Add(UTF8EncodingWithoutBOM);
 			SupportedEncodings.Add(UTF16EncodingLittleEndian);

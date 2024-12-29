@@ -132,7 +132,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 					if(argument.Parameter is string || argument.Parameter is System.Text.StringBuilder)
 						headers.Add("VoiceCodeParam", argument.Parameter.ToString());
 					else
-						headers.Add("VoiceCodeParam", Serializer.Json.Serialize(argument.Parameter, TextSerializationOptions.Camel()));
+						headers.Add("VoiceCodeParam", Serializer.Json.Serialize(argument.Parameter, Serializer.Json.Options.Camel()));
 				}
 
 				headers.Add("ActionCodeBreak", argument.CanBreak ? "true" : "false");
@@ -219,7 +219,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 				if(parameter is string || parameter is System.Text.StringBuilder)
 					headers.Add("TtsParam", parameter.ToString());
 				else
-					headers.Add("TtsParam", Serializer.Json.Serialize(parameter, TextSerializationOptions.Camel()));
+					headers.Add("TtsParam", Serializer.Json.Serialize(parameter, Serializer.Json.Options.Camel()));
 			}
 
 			if(!string.IsNullOrWhiteSpace(extra))
@@ -294,7 +294,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 				if(parameter is string || parameter is System.Text.StringBuilder)
 					headers.Add("TemplateParam", parameter.ToString());
 				else
-					headers.Add("TemplateParam", Serializer.Json.Serialize(parameter, TextSerializationOptions.Camel()));
+					headers.Add("TemplateParam", Serializer.Json.Serialize(parameter, Serializer.Json.Options.Camel()));
 			}
 
 			if(!string.IsNullOrWhiteSpace(extra))

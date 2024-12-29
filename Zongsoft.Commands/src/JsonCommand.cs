@@ -81,7 +81,7 @@ namespace Zongsoft.Commands
 			var options = new TextSerializationOptions()
 			{
 				MaximumDepth = context.Expression.Options.GetValue<int>(KEY_DEPTH_OPTION),
-				Typed = context.Expression.Options.GetValue<bool>(KEY_TYPED_OPTION),
+				Typified = context.Expression.Options.GetValue<bool>(KEY_TYPED_OPTION),
 				Indented = context.Expression.Options.GetValue<bool>(KEY_INDENTED_OPTION),
 				NamingConvention = context.Expression.Options.GetValue<SerializationNamingConvention>(KEY_CASING_OPTION),
 				IncludeFields = true,

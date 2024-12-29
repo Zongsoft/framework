@@ -49,7 +49,7 @@ namespace Zongsoft.Web.Formatters
 		#region 构造函数
 		public JsonOutputFormatter(Serialization.TextSerializationOptions options = null)
 		{
-			_options = options ?? Serialization.Serializer.Json.Options;
+			_options = options ?? Serialization.TextSerializationOptions.Default;
 
 			SupportedEncodings.Add(Encoding.UTF8);
 			SupportedEncodings.Add(Encoding.Unicode);
@@ -126,7 +126,7 @@ namespace Zongsoft.Web.Formatters
 				IncludeFields = defaultOptions.IncludeFields,
 				MaximumDepth = defaultOptions.MaximumDepth,
 				NamingConvention = defaultOptions.NamingConvention,
-				Typed = defaultOptions.Typed,
+				Typified = defaultOptions.Typified,
 			};
 
 			foreach(var part in parts)
