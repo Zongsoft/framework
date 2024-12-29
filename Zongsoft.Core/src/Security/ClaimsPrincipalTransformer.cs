@@ -113,10 +113,5 @@ namespace Zongsoft.Security
 			return identity.AsModel<Membership.IUserModel>();
 		}
 		#endregion
-
-		#region 嵌套子类
-		/// <summary>为避免自定义的字典JSON序列化器对 <see cref="Dictionary{TKey, TValue}"/> 类型的序列化处理，特封装此类。</summary>
-		private sealed class Result : Dictionary<string, object> { }
-		#endregion
 	}
 }
