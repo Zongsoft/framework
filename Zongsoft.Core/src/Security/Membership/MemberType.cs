@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   �ӷ�(Popeye Zhonzongsoft@qq.com.com>
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
@@ -33,16 +33,14 @@ using System.ComponentModel;
 namespace Zongsoft.Security.Membership
 {
 	/// <summary>
-	/// ��ʾ��ɫ��Ա�����͡�
+	/// 表示成员类型的枚举。
 	/// </summary>
 	public enum MemberType : byte
 	{
-		/// <summary>�û���Ա��</summary>
-		[Description("�û�")]
+		/// <summary>用户</summary>
 		User = 0,
 
-		/// <summary>��ɫ��Ա��</summary>
-		[Description("��ɫ")]
+		/// <summary>角色</summary>
 		Role = 1
 	}
 }
