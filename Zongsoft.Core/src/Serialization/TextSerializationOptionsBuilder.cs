@@ -63,15 +63,16 @@ public class TextSerializationOptionsBuilder
 		{
 			var options = new TextSerializationOptions()
 			{
-				Typified = true,
+				Indented = true,
+				Typified = state.typified,
 			};
 
 			//设置忽略项
-			options.Ignores(state);
+			options.Ignores(state.ignores);
 
 			//使构建的选项不能变更
 			return options.Immutate();
-		}, ignores);
+		}, (typified, ignores));
 	}
 
 	public TextSerializationOptions Typified(string ignores = null) => Typified(false, ignores);
@@ -86,14 +87,15 @@ public class TextSerializationOptionsBuilder
 			var options = new TextSerializationOptions()
 			{
 				Typified = true,
+				Indented = state.indented,
 			};
 
 			//设置忽略项
-			options.Ignores(state);
+			options.Ignores(state.ignores);
 
 			//使构建的选项不能变更
 			return options.Immutate();
-		}, ignores);
+		}, (indented, ignores));
 	}
 
 	public TextSerializationOptions Camel(string ignores = null) => Camel(false, ignores);

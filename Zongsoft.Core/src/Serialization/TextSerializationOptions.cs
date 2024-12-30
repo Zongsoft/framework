@@ -45,7 +45,7 @@ namespace Zongsoft.Serialization
 
 		#region 构造函数
 		public TextSerializationOptions(Action<object> configure = null) : base(configure) { }
-		public TextSerializationOptions(bool immutable, Action<object> configure = null) : base(immutable, configure) { }
+		protected TextSerializationOptions(bool immutable, Action<object> configure = null) : base(immutable, configure) { }
 		#endregion
 
 		#region 公共属性
