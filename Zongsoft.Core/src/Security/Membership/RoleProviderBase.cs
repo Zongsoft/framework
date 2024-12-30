@@ -94,6 +94,11 @@ namespace Zongsoft.Security.Membership
 			return this.DataAccess.Select<TRole>(this.GetNamespace(@namespace), paging);
 		}
 
+		public virtual IEnumerable<TRole> Find(string keyword, Paging paging = null)
+		{
+			return this.DataAccess.Select<TRole>(Condition.Like(nameof(IRoleModel.Name), keyword), paging);
+		}
+
 		public bool Exists(uint roleId)
 		{
 			return this.DataAccess.Exists<TRole>(Condition.Equal(nameof(IRoleModel.RoleId), roleId));

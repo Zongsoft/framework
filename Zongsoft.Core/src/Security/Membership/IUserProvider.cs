@@ -61,6 +61,12 @@ namespace Zongsoft.Security.Membership
 		/// <returns>返回当前命名空间中的所有用户对象集。</returns>
 		IEnumerable<TUser> GetUsers(string @namespace, Zongsoft.Data.Paging paging = null);
 
+		/// <summary>查找指定关键字的用户。</summary>
+		/// <param name="keyword">要查找的关键字。</param>
+		/// <param name="paging">查询的分页设置，默认为第一页。</param>
+		/// <returns>返回找到的用户对象集。</returns>
+		IEnumerable<TUser> Find(string keyword, Zongsoft.Data.Paging paging = null);
+
 		/// <summary>确定指定编号的用户是否存在。</summary>
 		/// <param name="userId">指定要查找的用户编号。</param>
 		/// <returns>如果指定编号的用户是存在的则返回真(True)，否则返回假(False)。</returns>
