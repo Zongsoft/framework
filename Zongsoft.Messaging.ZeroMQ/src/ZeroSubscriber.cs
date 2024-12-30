@@ -105,6 +105,10 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			if(!args.Socket.TryReceiveFrameString(out var header, out var more))
 				break;
 
+			//如果是空帧则忽略
+			if(string.IsNullOrEmpty(header))
+				continue;
+
 			//解包收到的首帧消息
 			var identifier = Packetizer.Unpack(header, out var topic, out var options);
 
@@ -118,6 +122,10 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			//接收数据帧的内容
 			if(!args.Socket.TryReceiveFrameBytes(out var data, out more))
 				break;
+
+			//如果是匿名消息并且数据帧内容为空则当作心跳消息处理（即忽略它）
+			if(string.IsNullOrEmpty(identifier) && data == null || data.Length == 0)
+				continue;
 
 			//如果接收到的首帧消息包含压缩选项，则必须对收到的消息内容进行解压
 			if(Packetizer.Options.TryGetValue(options, Packetizer.Options.Compressor, out var compressor))

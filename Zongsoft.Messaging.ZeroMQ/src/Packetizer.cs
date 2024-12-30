@@ -36,6 +36,7 @@ internal static class Packetizer
 {
 	private const char Delimiter = '\n';
 
+	public static string Pack(string topic) => $"{topic}@";
 	public static string Pack(string identifier, string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, out string compressor)
 	{
 		if(options != null && options.Properties.TryGetValue(Options.Compressive, out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var integer) && integer > 0 && data.Length > integer)
@@ -77,7 +78,7 @@ internal static class Packetizer
 		{
 			var index = url.LastIndexOf('@');
 
-			if(index > 0 && index < url.Length - 1)
+			if(index > 0 && index < url.Length)
 			{
 				topic = url[..index].ToString();
 				return url[(index + 1)..].ToString();

@@ -48,6 +48,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	#endregion
 
 	#region 成员字段
+	private NetMQTimer _timer;
 	private NetMQPoller _poller;
 	private NetMQQueue<Packet> _queue;
 	private PublisherSocket _publisher;
@@ -73,6 +74,14 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		_queue = new NetMQQueue<Packet>();
 		_queue.ReceiveReady += this.OnQueueReady;
 		_poller = new NetMQPoller() { _queue };
+
+		//如果没有指定心跳间隔则默认为心跳时间为10秒，如果显式指定了心跳间隔小于等于零则表示不启用心跳
+		if(!connectionSettings.TryGetValue<int>("heartbeat", out var heartbeat) || heartbeat > 0)
+		{
+			_timer = new NetMQTimer(TimeSpan.FromSeconds(heartbeat > 0 ? heartbeat : 10));
+			_timer.Elapsed += this.OnElapsed;
+			_poller.Add(_timer);
+		}
 	}
 	#endregion
 
@@ -124,10 +133,31 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		return ValueTask.FromResult<string>(null);
 	}
 
+	private void OnElapsed(object sender, NetMQTimerEventArgs e)
+	{
+		if(this.IsDisposed)
+			return;
+
+		_queue.Enqueue(default);
+	}
+
 	private void OnQueueReady(object sender, NetMQQueueEventArgs<Packet> e)
 	{
 		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
 		{
+			//如果主题为空则直接发送心跳包
+			if(string.IsNullOrEmpty(packet.Topic))
+			{
+				//方案一：直接发送空包
+				//_publisher.SendMoreFrameEmpty().SendFrameEmpty();
+
+				//方案二：依次向所有订阅者发送匿名空包
+				foreach(var subscriber in this.Subscribers)
+					_publisher.SendMoreFrame(Packetizer.Pack(this.GetTopic(subscriber.Topic))).SendFrameEmpty();
+
+				return;
+			}
+
 			var head = Packetizer.Pack(this.Identifier, packet.Topic, packet.Data, packet.Options, out var compressor);
 			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
 			_publisher.SendMoreFrame(head).SendFrame(data);
@@ -245,6 +275,13 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 			if(poller != null && !poller.IsDisposed)
 				poller.Dispose();
 
+			var timer = _timer;
+			if(timer != null)
+			{
+				timer.Enable = false;
+				timer.Elapsed -= this.OnElapsed;
+			}
+
 			var queue = _queue;
 			if(queue != null && !queue.IsDisposed)
 			{
@@ -259,6 +296,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 			NetMQConfig.Cleanup(false);
 		}
 
+		_timer = null;
 		_queue = null;
 		_poller = null;
 		_channel = null;
