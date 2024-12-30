@@ -189,7 +189,7 @@ namespace Zongsoft.Security.Membership
 			hierarchies = new List<IEnumerable<TRole>>();
 
 			//从角色成员集合中查找出指定成员的父级角色
-			var parents = members.Where(m => m.MemberId == memberId && m.MemberType == memberType)
+			var parents = members.Where(m => m.RoleId == memberId)
 								 .Select(m => m.Role).ToList();
 
 			//如果父级角色集不为空
@@ -201,7 +201,7 @@ namespace Zongsoft.Security.Membership
 				hierarchies.Add(parents);
 
 				//从角色成员集合中查找出当前层级中所有角色的父级角色集合（并进行全局去重）
-				parents = members.Where(m => parents.Any(p => p.RoleId == m.MemberId) && m.MemberType == MemberType.Role)
+				parents = members.Where(m => parents.Any(p => p.RoleId == m.MemberId))
 								 .Select(m => m.Role)
 								 .Except(flats, RoleComparer<TRole>.Instance).ToList();
 			}
