@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Caching;
 using Zongsoft.Services;
@@ -196,13 +197,30 @@ namespace Zongsoft.Security.Membership
 			return principal;
 		}
 
-		public CredentialPrincipal Refresh(string identifier, string scenario)
+		public IEnumerable<CredentialPrincipal> Refresh(string identifier, string scenario = null)
 		{
 			if(string.IsNullOrEmpty(identifier))
-				return null;
+				yield break;
 
-			var credentialId = this.Cache.GetValue<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()));
-			return string.IsNullOrEmpty(credentialId) ? null : this.Refresh(credentialId);
+			if(string.IsNullOrEmpty(scenario) || scenario == "*")
+			{
+				var keys = this.Cache.Find(GetCacheKeyOfUser(identifier, "*"));
+
+				foreach(var key in keys)
+				{
+					var credentialId = this.Cache.GetValue<string>(key);
+
+					if(!string.IsNullOrEmpty(credentialId))
+						yield return this.Refresh(this.Cache.GetValue<string>(key));
+				}
+			}
+			else
+			{
+				var credentialId = this.Cache.GetValue<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()));
+
+				if(!string.IsNullOrEmpty(credentialId))
+					yield return this.Refresh(credentialId);
+			}
 		}
 
 		public CredentialPrincipal GetPrincipal(string credentialId)
@@ -243,17 +261,30 @@ namespace Zongsoft.Security.Membership
 			return principal;
 		}
 
-		public CredentialPrincipal GetPrincipal(string identifier, string scenario)
+		public IEnumerable<CredentialPrincipal> GetPrincipals(string identifier, string scenario = null)
 		{
-			if(string.IsNullOrWhiteSpace(identifier))
-				throw new ArgumentNullException(nameof(identifier));
+			if(string.IsNullOrEmpty(identifier))
+				yield break;
 
-			var credentialId = this.Cache.GetValue<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()));
+			if(string.IsNullOrEmpty(scenario) || scenario == "*")
+			{
+				var keys = this.Cache.Find(GetCacheKeyOfUser(identifier, "*"));
 
-			if(string.IsNullOrEmpty(credentialId))
-				return null;
+				foreach(var key in keys)
+				{
+					var credentialId = this.Cache.GetValue<string>(key);
 
-			return this.GetPrincipal(credentialId);
+					if(!string.IsNullOrEmpty(credentialId))
+						yield return this.GetPrincipal(this.Cache.GetValue<string>(key));
+				}
+			}
+			else
+			{
+				var credentialId = this.Cache.GetValue<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()));
+
+				if(!string.IsNullOrEmpty(credentialId))
+					yield return this.GetPrincipal(credentialId);
+			}
 		}
 		#endregion
 
@@ -278,9 +309,9 @@ namespace Zongsoft.Security.Membership
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetCacheKeyOfUser(string identifier, string scene) => "Zongsoft.Security:" +
+		private static string GetCacheKeyOfUser(string identifier, string scenario) => "Zongsoft.Security:" +
 		(
-			string.IsNullOrWhiteSpace(scene) ? identifier : $"{identifier}!{scene}"
+			string.IsNullOrWhiteSpace(scenario) ? identifier : $"{identifier}!{scenario}"
 		);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
