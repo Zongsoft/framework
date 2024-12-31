@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -135,6 +135,24 @@ namespace Zongsoft.Externals.Redis
 				var keys = server.Keys(database, pattern, cursor: cursor, pageOffset: offset);
 
 				foreach(var key in keys)
+					yield return key;
+
+				var scanning = (IScanningCursor)keys;
+				cursor = scanning.Cursor;
+				offset = scanning.PageOffset;
+			} while(cursor != 0);
+		}
+
+		internal static async IAsyncEnumerable<RedisKey> ScanAsync(this IServer server, int database, string pattern)
+		{
+			var cursor = 0L;
+			var offset = 0;
+
+			do
+			{
+				var keys = server.KeysAsync(database, pattern, cursor: cursor, pageOffset: offset);
+
+				await foreach(var key in keys)
 					yield return key;
 
 				var scanning = (IScanningCursor)keys;

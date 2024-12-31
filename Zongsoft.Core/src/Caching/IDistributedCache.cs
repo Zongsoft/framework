@@ -55,7 +55,7 @@ namespace Zongsoft.Caching
 		long GetCount();
 
 		/// <summary>获取缓存容器中的记录总数。</summary>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<long> GetCountAsync(CancellationToken cancellation = default);
 
@@ -66,9 +66,20 @@ namespace Zongsoft.Caching
 
 		/// <summary>检测指定键的缓存项是否存在。</summary>
 		/// <param name="key">指定要检测的键。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<bool> ExistsAsync(string key, CancellationToken cancellation = default);
+
+		/// <summary>查找指定模式的缓存键集合。</summary>
+		/// <param name="pattern">指定的查找模式。</param>
+		/// <returns>返回匹配查找模式的缓存键集合。</returns>
+		IEnumerable<string> Find(string pattern);
+
+		/// <summary>查找指定模式的缓存键集合。</summary>
+		/// <param name="pattern">指定的查找模式。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回匹配查找模式的缓存键集合。</returns>
+		IAsyncEnumerable<string> FindAsync(string pattern, CancellationToken cancellation = default);
 		#endregion
 
 		#region 期限方法
@@ -79,7 +90,7 @@ namespace Zongsoft.Caching
 
 		/// <summary>获取指定键的缓存项的剩下的生存时长。</summary>
 		/// <param name="key">指定要设置的键。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<TimeSpan?> GetExpiryAsync(string key, CancellationToken cancellation = default);
 
@@ -92,7 +103,7 @@ namespace Zongsoft.Caching
 		/// <summary>设置指定键的缓存项的生存时长。</summary>
 		/// <param name="key">指定要设置的键。</param>
 		/// <param name="expiry">指定要设置的生存时长，如果为零则将该缓存项设置成永不过期。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<bool> SetExpiryAsync(string key, TimeSpan expiry, CancellationToken cancellation = default);
 		#endregion
@@ -102,7 +113,7 @@ namespace Zongsoft.Caching
 		void Clear();
 
 		/// <summary>清空缓存中的所有数据。</summary>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask ClearAsync(CancellationToken cancellation = default);
 
@@ -124,13 +135,13 @@ namespace Zongsoft.Caching
 
 		/// <summary>从缓存中删除指定键的缓存项。</summary>
 		/// <param name="key">指定要删除的键。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<bool> RemoveAsync(string key, CancellationToken cancellation = default);
 
 		/// <summary>从缓存中删除多个缓存项。</summary>
 		/// <param name="keys">指定要删除的键名集。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<int> RemoveAsync(IEnumerable<string> keys, CancellationToken cancellation = default);
 
@@ -143,7 +154,7 @@ namespace Zongsoft.Caching
 		/// <summary>修改指定键的缓存项的键名。</summary>
 		/// <param name="oldKey">指定要更名的键，即待更名的现有键。</param>
 		/// <param name="newKey">更改后的新键。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<bool> RenameAsync(string oldKey, string newKey, CancellationToken cancellation = default);
 		#endregion
@@ -175,27 +186,27 @@ namespace Zongsoft.Caching
 
 		/// <summary>从缓存中获取指定键的缓存值。</summary>
 		/// <param name="key">指定要获取的键。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<object> GetValueAsync(string key, CancellationToken cancellation = default);
 
 		/// <summary>从缓存中获取指定键的缓存值。</summary>
 		/// <typeparam name="T">指定的缓存项类型。</typeparam>
 		/// <param name="key">指定要获取的键。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<T> GetValueAsync<T>(string key, CancellationToken cancellation = default);
 
 		/// <summary>从缓存中获取指定键的缓存值。</summary>
 		/// <param name="key">指定要获取的键。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<(object Value, TimeSpan? Expiry)> GetValueExpiryAsync(string key, CancellationToken cancellation = default);
 
 		/// <summary>从缓存中获取指定键的缓存值。</summary>
 		/// <typeparam name="T">指定的缓存项类型。</typeparam>
 		/// <param name="key">指定要获取的键。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<(T Value, TimeSpan? Expiry)> GetValueExpiryAsync<T>(string key, CancellationToken cancellation = default);
 
@@ -240,7 +251,7 @@ namespace Zongsoft.Caching
 		/// <param name="key">指定要保存的键。</param>
 		/// <param name="value">指定要保存的值。</param>
 		/// <param name="requisite">指定设置的必须条件，默认为<see cref="CacheRequisite.Always"/>。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<bool> SetValueAsync(string key, object value, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default);
 
@@ -257,7 +268,7 @@ namespace Zongsoft.Caching
 		/// <param name="value">指定要保存的值。</param>
 		/// <param name="expiry">指定缓存项的生存时长，如果为零则表示永不过期。</param>
 		/// <param name="requisite">指定设置的必须条件，默认为<see cref="CacheRequisite.Always"/>。</param>
-		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回表示异步操作的任务对象。</returns>
 		ValueTask<bool> SetValueAsync(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default);
 		#endregion

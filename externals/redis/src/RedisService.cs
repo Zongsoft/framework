@@ -173,14 +173,13 @@ namespace Zongsoft.Externals.Redis
 				.Select(key => (string)key);
 		}
 
-		public async ValueTask<IEnumerable<string>> FindAsync(string pattern, CancellationToken cancellation = default)
+		public async IAsyncEnumerable<string> FindAsync(string pattern, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
 			//确保连接成功
 			await this.ConnectAsync(cancellation);
 
-			return _connection.GetServer(_database.IdentifyEndpoint())
-				.Scan(_database.Database, pattern)
-				.Select(key => (string)key);
+			await foreach(var key in _connection.GetServer(_database.IdentifyEndpoint()).ScanAsync(_database.Database, pattern))
+				yield return key;
 		}
 
 		public RedisServiceInfo GetInfo()
@@ -581,11 +580,7 @@ namespace Zongsoft.Externals.Redis
 			return await _database.KeyTimeToLiveAsync(GetKey(key));
 		}
 
-		public object GetValue(string key)
-		{
-			return this.GetValue<object>(key);
-		}
-
+		public object GetValue(string key) => this.GetValue<object>(key);
 		public T GetValue<T>(string key)
 		{
 			if(string.IsNullOrEmpty(key))
@@ -602,11 +597,7 @@ namespace Zongsoft.Externals.Redis
 			return _database.StringGet(GetKey(key)).GetValue<T>();
 		}
 
-		public object GetValue(string key, out TimeSpan? expiry)
-		{
-			return GetValue<object>(key, out expiry);
-		}
-
+		public object GetValue(string key, out TimeSpan? expiry) => GetValue<object>(key, out expiry);
 		public T GetValue<T>(string key, out TimeSpan? expiry)
 		{
 			if(string.IsNullOrEmpty(key))
@@ -632,11 +623,7 @@ namespace Zongsoft.Externals.Redis
 			return result.Value.GetValue<T>();
 		}
 
-		public ValueTask<object> GetValueAsync(string key, CancellationToken cancellation = default)
-		{
-			return this.GetValueAsync<object>(key, cancellation);
-		}
-
+		public ValueTask<object> GetValueAsync(string key, CancellationToken cancellation = default) => this.GetValueAsync<object>(key, cancellation);
 		public async ValueTask<T> GetValueAsync<T>(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
@@ -653,11 +640,7 @@ namespace Zongsoft.Externals.Redis
 			return (await _database.StringGetAsync(GetKey(key))).GetValue<T>();
 		}
 
-		public ValueTask<(object Value, TimeSpan? Expiry)> GetValueExpiryAsync(string key, CancellationToken cancellation = default)
-		{
-			return this.GetValueExpiryAsync<object>(key, cancellation);
-		}
-
+		public ValueTask<(object Value, TimeSpan? Expiry)> GetValueExpiryAsync(string key, CancellationToken cancellation = default) => this.GetValueExpiryAsync<object>(key, cancellation);
 		public async ValueTask<(T Value, TimeSpan? Expiry)> GetValueExpiryAsync<T>(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
@@ -729,11 +712,7 @@ namespace Zongsoft.Externals.Redis
 			return result.Value.HasValue;
 		}
 
-		public ValueTask<(bool result, object value)> TryGetValueAsync(string key, CancellationToken cancellation = default)
-		{
-			return this.TryGetValueAsync<object>(key, cancellation);
-		}
-
+		public ValueTask<(bool result, object value)> TryGetValueAsync(string key, CancellationToken cancellation = default) => this.TryGetValueAsync<object>(key, cancellation);
 		public async ValueTask<(bool result, T value)> TryGetValueAsync<T>(string key, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(key))
