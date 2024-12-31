@@ -46,7 +46,7 @@ namespace Zongsoft.Security
 			var (credentialId, renewalToken) = GenerateIdentifier();
 			this.CredentialId = credentialId;
 			this.RenewalToken = renewalToken;
-			this.Scenario = scenario;
+			this.Scenario = scenario?.Trim().ToLowerInvariant();
 
 			if(validity.HasValue && validity.Value > TimeSpan.Zero)
 				this.Validity = validity.Value;
@@ -56,7 +56,7 @@ namespace Zongsoft.Security
 		{
 			this.CredentialId = credentialId;
 			this.RenewalToken = renewalToken;
-			this.Scenario = scenario;
+			this.Scenario = scenario?.Trim().ToLowerInvariant();
 
 			if(validity.HasValue && validity.Value > TimeSpan.Zero)
 				this.Validity = validity.Value;

@@ -87,7 +87,7 @@ namespace Zongsoft.Security.Membership
 			//激发“Registering”事件
 			this.OnRegistering(principal);
 
-			//将当前用户身份保存到物理存储层中
+			//将当前凭证主体保存到分布式缓存中
 			cache.SetValue(GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Validity);
 
 			//设置当前用户及场景所对应的唯一凭证号为新注册的凭证号
@@ -148,7 +148,7 @@ namespace Zongsoft.Security.Membership
 			//创建一个新的凭证对象
 			principal = principal.Clone();
 
-			//将当前用户身份保存到物理存储层中
+			//将当前用户身份保存到分布式缓存中
 			cache.SetValue(GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Validity);
 
 			//将当前用户及场景对应的凭证号更改为新创建的凭证号
@@ -161,7 +161,7 @@ namespace Zongsoft.Security.Membership
 				CachePriority.High,
 				TimeSpan.FromTicks(principal.Validity.Ticks));
 
-			//将原来的凭证从物理存储层中删除
+			//将原来的凭证从分布式缓存中删除
 			cache.Remove(GetCacheKeyOfCredential(credentialId));
 
 			//将原来的凭证从本地内存缓存中删除
@@ -172,6 +172,37 @@ namespace Zongsoft.Security.Membership
 
 			//返回续约后的新凭证对象
 			return principal;
+		}
+
+		public CredentialPrincipal Refresh(string credentialId)
+		{
+			var principal = this.GetPrincipal(credentialId);
+			if(principal == null)
+				return null;
+
+			foreach(var challenger in Authentication.Instance.Challengers)
+				challenger.Challenge(principal, principal.Scenario);
+
+			//将刷新后的凭证主体保存到分布式缓存中
+			this.Cache.SetValue(GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Validity);
+
+			//将凭证对象保存到本地内存缓存中
+			_memoryCache.SetValue(
+				principal.CredentialId,
+				new CredentialToken(principal),
+				CachePriority.High,
+				TimeSpan.FromTicks(principal.Validity.Ticks));
+
+			return principal;
+		}
+
+		public CredentialPrincipal Refresh(string identifier, string scenario)
+		{
+			if(string.IsNullOrEmpty(identifier))
+				return null;
+
+			var credentialId = this.Cache.GetValue<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()));
+			return string.IsNullOrEmpty(credentialId) ? null : this.Refresh(credentialId);
 		}
 
 		public CredentialPrincipal GetPrincipal(string credentialId)
@@ -212,12 +243,12 @@ namespace Zongsoft.Security.Membership
 			return principal;
 		}
 
-		public CredentialPrincipal GetPrincipal(string identity, string scene)
+		public CredentialPrincipal GetPrincipal(string identifier, string scenario)
 		{
-			if(string.IsNullOrWhiteSpace(identity))
-				throw new ArgumentNullException(nameof(identity));
+			if(string.IsNullOrWhiteSpace(identifier))
+				throw new ArgumentNullException(nameof(identifier));
 
-			var credentialId = this.Cache.GetValue<string>(GetCacheKeyOfUser(identity, scene));
+			var credentialId = this.Cache.GetValue<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()));
 
 			if(string.IsNullOrEmpty(credentialId))
 				return null;
@@ -246,20 +277,14 @@ namespace Zongsoft.Security.Membership
 			token.Reset();
 		}
 
-		private static string GetCacheKeyOfUser(string identity, string scene) => "Zongsoft.Security:" +
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static string GetCacheKeyOfUser(string identifier, string scene) => "Zongsoft.Security:" +
 		(
-			string.IsNullOrWhiteSpace(scene) ?
-			identity :
-			identity + "!" + scene.Trim().ToLowerInvariant()
+			string.IsNullOrWhiteSpace(scene) ? identifier : $"{identifier}!{scene}"
 		);
 
-		private static string GetCacheKeyOfCredential(string credentialId)
-		{
-			if(string.IsNullOrWhiteSpace(credentialId))
-				throw new ArgumentNullException(nameof(credentialId));
-
-			return "Zongsoft.Security.Credential:" + credentialId.Trim().ToUpperInvariant();
-		}
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static string GetCacheKeyOfCredential(string credentialId) => $"Zongsoft.Security.Credential:{credentialId}";
 		#endregion
 
 		#region 嵌套结构
