@@ -15,8 +15,24 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
 		<PackageReference Include="MQTTnet" VersionOverride="4.3.7.1207" />
+		<PackageReference Include="MQTTnet.Extensions.ManagedClient" VersionOverride="4.3.7.1207" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+		<PackageReference Include="MQTTnet" VersionOverride="4.3.7.1207" />
+		<PackageReference Include="MQTTnet.Extensions.ManagedClient" VersionOverride="4.3.7.1207" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+		<PackageReference Include="MQTTnet" VersionOverride="4.3.7.1207" />
+		<PackageReference Include="MQTTnet.Extensions.ManagedClient" VersionOverride="4.3.7.1207" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+		<PackageReference Include="MQTTnet" VersionOverride="5.0.0.1405" />
+		<PackageReference Include="MQTTnet.Extensions.ManagedClient" VersionOverride="4.3.7.1207" />
 	</ItemGroup>
 
 	<ItemGroup>

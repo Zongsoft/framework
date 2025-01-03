@@ -29,8 +29,12 @@
 
 using System;
 
-using MQTTnet.Client;
+using MQTTnet;
 using MQTTnet.Protocol;
+
+#if NET5_0 || NET6_0 || NET7_0
+using MQTTnet.Client;
+#endif
 
 namespace Zongsoft.Messaging.Mqtt
 {

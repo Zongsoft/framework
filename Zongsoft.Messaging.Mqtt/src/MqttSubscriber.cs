@@ -45,7 +45,11 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 内部属性
+#if NET8_0_OR_GREATER
+		internal MQTTnet.MqttClientSubscribeOptions Subscription { get; }
+#else
 		internal MQTTnet.Client.MqttClientSubscribeOptions Subscription { get; }
+#endif
 		#endregion
 
 		#region 取消订阅

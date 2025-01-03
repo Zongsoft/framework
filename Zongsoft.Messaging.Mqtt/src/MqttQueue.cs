@@ -30,6 +30,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -40,18 +41,24 @@ using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 using MQTTnet;
-using MQTTnet.Client;
 using MQTTnet.Packets;
 using MQTTnet.Protocol;
-using MQTTnet.Exceptions;
+
+#if NET5_0 || NET6_0 || NET7_0
+using MQTTnet.Client;
+#endif
 
 namespace Zongsoft.Messaging.Mqtt
 {
 	public class MqttQueue : MessageQueueBase<MqttSubscriber>
 	{
 		#region 工厂字段
+#if NET8_0_OR_GREATER
+		private static readonly MqttClientFactory Factory = new();
+#else
 		private static readonly MqttFactory Factory = new();
-		#endregion
+#endif
+#endregion
 
 		#region 成员字段
 		private IMqttClient _client;
@@ -142,7 +149,11 @@ namespace Zongsoft.Messaging.Mqtt
 			//关闭自动应答
 			args.AutoAcknowledge = false;
 
+#if NET8_0_OR_GREATER
+			var data = args.ApplicationMessage.Payload.ToArray();
+#else
 			var data = args.ApplicationMessage.PayloadSegment.ToArray();
+#endif
 			var message = new Message(args.ApplicationMessage.Topic, data, AcknowledgeAsync)
 			{
 				Identity = args.ClientId
