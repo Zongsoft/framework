@@ -162,9 +162,26 @@ namespace Zongsoft.Security.Membership
 				Condition.Equal(nameof(Member.MemberType), memberType)) > 0;
 		}
 
-		public int RemoveMembers(uint roleId)
+		public int RemoveMembers(uint roleId, IEnumerable<Member> members = null)
 		{
-			return this.DataAccess.Delete<Member>(Condition.Equal(nameof(Member.RoleId), roleId));
+			var conditions = ConditionCollection.And(Condition.Equal(nameof(Member.RoleId), roleId));
+
+			if(members != null && members.Any())
+			{
+				int count = 0;
+
+				foreach(var type in members.GroupBy(p => p.MemberType))
+				{
+					conditions.Add(Condition.Equal(nameof(Member.MemberType), type.Key));
+					conditions.Add(Condition.In(nameof(Member.MemberId), type.Select(p => p.MemberId).Distinct()));
+
+					count += this.DataAccess.Delete<Member>(conditions);
+				}
+
+				return count;
+			}
+
+			return this.DataAccess.Delete<Member>(conditions);
 		}
 		#endregion
 	}
