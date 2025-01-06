@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Diagnostics"
+        title="Zongsoft Diagnostics Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2020-2025. All rights reserved."
+        description="Created Date: 2025-01-05 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Diagnostics" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workbench/Diagnostics">
+		<object name="Meters" value="{static:Zongsoft.Diagnostics.Initializer.Meters, Zongsoft.Diagnostics}" />
+		<object name="Tracers" value="{static:Zongsoft.Diagnostics.Initializer.Tracers, Zongsoft.Diagnostics}" />
+		<object name="Exporters" value="{static:Zongsoft.Diagnostics.Initializer.Exporters, Zongsoft.Diagnostics}" />
+	</extension>
+</plugin>

@@ -1,0 +1,17 @@
+artifacts/Zongsoft.Diagnostics.plugin
+lib/$(Framework)/Zongsoft.Diagnostics.*
+
+nuget:OpenTelemetry@1.9.0
+nuget:OpenTelemetry.Api@1.9.0
+nuget:OpenTelemetry.Api.ProviderBuilderExtensions@1.9.0
+nuget:OpenTelemetry.Extensions.Hosting@1.9.0
+nuget:OpenTelemetry.Extensions.Propagators@1.9.0
+nuget:OpenTelemetry.Instrumentation.Runtime@1.9.0
+nuget:OpenTelemetry.Exporter.Console@1.9.0
+nuget:OpenTelemetry.Exporter.InMemory@1.9.0
+nuget:OpenTelemetry.Exporter.OpenTelemetryProtocol@1.9.0
+nuget:OpenTelemetry.Exporter.Prometheus.AspNetCore@1.9.0-beta.2
+nuget:OpenTelemetry.Exporter.Prometheus.HttpListener@1.9.0-beta.2
+nuget:OpenTelemetry.Exporter.Zipkin@1.9.0
+nuget:OpenTelemetry.PersistentStorage.Abstractions@1.0.0
+nuget:OpenTelemetry.PersistentStorage.FileSystem@1.0.0

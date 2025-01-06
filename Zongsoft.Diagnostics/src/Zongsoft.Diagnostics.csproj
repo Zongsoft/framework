@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Version>0.1.0.0</Version>
+		<Product>Zongsoft Diagnostics Library</Product>
+		<Description>This is a class library for OpenTelemetry protocols.</Description>
+		<IncludeSymbols>true</IncludeSymbols>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Diagnostics</RepositoryUrl>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="OpenTelemetry" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Api" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Extensions.Hosting" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Extensions.Propagators" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.Runtime" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Exporter.Console" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Exporter.InMemory" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" VersionOverride="1.9.0-beta.2" />
+		<PackageReference Include="OpenTelemetry.Exporter.Prometheus.HttpListener" VersionOverride="1.9.0-beta.2" />
+		<PackageReference Include="OpenTelemetry.Exporter.Zipkin" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.PersistentStorage.Abstractions" VersionOverride="1.0.0" />
+		<PackageReference Include="OpenTelemetry.PersistentStorage.FileSystem" VersionOverride="1.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
+
+</Project>
