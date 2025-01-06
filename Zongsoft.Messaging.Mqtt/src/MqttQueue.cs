@@ -41,29 +41,24 @@ using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 using MQTTnet;
+using MQTTnet.Client;
 using MQTTnet.Packets;
 using MQTTnet.Protocol;
-
-#if NET5_0 || NET6_0 || NET7_0
-using MQTTnet.Client;
-#endif
+using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
 	public class MqttQueue : MessageQueueBase<MqttSubscriber>
 	{
 		#region 工厂字段
-#if NET8_0_OR_GREATER
-		private static readonly MqttClientFactory Factory = new();
-#else
 		private static readonly MqttFactory Factory = new();
-#endif
-#endregion
+		#endregion
 
 		#region 成员字段
 		private IMqttClient _client;
 		private MqttClientOptions _options;
 		private AutoResetEvent _semaphore;
+		private ManagedMqttClient _managedClient;
 		#endregion
 
 		#region 构造函数
@@ -76,6 +71,11 @@ namespace Zongsoft.Messaging.Mqtt
 			//挂载消息接收事件
 			_client.ApplicationMessageReceivedAsync += this.OnReceivedAsync;
 			_client.DisconnectedAsync += this.OnDisconnectedAsync;
+
+			_managedClient = new ManagedMqttClient(_client, MQTTnet.Diagnostics.MqttNetNullLogger.Instance);
+			var builder = new ManagedMqttClientOptionsBuilder();
+			builder.WithClientOptions(_options);
+			_managedClient.StartAsync(builder.Build());
 		}
 		#endregion
 
@@ -130,10 +130,23 @@ namespace Zongsoft.Messaging.Mqtt
 			//确保连接完成
 			await this.EnsureConnectAsync(cancellation);
 
+			if(options != null && options.Properties != null && options.Properties.HasValue)
+			{
+				message.UserProperties = new List<MqttUserProperty>(options.Properties.Count);
+
+				foreach(var property in options.Properties)
+				{
+					if(property.Key == null || property.Value == null)
+						continue;
+
+					message.UserProperties.Add(new(property.Key.ToString(), property.Value.ToString()));
+				}
+			}
+
 			try
 			{
-				var result = await _client.PublishAsync(message, cancellation);
-				return result.IsSuccess && result.PacketIdentifier.HasValue ? result.PacketIdentifier.ToString() : null;
+				await _managedClient.EnqueueAsync(message);
+				return null;
 			}
 			catch(Exception ex)
 			{
@@ -149,11 +162,7 @@ namespace Zongsoft.Messaging.Mqtt
 			//关闭自动应答
 			args.AutoAcknowledge = false;
 
-#if NET8_0_OR_GREATER
-			var data = args.ApplicationMessage.Payload.ToArray();
-#else
 			var data = args.ApplicationMessage.PayloadSegment.ToArray();
-#endif
 			var message = new Message(args.ApplicationMessage.Topic, data, AcknowledgeAsync)
 			{
 				Identity = args.ClientId
@@ -317,11 +326,28 @@ namespace Zongsoft.Messaging.Mqtt
 
 			if(client != null)
 			{
+				this.Destroy();
+
 				client.ApplicationMessageReceivedAsync -= this.OnReceivedAsync;
 				client.DisconnectedAsync -= this.OnDisconnectedAsync;
 			}
 
 			client.Dispose();
+		}
+
+		private async void Destroy()
+		{
+			try
+			{
+				var managedClient = Interlocked.Exchange(ref _managedClient, null);
+
+				if(managedClient != null)
+				{
+					await managedClient.StopAsync();
+					managedClient.Dispose();
+				}
+			}
+			finally { }
 		}
 		#endregion
 	}

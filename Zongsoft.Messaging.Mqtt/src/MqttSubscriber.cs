@@ -31,6 +31,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using MQTTnet;
+using MQTTnet.Client;
+
 using Zongsoft.Components;
 
 namespace Zongsoft.Messaging.Mqtt
@@ -45,11 +48,7 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 内部属性
-#if NET8_0_OR_GREATER
-		internal MQTTnet.MqttClientSubscribeOptions Subscription { get; }
-#else
-		internal MQTTnet.Client.MqttClientSubscribeOptions Subscription { get; }
-#endif
+		internal MqttClientSubscribeOptions Subscription { get; }
 		#endregion
 
 		#region 取消订阅
