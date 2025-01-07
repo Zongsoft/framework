@@ -71,7 +71,13 @@ namespace Zongsoft.Web
 			app.UseRouting();
 			app.UseAuthentication();
 			app.UseAuthorization();
-			app.UseStaticFiles();
+
+			app.UseStaticFiles(new StaticFileOptions
+			{
+				ServeUnknownFileTypes = true,
+				DefaultContentType = "application/octet-stream",
+			});
+
 			app.MapControllers();
 
 			//映射 SignalR 的 Hub 实现者
@@ -123,7 +129,12 @@ namespace Zongsoft.Web
 					app.UseRouting();
 					app.UseAuthentication();
 					app.UseAuthorization();
-					app.UseStaticFiles();
+					app.UseStaticFiles(new StaticFileOptions
+					{
+						ServeUnknownFileTypes = true,
+						DefaultContentType = "application/octet-stream",
+					});
+
 					app.UseEndpoints(endpoints =>
 					{
 						endpoints.MapControllers();
