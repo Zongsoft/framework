@@ -41,19 +41,8 @@ public class DiagnostorOptions
 
 	public sealed class FilteringOptions
 	{
-		public string Filters { get; set; }
-
 		[ConfigurationProperty("")]
+		public ICollection<string> Filters { get; set; }
 		public ConnectionSettingsCollection Exporters { get; set; }
-
-		public string[] GetFilters()
-		{
-			var filters = this.Filters;
-
-			if(string.IsNullOrEmpty(filters))
-				return [];
-
-			return filters.Split([',', ';', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-		}
 	}
 }

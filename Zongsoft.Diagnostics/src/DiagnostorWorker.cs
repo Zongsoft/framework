@@ -42,24 +42,20 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Diagnostics;
 
-public class Diagnostor : DiagnostorBase
+public class DiagnostorWorker(string name, Diagnostor.Configurator configurator) : WorkerBase(name)
 {
 	#region 成员字段
 	private MeterProvider _meters;
 	private TracerProvider _tracers;
-	#endregion
-
-	#region 构造函数
-	public Diagnostor(string name, IDiagnostorConfigurator configurator = null) : base(name)
-	{
-		configurator?.Configure(this);
-	}
+	private Diagnostor _diagnostor = new(name, configurator);
 	#endregion
 
 	#region 重写方法
-	public override void Open()
+	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		var meters = this.Meters;
+		var diagnostor = _diagnostor ?? throw new ObjectDisposedException(nameof(DiagnostorWorker));
+
+		var meters = diagnostor.Meters;
 
 		if(meters != null)
 		{
@@ -81,7 +77,7 @@ public class Diagnostor : DiagnostorBase
 			_meters = builder.Build();
 		}
 
-		var traces = this.Traces;
+		var traces = diagnostor.Traces;
 
 		if(traces != null)
 		{
@@ -102,9 +98,11 @@ public class Diagnostor : DiagnostorBase
 
 			_tracers = builder.Build();
 		}
+
+		return Task.CompletedTask;
 	}
 
-	public override void Close()
+	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
 		var meters = Interlocked.Exchange(ref _meters, null);
 		if(meters != null)
@@ -119,7 +117,11 @@ public class Diagnostor : DiagnostorBase
 			tracers.Shutdown();
 			tracers.Dispose();
 		}
+
+		return Task.CompletedTask;
 	}
+
+	protected override void Dispose(bool disposing) => _diagnostor = null;
 	#endregion
 
 	#region 私有方法

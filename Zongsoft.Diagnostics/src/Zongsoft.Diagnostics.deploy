@@ -1,3 +1,4 @@
+artifacts/Zongsoft.Diagnostics.option
 artifacts/Zongsoft.Diagnostics.plugin
 lib/$(Framework)/Zongsoft.Diagnostics.*
 

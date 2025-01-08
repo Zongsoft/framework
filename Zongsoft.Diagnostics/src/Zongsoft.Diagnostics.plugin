@@ -18,10 +18,14 @@
 	</extension>
 
 	<extension path="/Workbench/Diagnostics">
-		<object name="Diagnostor" type="Zongsoft.Diagnostics.Diagnostor, Zongsoft.Diagnostics" configurator="configuration:/diagnostics/diagnostor/default" />
+		<object name="Configurators" value="{static:Zongsoft.Diagnostics.Diagnostor.Configurators, Zongsoft.Core}" />
 	</extension>
 
-	<extension path="/Workbench/Starup">
-		<object name="Diagnostor" value="{path:/Workbench/Diagnostics/Diagnostor@Worker}" />
+	<extension path="/Workbench/Diagnostics/Configurators">
+		<object name="Configuration" value="{type:Zongsoft.Diagnostics.Configuration.DiagnostorConfigurator, Zongsoft.Diagnostics}" />
+	</extension>
+
+	<extension path="/Workbench/Startup">
+		<object name="Diagnostor" type="Zongsoft.Diagnostics.DiagnostorWorker, Zongsoft.Diagnostics" configurator="configuration:/diagnostics/diagnostor" />
 	</extension>
 </plugin>

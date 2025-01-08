@@ -2,15 +2,23 @@
 
 <options>
 	<option path="/Diagnostics">
-		<diagnostor name="default">
-			<meters filters="*">
-				<exporter name="default" driver="telemetry" />
-				<exporter name="prometheus" driver="prometheus" value="urls=http://127.0.0.1:9464,http://localhost:9464" />
+		<diagnostor>
+			<meters>
+				<filter>*</filter>
+
+				<exporters>
+					<exporter driver="telemetry" />
+					<exporter driver="prometheus" value="urls=http://127.0.0.1:9464,http://localhost:9464" />
+				</exporters>
 			</meters>
 
-			<traces filters="*">
-				<exporter name="default" driver="telemetry" />
-				<exporter name="prometheus" driver="prometheus" value="urls=http://127.0.0.1:9464,http://localhost:9464" />
+			<traces>
+				<filter>*</filter>
+
+				<exporters>
+					<exporter driver="telemetry" />
+					<exporter driver="zipkin" />
+				</exporters>
 			</traces>
 		</diagnostor>
 	</option>

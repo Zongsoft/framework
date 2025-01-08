@@ -29,55 +29,35 @@
 
 using System;
 using System.Linq;
-using System.Globalization;
-using System.ComponentModel;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Diagnostics.Configuration;
 
-[TypeConverter(typeof(Converter))]
-public class DiagnostorConfigurator : IDiagnostorConfigurator
+[Diagnostor.ConfiguratorFactory(typeof(Factory))]
+public class DiagnostorConfigurator(string path) : Diagnostor.Configurator(nameof(Configuration))
 {
-	private const string NAME = "Configuration";
+	private readonly string _path = path ?? throw new ArgumentNullException(nameof(path));
 
-	public DiagnostorConfigurator(string path)
-	{
-		if(string.IsNullOrEmpty(path))
-			throw new ArgumentNullException(nameof(path));
-
-		this.Path = path.Trim();
-	}
-
-	public string Name => NAME;
-	public string Path { get; set; }
-
-	public void Configure(IDiagnostor diagnostor, object argument = null)
+	public override void Configure(Diagnostor diagnostor)
 	{
 		if(diagnostor == null)
 			return;
 
-		var options = ApplicationContext.Current.Configuration.GetOption<DiagnostorOptions>(this.Path);
+		var options = ApplicationContext.Current.Configuration.GetOption<DiagnostorOptions>(_path);
 		if(options == null)
 			return;
 
 		if(options.Meters != null)
-			diagnostor.Meters = new DiagnostorFiltering(options.Meters.GetFilters(), options.Meters.Exporters.Select(exporter => new System.Collections.Generic.KeyValuePair<string, string>(exporter.Driver.Name, exporter.Value)));
+			diagnostor.Meters = new Diagnostor.Filtering(options.Meters.Filters, options.Meters.Exporters.Select(exporter => new System.Collections.Generic.KeyValuePair<string, string>(exporter.Driver.Name, exporter.Value)));
 
 		if(options.Traces != null)
-			diagnostor.Traces = new DiagnostorFiltering(options.Traces.GetFilters(), options.Traces.Exporters.Select(exporter => new System.Collections.Generic.KeyValuePair<string, string>(exporter.Driver.Name, exporter.Value)));
+			diagnostor.Traces = new Diagnostor.Filtering(options.Traces.Filters, options.Traces.Exporters.Select(exporter => new System.Collections.Generic.KeyValuePair<string, string>(exporter.Driver.Name, exporter.Value)));
 	}
 
-	private sealed class Converter : TypeConverter
+	private sealed class Factory : Diagnostor.ConfiguratorFactory
 	{
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
-		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-		{
-			if(value is string text)
-				return new DiagnostorConfigurator(text);
-
-			return null;
-		}
+		public override Diagnostor.Configurator Create(string argument) => new DiagnostorConfigurator(argument);
 	}
 }
