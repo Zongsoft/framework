@@ -130,12 +130,34 @@ namespace Zongsoft.Services
 		{
 			if(typeof(IServiceRegistration).IsAssignableFrom(type))
 			{
-				var registration = (IServiceRegistration)Activator.CreateInstance(type);
-				registration.Register(services, configuration);
-				return true;
+				var registration = GetRegistration(type);
+
+				if(registration != null)
+				{
+					registration.Register(services, configuration);
+					return true;
+				}
 			}
 
 			return false;
+
+			static IServiceRegistration GetRegistration(TypeInfo type)
+			{
+				var members = type.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField | BindingFlags.GetProperty);
+
+				for(int i = 0; i < members.Length; i++)
+				{
+					switch(members[i])
+					{
+						case FieldInfo field when typeof(IServiceRegistration).IsAssignableFrom(field.FieldType):
+							return (IServiceRegistration)field.GetValue(null);
+						case PropertyInfo property when typeof(IServiceRegistration).IsAssignableFrom(property.PropertyType):
+							return (IServiceRegistration)property.GetValue(null);
+					}
+				}
+
+				return (IServiceRegistration)Activator.CreateInstance(type);
+			}
 		}
 
 		private static void RegisterServices(IServiceCollection services, TypeInfo type, ServiceAttribute attribute)
