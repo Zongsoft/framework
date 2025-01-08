@@ -20,7 +20,9 @@
 		<PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" VersionOverride="1.9.0" />
 		<PackageReference Include="OpenTelemetry.Extensions.Hosting" VersionOverride="1.9.0" />
 		<PackageReference Include="OpenTelemetry.Extensions.Propagators" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.Http" VersionOverride="1.9.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.Runtime" VersionOverride="1.9.0" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" VersionOverride="1.9.0" />
 		<PackageReference Include="OpenTelemetry.Exporter.Console" VersionOverride="1.9.0" />
 		<PackageReference Include="OpenTelemetry.Exporter.InMemory" VersionOverride="1.9.0" />
 		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" VersionOverride="1.9.0" />
@@ -41,5 +43,4 @@
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
-
 </Project>

@@ -47,15 +47,29 @@ using OpenTelemetry.Extensions;
 using Zongsoft.Services;
 
 namespace Zongsoft.Diagnostics;
-
+                            
 [Service<IApplicationInitializer>(Members = nameof(Instance))]
-public sealed class Initializer : IApplicationInitializer, IServiceRegistration
+public sealed partial class Diagnostor : IApplicationInitializer
 {
-	public static readonly Initializer Instance = new();
+	public static readonly Diagnostor Instance = new();
 
-	private Initializer()
+	private Diagnostor()
 	{
-		this.Meters = new HashSet<string>();
+		this.Meters = new HashSet<string>()
+		{
+			"System.Runtime",
+			"System.Net.Http",
+			"System.Net.NameResolution",
+			"Microsoft.Extensions.Diagnostics.HealthChecks",
+			"Microsoft.Extensions.Diagnostics.ResourceMonitoring",
+			"Microsoft.AspNetCore.Hosting",
+			"Microsoft.AspNetCore.Routing",
+			"Microsoft.AspNetCore.Diagnostics",
+			"Microsoft.AspNetCore.RateLimiting",
+			"Microsoft.AspNetCore.HeaderParsing",
+			"Microsoft.AspNetCore.Server.Kestrel",
+			"Microsoft.AspNetCore.Http.Connections",
+		};
 		this.Tracers = new HashSet<string>();
 		this.Exporters = new HashSet<string>();
 	}
@@ -66,34 +80,73 @@ public sealed class Initializer : IApplicationInitializer, IServiceRegistration
 
 	public void Initialize(IApplicationContext context)
 	{
+		//var builder = context.Services.Resolve<IDeferredMeterProviderBuilder>();
+		//var telemetry = context.Services.Resolve<OpenTelemetryBuilder>();
+		//var mpb = context.Services.Resolve<MeterProviderBuilder>();
+		//var tpb = context.Services.Resolve<TracerProviderBuilder>();
+		//var mp = context.Services.Resolve<MeterProvider>();
+		//var tp = context.Services.Resolve<TracerProvider>();
+		//var lp = context.Services.Resolve<LoggerProvider>();
+
 		var meters = Sdk.CreateMeterProviderBuilder();
 		var tracers = Sdk.CreateTracerProviderBuilder();
 
 		this.Initialize(meters);
 		this.Initialize(tracers);
+
+		var a = meters.Build();
+		var b = tracers.Build();
+
+		a.Shutdown();
+		b.Shutdown();
+		a.Dispose();
+		b.Dispose();
 	}
 
 	private void Initialize(MeterProviderBuilder meters)
 	{
 		if(this.Meters.Count > 0)
 			meters.AddMeter(this.Meters.ToArray());
+
+		//meters.AddRuntimeInstrumentation();
+		//meters.AddHttpClientInstrumentation();
+		//meters.AddAspNetCoreInstrumentation();
+
+		meters.AddOtlpExporter();
+		meters.AddPrometheusExporter();
+		meters.AddPrometheusHttpListener(options => options.UriPrefixes =
+		[
+			"http://127.0.0.1:9464",
+			"http://localhost:9464",
+		]);
 	}
 
 	private void Initialize(TracerProviderBuilder tracers)
 	{
 		if(this.Tracers.Count > 0)
 			tracers.AddSource(this.Tracers.ToArray());
+
+		//tracers.AddHttpClientInstrumentation();
+		//tracers.AddAspNetCoreInstrumentation();
+
+		tracers.AddOtlpExporter();
+		tracers.AddZipkinExporter();
 	}
 
 	private void Initialize(LoggerProviderBuilder loggers)
 	{
 	}
-
-	public void Register(IServiceCollection services, IConfiguration configuration)
-	{
-		services.AddOpenTelemetry()
-			.WithMetrics(this.Initialize)
-			.WithTracing(this.Initialize)
-			.WithLogging(this.Initialize);
-	}
 }
+
+//partial class Diagnostor : IServiceRegistration
+//{
+//	void IServiceRegistration.Register(IServiceCollection services, IConfiguration configuration)
+//	{
+//		services.AddTransient<IApplicationInitializer>(_ => Instance);
+
+//		services.AddOpenTelemetry()
+//			.WithMetrics(this.Initialize)
+//			.WithTracing(this.Initialize)
+//			.WithLogging(this.Initialize);
+//	}
+//}
