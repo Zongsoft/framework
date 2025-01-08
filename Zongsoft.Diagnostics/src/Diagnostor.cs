@@ -47,15 +47,12 @@ public class Diagnostor : DiagnostorBase
 	#region 成员字段
 	private MeterProvider _meters;
 	private TracerProvider _tracers;
-	private readonly IServiceProvider _services;
 	#endregion
 
 	#region 构造函数
-	public Diagnostor(string name, IServiceProvider services, IDiagnostorConfigurator configurator = null) : base(name)
+	public Diagnostor(string name, IDiagnostorConfigurator configurator = null) : base(name)
 	{
-		_services = services ?? throw new ArgumentNullException(nameof(services));
-		if(configurator != null)
-			configurator.Configure(this);
+		configurator?.Configure(this);
 	}
 	#endregion
 
@@ -75,7 +72,7 @@ public class Diagnostor : DiagnostorBase
 			{
 				foreach(var exporter in meters.Exporters)
 				{
-					var launcher = _services.Resolve<Telemetry.IExporterLauncher<MeterProviderBuilder>>(exporter.Key);
+					var launcher = ApplicationContext.Current?.Services.Resolve<Telemetry.IExporterLauncher<MeterProviderBuilder>>(exporter.Key);
 					if(launcher != null)
 						launcher.Launch(builder, exporter.Value);
 				}
@@ -97,7 +94,7 @@ public class Diagnostor : DiagnostorBase
 			{
 				foreach(var exporter in traces.Exporters)
 				{
-					var launcher = _services.Resolve<Telemetry.IExporterLauncher<TracerProviderBuilder>>(exporter.Key);
+					var launcher = ApplicationContext.Current?.Services.Resolve<Telemetry.IExporterLauncher<TracerProviderBuilder>>(exporter.Key);
 					if(launcher != null)
 						launcher.Launch(builder, exporter.Value);
 				}

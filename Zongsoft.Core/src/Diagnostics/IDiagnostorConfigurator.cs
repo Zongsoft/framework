@@ -31,6 +31,7 @@ using System;
 
 namespace Zongsoft.Diagnostics;
 
+[System.ComponentModel.TypeConverter(typeof(DiagnostorConfiguratorConverter))]
 public interface IDiagnostorConfigurator
 {
 	string Name { get; }

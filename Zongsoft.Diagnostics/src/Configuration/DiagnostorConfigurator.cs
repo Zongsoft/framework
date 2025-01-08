@@ -29,20 +29,55 @@
 
 using System;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Globalization;
+using System.ComponentModel;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Diagnostics.Configuration;
 
+[TypeConverter(typeof(Converter))]
 public class DiagnostorConfigurator : IDiagnostorConfigurator
 {
-	public string Name => "Configuration";
+	private const string NAME = "Configuration";
+
+	public DiagnostorConfigurator(string path)
+	{
+		if(string.IsNullOrEmpty(path))
+			throw new ArgumentNullException(nameof(path));
+
+		this.Path = path.Trim();
+	}
+
+	public string Name => NAME;
+	public string Path { get; set; }
+
 	public void Configure(IDiagnostor diagnostor, object argument = null)
 	{
+		if(diagnostor == null)
+			return;
 
+		var options = ApplicationContext.Current.Configuration.GetOption<DiagnostorOptions>(this.Path);
+		if(options == null)
+			return;
+
+		if(options.Meters != null)
+			diagnostor.Meters = new DiagnostorFiltering(options.Meters.GetFilters(), options.Meters.Exporters.Select(exporter => new System.Collections.Generic.KeyValuePair<string, string>(exporter.Driver.Name, exporter.Value)));
+
+		if(options.Traces != null)
+			diagnostor.Traces = new DiagnostorFiltering(options.Traces.GetFilters(), options.Traces.Exporters.Select(exporter => new System.Collections.Generic.KeyValuePair<string, string>(exporter.Driver.Name, exporter.Value)));
+	}
+
+	private sealed class Converter : TypeConverter
+	{
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+		{
+			if(value is string text)
+				return new DiagnostorConfigurator(text);
+
+			return null;
+		}
 	}
 }

@@ -35,5 +35,5 @@ namespace Zongsoft.Diagnostics;
 public interface IDiagnostorFiltering
 {
 	ICollection<string> Filters { get; }
-	IEnumerable<KeyValuePair<string, string>> Exporters { get; }
+	IDictionary<string, string> Exporters { get; }
 }

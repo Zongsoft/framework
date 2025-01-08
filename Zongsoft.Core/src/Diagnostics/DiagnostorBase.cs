@@ -31,6 +31,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Diagnostics;
 
 public abstract class DiagnostorBase : IDiagnostor, IDisposable
@@ -41,6 +43,7 @@ public abstract class DiagnostorBase : IDiagnostor, IDisposable
 	#endregion
 
 	#region 成员字段
+	private WorkerWrapper _worker;
 	private volatile int _disposing;
 	#endregion
 
@@ -59,6 +62,7 @@ public abstract class DiagnostorBase : IDiagnostor, IDisposable
 	public IDiagnostorFiltering Meters { get; set; }
 	public IDiagnostorFiltering Traces { get; set; }
 	public bool IsDisposed => _disposing == DISPOSED;
+	public IWorker Worker => _worker ??= new WorkerWrapper(this);
 	#endregion
 
 	#region 公共方法
@@ -85,5 +89,34 @@ public abstract class DiagnostorBase : IDiagnostor, IDisposable
 	}
 
 	protected virtual void Dispose(bool disposing) => this.Close();
+	#endregion
+
+	#region 嵌套子类
+	private sealed class WorkerWrapper(DiagnostorBase diagnostor) : WorkerBase()
+	{
+		private DiagnostorBase _diagnostor = diagnostor;
+
+		protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
+		{
+			var diagnostor = _diagnostor ?? throw new ObjectDisposedException(nameof(WorkerWrapper));
+
+			if(!diagnostor.IsDisposed)
+				diagnostor.Open();
+
+			return Task.CompletedTask;
+		}
+
+		protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
+		{
+			var diagnostor = _diagnostor ?? throw new ObjectDisposedException(nameof(WorkerWrapper));
+
+			if(!diagnostor.IsDisposed)
+				diagnostor.Close();
+
+			return Task.CompletedTask;
+		}
+
+		protected override void Dispose(bool disposing) => _diagnostor = null;
+	}
 	#endregion
 }

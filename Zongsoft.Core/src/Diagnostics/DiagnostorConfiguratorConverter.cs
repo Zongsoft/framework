@@ -28,16 +28,22 @@
  */
 
 using System;
+using System.Linq;
+using System.Globalization;
+using System.ComponentModel;
 
 namespace Zongsoft.Diagnostics;
 
-public interface IDiagnostor : IDisposable
+public class DiagnostorConfiguratorConverter : TypeConverter
 {
-	void Open();
-	void Close();
+	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
+	public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+	{
+		if(value is string text)
+		{
 
-	string Name { get; }
-	bool IsDisposed { get; }
-	IDiagnostorFiltering Meters { get; set; }
-	IDiagnostorFiltering Traces { get; set; }
+		}
+
+		return null;
+	}
 }

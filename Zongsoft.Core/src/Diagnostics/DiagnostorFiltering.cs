@@ -28,16 +28,18 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Diagnostics;
 
-public interface IDiagnostor : IDisposable
+public class DiagnostorFiltering : IDiagnostorFiltering
 {
-	void Open();
-	void Close();
+	public DiagnostorFiltering(IEnumerable<string> filters, IEnumerable<KeyValuePair<string, string>> exporters = null)
+	{
+		this.Filters = new HashSet<string>(filters ?? []);
+		this.Exporters = new Dictionary<string, string>(exporters ?? [], StringComparer.OrdinalIgnoreCase);
+	}
 
-	string Name { get; }
-	bool IsDisposed { get; }
-	IDiagnostorFiltering Meters { get; set; }
-	IDiagnostorFiltering Traces { get; set; }
+	public ICollection<string> Filters { get; }
+	public IDictionary<string, string> Exporters { get; }
 }
