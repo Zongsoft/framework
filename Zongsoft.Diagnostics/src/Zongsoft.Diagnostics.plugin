@@ -12,28 +12,16 @@
 		</assemblies>
 	</manifest>
 
-	<extension path="/Workbench">
-		<object name="Diagnostics" value="{static:Zongsoft.Diagnostics.Diagnostor.Instance, Zongsoft.Diagnostics}" />
+	<extension path="/Workbench/Diagnostics">
+		<object name="Meters" value="{static:Zongsoft.Diagnostics.Telemetry.MeterProvider.Default, Zongsoft.Core}" />
+		<object name="Exporters" value="{static:Zongsoft.Diagnostics.Telemetry.ExporterProvider.Default, Zongsoft.Core}" />
 	</extension>
 
 	<extension path="/Workbench/Diagnostics">
-		<object name="Meters" value="{path:../@Meters}" />
-		<object name="Tracers" value="{path:../@Tracers}" />
-		<object name="Exporters" value="{path:../@Exporters}" />
+		<object name="Diagnostor" type="Zongsoft.Diagnostics.Diagnostor, Zongsoft.Diagnostics" configurator="configuration:/diagnostics/diagnostor/default" />
 	</extension>
 
-	<extension path="/Workbench/Diagnostics/Meters">
-		<object value="System.Runtime" />
-		<object value="System.Net.Http" />
-		<object value="System.Net.NameResolution" />
-		<object value="Microsoft.Extensions.Diagnostics.HealthChecks" />
-		<object value="Microsoft.Extensions.Diagnostics.ResourceMonitoring" />
-		<object value="Microsoft.AspNetCore.Hosting" />
-		<object value="Microsoft.AspNetCore.Routing" />
-		<object value="Microsoft.AspNetCore.Diagnostics" />
-		<object value="Microsoft.AspNetCore.RateLimiting" />
-		<object value="Microsoft.AspNetCore.HeaderParsing" />
-		<object value="Microsoft.AspNetCore.Server.Kestrel" />
-		<object value="Microsoft.AspNetCore.Http.Connections" />
+	<extension path="/Workbench/Starup">
+		<object name="Diagnostor" value="{path:/Workbench/Diagnostics/Diagnostor@Worker}" />
 	</extension>
 </plugin>

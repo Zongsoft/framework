@@ -33,120 +33,179 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Extensions;
 
 using Zongsoft.Services;
 
 namespace Zongsoft.Diagnostics;
-                            
-[Service<IApplicationInitializer>(Members = nameof(Instance))]
-public sealed partial class Diagnostor : IApplicationInitializer
+
+public class Diagnostor : DiagnostorBase
 {
-	public static readonly Diagnostor Instance = new();
+	#region 成员字段
+	private MeterProvider _meters;
+	private TracerProvider _tracers;
+	private readonly IServiceProvider _services;
+	#endregion
 
-	private Diagnostor()
+	#region 构造函数
+	public Diagnostor(string name, IServiceProvider services, IDiagnostorConfigurator configurator = null) : base(name)
 	{
-		this.Meters = new HashSet<string>()
+		_services = services ?? throw new ArgumentNullException(nameof(services));
+		if(configurator != null)
+			configurator.Configure(this);
+	}
+	#endregion
+
+	#region 重写方法
+	public override void Open()
+	{
+		var meters = this.Meters;
+
+		if(meters != null)
 		{
-			"System.Runtime",
-			"System.Net.Http",
-			"System.Net.NameResolution",
-			"Microsoft.Extensions.Diagnostics.HealthChecks",
-			"Microsoft.Extensions.Diagnostics.ResourceMonitoring",
-			"Microsoft.AspNetCore.Hosting",
-			"Microsoft.AspNetCore.Routing",
-			"Microsoft.AspNetCore.Diagnostics",
-			"Microsoft.AspNetCore.RateLimiting",
-			"Microsoft.AspNetCore.HeaderParsing",
-			"Microsoft.AspNetCore.Server.Kestrel",
-			"Microsoft.AspNetCore.Http.Connections",
-		};
-		this.Tracers = new HashSet<string>();
-		this.Exporters = new HashSet<string>();
+			var builder = Sdk.CreateMeterProviderBuilder();
+
+			//填充计量器（支持星号，默认计量器）
+			FillMeters(builder, meters.Filters);
+
+			if(meters.Exporters != null)
+			{
+				foreach(var exporter in meters.Exporters)
+				{
+					var launcher = _services.Resolve<Telemetry.IExporterLauncher<MeterProviderBuilder>>(exporter.Key);
+					if(launcher != null)
+						launcher.Launch(builder, exporter.Value);
+				}
+			}
+
+			_meters = builder.Build();
+		}
+
+		var traces = this.Traces;
+
+		if(traces != null)
+		{
+			var builder = Sdk.CreateTracerProviderBuilder();
+
+			//填充追踪器（支持星号，默认追踪器）
+			FillTracers(builder, traces.Filters);
+
+			if(traces.Exporters != null)
+			{
+				foreach(var exporter in traces.Exporters)
+				{
+					var launcher = _services.Resolve<Telemetry.IExporterLauncher<TracerProviderBuilder>>(exporter.Key);
+					if(launcher != null)
+						launcher.Launch(builder, exporter.Value);
+				}
+			}
+
+			_tracers = builder.Build();
+		}
 	}
 
-	public ICollection<string> Meters { get; }
-	public ICollection<string> Tracers { get; }
-	public ICollection<string> Exporters { get; }
-
-	public void Initialize(IApplicationContext context)
+	public override void Close()
 	{
-		//var builder = context.Services.Resolve<IDeferredMeterProviderBuilder>();
-		//var telemetry = context.Services.Resolve<OpenTelemetryBuilder>();
-		//var mpb = context.Services.Resolve<MeterProviderBuilder>();
-		//var tpb = context.Services.Resolve<TracerProviderBuilder>();
-		//var mp = context.Services.Resolve<MeterProvider>();
-		//var tp = context.Services.Resolve<TracerProvider>();
-		//var lp = context.Services.Resolve<LoggerProvider>();
+		var meters = Interlocked.Exchange(ref _meters, null);
+		if(meters != null)
+		{
+			meters.Shutdown();
+			meters.Dispose();
+		}
 
-		var meters = Sdk.CreateMeterProviderBuilder();
-		var tracers = Sdk.CreateTracerProviderBuilder();
-
-		this.Initialize(meters);
-		this.Initialize(tracers);
-
-		var a = meters.Build();
-		var b = tracers.Build();
-
-		a.Shutdown();
-		b.Shutdown();
-		a.Dispose();
-		b.Dispose();
+		var tracers = Interlocked.Exchange(ref _tracers, null);
+		if(tracers != null)
+		{
+			tracers.Shutdown();
+			tracers.Dispose();
+		}
 	}
+	#endregion
 
-	private void Initialize(MeterProviderBuilder meters)
+	#region 私有方法
+	private static readonly string[] DefaultMeters =
+	[
+		"System.Runtime",
+		"System.Net.Http",
+		"System.Net.NameResolution",
+		"Microsoft.Extensions.Diagnostics.HealthChecks",
+		"Microsoft.Extensions.Diagnostics.ResourceMonitoring",
+		"Microsoft.AspNetCore.Hosting",
+		"Microsoft.AspNetCore.Routing",
+		"Microsoft.AspNetCore.Diagnostics",
+		"Microsoft.AspNetCore.RateLimiting",
+		"Microsoft.AspNetCore.HeaderParsing",
+		"Microsoft.AspNetCore.Server.Kestrel",
+		"Microsoft.AspNetCore.Http.Connections",
+	];
+
+	private static readonly string[] DefaultTracers =
+	[
+		"System.Net",
+		"System.Net.Http",
+		"System.Net.Http.Connections",
+		"System.Net.NameResolution",
+		"System.Net.Sockets",
+		"System.Net.Security",
+		"Experimental.System.Net.Http.Connections",
+		"Experimental.System.Net.NameResolution",
+		"Experimental.System.Net.Sockets",
+		"Experimental.System.Net.Security",
+	];
+
+	private static void FillMeters(MeterProviderBuilder builder, ICollection<string> meters)
 	{
-		if(this.Meters.Count > 0)
-			meters.AddMeter(this.Meters.ToArray());
+		if(builder == null || meters == null || meters.Count == 0)
+			return;
 
-		//meters.AddRuntimeInstrumentation();
-		//meters.AddHttpClientInstrumentation();
-		//meters.AddAspNetCoreInstrumentation();
+		var hashset = new HashSet<string>();
 
-		meters.AddOtlpExporter();
-		meters.AddPrometheusExporter();
-		meters.AddPrometheusHttpListener(options => options.UriPrefixes =
-		[
-			"http://127.0.0.1:9464",
-			"http://localhost:9464",
-		]);
+		foreach(var meter in meters)
+		{
+			if(string.IsNullOrEmpty(meter))
+				continue;
+
+			if(meter == "*")
+			{
+				for(int i = 0; i < DefaultMeters.Length; i++)
+					hashset.Add(DefaultMeters[i]);
+			}
+			else
+			{
+				hashset.Add(meter);
+			}
+		}
+
+		builder.AddMeter(hashset.ToArray());
 	}
 
-	private void Initialize(TracerProviderBuilder tracers)
+	private static void FillTracers(TracerProviderBuilder builder, ICollection<string> tracers)
 	{
-		if(this.Tracers.Count > 0)
-			tracers.AddSource(this.Tracers.ToArray());
+		if(builder == null || tracers == null || tracers.Count == 0)
+			return;
 
-		//tracers.AddHttpClientInstrumentation();
-		//tracers.AddAspNetCoreInstrumentation();
+		var hashset = new HashSet<string>();
 
-		tracers.AddOtlpExporter();
-		tracers.AddZipkinExporter();
+		foreach(var tracer in tracers)
+		{
+			if(string.IsNullOrEmpty(tracer))
+				continue;
+
+			if(tracer == "*")
+			{
+				for(int i = 0; i < DefaultTracers.Length; i++)
+					hashset.Add(DefaultTracers[i]);
+			}
+			else
+			{
+				hashset.Add(tracer);
+			}
+		}
+
+		builder.AddSource(hashset.ToArray());
 	}
-
-	private void Initialize(LoggerProviderBuilder loggers)
-	{
-	}
+	#endregion
 }
-
-//partial class Diagnostor : IServiceRegistration
-//{
-//	void IServiceRegistration.Register(IServiceCollection services, IConfiguration configuration)
-//	{
-//		services.AddTransient<IApplicationInitializer>(_ => Instance);
-
-//		services.AddOpenTelemetry()
-//			.WithMetrics(this.Initialize)
-//			.WithTracing(this.Initialize)
-//			.WithLogging(this.Initialize);
-//	}
-//}

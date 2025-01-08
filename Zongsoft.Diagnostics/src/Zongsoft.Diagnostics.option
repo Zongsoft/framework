@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Diagnostics">
+		<diagnostor name="default">
+			<meters filters="*">
+				<exporter name="default" driver="telemetry" />
+				<exporter name="prometheus" driver="prometheus" value="urls=http://127.0.0.1:9464,http://localhost:9464" />
+			</meters>
+
+			<traces filters="*">
+				<exporter name="default" driver="telemetry" />
+				<exporter name="prometheus" driver="prometheus" value="urls=http://127.0.0.1:9464,http://localhost:9464" />
+			</traces>
+		</diagnostor>
+	</option>
+</options>
