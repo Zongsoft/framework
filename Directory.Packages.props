@@ -4,15 +4,18 @@
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+		<PackageVersion Include="Microsoft.OpenApi" Version="1.6.23" />
 		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="5.0.0" />
@@ -25,13 +28,16 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+		<PackageVersion Include="Microsoft.OpenApi" Version="1.6.23" />
 		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="6.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.4" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="6.0.3" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="6.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
@@ -46,13 +52,16 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+		<PackageVersion Include="Microsoft.OpenApi" Version="1.6.23" />
 		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
@@ -67,23 +76,31 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+		<PackageVersion Include="Microsoft.OpenApi" Version="1.6.23" />
 		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="8.0.11" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Localization" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Localization.Abstractions" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+
+		<PackageVersion Include="Microsoft.Extensions.Diagnostics" Version="8.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="8.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.Diagnostics.ResourceMonitoring" Version="8.10.0" />
 	</ItemGroup>
+
 </Project>
