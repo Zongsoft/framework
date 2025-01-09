@@ -138,7 +138,7 @@ namespace Zongsoft.Reflection.Expressions
 					}
 				}
 
-				throw new MissingMemberException();
+				throw new MissingMemberException($"The type '{type}' does not have a member named '{name}'.");
 			}
 
 			return members[0];
