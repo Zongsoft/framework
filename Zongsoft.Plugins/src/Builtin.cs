@@ -86,61 +86,28 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		public PluginTree Tree
-		{
-			get => _node?.Tree;
-		}
+		public PluginTree Tree => _node?.Tree;
 
-		/// <summary>
-		/// 获取当前构件所在的插件树节点，如果当前构件所在插件已被卸载则返回空。
-		/// </summary>
+		/// <summary>获取当前构件所在的插件树节点，如果当前构件所在插件已被卸载则返回空。</summary>
 		public PluginTreeNode Node
 		{
 			get => _node;
 			internal set => _node = value;
 		}
 
-		/// <summary>
-		/// 获取当前构件所位于插件树节点的路径，其等同于<see cref="Node"/>属性指定的<seealso cref="PluginTreeNode.Path"/>值。
-		/// </summary>
-		public string Path
-		{
-			get
-			{
-				var node = _node;
-				return node == null ? string.Empty : node.Path;
-			}
-		}
+		/// <summary>获取当前构件所位于插件树节点的路径，其等同于<see cref="Node"/>属性指定的<seealso cref="PluginTreeNode.Path"/>值。</summary>
+		public string Path => _node?.Path ?? string.Empty;
 
-		/// <summary>
-		/// 获取当前构件所位于插件树节点的完整路径，其等同于<see cref="Node"/>属性指定的<seealso cref="PluginTreeNode.FullPath"/>值。
-		/// </summary>
-		public string FullPath
-		{
-			get
-			{
-				var node = _node;
-				return node == null ? string.Empty : node.FullPath;
-			}
-		}
+		/// <summary>获取当前构件所位于插件树节点的完整路径，其等同于<see cref="Node"/>属性指定的<seealso cref="PluginTreeNode.FullPath"/>值。</summary>
+		public string FullPath => _node?.FullPath ?? string.Empty;
 
-		/// <summary>
-		/// 获取构件的构建器名称，即构件在插件文件中的元素名。
-		/// </summary>
-		public string Scheme
-		{
-			get => _scheme;
-		}
+		/// <summary>获取构件的构建器名称，即构件在插件文件中的元素名。</summary>
+		public string Scheme => _scheme;
 
-		/// <summary>
-		/// 获取构件是否已经构建过，只要构件被构建过该值则返回真，否则返回假。
-		/// </summary>
+		/// <summary>获取构件是否已经构建过，只要构件被构建过该值则返回真，否则返回假。</summary>
 		public bool IsBuilded
 		{
-			get
-			{
-				return _isBuilded;
-			}
+			get => _isBuilded;
 			internal set
 			{
 				if(_isBuilded == value)
@@ -153,47 +120,21 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取构件的位置。
-		/// </summary>
-		/// <remarks>
-		/// 	<para>在同级的构件中，通过指定该属性值来调整构件的排列顺序。</para>
-		/// </remarks>
+		/// <summary>获取构件的位置。</summary>
+		/// <remarks>在同级的构件中，通过指定该属性值来调整构件的排列顺序。</remarks>
 		public string Position
 		{
-			get
-			{
-				return _position;
-			}
-			internal set
-			{
-				if(string.IsNullOrEmpty(value))
-					_position = string.Empty;
-				else
-					_position = value.Trim();
-			}
+			get => _position;
+			internal set => _position = value ?? string.Empty;
 		}
 
-		/// <summary>
-		/// 获取当前Value是否可用。如果Value不为空(null)则返回真(True)，否则返回假(False)。
-		/// </summary>
-		public bool HasValue
-		{
-			get
-			{
-				return _value != null;
-			}
-		}
+		/// <summary>获取当前Value是否可用。如果Value不为空(null)则返回真(True)，否则返回假(False)。</summary>
+		public bool HasValue => _value != null;
 
-		/// <summary>
-		/// 获取构件的缓存值，获取该属性值始终不会引发构建动作。
-		/// </summary>
+		/// <summary>获取构件的缓存值，获取该属性值始终不会引发构建动作。</summary>
 		public object Value
 		{
-			get
-			{
-				return _value;
-			}
+			get => _value;
 			internal set
 			{
 				if(_value == value)
@@ -210,15 +151,10 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取构件的类型定义。
-		/// </summary>
+		/// <summary>获取构件的类型定义。</summary>
 		public BuiltinType BuiltinType
 		{
-			get
-			{
-				return _builtinType;
-			}
+			get => _builtinType;
 			internal set
 			{
 				if(_builtinType != null)
@@ -228,9 +164,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取当前构件是否具有特性，即 <see cref="Behaviors"/> 属性不为空并且集合元素数量大于零。
-		/// </summary>
+		/// <summary>获取当前构件是否具有特性，即 <see cref="Behaviors"/> 属性不为空并且集合元素数量大于零。</summary>
 		public bool HasBehaviors
 		{
 			get
@@ -240,9 +174,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取构件的行为特性集。
-		/// </summary>
+		/// <summary>获取构件的行为特性集。</summary>
 		public BuiltinBehaviorCollection Behaviors
 		{
 			get
@@ -254,9 +186,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取当前构件是否具有扩展属性。
-		/// </summary>
+		/// <summary>获取当前构件是否具有扩展属性。</summary>
 		public bool HasProperties
 		{
 			get
@@ -266,9 +196,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取构件的扩展属性集。
-		/// </summary>
+		/// <summary>获取构件的扩展属性集。</summary>
 		public PluginExtendedPropertyCollection Properties
 		{
 			get
@@ -302,13 +230,9 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 获取方法
-		/// <summary>
-		/// 在不构建值的情况下，获取构件值的类型。
-		/// </summary>
+		/// <summary>在不构建值的情况下，获取构件值的类型。</summary>
 		/// <returns>如果<see cref="HasValue"/>为真(true)则返回<see cref="Value"/>属性值的类型，否则根据当前构件的插件类型声明进行类型解析。</returns>
-		/// <remarks>
-		///		<para>对于自定义构建器的目标类型，将由构建器标注的<seealso cref="Builders.BuilderBehaviorAttribute"/>特性提供，详情请参考它的描述信息。</para>
-		/// </remarks>
+		/// <remarks>对于自定义构建器的目标类型，将由构建器标注的<seealso cref="Builders.BuilderBehaviorAttribute"/>特性提供，详情请参考它的描述信息。</remarks>
 		public Type GetValueType()
 		{
 			if(_value != null)
@@ -363,41 +287,18 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
-		public bool Equals(Builtin other)
-		{
-			return string.Equals(this.Scheme, other.Scheme, StringComparison.OrdinalIgnoreCase) &&
-				   string.Equals(this.FullPath, other.FullPath, StringComparison.OrdinalIgnoreCase);
-		}
+		public bool Equals(Builtin other) =>
+			string.Equals(this.Scheme, other.Scheme, StringComparison.OrdinalIgnoreCase) &&
+			string.Equals(this.FullPath, other.FullPath, StringComparison.OrdinalIgnoreCase);
 
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((Builtin)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(this.Scheme, this.FullPath);
-		}
-
-		public override string ToString()
-		{
-			return $"[{this.Scheme}]{this.FullPath}@{this.Plugin}";
-		}
+		public override bool Equals(object obj) => obj is Builtin other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Scheme, this.FullPath);
+		public override string ToString() => $"[{this.Scheme}]{this.FullPath}@{this.Plugin}";
 		#endregion
 
 		#region 私有方法
-		private void OnValueChanged(object value)
-		{
-			this.ValueChanged?.Invoke(this, new ValueChangedEventArgs(value));
-		}
-
-		private void OnValueChanging(object oldValue, object newValue)
-		{
-			this.ValueChanging?.Invoke(this, new ValueChangingEventArgs(oldValue, newValue));
-		}
+		private void OnValueChanged(object value) => this.ValueChanged?.Invoke(this, new ValueChangedEventArgs(value));
+		private void OnValueChanging(object oldValue, object newValue) => this.ValueChanging?.Invoke(this, new ValueChangingEventArgs(oldValue, newValue));
 		#endregion
 	}
 }

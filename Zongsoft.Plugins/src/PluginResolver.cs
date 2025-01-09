@@ -296,7 +296,7 @@ namespace Zongsoft.Plugins
 			var node = PluginTree.EnsurePath(PluginPath.Combine(path, parts[0]));
 
 			if(node == null)
-				throw new PluginException(string.Format("Invalid '{0}' ExtendedElement is not exists in '{1}' plugin.", path + "/" + parts[0], plugin.FilePath));
+				throw new PluginException($"Invalid '{path}/{parts[0]}' ExtendedElement is not exists in '{plugin.FilePath}' plugin.");
 
 			string propertyName = string.Join(".", parts, 1, parts.Length - 1);
 
@@ -314,7 +314,7 @@ namespace Zongsoft.Plugins
 			var parts = reader.Name.Split('.');
 
 			if(parts.Length != 2)
-				throw new PluginException(string.Format("Invalid '{0}' ExtendElement in '{1}'.", reader.Name, builtin.ToString()));
+				throw new PluginException($"Invalid '{reader.Name}' ExtendElement in '{builtin}'.");
 
 			if(string.Equals(parts[0], builtin.Scheme, StringComparison.OrdinalIgnoreCase))
 			{
@@ -322,7 +322,7 @@ namespace Zongsoft.Plugins
 				{
 					case "constructor":
 						if(builtin.BuiltinType == null)
-							throw new PluginException(string.Format("This '{0}' ExtendElement dependencied builtin-type is null.", reader.Name));
+							throw new PluginException($"This '{reader.Name}' ExtendElement dependencied builtin-type is null.");
 
 						ResolveBuiltinConstructor(reader, builtin.BuiltinType.Constructor);
 						break;
@@ -338,7 +338,7 @@ namespace Zongsoft.Plugins
 			}
 			else
 			{
-				throw new PluginException(string.Format("Invalid '{0}' ExtendElement in '{1}'.", reader.Name, builtin.ToString()));
+				throw new PluginException($"Invalid '{reader.Name}' ExtendElement in '{builtin}'.");
 			}
 		}
 
@@ -458,7 +458,7 @@ namespace Zongsoft.Plugins
 				{
 					if(reader.NodeType == XmlNodeType.Element && reader.Name == "parameter")
 					{
-						var member = constructor.Add(reader.GetAttribute("type"), reader.GetAttribute("value"));
+						var member = constructor.Parameters.Add(reader.GetAttribute("name"), reader.GetAttribute("type"), reader.GetAttribute("value"));
 
 						if(!reader.IsEmptyElement)
 						{
@@ -508,10 +508,10 @@ namespace Zongsoft.Plugins
 		private static XmlReader GetReader(string filePath)
 		{
 			if(string.IsNullOrWhiteSpace(filePath))
-				throw new ArgumentNullException("filePath");
+				throw new ArgumentNullException(nameof(filePath));
 
 			if(!File.Exists(filePath))
-				throw new FileNotFoundException(string.Format("The '{0}' file is not exists.", filePath));
+				throw new FileNotFoundException($"The '{filePath}' file is not exists.");
 
 			XmlReaderSettings settings = new XmlReaderSettings()
 			{
@@ -544,7 +544,7 @@ namespace Zongsoft.Plugins
 		private static bool IsExtendElement(string elementName)
 		{
 			if(string.IsNullOrWhiteSpace(elementName))
-				throw new ArgumentNullException("elementName");
+				throw new ArgumentNullException(nameof(elementName));
 
 			if(ExtendElementRegex.IsMatch(elementName))
 				return true;

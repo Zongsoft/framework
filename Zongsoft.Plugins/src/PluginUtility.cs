@@ -193,38 +193,85 @@ namespace Zongsoft.Plugins
 			if(builtinType == null)
 				throw new ArgumentNullException(nameof(builtinType));
 
-			object target;
+			if(builtinType.Constructor == null || builtinType.Constructor.Count == 0)
+				return BuildType(builtinType.TypeName, builtinType.Builtin);
 
-			if(builtinType.Constructor == null || builtinType.Constructor.Count < 1)
+			object result;
+			(var info, var values) = MatchConstructor(builtinType.Constructor);
+
+			if(info == null || values == null)
+				throw new PluginException($"Missing matching constructor for builtin '{builtinType.Builtin}'.");
+
+			try
 			{
-				target = BuildType(builtinType.TypeName, builtinType.Builtin);
+				result = info.Invoke(values);
 			}
-			else
+			catch(Exception ex)
 			{
-				object[] values = new object[builtinType.Constructor.Count];
+				if(System.Diagnostics.Debugger.IsAttached)
+					throw;
 
-				for(int i = 0; i < values.Length; i++)
-				{
-					values[i] = builtinType.Constructor.Parameters[i].GetValue(null);
-				}
-
-				try
-				{
-					target = Activator.CreateInstance(builtinType.Type, values);
-				}
-				catch(Exception ex)
-				{
-					if(System.Diagnostics.Debugger.IsAttached)
-						throw;
-
-					throw new PluginException(string.Format("Create object of '{0}' type faild, The parameters count of constructor is {1}.", builtinType.TypeName, values.Length), ex);
-				}
-
-				//注入依赖属性
-				InjectProperties(target, builtinType.Builtin);
+				throw new PluginException($"Create object of '{builtinType.TypeName}' type faild, The constructor is ({info.GetParameters()}).", ex);
 			}
 
-			return target;
+			//注入依赖属性
+			InjectProperties(result, builtinType.Builtin);
+
+			return result;
+
+			static (ConstructorInfo info, object[] values) MatchConstructor(BuiltinTypeConstructor constructor)
+			{
+				var type = constructor.BuiltinType.Type;
+				var values = new List<object>(constructor.Count * 2);
+
+				//优先匹配参数数量相同的构造函数
+				foreach(ConstructorInfo constructorInfo in type.GetConstructors().Where(ctor => ctor.GetParameters().Length == constructor.Count))
+				{
+					var parameters = constructorInfo.GetParameters();
+
+					for(int i = 0; i < parameters.Length; i++)
+					{
+						if(string.Equals(constructor.Parameters[i].Name, parameters[i].Name))
+							values.Add(constructor.Parameters[i].GetValue(parameters[i].ParameterType));
+						else if(constructor.Parameters[i].ParameterType == parameters[i].ParameterType)
+							values.Add(constructor.Parameters[i].GetValue(parameters[i].ParameterType));
+						else
+							break;
+					}
+
+					//如果匹配成功的参数数量与当前构造函数的参数数量相等则表示匹配成功
+					if(values.Count == parameters.Length)
+						return (constructorInfo, values.ToArray());
+				}
+
+				//按照构造函数参数数量多少依次匹配
+				foreach(ConstructorInfo constructorInfo in type.GetConstructors().OrderByDescending(ctor => ctor.GetParameters().Length))
+				{
+					var parameters = constructorInfo.GetParameters();
+
+					//如果构造函数的参数数量小于声明的参数数量则匹配失败
+					if(parameters.Length < constructor.Count)
+						continue;
+
+					for(int i = 0; i < parameters.Length; i++)
+					{
+						if(constructor.Parameters.TryGet(parameters[i].Name, out var parameter))
+							values.Add(parameter.GetValue(parameters[i].ParameterType));
+						else if(constructor.Parameters.TryGet(parameters[i].ParameterType, out parameter))
+							values.Add(parameter.GetValue(parameters[i].ParameterType));
+						else if(GetParameterValue(constructor.Builtin, parameters[i], out var value))
+							values.Add(value);
+						else
+							break;
+					}
+
+					//如果匹配成功的参数数量与当前构造函数的参数数量相等则表示匹配成功
+					if(values.Count == parameters.Length)
+						return (constructorInfo, values.ToArray());
+				}
+
+				return default;
+			}
 		}
 
 		internal static object BuildType(string typeName, Builtin builtin)
@@ -277,7 +324,7 @@ namespace Zongsoft.Plugins
 
 			foreach(ConstructorInfo constructor in constructors.OrderByDescending(ctor => ctor.GetParameters().Length))
 			{
-				ParameterInfo[] parameters = constructor.GetParameters();
+				var parameters = constructor.GetParameters();
 
 				if(parameters.Length == 0)
 					return Activator.CreateInstance(type);
@@ -306,45 +353,43 @@ namespace Zongsoft.Plugins
 		#region 参数回调
 		private static bool GetParameterValue(PluginElement element, ParameterInfo parameter, out object result)
 		{
-			var parameterType = parameter.ParameterType;
-
-			if(parameterType == typeof(Assembly))
-			{
-				result = GetPluginAssembly(element.Plugin);
-				return result != null;
-			}
-
-			if(parameterType == typeof(Builtin))
-			{
-				result = element as Builtin;
-				return result != null;
-			}
-
-			if(parameterType == typeof(PluginTreeNode))
-			{
-				result = element.GetNode();
-				return result != null;
-			}
-
-			if(parameterType == typeof(string) && string.Equals(parameter.Name, "name", StringComparison.OrdinalIgnoreCase))
+			if(parameter.ParameterType == typeof(string) && string.Equals(parameter.Name, "name", StringComparison.OrdinalIgnoreCase))
 			{
 				result = element.Name;
 				return true;
 			}
 
-			if(parameterType == typeof(Plugin))
+			if(parameter.ParameterType == typeof(Assembly))
+			{
+				result = GetPluginAssembly(element.Plugin);
+				return result != null;
+			}
+
+			if(parameter.ParameterType == typeof(Builtin))
+			{
+				result = element as Builtin;
+				return result != null;
+			}
+
+			if(parameter.ParameterType == typeof(PluginTreeNode))
+			{
+				result = element.GetNode();
+				return result != null;
+			}
+
+			if(parameter.ParameterType == typeof(Plugin))
 			{
 				result = element.Plugin;
 				return result != null;
 			}
 
-			if(parameterType == typeof(PluginTree))
+			if(parameter.ParameterType == typeof(PluginTree))
 			{
 				result = element.Plugin?.PluginTree;
 				return result != null;
 			}
 
-			if(typeof(IApplicationContext).IsAssignableFrom(parameterType))
+			if(typeof(IApplicationContext).IsAssignableFrom(parameter.ParameterType))
 			{
 				result = ApplicationContext.Current;
 				return true;
@@ -362,11 +407,26 @@ namespace Zongsoft.Plugins
 				return result != null;
 			}
 
+			if(element is Builtin builtin && builtin.HasProperties && builtin.Properties.TryGetValue(parameter.Name, out var property) && property.Value != null)
+			{
+				var converter = TypeDescriptor.GetConverter(parameter);
+				var propertyType = property.Type ?? property.Value?.GetType();
+
+				if(converter != null && propertyType != null && converter.CanConvertFrom(propertyType))
+				{
+					result = converter.ConvertFrom(property.Value);
+					return true;
+				}
+
+				if(Common.Convert.TryConvertValue(property.Value, parameter.ParameterType, out result))
+					return true;
+			}
+
 			var services = FindServiceProvider(element);
 			if(services != null)
 			{
 				result = services.GetService(parameter.ParameterType);
-				return result != null;
+				return result != null || parameter.HasDefaultValue;
 			}
 
 			if(parameter.HasDefaultValue)

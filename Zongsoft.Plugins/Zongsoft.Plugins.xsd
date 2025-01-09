@@ -201,9 +201,15 @@
 								</xs:annotation>
 
 								<xs:complexType>
-									<xs:attribute name="type" type="xs:string" use="required">
+									<xs:attribute name="name" type="xs:string" use="optional">
 										<xs:annotation>
-											<xs:documentation xml:lang="zh">类型的完整限定名，包括其程序集的名称，具体写法参考 System.Type 类的 AssemblyQualifiedName 属性帮助。</xs:documentation>
+											<xs:documentation xml:lang="zh">参数名称。</xs:documentation>
+										</xs:annotation>
+									</xs:attribute>
+
+									<xs:attribute name="type" type="xs:string" use="optional">
+										<xs:annotation>
+											<xs:documentation xml:lang="zh">参数类型，类型的完整限定名，包括其程序集的名称，具体写法参考 System.Type 类的 AssemblyQualifiedName 属性帮助。</xs:documentation>
 										</xs:annotation>
 									</xs:attribute>
 
@@ -219,7 +225,7 @@
 
 					<xs:key name="ParameterKey">
 						<xs:selector xpath="./parameter" />
-						<xs:field xpath="@type" />
+						<xs:field xpath="@name" />
 					</xs:key>
 				</xs:element>
 			</xs:sequence>

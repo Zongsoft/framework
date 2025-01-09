@@ -38,14 +38,14 @@ namespace Zongsoft.Plugins
 	{
 		#region 成员变量
 		private readonly BuiltinType _builtinType;
-		private readonly IList<Parameter> _parameters;
+		private readonly ParameterCollection _parameters;
 		#endregion
 
 		#region 构造函数
 		internal BuiltinTypeConstructor(BuiltinType builtinType)
 		{
 			_builtinType = builtinType ?? throw new ArgumentNullException(nameof(builtinType));
-			_parameters = new List<Parameter>();
+			_parameters = new ParameterCollection(this);
 		}
 		#endregion
 
@@ -53,16 +53,7 @@ namespace Zongsoft.Plugins
 		public Builtin Builtin => _builtinType.Builtin;
 		public BuiltinType BuiltinType => _builtinType;
 		public int Count => _parameters.Count;
-		public Parameter[] Parameters => _parameters.ToArray();
-		#endregion
-
-		#region 内部方法
-		internal Parameter Add(string parameterType, string rawValue)
-		{
-			var parameter = new Parameter(this, parameterType, rawValue);
-			_parameters.Add(parameter);
-			return parameter;
-		}
+		public ParameterCollection Parameters => _parameters;
 		#endregion
 
 		#region 枚举遍历
@@ -70,13 +61,69 @@ namespace Zongsoft.Plugins
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		#endregion
 
-		public class Parameter
+		public sealed class ParameterCollection(BuiltinTypeConstructor constructor) : IReadOnlyCollection<Parameter>
+		{
+			#region 成员字段
+			private readonly BuiltinTypeConstructor _constructor = constructor;
+			private readonly List<Parameter> _parameters = new();
+			#endregion
+
+			#region 公共属性
+			public int Count => _parameters.Count;
+			public Parameter this[int index] => _parameters[index];
+			public Parameter this[string name] => string.IsNullOrEmpty(name) ? null : _parameters.Find(parameter => string.Equals(parameter.Name, name));
+			public Parameter this[Type type] => type == null ? null : _parameters.Find(parameter => parameter.ParameterType == type);
+			#endregion
+
+			#region 公共方法
+			public bool TryGet(string name, out Parameter result)
+			{
+				if(string.IsNullOrEmpty(name))
+				{
+					result = null;
+					return false;
+				}
+
+				result = _parameters.Find(parameter => string.Equals(parameter.Name, name));
+				return result != null;
+			}
+
+			public bool TryGet(Type type, out Parameter result)
+			{
+				if(type == null)
+				{
+					result = null;
+					return false;
+				}
+
+				result = _parameters.Find(parameter => parameter.ParameterType == type);
+				return result != null;
+			}
+			#endregion
+
+			#region 内部方法
+			internal Parameter Add(string name, string parameterType, string rawValue)
+			{
+				var parameter = new Parameter(_constructor, name, parameterType, rawValue);
+				_parameters.Add(parameter);
+				return parameter;
+			}
+			#endregion
+
+			#region 枚举遍历
+			public IEnumerator<Parameter> GetEnumerator() => _parameters.GetEnumerator();
+			IEnumerator IEnumerable.GetEnumerator() => _parameters.GetEnumerator();
+			#endregion
+		}
+
+		public sealed class Parameter
 		{
 			#region 成员变量
 			private BuiltinTypeConstructor _constructor;
 			private string _rawValue;
 			private string _parameterTypeName;
 			private Type _parameterType;
+			private string _name;
 			private object _value;
 			#endregion
 
@@ -85,9 +132,10 @@ namespace Zongsoft.Plugins
 			#endregion
 
 			#region 构造函数
-			internal Parameter(BuiltinTypeConstructor constructor, string typeName, string rawValue)
+			internal Parameter(BuiltinTypeConstructor constructor, string name, string typeName, string rawValue)
 			{
 				_constructor = constructor ?? throw new ArgumentNullException(nameof(constructor));
+				_name = name;
 				_parameterTypeName = typeName;
 				_rawValue = rawValue;
 				_evaluateValueRequired = 0;
@@ -97,6 +145,7 @@ namespace Zongsoft.Plugins
 			#region 公共属性
 			public Builtin Builtin => _constructor._builtinType.Builtin;
 			public BuiltinTypeConstructor Constructor => _constructor;
+			public string Name => _name;
 			public Type ParameterType
 			{
 				get

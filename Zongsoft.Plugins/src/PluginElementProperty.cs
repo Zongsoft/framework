@@ -28,8 +28,8 @@
  */
 
 using System;
-using System.ComponentModel;
 using System.Threading;
+using System.ComponentModel;
 
 namespace Zongsoft.Plugins
 {
@@ -71,29 +71,14 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前属性的名称。
-		/// </summary>
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
+		/// <summary>获取当前属性的名称。</summary>
+		public string Name => _name;
 
-		/// <summary>
-		/// 获取或设置当前属性的原生文本值。
-		/// </summary>
-		/// <remarks>
-		///		<para>如果该属性发生改变，在下次获取<see cref="Value"/>属性时将自动引发重新计算。</para>
-		/// </remarks>
+		/// <summary>获取或设置当前属性的原生文本值。</summary>
+		/// <remarks>如果该属性发生改变，在下次获取<see cref="Value"/>属性时将自动引发重新计算。</remarks>
 		public string RawValue
 		{
-			get
-			{
-				return _rawValue;
-			}
+			get => _rawValue;
 			set
 			{
 				if(string.Equals(_rawValue, value, StringComparison.Ordinal))
@@ -104,27 +89,15 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取当前属性的所有者。
-		/// </summary>
+		/// <summary>获取当前属性的所有者。</summary>
 		public PluginElement Owner
 		{
-			get
-			{
-				return _owner;
-			}
-			internal set
-			{
-				_owner = value ?? throw new ArgumentNullException();
-			}
+			get => _owner;
+			internal set => _owner = value ?? throw new ArgumentNullException();
 		}
 
-		/// <summary>
-		/// 获取当前属性的值。
-		/// </summary>
-		/// <remarks>
-		///		<para>注意：当该属性值被计算过后就不在重复计算。</para>
-		/// </remarks>
+		/// <summary>获取当前属性的值。</summary>
+		/// <remarks>注意：当该属性值被计算过后就不在重复计算。</remarks>
 		public object Value
 		{
 			get
@@ -138,31 +111,17 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置属性类型。
-		/// </summary>
-		public Type Type
-		{
-			get; set;
-		}
+		/// <summary>获取或设置属性类型。</summary>
+		public Type Type { get; set; }
 
-		/// <summary>
-		/// 获取或设置类型转换器。
-		/// </summary>
-		public TypeConverter Converter
-		{
-			get; set;
-		}
+		/// <summary>获取或设置类型转换器。</summary>
+		public TypeConverter Converter { get; set; }
 		#endregion
 
 		#region 公共方法
-		public object GetValue(Type valueType)
-		{
-			return this.GetValue(
-				valueType ?? this.Type,
-				valueType == null ? null : Zongsoft.Common.TypeExtension.GetDefaultValue(valueType)
-			);
-		}
+		public object GetValue(Type valueType) => this.GetValue(
+			valueType ?? this.Type,
+			valueType == null ? null : Common.TypeExtension.GetDefaultValue(valueType));
 
 		public object GetValue(Type valueType, object defaultValue)
 		{
@@ -172,17 +131,14 @@ namespace Zongsoft.Plugins
 			var result = _valueNode.UnwrapValue(ObtainMode.Auto, new Builders.BuilderSettings(valueType));
 
 			if(valueType != null)
-				result = Zongsoft.Common.Convert.ConvertValue(result, valueType, () => this.Converter, defaultValue);
+				result = Common.Convert.ConvertValue(result, valueType, () => this.Converter, defaultValue);
 
 			return result;
 		}
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			return string.Format("{0}={1}", this.Name, this.RawValue);
-		}
+		public override string ToString() => $"{this.Name}={this.RawValue}";
 		#endregion
 	}
 }
