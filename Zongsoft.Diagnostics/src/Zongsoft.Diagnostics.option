@@ -7,8 +7,8 @@
 				<filter>*</filter>
 
 				<exporters>
-					<exporter driver="telemetry" />
-					<exporter driver="prometheus" value="urls=http://127.0.0.1:9464,http://localhost:9464" />
+					<exporter exporter.key="#" driver="telemetry" />
+					<exporter exporter.key="#" driver="prometheus" value="urls=http://127.0.0.1:9464,http://localhost:9464" />
 				</exporters>
 			</meters>
 
@@ -16,8 +16,8 @@
 				<filter>*</filter>
 
 				<exporters>
-					<exporter driver="telemetry" />
-					<exporter driver="zipkin" />
+					<exporter exporter.key="#" driver="telemetry" />
+					<exporter exporter.key="#" driver="zipkin" />
 				</exporters>
 			</traces>
 		</diagnostor>

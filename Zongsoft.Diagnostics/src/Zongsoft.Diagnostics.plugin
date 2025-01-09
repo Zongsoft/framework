@@ -26,6 +26,10 @@
 	</extension>
 
 	<extension path="/Workbench/Startup">
-		<object name="Diagnostor" type="Zongsoft.Diagnostics.DiagnostorWorker, Zongsoft.Diagnostics" configurator="configuration:/diagnostics/diagnostor" />
+		<object name="Diagnostor" type="Zongsoft.Diagnostics.DiagnostorWorker, Zongsoft.Diagnostics">
+			<object.constructor>
+				<parameter name="configurator" value="configuration:/diagnostics/diagnostor" />
+			</object.constructor>
+		</object>
 	</extension>
 </plugin>

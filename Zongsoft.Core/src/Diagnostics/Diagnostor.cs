@@ -40,7 +40,7 @@ namespace Zongsoft.Diagnostics;
 public partial class Diagnostor
 {
 	#region 构造函数
-	public Diagnostor(string name, [TypeConverter(typeof(ConfiguratorConverter))]Configurator configurator = null)
+	public Diagnostor(string name, Configurator configurator = null)
 	{
 		this.Name = name ?? string.Empty;
 		configurator?.Configure(this);
