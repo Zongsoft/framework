@@ -62,31 +62,22 @@ namespace Zongsoft.Plugins
 			this.ApplicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
 			_status = WorkbenchStatus.None;
 			_title = applicationContext.Title;
-			_startupPath = PluginPath.Combine(applicationContext.Options.GetWorkbenchMountion(), "Startup");
+			_startupPath = applicationContext.Options.GetStartupMountion();
 			_semaphore = new AutoResetEvent(true);
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取工作台所属的应用程序上下文。
-		/// </summary>
+		/// <summary>获取工作台所属的应用程序上下文。</summary>
 		public PluginApplicationContext ApplicationContext { get; }
 
-		/// <summary>
-		/// 获取工作台的运行状态。
-		/// </summary>
+		/// <summary>获取工作台的运行状态。</summary>
 		public WorkbenchStatus Status { get => _status; }
 
-		/// <summary>
-		/// 获取或设置工作台的标题。
-		/// </summary>
+		/// <summary>获取或设置工作台的标题。</summary>
 		public virtual string Title
 		{
-			get
-			{
-				return _title;
-			}
+			get => _title;
 			set
 			{
 				if(string.Equals(_title, value, StringComparison.Ordinal))
@@ -121,14 +112,14 @@ namespace Zongsoft.Plugins
 				this.OnOpening(EventArgs.Empty);
 
 				//查找当前工作台的插件节点
-				node = ApplicationContext.PluginTree.Find(ApplicationContext.Options.GetWorkbenchMountion());
+				node = this.ApplicationContext.PluginTree.Find(this.ApplicationContext.Options.GetWorkbenchMountion());
 
 				//确定当前工作台是否能挂载
 				mountable = node == null || node.NodeType != PluginTreeNodeType.Builtin;
 
 				//如果能挂载则将当前工作台挂载到插件树
 				if(mountable)
-					ApplicationContext.PluginTree.Mount(node, this);
+					this.ApplicationContext.PluginTree.Mount(node, this);
 
 				//调用虚拟方法以执行实际启动的操作
 				this.OnOpen();
@@ -144,7 +135,7 @@ namespace Zongsoft.Plugins
 
 				//如果状态被重置为了已关闭并且当前工作台已经被挂载过，则必须将其卸载
 				if(_status == WorkbenchStatus.None && mountable)
-					ApplicationContext.PluginTree.Unmount(node);
+					this.ApplicationContext.PluginTree.Unmount(node);
 
 				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
 				throw;
@@ -212,7 +203,7 @@ namespace Zongsoft.Plugins
 				return;
 
 			//获取启动路径对应的节点对象
-			PluginTreeNode startupNode = ApplicationContext.PluginTree.Find(_startupPath);
+			PluginTreeNode startupNode = this.ApplicationContext.PluginTree.Find(_startupPath);
 
 			//运行启动路径下的所有工作者
 			if(startupNode != null)
@@ -225,7 +216,7 @@ namespace Zongsoft.Plugins
 				return;
 
 			//获取启动路径对应的节点对象
-			PluginTreeNode startupNode = ApplicationContext.PluginTree.Find(_startupPath);
+			PluginTreeNode startupNode = this.ApplicationContext.PluginTree.Find(_startupPath);
 
 			//停止启动路径下的所有工作者
 			if(startupNode != null)
@@ -249,48 +240,29 @@ namespace Zongsoft.Plugins
 		#region 事件激发
 		protected void RaiseOpened()
 		{
-			if(Status == WorkbenchStatus.Opening)
+			if(this.Status == WorkbenchStatus.Opening)
 			{
 				_status = WorkbenchStatus.Running;
 				this.OnOpened(EventArgs.Empty);
-				ApplicationContext.RaiseStarted();
+				this.ApplicationContext.RaiseStarted();
 			}
 		}
 
 		protected void RaiseClosed()
 		{
-			if(Status == WorkbenchStatus.Closing)
+			if(this.Status == WorkbenchStatus.Closing)
 			{
 				_status = WorkbenchStatus.None;
 				this.OnClosed(EventArgs.Empty);
-				ApplicationContext.RaiseStopped();
+				this.ApplicationContext.RaiseStopped();
 			}
 		}
 
-		protected virtual void OnOpened(EventArgs args)
-		{
-			this.Opened?.Invoke(this, args);
-		}
-
-		public virtual void OnOpening(EventArgs args)
-		{
-			this.Opening?.Invoke(this, args);
-		}
-
-		protected virtual void OnClosed(EventArgs args)
-		{
-			this.Closed?.Invoke(this, args);
-		}
-
-		protected virtual void OnClosing(CancelEventArgs args)
-		{
-			this.Closing?.Invoke(this, args);
-		}
-
-		protected virtual void OnTitleChanged(EventArgs args)
-		{
-			this.TitleChanged?.Invoke(this, args);
-		}
+		protected virtual void OnOpened(EventArgs args) => this.Opened?.Invoke(this, args);
+		public virtual void OnOpening(EventArgs args) => this.Opening?.Invoke(this, args);
+		protected virtual void OnClosed(EventArgs args) => this.Closed?.Invoke(this, args);
+		protected virtual void OnClosing(CancelEventArgs args) => this.Closing?.Invoke(this, args);
+		protected virtual void OnTitleChanged(EventArgs args) => this.TitleChanged?.Invoke(this, args);
 		#endregion
 
 		#region 私有方法

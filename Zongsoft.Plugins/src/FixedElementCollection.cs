@@ -28,39 +28,22 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
 	public class FixedElementCollection : PluginElementCollection<FixedElement>
 	{
 		#region 构造函数
-		internal protected FixedElementCollection()
-		{
-		}
+		internal protected FixedElementCollection() { }
 		#endregion
 
 		#region 公共属性
-		public override bool IsReadOnly
-		{
-			get
-			{
-				return false;
-			}
-		}
+		public override bool IsReadOnly => false;
 		#endregion
 
 		#region 公共方法
-		public void Clear()
-		{
-			this.BaseClear();
-		}
-
-		public void Remove(string name)
-		{
-			this.BaseRemoveKey(name);
-		}
+		public void Clear() => this.BaseClear();
+		public void Remove(string name) => this.BaseRemoveKey(name);
 		#endregion
 	}
 }

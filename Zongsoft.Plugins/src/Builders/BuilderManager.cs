@@ -40,7 +40,7 @@ namespace Zongsoft.Plugins.Builders
 		#endregion
 
 		#region 单例字段
-		public static readonly BuilderManager Current = new BuilderManager();
+		public static readonly BuilderManager Current = new();
 		#endregion
 
 		#region 私有变量
@@ -166,7 +166,7 @@ namespace Zongsoft.Plugins.Builders
 		private IBuilder GetBuilder(Builtin builtin)
 		{
 			if(builtin == null)
-				throw new ArgumentNullException("builtin");
+				throw new ArgumentNullException(nameof(builtin));
 
 			//获取当前构件的构建器对象
 			IBuilder builder = builtin.Plugin.GetBuilder(builtin.Scheme);
@@ -195,10 +195,10 @@ namespace Zongsoft.Plugins.Builders
 		#endregion
 
 		#region 嵌套子类
-		private class BuildToken
+		private class BuildToken : IEquatable<BuildToken>
 		{
 			#region 公共字段
-			internal Builtin Builtin;
+			internal readonly Builtin Builtin;
 			internal object Target;
 			#endregion
 
@@ -211,23 +211,10 @@ namespace Zongsoft.Plugins.Builders
 			#endregion
 
 			#region 重写方法
-			public override bool Equals(object obj)
-			{
-				if(obj == null || obj.GetType() != typeof(BuildToken))
-					return false;
-
-				return object.Equals(this.Builtin, ((BuildToken)obj).Builtin);
-			}
-
-			public override int GetHashCode()
-			{
-				return HashCode.Combine(Builtin);
-			}
-
-			public override string ToString()
-			{
-				return this.Builtin.ToString();
-			}
+			public bool Equals(BuildToken other) => other is not null && object.Equals(this.Builtin, other.Builtin);
+			public override bool Equals(object obj) => obj is BuildToken other && this.Equals(other);
+			public override int GetHashCode() => HashCode.Combine(this.Builtin);
+			public override string ToString() => this.Builtin.ToString();
 			#endregion
 		}
 		#endregion

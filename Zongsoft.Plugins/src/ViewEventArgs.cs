@@ -34,21 +34,11 @@ namespace Zongsoft.Plugins
 	public class ViewEventArgs : EventArgs
 	{
 		#region 构造函数
-		public ViewEventArgs(object view)
-		{
-			if(view == null)
-				throw new ArgumentNullException("view");
-
-			this.View = view;
-		}
+		public ViewEventArgs(object view) => this.View = view ?? throw new ArgumentNullException(nameof(view));
 		#endregion
 
 		#region 公共属性
-		public object View
-		{
-			get;
-			private set;
-		}
+		public object View { get; }
 		#endregion
 	}
 }

@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
@@ -59,23 +58,18 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前处理器被激发的原因。
-		/// </summary>
-		public AppenderBehavior Behaviour
-		{
-			get
-			{
-				return _behaviour;
-			}
-		}
+		/// <summary>获取当前处理器被激发的原因。</summary>
+		public AppenderBehavior Behaviour => _behaviour;
 
-		/// <summary>
-		/// 获取当前节点的所有者对象，即所有者节点对应的目标对象。
-		/// </summary>
-		/// <remarks>
-		///		<para>获取该属性值不会激发对所有者节点的创建动作，以避免在构建过程中发生无限递归调用。</para>
-		/// </remarks>
+		/// <summary>获取当前节点对象。</summary>
+		/// <remarks>当前节点即表示处理器要操作插件位置对应的插件树节点。</remarks>
+		public PluginTreeNode Node => _node;
+
+		/// <summary>获取当前处理器对应的新值。</summary>
+		public object Value => _value;
+
+		/// <summary>获取当前节点的所有者对象，即所有者节点对应的目标对象。</summary>
+		/// <remarks>获取该属性值不会激发对所有者节点的创建动作，以避免在构建过程中发生无限递归调用。</remarks>
 		public object Container
 		{
 			get
@@ -93,9 +87,7 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		/// <summary>
-		/// 获取当前节点的所有者节点。
-		/// </summary>
+		/// <summary>获取当前节点的所有者节点。</summary>
 		public PluginTreeNode ContainerNode
 		{
 			get
@@ -104,37 +96,11 @@ namespace Zongsoft.Plugins
 				{
 					lock(_syncRoot)
 					{
-						if(_containerNode == null)
-							_containerNode = _node.Tree.GetOwnerNode(_node);
+						_containerNode ??= _node.Tree.GetOwnerNode(_node);
 					}
 				}
 
 				return _containerNode;
-			}
-		}
-
-		/// <summary>
-		/// 获取当前节点对象。
-		/// </summary>
-		/// <remarks>
-		///		<para>当前节点即表示处理器要操作插件位置对应的插件树节点。</para>
-		/// </remarks>
-		public PluginTreeNode Node
-		{
-			get
-			{
-				return _node;
-			}
-		}
-
-		/// <summary>
-		/// 获取当前处理器对应的新值。
-		/// </summary>
-		public object Value
-		{
-			get
-			{
-				return _value;
 			}
 		}
 		#endregion

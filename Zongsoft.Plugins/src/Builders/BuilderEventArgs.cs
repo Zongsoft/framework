@@ -33,28 +33,16 @@ namespace Zongsoft.Plugins.Builders
 {
 	public class BuilderEventArgs : EventArgs
 	{
-		#region 成员字段
-		private BuilderContext _context;
-		#endregion
-
 		#region 构造函数
 		public BuilderEventArgs(BuilderContext context)
 		{
-			_context = context ?? throw new ArgumentNullException(nameof(context));
+			this.Context = context ?? throw new ArgumentNullException(nameof(context));
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前的构建上下文对象。
-		/// </summary>
-		public BuilderContext Context
-		{
-			get
-			{
-				return _context;
-			}
-		}
+		/// <summary>获取当前的构建上下文对象。</summary>
+		public BuilderContext Context { get; }
 		#endregion
 	}
 }

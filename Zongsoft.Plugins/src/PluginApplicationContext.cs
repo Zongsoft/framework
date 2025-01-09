@@ -50,10 +50,7 @@ namespace Zongsoft.Plugins
 		protected PluginApplicationContext(IServiceProvider services) : base(services)
 		{
 			_syncRoot = new object();
-
-			this.Options = services.GetService<PluginOptions>() ??
-			               new PluginOptions(services.GetRequiredService<IHostEnvironment>());
-
+			this.Options = services.GetService<PluginOptions>() ?? new PluginOptions(services.GetRequiredService<IHostEnvironment>());
 			this.PluginTree = PluginTree.Get(this.Options);
 		}
 		#endregion
@@ -66,7 +63,7 @@ namespace Zongsoft.Plugins
 		public PluginTree PluginTree { get; }
 
 		/// <summary>获取加载的根插件集。</summary>
-		public IEnumerable<Plugin> Plugins { get => this.PluginTree.Plugins; }
+		public IEnumerable<Plugin> Plugins => this.PluginTree.Plugins;
 
 		/// <summary>获取当前应用程序的主控台(工作台)。</summary>
 		public IWorkbenchBase Workbench
@@ -86,7 +83,7 @@ namespace Zongsoft.Plugins
 							this.PluginTree.Mount(node, _workbench);
 
 							//确认工作台路径及其下属所有节点均已构建完成
-							this.EnsureNodes(node);
+							BuildWorkbenchChildren(node, this.Options.GetStartupMountion());
 
 							//激发“WorkbenchCreated”事件
 							this.OnWorkbenchCreated();
@@ -154,7 +151,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 私有方法
-		private void EnsureNodes(PluginTreeNode node)
+		private static void BuildWorkbenchChildren(PluginTreeNode node, string startup)
 		{
 			if(node == null)
 				return;
@@ -170,7 +167,7 @@ namespace Zongsoft.Plugins
 			}
 
 			foreach(var child in node.Children)
-				this.EnsureNodes(child);
+				BuildWorkbenchChildren(child, startup);
 		}
 		#endregion
 	}

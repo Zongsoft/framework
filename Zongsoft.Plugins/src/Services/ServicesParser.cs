@@ -112,66 +112,60 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 重写方法
-		public override Type GetValueType(ParserContext context)
+		public override Type GetValueType(ParserContext context) => GetValue(context, (provider, mode, isMultiple) =>
 		{
-			return this.GetValue(context, (provider, mode, isMultiple) =>
-			{
-				if(mode == null)
-					return provider.GetType();
+			if(mode == null)
+				return provider.GetType();
 
-				if(mode is Type)
-					return isMultiple ? typeof(IEnumerable<>).MakeGenericType((Type)mode) : (Type)mode;
+			if(mode is Type type)
+				return isMultiple ? typeof(IEnumerable<>).MakeGenericType(type) : type;
 
-				return null;
-			});
-		}
+			return null;
+		});
 
-		public override object Parse(ParserContext context)
+		public override object Parse(ParserContext context) => GetValue(context, (provider, mode, isMultiple) =>
 		{
-			return this.GetValue(context, (provider, mode, isMultiple) =>
-			{
-				if(mode == null)
-					return provider;
+			if(mode == null)
+				return provider;
 
-				if(mode.GetType() == typeof(string))
+			if(mode.GetType() == typeof(string))
+			{
+				var result = provider.Resolve((string)mode);
+
+				if(result == null)
 				{
-					var result = provider.Resolve((string)mode);
-
-					if(result == null)
+					if(context.MemberType != null)
 					{
-						if(context.MemberType != null)
-						{
-							result = provider.Resolve(context.MemberType, (string)mode);
-							if(result != null)
-								return result;
-						}
-
-						var parts = ((string)mode).Split('.');
-						if(parts.Length > 1)
-						{
-							result = provider.Resolve(parts[0]);
-
-							if(result != null)
-							{
-								var expression = MemberExpression.Parse(string.Join(',', parts, 1, parts.Length - 1));
-								return MemberExpressionEvaluator.Default.GetValue(expression, result);
-							}
-						}
+						result = provider.Resolve(context.MemberType, (string)mode);
+						if(result != null)
+							return result;
 					}
 
-					return result;
+					var parts = ((string)mode).Split('.');
+					if(parts.Length > 1)
+					{
+						result = provider.Resolve(parts[0]);
+
+						if(result != null)
+						{
+							var expression = MemberExpression.Parse(string.Join(',', parts, 1, parts.Length - 1));
+							return MemberExpressionEvaluator.Default.GetValue(expression, result);
+						}
+					}
 				}
 
-				if(mode is Type)
-					return isMultiple ? provider.GetServices((Type)mode) : provider.GetService((Type)mode);
+				return result;
+			}
 
-				return null;
-			});
-		}
+			if(mode is Type type)
+				return isMultiple ? provider.GetServices(type) : provider.GetService(type);
+
+			return null;
+		});
 		#endregion
 
 		#region 私有方法
-		private T GetValue<T>(ParserContext context, Func<IServiceProvider, object, bool, T> thunk) where T : class
+		private static T GetValue<T>(ParserContext context, Func<IServiceProvider, object, bool, T> thunk) where T : class
 		{
 			if(string.IsNullOrWhiteSpace(context.Text))
 				return null;
@@ -184,7 +178,7 @@ namespace Zongsoft.Services
 				return null;
 
 			//根据表达式获取特定的服务容器
-			var provider = this.FindServiceProvider(context, match);
+			var provider = FindServiceProvider(context, match);
 
 			if(provider == null)
 				return null;
@@ -196,7 +190,7 @@ namespace Zongsoft.Services
 			if(string.IsNullOrWhiteSpace(serviceName))
 				return thunk(provider, null, false);
 
-			if(serviceName.StartsWith("~") || serviceName.StartsWith("*"))
+			if(serviceName.StartsWith('~') || serviceName.StartsWith('*'))
 			{
 				if(context.MemberType == null)
 					return null;
@@ -206,14 +200,14 @@ namespace Zongsoft.Services
 					return thunk(provider, null, false);
 
 				//从特定服务容器中获取匹配目标成员类型的服务
-				return thunk(provider, context.MemberType, serviceName.StartsWith("*"));
+				return thunk(provider, context.MemberType, serviceName.StartsWith('*'));
 			}
 
 			//返回特定服务容器中指定名称的服务
 			return thunk(provider, serviceName, false);
 		}
 
-		private IServiceProvider FindServiceProvider(ParserContext context, Match match)
+		private static IServiceProvider FindServiceProvider(ParserContext context, Match match)
 		{
 			if(context == null || ApplicationContext.Current.Services == null)
 				return null;

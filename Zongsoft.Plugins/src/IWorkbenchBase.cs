@@ -46,31 +46,16 @@ namespace Zongsoft.Plugins
 		/// <summary>当工作台被关闭前。</summary>
 		event CancelEventHandler Closing;
 
-		/// <summary>
-		/// 获取工作台的当前状态。
-		/// </summary>
-		WorkbenchStatus Status
-		{
-			get;
-		}
+		/// <summary>获取工作台的当前状态。</summary>
+		WorkbenchStatus Status { get; }
 
-		/// <summary>
-		/// 获取或设置工作台标题。
-		/// </summary>
-		string Title
-		{
-			get;
-			set;
-		}
+		/// <summary>获取或设置工作台标题。</summary>
+		string Title { get; set; }
 
-		/// <summary>
-		/// 关闭工作台。
-		/// </summary>
-		void Close();
-
-		/// <summary>
-		/// 启动工作台。
-		/// </summary>
+		/// <summary>打开工作台。</summary>
 		void Open();
+
+		/// <summary>关闭工作台。</summary>
+		void Close();
 	}
 }

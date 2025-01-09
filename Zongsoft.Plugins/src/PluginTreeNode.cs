@@ -45,10 +45,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 构造函数
-		public PluginTreeNode(PluginTree tree, string name) : this(tree, name, null)
-		{
-		}
-
+		public PluginTreeNode(PluginTree tree, string name) : this(tree, name, null) { }
 		public PluginTreeNode(PluginTree tree, string name, object value) : base(name, null)
 		{
 			_tree = tree ?? throw new ArgumentNullException(nameof(tree));
@@ -223,11 +220,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共方法
-		public PluginTreeNode Find(string path)
-		{
-			return this.Find(new string[] { path });
-		}
-
+		public PluginTreeNode Find(string path) => this.Find([path]);
 		public PluginTreeNode Find(params string[] paths)
 		{
 			if(paths == null || paths.Length == 0)

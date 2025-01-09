@@ -28,17 +28,13 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
 	public class FixedElementCollection<T> : FixedElementCollection
 	{
 		#region 构造函数
-		internal protected FixedElementCollection()
-		{
-		}
+		internal protected FixedElementCollection() { }
 		#endregion
 
 		#region 公共属性
@@ -55,39 +51,22 @@ namespace Zongsoft.Plugins
 			}
 		}
 
-		public FixedElement<T> this[int index]
-		{
-			get
-			{
-				return (FixedElement<T>)this.Get(index);
-			}
-		}
-
-		public FixedElement<T> this[string name]
-		{
-			get
-			{
-				return (FixedElement<T>)this.Get(name);
-			}
-		}
+		public FixedElement<T> this[int index] => (FixedElement<T>)this.Get(index);
+		public FixedElement<T> this[string name] => (FixedElement<T>)this.Get(name);
 		#endregion
 
 		#region 公共方法
 		public FixedElement<T> Add(string typeName, string name, Plugin plugin)
 		{
-			FixedElement<T> item = new FixedElement<T>(typeName, name, plugin, this.ElementType);
-
+			var item = new FixedElement<T>(typeName, name, plugin, this.ElementType);
 			base.Insert(item, -1);
-
 			return item;
 		}
 
 		public FixedElement<T> Add(Type type, string name, Plugin plugin)
 		{
-			FixedElement<T> item = new FixedElement<T>(type, name, plugin, this.ElementType);
-
+			var item = new FixedElement<T>(type, name, plugin, this.ElementType);
 			base.Insert(item, -1);
-
 			return item;
 		}
 		#endregion

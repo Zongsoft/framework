@@ -62,36 +62,16 @@ namespace Zongsoft.Plugins.Parsers
 		#endregion
 
 		#region 公共属性
-		public string Scheme
-		{
-			get
-			{
-				return _scheme;
-			}
-		}
-
+		public string Scheme => _scheme;
 		public string Content
 		{
-			get
-			{
-				return _content;
-			}
-			set
-			{
-				_content = value;
-			}
+			get => _content;
+			set => _content = value;
 		}
-
 		public ParserExpression Next
 		{
-			get
-			{
-				return _next;
-			}
-			set
-			{
-				_next = value;
-			}
+			get => _next;
+			set => _next = value;
 		}
 		#endregion
 

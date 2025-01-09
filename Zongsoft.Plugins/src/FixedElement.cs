@@ -48,9 +48,9 @@ namespace Zongsoft.Plugins
 		protected FixedElement(Type type, string name, Plugin plugin, FixedElementType elementType) : base(name, plugin)
 		{
 			if(plugin == null)
-				throw new ArgumentNullException("plugin");
+				throw new ArgumentNullException(nameof(plugin));
 			if(type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 
 			_syncRoot = new object();
 			_type = type;
@@ -60,9 +60,9 @@ namespace Zongsoft.Plugins
 		protected FixedElement(string typeName, string name, Plugin plugin, FixedElementType elementType) : base(name, plugin)
 		{
 			if(plugin == null)
-				throw new ArgumentNullException("plugin");
+				throw new ArgumentNullException(nameof(plugin));
 			if(string.IsNullOrWhiteSpace(typeName))
-				throw new ArgumentNullException("typeName");
+				throw new ArgumentNullException(nameof(typeName));
 
 			_syncRoot = new object();
 			_typeName = typeName;
@@ -81,7 +81,7 @@ namespace Zongsoft.Plugins
 					{
 						if(_type == null)
 						{
-							Type type = PluginUtility.GetType(_typeName, this);
+							var type = PluginUtility.GetType(_typeName, this);
 
 							if(!this.ValidateType(type))
 								throw new InvalidOperationException();
@@ -106,8 +106,7 @@ namespace Zongsoft.Plugins
 			{
 				lock(_syncRoot)
 				{
-					if(_value == null)
-						_value = this.CreateValue();
+					_value ??= this.CreateValue();
 				}
 			}
 

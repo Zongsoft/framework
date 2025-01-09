@@ -49,49 +49,27 @@ namespace Zongsoft.Plugins.Builders
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置构建的结果类型。
-		/// </summary>
-		public Type TargetType
-		{
-			get; set;
-		}
+		/// <summary>获取或设置构建的结果类型。</summary>
+		public Type TargetType { get; set; }
 
-		/// <summary>
-		/// 获取或设置构建行为的标记。
-		/// </summary>
+		/// <summary>获取或设置构建行为的标记。</summary>
 		public BuilderSettingsFlags Flags
 		{
 			get => _flags;
 			set => _flags = value;
 		}
 
-		/// <summary>
-		/// 获取或设置构建完成的回调方法。
-		/// </summary>
-		public Action<BuilderContext> Builded
-		{
-			get; set;
-		}
+		/// <summary>获取或设置构建完成的回调方法。</summary>
+		public Action<BuilderContext> Builded { get; set; }
 		#endregion
 
 		#region 公共方法
-		public void SetFlags(BuilderSettingsFlags flags)
-		{
-			_flags |= flags;
-		}
-
-		public bool HasFlags(BuilderSettingsFlags flags)
-		{
-			return (_flags & flags) == flags;
-		}
+		public void SetFlags(BuilderSettingsFlags flags) => _flags |= flags;
+		public bool HasFlags(BuilderSettingsFlags flags) => (_flags & flags) == flags;
 		#endregion
 
 		#region 静态方法
-		public static BuilderSettings Create(BuilderSettingsFlags flags)
-		{
-			return new BuilderSettings(null) { Flags = flags };
-		}
+		public static BuilderSettings Create(BuilderSettingsFlags flags) => new(null) { Flags = flags };
 		#endregion
 	}
 }

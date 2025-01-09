@@ -69,108 +69,41 @@ namespace Zongsoft.Plugins.Builders
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前插件上下文中的插件树。
-		/// </summary>
-		public PluginTree PluginTree
-		{
-			get => _builtin.Tree;
-		}
+		/// <summary>获取当前插件上下文中的插件树。</summary>
+		public PluginTree PluginTree => _builtin.Tree;
 
-		/// <summary>
-		/// 获取当前的构建器对象。
-		/// </summary>
-		public IBuilder Builder
-		{
-			get
-			{
-				return _builder;
-			}
-		}
+		/// <summary>获取当前的构建器对象。</summary>
+		public IBuilder Builder => _builder;
 
-		/// <summary>
-		/// 获取或设置构建过程的追加器。
-		/// </summary>
-		/// <remarks>
-		///		<para>注意：该属性可能会被构建过程设置为空(null)，以阻止后续的追加动作。</para>
-		/// </remarks>
+		/// <summary>获取或设置构建过程的追加器。</summary>
+		/// <remarks>注意：该属性可能会被构建过程设置为空(null)，以阻止后续的追加动作。</remarks>
 		public IAppender Appender
 		{
-			get
-			{
-				return _appender;
-			}
-			set
-			{
-				_appender = value;
-			}
+			get => _appender;
+			set => _appender = value;
 		}
 
-		/// <summary>
-		/// 获取构建选项参数。
-		/// </summary>
-		public BuilderSettings Settings
-		{
-			get
-			{
-				return _settings;
-			}
-		}
+		/// <summary>获取构建选项参数。</summary>
+		public BuilderSettings Settings => _settings;
 
-		/// <summary>
-		/// 获取或设置是否取消后续构建。
-		/// </summary>
+		/// <summary>获取或设置是否取消后续构建。</summary>
 		public bool Cancel
 		{
-			get
-			{
-				return _cancel;
-			}
-			set
-			{
-				_cancel = value;
-			}
+			get => _cancel;
+			set => _cancel = value;
 		}
 
-		/// <summary>
-		/// 获取当前构建器要操作的构件。
-		/// </summary>
-		public Builtin Builtin
-		{
-			get
-			{
-				return _builtin;
-			}
-		}
+		/// <summary>获取当前构建器要操作的构件。</summary>
+		public Builtin Builtin => _builtin;
 
-		/// <summary>
-		/// 获取当前构建器需要操作的插件节点，即为<see cref="Builtin"/>属性所指定的构件所属的<see cref="PluginTreeNode"/>插件树节点。
-		/// </summary>
-		public PluginTreeNode Node
-		{
-			get
-			{
-				return _builtin.Node;
-			}
-		}
+		/// <summary>获取当前构建器需要操作的插件节点，即为<see cref="Builtin"/>属性所指定的构件所属的<see cref="PluginTreeNode"/>插件树节点。</summary>
+		public PluginTreeNode Node => _builtin.Node;
 
-		/// <summary>
-		/// 获取当前构建的深度，如果大于零则表示处于子构件的构建中。
-		/// </summary>
-		public int Depth
-		{
-			get
-			{
-				return _depth;
-			}
-		}
+		/// <summary>获取当前构建的深度，如果大于零则表示处于子构件的构建中。</summary>
+		public int Depth => _depth;
 
-		/// <summary>
-		/// 获取当前节点的所有者对象，即所有者节点对应的目标对象。
-		/// </summary>
-		/// <remarks>
-		///		<para>获取该属性值不会激发对所有者节点的创建动作，以避免在构建过程中发生无限递归调用。</para>
-		/// </remarks>
+		/// <summary>获取当前节点的所有者对象，即所有者节点对应的目标对象。</summary>
+		/// <remarks>获取该属性值不会激发对所有者节点的创建动作，以避免在构建过程中发生无限递归调用。</remarks>
 		public object Owner
 		{
 			get
@@ -188,9 +121,7 @@ namespace Zongsoft.Plugins.Builders
 			}
 		}
 
-		/// <summary>
-		/// 获取当前节点的所有者节点。
-		/// </summary>
+		/// <summary>获取当前节点的所有者节点。</summary>
 		public PluginTreeNode OwnerNode
 		{
 			get
@@ -219,22 +150,12 @@ namespace Zongsoft.Plugins.Builders
 			}
 		}
 
-		/// <summary>
-		/// 获取或设置由构建器创建的目标对象。
-		/// </summary>
-		/// <remarks>
-		///		<para>该属性返回值会被添加到<see cref="Owner"/>对象的子集中。</para>
-		/// </remarks>
+		/// <summary>获取或设置由构建器创建的目标对象。</summary>
+		/// <remarks>该属性返回值会被添加到<see cref="Owner"/>对象的子集中。</remarks>
 		public object Result
 		{
-			get
-			{
-				return _result;
-			}
-			set
-			{
-				_result = value;
-			}
+			get => _result;
+			set => _result = value;
 		}
 		#endregion
 

@@ -40,9 +40,7 @@ namespace Zongsoft.Plugins
 	/// </remarks>
 	public interface IAppender
 	{
-		/// <summary>
-		/// 将指定的子级目标对象追加到当前目标对象的特定集合中。
-		/// </summary>
+		/// <summary>将指定的子级目标对象追加到当前目标对象的特定集合中。</summary>
 		/// <param name="context">追加器的上下文对象。</param>
 		/// <returns>如果追加成功则返回真(true)，否则返回假(false)。</returns>
 		bool Append(AppenderContext context);

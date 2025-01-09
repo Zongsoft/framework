@@ -112,10 +112,12 @@ namespace Zongsoft.Plugins
 
 			return "/Workbench";
 		}
+
+		internal string GetStartupMountion() => PluginPath.Combine(this.GetWorkbenchMountion(), "Startup");
 		#endregion
 
 		#region 重写方法
-		public bool Equals(PluginOptions other) => other != null && string.Equals(this.PluginsPath, other.PluginsPath);
+		public bool Equals(PluginOptions other) => other is not null && string.Equals(this.PluginsPath, other.PluginsPath);
 		public override bool Equals(object obj) => obj is PluginOptions other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.PluginsPath);
 		public override string ToString() => this.PluginsPath;

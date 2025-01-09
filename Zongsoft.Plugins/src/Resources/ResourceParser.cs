@@ -75,15 +75,15 @@ namespace Zongsoft.Resources
 				match.Groups["arg"].Captures.CopyTo(args, 0);
 
 			if(TryParse(resourceName, context.Plugin, true, out object result))
-				return this.FormatResult(result, args);
+				return FormatResult(result, args);
 
 			//如果父插件的程序集中未包含指定的资源，则从当前程序集中继续查找
-			if(this.GetResourceValue(Assembly.GetExecutingAssembly(), resourceName, out result))
-				return this.FormatResult(result, args);
+			if(GetResourceValue(Assembly.GetExecutingAssembly(), resourceName, out result))
+				return FormatResult(result, args);
 
 			//如果当前程序集中未包含指定的资源，则从入口主程序集中继续查找
-			if(this.GetResourceValue(Assembly.GetEntryAssembly(), resourceName, out result))
-				return this.FormatResult(result, args);
+			if(GetResourceValue(Assembly.GetEntryAssembly(), resourceName, out result))
+				return FormatResult(result, args);
 
 			//最后返回无法解析的文本本身
 			return context.Text;
@@ -91,18 +91,18 @@ namespace Zongsoft.Resources
 		#endregion
 
 		#region 私有方法
-		private object FormatResult(object result, string[] args)
+		private static object FormatResult(object result, string[] args)
 		{
 			if(result == null)
 				return null;
 
-			if(result is string && args != null && args.Length > 0)
-				result = string.Format((string)result, (object[])args);
+			if(result is string format && args != null && args.Length > 0)
+				result = string.Format(format, (object[])args);
 
 			return result;
 		}
 
-		private bool TryParse(string text, Plugin plugin, bool findUp, out object value)
+		private static bool TryParse(string text, Plugin plugin, bool findUp, out object value)
 		{
 			if(plugin == null)
 			{
@@ -113,7 +113,7 @@ namespace Zongsoft.Resources
 			//在当前插件的程序集中进行资源查找，如果找到则直接返回
 			foreach(Assembly assembly in plugin.Manifest.Assemblies)
 			{
-				if(this.GetResourceValue(assembly, text, out value))
+				if(GetResourceValue(assembly, text, out value))
 					return true;
 			}
 
@@ -126,14 +126,14 @@ namespace Zongsoft.Resources
 
 			//如果当前插件的程序集中未包含指定的资源，则从父插件中继续查找
 			if(findUp)
-				return this.TryParse(text, plugin.Parent, findUp, out value);
+				return TryParse(text, plugin.Parent, findUp, out value);
 
 			//如果所有查找失败则返回假
 			value = text;
 			return false;
 		}
 
-		private bool GetResourceValue(Assembly assembly, string name, out object result)
+		private static bool GetResourceValue(Assembly assembly, string name, out object result)
 		{
 			result = null;
 
@@ -152,7 +152,7 @@ namespace Zongsoft.Resources
 				};
 
 			//在指定程序集中从可选的资源基名中找出存在的基名
-			baseName = this.GetResourceBaseName(assembly, baseNames);
+			baseName = GetResourceBaseName(assembly, baseNames);
 
 			//如果在指定的程序集中没有找到合适的资源基名则退出
 			if(string.IsNullOrEmpty(baseName))
@@ -167,7 +167,7 @@ namespace Zongsoft.Resources
 			return (result != null);
 		}
 
-		private string GetResourceBaseName(Assembly assembly, string[] names)
+		private static string GetResourceBaseName(Assembly assembly, string[] names)
 		{
 			if(names == null || names.Length < 1)
 				return null;

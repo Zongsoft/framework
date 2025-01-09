@@ -28,25 +28,17 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins
 {
 	public class PluginPath
 	{
 		#region 静态方法
-		public static string Combine(params string[] paths)
-		{
-			return Zongsoft.IO.Path.Combine(paths);
-		}
+		public static string Combine(params string[] paths) => Zongsoft.IO.Path.Combine(paths);
 		#endregion
 
 		#region 内部方法
-		internal static string PreparePathText(string text)
-		{
-			return PreparePathText(text, out _);
-		}
-
+		internal static string PreparePathText(string text) => PreparePathText(text, out _);
 		internal static string PreparePathText(string text, out ObtainMode mode)
 		{
 			mode = ObtainMode.Auto;
@@ -60,9 +52,9 @@ namespace Zongsoft.Plugins
 				return text;
 
 			if(index < text.Length - 1)
-				Enum.TryParse<ObtainMode>(text.Substring(index + 1), true, out mode);
+				Enum.TryParse<ObtainMode>(text[(index + 1)..], true, out mode);
 
-			return text.Substring(0, index);
+			return text[..index];
 		}
 		#endregion
 	}

@@ -39,30 +39,14 @@ namespace Zongsoft.Plugins.Builders
 		#endregion
 
 		#region 构造函数
-		protected BuilderBase()
-		{
-		}
-
-		protected BuilderBase(IEnumerable<string> ignoredProperties)
-		{
-			_ignoredProperties = ignoredProperties;
-		}
+		protected BuilderBase() { }
+		protected BuilderBase(IEnumerable<string> ignoredProperties) => _ignoredProperties = ignoredProperties;
 		#endregion
 
 		#region 保护属性
-		/// <summary>
-		/// 获取在创建目标对象时要忽略设置的扩展属性名。
-		/// </summary>
-		/// <remarks>
-		///		<para>对重写<see cref="Build"/>方法的实现者的说明：在构建目标对象后应排除本属性所指定的在Builtin.Properties中的属性项。</para>
-		/// </remarks>
-		protected virtual IEnumerable<string> IgnoredProperties
-		{
-			get
-			{
-				return _ignoredProperties;
-			}
-		}
+		/// <summary>获取在创建目标对象时要忽略设置的扩展属性名。</summary>
+		/// <remarks>对重写<see cref="Build"/>方法的实现者的说明：在构建目标对象后应排除本属性所指定的在Builtin.Properties中的属性项。</remarks>
+		protected virtual IEnumerable<string> IgnoredProperties => _ignoredProperties;
 		#endregion
 
 		#region 获取类型
@@ -97,29 +81,18 @@ namespace Zongsoft.Plugins.Builders
 			if(context == null || context.Builtin == null)
 				return;
 
-			Builtin builtin = context.Builtin;
+			var builtin = context.Builtin;
 
 			if(builtin.HasValue)
 			{
-				IDisposable value = builtin.Value as IDisposable;
-
-				if(value != null)
+				if(builtin.Value is IDisposable disposable)
+					disposable.Dispose();
+				else if(builtin.Value is System.Collections.IEnumerable collection)
 				{
-					value.Dispose();
-				}
-				else
-				{
-					System.Collections.IEnumerable collection = builtin.Value as System.Collections.IEnumerable;
-
-					if(collection != null)
+					foreach(object item in collection)
 					{
-						foreach(object item in collection)
-						{
-							IDisposable disposable = item as IDisposable;
-
-							if(disposable != null)
-								disposable.Dispose();
-						}
+						if(item is IDisposable disposableItem)
+							disposableItem.Dispose();
 					}
 				}
 
@@ -163,9 +136,7 @@ namespace Zongsoft.Plugins.Builders
 				appender.Append(new AppenderContext(context.Result, context.Node, context.Owner, context.OwnerNode, AppenderBehavior.Appending));
 		}
 
-		protected virtual void Dispose(bool disposing)
-		{
-		}
+		protected virtual void Dispose(bool disposing) { }
 		#endregion
 
 		#region 显式实现

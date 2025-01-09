@@ -32,20 +32,10 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Plugins
 {
-	public class BuiltinBehaviorCollection : KeyedCollection<string, BuiltinBehavior>
+	public class BuiltinBehaviorCollection(Builtin builtin) : KeyedCollection<string, BuiltinBehavior>(StringComparer.OrdinalIgnoreCase)
 	{
 		#region 成员字段
-		private Builtin _builtin;
-		#endregion
-
-		#region 构造函数
-		public BuiltinBehaviorCollection(Builtin builtin) : base(StringComparer.OrdinalIgnoreCase)
-		{
-			if(builtin == null)
-				throw new ArgumentNullException(nameof(builtin));
-
-			_builtin = builtin;
-		}
+		private readonly Builtin _builtin = builtin ?? throw new ArgumentNullException(nameof(builtin));
 		#endregion
 
 		#region 公共方法
@@ -77,31 +67,25 @@ namespace Zongsoft.Plugins
 			return false;
 		}
 
-		public T GetBehaviorValue<T>(string name, T defaultValue = default(T))
+		public T GetBehaviorValue<T>(string name, T defaultValue = default)
 		{
 			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 
 			var index = name.IndexOf('.');
 
 			if(index < 0 || index >= name.Length - 1)
 				throw new ArgumentException();
 
-			BuiltinBehavior behavior = null;
-
-			if(this.TryGet(name.Substring(0, index), out behavior))
-				return behavior.GetPropertyValue<T>(name.Substring(index + 1), defaultValue);
+			if(this.TryGet(name[..index], out var behavior))
+				return behavior.GetPropertyValue<T>(name[(index + 1)..], defaultValue);
 
 			return defaultValue;
 		}
 		#endregion
 
 		#region 重写方法
-		protected override string GetKeyForItem(BuiltinBehavior item)
-		{
-			return item.Name;
-		}
-
+		protected override string GetKeyForItem(BuiltinBehavior item) => item.Name;
 		protected override void InsertItem(int index, BuiltinBehavior item)
 		{
 			if(item == null)

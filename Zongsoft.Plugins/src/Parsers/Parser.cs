@@ -45,10 +45,7 @@ namespace Zongsoft.Plugins.Parsers
 		#region 静态方法
 		public static bool CanParse(string text)
 		{
-			if(string.IsNullOrWhiteSpace(text))
-				return false;
-
-			return _regex.IsMatch(text);
+			return !string.IsNullOrWhiteSpace(text) && _regex.IsMatch(text);
 		}
 
 		public static object Parse(string text, PluginTreeNode node, string memberName, Type memberType)
@@ -56,7 +53,7 @@ namespace Zongsoft.Plugins.Parsers
 			if(node == null)
 				throw new ArgumentNullException(nameof(node));
 
-			return ParseCore(text, node, (scheme, element) => GetParser(scheme, element), (scheme, expression, element) => new ParserContext(scheme, expression, element, memberName, memberType));
+			return ParseCore(text, node, GetParser, (scheme, expression, element) => new ParserContext(scheme, expression, element, memberName, memberType));
 		}
 
 		public static object Parse(string text, Builtin builtin, string memberName, Type memberType)
@@ -72,10 +69,8 @@ namespace Zongsoft.Plugins.Parsers
 			if(string.IsNullOrWhiteSpace(text) || builtin == null)
 				return null;
 
-			string scheme, value, prefix, suffix;
-
 			//解析输入的文本
-			ResolveText(text, out scheme, out value, out prefix, out suffix);
+			ResolveText(text, out var scheme, out var value, out _, out _);
 
 			if(!string.IsNullOrEmpty(scheme))
 			{
@@ -117,10 +112,8 @@ namespace Zongsoft.Plugins.Parsers
 			if(string.IsNullOrWhiteSpace(text))
 				return text;
 
-			string scheme, value, prefix, suffix;
-
 			//解析输入的文本
-			ResolveText(text, out scheme, out value, out prefix, out suffix);
+			ResolveText(text, out var scheme, out var value, out var prefix, out var suffix);
 
 			if(string.IsNullOrWhiteSpace(scheme))
 				return value;

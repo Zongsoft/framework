@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins.Builders
 {
@@ -46,29 +45,14 @@ namespace Zongsoft.Plugins.Builders
 		#endregion
 
 		#region 构造函数
-		public BuilderBehaviorAttribute(Type valueType)
-		{
-			if(valueType == null)
-				throw new ArgumentNullException("valueType");
-
-			_valueType = valueType;
-		}
+		public BuilderBehaviorAttribute(Type valueType) => _valueType = valueType ?? throw new ArgumentNullException(nameof(valueType));
 		#endregion
 
 		#region 公共属性
 		public Type ValueType
 		{
-			get
-			{
-				return _valueType;
-			}
-			set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_valueType = value;
-			}
+			get => _valueType;
+			set => _valueType = value ?? throw new ArgumentNullException(nameof(value));
 		}
 		#endregion
 	}

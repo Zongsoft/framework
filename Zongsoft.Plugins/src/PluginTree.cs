@@ -42,7 +42,7 @@ namespace Zongsoft.Plugins
 		public event EventHandler<PluginMountEventArgs> Mounting;
 		#endregion
 
-		#region 私有函数
+		#region 私有构造
 		private PluginTree(PluginOptions options)
 		{
 			this.Options = options ?? throw new ArgumentNullException(nameof(options));
@@ -72,7 +72,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 静态构建
-		private static readonly ConcurrentDictionary<PluginOptions, PluginTree> _instances = new ConcurrentDictionary<PluginOptions, PluginTree>();
+		private static readonly ConcurrentDictionary<PluginOptions, PluginTree> _instances = new();
 
 		public static PluginTree Get(PluginOptions options)
 		{
@@ -115,8 +115,8 @@ namespace Zongsoft.Plugins
 		/// <param name="path">指定的路径。</param>
 		/// <returns>如果查找成功则返回对应的插件树节点对象，否则返回空(null)。</returns>
 		/// <exception cref="System.ArgumentNullException">当<paramref name="path"/>参数为空或全空格字符串。</exception>
-		public PluginTreeNode Find(string path) => Root.Find(path);
-		public PluginTreeNode Find(params string[] paths) => Root.Find(paths);
+		public PluginTreeNode Find(string path) => this.Root.Find(path);
+		public PluginTreeNode Find(params string[] paths) => this.Root.Find(paths);
 		#endregion
 
 		#region 创建节点
@@ -145,11 +145,11 @@ namespace Zongsoft.Plugins
 		public PluginTreeNode EnsurePath(string path, string position, out bool existed)
 		{
 			if(string.IsNullOrWhiteSpace(path))
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
 			existed = true;
 			var node = this.Root;
-			string[] parts = path.Split('/');
+			var parts = path.Split('/');
 
 			for(int i = 0; i < parts.Length; i++)
 			{
@@ -160,7 +160,7 @@ namespace Zongsoft.Plugins
 					if(node == this.Root)
 						continue;
 					else
-						throw new PluginException("Invlaid '" + path + "' path.");
+						throw new PluginException($"Invlaid plugin path: '{path}'.");
 				}
 
 				var child = node.Children[part];
@@ -235,10 +235,10 @@ namespace Zongsoft.Plugins
 		internal void MountBuiltin(string path, Builtin builtin)
 		{
 			if(string.IsNullOrWhiteSpace(path))
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
 			if(builtin == null)
-				throw new ArgumentNullException("builtin");
+				throw new ArgumentNullException(nameof(builtin));
 
 			var fullPath = PluginPath.Combine(path, builtin.Name);
 
@@ -262,9 +262,7 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 卸载方法
-		/// <summary>
-		/// 卸载指定路径的自定义对象。
-		/// </summary>
+		/// <summary>卸载指定路径的自定义对象。</summary>
 		/// <param name="path">指定要卸载的路径。</param>
 		/// <returns>如果成功卸载则返回被卸载的对象，否则返回空(null)。</returns>
 		/// <exception cref="System.ArgumentNullException">当<paramref name="path"/>参数为空或全空字符串。</exception>
@@ -277,7 +275,7 @@ namespace Zongsoft.Plugins
 		public object Unmount(string path)
 		{
 			if(string.IsNullOrWhiteSpace(path))
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
 			PluginTreeNode node = this.Find(path);
 
@@ -287,9 +285,7 @@ namespace Zongsoft.Plugins
 			return this.Unmount(node);
 		}
 
-		/// <summary>
-		/// 卸载指定插件树节点对应的自定义对象。
-		/// </summary>
+		/// <summary>卸载指定插件树节点对应的自定义对象。</summary>
 		/// <param name="node">指定要卸载对象的挂靠节点。</param>
 		/// <returns>如果成功卸载则返回被卸载的对象，否则返回空(null)。</returns>
 		/// <exception cref="System.ArgumentNullException">当<paramref name="node"/>参数为空(null)。</exception>
@@ -332,7 +328,7 @@ namespace Zongsoft.Plugins
 		private void UnmountItem(Plugin plugin, string path)
 		{
 			if(string.IsNullOrWhiteSpace(path))
-				throw new ArgumentNullException("path");
+				throw new ArgumentNullException(nameof(path));
 
 			PluginTreeNode node = this.Find(path);
 
@@ -443,24 +439,8 @@ namespace Zongsoft.Plugins
 		/// <remarks>
 		///		<para>注意：该方法不会引起上级节点的创建动作，可确保在<see cref="Zongsoft.Plugins.IBuilder"/>构建器中使用而不会导致循环创建的问题。</para>
 		/// </remarks>
-		internal object GetOwner(PluginTreeNode node)
-		{
-			var ownerNode = this.GetOwnerNode(node);
-
-			if(ownerNode != null)
-				return ownerNode.Value;
-
-			return null;
-		}
-
-		public PluginTreeNode GetOwnerNode(string path)
-		{
-			if(string.IsNullOrWhiteSpace(path))
-				return null;
-
-			return this.GetOwnerNode(this.Find(path));
-		}
-
+		internal object GetOwner(PluginTreeNode node) => this.GetOwnerNode(node)?.Value;
+		public PluginTreeNode GetOwnerNode(string path) => string.IsNullOrWhiteSpace(path) ? null : this.GetOwnerNode(this.Find(path));
 		public PluginTreeNode GetOwnerNode(PluginTreeNode node)
 		{
 			if(node == null)

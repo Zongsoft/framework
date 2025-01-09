@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Plugins.Parsers
 {
@@ -41,7 +40,7 @@ namespace Zongsoft.Plugins.Parsers
 				return null;
 
 			//处理特殊路径表达式，即获取插件文件路径或目录
-			if(context.Text.StartsWith("~"))
+			if(context.Text.StartsWith('~'))
 				return typeof(string);
 
 			var expression = Collections.HierarchicalExpression.Parse(PluginPath.PreparePathText(context.Text));

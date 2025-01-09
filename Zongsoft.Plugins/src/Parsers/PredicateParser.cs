@@ -72,7 +72,7 @@ namespace Zongsoft.Plugins.Parsers
 				string text = matches.Count <= 1 ? null : context.Text.Substring(matches[1].Index);
 				object parameter = text;
 
-				if(Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IPredication<PluginPredicationContext>), predication.GetType()))
+				if(TypeExtension.IsAssignableFrom(typeof(IPredication<PluginPredicationContext>), predication.GetType()))
 					parameter = new PluginPredicationContext(text, context.Builtin, context.Node, context.Plugin);
 
 				return predication.Predicate(parameter);
