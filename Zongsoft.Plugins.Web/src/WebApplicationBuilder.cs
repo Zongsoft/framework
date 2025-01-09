@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
@@ -143,6 +144,11 @@ namespace Zongsoft.Web
 			services.AddSingleton<IApplicationFeatureProvider, SignalR.HubFeatureProvider>();
 			services.AddSingleton<IApplicationFeatureProvider<SignalR.HubFeature>, SignalR.HubFeatureProvider>();
 			services.AddAuthentication(CredentialPrincipal.Scheme).AddCredentials();
+
+			services.Configure<FormOptions>(options =>
+			{
+				options.MultipartBodyLengthLimit = 1024 * 1024 * 512;
+			});
 
 			services.AddCors(options => options.AddDefaultPolicy(builder =>
 				builder

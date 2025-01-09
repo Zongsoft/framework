@@ -111,6 +111,7 @@ public class FileController : ControllerBase
 	}
 
 	[HttpPost("{**path}")]
+	[DisableRequestSizeLimit]
 	public async ValueTask<IActionResult> UploadAsync(string path, CancellationToken cancellation)
 	{
 		var physicalPath = Utility.GetPhysicalPath(path);
