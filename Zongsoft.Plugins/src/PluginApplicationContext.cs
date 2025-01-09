@@ -82,8 +82,12 @@ namespace Zongsoft.Plugins
 							//将当前工作台对象挂载到插件结构中
 							this.PluginTree.Mount(node, _workbench);
 
+							//查找“Startup”启动目录节点
+							var startup = this.PluginTree.Find(this.Options.GetStartupMountion());
+
 							//确认工作台路径及其下属所有节点均已构建完成
-							BuildWorkbenchChildren(node, this.Options.GetStartupMountion());
+							//注意：忽略“Startup”节点及其子节点，必须将“Startup”节点置于最后构建
+							BuildWorkbenchChildren(node, n => n == startup);
 
 							//激发“WorkbenchCreated”事件
 							this.OnWorkbenchCreated();
@@ -151,9 +155,9 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 私有方法
-		private static void BuildWorkbenchChildren(PluginTreeNode node, string startup)
+		private static void BuildWorkbenchChildren(PluginTreeNode node, Predicate<PluginTreeNode> predicate)
 		{
-			if(node == null)
+			if(node == null || predicate(node))
 				return;
 
 			if(node.NodeType == PluginTreeNodeType.Builtin)
@@ -162,12 +166,10 @@ namespace Zongsoft.Plugins
 
 				if(!builtin.IsBuilded)
 					builtin.Build();
-
-				return;
 			}
 
 			foreach(var child in node.Children)
-				BuildWorkbenchChildren(child, startup);
+				BuildWorkbenchChildren(child, predicate);
 		}
 		#endregion
 	}

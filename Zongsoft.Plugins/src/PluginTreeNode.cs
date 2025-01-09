@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Plugins
 {
-	public class PluginTreeNode : PluginElement
+	public class PluginTreeNode : PluginElement, IEquatable<PluginTreeNode>
 	{
 		#region 成员字段
 		private object _value;
@@ -64,13 +64,7 @@ namespace Zongsoft.Plugins
 
 		#region 公共属性
 		/// <summary>获取插件树节点的类型。</summary>
-		public PluginTreeNodeType NodeType
-		{
-			get
-			{
-				return _nodeType;
-			}
-		}
+		public PluginTreeNodeType NodeType => _nodeType;
 
 		/// <summary>获取当前插件树节点挂载的对象。</summary>
 		/// <remarks>
@@ -88,10 +82,7 @@ namespace Zongsoft.Plugins
 		/// </remarks>
 		public object Value
 		{
-			get
-			{
-				return _value;
-			}
+			get => _value;
 			internal set
 			{
 				if(object.ReferenceEquals(_value, value))
@@ -106,40 +97,21 @@ namespace Zongsoft.Plugins
 		///		<para>注意：该方法不会激发节点类型为<see cref="PluginTreeNodeType.Builtin"/>的创建动作，因此适合在不需要获取目标值的场景中使用该方法来获取其类型。</para>
 		///		<para>当节点类型为<see cref="PluginTreeNodeType.Builtin"/>时的更详细行为请参考<seealso cref="Builtin.GetValueType()"/>方法的描述信息。</para>
 		/// </remarks>
-		public Type ValueType
+		public Type ValueType => _nodeType switch
 		{
-			get
-			{
-				switch(_nodeType)
-				{
-					case PluginTreeNodeType.Empty:
-						return null;
-					case PluginTreeNodeType.Custom:
-						return _value.GetType();
-					case PluginTreeNodeType.Builtin:
-						return ((Builtin)_value).GetValueType();
-					default:
-						throw new NotSupportedException();
-				}
-			}
-		}
+			PluginTreeNodeType.Empty => null,
+			PluginTreeNodeType.Custom => _value.GetType(),
+			PluginTreeNodeType.Builtin => ((Builtin)_value).GetValueType(),
+			_ => throw new NotSupportedException(),
+		};
 
 		/// <summary>获取插件树节点所在的插件树对象。</summary>
-		public PluginTree Tree
-		{
-			get
-			{
-				return _tree;
-			}
-		}
+		public PluginTree Tree => _tree;
 
 		/// <summary>获取插件树节点的父级节点。</summary>
 		public PluginTreeNode Parent
 		{
-			get
-			{
-				return _parent;
-			}
+			get => _parent;
 			internal set
 			{
 				if(object.ReferenceEquals(_parent, value))
@@ -154,13 +126,7 @@ namespace Zongsoft.Plugins
 		}
 
 		/// <summary>获取插件树节点的子级节点集。</summary>
-		public PluginTreeNodeCollection Children
-		{
-			get
-			{
-				return _children;
-			}
-		}
+		public PluginTreeNodeCollection Children => _children;
 
 		/// <summary>获取插件树节点的路径，该路径不含当前节点名称，如果是根节点则返回空字符串(<see cref="String.Empty"/>)。</summary>
 		public string Path
@@ -197,14 +163,7 @@ namespace Zongsoft.Plugins
 		}
 
 		/// <summary>获取当前插件节点是否具有扩展属性。</summary>
-		public bool HasProperties
-		{
-			get
-			{
-				var properties = _properties;
-				return properties != null && properties.Count > 0;
-			}
-		}
+		public bool HasProperties => _properties != null && _properties.Count > 0;
 
 		/// <summary>获取插件节点的扩展属性集。</summary>
 		public PluginExtendedPropertyCollection Properties
@@ -318,6 +277,9 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
+		public bool Equals(PluginTreeNode other) => other is not null && object.Equals(this.Plugin, other.Plugin) && string.Equals(this.FullPath, other.FullPath);
+		public override bool Equals(object obj) => obj is PluginTreeNode other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(_tree, this.FullPath);
 		public override string ToString() => this.Plugin == null ?
 			$"[{this.NodeType}]{this.FullPath}" :
 			$"[{this.NodeType}]{this.FullPath}@{this.Plugin}";

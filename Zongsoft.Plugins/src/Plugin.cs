@@ -392,10 +392,10 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 重写方法
-		public override string ToString() => $"{_name} [{_filePath}]";
-		public override int GetHashCode() => string.IsNullOrEmpty(_filePath) ? 0 : _filePath.GetHashCode();
-		public bool Equals(Plugin other) => other != null && string.Equals(_filePath, other._filePath);
+		public bool Equals(Plugin other) => other is not null && string.Equals(_filePath, other._filePath);
 		public override bool Equals(object obj) => obj is Plugin other && this.Equals(other);
+		public override int GetHashCode() => string.IsNullOrEmpty(_filePath) ? 0 : _filePath.GetHashCode();
+		public override string ToString() => $"{_name} [{_filePath}]";
 		#endregion
 
 		#region 嵌套子类
