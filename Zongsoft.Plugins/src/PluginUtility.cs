@@ -249,8 +249,8 @@ namespace Zongsoft.Plugins
 				{
 					var parameters = constructorInfo.GetParameters();
 
-					//如果构造函数的参数数量小于声明的参数数量则匹配失败
-					if(parameters.Length < constructor.Count)
+					//如果构造函数的参数数量小于或等于声明的参数数量则匹配失败
+					if(parameters.Length <= constructor.Count)
 						continue;
 
 					for(int i = 0; i < parameters.Length; i++)

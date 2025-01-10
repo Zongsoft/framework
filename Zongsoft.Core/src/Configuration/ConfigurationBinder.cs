@@ -45,11 +45,7 @@ namespace Zongsoft.Configuration
 			configuration.GetSection(ConfigurationUtility.GetConfigurationPath(path)).Bind(instance);
 		}
 
-		public static void Bind(this IConfiguration configuration, object instance)
-		{
-			configuration.Bind(instance, o => { });
-		}
-
+		public static void Bind(this IConfiguration configuration, object instance) => configuration.Bind(instance, o => { });
 		public static void Bind(this IConfiguration configuration, object instance, Action<ConfigurationBinderOptions> configureOptions)
 		{
 			if(configuration == null)
@@ -93,21 +89,9 @@ namespace Zongsoft.Configuration
 			return GetResolver(type).Resolve(type, configuration, options);
 		}
 
-		public static T GetOptionValue<T>(this IConfiguration configuration, string path)
-		{
-			return GetOptionValue(configuration, path, default(T));
-		}
-
-		public static T GetOptionValue<T>(this IConfiguration configuration, string path, T defaultValue)
-		{
-			return (T)GetOptionValue(configuration, typeof(T), path, defaultValue);
-		}
-
-		public static object GetOptionValue(this IConfiguration configuration, Type type, string path)
-		{
-			return GetOptionValue(configuration, type, path, defaultValue: null);
-		}
-
+		public static T GetOptionValue<T>(this IConfiguration configuration, string path) => GetOptionValue(configuration, path, default(T));
+		public static T GetOptionValue<T>(this IConfiguration configuration, string path, T defaultValue) => (T)GetOptionValue(configuration, typeof(T), path, defaultValue);
+		public static object GetOptionValue(this IConfiguration configuration, Type type, string path) => GetOptionValue(configuration, type, path, defaultValue: null);
 		public static object GetOptionValue(this IConfiguration configuration, Type type, string path, object defaultValue)
 		{
 			if(string.IsNullOrEmpty(path))

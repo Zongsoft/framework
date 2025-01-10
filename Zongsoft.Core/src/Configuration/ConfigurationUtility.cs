@@ -38,10 +38,7 @@ namespace Zongsoft.Configuration
 	{
 		public static string GetConfigurationPath(string key)
 		{
-			if(string.IsNullOrWhiteSpace(key))
-				return string.Empty;
-
-			return key.Trim('/').Replace('/', ':');
+			return string.IsNullOrEmpty(key) ? string.Empty : key.Trim('/').Replace('/', ':');
 		}
 
 		public static Type GetImplementedContract(Type actual, params Type[] expectedTypes)

@@ -29,8 +29,8 @@
 
 using System;
 using System.Text;
-using System.Collections.Generic;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace Zongsoft.Common
 {
@@ -39,9 +39,9 @@ namespace Zongsoft.Common
 		#region 初始化器
 		static Convert()
 		{
-			TypeDescriptor.AddAttributes(typeof(Enum), new Attribute[] { new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EnumConverter)) });
-			TypeDescriptor.AddAttributes(typeof(Guid), new Attribute[] { new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.GuidConverter)) });
-			TypeDescriptor.AddAttributes(typeof(Encoding), new Attribute[] { new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EncodingConverter)) });
+			TypeDescriptor.AddAttributes(typeof(Enum), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EnumConverter))]);
+			TypeDescriptor.AddAttributes(typeof(Guid), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.GuidConverter))]);
+			TypeDescriptor.AddAttributes(typeof(Encoding), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EncodingConverter))]);
 		}
 		#endregion
 

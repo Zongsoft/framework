@@ -149,7 +149,7 @@ namespace Zongsoft.Configuration
 				var valueType = collectionType.GenericTypeArguments[0];
 				var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
 
-				add.Invoke(instance, new object[] { this.Resolve(valueType, configuration, options) });
+				add.Invoke(instance, [this.Resolve(valueType, configuration, options)]);
 
 				return true;
 			}
@@ -442,14 +442,12 @@ namespace Zongsoft.Configuration
 			#region 构造函数
 			public PropertyToken(PropertyInfo property)
 			{
-				this.Property = property;
+				this.Property = property ?? throw new ArgumentNullException(nameof(property));
 				this.Converter = ConfigurationUtility.GetConverter(property);
+				this.Alias = property.Name;
 
 				var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
-
-				if(attribute == null)
-					this.Alias = property.Name;
-				else
+				if(attribute != null)
 					this.Alias = attribute.Name;
 			}
 			#endregion
@@ -457,11 +455,11 @@ namespace Zongsoft.Configuration
 			#region 公共字段
 			public readonly TypeConverter Converter;
 			public readonly PropertyInfo Property;
+			public readonly string Alias;
 			#endregion
 
 			#region 公共属性
 			public string Name => this.Property.Name;
-			public string Alias { get; }
 			public bool CanRead => this.Property.CanRead;
 			public bool CanWrite => this.Property.CanWrite;
 			public Type PropertyType => this.Property.PropertyType;
@@ -501,7 +499,7 @@ namespace Zongsoft.Configuration
 				if(!this.CanWrite)
 					return false;
 
-				if(Zongsoft.Common.Convert.TryConvertValue(value, this.PropertyType, () => this.Converter, out var convertedValue))
+				if(Common.Convert.TryConvertValue(value, this.PropertyType, () => this.Converter, out var convertedValue))
 				{
 					Reflection.Reflector.SetValue(this.Property, ref target, convertedValue);
 					return true;
@@ -512,31 +510,10 @@ namespace Zongsoft.Configuration
 			#endregion
 
 			#region 重写方法
-			public bool Equals(PropertyToken other)
-			{
-				if(other == null)
-					return false;
-
-				return this.Property.Equals(other.Property);
-			}
-
-			public override bool Equals(object obj)
-			{
-				if(obj == null || obj.GetType() != this.GetType())
-					return false;
-
-				return this.Property.Equals((PropertyToken)obj);
-			}
-
-			public override int GetHashCode()
-			{
-				return this.Property.GetHashCode();
-			}
-
-			public override string ToString()
-			{
-				return $"{this.Property.Name}:{this.Property.PropertyType.FullName}";
-			}
+			public bool Equals(PropertyToken other) => other is not null && this.Property.Equals(other.Property);
+			public override bool Equals(object obj) => obj is PropertyToken other && this.Equals(other);
+			public override int GetHashCode() => this.Property.GetHashCode();
+			public override string ToString() => $"{this.Property.Name}:{this.Property.PropertyType.FullName}";
 			#endregion
 		}
 		#endregion
