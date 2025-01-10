@@ -6,4 +6,42 @@
 			<connectionSetting connectionSetting.name="db2" driver="postgres" mode="all" value="db2.connectionString" />
 		</connectionSettings>
 	</option>
+
+	<option path="/Messaging/Queues">
+		<topic topic.name="avm">
+			<subscription reliability="MostOnce">
+				<filter filter.key="#" topic="heartbeat" />
+				<filter filter.key="#" topic="uplink-ping" />
+				<filter filter.key="#" topic="uplink-synchronize" />
+				<filter filter.key="#" topic="uplink-trade" />
+				<filter filter.key="#" topic="uplink-fault" />
+				<filter filter.key="#" topic="downlink-synchronize" />
+				<filter filter.key="#" topic="downlink-control" />
+			</subscription>
+		</topic>
+	</option>
+
+	<option path="/Diagnostics">
+		<diagnostor>
+			<meters>
+				<filter>*</filter>
+				<filter>Test</filter>
+
+
+				<exporters>
+					<exporter exporter.key="#" driver="telemetry" />
+					<exporter exporter.key="#" driver="prometheus" value="urls=http://127.0.0.1:9464,http://localhost:9464" />
+				</exporters>
+			</meters>
+
+			<traces>
+				<filter>*</filter>
+
+				<exporters>
+					<exporter exporter.key="#" driver="telemetry" />
+					<exporter exporter.key="#" driver="zipkin" />
+				</exporters>
+			</traces>
+		</diagnostor>
+	</option>
 </configuration>
