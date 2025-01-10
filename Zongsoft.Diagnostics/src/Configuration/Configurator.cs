@@ -35,8 +35,8 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Diagnostics.Configuration;
 
-[Diagnostor.ConfiguratorFactory(typeof(Factory))]
-public class DiagnostorConfigurator(string path) : Diagnostor.Configurator(nameof(Configuration))
+[Diagnostor.ConfiguratorFactory<Factory>]
+public class Configurator(string path) : Diagnostor.Configurator()
 {
 	private readonly string _path = path ?? throw new ArgumentNullException(nameof(path));
 
@@ -58,6 +58,6 @@ public class DiagnostorConfigurator(string path) : Diagnostor.Configurator(nameo
 
 	private sealed class Factory : Diagnostor.ConfiguratorFactory
 	{
-		public override Diagnostor.Configurator Create(string argument) => new DiagnostorConfigurator(argument);
+		public override Diagnostor.Configurator Create(string argument) => new Configurator(argument);
 	}
 }

@@ -41,7 +41,7 @@ public class DiagnostorOptions
 
 	public sealed class FilteringOptions
 	{
-		[ConfigurationProperty("")]
+		[ConfigurationProperty("filter")]
 		public ICollection<string> Filters { get; set; }
 		public ConnectionSettingsCollection Exporters { get; set; }
 	}

@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading;
 using System.Reflection;
 using System.Globalization;
 using System.ComponentModel;
@@ -55,7 +56,41 @@ public partial class Diagnostor
 	#endregion
 
 	#region 静态属性
-	public static IDictionary<string, Type> Configurators { get; } = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+	private static volatile Dictionary<string, Type> _configurators;
+	public static IDictionary<string, Type> Configurators
+	{
+		get
+		{
+			if(_configurators == null)
+			{
+				if(Interlocked.CompareExchange(ref _configurators, new(StringComparer.OrdinalIgnoreCase), null) == null)
+				{
+					var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+					for(int i = 0; i < assemblies.Length; i++)
+					{
+						if(assemblies[i].IsDynamic)
+							continue;
+
+						foreach(var type in assemblies[i].DefinedTypes)
+						{
+							if(type.IsPublic && type.IsClass && !type.IsAbstract && (typeof(Configurator).IsAssignableFrom(type) || typeof(ConfiguratorFactory).IsAssignableFrom(type)))
+							{
+								var attribute = type.GetCustomAttribute<ConfiguratorAttribute>(true);
+
+								if(attribute != null && attribute.Name != null)
+									_configurators.TryAdd(attribute.Name, type);
+								else
+									_configurators.TryAdd(type.Name.EndsWith(nameof(Configurator)) ? type.Name[..^nameof(Configurator).Length] : type.Name, type);
+							}
+						}
+					}
+				}
+			}
+
+			return _configurators;
+		}
+	}
 	#endregion
 
 	#region 实例属性
@@ -80,9 +115,13 @@ public partial class Diagnostor
 	[TypeConverter(typeof(ConfiguratorConverter))]
 	public abstract class Configurator
 	{
-		protected Configurator(string name) => this.Name = name ?? string.Empty;
-		public string Name { get; }
 		public abstract void Configure(Diagnostor diagnostor);
+	}
+
+	[AttributeUsage(AttributeTargets.Class)]
+	public class ConfiguratorAttribute(string name = null) : Attribute
+	{
+		public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
 	}
 
 	public abstract class ConfiguratorFactory
@@ -91,20 +130,22 @@ public partial class Diagnostor
 	}
 
 	[AttributeUsage(AttributeTargets.Class)]
-	public class ConfiguratorFactoryAttribute : Attribute
+	public class ConfiguratorFactoryAttribute(Type factory) : Attribute
 	{
-		public ConfiguratorFactoryAttribute(Type factory) => this.Factory = factory;
-		public Type Factory { get; set; }
+		public Type Factory { get; } = factory ?? throw new ArgumentNullException(nameof(factory));
 
 		public Configurator Create(string argument)
 		{
-			if(this.Factory == null || !typeof(Configurator).IsAssignableFrom(this.Factory))
+			if(this.Factory == null || !typeof(ConfiguratorFactory).IsAssignableFrom(this.Factory))
 				return null;
 
-			var constructor = this.Factory.GetConstructor([typeof(string)]);
-			return (Configurator)(constructor == null ? Activator.CreateInstance(this.Factory) : Activator.CreateInstance(this.Factory, argument));
+			var factory = Activator.CreateInstance(this.Factory) as ConfiguratorFactory;
+			return factory?.Create(argument);
 		}
 	}
+
+	[AttributeUsage(AttributeTargets.Class)]
+	public class ConfiguratorFactoryAttribute<T>() : ConfiguratorFactoryAttribute(typeof(T)) { }
 
 	private sealed class ConfiguratorConverter : TypeConverter
 	{
@@ -114,25 +155,23 @@ public partial class Diagnostor
 			if(value is string text)
 			{
 				var index = text.IndexOf(':');
+				var name = index > 0 && index < text.Length ? text[..index] : string.Empty;
 
-				if(index > 0 && index < text.Length)
+				if(Configurators.TryGetValue(name, out var type) && type != null)
 				{
-					if(Configurators.TryGetValue(text[..index], out var type) && type != null)
+					if(typeof(Configurator).IsAssignableFrom(type))
 					{
-						if(typeof(Configurator).IsAssignableFrom(type))
-						{
-							var attribute = type.GetCustomAttribute<ConfiguratorFactoryAttribute>(true);
+						var attribute = type.GetCustomAttribute<ConfiguratorFactoryAttribute>(true);
 
-							if(attribute != null && attribute.Factory != null)
-								return attribute.Create(text[(index + 1)..]);
+						if(attribute != null && attribute.Factory != null)
+							return attribute.Create(text[(index + 1)..]);
 
-							return Activator.CreateInstance(type, text[(index + 1)..]);
-						}
-						else if(typeof(ConfiguratorFactory).IsAssignableFrom(type))
-						{
-							var factory = (ConfiguratorFactory)Activator.CreateInstance(type);
-							return factory.Create(text[(index + 1)..]);
-						}
+						return Activator.CreateInstance(type, text[(index + 1)..]);
+					}
+					else if(typeof(ConfiguratorFactory).IsAssignableFrom(type))
+					{
+						var factory = (ConfiguratorFactory)Activator.CreateInstance(type);
+						return factory.Create(text[(index + 1)..]);
 					}
 				}
 			}
