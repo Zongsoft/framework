@@ -16,7 +16,7 @@ namespace Zongsoft.Configuration.Models
 		private const string MODULE = "*";
 		#endregion
 
-		public static IConfigurationRoot GetConfiguration(Action<IConfigurationEntity> persistent = null)
+		public static IConfigurationRoot GetConfiguration(Action<ConfigurationEntity> persistent = null)
 		{
 			//初始化数据（模拟数据库中的配置表中的记录）
 			var dictionary = new Dictionary<string, string>
@@ -53,11 +53,11 @@ namespace Zongsoft.Configuration.Models
 			};
 
 			//获取配置数据（模拟数据库访问操作）
-			IEnumerable<IConfigurationEntity> GetModels(IDictionary<string, string> data)
+			IEnumerable<ConfigurationEntity> GetModels(IDictionary<string, string> data)
 			{
 				foreach(var entry in data)
 				{
-					yield return Data.Model.Build<IConfigurationEntity>(model =>
+					yield return Data.Model.Build<ConfigurationEntity>(model =>
 					{
 						model.TenantId = TENANT_ID;
 						model.BranchId = BRANCH_ID;
@@ -130,7 +130,7 @@ namespace Zongsoft.Configuration.Models
 			configuration.GetSection("general:certificates:default").Value = "test";
 			configuration.GetSection("general:newkey").Value = "new-value";
 
-			static void OnChanged(IConfigurationEntity entity)
+			static void OnChanged(ConfigurationEntity entity)
 			{
 				switch(entity.Key)
 				{
@@ -160,28 +160,23 @@ namespace Zongsoft.Configuration.Models
 		}
 	}
 
-	public interface IConfigurationEntity : Data.IModel
+	public abstract class ConfigurationEntity
 	{
-		int TenantId { get; set; }
-
-		int BranchId { get; set; }
-
-		string Module { get; set; }
-
-		string Key { get; set; }
-
-		string Value { get; set; }
+		public abstract int TenantId { get; set; }
+		public abstract int BranchId { get; set; }
+		public abstract string Module { get; set; }
+		public abstract string Key { get; set; }
+		public abstract string Value { get; set; }
 	}
 
 	public static class ConfigurationEntityExtension
 	{
-		public static string GetInfo(this Models.IConfigurationEntity entity)
+		public static string GetInfo(this Models.ConfigurationEntity entity)
 		{
 			if(entity == null)
 				return string.Empty;
 
-			return $"[{entity.TenantId}.{entity.BranchId}:{entity.Module}]" + Environment.NewLine +
-				   $"{entity.Key}={entity.Value}";
+			return $"[{entity.TenantId}-{entity.BranchId}:{entity.Module}]" + Environment.NewLine + $"{entity.Key}={entity.Value}";
 		}
 	}
 }

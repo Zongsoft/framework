@@ -36,7 +36,7 @@ namespace Zongsoft.Configuration
 {
 	public static class ModelConfigurationExtension
 	{
-		public static IConfigurationBuilder AddModels<TModel>(this IConfigurationBuilder builder, IEnumerable<TModel> models, Action<Models.ModelConfigurationSource<TModel>> configureSource = null) where TModel : Zongsoft.Data.IModel
+		public static IConfigurationBuilder AddModels<TModel>(this IConfigurationBuilder builder, IEnumerable<TModel> models, Action<Models.ModelConfigurationSource<TModel>> configureSource = null)
 		{
 			if(builder == null)
 				throw new ArgumentNullException(nameof(builder));

@@ -36,10 +36,11 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Configuration;
 
 using Zongsoft.Data;
+using Zongsoft.Reflection;
 
 namespace Zongsoft.Configuration.Models
 {
-	public class ModelConfigurationProvider<TModel> : IConfigurationProvider where TModel : IModel
+	public class ModelConfigurationProvider<TModel> : IConfigurationProvider
 	{
 		#region 成员字段
 		private readonly ModelConfigurationSource<TModel> _source;
@@ -58,7 +59,9 @@ namespace Zongsoft.Configuration.Models
 			{
 				foreach(var model in source.Models)
 				{
-					if(model.TryGetValue(source.Mapping.Key, out var key) && key != null)
+					var target = model;
+
+					if(Accessor.TryGetValue(ref target, source.Mapping.Key, out var key) && key != null)
 						this.Data.Add(key.ToString(), model);
 				}
 			}
@@ -66,22 +69,15 @@ namespace Zongsoft.Configuration.Models
 		#endregion
 
 		#region 保护属性
-		protected IDictionary<string, TModel> Data
-		{
-			get; set;
-		}
+		protected IDictionary<string, TModel> Data { get; set; }
 		#endregion
 
 		#region 公共方法
 		public virtual bool TryGet(string key, out string value)
 		{
-			value = null;
-
-			if(this.Data.TryGetValue(key, out var model) && model.TryGetValue(_source.Mapping.Value, out var valueObject))
+			if(this.Data.TryGetValue(key, out var model) && Accessor.TryGetValue(ref model, _source.Mapping.Value, out var valueObject))
 			{
-				if(valueObject != null)
-					value = valueObject.ToString();
-
+				value = valueObject?.ToString();
 				return true;
 			}
 
@@ -95,12 +91,12 @@ namespace Zongsoft.Configuration.Models
 				value = null;
 
 			if(this.Data.TryGetValue(key, out var model))
-				model.TrySetValue(_source.Mapping.Value, value);
+				Accessor.TrySetValue(ref model, _source.Mapping.Value, value);
 			else
-				this.Data[key] = model = Model.Build<TModel>(m =>
+				this.Data[key] = model = Accessor.Create(target =>
 				{
-					m.TrySetValue(_source.Mapping.Key, key);
-					m.TrySetValue(_source.Mapping.Value, value);
+					Accessor.TrySetValue(ref target, _source.Mapping.Key, key);
+					Accessor.TrySetValue(ref target, _source.Mapping.Value, value);
 				});
 
 			var persistents = _source.Persistents;
@@ -112,10 +108,7 @@ namespace Zongsoft.Configuration.Models
 			}
 		}
 
-		public virtual void Load()
-		{
-		}
-
+		public virtual void Load() { }
 		public virtual IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
 		{
 			var prefix = parentPath == null ? string.Empty : parentPath + ConfigurationPath.KeyDelimiter;
@@ -127,10 +120,7 @@ namespace Zongsoft.Configuration.Models
 				.OrderBy(k => k, ConfigurationKeyComparer.Instance);
 		}
 
-		public IChangeToken GetReloadToken()
-		{
-			return _reloadToken;
-		}
+		public IChangeToken GetReloadToken() => _reloadToken;
 		#endregion
 
 		#region 保护方法
@@ -144,8 +134,49 @@ namespace Zongsoft.Configuration.Models
 		#region 私有方法
 		private static string Segment(string key, int prefixLength)
 		{
-			var indexOf = key.IndexOf(ConfigurationPath.KeyDelimiter, prefixLength);
-			return indexOf < 0 ? key.Substring(prefixLength) : key.Substring(prefixLength, indexOf - prefixLength);
+			var index = key.IndexOf(ConfigurationPath.KeyDelimiter, prefixLength);
+			return index < 0 ? key[prefixLength..] : key[prefixLength..index];
+		}
+		#endregion
+
+		#region 嵌套子类
+		private static class Accessor
+		{
+			public static TModel Create(Action<TModel> initiate = null)
+			{
+				var model = typeof(TModel).IsAbstract ? Model.Build<TModel>() : Activator.CreateInstance<TModel>();
+				initiate?.Invoke(model);
+				return model;
+			}
+
+			public static bool TryGetValue(ref TModel target, string name, out object value)
+			{
+				if(target is null)
+				{
+					value = null;
+					return false;
+				}
+
+				return target switch
+				{
+					IModel model => model.TryGetValue(name, out value),
+					IDataDictionary dictionary => dictionary.TryGetValue(name, out value),
+					_ => Reflector.TryGetValue(ref target, name, out value),
+				};
+			}
+
+			public static bool TrySetValue(ref TModel target, string name, object value)
+			{
+				if(target is null)
+					return false;
+
+				return target switch
+				{
+					IModel model => model.TrySetValue(name, value),
+					IDataDictionary dictionary => dictionary.TrySetValue(name, value),
+					_ => Reflector.TrySetValue(ref target, name, value),
+				};
+			}
 		}
 		#endregion
 	}

@@ -34,7 +34,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration.Models
 {
-	public class ModelConfigurationSource<TModel> : IConfigurationSource where TModel : Data.IModel
+	public class ModelConfigurationSource<TModel> : IConfigurationSource
 	{
 		#region 成员字段
 		private readonly HashSet<Action<TModel>> _persistents;
@@ -49,15 +49,8 @@ namespace Zongsoft.Configuration.Models
 		#endregion
 
 		#region 公共属性
-		public IEnumerable<TModel> Models
-		{
-			get; set;
-		}
-
-		public ModelConfigurationMapping Mapping
-		{
-			get;
-		}
+		public IEnumerable<TModel> Models { get; set; }
+		public ModelConfigurationMapping Mapping { get; }
 		#endregion
 
 		#region 内部属性
@@ -65,11 +58,7 @@ namespace Zongsoft.Configuration.Models
 		#endregion
 
 		#region 公共方法
-		public IConfigurationProvider Build(IConfigurationBuilder builder)
-		{
-			return new ModelConfigurationProvider<TModel>(this);
-		}
-
+		public IConfigurationProvider Build(IConfigurationBuilder builder) => new ModelConfigurationProvider<TModel>(this);
 		public ModelConfigurationSource<TModel> Map(string key, string value = null)
 		{
 			if(!string.IsNullOrWhiteSpace(key))
@@ -96,8 +85,8 @@ namespace Zongsoft.Configuration.Models
 	{
 		public ModelConfigurationMapping()
 		{
-			this.Key = nameof(Key);
-			this.Value = nameof(Value);
+			this.Key = nameof(this.Key);
+			this.Value = nameof(this.Value);
 		}
 
 		public ModelConfigurationMapping(string key, string value)
@@ -111,14 +100,7 @@ namespace Zongsoft.Configuration.Models
 			this.Value = value;
 		}
 
-		public string Key
-		{
-			get; internal set;
-		}
-
-		public string Value
-		{
-			get; internal set;
-		}
+		public string Key { get; internal set; }
+		public string Value { get; internal set; }
 	}
 }
