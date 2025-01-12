@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Configuration
 {
@@ -42,20 +41,15 @@ namespace Zongsoft.Configuration
 	public class ConfigurationPropertyAttribute : Attribute
 	{
 		#region 构造函数
-		public ConfigurationPropertyAttribute(string name)
+		public ConfigurationPropertyAttribute(string name = null)
 		{
 			this.Name = name == null ? string.Empty : name.Trim();
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取对应于配置源中的键名。
-		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		/// <summary>获取对应于配置源中的键名。</summary>
+		public string Name { get; }
 		#endregion
 	}
 }

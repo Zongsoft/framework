@@ -31,13 +31,14 @@ using System;
 using System.IO;
 using System.Xml;
 using System.Linq;
+using System.Threading;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration.Xml
 {
-	public class XmlStreamConfigurationProvider : StreamConfigurationProvider
+	public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source) : StreamConfigurationProvider(source)
 	{
 		#region 常量定义
 		private const string XML_OPTION_ELEMENT = "option";
@@ -46,20 +47,12 @@ namespace Zongsoft.Configuration.Xml
 		private const string XML_KEY_ATTRIBUTE = "key";
 		private const string XML_NAME_ATTRIBUTE = "name";
 
-		private static readonly char[] ILLEGAL_CHARACTERS = new char[] { ':', '/', '\\', '*', '?' };
-		#endregion
+		private static readonly char[] ILLEGAL_CHARACTERS = [':', '/', '\\', '*', '?'];
 
-		#region 构造函数
-		public XmlStreamConfigurationProvider(XmlStreamConfigurationSource source) : base(source)
-		{
-		}
 		#endregion
 
 		#region 重写方法
-		public override void Load(Stream stream)
-		{
-			this.Data = Read(stream);
-		}
+		public override void Load(Stream stream) => this.Data = Read(stream);
 		#endregion
 
 		#region 公共方法
@@ -86,8 +79,8 @@ namespace Zongsoft.Configuration.Xml
 				switch(reader.NodeType)
 				{
 					case XmlNodeType.Element:
-						if(context.Indexes.Count < context.Depth)
-							context.Indexes.Push(0);
+						//if(context.Indexes.Count < context.Depth)
+						//	context.Indexes.Push(0);
 
 						if(reader.Depth == 1)
 							context.DoOption();
@@ -118,9 +111,6 @@ namespace Zongsoft.Configuration.Xml
 		}
 		#endregion
 
-		#region 解析方法
-		#endregion
-
 		#region 私有方法
 		private static void SkipUntilRootElement(XmlReader reader)
 		{
@@ -140,6 +130,12 @@ namespace Zongsoft.Configuration.Xml
 		}
 		#endregion
 
+		#region 静态方法
+		private static volatile int _count;
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _counters = new(StringComparer.OrdinalIgnoreCase);
+		private static int Increase(string path) => _counters.AddOrUpdate(path ?? string.Empty, 1, (key, value) => value + 1);
+		#endregion
+
 		private partial struct Context
 		{
 			public Context(XmlReader reader)
@@ -148,13 +144,11 @@ namespace Zongsoft.Configuration.Xml
 				this.Previous = reader.NodeType;
 				this.Data = new(StringComparer.OrdinalIgnoreCase);
 				this.Paths = new();
-				this.Indexes = new();
 			}
 
 			public readonly Dictionary<string, string> Data;
 			public readonly XmlReader Reader;
 			public readonly Stack<string> Paths;
-			public readonly Stack<int> Indexes;
 
 			public XmlNodeType Previous;
 			public readonly int Depth => this.Reader.Depth;
@@ -167,17 +161,9 @@ namespace Zongsoft.Configuration.Xml
 					this.Previous = this.Reader.NodeType;
 			}
 
-			public readonly void Clear() { this.Paths.Clear(); this.Indexes.Clear(); }
+			public readonly void Clear() => this.Paths.Clear();
 			public readonly void Indent(string path) => this.Paths.Push(path);
 			public readonly string Dedent() => this.Paths.Pop();
-
-			public readonly int Increase()
-			{
-				var index = this.Indexes.Pop() + 1;
-				this.Paths.Push($"#{index}");
-				this.Indexes.Push(index);
-				return index;
-			}
 		}
 
 		partial struct Context
@@ -223,7 +209,7 @@ namespace Zongsoft.Configuration.Xml
 						this.Dedent();
 
 						if(string.IsNullOrWhiteSpace(this.Reader.Value) || this.Reader.Value == "#")
-							index = this.Increase();
+							this.Indent($"#{index = Interlocked.Increment(ref _count)}");
 						else
 							this.Indent(this.Reader.Value);
 
@@ -269,13 +255,16 @@ namespace Zongsoft.Configuration.Xml
 					this.Dedent();
 				}
 
-				if(this.Indexes.Count > 0)
-					this.Indexes.Pop();
+				//if(this.Indexes.Count > 0)
+				//	this.Indexes.Pop();
 			}
 
 			public readonly void DoText()
 			{
 				var key = ConfigurationPath.Combine(this.Paths.Reverse());
+
+				if(!string.IsNullOrWhiteSpace(this.Reader.Value))
+					key = ConfigurationPath.Combine(key, this.Reader.Value.Trim());
 
 				if(this.Data.ContainsKey(key))
 					throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated, key, GetLineInfo(this.Reader)));

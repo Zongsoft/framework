@@ -294,8 +294,10 @@ namespace Zongsoft.Configuration
 			{
 				foreach(var property in type.DeclaredProperties)
 				{
-					var token = new PropertyToken(property);
+					if(!property.CanWrite || !property.SetMethod.IsPublic)
+						continue;
 
+					var token = new PropertyToken(property);
 					properties.TryAdd(property.Name, token);
 
 					if(!string.Equals(token.ConfigurationKey, property.Name))

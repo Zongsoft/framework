@@ -8,40 +8,22 @@
 	</option>
 
 	<option path="/Messaging/Queues">
-		<topic topic.name="avm">
+		<queue queue.name="avm">
 			<subscription reliability="MostOnce">
-				<filter filter.key="#" topic="heartbeat" />
-				<filter filter.key="#" topic="uplink-ping" />
-				<filter filter.key="#" topic="uplink-synchronize" />
-				<filter filter.key="#" topic="uplink-trade" />
-				<filter filter.key="#" topic="uplink-fault" />
-				<filter filter.key="#" topic="downlink-synchronize" />
-				<filter filter.key="#" topic="downlink-control" />
+				<topic topic.name="heartbeat" />
+
+				<topic topic.name="uplink">
+					<tag>*</tag>
+					<tag>ping</tag>
+					<tag>synchronize</tag>
+				</topic>
+
+				<topic topic.name="downlink">
+					<tag>*</tag>
+					<tag>control</tag>
+					<tag>synchronize</tag>
+				</topic>
 			</subscription>
-		</topic>
-	</option>
-
-	<option path="/Diagnostics">
-		<diagnostor>
-			<meters>
-				<filter>*</filter>
-				<filter>Test</filter>
-
-
-				<exporters>
-					<exporter exporter.key="#" driver="telemetry" />
-					<exporter exporter.key="#" driver="prometheus" value="urls=http://127.0.0.1:9464,http://localhost:9464" />
-				</exporters>
-			</meters>
-
-			<traces>
-				<filter>*</filter>
-
-				<exporters>
-					<exporter exporter.key="#" driver="telemetry" />
-					<exporter exporter.key="#" driver="zipkin" />
-				</exporters>
-			</traces>
-		</diagnostor>
+		</queue>
 	</option>
 </configuration>

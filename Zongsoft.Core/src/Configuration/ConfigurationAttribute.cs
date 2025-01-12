@@ -35,10 +35,7 @@ namespace Zongsoft.Configuration
 	public class ConfigurationAttribute : Attribute
 	{
 		#region 公共属性
-		public ConfigurationAttribute()
-		{
-		}
-
+		public ConfigurationAttribute() { }
 		public ConfigurationAttribute(string unrecognizedProperty)
 		{
 			this.UnrecognizedProperty = unrecognizedProperty;
@@ -46,20 +43,9 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 公共属性
-		public Type ResolverType
-		{
-			get; set;
-		}
-
-		public Type RecognizerType
-		{
-			get; set;
-		}
-
-		public string UnrecognizedProperty
-		{
-			get; set;
-		}
+		public Type ResolverType { get; set; }
+		public Type RecognizerType { get; set; }
+		public string UnrecognizedProperty { get; set; }
 		#endregion
 	}
 }
