@@ -32,10 +32,19 @@ using System.Linq;
 using System.Reflection;
 using System.ComponentModel;
 
+using Microsoft.Extensions.Configuration;
+
 namespace Zongsoft.Configuration
 {
 	public static class ConfigurationUtility
 	{
+		public static bool IsCollection(this IConfiguration configuration) =>
+			configuration is IConfigurationSection section &&
+			section.Key != null &&
+			section.Key.Length > 1 &&
+			section.Key[0] == '[' &&
+			section.Key[^1] == ']';
+
 		public static string GetConfigurationPath(string key)
 		{
 			return string.IsNullOrEmpty(key) ? string.Empty : key.Trim('/').Replace('/', ':');

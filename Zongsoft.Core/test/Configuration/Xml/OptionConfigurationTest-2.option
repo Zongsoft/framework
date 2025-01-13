@@ -13,13 +13,13 @@
 				<topic topic.name="heartbeat" />
 
 				<topic topic.name="uplink">
-					<tag>*</tag>
+					<tag />
 					<tag>ping</tag>
 					<tag>synchronize</tag>
 				</topic>
 
 				<topic topic.name="downlink">
-					<tag>*</tag>
+					<tag></tag>
 					<tag>control</tag>
 					<tag>synchronize</tag>
 				</topic>

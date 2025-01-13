@@ -47,7 +47,7 @@ namespace Zongsoft.Configuration.Xml
 		private const string XML_KEY_ATTRIBUTE = "key";
 		private const string XML_NAME_ATTRIBUTE = "name";
 
-		private static readonly char[] ILLEGAL_CHARACTERS = [':', '/', '\\', '*', '?'];
+		private static readonly char[] ILLEGAL_CHARACTERS = [':', ';', '/', '\\', '*', '?', '[', ']', '{', '}'];
 
 		#endregion
 
@@ -79,9 +79,6 @@ namespace Zongsoft.Configuration.Xml
 				switch(reader.NodeType)
 				{
 					case XmlNodeType.Element:
-						//if(context.Indexes.Count < context.Depth)
-						//	context.Indexes.Push(0);
-
 						if(reader.Depth == 1)
 							context.DoOption();
 						else
@@ -130,12 +127,6 @@ namespace Zongsoft.Configuration.Xml
 		}
 		#endregion
 
-		#region 静态方法
-		private static volatile int _count;
-		private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _counters = new(StringComparer.OrdinalIgnoreCase);
-		private static int Increase(string path) => _counters.AddOrUpdate(path ?? string.Empty, 1, (key, value) => value + 1);
-		#endregion
-
 		private partial struct Context
 		{
 			public Context(XmlReader reader)
@@ -160,6 +151,9 @@ namespace Zongsoft.Configuration.Xml
 				else
 					this.Previous = this.Reader.NodeType;
 			}
+
+			public readonly string GetPath() => ConfigurationPath.Combine(this.Paths.Reverse());
+			public readonly string GetPath(string part) => ConfigurationPath.Combine([..this.Paths.Reverse(), part]);
 
 			public readonly void Clear() => this.Paths.Clear();
 			public readonly void Indent(string path) => this.Paths.Push(path);
@@ -193,7 +187,6 @@ namespace Zongsoft.Configuration.Xml
 
 				for(int i = 0; i < this.Reader.AttributeCount; i++)
 				{
-					var index = 0;
 					this.Reader.MoveToAttribute(i);
 
 					if(!string.IsNullOrEmpty(this.Reader.NamespaceURI))
@@ -208,12 +201,11 @@ namespace Zongsoft.Configuration.Xml
 
 						this.Dedent();
 
-						if(string.IsNullOrWhiteSpace(this.Reader.Value) || this.Reader.Value == "#")
-							this.Indent($"#{index = Interlocked.Increment(ref _count)}");
-						else
-							this.Indent(this.Reader.Value);
+						if(string.IsNullOrWhiteSpace(this.Reader.Value))
+							throw new ConfigurationException($"Missing name or key for '{this.Paths.Reverse()}' configuration entry. Located: {GetLineInfo(this.Reader)}");
 
-						this.Indent(this.Reader.LocalName.Substring(elementName.Length + 1));
+						this.Indent(this.Reader.Value);
+						this.Indent(this.Reader.LocalName[(elementName.Length + 1)..]);
 					}
 					else
 					{
@@ -223,14 +215,11 @@ namespace Zongsoft.Configuration.Xml
 						this.Indent(this.Reader.LocalName);
 					}
 
-					var key = ConfigurationPath.Combine(this.Paths.Reverse());
+					var key = this.GetPath();;
 					if(this.Data.ContainsKey(key))
 						throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated, key, GetLineInfo(this.Reader)));
 
-					if(index > 0)
-						this.Data[key] = index.ToString();
-					else
-						this.Data[key] = this.Reader.Value;
+					this.Data[key] = this.Reader.Value;
 
 					this.Dedent();
 				}
@@ -238,33 +227,44 @@ namespace Zongsoft.Configuration.Xml
 				this.Reader.MoveToElement();
 
 				if(this.Reader.IsEmptyElement)
+				{
+					//如果当前元素为纯空元素（即无Attribute，也无TEXT/CDATA节点）
+					//因此必须将其作为值为空的单值集合元素处理，参考DoText()方法的实现逻辑
+					if(this.Reader.AttributeCount == 0)
+					{
+						var key = this.GetPath("[]");
+						this.Data[key] = string.Empty;
+					}
+
 					this.Dedent();
+				}
 			}
 
 			public readonly void DoElementEnd()
 			{
 				if(this.Paths.Count > 0)
 				{
-					// 如果上一个节点类型是元素则说明当前元素中没有TEXT/CDATA节点
+					//如果上一个节点类型是元素则说明其为纯空元素（即无Attribute也无TEXT/CDATA节点）
+					//因此必须将其作为值为空的单值集合元素处理，参考DoText()方法的实现逻辑
 					if(this.Previous == XmlNodeType.Element)
 					{
-						var key = ConfigurationPath.Combine(this.Paths.Reverse());
+						var key = this.GetPath("[]");
 						this.Data[key] = string.Empty;
 					}
 
 					this.Dedent();
 				}
-
-				//if(this.Indexes.Count > 0)
-				//	this.Indexes.Pop();
 			}
 
 			public readonly void DoText()
 			{
-				var key = ConfigurationPath.Combine(this.Paths.Reverse());
+				var key = this.GetPath();
 
-				if(!string.IsNullOrWhiteSpace(this.Reader.Value))
-					key = ConfigurationPath.Combine(key, this.Reader.Value.Trim());
+				//文本节点所在的元素必须当作单值集合元素处理，即该集合类型为ICollection类型
+				if(string.IsNullOrWhiteSpace(this.Reader.Value))
+					key = ConfigurationPath.Combine(key, "[]");
+				else
+					key = ConfigurationPath.Combine(key, $"[{this.Reader.Value.Trim()}]");
 
 				if(this.Data.ContainsKey(key))
 					throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated, key, GetLineInfo(this.Reader)));

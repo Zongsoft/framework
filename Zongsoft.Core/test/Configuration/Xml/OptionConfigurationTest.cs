@@ -96,16 +96,16 @@ public class XmlConfigurationTest
 		tags = configuration.GetSection("messaging:queues:avm:subscription:uplink:tag").GetChildren().ToArray();
 		Assert.NotEmpty(tags);
 		Assert.Equal(3, tags.Length);
-		Assert.Equal("*", tags[0].Value);
-		Assert.Equal("ping", tags[1].Value);
-		Assert.Equal("synchronize", tags[2].Value);
+		Assert.Contains(tags, tag => string.IsNullOrEmpty(tag.Value));
+		Assert.Contains(tags, tag => tag.Value == "ping");
+		Assert.Contains(tags, tag => tag.Value == "synchronize");
 
 		tags = configuration.GetSection("messaging:queues:avm:subscription:downlink:tag").GetChildren().ToArray();
 		Assert.NotEmpty(tags);
 		Assert.Equal(3, tags.Length);
-		Assert.Equal("*", tags[0].Value);
-		Assert.Equal("control", tags[1].Value);
-		Assert.Equal("synchronize", tags[2].Value);
+		Assert.Contains(tags, tag => string.IsNullOrEmpty(tag.Value));
+		Assert.Contains(tags, tag => tag.Value == "control");
+		Assert.Contains(tags, tag => tag.Value == "synchronize");
 	}
 
 	[Fact]
@@ -126,21 +126,24 @@ public class XmlConfigurationTest
 		Assert.Null(topic.Tags);
 
 		Assert.True(topics.TryGetValue("uplink", out topic));
+		Assert.NotEmpty(topic.Tags);
 		Assert.Equal(3, topic.Tags.Count);
-		Assert.Equal("*", topic.Tags[0]);
-		Assert.Equal("ping", topic.Tags[1]);
-		Assert.Equal("synchronize", topic.Tags[2]);
+		Assert.Contains(topic.Tags, string.IsNullOrEmpty);
+		Assert.Contains(topic.Tags, tag => tag == "ping");
+		Assert.Contains(topic.Tags, tag => tag == "synchronize");
 
 		Assert.True(topics.TryGetValue("downlink", out topic));
+		Assert.NotEmpty(topic.Tags);
 		Assert.Equal(3, topic.Tags.Count);
-		Assert.Equal("*", topic.Tags[0]);
-		Assert.Equal("control", topic.Tags[1]);
-		Assert.Equal("synchronize", topic.Tags[2]);
+		Assert.Contains(topic.Tags, string.IsNullOrEmpty);
+		Assert.Contains(topic.Tags, tag => tag == "control");
+		Assert.Contains(topic.Tags, tag => tag == "synchronize");
 	}
 }
 
 public class QueueOptions
 {
+	public string Name { get; set; }
 	public SubscriptionOptions Subscription { get; set; }
 
 	public class SubscriptionOptions

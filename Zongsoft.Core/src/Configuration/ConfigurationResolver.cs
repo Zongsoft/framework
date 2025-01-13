@@ -81,43 +81,51 @@ namespace Zongsoft.Configuration
 
 		private void ResolveInstance(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
 		{
-			if(configuration is IConfigurationSection section)
+			if(configuration is not IConfigurationSection section)
+				return;
+
+			if(section.IsCollection())
 			{
-				var properties = this.GetProperties(instance.GetType().GetTypeInfo());
+				if(Collections.CollectionUtility.TryAdd(instance, section.Value))
+					return;
 
-				if(section.Value != null)
+				throw new ConfigurationException($"Failed to add `{section.Path}={section.Value}` configuration collection entry");
+			}
+
+			var properties = this.GetProperties(instance.GetType().GetTypeInfo());
+
+			if(section.Value != null)
+			{
+				if(properties.TryGetValue(section.Key, out var property))
 				{
-					if(properties.TryGetValue(section.Key, out var property))
-					{
-						if(SetPathInfo(instance, property, section))
-							return;
+					if(SetPathInfo(instance, property, section))
+						return;
 
-						if(property.SetValue(instance, section.Value))
-							return;
+					if(property.SetValue(instance, section.Value))
+						return;
 
-						throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, property.PropertyType));
-					}
+					throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, property.PropertyType));
+				}
 
-					this.OnUnrecognize(instance, properties, section, options);
+				this.OnUnrecognize(instance, properties, section, options);
+			}
+			else
+			{
+				if(properties.TryGetValue(section.Key, out var property))
+				{
+					var target = property.GetValue(instance);
+
+					if(target == null)
+						target = this.Resolve(property.PropertyType, configuration, options);
+					else
+						this.Resolve(target, configuration, options);
+
+					property.SetValue(instance, target);
 				}
 				else
 				{
-					if(properties.TryGetValue(section.Key, out var property))
-					{
-						var target = property.GetValue(instance);
-
-						if(target == null)
-							target = this.Resolve(property.PropertyType, configuration, options);
-						else
-							this.Resolve(target, configuration, options);
-
-						property.SetValue(instance, target);
-					}
-					else
-					{
-						if(!this.ResolveCollection(instance, section, properties, options))
-							this.OnUnrecognize(instance, properties, section, options);
-					}
+					if(!this.ResolveCollection(instance, section, properties, options))
+						this.OnUnrecognize(instance, properties, section, options);
 				}
 			}
 		}
@@ -294,7 +302,8 @@ namespace Zongsoft.Configuration
 			{
 				foreach(var property in type.DeclaredProperties)
 				{
-					if(!property.CanWrite || !property.SetMethod.IsPublic)
+					//如果属性不能写并且还不是集合类型，则忽略对该属性的解析
+					if(!property.CanWrite && !Common.TypeExtension.IsCollection(property.PropertyType))
 						continue;
 
 					var token = new PropertyToken(property);
@@ -465,6 +474,7 @@ namespace Zongsoft.Configuration
 			public bool CanRead => this.Property.CanRead;
 			public bool CanWrite => this.Property.CanWrite;
 			public Type PropertyType => this.Property.PropertyType;
+			public bool IsCollection => Common.TypeExtension.IsCollection(this.Property.PropertyType);
 
 			public string ConfigurationKey
 			{

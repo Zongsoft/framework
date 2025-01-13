@@ -34,7 +34,7 @@ namespace Zongsoft.Configuration
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
 	public class ConfigurationAttribute : Attribute
 	{
-		#region 公共属性
+		#region 构造函数
 		public ConfigurationAttribute() { }
 		public ConfigurationAttribute(string unrecognizedProperty)
 		{
@@ -43,8 +43,11 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取或设置配置解析器类型。</summary>
 		public Type ResolverType { get; set; }
+		/// <summary>获取或设置配置识别器类型。</summary>
 		public Type RecognizerType { get; set; }
+		/// <summary>获取或设置用来承载配置中所有未识别特性的属性名，该属性类型通常为 <see cref="System.Collections.Generic.IDictionary{TKey, TValue}" /> 或 <see cref="System.Collections.ObjectModel.KeyedCollection{TKey, TItem}" /> 类型。</summary>
 		public string UnrecognizedProperty { get; set; }
 		#endregion
 	}
