@@ -72,7 +72,7 @@ public partial class Diagnostor
 						if(assemblies[i].IsDynamic)
 							continue;
 
-						foreach(var type in assemblies[i].DefinedTypes)
+						foreach(var type in GetTypes(assemblies[i]))
 						{
 							if(type.IsPublic && type.IsClass && !type.IsAbstract && (typeof(Configurator).IsAssignableFrom(type) || typeof(ConfiguratorFactory).IsAssignableFrom(type)))
 							{
@@ -97,6 +97,20 @@ public partial class Diagnostor
 	public string Name { get; }
 	public Filtering Meters { get; set; }
 	public Filtering Traces { get; set; }
+	#endregion
+
+	#region 私有方法
+	private static IEnumerable<TypeInfo> GetTypes(Assembly assembly)
+	{
+		if(assembly == null)
+			return [];
+
+		try
+		{
+			return assembly.DefinedTypes;
+		}
+		catch { return []; }
+	}
 	#endregion
 
 	#region 嵌套子类

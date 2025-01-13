@@ -171,6 +171,12 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 			{
 				for(int i = 0; i < DefaultMeters.Length; i++)
 					hashset.Add(DefaultMeters[i]);
+
+				if(ApplicationContext.Current != null)
+				{
+					foreach(var module in ApplicationContext.Current.Modules)
+						hashset.Add(string.IsNullOrEmpty(module.Name) ? "Common" : module.Name);
+				}
 			}
 			else
 			{
@@ -197,6 +203,12 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 			{
 				for(int i = 0; i < DefaultTracers.Length; i++)
 					hashset.Add(DefaultTracers[i]);
+
+				if(ApplicationContext.Current != null)
+				{
+					foreach(var module in ApplicationContext.Current.Modules)
+						hashset.Add(string.IsNullOrEmpty(module.Name) ? "Common" : module.Name);
+				}
 			}
 			else
 			{
