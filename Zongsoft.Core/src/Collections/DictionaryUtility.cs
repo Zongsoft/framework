@@ -35,46 +35,50 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Collections;
 
-public static class CollectionUtility
+public static class DictionaryUtility
 {
 	#region 公共方法
-	public static bool TryAdd(object target, object value)
+	public static bool TryAdd(object target, object key, object value)
 	{
 		var added = false;
-		var adders = GetMethods(target, nameof(ICollection<object>.Add));
+		var adders = GetMethods(target, nameof(IDictionary<object, object>.Add));
 
 		foreach(var adder in adders)
 		{
-			if(Common.Convert.TryConvertValue(value, adder.ValueType, out var parameter))
+			if(Common.Convert.TryConvertValue(key, adder.KeyType, out var keyed) &&
+			   Common.Convert.TryConvertValue(value, adder.ValueType, out var valued))
 			{
-				adder.Invoker?.DynamicInvoke(parameter);
+				adder.Invoker?.DynamicInvoke(keyed, valued);
 				added = true;
 			}
 		}
 
-		if(!added && target is IList list)
-			added = list.Add(value) >= 0;
+		if(!added && target is IDictionary dictionary)
+		{
+			dictionary.Add(key, value);
+			return true;
+		}
 
 		return added;
 	}
 
-	public static bool TryRemove(object target, object value)
+	public static bool TryRemove(object target, object key)
 	{
 		var removed = false;
-		var removers = GetMethods(target, nameof(ICollection<object>.Remove));
+		var removers = GetMethods(target, nameof(IDictionary<object, object>.Remove));
 
 		foreach(var remover in removers)
 		{
-			if(Common.Convert.TryConvertValue(value, remover.ValueType, out var parameter))
+			if(Common.Convert.TryConvertValue(key, remover.KeyType, out var parameter))
 			{
 				remover.Invoker?.DynamicInvoke(parameter);
 				removed = true;
 			}
 		}
 
-		if(!removed && target is IList list)
+		if(!removed && target is IDictionary dictionary)
 		{
-			list.Remove(value);
+			dictionary.Remove(key);
 			return true;
 		}
 
@@ -83,12 +87,12 @@ public static class CollectionUtility
 	#endregion
 
 	#region 私有方法
-	private static IEnumerable<CollectionToken> GetMethods(object target, string name)
+	private static IEnumerable<DictionaryToken> GetMethods(object target, string name)
 	{
 		if(target == null)
 			yield break;
 
-		foreach(var contract in target.GetType().GetInterfaces().Where(p => p.IsGenericType && p.GetGenericTypeDefinition() == typeof(ICollection<>)))
+		foreach(var contract in target.GetType().GetInterfaces().Where(p => p.IsGenericType && p.GetGenericTypeDefinition() == typeof(IDictionary<,>)))
 		{
 			var mapping = target.GetType().GetInterfaceMap(contract);
 
@@ -102,17 +106,28 @@ public static class CollectionUtility
 	#endregion
 
 	#region 嵌套结构
-	private readonly struct CollectionToken
+	private readonly struct DictionaryToken
 	{
-		public CollectionToken(object target, MethodInfo method)
+		public DictionaryToken(object target, MethodInfo method)
 		{
-			this.ValueType = method.GetParameters()[0].ParameterType;
-			this.Invoker = method.ReturnType == null || method.ReturnType == typeof(void) ?
-				method.CreateDelegate(typeof(Action<>).MakeGenericType(this.ValueType), target) :
-				method.CreateDelegate(typeof(Func<,>).MakeGenericType(this.ValueType, method.ReturnType), target);
+			var parameters = method.GetParameters();
+
+			switch(method.Name)
+			{
+				case nameof(IDictionary<object, object>.Add):
+					this.KeyType = parameters[0].ParameterType;
+					this.ValueType = parameters[1].ParameterType;
+					this.Invoker = method.CreateDelegate(typeof(Action<,>).MakeGenericType(this.KeyType, this.ValueType), target);
+					break;
+				case nameof(IDictionary<object, object>.Remove):
+					this.KeyType = parameters[0].ParameterType;
+					this.Invoker = method.CreateDelegate(typeof(Func<,>).MakeGenericType(this.KeyType, method.ReturnType), target);
+					break;
+			}
 		}
 
 		public readonly Delegate Invoker;
+		public readonly Type KeyType;
 		public readonly Type ValueType;
 	}
 	#endregion
