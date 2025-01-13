@@ -28,22 +28,29 @@
  */
 
 using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 using Confluent.Kafka;
 
 using Zongsoft.Common;
-using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.Kafka
 {
 	internal static class KafkaUtility
 	{
+		private static readonly Dictionary<string, string> ProducerConfigurationMapping = new()
+		{
+			{ "Topic", null },
+			{ "SecurityProtocol", "security.protocol" },
+		};
+
+		private static readonly Dictionary<string, string> ConsumerConfigurationMapping = new()
+		{
+			{ "Topic", null },
+			{ "SecurityProtocol", "security.protocol" },
+		};
+
 		public static ProducerConfig GetProducerOptions(IConnectionSettings settings)
 		{
 			if(settings == null)
@@ -56,7 +63,10 @@ namespace Zongsoft.Messaging.Kafka
 			};
 
 			foreach(var setting in settings)
-				config.Set(setting.Key, setting.Value);
+			{
+				if(ProducerConfigurationMapping.TryGetValue(setting.Key, out var key) && key != null)
+					config.Set(key, setting.Value);
+			}
 
 			return config;
 		}
@@ -68,13 +78,16 @@ namespace Zongsoft.Messaging.Kafka
 
 			var config = new ConsumerConfig
 			{
-				GroupId = settings.Group,
+				GroupId = string.IsNullOrEmpty(settings.Group) ? $"G{Randomizer.GenerateString()}" : settings.Group,
 				ClientId = settings.Client,
 				BootstrapServers = settings.Server
 			};
 
 			foreach(var setting in settings)
-				config.Set(setting.Key, setting.Value);
+			{
+				if(ConsumerConfigurationMapping.TryGetValue(setting.Key, out var key) && key != null)
+					config.Set(key, setting.Value);
+			}
 
 			return config;
 		}
