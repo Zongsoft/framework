@@ -131,7 +131,7 @@ public class DirectoryController : ControllerBase
 		{
 			Name = info.FullName.StartsWith(ApplicationContext.Current.ApplicationPath) ? info.FullName[ApplicationContext.Current.ApplicationPath.Length..] : info.FullName;
 			Size = info.Length;
-			Type = Http.MimeMapper.Default.GetMimeType(info.Name);
+			Type = IO.Mime.GetMimeType(info.Name);
 			Creation = info.CreationTimeUtc;
 			Modification = info.LastWriteTimeUtc;
 

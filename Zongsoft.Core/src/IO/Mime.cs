@@ -28,48 +28,77 @@
  */
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
+using Zongsoft.Configuration;
+using Zongsoft.Configuration.Profiles;
 
 namespace Zongsoft.IO
 {
 	public static class Mime
 	{
-		#region 单例字段
-		public static readonly ICollection<IMimeMapper> Mappers = new List<IMimeMapper>();
+		#region 私有变量
+		private static readonly object _locker = new();
+		private static Dictionary<string, string> _mapping;
 		#endregion
 
-		#region 私有变量
-		private static int _initialized;
+		#region 公共属性
+		public static IDictionary<string, string> Mapping
+		{
+			get
+			{
+				Initialize();
+				return _mapping;
+			}
+		}
 		#endregion
 
 		#region 公共方法
 		public static string GetMimeType(string path) => TryGetMimeType(path, out var type) ? type : null;
 		public static bool TryGetMimeType(string path, out string type)
 		{
-			type = null;
-
 			if(string.IsNullOrEmpty(path))
-				return false;
-
-			var initialized = System.Threading.Interlocked.CompareExchange(ref _initialized, 1, 0);
-
-			if(initialized == 0)
-				((List<IMimeMapper>)Mappers).AddRange(ApplicationContext.Current.Services.ResolveAll<IMimeMapper>());
-
-			foreach(var mapper in Mappers)
 			{
-				var result = mapper.GetMimeType(path);
-
-				if(!string.IsNullOrEmpty(result))
-				{
-					type = result;
-					return true;
-				}
+				type = null;
+				return false;
 			}
 
-			return false;
+			Initialize();
+			return _mapping.TryGetValue(System.IO.Path.GetExtension(path), out type);
+		}
+		#endregion
+
+		#region 私有方法
+		private static void Initialize()
+		{
+			if(_mapping != null)
+				return;
+
+			lock(_locker)
+			{
+				_mapping ??= new Dictionary<string, string>(Load(), StringComparer.OrdinalIgnoreCase);
+			}
+		}
+
+		private static IEnumerable<KeyValuePair<string, string>> Load()
+		{
+			var root = ApplicationContext.Current?.ApplicationPath ?? AppDomain.CurrentDomain.BaseDirectory;
+			var path = Path.Combine(root, "mime");
+			if(!File.Exists(path))
+				yield break;
+
+			//加载应用程序根目录中名为“mime”的文件
+			var profile = Profile.Load(System.IO.Path.Combine(root, "mime"));
+
+			foreach(var item in profile.Items)
+			{
+				if(item is ProfileEntry entry && !string.IsNullOrEmpty(entry.Name) && !string.IsNullOrEmpty(entry.Value))
+				{
+					yield return new(entry.Name[0] == '.' ? entry.Name : $".{entry.Name}", entry.Value);
+				}
+			}
 		}
 		#endregion
 	}

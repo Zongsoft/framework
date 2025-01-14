@@ -62,41 +62,24 @@ namespace Zongsoft.Web
 
 		#region 成员字段
 		private string _basePath;
-		private IMimeMapper _mapping;
 		#endregion
 
 		#region 构造函数
-		public WebFileAccessor() => _mapping = Http.MimeMapper.Default;
-		public WebFileAccessor(string basePath)
-		{
-			_mapping = Http.MimeMapper.Default;
-			this.BasePath = basePath;
-		}
+		public WebFileAccessor() { }
+		public WebFileAccessor(string basePath) => this.BasePath = basePath;
 		#endregion
 
 		#region 公共属性
 		public string BasePath
 		{
-			get
-			{
-				return _basePath;
-			}
+			get => _basePath;
 			set
 			{
 				if(string.IsNullOrWhiteSpace(value))
 					_basePath = null;
 				else
-				{
-					var text = value.Trim();
-					_basePath = text + (text.EndsWith("/") ? string.Empty : "/");
-				}
+					_basePath = $"{value}{(value.EndsWith('/') ? string.Empty : '/')}";
 			}
-		}
-
-		public IMimeMapper Mapping
-		{
-			get => _mapping;
-			set => _mapping = value ?? throw new ArgumentNullException();
 		}
 		#endregion
 
@@ -298,12 +281,12 @@ namespace Zongsoft.Web
 		#region 虚拟方法
 		protected virtual string GetContentType(string fileName, string defaultValue = null)
 		{
-			return _mapping.GetMimeType(fileName) ?? (string.IsNullOrEmpty(defaultValue) ? "application/octet-stream" : defaultValue);
+			return Mime.GetMimeType(fileName) ?? (string.IsNullOrEmpty(defaultValue) ? "application/octet-stream" : defaultValue);
 		}
 
 		protected virtual bool TryGetContentType(string fileName, out string contentType)
 		{
-			contentType = _mapping.GetMimeType(fileName);
+			contentType = Mime.GetMimeType(fileName);
 			return !string.IsNullOrEmpty(contentType);
 		}
 		#endregion

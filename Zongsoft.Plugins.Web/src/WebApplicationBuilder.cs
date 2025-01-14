@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Features;
@@ -148,6 +149,16 @@ namespace Zongsoft.Web
 			services.Configure<FormOptions>(options =>
 			{
 				options.MultipartBodyLengthLimit = 1024 * 1024 * 512;
+			});
+
+			services.Configure<StaticFileOptions>(options =>
+			{
+				var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+
+				foreach(var entry in Zongsoft.IO.Mime.Mapping)
+					provider.Mappings.TryAdd(entry.Key, entry.Value);
+
+				options.ContentTypeProvider = provider;
 			});
 
 			services.AddCors(options => options.AddDefaultPolicy(builder =>

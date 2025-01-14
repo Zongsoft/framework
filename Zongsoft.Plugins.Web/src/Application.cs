@@ -72,9 +72,11 @@ namespace Zongsoft.Web
 			app.UseAuthentication();
 			app.UseAuthorization();
 
+			var opt = app.Services.Resolve<Microsoft.Extensions.Options.IOptions<StaticFileOptions>>();
+
 			app.UseStaticFiles(new StaticFileOptions
 			{
-				ServeUnknownFileTypes = true,
+				ServeUnknownFileTypes = false,
 				DefaultContentType = "application/octet-stream",
 			});
 
@@ -131,7 +133,7 @@ namespace Zongsoft.Web
 					app.UseAuthorization();
 					app.UseStaticFiles(new StaticFileOptions
 					{
-						ServeUnknownFileTypes = true,
+						ServeUnknownFileTypes = false,
 						DefaultContentType = "application/octet-stream",
 					});
 
