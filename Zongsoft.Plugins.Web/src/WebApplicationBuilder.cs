@@ -156,9 +156,10 @@ namespace Zongsoft.Web
 				var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
 
 				foreach(var entry in Zongsoft.IO.Mime.Mapping)
-					provider.Mappings.TryAdd(entry.Key, entry.Value);
+					provider.Mappings[entry.Key] = entry.Value;
 
 				options.ContentTypeProvider = provider;
+				options.DefaultContentType = "application/octet-stream";
 			});
 
 			services.AddCors(options => options.AddDefaultPolicy(builder =>

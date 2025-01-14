@@ -71,14 +71,7 @@ namespace Zongsoft.Web
 			app.UseRouting();
 			app.UseAuthentication();
 			app.UseAuthorization();
-
-			var opt = app.Services.Resolve<Microsoft.Extensions.Options.IOptions<StaticFileOptions>>();
-
-			app.UseStaticFiles(new StaticFileOptions
-			{
-				ServeUnknownFileTypes = false,
-				DefaultContentType = "application/octet-stream",
-			});
+			app.UseStaticFiles(app.Services.Resolve<Microsoft.Extensions.Options.IOptions<StaticFileOptions>>()?.Value);
 
 			app.MapControllers();
 
@@ -131,11 +124,7 @@ namespace Zongsoft.Web
 					app.UseRouting();
 					app.UseAuthentication();
 					app.UseAuthorization();
-					app.UseStaticFiles(new StaticFileOptions
-					{
-						ServeUnknownFileTypes = false,
-						DefaultContentType = "application/octet-stream",
-					});
+					app.UseStaticFiles(app.ApplicationServices.Resolve<Microsoft.Extensions.Options.IOptions<StaticFileOptions>>()?.Value);
 
 					app.UseEndpoints(endpoints =>
 					{
