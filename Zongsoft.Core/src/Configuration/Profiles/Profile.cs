@@ -209,9 +209,7 @@ namespace Zongsoft.Configuration.Profiles
 				{
 					case ProfileItemType.Comment:
 						foreach(var line in ((ProfileComment)item).Lines)
-						{
-							writer.WriteLine("#" + line);
-						}
+							writer.WriteLine($"#{line}");
 						break;
 					case ProfileItemType.Section:
 						WriteSection(writer, (ProfileSection)item);
@@ -265,7 +263,7 @@ namespace Zongsoft.Configuration.Profiles
 				if(!_sections.TryGetValue(name, out var child))
 					child = _sections.Add(name);
 
-				this.UpdateEntries(child, optionObject);
+				UpdateEntries(child, optionObject);
 			}
 			else
 			{
@@ -274,7 +272,7 @@ namespace Zongsoft.Configuration.Profiles
 					if(!section.Sections.TryGetValue(name, out var child))
 						child = ((ProfileSectionCollection)section.Sections).Add(name);
 
-					this.UpdateEntries(child, optionObject);
+					UpdateEntries(child, optionObject);
 				}
 				else
 				{
@@ -333,7 +331,7 @@ namespace Zongsoft.Configuration.Profiles
 			return true;
 		}
 
-		private void UpdateEntries(ProfileSection section, object value)
+		private static void UpdateEntries(ProfileSection section, object value)
 		{
 			if(section == null || value == null)
 				return;
@@ -405,9 +403,7 @@ namespace Zongsoft.Configuration.Profiles
 						break;
 					case ProfileItemType.Comment:
 						foreach(var line in ((ProfileComment)item).Lines)
-						{
-							writer.WriteLine("#" + line);
-						}
+							writer.WriteLine($"#{line}");
 						break;
 				}
 			}
@@ -430,16 +426,16 @@ namespace Zongsoft.Configuration.Profiles
 
 			if(text[0] == ';' || text[0] == '#')
 			{
-				result = text.Substring(1);
+				result = text[1..];
 				return LineType.Comment;
 			}
 
-			if(text[0] == '[' && text[text.Length - 1] == ']')
+			if(text[0] == '[' && text[^1] == ']')
 			{
 				if(text.Length < 3)
 					throw new ProfileException("Invalid format.");
 
-				result = text.Substring(1, text.Length - 2);
+				result = text[1..^1];
 				return LineType.Section;
 			}
 
