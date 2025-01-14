@@ -45,6 +45,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	#region 私有变量
 	private ushort _publisherPort;
 	private ushort _subscriberPort;
+	private readonly object _locker;
 	#endregion
 
 	#region 成员字段
@@ -71,6 +72,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		//生成当前消息队列的唯一标识
 		this.Identifier = GenerateIdentifier(connectionSettings);
 
+		_locker = new();
 		_queue = new NetMQQueue<Packet>();
 		_queue.ReceiveReady += this.OnQueueReady;
 		_poller = new NetMQPoller() { _queue };
@@ -192,17 +194,23 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		if(_publisher != null)
 			return;
 
-		var publisher = Interlocked.CompareExchange(ref _publisher, new PublisherSocket(), null);
-
-		if(publisher == null)
+		lock(_locker)
 		{
+			if(_publisher != null)
+				return;
+
 			//获取网络交换器的发布和订阅端口号
 			(_publisherPort, _subscriberPort) = GetPorts(this.ConnectionSettings);
 
-			_publisher = new PublisherSocket();
-			_publisher.Options.SendHighWatermark = 1000;
-			_publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
-			_publisher.Connect($"tcp://{this.ConnectionSettings.Server}:{_subscriberPort}");
+			//创建一个发布者套接字
+			var publisher = new PublisherSocket();
+
+			publisher.Options.SendHighWatermark = 1000;
+			publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
+			publisher.Connect($"tcp://{this.ConnectionSettings.Server}:{_subscriberPort}");
+
+			//将已经连接就绪的发布者保存
+			_publisher = publisher;
 
 			//启动网络轮询器
 			if(!_poller.IsRunning)
