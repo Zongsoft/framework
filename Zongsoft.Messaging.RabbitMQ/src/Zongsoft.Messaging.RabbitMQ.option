@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Messaging">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="RabbitMQ" driver="RabbitMQ"
+			                   value="server=127.0.0.1;username=program;password=xxxxxx;client=client1;group=group1" />
+		</connectionSettings>
+	</option>
+</options>

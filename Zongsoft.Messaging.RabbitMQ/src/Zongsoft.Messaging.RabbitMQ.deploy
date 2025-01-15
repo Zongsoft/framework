@@ -1,0 +1,5 @@
+artifacts/Zongsoft.Messaging.RabbitMQ.plugin
+artifacts/Zongsoft.Messaging.RabbitMQ.option
+lib/$(Framework)/Zongsoft.Messaging.RabbitMQ.*
+
+nuget:RabbitMQ.Client@7.0.0
