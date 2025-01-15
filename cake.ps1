@@ -2,6 +2,7 @@
 [string]$project_data             = 'Zongsoft.Data/build.cake'
 [string]$project_net              = 'Zongsoft.Net/build.cake'
 [string]$project_web              = 'Zongsoft.Web/build.cake'
+[string]$project_diagnostics      = 'Zongsoft.Diagnostics/build.cake'
 [string]$project_plugins          = 'Zongsoft.Plugins/build.cake'
 [string]$project_plugins_web      = 'Zongsoft.Plugins.Web/build.cake'
 [string]$project_security         = 'Zongsoft.Security/build.cake'
@@ -34,6 +35,9 @@ dotnet cake $project_net $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_web $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_web $CAKE_ARGS $ARGS
+
+Write-Host "dotnet cake $project_diagnostics $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+dotnet cake $project_diagnostics $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_plugins $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_plugins $CAKE_ARGS $ARGS
