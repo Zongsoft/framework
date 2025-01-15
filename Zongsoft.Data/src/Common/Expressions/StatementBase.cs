@@ -92,7 +92,7 @@ namespace Zongsoft.Data.Common.Expressions
 		private class SubqueryStatement : SelectStatement, ISelectStatementBase
 		{
 			#region 构造函数
-			public SubqueryStatement(IStatementBase host, TableIdentifier table) : base(table, string.Empty)
+			public SubqueryStatement(IStatementBase host, TableIdentifier table) : base(table, string.Empty, host?.Parameters)
 			{
 				this.Host = host ?? throw new ArgumentNullException(nameof(host));
 			}
@@ -103,7 +103,7 @@ namespace Zongsoft.Data.Common.Expressions
 			#endregion
 
 			#region 重写方法
-			protected override ParameterExpressionCollection CreateParameters() => Host.Parameters;
+			protected override ParameterExpressionCollection CreateParameters() => this.Host.Parameters;
 			#endregion
 		}
 		#endregion
