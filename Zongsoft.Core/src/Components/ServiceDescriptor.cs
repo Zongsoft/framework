@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -126,6 +127,14 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 		#endregion
 
 		#region 构造函数
+		internal Operation(ServiceDescriptor service, MethodInfo method)
+		{
+			_service = service ?? throw new ArgumentNullException(nameof(service));
+			this.Method = method ?? throw new ArgumentNullException(nameof(method));
+			this.Name = method.Name;
+			this.Alias = method.GetCustomAttribute<ComponentModel.AliasAttribute>()?.Alias;
+		}
+
 		internal Operation(ServiceDescriptor service, string name, string alias = null)
 		{
 			_service = service ?? throw new ArgumentNullException(nameof(service));
@@ -140,6 +149,9 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 
 		/// <summary>获取操作别名。</summary>
 		public string Alias { get; }
+
+		/// <summary>获取操作的方法。</summary>
+		public MethodInfo Method { get; }
 
 		/// <summary>获取操作的显示名。</summary>
 		public string Title
@@ -181,7 +193,15 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 
 		#region 公共方法
 		public bool TryGetValue(string name, out Operation value) => _operations.TryGetValue(name, out value);
-		public Operation Add(string name, string alias)
+
+		public Operation Add(MethodInfo method)
+		{
+			var operation = new Operation(_service, method);
+			_operations.Add(operation.Name, operation);
+			return operation;
+		}
+
+		public Operation Add(string name, string alias = null)
 		{
 			var operation = new Operation(_service, name, alias);
 			_operations.Add(name, operation);
