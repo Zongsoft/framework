@@ -127,21 +127,10 @@ namespace Zongsoft.Security
 		public static bool SetNamespace(this IIdentity identity, string @namespace) => SetNamespace(identity as ClaimsIdentity, @namespace);
 		public static bool SetNamespace(this ClaimsIdentity identity, string @namespace, string issuer = null, string originalIssuer = null)
 		{
-			if(identity == null)
+			if(string.IsNullOrWhiteSpace(@namespace))
 				return false;
 
-			var removed = false;
-
-			//注意：必须将结果集转成新集，因为之后的循环删除会因为集合变化导致循环异常
-			var claims = identity.FindAll(ClaimNames.Namespace).ToArray();
-
-			for(int i = 0; i < claims.Length; i++)
-				removed |= identity.TryRemoveClaim(claims[i]);
-
-			if(string.IsNullOrWhiteSpace(@namespace))
-				return removed;
-
-			return AddClaim(identity, ClaimNames.Namespace, @namespace, ClaimValueTypes.String, issuer, originalIssuer) != null;
+			return SetClaim(identity, ClaimNames.Namespace, @namespace, ClaimValueTypes.String, issuer, originalIssuer) != null;
 		}
 
 		public static Membership.UserStatus GetStatus(this ClaimsIdentity identity)
@@ -400,15 +389,50 @@ namespace Zongsoft.Security
 			return values != null && values.Length > 0;
 		}
 
-		public static Claim AddClaim(this ClaimsIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null)
+		public static bool RemoveClaim(this IIdentity identity, string name) => RemoveClaim(identity as ClaimsIdentity, name);
+		public static bool RemoveClaim(this ClaimsIdentity identity, string name)
 		{
-			if(identity == null)
-				throw new ArgumentNullException(nameof(identity));
+			if(identity == null || string.IsNullOrEmpty(name))
+				return false;
 
+			//注意：必须将结果集转成新集，因为之后的循环删除会因为集合变化导致循环异常
+			var claims = identity.FindAll(name).ToArray();
+
+			for(int i = 0; i < claims.Length; i++)
+				identity.RemoveClaim(claims[i]);
+
+			return claims != null && claims.Length > 0;
+		}
+
+		public static Claim SetClaim(this IIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null) =>
+			SetClaim(identity as ClaimsIdentity, name, value, valueType, issuer, originalIssuer);
+		public static Claim SetClaim(this ClaimsIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null)
+		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
-			if(string.IsNullOrEmpty(value))
+			if(identity == null || string.IsNullOrEmpty(value))
+				return null;
+
+			if(string.IsNullOrEmpty(issuer))
+				issuer = ClaimsIdentity.DefaultIssuer;
+			if(string.IsNullOrEmpty(originalIssuer))
+				originalIssuer = ClaimsIdentity.DefaultIssuer;
+
+			identity.RemoveClaim(name);
+			var claim = new Claim(name, value, valueType, issuer, originalIssuer, identity);
+			identity.AddClaim(claim);
+			return claim;
+		}
+
+		public static Claim AddClaim(this IIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null) =>
+			AddClaim(identity as ClaimsIdentity, name, value, valueType, issuer, originalIssuer);
+		public static Claim AddClaim(this ClaimsIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(identity == null || string.IsNullOrEmpty(value))
 				return null;
 
 			if(string.IsNullOrEmpty(issuer))
