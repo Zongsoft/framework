@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -475,6 +475,8 @@ namespace Zongsoft.IO
 		{
 			var root = ApplicationContext.Current?.ApplicationPath ?? AppContext.BaseDirectory;
 			var path = Path.Combine(root, "mime");
+
+			//确保应用程序根目录中名为“mime”的文件是存在的
 			if(!File.Exists(path))
 				yield break;
 
@@ -482,8 +484,8 @@ namespace Zongsoft.IO
 
 			try
 			{
-				//加载应用程序根目录中名为“mime”的文件
-				profile = Profile.Load(System.IO.Path.Combine(root, "mime"));
+				//加载 MIME 映射文件
+				profile = Profile.Load(path);
 			}
 			catch { yield break; }
 
