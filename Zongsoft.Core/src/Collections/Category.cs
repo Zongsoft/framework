@@ -38,14 +38,18 @@ namespace Zongsoft.Collections
 		#region 成员字段
 		private bool _visible;
 		private Category _parent;
+		private string _title;
+		private string _description;
 		#endregion
 
 		#region 构造函数
 		public Category() => this.Categories = new(this);
-		public Category(string name) : this(name, true) { }
-		public Category(string name, bool visible) : base(name)
+		public Category(string name, string title = null, string description = null) : this(name, true, title, description) { }
+		public Category(string name, bool visible, string title = null, string description = null) : base(name)
 		{
 			_visible = visible;
+			_title = title;
+			_description = description;
 			this.Categories = new(this);
 		}
 		#endregion
@@ -64,6 +68,8 @@ namespace Zongsoft.Collections
 			}
 		}
 
+		public string Title { get => _title; set => _title = value; }
+		public string Description { get => _description; set => _description = value; }
 		public CategoryCollection Categories { get; }
 		#endregion
 
