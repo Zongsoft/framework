@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<Version>6.8.1.0</Version>
 		<Product>Zongsoft Kafka Library</Product>
-		<Description>This is a library about Kafka messaging development.</Description>
+		<Description>This is a library about the Kafka messaging development.</Description>
 		<RootNamespace>Zongsoft.Messaging.Kafka</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>

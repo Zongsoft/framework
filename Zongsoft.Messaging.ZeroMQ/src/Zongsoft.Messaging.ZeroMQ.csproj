@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<Version>0.5.3.0</Version>
 		<Product>Zongsoft ZeroMQ Library</Product>
-		<Description>This is a library about ZeroMQ messaging development.</Description>
+		<Description>This is a library about the ZeroMQ messaging development.</Description>
 		<RootNamespace>Zongsoft.Messaging.ZeroMQ</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
