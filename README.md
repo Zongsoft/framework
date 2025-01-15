@@ -1,6 +1,6 @@
 # Zongsoft Framework
 
-这是 _**Z**ongsoft_ 开发框架的开源项目集，支持 _**.NET**_ `6`,`7`,`8` 等版本。
+这是 _**Z**ongsoft_ 开发框架的开源项目集，支持 _**.NET**_ `6`,`7`,`8`,`9` 等版本。
 
 ## 项目列表
 
@@ -12,14 +12,21 @@
 	> - [mysql](Zongsoft.Data/drivers/mysql/)：_**M**y**SQL**_/_**M**aria**DB**_ 驱动
 	> - [sqlite](Zongsoft.Data/drivers/sqlite/)：_**SQL**ite_ 驱动
 	> - [postgres](Zongsoft.Data/drivers/postgres/)：_**P**ostgre**SQL**_ 驱动
+	> - [influxdb](Zongsoft.Data/drivers/influxdb/)：_**I**nflux**DB**_ 驱动
 	> - [tdengine](Zongsoft.Data/drivers/tdengine/)：_**TD**engine_ 驱动
 	> - [clickhouse](Zongsoft.Data/drivers/clickhouse/)：_**C**lick**H**ouse_ 驱动
+- [Zongsoft.Diagnostics](Zongsoft.Diagnostics)
+	> 提供了 _**O**pen**T**elemetry_ 协议相关的诊断能力，包括 _**P**rometheus_、_**Z**ipkin_ 等输出支持。
 - [Zongsoft.Commands](Zongsoft.Commands)
 	> 提供了一些常用的命令，为应用层提供以命令行方式执行特定功能的能力。
 - [Zongsoft.Messaging.Kafka](Zongsoft.Messaging.Kafka)
 	> 提供了 _**K**afka_ 消息队列的插件化支持。
+- [Zongsoft.Messaging.RabbitMQ](Zongsoft.Messaging.RabbitMQ)
+	> 提供了 _**R**abbitMQ_ 消息队列的插件化支持。
 - [Zongsoft.Messaging.Mqtt](Zongsoft.Messaging.Mqtt)
-	> 提供了 _**M**qtt_ 消息队列的插件化支持。
+	> 提供了 _**M**qtt_ 协议的消息队列的插件化支持。
+- [Zongsoft.Messaging.ZeroMQ](Zongsoft.Messaging.ZeroMQ)
+	> 提供了 _**Z**eroMQ_ 消息队列的插件化支持。
 - [Zongsoft.Net](Zongsoft.Net)
 	> 提供了高性能网络通讯相关的支持，基于 [_**P**ipelines_](https://learn.microsoft.com/zh-cn/dotnet/standard/io/pipelines)、[_**B**uffers_](https://learn.microsoft.com/zh-cn/dotnet/standard/io/buffers) 等新式技术。
 - [Zongsoft.Plugins](Zongsoft.Plugins)
@@ -45,7 +52,7 @@
 	- [lua](externals/lua)
 		> 提供了 [**L**ua](https://lua.org) 表达式解析计算、脚本执行等功能，基于 [**NL**ua](https://github.com/nlua/nlua) 开源项目的插件化。
 	- [python](externals/python)
-		> 提供了 [**P**ython](https://python.org) 表达式解析计算、脚本执行等功能，基于 [**I**ronPython](https://ironpython.net) 开源项目的插件化。
+		> 提供了 [**P**ython](https://python.org) 表达式解析计算、脚本执行等功能，基于 [**I**ron**P**ython](https://ironpython.net) 开源项目的插件化。
 	- [scriban](externals/scriban)
 		> 提供了 [**S**criban](https://github.com/lunet-io/scriban) 表达式解析计算、_文本模板渲染_ 等功能，基于 [**S**criban](https://github.com/scriban/scriban) 开源项目的插件化。
 	- [wechat](externals/wechat)
