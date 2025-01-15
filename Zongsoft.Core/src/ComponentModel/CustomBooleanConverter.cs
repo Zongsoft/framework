@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   �ӷ�(Popeye Zhonzongsoft@qq.com.com>
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
@@ -29,23 +29,19 @@
 
 using System;
 using System.ComponentModel;
-using System.Collections.Generic;
 
 namespace Zongsoft.ComponentModel
 {
 	public class CustomBooleanConverter : BooleanConverter
 	{
-		#region ��Ա����
+		#region 成员字段
 		private string _trueString;
 		private string _falseString;
 		#endregion
 
-		#region ���캯��
-		public CustomBooleanConverter() : this("��", "��")
-		{
-		}
-
-		public CustomBooleanConverter([LocalizableAttribute(true)]string trueString, [LocalizableAttribute(true)]string falseString)
+		#region 构造函数
+		public CustomBooleanConverter() : this(null, null) { }
+		public CustomBooleanConverter([Localizable(true)]string trueString, [Localizable(true)]string falseString)
 		{
 			if(string.IsNullOrEmpty(trueString))
 				_trueString = bool.TrueString;
@@ -59,8 +55,8 @@ namespace Zongsoft.ComponentModel
 		}
 		#endregion
 
-		#region ��������
-		[LocalizableAttribute(true)]
+		#region 公共属性
+		[Localizable(true)]
 		public string TrueString
 		{
 			get
@@ -79,7 +75,7 @@ namespace Zongsoft.ComponentModel
 			}
 		}
 
-		[LocalizableAttribute(true)]
+		[Localizable(true)]
 		public string FalseString
 		{
 			get
@@ -99,26 +95,24 @@ namespace Zongsoft.ComponentModel
 		}
 		#endregion
 
-		#region ��д����
+		#region 公共方法
 		public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
 		{
-			if(value is string)
+			if(value is string text)
 			{
-				bool result;
-
-				if(bool.TryParse((string)value, out result))
+				if(bool.TryParse(text, out var result))
 					return result;
 
-				if(string.Equals((string)value, "yes", StringComparison.OrdinalIgnoreCase) ||
-				   string.Equals((string)value, "on", StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(text, "yes", StringComparison.OrdinalIgnoreCase) ||
+				   string.Equals(text, "on", StringComparison.OrdinalIgnoreCase))
 					return true;
 
-				if(string.Equals(_trueString, (string)value, StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(_trueString, text, StringComparison.OrdinalIgnoreCase))
 					return true;
-				if(string.Equals(_falseString, (string)value, StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(_falseString, text, StringComparison.OrdinalIgnoreCase))
 					return false;
 
-				if(string.IsNullOrWhiteSpace((string)value) && this.IsNullable(context.PropertyDescriptor.PropertyType))
+				if(string.IsNullOrWhiteSpace(text) && Common.TypeExtension.IsNullable(context.PropertyDescriptor.PropertyType))
 					return null;
 				else
 					return false;
@@ -142,20 +136,10 @@ namespace Zongsoft.ComponentModel
 
 		public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
 		{
-			if(this.IsNullable(context.PropertyDescriptor.PropertyType))
+			if(Common.TypeExtension.IsNullable(context.PropertyDescriptor.PropertyType))
 				return new TypeConverter.StandardValuesCollection(new object[] { null, true, false });
 			else
 				return new TypeConverter.StandardValuesCollection(new object[] { true, false });
-		}
-		#endregion
-
-		#region ˽�з���
-		private bool IsNullable(Type propertyType)
-		{
-			if(propertyType == null)
-				return false;
-
-			return propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>);
 		}
 		#endregion
 	}

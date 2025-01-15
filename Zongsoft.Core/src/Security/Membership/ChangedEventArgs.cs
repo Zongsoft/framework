@@ -38,35 +38,20 @@ namespace Zongsoft.Security.Membership
 		{
 			this.Id = id;
 			this.PropertyName = propertyName;
-			this.PropertyValue = PropertyValue;
+			this.PropertyValue = propertyValue;
 		}
 		#endregion
 
 		#region 公共属性
-		public uint Id
-		{
-			get;
-		}
-
-		public string PropertyName
-		{
-			get;
-		}
-
-		public object PropertyValue
-		{
-			get;
-		}
+		public uint Id { get; }
+		public string PropertyName { get; }
+		public object PropertyValue { get; }
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			if(this.PropertyValue == null)
-				return $"[{this.Id.ToString()}] {this.PropertyName}=NULL";
-			else
-				return $"[{this.Id.ToString()}] {this.PropertyName}={this.PropertyValue}";
-		}
+		public override string ToString() => this.PropertyValue == null ?
+			$"[{this.Id}] {this.PropertyName}=NULL" :
+			$"[{this.Id}] {this.PropertyName}={this.PropertyValue}";
 		#endregion
 	}
 }

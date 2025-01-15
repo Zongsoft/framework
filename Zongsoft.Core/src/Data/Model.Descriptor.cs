@@ -34,7 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
-	public static partial class Model
+	partial class Model
 	{
 		private static readonly Dictionary<Type, ModelDescriptor> _descriptors = new();
 
