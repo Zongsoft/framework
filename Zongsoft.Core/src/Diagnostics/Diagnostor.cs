@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Threading;
 using System.Reflection;
 using System.Globalization;
 using System.ComponentModel;
@@ -56,15 +55,20 @@ public partial class Diagnostor
 	#endregion
 
 	#region 静态属性
-	private static volatile Dictionary<string, Type> _configurators;
+	private static readonly object _locker = new();
+	private static Dictionary<string, Type> _configurators;
 	public static IDictionary<string, Type> Configurators
 	{
 		get
 		{
-			if(_configurators == null)
+			if(_configurators != null)
+				return _configurators;
+
+			lock(_locker)
 			{
-				if(Interlocked.CompareExchange(ref _configurators, new(StringComparer.OrdinalIgnoreCase), null) == null)
+				if(_configurators == null)
 				{
+					var configurators = new Dictionary<string, Type>();
 					var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
 					for(int i = 0; i < assemblies.Length; i++)
@@ -79,12 +83,14 @@ public partial class Diagnostor
 								var attribute = type.GetCustomAttribute<ConfiguratorAttribute>(true);
 
 								if(attribute != null && attribute.Name != null)
-									_configurators.TryAdd(attribute.Name, type);
+									configurators.TryAdd(attribute.Name, type);
 								else
-									_configurators.TryAdd(type.Name.EndsWith(nameof(Configurator)) ? type.Name[..^nameof(Configurator).Length] : type.Name, type);
+									configurators.TryAdd(type.Name.EndsWith(nameof(Configurator)) ? type.Name[..^nameof(Configurator).Length] : type.Name, type);
 							}
 						}
 					}
+
+					_configurators = configurators;
 				}
 			}
 
