@@ -2,6 +2,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Primitives;
+
 using Xunit;
 
 namespace Zongsoft.Caching.Tests;
@@ -29,5 +31,37 @@ public class MemoryCacheTest
 		const int COUNT = 10000;
 		Parallel.For(0, COUNT, index => cache.SetValue($"KEY#{index}", $"Value#{index}@{Environment.CurrentManagedThreadId}"));
 		Assert.Equal(COUNT, cache.Count);
+	}
+
+	[Fact]
+	public void TestDependency()
+	{
+		var cache = new MemoryCache();
+
+		var cancellation = new CancellationTokenSource();
+		var value = cache.GetOrCreate("KEY", key =>
+		{
+			return ("Value", new CancellationChangeToken(cancellation.Token));
+		});
+
+		Assert.NotNull(value);
+		Assert.Equal("Value", value);
+		Assert.Equal(1, cache.Count);
+
+		//通知缓存项过期
+		cancellation.Cancel();
+		Assert.False(cache.Contains("KEY"));
+		Assert.Equal(0, cache.Count);
+
+		//创建一个已经过期的缓存项
+		value = cache.GetOrCreate("KEY", key =>
+		{
+			return ("Value", new CancellationChangeToken(cancellation.Token));
+		});
+
+		Assert.NotNull(value);
+		Assert.Equal("Value", value);
+		Assert.False(cache.Contains("KEY"));
+		Assert.Equal(0, cache.Count);
 	}
 }

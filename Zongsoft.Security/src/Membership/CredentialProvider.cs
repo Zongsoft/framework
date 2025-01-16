@@ -52,7 +52,11 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 构造函数
-		public CredentialProvider() => _memoryCache = new MemoryCache();
+		public CredentialProvider()
+		{
+			_memoryCache = new MemoryCache();
+			_memoryCache.Evicted += this.MemoryCache_Evicted;
+		}
 		#endregion
 
 		#region 公共属性
@@ -115,7 +119,7 @@ namespace Zongsoft.Security.Membership
 			//激发“Unregistering”事件
 			this.OnUnregistering(credentialId);
 
-			//将凭证资料从缓存容器中删除
+			//将凭证资料从分布式缓存中删除
 			cache.Remove(GetCacheKeyOfCredential(credentialId));
 
 			//将当前用户及场景对应的凭证号记录删除
@@ -288,6 +292,16 @@ namespace Zongsoft.Security.Membership
 		}
 		#endregion
 
+		#region 缓存失效
+		private void MemoryCache_Evicted(object sender, CacheEvictedEventArgs args)
+		{
+			if(args.Value is CredentialToken token)
+				token.Principal?.Dispose();
+			else if(args.Value is CredentialPrincipal principal)
+				principal.Dispose();
+		}
+		#endregion
+
 		#region 激发事件
 		protected virtual void OnRegistered(CredentialPrincipal principal, bool renewal) => this.Registered?.Invoke(this, new CredentialRegisterEventArgs(principal, renewal));
 		protected virtual void OnRegistering(CredentialPrincipal principal) => this.Registering?.Invoke(this, new CredentialRegisterEventArgs(principal));
@@ -319,7 +333,7 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 嵌套结构
-		private class CredentialToken
+		private sealed class CredentialToken
 		{
 			#region 成员字段
 			private DateTime _issuedTime;

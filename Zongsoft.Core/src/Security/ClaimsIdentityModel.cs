@@ -63,21 +63,17 @@ namespace Zongsoft.Security
 			if(principal == null || principal.CredentialId == null)
 				return null;
 
-			//如果指定的安全主体中对应的身份模型已缓存则直接返回
-			if(_cache.TryGetValue(GetCacheKey(principal.CredentialId, scheme), out var identityModel) && identityModel != null)
-				return (TIdentityModel)identityModel;
+			return _cache.GetOrCreate<TIdentityModel>(GetCacheKey(principal.CredentialId, scheme), key =>
+			{
+				//获取指定方案的安全身份
+				var identity = principal.GetIdentity(scheme);
 
-			//确认当前的安全身份标识
-			var identity = principal.GetIdentity(scheme);
+				//将指定方案的安全身份转换为身份模型
+				var model = transform == null ? identity.AsModel<TIdentityModel>() : transform(identity);
 
-			//将当前安全身份标识转换为身份模型
-			var model = transform == null ? identity.AsModel<TIdentityModel>() : transform(identity);
-
-			//如果安全主体的有效期大于零则将身份模型缓存起来
-			if(principal.Validity > TimeSpan.Zero)
-				_cache.SetValue(GetCacheKey(principal.CredentialId, scheme), model, principal.Validity.TotalHours > 24 ? TimeSpan.FromHours(24) : principal.Validity);
-
-			return model;
+				//缓存身份模型及其失效的变更令牌
+				return new(model, principal.Watch());
+			});
 		}
 		#endregion
 

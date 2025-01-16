@@ -29,11 +29,14 @@
 
 using System;
 using System.IO;
+using System.Threading;
 using System.Security.Claims;
+
+using Microsoft.Extensions.Primitives;
 
 namespace Zongsoft.Security
 {
-	public class CredentialPrincipal : ClaimsPrincipal, IEquatable<CredentialPrincipal>, IEquatable<ClaimsPrincipal>
+	public class CredentialPrincipal : ClaimsPrincipal, IEquatable<CredentialPrincipal>, IEquatable<ClaimsPrincipal>, IDisposable
 	{
 		#region 静态字段
 		/// <summary>凭证验证的方案名。</summary>
@@ -151,7 +154,7 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 重写方法
-		public bool Equals(CredentialPrincipal other) => other != null && this.CredentialId == other.CredentialId;
+		public bool Equals(CredentialPrincipal other) => other is not null && this.CredentialId == other.CredentialId;
 		public bool Equals(ClaimsPrincipal other) => other is CredentialPrincipal principal && this.Equals(principal);
 		public override bool Equals(object obj) => obj is CredentialPrincipal other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.CredentialId);
@@ -167,12 +170,57 @@ namespace Zongsoft.Security
 		}
 		#endregion
 
+		#region 观察方法
+		private CancellationTokenSource _cancellation = new();
+		public IChangeToken Watch()
+		{
+			var cancellation = _cancellation;
+			return cancellation == null ? ChangedToken.Instance : new CancellationChangeToken(cancellation.Token);
+		}
+		#endregion
+
+		#region 处置方法
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			var cancellation = Interlocked.Exchange(ref _cancellation, null);
+
+			if(cancellation != null)
+			{
+				cancellation.Cancel();
+				cancellation.Dispose();
+			}
+		}
+		#endregion
+
 		#region 私有方法
 		private static (string credentialId, string renewalToken) GenerateIdentifier() =>
 		(
-			$"{(ulong)(DateTime.UtcNow - Zongsoft.Common.Timestamp.Millennium.Epoch).TotalSeconds}{Zongsoft.Common.Randomizer.GenerateString(8)}",
-			$"{(ulong)(DateTime.UtcNow - Zongsoft.Common.Timestamp.Millennium.Epoch).TotalDays}{Environment.TickCount64:X}{Zongsoft.Common.Randomizer.GenerateString(8)}"
+			$"{(ulong)(DateTime.UtcNow - Common.Timestamp.Millennium.Epoch).TotalSeconds}{Common.Randomizer.GenerateString(8)}",
+			$"{(ulong)(DateTime.UtcNow - Common.Timestamp.Millennium.Epoch).TotalDays}{Environment.TickCount64:X}{Common.Randomizer.GenerateString(8)}"
 		);
+		#endregion
+
+		#region 嵌套子类
+		private sealed class ChangedToken : IChangeToken
+		{
+			public static readonly ChangedToken Instance = new();
+
+			public bool HasChanged => true;
+			public bool ActiveChangeCallbacks => true;
+			public IDisposable RegisterChangeCallback(Action<object> callback, object state) => Nothing.Instance;
+
+			private sealed class Nothing : IDisposable
+			{
+				public static readonly Nothing Instance = new();
+				public void Dispose() { }
+			}
+		}
 		#endregion
 	}
 }
