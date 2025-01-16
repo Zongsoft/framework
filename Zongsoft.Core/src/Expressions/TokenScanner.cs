@@ -150,7 +150,7 @@ namespace Zongsoft.Expressions
 		{
 			#region 成员字段
 			private readonly string _text;
-			private int _position;
+			private volatile int _position;
 			#endregion
 
 			#region 构造函数

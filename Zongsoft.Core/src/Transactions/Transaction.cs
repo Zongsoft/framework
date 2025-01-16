@@ -28,9 +28,9 @@
  */
 
 using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Threading;
 
 namespace Zongsoft.Transactions
 {
@@ -53,7 +53,7 @@ namespace Zongsoft.Transactions
 		#endregion
 
 		#region 成员字段
-		private int _isCompleted;
+		private volatile int _isCompleted;
 		private Transaction _parent;
 		private TransactionBehavior _behavior;
 		private IsolationLevel _isolationLevel;
@@ -261,7 +261,7 @@ namespace Zongsoft.Transactions
 		#region 私有方法
 		private void DoEnlistment(EnlistmentPhase phase)
 		{
-			var isCompleted = System.Threading.Interlocked.Exchange(ref _isCompleted, 1);
+			var isCompleted = Interlocked.Exchange(ref _isCompleted, 1);
 
 			if(isCompleted != 0)
 				return;
@@ -299,7 +299,6 @@ namespace Zongsoft.Transactions
 			while(_enlistments.Count > 0)
 			{
 				var enlistment = _enlistments.Dequeue();
-
 				enlistment.OnEnlist(new EnlistmentContext(this, phase));
 			}
 
@@ -343,28 +342,9 @@ namespace Zongsoft.Transactions
 		#endregion
 
 		#region 重写方法
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return object.ReferenceEquals(this, obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return _information.TransactionId.GetHashCode();
-		}
-		#endregion
-
-		#region 相等比较
-		bool IEquatable<Transaction>.Equals(Transaction other)
-		{
-			if(other == null)
-				return false;
-
-			return object.ReferenceEquals(this, other);
-		}
+		bool IEquatable<Transaction>.Equals(Transaction other) => other is not null && object.ReferenceEquals(this, other);
+		public override bool Equals(object obj) => obj is Transaction other && this.Equals(other);
+		public override int GetHashCode() => _information.TransactionId.GetHashCode();
 		#endregion
 	}
 }

@@ -214,7 +214,7 @@ namespace Zongsoft.Collections
 			#region 迭代实现
 			private class SimulateEnumerator(T element) : IEnumerator<T>
 			{
-				private int _flag;
+				private volatile int _flag;
 				private readonly T _element = element;
 
 				public T Current

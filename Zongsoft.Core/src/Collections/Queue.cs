@@ -28,11 +28,10 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Zongsoft.Collections
 {
@@ -63,7 +62,6 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 私有变量
-		private object _syncRoot;
 		private int _head;
 		private int _tail;
 		private int _size;
@@ -72,27 +70,18 @@ namespace Zongsoft.Collections
 		private object[] _buffer;
 		private int _maximumLimit;
 		private int _minimumGrow = 0xFF;
+		private readonly object _syncRoot = new();
 		#endregion
 
 		#region 构造函数
-		/// <summary>
-		/// 初始化<seealso cref="Zongsoft.Collections.Queue"/>类的新实例，该实例为空，其初始容量为32和2.0f的成长因子。
-		/// </summary>
-		public Queue() : this(32, 2.0f)
-		{
-		}
+		/// <summary>初始化<seealso cref="Queue"/>类的新实例，该实例为空，其初始容量为32和2.0f的成长因子。</summary>
+		public Queue() : this(32, 2.0f) { }
 
-		/// <summary>
-		/// 初始化<seealso cref="Zongsoft.Collections.Queue"/>类的新实例，该实例为空，具有指定的初始容量和默认为2.0f的成长因子。
-		/// </summary>
+		/// <summary>初始化<seealso cref="Queue"/>类的新实例，该实例为空，具有指定的初始容量和默认为2.0f的成长因子。</summary>
 		/// <param name="capacity">初始化的队列容量，即包含的初始元素数。</param>
-		public Queue(int capacity) : this(capacity, 2.0f)
-		{
-		}
+		public Queue(int capacity) : this(capacity, 2.0f) { }
 
-		/// <summary>
-		/// 初始化<seealso cref="Zongsoft.Collections.Queue"/>类的新实例，该实例为空，具有指定的初始容量并使用指定的成长因子。
-		/// </summary>
+		/// <summary>初始化<seealso cref="Queue"/>类的新实例，该实例为空，具有指定的初始容量并使用指定的成长因子。</summary>
 		/// <param name="capacity">初始化的队列容量，即包含的初始元素数。</param>
 		/// <param name="growFactor">扩展队列容量要使用的因子。</param>
 		/// <exception cref="ArgumentOutOfRangeException">当<paramref name="capacity"/>参数小于壹(1)，或者<paramref name="growFactor"/>参数小于1.0f或大于10.0f。</exception>
@@ -110,56 +99,31 @@ namespace Zongsoft.Collections
 			_minimumGrow = 0xFF;
 			_growFactor = (int)(growFactor * 100);
 			_buffer = new object[capacity];
-			_name = this.GetType().FullName + "#" + System.Threading.Interlocked.Increment(ref _id).ToString();
+			_name = $"{this.GetType().FullName}#{Interlocked.Increment(ref _id)}";
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取队列名称。
-		/// </summary>
+		/// <summary>获取队列名称。</summary>
 		/// <remarks>该队列名称确保进程范围内的唯一性。</remarks>
-		public string Name
-		{
-			get => _name;
-		}
+		public string Name => _name;
 
-		/// <summary>
-		/// 获取队列中实际包含的元素数。
-		/// </summary>
-		public int Count
-		{
-			get => _size;
-		}
+		/// <summary>获取队列中实际包含的元素数。</summary>
+		public int Count => _size;
 
-		/// <summary>
-		/// 获取队列容量值，即队列中已分配的可用元素数，如果该数值小于<seealso cref="MaximumLimit"/>属性值，待扩容时会增加此值。
-		/// </summary>
-		public int Capacity
-		{
-			get => _buffer.Length;
-		}
+		/// <summary>获取队列容量值，即队列中已分配的可用元素数，如果该数值小于<seealso cref="MaximumLimit"/>属性值，待扩容时会增加此值。</summary>
+		public int Capacity => _buffer.Length;
 
-		/// <summary>
-		/// 获取或设置允许的最大队列元素数，默认值为0x00FFFFFF(十六进制)。
-		/// </summary>
+		/// <summary>获取或设置允许的最大队列元素数，默认值为0x00FFFFFF(十六进制)。</summary>
 		/// <exception cref="System.ArgumentOutOfRangeException">当设置的值小于<seealso cref="Count"/>属性值。</exception>
 		/// <remarks>该属性值在下次扩容的时候才会生效。</remarks>
 		public int MaximumLimit
 		{
 			get => _maximumLimit;
-			set
-			{
-				if(value < _size)
-					throw new ArgumentOutOfRangeException();
-
-				_maximumLimit = value;
-			}
+			set => _maximumLimit = value > _size ? value : throw new ArgumentOutOfRangeException(nameof(value));
 		}
 
-		/// <summary>
-		/// 获取或设置每次变化时的最小成长量，默认值为255。
-		/// </summary>
+		/// <summary>获取或设置每次变化时的最小成长量，默认值为255。</summary>
 		/// <exception cref="System.ArgumentOutOfRangeException">当设置值小于壹(1)。</exception>
 		/// <remarks>
 		///		<para>在扩容时，如果根据成长因子计算出来的成长量小于指定的最小成长量，则按此最小成长量增长。</para>
@@ -168,23 +132,13 @@ namespace Zongsoft.Collections
 		public int MinimumGrow
 		{
 			get => _minimumGrow;
-			set
-			{
-				if(value < 1)
-					throw new ArgumentOutOfRangeException();
-
-				_minimumGrow = value;
-			}
+			set => _minimumGrow = value > 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
 		}
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 移除队列中的所有元素。
-		/// </summary>
-		/// <remarks>
-		///		<para><see cref="Count"/>被设置为零，并且对来自该集合元素的其他对象的引用也被释放。</para>
-		/// </remarks>
+		/// <summary>移除队列中的所有元素。</summary>
+		/// <remarks><see cref="Count"/>被设置为零，并且对来自该集合元素的其他对象的引用也被释放。</remarks>
 		public void Clear()
 		{
 			if(_size < 1)
@@ -203,7 +157,6 @@ namespace Zongsoft.Collections
 			_size = 0;
 		}
 
-		/// <inheritdoc />
 		public Task ClearAsync(CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
@@ -252,10 +205,7 @@ namespace Zongsoft.Collections
 			return false;
 		}
 
-		public void TrimToSize()
-		{
-			this.SetCapacity(_size);
-		}
+		public void TrimToSize() => this.SetCapacity(_size);
 
 		public object[] ToArray()
 		{
@@ -279,9 +229,7 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 出队操作
-		/// <summary>
-		/// 移除并返回位于<see cref="Zongsoft.Collections.Queue"/>开始处的对象。
-		/// </summary>
+		/// <summary>移除并返回位于<see cref="Queue"/>开始处的对象。</summary>
 		/// <param name="settings">指定出队的选项参数，本实现不支持该参数。</param>
 		/// <returns>从队列的开头处移除的对象。</returns>
 		/// <exception cref="System.InvalidOperationException">当队列为空，即<see cref="Count"/>属性为零。</exception>
@@ -301,16 +249,13 @@ namespace Zongsoft.Collections
 			return removed;
 		}
 
-		/// <inheritdoc />
 		public Task<object> DequeueAsync(object settings = null, CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
 			return Task.FromResult(this.Dequeue());
 		}
 
-		/// <summary>
-		/// 移除并返回从开始处的由<paramref name="count"/>参数指定的连续多个对象。
-		/// </summary>
+		/// <summary>移除并返回从开始处的由<paramref name="count"/>参数指定的连续多个对象。</summary>
 		/// <param name="count">指定要连续移除的元素数。</param>
 		/// <param name="settings">指定出队的选项参数，本实现不支持该参数。</param>
 		/// <returns>从队列的开头处指定的连续对象集。</returns>
@@ -322,24 +267,13 @@ namespace Zongsoft.Collections
 			return this.DequeueManyCore(count, CollectionRemovedReason.Remove);
 		}
 
-		/// <inheritdoc />
-		#pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
-		public async IAsyncEnumerable<object> DequeueManyAsync(int count, object settings = null, [EnumeratorCancellation]CancellationToken cancellation = default)
-		#pragma warning restore CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
+		public IAsyncEnumerable<object> DequeueManyAsync(int count, object settings = null, CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
-			var items = this.DequeueMany(count);
-
-			foreach(var item in items)
-			{
-				if(cancellation.IsCancellationRequested)
-					yield break;
-
-				yield return item;
-			}
+			return Enumerable.Asynchronize(this.DequeueManyCore(count, CollectionRemovedReason.Remove));
 		}
 
-		private IEnumerable DequeueManyCore(int count, CollectionRemovedReason reason)
+		private object[] DequeueManyCore(int count, CollectionRemovedReason reason)
 		{
 			var result = this.GetElements(0, count, true, out var actualLength);
 
@@ -354,19 +288,12 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 入队操作
-		/// <summary>
-		/// 将字符串文本添加到<seealso cref="Zongsoft.Collections.Queue"/>的结尾处。
-		/// </summary>
+		/// <summary>将字符串文本添加到<seealso cref="Queue"/>的结尾处。</summary>
 		/// <param name="text">要入队的字符串文本，该值可以为空(null)。</param>
 		/// <param name="settings">不支持入队的选项参数设置，始终忽略该参数。</param>
-		public void Enqueue(string text, object settings = null)
-		{
-			this.Enqueue((object)text, settings);
-		}
+		public void Enqueue(string text, object settings = null) => this.Enqueue((object)text, settings);
 
-		/// <summary>
-		/// 将对象添加到<seealso cref="Zongsoft.Collections.Queue"/>的结尾处。
-		/// </summary>
+		/// <summary>将对象添加到<seealso cref="Queue"/>的结尾处。</summary>
 		/// <param name="item">要入队的对象，该值可以为空(null)。</param>
 		/// <param name="settings">不支持入队的选项参数设置，始终忽略该参数。</param>
 		/// <remarks>
@@ -403,7 +330,6 @@ namespace Zongsoft.Collections
 			this.OnEnqueued(new EnqueuedEventArgs(item, false));
 		}
 
-		/// <inheritdoc />
 		public Task EnqueueAsync(object item, object settings = null, CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
@@ -411,9 +337,7 @@ namespace Zongsoft.Collections
 			return Task.CompletedTask;
 		}
 
-		/// <summary>
-		/// 将指定集合中的所有元素依次添加到<seealso cref="Zongsoft.Collections.Queue"/>的结尾处。
-		/// </summary>
+		/// <summary>将指定集合中的所有元素依次添加到<seealso cref="Queue"/>的结尾处。</summary>
 		/// <param name="items">要入队的集合。</param>
 		/// <param name="settings">不支持入队的选项参数设置，始终忽略该参数。</param>
 		public void EnqueueMany<T>(IEnumerable<T> items, object settings = null)
@@ -427,7 +351,6 @@ namespace Zongsoft.Collections
 			}
 		}
 
-		/// <inheritdoc />
 		public Task EnqueueManyAsync<T>(IEnumerable<T> items, object settings = null, CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
@@ -437,14 +360,10 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 获取操作
-		/// <summary>
-		/// 返回位于队列开始处的对象但不将其移除。
-		/// </summary>
+		/// <summary>返回位于队列开始处的对象但不将其移除。</summary>
 		/// <returns>位于队列开头处的对象。</returns>
 		/// <exception cref="System.InvalidOperationException">当队列为空，即<see cref="Count"/>属性等于零。</exception>
-		/// <remarks>
-		///		<para>此方法类似于<seealso cref="Dequeue(object)"/>出队方法，但本方法不修改<seealso cref="Zongsoft.Collections.Queue"/>队列。</para>
-		/// </remarks>
+		/// <remarks>此方法类似于<seealso cref="Dequeue(object)"/>出队方法，但本方法不修改<seealso cref="Queue"/>队列。</remarks>
 		public object Peek()
 		{
 			if(_size == 0)
@@ -453,32 +372,22 @@ namespace Zongsoft.Collections
 			return _buffer[_head];
 		}
 
-		/// <inheritdoc />
 		public Task<object> PeekAsync(CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
 			return Task.FromResult(this.Peek());
 		}
 
-		/// <summary>
-		/// 返回从队列开头处往后偏移由<paramref name="startOffset"/>参数指定长度后开始的由<paramref name="count"/>参数指定的连续多个对象。
-		/// </summary>
+		/// <summary>返回从队列开头处往后偏移由<paramref name="startOffset"/>参数指定长度后开始的由<paramref name="count"/>参数指定的连续多个对象。</summary>
 		/// <param name="startOffset">从队列开头处往后偏移的长度。</param>
 		/// <param name="count">要连续获取的元素数。</param>
 		/// <returns>从队列的开头处指定偏移后的连续特定长度的对象集。</returns>
-		/// <exception cref="System.InvalidOperationException">当队列为空，即<see cref="Count"/>属性等于零。</exception>
-		/// <exception cref="System.ArgumentOutOfRangeException"><paramref name="count"/>参数小于壹(1)。</exception>
-		/// <remarks>
-		///		<para>如果<paramref name="count"/>参数指定的数值超出队列中可用的元素数，则忽略该参数值，而应用可用的元素数。</para>
-		/// </remarks>
-		public IEnumerable Take(int startOffset, int count)
-		{
-			return this.GetElements(startOffset, count, false);
-		}
+		/// <exception cref="InvalidOperationException">当队列为空，即<see cref="Count"/>属性等于零。</exception>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/>参数小于壹(1)。</exception>
+		/// <remarks>如果<paramref name="count"/>参数指定的数值超出队列中可用的元素数，则忽略该参数值，而应用可用的元素数。</remarks>
+		public IEnumerable Take(int startOffset, int count) => this.GetElements(startOffset, count, false);
 
-		/// <summary>
-		/// 返回从队列开头处往后偏移由<paramref name="startOffset"/>参数指定长度后开始的元素值。
-		/// </summary>
+		/// <summary>返回从队列开头处往后偏移由<paramref name="startOffset"/>参数指定长度后开始的元素值。</summary>
 		/// <param name="startOffset">从队列开头处往后偏移的长度。</param>
 		/// <returns>位于开头处偏移后的值。</returns>
 		public object Take(int startOffset)
@@ -496,9 +405,7 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 重写方法
-		/// <summary>
-		/// 返回当前队列的信息文本。
-		/// </summary>
+		/// <summary>返回当前队列的信息文本。</summary>
 		/// <returns>
 		///		<para>该方法重写了<seealso cref="System.Object"/>的同名方法，该重写返回如下格式的文本信息：</para>
 		///		<para>(队头位置-队尾位置)[大小/容量]{最大限制, 最小成长量}</para>
@@ -514,24 +421,13 @@ namespace Zongsoft.Collections
 		#endregion
 
 		#region 激发事件
-		protected virtual void OnDequeued(Zongsoft.Collections.DequeuedEventArgs args)
-		{
-			this.Dequeued?.Invoke(this, args);
-		}
-
-		protected virtual void OnEnqueued(Zongsoft.Collections.EnqueuedEventArgs args)
-		{
-			this.Enqueued?.Invoke(this, args);
-		}
+		protected virtual void OnDequeued(DequeuedEventArgs args) => this.Dequeued?.Invoke(this, args);
+		protected virtual void OnEnqueued(EnqueuedEventArgs args) => this.Enqueued?.Invoke(this, args);
 		#endregion
 
 		#region 私有方法
-		private ICollection GetElements(long startOffset, int count, bool cleanup)
-		{
-			return this.GetElements(startOffset, count, cleanup, out _);
-		}
-
-		private ICollection GetElements(long startOffset, int count, bool cleanup, out int actualLength)
+		private object[] GetElements(long startOffset, int count, bool cleanup) => this.GetElements(startOffset, count, cleanup, out _);
+		private object[] GetElements(long startOffset, int count, bool cleanup, out int actualLength)
 		{
 			if(startOffset < 0)
 				throw new ArgumentOutOfRangeException(nameof(startOffset));
@@ -621,13 +517,13 @@ namespace Zongsoft.Collections
 		public virtual void CopyTo(Array array, int index)
 		{
 			if(array == null)
-				throw new ArgumentNullException("array");
+				throw new ArgumentNullException(nameof(array));
 
 			if(array.Rank != 1)
 				throw new ArgumentException();
 
 			if(index < 0)
-				throw new ArgumentOutOfRangeException("index");
+				throw new ArgumentOutOfRangeException(nameof(index));
 
 			int arrayLen = array.Length;
 			if(arrayLen - index < _size)
@@ -644,24 +540,8 @@ namespace Zongsoft.Collections
 				Array.Copy(_buffer, 0, array, index + _buffer.Length - _head, numToCopy);
 		}
 
-		bool ICollection.IsSynchronized
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		object ICollection.SyncRoot
-		{
-			get
-			{
-				if(_syncRoot == null)
-					Interlocked.CompareExchange(ref _syncRoot, new Object(), null);
-
-				return _syncRoot;
-			}
-		}
+		bool ICollection.IsSynchronized => false;
+		object ICollection.SyncRoot => _syncRoot;
 		#endregion
 	}
 }

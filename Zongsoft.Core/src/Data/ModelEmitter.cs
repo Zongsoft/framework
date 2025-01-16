@@ -2509,7 +2509,7 @@ namespace Zongsoft.Data
 		{
 			var exchangeMethod = typeof(Interlocked)
 				.GetMethods(BindingFlags.Public | BindingFlags.Static)
-				.First(p => p.Name == "CompareExchange" && p.IsGenericMethod)
+				.First(p => p.Name == nameof(Interlocked.CompareExchange) && p.IsGenericMethod)
 				.MakeGenericMethod(typeof(PropertyChangedEventHandler));
 
 			//添加类型的实现接口声明

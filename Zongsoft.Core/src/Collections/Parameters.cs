@@ -38,23 +38,18 @@ namespace Zongsoft.Collections
 	public partial class Parameters : IDictionary<object, object>
 	{
 		#region 成员字段
-		private int _initialization;
-		private Dictionary<object, object> _cache;
+		private volatile Dictionary<object, object> _cache;
 		#endregion
 
 		#region 构造函数
 		public Parameters() { }
 		public Parameters(IEnumerable<KeyValuePair<string, object>> parameters)
 		{
-			_initialization = 0;
-
 			if(parameters != null && parameters.Any())
 				_cache = new(parameters.Select(entry => new KeyValuePair<object, object>(entry.Key ?? string.Empty, entry.Value)), Comparer.Instance);
 		}
 		public Parameters(IEnumerable<KeyValuePair<object, object>> parameters)
 		{
-			_initialization = 0;
-
 			if(parameters != null && parameters.Any())
 				_cache = new(parameters, Comparer.Instance);
 		}
@@ -191,11 +186,7 @@ namespace Zongsoft.Collections
 				throw new ArgumentNullException(nameof(key));
 
 			if(_cache == null)
-			{
-				var initialized = Interlocked.Exchange(ref _initialization, 1);
-				if(initialized == 0)
-					_cache = new(Comparer.Instance);
-			}
+				Interlocked.CompareExchange(ref _cache, new(Comparer.Instance), null);
 
 			_cache[key] = value;
 		}

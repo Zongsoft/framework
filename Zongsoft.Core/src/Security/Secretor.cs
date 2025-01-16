@@ -327,12 +327,18 @@ namespace Zongsoft.Security
 		#region 嵌套子类
 		private class DefaultTransmitter : ISecretor.SecretTransmitter
 		{
+			#region 常量定义
+			private const int NONE_STATE = 0;
+			private const int INITIALIZING_STATE = 1;
+			private const int INITIALIZED_STATE  = 2;
+			#endregion
+
 			#region 静态变量
 			private static readonly System.Security.Cryptography.HashAlgorithm _hasher = System.Security.Cryptography.MD5.Create();
 			#endregion
 
 			#region 私有变量
-			private volatile int _initialization;
+			private volatile int _state;
 			private readonly ISecretor _secretor;
 			private readonly IDictionary<string, ICaptcha> _captchas;
 			private readonly IDictionary<string, ITransmitter> _transmitters;
@@ -386,22 +392,39 @@ namespace Zongsoft.Security
 			#region 私有方法
 			private void Initialize(IServiceProvider serviceProvider)
 			{
-				var initialization = Interlocked.CompareExchange(ref _initialization, 1, 0);
-				if(initialization != 0)
+				if(_state == INITIALIZED_STATE)
 					return;
 
-				var captchas = serviceProvider.ResolveAll<ICaptcha>();
-				if(captchas != null)
+				//尝试将状态由未初始化设置为初始化中
+				var state = Interlocked.CompareExchange(ref _state, INITIALIZING_STATE, NONE_STATE);
+
+				//如果之前的状态就是初始化中，则等待其他线程完成初始化
+				if(state == INITIALIZING_STATE)
 				{
-					foreach(var captcha in captchas)
-						_captchas.TryAdd(captcha.Scheme, captcha);
+					SpinWait.SpinUntil(() => _state == INITIALIZED_STATE, 1000);
+					return;
 				}
 
-				var transmitters = serviceProvider.ResolveAll<ITransmitter>();
-				if(transmitters != null)
+				try
 				{
-					foreach(var transmitter in transmitters)
-						_transmitters.TryAdd(transmitter.Name, transmitter);
+					var captchas = serviceProvider.ResolveAll<ICaptcha>();
+					if(captchas != null)
+					{
+						foreach(var captcha in captchas)
+							_captchas.TryAdd(captcha.Scheme, captcha);
+					}
+
+					var transmitters = serviceProvider.ResolveAll<ITransmitter>();
+					if(transmitters != null)
+					{
+						foreach(var transmitter in transmitters)
+							_transmitters.TryAdd(transmitter.Name, transmitter);
+					}
+				}
+				finally
+				{
+					//设置状态为已初始化完成
+					_state = INITIALIZED_STATE;
 				}
 			}
 
