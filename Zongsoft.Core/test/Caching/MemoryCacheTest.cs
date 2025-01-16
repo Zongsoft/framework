@@ -41,11 +41,11 @@ public class MemoryCacheTest
 		var cancellation = new CancellationTokenSource();
 		var value = cache.GetOrCreate("KEY", key =>
 		{
-			return ("Value", new CancellationChangeToken(cancellation.Token));
+			return ("Value1", new CancellationChangeToken(cancellation.Token));
 		});
 
 		Assert.NotNull(value);
-		Assert.Equal("Value", value);
+		Assert.Equal("Value1", value);
 		Assert.Equal(1, cache.Count);
 
 		//通知缓存项过期
@@ -56,11 +56,22 @@ public class MemoryCacheTest
 		//创建一个已经过期的缓存项
 		value = cache.GetOrCreate("KEY", key =>
 		{
-			return ("Value", new CancellationChangeToken(cancellation.Token));
+			return ("Value2", new CancellationChangeToken(cancellation.Token));
 		});
 
 		Assert.NotNull(value);
-		Assert.Equal("Value", value);
+		Assert.Equal("Value2", value);
+		Assert.False(cache.Contains("KEY"));
+		Assert.Equal(0, cache.Count);
+
+		//创建一个依赖失效的缓存项
+		value = cache.GetOrCreate("KEY", key =>
+		{
+			return ("Value3", Common.Notification.GetToken());
+		});
+
+		Assert.NotNull(value);
+		Assert.Equal("Value3", value);
 		Assert.False(cache.Contains("KEY"));
 		Assert.Equal(0, cache.Count);
 	}

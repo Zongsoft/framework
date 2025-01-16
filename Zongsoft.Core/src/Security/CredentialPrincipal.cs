@@ -172,11 +172,7 @@ namespace Zongsoft.Security
 
 		#region 观察方法
 		private CancellationTokenSource _cancellation = new();
-		public IChangeToken Watch()
-		{
-			var cancellation = _cancellation;
-			return cancellation == null ? ChangedToken.Instance : new CancellationChangeToken(cancellation.Token);
-		}
+		public IChangeToken Watch() => Common.Notification.GetToken(_cancellation);
 		#endregion
 
 		#region 处置方法
@@ -204,23 +200,6 @@ namespace Zongsoft.Security
 			$"{(ulong)(DateTime.UtcNow - Common.Timestamp.Millennium.Epoch).TotalSeconds}{Common.Randomizer.GenerateString(8)}",
 			$"{(ulong)(DateTime.UtcNow - Common.Timestamp.Millennium.Epoch).TotalDays}{Environment.TickCount64:X}{Common.Randomizer.GenerateString(8)}"
 		);
-		#endregion
-
-		#region 嵌套子类
-		private sealed class ChangedToken : IChangeToken
-		{
-			public static readonly ChangedToken Instance = new();
-
-			public bool HasChanged => true;
-			public bool ActiveChangeCallbacks => true;
-			public IDisposable RegisterChangeCallback(Action<object> callback, object state) => Nothing.Instance;
-
-			private sealed class Nothing : IDisposable
-			{
-				public static readonly Nothing Instance = new();
-				public void Dispose() { }
-			}
-		}
 		#endregion
 	}
 }
