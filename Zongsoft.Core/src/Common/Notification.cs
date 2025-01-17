@@ -34,7 +34,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Zongsoft.Common;
 
-public sealed class Notification
+public static class Notification
 {
 	#region 单例字段
 	public static readonly IChangeToken Notified = new ChangedToken();

@@ -170,9 +170,10 @@ namespace Zongsoft.Security
 		}
 		#endregion
 
-		#region 观察方法
+		#region 处置通知
 		private CancellationTokenSource _cancellation = new();
-		public IChangeToken Watch() => Common.Notification.GetToken(_cancellation);
+		/// <summary>获取当前对象的处置通知令牌。</summary>
+		public IChangeToken Disposability => Common.Notification.GetToken(_cancellation);
 		#endregion
 
 		#region 处置方法
