@@ -199,8 +199,12 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 			if(_publisher != null)
 				return;
 
-			//获取网络交换器的发布和订阅端口号
+			//获取队列交换器的发布和订阅端口号
 			(_publisherPort, _subscriberPort) = GetPorts(this.ConnectionSettings);
+
+			//如果队列交换器的端口信息获取失败则抛出异常
+			if(_publisherPort == 0 || _subscriberPort == 0)
+				throw new InvalidOperationException($"Failed to acquire queue exchange information from the '{this.ConnectionSettings.Server}:{this.ConnectionSettings.Port}' server.");
 
 			//创建一个发布者套接字
 			var publisher = new PublisherSocket();
@@ -224,11 +228,8 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 			//发送请求获取交换器端口号
 			requester.SendFrameEmpty();
 
-			//接收返回的请求响应信息
-			var response = requester.ReceiveFrameString();
-
-			//如果响应信息为空则返回失败
-			if(string.IsNullOrEmpty(response))
+			//接收返回的请求响应信息，如果获取失败则返回
+			if(!requester.TryReceiveFrameString(out var response) || string.IsNullOrEmpty(response))
 				return default;
 
 			ushort publisherPort = 0, subscriberPort = 0;
