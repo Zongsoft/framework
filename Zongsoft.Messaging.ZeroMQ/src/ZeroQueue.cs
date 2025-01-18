@@ -104,7 +104,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		this.Initialize();
 
 		//执行网络订阅方法
-		var channel = subscriber.Subscribe($"tcp://{this.ConnectionSettings.Server}:{_publisherPort}");
+		var channel = subscriber.Subscribe(ZeroUtility.GetTcpAddress(this.ConnectionSettings.Server, _publisherPort));
 
 		//将订阅成功的网络通道加入到轮询器中
 		if(channel != null)
@@ -211,7 +211,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 
 			publisher.Options.SendHighWatermark = 1000;
 			publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
-			publisher.Connect($"tcp://{this.ConnectionSettings.Server}:{_subscriberPort}");
+			publisher.Connect(ZeroUtility.GetTcpAddress(this.ConnectionSettings.Server, _subscriberPort));
 
 			//将已经连接就绪的发布者保存
 			_publisher = publisher;
@@ -223,7 +223,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 
 		static (ushort publisherPort, ushort subscriberPort) GetPorts(IConnectionSettings settings)
 		{
-			using var requester = new RequestSocket($"tcp://{settings.Server}:{settings.Port}");
+			using var requester = new RequestSocket(ZeroUtility.GetTcpAddress(settings.Server, settings.Port));
 
 			//发送请求获取交换器端口号
 			requester.SendFrameEmpty();
