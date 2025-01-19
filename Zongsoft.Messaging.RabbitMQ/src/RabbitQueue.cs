@@ -48,19 +48,23 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber>
 	#region 成员字段
 	private IProducer<Null, byte[]> _producer;
 	private ConsumerBuilder<string, byte[]> _builder;
+	private readonly IConnectionFactory _connectionFactory;
+	private IConnection _connection;
+	private IChannel _channel;
 	#endregion
 
 	#region 构造函数
 	public RabbitQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
 	{
-		_producer = new ProducerBuilder<Null, byte[]>(RabbitUtility.GetProducerOptions(connectionSettings)).Build();
-		_builder = new ConsumerBuilder<string, byte[]>(RabbitUtility.GetConsumerOptions(this.ConnectionSettings));
+		_connectionFactory = Configuration.RabbitConnectionSettingsDriver.Instance.Modeler.Model(connectionSettings) as IConnectionFactory;
 	}
 	#endregion
 
 	#region 生成方法
 	public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 	{
+		await this.InitializeAsync(cancellation);
+
 		if(string.IsNullOrEmpty(topic))
 			throw new ArgumentNullException(nameof(topic));
 
@@ -81,6 +85,16 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber>
 		return new RabbitSubscriber(this, topic, handler, options);
 	}
 	#endregion
+
+	private async ValueTask InitializeAsync(CancellationToken cancellation)
+	{
+		if(_channel != null)
+			return;
+
+		_connection = await _connectionFactory.CreateConnectionAsync([this.ConnectionSettings.Server], this.ConnectionSettings.Client, cancellation);
+		_channel = await _connection.CreateChannelAsync(new CreateChannelOptions(false, false), cancellation);
+
+	}
 
 	#region 资源释放
 	protected override void Dispose(bool disposing)

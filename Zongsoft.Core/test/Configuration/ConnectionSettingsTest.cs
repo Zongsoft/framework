@@ -87,6 +87,9 @@ public class ConnectionSettingsTest
 		Assert.Equal("MyString", text, true);
 		Assert.True(settings.Values.TryGetValue("DateTime", out text));
 		Assert.Equal(DATE.ToString("yyyy-M-d"), text, true);
+
+		settings.Port = 999;
+		Assert.Equal(999, settings.Port);
 	}
 
 	[Fact]
