@@ -65,7 +65,7 @@ namespace Zongsoft.Externals.Redis.Messaging
 					connectionSettings.Properties[setting.Key] = setting.Value;
 			}
 
-			var options = connectionSettings.Model<ConfigurationOptions>();
+			var options = connectionSettings.GetOptions<ConfigurationOptions>();
 			var connection = ConnectionMultiplexer.Connect(options);
 			var database = connection.GetDatabase();
 

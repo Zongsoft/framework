@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,49 +30,84 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+/// <summary>
+/// 表示连接设置驱动器的接口。
+/// </summary>
+public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDriver>
 {
-	/// <summary>
-	/// 表示连接设置驱动器的接口。
-	/// </summary>
-	public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDriver>
+	#region 静态属性
+	/// <summary>获取连接设置项描述器集合。</summary>
+	static ConnectionSettingDescriptorCollection Descriptors { get; }
+	#endregion
+
+	#region 实例属性
+	/// <summary>获取驱动名称。</summary>
+	string Name { get; }
+	/// <summary>获取驱动的描述信息。</summary>
+	string Description { get; }
+	#endregion
+
+	#region 方法定义
+	/// <summary>获取指定的连接设置对应的选项配置。</summary>
+	/// <param name="settings">指定的连接设置。</param>
+	/// <returns>返回的对应选项配置。</returns>
+	object GetOptions(IConnectionSettings settings);
+
+	/// <summary>获取指定设置项的值。</summary>
+	/// <param name="name">指定要获取的设置项名称。</param>
+	/// <param name="values">当前连接设置的设置项值集合。</param>
+	/// <param name="value">输出参数，表示获取成功的设置项值。</param>
+	/// <returns>如果获取成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	bool TryGetValue(string name, IDictionary<string, string> values, out object value);
+
+	/// <summary>获取指定设置项的值。</summary>
+	/// <typeparam name="T">泛型参数，表示设置项的类型。</typeparam>
+	/// <param name="name">指定要获取的设置项名称。</param>
+	/// <param name="values">当前连接设置的设置项值集合。</param>
+	/// <param name="defaultValue">指定的获取失败的返回值。</param>
+	/// <returns>返回的设置项值，如果获取失败则返回值为<paramref name="defaultValue"/>参数指定的值。</returns>
+	T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue);
+
+	/// <summary>设置指定设置项的值。</summary>
+	/// <typeparam name="T">泛型参数，表示设置项的类型。</typeparam>
+	/// <param name="name">指定要设置的设置项名称。</param>
+	/// <param name="value">指定要设置的设置项的值。</param>
+	/// <param name="values">当前连接设置的设置项值集合。</param>
+	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	bool SetValue<T>(string name, T value, IDictionary<string, string> values);
+	#endregion
+
+	#region 默认实现
+	bool IsDriver(string name)
 	{
-		#region 静态属性
-		/// <summary>获取连接设置项描述器集合。</summary>
-		static ConnectionSettingDescriptorCollection Descriptors { get; }
-		#endregion
+		if(string.IsNullOrEmpty(name))
+			return string.IsNullOrEmpty(this.Name);
 
-		#region 实例属性
-		/// <summary>获取驱动名称。</summary>
-		string Name { get; }
-		/// <summary>获取或设置驱动的描述信息。</summary>
-		string Description { get; set; }
-		#endregion
-
-		TOptions GetOptions<TOptions>(IConnectionSettings settings);
-		bool TryGetValue(string name, IDictionary<string, string> values, out object value);
-		T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue);
-		bool SetValue<T>(string name, T value, IDictionary<string, string> values);
-
-		#region 方法实现
-		bool IsDriver(string name)
-		{
-			if(string.IsNullOrEmpty(name))
-				return string.IsNullOrEmpty(this.Name);
-
-			return string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase) || this.Name.StartsWith($".{name}", StringComparison.OrdinalIgnoreCase);
-		}
-		#endregion
+		return string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase) || this.Name.StartsWith($".{name}", StringComparison.OrdinalIgnoreCase);
 	}
+	#endregion
+}
 
-	/// <summary>
-	/// 表示连接设置驱动器的接口。
-	/// </summary>
-	public interface IConnectionSettingsDriver<out TDescriptors> : IConnectionSettingsDriver where TDescriptors : ConnectionSettingDescriptorCollection, new()
-	{
-		#region 静态属性
-		/// <summary>获取连接设置项描述器集合。</summary>
-		static new TDescriptors Descriptors { get; }
-		#endregion
-	}
+/// <summary>
+/// 表示连接设置驱动器的接口。
+/// </summary>
+public interface IConnectionSettingsDriver<out TDescriptors> : IConnectionSettingsDriver where TDescriptors : ConnectionSettingDescriptorCollection, new()
+{
+	#region 静态属性
+	/// <summary>获取连接设置项描述器集合。</summary>
+	static new TDescriptors Descriptors { get; }
+	#endregion
+}
+
+/// <summary>
+/// 表示连接设置驱动器的接口。
+/// </summary>
+public interface IConnectionSettingsDriver<out TOptions, out TDescriptors> : IConnectionSettingsDriver<TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()
+{
+	#region 实例方法
+	new TOptions GetOptions(IConnectionSettings settings);
+	TOptions GetOptions(string connectionString);
+	#endregion
 }

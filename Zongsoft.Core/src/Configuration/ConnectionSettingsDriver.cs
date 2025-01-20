@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,12 +32,8 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()
+public partial class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()
 {
-	#region 单例字段
-	internal static readonly IConnectionSettingsDriver Unnamed = new UnnamedDriver();
-	#endregion
-
 	#region 静态构造
 	static ConnectionSettingsDriver() => Descriptors = new();
 	#endregion
@@ -47,7 +43,7 @@ public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<
 	#endregion
 
 	#region 构造函数
-	public ConnectionSettingsDriver(string name, string description = null)
+	protected ConnectionSettingsDriver(string name, string description = null)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -59,23 +55,18 @@ public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<
 
 	#region 公共属性
 	public string Name { get; }
-	public string Description { get; set; }
+	public string Description { get; }
 	#endregion
 
 	#region 保护属性
-	protected IConnectionSettingsMapper Mapper { get; init; }
-	protected IConnectionSettingsModeler Modeler { get; init; }
+	protected MapperBase Mapper { get; init; }
 	#endregion
 
 	#region 公共方法
-	public TOptions GetOptions<TOptions>(IConnectionSettings settings) => (TOptions)this.Modeler.Model(settings);
+	public ConnectionSettings Create(string connectionString) => new(connectionString, this);
+	object IConnectionSettingsDriver.GetOptions(IConnectionSettings settings) => settings;
 	public bool TryGetValue(string name, IDictionary<string, string> values, out object value) => this.Mapper.Map(name, values, out value);
-	public T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue)
-	{
-		return this.Mapper.Map(name, values, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ?
-			result : defaultValue;
-	}
-
+	public T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue) => this.Mapper.Map(name, values, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ? result : defaultValue;
 	public bool SetValue<T>(string name, T value, IDictionary<string, string> values)
 	{
 		var text = this.Mapper.Map(name, value, values);
@@ -86,9 +77,6 @@ public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<
 		values[name] = text;
 		return true;
 	}
-
-	public ConnectionSettings Create(string connectionString) => new(this.Name, connectionString) { Driver = this };
-	public ConnectionSettings Create(string name, string connectionString) => new(name, connectionString) { Driver = this };
 	#endregion
 
 	#region 重写方法
@@ -97,15 +85,65 @@ public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<
 	public override int GetHashCode() => string.IsNullOrEmpty(this.Name) ? 0 : this.Name.ToUpperInvariant().GetHashCode();
 	public override string ToString() => this.Name;
 	#endregion
+}
 
-	#region 嵌套子类
-	private sealed class UnnamedDriver() : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>("?") { }
+public partial class ConnectionSettingsDriver<TOptions, TDescriptors> : ConnectionSettingsDriver<TDescriptors>, IConnectionSettingsDriver<TOptions, TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()
+{
+	#region 构造函数
+	protected ConnectionSettingsDriver(string name, string description = null) : base(name, description) { }
+	#endregion
+
+	#region 保护属性
+	protected PopulatorBase Populator { get; init; }
+	#endregion
+
+	#region 公共方法
+	object IConnectionSettingsDriver.GetOptions(IConnectionSettings settings) => this.GetOptions(settings);
+	public TOptions GetOptions(IConnectionSettings settings) => this.Populator.Populate(settings);
+	public TOptions GetOptions(string connectionString) => this.Populator.Populate(this.Create(connectionString));
 	#endregion
 }
 
-public class ConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>
+public class ConnectionSettingsDriver : IConnectionSettingsDriver, IEquatable<IConnectionSettingsDriver>
 {
-	#region 构造函数
-	public ConnectionSettingsDriver(string name, string description = null) : base(name, description) { }
+	#region 单例字段
+	public static readonly IConnectionSettingsDriver Default = new ConnectionSettingsDriver();
+	#endregion
+
+	#region 私有构造
+	private ConnectionSettingsDriver() { }
+	#endregion
+
+	#region 公共属性
+	public string Name => string.Empty;
+	public string Description => null;
+	#endregion
+
+	#region 公共方法
+	public object GetOptions(IConnectionSettings settings) => settings;
+	public T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue) => values.TryGetValue(name, out var value) ? Common.Convert.ConvertValue(value, defaultValue) : defaultValue;
+	public bool TryGetValue(string name, IDictionary<string, string> values, out object value)
+	{
+		if(values.TryGetValue(name, out var text))
+		{
+			value = text;
+			return true;
+		}
+
+		value = null;
+		return false;
+	}
+	public bool SetValue<T>(string name, T value, IDictionary<string, string> values)
+	{
+		if(value is null)
+			return values.Remove(name);
+
+		values[name] = value.ToString();
+		return true;
+	}
+	#endregion
+
+	#region 显式实现
+	bool IEquatable<IConnectionSettingsDriver>.Equals(IConnectionSettingsDriver other) => object.ReferenceEquals(this, other);
 	#endregion
 }

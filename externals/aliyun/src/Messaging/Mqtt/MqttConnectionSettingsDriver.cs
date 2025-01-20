@@ -35,7 +35,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 {
-	public sealed class MqttConnectionSettingsDriver : ConnectionSettingsDriver
+	public sealed class MqttConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>
 	{
 		#region 单例字段
 		public static readonly MqttConnectionSettingsDriver Instance = new();
@@ -49,7 +49,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 		#endregion
 
 		#region 嵌套子类
-		private sealed class MqttMapper(MqttConnectionSettingsDriver driver) : ConnectionSettingsMapper(driver)
+		private sealed class MqttMapper(MqttConnectionSettingsDriver driver) : MapperBase(driver)
 		{
 			#region 重写方法
 			protected override bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<string, string> values, out object value)

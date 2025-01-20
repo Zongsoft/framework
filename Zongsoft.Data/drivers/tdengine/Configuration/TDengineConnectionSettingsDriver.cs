@@ -36,7 +36,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Data.TDengine.Configuration;
 
-public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<TDengineConnectionSettingDescriptorCollection>
+public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<TDengineConnectionStringBuilder, TDengineConnectionSettingDescriptorCollection>
 {
 	#region 常量定义
 	internal const string NAME = "TDengine";
@@ -50,15 +50,15 @@ public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<
 	private TDengineConnectionSettingsDriver() : base(NAME)
 	{
 		this.Mapper = new TDengineMapper(this);
-		this.Modeler = new TDengineModeler(this);
+		this.Populator = new TDenginePopulator(this);
 	}
 	#endregion
 
 	#region 嵌套子类
-	private sealed class TDengineMapper(TDengineConnectionSettingsDriver driver) : ConnectionSettingsMapper(driver) { }
-	private sealed class TDengineModeler(TDengineConnectionSettingsDriver driver) : ConnectionSettingsModeler<TDengineConnectionStringBuilder>(driver)
+	private sealed class TDengineMapper(TDengineConnectionSettingsDriver driver) : MapperBase(driver) { }
+	private sealed class TDenginePopulator(TDengineConnectionSettingsDriver driver) : PopulatorBase(driver)
 	{
-		protected override TDengineConnectionStringBuilder CreateModel(IConnectionSettings settings) => new(settings.Value)
+		protected override TDengineConnectionStringBuilder Create(IConnectionSettings settings) => new(settings.Value)
 		{
 			Host = settings.Server,
 			Database = settings.Database,

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -53,6 +53,13 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 
 	#region 构造函数
 	public ConnectionSettings() => _values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+	public ConnectionSettings(string settings, IConnectionSettingsDriver driver = null)
+	{
+		_values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		this.Driver = driver;
+		this.Value = settings;
+	}
+
 	public ConnectionSettings(string name, string value) : base(name, value)
 	{
 		_values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -71,14 +78,14 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 			if(_driver == null)
 			{
 				if(this.HasProperties && this.Properties.TryGetValue(nameof(this.Driver), out var name) && name != null)
-					_driver = Drivers.TryGetValue(name, out var driver) ? driver : ConnectionSettingsDriver.Unnamed;
+					_driver = Drivers.TryGetValue(name, out var driver) ? driver : ConnectionSettingsDriver.Default;
 				else
-					_driver = ConnectionSettingsDriver.Unnamed;
+					_driver = ConnectionSettingsDriver.Default;
 			}
 
 			return _driver;
 		}
-		init => _driver = value ?? ConnectionSettingsDriver.Unnamed;
+		init => _driver = value ?? ConnectionSettingsDriver.Default;
 	}
 	public IDictionary<string, string> Values => _values;
 	public object this[string name]
@@ -110,13 +117,13 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 	public ushort Port
 	{
 		get => this.GetValue(nameof(Port), (ushort)0);
-		set => this.SetValue(nameof(Port), value.ToString());
+		set => this.SetValue(nameof(Port), value);
 	}
 
 	public TimeSpan Timeout
 	{
 		get => this.GetValue(nameof(Timeout), TimeSpan.Zero);
-		set => this.SetValue(nameof(Timeout), value.ToString());
+		set => this.SetValue(nameof(Timeout), value);
 	}
 
 	public string Charset
@@ -173,7 +180,8 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 	public bool IsDriver(string name) => ConnectionSettingsUtility.IsDriver(this, name);
 	public bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingsUtility.IsDriver(this, driver);
 
-	public TOptions GetOptions<TOptions>() => this.Driver.GetOptions<TOptions>(this);
+	public object GetOptions() => this.Driver.GetOptions(this);
+	public TOptions GetOptions<TOptions>() => this.Driver.GetOptions(this) is TOptions options ? options : default;
 	public bool SetValue<T>(string name, T value) => this.Driver.SetValue(name, value, _values);
 	public object GetValue(string name) => this.Driver.TryGetValue(name, _values, out var value) ? value : default;
 	public T GetValue<T>(string name, T defaultValue = default) => this.Driver.GetValue(name, _values, defaultValue);
@@ -231,16 +239,11 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 		{
 			private readonly string _name = name;
 
-			public string Name => _name ?? "?";
-			public IConnectionSettingsDriver Driver => Drivers.TryGetValue(_name, out var driver) ? driver : ConnectionSettingsDriver.Unnamed;
+			public string Name => _name ?? string.Empty;
+			public string Description => this.Driver.Description;
+			public IConnectionSettingsDriver Driver => Drivers.TryGetValue(_name, out var driver) ? driver : ConnectionSettingsDriver.Default;
 
-			public string Description
-			{
-				get => this.Driver.Description;
-				set => this.Driver.Description = value;
-			}
-
-			public TOptions GetOptions<TOptions>(IConnectionSettings settings) => this.Driver.GetOptions<TOptions>(settings);
+			public object GetOptions(IConnectionSettings settings) => this.Driver.GetOptions(settings);
 			public bool TryGetValue(string name, IDictionary<string, string> values, out object value) => this.Driver.TryGetValue(name, values, out value);
 			public T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue) => this.Driver.GetValue(name, values, defaultValue);
 			public bool SetValue<T>(string name, T value, IDictionary<string, string> values) => this.Driver.SetValue(name, value, values);

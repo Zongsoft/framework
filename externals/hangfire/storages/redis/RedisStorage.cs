@@ -87,11 +87,9 @@ namespace Zongsoft.Externals.Hangfire.Storages
 			return settings.FirstOrDefault(setting => setting != null && setting.IsDriver(DRIVER));
 		}
 
-		private static StackExchange.Redis.ConnectionMultiplexer GetRedisConnection() =>
-			GetRedisConnection(GetConnectionSetting(ApplicationContext.Current?.Configuration?.GetOption<ConnectionSettingsCollection>("/Externals/Redis/ConnectionSettings")));
-		private static StackExchange.Redis.ConnectionMultiplexer GetRedisConnection(IConnectionSettings settings) =>
-			StackExchange.Redis.ConnectionMultiplexer.Connect(GetRedisConfiguration(settings));
-		private static StackExchange.Redis.ConfigurationOptions GetRedisConfiguration(IConnectionSettings settings) => settings?.Model<StackExchange.Redis.ConfigurationOptions>();
+		private static StackExchange.Redis.ConnectionMultiplexer GetRedisConnection() => GetRedisConnection(GetConnectionSetting(ApplicationContext.Current?.Configuration?.GetOption<ConnectionSettingsCollection>("/Externals/Redis/ConnectionSettings")));
+		private static StackExchange.Redis.ConnectionMultiplexer GetRedisConnection(IConnectionSettings settings) => StackExchange.Redis.ConnectionMultiplexer.Connect(GetRedisConfiguration(settings));
+		private static StackExchange.Redis.ConfigurationOptions GetRedisConfiguration(IConnectionSettings settings) => settings?.GetOptions() as StackExchange.Redis.ConfigurationOptions;
 		#endregion
 
 		#region 重写方法

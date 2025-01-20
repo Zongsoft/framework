@@ -78,9 +78,9 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		_poller = new NetMQPoller() { _queue };
 
 		//如果没有指定心跳间隔则默认为心跳时间为10秒，如果显式指定了心跳间隔小于等于零则表示不启用心跳
-		if(!connectionSettings.TryGetValue<int>("heartbeat", out var heartbeat) || heartbeat > 0)
+		var heartbeat = connectionSettings.GetValue("heartbeat", TimeSpan.FromSeconds(10));
 		{
-			_timer = new NetMQTimer(TimeSpan.FromSeconds(heartbeat > 0 ? heartbeat : 10));
+			_timer = new NetMQTimer(heartbeat > TimeSpan.Zero ? heartbeat : TimeSpan.FromSeconds(10));
 			_timer.Elapsed += this.OnElapsed;
 			_poller.Add(_timer);
 		}

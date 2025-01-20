@@ -110,7 +110,7 @@ namespace Zongsoft.Externals.Redis
 
 		public int DatabaseId => _database?.Database ?? -1;
 		public IConnectionSettings Settings => _settings ??= ApplicationContext.Current?.Configuration.GetConnectionSettings("/Externals/Redis/ConnectionSettings", _name, "redis");
-		public ConfigurationOptions Options => _options ??= this.Settings?.Model<ConfigurationOptions>();
+		public ConfigurationOptions Options => _options ??= this.Settings?.GetOptions() as ConfigurationOptions;
 		#endregion
 
 		#region 内部属性

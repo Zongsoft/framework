@@ -93,7 +93,7 @@ public class ConnectionSettingsTest
 	}
 
 	[Fact]
-	public void TestModeler()
+	public void TestGetOptions()
 	{
 		var settings = MyDriver.Instance.Create(ConnectionString);
 		Assert.NotNull(settings);
@@ -108,7 +108,7 @@ public class ConnectionSettingsTest
 		Assert.Equal(999, settings.Port);
 		Assert.Equal(999, settings.GetValue<int>("Port"));
 
-		var options = settings.GetOptions<MyOptions>();
+		var options = MyDriver.Instance.GetOptions(settings);
 		Assert.NotNull(options);
 		Assert.True(options.Boolean);
 		Assert.Equal(100, options.Integer);
@@ -116,9 +116,19 @@ public class ConnectionSettingsTest
 		Assert.Equal("MyString", options.Text, true);
 		Assert.Equal(DATE, options.Birthday);
 		Assert.Equal(DateTime.Today.Year - DATE.Year, options.Age);
+
+		var target = settings.GetOptions();
+		Assert.NotNull(target);
+		Assert.IsType<MyOptions>(target);
+		Assert.True(((MyOptions)target).Boolean);
+		Assert.Equal(100, ((MyOptions)target).Integer);
+		Assert.Equal(1.23, ((MyOptions)target).Double);
+		Assert.Equal("MyString", ((MyOptions)target).Text, true);
+		Assert.Equal(DATE, ((MyOptions)target).Birthday);
+		Assert.Equal(DateTime.Today.Year - DATE.Year, ((MyOptions)target).Age);
 	}
 
-	public sealed class MyDriver : ConnectionSettingsDriver<MyDescriptorCollection>
+	public sealed class MyDriver : ConnectionSettingsDriver<MyOptions, MyDescriptorCollection>
 	{
 		#region 单例字段
 		public static readonly MyDriver Instance = new();
@@ -128,20 +138,20 @@ public class ConnectionSettingsTest
 		private MyDriver() : base("MyDriver")
 		{
 			this.Mapper = new MyMapper(this);
-			this.Modeler = new MyModeler(this);
+			this.Populator = new MyPopulator(this);
 		}
 		#endregion
 
 		#region 嵌套子类
-		private sealed class MyMapper(MyDriver driver) : ConnectionSettingsMapper<MyDriver>(driver) { }
-		private sealed class MyModeler(MyDriver driver) : ConnectionSettingsModeler<MyOptions>(driver)
+		private sealed class MyMapper(MyDriver driver) : MapperBase(driver) { }
+		private sealed class MyPopulator(MyDriver driver) : PopulatorBase(driver)
 		{
-			protected override bool OnModel(ref MyOptions model, ConnectionSettingDescriptor descriptor, object value)
+			protected override bool OnPopulate(ref MyOptions model, ConnectionSettingDescriptor descriptor, object value)
 			{
 				if(MyDescriptorCollection.DateTime.Equals(descriptor.Name) && Common.Convert.TryConvertValue<DateTime>(value, out var birthday))
 					model.Age = (short)(DateTime.Today.Year - birthday.Year);
 
-				return base.OnModel(ref model, descriptor, value);
+				return base.OnPopulate(ref model, descriptor, value);
 			}
 		}
 		#endregion

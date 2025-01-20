@@ -36,7 +36,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Redis.Configuration
 {
-	public sealed class RedisConnectionSettingsDriver : ConnectionSettingsDriver<RedisConnectionSettingDescriptorCollection>
+	public sealed class RedisConnectionSettingsDriver : ConnectionSettingsDriver<ConfigurationOptions, RedisConnectionSettingDescriptorCollection>
 	{
 		#region 常量定义
 		internal const string NAME = "Redis";
@@ -50,18 +50,18 @@ namespace Zongsoft.Externals.Redis.Configuration
 		public RedisConnectionSettingsDriver() : base(NAME)
 		{
 			this.Mapper = new RedisMapper(this);
-			this.Modeler = new RedisModeler(this);
+			this.Populator = new RedisPopulator(this);
 		}
 		#endregion
 
 		#region 嵌套子类
-		private sealed class RedisMapper(RedisConnectionSettingsDriver driver) : ConnectionSettingsMapper(driver)
+		private sealed class RedisMapper(RedisConnectionSettingsDriver driver) : MapperBase(driver)
 		{
 		}
 
-		private sealed class RedisModeler(RedisConnectionSettingsDriver driver) : ConnectionSettingsModeler<StackExchange.Redis.ConfigurationOptions>(driver)
+		private sealed class RedisPopulator(RedisConnectionSettingsDriver driver) : PopulatorBase(driver)
 		{
-			protected override bool OnModel(ref ConfigurationOptions model, ConnectionSettingDescriptor descriptor, object value)
+			protected override bool OnPopulate(ref ConfigurationOptions model, ConnectionSettingDescriptor descriptor, object value)
 			{
 				if(ConnectionSettingDescriptor.Server.Equals(descriptor.Name) && value is string server)
 				{
@@ -75,7 +75,7 @@ namespace Zongsoft.Externals.Redis.Configuration
 					model.SyncTimeout = (int)duration.TotalMilliseconds;
 				}
 
-				return base.OnModel(ref model, descriptor, value);
+				return base.OnPopulate(ref model, descriptor, value);
 			}
 		}
 		#endregion
