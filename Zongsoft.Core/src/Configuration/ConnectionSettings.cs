@@ -173,71 +173,11 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 	public bool IsDriver(string name) => ConnectionSettingsUtility.IsDriver(this, name);
 	public bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingsUtility.IsDriver(this, driver);
 
-	public TModel Model<TModel>()
-	{
-		var modeler = this.Driver.Modeler;
-		if(modeler == null)
-			return default;
-
-		var model = this.Driver.Modeler.Model(this);
-		if(model == null)
-			return default;
-
-		return typeof(TModel).IsAssignableFrom(model.GetType()) ? (TModel)model :
-			throw new InvalidOperationException($"Unable to convert a connection configuration object of type '{model.GetType().FullName}' to type '{typeof(TModel).FullName}'.");
-	}
-
-	public bool SetValue(string name, object value)
-	{
-		if(value == null)
-			return _values.Remove(name);
-
-		var text = this.Driver != null && this.Driver.Mapper != null ?
-			this.Driver.Mapper.Map(name, value, _values) :
-			Common.Convert.ConvertValue<string>(value);
-
-		if(string.IsNullOrEmpty(text))
-			return _values.Remove(name);
-
-		_values[name] = text;
-		return true;
-	}
-
-	public object GetValue(string name)
-	{
-		if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(name, _values, out var value))
-			return value;
-
-		return _values.TryGetValue(name, out var text) ? text : null;
-	}
-
-	public object GetValue(string name, Type type)
-	{
-		if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(name, _values, out var value))
-			return Common.Convert.ConvertValue(value, type);
-
-		return _values.TryGetValue(name, out var text) ? Common.Convert.ConvertValue(text, type) : null;
-	}
-
-	public T GetValue<T>(string name, T defaultValue = default)
-	{
-		if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(name, _values, out var value))
-			return Common.Convert.ConvertValue(value, defaultValue);
-
-		return _values.TryGetValue(name, out var text) ? Common.Convert.ConvertValue(text, defaultValue) : defaultValue;
-	}
-
-	public bool TryGetValue<T>(string name, out T value)
-	{
-		if(this.Driver != null && this.Driver.Mapper != null && this.Driver.Mapper.Map(name, _values, out var mappedValue))
-			return Common.Convert.TryConvertValue(mappedValue, out value);
-
-		if(_values.TryGetValue(name, out var text))
-			return Common.Convert.TryConvertValue(text, out value);
-
-		value = default;
-		return false;
-	}
+	public TOptions GetOptions<TOptions>() => this.Driver.GetOptions<TOptions>(this);
+	public bool SetValue<T>(string name, T value) => this.Driver.SetValue(name, value, _values);
+	public object GetValue(string name) => this.Driver.TryGetValue(name, _values, out var value) ? value : default;
+	public T GetValue<T>(string name, T defaultValue = default) => this.Driver.GetValue(name, _values, defaultValue);
+	public bool TryGetValue(string name, out object value) => this.Driver.TryGetValue(name, _values, out value);
 	#endregion
 
 	#region 参数解析
@@ -291,10 +231,8 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 		{
 			private readonly string _name = name;
 
-			public string Name => _name;
-			public IConnectionSettingsDriver Driver => string.IsNullOrEmpty(_name) ?
-				ConnectionSettingsDriver.Unnamed :
-				Drivers.TryGetValue(_name, out var driver) ? driver : ConnectionSettingsDriver.Unnamed;
+			public string Name => _name ?? "?";
+			public IConnectionSettingsDriver Driver => Drivers.TryGetValue(_name, out var driver) ? driver : ConnectionSettingsDriver.Unnamed;
 
 			public string Description
 			{
@@ -302,8 +240,11 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 				set => this.Driver.Description = value;
 			}
 
-			public IConnectionSettingsMapper Mapper => this.Driver.Mapper;
-			public IConnectionSettingsModeler Modeler => this.Driver.Modeler;
+			public TOptions GetOptions<TOptions>(IConnectionSettings settings) => this.Driver.GetOptions<TOptions>(settings);
+			public bool TryGetValue(string name, IDictionary<string, string> values, out object value) => this.Driver.TryGetValue(name, values, out value);
+			public T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue) => this.Driver.GetValue(name, values, defaultValue);
+			public bool SetValue<T>(string name, T value, IDictionary<string, string> values) => this.Driver.SetValue(name, value, values);
+
 			public static ConnectionSettingDescriptorCollection Descriptors => null;
 			public bool Equals(IConnectionSettingsDriver other) => this.Driver.Equals(other);
 		}

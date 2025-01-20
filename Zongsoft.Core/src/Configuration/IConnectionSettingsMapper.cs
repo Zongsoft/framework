@@ -52,6 +52,6 @@ namespace Zongsoft.Configuration
 		/// <param name="value">指定的待映射的值。</param>
 		/// <param name="values">指定的待映射的原始值集合。</param>
 		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		string Map(string name, object value, IDictionary<string, string> values);
+		string Map<T>(string name, T value, IDictionary<string, string> values);
 	}
 }

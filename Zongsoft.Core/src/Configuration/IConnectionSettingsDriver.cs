@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Configuration
 {
@@ -46,11 +47,12 @@ namespace Zongsoft.Configuration
 		string Name { get; }
 		/// <summary>获取或设置驱动的描述信息。</summary>
 		string Description { get; set; }
-		/// <summary>获取连接设置映射器。</summary>
-		IConnectionSettingsMapper Mapper { get; }
-		/// <summary>获取连接设置模型器。</summary>
-		IConnectionSettingsModeler Modeler { get; }
 		#endregion
+
+		TOptions GetOptions<TOptions>(IConnectionSettings settings);
+		bool TryGetValue(string name, IDictionary<string, string> values, out object value);
+		T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue);
+		bool SetValue<T>(string name, T value, IDictionary<string, string> values);
 
 		#region 方法实现
 		bool IsDriver(string name)

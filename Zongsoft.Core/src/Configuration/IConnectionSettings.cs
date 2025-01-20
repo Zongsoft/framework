@@ -79,10 +79,10 @@ namespace Zongsoft.Configuration
 		#endregion
 
 		#region 方法定义
-		/// <summary>构建当前连接设置的模型实例。</summary>
-		/// <typeparam name="TModel">泛型参数，指示构建的模型类型。</typeparam>
-		/// <returns>返回构建成功的模型实例。</returns>
-		TModel Model<TModel>();
+		/// <summary>构建当前连接设置的选项实例。</summary>
+		/// <typeparam name="TOptions">泛型参数，指示构建的选项类型。</typeparam>
+		/// <returns>返回构建成功的选项实例。</returns>
+		TOptions GetOptions<TOptions>();
 
 		/// <summary>判断指定名称的连接设置项是否存在。</summary>
 		/// <param name="name">指定要判断的设置项名称。</param>
@@ -97,11 +97,10 @@ namespace Zongsoft.Configuration
 		T GetValue<T>(string name, T defaultValue = default);
 
 		/// <summary>尝试获取指定名称的连接设置项的值。</summary>
-		/// <typeparam name="T">泛型参数，指示要转换的设置项值的类型。</typeparam>
 		/// <param name="name">指定要获取的设置项名称。</param>
 		/// <param name="value">输出参数，表示获取成功的设置项值。</param>
 		/// <returns>如果指定名称的设置项存在则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		bool TryGetValue<T>(string name, out T value);
+		bool TryGetValue(string name, out object value);
 		#endregion
 
 		#region 默认实现

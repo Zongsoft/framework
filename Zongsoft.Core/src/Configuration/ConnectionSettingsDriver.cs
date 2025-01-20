@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
@@ -46,16 +47,12 @@ public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<
 	#endregion
 
 	#region 构造函数
-	public ConnectionSettingsDriver(string name, string description = null) : this(name, null, null, description) { }
-	public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null) : this(name, mapper, null, description) { }
-	public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, IConnectionSettingsModeler modeler, string description = null)
+	public ConnectionSettingsDriver(string name, string description = null)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
 		this.Name = name;
-		this.Mapper = mapper;
-		this.Modeler = modeler;
 		this.Description = description;
 	}
 	#endregion
@@ -63,11 +60,33 @@ public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<
 	#region 公共属性
 	public string Name { get; }
 	public string Description { get; set; }
-	public IConnectionSettingsMapper Mapper { get; init; }
-	public IConnectionSettingsModeler Modeler { get; init; }
+	#endregion
+
+	#region 保护属性
+	protected IConnectionSettingsMapper Mapper { get; init; }
+	protected IConnectionSettingsModeler Modeler { get; init; }
 	#endregion
 
 	#region 公共方法
+	public TOptions GetOptions<TOptions>(IConnectionSettings settings) => (TOptions)this.Modeler.Model(settings);
+	public bool TryGetValue(string name, IDictionary<string, string> values, out object value) => this.Mapper.Map(name, values, out value);
+	public T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue)
+	{
+		return this.Mapper.Map(name, values, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ?
+			result : defaultValue;
+	}
+
+	public bool SetValue<T>(string name, T value, IDictionary<string, string> values)
+	{
+		var text = this.Mapper.Map(name, value, values);
+
+		if(string.IsNullOrEmpty(text))
+			return values.Remove(name);
+
+		values[name] = text;
+		return true;
+	}
+
 	public ConnectionSettings Create(string connectionString) => new(this.Name, connectionString) { Driver = this };
 	public ConnectionSettings Create(string name, string connectionString) => new(name, connectionString) { Driver = this };
 	#endregion
@@ -87,8 +106,6 @@ public class ConnectionSettingsDriver<TDescriptors> : IConnectionSettingsDriver<
 public class ConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>
 {
 	#region 构造函数
-	public ConnectionSettingsDriver(string name, string description = null) : base(name, null, null, description) { }
-	public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, string description = null) : base(name, mapper, null, description) { }
-	public ConnectionSettingsDriver(string name, IConnectionSettingsMapper mapper, IConnectionSettingsModeler modeler, string description = null) : base(name, mapper, modeler, description) { }
+	public ConnectionSettingsDriver(string name, string description = null) : base(name, description) { }
 	#endregion
 }

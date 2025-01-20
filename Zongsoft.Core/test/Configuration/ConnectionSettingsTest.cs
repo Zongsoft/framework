@@ -108,7 +108,7 @@ public class ConnectionSettingsTest
 		Assert.Equal(999, settings.Port);
 		Assert.Equal(999, settings.GetValue<int>("Port"));
 
-		var options = settings.Model<MyOptions>();
+		var options = settings.GetOptions<MyOptions>();
 		Assert.NotNull(options);
 		Assert.True(options.Boolean);
 		Assert.Equal(100, options.Integer);
@@ -133,7 +133,7 @@ public class ConnectionSettingsTest
 		#endregion
 
 		#region 嵌套子类
-		private sealed class MyMapper(MyDriver driver) : ConnectionSettingsMapper(driver) { }
+		private sealed class MyMapper(MyDriver driver) : ConnectionSettingsMapper<MyDriver>(driver) { }
 		private sealed class MyModeler(MyDriver driver) : ConnectionSettingsModeler<MyOptions>(driver)
 		{
 			protected override bool OnModel(ref MyOptions model, ConnectionSettingDescriptor descriptor, object value)

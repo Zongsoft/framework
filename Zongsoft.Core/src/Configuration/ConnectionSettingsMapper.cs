@@ -33,10 +33,10 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
+public abstract class ConnectionSettingsMapper<TDriver> : IConnectionSettingsMapper where TDriver : IConnectionSettingsDriver
 {
 	#region 构造函数
-	protected ConnectionSettingsMapper(IConnectionSettingsDriver driver)
+	protected ConnectionSettingsMapper(TDriver driver)
 	{
 		this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
 		this.Descriptors = (ConnectionSettingDescriptorCollection)driver.GetType()
@@ -46,8 +46,9 @@ public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
 	#endregion
 
 	#region 公共属性
-	public IConnectionSettingsDriver Driver { get; }
-	public ConnectionSettingDescriptorCollection Descriptors { get; }
+	public TDriver Driver { get; }
+	IConnectionSettingsDriver IConnectionSettingsMapper.Driver => this.Driver;
+	protected ConnectionSettingDescriptorCollection Descriptors { get; }
 	#endregion
 
 	#region 公共方法
@@ -60,14 +61,14 @@ public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
 		return false;
 	}
 
-	public string Map(string name, object value, IDictionary<string, string> values)
+	public string Map<T>(string name, T value, IDictionary<string, string> values)
 	{
 		return this.Descriptors.TryGetValue(name, out var descriptor) ? this.OnMap(descriptor, value, values) : null;
 	}
 	#endregion
 
 	#region 保护方法
-	protected virtual string OnMap(ConnectionSettingDescriptor descriptor, object value, IDictionary<string, string> values)
+	protected virtual string OnMap<T>(ConnectionSettingDescriptor descriptor, T value, IDictionary<string, string> values)
 	{
 		return Common.Convert.TryConvertValue<string>(value, out var result) ? result : null;
 	}
