@@ -228,8 +228,11 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 			//发送请求获取交换器端口号
 			requester.SendFrameEmpty();
 
+			//获取连接超时
+			var timeout = settings.Timeout > TimeSpan.Zero ? settings.Timeout : TimeSpan.FromSeconds(10);
+
 			//接收返回的请求响应信息，如果获取失败则返回
-			if(!requester.TryReceiveFrameString(out var response) || string.IsNullOrEmpty(response))
+			if(!requester.TryReceiveFrameString(timeout, out var response) || string.IsNullOrEmpty(response))
 				return default;
 
 			ushort publisherPort = 0, subscriberPort = 0;
