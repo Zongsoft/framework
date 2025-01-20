@@ -37,7 +37,6 @@ public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TMod
 {
 	#region 私有变量
 	private bool _initialized = false;
-	private ConnectionSettingDescriptorCollection _descriptors;
 	private readonly Dictionary<string, MemberInfo> _members = new(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
@@ -45,11 +44,15 @@ public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TMod
 	public ConnectionSettingsModeler(IConnectionSettingsDriver driver)
 	{
 		this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
+		this.Descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
+				.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+				.GetValue(null);
 	}
 	#endregion
 
 	#region 公共属性
 	public IConnectionSettingsDriver Driver { get; }
+	public ConnectionSettingDescriptorCollection Descriptors { get; }
 	#endregion
 
 	#region 初始化器
@@ -64,9 +67,6 @@ public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TMod
 				return;
 
 			var members = typeof(TModel).GetMembers(BindingFlags.Instance | BindingFlags.Public);
-			_descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
-				.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-				.GetValue(null);
 
 			for(int i = 0; i < members.Length; i++)
 			{
@@ -81,7 +81,7 @@ public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TMod
 				{
 					_members.TryAdd(members[i].Name, members[i]);
 
-					if(_descriptors != null && _descriptors.Count > 0 && _descriptors.TryGetValue(members[i].Name, out var descriptor))
+					if(this.Descriptors.TryGetValue(members[i].Name, out var descriptor))
 					{
 						_members.TryAdd(descriptor.Name, members[i]);
 
@@ -111,9 +111,8 @@ public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TMod
 
 		foreach(var setting in settings)
 		{
-			var type = _descriptors != null && _descriptors.TryGetValue(setting.Key, out var descriptor) ? descriptor.Type : null;
-			var value = type == null ? settings[setting.Key] : Common.Convert.ConvertValue(settings[setting.Key], type);
-			this.OnModel(ref model, setting.Key, value);
+			if(this.Descriptors.TryGetValue(setting.Key, out var descriptor))
+				this.OnModel(ref model, descriptor, setting.Value);
 		}
 
 		return model;
@@ -122,13 +121,13 @@ public class ConnectionSettingsModeler<TModel> : IConnectionSettingsModeler<TMod
 
 	#region 保护方法
 	protected virtual TModel CreateModel(IConnectionSettings settings) => Activator.CreateInstance<TModel>();
-	protected virtual bool OnModel(ref TModel model, string name, object value)
+	protected virtual bool OnModel(ref TModel model, ConnectionSettingDescriptor descriptor, object value)
 	{
-		if(_members.TryGetValue(name, out var member))
-		{
-			Reflection.Reflector.SetValue(member, ref model, value);
-			return true;
-		}
+		if(_members.TryGetValue(descriptor.Name, out var member))
+			return Common.Convert.TryConvertValue(value ?? descriptor.DefaultValue, descriptor.Type, out value) && Reflection.Reflector.TrySetValue(member, ref model, value);
+
+		if(!string.IsNullOrEmpty(descriptor.Alias) && _members.TryGetValue(descriptor.Alias, out member))
+			return Common.Convert.TryConvertValue(value ?? descriptor.DefaultValue, descriptor.Type, out value) && Reflection.Reflector.TrySetValue(member, ref model, value);
 
 		return false;
 	}

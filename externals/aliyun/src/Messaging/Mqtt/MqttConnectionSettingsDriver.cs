@@ -52,16 +52,16 @@ namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 		private sealed class MqttMapper(MqttConnectionSettingsDriver driver) : ConnectionSettingsMapper(driver)
 		{
 			#region 重写方法
-			protected override bool OnMap(string name, IDictionary<string, string> values, out object value)
+			protected override bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<string, string> values, out object value)
 			{
-				if(ConnectionSettingDescriptor.Client.Equals(name))
+				if(ConnectionSettingDescriptor.Client.Equals(descriptor.Name))
 					return Common.Convert.TryConvertValue(GetClient(values), out value);
-				if(ConnectionSettingDescriptor.UserName.Equals(name))
+				if(ConnectionSettingDescriptor.UserName.Equals(descriptor.Name))
 					return Common.Convert.TryConvertValue(GetUserName(values), out value);
-				if(ConnectionSettingDescriptor.Password.Equals(name))
+				if(ConnectionSettingDescriptor.Password.Equals(descriptor.Name))
 					return Common.Convert.TryConvertValue(GetPassword(values), out value);
 
-				return base.OnMap(name, values, out value);
+				return base.OnMap(descriptor, values, out value);
 			}
 			#endregion
 

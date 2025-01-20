@@ -35,60 +35,26 @@ namespace Zongsoft.Configuration;
 
 public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
 {
-	#region 私有变量
-	private bool _initialized = false;
-	private readonly Dictionary<string, string> _mapping = new(StringComparer.OrdinalIgnoreCase);
-	#endregion
-
 	#region 构造函数
 	protected ConnectionSettingsMapper(IConnectionSettingsDriver driver)
 	{
 		this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
+		this.Descriptors = (ConnectionSettingDescriptorCollection)driver.GetType()
+				.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+				.GetValue(null);
 	}
 	#endregion
 
 	#region 公共属性
 	public IConnectionSettingsDriver Driver { get; }
-	#endregion
-
-	#region 初始化器
-	private void Initialize()
-	{
-		if(_initialized)
-			return;
-
-		lock(_mapping)
-		{
-			if(_initialized)
-				return;
-
-			var descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
-				.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-				.GetValue(null);
-
-			if(descriptors != null)
-			{
-				foreach(var descriptor in descriptors)
-				{
-					if(string.IsNullOrEmpty(descriptor.Alias))
-						continue;
-
-					_mapping.Add(descriptor.Name, descriptor.Alias);
-				}
-			}
-
-			_initialized = true;
-		}
-	}
+	public ConnectionSettingDescriptorCollection Descriptors { get; }
 	#endregion
 
 	#region 公共方法
 	public bool Map(string name, IDictionary<string, string> values, out object result)
 	{
-		this.Initialize();
-
-		if(_mapping.ContainsKey(name) && values.ContainsKey(name))
-			return this.OnMap(name, values, out result);
+		if(this.Descriptors.TryGetValue(name, out var descriptor))
+			return this.OnMap(descriptor, values, out result);
 
 		result = default;
 		return false;
@@ -96,27 +62,26 @@ public abstract class ConnectionSettingsMapper : IConnectionSettingsMapper
 
 	public string Map(string name, object value, IDictionary<string, string> values)
 	{
-		this.Initialize();
-		return _mapping.ContainsKey(name) ? this.OnMap(name, value, values) : null;
+		return this.Descriptors.TryGetValue(name, out var descriptor) ? this.OnMap(descriptor, value, values) : null;
 	}
 	#endregion
 
 	#region 保护方法
-	protected virtual string OnMap(string name, object value, IDictionary<string, string> values)
+	protected virtual string OnMap(ConnectionSettingDescriptor descriptor, object value, IDictionary<string, string> values)
 	{
 		return Common.Convert.TryConvertValue<string>(value, out var result) ? result : null;
 	}
 
-	protected virtual bool OnMap(string name, IDictionary<string, string> values, out object value)
+	protected virtual bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<string, string> values, out object value)
 	{
-		if(values.TryGetValue(name, out var text))
-		{
-			value = text;
-			return true;
-		}
+		if(values.TryGetValue(descriptor.Name, out var text))
+			return Common.Convert.TryConvertValue(text, descriptor.Type, out value);
 
-		value = null;
-		return false;
+		if(!string.IsNullOrEmpty(descriptor.Alias) && values.TryGetValue(descriptor.Alias, out text))
+			return Common.Convert.TryConvertValue(text, descriptor.Type, out value);
+
+		value = descriptor.DefaultValue;
+		return !descriptor.Required || descriptor.DefaultValue != null;
 	}
 	#endregion
 }

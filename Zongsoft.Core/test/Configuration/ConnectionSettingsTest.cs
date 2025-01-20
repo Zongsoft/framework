@@ -100,6 +100,14 @@ public class ConnectionSettingsTest
 		Assert.True(settings.IsDriver(MyDriver.Instance));
 		Assert.Same(MyDriver.Instance, settings.Driver);
 
+		settings.Port = 996;
+		Assert.Equal(996, settings.Port);
+		Assert.Equal(996, settings.GetValue<int>("Port"));
+
+		Assert.True(settings.SetValue("Port", 999));
+		Assert.Equal(999, settings.Port);
+		Assert.Equal(999, settings.GetValue<int>("Port"));
+
 		var options = settings.Model<MyOptions>();
 		Assert.NotNull(options);
 		Assert.True(options.Boolean);
@@ -128,12 +136,12 @@ public class ConnectionSettingsTest
 		private sealed class MyMapper(MyDriver driver) : ConnectionSettingsMapper(driver) { }
 		private sealed class MyModeler(MyDriver driver) : ConnectionSettingsModeler<MyOptions>(driver)
 		{
-			protected override bool OnModel(ref MyOptions model, string name, object value)
+			protected override bool OnModel(ref MyOptions model, ConnectionSettingDescriptor descriptor, object value)
 			{
-				if(MyDescriptorCollection.DateTime.Equals(name) && Common.Convert.TryConvertValue<DateTime>(value, out var birthday))
+				if(MyDescriptorCollection.DateTime.Equals(descriptor.Name) && Common.Convert.TryConvertValue<DateTime>(value, out var birthday))
 					model.Age = (short)(DateTime.Today.Year - birthday.Year);
 
-				return base.OnModel(ref model, name, value);
+				return base.OnModel(ref model, descriptor, value);
 			}
 		}
 		#endregion
@@ -141,8 +149,22 @@ public class ConnectionSettingsTest
 
 	public sealed class MyDescriptorCollection : ConnectionSettingDescriptorCollection
 	{
-		public static readonly ConnectionSettingDescriptor DateTime = new ConnectionSettingDescriptor(nameof(DateTime), nameof(MyOptions.Birthday), typeof(DateTime));
-		public MyDescriptorCollection() => this.Add(DateTime);
+		public static readonly ConnectionSettingDescriptor Text = new(nameof(Text), typeof(string));
+		public static readonly ConnectionSettingDescriptor Port = new(nameof(Port), nameof(Port), false, (ushort)7969);
+		public static readonly ConnectionSettingDescriptor DateTime = new(nameof(DateTime), nameof(MyOptions.Birthday), typeof(DateTime));
+		public static readonly ConnectionSettingDescriptor Integer = new(nameof(Integer), typeof(int));
+		public static readonly ConnectionSettingDescriptor Boolean = new(nameof(Boolean), typeof(bool));
+		public static readonly ConnectionSettingDescriptor Double = new(nameof(Double), typeof(double));
+
+		public MyDescriptorCollection()
+		{
+			this.Add(Text);
+			this.Add(Port);
+			this.Add(DateTime);
+			this.Add(Integer);
+			this.Add(Boolean);
+			this.Add(Double);
+		}
 	}
 
 	public class MyOptions

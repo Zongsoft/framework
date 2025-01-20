@@ -70,7 +70,7 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 		{
 			if(_driver == null)
 			{
-				if(this.HasProperties && this.Properties.TryGetValue(nameof(Driver), out var name) && name != null)
+				if(this.HasProperties && this.Properties.TryGetValue(nameof(this.Driver), out var name) && name != null)
 					_driver = Drivers.TryGetValue(name, out var driver) ? driver : ConnectionSettingsDriver.Unnamed;
 				else
 					_driver = ConnectionSettingsDriver.Unnamed;

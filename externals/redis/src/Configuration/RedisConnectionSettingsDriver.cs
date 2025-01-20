@@ -61,21 +61,21 @@ namespace Zongsoft.Externals.Redis.Configuration
 
 		private sealed class RedisModeler(RedisConnectionSettingsDriver driver) : ConnectionSettingsModeler<StackExchange.Redis.ConfigurationOptions>(driver)
 		{
-			protected override bool OnModel(ref ConfigurationOptions model, string name, object value)
+			protected override bool OnModel(ref ConfigurationOptions model, ConnectionSettingDescriptor descriptor, object value)
 			{
-				if(ConnectionSettingDescriptor.Server.Equals(name) && value is string server)
+				if(ConnectionSettingDescriptor.Server.Equals(descriptor.Name) && value is string server)
 				{
 					foreach(var part in server.Slice(';'))
 						model.EndPoints.Add(part);
 				}
-				else if(ConnectionSettingDescriptor.Timeout.Equals(name) && Common.Convert.TryConvertValue<TimeSpan>(value, out var duration))
+				else if(ConnectionSettingDescriptor.Timeout.Equals(descriptor.Name) && Common.Convert.TryConvertValue<TimeSpan>(value, out var duration))
 				{
 					model.ConnectTimeout = (int)duration.TotalMilliseconds;
 					model.AsyncTimeout = (int)duration.TotalMilliseconds;
 					model.SyncTimeout = (int)duration.TotalMilliseconds;
 				}
 
-				return base.OnModel(ref model, name, value);
+				return base.OnModel(ref model, descriptor, value);
 			}
 		}
 		#endregion

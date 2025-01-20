@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using TDengine.Data;
 using TDengine.Data.Client;
@@ -56,14 +55,7 @@ public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<
 	#endregion
 
 	#region 嵌套子类
-	private sealed class TDengineMapper(TDengineConnectionSettingsDriver driver) : ConnectionSettingsMapper(driver)
-	{
-		protected override bool OnMap(string name, IDictionary<string, string> values, out object value)
-		{
-			return base.OnMap(name, values, out value);
-		}
-	}
-
+	private sealed class TDengineMapper(TDengineConnectionSettingsDriver driver) : ConnectionSettingsMapper(driver) { }
 	private sealed class TDengineModeler(TDengineConnectionSettingsDriver driver) : ConnectionSettingsModeler<TDengineConnectionStringBuilder>(driver)
 	{
 		protected override TDengineConnectionStringBuilder CreateModel(IConnectionSettings settings) => new(settings.Value)
@@ -77,14 +69,14 @@ public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<
 
 public sealed class TDengineConnectionSettingDescriptorCollection : ConnectionSettingDescriptorCollection
 {
-	public readonly static ConnectionSettingDescriptor<string> Server = new(nameof(Server), nameof(TDengineConnectionStringBuilder.Host), null, ConnectionSettingDescriptor.Server.Label, ConnectionSettingDescriptor.Server.Description);
-	public readonly static ConnectionSettingDescriptor<int> Port = new(nameof(Port), nameof(TDengineConnectionStringBuilder.Port), 6030, ConnectionSettingDescriptor.Port.Label, ConnectionSettingDescriptor.Port.Description);
-	public readonly static ConnectionSettingDescriptor<string> Database = new(nameof(Database), "DB", null, ConnectionSettingDescriptor.Database.Label, ConnectionSettingDescriptor.Database.Description);
+	public readonly static ConnectionSettingDescriptor<string> Server = new(nameof(Server), nameof(TDengineConnectionStringBuilder.Host), true);
+	public readonly static ConnectionSettingDescriptor<int> Port = new(nameof(Port), nameof(TDengineConnectionStringBuilder.Port), 6030);
+	public readonly static ConnectionSettingDescriptor<string> Database = new(nameof(Database), "DB", true);
 	public readonly static ConnectionSettingDescriptor<TDengineConnectionProtocol> Protocol = new(nameof(Protocol), nameof(TDengineConnectionStringBuilder.Protocol), TDengineConnectionProtocol.Native);
-	public readonly static ConnectionSettingDescriptor<string> Timezone = new(nameof(Timezone), nameof(TDengineConnectionStringBuilder.Timezone), null, null);
-	public readonly static ConnectionSettingDescriptor<string> Token = new(nameof(Token), nameof(TDengineConnectionStringBuilder.Token), null, null);
-	public readonly static ConnectionSettingDescriptor<bool> AutoReconnect = new(nameof(AutoReconnect), nameof(TDengineConnectionStringBuilder.AutoReconnect), (object)true);
-	public readonly static ConnectionSettingDescriptor<bool> EnableCompression = new(nameof(EnableCompression), nameof(TDengineConnectionStringBuilder.EnableCompression), (object)true);
+	public readonly static ConnectionSettingDescriptor<string> Timezone = new(nameof(Timezone));
+	public readonly static ConnectionSettingDescriptor<string> Token = new(nameof(Token));
+	public readonly static ConnectionSettingDescriptor<bool> Reconnectable = new(nameof(Reconnectable), nameof(TDengineConnectionStringBuilder.AutoReconnect), false, true);
+	public readonly static ConnectionSettingDescriptor<bool> Compressible = new(nameof(Compressible), nameof(TDengineConnectionStringBuilder.EnableCompression), false, true);
 
 	public TDengineConnectionSettingDescriptorCollection()
 	{
@@ -94,8 +86,8 @@ public sealed class TDengineConnectionSettingDescriptorCollection : ConnectionSe
 		this.Add(Database);
 		this.Add(Protocol);
 		this.Add(Timezone);
-		this.Add(AutoReconnect);
-		this.Add(EnableCompression);
+		this.Add(Compressible);
+		this.Add(Reconnectable);
 		this.Add(ConnectionSettingDescriptor.UserName);
 		this.Add(ConnectionSettingDescriptor.Password);
 		this.Add(ConnectionSettingDescriptor.Timeout);
