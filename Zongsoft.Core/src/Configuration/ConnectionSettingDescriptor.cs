@@ -169,10 +169,15 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 		return null != null;
 	}
 
-	public bool Equals(ConnectionSettingDescriptor other) => other is not null &&
-		string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) &&
-		string.Equals(this.Alias, other.Alias, StringComparison.OrdinalIgnoreCase) &&
-		this.Type == other.Type;
+	public bool Equals(ConnectionSettingDescriptor other) => other is not null && this.Type == other.Type &&
+	(
+		string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) ||
+		(
+			!string.IsNullOrEmpty(this.Alias) &&
+			!string.IsNullOrEmpty(other.Alias) &&
+			string.Equals(this.Alias, other.Alias, StringComparison.OrdinalIgnoreCase)
+		)
+	);
 
 	public override bool Equals(object obj) => obj switch
 	{
