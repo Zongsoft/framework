@@ -48,22 +48,21 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 
 	#region 成员字段
 	private IConnectionSettingsDriver _driver;
-	private readonly Dictionary<string, string> _values;
+	private readonly EntryCollection _values;
 	#endregion
 
 	#region 构造函数
-	public ConnectionSettings() => _values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+	public ConnectionSettings() => _values = new();
 	public ConnectionSettings(string settings, IConnectionSettingsDriver driver = null)
 	{
-		_values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		_values = new();
 		this.Driver = driver;
 		this.Value = settings;
 	}
 
 	public ConnectionSettings(string name, string value) : base(name, value)
 	{
-		_values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
+		_values = new();
 		if(!string.IsNullOrEmpty(value))
 			this.OnValueChanged(value);
 	}
@@ -87,7 +86,7 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 		}
 		init => _driver = value ?? ConnectionSettingsDriver.Default;
 	}
-	public IDictionary<string, string> Values => _values;
+	public IDictionary<object, string> Values => _values;
 	public object this[string name]
 	{
 		get => this.GetValue(name);
@@ -226,7 +225,7 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 
 	#region 枚举遍历
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _values.GetEnumerator();
+	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => ((IEnumerable<KeyValuePair<string, string>>)_values).GetEnumerator();
 	#endregion
 
 	#region 嵌套子类
@@ -244,12 +243,203 @@ public class ConnectionSettings : Setting, IConnectionSettings, IEquatable<Conne
 			public IConnectionSettingsDriver Driver => Drivers.TryGetValue(_name, out var driver) ? driver : ConnectionSettingsDriver.Default;
 
 			public object GetOptions(IConnectionSettings settings) => this.Driver.GetOptions(settings);
-			public bool TryGetValue(string name, IDictionary<string, string> values, out object value) => this.Driver.TryGetValue(name, values, out value);
-			public T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue) => this.Driver.GetValue(name, values, defaultValue);
-			public bool SetValue<T>(string name, T value, IDictionary<string, string> values) => this.Driver.SetValue(name, value, values);
+			public bool TryGetValue(string name, IDictionary<object, string> values, out object value) => this.Driver.TryGetValue(name, values, out value);
+			public T GetValue<T>(string name, IDictionary<object, string> values, T defaultValue) => this.Driver.GetValue(name, values, defaultValue);
+			public bool SetValue<T>(string name, T value, IDictionary<object, string> values) => this.Driver.SetValue(name, value, values);
 
 			public static ConnectionSettingDescriptorCollection Descriptors => null;
 			public bool Equals(IConnectionSettingsDriver other) => this.Driver.Equals(other);
+		}
+	}
+
+	private sealed class EntryCollection : IDictionary<object, string>, IEnumerable<KeyValuePair<string, string>>
+	{
+		private readonly Dictionary<string, string> _dictionary = new(StringComparer.OrdinalIgnoreCase);
+
+		public string this[object key]
+		{
+			get
+			{
+				if(key == null)
+					throw new ArgumentNullException(nameof(key));
+
+				return key switch
+				{
+					string name => this[name],
+					ConnectionSettingDescriptor descriptor => this[descriptor],
+					_ => throw new ArgumentException($"Unsupported key type: {key.GetType().FullName}.")
+				};
+			}
+			set
+			{
+				if(key == null)
+					throw new ArgumentNullException(nameof(key));
+
+				switch(key)
+				{
+					case string name:
+						this[name] = value;
+						break;
+					case ConnectionSettingDescriptor descriptor:
+						this[descriptor] = value;
+						break;
+					default:
+						throw new ArgumentException($"Unsupported key type: {key.GetType().FullName}.");
+				}
+			}
+		}
+
+		public string this[string key]
+		{
+			get => _dictionary[key];
+			set
+			{
+				if(string.IsNullOrEmpty(key))
+					throw new ArgumentNullException(nameof(key));
+
+				if(string.IsNullOrEmpty(value))
+					_dictionary.Remove(key);
+				else
+					_dictionary[key] = value;
+			}
+		}
+
+		public string this[ConnectionSettingDescriptor key]
+		{
+			get
+			{
+				if(key == null)
+					throw new ArgumentNullException(nameof(key));
+
+				if(_dictionary.TryGetValue(key.Name, out var value))
+					return value;
+
+				if(key.Alias != null)
+					_dictionary[key.Alias] = value;
+
+				throw new KeyNotFoundException();
+			}
+			set
+			{
+				if(key == null)
+					throw new ArgumentNullException(nameof(key));
+
+				if(string.IsNullOrEmpty(value))
+					_dictionary.Remove(key.Name);
+				else
+					_dictionary[key.Name] = value;
+
+				if(!string.IsNullOrEmpty(key.Alias))
+					_dictionary.Remove(key.Alias);
+			}
+		}
+
+		public ICollection<object> Keys => [.._dictionary.Keys];
+		public ICollection<string> Values => _dictionary.Values;
+
+		public int Count => _dictionary.Count;
+		bool ICollection<KeyValuePair<object, string>>.IsReadOnly => false;
+
+		public void Add(object key, string value)
+		{
+			if(key == null)
+				throw new ArgumentNullException(nameof(key));
+
+			switch(key)
+			{
+				case string name:
+					_dictionary.Add(name, value);
+					break;
+				case ConnectionSettingDescriptor descriptor:
+					_dictionary.Add(descriptor.Name, value);
+					break;
+				default:
+					throw new ArgumentException($"Unsupported key type: {key.GetType().FullName}.");
+			}
+		}
+
+		public void Add(string key, string value)
+		{
+			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
+
+			if(!string.IsNullOrEmpty(value))
+				_dictionary.Add(key, value);
+		}
+
+		public void Add(ConnectionSettingDescriptor key, string value)
+		{
+			if(key == null)
+				throw new ArgumentNullException(nameof(key));
+
+			if(!string.IsNullOrEmpty(value))
+				_dictionary.Add(key.Name, value);
+		}
+
+		void ICollection<KeyValuePair<object, string>>.Add(KeyValuePair<object, string> item) => this.Add(item.Key, item.Value);
+		public void Clear() => _dictionary.Clear();
+		bool ICollection<KeyValuePair<object, string>>.Contains(KeyValuePair<object, string> item) => this.ContainsKey(item.Key);
+		public bool ContainsKey(object key) => key switch
+		{
+			string name => this.Contains(name),
+			ConnectionSettingDescriptor descriptor => this.Contains(descriptor),
+			_ => false,
+		};
+		public bool Contains(string key) => key != null && _dictionary.ContainsKey(key);
+		public bool Contains(ConnectionSettingDescriptor key) => key != null && (_dictionary.ContainsKey(key.Name) || (key.Alias != null && _dictionary.ContainsKey(key.Alias)));
+
+		void ICollection<KeyValuePair<object, string>>.CopyTo(KeyValuePair<object, string>[] array, int arrayIndex) => ((ICollection<KeyValuePair<object, string>>)_dictionary).CopyTo(array, arrayIndex);
+		public bool Remove(object key) => key switch
+		{
+			string name => this.Remove(name),
+			ConnectionSettingDescriptor descriptor => this.Remove(descriptor),
+			_ => false,
+		};
+		public bool Remove(string key) => key != null && _dictionary.Remove(key);
+		public bool Remove(ConnectionSettingDescriptor key)
+		{
+			if(key == null)
+				return false;
+
+			var result = _dictionary.Remove(key.Name);
+			result |= key.Alias != null && _dictionary.Remove(key.Alias);
+			return result;
+		}
+
+		bool ICollection<KeyValuePair<object, string>>.Remove(KeyValuePair<object, string> item) => this.Remove(item.Key);
+		public bool TryGetValue(object key, out string value)
+		{
+			switch(key)
+			{
+				case string name:
+					return this.TryGetValue(name, out value);
+				case ConnectionSettingDescriptor descriptor:
+					return this.TryGetValue(descriptor, out value);
+			}
+
+			value = null;
+			return false;
+		}
+
+		public bool TryGetValue(string key, out string value) => _dictionary.TryGetValue(key, out value);
+		public bool TryGetValue(ConnectionSettingDescriptor key, out string value)
+		{
+			if(_dictionary.TryGetValue(key.Name, out value))
+				return true;
+
+			if(key.Alias != null && _dictionary.TryGetValue(key.Alias, out value))
+				return true;
+
+			value = null;
+			return false;
+		}
+
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		IEnumerator<KeyValuePair<string, string>> IEnumerable<KeyValuePair<string, string>>.GetEnumerator() => _dictionary.GetEnumerator();
+		public IEnumerator<KeyValuePair<object, string>> GetEnumerator()
+		{
+			foreach(var entry in _dictionary)
+				yield return new KeyValuePair<object, string>(entry.Key, entry.Value);
 		}
 	}
 	#endregion

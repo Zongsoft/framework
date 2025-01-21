@@ -60,7 +60,7 @@ public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDrive
 	/// <param name="values">当前连接设置的设置项值集合。</param>
 	/// <param name="value">输出参数，表示获取成功的设置项值。</param>
 	/// <returns>如果获取成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	bool TryGetValue(string name, IDictionary<string, string> values, out object value);
+	bool TryGetValue(string name, IDictionary<object, string> values, out object value);
 
 	/// <summary>获取指定设置项的值。</summary>
 	/// <typeparam name="T">泛型参数，表示设置项的类型。</typeparam>
@@ -68,7 +68,7 @@ public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDrive
 	/// <param name="values">当前连接设置的设置项值集合。</param>
 	/// <param name="defaultValue">指定的获取失败的返回值。</param>
 	/// <returns>返回的设置项值，如果获取失败则返回值为<paramref name="defaultValue"/>参数指定的值。</returns>
-	T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue);
+	T GetValue<T>(string name, IDictionary<object, string> values, T defaultValue);
 
 	/// <summary>设置指定设置项的值。</summary>
 	/// <typeparam name="T">泛型参数，表示设置项的类型。</typeparam>
@@ -76,7 +76,7 @@ public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDrive
 	/// <param name="value">指定要设置的设置项的值。</param>
 	/// <param name="values">当前连接设置的设置项值集合。</param>
 	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	bool SetValue<T>(string name, T value, IDictionary<string, string> values);
+	bool SetValue<T>(string name, T value, IDictionary<object, string> values);
 	#endregion
 
 	#region 默认实现
@@ -107,7 +107,7 @@ public interface IConnectionSettingsDriver<out TDescriptors> : IConnectionSettin
 public interface IConnectionSettingsDriver<out TOptions, out TDescriptors> : IConnectionSettingsDriver<TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()
 {
 	#region 实例方法
-	new TOptions GetOptions(IConnectionSettings settings);
 	TOptions GetOptions(string connectionString);
+	new TOptions GetOptions(IConnectionSettings settings);
 	#endregion
 }

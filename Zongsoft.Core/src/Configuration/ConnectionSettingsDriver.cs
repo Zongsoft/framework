@@ -65,9 +65,9 @@ public partial class ConnectionSettingsDriver<TDescriptors> : IConnectionSetting
 	#region 公共方法
 	public ConnectionSettings Create(string connectionString) => new(connectionString, this);
 	object IConnectionSettingsDriver.GetOptions(IConnectionSettings settings) => settings;
-	public bool TryGetValue(string name, IDictionary<string, string> values, out object value) => this.Mapper.Map(name, values, out value);
-	public T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue) => this.Mapper.Map(name, values, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ? result : defaultValue;
-	public bool SetValue<T>(string name, T value, IDictionary<string, string> values)
+	public bool TryGetValue(string name, IDictionary<object, string> values, out object value) => this.Mapper.Map(name, values, out value);
+	public T GetValue<T>(string name, IDictionary<object, string> values, T defaultValue) => this.Mapper.Map(name, values, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ? result : defaultValue;
+	public bool SetValue<T>(string name, T value, IDictionary<object, string> values)
 	{
 		var text = this.Mapper.Map(name, value, values);
 
@@ -121,8 +121,8 @@ public class ConnectionSettingsDriver : IConnectionSettingsDriver, IEquatable<IC
 
 	#region 公共方法
 	public object GetOptions(IConnectionSettings settings) => settings;
-	public T GetValue<T>(string name, IDictionary<string, string> values, T defaultValue) => values.TryGetValue(name, out var value) ? Common.Convert.ConvertValue(value, defaultValue) : defaultValue;
-	public bool TryGetValue(string name, IDictionary<string, string> values, out object value)
+	public T GetValue<T>(string name, IDictionary<object, string> values, T defaultValue) => values.TryGetValue(name, out var value) ? Common.Convert.ConvertValue(value, defaultValue) : defaultValue;
+	public bool TryGetValue(string name, IDictionary<object, string> values, out object value)
 	{
 		if(values.TryGetValue(name, out var text))
 		{
@@ -133,7 +133,7 @@ public class ConnectionSettingsDriver : IConnectionSettingsDriver, IEquatable<IC
 		value = null;
 		return false;
 	}
-	public bool SetValue<T>(string name, T value, IDictionary<string, string> values)
+	public bool SetValue<T>(string name, T value, IDictionary<object, string> values)
 	{
 		if(value is null)
 			return values.Remove(name);

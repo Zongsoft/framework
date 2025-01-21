@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-public class ConnectionSettingDescriptor : IEquatable<string>
+public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<ConnectionSettingDescriptor>
 {
 	#region 常量定义
 	private static readonly Type DEFAULT_TYPE = typeof(string);
@@ -169,6 +169,19 @@ public class ConnectionSettingDescriptor : IEquatable<string>
 		return null != null;
 	}
 
+	public bool Equals(ConnectionSettingDescriptor other) => other is not null &&
+		string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) &&
+		string.Equals(this.Alias, other.Alias, StringComparison.OrdinalIgnoreCase) &&
+		this.Type == other.Type;
+
+	public override bool Equals(object obj) => obj switch
+	{
+		string text => this.Equals(text),
+		ConnectionSettingDescriptor descriptor => this.Equals(descriptor),
+		_ => false,
+	};
+
+	public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Alias?.ToUpperInvariant(), this.Type);
 	public override string ToString() => this.DefaultValue == null ? $"[{this.Type.Name}]{this.Name}" : $"[{this.Type.Name}]{this.Name}={this.DefaultValue}";
 	#endregion
 

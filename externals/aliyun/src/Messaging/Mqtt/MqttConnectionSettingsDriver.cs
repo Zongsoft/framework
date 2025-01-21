@@ -52,13 +52,13 @@ namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 		private sealed class MqttMapper(MqttConnectionSettingsDriver driver) : MapperBase(driver)
 		{
 			#region 重写方法
-			protected override bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<string, string> values, out object value)
+			protected override bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<object, string> values, out object value)
 			{
-				if(ConnectionSettingDescriptor.Client.Equals(descriptor.Name))
+				if(ConnectionSettingDescriptor.Client.Equals(descriptor))
 					return Common.Convert.TryConvertValue(GetClient(values), out value);
-				if(ConnectionSettingDescriptor.UserName.Equals(descriptor.Name))
+				if(ConnectionSettingDescriptor.UserName.Equals(descriptor))
 					return Common.Convert.TryConvertValue(GetUserName(values), out value);
-				if(ConnectionSettingDescriptor.Password.Equals(descriptor.Name))
+				if(ConnectionSettingDescriptor.Password.Equals(descriptor))
 					return Common.Convert.TryConvertValue(GetPassword(values), out value);
 
 				return base.OnMap(descriptor, values, out value);
@@ -66,7 +66,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 			#endregion
 
 			#region 私有方法
-			private static string GetClient(IDictionary<string, string> values)
+			private static string GetClient(IDictionary<object, string> values)
 			{
 				if(values.TryGetValue(nameof(IConnectionSettings.Client), out var client) && !string.IsNullOrWhiteSpace(client))
 					return client;
@@ -77,12 +77,12 @@ namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
 				return null;
 			}
 
-			private static string GetUserName(IDictionary<string, string> values) =>
+			private static string GetUserName(IDictionary<object, string> values) =>
 				values.TryGetValue(nameof(IConnectionSettings.UserName), out var identity) &&
 				values.TryGetValue(nameof(IConnectionSettings.Instance), out var instance) ?
 				$"Signature|{identity}|{instance}" : null;
 
-			private static string GetPassword(IDictionary<string, string> values)
+			private static string GetPassword(IDictionary<object, string> values)
 			{
 				if(!values.TryGetValue(nameof(IConnectionSettings.Password), out var password) || string.IsNullOrEmpty(password))
 					return null;

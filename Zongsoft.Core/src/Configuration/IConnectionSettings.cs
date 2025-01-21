@@ -41,7 +41,7 @@ public interface IConnectionSettings : ISetting, IEquatable<IConnectionSettings>
 	/// <summary>获取连接的驱动。接口实现者应确保该属性值不会为空(<c>null</c>)。</summary>
 	IConnectionSettingsDriver Driver { get; }
 	/// <summary>获取连接设置的原始值集。</summary>
-	IDictionary<string, string> Values { get; }
+	IDictionary<object, string> Values { get; }
 
 	/// <summary>获取或设置指定键名的值。</summary>
 	/// <param name="name">指定的连接设置项的键名。</param>

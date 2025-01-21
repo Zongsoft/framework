@@ -58,7 +58,7 @@ partial class ConnectionSettingsDriver<TDescriptors>
 		/// <param name="values">指定的待映射的原始值集合。</param>
 		/// <param name="result">输出参数，返回映射转换成功后的值。</param>
 		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		public bool Map(string name, IDictionary<string, string> values, out object result)
+		public bool Map(string name, IDictionary<object, string> values, out object result)
 		{
 			if(this.Descriptors.TryGetValue(name, out var descriptor))
 				return this.OnMap(descriptor, values, out result);
@@ -72,24 +72,21 @@ partial class ConnectionSettingsDriver<TDescriptors>
 		/// <param name="value">指定的待映射的值。</param>
 		/// <param name="values">指定的待映射的原始值集合。</param>
 		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		public string Map<T>(string name, T value, IDictionary<string, string> values)
+		public string Map<T>(string name, T value, IDictionary<object, string> values)
 		{
 			return this.Descriptors.TryGetValue(name, out var descriptor) ? this.OnMap(descriptor, value, values) : null;
 		}
 		#endregion
 
 		#region 虚拟方法
-		protected virtual string OnMap<T>(ConnectionSettingDescriptor descriptor, T value, IDictionary<string, string> values)
+		protected virtual string OnMap<T>(ConnectionSettingDescriptor descriptor, T value, IDictionary<object, string> values)
 		{
 			return Common.Convert.TryConvertValue<string>(value, out var result) ? result : null;
 		}
 
-		protected virtual bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<string, string> values, out object value)
+		protected virtual bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<object, string> values, out object value)
 		{
-			if(values.TryGetValue(descriptor.Name, out var text))
-				return Common.Convert.TryConvertValue(text, descriptor.Type, out value);
-
-			if(!string.IsNullOrEmpty(descriptor.Alias) && values.TryGetValue(descriptor.Alias, out text))
+			if(values.TryGetValue(descriptor, out var text))
 				return Common.Convert.TryConvertValue(text, descriptor.Type, out value);
 
 			value = descriptor.DefaultValue;

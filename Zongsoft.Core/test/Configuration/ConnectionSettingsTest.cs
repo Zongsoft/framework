@@ -73,11 +73,18 @@ public class ConnectionSettingsTest
 	public void TestConnectionSettings()
 	{
 		var settings = new ConnectionSettings("MyConnectionSettings", ConnectionString);
-		Assert.Equal(6, settings.Values.Count);
+		Assert.Equal(5, settings.Values.Count);
 
-		Assert.True(settings.Values.TryGetValue("enabled", out var text));
-		Assert.Null(text);
-		Assert.True(settings.Values.TryGetValue("integer", out text));
+		Assert.False(settings.Values.ContainsKey("enabled"));
+		Assert.True(settings.SetValue("enabled", true));
+		Assert.Equal(6, settings.Values.Count);
+		Assert.True(settings.Values.ContainsKey("enabled"));
+
+		Assert.True(settings.SetValue("enabled", string.Empty));
+		Assert.False(settings.Values.ContainsKey("enabled"));
+		Assert.Equal(5, settings.Values.Count);
+
+		Assert.True(settings.Values.TryGetValue("integer", out var text));
 		Assert.Equal("100", text, true);
 		Assert.True(settings.Values.TryGetValue("double", out text));
 		Assert.Equal("1.23", text, true);
