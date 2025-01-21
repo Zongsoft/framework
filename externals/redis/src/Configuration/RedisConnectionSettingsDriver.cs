@@ -63,16 +63,20 @@ namespace Zongsoft.Externals.Redis.Configuration
 		{
 			protected override bool OnPopulate(ref ConfigurationOptions model, ConnectionSettingDescriptor descriptor, object value)
 			{
-				if(ConnectionSettingDescriptor.Server.Equals(descriptor.Name) && value is string server)
+				if(ConnectionSettingDescriptor.Server.Equals(descriptor) && value is string server)
 				{
 					foreach(var part in server.Slice(';'))
 						model.EndPoints.Add(part);
+
+					return true;
 				}
-				else if(ConnectionSettingDescriptor.Timeout.Equals(descriptor.Name) && Common.Convert.TryConvertValue<TimeSpan>(value, out var duration))
+				else if(ConnectionSettingDescriptor.Timeout.Equals(descriptor) && Common.Convert.TryConvertValue<TimeSpan>(value, out var duration))
 				{
 					model.ConnectTimeout = (int)duration.TotalMilliseconds;
 					model.AsyncTimeout = (int)duration.TotalMilliseconds;
 					model.SyncTimeout = (int)duration.TotalMilliseconds;
+
+					return true;
 				}
 
 				return base.OnPopulate(ref model, descriptor, value);
@@ -83,13 +87,25 @@ namespace Zongsoft.Externals.Redis.Configuration
 
 	public sealed class RedisConnectionSettingDescriptorCollection : ConnectionSettingDescriptorCollection
 	{
+		public readonly static ConnectionSettingDescriptor<string> Server = new(nameof(Server), nameof(ConfigurationOptions.EndPoints), true);
+		public readonly static ConnectionSettingDescriptor<string> Client = new(nameof(Client), nameof(ConfigurationOptions.ClientName), false);
+		public readonly static ConnectionSettingDescriptor<string> UserName = new(nameof(UserName), nameof(ConfigurationOptions.User), false);
+		public readonly static ConnectionSettingDescriptor<string> Password = new(nameof(Password));
+		public readonly static ConnectionSettingDescriptor<int> Database = new(nameof(Database), false);
+		public readonly static ConnectionSettingDescriptor<int> RetryCount = new(nameof(RetryCount), nameof(ConfigurationOptions.ConnectRetry), false);
+		public readonly static ConnectionSettingDescriptor<TimeSpan> Timeout = new(nameof(Timeout), nameof(ConfigurationOptions.ConnectTimeout), false);
+		public readonly static ConnectionSettingDescriptor<string> Application = new(nameof(Application), nameof(ConfigurationOptions.ServiceName), false);
+
 		public RedisConnectionSettingDescriptorCollection()
 		{
-			this.Add(nameof(ConnectionSettings.UserName), nameof(ConfigurationOptions.User), typeof(string));
-			this.Add(nameof(ConnectionSettings.Client), nameof(ConfigurationOptions.ClientName), typeof(string));
-			this.Add(nameof(ConnectionSettings.Timeout), nameof(ConfigurationOptions.ConnectTimeout), typeof(TimeSpan));
-			this.Add(nameof(ConnectionSettings.Database), nameof(ConfigurationOptions.DefaultDatabase), typeof(string));
-			this.Add(nameof(ConnectionSettings.Application), nameof(ConfigurationOptions.ServiceName), typeof(string));
+			this.Add(Server);
+			this.Add(Client);
+			this.Add(Timeout);
+			this.Add(UserName);
+			this.Add(Password);
+			this.Add(Database);
+			this.Add(RetryCount);
+			this.Add(Application);
 		}
 	}
 }
