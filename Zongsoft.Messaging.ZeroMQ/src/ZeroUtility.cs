@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 

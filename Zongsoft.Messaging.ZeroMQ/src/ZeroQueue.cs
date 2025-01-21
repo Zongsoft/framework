@@ -231,8 +231,15 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 			//获取连接超时
 			var timeout = settings.Timeout > TimeSpan.Zero ? settings.Timeout : TimeSpan.FromSeconds(10);
 
-			//接收返回的请求响应信息，如果获取失败则返回
-			if(!requester.TryReceiveFrameString(timeout, out var response) || string.IsNullOrEmpty(response))
+			//定义请求的响应内容
+			string response = null;
+
+			//接收返回的请求响应信息
+			//注意：TryReceiveFrame(...) 方法并不会等待指定的超时，因此需要通过 SpinWait 轮询响应内容
+			SpinWait.SpinUntil(() => requester.TryReceiveFrameString(timeout, out response), timeout);
+
+			//如果请求的响应内容为空则返回失败
+			if(string.IsNullOrEmpty(response))
 				return default;
 
 			ushort publisherPort = 0, subscriberPort = 0;
