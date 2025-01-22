@@ -72,9 +72,9 @@ namespace Zongsoft.Externals.Redis.Messaging
 			return subscriber.SubscribeAsync(cancellation);
 		}
 
-		protected override RedisSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options)
+		protected override ValueTask<RedisSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
 		{
-			return new(this, topic, handler, options);
+			return ValueTask.FromResult(new RedisSubscriber(this, topic, handler, options));
 		}
 		#endregion
 

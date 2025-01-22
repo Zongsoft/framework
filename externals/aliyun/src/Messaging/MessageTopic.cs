@@ -67,7 +67,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 
 		#region 订阅方法
 		protected override ValueTask<bool> OnSubscribeAsync(Consumer subscriber, CancellationToken cancellation = default) => ValueTask.FromResult(true);
-		protected override Consumer CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options) => new(this, topic, handler, options);
+		protected override ValueTask<Consumer> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => ValueTask.FromResult(new Consumer(this, topic, handler, options));
 		#endregion
 
 		#region 发送消息

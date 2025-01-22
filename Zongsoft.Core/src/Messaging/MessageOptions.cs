@@ -66,7 +66,7 @@ public class MessageEnqueueOptions
 	public MessageEnqueueOptions(TimeSpan delay, MessageReliability reliability = MessageReliability.MostOnce, byte priority = 0)
 	{
 		this.Delay = delay;
-		this.Expiry = TimeSpan.Zero;
+		this.Expiration = TimeSpan.Zero;
 		this.Priority = priority;
 		this.Reliability = reliability;
 		this.Properties = new Collections.Parameters();
@@ -77,8 +77,8 @@ public class MessageEnqueueOptions
 	/// <summary>获取或设置入队的延迟时长。</summary>
 	public TimeSpan Delay { get; set; }
 
-	/// <summary>获取或设置消息的有效期。</summary>
-	public TimeSpan Expiry { get; set; }
+	/// <summary>获取或设置消息的有效时长。</summary>
+	public TimeSpan Expiration { get; set; }
 
 	/// <summary>获取或设置消息的优先级。</summary>
 	public byte Priority { get; set; }

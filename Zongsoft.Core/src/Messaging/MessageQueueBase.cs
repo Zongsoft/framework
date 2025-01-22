@@ -130,7 +130,7 @@ namespace Zongsoft.Messaging
 			if(this.Subscribers.TryGetValue(topic, out var subscriber))
 				return subscriber;
 
-			if(this.Subscribers.TryAdd(topic, subscriber = this.CreateSubscriber(topic, tags, handler, options)))
+			if(this.Subscribers.TryAdd(topic, subscriber = await this.CreateSubscriberAsync(topic, tags, handler, options, cancellation)))
 			{
 				//执行订阅操作，如果订阅成功则挂载其订阅取消事件
 				if(await this.OnSubscribeAsync(subscriber, cancellation))
@@ -154,8 +154,8 @@ namespace Zongsoft.Messaging
 			}
 		}
 
-		protected abstract ValueTask<bool> OnSubscribeAsync(TSubscriber subscriber, CancellationToken cancellation = default);
-		protected abstract TSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options);
+		protected abstract ValueTask<bool> OnSubscribeAsync(TSubscriber subscriber, CancellationToken cancellation);
+		protected abstract ValueTask<TSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation);
 		protected virtual void OnUnsubscribed(TSubscriber subscriber) { }
 		#endregion
 

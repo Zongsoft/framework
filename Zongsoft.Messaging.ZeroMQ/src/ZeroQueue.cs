@@ -97,7 +97,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	#endregion
 
 	#region 订阅方法
-	protected override ZeroSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options) => new ZeroSubscriber(this, topic, handler, options);
+	protected override ValueTask<ZeroSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => ValueTask.FromResult(new ZeroSubscriber(this, topic, handler, options));
 	protected override ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default)
 	{
 		//确保初始化完成

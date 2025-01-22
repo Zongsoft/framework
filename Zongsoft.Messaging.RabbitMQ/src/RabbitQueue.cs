@@ -28,10 +28,9 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -62,7 +61,6 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber>
 
 	#region 公共属性
 	internal string Exchanger => string.IsNullOrEmpty(this.ConnectionSettings.Group) ? "/" : this.ConnectionSettings.Group;
-
 	internal string QueueName
 	{
 		get
@@ -90,10 +88,12 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber>
 
 		if(options != null)
 		{
-			properties = new BasicProperties();
-			properties.MessageId = Guid.NewGuid().ToString("N");
-			properties.Priority = options.Priority;
-			properties.Expiration = options.Expiry.ToString();
+			properties = new BasicProperties
+			{
+				Priority = options.Priority,
+				MessageId = Guid.NewGuid().ToString("N"),
+				Expiration = options.Expiration.ToString()
+			};
 
 			if(options.Properties != null && options.Properties.HasValue)
 			{
@@ -119,19 +119,18 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber>
 	#region 订阅方法
 	protected override async ValueTask<bool> OnSubscribeAsync(RabbitSubscriber subscriber, CancellationToken cancellation = default)
 	{
-		await this.InitializeAsync(cancellation);
-		subscriber.Channel = _channel;
-
 		var identifier = await subscriber.SubscribeAsync(this.QueueName, cancellation);
 		return !string.IsNullOrEmpty(identifier);
 	}
 
-	protected override RabbitSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options)
+	protected override async ValueTask<RabbitSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
 	{
+		await this.InitializeAsync(cancellation);
 		return new RabbitSubscriber(this, _channel, topic, tags, handler, options);
 	}
 	#endregion
 
+	#region 初始方法
 	private async ValueTask InitializeAsync(CancellationToken cancellation)
 	{
 		if(_channel != null && _channel.IsOpen)
@@ -160,6 +159,7 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber>
 			await _channel.QueueBindAsync(queue.QueueName, this.Exchanger, string.Empty, null, false, cancellation);
 		}
 	}
+	#endregion
 
 	#region 资源释放
 	protected override void Dispose(bool disposing)

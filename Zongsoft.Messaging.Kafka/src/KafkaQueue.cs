@@ -71,9 +71,9 @@ namespace Zongsoft.Messaging.Kafka
 			return ValueTask.FromResult(true);
 		}
 
-		protected override KafkaSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options)
+		protected override ValueTask<KafkaSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
 		{
-			return new KafkaSubscriber(this, topic, handler, options);
+			return ValueTask.FromResult(new KafkaSubscriber(this, topic, handler, options));
 		}
 		#endregion
 

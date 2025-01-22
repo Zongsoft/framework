@@ -45,12 +45,12 @@ public class RabbitSubscriber : MessageConsumerBase<RabbitQueue>, IAsyncBasicCon
 	#region 构造函数
 	public RabbitSubscriber(RabbitQueue queue, IChannel channel, string topic, string tags, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, tags, handler, options)
 	{
-		_channel = channel;
+		_channel = channel ?? throw new ArgumentNullException(nameof(channel));
 	}
 	#endregion
 
 	#region 公共属性
-	public IChannel Channel { get => _channel; internal set => _channel = value; }
+	public IChannel Channel => _channel;
 	#endregion
 
 	#region 重写方法

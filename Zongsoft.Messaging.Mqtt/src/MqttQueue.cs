@@ -100,7 +100,7 @@ namespace Zongsoft.Messaging.Mqtt
 			}
 		}
 
-		protected override MqttSubscriber CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options)
+		protected override ValueTask<MqttSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
 		{
 			var subscriber = new MqttSubscriber(this, topic, handler, options);
 
@@ -111,7 +111,7 @@ namespace Zongsoft.Messaging.Mqtt
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtLeastOnce : options.Reliability.ToQoS(),
 			});
 
-			return subscriber;
+			return ValueTask.FromResult(subscriber);
 		}
 
 		internal ValueTask UnsubscribeAsync(MqttSubscriber subscriber) => new(_client.UnsubscribeAsync(subscriber.Topic));

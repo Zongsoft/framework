@@ -62,7 +62,7 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 
 	#region 订阅方法
 	protected override ValueTask<bool> OnSubscribeAsync(MessageQueue.Consumer subscriber, CancellationToken cancellation = default) => ValueTask.FromResult(true);
-	protected override MessageQueue.Consumer CreateSubscriber(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options) => new(this, handler, options);
+	protected override ValueTask<Consumer> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => ValueTask.FromResult(new Consumer(this, handler, options));
 	#endregion
 
 	#region 数量获取
