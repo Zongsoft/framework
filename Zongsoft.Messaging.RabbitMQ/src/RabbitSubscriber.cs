@@ -36,97 +36,70 @@ using RabbitMQ.Client.Events;
 
 namespace Zongsoft.Messaging.RabbitMQ;
 
-public class RabbitSubscriber : MessageConsumerBase<RabbitQueue>
+public class RabbitSubscriber : MessageConsumerBase<RabbitQueue>, IAsyncBasicConsumer
 {
 	#region 成员字段
-	private Poller _poller;
-	private IConsumer<string, byte[]> _consumer;
+	private IChannel _channel;
 	#endregion
 
 	#region 构造函数
-	public RabbitSubscriber(RabbitQueue queue, string topic, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
+	public RabbitSubscriber(RabbitQueue queue, IChannel channel, string topic, string tags, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, tags, handler, options)
 	{
-		_consumer = new ConsumerBuilder<string, byte[]>(RabbitUtility.GetConsumerOptions(queue.ConnectionSettings)).Build();
-		_poller = new Poller(this);
+		_channel = channel;
 	}
+	#endregion
+
+	#region 公共属性
+	public IChannel Channel { get => _channel; internal set => _channel = value; }
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask OnCloseAsync(CancellationToken cancellation)
-	{
-		_consumer.Close();
-		_poller.Stop();
-		return ValueTask.CompletedTask;
-	}
+	protected override ValueTask OnCloseAsync(CancellationToken cancellation) => new (_channel.CloseAsync(cancellation));
 	#endregion
 
 	#region 内部方法
-	internal void Subscribe(IConsumer<string, byte[]> consumer)
+	internal Task<string> SubscribeAsync(string queue, CancellationToken cancellation)
 	{
-		_consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
-		_consumer.Subscribe(this.Topic);
-		_poller.Start();
+		return _channel.BasicConsumeAsync(queue, false, string.Join(',', this.Tags), this, cancellation);
 	}
+	#endregion
 
-	internal Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
+	#region 事件处理
+	public Task HandleBasicCancelAsync(string tag, CancellationToken cancellation = default)
 	{
-		if(_consumer == null)
-			throw new InvalidOperationException($"The message queue topic to consume is not yet subscribed.");
-
-		ConsumeResult<string, byte[]> result = null;
-
-		if(options.Timeout > TimeSpan.Zero)
-			cancellation = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(options.Timeout).Token, cancellation).Token;
-
-		try
-		{
-			//同步方式从消息队列中拉取消息(堵塞当前线程)
-			result = _consumer.Consume(cancellation);
-		}
-		catch(OperationCanceledException)
-		{
-			return Message.Empty;
-		}
-
-		if(result.IsPartitionEOF)
-			return Message.Empty;
-
-		//构建接收到的消息
-		return new Message(result.Message.Key, result.Topic, result.Message.Value, cancellation => _consumer.Commit(result))
-		{
-			Timestamp = result.Message.Timestamp.UtcDateTime,
-		};
+		return Task.CompletedTask;
+	}
+	public Task HandleBasicCancelOkAsync(string tag, CancellationToken cancellation = default)
+	{
+		return Task.CompletedTask;
+	}
+	public Task HandleBasicConsumeOkAsync(string tag, CancellationToken cancellation = default)
+	{
+		return Task.CompletedTask;
+	}
+	public async Task HandleBasicDeliverAsync(string tag, ulong delivery, bool redelivered, string exchange, string topic, IReadOnlyBasicProperties properties, ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
+	{
+		var message = new Message(topic, data.ToArray(), cancellation => _channel.BasicAckAsync(delivery, false, cancellation));
+		await this.Handler.HandleAsync(message, cancellation);
+	}
+	public Task HandleChannelShutdownAsync(object channel, ShutdownEventArgs reason)
+	{
+		return Task.CompletedTask;
 	}
 	#endregion
 
 	#region 处置方法
 	protected override ValueTask DisposeAsync(bool disposing)
 	{
-		var consumer = Interlocked.Exchange(ref _consumer, null);
-		if(consumer != null)
-			consumer.Dispose();
+		var channel = Interlocked.Exchange(ref _channel, null);
 
-		var poller = Interlocked.Exchange(ref _poller, null);
-		if(poller != null)
-			poller.Dispose();
+		if(disposing)
+		{
+			channel?.CloseAsync();
+			channel?.Dispose();
+		}
 
 		return base.DisposeAsync(disposing);
-	}
-	#endregion
-
-	#region 嵌套子类
-	private sealed class Poller(RabbitSubscriber subscriber) : MessagePollerBase
-	{
-		private RabbitSubscriber _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
-
-		protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation) => _subscriber?.Receive(options, cancellation) ?? Message.Empty;
-		protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation) => _subscriber?.Handler?.HandleAsync(message, cancellation) ?? ValueTask.CompletedTask;
-
-		protected override void Dispose(bool disposing)
-		{
-			base.Dispose(disposing);
-			_subscriber = null;
-		}
 	}
 	#endregion
 }
