@@ -50,12 +50,10 @@ public class ConfigurationTest
 		Assert.NotEmpty(configuration.Providers);
 
 		var settings = configuration.GetOption<ConnectionSettingsCollection>("/data/connectionSettings");
-
 		Assert.NotNull(settings);
 		Assert.NotEmpty(settings);
 
 		var setting = settings["db1"];
-
 		Assert.NotNull(setting);
 		Assert.Equal("db1", setting.Name);
 		Assert.True(setting.IsDriver("mysql"));
@@ -65,17 +63,32 @@ public class ConfigurationTest
 		Assert.True(setting.Properties.TryGetValue("mode", out var value));
 		Assert.Equal("all", value);
 
-		settings = configuration.GetOption<ConnectionSettingsCollection>("/externals/redis/ConnectionSettings");
+		setting = null;
+		setting = configuration.GetOption<IConnectionSettings>("/Data/ConnectionSettings/db1");
+		Assert.NotNull(setting);
+		Assert.Equal("db1", setting.Name);
+		Assert.True(setting.IsDriver("mysql"));
+		Assert.Equal("server=localhost", setting.Value);
+		Assert.True(setting.HasProperties);
+		Assert.True(setting.Properties.TryGetValue("mode", out value));
+		Assert.Equal("all", value);
 
+		settings = configuration.GetOption<ConnectionSettingsCollection>("/externals/redis/ConnectionSettings");
 		Assert.NotNull(settings);
 		Assert.NotEmpty(settings);
 
 		setting = settings["redis"];
-
 		Assert.NotNull(setting);
 		Assert.Equal("redis", setting.Name);
 		Assert.Equal("server=127.0.0.1", setting.Value);
+		Assert.False(setting.HasProperties);
+		Assert.Empty(setting.Properties);
 
+		setting = null;
+		setting = configuration.GetOption<IConnectionSettings>("/Externals/Redis/ConnectionSettings/redis");
+		Assert.NotNull(setting);
+		Assert.Equal("redis", setting.Name);
+		Assert.Equal("server=127.0.0.1", setting.Value);
 		Assert.False(setting.HasProperties);
 		Assert.Empty(setting.Properties);
 	}
