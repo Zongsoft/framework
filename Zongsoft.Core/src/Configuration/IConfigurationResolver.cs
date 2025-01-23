@@ -31,13 +31,12 @@ using System;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration
-{
-	public interface IConfigurationResolver
-	{
-		void Attach(object target, IConfiguration configuration, ConfigurationBinderOptions options);
+namespace Zongsoft.Configuration;
 
-		void Resolve(object target, IConfiguration configuration, ConfigurationBinderOptions options);
-		object Resolve(Type type, IConfiguration configuration, ConfigurationBinderOptions options);
-	}
+public interface IConfigurationResolver
+{
+	void Attach(object target, IConfiguration configuration, ConfigurationBinderOptions options);
+
+	void Resolve(object target, IConfiguration configuration, ConfigurationBinderOptions options);
+	object Resolve(Type type, IConfiguration configuration, ConfigurationBinderOptions options);
 }

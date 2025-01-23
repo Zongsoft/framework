@@ -32,10 +32,9 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public interface ICompositeConfigurationProvider : IConfigurationProvider
 {
-	public interface ICompositeConfigurationProvider : IConfigurationProvider
-	{
-		public IEnumerable<IConfigurationProvider> Providers { get; }
-	}
+	public IEnumerable<IConfigurationProvider> Providers { get; }
 }

@@ -33,23 +33,23 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-partial class ConnectionSettingsDriver<TDescriptors>
+partial class ConnectionSettingsDriver<TSettings>
 {
 	protected abstract class MapperBase
 	{
 		#region 构造函数
-		protected MapperBase(ConnectionSettingsDriver<TDescriptors> driver)
+		protected MapperBase(ConnectionSettingsDriver<TSettings> driver)
 		{
 			this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
-			this.Descriptors = (TDescriptors)driver.GetType()
+			this.Descriptors = (ConnectionSettingDescriptorCollection)driver.GetType()
 				.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
 				.GetValue(null);
 		}
 		#endregion
 
 		#region 保护字段
-		protected readonly ConnectionSettingsDriver<TDescriptors> Driver;
-		protected readonly TDescriptors Descriptors;
+		protected readonly ConnectionSettingsDriver<TSettings> Driver;
+		protected readonly ConnectionSettingDescriptorCollection Descriptors;
 		#endregion
 
 		#region 公共方法

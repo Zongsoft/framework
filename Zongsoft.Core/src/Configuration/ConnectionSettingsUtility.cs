@@ -40,7 +40,7 @@ public static class ConnectionSettingsUtility
 	/// <param name="name">指定要查找的连接配置项名称，如果为空或空字符串则表示查找默认连接配置。</param>
 	/// <param name="driver">指定要查找的连接驱动标识，如果为空或空字符串则表示忽略连接驱动匹配。</param>
 	/// <returns>如果查找成功则返回找到的连接配置，否则返回空。</returns>
-	public static ConnectionSettings GetConnectionSettings(this Microsoft.Extensions.Configuration.IConfiguration configuration, string path, string name, string driver = null)
+	public static IConnectionSettings GetConnectionSettings(this Microsoft.Extensions.Configuration.IConfiguration configuration, string path, string name, string driver = null)
 	{
 		if(configuration == null)
 			return null;

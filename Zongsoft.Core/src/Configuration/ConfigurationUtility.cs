@@ -34,88 +34,87 @@ using System.ComponentModel;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public static class ConfigurationUtility
 {
-	public static class ConfigurationUtility
+	public static bool IsCollection(this IConfiguration configuration) =>
+		configuration is IConfigurationSection section &&
+		section.Key != null &&
+		section.Key.Length > 1 &&
+		section.Key[0] == '[' &&
+		section.Key[^1] == ']';
+
+	public static string GetConfigurationPath(string key)
 	{
-		public static bool IsCollection(this IConfiguration configuration) =>
-			configuration is IConfigurationSection section &&
-			section.Key != null &&
-			section.Key.Length > 1 &&
-			section.Key[0] == '[' &&
-			section.Key[^1] == ']';
+		return string.IsNullOrEmpty(key) ? string.Empty : key.Trim('/').Replace('/', ':');
+	}
 
-		public static string GetConfigurationPath(string key)
+	public static Type GetImplementedContract(Type actual, params Type[] expectedTypes)
+	{
+		if(actual.IsGenericType && expectedTypes.Contains(actual.GetGenericTypeDefinition()))
+			return actual;
+
+		var contracts = actual.GetTypeInfo().ImplementedInterfaces;
+
+		foreach(var contract in contracts)
 		{
-			return string.IsNullOrEmpty(key) ? string.Empty : key.Trim('/').Replace('/', ':');
+			if(contract.IsGenericType && expectedTypes.Contains(contract.GetGenericTypeDefinition()))
+				return contract;
 		}
 
-		public static Type GetImplementedContract(Type actual, params Type[] expectedTypes)
+		return null;
+	}
+
+	internal static TypeConverter GetConverter(MemberInfo member)
+	{
+		/*
+		 * 注意：TypeDescriptor.GetConverter(...) 方法对于 MemberInfo(PropertyInfo/FieldInfo) 并不适用。
+		 */
+
+		var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
+
+		if(attribute != null && !string.IsNullOrEmpty(attribute.ConverterTypeName))
 		{
-			if(actual.IsGenericType && expectedTypes.Contains(actual.GetGenericTypeDefinition()))
-				return actual;
-
-			var contracts = actual.GetTypeInfo().ImplementedInterfaces;
-
-			foreach(var contract in contracts)
+			var type = Type.GetType(attribute.ConverterTypeName, assemblyName =>
 			{
-				if(contract.IsGenericType && expectedTypes.Contains(contract.GetGenericTypeDefinition()))
-					return contract;
-			}
+				var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-			return null;
-		}
-
-		internal static TypeConverter GetConverter(MemberInfo member)
-		{
-			/*
-			 * 注意：TypeDescriptor.GetConverter(...) 方法对于 MemberInfo(PropertyInfo/FieldInfo) 并不适用。
-			 */
-
-			var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
-
-			if(attribute != null && !string.IsNullOrEmpty(attribute.ConverterTypeName))
-			{
-				var type = Type.GetType(attribute.ConverterTypeName, assemblyName =>
+				for(int i = 0; i < assemblies.Length; i++)
 				{
-					var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+					var name = assemblies[i].GetName();
 
-					for(int i = 0; i < assemblies.Length; i++)
-					{
-						var name = assemblies[i].GetName();
+					if(string.Equals(assemblyName.FullName, name.FullName) && assemblyName.Version <= name.Version)
+						return assemblies[i];
+				}
 
-						if(string.Equals(assemblyName.FullName, name.FullName) && assemblyName.Version <= name.Version)
-							return assemblies[i];
-					}
+				return null;
+			}, null);
 
-					return null;
-				}, null);
-
-				return Activator.CreateInstance(type) as TypeConverter;
-			}
-
-			return null;
+			return Activator.CreateInstance(type) as TypeConverter;
 		}
 
-		internal static ConfigurationAttribute GetConfigurationAttribute(this Type type)
-		{
-			if(type == null || type == typeof(object))
-				return null;
+		return null;
+	}
 
-			var attribute = type.GetCustomAttribute<ConfigurationAttribute>(true);
+	internal static ConfigurationAttribute GetConfigurationAttribute(this Type type)
+	{
+		if(type == null || type == typeof(object))
+			return null;
+
+		var attribute = type.GetCustomAttribute<ConfigurationAttribute>(true);
+
+		if(attribute != null)
+			return attribute;
+
+		foreach(var contract in type.GetTypeInfo().ImplementedInterfaces)
+		{
+			attribute = contract.GetCustomAttribute<ConfigurationAttribute>(true);
 
 			if(attribute != null)
 				return attribute;
-
-			foreach(var contract in type.GetTypeInfo().ImplementedInterfaces)
-			{
-				attribute = contract.GetCustomAttribute<ConfigurationAttribute>(true);
-
-				if(attribute != null)
-					return attribute;
-			}
-
-			return GetConfigurationAttribute(type.BaseType);
 		}
+
+		return GetConfigurationAttribute(type.BaseType);
 	}
 }

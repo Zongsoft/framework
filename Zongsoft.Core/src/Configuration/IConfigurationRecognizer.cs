@@ -31,10 +31,9 @@ using System;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public interface IConfigurationRecognizer
 {
-	public interface IConfigurationRecognizer
-	{
-		bool Recognize(object target, IConfigurationSection configuration, ConfigurationBinderOptions options);
-	}
+	bool Recognize(object target, IConfigurationSection configuration, ConfigurationBinderOptions options);
 }

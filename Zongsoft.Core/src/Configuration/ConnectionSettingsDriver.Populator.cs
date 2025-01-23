@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-partial class ConnectionSettingsDriver<TOptions, TDescriptors>
+partial class ConnectionSettingsDriver<TSettings>
 {
 	protected abstract class PopulatorBase
 	{
@@ -42,14 +42,14 @@ partial class ConnectionSettingsDriver<TOptions, TDescriptors>
 		#endregion
 
 		#region 构造函数
-		protected PopulatorBase(ConnectionSettingsDriver<TOptions, TDescriptors> driver)
+		protected PopulatorBase(ConnectionSettingsDriver<TSettings> driver)
 		{
 			this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
-			this.Descriptors = (TDescriptors)this.Driver.GetType()
+			this.Descriptors = (ConnectionSettingDescriptorCollection)this.Driver.GetType()
 				.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
 				.GetValue(null);
 
-			var members = typeof(TOptions).GetMembers(BindingFlags.Instance | BindingFlags.Public);
+			var members = typeof(TSettings).GetMembers(BindingFlags.Instance | BindingFlags.Public);
 
 			for(int i = 0; i < members.Length; i++)
 			{
@@ -77,12 +77,12 @@ partial class ConnectionSettingsDriver<TOptions, TDescriptors>
 		#endregion
 
 		#region 保护字段
-		protected readonly ConnectionSettingsDriver<TOptions, TDescriptors> Driver;
-		protected readonly TDescriptors Descriptors;
+		protected readonly ConnectionSettingsDriver<TSettings> Driver;
+		protected readonly ConnectionSettingDescriptorCollection Descriptors;
 		#endregion
 
 		#region 公共方法
-		public TOptions Populate(IConnectionSettings settings)
+		public void Populate(TSettings settings)
 		{
 			if(settings == null)
 				throw new ArgumentNullException(nameof(settings));
@@ -90,27 +90,30 @@ partial class ConnectionSettingsDriver<TOptions, TDescriptors>
 			if(!((IConnectionSettingsDriver)this.Driver).IsDriver(settings.Driver?.Name))
 				throw new InvalidOperationException($"The specified '{settings}' connection settings is not a {this.Driver.Name} configuration.");
 
-			var options = this.Create(settings);
+			//设置配置对象的默认值
+			foreach(var descriptor in this.Descriptors)
+			{
+				if(descriptor.DefaultValue is not null)
+					this.OnPopulate(ref settings, descriptor, descriptor.DefaultValue);
+			}
 
+			//设置连接设置项的值
 			foreach(var setting in settings)
 			{
 				if(this.Descriptors.TryGetValue(setting.Key, out var descriptor))
-					this.OnPopulate(ref options, descriptor, setting.Value);
+					this.OnPopulate(ref settings, descriptor, setting.Value);
 			}
-
-			return options;
 		}
 		#endregion
 
-		#region 保护方法
-		protected virtual TOptions Create(IConnectionSettings settings) => Activator.CreateInstance<TOptions>();
-		protected virtual bool OnPopulate(ref TOptions model, ConnectionSettingDescriptor descriptor, object value)
+		#region 虚拟方法
+		protected virtual bool OnPopulate(ref TSettings target, ConnectionSettingDescriptor descriptor, object value)
 		{
 			if(_members.TryGetValue(descriptor.Name, out var member))
-				return Common.Convert.TryConvertValue(value ?? descriptor.DefaultValue, descriptor.Type, out value) && Reflection.Reflector.TrySetValue(member, ref model, value);
+				return Common.Convert.TryConvertValue(value ?? descriptor.DefaultValue, descriptor.Type, out value) && Reflection.Reflector.TrySetValue(member, ref target, value);
 
 			if(!string.IsNullOrEmpty(descriptor.Alias) && _members.TryGetValue(descriptor.Alias, out member))
-				return Common.Convert.TryConvertValue(value ?? descriptor.DefaultValue, descriptor.Type, out value) && Reflection.Reflector.TrySetValue(member, ref model, value);
+				return Common.Convert.TryConvertValue(value ?? descriptor.DefaultValue, descriptor.Type, out value) && Reflection.Reflector.TrySetValue(member, ref target, value);
 
 			return false;
 		}

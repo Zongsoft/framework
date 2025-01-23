@@ -30,15 +30,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Configuration
-{
-	[Configuration(nameof(Properties))]
-	public interface ISetting : IEquatable<ISetting>
-	{
-		string Name { get; }
-		string Value { get; set; }
+namespace Zongsoft.Configuration;
 
-		bool HasProperties { get; }
-		IDictionary<string, string> Properties { get; }
-	}
+[Configuration(nameof(Properties))]
+public interface ISetting : IEquatable<ISetting>
+{
+	string Name { get; }
+	string Value { get; set; }
+
+	bool HasProperties { get; }
+	IDictionary<string, string> Properties { get; }
 }

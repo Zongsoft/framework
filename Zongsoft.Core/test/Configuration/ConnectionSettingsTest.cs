@@ -1,6 +1,9 @@
 ﻿using System;
+using System.ComponentModel;
 
 using Xunit;
+
+using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Configuration;
 
@@ -70,30 +73,55 @@ public class ConnectionSettingsTest
 	}
 
 	[Fact]
+	public void TestConnectionDescriptor()
+	{
+		var descriptors = MyDriver.Descriptors;
+		Assert.NotNull(descriptors);
+		Assert.NotEmpty(descriptors);
+		Assert.Equal(6, descriptors.Count);
+
+		ConnectionSettingDescriptor descriptor = null;
+		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.Port), out descriptor));
+		Assert.NotNull(descriptor);
+		Assert.Same(typeof(ushort), descriptor.Type);
+		Assert.Equal((ushort)7969, descriptor.DefaultValue);
+
+		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.Birthday), out descriptor));
+		Assert.NotNull(descriptor);
+		Assert.Same(typeof(DateTime), descriptor.Type);
+		Assert.True(descriptors.TryGetValue("DateTime", out descriptor));
+		Assert.NotNull(descriptor);
+		Assert.Same(typeof(DateTime), descriptor.Type);
+	}
+
+	[Fact]
 	public void TestConnectionSettings()
 	{
 		var settings = new ConnectionSettings("MyConnectionSettings", ConnectionString);
-		Assert.Equal(5, settings.Values.Count);
+		Assert.Equal(5, settings.Entries.Count);
 
-		Assert.False(settings.Values.ContainsKey("enabled"));
+		Assert.False(settings.Entries.ContainsKey("enabled"));
 		Assert.True(settings.SetValue("enabled", true));
-		Assert.Equal(6, settings.Values.Count);
-		Assert.True(settings.Values.ContainsKey("enabled"));
+		Assert.Equal(6, settings.Entries.Count);
+		Assert.True(settings.Entries.ContainsKey("enabled"));
 
 		Assert.True(settings.SetValue("enabled", string.Empty));
-		Assert.False(settings.Values.ContainsKey("enabled"));
-		Assert.Equal(5, settings.Values.Count);
+		Assert.False(settings.Entries.ContainsKey("enabled"));
+		Assert.Equal(5, settings.Entries.Count);
 
-		Assert.True(settings.Values.TryGetValue("integer", out var text));
+		Assert.True(settings.Entries.TryGetValue("integer", out var text));
 		Assert.Equal("100", text, true);
-		Assert.True(settings.Values.TryGetValue("double", out text));
+		Assert.True(settings.Entries.TryGetValue("double", out text));
 		Assert.Equal("1.23", text, true);
-		Assert.True(settings.Values.TryGetValue("boolean", out text));
+		Assert.True(settings.Entries.TryGetValue("boolean", out text));
 		Assert.Equal("true", text, true);
-		Assert.True(settings.Values.TryGetValue("text", out text));
+		Assert.True(settings.Entries.TryGetValue("text", out text));
 		Assert.Equal("MyString", text, true);
-		Assert.True(settings.Values.TryGetValue("DateTime", out text));
+		Assert.True(settings.Entries.TryGetValue("DateTime", out text));
 		Assert.Equal(DATE.ToString("yyyy-M-d"), text, true);
+
+		Assert.True(settings.SetValue("NewKey", "NewValue"));
+		Assert.Equal("NewValue", settings.GetValue<string>("NewKey"));
 
 		settings.Port = 999;
 		Assert.Equal(999, settings.Port);
@@ -102,20 +130,22 @@ public class ConnectionSettingsTest
 	[Fact]
 	public void TestGetOptions()
 	{
-		var settings = MyDriver.Instance.Create(ConnectionString);
+		var settings = MyDriver.Instance.GetSettings(ConnectionString);
 		Assert.NotNull(settings);
 		Assert.True(settings.IsDriver(MyDriver.Instance));
 		Assert.Same(MyDriver.Instance, settings.Driver);
 
+		Assert.True(settings.Boolean);
+		Assert.Equal(7969, settings.Port);
+		Assert.Equal(100, settings.Integer);
+		Assert.Equal(1.23, settings.Double);
+		Assert.Equal("MyString", settings.Text, true);
+		Assert.Equal(DATE, settings.Birthday);
+
 		settings.Port = 996;
 		Assert.Equal(996, settings.Port);
-		Assert.Equal(996, settings.GetValue<int>("Port"));
 
-		Assert.True(settings.SetValue("Port", 999));
-		Assert.Equal(999, settings.Port);
-		Assert.Equal(999, settings.GetValue<int>("Port"));
-
-		var options = MyDriver.Instance.GetOptions(settings);
+		var options = MyDriver.Instance.GetSettings(ConnectionString);
 		Assert.NotNull(options);
 		Assert.True(options.Boolean);
 		Assert.Equal(100, options.Integer);
@@ -123,19 +153,9 @@ public class ConnectionSettingsTest
 		Assert.Equal("MyString", options.Text, true);
 		Assert.Equal(DATE, options.Birthday);
 		Assert.Equal(DateTime.Today.Year - DATE.Year, options.Age);
-
-		var target = settings.GetOptions();
-		Assert.NotNull(target);
-		Assert.IsType<MyOptions>(target);
-		Assert.True(((MyOptions)target).Boolean);
-		Assert.Equal(100, ((MyOptions)target).Integer);
-		Assert.Equal(1.23, ((MyOptions)target).Double);
-		Assert.Equal("MyString", ((MyOptions)target).Text, true);
-		Assert.Equal(DATE, ((MyOptions)target).Birthday);
-		Assert.Equal(DateTime.Today.Year - DATE.Year, ((MyOptions)target).Age);
 	}
 
-	public sealed class MyDriver : ConnectionSettingsDriver<MyOptions, MyDescriptorCollection>
+	public sealed class MyDriver : ConnectionSettingsDriver<MyConnectionSettings>
 	{
 		#region 单例字段
 		public static readonly MyDriver Instance = new();
@@ -153,44 +173,30 @@ public class ConnectionSettingsTest
 		private sealed class MyMapper(MyDriver driver) : MapperBase(driver) { }
 		private sealed class MyPopulator(MyDriver driver) : PopulatorBase(driver)
 		{
-			protected override bool OnPopulate(ref MyOptions model, ConnectionSettingDescriptor descriptor, object value)
+			protected override bool OnPopulate(ref MyConnectionSettings options, ConnectionSettingDescriptor descriptor, object value)
 			{
-				if(MyDescriptorCollection.DateTime.Equals(descriptor.Name) && Common.Convert.TryConvertValue<DateTime>(value, out var birthday))
-					model.Age = (short)(DateTime.Today.Year - birthday.Year);
+				if(descriptor.Equals(nameof(MyConnectionSettings.Birthday)) && Common.Convert.TryConvertValue<DateTime>(value, out var birthday))
+					options.Age = (short)(DateTime.Today.Year - birthday.Year);
 
-				return base.OnPopulate(ref model, descriptor, value);
+				return base.OnPopulate(ref options, descriptor, value);
 			}
 		}
 		#endregion
 	}
 
-	public sealed class MyDescriptorCollection : ConnectionSettingDescriptorCollection
+	public class MyConnectionSettings : ConnectionSettingsBase<MyDriver>
 	{
-		public static readonly ConnectionSettingDescriptor Text = new(nameof(Text), typeof(string));
-		public static readonly ConnectionSettingDescriptor Port = new(nameof(Port), nameof(Port), false, (ushort)7969);
-		public static readonly ConnectionSettingDescriptor DateTime = new(nameof(DateTime), nameof(MyOptions.Birthday), typeof(DateTime));
-		public static readonly ConnectionSettingDescriptor Integer = new(nameof(Integer), typeof(int));
-		public static readonly ConnectionSettingDescriptor Boolean = new(nameof(Boolean), typeof(bool));
-		public static readonly ConnectionSettingDescriptor Double = new(nameof(Double), typeof(double));
+		public MyConnectionSettings(MyDriver driver, string settings) : base(driver, settings) { }
+		public MyConnectionSettings(MyDriver driver, string name, string settings) : base(driver, name, settings) { }
 
-		public MyDescriptorCollection()
-		{
-			this.Add(Text);
-			this.Add(Port);
-			this.Add(DateTime);
-			this.Add(Integer);
-			this.Add(Boolean);
-			this.Add(Double);
-		}
-	}
-
-	public class MyOptions
-	{
+		[DefaultValue(7969)]
+		public ushort Port { get; set; }
 		public int Integer { get; set; }
 		public double Double { get; set; }
 		public bool Boolean { get; set; }
 		public string Text { get; set; }
-		public short Age { get; set; }
+		[Alias("DateTime")]
 		public DateTime Birthday { get; set; }
+		public short Age { get; internal set; }
 	}
 }

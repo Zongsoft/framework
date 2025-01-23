@@ -31,82 +31,81 @@ using System;
 using System.Threading;
 using System.Collections.Generic;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public class Setting : ISetting, IEquatable<Setting>, IEquatable<ISetting>
 {
-	public class Setting : ISetting, IEquatable<Setting>, IEquatable<ISetting>
+	#region 成员字段
+	private string _name;
+	private string _value;
+	private IDictionary<string, string> _properties;
+	#endregion
+
+	#region 构造函数
+	public Setting() { }
+	public Setting(string name, string value = null)
 	{
-		#region 成员字段
-		private string _name;
-		private string _value;
-		private IDictionary<string, string> _properties;
-		#endregion
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
 
-		#region 构造函数
-		public Setting() { }
-		public Setting(string name, string value = null)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
+		_name = name.Trim();
 
-			_name = name.Trim();
-
-			if(value != null)
-				_value = value.Trim();
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name
-		{
-			get => _name;
-			set
-			{
-				if(!string.IsNullOrEmpty(_name))
-					throw new InvalidOperationException(Zongsoft.Properties.Resources.Error_RepeatedOperation);
-
-				if(string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException();
-
-				_name = value.Trim();
-			}
-		}
-
-		public string Value
-		{
-			get => _value;
-			set
-			{
-				if(!string.Equals(_value, value))
-				{
-					_value = value == null ? null : value.Trim();
-					this.OnValueChanged(_value);
-				}
-			}
-		}
-
-		public bool HasProperties => _properties?.Count > 0;
-		public IDictionary<string, string> Properties
-		{
-			get
-			{
-				if(_properties == null)
-					Interlocked.CompareExchange(ref _properties, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), null);
-
-				return _properties;
-			}
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void OnValueChanged(string value) { }
-		#endregion
-
-		#region 重写方法
-		public bool Equals(ISetting setting) => setting != null && string.Equals(_name, setting.Name, StringComparison.OrdinalIgnoreCase);
-		public bool Equals(Setting setting) => setting != null && string.Equals(_name, setting._name, StringComparison.OrdinalIgnoreCase);
-		public override bool Equals(object obj) => obj is ISetting setting && this.Equals(setting);
-		public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant());
-		public override string ToString() => $"{this.Name}={this.Value}";
-		#endregion
+		if(value != null)
+			_value = value.Trim();
 	}
+	#endregion
+
+	#region 公共属性
+	public string Name
+	{
+		get => _name;
+		set
+		{
+			if(!string.IsNullOrEmpty(_name))
+				throw new InvalidOperationException(Zongsoft.Properties.Resources.Error_RepeatedOperation);
+
+			if(string.IsNullOrWhiteSpace(value))
+				throw new ArgumentNullException();
+
+			_name = value.Trim();
+		}
+	}
+
+	public string Value
+	{
+		get => _value;
+		set
+		{
+			if(!string.Equals(_value, value))
+			{
+				_value = value == null ? null : value.Trim();
+				this.OnValueChanged(_value);
+			}
+		}
+	}
+
+	public bool HasProperties => _properties?.Count > 0;
+	public IDictionary<string, string> Properties
+	{
+		get
+		{
+			if(_properties == null)
+				Interlocked.CompareExchange(ref _properties, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), null);
+
+			return _properties;
+		}
+	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void OnValueChanged(string value) { }
+	#endregion
+
+	#region 重写方法
+	public bool Equals(ISetting setting) => setting != null && string.Equals(_name, setting.Name, StringComparison.OrdinalIgnoreCase);
+	public bool Equals(Setting setting) => setting != null && string.Equals(_name, setting._name, StringComparison.OrdinalIgnoreCase);
+	public override bool Equals(object obj) => obj is ISetting setting && this.Equals(setting);
+	public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant());
+	public override string ToString() => $"{this.Name}={this.Value}";
+	#endregion
 }

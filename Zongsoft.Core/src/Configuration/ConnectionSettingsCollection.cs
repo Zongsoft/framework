@@ -32,7 +32,7 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Configuration;
 
-public class ConnectionSettingsCollection() : KeyedCollection<string, ConnectionSettings>(StringComparer.OrdinalIgnoreCase)
+public class ConnectionSettingsCollection() : KeyedCollection<string, IConnectionSettings>(StringComparer.OrdinalIgnoreCase)
 {
 	#region 成员字段
 	private string _default = string.Empty;
@@ -45,17 +45,17 @@ public class ConnectionSettingsCollection() : KeyedCollection<string, Connection
 		set => _default = value ?? string.Empty;
 	}
 
-	public new ConnectionSettings this[string name] => base[string.IsNullOrEmpty(name) ? _default : name];
+	public new IConnectionSettings this[string name] => base[string.IsNullOrEmpty(name) ? _default : name];
 	#endregion
 
 	#region 公共方法
-	public ConnectionSettings GetDefault() => this.TryGetValue(_default, out var setting) ? setting : null;
+	public IConnectionSettings GetDefault() => this.TryGetValue(_default, out var setting) ? setting : null;
 	public bool Contains(string name, string driver) => string.IsNullOrEmpty(driver) ?
 		this.Contains(name ?? string.Empty) :
 		this.TryGetValue(name, driver, out _);
 
-	public new bool TryGetValue(string name, out ConnectionSettings result) => base.TryGetValue(string.IsNullOrEmpty(name) ? _default : name, out result);
-	public bool TryGetValue(string name, string driver, out ConnectionSettings settings)
+	public new bool TryGetValue(string name, out IConnectionSettings result) => base.TryGetValue(string.IsNullOrEmpty(name) ? _default : name, out result);
+	public bool TryGetValue(string name, string driver, out IConnectionSettings settings)
 	{
 		if(this.TryGetValue(name, out settings) && settings != null && !string.IsNullOrEmpty(driver))
 			settings = string.Equals(settings.Driver?.Name, driver, StringComparison.OrdinalIgnoreCase) ||
@@ -66,6 +66,6 @@ public class ConnectionSettingsCollection() : KeyedCollection<string, Connection
 	#endregion
 
 	#region 重写方法
-	protected override string GetKeyForItem(ConnectionSettings settings) => settings.Name;
+	protected override string GetKeyForItem(IConnectionSettings settings) => settings.Name;
 	#endregion
 }

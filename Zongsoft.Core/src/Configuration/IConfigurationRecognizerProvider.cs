@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public interface IConfigurationRecognizerProvider
 {
-	public interface IConfigurationRecognizerProvider
-	{
-		IConfigurationRecognizer GetRecognize(Type type);
-	}
+	IConfigurationRecognizer GetRecognize(Type type);
 }

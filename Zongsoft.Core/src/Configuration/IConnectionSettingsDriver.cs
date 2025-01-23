@@ -33,7 +33,7 @@ using System.Collections.Generic;
 namespace Zongsoft.Configuration;
 
 /// <summary>
-/// 表示连接设置驱动器的接口。
+/// 表示连接设置驱动器的基础接口。
 /// </summary>
 public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDriver>
 {
@@ -50,11 +50,6 @@ public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDrive
 	#endregion
 
 	#region 方法定义
-	/// <summary>获取指定的连接设置对应的选项配置。</summary>
-	/// <param name="settings">指定的连接设置。</param>
-	/// <returns>返回的对应选项配置。</returns>
-	object GetOptions(IConnectionSettings settings);
-
 	/// <summary>获取指定设置项的值。</summary>
 	/// <param name="name">指定要获取的设置项名称。</param>
 	/// <param name="values">当前连接设置的设置项值集合。</param>
@@ -93,21 +88,12 @@ public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDrive
 /// <summary>
 /// 表示连接设置驱动器的接口。
 /// </summary>
-public interface IConnectionSettingsDriver<out TDescriptors> : IConnectionSettingsDriver where TDescriptors : ConnectionSettingDescriptorCollection, new()
+public interface IConnectionSettingsDriver<out TSettings> : IConnectionSettingsDriver where TSettings : IConnectionSettings
 {
-	#region 静态属性
-	/// <summary>获取连接设置项描述器集合。</summary>
-	static new TDescriptors Descriptors { get; }
-	#endregion
-}
-
-/// <summary>
-/// 表示连接设置驱动器的接口。
-/// </summary>
-public interface IConnectionSettingsDriver<out TOptions, out TDescriptors> : IConnectionSettingsDriver<TDescriptors> where TDescriptors : ConnectionSettingDescriptorCollection, new()
-{
-	#region 实例方法
-	TOptions GetOptions(string connectionString);
-	new TOptions GetOptions(IConnectionSettings settings);
+	#region 方法定义
+	/// <summary>构建指定连接字符串对应的连接设置对象。</summary>
+	/// <param name="connectionString">指定的连接字符串。</param>
+	/// <returns>返回构建的连接设置。</returns>
+	TSettings GetSettings(string connectionString);
 	#endregion
 }

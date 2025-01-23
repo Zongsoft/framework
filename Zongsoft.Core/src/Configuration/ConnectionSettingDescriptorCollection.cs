@@ -28,8 +28,12 @@
  */
 
 using System;
+using System.Reflection;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+
+using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Configuration;
 
@@ -129,6 +133,52 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 		var descriptor = new ConnectionSettingDescriptor(name, alias, type, required, defaultValue, label, description, dependencies);
 		this.Add(descriptor);
 		return descriptor;
+	}
+	#endregion
+
+	#region 内部方法
+	internal ConnectionSettingDescriptor Add(PropertyInfo property)
+	{
+		if(property == null)
+			throw new ArgumentNullException(nameof(property));
+
+		if(!property.CanRead || !property.CanWrite || !property.SetMethod.IsPublic)
+			return null;
+
+		if(property.DeclaringType == typeof(Setting))
+			return null;
+
+		var alias = property.GetCustomAttribute<AliasAttribute>();
+		var descriptor = new ConnectionSettingDescriptor(property.Name, alias?.Alias, property.PropertyType);
+
+		descriptor.Label = GetDisplayName(property);
+		descriptor.Description = GetDescription(property);
+		descriptor.DefaultValue = GetDefaultValue(property);
+
+		this.Add(descriptor);
+		return descriptor;
+
+		static string GetDisplayName(PropertyInfo property)
+		{
+			var attribute = property.GetCustomAttribute<DisplayNameAttribute>();
+			return attribute?.DisplayName;
+		}
+
+		static string GetDescription(PropertyInfo property)
+		{
+			var attribute = property.GetCustomAttribute<DescriptionAttribute>();
+			return attribute?.Description;
+		}
+
+		static object GetDefaultValue(PropertyInfo property)
+		{
+			var attribute = property.GetCustomAttribute<DefaultValueAttribute>();
+
+			if(attribute == null)
+				return Common.TypeExtension.GetDefaultValue(property.PropertyType);
+			else
+				return Common.Convert.ConvertValue(attribute.Value, property.PropertyType, () => Common.TypeExtension.GetDefaultValue(property.PropertyType));
+		}
 	}
 	#endregion
 }

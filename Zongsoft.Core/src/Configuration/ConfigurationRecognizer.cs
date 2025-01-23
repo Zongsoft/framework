@@ -33,75 +33,74 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public class ConfigurationRecognizer : IConfigurationRecognizer
 {
-	public class ConfigurationRecognizer : IConfigurationRecognizer
+	#region 私有字段
+	private readonly PropertyInfo _unrecognizedProperty;
+	private readonly Type _dictionaryType;
+	#endregion
+
+	#region 构造函数
+	public ConfigurationRecognizer(PropertyInfo unrecognizedProperty)
 	{
-		#region 私有字段
-		private readonly PropertyInfo _unrecognizedProperty;
-		private readonly Type _dictionaryType;
-		#endregion
+		_unrecognizedProperty = unrecognizedProperty ?? throw new ArgumentNullException(nameof(unrecognizedProperty));
+		_dictionaryType = ConfigurationUtility.GetImplementedContract(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
 
-		#region 构造函数
-		public ConfigurationRecognizer(PropertyInfo unrecognizedProperty)
-		{
-			_unrecognizedProperty = unrecognizedProperty ?? throw new ArgumentNullException(nameof(unrecognizedProperty));
-			_dictionaryType = ConfigurationUtility.GetImplementedContract(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
-
-			if(_dictionaryType == null || _dictionaryType.GenericTypeArguments[0] != typeof(string))
-				throw new InvalidOperationException(string.Format(Properties.Resources.Error_InvalidUnrecognizedProperty, unrecognizedProperty.Name));
-		}
-		#endregion
-
-		#region 识别方法
-		public bool Recognize(object target, IConfigurationSection configuration, ConfigurationBinderOptions options)
-		{
-			if(target == null)
-				return false;
-
-			var unrecognizedProperty = _unrecognizedProperty;
-			var dictionary = Reflection.Reflector.GetValue(unrecognizedProperty, ref target);
-
-			if(dictionary == null)
-			{
-				if(!unrecognizedProperty.CanWrite)
-					throw new ConfigurationException($"The {unrecognizedProperty.Name} unrecognized property value is null and it is read-only.");
-
-				if(unrecognizedProperty.PropertyType.IsAbstract)
-				{
-					var dictionaryType = ConfigurationUtility.GetImplementedContract(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
-
-					if(dictionaryType == null || dictionaryType.GenericTypeArguments[0] != typeof(string))
-						throw new InvalidOperationException(string.Format(Properties.Resources.Error_InvalidUnrecognizedProperty, unrecognizedProperty.Name));
-
-					dictionary = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeof(string), dictionaryType.GenericTypeArguments[1]), new object[] { StringComparer.OrdinalIgnoreCase });
-				}
-				else
-					dictionary = Activator.CreateInstance(unrecognizedProperty.PropertyType);
-
-				Reflection.Reflector.SetValue(unrecognizedProperty, ref target, dictionary);
-			}
-
-			this.SetDictionaryValue(dictionary, configuration);
-
-			return true;
-		}
-		#endregion
-
-		#region 私有方法
-		private void SetDictionaryValue(object dictionary, IConfigurationSection configuration)
-		{
-			if(configuration.Value == null)
-			{
-				foreach(var child in configuration.GetChildren())
-				{
-					this.SetDictionaryValue(dictionary, child);
-				}
-			}
-
-			if(dictionary != null && Common.Convert.TryConvertValue(configuration.Value, _dictionaryType.GenericTypeArguments[1], () => ConfigurationUtility.GetConverter(_unrecognizedProperty), out var convertedValue))
-				Reflection.Reflector.SetValue(ref dictionary, "Item", convertedValue, new object[] { configuration.Key });
-		}
-		#endregion
+		if(_dictionaryType == null || _dictionaryType.GenericTypeArguments[0] != typeof(string))
+			throw new InvalidOperationException(string.Format(Properties.Resources.Error_InvalidUnrecognizedProperty, unrecognizedProperty.Name));
 	}
+	#endregion
+
+	#region 识别方法
+	public bool Recognize(object target, IConfigurationSection configuration, ConfigurationBinderOptions options)
+	{
+		if(target == null)
+			return false;
+
+		var unrecognizedProperty = _unrecognizedProperty;
+		var dictionary = Reflection.Reflector.GetValue(unrecognizedProperty, ref target);
+
+		if(dictionary == null)
+		{
+			if(!unrecognizedProperty.CanWrite)
+				throw new ConfigurationException($"The {unrecognizedProperty.Name} unrecognized property value is null and it is read-only.");
+
+			if(unrecognizedProperty.PropertyType.IsAbstract)
+			{
+				var dictionaryType = ConfigurationUtility.GetImplementedContract(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
+
+				if(dictionaryType == null || dictionaryType.GenericTypeArguments[0] != typeof(string))
+					throw new InvalidOperationException(string.Format(Properties.Resources.Error_InvalidUnrecognizedProperty, unrecognizedProperty.Name));
+
+				dictionary = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeof(string), dictionaryType.GenericTypeArguments[1]), new object[] { StringComparer.OrdinalIgnoreCase });
+			}
+			else
+				dictionary = Activator.CreateInstance(unrecognizedProperty.PropertyType);
+
+			Reflection.Reflector.SetValue(unrecognizedProperty, ref target, dictionary);
+		}
+
+		this.SetDictionaryValue(dictionary, configuration);
+
+		return true;
+	}
+	#endregion
+
+	#region 私有方法
+	private void SetDictionaryValue(object dictionary, IConfigurationSection configuration)
+	{
+		if(configuration.Value == null)
+		{
+			foreach(var child in configuration.GetChildren())
+			{
+				this.SetDictionaryValue(dictionary, child);
+			}
+		}
+
+		if(dictionary != null && Common.Convert.TryConvertValue(configuration.Value, _dictionaryType.GenericTypeArguments[1], () => ConfigurationUtility.GetConverter(_unrecognizedProperty), out var convertedValue))
+			Reflection.Reflector.SetValue(ref dictionary, "Item", convertedValue, new object[] { configuration.Key });
+	}
+	#endregion
 }

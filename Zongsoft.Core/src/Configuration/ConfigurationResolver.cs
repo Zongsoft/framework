@@ -36,498 +36,494 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public class ConfigurationResolver : IConfigurationResolver
 {
-	public class ConfigurationResolver : IConfigurationResolver
+	#region 单例字段
+	public static readonly ConfigurationResolver Default = new();
+	#endregion
+
+	#region 构造函数
+	protected ConfigurationResolver() { }
+	#endregion
+
+	#region 公共属性
+	public IConfigurationRecognizerProvider Recognizers { get; set; }
+	#endregion
+
+	#region 解析方法
+	public object Resolve(Type type, IConfiguration configuration, ConfigurationBinderOptions options)
 	{
-		#region 单例字段
-		public static readonly ConfigurationResolver Default = new ConfigurationResolver();
-		#endregion
+		if(type == null)
+			throw new ArgumentNullException(nameof(type));
 
-		#region 构造函数
-		protected ConfigurationResolver() { }
-		#endregion
+		var instance = this.CreateInstance(type);
+		this.Resolve(instance, configuration, options);
+		return instance;
+	}
 
-		#region 公共属性
-		public IConfigurationRecognizerProvider Recognizers { get; set; }
-		#endregion
+	public void Resolve(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
+	{
+		if(instance == null)
+			throw new ArgumentNullException(nameof(instance));
 
-		#region 解析方法
-		public object Resolve(Type type, IConfiguration configuration, ConfigurationBinderOptions options)
+		var type = instance.GetType();
+
+		if(type == typeof(IConfigurationSection))
+			return;
+
+		foreach(var child in configuration.GetChildren())
 		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			var instance = this.CreateInstance(type);
-			this.Resolve(instance, configuration, options);
-			return instance;
+			this.ResolveInstance(instance, child, options);
 		}
+	}
 
-		public void Resolve(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
+	private void ResolveInstance(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
+	{
+		if(configuration is not IConfigurationSection section)
+			return;
+
+		if(section.IsCollection())
 		{
-			if(instance == null)
-				throw new ArgumentNullException(nameof(instance));
-
-			var type = instance.GetType();
-
-			if(type == typeof(IConfigurationSection))
+			if(Collections.CollectionUtility.TryAdd(instance, section.Value))
 				return;
 
-			foreach(var child in configuration.GetChildren())
-			{
-				this.ResolveInstance(instance, child, options);
-			}
+			throw new ConfigurationException($"Failed to add `{section.Path}={section.Value}` configuration collection entry");
 		}
 
-		private void ResolveInstance(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
-		{
-			if(configuration is not IConfigurationSection section)
-				return;
+		var properties = this.GetProperties(instance.GetType().GetTypeInfo());
 
-			if(section.IsCollection())
+		if(section.Value != null)
+		{
+			if(properties.TryGetValue(section.Key, out var property))
 			{
-				if(Collections.CollectionUtility.TryAdd(instance, section.Value))
+				if(SetPathInfo(instance, property, section))
 					return;
 
-				throw new ConfigurationException($"Failed to add `{section.Path}={section.Value}` configuration collection entry");
+				if(property.SetValue(instance, section.Value))
+					return;
+
+				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, property.PropertyType));
 			}
 
-			var properties = this.GetProperties(instance.GetType().GetTypeInfo());
-
-			if(section.Value != null)
+			this.OnUnrecognize(instance, properties, section, options);
+		}
+		else
+		{
+			if(properties.TryGetValue(section.Key, out var property))
 			{
-				if(properties.TryGetValue(section.Key, out var property))
-				{
-					if(SetPathInfo(instance, property, section))
-						return;
+				var target = property.GetValue(instance);
 
-					if(property.SetValue(instance, section.Value))
-						return;
+				if(target == null)
+					target = this.Resolve(property.PropertyType, configuration, options);
+				else
+					this.Resolve(target, configuration, options);
 
-					throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, property.PropertyType));
-				}
-
-				this.OnUnrecognize(instance, properties, section, options);
+				property.SetValue(instance, target);
 			}
 			else
 			{
-				if(properties.TryGetValue(section.Key, out var property))
-				{
-					var target = property.GetValue(instance);
-
-					if(target == null)
-						target = this.Resolve(property.PropertyType, configuration, options);
-					else
-						this.Resolve(target, configuration, options);
-
-					property.SetValue(instance, target);
-				}
-				else
-				{
-					if(!this.ResolveCollection(instance, section, properties, options))
-						this.OnUnrecognize(instance, properties, section, options);
-				}
+				if(!this.ResolveCollection(instance, section, properties, options))
+					this.OnUnrecognize(instance, properties, section, options);
 			}
 		}
+	}
 
-		private bool ResolveCollection(object instance, IConfigurationSection configuration, IDictionary<string, PropertyToken> properties, ConfigurationBinderOptions options)
+	private bool ResolveCollection(object instance, IConfigurationSection configuration, IDictionary<string, PropertyToken> properties, ConfigurationBinderOptions options)
+	{
+		var dictionaryType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(IDictionary<,>));
+
+		if(dictionaryType != null)
 		{
-			var dictionaryType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(IDictionary<,>));
+			object key = configuration.Key;
+
+			//如果字典键类型不是字符串并且配置键文本转换失败则抛出异常
+			if(dictionaryType.GenericTypeArguments[0] != typeof(string) && !Common.Convert.TryConvertValue(key, dictionaryType.GenericTypeArguments[0], out key))
+				throw new ConfigurationException($"Unable to convert the ‘{key}’ configuration key to a dictionary key type of ‘{dictionaryType.GenericTypeArguments[0].FullName}’ type.");
+
+			var valueType = dictionaryType.GenericTypeArguments[1];
+			var setter = dictionaryType.GetTypeInfo().GetDeclaredProperty("Item");
+
+			Reflection.Reflector.SetValue(setter, ref instance, this.Resolve(valueType, configuration, options), new object[] { key });
+
+			return true;
+		}
+
+		var collectionType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(ICollection<>));
+
+		if(collectionType != null)
+		{
+			var valueType = collectionType.GenericTypeArguments[0];
+			var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
+
+			add.Invoke(instance, [this.Resolve(valueType, configuration, options)]);
+
+			return true;
+		}
+
+		//返回失败
+		return false;
+	}
+	#endregion
+
+	#region 附加方法
+	public void Attach(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
+	{
+		if(instance == null)
+			throw new ArgumentNullException(nameof(instance));
+
+		if(configuration == null)
+			throw new ArgumentNullException(nameof(configuration));
+
+		var properties = this.GetProperties(instance.GetType().GetTypeInfo()).Values.Distinct().ToArray();
+
+		foreach(var property in properties)
+		{
+			if(Common.TypeExtension.IsScalarType(property.PropertyType))
+			{
+				configuration[property.ConfigurationKey] = property.GetStringValue(instance);
+				continue;
+			}
+
+			var propertyValue = property.GetValue(instance);
+
+			var dictionaryType = ConfigurationUtility.GetImplementedContract(
+				property.PropertyType,
+				typeof(IReadOnlyDictionary<,>),
+				typeof(IDictionary<,>));
 
 			if(dictionaryType != null)
 			{
-				object key = configuration.Key;
+				//if(propertyValue.GetType() != dictionaryType)
+				//	this.Attach(propertyValue, configuration.GetSection(property.ConfigurationKey), options);
 
-				//如果字典键类型不是字符串并且配置键文本转换失败则抛出异常
-				if(dictionaryType.GenericTypeArguments[0] != typeof(string) && !Common.Convert.TryConvertValue(key, dictionaryType.GenericTypeArguments[0], out key))
-					throw new ConfigurationException($"Unable to convert the ‘{key}’ configuration key to a dictionary key type of ‘{dictionaryType.GenericTypeArguments[0].FullName}’ type.");
+				foreach(DictionaryEntry entry in (IEnumerable)propertyValue)
+				{
+					var key = ConfigurationPath.Combine(property.ConfigurationKey, entry.Key.ToString());
+					this.Attach(entry.Value, configuration.GetSection(key), options);
+				}
 
-				var valueType = dictionaryType.GenericTypeArguments[1];
-				var setter = dictionaryType.GetTypeInfo().GetDeclaredProperty("Item");
-
-				Reflection.Reflector.SetValue(setter, ref instance, this.Resolve(valueType, configuration, options), new object[] { key });
-
-				return true;
+				continue;
 			}
 
-			var collectionType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(ICollection<>));
+			var collectionType = ConfigurationUtility.GetImplementedContract(
+				property.PropertyType,
+				typeof(IReadOnlyCollection<>),
+				typeof(ICollection<>),
+				typeof(IEnumerable<>));
 
 			if(collectionType != null)
 			{
-				var valueType = collectionType.GenericTypeArguments[0];
-				var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
+				//if(propertyValue.GetType() != collectionType)
+				//	this.Attach(propertyValue, configuration.GetSection(property.ConfigurationKey), options);
 
-				add.Invoke(instance, [this.Resolve(valueType, configuration, options)]);
+				int index = 0;
 
-				return true;
+				foreach(var entry in (IEnumerable)propertyValue)
+				{
+					var key = ConfigurationPath.Combine(property.ConfigurationKey, index++.ToString());
+					this.Attach(entry, configuration.GetSection(key), options);
+				}
+
+				continue;
 			}
 
-			//返回失败
-			return false;
+			this.Attach(propertyValue, configuration.GetSection(property.ConfigurationKey), options);
 		}
-		#endregion
+	}
+	#endregion
 
-		#region 附加方法
-		public void Attach(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
+	#region 虚拟方法
+	protected virtual object CreateInstance(Type type)
+	{
+		if(type.IsArray)
 		{
-			if(instance == null)
-				throw new ArgumentNullException(nameof(instance));
+			if(type.GetArrayRank() > 1)
+				throw new InvalidOperationException(string.Format(Properties.Resources.Error_UnsupportedMultidimensionalArray, type));
 
-			if(configuration == null)
-				throw new ArgumentNullException(nameof(configuration));
+			return Array.CreateInstance(type.GetElementType(), 0);
+		}
 
-			var properties = this.GetProperties(instance.GetType().GetTypeInfo()).Values.Distinct().ToArray();
+		if(type.IsInterface)
+		{
+			var contract = ConfigurationUtility.GetImplementedContract(type,
+				typeof(IReadOnlyDictionary<,>),
+				typeof(IDictionary<,>));
 
-			foreach(var property in properties)
+			if(contract != null)
 			{
-				if(Common.TypeExtension.IsScalarType(property.PropertyType))
-				{
-					configuration[property.ConfigurationKey] = property.GetStringValue(instance);
+				var dictionaryType = typeof(Dictionary<,>).MakeGenericType(contract.GenericTypeArguments[0], contract.GenericTypeArguments[1]);
+				return dictionaryType.GenericTypeArguments[0] != typeof(string) ?
+					Activator.CreateInstance(dictionaryType) :
+					Activator.CreateInstance(dictionaryType, new object[] { StringComparer.OrdinalIgnoreCase });
+			}
+
+			contract = ConfigurationUtility.GetImplementedContract(type, typeof(ISet<>));
+
+			if(contract != null)
+			{
+				var setType = typeof(HashSet<>).MakeGenericType(contract.GenericTypeArguments[0]);
+				return Activator.CreateInstance(setType);
+			}
+
+			contract = ConfigurationUtility.GetImplementedContract(type,
+				typeof(IReadOnlyList<>),
+				typeof(IList<>),
+				typeof(IReadOnlyCollection<>),
+				typeof(ICollection<>),
+				typeof(IEnumerable<>));
+
+			if(contract != null)
+			{
+				var listType = typeof(List<>).MakeGenericType(contract.GenericTypeArguments[0]);
+				return Activator.CreateInstance(listType);
+			}
+		}
+
+		try
+		{
+			if(type.IsInterface || type.IsAbstract)
+				return Zongsoft.Data.Model.Build(type);
+
+			return Activator.CreateInstance(type);
+		}
+		catch(Exception ex)
+		{
+			throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedToActivate, type), ex);
+		}
+	}
+
+	protected virtual IDictionary<string, PropertyToken> GetProperties(TypeInfo type)
+	{
+		var properties = new Dictionary<string, PropertyToken>(StringComparer.OrdinalIgnoreCase);
+
+		do
+		{
+			foreach(var property in type.DeclaredProperties)
+			{
+				//如果属性不能写并且还不是集合类型，则忽略对该属性的解析
+				if(!property.CanWrite && !Common.TypeExtension.IsCollection(property.PropertyType))
 					continue;
-				}
 
-				var propertyValue = property.GetValue(instance);
+				var token = new PropertyToken(property);
+				properties.TryAdd(property.Name, token);
 
-				var dictionaryType = ConfigurationUtility.GetImplementedContract(
-					property.PropertyType,
-					typeof(IReadOnlyDictionary<,>),
-					typeof(IDictionary<,>));
-
-				if(dictionaryType != null)
-				{
-					//if(propertyValue.GetType() != dictionaryType)
-					//	this.Attach(propertyValue, configuration.GetSection(property.ConfigurationKey), options);
-
-					foreach(DictionaryEntry entry in (IEnumerable)propertyValue)
-					{
-						var key = ConfigurationPath.Combine(property.ConfigurationKey, entry.Key.ToString());
-						this.Attach(entry.Value, configuration.GetSection(key), options);
-					}
-
-					continue;
-				}
-
-				var collectionType = ConfigurationUtility.GetImplementedContract(
-					property.PropertyType,
-					typeof(IReadOnlyCollection<>),
-					typeof(ICollection<>),
-					typeof(IEnumerable<>));
-
-				if(collectionType != null)
-				{
-					//if(propertyValue.GetType() != collectionType)
-					//	this.Attach(propertyValue, configuration.GetSection(property.ConfigurationKey), options);
-
-					int index = 0;
-
-					foreach(var entry in (IEnumerable)propertyValue)
-					{
-						var key = ConfigurationPath.Combine(property.ConfigurationKey, index++.ToString());
-						this.Attach(entry, configuration.GetSection(key), options);
-					}
-
-					continue;
-				}
-
-				this.Attach(propertyValue, configuration.GetSection(property.ConfigurationKey), options);
+				if(!string.Equals(token.ConfigurationKey, property.Name))
+					properties.TryAdd(token.ConfigurationKey, token);
 			}
+
+			type = type.BaseType.GetTypeInfo();
 		}
-		#endregion
+		while(type != typeof(object).GetTypeInfo());
 
-		#region 虚拟方法
-		protected virtual object CreateInstance(Type type)
+		return properties;
+	}
+
+	protected virtual void OnUnrecognize(object target, IDictionary<string, PropertyToken> properties, IConfigurationSection configuration, ConfigurationBinderOptions options)
+	{
+		var unrecognizedProperty = ConfigurationRecognizerProvider.GetUnrecognizedProperty(target.GetType());
+
+		if(unrecognizedProperty == null)
 		{
-			if(type.IsArray)
-			{
-				if(type.GetArrayRank() > 1)
-					throw new InvalidOperationException(string.Format(Properties.Resources.Error_UnsupportedMultidimensionalArray, type));
+			if(configuration.Value == null && this.ResolveDefaultProperty(target, FindDefaultProperty(properties.Values), properties, configuration, options))
+				return;
 
-				return Array.CreateInstance(type.GetElementType(), 0);
-			}
+			if(options!.UnrecognizedError)
+				throw new ConfigurationException($"The specified '{configuration.Path}' configuration section cannot be bound to a member of the '{target.GetType()}' type.");
 
-			if(type.IsInterface)
-			{
-				var contract = ConfigurationUtility.GetImplementedContract(type,
-					typeof(IReadOnlyDictionary<,>),
-					typeof(IDictionary<,>));
-
-				if(contract != null)
-				{
-					var dictionaryType = typeof(Dictionary<,>).MakeGenericType(contract.GenericTypeArguments[0], contract.GenericTypeArguments[1]);
-					return dictionaryType.GenericTypeArguments[0] != typeof(string) ?
-						Activator.CreateInstance(dictionaryType) :
-						Activator.CreateInstance(dictionaryType, new object[] { StringComparer.OrdinalIgnoreCase });
-				}
-
-				contract = ConfigurationUtility.GetImplementedContract(type, typeof(ISet<>));
-
-				if(contract != null)
-				{
-					var setType = typeof(HashSet<>).MakeGenericType(contract.GenericTypeArguments[0]);
-					return Activator.CreateInstance(setType);
-				}
-
-				contract = ConfigurationUtility.GetImplementedContract(type,
-					typeof(IReadOnlyList<>),
-					typeof(IList<>),
-					typeof(IReadOnlyCollection<>),
-					typeof(ICollection<>),
-					typeof(IEnumerable<>));
-
-				if(contract != null)
-				{
-					var listType = typeof(List<>).MakeGenericType(contract.GenericTypeArguments[0]);
-					return Activator.CreateInstance(listType);
-				}
-			}
-
-			try
-			{
-				if(type.IsInterface || type.IsAbstract)
-					return Zongsoft.Data.Model.Build(type);
-
-				return Activator.CreateInstance(type);
-			}
-			catch(Exception ex)
-			{
-				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedToActivate, type), ex);
-			}
+			return;
 		}
 
-		protected virtual IDictionary<string, PropertyToken> GetProperties(TypeInfo type)
+		if(configuration.Value == null)
 		{
-			var properties = new Dictionary<string, PropertyToken>(StringComparer.OrdinalIgnoreCase);
+			var attribute = unrecognizedProperty.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
 
-			do
+			//如果指定的未识别属性名被注解为空或星号，则表示它是一个默认集合属性
+			if(attribute != null && (string.IsNullOrEmpty(attribute.Name) || attribute.Name == "*"))
 			{
-				foreach(var property in type.DeclaredProperties)
-				{
-					//如果属性不能写并且还不是集合类型，则忽略对该属性的解析
-					if(!property.CanWrite && !Common.TypeExtension.IsCollection(property.PropertyType))
-						continue;
-
-					var token = new PropertyToken(property);
-					properties.TryAdd(property.Name, token);
-
-					if(!string.Equals(token.ConfigurationKey, property.Name))
-						properties.TryAdd(token.ConfigurationKey, token);
-				}
-
-				type = type.BaseType.GetTypeInfo();
-			}
-			while(type != typeof(object).GetTypeInfo());
-
-			return properties;
-		}
-
-		protected virtual void OnUnrecognize(object target, IDictionary<string, PropertyToken> properties, IConfigurationSection configuration, ConfigurationBinderOptions options)
-		{
-			var unrecognizedProperty = ConfigurationRecognizerProvider.GetUnrecognizedProperty(target.GetType());
-
-			if(unrecognizedProperty == null)
-			{
-				if(configuration.Value == null && this.ResolveDefaultProperty(target, FindDefaultProperty(properties.Values), properties, configuration, options))
+				//解析默认集合成功则返回，否则抛出异常
+				if(this.ResolveDefaultProperty(target, properties[unrecognizedProperty.Name], properties, configuration, options))
 					return;
 
-				if(options!.UnrecognizedError)
-					throw new ConfigurationException($"The specified '{configuration.Path}' configuration section cannot be bound to a member of the '{target.GetType()}' type.");
-
-				return;
+				throw new ConfigurationException($"The {unrecognizedProperty.Name} property of type '{target.GetType().FullName}' is annotated as the default collection, but the binding for this property fails.");
 			}
-
-			if(configuration.Value == null)
-			{
-				var attribute = unrecognizedProperty.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
-
-				//如果指定的未识别属性名被注解为空或星号，则表示它是一个默认集合属性
-				if(attribute != null && (string.IsNullOrEmpty(attribute.Name) || attribute.Name == "*"))
-				{
-					//解析默认集合成功则返回，否则抛出异常
-					if(this.ResolveDefaultProperty(target, properties[unrecognizedProperty.Name], properties, configuration, options))
-						return;
-
-					throw new ConfigurationException($"The {unrecognizedProperty.Name} property of type '{target.GetType().FullName}' is annotated as the default collection, but the binding for this property fails.");
-				}
-			}
-
-			var recognizers = this.Recognizers ?? ConfigurationRecognizerProvider.Default;
-			var recognizer = recognizers.GetRecognize(target.GetType()) ??
-				throw new ConfigurationException($"Unable to get a recognizer of type '{target.GetType().FullName}'.");
-
-			if(!recognizer.Recognize(target, configuration, options) && options!.UnrecognizedError)
-				throw new ConfigurationException($"The '{configuration.Path}' configuration section is not recognized.");
 		}
-		#endregion
 
-		#region 私有方法
-		private bool ResolveDefaultProperty(object instance, PropertyToken property, IDictionary<string, PropertyToken> properties, IConfigurationSection configuration, ConfigurationBinderOptions options)
+		var recognizers = this.Recognizers ?? ConfigurationRecognizerProvider.Default;
+		var recognizer = recognizers.GetRecognize(target.GetType()) ??
+			throw new ConfigurationException($"Unable to get a recognizer of type '{target.GetType().FullName}'.");
+
+		if(!recognizer.Recognize(target, configuration, options) && options!.UnrecognizedError)
+			throw new ConfigurationException($"The '{configuration.Path}' configuration section is not recognized.");
+	}
+	#endregion
+
+	#region 私有方法
+	private bool ResolveDefaultProperty(object instance, PropertyToken property, IDictionary<string, PropertyToken> properties, IConfigurationSection configuration, ConfigurationBinderOptions options)
+	{
+		if(property == null)
+			return false;
+
+		var value = property.GetValue(instance);
+
+		if(value == null)
 		{
-			if(property == null)
+			if(!property.CanWrite)
 				return false;
 
-			var value = property.GetValue(instance);
+			value = this.CreateInstance(property.PropertyType);
 
-			if(value == null)
-			{
-				if(!property.CanWrite)
-					return false;
-
-				value = this.CreateInstance(property.PropertyType);
-
-				if(!property.SetValue(instance, value))
-					throw new ConfigurationException($"The default collection property {property.Name} of '{instance.GetType().FullName}' type is null and it cannot be set.");
-			}
-
-			return this.ResolveCollection(value, configuration, this.GetProperties(value.GetType().GetTypeInfo()), options);
+			if(!property.SetValue(instance, value))
+				throw new ConfigurationException($"The default collection property {property.Name} of '{instance.GetType().FullName}' type is null and it cannot be set.");
 		}
 
-		private static PropertyToken FindDefaultProperty(IEnumerable<PropertyToken> properties)
+		return this.ResolveCollection(value, configuration, this.GetProperties(value.GetType().GetTypeInfo()), options);
+	}
+
+	private static PropertyToken FindDefaultProperty(IEnumerable<PropertyToken> properties)
+	{
+		foreach(var property in properties)
 		{
-			foreach(var property in properties)
+			if(string.IsNullOrEmpty(property.Alias) || property.Alias == "*")
+				return property;
+		}
+
+		return null;
+	}
+
+	private static bool SetPathInfo(object instance, PropertyToken property, IConfigurationSection entry)
+	{
+		if(property.PropertyType == typeof(System.IO.FileInfo))
+		{
+			var fileProvider = GetFileProvider(Zongsoft.Services.ApplicationContext.Current?.Configuration?.Providers, entry);
+
+			if(fileProvider != null)
 			{
-				if(string.IsNullOrEmpty(property.Alias) || property.Alias == "*")
-					return property;
+				var path = fileProvider.Source.FileProvider.GetFileInfo(entry.Value);
+				return property.SetValue(instance, new System.IO.FileInfo(path.PhysicalPath));
+			}
+		}
+		else if(property.PropertyType == typeof(System.IO.DirectoryInfo))
+		{
+			var fileProvider = GetFileProvider(Zongsoft.Services.ApplicationContext.Current?.Configuration?.Providers, entry);
+
+			if(fileProvider != null)
+			{
+				var path = fileProvider.Source.FileProvider.GetFileInfo(entry.Value);
+				return property.SetValue(instance, new System.IO.DirectoryInfo(path.PhysicalPath));
+			}
+		}
+
+		return false;
+
+		static FileConfigurationProvider GetFileProvider(IEnumerable<IConfigurationProvider> providers, IConfigurationSection section)
+		{
+			if(providers == null)
+				return null;
+
+			foreach(var provider in providers)
+			{
+				if(provider is FileConfigurationProvider fileConfiguration)
+				{
+					if(provider.TryGet(section.Path, out var value) && string.Equals(value, section.Value))
+						return fileConfiguration;
+				}
+				else if(provider is ICompositeConfigurationProvider composite)
+				{
+					var found = GetFileProvider(composite.Providers, section);
+
+					if(found != null)
+						return found;
+				}
 			}
 
 			return null;
 		}
+	}
+	#endregion
 
-		private static bool SetPathInfo(object instance, PropertyToken property, IConfigurationSection entry)
+	#region 内部结构
+	protected class PropertyToken : IEquatable<PropertyToken>
+	{
+		#region 成员字段
+		private string _configurationKey;
+		#endregion
+
+		#region 构造函数
+		public PropertyToken(PropertyInfo property)
 		{
-			if(property.PropertyType == typeof(System.IO.FileInfo))
-			{
-				var fileProvider = GetFileProvider(Zongsoft.Services.ApplicationContext.Current?.Configuration?.Providers, entry);
+			this.Property = property ?? throw new ArgumentNullException(nameof(property));
+			this.Converter = ConfigurationUtility.GetConverter(property);
+			this.Alias = property.Name;
 
-				if(fileProvider != null)
+			var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
+			if(attribute != null)
+				this.Alias = attribute.Name;
+		}
+		#endregion
+
+		#region 公共字段
+		public readonly TypeConverter Converter;
+		public readonly PropertyInfo Property;
+		public readonly string Alias;
+		#endregion
+
+		#region 公共属性
+		public string Name => this.Property.Name;
+		public bool CanRead => this.Property.CanRead;
+		public bool CanWrite => this.Property.CanWrite;
+		public Type PropertyType => this.Property.PropertyType;
+		public bool IsCollection => Common.TypeExtension.IsCollection(this.Property.PropertyType);
+
+		public string ConfigurationKey
+		{
+			get
+			{
+				if(string.IsNullOrEmpty(_configurationKey))
 				{
-					var path = fileProvider.Source.FileProvider.GetFileInfo(entry.Value);
-					return property.SetValue(instance, new System.IO.FileInfo(path.PhysicalPath));
+					_configurationKey = this.Property.GetCustomAttribute<ConfigurationPropertyAttribute>(true)?.Name;
+
+					if(string.IsNullOrEmpty(_configurationKey))
+						_configurationKey = this.Property.Name;
 				}
+
+				return _configurationKey;
 			}
-			else if(property.PropertyType == typeof(System.IO.DirectoryInfo))
-			{
-				var fileProvider = GetFileProvider(Zongsoft.Services.ApplicationContext.Current?.Configuration?.Providers, entry);
+		}
+		#endregion
 
-				if(fileProvider != null)
-				{
-					var path = fileProvider.Source.FileProvider.GetFileInfo(entry.Value);
-					return property.SetValue(instance, new System.IO.DirectoryInfo(path.PhysicalPath));
-				}
+		#region 公共方法
+		public object GetValue(object target) => Reflection.Reflector.GetValue(this.Property, ref target);
+
+		public string GetStringValue(object target)
+		{
+			return Common.Convert.ConvertValue<string>(
+				Reflection.Reflector.GetValue(this.Property, ref target),
+				() => this.Converter);
+		}
+
+		public bool SetValue(object target, object value)
+		{
+			if(!this.CanWrite)
+				return false;
+
+			if(Common.Convert.TryConvertValue(value, this.PropertyType, () => this.Converter, out var convertedValue))
+			{
+				Reflection.Reflector.SetValue(this.Property, ref target, convertedValue);
+				return true;
 			}
 
 			return false;
-
-			static FileConfigurationProvider GetFileProvider(IEnumerable<IConfigurationProvider> providers, IConfigurationSection section)
-			{
-				if(providers == null)
-					return null;
-
-				foreach(var provider in providers)
-				{
-					if(provider is FileConfigurationProvider fileConfiguration)
-					{
-						if(provider.TryGet(section.Path, out var value) && string.Equals(value, section.Value))
-							return fileConfiguration;
-					}
-					else if(provider is ICompositeConfigurationProvider composite)
-					{
-						var found = GetFileProvider(composite.Providers, section);
-
-						if(found != null)
-							return found;
-					}
-				}
-
-				return null;
-			}
 		}
 		#endregion
 
-		#region 内部结构
-		protected class PropertyToken : IEquatable<PropertyToken>
-		{
-			#region 成员字段
-			private string _configurationKey;
-			#endregion
-
-			#region 构造函数
-			public PropertyToken(PropertyInfo property)
-			{
-				this.Property = property ?? throw new ArgumentNullException(nameof(property));
-				this.Converter = ConfigurationUtility.GetConverter(property);
-				this.Alias = property.Name;
-
-				var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);
-				if(attribute != null)
-					this.Alias = attribute.Name;
-			}
-			#endregion
-
-			#region 公共字段
-			public readonly TypeConverter Converter;
-			public readonly PropertyInfo Property;
-			public readonly string Alias;
-			#endregion
-
-			#region 公共属性
-			public string Name => this.Property.Name;
-			public bool CanRead => this.Property.CanRead;
-			public bool CanWrite => this.Property.CanWrite;
-			public Type PropertyType => this.Property.PropertyType;
-			public bool IsCollection => Common.TypeExtension.IsCollection(this.Property.PropertyType);
-
-			public string ConfigurationKey
-			{
-				get
-				{
-					if(string.IsNullOrEmpty(_configurationKey))
-					{
-						_configurationKey = this.Property.GetCustomAttribute<ConfigurationPropertyAttribute>(true)?.Name;
-
-						if(string.IsNullOrEmpty(_configurationKey))
-							_configurationKey = this.Property.Name;
-					}
-
-					return _configurationKey;
-				}
-			}
-			#endregion
-
-			#region 公共方法
-			public object GetValue(object target)
-			{
-				return Reflection.Reflector.GetValue(this.Property, ref target);
-			}
-
-			public string GetStringValue(object target)
-			{
-				return Common.Convert.ConvertValue<string>(
-					Reflection.Reflector.GetValue(this.Property, ref target),
-					() => this.Converter);
-			}
-
-			public bool SetValue(object target, object value)
-			{
-				if(!this.CanWrite)
-					return false;
-
-				if(Common.Convert.TryConvertValue(value, this.PropertyType, () => this.Converter, out var convertedValue))
-				{
-					Reflection.Reflector.SetValue(this.Property, ref target, convertedValue);
-					return true;
-				}
-
-				return false;
-			}
-			#endregion
-
-			#region 重写方法
-			public bool Equals(PropertyToken other) => other is not null && this.Property.Equals(other.Property);
-			public override bool Equals(object obj) => obj is PropertyToken other && this.Equals(other);
-			public override int GetHashCode() => this.Property.GetHashCode();
-			public override string ToString() => $"{this.Property.Name}:{this.Property.PropertyType.FullName}";
-			#endregion
-		}
+		#region 重写方法
+		public bool Equals(PropertyToken other) => other is not null && this.Property.Equals(other.Property);
+		public override bool Equals(object obj) => obj is PropertyToken other && this.Equals(other);
+		public override int GetHashCode() => this.Property.GetHashCode();
+		public override string ToString() => $"{this.Property.Name}:{this.Property.PropertyType.FullName}";
 		#endregion
 	}
+	#endregion
 }

@@ -30,12 +30,11 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public class SettingCollection() : KeyedCollection<string, Setting>(StringComparer.OrdinalIgnoreCase)
 {
-	public class SettingCollection() : KeyedCollection<string, Setting>(StringComparer.OrdinalIgnoreCase)
-	{
-		#region 重写方法
-		protected override string GetKeyForItem(Setting item) => item.Name;
-		#endregion
-	}
+	#region 重写方法
+	protected override string GetKeyForItem(Setting item) => item.Name;
+	#endregion
 }
