@@ -29,13 +29,13 @@
 
 	<option path="/Data">
 		<connectionSettings default="db1">
-			<connectionSetting connectionSetting.name="db1" driver="mysql" mode="all" value="db1.connectionString" />
+			<connectionSetting connectionSetting.name="db1" driver="mysql" mode="all" value="server=localhost" />
 		</connectionSettings>
 	</option>
 
 	<option path="/Externals/Redis">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="redis" value="redis.connectionString" />
+			<connectionSetting connectionSetting.name="redis" value="server=127.0.0.1" />
 		</connectionSettings>
 	</option>
 </configuration>

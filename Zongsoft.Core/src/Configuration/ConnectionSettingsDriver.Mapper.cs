@@ -55,6 +55,16 @@ partial class ConnectionSettingsDriver<TSettings>
 		#region 公共方法
 		/// <summary>尝试映射转换指定键名对应的值。</summary>
 		/// <param name="name">指定的待映射的键名。</param>
+		/// <param name="value">指定的待映射的值。</param>
+		/// <param name="values">指定的待映射的原始值集合。</param>
+		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		public string Map<T>(string name, T value, IDictionary<object, string> values)
+		{
+			return this.Descriptors.TryGetValue(name, out var descriptor) ? this.OnMap(descriptor, value, values) : null;
+		}
+
+		/// <summary>尝试映射转换指定键名对应的值。</summary>
+		/// <param name="name">指定的待映射的键名。</param>
 		/// <param name="values">指定的待映射的原始值集合。</param>
 		/// <param name="result">输出参数，返回映射转换成功后的值。</param>
 		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
@@ -65,16 +75,6 @@ partial class ConnectionSettingsDriver<TSettings>
 
 			result = default;
 			return false;
-		}
-
-		/// <summary>尝试映射转换指定键名对应的值。</summary>
-		/// <param name="name">指定的待映射的键名。</param>
-		/// <param name="value">指定的待映射的值。</param>
-		/// <param name="values">指定的待映射的原始值集合。</param>
-		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		public string Map<T>(string name, T value, IDictionary<object, string> values)
-		{
-			return this.Descriptors.TryGetValue(name, out var descriptor) ? this.OnMap(descriptor, value, values) : null;
 		}
 		#endregion
 

@@ -3,7 +3,7 @@
 <configuration>
 	<option path="/Data">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="db2" driver="postgres" mode="all" value="db2.connectionString" />
+			<connectionSetting connectionSetting.name="db2" driver="MySQL" mode="all" value="server=192.168.0.1" />
 		</connectionSettings>
 	</option>
 

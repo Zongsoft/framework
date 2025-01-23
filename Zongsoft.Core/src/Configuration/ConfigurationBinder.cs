@@ -55,7 +55,7 @@ public static class ConfigurationBinder
 		{
 			var options = new ConfigurationBinderOptions();
 			configureOptions?.Invoke(options);
-			GetResolver(instance.GetType()).Resolve(instance, configuration, options);
+			ConfigurationUtility.GetResolver(instance.GetType()).Resolve(instance, configuration, options);
 		}
 	}
 
@@ -86,7 +86,7 @@ public static class ConfigurationBinder
 		if(configuration is IConfigurationSection section && section.Value != null)
 			return Common.Convert.ConvertValue(section.Value, type);
 
-		return GetResolver(type).Resolve(type, configuration, options);
+		return ConfigurationUtility.GetResolver(type).Resolve(type, configuration, options);
 	}
 
 	public static T GetOptionValue<T>(this IConfiguration configuration, string path) => GetOptionValue(configuration, path, default(T));
@@ -120,19 +120,7 @@ public static class ConfigurationBinder
 		if(!string.IsNullOrEmpty(path))
 			configuration = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(path));
 
-		GetResolver(instance.GetType()).Attach(instance, configuration, options);
-	}
-	#endregion
-
-	#region 私有方法
-	private static IConfigurationResolver GetResolver(Type type)
-	{
-		var attribute = type.GetConfigurationAttribute();
-
-		if(attribute != null && attribute.ResolverType != null)
-			return Activator.CreateInstance(attribute.ResolverType) as IConfigurationResolver ?? ConfigurationResolver.Default;
-
-		return ConfigurationResolver.Default;
+		ConfigurationUtility.GetResolver(instance.GetType()).Attach(instance, configuration, options);
 	}
 	#endregion
 }

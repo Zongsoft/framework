@@ -30,8 +30,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
-using System.ComponentModel;
 
 namespace Zongsoft.Configuration;
 
@@ -155,29 +153,5 @@ public class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDrive
 	/// <param name="value">指定要设置的设置项的值。</param>
 	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	public new bool SetValue<T>(string name, T value) => base.SetValue(name, value);
-	#endregion
-
-	#region 嵌套子类
-	private sealed class DriverConverter : TypeConverter
-	{
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
-		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => new DriverProxy(value as string);
-
-		private sealed class DriverProxy(string name) : IConnectionSettingsDriver
-		{
-			private readonly string _name = name;
-
-			public string Name => _name ?? string.Empty;
-			public string Description => this.Driver.Description;
-			public IConnectionSettingsDriver Driver => Drivers.TryGetValue(_name, out var driver) ? driver : ConnectionSettingsDriver.Default;
-
-			public bool TryGetValue(string name, IDictionary<object, string> values, out object value) => this.Driver.TryGetValue(name, values, out value);
-			public T GetValue<T>(string name, IDictionary<object, string> values, T defaultValue) => this.Driver.GetValue(name, values, defaultValue);
-			public bool SetValue<T>(string name, T value, IDictionary<object, string> values) => this.Driver.SetValue(name, value, values);
-
-			public static ConnectionSettingDescriptorCollection Descriptors => null;
-			public bool Equals(IConnectionSettingsDriver other) => this.Driver.Equals(other);
-		}
-	}
 	#endregion
 }

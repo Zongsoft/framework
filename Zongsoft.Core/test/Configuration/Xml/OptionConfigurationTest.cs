@@ -65,10 +65,10 @@ public class XmlConfigurationTest
 		Assert.Equal("db1", configuration.GetSection("data:connectionSettings:db1:name").Value);
 		Assert.Equal("all", configuration.GetSection("data:connectionSettings:db1:mode").Value);
 		Assert.Equal("mysql", configuration.GetSection("data:connectionSettings:db1:driver").Value);
-		Assert.Equal("db1.connectionString", configuration.GetSection("data:connectionSettings:db1:value").Value);
+		Assert.Equal("server=localhost", configuration.GetSection("data:connectionSettings:db1:value").Value);
 
 		Assert.Equal("redis", configuration.GetSection("externals:redis:connectionSettings:redis:name").Value);
-		Assert.Equal("redis.connectionString", configuration.GetSection("externals:redis:connectionSettings:redis:value").Value);
+		Assert.Equal("server=127.0.0.1", configuration.GetSection("externals:redis:connectionSettings:redis:value").Value);
 	}
 
 	[Fact]
@@ -80,8 +80,8 @@ public class XmlConfigurationTest
 
 		Assert.Equal("db2", configuration.GetSection("data:connectionSettings:db2:name").Value);
 		Assert.Equal("all", configuration.GetSection("data:connectionSettings:db2:mode").Value);
-		Assert.Equal("postgres", configuration.GetSection("data:connectionSettings:db2:driver").Value);
-		Assert.Equal("db2.connectionString", configuration.GetSection("data:connectionSettings:db2:value").Value);
+		Assert.Equal("MySQL", configuration.GetSection("data:connectionSettings:db2:driver").Value);
+		Assert.Equal("server=192.168.0.1", configuration.GetSection("data:connectionSettings:db2:value").Value);
 
 		Assert.Equal("avm", configuration.GetSection("messaging:queues:avm:name").Value);
 		Assert.Equal("MostOnce", configuration.GetSection("messaging:queues:avm:subscription:reliability").Value);

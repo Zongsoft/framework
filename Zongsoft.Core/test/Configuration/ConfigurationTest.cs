@@ -10,6 +10,12 @@ namespace Zongsoft.Configuration;
 
 public class ConfigurationTest
 {
+	public ConfigurationTest()
+	{
+		if(!ConnectionSettings.Drivers.Contains(MySqlConnectionSettingsDriver.NAME))
+			ConnectionSettings.Drivers.Add(MySqlConnectionSettingsDriver.Instance);
+	}
+
 	[Fact]
 	public void TestResolveModels()
 	{
@@ -53,15 +59,13 @@ public class ConfigurationTest
 		Assert.NotNull(setting);
 		Assert.Equal("db1", setting.Name);
 		Assert.True(setting.IsDriver("mysql"));
-		Assert.Equal("db1.connectionString", setting.Value);
+		Assert.Equal("server=localhost", setting.Value);
 
 		Assert.True(setting.HasProperties);
-		Assert.Equal(1, setting.Properties.Count);
-
 		Assert.True(setting.Properties.TryGetValue("mode", out var value));
 		Assert.Equal("all", value);
 
-		settings = configuration.GetOption<ConnectionSettingsCollection>("/externals/redis/connectionSettings");
+		settings = configuration.GetOption<ConnectionSettingsCollection>("/externals/redis/ConnectionSettings");
 
 		Assert.NotNull(settings);
 		Assert.NotEmpty(settings);
@@ -70,7 +74,7 @@ public class ConfigurationTest
 
 		Assert.NotNull(setting);
 		Assert.Equal("redis", setting.Name);
-		Assert.Equal("redis.connectionString", setting.Value);
+		Assert.Equal("server=127.0.0.1", setting.Value);
 
 		Assert.False(setting.HasProperties);
 		Assert.Empty(setting.Properties);
@@ -179,6 +183,36 @@ public class ConfigurationTest
 		Assert.Equal("zongsoft-files", bucket.Name);
 		Assert.Equal("Shenzhen", bucket.Region);
 		Assert.Equal("test", bucket.Certificate);
+	}
+	#endregion
+
+	#region 连接驱动
+	internal sealed class MySqlConnectionSettingsDriver : ConnectionSettingsDriver<MySqlConnectionSettings>
+	{
+		public const string NAME = "MySql";
+
+		public static readonly MySqlConnectionSettingsDriver Instance = new();
+
+		private MySqlConnectionSettingsDriver() : base(NAME)
+		{
+			this.Mapper = new MySqlMapper(this);
+			this.Populator = new MySqlPopulator(this);
+		}
+
+		private sealed class MySqlMapper(MySqlConnectionSettingsDriver driver) : MapperBase(driver) { }
+		private sealed class MySqlPopulator(MySqlConnectionSettingsDriver driver) : PopulatorBase(driver) { }
+	}
+
+	internal sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnectionSettingsDriver>
+	{
+		public MySqlConnectionSettings(MySqlConnectionSettingsDriver driver, string settings) : base(driver, settings) { }
+		public MySqlConnectionSettings(MySqlConnectionSettingsDriver driver, string name, string settings) : base(driver, name, settings) { }
+
+		public ushort Port { get; set; }
+		public string Server { get; set; }
+		public string Database { get; set; }
+		public string UserName { get; set; }
+		public string Password { get; set; }
 	}
 	#endregion
 }

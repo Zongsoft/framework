@@ -66,6 +66,16 @@ public static class ConfigurationUtility
 		return null;
 	}
 
+	internal static IConfigurationResolver GetResolver(Type type)
+	{
+		var attribute = type.GetConfigurationAttribute();
+
+		if(attribute != null && attribute.ResolverType != null)
+			return Activator.CreateInstance(attribute.ResolverType) as IConfigurationResolver ?? ConfigurationResolver.Default;
+
+		return ConfigurationResolver.Default;
+	}
+
 	internal static TypeConverter GetConverter(MemberInfo member)
 	{
 		/*

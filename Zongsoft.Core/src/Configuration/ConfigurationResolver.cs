@@ -116,7 +116,7 @@ public class ConfigurationResolver : IConfigurationResolver
 				var target = property.GetValue(instance);
 
 				if(target == null)
-					target = this.Resolve(property.PropertyType, configuration, options);
+					target = ConfigurationUtility.GetResolver(property.PropertyType).Resolve(property.PropertyType, configuration, options);
 				else
 					this.Resolve(target, configuration, options);
 
@@ -145,7 +145,7 @@ public class ConfigurationResolver : IConfigurationResolver
 			var valueType = dictionaryType.GenericTypeArguments[1];
 			var setter = dictionaryType.GetTypeInfo().GetDeclaredProperty("Item");
 
-			Reflection.Reflector.SetValue(setter, ref instance, this.Resolve(valueType, configuration, options), new object[] { key });
+			Reflection.Reflector.SetValue(setter, ref instance, ConfigurationUtility.GetResolver(valueType).Resolve(valueType, configuration, options), [key]);
 
 			return true;
 		}
@@ -157,7 +157,7 @@ public class ConfigurationResolver : IConfigurationResolver
 			var valueType = collectionType.GenericTypeArguments[0];
 			var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
 
-			add.Invoke(instance, [this.Resolve(valueType, configuration, options)]);
+			add.Invoke(instance, [ConfigurationUtility.GetResolver(valueType).Resolve(valueType, configuration, options)]);
 
 			return true;
 		}
@@ -329,7 +329,7 @@ public class ConfigurationResolver : IConfigurationResolver
 			if(configuration.Value == null && this.ResolveDefaultProperty(target, FindDefaultProperty(properties.Values), properties, configuration, options))
 				return;
 
-			if(options!.UnrecognizedError)
+			if(options != null && options.UnrecognizedError)
 				throw new ConfigurationException($"The specified '{configuration.Path}' configuration section cannot be bound to a member of the '{target.GetType()}' type.");
 
 			return;
@@ -354,7 +354,7 @@ public class ConfigurationResolver : IConfigurationResolver
 		var recognizer = recognizers.GetRecognize(target.GetType()) ??
 			throw new ConfigurationException($"Unable to get a recognizer of type '{target.GetType().FullName}'.");
 
-		if(!recognizer.Recognize(target, configuration, options) && options!.UnrecognizedError)
+		if(!recognizer.Recognize(target, configuration, options) && (options != null && options.UnrecognizedError))
 			throw new ConfigurationException($"The '{configuration.Path}' configuration section is not recognized.");
 	}
 	#endregion
