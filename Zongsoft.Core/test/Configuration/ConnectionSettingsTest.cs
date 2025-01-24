@@ -78,7 +78,7 @@ public class ConnectionSettingsTest
 		var descriptors = MyDriver.Descriptors;
 		Assert.NotNull(descriptors);
 		Assert.NotEmpty(descriptors);
-		Assert.Equal(6, descriptors.Count);
+		Assert.Equal(11, descriptors.Count);
 
 		ConnectionSettingDescriptor descriptor = null;
 		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.Port), out descriptor));
@@ -92,6 +92,46 @@ public class ConnectionSettingsTest
 		Assert.True(descriptors.TryGetValue("DateTime", out descriptor));
 		Assert.NotNull(descriptor);
 		Assert.Same(typeof(DateTime), descriptor.Type);
+
+		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.Text), out descriptor));
+		Assert.NotNull(descriptor);
+		Assert.Same(typeof(string), descriptor.Type);
+		Assert.True(descriptor.Required);
+		Assert.Equal("MyFormat", descriptor.Format);
+
+		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.AuthenticationMode), out descriptor));
+		Assert.NotNull(descriptor);
+		Assert.Same(typeof(AuthenticationMode), descriptor.Type);
+		Assert.False(descriptor.Required);
+		Assert.Equal(AuthenticationMode.None, descriptor.DefaultValue);
+		Assert.Empty(descriptor.Dependencies);
+		Assert.NotEmpty(descriptor.Options);
+		Assert.Equal(3, descriptor.Options.Count);
+		Assert.Equal(nameof(AuthenticationMode.None), descriptor.Options[0].Name);
+		Assert.Equal(nameof(AuthenticationMode.User), descriptor.Options[1].Name);
+		Assert.Equal(nameof(AuthenticationMode.Certificate), descriptor.Options[2].Name);
+
+		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.UserName), out descriptor));
+		Assert.NotNull(descriptor);
+		Assert.Same(typeof(string), descriptor.Type);
+		Assert.False(descriptor.Required);
+		Assert.Null(descriptor.DefaultValue);
+		Assert.Empty(descriptor.Options);
+		Assert.NotEmpty(descriptor.Dependencies);
+		Assert.Single(descriptor.Dependencies);
+		Assert.Equal(nameof(MyConnectionSettings.AuthenticationMode), descriptor.Dependencies[0].Name);
+		Assert.Equal(nameof(AuthenticationMode.User), descriptor.Dependencies[0].Value);
+
+		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.CertificateFile), out descriptor));
+		Assert.NotNull(descriptor);
+		Assert.Same(typeof(string), descriptor.Type);
+		Assert.False(descriptor.Required);
+		Assert.Null(descriptor.DefaultValue);
+		Assert.Empty(descriptor.Options);
+		Assert.NotEmpty(descriptor.Dependencies);
+		Assert.Single(descriptor.Dependencies);
+		Assert.Equal(nameof(MyConnectionSettings.AuthenticationMode), descriptor.Dependencies[0].Name);
+		Assert.Equal(nameof(AuthenticationMode.Certificate), descriptor.Dependencies[0].Value);
 	}
 
 	[Fact]
@@ -189,14 +229,33 @@ public class ConnectionSettingsTest
 		public MyConnectionSettings(MyDriver driver, string settings) : base(driver, settings) { }
 		public MyConnectionSettings(MyDriver driver, string name, string settings) : base(driver, name, settings) { }
 
+		public AuthenticationMode AuthenticationMode { get; set; }
+
+		[ConnectionSetting($"{nameof(AuthenticationMode)}:{nameof(AuthenticationMode.User)}")]
+		public string UserName { get; set; }
+		[ConnectionSetting($"{nameof(AuthenticationMode)}:{nameof(AuthenticationMode.User)}")]
+		public string Password { get; set; }
+		[ConnectionSetting($"{nameof(AuthenticationMode)}={nameof(AuthenticationMode.Certificate)}")]
+		public string CertificateFile { get; set; }
+		[ConnectionSetting($"{nameof(AuthenticationMode)}={nameof(AuthenticationMode.Certificate)}")]
+		public string CertificateSecret { get; set; }
+
 		[DefaultValue(7969)]
 		public ushort Port { get; set; }
 		public int Integer { get; set; }
 		public double Double { get; set; }
 		public bool Boolean { get; set; }
+		[ConnectionSetting(true, Format = "MyFormat")]
 		public string Text { get; set; }
 		[Alias("DateTime")]
 		public DateTime Birthday { get; set; }
 		public short Age { get; internal set; }
+	}
+
+	public enum AuthenticationMode
+	{
+		None,
+		User,
+		Certificate,
 	}
 }

@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Globalization;
+using System.ComponentModel;
 using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
@@ -191,8 +193,10 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 	#endregion
 
 	#region 嵌套子类
+	[TypeConverter(typeof(OptionConverter))]
 	public sealed class Option
 	{
+		#region 构造函数
 		public Option(Common.EnumEntry entry)
 		{
 			this.Name = entry.Name;
@@ -203,18 +207,55 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 
 		public Option(string name, object value, string label = null, string description = null)
 		{
-			this.Name = name;
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Name = name.Trim();
 			this.Value = value;
 			this.Label = label;
 			this.Description = description;
 		}
+		#endregion
 
+		#region 公共属性
 		public string Name { get; }
 		public object Value { get; set; }
 		public string Label { get; set; }
 		public string Description { get; set; }
+		#endregion
 
+		#region 公共方法
+		/// <summary>解析选项。</summary>
+		/// <param name="text">指定的待解析文本，文本格式为：<c>name:value|label|description</c>，其中<c>value</c>，及其后面的<c>label</c>、<c>description</c>均可选。</param>
+		/// <param name="result">输出参数，表示解析成功的结果。</param>
+		/// <returns>如果解析成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		public static bool TryParse(string text, out Option result)
+		{
+			if(string.IsNullOrEmpty(text))
+			{
+				result = null;
+				return false;
+			}
+
+			var parts = text.Split('|', StringSplitOptions.TrimEntries);
+			var index = parts[0].IndexOfAny([':', '=']);
+
+			result = index > 0 && index < parts[0].Length ?
+				new Option(parts[0][..index], parts[0][(index + 1)..]) :
+				new Option(parts[0], null);
+
+			if(parts.Length > 1)
+				result.Label = parts[1];
+			if(parts.Length > 2)
+				result.Description = parts[2];
+
+			return result != null && !string.IsNullOrEmpty(result.Name);
+		}
+		#endregion
+
+		#region 重写方法
 		public override string ToString() => this.Value == null ? this.Name : $"{this.Name}={this.Value}";
+		#endregion
 	}
 
 	public sealed class OptionCollection() : System.Collections.ObjectModel.KeyedCollection<string, Option>(StringComparer.OrdinalIgnoreCase)
@@ -222,21 +263,74 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 		protected override string GetKeyForItem(Option option) => option.Name;
 	}
 
+	[TypeConverter(typeof(DependencyConverter))]
 	public sealed class Dependency
 	{
+		#region 构造函数
 		public Dependency(string name, object value)
 		{
-			this.Name = name;
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Name = name.Trim();
 			this.Value = value;
 		}
+		#endregion
 
+		#region 公共属性
 		public string Name { get; }
 		public object Value { get; }
+		#endregion
+
+		#region 公共方法
+		/// <summary>解析依赖项。</summary>
+		/// <param name="text">指定的待解析文本，文本格式为：<c>name:value</c>，其中<c>value</c>可选。</param>
+		/// <param name="result">输出参数，表示解析成功的结果。</param>
+		/// <returns>如果解析成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+		public static bool TryParse(string text, out Dependency result)
+		{
+			if(string.IsNullOrEmpty(text))
+			{
+				result = null;
+				return false;
+			}
+
+			var index = text.IndexOfAny([':', '=']);
+
+			result = index > 0 && index < text.Length ?
+				new Dependency(text[..index], text[(index + 1)..]) :
+				new Dependency(text, null);
+
+			return result != null && !string.IsNullOrEmpty(result.Name);
+		}
+		#endregion
+
+		#region 重写方法
+		public override string ToString() => $"{this.Name}={this.Value}";
+		#endregion
 	}
 
 	public sealed class DependencyCollection() : System.Collections.ObjectModel.KeyedCollection<string, Dependency>(StringComparer.OrdinalIgnoreCase)
 	{
 		protected override string GetKeyForItem(Dependency dependency) => dependency.Name;
+	}
+
+	private sealed class OptionConverter : TypeConverter
+	{
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+		{
+			return value is string text && Option.TryParse(text, out var result) ? result : null;
+		}
+	}
+
+	private sealed class DependencyConverter : TypeConverter
+	{
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+		{
+			return value is string text && Dependency.TryParse(text, out var result) ? result : null;
+		}
 	}
 	#endregion
 }

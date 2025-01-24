@@ -145,15 +145,40 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 		if(!property.CanRead || !property.CanWrite || !property.SetMethod.IsPublic)
 			return null;
 
+		//忽略内置属性
 		if(property.DeclaringType == typeof(Setting))
 			return null;
 
 		var alias = property.GetCustomAttribute<AliasAttribute>();
-		var descriptor = new ConnectionSettingDescriptor(property.Name, alias?.Alias, property.PropertyType);
+		var descriptor = new ConnectionSettingDescriptor(property.Name, alias?.Alias, property.PropertyType)
+		{
+			Label = GetDisplayName(property),
+			Description = GetDescription(property),
+			DefaultValue = GetDefaultValue(property)
+		};
 
-		descriptor.Label = GetDisplayName(property);
-		descriptor.Description = GetDescription(property);
-		descriptor.DefaultValue = GetDefaultValue(property);
+		var attribute = property.GetCustomAttribute<ConnectionSettingAttribute>();
+		if(attribute != null)
+		{
+			descriptor.Format = attribute.Format;
+			descriptor.Required = attribute.Required;
+
+			if(attribute.GetOptions(out var options))
+			{
+				descriptor.Options.Clear();
+
+				for(int i = 0; i < options.Length; i++)
+					descriptor.Options.Add(options[i]);
+			}
+
+			if(attribute.GetDependencies(out var dependencies))
+			{
+				descriptor.Dependencies.Clear();
+
+				for(int i = 0; i < attribute.Dependencies.Length; i++)
+					descriptor.Dependencies.Add(dependencies[i]);
+			}
+		}
 
 		this.Add(descriptor);
 		return descriptor;
