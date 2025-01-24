@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 using Xunit;
 
-using Zongsoft.ComponentModel;
+using Zongsoft.Components;
 
 namespace Zongsoft.Configuration;
 
@@ -21,7 +21,7 @@ public class ConnectionSettingsTest
 		collection.Add("P1", typeof(int), 100);
 		Assert.Single(collection);
 
-		collection.Add("P2", "A2", typeof(string));
+		collection.Add("P2", ["A2"], typeof(string));
 		Assert.Equal(2, collection.Count);
 
 		Assert.True(collection.Contains("P1"));
@@ -32,21 +32,21 @@ public class ConnectionSettingsTest
 		Assert.True(collection.TryGetValue("P1", out var descriptor));
 		Assert.NotNull(descriptor);
 		Assert.Equal("P1", descriptor.Name);
-		Assert.Null(descriptor.Alias);
+		Assert.Null(descriptor.Aliases);
 		Assert.Equal(typeof(int), descriptor.Type);
 		Assert.Equal(100, descriptor.DefaultValue);
 
 		Assert.True(collection.TryGetValue("P2", out descriptor));
 		Assert.NotNull(descriptor);
 		Assert.Equal("P2", descriptor.Name);
-		Assert.Equal("A2", descriptor.Alias);
+		Assert.True(descriptor.HasAlias("A2"));
 		Assert.Equal(typeof(string), descriptor.Type);
 		Assert.Null(descriptor.DefaultValue);
 
 		Assert.True(collection.TryGetValue("A2", out descriptor));
 		Assert.NotNull(descriptor);
 		Assert.Equal("P2", descriptor.Name);
-		Assert.Equal("A2", descriptor.Alias);
+		Assert.True(descriptor.HasAlias("A2"));
 		Assert.Equal(typeof(string), descriptor.Type);
 		Assert.Null(descriptor.DefaultValue);
 
@@ -61,12 +61,12 @@ public class ConnectionSettingsTest
 		Assert.True(collection.TryGetValue("P2", out descriptor));
 		Assert.NotNull(descriptor);
 		Assert.Equal("P2", descriptor.Name);
-		Assert.Equal("A2", descriptor.Alias);
+		Assert.True(descriptor.HasAlias("A2"));
 
 		Assert.True(collection.TryGetValue("A2", out descriptor));
 		Assert.NotNull(descriptor);
 		Assert.Equal("P2", descriptor.Name);
-		Assert.Equal("A2", descriptor.Alias);
+		Assert.True(descriptor.HasAlias("A2"));
 
 		collection.Remove("A2");
 		Assert.Empty(collection);
@@ -78,7 +78,7 @@ public class ConnectionSettingsTest
 		var descriptors = MyDriver.Descriptors;
 		Assert.NotNull(descriptors);
 		Assert.NotEmpty(descriptors);
-		Assert.Equal(11, descriptors.Count);
+		Assert.Equal(12, descriptors.Count);
 
 		ConnectionSettingDescriptor descriptor = null;
 		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.Port), out descriptor));
@@ -168,7 +168,7 @@ public class ConnectionSettingsTest
 	}
 
 	[Fact]
-	public void TestGetOptions()
+	public void TestGetSettings()
 	{
 		var settings = MyDriver.Instance.GetSettings(ConnectionString);
 		Assert.NotNull(settings);
@@ -195,14 +195,49 @@ public class ConnectionSettingsTest
 		Assert.Equal(DateTime.Today.Year - DATE.Year, options.Age);
 	}
 
+	[Fact]
+	public void TestGetOptions()
+	{
+		var TIMEOUT = TimeSpan.FromMinutes(1);
+
+		var settings = MyDriver.Instance.GetSettings(ConnectionString);
+		Assert.NotNull(settings);
+		Assert.Equal(DATE, settings.Birthday);
+		Assert.Equal(TIMEOUT, settings.Timeout);
+
+		var options = settings.GetOptions();
+		Assert.NotNull(options);
+		Assert.Equal(DATE, options.DateTime);
+		Assert.Equal(TIMEOUT, options.ConnectionTimeout);
+		Assert.Equal(TIMEOUT, options.ExecutionTimeout);
+
+		var date = DateTime.Now;
+		var timeout = TimeSpan.Parse("1:2:3");
+
+		settings.Birthday = date;
+		settings.Timeout = timeout;
+		Assert.Equal(date, settings.Birthday);
+		Assert.Equal(timeout, settings.Timeout);
+
+		options = settings.GetOptions();
+		Assert.NotNull(options);
+		Assert.Equal(date, options.DateTime);
+		Assert.Equal(timeout, options.ConnectionTimeout);
+		Assert.Equal(timeout, options.ExecutionTimeout);
+	}
+
 	public sealed class MyDriver : ConnectionSettingsDriver<MyConnectionSettings>
 	{
+		#region 常量定义
+		internal const string NAME = "MyDriver";
+		#endregion
+
 		#region 单例字段
 		public static readonly MyDriver Instance = new();
 		#endregion
 
 		#region 私有构造
-		private MyDriver() : base("MyDriver")
+		private MyDriver() : base(NAME)
 		{
 			this.Mapper = new MyMapper(this);
 			this.Populator = new MyPopulator(this);
@@ -224,12 +259,16 @@ public class ConnectionSettingsTest
 		#endregion
 	}
 
-	public class MyConnectionSettings : ConnectionSettingsBase<MyDriver>
+	public class MyConnectionSettings : ConnectionSettingsBase<MyDriver, MyConnectionOptions>
 	{
 		public MyConnectionSettings(MyDriver driver, string settings) : base(driver, settings) { }
 		public MyConnectionSettings(MyDriver driver, string name, string settings) : base(driver, name, settings) { }
 
-		public AuthenticationMode AuthenticationMode { get; set; }
+		public AuthenticationMode AuthenticationMode
+		{
+			get => this.GetValue<AuthenticationMode>();
+			set => this.SetValue(nameof(AuthenticationMode), value);
+		}
 
 		[ConnectionSetting($"{nameof(AuthenticationMode)}:{nameof(AuthenticationMode.User)}")]
 		public string UserName { get; set; }
@@ -239,6 +278,15 @@ public class ConnectionSettingsTest
 		public string CertificateFile { get; set; }
 		[ConnectionSetting($"{nameof(AuthenticationMode)}={nameof(AuthenticationMode.Certificate)}")]
 		public string CertificateSecret { get; set; }
+
+		[DefaultValue("1m")]
+		[Alias(nameof(MyConnectionOptions.ConnectionTimeout))]
+		[Alias(nameof(MyConnectionOptions.ExecutionTimeout))]
+		public TimeSpan Timeout
+		{
+			get => this.GetValue<TimeSpan>();
+			set => this.SetValue(value);
+		}
 
 		[DefaultValue(7969)]
 		public ushort Port { get; set; }
@@ -250,6 +298,13 @@ public class ConnectionSettingsTest
 		[Alias("DateTime")]
 		public DateTime Birthday { get; set; }
 		public short Age { get; internal set; }
+	}
+
+	public class MyConnectionOptions
+	{
+		public DateTime DateTime { get; set; }
+		public TimeSpan ConnectionTimeout { get; set; }
+		public TimeSpan ExecutionTimeout { get; set; }
 	}
 
 	public enum AuthenticationMode

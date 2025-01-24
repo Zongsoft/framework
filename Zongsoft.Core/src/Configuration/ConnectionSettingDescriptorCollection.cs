@@ -28,12 +28,13 @@
  */
 
 using System;
+using System.Linq;
 using System.Reflection;
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-using Zongsoft.ComponentModel;
+using Zongsoft.Common;
 
 namespace Zongsoft.Configuration;
 
@@ -49,8 +50,11 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 
 		base.InsertItem(index, descriptor);
 
-		if(!string.IsNullOrEmpty(descriptor.Alias))
-			this.Dictionary.TryAdd(descriptor.Alias, descriptor);
+		if(!descriptor.Aliases.IsEmpty())
+		{
+			for(int i = 0; i < descriptor.Aliases.Length; i++)
+				this.Dictionary.TryAdd(descriptor.Aliases[i], descriptor);
+		}
 	}
 
 	protected override void SetItem(int index, ConnectionSettingDescriptor descriptor)
@@ -59,11 +63,17 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 			throw new ArgumentNullException(nameof(descriptor));
 
 		var older = this.Items[index];
-		if(!string.IsNullOrEmpty(older.Alias))
-			this.Dictionary.Remove(older.Alias);
+		if(!older.Aliases.IsEmpty())
+		{
+			for(int i = 0; i < older.Aliases.Length; i++)
+				this.Dictionary.Remove(older.Aliases[i]);
+		}
 
-		if(!string.IsNullOrEmpty(descriptor.Alias))
-			this.Dictionary.TryAdd(descriptor.Alias, descriptor);
+		if(!descriptor.Aliases.IsEmpty())
+		{
+			for(int i = 0; i < descriptor.Aliases.Length; i++)
+				this.Dictionary.TryAdd(descriptor.Aliases[i], descriptor);
+		}
 
 		base.SetItem(index, descriptor);
 	}
@@ -71,8 +81,11 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 	protected override void RemoveItem(int index)
 	{
 		var older = this.Items[index];
-		if(!string.IsNullOrEmpty(older.Alias))
-			this.Dictionary.Remove(older.Alias);
+		if(!older.Aliases.IsEmpty())
+		{
+			for(int i = 0; i < older.Aliases.Length; i++)
+				this.Dictionary.Remove(older.Aliases[i]);
+		}
 
 		base.RemoveItem(index);
 	}
@@ -107,30 +120,30 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 		return descriptor;
 	}
 
-	public ConnectionSettingDescriptor Add(string name, string alias, string label = null, string description = null) => this.Add(name, alias, false, null, null, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, alias, false, null, dependencies, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, object defaultValue, string label = null, string description = null) => this.Add(name, alias, false, defaultValue, null, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, alias, false, defaultValue, dependencies, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, bool required, string label = null, string description = null) => this.Add(name, alias, required, null, null, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, bool required, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, alias, required, null, dependencies, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, bool required, object defaultValue, string label = null, string description = null) => this.Add(name, alias, required, defaultValue, null, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, bool required, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null)
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, string label = null, string description = null) => this.Add(name, aliases, false, null, null, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, aliases, false, null, dependencies, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, object defaultValue, string label = null, string description = null) => this.Add(name, aliases, false, defaultValue, null, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, aliases, false, defaultValue, dependencies, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, bool required, string label = null, string description = null) => this.Add(name, aliases, required, null, null, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, bool required, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, aliases, required, null, dependencies, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, bool required, object defaultValue, string label = null, string description = null) => this.Add(name, aliases, required, defaultValue, null, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, bool required, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null)
 	{
-		var descriptor = new ConnectionSettingDescriptor(name, alias, null, required, defaultValue, label, description, dependencies);
+		var descriptor = new ConnectionSettingDescriptor(name, aliases, null, required, defaultValue, label, description, dependencies);
 		this.Add(descriptor);
 		return descriptor;
 	}
 
-	public ConnectionSettingDescriptor Add(string name, string alias, Type type, string label = null, string description = null) => this.Add(name, alias, type, false, null, null, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, Type type, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, alias, type, false, null, dependencies, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, Type type, object defaultValue, string label = null, string description = null) => this.Add(name, alias, type, false, defaultValue, null, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, Type type, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, alias, type, false, defaultValue, dependencies, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, Type type, bool required, string label = null, string description = null) => this.Add(name, alias, type, required, null, null, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, Type type, bool required, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, alias, type, required, null, dependencies, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, Type type, bool required, object defaultValue, string label = null, string description = null) => this.Add(name, alias, type, required, defaultValue, null, label, description);
-	public ConnectionSettingDescriptor Add(string name, string alias, Type type, bool required, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null)
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, string label = null, string description = null) => this.Add(name, aliases, type, false, null, null, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, aliases, type, false, null, dependencies, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, object defaultValue, string label = null, string description = null) => this.Add(name, aliases, type, false, defaultValue, null, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, aliases, type, false, defaultValue, dependencies, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, bool required, string label = null, string description = null) => this.Add(name, aliases, type, required, null, null, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, bool required, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null) => this.Add(name, aliases, type, required, null, dependencies, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, bool required, object defaultValue, string label = null, string description = null) => this.Add(name, aliases, type, required, defaultValue, null, label, description);
+	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, bool required, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null)
 	{
-		var descriptor = new ConnectionSettingDescriptor(name, alias, type, required, defaultValue, label, description, dependencies);
+		var descriptor = new ConnectionSettingDescriptor(name, aliases, type, required, defaultValue, label, description, dependencies);
 		this.Add(descriptor);
 		return descriptor;
 	}
@@ -142,6 +155,7 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 		if(property == null)
 			throw new ArgumentNullException(nameof(property));
 
+		//忽略不可读或不可写的属性
 		if(!property.CanRead || !property.CanWrite || !property.SetMethod.IsPublic)
 			return null;
 
@@ -149,8 +163,12 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 		if(property.DeclaringType == typeof(Setting))
 			return null;
 
-		var alias = property.GetCustomAttribute<AliasAttribute>();
-		var descriptor = new ConnectionSettingDescriptor(property.Name, alias?.Alias, property.PropertyType)
+		var aliases = property
+			.GetCustomAttributes<Components.AliasAttribute>()
+			.Select(alias => alias.Alias)
+			.ToArray();
+
+		var descriptor = new ConnectionSettingDescriptor(property.Name, aliases, property.PropertyType)
 		{
 			Label = GetDisplayName(property),
 			Description = GetDescription(property),

@@ -30,8 +30,7 @@
 using System;
 using System.Reflection;
 using System.ComponentModel;
-
-using Zongsoft.ComponentModel;
+using Zongsoft.Components;
 
 namespace Zongsoft.Common
 {

@@ -29,30 +29,17 @@
 
 using System;
 
-namespace Zongsoft.ComponentModel
+namespace Zongsoft.Components
 {
-	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = true)]
 	public class AliasAttribute : Attribute
 	{
-		#region 成员变量
-		private string _alias;
-		#endregion
-
 		#region 构造函数
-		public AliasAttribute(string alias)
-		{
-			_alias = alias ?? string.Empty;
-		}
+		public AliasAttribute(string alias) => this.Alias = alias;
 		#endregion
 
 		#region 公共属性
-		public string Alias
-		{
-			get
-			{
-				return _alias;
-			}
-		}
+		public string Alias { get; }
 		#endregion
 	}
 }

@@ -206,7 +206,7 @@ namespace Zongsoft.Data
 
 					this.Properties.Add(property.Name, new CriteriaPropertyDescripor(property, attribute));
 
-					foreach(var alias in property.GetCustomAttributes<Zongsoft.ComponentModel.AliasAttribute>(true))
+					foreach(var alias in property.GetCustomAttributes<Components.AliasAttribute>(true))
 						this.Properties.Add(alias.Alias, new CriteriaPropertyDescripor(property, attribute));
 				}
 			}

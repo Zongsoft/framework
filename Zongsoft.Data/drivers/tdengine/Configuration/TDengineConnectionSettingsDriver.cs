@@ -28,15 +28,17 @@
  */
 
 using System;
+using System.ComponentModel;
 
 using TDengine.Data;
 using TDengine.Data.Client;
 
+using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Data.TDengine.Configuration;
 
-public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<TDengineConnectionStringBuilder, TDengineConnectionSettingDescriptorCollection>
+public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<TDengineConnectionSettings>
 {
 	#region 常量定义
 	internal const string NAME = "TDengine";
@@ -56,40 +58,61 @@ public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<
 
 	#region 嵌套子类
 	private sealed class TDengineMapper(TDengineConnectionSettingsDriver driver) : MapperBase(driver) { }
-	private sealed class TDenginePopulator(TDengineConnectionSettingsDriver driver) : PopulatorBase(driver)
-	{
-		protected override TDengineConnectionStringBuilder Create(IConnectionSettings settings) => new(settings.Value)
-		{
-			Host = settings.Server,
-			Database = settings.Database,
-		};
-	}
+	private sealed class TDenginePopulator(TDengineConnectionSettingsDriver driver) : PopulatorBase(driver) { }
 	#endregion
 }
 
-public sealed class TDengineConnectionSettingDescriptorCollection : ConnectionSettingDescriptorCollection
+public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengineConnectionSettingsDriver>
 {
-	public readonly static ConnectionSettingDescriptor<string> Server = new(nameof(Server), nameof(TDengineConnectionStringBuilder.Host), true);
-	public readonly static ConnectionSettingDescriptor<int> Port = new(nameof(Port), nameof(TDengineConnectionStringBuilder.Port), 6030);
-	public readonly static ConnectionSettingDescriptor<string> Database = new(nameof(Database), "DB", true);
-	public readonly static ConnectionSettingDescriptor<TDengineConnectionProtocol> Protocol = new(nameof(Protocol), nameof(TDengineConnectionStringBuilder.Protocol), TDengineConnectionProtocol.Native);
-	public readonly static ConnectionSettingDescriptor<string> Timezone = new(nameof(Timezone));
-	public readonly static ConnectionSettingDescriptor<string> Token = new(nameof(Token));
-	public readonly static ConnectionSettingDescriptor<bool> Reconnectable = new(nameof(Reconnectable), nameof(TDengineConnectionStringBuilder.AutoReconnect), false, true);
-	public readonly static ConnectionSettingDescriptor<bool> Compressible = new(nameof(Compressible), nameof(TDengineConnectionStringBuilder.EnableCompression), false, true);
+	#region 构造函数
+	public TDengineConnectionSettings(TDengineConnectionSettingsDriver driver, string settings) : base(driver, settings) { }
+	public TDengineConnectionSettings(TDengineConnectionSettingsDriver driver, string name, string settings) : base(driver, name, settings) { }
+	#endregion
 
-	public TDengineConnectionSettingDescriptorCollection()
+	#region 公共属性
+	public ushort Port { get; set; }
+
+	[Alias(nameof(TDengineConnectionStringBuilder.ConnTimeout))]
+	[Alias(nameof(TDengineConnectionStringBuilder.ReadTimeout))]
+	[Alias(nameof(TDengineConnectionStringBuilder.WriteTimeout))]
+	public TimeSpan Timeout { get; set; }
+	public string Timezone { get; set; }
+	[ConnectionSetting(true)]
+	public string Server { get; set; }
+	[Alias("DB")]
+	public string Database { get; set; }
+	public string UserName { get; set; }
+	public string Password { get; set; }
+	[DefaultValue(TDengineConnectionProtocol.Native)]
+	public TDengineConnectionProtocol Protocol { get; set; }
+
+	[Alias(nameof(TDengineConnectionStringBuilder.UseSSL))]
+	public bool Secured { get; set; }
+	[Alias(nameof(TDengineConnectionStringBuilder.AutoReconnect))]
+	public bool Reconnectable { get; set; }
+	[Alias(nameof(TDengineConnectionStringBuilder.EnableCompression))]
+	public bool Compressible { get; set; }
+	#endregion
+
+	#region 公共方法
+	public TDengineConnectionStringBuilder GetOptions()
 	{
-		this.Add(Server);
-		this.Add(Port);
-		this.Add(Token);
-		this.Add(Database);
-		this.Add(Protocol);
-		this.Add(Timezone);
-		this.Add(Compressible);
-		this.Add(Reconnectable);
-		this.Add(ConnectionSettingDescriptor.UserName);
-		this.Add(ConnectionSettingDescriptor.Password);
-		this.Add(ConnectionSettingDescriptor.Timeout);
+		var options = new TDengineConnectionStringBuilder(string.Empty)
+		{
+			Host = this.Server,
+			Database = this.Database,
+			Username = this.UserName,
+			Password = this.Password,
+			Protocol = this.Protocol.ToString(),
+		};
+
+		if(this.Port > 0)
+			options.Port = this.Port;
+
+		if(!string.IsNullOrEmpty(this.Timezone))
+			options.Timezone = TimeZoneInfo.FromSerializedString(this.Timezone);
+
+		return options;
 	}
+	#endregion
 }

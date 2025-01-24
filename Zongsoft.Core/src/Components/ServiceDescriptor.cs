@@ -132,7 +132,7 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 			_service = service ?? throw new ArgumentNullException(nameof(service));
 			this.Method = method ?? throw new ArgumentNullException(nameof(method));
 			this.Name = method.Name;
-			this.Alias = method.GetCustomAttribute<ComponentModel.AliasAttribute>()?.Alias;
+			this.Alias = method.GetCustomAttribute<AliasAttribute>()?.Alias;
 		}
 
 		internal Operation(ServiceDescriptor service, string name, string alias = null)

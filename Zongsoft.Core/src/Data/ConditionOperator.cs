@@ -35,31 +35,31 @@ namespace Zongsoft.Data
 	public enum ConditionOperator
 	{
 		/// <summary>等于</summary>
-		[ComponentModel.Alias("==")]
+		[Components.Alias("==")]
 		Equal,
 
 		/// <summary>不等于</summary>
-		[ComponentModel.Alias("!=")]
+		[Components.Alias("!=")]
 		NotEqual,
 
 		/// <summary>大于</summary>
-		[ComponentModel.Alias(">")]
+		[Components.Alias(">")]
 		GreaterThan,
 
 		/// <summary>大于或等于</summary>
-		[ComponentModel.Alias(">=")]
+		[Components.Alias(">=")]
 		GreaterThanEqual,
 
 		/// <summary>小于</summary>
-		[ComponentModel.Alias("<")]
+		[Components.Alias("<")]
 		LessThan,
 
 		/// <summary>小于或等于</summary>
-		[ComponentModel.Alias("<=")]
+		[Components.Alias("<=")]
 		LessThanEqual,
 
 		/// <summary>模糊匹配</summary>
-		[ComponentModel.Alias("*=")]
+		[Components.Alias("*=")]
 		Like,
 
 		/// <summary>介于</summary>

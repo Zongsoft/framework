@@ -83,11 +83,11 @@ namespace Zongsoft.Data.TDengine
 
 		public override DbConnection CreateConnection(string connectionString = null) => new TDengineConnection(connectionString ?? string.Empty)
 		{
-			ConnectionStringBuilder = Configuration.TDengineConnectionSettingsDriver.Instance.GetOptions(connectionString)
+			ConnectionStringBuilder = Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions()
 		};
 
 		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
-			Configuration.TDengineConnectionSettingsDriver.Instance.GetOptions(connectionString);
+			Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
 
 		public override IDataImporter CreateImporter() => new TDengineImporter();
 		#endregion

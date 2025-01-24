@@ -34,13 +34,13 @@ namespace Zongsoft.Data.Metadata
 {
 	public enum DataAssociationMultiplicity
 	{
-		[Zongsoft.ComponentModel.Alias("?")]
+		[Zongsoft.Components.Alias("?")]
 		ZeroOrOne,
 
-		[Zongsoft.ComponentModel.Alias("1")]
+		[Zongsoft.Components.Alias("1")]
 		One,
 
-		[Zongsoft.ComponentModel.Alias("*")]
+		[Zongsoft.Components.Alias("*")]
 		Many,
 	}
 }

@@ -58,7 +58,7 @@ namespace Zongsoft.Common
 		public readonly object Value;
 
 		/// <summary>获取枚举项的别名，如果未定义建议创建者设置为枚举项的名称。</summary>
-		/// <remarks>枚举项的别名由<seealso cref="Zongsoft.ComponentModel.AliasAttribute"/>自定义特性指定。</remarks>
+		/// <remarks>枚举项的别名由<seealso cref="Components.AliasAttribute"/>自定义特性指定。</remarks>
 		public readonly string Alias;
 
 		/// <summary>当前描述枚举项的描述文本，如果未定义建议创建者设置为枚举项的名称。</summary>

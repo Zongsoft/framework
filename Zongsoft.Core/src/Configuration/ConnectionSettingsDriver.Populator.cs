@@ -68,8 +68,11 @@ partial class ConnectionSettingsDriver<TSettings>
 					{
 						_members.TryAdd(descriptor.Name, members[i]);
 
-						if(!string.IsNullOrEmpty(descriptor.Alias))
-							_members.TryAdd(descriptor.Alias, members[i]);
+						if(descriptor.Aliases != null && descriptor.Aliases.Length > 0)
+						{
+							for(int j = 0; j < descriptor.Aliases.Length; j++)
+								_members.TryAdd(descriptor.Aliases[j], members[i]);
+						}
 					}
 				}
 			}
@@ -112,8 +115,14 @@ partial class ConnectionSettingsDriver<TSettings>
 			if(_members.TryGetValue(descriptor.Name, out var member))
 				return Common.Convert.TryConvertValue(value ?? descriptor.DefaultValue, descriptor.Type, out value) && Reflection.Reflector.TrySetValue(member, ref target, value);
 
-			if(!string.IsNullOrEmpty(descriptor.Alias) && _members.TryGetValue(descriptor.Alias, out member))
-				return Common.Convert.TryConvertValue(value ?? descriptor.DefaultValue, descriptor.Type, out value) && Reflection.Reflector.TrySetValue(member, ref target, value);
+			if(descriptor.Aliases != null && descriptor.Aliases.Length > 0)
+			{
+				for(int i = 0; i < descriptor.Aliases.Length; i++)
+				{
+					if(_members.TryGetValue(descriptor.Aliases[i], out member))
+						return Common.Convert.TryConvertValue(value ?? descriptor.DefaultValue, descriptor.Type, out value) && Reflection.Reflector.TrySetValue(member, ref target, value);
+				}
+			}
 
 			return false;
 		}

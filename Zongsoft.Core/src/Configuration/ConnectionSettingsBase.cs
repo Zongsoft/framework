@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Linq;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -80,8 +82,10 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	#endregion
 
 	#region 保护方法
+	protected bool SetValue<T>(T value, [System.Runtime.CompilerServices.CallerMemberName]string name = null) => _driver.SetValue(name, value, _entries);
 	protected bool SetValue<T>(string name, T value) => _driver.SetValue(name, value, _entries);
-	protected object GetValue(string name) => _driver.TryGetValue(name, _entries, out var value) ? value : default;
+	protected object GetValue([System.Runtime.CompilerServices.CallerMemberName]string name = null) => _driver.TryGetValue(name, _entries, out var value) ? value : default;
+	protected T GetValue<T>([System.Runtime.CompilerServices.CallerMemberName]string name = null) => this.GetValue<T>(name);
 	protected T GetValue<T>(string name, T defaultValue = default) => _driver.GetValue(name, _entries, defaultValue);
 	protected bool TryGetValue(string name, out object value) => _driver.TryGetValue(name, _entries, out value);
 	#endregion
@@ -190,8 +194,11 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 				if(_dictionary.TryGetValue(key.Name, out var value))
 					return value;
 
-				if(key.Alias != null)
-					_dictionary[key.Alias] = value;
+				if(key.Aliases != null && key.Aliases.Length > 0)
+				{
+					for(int i = 0; i < key.Aliases.Length; i++)
+						_dictionary[key.Aliases[i]] = value;
+				}
 
 				throw new KeyNotFoundException();
 			}
@@ -205,8 +212,11 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 				else
 					_dictionary[key.Name] = value;
 
-				if(!string.IsNullOrEmpty(key.Alias))
-					_dictionary.Remove(key.Alias);
+				if(key.Aliases != null && key.Aliases.Length > 0)
+				{
+					for(int i = 0; i < key.Aliases.Length; i++)
+						_dictionary.Remove(key.Aliases[i]);
+				}
 			}
 		}
 
@@ -262,7 +272,25 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 			_ => false,
 		};
 		public bool Contains(string key) => key != null && _dictionary.ContainsKey(key);
-		public bool Contains(ConnectionSettingDescriptor key) => key != null && (_dictionary.ContainsKey(key.Name) || (key.Alias != null && _dictionary.ContainsKey(key.Alias)));
+		public bool Contains(ConnectionSettingDescriptor key)
+		{
+			if(key == null)
+				return false;
+
+			if(_dictionary.ContainsKey(key.Name))
+				return true;
+
+			if(key.Aliases != null && key.Aliases.Length > 0)
+			{
+				for(int i = 0; i < key.Aliases.Length; i++)
+				{
+					if(key.Aliases[i] != null && _dictionary.ContainsKey(key.Aliases[i]))
+						return true;
+				}
+			}
+
+			return false;
+		}
 
 		void ICollection<KeyValuePair<object, string>>.CopyTo(KeyValuePair<object, string>[] array, int arrayIndex) => ((ICollection<KeyValuePair<object, string>>)_dictionary).CopyTo(array, arrayIndex);
 		public bool Remove(object key) => key switch
@@ -278,7 +306,13 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 				return false;
 
 			var result = _dictionary.Remove(key.Name);
-			result |= key.Alias != null && _dictionary.Remove(key.Alias);
+
+			if(key.Aliases != null && key.Aliases.Length > 0)
+			{
+				for(int i = 0; i < key.Aliases.Length; i++)
+					result |= key.Aliases[i] != null && _dictionary.Remove(key.Aliases[i]);
+			}
+
 			return result;
 		}
 
@@ -300,11 +334,23 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 		public bool TryGetValue(string key, out string value) => _dictionary.TryGetValue(key, out value);
 		public bool TryGetValue(ConnectionSettingDescriptor key, out string value)
 		{
+			if(key == null)
+			{
+				value = null;
+				return false;
+			}
+
 			if(_dictionary.TryGetValue(key.Name, out value))
 				return true;
 
-			if(key.Alias != null && _dictionary.TryGetValue(key.Alias, out value))
-				return true;
+			if(key.Aliases != null && key.Aliases.Length > 0)
+			{
+				for(int i = 0; i < key.Aliases.Length; i++)
+				{
+					if(_dictionary.TryGetValue(key.Aliases[i], out value))
+						return true;
+				}
+			}
 
 			value = null;
 			return false;
@@ -318,5 +364,39 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 				yield return new KeyValuePair<object, string>(entry.Key, entry.Value);
 		}
 	}
+	#endregion
+}
+
+public abstract class ConnectionSettingsBase<TDriver, TOptions> : ConnectionSettingsBase<TDriver> where TDriver : IConnectionSettingsDriver
+{
+	#region 静态成员
+	private static readonly PropertyInfo[] _properties = typeof(TOptions)
+		.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+		.Where(property => property.CanWrite && property.SetMethod.IsPublic)
+		.ToArray();
+	#endregion
+
+	#region 构造函数
+	protected ConnectionSettingsBase(TDriver driver, string settings) : base(driver, settings) { }
+	protected ConnectionSettingsBase(TDriver driver, string name, string settings) : base(driver, name, settings) { }
+	#endregion
+
+	#region 公共方法
+	public virtual TOptions GetOptions()
+	{
+		var options = this.CreateOptions();
+
+		for(int i = 0; i < _properties.Length; i++)
+		{
+			if(this.TryGetValue(_properties[i].Name, out var value) && value is not null)
+				Reflection.Reflector.TrySetValue(_properties[i], ref options, value);
+		}
+
+		return options;
+	}
+	#endregion
+
+	#region 保护方法
+	protected virtual TOptions CreateOptions() => Activator.CreateInstance<TOptions>();
 	#endregion
 }
