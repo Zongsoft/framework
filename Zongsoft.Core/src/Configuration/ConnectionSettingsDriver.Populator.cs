@@ -96,8 +96,8 @@ partial class ConnectionSettingsDriver<TSettings>
 			//设置配置对象的默认值
 			foreach(var descriptor in this.Descriptors)
 			{
-				if(descriptor.DefaultValue is not null)
-					this.OnPopulate(ref settings, descriptor, descriptor.DefaultValue);
+				if(descriptor.HasDefaultValue(out var defaultValue))
+					this.OnPopulate(ref settings, descriptor, defaultValue);
 			}
 
 			//设置连接设置项的值

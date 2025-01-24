@@ -215,12 +215,12 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 
 		static object GetDefaultValue(PropertyInfo property)
 		{
-			var attribute = property.GetCustomAttribute<DefaultValueAttribute>();
+			var attribute = property.GetCustomAttribute<DefaultValueAttribute>(true);
 
 			if(attribute == null)
-				return Common.TypeExtension.GetDefaultValue(property.PropertyType);
-			else
-				return Common.Convert.ConvertValue(attribute.Value, property.PropertyType, () => Common.TypeExtension.GetDefaultValue(property.PropertyType));
+				return null;
+
+			return Common.Convert.ConvertValue(attribute.Value, property.PropertyType, () => Common.TypeExtension.GetDefaultValue(property.PropertyType));
 		}
 	}
 	#endregion

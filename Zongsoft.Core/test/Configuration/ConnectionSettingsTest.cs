@@ -9,7 +9,7 @@ namespace Zongsoft.Configuration;
 
 public class ConnectionSettingsTest
 {
-	private static readonly DateTime DATE = new DateTime(1979, 5, 15);
+	private static readonly DateTime DATE = new(1979, 5, 15);
 	private static readonly string ConnectionString = $" ;;  ; Integer=100 ; enabled ; double= 1.23; ;  boolean= true ; text= MyString; dateTime={DATE:yyyy-M-d}; ;";
 
 	[Fact]
@@ -135,7 +135,7 @@ public class ConnectionSettingsTest
 	}
 
 	[Fact]
-	public void TestConnectionSettings()
+	public void TestConnectionSettingsGetValueAndSetValue()
 	{
 		var settings = new ConnectionSettings("MyConnectionSettings", ConnectionString);
 		Assert.Equal(5, settings.Entries.Count);
@@ -168,7 +168,7 @@ public class ConnectionSettingsTest
 	}
 
 	[Fact]
-	public void TestGetSettings()
+	public void TestConnectionSettings()
 	{
 		var settings = MyDriver.Instance.GetSettings(ConnectionString);
 		Assert.NotNull(settings);
@@ -181,22 +181,26 @@ public class ConnectionSettingsTest
 		Assert.Equal(1.23, settings.Double);
 		Assert.Equal("MyString", settings.Text, true);
 		Assert.Equal(DATE, settings.Birthday);
+		Assert.Equal(DateTime.Today.Year - DATE.Year, settings.Age);
 
 		settings.Port = 996;
 		Assert.Equal(996, settings.Port);
-
-		var options = MyDriver.Instance.GetSettings(ConnectionString);
-		Assert.NotNull(options);
-		Assert.True(options.Boolean);
-		Assert.Equal(100, options.Integer);
-		Assert.Equal(1.23, options.Double);
-		Assert.Equal("MyString", options.Text, true);
-		Assert.Equal(DATE, options.Birthday);
-		Assert.Equal(DateTime.Today.Year - DATE.Year, options.Age);
+		settings.Timeout = TimeSpan.FromSeconds(99);
+		Assert.Equal(TimeSpan.FromSeconds(99), settings.Timeout);
+		settings.Text = null;
+		Assert.Null(settings.Text);
+		settings.Text = string.Empty;
+		Assert.Null(settings.Text);
+		settings.Text = nameof(settings.Text);
+		Assert.Equal(nameof(settings.Text), settings.Text);
+		settings.UserName = "admin";
+		Assert.Equal("admin", settings.UserName);
+		settings.Password = "password";
+		Assert.Equal("password", settings.Password);
 	}
 
 	[Fact]
-	public void TestGetOptions()
+	public void TestConnectionSettingsGetOptions()
 	{
 		var TIMEOUT = TimeSpan.FromMinutes(1);
 
@@ -211,7 +215,7 @@ public class ConnectionSettingsTest
 		Assert.Equal(TIMEOUT, options.ConnectionTimeout);
 		Assert.Equal(TIMEOUT, options.ExecutionTimeout);
 
-		var date = DateTime.Now;
+		var date = DateTime.Today;
 		var timeout = TimeSpan.Parse("1:2:3");
 
 		settings.Birthday = date;
@@ -246,16 +250,7 @@ public class ConnectionSettingsTest
 
 		#region 嵌套子类
 		private sealed class MyMapper(MyDriver driver) : MapperBase(driver) { }
-		private sealed class MyPopulator(MyDriver driver) : PopulatorBase(driver)
-		{
-			protected override bool OnPopulate(ref MyConnectionSettings options, ConnectionSettingDescriptor descriptor, object value)
-			{
-				if(descriptor.Equals(nameof(MyConnectionSettings.Birthday)) && Common.Convert.TryConvertValue<DateTime>(value, out var birthday))
-					options.Age = (short)(DateTime.Today.Year - birthday.Year);
-
-				return base.OnPopulate(ref options, descriptor, value);
-			}
-		}
+		private sealed class MyPopulator(MyDriver driver) : PopulatorBase(driver) { }
 		#endregion
 	}
 
@@ -267,17 +262,36 @@ public class ConnectionSettingsTest
 		public AuthenticationMode AuthenticationMode
 		{
 			get => this.GetValue<AuthenticationMode>();
-			set => this.SetValue(nameof(AuthenticationMode), value);
+			set => this.SetValue(value);
 		}
 
 		[ConnectionSetting($"{nameof(AuthenticationMode)}:{nameof(AuthenticationMode.User)}")]
-		public string UserName { get; set; }
+		public string UserName
+		{
+			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
+
 		[ConnectionSetting($"{nameof(AuthenticationMode)}:{nameof(AuthenticationMode.User)}")]
-		public string Password { get; set; }
+		public string Password
+		{
+			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
+
 		[ConnectionSetting($"{nameof(AuthenticationMode)}={nameof(AuthenticationMode.Certificate)}")]
-		public string CertificateFile { get; set; }
+		public string CertificateFile
+		{
+			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
+
 		[ConnectionSetting($"{nameof(AuthenticationMode)}={nameof(AuthenticationMode.Certificate)}")]
-		public string CertificateSecret { get; set; }
+		public string CertificateSecret
+		{
+			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
 
 		[DefaultValue("1m")]
 		[Alias(nameof(MyConnectionOptions.ConnectionTimeout))]
@@ -289,15 +303,45 @@ public class ConnectionSettingsTest
 		}
 
 		[DefaultValue(7969)]
-		public ushort Port { get; set; }
-		public int Integer { get; set; }
-		public double Double { get; set; }
-		public bool Boolean { get; set; }
+		public ushort Port
+		{
+			get => this.GetValue<ushort>();
+			set => this.SetValue(value);
+		}
+
+		public int Integer
+		{
+			get => this.GetValue<int>();
+			set => this.SetValue(value);
+		}
+
+		public double Double
+		{
+			get => this.GetValue<double>();
+			set => this.SetValue(value);
+		}
+
+		public bool Boolean
+		{
+			get => this.GetValue<bool>();
+			set => this.SetValue(value);
+		}
+
 		[ConnectionSetting(true, Format = "MyFormat")]
-		public string Text { get; set; }
+		public string Text
+		{
+			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
+
 		[Alias("DateTime")]
-		public DateTime Birthday { get; set; }
-		public short Age { get; internal set; }
+		public DateTime Birthday
+		{
+			get => this.GetValue<DateTime>();
+			set => this.SetValue(value);
+		}
+
+		public short Age => (short)(DateTime.Today.Year - this.Birthday.Year);
 	}
 
 	public class MyConnectionOptions

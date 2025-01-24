@@ -85,7 +85,7 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	protected bool SetValue<T>(T value, [System.Runtime.CompilerServices.CallerMemberName]string name = null) => _driver.SetValue(name, value, _entries);
 	protected bool SetValue<T>(string name, T value) => _driver.SetValue(name, value, _entries);
 	protected object GetValue([System.Runtime.CompilerServices.CallerMemberName]string name = null) => _driver.TryGetValue(name, _entries, out var value) ? value : default;
-	protected T GetValue<T>([System.Runtime.CompilerServices.CallerMemberName]string name = null) => this.GetValue<T>(name);
+	protected T GetValue<T>([System.Runtime.CompilerServices.CallerMemberName]string name = null) => _driver.GetValue<T>(name, _entries, default);
 	protected T GetValue<T>(string name, T defaultValue = default) => _driver.GetValue(name, _entries, defaultValue);
 	protected bool TryGetValue(string name, out object value) => _driver.TryGetValue(name, _entries, out value);
 	#endregion

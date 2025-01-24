@@ -60,7 +60,7 @@ partial class ConnectionSettingsDriver<TSettings>
 		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 		public string Map<T>(string name, T value, IDictionary<object, string> values)
 		{
-			return this.Descriptors.TryGetValue(name, out var descriptor) ? this.OnMap(descriptor, value, values) : null;
+			return name != null && this.Descriptors.TryGetValue(name, out var descriptor) ? this.OnMap(descriptor, value, values) : null;
 		}
 
 		/// <summary>尝试映射转换指定键名对应的值。</summary>
@@ -70,7 +70,7 @@ partial class ConnectionSettingsDriver<TSettings>
 		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 		public bool Map(string name, IDictionary<object, string> values, out object result)
 		{
-			if(this.Descriptors.TryGetValue(name, out var descriptor))
+			if(name != null && this.Descriptors.TryGetValue(name, out var descriptor))
 				return this.OnMap(descriptor, values, out result);
 
 			result = default;

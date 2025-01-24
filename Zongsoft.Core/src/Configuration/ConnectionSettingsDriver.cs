@@ -73,15 +73,9 @@ public partial class ConnectionSettingsDriver<TSettings> : IConnectionSettingsDr
 	#endregion
 
 	#region 公共方法
-	public virtual TSettings GetSettings(string connectionString)
-	{
-		var settings = (TSettings)Activator.CreateInstance(typeof(TSettings), this, connectionString);
-		this.Populator.Populate(settings);
-		return settings;
-	}
-
+	public virtual TSettings GetSettings(string connectionString) => (TSettings)Activator.CreateInstance(typeof(TSettings), this, connectionString);
 	public virtual bool TryGetValue(string name, IDictionary<object, string> values, out object value) => this.Mapper.Map(name, values, out value);
-	public virtual T GetValue<T>(string name, IDictionary<object, string> values, T defaultValue) => this.Mapper.Map(name, values, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ? result : defaultValue;
+	public virtual T GetValue<T>(string name, IDictionary<object, string> values, T defaultValue = default) => this.Mapper.Map(name, values, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ? result : defaultValue;
 	public virtual bool SetValue<T>(string name, T value, IDictionary<object, string> values)
 	{
 		var text = this.Mapper.Map(name, value, values);

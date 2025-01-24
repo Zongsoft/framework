@@ -221,11 +221,35 @@ public class ConfigurationTest
 		public MySqlConnectionSettings(MySqlConnectionSettingsDriver driver, string settings) : base(driver, settings) { }
 		public MySqlConnectionSettings(MySqlConnectionSettingsDriver driver, string name, string settings) : base(driver, name, settings) { }
 
-		public ushort Port { get; set; }
-		public string Server { get; set; }
-		public string Database { get; set; }
-		public string UserName { get; set; }
-		public string Password { get; set; }
+		public ushort Port
+		{
+			get => this.GetValue<ushort>();
+			set => this.SetValue(value);
+		}
+
+		public string Server
+		{
+			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
+
+		public string Database
+		{
+			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
+
+		public string UserName
+		{
+			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
+
+		public string Password
+		{
+			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
 	}
 	#endregion
 }
