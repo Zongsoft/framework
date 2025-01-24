@@ -78,16 +78,16 @@ public partial class ConnectionSettingsDriver<TSettings> : IConnectionSettingsDr
 
 	#region 公共方法
 	public virtual TSettings GetSettings(string connectionString) => (TSettings)Activator.CreateInstance(typeof(TSettings), this, connectionString);
-	public virtual bool TryGetValue(string name, IDictionary<object, string> values, out object value) => this.Mapper.Map(name, values, out value);
-	public virtual T GetValue<T>(string name, IDictionary<object, string> values, T defaultValue = default) => this.Mapper.Map(name, values, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ? result : defaultValue;
-	public virtual bool SetValue<T>(string name, T value, IDictionary<object, string> values)
+	public virtual bool TryGetValue(string name, IDictionary<object, string> entries, out object value) => this.Mapper.Map(name, entries, out value);
+	public virtual T GetValue<T>(string name, IDictionary<object, string> entries, T defaultValue = default) => this.Mapper.Map(name, entries, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ? result : defaultValue;
+	public virtual bool SetValue<T>(string name, T value, IDictionary<object, string> entries)
 	{
-		var text = this.Mapper.Map(name, value, values);
+		var text = this.Mapper.Map(name, value, entries);
 
 		if(string.IsNullOrEmpty(text))
-			return values.Remove(name);
+			return entries.Remove(name);
 
-		values[name] = text;
+		entries[name] = text;
 		return true;
 	}
 	#endregion

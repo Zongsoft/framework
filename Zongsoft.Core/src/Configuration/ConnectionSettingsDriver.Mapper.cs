@@ -56,22 +56,22 @@ partial class ConnectionSettingsDriver<TSettings>
 		/// <summary>尝试映射转换指定键名对应的值。</summary>
 		/// <param name="name">指定的待映射的键名。</param>
 		/// <param name="value">指定的待映射的值。</param>
-		/// <param name="values">指定的待映射的原始值集合。</param>
+		/// <param name="entries">指定的待映射的原始集合。</param>
 		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		public string Map<T>(string name, T value, IDictionary<object, string> values)
+		public string Map<T>(string name, T value, IDictionary<object, string> entries)
 		{
-			return name != null && this.Descriptors.TryGetValue(name, out var descriptor) ? this.OnMap(descriptor, value, values) : null;
+			return name != null && this.Descriptors.TryGetValue(name, out var descriptor) ? this.OnMap(descriptor, value, entries) : null;
 		}
 
 		/// <summary>尝试映射转换指定键名对应的值。</summary>
 		/// <param name="name">指定的待映射的键名。</param>
-		/// <param name="values">指定的待映射的原始值集合。</param>
+		/// <param name="entries">指定的待映射的原始集合。</param>
 		/// <param name="result">输出参数，返回映射转换成功后的值。</param>
 		/// <returns>如果映射成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		public bool Map(string name, IDictionary<object, string> values, out object result)
+		public bool Map(string name, IDictionary<object, string> entries, out object result)
 		{
 			if(name != null && this.Descriptors.TryGetValue(name, out var descriptor))
-				return this.OnMap(descriptor, values, out result);
+				return this.OnMap(descriptor, entries, out result);
 
 			result = default;
 			return false;
@@ -79,14 +79,14 @@ partial class ConnectionSettingsDriver<TSettings>
 		#endregion
 
 		#region 虚拟方法
-		protected virtual string OnMap<T>(ConnectionSettingDescriptor descriptor, T value, IDictionary<object, string> values)
+		protected virtual string OnMap<T>(ConnectionSettingDescriptor descriptor, T value, IDictionary<object, string> entries)
 		{
 			return Common.Convert.TryConvertValue<string>(value, () => descriptor.Converter, out var result) ? result : null;
 		}
 
-		protected virtual bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<object, string> values, out object value)
+		protected virtual bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<object, string> entries, out object value)
 		{
-			if(values.TryGetValue(descriptor, out var text))
+			if(entries.TryGetValue(descriptor, out var text))
 				return Common.Convert.TryConvertValue(text, descriptor.Type, () => descriptor.Converter, out value);
 
 			value = descriptor.DefaultValue;
