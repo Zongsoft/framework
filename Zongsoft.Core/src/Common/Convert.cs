@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Net;
 using System.Text;
 using System.ComponentModel;
 using System.Collections.Generic;
@@ -42,6 +43,7 @@ namespace Zongsoft.Common
 			TypeDescriptor.AddAttributes(typeof(Enum), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EnumConverter))]);
 			TypeDescriptor.AddAttributes(typeof(Guid), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.GuidConverter))]);
 			TypeDescriptor.AddAttributes(typeof(Encoding), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EncodingConverter))]);
+			TypeDescriptor.AddAttributes(typeof(EndPoint), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EndpointConverter))]);
 		}
 		#endregion
 
@@ -160,8 +162,7 @@ namespace Zongsoft.Common
 
 		public static bool TryConvertValue(object value, Type conversionType, Func<TypeConverter> converterFactory, out object result)
 		{
-			result = null;
-
+			//如果转换类型为空或对象类型则无需转换
 			if(conversionType == null || conversionType == typeof(object))
 			{
 				result = value;
@@ -198,6 +199,10 @@ namespace Zongsoft.Common
 
 				if(converter != null && converter.GetType() != typeof(TypeConverter))
 				{
+					//处理转换类型为集合(含数组)类型的情况
+					if(type.IsEnumerable() && converter.GetType() == typeof(ReferenceConverter))
+						converter = Zongsoft.ComponentModel.CollectionConverter.Default;
+
 					if(converter.CanConvertFrom(value.GetType())) //尝试从源类型进行转换
 					{
 						result = converter.ConvertFrom(value);
@@ -214,29 +219,27 @@ namespace Zongsoft.Common
 				if(value is string)
 				{
 					var method = type.IsValueType ?
-						type.GetMethod("TryParse", new Type[] { typeof(string), type.MakeByRefType() }) :
-						type.GetMethod("TryParse", new Type[] { typeof(string), type });
+						type.GetMethod("TryParse", [typeof(string), type.MakeByRefType()]) :
+						type.GetMethod("TryParse", [typeof(string), type]);
 
 					if(method != null && method.IsStatic)
 					{
 						var args = new object[] { value, null };
-						var succeed = method.Invoke(null, args);
+						var invoked = method.Invoke(null, args);
 
-						if(succeed.GetType() == typeof(bool))
+						if(invoked is bool succeed)
 						{
-							if((bool)succeed)
-								result = args[1];
-
-							return (bool)succeed;
+							result = succeed ? args[1] : null;
+							return succeed;
 						}
 					}
 					else
 					{
-						method = type.GetMethod("Parse", new Type[] { typeof(string) });
+						method = type.GetMethod("Parse", [typeof(string)]);
 
 						if(method != null && method.IsStatic)
 						{
-							result = method.Invoke(null, new object[] { value });
+							result = method.Invoke(null, [value]);
 							return true;
 						}
 					}
@@ -247,6 +250,7 @@ namespace Zongsoft.Common
 			}
 			catch
 			{
+				result = null;
 				return false;
 			}
 		}

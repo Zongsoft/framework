@@ -364,11 +364,11 @@ namespace Zongsoft.Common
 
 		public static object GetDefaultValue(this Type type)
 		{
-			if(type == null || type.IsClass || type.IsInterface || type.IsNullable())
-				return null;
-
 			if(type == typeof(DBNull))
 				return DBNull.Value;
+
+			if(type == null || type.IsClass || type.IsInterface || type.IsNullable())
+				return null;
 
 			if(type.IsEnum)
 			{
