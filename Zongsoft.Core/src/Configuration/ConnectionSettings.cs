@@ -33,7 +33,6 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-[Zongsoft.Services.Service(Members = nameof(Drivers))]
 public class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDriver>
 {
 	#region 静态构造
@@ -52,80 +51,80 @@ public class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDrive
 	#region 特定属性
 	public string Group
 	{
-		get => this.GetValue<string>(nameof(Group));
-		set => this.SetValue(nameof(Group), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public string Client
 	{
-		get => this.GetValue<string>(nameof(Client));
-		set => this.SetValue(nameof(Client), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public string Server
 	{
-		get => this.GetValue<string>(nameof(Server));
-		set => this.SetValue(nameof(Server), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public ushort Port
 	{
-		get => this.GetValue(nameof(Port), (ushort)0);
-		set => this.SetValue(nameof(Port), value);
+		get => this.GetValue<ushort>();
+		set => this.SetValue(value);
 	}
 
 	public TimeSpan Timeout
 	{
-		get => this.GetValue(nameof(Timeout), TimeSpan.Zero);
-		set => this.SetValue(nameof(Timeout), value);
+		get => this.GetValue<TimeSpan>();
+		set => this.SetValue(value);
 	}
 
 	public string Charset
 	{
-		get => this.GetValue<string>(nameof(Charset));
-		set => this.SetValue(nameof(Charset), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public string Encoding
 	{
-		get => this.GetValue<string>(nameof(Encoding));
-		set => this.SetValue(nameof(Encoding), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public string Provider
 	{
-		get => this.GetValue<string>(nameof(Provider));
-		set => this.SetValue(nameof(Provider), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public string Database
 	{
-		get => this.GetValue<string>(nameof(Database));
-		set => this.SetValue(nameof(Database), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public string UserName
 	{
-		get => this.GetValue<string>(nameof(UserName));
-		set => this.SetValue(nameof(UserName), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public string Password
 	{
-		get => this.GetValue<string>(nameof(Password));
-		set => this.SetValue(nameof(Password), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public string Instance
 	{
-		get => this.GetValue<string>(nameof(Instance));
-		set => this.SetValue(nameof(Instance), value);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
 
 	public string Application
 	{
-		get => this.GetValue<string>(nameof(Application)) ?? Services.ApplicationContext.Current?.Name;
-		set => this.SetValue(nameof(Application), value);
+		get => this.GetValue<string>() ?? Services.ApplicationContext.Current?.Name;
+		set => this.SetValue(value);
 	}
 	#endregion
 

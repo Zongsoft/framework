@@ -172,7 +172,8 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 		{
 			Label = GetDisplayName(property),
 			Description = GetDescription(property),
-			DefaultValue = GetDefaultValue(property)
+			DefaultValue = GetDefaultValue(property),
+			Converter = ConfigurationUtility.GetConverter(property),
 		};
 
 		var attribute = property.GetCustomAttribute<ConnectionSettingAttribute>();

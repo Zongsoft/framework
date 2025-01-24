@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Net;
+using System.Linq;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 using Xunit;
 
@@ -10,7 +13,7 @@ namespace Zongsoft.Configuration;
 public class ConnectionSettingsTest
 {
 	private static readonly DateTime DATE = new(1979, 5, 15);
-	private static readonly string ConnectionString = $" ;;  ; Integer=100 ; enabled ; double= 1.23; ;  boolean= true ; text= MyString; dateTime={DATE:yyyy-M-d}; ;";
+	private static readonly string ConnectionString = $" ;; server=192.168.0.1:8080, localhost:8088  ; Integer=100 ; enabled ; double= 1.23; ;  boolean= true ; text= MyString; dateTime={DATE:yyyy-M-d}; ;";
 
 	[Fact]
 	public void TestDescriptorCollection()
@@ -78,7 +81,7 @@ public class ConnectionSettingsTest
 		var descriptors = MyDriver.Descriptors;
 		Assert.NotNull(descriptors);
 		Assert.NotEmpty(descriptors);
-		Assert.Equal(12, descriptors.Count);
+		Assert.Equal(13, descriptors.Count);
 
 		ConnectionSettingDescriptor descriptor = null;
 		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.Port), out descriptor));
@@ -138,16 +141,16 @@ public class ConnectionSettingsTest
 	public void TestConnectionSettingsGetValueAndSetValue()
 	{
 		var settings = new ConnectionSettings("MyConnectionSettings", ConnectionString);
-		Assert.Equal(5, settings.Entries.Count);
+		Assert.Equal(6, settings.Entries.Count);
 
 		Assert.False(settings.Entries.ContainsKey("enabled"));
 		Assert.True(settings.SetValue("enabled", true));
-		Assert.Equal(6, settings.Entries.Count);
+		Assert.Equal(7, settings.Entries.Count);
 		Assert.True(settings.Entries.ContainsKey("enabled"));
 
 		Assert.True(settings.SetValue("enabled", string.Empty));
 		Assert.False(settings.Entries.ContainsKey("enabled"));
-		Assert.Equal(5, settings.Entries.Count);
+		Assert.Equal(6, settings.Entries.Count);
 
 		Assert.True(settings.Entries.TryGetValue("integer", out var text));
 		Assert.Equal("100", text, true);
@@ -182,6 +185,17 @@ public class ConnectionSettingsTest
 		Assert.Equal("MyString", settings.Text, true);
 		Assert.Equal(DATE, settings.Birthday);
 		Assert.Equal(DateTime.Today.Year - DATE.Year, settings.Age);
+
+		Assert.NotNull(settings.Server);
+		Assert.NotEmpty(settings.Server);
+		Assert.Equal(2, settings.Server.Count);
+		Assert.IsType<IPEndPoint>(settings.Server.ToArray()[0]);
+		Assert.Equal(IPEndPoint.Parse("192.168.0.1:8080"), settings.Server.ToArray()[0]);
+		Assert.IsType<DnsEndPoint>(settings.Server.ToArray()[1]);
+		Assert.Equal(new DnsEndPoint("localhost", 8088), settings.Server.ToArray()[1]);
+
+		settings.Server.Add(IPEndPoint.Parse("127.0.0.1:88"));
+		//Assert.Equal(3, settings.Server.Count);
 
 		settings.Port = 996;
 		Assert.Equal(996, settings.Port);
@@ -241,16 +255,7 @@ public class ConnectionSettingsTest
 		#endregion
 
 		#region 私有构造
-		private MyDriver() : base(NAME)
-		{
-			this.Mapper = new MyMapper(this);
-			this.Populator = new MyPopulator(this);
-		}
-		#endregion
-
-		#region 嵌套子类
-		private sealed class MyMapper(MyDriver driver) : MapperBase(driver) { }
-		private sealed class MyPopulator(MyDriver driver) : PopulatorBase(driver) { }
+		private MyDriver() : base(NAME) { }
 		#endregion
 	}
 
@@ -290,6 +295,12 @@ public class ConnectionSettingsTest
 		public string CertificateSecret
 		{
 			get => this.GetValue<string>();
+			set => this.SetValue(value);
+		}
+
+		public ICollection<EndPoint> Server
+		{
+			get => this.GetValue<ICollection<EndPoint>>();
 			set => this.SetValue(value);
 		}
 
@@ -346,6 +357,8 @@ public class ConnectionSettingsTest
 
 	public class MyConnectionOptions
 	{
+		public ICollection<System.Net.EndPoint> Server { get; set; }
+		public TimeZoneInfo Timezone { get; set; }
 		public DateTime DateTime { get; set; }
 		public TimeSpan ConnectionTimeout { get; set; }
 		public TimeSpan ExecutionTimeout { get; set; }

@@ -81,17 +81,19 @@ partial class ConnectionSettingsDriver<TSettings>
 		#region 虚拟方法
 		protected virtual string OnMap<T>(ConnectionSettingDescriptor descriptor, T value, IDictionary<object, string> values)
 		{
-			return Common.Convert.TryConvertValue<string>(value, out var result) ? result : null;
+			return Common.Convert.TryConvertValue<string>(value, () => descriptor.Converter, out var result) ? result : null;
 		}
 
 		protected virtual bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<object, string> values, out object value)
 		{
 			if(values.TryGetValue(descriptor, out var text))
-				return Common.Convert.TryConvertValue(text, descriptor.Type, out value);
+				return Common.Convert.TryConvertValue(text, descriptor.Type, () => descriptor.Converter, out value);
 
 			value = descriptor.DefaultValue;
 			return !descriptor.Required || descriptor.DefaultValue != null;
 		}
 		#endregion
 	}
+
+	private sealed class DefaultMapper(ConnectionSettingsDriver<TSettings> driver) : MapperBase(driver) { }
 }

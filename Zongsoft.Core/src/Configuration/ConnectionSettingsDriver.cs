@@ -68,8 +68,12 @@ public partial class ConnectionSettingsDriver<TSettings> : IConnectionSettingsDr
 	#endregion
 
 	#region 保护属性
-	protected MapperBase Mapper { get; init; }
-	protected PopulatorBase Populator { get; init; }
+	private MapperBase _mapper;
+	protected MapperBase Mapper
+	{
+		get => _mapper ??= new DefaultMapper(this);
+		init => _mapper = value;
+	}
 	#endregion
 
 	#region 公共方法

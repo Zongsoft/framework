@@ -202,18 +202,17 @@ public class ConfigurationTest
 	#region 连接驱动
 	internal sealed class MySqlConnectionSettingsDriver : ConnectionSettingsDriver<MySqlConnectionSettings>
 	{
+		#region 常量定义
 		public const string NAME = "MySql";
+		#endregion
 
+		#region 单例字段
 		public static readonly MySqlConnectionSettingsDriver Instance = new();
+		#endregion
 
-		private MySqlConnectionSettingsDriver() : base(NAME)
-		{
-			this.Mapper = new MySqlMapper(this);
-			this.Populator = new MySqlPopulator(this);
-		}
-
-		private sealed class MySqlMapper(MySqlConnectionSettingsDriver driver) : MapperBase(driver) { }
-		private sealed class MySqlPopulator(MySqlConnectionSettingsDriver driver) : PopulatorBase(driver) { }
+		#region 私有构造
+		private MySqlConnectionSettingsDriver() : base(NAME) { }
+		#endregion
 	}
 
 	internal sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnectionSettingsDriver>

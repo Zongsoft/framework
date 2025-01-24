@@ -166,6 +166,8 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 	public string Format { get; set; }
 	/// <summary>获取或设置一个值，指示连接设置项是否为必须设置项。</summary>
 	public bool Required { get; set; }
+	/// <summary>获取或设置类型转换器。</summary>
+	public TypeConverter Converter { get; set; }
 	/// <summary>获取或设置连接设置项的标题。</summary>
 	public string Label { get; set; }
 	/// <summary>获取或设置连接设置项的描述。</summary>
@@ -183,7 +185,7 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 			if(_hasDefaultValue)
 				return _defaultValue;
 
-			return Common.Convert.ConvertValue(_defaultValue, this.Type, () => Common.TypeExtension.GetDefaultValue(this.Type));
+			return Common.Convert.ConvertValue(_defaultValue, this.Type, () => this.Converter, () => Common.TypeExtension.GetDefaultValue(this.Type));
 		}
 		set
 		{
@@ -191,7 +193,7 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 				return;
 
 			//确保设置的默认值是类型匹配的，否则抛出转换异常
-			_defaultValue = Common.Convert.ConvertValue(value, this.Type);
+			_defaultValue = Common.Convert.ConvertValue(value, this.Type, () => this.Converter);
 			_hasDefaultValue = true;
 		}
 	}
