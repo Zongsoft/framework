@@ -114,7 +114,7 @@ public class ConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSetti
 	#endregion
 
 	#region 重写方法
-	bool IConnectionSettingsDriver.IsDriver(string name) => string.IsNullOrEmpty(name) || name == "*";
+	bool IConnectionSettingsDriver.IsDriver(string name) => string.IsNullOrEmpty(name);
 	public override ConnectionSettings GetSettings(string connectionString) => new(connectionString);
 	public override bool TryGetValue(string name, IDictionary<object, string> values, out object value)
 	{

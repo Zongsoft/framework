@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 
 using Microsoft.Extensions.Configuration;
 
@@ -35,6 +36,10 @@ namespace Zongsoft.Configuration;
 
 internal class ConnectionSettingsResolver : IConfigurationResolver
 {
+	#region 静态字段
+	private static readonly ConcurrentDictionary<Type, Delegate> _creators = new();
+	#endregion
+
 	#region 公共方法
 	public void Attach(object target, IConfiguration configuration, ConfigurationBinderOptions options) => ConfigurationResolver.Default.Attach(target, configuration, options);
 	public void Resolve(object target, IConfiguration configuration, ConfigurationBinderOptions options) => ConfigurationResolver.Default.Resolve(target, configuration, options);
@@ -43,13 +48,8 @@ internal class ConnectionSettingsResolver : IConfigurationResolver
 		IConnectionSettings result = null;
 		var driverName = configuration.GetSection(nameof(IConnectionSettings.Driver))?.Value;
 
-		if(!string.IsNullOrWhiteSpace(driverName) && ConnectionSettings.Drivers.TryGetValue(driverName, out var driver))
-		{
-			var creator = GetCreator(driver);
-
-			if(creator != null)
-				result = (IConnectionSettings)creator.DynamicInvoke(configuration.GetSection(nameof(ConnectionSettings.Value))?.Value);
-		}
+		if(!string.IsNullOrEmpty(driverName) && ConnectionSettings.Drivers.TryGetValue(driverName, out var driver))
+			result = Create(driver, configuration.GetSection(nameof(ConnectionSettings.Value))?.Value);
 
 		result ??= new ConnectionSettings(null);
 		this.Resolve(result, configuration, options);
@@ -58,6 +58,15 @@ internal class ConnectionSettingsResolver : IConfigurationResolver
 	#endregion
 
 	#region 私有方法
+	private static IConnectionSettings Create(IConnectionSettingsDriver driver, string connectionString)
+	{
+		if(driver == null)
+			return null;
+
+		var creator = _creators.GetOrAdd(driver.GetType(), (key, driver) => GetCreator(driver), driver);
+		return (IConnectionSettings)creator?.DynamicInvoke(connectionString);
+	}
+
 	private static Delegate GetCreator(IConnectionSettingsDriver driver)
 	{
 		if(driver == null)

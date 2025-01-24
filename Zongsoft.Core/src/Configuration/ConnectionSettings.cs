@@ -45,7 +45,7 @@ public class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDrive
 	#endregion
 
 	#region 构造函数
-	public ConnectionSettings(string value) : base(ConnectionSettingsDriver.Default, value) { }
+	public ConnectionSettings(string value = null) : base(ConnectionSettingsDriver.Default, value) { }
 	public ConnectionSettings(string name, string value) : base(ConnectionSettingsDriver.Default, name, value) { }
 	#endregion
 
