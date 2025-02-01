@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Net;
-using System.Linq;
 using System.ComponentModel;
 using System.Collections.Generic;
 
@@ -188,14 +187,20 @@ public class ConnectionSettingsTest
 
 		Assert.NotNull(settings.Server);
 		Assert.NotEmpty(settings.Server);
-		Assert.Equal(2, settings.Server.Count);
-		Assert.IsType<IPEndPoint>(settings.Server.ToArray()[0]);
-		Assert.Equal(IPEndPoint.Parse("192.168.0.1:8080"), settings.Server.ToArray()[0]);
-		Assert.IsType<DnsEndPoint>(settings.Server.ToArray()[1]);
-		Assert.Equal(new DnsEndPoint("localhost", 8088), settings.Server.ToArray()[1]);
+		Assert.Equal(2, settings.Server.Length);
+		Assert.IsType<IPEndPoint>(settings.Server[0]);
+		Assert.Equal(IPEndPoint.Parse("192.168.0.1:8080"), settings.Server[0]);
+		Assert.IsType<DnsEndPoint>(settings.Server[1]);
+		Assert.Equal(new DnsEndPoint("localhost", 8088), settings.Server[1]);
 
-		settings.Server.Add(IPEndPoint.Parse("127.0.0.1:88"));
-		//Assert.Equal(3, settings.Server.Count);
+		settings.Server = [.. settings.Server, IPEndPoint.Parse("127.0.0.1:88")];
+		Assert.Equal(3, settings.Server.Length);
+		Assert.IsType<IPEndPoint>(settings.Server[0]);
+		Assert.Equal(IPEndPoint.Parse("192.168.0.1:8080"), settings.Server[0]);
+		Assert.IsType<DnsEndPoint>(settings.Server[1]);
+		Assert.Equal(new DnsEndPoint("localhost", 8088), settings.Server[1]);
+		Assert.IsType<IPEndPoint>(settings.Server[2]);
+		Assert.Equal(IPEndPoint.Parse("127.0.0.1:88"), settings.Server[2]);
 
 		settings.Port = 996;
 		Assert.Equal(996, settings.Port);
@@ -298,9 +303,9 @@ public class ConnectionSettingsTest
 			set => this.SetValue(value);
 		}
 
-		public ICollection<EndPoint> Server
+		public EndPoint[] Server
 		{
-			get => this.GetValue<ICollection<EndPoint>>();
+			get => this.GetValue<EndPoint[]>();
 			set => this.SetValue(value);
 		}
 
@@ -345,7 +350,7 @@ public class ConnectionSettingsTest
 			set => this.SetValue(value);
 		}
 
-		[Alias("DateTime")]
+		[Alias(nameof(MyConnectionOptions.DateTime))]
 		public DateTime Birthday
 		{
 			get => this.GetValue<DateTime>();
@@ -357,8 +362,7 @@ public class ConnectionSettingsTest
 
 	public class MyConnectionOptions
 	{
-		public ICollection<System.Net.EndPoint> Server { get; set; }
-		public TimeZoneInfo Timezone { get; set; }
+		public ICollection<EndPoint> Server { get; set; }
 		public DateTime DateTime { get; set; }
 		public TimeSpan ConnectionTimeout { get; set; }
 		public TimeSpan ExecutionTimeout { get; set; }

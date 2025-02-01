@@ -165,6 +165,7 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 
 		var aliases = property
 			.GetCustomAttributes<Components.AliasAttribute>()
+			.Where(alias => !string.IsNullOrEmpty(alias.Alias) && !string.Equals(alias.Alias, property.Name, StringComparison.OrdinalIgnoreCase))
 			.Select(alias => alias.Alias)
 			.ToArray();
 
@@ -175,6 +176,10 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 			DefaultValue = GetDefaultValue(property),
 			Converter = ConfigurationUtility.GetConverter(property),
 		};
+
+		//如果当前属性未显式声明转换器，并且属性类型为集合类型则需要为其指定一个特定的转换器
+		if(descriptor.Converter == null && descriptor.Type != typeof(string) && TypeExtension.IsEnumerable(descriptor.Type))
+			descriptor.Converter = ComponentModel.CollectionConverter.Default;
 
 		var attribute = property.GetCustomAttribute<ConnectionSettingAttribute>();
 		if(attribute != null)

@@ -41,9 +41,7 @@ partial class ConnectionSettingsDriver<TSettings>
 		protected MapperBase(ConnectionSettingsDriver<TSettings> driver)
 		{
 			this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
-			this.Descriptors = (ConnectionSettingDescriptorCollection)driver.GetType()
-				.GetProperty(nameof(IConnectionSettingsDriver.Descriptors), BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-				.GetValue(null);
+			this.Descriptors = driver.GetDescriptors();
 		}
 		#endregion
 

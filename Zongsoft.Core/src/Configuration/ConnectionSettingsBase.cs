@@ -40,12 +40,14 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	#region 成员字段
 	private readonly TDriver _driver;
 	private readonly EntryCollection _entries;
+	private readonly Dictionary<string, object> _cache;
 	#endregion
 
 	#region 构造函数
 	protected ConnectionSettingsBase(TDriver driver, string settings)
 	{
 		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
+		_cache = new(StringComparer.OrdinalIgnoreCase);
 		_entries = new();
 
 		if(!string.IsNullOrEmpty(settings))
@@ -55,6 +57,7 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	protected ConnectionSettingsBase(TDriver driver, string name, string settings) : base(name, settings)
 	{
 		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
+		_cache = new(StringComparer.OrdinalIgnoreCase);
 		_entries = new();
 
 		if(!string.IsNullOrEmpty(settings))
@@ -82,12 +85,53 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	#endregion
 
 	#region 保护方法
-	protected bool SetValue<T>(T value, [System.Runtime.CompilerServices.CallerMemberName]string name = null) => _driver.SetValue(name, value, _entries);
-	protected bool SetValue<T>(string name, T value) => _driver.SetValue(name, value, _entries);
-	protected object GetValue([System.Runtime.CompilerServices.CallerMemberName]string name = null) => _driver.TryGetValue(name, _entries, out var value) ? value : default;
-	protected T GetValue<T>([System.Runtime.CompilerServices.CallerMemberName]string name = null) => _driver.GetValue<T>(name, _entries, default);
-	protected T GetValue<T>(string name, T defaultValue = default) => _driver.GetValue(name, _entries, defaultValue);
-	protected bool TryGetValue(string name, out object value) => _driver.TryGetValue(name, _entries, out value);
+	protected bool SetValue<T>(T value, [System.Runtime.CompilerServices.CallerMemberName]string name = null) => this.SetValue<T>(name, value);
+	protected bool SetValue<T>(string name, T value)
+	{
+		if(_driver.SetValue(name, value, _entries))
+		{
+			_cache.Remove(name);
+			return true;
+		}
+
+		return false;
+	}
+
+	protected object GetValue([System.Runtime.CompilerServices.CallerMemberName]string name = null)
+	{
+		if(_cache.TryGetValue(name, out var value))
+			return value;
+
+		return _driver.TryGetValue(name, _entries, out value) ? _cache[name] = value : null;
+	}
+
+	protected T GetValue<T>([System.Runtime.CompilerServices.CallerMemberName]string name = null) => this.GetValue<T>(name, default);
+	protected T GetValue<T>(string name, T defaultValue = default)
+	{
+		if(_cache.TryGetValue(name, out var value))
+			return (T)value;
+
+		var result = _driver.GetValue(name, _entries, defaultValue);
+
+		if(result is not null)
+			_cache[name] = result;
+
+		return result;
+	}
+
+	protected bool TryGetValue(string name, out object value)
+	{
+		if(_cache.TryGetValue(name, out value))
+			return true;
+
+		if(_driver.TryGetValue(name, _entries, out value))
+		{
+			_cache[name] = value;
+			return true;
+		}
+
+		return false;
+	}
 	#endregion
 
 	#region 参数解析

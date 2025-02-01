@@ -129,6 +129,8 @@ public class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDrive
 	#endregion
 
 	#region 公共属性
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Zongsoft.Serialization.SerializationMember(Ignored = true)]
 	public new IDictionary<object, string> Entries => base.Entries;
 	#endregion
 
