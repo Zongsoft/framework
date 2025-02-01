@@ -194,15 +194,11 @@ namespace Zongsoft.Common
 					return true;
 				}
 
-				//获取目标类型的转换器
-				var converter = converterFactory?.Invoke() ?? TypeDescriptor.GetConverter(type);
+				//获取目标类型的转换器，如果转换类型为字符串则必须以待转换值的类型为准
+				var converter = converterFactory?.Invoke() ?? (type == typeof(string) ? TypeDescriptor.GetConverter(value.GetType()) : TypeDescriptor.GetConverter(type));
 
 				if(converter != null && converter.GetType() != typeof(TypeConverter))
 				{
-					//处理转换类型为集合(含数组)类型的情况
-					if(type.IsEnumerable() && converter.GetType() == typeof(ReferenceConverter))
-						converter = Zongsoft.ComponentModel.CollectionConverter.Default;
-
 					if(converter.CanConvertFrom(value.GetType())) //尝试从源类型进行转换
 					{
 						result = converter.ConvertFrom(value);

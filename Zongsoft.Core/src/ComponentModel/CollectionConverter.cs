@@ -37,7 +37,9 @@ namespace Zongsoft.ComponentModel;
 
 public class CollectionConverter : TypeConverter
 {
+	#region 单例字段
 	public static readonly CollectionConverter Default = new();
+	#endregion
 
 	#region 构造函数
 	public CollectionConverter() : this(null) { }
