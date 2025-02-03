@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Linq;
 using System.ComponentModel;
 using System.Collections.Generic;
 
@@ -77,7 +78,7 @@ public class ConnectionSettingsTest
 	[Fact]
 	public void TestConnectionDescriptor()
 	{
-		var descriptors = MyDriver.Descriptors;
+		var descriptors = MyDriver.Instance.Descriptors;
 		Assert.NotNull(descriptors);
 		Assert.NotEmpty(descriptors);
 		Assert.Equal(13, descriptors.Count);
@@ -140,33 +141,31 @@ public class ConnectionSettingsTest
 	public void TestConnectionSettingsGetValueAndSetValue()
 	{
 		var settings = new ConnectionSettings("MyConnectionSettings", ConnectionString);
-		Assert.Equal(6, settings.Entries.Count);
+		Assert.NotEmpty(settings);
+		Assert.NotNull(settings.Value);
+		Assert.NotEmpty(settings.Value);
+		Assert.Equal(7, settings.Count());
 
-		Assert.False(settings.Entries.ContainsKey("enabled"));
+		Assert.Equal(100, settings.GetValue<int>("integer"));
+		Assert.Equal(1.23, settings.GetValue<double>("double"));
+		Assert.True(settings.GetValue<bool>("boolean"));
+		Assert.Equal("MyString", settings.GetValue<string>("Text"));
+		Assert.Equal(DATE, settings.GetValue<DateTime>("DateTime"));
+
+		Assert.Null(settings.GetValue<bool?>("enabled"));
 		Assert.True(settings.SetValue("enabled", true));
-		Assert.Equal(7, settings.Entries.Count);
-		Assert.True(settings.Entries.ContainsKey("enabled"));
-
+		Assert.True(settings.GetValue<bool>("enabled"));
 		Assert.True(settings.SetValue("enabled", string.Empty));
-		Assert.False(settings.Entries.ContainsKey("enabled"));
-		Assert.Equal(6, settings.Entries.Count);
-
-		Assert.True(settings.Entries.TryGetValue("integer", out var text));
-		Assert.Equal("100", text, true);
-		Assert.True(settings.Entries.TryGetValue("double", out text));
-		Assert.Equal("1.23", text, true);
-		Assert.True(settings.Entries.TryGetValue("boolean", out text));
-		Assert.Equal("true", text, true);
-		Assert.True(settings.Entries.TryGetValue("text", out text));
-		Assert.Equal("MyString", text, true);
-		Assert.True(settings.Entries.TryGetValue("DateTime", out text));
-		Assert.Equal(DATE.ToString("yyyy-M-d"), text, true);
+		Assert.Equal(6, settings.Count());
 
 		Assert.True(settings.SetValue("NewKey", "NewValue"));
 		Assert.Equal("NewValue", settings.GetValue<string>("NewKey"));
 
 		settings.Port = 999;
 		Assert.Equal(999, settings.Port);
+
+		Assert.NotNull(settings.Value);
+		Assert.NotEmpty(settings.Value);
 	}
 
 	[Fact]
@@ -174,6 +173,8 @@ public class ConnectionSettingsTest
 	{
 		var settings = MyDriver.Instance.GetSettings(ConnectionString);
 		Assert.NotNull(settings);
+		Assert.NotNull(settings.Value);
+		Assert.NotEmpty(settings.Value);
 		Assert.True(settings.IsDriver(MyDriver.Instance));
 		Assert.Same(MyDriver.Instance, settings.Driver);
 
@@ -216,6 +217,10 @@ public class ConnectionSettingsTest
 		Assert.Equal("admin", settings.UserName);
 		settings.Password = "password";
 		Assert.Equal("password", settings.Password);
+
+		var date = DateTime.Today.AddDays(3);
+		settings.Birthday = date;
+		Assert.Equal(date, settings.Birthday);
 	}
 
 	[Fact]

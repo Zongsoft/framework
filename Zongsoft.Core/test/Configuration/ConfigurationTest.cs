@@ -81,16 +81,12 @@ public class ConfigurationTest
 		Assert.NotNull(setting);
 		Assert.Equal("redis", setting.Name);
 		Assert.Equal("server=127.0.0.1", setting.Value);
-		Assert.False(setting.HasProperties);
-		Assert.Empty(setting.Properties);
 
 		setting = null;
 		setting = configuration.GetOption<IConnectionSettings>("/Externals/Redis/ConnectionSettings/redis");
 		Assert.NotNull(setting);
 		Assert.Equal("redis", setting.Name);
 		Assert.Equal("server=127.0.0.1", setting.Value);
-		Assert.False(setting.HasProperties);
-		Assert.Empty(setting.Properties);
 	}
 
 	[Fact]

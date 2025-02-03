@@ -49,53 +49,54 @@ internal class ConnectionSettingsResolver : IConfigurationResolver
 		var driverName = configuration.GetSection(nameof(IConnectionSettings.Driver))?.Value;
 
 		if(!string.IsNullOrEmpty(driverName) && ConnectionSettings.Drivers.TryGetValue(driverName, out var driver))
-			result = Create(driver, configuration.GetSection(nameof(ConnectionSettings.Value))?.Value);
+			result = Create(driver, configuration.GetSection(nameof(ConnectionSettings.Name))?.Value, configuration.GetSection(nameof(ConnectionSettings.Value))?.Value);
 
-		result ??= new ConnectionSettings(null);
+		result ??= new ConnectionSettings(configuration.GetSection(nameof(ConnectionSettings.Name)).Value, null);
 		this.Resolve(result, configuration, options);
 		return result;
 	}
 	#endregion
 
 	#region 私有方法
-	private static IConnectionSettings Create(IConnectionSettingsDriver driver, string connectionString)
+	private static IConnectionSettings Create(IConnectionSettingsDriver driver, string name, string connectionString)
 	{
 		if(driver == null)
 			return null;
 
 		var creator = _creators.GetOrAdd(driver.GetType(), (key, driver) => GetCreator(driver), driver);
-		return (IConnectionSettings)creator?.DynamicInvoke(connectionString);
-	}
+		return (IConnectionSettings)creator?.DynamicInvoke(name, connectionString);
 
-	private static Delegate GetCreator(IConnectionSettingsDriver driver)
-	{
-		if(driver == null)
-			return null;
-
-		var contracts = driver.GetType().GetInterfaces();
-
-		for(int i = 0; i < contracts.Length; i++)
+		static Delegate GetCreator(IConnectionSettingsDriver driver)
 		{
-			if(contracts[i].IsGenericType && contracts[i].GetGenericTypeDefinition() == typeof(IConnectionSettingsDriver<>))
+			if(driver == null)
+				return null;
+
+			var contracts = driver.GetType().GetInterfaces();
+
+			for(int i = 0; i < contracts.Length; i++)
 			{
-				var mapping = driver.GetType().GetInterfaceMap(contracts[i]);
-
-				if(mapping.TargetType == null)
-					continue;
-
-				for(int j = 0; j < mapping.TargetMethods.Length; j++)
+				if(contracts[i].IsGenericType && contracts[i].GetGenericTypeDefinition() == typeof(IConnectionSettingsDriver<>))
 				{
-					if(mapping.TargetMethods[j].Name == nameof(IConnectionSettingsDriver<IConnectionSettings>.GetSettings) &&
-					   mapping.TargetMethods[j].ReturnType == contracts[i].GenericTypeArguments[0])
+					var mapping = driver.GetType().GetInterfaceMap(contracts[i]);
+
+					if(mapping.TargetType == null)
+						continue;
+
+					for(int j = 0; j < mapping.TargetMethods.Length; j++)
 					{
-						var invokerType = typeof(Func<,>).MakeGenericType(typeof(string), mapping.TargetMethods[j].ReturnType);
-						return mapping.TargetMethods[j].CreateDelegate(invokerType, driver);
+						if(mapping.TargetMethods[j].Name == nameof(IConnectionSettingsDriver<IConnectionSettings>.GetSettings) &&
+						   mapping.TargetMethods[j].ReturnType == contracts[i].GenericTypeArguments[0] &&
+						   mapping.TargetMethods[j].GetParameters().Length == 2)
+						{
+							var invokerType = typeof(Func<,,>).MakeGenericType(typeof(string), typeof(string), mapping.TargetMethods[j].ReturnType);
+							return mapping.TargetMethods[j].CreateDelegate(invokerType, driver);
+						}
 					}
 				}
 			}
-		}
 
-		return null;
+			return null;
+		}
 	}
 	#endregion
 }

@@ -39,26 +39,21 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 {
 	#region 成员字段
 	private readonly TDriver _driver;
-	private readonly EntryCollection _entries;
-	private readonly Dictionary<string, object> _cache;
+	private readonly Dictionary<string, string> _entries;
 	#endregion
 
 	#region 构造函数
 	protected ConnectionSettingsBase(TDriver driver, string settings)
 	{
 		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
-		_cache = new(StringComparer.OrdinalIgnoreCase);
-		_entries = new();
-
-		if(!string.IsNullOrEmpty(settings))
-			this.OnValueChanged(settings);
+		_entries = new(StringComparer.OrdinalIgnoreCase);
+		base.Value = settings;
 	}
 
 	protected ConnectionSettingsBase(TDriver driver, string name, string settings) : base(name, settings)
 	{
 		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
-		_cache = new(StringComparer.OrdinalIgnoreCase);
-		_entries = new();
+		_entries = new(StringComparer.OrdinalIgnoreCase);
 
 		if(!string.IsNullOrEmpty(settings))
 			this.OnValueChanged(settings);
@@ -71,12 +66,7 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	#endregion
 
 	#region 保护属性
-	protected IDictionary<object, string> Entries => _entries;
-	protected object this[string name]
-	{
-		get => this.GetValue(name);
-		set => this.SetValue(name, value);
-	}
+	protected IDictionary<string, string> Entries => _entries;
 	#endregion
 
 	#region 公共方法
@@ -88,48 +78,75 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	protected bool SetValue<T>(T value, [System.Runtime.CompilerServices.CallerMemberName]string name = null) => this.SetValue<T>(name, value);
 	protected bool SetValue<T>(string name, T value)
 	{
-		if(_driver.SetValue(name, value, _entries))
+		if(_driver.Descriptors.TryGetValue(name, out var descriptor))
+			return this.SetValue(descriptor, value);
+
+		return false;
+	}
+
+	protected virtual bool SetValue<T>(ConnectionSettingDescriptor descriptor, T value)
+	{
+		if(Common.Convert.TryConvertValue<string>(value, () => descriptor.Converter, out var result))
 		{
-			_cache.Remove(name);
+			if(string.IsNullOrEmpty(result))
+				_entries.Remove(descriptor.Name);
+			else
+				_entries[descriptor.Name] = result;
+
+			//更新 Value 属性值
+			this.Value = string.Join(';', _entries.Where(entry => !string.IsNullOrEmpty(entry.Value)).Select(entry => $"{entry.Key}={entry.Value}"));
+
 			return true;
 		}
 
 		return false;
 	}
 
-	protected object GetValue([System.Runtime.CompilerServices.CallerMemberName]string name = null)
+	protected T GetValue<T>([System.Runtime.CompilerServices.CallerMemberName]string name = null)
 	{
-		if(_cache.TryGetValue(name, out var value))
+		if(_driver.Descriptors.TryGetValue(name, out var descriptor))
+			return this.GetValue<T>(descriptor);
+
+		throw new InvalidOperationException($"The setting named '{name}' is illegal in connection Settings of the '{_driver.Name}' driver type.");
+	}
+
+	protected virtual T GetValue<T>(ConnectionSettingDescriptor descriptor)
+	{
+		if(_entries.TryGetValue(descriptor.Name, out var text) && Common.Convert.TryConvertValue<T>(text, () => descriptor.Converter, out var value))
 			return value;
 
-		return _driver.TryGetValue(name, _entries, out value) ? _cache[name] = value : null;
+		return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, () => descriptor.Converter);
 	}
 
-	protected T GetValue<T>([System.Runtime.CompilerServices.CallerMemberName]string name = null) => this.GetValue<T>(name, default);
-	protected T GetValue<T>(string name, T defaultValue = default)
+	protected virtual object GetValue(ConnectionSettingDescriptor descriptor)
 	{
-		if(_cache.TryGetValue(name, out var value))
-			return (T)value;
+		if(_entries.TryGetValue(descriptor.Name, out var text) && Common.Convert.TryConvertValue(text, descriptor.Type, () => descriptor.Converter, out var value))
+			return value;
 
-		var result = _driver.GetValue(name, _entries, defaultValue);
-
-		if(result is not null)
-			_cache[name] = result;
-
-		return result;
+		return Common.Convert.ConvertValue(descriptor.DefaultValue, descriptor.Type, () => descriptor.Converter);
 	}
 
-	protected bool TryGetValue(string name, out object value)
+	internal bool TryGetValue<T>(string name, out T value)
 	{
-		if(_cache.TryGetValue(name, out value))
-			return true;
-
-		if(_driver.TryGetValue(name, _entries, out value))
+		if(_driver.Descriptors.TryGetValue(name, out var descriptor))
 		{
-			_cache[name] = value;
+			value = this.GetValue<T>(descriptor);
 			return true;
 		}
 
+		value = default;
+		return false;
+	}
+
+	internal bool TryGetValue(string name, out object value)
+	{
+		if(_driver.Descriptors.TryGetValue(name, out var descriptor))
+		{
+			value = this.GetValue(descriptor);
+			return true;
+		}
+
+		value = null;
 		return false;
 	}
 	#endregion
@@ -151,11 +168,32 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 			var index = part.IndexOf('=');
 
 			if(index < 0)
-				_entries[part.Trim()] = null;
+			{
+				var key = part.Trim();
+
+				if(_driver.Descriptors.TryGetValue(key, out var descriptor))
+					_entries[descriptor.Name] = null;
+				else
+					_entries[key] = null;
+			}
 			else if(index == part.Length - 1)
-				_entries[part[0..^1].Trim()] = null;
+			{
+				var key = part[0..^1].Trim();
+
+				if(_driver.Descriptors.TryGetValue(key, out var descriptor))
+					_entries[descriptor.Name] = null;
+				else
+					_entries[key] = null;
+			}
 			else if(index > 0 && index < part.Length - 1)
-				_entries[part[..index].Trim()] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
+			{
+				var key = part[..index].Trim();
+
+				if(_driver.Descriptors.TryGetValue(key, out var descriptor))
+					_entries[descriptor.Name] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
+				else
+					_entries[key] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
+			}
 		}
 	}
 	#endregion
@@ -173,241 +211,6 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	#region 枚举遍历
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => ((IEnumerable<KeyValuePair<string, string>>)_entries).GetEnumerator();
-	#endregion
-
-	#region 嵌套子类
-	private sealed class EntryCollection : IDictionary<object, string>, IEnumerable<KeyValuePair<string, string>>
-	{
-		private readonly Dictionary<string, string> _dictionary = new(StringComparer.OrdinalIgnoreCase);
-
-		public string this[object key]
-		{
-			get
-			{
-				if(key == null)
-					throw new ArgumentNullException(nameof(key));
-
-				return key switch
-				{
-					string name => this[name],
-					ConnectionSettingDescriptor descriptor => this[descriptor],
-					_ => throw new ArgumentException($"Unsupported key type: {key.GetType().FullName}.")
-				};
-			}
-			set
-			{
-				if(key == null)
-					throw new ArgumentNullException(nameof(key));
-
-				switch(key)
-				{
-					case string name:
-						this[name] = value;
-						break;
-					case ConnectionSettingDescriptor descriptor:
-						this[descriptor] = value;
-						break;
-					default:
-						throw new ArgumentException($"Unsupported key type: {key.GetType().FullName}.");
-				}
-			}
-		}
-
-		public string this[string key]
-		{
-			get => _dictionary[key];
-			set
-			{
-				if(string.IsNullOrEmpty(key))
-					throw new ArgumentNullException(nameof(key));
-
-				if(string.IsNullOrEmpty(value))
-					_dictionary.Remove(key);
-				else
-					_dictionary[key] = value;
-			}
-		}
-
-		public string this[ConnectionSettingDescriptor key]
-		{
-			get
-			{
-				if(key == null)
-					throw new ArgumentNullException(nameof(key));
-
-				if(_dictionary.TryGetValue(key.Name, out var value))
-					return value;
-
-				if(key.Aliases != null && key.Aliases.Length > 0)
-				{
-					for(int i = 0; i < key.Aliases.Length; i++)
-						_dictionary[key.Aliases[i]] = value;
-				}
-
-				throw new KeyNotFoundException();
-			}
-			set
-			{
-				if(key == null)
-					throw new ArgumentNullException(nameof(key));
-
-				if(string.IsNullOrEmpty(value))
-					_dictionary.Remove(key.Name);
-				else
-					_dictionary[key.Name] = value;
-
-				if(key.Aliases != null && key.Aliases.Length > 0)
-				{
-					for(int i = 0; i < key.Aliases.Length; i++)
-						_dictionary.Remove(key.Aliases[i]);
-				}
-			}
-		}
-
-		public ICollection<object> Keys => [.. _dictionary.Keys];
-		public ICollection<string> Values => _dictionary.Values;
-
-		public int Count => _dictionary.Count;
-		bool ICollection<KeyValuePair<object, string>>.IsReadOnly => false;
-
-		public void Add(object key, string value)
-		{
-			if(key == null)
-				throw new ArgumentNullException(nameof(key));
-
-			switch(key)
-			{
-				case string name:
-					_dictionary.Add(name, value);
-					break;
-				case ConnectionSettingDescriptor descriptor:
-					_dictionary.Add(descriptor.Name, value);
-					break;
-				default:
-					throw new ArgumentException($"Unsupported key type: {key.GetType().FullName}.");
-			}
-		}
-
-		public void Add(string key, string value)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			if(!string.IsNullOrEmpty(value))
-				_dictionary.Add(key, value);
-		}
-
-		public void Add(ConnectionSettingDescriptor key, string value)
-		{
-			if(key == null)
-				throw new ArgumentNullException(nameof(key));
-
-			if(!string.IsNullOrEmpty(value))
-				_dictionary.Add(key.Name, value);
-		}
-
-		void ICollection<KeyValuePair<object, string>>.Add(KeyValuePair<object, string> item) => this.Add(item.Key, item.Value);
-		public void Clear() => _dictionary.Clear();
-		bool ICollection<KeyValuePair<object, string>>.Contains(KeyValuePair<object, string> item) => this.ContainsKey(item.Key);
-		public bool ContainsKey(object key) => key switch
-		{
-			string name => this.Contains(name),
-			ConnectionSettingDescriptor descriptor => this.Contains(descriptor),
-			_ => false,
-		};
-		public bool Contains(string key) => key != null && _dictionary.ContainsKey(key);
-		public bool Contains(ConnectionSettingDescriptor key)
-		{
-			if(key == null)
-				return false;
-
-			if(_dictionary.ContainsKey(key.Name))
-				return true;
-
-			if(key.Aliases != null && key.Aliases.Length > 0)
-			{
-				for(int i = 0; i < key.Aliases.Length; i++)
-				{
-					if(key.Aliases[i] != null && _dictionary.ContainsKey(key.Aliases[i]))
-						return true;
-				}
-			}
-
-			return false;
-		}
-
-		void ICollection<KeyValuePair<object, string>>.CopyTo(KeyValuePair<object, string>[] array, int arrayIndex) => ((ICollection<KeyValuePair<object, string>>)_dictionary).CopyTo(array, arrayIndex);
-		public bool Remove(object key) => key switch
-		{
-			string name => this.Remove(name),
-			ConnectionSettingDescriptor descriptor => this.Remove(descriptor),
-			_ => false,
-		};
-		public bool Remove(string key) => key != null && _dictionary.Remove(key);
-		public bool Remove(ConnectionSettingDescriptor key)
-		{
-			if(key == null)
-				return false;
-
-			var result = _dictionary.Remove(key.Name);
-
-			if(key.Aliases != null && key.Aliases.Length > 0)
-			{
-				for(int i = 0; i < key.Aliases.Length; i++)
-					result |= key.Aliases[i] != null && _dictionary.Remove(key.Aliases[i]);
-			}
-
-			return result;
-		}
-
-		bool ICollection<KeyValuePair<object, string>>.Remove(KeyValuePair<object, string> item) => this.Remove(item.Key);
-		public bool TryGetValue(object key, out string value)
-		{
-			switch(key)
-			{
-				case string name:
-					return this.TryGetValue(name, out value);
-				case ConnectionSettingDescriptor descriptor:
-					return this.TryGetValue(descriptor, out value);
-			}
-
-			value = null;
-			return false;
-		}
-
-		public bool TryGetValue(string key, out string value) => _dictionary.TryGetValue(key, out value);
-		public bool TryGetValue(ConnectionSettingDescriptor key, out string value)
-		{
-			if(key == null)
-			{
-				value = null;
-				return false;
-			}
-
-			if(_dictionary.TryGetValue(key.Name, out value))
-				return true;
-
-			if(key.Aliases != null && key.Aliases.Length > 0)
-			{
-				for(int i = 0; i < key.Aliases.Length; i++)
-				{
-					if(_dictionary.TryGetValue(key.Aliases[i], out value))
-						return true;
-				}
-			}
-
-			value = null;
-			return false;
-		}
-
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		IEnumerator<KeyValuePair<string, string>> IEnumerable<KeyValuePair<string, string>>.GetEnumerator() => _dictionary.GetEnumerator();
-		public IEnumerator<KeyValuePair<object, string>> GetEnumerator()
-		{
-			foreach(var entry in _dictionary)
-				yield return new KeyValuePair<object, string>(entry.Key, entry.Value);
-		}
-	}
 	#endregion
 }
 

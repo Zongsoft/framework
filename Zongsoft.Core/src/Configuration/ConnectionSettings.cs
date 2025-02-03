@@ -28,8 +28,7 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Linq;
 
 namespace Zongsoft.Configuration;
 
@@ -128,31 +127,52 @@ public class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDrive
 	}
 	#endregion
 
-	#region 公共属性
-	[System.Text.Json.Serialization.JsonIgnore]
-	[Zongsoft.Serialization.SerializationMember(Ignored = true)]
-	public new IDictionary<object, string> Entries => base.Entries;
+	#region 索引属性
+	public string this[string name]
+	{
+		get => this.GetValue<string>(name);
+		set => this.SetValue(name, value);
+	}
 	#endregion
 
 	#region 公共方法
-	/// <summary>获取指定设置项的值。</summary>
-	/// <param name="name">指定要获取的设置项名称。</param>
-	/// <param name="value">输出参数，表示获取成功的设置项值。</param>
-	/// <returns>如果获取成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	public new bool TryGetValue(string name, out object value) => base.TryGetValue(name, out value);
+	/// <summary>设置指定设置项的值。</summary>
+	/// <typeparam name="T">泛型参数，表示设置项的类型。</typeparam>
+	/// <param name="name">指定要设置的设置项名称。</param>
+	/// <param name="value">指定要设置的设置项的值。</param>
+	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	public new bool SetValue<T>(string name, T value)
+	{
+		if(base.SetValue(name, value))
+			return true;
+
+		if(Common.Convert.TryConvertValue<string>(value, out var result))
+		{
+			if(string.IsNullOrEmpty(result))
+				base.Entries.Remove(name);
+			else
+				base.Entries[name] = result;
+
+			//更新 Value 属性值
+			this.Value = string.Join(';', base.Entries.Where(entry => !string.IsNullOrEmpty(entry.Value)).Select(entry => $"{entry.Key}={entry.Value}"));
+
+			return true;
+		}
+
+		return false;
+	}
 
 	/// <summary>获取指定设置项的值。</summary>
 	/// <typeparam name="T">泛型参数，表示设置项的类型。</typeparam>
 	/// <param name="name">指定要获取的设置项名称。</param>
 	/// <param name="defaultValue">指定的获取失败的返回值。</param>
 	/// <returns>返回的设置项值，如果获取失败则返回值为<paramref name="defaultValue"/>参数指定的值。</returns>
-	public new T GetValue<T>(string name, T defaultValue = default) => base.GetValue(name, defaultValue);
+	public T GetValue<T>(string name, T defaultValue = default)
+	{
+		if(this.TryGetValue<T>(name, out var value))
+			return value;
 
-	/// <summary>设置指定设置项的值。</summary>
-	/// <typeparam name="T">泛型参数，表示设置项的类型。</typeparam>
-	/// <param name="name">指定要设置的设置项名称。</param>
-	/// <param name="value">指定要设置的设置项的值。</param>
-	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	public new bool SetValue<T>(string name, T value) => base.SetValue(name, value);
+		return base.Entries.TryGetValue(name, out var text) && Common.Convert.TryConvertValue<T>(text, out value) ? value : defaultValue;
+	}
 	#endregion
 }

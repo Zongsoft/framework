@@ -56,21 +56,7 @@ public class Setting : ISetting, IEquatable<Setting>, IEquatable<ISetting>
 	#endregion
 
 	#region 公共属性
-	public string Name
-	{
-		get => _name;
-		set
-		{
-			if(!string.IsNullOrEmpty(_name))
-				throw new InvalidOperationException(Zongsoft.Properties.Resources.Error_RepeatedOperation);
-
-			if(string.IsNullOrWhiteSpace(value))
-				throw new ArgumentNullException();
-
-			_name = value.Trim();
-		}
-	}
-
+	public string Name => _name;
 	public string Value
 	{
 		get => _value;
@@ -78,7 +64,7 @@ public class Setting : ISetting, IEquatable<Setting>, IEquatable<ISetting>
 		{
 			if(!string.Equals(_value, value))
 			{
-				_value = value == null ? null : value.Trim();
+				_value = value?.Trim();
 				this.OnValueChanged(_value);
 			}
 		}

@@ -35,23 +35,17 @@ namespace Zongsoft.Configuration;
 
 public partial class ConnectionSettingsDriver<TSettings> : IConnectionSettingsDriver<TSettings>, IEquatable<IConnectionSettingsDriver>, IEquatable<IConnectionSettingsDriver<TSettings>> where TSettings : IConnectionSettings
 {
-	#region 静态构造
-	static ConnectionSettingsDriver()
+	#region 构造函数
+	internal ConnectionSettingsDriver()
 	{
-		Descriptors = new();
+		this.Name = string.Empty;
+		this.Descriptors = new();
 
 		var properties = typeof(TSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
 		for(int i = 0; i < properties.Length; i++)
-			Descriptors.Add(properties[i]);
+			this.Descriptors.Add(properties[i]);
 	}
-	#endregion
 
-	#region 静态属性
-	public static ConnectionSettingDescriptorCollection Descriptors { get; }
-	#endregion
-
-	#region 构造函数
-	internal ConnectionSettingsDriver() => this.Name = string.Empty;
 	protected ConnectionSettingsDriver(string name, string description = null)
 	{
 		if(string.IsNullOrEmpty(name))
@@ -59,37 +53,24 @@ public partial class ConnectionSettingsDriver<TSettings> : IConnectionSettingsDr
 
 		this.Name = name;
 		this.Description = description;
+		this.Descriptors = new();
+
+		var properties = typeof(TSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+		for(int i = 0; i < properties.Length; i++)
+			this.Descriptors.Add(properties[i]);
+
 	}
 	#endregion
 
 	#region 公共属性
 	public string Name { get; }
 	public string Description { get; }
-	#endregion
-
-	#region 保护属性
-	private MapperBase _mapper;
-	protected MapperBase Mapper
-	{
-		get => _mapper ??= new DefaultMapper(this);
-		init => _mapper = value;
-	}
+	public ConnectionSettingDescriptorCollection Descriptors { get; }
 	#endregion
 
 	#region 公共方法
 	public virtual TSettings GetSettings(string connectionString) => (TSettings)Activator.CreateInstance(typeof(TSettings), this, connectionString);
-	public virtual bool TryGetValue(string name, IDictionary<object, string> entries, out object value) => this.Mapper.Map(name, entries, out value);
-	public virtual T GetValue<T>(string name, IDictionary<object, string> entries, T defaultValue = default) => this.Mapper.Map(name, entries, out var value) && Common.Convert.TryConvertValue<T>(value, out var result) ? result : defaultValue;
-	public virtual bool SetValue<T>(string name, T value, IDictionary<object, string> entries)
-	{
-		var text = this.Mapper.Map(name, value, entries);
-
-		if(string.IsNullOrEmpty(text))
-			return entries.Remove(name);
-
-		entries[name] = text;
-		return true;
-	}
+	public virtual TSettings GetSettings(string name, string connectionString) => (TSettings)Activator.CreateInstance(typeof(TSettings), this, name, connectionString);
 	#endregion
 
 	#region 重写方法
@@ -114,33 +95,5 @@ public class ConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSetti
 	#region 重写方法
 	bool IConnectionSettingsDriver.IsDriver(string name) => string.IsNullOrEmpty(name);
 	public override ConnectionSettings GetSettings(string connectionString) => new(connectionString);
-	public override bool TryGetValue(string name, IDictionary<object, string> values, out object value)
-	{
-		if(values.TryGetValue(name, out var text))
-		{
-			value = text;
-			return true;
-		}
-
-		value = null;
-		return false;
-	}
-	public override T GetValue<T>(string name, IDictionary<object, string> values, T defaultValue)
-	{
-		return values.TryGetValue(name, out var text) ? Common.Convert.ConvertValue(text, defaultValue) : defaultValue;
-	}
-	public override bool SetValue<T>(string name, T value, IDictionary<object, string> values)
-	{
-		if(value is null)
-			return values.Remove(name);
-
-		if(Common.Convert.TryConvertValue<string>(value, out var text))
-		{
-			values[name] = text;
-			return true;
-		}
-
-		return false;
-	}
 	#endregion
 }
