@@ -33,20 +33,19 @@ using System.Threading.Tasks;
 
 using Zongsoft.Messaging;
 using Zongsoft.Components;
-using Zongsoft.Configuration;
 
 using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis.Messaging
 {
-	public class RedisQueue : MessageQueueBase<RedisSubscriber>
+	public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisConnectionSettings>
 	{
 		#region 成员字段
 		private IDatabase _database;
 		#endregion
 
 		#region 构造函数
-		public RedisQueue(string name, IDatabase database, IConnectionSettings settings = null) : base(name, settings)
+		public RedisQueue(string name, IDatabase database, Configuration.RedisConnectionSettings settings = null) : base(name, settings)
 		{
 			_database = database ?? throw new ArgumentNullException(nameof(database));
 		}

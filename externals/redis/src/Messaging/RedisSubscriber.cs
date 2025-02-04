@@ -35,6 +35,7 @@ using System.Threading.Tasks;
 using Zongsoft.Common;
 using Zongsoft.Messaging;
 using Zongsoft.Components;
+using Zongsoft.Configuration;
 
 using StackExchange.Redis;
 
@@ -72,13 +73,13 @@ namespace Zongsoft.Externals.Redis.Messaging
 		#region 构造函数
 		public RedisSubscriber(RedisQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
 		{
-			_group = queue.ConnectionSettings.Group;
-			_client = string.IsNullOrWhiteSpace(queue.ConnectionSettings.Client) ? "C" + Randomizer.GenerateString() : queue.ConnectionSettings.Client;
+			_group = queue.Settings.Group;
+			_client = string.IsNullOrWhiteSpace(queue.Settings.Client) ? "C" + Randomizer.GenerateString() : queue.Settings.Client;
 			_poller = new Poller(this);
 
 			//初始化属性值
-			this.Deadline = queue.ConnectionSettings.GetValue(nameof(Deadline), 10000);
-			this.IdleTimeout = queue.ConnectionSettings.GetValue(nameof(IdleTimeout), TimeSpan.FromSeconds(30));
+			this.Deadline = queue.Settings.GetValue(nameof(Deadline), 10000);
+			this.IdleTimeout = queue.Settings.GetValue(nameof(IdleTimeout), TimeSpan.FromSeconds(30));
 		}
 		#endregion
 

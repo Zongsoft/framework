@@ -9,33 +9,42 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2021 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Messaging.Mqtt library.
+ * This file is part of Zongsoft.Messaging.ZeroMQ library.
  *
- * The Zongsoft.Messaging.Mqtt is free software: you can redistribute it and/or modify
+ * The Zongsoft.Messaging.ZeroMQ is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Messaging.Mqtt is distributed in the hope that it will be useful,
+ * The Zongsoft.Messaging.ZeroMQ is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Messaging.Mqtt library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Messaging.ZeroMQ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Messaging.Mqtt
+namespace Zongsoft.Messaging.ZeroMQ.Configuration;
+
+public sealed class ZeroConnectionSettingsDriver : ConnectionSettingsDriver<ZeroConnectionSettings>
 {
-	[Service(typeof(IMessageQueueProvider))]
-	public class MqttQueueProvider() : MessageQueueProviderBase<MqttQueue, Configuration.MqttConnectionSettings>(Configuration.MqttConnectionSettingsDriver.NAME)
-	{
-	}
+	#region 常量定义
+	internal const string NAME = "ZeroMQ";
+	#endregion
+
+	#region 单例字段
+	public static readonly ZeroConnectionSettingsDriver Instance = new();
+	#endregion
+
+	#region 私有构造
+	private ZeroConnectionSettingsDriver() : base(NAME) { }
+	#endregion
 }

@@ -28,13 +28,10 @@
  */
 
 using System;
-using System.Linq;
 using System.Text;
-using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 using Zongsoft.Common;
 using Zongsoft.Components;
@@ -48,7 +45,7 @@ using MQTTnet.Extensions.ManagedClient;
 
 namespace Zongsoft.Messaging.Mqtt
 {
-	public class MqttQueue : MessageQueueBase<MqttSubscriber>
+	public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConnectionSettings>
 	{
 		#region 工厂字段
 		private static readonly MqttFactory Factory = new();
@@ -62,10 +59,10 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 构造函数
-		public MqttQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
+		public MqttQueue(string name, Configuration.MqttConnectionSettings settings) : base(name, settings)
 		{
 			_client = Factory.CreateMqttClient();
-			_options = MqttUtility.GetOptions(connectionSettings);
+			_options = settings.GetOptions();
 			_semaphore = new AutoResetEvent(true);
 
 			//挂载消息接收事件
@@ -286,8 +283,8 @@ namespace Zongsoft.Messaging.Mqtt
 		#region 重写方法
 		public override string ToString()
 		{
-			var settings = this.ConnectionSettings;
-			return settings == null ? this.Name : $"{this.Name}{Environment.NewLine}Server={settings.Server};Instance={settings.Instance};Client={settings.Client}";
+			var settings = this.Settings;
+			return settings == null ? this.Name : $"{this.Name}{Environment.NewLine}Server={settings.Server};Client={settings.Client}";
 		}
 		#endregion
 

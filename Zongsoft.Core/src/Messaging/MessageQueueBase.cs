@@ -156,6 +156,10 @@ namespace Zongsoft.Messaging
 		protected virtual void OnUnsubscribed(TSubscriber subscriber) { }
 		#endregion
 
+		#region 重写方法
+		public override string ToString() => $"[{this.GetType().Name}]{this.Name}";
+		#endregion
+
 		#region 资源释放
 		public void Dispose()
 		{
@@ -221,6 +225,14 @@ namespace Zongsoft.Messaging
 		where TSubscriber : IMessageConsumer
 		where TSettings : IMessageQueueSettings
 	{
+		#region 公共属性
 		public TSettings Settings { get; set; } = settings;
+		#endregion
+
+		#region 重写方法
+		public override string ToString() => this.Settings is null ?
+			$"[{this.GetType().Name}]{this.Name}" :
+			$"[{this.GetType().Name}]{this.Name}({this.Settings.Value})";
+		#endregion
 	}
 }

@@ -40,7 +40,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
+public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configuration.ZeroConnectionSettings>
 {
 	#region 私有变量
 	private ushort _publisherPort;
@@ -57,20 +57,20 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	#endregion
 
 	#region 构造函数
-	public ZeroQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
+	public ZeroQueue(string name, Configuration.ZeroConnectionSettings settings) : base(name, settings)
 	{
-		if(connectionSettings == null)
-			throw new ArgumentNullException(nameof(connectionSettings));
+		if(settings == null)
+			throw new ArgumentNullException(nameof(settings));
 
-		if(string.IsNullOrEmpty(connectionSettings.Server))
+		if(string.IsNullOrEmpty(settings.Server))
 			throw new ArgumentException($"The required server address is missing in the connection settings.");
 
 		//如果未指定远程队列服务器端口号则设置默认端口号
-		if(connectionSettings.Port == 0)
-			connectionSettings.Port = ZeroQueueServer.PORT;
+		if(settings.Port == 0)
+			settings.Port = ZeroQueueServer.PORT;
 
 		//生成当前消息队列的唯一标识
-		this.Identifier = GenerateIdentifier(connectionSettings);
+		this.Identifier = GenerateIdentifier(settings);
 
 		_locker = new();
 		_queue = new NetMQQueue<Packet>();
@@ -78,12 +78,9 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		_poller = new NetMQPoller() { _queue };
 
 		//如果没有指定心跳间隔则默认为心跳时间为10秒，如果显式指定了心跳间隔小于等于零则表示不启用心跳
-		var heartbeat = connectionSettings.GetValue("heartbeat", TimeSpan.FromSeconds(10));
-		{
-			_timer = new NetMQTimer(heartbeat > TimeSpan.Zero ? heartbeat : TimeSpan.FromSeconds(10));
-			_timer.Elapsed += this.OnElapsed;
-			_poller.Add(_timer);
-		}
+		_timer = new NetMQTimer(settings.Heartbeat > TimeSpan.Zero ? settings.Heartbeat : TimeSpan.FromSeconds(10));
+		_timer.Elapsed += this.OnElapsed;
+		_poller.Add(_timer);
 	}
 	#endregion
 
@@ -104,7 +101,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		this.Initialize();
 
 		//执行网络订阅方法
-		var channel = subscriber.Subscribe(ZeroUtility.GetTcpAddress(this.ConnectionSettings.Server, _publisherPort));
+		var channel = subscriber.Subscribe(ZeroUtility.GetTcpAddress(this.Settings.Server, _publisherPort));
 
 		//将订阅成功的网络通道加入到轮询器中
 		if(channel != null)
@@ -184,8 +181,8 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 	/// <summary>获取要发送和订阅的消息主题。</summary>
 	/// <param name="topic">指定的原始主题。</param>
 	/// <returns>返回处理过的消息主题。</returns>
-	internal string GetTopic(string topic) => string.IsNullOrEmpty(this.ConnectionSettings.Group) ?
-		(topic == "*" ? string.Empty : topic) : $"{this.ConnectionSettings.Group}:{(topic == "*" ? string.Empty : topic)}";
+	internal string GetTopic(string topic) => string.IsNullOrEmpty(this.Settings.Group) ?
+		(topic == "*" ? string.Empty : topic) : $"{this.Settings.Group}:{(topic == "*" ? string.Empty : topic)}";
 	#endregion
 
 	#region 私有方法
@@ -200,18 +197,18 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 				return;
 
 			//获取队列交换器的发布和订阅端口号
-			(_publisherPort, _subscriberPort) = GetPorts(this.ConnectionSettings);
+			(_publisherPort, _subscriberPort) = GetPorts(this.Settings);
 
 			//如果队列交换器的端口信息获取失败则抛出异常
 			if(_publisherPort == 0 || _subscriberPort == 0)
-				throw new InvalidOperationException($"Failed to acquire queue exchange information from the '{this.ConnectionSettings.Server}:{this.ConnectionSettings.Port}' server.");
+				throw new InvalidOperationException($"Failed to acquire queue exchange information from the '{this.Settings.Server}:{this.Settings.Port}' server.");
 
 			//创建一个发布者套接字
 			var publisher = new PublisherSocket();
 
 			publisher.Options.SendHighWatermark = 1000;
 			publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
-			publisher.Connect(ZeroUtility.GetTcpAddress(this.ConnectionSettings.Server, _subscriberPort));
+			publisher.Connect(ZeroUtility.GetTcpAddress(this.Settings.Server, _subscriberPort));
 
 			//将已经连接就绪的发布者保存
 			_publisher = publisher;
@@ -221,7 +218,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 				_poller.RunAsync();
 		}
 
-		static (ushort publisherPort, ushort subscriberPort) GetPorts(IConnectionSettings settings)
+		static (ushort publisherPort, ushort subscriberPort) GetPorts(Configuration.ZeroConnectionSettings settings)
 		{
 			using var requester = new RequestSocket(ZeroUtility.GetTcpAddress(settings.Server, settings.Port));
 
@@ -273,15 +270,12 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber>
 		}
 	}
 
-	private static string GenerateIdentifier(IConnectionSettings connectionSettings)
+	private static string GenerateIdentifier(Configuration.ZeroConnectionSettings settings)
 	{
-		if(connectionSettings == null)
+		if(string.IsNullOrEmpty(settings?.Client))
 			return Randomizer.GenerateString(10);
-
-		if(string.IsNullOrEmpty(connectionSettings.Client))
-			return string.IsNullOrEmpty(connectionSettings.Instance) ? Randomizer.GenerateString(10) : $"{connectionSettings.Instance}-{Randomizer.GenerateInt32():X}";
 		else
-			return string.IsNullOrEmpty(connectionSettings.Instance) ? $"{connectionSettings.Client}-{Randomizer.GenerateInt32():X}" : $"{connectionSettings.Client}:{connectionSettings.Instance}-{Randomizer.GenerateInt32():X}";
+			return $"{settings.Client}-{Math.Abs(Randomizer.GenerateInt32()):X}";
 	}
 	#endregion
 

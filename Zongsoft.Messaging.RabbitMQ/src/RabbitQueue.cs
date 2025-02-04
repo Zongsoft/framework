@@ -40,7 +40,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.RabbitMQ;
 
-public class RabbitQueue : MessageQueueBase<RabbitSubscriber>
+public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.RabbitConnectionSettings>
 {
 	#region 常量定义
 	internal const string NAME = "RabbitMQ";
@@ -53,22 +53,22 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber>
 	#endregion
 
 	#region 构造函数
-	public RabbitQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
+	public RabbitQueue(string name, Configuration.RabbitConnectionSettings settings) : base(name, settings)
 	{
-		_connectionFactory = Configuration.RabbitConnectionSettingsDriver.Instance.GetOptions(connectionSettings);
+		_connectionFactory = settings.GetOptions();
 	}
 	#endregion
 
 	#region 公共属性
-	internal string Exchanger => string.IsNullOrEmpty(this.ConnectionSettings.Group) ? "/" : this.ConnectionSettings.Group;
+	internal string Exchanger => string.IsNullOrEmpty(this.Settings.Group) ? "/" : this.Settings.Group;
 	internal string QueueName
 	{
 		get
 		{
-			if(this.ConnectionSettings.TryGetValue("Queue", out var value) && value != null)
-				return value.ToString();
+			if(!string.IsNullOrEmpty(this.Settings.Queue))
+				return this.Settings.Queue;
 
-			return string.IsNullOrEmpty(this.ConnectionSettings.Name) ? this.Name : this.ConnectionSettings.Name;
+			return string.IsNullOrEmpty(this.Settings.Name) ? this.Name : this.Settings.Name;
 		}
 	}
 	#endregion

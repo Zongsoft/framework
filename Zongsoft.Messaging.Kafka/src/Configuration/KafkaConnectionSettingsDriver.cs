@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.Kafka library.
  *
@@ -29,13 +29,19 @@
 
 using System;
 
-using Zongsoft.Services;
-using Zongsoft.Configuration;
+namespace Zongsoft.Messaging.Kafka.Configuration;
 
-namespace Zongsoft.Messaging.Kafka;
-
-[Service<IMessageQueueFactory>]
-public sealed class KafkaQueueFactory() : MessageQueueFactoryBase(Configuration.KafkaConnectionSettingsDriver.NAME)
+public sealed class KafkaConnectionSettingsDriver : Zongsoft.Configuration.ConnectionSettingsDriver<KafkaConnectionSettings>
 {
-	public override IMessageQueue Create(IMessageQueueSettings settings) => new KafkaQueue(string.Empty, settings as Configuration.KafkaConnectionSettings);
+	#region 常量定义
+	internal const string NAME = "Kafka";
+	#endregion
+
+	#region 单例字段
+	public static readonly KafkaConnectionSettingsDriver Instance = new();
+	#endregion
+
+	#region 私有构造
+	private KafkaConnectionSettingsDriver() : base(NAME) { }
+	#endregion
 }

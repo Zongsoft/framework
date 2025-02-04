@@ -28,44 +28,15 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-[Service<IMessageQueueProvider, IServiceProvider<IMessageQueue>>("ZeroMQ")]
-public class ZeroQueueProvider : MessageQueueProviderBase, IServiceProvider<IMessageQueue>
+[Service<IMessageQueueProvider, IServiceProvider<IMessageQueue>>(Configuration.ZeroConnectionSettingsDriver.NAME)]
+public class ZeroQueueProvider() : MessageQueueProviderBase<ZeroQueue, Configuration.ZeroConnectionSettings>(Configuration.ZeroConnectionSettingsDriver.NAME), IServiceProvider<IMessageQueue>
 {
-	#region 构造函数
-	public ZeroQueueProvider() : base("ZeroMQ") { }
-	#endregion
-
-	#region 重写方法
-	public override bool Exists(string name)
-	{
-		var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingsCollection>("/Messaging/ConnectionSettings");
-		return connectionSettings != null && connectionSettings.Contains(name, this.Name);
-	}
-
-	protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
-	{
-		var connectionSetting = ApplicationContext.Current?.Configuration.GetConnectionSettings("/Messaging/ConnectionSettings", name, this.Name);
-		if(connectionSetting == null)
-			throw new ConfigurationException($"The specified {this.Name} message queue connection setting named '{name}' was not found.");
-
-		if(settings != null)
-		{
-			foreach(var setting in settings)
-				connectionSetting.Properties[setting.Key] = setting.Value;
-		}
-
-		return new ZeroQueue(name, connectionSetting);
-	}
-	#endregion
-
 	#region 显式实现
 	IMessageQueue IServiceProvider<IMessageQueue>.GetService(string name) => this.Queue(name);
 	#endregion

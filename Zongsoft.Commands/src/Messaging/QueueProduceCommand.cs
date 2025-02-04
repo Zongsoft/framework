@@ -253,7 +253,7 @@ namespace Zongsoft.Messaging.Commands
 		public enum ContentType
 		{
 			String,
-			[Zongsoft.ComponentModel.Alias("int")]
+			[Components.Alias("int")]
 			Integer,
 			Short,
 			Long,

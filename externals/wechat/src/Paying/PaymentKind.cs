@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
@@ -38,7 +37,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 	public enum PaymentKind
 	{
 		/// <summary>公众号支付</summary>
-		[Zongsoft.ComponentModel.Alias("JSAPI")]
+		[Components.Alias("JSAPI")]
 		Web,
 
 		/// <summary>扫码支付</summary>
@@ -48,15 +47,15 @@ namespace Zongsoft.Externals.Wechat.Paying
 		App,
 
 		/// <summary>付款码支付</summary>
-		[Zongsoft.ComponentModel.Alias("MICROPAY")]
+		[Components.Alias("MICROPAY")]
 		Paycode,
 
 		/// <summary>H5支付</summary>
-		[Zongsoft.ComponentModel.Alias("MWEB")]
+		[Components.Alias("MWEB")]
 		Mobile,
 
 		/// <summary>刷脸支付</summary>
-		[Zongsoft.ComponentModel.Alias("FACEPAY")]
+		[Components.Alias("FACEPAY")]
 		Facepay,
 	}
 }

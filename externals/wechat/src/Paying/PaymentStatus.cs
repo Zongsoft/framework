@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Externals.Wechat.Paying
 {
@@ -38,31 +37,31 @@ namespace Zongsoft.Externals.Wechat.Paying
 	public enum PaymentStatus
 	{
 		/// <summary>未支付</summary>
-		[Zongsoft.ComponentModel.Alias("NotPay")]
+		[Components.Alias("NotPay")]
 		None,
 
 		/// <summary>支付成功</summary>
-		[Zongsoft.ComponentModel.Alias("Success")]
+		[Components.Alias("Success")]
 		Succeed,
 
 		/// <summary>转入退款</summary>
-		[Zongsoft.ComponentModel.Alias("Refund")]
+		[Components.Alias("Refund")]
 		Refund,
 
 		/// <summary>已关闭</summary>
-		[Zongsoft.ComponentModel.Alias("Closed")]
+		[Components.Alias("Closed")]
 		Cancelled,
 
 		/// <summary>已撤销（仅付款码支付会返回）</summary>
-		[Zongsoft.ComponentModel.Alias("Revoked")]
+		[Components.Alias("Revoked")]
 		Revoked,
 
 		/// <summary>用户支付中（仅付款码支付会返回）</summary>
-		[Zongsoft.ComponentModel.Alias("UserPaying")]
+		[Components.Alias("UserPaying")]
 		Paying,
 
 		/// <summary>支付失败（仅付款码支付会返回）</summary>
-		[Zongsoft.ComponentModel.Alias("PayError")]
+		[Components.Alias("PayError")]
 		Failed,
 	}
 }

@@ -40,35 +40,15 @@ using StackExchange.Redis;
 namespace Zongsoft.Externals.Redis.Messaging
 {
 	[Service(typeof(IMessageQueueProvider))]
-	public class RedisQueueProvider : MessageQueueProviderBase
+	public class RedisQueueProvider() : MessageQueueProviderBase<RedisQueue, Configuration.RedisConnectionSettings>(Configuration.RedisConnectionSettingsDriver.NAME)
 	{
-		#region 构造函数
-		public RedisQueueProvider() : base("Redis") { }
-		#endregion
-
 		#region 重写方法
-		public override bool Exists(string name)
-		{
-			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingsCollection>("/Messaging/ConnectionSettings");
-			return connectionSettings != null && connectionSettings.Contains(name, this.Name);
-		}
-
 		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
 		{
-			var connectionSettings = ApplicationContext.Current?.Configuration.GetConnectionSettings("/Messaging/ConnectionSettings", name, this.Name);
-			if(connectionSettings == null)
-				throw new ConfigurationException($"The specified {this.Name} message queue connection settings named '{name}' was not found.");
-
-			if(settings != null)
-			{
-				foreach(var setting in settings)
-					connectionSettings.Properties[setting.Key] = setting.Value;
-			}
-
+			var connectionSettings = this.GetSettings<Configuration.RedisConnectionSettings>(name, settings);
 			var options = connectionSettings.GetOptions<ConfigurationOptions>();
 			var connection = ConnectionMultiplexer.Connect(options);
 			var database = connection.GetDatabase();
-
 			return new RedisQueue(name, database, connectionSettings);
 		}
 		#endregion

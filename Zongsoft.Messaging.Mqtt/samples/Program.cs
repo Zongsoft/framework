@@ -9,7 +9,7 @@ internal class Program
 {
 	static void Main(string[] args)
 	{
-		var queue = new MqttQueue("MQTT", new Zongsoft.Configuration.ConnectionSettings("Mqtt", $"server=192.168.2.200;username=program;password=xxxxxx;"));
+		var queue = new MqttQueue("MQTT", Configuration.MqttConnectionSettingsDriver.Instance.GetSettings("Mqtt", $"server=192.168.2.200;username=program;password=xxxxxx;"));
 
 		Parallel.For(0, 100, async index =>
 		{

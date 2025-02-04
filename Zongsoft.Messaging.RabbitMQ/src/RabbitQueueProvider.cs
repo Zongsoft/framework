@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
@@ -37,28 +35,6 @@ using Zongsoft.Configuration;
 namespace Zongsoft.Messaging.RabbitMQ;
 
 [Service(typeof(IMessageQueueProvider))]
-public class RabbitQueueProvider() : MessageQueueProviderBase(RabbitQueue.NAME)
+public class RabbitQueueProvider() : MessageQueueProviderBase<RabbitQueue, Configuration.RabbitConnectionSettings>(RabbitQueue.NAME)
 {
-	#region 重写方法
-	public override bool Exists(string name)
-	{
-		var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingsCollection>("/Messaging/ConnectionSettings");
-		return connectionSettings != null && connectionSettings.Contains(name, this.Name);
-	}
-
-	protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
-	{
-		var connectionSettings = ApplicationContext.Current?.Configuration.GetConnectionSettings("/Messaging/ConnectionSettings", name, this.Name);
-		if(connectionSettings == null)
-			throw new ConfigurationException($"The specified {this.Name} message queue connection setting named '{name}' was not found.");
-
-		if(settings != null)
-		{
-			foreach(var setting in settings)
-				connectionSettings.Properties[setting.Key] = setting.Value;
-		}
-
-		return new RabbitQueue(name, connectionSettings);
-	}
-	#endregion
 }

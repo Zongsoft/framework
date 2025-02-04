@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Aliyun library.
  *
@@ -28,77 +28,22 @@
  */
 
 using System;
-using System.Text;
-using System.Collections.Generic;
 
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt
+namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt;
+
+public sealed class MqttConnectionSettingsDriver : ConnectionSettingsDriver<MqttConnectionSettings>
 {
-	public sealed class MqttConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSettingDescriptorCollection>
-	{
-		#region 单例字段
-		public static readonly MqttConnectionSettingsDriver Instance = new();
-		#endregion
+	#region 常量定义
+	public const string NAME = "Aliyun.Mqtt";
+	#endregion
 
-		#region 私有构造
-		private MqttConnectionSettingsDriver() : base("Aliyun.Mqtt")
-		{
-			this.Mapper = new MqttMapper(this);
-		}
-		#endregion
+	#region 单例字段
+	public static readonly MqttConnectionSettingsDriver Instance = new();
+	#endregion
 
-		#region 嵌套子类
-		private sealed class MqttMapper(MqttConnectionSettingsDriver driver) : MapperBase(driver)
-		{
-			#region 重写方法
-			protected override bool OnMap(ConnectionSettingDescriptor descriptor, IDictionary<object, string> values, out object value)
-			{
-				if(ConnectionSettingDescriptor.Client.Equals(descriptor))
-					return Common.Convert.TryConvertValue(GetClient(values), out value);
-				if(ConnectionSettingDescriptor.UserName.Equals(descriptor))
-					return Common.Convert.TryConvertValue(GetUserName(values), out value);
-				if(ConnectionSettingDescriptor.Password.Equals(descriptor))
-					return Common.Convert.TryConvertValue(GetPassword(values), out value);
-
-				return base.OnMap(descriptor, values, out value);
-			}
-			#endregion
-
-			#region 私有方法
-			private static string GetClient(IDictionary<object, string> values)
-			{
-				if(values.TryGetValue(nameof(IConnectionSettings.Client), out var client) && !string.IsNullOrWhiteSpace(client))
-					return client;
-
-				if(values.TryGetValue(nameof(IConnectionSettings.Group), out var group) && !string.IsNullOrWhiteSpace(group))
-					return values[nameof(IConnectionSettings.Client)] = group + "@@@" + Zongsoft.Common.Randomizer.GenerateString();
-
-				return null;
-			}
-
-			private static string GetUserName(IDictionary<object, string> values) =>
-				values.TryGetValue(nameof(IConnectionSettings.UserName), out var identity) &&
-				values.TryGetValue(nameof(IConnectionSettings.Instance), out var instance) ?
-				$"Signature|{identity}|{instance}" : null;
-
-			private static string GetPassword(IDictionary<object, string> values)
-			{
-				if(!values.TryGetValue(nameof(IConnectionSettings.Password), out var password) || string.IsNullOrEmpty(password))
-					return null;
-
-				var client = GetClient(values);
-				if(string.IsNullOrEmpty(client))
-					return null;
-
-				using(var encipher = new System.Security.Cryptography.HMACSHA1(Encoding.UTF8.GetBytes(password)))
-				{
-					var data = Encoding.UTF8.GetBytes(client);
-					return Convert.ToBase64String(encipher.ComputeHash(data));
-				}
-			}
-			#endregion
-		}
-		#endregion
-	}
+	#region 私有构造
+	private MqttConnectionSettingsDriver() : base(NAME) { }
+	#endregion
 }

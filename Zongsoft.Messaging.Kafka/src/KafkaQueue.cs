@@ -38,7 +38,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.Kafka
 {
-	public class KafkaQueue : MessageQueueBase<KafkaSubscriber>
+	public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaConnectionSettings>
 	{
 		#region 成员字段
 		private IProducer<Null, byte[]> _producer;
@@ -46,10 +46,10 @@ namespace Zongsoft.Messaging.Kafka
 		#endregion
 
 		#region 构造函数
-		public KafkaQueue(string name, IConnectionSettings connectionSettings) : base(name, connectionSettings)
+		public KafkaQueue(string name, Configuration.KafkaConnectionSettings settings) : base(name, settings)
 		{
-			_producer = new ProducerBuilder<Null, byte[]>(KafkaUtility.GetProducerOptions(connectionSettings)).Build();
-			_builder = new ConsumerBuilder<string, byte[]>(KafkaUtility.GetConsumerOptions(this.ConnectionSettings));
+			_producer = new ProducerBuilder<Null, byte[]>(settings.GetProducerOptions()).Build();
+			_builder = new ConsumerBuilder<string, byte[]>(settings.GetConsumerOptions());
 		}
 		#endregion
 

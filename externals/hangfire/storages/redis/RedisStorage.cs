@@ -72,7 +72,7 @@ namespace Zongsoft.Externals.Hangfire.Storages
 		#endregion
 
 		#region 私有方法
-		private static ConnectionSettings GetConnectionSetting(ConnectionSettingsCollection settings)
+		private static IConnectionSettings GetConnectionSetting(ConnectionSettingsCollection settings)
 		{
 			if(settings == null || settings.Count == 0)
 				return null;
@@ -89,7 +89,7 @@ namespace Zongsoft.Externals.Hangfire.Storages
 
 		private static StackExchange.Redis.ConnectionMultiplexer GetRedisConnection() => GetRedisConnection(GetConnectionSetting(ApplicationContext.Current?.Configuration?.GetOption<ConnectionSettingsCollection>("/Externals/Redis/ConnectionSettings")));
 		private static StackExchange.Redis.ConnectionMultiplexer GetRedisConnection(IConnectionSettings settings) => StackExchange.Redis.ConnectionMultiplexer.Connect(GetRedisConfiguration(settings));
-		private static StackExchange.Redis.ConfigurationOptions GetRedisConfiguration(IConnectionSettings settings) => settings?.GetOptions() as StackExchange.Redis.ConfigurationOptions;
+		private static StackExchange.Redis.ConfigurationOptions GetRedisConfiguration(IConnectionSettings settings) => settings?.GetOptions<StackExchange.Redis.ConfigurationOptions>();
 		#endregion
 
 		#region 重写方法

@@ -96,7 +96,7 @@ namespace Zongsoft.Externals.Redis
 				throw new ArgumentNullException(nameof(connectionString));
 
 			_name = name.Trim();
-			_settings = Configuration.RedisConnectionSettingsDriver.Instance.Create(connectionString);
+			_settings = Configuration.RedisConnectionSettingsDriver.Instance.GetSettings(connectionString);
 		}
 		#endregion
 
@@ -110,7 +110,7 @@ namespace Zongsoft.Externals.Redis
 
 		public int DatabaseId => _database?.Database ?? -1;
 		public IConnectionSettings Settings => _settings ??= ApplicationContext.Current?.Configuration.GetConnectionSettings("/Externals/Redis/ConnectionSettings", _name, "redis");
-		public ConfigurationOptions Options => _options ??= this.Settings?.GetOptions() as ConfigurationOptions;
+		public ConfigurationOptions Options => _options ??= this.Settings?.GetOptions<ConfigurationOptions>();
 		#endregion
 
 		#region 内部属性

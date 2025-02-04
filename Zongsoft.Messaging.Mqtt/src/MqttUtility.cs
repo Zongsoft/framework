@@ -44,28 +44,5 @@ namespace Zongsoft.Messaging.Mqtt
 			MessageReliability.ExactlyOnce => MqttQualityOfServiceLevel.ExactlyOnce,
 			_ => MqttQualityOfServiceLevel.AtMostOnce,
 		};
-
-		public static MqttClientOptions GetOptions(Zongsoft.Configuration.IConnectionSettings settings)
-		{
-			if(settings == null)
-				throw new ArgumentNullException(nameof(settings));
-
-			var clientId = settings.Client;
-
-			//确保ClientId不为空
-			if(string.IsNullOrWhiteSpace(clientId))
-				clientId = 'C' + Zongsoft.Common.Randomizer.GenerateString();
-
-			return new MqttClientOptionsBuilder()
-				.WithClientId(clientId)
-				.WithCleanSession(false)
-				.WithCleanStart(false)
-				.WithSessionExpiryInterval(ushort.MaxValue)
-				.WithTcpServer(settings.Server, settings.Port > 0 ? settings.Port : null)
-				.WithKeepAlivePeriod(TimeSpan.FromSeconds(30))
-				.WithCredentials(settings.UserName, settings.Password)
-				.WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
-				.Build();
-		}
 	}
 }

@@ -91,7 +91,7 @@ namespace Zongsoft.Messaging.Commands
 			if(this.Queue == null)
 				context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoQueue);
 			else
-				context.Output.WriteLine(CommandOutletColor.Green, this.Queue.ConnectionSettings);
+				context.Output.WriteLine(CommandOutletColor.Green, this.Queue.ToString());
 
 			return this.Queue;
 		}

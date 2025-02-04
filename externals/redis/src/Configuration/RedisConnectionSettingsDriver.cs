@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -29,83 +29,22 @@
 
 using System;
 
-using StackExchange.Redis;
-
 using Zongsoft.Common;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Externals.Redis.Configuration
+namespace Zongsoft.Externals.Redis.Configuration;
+
+public sealed class RedisConnectionSettingsDriver : ConnectionSettingsDriver<RedisConnectionSettings>
 {
-	public sealed class RedisConnectionSettingsDriver : ConnectionSettingsDriver<ConfigurationOptions, RedisConnectionSettingDescriptorCollection>
-	{
-		#region 常量定义
-		internal const string NAME = "Redis";
-		#endregion
+	#region 常量定义
+	internal const string NAME = "Redis";
+	#endregion
 
-		#region 单例字段
-		public static readonly RedisConnectionSettingsDriver Instance = new();
-		#endregion
+	#region 单例字段
+	public static readonly RedisConnectionSettingsDriver Instance = new();
+	#endregion
 
-		#region 构造函数
-		public RedisConnectionSettingsDriver() : base(NAME)
-		{
-			this.Mapper = new RedisMapper(this);
-			this.Populator = new RedisPopulator(this);
-		}
-		#endregion
-
-		#region 嵌套子类
-		private sealed class RedisMapper(RedisConnectionSettingsDriver driver) : MapperBase(driver)
-		{
-		}
-
-		private sealed class RedisPopulator(RedisConnectionSettingsDriver driver) : PopulatorBase(driver)
-		{
-			protected override bool OnPopulate(ref ConfigurationOptions model, ConnectionSettingDescriptor descriptor, object value)
-			{
-				if(ConnectionSettingDescriptor.Server.Equals(descriptor) && value is string server)
-				{
-					foreach(var part in server.Slice(';'))
-						model.EndPoints.Add(part);
-
-					return true;
-				}
-				else if(ConnectionSettingDescriptor.Timeout.Equals(descriptor) && Common.Convert.TryConvertValue<TimeSpan>(value, out var duration))
-				{
-					model.ConnectTimeout = (int)duration.TotalMilliseconds;
-					model.AsyncTimeout = (int)duration.TotalMilliseconds;
-					model.SyncTimeout = (int)duration.TotalMilliseconds;
-
-					return true;
-				}
-
-				return base.OnPopulate(ref model, descriptor, value);
-			}
-		}
-		#endregion
-	}
-
-	public sealed class RedisConnectionSettingDescriptorCollection : ConnectionSettingDescriptorCollection
-	{
-		public readonly static ConnectionSettingDescriptor<string> Server = new(nameof(Server), nameof(ConfigurationOptions.EndPoints), true);
-		public readonly static ConnectionSettingDescriptor<string> Client = new(nameof(Client), nameof(ConfigurationOptions.ClientName), false);
-		public readonly static ConnectionSettingDescriptor<string> UserName = new(nameof(UserName), nameof(ConfigurationOptions.User), false);
-		public readonly static ConnectionSettingDescriptor<string> Password = new(nameof(Password));
-		public readonly static ConnectionSettingDescriptor<int> Database = new(nameof(Database), false);
-		public readonly static ConnectionSettingDescriptor<int> RetryCount = new(nameof(RetryCount), nameof(ConfigurationOptions.ConnectRetry), false);
-		public readonly static ConnectionSettingDescriptor<TimeSpan> Timeout = new(nameof(Timeout), nameof(ConfigurationOptions.ConnectTimeout), false);
-		public readonly static ConnectionSettingDescriptor<string> Application = new(nameof(Application), nameof(ConfigurationOptions.ServiceName), false);
-
-		public RedisConnectionSettingDescriptorCollection()
-		{
-			this.Add(Server);
-			this.Add(Client);
-			this.Add(Timeout);
-			this.Add(UserName);
-			this.Add(Password);
-			this.Add(Database);
-			this.Add(RetryCount);
-			this.Add(Application);
-		}
-	}
+	#region 私有构造
+	private RedisConnectionSettingsDriver() : base(NAME) { }
+	#endregion
 }

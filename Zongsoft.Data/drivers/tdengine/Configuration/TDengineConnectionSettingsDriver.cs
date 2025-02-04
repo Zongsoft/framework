@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.TDengine library.
  *
@@ -28,10 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
-
-using TDengine.Data;
-using TDengine.Data.Client;
 
 using Zongsoft.Components;
 using Zongsoft.Configuration;
@@ -49,70 +45,6 @@ public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<
 	#endregion
 
 	#region 私有构造
-	private TDengineConnectionSettingsDriver() : base(NAME)
-	{
-		this.Mapper = new TDengineMapper(this);
-		this.Populator = new TDenginePopulator(this);
-	}
-	#endregion
-
-	#region 嵌套子类
-	private sealed class TDengineMapper(TDengineConnectionSettingsDriver driver) : MapperBase(driver) { }
-	private sealed class TDenginePopulator(TDengineConnectionSettingsDriver driver) : PopulatorBase(driver) { }
-	#endregion
-}
-
-public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengineConnectionSettingsDriver>
-{
-	#region 构造函数
-	public TDengineConnectionSettings(TDengineConnectionSettingsDriver driver, string settings) : base(driver, settings) { }
-	public TDengineConnectionSettings(TDengineConnectionSettingsDriver driver, string name, string settings) : base(driver, name, settings) { }
-	#endregion
-
-	#region 公共属性
-	public ushort Port { get; set; }
-
-	[Alias(nameof(TDengineConnectionStringBuilder.ConnTimeout))]
-	[Alias(nameof(TDengineConnectionStringBuilder.ReadTimeout))]
-	[Alias(nameof(TDengineConnectionStringBuilder.WriteTimeout))]
-	public TimeSpan Timeout { get; set; }
-	public string Timezone { get; set; }
-	[ConnectionSetting(true)]
-	public string Server { get; set; }
-	[Alias("DB")]
-	public string Database { get; set; }
-	public string UserName { get; set; }
-	public string Password { get; set; }
-	[DefaultValue(TDengineConnectionProtocol.Native)]
-	public TDengineConnectionProtocol Protocol { get; set; }
-
-	[Alias(nameof(TDengineConnectionStringBuilder.UseSSL))]
-	public bool Secured { get; set; }
-	[Alias(nameof(TDengineConnectionStringBuilder.AutoReconnect))]
-	public bool Reconnectable { get; set; }
-	[Alias(nameof(TDengineConnectionStringBuilder.EnableCompression))]
-	public bool Compressible { get; set; }
-	#endregion
-
-	#region 公共方法
-	public TDengineConnectionStringBuilder GetOptions()
-	{
-		var options = new TDengineConnectionStringBuilder(string.Empty)
-		{
-			Host = this.Server,
-			Database = this.Database,
-			Username = this.UserName,
-			Password = this.Password,
-			Protocol = this.Protocol.ToString(),
-		};
-
-		if(this.Port > 0)
-			options.Port = this.Port;
-
-		if(!string.IsNullOrEmpty(this.Timezone))
-			options.Timezone = TimeZoneInfo.FromSerializedString(this.Timezone);
-
-		return options;
-	}
+	private TDengineConnectionSettingsDriver() : base(NAME) { }
 	#endregion
 }

@@ -35,8 +35,7 @@ using Zongsoft.Configuration;
 namespace Zongsoft.Messaging.ZeroMQ;
 
 [Service<IMessageQueueFactory>]
-public sealed class ZeroQueueFactory() : MessageQueueFactoryBase(NAME)
+public sealed class ZeroQueueFactory() : MessageQueueFactoryBase(Configuration.ZeroConnectionSettingsDriver.NAME)
 {
-	internal const string NAME = "ZeroMQ";
-	public override IMessageQueue Create(IConnectionSettings settings) => new ZeroQueue(string.Empty, settings);
+	public override IMessageQueue Create(IMessageQueueSettings settings) => new ZeroQueue(string.Empty, settings as Configuration.ZeroConnectionSettings);
 }

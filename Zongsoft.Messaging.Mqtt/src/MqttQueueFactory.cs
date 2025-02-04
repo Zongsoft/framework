@@ -35,8 +35,7 @@ using Zongsoft.Configuration;
 namespace Zongsoft.Messaging.Mqtt;
 
 [Service<IMessageQueueFactory>]
-public sealed class MqttQueueFactory() : MessageQueueFactoryBase(NAME)
+public sealed class MqttQueueFactory() : MessageQueueFactoryBase(Configuration.MqttConnectionSettingsDriver.NAME)
 {
-	internal const string NAME = "Mqtt";
-	public override IMessageQueue Create(IConnectionSettings settings) => new MqttQueue(string.Empty, settings);
+	public override IMessageQueue Create(IMessageQueueSettings settings) => new MqttQueue(string.Empty, settings as Configuration.MqttConnectionSettings);
 }

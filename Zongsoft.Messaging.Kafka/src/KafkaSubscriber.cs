@@ -45,7 +45,7 @@ namespace Zongsoft.Messaging.Kafka
 		#region 构造函数
 		public KafkaSubscriber(KafkaQueue queue, string topic, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
 		{
-			_consumer = new ConsumerBuilder<string, byte[]>(KafkaUtility.GetConsumerOptions(queue.ConnectionSettings)).Build();
+			_consumer = new ConsumerBuilder<string, byte[]>(queue.Settings.GetConsumerOptions()).Build();
 			_poller = new Poller(this);
 		}
 		#endregion

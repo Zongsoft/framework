@@ -9,7 +9,7 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		var settings = Configuration.RabbitConnectionSettingsDriver.Instance.Create($"server=192.168.2.221;client=Zongsoft.Messaing.RabbitMQ.Sample;username=program;password=xxxxxx;");
+		var settings = Configuration.RabbitConnectionSettingsDriver.Instance.GetSettings($"server=192.168.2.221;client=Zongsoft.Messaing.RabbitMQ.Sample;username=program;password=xxxxxx;");
 		var queue = new RabbitQueue("RabbitMQ", settings);
 
 		await queue.SubscribeAsync(async message =>

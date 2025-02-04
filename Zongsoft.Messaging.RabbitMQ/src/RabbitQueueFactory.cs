@@ -37,5 +37,5 @@ namespace Zongsoft.Messaging.RabbitMQ;
 [Service<IMessageQueueFactory>]
 public sealed class RabbitQueueFactory() : MessageQueueFactoryBase(RabbitQueue.NAME)
 {
-	public override IMessageQueue Create(IConnectionSettings settings) => new RabbitQueue(string.Empty, settings);
+	public override IMessageQueue Create(IMessageQueueSettings settings) => new RabbitQueue(string.Empty, settings as Configuration.RabbitConnectionSettings);
 }
