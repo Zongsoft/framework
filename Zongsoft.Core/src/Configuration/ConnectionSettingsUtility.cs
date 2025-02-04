@@ -28,11 +28,17 @@
  */
 
 using System;
+using System.Reflection;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Configuration;
 
 public static class ConnectionSettingsUtility
 {
+	#region 私有变量
+	private static readonly ConcurrentDictionary<Type, Delegate> _thunks = new();
+	#endregion
+
 	#region 公共方法
 	/// <summary>获取指定的连接配置。</summary>
 	/// <param name="configuration">指定的配置信息。</param>
@@ -58,6 +64,37 @@ public static class ConnectionSettingsUtility
 			return setting.Driver != null && setting.IsDriver(driver) ? setting : null;
 
 		return setting;
+	}
+
+	public static T GetValue<T>(this IConnectionSettings connectionSettings, string name, T defaultValue = default) => TryGetValue<T>(connectionSettings, name, out var value) ? value : defaultValue;
+	public static bool TryGetValue<T>(this IConnectionSettings connectionSettings, string name, out T value)
+	{
+		if(connectionSettings == null)
+		{
+			value = default;
+			return false;
+		}
+
+		var text = connectionSettings[name];
+
+		if(!string.IsNullOrEmpty(text) && connectionSettings.Driver.Descriptors.TryGetValue(name, out var descriptor))
+			return Common.Convert.TryConvertValue<T>(text, () => descriptor.Converter, out value);
+
+		return Common.Convert.TryConvertValue<T>(text, out value);
+	}
+
+	public static TOptions GetOptions<TOptions>(this IConnectionSettings connectionSettings)
+	{
+		if(connectionSettings == null)
+			return default;
+
+		var thunk = _thunks.GetOrAdd(connectionSettings.GetType(), type =>
+		{
+			var method = type.GetMethod(nameof(ConnectionSettingsBase<IConnectionSettingsDriver, TOptions>.GetOptions), BindingFlags.Public | BindingFlags.Instance);
+			return method?.CreateDelegate(typeof(Func<>).MakeGenericType(method.ReturnType), connectionSettings);
+		});
+
+		return thunk != null && thunk.DynamicInvoke() is TOptions options ? options : default;
 	}
 	#endregion
 

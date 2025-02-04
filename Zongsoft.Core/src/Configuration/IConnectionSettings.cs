@@ -41,6 +41,11 @@ public interface IConnectionSettings : ISetting, IEquatable<IConnectionSettings>
 	#region 属性定义
 	/// <summary>获取连接的驱动。接口实现者应确保该属性值不会为空(<c>null</c>)。</summary>
 	IConnectionSettingsDriver Driver { get; }
+
+	/// <summary>获取或设置指定设置项。</summary>
+	/// <param name="name">指定的设置项名称。</param>
+	/// <returns>返回指定名称的设置值。</returns>
+	string this[string name] { get; set; }
 	#endregion
 
 	#region 默认实现

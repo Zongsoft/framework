@@ -252,6 +252,12 @@ public class ConnectionSettingsTest
 		Assert.Equal(date, options.DateTime);
 		Assert.Equal(timeout, options.ConnectionTimeout);
 		Assert.Equal(timeout, options.ExecutionTimeout);
+
+		options = ConnectionSettingsUtility.GetOptions<MyConnectionOptions>(settings);
+		Assert.NotNull(options);
+		Assert.Equal(date, options.DateTime);
+		Assert.Equal(timeout, options.ConnectionTimeout);
+		Assert.Equal(timeout, options.ExecutionTimeout);
 	}
 
 	public sealed class MyDriver : ConnectionSettingsDriver<MyConnectionSettings>

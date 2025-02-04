@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,7 +30,6 @@
 using System;
 
 using Zongsoft.Services;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging;
 
@@ -41,7 +40,7 @@ public abstract class MessageQueueFactoryBase(string name) : IMessageQueueFactor
 	#endregion
 
 	#region 构建方法
-	public abstract IMessageQueue Create(IConnectionSettings settings);
+	public abstract IMessageQueue Create(IMessageQueueSettings settings);
 	#endregion
 
 	#region 服务匹配

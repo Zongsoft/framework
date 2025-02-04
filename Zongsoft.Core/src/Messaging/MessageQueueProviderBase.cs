@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,10 +31,17 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Services;
+using Zongsoft.Configuration;
+
 namespace Zongsoft.Messaging
 {
 	public abstract class MessageQueueProviderBase : IMessageQueueProvider
 	{
+		#region 常量定义
+		internal const string SETTINGS_PATH = "/Messaging/ConnectionSettings";
+		#endregion
+
 		#region 成员字段
 		private readonly Dictionary<string, WeakReference<IMessageQueue>> _queues;
 		#endregion
@@ -85,6 +92,23 @@ namespace Zongsoft.Messaging
 		protected abstract IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings);
 		#endregion
 
+		#region 保护方法
+		protected TSettings GetSettings<TSettings>(string name, IEnumerable<KeyValuePair<string, string>> settings) where TSettings : class, IMessageQueueSettings
+		{
+			var connectionSettings = ApplicationContext.Current?.Configuration.GetConnectionSettings(SETTINGS_PATH, name, this.Name);
+			if(connectionSettings == null)
+				throw new ConfigurationException($"The specified {this.Name} message queue connection setting named '{name}' was not found.");
+
+			if(settings != null)
+			{
+				foreach(var setting in settings)
+					connectionSettings[setting.Key] = setting.Value;
+			}
+
+			return connectionSettings as TSettings ?? throw new InvalidOperationException($"The specified '{SETTINGS_PATH}/{name}@{this.Name}' connection setting is not of the required '{typeof(TSettings).FullName}' settings type.");
+		}
+		#endregion
+
 		#region 枚举遍历
 		public IEnumerator<IMessageQueue> GetEnumerator()
 		{
@@ -99,5 +123,21 @@ namespace Zongsoft.Messaging
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		#endregion
+	}
+
+	public abstract class MessageQueueProviderBase<TQueue, TSettings>(string name) : MessageQueueProviderBase(name)
+		where TQueue : class, IMessageQueue
+		where TSettings : class, IMessageQueueSettings
+	{
+		public override bool Exists(string name)
+		{
+			var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingsCollection>(SETTINGS_PATH);
+			return connectionSettings != null && connectionSettings.Contains(name, this.Name);
+		}
+
+		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
+		{
+			return (IMessageQueue)Activator.CreateInstance(typeof(TQueue), name, this.GetSettings<TSettings>(name, settings));
+		}
 	}
 }

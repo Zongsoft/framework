@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -43,9 +43,6 @@ namespace Zongsoft.Messaging
 		#region 属性定义
 		/// <summary>获取消息队列的名称。</summary>
 		string Name { get; }
-
-		/// <summary>获取或设置消息队列的连接设置。</summary>
-		Configuration.IConnectionSettings ConnectionSettings { get; set; }
 		#endregion
 
 		#region 订阅方法

@@ -127,14 +127,6 @@ public class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDrive
 	}
 	#endregion
 
-	#region 索引属性
-	public string this[string name]
-	{
-		get => this.GetValue<string>(name);
-		set => this.SetValue(name, value);
-	}
-	#endregion
-
 	#region 公共方法
 	/// <summary>设置指定设置项的值。</summary>
 	/// <typeparam name="T">泛型参数，表示设置项的类型。</typeparam>

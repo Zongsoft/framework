@@ -160,7 +160,7 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 			return null;
 
 		//忽略内置属性
-		if(property.DeclaringType == typeof(Setting))
+		if(property.DeclaringType == typeof(Setting) || (property.DeclaringType.IsGenericType && property.DeclaringType.GetGenericTypeDefinition() == typeof(ConnectionSettingsBase<>)))
 			return null;
 
 		var aliases = property

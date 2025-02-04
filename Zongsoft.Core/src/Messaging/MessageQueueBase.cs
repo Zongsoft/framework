@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -37,7 +37,6 @@ using System.Collections.Concurrent;
 
 using Zongsoft.Components;
 using Zongsoft.Collections;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging
 {
@@ -53,17 +52,15 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 构造函数
-		protected MessageQueueBase(string name, IConnectionSettings connectionSettings = null)
+		protected MessageQueueBase(string name)
 		{
 			this.Name = name ?? string.Empty;
-			this.ConnectionSettings = connectionSettings;
 			this.Subscribers = new SubscriberCollection();
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name { get; }
-		public IConnectionSettings ConnectionSettings { get; set; }
 		public SubscriberCollection Subscribers { get; }
 		public bool IsDisposed => _disposing == DISPOSED;
 		#endregion
@@ -218,5 +215,12 @@ namespace Zongsoft.Messaging
 			}
 		}
 		#endregion
+	}
+
+	public abstract class MessageQueueBase<TSubscriber, TSettings>(string name, TSettings settings = default) : MessageQueueBase<TSubscriber>(name)
+		where TSubscriber : IMessageConsumer
+		where TSettings : IMessageQueueSettings
+	{
+		public TSettings Settings { get; set; } = settings;
 	}
 }

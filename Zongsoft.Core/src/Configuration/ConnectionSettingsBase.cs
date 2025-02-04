@@ -65,6 +65,29 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	IConnectionSettingsDriver IConnectionSettings.Driver => _driver;
 	#endregion
 
+	#region 索引属性
+	public string this[string name]
+	{
+		get => this.TryGetValue<string>(name, out var value) || _entries.TryGetValue(name, out value) ? value : null;
+		set
+		{
+			if(_driver.Descriptors.TryGetValue(name, out var descriptor))
+			{
+				this.SetValue<string>(descriptor, value);
+				return;
+			}
+
+			if(string.IsNullOrEmpty(value))
+				_entries.Remove(name);
+			else
+				_entries[name] = value;
+
+			//更新 Value 属性值
+			this.Value = string.Join(';', _entries.Where(entry => !string.IsNullOrEmpty(entry.Value)).Select(entry => $"{entry.Key}={entry.Value}"));
+		}
+	}
+	#endregion
+
 	#region 保护属性
 	protected IDictionary<string, string> Entries => _entries;
 	#endregion
@@ -229,21 +252,26 @@ public abstract class ConnectionSettingsBase<TDriver, TOptions> : ConnectionSett
 	#endregion
 
 	#region 公共方法
-	public virtual TOptions GetOptions()
+	public TOptions GetOptions()
 	{
 		var options = this.CreateOptions();
+		this.Populate(options);
+		return options;
+	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual TOptions CreateOptions() => Activator.CreateInstance<TOptions>();
+	protected virtual void Populate(TOptions options)
+	{
+		if(options is null)
+			throw new ArgumentNullException(nameof(options));
 
 		for(int i = 0; i < _properties.Length; i++)
 		{
 			if(this.TryGetValue(_properties[i].Name, out var value) && value is not null)
 				Reflection.Reflector.TrySetValue(_properties[i], ref options, value);
 		}
-
-		return options;
 	}
-	#endregion
-
-	#region 保护方法
-	protected virtual TOptions CreateOptions() => Activator.CreateInstance<TOptions>();
 	#endregion
 }

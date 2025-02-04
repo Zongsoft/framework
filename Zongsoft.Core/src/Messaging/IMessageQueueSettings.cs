@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,16 +31,12 @@ using System;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 提供消息队列创建功能的接口。
-/// </summary>
-public interface IMessageQueueFactory
+public interface IMessageQueueSettings : Configuration.IConnectionSettings
 {
-	/// <summary>获取消息队列类型名称。</summary>
-	string Name { get; }
-
-	/// <summary>创建一个消息队列实例。</summary>
-	/// <param name="settings">指定要创建的消息队列设置。</param>
-	/// <returns>返回创建成功的消息队列对象。</returns>
-	IMessageQueue Create(IMessageQueueSettings settings);
+	string Group { get; set; }
+	string Client { get; set; }
+	string Server { get; set; }
+	string UserName { get; set; }
+	string Password { get; set; }
+	TimeSpan Timeout { get; set; }
 }
