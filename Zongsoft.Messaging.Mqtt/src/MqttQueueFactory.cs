@@ -37,5 +37,6 @@ namespace Zongsoft.Messaging.Mqtt;
 [Service<IMessageQueueFactory>]
 public sealed class MqttQueueFactory() : MessageQueueFactoryBase(Configuration.MqttConnectionSettingsDriver.NAME)
 {
-	public override IMessageQueue Create(IMessageQueueSettings settings) => new MqttQueue(string.Empty, settings as Configuration.MqttConnectionSettings);
+	public override IMessageQueue Create(IMessageQueueSettings settings) => new MqttQueue(settings.Name, settings as Configuration.MqttConnectionSettings);
+	public override IMessageQueue Create(string name, string connectionString) => new MqttQueue(name ?? string.Empty, Configuration.MqttConnectionSettingsDriver.Instance.GetSettings(connectionString));
 }

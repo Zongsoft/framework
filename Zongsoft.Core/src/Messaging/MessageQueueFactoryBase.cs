@@ -41,6 +41,7 @@ public abstract class MessageQueueFactoryBase(string name) : IMessageQueueFactor
 
 	#region 构建方法
 	public abstract IMessageQueue Create(IMessageQueueSettings settings);
+	public abstract IMessageQueue Create(string name, string connectionString);
 	#endregion
 
 	#region 服务匹配

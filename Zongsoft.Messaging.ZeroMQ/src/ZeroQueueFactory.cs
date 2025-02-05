@@ -37,5 +37,6 @@ namespace Zongsoft.Messaging.ZeroMQ;
 [Service<IMessageQueueFactory>]
 public sealed class ZeroQueueFactory() : MessageQueueFactoryBase(Configuration.ZeroConnectionSettingsDriver.NAME)
 {
-	public override IMessageQueue Create(IMessageQueueSettings settings) => new ZeroQueue(string.Empty, settings as Configuration.ZeroConnectionSettings);
+	public override IMessageQueue Create(IMessageQueueSettings settings) => new ZeroQueue(settings.Name, settings as Configuration.ZeroConnectionSettings);
+	public override IMessageQueue Create(string name, string connectionString) => new ZeroQueue(name ?? string.Empty, Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings(connectionString));
 }

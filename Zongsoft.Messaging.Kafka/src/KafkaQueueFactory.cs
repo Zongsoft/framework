@@ -37,5 +37,6 @@ namespace Zongsoft.Messaging.Kafka;
 [Service<IMessageQueueFactory>]
 public sealed class KafkaQueueFactory() : MessageQueueFactoryBase(Configuration.KafkaConnectionSettingsDriver.NAME)
 {
-	public override IMessageQueue Create(IMessageQueueSettings settings) => new KafkaQueue(string.Empty, settings as Configuration.KafkaConnectionSettings);
+	public override IMessageQueue Create(IMessageQueueSettings settings) => new KafkaQueue(settings.Name, settings as Configuration.KafkaConnectionSettings);
+	public override IMessageQueue Create(string name, string connectionString) => new KafkaQueue(name ?? string.Empty, Configuration.KafkaConnectionSettingsDriver.Instance.GetSettings(connectionString));
 }
