@@ -81,7 +81,7 @@ public class ConnectionSettingsTest
 		var descriptors = MyDriver.Instance.Descriptors;
 		Assert.NotNull(descriptors);
 		Assert.NotEmpty(descriptors);
-		Assert.Equal(13, descriptors.Count);
+		Assert.Equal(14, descriptors.Count);
 
 		ConnectionSettingDescriptor descriptor = null;
 		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.Port), out descriptor));
@@ -247,17 +247,23 @@ public class ConnectionSettingsTest
 		Assert.Equal(date, settings.Birthday);
 		Assert.Equal(timeout, settings.Timeout);
 
+		var seconds = 15;
+		settings.DurationSeconds = TimeSpan.FromSeconds(seconds);
+		Assert.Equal(TimeSpan.FromSeconds(seconds), settings.DurationSeconds);
+
 		options = settings.GetOptions();
 		Assert.NotNull(options);
 		Assert.Equal(date, options.DateTime);
 		Assert.Equal(timeout, options.ConnectionTimeout);
 		Assert.Equal(timeout, options.ExecutionTimeout);
+		Assert.Equal(seconds, options.Seconds);
 
 		options = ConnectionSettingsUtility.GetOptions<MyConnectionOptions>(settings);
 		Assert.NotNull(options);
 		Assert.Equal(date, options.DateTime);
 		Assert.Equal(timeout, options.ConnectionTimeout);
 		Assert.Equal(timeout, options.ExecutionTimeout);
+		Assert.Equal(seconds, options.Seconds);
 	}
 
 	public sealed class MyDriver : ConnectionSettingsDriver<MyConnectionSettings>
@@ -329,6 +335,14 @@ public class ConnectionSettingsTest
 			set => this.SetValue(value);
 		}
 
+		[Alias(nameof(MyConnectionOptions.Seconds))]
+		[ConnectionSetting(typeof(Components.Converters.TimeSpanConverter.Seconds))]
+		public TimeSpan DurationSeconds
+		{
+			get => this.GetValue<TimeSpan>();
+			set => this.SetValue(value);
+		}
+
 		[DefaultValue(7969)]
 		public ushort Port
 		{
@@ -377,6 +391,7 @@ public class ConnectionSettingsTest
 		public DateTime DateTime { get; set; }
 		public TimeSpan ConnectionTimeout { get; set; }
 		public TimeSpan ExecutionTimeout { get; set; }
+		public int Seconds { get; set; }
 	}
 
 	public enum AuthenticationMode

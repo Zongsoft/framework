@@ -24,6 +24,22 @@ namespace Zongsoft.Common.Tests
 			Assert.Equal("100.5", Zongsoft.Common.Convert.ConvertValue<string>(100.50));
 			Assert.Equal("100.50", Zongsoft.Common.Convert.ConvertValue<string>(100.50m));
 
+			var duration = TimeSpan.Parse("1:20:30");
+			Assert.Equal(duration, Zongsoft.Common.Convert.ConvertValue<TimeSpan>("1:20:30"));
+			Assert.True(TimeSpanUtility.TryParse("15S", out duration));
+			Assert.Equal(duration, Zongsoft.Common.Convert.ConvertValue<TimeSpan>("15s"));
+			Assert.True(TimeSpanUtility.TryParse("20m", out duration));
+			Assert.Equal(duration, Zongsoft.Common.Convert.ConvertValue<TimeSpan>("20M"));
+			Assert.True(TimeSpanUtility.TryParse("30h", out duration));
+			Assert.Equal(duration, Zongsoft.Common.Convert.ConvertValue<TimeSpan>("30H"));
+			Assert.True(TimeSpanUtility.TryParse("40D", out duration));
+			Assert.Equal(duration, Zongsoft.Common.Convert.ConvertValue<TimeSpan>("40d"));
+
+			Assert.True(TimeSpanUtility.TryParse("0.5S", out duration));
+			Assert.Equal(0.5, duration.TotalSeconds);
+			Assert.Equal(500d, duration.TotalMilliseconds);
+			Assert.Equal(duration, Zongsoft.Common.Convert.ConvertValue<TimeSpan>("0.5s"));
+
 			Assert.Equal(Gender.Male, Zongsoft.Common.Convert.ConvertValue("male", typeof(Gender)));
 			Assert.Equal(Gender.Male, Zongsoft.Common.Convert.ConvertValue("Male", typeof(Gender)));
 			Assert.Equal(Gender.Female, Zongsoft.Common.Convert.ConvertValue("female", typeof(Gender)));

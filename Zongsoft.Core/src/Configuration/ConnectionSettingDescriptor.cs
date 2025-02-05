@@ -168,6 +168,8 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 	public bool Required { get; set; }
 	/// <summary>获取或设置类型转换器。</summary>
 	public TypeConverter Converter { get; set; }
+	/// <summary>获取或设置成员组装器。</summary>
+	public TypeConverter Populator { get; set; }
 	/// <summary>获取或设置连接设置项的标题。</summary>
 	public string Label { get; set; }
 	/// <summary>获取或设置连接设置项的描述。</summary>

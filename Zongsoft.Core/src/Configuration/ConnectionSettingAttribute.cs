@@ -45,16 +45,40 @@ public class ConnectionSettingAttribute : Attribute
 		this.Required = required;
 		this.Dependencies = dependencies;
 	}
+	public ConnectionSettingAttribute(bool required, Type populator, params string[] dependencies)
+	{
+		this.Required = required;
+		this.Populator = populator;
+		this.Dependencies = dependencies;
+	}
+
+	public ConnectionSettingAttribute(Type populator, params string[] dependencies)
+	{
+		this.Populator = populator;
+		this.Dependencies = dependencies;
+	}
+	public ConnectionSettingAttribute(Type populator, bool required, params string[] dependencies)
+	{
+		this.Required = required;
+		this.Populator = populator;
+		this.Dependencies = dependencies;
+	}
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取或设置设置项的格式字符串。</summary>
 	public string Format { get; set; }
+
 	/// <summary>获取或设置一个值，指示是否为必须项。</summary>
 	public bool Required { get; set; }
+
+	/// <summary>获取或设置设置项的转换到对应选项对象成员值的转换器(组装器)类型。</summary>
+	public Type Populator { get; set; }
+
 	/// <summary>获取或设置设置项的选项数组。</summary>
 	/// <remarks>单个选项的格式为：<c>name[:value][|label[|description]]</c>。</remarks>
 	public string[] Options { get; set; }
+
 	/// <summary>获取或设置设置项的依赖数组。</summary>
 	/// <remarks>单个依赖的格式为：<c>name[:value]</c>。</remarks>
 	public string[] Dependencies { get; set; }

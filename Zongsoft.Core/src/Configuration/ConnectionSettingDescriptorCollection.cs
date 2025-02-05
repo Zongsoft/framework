@@ -189,6 +189,9 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 			descriptor.Format = attribute.Format;
 			descriptor.Required = attribute.Required;
 
+			if(attribute.Populator != null && typeof(TypeConverter).IsAssignableFrom(attribute.Populator))
+				descriptor.Populator = (TypeConverter)Activator.CreateInstance(attribute.Populator);
+
 			if(attribute.GetOptions(out var options))
 			{
 				descriptor.Options.Clear();
