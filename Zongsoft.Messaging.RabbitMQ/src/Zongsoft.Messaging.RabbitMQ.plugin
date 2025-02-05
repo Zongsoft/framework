@@ -12,7 +12,6 @@
 		</assemblies>
 	</manifest>
 
-	<!-- 挂载连接设置驱动器 -->
 	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
 		<object name="RabbitMQ" value="{static:Zongsoft.Messaging.RabbitMQ.Configuration.RabbitConnectionSettingsDriver.Instance, Zongsoft.Messaging.RabbitMQ}" />
 	</extension>

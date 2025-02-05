@@ -11,4 +11,8 @@
 			<assembly name="Zongsoft.Messaging.Mqtt" />
 		</assemblies>
 	</manifest>
+
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="Mqtt" value="{static:Zongsoft.Messaging.Mqtt.Configuration.MqttConnectionSettingsDriver.Instance, Zongsoft.Messaging.Mqtt}" />
+	</extension>
 </plugin>

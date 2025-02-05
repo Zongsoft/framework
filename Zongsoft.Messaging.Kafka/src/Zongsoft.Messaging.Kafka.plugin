@@ -11,4 +11,8 @@
 			<assembly name="Zongsoft.Messaging.Kafka" />
 		</assemblies>
 	</manifest>
+
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="Kafka" value="{static:Zongsoft.Messaging.Kafka.Configuration.KafkaConnectionSettingsDriver.Instance, Zongsoft.Messaging.Kafka}" />
+	</extension>
 </plugin>

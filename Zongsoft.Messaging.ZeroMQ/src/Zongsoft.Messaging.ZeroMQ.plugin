@@ -12,6 +12,10 @@
 		</assemblies>
 	</manifest>
 
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="ZeroMQ" value="{static:Zongsoft.Messaging.ZeroMQ.Configuration.ZeroConnectionSettingsDriver.Instance, Zongsoft.Messaging.ZeroMQ}" />
+	</extension>
+
 	<extension path="/Workbench/Messaging/Zero">
 		<object name="Requester" type="Zongsoft.Messaging.ZeroMQ.ZeroRequester, Zongsoft.Messaging.ZeroMQ">
 			<expose name="Handlers" value="{path:../@Handlers}" />

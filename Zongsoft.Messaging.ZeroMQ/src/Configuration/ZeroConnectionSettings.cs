@@ -49,11 +49,37 @@ public sealed class ZeroConnectionSettings : ConnectionSettingsBase<ZeroConnecti
 		set => this.SetValue(value);
 	}
 
-	public string Group { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-	public string Client { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-	public string Server { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-	public string UserName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-	public string Password { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+	public string Group
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	public string Client
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	public string Server
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	public string UserName
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	public string Password
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[DefaultValue("10s")]
 	public TimeSpan Timeout
 	{
 		get => this.GetValue<TimeSpan>();
