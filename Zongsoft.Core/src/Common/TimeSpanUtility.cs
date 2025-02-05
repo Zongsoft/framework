@@ -42,13 +42,13 @@ namespace Zongsoft.Common
 				return false;
 			}
 
-			int number;
+			double number;
 
 			switch(text[^1])
 			{
 				case 'd':
 				case 'D':
-					if(int.TryParse(text[0..^1], out number))
+					if(double.TryParse(text[0..^1], out number))
 					{
 						value = TimeSpan.FromDays(number);
 						return true;
@@ -57,7 +57,7 @@ namespace Zongsoft.Common
 					break;
 				case 'h':
 				case 'H':
-					if(int.TryParse(text[0..^1], out number))
+					if(double.TryParse(text[0..^1], out number))
 					{
 						value = TimeSpan.FromHours(number);
 						return true;
@@ -66,7 +66,7 @@ namespace Zongsoft.Common
 					break;
 				case 'm':
 				case 'M':
-					if(int.TryParse(text[0..^1], out number))
+					if(double.TryParse(text[0..^1], out number))
 					{
 						value = TimeSpan.FromMinutes(number);
 						return true;
@@ -75,7 +75,7 @@ namespace Zongsoft.Common
 					break;
 				case 's':
 				case 'S':
-					if(int.TryParse(text[0..^1], out number))
+					if(double.TryParse(text[0..^1], out number))
 					{
 						value = TimeSpan.FromSeconds(number);
 						return true;

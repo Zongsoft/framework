@@ -42,6 +42,7 @@ namespace Zongsoft.Common
 		{
 			TypeDescriptor.AddAttributes(typeof(Enum), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EnumConverter))]);
 			TypeDescriptor.AddAttributes(typeof(Guid), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.GuidConverter))]);
+			TypeDescriptor.AddAttributes(typeof(TimeSpan), [new TypeConverterAttribute(typeof(Components.Converters.TimeSpanConverter))]);
 			TypeDescriptor.AddAttributes(typeof(Encoding), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EncodingConverter))]);
 			TypeDescriptor.AddAttributes(typeof(EndPoint), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EndpointConverter))]);
 		}
@@ -188,12 +189,6 @@ namespace Zongsoft.Common
 
 			try
 			{
-				if(value is string text && type == typeof(TimeSpan) && TimeSpanUtility.TryParse(text, out var timespan))
-				{
-					result = timespan;
-					return true;
-				}
-
 				//获取目标类型的转换器，如果转换类型为字符串则必须以待转换值的类型为准
 				var converter = converterFactory?.Invoke() ?? (type == typeof(string) ? TypeDescriptor.GetConverter(value.GetType()) : TypeDescriptor.GetConverter(type));
 
