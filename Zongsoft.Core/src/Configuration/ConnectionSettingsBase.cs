@@ -35,45 +35,39 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSettings, IEquatable<ConnectionSettingsBase<TDriver>>, IEquatable<IConnectionSettings> where TDriver : IConnectionSettingsDriver
+public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IEquatable<ConnectionSettingsBase>, IEquatable<IConnectionSettings>
 {
 	#region 成员字段
-	private readonly TDriver _driver;
 	private readonly Dictionary<string, string> _entries;
 	#endregion
 
 	#region 构造函数
-	protected ConnectionSettingsBase(TDriver driver, string settings)
+	protected ConnectionSettingsBase(string settings) : base(string.Empty, settings)
 	{
-		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
 		_entries = new(StringComparer.OrdinalIgnoreCase);
-		base.Value = settings;
 	}
 
-	protected ConnectionSettingsBase(TDriver driver, string name, string settings) : base(name, settings)
+	protected ConnectionSettingsBase(string name, string settings) : base(name, settings)
 	{
-		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
 		_entries = new(StringComparer.OrdinalIgnoreCase);
-
-		if(!string.IsNullOrEmpty(settings))
-			this.OnValueChanged(settings);
 	}
 	#endregion
 
 	#region 公共属性
-	public TDriver Driver => _driver;
-	IConnectionSettingsDriver IConnectionSettings.Driver => _driver;
-	#endregion
-
-	#region 索引属性
 	public string this[string name]
 	{
-		get => this.TryGetValue<string>(name, out var value) || _entries.TryGetValue(name, out value) ? value : null;
+		get
+		{
+			if(this.GetDriver().Descriptors.TryGetValue(name, out var descriptor))
+				return this.GetValue<string>(descriptor);
+
+			return _entries.TryGetValue(name, out var value) ? value : null;
+		}
 		set
 		{
-			if(_driver.Descriptors.TryGetValue(name, out var descriptor))
+			if(this.GetDriver().Descriptors.TryGetValue(name, out var descriptor))
 			{
-				this.SetValue<string>(descriptor, value);
+				this.SetValue(descriptor, value);
 				return;
 			}
 
@@ -92,19 +86,34 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	protected IDictionary<string, string> Entries => _entries;
 	#endregion
 
+	#region 显式实现
+	IConnectionSettingsDriver IConnectionSettings.Driver => this.GetDriver();
+	#endregion
+
+	#region 抽象方法
+	protected abstract IConnectionSettingsDriver GetDriver();
+	#endregion
+
 	#region 公共方法
 	public bool IsDriver(string name) => ConnectionSettingsUtility.IsDriver(this, name);
 	public bool IsDriver(IConnectionSettingsDriver driver) => ConnectionSettingsUtility.IsDriver(this, driver);
 	#endregion
 
 	#region 保护方法
-	protected bool SetValue<T>(T value, [System.Runtime.CompilerServices.CallerMemberName]string name = null) => this.SetValue<T>(name, value);
-	protected bool SetValue<T>(string name, T value)
+	protected virtual T GetValue<T>(ConnectionSettingDescriptor descriptor)
 	{
-		if(_driver.Descriptors.TryGetValue(name, out var descriptor))
-			return this.SetValue(descriptor, value);
+		if(_entries.TryGetValue(descriptor.Name, out var text) && Common.Convert.TryConvertValue<T>(text, () => descriptor.Converter, out var value))
+			return value;
 
-		return false;
+		return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, () => descriptor.Converter);
+	}
+
+	protected virtual object GetValue(ConnectionSettingDescriptor descriptor)
+	{
+		if(_entries.TryGetValue(descriptor.Name, out var text) && Common.Convert.TryConvertValue(text, descriptor.Type, () => descriptor.Converter, out var value))
+			return value;
+
+		return Common.Convert.ConvertValue(descriptor.DefaultValue, descriptor.Type, () => descriptor.Converter);
 	}
 
 	protected virtual bool SetValue<T>(ConnectionSettingDescriptor descriptor, T value)
@@ -124,6 +133,110 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 
 		return false;
 	}
+	#endregion
+
+	#region 参数解析
+	protected override void OnValueChanged(string value)
+	{
+		if(string.IsNullOrEmpty(value))
+		{
+			_entries.Clear();
+			return;
+		}
+
+		var driver = this.GetDriver();
+		var parts = value.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+		for(int i = 0; i < parts.Length; i++)
+		{
+			var part = parts[i];
+			var index = part.IndexOf('=');
+
+			if(index < 0)
+			{
+				var key = part.Trim();
+
+				if(driver.Descriptors.TryGetValue(key, out var descriptor))
+					_entries[descriptor.Name] = null;
+				else
+					_entries[key] = null;
+			}
+			else if(index == part.Length - 1)
+			{
+				var key = part[0..^1].Trim();
+
+				if(driver.Descriptors.TryGetValue(key, out var descriptor))
+					_entries[descriptor.Name] = null;
+				else
+					_entries[key] = null;
+			}
+			else if(index > 0 && index < part.Length - 1)
+			{
+				var key = part[..index].Trim();
+
+				if(driver.Descriptors.TryGetValue(key, out var descriptor))
+					_entries[descriptor.Name] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
+				else
+					_entries[key] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
+			}
+		}
+	}
+	#endregion
+
+	#region 重写方法
+	public bool Equals(IConnectionSettings settings) => settings != null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
+	public bool Equals(ConnectionSettingsBase settings) => settings != null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.GetDriver());
+	public override bool Equals(object obj) => obj is IConnectionSettings settings && this.Equals(settings);
+	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.GetDriver().Name.ToLowerInvariant());
+	public override string ToString() => $"[{this.Name}@{this.GetDriver()}]{this.Value}";
+	#endregion
+
+	#region 枚举遍历
+	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _entries.GetEnumerator();
+	#endregion
+}
+
+public abstract class ConnectionSettingsBase<TDriver> : ConnectionSettingsBase, IEquatable<ConnectionSettingsBase<TDriver>> where TDriver : IConnectionSettingsDriver
+{
+	#region 成员字段
+	private readonly TDriver _driver;
+	#endregion
+
+	#region 构造函数
+	protected ConnectionSettingsBase(TDriver driver, string settings) : base(settings)
+	{
+		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
+
+		//注意：必须显式调用基类的 OnValueChanged 方法以解析设置项集。
+		if(!string.IsNullOrEmpty(settings))
+			this.OnValueChanged(settings);
+	}
+
+	protected ConnectionSettingsBase(TDriver driver, string name, string settings) : base(name, settings)
+	{
+		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
+
+		//注意：必须显式调用基类的 OnValueChanged 方法以解析设置项集。
+		if(!string.IsNullOrEmpty(settings))
+			this.OnValueChanged(settings);
+	}
+	#endregion
+
+	#region 公共属性
+	public TDriver Driver => _driver;
+	protected override IConnectionSettingsDriver GetDriver() => _driver;
+	#endregion
+
+	#region 保护方法
+	protected bool SetValue<T>(T value, [System.Runtime.CompilerServices.CallerMemberName]string name = null) => this.SetValue<T>(name, value);
+	protected bool SetValue<T>(string name, T value)
+	{
+		if(_driver.Descriptors.TryGetValue(name, out var descriptor))
+			return this.SetValue(descriptor, value);
+
+		return false;
+	}
 
 	protected T GetValue<T>([System.Runtime.CompilerServices.CallerMemberName]string name = null)
 	{
@@ -131,22 +244,6 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 			return this.GetValue<T>(descriptor);
 
 		throw new InvalidOperationException($"The setting named '{name}' is illegal in connection Settings of the '{_driver.Name}' driver type.");
-	}
-
-	protected virtual T GetValue<T>(ConnectionSettingDescriptor descriptor)
-	{
-		if(_entries.TryGetValue(descriptor.Name, out var text) && Common.Convert.TryConvertValue<T>(text, () => descriptor.Converter, out var value))
-			return value;
-
-		return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, () => descriptor.Converter);
-	}
-
-	protected virtual object GetValue(ConnectionSettingDescriptor descriptor)
-	{
-		if(_entries.TryGetValue(descriptor.Name, out var text) && Common.Convert.TryConvertValue(text, descriptor.Type, () => descriptor.Converter, out var value))
-			return value;
-
-		return Common.Convert.ConvertValue(descriptor.DefaultValue, descriptor.Type, () => descriptor.Converter);
 	}
 
 	internal bool TryGetValue<T>(string name, out T value)
@@ -174,66 +271,8 @@ public abstract class ConnectionSettingsBase<TDriver> : Setting, IConnectionSett
 	}
 	#endregion
 
-	#region 参数解析
-	protected override void OnValueChanged(string value)
-	{
-		if(string.IsNullOrEmpty(value))
-		{
-			_entries.Clear();
-			return;
-		}
-
-		var parts = value.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-		for(int i = 0; i < parts.Length; i++)
-		{
-			var part = parts[i];
-			var index = part.IndexOf('=');
-
-			if(index < 0)
-			{
-				var key = part.Trim();
-
-				if(_driver.Descriptors.TryGetValue(key, out var descriptor))
-					_entries[descriptor.Name] = null;
-				else
-					_entries[key] = null;
-			}
-			else if(index == part.Length - 1)
-			{
-				var key = part[0..^1].Trim();
-
-				if(_driver.Descriptors.TryGetValue(key, out var descriptor))
-					_entries[descriptor.Name] = null;
-				else
-					_entries[key] = null;
-			}
-			else if(index > 0 && index < part.Length - 1)
-			{
-				var key = part[..index].Trim();
-
-				if(_driver.Descriptors.TryGetValue(key, out var descriptor))
-					_entries[descriptor.Name] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
-				else
-					_entries[key] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
-			}
-		}
-	}
-	#endregion
-
 	#region 重写方法
-	public bool Equals(IConnectionSettings settings) => settings != null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
 	public bool Equals(ConnectionSettingsBase<TDriver> settings) => settings != null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
-	public override bool Equals(object obj) => obj is IConnectionSettings settings && this.Equals(settings);
-	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), _driver.Name.ToLowerInvariant());
-	public override string ToString() => _driver == null ?
-		$"[{this.Name}]{this.Value}" :
-		$"[{this.Name}@{this.Driver}]{this.Value}";
-	#endregion
-
-	#region 枚举遍历
-	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => ((IEnumerable<KeyValuePair<string, string>>)_entries).GetEnumerator();
 	#endregion
 }
 

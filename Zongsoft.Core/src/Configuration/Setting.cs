@@ -42,16 +42,14 @@ public class Setting : ISetting, IEquatable<Setting>, IEquatable<ISetting>
 	#endregion
 
 	#region 构造函数
-	public Setting() { }
+	/// <summary>构建一个设置项。</summary>
+	/// <param name="name">指定的设置项名称。</param>
+	/// <param name="value">指定的设置项内容。</param>
+	/// <remarks>注意：通过本构造函数的 <paramref name="value"/> 参数设置 <see cref="Value"/> 属性并不会触发 <see cref="OnValueChanged(string)"/> 回调方法。</remarks>
 	public Setting(string name, string value = null)
 	{
-		if(string.IsNullOrWhiteSpace(name))
-			throw new ArgumentNullException(nameof(name));
-
-		_name = name.Trim();
-
-		if(value != null)
-			_value = value.Trim();
+		_name = name == null ? string.Empty : name.Trim();
+		_value = value?.Trim();
 	}
 	#endregion
 
