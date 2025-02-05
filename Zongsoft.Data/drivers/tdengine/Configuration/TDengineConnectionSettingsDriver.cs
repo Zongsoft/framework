@@ -36,15 +36,11 @@ namespace Zongsoft.Data.TDengine.Configuration;
 
 public sealed class TDengineConnectionSettingsDriver : ConnectionSettingsDriver<TDengineConnectionSettings>
 {
-	#region 常量定义
-	internal const string NAME = "TDengine";
-	#endregion
-
 	#region 单例字段
 	public static readonly TDengineConnectionSettingsDriver Instance = new();
 	#endregion
 
 	#region 私有构造
-	private TDengineConnectionSettingsDriver() : base(NAME) { }
+	private TDengineConnectionSettingsDriver() : base(TDengineDriver.NAME) { }
 	#endregion
 }
