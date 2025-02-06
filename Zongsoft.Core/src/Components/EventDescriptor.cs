@@ -120,8 +120,7 @@ namespace Zongsoft.Components
 
 		#region 私有方法
 		private string GetTitle() =>　_registry == null ? null :
-			Resources.ResourceUtility.GetResourceString(_registry.GetType(), $"{this.Name}.{nameof(EventDescriptor.Title)}") ??
-			Resources.ResourceUtility.GetResourceString(_registry.GetType(), this.Name);
+			Resources.ResourceUtility.GetResourceString(_registry.GetType(), [$"{this.Name}.{nameof(EventDescriptor.Title)}", this.Name]);
 
 		private string GetDescription() => _registry == null ? null :
 			Resources.ResourceUtility.GetResourceString(_registry.GetType(), $"{this.Name}.{nameof(EventDescriptor.Description)}");

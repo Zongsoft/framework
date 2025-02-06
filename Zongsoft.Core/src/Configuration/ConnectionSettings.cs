@@ -202,7 +202,7 @@ partial class ConnectionSettings
 
 				foreach(var type in GetDefinedTypes(assemblies[i]))
 				{
-					if(type.IsAbstract || type.IsValueType || type.IsGenericTypeDefinition)
+					if(type.IsNotPublic || type.IsAbstract || type.IsValueType || type.IsGenericTypeDefinition)
 						continue;
 
 					if(typeof(IConnectionSettingsDriver).IsAssignableFrom(type))

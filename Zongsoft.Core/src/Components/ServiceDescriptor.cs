@@ -110,12 +110,13 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 	#endregion
 
 	#region 私有方法
-	private string GetTitle() =>
-		Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(ServiceDescriptor.Title)}") ??
-		Resources.ResourceUtility.GetResourceString(this.Type, this.Name);
+	private string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Type,
+	[
+		$"{this.Name}.{nameof(ServiceDescriptor.Title)}",
+		this.Name
+	]);
 
-	private string GetDescription() =>
-		Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(ServiceDescriptor.Description)}");
+	private string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(ServiceDescriptor.Description)}");
 	#endregion
 
 	public class Operation
@@ -169,13 +170,13 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 		#endregion
 
 		#region 私有方法
-		private string GetTitle() =>
-			Resources.ResourceUtility.GetResourceString(_service.Type, $"{_service.Name}.{this.Name}.{nameof(ServiceDescriptor.Title)}") ??
-			Resources.ResourceUtility.GetResourceString(_service.Type, $"{_service.Name}.{this.Name}");
+		private string GetTitle() => Resources.ResourceUtility.GetResourceString(_service.Type,
+		[
+			$"{_service.Name}.{this.Name}.{nameof(ServiceDescriptor.Title)}",
+			$"{_service.Name}.{this.Name}"
+		]);
 
-		private string GetDescription() =>
-			Resources.ResourceUtility.GetResourceString(_service.Type, $"{_service.Name}.{this.Name}.{nameof(ServiceDescriptor.Description)}") ??
-			Resources.ResourceUtility.GetResourceString(_service.Type, $"{_service.Name}.{this.Name}");
+		private string GetDescription() => Resources.ResourceUtility.GetResourceString(_service.Type, $"{_service.Name}.{this.Name}.{nameof(ServiceDescriptor.Description)}");
 		#endregion
 	}
 

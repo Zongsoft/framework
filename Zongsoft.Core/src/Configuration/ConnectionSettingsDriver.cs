@@ -39,7 +39,7 @@ public partial class ConnectionSettingsDriver<TSettings> : IConnectionSettingsDr
 	internal ConnectionSettingsDriver()
 	{
 		this.Name = string.Empty;
-		this.Descriptors = new();
+		this.Descriptors = new(this);
 
 		var properties = typeof(TSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
 		for(int i = 0; i < properties.Length; i++)
@@ -53,7 +53,7 @@ public partial class ConnectionSettingsDriver<TSettings> : IConnectionSettingsDr
 
 		this.Name = name;
 		this.Description = description;
-		this.Descriptors = new();
+		this.Descriptors = new(this);
 
 		var properties = typeof(TSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
 		for(int i = 0; i < properties.Length; i++)

@@ -177,8 +177,7 @@ namespace Zongsoft.Common
 			var attribute = field.GetCustomAttribute<DescriptionAttribute>();
 
 			return attribute == null || string.IsNullOrEmpty(attribute.Description) ?
-				Resources.ResourceUtility.GetResourceString(field, $"{field.DeclaringType.Name}.{field.Name}.Description") ??
-				Resources.ResourceUtility.GetResourceString(field, $"{field.DeclaringType.Name}.{field.Name}") :
+				Resources.ResourceUtility.GetResourceString(field, $"{field.DeclaringType.Name}.{field.Name}.Description", $"{field.DeclaringType.Name}.{field.Name}") :
 				Resources.ResourceUtility.GetResourceString(field, attribute.Description);
 		}
 		#endregion

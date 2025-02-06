@@ -183,15 +183,19 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 私有方法
-		private string GetLabel() => _model == null ? this.Name :
-			Resources.ResourceUtility.GetResourceString(_model.Type, $"{_model.Name}.{this.Name}.{nameof(this.Label)}") ??
-			Resources.ResourceUtility.GetResourceString(_model.Type, $"{_model.Name}.{this.Name}") ??
-			Resources.ResourceUtility.GetResourceString(_model.Type, $"{this.Name}.{nameof(this.Label)}") ??
-			Resources.ResourceUtility.GetResourceString(_model.Type, this.Name);
+		private string GetLabel() => _model == null ? this.Name : Resources.ResourceUtility.GetResourceString(_model.Type,
+		[
+			$"{_model.Name}.{this.Name}.{nameof(this.Label)}",
+			$"{_model.Name}.{this.Name}",
+			$"{this.Name}.{nameof(this.Label)}",
+			this.Name
+		]);
 
-		private string GetDescription() => _model == null ? null :
-			Resources.ResourceUtility.GetResourceString(_model.Type, $"{_model.Name}.{this.Name}.{nameof(this.Description)}") ??
-			Resources.ResourceUtility.GetResourceString(_model.Type, $"{this.Name}.{nameof(this.Description)}");
+		private string GetDescription() => _model == null ? null : Resources.ResourceUtility.GetResourceString(_model.Type,
+		[
+			$"{_model.Name}.{this.Name}.{nameof(this.Description)}",
+			$"{this.Name}.{nameof(this.Description)}"
+		]);
 		#endregion
 
 		#region 重写方法

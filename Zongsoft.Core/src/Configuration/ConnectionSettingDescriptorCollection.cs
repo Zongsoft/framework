@@ -38,8 +38,12 @@ using Zongsoft.Common;
 
 namespace Zongsoft.Configuration;
 
-public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, ConnectionSettingDescriptor>(StringComparer.OrdinalIgnoreCase)
+public class ConnectionSettingDescriptorCollection(IConnectionSettingsDriver driver) : KeyedCollection<string, ConnectionSettingDescriptor>(StringComparer.OrdinalIgnoreCase)
 {
+	#region 成员字段
+	private readonly IConnectionSettingsDriver _driver = driver ?? throw new ArgumentNullException(nameof(driver));
+	#endregion
+
 	#region 重写方法
 	protected override string GetKeyForItem(ConnectionSettingDescriptor descriptor) => descriptor.Name;
 
@@ -101,7 +105,7 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 	public ConnectionSettingDescriptor Add(string name, bool required, object defaultValue, string label = null, string description = null) => this.Add(name, required, defaultValue, null, label, description);
 	public ConnectionSettingDescriptor Add(string name, bool required, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null)
 	{
-		var descriptor = new ConnectionSettingDescriptor(name, null, null, required, defaultValue, label, description, dependencies);
+		var descriptor = new ConnectionSettingDescriptor(_driver, name, null, null, required, defaultValue, label, description, dependencies);
 		this.Add(descriptor);
 		return descriptor;
 	}
@@ -115,7 +119,7 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 	public ConnectionSettingDescriptor Add(string name, Type type, bool required, object defaultValue, string label = null, string description = null) => this.Add(name, type, required, defaultValue, null, label, description);
 	public ConnectionSettingDescriptor Add(string name, Type type, bool required, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null)
 	{
-		var descriptor = new ConnectionSettingDescriptor(name, null, type, required, defaultValue, label, description, dependencies);
+		var descriptor = new ConnectionSettingDescriptor(_driver, name, null, type, required, defaultValue, label, description, dependencies);
 		this.Add(descriptor);
 		return descriptor;
 	}
@@ -129,7 +133,7 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 	public ConnectionSettingDescriptor Add(string name, string[] aliases, bool required, object defaultValue, string label = null, string description = null) => this.Add(name, aliases, required, defaultValue, null, label, description);
 	public ConnectionSettingDescriptor Add(string name, string[] aliases, bool required, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null)
 	{
-		var descriptor = new ConnectionSettingDescriptor(name, aliases, null, required, defaultValue, label, description, dependencies);
+		var descriptor = new ConnectionSettingDescriptor(_driver, name, aliases, null, required, defaultValue, label, description, dependencies);
 		this.Add(descriptor);
 		return descriptor;
 	}
@@ -143,7 +147,7 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, bool required, object defaultValue, string label = null, string description = null) => this.Add(name, aliases, type, required, defaultValue, null, label, description);
 	public ConnectionSettingDescriptor Add(string name, string[] aliases, Type type, bool required, object defaultValue, IEnumerable<ConnectionSettingDescriptor.Dependency> dependencies, string label = null, string description = null)
 	{
-		var descriptor = new ConnectionSettingDescriptor(name, aliases, type, required, defaultValue, label, description, dependencies);
+		var descriptor = new ConnectionSettingDescriptor(_driver, name, aliases, type, required, defaultValue, label, description, dependencies);
 		this.Add(descriptor);
 		return descriptor;
 	}
@@ -171,7 +175,7 @@ public class ConnectionSettingDescriptorCollection() : KeyedCollection<string, C
 			.Select(alias => alias.Alias)
 			.ToArray();
 
-		var descriptor = new ConnectionSettingDescriptor(property.Name, aliases, property.PropertyType)
+		var descriptor = new ConnectionSettingDescriptor(_driver, property.Name, aliases, property.PropertyType)
 		{
 			Label = GetDisplayName(property),
 			Description = GetDescription(property),

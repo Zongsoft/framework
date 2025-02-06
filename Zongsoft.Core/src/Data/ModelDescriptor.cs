@@ -92,11 +92,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 私有方法
-		private string GetTitle() =>
-			Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(this.Title)}") ??
-			Resources.ResourceUtility.GetResourceString(this.Type, this.Name) ??
-			this.Name;
-
+		private string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Type, [$"{this.Name}.{nameof(this.Title)}", this.Name]) ?? this.Name;
 		private string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(this.Description)}");
 		#endregion
 

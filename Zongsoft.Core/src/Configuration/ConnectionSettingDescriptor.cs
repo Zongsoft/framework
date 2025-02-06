@@ -35,83 +35,82 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
+/// <summary>表示连接设置项的描述类。</summary>
+/// <remarks>
+///		<para>连接设置的常用项有：</para>
+///		<list type="bullet">
+///			<item>Group</item>
+///			<item>Client</item>
+///			<item>Server</item>
+///			<item>Port</item>
+///			<item>Timeout</item>
+///			<item>Charset</item>
+///			<item>Encoding</item>
+///			<item>Provider</item>
+///			<item>Database</item>
+///			<item>UserName</item>
+///			<item>Password</item>
+///			<item>Instance</item>
+///			<item>Application</item>
+///		</list>
+/// </remarks>
 public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<ConnectionSettingDescriptor>
 {
 	#region 常量定义
 	private static readonly Type DEFAULT_TYPE = typeof(string);
 	#endregion
 
-	#region 静态字段
-	/// <summary>获取分组标识描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Group = new(nameof(Group), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Group, Properties.Resources.ConnectionSettingDescriptor_Group_Description);
-	/// <summary>获取客户端标识描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Client = new(nameof(Client), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Client, Properties.Resources.ConnectionSettingDescriptor_Client_Description);
-	/// <summary>获取服务器地址描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Server = new(nameof(Server), typeof(string), true, null, Properties.Resources.ConnectionSettingDescriptor_Server, Properties.Resources.ConnectionSettingDescriptor_Server_Description);
-	/// <summary>获取端口号描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Port = new(nameof(Port), typeof(ushort), null, Properties.Resources.ConnectionSettingDescriptor_Port, Properties.Resources.ConnectionSettingDescriptor_Port_Description);
-	/// <summary>获取超时描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Timeout = new(nameof(Timeout), typeof(TimeSpan), null, Properties.Resources.ConnectionSettingDescriptor_Timeout, Properties.Resources.ConnectionSettingDescriptor_Timeout_Description);
-	/// <summary>获取字符集描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Charset = new(nameof(Charset), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Charset, Properties.Resources.ConnectionSettingDescriptor_Charset_Description);
-	/// <summary>获取字符编码描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Encoding = new(nameof(Encoding), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Encoding, Properties.Resources.ConnectionSettingDescriptor_Encoding_Description);
-	/// <summary>获取提供程序描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Provider = new(nameof(Provider), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Provider, Properties.Resources.ConnectionSettingDescriptor_Provider_Description);
-	/// <summary>获取数据库名描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Database = new(nameof(Database), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Database, Properties.Resources.ConnectionSettingDescriptor_Database_Description);
-	/// <summary>获取连接账户描述器。</summary>
-	public static readonly ConnectionSettingDescriptor UserName = new(nameof(UserName), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_UserName, Properties.Resources.ConnectionSettingDescriptor_UserName_Description);
-	/// <summary>获取连接密码描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Password = new(nameof(Password), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Password, Properties.Resources.ConnectionSettingDescriptor_Password_Description);
-	/// <summary>获取实例标识描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Instance = new(nameof(Instance), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Instance, Properties.Resources.ConnectionSettingDescriptor_Instance_Description);
-	/// <summary>获取应用标识描述器。</summary>
-	public static readonly ConnectionSettingDescriptor Application = new(nameof(Application), typeof(string), null, Properties.Resources.ConnectionSettingDescriptor_Application, Properties.Resources.ConnectionSettingDescriptor_Application_Description);
+	#region 成员字段
+	private object _defaultValue;
+	private bool _hasDefaultValue;
+	private string _label;
+	private string _description;
+	private readonly IConnectionSettingsDriver _driver;
 	#endregion
 
 	#region 构造函数
-	public ConnectionSettingDescriptor(string name, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, false, null, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, false, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, object defaultValue, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, false, defaultValue, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, false, defaultValue, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, bool required, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, required, null, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, required, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, bool required, object defaultValue, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, required, defaultValue, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, DEFAULT_TYPE, required, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string label = null, string description = null) : this(driver, name, null, DEFAULT_TYPE, false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, null, DEFAULT_TYPE, false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, object defaultValue, string label = null, string description = null) : this(driver, name, null, DEFAULT_TYPE, false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, null, DEFAULT_TYPE, false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, bool required, string label = null, string description = null) : this(driver, name, null, DEFAULT_TYPE, required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, null, DEFAULT_TYPE, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, bool required, object defaultValue, string label = null, string description = null) : this(driver, name, null, DEFAULT_TYPE, required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, null, DEFAULT_TYPE, required, defaultValue, label, description, dependencies) { }
 
-	public ConnectionSettingDescriptor(string name, Type type, string label = null, string description = null) : this(name, null, type, false, null, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, Type type, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, type, false, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, Type type, object defaultValue, string label = null, string description = null) : this(name, null, type, false, defaultValue, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, Type type, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, type, false, defaultValue, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, Type type, bool required, string label = null, string description = null) : this(name, null, type, required, null, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, Type type, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, type, required, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, Type type, bool required, object defaultValue, string label = null, string description = null) : this(name, null, type, required, defaultValue, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, Type type, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, null, type, required, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, string label = null, string description = null) : this(driver, name, null, type, false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, null, type, false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, object defaultValue, string label = null, string description = null) : this(driver, name, null, type, false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, null, type, false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, bool required, string label = null, string description = null) : this(driver, name, null, type, required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, null, type, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, bool required, object defaultValue, string label = null, string description = null) : this(driver, name, null, type, required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, null, type, required, defaultValue, label, description, dependencies) { }
 
-	public ConnectionSettingDescriptor(string name, string[] aliases, string label = null, string description = null) : this(name, aliases, DEFAULT_TYPE, false, null, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, aliases, DEFAULT_TYPE, false, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, object defaultValue, string label = null, string description = null) : this(name, aliases, DEFAULT_TYPE, false, defaultValue, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, aliases, DEFAULT_TYPE, false, defaultValue, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, bool required, string label = null, string description = null) : this(name, aliases, DEFAULT_TYPE, required, null, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, aliases, DEFAULT_TYPE, required, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, bool required, object defaultValue, string label = null, string description = null) : this(name, aliases, DEFAULT_TYPE, required, defaultValue, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, aliases, DEFAULT_TYPE, required, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, string label = null, string description = null) : this(driver, name, aliases, DEFAULT_TYPE, false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, aliases, DEFAULT_TYPE, false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, object defaultValue, string label = null, string description = null) : this(driver, name, aliases, DEFAULT_TYPE, false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, aliases, DEFAULT_TYPE, false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, bool required, string label = null, string description = null) : this(driver, name, aliases, DEFAULT_TYPE, required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, aliases, DEFAULT_TYPE, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, bool required, object defaultValue, string label = null, string description = null) : this(driver, name, aliases, DEFAULT_TYPE, required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, aliases, DEFAULT_TYPE, required, defaultValue, label, description, dependencies) { }
 
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, string label = null, string description = null) : this(name, aliases, type, false, null, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, aliases, type, false, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, object defaultValue, string label = null, string description = null) : this(name, aliases, type, false, defaultValue, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, aliases, type, false, defaultValue, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, bool required, string label = null, string description = null) : this(name, aliases, type, required, null, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, aliases, type, required, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, bool required, object defaultValue, string label = null, string description = null) : this(name, aliases, type, required, defaultValue, label, description, null) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(name, aliases, type, required, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, string label = null, string description = null) : this(driver, name, aliases, type, false, null, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, aliases, type, false, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, object defaultValue, string label = null, string description = null) : this(driver, name, aliases, type, false, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, aliases, type, false, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, bool required, string label = null, string description = null) : this(driver, name, aliases, type, required, null, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, bool required, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, aliases, type, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, bool required, object defaultValue, string label = null, string description = null) : this(driver, name, aliases, type, required, defaultValue, label, description, null) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, bool required, object defaultValue, IEnumerable<Dependency> dependencies, string label = null, string description = null) : this(driver, name, aliases, type, required, defaultValue, label, description, dependencies) { }
 
-	public ConnectionSettingDescriptor(string name, Type type, bool required, string label = null, string description = null, IEnumerable<Dependency> dependencies = null) : this(name, null, type, required, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, Type type, bool required, object defaultValue, string label = null, string description = null, IEnumerable<Dependency> dependencies = null) : this(name, null, type, required, defaultValue, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, bool required, string label = null, string description = null, IEnumerable<Dependency> dependencies = null) : this(name, aliases, type, required, null, label, description, dependencies) { }
-	public ConnectionSettingDescriptor(string name, string[] aliases, Type type, bool required, object defaultValue, string label = null, string description = null, IEnumerable<Dependency> dependencies = null)
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, bool required, string label = null, string description = null, IEnumerable<Dependency> dependencies = null) : this(driver, name, null, type, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, Type type, bool required, object defaultValue, string label = null, string description = null, IEnumerable<Dependency> dependencies = null) : this(driver, name, null, type, required, defaultValue, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, bool required, string label = null, string description = null, IEnumerable<Dependency> dependencies = null) : this(driver, name, aliases, type, required, null, label, description, dependencies) { }
+	public ConnectionSettingDescriptor(IConnectionSettingsDriver driver, string name, string[] aliases, Type type, bool required, object defaultValue, string label = null, string description = null, IEnumerable<Dependency> dependencies = null)
 	{
+		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
 		this.Name = name ?? throw new ArgumentNullException(nameof(name));
 		this.Type = type;
 		this.Required = required;
@@ -150,11 +149,6 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 	}
 	#endregion
 
-	#region 成员字段
-	private object _defaultValue;
-	private bool _hasDefaultValue;
-	#endregion
-
 	#region 公共属性
 	/// <summary>获取连接设置项的名称。</summary>
 	public string Name { get; }
@@ -170,14 +164,24 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 	public TypeConverter Converter { get; set; }
 	/// <summary>获取或设置成员组装器。</summary>
 	public TypeConverter Populator { get; set; }
-	/// <summary>获取或设置连接设置项的标题。</summary>
-	public string Label { get; set; }
-	/// <summary>获取或设置连接设置项的描述。</summary>
-	public string Description { get; set; }
 	/// <summary>获取连接设置项的选项集。</summary>
 	public OptionCollection Options { get; }
 	/// <summary>获取连接设置项的依赖集。</summary>
 	public DependencyCollection Dependencies { get; }
+
+	/// <summary>获取或设置连接设置项的标题。</summary>
+	public string Label
+	{
+		get => _label ?? GetLabel(_driver, this.Name);
+		set => _label = value;
+	}
+
+	/// <summary>获取或设置连接设置项的描述。</summary>
+	public string Description
+	{
+		get => _description ?? GetDescription(_driver, this.Name);
+		set => _description = value;
+	}
 
 	/// <summary>获取或设置连接设置项的默认值。</summary>
 	public object DefaultValue
@@ -212,17 +216,7 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 
 	#region 重写方法
 	public bool Equals(string name) => string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase) || this.HasAlias(name);
-	public bool Equals(string name, out ConnectionSettingDescriptor descriptor)
-	{
-		descriptor = this.Equals(name) ? this : null;
-		return null != null;
-	}
-
-	public bool Equals(ConnectionSettingDescriptor other) => other is not null && this.Type == other.Type &&
-	(
-		string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) || MatchAliases(this.Aliases, other.Aliases)
-	);
-
+	public bool Equals(ConnectionSettingDescriptor other) => other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj switch
 	{
 		string text => this.Equals(text),
@@ -230,46 +224,40 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 		_ => false,
 	};
 
-	public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Aliases, this.Type);
+	public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant());
 	public override string ToString() => this.DefaultValue == null ? $"[{this.Type.Name}]{this.Name}" : $"[{this.Type.Name}]{this.Name}={this.DefaultValue}";
 	#endregion
 
 	#region 私有方法
-	private static bool MatchAliases(ReadOnlySpan<string> left, ReadOnlySpan<string> right)
-	{
-		if(left.IsEmpty)
-			return right.IsEmpty;
+	private static string GetLabel(IConnectionSettingsDriver driver, string name) => Resources.ResourceUtility.GetResourceString(driver.GetType(),
+		$"{driver.Name}.{nameof(ConnectionSettings)}.{name}",
+		$"{driver.Name}.Settings.{name}",
+		$"{nameof(ConnectionSettings)}.{name}",
+		$"Settings.{name}");
 
-		if(right.IsEmpty)
-			return false;
-
-		if(left.Length != right.Length)
-			return false;
-
-		for(int i = 0; i < left.Length; i++)
-		{
-			for(int j = 0; j < right.Length; j++)
-			{
-				if(string.Equals(left[i], right[j], StringComparison.OrdinalIgnoreCase))
-					return true;
-			}
-		}
-
-		return false;
-	}
+	private static string GetDescription(IConnectionSettingsDriver driver, string name) => Resources.ResourceUtility.GetResourceString(driver.GetType(),
+		$"{driver.Name}.{nameof(ConnectionSettings)}.{name}.{nameof(Description)}",
+		$"{driver.Name}.Settings.{name}.{nameof(Description)}",
+		$"{nameof(ConnectionSettings)}.{name}.{nameof(Description)}",
+		$"Settings.{name}.{nameof(Description)}");
 	#endregion
 
 	#region 嵌套子类
 	[TypeConverter(typeof(OptionConverter))]
 	public sealed class Option
 	{
+		#region 成员字段
+		private readonly Type _type;
+		private string _label;
+		private string _description;
+		#endregion
+
 		#region 构造函数
 		public Option(Common.EnumEntry entry)
 		{
 			this.Name = entry.Name;
 			this.Value = entry.Value;
-			this.Label = entry.Type == null ? null : Resources.ResourceUtility.GetResourceString(entry.Type, $"{entry.Type.Name}.{entry.Name}");
-			this.Description = entry.Description;
+			_type = entry.Type;
 		}
 
 		public Option(string name, object value, string label = null, string description = null)
@@ -287,8 +275,18 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 		#region 公共属性
 		public string Name { get; }
 		public object Value { get; set; }
-		public string Label { get; set; }
-		public string Description { get; set; }
+
+		public string Label
+		{
+			get => _label ?? Resources.ResourceUtility.GetResourceString(_type, $"{_type.Name}.{this.Name}");
+			set => _label = value;
+		}
+
+		public string Description
+		{
+			get => _description ?? Resources.ResourceUtility.GetResourceString(_type, $"{_type.Name}.{this.Name}.{nameof(this.Description)}");
+			set => _description = value;
+		}
 		#endregion
 
 		#region 公共方法

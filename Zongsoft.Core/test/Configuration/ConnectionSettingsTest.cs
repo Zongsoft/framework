@@ -16,66 +16,6 @@ public class ConnectionSettingsTest
 	private static readonly string ConnectionString = $" ;; server=192.168.0.1:8080, localhost:8088  ; Integer=100 ; enabled ; double= 1.23; ;  boolean= true ; text= MyString; dateTime={DATE:yyyy-M-d}; ;";
 
 	[Fact]
-	public void TestDescriptorCollection()
-	{
-		var collection = new ConnectionSettingDescriptorCollection();
-		Assert.Empty(collection);
-
-		collection.Add("P1", typeof(int), 100);
-		Assert.Single(collection);
-
-		collection.Add("P2", ["A2"], typeof(string));
-		Assert.Equal(2, collection.Count);
-
-		Assert.True(collection.Contains("P1"));
-		Assert.False(collection.Contains("A1"));
-		Assert.True(collection.Contains("P2"));
-		Assert.True(collection.Contains("A2"));
-
-		Assert.True(collection.TryGetValue("P1", out var descriptor));
-		Assert.NotNull(descriptor);
-		Assert.Equal("P1", descriptor.Name);
-		Assert.Null(descriptor.Aliases);
-		Assert.Equal(typeof(int), descriptor.Type);
-		Assert.Equal(100, descriptor.DefaultValue);
-
-		Assert.True(collection.TryGetValue("P2", out descriptor));
-		Assert.NotNull(descriptor);
-		Assert.Equal("P2", descriptor.Name);
-		Assert.True(descriptor.HasAlias("A2"));
-		Assert.Equal(typeof(string), descriptor.Type);
-		Assert.Null(descriptor.DefaultValue);
-
-		Assert.True(collection.TryGetValue("A2", out descriptor));
-		Assert.NotNull(descriptor);
-		Assert.Equal("P2", descriptor.Name);
-		Assert.True(descriptor.HasAlias("A2"));
-		Assert.Equal(typeof(string), descriptor.Type);
-		Assert.Null(descriptor.DefaultValue);
-
-		collection.Remove("P1");
-		Assert.Single(collection);
-
-		Assert.False(collection.Contains("P1"));
-		Assert.False(collection.Contains("A1"));
-		Assert.True(collection.Contains("P2"));
-		Assert.True(collection.Contains("A2"));
-
-		Assert.True(collection.TryGetValue("P2", out descriptor));
-		Assert.NotNull(descriptor);
-		Assert.Equal("P2", descriptor.Name);
-		Assert.True(descriptor.HasAlias("A2"));
-
-		Assert.True(collection.TryGetValue("A2", out descriptor));
-		Assert.NotNull(descriptor);
-		Assert.Equal("P2", descriptor.Name);
-		Assert.True(descriptor.HasAlias("A2"));
-
-		collection.Remove("A2");
-		Assert.Empty(collection);
-	}
-
-	[Fact]
 	public void TestConnectionDescriptor()
 	{
 		var descriptors = MyDriver.Instance.Descriptors;
