@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -113,6 +113,7 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
 		this.Name = name ?? throw new ArgumentNullException(nameof(name));
 		this.Type = type;
+		this.Visible = true;
 		this.Required = required;
 		this.DefaultValue = defaultValue;
 		this.Label = label;
@@ -158,8 +159,12 @@ public class ConnectionSettingDescriptor : IEquatable<string>, IEquatable<Connec
 	public string[] Aliases { get; set; }
 	/// <summary>获取或设置连接设置项的格式；它通常会表示解析格式，也可以是对类型的细化说明。</summary>
 	public string Format { get; set; }
-	/// <summary>获取或设置一个值，指示连接设置项是否为必须设置项。</summary>
+	/// <summary>获取或设置一个值，指示连接设置项是否必须设置。</summary>
 	public bool Required { get; set; }
+	/// <summary>获取或设置一个值，指示连接设置项是否忽略。</summary>
+	public bool Ignored { get; set; }
+	/// <summary>获取或设置一个值，指示连接设置项是否可见。</summary>
+	public bool Visible { get; set; }
 	/// <summary>获取或设置类型转换器。</summary>
 	public TypeConverter Converter { get; set; }
 	/// <summary>获取或设置成员组装器。</summary>

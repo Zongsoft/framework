@@ -42,11 +42,13 @@ public class ConnectionSettingAttribute : Attribute
 	public ConnectionSettingAttribute(params string[] dependencies) : this(false, dependencies) { }
 	public ConnectionSettingAttribute(bool required, params string[] dependencies)
 	{
+		this.Visible = true;
 		this.Required = required;
 		this.Dependencies = dependencies;
 	}
 	public ConnectionSettingAttribute(bool required, Type populator, params string[] dependencies)
 	{
+		this.Visible = true;
 		this.Required = required;
 		this.Populator = populator;
 		this.Dependencies = dependencies;
@@ -54,11 +56,13 @@ public class ConnectionSettingAttribute : Attribute
 
 	public ConnectionSettingAttribute(Type populator, params string[] dependencies)
 	{
+		this.Visible = true;
 		this.Populator = populator;
 		this.Dependencies = dependencies;
 	}
 	public ConnectionSettingAttribute(Type populator, bool required, params string[] dependencies)
 	{
+		this.Visible = true;
 		this.Required = required;
 		this.Populator = populator;
 		this.Dependencies = dependencies;
@@ -71,6 +75,12 @@ public class ConnectionSettingAttribute : Attribute
 
 	/// <summary>获取或设置一个值，指示是否为必须项。</summary>
 	public bool Required { get; set; }
+
+	/// <summary>获取或设置一个值，指示是否忽略。</summary>
+	public bool Ignored { get; set; }
+
+	/// <summary>获取或设置一个值，指示是否可见。</summary>
+	public bool Visible { get; set; }
 
 	/// <summary>获取或设置设置项的转换到对应选项对象成员值的转换器(组装器)类型。</summary>
 	public Type Populator { get; set; }

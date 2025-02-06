@@ -308,10 +308,14 @@ public abstract class ConnectionSettingsBase<TDriver, TOptions> : ConnectionSett
 
 		for(int i = 0; i < _properties.Length; i++)
 		{
-			if(this.TryGetValue(_properties[i].Name, out var value) && value is not null)
+			//获取当前属性对应的设置项描述器，如果获取成功并且该属性不为忽略项则进行属性设置
+			if(this.Driver.Descriptors.TryGetValue(_properties[i].Name, out var descriptor) && !descriptor.Ignored)
 			{
-				//如果设置项指定了组装器，则必须将设置项的值再通过组装器转换为目标属性的类型
-				if(this.Driver.Descriptors.TryGetValue(_properties[i].Name, out var descriptor) && descriptor.Populator != null)
+				//获取当前属性对应的设置项值
+				var value = this.GetValue(descriptor);
+
+				//如果设置项指定了组装器，则必须将解析后的值再通过组装器转换为目标属性的类型
+				if(descriptor.Populator != null)
 					value = Common.Convert.ConvertValue(value, _properties[i].PropertyType, () => descriptor.Populator);
 
 				Reflection.Reflector.TrySetValue(_properties[i], ref options, value);

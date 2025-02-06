@@ -191,6 +191,8 @@ public class ConnectionSettingDescriptorCollection(IConnectionSettingsDriver dri
 		if(attribute != null)
 		{
 			descriptor.Format = attribute.Format;
+			descriptor.Ignored = attribute.Ignored;
+			descriptor.Visible = attribute.Visible;
 			descriptor.Required = attribute.Required;
 
 			if(attribute.Populator != null && typeof(TypeConverter).IsAssignableFrom(attribute.Populator))
