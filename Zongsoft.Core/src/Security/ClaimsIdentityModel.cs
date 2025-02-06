@@ -72,7 +72,7 @@ namespace Zongsoft.Security
 				var model = transform == null ? identity.AsModel<TIdentityModel>() : transform(identity);
 
 				//缓存身份模型及其失效的变更令牌
-				return new(model, principal.Disposability);
+				return new(model, principal.Disposed);
 			});
 		}
 		#endregion
