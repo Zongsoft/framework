@@ -92,9 +92,11 @@ public sealed class RedisConnectionSettings : ConnectionSettingsBase<RedisConnec
 		set => this.SetValue(value);
 	}
 
+	[DefaultValue("10s")]
 	[Alias(nameof(ConfigurationOptions.SyncTimeout))]
 	[Alias(nameof(ConfigurationOptions.AsyncTimeout))]
 	[Alias(nameof(ConfigurationOptions.ConnectTimeout))]
+	[ConnectionSetting(typeof(Zongsoft.Components.Converters.TimeSpanConverter.Milliseconds))]
 	public TimeSpan Timeout
 	{
 		get => this.GetValue<TimeSpan>();
@@ -115,6 +117,7 @@ public sealed class RedisConnectionSettings : ConnectionSettingsBase<RedisConnec
 		set => this.SetValue(value);
 	}
 
+	[DefaultValue("10s")]
 	[Alias(nameof(ConfigurationOptions.HeartbeatInterval))]
 	public TimeSpan Heartbeat
 	{
