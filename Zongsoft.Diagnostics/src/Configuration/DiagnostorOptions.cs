@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 using Zongsoft.Configuration;
 
@@ -36,13 +37,25 @@ namespace Zongsoft.Diagnostics.Configuration;
 
 public class DiagnostorOptions
 {
-	public FilteringOptions Meters { get; set; }
-	public FilteringOptions Traces { get; set; }
+	public Filtering Meters { get; set; }
+	public Filtering Traces { get; set; }
 
-	public sealed class FilteringOptions
+	public sealed class Filtering
 	{
 		[ConfigurationProperty("filter")]
 		public ICollection<string> Filters { get; set; }
-		public ConnectionSettingsCollection Exporters { get; set; }
+		public FilteringExporterCollection Exporters { get; set; }
+	}
+
+	public sealed class FilteringExporter
+	{
+		public string Name { get; set; }
+		public string Driver { get; set; }
+		public string Settings { get; set; }
+	}
+
+	public sealed class FilteringExporterCollection() : KeyedCollection<string, FilteringExporter>(StringComparer.OrdinalIgnoreCase)
+	{
+		protected override string GetKeyForItem(FilteringExporter exporter) => exporter.Name;
 	}
 }

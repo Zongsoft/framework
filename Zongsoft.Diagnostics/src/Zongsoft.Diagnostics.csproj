@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.2.0.0</Version>
+		<Version>0.3.0.0</Version>
 		<Product>Zongsoft Diagnostics Library</Product>
 		<Description>This is a class library for OpenTelemetry protocols.</Description>
 		<IncludeSymbols>true</IncludeSymbols>

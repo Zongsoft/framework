@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
@@ -36,10 +37,13 @@ using Zongsoft.Configuration;
 namespace Zongsoft.Diagnostics.Configuration;
 
 [Diagnostor.ConfiguratorFactory<Factory>]
-public class Configurator(string path) : Diagnostor.Configurator()
+public sealed class Configurator(string path) : Diagnostor.Configurator()
 {
+	#region 成员字段
 	private readonly string _path = path ?? throw new ArgumentNullException(nameof(path));
+	#endregion
 
+	#region 重写方法
 	public override void Configure(Diagnostor diagnostor)
 	{
 		if(diagnostor == null)
@@ -50,14 +54,17 @@ public class Configurator(string path) : Diagnostor.Configurator()
 			return;
 
 		if(options.Meters != null)
-			diagnostor.Meters = new Diagnostor.Filtering(options.Meters.Filters, options.Meters.Exporters.Select(exporter => new System.Collections.Generic.KeyValuePair<string, string>(exporter.Driver.Name, exporter.Value)));
+			diagnostor.Meters = new Diagnostor.Filtering(options.Meters.Filters, options.Meters.Exporters.Select(exporter => new KeyValuePair<string, string>(exporter.Driver, exporter.Settings)));
 
 		if(options.Traces != null)
-			diagnostor.Traces = new Diagnostor.Filtering(options.Traces.Filters, options.Traces.Exporters.Select(exporter => new System.Collections.Generic.KeyValuePair<string, string>(exporter.Driver.Name, exporter.Value)));
+			diagnostor.Traces = new Diagnostor.Filtering(options.Traces.Filters, options.Traces.Exporters.Select(exporter => new KeyValuePair<string, string>(exporter.Driver, exporter.Settings)));
 	}
+	#endregion
 
+	#region 嵌套子类
 	private sealed class Factory : Diagnostor.ConfiguratorFactory
 	{
 		public override Diagnostor.Configurator Create(string argument) => new Configurator(argument);
 	}
+	#endregion
 }
