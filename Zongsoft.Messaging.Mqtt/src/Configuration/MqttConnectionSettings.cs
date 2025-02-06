@@ -61,6 +61,7 @@ public sealed class MqttConnectionSettings : ConnectionSettingsBase<MqttConnecti
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(true)]
 	public string Server
 	{
 		get => this.GetValue<string>();
@@ -79,15 +80,16 @@ public sealed class MqttConnectionSettings : ConnectionSettingsBase<MqttConnecti
 		set => this.SetValue(value);
 	}
 
-	[DefaultValue("0:01:30")]
+	[DefaultValue("60s")]
 	public TimeSpan Timeout
 	{
 		get => this.GetValue<TimeSpan>();
 		set => this.SetValue(value);
 	}
 
-	[DefaultValue("0:0:30")]
+	[DefaultValue("30s")]
 	[Alias(nameof(MqttClientOptions.KeepAlivePeriod))]
+	[ConnectionSetting(typeof(Components.Converters.TimeSpanConverter.Milliseconds))]
 	public TimeSpan KeepAlive
 	{
 		get => this.GetValue<TimeSpan>();

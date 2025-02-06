@@ -52,6 +52,7 @@ public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengine
 		set => this.SetValue(value);
 	}
 
+	[DefaultValue("10s")]
 	[Alias(nameof(TDengineConnectionStringBuilder.ConnTimeout))]
 	[Alias(nameof(TDengineConnectionStringBuilder.ReadTimeout))]
 	[Alias(nameof(TDengineConnectionStringBuilder.WriteTimeout))]
@@ -69,6 +70,7 @@ public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengine
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(true)]
 	public string Database
 	{
 		get => this.GetValue<string>();

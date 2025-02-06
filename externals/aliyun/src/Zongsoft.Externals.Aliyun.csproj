@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.15.0</Version>
+		<Version>6.16.0</Version>
 		<Product>Zongsoft Aliyun Library</Product>
 		<Description>This is a library about Aliyun SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Aliyun</RootNamespace>

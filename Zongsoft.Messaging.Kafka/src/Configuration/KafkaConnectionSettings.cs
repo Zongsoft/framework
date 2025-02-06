@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.ComponentModel;
 
 using Confluent.Kafka;
 
@@ -51,6 +52,13 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 		set => this.SetValue(value);
 	}
 
+	[Alias(nameof(ConsumerConfig.GroupProtocol))]
+	public GroupProtocol GroupProtocol
+	{
+		get => this.GetValue<GroupProtocol>();
+		set => this.SetValue(value);
+	}
+
 	[Alias(nameof(ClientConfig.ClientId))]
 	public string Client
 	{
@@ -59,6 +67,7 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 	}
 
 	[Alias(nameof(ClientConfig.BootstrapServers))]
+	[ConnectionSetting(true)]
 	public string Server
 	{
 		get => this.GetValue<string>();
@@ -83,7 +92,56 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 		set => this.SetValue(value);
 	}
 
+	public int CompressionLevel
+	{
+		get => this.GetValue<int>();
+		set => this.SetValue(value);
+	}
+
+	public CompressionType CompressionType
+	{
+		get => this.GetValue<CompressionType>();
+		set => this.SetValue(value);
+	}
+
+	public IsolationLevel IsolationLevel
+	{
+		get => this.GetValue<IsolationLevel>();
+		set => this.SetValue(value);
+	}
+
+	[DefaultValue("10s")]
+	[Alias(nameof(ConsumerConfig.HeartbeatIntervalMs))]
+	public TimeSpan Heartbeat
+	{
+		get => this.GetValue<TimeSpan>();
+		set => this.SetValue(value);
+	}
+
+	[DefaultValue("10s")]
+	[Alias(nameof(ClientConfig.SocketTimeoutMs))]
+	[Alias(nameof(ClientConfig.SocketConnectionSetupTimeoutMs))]
+	[Alias(nameof(ConsumerConfig.SessionTimeoutMs))]
+	[Alias(nameof(ProducerConfig.RequestTimeoutMs))]
+	[Alias(nameof(ProducerConfig.MessageTimeoutMs))]
+	[ConnectionSetting(typeof(Components.Converters.TimeSpanConverter.Milliseconds))]
 	public TimeSpan Timeout
+	{
+		get => this.GetValue<TimeSpan>();
+		set => this.SetValue(value);
+	}
+
+	[Alias(nameof(ProducerConfig.TransactionalId))]
+	public string TransactionId
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[DefaultValue("60s")]
+	[Alias(nameof(ProducerConfig.TransactionTimeoutMs))]
+	[ConnectionSetting(typeof(Components.Converters.TimeSpanConverter.Milliseconds))]
+	public TimeSpan TransactionTimeout
 	{
 		get => this.GetValue<TimeSpan>();
 		set => this.SetValue(value);
@@ -95,6 +153,10 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 	{
 		var options = new ConsumerConfig();
 		base.Populate(options);
+
+		if(string.IsNullOrEmpty(options.ClientId))
+			options.ClientId = $"C{Common.Randomizer.GenerateString()}";
+
 		return options;
 	}
 
@@ -102,6 +164,10 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 	{
 		var options = new ProducerConfig();
 		base.Populate(options);
+
+		if(string.IsNullOrEmpty(options.ClientId))
+			options.ClientId = $"C{Common.Randomizer.GenerateString()}";
+
 		return options;
 	}
 	#endregion

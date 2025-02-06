@@ -43,6 +43,7 @@ public sealed class ZeroConnectionSettings : ConnectionSettingsBase<ZeroConnecti
 	#endregion
 
 	#region 公共属性
+	[DefaultValue(ZeroQueueServer.PORT)]
 	public ushort Port
 	{
 		get => this.GetValue<ushort>();
@@ -61,19 +62,8 @@ public sealed class ZeroConnectionSettings : ConnectionSettingsBase<ZeroConnecti
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(true)]
 	public string Server
-	{
-		get => this.GetValue<string>();
-		set => this.SetValue(value);
-	}
-
-	public string UserName
-	{
-		get => this.GetValue<string>();
-		set => this.SetValue(value);
-	}
-
-	public string Password
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);

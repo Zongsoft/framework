@@ -65,6 +65,7 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(true)]
 	public string Database
 	{
 		get => this.GetValue<string>();
@@ -109,7 +110,7 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
-	[ConnectionSetting(typeof(Components.Converters.TimeSpanConverter.Seconds))]
+	[ConnectionSetting(typeof(Components.Converters.TimeSpanConverter.Seconds), Visible = false)]
 	public TimeSpan KeepAlive
 	{
 		get => this.GetValue<TimeSpan>();
@@ -125,30 +126,37 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 	}
 
 	[DefaultValue(true)]
+	[ConnectionSetting(Visible = false)]
 	public bool Pooling
 	{
 		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 
+	[DefaultValue(1000)]
+	[ConnectionSetting(Visible = false)]
 	public uint MaximumPoolSize
 	{
 		get => this.GetValue<uint>();
 		set => this.SetValue(value);
 	}
 
+	[DefaultValue(5)]
+	[ConnectionSetting(Visible = false)]
 	public uint MinimumPoolSize
 	{
 		get => this.GetValue<uint>();
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(Visible = false)]
 	public bool Replication
 	{
 		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(Visible = false)]
 	public bool ConnectionReset
 	{
 		get => this.GetValue<bool>();
@@ -189,6 +197,7 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 	}
 
 	[DefaultValue(true)]
+	[ConnectionSetting(Visible = false)]
 	public bool AllowUserVariables
 	{
 		get => this.GetValue<bool>();
@@ -196,6 +205,7 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 	}
 
 	[DefaultValue(true)]
+	[ConnectionSetting(Visible = false)]
 	public bool AllowPublicKeyRetrieval
 	{
 		get => this.GetValue<bool>();
@@ -203,12 +213,14 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 	}
 
 	[DefaultValue(true)]
+	[ConnectionSetting(Visible = false)]
 	public bool AllowLoadLocalInfile
 	{
 		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(Visible = false)]
 	public string AllowLoadLocalInfileInPath
 	{
 		get => this.GetValue<string>();
@@ -216,6 +228,7 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 	}
 
 	[DefaultValue(true)]
+	[ConnectionSetting(Visible = false)]
 	public bool AllowZeroDateTime
 	{
 		get => this.GetValue<bool>();
@@ -223,6 +236,7 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 	}
 
 	[DefaultValue(true)]
+	[ConnectionSetting(Visible = false)]
 	public bool ConvertZeroDateTime
 	{
 		get => this.GetValue<bool>();

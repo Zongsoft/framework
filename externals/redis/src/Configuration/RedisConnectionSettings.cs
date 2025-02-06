@@ -117,7 +117,7 @@ public sealed class RedisConnectionSettings : ConnectionSettingsBase<RedisConnec
 		set => this.SetValue(value);
 	}
 
-	[DefaultValue("10s")]
+	[DefaultValue("15s")]
 	[Alias(nameof(ConfigurationOptions.HeartbeatInterval))]
 	public TimeSpan Heartbeat
 	{

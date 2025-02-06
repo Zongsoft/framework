@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Messaging.Mqtt;
 
-public class MqttConnectionSettings : Zongsoft.Configuration.ConnectionSettingsBase<MqttConnectionSettingsDriver>
+public class MqttConnectionSettings : Zongsoft.Configuration.ConnectionSettingsBase<MqttConnectionSettingsDriver>, Zongsoft.Messaging.IMessageQueueSettings
 {
 	#region 构造函数
 	public MqttConnectionSettings(string value = null) : base(MqttConnectionSettingsDriver.Instance, value) { }

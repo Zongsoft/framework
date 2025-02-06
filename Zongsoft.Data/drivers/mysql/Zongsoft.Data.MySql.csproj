@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.7.0</Version>
+		<Version>6.8.0</Version>
 		<Product>Zongsoft Data Driver for MySQL</Product>
 		<Description>This is a data driver for MySQL of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.MySql</RootNamespace>
@@ -39,5 +39,20 @@
 		<Reference Include="Zongsoft.Data">
 			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
 	</ItemGroup>
 </Project>
