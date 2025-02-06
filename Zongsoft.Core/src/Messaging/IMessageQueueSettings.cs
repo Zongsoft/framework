@@ -36,7 +36,5 @@ public interface IMessageQueueSettings : Configuration.IConnectionSettings
 	string Group { get; set; }
 	string Client { get; set; }
 	string Server { get; set; }
-	string UserName { get; set; }
-	string Password { get; set; }
 	TimeSpan Timeout { get; set; }
 }
