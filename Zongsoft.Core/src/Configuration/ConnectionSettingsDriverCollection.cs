@@ -35,4 +35,9 @@ namespace Zongsoft.Configuration;
 public class ConnectionSettingsDriverCollection() : KeyedCollection<string, IConnectionSettingsDriver>(StringComparer.OrdinalIgnoreCase)
 {
 	protected override string GetKeyForItem(IConnectionSettingsDriver driver) => driver.Name;
+	protected override void InsertItem(int index, IConnectionSettingsDriver driver)
+	{
+		if(driver != null && !this.Contains(driver.Name))
+			base.InsertItem(index, driver);
+	}
 }

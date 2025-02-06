@@ -29,19 +29,13 @@
 
 using System;
 using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-public class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDriver>
+public partial class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDriver>
 {
-	#region 静态构造
-	static ConnectionSettings() => Drivers = new();
-	#endregion
-
-	#region 静态属性
-	public static ConnectionSettingsDriverCollection Drivers { get; }
-	#endregion
-
 	#region 构造函数
 	public ConnectionSettings(string value = null) : base(ConnectionSettingsDriver.Default, value) { }
 	public ConnectionSettings(string name, string value) : base(ConnectionSettingsDriver.Default, name, value) { }
@@ -165,6 +159,81 @@ public class ConnectionSettings : ConnectionSettingsBase<ConnectionSettingsDrive
 			return value;
 
 		return base.Entries.TryGetValue(name, out var text) && Common.Convert.TryConvertValue<T>(text, out value) ? value : defaultValue;
+	}
+	#endregion
+}
+
+partial class ConnectionSettings
+{
+	#region 静态字段
+	private static bool _loaded;
+	private static readonly ConnectionSettingsDriverCollection _drivers = new();
+	#endregion
+
+	#region 静态属性
+	public static ConnectionSettingsDriverCollection Drivers
+	{
+		get
+		{
+			if(!_loaded)
+				Load();
+
+			return _drivers;
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private static void Load()
+	{
+		lock(_drivers)
+		{
+			if(_loaded)
+				return;
+
+			_loaded = true;
+
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+			for(int i = 0; i < assemblies.Length; i++)
+			{
+				if(assemblies[i].IsDynamic)
+					continue;
+
+				foreach(var type in GetDefinedTypes(assemblies[i]))
+				{
+					if(type.IsAbstract || type.IsValueType || type.IsGenericTypeDefinition)
+						continue;
+
+					if(typeof(IConnectionSettingsDriver).IsAssignableFrom(type))
+					{
+						var field = type.GetField(nameof(IConnectionSettingsDriver.Instance), BindingFlags.Public | BindingFlags.Static);
+
+						if(field != null && typeof(IConnectionSettingsDriver).IsAssignableFrom(field.FieldType))
+							_drivers.Add((IConnectionSettingsDriver)field.GetValue(null));
+						else
+						{
+							var property = type.GetProperty(nameof(IConnectionSettingsDriver.Instance), BindingFlags.Public | BindingFlags.Static);
+
+							if(property != null && property.CanRead && typeof(IConnectionSettingsDriver).IsAssignableFrom(field.FieldType))
+								_drivers.Add((IConnectionSettingsDriver)property.GetValue(null));
+						}
+					}
+				}
+			}
+		}
+
+		static IEnumerable<Type> GetDefinedTypes(Assembly assembly)
+		{
+			try
+			{
+				return assembly.DefinedTypes;
+			}
+			catch
+			{
+				return [];
+			}
+		}
 	}
 	#endregion
 }
