@@ -36,26 +36,24 @@ namespace Zongsoft.Configuration;
 public class Settings : IEnumerable<KeyValuePair<string, string>>
 {
 	#region 成员字段
-	private string _name;
 	private string _value;
-	private Dictionary<string, string> _settings;
+	private readonly Dictionary<string, string> _settings;
 	#endregion
 
 	#region 构造函数
 	/// <summary>构建一个设置。</summary>
 	/// <param name="name">指定的设置名称。</param>
 	/// <param name="value">指定的设置内容。</param>
-	/// <remarks>注意：通过本构造函数的 <paramref name="value"/> 参数设置 <see cref="Value"/> 属性并不会触发 <see cref="OnValueChanged(string)"/> 回调方法。</remarks>
 	public Settings(string name, string value = null)
 	{
-		_name = name == null ? string.Empty : name.Trim();
-		_value = value?.Trim();
+		this.Name = name == null ? string.Empty : name.Trim();
+		this.Value = value;
 		_settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 	}
 	#endregion
 
 	#region 公共属性
-	public string Name => _name;
+	public string Name { get; }
 	public string Value
 	{
 		get => _value;
@@ -122,9 +120,9 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 	#endregion
 
 	#region 重写方法
-	public bool Equals(Settings settings) => settings is not null && string.Equals(_name, settings._name, StringComparison.OrdinalIgnoreCase);
+	public bool Equals(Settings settings) => settings is not null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj is Settings settings && this.Equals(settings);
-	public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant());
+	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant());
 	public override string ToString() => $"{this.Name}={this.Value}";
 	#endregion
 
