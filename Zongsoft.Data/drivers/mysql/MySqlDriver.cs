@@ -31,7 +31,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
