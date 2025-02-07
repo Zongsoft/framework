@@ -33,7 +33,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
@@ -186,11 +186,7 @@ namespace Zongsoft.Data.MySql
 
 			try
 			{
-#if NET6_0_OR_GREATER
-				context.Count = await bulker.LoadAsync(null, cancellation);
-#else
 				context.Count = await bulker.LoadAsync(cancellation);
-#endif
 			}
 			finally
 			{
