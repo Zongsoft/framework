@@ -120,4 +120,8 @@ public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengine
 		set => this.SetValue(value);
 	}
 	#endregion
+
+	#region 重写方法
+	protected override TDengineConnectionStringBuilder CreateOptions() => new(string.Empty);
+	#endregion
 }
