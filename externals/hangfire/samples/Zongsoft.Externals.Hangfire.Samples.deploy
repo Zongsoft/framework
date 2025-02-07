@@ -1,2 +1,3 @@
 artifacts/Zongsoft.Externals.Hangfire.Samples.plugin
 lib/$(Framework)/Zongsoft.Externals.Hangfire.Samples.*
+lib/$(Framework)/*/Zongsoft.Externals.Hangfire.Samples.resources.*

@@ -1,5 +1,6 @@
 artifacts/Zongsoft.Externals.ClosedXml.plugin
 lib/$(Framework)/Zongsoft.Externals.ClosedXml.*
+lib/$(Framework)/*/Zongsoft.Externals.ClosedXml.resources.*
 
 nuget:ClosedXml@0.102.2
 nuget:ClosedXml.Report@0.2.10

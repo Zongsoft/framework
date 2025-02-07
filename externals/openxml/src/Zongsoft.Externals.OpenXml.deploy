@@ -1,4 +1,5 @@
 artifacts/Zongsoft.Externals.OpenXml.plugin
 lib/$(Framework)/Zongsoft.Externals.OpenXml.*
+lib/$(Framework)/*/Zongsoft.Externals.OpenXml.resources.*
 
 nuget:DocumentFormat.OpenXml@2.20.0

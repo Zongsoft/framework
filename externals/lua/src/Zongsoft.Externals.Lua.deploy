@@ -1,5 +1,6 @@
 artifacts/Zongsoft.Externals.Lua.plugin
 lib/$(Framework)/Zongsoft.Externals.Lua.*
+lib/$(Framework)/*/Zongsoft.Externals.Lua.resources.*
 
 nuget:NLua@1.7.3
 nuget:KeraLua@1.4.1

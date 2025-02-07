@@ -1,2 +1,3 @@
 artifacts/Zongsoft.Externals.Grapecity.Web.plugin
 lib/$(Framework)/Zongsoft.Externals.Grapecity.Web.*
+lib/$(Framework)/*/Zongsoft.Externals.Grapecity.Web.resources.*

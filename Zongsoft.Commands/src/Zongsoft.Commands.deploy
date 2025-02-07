@@ -1,2 +1,3 @@
 artifacts/Zongsoft.Commands.plugin
 lib/$(Framework)/Zongsoft.Commands.*
+lib/$(Framework)/*/Zongsoft.Commands.resources.*

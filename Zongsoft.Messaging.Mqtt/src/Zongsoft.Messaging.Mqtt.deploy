@@ -1,6 +1,7 @@
 artifacts/Zongsoft.Messaging.Mqtt.plugin
 artifacts/Zongsoft.Messaging.Mqtt.option
 lib/$(Framework)/Zongsoft.Messaging.Mqtt.*
+lib/$(Framework)/*/Zongsoft.Messaging.Mqtt.resources.*
 
 nuget:MqttNet@4.3.7.1207
 nuget:MQTTnet.Extensions.ManagedClient@4.3.7.1207

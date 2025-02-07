@@ -1,5 +1,6 @@
 artifacts/Zongsoft.Data.MySql.plugin
 lib/$(Framework)/Zongsoft.Data.MySql.*
+lib/$(Framework)/*/Zongsoft.Data.MySql.resources.*
 
 nuget:MySql.Data@9.1.0   <framework:net6.0^>
 nuget:MySql.Data@6.10.9  <framework:net5.0>

@@ -1,3 +1,4 @@
 artifacts/Zongsoft.Externals.Aliyun.plugin
 artifacts/Zongsoft.Externals.Aliyun.option
 lib/$(Framework)/Zongsoft.Externals.Aliyun.*
+lib/$(Framework)/*/Zongsoft.Externals.Aliyun.resources.*

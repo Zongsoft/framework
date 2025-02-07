@@ -2,3 +2,4 @@ artifacts/Zongsoft.Security.plugin
 artifacts/Zongsoft.Security.option
 artifacts/Zongsoft.Security.mapping
 lib/$(Framework)/Zongsoft.Security.*
+lib/$(Framework)/*/Zongsoft.Security.resources.*

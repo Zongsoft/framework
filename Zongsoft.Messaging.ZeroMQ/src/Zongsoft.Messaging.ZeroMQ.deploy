@@ -1,6 +1,7 @@
 artifacts/Zongsoft.Messaging.ZeroMQ.plugin
 artifacts/Zongsoft.Messaging.ZeroMQ.option
 lib/$(Framework)/Zongsoft.Messaging.ZeroMQ.*
+lib/$(Framework)/*/Zongsoft.Messaging.ZeroMQ.resources.*
 
 nuget:NetMQ@4.0.1.13
 nuget:AsyncIO@0.1.69

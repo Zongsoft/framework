@@ -1,2 +1,3 @@
 artifacts/Zongsoft.Data.plugin
 lib/$(Framework)/Zongsoft.Data.*
+lib/$(Framework)/*/Zongsoft.Data.resources.*

@@ -1,6 +1,7 @@
 artifacts/Zongsoft.Messaging.Kafka.plugin
 artifacts/Zongsoft.Messaging.Kafka.option
 lib/$(Framework)/Zongsoft.Messaging.Kafka.*
+lib/$(Framework)/*/Zongsoft.Messaging.Kafka.resources.*
 
 nuget:Confluent.Kafka@2.6.1
 

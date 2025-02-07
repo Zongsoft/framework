@@ -1,5 +1,6 @@
 artifacts/Zongsoft.Externals.Wechat.plugin
 artifacts/Zongsoft.Externals.Wechat.option
 lib/$(Framework)/Zongsoft.Externals.Wechat.*
+lib/$(Framework)/*/Zongsoft.Externals.Wechat.resources.*
 
 nuget:Portable.BouncyCastle@1.9.0

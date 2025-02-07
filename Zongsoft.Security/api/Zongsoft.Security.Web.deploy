@@ -1,2 +1,3 @@
 artifacts/Zongsoft.Security.Web.plugin
 lib/$(Framework)/Zongsoft.Security.Web.*
+lib/$(Framework)/*/Zongsoft.Security.Web.resources.*

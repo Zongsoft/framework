@@ -1,2 +1,3 @@
 artifacts/Zongsoft.Externals.Aliyun.Gateway.plugin
 lib/$(Framework)/Zongsoft.Externals.Aliyun.Gateway.*
+lib/$(Framework)/*/Zongsoft.Externals.Aliyun.Gateway.resources.*
