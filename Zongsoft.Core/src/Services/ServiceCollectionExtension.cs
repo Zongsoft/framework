@@ -36,247 +36,246 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public static class ServiceCollectionExtension
 {
-	public static class ServiceCollectionExtension
+	#region 私有变量
+	private static readonly TypeInfo ObjectType = typeof(object).GetTypeInfo();
+	private static readonly MethodInfo ConfigureMethod = typeof(OptionsConfigurationExtension)
+		.GetMethod(nameof(OptionsConfigurationExtension.Configure), 1,
+			BindingFlags.Public | BindingFlags.Static,
+			null,
+			[typeof(IServiceCollection), typeof(string), typeof(IConfiguration)],
+			null);
+	#endregion
+
+	#region 公共方法
+	public static void Register(this IServiceCollection services, Assembly assembly, IConfiguration configuration)
 	{
-		#region 私有变量
-		private static readonly TypeInfo ObjectType = typeof(object).GetTypeInfo();
-		private static readonly MethodInfo ConfigureMethod = typeof(OptionsConfigurationExtension)
-			.GetMethod(nameof(OptionsConfigurationExtension.Configure), 1,
-				BindingFlags.Public | BindingFlags.Static,
-				null,
-				new[] { typeof(IServiceCollection), typeof(string), typeof(IConfiguration) },
-				null);
-		#endregion
+		if(assembly == null)
+			throw new ArgumentNullException(nameof(assembly));
 
-		#region 公共方法
-		public static void Register(this IServiceCollection services, Assembly assembly, IConfiguration configuration)
+		foreach(var exportedType in assembly.ExportedTypes)
 		{
-			if(assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
+			var type = exportedType.GetTypeInfo();
 
-			foreach(var exportedType in assembly.ExportedTypes)
+			//如果是非公共类、泛型原型类则忽略
+			if(type.IsNotPublic || !type.IsClass || (type.IsGenericType && type.IsGenericTypeDefinition))
+				continue;
+
+			//使用 IServiceRegistration 服务注册器注册服务
+			if(RegisterServices(services, type, configuration))
+				continue;
+
+			//获取服务注册注解
+			var attributes = type.GetCustomAttributes<ServiceAttribute>(true);
+
+			//尝试注册服务
+			foreach(var attribute in attributes)
 			{
-				var type = exportedType.GetTypeInfo();
-
-				//如果是非公共类、泛型原型类则忽略
-				if(type.IsNotPublic || !type.IsClass || (type.IsGenericType && type.IsGenericTypeDefinition))
-					continue;
-
-				//使用 IServiceRegistration 服务注册器注册服务
-				if(RegisterServices(services, type, configuration))
-					continue;
-
-				//获取服务注册注解
-				var attributes = type.GetCustomAttributes<ServiceAttribute>(true);
-
-				//尝试注册服务
-				foreach(var attribute in attributes)
-				{
-					if(attribute != null)
-						RegisterServices(services, type, attribute);
-				}
-
-				//尝试注入配置
-				if(configuration != null)
-					RegisterOptions(services, type, configuration);
+				if(attribute != null)
+					RegisterServices(services, type, attribute);
 			}
+
+			//尝试注入配置
+			if(configuration != null)
+				RegisterOptions(services, type, configuration);
 		}
-		#endregion
+	}
+	#endregion
 
-		#region 私有方法
-		private static void RegisterOptions(IServiceCollection services, TypeInfo type, IConfiguration configuration)
+	#region 私有方法
+	private static void RegisterOptions(IServiceCollection services, TypeInfo type, IConfiguration configuration)
+	{
+		static Type GetOptionType(Type type)
 		{
-			static Type GetOptionType(Type type)
-			{
-				return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IOptions<>) ?
-				       type.GenericTypeArguments[0] : type;
-			}
-
-			do
-			{
-				var properties = type.DeclaredProperties.Where(p => p.CanRead && p.CanWrite && p.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
-
-				foreach(var property in properties)
-				{
-					var attribute = property.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
-
-					if(attribute != null)
-					{
-						var method = ConfigureMethod.MakeGenericMethod(GetOptionType(property.PropertyType));
-						method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(Configuration.ConfigurationUtility.GetConfigurationPath(attribute.Path)) });
-					}
-				}
-
-				var fields = type.DeclaredFields.Where(f => f.IsPublic && !f.IsInitOnly && f.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
-
-				foreach(var field in fields)
-				{
-					var attribute = field.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
-
-					if(attribute != null)
-					{
-						var method = ConfigureMethod.MakeGenericMethod(GetOptionType(field.FieldType));
-						method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(Configuration.ConfigurationUtility.GetConfigurationPath(attribute.Path)) });
-					}
-				}
-
-				type = type.BaseType?.GetTypeInfo();
-			} while(type != null && type.GetTypeInfo() != ObjectType);
+			return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IOptions<>) ?
+			       type.GenericTypeArguments[0] : type;
 		}
 
-		private static bool RegisterServices(IServiceCollection services, TypeInfo type, IConfiguration configuration)
+		do
 		{
-			if(typeof(IServiceRegistration).IsAssignableFrom(type))
-			{
-				var registration = GetRegistration(type);
+			var properties = type.DeclaredProperties.Where(p => p.CanRead && p.CanWrite && p.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
 
-				if(registration != null)
+			foreach(var property in properties)
+			{
+				var attribute = property.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
+
+				if(attribute != null)
 				{
-					registration.Register(services, configuration);
-					return true;
+					var method = ConfigureMethod.MakeGenericMethod(GetOptionType(property.PropertyType));
+					method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(Configuration.ConfigurationUtility.GetConfigurationPath(attribute.Path)) });
 				}
 			}
 
-			return false;
+			var fields = type.DeclaredFields.Where(f => f.IsPublic && !f.IsInitOnly && f.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
 
-			static IServiceRegistration GetRegistration(TypeInfo type)
+			foreach(var field in fields)
 			{
-				var members = type.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField | BindingFlags.GetProperty);
+				var attribute = field.GetCustomAttribute<Configuration.Options.OptionsAttribute>(true);
 
-				for(int i = 0; i < members.Length; i++)
+				if(attribute != null)
 				{
-					switch(members[i])
-					{
-						case FieldInfo field when typeof(IServiceRegistration).IsAssignableFrom(field.FieldType):
-							return (IServiceRegistration)field.GetValue(null);
-						case PropertyInfo property when typeof(IServiceRegistration).IsAssignableFrom(property.PropertyType):
-							return (IServiceRegistration)property.GetValue(null);
-					}
+					var method = ConfigureMethod.MakeGenericMethod(GetOptionType(field.FieldType));
+					method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(Configuration.ConfigurationUtility.GetConfigurationPath(attribute.Path)) });
 				}
+			}
 
-				return (IServiceRegistration)Activator.CreateInstance(type);
+			type = type.BaseType?.GetTypeInfo();
+		} while(type != null && type.GetTypeInfo() != ObjectType);
+	}
+
+	private static bool RegisterServices(IServiceCollection services, TypeInfo type, IConfiguration configuration)
+	{
+		if(typeof(IServiceRegistration).IsAssignableFrom(type))
+		{
+			var registration = GetRegistration(type);
+
+			if(registration != null)
+			{
+				registration.Register(services, configuration);
+				return true;
 			}
 		}
 
-		private static void RegisterServices(IServiceCollection services, TypeInfo type, ServiceAttribute attribute)
+		return false;
+
+		static IServiceRegistration GetRegistration(TypeInfo type)
 		{
-			//如果是成员注册
-			if(!string.IsNullOrEmpty(attribute.Members))
+			var members = type.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField | BindingFlags.GetProperty);
+
+			for(int i = 0; i < members.Length; i++)
 			{
-				RegisterStaticMember(services, type, attribute.Members, attribute.Contracts);
-				return;
+				switch(members[i])
+				{
+					case FieldInfo field when typeof(IServiceRegistration).IsAssignableFrom(field.FieldType):
+						return (IServiceRegistration)field.GetValue(null);
+					case PropertyInfo property when typeof(IServiceRegistration).IsAssignableFrom(property.PropertyType):
+						return (IServiceRegistration)property.GetValue(null);
+				}
 			}
 
-			//如果是抽象类则返回
-			if(type.IsAbstract)
-				return;
+			return (IServiceRegistration)Activator.CreateInstance(type);
+		}
+	}
 
-			services.AddSingleton((Type)type);
+	private static void RegisterServices(IServiceCollection services, TypeInfo type, ServiceAttribute attribute)
+	{
+		//如果是成员注册
+		if(!string.IsNullOrEmpty(attribute.Members))
+		{
+			RegisterStaticMember(services, type, attribute.Members, attribute.Contracts);
+			return;
+		}
 
-			if(!string.IsNullOrEmpty(attribute.Name))
-				ServiceProviderExtension.Register(attribute.Name, type);
+		//如果是抽象类则返回
+		if(type.IsAbstract)
+			return;
 
-			if(attribute.Contracts != null)
+		services.AddSingleton((Type)type);
+
+		if(!string.IsNullOrEmpty(attribute.Name))
+			ServiceProviderExtension.Register(attribute.Name, type);
+
+		if(attribute.Contracts != null)
+		{
+			var contracts = attribute.Contracts;
+			var moduleName = ApplicationModuleAttribute.Find(type)?.Name;
+
+			if(!string.IsNullOrEmpty(moduleName))
 			{
-				var contracts = attribute.Contracts;
-				var moduleName = ApplicationModuleAttribute.Find(type)?.Name;
+				for(var i = 0; i < contracts.Length; i++)
+				{
+					var modular = ModularServiceUtility.GetModularService(moduleName, contracts[i], type);
+					services.AddSingleton(modular.GetType(), modular);
+				}
+			}
+
+			for(var i = 0; i < contracts.Length; i++)
+			{
+				if(contracts[i] != type)
+					services.AddSingleton(contracts[i], services => services.GetService(type));
+			}
+		}
+	}
+
+	private static void RegisterStaticMember(IServiceCollection services, TypeInfo type, string members, Type[] contracts)
+	{
+		if(string.IsNullOrEmpty(members))
+			return;
+
+		var moduleName = ApplicationModuleAttribute.Find(type)?.Name;
+
+		foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
+		{
+			var property = type.GetProperty(member, BindingFlags.Static | BindingFlags.Public);
+
+			if(property != null)
+			{
+				var value = property.GetValue(null);
 
 				if(!string.IsNullOrEmpty(moduleName))
 				{
-					for(var i = 0; i < contracts.Length; i++)
+					foreach(var contract in GetContracts(property.PropertyType, contracts))
 					{
-						var modular = ModularServiceUtility.GetModularService(moduleName, contracts[i], type);
+						var modular = ModularServiceUtility.GetModularService(moduleName, contract, value);
 						services.AddSingleton(modular.GetType(), modular);
 					}
 				}
 
-				for(var i = 0; i < contracts.Length; i++)
+				foreach(var contract in GetContracts(property.PropertyType, contracts))
+					services.AddSingleton(contract, value);
+
+				continue;
+			}
+
+			var field = type.GetField(member, BindingFlags.Static | BindingFlags.Public);
+
+			if(field != null)
+			{
+				var value = field.GetValue(null);
+
+				if(!string.IsNullOrEmpty(moduleName))
+				{
+					foreach(var contract in GetContracts(field.FieldType, contracts))
+					{
+						var modular = ModularServiceUtility.GetModularService(moduleName, contract, value);
+						services.AddSingleton(modular.GetType(), modular);
+					}
+				}
+
+				foreach(var contract in GetContracts(field.FieldType, contracts))
+					services.AddSingleton(contract, value);
+
+				continue;
+			}
+		}
+	}
+
+	private static IEnumerable<Type> GetContracts(Type type, Type[] contracts)
+	{
+		if(type == null)
+		{
+			if(contracts == null || contracts.Length == 0)
+				yield break;
+
+			for(int i = 0; i < contracts.Length; i++)
+				yield return contracts[i];
+		}
+		else
+		{
+			yield return type;
+
+			if(contracts != null && contracts.Length > 0)
+			{
+				for(int i = 0; i < contracts.Length; i++)
 				{
 					if(contracts[i] != type)
-						services.AddSingleton(contracts[i], services => services.GetService(type));
+						yield return contracts[i];
 				}
 			}
 		}
-
-		private static void RegisterStaticMember(IServiceCollection services, TypeInfo type, string members, Type[] contracts)
-		{
-			if(string.IsNullOrEmpty(members))
-				return;
-
-			var moduleName = ApplicationModuleAttribute.Find(type)?.Name;
-
-			foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
-			{
-				var property = type.GetProperty(member, BindingFlags.Static | BindingFlags.Public);
-
-				if(property != null)
-				{
-					var value = property.GetValue(null);
-
-					if(!string.IsNullOrEmpty(moduleName))
-					{
-						foreach(var contract in GetContracts(property.PropertyType, contracts))
-						{
-							var modular = ModularServiceUtility.GetModularService(moduleName, contract, value);
-							services.AddSingleton(modular.GetType(), modular);
-						}
-					}
-
-					foreach(var contract in GetContracts(property.PropertyType, contracts))
-						services.AddSingleton(contract, value);
-
-					continue;
-				}
-
-				var field = type.GetField(member, BindingFlags.Static | BindingFlags.Public);
-
-				if(field != null)
-				{
-					var value = field.GetValue(null);
-
-					if(!string.IsNullOrEmpty(moduleName))
-					{
-						foreach(var contract in GetContracts(field.FieldType, contracts))
-						{
-							var modular = ModularServiceUtility.GetModularService(moduleName, contract, value);
-							services.AddSingleton(modular.GetType(), modular);
-						}
-					}
-
-					foreach(var contract in GetContracts(field.FieldType, contracts))
-						services.AddSingleton(contract, value);
-
-					continue;
-				}
-			}
-		}
-
-		private static IEnumerable<Type> GetContracts(Type type, Type[] contracts)
-		{
-			if(type == null)
-			{
-				if(contracts == null || contracts.Length == 0)
-					yield break;
-
-				for(int i = 0; i < contracts.Length; i++)
-					yield return contracts[i];
-			}
-			else
-			{
-				yield return type;
-
-				if(contracts != null && contracts.Length > 0)
-				{
-					for(int i = 0; i < contracts.Length; i++)
-					{
-						if(contracts[i] != type)
-							yield return contracts[i];
-					}
-				}
-			}
-		}
-		#endregion
 	}
+	#endregion
 }
