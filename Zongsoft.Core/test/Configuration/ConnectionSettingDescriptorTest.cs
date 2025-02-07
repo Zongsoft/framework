@@ -2,7 +2,7 @@
 
 using Xunit;
 
-namespace Zongsoft.Configuration;
+namespace Zongsoft.Configuration.Tests;
 
 public class ConnectionSettingDescriptorTest
 {

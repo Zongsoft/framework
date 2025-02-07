@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 using Xunit;
 
-namespace Zongsoft.Configuration.Models;
+namespace Zongsoft.Configuration.Tests;
 
 public class ModelConfigurationTest
 {
@@ -171,7 +171,7 @@ public abstract class ConfigurationEntity
 
 public static class ConfigurationEntityExtension
 {
-	public static string GetInfo(this Models.ConfigurationEntity entity)
+	public static string GetInfo(this ConfigurationEntity entity)
 	{
 		if(entity == null)
 			return string.Empty;

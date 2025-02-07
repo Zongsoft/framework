@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 using Xunit;
 
-namespace Zongsoft.Serialization;
+namespace Zongsoft.Serialization.Tests;
 
 public class TextSerializationOptionsTest
 {

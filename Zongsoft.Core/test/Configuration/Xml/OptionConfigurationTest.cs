@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 
 using Xunit;
 
-namespace Zongsoft.Configuration.Xml;
+namespace Zongsoft.Configuration.Tests;
 
 public class XmlConfigurationTest
 {

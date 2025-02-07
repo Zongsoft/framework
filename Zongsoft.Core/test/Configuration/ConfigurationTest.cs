@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 
 using Xunit;
 
-namespace Zongsoft.Configuration;
+namespace Zongsoft.Configuration.Tests;
 
 public class ConfigurationTest
 {
@@ -19,7 +19,7 @@ public class ConfigurationTest
 	[Fact]
 	public void TestResolveModels()
 	{
-		var configuration = Models.ModelConfigurationTest.GetConfiguration();
+		var configuration = ModelConfigurationTest.GetConfiguration();
 
 		Assert.NotNull(configuration);
 		Assert.NotEmpty(configuration.Providers);
@@ -31,7 +31,7 @@ public class ConfigurationTest
 	[Fact]
 	public void TestResolveXml()
 	{
-		var configuration = Xml.XmlConfigurationTest.GetConfiguration();
+		var configuration = XmlConfigurationTest.GetConfiguration();
 
 		Assert.NotNull(configuration);
 		Assert.NotEmpty(configuration.Providers);
@@ -44,7 +44,7 @@ public class ConfigurationTest
 	[Fact]
 	public void TestResolveConnectionSettings()
 	{
-		var configuration = Xml.XmlConfigurationTest.GetConfiguration();
+		var configuration = XmlConfigurationTest.GetConfiguration();
 
 		Assert.NotNull(configuration);
 		Assert.NotEmpty(configuration.Providers);
@@ -92,7 +92,7 @@ public class ConfigurationTest
 	[Fact]
 	public void TestAttachXml()
 	{
-		var configuration = Xml.XmlConfigurationTest.GetConfiguration();
+		var configuration = XmlConfigurationTest.GetConfiguration();
 
 		Assert.NotNull(configuration);
 		Assert.NotEmpty(configuration.Providers);

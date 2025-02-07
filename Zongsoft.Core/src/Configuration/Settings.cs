@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -46,9 +47,9 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 	/// <param name="value">指定的设置内容。</param>
 	public Settings(string name, string value = null)
 	{
-		this.Name = name == null ? string.Empty : name.Trim();
-		this.Value = value;
 		_settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		this.Name = name == null ? string.Empty : name.Trim();
+		this.Value = value ?? string.Empty;
 	}
 	#endregion
 
@@ -59,6 +60,7 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 		get => _value;
 		set
 		{
+			value ??= string.Empty;
 			if(!string.Equals(_value, value))
 			{
 				_value = value;
@@ -70,15 +72,19 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 	public bool IsEmpty => _settings.Count == 0;
 	public string this[string name]
 	{
-		get => _settings.TryGetValue(name, out var value) ? value : null;
+		get => name != null && _settings.TryGetValue(name, out var value) ? value : null;
 		set
 		{
+			if(string.IsNullOrEmpty(name))
+				return;
+
 			if(string.IsNullOrEmpty(value))
 				_settings.Remove(name);
 			else
 				_settings[name] = value.Trim();
 
-			_value = string.Join(';', _settings);
+			//更新设置表达式值
+			_value = string.Join(';', _settings.Select(entry => $"{entry.Key}={entry.Value}"));
 		}
 	}
 	#endregion
@@ -123,7 +129,7 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 	public bool Equals(Settings settings) => settings is not null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj is Settings settings && this.Equals(settings);
 	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant());
-	public override string ToString() => $"{this.Name}={this.Value}";
+	public override string ToString() => string.IsNullOrEmpty(this.Name) ? this.Value : $"[{this.Name}]{this.Value}";
 	#endregion
 
 	#region 枚举遍历

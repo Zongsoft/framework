@@ -2,7 +2,7 @@
 
 using Xunit;
 
-namespace Zongsoft.IO.Compression;
+namespace Zongsoft.IO.Compression.Tests;
 
 public class CompressorTest
 {

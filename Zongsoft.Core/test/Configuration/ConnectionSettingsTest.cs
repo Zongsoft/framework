@@ -8,7 +8,7 @@ using Xunit;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.Configuration;
+namespace Zongsoft.Configuration.Tests;
 
 public class ConnectionSettingsTest
 {
