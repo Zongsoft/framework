@@ -30,8 +30,7 @@
 using System;
 using System.ComponentModel;
 
-using MySql.Data;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 
 using Zongsoft.Components;
 using Zongsoft.Configuration;
