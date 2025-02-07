@@ -95,5 +95,6 @@ public class ConnectionSettingsDriver : ConnectionSettingsDriver<ConnectionSetti
 	#region 重写方法
 	bool IConnectionSettingsDriver.IsDriver(string name) => string.IsNullOrEmpty(name);
 	public override ConnectionSettings GetSettings(string connectionString) => new(connectionString);
+	public override ConnectionSettings GetSettings(string name, string connectionString) => new(name, connectionString);
 	#endregion
 }
