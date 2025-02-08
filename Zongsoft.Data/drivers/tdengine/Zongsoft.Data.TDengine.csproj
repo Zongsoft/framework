@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.3.2</Version>
+		<Version>1.3.3</Version>
 		<Product>Zongsoft Data Driver for TDengine</Product>
 		<Description>This is a data driver for TDengine of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.TDengine</RootNamespace>

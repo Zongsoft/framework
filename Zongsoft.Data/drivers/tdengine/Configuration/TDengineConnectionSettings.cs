@@ -90,6 +90,7 @@ public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengine
 	}
 
 	[DefaultValue(TDengineConnectionProtocol.Native)]
+	[ConnectionSetting(Ignored = true)]
 	public TDengineConnectionProtocol Protocol
 	{
 		get => this.GetValue<TDengineConnectionProtocol>();
@@ -123,5 +124,10 @@ public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengine
 
 	#region 重写方法
 	protected override TDengineConnectionStringBuilder CreateOptions() => new(string.Empty);
+	protected override void Populate(TDengineConnectionStringBuilder options)
+	{
+		base.Populate(options);
+		options.Protocol = this.Protocol.ToString();
+	}
 	#endregion
 }
