@@ -36,24 +36,6 @@ namespace Zongsoft.Common
 	{
 		public static bool TryGetQueryString(this Uri url, string key, out string value)
 		{
-			bool TryGetPart(string part, out KeyValuePair<string, string> pair)
-			{
-				if(string.IsNullOrEmpty(part))
-				{
-					pair = default(KeyValuePair<string, string>);
-					return false;
-				}
-
-				var index = part.IndexOf('=');
-
-				if(index < 0)
-					pair = new KeyValuePair<string, string>(part, string.Empty);
-				else
-					pair = new KeyValuePair<string, string>(part.Substring(0, index), part.Substring(index + 1));
-
-				return true;
-			}
-
 			var parts = StringExtension.Slice<KeyValuePair<string, string>>(url.Query, '&', TryGetPart);
 
 			foreach(var part in parts)
@@ -67,6 +49,24 @@ namespace Zongsoft.Common
 
 			value = null;
 			return false;
+
+			static bool TryGetPart(string part, out KeyValuePair<string, string> pair)
+			{
+				if(string.IsNullOrEmpty(part))
+				{
+					pair = default;
+					return false;
+				}
+
+				var index = part.IndexOf('=');
+
+				if(index < 0)
+					pair = new KeyValuePair<string, string>(part, string.Empty);
+				else
+					pair = new KeyValuePair<string, string>(part[..index], part[(index + 1)..]);
+
+				return true;
+			}
 		}
 	}
 }
