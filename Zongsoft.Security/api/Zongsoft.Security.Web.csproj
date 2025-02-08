@@ -21,12 +21,22 @@
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
-		</Reference>
-		<Reference Include="Zongsoft.Web">
-			<HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Web.dll</HintPath>
-		</Reference>
-	</ItemGroup>
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+				<Reference Include="Zongsoft.Web">
+					<HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Web.dll</HintPath>
+				</Reference>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="6.7.8" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
 </Project>

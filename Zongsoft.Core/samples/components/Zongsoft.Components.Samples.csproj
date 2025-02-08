@@ -18,12 +18,22 @@
 		<PackageReference Include="NetMQ" VersionOverride="4.0.1.13" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
-		</Reference>
-		<Reference Include="Zongsoft.Messaging.ZeroMQ">
-			<HintPath>..\..\..\Zongsoft.Messaging.ZeroMQ\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Messaging.ZeroMQ.dll</HintPath>
-		</Reference>
-	</ItemGroup>
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+				<Reference Include="Zongsoft.Messaging.ZeroMQ">
+					<HintPath>..\..\..\Zongsoft.Messaging.ZeroMQ\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Messaging.ZeroMQ.dll</HintPath>
+				</Reference>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
+				<PackageReference Include="Zongsoft.Messaging.ZeroMQ" VersionOverride="0.9.0" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
 </Project>

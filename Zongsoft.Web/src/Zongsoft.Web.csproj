@@ -28,9 +28,18 @@
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" VersionOverride="8.0.11" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
-		</Reference>
-	</ItemGroup>
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
 </Project>
