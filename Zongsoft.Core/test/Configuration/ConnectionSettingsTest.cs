@@ -206,6 +206,72 @@ public class ConnectionSettingsTest
 		Assert.Equal(seconds, options.Seconds);
 	}
 
+	[Fact]
+	public void TestGetSettings1()
+	{
+		var settings1 = MyDriver.Instance.GetSettings(ConnectionString);
+		Assert.NotNull(settings1);
+		Assert.NotEmpty(settings1);
+		Assert.Empty(settings1.Name);
+
+		var settings2 = ConnectionSettingsUtility.GetSettings(MyDriver.Instance, ConnectionString);
+		Assert.NotNull(settings2);
+		Assert.NotEmpty(settings2);
+		Assert.Empty(settings2.Name);
+		Assert.IsType<MyConnectionSettings>(settings2);
+
+		var mySettings = (MyConnectionSettings)settings2;
+		Assert.Equal(settings1.Name, settings2.Name);
+		Assert.Equal(settings1.Value, settings2.Value);
+		Assert.Equal(settings1.UserName, mySettings.UserName);
+		Assert.Equal(settings1.Password, mySettings.Password);
+		Assert.Equal(settings1.CertificateFile, mySettings.CertificateFile);
+		Assert.Equal(settings1.CertificateSecret, mySettings.CertificateSecret);
+		Assert.Equal(settings1.Server, mySettings.Server);
+		Assert.Equal(settings1.Timeout, mySettings.Timeout);
+		Assert.Equal(settings1.Port, mySettings.Port);
+		Assert.Equal(settings1.Text, mySettings.Text);
+		Assert.Equal(settings1.Double, mySettings.Double);
+		Assert.Equal(settings1.Integer, mySettings.Integer);
+		Assert.Equal(settings1.Boolean, mySettings.Boolean);
+		Assert.Equal(settings1.Birthday, mySettings.Birthday);
+		Assert.Equal(settings1.DurationSeconds, mySettings.DurationSeconds);
+	}
+
+	[Fact]
+	public void TestGetSettings2()
+	{
+		const string NAME = "MySettings";
+
+		var settings1 = MyDriver.Instance.GetSettings(NAME, ConnectionString);
+		Assert.NotNull(settings1);
+		Assert.NotEmpty(settings1);
+		Assert.Equal(NAME, settings1.Name);
+
+		var settings2 = ConnectionSettingsUtility.GetSettings(MyDriver.Instance, NAME, ConnectionString);
+		Assert.NotNull(settings2);
+		Assert.NotEmpty(settings2);
+		Assert.Equal(NAME, settings2.Name);
+		Assert.IsType<MyConnectionSettings>(settings2);
+
+		var mySettings = (MyConnectionSettings)settings2;
+		Assert.Equal(settings1.Name, settings2.Name);
+		Assert.Equal(settings1.Value, settings2.Value);
+		Assert.Equal(settings1.UserName, mySettings.UserName);
+		Assert.Equal(settings1.Password, mySettings.Password);
+		Assert.Equal(settings1.CertificateFile, mySettings.CertificateFile);
+		Assert.Equal(settings1.CertificateSecret, mySettings.CertificateSecret);
+		Assert.Equal(settings1.Server, mySettings.Server);
+		Assert.Equal(settings1.Timeout, mySettings.Timeout);
+		Assert.Equal(settings1.Port, mySettings.Port);
+		Assert.Equal(settings1.Text, mySettings.Text);
+		Assert.Equal(settings1.Double, mySettings.Double);
+		Assert.Equal(settings1.Integer, mySettings.Integer);
+		Assert.Equal(settings1.Boolean, mySettings.Boolean);
+		Assert.Equal(settings1.Birthday, mySettings.Birthday);
+		Assert.Equal(settings1.DurationSeconds, mySettings.DurationSeconds);
+	}
+
 	public sealed class MyDriver : ConnectionSettingsDriver<MyConnectionSettings>
 	{
 		#region 常量定义

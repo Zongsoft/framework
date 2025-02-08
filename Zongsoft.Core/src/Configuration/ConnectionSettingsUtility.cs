@@ -83,6 +83,69 @@ public static class ConnectionSettingsUtility
 		return Common.Convert.TryConvertValue<T>(text, out value);
 	}
 
+	public static IConnectionSettings GetSettings(this IConnectionSettingsDriver driver, string connectionString)
+	{
+		return GetSettings(driver, [connectionString], GetMethod);
+
+		static MethodInfo GetMethod(InterfaceMapping mapping)
+		{
+			for(int i = 0; i < mapping.TargetMethods.Length; i++)
+			{
+				if(mapping.TargetMethods[i].Name == nameof(IConnectionSettingsDriver<IConnectionSettings>.GetSettings))
+				{
+					var parameters = mapping.TargetMethods[i].GetParameters();
+
+					if(parameters.Length == 1 && parameters[0].ParameterType == typeof(string))
+						return mapping.TargetMethods[i];
+				}
+			}
+
+			return null;
+		}
+	}
+
+	public static IConnectionSettings GetSettings(this IConnectionSettingsDriver driver, string name, string connectionString)
+	{
+		return GetSettings(driver, [name, connectionString], GetMethod);
+
+		static MethodInfo GetMethod(InterfaceMapping mapping)
+		{
+			for(int i = 0; i < mapping.TargetMethods.Length; i++)
+			{
+				if(mapping.TargetMethods[i].Name == nameof(IConnectionSettingsDriver<IConnectionSettings>.GetSettings))
+				{
+					var parameters = mapping.TargetMethods[i].GetParameters();
+
+					if(parameters.Length == 2 && parameters[0].ParameterType == typeof(string) && parameters[1].ParameterType == typeof(string))
+						return mapping.TargetMethods[i];
+				}
+			}
+
+			return null;
+		}
+	}
+
+	private static IConnectionSettings GetSettings(IConnectionSettingsDriver driver, object[] parameters, Func<InterfaceMapping, MethodInfo> locator)
+	{
+		if(driver == null)
+			throw new ArgumentNullException(nameof(driver));
+
+		var contracts = driver.GetType().GetInterfaces();
+
+		for(int i = 0; i < contracts.Length; i++)
+		{
+			if(contracts[i].IsGenericType && contracts[i].GetGenericTypeDefinition() == typeof(IConnectionSettingsDriver<>))
+			{
+				var method = locator(driver.GetType().GetInterfaceMap(contracts[i]));
+
+				if(method != null)
+					return (IConnectionSettings)method.Invoke(driver, parameters);
+			}
+		}
+
+		return null;
+	}
+
 	public static TOptions GetOptions<TOptions>(this IConnectionSettings connectionSettings)
 	{
 		if(connectionSettings == null)
