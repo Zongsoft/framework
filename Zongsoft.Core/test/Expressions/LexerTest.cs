@@ -220,7 +220,7 @@ namespace Zongsoft.Expressions.Tests
 			token = scanner.Scan();
 			Assert.NotNull(token);
 			Assert.Equal(TokenType.Keyword, token.Type);
-			Assert.True(string.Equals("Between", (string)token.Value, StringComparison.OrdinalIgnoreCase));
+			Assert.Equal("Between", (string)token.Value, true);
 
 			token = scanner.Scan();
 			Assert.NotNull(token);
@@ -243,7 +243,7 @@ namespace Zongsoft.Expressions.Tests
 			token = scanner.Scan();
 			Assert.NotNull(token);
 			Assert.Equal(TokenType.Keyword, token.Type);
-			Assert.True(string.Equals("IN", (string)token.Value, StringComparison.OrdinalIgnoreCase));
+			Assert.Equal("IN", (string)token.Value, true);
 
 			token = scanner.Scan();
 			Assert.NotNull(token);

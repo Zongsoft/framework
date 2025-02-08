@@ -23,9 +23,9 @@ public class DictionaryTest
 		Assert.Equal(2, ((IDictionary<string, int>)dictionary)["K2"]);
 
 		Assert.True(DictionaryUtility.TryRemove(dictionary, "K1"));
-		Assert.Equal(1, ((IDictionary<string, int>)dictionary).Count);
+		Assert.Single((IDictionary<string, int>)dictionary);
 		Assert.True(DictionaryUtility.TryRemove(dictionary, "K2"));
-		Assert.Equal(0, ((IDictionary<string, int>)dictionary).Count);
+		Assert.Empty((IDictionary<string, int>)dictionary);
 	}
 
 	[Fact]
@@ -43,8 +43,8 @@ public class DictionaryTest
 		Assert.Equal(2, ((IDictionary)dictionary)["K2"]);
 
 		Assert.True(DictionaryUtility.TryRemove(dictionary, "K1"));
-		Assert.Equal(1, ((IDictionary)dictionary).Count);
+		Assert.Single((IDictionary)dictionary);
 		Assert.True(DictionaryUtility.TryRemove(dictionary, "K2"));
-		Assert.Equal(0, ((IDictionary)dictionary).Count);
+		Assert.Empty(((IDictionary)dictionary));
 	}
 }

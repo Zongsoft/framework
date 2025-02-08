@@ -29,12 +29,12 @@ namespace Zongsoft.Common.Tests
 
 			Assert.True(TypeExtension.IsAssignableFrom(typeof(IService<>), typeof(EmployeeService), out var genericTypes));
 			Assert.NotEmpty(genericTypes);
-			Assert.Equal(1, genericTypes.Count);
+			Assert.Single(genericTypes);
 			Assert.Same(genericTypes[0], typeof(IService<Employee>));
 
 			Assert.True(TypeExtension.IsAssignableFrom(typeof(PersonServiceBase<>), typeof(EmployeeService), out genericTypes));
 			Assert.NotEmpty(genericTypes);
-			Assert.Equal(1, genericTypes.Count);
+			Assert.Single(genericTypes);
 			Assert.Same(genericTypes[0], typeof(PersonServiceBase<Employee>));
 		}
 

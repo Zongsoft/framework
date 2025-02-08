@@ -23,9 +23,9 @@ public class CollectionTest
 		Assert.Equal(2, ((IList<int>)list)[1]);
 
 		Assert.True(CollectionUtility.TryRemove(list, 1));
-		Assert.Equal(1, ((IList<int>)list).Count);
+		Assert.Single((IList<int>)list);
 		Assert.True(CollectionUtility.TryRemove(list, 2));
-		Assert.Equal(0, ((IList<int>)list).Count);
+		Assert.Empty((IList<int>)list);
 	}
 
 	[Fact]
@@ -43,8 +43,8 @@ public class CollectionTest
 		Assert.Equal(2, ((IList)list)[1]);
 
 		Assert.True(CollectionUtility.TryRemove(list, 1));
-		Assert.Equal(1, ((IList)list).Count);
+		Assert.Single((IList)list);
 		Assert.True(CollectionUtility.TryRemove(list, 2));
-		Assert.Equal(0, ((IList)list).Count);
+		Assert.Empty((IList)list);
 	}
 }

@@ -25,7 +25,7 @@ namespace Zongsoft.Components.Tests
 			//Bind
 			descriptor.Bind(_trigger, nameof(_trigger.MyEvent));
 			descriptor.Handlers.Add(new MyEventHandler1());
-			Assert.Equal(1, descriptor.Handlers.Count);
+			Assert.Single(descriptor.Handlers);
 			Assert.Throws<MyHandlerException>(_trigger.OnMyEvent);
 
 			//Unbind
@@ -46,7 +46,7 @@ namespace Zongsoft.Components.Tests
 			//Bind
 			descriptor.Bind(_trigger, nameof(_trigger.MyEventWithArgs));
 			descriptor.Handlers.Add(new MyEventHandler2());
-			Assert.Equal(1, descriptor.Handlers.Count);
+			Assert.Single(descriptor.Handlers);
 			Assert.Throws<MyHandlerException>(_trigger.OnMyEventWithArgs);
 
 			//Unbind
@@ -69,7 +69,7 @@ namespace Zongsoft.Components.Tests
 			Assert.NotNull(_trigger.Action0);
 
 			descriptor.Handlers.Add(new MyHandlerGeneric());
-			Assert.Equal(1, descriptor.Handlers.Count);
+			Assert.Single(descriptor.Handlers);
 			Assert.Throws<MyHandlerException>(_trigger.OnAction0);
 
 			//Unbind
@@ -92,7 +92,7 @@ namespace Zongsoft.Components.Tests
 			Assert.NotNull(_trigger.Action1_Object);
 
 			descriptor.Handlers.Add(new MyHandlerObject());
-			Assert.Equal(1, descriptor.Handlers.Count);
+			Assert.Single(descriptor.Handlers);
 			Assert.Throws<MyHandlerException>(_trigger.OnAction1_Object);
 
 			//Unbind
@@ -115,7 +115,7 @@ namespace Zongsoft.Components.Tests
 			Assert.NotNull(_trigger.Action1_Generic);
 
 			descriptor.Handlers.Add(new MyHandlerGeneric());
-			Assert.Equal(1, descriptor.Handlers.Count);
+			Assert.Single(descriptor.Handlers);
 			Assert.Throws<MyHandlerException>(_trigger.OnAction1_Generic);
 
 			//Unbind
@@ -138,7 +138,7 @@ namespace Zongsoft.Components.Tests
 			Assert.NotNull(_trigger.Action2_Object);
 
 			descriptor.Handlers.Add(new MyHandlerObject());
-			Assert.Equal(1, descriptor.Handlers.Count);
+			Assert.Single(descriptor.Handlers);
 			Assert.Throws<MyHandlerException>(_trigger.OnAction2_Object);
 
 			//Unbind
@@ -161,7 +161,7 @@ namespace Zongsoft.Components.Tests
 			Assert.NotNull(_trigger.Action2_Generic);
 
 			descriptor.Handlers.Add(new MyHandlerGeneric());
-			Assert.Equal(1, descriptor.Handlers.Count);
+			Assert.Single(descriptor.Handlers);
 			Assert.Throws<MyHandlerException>(_trigger.OnAction2_Generic);
 
 			//Unbind
@@ -184,7 +184,7 @@ namespace Zongsoft.Components.Tests
 			Assert.NotNull(_trigger.Action3_Object);
 
 			descriptor.Handlers.Add(new MyHandlerObject());
-			Assert.Equal(1, descriptor.Handlers.Count);
+			Assert.Single(descriptor.Handlers);
 			Assert.Throws<MyHandlerException>(_trigger.OnAction3_Object);
 
 			//Unbind
@@ -207,7 +207,7 @@ namespace Zongsoft.Components.Tests
 			Assert.NotNull(_trigger.Action3_Generic);
 
 			descriptor.Handlers.Add(new MyHandlerGeneric());
-			Assert.Equal(1, descriptor.Handlers.Count);
+			Assert.Single(descriptor.Handlers);
 			Assert.Throws<MyHandlerException>(_trigger.OnAction3_Generic);
 
 			//Unbind

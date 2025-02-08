@@ -128,7 +128,7 @@ namespace Zongsoft.Collections.Tests
 			Assert.NotNull(expression.Accessor);
 			Assert.Equal(MemberExpressionType.Indexer, expression.Accessor.ExpressionType);
 			var parameters = ((IndexerExpression)expression.Accessor).Arguments;
-			Assert.Equal(1, parameters.Count);
+			Assert.Single(parameters);
 			Assert.Equal(MemberExpressionType.Constant, parameters[0].ExpressionType);
 			Assert.Equal(100, (int)((ConstantExpression)parameters[0]).Value);
 
@@ -152,7 +152,7 @@ namespace Zongsoft.Collections.Tests
 			var member = expression.Accessor.Next;
 			Assert.Equal(MemberExpressionType.Indexer, member.ExpressionType);
 			parameters = ((IndexerExpression)member).Arguments;
-			Assert.Equal(1, parameters.Count);
+			Assert.Single(parameters);
 			Assert.Equal(MemberExpressionType.Constant, parameters[0].ExpressionType);
 			Assert.Equal(100, (int)((ConstantExpression)parameters[0]).Value);
 			Assert.NotNull(member.Next);

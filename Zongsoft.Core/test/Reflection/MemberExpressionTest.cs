@@ -24,14 +24,14 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.True(MemberExpression.TryParse("abc (  ) ", out expression));
 			Assert.Equal(MemberExpressionType.Method, expression.ExpressionType);
 			Assert.Equal("abc", ((MethodExpression)expression).Name);
-			Assert.Equal(0, ((MethodExpression)expression).Arguments.Count);
+			Assert.Empty(((MethodExpression)expression).Arguments);
 			Assert.Null(expression.Previous);
 			Assert.Null(expression.Next);
 
 			Assert.True(MemberExpression.TryParse("abc ( def) ", out expression));
 			Assert.Equal(MemberExpressionType.Method, expression.ExpressionType);
 			Assert.Equal("abc", ((MethodExpression)expression).Name);
-			Assert.Equal(1, ((MethodExpression)expression).Arguments.Count);
+			Assert.Single(((MethodExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((MethodExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("def", ((IdentifierExpression)((MethodExpression)expression).Arguments[0]).Name);
 			Assert.Null(expression.Previous);
@@ -40,7 +40,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.True(MemberExpression.TryParse("abc ( 'xyz' ) ", out expression));
 			Assert.Equal(MemberExpressionType.Method, expression.ExpressionType);
 			Assert.Equal("abc", ((MethodExpression)expression).Name);
-			Assert.Equal(1, ((MethodExpression)expression).Arguments.Count);
+			Assert.Single(((MethodExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((MethodExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("xyz", ((ConstantExpression)((MethodExpression)expression).Arguments[0]).Value);
 			Assert.Null(expression.Previous);
@@ -49,7 +49,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.True(MemberExpression.TryParse("abc ( 123 ) ", out expression));
 			Assert.Equal(MemberExpressionType.Method, expression.ExpressionType);
 			Assert.Equal("abc", ((MethodExpression)expression).Name);
-			Assert.Equal(1, ((MethodExpression)expression).Arguments.Count);
+			Assert.Single(((MethodExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((MethodExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123, ((ConstantExpression)((MethodExpression)expression).Arguments[0]).Value);
 			Assert.Null(expression.Previous);
@@ -58,7 +58,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.True(MemberExpression.TryParse("abc ( 123.45f ) ", out expression));
 			Assert.Equal(MemberExpressionType.Method, expression.ExpressionType);
 			Assert.Equal("abc", ((MethodExpression)expression).Name);
-			Assert.Equal(1, ((MethodExpression)expression).Arguments.Count);
+			Assert.Single(((MethodExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((MethodExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123.45f, ((ConstantExpression)((MethodExpression)expression).Arguments[0]).Value);
 			Assert.Null(expression.Previous);
@@ -66,7 +66,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse("[  123 ]", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123, ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.Null(expression.Next);
@@ -74,7 +74,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse("[  'very sexy' ]", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("very sexy", ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.Null(expression.Next);
@@ -82,7 +82,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse("[  123.45 ]", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123.45, ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.Null(expression.Next);
@@ -90,7 +90,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse("[  123.45m ]", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123.45M, ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.Null(expression.Next);
@@ -98,7 +98,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse("[  abc ]", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.Null(expression.Next);
@@ -140,7 +140,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.NotNull(expression.Next);
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("def", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.NotNull(expression.Previous);
@@ -228,7 +228,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.NotNull(expression.Next);
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123, ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.NotNull(expression.Previous);
@@ -266,7 +266,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse("[123] .	bbb ( 'def', xyz) ", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123, ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.Null(expression.Previous);
@@ -311,7 +311,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.NotNull(expression.Next);
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("def", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.NotNull(expression.Previous);
@@ -324,7 +324,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse("[abc]  . def .xyz", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.Null(expression.Previous);
@@ -342,14 +342,14 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse(" [abc ]  [ def ] . xyz", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.Null(expression.Previous);
 			Assert.NotNull(expression.Next);
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("def", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.NotNull(expression.Previous);
@@ -362,14 +362,14 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse(" [abc ]  [ 123 ] . xyz", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.Null(expression.Previous);
 			Assert.NotNull(expression.Next);
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123, ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.NotNull(expression.Previous);
@@ -382,21 +382,21 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse(" [abc ]  [ 123 ]['xyz']", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.Null(expression.Previous);
 			Assert.NotNull(expression.Next);
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123, ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.NotNull(expression.Previous);
 			Assert.NotNull(expression.Next);
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("xyz", ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.NotNull(expression.Previous);
@@ -404,14 +404,14 @@ namespace Zongsoft.Reflection.Expressions.Tests
 
 			Assert.True(MemberExpression.TryParse(" [abc ]  [ 123 ].xyz()", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.Null(expression.Previous);
 			Assert.NotNull(expression.Next);
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123, ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			Assert.NotNull(expression.Previous);
@@ -419,13 +419,13 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Method, expression.ExpressionType);
 			Assert.Equal("xyz", ((MethodExpression)expression).Name);
-			Assert.Equal(0, ((MethodExpression)expression).Arguments.Count);
+			Assert.Empty(((MethodExpression)expression).Arguments);
 			Assert.NotNull(expression.Previous);
 			Assert.Null(expression.Next);
 
 			Assert.True(MemberExpression.TryParse(" [abc ]  .foo( 123 ).xyz ( 'OK')", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)expression).Arguments.Count);
+			Assert.Single(((IndexerExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)expression).Arguments[0]).Name);
 			Assert.Null(expression.Previous);
@@ -433,7 +433,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Method, expression.ExpressionType);
 			Assert.Equal("foo", ((MethodExpression)expression).Name);
-			Assert.Equal(1, ((MethodExpression)expression).Arguments.Count);
+			Assert.Single(((MethodExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((MethodExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal(123, ((ConstantExpression)((MethodExpression)expression).Arguments[0]).Value);
 			Assert.NotNull(expression.Previous);
@@ -441,7 +441,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			expression = expression.Next;
 			Assert.Equal(MemberExpressionType.Method, expression.ExpressionType);
 			Assert.Equal("xyz", ((MethodExpression)expression).Name);
-			Assert.Equal(1, ((MethodExpression)expression).Arguments.Count);
+			Assert.Single(((MethodExpression)expression).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((MethodExpression)expression).Arguments[0].ExpressionType);
 			Assert.Equal("OK", ((ConstantExpression)((MethodExpression)expression).Arguments[0]).Value);
 			Assert.NotNull(expression.Previous);
@@ -486,7 +486,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.Equal(123L, ((ConstantExpression)((IndexerExpression)expression).Arguments[0]).Value);
 			argument = ((IndexerExpression)expression).Arguments[1];
 			Assert.Equal(MemberExpressionType.Indexer, argument.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)argument).Arguments.Count);
+			Assert.Single(((IndexerExpression)argument).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)argument).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)argument).Arguments[0]).Name);
 
@@ -495,7 +495,7 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.Equal(2, ((IndexerExpression)expression).Arguments.Count);
 			argument = ((IndexerExpression)expression).Arguments[0];
 			Assert.Equal(MemberExpressionType.Indexer, argument.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)argument).Arguments.Count);
+			Assert.Single(((IndexerExpression)argument).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)argument).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)argument).Arguments[0]).Name);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)expression).Arguments[1].ExpressionType);
@@ -506,21 +506,21 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.Equal(2, ((IndexerExpression)expression).Arguments.Count);
 			argument = ((IndexerExpression)expression).Arguments[0];
 			Assert.Equal(MemberExpressionType.Indexer, argument.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)argument).Arguments.Count);
+			Assert.Single(((IndexerExpression)argument).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)argument).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)argument).Arguments[0]).Name);
 			Assert.Equal(MemberExpressionType.Method, ((IndexerExpression)expression).Arguments[1].ExpressionType);
 			argument = ((IndexerExpression)expression).Arguments[1];
 			Assert.Equal(MemberExpressionType.Method, argument.ExpressionType);
 			Assert.Equal("foo", ((MethodExpression)argument).Name);
-			Assert.Equal(0, ((MethodExpression)argument).Arguments.Count);
+			Assert.Empty(((MethodExpression)argument).Arguments);
 
 			Assert.True(MemberExpression.TryParse("[[abc], foo(1, ['OK'], bar(xyz))]", out expression));
 			Assert.Equal(MemberExpressionType.Indexer, expression.ExpressionType);
 			Assert.Equal(2, ((IndexerExpression)expression).Arguments.Count);
 			argument = ((IndexerExpression)expression).Arguments[0];
 			Assert.Equal(MemberExpressionType.Indexer, argument.ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)argument).Arguments.Count);
+			Assert.Single(((IndexerExpression)argument).Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, ((IndexerExpression)argument).Arguments[0].ExpressionType);
 			Assert.Equal("abc", ((IdentifierExpression)((IndexerExpression)argument).Arguments[0]).Name);
 			Assert.Equal(MemberExpressionType.Method, ((IndexerExpression)expression).Arguments[1].ExpressionType);
@@ -533,12 +533,12 @@ namespace Zongsoft.Reflection.Expressions.Tests
 			Assert.Equal(MemberExpressionType.Constant, method.Arguments[0].ExpressionType);
 			Assert.Equal(1, ((ConstantExpression)method.Arguments[0]).Value);
 			Assert.Equal(MemberExpressionType.Indexer, method.Arguments[1].ExpressionType);
-			Assert.Equal(1, ((IndexerExpression)method.Arguments[1]).Arguments.Count);
+			Assert.Single(((IndexerExpression)method.Arguments[1]).Arguments);
 			Assert.Equal(MemberExpressionType.Constant, ((IndexerExpression)method.Arguments[1]).Arguments[0].ExpressionType);
 			Assert.Equal("OK", ((ConstantExpression)((IndexerExpression)method.Arguments[1]).Arguments[0]).Value);
 			Assert.Equal(MemberExpressionType.Method, method.Arguments[2].ExpressionType);
 			method = (MethodExpression)method.Arguments[2];
-			Assert.Equal(1, method.Arguments.Count);
+			Assert.Single(method.Arguments);
 			Assert.Equal(MemberExpressionType.Identifier, method.Arguments[0].ExpressionType);
 			Assert.Equal("xyz", ((IdentifierExpression)method.Arguments[0]).Name);
 		}

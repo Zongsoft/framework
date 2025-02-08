@@ -147,7 +147,7 @@ namespace Zongsoft.Data.Tests
 			Assert.False(person.HasChanges(nameof(person.HomeAddress)));
 
 			changes = person.GetChanges();
-			Assert.Equal(1, changes.Count);
+			Assert.Single(changes);
 			Assert.True(changes.TryGetValue(nameof(person.Name), out value));
 			Assert.Equal("Popeye", value);
 
@@ -974,7 +974,7 @@ namespace Zongsoft.Data.Tests
 			Assert.False(model.HasChanges(nameof(PersonBase.HomeAddress)));
 
 			changes = model.GetChanges();
-			Assert.Equal(1, changes.Count);
+			Assert.Single(changes);
 			Assert.True(changes.TryGetValue(nameof(PersonBase.Name), out value));
 			Assert.Equal("Popeye", value);
 

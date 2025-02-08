@@ -147,7 +147,7 @@ public class ConfigurationTest
 		Assert.True(string.IsNullOrEmpty(mobile.Certificate));
 
 		Assert.NotEmpty(mobile.Messages);
-		Assert.Equal(1, mobile.Messages.Count);
+		Assert.Single(mobile.Messages);
 
 		var message = mobile.Messages["alarm"];
 		Assert.NotNull(message);
@@ -185,7 +185,7 @@ public class ConfigurationTest
 		Assert.True(string.IsNullOrEmpty(storage.Certificate));
 
 		Assert.NotEmpty(storage.Buckets);
-		Assert.Equal(1, storage.Buckets.Count);
+		Assert.Single(storage.Buckets);
 
 		var bucket = storage.Buckets["zongsoft-files"];
 		Assert.NotNull(bucket);
