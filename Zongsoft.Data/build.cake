@@ -1,6 +1,7 @@
 var target = Argument("target", "default");
+var edition = Argument("edition", "Debug");
 
-var solutionFile  = "Zongsoft.Data.sln";
+var solutionFile = "Zongsoft.Data.sln";
 var providerFiles = new string[]
 {
 	@"drivers/mssql/Zongsoft.Data.MsSql.sln",
@@ -14,9 +15,8 @@ Task("clean")
 	.Description("清理解决方案")
 	.Does(() =>
 {
-	DeleteFiles("**/*.nupkg");
-	CleanDirectories("**/bin");
-	CleanDirectories("**/obj");
+	CleanDirectories("**/bin/{edition}");
+	CleanDirectories("**/obj/{edition}");
 });
 
 Task("restore")
@@ -39,7 +39,8 @@ Task("build")
 {
 	var settings = new DotNetBuildSettings
 	{
-		NoRestore = true
+		NoRestore = true,
+		Configuration = edition,
 	};
 
 	DotNetBuild(solutionFile, settings);
@@ -57,8 +58,9 @@ Task("test")
 {
 	var settings = new DotNetTestSettings
 	{
+		NoBuild = true,
 		NoRestore = true,
-		NoBuild = true
+		Configuration = edition,
 	};
 
 	var projects = GetFiles("**/test/*.csproj");
