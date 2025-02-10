@@ -15,8 +15,8 @@ Task("clean")
 	.Description("清理解决方案")
 	.Does(() =>
 {
-	CleanDirectories("**/bin/{edition}");
-	CleanDirectories("**/obj/{edition}");
+	CleanDirectories($"**/bin/{edition}");
+	CleanDirectories($"**/obj/{edition}");
 });
 
 Task("restore")

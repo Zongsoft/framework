@@ -7,8 +7,8 @@ Task("clean")
 	.Description("清理解决方案")
 	.Does(() =>
 {
-	CleanDirectories("**/bin/{edition}");
-	CleanDirectories("**/obj/{edition}");
+	CleanDirectories($"**/bin/{edition}");
+	CleanDirectories($"**/obj/{edition}");
 });
 
 Task("restore")
@@ -50,6 +50,24 @@ Task("test")
 	foreach(var project in projects)
 	{
 		DotNetTest(project.FullPath, settings);
+	}
+});
+
+Task("pack")
+	.Description("发包(NuGet)")
+	.IsDependentOn("build")
+	.Does(() =>
+{
+	var packages = GetFiles($"**/{edition}/*.nupkg");
+
+	foreach(var package in packages)
+	{
+		DotNetNuGetPush(package.FullPath, new DotNetNuGetPushSettings
+		{
+			Source = "nuget.org",
+			ApiKey = EnvironmentVariable("NUGET_API_KEY"),
+			SkipDuplicate = true,
+		});
 	}
 });
 
