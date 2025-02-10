@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Features;
@@ -171,7 +169,28 @@ namespace Zongsoft.Web
 				.SetIsOriginAllowed(origin => true)));
 
 			services.AddLocalization();
-			services.AddRequestLocalization(options => options.ApplyCurrentCultureToResponseHeaders = true);
+			services.AddRequestLocalization(options =>
+			{
+				options.ApplyCurrentCultureToResponseHeaders = true;
+
+				//获取系统支持的所有区域性信息
+				var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.AllCultures);
+
+				//清空当前支持的区域性信息
+				options.SupportedCultures.Clear();
+				options.SupportedUICultures.Clear();
+
+				for(int i = 0; i < cultures.Length; i++)
+				{
+					//忽略中性区域
+					if(string.IsNullOrEmpty(cultures[i].Name))
+						continue;
+
+					options.SupportedCultures.Add(cultures[i]);
+					options.SupportedUICultures.Add(cultures[i]);
+				}
+			});
+
 			services.AddEndpointsApiExplorer();
 
 			services.AddSignalR(options =>
