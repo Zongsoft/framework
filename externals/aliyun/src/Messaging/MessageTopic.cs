@@ -71,7 +71,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#endregion
 
 		#region 发送消息
-		public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
+		protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 		{
 			if(data.IsEmpty)
 				return null;

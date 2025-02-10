@@ -144,4 +144,7 @@
   <data name="ZeroMQ.Settings.Group.Description" xml:space="preserve">
     <value>消息队列分组标识，是一种消息隔离的单位。</value>
   </data>
+  <data name="ZeroMQ.Settings.Topic" xml:space="preserve">
+    <value>默认主题</value>
+  </data>
 </root>

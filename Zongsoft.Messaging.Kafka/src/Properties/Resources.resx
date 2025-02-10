@@ -139,4 +139,7 @@
   <data name="Kafka.Settings.TransactionTimeout" xml:space="preserve">
     <value>Transaction Timeout</value>
   </data>
+  <data name="Kafka.Settings.Topic" xml:space="preserve">
+    <value>Topic</value>
+  </data>
 </root>

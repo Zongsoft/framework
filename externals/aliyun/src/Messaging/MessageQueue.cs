@@ -167,7 +167,7 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 		return MessageUtility.GetMessageResponseId(await response.Content.ReadAsStreamAsync(cancellation));
 	}
 
-	public override ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
+	protected override ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
 		return this.EnqueueAsync(data, options, cancellation);
 	}

@@ -64,7 +64,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 				channel.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 				channel.ReceiveReady += this.OnReceiveReady;
 				channel.Connect(address);
-				channel.Subscribe(this.Queue.GetTopic(this.Topic));
+				channel.Subscribe(this.Topic);
 			}
 
 			return _channel;
@@ -86,7 +86,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			this.Queue.Unregister(orginal);
 
 			channel.ReceiveReady -= this.OnReceiveReady;
-			channel.Unsubscribe(this.Queue.GetTopic(this.Topic));
+			channel.Unsubscribe(this.Topic);
 			channel.Dispose();
 		}
 

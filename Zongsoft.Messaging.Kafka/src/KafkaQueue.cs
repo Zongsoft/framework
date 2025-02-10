@@ -54,7 +54,7 @@ namespace Zongsoft.Messaging.Kafka
 		#endregion
 
 		#region 生成方法
-		public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
+		protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(topic))
 				throw new ArgumentNullException(nameof(topic));

@@ -51,6 +51,13 @@ public sealed class RabbitConnectionSettings : ConnectionSettingsBase<RabbitConn
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(Ignored = true)]
+	public string Topic
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
 	public string Group
 	{
 		get => this.GetValue<string>();

@@ -67,7 +67,7 @@ namespace Zongsoft.Messaging
 
 		#region 生产方法
 		public ValueTask<string> ProduceAsync(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
-			this.ProduceAsync(null, null, data, options, cancellation);
+			this.OnProduceAsync(this.GetTopic(null), null, data, options, cancellation);
 
 		public ValueTask<string> ProduceAsync(ReadOnlyMemory<char> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
 			this.ProduceAsync(null, null, data, Encoding.UTF8, options, cancellation);
@@ -76,9 +76,10 @@ namespace Zongsoft.Messaging
 			this.ProduceAsync(null, null, data, encoding, options, cancellation);
 
 		public ValueTask<string> ProduceAsync(string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
-			this.ProduceAsync(topic, null, data, options, cancellation);
+			this.OnProduceAsync(this.GetTopic(topic), null, data, options, cancellation);
 
-		public abstract ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default);
+		public ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
+			this.OnProduceAsync(this.GetTopic(topic), tags, data, options, cancellation);
 
 		public ValueTask<string> ProduceAsync(string topic, ReadOnlyMemory<char> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
 			this.ProduceAsync(topic, null, data, Encoding.UTF8, options, cancellation);
@@ -90,7 +91,9 @@ namespace Zongsoft.Messaging
 			this.ProduceAsync(topic, tags, data, Encoding.UTF8, options, cancellation);
 
 		public ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<char> data, Encoding encoding, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
-			this.ProduceAsync(topic, tags, encoding.GetBytes(data.ToString()), options, cancellation);
+			this.OnProduceAsync(this.GetTopic(topic), tags, encoding.GetBytes(data.ToString()), options, cancellation);
+
+		protected abstract ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation);
 		#endregion
 
 		#region 订阅方法
@@ -122,7 +125,7 @@ namespace Zongsoft.Messaging
 		public async ValueTask<TSubscriber> SubscribeAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 		{
 			//确保主题不为空
-			topic ??= string.Empty;
+			topic = this.GetTopic(topic) ?? string.Empty;
 
 			if(this.Subscribers.TryGetValue(topic, out var subscriber))
 				return subscriber;
@@ -156,11 +159,16 @@ namespace Zongsoft.Messaging
 		protected virtual void OnUnsubscribed(TSubscriber subscriber) { }
 		#endregion
 
+		#region 虚拟方法
+		protected virtual string GetTopic(string topic) => topic ?? string.Empty;
+		#endregion
+
 		#region 重写方法
 		public override string ToString() => $"[{this.GetType().Name}]{this.Name}";
 		#endregion
 
 		#region 资源释放
+		protected virtual void Dispose(bool disposing) { }
 		public void Dispose()
 		{
 			var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
@@ -177,8 +185,6 @@ namespace Zongsoft.Messaging
 				_disposing = DISPOSED;
 			}
 		}
-
-		protected virtual void Dispose(bool disposing) { }
 		#endregion
 
 		#region 嵌套子类
@@ -230,6 +236,7 @@ namespace Zongsoft.Messaging
 		#endregion
 
 		#region 重写方法
+		protected override string GetTopic(string topic) => string.IsNullOrEmpty(topic) ? this.Settings["Topic"] ?? string.Empty : topic;
 		public override string ToString() => this.Settings is null ?
 			$"[{this.GetType().Name}]{this.Name}" :
 			$"[{this.GetType().Name}]{this.Name}({this.Settings.Value})";

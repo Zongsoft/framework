@@ -74,15 +74,15 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 	#endregion
 
 	#region 生成方法
-	public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
+	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
 		await this.InitializeAsync(cancellation);
 
 		if(string.IsNullOrEmpty(topic))
 			throw new ArgumentNullException(nameof(topic));
 
-		if(!string.IsNullOrEmpty(topic))
-			topic = topic.Replace('/', '.');
+		//确保主题名称的格式正确
+		topic = topic.Replace('/', '.');
 
 		BasicProperties properties = null;
 

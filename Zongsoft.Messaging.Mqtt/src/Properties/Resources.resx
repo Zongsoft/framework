@@ -107,7 +107,7 @@
     <value>Group</value>
   </data>
   <data name="Mqtt.Settings.UserName" xml:space="preserve">
-    <value>UserName</value>
+    <value>User Name</value>
   </data>
   <data name="Mqtt.Settings.Password" xml:space="preserve">
     <value>Password</value>
@@ -126,5 +126,8 @@
   </data>
   <data name="Mqtt.Settings.ProtocolVersion" xml:space="preserve">
     <value>Protocol Version</value>
+  </data>
+  <data name="Mqtt.Settings.Topic" xml:space="preserve">
+    <value>Topic</value>
   </data>
 </root>

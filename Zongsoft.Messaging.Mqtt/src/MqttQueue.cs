@@ -115,11 +115,11 @@ namespace Zongsoft.Messaging.Mqtt
 		#endregion
 
 		#region 发布方法
-		public override async ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
+		protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 		{
 			var message = new MqttApplicationMessage()
 			{
-				Topic = topic,
+				Topic = topic ?? string.Empty,
 				PayloadSegment = data.ToArray(),
 				QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtLeastOnce : options.Reliability.ToQoS(),
 			};

@@ -178,7 +178,16 @@ namespace Zongsoft.Messaging.RabbitMQ.Properties {
         }
         
         /// <summary>
-        ///   查找类似 UserName 的本地化字符串。
+        ///   查找类似 Topic 的本地化字符串。
+        /// </summary>
+        internal static string RabbitMQ_Settings_Topic {
+            get {
+                return ResourceManager.GetString("RabbitMQ.Settings.Topic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 User Name 的本地化字符串。
         /// </summary>
         internal static string RabbitMQ_Settings_UserName {
             get {

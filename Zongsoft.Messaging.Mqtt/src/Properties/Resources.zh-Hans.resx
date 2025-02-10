@@ -147,4 +147,7 @@
   <data name="Mqtt.Settings.ProtocolVersion" xml:space="preserve">
     <value>协议版本</value>
   </data>
+  <data name="Mqtt.Settings.Topic" xml:space="preserve">
+    <value>默认主题</value>
+  </data>
 </root>

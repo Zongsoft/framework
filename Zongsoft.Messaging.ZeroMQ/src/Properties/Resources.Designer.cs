@@ -140,5 +140,14 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Timeout", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   查找类似 Topic 的本地化字符串。
+        /// </summary>
+        internal static string ZeroMQ_Settings_Topic {
+            get {
+                return ResourceManager.GetString("ZeroMQ.Settings.Topic", resourceCulture);
+            }
+        }
     }
 }

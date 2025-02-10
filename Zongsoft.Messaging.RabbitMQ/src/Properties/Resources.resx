@@ -119,7 +119,7 @@
     <value>Port</value>
   </data>
   <data name="RabbitMQ.Settings.UserName" xml:space="preserve">
-    <value>UserName</value>
+    <value>User Name</value>
   </data>
   <data name="RabbitMQ.Settings.Password" xml:space="preserve">
     <value>Password</value>
@@ -138,5 +138,8 @@
   </data>
   <data name="RabbitMQ.Settings.Reconnectable" xml:space="preserve">
     <value>Automatic Reconnection</value>
+  </data>
+  <data name="RabbitMQ.Settings.Topic" xml:space="preserve">
+    <value>Topic</value>
   </data>
 </root>

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.11.1</Version>
+		<Version>6.11.2</Version>
 		<Product>Zongsoft Kafka Library</Product>
 		<Description>This is a library about the Kafka messaging development.</Description>
 		<RootNamespace>Zongsoft.Messaging.Kafka</RootNamespace>

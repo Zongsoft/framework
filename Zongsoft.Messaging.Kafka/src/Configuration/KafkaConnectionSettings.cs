@@ -45,6 +45,13 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 	#endregion
 
 	#region 公共属性
+	[ConnectionSetting(Ignored = true)]
+	public string Topic
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
 	[Alias(nameof(ConsumerConfig.GroupId))]
 	public string Group
 	{

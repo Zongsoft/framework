@@ -159,4 +159,7 @@
   <data name="RabbitMQ.Settings.Reconnectable" xml:space="preserve">
     <value>自动重连</value>
   </data>
+  <data name="RabbitMQ.Settings.Topic" xml:space="preserve">
+    <value>默认主题</value>
+  </data>
 </root>

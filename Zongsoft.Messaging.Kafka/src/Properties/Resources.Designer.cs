@@ -160,6 +160,15 @@ namespace Zongsoft.Messaging.Kafka.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Topic 的本地化字符串。
+        /// </summary>
+        internal static string Kafka_Settings_Topic {
+            get {
+                return ResourceManager.GetString("Kafka.Settings.Topic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Transaction Id 的本地化字符串。
         /// </summary>
         internal static string Kafka_Settings_TransactionId {

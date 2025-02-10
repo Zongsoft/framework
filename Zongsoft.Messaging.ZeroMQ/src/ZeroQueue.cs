@@ -114,19 +114,19 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#endregion
 
 	#region 发布方法
-	public override ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
+	protected override ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
 		//确保初始化完成
 		this.Initialize();
 
-		if(string.IsNullOrEmpty(topic) || topic == "*")
+		if(string.IsNullOrEmpty(topic))
 		{
 			foreach(var subscriber in this.Subscribers)
-				_queue.Enqueue(new Packet(this.GetTopic(subscriber.Topic), data, options));
+				_queue.Enqueue(new Packet(subscriber.Topic, data, options));
 		}
 		else
 		{
-			_queue.Enqueue(new Packet(this.GetTopic(topic), data, options));
+			_queue.Enqueue(new Packet(topic, data, options));
 		}
 
 		return ValueTask.FromResult<string>(null);
@@ -152,7 +152,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 
 				//方案二：依次向所有订阅者发送匿名空包
 				foreach(var subscriber in this.Subscribers)
-					_publisher.SendMoreFrame(Packetizer.Pack(this.GetTopic(subscriber.Topic))).SendFrameEmpty();
+					_publisher.SendMoreFrame(Packetizer.Pack(subscriber.Topic)).SendFrameEmpty();
 
 				return;
 			}
@@ -177,12 +177,18 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 				Thread.Sleep(10);
 		}
 	}
+	#endregion
 
-	/// <summary>获取要发送和订阅的消息主题。</summary>
-	/// <param name="topic">指定的原始主题。</param>
-	/// <returns>返回处理过的消息主题。</returns>
-	internal string GetTopic(string topic) => string.IsNullOrEmpty(this.Settings.Group) ?
-		(topic == "*" ? string.Empty : topic) : $"{this.Settings.Group}:{(topic == "*" ? string.Empty : topic)}";
+	#region 重写方法
+	protected override string GetTopic(string topic)
+	{
+		topic = base.GetTopic(topic);
+
+		if(topic == "*")
+			topic = string.Empty;
+
+		return string.IsNullOrEmpty(this.Settings.Group) ? topic : $"{this.Settings.Group}:{topic}";
+	}
 	#endregion
 
 	#region 私有方法

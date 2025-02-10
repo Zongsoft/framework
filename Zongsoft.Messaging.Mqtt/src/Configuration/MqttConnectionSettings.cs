@@ -48,6 +48,13 @@ public sealed class MqttConnectionSettings : ConnectionSettingsBase<MqttConnecti
 	#endregion
 
 	#region 公共属性
+	[ConnectionSetting(Ignored = true)]
+	public string Topic
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
 	public string Group
 	{
 		get => this.GetValue<string>();

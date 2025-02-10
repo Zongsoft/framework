@@ -142,7 +142,16 @@ namespace Zongsoft.Messaging.Mqtt.Properties {
         }
         
         /// <summary>
-        ///   查找类似 UserName 的本地化字符串。
+        ///   查找类似 Topic 的本地化字符串。
+        /// </summary>
+        internal static string Mqtt_Settings_Topic {
+            get {
+                return ResourceManager.GetString("Mqtt.Settings.Topic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 User Name 的本地化字符串。
         /// </summary>
         internal static string Mqtt_Settings_UserName {
             get {

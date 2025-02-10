@@ -159,4 +159,7 @@
   <data name="Kafka.Settings.TransactionTimeout" xml:space="preserve">
     <value>事务超时</value>
   </data>
+  <data name="Kafka.Settings.Topic" xml:space="preserve">
+    <value>默认主题</value>
+  </data>
 </root>
