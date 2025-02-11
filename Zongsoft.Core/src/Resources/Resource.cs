@@ -34,7 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Resources;
 
-public class Resource : IResource
+public partial class Resource : IResource
 {
 	#region 成员字段
 	private IResourceLocator _locator;

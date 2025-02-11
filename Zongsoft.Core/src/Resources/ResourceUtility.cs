@@ -51,15 +51,15 @@ public static class ResourceUtility
 	internal static string GetLocation(MemberInfo member) => member == null ? null : GetLocation(member.ReflectedType);
 	internal static string GetLocation(Type type) => type == null ? null : (string.IsNullOrEmpty(type.Namespace) ? type.Name : $"{type.Namespace}{Type.Delimiter}{type.Name}");
 
-	public static object GetResourceObject(this Type location, string name) => ResourceAssistant.GetResource(location).GetObject(name, location);
-	public static object GetResourceObject(this MemberInfo location, string name) => ResourceAssistant.GetResource(location).GetObject(name, location);
-	public static object GetResourceObject(this Assembly assembly, string name, Type location) => ResourceAssistant.GetResource(assembly).GetObject(name, location);
-	public static object GetResourceObject(this Assembly assembly, string name, MemberInfo location) => ResourceAssistant.GetResource(assembly).GetObject(name, location);
-	public static object GetResourceObject(this Assembly assembly, string name, string location = null) => ResourceAssistant.GetResource(assembly).GetObject(name, location);
+	public static object GetResourceObject(this Type location, string name) => Resource.GetResource(location).GetObject(name, location);
+	public static object GetResourceObject(this MemberInfo location, string name) => Resource.GetResource(location).GetObject(name, location);
+	public static object GetResourceObject(this Assembly assembly, string name, Type location) => Resource.GetResource(assembly).GetObject(name, location);
+	public static object GetResourceObject(this Assembly assembly, string name, MemberInfo location) => Resource.GetResource(assembly).GetObject(name, location);
+	public static object GetResourceObject(this Assembly assembly, string name, string location = null) => Resource.GetResource(assembly).GetObject(name, location);
 
 	public static object GetResourceObject(this Type location, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(location);
+		var resource = Resource.GetResource(location);
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -73,7 +73,7 @@ public static class ResourceUtility
 	}
 	public static object GetResourceObject(this MemberInfo location, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(location);
+		var resource = Resource.GetResource(location);
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -87,7 +87,7 @@ public static class ResourceUtility
 	}
 	public static object GetResourceObject(this Assembly assembly, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(assembly);
+		var resource = Resource.GetResource(assembly);
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -101,7 +101,7 @@ public static class ResourceUtility
 	}
 	public static object GetResourceObject(this Assembly assembly, Type location, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(assembly);
+		var resource = Resource.GetResource(assembly);
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -115,7 +115,7 @@ public static class ResourceUtility
 	}
 	public static object GetResourceObject(this Assembly assembly, MemberInfo location, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(assembly);
+		var resource = Resource.GetResource(assembly);
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -128,15 +128,15 @@ public static class ResourceUtility
 		return null;
 	}
 
-	public static string GetResourceString(this Type location, string name) => ResourceAssistant.GetResource(location).GetString(name, location);
-	public static string GetResourceString(this MemberInfo location, string name) => ResourceAssistant.GetResource(location).GetString(name, location);
-	public static string GetResourceString(this Assembly assembly, string name, Type location) => ResourceAssistant.GetResource(assembly).GetString(name, location);
-	public static string GetResourceString(this Assembly assembly, string name, MemberInfo location) => ResourceAssistant.GetResource(assembly).GetString(name, location);
-	public static string GetResourceString(this Assembly assembly, string name, string location = null) => ResourceAssistant.GetResource(assembly).GetString(name, location);
+	public static string GetResourceString(this Type location, string name) => Resource.GetResource(location).GetString(name, location);
+	public static string GetResourceString(this MemberInfo location, string name) => Resource.GetResource(location).GetString(name, location);
+	public static string GetResourceString(this Assembly assembly, string name, Type location) => Resource.GetResource(assembly).GetString(name, location);
+	public static string GetResourceString(this Assembly assembly, string name, MemberInfo location) => Resource.GetResource(assembly).GetString(name, location);
+	public static string GetResourceString(this Assembly assembly, string name, string location = null) => Resource.GetResource(assembly).GetString(name, location);
 
 	public static string GetResourceString(this Type location, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(location);
+		var resource = Resource.GetResource(location);
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -150,7 +150,7 @@ public static class ResourceUtility
 	}
 	public static string GetResourceString(this MemberInfo location, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(location);
+		var resource = Resource.GetResource(location);
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -164,7 +164,7 @@ public static class ResourceUtility
 	}
 	public static string GetResourceString(this Assembly assembly, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(assembly);
+		var resource = Resource.GetResource(assembly);
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -178,7 +178,7 @@ public static class ResourceUtility
 	}
 	public static string GetResourceString(this Assembly assembly, Type location, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(assembly);
+		var resource = Resource.GetResource(assembly);
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -192,7 +192,7 @@ public static class ResourceUtility
 	}
 	public static string GetResourceString(this Assembly assembly, MemberInfo location, params ReadOnlySpan<string> names)
 	{
-		var resource = ResourceAssistant.GetResource(assembly);
+		var resource = Resource.GetResource(assembly);
 
 		for(int i = 0; i < names.Length; i++)
 		{

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,19 +29,14 @@
 
 using System;
 using System.Reflection;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Resources;
 
-public static class ResourceAssistant
+partial class Resource
 {
 	#region 成员字段
-	private static readonly ConcurrentDictionary<string, IResource> _resources = new();
-	#endregion
-
-	#region 公共属性
-	public static ICollection<IResource> Resources => _resources.Values;
+	private static readonly ConcurrentDictionary<string, IResource> _cache = new();
 	#endregion
 
 	#region 公共方法
@@ -64,7 +59,7 @@ public static class ResourceAssistant
 		if(assembly == null)
 			throw new ArgumentNullException(nameof(assembly));
 
-		return _resources.GetOrAdd(assembly.GetName().FullName, key => new Resource(assembly));
+		return _cache.GetOrAdd(assembly.GetName().FullName, key => new Resource(assembly));
 	}
 	#endregion
 }

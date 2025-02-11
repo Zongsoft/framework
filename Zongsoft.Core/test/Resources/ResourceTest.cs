@@ -13,7 +13,7 @@ public class ResourceTest
 	[Fact]
 	public void Test()
 	{
-		var resource = ResourceAssistant.GetResource<Gender>();
+		var resource = Resource.GetResource<Gender>();
 		Assert.NotNull(resource);
 
 		var text = resource.GetString("Gender.Male");
