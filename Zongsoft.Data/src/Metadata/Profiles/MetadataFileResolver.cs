@@ -44,6 +44,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 		public const string XML_NAMESPACE_URI = "http://schemas.zongsoft.com/data";
 
 		private const string XML_SCHEMA_ELEMENT = "schema";
+		private const string XML_MAPPING_ELEMENT = "mapping";
 		private const string XML_CONTAINER_ELEMENT = "container";
 		private const string XML_ENTITY_ELEMENT = "entity";
 		private const string XML_KEY_ELEMENT = "key";
@@ -152,8 +153,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 				throw new MetadataFileException($"Invalid '{filePath}' mapping file.", ex);
 			}
 
-			if(reader.LocalName != XML_SCHEMA_ELEMENT)
-				throw new MetadataFileException(string.Format("The root element must be '<{0}>' in this '{1}' file.", XML_SCHEMA_ELEMENT, filePath));
+			if(reader.LocalName != XML_SCHEMA_ELEMENT && reader.LocalName != XML_MAPPING_ELEMENT)
+				throw new MetadataFileException($"The root element must be '<{XML_SCHEMA_ELEMENT}>' in this '{filePath}' file.");
 
 			//获取映射文件所属的应用名
 			var applicationName = reader.GetAttribute(XML_NAME_ATTRIBUTE);
@@ -530,7 +531,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 				//为指定名称的特性值做类型转换，如果转换失败则抛出异常
 				if(!Zongsoft.Common.Convert.TryConvertValue<T>(attributeValue, out var result))
-					throw new MetadataFileException(string.Format("Invalid value '{0}' of '{1}' attribute in '{2}' element.", attributeValue, name, elementName));
+					throw new MetadataFileException($"Invalid value '{attributeValue}' of '{name}' attribute in '{elementName}' element.");
 
 				return result;
 			}
@@ -576,9 +577,9 @@ namespace Zongsoft.Data.Metadata.Profiles
 				var filePath = file != null ? file.FilePath : string.Empty;
 
 				if(string.IsNullOrWhiteSpace(elementName))
-					throw new MetadataFileException(string.Format("Contains unrecognized element(s) in the '{0}' file.", filePath));
+					throw new MetadataFileException($"Contains unrecognized element(s) in the '{filePath}' file.");
 				else
-					throw new MetadataFileException(string.Format("Found a unrecognized '{0}' element in the '{1}' file.", elementName, filePath));
+					throw new MetadataFileException($"Found a unrecognized '{elementName}' element in the '{filePath}' file.");
 			}
 		}
 
@@ -587,6 +588,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 			var nameTable = new NameTable();
 
 			nameTable.Add(XML_SCHEMA_ELEMENT);
+			nameTable.Add(XML_MAPPING_ELEMENT);
 			nameTable.Add(XML_CONTAINER_ELEMENT);
 			nameTable.Add(XML_ENTITY_ELEMENT);
 			nameTable.Add(XML_KEY_ELEMENT);
