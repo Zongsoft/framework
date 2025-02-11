@@ -35,6 +35,7 @@ using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
+using Zongsoft.Resources;
 using Zongsoft.Reflection;
 using Zongsoft.Reflection.Expressions;
 
@@ -362,6 +363,13 @@ namespace Zongsoft.Plugins
 			if(parameter.ParameterType == typeof(Assembly))
 			{
 				result = GetPluginAssembly(element.Plugin);
+				return result != null;
+			}
+
+			if(parameter.ParameterType == typeof(IResource) || parameter.ParameterType == typeof(Resource))
+			{
+				var assembly = GetPluginAssembly(element.Plugin);
+				result = assembly == null ? null : Resource.GetResource(assembly);
 				return result != null;
 			}
 
