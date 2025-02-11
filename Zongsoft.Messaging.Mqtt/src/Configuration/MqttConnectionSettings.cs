@@ -68,19 +68,21 @@ public sealed class MqttConnectionSettings : ConnectionSettingsBase<MqttConnecti
 		set => this.SetValue(value);
 	}
 
-	[ConnectionSetting(true)]
+	[ConnectionSetting(true, Ignored = true)]
 	public string Server
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(Ignored = true)]
 	public string UserName
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 
+	[ConnectionSetting(Ignored = true)]
 	public string Password
 	{
 		get => this.GetValue<string>();
@@ -130,6 +132,10 @@ public sealed class MqttConnectionSettings : ConnectionSettingsBase<MqttConnecti
 	{
 		base.Populate(options);
 
+		//确保服务器地址不为空
+		if(string.IsNullOrEmpty(this.Server))
+			return;
+
 		//确保生成的 ClientId 不为空
 		if(string.IsNullOrEmpty(options.ClientId))
 			options.ClientId = 'C' + Common.Randomizer.GenerateString();
@@ -137,11 +143,32 @@ public sealed class MqttConnectionSettings : ConnectionSettingsBase<MqttConnecti
 		//设置安全凭证
 		options.Credentials = new MqttClientCredentials(this.UserName, string.IsNullOrEmpty(this.Password) ? null : Encoding.UTF8.GetBytes(this.Password));
 
-		//设置服务器地址
-		options.ChannelOptions = new MqttClientTcpOptions
+		//创建选项构建器
+		var builder = new MqttClientOptionsBuilder();
+
+		//使用选项构建器定义服务器地址
+		if(this.Server.Contains("://"))
+			builder.WithConnectionUri(this.Server);
+		else
 		{
-			RemoteEndpoint = Common.Convert.ConvertValue<System.Net.EndPoint>(this.Server)
-		};
+			(var host, var port) = Parse(this.Server);
+			builder.WithTcpServer(host, port);
+		}
+
+		//设置服务器地址
+		options.ChannelOptions = builder.Build().ChannelOptions;
+
+		static (string host, int? port) Parse(ReadOnlySpan<char> server)
+		{
+			var index = server.IndexOf(':');
+
+			if(index > 0)
+				return index == server.Length - 1 ?
+					(server[..index].ToString(), null) :
+					(server[..index].ToString(), int.Parse(server[(index + 1)..]));
+
+			return (server.ToString(), null);
+		}
 	}
 	#endregion
 }

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.16.2</Version>
+		<Version>6.16.3</Version>
 		<Product>Zongsoft Mqtt Library</Product>
 		<Description>This is a library about the mqtt messaging protocol development.</Description>
 		<RootNamespace>Zongsoft.Messaging.Mqtt</RootNamespace>
