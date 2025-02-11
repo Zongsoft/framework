@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -42,15 +42,17 @@ namespace Zongsoft.Services
 	public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 	{
 		#region 成员字段
-		private readonly object _syncRoot = new object();
+		private string _title;
+		private string _description;
 		private ServiceProvider _services;
+		private readonly object _syncRoot = new object();
 		#endregion
 
 		#region 构造函数
 		public ApplicationModule(string name, string title = null, string description = null)
 		{
 			this.Name = name == null ? string.Empty : name.Trim();
-			this.Title = title ?? this.Name;
+			this.Title = title;
 			this.Description = description;
 			this.Schemas = new SchemaCollection();
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
@@ -59,10 +61,20 @@ namespace Zongsoft.Services
 
 		#region 公共属性
 		public string Name { get; protected set; }
-		public string Title {get; set; }
-		public string Description { get; set; }
 		public SchemaCollection Schemas { get; }
 		public IDictionary<string, object> Properties { get; }
+
+		public string Title
+		{
+			get => string.IsNullOrEmpty(_title) ? Resources.ResourceUtility.GetResourceString(this.GetType(), [$"{this.Name}.{nameof(this.Title)}", this.Name]) : _title;
+			set => _title = value;
+		}
+
+		public string Description
+		{
+			get => string.IsNullOrEmpty(_description) ? Resources.ResourceUtility.GetResourceString(this.GetType(), $"{this.Name}.{nameof(this.Description)}") : _description;
+			set => _description = value;
+		}
 
 		public virtual IServiceProvider Services
 		{
