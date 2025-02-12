@@ -157,6 +157,10 @@
     <value>Filter</value>
   </data>
   <data name="ZeroMQ.Settings.Filter.Description" xml:space="preserve">
-    <value>Acceptable sender instance identifiers, multiple identifiers separated by commas. Default is not to accept messages sent by this instance, set to an asterisk if you need to accept messages from all senders containing itself.</value>
+    <value>Acceptable sender instance identifiers, multiple identifiers separated by commas. Messages sent by this instance are not accepted by default.
+
+• Set to asterisk(*) if you need to accept messages from all (including this instance) senders;
+• Set to dot(.) or (~) if only messages from the sender of this instance are accepted ;
+• If you need to reject messages from the specified instance sender, follow the instance identifier with an exclamation mark (e.g. !1234, !5678).</value>
   </data>
 </root>

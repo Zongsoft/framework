@@ -176,7 +176,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		if(_exclusion != null && _exclusion.Contains(identifier))
 			return false;
 
-		return _inclusion == null || _inclusion.Contains(identifier);
+		return _inclusion == null || _inclusion.Count == 0 || _inclusion.Contains(identifier);
 	}
 
 	internal void Unregister(SubscriberSocket channel)
@@ -294,8 +294,9 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	{
 		if(string.IsNullOrWhiteSpace(filter))
 		{
-			_exclusion = new HashSet<string>([instance]);
 			_inclusion = null;
+			_exclusion = new HashSet<string>([instance]);
+			return;
 		}
 
 		var parts = filter.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -306,12 +307,11 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			{
 				case "*":
 					_exclusion?.Clear();
+					_inclusion?.Clear();
 					break;
 				case ".":
-				case "#":
-				case "$":
-				case "self":
-					_exclusion?.Clear();
+				case "~":
+					_exclusion?.Remove(instance);
 
 					if(_inclusion == null)
 						_inclusion = new HashSet<string>([instance]);
@@ -326,10 +326,15 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 							_exclusion?.Clear();
 						else
 						{
+							var part = parts[i][1..];
+
+							if(part == "." || part == "~")
+								part = instance;
+
 							if(_exclusion == null)
-								_exclusion = new HashSet<string>([parts[i][1..]]);
+								_exclusion = new HashSet<string>([part]);
 							else
-								_exclusion.Add(parts[i][1..]);
+								_exclusion.Add(part);
 						}
 					}
 					else
@@ -349,10 +354,12 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 
 	private static string GenerateIdentifier(Configuration.ZeroConnectionSettings settings)
 	{
-		if(string.IsNullOrEmpty(settings.Instance) || settings.Instance == "*" || settings.Instance == "#")
+		if(string.IsNullOrEmpty(settings.Instance) || settings.Instance == "*")
+		{
 			return string.IsNullOrEmpty(settings?.Client) ?
 				Randomizer.GenerateString(10) :
 				$"{settings.Client}-{Math.Abs(Randomizer.GenerateInt32()):X}";
+		}
 
 		return settings.Instance;
 	}

@@ -79,7 +79,11 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Acceptable sender instance identifiers, multiple identifiers separated by commas. Default is not to accept messages sent by this instance, set to an asterisk if you need to accept messages from all senders containing itself. 的本地化字符串。
+        ///   查找类似 Acceptable sender instance identifiers, multiple identifiers separated by commas. Messages sent by this instance are not accepted by default.
+        ///
+        ///• Set to asterisk(*) if you need to accept messages from all (including this instance) senders;
+        ///• Set to dot(.) or (~) if only messages from the sender of this instance are accepted ;
+        ///• If you need to reject messages from the specified instance sender, follow the instance identifier with an exclamation mark (e.g. !1234, !5678). 的本地化字符串。
         /// </summary>
         internal static string ZeroMQ_Settings_Filter_Description {
             get {
