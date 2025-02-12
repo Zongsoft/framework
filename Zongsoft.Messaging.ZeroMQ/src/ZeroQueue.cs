@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using NetMQ;
 using NetMQ.Sockets;
@@ -46,6 +47,8 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	private ushort _publisherPort;
 	private ushort _subscriberPort;
 	private readonly object _locker;
+	private HashSet<string> _exclusion;
+	private HashSet<string> _inclusion;
 	#endregion
 
 	#region 成员字段
@@ -69,8 +72,11 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		if(settings.Port == 0)
 			settings.Port = ZeroQueueServer.PORT;
 
-		//生成当前消息队列的唯一标识
-		this.Identifier = GenerateIdentifier(settings);
+		//生成当前消息队列的实例标识
+		this.Instance = GenerateIdentifier(settings);
+
+		//初始化消息实例过滤器
+		this.SetFilter(settings.Filter, this.Instance);
 
 		_locker = new();
 		_queue = new NetMQQueue<Packet>();
@@ -85,8 +91,8 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取当前队列的唯一标识。</summary>
-	public string Identifier { get; }
+	/// <summary>获取当前队列的实例标识。</summary>
+	public string Instance { get; }
 	#endregion
 
 	#region 公共方法
@@ -157,7 +163,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 				return;
 			}
 
-			var head = Packetizer.Pack(this.Identifier, packet.Topic, packet.Data, packet.Options, out var compressor);
+			var head = Packetizer.Pack(this.Instance, packet.Topic, packet.Data, packet.Options, out var compressor);
 			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
 			_publisher.SendMoreFrame(head).SendFrame(data);
 		}
@@ -165,6 +171,14 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#endregion
 
 	#region 内部方法
+	internal bool Validate(string identifier)
+	{
+		if(_exclusion != null && _exclusion.Contains(identifier))
+			return false;
+
+		return _inclusion == null || _inclusion.Contains(identifier);
+	}
+
 	internal void Unregister(SubscriberSocket channel)
 	{
 		if(channel != null && !channel.IsDisposed)
@@ -276,12 +290,71 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		}
 	}
 
+	private void SetFilter(string filter, string instance)
+	{
+		if(string.IsNullOrWhiteSpace(filter))
+		{
+			_exclusion = new HashSet<string>([instance]);
+			_inclusion = null;
+		}
+
+		var parts = filter.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+		for(int i = 0; i < parts.Length; i++)
+		{
+			switch(parts[i])
+			{
+				case "*":
+					_exclusion?.Clear();
+					break;
+				case ".":
+				case "#":
+				case "$":
+				case "self":
+					_exclusion?.Clear();
+
+					if(_inclusion == null)
+						_inclusion = new HashSet<string>([instance]);
+					else
+						_inclusion.Add(instance);
+
+					break;
+				default:
+					if(parts[i][0] == '!')
+					{
+						if(parts[i].Length == 1)
+							_exclusion?.Clear();
+						else
+						{
+							if(_exclusion == null)
+								_exclusion = new HashSet<string>([parts[i][1..]]);
+							else
+								_exclusion.Add(parts[i][1..]);
+						}
+					}
+					else
+					{
+						_exclusion?.Remove(parts[i]);
+
+						if(_inclusion == null)
+							_inclusion = new HashSet<string>([parts[i]]);
+						else
+							_inclusion.Add(parts[i]);
+					}
+					break;
+			}
+
+		}
+	}
+
 	private static string GenerateIdentifier(Configuration.ZeroConnectionSettings settings)
 	{
-		if(string.IsNullOrEmpty(settings?.Client))
-			return Randomizer.GenerateString(10);
-		else
-			return $"{settings.Client}-{Math.Abs(Randomizer.GenerateInt32()):X}";
+		if(string.IsNullOrEmpty(settings.Instance) || settings.Instance == "*" || settings.Instance == "#")
+			return string.IsNullOrEmpty(settings?.Client) ?
+				Randomizer.GenerateString(10) :
+				$"{settings.Client}-{Math.Abs(Randomizer.GenerateInt32()):X}";
+
+		return settings.Instance;
 	}
 	#endregion
 

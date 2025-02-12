@@ -112,8 +112,8 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			//解包收到的首帧消息
 			var identifier = Packetizer.Unpack(header, out var topic, out var options);
 
-			//如果接收到的消息是本队列发出的则忽略它并跳过随后的数据帧
-			if(string.Equals(identifier, this.Queue.Identifier))
+			//如果接收到的消息需要排除则跳过后续数据帧
+			if(!this.Queue.Validate(identifier))
 			{
 				args.Socket.TrySkipFrame();
 				continue;

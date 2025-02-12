@@ -147,4 +147,16 @@
   <data name="ZeroMQ.Settings.Topic" xml:space="preserve">
     <value>默认主题</value>
   </data>
+  <data name="ZeroMQ.Settings.Instance" xml:space="preserve">
+    <value>实例标识</value>
+  </data>
+  <data name="ZeroMQ.Settings.Instance.Description" xml:space="preserve">
+    <value>消息队列实例标识，发送的消息均携带所属的实例标识，消息接受方根据该实例标识可以确定发送方。默认为自动生成。</value>
+  </data>
+  <data name="ZeroMQ.Settings.Filter" xml:space="preserve">
+    <value>实例过滤</value>
+  </data>
+  <data name="ZeroMQ.Settings.Filter.Description" xml:space="preserve">
+    <value>可接受的发送者实例标识，多个标识以逗号分隔。默认不接受本实例发送的消息，如果需要接受包含自身的所有发送者的消息则设置为星号。</value>
+  </data>
 </root>

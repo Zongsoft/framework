@@ -68,6 +68,18 @@ public sealed class ZeroConnectionSettings : ConnectionSettingsBase<ZeroConnecti
 		set => this.SetValue(value);
 	}
 
+	public string Instance
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	public string Filter
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
 	[ConnectionSetting(true)]
 	public string Server
 	{

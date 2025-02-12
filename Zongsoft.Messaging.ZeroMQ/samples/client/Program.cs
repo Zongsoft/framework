@@ -39,7 +39,7 @@ internal class Program
 					_queue.Dispose();
 					return;
 				case "info":
-					Console.WriteLine($"[{_queue.Identifier}] {_queue.Settings}");
+					Console.WriteLine($"[{_queue.Instance}] {_queue.Settings}");
 
 					if(_queue.Subscribers.Count > 0)
 					{

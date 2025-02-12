@@ -70,6 +70,24 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Filter 的本地化字符串。
+        /// </summary>
+        internal static string ZeroMQ_Settings_Filter {
+            get {
+                return ResourceManager.GetString("ZeroMQ.Settings.Filter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Acceptable sender instance identifiers, multiple identifiers separated by commas. Default is not to accept messages sent by this instance, set to an asterisk if you need to accept messages from all senders containing itself. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroMQ_Settings_Filter_Description {
+            get {
+                return ResourceManager.GetString("ZeroMQ.Settings.Filter.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Group 的本地化字符串。
         /// </summary>
         internal static string ZeroMQ_Settings_Group {
@@ -102,6 +120,24 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         internal static string ZeroMQ_Settings_Heartbeat_Description {
             get {
                 return ResourceManager.GetString("ZeroMQ.Settings.Heartbeat.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Instance 的本地化字符串。
+        /// </summary>
+        internal static string ZeroMQ_Settings_Instance {
+            get {
+                return ResourceManager.GetString("ZeroMQ.Settings.Instance", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The instance identifier of the message queue. Each sent message carries the instance identifier to which it belongs, the message receiver can determine the sender based on the instance identifier. Defaults to auto-generate. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroMQ_Settings_Instance_Description {
+            get {
+                return ResourceManager.GetString("ZeroMQ.Settings.Instance.Description", resourceCulture);
             }
         }
         

@@ -86,7 +86,7 @@ partial class ZeroQueue
 			return base.DisposeAsync(disposing);
 		}
 
-		public override string ToString() => _queue == null ? $"{this.GetType().Name}(Disposed)" : $"{_queue.Name}#{_queue.Identifier} ({_queue.Settings?.Server})";
+		public override string ToString() => _queue == null ? $"{this.GetType().Name}(Disposed)" : $"{_queue.Name}#{_queue.Instance} ({_queue.Settings?.Server})";
 		#endregion
 
 		#region 嵌套子类

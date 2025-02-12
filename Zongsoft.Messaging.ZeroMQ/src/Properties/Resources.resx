@@ -147,4 +147,16 @@
   <data name="ZeroMQ.Settings.Topic" xml:space="preserve">
     <value>Topic</value>
   </data>
+  <data name="ZeroMQ.Settings.Instance" xml:space="preserve">
+    <value>Instance</value>
+  </data>
+  <data name="ZeroMQ.Settings.Instance.Description" xml:space="preserve">
+    <value>The instance identifier of the message queue. Each sent message carries the instance identifier to which it belongs, the message receiver can determine the sender based on the instance identifier. Defaults to auto-generate.</value>
+  </data>
+  <data name="ZeroMQ.Settings.Filter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="ZeroMQ.Settings.Filter.Description" xml:space="preserve">
+    <value>Acceptable sender instance identifiers, multiple identifiers separated by commas. Default is not to accept messages sent by this instance, set to an asterisk if you need to accept messages from all senders containing itself.</value>
+  </data>
 </root>
