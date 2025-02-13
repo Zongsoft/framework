@@ -63,8 +63,44 @@ public class ImportDirective : IProfileDirective
 
 			var profile = Profile.Load(path);
 
-			foreach(var item in profile.Items)
-				context.Profile.Items.Add(item);
+			foreach(var item in profile.GetItems())
+			{
+				switch(item)
+				{
+					case ProfileEntry entry:
+						SetEntry(context.Profile.Entries, entry);
+						break;
+					case ProfileSection section:
+						SetSection(context.Profile.Sections, section);
+						break;
+				}
+			}
+		}
+
+		static void SetEntry(ProfileEntryCollection entries, ProfileEntry entry)
+		{
+			if(entries != null && entry != null)
+				return;
+
+			if(entries.TryGetValue(entry.Name, out var found))
+				found.Value = entry.Value;
+			else
+				entries.Add(entry.Name, entry.Value);
+		}
+
+		static void SetSection(ProfileSectionCollection sections, ProfileSection section)
+		{
+			if(sections == null || section == null)
+				return;
+
+			if(!sections.TryGetValue(section.Name, out var found))
+				found = sections.Add(section.Name);
+
+			foreach(var entry in section.Entries)
+				found.SetEntryValue(entry.Name, entry.Value);
+
+			foreach(var child in section.Sections)
+				SetSection(found.Sections, child);
 		}
 	}
 

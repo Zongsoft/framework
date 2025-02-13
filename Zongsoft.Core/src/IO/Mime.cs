@@ -489,9 +489,9 @@ namespace Zongsoft.IO
 			}
 			catch { yield break; }
 
-			foreach(var item in profile.Items)
+			foreach(var entry in profile.Entries)
 			{
-				if(item is ProfileEntry entry && !string.IsNullOrEmpty(entry.Name) && !string.IsNullOrEmpty(entry.Value))
+				if(!string.IsNullOrEmpty(entry.Name) && !string.IsNullOrEmpty(entry.Value))
 					yield return new(entry.Name[0] == '.' ? entry.Name : $".{entry.Name}", entry.Value);
 			}
 		}

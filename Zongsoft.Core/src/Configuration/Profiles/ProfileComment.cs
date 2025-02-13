@@ -35,19 +35,27 @@ namespace Zongsoft.Configuration.Profiles
 	{
 		#region 私有变量
 		private readonly string _text;
+		private readonly string[] _lines;
 		#endregion
 
 		#region 构造函数
-		protected ProfileComment(string text, int lineNumber = -1) : base(lineNumber)
+		internal ProfileComment(Profile profile, string text, int lineNumber = -1) : base(profile, lineNumber)
 		{
 			_text = text ?? string.Empty;
+			_lines = string.IsNullOrEmpty(text) ? [] : text.Split('\n');
+		}
+
+		internal ProfileComment(ProfileSection section, string text, int lineNumber = -1) : base(section, lineNumber)
+		{
+			_text = text ?? string.Empty;
+			_lines = string.IsNullOrEmpty(text) ? [] : text.Split('\n');
 		}
 		#endregion
 
 		#region 公共属性
 		public bool IsEmpty => string.IsNullOrEmpty(_text);
 		public string Text => _text;
-		public string[] Lines => string.IsNullOrEmpty(_text) ? [] : _text.Split('\n');
+		public string[] Lines => _lines;
 		public override ProfileItemType ItemType => ProfileItemType.Comment;
 		#endregion
 
@@ -56,14 +64,24 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 静态方法
-		public static ProfileComment GetComment(string text, int lineNumber = -1)
+		internal static ProfileComment GetComment(Profile profile, string text, int lineNumber = -1)
 		{
 			(var name, var argument) = ProfileDirective.Parse(text);
 
 			if(string.IsNullOrEmpty(name))
-				return new ProfileComment(text, lineNumber);
+				return new ProfileComment(profile, text, lineNumber);
 			else
-				return new ProfileDirective(name, argument, lineNumber);
+				return new ProfileDirective(profile, name, argument, lineNumber);
+		}
+
+		internal static ProfileComment GetComment(ProfileSection section, string text, int lineNumber = -1)
+		{
+			(var name, var argument) = ProfileDirective.Parse(text);
+
+			if(string.IsNullOrEmpty(name))
+				return new ProfileComment(section, text, lineNumber);
+			else
+				return new ProfileDirective(section, name, argument, lineNumber);
 		}
 		#endregion
 	}

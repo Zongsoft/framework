@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,17 +28,15 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Configuration.Profiles
+namespace Zongsoft.Configuration.Profiles;
+
+public enum ProfileItemType
 {
-	public enum ProfileItemType
-	{
-		/// <summary>设置条目。</summary>
-		Entry,
-		/// <summary>设置段。</summary>
-		Section,
-		/// <summary>注释行。</summary>
-		Comment,
-	}
+	/// <summary>设置项。</summary>
+	Entry,
+	/// <summary>设置段。</summary>
+	Section,
+	/// <summary>注释行。</summary>
+	Comment,
 }

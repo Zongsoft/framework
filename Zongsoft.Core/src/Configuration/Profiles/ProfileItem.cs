@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,65 +28,31 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles
 {
 	public abstract class ProfileItem
 	{
-		#region 成员字段
-		private object _owner;
-		private readonly int _lineNumber;
-		#endregion
-
 		#region 构造函数
-		protected ProfileItem() => _lineNumber = -1;
-		protected ProfileItem(int lineNumber) => _lineNumber = Math.Max(lineNumber, -1);
-		protected ProfileItem(Profile owner, int lineNumber)
+		protected ProfileItem(Profile profile, int lineNumber = -1)
 		{
-			_owner = owner ?? throw new ArgumentNullException(nameof(owner));
-			_lineNumber = Math.Max(lineNumber, -1);
+			this.Profile = profile ?? throw new ArgumentNullException(nameof(profile));
+			this.LineNumber = Math.Max(lineNumber, -1);
 		}
 
-		protected ProfileItem(ProfileSection owner, int lineNumber)
+		protected ProfileItem(ProfileSection section, int lineNumber = -1)
 		{
-			_owner = owner ?? throw new ArgumentNullException(nameof(owner));
-			_lineNumber = Math.Max(lineNumber, -1);
+			this.Section = section ?? throw new ArgumentNullException(nameof(section));
+			this.Profile = section.Profile;
+			this.LineNumber = Math.Max(lineNumber, -1);
 		}
 		#endregion
 
 		#region 公共属性
-		public virtual Profile Profile => _owner switch
-		{
-			Profile profile => profile,
-			ProfileItem item => item.Profile,
-			_ => null,
-		};
-
+		public Profile Profile { get; }
+		public ProfileSection Section { get; }
 		public abstract ProfileItemType ItemType { get; }
-		public int LineNumber => _lineNumber;
-		#endregion
-
-		#region 保护属性
-		internal protected object Owner
-		{
-			get => _owner;
-			internal set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				if(object.ReferenceEquals(_owner, value))
-					return;
-
-				_owner = value;
-				this.OnOwnerChanged(value);
-			}
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void OnOwnerChanged(object owner) { }
+		public int LineNumber { get; }
 		#endregion
 	}
 }

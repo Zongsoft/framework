@@ -28,51 +28,54 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Configuration.Profiles
 {
-	internal class ProfileItemCollection : System.Collections.ObjectModel.ObservableCollection<ProfileItem>
+	public class ProfileItemCollection<TItem> : Collection<TItem> where TItem : ProfileItem
 	{
 		#region 成员字段
-		private readonly object _owner;
+		private readonly Profile _profile;
+		private readonly ProfileSection _section;
 		#endregion
 
 		#region 构造函数
-		public ProfileItemCollection(object owner)
+		protected ProfileItemCollection(Profile profile)
 		{
-			_owner = owner ?? throw new ArgumentNullException(nameof(owner));
+			_profile = profile ?? throw new ArgumentNullException(nameof(profile));
+		}
+
+		protected ProfileItemCollection(ProfileSection section)
+		{
+			_section = section ?? throw new ArgumentNullException(nameof(section));
+			_profile = section.Profile;
 		}
 		#endregion
 
 		#region 内部属性
-		internal object Owner
-		{
-			get => _owner;
-			set
-			{
-				if(object.ReferenceEquals(_owner, value))
-					return;
-
-				foreach(var item in this.Items)
-					item.Owner = value;
-			}
-		}
+		public Profile Profile => _profile;
+		public ProfileSection Section => _section;
 		#endregion
 
 		#region 重写方法
-		protected override void InsertItem(int index, ProfileItem item)
+		protected override void InsertItem(int index, TItem item)
 		{
-			if(item != null && item.Owner == null)
-				item.Owner = _owner;
+			if(item == null)
+				throw new ArgumentNullException(nameof(item));
+
+			if(item.Profile != _profile)
+				throw new InvalidOperationException($"The '{item}' item to be added does not belong to the profile file({_profile.FilePath}) where this collection resides.");
 
 			base.InsertItem(index, item);
 		}
 
-		protected override void SetItem(int index, ProfileItem item)
+		protected override void SetItem(int index, TItem item)
 		{
-			if(item != null && item.Owner == null)
-				item.Owner = _owner;
+			if(item == null)
+				throw new ArgumentNullException(nameof(item));
+
+			if(item.Profile != _profile)
+				throw new InvalidOperationException($"The '{item}' item to be set does not belong to the profile file({_profile.FilePath}) where this collection resides.");
 
 			base.SetItem(index, item);
 		}

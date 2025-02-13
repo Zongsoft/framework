@@ -34,15 +34,27 @@ namespace Zongsoft.Configuration.Profiles;
 
 public class ProfileOptions
 {
-	public ProfileOptions(params IEnumerable<IProfileDirective> directives)
+	#region 构造函数
+	public ProfileOptions(params IEnumerable<IProfileDirective> directives) : this(true, directives) { }
+	public ProfileOptions(bool reservedBlanks, params IEnumerable<IProfileDirective> directives)
 	{
+		this.ReservedBlanks = reservedBlanks;
 		this.Directives = new ProfileDirectiveProvider(directives);
 	}
 
-	public ProfileOptions(params ReadOnlySpan<IProfileDirective> directives)
+	public ProfileOptions(params ReadOnlySpan<IProfileDirective> directives) : this(true, directives) { }
+	public ProfileOptions(bool reservedBlanks, params ReadOnlySpan<IProfileDirective> directives)
 	{
+		this.ReservedBlanks = reservedBlanks;
 		this.Directives = new ProfileDirectiveProvider(directives);
 	}
+	#endregion
 
+	#region 公共属性
+	/// <summary>获取或设置一个值，指示是否保留空行。</summary>
+	public bool ReservedBlanks { get; set; }
+
+	/// <summary>获取或设置指令提供程序。</summary>
 	public IProfileDirectiveProvider Directives { get; set; }
+	#endregion
 }

@@ -52,37 +52,29 @@ namespace Zongsoft.Configuration.Profiles
 		#region 枚举定义
 		private enum LineType
 		{
-			Empty,
+			Blank,
 			Entry,
 			Section,
 			Comment,
 		}
 		#endregion
 
-		#region 成员字段
-		private readonly string _filePath;
-		private readonly ProfileItemCollection _items;
-		private ProfileCommentCollection _comments;
-		private ProfileSectionCollection _sections;
-		#endregion
-
 		#region 构造函数
 		public Profile(string filePath = null)
 		{
-			if(filePath != null)
-				_filePath = filePath.Trim();
-
-			_items = new ProfileItemCollection(this);
-			_sections = new ProfileSectionCollection(_items);
-			_comments = new ProfileCommentCollection(_items);
+			this.FilePath = filePath?.Trim();
+			this.Entries = new(this);
+			this.Sections = new(this);
+			this.Comments = new(this);
 		}
 		#endregion
 
 		#region 公共属性
-		public string FilePath => _filePath;
-		public ICollection<ProfileItem> Items => _items;
-		public ICollection<ProfileComment> Comments => _comments;
-		public IProfileItemCollection<ProfileSection> Sections => _sections;
+		public string FilePath { get; }
+		public int[] Blanks { get; private set; }
+		public ProfileEntryCollection Entries { get; }
+		public ProfileCommentCollection Comments { get; }
+		public ProfileSectionCollection Sections { get; }
 		#endregion
 
 		#region 加载方法
@@ -103,6 +95,7 @@ namespace Zongsoft.Configuration.Profiles
 			if(stream == null)
 				throw new ArgumentNullException(nameof(stream));
 
+			List<int> blanks = [];
 			Profile profile = new Profile(stream is FileStream fileStream ? fileStream.Name : string.Empty);
 			ProfileReadingContext context = new ProfileReadingContext(profile, stream);
 
@@ -116,6 +109,10 @@ namespace Zongsoft.Configuration.Profiles
 					//解析读取到的行文本
 					switch(ParseLine(text, out var content))
 					{
+						case LineType.Blank:
+							if(options != null && options.ReservedBlanks)
+								blanks.Add(context.LineNumber);
+							break;
 						case LineType.Section:
 							var parts = content.Split(' ', '\t', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
@@ -123,7 +120,7 @@ namespace Zongsoft.Configuration.Profiles
 								context.Section = null;
 							else
 							{
-								var sections = (ProfileSectionCollection)profile.Sections;
+								var sections = profile.Sections;
 
 								for(int i = 0; i < parts.Length; i++)
 								{
@@ -132,7 +129,7 @@ namespace Zongsoft.Configuration.Profiles
 									else
 										context.Section = sections.Add(parts[i], context.LineNumber);
 
-									sections = (ProfileSectionCollection)context.Section.Sections;
+									sections = context.Section.Sections;
 								}
 							}
 
@@ -143,26 +140,23 @@ namespace Zongsoft.Configuration.Profiles
 							if(context.Section == null)
 							{
 								if(index < 0)
-									profile.Items.Add(new ProfileEntry(context.LineNumber, content));
+									profile.Entries.Add(context.LineNumber, content);
 								else
-									profile.Items.Add(new ProfileEntry(context.LineNumber, content[..index], content[(index + 1)..]));
+									profile.Entries.Add(context.LineNumber, content[..index], content[(index + 1)..]);
 							}
 							else
 							{
 								if(index < 0)
-									((ProfileEntryCollection)context.Section.Entries).Add(context.LineNumber, content);
+									context.Section.Entries.Add(context.LineNumber, content);
 								else
-									((ProfileEntryCollection)context.Section.Entries).Add(context.LineNumber, content[..index], content[(index + 1)..]);
+									context.Section.Entries.Add(context.LineNumber, content[..index], content[(index + 1)..]);
 							}
 
 							break;
 						case LineType.Comment:
-							var comment = ProfileComment.GetComment(content, context.LineNumber);
-
-							if(context.Section == null)
-								profile._items.Add(comment);
-							else
-								context.Section.Items.Add(comment);
+							var comment = context.Section == null ?
+								profile.Comments.Add(content, context.LineNumber) :
+								context.Section.Comments.Add(content, context.LineNumber);
 
 							//如果是指令项则调用指令的读方法
 							if(comment is ProfileDirective directive)
@@ -176,6 +170,10 @@ namespace Zongsoft.Configuration.Profiles
 				}
 			}
 
+			//更新配置文件中的空行集
+			profile.Blanks = blanks.ToArray();
+
+			//返回加载成功的配置文件
 			return profile;
 		}
 		#endregion
@@ -183,19 +181,19 @@ namespace Zongsoft.Configuration.Profiles
 		#region 保存方法
 		public void Save(ProfileOptions options = null)
 		{
-			if(string.IsNullOrWhiteSpace(_filePath))
+			if(string.IsNullOrWhiteSpace(this.FilePath))
 				throw new InvalidOperationException();
 
-			this.Save(_filePath, options);
+			this.Save(this.FilePath, options);
 		}
 
 		public void Save(string filePath, ProfileOptions options = null) => this.Save(filePath, null, options);
 		public void Save(string filePath, Encoding encoding, ProfileOptions options = null)
 		{
-			filePath ??= _filePath;
+			filePath ??= this.FilePath;
 
 			if(string.IsNullOrWhiteSpace(filePath))
-				throw new ArgumentException();
+				throw new ArgumentNullException(nameof(filePath));
 
 			using(var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
 			{
@@ -222,9 +220,9 @@ namespace Zongsoft.Configuration.Profiles
 
 			var context = new ProfileWritingContext(this, writer);
 
-			foreach(var item in _items)
+			foreach(var item in this.GetItems())
 			{
-				//忽略非本配置文件的条码
+				//忽略非本配置文件的条目
 				if(item == null || item.Profile != this)
 					continue;
 
@@ -290,8 +288,8 @@ namespace Zongsoft.Configuration.Profiles
 
 			if(section == null)
 			{
-				if(!_sections.TryGetValue(name, out var child))
-					child = _sections.Add(name);
+				if(!this.Sections.TryGetValue(name, out var child))
+					child = this.Sections.Add(name);
 
 				UpdateEntries(child, optionObject);
 			}
@@ -300,7 +298,7 @@ namespace Zongsoft.Configuration.Profiles
 				if(isSectionPath)
 				{
 					if(!section.Sections.TryGetValue(name, out var child))
-						child = ((ProfileSectionCollection)section.Sections).Add(name);
+						child = section.Sections.Add(name);
 
 					UpdateEntries(child, optionObject);
 				}
@@ -344,7 +342,7 @@ namespace Zongsoft.Configuration.Profiles
 			name = parts[index];
 			isSectionPath = string.IsNullOrWhiteSpace(parts[parts.Length - 1]);
 
-			var sections = (ProfileSectionCollection)this.Sections;
+			var sections = this.Sections;
 
 			for(int i = 0; i < index; i++)
 			{
@@ -359,7 +357,7 @@ namespace Zongsoft.Configuration.Profiles
 					section = sections.Add(parts[i]);
 				}
 
-				sections = (ProfileSectionCollection)section.Sections;
+				sections = section.Sections;
 			}
 
 			return true;
@@ -430,7 +428,7 @@ namespace Zongsoft.Configuration.Profiles
 				writer.WriteLine($"[{section.FullName}]");
 			}
 
-			foreach(var item in section.Items)
+			foreach(var item in section.GetItems())
 			{
 				switch(item.ItemType)
 				{
@@ -458,7 +456,7 @@ namespace Zongsoft.Configuration.Profiles
 			result = null;
 
 			if(string.IsNullOrWhiteSpace(text))
-				return LineType.Empty;
+				return LineType.Blank;
 
 			text = text.Trim();
 

@@ -28,30 +28,36 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles
 {
 	public class ProfileEntry : ProfileItem
 	{
 		#region 构造函数
-		public ProfileEntry(string name, string value = null) : this(-1, name, value) { }
-		public ProfileEntry(int lineNumber, string name, string value = null) : base(lineNumber)
+		public ProfileEntry(Profile profile, string name, string value = null) : this(profile, -1, name, value) { }
+		public ProfileEntry(Profile profile, int lineNumber, string name, string value = null) : base(profile, lineNumber)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name.Trim();
+			this.Value = value?.Trim();
+		}
 
-			if(value != null)
-				this.Value = value.Trim();
+		public ProfileEntry(ProfileSection section, string name, string value = null) : this(section, -1, name, value) { }
+		public ProfileEntry(ProfileSection section, int lineNumber, string name, string value = null) : base(section, lineNumber)
+		{
+			if(string.IsNullOrWhiteSpace(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Name = name.Trim();
+			this.Value = value?.Trim();
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name { get; }
 		public string Value { get; set; }
-		public ProfileSection Section => base.Owner as ProfileSection;
 		public override ProfileItemType ItemType => ProfileItemType.Entry;
 		#endregion
 

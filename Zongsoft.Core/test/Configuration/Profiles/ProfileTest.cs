@@ -19,7 +19,7 @@ public class ProfileTest
 	private static void TestProfile1(Profile profile)
 	{
 		Assert.NotNull(profile);
-		Assert.NotEmpty(profile.Items);
+		Assert.NotEmpty(profile.GetItems());
 
 		Assert.Single(profile.Sections);
 		Assert.True(profile.Sections.TryGetValue("plugins", out var section));
@@ -51,7 +51,7 @@ public class ProfileTest
 	private static void TestProfile2(Profile profile)
 	{
 		Assert.NotNull(profile);
-		Assert.NotEmpty(profile.Items);
+		Assert.NotEmpty(profile.GetItems());
 
 		Assert.Single(profile.Sections);
 		Assert.True(profile.Sections.TryGetValue("plugins", out var section));
@@ -100,15 +100,10 @@ public class ProfileTest
 	private static void TestProfile3(Profile profile)
 	{
 		Assert.NotNull(profile);
-		Assert.NotEmpty(profile.Items);
+		Assert.NotEmpty(profile.Entries);
 
-		var item = profile.Items.FirstOrDefault();
-
-		Assert.NotNull(item);
-		Assert.Equal(ProfileItemType.Entry, item.ItemType);
-		Assert.IsType<ProfileEntry>(item);
-
-		var entry = (ProfileEntry)item;
+		var entry = profile.Entries[0];
+		Assert.NotNull(entry);
 		Assert.Equal("../mime", entry.Name);
 		Assert.Null(entry.Value);
 
@@ -117,38 +112,20 @@ public class ProfileTest
 		Assert.NotEmpty(section.Entries);
 		Assert.Equal("nuget:Zongsoft.Plugins/plugins/Main.plugin", section.Entries.First().Name);
 
-		var comment = Get(profile.Comments, 0);
+		var comment = section.Comments[0];
 		Assert.NotNull(comment);
 		Assert.IsType<ProfileDirective>(comment);
 
 		var directive = (ProfileDirective)comment;
 		Assert.Equal("import", directive.Name);
-		Assert.Equal("./Profile-1.option", directive.Argument);
+		Assert.Equal("./Profile-1.ini", directive.Argument);
 
-		comment = Get(profile.Comments, 1);
+		comment = section.Comments[1];
 		Assert.NotNull(comment);
 		Assert.IsType<ProfileDirective>(comment);
 
 		directive = (ProfileDirective)comment;
 		Assert.Equal("import", directive.Name);
-		Assert.Equal("./Profile-2.option", directive.Argument);
+		Assert.Equal("./Profile-2.ini", directive.Argument);
 	}
-
-	#region 私有方法
-	private static TElement Get<TElement>(ICollection<TElement> collection, int index)
-	{
-		if(collection == null || index < 0)
-			return default;
-
-		int current = 0;
-
-		foreach(var element in collection)
-		{
-			if(index == current++)
-				return element;
-		}
-
-		return default;
-	}
-	#endregion
 }

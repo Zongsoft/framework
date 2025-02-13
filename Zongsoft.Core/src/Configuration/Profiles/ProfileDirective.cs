@@ -34,7 +34,13 @@ namespace Zongsoft.Configuration.Profiles;
 public class ProfileDirective : ProfileComment
 {
 	#region 私有构造
-	internal ProfileDirective(string name, string argument, int lineNumber = -1) : base(string.IsNullOrEmpty(argument) ? $"@{name}" : $"@{name} {argument}", lineNumber)
+	internal ProfileDirective(Profile profile, string name, string argument, int lineNumber = -1) : base(profile, string.IsNullOrEmpty(argument) ? $"@{name}" : $"@{name} {argument}", lineNumber)
+	{
+		this.Name = name;
+		this.Argument = argument;
+	}
+
+	internal ProfileDirective(ProfileSection section, string name, string argument, int lineNumber = -1) : base(section, string.IsNullOrEmpty(argument) ? $"@{name}" : $"@{name} {argument}", lineNumber)
 	{
 		this.Name = name;
 		this.Argument = argument;

@@ -38,16 +38,8 @@ namespace Zongsoft.Configuration.Profiles
 		private static readonly char[] IllegalCharacters = ['.', '/', '\\', '*', '?', '!', '@', '#', '%', '^', '&'];
 		#endregion
 
-		#region 成员字段
-		private readonly string _name;
-		private readonly ProfileItemCollection _items;
-		private ProfileEntryCollection _entries;
-		private ProfileCommentCollection _comments;
-		private ProfileSectionCollection _sections;
-		#endregion
-
 		#region 构造函数
-		public ProfileSection(string name, int lineNumber = -1) : base(lineNumber)
+		public ProfileSection(Profile profile, string name, int lineNumber = -1) : base(profile, lineNumber)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -55,66 +47,39 @@ namespace Zongsoft.Configuration.Profiles
 			if(name.IndexOfAny(IllegalCharacters) >= 0)
 				throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
 
-			_name = name.Trim();
-			_items = new ProfileItemCollection(this);
+			this.Name = name.Trim();
+			this.FullName = this.Name;
+			this.Entries = new(this);
+			this.Comments = new(this);
+			this.Sections = new(this);
+		}
+
+		public ProfileSection(ProfileSection section, string name, int lineNumber = -1) : base(section, lineNumber)
+		{
+			if(string.IsNullOrWhiteSpace(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(name.IndexOfAny(IllegalCharacters) >= 0)
+				throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
+
+			this.Name = name.Trim();
+			this.FullName = section.FullName + ' ' + this.Name;
+			this.Entries = new(this);
+			this.Comments = new(this);
+			this.Sections = new(this);
 		}
 		#endregion
 
 		#region 公共属性
-		public string Name => _name;
-		public string FullName
-		{
-			get
-			{
-				var parent = this.Parent;
-
-				if(parent == null)
-					return this.Name;
-				else
-					return parent.FullName + " " + this.Name;
-			}
-		}
-
-		public ProfileSection Parent => base.Owner as ProfileSection;
-		public ICollection<ProfileItem> Items => _items;
-		public IProfileItemCollection<ProfileEntry> Entries
-		{
-			get
-			{
-				if(_entries == null)
-					System.Threading.Interlocked.CompareExchange(ref _entries, new ProfileEntryCollection(_items), null);
-
-				return _entries;
-			}
-		}
-
-		public ICollection<ProfileComment> Comments
-		{
-			get
-			{
-				if(_comments == null)
-					System.Threading.Interlocked.CompareExchange(ref _comments, new ProfileCommentCollection(_items), null);
-
-				return _comments;
-			}
-		}
-
-		public IProfileItemCollection<ProfileSection> Sections
-		{
-			get
-			{
-				if(_sections == null)
-					System.Threading.Interlocked.CompareExchange(ref _sections, new ProfileSectionCollection(_items), null);
-
-				return _sections;
-			}
-		}
-
+		public string Name { get; }
+		public string FullName { get; }
+		public ProfileEntryCollection Entries { get; }
+		public ProfileCommentCollection Comments { get; }
+		public ProfileSectionCollection Sections { get; }
 		public override ProfileItemType ItemType => ProfileItemType.Section;
 		#endregion
 
 		#region 重写方法
-		protected override void OnOwnerChanged(object owner) => _items.Owner = owner;
 		public override string ToString() => $"[{this.FullName}]";
 		#endregion
 

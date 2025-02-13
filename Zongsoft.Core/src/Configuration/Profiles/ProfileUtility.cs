@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,39 +30,35 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Configuration.Profiles
+namespace Zongsoft.Configuration.Profiles;
+
+public static class ProfileUtility
 {
-	internal static class ProfileItemCollectionExtension
+	public static IReadOnlyList<ProfileItem> GetItems(this Profile profile)
 	{
-		public static ProfileComment Add(this ICollection<ProfileComment> comments, string comment, int lineNumber = -1)
-		{
-			if(comment == null)
-				return null;
+		if(profile == null)
+			return [];
 
-			var item = ProfileComment.GetComment(comment, lineNumber);
-			comments.Add(item);
-			return item;
-		}
+		var list = new List<ProfileItem>(profile.Comments.Count + profile.Entries.Count + profile.Sections.Count);
 
-		public static ProfileSection Add(this IProfileItemCollection<ProfileSection> sections, string name, int lineNumber = -1)
-		{
-			var item = new ProfileSection(name, lineNumber);
-			sections.Add(item);
-			return item;
-		}
+		list.AddRange(profile.Comments);
+		list.AddRange(profile.Entries);
+		list.AddRange(profile.Sections);
 
-		public static ProfileEntry Add(this IProfileItemCollection<ProfileEntry> entries, string name, string value = null)
-		{
-			var item = new ProfileEntry(name, value);
-			entries.Add(item);
-			return item;
-		}
+		return list;
+	}
 
-		public static ProfileEntry Add(this IProfileItemCollection<ProfileEntry> entries, int lineNumber, string name, string value = null)
-		{
-			var item = new ProfileEntry(lineNumber, name, value);
-			entries.Add(item);
-			return item;
-		}
+	public static IReadOnlyList<ProfileItem> GetItems(this ProfileSection section)
+	{
+		if(section == null)
+			return [];
+
+		var list = new List<ProfileItem>(section.Comments.Count + section.Entries.Count + section.Sections.Count);
+
+		list.AddRange(section.Comments);
+		list.AddRange(section.Entries);
+		list.AddRange(section.Sections);
+
+		return list;
 	}
 }

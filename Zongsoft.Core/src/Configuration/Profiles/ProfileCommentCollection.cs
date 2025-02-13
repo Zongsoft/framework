@@ -28,81 +28,25 @@
  */
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles
 {
-	internal class ProfileCommentCollection : ICollection<ProfileComment>
+	public class ProfileCommentCollection : ProfileItemCollection<ProfileComment>
 	{
-		#region 成员字段
-		private readonly ProfileItemCollection _items;
-		#endregion
-
 		#region 构造函数
-		public ProfileCommentCollection(ProfileItemCollection items)
-		{
-			_items = items ?? throw new ArgumentNullException(nameof(items));
-		}
-		#endregion
-
-		#region 公共属性
-		public int Count => _items.Count(item => item.ItemType == ProfileItemType.Comment);
-		public bool IsReadOnly => false;
+		public ProfileCommentCollection(Profile profile) : base(profile) { }
+		public ProfileCommentCollection(ProfileSection section) : base(section) { }
 		#endregion
 
 		#region 公共方法
-		public void Add(ProfileComment item) => _items.Add(item);
-		public ProfileComment Add(string comment, int lineNumber = -1)
+		public ProfileComment Add(string text, int lineNumber = -1)
 		{
-			if(comment == null)
-				return null;
+			var comment = this.Section == null ?
+				ProfileComment.GetComment(this.Profile, text, lineNumber) :
+				ProfileComment.GetComment(this.Section, text, lineNumber);
 
-			var item = ProfileComment.GetComment(comment, lineNumber);
-			_items.Add(item);
-			return item;
-		}
-
-		public void Clear()
-		{
-			var comments = _items.Where(item => item.ItemType == ProfileItemType.Comment).ToArray();
-
-			for(int i = 0; i < comments.Length; i++)
-				_items.Remove(comments[i]);
-		}
-
-		public bool Remove(ProfileComment item) => _items.Remove(item);
-		public bool Contains(ProfileComment item) => _items.Contains(item);
-		public void CopyTo(ProfileComment[] array, int arrayIndex)
-		{
-			if(array == null)
-				return;
-
-			if(arrayIndex >= array.Length)
-				throw new ArgumentOutOfRangeException("arrayIndex");
-
-			int index = 0;
-
-			foreach(var item in _items)
-			{
-				if(arrayIndex + index >= array.Length)
-					return;
-
-				if(item.ItemType == ProfileItemType.Comment)
-					array[arrayIndex + index++] = (ProfileComment)item;
-			}
-		}
-		#endregion
-
-		#region 遍历枚举
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<ProfileComment> GetEnumerator()
-		{
-			foreach(var item in _items)
-			{
-				if(item.ItemType == ProfileItemType.Comment)
-					yield return (ProfileComment)item;
-			}
+			this.Add(comment);
+			return comment;
 		}
 		#endregion
 	}
