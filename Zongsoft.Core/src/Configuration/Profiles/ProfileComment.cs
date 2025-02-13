@@ -28,77 +28,42 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Zongsoft.Configuration.Profiles
 {
 	public class ProfileComment : ProfileItem
 	{
 		#region 私有变量
-		private readonly StringBuilder _text;
+		private readonly string _text;
 		#endregion
 
 		#region 构造函数
-		public ProfileComment(string text, int lineNumber = -1) : base(lineNumber)
+		protected ProfileComment(string text, int lineNumber = -1) : base(lineNumber)
 		{
-			if(string.IsNullOrEmpty(text))
-				_text = new StringBuilder();
-			else
-				_text = new StringBuilder(text);
+			_text = text ?? string.Empty;
 		}
 		#endregion
 
 		#region 公共属性
-		public string Text
-		{
-			get
-			{
-				return _text.ToString();
-			}
-		}
-
-		public string[] Lines
-		{
-			get
-			{
-				return _text.ToString().Split('\r', '\n');
-			}
-		}
-
-		public override ProfileItemType ItemType
-		{
-			get
-			{
-				return ProfileItemType.Comment;
-			}
-		}
+		public bool IsEmpty => string.IsNullOrEmpty(_text);
+		public string Text => _text;
+		public string[] Lines => string.IsNullOrEmpty(_text) ? [] : _text.Split('\n');
+		public override ProfileItemType ItemType => ProfileItemType.Comment;
 		#endregion
 
-		#region 公共方法
-		public void Append(string text)
+		#region 重写方法
+		public override string ToString() => _text;
+		#endregion
+
+		#region 静态方法
+		public static ProfileComment GetComment(string text, int lineNumber = -1)
 		{
-			if(string.IsNullOrEmpty(text))
-				return;
+			(var name, var argument) = ProfileDirective.Parse(text);
 
-			_text.Append(text);
-		}
-
-		public void AppendFormat(string format, params object[] args)
-		{
-			if(string.IsNullOrEmpty(format))
-				return;
-
-			_text.AppendFormat(format, args);
-		}
-
-		public void AppendLine(string text)
-		{
-			if(text == null)
-				_text.AppendLine();
+			if(string.IsNullOrEmpty(name))
+				return new ProfileComment(text, lineNumber);
 			else
-				_text.AppendLine(text);
+				return new ProfileDirective(name, argument, lineNumber);
 		}
 		#endregion
 	}

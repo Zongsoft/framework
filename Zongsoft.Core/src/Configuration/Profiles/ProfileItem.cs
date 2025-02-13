@@ -40,16 +40,8 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 构造函数
-		protected ProfileItem()
-		{
-			_lineNumber = -1;
-		}
-
-		protected ProfileItem(int lineNumber)
-		{
-			_lineNumber = Math.Max(lineNumber, -1);
-		}
-
+		protected ProfileItem() => _lineNumber = -1;
+		protected ProfileItem(int lineNumber) => _lineNumber = Math.Max(lineNumber, -1);
 		protected ProfileItem(Profile owner, int lineNumber)
 		{
 			_owner = owner ?? throw new ArgumentNullException(nameof(owner));

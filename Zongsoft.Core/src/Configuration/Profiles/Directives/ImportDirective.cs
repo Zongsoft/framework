@@ -28,38 +28,46 @@
  */
 
 using System;
-using System.Reflection;
-using System.Collections.Concurrent;
+using System.IO;
 
-namespace Zongsoft.Resources;
+namespace Zongsoft.Configuration.Profiles.Directives;
 
-partial class Resource
+public class ImportDirective : IProfileDirective
 {
-	#region 成员字段
-	private static readonly ConcurrentDictionary<string, IResource> _cache = new();
+	#region 单例字段
+	public static readonly ImportDirective Instance = new();
+	#endregion
+
+	#region 私有构造
+	private ImportDirective() { }
+	#endregion
+
+	#region 公共属性
+	public string Name => "Import";
 	#endregion
 
 	#region 公共方法
-	public static IResource GetResource(MemberInfo member, IResourceLocator locator = null)
+	public void OnRead(ProfileReadingContext context, string argument)
 	{
-		if(member == null)
-			throw new ArgumentNullException(nameof(member));
+		if(string.IsNullOrEmpty(argument))
+			return;
 
-		if(member is Type type)
-			return GetResource(type);
+		var directory = Path.GetDirectoryName(context.Profile.FilePath);
+		var paths = argument.Split([' ', '\t', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
-		type = member.ReflectedType ?? member.DeclaringType;
-		return type != null ? GetResource(type, locator) : GetResource(member.GetType().Assembly, locator);
+		for(int i = 0; i < paths.Length; i++)
+		{
+			var path = Path.Combine(directory, paths[i]);
+			if(!File.Exists(path))
+				continue;
+
+			var profile = Profile.Load(path);
+
+			foreach(var item in profile.Items)
+				context.Profile.Items.Add(item);
+		}
 	}
 
-	public static IResource GetResource(Type type, IResourceLocator locator = null) => GetResource(type?.Assembly, locator);
-	public static IResource GetResource<T>(IResourceLocator locator = null) => GetResource(typeof(T).Assembly, locator);
-	public static IResource GetResource(Assembly assembly, IResourceLocator locator = null)
-	{
-		if(assembly == null)
-			throw new ArgumentNullException(nameof(assembly));
-
-		return _cache.GetOrAdd(assembly.GetName().FullName, (key, argument) => new Resource(assembly, argument), locator);
-	}
+	public void OnWrite(ProfileWritingContext context, string argument) { }
 	#endregion
 }

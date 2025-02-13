@@ -28,38 +28,44 @@
  */
 
 using System;
-using System.Reflection;
-using System.Collections.Concurrent;
 
-namespace Zongsoft.Resources;
+namespace Zongsoft.Configuration.Profiles;
 
-partial class Resource
+public class ProfileDirective : ProfileComment
 {
-	#region 成员字段
-	private static readonly ConcurrentDictionary<string, IResource> _cache = new();
+	#region 私有构造
+	internal ProfileDirective(string name, string argument, int lineNumber = -1) : base(string.IsNullOrEmpty(argument) ? $"@{name}" : $"@{name} {argument}", lineNumber)
+	{
+		this.Name = name;
+		this.Argument = argument;
+	}
 	#endregion
 
-	#region 公共方法
-	public static IResource GetResource(MemberInfo member, IResourceLocator locator = null)
+	#region 公共属性
+	public string Name { get; }
+	public string Argument { get; }
+	#endregion
+
+	#region 解析方法
+	internal static (string name, string argument) Parse(ReadOnlySpan<char> text)
 	{
-		if(member == null)
-			throw new ArgumentNullException(nameof(member));
+		if(text.IsEmpty || text[0] != '@' || text.Length <= 1)
+			return default;
 
-		if(member is Type type)
-			return GetResource(type);
+		for(int i = 1; i < text.Length; i++)
+		{
+			if(text[i] == ' ' || text[i] == '\t')
+				return i > 1 ? (text[1..i].ToString(), text[(i+ 1)..].Trim().ToString()) : default;
 
-		type = member.ReflectedType ?? member.DeclaringType;
-		return type != null ? GetResource(type, locator) : GetResource(member.GetType().Assembly, locator);
-	}
+			if(!ValidName(text[i], i - 1))
+				return default;
+		}
 
-	public static IResource GetResource(Type type, IResourceLocator locator = null) => GetResource(type?.Assembly, locator);
-	public static IResource GetResource<T>(IResourceLocator locator = null) => GetResource(typeof(T).Assembly, locator);
-	public static IResource GetResource(Assembly assembly, IResourceLocator locator = null)
-	{
-		if(assembly == null)
-			throw new ArgumentNullException(nameof(assembly));
+		return (text[1..].ToString(), null);
 
-		return _cache.GetOrAdd(assembly.GetName().FullName, (key, argument) => new Resource(assembly, argument), locator);
+		static bool ValidName(char character, int position) => position == 0 ?
+			char.IsLetterOrDigit(character) || character == '_' :
+			char.IsLetterOrDigit(character) || character == '_' || character == '-' || character == '.';
 	}
 	#endregion
 }

@@ -35,7 +35,7 @@ namespace Zongsoft.Configuration.Profiles
 	public class ProfileSection : ProfileItem
 	{
 		#region 静态常量
-		private static readonly char[] IllegalCharacters = new char[] { '.', '/', '\\', '*', '?', '!', '@', '#', '%', '^', '&' };
+		private static readonly char[] IllegalCharacters = ['.', '/', '\\', '*', '?', '!', '@', '#', '%', '^', '&'];
 		#endregion
 
 		#region 成员字段
@@ -114,10 +114,8 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 重写方法
-		protected override void OnOwnerChanged(object owner)
-		{
-			_items.Owner = owner;
-		}
+		protected override void OnOwnerChanged(object owner) => _items.Owner = owner;
+		public override string ToString() => $"[{this.FullName}]";
 		#endregion
 
 		#region 公共方法

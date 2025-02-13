@@ -39,7 +39,7 @@ namespace Zongsoft.Configuration.Profiles
 			if(comment == null)
 				return null;
 
-			var item = new ProfileComment(comment, lineNumber);
+			var item = ProfileComment.GetComment(comment, lineNumber);
 			comments.Add(item);
 			return item;
 		}

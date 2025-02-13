@@ -32,14 +32,10 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles
 {
-	[Serializable]
 	public class ProfileEntry : ProfileItem
 	{
 		#region 构造函数
-		public ProfileEntry(string name, string value = null) : this(-1, name, value)
-		{
-		}
-
+		public ProfileEntry(string name, string value = null) : this(-1, name, value) { }
 		public ProfileEntry(int lineNumber, string name, string value = null) : base(lineNumber)
 		{
 			if(string.IsNullOrWhiteSpace(name))
@@ -60,13 +56,7 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 重写方法
-		public override string ToString()
-		{
-			if(Value == null)
-				return Name;
-
-			return string.Format("{0}={1}", Name, Value);
-		}
+		public override string ToString() => string.IsNullOrEmpty(this.Value) ? this.Name : $"{this.Name}={this.Value}";
 		#endregion
 	}
 }

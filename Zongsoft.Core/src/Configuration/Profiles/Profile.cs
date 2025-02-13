@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,9 +30,9 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Zongsoft.Configuration.Profiles
 {
@@ -86,29 +86,31 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 加载方法
-		public static Profile Load(string filePath)
+		public static Profile Load(string filePath, ProfileOptions options = null)
 		{
 			if(string.IsNullOrWhiteSpace(filePath))
 				throw new ArgumentNullException(nameof(filePath));
 
 			using(var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				return Load(stream);
+				return Load(stream, null, options);
 			}
 		}
 
-		public static Profile Load(Stream stream, Encoding encoding = null)
+		public static Profile Load(Stream stream, ProfileOptions options = null) => Load(stream, null, options);
+		public static Profile Load(Stream stream, Encoding encoding, ProfileOptions options = null)
 		{
 			if(stream == null)
 				throw new ArgumentNullException(nameof(stream));
 
-			Profile profile = new Profile(stream is FileStream fileStream ? fileStream.Name : string.Empty);
 			ProfileSection section = null;
+			Profile profile = new Profile(stream is FileStream fileStream ? fileStream.Name : string.Empty);
+			ProfileReadingContext context = new ProfileReadingContext(profile, stream);
 
 			using(var reader = new StreamReader(stream, encoding ?? Encoding.UTF8))
 			{
-				int lineNumber = 0;
 				string text;
+				context.LineNumber = 0;
 
 				while((text = reader.ReadLine()) != null)
 				{
@@ -116,15 +118,21 @@ namespace Zongsoft.Configuration.Profiles
 					switch(ParseLine(text, out var content))
 					{
 						case LineType.Section:
-							var parts = content.Split(' ', '\t');
-							var sections = (ProfileSectionCollection)profile.Sections;
+							var parts = content.Split(' ', '\t', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
-							foreach(string part in parts)
+							if(parts == null || parts.Length == 0)
+								section = null;
+							else
 							{
-								if(!sections.TryGetValue(part, out section))
-									section = sections.Add(part, lineNumber);
+								var sections = (ProfileSectionCollection)profile.Sections;
 
-								sections = (ProfileSectionCollection)section.Sections;
+								for(int i = 0; i < parts.Length; i++)
+								{
+									if(!sections.TryGetValue(parts[i], out section))
+										section = sections.Add(parts[i], context.LineNumber);
+
+									sections = (ProfileSectionCollection)section.Sections;
+								}
 							}
 
 							break;
@@ -134,30 +142,36 @@ namespace Zongsoft.Configuration.Profiles
 							if(section == null)
 							{
 								if(index < 0)
-									profile.Items.Add(new ProfileEntry(lineNumber, content));
+									profile.Items.Add(new ProfileEntry(context.LineNumber, content));
 								else
-									profile.Items.Add(new ProfileEntry(lineNumber, content.Substring(0, index), content.Substring(index + 1)));
+									profile.Items.Add(new ProfileEntry(context.LineNumber, content[..index], content[(index + 1)..]));
 							}
 							else
 							{
 								if(index < 0)
-									((ProfileEntryCollection)section.Entries).Add(lineNumber, content);
+									((ProfileEntryCollection)section.Entries).Add(context.LineNumber, content);
 								else
-									((ProfileEntryCollection)section.Entries).Add(lineNumber, content.Substring(0, index), content.Substring(index + 1));
+									((ProfileEntryCollection)section.Entries).Add(context.LineNumber, content[..index], content[(index + 1)..]);
 							}
 
 							break;
 						case LineType.Comment:
+							var comment = ProfileComment.GetComment(content, context.LineNumber);
+
 							if(section == null)
-								profile._items.Add(new ProfileComment(content, lineNumber));
+								profile._items.Add(comment);
 							else
-								section.Items.Add(new ProfileComment(content, lineNumber));
+								section.Items.Add(comment);
+
+							//如果是指令项则调用指令的读方法
+							if(comment is ProfileDirective directive)
+								context.OnRead(options, directive.Name, directive.Argument);
 
 							break;
 					}
 
 					//递增行号
-					lineNumber++;
+					context.LineNumber++;
 				}
 			}
 
@@ -166,15 +180,16 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 保存方法
-		public void Save()
+		public void Save(ProfileOptions options = null)
 		{
 			if(string.IsNullOrWhiteSpace(_filePath))
 				throw new InvalidOperationException();
 
-			this.Save(_filePath);
+			this.Save(_filePath, options);
 		}
 
-		public void Save(string filePath, Encoding encoding = null)
+		public void Save(string filePath, ProfileOptions options = null) => this.Save(filePath, null, options);
+		public void Save(string filePath, Encoding encoding, ProfileOptions options = null)
 		{
 			filePath ??= _filePath;
 
@@ -183,36 +198,50 @@ namespace Zongsoft.Configuration.Profiles
 
 			using(var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
 			{
-				this.Save(stream, encoding);
+				this.Save(stream, encoding, options);
 			}
 		}
 
-		public void Save(Stream stream, Encoding encoding = null)
+		public void Save(Stream stream, ProfileOptions options = null) => this.Save(stream, null, options);
+		public void Save(Stream stream, Encoding encoding, ProfileOptions options = null)
 		{
 			if(stream == null)
 				throw new ArgumentNullException(nameof(stream));
 
 			using(var writer = new StreamWriter(stream, encoding ?? Encoding.UTF8))
 			{
-				this.Save(writer);
+				this.Save(writer, options);
 			}
 		}
 
-		public void Save(TextWriter writer)
+		public void Save(TextWriter writer, ProfileOptions options = null)
 		{
 			if(writer == null)
 				throw new ArgumentNullException(nameof(writer));
 
+			var context = new ProfileWritingContext(this, writer);
+
 			foreach(var item in _items)
 			{
+				//忽略非本配置文件的条码
+				if(item == null || item.Profile != this)
+					continue;
+
 				switch(item.ItemType)
 				{
-					case ProfileItemType.Comment:
-						foreach(var line in ((ProfileComment)item).Lines)
-							writer.WriteLine($"#{line}");
+					case ProfileItemType.Entry:
+						WriteEntry(writer, (ProfileEntry)item);
 						break;
 					case ProfileItemType.Section:
 						WriteSection(writer, (ProfileSection)item);
+						break;
+					case ProfileItemType.Comment:
+						WriteComment(writer, (ProfileComment)item);
+
+						//如果是指令项则调用指令的写方法
+						if(item is ProfileDirective directive)
+							context.OnWrite(options, directive.Name, directive.Argument);
+
 						break;
 				}
 			}
@@ -280,6 +309,10 @@ namespace Zongsoft.Configuration.Profiles
 				}
 			}
 		}
+		#endregion
+
+		#region 重写方法
+		public override string ToString() => this.FilePath;
 		#endregion
 
 		#region 私有方法
@@ -372,17 +405,28 @@ namespace Zongsoft.Configuration.Profiles
 			}
 		}
 
+		private static void WriteEntry(TextWriter writer, ProfileEntry entry)
+		{
+			if(string.IsNullOrWhiteSpace(entry.Value))
+				writer.WriteLine(entry.Name);
+			else
+				writer.WriteLine(entry.Name + "=" + entry.Value);
+		}
+
+		private static void WriteComment(TextWriter writer, ProfileComment comment)
+		{
+			foreach(var line in comment.Lines)
+				writer.WriteLine($"#{line}");
+		}
+
 		private static void WriteSection(TextWriter writer, ProfileSection section)
 		{
-			if(section == null)
-				return;
-
 			var sections = new List<ProfileSection>();
 
 			if(section.Entries.Count > 0 || section.Comments.Count > 0)
 			{
 				writer.WriteLine();
-				writer.WriteLine("[{0}]", section.FullName);
+				writer.WriteLine($"[{section.FullName}]");
 			}
 
 			foreach(var item in section.Items)
@@ -393,17 +437,10 @@ namespace Zongsoft.Configuration.Profiles
 						sections.Add((ProfileSection)item);
 						break;
 					case ProfileItemType.Entry:
-						var entry = (ProfileEntry)item;
-
-						if(string.IsNullOrWhiteSpace(entry.Value))
-							writer.WriteLine(entry.Name);
-						else
-							writer.WriteLine(entry.Name + "=" + entry.Value);
-
+						WriteEntry(writer, (ProfileEntry)item);
 						break;
 					case ProfileItemType.Comment:
-						foreach(var line in ((ProfileComment)item).Lines)
-							writer.WriteLine($"#{line}");
+						WriteComment(writer, (ProfileComment)item);
 						break;
 				}
 			}
@@ -432,9 +469,6 @@ namespace Zongsoft.Configuration.Profiles
 
 			if(text[0] == '[' && text[^1] == ']')
 			{
-				if(text.Length < 3)
-					throw new ProfileException("Invalid format.");
-
 				result = text[1..^1];
 				return LineType.Section;
 			}

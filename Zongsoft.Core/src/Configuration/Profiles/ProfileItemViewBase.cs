@@ -97,15 +97,8 @@ namespace Zongsoft.Configuration.Profiles
 			return false;
 		}
 
-		public bool Remove(T item)
-		{
-			return _items.Remove(item);
-		}
-
-		public bool Contains(string name)
-		{
-			return _innerDictionary.ContainsKey(name);
-		}
+		public bool Remove(T item) => _items.Remove(item);
+		public bool Contains(string name) => _innerDictionary.ContainsKey(name);
 
 		public bool Contains(T item)
 		{

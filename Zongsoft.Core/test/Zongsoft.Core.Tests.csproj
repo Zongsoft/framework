@@ -64,6 +64,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Update="Configuration\Profiles\Profile-1.option">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Configuration\Profiles\Profile-2.option">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Configuration\Profiles\Profile-3.option">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Configuration\Xml\OptionConfigurationTest-2.option">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

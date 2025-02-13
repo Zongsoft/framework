@@ -28,38 +28,10 @@
  */
 
 using System;
-using System.Reflection;
-using System.Collections.Concurrent;
 
-namespace Zongsoft.Resources;
+namespace Zongsoft.Configuration.Profiles;
 
-partial class Resource
+public interface IProfileDirectiveProvider
 {
-	#region 成员字段
-	private static readonly ConcurrentDictionary<string, IResource> _cache = new();
-	#endregion
-
-	#region 公共方法
-	public static IResource GetResource(MemberInfo member, IResourceLocator locator = null)
-	{
-		if(member == null)
-			throw new ArgumentNullException(nameof(member));
-
-		if(member is Type type)
-			return GetResource(type);
-
-		type = member.ReflectedType ?? member.DeclaringType;
-		return type != null ? GetResource(type, locator) : GetResource(member.GetType().Assembly, locator);
-	}
-
-	public static IResource GetResource(Type type, IResourceLocator locator = null) => GetResource(type?.Assembly, locator);
-	public static IResource GetResource<T>(IResourceLocator locator = null) => GetResource(typeof(T).Assembly, locator);
-	public static IResource GetResource(Assembly assembly, IResourceLocator locator = null)
-	{
-		if(assembly == null)
-			throw new ArgumentNullException(nameof(assembly));
-
-		return _cache.GetOrAdd(assembly.GetName().FullName, (key, argument) => new Resource(assembly, argument), locator);
-	}
-	#endregion
+	IProfileDirective GetDirective(string name);
 }

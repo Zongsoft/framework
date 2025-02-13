@@ -48,10 +48,7 @@ namespace Zongsoft.Configuration.Profiles
 		#region 内部属性
 		internal object Owner
 		{
-			get
-			{
-				return _owner;
-			}
+			get => _owner;
 			set
 			{
 				if(object.ReferenceEquals(_owner, value))
@@ -66,7 +63,7 @@ namespace Zongsoft.Configuration.Profiles
 		#region 重写方法
 		protected override void InsertItem(int index, ProfileItem item)
 		{
-			if(item != null)
+			if(item != null && item.Owner == null)
 				item.Owner = _owner;
 
 			base.InsertItem(index, item);
@@ -74,7 +71,7 @@ namespace Zongsoft.Configuration.Profiles
 
 		protected override void SetItem(int index, ProfileItem item)
 		{
-			if(item != null)
+			if(item != null && item.Owner == null)
 				item.Owner = _owner;
 
 			base.SetItem(index, item);

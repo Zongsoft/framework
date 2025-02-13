@@ -11,7 +11,7 @@ namespace Zongsoft.Configuration.Tests;
 
 public class XmlConfigurationTest
 {
-	public static IConfigurationRoot GetConfiguration()
+	public static IConfigurationRoot GetConfiguration1()
 	{
 		return new ConfigurationBuilder()
 			.AddOptionFile("Configuration/Xml/OptionConfigurationTest-1.option")
@@ -26,7 +26,7 @@ public class XmlConfigurationTest
 	}
 
 	[Fact]
-	public void TestLoad1() => TestConfiguration1(GetConfiguration());
+	public void TestLoad1() => TestConfiguration1(GetConfiguration1());
 	private static void TestConfiguration1(IConfigurationRoot configuration)
 	{
 		Assert.NotNull(configuration);

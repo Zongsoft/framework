@@ -1,0 +1,7 @@
+﻿../mime
+
+[plugins]
+nuget:Zongsoft.Plugins/plugins/Main.plugin
+
+#@import ./Profile-1.option
+#@import ./Profile-2.option

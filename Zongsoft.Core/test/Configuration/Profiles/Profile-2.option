@@ -1,0 +1,5 @@
+﻿[plugins zongsoft data mysql]
+nuget:Zongsoft.Data.MySql
+
+[plugins zongsoft data postgres]
+nuget:Zongsoft.Data.Postgres

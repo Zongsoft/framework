@@ -28,38 +28,27 @@
  */
 
 using System;
-using System.Reflection;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 
-namespace Zongsoft.Resources;
+namespace Zongsoft.Configuration.Profiles;
 
-partial class Resource
+internal static class ProfileContextUtility
 {
-	#region 成员字段
-	private static readonly ConcurrentDictionary<string, IResource> _cache = new();
-	#endregion
-
-	#region 公共方法
-	public static IResource GetResource(MemberInfo member, IResourceLocator locator = null)
+	internal static void OnRead(this ProfileReadingContext context, ProfileOptions options, string name, string argument)
 	{
-		if(member == null)
-			throw new ArgumentNullException(nameof(member));
+		if(context == null || string.IsNullOrEmpty(name))
+			return;
 
-		if(member is Type type)
-			return GetResource(type);
-
-		type = member.ReflectedType ?? member.DeclaringType;
-		return type != null ? GetResource(type, locator) : GetResource(member.GetType().Assembly, locator);
+		var provider = options?.Directives ?? ProfileDirectiveProvider.Default;
+		provider.GetDirective(name)?.OnRead(context, argument);
 	}
 
-	public static IResource GetResource(Type type, IResourceLocator locator = null) => GetResource(type?.Assembly, locator);
-	public static IResource GetResource<T>(IResourceLocator locator = null) => GetResource(typeof(T).Assembly, locator);
-	public static IResource GetResource(Assembly assembly, IResourceLocator locator = null)
+	internal static void OnWrite(this ProfileWritingContext context, ProfileOptions options, string name, string argument)
 	{
-		if(assembly == null)
-			throw new ArgumentNullException(nameof(assembly));
+		if(context == null || string.IsNullOrEmpty(name))
+			return;
 
-		return _cache.GetOrAdd(assembly.GetName().FullName, (key, argument) => new Resource(assembly, argument), locator);
+		var provider = options?.Directives ?? ProfileDirectiveProvider.Default;
+		provider.GetDirective(name)?.OnWrite(context, argument);
 	}
-	#endregion
 }

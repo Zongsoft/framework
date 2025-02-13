@@ -28,8 +28,8 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles
 {
@@ -47,53 +47,32 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 公共属性
-		public int Count
-		{
-			get
-			{
-				return _items.Count(item => item.ItemType == ProfileItemType.Comment);
-			}
-		}
-
-		public bool IsReadOnly
-		{
-			get
-			{
-				return false;
-			}
-		}
+		public int Count => _items.Count(item => item.ItemType == ProfileItemType.Comment);
+		public bool IsReadOnly => false;
 		#endregion
 
 		#region 公共方法
+		public void Add(ProfileComment item) => _items.Add(item);
 		public ProfileComment Add(string comment, int lineNumber = -1)
 		{
 			if(comment == null)
 				return null;
 
-			var item = new ProfileComment(comment, lineNumber);
+			var item = ProfileComment.GetComment(comment, lineNumber);
 			_items.Add(item);
 			return item;
 		}
 
-		public void Add(ProfileComment item)
-		{
-			_items.Add(item);
-		}
-
 		public void Clear()
 		{
-			foreach(var item in _items)
-			{
-				if(item.ItemType == ProfileItemType.Comment)
-					_items.Remove(item);
-			}
+			var comments = _items.Where(item => item.ItemType == ProfileItemType.Comment).ToArray();
+
+			for(int i = 0; i < comments.Length; i++)
+				_items.Remove(comments[i]);
 		}
 
-		public bool Contains(ProfileComment item)
-		{
-			return _items.Contains(item);
-		}
-
+		public bool Remove(ProfileComment item) => _items.Remove(item);
+		public bool Contains(ProfileComment item) => _items.Contains(item);
 		public void CopyTo(ProfileComment[] array, int arrayIndex)
 		{
 			if(array == null)
@@ -113,14 +92,10 @@ namespace Zongsoft.Configuration.Profiles
 					array[arrayIndex + index++] = (ProfileComment)item;
 			}
 		}
-
-		public bool Remove(ProfileComment item)
-		{
-			return _items.Remove(item);
-		}
 		#endregion
 
 		#region 遍历枚举
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<ProfileComment> GetEnumerator()
 		{
 			foreach(var item in _items)
@@ -128,11 +103,6 @@ namespace Zongsoft.Configuration.Profiles
 				if(item.ItemType == ProfileItemType.Comment)
 					yield return (ProfileComment)item;
 			}
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
 		}
 		#endregion
 	}

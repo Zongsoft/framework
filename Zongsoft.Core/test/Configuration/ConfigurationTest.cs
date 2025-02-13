@@ -31,7 +31,7 @@ public class ConfigurationTest
 	[Fact]
 	public void TestResolveXml()
 	{
-		var configuration = XmlConfigurationTest.GetConfiguration();
+		var configuration = XmlConfigurationTest.GetConfiguration1();
 
 		Assert.NotNull(configuration);
 		Assert.NotEmpty(configuration.Providers);
@@ -44,7 +44,7 @@ public class ConfigurationTest
 	[Fact]
 	public void TestResolveConnectionSettings()
 	{
-		var configuration = XmlConfigurationTest.GetConfiguration();
+		var configuration = XmlConfigurationTest.GetConfiguration1();
 
 		Assert.NotNull(configuration);
 		Assert.NotEmpty(configuration.Providers);
@@ -92,7 +92,7 @@ public class ConfigurationTest
 	[Fact]
 	public void TestAttachXml()
 	{
-		var configuration = XmlConfigurationTest.GetConfiguration();
+		var configuration = XmlConfigurationTest.GetConfiguration1();
 
 		Assert.NotNull(configuration);
 		Assert.NotEmpty(configuration.Providers);
