@@ -37,19 +37,19 @@ namespace Zongsoft.Configuration.Profiles
 	{
 		#region 成员字段
 		private readonly ProfileItemCollection _items;
-		private readonly Dictionary<string, T> _innerDictionary;
+		private readonly Dictionary<string, T> _dictionary;
 		#endregion
 
 		#region 构造函数
 		protected ProfileItemViewBase(ProfileItemCollection items)
 		{
 			_items = items ?? throw new ArgumentNullException(nameof(items));
-			_innerDictionary = new Dictionary<string, T>(items.Count, StringComparer.OrdinalIgnoreCase);
+			_dictionary = new Dictionary<string, T>(items.Count, StringComparer.OrdinalIgnoreCase);
 
 			foreach(var item in items)
 			{
 				if(this.OnItemMatch(item))
-					_innerDictionary.Add(this.GetKeyForItem((T)item), (T)item);
+					_dictionary.Add(this.GetKeyForItem((T)item), (T)item);
 			}
 
 			items.CollectionChanged += Items_CollectionChanged;
@@ -57,14 +57,14 @@ namespace Zongsoft.Configuration.Profiles
 		#endregion
 
 		#region 公共属性
-		public int Count => _innerDictionary.Count;
-		public IEnumerable<string> Keys => _innerDictionary.Keys;
+		public int Count => _dictionary.Count;
+		public IEnumerable<string> Keys => _dictionary.Keys;
 
 		public T this[string name]
 		{
 			get
 			{
-				if(_innerDictionary.TryGetValue(name, out var result))
+				if(_dictionary.TryGetValue(name, out var result))
 					return result;
 
 				throw new KeyNotFoundException();
@@ -81,31 +81,31 @@ namespace Zongsoft.Configuration.Profiles
 			_items.Add(item);
 		}
 
-		public bool TryGetValue(string name, out T value) => _innerDictionary.TryGetValue(name, out value);
+		public bool TryGetValue(string name, out T value) => _dictionary.TryGetValue(name, out value);
 
 		public void Clear()
 		{
-			_innerDictionary.Clear();
+			_dictionary.Clear();
 			_items.Clear();
 		}
 
 		public bool Remove(string name)
 		{
-			if(_innerDictionary.TryGetValue(name, out var item))
+			if(_dictionary.TryGetValue(name, out var item))
 				return _items.Remove(item);
 
 			return false;
 		}
 
 		public bool Remove(T item) => _items.Remove(item);
-		public bool Contains(string name) => _innerDictionary.ContainsKey(name);
+		public bool Contains(string name) => _dictionary.ContainsKey(name);
 
 		public bool Contains(T item)
 		{
 			if(item == null)
 				return false;
 
-			if(_innerDictionary.TryGetValue(this.GetKeyForItem(item), out var entry))
+			if(_dictionary.TryGetValue(this.GetKeyForItem(item), out var entry))
 				return object.ReferenceEquals(item, entry);
 
 			return false;
@@ -121,7 +121,7 @@ namespace Zongsoft.Configuration.Profiles
 
 			int index = 0;
 
-			foreach(var item in _innerDictionary.Values)
+			foreach(var item in _dictionary.Values)
 			{
 				if(arrayIndex + index >= array.Length)
 					return;
@@ -153,7 +153,7 @@ namespace Zongsoft.Configuration.Profiles
 					{
 						if(this.OnItemMatch((ProfileItem)item))
 						{
-							_innerDictionary.Add(this.GetKeyForItem((T)item), (T)item);
+							_dictionary.Add(this.GetKeyForItem((T)item), (T)item);
 						}
 					}
 					break;
@@ -162,7 +162,7 @@ namespace Zongsoft.Configuration.Profiles
 					{
 						if(this.OnItemMatch((ProfileItem)item))
 						{
-							_innerDictionary.Remove(this.GetKeyForItem((T)item));
+							_dictionary.Remove(this.GetKeyForItem((T)item));
 						}
 					}
 					break;
@@ -171,7 +171,7 @@ namespace Zongsoft.Configuration.Profiles
 					{
 						if(this.OnItemMatch((ProfileItem)item))
 						{
-							_innerDictionary.Remove(this.GetKeyForItem((T)item));
+							_dictionary.Remove(this.GetKeyForItem((T)item));
 						}
 					}
 
@@ -179,12 +179,12 @@ namespace Zongsoft.Configuration.Profiles
 					{
 						if(this.OnItemMatch((ProfileItem)item))
 						{
-							_innerDictionary.Add(this.GetKeyForItem((T)item), (T)item);
+							_dictionary.Add(this.GetKeyForItem((T)item), (T)item);
 						}
 					}
 					break;
 				case NotifyCollectionChangedAction.Reset:
-					_innerDictionary.Clear();
+					_dictionary.Clear();
 					break;
 			}
 		}
@@ -194,7 +194,7 @@ namespace Zongsoft.Configuration.Profiles
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<T> GetEnumerator()
 		{
-			foreach(var item in _innerDictionary.Values)
+			foreach(var item in _dictionary.Values)
 				yield return item;
 		}
 		#endregion

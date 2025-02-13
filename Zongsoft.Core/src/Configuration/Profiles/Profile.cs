@@ -103,7 +103,6 @@ namespace Zongsoft.Configuration.Profiles
 			if(stream == null)
 				throw new ArgumentNullException(nameof(stream));
 
-			ProfileSection section = null;
 			Profile profile = new Profile(stream is FileStream fileStream ? fileStream.Name : string.Empty);
 			ProfileReadingContext context = new ProfileReadingContext(profile, stream);
 
@@ -121,17 +120,19 @@ namespace Zongsoft.Configuration.Profiles
 							var parts = content.Split(' ', '\t', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
 							if(parts == null || parts.Length == 0)
-								section = null;
+								context.Section = null;
 							else
 							{
 								var sections = (ProfileSectionCollection)profile.Sections;
 
 								for(int i = 0; i < parts.Length; i++)
 								{
-									if(!sections.TryGetValue(parts[i], out section))
-										section = sections.Add(parts[i], context.LineNumber);
+									if(sections.TryGetValue(parts[i], out var section))
+										context.Section = section;
+									else
+										context.Section = sections.Add(parts[i], context.LineNumber);
 
-									sections = (ProfileSectionCollection)section.Sections;
+									sections = (ProfileSectionCollection)context.Section.Sections;
 								}
 							}
 
@@ -139,7 +140,7 @@ namespace Zongsoft.Configuration.Profiles
 						case LineType.Entry:
 							var index = content.IndexOf('=');
 
-							if(section == null)
+							if(context.Section == null)
 							{
 								if(index < 0)
 									profile.Items.Add(new ProfileEntry(context.LineNumber, content));
@@ -149,19 +150,19 @@ namespace Zongsoft.Configuration.Profiles
 							else
 							{
 								if(index < 0)
-									((ProfileEntryCollection)section.Entries).Add(context.LineNumber, content);
+									((ProfileEntryCollection)context.Section.Entries).Add(context.LineNumber, content);
 								else
-									((ProfileEntryCollection)section.Entries).Add(context.LineNumber, content[..index], content[(index + 1)..]);
+									((ProfileEntryCollection)context.Section.Entries).Add(context.LineNumber, content[..index], content[(index + 1)..]);
 							}
 
 							break;
 						case LineType.Comment:
 							var comment = ProfileComment.GetComment(content, context.LineNumber);
 
-							if(section == null)
+							if(context.Section == null)
 								profile._items.Add(comment);
 							else
-								section.Items.Add(comment);
+								context.Section.Items.Add(comment);
 
 							//如果是指令项则调用指令的读方法
 							if(comment is ProfileDirective directive)

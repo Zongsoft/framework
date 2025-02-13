@@ -10,9 +10,9 @@ namespace Zongsoft.Configuration.Tests;
 
 public class ProfileTest
 {
-	public static Profile GetProfile1() => Profile.Load("Configuration/Profiles/Profile-1.option");
-	public static Profile GetProfile2() => Profile.Load("Configuration/Profiles/Profile-2.option");
-	public static Profile GetProfile3() => Profile.Load("Configuration/Profiles/Profile-3.option");
+	public static Profile GetProfile1() => Profile.Load("Configuration/Profiles/Profile-1.ini");
+	public static Profile GetProfile2() => Profile.Load("Configuration/Profiles/Profile-2.ini");
+	public static Profile GetProfile3() => Profile.Load("Configuration/Profiles/Profile-3.ini");
 
 	[Fact]
 	public void TestLoad1() => TestProfile1(GetProfile1());
@@ -134,6 +134,7 @@ public class ProfileTest
 		Assert.Equal("./Profile-2.option", directive.Argument);
 	}
 
+	#region 私有方法
 	private static TElement Get<TElement>(ICollection<TElement> collection, int index)
 	{
 		if(collection == null || index < 0)
@@ -149,4 +150,5 @@ public class ProfileTest
 
 		return default;
 	}
+	#endregion
 }

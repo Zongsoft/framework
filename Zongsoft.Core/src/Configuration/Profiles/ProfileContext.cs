@@ -40,7 +40,6 @@ public abstract class ProfileContextBase
 	}
 
 	public Profile Profile { get; }
-	public ProfileSection Section { get; internal set; }
 }
 
 public class ProfileReadingContext : ProfileContextBase
@@ -53,6 +52,7 @@ public class ProfileReadingContext : ProfileContextBase
 
 	public Stream Input { get; }
 	public int LineNumber { get; internal set; }
+	public ProfileSection Section { get; internal set; }
 }
 
 public class ProfileWritingContext : ProfileContextBase
