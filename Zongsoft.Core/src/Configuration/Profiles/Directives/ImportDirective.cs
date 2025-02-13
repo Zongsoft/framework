@@ -79,7 +79,7 @@ public class ImportDirective : IProfileDirective
 
 		static void SetEntry(ProfileEntryCollection entries, ProfileEntry entry)
 		{
-			if(entries != null && entry != null)
+			if(entries == null || entry == null)
 				return;
 
 			if(entries.TryGetValue(entry.Name, out var found))
@@ -97,7 +97,7 @@ public class ImportDirective : IProfileDirective
 				found = sections.Add(section.Name);
 
 			foreach(var entry in section.Entries)
-				found.SetEntryValue(entry.Name, entry.Value);
+				SetEntry(found.Entries, entry);
 
 			foreach(var child in section.Sections)
 				SetSection(found.Sections, child);
