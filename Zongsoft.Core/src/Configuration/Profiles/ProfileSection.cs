@@ -35,7 +35,7 @@ namespace Zongsoft.Configuration.Profiles
 	public class ProfileSection : ProfileItem
 	{
 		#region 静态常量
-		private static readonly char[] IllegalCharacters = ['.', '/', '\\', '*', '?', '!', '@', '#', '%', '^', '&'];
+		private static readonly char[] IllegalCharacters = ['.', '/', '\\', '|', ':', '*', '?', '!', '@', '#', '%', '^', '&'];
 		#endregion
 
 		#region 构造函数

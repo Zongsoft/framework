@@ -4,7 +4,6 @@ using System.Linq;
 using Zongsoft.Configuration.Profiles;
 
 using Xunit;
-using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Tests;
 
@@ -115,7 +114,6 @@ public class ProfileTest
 		var comment = section.Comments[0];
 		Assert.NotNull(comment);
 		Assert.IsType<ProfileDirective>(comment);
-
 		var directive = (ProfileDirective)comment;
 		Assert.Equal("import", directive.Name);
 		Assert.Equal("./Profile-1.ini", directive.Argument);
@@ -123,9 +121,23 @@ public class ProfileTest
 		comment = section.Comments[1];
 		Assert.NotNull(comment);
 		Assert.IsType<ProfileDirective>(comment);
-
 		directive = (ProfileDirective)comment;
 		Assert.Equal("import", directive.Name);
 		Assert.Equal("./Profile-2.ini", directive.Argument);
+
+		section = profile.Sections.Find("Plugins Zongsoft Data");
+		Assert.NotNull(section);
+		Assert.NotEmpty(section.Entries);
+		Assert.Equal("nuget:Zongsoft.Data", section.Entries[0].Name);
+
+		section = profile.Sections.Find("plugins zongsoft data mysql");
+		Assert.NotNull(section);
+		Assert.NotEmpty(section.Entries);
+		Assert.Equal("nuget:Zongsoft.Data.MySql", section.Entries[0].Name);
+
+		section = profile.Sections.Find("plugins/zongsoft/data/postgres");
+		Assert.NotNull(section);
+		Assert.NotEmpty(section.Entries);
+		Assert.Equal("nuget:Zongsoft.Data.Postgres", section.Entries[0].Name);
 	}
 }
