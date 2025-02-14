@@ -73,6 +73,9 @@
 		<None Update="Configuration\Profiles\Profile-3.ini">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="Configuration\Profiles\Profile-4.ini">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Configuration\Xml\OptionConfigurationTest-2.option">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>

@@ -63,14 +63,16 @@ public class Profile : IEnumerable<ProfileItem>
 	#region 构造函数
 	public Profile(string filePath = null)
 	{
-		this.FilePath = filePath?.Trim();
 		this.Entries = new(this);
 		this.Sections = new(this);
 		this.Comments = new(this);
+		this.FilePath = filePath ?? string.Empty;
+		this.FileName = string.IsNullOrEmpty(filePath) ? string.Empty : Path.GetFileName(filePath);
 	}
 	#endregion
 
 	#region 公共属性
+	public string FileName { get; }
 	public string FilePath { get; }
 	public int[] Blanks { get; private set; }
 	public ProfileEntryCollection Entries { get; }

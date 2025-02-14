@@ -12,6 +12,7 @@ public class ProfileTest
 	public static Profile GetProfile1() => Profile.Load("Configuration/Profiles/Profile-1.ini");
 	public static Profile GetProfile2() => Profile.Load("Configuration/Profiles/Profile-2.ini");
 	public static Profile GetProfile3() => Profile.Load("Configuration/Profiles/Profile-3.ini");
+	public static Profile GetProfile4() => Profile.Load("Configuration/Profiles/Profile-4.ini");
 
 	[Fact]
 	public void TestLoad1() => TestProfile1(GetProfile1());
@@ -105,15 +106,18 @@ public class ProfileTest
 		Assert.NotNull(entry);
 		Assert.Equal("../mime", entry.Name);
 		Assert.Null(entry.Value);
+		Assert.Equal("Profile-3.ini", entry.Profile.FileName);
 
 		Assert.True(profile.Sections.TryGetValue("plugins", out var section));
 		Assert.NotNull(section);
 		Assert.NotEmpty(section.Entries);
-		Assert.Equal("nuget:Zongsoft.Plugins/plugins/Main.plugin", section.Entries.First().Name);
+		Assert.Equal("nuget:Zongsoft.Plugins/plugins/Main.plugin", section.Entries[0].Name);
+		Assert.Equal("Profile-3.ini", section.Entries[0].Profile.FileName);
 
 		var comment = section.Comments[0];
 		Assert.NotNull(comment);
 		Assert.IsType<ProfileDirective>(comment);
+		Assert.Equal("Profile-3.ini", comment.Profile.FileName);
 		var directive = (ProfileDirective)comment;
 		Assert.Equal("import", directive.Name);
 		Assert.Equal("./Profile-1.ini", directive.Argument);
@@ -121,6 +125,7 @@ public class ProfileTest
 		comment = section.Comments[1];
 		Assert.NotNull(comment);
 		Assert.IsType<ProfileDirective>(comment);
+		Assert.Equal("Profile-3.ini", comment.Profile.FileName);
 		directive = (ProfileDirective)comment;
 		Assert.Equal("import", directive.Name);
 		Assert.Equal("./Profile-2.ini", directive.Argument);
@@ -129,15 +134,74 @@ public class ProfileTest
 		Assert.NotNull(section);
 		Assert.NotEmpty(section.Entries);
 		Assert.Equal("nuget:Zongsoft.Data", section.Entries[0].Name);
+		Assert.Equal("Profile-1.ini", section.Entries[0].Profile.FileName);
 
 		section = profile.Sections.Find("plugins zongsoft data mysql");
 		Assert.NotNull(section);
 		Assert.NotEmpty(section.Entries);
 		Assert.Equal("nuget:Zongsoft.Data.MySql", section.Entries[0].Name);
+		Assert.Equal("Profile-2.ini", section.Entries[0].Profile.FileName);
 
 		section = profile.Sections.Find("plugins/zongsoft/data/postgres");
 		Assert.NotNull(section);
 		Assert.NotEmpty(section.Entries);
 		Assert.Equal("nuget:Zongsoft.Data.Postgres", section.Entries[0].Name);
+		Assert.Equal("Profile-2.ini", section.Entries[0].Profile.FileName);
+	}
+
+	[Fact]
+	public void TestLoad4() => TestProfile4(GetProfile4());
+	private static void TestProfile4(Profile profile)
+	{
+		Assert.NotNull(profile);
+		Assert.NotEmpty(profile.Comments);
+
+		var comment = profile.Comments[0];
+		Assert.NotNull(comment);
+		Assert.IsType<ProfileDirective>(comment);
+		Assert.Equal("Profile-4.ini", comment.Profile.FileName);
+		var directive = (ProfileDirective)comment;
+		Assert.Equal("import", directive.Name);
+		Assert.Equal("./Profile-3.ini", directive.Argument);
+
+		var entry = profile.Entries[0];
+		Assert.NotNull(entry);
+		Assert.Equal("../mime", entry.Name);
+		Assert.Null(entry.Value);
+		Assert.Equal("Profile-3.ini", entry.Profile.FileName);
+
+		Assert.True(profile.Sections.TryGetValue("plugins", out var section));
+		Assert.NotNull(section);
+		Assert.NotEmpty(section.Entries);
+		Assert.Equal("nuget:Zongsoft.Plugins/plugins/Main.plugin", section.Entries[0].Name);
+		Assert.Equal("Profile-3.ini", section.Entries[0].Profile.FileName);
+
+		section = profile.Sections.Find("Plugins Zongsoft Data");
+		Assert.NotNull(section);
+		Assert.NotEmpty(section.Entries);
+		Assert.Equal("nuget:Zongsoft.Data", section.Entries[0].Name);
+		Assert.Equal("Profile-1.ini", section.Entries[0].Profile.FileName);
+
+		section = profile.Sections.Find("plugins zongsoft data mysql");
+		Assert.NotNull(section);
+		Assert.NotEmpty(section.Entries);
+		Assert.Equal("nuget:Zongsoft.Data.MySql", section.Entries[0].Name);
+		Assert.Equal("Profile-2.ini", section.Entries[0].Profile.FileName);
+
+		section = profile.Sections.Find("plugins/zongsoft/data/postgres");
+		Assert.NotNull(section);
+		Assert.NotEmpty(section.Entries);
+		Assert.Equal("nuget:Zongsoft.Data.Postgres", section.Entries[0].Name);
+		Assert.Equal("Profile-2.ini", section.Entries[0].Profile.FileName);
+
+		section = profile.Sections.Find("plugins zongsoft security");
+		Assert.NotNull(section);
+		Assert.NotEmpty(section.Entries);
+		Assert.Equal(2, section.Entries.Count);
+		Assert.Equal("nuget:Zongsoft.Security.Web", section.Entries[0].Name);
+		Assert.Equal("nuget:Zongsoft.Security.Captcha", section.Entries[1].Name);
+		Assert.Equal("Profile-4.ini", section.Entries[0].Profile.FileName);
+		Assert.Equal("Profile-4.ini", section.Entries[1].Profile.FileName);
+		Assert.Equal(section.Entries[0].Profile, section.Entries[1].Profile);
 	}
 }
