@@ -53,31 +53,7 @@ public class ProfileItemCollection<TItem> : Collection<TItem> where TItem : Prof
 	#endregion
 
 	#region 内部属性
-	public Profile Profile => _profile;
-	public ProfileSection Section => _section;
-	#endregion
-
-	#region 重写方法
-	protected override void InsertItem(int index, TItem item)
-	{
-		if(item == null)
-			throw new ArgumentNullException(nameof(item));
-
-		if(item.Profile != _profile)
-			throw new InvalidOperationException($"The '{item}' item to be added does not belong to the profile file({_profile.FilePath}) where this collection resides.");
-
-		base.InsertItem(index, item);
-	}
-
-	protected override void SetItem(int index, TItem item)
-	{
-		if(item == null)
-			throw new ArgumentNullException(nameof(item));
-
-		if(item.Profile != _profile)
-			throw new InvalidOperationException($"The '{item}' item to be set does not belong to the profile file({_profile.FilePath}) where this collection resides.");
-
-		base.SetItem(index, item);
-	}
+	internal Profile Profile => _profile;
+	internal ProfileSection Section => _section;
 	#endregion
 }

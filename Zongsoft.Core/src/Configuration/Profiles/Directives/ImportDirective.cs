@@ -85,7 +85,7 @@ public class ImportDirective : IProfileDirective
 			if(entries.TryGetValue(entry.Name, out var found))
 				found.Value = entry.Value;
 			else
-				entries.Add(entry.Name, entry.Value);
+				entries.Add(entry);
 		}
 
 		static void SetSection(ProfileSectionCollection sections, ProfileSection section)

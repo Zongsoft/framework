@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Reflection;
 using System.Collections;
@@ -229,13 +230,13 @@ public class Profile
 			switch(item.ItemType)
 			{
 				case ProfileItemType.Entry:
-					WriteEntry(writer, (ProfileEntry)item);
+					this.WriteEntry(writer, (ProfileEntry)item);
 					break;
 				case ProfileItemType.Section:
-					WriteSection(writer, (ProfileSection)item);
+					this.WriteSection(writer, (ProfileSection)item);
 					break;
 				case ProfileItemType.Comment:
-					WriteComment(writer, (ProfileComment)item);
+					this.WriteComment(writer, (ProfileComment)item);
 
 					//如果是指令项则调用指令的写方法
 					if(item is ProfileDirective directive)
@@ -404,25 +405,34 @@ public class Profile
 		}
 	}
 
-	private static void WriteEntry(TextWriter writer, ProfileEntry entry)
+	private void WriteEntry(TextWriter writer, ProfileEntry entry)
 	{
+		if(entry == null || entry.Profile != this)
+			return;
+
 		if(string.IsNullOrWhiteSpace(entry.Value))
 			writer.WriteLine(entry.Name);
 		else
 			writer.WriteLine(entry.Name + "=" + entry.Value);
 	}
 
-	private static void WriteComment(TextWriter writer, ProfileComment comment)
+	private void WriteComment(TextWriter writer, ProfileComment comment)
 	{
+		if(comment == null || comment.Profile != this)
+			return;
+
 		foreach(var line in comment.Lines)
 			writer.WriteLine($"#{line}");
 	}
 
-	private static void WriteSection(TextWriter writer, ProfileSection section)
+	private void WriteSection(TextWriter writer, ProfileSection section)
 	{
+		if(section == null || section.Profile != this)
+			return;
+
 		var sections = new List<ProfileSection>();
 
-		if(section.Entries.Count > 0 || section.Comments.Count > 0)
+		if(CanWrite(section))
 		{
 			writer.WriteLine();
 			writer.WriteLine($"[{section.FullName}]");
@@ -436,10 +446,10 @@ public class Profile
 					sections.Add((ProfileSection)item);
 					break;
 				case ProfileItemType.Entry:
-					WriteEntry(writer, (ProfileEntry)item);
+					this.WriteEntry(writer, (ProfileEntry)item);
 					break;
 				case ProfileItemType.Comment:
-					WriteComment(writer, (ProfileComment)item);
+					this.WriteComment(writer, (ProfileComment)item);
 					break;
 			}
 		}
@@ -447,7 +457,17 @@ public class Profile
 		if(sections.Count > 0)
 		{
 			foreach(var child in sections)
-				WriteSection(writer, child);
+				this.WriteSection(writer, child);
+		}
+
+		static bool CanWrite(ProfileSection section)
+		{
+			if(section.Entries.Count > 0 && section.Entries.Any(entry => entry.Profile == section.Profile))
+				return true;
+			if(section.Comments.Count > 0 && section.Comments.Any(comment => comment.Profile == section.Profile))
+				return true;
+
+			return false;
 		}
 	}
 
