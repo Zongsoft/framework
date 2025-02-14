@@ -18,7 +18,7 @@ public class ProfileTest
 	private static void TestProfile1(Profile profile)
 	{
 		Assert.NotNull(profile);
-		Assert.NotEmpty(profile.GetItems());
+		Assert.NotEmpty(profile);
 
 		Assert.Single(profile.Sections);
 		Assert.True(profile.Sections.TryGetValue("plugins", out var section));
@@ -50,7 +50,7 @@ public class ProfileTest
 	private static void TestProfile2(Profile profile)
 	{
 		Assert.NotNull(profile);
-		Assert.NotEmpty(profile.GetItems());
+		Assert.NotEmpty(profile);
 
 		Assert.Single(profile.Sections);
 		Assert.True(profile.Sections.TryGetValue("plugins", out var section));

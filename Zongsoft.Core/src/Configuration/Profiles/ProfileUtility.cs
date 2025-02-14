@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles;
 
-public static class ProfileUtility
+internal static class ProfileUtility
 {
 	public static IReadOnlyList<ProfileItem> GetItems(this Profile profile)
 	{

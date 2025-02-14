@@ -48,7 +48,7 @@ namespace Zongsoft.Configuration.Profiles;
 ///		<para>注意：节是支持分层嵌套的，即在配置节中以空格或制表符(Tab)来分隔节的层级关系。</para>
 ///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的。所有的注释语句不管多长都是独占一行直到结束的，在注释符和行结束符之间的所有内容都是被忽略的。</para>
 /// </remarks>
-public class Profile
+public class Profile : IEnumerable<ProfileItem>
 {
 	#region 枚举定义
 	private enum LineType
@@ -313,6 +313,11 @@ public class Profile
 
 	#region 重写方法
 	public override string ToString() => this.FilePath;
+	#endregion
+
+	#region 枚举遍历
+	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<ProfileItem> GetEnumerator() => this.GetItems().GetEnumerator();
 	#endregion
 
 	#region 私有方法

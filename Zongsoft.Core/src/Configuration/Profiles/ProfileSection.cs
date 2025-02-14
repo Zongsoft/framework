@@ -28,11 +28,12 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles;
 
-public class ProfileSection : ProfileItem
+public class ProfileSection : ProfileItem, IEnumerable<ProfileItem>
 {
 	#region 静态常量
 	private static readonly char[] IllegalCharacters = ['.', '/', '\\', '|', ':', '*', '?', '!', '@', '#', '%', '^', '&'];
@@ -81,6 +82,11 @@ public class ProfileSection : ProfileItem
 
 	#region 重写方法
 	public override string ToString() => $"[{this.FullName}]";
+	#endregion
+
+	#region 枚举遍历
+	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<ProfileItem> GetEnumerator() => this.GetItems().GetEnumerator();
 	#endregion
 
 	#region 公共方法
