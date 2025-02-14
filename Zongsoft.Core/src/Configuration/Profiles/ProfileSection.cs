@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,75 +30,74 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Configuration.Profiles
+namespace Zongsoft.Configuration.Profiles;
+
+public class ProfileSection : ProfileItem
 {
-	public class ProfileSection : ProfileItem
+	#region 静态常量
+	private static readonly char[] IllegalCharacters = ['.', '/', '\\', '|', ':', '*', '?', '!', '@', '#', '%', '^', '&'];
+	#endregion
+
+	#region 构造函数
+	public ProfileSection(Profile profile, string name, int lineNumber = -1) : base(profile, lineNumber)
 	{
-		#region 静态常量
-		private static readonly char[] IllegalCharacters = ['.', '/', '\\', '|', ':', '*', '?', '!', '@', '#', '%', '^', '&'];
-		#endregion
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
 
-		#region 构造函数
-		public ProfileSection(Profile profile, string name, int lineNumber = -1) : base(profile, lineNumber)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
+		if(name.IndexOfAny(IllegalCharacters) >= 0)
+			throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
 
-			if(name.IndexOfAny(IllegalCharacters) >= 0)
-				throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
-
-			this.Name = name.Trim();
-			this.FullName = this.Name;
-			this.Entries = new(this);
-			this.Comments = new(this);
-			this.Sections = new(this);
-		}
-
-		public ProfileSection(ProfileSection section, string name, int lineNumber = -1) : base(section, lineNumber)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
-
-			if(name.IndexOfAny(IllegalCharacters) >= 0)
-				throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
-
-			this.Name = name.Trim();
-			this.FullName = section.FullName + ' ' + this.Name;
-			this.Entries = new(this);
-			this.Comments = new(this);
-			this.Sections = new(this);
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name { get; }
-		public string FullName { get; }
-		public ProfileEntryCollection Entries { get; }
-		public ProfileCommentCollection Comments { get; }
-		public ProfileSectionCollection Sections { get; }
-		public override ProfileItemType ItemType => ProfileItemType.Section;
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => $"[{this.FullName}]";
-		#endregion
-
-		#region 公共方法
-		public string GetEntryValue(string name)
-		{
-			if(this.Entries.TryGetValue(name, out var entry))
-				return entry.Value;
-
-			return null;
-		}
-
-		public void SetEntryValue(string name, string value)
-		{
-			if(this.Entries.TryGetValue(name, out var entry))
-				entry.Value = value;
-			else
-				this.Entries.Add(name, value);
-		}
-		#endregion
+		this.Name = name.Trim();
+		this.FullName = this.Name;
+		this.Entries = new(this);
+		this.Comments = new(this);
+		this.Sections = new(this);
 	}
+
+	public ProfileSection(ProfileSection section, string name, int lineNumber = -1) : base(section, lineNumber)
+	{
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
+
+		if(name.IndexOfAny(IllegalCharacters) >= 0)
+			throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
+
+		this.Name = name.Trim();
+		this.FullName = section.FullName + ' ' + this.Name;
+		this.Entries = new(this);
+		this.Comments = new(this);
+		this.Sections = new(this);
+	}
+	#endregion
+
+	#region 公共属性
+	public string Name { get; }
+	public string FullName { get; }
+	public ProfileEntryCollection Entries { get; }
+	public ProfileCommentCollection Comments { get; }
+	public ProfileSectionCollection Sections { get; }
+	public override ProfileItemType ItemType => ProfileItemType.Section;
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"[{this.FullName}]";
+	#endregion
+
+	#region 公共方法
+	public string GetEntryValue(string name)
+	{
+		if(this.Entries.TryGetValue(name, out var entry))
+			return entry.Value;
+
+		return null;
+	}
+
+	public void SetEntryValue(string name, string value)
+	{
+		if(this.Entries.TryGetValue(name, out var entry))
+			entry.Value = value;
+		else
+			this.Entries.Add(name, value);
+	}
+	#endregion
 }

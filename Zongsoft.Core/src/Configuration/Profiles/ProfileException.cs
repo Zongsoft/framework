@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,14 +29,13 @@
 
 using System;
 
-namespace Zongsoft.Configuration.Profiles
+namespace Zongsoft.Configuration.Profiles;
+
+public class ProfileException : Exception
 {
-	public class ProfileException : Exception
-	{
-		#region 构造函数
-		public ProfileException() { }
-		public ProfileException(string message) : base(message) { }
-		public ProfileException(string message, Exception innerException) : base(message, innerException) { }
-		#endregion
-	}
+	#region 构造函数
+	public ProfileException() { }
+	public ProfileException(string message) : base(message) { }
+	public ProfileException(string message, Exception innerException) : base(message, innerException) { }
+	#endregion
 }

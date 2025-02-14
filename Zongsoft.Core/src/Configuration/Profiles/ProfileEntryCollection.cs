@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,85 +30,84 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Configuration.Profiles
+namespace Zongsoft.Configuration.Profiles;
+
+public class ProfileEntryCollection : ProfileItemCollection<ProfileEntry>
 {
-	public class ProfileEntryCollection : ProfileItemCollection<ProfileEntry>
+	#region 成员字段
+	private readonly Dictionary<string, ProfileEntry> _dictionary;
+	#endregion
+
+	#region 构造函数
+	public ProfileEntryCollection(Profile profile) : base(profile) => _dictionary = new(StringComparer.OrdinalIgnoreCase);
+	public ProfileEntryCollection(ProfileSection section) : base(section) => _dictionary = new(StringComparer.OrdinalIgnoreCase);
+	#endregion
+
+	#region 公共属性
+	public ProfileEntry this[string name] => name != null && _dictionary.TryGetValue(name, out var entry) ? entry : null;
+	#endregion
+
+	#region 公共方法
+	public bool Contains(string name) => name != null && _dictionary.ContainsKey(name);
+	public bool TryGetValue(string name, out ProfileEntry entry) => _dictionary.TryGetValue(name, out entry);
+
+	public bool Remove(string name, out ProfileEntry entry)
 	{
-		#region 成员字段
-		private readonly Dictionary<string, ProfileEntry> _dictionary;
-		#endregion
-
-		#region 构造函数
-		public ProfileEntryCollection(Profile profile) : base(profile) => _dictionary = new(StringComparer.OrdinalIgnoreCase);
-		public ProfileEntryCollection(ProfileSection section) : base(section) => _dictionary = new(StringComparer.OrdinalIgnoreCase);
-		#endregion
-
-		#region 公共属性
-		public ProfileEntry this[string name] => name != null && _dictionary.TryGetValue(name, out var entry) ? entry : null;
-		#endregion
-
-		#region 公共方法
-		public bool Contains(string name) => name != null && _dictionary.ContainsKey(name);
-		public bool TryGetValue(string name, out ProfileEntry entry) => _dictionary.TryGetValue(name, out entry);
-
-		public bool Remove(string name, out ProfileEntry entry)
+		if(_dictionary.Remove(name, out entry))
 		{
-			if(_dictionary.Remove(name, out entry))
-			{
-				base.Items.Remove(entry);
-				return true;
-			}
-
-			return false;
+			base.Items.Remove(entry);
+			return true;
 		}
 
-		public ProfileEntry Add(string name, string value = null)
-		{
-			ProfileEntry entry = this.Section == null ? new(this.Profile, name, value) : new(this.Section, name, value);
-			this.Add(entry);
-			return entry;
-		}
-
-		public ProfileEntry Add(int lineNumber, string name, string value = null)
-		{
-			ProfileEntry entry = this.Section == null ? new(this.Profile, lineNumber, name, value) : new(this.Section, lineNumber, name, value);
-			this.Add(entry);
-			return entry;
-		}
-
-		#endregion
-
-		#region 重写方法
-		protected override void InsertItem(int index, ProfileEntry entry)
-		{
-			if(entry == null)
-				throw new ArgumentNullException(nameof(entry));
-
-			_dictionary.Add(entry.Name, entry);
-			base.InsertItem(index, entry);
-		}
-
-		protected override void SetItem(int index, ProfileEntry entry)
-		{
-			if(entry == null)
-				throw new ArgumentNullException(nameof(entry));
-
-			_dictionary[entry.Name] = entry;
-			base.SetItem(index, entry);
-		}
-
-		protected override void RemoveItem(int index)
-		{
-			var item = base.Items[index];
-			base.RemoveItem(index);
-			_dictionary.Remove(item.Name);
-		}
-
-		protected override void ClearItems()
-		{
-			_dictionary.Clear();
-			base.ClearItems();
-		}
-		#endregion
+		return false;
 	}
+
+	public ProfileEntry Add(string name, string value = null)
+	{
+		ProfileEntry entry = this.Section == null ? new(this.Profile, name, value) : new(this.Section, name, value);
+		this.Add(entry);
+		return entry;
+	}
+
+	public ProfileEntry Add(int lineNumber, string name, string value = null)
+	{
+		ProfileEntry entry = this.Section == null ? new(this.Profile, lineNumber, name, value) : new(this.Section, lineNumber, name, value);
+		this.Add(entry);
+		return entry;
+	}
+
+	#endregion
+
+	#region 重写方法
+	protected override void InsertItem(int index, ProfileEntry entry)
+	{
+		if(entry == null)
+			throw new ArgumentNullException(nameof(entry));
+
+		_dictionary.Add(entry.Name, entry);
+		base.InsertItem(index, entry);
+	}
+
+	protected override void SetItem(int index, ProfileEntry entry)
+	{
+		if(entry == null)
+			throw new ArgumentNullException(nameof(entry));
+
+		_dictionary[entry.Name] = entry;
+		base.SetItem(index, entry);
+	}
+
+	protected override void RemoveItem(int index)
+	{
+		var item = base.Items[index];
+		base.RemoveItem(index);
+		_dictionary.Remove(item.Name);
+	}
+
+	protected override void ClearItems()
+	{
+		_dictionary.Clear();
+		base.ClearItems();
+	}
+	#endregion
 }

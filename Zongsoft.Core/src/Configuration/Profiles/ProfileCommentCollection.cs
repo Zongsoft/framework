@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,25 +29,24 @@
 
 using System;
 
-namespace Zongsoft.Configuration.Profiles
+namespace Zongsoft.Configuration.Profiles;
+
+public class ProfileCommentCollection : ProfileItemCollection<ProfileComment>
 {
-	public class ProfileCommentCollection : ProfileItemCollection<ProfileComment>
+	#region 构造函数
+	public ProfileCommentCollection(Profile profile) : base(profile) { }
+	public ProfileCommentCollection(ProfileSection section) : base(section) { }
+	#endregion
+
+	#region 公共方法
+	public ProfileComment Add(string text, int lineNumber = -1)
 	{
-		#region 构造函数
-		public ProfileCommentCollection(Profile profile) : base(profile) { }
-		public ProfileCommentCollection(ProfileSection section) : base(section) { }
-		#endregion
+		var comment = this.Section == null ?
+			ProfileComment.GetComment(this.Profile, text, lineNumber) :
+			ProfileComment.GetComment(this.Section, text, lineNumber);
 
-		#region 公共方法
-		public ProfileComment Add(string text, int lineNumber = -1)
-		{
-			var comment = this.Section == null ?
-				ProfileComment.GetComment(this.Profile, text, lineNumber) :
-				ProfileComment.GetComment(this.Section, text, lineNumber);
-
-			this.Add(comment);
-			return comment;
-		}
-		#endregion
+		this.Add(comment);
+		return comment;
 	}
+	#endregion
 }

@@ -29,30 +29,29 @@
 
 using System;
 
-namespace Zongsoft.Configuration.Profiles
+namespace Zongsoft.Configuration.Profiles;
+
+public abstract class ProfileItem
 {
-	public abstract class ProfileItem
+	#region 构造函数
+	protected ProfileItem(Profile profile, int lineNumber = -1)
 	{
-		#region 构造函数
-		protected ProfileItem(Profile profile, int lineNumber = -1)
-		{
-			this.Profile = profile ?? throw new ArgumentNullException(nameof(profile));
-			this.LineNumber = Math.Max(lineNumber, -1);
-		}
-
-		protected ProfileItem(ProfileSection section, int lineNumber = -1)
-		{
-			this.Section = section ?? throw new ArgumentNullException(nameof(section));
-			this.Profile = section.Profile;
-			this.LineNumber = Math.Max(lineNumber, -1);
-		}
-		#endregion
-
-		#region 公共属性
-		public Profile Profile { get; }
-		public ProfileSection Section { get; }
-		public abstract ProfileItemType ItemType { get; }
-		public int LineNumber { get; }
-		#endregion
+		this.Profile = profile ?? throw new ArgumentNullException(nameof(profile));
+		this.LineNumber = Math.Max(lineNumber, -1);
 	}
+
+	protected ProfileItem(ProfileSection section, int lineNumber = -1)
+	{
+		this.Section = section ?? throw new ArgumentNullException(nameof(section));
+		this.Profile = section.Profile;
+		this.LineNumber = Math.Max(lineNumber, -1);
+	}
+	#endregion
+
+	#region 公共属性
+	public Profile Profile { get; }
+	public ProfileSection Section { get; }
+	public abstract ProfileItemType ItemType { get; }
+	public int LineNumber { get; }
+	#endregion
 }

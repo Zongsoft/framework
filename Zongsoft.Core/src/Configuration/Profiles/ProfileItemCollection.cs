@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,55 +30,54 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Configuration.Profiles
+namespace Zongsoft.Configuration.Profiles;
+
+public class ProfileItemCollection<TItem> : Collection<TItem> where TItem : ProfileItem
 {
-	public class ProfileItemCollection<TItem> : Collection<TItem> where TItem : ProfileItem
+	#region 成员字段
+	private readonly Profile _profile;
+	private readonly ProfileSection _section;
+	#endregion
+
+	#region 构造函数
+	protected ProfileItemCollection(Profile profile)
 	{
-		#region 成员字段
-		private readonly Profile _profile;
-		private readonly ProfileSection _section;
-		#endregion
-
-		#region 构造函数
-		protected ProfileItemCollection(Profile profile)
-		{
-			_profile = profile ?? throw new ArgumentNullException(nameof(profile));
-		}
-
-		protected ProfileItemCollection(ProfileSection section)
-		{
-			_section = section ?? throw new ArgumentNullException(nameof(section));
-			_profile = section.Profile;
-		}
-		#endregion
-
-		#region 内部属性
-		public Profile Profile => _profile;
-		public ProfileSection Section => _section;
-		#endregion
-
-		#region 重写方法
-		protected override void InsertItem(int index, TItem item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
-
-			if(item.Profile != _profile)
-				throw new InvalidOperationException($"The '{item}' item to be added does not belong to the profile file({_profile.FilePath}) where this collection resides.");
-
-			base.InsertItem(index, item);
-		}
-
-		protected override void SetItem(int index, TItem item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
-
-			if(item.Profile != _profile)
-				throw new InvalidOperationException($"The '{item}' item to be set does not belong to the profile file({_profile.FilePath}) where this collection resides.");
-
-			base.SetItem(index, item);
-		}
-		#endregion
+		_profile = profile ?? throw new ArgumentNullException(nameof(profile));
 	}
+
+	protected ProfileItemCollection(ProfileSection section)
+	{
+		_section = section ?? throw new ArgumentNullException(nameof(section));
+		_profile = section.Profile;
+	}
+	#endregion
+
+	#region 内部属性
+	public Profile Profile => _profile;
+	public ProfileSection Section => _section;
+	#endregion
+
+	#region 重写方法
+	protected override void InsertItem(int index, TItem item)
+	{
+		if(item == null)
+			throw new ArgumentNullException(nameof(item));
+
+		if(item.Profile != _profile)
+			throw new InvalidOperationException($"The '{item}' item to be added does not belong to the profile file({_profile.FilePath}) where this collection resides.");
+
+		base.InsertItem(index, item);
+	}
+
+	protected override void SetItem(int index, TItem item)
+	{
+		if(item == null)
+			throw new ArgumentNullException(nameof(item));
+
+		if(item.Profile != _profile)
+			throw new InvalidOperationException($"The '{item}' item to be set does not belong to the profile file({_profile.FilePath}) where this collection resides.");
+
+		base.SetItem(index, item);
+	}
+	#endregion
 }
