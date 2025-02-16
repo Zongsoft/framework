@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 using Zongsoft.Data.Metadata;
 
@@ -99,7 +100,7 @@ namespace Zongsoft.Data.Common.Expressions
 		#endregion
 
 		#region 私有方法
-		private static IDataEntityPropertyCollection GetAssociatedProperties(IDataEntityComplexProperty property, ref ICollection<IDataEntity> ancestors)
+		private static KeyedCollection<string, IDataEntityProperty> GetAssociatedProperties(IDataEntityComplexProperty property, ref ICollection<IDataEntity> ancestors)
 		{
 			var index = property.Port.IndexOf(':');
 			var entityName = index < 0 ? property.Port : property.Port.Substring(0, index);
@@ -133,7 +134,7 @@ namespace Zongsoft.Data.Common.Expressions
 			return properties;
 		}
 
-		private static IDataEntityProperty FindBaseProperty(ref IDataEntityPropertyCollection properties, string name, ref ICollection<IDataEntity> ancestors)
+		private static IDataEntityProperty FindBaseProperty(ref KeyedCollection<string, IDataEntityProperty> properties, string name, ref ICollection<IDataEntity> ancestors)
 		{
 			if(properties == null)
 				return null;

@@ -51,7 +51,7 @@ namespace Zongsoft.Data
 			if(string.IsNullOrEmpty(name))
 				name = accessor.Naming.Get(modelType);
 
-			return GetDescriptor(accessor.Metadata.Entities[name], modelType);
+			return GetDescriptor(Mapping.Entities[name], modelType);
 		}
 
 		public static ModelDescriptor GetDescriptor<TModel>(this Metadata.IDataEntity entity) => GetDescriptor(entity, typeof(TModel));

@@ -37,9 +37,6 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public interface IDataCommand : IEquatable<IDataCommand>
 	{
-		/// <summary>获取或设置所属的元数据容器。</summary>
-		IDataMetadataContainer Container { get; set; }
-
 		/// <summary>获取所属命名空间。</summary>
 		string Namespace { get; }
 
@@ -59,7 +56,7 @@ namespace Zongsoft.Data.Metadata
 		string Driver { get; set; }
 
 		/// <summary>获取或设置命令的变化性。</summary>
-		CommandMutability Mutability { get; set; }
+		DataCommandMutability Mutability { get; set; }
 
 		/// <summary>获取数据命令的参数集合。</summary>
 		DataCommandParameterCollection Parameters { get; }

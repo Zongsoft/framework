@@ -540,7 +540,7 @@ namespace Zongsoft.Data
 	{
 		public static Metadata.IDataEntity GetEntity(this IDataAccess dataAccess, string name)
 		{
-			if(dataAccess.Metadata.Entities.TryGetValue(name, out var entity))
+			if(Mapping.Entities.TryGetValue(name, out var entity))
 				return entity;
 
 			throw new DataException($"The specified '{name}' entity mapping does not exist.");
@@ -548,7 +548,7 @@ namespace Zongsoft.Data
 
 		public static Metadata.IDataCommand GetCommand(this IDataAccess dataAccess, string name)
 		{
-			if(dataAccess.Metadata.Commands.TryGetValue(name, out var command))
+			if(Mapping.Commands.TryGetValue(name, out var command))
 				return command;
 
 			throw new DataException($"The specified '{name}' command mapping does not exist.");

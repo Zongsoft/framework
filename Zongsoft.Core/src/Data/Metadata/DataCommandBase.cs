@@ -37,10 +37,6 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public class DataCommandBase : IDataCommand, IEquatable<IDataCommand>, IEquatable<DataCommandBase>
 	{
-		#region 成员字段
-		private IDataMetadataContainer _container;
-		#endregion
-
 		#region 构造函数
 		protected DataCommandBase(string @namespace, string name, string alias = null)
 		{
@@ -56,19 +52,6 @@ namespace Zongsoft.Data.Metadata
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取数据命令所属的元数据容器。</summary>
-		public virtual IDataMetadataContainer Container
-		{
-			get => _container;
-			set
-			{
-				if(value is not null && _container is not null)
-					throw new InvalidOperationException();
-
-				_container = value;
-			}
-		}
-
 		/// <summary>获取所属命名空间。</summary>
 		public string Namespace { get; }
 
@@ -88,7 +71,7 @@ namespace Zongsoft.Data.Metadata
 		public string Driver { get; set; }
 
 		/// <summary>获取或设置数据命令的变化性。</summary>
-		public CommandMutability Mutability { get; set; }
+		public DataCommandMutability Mutability { get; set; }
 
 		/// <summary>获取数据命令的参数集合。</summary>
 		public DataCommandParameterCollection Parameters { get; }
@@ -106,13 +89,10 @@ namespace Zongsoft.Data.Metadata
 		{
 			var qualifiedName = $"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)})";
 
-			if(this.Mutability != CommandMutability.None)
+			if(this.Mutability != DataCommandMutability.None)
 				qualifiedName += $"!{this.Mutability}";
 
-			if(this.Container == null || string.IsNullOrEmpty(this.Container.Name))
-				return qualifiedName;
-			else
-				return $"{Container.Name}:{qualifiedName}";
+			return qualifiedName;
 		}
 		#endregion
 	}

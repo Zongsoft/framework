@@ -37,7 +37,7 @@ namespace Zongsoft.Data
 	public static class DataServiceExtension
 	{
 		#region 公共方法
-		public static Metadata.IDataEntity GetEntity(this IDataService service) => service.DataAccess.Metadata.Entities.TryGetValue(service.Name, out var entity) ? entity : null;
+		public static Metadata.IDataEntity GetEntity(this IDataService service) => Mapping.Entities.TryGetValue(service.Name, out var entity) ? entity : null;
 		#endregion
 
 		#region 聚合方法

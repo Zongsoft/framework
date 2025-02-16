@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata
 {
@@ -37,10 +37,6 @@ namespace Zongsoft.Data.Metadata
 	/// </summary>
 	public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<DataEntityBase>
 	{
-		#region 成员字段
-		private IDataMetadataContainer _container;
-		#endregion
-
 		#region 构造函数
 		protected DataEntityBase(string @namespace, string name, string baseName, bool immutable = false)
 		{
@@ -56,19 +52,6 @@ namespace Zongsoft.Data.Metadata
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置数据实体所属的元数据容器。</summary>
-		public virtual IDataMetadataContainer Container
-		{
-			get => _container;
-			set
-			{
-				if(value is not null && _container is not null)
-					throw new InvalidOperationException();
-
-				_container = value;
-			}
-		}
-
 		/// <summary>获取所属命名空间。</summary>
 		public string Namespace { get; }
 
@@ -97,7 +80,7 @@ namespace Zongsoft.Data.Metadata
 		public IDataEntitySimplexProperty[] Key { get; set; }
 
 		/// <summary>获取数据实体的属性元数据集合。</summary>
-		public IDataEntityPropertyCollection Properties { get; protected set; }
+		public KeyedCollection<string, IDataEntityProperty> Properties { get; protected set; }
 		#endregion
 
 		#region 重写方法
@@ -112,10 +95,7 @@ namespace Zongsoft.Data.Metadata
 			if(this.Immutable)
 				qualifiedName += "(Immutable)";
 
-			if(this.Container == null || string.IsNullOrEmpty(this.Container.Name))
-				return qualifiedName;
-			else
-				return $"{Container.Name}:{qualifiedName}";
+			return qualifiedName;
 		}
 		#endregion
 	}

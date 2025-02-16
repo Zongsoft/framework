@@ -28,30 +28,28 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata
 {
-	public interface IDataMetadataLoader
+	/// <summary>
+	/// 表示数据命令变化性的枚举。
+	/// </summary>
+	[Flags]
+	public enum DataCommandMutability
 	{
-		IEnumerable<Result> Load(string name);
+		/// <summary>无变化，即只读。</summary>
+		None = 0,
 
-		public readonly struct Result
-		{
-			public Result(IEnumerable<IDataCommand> commands, IEnumerable<IDataEntity> entities)
-			{
-				this.Commands = commands;
-				this.Entities = entities;
-			}
+		/// <summary>删除。</summary>
+		Delete = 1,
 
-			public Result(IEnumerable<IDataEntity> entities, IEnumerable<IDataCommand> commands)
-			{
-				this.Entities = entities;
-				this.Commands = commands;
-			}
+		/// <summary>新增。</summary>
+		Insert = 2,
 
-			public IEnumerable<IDataEntity> Entities { get; }
-			public IEnumerable<IDataCommand> Commands { get; }
-		}
+		/// <summary>更新。</summary>
+		Update = 4,
+
+		/// <summary>增改，即新增和更新。</summary>
+		Upsert = 6,
 	}
 }

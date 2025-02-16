@@ -79,9 +79,6 @@ namespace Zongsoft.Data
 		/// <summary>获取或设置数据序号程序。</summary>
 		IDataSequencer Sequencer { get; set; }
 
-		/// <summary>获取数据访问器的元数据容器。</summary>
-		Metadata.IDataMetadataContainer Metadata { get; }
-
 		/// <summary>获取数据访问的过滤器集合。</summary>
 		ICollection<object> Filters { get; }
 		#endregion

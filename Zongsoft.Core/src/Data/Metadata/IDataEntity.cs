@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata
 {
@@ -38,9 +38,6 @@ namespace Zongsoft.Data.Metadata
 	public interface IDataEntity : IEquatable<IDataEntity>
 	{
 		#region 属性声明
-		/// <summary>获取或设置所属的元数据容器。</summary>
-		IDataMetadataContainer Container { get; set; }
-
 		/// <summary>获取所属命名空间。</summary>
 		string Namespace { get; }
 
@@ -70,7 +67,7 @@ namespace Zongsoft.Data.Metadata
 		IDataEntitySimplexProperty[] Key { get; set; }
 
 		/// <summary>获取数据实体的属性元数据集合。</summary>
-		IDataEntityPropertyCollection Properties { get; }
+		KeyedCollection<string, IDataEntityProperty> Properties { get; }
 		#endregion
 	}
 }

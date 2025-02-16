@@ -28,130 +28,40 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata
 {
-	public class DataEntityCollection : IDataEntityCollection
+	public class DataEntityCollection() : KeyedCollection<string, IDataEntity>(StringComparer.OrdinalIgnoreCase)
 	{
-		#region 成员字段
-		private readonly IDataMetadataContainer _container;
-		private readonly Dictionary<string, IDataEntity> _dictionary;
-		#endregion
-
-		#region 构造函数
-		public DataEntityCollection(IDataMetadataContainer container)
-		{
-			_container = container ?? throw new ArgumentNullException(nameof(container));
-			_dictionary = new Dictionary<string, IDataEntity>(StringComparer.OrdinalIgnoreCase);
-		}
-		#endregion
-
 		#region 公共属性
-		public int Count => _dictionary.Count;
-		bool ICollection<IDataEntity>.IsReadOnly => false;
-		public IDataEntity this[string name, string @namespace = null]
-		{
-			get
-			{
-				var key = string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
-
-				if(_dictionary.TryGetValue(key, out var entity))
-					return entity;
-
-				throw new DataException($"The specified '{key}' entity mapping does not exist.");
-			}
-		}
+		public IDataEntity this[string name, string @namespace = null] => base[GetKey(name, @namespace)];
 		#endregion
 
 		#region 公共方法
-		public void Add(IDataEntity entity)
-		{
-			CheckContainer(entity);
-			_dictionary.Add(GetKey(entity), entity);
-			entity.Container = _container;
-		}
-
 		public bool TryAdd(IDataEntity entity)
 		{
-			CheckContainer(entity);
+			if(entity == null)
+				throw new ArgumentNullException(nameof(entity));
 
-			if(_dictionary.TryAdd(GetKey(entity), entity))
-			{
-				entity.Container = _container;
-				return true;
-			}
-
-			return false;
-		}
-
-		public void Clear() => _dictionary.Clear();
-		public bool Contains(IDataEntity entity) => entity != null && _dictionary.ContainsKey(GetKey(entity));
-		public bool Contains(string name, string @namespace = null)
-		{
-			if(string.IsNullOrEmpty(name))
+			if(this.Contains(entity))
 				return false;
 
-			return string.IsNullOrEmpty(@namespace) ? _dictionary.ContainsKey(name) : _dictionary.ContainsKey($"{@namespace}.{name}");
+			this.Add(entity);
+			return true;
 		}
 
-		public bool Remove(IDataEntity entity)
-		{
-			if(entity != null && _dictionary.Remove(GetKey(entity), out var value))
-			{
-				value.Container = null;
-				return true;
-			}
-
-			return false;
-		}
-
-		public bool Remove(string name, string @namespace = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				return false;
-
-			var result = string.IsNullOrEmpty(@namespace) ? _dictionary.Remove(name, out var entity) : _dictionary.Remove($"{@namespace}.{name}", out entity);
-			if(result)
-				entity.Container = null;
-
-			return result;
-		}
-
-		public bool TryGetValue(string name, out IDataEntity value) => _dictionary.TryGetValue(name, out value);
-		public bool TryGetValue(string name, string @namespace, out IDataEntity value) => _dictionary.TryGetValue(string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}", out value);
-
-		public void CopyTo(IDataEntity[] array, int arrayIndex)
-		{
-			if(array == null)
-				throw new ArgumentNullException(nameof(array));
-			if(arrayIndex < 0 || arrayIndex >= array.Length)
-				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-
-			_dictionary.Values.CopyTo(array, arrayIndex);
-		}
+		public bool Contains(string name, string @namespace = null) => base.Contains(GetKey(name, @namespace));
+		public bool Remove(string name, string @namespace = null) => base.Remove(GetKey(name, @namespace));
+		public bool TryGetValue(string name, string @namespace, out IDataEntity value) => base.TryGetValue(GetKey(name, @namespace), out value);
 		#endregion
 
-		#region 枚举遍历
-		public IEnumerator<IDataEntity> GetEnumerator() => _dictionary.Values.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		#region 重写方法
+		protected override string GetKeyForItem(IDataEntity entity) => entity.QualifiedName;
 		#endregion
 
 		#region 私有方法
-		private static string GetKey(IDataEntity entity)
-		{
-			if(entity is null)
-				throw new ArgumentNullException(nameof(entity));
-
-			return entity.QualifiedName;
-		}
-
-		private void CheckContainer(IDataEntity entity)
-		{
-			if(entity != null && entity.Container != null && !object.ReferenceEquals(_container, entity.Container))
-				throw new DataException($"The specified '{entity}' data entity mapping did not detach the container.");
-		}
+		private static string GetKey(string name, string @namespace) => string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
 		#endregion
 	}
 }

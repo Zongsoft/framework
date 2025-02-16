@@ -91,7 +91,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取数据访问的应用（子系统/业务模块）名。</summary>
+		/// <summary>获取数据访问器的名称，通常为应用、模块名。</summary>
 		public string Name
 		{
 			get => _name;
@@ -110,9 +110,6 @@ namespace Zongsoft.Data
 			get => _sequencer ??= this.CreateSequencer();
 			set => _sequencer = value ?? throw new ArgumentNullException(nameof(value));
 		}
-
-		/// <summary>获取数据访问器的元数据容器。</summary>
-		public abstract Metadata.IDataMetadataContainer Metadata { get; }
 
 		/// <summary>获取数据访问过滤器集合。</summary>
 		public ICollection<object> Filters => _filters;
@@ -2000,7 +1997,7 @@ namespace Zongsoft.Data
 			#region 私有方法
 			private Metadata.IDataEntitySimplexProperty GetProperty(string name, string field)
 			{
-				if(!_accessor.Metadata.Entities.TryGetValue(name, out var entity))
+				if(!Mapping.Entities.TryGetValue(name, out var entity))
 					throw new InvalidOperationException($"The entity specified with the name '{name}' does not exist.");
 
 				if(!entity.Properties.TryGetValue(field, out var property))

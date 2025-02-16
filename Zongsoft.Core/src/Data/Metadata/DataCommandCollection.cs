@@ -28,130 +28,40 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata
 {
-	public class DataCommandCollection : IDataCommandCollection
+	public class DataCommandCollection() : KeyedCollection<string, IDataCommand>(StringComparer.OrdinalIgnoreCase)
 	{
-		#region 成员字段
-		private readonly IDataMetadataContainer _container;
-		private readonly Dictionary<string, IDataCommand> _dictionary;
-		#endregion
-
-		#region 构造函数
-		public DataCommandCollection(IDataMetadataContainer container)
-		{
-			_container = container ?? throw new ArgumentNullException(nameof(container));
-			_dictionary = new Dictionary<string, IDataCommand>(StringComparer.OrdinalIgnoreCase);
-		}
-		#endregion
-
 		#region 公共属性
-		public int Count => _dictionary.Count;
-		bool ICollection<IDataCommand>.IsReadOnly => false;
-		public IDataCommand this[string name, string @namespace = null]
-		{
-			get
-			{
-				var key = string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
-
-				if(_dictionary.TryGetValue(key, out var command))
-					return command;
-
-				throw new DataException($"The specified '{key}' command mapping does not exist.");
-			}
-		}
+		public IDataCommand this[string name, string @namespace = null] => base[GetKey(name, @namespace)];
 		#endregion
 
 		#region 公共方法
-		public void Add(IDataCommand command)
-		{
-			CheckContainer(command);
-			_dictionary.Add(GetKey(command), command);
-			command.Container = _container;
-		}
-
 		public bool TryAdd(IDataCommand command)
 		{
-			CheckContainer(command);
+			if(command == null)
+				throw new ArgumentNullException(nameof(command));
 
-			if(_dictionary.TryAdd(GetKey(command), command))
-			{
-				command.Container = _container;
-				return true;
-			}
-
-			return false;
-		}
-
-		public void Clear() => _dictionary.Clear();
-		public bool Contains(IDataCommand command) => command != null && _dictionary.ContainsKey(GetKey(command));
-		public bool Contains(string name, string @namespace = null)
-		{
-			if(string.IsNullOrEmpty(name))
+			if(this.Contains(command))
 				return false;
 
-			return string.IsNullOrEmpty(@namespace) ? _dictionary.ContainsKey(name) : _dictionary.ContainsKey($"{@namespace}.{name}");
+			this.Add(command);
+			return true;
 		}
 
-		public bool Remove(IDataCommand command)
-		{
-			if(command != null && _dictionary.Remove(GetKey(command), out var value))
-			{
-				value.Container = null;
-				return true;
-			}
-
-			return false;
-		}
-
-		public bool Remove(string name, string @namespace = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				return false;
-
-			var result = string.IsNullOrEmpty(@namespace) ? _dictionary.Remove(name, out var command) : _dictionary.Remove($"{@namespace}.{name}", out command);
-			if(result)
-				command.Container = null;
-
-			return result;
-		}
-
-		public bool TryGetValue(string name, out IDataCommand value) => _dictionary.TryGetValue(name, out value);
-		public bool TryGetValue(string name, string @namespace, out IDataCommand value) => _dictionary.TryGetValue(string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}", out value);
-
-		public void CopyTo(IDataCommand[] array, int arrayIndex)
-		{
-			if(array == null)
-				throw new ArgumentNullException(nameof(array));
-			if(arrayIndex < 0 || arrayIndex >= array.Length)
-				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-
-			_dictionary.Values.CopyTo(array, arrayIndex);
-		}
+		public bool Contains(string name, string @namespace = null) => base.Contains(GetKey(name, @namespace));
+		public bool Remove(string name, string @namespace = null) => base.Remove(GetKey(name, @namespace));
+		public bool TryGetValue(string name, string @namespace, out IDataCommand value) => base.TryGetValue(GetKey(name, @namespace), out value);
 		#endregion
 
-		#region 枚举遍历
-		public IEnumerator<IDataCommand> GetEnumerator() => _dictionary.Values.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		#region 重写方法
+		protected override string GetKeyForItem(IDataCommand command) => command.QualifiedName;
 		#endregion
 
 		#region 私有方法
-		private static string GetKey(IDataCommand command)
-		{
-			if(command is null)
-				throw new ArgumentNullException(nameof(command));
-
-			return command.QualifiedName;
-		}
-
-		private void CheckContainer(IDataCommand command)
-		{
-			if(command != null && command.Container != null && !object.ReferenceEquals(_container, command.Container))
-				throw new DataException($"The specified '{command}' data command mapping did not detach the container.");
-		}
+		private static string GetKey(string name, string @namespace) => string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
 		#endregion
 	}
 }

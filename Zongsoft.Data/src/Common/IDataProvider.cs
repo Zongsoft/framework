@@ -58,9 +58,6 @@ namespace Zongsoft.Data.Common
 
 		/// <summary>获取或设置数据提供程序的连接器。</summary>
 		IDataMultiplexer Multiplexer { get; set; }
-
-		/// <summary>获取或设置数据提供程序的元数据管理器。</summary>
-		Metadata.IDataMetadataContainer Metadata { get; set; }
 		#endregion
 
 		#region 方法定义

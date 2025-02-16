@@ -66,7 +66,6 @@ namespace Zongsoft.Data
 
 		#region 公共属性
 		public IDataProvider Provider => _provider;
-		public override IDataMetadataContainer Metadata => _provider.Metadata;
 		#endregion
 
 		#region 执行方法
@@ -384,11 +383,11 @@ namespace Zongsoft.Data
 				if(index < 0)
 					throw new ArgumentException($"Invalid sequence key, the sequence key must separate the entity name and property name with a colon or a dot.");
 
-				if(!_provider.Metadata.Entities.TryGetValue(key.Substring(0, index), out var entity))
-					throw new ArgumentException($"The '{key.Substring(0, index)}' entity specified in the sequence key does not exist.");
+				if(!Mapping.Entities.TryGetValue(key[..index], out var entity))
+					throw new ArgumentException($"The '{key[..index]}' entity specified in the sequence key does not exist.");
 
-				if(!entity.Properties.TryGetValue(key.Substring(index + 1), out var found) || found.IsComplex)
-					throw new ArgumentException($"The '{key.Substring(index + 1)}' property specified in the sequence key does not exist or is not a simplex property.");
+				if(!entity.Properties.TryGetValue(key[(index + 1)..], out var found) || found.IsComplex)
+					throw new ArgumentException($"The '{key[(index + 1)..]}' property specified in the sequence key does not exist or is not a simplex property.");
 
 				sequence = ((IDataEntitySimplexProperty)found).Sequence;
 

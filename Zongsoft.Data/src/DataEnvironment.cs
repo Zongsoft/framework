@@ -51,7 +51,6 @@ namespace Zongsoft.Data
 		private static IDataProviderFactory _providers;
 		private static IDataValidatorProvider _validators;
 		private static IDataPopulatorProviderFactory _populators;
-		private static readonly ICollection<IDataMetadataLoader> _loaders;
 		private static readonly KeyedCollection<string, IDataDriver> _drivers;
 		private static readonly DataAccessFilterCollection _filters;
 		#endregion
@@ -65,7 +64,6 @@ namespace Zongsoft.Data
 			_populators = DataPopulatorProviderFactory.Instance;
 			_drivers = new DataDriverCollection();
 			_filters = new DataAccessFilterCollection();
-			_loaders = new List<IDataMetadataLoader>() { MetadataFileLoader.Default };
 		}
 		#endregion
 
@@ -94,7 +92,6 @@ namespace Zongsoft.Data
 			set => _populators = value ?? throw new ArgumentNullException();
 		}
 
-		public static ICollection<IDataMetadataLoader> Loaders => _loaders;
 		public static KeyedCollection<string, IDataDriver> Drivers => _drivers;
 		public static DataAccessFilterCollection Filters => _filters;
 		#endregion

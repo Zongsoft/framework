@@ -48,7 +48,6 @@ namespace Zongsoft.Data.Common
 		#region 成员字段
 		private IDataImporter _importer;
 		private IDataExecutor _executor;
-		private IDataMetadataContainer _metadata;
 		private IDataMultiplexer _multiplexer;
 		#endregion
 
@@ -61,7 +60,6 @@ namespace Zongsoft.Data.Common
 			this.Name = name.Trim();
 
 			_executor = DataExecutor.Instance;
-			_metadata = new DataMetadataContainer(this.Name);
 			_multiplexer = new DataMultiplexer(this.Name);
 		}
 		#endregion
@@ -73,12 +71,6 @@ namespace Zongsoft.Data.Common
 		{
 			get => _executor;
 			set => _executor = value ?? throw new ArgumentNullException();
-		}
-
-		public IDataMetadataContainer Metadata
-		{
-			get => _metadata;
-			set => _metadata = value ?? throw new ArgumentNullException();
 		}
 
 		public IDataMultiplexer Multiplexer

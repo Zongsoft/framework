@@ -28,62 +28,84 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Collections.Generic;
 
-namespace Zongsoft.Data.Metadata.Profiles
+namespace Zongsoft.Data.Metadata.Profiles;
+
+[Services.Service<Services.IApplicationInitializer>]
+public class MetadataFileLoader : Zongsoft.Services.IApplicationInitializer
 {
-	public class MetadataFileLoader : IDataMetadataLoader
+	#region 单例字段
+	public static readonly MetadataFileLoader Default = new MetadataFileLoader();
+	#endregion
+
+	#region 成员字段
+	private string _path;
+	#endregion
+
+	#region 构造函数
+	private MetadataFileLoader() => _path = Services.ApplicationContext.Current?.ApplicationPath;
+	public MetadataFileLoader(string path) => _path = path;
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置要加载的目录地址，支持“|”竖线符分隔的多个目录。</summary>
+	public string Path
 	{
-		#region 单例字段
-		public static readonly MetadataFileLoader Default = new MetadataFileLoader();
-		#endregion
+		get => _path;
+		set => _path = value;
+	}
+	#endregion
 
-		#region 成员字段
-		private string _path;
-		#endregion
+	#region 加载方法
+	public IEnumerable<Result> Load(string name = null)
+	{
+		var directories = string.IsNullOrEmpty(_path) ? [Services.ApplicationContext.Current?.ApplicationPath] : _path.Split('|');
 
-		#region 构造函数
-		private MetadataFileLoader() => _path = Services.ApplicationContext.Current?.ApplicationPath;
-		public MetadataFileLoader(string path) => _path = path;
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置要加载的目录地址，支持“|”竖线符分隔的多个目录。</summary>
-		public string Path
+		foreach(var directory in directories)
 		{
-			get => _path;
-			set => _path = value;
-		}
-		#endregion
+			if(string.IsNullOrWhiteSpace(directory))
+				continue;
 
-		#region 加载方法
-		public IEnumerable<IDataMetadataLoader.Result> Load(string name)
-		{
-			var directories = string.IsNullOrEmpty(_path) ? [Services.ApplicationContext.Current?.ApplicationPath] : _path.Split('|');
+			//如果指定的目录不存在则忽略
+			if(!Directory.Exists(directory))
+				continue;
 
-			foreach(var directory in directories)
+			//查找指定目录下的所有映射文件
+			var files = Directory.GetFiles(directory, "*.mapping", SearchOption.AllDirectories);
+
+			foreach(var file in files)
 			{
-				if(string.IsNullOrWhiteSpace(directory))
-					continue;
+				//加载指定的映射文件
+				var metadata = MetadataFile.Load(file, name);
 
-				//如果指定的目录不存在则忽略
-				if(!Directory.Exists(directory))
-					continue;
-
-				//查找指定目录下的所有映射文件
-				var files = Directory.GetFiles(directory, "*.mapping", SearchOption.AllDirectories);
-
-				foreach(var file in files)
-				{
-					//加载指定的映射文件
-					var metadata = MetadataFile.Load(file, name);
-
-					//遍历返回加载的结果
-					yield return new(metadata.Entities, metadata.Commands);
-				}
+				//遍历返回加载的结果
+				yield return new(metadata.Entities, metadata.Commands);
 			}
 		}
-		#endregion
+	}
+	#endregion
+
+	#region 显式实现
+	void Services.IApplicationInitializer.Initialize(Services.IApplicationContext context) => this.Load();
+	#endregion
+
+	public readonly struct Result
+	{
+		public Result(IEnumerable<IDataCommand> commands, IEnumerable<IDataEntity> entities)
+		{
+			this.Commands = commands;
+			this.Entities = entities;
+		}
+
+		public Result(IEnumerable<IDataEntity> entities, IEnumerable<IDataCommand> commands)
+		{
+			this.Entities = entities;
+			this.Commands = commands;
+		}
+
+		public IEnumerable<IDataEntity> Entities { get; }
+		public IEnumerable<IDataCommand> Commands { get; }
 	}
 }
