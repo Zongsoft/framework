@@ -28,12 +28,17 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Data
 {
-	[Service(typeof(IServiceProvider<IDataAccess>), typeof(IServiceProvider<DataAccessBase>), typeof(IServiceProvider<DataAccess>))]
+	[Service<
+		IServiceProvider<IDataAccess>,
+		IServiceProvider<DataAccessBase>,
+		IServiceProvider<DataAccess>>(Members = nameof(Instance))]
 	public class DataAccessProvider : DataAccessProviderBase<DataAccess>
 	{
 		#region 单例字段
@@ -41,7 +46,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 重写方法
-		protected override DataAccess CreateAccessor(string name)
+		protected override DataAccess CreateAccessor(string name, IEnumerable<IConnectionSettings> settings)
 		{
 			var result = new DataAccess(name, DataEnvironment.Filters);
 			var services = ApplicationContext.Current.Services;

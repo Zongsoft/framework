@@ -28,27 +28,19 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
+using Zongsoft.Caching;
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Data
 {
 	[Service(typeof(IServiceProvider<IDataAccess>))]
-	public abstract class DataAccessProviderBase<TDataAccess> : IDataAccessProvider, IServiceProvider<TDataAccess>, ICollection<TDataAccess> where TDataAccess : class, IDataAccess
+	public abstract class DataAccessProviderBase<TDataAccess> : IDataAccessProvider, IServiceProvider<TDataAccess> where TDataAccess : class, IDataAccess
 	{
 		#region 成员字段
-		private readonly DataAccessCollection _accesses;
-		#endregion
-
-		#region 构造函数
-		protected DataAccessProviderBase()
-		{
-			_accesses = new DataAccessCollection();
-		}
+		private readonly MemoryCache _accesses = new();
 		#endregion
 
 		#region 公共属性
@@ -56,50 +48,22 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共方法
-		public TDataAccess GetAccessor(string name = null)
+		public TDataAccess GetAccessor(string name = null) => this.GetAccessor(name, null);
+		public TDataAccess GetAccessor(string name, params IEnumerable<IConnectionSettings> settings)
 		{
-			name = GetName(name);
+			if(string.IsNullOrEmpty(name) || settings == null)
+				name = GetName(name);
 
-			if(_accesses.TryGetValue(name, out var accessor))
-				return accessor;
-
-			lock(_accesses)
+			return _accesses.GetOrCreate(name, key =>
 			{
-				if(_accesses.TryGetValue(name, out accessor))
-					return accessor;
-
-				_accesses.Add(accessor = this.CreateAccessor(name));
-			}
-
-			return accessor;
-		}
-
-		public bool TryGetAccessor(string name, out TDataAccess accessor)
-		{
-			if(string.IsNullOrEmpty(name))
-			{
-				name = GetConnectionSettings().Default;
-
-				if(string.IsNullOrEmpty(name))
-				{
-					accessor = null;
-					return false;
-				}
-			}
-
-			if(_accesses.TryGetValue(name, out var result))
-			{
-				accessor = result;
-				return true;
-			}
-
-			accessor = null;
-			return false;
+				var accessor = this.CreateAccessor(name, settings);
+				return (accessor, accessor.Disposed);
+			});
 		}
 		#endregion
 
 		#region 抽象方法
-		protected abstract TDataAccess CreateAccessor(string name);
+		protected abstract TDataAccess CreateAccessor(string name, params IEnumerable<IConnectionSettings> settings);
 		#endregion
 
 		#region 私有方法
@@ -128,36 +92,7 @@ namespace Zongsoft.Data
 		#region 显式实现
 		TDataAccess IServiceProvider<TDataAccess>.GetService(string name) => this.GetAccessor(name);
 		IDataAccess IDataAccessProvider.GetAccessor(string name) => this.GetAccessor(name);
-		bool IDataAccessProvider.TryGetAccessor(string name, out IDataAccess accessor)
-		{
-			if(this.TryGetAccessor(name, out var result))
-			{
-				accessor = result;
-				return true;
-			}
-
-			accessor = null;
-			return false;
-		}
-
-		bool ICollection<TDataAccess>.IsReadOnly => false;
-		void ICollection<TDataAccess>.Add(TDataAccess item) => _accesses.Add(item ?? throw new ArgumentNullException(nameof(item)));
-		void ICollection<TDataAccess>.Clear() => _accesses.Clear();
-		bool ICollection<TDataAccess>.Contains(TDataAccess item) => item != null && _accesses.Contains(item);
-		void ICollection<TDataAccess>.CopyTo(TDataAccess[] array, int arrayIndex) => _accesses.CopyTo(array, arrayIndex);
-		bool ICollection<TDataAccess>.Remove(TDataAccess item) => item != null && _accesses.Remove(item);
-		#endregion
-
-		#region 枚举遍历
-		public IEnumerator<TDataAccess> GetEnumerator() => _accesses.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => _accesses.GetEnumerator();
-		#endregion
-
-		#region 嵌套子类
-		private class DataAccessCollection() : KeyedCollection<string, TDataAccess>(StringComparer.OrdinalIgnoreCase)
-		{
-			protected override string GetKeyForItem(TDataAccess accessor) => accessor.Name;
-		}
+		IDataAccess IDataAccessProvider.GetAccessor(string name, params IEnumerable<IConnectionSettings> settings) => this.GetAccessor(name, settings);
 		#endregion
 	}
 }
