@@ -111,7 +111,7 @@ namespace Zongsoft.Data.Common
 
 			if(members.TryGetValue(name.Substring(GetLast(last)), out var member))
 			{
-				if(token.HasValue && entity.Properties[member.Name].IsPrimaryKey)
+				if(token.HasValue && entity.Properties[member.Name].IsPrimaryKey())
 				{
 					for(int i = 0; i < entity.Key.Length; i++)
 					{

@@ -29,32 +29,33 @@
 
 using System;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+public static class DataEntityPropertyUtility
 {
-	public static class DataEntityPropertyUtility
+	public static bool IsPrimaryKey(this IDataEntityProperty property) => property is IDataEntitySimplexProperty simplex ? simplex.IsPrimaryKey : false;
+
+	public static bool IsSimplex(this IDataEntityProperty property, out IDataEntitySimplexProperty simplex)
 	{
-		public static bool IsSimplex(this IDataEntityProperty property, out IDataEntitySimplexProperty simplex)
+		if(property != null && property.IsSimplex)
 		{
-			if(property != null && property.IsSimplex)
-			{
-				simplex = (IDataEntitySimplexProperty)property;
-				return true;
-			}
-
-			simplex = null;
-			return false;
+			simplex = (IDataEntitySimplexProperty)property;
+			return true;
 		}
 
-		public static bool IsComplex(this IDataEntityProperty property, out IDataEntityComplexProperty complex)
-		{
-			if(property != null && property.IsComplex)
-			{
-				complex = (IDataEntityComplexProperty)property;
-				return true;
-			}
+		simplex = null;
+		return false;
+	}
 
-			complex = null;
-			return false;
+	public static bool IsComplex(this IDataEntityProperty property, out IDataEntityComplexProperty complex)
+	{
+		if(property != null && property.IsComplex)
+		{
+			complex = (IDataEntityComplexProperty)property;
+			return true;
 		}
+
+		complex = null;
+		return false;
 	}
 }

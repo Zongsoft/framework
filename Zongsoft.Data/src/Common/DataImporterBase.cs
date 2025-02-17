@@ -165,7 +165,7 @@ namespace Zongsoft.Data.Common
 						return Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType()));
 
 					//如果待转换的值不为空且当前字段不允许空，则尝试获取其类型的默认值
-					return value == null && !nullable ? Zongsoft.Common.TypeExtension.GetDefaultValue(DbTypeUtility.AsType(type)) : value;
+					return value == null && !nullable ? Zongsoft.Common.TypeExtension.GetDefaultValue(DataUtility.AsType(type)) : value;
 				}
 			}
 			#endregion

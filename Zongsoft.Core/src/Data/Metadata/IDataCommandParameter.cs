@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,29 +30,31 @@
 using System;
 using System.Data;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+/// <summary>
+/// 表示命令参数的元数据类。
+/// </summary>
+public interface IDataCommandParameter
 {
-	/// <summary>
-	/// 表示命令参数的元数据类。
-	/// </summary>
-	public interface IDataCommandParameter
-	{
-		/// <summary>获取命令参数的名称。</summary>
-		string Name { get; }
+	/// <summary>获取参数所属的命令对象。</summary>
+	IDataCommand Command { get; }
 
-		/// <summary>获取命令参数的别名。</summary>
-		string Alias { get; }
+	/// <summary>获取命令参数的名称。</summary>
+	string Name { get; }
 
-		/// <summary>获取命令参数的类型。</summary>
-		DbType Type { get; }
+	/// <summary>获取命令参数的别名。</summary>
+	string Alias { get; }
 
-		/// <summary>获取命令参数的最大长度。</summary>
-		int Length { get; }
+	/// <summary>获取命令参数的类型。</summary>
+	DbType Type { get; }
 
-		/// <summary>获取或设置命令参数的值。</summary>
-		object Value { get; set; }
+	/// <summary>获取命令参数的最大长度。</summary>
+	int Length { get; }
 
-		/// <summary>获取命令参数的传递方向。</summary>
-		ParameterDirection Direction { get; }
-	}
+	/// <summary>获取或设置命令参数的值。</summary>
+	object Value { get; set; }
+
+	/// <summary>获取命令参数的传递方向。</summary>
+	ParameterDirection Direction { get; }
 }

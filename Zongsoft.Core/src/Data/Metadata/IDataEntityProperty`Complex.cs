@@ -28,40 +28,35 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+/// <summary>
+/// 表示数据实体复合属性的元数据类。
+/// </summary>
+public interface IDataEntityComplexProperty : IDataEntityProperty
 {
-	/// <summary>
-	/// 表示数据实体单值属性的元数据类。
-	/// </summary>
-	public interface IDataEntitySimplexProperty : IDataEntityProperty
-	{
-		/// <summary>获取数据实体属性的别名（字段名）。</summary>
-		string Alias { get; }
+	/// <summary>获取或设置属性的特性。</summary>
+	DataEntityComplexPropertyBehaviors Behaviors { get; set; }
 
-		/// <summary>获取数据实体属性的数据类型。</summary>
-		System.Data.DbType Type { get; }
+	/// <summary>获取关联的外部实体。</summary>
+	IDataEntity Foreign { get; }
 
-		/// <summary>获取或设置文本或数组属性的最大长度，单位：字节。</summary>
-		int Length { get; set; }
+	/// <summary>获取关联的外部层级属性，只有多级关联该属性才不为空(null)。</summary>
+	IDataEntityProperty ForeignProperty { get; }
 
-		/// <summary>获取或设置数值属性的精度。</summary>
-		byte Precision { get; set; }
+	/// <summary>获取一个值，指示关联的重复性关系。</summary>
+	DataAssociationMultiplicity Multiplicity { get; }
 
-		/// <summary>获取或设置数值属性的小数点位数。</summary>
-		byte Scale { get; set; }
+	/// <summary>获取关联目标，通常它是目标实体名，也支持跳跃关联(即关联到一个复合属性)。</summary>
+	/// <remarks>
+	///		<para>跳跃关联是指关联目标为实体的导航属性，实体与导航属性之间以冒号(:)区隔。</para>
+	/// </remarks>
+	string Port { get; }
 
-		/// <summary>获取或设置默认值。</summary>
-		object DefaultValue { get; set; }
+	/// <summary>获取关联的连接数组。</summary>
+	DataAssociationLink[] Links { get; }
 
-		/// <summary>获取或设置属性是否允许为空。</summary>
-		bool Nullable { get; set; }
-
-		/// <summary>获取或设置属性是否可以参与排序。</summary>
-		bool Sortable { get; set; }
-
-		/// <summary>获取数据序号器元数据。</summary>
-		IDataEntityPropertySequence Sequence { get; }
-	}
+	/// <summary>获取关联的约束数组。</summary>
+	DataAssociationConstraint[] Constraints { get; }
 }

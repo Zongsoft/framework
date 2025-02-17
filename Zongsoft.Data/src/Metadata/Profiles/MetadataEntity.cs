@@ -40,7 +40,6 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#region 构造函数
 		public MetadataEntity(string @namespace, string name, string baseName, bool immutable = false) : base(@namespace, name, baseName, immutable)
 		{
-			this.Properties = new MetadataEntityPropertyCollection(this);
 		}
 		#endregion
 
@@ -59,9 +58,6 @@ namespace Zongsoft.Data.Metadata.Profiles
 					throw new MetadataFileException($"The '{key}' primary key in the '{this.Name}' entity is undefined.");
 				if(property.IsComplex)
 					throw new MetadataFileException($"The '{key}' primary key in the '{this.Name}' entity cannot be a complex(navigation) property.");
-
-				//将主键属性的是否主键开关打开
-				((MetadataEntitySimplexProperty)property).SetPrimaryKey();
 
 				array[index++] = (IDataEntitySimplexProperty)property;
 			}

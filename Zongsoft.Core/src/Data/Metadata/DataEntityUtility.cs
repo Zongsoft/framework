@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,15 +31,20 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据实体复合属性特性的枚举。
-/// </summary>
-[Flags]
-public enum DataEntityComplexPropertyBehaviors
+public static class DataEntityUtility
 {
-	/// <summary>无</summary>
-	None = 0,
+	public static IDataEntity GetEntity(this IDataEntity entity, string name)
+	{
+		if(entity == null || string.IsNullOrEmpty(name))
+			return null;
 
-	/// <summary>主表</summary>
-	Principal = 1,
+		var index = name.LastIndexOf('.');
+		if(index > 0)
+			return Mapping.Entities[name[(index + 1)..], name[..index]];
+
+		if(!string.IsNullOrEmpty(entity.Namespace) && Mapping.Entities.TryGetValue(name, entity.Namespace, out var result))
+			return result;
+
+		return Mapping.Entities[name];
+	}
 }

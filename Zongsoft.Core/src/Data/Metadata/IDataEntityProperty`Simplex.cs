@@ -32,14 +32,37 @@ using System;
 namespace Zongsoft.Data.Metadata;
 
 /// <summary>
-/// 表示数据实体复合属性特性的枚举。
+/// 表示数据实体单值属性的元数据类。
 /// </summary>
-[Flags]
-public enum DataEntityComplexPropertyBehaviors
+public interface IDataEntitySimplexProperty : IDataEntityProperty
 {
-	/// <summary>无</summary>
-	None = 0,
+	/// <summary>获取数据实体属性的别名（字段名）。</summary>
+	string Alias { get; }
 
-	/// <summary>主表</summary>
-	Principal = 1,
+	/// <summary>获取数据实体属性的数据类型。</summary>
+	System.Data.DbType Type { get; }
+
+	/// <summary>获取一个值，指示当前属性是否为主键。</summary>
+	bool IsPrimaryKey { get; }
+
+	/// <summary>获取或设置文本或数组属性的最大长度，单位：字节。</summary>
+	int Length { get; set; }
+
+	/// <summary>获取或设置数值属性的精度。</summary>
+	byte Precision { get; set; }
+
+	/// <summary>获取或设置数值属性的小数点位数。</summary>
+	byte Scale { get; set; }
+
+	/// <summary>获取或设置默认值。</summary>
+	object DefaultValue { get; set; }
+
+	/// <summary>获取或设置属性是否允许为空。</summary>
+	bool Nullable { get; set; }
+
+	/// <summary>获取或设置属性是否可以参与排序。</summary>
+	bool Sortable { get; set; }
+
+	/// <summary>获取或设置数据序号器元数据。</summary>
+	IDataEntityPropertySequence Sequence { get; set; }
 }

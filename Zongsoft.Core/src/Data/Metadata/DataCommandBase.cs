@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,70 +30,69 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+/// <summary>
+/// 表示数据命令的元数据类。
+/// </summary>
+public class DataCommandBase : IDataCommand, IEquatable<IDataCommand>, IEquatable<DataCommandBase>
 {
-	/// <summary>
-	/// 表示数据命令的元数据类。
-	/// </summary>
-	public class DataCommandBase : IDataCommand, IEquatable<IDataCommand>, IEquatable<DataCommandBase>
+	#region 构造函数
+	protected DataCommandBase(string @namespace, string name, string alias = null)
 	{
-		#region 构造函数
-		protected DataCommandBase(string @namespace, string name, string alias = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Namespace = @namespace;
-			this.Name = name.Trim();
-			this.Alias = alias;
-			this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.Trim().ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.Trim().ToLowerInvariant()}";
-			this.Parameters = new DataCommandParameterCollection();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取所属命名空间。</summary>
-		public string Namespace { get; }
-
-		/// <summary>获取数据命令的名称。</summary>
-		public string Name { get; }
-
-		/// <summary>获取数据命令的限定名称。</summary>
-		public string QualifiedName { get; }
-
-		/// <summary>获取或设置数据命令的类型。</summary>
-		public DataCommandType Type { get; set; }
-
-		/// <summary>获取或设置数据命令的别名（表名、存储过程名）。</summary>
-		public string Alias { get; set; }
-
-		/// <summary>获取或设置数据命令支持的驱动。</summary>
-		public string Driver { get; set; }
-
-		/// <summary>获取或设置数据命令的变化性。</summary>
-		public DataCommandMutability Mutability { get; set; }
-
-		/// <summary>获取数据命令的参数集合。</summary>
-		public DataCommandParameterCollection Parameters { get; }
-
-		/// <summary>获取数据命令的脚本对象。</summary>
-		public IDataCommandScriptor Scriptor { get; protected set; }
-		#endregion
-
-		#region 重写方法
-		public bool Equals(IDataCommand other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
-		public bool Equals(DataCommandBase other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
-		public override bool Equals(object obj) => obj is DataCommandBase other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.QualifiedName);
-		public override string ToString()
-		{
-			var qualifiedName = $"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)})";
-
-			if(this.Mutability != DataCommandMutability.None)
-				qualifiedName += $"!{this.Mutability}";
-
-			return qualifiedName;
-		}
-		#endregion
+		this.Namespace = @namespace;
+		this.Name = name.Trim();
+		this.Alias = alias;
+		this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.Trim().ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.Trim().ToLowerInvariant()}";
+		this.Parameters = new();
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取所属命名空间。</summary>
+	public string Namespace { get; }
+
+	/// <summary>获取数据命令的名称。</summary>
+	public string Name { get; }
+
+	/// <summary>获取数据命令的限定名称。</summary>
+	public string QualifiedName { get; }
+
+	/// <summary>获取或设置数据命令的类型。</summary>
+	public DataCommandType Type { get; set; }
+
+	/// <summary>获取或设置数据命令的别名（表名、存储过程名）。</summary>
+	public string Alias { get; set; }
+
+	/// <summary>获取或设置数据命令支持的驱动。</summary>
+	public string Driver { get; set; }
+
+	/// <summary>获取或设置数据命令的变化性。</summary>
+	public DataCommandMutability Mutability { get; set; }
+
+	/// <summary>获取数据命令的参数集合。</summary>
+	public DataCommandParameterCollection Parameters { get; }
+
+	/// <summary>获取数据命令的脚本对象。</summary>
+	public IDataCommandScriptor Scriptor { get; protected set; }
+	#endregion
+
+	#region 重写方法
+	public bool Equals(IDataCommand other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
+	public bool Equals(DataCommandBase other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
+	public override bool Equals(object obj) => obj is DataCommandBase other && this.Equals(other);
+	public override int GetHashCode() => HashCode.Combine(this.QualifiedName);
+	public override string ToString()
+	{
+		var qualifiedName = $"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)})";
+
+		if(this.Mutability != DataCommandMutability.None)
+			qualifiedName += $"!{this.Mutability}";
+
+		return qualifiedName;
+	}
+	#endregion
 }

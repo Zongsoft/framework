@@ -101,7 +101,7 @@ namespace Zongsoft.Data.Common
 				return context.Method switch
 				{
 					DataAccessMethod.Select or DataAccessMethod.Exists or DataAccessMethod.Aggregate => _readables.Get(),
-					DataAccessMethod.Execute => ((DataExecuteContextBase)context).Command.Mutability == Metadata.CommandMutability.None ? _readables.Get() : _writables.Get(),
+					DataAccessMethod.Execute => ((DataExecuteContextBase)context).Command.Mutability == Metadata.DataCommandMutability.None ? _readables.Get() : _writables.Get(),
 					_ => _writables.Get(),
 				};
 			}

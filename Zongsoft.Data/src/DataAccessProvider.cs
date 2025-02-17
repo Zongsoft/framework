@@ -37,7 +37,7 @@ namespace Zongsoft.Data
 	public class DataAccessProvider : DataAccessProviderBase<DataAccess>
 	{
 		#region 单例字段
-		public static readonly DataAccessProvider Instance = new DataAccessProvider();
+		public static readonly DataAccessProvider Instance = new();
 		#endregion
 
 		#region 重写方法

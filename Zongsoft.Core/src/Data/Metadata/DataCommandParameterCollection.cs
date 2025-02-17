@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+public class DataCommandParameterCollection() : KeyedCollection<string, IDataCommandParameter>(StringComparer.OrdinalIgnoreCase)
 {
-	public class DataCommandParameterCollection() : KeyedCollection<string, IDataCommandParameter>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(IDataCommandParameter parameter) => parameter.Name;
-	}
+	protected override string GetKeyForItem(IDataCommandParameter parameter) => parameter.Name;
 }

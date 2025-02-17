@@ -32,8 +32,8 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-using Zongsoft.Data.Metadata;
 using Zongsoft.Services;
+using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data;
 
@@ -100,7 +100,7 @@ public static class Mapping
 			if(this.IsLoaded)
 				return;
 
-			//初始加载器集合
+			//初始化加载器集合
 			this.Initialize();
 
 			foreach(var loader in this.Items)
@@ -155,7 +155,7 @@ public static class Mapping
 		protected override void SetItem(int index, Loader loader) => throw new NotSupportedException();
 		protected override void RemoveItem(int index)
 		{
-			if(_loads > 0 && index >= 0)
+			if(_loads > 0 && index >= 0 && base[index].IsLoaded)
 				Interlocked.Decrement(ref _loads);
 		}
 		#endregion
@@ -194,23 +194,26 @@ public static class Mapping
 					return;
 
 				//加载元数据
-				(var entities, var commands) = this.OnLoad();
+				var results = this.OnLoad();
 
-				if(entities != null)
+				foreach(var result in results)
 				{
-					foreach(var entity in entities)
+					if(result.Entities != null)
 					{
-						if(entity != null)
-							Entities.TryAdd(entity);
+						foreach(var entity in result.Entities)
+						{
+							if(entity != null)
+								SetEntity(entity);
+						}
 					}
-				}
 
-				if(commands != null)
-				{
-					foreach(var command in commands)
+					if(result.Commands != null)
 					{
-						if(command != null)
-							Commands.TryAdd(command);
+						foreach(var command in result.Commands)
+						{
+							if(command != null)
+								SetCommand(command);
+						}
 					}
 				}
 			}
@@ -225,8 +228,64 @@ public static class Mapping
 		}
 		#endregion
 
+		#region 私有方法
+		private static void SetEntity(IDataEntity entity)
+		{
+			if(entity == null)
+				return;
+
+			if(Entities.TryAdd(entity))
+				return;
+
+			var existed = Entities[entity.Name, entity.Namespace];
+
+			foreach(var property in entity.Properties)
+			{
+				existed.Properties.Add(property);
+			}
+
+			if(string.IsNullOrEmpty(existed.Alias))
+				existed.Alias = entity.Alias;
+			if(string.IsNullOrEmpty(existed.BaseName))
+				existed.BaseName = entity.BaseName;
+			if(string.IsNullOrEmpty(existed.Driver))
+				existed.Driver = entity.Driver;
+		}
+
+		private static void SetCommand(IDataCommand command)
+		{
+			if(command == null)
+				return;
+
+			if(_commands.TryAdd(command))
+				return;
+
+			throw new DataException($"The specified '{command}' data command mapping cannot be defined repeatedly.");
+		}
+		#endregion
+
 		#region 抽象方法
-		protected abstract (IEnumerable<IDataEntity> entities, IEnumerable<IDataCommand> commands) OnLoad();
+		protected abstract IEnumerable<Result> OnLoad();
+		#endregion
+
+		#region 嵌套结构
+		public readonly struct Result
+		{
+			public Result(IEnumerable<IDataCommand> commands, IEnumerable<IDataEntity> entities)
+			{
+				this.Commands = commands;
+				this.Entities = entities;
+			}
+
+			public Result(IEnumerable<IDataEntity> entities, IEnumerable<IDataCommand> commands)
+			{
+				this.Entities = entities;
+				this.Commands = commands;
+			}
+
+			public IEnumerable<IDataEntity> Entities { get; }
+			public IEnumerable<IDataCommand> Commands { get; }
+		}
 		#endregion
 	}
 	#endregion

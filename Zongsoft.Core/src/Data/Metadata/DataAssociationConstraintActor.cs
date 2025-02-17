@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Data.Metadata
-{
-	/// <summary>
-	/// 表示关联约束主体的枚举。
-	/// </summary>
-	public enum DataAssociationConstraintActor
-	{
-		/// <summary>本键</summary>
-		Principal,
+namespace Zongsoft.Data.Metadata;
 
-		/// <summary>外链</summary>
-		Foreign,
-	}
+/// <summary>
+/// 表示关联约束主体的枚举。
+/// </summary>
+public enum DataAssociationConstraintActor
+{
+	/// <summary>本键</summary>
+	Principal,
+
+	/// <summary>外链</summary>
+	Foreign,
 }

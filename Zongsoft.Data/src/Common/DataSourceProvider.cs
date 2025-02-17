@@ -38,7 +38,7 @@ namespace Zongsoft.Data.Common
 	public class DataSourceProvider : IDataSourceProvider
 	{
 		#region 单例字段
-		public static readonly DataSourceProvider Default = new DataSourceProvider();
+		public static readonly DataSourceProvider Default = new();
 		#endregion
 
 		#region 私有构造

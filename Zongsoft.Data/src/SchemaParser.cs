@@ -39,21 +39,14 @@ namespace Zongsoft.Data
 {
 	public class SchemaParser : SchemaParserBase<SchemaMember>
 	{
-		#region 成员字段
-		private IDataProvider _provider;
-		#endregion
-
-		#region 构造函数
-		public SchemaParser(IDataProvider provider)
-		{
-			_provider = provider ?? throw new ArgumentNullException(nameof(provider));
-		}
+		#region 单例字段
+		public static readonly SchemaParser Instance = new();
 		#endregion
 
 		#region 解析方法
 		public override ISchema<SchemaMember> Parse(string name, string expression, Type entityType)
 		{
-			var entity = _provider.Metadata.Entities[name];
+			var entity = Mapping.Entities[name];
 
 			if(string.IsNullOrWhiteSpace(expression))
 				expression = "*";

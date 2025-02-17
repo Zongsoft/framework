@@ -30,38 +30,37 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+/// <summary>
+/// 表示数据命令的元数据类。
+/// </summary>
+public interface IDataCommand : IEquatable<IDataCommand>
 {
-	/// <summary>
-	/// 表示数据命令的元数据类。
-	/// </summary>
-	public interface IDataCommand : IEquatable<IDataCommand>
-	{
-		/// <summary>获取所属命名空间。</summary>
-		string Namespace { get; }
+	/// <summary>获取所属命名空间。</summary>
+	string Namespace { get; }
 
-		/// <summary>获取数据命令的名称。</summary>
-		string Name { get; }
+	/// <summary>获取数据命令的名称。</summary>
+	string Name { get; }
 
-		/// <summary>获取数据命令的限定名称。</summary>
-		string QualifiedName { get; }
+	/// <summary>获取数据命令的限定名称。</summary>
+	string QualifiedName { get; }
 
-		/// <summary>获取或设置命令的类型。</summary>
-		DataCommandType Type { get; set; }
+	/// <summary>获取或设置命令的类型。</summary>
+	DataCommandType Type { get; set; }
 
-		/// <summary>获取或设置数据命令的别名（函数或存储过程的名称）。</summary>
-		string Alias { get; set; }
+	/// <summary>获取或设置数据命令的别名（函数或存储过程的名称）。</summary>
+	string Alias { get; set; }
 
-		/// <summary>获取或设置数据命令支持的驱动。</summary>
-		string Driver { get; set; }
+	/// <summary>获取或设置数据命令支持的驱动。</summary>
+	string Driver { get; set; }
 
-		/// <summary>获取或设置命令的变化性。</summary>
-		DataCommandMutability Mutability { get; set; }
+	/// <summary>获取或设置命令的变化性。</summary>
+	DataCommandMutability Mutability { get; set; }
 
-		/// <summary>获取数据命令的参数集合。</summary>
-		DataCommandParameterCollection Parameters { get; }
+	/// <summary>获取数据命令的参数集合。</summary>
+	DataCommandParameterCollection Parameters { get; }
 
-		/// <summary>获取数据命令的脚本对象。</summary>
-		IDataCommandScriptor Scriptor { get; }
-	}
+	/// <summary>获取数据命令的脚本对象。</summary>
+	IDataCommandScriptor Scriptor { get; }
 }

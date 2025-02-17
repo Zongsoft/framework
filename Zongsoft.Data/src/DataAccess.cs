@@ -114,7 +114,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 模式解析
-		protected override ISchemaParser CreateSchema() => new SchemaParser(this.Provider);
+		protected override ISchemaParser CreateSchema() => SchemaParser.Instance;
 		#endregion
 
 		#region 序号构建
@@ -197,10 +197,6 @@ namespace Zongsoft.Data
 		{
 			#region 常量定义
 			private const string SEQUENCE_KEY = "Zongsoft.Sequence:";
-			#endregion
-
-			#region 成员字段
-			private readonly IDataProvider _provider = accessor.Provider;
 			#endregion
 
 			#region 公共方法

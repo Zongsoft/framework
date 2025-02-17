@@ -86,22 +86,6 @@ namespace Zongsoft.Data.Metadata
 			throw new InvalidOperationException($"The specified '{path}' member does not exist in the '{entity}' entity.");
 		}
 
-		public static IDataEntity GetEntity(this IDataEntity entity, string name)
-		{
-			if(entity == null || string.IsNullOrEmpty(name))
-				return null;
-
-			var index = name.LastIndexOf('.');
-			if(index > 0)
-				return entity.Container.Entities[name[(index + 1)..], name[..index]];
-
-			if(!string.IsNullOrEmpty(entity.Namespace) &&
-				entity.Container.Entities.TryGetValue(name, entity.Namespace, out var result))
-				return result;
-
-			return entity.Container.Entities[name];
-		}
-
 		/// <summary>
 		/// 查找指定实体元素继承的父实体元素。
 		/// </summary>
@@ -112,7 +96,7 @@ namespace Zongsoft.Data.Metadata
 			if(entity == null || string.IsNullOrEmpty(entity.BaseName))
 				return null;
 
-			return GetEntity(entity, entity.BaseName) ?? throw new DataException($"The '{entity.BaseName}' base of '{entity.Name}' entity does not exist.");
+			return entity.GetEntity(entity.BaseName) ?? throw new DataException($"The '{entity.BaseName}' base of '{entity.Name}' entity does not exist.");
 		}
 
 		/// <summary>

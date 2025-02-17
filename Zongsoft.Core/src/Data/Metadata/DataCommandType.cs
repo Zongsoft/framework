@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Data.Metadata
-{
-	/// <summary>
-	/// 表示数据命令类型的枚举。
-	/// </summary>
-	public enum DataCommandType
-	{
-		/// <summary>命令文本</summary>
-		Text,
+namespace Zongsoft.Data.Metadata;
 
-		/// <summary>函数或存储过程</summary>
-		Procedure,
-	}
+/// <summary>
+/// 表示数据命令类型的枚举。
+/// </summary>
+public enum DataCommandType
+{
+	/// <summary>命令文本</summary>
+	Text,
+
+	/// <summary>函数或存储过程</summary>
+	Procedure,
 }

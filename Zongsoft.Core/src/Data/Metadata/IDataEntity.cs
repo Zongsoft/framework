@@ -28,46 +28,44 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+/// <summary>
+/// 表示数据实体的元数据接口。
+/// </summary>
+public interface IDataEntity : IEquatable<IDataEntity>
 {
-	/// <summary>
-	/// 表示数据实体的元数据接口。
-	/// </summary>
-	public interface IDataEntity : IEquatable<IDataEntity>
-	{
-		#region 属性声明
-		/// <summary>获取所属命名空间。</summary>
-		string Namespace { get; }
+	#region 属性声明
+	/// <summary>获取所属命名空间。</summary>
+	string Namespace { get; }
 
-		/// <summary>获取数据实体的名称。</summary>
-		string Name { get; }
+	/// <summary>获取数据实体的名称。</summary>
+	string Name { get; }
 
-		/// <summary>获取数据实体的限定名称。</summary>
-		string QualifiedName { get; }
+	/// <summary>获取数据实体的限定名称。</summary>
+	string QualifiedName { get; }
 
-		/// <summary>获取或设置数据实体映射的别名（表名）。</summary>
-		string Alias { get; set; }
+	/// <summary>获取或设置数据实体映射的别名（表名）。</summary>
+	string Alias { get; set; }
 
-		/// <summary>获取或设置数据实体继承的父实体名。</summary>
-		string BaseName { get; set; }
+	/// <summary>获取或设置数据实体继承的父实体名。</summary>
+	string BaseName { get; set; }
 
-		/// <summary>获取或设置数据实体支持的驱动。</summary>
-		string Driver { get; set; }
+	/// <summary>获取或设置数据实体支持的驱动。</summary>
+	string Driver { get; set; }
 
-		/// <summary>获取或设置一个值，指示是否为不可变实体，默认为否(False)。</summary>
-		/// <remarks>不可变实体只支持新增和删除操作。</remarks>
-		bool Immutable { get; set; }
+	/// <summary>获取或设置一个值，指示是否为不可变实体，默认为否(False)。</summary>
+	/// <remarks>不可变实体只支持新增和删除操作。</remarks>
+	bool Immutable { get; set; }
 
-		/// <summary>获取一个值，指示该实体是否定义了主键。</summary>
-		bool HasKey => this.Key != null && this.Key.Length > 0;
+	/// <summary>获取一个值，指示该实体是否定义了主键。</summary>
+	bool HasKey => this.Key != null && this.Key.Length > 0;
 
-		/// <summary>获取或设置数据实体的主键。</summary>
-		IDataEntitySimplexProperty[] Key { get; set; }
+	/// <summary>获取数据实体的主键。</summary>
+	IDataEntitySimplexProperty[] Key { get; }
 
-		/// <summary>获取数据实体的属性元数据集合。</summary>
-		KeyedCollection<string, IDataEntityProperty> Properties { get; }
-		#endregion
-	}
+	/// <summary>获取数据实体的属性元数据集合。</summary>
+	DataEntityPropertyCollection Properties { get; }
+	#endregion
 }

@@ -251,7 +251,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 						break;
 					case XML_PROPERTY_ELEMENT:
-						var property = new MetadataEntitySimplexProperty(entity,
+						var property = new DataEntitySimplexProperty(entity,
 						                   reader.GetAttribute(XML_NAME_ATTRIBUTE),
 										   GetDbType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
 										   GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
@@ -266,17 +266,17 @@ namespace Zongsoft.Data.Metadata.Profiles
 						};
 
 						//设置默认值的字面量
-						property.SetDefaultValue(GetAttributeValue<string>(reader, XML_DEFAULT_ATTRIBUTE));
+						property.DefaultValue = GetAttributeValue<string>(reader, XML_DEFAULT_ATTRIBUTE);
 
 						//设置序号器元数据信息
-						property.SetSequence(GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE));
+						property.Sequence = DataEntityPropertySequence.Parse(property, GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE));
 
 						//将解析成功的属性元素加入到实体的属性集合
 						entity.Properties.Add(property);
 
 						break;
 					case XML_COMPLEXPROPERTY_ELEMENT:
-						var complexProperty = new MetadataEntityComplexProperty(entity,
+						var complexProperty = new DataEntityComplexProperty(entity,
 							reader.GetAttribute(XML_NAME_ATTRIBUTE),
 							reader.GetAttribute(XML_PORT_ATTRIBUTE),
 							GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
@@ -381,7 +381,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 				Type = GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Text),
 				Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
 				Driver = GetAttributeValue<string>(reader, XML_DRIVER_ATTRIBUTE),
-				Mutability = GetAttributeValue(reader, XML_MUTABILITY_ATTRIBUTE, CommandMutability.Delete | CommandMutability.Insert | CommandMutability.Update),
+				Mutability = GetAttributeValue(reader, XML_MUTABILITY_ATTRIBUTE, DataCommandMutability.Delete | DataCommandMutability.Insert | DataCommandMutability.Update),
 			};
 
 			//注意：首先尝试从外部脚本文件中加载命令文本
@@ -397,7 +397,7 @@ namespace Zongsoft.Data.Metadata.Profiles
 				switch(reader.LocalName)
 				{
 					case XML_PARAMETER_ELEMENT:
-						var parameter = new MetadataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), GetDbType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
+						var parameter = new DataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), GetDbType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
 						{
 							Direction = GetAttributeValue(reader, XML_DIRECTION_ATTRIBUTE, value => GetDirection(value)),
 							Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),

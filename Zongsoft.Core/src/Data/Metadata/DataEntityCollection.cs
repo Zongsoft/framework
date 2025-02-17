@@ -30,38 +30,37 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+public class DataEntityCollection() : KeyedCollection<string, IDataEntity>(StringComparer.OrdinalIgnoreCase)
 {
-	public class DataEntityCollection() : KeyedCollection<string, IDataEntity>(StringComparer.OrdinalIgnoreCase)
+	#region 公共属性
+	public IDataEntity this[string name, string @namespace = null] => base[GetKey(name, @namespace)];
+	#endregion
+
+	#region 公共方法
+	public bool TryAdd(IDataEntity entity)
 	{
-		#region 公共属性
-		public IDataEntity this[string name, string @namespace = null] => base[GetKey(name, @namespace)];
-		#endregion
+		if(entity == null)
+			throw new ArgumentNullException(nameof(entity));
 
-		#region 公共方法
-		public bool TryAdd(IDataEntity entity)
-		{
-			if(entity == null)
-				throw new ArgumentNullException(nameof(entity));
+		if(this.Contains(entity))
+			return false;
 
-			if(this.Contains(entity))
-				return false;
-
-			this.Add(entity);
-			return true;
-		}
-
-		public bool Contains(string name, string @namespace = null) => base.Contains(GetKey(name, @namespace));
-		public bool Remove(string name, string @namespace = null) => base.Remove(GetKey(name, @namespace));
-		public bool TryGetValue(string name, string @namespace, out IDataEntity value) => base.TryGetValue(GetKey(name, @namespace), out value);
-		#endregion
-
-		#region 重写方法
-		protected override string GetKeyForItem(IDataEntity entity) => entity.QualifiedName;
-		#endregion
-
-		#region 私有方法
-		private static string GetKey(string name, string @namespace) => string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
-		#endregion
+		this.Add(entity);
+		return true;
 	}
+
+	public bool Contains(string name, string @namespace = null) => base.Contains(GetKey(name, @namespace));
+	public bool Remove(string name, string @namespace = null) => base.Remove(GetKey(name, @namespace));
+	public bool TryGetValue(string name, string @namespace, out IDataEntity value) => base.TryGetValue(GetKey(name, @namespace), out value);
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(IDataEntity entity) => entity.QualifiedName;
+	#endregion
+
+	#region 私有方法
+	private static string GetKey(string name, string @namespace) => string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
+	#endregion
 }

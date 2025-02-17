@@ -38,8 +38,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 		#region 成员字段
 		private readonly string _name;
 		private readonly string _filePath;
-		private readonly MetadataEntityCollection _entities;
-		private readonly MetadataCommandCollection _commands;
+		private readonly DataEntityCollection _entities;
+		private readonly DataCommandCollection _commands;
 		#endregion
 
 		#region 构造函数
@@ -62,10 +62,10 @@ namespace Zongsoft.Data.Metadata.Profiles
 		public string FilePath => _filePath;
 
 		/// <summary>获取映射文件中的实体元素集。</summary>
-		public MetadataEntityCollection Entities => _entities;
+		public DataEntityCollection Entities => _entities;
 
 		/// <summary>获取映射文件中的命令元素集。</summary>
-		public MetadataCommandCollection Commands => _commands;
+		public DataCommandCollection Commands => _commands;
 		#endregion
 
 		#region 加载方法

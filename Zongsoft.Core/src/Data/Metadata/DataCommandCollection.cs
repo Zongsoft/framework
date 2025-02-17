@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,38 +30,37 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+public class DataCommandCollection() : KeyedCollection<string, IDataCommand>(StringComparer.OrdinalIgnoreCase)
 {
-	public class DataCommandCollection() : KeyedCollection<string, IDataCommand>(StringComparer.OrdinalIgnoreCase)
+	#region 公共属性
+	public IDataCommand this[string name, string @namespace = null] => base[GetKey(name, @namespace)];
+	#endregion
+
+	#region 公共方法
+	public bool TryAdd(IDataCommand command)
 	{
-		#region 公共属性
-		public IDataCommand this[string name, string @namespace = null] => base[GetKey(name, @namespace)];
-		#endregion
+		if(command == null)
+			throw new ArgumentNullException(nameof(command));
 
-		#region 公共方法
-		public bool TryAdd(IDataCommand command)
-		{
-			if(command == null)
-				throw new ArgumentNullException(nameof(command));
+		if(this.Contains(command))
+			return false;
 
-			if(this.Contains(command))
-				return false;
-
-			this.Add(command);
-			return true;
-		}
-
-		public bool Contains(string name, string @namespace = null) => base.Contains(GetKey(name, @namespace));
-		public bool Remove(string name, string @namespace = null) => base.Remove(GetKey(name, @namespace));
-		public bool TryGetValue(string name, string @namespace, out IDataCommand value) => base.TryGetValue(GetKey(name, @namespace), out value);
-		#endregion
-
-		#region 重写方法
-		protected override string GetKeyForItem(IDataCommand command) => command.QualifiedName;
-		#endregion
-
-		#region 私有方法
-		private static string GetKey(string name, string @namespace) => string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
-		#endregion
+		this.Add(command);
+		return true;
 	}
+
+	public bool Contains(string name, string @namespace = null) => base.Contains(GetKey(name, @namespace));
+	public bool Remove(string name, string @namespace = null) => base.Remove(GetKey(name, @namespace));
+	public bool TryGetValue(string name, string @namespace, out IDataCommand value) => base.TryGetValue(GetKey(name, @namespace), out value);
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(IDataCommand command) => command.QualifiedName;
+	#endregion
+
+	#region 私有方法
+	private static string GetKey(string name, string @namespace) => string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
+	#endregion
 }

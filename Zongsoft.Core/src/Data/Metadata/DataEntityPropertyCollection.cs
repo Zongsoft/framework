@@ -9,38 +9,37 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Data library.
+ * This file is part of Zongsoft.Core library.
  *
- * The Zongsoft.Data is free software: you can redistribute it and/or modify
+ * The Zongsoft.Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Data is distributed in the hope that it will be useful,
+ * The Zongsoft.Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Data library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Metadata.Profiles
-{
-    public class MetadataEntityCollection() : KeyedCollection<string, MetadataEntity>(StringComparer.OrdinalIgnoreCase), IEnumerable<IDataEntity>
-    {
-		protected override string GetKeyForItem(MetadataEntity entity) => entity.Name;
+namespace Zongsoft.Data.Metadata;
 
-		IEnumerator<IDataEntity> IEnumerable<IDataEntity>.GetEnumerator()
-		{
-			foreach(var entity in this)
-				yield return entity;
-		}
-	}
+public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<string, IDataEntityProperty>(StringComparer.OrdinalIgnoreCase)
+{
+	#region 公共属性
+	public IDataEntity Entity { get; } = entity;
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(IDataEntityProperty property) => property.Name;
+	#endregion
 }

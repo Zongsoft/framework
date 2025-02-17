@@ -28,19 +28,17 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+public enum DataAssociationMultiplicity
 {
-	public enum DataAssociationMultiplicity
-	{
-		[Zongsoft.Components.Alias("?")]
-		ZeroOrOne,
+	[Zongsoft.Components.Alias("?")]
+	ZeroOrOne,
 
-		[Zongsoft.Components.Alias("1")]
-		One,
+	[Zongsoft.Components.Alias("1")]
+	One,
 
-		[Zongsoft.Components.Alias("*")]
-		Many,
-	}
+	[Zongsoft.Components.Alias("*")]
+	Many,
 }
