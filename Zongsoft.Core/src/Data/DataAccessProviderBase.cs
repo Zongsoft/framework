@@ -28,7 +28,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Linq;
 
 using Zongsoft.Caching;
 using Zongsoft.Services;
@@ -49,21 +49,21 @@ namespace Zongsoft.Data
 
 		#region 公共方法
 		public TDataAccess GetAccessor(string name = null) => this.GetAccessor(name, null);
-		public TDataAccess GetAccessor(string name, params IEnumerable<IConnectionSettings> settings)
+		public TDataAccess GetAccessor(string name, IDataAccessOptions options = null)
 		{
-			if(string.IsNullOrEmpty(name) || settings == null)
+			if(string.IsNullOrEmpty(name) || options == null || options.Settings == null || !options.Settings.Any())
 				name = GetName(name);
 
 			return _accesses.GetOrCreate(name, key =>
 			{
-				var accessor = this.CreateAccessor(name, settings);
+				var accessor = this.CreateAccessor(name, options);
 				return (accessor, accessor.Disposed);
 			});
 		}
 		#endregion
 
 		#region 抽象方法
-		protected abstract TDataAccess CreateAccessor(string name, params IEnumerable<IConnectionSettings> settings);
+		protected abstract TDataAccess CreateAccessor(string name, IDataAccessOptions options);
 		#endregion
 
 		#region 私有方法
@@ -92,7 +92,7 @@ namespace Zongsoft.Data
 		#region 显式实现
 		TDataAccess IServiceProvider<TDataAccess>.GetService(string name) => this.GetAccessor(name);
 		IDataAccess IDataAccessProvider.GetAccessor(string name) => this.GetAccessor(name);
-		IDataAccess IDataAccessProvider.GetAccessor(string name, params IEnumerable<IConnectionSettings> settings) => this.GetAccessor(name, settings);
+		IDataAccess IDataAccessProvider.GetAccessor(string name, IDataAccessOptions options) => this.GetAccessor(name, options);
 		#endregion
 	}
 }

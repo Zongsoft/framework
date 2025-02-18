@@ -9,37 +9,39 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Data library.
+ * This file is part of Zongsoft.Core library.
  *
- * The Zongsoft.Data is free software: you can redistribute it and/or modify
+ * The Zongsoft.Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Data is distributed in the hope that it will be useful,
+ * The Zongsoft.Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Data library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common
+using Zongsoft.Configuration;
+
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示构建数据访问器的选项设置接口。
+/// </summary>
+public interface IDataAccessOptions
 {
-	/// <summary>
-	/// 表示数据提供程序工厂的接口。
-	/// </summary>
-	public interface IDataProviderFactory : IEnumerable<IDataProvider>
-	{
-		/// <summary>获取或创建指定应用名的数据提供程序。</summary>
-		/// <param name="name">指定要获取或创建的应用名。</param>
-		/// <returns>返回获取或创建成功的数据提供程序。</returns>
-		IDataProvider GetProvider(string name);
-	}
+	/// <summary>获取或设置数据访问的过滤器集合。</summary>
+	IEnumerable<object> Filters { get; set; }
+
+	/// <summary>获取或设置数据访问的连接设置集合。</summary>
+	IEnumerable<IConnectionSettings> Settings { get; set; }
 }

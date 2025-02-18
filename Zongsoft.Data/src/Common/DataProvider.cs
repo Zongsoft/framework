@@ -31,8 +31,9 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
-using Zongsoft.Data.Metadata;
+using Zongsoft.Configuration;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.Common
@@ -52,7 +53,7 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 构造函数
-		public DataProvider(string name)
+		public DataProvider(string name, IEnumerable<IConnectionSettings> settings)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -60,7 +61,7 @@ namespace Zongsoft.Data.Common
 			this.Name = name.Trim();
 
 			_executor = DataExecutor.Instance;
-			_multiplexer = new DataMultiplexer(this.Name);
+			_multiplexer = new DataMultiplexer(this.Name, settings);
 		}
 		#endregion
 
@@ -338,15 +339,24 @@ namespace Zongsoft.Data.Common
 			#endregion
 		}
 
-		private class DataMultiplexer(string name) : IDataMultiplexer
+		private class DataMultiplexer : IDataMultiplexer
 		{
 			#region 成员字段
-			private readonly string _name = name;
+			private readonly string _name;
 			private IDataSourceSelector _selector;
+			private IDataSourceProvider _provider;
+			#endregion
+
+			#region 构造函数
+			public DataMultiplexer(string name, IEnumerable<IConnectionSettings> settings)
+			{
+				_name = name;
+				_provider = new DataSourceProvider(settings);
+			}
 			#endregion
 
 			#region 公共属性
-			public IDataSourceProvider Provider => DataSourceProvider.Default;
+			public IDataSourceProvider Provider => _provider;
 			public IDataSourceSelector Selector => _selector;
 			#endregion
 

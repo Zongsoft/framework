@@ -42,25 +42,23 @@ namespace Zongsoft.Data
 	public class DataAccess : DataAccessBase
 	{
 		#region 成员字段
-		private readonly IDataProvider _provider;
+		private IDataProvider _provider;
 		#endregion
 
 		#region 构造函数
-		public DataAccess(string name) : this(name, null) { }
-		public DataAccess(string name, IEnumerable<object> filters) : base(name)
+		public DataAccess(string name, IDataAccessOptions options = null) : base(name)
 		{
-			if(filters != null)
+			foreach(var filter in DataEnvironment.Filters)
+				this.Filters.Add(filter);
+
+			if(options?.Filters != null)
 			{
-				foreach(var filter in filters)
-				{
-					if(filter != null)
-						this.Filters.Add(filter);
-				}
+				foreach(var filter in options.Filters)
+					this.Filters.Add(filter);
 			}
 
-			_provider = DataEnvironment.Providers.GetProvider(this.Name);
-			if(_provider != null)
-				_provider.Error += this.Provider_Error;
+			_provider = new DataProvider(name, options.Settings);
+			_provider.Error += this.Provider_Error;
 		}
 		#endregion
 
@@ -190,6 +188,20 @@ namespace Zongsoft.Data
 
 		#region 异常事件
 		private void Provider_Error(object sender, DataAccessErrorEventArgs args) => this.OnError(args);
+		#endregion
+
+		#region 处置方法
+		protected override void Dispose(bool disposing)
+		{
+			//取消提供程序的事件监听
+			_provider.Error -= this.Provider_Error;
+
+			//置空提供程序
+			_provider = null;
+
+			//调用基类同名方法
+			base.Dispose(disposing);
+		}
 		#endregion
 
 		#region 嵌套子类

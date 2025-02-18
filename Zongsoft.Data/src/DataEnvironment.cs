@@ -29,41 +29,34 @@
 
 using System;
 using System.Reflection;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 using Zongsoft.Services;
 using Zongsoft.Data.Common;
-using Zongsoft.Data.Metadata;
-using Zongsoft.Data.Metadata.Profiles;
 
 namespace Zongsoft.Data
 {
 	/// <summary>
 	/// 提供数据访问操作的环境信息。
 	/// </summary>
-	[DefaultMember(nameof(Accessors))]
+	[DefaultMember(nameof(Filters))]
 	[Service(Members = $"{nameof(Accessors)},{nameof(Filters)}")]
 	public static class DataEnvironment
 	{
 		#region 成员字段
 		private static IDataAccessProvider _accessors;
-		private static IDataProviderFactory _providers;
 		private static IDataValidatorProvider _validators;
 		private static IDataPopulatorProviderFactory _populators;
-		private static readonly KeyedCollection<string, IDataDriver> _drivers;
-		private static readonly DataAccessFilterCollection _filters;
 		#endregion
 
 		#region 静态构造
 		static DataEnvironment()
 		{
 			_accessors = DataAccessProvider.Instance;
-			_providers = DataProviderFactory.Instance;
 			_validators = DataValidatorProvider.Instance;
 			_populators = DataPopulatorProviderFactory.Instance;
-			_drivers = new DataDriverCollection();
-			_filters = new DataAccessFilterCollection();
+
+			Drivers = new();
+			Filters = new();
 		}
 		#endregion
 
@@ -72,12 +65,6 @@ namespace Zongsoft.Data
 		{
 			get => _accessors;
 			set => _accessors = value ?? throw new ArgumentNullException();
-		}
-
-		public static IDataProviderFactory Providers
-		{
-			get => _providers;
-			set => _providers = value ?? throw new ArgumentNullException();
 		}
 
 		public static IDataValidatorProvider Validators
@@ -92,8 +79,8 @@ namespace Zongsoft.Data
 			set => _populators = value ?? throw new ArgumentNullException();
 		}
 
-		public static KeyedCollection<string, IDataDriver> Drivers => _drivers;
-		public static DataAccessFilterCollection Filters => _filters;
+		public static DataDriverCollection Drivers { get; }
+		public static DataAccessFilterCollection Filters { get; }
 		#endregion
 	}
 }

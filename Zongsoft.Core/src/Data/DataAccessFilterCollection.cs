@@ -74,6 +74,22 @@ namespace Zongsoft.Data
 				descriptor.OnFiltered(context);
 		}
 
+		public int Add(IEnumerable<object> filters)
+		{
+			if(filters == null)
+				return 0;
+
+			int count = 0;
+
+			foreach(var filter in filters)
+			{
+				if(this.Add(filter))
+					count++;
+			}
+
+			return count;
+		}
+
 		public bool Add(object instance)
 		{
 			if(instance == null)

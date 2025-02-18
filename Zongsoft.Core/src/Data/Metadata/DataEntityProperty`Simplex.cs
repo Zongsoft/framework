@@ -46,9 +46,25 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	#endregion
 
 	#region 构造函数
-	public DataEntitySimplexProperty(DataEntityBase entity, string name, System.Data.DbType type, bool immutable = false) : base(entity, name, immutable)
+	public DataEntitySimplexProperty(IDataEntity entity, string name, DbType type, bool nullable, bool immutable = false) : base(entity, name, immutable)
 	{
 		this.Type = type;
+		this.Nullable = nullable;
+	}
+
+	public DataEntitySimplexProperty(IDataEntity entity, string name, DbType type, int length, bool nullable, bool immutable = false) : base(entity, name, immutable)
+	{
+		this.Type = type;
+		this.Length = length;
+		this.Nullable = nullable;
+	}
+
+	public DataEntitySimplexProperty(IDataEntity entity, string name, DbType type, byte precision, byte scale, bool nullable, bool immutable = false) : base(entity, name, immutable)
+	{
+		this.Type = type;
+		this.Precision = precision;
+		this.Scale = scale;
+		this.Nullable = nullable;
 	}
 	#endregion
 
@@ -126,6 +142,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	/// <summary>获取或设置序号器元数据。</summary>
 	public IDataEntityPropertySequence Sequence { get; set; }
 
+	/// <summary>获取一个值，指示当前属性是否为主键。</summary>
 	public bool IsPrimaryKey
 	{
 		get

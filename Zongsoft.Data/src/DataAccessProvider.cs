@@ -46,9 +46,9 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 重写方法
-		protected override DataAccess CreateAccessor(string name, IEnumerable<IConnectionSettings> settings)
+		protected override DataAccess CreateAccessor(string name, IDataAccessOptions options)
 		{
-			var result = new DataAccess(name, DataEnvironment.Filters);
+			var result = new DataAccess(name, options);
 			var services = ApplicationContext.Current.Services;
 
 			if(!string.IsNullOrEmpty(name) && ApplicationContext.Current.Modules.TryGetValue(name, out var module))

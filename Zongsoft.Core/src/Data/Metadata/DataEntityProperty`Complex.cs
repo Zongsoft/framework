@@ -39,12 +39,27 @@ public class DataEntityComplexProperty : DataEntityPropertyBase, IDataEntityComp
 	#endregion
 
 	#region 构造函数
-	public DataEntityComplexProperty(IDataEntity entity, string name, string port, bool immutable = true) : base(entity, name, immutable)
+	public DataEntityComplexProperty(IDataEntity entity, string name, string port, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) : this(entity, name, port, true, behaviors) { }
+	public DataEntityComplexProperty(IDataEntity entity, string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) : base(entity, name, immutable)
 	{
 		if(string.IsNullOrWhiteSpace(port))
 			throw new ArgumentNullException(nameof(port));
 
 		this.Port = port.Trim();
+		this.Behaviors = behaviors;
+	}
+
+	public DataEntityComplexProperty(IDataEntity entity, string name, string port, bool immutable, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : this(entity, name, port, immutable, DataEntityComplexPropertyBehaviors.None, multiplicity, links) { }
+	public DataEntityComplexProperty(IDataEntity entity, string name, string port, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : this(entity, name, port, true, behaviors, multiplicity, links) { }
+	public DataEntityComplexProperty(IDataEntity entity, string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : base(entity, name, immutable)
+	{
+		if(string.IsNullOrWhiteSpace(port))
+			throw new ArgumentNullException(nameof(port));
+
+		this.Port = port.Trim();
+		this.Behaviors = behaviors;
+		this.Multiplicity = multiplicity;
+		this.Links = links;
 	}
 	#endregion
 

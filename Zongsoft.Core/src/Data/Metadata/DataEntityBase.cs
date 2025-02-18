@@ -83,6 +83,29 @@ public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<D
 	public DataEntityPropertyCollection Properties { get; }
 	#endregion
 
+	#region 内部方法
+	protected void SetKey(params ReadOnlySpan<string> keys)
+	{
+		if(keys.IsEmpty)
+			return;
+
+		var index = 0;
+		var array = new IDataEntitySimplexProperty[keys.Length];
+
+		for(int i = 0; i < keys.Length; i++)
+		{
+			if(!this.Properties.TryGetValue(keys[i], out var property))
+				throw new DataException($"The '{keys[i]}' primary key in the '{this.Name}' entity is undefined.");
+			if(property.IsComplex)
+				throw new DataException($"The '{keys[i]}' primary key in the '{this.Name}' entity cannot be a complex(navigation) property.");
+
+			array[index++] = (IDataEntitySimplexProperty)property;
+		}
+
+		this.Key = array;
+	}
+	#endregion
+
 	#region 重写方法
 	public bool Equals(IDataEntity other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
 	public bool Equals(DataEntityBase other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,22 +32,23 @@ using System.Collections.Generic;
 
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Data
-{
-	/// <summary>
-	/// 表示数据访问提供程序的接口。
-	/// </summary>
-	public interface IDataAccessProvider
-	{
-		/// <summary>获取或创建指定应用的数据访问器。</summary>
-		/// <param name="name">指定的应用名。</param>
-		/// <returns>返回指定应用名的数据访问器。</returns>
-		IDataAccess GetAccessor(string name = null);
+namespace Zongsoft.Data;
 
-		/// <summary>获取或创建指定应用的数据访问器。</summary>
-		/// <param name="name">指定的应用名。</param>
-		/// <param name="options">指定的数据访问器选项设置。</param>
-		/// <returns>返回指定应用名的数据访问器。</returns>
-		IDataAccess GetAccessor(string name, IDataAccessOptions options = null);
+/// <summary>
+/// 表示构建数据访问器的选项设置类。
+/// </summary>
+public class DataAccessOptions : IDataAccessOptions
+{
+	#region 构造函数
+	public DataAccessOptions(IEnumerable<IConnectionSettings> settings, IEnumerable<object> filters = null)
+	{
+		this.Settings = settings;
+		this.Filters = filters;
 	}
+	#endregion
+
+	#region 公共属性
+	public IEnumerable<object> Filters { get; set; }
+	public IEnumerable<IConnectionSettings> Settings { get; set; }
+	#endregion
 }

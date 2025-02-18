@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Data;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -41,5 +42,47 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 
 	#region 重写方法
 	protected override string GetKeyForItem(IDataEntityProperty property) => property.Name;
+	#endregion
+
+	#region 公共方法
+	public DataEntitySimplexProperty Simplex(string name, DbType type, bool nullable, bool immutable = false)
+	{
+		var property = new DataEntitySimplexProperty(this.Entity, name, type, nullable, immutable);
+		this.Add(property);
+		return property;
+	}
+
+	public DataEntitySimplexProperty Simplex(string name, DbType type, int length, bool nullable, bool immutable = false)
+	{
+		var property = new DataEntitySimplexProperty(this.Entity, name, type, length, nullable, immutable);
+		this.Add(property);
+		return property;
+	}
+
+	public DataEntitySimplexProperty Simplex(string name, DbType type, byte precision, byte scale, bool nullable, bool immutable = false)
+	{
+		var property = new DataEntitySimplexProperty(this.Entity, name, type, precision, scale, nullable, immutable);
+		this.Add(property);
+		return property;
+	}
+
+	public DataEntityComplexProperty Complex(string name, string port, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) => this.Complex(name, port, true, behaviors);
+	public DataEntityComplexProperty Complex(string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None)
+	{
+		var property = new DataEntityComplexProperty(this.Entity, name, port, immutable, behaviors);
+		this.Add(property);
+		return property;
+	}
+
+	public DataEntityComplexProperty Complex(string name, string port, bool immutable, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) =>
+		this.Complex(name, port, immutable, DataEntityComplexPropertyBehaviors.None, multiplicity, links);
+	public DataEntityComplexProperty Complex(string name, string port, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) =>
+		this.Complex(name, port, true, behaviors, multiplicity, links);
+	public DataEntityComplexProperty Complex(string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links)
+	{
+		var property = new DataEntityComplexProperty(this.Entity, name, port, immutable, behaviors, multiplicity, links);
+		this.Add(property);
+		return property;
+	}
 	#endregion
 }

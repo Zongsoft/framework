@@ -35,35 +35,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 	/// <summary>
 	/// 表示数据实体的元数据类。
 	/// </summary>
-	public class MetadataEntity : DataEntityBase
+	public class MetadataEntity(string @namespace, string name, string baseName, bool immutable = false) : DataEntityBase(@namespace, name, baseName, immutable)
 	{
-		#region 构造函数
-		public MetadataEntity(string @namespace, string name, string baseName, bool immutable = false) : base(@namespace, name, baseName, immutable)
-		{
-		}
-		#endregion
-
-		#region 内部方法
-		internal void SetKey(ICollection<string> keys)
-		{
-			if(keys == null || keys.Count == 0)
-				return;
-
-			var index = 0;
-			var array = new IDataEntitySimplexProperty[keys.Count];
-
-			foreach(var key in keys)
-			{
-				if(!this.Properties.TryGetValue(key, out var property))
-					throw new MetadataFileException($"The '{key}' primary key in the '{this.Name}' entity is undefined.");
-				if(property.IsComplex)
-					throw new MetadataFileException($"The '{key}' primary key in the '{this.Name}' entity cannot be a complex(navigation) property.");
-
-				array[index++] = (IDataEntitySimplexProperty)property;
-			}
-
-			this.Key = array;
-		}
-		#endregion
+		internal void SetKey(IReadOnlyCollection<string> keys) => base.SetKey([..keys]);
 	}
 }

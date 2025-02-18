@@ -59,10 +59,10 @@ namespace Zongsoft.Data
 	public class DataExistContext : DataExistContextBase, IDataAccessContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
-		public DataExistContext(IDataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, criteria, options)
+		public DataExistContext(DataAccess dataAccess, string name, ICondition criteria, IDataExistsOptions options = null) : base(dataAccess, name, criteria, options)
 		{
 			this.Aliaser = new Common.Expressions.Aliaser();
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Provider = dataAccess.Provider;
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
@@ -79,10 +79,10 @@ namespace Zongsoft.Data
 	public class DataExecuteContext : DataExecuteContextBase, IDataAccessContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
-		public DataExecuteContext(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, isScalar, resultType, inParameters, outParameters, options)
+		public DataExecuteContext(DataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, isScalar, resultType, inParameters, outParameters, options)
 		{
 			this.Aliaser = new Common.Expressions.Aliaser();
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Provider = dataAccess.Provider;
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
@@ -98,10 +98,10 @@ namespace Zongsoft.Data
 	public class DataAggregateContext : DataAggregateContextBase, IDataAccessContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
-		public DataAggregateContext(IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options = null) : base(dataAccess, name, aggregate, criteria, options)
+		public DataAggregateContext(DataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options = null) : base(dataAccess, name, aggregate, criteria, options)
 		{
 			this.Aliaser = new Common.Expressions.Aliaser();
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Provider = dataAccess.Provider;
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
@@ -118,9 +118,9 @@ namespace Zongsoft.Data
 	public class DataImportContext : DataImportContextBase, IDataAccessContext
 	{
 		#region 构造函数
-		public DataImportContext(IDataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, data, members, options)
+		public DataImportContext(DataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, data, members, options)
 		{
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Provider = dataAccess.Provider;
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 		}
 		#endregion
@@ -135,10 +135,10 @@ namespace Zongsoft.Data
 	public class DataDeleteContext : DataDeleteContextBase, IDataMutateContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
-		public DataDeleteContext(IDataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDataDeleteOptions options = null) : base(dataAccess, name, criteria, schema, options)
+		public DataDeleteContext(DataAccess dataAccess, string name, ICondition criteria, ISchema schema, IDataDeleteOptions options = null) : base(dataAccess, name, criteria, schema, options)
 		{
 			this.Aliaser = new Common.Expressions.Aliaser();
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Provider = dataAccess.Provider;
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
@@ -156,10 +156,10 @@ namespace Zongsoft.Data
 	public class DataInsertContext : DataInsertContextBase, IDataMutateContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
-		public DataInsertContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options = null) : base(dataAccess, name, isMultiple, data, schema, options)
+		public DataInsertContext(DataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options = null) : base(dataAccess, name, isMultiple, data, schema, options)
 		{
 			this.Aliaser = new Common.Expressions.Aliaser();
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Provider = dataAccess.Provider;
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
@@ -177,10 +177,10 @@ namespace Zongsoft.Data
 	public class DataUpdateContext : DataUpdateContextBase, IDataMutateContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
-		public DataUpdateContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, isMultiple, data, criteria, schema, options)
+		public DataUpdateContext(DataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, isMultiple, data, criteria, schema, options)
 		{
 			this.Aliaser = new Common.Expressions.Aliaser();
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Provider = dataAccess.Provider;
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
@@ -198,10 +198,10 @@ namespace Zongsoft.Data
 	public class DataUpsertContext : DataUpsertContextBase, IDataMutateContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
-		public DataUpsertContext(IDataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options = null) : base(dataAccess, name, isMultiple, data, schema, options)
+		public DataUpsertContext(DataAccess dataAccess, string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options = null) : base(dataAccess, name, isMultiple, data, schema, options)
 		{
 			this.Aliaser = new Common.Expressions.Aliaser();
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Provider = dataAccess.Provider;
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}
@@ -219,10 +219,10 @@ namespace Zongsoft.Data
 	public class DataSelectContext : DataSelectContextBase, IDataAccessContext, Common.Expressions.IAliasable
 	{
 		#region 构造函数
-		public DataSelectContext(IDataAccess dataAccess, string name, Type entityType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options = null) : base(dataAccess, name, entityType, grouping, criteria, schema, paging, sortings, options)
+		public DataSelectContext(DataAccess dataAccess, string name, Type entityType, Grouping grouping, ICondition criteria, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options = null) : base(dataAccess, name, entityType, grouping, criteria, schema, paging, sortings, options)
 		{
 			this.Aliaser = new Common.Expressions.Aliaser();
-			this.Provider = DataEnvironment.Providers.GetProvider(dataAccess.Name);
+			this.Provider = dataAccess.Provider;
 			this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));
 			this.Validator = DataEnvironment.Validators.GetValidator(this);
 		}

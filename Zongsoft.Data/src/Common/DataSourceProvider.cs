@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
@@ -37,36 +38,47 @@ namespace Zongsoft.Data.Common
 {
 	public class DataSourceProvider : IDataSourceProvider
 	{
-		#region 单例字段
-		public static readonly DataSourceProvider Default = new();
+		#region 成员字段
+		private readonly List<IDataSource> _sources;
 		#endregion
 
-		#region 私有构造
-		private DataSourceProvider() { }
+		#region 构造函数
+		public DataSourceProvider(IEnumerable<IConnectionSettings> settings)
+		{
+			if(settings == null)
+				_sources = new();
+			else
+				_sources = new(settings.Select(setting => new DataSource(setting)));
+		}
 		#endregion
 
 		#region 公共方法
 		public IEnumerable<IDataSource> GetSources(string name)
 		{
-			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Data/ConnectionSettings");
-
-			if(connectionSettings == null || connectionSettings.Count == 0)
-				yield break;
-
-			if(string.IsNullOrEmpty(name))
+			if(_sources == null || _sources.Count == 0)
 			{
-				name = connectionSettings.Default;
+				var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Data/ConnectionSettings");
+
+				if(connectionSettings == null || connectionSettings.Count == 0)
+					return [];
 
 				if(string.IsNullOrEmpty(name))
-					yield break;
+				{
+					name = connectionSettings.Default;
+
+					if(string.IsNullOrEmpty(name))
+						return [];
+				}
+
+				foreach(var connectionSetting in connectionSettings)
+				{
+					if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
+					   connectionSetting.Name.StartsWith(name + DataSource.SEPARATOR, StringComparison.OrdinalIgnoreCase))
+						_sources.Add(new DataSource(connectionSetting));
+				}
 			}
 
-			foreach(var connectionSetting in connectionSettings)
-			{
-				if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
-				   connectionSetting.Name.StartsWith(name + DataSource.SEPARATOR, StringComparison.OrdinalIgnoreCase))
-					yield return new DataSource(connectionSetting);
-			}
+			return _sources;
 		}
 		#endregion
 	}
