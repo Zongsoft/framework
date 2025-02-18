@@ -36,8 +36,8 @@ namespace Zongsoft.Data.Metadata.Profiles
 {
 	public class MetadataFileResolver
 	{
-		#region 静态字段
-		private static MetadataFileResolver _default;
+		#region 单例字段
+		public static readonly MetadataFileResolver Default = new();
 		#endregion
 
 		#region 常量定义
@@ -88,23 +88,6 @@ namespace Zongsoft.Data.Metadata.Profiles
 
 		#region 构造函数
 		protected MetadataFileResolver() { }
-		#endregion
-
-		#region 静态属性
-		public static MetadataFileResolver Default
-		{
-			get
-			{
-				if(_default == null)
-					System.Threading.Interlocked.CompareExchange(ref _default, new MetadataFileResolver(), null);
-
-				return _default;
-			}
-			set
-			{
-				_default = value;
-			}
-		}
 		#endregion
 
 		#region 公共方法
@@ -265,11 +248,25 @@ namespace Zongsoft.Data.Metadata.Profiles
 							Sortable = GetAttributeValue(reader, XML_SORTABLE_ATTRIBUTE, false),
 						};
 
-						//设置默认值的字面量
-						property.DefaultValue = GetAttributeValue<string>(reader, XML_DEFAULT_ATTRIBUTE);
+						try
+						{
+							//设置默认值的字面量
+							property.DefaultValue = GetAttributeValue<string>(reader, XML_DEFAULT_ATTRIBUTE);
+						}
+						catch(Exception ex)
+						{
+							throw new MetadataFileException($"The default value ‘{GetAttributeValue<string>(reader, XML_DEFAULT_ATTRIBUTE)}’ for the ‘{property.Name}’ property of the ‘{entity}’ entity is invalid and is located in the file: {provider.FilePath}.", ex);
+						}
 
-						//设置序号器元数据信息
-						property.Sequence = DataEntityPropertySequence.Parse(property, GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE));
+						try
+						{
+							//设置序号器元数据信息
+							property.Sequence = DataEntityPropertySequence.Parse(property, GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE));
+						}
+						catch(Exception ex)
+						{
+							throw new MetadataFileException($"The sequence ‘{GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE)}’ for the ‘{property.Name}’ property of the ‘{entity}’ entity is invalid and is located in the file: {provider.FilePath}.", ex);
+						}
 
 						//将解析成功的属性元素加入到实体的属性集合
 						entity.Properties.Add(property);

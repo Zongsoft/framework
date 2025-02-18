@@ -57,7 +57,7 @@ namespace Zongsoft.Data
 					this.Filters.Add(filter);
 			}
 
-			_provider = new DataProvider(name, options.Settings);
+			_provider = new DataProvider(name, options?.Settings);
 			_provider.Error += this.Provider_Error;
 		}
 		#endregion

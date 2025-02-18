@@ -50,7 +50,7 @@ public static class Mapping
 	{
 		_entities = new();
 		_commands = new();
-		_loaders = new LoaderCollection();
+		_loaders = new();
 	}
 	#endregion
 
@@ -142,19 +142,38 @@ public static class Mapping
 		#endregion
 
 		#region 重写方法
-		protected override void ClearItems() => Interlocked.Exchange(ref _loads, 0);
+		protected override void ClearItems()
+		{
+			base.ClearItems();
+			Interlocked.Exchange(ref _loads, 0);
+		}
+
 		protected override void InsertItem(int index, Loader loader)
 		{
 			if(loader == null)
 				throw new ArgumentNullException(nameof(loader));
 
+			base.InsertItem(index, loader);
+
 			if(loader.IsLoaded)
 				Interlocked.Increment(ref _loads);
 		}
 
-		protected override void SetItem(int index, Loader loader) => throw new NotSupportedException();
+		protected override void SetItem(int index, Loader loader)
+		{
+			if(_loads > 0 && index >= 0 && base[index].IsLoaded)
+				Interlocked.Decrement(ref _loads);
+
+			base.SetItem(index, loader);
+
+			if(loader.IsLoaded)
+				Interlocked.Increment(ref _loads);
+		}
+
 		protected override void RemoveItem(int index)
 		{
+			base.RemoveItem(index);
+
 			if(_loads > 0 && index >= 0 && base[index].IsLoaded)
 				Interlocked.Decrement(ref _loads);
 		}
@@ -234,10 +253,10 @@ public static class Mapping
 			if(entity == null)
 				return;
 
-			if(Entities.TryAdd(entity))
+			if(_entities.TryAdd(entity))
 				return;
 
-			var existed = Entities[entity.Name, entity.Namespace];
+			var existed = _entities[entity.Name, entity.Namespace];
 
 			foreach(var property in entity.Properties)
 			{

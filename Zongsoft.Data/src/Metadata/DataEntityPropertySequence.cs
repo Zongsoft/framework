@@ -186,7 +186,7 @@ namespace Zongsoft.Data.Metadata
 			//如果名字组是字母打头，则将其视为引用为代理序列。而代理序列不允许其他选项
 			if(name != null && name.Length > 0 && char.IsLetter(name[0]))
 			{
-				var index = name.LastIndexOfAny(new[] { '.', ':' });
+				var index = name.LastIndexOfAny(['.', ':']);
 
 				if(index > 0 && index < name.Length - 1)
 					return new Proxy(property, name.Substring(0, index), name.Substring(index + 1));
@@ -198,10 +198,10 @@ namespace Zongsoft.Data.Metadata
 			IList<string> references = null;
 
 			if(match.Groups["seed"].Success)
-				int.TryParse(match.Groups["seed"].Value, out seed);
+				seed = int.Parse(match.Groups["seed"].Value);
 
 			if(match.Groups["interval"].Success)
-				int.TryParse(match.Groups["interval"].Value, out interval);
+				interval = int.Parse(match.Groups["interval"].Value);
 
 			if(match.Groups["refs"].Success)
 				references = match.Groups["refs"].Value.Split(',');
