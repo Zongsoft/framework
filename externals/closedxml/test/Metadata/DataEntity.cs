@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata;
 
-internal class DataEntity : DataEntityBase
+internal class DataEntity(string @namespace, string name, bool immutable = false) : DataEntityBase(@namespace, name, null, immutable)
 {
 	public DataEntity(string name, params IDataEntityProperty[] properties) : this(null, name)
 	{
@@ -14,8 +13,5 @@ internal class DataEntity : DataEntityBase
 		}
 	}
 
-    public DataEntity(string @namespace, string name, bool immutable = false) : base(@namespace, name, null, immutable)
-	{
-		this.Properties = new DataEntityPropertyCollection(this);
-	}
+	public new void SetKey(params ReadOnlySpan<string> keys) => base.SetKey(keys);
 }

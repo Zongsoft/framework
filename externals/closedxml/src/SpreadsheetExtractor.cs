@@ -39,6 +39,7 @@ using ClosedXML.Excel;
 
 using Zongsoft.Data;
 using Zongsoft.Data.Templates;
+using System.Linq;
 
 namespace Zongsoft.Externals.ClosedXml
 {
@@ -89,7 +90,7 @@ namespace Zongsoft.Externals.ClosedXml
 				_rows = data.RowCount();
 				_fields = new DataArchiveFieldCollection(data.ColumnCount());
 
-				foreach(var reference in worksheet.NamedRanges.ValidNamedRanges())
+				foreach(var reference in worksheet.Workbook.NamedRanges.ValidNamedRanges().Concat(worksheet.NamedRanges.ValidNamedRanges()))
 				{
 					var range = worksheet.Range(reference.RefersTo);
 

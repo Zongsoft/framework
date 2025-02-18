@@ -286,7 +286,7 @@ namespace Zongsoft.Externals.ClosedXml
 			}
 
 			//设置主键的样式
-			if(property.Field != null && property.Field.IsPrimaryKey)
+			if(property.Field != null && property.Field.IsPrimaryKey())
 			{
 				column.Style.Font.SetBold(true);
 				column.Style.Font.SetFontName(FONT_NAME);

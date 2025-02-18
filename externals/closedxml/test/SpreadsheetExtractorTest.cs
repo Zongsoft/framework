@@ -33,6 +33,12 @@ public class SpreadsheetExtractorTest
 	[Fact]
 	public void TestTemplateExtract()
 	{
+		//using var stream = System.IO.File.Open(@"D:\Temp\t.xlsx", FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+		//_renderer.RenderAsync(stream, Templates.ApartmentUsage.Template, Templates.ApartmentUsage).AsTask().Wait();
+		//stream.Flush();
+		//stream.Dispose();
+		//return;
+
 		using var stream = new MemoryStream();
 		_renderer.RenderAsync(stream, Templates.ApartmentUsage.Template, Templates.ApartmentUsage).AsTask().Wait();
 		stream.Seek(0, SeekOrigin.Begin);

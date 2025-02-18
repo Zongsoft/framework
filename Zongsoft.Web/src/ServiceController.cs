@@ -144,7 +144,7 @@ namespace Zongsoft.Web
 
 			if(await this.OnCreateAsync(model, null, cancellation) > 0)
 			{
-				var keys = this.DataService.DataAccess.Metadata.Entities[this.DataService.Name].Key;
+				var keys = Mapping.Entities.TryGetValue(this.DataService.Name, out var entity) ? entity.Key : null;
 
 				if(keys == null || keys.Length == 0)
 					return this.CreatedAtAction("Get", this.RouteData.Values, model);
