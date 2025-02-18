@@ -28,9 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Data
 {
