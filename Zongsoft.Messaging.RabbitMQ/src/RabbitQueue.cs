@@ -92,8 +92,10 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 			{
 				Priority = options.Priority,
 				MessageId = Guid.NewGuid().ToString("N"),
-				Expiration = options.Expiration.ToString()
 			};
+
+			if(options.Expiration > TimeSpan.Zero)
+				properties.Expiration = options.Expiration.TotalMilliseconds.ToString("#");
 
 			if(options.Properties != null && options.Properties.HasValue)
 			{
