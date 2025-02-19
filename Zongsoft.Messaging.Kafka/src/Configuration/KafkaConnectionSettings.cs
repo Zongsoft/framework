@@ -164,6 +164,15 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 		if(string.IsNullOrEmpty(options.ClientId))
 			options.ClientId = $"C{Common.Randomizer.GenerateString()}";
 
+		//手动设置消费者配置属性
+		options.GroupId = string.IsNullOrEmpty(this.Group) ? $"G{Common.Randomizer.GenerateString()}" : this.Group;
+		options.GroupProtocol = this.GroupProtocol;
+
+		if(this.Heartbeat > TimeSpan.Zero)
+			options.HeartbeatIntervalMs = (int)this.Heartbeat.TotalMilliseconds;
+		if(this.Timeout > TimeSpan.Zero)
+			options.SessionTimeoutMs = (int)this.Timeout.TotalMilliseconds;
+
 		return options;
 	}
 
@@ -174,6 +183,18 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 
 		if(string.IsNullOrEmpty(options.ClientId))
 			options.ClientId = $"C{Common.Randomizer.GenerateString()}";
+
+		//手动设置生产者配置属性
+		options.TransactionalId = this.TransactionId;
+
+		if(this.TransactionTimeout > TimeSpan.Zero)
+			options.TransactionTimeoutMs = (int)this.TransactionTimeout.TotalMilliseconds;
+
+		if(this.Timeout > TimeSpan.Zero)
+		{
+			options.RequestTimeoutMs = (int)this.Timeout.TotalMilliseconds;
+			options.MessageTimeoutMs = (int)this.Timeout.TotalMilliseconds;
+		}
 
 		return options;
 	}

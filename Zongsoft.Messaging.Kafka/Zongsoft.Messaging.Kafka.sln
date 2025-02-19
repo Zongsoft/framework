@@ -5,6 +5,11 @@ VisualStudioVersion = 17.1.32414.318
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Messaging.Kafka", "src\Zongsoft.Messaging.Kafka.csproj", "{1C4F17B0-955F-4C7F-BC41-494A18061543}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Messaging.Kafka.Samples", "samples\Zongsoft.Messaging.Kafka.Samples.csproj", "{E1938618-101A-458A-8F35-55FE13FEF57E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1C4F17B0-955F-4C7F-BC41-494A18061543} = {1C4F17B0-955F-4C7F-BC41-494A18061543}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +26,14 @@ Global
 		{1C4F17B0-955F-4C7F-BC41-494A18061543}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1C4F17B0-955F-4C7F-BC41-494A18061543}.Release|x64.ActiveCfg = Release|x64
 		{1C4F17B0-955F-4C7F-BC41-494A18061543}.Release|x64.Build.0 = Release|x64
+		{E1938618-101A-458A-8F35-55FE13FEF57E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1938618-101A-458A-8F35-55FE13FEF57E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1938618-101A-458A-8F35-55FE13FEF57E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E1938618-101A-458A-8F35-55FE13FEF57E}.Debug|x64.Build.0 = Debug|Any CPU
+		{E1938618-101A-458A-8F35-55FE13FEF57E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1938618-101A-458A-8F35-55FE13FEF57E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1938618-101A-458A-8F35-55FE13FEF57E}.Release|x64.ActiveCfg = Release|Any CPU
+		{E1938618-101A-458A-8F35-55FE13FEF57E}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

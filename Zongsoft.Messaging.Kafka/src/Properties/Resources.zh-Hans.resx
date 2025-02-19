@@ -162,4 +162,10 @@
   <data name="Kafka.Settings.Topic" xml:space="preserve">
     <value>默认主题</value>
   </data>
+  <data name="Kafka.Settings.Server.Description" xml:space="preserve">
+    <value>表示连接的 Kafka 服务器地址，支持以逗号分隔的多个地址。</value>
+  </data>
+  <data name="Kafka.Settings.Group.Description" xml:space="preserve">
+    <value>表示消息分组名称，如果未指定则默认生成一个随机的组名。</value>
+  </data>
 </root>
