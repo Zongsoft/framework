@@ -36,7 +36,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Data
 {
-	[Service(typeof(IServiceProvider<IDataAccess>))]
+	[Service<IDataAccessProvider, IServiceProvider<IDataAccess>>]
 	public abstract class DataAccessProviderBase<TDataAccess> : IDataAccessProvider, IServiceProvider<TDataAccess> where TDataAccess : class, IDataAccess
 	{
 		#region 成员字段
