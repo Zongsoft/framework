@@ -65,26 +65,30 @@ public class RabbitSubscriber : MessageConsumerBase<RabbitQueue>, IAsyncBasicCon
 	#endregion
 
 	#region 事件处理
-	public Task HandleBasicCancelAsync(string tag, CancellationToken cancellation = default)
+	Task IAsyncBasicConsumer.HandleChannelShutdownAsync(object channel, ShutdownEventArgs reason)
 	{
 		return Task.CompletedTask;
 	}
-	public Task HandleBasicCancelOkAsync(string tag, CancellationToken cancellation = default)
+	Task IAsyncBasicConsumer.HandleBasicCancelAsync(string tag, CancellationToken cancellation)
 	{
 		return Task.CompletedTask;
 	}
-	public Task HandleBasicConsumeOkAsync(string tag, CancellationToken cancellation = default)
+	Task IAsyncBasicConsumer.HandleBasicCancelOkAsync(string tag, CancellationToken cancellation)
 	{
 		return Task.CompletedTask;
 	}
-	public async Task HandleBasicDeliverAsync(string tag, ulong delivery, bool redelivered, string exchange, string topic, IReadOnlyBasicProperties properties, ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
+	Task IAsyncBasicConsumer.HandleBasicConsumeOkAsync(string tag, CancellationToken cancellation)
 	{
-		var message = new Message(topic, data.ToArray(), cancellation => _channel.BasicAckAsync(delivery, false, cancellation));
+		return Task.CompletedTask;
+	}
+
+	async Task IAsyncBasicConsumer.HandleBasicDeliverAsync(string tag, ulong delivery, bool redelivered, string exchange, string topic, IReadOnlyBasicProperties properties, ReadOnlyMemory<byte> data, CancellationToken cancellation)
+	{
+		var message = properties == null || string.IsNullOrEmpty(properties.MessageId) ?
+			new Message(topic, data.ToArray(), cancellation => _channel.BasicAckAsync(delivery, false, cancellation)) :
+			new Message(properties.MessageId, topic, data.ToArray(), cancellation => _channel.BasicAckAsync(delivery, false, cancellation));
+
 		await this.Handler.HandleAsync(message, cancellation);
-	}
-	public Task HandleChannelShutdownAsync(object channel, ShutdownEventArgs reason)
-	{
-		return Task.CompletedTask;
 	}
 	#endregion
 

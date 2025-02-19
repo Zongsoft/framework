@@ -40,6 +40,10 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.RabbitMQ;
 
+/// <summary>
+/// 提供 RabbitMQ 消息队列的生成和订阅相关功能。
+/// 有关 RabbitMQ 的详细技术说明，请参考：https://rabbitmq.cn/tutorials
+/// </summary>
 public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.RabbitConnectionSettings>
 {
 	#region 常量定义
@@ -145,7 +149,7 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 		{
 			_channel = await _connection.CreateChannelAsync(new CreateChannelOptions(false, false), cancellation);
 
-			//通过Qos开启工作者模式
+			//通过QoS开启工作者模式
 			//await _channel.BasicQosAsync(0, 1, false, cancellation);
 
 			//定义消息交换器
