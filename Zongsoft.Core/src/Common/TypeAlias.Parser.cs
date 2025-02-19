@@ -565,9 +565,12 @@ namespace Zongsoft.Common
 						typeName = $"{typeName}, {alias.Assembly}";
 
 					if(assemblyResolver == null && typeResolver == null)
-						type = System.Type.GetType(typeName, throwException, true).GetTypeInfo();
+						type = System.Type.GetType(typeName, throwException, true)?.GetTypeInfo();
 					else
-						type = System.Type.GetType(typeName, assemblyResolver, typeResolver, throwException, true).GetTypeInfo();
+						type = System.Type.GetType(typeName, assemblyResolver, typeResolver, throwException, true)?.GetTypeInfo();
+
+					if(type == null)
+						return null;
 				}
 
 				if(type.ContainsGenericParameters && alias.HasGenericArguments)
