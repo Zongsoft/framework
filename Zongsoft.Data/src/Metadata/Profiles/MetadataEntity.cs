@@ -30,13 +30,12 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Metadata.Profiles
+namespace Zongsoft.Data.Metadata.Profiles;
+
+/// <summary>
+/// 表示数据实体的元数据类。
+/// </summary>
+public class MetadataEntity(string @namespace, string name, string baseName, bool immutable = false) : DataEntityBase(@namespace, name, baseName, immutable)
 {
-	/// <summary>
-	/// 表示数据实体的元数据类。
-	/// </summary>
-	public class MetadataEntity(string @namespace, string name, string baseName, bool immutable = false) : DataEntityBase(@namespace, name, baseName, immutable)
-	{
-		internal void SetKey(IReadOnlyCollection<string> keys) => base.SetKey([..keys]);
-	}
+	internal void SetKey(IReadOnlyCollection<string> keys) => base.SetKey([..keys]);
 }

@@ -35,133 +35,132 @@ using System.Collections.Generic;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class SchemaParser : SchemaParserBase<SchemaMember>
 {
-	public class SchemaParser : SchemaParserBase<SchemaMember>
+	#region 单例字段
+	public static readonly SchemaParser Instance = new();
+	#endregion
+
+	#region 解析方法
+	public override ISchema<SchemaMember> Parse(string name, string expression, Type entityType)
 	{
-		#region 单例字段
-		public static readonly SchemaParser Instance = new();
-		#endregion
+		var entity = Mapping.Entities[name];
 
-		#region 解析方法
-		public override ISchema<SchemaMember> Parse(string name, string expression, Type entityType)
+		if(string.IsNullOrWhiteSpace(expression))
+			expression = "*";
+
+		return new Schema(this, expression, entity, entityType, base.Parse(expression, Resolve, new SchemaData(entity, entityType)));
+	}
+
+	private static IEnumerable<SchemaMember> Resolve(SchemaEntryToken token)
+	{
+		var data = (SchemaData)token.Data;
+		var current = data.Entity;
+
+		if(token.Parent != null)
 		{
-			var entity = Mapping.Entities[name];
+			var parent = token.Parent;
 
-			if(string.IsNullOrWhiteSpace(expression))
-				expression = "*";
+			if(parent.Token.Property.IsSimplex)
+				throw new DataArgumentException("schema", $"The specified {parent} schema does not correspond to a complex property, so its child elements cannot be defined.");
 
-			return new Schema(this, expression, entity, entityType, base.Parse(expression, token => this.Resolve(token), new SchemaData(entity, entityType)));
+			var complex = (IDataEntityComplexProperty)parent.Token.Property;
+			data.Entity = complex.Foreign;
+
+			while(complex.ForeignProperty != null && complex.ForeignProperty.IsComplex)
+			{
+				complex = (IDataEntityComplexProperty)complex.ForeignProperty;
+				data.Entity = complex.Foreign;
+			}
+
+			if(parent.Token.Member != null)
+			{
+				switch(parent.Token.Member.MemberType)
+				{
+					case MemberTypes.Field:
+						data.EntityType = Zongsoft.Common.TypeExtension.GetElementType(((FieldInfo)parent.Token.Member).FieldType) ??
+						                  ((FieldInfo)parent.Token.Member).FieldType;
+						break;
+					case MemberTypes.Property:
+						data.EntityType = Zongsoft.Common.TypeExtension.GetElementType(((PropertyInfo)parent.Token.Member).PropertyType) ??
+						                  ((PropertyInfo)parent.Token.Member).PropertyType;
+						break;
+					case MemberTypes.Method:
+						data.EntityType = Zongsoft.Common.TypeExtension.GetElementType(((MethodInfo)parent.Token.Member).ReturnType) ??
+						                  ((MethodInfo)parent.Token.Member).ReturnType;
+						break;
+					default:
+						throw new DataArgumentException("schema", $"Invalid kind of '{parent.Token.Member}' member.");
+				}
+			}
 		}
 
-		private IEnumerable<SchemaMember> Resolve(SchemaEntryToken token)
+		if(token.Name == "*")
 		{
-			var data = (SchemaData)token.Data;
-			var current = data.Entity;
-
-			if(token.Parent != null)
-			{
-				var parent = token.Parent;
-
-				if(parent.Token.Property.IsSimplex)
-					throw new DataArgumentException("schema", $"The specified {parent} schema does not correspond to a complex property, so its child elements cannot be defined.");
-
-				var complex = (IDataEntityComplexProperty)parent.Token.Property;
-				data.Entity = complex.Foreign;
-
-				while(complex.ForeignProperty != null && complex.ForeignProperty.IsComplex)
-				{
-					complex = (IDataEntityComplexProperty)complex.ForeignProperty;
-					data.Entity = complex.Foreign;
-				}
-
-				if(parent.Token.Member != null)
-				{
-					switch(parent.Token.Member.MemberType)
-					{
-						case MemberTypes.Field:
-							data.EntityType = Zongsoft.Common.TypeExtension.GetElementType(((FieldInfo)parent.Token.Member).FieldType) ??
-							                  ((FieldInfo)parent.Token.Member).FieldType;
-							break;
-						case MemberTypes.Property:
-							data.EntityType = Zongsoft.Common.TypeExtension.GetElementType(((PropertyInfo)parent.Token.Member).PropertyType) ??
-							                  ((PropertyInfo)parent.Token.Member).PropertyType;
-							break;
-						case MemberTypes.Method:
-							data.EntityType = Zongsoft.Common.TypeExtension.GetElementType(((MethodInfo)parent.Token.Member).ReturnType) ??
-							                  ((MethodInfo)parent.Token.Member).ReturnType;
-							break;
-						default:
-							throw new DataArgumentException("schema", $"Invalid kind of '{parent.Token.Member}' member.");
-					}
-				}
-			}
-
-			if(token.Name == "*")
-			{
-				//return data.Entity.GetTokens(data.EntityType)
-				//				  .Where(p => p.Property.IsSimplex)
-				//				  .Select(p => new SchemaMember(p));
-
-				current = data.Entity;
-				var members = new List<SchemaMember>();
-
-				while(current != null)
-				{
-					members.AddRange(
-						current.GetTokens(data.EntityType)
-						       .Where(p => p.Property.IsSimplex)
-						       .Select(p => new SchemaMember(p)));
-
-					current = current.GetBaseEntity();
-				}
-
-				return members;
-			}
+			//return data.Entity.GetTokens(data.EntityType)
+			//				  .Where(p => p.Property.IsSimplex)
+			//				  .Select(p => new SchemaMember(p));
 
 			current = data.Entity;
-			ICollection<IDataEntity> ancestors = null;
+			var members = new List<SchemaMember>();
 
 			while(current != null)
 			{
-				if(Zongsoft.Common.TypeExtension.IsScalarType(data.EntityType) && current.Properties.TryGetValue(token.Name, out var property))
-					return new[] { new SchemaMember(property, ancestors) };
-
-				if(current.GetTokens(data.EntityType).TryGetValue(token.Name, out var stub))
-					return new []{ new SchemaMember(stub, ancestors) };
-
-				if(ancestors == null)
-					ancestors = new List<IDataEntity>();
+				members.AddRange(
+					current.GetTokens(data.EntityType)
+					       .Where(p => p.Property.IsSimplex)
+					       .Select(p => new SchemaMember(p)));
 
 				current = current.GetBaseEntity();
-
-				if(current != null)
-					ancestors.Add(current);
 			}
 
-			throw new DataArgumentException("schema", $"The specified '{token.Name}' property does not exist in the '{data.Entity.Name}' entity.");
+			return members;
 		}
-		#endregion
 
-		#region 内部方法
-		internal void Append(Schema schema, string expression)
+		current = data.Entity;
+		List<IDataEntity> ancestors = null;
+
+		while(current != null)
 		{
-			var entries = base.Parse(expression, token => this.Resolve(token), new SchemaData(schema.Entity, schema.ModelType), schema.Members);
-		}
-		#endregion
+			if(Zongsoft.Common.TypeExtension.IsScalarType(data.EntityType) && current.Properties.TryGetValue(token.Name, out var property))
+				return [new SchemaMember(property, ancestors)];
 
-		#region 嵌套结构
-		private struct SchemaData
-		{
-			public IDataEntity Entity;
-			public Type EntityType;
+			if(current.GetTokens(data.EntityType).TryGetValue(token.Name, out var stub))
+				return [new SchemaMember(stub, ancestors)];
 
-			public SchemaData(IDataEntity entity, Type entityType)
-			{
-				this.Entity = entity;
-				this.EntityType = entityType ?? typeof(object);
-			}
+			if(ancestors == null)
+				ancestors = new List<IDataEntity>();
+
+			current = current.GetBaseEntity();
+
+			if(current != null)
+				ancestors.Add(current);
 		}
-		#endregion
+
+		throw new DataArgumentException("schema", $"The specified '{token.Name}' property does not exist in the '{data.Entity.Name}' entity.");
 	}
+	#endregion
+
+	#region 内部方法
+	internal void Append(Schema schema, string expression)
+	{
+		var entries = base.Parse(expression, Resolve, new SchemaData(schema.Entity, schema.ModelType), schema.Members);
+	}
+	#endregion
+
+	#region 嵌套结构
+	private struct SchemaData
+	{
+		public IDataEntity Entity;
+		public Type EntityType;
+
+		public SchemaData(IDataEntity entity, Type entityType)
+		{
+			this.Entity = entity;
+			this.EntityType = entityType ?? typeof(object);
+		}
+	}
+	#endregion
 }

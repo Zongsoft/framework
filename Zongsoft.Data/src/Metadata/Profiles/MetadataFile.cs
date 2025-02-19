@@ -31,52 +31,42 @@ using System;
 using System.IO;
 using System.Xml;
 
-namespace Zongsoft.Data.Metadata.Profiles
+namespace Zongsoft.Data.Metadata.Profiles;
+
+public class MetadataFile
 {
-	public class MetadataFile
+	#region 构造函数
+	public MetadataFile(string filePath, string name)
 	{
-		#region 成员字段
-		private readonly string _name;
-		private readonly string _filePath;
-		private readonly DataEntityCollection _entities;
-		private readonly DataCommandCollection _commands;
-		#endregion
-
-		#region 构造函数
-		public MetadataFile(string filePath, string name)
-		{
-			if(name != null)
-				_name = name.Trim();
-
-			_filePath = filePath;
-			_entities = new();
-			_commands = new();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取映射文件所属的应用名。</summary>
-		public string Name => _name;
-
-		/// <summary>获取映射文件的完整路径。</summary>
-		public string FilePath => _filePath;
-
-		/// <summary>获取映射文件中的实体元素集。</summary>
-		public DataEntityCollection Entities => _entities;
-
-		/// <summary>获取映射文件中的命令元素集。</summary>
-		public DataCommandCollection Commands => _commands;
-		#endregion
-
-		#region 加载方法
-		public static MetadataFile Load(string filePath, string name = null) => MetadataFileResolver.Default.Resolve(filePath, name);
-		public static MetadataFile Load(Stream stream, string name = null) => MetadataFileResolver.Default.Resolve(stream, name);
-		public static MetadataFile Load(TextReader reader, string name = null) => MetadataFileResolver.Default.Resolve(reader, name);
-		public static MetadataFile Load(XmlReader reader, string name = null) => MetadataFileResolver.Default.Resolve(reader, name);
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => string.IsNullOrEmpty(_name) ? _filePath : $"{_name}({_filePath})";
-		#endregion
+		this.Name = name?.Trim();
+		this.FilePath = filePath;
+		this.Entities = new();
+		this.Commands = new();
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取映射文件所属的应用名。</summary>
+	public string Name { get; }
+
+	/// <summary>获取映射文件的完整路径。</summary>
+	public string FilePath { get; }
+
+	/// <summary>获取映射文件中的实体元素集。</summary>
+	public DataEntityCollection Entities { get; }
+
+	/// <summary>获取映射文件中的命令元素集。</summary>
+	public DataCommandCollection Commands { get; }
+	#endregion
+
+	#region 加载方法
+	public static MetadataFile Load(string filePath, string name = null) => MetadataFileResolver.Default.Resolve(filePath, name);
+	public static MetadataFile Load(Stream stream, string name = null) => MetadataFileResolver.Default.Resolve(stream, name);
+	public static MetadataFile Load(TextReader reader, string name = null) => MetadataFileResolver.Default.Resolve(reader, name);
+	public static MetadataFile Load(XmlReader reader, string name = null) => MetadataFileResolver.Default.Resolve(reader, name);
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => string.IsNullOrEmpty(this.Name) ? this.FilePath : $"{this.Name}({this.FilePath})";
+	#endregion
 }

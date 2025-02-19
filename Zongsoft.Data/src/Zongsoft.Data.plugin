@@ -15,8 +15,6 @@
 	<extension path="/Workbench/Data">
 		<object name="Drivers" value="{static:Zongsoft.Data.DataEnvironment.Drivers, Zongsoft.Data}" />
 		<object name="Filters" value="{static:Zongsoft.Data.DataEnvironment.Filters, Zongsoft.Data}" />
-		<object name="Providers" value="{static:Zongsoft.Data.DataEnvironment.Providers, Zongsoft.Data}" />
-		<object name="Accessors" value="{static:Zongsoft.Data.DataEnvironment.Accessors, Zongsoft.Data}" />
 		<object name="Validators" value="{static:Zongsoft.Data.DataEnvironment.Validators, Zongsoft.Data}" />
 		<object name="Populators" value="{static:Zongsoft.Data.DataEnvironment.Populators, Zongsoft.Data}" />
 	</extension>

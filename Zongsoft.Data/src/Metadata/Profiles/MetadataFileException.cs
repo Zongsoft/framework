@@ -29,14 +29,13 @@
 
 using System;
 
-namespace Zongsoft.Data.Metadata.Profiles
+namespace Zongsoft.Data.Metadata.Profiles;
+
+public class MetadataFileException : Exception
 {
-	public class MetadataFileException : Exception
-	{
-		#region 构造函数
-		public MetadataFileException() { }
-		public MetadataFileException(string message) : base(message) { }
-		public MetadataFileException(string message, Exception innerException) : base(message, innerException) { }
-		#endregion
-	}
+	#region 构造函数
+	public MetadataFileException() { }
+	public MetadataFileException(string message) : base(message) { }
+	public MetadataFileException(string message, Exception innerException) : base(message, innerException) { }
+	#endregion
 }

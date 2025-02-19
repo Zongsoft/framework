@@ -28,23 +28,21 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 定义用于数据提供程序的访问方式。
+/// </summary>
+[Flags]
+public enum DataAccessMode
 {
-	/// <summary>
-	/// 定义用于数据提供程序的访问方式。
-	/// </summary>
-	[Flags]
-	public enum DataAccessMode
-	{
-		/// <summary>读取数据。</summary>
-		ReadOnly = 1,
+	/// <summary>读取数据。</summary>
+	ReadOnly = 1,
 
-		/// <summary>写入数据(新增、删除、修改)。</summary>
-		WriteOnly = 2,
+	/// <summary>写入数据(新增、删除、修改)。</summary>
+	WriteOnly = 2,
 
-		/// <summary>读写数据。</summary>
-		All = 3,
-	}
+	/// <summary>读写数据。</summary>
+	All = 3,
 }

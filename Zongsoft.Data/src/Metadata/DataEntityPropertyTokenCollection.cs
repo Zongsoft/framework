@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Metadata
+namespace Zongsoft.Data.Metadata;
+
+public class DataEntityPropertyTokenCollection() : KeyedCollection<string, DataEntityPropertyToken>(StringComparer.OrdinalIgnoreCase)
 {
-	public class DataEntityPropertyTokenCollection() : KeyedCollection<string, DataEntityPropertyToken>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(DataEntityPropertyToken token) => token.Property.Name;
-	}
+	protected override string GetKeyForItem(DataEntityPropertyToken token) => token.Property.Name;
 }

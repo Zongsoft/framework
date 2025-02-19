@@ -29,23 +29,22 @@
 
 using System;
 
-namespace Zongsoft.Data.Metadata.Profiles
-{
-	/// <summary>
-	/// 表示数据命令的元数据类。
-	/// </summary>
-	public class MetadataCommand : DataCommandBase
-	{
-		#region 构造函数
-		public MetadataCommand(string @namespace, string name, string alias = null) : base(@namespace, name, alias)
-		{
-			base.Scriptor = this.Scriptor = new MetadataCommandScriptor(this);
-		}
-		#endregion
+namespace Zongsoft.Data.Metadata.Profiles;
 
-		#region 公共属性
-		/// <summary>获取数据命令的脚本对象。</summary>
-		public new MetadataCommandScriptor Scriptor { get; }
-		#endregion
+/// <summary>
+/// 表示数据命令的元数据类。
+/// </summary>
+public class MetadataCommand : DataCommandBase
+{
+	#region 构造函数
+	public MetadataCommand(string @namespace, string name, string alias = null) : base(@namespace, name, alias)
+	{
+		base.Scriptor = this.Scriptor = new MetadataCommandScriptor(this);
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取数据命令的脚本对象。</summary>
+	public new MetadataCommandScriptor Scriptor { get; }
+	#endregion
 }

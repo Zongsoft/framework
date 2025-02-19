@@ -37,7 +37,7 @@ namespace Zongsoft.Data.Common
 	public class DataPopulatorProviderFactory : IDataPopulatorProviderFactory
 	{
 		#region 单例模式
-		public static readonly DataPopulatorProviderFactory Instance = new DataPopulatorProviderFactory();
+		public static readonly DataPopulatorProviderFactory Instance = new();
 		#endregion
 
 		#region 成员字段

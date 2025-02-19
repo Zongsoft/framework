@@ -28,35 +28,33 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+[Service<
+	IServiceProvider<IDataAccess>,
+	IServiceProvider<DataAccessBase>,
+	IServiceProvider<DataAccess>>(Members = nameof(Instance))]
+public class DataAccessProvider : DataAccessProviderBase<DataAccess>
 {
-	[Service<
-		IServiceProvider<IDataAccess>,
-		IServiceProvider<DataAccessBase>,
-		IServiceProvider<DataAccess>>(Members = nameof(Instance))]
-	public class DataAccessProvider : DataAccessProviderBase<DataAccess>
+	#region 单例字段
+	public static readonly DataAccessProvider Instance = new();
+	#endregion
+
+	#region 重写方法
+	protected override DataAccess CreateAccessor(string name, IDataAccessOptions options)
 	{
-		#region 单例字段
-		public static readonly DataAccessProvider Instance = new();
-		#endregion
+		var result = new DataAccess(name, options);
+		var services = ApplicationContext.Current.Services;
 
-		#region 重写方法
-		protected override DataAccess CreateAccessor(string name, IDataAccessOptions options)
-		{
-			var result = new DataAccess(name, options);
-			var services = ApplicationContext.Current.Services;
+		if(!string.IsNullOrEmpty(name) && ApplicationContext.Current.Modules.TryGetValue(name, out var module))
+			services = module.Services;
 
-			if(!string.IsNullOrEmpty(name) && ApplicationContext.Current.Modules.TryGetValue(name, out var module))
-				services = module.Services;
-
-			ServiceInjector.Inject(services, result);
-			return result;
-		}
-		#endregion
+		ServiceInjector.Inject(services, result);
+		return result;
 	}
+	#endregion
 }

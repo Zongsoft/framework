@@ -37,444 +37,443 @@ using Zongsoft.Common;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class DataAccess : DataAccessBase
 {
-	public class DataAccess : DataAccessBase
+	#region 成员字段
+	private IDataProvider _provider;
+	#endregion
+
+	#region 构造函数
+	public DataAccess(string name, IDataAccessOptions options = null) : base(name)
 	{
-		#region 成员字段
-		private IDataProvider _provider;
-		#endregion
+		foreach(var filter in DataEnvironment.Filters)
+			this.Filters.Add(filter);
 
-		#region 构造函数
-		public DataAccess(string name, IDataAccessOptions options = null) : base(name)
+		if(options?.Filters != null)
 		{
-			foreach(var filter in DataEnvironment.Filters)
+			foreach(var filter in options.Filters)
 				this.Filters.Add(filter);
+		}
 
-			if(options?.Filters != null)
-			{
-				foreach(var filter in options.Filters)
-					this.Filters.Add(filter);
-			}
+		_provider = new DataProvider(name, options?.Settings);
+		_provider.Error += this.Provider_Error;
+	}
+	#endregion
 
-			_provider = new DataProvider(name, options?.Settings);
-			_provider.Error += this.Provider_Error;
+	#region 公共属性
+	public IDataProvider Provider => _provider;
+	#endregion
+
+	#region 执行方法
+	protected override void OnExecute(DataExecuteContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+	protected override ValueTask OnExecuteAsync(DataExecuteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+	#endregion
+
+	#region 导入方法
+	protected override void OnImport(DataImportContextBase context) => this.Provider.Import((DataImportContext)context);
+	protected override ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation = default) => this.Provider.ImportAsync((DataImportContext)context, cancellation);
+	#endregion
+
+	#region 存在方法
+	protected override void OnExists(DataExistContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+	protected override ValueTask OnExistsAsync(DataExistContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+	#endregion
+
+	#region 聚合方法
+	protected override void OnAggregate(DataAggregateContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+	protected override ValueTask OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+	#endregion
+
+	#region 删除方法
+	protected override void OnDelete(DataDeleteContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+	protected override ValueTask OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+	#endregion
+
+	#region 插入方法
+	protected override void OnInsert(DataInsertContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+	protected override ValueTask OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+	#endregion
+
+	#region 增改方法
+	protected override void OnUpsert(DataUpsertContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+	protected override ValueTask OnUpsertAsync(DataUpsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+	#endregion
+
+	#region 更新方法
+	protected override void OnUpdate(DataUpdateContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+	protected override ValueTask OnUpdateAsync(DataUpdateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+	#endregion
+
+	#region 查询方法
+	protected override void OnSelect(DataSelectContextBase context) => this.Provider.Execute((IDataAccessContext)context);
+	protected override ValueTask OnSelectAsync(DataSelectContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
+	#endregion
+
+	#region 模式解析
+	protected override ISchemaParser CreateSchema() => SchemaParser.Instance;
+	#endregion
+
+	#region 序号构建
+	protected override IDataSequencer CreateSequencer() => new DataSequencer(this);
+	#endregion
+
+	#region 调用过滤
+	protected override void OnFiltered(IDataAccessContextBase context)
+	{
+		//首先调用本数据访问器的过滤器后趋部分
+		base.OnFiltered(context);
+
+		//最后调用全局过滤器的前趋部分
+		DataEnvironment.Filters.InvokeFiltered(context);
+	}
+
+	protected override void OnFiltering(IDataAccessContextBase context)
+	{
+		//首先调用全局过滤器的前趋部分
+		DataEnvironment.Filters.InvokeFiltering(context);
+
+		//最后调用本数据访问器的过滤器前趋部分
+		base.OnFiltering(context);
+	}
+	#endregion
+
+	#region 上下文法
+	protected override DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options) =>
+		new DataExistContext(this, name, criteria.Flatten(), options);
+
+	protected override DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDataExecuteOptions options) =>
+		new DataExecuteContext(this, name, isScalar, resultType, inParameters, null, options);
+
+	protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options) =>
+		new DataAggregateContext(this, name, aggregate, criteria.Flatten(), options);
+
+	protected override DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options) =>
+		new DataImportContext(this, name, data, members, options);
+
+	protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options) =>
+		new DataDeleteContext(this, name, criteria.Flatten(), schema, options);
+
+	protected override DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options) =>
+		new DataInsertContext(this, name, isMultiple, data, schema, options);
+
+	protected override DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options) =>
+		new DataUpsertContext(this, name, isMultiple, data, schema, options);
+
+	protected override DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options) =>
+		new DataUpdateContext(this, name, isMultiple, data, criteria.Flatten(), schema, options);
+
+	protected override DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options) =>
+		new DataSelectContext(this, name, entityType, grouping, criteria.Flatten(), schema, paging, sortings, options);
+	#endregion
+
+	#region 内部方法
+	internal long Increase(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
+	{
+		if(this.Sequencer == null)
+			throw new InvalidOperationException($"Missing required sequencer of the '{this.Name}' DataAccess.");
+
+		return ((DataSequencer)this.Sequencer).Increase(context, sequence, data);
+	}
+
+	internal ValueTask<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
+	{
+		if(this.Sequencer == null)
+			throw new InvalidOperationException($"Missing required sequencer of the '{this.Name}' DataAccess.");
+
+		return ((DataSequencer)this.Sequencer).IncreaseAsync(context, sequence, data, cancellation);
+	}
+	#endregion
+
+	#region 异常事件
+	private void Provider_Error(object sender, DataAccessErrorEventArgs args) => this.OnError(args);
+	#endregion
+
+	#region 处置方法
+	protected override void Dispose(bool disposing)
+	{
+		//取消提供程序的事件监听
+		_provider.Error -= this.Provider_Error;
+
+		//置空提供程序
+		_provider = null;
+
+		//调用基类同名方法
+		base.Dispose(disposing);
+	}
+	#endregion
+
+	#region 嵌套子类
+	private sealed class DataSequencer(DataAccess accessor) : DataSequencerBase(accessor), ISequence
+	{
+		#region 常量定义
+		private const string SEQUENCE_KEY = "Zongsoft.Sequence:";
+		#endregion
+
+		#region 公共方法
+		public override long Increase(IDataEntitySimplexProperty property, int interval = 1)
+		{
+			if(property == null)
+				throw new ArgumentNullException(nameof(property));
+
+			var sequence = property.Sequence ?? throw new InvalidOperationException($"The specified '{property.Entity.Name}.{property.Name}' property does not define a sequence.");
+			if(sequence.IsBuiltin)
+				return 0L;
+
+			var key = GetSequenceKey(null, sequence, null);
+
+			return this.Sequence.Increase(key,
+				interval == 1 ? sequence.Interval : interval,
+				sequence.Seed);
+		}
+
+		public override ValueTask<long> IncreaseAsync(IDataEntitySimplexProperty property, int interval, CancellationToken cancellation = default)
+		{
+			if(property == null)
+				throw new ArgumentNullException(nameof(property));
+
+			var sequence = property.Sequence ?? throw new InvalidOperationException($"The specified '{property.Entity.Name}.{property.Name}' property does not define a sequence.");
+			if(sequence.IsBuiltin)
+				return ValueTask.FromResult(0L);
+
+			var key = GetSequenceKey(null, sequence, null);
+
+			return this.Sequence.IncreaseAsync(key,
+				interval == 1 ? sequence.Interval : interval,
+				sequence.Seed, null, cancellation);
+		}
+
+		public long Increase(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
+		{
+			if(sequence == null)
+				throw new ArgumentNullException(nameof(sequence));
+
+			return this.Sequence.Increase(GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed);
+		}
+
+		public ValueTask<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
+		{
+			if(sequence == null)
+				throw new ArgumentNullException(nameof(sequence));
+
+			return this.Sequence.IncreaseAsync(GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed, null, cancellation);
 		}
 		#endregion
 
-		#region 公共属性
-		public IDataProvider Provider => _provider;
-		#endregion
-
-		#region 执行方法
-		protected override void OnExecute(DataExecuteContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override ValueTask OnExecuteAsync(DataExecuteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
-		#endregion
-
-		#region 导入方法
-		protected override void OnImport(DataImportContextBase context) => this.Provider.Import((DataImportContext)context);
-		protected override ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation = default) => this.Provider.ImportAsync((DataImportContext)context, cancellation);
-		#endregion
-
-		#region 存在方法
-		protected override void OnExists(DataExistContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override ValueTask OnExistsAsync(DataExistContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
-		#endregion
-
-		#region 聚合方法
-		protected override void OnAggregate(DataAggregateContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override ValueTask OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
-		#endregion
-
-		#region 删除方法
-		protected override void OnDelete(DataDeleteContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override ValueTask OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
-		#endregion
-
-		#region 插入方法
-		protected override void OnInsert(DataInsertContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override ValueTask OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
-		#endregion
-
-		#region 增改方法
-		protected override void OnUpsert(DataUpsertContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override ValueTask OnUpsertAsync(DataUpsertContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
-		#endregion
-
-		#region 更新方法
-		protected override void OnUpdate(DataUpdateContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override ValueTask OnUpdateAsync(DataUpdateContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
-		#endregion
-
-		#region 查询方法
-		protected override void OnSelect(DataSelectContextBase context) => this.Provider.Execute((IDataAccessContext)context);
-		protected override ValueTask OnSelectAsync(DataSelectContextBase context, CancellationToken cancellation) => this.Provider.ExecuteAsync((IDataAccessContext)context, cancellation);
-		#endregion
-
-		#region 模式解析
-		protected override ISchemaParser CreateSchema() => SchemaParser.Instance;
-		#endregion
-
-		#region 序号构建
-		protected override IDataSequencer CreateSequencer() => new DataSequencer(this);
-		#endregion
-
-		#region 调用过滤
-		protected override void OnFiltered(IDataAccessContextBase context)
+		#region 显式实现
+		long ISequence.Increase(string key, int interval, int seed, TimeSpan? expiry)
 		{
-			//首先调用本数据访问器的过滤器后趋部分
-			base.OnFiltered(context);
+			key = GetSequenceKey(key, out var sequence);
 
-			//最后调用全局过滤器的前趋部分
-			DataEnvironment.Filters.InvokeFiltered(context);
+			return this.Sequence.Increase(key,
+				interval == 1 ? sequence.Interval : interval,
+				seed == 0 ? sequence.Seed : seed,
+				expiry);
 		}
 
-		protected override void OnFiltering(IDataAccessContextBase context)
+		double ISequence.Increase(string key, double interval, double seed, TimeSpan? expiry)
 		{
-			//首先调用全局过滤器的前趋部分
-			DataEnvironment.Filters.InvokeFiltering(context);
+			key = GetSequenceKey(key, out var sequence);
 
-			//最后调用本数据访问器的过滤器前趋部分
-			base.OnFiltering(context);
-		}
-		#endregion
-
-		#region 上下文法
-		protected override DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options) =>
-			new DataExistContext(this, name, criteria.Flatten(), options);
-
-		protected override DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDataExecuteOptions options) =>
-			new DataExecuteContext(this, name, isScalar, resultType, inParameters, null, options);
-
-		protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options) =>
-			new DataAggregateContext(this, name, aggregate, criteria.Flatten(), options);
-
-		protected override DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options) =>
-			new DataImportContext(this, name, data, members, options);
-
-		protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options) =>
-			new DataDeleteContext(this, name, criteria.Flatten(), schema, options);
-
-		protected override DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options) =>
-			new DataInsertContext(this, name, isMultiple, data, schema, options);
-
-		protected override DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options) =>
-			new DataUpsertContext(this, name, isMultiple, data, schema, options);
-
-		protected override DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options) =>
-			new DataUpdateContext(this, name, isMultiple, data, criteria.Flatten(), schema, options);
-
-		protected override DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options) =>
-			new DataSelectContext(this, name, entityType, grouping, criteria.Flatten(), schema, paging, sortings, options);
-		#endregion
-
-		#region 内部方法
-		internal long Increase(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
-		{
-			if(this.Sequencer == null)
-				throw new InvalidOperationException($"Missing required sequencer of the '{this.Name}' DataAccess.");
-
-			return ((DataSequencer)this.Sequencer).Increase(context, sequence, data);
+			return this.Sequence.Increase(key,
+				interval == 1 ? sequence.Interval : interval,
+				seed == 0 ? sequence.Seed : seed,
+				expiry);
 		}
 
-		internal ValueTask<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
+		long ISequence.Decrease(string key, int interval, int seed, TimeSpan? expiry)
 		{
-			if(this.Sequencer == null)
-				throw new InvalidOperationException($"Missing required sequencer of the '{this.Name}' DataAccess.");
+			key = GetSequenceKey(key, out var sequence);
 
-			return ((DataSequencer)this.Sequencer).IncreaseAsync(context, sequence, data, cancellation);
+			return this.Sequence.Decrease(key,
+				interval == 1 ? sequence.Interval : interval,
+				seed == 0 ? sequence.Seed : seed,
+				expiry);
+		}
+
+		double ISequence.Decrease(string key, double interval, double seed, TimeSpan? expiry)
+		{
+			key = GetSequenceKey(key, out var sequence);
+
+			return this.Sequence.Decrease(key,
+				interval == 1 ? sequence.Interval : interval,
+				seed == 0 ? sequence.Seed : seed,
+				expiry);
+		}
+
+		ValueTask<long> ISequence.IncreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
+		{
+			key = GetSequenceKey(key, out var sequence);
+
+			return this.Sequence.IncreaseAsync(key,
+				interval == 1 ? sequence.Interval : interval,
+				seed == 0 ? sequence.Seed : seed,
+				expiry,
+				cancellation);
+		}
+
+		ValueTask<double> ISequence.IncreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
+		{
+			key = GetSequenceKey(key, out var sequence);
+
+			return this.Sequence.IncreaseAsync(key,
+				interval == 1 ? sequence.Interval : interval,
+				seed == 0 ? sequence.Seed : seed,
+				expiry,
+				cancellation);
+		}
+
+		ValueTask<long> ISequence.DecreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
+		{
+			key = GetSequenceKey(key, out var sequence);
+
+			return this.Sequence.DecreaseAsync(key,
+				interval == 1 ? sequence.Interval : interval,
+				seed == 0 ? sequence.Seed : seed,
+				expiry,
+				cancellation);
+		}
+
+		ValueTask<double> ISequence.DecreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
+		{
+			key = GetSequenceKey(key, out var sequence);
+
+			return this.Sequence.DecreaseAsync(key,
+				interval == 1 ? sequence.Interval : interval,
+				seed == 0 ? sequence.Seed : seed,
+				expiry,
+				cancellation);
+		}
+
+		void ISequence.Reset(string key, int value, TimeSpan? expiry)
+		{
+			key = GetSequenceKey(key, out var sequence);
+			this.Sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
+		}
+
+		void ISequence.Reset(string key, double value, TimeSpan? expiry)
+		{
+			key = GetSequenceKey(key, out var sequence);
+			this.Sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
+		}
+
+		ValueTask ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
+		{
+			key = GetSequenceKey(key, out var sequence);
+			return this.Sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
+		}
+
+		ValueTask ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
+		{
+			key = GetSequenceKey(key, out var sequence);
+			return this.Sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
 		}
 		#endregion
 
-		#region 异常事件
-		private void Provider_Error(object sender, DataAccessErrorEventArgs args) => this.OnError(args);
-		#endregion
-
-		#region 处置方法
-		protected override void Dispose(bool disposing)
+		#region 私有方法
+		private static string GetSequenceKey(string key, out IDataEntityPropertySequence sequence)
 		{
-			//取消提供程序的事件监听
-			_provider.Error -= this.Provider_Error;
+			sequence = null;
 
-			//置空提供程序
-			_provider = null;
+			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
 
-			//调用基类同名方法
-			base.Dispose(disposing);
+			var index = key.LastIndexOfAny([':', '.', '@']);
+			object data = null;
+
+			if(index > 0 && key[index] == '@')
+			{
+				data = key[(index + 1)..].Split(',', '|', '-');
+				index = key.LastIndexOfAny([':', '.'], index);
+			}
+
+			if(index < 0)
+				throw new ArgumentException($"Invalid sequence key, the sequence key must separate the entity name and property name with a colon or a dot.");
+
+			if(!Mapping.Entities.TryGetValue(key[..index], out var entity))
+				throw new ArgumentException($"The '{key[..index]}' entity specified in the sequence key does not exist.");
+
+			if(!entity.Properties.TryGetValue(key[(index + 1)..], out var found) || found.IsComplex)
+				throw new ArgumentException($"The '{key[(index + 1)..]}' property specified in the sequence key does not exist or is not a simplex property.");
+
+			sequence = ((IDataEntitySimplexProperty)found).Sequence;
+
+			if(sequence == null)
+				throw new ArgumentException($"The '{found.Name}' property specified in the sequence key is undefined.");
+
+			return GetSequenceKey(null, sequence, data);
 		}
-		#endregion
 
-		#region 嵌套子类
-		private sealed class DataSequencer(DataAccess accessor) : DataSequencerBase(accessor), ISequence
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static string GetSequenceKey(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
 		{
-			#region 常量定义
-			private const string SEQUENCE_KEY = "Zongsoft.Sequence:";
-			#endregion
+			var key = $"{SEQUENCE_KEY}{sequence.Property.Entity.Name}.{sequence.Property.Name}";
 
-			#region 公共方法
-			public override long Increase(IDataEntitySimplexProperty property, int interval = 1)
+			if(sequence.References != null && sequence.References.Length > 0)
 			{
-				if(property == null)
-					throw new ArgumentNullException(nameof(property));
+				if(data == null)
+					throw new InvalidOperationException($"Missing required references data for the '{sequence.Name}' sequence.");
 
-				var sequence = property.Sequence ?? throw new InvalidOperationException($"The specified '{property.Entity.Name}.{property.Name}' property does not define a sequence.");
-				if(sequence.IsBuiltin)
-					return 0L;
+				var index = 0;
+				object value = null;
 
-				var key = this.GetSequenceKey(null, sequence, null);
-
-				return this.Sequence.Increase(key,
-					interval == 1 ? sequence.Interval : interval,
-					sequence.Seed);
-			}
-
-			public override ValueTask<long> IncreaseAsync(IDataEntitySimplexProperty property, int interval, CancellationToken cancellation = default)
-			{
-				if(property == null)
-					throw new ArgumentNullException(nameof(property));
-
-				var sequence = property.Sequence ?? throw new InvalidOperationException($"The specified '{property.Entity.Name}.{property.Name}' property does not define a sequence.");
-				if(sequence.IsBuiltin)
-					return ValueTask.FromResult(0L);
-
-				var key = this.GetSequenceKey(null, sequence, null);
-
-				return this.Sequence.IncreaseAsync(key,
-					interval == 1 ? sequence.Interval : interval,
-					sequence.Seed, null, cancellation);
-			}
-
-			public long Increase(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
-			{
-				if(sequence == null)
-					throw new ArgumentNullException(nameof(sequence));
-
-				return this.Sequence.Increase(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed);
-			}
-
-			public ValueTask<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
-			{
-				if(sequence == null)
-					throw new ArgumentNullException(nameof(sequence));
-
-				return this.Sequence.IncreaseAsync(this.GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed, null, cancellation);
-			}
-			#endregion
-
-			#region 显式实现
-			long ISequence.Increase(string key, int interval, int seed, TimeSpan? expiry)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return this.Sequence.Increase(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed,
-					expiry);
-			}
-
-			double ISequence.Increase(string key, double interval, double seed, TimeSpan? expiry)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return this.Sequence.Increase(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed,
-					expiry);
-			}
-
-			long ISequence.Decrease(string key, int interval, int seed, TimeSpan? expiry)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return this.Sequence.Decrease(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed,
-					expiry);
-			}
-
-			double ISequence.Decrease(string key, double interval, double seed, TimeSpan? expiry)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return this.Sequence.Decrease(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed,
-					expiry);
-			}
-
-			ValueTask<long> ISequence.IncreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return this.Sequence.IncreaseAsync(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed,
-					expiry,
-					cancellation);
-			}
-
-			ValueTask<double> ISequence.IncreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return this.Sequence.IncreaseAsync(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed,
-					expiry,
-					cancellation);
-			}
-
-			ValueTask<long> ISequence.DecreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return this.Sequence.DecreaseAsync(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed,
-					expiry,
-					cancellation);
-			}
-
-			ValueTask<double> ISequence.DecreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-
-				return this.Sequence.DecreaseAsync(key,
-					interval == 1 ? sequence.Interval : interval,
-					seed == 0 ? sequence.Seed : seed,
-					expiry,
-					cancellation);
-			}
-
-			void ISequence.Reset(string key, int value, TimeSpan? expiry)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-				this.Sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
-			}
-
-			void ISequence.Reset(string key, double value, TimeSpan? expiry)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-				this.Sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
-			}
-
-			ValueTask ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-				return this.Sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
-			}
-
-			ValueTask ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
-			{
-				key = this.GetSequenceKey(key, out var sequence);
-				return this.Sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
-			}
-			#endregion
-
-			#region 私有方法
-			private string GetSequenceKey(string key, out IDataEntityPropertySequence sequence)
-			{
-				sequence = null;
-
-				if(string.IsNullOrEmpty(key))
-					throw new ArgumentNullException(nameof(key));
-
-				var index = key.LastIndexOfAny([':', '.', '@']);
-				object data = null;
-
-				if(index > 0 && key[index] == '@')
+				foreach(var reference in sequence.References)
 				{
-					data = key.Substring(index + 1).Split(',', '|', '-');
-					index = key.LastIndexOfAny([':', '.'], index);
-				}
-
-				if(index < 0)
-					throw new ArgumentException($"Invalid sequence key, the sequence key must separate the entity name and property name with a colon or a dot.");
-
-				if(!Mapping.Entities.TryGetValue(key[..index], out var entity))
-					throw new ArgumentException($"The '{key[..index]}' entity specified in the sequence key does not exist.");
-
-				if(!entity.Properties.TryGetValue(key[(index + 1)..], out var found) || found.IsComplex)
-					throw new ArgumentException($"The '{key[(index + 1)..]}' property specified in the sequence key does not exist or is not a simplex property.");
-
-				sequence = ((IDataEntitySimplexProperty)found).Sequence;
-
-				if(sequence == null)
-					throw new ArgumentException($"The '{found.Name}' property specified in the sequence key is undefined.");
-
-				return this.GetSequenceKey(null, sequence, data);
-			}
-
-			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private string GetSequenceKey(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
-			{
-				var key = $"{SEQUENCE_KEY}{sequence.Property.Entity.Name}.{sequence.Property.Name}";
-
-				if(sequence.References != null && sequence.References.Length > 0)
-				{
-					if(data == null)
-						throw new InvalidOperationException($"Missing required references data for the '{sequence.Name}' sequence.");
-
-					var index = 0;
-					object value = null;
-
-					foreach(var reference in sequence.References)
+					switch(data)
 					{
-						switch(data)
-						{
-							case IModel model:
-								if(!model.TryGetValue(reference.Name, out value) && !this.GetRequiredValue(context, reference, out value))
-									throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
+						case IModel model:
+							if(!model.TryGetValue(reference.Name, out value) && !GetRequiredValue(context, reference, out value))
+								throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
 
-								break;
-							case IDictionary<string, object> genericDictionary:
-								if(!genericDictionary.TryGetValue(reference.Name, out value) && !this.GetRequiredValue(context, reference, out value))
-									throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
+							break;
+						case IDictionary<string, object> genericDictionary:
+							if(!genericDictionary.TryGetValue(reference.Name, out value) && !GetRequiredValue(context, reference, out value))
+								throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
 
-								break;
-							case IDictionary classicDictionary:
-								if(!classicDictionary.Contains(reference.Name) && !this.GetRequiredValue(context, reference, out value))
-									throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
+							break;
+						case IDictionary classicDictionary:
+							if(!classicDictionary.Contains(reference.Name) && !GetRequiredValue(context, reference, out value))
+								throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
 
-								break;
-							default:
-								if(Zongsoft.Common.TypeExtension.IsScalarType(data.GetType()))
-								{
-									if(data.GetType().IsArray)
-										value = ((Array)data).GetValue(index) ?? throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
-									else
-										value = data.ToString();
-								}
+							break;
+						default:
+							if(Zongsoft.Common.TypeExtension.IsScalarType(data.GetType()))
+							{
+								if(data.GetType().IsArray)
+									value = ((Array)data).GetValue(index) ?? throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
 								else
-								{
-									if(Reflection.Reflector.GetValue(ref data, reference.Name) == null && !this.GetRequiredValue(context, reference, out value))
-										throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
-								}
+									value = data.ToString();
+							}
+							else
+							{
+								if(Reflection.Reflector.GetValue(ref data, reference.Name) == null && !GetRequiredValue(context, reference, out value))
+									throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
+							}
 
-								break;
-						}
-
-						if(index++ == 0)
-							key += ":";
-						else
-							key += "-";
-
-						key += value.ToString().Trim();
+							break;
 					}
+
+					if(index++ == 0)
+						key += ":";
+					else
+						key += "-";
+
+					key += value.ToString().Trim();
 				}
-
-				return key;
 			}
 
-			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private bool GetRequiredValue(IDataMutateContextBase context, IDataEntitySimplexProperty property, out object value)
-			{
-				value = null;
-				var validator = context.Options.ValidatorSuppressed ? null : context.Validator;
-				return validator != null && validator.OnInsert(context, property, out value);
-			}
-			#endregion
+			return key;
+		}
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static bool GetRequiredValue(IDataMutateContextBase context, IDataEntitySimplexProperty property, out object value)
+		{
+			value = null;
+			var validator = context.Options.ValidatorSuppressed ? null : context.Validator;
+			return validator != null && validator.OnInsert(context, property, out value);
 		}
 		#endregion
 	}
+	#endregion
 }
