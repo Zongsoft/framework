@@ -65,42 +65,37 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 
 	#region 公共属性
 	internal string Exchanger => string.IsNullOrEmpty(this.Settings.Group) ? "/" : this.Settings.Group;
-	internal string QueueName
-	{
-		get
-		{
-			if(!string.IsNullOrEmpty(this.Settings.Queue))
-				return this.Settings.Queue;
-
-			return string.IsNullOrEmpty(this.Settings.Name) ? this.Name : this.Settings.Name;
-		}
-	}
+	internal string QueueName => this.Settings.Queue;
 	#endregion
 
 	#region 生成方法
 	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
-		await this.InitializeAsync(cancellation);
-
 		if(string.IsNullOrEmpty(topic))
 			throw new ArgumentNullException(nameof(topic));
 
-		//确保主题名称的格式正确
+		//尝试初始化环境
+		await this.InitializeAsync(cancellation);
+
+		//确保主题格式正确
 		topic = topic.Replace('/', '.');
 
-		BasicProperties properties = null;
+		//构建消息参数
+		BasicProperties properties = new BasicProperties
+		{
+			MessageId = Common.Randomizer.GenerateString(12),
+		};
 
 		if(options != null)
 		{
-			properties = new BasicProperties
-			{
-				Priority = options.Priority,
-				MessageId = Guid.NewGuid().ToString("N"),
-			};
+			//设置优先级
+			properties.Priority = options.Priority;
 
+			//设置消息的有效期
 			if(options.Expiration > TimeSpan.Zero)
 				properties.Expiration = options.Expiration.TotalMilliseconds.ToString("#");
 
+			//设置消息的可选属性集
 			if(options.Properties != null && options.Properties.HasValue)
 			{
 				properties.Headers ??= new Dictionary<string, object>();
@@ -113,12 +108,11 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 			}
 		}
 
-		if(properties == null)
-			await _channel.BasicPublishAsync(this.Exchanger, topic, false, data, cancellation);
-		else
-			await _channel.BasicPublishAsync(this.Exchanger, topic, false, properties, data, cancellation);
+		//发送消息
+		await _channel.BasicPublishAsync(this.Exchanger, topic, false, properties, data, cancellation);
 
-		return null;
+		//返回消息编号
+		return properties.MessageId;
 	}
 	#endregion
 
@@ -131,7 +125,16 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 
 	protected override async ValueTask<RabbitSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
 	{
+		//确保主题格式正确
+		topic = string.IsNullOrEmpty(topic) ? "#" : topic.Replace('/', '.');
+
+		//尝试初始化环境
 		await this.InitializeAsync(cancellation);
+
+		//绑定队列订阅主题
+		await _channel.QueueBindAsync(_channel.CurrentQueue, this.Exchanger, topic, null, false, cancellation);
+
+		//返回创建的订阅者
 		return new RabbitSubscriber(this, _channel, topic, tags, handler, options);
 	}
 	#endregion
@@ -143,7 +146,7 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 			return;
 
 		if(_connection == null || !_connection.IsOpen)
-			_connection = await _connectionFactory.CreateConnectionAsync(cancellation);
+			_connection = await _connectionFactory.CreateConnectionAsync(GetClient(this.Settings), cancellation);
 
 		if(_channel == null || _channel.IsClosed)
 		{
@@ -159,11 +162,9 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 			var queue = string.IsNullOrEmpty(this.QueueName) ?
 				await _channel.QueueDeclareAsync(cancellationToken: cancellation) :
 				await _channel.QueueDeclareAsync(this.QueueName, true, false, false, null, false, cancellation);
-
-			//绑定消息队列
-			await _channel.QueueBindAsync(queue.QueueName, this.Exchanger, "#", null, false, cancellation);
-			await _channel.QueueBindAsync(queue.QueueName, this.Exchanger, string.Empty, null, false, cancellation);
 		}
+
+		static string GetClient(Configuration.RabbitConnectionSettings settings) => string.IsNullOrEmpty(settings.Client) ? $"Zongsoft.RabbitMQ:{Common.Randomizer.GenerateString()}" : settings.Client;
 	}
 	#endregion
 

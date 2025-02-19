@@ -115,6 +115,15 @@ namespace Zongsoft.Messaging.RabbitMQ.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Indicates the Exchange of RabbitMQ, defaults to “/” if not specified. 的本地化字符串。
+        /// </summary>
+        internal static string RabbitMQ_Settings_Group_Description {
+            get {
+                return ResourceManager.GetString("RabbitMQ.Settings.Group.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Heartbeat 的本地化字符串。
         /// </summary>
         internal static string RabbitMQ_Settings_Heartbeat {
@@ -147,6 +156,15 @@ namespace Zongsoft.Messaging.RabbitMQ.Properties {
         internal static string RabbitMQ_Settings_Queue {
             get {
                 return ResourceManager.GetString("RabbitMQ.Settings.Queue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Indicates the message queue name of RabbitMQ, if not specified, it defaults to an anonymous non-persistent queue, which is automatically destroyed by the RabbitMQ server when the subscriber unsubscribes or closes. 的本地化字符串。
+        /// </summary>
+        internal static string RabbitMQ_Settings_Queue_Description {
+            get {
+                return ResourceManager.GetString("RabbitMQ.Settings.Queue.Description", resourceCulture);
             }
         }
         

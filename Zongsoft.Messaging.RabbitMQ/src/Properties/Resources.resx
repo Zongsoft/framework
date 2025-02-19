@@ -142,4 +142,10 @@
   <data name="RabbitMQ.Settings.Topic" xml:space="preserve">
     <value>Topic</value>
   </data>
+  <data name="RabbitMQ.Settings.Group.Description" xml:space="preserve">
+    <value>Indicates the Exchange of RabbitMQ, defaults to “/” if not specified.</value>
+  </data>
+  <data name="RabbitMQ.Settings.Queue.Description" xml:space="preserve">
+    <value>Indicates the message queue name of RabbitMQ, if not specified, it defaults to an anonymous non-persistent queue, which is automatically destroyed by the RabbitMQ server when the subscriber unsubscribes or closes.</value>
+  </data>
 </root>

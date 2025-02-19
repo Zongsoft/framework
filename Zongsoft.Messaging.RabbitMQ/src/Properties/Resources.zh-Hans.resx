@@ -162,4 +162,10 @@
   <data name="RabbitMQ.Settings.Topic" xml:space="preserve">
     <value>默认主题</value>
   </data>
+  <data name="RabbitMQ.Settings.Group.Description" xml:space="preserve">
+    <value>表示 RabbitMQ 的交换机(Exchange)，如果未指定则默认为“/”。</value>
+  </data>
+  <data name="RabbitMQ.Settings.Queue.Description" xml:space="preserve">
+    <value>表示 RabbitMQ 的消息队列名，如果未指定则默认为匿名的非持久化队列，非持久化队列随订阅者取消订阅或关闭而由 RabbitMQ 服务器自动销毁。</value>
+  </data>
 </root>
