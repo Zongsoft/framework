@@ -18,14 +18,15 @@ public class MemoryCacheTest
 		var cache = new MemoryCache();
 		Assert.Equal(0, cache.Count);
 		Assert.False(cache.Contains("KEY"));
-		Assert.False(cache.Remove("KEY"));
+		Assert.False(cache.Remove("KEY", out _));
 		Assert.False(cache.TryGetValue("KEY", out _));
 
 		value = cache.GetOrCreate("K1", () => "V1");
 		Assert.NotNull(value);
 		Assert.True(cache.Contains("K1"));
 		Assert.Equal("V1", value);
-		Assert.True(cache.Remove("K1"));
+		Assert.True(cache.Remove("K1", out value));
+		Assert.Equal("V1", value);
 		Assert.Equal(0, cache.Count);
 
 		const int COUNT = 10000;
