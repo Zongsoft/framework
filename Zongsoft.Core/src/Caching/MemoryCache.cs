@@ -84,14 +84,17 @@ namespace Zongsoft.Caching
 #else
 		public void Clear() => _cache.Compact(1.0);
 #endif
-		public bool Remove(object key)
+
+		public void Remove(object key) => _cache.Remove(key);
+		public bool Remove(object key, out object value)
 		{
-			if(_cache.TryGetValue(key, out _))
+			if(key is not null && _cache.TryGetValue(key, out value))
 			{
 				_cache.Remove(key);
 				return true;
 			}
 
+			value = null;
 			return false;
 		}
 #endregion
