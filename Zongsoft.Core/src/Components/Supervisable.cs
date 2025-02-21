@@ -33,11 +33,6 @@ using System.Threading;
 
 namespace Zongsoft.Components;
 
-public interface ISupervisable<T> : IObservable<T>
-{
-	void OnUnsupervised(Superviser<T> superviser);
-}
-
 public abstract class Supervisable<T> : ISupervisable<T>, IObservable<T>
 {
 	#region 成员字段
@@ -77,8 +72,8 @@ public abstract class Supervisable<T> : ISupervisable<T>, IObservable<T>
 	#endregion
 
 	#region 终止监视
-	void ISupervisable<T>.OnUnsupervised(Superviser<T> superviser) => this.OnUnsupervised(superviser);
-	protected virtual void OnUnsupervised(Superviser<T> superviser) { }
+	void ISupervisable<T>.OnUnsupervised(ISuperviser<T> superviser) => this.OnUnsupervised(superviser);
+	protected virtual void OnUnsupervised(ISuperviser<T> superviser) { }
 	#endregion
 
 	#region 嵌套子类

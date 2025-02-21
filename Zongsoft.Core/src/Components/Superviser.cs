@@ -37,13 +37,7 @@ using Zongsoft.Caching;
 
 namespace Zongsoft.Components;
 
-public interface ISuperviser
-{
-	IDisposable Supervise<T>(IObservable<T> observable);
-	bool Unsupervise<T>(IObservable<T> observable);
-}
-
-public class Superviser<T> : IDisposable
+public class Superviser<T> : ISuperviser<T>, IDisposable
 {
 	#region 成员字段
 	private MemoryCache _cache;
