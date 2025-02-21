@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.5.1.0</Version>
+		<Version>6.6.0</Version>
 		<Product>Zongsoft Security Library</Product>
 		<Description>This is a class library about security development.</Description>
 		<RootNamespace>Zongsoft.Security</RootNamespace>
