@@ -31,11 +31,14 @@ using System;
 using System.Linq;
 using System.Threading;
 
-using Microsoft.Extensions.Primitives;
-
 namespace Zongsoft.Components;
 
-public abstract class Supervisable<T> : IObservable<T>
+public interface ISupervisable<T> : IObservable<T>
+{
+	void OnUnsupervised(Superviser<T> superviser);
+}
+
+public abstract class Supervisable<T> : ISupervisable<T>, IObservable<T>
 {
 	#region 成员字段
 	private Subscriber _subscriber;
@@ -59,46 +62,45 @@ public abstract class Supervisable<T> : IObservable<T>
 		_subscriber?.Dispose();
 
 		//创建一个订阅者(观察者的令牌)
-		var subscriber = new Subscriber(observer);
-
-		//注册订阅者的注销事件
-		subscriber.Disposed.RegisterChangeCallback(
-			subscriber =>
-			{
-				if(object.ReferenceEquals(_subscriber, subscriber))
-					_subscriber = null;
-			}, subscriber);
+		var subscriber = new Subscriber(this, observer);
 
 		//返回订阅者
 		return _subscriber = subscriber;
 	}
+
+	private void Unsubscribe()
+	{
+		//释放原有订阅者(取消观察)
+		_subscriber?.Dispose();
+		_subscriber = null;
+	}
+	#endregion
+
+	#region 终止监视
+	void ISupervisable<T>.OnUnsupervised(Superviser<T> superviser) => this.OnUnsupervised(superviser);
+	protected virtual void OnUnsupervised(Superviser<T> superviser) { }
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Subscriber(IObserver<T> observer) : IEquatable<Subscriber>, IEquatable<IObserver<T>>, IDisposable
+	private sealed class Subscriber(Supervisable<T> supervisable, IObserver<T> observer) : IEquatable<Subscriber>, IEquatable<IObserver<T>>, IDisposable
 	{
 		#region 私有变量
+		private Supervisable<T> _supervisable = supervisable;
 		private IObserver<T> _observer = observer;
-		private CancellationTokenSource _cancellation = new();
 		#endregion
 
 		#region 公共属性
 		public IObserver<T> Observer => _observer;
-		public IChangeToken Disposed => Common.Notification.GetToken(_cancellation);
 		#endregion
 
 		#region 处置方法
 		public void Dispose()
 		{
-			var cancellation = Interlocked.Exchange(ref _cancellation, null);
-
-			if(cancellation != null)
+			var supervisable = Interlocked.Exchange(ref _supervisable, null);
+			if(supervisable != null)
 			{
-				cancellation.Cancel();
-				cancellation.Dispose();
-
-				_observer?.OnCompleted();
 				_observer = null;
+				supervisable.Unsubscribe();
 			}
 		}
 		#endregion

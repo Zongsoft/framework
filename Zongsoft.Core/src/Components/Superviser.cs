@@ -37,6 +37,12 @@ using Zongsoft.Caching;
 
 namespace Zongsoft.Components;
 
+public interface ISuperviser
+{
+	IDisposable Supervise<T>(IObservable<T> observable);
+	bool Unsupervise<T>(IObservable<T> observable);
+}
+
 public class Superviser<T> : IDisposable
 {
 	#region 成员字段
@@ -82,7 +88,7 @@ public class Superviser<T> : IDisposable
 		return observer;
 	}
 
-	public void Unsupervise(IObservable<T> observable)
+	public bool Unsupervise(IObservable<T> observable)
 	{
 		//获取被观察对象并执行取消对被观察对象的监测(取消订阅)
 		if(observable != null && _cache.Remove(observable, out var value))
@@ -91,13 +97,28 @@ public class Superviser<T> : IDisposable
 				observer.Unsubscribe();
 			else if(value is IDisposable disposable)
 				disposable.Dispose();
+
+			return true;
 		}
+
+		return false;
 	}
 	#endregion
 
 	#region 驱逐事件
-	private void OnEvicted(object sender, CacheEvictedEventArgs args) => this.OnEvicted((IObservable<T>)args.Key);
-	protected virtual void OnEvicted(IObservable<T> observable) => (observable as IDisposable)?.Dispose();
+	private void OnEvicted(object sender, CacheEvictedEventArgs args) => this.OnUnsupervised((IObservable<T>)args.Key);
+	protected virtual void OnUnsupervised(IObservable<T> observable)
+	{
+		switch(observable)
+		{
+			case ISupervisable<T> supervisable:
+				supervisable.OnUnsupervised(this);
+				break;
+			case IDisposable disposable:
+				disposable.Dispose();
+				break;
+		}
+	}
 	#endregion
 
 	#region 错误回调
