@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Reflection;
 using System.Collections;
@@ -56,6 +57,9 @@ public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 	public LuaExpressionEvaluator() : base(NAME)
 	{
 		_engine = new NLua.Lua();
+
+		//设置引擎的文本编码方式
+		_engine.State.Encoding = Encoding.UTF8;
 
 		//加载 .NET CLR 程序集
 		_engine.LoadCLRPackage();

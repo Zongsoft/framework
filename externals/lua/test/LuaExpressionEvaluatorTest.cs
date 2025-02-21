@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Collections.Generic;
 
 using Xunit;
@@ -13,8 +14,8 @@ public class LuaExpressionEvaluatorTest
 	[Fact]
 	public void TestEvaluateOutput()
 	{
-		const string PRINT_MESSAGE = "Hello, World!";
-		const string ERROR_MESSAGE = "This is an error message.";
+		const string PRINT_MESSAGE = "Hello, World! 🌍";
+		const string ERROR_MESSAGE = "This is an error message. 💥";
 
 		using var evaluator = new LuaExpressionEvaluator();
 
