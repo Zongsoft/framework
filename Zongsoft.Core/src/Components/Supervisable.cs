@@ -51,7 +51,7 @@ public abstract class Supervisable<T> : IObservable<T>
 		if(observer == null)
 			return null;
 
-		//如果当前订阅者就是指定的观察对象则该订阅者
+		//如果当前订阅者就是指定的被观察对象则返回当前订阅者
 		if(_subscriber == observer)
 			return _subscriber;
 

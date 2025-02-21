@@ -72,20 +72,26 @@ public class Superviser<T> : IDisposable
 		if(observable == null)
 			throw new ArgumentNullException(nameof(observable));
 
-		return _cache.GetOrCreate(observable, key =>
-		{
-			var observer = new Observer(this, (IObservable<T>)key);
-			return (observable.Subscribe(observer), _options.Lifecycle);
-		});
+		//获取或创建一个监视被观察对象的观察者
+		var observer = _cache.GetOrCreate(observable, key => (new Observer(this, (IObservable<T>)key), _options.Lifecycle));
+
+		//订阅被观察对象的行为
+		observer.Subscribe();
+
+		//返回观察者订阅凭证
+		return observer;
 	}
 
 	public void Unsupervise(IObservable<T> observable)
 	{
-		if(observable == null)
-			throw new ArgumentNullException(nameof(observable));
-
-		if(_cache.Remove(observable, out var value) && value is IDisposable disposable)
-			disposable.Dispose();
+		//获取被观察对象并执行取消对被观察对象的监测(取消订阅)
+		if(observable != null && _cache.Remove(observable, out var value))
+		{
+			if(value is Observer observer)
+				observer.Unsubscribe();
+			else if(value is IDisposable disposable)
+				disposable.Dispose();
+		}
 	}
 	#endregion
 
@@ -127,28 +133,102 @@ public class Superviser<T> : IDisposable
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Observer(Superviser<T> superviser, IObservable<T> observable) : IObserver<T>, IEquatable<IObservable<T>>
+	private sealed class Observer : IObserver<T>, IDisposable, IEquatable<IObservable<T>>
 	{
 		#region 私有变量
-		private readonly Superviser<T> _superviser = superviser;
-		private readonly IObservable<T> _observable = observable;
-		private volatile int _errors;
+		private readonly object _lock;
+		private Superviser<T> _superviser;
+		private IObservable<T> _observable;
+		private IDisposable _subscriber;
+		private int _errors;
+		#endregion
+
+		#region 构造函数
+		public Observer(Superviser<T> superviser, IObservable<T> observable)
+		{
+			_lock = new();
+			_superviser = superviser;
+			_observable = observable;
+		}
 		#endregion
 
 		#region 观察方法
-		public void OnCompleted() => _superviser.Unsupervise(_observable);
+		public void OnCompleted()
+		{
+			//被观察对象已终止，则将其从监测器中移除
+			_superviser.Unsupervise(_observable);
+		}
+
 		public void OnNext(T value)
 		{
+			//重置最近的错误计数值
 			_errors = 0;
+
+			//更新被观察对象的最后访问时间以顺延过期
 			_superviser.Touch(_observable);
 		}
 
 		public void OnError(Exception exception)
 		{
+			//通知监测器进行错误处理，如果返回真则取消观察，否则更新被观察对象的最后访问时间以顺延过期
 			if(_superviser.OnError(_observable, exception, Interlocked.Increment(ref _errors)))
 				_superviser.Unsupervise(_observable);
 			else
 				_superviser.Touch(_observable);
+		}
+		#endregion
+
+		#region 公共属性
+		public bool IsSubscribed => _subscriber != null;
+		#endregion
+
+		#region 订阅方法
+		/// <summary>订阅被观察对象，即将观察者注入给被观察对象以挂载被观察对象的通知。</summary>
+		/// <remarks>注意：该方法实现确保只能进行一次订阅，以避免重复订阅可能导致的重复通知。</remarks>
+		/// <returns>返回的订阅凭证。</returns>
+		public IDisposable Subscribe()
+		{
+			if(_superviser == null)
+				return null;
+
+			if(_subscriber != null)
+				return _subscriber;
+
+			lock(_lock)
+			{
+				if(_subscriber != null)
+					return _subscriber;
+
+				return _subscriber = _observable?.Subscribe(this);
+			}
+		}
+
+		internal void Unsubscribe()
+		{
+			var superviser = Interlocked.Exchange(ref _superviser, null);
+
+			if(superviser == null)
+				return;
+
+			lock(_lock)
+			{
+				//取消订阅
+				_subscriber?.Dispose();
+
+				//清空相关引用
+				_subscriber = null;
+				_observable = null;
+			}
+		}
+		#endregion
+
+		#region 处置方法
+		public void Dispose()
+		{
+			var superviser = Interlocked.Exchange(ref _superviser, null);
+
+			//将被观察对象从监测器中移除
+			superviser?.Unsupervise(_observable);
 		}
 		#endregion
 
