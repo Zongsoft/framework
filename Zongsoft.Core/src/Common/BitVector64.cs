@@ -44,7 +44,7 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 公共属性
-		public long Data => _data;
+		public readonly long Data => _data;
 
 		public bool this[long bit]
 		{
@@ -76,8 +76,8 @@ namespace Zongsoft.Common
 
 		#region 类型转换
 		public static implicit operator long(BitVector64 vector) => vector._data;
-		public static implicit operator BitVector64(long data) => new BitVector64(data);
-		public static implicit operator BitVector64(BitVector32 vector) => new BitVector64(vector.Data);
+		public static implicit operator BitVector64(long data) => new(data);
+		public static implicit operator BitVector64(BitVector32 vector) => new(vector.Data);
 		#endregion
 
 		#region 符号重写
@@ -86,11 +86,11 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 重写方法
-		public bool Equals(BitVector32 other) => _data == other.Data;
-		public bool Equals(BitVector64 other) => _data == other._data;
-		public override bool Equals(object obj) => obj is BitVector64 other && this.Equals(other);
-		public override int GetHashCode() => _data.GetHashCode();
-		public override string ToString() => _data.ToString();
+		public readonly bool Equals(BitVector32 other) => _data == other.Data;
+		public readonly bool Equals(BitVector64 other) => _data == other._data;
+		public override readonly bool Equals(object obj) => obj is BitVector64 other && this.Equals(other);
+		public override readonly int GetHashCode() => _data.GetHashCode();
+		public override readonly string ToString() => _data.ToString();
 		#endregion
 	}
 }

@@ -32,18 +32,14 @@ using System.Threading;
 
 namespace Zongsoft.Common
 {
-	public struct BitVector32 : IEquatable<BitVector32>
+	public struct BitVector32(int data) : IEquatable<BitVector32>
 	{
 		#region 成员字段
-		private int _data;
-		#endregion
-
-		#region 构造函数
-		public BitVector32(int data) => _data = data;
+		private int _data = data;
 		#endregion
 
 		#region 公共属性
-		public int Data => _data;
+		public readonly int Data => _data;
 
 		public bool this[int bit]
 		{
@@ -75,7 +71,7 @@ namespace Zongsoft.Common
 
 		#region 类型转换
 		public static implicit operator int(BitVector32 vector) => vector._data;
-		public static implicit operator BitVector32(int data) => new BitVector32(data);
+		public static implicit operator BitVector32(int data) => new(data);
 		#endregion
 
 		#region 符号重写
@@ -84,10 +80,10 @@ namespace Zongsoft.Common
 		#endregion
 
 		#region 重写方法
-		public bool Equals(BitVector32 other) => _data == other._data;
-		public override bool Equals(object obj) => obj is BitVector32 other && this.Equals(other);
-		public override int GetHashCode() => _data.GetHashCode();
-		public override string ToString() => _data.ToString();
+		public readonly bool Equals(BitVector32 other) => _data == other._data;
+		public override readonly bool Equals(object obj) => obj is BitVector32 other && this.Equals(other);
+		public override readonly int GetHashCode() => _data.GetHashCode();
+		public override readonly string ToString() => _data.ToString();
 		#endregion
 	}
 }
