@@ -62,8 +62,10 @@ namespace Zongsoft.Collections
 				if(succeed)
 					yield return iterator.Current;
 				else
-					Dispose(iterator);
+					break;
 			}
+
+			Dispose(iterator);
 
 			static async void Dispose(IAsyncEnumerator<T> enumerator)
 			{
