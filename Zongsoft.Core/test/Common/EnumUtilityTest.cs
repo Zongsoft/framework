@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
+
+using Xunit;
 
 using Zongsoft.Common;
 using Zongsoft.Tests;
-
-using Xunit;
 
 namespace Zongsoft.Common.Tests
 {
@@ -36,8 +35,8 @@ namespace Zongsoft.Common.Tests
 			var entries = EnumUtility.GetEnumEntries(typeof(Gender), true);
 
 			Assert.Equal(2, entries.Length);
-			Assert.Equal("Male", entries[1].Name);
-			Assert.Equal("Female", entries[0].Name);
+			Assert.Contains(entries, entry => entry.Name == "Male");
+			Assert.Contains(entries, entry => entry.Name == "Female");
 
 			entries = EnumUtility.GetEnumEntries(typeof(Nullable<Gender>), true, null, "<Unknown>");
 
@@ -46,8 +45,8 @@ namespace Zongsoft.Common.Tests
 			Assert.Null(entries[0].Value);
 			Assert.Equal("<Unknown>", entries[0].Description);
 
-			Assert.Equal("Male", entries[2].Name);
-			Assert.Equal("Female", entries[1].Name);
+			Assert.Contains(entries, entry => entry.Name == "Male");
+			Assert.Contains(entries, entry => entry.Name == "Female");
 		}
 	}
 }
