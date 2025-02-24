@@ -90,7 +90,7 @@ namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 
 			if(this.Request.QueryString.HasValue)
 			{
-				text.Append("?");
+				text.Append('?');
 				text.Append(this.Request.QueryString);
 			}
 
@@ -98,7 +98,7 @@ namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 
 			foreach(var header in this.Request.Headers)
 			{
-				text.AppendLine(header.Key + ":" + string.Join(";", header.Value));
+				text.AppendLine(header.Key + ':' + string.Join(';', [..header.Value]));
 			}
 
 			if(this.Request.ContentLength > 0)

@@ -165,7 +165,7 @@ namespace Zongsoft.Web
 			foreach(var header in request.Headers)
 			{
 				if(header.Key.Length > EXTENDED_PROPERTY_PREFIX.Length && header.Key.StartsWith(EXTENDED_PROPERTY_PREFIX, StringComparison.OrdinalIgnoreCase))
-					properties[header.Key.Substring(EXTENDED_PROPERTY_PREFIX.Length)] = string.Join("", header.Value);
+					properties[header.Key[EXTENDED_PROPERTY_PREFIX.Length..]] = string.Join(' ', [.. header.Value]);
 			}
 
 			if(request.HasFormContentType)

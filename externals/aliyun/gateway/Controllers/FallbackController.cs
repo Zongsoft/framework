@@ -99,7 +99,7 @@ namespace Zongsoft.Externals.Aliyun.Gateway.Controllers
 
 			foreach(var header in this.Request.Headers)
 			{
-				text.AppendLine(header.Key + ":" + string.Join(";", header.Value));
+				text.AppendLine(header.Key + ':' + string.Join(';', [..header.Value]));
 			}
 
 			if(this.Request.ContentLength > 0)

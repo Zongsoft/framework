@@ -138,7 +138,7 @@ public class ExceptionFilter : IExceptionFilter
 			}
 		);
 
-		if(extras != null && extras.Length > 0)
+		if(!extras.IsEmpty)
 		{
 			foreach(var extra in extras)
 				result.Extensions.Add(extra.Key, extra.Value);

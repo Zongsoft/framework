@@ -105,7 +105,7 @@ namespace Zongsoft.Common
 				return text;
 
 			while(text.EndsWith(trimString, comparisonType))
-				text = text.Remove(text.Length - trimString.Length);
+				text = text[..^trimString.Length];
 
 			return text;
 		}
@@ -121,7 +121,7 @@ namespace Zongsoft.Common
 				return text;
 
 			while(text.StartsWith(trimString, comparisonType))
-				text = text.Remove(0, trimString.Length);
+				text = text[trimString.Length..];
 
 			return text;
 		}
@@ -141,7 +141,7 @@ namespace Zongsoft.Common
 		{
 			digits = null;
 
-			if(text == null || text.Length == 0)
+			if(text.IsEmpty)
 				return false;
 
 			int start = -1, count = 0;

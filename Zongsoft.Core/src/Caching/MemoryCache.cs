@@ -68,6 +68,10 @@ namespace Zongsoft.Caching
 		#region 公共属性
 		public int Count => _cache.Count;
 		public MemoryCacheOptions Options => _options;
+
+		#if NET9_0_OR_GREATER
+		public IEnumerable<object> Keys => _cache.Keys;
+		#endif
 		#endregion
 
 		#region 存在方法

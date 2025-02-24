@@ -11,20 +11,8 @@
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/tdengine</RepositoryUrl>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
-		<PackageReference Include="TDengine.Connector" VersionOverride="3.1.4" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-		<PackageReference Include="TDengine.Connector" VersionOverride="3.1.4" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-		<PackageReference Include="TDengine.Connector" VersionOverride="3.1.4" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-		<PackageReference Include="TDengine.Connector" VersionOverride="3.1.4" />
+	<ItemGroup>
+		<PackageReference Include="TDengine.Connector" VersionOverride="3.1.6" />
 	</ItemGroup>
 
 	<ItemGroup>

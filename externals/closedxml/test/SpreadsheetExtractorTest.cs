@@ -1,3 +1,8 @@
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
 using Zongsoft.Externals.ClosedXml.Tests.Models;
 
 namespace Zongsoft.Externals.ClosedXml.Tests;
@@ -9,13 +14,13 @@ public class SpreadsheetExtractorTest
 	private readonly SpreadsheetRenderer _renderer = new();
 
     [Fact]
-	public void TestExtract()
+	public async Task TestExtractAsync()
 	{
 		using var stream = new MemoryStream();
-		_generator.GenerateAsync(stream, Templates.User.Descriptor, Templates.User.Data).AsTask().Wait();
+		await _generator.GenerateAsync(stream, Templates.User.Descriptor, Templates.User.Data);
 		stream.Seek(0, SeekOrigin.Begin);
 
-		var result = _extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(Templates.User.Descriptor)).Synchronize()?.ToArray();
+		var result = _extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(Templates.User.Descriptor)).Synchronize().ToArray();
 		Assert.NotNull(result);
 		Assert.NotEmpty(result);
 		Assert.Equal(Templates.User.Data.Length, result.Length);
@@ -31,16 +36,10 @@ public class SpreadsheetExtractorTest
 	}
 
 	[Fact]
-	public void TestTemplateExtract()
+	public async Task TestTemplateExtractAsync()
 	{
-		//using var stream = System.IO.File.Open(@"D:\Temp\t.xlsx", FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
-		//_renderer.RenderAsync(stream, Templates.ApartmentUsage.Template, Templates.ApartmentUsage).AsTask().Wait();
-		//stream.Flush();
-		//stream.Dispose();
-		//return;
-
 		using var stream = new MemoryStream();
-		_renderer.RenderAsync(stream, Templates.ApartmentUsage.Template, Templates.ApartmentUsage).AsTask().Wait();
+		await _renderer.RenderAsync(stream, Templates.ApartmentUsage.Template, Templates.ApartmentUsage);
 		stream.Seek(0, SeekOrigin.Begin);
 
 		var result = _extractor.ExtractAsync<AssetUsage>(stream, new DataArchiveExtractorOptions(Templates.AssetUsage.Descriptor))

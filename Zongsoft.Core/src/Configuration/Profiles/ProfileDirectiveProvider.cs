@@ -77,7 +77,7 @@ public class ProfileDirectiveProvider : IProfileDirectiveProvider
 
 		public ProfileDirectiveCollection(params ReadOnlySpan<IProfileDirective> directives) : base(StringComparer.OrdinalIgnoreCase)
 		{
-			if(directives != null && directives.Length > 0)
+			if(!directives.IsEmpty)
 			{
 				for(int i = 0; i < directives.Length; i++)
 					this.Items.Add(directives[i]);

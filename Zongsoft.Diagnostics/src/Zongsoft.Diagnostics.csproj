@@ -37,6 +37,10 @@
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.ResourceMonitoring" />
 	</ItemGroup>
 
+	<ItemGroup Condition="$(TargetFramework) == 'net9.0'">
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.ResourceMonitoring" />
+	</ItemGroup>
+
 	<Choose>
 		<When Condition="$(Configuration)=='Debug'">
 			<ItemGroup>
