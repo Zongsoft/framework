@@ -26,7 +26,6 @@ Task("build")
 {
 	var settings = new DotNetBuildSettings
 	{
-		NoRestore = true,
 		Configuration = edition,
 	};
 
