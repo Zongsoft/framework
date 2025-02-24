@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>2.6.0</Version>
+		<Version>3.0.0</Version>
 		<Product>Zongsoft ClosedXml Library</Product>
 		<Description>This is a library about ClosedXML SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.ClosedXml</RootNamespace>
@@ -29,7 +29,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
+				<PackageReference Include="Zongsoft.Core" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

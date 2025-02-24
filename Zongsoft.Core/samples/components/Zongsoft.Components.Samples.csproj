@@ -31,8 +31,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
-				<PackageReference Include="Zongsoft.Messaging.ZeroMQ" VersionOverride="0.9.0" />
+				<PackageReference Include="Zongsoft.Core" />
+				<PackageReference Include="Zongsoft.Messaging.ZeroMQ" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

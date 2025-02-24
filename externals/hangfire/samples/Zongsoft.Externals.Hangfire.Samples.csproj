@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.0.0.0</Version>
+		<Version>1.0.0</Version>
 		<Product>Zongsoft Hangfire Samples</Product>
 		<Description>This is a sample for the Hangfire.</Description>
 		<IsPackable>true</IsPackable>
@@ -19,7 +19,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
+				<PackageReference Include="Zongsoft.Core" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

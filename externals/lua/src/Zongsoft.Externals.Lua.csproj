@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.9.0</Version>
+		<Version>2.0.0</Version>
 		<Product>Zongsoft Lua Library</Product>
 		<Description>This is a library about Lua SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Lua</RootNamespace>
@@ -29,7 +29,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
+				<PackageReference Include="Zongsoft.Core" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

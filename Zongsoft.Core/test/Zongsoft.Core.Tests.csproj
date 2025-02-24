@@ -22,24 +22,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.CodeCoverage" VersionOverride="17.12.0" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" VersionOverride="17.12.0" />
-		<PackageReference Include="xunit" VersionOverride="2.9.3" />
-		<PackageReference Include="xunit.core" VersionOverride="2.9.3" />
-		<PackageReference Include="xunit.assert" VersionOverride="2.9.3" />
-		<PackageReference Include="xunit.analyzers" VersionOverride="1.20.0" />
-		<PackageReference Include="xunit.runner.msbuild" VersionOverride="2.9.3">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="xunit.runner.visualstudio" VersionOverride="3.0.2">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="coverlet.collector" VersionOverride="6.0.4">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="xunit" />
+		<PackageReference Include="xunit.core" />
+		<PackageReference Include="xunit.assert" />
+		<PackageReference Include="xunit.analyzers" />
+		<PackageReference Include="xunit.runner.msbuild" />
+		<PackageReference Include="xunit.runner.visualstudio" />
 	</ItemGroup>
 
 	<ItemGroup>

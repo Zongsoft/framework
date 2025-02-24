@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>6.2.0.0</Version>
+		<Version>7.0.0</Version>
 		<Product>Zongsoft Reporting Library</Product>
 		<Description>This is a base class library that provides reporting.</Description>
 		<RootNamespace>Zongsoft.Reporting</RootNamespace>
@@ -30,7 +30,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
+				<PackageReference Include="Zongsoft.Core" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

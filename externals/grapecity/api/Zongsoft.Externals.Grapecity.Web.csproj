@@ -38,8 +38,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
-				<PackageReference Include="Zongsoft.Reporting" VersionOverride="6.2.0" />
+				<PackageReference Include="Zongsoft.Core" />
+				<PackageReference Include="Zongsoft.Reporting" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

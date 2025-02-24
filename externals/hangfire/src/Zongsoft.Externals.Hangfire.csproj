@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.6.4.0</Version>
+		<Version>2.0.0</Version>
 		<Product>Zongsoft Hangfire Library</Product>
 		<Description>This is a library about Hangfire SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Hangfire</RootNamespace>
@@ -15,7 +15,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.15" />
+		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.18" />
 	</ItemGroup>
 
 	<Choose>
@@ -28,7 +28,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="6.40.4" />
+				<PackageReference Include="Zongsoft.Core" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
