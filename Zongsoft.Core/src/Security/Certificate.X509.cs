@@ -105,9 +105,16 @@ namespace Zongsoft.Security
 			{
 				public string Name => "X509";
 
-				public ICertificate Resolve(byte[] data, string secret = null, CertificateDescriptor descriptor = default) => new X509(string.IsNullOrEmpty(secret) ? new X509Certificate2(data) : new X509Certificate2(data, secret), descriptor);
-				public ICertificate Resolve(string filePath, string secret = null, CertificateDescriptor descriptor = default) => this.Resolve(Zongsoft.IO.FileSystem.File.Open(filePath), secret, descriptor);
+				public ICertificate Resolve(byte[] data, string secret = null, CertificateDescriptor descriptor = default)
+				{
+					#if NET9_0_OR_GREATER
+						return new X509(string.IsNullOrEmpty(secret) ? X509CertificateLoader.LoadCertificate(data) : X509CertificateLoader.LoadPkcs12(data, secret), descriptor);
+					#else
+						return new X509(string.IsNullOrEmpty(secret) ? new X509Certificate2(data) : new X509Certificate2(data, secret), descriptor);
+					#endif
+				}
 
+				public ICertificate Resolve(string filePath, string secret = null, CertificateDescriptor descriptor = default) => this.Resolve(Zongsoft.IO.FileSystem.File.Open(filePath), secret, descriptor);
 				public ICertificate Resolve(Stream stream, string secret = null, CertificateDescriptor descriptor = default)
 				{
 					if(stream == null)
@@ -125,10 +132,14 @@ namespace Zongsoft.Security
 							data.AddRange(buffer.AsSpan(0, bytesRead).ToArray());
 					}
 
-					return new X509(string.IsNullOrEmpty(secret) ? new X509Certificate2(data.ToArray()) : new X509Certificate2(data.ToArray(), secret), descriptor);
+#if NET9_0_OR_GREATER
+						return new X509(string.IsNullOrEmpty(secret) ? X509CertificateLoader.LoadCertificate([.. data]) : X509CertificateLoader.LoadPkcs12(data.ToArray(), secret), descriptor);
+#else
+						return new X509(string.IsNullOrEmpty(secret) ? new X509Certificate2(data.ToArray()) : new X509Certificate2(data.ToArray(), secret), descriptor);
+#endif
 				}
 			}
-			#endregion
+#endregion
 		}
 	}
 }
