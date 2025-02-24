@@ -104,15 +104,16 @@ namespace Zongsoft.Plugins.Hosting
 		#region 事件响应
 		private void OnApplicationStarted()
 		{
-#if !DEBUG
+#if DEBUG
+			_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
+			//_applicationContext.Workbench.Open();
+#else
 			try
-#endif
 			{
 				_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
 				//_applicationContext.Workbench.Open();
 			}
-#if !DEBUG
-			catcch(Exception ex)
+			catch(Exception ex)
 			{
 				_logger.LogError(ex, $"The {_applicationContext.Name} application failed to start.");
 				throw;
@@ -130,7 +131,7 @@ namespace Zongsoft.Plugins.Hosting
 			_shutdownBlock.WaitOne();
 			Environment.ExitCode = 0;
 		}
-		#endregion
+#endregion
 
 		#region 处置方法
 		public void Dispose()
