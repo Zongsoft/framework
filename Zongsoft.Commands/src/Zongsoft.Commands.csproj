@@ -29,7 +29,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
@@ -53,5 +53,4 @@
 			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
 	</ItemGroup>
-
 </Project>
