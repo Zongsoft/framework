@@ -283,13 +283,21 @@ namespace Zongsoft.Data.Common
 					{
 						if(_connection == null)
 						{
+							//创建一个数据连接对象
 							_connection = _source.Driver.CreateConnection(_source.ConnectionString);
-							_connection.StateChange += this.Connection_StateChange;
 
+							//绑定命令关联的连接对象
 							command.Connection = _connection;
 
-							//将命令加入到待绑定事务的命令集中
-							_commands.Add(command);
+							//如果驱动支持事务则进行相关事务处理
+							if(TransactionSupported)
+							{
+								//挂载连接状态变更事件，以进行事务绑定
+								_connection.StateChange += this.Connection_StateChange;
+
+								//将命令加入到待绑定事务的命令集中
+								_commands.Add(command);
+							}
 
 							return;
 						}
@@ -447,16 +455,13 @@ namespace Zongsoft.Data.Common
 			switch(e.CurrentState)
 			{
 				case ConnectionState.Open:
-					//只有驱动支持事务才能发起事务操作
-					if(TransactionSupported)
-					{
-						_transaction = connection.BeginTransaction(GetIsolationLevel());
+					//连接完成则开启一个事务
+					_transaction = connection.BeginTransaction(this.GetIsolationLevel());
 
-						//依次设置待绑定命令的事务
-						while(_commands.TryTake(out var command))
-						{
-							command.Transaction = _transaction;
-						}
+					//依次设置待绑定命令的事务
+					while(_commands.TryTake(out var command))
+					{
+						command.Transaction = _transaction;
 					}
 
 					break;
