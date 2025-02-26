@@ -61,15 +61,7 @@ namespace Zongsoft.Data.Common.Expressions
 			if(!string.IsNullOrEmpty(statement.Alias))
 				context.WriteLine($"/* {statement.Alias} */");
 
-			//调用基类同名方法
-			base.OnVisiting(context, statement);
-		}
-
-		protected override void OnVisited(ExpressionVisitorContext context, SelectStatement statement)
-		{
-			if(context.Depth == 0)
-				context.WriteLine(";");
-
+			//如果需要分页，则首先生成分页查询
 			if(statement.Paging != null && statement.Paging.Enabled)
 			{
 				/*
@@ -78,9 +70,10 @@ namespace Zongsoft.Data.Common.Expressions
 
 				if(statement.GroupBy == null)
 				{
-					context.WriteLine("SELECT COUNT(*)");
+					context.Write("SELECT COUNT(*)");
 					this.VisitFrom(context, statement.From);
 					this.VisitWhere(context, statement.Where);
+					context.WriteLine(";");
 				}
 				else
 				{
@@ -100,9 +93,18 @@ namespace Zongsoft.Data.Common.Expressions
 					this.VisitFrom(context, statement.From);
 					this.VisitWhere(context, statement.Where);
 					this.VisitGroupBy(context, statement.GroupBy);
-					context.WriteLine(") AS __wrapping__");
+					context.WriteLine(") AS __wrapping__;");
 				}
 			}
+
+			//调用基类同名方法
+			base.OnVisiting(context, statement);
+		}
+
+		protected override void OnVisited(ExpressionVisitorContext context, SelectStatement statement)
+		{
+			if(context.Depth == 0)
+				context.WriteLine(";");
 
 			//调用基类同名方法
 			base.OnVisited(context, statement);

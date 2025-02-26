@@ -84,7 +84,7 @@ namespace Zongsoft.Data.Common.Expressions
 
 		protected virtual void VisitFrom(ExpressionVisitorContext context, ICollection<ISource> sources)
 		{
-			context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, join));
+			context.VisitFrom(sources, this.VisitJoin);
 		}
 
 		protected virtual void VisitJoin(ExpressionVisitorContext context, JoinClause joining)
