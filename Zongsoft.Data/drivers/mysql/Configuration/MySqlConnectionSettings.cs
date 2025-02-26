@@ -45,32 +45,42 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 	#endregion
 
 	#region 公共属性
+	[Category("Connection")]
 	[ConnectionSetting(true)]
+	[Alias(nameof(MySqlConnectionStringBuilder.Server))]
 	public string Server
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 
+	[DefaultValue(3306)]
+	[Category("Connection")]
+	[Alias(nameof(MySqlConnectionStringBuilder.Port))]
 	public ushort Port
 	{
 		get => this.GetValue<ushort>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Other")]
+	[Alias(nameof(MySqlConnectionStringBuilder.ApplicationName))]
 	public string Client
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Connection")]
 	[ConnectionSetting(true)]
+	[Alias(nameof(MySqlConnectionStringBuilder.Database))]
 	public string Database
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Connection")]
 	[Alias(nameof(MySqlConnectionStringBuilder.UserID))]
 	public string UserName
 	{
@@ -78,12 +88,15 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
+	[Category("Connection")]
+	[Alias(nameof(MySqlConnectionStringBuilder.Password))]
 	public string Password
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Other")]
 	[DefaultValue("utf8mb4")]
 	[Alias(nameof(MySqlConnectionStringBuilder.CharacterSet))]
 	public string Charset
@@ -92,6 +105,33 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
+	[Category("Connection")]
+	[Alias(nameof(MySqlConnectionStringBuilder.PipeName))]
+	public string PipeName
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[Category("Other")]
+	[DefaultValue(true)]
+	[Alias(nameof(MySqlConnectionStringBuilder.Pipelining))]
+	public bool Pipelining
+	{
+		get => this.GetValue<bool>();
+		set => this.SetValue(value);
+	}
+
+	[Category("Connection")]
+	[DefaultValue(MySqlLoadBalance.RoundRobin)]
+	[Alias(nameof(MySqlConnectionStringBuilder.LoadBalance))]
+	public MySqlLoadBalance LoadBalance
+	{
+		get => this.GetValue<MySqlLoadBalance>();
+		set => this.SetValue(value);
+	}
+
+	[Category("Other")]
 	[Alias(nameof(MySqlConnectionStringBuilder.UseCompression))]
 	public bool Compressible
 	{
@@ -99,7 +139,8 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
-	[DefaultValue("10s")]
+	[DefaultValue("30s")]
+	[Category("Connection")]
 	[Alias(nameof(MySqlConnectionStringBuilder.ConnectionTimeout))]
 	[Alias(nameof(MySqlConnectionStringBuilder.DefaultCommandTimeout))]
 	[ConnectionSetting(typeof(Components.Converters.TimeSpanConverter.Seconds))]
@@ -109,6 +150,8 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
+	[Category("Connection")]
+	[Alias(nameof(MySqlConnectionStringBuilder.Keepalive))]
 	[ConnectionSetting(typeof(Components.Converters.TimeSpanConverter.Seconds), Visible = false)]
 	public TimeSpan KeepAlive
 	{
@@ -116,6 +159,7 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
+	[Category("Connection")]
 	[DefaultValue(MySqlConnectionProtocol.Tcp)]
 	[Alias(nameof(MySqlConnectionStringBuilder.ConnectionProtocol))]
 	public MySqlConnectionProtocol Protocol
@@ -124,50 +168,56 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
+	[Category("Pooling")]
 	[DefaultValue(true)]
 	[ConnectionSetting(Visible = false)]
+	[Alias(nameof(MySqlConnectionStringBuilder.Pooling))]
 	public bool Pooling
 	{
 		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 
-	[DefaultValue(1000)]
+	[Category("Pooling")]
+	[DefaultValue(500)]
 	[ConnectionSetting(Visible = false)]
+	[Alias(nameof(MySqlConnectionStringBuilder.MaximumPoolSize))]
 	public uint MaximumPoolSize
 	{
 		get => this.GetValue<uint>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Pooling")]
 	[DefaultValue(5)]
 	[ConnectionSetting(Visible = false)]
+	[Alias(nameof(MySqlConnectionStringBuilder.MinimumPoolSize))]
 	public uint MinimumPoolSize
 	{
 		get => this.GetValue<uint>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Pooling")]
+	[DefaultValue(true)]
 	[ConnectionSetting(Visible = false)]
-	public bool Replication
-	{
-		get => this.GetValue<bool>();
-		set => this.SetValue(value);
-	}
-
-	[ConnectionSetting(Visible = false)]
+	[Alias(nameof(MySqlConnectionStringBuilder.ConnectionReset))]
 	public bool ConnectionReset
 	{
 		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 
-	public bool IntegratedSecurity
+	[Category("TLS")]
+	[Alias(nameof(MySqlConnectionStringBuilder.SslKey))]
+	public string SslKey
 	{
-		get => this.GetValue<bool>();
+		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 
+	[Category("TLS")]
+	[DefaultValue(MySqlSslMode.None)]
 	[Alias(nameof(MySqlConnectionStringBuilder.SslMode))]
 	public MySqlSslMode SslMode
 	{
@@ -175,12 +225,23 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
+	[Category("TLS")]
+	[Alias(nameof(MySqlConnectionStringBuilder.SslCert))]
+	public string SslCertification
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[Category("TLS")]
+	[Alias(nameof(MySqlConnectionStringBuilder.CertificateFile))]
 	public string CertificateFile
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 
+	[Category("TLS")]
 	[Alias(nameof(MySqlConnectionStringBuilder.CertificatePassword))]
 	public string CertificateSecret
 	{
@@ -188,6 +249,7 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
+	[Category("TLS")]
 	[Alias(nameof(MySqlConnectionStringBuilder.CertificateThumbprint))]
 	public string CertificateDigest
 	{
@@ -195,30 +257,46 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
-	[DefaultValue(true)]
+	[Category("TLS")]
+	[DefaultValue(MySqlCertificateStoreLocation.None)]
+	[Alias(nameof(MySqlConnectionStringBuilder.CertificateStoreLocation))]
+	public MySqlCertificateStoreLocation CertificateStoreLocation
+	{
+		get => this.GetValue<MySqlCertificateStoreLocation>();
+		set => this.SetValue(value);
+	}
+
+	[Category("Other")]
+	[DefaultValue(false)]
 	[ConnectionSetting(Visible = false)]
+	[Alias(nameof(MySqlConnectionStringBuilder.AllowUserVariables))]
 	public bool AllowUserVariables
 	{
 		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Other")]
 	[DefaultValue(true)]
 	[ConnectionSetting(Visible = false)]
+	[Alias(nameof(MySqlConnectionStringBuilder.AllowPublicKeyRetrieval))]
 	public bool AllowPublicKeyRetrieval
 	{
 		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Other")]
 	[DefaultValue(true)]
 	[ConnectionSetting(Visible = false)]
+	[Alias(nameof(MySqlConnectionStringBuilder.AllowLoadLocalInfile))]
 	public bool AllowLoadLocalInfile
 	{
 		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Other")]
 	[ConnectionSetting(Visible = false)]
 	public string AllowLoadLocalInfileInPath
 	{
@@ -226,19 +304,32 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 		set => this.SetValue(value);
 	}
 
+	[Category("Other")]
 	[DefaultValue(true)]
 	[ConnectionSetting(Visible = false)]
+	[Alias(nameof(MySqlConnectionStringBuilder.AllowZeroDateTime))]
 	public bool AllowZeroDateTime
 	{
 		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 
+	[Category("Other")]
 	[DefaultValue(true)]
 	[ConnectionSetting(Visible = false)]
+	[Alias(nameof(MySqlConnectionStringBuilder.ConvertZeroDateTime))]
 	public bool ConvertZeroDateTime
 	{
 		get => this.GetValue<bool>();
+		set => this.SetValue(value);
+	}
+
+	[Category("Other")]
+	[DefaultValue(MySqlDateTimeKind.Unspecified)]
+	[Alias(nameof(MySqlConnectionStringBuilder.DateTimeKind))]
+	public MySqlDateTimeKind DateTimeKind
+	{
+		get => this.GetValue<MySqlDateTimeKind>();
 		set => this.SetValue(value);
 	}
 	#endregion
