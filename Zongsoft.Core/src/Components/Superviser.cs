@@ -30,14 +30,13 @@
 using System;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Caching;
 
 namespace Zongsoft.Components;
 
-public class Superviser<T> : ISuperviser<T>, IDisposable
+public partial class Superviser<T> : ISuperviser<T>, IDisposable
 {
 	#region 成员字段
 	private MemoryCache _cache;
@@ -255,3 +254,20 @@ public class Superviser<T> : ISuperviser<T>, IDisposable
 	}
 	#endregion
 }
+
+#if NET9_0_OR_GREATER
+partial class Superviser<T> : System.Collections.Generic.IEnumerable<IObservable<T>>
+{
+	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public System.Collections.Generic.IEnumerator<IObservable<T>> GetEnumerator()
+	{
+		var cache = _cache ?? throw new ObjectDisposedException(this.GetType().FullName);
+
+		foreach(var key in cache.Keys)
+		{
+			if(key is IObservable<T> observable)
+				yield return observable;
+		}
+	}
+}
+#endif
