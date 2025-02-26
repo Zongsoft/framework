@@ -288,6 +288,8 @@ namespace Zongsoft.Data.Common
 
 							//绑定命令关联的连接对象
 							command.Connection = _connection;
+							//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
+							command.Transaction = null;
 
 							//如果驱动支持事务则进行相关事务处理
 							if(TransactionSupported)
@@ -334,7 +336,12 @@ namespace Zongsoft.Data.Common
 			//如果当前会话已经完成，则数据读取器应构建独属的连接
 			if(this.IsCompleted)
 			{
+				//设置命令连接为新建连接
 				command.Connection = _source.Driver.CreateConnection(_source.ConnectionString);
+
+				//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
+				command.Transaction = null;
+
 				return false;
 			}
 
@@ -350,7 +357,12 @@ namespace Zongsoft.Data.Common
 			//如果当前会话的主连接已经被其他读取器占用则只能创建新的连接
 			if(reading > 1)
 			{
+				//设置命令连接为新建连接
 				command.Connection = _source.Driver.CreateConnection(_source.ConnectionString);
+
+				//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
+				command.Transaction = null;
+
 				return false;
 			}
 			else
