@@ -4,11 +4,15 @@
 		<TargetFramework>net8.0</TargetFramework>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\src\Zongsoft.Messaging.Mqtt.csproj" />
+	</ItemGroup>
+
 	<Choose>
 		<When Condition="$(Configuration)=='Debug'">
 			<ItemGroup>
 				<Reference Include="Zongsoft.Core">
-					<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+					<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 				</Reference>
 			</ItemGroup>
 		</When>
@@ -18,8 +22,4 @@
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
-
-	<ItemGroup>
-		<ProjectReference Include="..\src\Zongsoft.Messaging.Kafka.csproj" />
-	</ItemGroup>
 </Project>

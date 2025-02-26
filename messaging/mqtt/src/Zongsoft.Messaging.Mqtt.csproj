@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.0.0</Version>
-		<Product>Zongsoft ZeroMQ Library</Product>
-		<Description>This is a library about the ZeroMQ messaging development.</Description>
-		<RootNamespace>Zongsoft.Messaging.ZeroMQ</RootNamespace>
+		<Version>7.0.0</Version>
+		<Product>Zongsoft Mqtt Library</Product>
+		<Description>This is a library about the mqtt messaging protocol development.</Description>
+		<RootNamespace>Zongsoft.Messaging.Mqtt</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Messaging.ZeroMQ</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Messaging.Mqtt</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -16,14 +16,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="NetMQ" VersionOverride="4.0.1.13" />
+		<PackageReference Include="MQTTnet" VersionOverride="4.3.7.1207" />
+		<PackageReference Include="MQTTnet.Extensions.ManagedClient" VersionOverride="4.3.7.1207" />
 	</ItemGroup>
 
 	<Choose>
 		<When Condition="$(Configuration)=='Debug'">
 			<ItemGroup>
 				<Reference Include="Zongsoft.Core">
-					<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+					<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 				</Reference>
 			</ItemGroup>
 		</When>

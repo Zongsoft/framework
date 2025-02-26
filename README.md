@@ -15,18 +15,10 @@
 	> - [influxdb](Zongsoft.Data/drivers/influxdb/)：_**I**nflux**DB**_ 驱动
 	> - [tdengine](Zongsoft.Data/drivers/tdengine/)：_**TD**engine_ 驱动
 	> - [clickhouse](Zongsoft.Data/drivers/clickhouse/)：_**C**lick**H**ouse_ 驱动
-- [Zongsoft.Diagnostics](Zongsoft.Diagnostics)
-	> 提供了 _**O**pen**T**elemetry_ 协议相关的诊断能力，包括 _**P**rometheus_、_**Z**ipkin_ 等输出支持。
 - [Zongsoft.Commands](Zongsoft.Commands)
 	> 提供了一些常用的命令，为应用层提供以命令行方式执行特定功能的能力。
-- [Zongsoft.Messaging.Kafka](Zongsoft.Messaging.Kafka)
-	> 提供了 _**K**afka_ 消息队列的插件化支持。
-- [Zongsoft.Messaging.RabbitMQ](Zongsoft.Messaging.RabbitMQ)
-	> 提供了 _**R**abbitMQ_ 消息队列的插件化支持。
-- [Zongsoft.Messaging.Mqtt](Zongsoft.Messaging.Mqtt)
-	> 提供了 _**M**qtt_ 协议的消息队列的插件化支持。
-- [Zongsoft.Messaging.ZeroMQ](Zongsoft.Messaging.ZeroMQ)
-	> 提供了 _**Z**eroMQ_ 消息队列的插件化支持。
+- [Zongsoft.Diagnostics](Zongsoft.Diagnostics)
+	> 提供了 _**O**pen**T**elemetry_ 协议相关的诊断能力，包括 _**P**rometheus_、_**Z**ipkin_ 等输出支持。
 - [Zongsoft.Net](Zongsoft.Net)
 	> 提供了高性能网络通讯相关的支持，基于 [_**P**ipelines_](https://learn.microsoft.com/zh-cn/dotnet/standard/io/pipelines)、[_**B**uffers_](https://learn.microsoft.com/zh-cn/dotnet/standard/io/buffers) 等新式技术。
 - [Zongsoft.Plugins](Zongsoft.Plugins)
@@ -40,20 +32,30 @@
 - [Zongsoft.Web](Zongsoft.Web)
 	> 提供了 **W**eb 应用中安全相关的插件化支持。
 
+- [messaging](messaging/)
+	- [kafka](messaging/kafka/)
+		> 提供了 _**K**afka_ 消息队列的插件化支持。
+	- [rabbit](messaging/rabbit/)
+		> 提供了 _**R**abbitMQ_ 消息队列的插件化支持。
+	- [mqtt](messaging/mqtt/)
+		> 提供了 _**M**qtt_ 协议的消息队列的插件化支持。
+	- [zero](messaging/zero/)
+		> 提供了 _**Z**eroMQ_ 消息队列的插件化支持。
+
 - [externals](externals/)
-	- [aliyun](externals/aliyun)
+	- [aliyun](externals/aliyun/)
 		> 提供了 _阿里云_ 相关服务的插件化支持，基于阿里云 HTTP API 接口实现。
-	- [closedxml](externals/closedxml)
+	- [closedxml](externals/closedxml/)
 		> 提供了电子表格 _(**E**xcel)_ 生成、导入、导出、模板渲染等功能，基于 [**C**losed**X**ml](https://github.com/ClosedXML) 开源项目的插件化。
-	- [hangfire](externals/hangfire)
+	- [hangfire](externals/hangfire/)
 		> 提供了时间任务调度相关功能，基于 [**H**angfire](https://www.hangfire.io) 开源项目的插件化。
-	- [redis](externals/redis)
+	- [redis](externals/redis/)
 		> 提供了分布式缓存、分布式锁、序列号生成等功能，基于 [**S**tack**E**xchange.**R**edis](https://github.com/StackExchange/StackExchange.Redis) 开源项目的插件化。
-	- [lua](externals/lua)
+	- [lua](externals/lua/)
 		> 提供了 [**L**ua](https://lua.org) 表达式解析计算、脚本执行等功能，基于 [**NL**ua](https://github.com/nlua/nlua) 开源项目的插件化。
-	- [python](externals/python)
+	- [python](externals/python/)
 		> 提供了 [**P**ython](https://python.org) 表达式解析计算、脚本执行等功能，基于 [**I**ron**P**ython](https://ironpython.net) 开源项目的插件化。
-	- [scriban](externals/scriban)
+	- [scriban](externals/scriban/)
 		> 提供了 [**S**criban](https://github.com/lunet-io/scriban) 表达式解析计算、_文本模板渲染_ 等功能，基于 [**S**criban](https://github.com/scriban/scriban) 开源项目的插件化。
-	- [wechat](externals/wechat)
+	- [wechat](externals/wechat/)
 		> 提供了微信认证、微信支付、微信公众号等相关功能，基于微信 HTTP API 接口实现。

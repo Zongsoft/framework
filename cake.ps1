@@ -8,9 +8,12 @@
 [string]$project_security         = 'Zongsoft.Security/build.cake'
 [string]$project_commands         = 'Zongsoft.Commands/build.cake'
 [string]$project_reporting        = 'Zongsoft.Reporting/build.cake'
-[string]$project_messaging_mqtt   = 'Zongsoft.Messaging.Mqtt/build.cake'
-[string]$project_messaging_kafka  = 'Zongsoft.Messaging.Kafka/build.cake'
-[string]$project_messaging_zeromq = 'Zongsoft.Messaging.ZeroMQ/build.cake'
+
+[string]$project_messaging_mqtt   = 'messaging/mqtt/build.cake'
+[string]$project_messaging_kafka  = 'messaging/kafka/build.cake'
+[string]$project_messaging_rabbit = 'messaging/rabbit/build.cake'
+[string]$project_messaging_zeromq = 'messaging/zero/build.cake'
+
 [string]$project_aliyun           = 'externals/aliyun/build.cake'
 [string]$project_redis            = 'externals/redis/build.cake'
 [string]$project_wechat           = 'externals/wechat/build.cake'
@@ -57,6 +60,9 @@ dotnet cake $project_messaging_mqtt $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_messaging_kafka $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_messaging_kafka $CAKE_ARGS $ARGS
+
+Write-Host "dotnet cake $project_messaging_rabbit $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+dotnet cake $project_messaging_rabbit $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_messaging_zeromq $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_messaging_zeromq $CAKE_ARGS $ARGS
