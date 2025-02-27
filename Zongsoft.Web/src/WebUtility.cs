@@ -63,18 +63,34 @@ namespace Zongsoft.Web
 			if(data.GetType().IsValueType && object.Equals(data, Zongsoft.Common.TypeExtension.GetDefaultValue(data.GetType())))
 				return new NoContentResult();
 
-			//设置响应的分页头
-			controller.Response.Headers.SetPagination(paging);
-
-			//如果启用了分页并且结果集为空，则返回204(NoContent)
-			if(paging != null && paging.Enabled && paging.IsEmpty)
+			//如果数据是可分页类型则挂载其分页事件
+			if(data is IPageable pageable)
 			{
-				controller.Response.Headers[Headers.Pagination] = $"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})";
-				return new OkObjectResult(Array.Empty<object>());
+				pageable.Paginated += OnPaginated;
+			}
+			else
+			{
+				//设置响应的分页头
+				controller.Response.Headers.SetPagination(paging);
+
+				//如果启用了分页并且结果集为空，则返回204(NoContent)
+				if(paging != null && paging.Enabled && paging.IsEmpty)
+				{
+					controller.Response.Headers[Headers.Pagination] = $"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})";
+					return new OkObjectResult(Array.Empty<object>());
+				}
 			}
 
 			//返回数据
 			return new OkObjectResult(data);
+
+			void OnPaginated(object sender, PagingEventArgs args)
+			{
+				if(sender is IPageable pageable)
+					pageable.Paginated -= OnPaginated;
+
+				controller.Response.Headers.SetPagination(args.Paging);
+			}
 		}
 
 		public static async Task<string> ReadAsStringAsync(this HttpRequest request)
