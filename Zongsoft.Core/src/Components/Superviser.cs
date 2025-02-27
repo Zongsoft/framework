@@ -30,6 +30,8 @@
 using System;
 using System.Linq;
 using System.Threading;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Zongsoft.Common;
 using Zongsoft.Caching;
@@ -40,6 +42,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 {
 	#region 成员字段
 	private MemoryCache _cache;
+	private ConcurrentDictionary<object, IObservable<T>> _keys;
 	private MemoryCacheScanner _scanner;
 	private SuperviserOptions _options;
 	#endregion
@@ -48,6 +51,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	public Superviser(SuperviserOptions options = null)
 	{
 		_options = options ?? new();
+		_keys = new();
 		_cache = new MemoryCache();
 		_scanner = new MemoryCacheScanner(_cache);
 
@@ -58,6 +62,8 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 	#region 公共属性
 	public int Count => _cache?.Count ?? 0;
+	public ICollection<object> Keys => _keys.Keys;
+	public IObservable<T> this[object key] => key != null && _keys.TryGetValue(key, out var observable) ? observable : null;
 	public SuperviserOptions Options
 	{
 		get => _options;
@@ -66,13 +72,21 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	#endregion
 
 	#region 公共方法
-	public IDisposable Supervise(IObservable<T> observable)
+	public void Clear() => _cache?.Clear();
+	public bool Contains(object key) => key is IObservable<T> ? _cache.Contains(key) : _keys.ContainsKey(key);
+	public bool Contains(IObservable<T> observable) => _cache.Contains(observable);
+
+	public IDisposable Supervise(IObservable<T> observable) => this.Supervise(null, observable);
+	public IDisposable Supervise(object key, IObservable<T> observable)
 	{
 		if(observable == null)
 			throw new ArgumentNullException(nameof(observable));
 
 		//获取或创建一个监视被观察对象的观察者
-		var observer = _cache.GetOrCreate(observable, key => (new Observer(this, (IObservable<T>)key), _options.Lifecycle));
+		var observer = _cache.GetOrCreate(observable, observable => (new Observer(this, (IObservable<T>)observable), _options.Lifecycle, key));
+
+		if(key != null)
+			_keys.TryAdd(key, observable);
 
 		//订阅被观察对象的行为
 		observer.Subscribe();
@@ -96,10 +110,26 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 		return false;
 	}
+
+	public bool Unsupervise(object key, out IObservable<T> observable)
+	{
+		//获取被观察对象并执行取消对被观察对象的监测(取消订阅)
+		if(_keys.TryRemove(key, out observable))
+			return this.Unsupervise(observable);
+
+		return false;
+	}
 	#endregion
 
 	#region 驱逐事件
-	private void OnEvicted(object sender, CacheEvictedEventArgs args) => this.OnUnsupervised((IObservable<T>)args.Key);
+	private void OnEvicted(object sender, CacheEvictedEventArgs args)
+	{
+		if(args.State != null)
+			_keys.TryRemove(args.State, out _);
+
+		this.OnUnsupervised((IObservable<T>)args.Key);
+	}
+
 	protected virtual void OnUnsupervised(IObservable<T> observable)
 	{
 		switch(observable)

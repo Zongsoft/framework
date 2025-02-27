@@ -28,11 +28,22 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
 public interface ISuperviser<T>
 {
+	int Count { get; }
+	ICollection<object> Keys { get; }
+
+	void Clear();
+	bool Contains(object key);
+	bool Contains(IObservable<T> observable);
+
 	IDisposable Supervise(IObservable<T> observable);
+	IDisposable Supervise(object key, IObservable<T> observable);
+
 	bool Unsupervise(IObservable<T> observable);
+	bool Unsupervise(object key, out IObservable<T> observable);
 }

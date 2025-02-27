@@ -56,11 +56,8 @@ public abstract class Supervisable<T> : ISupervisable<T>, IObservable<T>
 		//释放原有订阅者(取消观察)
 		_subscriber?.Dispose();
 
-		//创建一个订阅者(观察者的令牌)
-		var subscriber = new Subscriber(this, observer);
-
-		//返回订阅者
-		return _subscriber = subscriber;
+		//返回创建的订阅者(即观察者令牌)
+		return _subscriber = this.OnSubscribe(observer);
 	}
 
 	private void Unsubscribe()
@@ -71,13 +68,17 @@ public abstract class Supervisable<T> : ISupervisable<T>, IObservable<T>
 	}
 	#endregion
 
+	#region 订阅通知
+	protected virtual Subscriber OnSubscribe(IObserver<T> observer) => new(this, observer);
+	#endregion
+
 	#region 终止监视
 	void ISupervisable<T>.OnUnsupervised(ISuperviser<T> superviser) => this.OnUnsupervised(superviser);
 	protected virtual void OnUnsupervised(ISuperviser<T> superviser) { }
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Subscriber(Supervisable<T> supervisable, IObserver<T> observer) : IEquatable<Subscriber>, IEquatable<IObserver<T>>, IDisposable
+	protected sealed class Subscriber(Supervisable<T> supervisable, IObserver<T> observer) : IEquatable<Subscriber>, IEquatable<IObserver<T>>, IDisposable
 	{
 		#region 私有变量
 		private Supervisable<T> _supervisable = supervisable;
