@@ -72,21 +72,21 @@ public static class Pageable
 		return new FilteredEnumerable<T>(source, predicate);
 	}
 
-	public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> map)
+	public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> mapper)
 	{
 		if(source == null)
 			throw new ArgumentNullException(nameof(source));
 
-		if(map == null)
-			throw new ArgumentNullException(nameof(map));
+		if(mapper == null)
+			throw new ArgumentNullException(nameof(mapper));
 
 		var pageable = source as IPageable;
 
 		if(pageable == null)
-			return source.Select(map);
+			return source.Select(mapper);
 
 		var collectionType = typeof(MappedEnumerable<,>).MakeGenericType(typeof(TSource), typeof(TResult));
-		return (IEnumerable<TResult>)Activator.CreateInstance(collectionType, [source, map]);
+		return (IEnumerable<TResult>)Activator.CreateInstance(collectionType, [source, mapper]);
 	}
 	#endregion
 
@@ -167,13 +167,13 @@ public static class Pageable
 
 		#region 私有变量
 		private readonly IEnumerable<TSource> _source;
-		private readonly Func<TSource, TResult> _map;
+		private readonly Func<TSource, TResult> _mapper;
 		#endregion
 
 		#region 构造函数
-		public MappedEnumerable(IEnumerable<TSource> source, Func<TSource, TResult> map)
+		public MappedEnumerable(IEnumerable<TSource> source, Func<TSource, TResult> mapper)
 		{
-			_map = map;
+			_mapper = mapper;
 			_source = source;
 			((IPageable)_source).Paginated += this.OnPaginated;
 		}
@@ -185,7 +185,7 @@ public static class Pageable
 
 		#region 枚举遍历
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<TResult> GetEnumerator() => new MappedIterator(_source.GetEnumerator(), _map, this.OnExit);
+		public IEnumerator<TResult> GetEnumerator() => new MappedIterator(_source.GetEnumerator(), _mapper, this.OnExit);
 		#endregion
 
 		#region 私有方法
