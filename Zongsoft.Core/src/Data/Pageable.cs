@@ -30,8 +30,12 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+
+using Zongsoft.Collections;
 
 namespace Zongsoft.Data;
 
@@ -88,6 +92,21 @@ public static class Pageable
 		var collectionType = typeof(MappedEnumerable<,>).MakeGenericType(typeof(TSource), typeof(TResult));
 		return (IEnumerable<TResult>)Activator.CreateInstance(collectionType, [source, mapper]);
 	}
+
+	public static IAsyncEnumerable<TResult> Map<TSource, TResult>(this IAsyncEnumerable<TSource> source, Func<TSource, TResult> mapper)
+	{
+		if(source == null)
+			throw new ArgumentNullException(nameof(source));
+
+		if(mapper == null)
+			throw new ArgumentNullException(nameof(mapper));
+
+		var collectionType = source is IPageable ?
+			typeof(MappedAsyncEnumerable<,>).MakeGenericType(typeof(TSource), typeof(TResult)) :
+			typeof(AsyncEnumerable<,>).MakeGenericType(typeof(TSource), typeof(TResult));
+
+		return (IAsyncEnumerable<TResult>)Activator.CreateInstance(collectionType, [source, mapper]);
+	}
 	#endregion
 
 	#region 嵌套子类
@@ -126,7 +145,7 @@ public static class Pageable
 		#endregion
 
 		#region 数据迭代
-		private class FilteredIterator(IEnumerator iterator, Pageable.FilterDelegate filter, Action exit) : IEnumerator<T>, IEnumerator, IDisposable
+		private class FilteredIterator(IEnumerator iterator, FilterDelegate filter, Action exit) : IEnumerator<T>, IEnumerator, IDisposable
 		{
 			private readonly IEnumerator _iterator = iterator;
 			private readonly FilterDelegate _filter = filter;
@@ -194,14 +213,14 @@ public static class Pageable
 		#endregion
 
 		#region 数据迭代
-		private class MappedIterator(IEnumerator<TSource> iterator, Func<TSource, TResult> map, Action exit) : IEnumerator<TResult>, IEnumerator, IDisposable
+		private class MappedIterator(IEnumerator<TSource> iterator, Func<TSource, TResult> mapper, Action exit) : IEnumerator<TResult>, IEnumerator, IDisposable
 		{
 			private readonly IEnumerator<TSource> _iterator = iterator;
-			private readonly Func<TSource, TResult> _map = map;
+			private readonly Func<TSource, TResult> _mapper = mapper;
 			private readonly Action _exit = exit;
 
-			object IEnumerator.Current => _map(_iterator.Current);
-			public TResult Current => (TResult)_map(_iterator.Current);
+			object IEnumerator.Current => _mapper(_iterator.Current);
+			public TResult Current => _mapper(_iterator.Current);
 			public bool MoveNext() => _iterator.MoveNext();
 			public void Reset() => _iterator.Reset();
 
@@ -210,6 +229,101 @@ public static class Pageable
 				_iterator.Dispose();
 				_exit();
 			}
+		}
+		#endregion
+	}
+
+	private class MappedAsyncEnumerable<TSource, TResult> : IAsyncEnumerable<TResult>, IPageable
+	{
+		#region 事件声明
+		public event EventHandler<PagingEventArgs> Paginated;
+		#endregion
+
+		#region 私有变量
+		private readonly IAsyncEnumerable<TSource> _source;
+		private readonly Func<TSource, TResult> _mapper;
+		#endregion
+
+		#region 构造函数
+		public MappedAsyncEnumerable(IAsyncEnumerable<TSource> source, Func<TSource, TResult> mapper)
+		{
+			_mapper = mapper;
+			_source = source;
+			((IPageable)_source).Paginated += this.OnPaginated;
+		}
+		#endregion
+
+		#region 公共属性
+		public bool Suppressed => ((IPageable)_source).Suppressed;
+		#endregion
+
+		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => new MappedIterator(_source.Synchronize().GetEnumerator(), _mapper, this.OnExit);
+		public IAsyncEnumerator<TResult> GetAsyncEnumerator(CancellationToken cancellation) => new MappedAsyncIterator(_source.GetAsyncEnumerator(cancellation), _mapper, this.OnExit);
+		#endregion
+
+		#region 私有方法
+		private void OnPaginated(object sender, PagingEventArgs args) => this.Paginated?.Invoke(sender, args);
+		private void OnExit() => ((IPageable)_source).Paginated -= this.OnPaginated;
+		#endregion
+
+		#region 数据迭代
+		private class MappedAsyncIterator(IAsyncEnumerator<TSource> iterator, Func<TSource, TResult> mapper, Action exit) : IAsyncEnumerator<TResult>, IAsyncDisposable
+		{
+			private readonly IAsyncEnumerator<TSource> _iterator = iterator;
+			private readonly Func<TSource, TResult> _mapper = mapper;
+			private readonly Action _exit = exit;
+
+			public TResult Current => _mapper(_iterator.Current);
+			public ValueTask<bool> MoveNextAsync() => _iterator.MoveNextAsync();
+
+			public ValueTask DisposeAsync()
+			{
+				_exit();
+				return _iterator.DisposeAsync();
+			}
+		}
+
+		private class MappedIterator(IEnumerator<TSource> iterator, Func<TSource, TResult> mapper, Action exit) : IEnumerator<TResult>, IEnumerator, IDisposable
+		{
+			private readonly IEnumerator<TSource> _iterator = iterator;
+			private readonly Func<TSource, TResult> _mapper = mapper;
+			private readonly Action _exit = exit;
+
+			object IEnumerator.Current => _mapper(_iterator.Current);
+			public TResult Current => _mapper(_iterator.Current);
+			public bool MoveNext() => _iterator.MoveNext();
+			public void Reset() => _iterator.Reset();
+
+			public void Dispose()
+			{
+				_iterator.Dispose();
+				_exit();
+			}
+		}
+		#endregion
+	}
+
+	private sealed class AsyncEnumerable<TSource, TResult>(IAsyncEnumerable<TSource> source, Func<TSource, TResult> mapper) : IAsyncEnumerable<TResult>
+	{
+		#region 私有变量
+		private readonly IAsyncEnumerable<TSource> _source = source;
+		private readonly Func<TSource, TResult> _mapper = mapper;
+		#endregion
+
+		#region 枚举遍历
+		public IAsyncEnumerator<TResult> GetAsyncEnumerator(CancellationToken cancellation) => new AsyncIterator(_source.GetAsyncEnumerator(cancellation), _mapper);
+		#endregion
+
+		#region 数据迭代
+		private class AsyncIterator(IAsyncEnumerator<TSource> iterator, Func<TSource, TResult> mapper) : IAsyncEnumerator<TResult>, IAsyncDisposable
+		{
+			private readonly IAsyncEnumerator<TSource> _iterator = iterator;
+			private readonly Func<TSource, TResult> _mapper = mapper;
+
+			public TResult Current => _mapper(_iterator.Current);
+			public ValueTask<bool> MoveNextAsync() => _iterator.MoveNextAsync();
+			public ValueTask DisposeAsync() => _iterator.DisposeAsync();
 		}
 		#endregion
 	}
