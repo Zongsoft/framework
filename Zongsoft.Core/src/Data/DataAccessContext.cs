@@ -257,24 +257,10 @@ namespace Zongsoft.Data
 		/// <summary>获取或设置查询操作的排序设置。</summary>
 		public Sorting[] Sortings { get; set; }
 
-		/// <summary>获取或设置查询结果的过滤器。</summary>
-		public FilterDelegate ResultFilter { get; set; }
-
 		/// <summary>获取或设置查询操作的结果集。</summary>
 		public IEnumerable Result
 		{
-			get
-			{
-				bool OnFilter(ref object data)
-				{
-					return ResultFilter(this, ref data);
-				}
-
-				if(ResultFilter != null && _result is IPageable source)
-					Pageable.Filter(source, this.ModelType, OnFilter);
-
-				return _result;
-			}
+			get => _result;
 			set => _result = value ?? throw new ArgumentNullException();
 		}
 
