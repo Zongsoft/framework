@@ -248,8 +248,12 @@ namespace Zongsoft.Data.Common
 		#endregion
 
 		#region 嵌套子类
-		private class LazyCollection<T> : IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable
+		private class LazyCollection<T> : IPageable, IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable
 		{
+			#region 事件定义
+			public event EventHandler<PagingEventArgs> Paginated;
+			#endregion
+
 			#region 成员变量
 			private readonly int _skip;
 			private readonly Paging _paging;
@@ -288,6 +292,9 @@ namespace Zongsoft.Data.Common
 
 					//将读取器移到数据查询
 					reader.NextResult();
+
+					//激发分页完成事件
+					this.Paginated?.Invoke(this, new PagingEventArgs(_context.Name, _paging));
 				}
 
 				return new LazyIterator(_context, _statement, reader, _skip);
@@ -298,7 +305,7 @@ namespace Zongsoft.Data.Common
 				var reader = await _command.ExecuteReaderAsync(cancellation);
 
 				//如果启用了分页，则先获取分页信息
-				if(_paging != null && _paging.Enabled && _skip == 0)
+				if(_paging != null && _paging.Enabled)
 				{
 					//首先执行分页查询
 					if(await reader.ReadAsync(cancellation))
@@ -306,6 +313,9 @@ namespace Zongsoft.Data.Common
 
 					//将读取器移到数据查询
 					await reader.NextResultAsync(cancellation);
+
+					//激发分页完成事件
+					this.Paginated?.Invoke(this, new PagingEventArgs(_context.Name, _paging));
 				}
 
 				await using var iterator = new LazyIterator(_context, _statement, reader, _skip);
