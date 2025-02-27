@@ -83,11 +83,11 @@ namespace Zongsoft.Caching
 		#endregion
 
 		#region 删除方法
-#if NET7_0_OR_GREATER
+		#if NET7_0_OR_GREATER
 		public void Clear() => _cache.Clear();
-#else
+		#else
 		public void Clear() => _cache.Compact(1.0);
-#endif
+		#endif
 
 		public void Remove(object key) => _cache.Remove(key);
 		public bool Remove(object key, out object value)
@@ -101,7 +101,7 @@ namespace Zongsoft.Caching
 			value = null;
 			return false;
 		}
-#endregion
+		#endregion
 
 		#region 获取方法
 		public object GetValue(object key) => _cache.Get(key);

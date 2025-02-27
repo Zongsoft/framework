@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -33,254 +33,185 @@ using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public static class Pageable
 {
-	public static class Pageable
+	#region 委托定义
+	public delegate bool FilterDelegate(ref object data);
+	#endregion
+
+	#region 静态字段
+	private static readonly MethodInfo FilterMethod = typeof(Pageable).GetMethod(
+			nameof(Filter),
+			BindingFlags.Public | BindingFlags.Static,
+			null,
+			CallingConventions.Standard,
+			[typeof(IPageable), typeof(FilterDelegate)],
+			null);
+	#endregion
+
+	#region 公共方法
+	public static IEnumerable Filter(this IPageable source, Type elementType, FilterDelegate predicate)
 	{
-		#region 委托定义
-		public delegate bool FilterDelegate(ref object data);
+		if(elementType == null)
+			throw new ArgumentNullException(nameof(elementType));
+
+		var method = FilterMethod.MakeGenericMethod(elementType);
+		return (IEnumerable)method.Invoke(null, [source, predicate]);
+	}
+
+	public static IEnumerable<T> Filter<T>(this IPageable source, FilterDelegate predicate)
+	{
+		if(source == null)
+			throw new ArgumentNullException(nameof(source));
+
+		if(predicate == null)
+			throw new ArgumentNullException(nameof(predicate));
+
+		return new FilteredEnumerable<T>(source, predicate);
+	}
+
+	public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> map)
+	{
+		if(source == null)
+			throw new ArgumentNullException(nameof(source));
+
+		if(map == null)
+			throw new ArgumentNullException(nameof(map));
+
+		var pageable = source as IPageable;
+
+		if(pageable == null)
+			return source.Select(map);
+
+		var collectionType = typeof(MappedEnumerable<,>).MakeGenericType(typeof(TSource), typeof(TResult));
+		return (IEnumerable<TResult>)Activator.CreateInstance(collectionType, [source, map]);
+	}
+	#endregion
+
+	#region 嵌套子类
+	private class FilteredEnumerable<T> : IEnumerable<T>, IEnumerable, IPageable
+	{
+		#region 事件声明
+		public event EventHandler<PagingEventArgs> Paginated;
 		#endregion
 
-		#region 静态字段
-		private static readonly MethodInfo FilterMethod = typeof(Pageable).GetMethod(
-				nameof(Filter),
-				BindingFlags.Public | BindingFlags.Static,
-				null,
-				CallingConventions.Standard,
-				new Type[] { typeof(IPageable), typeof(FilterDelegate) },
-				null);
+		#region 私有变量
+		private readonly IEnumerable _source;
+		private readonly FilterDelegate _filter;
 		#endregion
 
-		#region 公共方法
-		public static IEnumerable Filter(this IPageable source, Type elementType, FilterDelegate predicate)
+		#region 构造函数
+		public FilteredEnumerable(IEnumerable source, FilterDelegate filter)
 		{
-			if(elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
-
-			var method = FilterMethod.MakeGenericMethod(elementType);
-			return (IEnumerable)method.Invoke(null, new object[] { source, predicate });
-		}
-
-		public static IEnumerable<T> Filter<T>(this IPageable source, FilterDelegate predicate)
-		{
-			if(source == null)
-				throw new ArgumentNullException(nameof(source));
-
-			if(predicate == null)
-				throw new ArgumentNullException(nameof(predicate));
-
-			return new FilteredCollection<T>(source, predicate);
-		}
-
-		public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> map)
-		{
-			if(source == null)
-				throw new ArgumentNullException(nameof(source));
-
-			if(map == null)
-				throw new ArgumentNullException(nameof(map));
-
-			var pageable = source as IPageable;
-
-			if(pageable == null)
-				return source.Select(map);
-
-			var collectionType = typeof(MappedCollection<,>).MakeGenericType(typeof(TSource), typeof(TResult));
-			return (IEnumerable<TResult>)Activator.CreateInstance(collectionType, new object[] { source, map });
+			_filter = filter;
+			_source = source;
+			((IPageable)_source).Paginated += this.OnPaginated;
 		}
 		#endregion
 
-		#region 嵌套子类
-		private class FilteredCollection<T> : IEnumerable<T>, IEnumerable, IPageable
+		#region 公共属性
+		public bool Suppressed => ((IPageable)_source).Suppressed;
+		#endregion
+
+		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<T> GetEnumerator() => new FilteredIterator(_source.GetEnumerator(), _filter, this.OnExit);
+		#endregion
+
+		#region 私有方法
+		private void OnPaginated(object sender, PagingEventArgs args) => this.Paginated?.Invoke(sender, args);
+		private void OnExit() => ((IPageable)_source).Paginated -= this.OnPaginated;
+		#endregion
+
+		#region 数据迭代
+		private class FilteredIterator(IEnumerator iterator, Pageable.FilterDelegate filter, Action exit) : IEnumerator<T>, IEnumerator, IDisposable
 		{
-			#region 事件声明
-			public event EventHandler<PagingEventArgs> Paginated;
-			#endregion
+			private readonly IEnumerator _iterator = iterator;
+			private readonly FilterDelegate _filter = filter;
+			private readonly Action _exit = exit;
+			private object _current;
 
-			#region 私有变量
-			private IEnumerable _source;
-			private FilterDelegate _filter;
-			#endregion
+			public T Current => (T)_current;
+			object IEnumerator.Current => _current;
 
-			#region 构造函数
-			public FilteredCollection(IEnumerable source, FilterDelegate filter)
+			public bool MoveNext()
 			{
-				_filter = filter;
-				_source = source;
-				((IPageable)_source).Paginated += this.OnPaginated;
-			}
-			#endregion
-
-			#region 公共属性
-			public bool Suppressed => ((IPageable)_source).Suppressed;
-			#endregion
-
-			#region 枚举遍历
-			public IEnumerator<T> GetEnumerator()
-			{
-				return new FilteredIterator(_source.GetEnumerator(), _filter, this.OnExit);
-			}
-
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				return this.GetEnumerator();
-			}
-			#endregion
-
-			#region 私有方法
-			private void OnPaginated(object sender, PagingEventArgs e)
-			{
-				this.Paginated?.Invoke(sender, e);
-			}
-
-			private void OnExit()
-			{
-				((IPageable)_source).Paginated -= this.OnPaginated;
-			}
-			#endregion
-
-			#region 数据迭代
-			private class FilteredIterator : IEnumerator<T>, IEnumerator, IDisposable
-			{
-				private IEnumerator _iterator;
-				private FilterDelegate _filter;
-				private Action _exit;
-				private object _current;
-
-				public FilteredIterator(IEnumerator iterator, FilterDelegate filter, Action exit)
+				if(_iterator.MoveNext())
 				{
-					_iterator = iterator;
-					_filter = filter;
-					_exit = exit;
+					_current = _iterator.Current;
+					return _filter(ref _current);
 				}
 
-				public T Current
-				{
-					get => (T)_current;
-				}
-
-				object IEnumerator.Current
-				{
-					get => _current;
-				}
-
-				public bool MoveNext()
-				{
-					if(_iterator.MoveNext())
-					{
-						_current = _iterator.Current;
-						return _filter(ref _current);
-					}
-
-					return false;
-				}
-
-				public void Reset()
-				{
-					_iterator.Reset();
-				}
-
-				public void Dispose()
-				{
-					if(_iterator is IDisposable disposable)
-						disposable.Dispose();
-
-					_exit();
-				}
+				return false;
 			}
-			#endregion
-		}
 
-		private class MappedCollection<TSource, TResult> : IEnumerable<TResult>, IEnumerable, IPageable
-		{
-			#region 事件声明
-			public event EventHandler<PagingEventArgs> Paginated;
-			#endregion
-
-			#region 私有变量
-			private readonly IEnumerable<TSource> _source;
-			private readonly Func<TSource, TResult> _map;
-			#endregion
-
-			#region 构造函数
-			public MappedCollection(IEnumerable<TSource> source, Func<TSource, TResult> map)
+			public void Reset() => _iterator.Reset();
+			public void Dispose()
 			{
-				_map = map;
-				_source = source;
-				((IPageable)_source).Paginated += this.OnPaginated;
+				if(_iterator is IDisposable disposable)
+					disposable.Dispose();
+
+				_exit();
 			}
-			#endregion
-
-			#region 公共属性
-			public bool Suppressed => ((IPageable)_source).Suppressed;
-			#endregion
-
-			#region 枚举遍历
-			public IEnumerator<TResult> GetEnumerator()
-			{
-				return new MappedIterator(_source.GetEnumerator(), _map, this.OnExit);
-			}
-
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				return this.GetEnumerator();
-			}
-			#endregion
-
-			#region 私有方法
-			private void OnPaginated(object sender, PagingEventArgs e)
-			{
-				this.Paginated?.Invoke(sender, e);
-			}
-
-			private void OnExit()
-			{
-				((IPageable)_source).Paginated -= this.OnPaginated;
-			}
-			#endregion
-
-			#region 数据迭代
-			private class MappedIterator : IEnumerator<TResult>, IEnumerator, IDisposable
-			{
-				private IEnumerator<TSource> _iterator;
-				private Func<TSource, TResult> _map;
-				private Action _exit;
-
-				public MappedIterator(IEnumerator<TSource> iterator, Func<TSource, TResult> map, Action exit)
-				{
-					_iterator = iterator;
-					_map = map;
-					_exit = exit;
-				}
-
-				public TResult Current
-				{
-					get => (TResult)_map(_iterator.Current);
-				}
-
-				public bool MoveNext()
-				{
-					return _iterator.MoveNext();
-				}
-
-				public void Reset()
-				{
-					_iterator.Reset();
-				}
-
-				public void Dispose()
-				{
-					_iterator.Dispose();
-					_exit();
-				}
-
-				object IEnumerator.Current
-				{
-					get => _map(_iterator.Current);
-				}
-			}
-			#endregion
 		}
 		#endregion
 	}
+
+	private class MappedEnumerable<TSource, TResult> : IEnumerable<TResult>, IEnumerable, IPageable
+	{
+		#region 事件声明
+		public event EventHandler<PagingEventArgs> Paginated;
+		#endregion
+
+		#region 私有变量
+		private readonly IEnumerable<TSource> _source;
+		private readonly Func<TSource, TResult> _map;
+		#endregion
+
+		#region 构造函数
+		public MappedEnumerable(IEnumerable<TSource> source, Func<TSource, TResult> map)
+		{
+			_map = map;
+			_source = source;
+			((IPageable)_source).Paginated += this.OnPaginated;
+		}
+		#endregion
+
+		#region 公共属性
+		public bool Suppressed => ((IPageable)_source).Suppressed;
+		#endregion
+
+		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<TResult> GetEnumerator() => new MappedIterator(_source.GetEnumerator(), _map, this.OnExit);
+		#endregion
+
+		#region 私有方法
+		private void OnPaginated(object sender, PagingEventArgs args) => this.Paginated?.Invoke(sender, args);
+		private void OnExit() => ((IPageable)_source).Paginated -= this.OnPaginated;
+		#endregion
+
+		#region 数据迭代
+		private class MappedIterator(IEnumerator<TSource> iterator, Func<TSource, TResult> map, Action exit) : IEnumerator<TResult>, IEnumerator, IDisposable
+		{
+			private readonly IEnumerator<TSource> _iterator = iterator;
+			private readonly Func<TSource, TResult> _map = map;
+			private readonly Action _exit = exit;
+
+			object IEnumerator.Current => _map(_iterator.Current);
+			public TResult Current => (TResult)_map(_iterator.Current);
+			public bool MoveNext() => _iterator.MoveNext();
+			public void Reset() => _iterator.Reset();
+
+			public void Dispose()
+			{
+				_iterator.Dispose();
+				_exit();
+			}
+		}
+		#endregion
+	}
+	#endregion
 }
