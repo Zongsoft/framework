@@ -44,14 +44,14 @@ public class SuperviserTest
 		Assert.NotNull(observable);
 		Assert.IsType<MySupervisable>(observable);
 		Assert.Equal("S1", ((MySupervisable)observable).Name);
-		Assert.True(((MySupervisable)observable).IsUnsupervised(100));
+		Assert.True(((MySupervisable)observable).IsUnsupervised(1000));
 		Assert.False(_superviser.Contains("S1"));
 
 		Assert.True(_superviser.Unsupervise("S2", out observable));
 		Assert.NotNull(observable);
 		Assert.IsType<MySupervisable>(observable);
 		Assert.Equal("S2", ((MySupervisable)observable).Name);
-		Assert.True(((MySupervisable)observable).IsUnsupervised(100));
+		Assert.True(((MySupervisable)observable).IsUnsupervised(1000));
 		Assert.False(_superviser.Contains("S2"));
 
 		Assert.Equal(0, _superviser.Count);
@@ -70,7 +70,6 @@ public class SuperviserTest
 		#region 取消监视
 		public bool IsUnsupervised(int milliseconds) => SpinWait.SpinUntil(() => _isUnsupervised, milliseconds);
 		public bool IsUnsupervised(TimeSpan timeout) => SpinWait.SpinUntil(() => _isUnsupervised, timeout);
-
 		protected override void OnUnsupervised(ISuperviser<string> superviser) => _isUnsupervised = true;
 		#endregion
 

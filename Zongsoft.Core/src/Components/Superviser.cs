@@ -44,17 +44,22 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	private MemoryCache _cache;
 	private ConcurrentDictionary<object, IObservable<T>> _keys;
 	private MemoryCacheScanner _scanner;
-	private SuperviserOptions _options;
+	private SupervisableOptions _options;
 	#endregion
 
 	#region 构造函数
-	public Superviser(SuperviserOptions options = null)
+	public Superviser(SupervisableOptions options = null)
 	{
 		_options = options ?? new();
-		_keys = new();
-		_cache = new MemoryCache();
-		_scanner = new MemoryCacheScanner(_cache);
+		_keys = new(KeyEqualityComparer.Instance);
 
+		//确保内存缓存的扫描频率不能过高，因为扫描频率过高可能会导致监测精度不够
+		var frequency = _options.Lifecycle > TimeSpan.Zero ? _options.Lifecycle : TimeSpan.FromSeconds(60);
+		if(frequency > TimeSpan.FromSeconds(60))
+			frequency = TimeSpan.FromSeconds(60);
+
+		_cache = new MemoryCache(frequency);
+		_scanner = new MemoryCacheScanner(_cache);
 		_cache.Evicted += this.OnEvicted;
 		_scanner.Start();
 	}
@@ -64,7 +69,9 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	public int Count => _cache?.Count ?? 0;
 	public ICollection<object> Keys => _keys.Keys;
 	public IObservable<T> this[object key] => key != null && _keys.TryGetValue(key, out var observable) ? observable : null;
-	public SuperviserOptions Options
+
+	/// <summary>获取或设置默认的监测选项设置。</summary>
+	public SupervisableOptions Options
 	{
 		get => _options;
 		set => _options = value ?? throw new ArgumentNullException(nameof(value));
@@ -83,7 +90,14 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 			throw new ArgumentNullException(nameof(observable));
 
 		//获取或创建一个监视被观察对象的观察者
-		var observer = _cache.GetOrCreate(observable, observable => (new Observer(this, (IObservable<T>)observable), _options.Lifecycle, key));
+		var observer = _cache.GetOrCreate(observable, observable =>
+		{
+			//获取当前被观察对象的生命周期，如果其未设置则应用监测器的默认值
+			var lifecycle = this.GetOptions(observable).Lifecycle;
+
+			//注意：如果缓存项的有效期为零则不会进行缓存驱逐事件的监听，因此对于无限期的被观察者必须返回对应的缓存期限设置为最大值
+			return (new Observer(this, (IObservable<T>)observable), lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.MaxValue, key);
+		});
 
 		if(key != null)
 			_keys.TryAdd(key, observable);
@@ -145,7 +159,11 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	#endregion
 
 	#region 错误回调
-	protected virtual bool OnError(IObservable<T> observable, Exception exception, int count) => _options.HasErrorLimit(out var limit) && count > limit;
+	protected virtual bool OnError(IObservable<T> observable, Exception exception, uint count) => this.GetOptions(observable).HasErrorLimit(out var limit) && count > limit;
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"[{this.GetType().Name}] {_options}";
 	#endregion
 
 	#region 处置方法
@@ -174,9 +192,29 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 	#region 私有方法
 	private void Touch(IObservable<T> observable) => _cache.Contains(observable);
+	private SupervisableOptions GetOptions(object observable) => observable is ISupervisable<T> supervisable && supervisable.Options != null ? supervisable.Options : _options;
 	#endregion
 
 	#region 嵌套子类
+	private sealed class KeyEqualityComparer : EqualityComparer<object>
+	{
+		public static readonly KeyEqualityComparer Instance = new();
+		public override int GetHashCode(object obj) => obj is string text ? text.ToUpperInvariant().GetHashCode() : Default.GetHashCode(obj);
+		public override bool Equals(object x, object y)
+		{
+			if(x == null)
+				return y == null;
+
+			if(y == null)
+				return false;
+
+			if(x is string a && y is string b)
+				return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+
+			return Default.Equals(x, y);
+		}
+	}
+
 	private sealed class Observer : IObserver<T>, IDisposable, IEquatable<IObservable<T>>
 	{
 		#region 私有变量
@@ -184,7 +222,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		private Superviser<T> _superviser;
 		private IObservable<T> _observable;
 		private IDisposable _subscriber;
-		private int _errors;
+		private uint _errors;
 		#endregion
 
 		#region 构造函数

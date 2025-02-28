@@ -33,10 +33,19 @@ using System.Threading;
 
 namespace Zongsoft.Components;
 
-public abstract class Supervisable<T> : ISupervisable<T>, IObservable<T>
+public abstract class Supervisable<T>(SupervisableOptions options = null) : ISupervisable<T>, IObservable<T>
 {
 	#region 成员字段
 	private Subscriber _subscriber;
+	private SupervisableOptions _options = options;
+	#endregion
+
+	#region 公共属性
+	public SupervisableOptions Options
+	{
+		get => _options;
+		set => _options = value;
+	}
 	#endregion
 
 	#region 保护属性

@@ -31,11 +31,10 @@ using System;
 
 namespace Zongsoft.Components;
 
-public class SuperviserOptions
+public class SupervisableOptions
 {
 	#region 常量定义
 	private const int ERROR_LIMIT = -1;
-	private const int LIFECYCLE_SECONDS = 60;
 	#endregion
 
 	#region 成员字段
@@ -44,8 +43,8 @@ public class SuperviserOptions
 	#endregion
 
 	#region 构造函数
-	public SuperviserOptions(int errorLimit = ERROR_LIMIT) : this(TimeSpan.Zero, errorLimit) { }
-	public SuperviserOptions(TimeSpan lifecycle, int errorLimit = ERROR_LIMIT)
+	public SupervisableOptions(int errorLimit = ERROR_LIMIT) : this(TimeSpan.Zero, errorLimit) { }
+	public SupervisableOptions(TimeSpan lifecycle, int errorLimit = ERROR_LIMIT)
 	{
 		this.ErrorLimit = errorLimit;
 		this.Lifecycle = lifecycle;
@@ -53,11 +52,11 @@ public class SuperviserOptions
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取或设置监测的生命周期，如果被观察对象超过该周期内未有汇报，则会被驱逐监测。默认值为<c>60</c>秒。</summary>
+	/// <summary>获取或设置监测的生命周期，如果被观察对象超过该周期内未有汇报，则会被驱逐监测。如果为零表示不启用该限制，默认值为<c>60</c>秒。</summary>
 	public TimeSpan Lifecycle
 	{
 		get => _lifecycle;
-		set => _lifecycle = value > TimeSpan.Zero ? value : TimeSpan.FromSeconds(LIFECYCLE_SECONDS);
+		set => _lifecycle = value;
 	}
 
 	/// <summary>获取或设置错误次数的限值，如果被观察对象汇报的异常超过该限定值，则可能会被驱逐监测。默认为<c>-1</c>，表示不启用该限制。</summary>
@@ -74,5 +73,9 @@ public class SuperviserOptions
 		limit = _errorLimit;
 		return limit > -1;
 	}
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"{nameof(this.Lifecycle)}={(this.Lifecycle > TimeSpan.Zero ? this.Lifecycle : "Infinite")};{nameof(this.ErrorLimit)}={this.ErrorLimit}";
 	#endregion
 }
