@@ -12,7 +12,7 @@ partial struct Meter
 		public string Key = key;
 		public string Code = code;
 
-		[System.Text.Json.Serialization.JsonConverter(typeof(Zongsoft.Serialization.Json.ObjectConverter))]
+		[System.Text.Json.Serialization.JsonConverter(typeof(Zongsoft.Serialization.Json.Converters.ObjectConverter))]
 		public object Value = value;
 		#endregion
 

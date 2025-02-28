@@ -20,7 +20,7 @@ public class EventExchangerSample
 	public EventExchangerSample()
 	{
 		//创建消息队列
-		var queue = new ZeroQueue("ZeroMQ", new ConnectionSettings("ZeroMQ", CONNECTION_STRING));
+		var queue = new ZeroQueue("ZeroMQ", Zongsoft.Messaging.ZeroMQ.Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings(CONNECTION_STRING));
 
 		//添加事件交换器通道
 		EventExchanger.Instance.Channels.Add(queue.Channel);
