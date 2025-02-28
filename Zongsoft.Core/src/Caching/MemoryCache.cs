@@ -54,7 +54,7 @@ namespace Zongsoft.Caching
 		#endregion
 
 		#region 构造函数
-		public MemoryCache() : this(TimeSpan.FromSeconds(60), 0) { }
+		public MemoryCache() : this(TimeSpan.FromSeconds(60)) { }
 		public MemoryCache(TimeSpan frequency, int limit = 0)
 		{
 			_options = new MemoryCacheOptions(frequency, limit);
