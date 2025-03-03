@@ -54,7 +54,11 @@ public class MemoryCacheScanner : IDisposable
 	#endregion
 
 	#region 时钟方法
-	private static void OnTick(object state) => ((MemoryCache)state).Compact(0);
+	private static void OnTick(object state)
+	{
+		if(state is MemoryCache cache)
+			cache.Compact(0);
+	}
 	#endregion
 
 	#region 处置方法
