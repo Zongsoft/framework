@@ -19,13 +19,13 @@ public class MySuperviser(SupervisableOptions options = null) : Superviser<strin
 		return base.OnError(observable, exception, count);
 	}
 
-	protected override void OnUnsupervised(IObservable<string> observable)
+	protected override void OnUnsupervised(object key, IObservable<string> observable, SupervisableReason reason)
 	{
 		Terminal.Instance.WriteLine(
 			CommandOutletContent
 				.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss}] ")
 				.Append(CommandOutletColor.DarkMagenta, $"Superviser.Unsupervised: {observable}"));
 
-		base.OnUnsupervised(observable);
+		base.OnUnsupervised(key, observable, reason);
 	}
 }

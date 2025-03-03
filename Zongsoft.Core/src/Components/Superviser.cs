@@ -40,6 +40,20 @@ namespace Zongsoft.Components;
 
 public partial class Superviser<T> : ISuperviser<T>, IDisposable
 {
+	#region 事件声明
+	public event EventHandler<SuperviserEventArgs<T>> Supervised;
+	public event EventHandler<SuperviserEventArgs<T>> Unsupervised;
+	#endregion
+
+	#region 常量定义
+	private const int DISPOSED = -1;
+	private const int DISPOSING = 1;
+	#endregion
+
+	#region 私有变量
+	private volatile int _disposing;
+	#endregion
+
 	#region 成员字段
 	private MemoryCache _cache;
 	private ConcurrentDictionary<object, IObservable<T>> _keys;
@@ -69,6 +83,8 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	public int Count => _cache?.Count ?? 0;
 	public ICollection<object> Keys => _keys.Keys;
 	public IObservable<T> this[object key] => key != null && _keys.TryGetValue(key, out var observable) ? observable : null;
+	public bool IsDisposed => _disposing == DISPOSED;
+	public bool IsDisposing => _disposing == DISPOSING;
 
 	/// <summary>获取或设置默认的监测选项设置。</summary>
 	public SupervisableOptions Options
@@ -89,9 +105,13 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		if(observable == null)
 			throw new ArgumentNullException(nameof(observable));
 
+		var raises = 0;
+
 		//获取或创建一个监视被观察对象的观察者
 		var observer = _cache.GetOrCreate(observable, observable =>
 		{
+			Interlocked.Increment(ref raises);
+
 			//获取当前被观察对象的生命周期，如果其未设置则应用监测器的默认值
 			var lifecycle = this.GetOptions(observable).Lifecycle;
 
@@ -104,6 +124,9 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 		//订阅被观察对象的行为
 		observer.Subscribe();
+
+		if(raises > 0 && Interlocked.Decrement(ref raises) == 0)
+			this.OnSupervised(new SuperviserEventArgs<T>(key, observable));
 
 		//返回观察者订阅凭证
 		return observer;
@@ -125,6 +148,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		return false;
 	}
 
+	public bool Unsupervise(object key) => this.Unsupervise(key, out _);
 	public bool Unsupervise(object key, out IObservable<T> observable)
 	{
 		//获取被观察对象并执行取消对被观察对象的监测(取消订阅)
@@ -141,25 +165,52 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		if(args.State != null)
 			_keys.TryRemove(args.State, out _);
 
-		this.OnUnsupervised((IObservable<T>)args.Key);
+		this.OnUnsupervised(args.State, (IObservable<T>)args.Key, args.Reason switch
+		{
+			CacheEvictedReason.Expired => SupervisableReason.Inactived,
+			_ => SupervisableReason.Manual,
+		});
 	}
 
-	protected virtual void OnUnsupervised(IObservable<T> observable)
+	protected virtual void OnUnsupervised(object key, IObservable<T> observable, SupervisableReason reason)
 	{
 		switch(observable)
 		{
 			case ISupervisable<T> supervisable:
-				supervisable.OnUnsupervised(this);
+				supervisable.OnUnsupervised(this, reason);
 				break;
 			case IDisposable disposable:
 				disposable.Dispose();
 				break;
 		}
+
+		this.OnUnsupervised(new SuperviserEventArgs<T>(key, observable));
 	}
 	#endregion
 
 	#region 错误回调
 	protected virtual bool OnError(IObservable<T> observable, Exception exception, uint count) => this.GetOptions(observable).HasErrorLimit(out var limit) && count > limit;
+	#endregion
+
+	#region 事件触发
+	private volatile int _raises;
+	protected virtual void OnSupervised(SuperviserEventArgs<T> args)
+	{
+		//递增被监测成功的计数器
+		Interlocked.Increment(ref _raises);
+
+		//触发“Supervised”事件
+		this.Supervised?.Invoke(this, args);
+	}
+
+	protected virtual void OnUnsupervised(SuperviserEventArgs<T> args)
+	{
+		//递减被注销成功的计数器
+		Interlocked.Decrement(ref _raises);
+
+		//触发“Unsupervised”事件
+		this.Unsupervised?.Invoke(this, args);
+	}
 	#endregion
 
 	#region 重写方法
@@ -169,8 +220,19 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	#region 处置方法
 	public void Dispose()
 	{
-		this.Dispose(true);
-		GC.SuppressFinalize(this);
+		var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
+		if(disposing != 0)
+			return;
+
+		try
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+		finally
+		{
+			_disposing = DISPOSED;
+		}
 	}
 
 	protected virtual void Dispose(bool disposing)
@@ -179,11 +241,17 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		{
 			_cache?.Clear();
 			_scanner?.Stop();
+
+			//确保所有被监测对象的注销事件都已经成功触发
+			SpinWait.SpinUntil(() => _raises > 0, 1000);
 		}
 
 		var cache = _cache;
 		if(cache != null)
 			cache.Evicted -= this.OnEvicted;
+
+		this.Supervised = null;
+		this.Unsupervised = null;
 
 		_cache = null;
 		_scanner = null;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Xunit;
 
@@ -57,6 +58,45 @@ public class SuperviserTest
 		Assert.Equal(0, _superviser.Count);
 	}
 
+	[Fact]
+	public void TestEventRaises()
+	{
+		const int COUNT = 1000;
+
+		//挂载监测完成事件
+		_superviser.Supervised += this.OnSupervised;
+
+		//并发执行监测方法，以触发监测完成事件
+		Parallel.For(0, COUNT, index =>
+		{
+			_superviser.Supervise($"S{index + 1}", new MySupervisable($"S{index + 1}"));
+		});
+
+		//确保计数器数值一致
+		Assert.Equal(COUNT, _raises);
+
+		//挂载取消监测事件
+		_superviser.Unsupervised += this.OnUnsupervised;
+
+		//并发执行取消监测方法，以触发监测取消事件
+		Parallel.For(0, COUNT, index =>
+		{
+			_superviser.Unsupervise($"S{index + 1}", out _);
+		});
+
+		//由于取消监测事件回调有延迟，因此需要等待取消事件回调完成
+		SpinWait.SpinUntil(() => _raises > 0, 1000 * 5);
+
+		//确保计数器数值一致
+		Assert.Equal(0, _raises);
+	}
+
+	#region 事件处理
+	private volatile int _raises = 0;
+	private void OnSupervised(object sender, SuperviserEventArgs<string> e) => Interlocked.Increment(ref _raises);
+	private void OnUnsupervised(object sender, SuperviserEventArgs<string> e) => Interlocked.Decrement(ref _raises);
+	#endregion
+
 	private sealed class MySupervisable(string name) : Supervisable<string>, IEquatable<string>, IEquatable<MySupervisable>
 	{
 		#region 私有变量
@@ -70,7 +110,7 @@ public class SuperviserTest
 		#region 取消监视
 		public bool IsUnsupervised(int milliseconds) => SpinWait.SpinUntil(() => _isUnsupervised, milliseconds);
 		public bool IsUnsupervised(TimeSpan timeout) => SpinWait.SpinUntil(() => _isUnsupervised, timeout);
-		protected override void OnUnsupervised(ISuperviser<string> superviser) => _isUnsupervised = true;
+		protected override void OnUnsupervised(ISuperviser<string> superviser, SupervisableReason reason) => _isUnsupervised = true;
 		#endregion
 
 		#region 重写方法

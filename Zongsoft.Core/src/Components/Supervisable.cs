@@ -82,8 +82,8 @@ public abstract class Supervisable<T>(SupervisableOptions options = null) : ISup
 	#endregion
 
 	#region 终止监视
-	void ISupervisable<T>.OnUnsupervised(ISuperviser<T> superviser) => this.OnUnsupervised(superviser);
-	protected virtual void OnUnsupervised(ISuperviser<T> superviser) { }
+	void ISupervisable<T>.OnUnsupervised(ISuperviser<T> superviser, SupervisableReason reason) => this.OnUnsupervised(superviser, reason);
+	protected virtual void OnUnsupervised(ISuperviser<T> superviser, SupervisableReason reason) { }
 	#endregion
 
 	#region 嵌套子类

@@ -30,6 +30,7 @@ internal class Program
 		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `info` to display the superviser information.");
 		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `open` to start reporting of supervisable objects with the specified name.");
 		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `close` to stop reporting of supervisable objects with the specified name.");
+		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `clear` to clear all supervisable objects.");
 		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `error` to enables error reporting for the supervisable objects with the specified name.");
 		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `pause` to pause reporting of supervisable objects with the specified name.");
 		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `resume` to resume reporting of supervisable objects with the specified name.");
@@ -88,6 +89,9 @@ internal class Program
 					foreach(var supervisable in Get(superviser, parts[1..]))
 						supervisable.Resume();
 
+					break;
+				case "clear":
+					superviser.Clear();
 					break;
 				case "close":
 					if(parts.Length <= 1)

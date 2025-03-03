@@ -68,11 +68,11 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 		return base.OnSubscribe(observer);
 	}
 
-	protected override void OnUnsupervised(ISuperviser<string> superviser)
+	protected override void OnUnsupervised(ISuperviser<string> superviser, SupervisableReason reason)
 	{
 		Terminal.Instance.WriteLine(
 			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss}] ")
-			                    .Append(CommandOutletColor.DarkMagenta, $"{this.Name} Unsupervised."));
+			                    .Append(CommandOutletColor.DarkMagenta, $"{this.Name} Unsupervised<{reason}>."));
 
 		this.Dispose();
 	}

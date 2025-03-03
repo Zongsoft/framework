@@ -34,5 +34,5 @@ namespace Zongsoft.Components;
 public interface ISupervisable<T> : IObservable<T>
 {
 	SupervisableOptions Options { get; set; }
-	void OnUnsupervised(ISuperviser<T> superviser);
+	void OnUnsupervised(ISuperviser<T> superviser, SupervisableReason reason);
 }

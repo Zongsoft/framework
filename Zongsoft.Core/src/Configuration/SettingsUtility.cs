@@ -28,35 +28,20 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Components;
+namespace Zongsoft.Configuration;
 
-public interface ISuperviser<T> : IDisposable
+public static class SettingsUtility
 {
-	#region 事件定义
-	event EventHandler<SuperviserEventArgs<T>> Supervised;
-	event EventHandler<SuperviserEventArgs<T>> Unsupervised;
-	#endregion
+	public static T GetValue<T>(this Settings settings, string name, T defaultValue = default)
+	{
+		var value = settings != null && name != null ? settings[name] : null;
+		return Common.Convert.ConvertValue(value, defaultValue);
+	}
 
-	#region 属性定义
-	int Count { get; }
-	ICollection<object> Keys { get; }
-	IObservable<T> this[object key] { get; }
-	bool IsDisposed { get; }
-	bool IsDisposing { get; }
-	#endregion
-
-	#region 方法定义
-	void Clear();
-	bool Contains(object key);
-	bool Contains(IObservable<T> observable);
-
-	IDisposable Supervise(IObservable<T> observable);
-	IDisposable Supervise(object key, IObservable<T> observable);
-
-	bool Unsupervise(IObservable<T> observable);
-	bool Unsupervise(object key);
-	bool Unsupervise(object key, out IObservable<T> observable);
-	#endregion
+	public static T GetValue<T>(this Settings settings, string name, Func<T> defaultValue)
+	{
+		var value = settings != null && name != null ? settings[name] : null;
+		return Common.Convert.ConvertValue(value, defaultValue);
+	}
 }
