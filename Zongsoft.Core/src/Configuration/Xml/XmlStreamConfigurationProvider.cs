@@ -98,7 +98,7 @@ namespace Zongsoft.Configuration.Xml
 					case XmlNodeType.Whitespace:
 						break;
 					default:
-						throw new FormatException(string.Format(Properties.Resources.Error_UnSupportedNodeType, reader.NodeType, GetLineInfo(reader)));
+						throw new FormatException(string.Format(Properties.Resources.Error_UnsupportedNodeType, reader.NodeType, GetLineInfo(reader)));
 				}
 
 				context.Next();
@@ -121,7 +121,7 @@ namespace Zongsoft.Configuration.Xml
 		private static string GetLineInfo(XmlReader reader)
 		{
 			if(reader is IXmlLineInfo info)
-				return string.Format(Properties.Resources.Text_LinePositionInfo, info.LineNumber, info.LinePosition);
+				return string.Format(Properties.Resources.LinePositionInfo, info.LineNumber, info.LinePosition);
 
 			return string.Empty;
 		}

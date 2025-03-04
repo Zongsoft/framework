@@ -54,7 +54,7 @@ namespace Zongsoft.Services.Commands
 		#endregion
 
 		#region 保护属性
-		protected CommandContext Context { get => _context; }
+		protected CommandContext Context => _context;
 		#endregion
 
 		#region 执行方法
@@ -115,14 +115,11 @@ namespace Zongsoft.Services.Commands
 
 		protected virtual void OnListening(CommandContext context, TWorker worker)
 		{
-			context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.Text_WorkerListenCommand_Welcome, worker.Name));
-			context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.Text_WorkerListenCommand_Prompt + Environment.NewLine);
+			context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.WorkerListenCommand_Welcome, worker.Name));
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.WorkerListenCommand_Prompt + Environment.NewLine);
 		}
 
-		protected virtual void OnListened(CommandContext context, TWorker worker)
-		{
-		}
-
+		protected virtual void OnListened(CommandContext context, TWorker worker) { }
 		protected virtual void OnStateChanged(TWorker worker, WorkerStateChangedEventArgs args)
 		{
 			_context.Output.WriteLine(WorkerInfoCommand.GetInfo(worker));

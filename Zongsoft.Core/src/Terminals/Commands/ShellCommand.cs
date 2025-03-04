@@ -28,25 +28,19 @@
  */
 
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Zongsoft.Terminals.Commands
 {
-	[DisplayName("Text.ShellCommand.Name")]
-	[Description("Text.ShellCommand.Description")]
-	[Zongsoft.Services.CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "Text.ShellCommand.Options.Timeout")]
+	[DisplayName("ShellCommand.Name")]
+	[Description("ShellCommand.Description")]
+	[Zongsoft.Services.CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "ShellCommand.Options.Timeout")]
 	public class ShellCommand : Zongsoft.Services.CommandBase<TerminalCommandContext>
 	{
 		#region 构造函数
-		public ShellCommand() : base("Shell")
-		{
-		}
-
-		public ShellCommand(string name) : base(name)
-		{
-		}
+		public ShellCommand() : base("Shell") { }
+		public ShellCommand(string name) : base(name) { }
 		#endregion
 
 		#region 重写方法

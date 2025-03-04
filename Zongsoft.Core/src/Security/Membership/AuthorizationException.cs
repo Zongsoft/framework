@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Zongsoft.Security.Membership
 {
@@ -39,21 +38,10 @@ namespace Zongsoft.Security.Membership
 	public class AuthorizationException : SecurityException
 	{
 		#region 构造函数
-		public AuthorizationException() : base(SecurityReasons.Forbidden, Properties.Resources.Text_AuthorizationException_Message)
-		{
-		}
-
-		public AuthorizationException(string reason) : base(reason, Properties.Resources.Text_AuthorizationException_Message)
-		{
-		}
-
-		public AuthorizationException(string reason, string message) : base(reason, message ?? Properties.Resources.Text_AuthorizationException_Message)
-		{
-		}
-
-		public AuthorizationException(string reason, string message, Exception innerException) : base(reason, message ?? Properties.Resources.Text_AuthorizationException_Message, innerException)
-		{
-		}
+		public AuthorizationException() : base(SecurityReasons.Forbidden, Properties.Resources.AuthorizationException_Message) { }
+		public AuthorizationException(string reason) : base(reason, Properties.Resources.AuthorizationException_Message) { }
+		public AuthorizationException(string reason, string message) : base(reason, message ?? Properties.Resources.AuthorizationException_Message) { }
+		public AuthorizationException(string reason, string message, Exception innerException) : base(reason, message ?? Properties.Resources.AuthorizationException_Message, innerException) { }
 		#endregion
 	}
 }

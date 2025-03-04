@@ -37,23 +37,23 @@ namespace Zongsoft.Data
 	public class DataArgumentException : DataException
 	{
 		#region 构造函数
-		public DataArgumentException(string name, Exception innerException = null) : base(Properties.Resources.Text_DataArgumentException_Message, innerException)
+		public DataArgumentException(string name, Exception innerException = null) : base(Properties.Resources.DataArgumentException_Message, innerException)
 		{
 			this.Name = name;
 		}
 
-		public DataArgumentException(string name, string message, Exception innerException = null) : base(message ?? Properties.Resources.Text_DataArgumentException_Message, innerException)
+		public DataArgumentException(string name, string message, Exception innerException = null) : base(message ?? Properties.Resources.DataArgumentException_Message, innerException)
 		{
 			this.Name = name;
 		}
 
-		public DataArgumentException(string name, object value, Exception innerException = null) : base(Properties.Resources.Text_DataArgumentException_Message, innerException)
+		public DataArgumentException(string name, object value, Exception innerException = null) : base(Properties.Resources.DataArgumentException_Message, innerException)
 		{
 			this.Name = name;
 			this.Value = value;
 		}
 
-		public DataArgumentException(string name, object value, string message, Exception innerException = null) : base(message ?? Properties.Resources.Text_DataArgumentException_Message, innerException)
+		public DataArgumentException(string name, object value, string message, Exception innerException = null) : base(message ?? Properties.Resources.DataArgumentException_Message, innerException)
 		{
 			this.Name = name;
 			this.Value = value;
@@ -73,10 +73,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 重写方法
-		public override string ToString() =>
-			string.IsNullOrEmpty(this.Name) ?
-			this.Value?.ToString() :
-			$"{this.Name}={this.Value}";
+		public override string ToString() => string.IsNullOrEmpty(this.Name) ? this.Value?.ToString() : $"{this.Name}={this.Value}";
 		#endregion
 	}
 }

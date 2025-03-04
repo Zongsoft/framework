@@ -32,7 +32,7 @@ using System.Threading;
 
 namespace Zongsoft.Services.Commands
 {
-	[CommandOption(KEY_TIMEOUT_OPTION, typeof(TimeSpan), DefaultValue = "5s", Description = "${Text.Command.Options.Timeout}")]
+	[CommandOption(KEY_TIMEOUT_OPTION, typeof(TimeSpan), DefaultValue = "5s", Description = "${Command.Options.Timeout}")]
 	public class WorkerResumeCommand : CommandBase<CommandContext>
 	{
 		#region 单例字段
@@ -110,12 +110,12 @@ namespace Zongsoft.Services.Commands
 		#region 私有方法
 		private void OnFailed(ICommandOutlet output, IWorker worker)
 		{
-			output.WriteLine(Utility.GetWorkerActionContent(worker, string.Format(Properties.Resources.Text_Command_ExecutionFailed_Message, Properties.Resources.Text_WorkerResumeCommand_Name), CommandOutletColor.DarkRed));
+			output.WriteLine(Utility.GetWorkerActionContent(worker, string.Format(Properties.Resources.Command_ExecutionFailed_Message, Properties.Resources.WorkerResumeCommand_Name), CommandOutletColor.DarkRed));
 		}
 
 		private void OnSucceed(ICommandOutlet output, IWorker worker)
 		{
-			output.WriteLine(Utility.GetWorkerActionContent(worker, string.Format(Properties.Resources.Text_Command_ExecutionSucceed_Message, Properties.Resources.Text_WorkerResumeCommand_Name), CommandOutletColor.DarkGreen));
+			output.WriteLine(Utility.GetWorkerActionContent(worker, string.Format(Properties.Resources.Command_ExecutionSucceed_Message, Properties.Resources.WorkerResumeCommand_Name), CommandOutletColor.DarkGreen));
 		}
 		#endregion
 	}

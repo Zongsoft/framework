@@ -37,7 +37,7 @@ namespace Zongsoft.Data
 	public class DataConstraintException : DataException
 	{
 		#region 构造函数
-		public DataConstraintException(string field, Exception innerException = null) : base(Properties.Resources.Text_DataConstraintException_Message, innerException)
+		public DataConstraintException(string field, Exception innerException = null) : base(Properties.Resources.DataConstraintException_Message, innerException)
 		{
 			this.Field = field;
 		}

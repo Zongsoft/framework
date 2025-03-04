@@ -194,7 +194,7 @@ namespace Zongsoft.Security
 				if(_period > TimeSpan.Zero &&
 				   this.Unpack(text, out _, out var timestamp, out _) &&
 				   DateTime.UtcNow - timestamp < _period)
-					throw new SecurityException("Secret.TooFrequently", Properties.Resources.Text_SecretGenerateTooFrequently_Message);
+					throw new SecurityException("Secret.TooFrequently", Properties.Resources.SecretGenerateTooFrequently_Message);
 			}
 
 			//根据指定的模式生成或获取秘密（验证码）

@@ -159,7 +159,7 @@
   <data name="Error.UnsupportedMultidimensionalArray" xml:space="preserve">
     <value>无法创建类型为“ {0}”的实例，因为不支持多维数组。</value>
   </data>
-  <data name="Error.UnSupportedNodeType" xml:space="preserve">
+  <data name="Error.UnsupportedNodeType" xml:space="preserve">
     <value>发现不受支持的节点类型“{0}”。{1}</value>
   </data>
   <data name="OperationException.Argument.Message" xml:space="preserve">
@@ -180,151 +180,151 @@
   <data name="OperationException.Unsupported.Message" xml:space="preserve">
     <value>不支持当前操作。</value>
   </data>
-  <data name="Text.AuthenticationException.Message" xml:space="preserve">
+  <data name="AuthenticationException.Message" xml:space="preserve">
     <value>身份验证失败。</value>
   </data>
-  <data name="Text.AuthenticationReason.AccountDisabled" xml:space="preserve">
-    <value>帐户已被封。</value>
+  <data name="Security.AccountDisabled.Message" xml:space="preserve">
+    <value>帐户已被禁用。</value>
   </data>
-  <data name="Text.AuthenticationReason.AccountSuspended" xml:space="preserve">
+  <data name="Security.AccountSuspended.Message" xml:space="preserve">
     <value>帐户被暂停，可能是因为验证失败次数太多。</value>
   </data>
-  <data name="Text.AuthenticationReason.AccountUnapproved" xml:space="preserve">
+  <data name="Security.AccountUnapproved.Message" xml:space="preserve">
     <value>帐户尚未通过审核批准。</value>
   </data>
-  <data name="Text.AuthenticationReason.Forbidden" xml:space="preserve">
+  <data name="Security.Forbidden.Message" xml:space="preserve">
     <value>禁止访问，您的账号没有被授权访问当前资源。</value>
   </data>
-  <data name="Text.AuthenticationReason.InvalidIdentity" xml:space="preserve">
+  <data name="Security.InvalidIdentity.Message" xml:space="preserve">
     <value>无效的身份标识。</value>
   </data>
-  <data name="Text.AuthenticationReason.InvalidPassword" xml:space="preserve">
+  <data name="Security.InvalidPassword.Message" xml:space="preserve">
     <value>无效的密码。</value>
   </data>
-  <data name="Text.AuthenticationReason.Succeed" xml:space="preserve">
-    <value>验证成功</value>
+  <data name="Security.Succeed.Message" xml:space="preserve">
+    <value>验证成功。</value>
   </data>
-  <data name="Text.AuthenticationReason.Unknown" xml:space="preserve">
-    <value>其他未知原因。</value>
+  <data name="Security.Unknown.Message" xml:space="preserve">
+    <value>其他未知的安全原因。</value>
   </data>
-  <data name="Text.AuthorizationException.Message" xml:space="preserve">
+  <data name="AuthorizationException.Message" xml:space="preserve">
     <value>禁止访问，您没有访问这项资源的授权。</value>
   </data>
-  <data name="Text.ClearCommand.Description" xml:space="preserve">
+  <data name="ClearCommand.Description" xml:space="preserve">
     <value>清除当前终端的显示内容。</value>
   </data>
-  <data name="Text.ClearCommand.Name" xml:space="preserve">
+  <data name="ClearCommand.Name" xml:space="preserve">
     <value>清除命令</value>
   </data>
-  <data name="Text.Command.ExecutionFailed.Message" xml:space="preserve">
+  <data name="Command.ExecutionFailed.Message" xml:space="preserve">
     <value>{0} 执行失败。</value>
   </data>
-  <data name="Text.Command.ExecutionSucceed.Message" xml:space="preserve">
+  <data name="Command.ExecutionSucceed.Message" xml:space="preserve">
     <value>{0} 执行成功。</value>
   </data>
-  <data name="Text.Command.Options.Timeout" xml:space="preserve">
+  <data name="Command.Options.Timeout" xml:space="preserve">
     <value>超时</value>
   </data>
-  <data name="Text.CommandError.Label" xml:space="preserve">
+  <data name="CommandError.Label" xml:space="preserve">
     <value>命令出错：</value>
   </data>
-  <data name="Text.CommandNotFound" xml:space="preserve">
+  <data name="CommandNotFound.Message" xml:space="preserve">
     <value>指定的 '{0}' 命令没有找到。</value>
   </data>
-  <data name="Text.CredentialException.Message" xml:space="preserve">
+  <data name="CredentialException.Message" xml:space="preserve">
     <value>凭证错误：指定的凭证是无效的或已经过期。</value>
   </data>
-  <data name="Text.DataArgumentException.Message" xml:space="preserve">
+  <data name="DataArgumentException.Message" xml:space="preserve">
     <value>无效的数据参数或者内容值。</value>
   </data>
-  <data name="Text.DataConflictException.Message" xml:space="preserve">
+  <data name="DataConflictException.Message" xml:space="preserve">
     <value>数据冲突：数据项中 {0} 的 {1} 值重复了。</value>
   </data>
-  <data name="Text.DataConstraintException.Message" xml:space="preserve">
+  <data name="DataConstraintException.Message" xml:space="preserve">
     <value>数据约束失败。</value>
   </data>
-  <data name="Text.ExitCommand.Confirm" xml:space="preserve">
+  <data name="ExitCommand.Confirm" xml:space="preserve">
     <value>您确认是否要退出(输入Yes则退出)？</value>
   </data>
-  <data name="Text.ExitCommand.Description" xml:space="preserve">
+  <data name="ExitCommand.Description" xml:space="preserve">
     <value>退出当前应用程序。</value>
   </data>
-  <data name="Text.ExitCommand.Name" xml:space="preserve">
+  <data name="ExitCommand.Name" xml:space="preserve">
     <value>退出命令</value>
   </data>
-  <data name="Text.ExitCommand.Options.Confirm" xml:space="preserve">
+  <data name="ExitCommand.Options.Confirm" xml:space="preserve">
     <value>直接退出，不提示确认信息。</value>
   </data>
-  <data name="Text.InvalidCommandOption" xml:space="preserve">
+  <data name="InvalidCommandOption" xml:space="preserve">
     <value>指定的 '{0}' 是一个无效的命令选项。</value>
   </data>
-  <data name="Text.InvalidCommandOptionValue" xml:space="preserve">
+  <data name="InvalidCommandOptionValue" xml:space="preserve">
     <value>指定的 '{1}' 是一个无效的 '{0}' 命令选项值。</value>
   </data>
-  <data name="Text.LinePositionInfo" xml:space="preserve">
+  <data name="LinePositionInfo" xml:space="preserve">
     <value>第 {0} 行，第 {1} 列。</value>
   </data>
-  <data name="Text.MessageQueueListener.Description" xml:space="preserve">
+  <data name="MessageQueueListener.Description" xml:space="preserve">
     <value>这是一个侦听消息队列的后台服务程序，它以堵塞方式不断轮询消息队列(即循环以堵塞式调用消息队列的出队方法)，一旦队列中有消息可用则立即将消息出队，然后交给侦听器中的执行器去执行。</value>
   </data>
-  <data name="Text.MessageQueueListener.Title" xml:space="preserve">
+  <data name="MessageQueueListener.Title" xml:space="preserve">
     <value>消息队列侦听器</value>
   </data>
-  <data name="Text.MissingCommandOption" xml:space="preserve">
+  <data name="MissingCommandOption" xml:space="preserve">
     <value>缺少 '{0}' 命令选项，必须为该选项提供值。</value>
   </data>
-  <data name="Text.SecretGenerateTooFrequently.Message" xml:space="preserve">
+  <data name="SecretGenerateTooFrequently.Message" xml:space="preserve">
     <value>验证码生成操作调用太频繁，请等待一会后再来。</value>
   </data>
-  <data name="Text.ShellCommand.Description" xml:space="preserve">
+  <data name="ShellCommand.Description" xml:space="preserve">
     <value>通过系统Shell来执行外部命令。</value>
   </data>
-  <data name="Text.ShellCommand.Name" xml:space="preserve">
+  <data name="ShellCommand.Name" xml:space="preserve">
     <value>外部命令执行器</value>
   </data>
-  <data name="Text.ShellCommand.Options.Timeout" xml:space="preserve">
+  <data name="ShellCommand.Options.Timeout" xml:space="preserve">
     <value>运行外部命令的超时，单位：毫秒。</value>
   </data>
-  <data name="Text.WorkerListenCommand.Prompt" xml:space="preserve">
+  <data name="WorkerListenCommand.Prompt" xml:space="preserve">
     <value>提示：按 Ctrl+C 组合键可以退出侦听模式。</value>
   </data>
-  <data name="Text.WorkerListenCommand.Welcome" xml:space="preserve">
+  <data name="WorkerListenCommand.Welcome" xml:space="preserve">
     <value>欢迎进入 {0} 的侦听模式。</value>
   </data>
-  <data name="Text.WorkerPauseCommand.Name" xml:space="preserve">
+  <data name="WorkerPauseCommand.Name" xml:space="preserve">
     <value>暂停</value>
   </data>
-  <data name="Text.WorkerResumeCommand.Name" xml:space="preserve">
+  <data name="WorkerResumeCommand.Name" xml:space="preserve">
     <value>恢复</value>
   </data>
-  <data name="Text.WorkerStartCommand.Name" xml:space="preserve">
+  <data name="WorkerStartCommand.Name" xml:space="preserve">
     <value>启动</value>
   </data>
-  <data name="Text.WorkerStartCommand.Options.Force" xml:space="preserve">
+  <data name="WorkerStartCommand.Options.Force" xml:space="preserve">
     <value>强制启动，即使命令被禁用也尝试启动。</value>
   </data>
-  <data name="Text.WorkerState.Paused" xml:space="preserve">
+  <data name="WorkerState.Paused" xml:space="preserve">
     <value>已暂停</value>
   </data>
-  <data name="Text.WorkerState.Pausing" xml:space="preserve">
+  <data name="WorkerState.Pausing" xml:space="preserve">
     <value>暂停中</value>
   </data>
-  <data name="Text.WorkerState.Resuming" xml:space="preserve">
+  <data name="WorkerState.Resuming" xml:space="preserve">
     <value>恢复中</value>
   </data>
-  <data name="Text.WorkerState.Running" xml:space="preserve">
+  <data name="WorkerState.Running" xml:space="preserve">
     <value>运行中</value>
   </data>
-  <data name="Text.WorkerState.Starting" xml:space="preserve">
+  <data name="WorkerState.Starting" xml:space="preserve">
     <value>启动中</value>
   </data>
-  <data name="Text.WorkerState.Stopped" xml:space="preserve">
+  <data name="WorkerState.Stopped" xml:space="preserve">
     <value>已停止</value>
   </data>
-  <data name="Text.WorkerState.Stopping" xml:space="preserve">
+  <data name="WorkerState.Stopping" xml:space="preserve">
     <value>停止中</value>
   </data>
-  <data name="Text.WorkerStopCommand.Name" xml:space="preserve">
+  <data name="WorkerStopCommand.Name" xml:space="preserve">
     <value>停止</value>
   </data>
   <data name="ConnectionSettings.Group" xml:space="preserve">

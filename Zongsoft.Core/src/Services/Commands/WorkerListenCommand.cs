@@ -110,14 +110,11 @@ namespace Zongsoft.Services.Commands
 		#region 虚拟方法
 		protected virtual void OnListening(CommandContext context, IWorker worker)
 		{
-			context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.Text_WorkerListenCommand_Welcome, worker.Name));
-			context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.Text_WorkerListenCommand_Prompt + Environment.NewLine);
+			context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.WorkerListenCommand_Welcome, worker.Name));
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.WorkerListenCommand_Prompt + Environment.NewLine);
 		}
 
-		protected virtual void OnListened(CommandContext context, IWorker worker)
-		{
-		}
-
+		protected virtual void OnListened(CommandContext context, IWorker worker) { }
 		protected virtual void OnStateChanged(IWorker worker, WorkerStateChangedEventArgs args)
 		{
 			_context.Output.WriteLine(WorkerInfoCommand.GetInfo(worker));

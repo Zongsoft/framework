@@ -47,14 +47,7 @@ namespace Zongsoft.Services
 
 		#region 公共属性
 		public string OptionName { get; }
-		public override string Message
-		{
-			get
-			{
-				var message = base.Message;
-				return string.IsNullOrEmpty(message) ? string.Format(Properties.Resources.Text_InvalidCommandOption, this.OptionName) : message;
-			}
-		}
+		public override string Message => this.HasMessage ? base.Message : string.Format(Properties.Resources.InvalidCommandOption, this.OptionName);
 		#endregion
 	}
 }

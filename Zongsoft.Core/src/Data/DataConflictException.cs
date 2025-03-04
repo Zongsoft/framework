@@ -38,7 +38,7 @@ namespace Zongsoft.Data
 	{
 		#region 构造函数
 		public DataConflictException(string driverName, int code, string key, string value, string[] fields, Exception innerException = null) :
-			base(driverName, code, string.Format(Properties.Resources.Text_DataConflictException_Message, key, value), innerException)
+			base(driverName, code, string.Format(Properties.Resources.DataConflictException_Message, key, value), innerException)
 		{
 			this.Key = key;
 			this.Value = value;

@@ -61,6 +61,87 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 身份验证失败。 的本地化字符串。
+        /// </summary>
+        internal static string AuthenticationException_Message {
+            get {
+                return ResourceManager.GetString("AuthenticationException.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 禁止访问，您没有访问这项资源的授权。 的本地化字符串。
+        /// </summary>
+        internal static string AuthorizationException_Message {
+            get {
+                return ResourceManager.GetString("AuthorizationException.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 清除当前终端的显示内容。 的本地化字符串。
+        /// </summary>
+        internal static string ClearCommand_Description {
+            get {
+                return ResourceManager.GetString("ClearCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 清除命令 的本地化字符串。
+        /// </summary>
+        internal static string ClearCommand_Name {
+            get {
+                return ResourceManager.GetString("ClearCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 {0} 执行失败。 的本地化字符串。
+        /// </summary>
+        internal static string Command_ExecutionFailed_Message {
+            get {
+                return ResourceManager.GetString("Command.ExecutionFailed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 {0} 执行成功。 的本地化字符串。
+        /// </summary>
+        internal static string Command_ExecutionSucceed_Message {
+            get {
+                return ResourceManager.GetString("Command.ExecutionSucceed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 超时 的本地化字符串。
+        /// </summary>
+        internal static string Command_Options_Timeout {
+            get {
+                return ResourceManager.GetString("Command.Options.Timeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 命令出错： 的本地化字符串。
+        /// </summary>
+        internal static string CommandError_Label {
+            get {
+                return ResourceManager.GetString("CommandError.Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 指定的 &apos;{0}&apos; 命令没有找到。 的本地化字符串。
+        /// </summary>
+        internal static string CommandNotFound_Message {
+            get {
+                return ResourceManager.GetString("CommandNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 应用名称 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Application {
@@ -295,6 +376,42 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 凭证错误：指定的凭证是无效的或已经过期。 的本地化字符串。
+        /// </summary>
+        internal static string CredentialException_Message {
+            get {
+                return ResourceManager.GetString("CredentialException.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 无效的数据参数或者内容值。 的本地化字符串。
+        /// </summary>
+        internal static string DataArgumentException_Message {
+            get {
+                return ResourceManager.GetString("DataArgumentException.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 数据冲突：数据项中 {0} 的 {1} 值重复了。 的本地化字符串。
+        /// </summary>
+        internal static string DataConflictException_Message {
+            get {
+                return ResourceManager.GetString("DataConflictException.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 数据约束失败。 的本地化字符串。
+        /// </summary>
+        internal static string DataConstraintException_Message {
+            get {
+                return ResourceManager.GetString("DataConstraintException.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 禁用 的本地化字符串。
         /// </summary>
         internal static string Disabled {
@@ -423,9 +540,99 @@ namespace Zongsoft.Properties {
         /// <summary>
         ///   查找类似 发现不受支持的节点类型“{0}”。{1} 的本地化字符串。
         /// </summary>
-        internal static string Error_UnSupportedNodeType {
+        internal static string Error_UnsupportedNodeType {
             get {
-                return ResourceManager.GetString("Error.UnSupportedNodeType", resourceCulture);
+                return ResourceManager.GetString("Error.UnsupportedNodeType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 您确认是否要退出(输入Yes则退出)？ 的本地化字符串。
+        /// </summary>
+        internal static string ExitCommand_Confirm {
+            get {
+                return ResourceManager.GetString("ExitCommand.Confirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 退出当前应用程序。 的本地化字符串。
+        /// </summary>
+        internal static string ExitCommand_Description {
+            get {
+                return ResourceManager.GetString("ExitCommand.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 退出命令 的本地化字符串。
+        /// </summary>
+        internal static string ExitCommand_Name {
+            get {
+                return ResourceManager.GetString("ExitCommand.Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 直接退出，不提示确认信息。 的本地化字符串。
+        /// </summary>
+        internal static string ExitCommand_Options_Confirm {
+            get {
+                return ResourceManager.GetString("ExitCommand.Options.Confirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 指定的 &apos;{0}&apos; 是一个无效的命令选项。 的本地化字符串。
+        /// </summary>
+        internal static string InvalidCommandOption {
+            get {
+                return ResourceManager.GetString("InvalidCommandOption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 指定的 &apos;{1}&apos; 是一个无效的 &apos;{0}&apos; 命令选项值。 的本地化字符串。
+        /// </summary>
+        internal static string InvalidCommandOptionValue {
+            get {
+                return ResourceManager.GetString("InvalidCommandOptionValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 第 {0} 行，第 {1} 列。 的本地化字符串。
+        /// </summary>
+        internal static string LinePositionInfo {
+            get {
+                return ResourceManager.GetString("LinePositionInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 这是一个侦听消息队列的后台服务程序，它以堵塞方式不断轮询消息队列(即循环以堵塞式调用消息队列的出队方法)，一旦队列中有消息可用则立即将消息出队，然后交给侦听器中的执行器去执行。 的本地化字符串。
+        /// </summary>
+        internal static string MessageQueueListener_Description {
+            get {
+                return ResourceManager.GetString("MessageQueueListener.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 消息队列侦听器 的本地化字符串。
+        /// </summary>
+        internal static string MessageQueueListener_Title {
+            get {
+                return ResourceManager.GetString("MessageQueueListener.Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 缺少 &apos;{0}&apos; 命令选项，必须为该选项提供值。 的本地化字符串。
+        /// </summary>
+        internal static string MissingCommandOption {
+            get {
+                return ResourceManager.GetString("MissingCommandOption", resourceCulture);
             }
         }
         
@@ -484,443 +691,236 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 身份验证失败。 的本地化字符串。
+        ///   查找类似 验证码生成操作调用太频繁，请等待一会后再来。 的本地化字符串。
         /// </summary>
-        internal static string Text_AuthenticationException_Message {
+        internal static string SecretGenerateTooFrequently_Message {
             get {
-                return ResourceManager.GetString("Text.AuthenticationException.Message", resourceCulture);
+                return ResourceManager.GetString("SecretGenerateTooFrequently.Message", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 帐户已被封。 的本地化字符串。
+        ///   查找类似 帐户已被禁用。 的本地化字符串。
         /// </summary>
-        internal static string Text_AuthenticationReason_AccountDisabled {
+        internal static string Security_AccountDisabled_Message {
             get {
-                return ResourceManager.GetString("Text.AuthenticationReason.AccountDisabled", resourceCulture);
+                return ResourceManager.GetString("Security.AccountDisabled.Message", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 帐户被暂停，可能是因为验证失败次数太多。 的本地化字符串。
         /// </summary>
-        internal static string Text_AuthenticationReason_AccountSuspended {
+        internal static string Security_AccountSuspended_Message {
             get {
-                return ResourceManager.GetString("Text.AuthenticationReason.AccountSuspended", resourceCulture);
+                return ResourceManager.GetString("Security.AccountSuspended.Message", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 帐户尚未通过审核批准。 的本地化字符串。
         /// </summary>
-        internal static string Text_AuthenticationReason_AccountUnapproved {
+        internal static string Security_AccountUnapproved_Message {
             get {
-                return ResourceManager.GetString("Text.AuthenticationReason.AccountUnapproved", resourceCulture);
+                return ResourceManager.GetString("Security.AccountUnapproved.Message", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 禁止访问，您的账号没有被授权访问当前资源。 的本地化字符串。
         /// </summary>
-        internal static string Text_AuthenticationReason_Forbidden {
+        internal static string Security_Forbidden_Message {
             get {
-                return ResourceManager.GetString("Text.AuthenticationReason.Forbidden", resourceCulture);
+                return ResourceManager.GetString("Security.Forbidden.Message", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 无效的身份标识。 的本地化字符串。
         /// </summary>
-        internal static string Text_AuthenticationReason_InvalidIdentity {
+        internal static string Security_InvalidIdentity_Message {
             get {
-                return ResourceManager.GetString("Text.AuthenticationReason.InvalidIdentity", resourceCulture);
+                return ResourceManager.GetString("Security.InvalidIdentity.Message", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 无效的密码。 的本地化字符串。
         /// </summary>
-        internal static string Text_AuthenticationReason_InvalidPassword {
+        internal static string Security_InvalidPassword_Message {
             get {
-                return ResourceManager.GetString("Text.AuthenticationReason.InvalidPassword", resourceCulture);
+                return ResourceManager.GetString("Security.InvalidPassword.Message", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 验证成功 的本地化字符串。
+        ///   查找类似 验证成功。 的本地化字符串。
         /// </summary>
-        internal static string Text_AuthenticationReason_Succeed {
+        internal static string Security_Succeed_Message {
             get {
-                return ResourceManager.GetString("Text.AuthenticationReason.Succeed", resourceCulture);
+                return ResourceManager.GetString("Security.Succeed.Message", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 其他未知原因。 的本地化字符串。
+        ///   查找类似 其他未知的安全原因。 的本地化字符串。
         /// </summary>
-        internal static string Text_AuthenticationReason_Unknown {
+        internal static string Security_Unknown_Message {
             get {
-                return ResourceManager.GetString("Text.AuthenticationReason.Unknown", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 禁止访问，您没有访问这项资源的授权。 的本地化字符串。
-        /// </summary>
-        internal static string Text_AuthorizationException_Message {
-            get {
-                return ResourceManager.GetString("Text.AuthorizationException.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 清除当前终端的显示内容。 的本地化字符串。
-        /// </summary>
-        internal static string Text_ClearCommand_Description {
-            get {
-                return ResourceManager.GetString("Text.ClearCommand.Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 清除命令 的本地化字符串。
-        /// </summary>
-        internal static string Text_ClearCommand_Name {
-            get {
-                return ResourceManager.GetString("Text.ClearCommand.Name", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 {0} 执行失败。 的本地化字符串。
-        /// </summary>
-        internal static string Text_Command_ExecutionFailed_Message {
-            get {
-                return ResourceManager.GetString("Text.Command.ExecutionFailed.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 {0} 执行成功。 的本地化字符串。
-        /// </summary>
-        internal static string Text_Command_ExecutionSucceed_Message {
-            get {
-                return ResourceManager.GetString("Text.Command.ExecutionSucceed.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 超时 的本地化字符串。
-        /// </summary>
-        internal static string Text_Command_Options_Timeout {
-            get {
-                return ResourceManager.GetString("Text.Command.Options.Timeout", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 命令出错： 的本地化字符串。
-        /// </summary>
-        internal static string Text_CommandError_Label {
-            get {
-                return ResourceManager.GetString("Text.CommandError.Label", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 指定的 &apos;{0}&apos; 命令没有找到。 的本地化字符串。
-        /// </summary>
-        internal static string Text_CommandNotFound {
-            get {
-                return ResourceManager.GetString("Text.CommandNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 凭证错误：指定的凭证是无效的或已经过期。 的本地化字符串。
-        /// </summary>
-        internal static string Text_CredentialException_Message {
-            get {
-                return ResourceManager.GetString("Text.CredentialException.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 无效的数据参数或者内容值。 的本地化字符串。
-        /// </summary>
-        internal static string Text_DataArgumentException_Message {
-            get {
-                return ResourceManager.GetString("Text.DataArgumentException.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 数据冲突：数据项中 {0} 的 {1} 值重复了。 的本地化字符串。
-        /// </summary>
-        internal static string Text_DataConflictException_Message {
-            get {
-                return ResourceManager.GetString("Text.DataConflictException.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 数据约束失败。 的本地化字符串。
-        /// </summary>
-        internal static string Text_DataConstraintException_Message {
-            get {
-                return ResourceManager.GetString("Text.DataConstraintException.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 您确认是否要退出(输入Yes则退出)？ 的本地化字符串。
-        /// </summary>
-        internal static string Text_ExitCommand_Confirm {
-            get {
-                return ResourceManager.GetString("Text.ExitCommand.Confirm", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 退出当前应用程序。 的本地化字符串。
-        /// </summary>
-        internal static string Text_ExitCommand_Description {
-            get {
-                return ResourceManager.GetString("Text.ExitCommand.Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 退出命令 的本地化字符串。
-        /// </summary>
-        internal static string Text_ExitCommand_Name {
-            get {
-                return ResourceManager.GetString("Text.ExitCommand.Name", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 直接退出，不提示确认信息。 的本地化字符串。
-        /// </summary>
-        internal static string Text_ExitCommand_Options_Confirm {
-            get {
-                return ResourceManager.GetString("Text.ExitCommand.Options.Confirm", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 指定的 &apos;{0}&apos; 是一个无效的命令选项。 的本地化字符串。
-        /// </summary>
-        internal static string Text_InvalidCommandOption {
-            get {
-                return ResourceManager.GetString("Text.InvalidCommandOption", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 指定的 &apos;{1}&apos; 是一个无效的 &apos;{0}&apos; 命令选项值。 的本地化字符串。
-        /// </summary>
-        internal static string Text_InvalidCommandOptionValue {
-            get {
-                return ResourceManager.GetString("Text.InvalidCommandOptionValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 第 {0} 行，第 {1} 列。 的本地化字符串。
-        /// </summary>
-        internal static string Text_LinePositionInfo {
-            get {
-                return ResourceManager.GetString("Text.LinePositionInfo", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 这是一个侦听消息队列的后台服务程序，它以堵塞方式不断轮询消息队列(即循环以堵塞式调用消息队列的出队方法)，一旦队列中有消息可用则立即将消息出队，然后交给侦听器中的执行器去执行。 的本地化字符串。
-        /// </summary>
-        internal static string Text_MessageQueueListener_Description {
-            get {
-                return ResourceManager.GetString("Text.MessageQueueListener.Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 消息队列侦听器 的本地化字符串。
-        /// </summary>
-        internal static string Text_MessageQueueListener_Title {
-            get {
-                return ResourceManager.GetString("Text.MessageQueueListener.Title", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 缺少 &apos;{0}&apos; 命令选项，必须为该选项提供值。 的本地化字符串。
-        /// </summary>
-        internal static string Text_MissingCommandOption {
-            get {
-                return ResourceManager.GetString("Text.MissingCommandOption", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 验证码生成操作调用太频繁，请等待一会后再来。 的本地化字符串。
-        /// </summary>
-        internal static string Text_SecretGenerateTooFrequently_Message {
-            get {
-                return ResourceManager.GetString("Text.SecretGenerateTooFrequently.Message", resourceCulture);
+                return ResourceManager.GetString("Security.Unknown.Message", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 通过系统Shell来执行外部命令。 的本地化字符串。
         /// </summary>
-        internal static string Text_ShellCommand_Description {
+        internal static string ShellCommand_Description {
             get {
-                return ResourceManager.GetString("Text.ShellCommand.Description", resourceCulture);
+                return ResourceManager.GetString("ShellCommand.Description", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 外部命令执行器 的本地化字符串。
         /// </summary>
-        internal static string Text_ShellCommand_Name {
+        internal static string ShellCommand_Name {
             get {
-                return ResourceManager.GetString("Text.ShellCommand.Name", resourceCulture);
+                return ResourceManager.GetString("ShellCommand.Name", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 运行外部命令的超时，单位：毫秒。 的本地化字符串。
         /// </summary>
-        internal static string Text_ShellCommand_Options_Timeout {
+        internal static string ShellCommand_Options_Timeout {
             get {
-                return ResourceManager.GetString("Text.ShellCommand.Options.Timeout", resourceCulture);
+                return ResourceManager.GetString("ShellCommand.Options.Timeout", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 提示：按 Ctrl+C 组合键可以退出侦听模式。 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerListenCommand_Prompt {
+        internal static string WorkerListenCommand_Prompt {
             get {
-                return ResourceManager.GetString("Text.WorkerListenCommand.Prompt", resourceCulture);
+                return ResourceManager.GetString("WorkerListenCommand.Prompt", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 欢迎进入 {0} 的侦听模式。 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerListenCommand_Welcome {
+        internal static string WorkerListenCommand_Welcome {
             get {
-                return ResourceManager.GetString("Text.WorkerListenCommand.Welcome", resourceCulture);
+                return ResourceManager.GetString("WorkerListenCommand.Welcome", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 暂停 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerPauseCommand_Name {
+        internal static string WorkerPauseCommand_Name {
             get {
-                return ResourceManager.GetString("Text.WorkerPauseCommand.Name", resourceCulture);
+                return ResourceManager.GetString("WorkerPauseCommand.Name", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 恢复 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerResumeCommand_Name {
+        internal static string WorkerResumeCommand_Name {
             get {
-                return ResourceManager.GetString("Text.WorkerResumeCommand.Name", resourceCulture);
+                return ResourceManager.GetString("WorkerResumeCommand.Name", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 启动 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerStartCommand_Name {
+        internal static string WorkerStartCommand_Name {
             get {
-                return ResourceManager.GetString("Text.WorkerStartCommand.Name", resourceCulture);
+                return ResourceManager.GetString("WorkerStartCommand.Name", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 强制启动，即使命令被禁用也尝试启动。 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerStartCommand_Options_Force {
+        internal static string WorkerStartCommand_Options_Force {
             get {
-                return ResourceManager.GetString("Text.WorkerStartCommand.Options.Force", resourceCulture);
+                return ResourceManager.GetString("WorkerStartCommand.Options.Force", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 已暂停 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerState_Paused {
+        internal static string WorkerState_Paused {
             get {
-                return ResourceManager.GetString("Text.WorkerState.Paused", resourceCulture);
+                return ResourceManager.GetString("WorkerState.Paused", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 暂停中 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerState_Pausing {
+        internal static string WorkerState_Pausing {
             get {
-                return ResourceManager.GetString("Text.WorkerState.Pausing", resourceCulture);
+                return ResourceManager.GetString("WorkerState.Pausing", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 恢复中 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerState_Resuming {
+        internal static string WorkerState_Resuming {
             get {
-                return ResourceManager.GetString("Text.WorkerState.Resuming", resourceCulture);
+                return ResourceManager.GetString("WorkerState.Resuming", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 运行中 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerState_Running {
+        internal static string WorkerState_Running {
             get {
-                return ResourceManager.GetString("Text.WorkerState.Running", resourceCulture);
+                return ResourceManager.GetString("WorkerState.Running", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 启动中 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerState_Starting {
+        internal static string WorkerState_Starting {
             get {
-                return ResourceManager.GetString("Text.WorkerState.Starting", resourceCulture);
+                return ResourceManager.GetString("WorkerState.Starting", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 已停止 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerState_Stopped {
+        internal static string WorkerState_Stopped {
             get {
-                return ResourceManager.GetString("Text.WorkerState.Stopped", resourceCulture);
+                return ResourceManager.GetString("WorkerState.Stopped", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 停止中 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerState_Stopping {
+        internal static string WorkerState_Stopping {
             get {
-                return ResourceManager.GetString("Text.WorkerState.Stopping", resourceCulture);
+                return ResourceManager.GetString("WorkerState.Stopping", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 停止 的本地化字符串。
         /// </summary>
-        internal static string Text_WorkerStopCommand_Name {
+        internal static string WorkerStopCommand_Name {
             get {
-                return ResourceManager.GetString("Text.WorkerStopCommand.Name", resourceCulture);
+                return ResourceManager.GetString("WorkerStopCommand.Name", resourceCulture);
             }
         }
     }

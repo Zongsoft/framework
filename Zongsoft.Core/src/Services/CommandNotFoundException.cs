@@ -42,7 +42,7 @@ namespace Zongsoft.Services
 		#endregion
 
 		#region 重写属性
-		public override string Message => string.Format(Properties.Resources.Text_CommandNotFound, this.Path);
+		public override string Message => string.Format(Properties.Resources.CommandNotFound_Message, this.Path);
 		#endregion
 	}
 }

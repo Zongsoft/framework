@@ -34,7 +34,7 @@ namespace Zongsoft.Services
 	public class CommandOptionValueException : CommandOptionException
 	{
 		#region 构造函数
-		public CommandOptionValueException(string optionName, object optionValue) : base(optionName, string.Format(Properties.Resources.Text_InvalidCommandOptionValue, optionName, optionValue))
+		public CommandOptionValueException(string optionName, object optionValue) : base(optionName, string.Format(Properties.Resources.InvalidCommandOptionValue, optionName, optionValue))
 		{
 			this.OptionValue = optionValue;
 		}

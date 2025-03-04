@@ -39,7 +39,15 @@ namespace Zongsoft.Services
 		public CommandException(string message) : this(0, message, null) { }
 		public CommandException(string message, Exception innerException) : this(0, message, innerException) { }
 		public CommandException(int code, string message) : this(code, message, null) { }
-		public CommandException(int code, string message, Exception innerException) : base(message, innerException) => this.Code = code;
+		public CommandException(int code, string message, Exception innerException) : base(message, innerException)
+		{
+			this.Code = code;
+			this.HasMessage = !string.IsNullOrEmpty(message);
+		}
+		#endregion
+
+		#region 保护属性
+		protected bool HasMessage { get; }
 		#endregion
 
 		#region 公共属性
