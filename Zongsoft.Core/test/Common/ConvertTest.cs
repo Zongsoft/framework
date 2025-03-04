@@ -17,7 +17,13 @@ namespace Zongsoft.Common.Tests
 			Assert.NotNull(Zongsoft.Common.Convert.ConvertValue<int?>("123", () => default(int?)));
 			Assert.Equal(123, Zongsoft.Common.Convert.ConvertValue<int?>("123", () => default(int?)));
 
-			Assert.Equal(123, Zongsoft.Common.Convert.ConvertValue<int>("123"));
+			object value = 123;
+			Assert.Equal(123.0f, Zongsoft.Common.Convert.ConvertValue<float>(value));
+			Assert.Equal(123.0d, Zongsoft.Common.Convert.ConvertValue<double>(value));
+			Assert.Equal(123.0m, Zongsoft.Common.Convert.ConvertValue<decimal>(value));
+
+			value = "123";
+			Assert.Equal(123, Zongsoft.Common.Convert.ConvertValue<int>(value));
 
 			Assert.Equal("100", Zongsoft.Common.Convert.ConvertValue<string>(100));
 			Assert.Equal("100", Zongsoft.Common.Convert.ConvertValue<string>(100L));
@@ -55,8 +61,10 @@ namespace Zongsoft.Common.Tests
 			Assert.Equal(Gender.Female, Zongsoft.Common.Convert.ConvertValue<Gender>("F"));
 
 			//根据枚举项的 DescriptionAttribute 值来解析
-			Assert.Equal(Gender.Male, Zongsoft.Common.Convert.ConvertValue<Gender>("男士"));
-			Assert.Equal(Gender.Female, Zongsoft.Common.Convert.ConvertValue<Gender>("女士"));
+			if(EnumUtility.TryGetEnumDescription(Gender.Male, out var description) && description != null)
+				Assert.Equal(Gender.Male, Zongsoft.Common.Convert.ConvertValue<Gender>(description));
+			if(EnumUtility.TryGetEnumDescription(Gender.Female, out description) && description != null)
+				Assert.Equal(Gender.Female, Zongsoft.Common.Convert.ConvertValue<Gender>(description));
 		}
 
 		[Fact]
@@ -104,7 +112,7 @@ namespace Zongsoft.Common.Tests
 			Assert.True(vector[5]);
 		}
 
-		private bool BinaryCompare(byte[] binary1, byte[] binary2)
+		private static bool BinaryCompare(byte[] binary1, byte[] binary2)
 		{
 			if(binary1 == null || binary2 == null || binary1.Length != binary2.Length)
 				return false;

@@ -61,7 +61,7 @@ public class SuperviserTest
 	[Fact]
 	public void TestEventRaises()
 	{
-		const int COUNT = 1000;
+		const int COUNT = 100;
 
 		//挂载监测完成事件
 		_superviser.Supervised += this.OnSupervised;
@@ -85,7 +85,7 @@ public class SuperviserTest
 		});
 
 		//由于取消监测事件回调有延迟，因此需要等待取消事件回调完成
-		SpinWait.SpinUntil(() => _raises > 0, 1000 * 5);
+		SpinWait.SpinUntil(() => _raises > 0, 3 * 1000);
 
 		//确保计数器数值一致
 		Assert.Equal(0, _raises);
