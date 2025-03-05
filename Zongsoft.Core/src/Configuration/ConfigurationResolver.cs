@@ -302,6 +302,9 @@ public class ConfigurationResolver : IConfigurationResolver
 
 			for(int i = 0; i < constructors.Length; i++)
 			{
+				if(!constructors[i].IsPublic)
+					continue;
+
 				var args = FindConstructor(constructors[i], section);
 
 				if(args != null)
