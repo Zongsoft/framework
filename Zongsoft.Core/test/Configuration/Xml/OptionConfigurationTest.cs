@@ -139,6 +139,23 @@ public class XmlConfigurationTest
 		Assert.Contains(topic.Tags, tag => tag == "control");
 		Assert.Contains(topic.Tags, tag => tag == "synchronize");
 	}
+
+	[Fact]
+	public void TestSettings()
+	{
+		var configuration = GetConfiguration2();
+		var settings = configuration.GetOption<SettingsCollection>("Settings");
+
+		Assert.NotNull(settings);
+		Assert.NotEmpty(settings);
+		Assert.Equal(2, settings.Count);
+		Assert.True(settings.Contains("Setting1"));
+		Assert.True(settings.Contains("Setting2"));
+		Assert.False(settings.Contains("NotExisted!"));
+
+		Assert.Equal("SettingValue#1", settings["Setting1"].Value);
+		Assert.Equal("SettingValue#2", settings["Setting2"].Value);
+	}
 }
 
 public class QueueOptions

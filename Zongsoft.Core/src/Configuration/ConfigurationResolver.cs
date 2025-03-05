@@ -58,7 +58,7 @@ public class ConfigurationResolver : IConfigurationResolver
 		if(type == null)
 			throw new ArgumentNullException(nameof(type));
 
-		var instance = this.CreateInstance(type);
+		var instance = this.CreateInstance(type, configuration);
 		this.Resolve(instance, configuration, options);
 		return instance;
 	}
@@ -235,7 +235,7 @@ public class ConfigurationResolver : IConfigurationResolver
 	#endregion
 
 	#region 虚拟方法
-	protected virtual object CreateInstance(Type type)
+	protected virtual object CreateInstance(Type type, IConfiguration configuration)
 	{
 		if(type.IsArray)
 		{
@@ -286,11 +286,55 @@ public class ConfigurationResolver : IConfigurationResolver
 			if(type.IsInterface || type.IsAbstract)
 				return Zongsoft.Data.Model.Build(type);
 
-			return Activator.CreateInstance(type);
+			return Activator.CreateInstance(type, GetConstructorArguments(type, configuration as IConfigurationSection));
 		}
 		catch(Exception ex)
 		{
 			throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedToActivate, type), ex);
+		}
+
+		static object[] GetConstructorArguments(Type type, IConfigurationSection section)
+		{
+			if(section == null || section.Key == null)
+				return null;
+
+			var constructors = type.GetConstructors();
+
+			for(int i = 0; i < constructors.Length; i++)
+			{
+				var args = FindConstructor(constructors[i], section);
+
+				if(args != null)
+					return args;
+			}
+
+			return null;
+
+			static object[] FindConstructor(ConstructorInfo constructor, IConfigurationSection section)
+			{
+				object[] args = null;
+				var parameters = constructor.GetParameters();
+
+				for(int i = 0; i < parameters.Length; i++)
+				{
+					if(parameters[i].ParameterType == typeof(string) && (parameters[i].Name == "name" || parameters[i].Name == "key"))
+					{
+						args ??= new object[parameters.Length];
+						args[i] = section.Key;
+					}
+					else if(parameters[i].HasDefaultValue)
+					{
+						args ??= new object[parameters.Length];
+						args[i] = parameters[i].DefaultValue;
+					}
+					else
+					{
+						return null;
+					}
+				}
+
+				return args;
+			}
 		}
 	}
 
@@ -372,7 +416,7 @@ public class ConfigurationResolver : IConfigurationResolver
 			if(!property.CanWrite)
 				return false;
 
-			value = this.CreateInstance(property.PropertyType);
+			value = this.CreateInstance(property.PropertyType, configuration);
 
 			if(!property.SetValue(instance, value))
 				throw new ConfigurationException($"The default collection property {property.Name} of '{instance.GetType().FullName}' type is null and it cannot be set.");

@@ -26,4 +26,9 @@
 			</subscription>
 		</queue>
 	</option>
+
+	<option path="/Settings">
+		<setting setting.name="Setting1" value="SettingValue#1" />
+		<setting setting.name="Setting2" value="SettingValue#2" />
+	</option>
 </configuration>
