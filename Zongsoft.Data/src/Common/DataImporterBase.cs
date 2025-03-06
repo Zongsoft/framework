@@ -170,6 +170,10 @@ namespace Zongsoft.Data.Common
 			}
 			#endregion
 
+			#region 重写方法
+			public override string ToString() => this.Property.ToString();
+			#endregion
+
 			#region 私有方法
 			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 			private static bool CanSequence(Metadata.IDataEntityPropertySequence sequence) =>

@@ -48,6 +48,9 @@ public class DataAccessProvider : DataAccessProviderBase<DataAccess>
 	protected override DataAccess CreateAccessor(string name, IDataAccessOptions options)
 	{
 		var result = new DataAccess(name, options);
+		if(ApplicationContext.Current == null)
+			return result;
+
 		var services = ApplicationContext.Current.Services;
 
 		if(!string.IsNullOrEmpty(name) && ApplicationContext.Current.Modules.TryGetValue(name, out var module))
