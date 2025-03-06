@@ -288,12 +288,13 @@ namespace Zongsoft.Data.Common
 
 							//绑定命令关联的连接对象
 							command.Connection = _connection;
-							//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
-							command.Transaction = null;
 
 							//如果驱动支持事务则进行相关事务处理
 							if(TransactionSupported)
 							{
+								//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
+								command.Transaction = null;
+
 								//挂载连接状态变更事件，以进行事务绑定
 								_connection.StateChange += this.Connection_StateChange;
 
@@ -340,7 +341,8 @@ namespace Zongsoft.Data.Common
 				command.Connection = _source.Driver.CreateConnection(_source.ConnectionString);
 
 				//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
-				command.Transaction = null;
+				if(this.TransactionSupported)
+					command.Transaction = null;
 
 				return false;
 			}
@@ -361,7 +363,8 @@ namespace Zongsoft.Data.Common
 				command.Connection = _source.Driver.CreateConnection(_source.ConnectionString);
 
 				//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
-				command.Transaction = null;
+				if(this.TransactionSupported)
+					command.Transaction = null;
 
 				return false;
 			}
