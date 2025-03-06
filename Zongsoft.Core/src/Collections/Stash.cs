@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -43,7 +43,7 @@ public class Stash<T> : IDisposable
 
 	#region 私有变量
 	private Timer _timer;
-	private List<T> _cache;
+	private IList<T> _cache;
 	private AutoResetEvent _semaphore;
 	private Action<IEnumerable<T>> _accessor;
 	#endregion
@@ -52,35 +52,144 @@ public class Stash<T> : IDisposable
 	public Stash(Action<IEnumerable<T>> accessor, TimeSpan period, int limit = 0)
 	{
 		_accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
-		_period = period.Ticks > TimeSpan.TicksPerSecond ? period : TimeSpan.FromSeconds(1);
-		_limit = limit > 0 ? limit : 0;
 
-		_cache = new(Math.Max(limit, 16));
-		_timer = new Timer(this.OnTick, null, _period, _period);
+		this.Period = period;
+		this.Limit = limit;
+
+		_cache = this.RentCache();
 		_semaphore = new AutoResetEvent(true);
+		_timer = new Timer(this.OnTick, null, _period, _period);
 	}
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取当前暂存区的数量。</summary>
 	public int Count => _cache.Count;
+
+	/// <summary>获取一个值，指示当前暂存区是否空了。</summary>
+	public bool IsEmpty => _cache.Count == 0;
+
+	/// <summary>获取或设置暂存数量限制，如果暂存数量超过该属性值则立即触发回调。如果为零则表示忽略该限制。</summary>
+	public int Limit
+	{
+		get => _limit;
+		set => _limit = value > 0 ? value : 0;
+	}
+
+	/// <summary>获取或设置暂存的触发周期，不能低于<c>1</c>毫秒(Millisecond)。</summary>
+	public TimeSpan Period
+	{
+		get => _period;
+		set
+		{
+			var period = value.Ticks > TimeSpan.TicksPerMillisecond ? value : TimeSpan.FromMilliseconds(1);
+
+			if(_period == period)
+				return;
+
+			_period = period;
+			_timer?.Change(period, period);
+		}
+	}
 	#endregion
 
 	#region 公共方法
-	public void Put(T item)
+	public void Discard()
+	{
+		if(_cache.Count == 0)
+			return;
+
+		try
+		{
+			_semaphore.WaitOne();
+			_cache.Clear();
+		}
+		finally
+		{
+			_semaphore.Set();
+		}
+	}
+
+	public void Put(T value)
 	{
 		try
 		{
 			_semaphore.WaitOne();
-			_cache.Add(item);
+			_cache.Add(value);
 		}
 		finally
 		{
 			_semaphore.Set();
 		}
 
-		if(_limit > 0 && _cache.Count > _limit)
-			this.InvokeAccessor();
+		if(_limit > 0 && _cache.Count >= _limit)
+			this.Flush();
 	}
+
+	public bool TryTake(out T value) => this.TryTake(0, out value);
+	public bool TryTake(int index, out T value)
+	{
+		try
+		{
+			_semaphore.WaitOne();
+
+			if(index < 0)
+				index = _cache.Count + index;
+
+			if(_cache.Count == 0 || index < 0 || index > _cache.Count - 1)
+			{
+				value = default;
+				return false;
+			}
+
+			value = _cache[index];
+			_cache.RemoveAt(index);
+			return true;
+		}
+		finally
+		{
+			_semaphore.Set();
+		}
+	}
+
+	public void Flush()
+	{
+		IList<T> cache;
+
+		if(_cache == null || _cache.Count == 0)
+			return;
+
+		try
+		{
+			_semaphore.WaitOne();
+
+			//获取当前缓存对象
+			cache = _cache;
+
+			//如果当前缓存为空，表示本实例已被处置
+			if(cache == null)
+				return;
+
+			//重新租用一个新的缓存对象
+			_cache = this.RentCache();
+		}
+		finally
+		{
+			_semaphore.Set();
+		}
+
+		//执行访问器回调
+		this.OnFlush(cache);
+
+		//归还回调完成的缓存对象
+		this.ReturnCache(cache);
+	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual IList<T> RentCache() => new List<T>(Math.Max(_limit, 16));
+	protected virtual void ReturnCache(IList<T> cache) => cache?.Clear();
+	protected virtual void OnFlush(IList<T> cache) => _accessor?.Invoke(cache);
 	#endregion
 
 	#region 时钟方法
@@ -89,40 +198,17 @@ public class Stash<T> : IDisposable
 		//暂停计时器
 		_timer.Change(Timeout.Infinite, Timeout.Infinite);
 
-		//执行访问器
-		this.InvokeAccessor();
-
-		//恢复计时器
-		_timer.Change(_period, _period);
-	}
-	#endregion
-
-	#region 私有方法
-	private void InvokeAccessor()
-	{
-		List<T> cache;
-
-		if(_cache.Count == 0)
-			return;
-
 		try
 		{
-			_semaphore.WaitOne();
-			cache = _cache;
-			_cache = this.CreateCache();
+			//推送数据
+			this.Flush();
 		}
 		finally
 		{
-			_semaphore.Set();
+			//恢复计时器
+			_timer.Change(_period, _period);
 		}
-
-		_accessor?.Invoke(cache);
-		cache.Clear();
 	}
-	#endregion
-
-	#region 私有方法
-	private List<T> CreateCache() => new(Math.Max(_limit, 16));
 	#endregion
 
 	#region 处置方法
@@ -134,21 +220,23 @@ public class Stash<T> : IDisposable
 
 	protected virtual void Dispose(bool disposing)
 	{
-		var timer = Interlocked.Exchange(ref _timer, null);
+		var cache = Interlocked.Exchange(ref _cache, null);
 
-		if(timer != null)
+		if(cache == null)
+			return;
+
+		if(disposing)
 		{
-			if(disposing)
-			{
-				_cache.Clear();
-				timer.Dispose();
+			cache.Clear();
+			this.ReturnCache(cache);
 
-				_semaphore.Dispose();
-			}
-
-			_accessor = null;
-			_semaphore = null;
+			_timer.Dispose();
+			_semaphore.Dispose();
 		}
+
+		_timer = null;
+		_accessor = null;
+		_semaphore = null;
 	}
 	#endregion
 }
