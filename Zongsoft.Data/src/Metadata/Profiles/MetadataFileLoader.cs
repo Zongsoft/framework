@@ -34,7 +34,7 @@ using System.Collections.Generic;
 namespace Zongsoft.Data.Metadata.Profiles;
 
 [Services.Service<Mapping.Loader>(Members = nameof(Default))]
-public class MetadataFileLoader : Mapping.Loader
+public class MetadataFileLoader : Mapping.Loader, IEquatable<MetadataFileLoader>
 {
 	#region 单例字段
 	public static readonly MetadataFileLoader Default = new();
@@ -85,5 +85,12 @@ public class MetadataFileLoader : Mapping.Loader
 			}
 		}
 	}
+	#endregion
+
+	#region 重写方法
+	public bool Equals(MetadataFileLoader other) => string.Equals(_path, other._path);
+	public override bool Equals(object obj) => obj is MetadataFileLoader other && this.Equals(other);
+	public override int GetHashCode() => _path.GetHashCode();
+	public override string ToString() => _path;
 	#endregion
 }
