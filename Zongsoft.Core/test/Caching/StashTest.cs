@@ -80,28 +80,28 @@ public class StashTest
 	{
 		const int COUNT = 1000;
 
-		var processor = new Flusher<string>();
-		using var stash = new Stash<string>(processor.OnFlush, TimeSpan.FromSeconds(10), 0);
+		var flusher = new Flusher<string>();
+		using var stash = new Stash<string>(flusher.OnFlush, TimeSpan.FromSeconds(10), 0);
 		Assert.True(stash.IsEmpty);
 		Assert.False(stash.TryTake(out var value));
-		Assert.Equal(0, processor.Count);
+		Assert.Equal(0, flusher.Count);
 
 		Parallel.For(0, COUNT, index => stash.Put($"Value#{index}"));
 		Assert.Equal(COUNT, stash.Count);
 
 		stash.Flush();
 		Assert.True(stash.IsEmpty);
-		Assert.Equal(COUNT, processor.Count);
+		Assert.Equal(COUNT, flusher.Count);
 	}
 
 	[Fact]
 	public void TestLimit()
 	{
-		var processor = new Flusher<string>();
-		using var stash = new Stash<string>(processor.OnFlush, TimeSpan.FromSeconds(10), 0);
+		var flusher = new Flusher<string>();
+		using var stash = new Stash<string>(flusher.OnFlush, TimeSpan.FromSeconds(10), 0);
 		Assert.True(stash.IsEmpty);
 		Assert.False(stash.TryTake(out var value));
-		Assert.Equal(0, processor.Count);
+		Assert.Equal(0, flusher.Count);
 
 		stash.Put("A");
 		stash.Put("B");
@@ -114,17 +114,17 @@ public class StashTest
 		stash.Put("D");
 
 		Assert.True(stash.IsEmpty);
-		Assert.Equal(4, processor.Count);
+		Assert.Equal(4, flusher.Count);
 	}
 
 	[Fact]
 	public void TestPeriod()
 	{
-		var processor = new Flusher<string>();
-		using var stash = new Stash<string>(processor.OnFlush, TimeSpan.FromSeconds(10), 0);
+		var flusher = new Flusher<string>();
+		using var stash = new Stash<string>(flusher.OnFlush, TimeSpan.FromSeconds(10), 0);
 		Assert.True(stash.IsEmpty);
 		Assert.False(stash.TryTake(out var value));
-		Assert.Equal(0, processor.Count);
+		Assert.Equal(0, flusher.Count);
 
 		stash.Put("A");
 		stash.Put("B");
@@ -134,10 +134,10 @@ public class StashTest
 		//设置触发周期
 		stash.Period = TimeSpan.FromMilliseconds(1);
 		//等待周期刷新
-		SpinWait.SpinUntil(() => processor.Count >= 3, 500);
+		SpinWait.SpinUntil(() => flusher.Count >= 3, 500);
 
 		Assert.True(stash.IsEmpty);
-		Assert.Equal(3, processor.Count);
+		Assert.Equal(3, flusher.Count);
 	}
 
 	private class Flusher<T>
