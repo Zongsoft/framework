@@ -32,7 +32,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Zongsoft.Collections;
+using Microsoft.Extensions.ObjectPool;
+
+namespace Zongsoft.Caching;
 
 public class Stash<T> : IDisposable
 {
@@ -43,20 +45,22 @@ public class Stash<T> : IDisposable
 
 	#region 私有变量
 	private Timer _timer;
-	private IList<T> _cache;
+	private List<T> _cache;
 	private AutoResetEvent _semaphore;
-	private Action<IEnumerable<T>> _accessor;
+	private Action<IReadOnlyList<T>> _flusher;
+	private DefaultObjectPool<List<T>> _pool;
 	#endregion
 
 	#region 构造函数
-	public Stash(Action<IEnumerable<T>> accessor, TimeSpan period, int limit = 0)
+	public Stash(Action<IReadOnlyList<T>> flusher, TimeSpan period, int limit = 0)
 	{
-		_accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
+		_flusher = flusher ?? throw new ArgumentNullException(nameof(flusher));
 
 		this.Period = period;
 		this.Limit = limit;
 
-		_cache = this.RentCache();
+		_pool = new DefaultObjectPool<List<T>>(new StashPooledPolicy(this));
+		_cache = this.OnRent();
 		_semaphore = new AutoResetEvent(true);
 		_timer = new Timer(this.OnTick, null, _period, _period);
 	}
@@ -69,14 +73,14 @@ public class Stash<T> : IDisposable
 	/// <summary>获取一个值，指示当前暂存区是否空了。</summary>
 	public bool IsEmpty => _cache.Count == 0;
 
-	/// <summary>获取或设置暂存数量限制，如果暂存数量超过该属性值则立即触发回调。如果为零则表示忽略该限制。</summary>
+	/// <summary>获取或设置暂存数量限制，如果暂存数量超过该属性值则立即触发刷新回调。如果为零则表示忽略该限制。</summary>
 	public int Limit
 	{
 		get => _limit;
 		set => _limit = value > 0 ? value : 0;
 	}
 
-	/// <summary>获取或设置暂存的触发周期，不能低于<c>1</c>毫秒(Millisecond)。</summary>
+	/// <summary>获取或设置暂存的刷新周期，不能低于<c>1</c>毫秒(Millisecond)。</summary>
 	public TimeSpan Period
 	{
 		get => _period;
@@ -154,7 +158,7 @@ public class Stash<T> : IDisposable
 
 	public void Flush()
 	{
-		IList<T> cache;
+		List<T> cache;
 
 		if(_cache == null || _cache.Count == 0)
 			return;
@@ -171,25 +175,25 @@ public class Stash<T> : IDisposable
 				return;
 
 			//重新租用一个新的缓存对象
-			_cache = this.RentCache();
+			_cache = this.OnRent();
 		}
 		finally
 		{
 			_semaphore.Set();
 		}
 
-		//执行访问器回调
+		//执行刷新回调
 		this.OnFlush(cache);
 
 		//归还回调完成的缓存对象
-		this.ReturnCache(cache);
+		this.OnReturn(cache);
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual IList<T> RentCache() => new List<T>(Math.Max(_limit, 16));
-	protected virtual void ReturnCache(IList<T> cache) => cache?.Clear();
-	protected virtual void OnFlush(IList<T> cache) => _accessor?.Invoke(cache);
+	protected virtual List<T> OnRent() => _pool.Get();
+	protected virtual void OnReturn(List<T> cache) => _pool.Return(cache);
+	protected virtual void OnFlush(List<T> cache) => _flusher?.Invoke(cache);
 	#endregion
 
 	#region 时钟方法
@@ -228,15 +232,25 @@ public class Stash<T> : IDisposable
 		if(disposing)
 		{
 			cache.Clear();
-			this.ReturnCache(cache);
+			this.OnReturn(cache);
 
 			_timer.Dispose();
 			_semaphore.Dispose();
 		}
 
+		_pool = null;
 		_timer = null;
-		_accessor = null;
+		_flusher = null;
 		_semaphore = null;
+	}
+	#endregion
+
+	#region 嵌套子类
+	private sealed class StashPooledPolicy(Stash<T> stash) : PooledObjectPolicy<List<T>>
+	{
+		private readonly Stash<T> _stash = stash;
+		public override List<T> Create() => new(Math.Clamp(_stash.Limit, 16, 4 * 1024 * 1024));
+		public override bool Return(List<T> list) { list.Clear(); return true; }
 	}
 	#endregion
 }

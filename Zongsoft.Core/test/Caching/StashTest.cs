@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 using Xunit;
 
-namespace Zongsoft.Collections.Tests;
+namespace Zongsoft.Caching.Tests;
 
 public class StashTest
 {
@@ -27,11 +27,10 @@ public class StashTest
 	[Fact]
 	public void TestTake()
 	{
-		var processor = new Processor<string>();
-		using var stash = new Stash<string>(processor.OnProcess, TimeSpan.FromSeconds(10), 0);
+		using var stash = new Stash<string>(_ => { }, TimeSpan.FromSeconds(10), 0);
 		Assert.True(stash.IsEmpty);
+		Assert.Equal(0, stash.Count);
 		Assert.False(stash.TryTake(out var value));
-		Assert.Equal(0, processor.Count);
 
 		stash.Put("A");
 		stash.Put("B");
@@ -52,7 +51,28 @@ public class StashTest
 		Assert.False(stash.TryTake(out _));
 
 		Assert.True(stash.IsEmpty);
-		Assert.Equal(0, processor.Count);
+		Assert.Equal(0, stash.Count);
+
+		stash.Put("A");
+		stash.Put("B");
+		stash.Put("C");
+		Assert.Equal(3, stash.Count);
+
+		Assert.True(stash.TryTake(-1, out value));
+		Assert.Equal("C", value);
+		Assert.Equal(2, stash.Count);
+
+		Assert.True(stash.TryTake(-2, out value));
+		Assert.Equal("A", value);
+		Assert.Equal(1, stash.Count);
+
+		Assert.True(stash.TryTake(-1, out value));
+		Assert.Equal("B", value);
+		Assert.Equal(0, stash.Count);
+		Assert.False(stash.TryTake(out _));
+
+		Assert.True(stash.IsEmpty);
+		Assert.Equal(0, stash.Count);
 	}
 
 	[Fact]
@@ -60,8 +80,8 @@ public class StashTest
 	{
 		const int COUNT = 1000;
 
-		var processor = new Processor<string>();
-		using var stash = new Stash<string>(processor.OnProcess, TimeSpan.FromSeconds(10), 0);
+		var processor = new Flusher<string>();
+		using var stash = new Stash<string>(processor.OnFlush, TimeSpan.FromSeconds(10), 0);
 		Assert.True(stash.IsEmpty);
 		Assert.False(stash.TryTake(out var value));
 		Assert.Equal(0, processor.Count);
@@ -77,8 +97,8 @@ public class StashTest
 	[Fact]
 	public void TestLimit()
 	{
-		var processor = new Processor<string>();
-		using var stash = new Stash<string>(processor.OnProcess, TimeSpan.FromSeconds(10), 0);
+		var processor = new Flusher<string>();
+		using var stash = new Stash<string>(processor.OnFlush, TimeSpan.FromSeconds(10), 0);
 		Assert.True(stash.IsEmpty);
 		Assert.False(stash.TryTake(out var value));
 		Assert.Equal(0, processor.Count);
@@ -100,8 +120,8 @@ public class StashTest
 	[Fact]
 	public void TestPeriod()
 	{
-		var processor = new Processor<string>();
-		using var stash = new Stash<string>(processor.OnProcess, TimeSpan.FromSeconds(10), 0);
+		var processor = new Flusher<string>();
+		using var stash = new Stash<string>(processor.OnFlush, TimeSpan.FromSeconds(10), 0);
 		Assert.True(stash.IsEmpty);
 		Assert.False(stash.TryTake(out var value));
 		Assert.Equal(0, processor.Count);
@@ -120,15 +140,10 @@ public class StashTest
 		Assert.Equal(3, processor.Count);
 	}
 
-	private class Processor<T>
+	private class Flusher<T>
 	{
 		private int _count;
 		public int Count => _count;
-
-		public void OnProcess(IEnumerable<T> values)
-		{
-			foreach(var _ in values)
-				Interlocked.Increment(ref _count);
-		}
+		public void OnFlush(IReadOnlyList<T> values) => Interlocked.Add(ref _count, values.Count);
 	}
 }
