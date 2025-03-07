@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -40,11 +40,11 @@ namespace Zongsoft.Common
 		#region 初始化器
 		static Convert()
 		{
-			TypeDescriptor.AddAttributes(typeof(Enum), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EnumConverter))]);
-			TypeDescriptor.AddAttributes(typeof(Guid), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.GuidConverter))]);
+			TypeDescriptor.AddAttributes(typeof(Enum), [new TypeConverterAttribute(typeof(Components.Converters.EnumConverter))]);
+			TypeDescriptor.AddAttributes(typeof(Guid), [new TypeConverterAttribute(typeof(Components.Converters.GuidConverter))]);
 			TypeDescriptor.AddAttributes(typeof(TimeSpan), [new TypeConverterAttribute(typeof(Components.Converters.TimeSpanConverter))]);
-			TypeDescriptor.AddAttributes(typeof(Encoding), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EncodingConverter))]);
-			TypeDescriptor.AddAttributes(typeof(EndPoint), [new TypeConverterAttribute(typeof(Zongsoft.ComponentModel.EndpointConverter))]);
+			TypeDescriptor.AddAttributes(typeof(Encoding), [new TypeConverterAttribute(typeof(Components.Converters.EncodingConverter))]);
+			TypeDescriptor.AddAttributes(typeof(EndPoint), [new TypeConverterAttribute(typeof(Components.Converters.EndpointConverter))]);
 		}
 		#endregion
 

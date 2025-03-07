@@ -185,7 +185,7 @@ public class ConnectionSettingDescriptorCollection(IConnectionSettingsDriver dri
 
 		//如果当前属性未显式声明转换器，并且属性类型为集合类型则需要为其指定一个特定的转换器
 		if(descriptor.Converter == null && descriptor.Type != typeof(string) && TypeExtension.IsEnumerable(descriptor.Type))
-			descriptor.Converter = ComponentModel.CollectionConverter.Default;
+			descriptor.Converter = Components.Converters.CollectionConverter.Default;
 
 		var attribute = property.GetCustomAttribute<ConnectionSettingAttribute>();
 		if(attribute != null)

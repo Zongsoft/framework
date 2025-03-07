@@ -33,7 +33,7 @@ using System.Globalization;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-namespace Zongsoft.ComponentModel;
+namespace Zongsoft.Components.Converters;
 
 public class CollectionConverter : TypeConverter
 {
@@ -111,7 +111,7 @@ public class CollectionConverter : TypeConverter
 		{
 			var array = Array.CreateInstance(elementType, parts.Length);
 
-			for(int i = 0; i < parts.Length; i++)
+			for(var i = 0; i < parts.Length; i++)
 				array.SetValue(Common.Convert.ConvertValue(parts[i], elementType), i);
 
 			return array;
@@ -121,7 +121,7 @@ public class CollectionConverter : TypeConverter
 			Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType)) :
 			Activator.CreateInstance(conversionType);
 
-		for(int i = 0; i < parts.Length; i++)
+		for(var i = 0; i < parts.Length; i++)
 			Collections.CollectionUtility.TryAdd(result, Common.Convert.ConvertValue(parts[i], elementType));
 
 		return result;
