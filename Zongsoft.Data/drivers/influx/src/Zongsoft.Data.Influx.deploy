@@ -1,0 +1,5 @@
+artifacts/Zongsoft.Data.Influx.plugin
+lib/$(Framework)/Zongsoft.Data.Influx.*
+lib/$(Framework)/*/Zongsoft.Data.Influx.resources.*
+
+nuget:InfluxDB3.Client@1.0.0

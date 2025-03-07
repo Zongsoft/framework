@@ -12,7 +12,7 @@
 	> - [mysql](Zongsoft.Data/drivers/mysql/)：_**M**y**SQL**_/_**M**aria**DB**_ 驱动
 	> - [sqlite](Zongsoft.Data/drivers/sqlite/)：_**SQL**ite_ 驱动
 	> - [postgres](Zongsoft.Data/drivers/postgres/)：_**P**ostgre**SQL**_ 驱动
-	> - [influxdb](Zongsoft.Data/drivers/influxdb/)：_**I**nflux**DB**_ 驱动
+	> - [influxdb](Zongsoft.Data/drivers/influx/)：_**I**nflux**DB**_ 驱动
 	> - [tdengine](Zongsoft.Data/drivers/tdengine/)：_**TD**engine_ 驱动
 	> - [clickhouse](Zongsoft.Data/drivers/clickhouse/)：_**C**lick**H**ouse_ 驱动
 - [Zongsoft.Commands](Zongsoft.Commands)

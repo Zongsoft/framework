@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32922.545
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Data.Influx", "src\Zongsoft.Data.Influx.csproj", "{F1CFA0BA-1E84-42DD-B963-3A8FB6FE557E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Data.Influx.Tests", "test\Zongsoft.Data.Influx.Tests.csproj", "{74392AE8-A537-4001-B017-30C69056BA34}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F1CFA0BA-1E84-42DD-B963-3A8FB6FE557E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1CFA0BA-1E84-42DD-B963-3A8FB6FE557E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1CFA0BA-1E84-42DD-B963-3A8FB6FE557E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1CFA0BA-1E84-42DD-B963-3A8FB6FE557E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74392AE8-A537-4001-B017-30C69056BA34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74392AE8-A537-4001-B017-30C69056BA34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74392AE8-A537-4001-B017-30C69056BA34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74392AE8-A537-4001-B017-30C69056BA34}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A6C7B585-9966-45A3-B1EC-DE1138D05E6C}
+	EndGlobalSection
+EndGlobal
