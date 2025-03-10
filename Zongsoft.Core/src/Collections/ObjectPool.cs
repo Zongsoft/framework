@@ -103,7 +103,7 @@ namespace Zongsoft.Collections
 		}
 
 		/// <summary>获取对象池的最大容量，零表示不限制。</summary>
-		public int MaximumLimit { get => _maximumLimit; }
+		public int MaximumLimit => _maximumLimit;
 		#endregion
 
 		#region 公共方法

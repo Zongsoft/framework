@@ -55,7 +55,7 @@ namespace Zongsoft.Data
 		public GroupKey[] Keys { get; }
 
 		/// <summary>获取分组的聚合成员集合。</summary>
-		public DataAggregateCollection Aggregates { get => _aggregates; }
+		public DataAggregateCollection Aggregates => _aggregates;
 
 		/// <summary>获取或设置分组的过滤条件，默认为空。</summary>
 		public ICondition Filter { get; set; }

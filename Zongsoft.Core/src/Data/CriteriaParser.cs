@@ -258,10 +258,10 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 公共属性
-			public bool IsEmpty { get => this.Members == null || this.Members.Length == 0; }
-			public bool HasValue { get => this.Members != null && this.Members.Length > 0; }
-			public bool Failed { get => !string.IsNullOrEmpty(_message); }
-			public bool Succeed { get => string.IsNullOrEmpty(_message); }
+			public readonly bool IsEmpty => this.Members == null || this.Members.Length == 0;
+			public readonly bool HasValue => this.Members != null && this.Members.Length > 0;
+			public readonly bool Failed => !string.IsNullOrEmpty(_message);
+			public readonly bool Succeed => string.IsNullOrEmpty(_message);
 			#endregion
 
 			#region 公共方法
@@ -305,11 +305,11 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 公共属性
-			public State State { get => _state; }
-			public int Index { get => _index; }
-			public char Character { get => _character; }
-			public string ErrorMessage { get => _errorMessage; }
-			public bool IsWhitespace { get => char.IsWhiteSpace(_character); }
+			public readonly State State => _state;
+			public readonly int Index => _index;
+			public readonly char Character => _character;
+			public readonly string ErrorMessage => _errorMessage;
+			public readonly bool IsWhitespace => char.IsWhiteSpace(_character);
 			#endregion
 
 			#region 公共方法

@@ -308,7 +308,7 @@ namespace Zongsoft.Data
 		public ISchema Schema { get; set; }
 
 		/// <summary>获取写入操作的选项对象。</summary>
-		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
+		IDataMutateOptions IDataMutateContextBase.Options => this.Options;
 
 		/// <summary>获取或设置当前删除操作的验证器。</summary>
 		public IDataValidator Validator { get; init; }
@@ -371,7 +371,7 @@ namespace Zongsoft.Data
 		public ISchema Schema { get; set; }
 
 		/// <summary>获取写入操作的选项对象。</summary>
-		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
+		IDataMutateOptions IDataMutateContextBase.Options => this.Options;
 
 		/// <summary>获取插入数据的元素类型。</summary>
 		public virtual Type ModelType
@@ -431,7 +431,7 @@ namespace Zongsoft.Data
 		public ISchema Schema { get; set; }
 
 		/// <summary>获取写入操作的选项对象。</summary>
-		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
+		IDataMutateOptions IDataMutateContextBase.Options => this.Options;
 
 		/// <summary>获取更新数据的元素类型。</summary>
 		public virtual Type ModelType
@@ -498,7 +498,7 @@ namespace Zongsoft.Data
 		public ISchema Schema { get; set; }
 
 		/// <summary>获取写入操作的选项对象。</summary>
-		IDataMutateOptions IDataMutateContextBase.Options { get => this.Options; }
+		IDataMutateOptions IDataMutateContextBase.Options => this.Options;
 
 		/// <summary>获取操作数据的元素类型。</summary>
 		public virtual Type ModelType

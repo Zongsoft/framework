@@ -54,7 +54,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public string Name { get => this.DataService.Name; }
+		public string Name => this.DataService.Name;
 		public IDataService<TModel> DataService { get; }
 		public IDataSearcherConditioner Conditioner
 		{

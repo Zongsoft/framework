@@ -70,10 +70,10 @@ public class DataAssociationLink
 	}
 
 	/// <summary>获取关联元素的外键属性名。</summary>
-	public string Foreign { get => _foreign; }
+	public string Foreign => _foreign;
 
 	/// <summary>获取关联元素的锚点。</summary>
-	public string Anchor { get => _anchor; }
+	public string Anchor => _anchor;
 	#endregion
 
 	#region 公共方法

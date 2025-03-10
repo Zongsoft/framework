@@ -54,7 +54,7 @@ namespace Zongsoft.Services.Commands
 		#endregion
 
 		#region 保护属性
-		protected CommandContext Context { get => _context; }
+		protected CommandContext Context => _context;
 		#endregion
 
 		#region 执行方法

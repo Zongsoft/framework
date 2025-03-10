@@ -73,8 +73,8 @@ namespace Zongsoft.IO
 			set => _type = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
 		}
 
-		public override bool IsFile { get => true; }
-		public override bool IsDirectory { get => false; }
+		public override bool IsFile => true;
+		public override bool IsDirectory => false;
 		#endregion
 
 		#region 重写方法

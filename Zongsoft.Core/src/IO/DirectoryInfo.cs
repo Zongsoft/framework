@@ -43,8 +43,8 @@ namespace Zongsoft.IO
 		#endregion
 
 		#region 重写属性
-		public override bool IsFile { get => false; }
-		public override bool IsDirectory { get => true; }
+		public override bool IsFile => false;
+		public override bool IsDirectory => true;
 		#endregion
 	}
 }

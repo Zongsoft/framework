@@ -43,7 +43,7 @@ namespace Zongsoft.Diagnostics
 		#endregion
 
 		#region 公共属性
-		public string Name { get => "xml"; }
+		public string Name => "xml";
 		#endregion
 
 		#region 公共方法

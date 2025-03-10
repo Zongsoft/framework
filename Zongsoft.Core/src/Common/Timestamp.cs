@@ -54,13 +54,13 @@ namespace Zongsoft.Common
 
 		#region 公共属性
 		/// <summary>获取此刻的时间戳。</summary>
-		public long Now { get => this.ToTimestamp(DateTime.UtcNow); }
+		public long Now => this.ToTimestamp(DateTime.UtcNow);
 
 		/// <summary>获取今天零时的时间戳。</summary>
-		public long Today { get => this.ToTimestamp(DateTime.UtcNow.Date); }
+		public long Today => this.ToTimestamp(DateTime.UtcNow.Date);
 
 		/// <summary>获取昨天零时的时间戳。</summary>
-		public long Yesterday { get => this.ToTimestamp(DateTime.UtcNow.Date.AddDays(-1)); }
+		public long Yesterday => this.ToTimestamp(DateTime.UtcNow.Date.AddDays(-1));
 		#endregion
 
 		#region 公共方法

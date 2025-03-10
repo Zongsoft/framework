@@ -61,7 +61,7 @@ public class CompositeConfigurationProvider : ICompositeConfigurationProvider, I
 	#endregion
 
 	#region 公共属性
-	public IEnumerable<IConfigurationProvider> Providers { get => _providers; }
+	public IEnumerable<IConfigurationProvider> Providers => _providers;
 	#endregion
 
 	#region 公共方法

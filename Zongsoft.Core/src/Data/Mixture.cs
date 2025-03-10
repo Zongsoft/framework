@@ -55,7 +55,7 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public T Value { get => this.Range.Minimum.HasValue ? this.Range.Minimum.Value : default; }
+		public T Value => this.Range.Minimum ?? default;
 		public readonly T[] Array;
 		public readonly Range<T> Range;
 

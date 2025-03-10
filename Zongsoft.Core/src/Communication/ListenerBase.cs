@@ -51,7 +51,7 @@ namespace Zongsoft.Communication
 		#endregion
 
 		#region 公共属性
-		public virtual bool IsListening { get => this.State == WorkerState.Running; }
+		public virtual bool IsListening => this.State == WorkerState.Running;
 		public virtual IPacketizer<T> Packetizer { get; }
 		public IHandler<T> Handler { get => _handler; set => _handler = value; }
 		IHandler IHandleable.Handler { get => _handler; set => _handler = value as IHandler<T> ?? throw new ArgumentException($"The specified ‘{value}’ handler does not match."); }

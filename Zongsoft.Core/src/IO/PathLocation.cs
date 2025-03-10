@@ -53,7 +53,7 @@ namespace Zongsoft.IO
 
 		[JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
-		public bool IsEmpty { get => string.IsNullOrEmpty(this.Path); }
+		public bool IsEmpty => string.IsNullOrEmpty(this.Path);
 		#endregion
 
 		#region 重写方法

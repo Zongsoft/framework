@@ -238,8 +238,7 @@ namespace Zongsoft.Data
 				}
 			}
 
-			public ConditionOperator? Operator { get => this.Attribute != null ? this.Attribute.Operator : null; }
-
+			public ConditionOperator? Operator => this.Attribute != null ? this.Attribute.Operator : null;
 			public object GetValue(object target) => Zongsoft.Reflection.Reflector.GetValue(this.PropertyInfo, ref target);
 		}
 		#endregion

@@ -53,8 +53,8 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		public int Count { get => _items.Count; }
-		public bool IsReadOnly { get => false; }
+		public int Count => _items.Count;
+		public bool IsReadOnly => false;
 		#endregion
 
 		#region 公共方法

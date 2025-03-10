@@ -43,7 +43,7 @@ namespace Zongsoft.Diagnostics.Configuration
 			public string Name { get; set; }
 			public string Type { get; set; }
 			public LoggerHandlerPredicationSetting Predication { get; set; }
-			public bool HasProperties { get => this.Properties?.Count > 0; }
+			public bool HasProperties => this.Properties?.Count > 0;
 			public IDictionary<string, string> Properties { get; set; }
 		}
 

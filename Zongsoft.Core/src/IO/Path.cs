@@ -612,15 +612,15 @@ namespace Zongsoft.IO
 			#endregion
 
 			#region 公共属性
-			public PathState State { get => _state; }
-			public int Index { get => _index; }
-			public char Character { get => _character; }
-			public bool IsLetter { get => char.IsLetter(_character); }
-			public bool IsDigit { get => char.IsDigit(_character); }
-			public bool IsLetterOrDigit { get => char.IsLetterOrDigit(_character); }
-			public bool IsWhitespace { get => char.IsWhiteSpace(_character); }
-			public bool IsSlash { get => _character == '/' || _character == '\\'; }
-			public bool IsInvalid { get => System.IO.Path.GetInvalidPathChars().Contains(_character); }
+			public readonly PathState State => _state;
+			public readonly int Index => _index;
+			public readonly char Character => _character;
+			public readonly bool IsLetter => char.IsLetter(_character);
+			public readonly bool IsDigit => char.IsDigit(_character);
+			public readonly bool IsLetterOrDigit => char.IsLetterOrDigit(_character);
+			public readonly bool IsWhitespace => char.IsWhiteSpace(_character);
+			public readonly bool IsSlash => _character == '/' || _character == '\\';
+			public readonly bool IsInvalid => System.IO.Path.GetInvalidPathChars().Contains(_character);
 			#endregion
 
 			#region 公共方法

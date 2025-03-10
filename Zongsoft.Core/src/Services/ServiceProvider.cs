@@ -80,7 +80,7 @@ internal class ServiceProvider : IServiceProvider, IDisposable
 	#endregion
 
 	#region 公共属性
-	public string Name { get => _name; }
+	public string Name => _name;
 	#endregion
 
 	#region 公共方法

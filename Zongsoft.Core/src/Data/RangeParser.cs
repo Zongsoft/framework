@@ -291,11 +291,11 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 公共属性
-			public State State { get => _state; }
-			public int Index { get => _index; }
-			public char Character { get => _character; }
-			public string ErrorMessage { get => _errorMessage; }
-			public bool IsWhitespace { get => char.IsWhiteSpace(_character); }
+			public readonly State State => _state;
+			public readonly int Index => _index;
+			public readonly char Character => _character;
+			public readonly string ErrorMessage => _errorMessage;
+			public readonly bool IsWhitespace => char.IsWhiteSpace(_character);
 			#endregion
 
 			#region 公共方法
@@ -753,14 +753,14 @@ namespace Zongsoft.Data
 			#endregion
 
 			#region 公共属性
-			public State State { get => _state; }
-			public int Index { get => _index; }
-			public char Character { get => _character; }
-			public string ErrorMessage { get => _errorMessage; }
-			public bool IsWhitespace { get => char.IsWhiteSpace(_character); }
-			public bool IsLetter { get => char.IsLetter(_character); }
-			public bool IsDigit { get => char.IsDigit(_character); }
-			public bool IsLetterOrDigit { get => char.IsLetterOrDigit(_character); }
+			public readonly State State => _state;
+			public readonly int Index => _index;
+			public readonly char Character => _character;
+			public readonly string ErrorMessage => _errorMessage;
+			public readonly bool IsWhitespace => char.IsWhiteSpace(_character);
+			public readonly bool IsLetter => char.IsLetter(_character);
+			public readonly bool IsDigit => char.IsDigit(_character);
+			public readonly bool IsLetterOrDigit => char.IsLetterOrDigit(_character);
 			#endregion
 
 			#region 公共方法
