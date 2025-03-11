@@ -36,7 +36,7 @@ namespace Zongsoft.Configuration;
 public static class ConnectionSettingsUtility
 {
 	#region 私有变量
-	private static readonly ConcurrentDictionary<Type, Delegate> _thunks = new();
+	private static readonly ConcurrentDictionary<Type, MethodInfo> _thunks = new();
 	#endregion
 
 	#region 公共方法
@@ -151,12 +151,12 @@ public static class ConnectionSettingsUtility
 		if(connectionSettings == null)
 			return default;
 
-		var thunk = _thunks.GetOrAdd(connectionSettings.GetType(), type =>
+		var method = _thunks.GetOrAdd(connectionSettings.GetType(), type =>
 		{
-			var method = type.GetMethod(nameof(ConnectionSettingsBase<IConnectionSettingsDriver, TOptions>.GetOptions), BindingFlags.Public | BindingFlags.Instance);
-			return method?.CreateDelegate(typeof(Func<>).MakeGenericType(method.ReturnType), connectionSettings);
+			return type.GetMethod(nameof(ConnectionSettingsBase<IConnectionSettingsDriver, TOptions>.GetOptions), BindingFlags.Public | BindingFlags.Instance);
 		});
 
+		var thunk = method?.CreateDelegate(typeof(Func<>).MakeGenericType(method.ReturnType), connectionSettings);
 		return thunk != null && thunk.DynamicInvoke() is TOptions options ? options : default;
 	}
 	#endregion

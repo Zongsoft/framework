@@ -207,6 +207,37 @@ public class ConnectionSettingsTest
 	}
 
 	[Fact]
+	public void TestGetSettings()
+	{
+		Assert.True(ConnectionSettings.Drivers.TryGetValue(MyDriver.NAME, out var driver));
+		Assert.NotNull(driver);
+
+		var text = "server=127.0.0.1:80";
+		var settings = driver.GetSettings(text);
+		Assert.NotNull(settings);
+		Assert.NotEmpty(settings);
+
+		var options = settings.GetOptions<MyConnectionOptions>();
+		Assert.NotNull(options);
+		Assert.NotNull(options.Server);
+		Assert.NotEmpty(options.Server);
+		Assert.Single(options.Server);
+		Assert.Equal("127.0.0.1:80", options.Server.First().ToString());
+
+		text = "server=127.0.0.1:88";
+		settings = driver.GetSettings(text);
+		Assert.NotNull(settings);
+		Assert.NotEmpty(settings);
+
+		options = settings.GetOptions<MyConnectionOptions>();
+		Assert.NotNull(options);
+		Assert.NotNull(options.Server);
+		Assert.NotEmpty(options.Server);
+		Assert.Single(options.Server);
+		Assert.Equal("127.0.0.1:88", options.Server.First().ToString());
+	}
+
+	[Fact]
 	public void TestGetSettings1()
 	{
 		var settings1 = MyDriver.Instance.GetSettings(ConnectionString);
