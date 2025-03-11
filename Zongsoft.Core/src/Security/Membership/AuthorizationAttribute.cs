@@ -29,7 +29,6 @@
 
 using System;
 using System.Linq;
-using System.ComponentModel;
 
 namespace Zongsoft.Security.Membership
 {
@@ -37,17 +36,8 @@ namespace Zongsoft.Security.Membership
 	public class AuthorizationAttribute : Attribute
 	{
 		#region 构造函数
-		public AuthorizationAttribute()
-		{
-		}
-
-		public AuthorizationAttribute(string schema)
-		{
-			this.Schema = schema;
-			this.Action = null;
-		}
-
-		public AuthorizationAttribute(string schema, string action)
+		public AuthorizationAttribute() { }
+		public AuthorizationAttribute(string schema, string action = null)
 		{
 			this.Schema = schema;
 			this.Action = action;
@@ -55,51 +45,24 @@ namespace Zongsoft.Security.Membership
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置一个值，指示是否禁止验证。
-		/// </summary>
-		public bool Suppressed
-		{
-			get; set;
-		}
+		/// <summary>获取或设置一个值，指示是否禁止验证。</summary>
+		public bool Suppressed { get; set; }
 
-		/// <summary>
-		/// 获取或设置当前身份必须所属角色集（注：多个角色名之间以逗号分隔）。
-		/// </summary>
-		public string Roles
-		{
-			get; set;
-		}
+		/// <summary>获取或设置当前身份必须所属角色集（注：多个角色名之间以逗号分隔）。</summary>
+		public string Roles { get; set; }
 
-		/// <summary>
-		/// 获取或设置身份验证的质询器类型。
-		/// </summary>
-		public Type ChallengerType
-		{
-			get; set;
-		}
+		/// <summary>获取或设置身份验证的质询器类型。</summary>
+		public Type ChallengerType { get; set; }
 
-		/// <summary>
-		/// 获取或设置操作名。
-		/// </summary>
-		public string Action
-		{
-			get; set;
-		}
+		/// <summary>获取或设置操作名。</summary>
+		public string Action { get; set; }
 
-		/// <summary>
-		/// 获取或设置模式名。
-		/// </summary>
-		public string Schema
-		{
-			get; set;
-		}
+		/// <summary>获取或设置模式名。</summary>
+		public string Schema { get; set; }
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 尝试获取设置的待验证的角色名数组。
-		/// </summary>
+		/// <summary>尝试获取设置的待验证的角色名数组。</summary>
 		/// <param name="roles">输出参数，返回待验证的角色名数组。</param>
 		/// <returns>如果<see cref="Roles"/>属性不为空或空字符串则返回真(True)，否则返回假(False)。</returns>
 		public bool TryGetRoles(out string[] roles)
