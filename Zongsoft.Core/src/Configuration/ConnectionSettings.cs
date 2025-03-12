@@ -191,8 +191,6 @@ partial class ConnectionSettings
 			if(_loaded)
 				return;
 
-			_loaded = true;
-
 			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
 			for(int i = 0; i < assemblies.Length; i++)
@@ -221,6 +219,8 @@ partial class ConnectionSettings
 					}
 				}
 			}
+
+			_loaded = true;
 		}
 
 		static IEnumerable<Type> GetDefinedTypes(Assembly assembly)
