@@ -556,7 +556,7 @@ partial class TypeAlias
 			if(string.IsNullOrEmpty(alias.Type))
 				return null;
 
-			if(!_types.TryGetValue(alias.Type, out var type))
+			if(!_aliases.TryGet(alias.Type, out var type))
 			{
 				var typeName = alias.Type.Contains('.') ? alias.Type : $"{nameof(System)}.{alias.Type}";
 				if(alias.HasGenericArguments)
