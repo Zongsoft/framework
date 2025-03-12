@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,214 +32,213 @@ using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Zongsoft.Common
+namespace Zongsoft.Common;
+
+public static partial class TypeAlias
 {
-	public static partial class TypeAlias
+	#region 静态字段
+	private static readonly Dictionary<string, TypeInfo> _types = new(StringComparer.OrdinalIgnoreCase)
 	{
-		#region 静态字段
-		private static readonly Dictionary<string, TypeInfo> Types = new(StringComparer.OrdinalIgnoreCase)
+		{ nameof(Object), typeof(object).GetTypeInfo() },
+		{ nameof(DBNull), typeof(DBNull).GetTypeInfo() },
+		{ nameof(String), typeof(string).GetTypeInfo() },
+		{ nameof(Boolean), typeof(bool).GetTypeInfo() },
+		{ nameof(Guid), typeof(Guid).GetTypeInfo() },
+		{ nameof(Char), typeof(char).GetTypeInfo() },
+		{ nameof(Byte), typeof(byte).GetTypeInfo() },
+		{ nameof(SByte), typeof(sbyte).GetTypeInfo() },
+		{ nameof(Int16), typeof(short).GetTypeInfo() },
+		{ nameof(UInt16), typeof(ushort).GetTypeInfo() },
+		{ nameof(Int32), typeof(int).GetTypeInfo() },
+		{ nameof(UInt32), typeof(uint).GetTypeInfo() },
+		{ nameof(Int64), typeof(long).GetTypeInfo() },
+		{ nameof(UInt64), typeof(ulong).GetTypeInfo() },
+		{ nameof(Single), typeof(float).GetTypeInfo() },
+		{ nameof(Double), typeof(double).GetTypeInfo() },
+		{ nameof(Decimal), typeof(decimal).GetTypeInfo() },
+		{ nameof(TimeSpan), typeof(TimeSpan).GetTypeInfo() },
+		{ nameof(DateOnly), typeof(DateOnly).GetTypeInfo() },
+		{ nameof(TimeOnly), typeof(TimeOnly).GetTypeInfo() },
+		{ nameof(DateTime), typeof(DateTime).GetTypeInfo() },
+		{ nameof(DateTimeOffset), typeof(DateTimeOffset).GetTypeInfo() },
+
+		{ "void", typeof(void).GetTypeInfo() },
+		{ "bool", typeof(bool).GetTypeInfo() },
+		{ "uuid", typeof(Guid).GetTypeInfo() },
+		{ "float", typeof(float).GetTypeInfo() },
+		{ "short", typeof(short).GetTypeInfo() },
+		{ "ushort", typeof(ushort).GetTypeInfo() },
+		{ "int", typeof(int).GetTypeInfo() },
+		{ "integer", typeof(int).GetTypeInfo() },
+		{ "uint", typeof(uint).GetTypeInfo() },
+		{ "long", typeof(long).GetTypeInfo() },
+		{ "ulong", typeof(ulong).GetTypeInfo() },
+		{ "money", typeof(decimal).GetTypeInfo() },
+		{ "currency", typeof(decimal).GetTypeInfo() },
+		{ "date", typeof(DateOnly).GetTypeInfo() },
+		{ "time", typeof(TimeOnly).GetTypeInfo() },
+		{ "timestamp", typeof(DateTimeOffset).GetTypeInfo() },
+		{ "binary", typeof(byte[]).GetTypeInfo() },
+		{ "range", typeof(Zongsoft.Data.Range<>).GetTypeInfo() },
+		{ "mixture", typeof(Zongsoft.Data.Mixture<>).GetTypeInfo() },
+
+		{ nameof(IList), typeof(IList<>).GetTypeInfo() },
+		{ nameof(IEnumerable), typeof(IEnumerable<>).GetTypeInfo() },
+		{ nameof(ICollection), typeof(ICollection<>).GetTypeInfo() },
+		{ nameof(IDictionary), typeof(IDictionary<,>).GetTypeInfo() },
+
+		{ "List", typeof(List<>).GetTypeInfo() },
+		{ "ISet", typeof(ISet<>).GetTypeInfo() },
+		{ "Hashset", typeof(HashSet<>).GetTypeInfo() },
+		{ "Dictionary", typeof(Dictionary<,>).GetTypeInfo() },
+
+		{ "IReadOnlySet", typeof(IReadOnlySet<>).GetTypeInfo() },
+		{ "IReadOnlyList", typeof(IReadOnlyList<>).GetTypeInfo() },
+		{ "IReadOnlyCollection", typeof(IReadOnlyCollection<>).GetTypeInfo() },
+		{ "IReadOnlyDictionary", typeof(IReadOnlyDictionary<,>).GetTypeInfo() },
+	};
+
+	private static readonly Dictionary<Type, string> _aliases = new()
+	{
+		{ typeof(void), "void" },
+		{ typeof(object), nameof(Object) },
+		{ typeof(Guid), nameof(Guid) },
+		{ typeof(TimeSpan), nameof(TimeSpan) },
+		{ typeof(DateOnly), "Date" },
+		{ typeof(TimeOnly), "Time" },
+		{ typeof(DateTimeOffset), "Timestamp" },
+		{ typeof(Zongsoft.Data.Range<>), "Range" },
+		{ typeof(Zongsoft.Data.Mixture<>), "Mixture" },
+
+		{ typeof(IList<>), nameof(IList) },
+		{ typeof(IEnumerable<>), nameof(IEnumerable) },
+		{ typeof(ICollection<>), nameof(ICollection) },
+		{ typeof(IDictionary<,>), nameof(IDictionary) },
+
+		{ typeof(List<>), "List" },
+		{ typeof(ISet<>), "ISet" },
+		{ typeof(HashSet<>), "Hashset" },
+		{ typeof(Dictionary<,>), "Dictionary" },
+
+		{ typeof(IReadOnlySet<>), "IReadOnlySet" },
+		{ typeof(IReadOnlyList<>), "IReadOnlyList" },
+		{ typeof(IReadOnlyCollection<>), "IReadOnlyCollection" },
+		{ typeof(IReadOnlyDictionary<,>), "IReadOnlyDictionary" },
+	};
+	#endregion
+
+	#region 别名方法
+	public static string GetAlias(this Type type)
+	{
+		if(type == null)
+			return null;
+
+		var elementType = type.IsArray ? type.GetElementType() : type;
+		elementType = elementType.IsNullable(out var underlyingType) ? underlyingType : elementType;
+		var code = Type.GetTypeCode(elementType);
+
+		string alias;
+		bool aliased;
+
+		if(!elementType.IsEnum && code != TypeCode.Object)
 		{
-			{ nameof(Object), typeof(object).GetTypeInfo() },
-			{ nameof(DBNull), typeof(DBNull).GetTypeInfo() },
-			{ nameof(String), typeof(string).GetTypeInfo() },
-			{ nameof(Boolean), typeof(bool).GetTypeInfo() },
-			{ nameof(Guid), typeof(Guid).GetTypeInfo() },
-			{ nameof(Char), typeof(char).GetTypeInfo() },
-			{ nameof(Byte), typeof(byte).GetTypeInfo() },
-			{ nameof(SByte), typeof(sbyte).GetTypeInfo() },
-			{ nameof(Int16), typeof(short).GetTypeInfo() },
-			{ nameof(UInt16), typeof(ushort).GetTypeInfo() },
-			{ nameof(Int32), typeof(int).GetTypeInfo() },
-			{ nameof(UInt32), typeof(uint).GetTypeInfo() },
-			{ nameof(Int64), typeof(long).GetTypeInfo() },
-			{ nameof(UInt64), typeof(ulong).GetTypeInfo() },
-			{ nameof(Single), typeof(float).GetTypeInfo() },
-			{ nameof(Double), typeof(double).GetTypeInfo() },
-			{ nameof(Decimal), typeof(decimal).GetTypeInfo() },
-			{ nameof(TimeSpan), typeof(TimeSpan).GetTypeInfo() },
-			{ nameof(DateOnly), typeof(DateOnly).GetTypeInfo() },
-			{ nameof(TimeOnly), typeof(TimeOnly).GetTypeInfo() },
-			{ nameof(DateTime), typeof(DateTime).GetTypeInfo() },
-			{ nameof(DateTimeOffset), typeof(DateTimeOffset).GetTypeInfo() },
-
-			{ "void", typeof(void).GetTypeInfo() },
-			{ "bool", typeof(bool).GetTypeInfo() },
-			{ "uuid", typeof(Guid).GetTypeInfo() },
-			{ "float", typeof(float).GetTypeInfo() },
-			{ "short", typeof(short).GetTypeInfo() },
-			{ "ushort", typeof(ushort).GetTypeInfo() },
-			{ "int", typeof(int).GetTypeInfo() },
-			{ "integer", typeof(int).GetTypeInfo() },
-			{ "uint", typeof(uint).GetTypeInfo() },
-			{ "long", typeof(long).GetTypeInfo() },
-			{ "ulong", typeof(ulong).GetTypeInfo() },
-			{ "money", typeof(decimal).GetTypeInfo() },
-			{ "currency", typeof(decimal).GetTypeInfo() },
-			{ "date", typeof(DateOnly).GetTypeInfo() },
-			{ "time", typeof(TimeOnly).GetTypeInfo() },
-			{ "timestamp", typeof(DateTimeOffset).GetTypeInfo() },
-			{ "binary", typeof(byte[]).GetTypeInfo() },
-			{ "range", typeof(Zongsoft.Data.Range<>).GetTypeInfo() },
-			{ "mixture", typeof(Zongsoft.Data.Mixture<>).GetTypeInfo() },
-
-			{ nameof(IList), typeof(IList<>).GetTypeInfo() },
-			{ nameof(IEnumerable), typeof(IEnumerable<>).GetTypeInfo() },
-			{ nameof(ICollection), typeof(ICollection<>).GetTypeInfo() },
-			{ nameof(IDictionary), typeof(IDictionary<,>).GetTypeInfo() },
-
-			{ "List", typeof(List<>).GetTypeInfo() },
-			{ "ISet", typeof(ISet<>).GetTypeInfo() },
-			{ "Hashset", typeof(HashSet<>).GetTypeInfo() },
-			{ "Dictionary", typeof(Dictionary<,>).GetTypeInfo() },
-
-			{ "IReadOnlySet", typeof(IReadOnlySet<>).GetTypeInfo() },
-			{ "IReadOnlyList", typeof(IReadOnlyList<>).GetTypeInfo() },
-			{ "IReadOnlyCollection", typeof(IReadOnlyCollection<>).GetTypeInfo() },
-			{ "IReadOnlyDictionary", typeof(IReadOnlyDictionary<,>).GetTypeInfo() },
-		};
-
-		private static readonly Dictionary<Type, string> Aliases = new()
+			alias = code.ToString();
+			aliased = true;
+		}
+		else
 		{
-			{ typeof(void), "void" },
-			{ typeof(object), nameof(Object) },
-			{ typeof(Guid), nameof(Guid) },
-			{ typeof(TimeSpan), nameof(TimeSpan) },
-			{ typeof(DateOnly), "Date" },
-			{ typeof(TimeOnly), "Time" },
-			{ typeof(DateTimeOffset), "Timestamp" },
-			{ typeof(Zongsoft.Data.Range<>), "Range" },
-			{ typeof(Zongsoft.Data.Mixture<>), "Mixture" },
+			var prototype = elementType.IsGenericType ? elementType.GetGenericTypeDefinition() : elementType;
+			aliased = _aliases.TryGetValue(prototype, out alias);
 
-			{ typeof(IList<>), nameof(IList) },
-			{ typeof(IEnumerable<>), nameof(IEnumerable) },
-			{ typeof(ICollection<>), nameof(ICollection) },
-			{ typeof(IDictionary<,>), nameof(IDictionary) },
-
-			{ typeof(List<>), "List" },
-			{ typeof(ISet<>), "ISet" },
-			{ typeof(HashSet<>), "Hashset" },
-			{ typeof(Dictionary<,>), "Dictionary" },
-
-			{ typeof(IReadOnlySet<>), "IReadOnlySet" },
-			{ typeof(IReadOnlyList<>), "IReadOnlyList" },
-			{ typeof(IReadOnlyCollection<>), "IReadOnlyCollection" },
-			{ typeof(IReadOnlyDictionary<,>), "IReadOnlyDictionary" },
-		};
-		#endregion
-
-		#region 别名方法
-		public static string GetAlias(this Type type)
-		{
-			if(type == null)
-				return null;
-
-			var elementType = type.IsArray ? type.GetElementType() : type;
-			elementType = elementType.IsNullable(out var underlyingType) ? underlyingType : elementType;
-			var code = Type.GetTypeCode(elementType);
-
-			string alias;
-			bool aliased;
-
-			if(!elementType.IsEnum && code != TypeCode.Object)
+			if(!aliased)
 			{
-				alias = code.ToString();
-				aliased = true;
+				var typeName = elementType.IsGenericType ?
+					elementType.Name[..(elementType.Name.Length - GetDigits(elementType.GenericTypeArguments.Length) - 1)] :
+					elementType.Name;
+
+				aliased = string.Equals(elementType.Namespace, nameof(System));
+				alias = aliased ? typeName : $"{elementType.Namespace}.{typeName}";
 			}
-			else
+
+			if(elementType.IsGenericType)
 			{
-				var prototype = elementType.IsGenericType ? elementType.GetGenericTypeDefinition() : elementType;
-				aliased = Aliases.TryGetValue(prototype, out alias);
+				alias += '<';
 
-				if(!aliased)
+				var arguments = elementType.GenericTypeArguments;
+				if(arguments != null && arguments.Length > 0)
 				{
-					var typeName = elementType.IsGenericType ?
-						elementType.Name[..(elementType.Name.Length - GetDigits(elementType.GenericTypeArguments.Length) - 1)] :
-						elementType.Name;
-
-					aliased = string.Equals(elementType.Namespace, nameof(System));
-					alias = aliased ? typeName : $"{elementType.Namespace}.{typeName}";
-				}
-
-				if(elementType.IsGenericType)
-				{
-					alias += '<';
-
-					var arguments = elementType.GenericTypeArguments;
-					if(arguments != null && arguments.Length > 0)
+					for(int i = 0; i < arguments.Length; i++)
 					{
-						for(int i = 0; i < arguments.Length; i++)
-						{
-							if(i > 0)
-								alias += ", ";
+						if(i > 0)
+							alias += ", ";
 
-							alias += GetAlias(arguments[i]);
-						}
+						alias += GetAlias(arguments[i]);
 					}
-
-					alias += '>';
 				}
+
+				alias += '>';
 			}
-
-			if(underlyingType != null)
-				alias += '?';
-
-			if(type.IsArray)
-				alias += "[]";
-
-			return aliased ? alias : $"{alias}@{elementType.Assembly.GetName().Name}";
 		}
 
-		/// <summary>获取指定整数的十进制数的位数。</summary>
-		/// <param name="integer">指定的整数值。</param>
-		/// <returns>返回指定整数的十进制的位数。</returns>
-		private static int GetDigits(int integer)
-		{
-			if(integer < 10)
-				return 1;
-			if(integer < 100)
-				return 2;
-			if(integer < 1000)
-				return 3;
-			if(integer < 10000)
-				return 4;
-			if(integer < 100000)
-				return 5;
-			if(integer < 1000000)
-				return 6;
-			if(integer < 10000000)
-				return 7;
-			if(integer < 100000000)
-				return 8;
-			if(integer < 1000000000)
-				return 9;
+		if(underlyingType != null)
+			alias += '?';
 
-			return 10;
-		}
-		#endregion
+		if(type.IsArray)
+			alias += "[]";
 
-		#region 解析方法
-		public static bool TryParse(string typeName, out Type result) => TryParse(typeName, true, out result);
-		public static bool TryParse(string typeName, bool ignoreCase, out Type result)
-		{
-			result = Parse(typeName, false, ignoreCase);
-			return result != null;
-		}
-
-		public static Type Parse(string typeName, bool throwException = true, bool ignoreCase = true) => Parse(typeName, null, null, throwException, ignoreCase);
-		public static Type Parse(string typeName, Func<AssemblyName, Assembly> assemblyResolver, Func<Assembly, string, bool, Type> typeResolver, bool throwException = true, bool ignoreCase = true)
-		{
-			if(string.IsNullOrEmpty(typeName))
-				return throwException ? throw new ArgumentNullException(nameof(typeName)) : null;
-
-			if(Types.TryGetValue(typeName, out var type) && !type.ContainsGenericParameters)
-				return type;
-
-			if(typeName.IndexOfAny(['`', '=']) > 0)
-				return Type.GetType(typeName, assemblyResolver, typeResolver, throwException, ignoreCase);
-
-			var token = throwException ? ParseCore(typeName, message => throw new InvalidOperationException(message)) : ParseCore(typeName);
-			return string.IsNullOrEmpty(token.Type) ? null : token.ToType(assemblyResolver, typeResolver, throwException);
-		}
-		#endregion
+		return aliased ? alias : $"{alias}@{elementType.Assembly.GetName().Name}";
 	}
+
+	/// <summary>获取指定整数的十进制数的位数。</summary>
+	/// <param name="integer">指定的整数值。</param>
+	/// <returns>返回指定整数的十进制的位数。</returns>
+	private static int GetDigits(int integer)
+	{
+		if(integer < 10)
+			return 1;
+		if(integer < 100)
+			return 2;
+		if(integer < 1000)
+			return 3;
+		if(integer < 10000)
+			return 4;
+		if(integer < 100000)
+			return 5;
+		if(integer < 1000000)
+			return 6;
+		if(integer < 10000000)
+			return 7;
+		if(integer < 100000000)
+			return 8;
+		if(integer < 1000000000)
+			return 9;
+
+		return 10;
+	}
+	#endregion
+
+	#region 解析方法
+	public static bool TryParse(string typeName, out Type result) => TryParse(typeName, true, out result);
+	public static bool TryParse(string typeName, bool ignoreCase, out Type result)
+	{
+		result = Parse(typeName, false, ignoreCase);
+		return result != null;
+	}
+
+	public static Type Parse(string typeName, bool throwException = true, bool ignoreCase = true) => Parse(typeName, null, null, throwException, ignoreCase);
+	public static Type Parse(string typeName, Func<AssemblyName, Assembly> assemblyResolver, Func<Assembly, string, bool, Type> typeResolver, bool throwException = true, bool ignoreCase = true)
+	{
+		if(string.IsNullOrEmpty(typeName))
+			return throwException ? throw new ArgumentNullException(nameof(typeName)) : null;
+
+		if(_types.TryGetValue(typeName, out var type) && !type.ContainsGenericParameters)
+			return type;
+
+		if(typeName.IndexOfAny(['`', '=']) > 0)
+			return Type.GetType(typeName, assemblyResolver, typeResolver, throwException, ignoreCase);
+
+		var token = throwException ? ParseCore(typeName, message => throw new InvalidOperationException(message)) : ParseCore(typeName);
+		return string.IsNullOrEmpty(token.Type) ? null : token.ToType(assemblyResolver, typeResolver, throwException);
+	}
+	#endregion
 }
