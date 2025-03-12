@@ -23,7 +23,7 @@
 [string]$project_python           = 'externals/python/build.cake'
 [string]$project_lua              = 'externals/lua/build.cake'
 
-[string]$project_administratives = '../Administratives/build.cake'
+[string]$project_administratives  = '../Administratives/build.cake'
 
 [string]$CAKE_ARGS = '--verbosity=normal'
 
