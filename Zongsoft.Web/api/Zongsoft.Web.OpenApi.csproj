@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFrameworks>net9.0;</TargetFrameworks>
+		<OutputType>Library</OutputType>
+		<Version>1.0.0</Version>
+		<Product>Zongsoft Web Open-API Library</Product>
+		<Description>This is a plug-in library that provides Open-API specification for Web programs.</Description>
+		<RootNamespace>Zongsoft.Web.OpenApi</RootNamespace>
+		<IncludeSymbols>true</IncludeSymbols>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Web/api</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup Condition="$(TargetFramework) == 'net9.0'">
+		<PackageReference Include="Microsoft.OpenApi" VersionOverride="1.6.23" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" VersionOverride="9.0.2" />
+		<PackageReference Include="Scalar.AspNetCore" VersionOverride="2.0.26" />
+	</ItemGroup>
+
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+				<ProjectReference Include="..\src\Zongsoft.Web.csproj" />
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.0.0" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="7.0.0" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+</Project>

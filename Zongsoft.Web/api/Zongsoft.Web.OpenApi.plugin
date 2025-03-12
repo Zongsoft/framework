@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Web.OpenApi"
+        title="Zongsoft Web Open-API Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2020-2025. All rights reserved."
+        description="Created Date: 2025-03-10 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Web.OpenApi" />
+		</assemblies>
+	</manifest>
+</plugin>

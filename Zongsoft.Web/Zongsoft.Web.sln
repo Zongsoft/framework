@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29806.167
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156 d17.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web", "src\Zongsoft.Web.csproj", "{1DC48500-0D08-4468-A5F6-1631FBC2F5B3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web.OpenApi", "api\Zongsoft.Web.OpenApi.csproj", "{32CAAB69-1AAF-6415-51B8-E463EA863E8D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{1DC48500-0D08-4468-A5F6-1631FBC2F5B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1DC48500-0D08-4468-A5F6-1631FBC2F5B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1DC48500-0D08-4468-A5F6-1631FBC2F5B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32CAAB69-1AAF-6415-51B8-E463EA863E8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32CAAB69-1AAF-6415-51B8-E463EA863E8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32CAAB69-1AAF-6415-51B8-E463EA863E8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32CAAB69-1AAF-6415-51B8-E463EA863E8D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
