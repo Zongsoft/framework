@@ -34,12 +34,76 @@ namespace Zongsoft.Resources;
 
 public static class ResourceUtility
 {
-	public static object GetObject<T>(this IResource resource, string name) => resource.GetObject(name, GetLocation(typeof(T)));
-	public static object GetObject(this IResource resource, string name, Type location) => resource.GetObject(name, GetLocation(location));
-	public static object GetObject(this IResource resource, string name, MemberInfo location) => resource.GetObject(name, GetLocation(location));
-	public static string GetString<T>(this IResource resource, string name) => resource.GetString(name, GetLocation(typeof(T)));
-	public static string GetString(this IResource resource, string name, Type location) => resource.GetString(name, GetLocation(location));
-	public static string GetString(this IResource resource, string name, MemberInfo location) => resource.GetString(name, GetLocation(location));
+	public static object GetObject<T>(this IResource resource, string name) => resource?.GetObject(name, GetLocation(typeof(T)));
+	public static object GetObject(this IResource resource, string name, Type location) => resource?.GetObject(name, GetLocation(location));
+	public static object GetObject(this IResource resource, string name, MemberInfo location) => resource?.GetObject(name, GetLocation(location));
+	public static string GetString<T>(this IResource resource, string name) => resource?.GetString(name, GetLocation(typeof(T)));
+	public static string GetString(this IResource resource, string name, Type location) => resource?.GetString(name, GetLocation(location));
+	public static string GetString(this IResource resource, string name, MemberInfo location) => resource?.GetString(name, GetLocation(location));
+
+	public static object GetObject(this IResource resource, params ReadOnlySpan<string> names) => GetObject(resource, null, names);
+	public static object GetObject(this IResource resource, Type location, params ReadOnlySpan<string> names)
+	{
+		if(resource == null)
+			return null;
+
+		for(int i = 0; i < names.Length; i++)
+		{
+			var result = resource.GetObject(names[i], location);
+
+			if(result != null)
+				return result;
+		}
+
+		return null;
+	}
+	public static object GetObject(this IResource resource, MemberInfo location, params ReadOnlySpan<string> names)
+	{
+		if(resource == null)
+			return null;
+
+		for(int i = 0; i < names.Length; i++)
+		{
+			var result = resource.GetObject(names[i], location);
+
+			if(result != null)
+				return result;
+		}
+
+		return null;
+	}
+
+	public static string GetString(this IResource resource, params ReadOnlySpan<string> names) => GetString(resource, null, names);
+	public static string GetString(this IResource resource, Type location, params ReadOnlySpan<string> names)
+	{
+		if(resource == null)
+			return null;
+
+		for(int i = 0; i < names.Length; i++)
+		{
+			var result = resource.GetString(names[i], location);
+
+			if(result != null)
+				return result;
+		}
+
+		return null;
+	}
+	public static string GetString(this IResource resource, MemberInfo location, params ReadOnlySpan<string> names)
+	{
+		if(resource == null)
+			return null;
+
+		for(int i = 0; i < names.Length; i++)
+		{
+			var result = resource.GetString(names[i], location);
+
+			if(result != null)
+				return result;
+		}
+
+		return null;
+	}
 
 	public static bool TryGetObject<T>(this IResource resource, string name, out object value) => resource.TryGetObject(name, GetLocation(typeof(T)), out value);
 	public static bool TryGetObject(this IResource resource, string name, Type location, out object value) => resource.TryGetObject(name, GetLocation(location), out value);
@@ -60,6 +124,8 @@ public static class ResourceUtility
 	public static object GetResourceObject(this Type location, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(location);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -74,6 +140,8 @@ public static class ResourceUtility
 	public static object GetResourceObject(this MemberInfo location, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(location);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -88,6 +156,8 @@ public static class ResourceUtility
 	public static object GetResourceObject(this Assembly assembly, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(assembly);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -102,6 +172,8 @@ public static class ResourceUtility
 	public static object GetResourceObject(this Assembly assembly, Type location, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(assembly);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -116,6 +188,8 @@ public static class ResourceUtility
 	public static object GetResourceObject(this Assembly assembly, MemberInfo location, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(assembly);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -137,6 +211,8 @@ public static class ResourceUtility
 	public static string GetResourceString(this Type location, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(location);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -151,6 +227,8 @@ public static class ResourceUtility
 	public static string GetResourceString(this MemberInfo location, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(location);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -165,6 +243,8 @@ public static class ResourceUtility
 	public static string GetResourceString(this Assembly assembly, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(assembly);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -179,6 +259,8 @@ public static class ResourceUtility
 	public static string GetResourceString(this Assembly assembly, Type location, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(assembly);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
@@ -193,6 +275,8 @@ public static class ResourceUtility
 	public static string GetResourceString(this Assembly assembly, MemberInfo location, params ReadOnlySpan<string> names)
 	{
 		var resource = Resource.GetResource(assembly);
+		if(resource == null)
+			return null;
 
 		for(int i = 0; i < names.Length; i++)
 		{
