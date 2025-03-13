@@ -28,31 +28,30 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Collections;
 
-[System.Reflection.DefaultMember(nameof(Categories))]
-[System.ComponentModel.DefaultProperty(nameof(Categories))]
-public class Category : CategoryBase<Category>
+public abstract class CategoryCollectionBase<TCategory> : HierarchicalNodeCollection<TCategory> where TCategory : CategoryBase<TCategory>
 {
 	#region 构造函数
-	public Category() => this.Categories = new(this);
-	public Category(string name, string title = null, string description = null) : this(null, name, true, title, description) { }
-	public Category(string name, bool visible, string title = null, string description = null) : this(null, name, visible, title, description) { }
+	protected CategoryCollectionBase() : base(null) { }
+	protected CategoryCollectionBase(TCategory owner) : base(owner) { }
+	#endregion
 
-	public Category(Resources.IResource resource) : base(resource) => this.Categories = new(this);
-	public Category(Resources.IResource resource, string name, string title = null, string description = null) : this(resource, name, true, title, description) { }
-	public Category(Resources.IResource resource, string name, bool visible, string title = null, string description = null) : base(resource, name, visible, title, description)
+	#region 公共方法
+	public void AddRange(params TCategory[] categories) => this.AddRange((IEnumerable<TCategory>)categories);
+	public void AddRange(IEnumerable<TCategory> categories)
 	{
-		this.Categories = new(this);
+		if(categories == null)
+			return;
+
+		foreach(var category in categories)
+			this.Add(category);
 	}
 	#endregion
 
-	#region 公共属性
-	public CategoryCollection Categories { get; }
-	#endregion
-
 	#region 重写方法
-	protected override IHierarchicalNodeCollection<Category> Nodes => this.Categories;
+	protected override void SetOwner(TCategory owner, TCategory node) => node?.SetParent(owner);
 	#endregion
 }

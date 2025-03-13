@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,38 +28,22 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Collections
+namespace Zongsoft.Collections;
+
+public class CategoryCollection : CategoryCollectionBase<Category>
 {
-	public class CategoryCollection : HierarchicalNodeCollection<Category>
+	#region 构造函数
+	public CategoryCollection() : base(null) { }
+	internal CategoryCollection(Category owner) : base(owner) { }
+	#endregion
+
+	#region 公共方法
+	public Category Add(string name, string title = null, string description = null)
 	{
-		#region 构造函数
-		public CategoryCollection() : base(null) { }
-		internal CategoryCollection(Category owner) : base(owner) { }
-		#endregion
-
-		#region 公共方法
-		public Category Add(string name)
-		{
-			var category = new Category(name);
-			this.Add(category);
-			return category;
-		}
-
-		public void AddRange(params Category[] categories) => this.AddRange((IEnumerable<Category>)categories);
-		public void AddRange(IEnumerable<Category> categories)
-		{
-			if(categories == null)
-				return;
-
-			foreach(var category in categories)
-				this.Add(category);
-		}
-		#endregion
-
-		#region 重写方法
-		protected override void SetOwner(Category owner, Category node) => node?.SetParent(owner);
-		#endregion
+		var category = new Category(name, title, description);
+		this.Add(category);
+		return category;
 	}
+	#endregion
 }

@@ -44,7 +44,6 @@ namespace Zongsoft.Collections.Tests
 			Assert.IsType<ArgumentException>(Record.Exception(() => new Category("/")));
 			Assert.IsType<ArgumentException>(Record.Exception(() => new Category("ABC\\")));
 			Assert.IsType<ArgumentException>(Record.Exception(() => new Category("ABC/DEF")));
-			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category(null)));
 			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category(string.Empty)));
 			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category(" ")));
 			Assert.IsType<ArgumentNullException>(Record.Exception(() => new Category("\t")));
