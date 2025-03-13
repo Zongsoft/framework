@@ -160,7 +160,7 @@ public class Stash<T> : IDisposable
 	{
 		List<T> cache;
 
-		if(_cache == null || _cache.Count == 0)
+		if(_cache == null)
 			return;
 
 		try
