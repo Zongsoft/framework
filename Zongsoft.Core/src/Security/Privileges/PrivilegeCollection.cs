@@ -28,34 +28,24 @@
  */
 
 using System;
-using System.Reflection;
-using System.ComponentModel;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
-namespace Zongsoft.Security.Membership;
+namespace Zongsoft.Security.Privileges;
 
-[DefaultMember(nameof(Permissions))]
-[DefaultProperty(nameof(Permissions))]
-public partial class Privilege
+public class PrivilegeCollection() : KeyedCollection<string, Privilege>(StringComparer.OrdinalIgnoreCase)
 {
-	#region 构造函数
-	public Privilege(string name, string path = null)
+	protected override string GetKeyForItem(Privilege privilege) => privilege.Name;
+
+	public IEnumerable<Privilege> FindAll(string target, string action)
 	{
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
+		if(target == null)
+			yield break;
 
-		this.Name = name;
-		this.Path = path?.Trim('/');
-		this.Permissions = new();
+		foreach(var privilege in this.Items)
+		{
+			if(privilege.Permissions.Contains(target, action))
+				yield return privilege;
+		}
 	}
-	#endregion
-
-	#region 公共属性
-	public string Name { get; }
-	public string Path { get; set; }
-	public PermissionCollection Permissions { get; }
-	#endregion
-
-	#region 重写方法
-	public override string ToString() => string.IsNullOrEmpty(this.Path) ? this.Name : $"{this.Path}/{this.Name}";
-	#endregion
 }

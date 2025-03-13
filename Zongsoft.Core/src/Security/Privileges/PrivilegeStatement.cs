@@ -28,24 +28,11 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
-namespace Zongsoft.Security.Membership;
+namespace Zongsoft.Security.Privileges;
 
-public class PrivilegeCollection() : KeyedCollection<string, Privilege>(StringComparer.OrdinalIgnoreCase)
+public class PrivilegeStatement : PrivilegeCategory
 {
-	protected override string GetKeyForItem(Privilege privilege) => privilege.Name;
-
-	public IEnumerable<Privilege> FindAll(string target, string action)
-	{
-		if(target == null)
-			yield break;
-
-		foreach(var privilege in this.Items)
-		{
-			if(privilege.Permissions.Contains(target, action))
-				yield return privilege;
-		}
-	}
+	public PrivilegeStatement(string name) => this.Scheme = name;
+	public string Scheme { get; }
 }

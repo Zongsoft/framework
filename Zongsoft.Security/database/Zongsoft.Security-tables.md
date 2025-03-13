@@ -49,9 +49,22 @@ MemberType | byte | 1 | ✗ | 主键，成员类型(_0:用户; 1:角色_)
 
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
-MemberId   | int     | 4  | ✗ | 主键，用户或角色编号
-MemberType | byte    | 1  | ✗ | 主键，成员类型(_0:用户; 1:角色_)
-Privilege  | varchar | 50 | ✗ | 主键，权限标识
+MemberId   | int     | 4   | ✗ | 主键，用户或角色编号
+MemberType | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
+Privilege  | varchar | 100 | ✗ | 主键，权限标识
+Granted    | bool    | -   | ✗ | 授权标记
+
+> 注：权限标识(_`Privilege`_)由 _授权目标_ 和 _授权操作_ 标识构成，譬如：
+> - `Employee:*`                  表示 _公共_ 模块中 _员工_ 的所有操作；
+> - `Employee:Get`                表示 _公共_ 模块中 _员工_ 的获取操作；
+> - `Things:Device:*`             表示 _物联_ 模块中 _设备_ 的所有操作；
+> - `Things:Device:Create`        表示 _物联_ 模块中 _设备_ 的新建操作；
+> - `Things:Device.Metric:*`      表示 _物联_ 模块中 _设备指标_ 的所有操作；
+> - `Things:Device.Metric:Create` 表示 _物联_ 模块中 _设备指标_ 的新建操作；
+
+> 注：授权标记(_`Granted`_)字段表示成员(_用户或角色_)对权限标识(_`Privilege`_)的授权，定义如下：
+> - **真**：表示用户或角色对指定 _权限标识_ 的授权；
+> - **假**：表示用户或角色对指定 _权限标识_ 的权限。
 
 
 ## 权限表 `Permission`
