@@ -52,10 +52,13 @@ public class Stash<T> : IDisposable
 	#endregion
 
 	#region 构造函数
-	public Stash(Action<IReadOnlyList<T>> flusher, TimeSpan period, int limit = 0)
+	public Stash(Action<IReadOnlyList<T>> flusher, TimeSpan period, int limit = 0) : this(period, limit)
 	{
 		_flusher = flusher ?? throw new ArgumentNullException(nameof(flusher));
+	}
 
+	protected Stash(TimeSpan period, int limit = 0)
+	{
 		this.Period = period;
 		this.Limit = limit;
 
