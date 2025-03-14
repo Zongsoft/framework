@@ -13,9 +13,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="SixLabors.Fonts" VersionOverride="2.0.4" />
-		<PackageReference Include="SixLabors.ImageSharp" VersionOverride="3.1.5" />
-		<PackageReference Include="SixLabors.ImageSharp.Drawing" VersionOverride="2.1.4" />
+		<PackageReference Include="SixLabors.Fonts" VersionOverride="2.1.2" />
+		<PackageReference Include="SixLabors.ImageSharp" VersionOverride="3.1.7" />
+		<PackageReference Include="SixLabors.ImageSharp.Drawing" VersionOverride="2.1.5" />
 	</ItemGroup>
 
 	<ItemGroup>
