@@ -64,6 +64,7 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 	#endregion
 
 	#region 公共方法
+	public bool Validate<TValue>(out TValue value) => Common.Convert.TryConvertValue<TValue>(this.Value, out value);
 	public bool Validate<TType, TValue>(out TValue value) => this.Validate(typeof(TType), out value);
 	public bool Validate<TValue>(Type type, out TValue value)
 	{
@@ -194,6 +195,7 @@ public readonly struct Identifier<T>(Type type, T value, string label = null, st
 	#endregion
 
 	#region 公共方法
+	public bool Validate(out T value) => Common.Convert.TryConvertValue<T>(this.Value, out value);
 	public bool Validate<TType>(out T value) => this.Validate(typeof(TType), out value);
 	public bool Validate(Type type, out T value)
 	{
