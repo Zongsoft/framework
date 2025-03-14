@@ -11,20 +11,20 @@
  *
  * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Core library.
+ * This file is part of Zongsoft.Security library.
  *
- * The Zongsoft.Core is free software: you can redistribute it and/or modify
+ * The Zongsoft.Security is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Core is distributed in the hope that it will be useful,
+ * The Zongsoft.Security is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Security library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
@@ -32,14 +32,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public interface IPrivilegeService
+[Service<IAuthorizer>]
+public class Authorizer() : AuthorizerBase(string.Empty)
 {
-	IAsyncEnumerable<IPrivilegeRequirement> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilegeRequirement> privileges, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilegeRequirement> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default);
+	public override ValueTask<bool> AuthorizeAsync(Identifier identifier, string privilege, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();
+	public override IAsyncEnumerable<Privilege> AuthorizesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();
 }

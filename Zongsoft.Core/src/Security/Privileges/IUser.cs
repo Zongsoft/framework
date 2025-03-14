@@ -28,18 +28,39 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-
-using Zongsoft.Components;
-using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public interface IPrivilegeService
+/// <summary>
+/// 表示权限系统的用户接口。
+/// </summary>
+public interface IUser : Zongsoft.Components.IIdentifiable
 {
-	IAsyncEnumerable<IPrivilegeRequirement> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilegeRequirement> privileges, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilegeRequirement> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default);
+	#region 常量定义
+	/// <summary>系统管理员用户名。</summary>
+	public const string Administrator = nameof(Administrator);
+	#endregion
+
+	#region 属性定义
+	/// <summary>获取或设置用户名称。</summary>
+	string Name { get; set; }
+
+	/// <summary>获取或设置用户的邮箱地址。</summary>
+	string Email { get; set; }
+
+	/// <summary>获取或设置用户的电话号码。</summary>
+	string Phone { get; set; }
+
+	/// <summary>获取或设置用户头像。</summary>
+	string Avatar { get; set; }
+
+	/// <summary>获取或设置用户昵称。</summary>
+	string Nickname { get; set; }
+
+	/// <summary>获取或设置用户所属的命名空间。</summary>
+	string Namespace { get; set; }
+
+	/// <summary>获取或设置用户的描述信息。</summary>
+	string Description { get; set; }
+	#endregion
 }

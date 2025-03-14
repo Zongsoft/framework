@@ -39,7 +39,7 @@ namespace Zongsoft.Security.Privileges;
 
 [DefaultMember(nameof(Permissions))]
 [DefaultProperty(nameof(Permissions))]
-public partial class Privilege : IIdentifiable, IIdentifiable<string>
+public partial class Privilege : IPrivilegeRequirement, IIdentifiable, IIdentifiable<string>
 {
 	#region 成员字段
 	private IResource _resource;

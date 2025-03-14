@@ -28,26 +28,42 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Collections.Generic;
 
+using Zongsoft.Services;
 using Zongsoft.Components;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class AuthorizerBase : IAuthorizer
+public abstract class AuthorizerBase : IAuthorizer, IMatchable, IMatchable<string>
 {
+	#region 构造函数
 	protected AuthorizerBase(string name)
 	{
 		this.Scheme = name;
 		this.Privileger = new();
 	}
+	#endregion
 
+	#region 公共属性
 	public string Scheme { get; }
 	public PrivilegeCategory Privileger { get; }
+	#endregion
 
-	public virtual bool Authorize(ClaimsIdentity user, string privilege) => this.Authorize(user.Identify(), privilege);
-	public abstract bool Authorize(Identifier identifier, string privilege);
-	public virtual IEnumerable<Privilege> Authorizes(ClaimsIdentity user) => this.Authorizes(user.Identify());
-	public abstract IEnumerable<Privilege> Authorizes(Identifier identifier);
+	#region 公共方法
+	public virtual ValueTask<bool> AuthorizeAsync(ClaimsIdentity user, string privilege, Parameters parameters, CancellationToken cancellation = default) => this.AuthorizeAsync(user.Identify(), privilege, parameters, cancellation);
+	public abstract ValueTask<bool> AuthorizeAsync(Identifier identifier, string privilege, Parameters parameters, CancellationToken cancellation = default);
+	public virtual IAsyncEnumerable<Privilege> AuthorizesAsync(ClaimsIdentity user, Parameters parameters, CancellationToken cancellation = default) => this.AuthorizesAsync(user.Identify(), parameters, cancellation);
+	public abstract IAsyncEnumerable<Privilege> AuthorizesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default);
+	#endregion
+
+	#region 服务匹配
+	bool IMatchable.Match(object argument) => argument is string name && this.OnMatch(name);
+	bool IMatchable<string>.Match(string argument) => this.OnMatch(argument);
+	protected virtual bool OnMatch(string argument) => string.Equals(this.Scheme, argument, StringComparison.OrdinalIgnoreCase);
+	#endregion
 }

@@ -28,18 +28,10 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-
-using Zongsoft.Components;
-using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public interface IPrivilegeService
+public interface IPrivilegeRequirement
 {
-	IAsyncEnumerable<IPrivilegeRequirement> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilegeRequirement> privileges, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilegeRequirement> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default);
+	string Name { get; }
 }
