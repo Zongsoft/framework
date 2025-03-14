@@ -63,6 +63,18 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 	public bool HasValue => this.Type != null && this.Value != null;
 	#endregion
 
+	#region 公共方法
+	public bool Validate<TType, TValue>(out TValue value) => this.Validate(typeof(TType), out value);
+	public bool Validate<TValue>(Type type, out TValue value)
+	{
+		if(type != null && type.IsAssignableFrom(this.Type))
+			return Common.Convert.TryConvertValue<TValue>(this.Value, out value);
+
+		value = default;
+		return false;
+	}
+	#endregion
+
 	#region 重写方法
 	public bool Equals(Identifier other) => this.Type == other.Type && this.Value == other.Value;
 	public override bool Equals(object obj) => obj is Identifier other && this.Equals(other);
@@ -179,6 +191,18 @@ public readonly struct Identifier<T>(Type type, T value, string label = null, st
 
 	/// <summary>获取一个值，指示当前对象标识是否具有键值。</summary>
 	public bool HasValue => this.Type != null && this.Value != null;
+	#endregion
+
+	#region 公共方法
+	public bool Validate<TType>(out T value) => this.Validate(typeof(TType), out value);
+	public bool Validate(Type type, out T value)
+	{
+		if(type != null && type.IsAssignableFrom(this.Type))
+			return Common.Convert.TryConvertValue<T>(this.Value, out value);
+
+		value = default;
+		return false;
+	}
 	#endregion
 
 	#region 重写方法
