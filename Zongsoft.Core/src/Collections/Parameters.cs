@@ -112,6 +112,11 @@ namespace Zongsoft.Collections
 		public bool Contains<T>() => this.Contains((object)typeof(T));
 		public bool Contains(Type type) => this.Contains((object)type);
 		public bool Contains(string name) => this.Contains((object)(name ?? string.Empty));
+		public bool Contains<TValue>(string name, TValue value, IEqualityComparer<TValue> comparer = null) =>
+			_cache.TryGetValue(name ?? string.Empty, out var result) &&
+			Common.Convert.TryConvertValue<TValue>(result, out var convertedValue) &&
+			(comparer ?? EqualityComparer<TValue>.Default).Equals(convertedValue, value);
+
 		private bool Contains(object key) => key != null && _cache != null && _cache.ContainsKey(key);
 
 		public object GetValue(Type type) => this.GetValue((object)type);
@@ -144,6 +149,16 @@ namespace Zongsoft.Collections
 
 		public bool TryGetValue(Type type, out object value) => this.TryGetValue((object)type, out value);
 		public bool TryGetValue(string name, out object value) => this.TryGetValue((object)(name ?? string.Empty), out value);
+		public bool TryGetValue<TValue>(string name, out TValue value)
+		{
+			var parameters = _cache;
+			if(parameters != null && parameters.TryGetValue(name ?? string.Empty, out var result))
+				return Common.Convert.TryConvertValue<TValue>(result, out value);
+
+			value = default;
+			return false;
+		}
+
 		private bool TryGetValue(object key, out object value)
 		{
 			value = null;
