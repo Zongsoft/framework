@@ -32,26 +32,59 @@ using System.Reflection;
 using System.ComponentModel;
 using System.Collections.Generic;
 
+using Zongsoft.Resources;
+
 namespace Zongsoft.Security.Privileges;
 
 [DefaultMember(nameof(Permissions))]
 [DefaultProperty(nameof(Permissions))]
 public partial class Privilege
 {
+	#region 成员字段
+	private IResource _resource;
+	private string _label;
+	private string _description;
+	#endregion
+
 	#region 构造函数
-	public Privilege(string name, params IEnumerable<Permission> permissions)
+	public Privilege(string name, params IEnumerable<Permission> permissions) : this(null, name, null, null, permissions) { }
+	public Privilege(string name, string label, params IEnumerable<Permission> permissions) : this(null, name, label, null, permissions) { }
+	public Privilege(string name, string label, string description, params IEnumerable<Permission> permissions) : this(null, name, label, description, permissions) { }
+
+	public Privilege(IResource resource, string name, params IEnumerable<Permission> permissions) : this(resource, name, null, null, permissions) { }
+	public Privilege(IResource resource, string name, string label, params IEnumerable<Permission> permissions) : this(resource, name, label, null, permissions) { }
+	public Privilege(IResource resource, string name, string label, string description, params IEnumerable<Permission> permissions)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
+		_resource = resource;
+
 		this.Name = name;
+		this.Label = label;
+		this.Description = description;
 		this.Permissions = new(permissions);
 	}
 	#endregion
 
 	#region 公共属性
 	public string Name { get; }
+	public string Label { get => _label ?? this.GetLabel(); set => _label = value; }
+	public string Description { get => _description ?? this.GetDescription(); set => _description = value; }
 	public PermissionCollection Permissions { get; }
+	#endregion
+
+	#region 虚拟方法
+	protected virtual string GetLabel() => ResourceUtility.GetString(_resource,
+	[
+		$"{this.Name}.{nameof(this.Label)}",
+		this.Name
+	]);
+
+	protected virtual string GetDescription() => ResourceUtility.GetString(_resource,
+	[
+		$"{this.Name}.{nameof(this.Description)}"
+	]);
 	#endregion
 
 	#region 重写方法

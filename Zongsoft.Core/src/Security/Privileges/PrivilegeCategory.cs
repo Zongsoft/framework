@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Reflection;
 
 using Zongsoft.Resources;
 using Zongsoft.Components;
@@ -38,15 +37,10 @@ namespace Zongsoft.Security.Privileges;
 
 public class PrivilegeCategory : CategoryBase<PrivilegeCategory>, IDiscriminator
 {
-	#region 静态字段
-	private static readonly PropertyInfo PrivilegesProperty = typeof(PrivilegeCategory).GetProperty(nameof(Privileges));
-	private static readonly PropertyInfo CategoriesProperty = typeof(PrivilegeCategory).GetProperty(nameof(Categories));
-	#endregion
-
 	#region 内部构造
 	internal PrivilegeCategory()
 	{
-		this.Privileges = new();
+		this.Privileges = new(this);
 		this.Categories = new(this);
 	}
 	#endregion
@@ -57,7 +51,7 @@ public class PrivilegeCategory : CategoryBase<PrivilegeCategory>, IDiscriminator
 	public PrivilegeCategory(IResource resource, string name, string title = null, string description = null) : this(resource, name, true, title, description) { }
 	public PrivilegeCategory(IResource resource, string name, bool visible, string title = null, string description = null) : base(resource, name, visible, title, description)
 	{
-		this.Privileges = new();
+		this.Privileges = new(this);
 		this.Categories = new(this);
 	}
 	#endregion
@@ -72,8 +66,22 @@ public class PrivilegeCategory : CategoryBase<PrivilegeCategory>, IDiscriminator
 	#endregion
 
 	#region 显式实现
-	object IDiscriminator.Discriminate(object argument) =>
-		argument is string type && string.Equals(type, nameof(Privilege), StringComparison.OrdinalIgnoreCase) ? PrivilegesProperty : CategoriesProperty;
+	object IDiscriminator.Discriminate(object argument)
+	{
+		if(argument == null)
+			return this.Categories;
+
+		if(argument is string type)
+		{
+			if(string.IsNullOrEmpty(type) || string.Equals(type, nameof(Category), StringComparison.OrdinalIgnoreCase))
+				return this.Categories;
+
+			if(string.Equals(type, nameof(Privilege), StringComparison.OrdinalIgnoreCase))
+				return this.Privileges;
+		}
+
+		return null;
+	}
 	#endregion
 }
 

@@ -28,41 +28,11 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Security.Privileges;
 
-public class PrivilegeCollection(PrivilegeCategory category) : KeyedCollection<string, Privilege>(StringComparer.OrdinalIgnoreCase)
+public struct AuthorizationState
 {
-	private PrivilegeCategory _root;
-	private readonly PrivilegeCategory _category = category;
-
-	private PrivilegeCategory Root => _root ??= _category.Find("/");
-
-	protected override string GetKeyForItem(Privilege privilege) => privilege.Name;
-
-	public IEnumerable<Privilege> FindAll(string target, string action)
-	{
-		foreach(var privilege in FindAll(this.Root, target, action))
-			yield return privilege;
-	}
-
-	private static IEnumerable<Privilege> FindAll(PrivilegeCategory category, string target, string action)
-	{
-		if(category == null || target == null)
-			yield break;
-
-		foreach(var privilege in category.Privileges)
-		{
-			if(privilege.Permissions.Contains(target, action))
-				yield return privilege;
-		}
-
-		foreach(var child in category.Categories)
-		{
-			foreach(var privilege in FindAll(child, target, action))
-				yield return privilege;
-		}
-	}
+	public Privilege Privilege { get; }
+	public Collections.Parameters Properties { get; }
 }
