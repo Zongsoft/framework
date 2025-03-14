@@ -28,11 +28,14 @@
  */
 
 using System;
+using System.Collections.Generic;
+
+using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-public struct AuthorizationState
+public interface IPrivilegeService
 {
-	public Privilege Privilege { get; }
-	public Collections.Parameters Properties { get; }
+	IEnumerable<Privilege> GetPrivileges(Identifier identifier);
+	int SetPrivileges(Identifier identifier, IEnumerable<Privilege> privileges, bool shouldResetting = false);
 }

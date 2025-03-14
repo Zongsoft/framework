@@ -33,12 +33,13 @@ using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Resources;
+using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
 [DefaultMember(nameof(Permissions))]
 [DefaultProperty(nameof(Permissions))]
-public partial class Privilege
+public partial class Privilege : IIdentifiable, IIdentifiable<string>
 {
 	#region 成员字段
 	private IResource _resource;
@@ -85,6 +86,16 @@ public partial class Privilege
 	[
 		$"{this.Name}.{nameof(this.Description)}"
 	]);
+	#endregion
+
+	#region 显式实现
+	Identifier IIdentifiable.Identifier => (Identifier)this;
+	Identifier<string> IIdentifiable<string>.Identifier => (Identifier<string>)this;
+	#endregion
+
+	#region 隐式转换
+	public static implicit operator Identifier(Privilege privilege) => new(typeof(Privilege), privilege.Name, privilege.Label, privilege.Description);
+	public static implicit operator Identifier<string>(Privilege privilege) => new(typeof(Privilege), privilege.Name, privilege.Label, privilege.Description);
 	#endregion
 
 	#region 重写方法

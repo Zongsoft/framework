@@ -444,6 +444,25 @@ namespace Zongsoft.Security
 			identity.AddClaim(claim);
 			return claim;
 		}
+
+		public static string GetQualifiedName(this IIdentity identity) => GetQualifiedName(identity as ClaimsIdentity);
+		public static string GetQualifiedName(this ClaimsIdentity identity)
+		{
+			if(identity == null)
+				return null;
+
+			var @namespace = identity.GetNamespace();
+			return string.IsNullOrEmpty(@namespace) || @namespace == "*" ? identity.Name : $"{@namespace}:{identity.Name}";
+		}
+
+		public static Components.Identifier Identify(this IIdentity identity) => Identify(identity as ClaimsIdentity);
+		public static Components.Identifier Identify(this ClaimsIdentity identity) => new
+		(
+			identity.GetType(),
+			identity.GetIdentifier(),
+			identity.GetQualifiedName(),
+			identity.TryGetClaim<string>(nameof(Components.Identifier.Description), out var description) ? description : null
+		);
 		#endregion
 
 		#region 私有方法

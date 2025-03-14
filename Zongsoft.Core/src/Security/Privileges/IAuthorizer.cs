@@ -31,23 +31,34 @@ using System;
 using System.Security.Claims;
 using System.Collections.Generic;
 
+using Zongsoft.Components;
+
 namespace Zongsoft.Security.Privileges;
 
+/// <summary>
+/// 提供关于鉴权相关功能的接口。
+/// </summary>
 public interface IAuthorizer
 {
-	/// <summary>判断指定的用户是否具有指定的授权。</summary>
-	/// <param name="user">指定的用户对象。</param>
+	/// <summary>获取鉴权器名称。</summary>
+	string Scheme { get; }
+
+	/// <summary>获取权限定义器。</summary>
+	PrivilegeCategory Privileger { get; }
+
+	/// <summary>判断指定用户是否具有指定的授权。</summary>
+	/// <param name="user">指定的用户身份。</param>
 	/// <param name="privilege">指定的权限标识。</param>
 	/// <returns>如果具有授权则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	/// <remarks>该验证会对指定的用户所属角色逐级向上展开做授权判断，因此只需对本方法一次调用即可得知指定用户的最终授权运算结果。</remarks>
 	bool Authorize(ClaimsIdentity user, string privilege);
 
-	/// <summary>判断指定的角色是否具有指定的授权。</summary>
-	/// <param name="role">指定的角色标识。</param>
+	/// <summary>判断指定用户或角色是否具有指定的授权。</summary>
+	/// <param name="identifier">指定的用户或角色标识。</param>
 	/// <param name="privilege">指定的权限标识。</param>
 	/// <returns>如果具有授权则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	/// <remarks>该验证会对指定的角色所属角色逐级向上展开做授权判断，因此只需对本方法一次调用即可得知指定角色的最终授权运算结果。</remarks>
-	bool Authorize(string role, string privilege);
+	/// <remarks>该验证会对指定的用户或角色所属角色逐级向上展开做授权判断，因此只需对本方法一次调用即可得知指定用户或角色的最终授权运算结果。</remarks>
+	bool Authorize(Identifier identifier, string privilege);
 
 	/// <summary>获取指定用户的最终授权状态集。</summary>
 	/// <param name="user">指定要获取的最终授权状态集的用户身份。</param>
@@ -56,14 +67,14 @@ public interface IAuthorizer
 	/// 	<para>注意：该集合仅包含了最终的已授权状态信息。</para>
 	/// 	<para>该方法会对指定的用户所属角色逐级向上展开做授权判断，因此只需对本方法一次调用即可得知指定用户的最终授权运算结果。</para>
 	/// </remarks>
-	IEnumerable<AuthorizationState> Authorizes(ClaimsIdentity user);
+	IEnumerable<Privilege> Authorizes(ClaimsIdentity user);
 
-	/// <summary>获取指定角色的最终授权状态集。</summary>
-	/// <param name="role">指定要获取的最终授权状态集的角色标识。</param>
-	/// <returns>返回指定角色的最终授权状态集。</returns>
+	/// <summary>获取指定用户或角色的最终授权状态集。</summary>
+	/// <param name="identifier">指定要获取的最终授权状态集的用户或角色标识。</param>
+	/// <returns>返回指定用户或角色的最终授权状态集。</returns>
 	/// <remarks>
 	/// 	<para>注意：该集合仅包含了最终的已授权状态信息。</para>
-	/// 	<para>该方法会对指定的角色所属角色逐级向上展开做授权判断，因此只需对本方法一次调用即可得知指定角色的最终授权运算结果。</para>
+	/// 	<para>该方法会对指定的用户或角色所属角色逐级向上展开做授权判断，因此只需对本方法一次调用即可得知指定用户或角色的最终授权运算结果。</para>
 	/// </remarks>
-	IEnumerable<AuthorizationState> Authorizes(string role);
+	IEnumerable<Privilege> Authorizes(Identifier identifier);
 }

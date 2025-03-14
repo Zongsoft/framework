@@ -32,11 +32,13 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Components;
+
 namespace Zongsoft.Security.Privileges;
 
 partial class Privilege
 {
-	public sealed class Permission : IEquatable<Permission>
+	public sealed class Permission : IEquatable<Permission>, IIdentifiable<string>, IIdentifiable
 	{
 		#region 私有字段
 		private readonly int _hashcode;
@@ -66,6 +68,16 @@ partial class Privilege
 		public override bool Equals(object obj) => obj is Permission other && this.Equals(other);
 		public override int GetHashCode() => _hashcode;
 		public override string ToString() => $"{this.Target}#{this.Action}";
+		#endregion
+
+		#region 显式实现
+		Identifier IIdentifiable.Identifier => (Identifier)this;
+		Identifier<string> IIdentifiable<string>.Identifier => (Identifier<string>)this;
+		#endregion
+
+		#region 隐式转换
+		public static implicit operator Identifier(Permission permission) => new(typeof(Privilege), permission.ToString());
+		public static implicit operator Identifier<string>(Permission permission) => new(typeof(Privilege), permission.ToString());
 		#endregion
 
 		#region 符号重写

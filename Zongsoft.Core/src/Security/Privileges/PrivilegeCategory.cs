@@ -59,6 +59,7 @@ public class PrivilegeCategory : CategoryBase<PrivilegeCategory>, IDiscriminator
 	#region 公共属性
 	public PrivilegeCollection Privileges { get; }
 	public PrivilegeCategoryCollection Categories { get; }
+	public Privilege this[string name] => this.Privileges[name];
 	#endregion
 
 	#region 重写方法
@@ -83,9 +84,4 @@ public class PrivilegeCategory : CategoryBase<PrivilegeCategory>, IDiscriminator
 		return null;
 	}
 	#endregion
-}
-
-public sealed class PrivilegeCategoryCollection : CategoryCollectionBase<PrivilegeCategory>
-{
-	internal PrivilegeCategoryCollection(PrivilegeCategory owner) : base(owner) { }
 }
