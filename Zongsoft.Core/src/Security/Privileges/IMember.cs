@@ -28,18 +28,18 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
+using Zongsoft.Common;
 using Zongsoft.Components;
-using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public interface IPrivilegeService
+public interface IMember<TRole> : IEquatable<IMember<TRole>> where TRole : IRole
 {
-	IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default);
+	Identifier RoleId { get; }
+	Identifier MemberId { get; }
+	MemberType MemberType { get; }
+
+	TRole Role { get; }
+	object Member { get; }
 }

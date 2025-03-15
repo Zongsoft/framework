@@ -28,18 +28,38 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
+using Zongsoft.Common;
 using Zongsoft.Components;
-using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public interface IPrivilegeService
+public readonly struct Member : IEquatable<Member>
 {
-	IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default);
+	#region 构造函数
+	public Member(Identifier memberId, MemberType memberType)
+	{
+		this.MemberId = memberId;
+		this.MemberType = memberType;
+	}
+	#endregion
+
+	#region 公共属性
+	public Identifier MemberId { get; }
+	public MemberType MemberType { get; }
+	#endregion
+
+	#region 重写方法
+	public readonly bool Equals(Member other) =>
+		this.MemberId == other.MemberId &&
+		this.MemberType == other.MemberType;
+	public override readonly bool Equals(object obj) => obj is Member other && this.Equals(other);
+	public override readonly int GetHashCode() => HashCode.Combine(this.MemberId, this.MemberType);
+	public override readonly string ToString() => $"{this.MemberId}@{this.MemberType}";
+	#endregion
+
+	#region 符号重载
+	public static bool operator ==(Member left, Member right) => left.Equals(right);
+	public static bool operator !=(Member left, Member right) => !(left == right);
+	#endregion
 }

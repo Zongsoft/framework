@@ -75,7 +75,7 @@ public partial interface IUserService<TUser> where TUser : IUser
 	/// <param name="paging">查找的分页设置。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回找到的用户结果集。</returns>
-	IAsyncEnumerable<TUser> FindAsync(object criteria, string schema, Paging paging, CancellationToken cancellation = default);
+	IAsyncEnumerable<TUser> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
 
 	/// <summary>更改用户名称。</summary>
 	/// <param name="identifier">要更名的用户标识。</param>

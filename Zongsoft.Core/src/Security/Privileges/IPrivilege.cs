@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Security.Privileges;
 
-public interface IPrivilegeRequirement
+public interface IPrivilege : IEquatable<IPrivilege>
 {
 	string Name { get; }
 }

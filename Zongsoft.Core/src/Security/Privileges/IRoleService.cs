@@ -40,8 +40,13 @@ namespace Zongsoft.Security.Privileges;
 /// <summary>
 /// 提供角色服务的接口。
 /// </summary>
-public interface IRoleService<TRole> where TRole : IRole
+public interface IRoleService<TRole, TMember> where TRole : IRole where TMember : IMember<TRole>
 {
+	#region 属性定义
+	/// <summary>获取角色成员服务。</summary>
+	IMemberService<TRole, TMember> Members { get; }
+	#endregion
+
 	/// <summary>确定指定的角色是否存在。</summary>
 	/// <param name="identifier">指定要查找的角色标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
@@ -75,7 +80,7 @@ public interface IRoleService<TRole> where TRole : IRole
 	/// <param name="paging">查找的分页设置。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回找到的角色结果集。</returns>
-	IAsyncEnumerable<TRole> FindAsync(object criteria, string schema, Paging paging, CancellationToken cancellation = default);
+	IAsyncEnumerable<TRole> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
 
 	/// <summary>更改角色名称。</summary>
 	/// <param name="identifier">要更名的角色标识。</param>
