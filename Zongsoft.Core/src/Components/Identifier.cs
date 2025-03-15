@@ -42,7 +42,7 @@ namespace Zongsoft.Components;
 /// </summary>
 [TypeConverter(typeof(TypeConverter))]
 [JsonConverter(typeof(JsonConverter))]
-public readonly struct Identifier(Type type, object value, string label = null, string description = null) : IEquatable<Identifier>
+public readonly struct Identifier(Type type, object value, string label = null, string description = null) : IEquatable<Identifier>, IConvertible
 {
 	#region 公共字段
 	/// <summary>获取标识的对象类型。</summary>
@@ -104,9 +104,50 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 	}
 	#endregion
 
-	#region 符号重写
+	#region 符号重载
 	public static bool operator ==(Identifier left, Identifier right) => left.Equals(right);
 	public static bool operator !=(Identifier left, Identifier right) => !(left == right);
+
+	public static explicit operator bool(Identifier identifier) => Common.Convert.ConvertValue<bool>(identifier.Value);
+	public static explicit operator char(Identifier identifier) => Common.Convert.ConvertValue<char>(identifier.Value);
+	public static explicit operator byte(Identifier identifier) => Common.Convert.ConvertValue<byte>(identifier.Value);
+	public static explicit operator sbyte(Identifier identifier) => Common.Convert.ConvertValue<sbyte>(identifier.Value);
+	public static explicit operator short(Identifier identifier) => Common.Convert.ConvertValue<short>(identifier.Value);
+	public static explicit operator int(Identifier identifier) => Common.Convert.ConvertValue<int>(identifier.Value);
+	public static explicit operator long(Identifier identifier) => Common.Convert.ConvertValue<long>(identifier.Value);
+	public static explicit operator ushort(Identifier identifier) => Common.Convert.ConvertValue<ushort>(identifier.Value);
+	public static explicit operator uint(Identifier identifier) => Common.Convert.ConvertValue<uint>(identifier.Value);
+	public static explicit operator ulong(Identifier identifier) => Common.Convert.ConvertValue<ulong>(identifier.Value);
+	public static explicit operator float(Identifier identifier) => Common.Convert.ConvertValue<float>(identifier.Value);
+	public static explicit operator double(Identifier identifier) => Common.Convert.ConvertValue<double>(identifier.Value);
+	public static explicit operator decimal(Identifier identifier) => Common.Convert.ConvertValue<decimal>(identifier.Value);
+	public static explicit operator string(Identifier identifier) => Common.Convert.ConvertValue<string>(identifier.Value);
+	public static explicit operator DateTime(Identifier identifier) => Common.Convert.ConvertValue<DateTime>(identifier.Value);
+	public static explicit operator DateTimeOffset(Identifier identifier) => Common.Convert.ConvertValue<DateTimeOffset>(identifier.Value);
+	public static explicit operator DateOnly(Identifier identifier) => Common.Convert.ConvertValue<DateOnly>(identifier.Value);
+	public static explicit operator TimeOnly(Identifier identifier) => Common.Convert.ConvertValue<TimeOnly>(identifier.Value);
+	public static explicit operator TimeSpan(Identifier identifier) => Common.Convert.ConvertValue<TimeSpan>(identifier.Value);
+	public static explicit operator Guid(Identifier identifier) => Common.Convert.ConvertValue<Guid>(identifier.Value);
+	#endregion
+
+	#region 转换方法
+	bool IConvertible.ToBoolean(IFormatProvider provider) => Common.Convert.ConvertValue<bool>(this.Value);
+	char IConvertible.ToChar(IFormatProvider provider) => Common.Convert.ConvertValue<char>(this.Value);
+	byte IConvertible.ToByte(IFormatProvider provider) => Common.Convert.ConvertValue<byte>(this.Value);
+	sbyte IConvertible.ToSByte(IFormatProvider provider) => Common.Convert.ConvertValue<sbyte>(this.Value);
+	short IConvertible.ToInt16(IFormatProvider provider) => Common.Convert.ConvertValue<short>(this.Value);
+	int IConvertible.ToInt32(IFormatProvider provider) => Common.Convert.ConvertValue<int>(this.Value);
+	long IConvertible.ToInt64(IFormatProvider provider) => Common.Convert.ConvertValue<long>(this.Value);
+	ushort IConvertible.ToUInt16(IFormatProvider provider) => Common.Convert.ConvertValue<ushort>(this.Value);
+	uint IConvertible.ToUInt32(IFormatProvider provider) => Common.Convert.ConvertValue<uint>(this.Value);
+	ulong IConvertible.ToUInt64(IFormatProvider provider) => Common.Convert.ConvertValue<ulong>(this.Value);
+	float IConvertible.ToSingle(IFormatProvider provider) => Common.Convert.ConvertValue<float>(this.Value);
+	double IConvertible.ToDouble(IFormatProvider provider) => Common.Convert.ConvertValue<double>(this.Value);
+	decimal IConvertible.ToDecimal(IFormatProvider provider) => Common.Convert.ConvertValue<decimal>(this.Value);
+	string IConvertible.ToString(IFormatProvider provider) => Common.Convert.ConvertValue<string>(this.Value);
+	DateTime IConvertible.ToDateTime(IFormatProvider provider) => Common.Convert.ConvertValue<DateTime>(this.Value);
+	object IConvertible.ToType(Type conversionType, IFormatProvider provider) => Common.Convert.ConvertValue(this.Value, conversionType);
+	TypeCode IConvertible.GetTypeCode() => this.Value == null ? TypeCode.Empty : Type.GetTypeCode(this.Value.GetType());
 	#endregion
 
 	#region 解析方法
@@ -241,6 +282,7 @@ public readonly struct Identifier<T>(Type type, T value, string label = null, st
 	#endregion
 
 	#region 类型转换
+	public static implicit operator T(Identifier<T> identifier) => identifier.Value;
 	public static implicit operator Identifier(Identifier<T> identifier) => new(identifier.Type, identifier.Value, identifier.Label, identifier.Description);
 	public static explicit operator Identifier<T>(Identifier identifier) => new(identifier.Type, Common.Convert.ConvertValue<T>(identifier.Value), identifier.Label, identifier.Description);
 	#endregion
