@@ -47,6 +47,24 @@ namespace Zongsoft.Collections
 
 		public static IAsyncEnumerable<T> Empty<T>() => EmptyAsyncEnumerable<T>.Empty;
 
+		public static async ValueTask<T> First<T>(this IAsyncEnumerable<T> source, CancellationToken cancellation = default)
+		{
+			if(source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			await using var enumerator = source.GetAsyncEnumerator(cancellation);
+			return await enumerator.MoveNextAsync() ? enumerator.Current : throw new InvalidOperationException($"Sequence contains no elements.");
+		}
+
+		public static async ValueTask<T> FirstOrDefault<T>(this IAsyncEnumerable<T> source, CancellationToken cancellation = default)
+		{
+			if(source == null)
+				throw new ArgumentNullException(nameof(source));
+
+			await using var enumerator = source.GetAsyncEnumerator(cancellation);
+			return await enumerator.MoveNextAsync() ? enumerator.Current : default;
+		}
+
 		public static IEnumerable<T> Synchronize<T>(this IAsyncEnumerable<T> source, CancellationToken cancellation = default)
 		{
 #if NET7_0_OR_GREATER
