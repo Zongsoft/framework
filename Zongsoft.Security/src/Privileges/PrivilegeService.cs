@@ -31,12 +31,9 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Claims;
-using System.Security.Principal;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
-using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Collections;
@@ -46,10 +43,14 @@ using Zongsoft.Security.Privileges.Models;
 namespace Zongsoft.Security.Privileges;
 
 [Service<IPrivilegeService>]
-public class PrivilegeService : IPrivilegeService
+public class PrivilegeService : PrivilegeServiceBase
 {
+	#region 重写属性
+	protected override IDataAccess Accessor => Module.Current.Accessor;
+	#endregion
+
 	#region 获取方法
-	public IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default)
+	protected override IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty)
 			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
@@ -57,15 +58,15 @@ public class PrivilegeService : IPrivilegeService
 		if(!TryGetMember(ref identifier, out var memberId, out var memberType))
 			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
 
-		if(parameters.Contains("type", "filter", StringComparer.OrdinalIgnoreCase))
+		if(IsFiltering(parameters))
 		{
 			var criteria =
-				Condition.Equal(nameof(PrivilegeFilterModel.MemberId), memberId) &
-				Condition.Equal(nameof(PrivilegeFilterModel.MemberType), memberType);
+				Condition.Equal(nameof(PrivilegeFilteringModel.MemberId), memberId) &
+				Condition.Equal(nameof(PrivilegeFilteringModel.MemberType), memberType);
 
 			return Module.Current.Accessor
-				.SelectAsync<PrivilegeFilterModel>(criteria, cancellation)
-				.Map(model => new PrivilegeFilterRequirement(model.Privilege, model.Filter));
+				.SelectAsync<PrivilegeFilteringModel>(criteria, cancellation)
+				.Map(model => new PrivilegeFilteringRequirement(model.PrivilegeName, model.PrivilegeFilter));
 		}
 		else
 		{
@@ -75,14 +76,28 @@ public class PrivilegeService : IPrivilegeService
 
 			return Module.Current.Accessor
 				.SelectAsync<PrivilegeModel>(criteria, cancellation)
-				.Map(model => new PrivilegeRequirement(model.Privilege, model.Granted));
+				.Map(model => new PrivilegeRequirement(model.PrivilegeName, model.PrivilegeMode));
 		}
 	}
 	#endregion
 
 	#region 设置方法
-	public ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation = default) => this.SetPrivilegesAsync(identifier, privileges, false, parameters, cancellation);
-	public async ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default)
+	protected override ValueTask<int> OnResetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation)
+	{
+		if(!TryGetMember(ref identifier, out var memberId, out var memberType))
+			return ValueTask.FromResult(0);
+
+		if(IsFiltering(parameters))
+			return Module.Current.Accessor.DeleteAsync<PrivilegeFilteringModel>(
+					Condition.Equal(nameof(PrivilegeFilteringModel.MemberId), memberId) &
+					Condition.Equal(nameof(PrivilegeFilteringModel.MemberType), memberType), string.Empty, cancellation);
+		else
+			return Module.Current.Accessor.DeleteAsync<PrivilegeModel>(
+					Condition.Equal(nameof(PrivilegeModel.MemberId), memberId) &
+					Condition.Equal(nameof(PrivilegeModel.MemberType), memberType), string.Empty, cancellation);
+	}
+
+	protected override async ValueTask<int> OnSetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty || privileges == null)
 			return 0;
@@ -90,48 +105,67 @@ public class PrivilegeService : IPrivilegeService
 		if(!TryGetMember(ref identifier, out var memberId, out var memberType))
 			return 0;
 
-		if(parameters.Contains("type", "filter", StringComparer.OrdinalIgnoreCase))
+		if(IsFiltering(parameters))
 		{
-			if(shouldResetting)
-				await Module.Current.Accessor.DeleteAsync<PrivilegeFilterModel>(
-					Condition.Equal(nameof(PrivilegeFilterModel.MemberId), memberId) &
-					Condition.Equal(nameof(PrivilegeFilterModel.MemberType), memberType), string.Empty, cancellation);
+			//找出过滤字段为空值的权限
+			var requirements = privileges
+				.OfType<PrivilegeFilteringRequirement>()
+				.Where(privilege => string.IsNullOrWhiteSpace(privilege.Filter))
+				.Select(privilege => privilege.Name).ToArray();
+
+			//删除过滤字段为空值的权限设置
+			if(requirements.Length > 0)
+				await Module.Current.Accessor.DeleteAsync<PrivilegeFilteringModel>(
+					Condition.Equal(nameof(PrivilegeFilteringModel.MemberId), memberId) &
+					Condition.Equal(nameof(PrivilegeFilteringModel.MemberType), memberType) &
+					Condition.In(nameof(PrivilegeFilteringModel.PrivilegeName), requirements), cancellation: cancellation);
 
 			var models = privileges
-				.OfType<PrivilegeFilterRequirement>()
-				.Select(requirement => Model.Build<PrivilegeFilterModel>(model =>
+				.OfType<PrivilegeFilteringRequirement>()
+				.Where(privilege => !string.IsNullOrWhiteSpace(privilege.Filter))
+				.Select(privilege => Model.Build<PrivilegeFilteringModel>(model =>
 				{
 					model.MemberId = memberId;
 					model.MemberType = memberType;
-					model.Privilege = requirement.Name;
-					model.Filter = requirement.Filter;
+					model.PrivilegeName = privilege.Name;
+					model.PrivilegeFilter = privilege.Filter;
 				}));
 
-			return await Module.Current.Accessor.InsertManyAsync(models, cancellation);
+			return await Module.Current.Accessor.UpsertManyAsync(models, cancellation);
 		}
 		else
 		{
-			if(shouldResetting)
+			//找出授权方式为空值的权限
+			var requirements = privileges
+				.OfType<PrivilegeRequirement>()
+				.Where(privilege => privilege.Mode == null)
+				.Select(privilege => privilege.Name).ToArray();
+
+			//删除授权方式为空值的权限设置
+			if(requirements.Length > 0)
 				await Module.Current.Accessor.DeleteAsync<PrivilegeModel>(
 					Condition.Equal(nameof(PrivilegeModel.MemberId), memberId) &
-					Condition.Equal(nameof(PrivilegeModel.MemberType), memberType), string.Empty, cancellation);
+					Condition.Equal(nameof(PrivilegeModel.MemberType), memberType) &
+					Condition.In(nameof(PrivilegeModel.PrivilegeName), requirements), cancellation: cancellation);
 
 			var models = privileges
 				.OfType<PrivilegeRequirement>()
-				.Select(requirement => Model.Build<PrivilegeModel>(model =>
+				.Where(privilege => privilege.Mode.HasValue)
+				.Select(privilege => Model.Build<PrivilegeModel>(model =>
 				{
 					model.MemberId = memberId;
 					model.MemberType = memberType;
-					model.Privilege = requirement.Name;
-					model.Granted = requirement.Granted;
+					model.PrivilegeName = privilege.Name;
+					model.PrivilegeMode = privilege.Mode.Value;
 				}));
 
-			return await Module.Current.Accessor.InsertManyAsync(models, cancellation);
+			return await Module.Current.Accessor.UpsertManyAsync(models, cancellation);
 		}
 	}
 	#endregion
 
 	#region 私有方法
+	private static bool IsFiltering(Parameters parameters) => parameters.Contains("type", "filter", StringComparer.OrdinalIgnoreCase);
 	private static bool TryGetMember(ref Identifier identifier, out uint memberId, out MemberType memberType)
 	{
 		if(identifier.Validate<IUser, uint>(out memberId))
@@ -140,14 +174,14 @@ public class PrivilegeService : IPrivilegeService
 			return true;
 		}
 
-		if(identifier.Validate(out memberId))
+		if(identifier.Validate<IRole, uint>(out memberId))
 		{
 			memberType = MemberType.Role;
 			return true;
 		}
 
 		memberId = 0;
-		memberType = MemberType.User;
+		memberType = 0;
 		return false;
 	}
 	#endregion
@@ -157,20 +191,20 @@ public class PrivilegeService : IPrivilegeService
 	{
 		#region 构造函数
 		public PrivilegeRequirement() { }
-		public PrivilegeRequirement(string name, bool granted)
+		public PrivilegeRequirement(string name, PrivilegeMode? mode = null)
 		{
 			this.Name = name;
-			this.Granted = granted;
+			this.Mode = mode;
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name { get; set; }
-		public bool Granted { get; set; }
+		public PrivilegeMode? Mode { get; set; }
 		#endregion
 
 		#region 重写方法
-		public override string ToString() => this.Granted ? $"{this.Name}(Granted)" : $"{this.Name}(Denied)";
+		public override string ToString() => this.Mode.HasValue ? $"{this.Name}({this.Mode})" : this.Name;
 		#endregion
 
 		#region 显式实现
@@ -178,11 +212,11 @@ public class PrivilegeService : IPrivilegeService
 		#endregion
 	}
 
-	public class PrivilegeFilterRequirement : IPrivilege, IEquatable<IPrivilege>
+	public class PrivilegeFilteringRequirement : IPrivilege, IEquatable<IPrivilege>
 	{
 		#region 构造函数
-		public PrivilegeFilterRequirement() { }
-		public PrivilegeFilterRequirement(string name, string filter)
+		public PrivilegeFilteringRequirement() { }
+		public PrivilegeFilteringRequirement(string name, string filter)
 		{
 			this.Name = name;
 			this.Filter = filter;

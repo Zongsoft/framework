@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
@@ -49,6 +50,7 @@ public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, 
 
 	#region 保护属性
 	protected abstract IDataAccess Accessor { get; }
+	protected virtual ClaimsPrincipal Principal => ApplicationContext.Current?.Principal;
 	#endregion
 
 	#region 公共方法
@@ -77,7 +79,7 @@ public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, 
 		return this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation);
 	}
 
-	public async ValueTask<bool> Rename(Identifier identifier, string name, CancellationToken cancellation = default)
+	public async ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty || string.IsNullOrEmpty(name))
 			return false;

@@ -35,6 +35,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges.Models;
 
+[Model($"{Module.NAME}.User")]
 public abstract class UserModel : IUser, IIdentifiable, IIdentifiable<uint>, IEquatable<UserModel>
 {
 	public abstract uint UserId { get; set; }

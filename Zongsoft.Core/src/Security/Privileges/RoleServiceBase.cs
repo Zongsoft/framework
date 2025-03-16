@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
@@ -41,19 +42,15 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class RoleServiceBase<TRole, TMember> : IRoleService<TRole, TMember>, IMatchable, IMatchable<string> where TRole : IRole where TMember : IMember<TRole>
+public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IMatchable, IMatchable<string> where TRole : IRole
 {
-	#region 构造函数
-	protected RoleServiceBase(IMemberService<TRole, TMember> members = null) => this.Members = members;
-	#endregion
-
 	#region 公共属性
 	public virtual string Name => this.Accessor.Naming.Get<TRole>();
-	public IMemberService<TRole, TMember> Members { get; protected init; }
 	#endregion
 
 	#region 保护属性
 	internal protected abstract IDataAccess Accessor { get; }
+	protected virtual ClaimsPrincipal Principal => ApplicationContext.Current?.Principal;
 	#endregion
 
 	#region 公共方法
@@ -82,7 +79,7 @@ public abstract class RoleServiceBase<TRole, TMember> : IRoleService<TRole, TMem
 		return this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation);
 	}
 
-	public async ValueTask<bool> Rename(Identifier identifier, string name, CancellationToken cancellation = default)
+	public async ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty || string.IsNullOrEmpty(name))
 			return false;

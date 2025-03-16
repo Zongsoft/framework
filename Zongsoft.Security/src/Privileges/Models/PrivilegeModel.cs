@@ -30,20 +30,24 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Data;
+
 namespace Zongsoft.Security.Privileges.Models;
 
+[Model($"{Module.NAME}.Privilege")]
 public abstract class PrivilegeModel
 {
 	public abstract uint MemberId { get; set; }
 	public abstract MemberType MemberType { get; set; }
-	public abstract string Privilege { get; set; }
-	public abstract bool Granted { get; set; }
+	public abstract string PrivilegeName { get; set; }
+	public abstract PrivilegeMode PrivilegeMode { get; set; }
 }
 
-public abstract class PrivilegeFilterModel
+[Model($"{Module.NAME}.PrivilegeFiltering")]
+public abstract class PrivilegeFilteringModel
 {
 	public abstract uint MemberId { get; set; }
 	public abstract MemberType MemberType { get; set; }
-	public abstract string Privilege { get; set; }
-	public abstract string Filter { get; set; }
+	public abstract string PrivilegeName { get; set; }
+	public abstract string PrivilegeFilter { get; set; }
 }

@@ -136,26 +136,26 @@
 			<key>
 				<member name="MemberId" />
 				<member name="MemberType" />
-				<member name="Privilege" />
+				<member name="PrivilegeName" />
 			</key>
 
 			<property name="MemberId" type="uint" nullable="false" />
 			<property name="MemberType" type="byte" nullable="false" />
-			<property name="Privilege" type="string" length="100" nullable="false" />
-			<property name="Granted" type="bool" nullable="false" />
+			<property name="PrivilegeName" type="string" length="100" nullable="false" />
+			<property name="PrivilegeMode" type="byte" nullable="false" />
 		</entity>
 
-		<entity name="PrivilegeFilter" table="Security_PrivilegeFilter">
+		<entity name="PrivilegeFiltering" table="Security_PrivilegeFiltering">
 			<key>
 				<member name="MemberId" />
 				<member name="MemberType" />
-				<member name="Privilege" />
+				<member name="PrivilegeName" />
 			</key>
 
 			<property name="MemberId" type="uint" nullable="false" />
 			<property name="MemberType" type="byte" nullable="false" />
-			<property name="Privilege" type="string" length="100" nullable="false" />
-			<property name="Filter" type="string" length="4000" nullable="false" />
+			<property name="PrivilegeName" type="string" length="100" nullable="false" />
+			<property name="PrivilegeFilter" type="string" length="500" nullable="false" />
 		</entity>
 
 		<entity name="Permission" table="Security_Permission">
@@ -185,7 +185,7 @@
 			<property name="MemberType" type="byte" nullable="false" />
 			<property name="Target" type="string" length="50" nullable="false" />
 			<property name="Action" type="string" length="50" nullable="false" />
-			<property name="Filter" type="string" length="4000" nullable="false" />
+			<property name="Filter" type="string" length="500" nullable="false" />
 		</entity>
 
 		<entity name="Censorship" table="Security_Censorship">

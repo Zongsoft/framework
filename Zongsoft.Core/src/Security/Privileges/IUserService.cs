@@ -82,7 +82,7 @@ public partial interface IUserService<TUser> where TUser : IUser
 	/// <param name="name">要更名的新名称。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果更名成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> Rename(Identifier identifier, string name, CancellationToken cancellation = default);
+	ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default);
 
 	/// <summary>设置指定用户的邮箱地址。</summary>
 	/// <param name="identifier">要设置的用户标识。</param>

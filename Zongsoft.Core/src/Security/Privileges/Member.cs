@@ -34,7 +34,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-public readonly struct Member : IEquatable<Member>
+public readonly struct Member : IIdentifiable, IEquatable<Member>
 {
 	#region 构造函数
 	public Member(Identifier memberId, MemberType memberType)
@@ -49,6 +49,152 @@ public readonly struct Member : IEquatable<Member>
 	public MemberType MemberType { get; }
 	#endregion
 
+	#region 显式实现
+	Identifier IIdentifiable.Identifier
+	{
+		get
+		{
+			if(this.MemberId.IsEmpty)
+				return default;
+
+			return this.MemberType switch
+			{
+				MemberType.Role => new(typeof(Member), this.MemberId),
+				MemberType.User => new(typeof(Member), this.MemberId),
+				_ => throw new InvalidOperationException($"Invalid {nameof(this.MemberType)} value of the {nameof(Member)}.")
+			};
+		}
+	}
+	#endregion
+
+	#region 静态方法
+	public static Member Create(MemberType memberType, int id) => memberType switch
+	{
+		MemberType.Role => new(new Identifier(typeof(IRole), id), memberType),
+		MemberType.User => new(new Identifier(typeof(IUser), id), memberType),
+		_ => throw new ArgumentOutOfRangeException(nameof(memberType), memberType, null)
+	};
+
+	public static Member Create(MemberType memberType, uint id) => memberType switch
+	{
+		MemberType.Role => new(new Identifier(typeof(IRole), id), memberType),
+		MemberType.User => new(new Identifier(typeof(IUser), id), memberType),
+		_ => throw new ArgumentOutOfRangeException(nameof(memberType), memberType, null)
+	};
+
+	public static Member Create(MemberType memberType, string qualifiedName) => memberType switch
+	{
+		MemberType.Role => new(new Identifier(typeof(IRole), qualifiedName), memberType),
+		MemberType.User => new(new Identifier(typeof(IUser), qualifiedName), memberType),
+		_ => throw new ArgumentOutOfRangeException(nameof(memberType), memberType, null)
+	};
+
+	public static Member Role(int id) => new(new Identifier(typeof(IRole), id), MemberType.Role);
+	public static Member Role(uint id) => new(new Identifier(typeof(IRole), id), MemberType.Role);
+	public static Member Role(string qualifiedName) => new(new Identifier(typeof(IRole), qualifiedName), MemberType.Role);
+	public static Member Role(Identifier role) => new(role, MemberType.Role);
+
+	public static Member User(int id) => new(new Identifier(typeof(IUser), id), MemberType.User);
+	public static Member User(uint id) => new(new Identifier(typeof(IUser), id), MemberType.User);
+	public static Member User(string qualifiedName) => new(new Identifier(typeof(IUser), qualifiedName), MemberType.User);
+	public static Member User(Identifier user) => new(user, MemberType.User);
+	#endregion
+
+	#region 解析方法
+	public static Member Parse(ReadOnlySpan<char> text)
+	{
+		if(text.IsEmpty)
+			throw new ArgumentNullException(nameof(text));
+
+		//成员类型在前，成员标识在后（MemberType:MemberId）
+		var index = text.IndexOf(':');
+
+		if(index > 0)
+		{
+			var type = text[..index];
+			var name = text[(index + 1)..];
+			return Parse(name, type);
+		}
+
+		//成员标识在前，成员类型在后（MemberId@MemberType）
+		index = text.IndexOf('@');
+
+		if(index > 0)
+		{
+			var name = text[..index];
+			var type = text[(index + 1)..];
+			return Parse(name, type);
+		}
+
+		throw new InvalidOperationException($"Invalid format.");
+
+		static Member Parse(ReadOnlySpan<char> name, ReadOnlySpan<char> type)
+		{
+			if(Enum.TryParse<MemberType>(type, true, out var memberType))
+			{
+				return memberType switch
+				{
+					MemberType.Role => new(new Identifier(typeof(IRole), name.ToString()), memberType),
+					MemberType.User => new(new Identifier(typeof(IUser), name.ToString()), memberType),
+					_ => throw new InvalidOperationException($"The specified '{type}' is an undefined entry of the {typeof(MemberType).Name} enum type."),
+				};
+			}
+
+			throw new InvalidOperationException($"Cannot resolve '{type}' to {typeof(MemberType).Name} type.");
+		}
+	}
+
+	public static bool TryParse(ReadOnlySpan<char> text, out Member result)
+	{
+		if(text.IsEmpty)
+		{
+			result = default;
+			return false;
+		}
+
+		//成员类型在前，成员标识在后（MemberType:MemberId）
+		var index = text.IndexOf(':');
+
+		if(index > 0)
+		{
+			var type = text[..index];
+			var name = text[(index + 1)..];
+			return TryParse(name, type, out result);
+		}
+
+		//成员标识在前，成员类型在后（MemberId@MemberType）
+		index = text.IndexOf('@');
+
+		if(index > 0)
+		{
+			var name = text[..index];
+			var type = text[(index + 1)..];
+			return TryParse(name, type, out result);
+		}
+
+		result = default;
+		return false;
+
+		static bool TryParse(ReadOnlySpan<char> name, ReadOnlySpan<char> type, out Member result)
+		{
+			if(Enum.TryParse<MemberType>(type, true, out var memberType))
+			{
+				result = memberType switch
+				{
+					MemberType.Role => new(new Identifier(typeof(IRole), name.ToString()), memberType),
+					MemberType.User => new(new Identifier(typeof(IUser), name.ToString()), memberType),
+					_ => default,
+				};
+
+				return result.MemberId.HasValue;
+			}
+
+			result = default;
+			return false;
+		}
+	}
+	#endregion
+
 	#region 重写方法
 	public readonly bool Equals(Member other) =>
 		this.MemberId == other.MemberId &&
@@ -59,6 +205,7 @@ public readonly struct Member : IEquatable<Member>
 	#endregion
 
 	#region 符号重载
+	public static implicit operator Identifier(Member member) => ((IIdentifiable)member).Identifier;
 	public static bool operator ==(Member left, Member right) => left.Equals(right);
 	public static bool operator !=(Member left, Member right) => !(left == right);
 	#endregion

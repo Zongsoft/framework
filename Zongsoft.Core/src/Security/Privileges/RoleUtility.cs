@@ -29,10 +29,13 @@
 
 using System;
 
+using Zongsoft.Components;
+
 namespace Zongsoft.Security.Privileges;
 
-public class PrivilegeStatement : PrivilegeCategory
+public static class RoleUtility
 {
-	public PrivilegeStatement(string name) => this.Scheme = name;
-	public string Scheme { get; }
+	public static Identifier<int> Identify(this IRole role, int id, string label = null, string description = null) => new(role?.GetType() ?? typeof(IRole), id, label, description);
+	public static Identifier<uint> Identify(this IRole role, uint id, string label = null, string description = null) => new(role?.GetType() ?? typeof(IRole), id, label, description);
+	public static Identifier Identify(this IRole role, object value, string label = null, string description = null) => new(role?.GetType() ?? typeof(IRole), value, label, description);
 }

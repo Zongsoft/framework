@@ -41,27 +41,25 @@ using Zongsoft.Security.Privileges.Models;
 
 namespace Zongsoft.Security.Privileges;
 
-[Service<IRoleService<IRole>, IRoleService<RoleModel>>]
-public partial class RoleService : RoleServiceBase<RoleModel>, IRoleService<IRole>
+[Service<IMemberService<IRole, IMember<IRole>>>]
+public class MemberService : MemberServiceBase<RoleModel, MemberModel>, IMemberService<IRole, IMember<IRole>>
 {
 	#region 重写方法
 	protected override IDataAccess Accessor => Module.Current.Accessor;
-	protected override ICondition GetCriteria(Identifier identifier)
+	protected override MemberModel Create(Identifier roleId, Member member) => Model.Build<MemberModel>(model =>
 	{
-		if(identifier.Validate(out uint roleId))
-			return Condition.Equal(nameof(RoleModel.RoleId), roleId);
-
-		return base.GetCriteria(identifier);
-	}
+		model.RoleId = (uint)roleId;
+		model.MemberId = (uint)member.MemberId;
+		model.MemberType = member.MemberType;
+	});
 	#endregion
 
 	#region 显式实现
-	async ValueTask<IRole> IRoleService<IRole>.GetAsync(Identifier identifier, CancellationToken cancellation) => await this.GetAsync(identifier, cancellation);
-	async ValueTask<IRole> IRoleService<IRole>.GetAsync(Identifier identifier, string schema, CancellationToken cancellation) => await this.GetAsync(identifier, schema, cancellation);
-	IAsyncEnumerable<IRole> IRoleService<IRole>.FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation) => this.FindAsync(keyword, schema, paging, cancellation).Map(role => (IRole)role);
-	IAsyncEnumerable<IRole> IRoleService<IRole>.FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation) => this.FindAsync(criteria, schema, paging, cancellation).Map(role => (IRole)role);
-	ValueTask<bool> IRoleService<IRole>.CreateAsync(IRole role, CancellationToken cancellation) => this.CreateAsync(role as RoleModel, cancellation);
-	ValueTask<int> IRoleService<IRole>.CreateAsync(IEnumerable<IRole> roles, CancellationToken cancellation) => this.CreateAsync(roles.Cast<RoleModel>(), cancellation);
-	ValueTask<bool> IRoleService<IRole>.UpdateAsync(IRole role, CancellationToken cancellation) => this.UpdateAsync(role as RoleModel, cancellation);
+	IAsyncEnumerable<IRole> IMemberService<IRole, IMember<IRole>>.GetAncestorsAsync(Member member, CancellationToken cancellation) => this.GetAncestorsAsync(member, cancellation);
+	IAsyncEnumerable<IRole> IMemberService<IRole, IMember<IRole>>.GetRolesAsync(Member member, CancellationToken cancellation) => this.GetRolesAsync(member, cancellation);
+	IAsyncEnumerable<IMember<IRole>> IMemberService<IRole, IMember<IRole>>.GetAsync(Identifier role, CancellationToken cancellation) => this.GetAsync(role, cancellation);
+	IAsyncEnumerable<IMember<IRole>> IMemberService<IRole, IMember<IRole>>.GetAsync(Identifier role, string schema, CancellationToken cancellation) => this.GetAsync(role, schema, cancellation);
+	ValueTask<int> IMemberService<IRole, IMember<IRole>>.SetAsync(IEnumerable<IMember<IRole>> members, CancellationToken cancellation) => this.SetAsync(members.Cast<MemberModel>(), cancellation);
+	ValueTask<int> IMemberService<IRole, IMember<IRole>>.RemoveAsync(IEnumerable<IMember<IRole>> members, CancellationToken cancellation) => this.RemoveAsync(members.Cast<MemberModel>(), cancellation);
 	#endregion
 }

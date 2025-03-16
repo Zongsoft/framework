@@ -8,6 +8,7 @@ UserId            | int       | 4   | ✗ | 主键，用户编号
 Namespace         | varchar   | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
 Name              | varchar   | 50  | ✗ | 用户名称(_在所属命名空间内具有唯一性_)
 Nickname          | nvarchar  | 50  | ✓ | 用户昵称
+Avatar            | nvarchar  | 50  | ✓ | 用户头像
 Password          | varbinary | 64  | ✓ | 登录密码
 PasswordSalt      | bigint    | 8   | ✓ | 密码盐(_随机数_)
 Email             | varchar   | 50  | ✓ | 绑定的电子邮箱(_在所属命名空间内具有唯一性_)
@@ -33,6 +34,7 @@ RoleId      | int      | 4   | ✗ | 主键，角色编号
 Namespace   | varchar  | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
 Name        | varchar  | 50  | ✗ | 角色名称(_在所属命名空间内具有唯一性_)
 Nickname    | nvarchar | 50  | ✓ | 角色昵称
+Avatar      | nvarchar | 50  | ✓ | 角色头像
 Description | nvarchar | 500 | ✓ | 描述信息
 
 
@@ -49,12 +51,12 @@ MemberType | byte | 1 | ✗ | 主键，成员类型(_0:用户; 1:角色_)
 
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
-MemberId   | int     | 4   | ✗ | 主键，用户或角色编号
-MemberType | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
-Privilege  | varchar | 100 | ✗ | 主键，权限标识
-Granted    | bool    | -   | ✗ | 授权标记
+MemberId      | int     | 4   | ✗ | 主键，用户或角色编号
+MemberType    | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
+PrivilegeName | varchar | 100 | ✗ | 主键，权限标识
+PrivilegeMode | tinyint | 1   | ✗ | 授权方式
 
-> 注：权限标识(_`Privilege`_)由 _授权目标_ 和 _授权操作_ 标识构成，譬如：
+> 注：权限标识(_`PrivilegeName`_)由 _授权目标_ 和 _授权操作_ 标识构成，譬如：
 > - `Employee:*`                  表示 _公共_ 模块中 _员工_ 的所有操作；
 > - `Employee:Get`                表示 _公共_ 模块中 _员工_ 的获取操作；
 > - `Things:Device:*`             表示 _物联_ 模块中 _设备_ 的所有操作；
@@ -62,35 +64,19 @@ Granted    | bool    | -   | ✗ | 授权标记
 > - `Things:Device.Metric:*`      表示 _物联_ 模块中 _设备指标_ 的所有操作；
 > - `Things:Device.Metric:Create` 表示 _物联_ 模块中 _设备指标_ 的新建操作；
 
-> 注：授权标记(_`Granted`_)字段表示成员(_用户或角色_)对权限标识(_`Privilege`_)的授权，定义如下：
-> - **真**：表示用户或角色对指定 _权限标识_ 的授权；
-> - **假**：表示用户或角色对指定 _权限标识_ 的权限。
+> 注：授权方式(_`PrivilegeMode`_)字段表示成员(_用户或角色_)对权限标识(_`PrivilegeName`_)的授权，定义如下：
+> - **G**ranted _(`1`)_：表示用户或角色拥有对指定 _权限标识_ 的授权；
+> - **R**evoked _(`0`)_：表示用户或角色没有对指定 _权限标识_ 的权限。
 
 
-## 权限表 `Permission`
-
-字段名称 | 数据类型 | 长度 | 可空 | 备注
-------- |:-------:|:---:|:---:| ----
-MemberId   | int     | 4  | ✗ | 主键，用户或角色编号
-MemberType | byte    | 1  | ✗ | 主键，成员类型(_0:用户; 1:角色_)
-Target     | varchar | 50 | ✗ | 主键，授权目标的标识
-Action     | varchar | 50 | ✗ | 主键，授权行为的标识
-Granted    | bool    | -  | ✗ | 授权标记
-
-> 注：授权标记(_`Granted`_)字段表示成员(_用户或角色_)对操作目标(_`Target`_)是否具有指定操作(_`Action`_)的授权，定义如下：
-> - **真**：表示用户或角色对指定目标拥有指定操作的授权；
-> - **假**：表示用户或角色对指定目标没有指定操作的权限。
-
-
-## 权限过滤表 `PermissionFilter`
+## 权限过滤表 `PrivilegeFiltering`
 
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
-MemberId   | int     | 4   | ✗ | 主键，用户或角色编号
-MemberType | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
-Target     | varchar | 50  | ✗ | 主键，授权目标的标识
-Action     | varchar | 50  | ✗ | 主键，授权行为的标识
-Filter     | varchar | 500 | ✗ | 过滤表达式
+MemberId        | int     | 4   | ✗ | 主键，用户或角色编号
+MemberType      | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
+PrivilegeName   | varchar | 100 | ✗ | 主键，权限标识
+PrivilegeFilter | varchar | 500 | ✗ | 权限过滤表达式
 
 -----
 
@@ -125,18 +111,18 @@ RoleId | MemberId | MemberType
 201    | 1002     | `0`(_User_) _表示：“Pony”属于“销售人员”_
 202    | 1002     | `0`(_User_) _表示：“Pony”属于“客服人员”_
 
-#### 权限记录 `Permission`
+#### 权限记录 `Privilege`
 
-MemberId | MemberType |  Target  |  Action  | Granted
-:-------:|:----------:|:--------:|:--------:|:------:
-101      | `1`(_Role_) | Product   | Select  | ✓ (_True_)
-101      | `1`(_Role_) | Feedback  | Select  | ✓ (_True_)
-101      | `1`(_Role_) | SaleOrder | Select  | ✓ (_True_)
-201      | `1`(_Role_) | Feedback  | Select  | ✗ (_False_)
-201      | `1`(_Role_) | SaleOrder | Update  | ✓ (_True_)
-202      | `1`(_Role_) | Feedback  | Update  | ✓ (_True_)
-202      | `1`(_Role_) | SaleOrder | Select  | ✗ (_False_)
-1001     | `0`(_User_) | Feedback  | Select  | ✓ (_True_)
+MemberId | MemberType |   PrivilegeName   | PrivilegeMode
+:-------:|:----------:|:-----------------:|:-------------:
+101      | `1`(_Role_) | Product:Select   | ✓ (_Granted_)
+101      | `1`(_Role_) | Feedback:Select  | ✓ (_Granted_)
+101      | `1`(_Role_) | SaleOrder:Select | ✓ (_Granted_)
+201      | `1`(_Role_) | Feedback:Select  | ✗ (_Revoked_)
+201      | `1`(_Role_) | SaleOrder:Update | ✓ (_Granted_)
+202      | `1`(_Role_) | Feedback:Update  | ✓ (_Granted_)
+202      | `1`(_Role_) | SaleOrder:Select | ✗ (_Revoked_)
+1001     | `0`(_User_) | Feedback:Select  | ✓ (_Granted_)
 
 -----
 
@@ -154,18 +140,10 @@ MemberId | MemberType |  Target  |  Action  | Granted
 
 ```json
 [
-	{
-		"Target":"Product",
-		"Actions":["Select"]
-	},
-	{
-		"Target":"Feedback",
-		"Actions":["Select"]
-	},
-	{
-		"Target":"SaleOrder",
-		"Actions":["Select", "Update"]
-	}
+	"Product:Select",
+	"Feedback:Select",
+	"SaleOrder:Select",
+	"SaleOrder:Update",
 ]
 ```
 
@@ -186,18 +164,9 @@ MemberId | MemberType |  Target  |  Action  | Granted
 
 ```json
 [
-	{
-		"Target":"Product",
-		"Actions":["Select"]
-	},
-	{
-		"Target":"Feedback",
-		"Actions":["Select"]
-	},
-	{
-		"Target":"SaleOrder",
-		"Actions":["Select"]
-	}
+	"Product:Select",
+	"Feedback:Select",
+	"SaleOrder:Select",
 ]
 ```
 
@@ -206,11 +175,11 @@ MemberId | MemberType |  Target  |  Action  | Granted
 
 权限过滤是指对具有特定操作权限的目标资源进行字段过滤。承接上面的数据，并有如下“授权过滤”数据：
 
-#### 权限过滤 `PermissionFilter`
+#### 权限过滤 `PrivilegeFiltering`
 
-MemberId | MemberType |  Target  |  Action  | Filter
-:-------:|:----------:|:--------:|:--------:|:------:
-201      | `1`(_Role_) | SaleOrder | Select  | `!Amount,!Details.Price,!Details.Discount,!Details.Quantity`
+MemberId | MemberType |   PrivilegeName   | PrivilegeFilter
+:-------:|:----------:|:-----------------:|:---------------:
+201      | `1`(_Role_) | SaleOrder:Select | `!Amount,!Details.Price,!Details.Discount,!Details.Quantity`
 
 
 综上所示，“销售人员(`201`)”角色虽然拥有对“销售订单(`SaleOrder`)”及其子资源的具有“查看(`Select`)”权限，但是却不包含对这些资源中的如下字段：

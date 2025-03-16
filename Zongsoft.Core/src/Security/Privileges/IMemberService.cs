@@ -54,39 +54,60 @@ public interface IMemberService<TRole, TMember> where TRole : IRole where TMembe
 	/// <returns>返回的上级角色集。</returns>
 	IAsyncEnumerable<TRole> GetRolesAsync(Member member, CancellationToken cancellation = default);
 
+	/// <summary>设置指定成员的父级角色。</summary>
+	/// <param name="member">指定的成员标识。</param>
+	/// <param name="role">指定的父级角色标识。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> SetRoleAsync(Member member, Identifier role, CancellationToken cancellation = default);
+
+	/// <summary>设置指定成员的父级角色集。</summary>
+	/// <param name="member">指定的成员标识。</param>
+	/// <param name="roles">指定的父级角色标识集。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回的设置成功的记录数。</returns>
+	ValueTask<int> SetRolesAsync(Member member, IEnumerable<Identifier> roles, CancellationToken cancellation = default);
+
 	/// <summary>获取指定角色的直属成员集。</summary>
 	/// <param name="role">指定的角色标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回隶属于指定角色的直属子级成员集。</returns>
-	IAsyncEnumerable<TMember> GetMembersAsync(Identifier role, CancellationToken cancellation = default);
+	IAsyncEnumerable<TMember> GetAsync(Identifier role, CancellationToken cancellation = default);
 
 	/// <summary>获取指定角色的直属成员集。</summary>
 	/// <param name="role">指定的角色标识。</param>
 	/// <param name="schema">指定的数据模式表达式文本。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回隶属于指定角色的直属子级成员集。</returns>
-	IAsyncEnumerable<TMember> GetMembersAsync(Identifier role, string schema, CancellationToken cancellation = default);
+	IAsyncEnumerable<TMember> GetAsync(Identifier role, string schema, CancellationToken cancellation = default);
 
 	/// <summary>新增或更新指定角色下的成员。</summary>
 	/// <param name="role">指定要更新的角色标识。</param>
-	/// <param name="members">要更新的角色成员集，如果为空则表示清空指定角色的成员集。</param>
+	/// <param name="member">要更新的角色成员。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果更新成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> SetAsync(Identifier role, Member member, CancellationToken cancellation = default);
+
+	/// <summary>新增或更新指定角色下的成员。</summary>
+	/// <param name="role">指定要更新的角色标识。</param>
+	/// <param name="members">要更新的角色成员集。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果更新成功则返回更新的数量，否则返回零。</returns>
-	ValueTask<int> SetMembers(Identifier role, IEnumerable<Member> members, CancellationToken cancellation = default);
+	ValueTask<int> SetAsync(Identifier role, IEnumerable<Member> members, CancellationToken cancellation = default);
 
 	/// <summary>新增或更新指定角色下的成员。</summary>
 	/// <param name="role">指定要更新的角色标识。</param>
-	/// <param name="members">要更新的角色成员集，如果为空则表示清空指定角色的成员集。</param>
+	/// <param name="members">要更新的角色成员集。</param>
 	/// <param name="shouldResetting">指示是否以重置的方式更新角色成员，即是否在更新角色成员之前先清空指定角色下的所有成员。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果更新成功则返回更新的数量，否则返回零。</returns>
-	ValueTask<int> SetMembers(Identifier role, IEnumerable<Member> members, bool shouldResetting, CancellationToken cancellation = default);
+	ValueTask<int> SetAsync(Identifier role, IEnumerable<Member> members, bool shouldResetting, CancellationToken cancellation = default);
 
 	/// <summary>新增或更新指定角色下的成员。</summary>
-	/// <param name="members">要更新的角色成员集，如果为空则表示清空指定角色的成员集。</param>
+	/// <param name="members">要更新的角色成员集。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果更新成功则返回更新的数量，否则返回零。</returns>
-	ValueTask<int> SetMembers(IEnumerable<TMember> members, CancellationToken cancellation = default);
+	ValueTask<int> SetAsync(IEnumerable<TMember> members, CancellationToken cancellation = default);
 
 	/// <summary>删除单个角色成员。</summary>
 	/// <param name="role">指定要删除成员所属的角色标识。</param>
@@ -97,7 +118,7 @@ public interface IMemberService<TRole, TMember> where TRole : IRole where TMembe
 
 	/// <summary>删除多个角色成员。</summary>
 	/// <param name="role">指定要删除成员所属的角色标识。</param>
-	/// <param name="members">指定要删除的成员集。</param>
+	/// <param name="members">指定要删除的成员集，如果为空则表示清空指定角色的成员集。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果删除成功则返回删除的数量，否则返回零。</returns>
 	ValueTask<int> RemoveAsync(Identifier role, IEnumerable<Member> members, CancellationToken cancellation = default);

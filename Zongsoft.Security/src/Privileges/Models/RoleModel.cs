@@ -35,6 +35,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges.Models;
 
+[Model($"{Module.NAME}.Role")]
 public abstract class RoleModel : IRole, IIdentifiable, IIdentifiable<uint>, IEquatable<RoleModel>
 {
 	public abstract uint RoleId { get; set; }

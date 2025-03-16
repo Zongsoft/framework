@@ -39,27 +39,45 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, TMember> where TRole : IRole where TMember : IMember<TRole>
+public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, TMember>
+	where TRole : IRole
+	where TMember : IMember<TRole>
 {
-	#region 构造函数
-	protected MemberServiceBase(RoleServiceBase<TRole, TMember> roles) => this.Roles = roles ?? throw new ArgumentNullException(nameof(roles));
-	#endregion
-
 	#region 公共属性
 	public virtual string Name => this.Accessor.Naming.Get<TMember>();
 	#endregion
 
 	#region 保护属性
-	protected RoleServiceBase<TRole, TMember> Roles { get; }
-	protected IDataAccess Accessor => this.Roles.Accessor;
+	protected abstract IDataAccess Accessor { get; }
 	#endregion
 
 	#region 公共方法
 	public IAsyncEnumerable<TRole> GetAncestorsAsync(Member member, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public IAsyncEnumerable<TRole> GetRolesAsync(Member member, CancellationToken cancellation = default) => throw new NotImplementedException();
+	public IAsyncEnumerable<TRole> GetRolesAsync(Member member, CancellationToken cancellation = default)
+	{
+		return this.Accessor.SelectAsync<TMember>(
+			this.GetCriteria(member),
+			$"*, {nameof(IMember<TRole>.Role)}" + "{*}",
+			cancellation
+		).Map(member => member.Role);
+	}
 
-	public IAsyncEnumerable<TMember> GetMembersAsync(Identifier role, CancellationToken cancellation = default) => this.GetMembersAsync(role, null, cancellation);
-	public IAsyncEnumerable<TMember> GetMembersAsync(Identifier role, string schema, CancellationToken cancellation = default)
+	public ValueTask<int> SetRolesAsync(Member member, IEnumerable<Identifier> roles, CancellationToken cancellation = default)
+	{
+		if(roles == null)
+			return this.Accessor.DeleteAsync(this.Name, this.GetCriteria(member), cancellation: cancellation);
+
+		var members = roles.Select(role => this.Create(role, member));
+		return this.Accessor.UpsertManyAsync(this.Name, members, cancellation);
+	}
+
+	public async ValueTask<bool> SetRoleAsync(Member member, Identifier role, CancellationToken cancellation = default)
+	{
+		return role.HasValue && await this.Accessor.UpsertAsync(this.Create(role, member), cancellation) > 0;
+	}
+
+	public IAsyncEnumerable<TMember> GetAsync(Identifier role, CancellationToken cancellation = default) => this.GetAsync(role, null, cancellation);
+	public IAsyncEnumerable<TMember> GetAsync(Identifier role, string schema, CancellationToken cancellation = default)
 	{
 		if(role.IsEmpty)
 			return Zongsoft.Collections.Enumerable.Empty<TMember>();
@@ -71,8 +89,11 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 		return this.Accessor.SelectAsync<TMember>(criteria, schema, cancellation);
 	}
 
-	public ValueTask<int> SetMembers(Identifier role, IEnumerable<Member> members, CancellationToken cancellation = default) => this.SetMembers(role, members, false, cancellation);
-	public async ValueTask<int> SetMembers(Identifier role, IEnumerable<Member> members, bool shouldResetting, CancellationToken cancellation = default)
+	public async ValueTask<bool> SetAsync(Identifier role, Member member, CancellationToken cancellation = default) => role.HasValue && await this.SetAsync(this.Create(role, member), cancellation);
+	public async ValueTask<bool> SetAsync(TMember member, CancellationToken cancellation = default) => member != null && await this.Accessor.UpsertAsync(member, cancellation) > 0;
+
+	public ValueTask<int> SetAsync(Identifier role, IEnumerable<Member> members, CancellationToken cancellation = default) => this.SetAsync(role, members, false, cancellation);
+	public async ValueTask<int> SetAsync(Identifier role, IEnumerable<Member> members, bool shouldResetting, CancellationToken cancellation = default)
 	{
 		if(role.IsEmpty || members == null)
 			return 0;
@@ -87,7 +108,7 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 		return await this.Accessor.UpsertAsync(members.Select(member => this.Create(role, member)), cancellation);
 	}
 
-	public ValueTask<int> SetMembers(IEnumerable<TMember> members, CancellationToken cancellation = default) => this.Accessor.UpsertManyAsync(members, cancellation);
+	public ValueTask<int> SetAsync(IEnumerable<TMember> members, CancellationToken cancellation = default) => this.Accessor.UpsertManyAsync(members, cancellation);
 
 	public async ValueTask<bool> RemoveAsync(Identifier role, Member member, CancellationToken cancellation = default)
 	{
@@ -163,6 +184,13 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 		if(identifier.IsEmpty)
 			return null;
 
+		if(identifier.Validate<Member>(out var member))
+			return Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId) &
+			       Condition.Equal(nameof(IMember<TRole>.MemberType), member.MemberType);
+
+		if(identifier.Validate<IRole, Identifier>(out var roleId))
+			return Condition.Equal(nameof(IMember<TRole>.RoleId), roleId.Value);
+
 		if(identifier.Validate<IRole, string>(out var qualifiedName))
 		{
 			var parts = qualifiedName.Split(':');
@@ -176,5 +204,4 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 		throw OperationException.Argument();
 	}
 	#endregion
-
 }

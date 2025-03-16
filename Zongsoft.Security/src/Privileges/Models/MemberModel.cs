@@ -28,14 +28,14 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges.Models;
 
-public abstract class MemberModel : IMember<RoleModel>, IEquatable<MemberModel>
+[Model($"{Module.NAME}.Member")]
+public abstract class MemberModel : IMember<RoleModel>, IMember<IRole>, IEquatable<MemberModel>
 {
 	#region 公共属性
 	public abstract uint RoleId { get; set; }
@@ -59,7 +59,17 @@ public abstract class MemberModel : IMember<RoleModel>, IEquatable<MemberModel>
 	#endregion
 
 	#region 显式实现
+	IRole IMember<IRole>.Role => this.Role;
+	Identifier IMember<IRole>.RoleId => new Identifier<uint>(typeof(IMember<IRole>), this.RoleId);
 	Identifier IMember<RoleModel>.RoleId => new Identifier<uint>(typeof(RoleModel), this.RoleId);
+
+	Identifier IMember<IRole>.MemberId => this.MemberType switch
+	{
+		MemberType.Role => new Identifier<uint>(typeof(IMember<IRole>), this.MemberId),
+		MemberType.User => new Identifier<uint>(typeof(IMember<IRole>), this.MemberId),
+		_ => default,
+	};
+
 	Identifier IMember<RoleModel>.MemberId => this.MemberType switch
 	{
 		MemberType.Role => new Identifier<uint>(typeof(RoleModel), this.MemberId),
@@ -77,5 +87,6 @@ public abstract class MemberModel : IMember<RoleModel>, IEquatable<MemberModel>
 	public override bool Equals(object obj) => obj is MemberModel other && this.Equals(other);
 	public override int GetHashCode() => HashCode.Combine(this.RoleId, this.MemberId, this.MemberType);
 	public override string ToString() => $"{this.RoleId}:{this.MemberId}@{this.MemberType}";
+	bool IEquatable<IMember<IRole>>.Equals(IMember<IRole> other) => throw new NotImplementedException();
 	#endregion
 }
