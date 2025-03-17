@@ -195,15 +195,8 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 		if(identifier.Validate<IRole, Identifier>(out var roleId))
 			return Condition.Equal(nameof(IMember<TRole>.RoleId), roleId.Value);
 
-		if(identifier.Validate<IRole, string>(out var qualifiedName))
-		{
-			var index = qualifiedName.IndexOf(':');
-
-			if(index >= 0)
-				return Utility.GetCriteria(qualifiedName[..index], qualifiedName[(index + 1)..]);
-
-			return Condition.Equal(nameof(IRole.Name), qualifiedName);
-		}
+		if(identifier.Validate<IRole, string>(out var id))
+			return Condition.Equal(nameof(IRole.Name), id);
 
 		throw OperationException.Argument();
 	}

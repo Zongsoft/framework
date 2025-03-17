@@ -108,7 +108,7 @@ Content-Type: text/plain
 {{roles}}
 
 ### 获取角色的最终授权集
-# @prompt id      角色编号
+# @prompt id    角色编号
 GET /Security/Roles/{{id}}/Authorizes HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
