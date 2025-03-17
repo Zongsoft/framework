@@ -923,5 +923,23 @@ namespace Zongsoft.Properties {
                 return ResourceManager.GetString("WorkerStopCommand.Name", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   查找类似 角色 的本地化字符串。
+        /// </summary>
+        internal static string Zongsoft_Security_Privileges_MemberType_Role {
+            get {
+                return ResourceManager.GetString("Zongsoft.Security.Privileges.MemberType.Role", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 用户 的本地化字符串。
+        /// </summary>
+        internal static string Zongsoft_Security_Privileges_MemberType_User {
+            get {
+                return ResourceManager.GetString("Zongsoft.Security.Privileges.MemberType.User", resourceCulture);
+            }
+        }
     }
 }

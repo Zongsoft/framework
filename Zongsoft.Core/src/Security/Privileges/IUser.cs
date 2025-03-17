@@ -63,4 +63,11 @@ public interface IUser : Zongsoft.Components.IIdentifiable
 	/// <summary>获取或设置用户的描述信息。</summary>
 	string Description { get; set; }
 	#endregion
+
+	#region 方法定义
+	/// <summary>设置用户标识值，即设置主键值。</summary>
+	/// <typeparam name="T">主键值类型。</typeparam>
+	/// <param name="value">指定的标识值，即主键值。</param>
+	void Identify<T>(T value);
+	#endregion
 }

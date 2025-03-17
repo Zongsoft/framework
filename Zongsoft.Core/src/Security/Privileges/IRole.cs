@@ -60,4 +60,11 @@ public interface IRole : Zongsoft.Components.IIdentifiable
 	/// <summary>获取或设置角色的描述信息。</summary>
 	string Description { get; set; }
 	#endregion
+
+	#region 方法定义
+	/// <summary>设置角色标识值，即设置主键值。</summary>
+	/// <typeparam name="T">主键值类型。</typeparam>
+	/// <param name="value">指定的标识值，即主键值。</param>
+	void Identify<T>(T value);
+	#endregion
 }

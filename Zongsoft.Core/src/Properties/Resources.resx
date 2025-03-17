@@ -405,4 +405,10 @@
   <data name="ConnectionSettings.Application.Description" xml:space="preserve">
     <value>表示连接的应用标识。</value>
   </data>
+  <data name="Zongsoft.Security.Privileges.MemberType.Role" xml:space="preserve">
+    <value>角色</value>
+  </data>
+  <data name="Zongsoft.Security.Privileges.MemberType.User" xml:space="preserve">
+    <value>用户</value>
+  </data>
 </root>

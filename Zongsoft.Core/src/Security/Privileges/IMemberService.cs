@@ -52,21 +52,21 @@ public interface IMemberService<TRole, TMember> where TRole : IRole where TMembe
 	/// <param name="member">指定的成员标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回的上级角色集。</returns>
-	IAsyncEnumerable<TRole> GetRolesAsync(Member member, CancellationToken cancellation = default);
+	IAsyncEnumerable<TRole> GetParentsAsync(Member member, CancellationToken cancellation = default);
 
 	/// <summary>设置指定成员的父级角色。</summary>
 	/// <param name="member">指定的成员标识。</param>
 	/// <param name="role">指定的父级角色标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> SetRoleAsync(Member member, Identifier role, CancellationToken cancellation = default);
+	ValueTask<bool> SetParentAsync(Member member, Identifier role, CancellationToken cancellation = default);
 
 	/// <summary>设置指定成员的父级角色集。</summary>
 	/// <param name="member">指定的成员标识。</param>
 	/// <param name="roles">指定的父级角色标识集。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回的设置成功的记录数。</returns>
-	ValueTask<int> SetRolesAsync(Member member, IEnumerable<Identifier> roles, CancellationToken cancellation = default);
+	ValueTask<int> SetParentsAsync(Member member, IEnumerable<Identifier> roles, CancellationToken cancellation = default);
 
 	/// <summary>获取指定角色的直属成员集。</summary>
 	/// <param name="role">指定的角色标识。</param>

@@ -49,24 +49,6 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	public MemberType MemberType { get; }
 	#endregion
 
-	#region 显式实现
-	Identifier IIdentifiable.Identifier
-	{
-		get
-		{
-			if(this.MemberId.IsEmpty)
-				return default;
-
-			return this.MemberType switch
-			{
-				MemberType.Role => new(typeof(Member), this.MemberId),
-				MemberType.User => new(typeof(Member), this.MemberId),
-				_ => throw new InvalidOperationException($"Invalid {nameof(this.MemberType)} value of the {nameof(Member)}.")
-			};
-		}
-	}
-	#endregion
-
 	#region 静态方法
 	public static Member Create(MemberType memberType, int id) => memberType switch
 	{
@@ -101,6 +83,7 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	#endregion
 
 	#region 解析方法
+	public static Member Parse(string text) => Parse(text.AsSpan());
 	public static Member Parse(ReadOnlySpan<char> text)
 	{
 		if(text.IsEmpty)
@@ -144,6 +127,7 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 		}
 	}
 
+	public static bool TryParse(string text, out Member result) => TryParse(text.AsSpan(), out result);
 	public static bool TryParse(ReadOnlySpan<char> text, out Member result)
 	{
 		if(text.IsEmpty)
@@ -202,6 +186,10 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	public override readonly bool Equals(object obj) => obj is Member other && this.Equals(other);
 	public override readonly int GetHashCode() => HashCode.Combine(this.MemberId, this.MemberType);
 	public override readonly string ToString() => $"{this.MemberId}@{this.MemberType}";
+	#endregion
+
+	#region 显式实现
+	Identifier IIdentifiable.Identifier => this.MemberId.IsEmpty ? default : new(typeof(Member), this);
 	#endregion
 
 	#region 符号重载

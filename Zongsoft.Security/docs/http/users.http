@@ -27,7 +27,7 @@ Authorization: Credential {{$dotenv credentialId}}
 ### 用户存在
 # @prompt namespace 命名空间
 # @prompt identity  用户标识
-GET /Security/Users/Exists/{{namespace}}:{{identity}} HTTP/1.1
+GET /Security/Users/{{namespace}}:{{identity}}/Exists HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 

@@ -40,7 +40,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class PrivilegeServiceBase : IPrivilegeService
+public abstract class PrivilegeServiceBase : IPrivilegeService, IMatchable, IMatchable<ClaimsPrincipal>
 {
 	#region 保护属性
 	protected abstract IDataAccess Accessor { get; }
@@ -69,5 +69,11 @@ public abstract class PrivilegeServiceBase : IPrivilegeService
 	protected abstract IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation);
 	protected abstract ValueTask<int> OnResetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation);
 	protected abstract ValueTask<int> OnSetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation);
+	#endregion
+
+	#region 服务匹配
+	bool IMatchable.Match(object argument) => argument is ClaimsPrincipal principal && this.OnMatch(principal);
+	bool IMatchable<ClaimsPrincipal>.Match(ClaimsPrincipal argument) => this.OnMatch(argument);
+	protected virtual bool OnMatch(ClaimsPrincipal principal) => principal != null && principal.Identity != null && principal.Identity.IsAuthenticated;
 	#endregion
 }

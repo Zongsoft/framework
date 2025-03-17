@@ -56,7 +56,7 @@ public class MemberService : MemberServiceBase<RoleModel, MemberModel>, IMemberS
 
 	#region 显式实现
 	IAsyncEnumerable<IRole> IMemberService<IRole, IMember<IRole>>.GetAncestorsAsync(Member member, CancellationToken cancellation) => this.GetAncestorsAsync(member, cancellation);
-	IAsyncEnumerable<IRole> IMemberService<IRole, IMember<IRole>>.GetRolesAsync(Member member, CancellationToken cancellation) => this.GetRolesAsync(member, cancellation);
+	IAsyncEnumerable<IRole> IMemberService<IRole, IMember<IRole>>.GetParentsAsync(Member member, CancellationToken cancellation) => this.GetParentsAsync(member, cancellation);
 	IAsyncEnumerable<IMember<IRole>> IMemberService<IRole, IMember<IRole>>.GetAsync(Identifier role, CancellationToken cancellation) => this.GetAsync(role, cancellation);
 	IAsyncEnumerable<IMember<IRole>> IMemberService<IRole, IMember<IRole>>.GetAsync(Identifier role, string schema, CancellationToken cancellation) => this.GetAsync(role, schema, cancellation);
 	ValueTask<int> IMemberService<IRole, IMember<IRole>>.SetAsync(IEnumerable<IMember<IRole>> members, CancellationToken cancellation) => this.SetAsync(members.Cast<MemberModel>(), cancellation);

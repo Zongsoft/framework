@@ -43,9 +43,8 @@ using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Web.Http;
 using Zongsoft.Security.Privileges;
-using Zongsoft.Security.Privileges.Models;
 
-namespace Zongsoft.Security.Controllers;
+namespace Zongsoft.Security.Web.Controllers;
 
 partial class RoleController
 {
@@ -53,80 +52,98 @@ partial class RoleController
 	[Authorize(Roles = $"{IRole.Administrators},{IRole.Security}")]
 	public class MemberController : ControllerBase
 	{
-		public readonly IMemberService<IRole, IMember<IRole>> Service;
+		#region 公共属性
+		public IMemberService<IRole, IMember<IRole>> Service => this.HttpContext.RequestServices.Resolve<IMemberService<IRole, IMember<IRole>>>(this.User);
+		#endregion
 
-		[HttpGet("{id}/Ancestors")]
-		public IAsyncEnumerable<IRole> GetAncestors(uint id, CancellationToken cancellation = default)
+		#region 上级角色
+		[HttpGet("/[area]/{id}/Ancestors")]
+		public IAsyncEnumerable<IRole> GetAncestors(string id, CancellationToken cancellation = default)
 		{
 			return this.Service.GetAncestorsAsync(Member.Role(id), cancellation);
 		}
 
-		[HttpGet("{id}/Roles")]
-		public IAsyncEnumerable<IRole> GetRoles(uint id, CancellationToken cancellation = default)
+		[HttpGet("/[area]/{id}/Roles")]
+		[HttpGet("/[area]/{id}/Parents")]
+		public IAsyncEnumerable<IRole> GetParents(string id, CancellationToken cancellation = default)
 		{
-			return this.Service.GetRolesAsync(Member.Role(id), cancellation);
+			return this.Service.GetParentsAsync(Member.Role(id), cancellation);
 		}
 
-		[HttpPut("{id}/Role")]
-		public async ValueTask<IActionResult> SetRole(uint id, uint roleId, CancellationToken cancellation = default)
+		[HttpPut("/[area]/{id}/Role")]
+		[HttpPut("/[area]/{id}/Parent")]
+		public async ValueTask<IActionResult> SetParent(string id, string roleId, CancellationToken cancellation = default)
 		{
-			return await this.Service.SetRoleAsync(Member.User(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
+			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(roleId))
+				return this.BadRequest();
+
+			return await this.Service.SetParentAsync(Member.User(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
-		[HttpPut("{id}/Roles")]
-		public async ValueTask<IActionResult> SetRoles(uint id, CancellationToken cancellation)
+		[HttpPut("/[area]/{id}/Roles")]
+		[HttpPut("/[area]/{id}/Parents")]
+		public async ValueTask<IActionResult> SetParents(string id, CancellationToken cancellation)
 		{
+			if(string.IsNullOrEmpty(id))
+				return this.BadRequest();
+
 			var content = await this.Request.ReadAsStringAsync();
 
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			var roles = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).Select(id => new Identifier(typeof(IRole), id)).ToArray();
-			var count = await this.Service.SetRolesAsync(Member.User(id), roles, cancellation);
+			var count = await this.Service.SetParentsAsync(Member.User(id), roles, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
+		#endregion
 
-		[HttpGet("{id}")]
-		public IAsyncEnumerable<IMember<IRole>> Get(uint id, CancellationToken cancellation = default)
+		#region 下级成员
+		[HttpGet("/[area]/{id}/[controller]")]
+		public IAsyncEnumerable<IMember<IRole>> Get(string id, CancellationToken cancellation = default)
 		{
 			return this.Service.GetAsync(new Identifier(typeof(IRole), id), this.Request.Headers.GetDataSchema(), cancellation);
 		}
 
-		[HttpPut("{id}/{memberType}:{memberId}")]
-		public async Task<IActionResult> Set(uint id, MemberType memberType, uint memberId, CancellationToken cancellation = default)
+		[HttpPut("/[area]/{id}/[controller]")]
+		public async Task<IActionResult> Set(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
 		{
-			return await this.Service.SetAsync(new Identifier(typeof(IRole), id), Member.Create(memberType, memberId), cancellation) ?
-				this.CreatedAtAction(nameof(Get), new { id }, null) : this.NoContent();
-		}
+			if(string.IsNullOrEmpty(id))
+				return this.BadRequest();
 
-		[HttpPut("{id}")]
-		public async Task<IActionResult> Set(uint id, [FromBody]IEnumerable<Member> members, [FromQuery]bool reset = false, CancellationToken cancellation = default)
-		{
+			var members = await this.GetMembersAsync(cancellation);
+			if(members == null || !members.Any())
+				return this.BadRequest();
+
 			return await this.Service.SetAsync(new Identifier(typeof(IRole), id), members, reset, cancellation) > 0 ?
 				this.CreatedAtAction(nameof(Get), new { id }, null) :
 				this.NoContent();
 		}
 
-		[HttpDelete("{id}/{memberType}:{memberId}")]
-		public async Task<IActionResult> Remove(uint id, MemberType memberType, uint memberId, CancellationToken cancellation = default)
+		[HttpDelete("/[area]/{id}/[controller]")]
+		public async Task<IActionResult> Remove(string id, CancellationToken cancellation = default)
 		{
-			return await this.Service.RemoveAsync(new Identifier(typeof(IRole), id), Member.Create(memberType, memberId), cancellation) ? this.NoContent() : this.NotFound();
-		}
-
-		[HttpDelete("{id}")]
-		public async Task<IActionResult> Remove(uint id, CancellationToken cancellation = default)
-		{
-			var content = await this.Request.ReadAsStringAsync();
-
-			if(string.IsNullOrWhiteSpace(content))
+			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
 
-			var members = content == "*" ? null : content
-				.Split([',', ';', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-				.Select(part => Member.Parse(part));
-
+			var members = await this.GetMembersAsync(cancellation);
 			var count = await this.Service.RemoveAsync(new Identifier(typeof(IRole), id), members, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
+		#endregion
+
+		#region 私有方法
+		private async ValueTask<IEnumerable<Member>> GetMembersAsync(CancellationToken cancellation)
+		{
+			if(this.Request.HasJsonContentType())
+				return await Serialization.Serializer.Json.DeserializeAsync<Member[]>(this.Request.Body, cancellation);
+
+			var content = await this.Request.ReadAsStringAsync();
+			if(string.IsNullOrEmpty(content))
+				return null;
+
+			return Common.StringExtension.Slice<Member>(content, [',', ';', '\n'], Member.TryParse);
+		}
+		#endregion
 	}
 }

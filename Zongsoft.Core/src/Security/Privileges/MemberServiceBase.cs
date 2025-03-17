@@ -31,15 +31,17 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Common;
+using Zongsoft.Services;
 using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, TMember>
+public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService<TRole, TMember>, IMatchable, IMatchable<ClaimsPrincipal>
 	where TRole : IRole
 	where TMember : IMember<TRole>
 {
@@ -52,8 +54,7 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 	#endregion
 
 	#region 公共方法
-	public IAsyncEnumerable<TRole> GetAncestorsAsync(Member member, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public IAsyncEnumerable<TRole> GetRolesAsync(Member member, CancellationToken cancellation = default)
+	public IAsyncEnumerable<TRole> GetParentsAsync(Member member, CancellationToken cancellation = default)
 	{
 		return this.Accessor.SelectAsync<TMember>(
 			this.GetCriteria(member),
@@ -62,7 +63,7 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 		).Map(member => member.Role);
 	}
 
-	public ValueTask<int> SetRolesAsync(Member member, IEnumerable<Identifier> roles, CancellationToken cancellation = default)
+	public ValueTask<int> SetParentsAsync(Member member, IEnumerable<Identifier> roles, CancellationToken cancellation = default)
 	{
 		if(roles == null)
 			return this.Accessor.DeleteAsync(this.Name, this.GetCriteria(member), cancellation: cancellation);
@@ -71,7 +72,7 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 		return this.Accessor.UpsertManyAsync(this.Name, members, cancellation);
 	}
 
-	public async ValueTask<bool> SetRoleAsync(Member member, Identifier role, CancellationToken cancellation = default)
+	public async ValueTask<bool> SetParentAsync(Member member, Identifier role, CancellationToken cancellation = default)
 	{
 		return role.HasValue && await this.Accessor.UpsertAsync(this.Create(role, member), cancellation) > 0;
 	}
@@ -95,7 +96,7 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 	public ValueTask<int> SetAsync(Identifier role, IEnumerable<Member> members, CancellationToken cancellation = default) => this.SetAsync(role, members, false, cancellation);
 	public async ValueTask<int> SetAsync(Identifier role, IEnumerable<Member> members, bool shouldResetting, CancellationToken cancellation = default)
 	{
-		if(role.IsEmpty || members == null)
+		if(role.IsEmpty || members == null || !members.Any())
 			return 0;
 
 		var criteria = this.GetCriteria(role);
@@ -121,8 +122,11 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 
 	public async ValueTask<int> RemoveAsync(Identifier role, IEnumerable<Member> members, CancellationToken cancellation = default)
 	{
-		if(role.IsEmpty || members == null)
+		if(role.IsEmpty)
 			return 0;
+
+		if(members == null || !members.Any())
+			return await this.Accessor.DeleteAsync(this.Name, this.GetCriteria(role), cancellation: cancellation);
 
 		var count = 0;
 
@@ -165,7 +169,7 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 			return null;
 
 		return Condition.Equal(nameof(IMember<TRole>.RoleId), role.Value) &
-			Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId) &
+			Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId.Value) &
 			Condition.Equal(nameof(IMember<TRole>.MemberType), member.MemberType);
 	}
 
@@ -175,7 +179,7 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 			return null;
 
 		return Condition.Equal(nameof(IMember<TRole>.RoleId), member.RoleId.Value) &
-			Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId) &
+			Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId.Value) &
 			Condition.Equal(nameof(IMember<TRole>.MemberType), member.MemberType);
 	}
 
@@ -185,7 +189,7 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 			return null;
 
 		if(identifier.Validate<Member>(out var member))
-			return Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId) &
+			return Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId.Value) &
 			       Condition.Equal(nameof(IMember<TRole>.MemberType), member.MemberType);
 
 		if(identifier.Validate<IRole, Identifier>(out var roleId))
@@ -193,15 +197,21 @@ public abstract class MemberServiceBase<TRole, TMember> : IMemberService<TRole, 
 
 		if(identifier.Validate<IRole, string>(out var qualifiedName))
 		{
-			var parts = qualifiedName.Split(':');
+			var index = qualifiedName.IndexOf(':');
 
-			if(parts.Length == 2)
-				return Condition.Equal(nameof(IRole.Namespace), parts[0]) & Condition.Equal(nameof(IRole.Name), parts[1]);
-			else
-				return Condition.Equal(nameof(IRole.Name), parts[0]);
+			if(index >= 0)
+				return Utility.GetCriteria(qualifiedName[..index], qualifiedName[(index + 1)..]);
+
+			return Condition.Equal(nameof(IRole.Name), qualifiedName);
 		}
 
 		throw OperationException.Argument();
 	}
+	#endregion
+
+	#region 服务匹配
+	bool IMatchable.Match(object argument) => argument is ClaimsPrincipal principal && this.OnMatch(principal);
+	bool IMatchable<ClaimsPrincipal>.Match(ClaimsPrincipal argument) => this.OnMatch(argument);
+	protected virtual bool OnMatch(ClaimsPrincipal principal) => principal != null && principal.Identity != null && principal.Identity.IsAuthenticated;
 	#endregion
 }

@@ -45,6 +45,28 @@ public abstract class RoleModel : IRole, IIdentifiable, IIdentifiable<uint>, IEq
 	public abstract string Namespace { get; set; }
 	public abstract string Description { get; set; }
 
+	public void Identify<T>(T value)
+	{
+		switch(value)
+		{
+			case int id:
+				this.RoleId = (uint)id;
+				break;
+			case uint id:
+				this.RoleId = id;
+				break;
+			case string id:
+				this.RoleId = uint.Parse(id);
+				break;
+			case Identifier id:
+				if(id.HasValue)
+					this.Identify(id.Value);
+				break;
+			default:
+				throw new InvalidOperationException($"The specified '{value}' value cannot be converted to a role identifier.");
+		}
+	}
+
 	public virtual bool Equals(RoleModel other) => other is not null && this.RoleId == other.RoleId;
 	public override bool Equals(object obj) => obj is RoleModel other && this.Equals(other);
 	public override int GetHashCode() => this.RoleId.GetHashCode();

@@ -43,50 +43,47 @@ using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Web.Http;
 using Zongsoft.Security.Privileges;
-using Zongsoft.Security.Privileges.Models;
 
-namespace Zongsoft.Security.Controllers;
+namespace Zongsoft.Security.Web.Controllers;
 
 [Area(Module.NAME)]
 [ControllerName("Roles")]
 [Authorize(Roles = $"{IRole.Administrators},{IRole.Security}")]
 public partial class RoleController : ControllerBase
 {
-	#region 构造函数
-	public RoleController(IRoleService<IRole> service) => this.Service = service;
-	#endregion
-
 	#region 公共属性
-	public IRoleService<IRole> Service { get; }
+	public IRoleService<IRole> Service => this.HttpContext.RequestServices.Resolve<IRoleService<IRole>>(this.User);
 	#endregion
 
 	#region 公共方法
-	[HttpGet("{identifier?}")]
-	public async Task<IActionResult> Get(string identifier, [FromQuery]Paging page = null, CancellationToken cancellation = default)
+	[HttpGet("{id?}")]
+	public async Task<IActionResult> Get(string id, [FromQuery]Paging page = null, CancellationToken cancellation = default)
 	{
-		if(string.IsNullOrEmpty(identifier) || identifier == "*")
-			return this.Paginate(page ??= Paging.First(), this.Service.FindAsync(identifier, this.Request.Headers.GetDataSchema(), page, cancellation));
+		if(string.IsNullOrEmpty(id) || id == "*" || id.Contains(':'))
+			return this.Paginate(page ??= Paging.First(), this.Service.FindAsync(id, this.Request.Headers.GetDataSchema(), page, cancellation));
 
-		var result = await this.Service.GetAsync(new Identifier(typeof(IRole), identifier), this.Request.Headers.GetDataSchema(), cancellation);
+		var result = await this.Service.GetAsync(new Identifier(typeof(IRole), id), this.Request.Headers.GetDataSchema(), cancellation);
 		return result != null ? this.Ok(result) : this.NoContent();
 	}
 
 	[HttpPost]
-	public async Task<ActionResult> Create([FromBody]RoleModel model, CancellationToken cancellation = default)
+	[HttpPost("Role")]
+	public async Task<IActionResult> Create(CancellationToken cancellation = default)
 	{
-		if(model == null)
-			return this.BadRequest();
+		var model = await this.GetModelAsync(cancellation);
+		if(model is IActionResult result)
+			return result;
 
-		if(await this.Service.CreateAsync(model, cancellation))
-			return this.CreatedAtAction(nameof(Get), new { id = model.RoleId }, model);
+		if(await this.Service.CreateAsync((IRole)model, cancellation))
+			return this.CreatedAtAction(nameof(Get), new { id = ((IIdentifiable)model).Identifier.Value }, model);
 
 		return this.Conflict();
 	}
 
 	[HttpDelete("{id}")]
-	public async Task<IActionResult> Delete(uint id, CancellationToken cancellation = default)
+	public async Task<IActionResult> Delete(string id, CancellationToken cancellation = default)
 	{
-		if(id == 0)
+		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
 		return await this.Service.DeleteAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
@@ -100,28 +97,36 @@ public partial class RoleController : ControllerBase
 		if(string.IsNullOrWhiteSpace(content))
 			return this.BadRequest();
 
-		var ids = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', '|'], uint.TryParse).ToArray();
+		var ids = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).ToArray();
 
 		if(ids == null || ids.Length == 0)
 			return this.BadRequest();
 
-		return await this.Service.DeleteAsync(ids.Select(id => new Identifier(typeof(IRole), id)), cancellation) > 0 ? this.NoContent() : this.NotFound();
+		var count = await this.Service.DeleteAsync(ids.Select(id => new Identifier(typeof(IRole), id)), cancellation);
+		return count > 0 ? this.Content(count.ToString()) : this.NotFound();
 	}
 
 	[HttpPut("{id:required}")]
 	[HttpPatch("{id:required}")]
-	public async Task<IActionResult> Update(uint id, [FromBody]RoleModel model, CancellationToken cancellation = default)
+	public async Task<IActionResult> Update(string id, CancellationToken cancellation = default)
 	{
-		if(id == 0)
+		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		model.RoleId = id;
-		return await this.Service.UpdateAsync(model, cancellation) ? this.NoContent() : this.NotFound();
+		var model = await this.GetModelAsync(cancellation);
+		if(model is IActionResult result)
+			return result;
+
+		((IRole)model).Identify(id);
+		return await this.Service.UpdateAsync((IRole)model, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpPatch("{id}/Name")]
-	public async Task<IActionResult> Rename(uint id, CancellationToken cancellation = default)
+	public async Task<IActionResult> Rename(string id, CancellationToken cancellation = default)
 	{
+		if(string.IsNullOrEmpty(id))
+			return this.BadRequest();
+
 		var content = await this.Request.ReadAsStringAsync();
 
 		if(string.IsNullOrWhiteSpace(content))
@@ -132,18 +137,24 @@ public partial class RoleController : ControllerBase
 
 	[HttpHead("{id:required}")]
 	[HttpGet("{id}/[action]")]
-	public async Task<IActionResult> Exists(uint id, CancellationToken cancellation = default)
+	[HttpGet("[action]/{id}")]
+	public async Task<IActionResult> Exists(string id, CancellationToken cancellation = default)
 	{
-		return await this.Service.ExistsAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
-	}
-
-	[HttpHead("{namespace}:{name}")]
-	public async Task<IActionResult> Exists(string @namespace, string name)
-	{
-		if(string.IsNullOrWhiteSpace(name))
+		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.ExistsAsync(new Identifier(typeof(IRole), $"{@namespace}:{name}")) ? this.NoContent() : this.NotFound();
+		return await this.Service.ExistsAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+	}
+	#endregion
+
+	#region 保护方法
+	protected async ValueTask<object> GetModelAsync(CancellationToken cancellation)
+	{
+		var modelType = Utility.GetModelType(this.Service, typeof(IRole), typeof(IRoleService<>));
+		if(modelType == null)
+			return this.StatusCode(StatusCodes.Status501NotImplemented);
+
+		return await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType, cancellation) is IRole model ? model : this.BadRequest();
 	}
 	#endregion
 }

@@ -42,7 +42,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, IMatchable<string> where TUser : IUser
+public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, IMatchable<ClaimsPrincipal> where TUser : IUser
 {
 	#region 公共属性
 	public virtual string Name => this.Accessor.Naming.Get<TUser>();
@@ -195,11 +195,21 @@ public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, 
 	#endregion
 
 	#region 虚拟方法
-	protected virtual ICondition GetCriteria(string keyword) => string.IsNullOrEmpty(keyword) ? null :
-		Condition.Like(nameof(IUser.Name), keyword) |
-		Condition.Like(nameof(IUser.Email), keyword) |
-		Condition.Like(nameof(IUser.Phone), keyword) |
-		Condition.Like(nameof(IUser.Nickname), keyword);
+	protected virtual ICondition GetCriteria(string keyword)
+	{
+		if(string.IsNullOrEmpty(keyword) || keyword == "*")
+			return null;
+
+		var index = keyword.IndexOf(':');
+
+		if(index >= 0)
+			return Utility.GetCriteria(keyword[..index], keyword[(index + 1)..]);
+
+		return Condition.Like(nameof(IUser.Name), keyword) |
+		       Condition.Like(nameof(IUser.Email), keyword) |
+		       Condition.Like(nameof(IUser.Phone), keyword) |
+		       Condition.Like(nameof(IUser.Nickname), keyword);
+	}
 
 	protected virtual ICondition GetCriteria(Identifier identifier)
 	{
@@ -208,12 +218,12 @@ public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, 
 
 		if(identifier.Validate(out string qualifiedName))
 		{
-			var parts = qualifiedName.Split(':');
+			var index = qualifiedName.IndexOf(':');
 
-			if(parts.Length == 2)
-				return Condition.Equal(nameof(IUser.Namespace), parts[0]) & Condition.Equal(nameof(IUser.Name), parts[1]);
-			else
-				return Condition.Equal(nameof(IUser.Name), parts[0]);
+			if(index >= 0)
+				return Utility.GetCriteria(qualifiedName[..index], qualifiedName[(index + 1)..]);
+
+			return Condition.Equal(nameof(IUser.Name), qualifiedName);
 		}
 
 		throw OperationException.Argument();
@@ -221,8 +231,8 @@ public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, 
 	#endregion
 
 	#region 服务匹配
-	bool IMatchable.Match(object argument) => argument is string name && this.OnMatch(name);
-	bool IMatchable<string>.Match(string argument) => this.OnMatch(argument);
-	protected virtual bool OnMatch(string argument) => string.Equals(this.Name, argument, StringComparison.OrdinalIgnoreCase);
+	bool IMatchable.Match(object argument) => argument is ClaimsPrincipal principal && this.OnMatch(principal);
+	bool IMatchable<ClaimsPrincipal>.Match(ClaimsPrincipal argument) => this.OnMatch(argument);
+	protected virtual bool OnMatch(ClaimsPrincipal principal) => principal != null && principal.Identity != null && principal.Identity.IsAuthenticated;
 	#endregion
 }

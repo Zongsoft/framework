@@ -28,14 +28,26 @@
  */
 
 using System;
+using System.Linq;
 
-using Zongsoft.Components;
+using Zongsoft.Data;
 
 namespace Zongsoft.Security.Privileges;
 
-public static class RoleUtility
+internal static class Utility
 {
-	public static Identifier<int> Identify(this IRole role, int id, string label = null, string description = null) => new(role?.GetType() ?? typeof(IRole), id, label, description);
-	public static Identifier<uint> Identify(this IRole role, uint id, string label = null, string description = null) => new(role?.GetType() ?? typeof(IRole), id, label, description);
-	public static Identifier Identify(this IRole role, object value, string label = null, string description = null) => new(role?.GetType() ?? typeof(IRole), value, label, description);
+	private const string NAMESPACE_FIELD = "Namespace";
+	private const string NAME_FIELD = "Name";
+
+	public static ICondition GetCriteria(string @namespace, string name)
+	{
+		if(string.IsNullOrEmpty(@namespace) || @namespace[0] == '*')
+			return string.IsNullOrEmpty(name) || name == "*" ? null : Condition.Equal(NAME_FIELD, name.ToString());
+
+		if(string.IsNullOrEmpty(name) || name == "*")
+			return Condition.Equal(NAMESPACE_FIELD, @namespace.ToString());
+
+		return Condition.Equal(NAMESPACE_FIELD, @namespace.ToString()) &
+		       Condition.Equal(NAME_FIELD, name.ToString());
+	}
 }

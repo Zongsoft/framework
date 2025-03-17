@@ -43,9 +43,8 @@ using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Web.Http;
 using Zongsoft.Security.Privileges;
-using Zongsoft.Security.Privileges.Models;
 
-namespace Zongsoft.Security.Controllers;
+namespace Zongsoft.Security.Web.Controllers;
 
 partial class UserController
 {
@@ -53,37 +52,50 @@ partial class UserController
 	[Authorize(Roles = $"{IRole.Administrators},{IRole.Security}")]
 	public class MemberController : ControllerBase
 	{
-		public readonly IMemberService<IRole, IMember<IRole>> Service;
+		#region 公共属性
+		public IMemberService<IRole, IMember<IRole>> Service => this.HttpContext.RequestServices.Resolve<IMemberService<IRole, IMember<IRole>>>(this.User);
+		#endregion
 
-		[HttpGet("{id}/Ancestors")]
-		public IAsyncEnumerable<IRole> GetAncestors(uint id, CancellationToken cancellation = default)
+		#region 上级角色
+		[HttpGet("/[area]/{id}/Ancestors")]
+		public IAsyncEnumerable<IRole> GetAncestors(string id, CancellationToken cancellation = default)
 		{
 			return this.Service.GetAncestorsAsync(Member.User(id), cancellation);
 		}
 
-		[HttpGet("{id}/Roles")]
-		public IAsyncEnumerable<IRole> GetRoles(uint id, CancellationToken cancellation = default)
+		[HttpGet("/[area]/{id}/Roles")]
+		[HttpGet("/[area]/{id}/Parents")]
+		public IAsyncEnumerable<IRole> GetParents(string id, CancellationToken cancellation = default)
 		{
-			return this.Service.GetRolesAsync(Member.User(id), cancellation);
+			return this.Service.GetParentsAsync(Member.User(id), cancellation);
 		}
 
-		[HttpPut("{id}/Role")]
-		public async ValueTask<IActionResult> SetRole(uint id, uint roleId, CancellationToken cancellation = default)
+		[HttpPut("/[area]/{id}/Role")]
+		[HttpPut("/[area]/{id}/Parent")]
+		public async ValueTask<IActionResult> SetParent(string id, string roleId, CancellationToken cancellation = default)
 		{
-			return await this.Service.SetRoleAsync(Member.User(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
+			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(roleId))
+				return this.BadRequest();
+
+			return await this.Service.SetParentAsync(Member.User(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
-		[HttpPut("{id}/Roles")]
-		public async ValueTask<IActionResult> SetRoles(uint id, CancellationToken cancellation)
+		[HttpPut("/[area]/{id}/Roles")]
+		[HttpPut("/[area]/{id}/Parents")]
+		public async ValueTask<IActionResult> SetParents(string id, CancellationToken cancellation)
 		{
+			if(string.IsNullOrEmpty(id))
+				return this.BadRequest();
+
 			var content = await this.Request.ReadAsStringAsync();
 
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
 			var roles = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).Select(id => new Identifier(typeof(IRole), id)).ToArray();
-			var count = await this.Service.SetRolesAsync(Member.User(id), roles, cancellation);
+			var count = await this.Service.SetParentsAsync(Member.User(id), roles, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
+		#endregion
 	}
 }
