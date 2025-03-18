@@ -168,13 +168,13 @@ public class PrivilegeService : PrivilegeServiceBase
 	private static bool IsFiltering(Parameters parameters) => parameters.Contains("type", "filter", StringComparer.OrdinalIgnoreCase);
 	private static bool TryGetMember(ref Identifier identifier, out uint memberId, out MemberType memberType)
 	{
-		if(identifier.Validate<IUser, uint>(out memberId))
+		if(identifier.IsUser(out memberId))
 		{
 			memberType = MemberType.User;
 			return true;
 		}
 
-		if(identifier.Validate<IRole, uint>(out memberId))
+		if(identifier.IsRole(out memberId))
 		{
 			memberType = MemberType.Role;
 			return true;

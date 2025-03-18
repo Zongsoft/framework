@@ -64,11 +64,15 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 	#endregion
 
 	#region 公共方法
-	public bool Validate<TValue>(out TValue value) => Common.Convert.TryConvertValue<TValue>(this.Value, out value);
+	public Identifier Cast<TType>() => new(typeof(TType), this.Value, this.Label, this.Description);
+	public Identifier<TValue> Cast<TType, TValue>() where TValue : IEquatable<TValue> => new(typeof(TType), Common.Convert.ConvertValue<TValue>(this.Value), this.Label, this.Description);
+
+	public bool Validate<TValue>(out TValue value) => Common.Convert.TryConvertValue(this.Value, out value);
+	public bool Validate<TType>() => this.Type != null && typeof(TType).IsAssignableFrom(this.Type);
 	public bool Validate<TType, TValue>(out TValue value) => this.Validate(typeof(TType), out value);
 	public bool Validate<TValue>(Type type, out TValue value)
 	{
-		if(type != null && type.IsAssignableFrom(this.Type))
+		if(type != null && this.Type != null && type.IsAssignableFrom(this.Type))
 			return Common.Convert.TryConvertValue<TValue>(this.Value, out value);
 
 		value = default;

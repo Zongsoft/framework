@@ -28,14 +28,13 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Claims;
-using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
-using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
@@ -45,42 +44,29 @@ public abstract class AuthorizerBase : IAuthorizer, IMatchable, IMatchable<Claim
 	#region 构造函数
 	protected AuthorizerBase(string name)
 	{
-		this.Scheme = name;
+		this.Name = name ?? string.Empty;
 		this.Privileger = new();
 	}
 	#endregion
 
 	#region 公共属性
-	public string Scheme { get; }
-	public PrivilegeCategory Privileger { get; }
+	public string Name { get; }
+	public Privileger Privileger { get; }
 	#endregion
 
 	#region 公共方法
-	public virtual ValueTask<bool> AuthorizeAsync(ClaimsIdentity user, string privilege, Parameters parameters, CancellationToken cancellation = default) => this.AuthorizeAsync(user.Identify(), privilege, parameters, cancellation);
-	public abstract ValueTask<bool> AuthorizeAsync(Identifier identifier, string privilege, Parameters parameters, CancellationToken cancellation = default);
-	public virtual IAsyncEnumerable<Privilege> AuthorizesAsync(ClaimsIdentity user, Parameters parameters, CancellationToken cancellation = default) => this.AuthorizesAsync(user.Identify(), parameters, cancellation);
-	public abstract IAsyncEnumerable<Privilege> AuthorizesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default);
-	#endregion
-
-	#region 虚拟方法
-	protected virtual ICondition GetCriteria(Identifier identifier)
+	public virtual ValueTask<bool> AuthorizeAsync(ClaimsIdentity user, string privilege, Parameters parameters, CancellationToken cancellation = default)
 	{
-		if(identifier.IsEmpty)
-			return null;
+		if(user == null)
+			return ValueTask.FromResult(false);
 
-		if(identifier.Validate<Member>(out var member))
-			return Condition.Equal(nameof(Member.MemberId), member.MemberId.Value) &
-				   Condition.Equal(nameof(Member.MemberType), member.MemberType);
+		if(privilege == null)
+			return ValueTask.FromResult(false);
 
-		if(identifier.Validate<IRole, Identifier>(out var roleId))
-			return Condition.Equal(nameof(Member.MemberId), roleId.Value) &
-			       Condition.Equal(nameof(Member.MemberType), MemberType.Role);
-
-		if(identifier.Validate<IUser, Identifier>(out var userId))
-			return Condition.Equal(nameof(Member.MemberId), userId.Value) &
-			       Condition.Equal(nameof(Member.MemberType), MemberType.User);
-
-		return null;
+		return ValueTask.FromResult(
+			user.TryGetClaims("Privileges", out var privileges) &&
+			privileges.Contains(privilege, StringComparer.OrdinalIgnoreCase)
+		);
 	}
 	#endregion
 

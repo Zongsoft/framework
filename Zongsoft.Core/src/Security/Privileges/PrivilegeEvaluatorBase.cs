@@ -31,16 +31,22 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator
+public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator, IMatchable, IMatchable<ClaimsPrincipal>
 {
+	#region 保护属性
+	protected virtual ClaimsPrincipal Principal => ApplicationContext.Current?.Principal;
+	#endregion
+
 	#region 公共方法
 	public IAsyncEnumerable<IPrivilegeEvaluatorResult> EvaluateAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default)
 	{
@@ -77,6 +83,12 @@ public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator
 
 		return privileges.Select(privilege => this.OnResult(context, privilege)).Asynchronize();
 	}
+	#endregion
+
+	#region 服务匹配
+	bool IMatchable.Match(object argument) => argument is ClaimsPrincipal principal && this.OnMatch(principal);
+	bool IMatchable<ClaimsPrincipal>.Match(ClaimsPrincipal argument) => this.OnMatch(argument);
+	protected virtual bool OnMatch(ClaimsPrincipal principal) => principal != null && principal.Identity != null && principal.Identity.IsAuthenticated;
 	#endregion
 
 	#region 嵌套子类
