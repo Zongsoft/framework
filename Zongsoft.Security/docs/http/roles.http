@@ -80,7 +80,7 @@ Content-Type: text/plain
 
 ### 角色父级角色
 # @prompt id 角色编号
-GET /Security/Roles/{{id}}/Roles HTTP/1.1
+GET /Security/Roles/{{id}}/Parents HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
@@ -100,7 +100,7 @@ Authorization: Credential {{$dotenv credentialId}}
 ### 设置角色的父级角色
 # @prompt id    角色编号
 # @prompt roles 角色编号(以逗号分隔)
-PUT /Security/Roles/{{id}}/Roles HTTP/1.1
+PUT /Security/Roles/{{id}}/Parents HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 Content-Type: text/plain

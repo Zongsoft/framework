@@ -3,61 +3,54 @@
 GET /Security/Roles/{{id}}/Members HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
+X-Data-Schema: *, Role{*}, MemberUser{*}, MemberRole{*}
 
-### 设置角色成员(用户成员)
+### 设置角色成员-单个(用户成员)
 # @prompt roleId   角色编号
 # @prompt memberId 成员编号(用户成员编号)
 PUT /Security/Roles/{{roleId}}/Member/User:{{memberId}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
-### 设置角色成员(角色成员)
+### 设置角色成员-单个(角色成员)
 # @prompt roleId   角色编号
 # @prompt memberId 成员编号(角色成员编号)
 PUT /Security/Roles/{{roleId}}/Member/Role:{{memberId}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
-### 设置角色成员集
+### 设置角色成员集(文本格式，以逗号或换行符分隔)
 # @prompt roleId     角色编号
-# @prompt memberType 成员类型(0:用户,1:角色)
+# @prompt memberType 成员类型(0:User,1:Role)
 # @prompt memberId   成员编号
 PUT /Security/Roles/{{roleId}}/Members HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
+Content-Type: text/plain
 
-[
-	{
-		"MemberId":{{memberId}},
-		"MemberType":"{{memberType}}"
-	}
-]
+{{memberType}}:{{memberId}}
 
-### 删除角色成员(用户成员)
+### 删除角色成员-单个(用户成员)
 # @prompt roleId   角色编号
 # @prompt memberId 成员编号(用户成员编号)
 DELETE /Security/Roles/{{roleId}}/Member/User:{{memberId}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
-### 删除角色成员(角色成员)
+### 删除角色成员-单个(角色成员)
 # @prompt roleId   角色编号
 # @prompt memberId 成员编号(角色成员编号)
 DELETE /Security/Roles/{{roleId}}/Member/Role:{{memberId}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
-### 删除角色成员集
+### 删除角色成员集(文本格式，以逗号或换行符分隔)
 # @prompt roleId     角色编号
-# @prompt memberType 成员类型(0:用户,1:角色)
+# @prompt memberType 成员类型(0:User,1:Role)
 # @prompt memberId   成员编号
 DELETE /Security/Roles/{{roleId}}/Members HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
+Content-Type: text/plain
 
-[
-	{
-		"MemberId":{{memberId}},
-		"MemberType":"{{memberType}}"
-	}
-]
+{{memberType}}:{{memberId}}

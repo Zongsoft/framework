@@ -77,7 +77,7 @@ partial class RoleController
 			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(roleId))
 				return this.BadRequest();
 
-			return await this.Service.SetParentAsync(Member.User(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
+			return await this.Service.SetParentAsync(Member.Role(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
 		[HttpPut("/[area]/{id}/Roles")]
@@ -93,7 +93,7 @@ partial class RoleController
 				return this.BadRequest();
 
 			var roles = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).Select(id => new Identifier(typeof(IRole), id)).ToArray();
-			var count = await this.Service.SetParentsAsync(Member.User(id), roles, cancellation);
+			var count = await this.Service.SetParentsAsync(Member.Role(id), roles, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 		#endregion
@@ -105,13 +105,26 @@ partial class RoleController
 			return this.Service.GetAsync(new Identifier(typeof(IRole), id), this.Request.Headers.GetDataSchema(), cancellation);
 		}
 
+		[HttpPut("/[area]/{id}/Member/{argument}")]
+		public async Task<IActionResult> Set(string id, string argument, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(argument))
+				return this.BadRequest();
+
+			if(!Member.TryParse(argument, out var member))
+				return this.BadRequest();
+
+			return await this.Service.SetAsync(new Identifier(typeof(IRole), id), member, cancellation) ?
+				this.CreatedAtAction(nameof(Get), new { id }, null) : this.NoContent();
+		}
+
 		[HttpPut("/[area]/{id}/[controller]")]
 		public async Task<IActionResult> Set(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
 
-			var members = await this.GetMembersAsync(cancellation);
+			var members = await this.GetRequestAsync(cancellation);
 			if(members == null || !members.Any())
 				return this.BadRequest();
 
@@ -120,20 +133,33 @@ partial class RoleController
 				this.NoContent();
 		}
 
+		[HttpDelete("/[area]/{id}/Member/{argument}")]
+		public async Task<IActionResult> Remove(string id, string argument, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(argument))
+				return this.BadRequest();
+
+			if(!Member.TryParse(argument, out var member))
+				return this.BadRequest();
+
+			return await this.Service.RemoveAsync(new Identifier(typeof(IRole), id), member, cancellation) ?
+				this.NoContent() : this.NotFound();
+		}
+
 		[HttpDelete("/[area]/{id}/[controller]")]
 		public async Task<IActionResult> Remove(string id, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
 
-			var members = await this.GetMembersAsync(cancellation);
+			var members = await this.GetRequestAsync(cancellation);
 			var count = await this.Service.RemoveAsync(new Identifier(typeof(IRole), id), members, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 		#endregion
 
 		#region 私有方法
-		private async ValueTask<IEnumerable<Member>> GetMembersAsync(CancellationToken cancellation)
+		private async ValueTask<IEnumerable<Member>> GetRequestAsync(CancellationToken cancellation)
 		{
 			if(this.Request.HasJsonContentType())
 				return await Serialization.Serializer.Json.DeserializeAsync<Member[]>(this.Request.Body, cancellation);

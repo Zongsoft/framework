@@ -213,7 +213,7 @@ Content-Type: application/json
 
 ### 用户父级角色
 # @prompt id 用户编号
-GET /Security/Users/{{id}}/Roles HTTP/1.1
+GET /Security/Users/{{id}}/Parents HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
@@ -233,7 +233,7 @@ Authorization: Credential {{$dotenv credentialId}}
 ### 设置用户的父级角色
 # @prompt id    用户编号
 # @prompt roles 角色编号(以逗号分隔)
-PUT /Security/Users/{{id}}/Roles HTTP/1.1
+PUT /Security/Users/{{id}}/Parents HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 Content-Type: text/plain

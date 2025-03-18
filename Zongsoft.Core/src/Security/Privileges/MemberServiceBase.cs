@@ -106,7 +106,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 		if(shouldResetting)
 			await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
 
-		return await this.Accessor.UpsertAsync(members.Select(member => this.Create(role, member)), cancellation);
+		return await this.Accessor.UpsertManyAsync(members.Select(member => this.Create(role, member)), cancellation);
 	}
 
 	public ValueTask<int> SetAsync(IEnumerable<TMember> members, CancellationToken cancellation = default) => this.Accessor.UpsertManyAsync(members, cancellation);
@@ -195,10 +195,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 		if(identifier.Validate<IRole, Identifier>(out var roleId))
 			return Condition.Equal(nameof(IMember<TRole>.RoleId), roleId.Value);
 
-		if(identifier.Validate<IRole, string>(out var id))
-			return Condition.Equal(nameof(IRole.Name), id);
-
-		throw OperationException.Argument();
+		return Condition.Equal(nameof(IMember<TRole>.RoleId), identifier.Value);
 	}
 	#endregion
 
