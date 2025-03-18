@@ -35,6 +35,7 @@ using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Components;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
@@ -70,6 +71,69 @@ partial class MemberServiceBase<TRole, TMember>
 
 		foreach(var role in result)
 			yield return role;
+	}
+
+	public async IAsyncEnumerable<ICollection<Identifier>> GetAncestorsAsync(Member member, int depth, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
+	{
+		var result = new Stack<HashSet<Identifier>>();
+
+		//获取指定成员的父角色集
+		var parents = GetParentsAsync(member, cancellation);
+
+		//将父角色集压入结果栈
+		result.Push(parents.Synchronize(cancellation).ToHashSet());
+
+		//如果结果集为空则返回
+		if(result.Count == 0)
+			yield break;
+
+		//将结果集合并到去重集（注：最大层级数为1时，不需要去重处理）
+		var distinction = depth == 1 ? null : new HashSet<Identifier>(result.Peek());
+
+		//定义当前层级数
+		var current = 0;
+
+		//获取最上层的角色集
+		while(result.TryPeek(out var roles))
+		{
+			//如果指定了最大层级数则递增当前层级数；
+			//如果当前层级数已经到达了最大层级数则中断
+			if(depth > 0 && ++current == depth)
+				break;
+
+			//创建当前层的角色集
+			var hashset = new HashSet<Identifier>();
+
+			foreach(var role in roles)
+			{
+				//获取待查成员的父角色集
+				parents = GetParentsAsync(Member.Role(role), cancellation);
+
+				//依次将待查成员父角色加入到当前层集和去重集
+				await foreach(var parent in parents)
+				{
+					if(distinction.Add(parent))
+						hashset.Add(parent);
+				}
+			}
+
+			//将当前层压入结果栈
+			if(hashset.Count > 0)
+				result.Push(hashset);
+			else
+				break;
+		}
+
+		foreach(var roles in result)
+			yield return roles;
+
+		IAsyncEnumerable<Identifier> GetParentsAsync(Member member, CancellationToken cancellation) =>
+			this.Accessor.SelectAsync<Identifier>(
+				this.Name,
+				this.GetCriteria(member),
+				nameof(IMember<TRole>.RoleId),
+				cancellation
+			);
 	}
 
 	private class RoleComparer : IEqualityComparer<TRole>

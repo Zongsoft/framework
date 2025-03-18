@@ -33,13 +33,14 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Collections.Generic;
 
+using Zongsoft.Data;
 using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class AuthorizerBase : IAuthorizer, IMatchable, IMatchable<string>
+public abstract class AuthorizerBase : IAuthorizer, IMatchable, IMatchable<ClaimsPrincipal>
 {
 	#region 构造函数
 	protected AuthorizerBase(string name)
@@ -61,9 +62,31 @@ public abstract class AuthorizerBase : IAuthorizer, IMatchable, IMatchable<strin
 	public abstract IAsyncEnumerable<Privilege> AuthorizesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default);
 	#endregion
 
+	#region 虚拟方法
+	protected virtual ICondition GetCriteria(Identifier identifier)
+	{
+		if(identifier.IsEmpty)
+			return null;
+
+		if(identifier.Validate<Member>(out var member))
+			return Condition.Equal(nameof(Member.MemberId), member.MemberId.Value) &
+				   Condition.Equal(nameof(Member.MemberType), member.MemberType);
+
+		if(identifier.Validate<IRole, Identifier>(out var roleId))
+			return Condition.Equal(nameof(Member.MemberId), roleId.Value) &
+			       Condition.Equal(nameof(Member.MemberType), MemberType.Role);
+
+		if(identifier.Validate<IUser, Identifier>(out var userId))
+			return Condition.Equal(nameof(Member.MemberId), userId.Value) &
+			       Condition.Equal(nameof(Member.MemberType), MemberType.User);
+
+		return null;
+	}
+	#endregion
+
 	#region 服务匹配
-	bool IMatchable.Match(object argument) => argument is string name && this.OnMatch(name);
-	bool IMatchable<string>.Match(string argument) => this.OnMatch(argument);
-	protected virtual bool OnMatch(string argument) => string.Equals(this.Scheme, argument, StringComparison.OrdinalIgnoreCase);
+	bool IMatchable.Match(object argument) => argument is ClaimsPrincipal principal && this.OnMatch(principal);
+	bool IMatchable<ClaimsPrincipal>.Match(ClaimsPrincipal argument) => this.OnMatch(argument);
+	protected virtual bool OnMatch(ClaimsPrincipal principal) => principal != null && principal.Identity != null && principal.Identity.IsAuthenticated;
 	#endregion
 }

@@ -48,6 +48,13 @@ public interface IMemberService<TRole, TMember> where TRole : IRole where TMembe
 	/// <returns>返回的所有祖先角色集。</returns>
 	IAsyncEnumerable<TRole> GetAncestorsAsync(Member member, CancellationToken cancellation = default);
 
+	/// <summary>获取指定成员的所有祖先角色集。</summary>
+	/// <param name="member">指定的成员标识。</param>
+	/// <param name="depth">指定要获取的祖先角色的最大层级。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回的祖先角色层级列表集。</returns>
+	IAsyncEnumerable<ICollection<Identifier>> GetAncestorsAsync(Member member, int depth, CancellationToken cancellation = default);
+
 	/// <summary>获取指定成员的父级角色集。</summary>
 	/// <param name="member">指定的成员标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
