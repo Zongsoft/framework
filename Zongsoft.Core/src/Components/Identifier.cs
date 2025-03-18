@@ -199,8 +199,15 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 	{
 		public override Identifier Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
-			var text = reader.GetString();
-			return Identifier.Parse(text);
+			return reader.TokenType switch
+			{
+				JsonTokenType.String => new(typeof(object), reader.GetString()),
+				JsonTokenType.Number => reader.TryGetInt32(out var integer) ? new(typeof(object), integer) : new(typeof(object), reader.GetDouble()),
+				JsonTokenType.True => new(typeof(object), true),
+				JsonTokenType.False => new(typeof(object), false),
+				JsonTokenType.Null => default,
+				_ => default,
+			};
 		}
 
 		public override void Write(Utf8JsonWriter writer, Identifier value, JsonSerializerOptions options)

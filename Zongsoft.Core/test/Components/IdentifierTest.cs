@@ -62,4 +62,27 @@ public class IdentifierTest
 		Assert.Equal(100m, (decimal)identifier);
 		Assert.Equal("100", (string)identifier);
 	}
+
+	[Fact]
+	public void TestDeserialize()
+	{
+		const string JSON = """
+		{
+			"Id" : 100,
+			"Name" : "Popeye"
+		}
+		""";
+
+		var result = System.Text.Json.JsonSerializer.Deserialize<Person>(JSON);
+		Assert.NotNull(result.Id.Value);
+		Assert.IsType<int>(result.Id.Value);
+		Assert.Equal(100, (int)result.Id.Value);
+		Assert.Equal("Popeye", result.Name);
+	}
+
+	private class Person
+	{
+		public Identifier Id { get; set; }
+		public string Name { get; set; }
+	}
 }
