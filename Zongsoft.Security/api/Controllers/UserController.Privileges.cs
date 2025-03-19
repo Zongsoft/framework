@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
@@ -41,6 +42,7 @@ using Zongsoft.Web;
 using Zongsoft.Data;
 using Zongsoft.Services;
 using Zongsoft.Components;
+using Zongsoft.Collections;
 using Zongsoft.Web.Http;
 using Zongsoft.Security.Privileges;
 
@@ -48,55 +50,34 @@ namespace Zongsoft.Security.Web.Controllers;
 
 partial class UserController
 {
-	[ControllerName("Members")]
+	[ControllerName("Privileges")]
 	[Authorize(Roles = $"{IRole.Administrators},{IRole.Security}")]
-	public class MemberController : ControllerBase
+	public class PrivilegeController : ControllerBase
 	{
 		#region 公共属性
-		public IMemberService<IRole, IMember<IRole>> Service => this.HttpContext.RequestServices.Resolve<IMemberService<IRole, IMember<IRole>>>(this.User);
+		public IPrivilegeService Service => this.HttpContext.RequestServices.Resolve<IPrivilegeService>(this.User);
 		#endregion
 
-		#region 上级角色
-		[HttpGet("/[area]/{id}/Ancestors")]
-		public IActionResult GetAncestors(string id, CancellationToken cancellation = default)
+		#region 公共方法
+		[HttpGet("/[area]/{id}/[controller]")]
+		public IAsyncEnumerable<IPrivilege> Get(string id, CancellationToken cancellation = default)
 		{
-			if(this.Request.Query.TryGetValue("depth", out var text) && int.TryParse(text, out var depth))
-				return this.Ok(this.Service.GetAncestorsAsync(Member.User(id), depth, cancellation));
-			else
-				return this.Ok(this.Service.GetAncestorsAsync(Member.User(id), cancellation));
+			return this.Service.GetPrivilegesAsync(new Identifier(typeof(IUser), id), new Parameters(this.Request.GetParameters()), cancellation);
 		}
 
-		[HttpGet("/[area]/{id}/Roles")]
-		[HttpGet("/[area]/{id}/Parents")]
-		public IAsyncEnumerable<IRole> GetParents(string id, CancellationToken cancellation = default)
-		{
-			return this.Service.GetParentsAsync(Member.User(id), cancellation);
-		}
-
-		[HttpPut("/[area]/{id}/Role")]
-		[HttpPut("/[area]/{id}/Parent")]
-		public async ValueTask<IActionResult> SetParent(string id, string roleId, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(roleId))
-				return this.BadRequest();
-
-			return await this.Service.SetParentAsync(Member.User(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
-		}
-
-		[HttpPut("/[area]/{id}/Roles")]
-		[HttpPut("/[area]/{id}/Parents")]
-		public async ValueTask<IActionResult> SetParents(string id, CancellationToken cancellation)
+		[HttpPut("/[area]/{id}/[controller]")]
+		public async Task<IActionResult> Set(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
 
-			var content = await this.Request.ReadAsStringAsync();
+			var parameters = new Parameters(this.Request.GetParameters());
+			var modelType = this.Service is IDiscriminator discriminator ? discriminator.Discriminate(parameters) as Type : null;
+			if(modelType == null)
+				return this.StatusCode(StatusCodes.Status501NotImplemented);
 
-			if(string.IsNullOrWhiteSpace(content))
-				return this.BadRequest();
-
-			var roles = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).Select(id => new Identifier(typeof(IRole), id)).ToArray();
-			var count = await this.Service.SetParentsAsync(Member.User(id), roles, cancellation);
+			var requirements = (IEnumerable)await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType.MakeArrayType(), cancellation);
+			var count = await this.Service.SetPrivilegesAsync(new Identifier(typeof(IUser), id), requirements.OfType<IPrivilege>(), reset, parameters, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 		#endregion

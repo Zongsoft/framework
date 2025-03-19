@@ -128,12 +128,12 @@ partial class MemberServiceBase<TRole, TMember>
 			yield return roles;
 
 		IAsyncEnumerable<Identifier> GetParentsAsync(Member member, CancellationToken cancellation) =>
-			this.Accessor.SelectAsync<Identifier>(
+			this.Accessor.SelectAsync<object>(
 				this.Name,
 				this.GetCriteria(member),
 				nameof(IMember<TRole>.RoleId),
 				cancellation
-			);
+			).Map(id => new Identifier(typeof(IRole), id));
 	}
 
 	private class RoleComparer : IEqualityComparer<TRole>

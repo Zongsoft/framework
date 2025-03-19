@@ -58,9 +58,12 @@ partial class RoleController
 
 		#region 上级角色
 		[HttpGet("/[area]/{id}/Ancestors")]
-		public IAsyncEnumerable<IRole> GetAncestors(string id, CancellationToken cancellation = default)
+		public IActionResult GetAncestors(string id, CancellationToken cancellation = default)
 		{
-			return this.Service.GetAncestorsAsync(Member.Role(id), cancellation);
+			if(this.Request.Query.TryGetValue("depth", out var text) && int.TryParse(text, out var depth))
+				return this.Ok(this.Service.GetAncestorsAsync(Member.Role(id), depth, cancellation));
+			else
+				return this.Ok(this.Service.GetAncestorsAsync(Member.Role(id), cancellation));
 		}
 
 		[HttpGet("/[area]/{id}/Roles")]

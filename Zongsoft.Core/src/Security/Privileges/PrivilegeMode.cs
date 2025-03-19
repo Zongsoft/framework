@@ -35,7 +35,9 @@ namespace Zongsoft.Security.Privileges;
 public enum PrivilegeMode : byte
 {
 	/// <summary>拒绝</summary>
-	Revoked = 0,
+	Denied = 0,
 	/// <summary>授予</summary>
 	Granted = 1,
+	/// <summary>撤回</summary>
+	Revoked = 2,
 }

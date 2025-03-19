@@ -43,7 +43,7 @@ using Zongsoft.Security.Privileges.Models;
 namespace Zongsoft.Security.Privileges;
 
 [Service<IPrivilegeService>]
-public class PrivilegeService : PrivilegeServiceBase
+public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 {
 	#region 重写属性
 	protected override IDataAccess Accessor => Module.Current.Accessor;
@@ -105,6 +105,8 @@ public class PrivilegeService : PrivilegeServiceBase
 		if(!TryGetMember(ref identifier, out var memberId, out var memberType))
 			return 0;
 
+		var count = 0;
+
 		if(IsFiltering(parameters))
 		{
 			//找出过滤字段为空值的权限
@@ -115,7 +117,7 @@ public class PrivilegeService : PrivilegeServiceBase
 
 			//删除过滤字段为空值的权限设置
 			if(requirements.Length > 0)
-				await Module.Current.Accessor.DeleteAsync<PrivilegeFilteringModel>(
+				count = await Module.Current.Accessor.DeleteAsync<PrivilegeFilteringModel>(
 					Condition.Equal(nameof(PrivilegeFilteringModel.MemberId), memberId) &
 					Condition.Equal(nameof(PrivilegeFilteringModel.MemberType), memberType) &
 					Condition.In(nameof(PrivilegeFilteringModel.PrivilegeName), requirements), cancellation: cancellation);
@@ -131,26 +133,26 @@ public class PrivilegeService : PrivilegeServiceBase
 					model.PrivilegeFilter = privilege.Filter;
 				}));
 
-			return await Module.Current.Accessor.UpsertManyAsync(models, cancellation);
+			return count + await Module.Current.Accessor.UpsertManyAsync(models, cancellation);
 		}
 		else
 		{
 			//找出授权方式为空值的权限
 			var requirements = privileges
 				.OfType<PrivilegeRequirement>()
-				.Where(privilege => privilege.Mode == null)
+				.Where(privilege => privilege.Mode == null || privilege.Mode == PrivilegeMode.Revoked)
 				.Select(privilege => privilege.Name).ToArray();
 
 			//删除授权方式为空值的权限设置
 			if(requirements.Length > 0)
-				await Module.Current.Accessor.DeleteAsync<PrivilegeModel>(
+				count = await Module.Current.Accessor.DeleteAsync<PrivilegeModel>(
 					Condition.Equal(nameof(PrivilegeModel.MemberId), memberId) &
 					Condition.Equal(nameof(PrivilegeModel.MemberType), memberType) &
 					Condition.In(nameof(PrivilegeModel.PrivilegeName), requirements), cancellation: cancellation);
 
 			var models = privileges
 				.OfType<PrivilegeRequirement>()
-				.Where(privilege => privilege.Mode.HasValue)
+				.Where(privilege => privilege.Mode.HasValue && (privilege.Mode == PrivilegeMode.Denied || privilege.Mode == PrivilegeMode.Granted))
 				.Select(privilege => Model.Build<PrivilegeModel>(model =>
 				{
 					model.MemberId = memberId;
@@ -159,9 +161,15 @@ public class PrivilegeService : PrivilegeServiceBase
 					model.PrivilegeMode = privilege.Mode.Value;
 				}));
 
-			return await Module.Current.Accessor.UpsertManyAsync(models, cancellation);
+			return count + await Module.Current.Accessor.UpsertManyAsync(models, cancellation);
 		}
 	}
+	#endregion
+
+	#region 显式实现
+	object IDiscriminator.Discriminate(object argument) => argument is Parameters parameters && IsFiltering(parameters) ?
+		typeof(PrivilegeFilteringRequirement) :
+		typeof(PrivilegeRequirement);
 	#endregion
 
 	#region 私有方法

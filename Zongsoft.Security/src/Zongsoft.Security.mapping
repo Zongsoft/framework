@@ -9,6 +9,7 @@
 
 			<property name="RoleId" type="uint" nullable="false" sequence="#" />
 			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Avatar" type="string" length="50" nullable="false" />
 			<property name="Nickname" type="string" length="50" nullable="true" />
 			<property name="Namespace" type="string" length="50" nullable="false" />
 			<property name="Description" type="string" length="500" nullable="true" />
@@ -25,7 +26,7 @@
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="Permissions" port="Permission" multiplicity="*" immutable="false">
+			<complexProperty name="Privileges" port="Privilege" multiplicity="*" immutable="false">
 				<link port="MemberId" anchor="RoleId" />
 
 				<constraints>
@@ -33,7 +34,7 @@
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="PermissionFilters" port="PermissionFilter" multiplicity="*" immutable="false">
+			<complexProperty name="PrivilegeFilters" port="PrivilegeFilter" multiplicity="*" immutable="false">
 				<link port="MemberId" anchor="RoleId" />
 
 				<constraints>
@@ -49,6 +50,7 @@
 
 			<property name="UserId" type="uint" nullable="false" sequence="#" />
 			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Avatar" type="string" length="50" nullable="false" />
 			<property name="Nickname" type="string" length="50" nullable="true" />
 			<property name="Namespace" type="string" length="50" nullable="true" />
 			<property name="Password" type="binary" length="64" nullable="true" />
@@ -83,7 +85,7 @@
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="Permissions" port="Permission" multiplicity="*" immutable="false">
+			<complexProperty name="Privileges" port="Privilege" multiplicity="*" immutable="false">
 				<link port="MemberId" anchor="UserId" />
 
 				<constraints>
@@ -91,7 +93,7 @@
 				</constraints>
 			</complexProperty>
 
-			<complexProperty name="PermissionFilters" port="PermissionFilter" multiplicity="*" immutable="false">
+			<complexProperty name="PrivilegeFilters" port="PrivilegeFilter" multiplicity="*" immutable="false">
 				<link port="MemberId" anchor="UserId" />
 
 				<constraints>
@@ -156,36 +158,6 @@
 			<property name="MemberType" type="byte" nullable="false" />
 			<property name="PrivilegeName" type="string" length="100" nullable="false" />
 			<property name="PrivilegeFilter" type="string" length="500" nullable="false" />
-		</entity>
-
-		<entity name="Permission" table="Security_Permission">
-			<key>
-				<member name="MemberId" />
-				<member name="MemberType" />
-				<member name="Target" />
-				<member name="Action" />
-			</key>
-
-			<property name="MemberId" type="uint" nullable="false" />
-			<property name="MemberType" type="byte" nullable="false" />
-			<property name="Target" type="string" length="50" nullable="false" />
-			<property name="Action" type="string" length="50" nullable="false" />
-			<property name="Granted" type="bool" nullable="false" />
-		</entity>
-
-		<entity name="PermissionFilter" table="Security_PermissionFilter">
-			<key>
-				<member name="MemberId" />
-				<member name="MemberType" />
-				<member name="Target" />
-				<member name="Action" />
-			</key>
-
-			<property name="MemberId" type="uint" nullable="false" />
-			<property name="MemberType" type="byte" nullable="false" />
-			<property name="Target" type="string" length="50" nullable="false" />
-			<property name="Action" type="string" length="50" nullable="false" />
-			<property name="Filter" type="string" length="500" nullable="false" />
 		</entity>
 
 		<entity name="Censorship" table="Security_Censorship">

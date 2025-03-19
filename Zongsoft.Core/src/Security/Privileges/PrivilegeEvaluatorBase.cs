@@ -74,10 +74,15 @@ public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator, IMatchable, 
 			//同级拒绝优先
 			foreach(var statement in statements)
 			{
-				if(statement.PrivilegeMode == PrivilegeMode.Granted)
-					privileges.Add(statement.PrivilegeName);
-				else
-					privileges.Remove(statement.PrivilegeName);
+				switch(statement.PrivilegeMode)
+				{
+					case PrivilegeMode.Denied:
+						privileges.Remove(statement.PrivilegeName);
+						break;
+					case PrivilegeMode.Granted:
+						privileges.Add(statement.PrivilegeName);
+						break;
+				}
 			}
 		}
 
