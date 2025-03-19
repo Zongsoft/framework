@@ -209,6 +209,7 @@ namespace Zongsoft.Web
 				options.Filters.Add(new Zongsoft.Web.Filters.ExceptionFilter());
 				options.Conventions.Add(new ApplicationModelConvention());
 				options.Conventions.Add(new Zongsoft.Web.Filters.GlobalFilterConvention());
+				options.Conventions.Add(new Zongsoft.Web.Security.AuthorizationConvention());
 				options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.RangeModelBinderProvider());
 				options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.MixtureModelBinderProvider());
 			});

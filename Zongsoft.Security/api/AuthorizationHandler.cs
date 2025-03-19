@@ -34,7 +34,7 @@ using System.Security.Claims;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 using Zongsoft.Web;
 using Zongsoft.Web.Http;
@@ -46,19 +46,47 @@ namespace Zongsoft.Security.Privileges.Web;
 [Service<IAuthorizationHandler>]
 public class AuthorizationHandler : IAuthorizationHandler
 {
-	public Task HandleAsync(AuthorizationHandlerContext context)
+	public async Task HandleAsync(AuthorizationHandlerContext context)
 	{
 		if(context.User.IsAnonymous())
-			return Task.CompletedTask;
+			return;
 
 		var authorizer = GetAuthorizer(context.User.Identity);
 
-		if(authorizer != null && context.Resource is HttpContext http)
+		if(authorizer != null)
 		{
-			var parameters = new Parameters(http.Request.GetParameters());
+			var parameters = context.Resource is HttpContext http ? new Parameters(http.Request.GetParameters()) : null;
+			await this.AuthorizeAsync(context, authorizer, context.User.Identity as ClaimsIdentity, parameters);
 		}
 
-		return Task.CompletedTask;
+		foreach(var identity in context.User.Identities)
+		{
+			authorizer = GetAuthorizer(identity);
+
+			if(authorizer != null)
+			{
+				var parameters = context.Resource is HttpContext http ? new Parameters(http.Request.GetParameters()) : null;
+				await this.AuthorizeAsync(context, authorizer, identity, parameters);
+			}
+		}
+	}
+
+	#region 私有方法
+	private async ValueTask AuthorizeAsync(AuthorizationHandlerContext context, IAuthorizer authorizer, ClaimsIdentity identity, Parameters parameters)
+	{
+		if(authorizer == null || identity == null)
+			return;
+
+		foreach(var requirement in context.Requirements)
+		{
+			if(requirement is OperationAuthorizationRequirement operation)
+			{
+				if(await authorizer.AuthorizeAsync(identity, operation.Name, parameters))
+					context.Succeed(requirement);
+				else
+					context.Fail(new AuthorizationFailureReason(this, $"The '{operation.Name}' operation is not authorized."));
+			}
+		}
 	}
 
 	private static IAuthorizer GetAuthorizer(System.Security.Principal.IIdentity identity)
@@ -71,4 +99,5 @@ public class AuthorizationHandler : IAuthorizationHandler
 		else
 			return Authorization.Authorizers[identity.AuthenticationType];
 	}
+	#endregion
 }
