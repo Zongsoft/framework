@@ -81,7 +81,7 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 	#endregion
 
 	#region 重写方法
-	public bool Equals(Identifier other) => this.Type == other.Type && this.Value == other.Value;
+	public bool Equals(Identifier other) => this.Type == other.Type && object.Equals(this.Value, other.Value);
 	public override bool Equals(object obj) => obj is Identifier other && this.Equals(other);
 	public override int GetHashCode() => this.Value is string text ? HashCode.Combine(this.Type, text.ToUpperInvariant()) : HashCode.Combine(this.Type, this.Value);
 	public override string ToString()
@@ -214,9 +214,15 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 			};
 		}
 
-		public override void Write(Utf8JsonWriter writer, Identifier value, JsonSerializerOptions options)
+		public override void Write(Utf8JsonWriter writer, Identifier identifier, JsonSerializerOptions options)
 		{
-			writer.WriteStringValue(value.ToString());
+			if(identifier.IsEmpty || identifier.Value == null)
+			{
+				writer.WriteNullValue();
+				return;
+			}
+
+			Serialization.Json.JsonWriterExtension.WriteObject(writer, identifier.Value, options);
 		}
 	}
 	#endregion
