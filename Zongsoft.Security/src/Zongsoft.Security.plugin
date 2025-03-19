@@ -43,9 +43,8 @@
 			<expose name="Transformers" value="{path:../@Transformer}" />
 		</object>
 
-		<object name="Authorization" value="{static:Zongsoft.Security.Membership.Authorization.Instance, Zongsoft.Core}">
-			<expose name="Filters" value="{path:../@Filters}" />
-			<object name="Default" value="{srv:~@Security}" />
+		<object name="Authorization" value="{static:Zongsoft.Security.Privileges.Authorization.Authorizers, Zongsoft.Core}">
+			<object name="Default" type="Zongsoft.Security.Privileges.Authorizer, Zongsoft.Security" />
 		</object>
 	</extension>
 

@@ -52,6 +52,7 @@ public abstract class AuthorizerBase : IAuthorizer, IMatchable, IMatchable<Claim
 	#region 公共属性
 	public string Name { get; }
 	public Privileger Privileger { get; }
+	public abstract IPrivilegeEvaluator Evaluator { get; }
 	#endregion
 
 	#region 公共方法

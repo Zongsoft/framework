@@ -32,6 +32,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Claims;
 
+using Zongsoft.Services;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
@@ -46,6 +47,9 @@ public interface IAuthorizer
 
 	/// <summary>获取权限定义器。</summary>
 	Privileger Privileger { get; }
+
+	/// <summary>获取权限评估器。</summary>
+	IPrivilegeEvaluator Evaluator { get; }
 
 	/// <summary>判断指定用户是否具有指定的授权。</summary>
 	/// <param name="user">指定的用户身份。</param>

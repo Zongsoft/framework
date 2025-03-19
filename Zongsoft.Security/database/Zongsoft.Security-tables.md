@@ -54,7 +54,7 @@ MemberType | byte | 1 | ✗ | 主键，成员类型(_0:用户; 1:角色_)
 MemberId      | int     | 4   | ✗ | 主键，用户或角色编号
 MemberType    | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
 PrivilegeName | varchar | 100 | ✗ | 主键，权限标识
-PrivilegeMode | tinyint | 1   | ✗ | 授权方式
+PrivilegeMode | byte    | 1   | ✗ | 授权方式
 
 > 注：权限标识(_`PrivilegeName`_)由 _授权目标_ 和 _授权操作_ 标识构成，譬如：
 > - `Employee:*`                  表示 _公共_ 模块中 _员工_ 的所有操作；

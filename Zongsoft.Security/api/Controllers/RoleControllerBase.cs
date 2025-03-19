@@ -38,6 +38,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Web;
+using Zongsoft.Web.Http;
 using Zongsoft.Data;
 using Zongsoft.Services;
 using Zongsoft.Security.Membership;
@@ -270,14 +271,14 @@ namespace Zongsoft.Security.Web.Controllers
 				return this.BadRequest();
 
 			var members = Zongsoft.Common.StringExtension.Slice<uint>(content, ',', uint.TryParse).Select(roleId => new Member(roleId, id, MemberType.Role));
-			return this.MemberProvider.SetMembers(members) > 0 ? (IActionResult)this.CreatedAtAction(nameof(GetRoles), new { id }, members) : this.NotFound();
+			return this.MemberProvider.SetMembers(members) > 0 ? this.CreatedAtAction(nameof(GetRoles), new { id }, members) : this.NotFound();
 		}
 
 		[HttpGet("{id}/Members")]
 		[HttpGet("Members/{id:required}")]
 		public Task<IActionResult> GetMembers(uint id)
 		{
-			var members = this.MemberProvider.GetMembers(id, this.Request.GetDataSchema());
+			var members = this.MemberProvider.GetMembers(id, this.Request.Headers.GetDataSchema());
 
 			return members != null ?
 				Task.FromResult((IActionResult)this.Ok(members)) :

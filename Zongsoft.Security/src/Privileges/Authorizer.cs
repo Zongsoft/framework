@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Security library.
  *
@@ -28,14 +28,13 @@
  */
 
 using System;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 
-[assembly: Zongsoft.Services.ApplicationModule(Zongsoft.Security.Module.NAME)]
+using Zongsoft.Services;
 
-namespace Zongsoft.Security.Web;
+namespace Zongsoft.Security.Privileges;
 
-internal static class Utility
+public class Authorizer(string name) : AuthorizerBase(name)
 {
+	public override IPrivilegeEvaluator Evaluator => Module.Current.Services.Resolve<IPrivilegeEvaluator>();
 }
