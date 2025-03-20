@@ -71,39 +71,9 @@ public partial class ControllerDescriptor(ControllerModel controller) : ICommonM
 		}
 	}
 
-	public string QualifiedName
-	{
-		get
-		{
-			if(_qualifiedName == null)
-			{
-				var qualifiedName = this.Service?.QualifiedName;
-
-				if(string.IsNullOrEmpty(qualifiedName))
-				{
-					var attribute = ApplicationModuleAttribute.Find(this.ControllerType);
-
-					if(attribute == null || string.IsNullOrEmpty(attribute.Name))
-						qualifiedName = GetFullName();
-					else
-						qualifiedName = $"{attribute.Name}:{GetFullName()}";
-				}
-
-				_qualifiedName = qualifiedName;
-			}
-
-			return _qualifiedName;
-
-			string GetFullName()
-			{
-				var path = ControllerNameAttribute.GetAncestorPath(this.ControllerType, Type.Delimiter);
-				return string.IsNullOrEmpty(path) ? this.ControllerName : $"{path}.{this.ControllerName}";
-			}
-		}
-	}
-
 	string ICommonModel.Name => _controller.ControllerName;
 	public string DisplayName => _controller.DisplayName;
+	public string QualifiedName => _qualifiedName ??= this.GetQualifiedName();
 	public string ControllerName => _controller.ControllerName;
 	public Type ControllerType => _controller.ControllerType;
 	public IList<PropertyModel> ControllerProperties => _controller.ControllerProperties;
@@ -141,15 +111,55 @@ public partial class ControllerDescriptor(ControllerModel controller) : ICommonM
 			var modelType = genericTypes[0].GenericTypeArguments[0];
 			var serviceType = genericTypes[0].GenericTypeArguments[1];
 
-			var serviceDescriptor = ServiceDescriptorProvider.Default.GetDescriptor(serviceType);
-
-			if(ApplicationContext.Current.Services.GetService(serviceType) is IDataService service)
-				return (serviceDescriptor, Zongsoft.Data.Model.GetDescriptor(service, modelType));
-			else
-				return (serviceDescriptor, null);
+			return (
+				ServiceDescriptor.Get(serviceType),
+				Zongsoft.Data.Model.GetDescriptor(modelType)
+			);
 		}
 
 		return default;
+	}
+
+	private string GetQualifiedName()
+	{
+		var qualifiedName = this.Service?.QualifiedName;
+
+		if(string.IsNullOrEmpty(qualifiedName))
+		{
+			var attribute = ApplicationModuleAttribute.Find(this.ControllerType);
+
+			if(attribute == null || string.IsNullOrEmpty(attribute.Name))
+				qualifiedName = GetFullName();
+			else
+				qualifiedName = $"{attribute.Name}:{GetFullName()}";
+		}
+
+		return qualifiedName;
+
+		string GetFullName()
+		{
+			var path = GetAncestorPath(this.ControllerType);
+			return string.IsNullOrEmpty(path) ? this.ControllerName : $"{path}.{this.ControllerName}";
+		}
+	}
+
+	private static string GetAncestorPath(Type controllerType)
+	{
+		if(controllerType == null || !controllerType.IsNested)
+			return null;
+
+		var stack = new Stack<Type>();
+		var type = controllerType.DeclaringType;
+
+		while(type != null)
+		{
+			if(ControllerFeatureProvider.IsControllerType(type))
+				stack.Push(type);
+
+			type = type.DeclaringType;
+		}
+
+		return string.Join(Type.Delimiter, stack.Select(type => type.Name));
 	}
 	#endregion
 }
