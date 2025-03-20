@@ -76,8 +76,12 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 		{
 			if(string.IsNullOrEmpty(_qualifiedName))
 			{
-				var module = Services.ApplicationModuleAttribute.Find(this.Type)?.Name;
-				_qualifiedName = string.IsNullOrEmpty(module) ? this.Name : $"{module}:{this.Name}";
+				var attribute = Services.ApplicationModuleAttribute.Find(this.Type);
+
+				if(attribute == null)
+					_qualifiedName = string.IsNullOrEmpty(this.Type.Namespace) ? this.Name : $"{this.Type.Namespace}.{this.Name}";
+				else
+					_qualifiedName = string.IsNullOrEmpty(attribute.Name) ? this.Name : $"{attribute.Name}:{this.Name}";
 			}
 
 			return _qualifiedName;

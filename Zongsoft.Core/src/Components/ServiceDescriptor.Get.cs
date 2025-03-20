@@ -63,7 +63,7 @@ partial class ServiceDescriptor
 			}
 		}
 
-		return _descriptors.GetOrAdd(type, type => provider?.GetDescriptor(type));
+		return _descriptors.GetOrAdd(type, type => (provider ?? ServiceDescriptorProvider.Default).GetDescriptor(type));
 	}
 	#endregion
 
@@ -111,6 +111,15 @@ partial class ServiceDescriptor
 			}
 			catch { return []; }
 		}
+	}
+	#endregion
+
+	#region 嵌套子类
+	private class ServiceDescriptorProvider : IServiceDescriptorProvider
+	{
+		public static readonly ServiceDescriptorProvider Default = new();
+		public bool Support(Type type) => type != null && (type.IsClass || type.IsInterface);
+		public ServiceDescriptor GetDescriptor(Type type) => new ServiceDescriptor(type);
 	}
 	#endregion
 }
