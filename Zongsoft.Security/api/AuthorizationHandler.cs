@@ -83,6 +83,13 @@ public class AuthorizationHandler : AuthorizationHandler<OperationAuthorizationR
 		if(authorizer == null || identity == null)
 			return;
 
+		//如果指定的用户属于内置的“系统管理员”角色则授权成功
+		if(identity.InRole(IRole.Administrators))
+		{
+			context.Succeed(requirement);
+			return;
+		}
+
 		//获取指定操作请求对应的多个权限定义
 		var privileges = authorizer.Privileger.FindAll(requirement.Name);
 
