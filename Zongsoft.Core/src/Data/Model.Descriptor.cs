@@ -28,62 +28,46 @@
  */
 
 using System;
-using System.Linq;
-using System.Reflection;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+partial class Model
 {
-	partial class Model
+	#region 私有变量
+	private static readonly ConcurrentDictionary<Type, ModelDescriptor> _descriptors = new();
+	#endregion
+
+	#region 公共方法
+	public static ModelDescriptor GetDescriptor<TModel>(this IDataService<TModel> service) => GetDescriptor(typeof(TModel));
+	public static ModelDescriptor GetDescriptor(this IDataService service)
 	{
-		private static readonly Dictionary<Type, ModelDescriptor> _descriptors = new();
+		if(service == null)
+			throw new ArgumentNullException(nameof(service));
 
-		public static ModelDescriptor GetDescriptor<TModel>(this IDataService<TModel> service) => GetDescriptor(service?.DataAccess, service?.Name, typeof(TModel));
-		public static ModelDescriptor GetDescriptor(this IDataService service, Type modelType) => GetDescriptor(service?.DataAccess, null, modelType);
-		public static ModelDescriptor GetDescriptor<TModel>(this IDataAccess accessor, string name = null) => GetDescriptor(accessor, name, typeof(TModel));
-		public static ModelDescriptor GetDescriptor(this IDataAccess accessor, Type modelType) => GetDescriptor(accessor, null, modelType);
-		public static ModelDescriptor GetDescriptor(this IDataAccess accessor, string name, Type modelType)
+		var contracts = service.GetType().GetInterfaces();
+
+		for(int i = 0; i < contracts.Length; i++)
 		{
-			if(accessor == null)
-				throw new ArgumentNullException(nameof(accessor));
-
-			//如果未指定模型名称则根据模型类型获取其名称
-			if(string.IsNullOrEmpty(name))
-				name = accessor.Naming.Get(modelType);
-
-			return GetDescriptor(Mapping.Entities[name], modelType);
+			if(contracts[i].IsGenericType && contracts[i].GetGenericTypeDefinition() == typeof(IDataService<>))
+				return GetDescriptor(contracts[i].GetGenericArguments()[0]);
 		}
 
-		public static ModelDescriptor GetDescriptor<TModel>(this Metadata.IDataEntity entity) => GetDescriptor(entity, typeof(TModel));
-		public static ModelDescriptor GetDescriptor(this Metadata.IDataEntity entity, Type modelType)
-		{
-			if(modelType == null)
-				throw new ArgumentNullException(nameof(modelType));
-
-			//对动态模型类进行特殊处理
-			if(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType.IsAbstract)
-				modelType = modelType.BaseType;
-
-			//如果已经缓存则直接从缓存中获取
-			if(_descriptors.TryGetValue(modelType, out var descriptor))
-				return descriptor;
-
-			//创建模型描述器
-			var model = new ModelDescriptor(modelType, entity);
-
-			//添加模型的属性定义
-			model.Properties.AddRange(
-				modelType.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-					.Select(property => new ModelPropertyDescriptor(property))
-			);
-
-			//添加模型的字段定义
-			model.Properties.AddRange(
-				modelType.GetFields(BindingFlags.Instance | BindingFlags.Public)
-					.Select(field => new ModelPropertyDescriptor(field))
-			);
-
-			return _descriptors.TryAdd(modelType, model) ? model : _descriptors[modelType];
-		}
+		return null;
 	}
+
+	public static ModelDescriptor GetDescriptor(Type modelType) => GetDescriptor(null, modelType);
+	public static ModelDescriptor GetDescriptor<TModel>(this Metadata.IDataEntity entity) => GetDescriptor(entity, typeof(TModel));
+	public static ModelDescriptor GetDescriptor(this Metadata.IDataEntity entity, Type modelType)
+	{
+		if(modelType == null)
+			throw new ArgumentNullException(nameof(modelType));
+
+		//对动态模型类进行特殊处理
+		if(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType.IsAbstract)
+			modelType = modelType.BaseType;
+
+		return _descriptors.GetOrAdd(modelType, modelType => new ModelDescriptor(modelType, entity));
+	}
+	#endregion
 }
