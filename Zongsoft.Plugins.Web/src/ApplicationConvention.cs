@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins.Web library.
  *
@@ -29,19 +29,17 @@
 
 using System;
 
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+
+using Zongsoft.Services;
+
 namespace Zongsoft.Web;
 
-public class Workbench : Zongsoft.Plugins.WorkbenchBase
+public class ApplicationConvention : IApplicationModelConvention
 {
-	#region 构造函数
-	internal Workbench(WebApplicationContext applicationContext) : base(applicationContext) { }
-	#endregion
-
-	#region 重写方法
-	protected override void OnOpen()
+	public void Apply(ApplicationModel application)
 	{
-		//调用基类同名方法，以启动工作台下Startup下的所有工作者
-		base.OnOpen();
+		ApplicationContext.Current.Properties[typeof(ControllerDescriptorCollection)] = new ControllerDescriptorCollection(application.Controllers);
 	}
-	#endregion
 }

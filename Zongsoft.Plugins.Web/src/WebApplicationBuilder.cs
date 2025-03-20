@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins.Web library.
  *
@@ -46,173 +46,172 @@ using Zongsoft.Plugins.Hosting;
 using Zongsoft.Security;
 using Zongsoft.Services;
 
-namespace Zongsoft.Web
-{
+namespace Zongsoft.Web;
+
 #if NET7_0_OR_GREATER
-	public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplication>
+public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplication>
+{
+	private readonly Microsoft.AspNetCore.Builder.WebApplicationBuilder _builder;
+	private readonly Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> _configure;
+
+	public WebApplicationBuilder(string name, string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null)
 	{
-		private readonly Microsoft.AspNetCore.Builder.WebApplicationBuilder _builder;
-		private readonly Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> _configure;
+		//注意：在.NET7.0 中必须通过 WebApplicationOptions 来设置环境变量
+		var environment = System.Environment.GetEnvironmentVariable(HostDefaults.EnvironmentKey);
 
-		public WebApplicationBuilder(string name, string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null)
+		var options = string.IsNullOrWhiteSpace(environment) ?
+			new WebApplicationOptions() { ApplicationName = name, Args = args } :
+			new WebApplicationOptions() { ApplicationName = name, Args = args, EnvironmentName = environment };
+
+		_builder = WebApplication.CreateBuilder(options);
+		_configure = configure;
+
+		//处理应用名为空的情况
+		if(string.IsNullOrEmpty(name))
 		{
-			//注意：在.NET7.0 中必须通过 WebApplicationOptions 来设置环境变量
-			var environment = System.Environment.GetEnvironmentVariable(HostDefaults.EnvironmentKey);
+			name = GetApplicationName(_builder.Configuration);
 
-			var options = string.IsNullOrWhiteSpace(environment) ?
-				new WebApplicationOptions() { ApplicationName = name, Args = args } :
-				new WebApplicationOptions() { ApplicationName = name, Args = args, EnvironmentName = environment };
-
-			_builder = WebApplication.CreateBuilder(options);
-			_configure = configure;
-
-			//处理应用名为空的情况
-			if(string.IsNullOrEmpty(name))
+			if(!string.IsNullOrEmpty(name))
 			{
-				name = GetApplicationName(_builder.Configuration);
-
-				if(!string.IsNullOrEmpty(name))
-				{
-					_builder.Environment.ApplicationName = name;
-					_builder.Configuration[HostDefaults.ApplicationKey] = name;
-					_builder.Host.ConfigureHostOptions((ctx, opt) => ctx.HostingEnvironment.ApplicationName = name);
-				}
+				_builder.Environment.ApplicationName = name;
+				_builder.Configuration[HostDefaults.ApplicationKey] = name;
+				_builder.Host.ConfigureHostOptions((ctx, opt) => ctx.HostingEnvironment.ApplicationName = name);
 			}
-
-			//设置服务提供程序工厂
-			_builder.Host.UseServiceProviderFactory(new Services.ServiceProviderFactory());
-
-			//挂载插件宿主生命期
-			_builder.Services.AddSingleton<IHostLifetime, PluginsHostLifetime>();
 		}
 
-		public override IServiceCollection Services => _builder.Services;
-		public override ConfigurationManager Configuration => _builder.Configuration;
-		public override IHostEnvironment Environment => _builder.Environment;
-		public override WebApplication Build()
-		{
-			_configure?.Invoke(_builder);
+		//设置服务提供程序工厂
+		_builder.Host.UseServiceProviderFactory(new Services.ServiceProviderFactory());
 
-			//创建默认的插件环境配置
-			var options = this.CreateOptions();
-
-			//添加插件配置文件源到配置管理器中
-			((IConfigurationBuilder)_builder.Configuration).Add(new Zongsoft.Configuration.PluginConfigurationSource(options));
-
-			//注册插件服务
-			this.RegisterServices(_builder.Services, options);
-
-			return _builder.Build();
-		}
-
-		protected override void RegisterServices(IServiceCollection services, PluginOptions options)
-		{
-			services.AddSingleton<WebApplicationContext>();
-			services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
-			services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
-
-			base.RegisterServices(services, options);
-			WebApplicationUtility.RegisterServices(services);
-		}
+		//挂载插件宿主生命期
+		_builder.Services.AddSingleton<IHostLifetime, PluginsHostLifetime>();
 	}
-#else
-	public partial class WebApplicationBuilder : Zongsoft.Plugins.Hosting.ApplicationBuilder
+
+	public override IServiceCollection Services => _builder.Services;
+	public override ConfigurationManager Configuration => _builder.Configuration;
+	public override IHostEnvironment Environment => _builder.Environment;
+	public override WebApplication Build()
 	{
-		public WebApplicationBuilder(string name, string[] args, Action<IHostBuilder> configure = null) : base(name, args, configure) { }
-		public WebApplicationBuilder(string name, IHostBuilder builder, Action<IHostBuilder> configure = null) : base(name, builder, configure) { }
-		protected override void RegisterServices(IServiceCollection services, PluginOptions options)
-		{
-			services.AddSingleton<WebApplicationContext>();
-			services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
-			services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
+		_configure?.Invoke(_builder);
 
-			base.RegisterServices(services, options);
-			WebApplicationUtility.RegisterServices(services);
-		}
+		//创建默认的插件环境配置
+		var options = this.CreateOptions();
+
+		//添加插件配置文件源到配置管理器中
+		((IConfigurationBuilder)_builder.Configuration).Add(new Zongsoft.Configuration.PluginConfigurationSource(options));
+
+		//注册插件服务
+		this.RegisterServices(_builder.Services, options);
+
+		return _builder.Build();
 	}
+
+	protected override void RegisterServices(IServiceCollection services, PluginOptions options)
+	{
+		services.AddSingleton<WebApplicationContext>();
+		services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
+		services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
+
+		base.RegisterServices(services, options);
+		WebApplicationUtility.RegisterServices(services);
+	}
+}
+#else
+public partial class WebApplicationBuilder : Zongsoft.Plugins.Hosting.ApplicationBuilder
+{
+	public WebApplicationBuilder(string name, string[] args, Action<IHostBuilder> configure = null) : base(name, args, configure) { }
+	public WebApplicationBuilder(string name, IHostBuilder builder, Action<IHostBuilder> configure = null) : base(name, builder, configure) { }
+	protected override void RegisterServices(IServiceCollection services, PluginOptions options)
+	{
+		services.AddSingleton<WebApplicationContext>();
+		services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
+		services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
+
+		base.RegisterServices(services, options);
+		WebApplicationUtility.RegisterServices(services);
+	}
+}
 #endif
 
-	internal static class WebApplicationUtility
+internal static class WebApplicationUtility
+{
+	public static void RegisterServices(IServiceCollection services)
 	{
-		public static void RegisterServices(IServiceCollection services)
+		services.AddHttpContextAccessor();
+		services.AddSingleton<IControllerActivator, ControllerActivator>();
+		services.AddSingleton<IApplicationFeatureProvider, ControllerFeatureProvider>();
+		services.AddSingleton<IApplicationFeatureProvider<ControllerFeature>, ControllerFeatureProvider>();
+		services.AddSingleton<IApplicationFeatureProvider, SignalR.HubFeatureProvider>();
+		services.AddSingleton<IApplicationFeatureProvider<SignalR.HubFeature>, SignalR.HubFeatureProvider>();
+		services.AddAuthentication(CredentialPrincipal.Scheme).AddCredentials();
+
+		services.Configure<FormOptions>(options =>
 		{
-			services.AddHttpContextAccessor();
-			services.AddSingleton<IControllerActivator, ControllerActivator>();
-			services.AddSingleton<IApplicationFeatureProvider, ControllerFeatureProvider>();
-			services.AddSingleton<IApplicationFeatureProvider<ControllerFeature>, ControllerFeatureProvider>();
-			services.AddSingleton<IApplicationFeatureProvider, SignalR.HubFeatureProvider>();
-			services.AddSingleton<IApplicationFeatureProvider<SignalR.HubFeature>, SignalR.HubFeatureProvider>();
-			services.AddAuthentication(CredentialPrincipal.Scheme).AddCredentials();
+			options.MultipartBodyLengthLimit = 1024 * 1024 * 512;
+		});
 
-			services.Configure<FormOptions>(options =>
+		services.Configure<StaticFileOptions>(options =>
+		{
+			var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+
+			foreach(var entry in Zongsoft.IO.Mime.Mapping)
+				provider.Mappings[entry.Key] = entry.Value;
+
+			options.ContentTypeProvider = provider;
+			options.DefaultContentType = "application/octet-stream";
+		});
+
+		services.AddCors(options => options.AddDefaultPolicy(builder =>
+			builder
+			.AllowAnyHeader()
+			.AllowAnyMethod()
+			.AllowCredentials()
+			.WithExposedHeaders(Http.Headers.Captcha, Http.Headers.Pagination)
+			.SetIsOriginAllowed(origin => true)));
+
+		services.AddLocalization();
+		services.AddRequestLocalization(options =>
+		{
+			options.ApplyCurrentCultureToResponseHeaders = true;
+
+			//获取系统支持的所有区域性信息
+			var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.AllCultures);
+
+			//清空当前支持的区域性信息
+			options.SupportedCultures.Clear();
+			options.SupportedUICultures.Clear();
+
+			for(int i = 0; i < cultures.Length; i++)
 			{
-				options.MultipartBodyLengthLimit = 1024 * 1024 * 512;
-			});
+				//忽略中性区域
+				if(string.IsNullOrEmpty(cultures[i].Name))
+					continue;
 
-			services.Configure<StaticFileOptions>(options =>
-			{
-				var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+				options.SupportedCultures.Add(cultures[i]);
+				options.SupportedUICultures.Add(cultures[i]);
+			}
+		});
 
-				foreach(var entry in Zongsoft.IO.Mime.Mapping)
-					provider.Mappings[entry.Key] = entry.Value;
+		services.AddEndpointsApiExplorer();
 
-				options.ContentTypeProvider = provider;
-				options.DefaultContentType = "application/octet-stream";
-			});
+		services.AddSignalR(options =>
+		{
+			options.EnableDetailedErrors = true;
+		});
 
-			services.AddCors(options => options.AddDefaultPolicy(builder =>
-				builder
-				.AllowAnyHeader()
-				.AllowAnyMethod()
-				.AllowCredentials()
-				.WithExposedHeaders(Http.Headers.Captcha, Http.Headers.Pagination)
-				.SetIsOriginAllowed(origin => true)));
+		services.AddControllers(options =>
+		{
+			options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
+			options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
 
-			services.AddLocalization();
-			services.AddRequestLocalization(options =>
-			{
-				options.ApplyCurrentCultureToResponseHeaders = true;
+			options.InputFormatters.Add(new Zongsoft.Web.Formatters.JsonInputFormatter());
+			options.OutputFormatters.Add(new Zongsoft.Web.Formatters.JsonOutputFormatter());
 
-				//获取系统支持的所有区域性信息
-				var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.AllCultures);
-
-				//清空当前支持的区域性信息
-				options.SupportedCultures.Clear();
-				options.SupportedUICultures.Clear();
-
-				for(int i = 0; i < cultures.Length; i++)
-				{
-					//忽略中性区域
-					if(string.IsNullOrEmpty(cultures[i].Name))
-						continue;
-
-					options.SupportedCultures.Add(cultures[i]);
-					options.SupportedUICultures.Add(cultures[i]);
-				}
-			});
-
-			services.AddEndpointsApiExplorer();
-
-			services.AddSignalR(options =>
-			{
-				options.EnableDetailedErrors = true;
-			});
-
-			services.AddControllers(options =>
-			{
-				options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
-				options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
-
-				options.InputFormatters.Add(new Zongsoft.Web.Formatters.JsonInputFormatter());
-				options.OutputFormatters.Add(new Zongsoft.Web.Formatters.JsonOutputFormatter());
-
-				options.Filters.Add(new Zongsoft.Web.Filters.ExceptionFilter());
-				options.Conventions.Add(new ApplicationModelConvention());
-				options.Conventions.Add(new Zongsoft.Web.Filters.GlobalFilterConvention());
-				options.Conventions.Add(new Zongsoft.Web.Security.AuthorizationConvention());
-				options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.RangeModelBinderProvider());
-				options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.MixtureModelBinderProvider());
-			});
-		}
+			options.Filters.Add(new Zongsoft.Web.Filters.ExceptionFilter());
+			options.Conventions.Add(new ApplicationConvention());
+			options.Conventions.Add(new Zongsoft.Web.Filters.GlobalFilterConvention());
+			options.Conventions.Add(new Zongsoft.Web.Security.AuthorizationConvention());
+			options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.RangeModelBinderProvider());
+			options.ModelBinderProviders.Insert(0, new Zongsoft.Web.Binders.MixtureModelBinderProvider());
+		});
 	}
 }
