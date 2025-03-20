@@ -34,6 +34,18 @@ namespace Zongsoft.Security.Privileges;
 
 public class Privileger : PrivilegeCategory
 {
+	public IEnumerable<Privilege> FindAll(ReadOnlySpan<char> qualifiedName)
+	{
+		if(qualifiedName.IsEmpty)
+			return [];
+
+		var index = qualifiedName.LastIndexOfAny([':', '.']);
+		if(index <= 0 || index >= qualifiedName.Length - 1)
+			return [];
+
+		return this.FindAll(qualifiedName[..index].ToString(), qualifiedName[(index + 1)..].ToString());
+	}
+
 	public IEnumerable<Privilege> FindAll(string target, string action)
 	{
 		foreach(var privilege in FindAll(this, target, action))
@@ -42,7 +54,7 @@ public class Privileger : PrivilegeCategory
 
 	private static IEnumerable<Privilege> FindAll(PrivilegeCategory category, string target, string action)
 	{
-		if(category == null || target == null)
+		if(category == null || string.IsNullOrEmpty(target))
 			yield break;
 
 		foreach(var privilege in category.Privileges)

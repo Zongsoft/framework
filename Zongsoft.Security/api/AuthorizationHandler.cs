@@ -31,6 +31,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
@@ -44,9 +45,10 @@ using Zongsoft.Collections;
 namespace Zongsoft.Security.Privileges.Web;
 
 [Service<IAuthorizationHandler>]
-public class AuthorizationHandler : IAuthorizationHandler
+public class AuthorizationHandler : AuthorizationHandler<OperationAuthorizationRequirement>
 {
-	public async Task HandleAsync(AuthorizationHandlerContext context)
+	#region 验证处理
+	protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, OperationAuthorizationRequirement requirement)
 	{
 		if(context.User.IsAnonymous())
 			return;
@@ -56,36 +58,60 @@ public class AuthorizationHandler : IAuthorizationHandler
 		if(authorizer != null)
 		{
 			var parameters = context.Resource is HttpContext http ? new Parameters(http.Request.GetParameters()) : null;
-			await this.AuthorizeAsync(context, authorizer, context.User.Identity as ClaimsIdentity, parameters);
+			await this.AuthorizeAsync(context, authorizer, context.User.Identity as ClaimsIdentity, requirement, parameters);
 		}
 
 		foreach(var identity in context.User.Identities)
 		{
+			if(identity.Equals(context.User.Identity))
+				continue;
+
 			authorizer = GetAuthorizer(identity);
 
 			if(authorizer != null)
 			{
 				var parameters = context.Resource is HttpContext http ? new Parameters(http.Request.GetParameters()) : null;
-				await this.AuthorizeAsync(context, authorizer, identity, parameters);
+				await this.AuthorizeAsync(context, authorizer, identity, requirement, parameters);
 			}
 		}
 	}
+	#endregion
 
 	#region 私有方法
-	private async ValueTask AuthorizeAsync(AuthorizationHandlerContext context, IAuthorizer authorizer, ClaimsIdentity identity, Parameters parameters)
+	private async ValueTask AuthorizeAsync(AuthorizationHandlerContext context, IAuthorizer authorizer, ClaimsIdentity identity, OperationAuthorizationRequirement requirement, Parameters parameters)
 	{
 		if(authorizer == null || identity == null)
 			return;
 
-		foreach(var requirement in context.Requirements)
+		//获取指定操作请求对应的多个权限定义
+		var privileges = authorizer.Privileger.FindAll(requirement.Name);
+
+		//执行授权验证（默认采用 Any 模式）
+		if(await Any(privileges, authorizer, identity, parameters))
+			context.Succeed(requirement);
+		else
+			context.Fail(new AuthorizationFailureReason(this, $"The '{requirement.Name}' operation is not authorized."));
+
+		async ValueTask<bool> Any(IEnumerable<Privilege> privileges, IAuthorizer authorizer, ClaimsIdentity identity, Parameters parameters)
 		{
-			if(requirement is OperationAuthorizationRequirement operation)
+			foreach(var privilege in privileges)
 			{
-				if(await authorizer.AuthorizeAsync(identity, operation.Name, parameters))
-					context.Succeed(requirement);
-				else
-					context.Fail(new AuthorizationFailureReason(this, $"The '{operation.Name}' operation is not authorized."));
+				if(await authorizer.AuthorizeAsync(identity, privilege.Name, parameters))
+					return true;
 			}
+
+			return false;
+		}
+
+		async ValueTask<bool> All(IEnumerable<Privilege> privileges, IAuthorizer authorizer, ClaimsIdentity identity, Parameters parameters)
+		{
+			foreach(var privilege in privileges)
+			{
+				if(!await authorizer.AuthorizeAsync(identity, privilege.Name, parameters))
+					return false;
+			}
+
+			return true;
 		}
 	}
 

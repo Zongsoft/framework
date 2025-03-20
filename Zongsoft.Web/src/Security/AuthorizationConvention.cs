@@ -53,24 +53,13 @@ public class AuthorizationConvention : IApplicationModelConvention
 					continue;
 
 				for(int i = 0; i < action.Selectors.Count; i++)
-					action.Selectors[i].EndpointMetadata.Add(new OperationAuthorizationRequirement() { Name = GetOperation(action) });
+					action.Selectors[i].EndpointMetadata.Add(new RequirementData(action));
 			}
 		}
 	}
 	#endregion
 
 	#region 私有方法
-	private static string GetOperation(ActionModel action)
-	{
-		var controllerName = action.RouteValues.TryGetValue("ancestor", out var ancestor) && !string.IsNullOrEmpty(ancestor) ?
-			$"{ancestor.Replace('/', '.')}.{action.Controller.ControllerName}" : action.Controller.ControllerName;
-
-		if(action.RouteValues.TryGetValue("module", out var module) && !string.IsNullOrEmpty(module))
-			return $"{module}:{controllerName}:{action.ActionName}";
-		else
-			return $"{controllerName}:{action.ActionName}";
-	}
-
 	private static bool IsAuthorizable(IEnumerable<object> attributes, bool inheritedValue)
 	{
 		if(attributes == null)
@@ -87,6 +76,36 @@ public class AuthorizationConvention : IApplicationModelConvention
 		}
 
 		return result;
+	}
+	#endregion
+
+	#region 嵌套子类
+	#if NET8_0_OR_GREATER
+	partial class RequirementData : IAuthorizationRequirementData { }
+	#endif
+
+	partial class RequirementData(ActionModel action)
+	{
+		private readonly ActionModel _action = action;
+
+		public IEnumerable<IAuthorizationRequirement> GetRequirements()
+		{
+			yield return new OperationAuthorizationRequirement() { Name = GetOperation(_action) };
+		}
+
+		private static string GetOperation(ActionModel action)
+		{
+			foreach(var entry in action.Controller.RouteValues)
+				action.RouteValues.TryAdd(entry.Key, entry.Value);
+
+			var controllerName = action.RouteValues.TryGetValue("ancestor", out var ancestor) && !string.IsNullOrEmpty(ancestor) ?
+				$"{ancestor.Replace('/', '.')}.{action.Controller.ControllerName}" : action.Controller.ControllerName;
+
+			if(action.RouteValues.TryGetValue("module", out var module) && !string.IsNullOrEmpty(module))
+				return $"{module}:{controllerName}:{action.ActionName}";
+			else
+				return $"{controllerName}:{action.ActionName}";
+		}
 	}
 	#endregion
 }
