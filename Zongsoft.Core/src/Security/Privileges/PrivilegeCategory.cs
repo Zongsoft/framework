@@ -69,16 +69,20 @@ public class PrivilegeCategory : CategoryBase<PrivilegeCategory>, IDiscriminator
 	#region 显式实现
 	object IDiscriminator.Discriminate(object argument)
 	{
-		if(argument == null)
-			return this.Categories;
-
-		if(argument is string type)
+		switch(argument)
 		{
-			if(string.IsNullOrEmpty(type) || string.Equals(type, nameof(Category), StringComparison.OrdinalIgnoreCase))
-				return this.Categories;
+			case string type:
+				if(string.IsNullOrEmpty(type) || string.Equals(type, nameof(Category), StringComparison.OrdinalIgnoreCase))
+					return this.Categories;
 
-			if(string.Equals(type, nameof(Privilege), StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(type, nameof(Privilege), StringComparison.OrdinalIgnoreCase))
+					return this.Privileges;
+
+				break;
+			case Privilege:
 				return this.Privileges;
+			case PrivilegeCategory:
+				return this.Categories;
 		}
 
 		return null;
