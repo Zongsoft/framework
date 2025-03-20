@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web library.
  *
@@ -28,19 +28,40 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-using Zongsoft.Services;
+namespace Zongsoft.Web;
 
-namespace Zongsoft.Web
+public class ControllerDescriptorCollection : KeyedCollection<string, ControllerDescriptor>
 {
-	public class ApplicationModelConvention : IApplicationModelConvention
+	#region 构造函数
+	public ControllerDescriptorCollection(IEnumerable<ControllerModel> controllers) : base(StringComparer.OrdinalIgnoreCase)
 	{
-		public void Apply(ApplicationModel application)
-		{
-			ApplicationContext.Current.Properties[nameof(ApplicationModel)] = application;
-		}
+		foreach(var controller in controllers)
+			this.Add(new ControllerDescriptor(controller));
 	}
+	#endregion
+
+	#region 公共方法
+	public bool TryGetValue(Services.IApplicationModule module, string name, out ControllerDescriptor value) => this.TryGetValue(module?.Name, name, out value);
+	public bool TryGetValue(string module, string name, out ControllerDescriptor value)
+	{
+		if(string.IsNullOrEmpty(name))
+		{
+			value = null;
+			return false;
+		}
+
+		return string.IsNullOrEmpty(module) ?
+			this.TryGetValue(name, out value) :
+			this.TryGetValue($"{module}:{name}", out value);
+	}
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(ControllerDescriptor descriptor) => descriptor.QualifiedName;
+	#endregion
 }

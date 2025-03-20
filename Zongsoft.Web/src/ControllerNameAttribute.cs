@@ -63,7 +63,7 @@ namespace Zongsoft.Web
 		{
 			if(controller.ControllerType.IsNested)
 			{
-				var ancestor = controller.RouteValues["ancestor"] = GetAncestorPath(controller.ControllerType);
+				var ancestor = controller.RouteValues["ancestor"] = GetAncestorPath(controller.ControllerType, '/');
 				var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
 
 				if(string.IsNullOrEmpty(module))
@@ -107,8 +107,8 @@ namespace Zongsoft.Web
 		}
 		#endregion
 
-		#region 私有方法
-		private static string GetAncestorPath(Type controllerType)
+		#region 内部方法
+		internal static string GetAncestorPath(Type controllerType, char separator)
 		{
 			if(controllerType == null || !controllerType.IsNested)
 				return null;
@@ -124,9 +124,11 @@ namespace Zongsoft.Web
 				type = type.DeclaringType;
 			}
 
-			return string.Join('/', stack.Select(GetControllerName));
+			return string.Join(separator, stack.Select(GetControllerName));
 		}
+		#endregion
 
+		#region 私有方法
 		private static string GetControllerName(Type controllerType)
 		{
 			var attribute = controllerType.GetCustomAttribute<ControllerNameAttribute>(true);

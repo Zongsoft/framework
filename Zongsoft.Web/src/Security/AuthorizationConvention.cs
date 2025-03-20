@@ -35,6 +35,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Web.Security;
 
 public class AuthorizationConvention : IApplicationModelConvention
@@ -42,7 +44,10 @@ public class AuthorizationConvention : IApplicationModelConvention
 	#region 公共方法
 	public void Apply(ApplicationModel application)
 	{
-		foreach(var controller in application.Controllers)
+		if(!ApplicationContext.Current.Properties.TryGetValue<ControllerDescriptorCollection>(out var controllers))
+			return;
+
+		foreach(var controller in controllers)
 		{
 			var controllerAuthorizable = IsAuthorizable(controller.Attributes, false);
 
@@ -53,7 +58,7 @@ public class AuthorizationConvention : IApplicationModelConvention
 					continue;
 
 				for(int i = 0; i < action.Selectors.Count; i++)
-					action.Selectors[i].EndpointMetadata.Add(new RequirementData(action));
+					action.Selectors[i].EndpointMetadata.Add(new RequirementData(controller, action));
 			}
 		}
 	}
@@ -84,27 +89,17 @@ public class AuthorizationConvention : IApplicationModelConvention
 	partial class RequirementData : IAuthorizationRequirementData { }
 	#endif
 
-	partial class RequirementData(ActionModel action)
+	partial class RequirementData(ControllerDescriptor controller, ActionModel action)
 	{
+		private readonly ControllerDescriptor _controller = controller;
 		private readonly ActionModel _action = action;
 
 		public IEnumerable<IAuthorizationRequirement> GetRequirements()
 		{
-			yield return new OperationAuthorizationRequirement() { Name = GetOperation(_action) };
-		}
-
-		private static string GetOperation(ActionModel action)
-		{
-			foreach(var entry in action.Controller.RouteValues)
-				action.RouteValues.TryAdd(entry.Key, entry.Value);
-
-			var controllerName = action.RouteValues.TryGetValue("ancestor", out var ancestor) && !string.IsNullOrEmpty(ancestor) ?
-				$"{ancestor.Replace('/', '.')}.{action.Controller.ControllerName}" : action.Controller.ControllerName;
-
-			if(action.RouteValues.TryGetValue("module", out var module) && !string.IsNullOrEmpty(module))
-				return $"{module}:{controllerName}:{action.ActionName}";
-			else
-				return $"{controllerName}:{action.ActionName}";
+			yield return new OperationAuthorizationRequirement()
+			{
+				Name = $"{_controller.QualifiedName}:{_action.ActionName}"
+			};
 		}
 	}
 	#endregion
