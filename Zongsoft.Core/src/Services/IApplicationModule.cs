@@ -28,9 +28,8 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-using Zongsoft.Components;
+using Zongsoft.Collections;
 using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Services
@@ -56,6 +55,6 @@ namespace Zongsoft.Services
 		SchemaCollection Schemas { get; }
 
 		/// <summary>获取应用模块的自定义属性集。</summary>
-		IDictionary<string, object> Properties { get; }
+		Parameters Properties { get; }
 	}
 }

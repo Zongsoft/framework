@@ -82,7 +82,7 @@ namespace Zongsoft.Services
 
 			this.Modules = new ApplicationModuleCollection();
 			this.Schemas = new ComponentModel.SchemaCollection();
-			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+			this.Properties = new Collections.Parameters();
 
 			var lifetime = _services.GetService<IHostApplicationLifetime>();
 
@@ -152,7 +152,7 @@ namespace Zongsoft.Services
 		public ComponentModel.SchemaCollection Schemas { get; }
 		public ICollection<IApplicationInitializer> Initializers => _initializers;
 		public ICollection<IWorker> Workers => _workers;
-		public IDictionary<string, object> Properties { get; }
+		public Collections.Parameters Properties { get; }
 		#endregion
 
 		#region 公共方法

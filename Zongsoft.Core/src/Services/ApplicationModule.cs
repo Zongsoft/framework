@@ -34,6 +34,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Components;
+using Zongsoft.Collections;
 using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Services
@@ -55,14 +56,14 @@ namespace Zongsoft.Services
 			this.Title = title;
 			this.Description = description;
 			this.Schemas = new SchemaCollection();
-			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+			this.Properties = new Parameters();
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name { get; protected set; }
 		public SchemaCollection Schemas { get; }
-		public IDictionary<string, object> Properties { get; }
+		public Parameters Properties { get; }
 
 		public string Title
 		{
