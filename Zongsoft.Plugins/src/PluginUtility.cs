@@ -195,7 +195,7 @@ namespace Zongsoft.Plugins
 				throw new ArgumentNullException(nameof(builtinType));
 
 			if(builtinType.Constructor == null || builtinType.Constructor.Count == 0)
-				return BuildType(builtinType.TypeName, builtinType.Builtin);
+				return BuildType(builtinType.Type, builtinType.Builtin);
 
 			object result;
 			(var info, var values) = MatchConstructor(builtinType.Constructor);
@@ -644,6 +644,12 @@ namespace Zongsoft.Plugins
 			ServiceInjector.Inject(FindServiceProvider(element), target);
 		}
 
+		internal static PluginTreeNode GetOwnerNode(PluginElement element)
+		{
+			var node = element.GetNode();
+			return node == null ? null : node.Tree.GetOwnerNode(node);
+		}
+
 		internal static Type GetOwnerElementType(PluginTreeNode node)
 		{
 			var ownerNode = node.Tree.GetOwnerNode(node);
@@ -668,6 +674,29 @@ namespace Zongsoft.Plugins
 			if(elementType != null)
 				return elementType;
 
+			return GetDefaultMemberType(ownerType);
+		}
+
+		internal static Type GetDefaultMemberType(Type ownerType)
+		{
+			var member = GetDefaultMemberInfo(ownerType);
+
+			if(member != null)
+			{
+				switch(member.MemberType)
+				{
+					case MemberTypes.Field:
+						return GetImplementedCollectionElementType(((FieldInfo)member).FieldType);
+					case MemberTypes.Property:
+						return GetImplementedCollectionElementType(((PropertyInfo)member).PropertyType);
+				}
+			}
+
+			return null;
+		}
+
+		private static MemberInfo GetDefaultMemberInfo(Type ownerType)
+		{
 			MemberInfo[] members = null;
 			var memberAttribute = ownerType.GetCustomAttribute<DefaultMemberAttribute>(true);
 
@@ -680,21 +709,19 @@ namespace Zongsoft.Plugins
 					members = ownerType.GetMember(propertyAttribute.Name, BindingFlags.Public | BindingFlags.Instance);
 			}
 
-			if(members != null && members.Length == 1)
-			{
-				switch(members[0].MemberType)
-				{
-					case MemberTypes.Field:
-						return GetImplementedCollectionElementType(((FieldInfo)members[0]).FieldType);
-					case MemberTypes.Property:
-						return GetImplementedCollectionElementType(((PropertyInfo)members[0]).PropertyType);
-				}
-			}
-
-			return null;
+			return members != null && members.Length > 0 ? members[0] : null;
 		}
 
-		private static Type GetImplementedCollectionElementType(Type instanceType)
+		internal static object GetDefaultMemberValue(object owner)
+		{
+			if(owner == null)
+				return null;
+
+			var member = GetDefaultMemberInfo(owner.GetType());
+			return Reflector.TryGetValue(member, ref owner, out var value) ? value : null;
+		}
+
+		internal static Type GetImplementedCollectionElementType(Type instanceType)
 		{
 			if(instanceType == null)
 				return null;

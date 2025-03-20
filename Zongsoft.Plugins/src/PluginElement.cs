@@ -79,7 +79,7 @@ namespace Zongsoft.Plugins
 				{
 					var chr = value[i];
 
-					if((chr == '_' || chr == '-' || chr == '$') ||
+					if((chr == '_' || chr == '-' || chr == '.' || chr == '$') ||
 					   (chr >= '0' && chr <= '9') ||
 					   (chr >= 'a' && chr <= 'z') ||
 					   (chr >= 'A' && chr <= 'Z'))

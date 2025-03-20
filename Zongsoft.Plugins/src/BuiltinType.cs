@@ -56,7 +56,7 @@ namespace Zongsoft.Plugins
 		#region 公共属性
 		public Builtin Builtin => _builtin;
 		public BuiltinTypeConstructor Constructor => _constructor;
-		public Type Type => _type ??= PluginUtility.GetType(this.TypeName, _builtin);
+		public Type Type => _type ??= this.Discriminate() ?? PluginUtility.GetType(this.TypeName, _builtin);
 		public string TypeName
 		{
 			get => _typeName;
@@ -65,6 +65,42 @@ namespace Zongsoft.Plugins
 				_typeName = value?.Trim();
 				_type = null;
 			}
+		}
+		#endregion
+
+		#region 鉴定类型
+		private Type Discriminate()
+		{
+			var ownerNode = PluginUtility.GetOwnerNode(_builtin);
+			var ownerValue = ownerNode?.UnwrapValue(ObtainMode.Never);
+
+			if(ownerValue == null)
+				return null;
+
+			if(ownerValue is Components.IDiscriminator ownerDiscriminator)
+				return this.Discriminate(ownerDiscriminator);
+
+			var memberValue = PluginUtility.GetDefaultMemberValue(ownerValue);
+			if(memberValue is Components.IDiscriminator memberDiscriminator)
+				return this.Discriminate(memberDiscriminator);
+
+			return null;
+		}
+
+		private Type Discriminate(Components.IDiscriminator discriminator)
+		{
+			if(discriminator == null)
+				return null;
+
+			var result = discriminator.Discriminate(_typeName);
+
+			if(result == null)
+				return null;
+
+			if(result is Type type)
+				return type;
+
+			return PluginUtility.GetImplementedCollectionElementType(result.GetType());
 		}
 		#endregion
 	}

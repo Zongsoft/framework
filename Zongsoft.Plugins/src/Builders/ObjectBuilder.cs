@@ -111,6 +111,15 @@ namespace Zongsoft.Plugins.Builders
 			if(container == null || child == null)
 				return false;
 
+			//优先确认容器的子集对象
+			if(container is Components.IDiscriminator discriminator)
+			{
+				var host = discriminator.Discriminate(child);
+
+				if(host != null)
+					return this.Append(host, child, key);
+			}
+
 			//第一步：尝试容器是否实现泛型字典接口
 			var invoker = GetGenericDictionaryAdder(container, child, out var convertedChild);
 			if(invoker != null && convertedChild != null)
