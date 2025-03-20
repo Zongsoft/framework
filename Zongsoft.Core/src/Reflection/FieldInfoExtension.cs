@@ -61,6 +61,7 @@ namespace Zongsoft.Reflection
 			field = null;
 			return false;
 		}
+		#endregion
 
 		#region 通用目标
 		public static Getter GetGetter(this FieldInfo field)
@@ -339,8 +340,6 @@ namespace Zongsoft.Reflection
 
 			return (Setter<T>)method.CreateDelegate(typeof(Setter<T>));
 		}
-		#endregion
-
 		#endregion
 
 		#region 嵌套子类

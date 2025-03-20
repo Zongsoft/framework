@@ -63,6 +63,7 @@ namespace Zongsoft.Reflection
 		}
 
 		public static bool IsIndexer(this PropertyInfo property) => property != null && property.GetIndexParameters().Length > 0;
+		#endregion
 
 		#region 通用目标
 		public static Getter GetGetter(this PropertyInfo property)
@@ -546,6 +547,52 @@ namespace Zongsoft.Reflection
 		}
 		#endregion
 
+		#region 内部方法
+		internal static bool TryGetValue(PropertyInfo property, ref object target, object[] parameters, out object value)
+		{
+			if(property != null && property.CanRead && property.GetMethod.GetParameters().Length == (parameters == null ? 0 : parameters.Length))
+			{
+				value = property.GetGetter().Invoke(ref target, parameters);
+				return true;
+			}
+
+			value = default;
+			return false;
+		}
+
+		internal static bool TryGetValue<T>(PropertyInfo property, ref T target, object[] parameters, out object value)
+		{
+			if(property != null && property.CanRead && property.GetMethod.GetParameters().Length == (parameters == null ? 0 : parameters.Length))
+			{
+				value = property.GetGetter<T>().Invoke(ref target, parameters);
+				return true;
+			}
+
+			value = default;
+			return false;
+		}
+
+		internal static bool TrySetValue(PropertyInfo property, ref object target, object value, object[] parameters)
+		{
+			if(property != null && property.CanWrite && property.SetMethod.GetParameters().Length == (parameters == null ? 0 : parameters.Length) + 1)
+			{
+				property.GetSetter().Invoke(ref target, value, parameters);
+				return true;
+			}
+
+			return false;
+		}
+
+		internal static bool TrySetValue<T>(PropertyInfo property, ref T target, object value, object[] parameters)
+		{
+			if(property != null && property.CanWrite && property.SetMethod.GetParameters().Length == (parameters == null ? 0 : parameters.Length) + 1)
+			{
+				property.GetSetter<T>().Invoke(ref target, value, parameters);
+				return true;
+			}
+
+			return false;
+		}
 		#endregion
 
 		#region 嵌套子类

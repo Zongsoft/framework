@@ -166,14 +166,7 @@ namespace Zongsoft.Reflection
 
 		public static bool TryGetValue(this PropertyInfo property, ref object target, object[] parameters, out object value)
 		{
-			if(property != null && property.CanRead)
-			{
-				value = property.GetGetter().Invoke(ref target, parameters);
-				return true;
-			}
-
-			value = null;
-			return false;
+			return PropertyInfoExtension.TryGetValue(property, ref target, parameters, out value);
 		}
 
 		public static bool TryGetValue(this MemberInfo member, ref object target, out object value)
@@ -195,14 +188,7 @@ namespace Zongsoft.Reflection
 					return true;
 				case MemberTypes.Property:
 					var property = (PropertyInfo)member;
-
-					if(property.CanRead)
-					{
-						value = property.GetGetter().Invoke(ref target, parameters);
-						return true;
-					}
-
-					return false;
+					return PropertyInfoExtension.TryGetValue(property, ref target, parameters, out value);
 			}
 
 			return false;
@@ -250,14 +236,7 @@ namespace Zongsoft.Reflection
 
 		public static bool TryGetValue<T>(this PropertyInfo property, ref T target, object[] parameters, out object value)
 		{
-			if(property != null && property.CanRead)
-			{
-				value = property.GetGetter<T>().Invoke(ref target, parameters);
-				return true;
-			}
-
-			value = null;
-			return false;
+			return PropertyInfoExtension.TryGetValue<T>(property, ref target, parameters, out value);
 		}
 
 		public static bool TryGetValue<T>(this MemberInfo member, ref T target, out object value)
@@ -279,14 +258,7 @@ namespace Zongsoft.Reflection
 					return true;
 				case MemberTypes.Property:
 					var property = (PropertyInfo)member;
-
-					if(property.CanRead)
-					{
-						value = property.GetGetter<T>().Invoke(ref target, parameters);
-						return true;
-					}
-
-					return false;
+					return PropertyInfoExtension.TryGetValue(property, ref target, parameters, out value);
 			}
 
 			return false;
@@ -477,8 +449,7 @@ namespace Zongsoft.Reflection
 			if(property == null || !property.CanWrite)
 				return false;
 
-			property.GetSetter().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
-			return true;
+			return PropertyInfoExtension.TrySetValue(property, ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 		}
 
 		public static bool TrySetValue(this MemberInfo member, ref object target, object value, params object[] parameters) => TrySetValue(member, ref target, _ => value, parameters);
@@ -504,9 +475,7 @@ namespace Zongsoft.Reflection
 					if(!property.CanWrite)
 						return false;
 
-					property.GetSetter().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
-
-					return true;
+					return PropertyInfoExtension.TrySetValue(property, ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 			}
 
 			return false;
@@ -545,8 +514,7 @@ namespace Zongsoft.Reflection
 			if(property == null || !property.CanWrite)
 				return false;
 
-			property.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
-			return true;
+			return PropertyInfoExtension.TrySetValue(property, ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 		}
 
 		public static bool TrySetValue<T>(this MemberInfo member, ref T target, object value, params object[] parameters) => TrySetValue<T>(member, ref target, _ => value, parameters);
@@ -572,9 +540,7 @@ namespace Zongsoft.Reflection
 					if(!property.CanWrite)
 						return false;
 
-					property.GetSetter<T>().Invoke(ref target, valueFactory?.Invoke(property.PropertyType), parameters);
-
-					return true;
+					return PropertyInfoExtension.TrySetValue(property, ref target, valueFactory?.Invoke(property.PropertyType), parameters);
 			}
 
 			return false;

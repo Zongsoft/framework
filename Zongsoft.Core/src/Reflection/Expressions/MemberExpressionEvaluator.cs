@@ -63,8 +63,8 @@ namespace Zongsoft.Reflection.Expressions
 			return result;
 		}
 
-		public void SetValue(IMemberExpression expression, object origin, object value, Action<MemberContext> evaluate = null) => this.SetValue(expression, origin, _ => value, evaluate);
-		public void SetValue(IMemberExpression expression, object origin, Func<MemberContext, object> valueFactory, Action<MemberContext> evaluate = null)
+		public bool SetValue(IMemberExpression expression, object origin, object value, Action<MemberContext> evaluate = null) => this.SetValue(expression, origin, _ => value, evaluate);
+		public bool SetValue(IMemberExpression expression, object origin, Func<MemberContext, object> valueFactory, Action<MemberContext> evaluate = null)
 		{
 			if(expression == null)
 				throw new ArgumentNullException(nameof(expression));
@@ -89,7 +89,7 @@ namespace Zongsoft.Reflection.Expressions
 			evaluate?.Invoke(context);
 			context.Value = valueFactory(context);
 
-			this.SetMemberValue(context);
+			return this.SetMemberValue(context);
 		}
 		#endregion
 
@@ -152,7 +152,14 @@ namespace Zongsoft.Reflection.Expressions
 			return Reflector.GetValue(context.Member, ref context.Owner, context.Parameters);
 		}
 
-		protected virtual void SetMemberValue(MemberContext context) => Reflector.SetValue(context.Member, ref context.Owner, context.Value, context.Parameters);
+		protected virtual bool SetMemberValue(MemberContext context)
+		{
+			if(context.IsReadOnly)
+				return false;
+
+			Reflector.SetValue(context.Member, ref context.Owner, context.Value, context.Parameters);
+			return true;
+		}
 		#endregion
 
 		#region 私有方法
@@ -189,6 +196,12 @@ namespace Zongsoft.Reflection.Expressions
 			public int Dedent() => --this.Depth;
 			public bool HasValue => this.Value != null;
 			public bool HasNext => this.Expression.Next != null;
+			public bool IsReadOnly => this.Member.MemberType switch
+			{
+				MemberTypes.Field => ((FieldInfo)this.Member).IsInitOnly,
+				MemberTypes.Property => !((PropertyInfo)this.Member).CanWrite,
+				_ => false,
+			};
 
 			public MemberContext Next()
 			{
