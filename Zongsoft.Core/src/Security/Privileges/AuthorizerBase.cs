@@ -39,6 +39,8 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
+[System.Reflection.DefaultMember(nameof(Privileger))]
+[System.ComponentModel.DefaultProperty(nameof(Privileger))]
 public abstract class AuthorizerBase : IAuthorizer, IMatchable, IMatchable<ClaimsPrincipal>
 {
 	#region 构造函数
