@@ -152,14 +152,7 @@ namespace Zongsoft.Reflection.Expressions
 			return Reflector.GetValue(context.Member, ref context.Owner, context.Parameters);
 		}
 
-		protected virtual bool SetMemberValue(MemberContext context)
-		{
-			if(context.IsReadOnly)
-				return false;
-
-			Reflector.SetValue(context.Member, ref context.Owner, context.Value, context.Parameters);
-			return true;
-		}
+		protected virtual bool SetMemberValue(MemberContext context) => Reflector.SetValue(context.Member, ref context.Owner, context.Value, context.Parameters);
 		#endregion
 
 		#region 私有方法
