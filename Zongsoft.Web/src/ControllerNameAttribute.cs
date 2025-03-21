@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web library.
  *
@@ -35,108 +35,75 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-namespace Zongsoft.Web
+namespace Zongsoft.Web;
+
+[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+public class ControllerNameAttribute : Attribute, IControllerModelConvention
 {
-	[AttributeUsage(AttributeTargets.Class, Inherited = true)]
-	public class ControllerNameAttribute : Attribute, IControllerModelConvention
+	#region 构造函数
+	public ControllerNameAttribute(bool isModular = true) : this(null, isModular) { }
+	public ControllerNameAttribute(string name, bool isModular = true)
 	{
-		#region 构造函数
-		public ControllerNameAttribute(bool isModular = true) : this(null, isModular) { }
-		public ControllerNameAttribute(string name, bool isModular = true)
-		{
-			this.Name = name;
-			this.IsModular = isModular;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置控制器的名称。</summary>
-		public string Name { get; set; }
-
-		/// <summary>获取或设置一个值，指示是否为模块化的控制器。</summary>
-		/// <remarks>如果为模块化控制器，将会查找该控制器所在程序集的 <see cref="Zongsoft.Services.ApplicationModuleAttribute.Name"/> 特性作为路由的前导。</remarks>
-		public bool IsModular { get; set; }
-		#endregion
-
-		#region 公共方法
-		public void Apply(ControllerModel controller)
-		{
-			if(controller.ControllerType.IsNested)
-			{
-				var ancestor = controller.RouteValues["ancestor"] = GetAncestorPath(controller.ControllerType);
-				var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
-
-				if(string.IsNullOrEmpty(module))
-				{
-					controller.RouteValues["module"] = string.Empty;
-					controller.RouteValues["area"] = ancestor;
-				}
-				else
-				{
-					controller.RouteValues["module"] = module;
-					controller.RouteValues["area"] = $"{module}/{ancestor}";
-				}
-			}
-			else if(this.IsModular)
-			{
-				var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
-
-				if(string.IsNullOrEmpty(module))
-				{
-					controller.RouteValues["area"] = string.Empty;
-					controller.RouteValues["module"] = string.Empty;
-				}
-				else
-				{
-					controller.RouteValues["area"] = module;
-					controller.RouteValues["module"] = module;
-				}
-			}
-
-			if(!string.IsNullOrEmpty(this.Name))
-				controller.ControllerName = controller.RouteValues["controller"] = this.Name;
-
-			var hasRouteAttribute = controller.Selectors.Any(selector => selector.AttributeRouteModel != null);
-			if(!hasRouteAttribute)
-			{
-				controller.Selectors[0].AttributeRouteModel = new AttributeRouteModel()
-				{
-					Template = $"[area]/[controller]",
-				};
-			}
-		}
-		#endregion
-
-		#region 私有方法
-		private static string GetAncestorPath(Type controllerType)
-		{
-			if(controllerType == null || !controllerType.IsNested)
-				return null;
-
-			var stack = new Stack<Type>();
-			var type = controllerType.DeclaringType;
-
-			while(type != null)
-			{
-				if(ControllerFeatureProvider.IsControllerType(type))
-					stack.Push(type);
-
-				type = type.DeclaringType;
-			}
-
-			return string.Join('/', stack.Select(GetControllerName));
-		}
-
-		private static string GetControllerName(Type controllerType)
-		{
-			var attribute = controllerType.GetCustomAttribute<ControllerNameAttribute>(true);
-
-			if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
-				return attribute.Name;
-
-			return controllerType.Name.Length > 10 && controllerType.Name.EndsWith("Controller", StringComparison.OrdinalIgnoreCase) ?
-			       controllerType.Name[..^10] : controllerType.Name;
-		}
-		#endregion
+		this.Name = name;
+		this.IsModular = isModular;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置控制器的名称。</summary>
+	public string Name { get; set; }
+
+	/// <summary>获取或设置一个值，指示是否为模块化的控制器。</summary>
+	/// <remarks>如果为模块化控制器，将会查找该控制器所在程序集的 <see cref="Zongsoft.Services.ApplicationModuleAttribute.Name"/> 特性作为路由的前导。</remarks>
+	public bool IsModular { get; set; }
+	#endregion
+
+	#region 公共方法
+	public void Apply(ControllerModel controller)
+	{
+		if(controller.ControllerType.IsNested)
+		{
+			var @namespace = controller.RouteValues["@namespace"] = ControllerUtility.GetNamespace(controller.ControllerType, '/');
+			var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
+
+			if(string.IsNullOrEmpty(module))
+			{
+				controller.RouteValues["module"] = string.Empty;
+				controller.RouteValues["area"] = @namespace;
+			}
+			else
+			{
+				controller.RouteValues["module"] = module;
+				controller.RouteValues["area"] = $"{module}/{@namespace}";
+			}
+		}
+		else if(this.IsModular)
+		{
+			var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
+
+			if(string.IsNullOrEmpty(module))
+			{
+				controller.RouteValues["area"] = string.Empty;
+				controller.RouteValues["module"] = string.Empty;
+			}
+			else
+			{
+				controller.RouteValues["area"] = module;
+				controller.RouteValues["module"] = module;
+			}
+		}
+
+		if(!string.IsNullOrEmpty(this.Name))
+			controller.ControllerName = controller.RouteValues["controller"] = this.Name;
+
+		var hasRouteAttribute = controller.Selectors.Any(selector => selector.AttributeRouteModel != null);
+		if(!hasRouteAttribute)
+		{
+			controller.Selectors[0].AttributeRouteModel = new AttributeRouteModel()
+			{
+				Template = $"[area]/[controller]",
+			};
+		}
+	}
+	#endregion
 }

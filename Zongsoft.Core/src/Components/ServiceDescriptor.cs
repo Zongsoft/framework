@@ -37,27 +37,22 @@ namespace Zongsoft.Components;
 public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 {
 	#region 常量定义
-	private const string SUFFIX = "Service";
+	private const string SERVICE_SUFFIX      = "Service";
+	private const string SERVICE_BASE_SUFFIX = "ServiceBase";
 	#endregion
 
 	#region 成员字段
-	private string _qualifiedName;
 	private string _title;
 	private string _description;
+	private string _qualifiedName;
 	#endregion
 
 	#region 构造函数
 	public ServiceDescriptor(Type type) : this(null, type) { }
 	public ServiceDescriptor(string name, Type type)
 	{
-		if(type == null)
-			throw new ArgumentNullException(nameof(type));
-
-		if(string.IsNullOrEmpty(name))
-			name = type.Name.Length > SUFFIX.Length && type.Name.EndsWith(SUFFIX) ? type.Name[..^SUFFIX.Length] : type.Name;
-
-		this.Name = name;
-		this.Type = type;
+		this.Type = type ?? throw new ArgumentNullException(nameof(type));
+		this.Name = string.IsNullOrEmpty(name) ? GetFullName(type) : name;
 		this.Operations = new(this);
 	}
 	#endregion
@@ -69,24 +64,8 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 	/// <summary>获取服务类型。</summary>
 	public Type Type { get; }
 
-	/// <summary>获取服务的限定名称，即服务所在模块名与服务名的完整组合(<c>ModuleName.ServiceName</c>。</summary>
-	public string QualifiedName
-	{
-		get
-		{
-			if(string.IsNullOrEmpty(_qualifiedName))
-			{
-				var attribute = Services.ApplicationModuleAttribute.Find(this.Type);
-
-				if(attribute == null)
-					_qualifiedName = string.IsNullOrEmpty(this.Type.Namespace) ? this.Name : $"{this.Type.Namespace}.{this.Name}";
-				else
-					_qualifiedName = string.IsNullOrEmpty(attribute.Name) ? this.Name : $"{attribute.Name}:{this.Name}";
-			}
-
-			return _qualifiedName;
-		}
-	}
+	/// <summary>获取服务的限定名称，即服务所在模块名与服务名的完整组合(<c>ModuleName:ServiceName.Nested..Nested</c>。</summary>
+	public string QualifiedName => _qualifiedName ??= GetQualifiedName(this.Type);
 
 	/// <summary>获取服务的显示名。</summary>
 	public string Title
@@ -114,13 +93,50 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 	#endregion
 
 	#region 私有方法
+	private static string GetQualifiedName(Type type)
+	{
+		var attribute = Services.ApplicationModuleAttribute.Find(type);
+
+		if(attribute == null)
+			return string.IsNullOrEmpty(type.Namespace) ? GetFullName(type) : $"{type.Namespace}.{GetFullName(type)}";
+		else
+			return string.IsNullOrEmpty(attribute.Name) ? GetFullName(type) : $"{attribute.Name}:{GetFullName(type)}";
+	}
+
+	private static string GetFullName(Type type)
+	{
+		if(!type.IsNested)
+			return GetName(type);
+
+		var stack = new Stack<string>();
+
+		while(type != null)
+		{
+			stack.Push(GetName(type));
+			type = type.DeclaringType;
+		}
+
+		return string.Join(Type.Delimiter, stack);
+
+		static string GetName(Type type)
+		{
+			if(type.Name.Length > SERVICE_SUFFIX.Length && type.Name.EndsWith(SERVICE_SUFFIX))
+				return type.Name[..^SERVICE_SUFFIX.Length];
+
+			if(type.Name.Length > SERVICE_BASE_SUFFIX.Length && type.Name.EndsWith(SERVICE_BASE_SUFFIX))
+				return type.Name[..^SERVICE_BASE_SUFFIX.Length];
+
+			return type.Name;
+		}
+	}
+
 	private string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Type,
 	[
-		$"{this.Name}.{nameof(ServiceDescriptor.Title)}",
+		$"{this.Name}.{nameof(this.Title)}",
 		this.Name
 	]);
 
-	private string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(ServiceDescriptor.Description)}");
+	private string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(this.Description)}");
 	#endregion
 
 	public class Operation

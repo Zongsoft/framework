@@ -122,44 +122,43 @@ public partial class ControllerDescriptor(ControllerModel controller) : ICommonM
 
 	private string GetQualifiedName()
 	{
-		var qualifiedName = this.Service?.QualifiedName;
+		//var qualifiedName = this.Service?.QualifiedName;
 
-		if(string.IsNullOrEmpty(qualifiedName))
+		//if(string.IsNullOrEmpty(qualifiedName))
 		{
-			var attribute = ApplicationModuleAttribute.Find(this.ControllerType);
+			var module = ApplicationModuleAttribute.Find(this.ControllerType);
 
-			if(attribute == null || string.IsNullOrEmpty(attribute.Name))
-				qualifiedName = GetFullName();
+			if(module == null)
+				return GetFullName(this.ControllerType);
+
+			if(string.IsNullOrEmpty(module.Name))
+				return ControllerUtility.GetQualifiedName(this.ControllerType, '.');
 			else
-				qualifiedName = $"{attribute.Name}:{GetFullName()}";
+				return $"{module.Name}:{ControllerUtility.GetQualifiedName(this.ControllerType, '.')}";
 		}
 
-		return qualifiedName;
-
-		string GetFullName()
-		{
-			var path = GetAncestorPath(this.ControllerType);
-			return string.IsNullOrEmpty(path) ? this.ControllerName : $"{path}.{this.ControllerName}";
-		}
+		//return qualifiedName;
 	}
 
-	private static string GetAncestorPath(Type controllerType)
+	private static string GetFullName(Type controllerType)
 	{
-		if(controllerType == null || !controllerType.IsNested)
+		if(controllerType == null)
 			return null;
 
-		var stack = new Stack<Type>();
-		var type = controllerType.DeclaringType;
+		var route = controllerType.GetCustomAttributes<RouteAttribute>(true).FirstOrDefault();
+		var area = controllerType.GetCustomAttributes<AreaAttribute>(true).FirstOrDefault();
 
-		while(type != null)
-		{
-			if(ControllerFeatureProvider.IsControllerType(type))
-				stack.Push(type);
+		if(route == null || string.IsNullOrEmpty(route.Template))
+			return string.IsNullOrEmpty(area?.RouteValue) ?
+				ControllerUtility.GetQualifiedName(controllerType, Type.Delimiter) :
+				$"{area.RouteValue.Replace('/', '.')}.{ControllerUtility.GetQualifiedName(controllerType, Type.Delimiter)}";
 
-			type = type.DeclaringType;
-		}
-
-		return string.Join(Type.Delimiter, stack.Select(type => type.Name));
+		return route.Template
+			.Replace("[controller]", ControllerUtility.GetName(controllerType))
+			.Replace("{controller}", ControllerUtility.GetName(controllerType))
+			.Replace("[area]", area?.RouteValue)
+			.Replace("{area}", area?.RouteValue)
+			.Replace('/', '.');
 	}
 	#endregion
 }

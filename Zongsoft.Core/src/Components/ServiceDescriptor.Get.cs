@@ -119,7 +119,7 @@ partial class ServiceDescriptor
 	{
 		public static readonly ServiceDescriptorProvider Default = new();
 		public bool Support(Type type) => type != null && (type.IsClass || type.IsInterface);
-		public ServiceDescriptor GetDescriptor(Type type) => new ServiceDescriptor(type);
+		public ServiceDescriptor GetDescriptor(Type type) => new(type);
 	}
 	#endregion
 }
