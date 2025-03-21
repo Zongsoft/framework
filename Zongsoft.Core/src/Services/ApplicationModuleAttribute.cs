@@ -36,13 +36,7 @@ namespace Zongsoft.Services;
 public class ApplicationModuleAttribute : Attribute
 {
 	#region 构造函数
-	public ApplicationModuleAttribute(string name)
-	{
-		if(string.IsNullOrWhiteSpace(name))
-			throw new ArgumentNullException(nameof(name));
-
-		this.Name = name;
-	}
+	public ApplicationModuleAttribute(string name) => this.Name = name ?? string.Empty;
 	#endregion
 
 	#region 公共属性
@@ -87,8 +81,16 @@ public class ApplicationModuleAttribute : Attribute
 					continue;
 
 				var found = Match(assemblies[i]);
+
 				if(found != null)
-					return found.GetCustomAttribute<ApplicationModuleAttribute>();
+				{
+					attribute = found.GetCustomAttribute<ApplicationModuleAttribute>();
+
+					if(attribute != null)
+						return attribute;
+
+					break;
+				}
 			}
 
 			//继续向前查找
