@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.WeChat library.
  *
@@ -28,51 +28,54 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using System.Linq;
 
-namespace Zongsoft.Externals.Wechat.Web.Controllers
+using Zongsoft.Web;
+
+namespace Zongsoft.Externals.Wechat.Web.Controllers;
+
+[Area("Externals/Wechat")]
+[ControllerName("Channels")]
+public class ChannelController : ControllerBase
 {
-	[ApiController]
-	[Route("Externals/Wechat/Channels")]
-	public class ChannelController : ControllerBase
+	#region 公共方法
+	[HttpPost("{id}/[action]")]
+	public async ValueTask<IActionResult> Postmark(string id, CancellationToken cancellation = default)
 	{
-		[HttpPost("{id}/{action}")]
-		public async ValueTask<IActionResult> Postmark(string id, CancellationToken cancellation = default)
+		if(string.IsNullOrEmpty(id))
+			return this.BadRequest();
+
+		if(!ChannelManager.TryGetChannel(id, out var channel))
+			return this.NotFound();
+
+		var content = await this.Request.ReadAsStringAsync(cancellation);
+		var (value, nonce, timestamp, period) = await channel.PostmarkAsync(content, cancellation);
+
+		if(value == null || value.Length == 0)
+			return this.NotFound();
+
+		return this.Ok(new
 		{
-			if(string.IsNullOrEmpty(id))
-				return this.BadRequest();
-
-			if(!ChannelManager.TryGetChannel(id, out var channel))
-				return this.NotFound();
-
-			var content = await this.Request.ReadAsStringAsync(cancellation);
-			var (value, nonce, timestamp, period) = await channel.PostmarkAsync(content, cancellation);
-
-			if(value == null || value.Length == 0)
-				return this.NotFound();
-
-			return this.Ok(new
-			{
-				Applet = channel.Account.Code,
-				Nonce = nonce,
-				Timestamp = timestamp,
-				Period = period,
-				Value = value,
-			});
-		}
+			Applet = channel.Account.Code,
+			Nonce = nonce,
+			Timestamp = timestamp,
+			Period = period,
+			Value = value,
+		});
 	}
+	#endregion
 
-	[ApiController]
-	[Route("Externals/Wechat/Channels")]
+	#region 嵌套子类
+	[ControllerName("Credential")]
 	public class ChannelCredentialController : ControllerBase
 	{
-		[HttpGet("{id}/Credential")]
+		[HttpGet("/[area]/{id}/[controller]")]
 		public async ValueTask<IActionResult> GetCredential(string id, CancellationToken cancellation = default)
 		{
 			if(!ChannelManager.TryGetChannel(id, out var channel))
@@ -82,7 +85,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 
-		[HttpPost("{id}/Credential/[action]")]
+		[HttpPost("/[area]/{id}/[controller]/[action]")]
 		public async ValueTask<IActionResult> Refresh(string key, CancellationToken cancellation = default)
 		{
 			if(!ChannelManager.TryGetChannel(key, out var channel))
@@ -93,12 +96,11 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		}
 	}
 
-	[ApiController]
-	[Route("Externals/Wechat/Channels/{id}/Users")]
+	[ControllerName("Users")]
 	public class ChannelUserController : ControllerBase
 	{
 		[HttpGet("{identifier?}")]
-		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery]string bookmark = null, CancellationToken cancellation = default)
+		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery] string bookmark = null, CancellationToken cancellation = default)
 		{
 			if(!ChannelManager.TryGetChannel(id, out var channel))
 				return this.NotFound();
@@ -115,11 +117,10 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		}
 	}
 
-	[ApiController]
-	[Route("Externals/Wechat/Channels/{id}/Messager")]
+	[ControllerName("Messager")]
 	public class ChannelMessagerController : ControllerBase
 	{
-		[HttpGet("Templates")]
+		[HttpGet("/[area]/{id}/[controller]/Templates")]
 		public async ValueTask<IActionResult> GetTemplatesAsync(string id, CancellationToken cancellation = default)
 		{
 			if(!ChannelManager.TryGetChannel(id, out var channel))
@@ -129,8 +130,8 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			return result != null && result.Any() ? this.Ok(result) : this.NoContent();
 		}
 
-		[HttpPost("Send/{destination}")]
-		public async ValueTask<IActionResult> SendAsync(string id, string destination, [FromQuery]string template, [FromQuery]string url, [FromBody]Dictionary<string, object> data, CancellationToken cancellation = default)
+		[HttpPost("/[area]/{id}/[controller]/[action]/{destination}")]
+		public async ValueTask<IActionResult> SendAsync(string id, string destination, [FromQuery] string template, [FromQuery] string url, [FromBody] Dictionary<string, object> data, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(template) || data == null)
 				return this.BadRequest();
@@ -143,8 +144,7 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		}
 	}
 
-	[ApiController]
-	[Route("Externals/Wechat/Channels/{id}/Authentication")]
+	[ControllerName("Authentication")]
 	public class ChannelAuthenticationController : ControllerBase
 	{
 		[HttpPost("{token}")]
@@ -160,4 +160,5 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			return this.Ok(result);
 		}
 	}
+	#endregion
 }

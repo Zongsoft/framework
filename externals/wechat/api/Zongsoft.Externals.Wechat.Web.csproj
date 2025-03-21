@@ -20,11 +20,15 @@
 				<Reference Include="Zongsoft.Core">
 					<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 				</Reference>
+				<Reference Include="Zongsoft.Web">
+					<HintPath>..\..\..\Zongsoft.Web\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Web.dll</HintPath>
+				</Reference>
 			</ItemGroup>
 		</When>
 		<Otherwise>
 			<ItemGroup>
 				<PackageReference Include="Zongsoft.Core" VersionOverride="7.0.0" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="7.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.WeChat library.
  *
@@ -34,51 +34,54 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
-namespace Zongsoft.Externals.Wechat.Web.Controllers
+using Zongsoft.Web;
+
+namespace Zongsoft.Externals.Wechat.Web.Controllers;
+
+[Area("Externals/Wechat")]
+[ControllerName("Applets")]
+public class AppletController : ControllerBase
 {
-	[ApiController]
-	[Route("Externals/Wechat/Applets")]
-	public class AppletController : ControllerBase
+	#region 公共方法
+	[HttpPost("[action]")]
+	[HttpPost("{id}/[action]")]
+	public async ValueTask<IActionResult> Login(string id, CancellationToken cancellation = default)
 	{
-		[HttpPost("{action}")]
-		[HttpPost("{id}/{action}")]
-		public async ValueTask<IActionResult> Login(string id, CancellationToken cancellation = default)
-		{
-			var token = await this.Request.ReadAsStringAsync(cancellation);
+		var token = await this.Request.ReadAsStringAsync(cancellation);
 
-			if(string.IsNullOrEmpty(token))
-				return this.BadRequest();
+		if(string.IsNullOrEmpty(token))
+			return this.BadRequest();
 
-			if(!AppletManager.TryGetApplet(id, out var applet))
-				return this.NotFound();
+		if(!AppletManager.TryGetApplet(id, out var applet))
+			return this.NotFound();
 
-			var result = await applet.LoginAsync(token, cancellation);
-			return string.IsNullOrEmpty(result.OpenId) ? this.NotFound() : this.Ok(result);
-		}
-
-		[HttpGet("Phone/{token}")]
-		[HttpGet("PhoneNumber/{token}")]
-		[HttpGet("{id}/Phone/{token}")]
-		[HttpGet("{id}/PhoneNumber/{token}")]
-		public async ValueTask<IActionResult> GetPhoneNumber(string id, string token, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(token))
-				return this.BadRequest();
-
-			if(!AppletManager.TryGetApplet(id, out var applet))
-				return this.NotFound();
-
-			var result = await applet.GetPhoneNumberAsync(token, cancellation);
-			return string.IsNullOrEmpty(result) ? this.NotFound() : this.Content(result);
-		}
+		var result = await applet.LoginAsync(token, cancellation);
+		return string.IsNullOrEmpty(result.OpenId) ? this.NotFound() : this.Ok(result);
 	}
 
-	[ApiController]
-	[Route("Externals/Wechat/Applets/{id}/Users")]
+	[HttpGet("Phone/{token}")]
+	[HttpGet("PhoneNumber/{token}")]
+	[HttpGet("{id}/Phone/{token}")]
+	[HttpGet("{id}/PhoneNumber/{token}")]
+	public async ValueTask<IActionResult> GetPhoneNumber(string id, string token, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(token))
+			return this.BadRequest();
+
+		if(!AppletManager.TryGetApplet(id, out var applet))
+			return this.NotFound();
+
+		var result = await applet.GetPhoneNumberAsync(token, cancellation);
+		return string.IsNullOrEmpty(result) ? this.NotFound() : this.Content(result);
+	}
+	#endregion
+
+	#region 嵌套子类
+	[ControllerName("Users")]
 	public class AppletUserController : ControllerBase
 	{
-		[HttpGet("{identifier?}")]
-		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery]string bookmark = null, CancellationToken cancellation = default)
+		[HttpGet("/[area]/{id}/[controller]/{identifier?}")]
+		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery] string bookmark = null, CancellationToken cancellation = default)
 		{
 			if(!AppletManager.TryGetApplet(id, out var applet))
 				return this.NotFound();
@@ -95,12 +98,11 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		}
 	}
 
-	[ApiController]
-	[Route("Externals/Wechat/Applets")]
+	[ControllerName("Credential")]
 	public class AppletCredentialController : ControllerBase
 	{
-		[HttpGet("Credential")]
-		[HttpGet("{key}/Credential")]
+		[HttpGet]
+		[HttpGet("/[area]/{key}/[controller]")]
 		public async ValueTask<IActionResult> GetCredential(string key, CancellationToken cancellation = default)
 		{
 			if(!AppletManager.TryGetApplet(key, out var applet))
@@ -110,8 +112,8 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 
-		[HttpPost("Credential/[action]")]
-		[HttpPost("{key}/Credential/[action]")]
+		[HttpPost("[action]")]
+		[HttpPost("/[area]/{key}/[controller]/[action]")]
 		public async ValueTask<IActionResult> Refresh(string key, CancellationToken cancellation = default)
 		{
 			if(!AppletManager.TryGetApplet(key, out var applet))
@@ -121,4 +123,5 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			return string.IsNullOrEmpty(credential) ? this.NoContent() : this.Content(credential);
 		}
 	}
+	#endregion
 }
