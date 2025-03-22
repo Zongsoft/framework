@@ -35,6 +35,8 @@ namespace Zongsoft.Serialization.Json.Converters;
 
 public class TimeOnlyConverter : JsonConverter<TimeOnly>
 {
+	public static readonly TimeOnlyConverter Instance = new();
+
 	public override TimeOnly Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.TokenType switch
 	{
 		JsonTokenType.Number => new TimeOnly(reader.GetInt64()),

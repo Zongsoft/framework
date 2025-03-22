@@ -35,6 +35,8 @@ namespace Zongsoft.Serialization.Json.Converters;
 
 public class DateOnlyConverter : JsonConverter<DateOnly>
 {
+	public static readonly DateOnlyConverter Instance = new();
+
 	public override DateOnly Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.TokenType switch
 	{
 		JsonTokenType.Number => DateOnly.FromDayNumber(reader.GetInt32()),

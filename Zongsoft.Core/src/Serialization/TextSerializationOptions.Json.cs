@@ -86,10 +86,10 @@ partial class TextSerializationOptions
 			IncludeFields = this.IncludeFields,
 			Converters =
 			{
-				new Json.Converters.TypeConverter(),
-				new Json.Converters.DateOnlyConverter(),
-				new Json.Converters.TimeOnlyConverter(),
-				new Json.Converters.TimeSpanConverter(),
+				Json.Converters.TypeConverter.Factory,
+				Json.Converters.DateOnlyConverter.Instance,
+				Json.Converters.TimeOnlyConverter.Instance,
+				Json.Converters.TimeSpanConverter.Instance,
 				new JsonStringEnumConverter(naming),
 				new Json.Converters.ModelConverterFactory(),
 				new Json.Converters.RangeConverterFactory(),

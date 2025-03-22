@@ -35,6 +35,8 @@ namespace Zongsoft.Serialization.Json.Converters;
 
 public class TimeSpanConverter : JsonConverter<TimeSpan>
 {
+	public static readonly TimeSpanConverter Instance = new();
+
 	public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		if(reader.TokenType == JsonTokenType.Number)

@@ -35,6 +35,16 @@ namespace Zongsoft.Serialization.Json.Converters;
 
 public class TypeConverter : JsonConverter<Type>
 {
+	public static readonly JsonConverterFactory Factory = new TypeConverterFactory();
+
+	private class TypeConverterFactory : JsonConverterFactory
+	{
+		private static readonly TypeConverter Default = new();
+
+		public override bool CanConvert(Type type) => typeof(Type).IsAssignableFrom(type);
+		public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => Default;
+	}
+
 	public override Type Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		if(reader.TokenType == JsonTokenType.Null)
