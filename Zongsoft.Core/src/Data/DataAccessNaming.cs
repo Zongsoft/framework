@@ -30,7 +30,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Data
 {
@@ -39,105 +38,30 @@ namespace Zongsoft.Data
 	/// </summary>
 	public class DataAccessNaming : IDataAccessNaming, ICollection<KeyValuePair<Type, string>>
 	{
-		#region 成员字段
-		private readonly ConcurrentDictionary<Type, string> _mapping;
-		#endregion
-
-		#region 构造函数
-		public DataAccessNaming()
-		{
-			_mapping = new ConcurrentDictionary<Type, string>();
-		}
-		#endregion
-
 		#region 公共属性
-		public int Count => _mapping.Count;
+		public int Count => Model.Naming.Count;
 		#endregion
 
 		#region 公共方法
-		public void Map<TModel>(string name = null) => this.Map(typeof(TModel), name);
-		public void Map(Type modelType, string name = null)
-		{
-			if(modelType == null)
-				throw new ArgumentNullException(nameof(modelType));
+		public void Map<TModel>(string name = null) => Model.Naming.Map(typeof(TModel), name);
+		public void Map(Type modelType, string name = null) => Model.Naming.Map(modelType, name);
 
-			//对动态模型类进行特殊处理
-			if(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType.IsAbstract)
-				modelType = modelType.BaseType;
-
-			_mapping[modelType] = string.IsNullOrEmpty(name) ? GetName(modelType) : name;
-		}
-
-		public string Get<TModel>() => this.Get(typeof(TModel));
-		public string Get(Type modelType)
-		{
-			if(modelType == null)
-				throw new ArgumentNullException(nameof(modelType));
-
-			//对动态模型类进行特殊处理
-			if(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType.IsAbstract)
-				modelType = modelType.BaseType;
-
-			return _mapping.GetOrAdd(modelType, GetName);
-		}
-		#endregion
-
-		#region 静态方法
-		private static string GetName(Type type)
-		{
-			//如果该类型应用了数据访问注解，则返回注解中声明的名字
-			if(TryGetNameFromAttribute(type, out var name))
-				return name;
-
-			name = type.Name;
-
-			if(type.IsGenericType)
-			{
-				//如果类型的声明类型为空，很可能它是一个匿名类（匿名类必定是一个泛型类）
-				if(type.DeclaringType == null)
-				{
-					foreach(var attribute in type.CustomAttributes)
-					{
-						//如果指定的类型是一个匿名类，则返回空（因为匿名类名没有意义）
-						if(attribute.AttributeType == typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute))
-							return null;
-					}
-				}
-
-				//去掉泛型类名中关于泛型参数数量的后缀部分
-				name = type.Name[..type.Name.IndexOf('`')];
-			}
-
-			//处理接口命名的规范
-			if(type.IsInterface && name.Length > 1 && name[0] == 'I' && char.IsUpper(name[1]))
-				name = name[1..];
-			//处理抽象类命名的规范
-			else if(type.IsAbstract && name.Length > 4 && name.EndsWith("Base"))
-				name = name[..^4];
-
-			var module = Services.ApplicationModuleAttribute.Find(type)?.Name;
-			return string.IsNullOrEmpty(module) ? name : $"{module}.{name}";
-		}
-
-		private static bool TryGetNameFromAttribute(Type type, out string name)
-		{
-			name = ((ModelAttribute)Attribute.GetCustomAttribute(type, typeof(ModelAttribute), true))?.Name;
-			return name != null && name.Length > 0;
-		}
+		public string Get<TModel>() => Model.Naming.Get(typeof(TModel));
+		public string Get(Type modelType) => Model.Naming.Get(modelType);
 		#endregion
 
 		#region 集合成员
 		bool ICollection<KeyValuePair<Type, string>>.IsReadOnly => false;
 		void ICollection<KeyValuePair<Type, string>>.Add(KeyValuePair<Type, string> item) => this.Map(item.Key, item.Value);
-		void ICollection<KeyValuePair<Type, string>>.Clear() => _mapping.Clear();
-		bool ICollection<KeyValuePair<Type, string>>.Remove(KeyValuePair<Type, string> item) => _mapping.TryRemove(item.Key, out _);
-		bool ICollection<KeyValuePair<Type, string>>.Contains(KeyValuePair<Type, string> item) => _mapping.ContainsKey(item.Key);
+		void ICollection<KeyValuePair<Type, string>>.Clear() => throw new NotSupportedException();
+		bool ICollection<KeyValuePair<Type, string>>.Remove(KeyValuePair<Type, string> item) => Model.Naming.Unmap(item.Key);
+		bool ICollection<KeyValuePair<Type, string>>.Contains(KeyValuePair<Type, string> item) => Model.Naming.Contains(item.Key);
 
 		void ICollection<KeyValuePair<Type, string>>.CopyTo(KeyValuePair<Type, string>[] array, int arrayIndex)
 		{
 			int offset = 0;
 
-			foreach(var entry in _mapping)
+			foreach(var entry in Model.Naming.Enumerable())
 			{
 				if(arrayIndex + offset >= array.Length)
 					break;
@@ -146,8 +70,8 @@ namespace Zongsoft.Data
 			}
 		}
 
-		public IEnumerator<KeyValuePair<Type, string>> GetEnumerator() => _mapping.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => _mapping.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<KeyValuePair<Type, string>> GetEnumerator() => Model.Naming.Enumerable().GetEnumerator();
 		#endregion
 	}
 }
