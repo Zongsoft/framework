@@ -28,12 +28,14 @@
  */
 
 using System;
+using System.Linq;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.ResponseCompression;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -189,6 +191,23 @@ internal static class WebApplicationUtility
 				options.SupportedCultures.Add(cultures[i]);
 				options.SupportedUICultures.Add(cultures[i]);
 			}
+		});
+
+		services.Configure<BrotliCompressionProviderOptions>(options => options.Level = System.IO.Compression.CompressionLevel.Optimal);
+		services.Configure<GzipCompressionProviderOptions>(options => options.Level = System.IO.Compression.CompressionLevel.Optimal);
+
+		services.AddResponseCompression(options =>
+		{
+			options.EnableForHttps = true;
+			options.Providers.Add<BrotliCompressionProvider>();
+			options.Providers.Add<GzipCompressionProvider>();
+
+			options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+			[
+				"image/svg+xml",
+				"application/atom+xml",
+				"application/xhtml+xml",
+			]);
 		});
 
 		services.AddEndpointsApiExplorer();

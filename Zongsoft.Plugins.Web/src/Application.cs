@@ -29,9 +29,10 @@
 
 using System;
 
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.ResponseCompression;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
@@ -71,6 +72,7 @@ public static class Application
 		app.UseRouting();
 		app.UseAuthentication();
 		app.UseAuthorization();
+		app.UseResponseCompression();
 		app.UseStaticFiles(app.Services.Resolve<Microsoft.Extensions.Options.IOptions<StaticFileOptions>>()?.Value);
 
 		app.MapControllers();
@@ -124,6 +126,7 @@ public static class Application
 				app.UseRouting();
 				app.UseAuthentication();
 				app.UseAuthorization();
+				app.UseResponseCompression();
 				app.UseStaticFiles(app.ApplicationServices.Resolve<Microsoft.Extensions.Options.IOptions<StaticFileOptions>>()?.Value);
 
 				app.UseEndpoints(endpoints =>
