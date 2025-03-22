@@ -57,7 +57,8 @@ partial class RoleController
 		#endregion
 
 		#region 上级角色
-		[HttpGet("/[area]/{id}/Ancestors")]
+		[ActionName("Ancestors")]
+		[HttpGet("/[area]/{id}/[action]")]
 		public IActionResult GetAncestors(string id, CancellationToken cancellation = default)
 		{
 			if(this.Request.Query.TryGetValue("depth", out var text) && int.TryParse(text, out var depth))
@@ -66,15 +67,17 @@ partial class RoleController
 				return this.Ok(this.Service.GetAncestorsAsync(Member.Role(id), cancellation));
 		}
 
+		[ActionName("Parents")]
 		[HttpGet("/[area]/{id}/Roles")]
-		[HttpGet("/[area]/{id}/Parents")]
+		[HttpGet("/[area]/{id}/[action]")]
 		public IAsyncEnumerable<IRole> GetParents(string id, CancellationToken cancellation = default)
 		{
 			return this.Service.GetParentsAsync(Member.Role(id), cancellation);
 		}
 
+		[ActionName("Parent")]
 		[HttpPut("/[area]/{id}/Role")]
-		[HttpPut("/[area]/{id}/Parent")]
+		[HttpPut("/[area]/{id}/[action]")]
 		public async ValueTask<IActionResult> SetParent(string id, string roleId, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(roleId))
@@ -83,8 +86,9 @@ partial class RoleController
 			return await this.Service.SetParentAsync(Member.Role(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
+		[ActionName("Parents")]
 		[HttpPut("/[area]/{id}/Roles")]
-		[HttpPut("/[area]/{id}/Parents")]
+		[HttpPut("/[area]/{id}/[action]")]
 		public async ValueTask<IActionResult> SetParents(string id, CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(id))
