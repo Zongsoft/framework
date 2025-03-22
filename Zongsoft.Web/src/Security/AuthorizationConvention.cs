@@ -44,21 +44,21 @@ public class AuthorizationConvention : IApplicationModelConvention
 	#region 公共方法
 	public void Apply(ApplicationModel application)
 	{
-		if(!ApplicationContext.Current.Properties.TryGetValue<ControllerDescriptorCollection>(out var controllers))
+		if(!ApplicationContext.Current.Properties.TryGetValue<ControllerServiceDescriptorCollection>(out var descriptors))
 			return;
 
-		foreach(var controller in controllers)
+		foreach(var descriptor in descriptors)
 		{
-			var controllerAuthorizable = IsAuthorizable(controller.Attributes, false);
+			var controllerAuthorizable = IsAuthorizable(descriptor.Controller.Attributes, false);
 
-			foreach(var action in controller.Actions)
+			foreach(var action in descriptor.Controller.Actions)
 			{
 				var authorizable = IsAuthorizable(action.Attributes, controllerAuthorizable);
 				if(!authorizable)
 					continue;
 
 				for(int i = 0; i < action.Selectors.Count; i++)
-					action.Selectors[i].EndpointMetadata.Add(new RequirementData(controller, action));
+					action.Selectors[i].EndpointMetadata.Add(new RequirementData(action));
 			}
 		}
 	}
@@ -89,18 +89,23 @@ public class AuthorizationConvention : IApplicationModelConvention
 	partial class RequirementData : IAuthorizationRequirementData { }
 	#endif
 
-	partial class RequirementData(ControllerDescriptor controller, ActionModel action)
+	partial class RequirementData(ActionModel action)
 	{
-		private readonly ControllerDescriptor _controller = controller;
+		#region 成员字段
 		private readonly ActionModel _action = action;
+		#endregion
 
+		#region 公共方法
 		public IEnumerable<IAuthorizationRequirement> GetRequirements()
 		{
+			var descriptor = _action.Controller.GetService();
+
 			yield return new OperationAuthorizationRequirement()
 			{
-				Name = $"{_controller.Service.QualifiedName}:{_action.ActionName}"
+				Name = descriptor == null ? _action.ActionName : $"{descriptor.QualifiedName}:{_action.ActionName}"
 			};
 		}
+		#endregion
 	}
 	#endregion
 }

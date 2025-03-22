@@ -32,7 +32,6 @@ using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Zongsoft.Web;
@@ -63,7 +62,7 @@ public class ControllerNameAttribute : Attribute, IControllerModelConvention
 	{
 		if(controller.ControllerType.IsNested)
 		{
-			var @namespace = controller.RouteValues["namespace"] = ControllerUtility.GetNamespace(controller.ControllerType, '/');
+			var @namespace = controller.RouteValues["namespace"] = GetNamespace(controller.ControllerType, '/');
 			var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
 
 			if(string.IsNullOrEmpty(module))
@@ -103,6 +102,46 @@ public class ControllerNameAttribute : Attribute, IControllerModelConvention
 			{
 				Template = $"[area]/[controller]",
 			};
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private static string GetNamespace(Type controllerType, char separator)
+	{
+		if(controllerType == null || !controllerType.IsNested)
+			return null;
+
+		var stack = new Stack<Type>();
+		var type = controllerType.DeclaringType;
+
+		while(type != null)
+		{
+			if(ControllerFeatureProvider.IsControllerType(type))
+				stack.Push(type);
+
+			type = type.DeclaringType;
+		}
+
+		return string.Join(separator, stack.Select(GetName));
+
+		static string GetName(Type controllerType)
+		{
+			var attribute = controllerType.GetCustomAttribute<ControllerNameAttribute>(true);
+
+			if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
+				return attribute.Name;
+
+			const string CONTROLLER_SUFFIX = "Controller";
+			const string CONTROLLER_BASE_SUFFIX = "ControllerBase";
+
+			if(controllerType.Name.Length > CONTROLLER_SUFFIX.Length && controllerType.Name.EndsWith(CONTROLLER_SUFFIX, StringComparison.OrdinalIgnoreCase))
+				return controllerType.Name[..^CONTROLLER_SUFFIX.Length];
+
+			if(controllerType.Name.Length > CONTROLLER_BASE_SUFFIX.Length && controllerType.Name.EndsWith(CONTROLLER_BASE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+				return controllerType.Name[..^CONTROLLER_BASE_SUFFIX.Length];
+
+			return controllerType.Name;
 		}
 	}
 	#endregion

@@ -33,6 +33,7 @@ using System.Reflection;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 using Zongsoft.Data;
 using Zongsoft.Common;
@@ -40,14 +41,15 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Web;
 
-public class ServiceControllerDescriptor : IEquatable<ServiceControllerDescriptor>
+public class ControllerServiceDescriptor : IEquatable<ControllerServiceDescriptor>
 {
 	#region 私有构造
-	private ServiceControllerDescriptor(string module, string @namespace, string serviceName, Type serviceType, ModelDescriptor model)
+	private ControllerServiceDescriptor(ControllerModel controller, string module, string @namespace, string serviceName, Type serviceType, ModelDescriptor model)
 	{
 		if(string.IsNullOrEmpty(serviceName))
 			throw new ArgumentNullException(nameof(serviceName));
 
+		this.Controller = controller ?? throw new ArgumentNullException(nameof(controller));
 		this.Module = module;
 		this.Namespace = @namespace;
 		this.Name = serviceName;
@@ -74,31 +76,33 @@ public class ServiceControllerDescriptor : IEquatable<ServiceControllerDescripto
 	public string QualifiedName { get; }
 	/// <summary>获取服务模型描述。</summary>
 	public ModelDescriptor Model { get; }
+	/// <summary>获取控制器描述器。</summary>
+	public ControllerModel Controller { get; }
 	#endregion
 
 	#region 重写方法
-	public bool Equals(ServiceControllerDescriptor other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
-	public override bool Equals(object obj) => this.Equals(obj as ServiceControllerDescriptor);
+	public bool Equals(ControllerServiceDescriptor other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
+	public override bool Equals(object obj) => this.Equals(obj as ControllerServiceDescriptor);
 	public override int GetHashCode() => this.QualifiedName.GetHashCode();
 	public override string ToString() => this.QualifiedName;
 	#endregion
 
-	#region 公共方法
-	public static ServiceControllerDescriptor Get(Type controllerType)
+	#region 静态方法
+	public static ControllerServiceDescriptor Get(ControllerModel controller)
 	{
-		if(controllerType == null)
-			throw new ArgumentNullException(nameof(controllerType));
+		if(controller == null)
+			throw new ArgumentNullException(nameof(controller));
 
-		var @namespace = GetNamespace(controllerType);
-		(var modelType, var serviceType) = GetServiceInfo(controllerType);
+		var @namespace = GetNamespace(controller.ControllerType);
+		(var modelType, var serviceType) = GetServiceInfo(controller.ControllerType);
 
 		if(serviceType != null)
 		{
 			var model = Zongsoft.Data.Model.GetDescriptor(modelType);
-			return new ServiceControllerDescriptor(ApplicationModuleAttribute.Find(serviceType)?.Name, @namespace, GetServiceName(serviceType), serviceType, model);
+			return new ControllerServiceDescriptor(controller, ApplicationModuleAttribute.Find(serviceType)?.Name, @namespace, GetServiceName(serviceType), serviceType, model);
 		}
 
-		return new ServiceControllerDescriptor(ApplicationModuleAttribute.Find(controllerType)?.Name, @namespace, GetControllerName(controllerType), null, null);
+		return new ControllerServiceDescriptor(controller, ApplicationModuleAttribute.Find(controller.ControllerType)?.Name, @namespace, GetControllerName(controller.ControllerType), null, null);
 	}
 	#endregion
 

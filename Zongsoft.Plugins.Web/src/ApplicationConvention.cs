@@ -40,6 +40,6 @@ public class ApplicationConvention : IApplicationModelConvention
 {
 	public void Apply(ApplicationModel application)
 	{
-		ApplicationContext.Current.Properties[typeof(ControllerDescriptorCollection)] = new ControllerDescriptorCollection(application.Controllers);
+		ApplicationContext.Current.Properties[typeof(ControllerServiceDescriptorCollection)] = new ControllerServiceDescriptorCollection(application.Controllers);
 	}
 }

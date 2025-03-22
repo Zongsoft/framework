@@ -29,7 +29,6 @@
 
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -38,68 +37,30 @@ namespace Zongsoft.Web;
 
 public static class ControllerUtility
 {
-	public static string GetName(Type controllerType)
+	public static ControllerServiceDescriptor GetService(this ControllerModel controller)
 	{
-		var attribute = controllerType.GetCustomAttribute<ControllerNameAttribute>(true);
-
-		if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
-			return attribute.Name;
-
-		const string CONTROLLER_SUFFIX = "Controller";
-		const string CONTROLLER_BASE_SUFFIX = "ControllerBase";
-
-		if(controllerType.Name.Length > CONTROLLER_SUFFIX.Length && controllerType.Name.EndsWith(CONTROLLER_SUFFIX, StringComparison.OrdinalIgnoreCase))
-			return controllerType.Name[..^CONTROLLER_SUFFIX.Length];
-
-		if(controllerType.Name.Length > CONTROLLER_BASE_SUFFIX.Length && controllerType.Name.EndsWith(CONTROLLER_BASE_SUFFIX, StringComparison.OrdinalIgnoreCase))
-			return controllerType.Name[..^CONTROLLER_BASE_SUFFIX.Length];
-
-		return controllerType.Name;
+		return controller != null && controller.Properties.TryGetValue("Service", out var value) ? value as ControllerServiceDescriptor : null;
 	}
 
-	public static string GetNamespace(Type controllerType, char separator)
+	public static bool SetService(this ControllerModel controller, ControllerServiceDescriptor service)
 	{
-		if(controllerType == null || !controllerType.IsNested)
+		return controller != null && service != null && controller.Properties.TryAdd("Service", service);
+	}
+
+	public static object Serializable(this ControllerServiceDescriptor descriptor)
+	{
+		if(descriptor == null)
 			return null;
-
-		var stack = new Stack<Type>();
-		var type = controllerType.DeclaringType;
-
-		while(type != null)
-		{
-			if(ControllerFeatureProvider.IsControllerType(type))
-				stack.Push(type);
-
-			type = type.DeclaringType;
-		}
-
-		return string.Join(separator, stack.Select(GetName));
-	}
-
-	public static string GetQualifiedName(Type controllerType, char separator)
-	{
-		var @namespace = GetNamespace(controllerType, separator);
-
-		return string.IsNullOrEmpty(@namespace) ?
-			GetName(controllerType) :
-			$"{@namespace}{separator}{GetName(controllerType)}";
-	}
-
-	public static object Serializable(this ControllerModel controller)
-	{
-		if(controller == null)
-			return null;
-
-		controller.Properties.TryGetValue("Model", out var model);
-		controller.Properties.TryGetValue("QualifiedName", out var qualifiedName);
 
 		return new
 		{
-			Name = controller.ControllerName,
-			QualifiedName = qualifiedName,
-			Type = controller.ControllerType,
-			Model = model,
-			Actions = controller.Actions.Select(action => action.Serializable()),
+			descriptor.Name,
+			descriptor.Module,
+			descriptor.Namespace,
+			descriptor.QualifiedName,
+			descriptor.Type,
+			descriptor.Model,
+			Actions = descriptor.Controller.Actions.Select(action => action.Serializable()),
 		};
 	}
 
@@ -111,10 +72,28 @@ public static class ControllerUtility
 		return new
 		{
 			Name = action.ActionName,
+			Routes = GetRoutes(action),
 			Parameters = action.Parameters
 				.Where(parameter => IsRequestParameter(parameter))
 				.Select(parameter => parameter.Serializable()),
 		};
+
+		static IEnumerable<object> GetRoutes(ActionModel action)
+		{
+			if(action == null)
+				yield break;
+
+			foreach(var selector in action.Selectors)
+			{
+				if(selector.AttributeRouteModel != null)
+					yield return new
+					{
+						selector.AttributeRouteModel.Name,
+						selector.AttributeRouteModel.Order,
+						selector.AttributeRouteModel.Template,
+					};
+			}
+		}
 
 		static bool IsRequestParameter(ParameterModel parameter) =>
 			parameter != null &&
@@ -132,7 +111,8 @@ public static class ControllerUtility
 		{
 			parameter.Name,
 			Type = parameter.ParameterType,
-			Source = parameter.BindingInfo.BindingSource.Id,
+			Kind = parameter.BindingInfo?.BindingSource?.Id,
+			Optional = parameter.ParameterInfo?.IsOptional ?? false,
 		};
 	}
 }

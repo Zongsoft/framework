@@ -35,23 +35,23 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Zongsoft.Web;
 
-public class ControllerDescriptorCollection : KeyedCollection<string, ControllerDescriptor>
+public class ControllerServiceDescriptorCollection : KeyedCollection<string, ControllerServiceDescriptor>
 {
 	#region 构造函数
-	public ControllerDescriptorCollection(IEnumerable<ControllerModel> controllers) : base(StringComparer.OrdinalIgnoreCase)
+	public ControllerServiceDescriptorCollection(IEnumerable<ControllerModel> controllers) : base(StringComparer.OrdinalIgnoreCase)
 	{
 		foreach(var controller in controllers)
 		{
-			var descriptor = new ControllerDescriptor(controller);
+			var descriptor = ControllerServiceDescriptor.Get(controller);
 			this.Add(descriptor);
-			controller.Properties[nameof(descriptor.Service)] = descriptor.Service;
+			controller.SetService(descriptor);
 		}
 	}
 	#endregion
 
 	#region 公共方法
-	public bool TryGetValue(Services.IApplicationModule module, string name, out ControllerDescriptor value) => this.TryGetValue(module?.Name, name, out value);
-	public bool TryGetValue(string module, string name, out ControllerDescriptor value)
+	public bool TryGetValue(Services.IApplicationModule module, string name, out ControllerServiceDescriptor value) => this.TryGetValue(module?.Name, name, out value);
+	public bool TryGetValue(string module, string name, out ControllerServiceDescriptor value)
 	{
 		if(string.IsNullOrEmpty(name))
 		{
@@ -66,6 +66,6 @@ public class ControllerDescriptorCollection : KeyedCollection<string, Controller
 	#endregion
 
 	#region 重写方法
-	protected override string GetKeyForItem(ControllerDescriptor descriptor) => descriptor.Service.QualifiedName;
+	protected override string GetKeyForItem(ControllerServiceDescriptor descriptor) => descriptor.QualifiedName;
 	#endregion
 }
