@@ -73,7 +73,7 @@ public class ChannelController : ControllerBase
 
 	#region 嵌套子类
 	[ControllerName("Credential")]
-	public class ChannelCredentialController : ControllerBase
+	public class CredentialController : ControllerBase
 	{
 		[HttpGet("/[area]/{id}/[controller]")]
 		public async ValueTask<IActionResult> GetCredential(string id, CancellationToken cancellation = default)
@@ -97,7 +97,7 @@ public class ChannelController : ControllerBase
 	}
 
 	[ControllerName("Users")]
-	public class ChannelUserController : ControllerBase
+	public class UserController : ControllerBase
 	{
 		[HttpGet("{identifier?}")]
 		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery] string bookmark = null, CancellationToken cancellation = default)
@@ -118,7 +118,7 @@ public class ChannelController : ControllerBase
 	}
 
 	[ControllerName("Messager")]
-	public class ChannelMessagerController : ControllerBase
+	public class MessagerController : ControllerBase
 	{
 		[HttpGet("/[area]/{id}/[controller]/Templates")]
 		public async ValueTask<IActionResult> GetTemplatesAsync(string id, CancellationToken cancellation = default)
@@ -145,7 +145,7 @@ public class ChannelController : ControllerBase
 	}
 
 	[ControllerName("Authentication")]
-	public class ChannelAuthenticationController : ControllerBase
+	public class AuthenticationController : ControllerBase
 	{
 		[HttpPost("{token}")]
 		public async ValueTask<IActionResult> AuthenticateAsync(string id, string token, CancellationToken cancellation = default)

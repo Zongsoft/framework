@@ -35,13 +35,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
+using Zongsoft.Web;
 using Zongsoft.Common;
 using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Wechat.Gateway.Controllers
 {
-	[ApiController]
-	[Route("Externals/Wechat/Fallback")]
+	[Area("Externals/Wechat")]
+	[ControllerName("Fallback")]
 	public class FallbackController : ControllerBase
 	{
 		[HttpPost("{name}/{key?}")]

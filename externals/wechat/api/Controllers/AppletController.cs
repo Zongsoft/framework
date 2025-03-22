@@ -78,7 +78,7 @@ public class AppletController : ControllerBase
 
 	#region 嵌套子类
 	[ControllerName("Users")]
-	public class AppletUserController : ControllerBase
+	public class UserController : ControllerBase
 	{
 		[HttpGet("/[area]/{id}/[controller]/{identifier?}")]
 		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery] string bookmark = null, CancellationToken cancellation = default)
@@ -99,7 +99,7 @@ public class AppletController : ControllerBase
 	}
 
 	[ControllerName("Credential")]
-	public class AppletCredentialController : ControllerBase
+	public class CredentialController : ControllerBase
 	{
 		[HttpGet]
 		[HttpGet("/[area]/{key}/[controller]")]

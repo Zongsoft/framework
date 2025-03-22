@@ -35,12 +35,13 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
+using Zongsoft.Web;
 using Zongsoft.Data;
 
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
-	[ApiController]
-	[Route("Externals/Wechat/Banks")]
+	[Area("Externals/Wechat")]
+	[ControllerName("Banks")]
 	public class BankController : ControllerBase
 	{
 		[HttpGet("{kind}")]

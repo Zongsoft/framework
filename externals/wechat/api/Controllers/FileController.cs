@@ -36,12 +36,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
+using Zongsoft.Web;
 using Zongsoft.Externals.Wechat.Paying;
 
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
-	[ApiController]
-	[Route("Externals/Wechat/Files")]
+	[Area("Externals/Wechat")]
+	[ControllerName("Files")]
 	public class FileController : ControllerBase
 	{
 		[HttpPost("{name?}")]

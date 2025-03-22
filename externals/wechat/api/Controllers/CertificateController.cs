@@ -36,8 +36,8 @@ using Microsoft.AspNetCore.Http;
 
 namespace Zongsoft.Externals.Wechat.Web.Controllers
 {
-	[ApiController]
-	[Route("Externals/Wechat/Certificates")]
+	[Area("Externals/Wechat")]
+	[Zongsoft.Web.ControllerName("Certificates")]
 	public class CertificateController : ControllerBase
 	{
 		[HttpGet("{code?}")]
