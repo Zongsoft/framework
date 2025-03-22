@@ -60,8 +60,19 @@ public sealed class ModelDescriptor : IEquatable<ModelDescriptor>
 
 		if(entity == null)
 		{
-			_name = Model.Naming.Get(type);
-			_namespace = ApplicationModuleAttribute.Find(type)?.Name;
+			var qualifiedName = Model.Naming.Get(type);
+			var index = qualifiedName.LastIndexOf(Type.Delimiter);
+
+			if(index < 0)
+			{
+				_name = qualifiedName;
+				_namespace = null;
+			}
+			else
+			{
+				_name = qualifiedName[(index + 1)..];
+				_namespace = qualifiedName[..index];
+			}
 		}
 		else
 		{

@@ -162,7 +162,7 @@ namespace Zongsoft.Data
 		{
 			_model = model;
 
-			if(model == null)
+			if(model == null || model.Entity == null)
 				return;
 
 			_field = _model.Entity.Properties.TryGetValue(this.Name, out var field) ? field : null;
