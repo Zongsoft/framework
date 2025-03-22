@@ -37,8 +37,6 @@ namespace Zongsoft.Components;
 public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 {
 	#region 常量定义
-	private const string SERVICE_SUFFIX      = "Service";
-	private const string SERVICE_BASE_SUFFIX = "ServiceBase";
 	#endregion
 
 	#region 成员字段
@@ -120,6 +118,9 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 
 		static string GetName(Type type)
 		{
+			const string SERVICE_SUFFIX = "Service";
+			const string SERVICE_BASE_SUFFIX = "ServiceBase";
+
 			if(type.Name.Length > SERVICE_SUFFIX.Length && type.Name.EndsWith(SERVICE_SUFFIX))
 				return type.Name[..^SERVICE_SUFFIX.Length];
 
