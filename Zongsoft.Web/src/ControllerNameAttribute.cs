@@ -63,7 +63,7 @@ public class ControllerNameAttribute : Attribute, IControllerModelConvention
 	{
 		if(controller.ControllerType.IsNested)
 		{
-			var @namespace = controller.RouteValues["@namespace"] = ControllerUtility.GetNamespace(controller.ControllerType, '/');
+			var @namespace = controller.RouteValues["namespace"] = ControllerUtility.GetNamespace(controller.ControllerType, '/');
 			var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
 
 			if(string.IsNullOrEmpty(module))

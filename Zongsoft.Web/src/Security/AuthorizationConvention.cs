@@ -98,7 +98,7 @@ public class AuthorizationConvention : IApplicationModelConvention
 		{
 			yield return new OperationAuthorizationRequirement()
 			{
-				Name = $"{_controller.QualifiedName}:{_action.ActionName}"
+				Name = $"{_controller.Service.QualifiedName}:{_action.ActionName}"
 			};
 		}
 	}

@@ -36,44 +36,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-using Zongsoft.Data;
-using Zongsoft.Services;
-using Zongsoft.Components;
-
 namespace Zongsoft.Web;
 
 public partial class ControllerDescriptor(ControllerModel controller) : ICommonModel, IFilterModel, IApiExplorerModel
 {
 	#region 成员字段
-	private bool _initialized;
-	private string _qualifiedName;
-	private ModelDescriptor _model;
-	private ServiceDescriptor _service;
+	private ServiceControllerDescriptor _service;
 	private readonly ControllerModel _controller = controller;
 	#endregion
 
 	#region 公共属性
-	public ModelDescriptor Model
-	{
-		get
-		{
-			this.Initialize();
-			return _model;
-		}
-	}
-
-	public ServiceDescriptor Service
-	{
-		get
-		{
-			this.Initialize();
-			return _service;
-		}
-	}
-
+	public ServiceControllerDescriptor Service => _service ??= ServiceControllerDescriptor.Get(_controller.ControllerType);
 	string ICommonModel.Name => _controller.ControllerName;
 	public string DisplayName => _controller.DisplayName;
-	public string QualifiedName => _qualifiedName ??= this.GetQualifiedName();
 	public string ControllerName => _controller.ControllerName;
 	public Type ControllerType => _controller.ControllerType;
 	public IList<PropertyModel> ControllerProperties => _controller.ControllerProperties;
@@ -88,77 +63,8 @@ public partial class ControllerDescriptor(ControllerModel controller) : ICommonM
 	public ApiExplorerModel ApiExplorer { get => _controller.ApiExplorer; set => _controller.ApiExplorer = value; }
 	#endregion
 
-	#region 私有方法
-	private void Initialize()
-	{
-		if(_initialized)
-			return;
-
-		lock(_controller)
-		{
-			if(_initialized)
-				return;
-
-			(_service, _model) = Resolve(_controller);
-			_initialized = true;
-		}
-	}
-
-	private static (ServiceDescriptor, ModelDescriptor) Resolve(ControllerModel controller)
-	{
-		if(Common.TypeExtension.IsAssignableFrom(typeof(ServiceControllerBase<,>), controller.ControllerType, out var genericTypes) && genericTypes.Count > 0)
-		{
-			var modelType = genericTypes[0].GenericTypeArguments[0];
-			var serviceType = genericTypes[0].GenericTypeArguments[1];
-
-			return (
-				ServiceDescriptor.Get(serviceType),
-				Zongsoft.Data.Model.GetDescriptor(modelType)
-			);
-		}
-
-		return default;
-	}
-
-	private string GetQualifiedName()
-	{
-		//var qualifiedName = this.Service?.QualifiedName;
-
-		//if(string.IsNullOrEmpty(qualifiedName))
-		{
-			var module = ApplicationModuleAttribute.Find(this.ControllerType);
-
-			if(module == null)
-				return GetFullName(this.ControllerType);
-
-			if(string.IsNullOrEmpty(module.Name))
-				return ControllerUtility.GetQualifiedName(this.ControllerType, '.');
-			else
-				return $"{module.Name}:{ControllerUtility.GetQualifiedName(this.ControllerType, '.')}";
-		}
-
-		//return qualifiedName;
-	}
-
-	private static string GetFullName(Type controllerType)
-	{
-		if(controllerType == null)
-			return null;
-
-		var route = controllerType.GetCustomAttributes<RouteAttribute>(true).FirstOrDefault();
-		var area = controllerType.GetCustomAttributes<AreaAttribute>(true).FirstOrDefault();
-
-		if(route == null || string.IsNullOrEmpty(route.Template))
-			return string.IsNullOrEmpty(area?.RouteValue) ?
-				ControllerUtility.GetQualifiedName(controllerType, Type.Delimiter) :
-				$"{area.RouteValue.Replace('/', '.')}.{ControllerUtility.GetQualifiedName(controllerType, Type.Delimiter)}";
-
-		return route.Template
-			.Replace("[controller]", ControllerUtility.GetName(controllerType))
-			.Replace("{controller}", ControllerUtility.GetName(controllerType))
-			.Replace("[area]", area?.RouteValue)
-			.Replace("{area}", area?.RouteValue)
-			.Replace('/', '.');
-	}
+	#region 隐式转换
+	public static implicit operator ControllerModel(ControllerDescriptor descriptor) => descriptor._controller;
+	public static implicit operator ControllerDescriptor(ControllerModel controller) => new(controller);
 	#endregion
 }

@@ -41,7 +41,11 @@ public class ControllerDescriptorCollection : KeyedCollection<string, Controller
 	public ControllerDescriptorCollection(IEnumerable<ControllerModel> controllers) : base(StringComparer.OrdinalIgnoreCase)
 	{
 		foreach(var controller in controllers)
-			this.Add(new ControllerDescriptor(controller));
+		{
+			var descriptor = new ControllerDescriptor(controller);
+			this.Add(descriptor);
+			controller.Properties[nameof(descriptor.Service)] = descriptor.Service;
+		}
 	}
 	#endregion
 
@@ -62,6 +66,6 @@ public class ControllerDescriptorCollection : KeyedCollection<string, Controller
 	#endregion
 
 	#region 重写方法
-	protected override string GetKeyForItem(ControllerDescriptor descriptor) => descriptor.QualifiedName;
+	protected override string GetKeyForItem(ControllerDescriptor descriptor) => descriptor.Service.QualifiedName;
 	#endregion
 }
