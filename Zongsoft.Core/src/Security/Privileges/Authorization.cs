@@ -28,9 +28,6 @@
  */
 
 using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Zongsoft.Security.Privileges;
 
@@ -38,10 +35,24 @@ namespace Zongsoft.Security.Privileges;
 [System.ComponentModel.DefaultProperty(nameof(Authorizers))]
 public static class Authorization
 {
+	#region 成员字段
+	private static IAuthorizer _authorizer;
+	#endregion
+
+	#region 静态构造
 	static Authorization()
 	{
 		Authorizers = new();
 	}
+	#endregion
+
+	#region 公共属性
+	public static IAuthorizer Authorizer
+	{
+		get => _authorizer ??= Authorizers.Count > 0 ? Authorizers[0] : null;
+		set => _authorizer = value;
+	}
 
 	public static AuthorizerCollection Authorizers { get; }
+	#endregion
 }

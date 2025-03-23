@@ -44,7 +44,7 @@
 		</object>
 
 		<object name="Authorization" value="{static:Zongsoft.Security.Privileges.Authorization.Authorizers, Zongsoft.Core}">
-			<object name="Default" type="Zongsoft.Security.Privileges.Authorizer, Zongsoft.Security" />
+			<object name="Authorizer" type="Zongsoft.Security.Privileges.Authorizer, Zongsoft.Security" />
 		</object>
 	</extension>
 
