@@ -1,0 +1,5 @@
+### 授权权限
+# @prompt scheme 身份标识
+GET /Security/Authorization/{{scheme}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}

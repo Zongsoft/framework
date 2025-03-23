@@ -127,10 +127,10 @@ public class AuthorizationHandler : AuthorizationHandler<OperationAuthorizationR
 		if(identity == null || !identity.IsAuthenticated)
 			return null;
 
-		if(string.IsNullOrEmpty(identity.AuthenticationType) || string.Equals(identity.AuthenticationType, "Default", StringComparison.OrdinalIgnoreCase))
-			return Authorization.Authorizers[string.Empty] ?? Authorization.Authorizers["Default"];
-		else
-			return Authorization.Authorizers[identity.AuthenticationType];
+		if(string.IsNullOrEmpty(identity.AuthenticationType))
+			return Authorization.Authorizer;
+
+		return Authorization.Authorizers.TryGetValue(identity.AuthenticationType, out var authorizer) ? authorizer : null;
 	}
 	#endregion
 }

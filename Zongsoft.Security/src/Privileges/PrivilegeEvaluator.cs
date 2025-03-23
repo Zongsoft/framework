@@ -57,7 +57,7 @@ public class PrivilegeEvaluator : PrivilegeEvaluatorBase
 		{
 			//依次获取每层上级角色的授权集
 			var privileges = Module.Current.Accessor.SelectAsync<PrivilegeModel>(
-				Condition.In(nameof(PrivilegeModel.MemberId), ancestor) &
+				Condition.In(nameof(PrivilegeModel.MemberId), ancestor.Select(id => (uint)id)) &
 				Condition.Equal(nameof(PrivilegeModel.MemberType), MemberType.Role),
 				cancellation);
 

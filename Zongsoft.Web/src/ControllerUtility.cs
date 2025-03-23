@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Zongsoft.Web;
@@ -86,13 +87,22 @@ public static class ControllerUtility
 			foreach(var selector in action.Selectors)
 			{
 				if(selector.AttributeRouteModel != null)
-					yield return new
-					{
-						selector.AttributeRouteModel.Name,
-						selector.AttributeRouteModel.Order,
-						selector.AttributeRouteModel.Template,
-					};
+				{
+					var method = GetMethod(selector.AttributeRouteModel.Attribute);
+
+					yield return string.IsNullOrEmpty(method) ?
+						selector.AttributeRouteModel.Template :
+						$"{method} {selector.AttributeRouteModel.Template}";
+				}
 			}
+		}
+
+		static string GetMethod(object metadata)
+		{
+			if(metadata is IActionHttpMethodProvider provider && provider.HttpMethods.Any())
+				return string.Join(",", provider.HttpMethods);
+
+			return null;
 		}
 
 		static bool IsRequestParameter(ParameterModel parameter) =>

@@ -32,9 +32,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using System.Collections.Generic;
 
 using Zongsoft.Data;
+using Zongsoft.Caching;
 using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
@@ -43,11 +46,16 @@ namespace Zongsoft.Security.Privileges;
 [System.ComponentModel.DefaultProperty(nameof(Privileger))]
 public abstract class AuthorizerBase : IAuthorizer, IMatchable, IMatchable<ClaimsPrincipal>
 {
+	#region 私有字段
+	private readonly MemoryCache _cache;
+	#endregion
+
 	#region 构造函数
 	protected AuthorizerBase(string name)
 	{
 		this.Name = name ?? string.Empty;
 		this.Privileger = new();
+		_cache = new MemoryCache();
 	}
 	#endregion
 
@@ -58,18 +66,29 @@ public abstract class AuthorizerBase : IAuthorizer, IMatchable, IMatchable<Claim
 	#endregion
 
 	#region 公共方法
-	public virtual ValueTask<bool> AuthorizeAsync(ClaimsIdentity user, string privilege, Parameters parameters, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> AuthorizeAsync(ClaimsIdentity user, string privilege, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(user == null)
-			return ValueTask.FromResult(false);
+			return false;
 
 		if(privilege == null)
-			return ValueTask.FromResult(false);
+			return false;
 
-		return ValueTask.FromResult(
-			user.TryGetClaims("Privileges", out var privileges) &&
-			privileges.Contains(privilege, StringComparer.OrdinalIgnoreCase)
-		);
+		var privileges = await _cache.GetOrCreateAsync(user.Identify(),
+			key => (GetPrivilegesAsync((Identifier)key, cancellation), TimeSpan.FromMinutes(60)));
+
+		return privileges.Contains(privilege);
+
+		async Task<HashSet<string>> GetPrivilegesAsync(Identifier identifier, CancellationToken cancellation)
+		{
+			var privileges = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+			var results = this.Evaluator.EvaluateAsync(identifier, parameters, cancellation);
+			await foreach(var result in results)
+				privileges.Add(result.Privilege);
+
+			return privileges;
+		}
 	}
 	#endregion
 
