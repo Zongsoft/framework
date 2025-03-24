@@ -110,10 +110,10 @@ namespace Zongsoft.Plugins
 			else
 				throw new PluginException("Invalid value of the plugin extended property.");
 
-			if(this.TryGetValue(name, out var item))
-				this.Dictionary[name] = property;
-			else
-				this.Add(property);
+			if(this.Contains(name))
+				this.Remove(name);
+
+			this.Add(property);
 
 			return property;
 		}

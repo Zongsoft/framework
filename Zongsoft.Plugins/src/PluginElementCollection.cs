@@ -105,30 +105,12 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 虚拟方法
-		protected virtual bool ValidateElement(TElement element)
-		{
-			return true;
-		}
-
-		protected virtual void OnClear()
-		{
-		}
-
-		protected virtual void OnClearComplete()
-		{
-		}
-
-		protected virtual void OnRemoveComplete(TElement value)
-		{
-		}
-
-		protected virtual void OnInsertComplete(TElement value, int index)
-		{
-		}
-
-		protected virtual void OnSetComplete(TElement oldValue, TElement newValue)
-		{
-		}
+		protected virtual bool ValidateElement(TElement element) => true;
+		protected virtual void OnClear() { }
+		protected virtual void OnClearComplete() { }
+		protected virtual void OnRemoveComplete(TElement value) { }
+		protected virtual void OnInsertComplete(TElement value, int index) { }
+		protected virtual void OnSetComplete(TElement oldValue, TElement newValue) { }
 		#endregion
 
 		#region 保护方法
