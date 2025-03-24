@@ -30,7 +30,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -38,12 +37,13 @@ using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Web;
 using Zongsoft.Services;
-using Zongsoft.Security.Membership;
+using Zongsoft.Web.Http;
+using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Security.Web.Controllers;
 
 [Area(Module.NAME)]
-[Route("[area]/[controller]/[action]")]
+[ControllerName("Authentication")]
 public class AuthenticationController : ControllerBase
 {
 	#region 常量定义
@@ -56,26 +56,13 @@ public class AuthenticationController : ControllerBase
 	#endregion
 
 	#region 公共方法
-	[HttpPost("{scheme?}/{key?}")]
-	public async ValueTask<IActionResult> Signin(string scheme, string key, [FromQuery]string scenario)
+	[HttpPost("[action]/{scheme?}/{key?}")]
+	public async ValueTask<IActionResult> Signin(string scheme, string key, [FromQuery]string scenario, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrWhiteSpace(scenario))
 			return this.BadRequest();
 		if(this.Request.ContentLength == null || this.Request.ContentLength == 0)
 			return this.BadRequest();
-
-		static IDictionary<string, object> GetParameters(Microsoft.AspNetCore.Http.IQueryCollection query)
-		{
-			if(query == null || query.Count == 0)
-				return null;
-
-			var parameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
-			foreach(var entry in query)
-				parameters.Add(entry.Key, entry.Value.ToString());
-
-			return parameters;
-		}
 
 		var feature = this.HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpBodyControlFeature>();
 		if(feature != null)
@@ -83,7 +70,7 @@ public class AuthenticationController : ControllerBase
 
 		try
 		{
-			var principal = await Authentication.Instance.AuthenticateAsync(scheme, key, this.Request.Body, scenario, GetParameters(this.Request.Query));
+			var principal = await Authentication.AuthenticateAsync(scheme, key, this.Request.Body, scenario, new(this.Request.GetParameters()), cancellation);
 
 			return principal != null ?
 				this.Ok(this.Transform(principal)) :
@@ -95,16 +82,15 @@ public class AuthenticationController : ControllerBase
 		}
 	}
 
-	[HttpPost]
-	[Authorize]
+	[HttpPost("[action]")]
 	public void Signout()
 	{
-		if(this.User is CredentialPrincipal credential)
-			Authentication.Instance.Authority?.Unregister(credential.CredentialId);
+		if(this.User is CredentialPrincipal credential && credential.CredentialId != null)
+			Authentication.Authority?.Unregister(credential.CredentialId);
 	}
 
 	[Authorize]
-	[HttpPost("{id:required}")]
+	[HttpPost("[action]/{id:required}")]
 	public Task<IActionResult> Renew(string id)
 	{
 		if(string.IsNullOrWhiteSpace(id))
@@ -112,7 +98,7 @@ public class AuthenticationController : ControllerBase
 
 		if(this.User is CredentialPrincipal credential)
 		{
-			var principal = Authentication.Instance.Authority.Renew(credential.CredentialId, id);
+			var principal = Authentication.Authority.Renew(credential.CredentialId, id);
 
 			return principal == null ?
 				Task.FromResult((IActionResult)this.NotFound()) :
@@ -122,7 +108,7 @@ public class AuthenticationController : ControllerBase
 		return Task.FromResult((IActionResult)this.Unauthorized());
 	}
 
-	[HttpPost("{scheme}:{destination}")]
+	[HttpPost("[action]/{scheme}:{destination}")]
 	public async ValueTask<IActionResult> SecretAsync(string scheme, string destination, [FromQuery]string scenario, [FromQuery]string channel = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(scheme) || string.IsNullOrEmpty(destination))
@@ -136,7 +122,7 @@ public class AuthenticationController : ControllerBase
 		return this.Content(result);
 	}
 
-	[HttpPost("{token}")]
+	[HttpPost("[action]/{token}")]
 	public async ValueTask<IActionResult> VerifyAsync(string token, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(token))
@@ -148,7 +134,11 @@ public class AuthenticationController : ControllerBase
 
 		using(var reader = new System.IO.StreamReader(this.Request.Body))
 		{
+			#if NET7_0_OR_GREATER
+			secret = await reader.ReadToEndAsync(cancellation);
+			#else
 			secret = await reader.ReadToEndAsync();
+			#endif
 
 			if(string.IsNullOrEmpty(secret))
 				return this.BadRequest();
@@ -159,6 +149,6 @@ public class AuthenticationController : ControllerBase
 	#endregion
 
 	#region 私有方法
-	private object Transform(System.Security.Claims.ClaimsPrincipal principal) => Authentication.Instance.Transformer.Transform(principal);
+	private object Transform(System.Security.Claims.ClaimsPrincipal principal) => Authentication.Transformer.Transform(principal);
 	#endregion
 }

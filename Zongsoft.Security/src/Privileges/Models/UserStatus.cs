@@ -32,7 +32,7 @@ using System;
 namespace Zongsoft.Security.Privileges.Models;
 
 /// <summary>表示用户状态的枚举。</summary>
-enum UserStatus : byte
+public enum UserStatus : byte
 {
 	/// <summary>正常可用</summary>
 	Active = 0,

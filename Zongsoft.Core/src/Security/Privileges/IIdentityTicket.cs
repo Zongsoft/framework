@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,33 +31,8 @@ using System;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 表示权限系统的角色接口。
-/// </summary>
-public interface IRole : Zongsoft.Components.IIdentifiable
+public interface IIdentityTicket
 {
-	#region 常量定义
-	/// <summary>系统管理员角色名。</summary>
-	public const string Administrators = nameof(Administrators);
-
-	/// <summary>安全管理员角色名。</summary>
-	public const string Security = nameof(Security);
-	#endregion
-
-	#region 属性定义
-	/// <summary>获取或设置角色名称。</summary>
-	string Name { get; set; }
-
-	/// <summary>获取或设置角色头像。</summary>
-	string Avatar { get; set; }
-
-	/// <summary>获取或设置角色昵称。</summary>
-	string Nickname { get; set; }
-
-	/// <summary>获取或设置角色所属的命名空间。</summary>
 	string Namespace { get; set; }
-
-	/// <summary>获取或设置角色的描述信息。</summary>
-	string Description { get; set; }
-	#endregion
+	string Identity { get; set; }
 }

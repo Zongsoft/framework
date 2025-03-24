@@ -30,7 +30,7 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Security.Membership.Configuration
+namespace Zongsoft.Security.Configuration
 {
 	/// <summary>
 	/// 表示身份验证的配置选项。

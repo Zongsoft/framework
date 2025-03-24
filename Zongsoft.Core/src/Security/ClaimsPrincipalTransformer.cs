@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Threading;
 using System.Reflection;
 using System.Security.Claims;
 using System.Security.Principal;
@@ -69,6 +70,11 @@ namespace Zongsoft.Security
 
 				foreach(var property in properties)
 				{
+					if(property.PropertyType == typeof(CancellationToken) ||
+					   property.PropertyType == typeof(CancellationTokenSource) ||
+					   typeof(Microsoft.Extensions.Primitives.IChangeToken).IsAssignableFrom(property.PropertyType))
+						continue;
+
 					if(property.PropertyType == typeof(TimeSpan))
 						result.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal).ToString());
 					else
@@ -110,7 +116,7 @@ namespace Zongsoft.Security
 					return transformer.Transform(identity);
 			}
 
-			return identity.AsModel<Membership.IUserModel>();
+			return identity.AsModel<Privileges.IUser>();
 		}
 		#endregion
 	}

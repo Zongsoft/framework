@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Security.Membership.Configuration
+namespace Zongsoft.Security.Configuration
 {
 	/// <summary>
 	/// 表示身份验证方式的枚举。

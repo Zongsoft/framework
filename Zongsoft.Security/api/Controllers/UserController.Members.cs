@@ -53,7 +53,7 @@ partial class UserController
 	public class MemberController : ControllerBase
 	{
 		#region 公共属性
-		public IMemberService<IRole, IMember<IRole>> Service => this.HttpContext.RequestServices.Resolve<IMemberService<IRole, IMember<IRole>>>(this.User);
+		public IMemberService<IRole, IMember<IRole>> Service => Authentication.Servicer.Members;
 		#endregion
 
 		#region 上级角色

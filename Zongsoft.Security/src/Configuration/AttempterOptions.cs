@@ -30,7 +30,7 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Security.Membership.Configuration
+namespace Zongsoft.Security.Configuration
 {
 	/// <summary>
 	/// 表示恶意检测器的配置选项。

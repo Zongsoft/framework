@@ -42,6 +42,7 @@ public abstract class UserModel : IUser, IIdentifiable, IIdentifiable<uint>, IEq
 	public abstract string Name { get; set; }
 	public abstract string Email { get; set; }
 	public abstract string Phone { get; set; }
+	public abstract string Gender { get; set; }
 	public abstract string Avatar { get; set; }
 	public abstract string Nickname { get; set; }
 	public abstract string Namespace { get; set; }
@@ -74,6 +75,15 @@ public abstract class UserModel : IUser, IIdentifiable, IIdentifiable<uint>, IEq
 	public override int GetHashCode() => this.UserId.GetHashCode();
 	public override string ToString() => string.IsNullOrEmpty(this.Namespace) ? $"[{this.UserId}]{this.Name}" : $"[{this.UserId}]{this.Namespace}:{this.Name}";
 
-	Identifier IIdentifiable.Identifier => new(typeof(UserModel), this.UserId, this.Name, this.Description);
-	Identifier<uint> IIdentifiable<uint>.Identifier => new(typeof(UserModel), this.UserId, this.Name, this.Description);
+	Identifier IIdentifiable.Identifier
+	{
+		get => new(typeof(UserModel), this.UserId, this.Name, this.Description);
+		set => this.UserId = value.Validate<IUser, uint>(out var id) ? id : throw new ArgumentException();
+	}
+
+	Identifier<uint> IIdentifiable<uint>.Identifier
+	{
+		get => new(typeof(UserModel), this.UserId, this.Name, this.Description);
+		set => this.UserId = value.Validate<IUser>(out var id) ? id : throw new ArgumentException();
+	}
 }

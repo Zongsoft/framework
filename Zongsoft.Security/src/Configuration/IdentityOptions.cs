@@ -30,7 +30,9 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Security.Membership.Configuration
+using Zongsoft.Security.Membership;
+
+namespace Zongsoft.Security.Configuration
 {
 	/// <summary>
 	/// 表示用户管理的配置选项。

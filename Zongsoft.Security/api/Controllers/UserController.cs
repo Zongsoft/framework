@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Web.Controllers;
 public partial class UserController : ControllerBase
 {
 	#region 公共属性
-	public IUserService<IUser> Service => this.HttpContext.RequestServices.Resolve<IUserService<IUser>>(this.User);
+	public IUserService<IUser> Service => Authentication.Servicer.Users;
 	#endregion
 
 	#region 公共方法
@@ -116,7 +116,7 @@ public partial class UserController : ControllerBase
 		if(model is IActionResult result)
 			return result;
 
-		((IUser)model).Identify(id);
+		((IUser)model).Identifier = new(typeof(IUser), id);
 		return await this.Service.UpdateAsync((IUser)model, cancellation) ? this.NoContent() : this.NotFound();
 	}
 

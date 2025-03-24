@@ -57,11 +57,6 @@ namespace Zongsoft.Security.Membership
 			if(!string.IsNullOrEmpty(user.Phone))
 				identity.AddClaim(new Claim(ClaimTypes.MobilePhone, user.Phone.ToString(), ClaimValueTypes.String, issuer, issuer, identity));
 
-			identity.AddClaim(new Claim(ClaimNames.UserStatus, user.Status.ToString(), ClaimValueTypes.Integer32, issuer, issuer, identity));
-
-			if(user.StatusTimestamp.HasValue)
-				identity.AddClaim(new Claim(ClaimNames.UserStatusTimestamp, user.StatusTimestamp.ToString(), ClaimValueTypes.DateTime, issuer, issuer, identity));
-
 			identity.AddClaim(new Claim(ClaimNames.Creation, user.Creation.ToString(), ClaimValueTypes.DateTime, issuer, issuer, identity));
 
 			if(user.Modification.HasValue)

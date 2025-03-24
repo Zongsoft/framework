@@ -71,8 +71,8 @@ partial class Privilege
 		#endregion
 
 		#region 显式实现
-		Identifier IIdentifiable.Identifier => (Identifier)this;
-		Identifier<string> IIdentifiable<string>.Identifier => (Identifier<string>)this;
+		Identifier IIdentifiable.Identifier { get => (Identifier)this; set => throw new NotSupportedException(); }
+		Identifier<string> IIdentifiable<string>.Identifier { get => (Identifier<string>)this; set => throw new NotSupportedException(); }
 		#endregion
 
 		#region 隐式转换

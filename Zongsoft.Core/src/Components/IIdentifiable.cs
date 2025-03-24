@@ -35,14 +35,14 @@ namespace Zongsoft.Components;
 /// <remarks>接口实现者应实现 <see cref="Identifier"/> 的隐式转换操作符。</remarks>
 public interface IIdentifiable
 {
-	/// <summary>获取对象的标识。</summary>
-	Identifier Identifier { get; }
+	/// <summary>获取或设置对象的标识。</summary>
+	Identifier Identifier { get; set; }
 }
 
 /// <summary>提供对象标识的接口。</summary>
 /// <remarks>接口实现者应实现 <see cref="Identifier{T}"/> 的隐式转换操作符。</remarks>
 public interface IIdentifiable<T> where T : IEquatable<T>
 {
-	/// <summary>获取对象的标识。</summary>
-	Identifier<T> Identifier { get; }
+	/// <summary>获取或设置对象的标识。</summary>
+	Identifier<T> Identifier { get; set; }
 }

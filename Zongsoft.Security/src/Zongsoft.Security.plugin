@@ -35,34 +35,41 @@
 
 	<!-- 挂载验证和授权集成模块 -->
 	<extension path="/Workbench/Security">
-		<object name="Authentication"
-			authority="{srv:~@Security}"
-		        value="{static:Zongsoft.Security.Membership.Authentication.Instance, Zongsoft.Core}">
-			<expose name="Authenticators" value="{path:../@Authenticators}" />
-			<expose name="Challengers" value="{path:../@Challengers}" />
-			<expose name="Transformers" value="{path:../@Transformer}" />
+		<object name="Authentication" value="{static:Zongsoft.Security.Privileges.Authentication.Authenticators, Zongsoft.Core}">
+			<expose name="Servicer" value="{static:Zongsoft.Security.Privileges.Authentication.Servicer, Zongsoft.Core}" />
+			<expose name="Challengers" value="{static:Zongsoft.Security.Privileges.Authentication.Challengers, Zongsoft.Core}" />
+			<expose name="Transformers" value="{static:Zongsoft.Security.Privileges.Authentication.Transformer, Zongsoft.Core}" />
 		</object>
 
 		<object name="Authorization" value="{static:Zongsoft.Security.Privileges.Authorization.Authorizers, Zongsoft.Core}">
+			<object name="Servicer" value="{static:Zongsoft.Security.Privileges.Authorization.Servicer, Zongsoft.Core}" />
 			<object name="Authorizer" type="Zongsoft.Security.Privileges.Authorizer, Zongsoft.Security" />
 		</object>
 	</extension>
 
 	<!-- 挂载安全鉴证器 -->
-	<extension path="/Workbench/Security/Authentication/Authenticators">
-		<object name="Identity" type="Zongsoft.Security.Membership.IdentityAuthenticator, Zongsoft.Security" />
-		<object name="Secretor" type="Zongsoft.Security.Membership.SecretAuthenticator, Zongsoft.Security" />
+	<extension path="/Workbench/Security/Authentication">
+		<object name="Identity" type="Zongsoft.Security.Privileges.IdentityAuthenticator, Zongsoft.Security" />
+		<object name="Secretor" type="Zongsoft.Security.Privileges.SecretAuthenticator, Zongsoft.Security" />
 	</extension>
 
-	<extension path="/Workbench/Modules/Security/Schemas">
-		<object name="Role" title="{res:Role.Title}" description="{res:Role.Description}" visible="false">
-			<object name="Read" title="{res:Read.Title}" description="{res:Read.Description}" visible="false" />
-			<object name="Write" title="{res:Write.Title}" description="{res:Write.Description}" visible="false" />
-		</object>
+	<!-- 挂载身份验证服务 -->
+	<extension path="/Workbench/Security/Authentication">
+		<servicer.roles>
+			<object name="zongsoft_roles" type="Zongsoft.Security.Privileges.RoleService, Zongsoft.Security" />
+		</servicer.roles>
+		<servicer.users>
+			<object name="zongsoft_users" type="Zongsoft.Security.Privileges.UserService, Zongsoft.Security" />
+		</servicer.users>
+		<servicer.members>
+			<object name="zongsoft_members" type="Zongsoft.Security.Privileges.MemberService, Zongsoft.Security" />
+		</servicer.members>
+	</extension>
 
-		<object name="User" title="{res:User.Title}" description="{res:User.Description}" visible="false">
-			<object name="Read" title="{res:Read.Title}" description="{res:Read.Description}" visible="false" />
-			<object name="Write" title="{res:Write.Title}" description="{res:Write.Description}" visible="false" />
-		</object>
+	<!-- 挂载身份授权服务 -->
+	<extension path="/Workbench/Security/Authorization">
+		<servicer.privileges>
+			<object name="zongsoft_privileges" type="Zongsoft.Security.Privileges.PrivilegeService, Zongsoft.Security" />
+		</servicer.privileges>
 	</extension>
 </plugin>

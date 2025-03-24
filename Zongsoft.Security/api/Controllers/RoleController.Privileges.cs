@@ -55,7 +55,7 @@ partial class RoleController
 	public class PrivilegeController : ControllerBase
 	{
 		#region 公共属性
-		public IPrivilegeService Service => this.HttpContext.RequestServices.Resolve<IPrivilegeService>(this.User);
+		public IPrivilegeService Service => Authorization.Servicer.Privileges;
 		#endregion
 
 		#region 公共方法

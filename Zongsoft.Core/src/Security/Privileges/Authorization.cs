@@ -43,6 +43,7 @@ public static class Authorization
 	static Authorization()
 	{
 		Authorizers = new();
+		Servicer = new();
 	}
 	#endregion
 
@@ -54,5 +55,16 @@ public static class Authorization
 	}
 
 	public static AuthorizerCollection Authorizers { get; }
+
+	/// <summary>获取安全授权服务提供程序。</summary>
+	public static AuthorizationServicer Servicer { get; }
+	#endregion
+
+	#region 嵌套子类
+	public sealed class AuthorizationServicer
+	{
+		internal AuthorizationServicer() { }
+		public IPrivilegeService Privileges { get; set; }
+	}
 	#endregion
 }

@@ -32,7 +32,7 @@ using System.Globalization;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-namespace Zongsoft.Security.Membership.Configuration
+namespace Zongsoft.Security.Configuration
 {
 	/// <summary>
 	/// 表示授权管理的配置选项。
@@ -65,7 +65,7 @@ namespace Zongsoft.Security.Membership.Configuration
 					if(string.IsNullOrEmpty(text))
 						return null;
 
-					return new HashSet<string>(Zongsoft.Common.StringExtension.Slice(text, ',', ';', '|'));
+					return new HashSet<string>(Common.StringExtension.Slice(text, ',', ';', '|'));
 				}
 
 				return base.ConvertFrom(context, culture, value);

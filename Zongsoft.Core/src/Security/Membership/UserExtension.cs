@@ -88,11 +88,6 @@ namespace Zongsoft.Security.Membership
 			if(!string.IsNullOrEmpty(user.Phone))
 				identity.AddClaim(new Claim(ClaimTypes.MobilePhone, user.Phone.ToString(), ClaimValueTypes.String));
 
-			identity.AddClaim(new Claim(ClaimNames.UserStatus, user.Status.ToString(), ClaimValueTypes.Integer32));
-
-			if(user.StatusTimestamp.HasValue)
-				identity.AddClaim(new Claim(ClaimNames.UserStatusTimestamp, user.StatusTimestamp.ToString(), ClaimValueTypes.DateTime));
-
 			identity.AddClaim(new Claim(ClaimNames.Creation, user.Creation.ToString(), ClaimValueTypes.DateTime));
 
 			if(user.Modification.HasValue)

@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Web.Controllers;
 public partial class RoleController : ControllerBase
 {
 	#region 公共属性
-	public IRoleService<IRole> Service => this.HttpContext.RequestServices.Resolve<IRoleService<IRole>>(this.User);
+	public IRoleService<IRole> Service => Authentication.Servicer.Roles;
 	#endregion
 
 	#region 公共方法
@@ -117,7 +117,7 @@ public partial class RoleController : ControllerBase
 		if(model is IActionResult result)
 			return result;
 
-		((IRole)model).Identify(id);
+		((IRole)model).Identifier = new(typeof(IRole), id);
 		return await this.Service.UpdateAsync((IRole)model, cancellation) ? this.NoContent() : this.NotFound();
 	}
 

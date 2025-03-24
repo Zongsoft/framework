@@ -72,6 +72,15 @@ public abstract class RoleModel : IRole, IIdentifiable, IIdentifiable<uint>, IEq
 	public override int GetHashCode() => this.RoleId.GetHashCode();
 	public override string ToString() => string.IsNullOrEmpty(this.Namespace) ? $"[{this.RoleId}]{this.Name}" : $"[{this.RoleId}]{this.Namespace}:{this.Name}";
 
-	Identifier IIdentifiable.Identifier => new(typeof(RoleModel), this.RoleId, this.Name, this.Description);
-	Identifier<uint> IIdentifiable<uint>.Identifier => new(typeof(RoleModel), this.RoleId, this.Name, this.Description);
+	Identifier IIdentifiable.Identifier
+	{
+		get => new(typeof(RoleModel), this.RoleId, this.Name, this.Description);
+		set => this.RoleId = value.Validate<IRole, uint>(out var id) ? id : throw new ArgumentException();
+	}
+
+	Identifier<uint> IIdentifiable<uint>.Identifier
+	{
+		get => new (typeof(RoleModel), this.RoleId, this.Name, this.Description);
+		set => this.RoleId = value.Validate<IRole>(out var id) ? id : throw new ArgumentException();
+	}
 }
