@@ -52,7 +52,7 @@ public class SecretAuthenticator : SecretAuthenticatorBase
 	#region 重写方法
 	protected override async ValueTask<IUser> GetUserAsync(string identifier, CancellationToken cancellation)
 	{
-		ICondition criteria = UserUtility.GetIdentity(identifier);
+		ICondition criteria = UserUtility.GetCriteria(identifier);
 		var result = Module.Current.Accessor.SelectAsync<UserModel>(criteria, cancellation);
 
 		await using var enumerator = result.GetAsyncEnumerator(cancellation);

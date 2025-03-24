@@ -167,7 +167,11 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IMatchable, 
 		var index = keyword.IndexOf(':');
 
 		if(index >= 0)
-			return Utility.GetCriteria(keyword[..index], keyword[(index + 1)..]);
+			return Condition.Equal(nameof(IRole.Namespace), keyword[..index]) &
+			(
+				Condition.Like(nameof(IRole.Name), keyword[(index + 1)..]) |
+				Condition.Like(nameof(IRole.Nickname), keyword[(index + 1)..])
+			);
 
 		return Condition.Like(nameof(IRole.Name), keyword) |
 		       Condition.Like(nameof(IRole.Nickname), keyword);
@@ -183,9 +187,9 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IMatchable, 
 			var index = qualifiedName.IndexOf(':');
 
 			if(index >= 0)
-				return Utility.GetCriteria(qualifiedName[..index], qualifiedName[(index + 1)..]);
-
-			return Condition.Equal(nameof(IRole.Name), qualifiedName);
+				return Condition.Equal(nameof(IRole.Namespace), qualifiedName[..index]) & Condition.Equal(nameof(IRole.Name), qualifiedName[(index + 1)..]);
+			else
+				return Condition.Equal(nameof(IRole.Name), qualifiedName);
 		}
 
 		throw OperationException.Argument();

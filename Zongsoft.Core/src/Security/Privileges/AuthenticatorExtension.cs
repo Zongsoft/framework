@@ -29,7 +29,6 @@
 
 using System;
 using System.Security.Claims;
-using System.Security.Principal;
 
 namespace Zongsoft.Security.Privileges;
 
@@ -48,14 +47,18 @@ public static class AuthenticatorExtension
 
 		identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Identifier.Value.ToString(), ClaimValueTypes.UInteger32, issuer, issuer, identity));
 
+		if(!string.IsNullOrEmpty(user.Email))
+			identity.AddClaim(new Claim(ClaimTypes.Email, user.Email, ClaimValueTypes.String, issuer, issuer, identity));
+		if(!string.IsNullOrEmpty(user.Phone))
+			identity.AddClaim(new Claim(ClaimTypes.MobilePhone, user.Phone, ClaimValueTypes.String, issuer, issuer, identity));
+		if(!string.IsNullOrEmpty(user.Gender))
+			identity.AddClaim(new Claim(nameof(user.Gender), user.Gender, ClaimValueTypes.String, issuer, issuer, identity));
+		if(!string.IsNullOrEmpty(user.Avatar))
+			identity.AddClaim(new Claim(nameof(user.Avatar), user.Avatar, ClaimValueTypes.String, issuer, issuer, identity));
 		if(!string.IsNullOrEmpty(user.Namespace))
 			identity.AddClaim(new Claim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String, issuer, issuer, identity));
 		if(!string.IsNullOrEmpty(user.Description))
 			identity.AddClaim(new Claim(ClaimNames.Description, user.Description, ClaimValueTypes.String, issuer, issuer, identity));
-		if(!string.IsNullOrEmpty(user.Email))
-			identity.AddClaim(new Claim(ClaimTypes.Email, user.Email.ToString(), ClaimValueTypes.String, issuer, issuer, identity));
-		if(!string.IsNullOrEmpty(user.Phone))
-			identity.AddClaim(new Claim(ClaimTypes.MobilePhone, user.Phone.ToString(), ClaimValueTypes.String, issuer, issuer, identity));
 
 		if(expiration.HasValue && expiration.Value > TimeSpan.Zero)
 			identity.AddClaim(new Claim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration, issuer, issuer, identity));

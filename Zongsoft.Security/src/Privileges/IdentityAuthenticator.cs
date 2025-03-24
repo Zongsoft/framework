@@ -50,45 +50,6 @@ public class IdentityAuthenticator : IdentityAuthenticatorBase
 	#endregion
 
 	#region 重写方法
-	protected override async ValueTask<Secret> GetSecretAsync(string identity, string @namespace, CancellationToken cancellation)
-	{
-		ICondition criteria = UserUtility.GetIdentity(identity, @namespace);
-		var result = this.Accessor.SelectAsync<UserSecret>(criteria, Paging.First(), cancellation);
-
-		await using var enumerator = result.GetAsyncEnumerator(cancellation);
-
-		if(await enumerator.MoveNextAsync())
-			return enumerator.Current;
-		else
-			return default;
-	}
-
-	protected override ValueTask<bool> VerifySecretAsync(Requirement requirement, Secret state, CancellationToken cancellation)
-	{
-		if(state is UserSecret secret)
-		{
-			//确认用户状态
-			switch(secret.Status)
-			{
-				case Models.UserStatus.Disabled:
-					throw new AuthenticationException(SecurityReasons.AccountDisabled);
-				case Models.UserStatus.Unapproved:
-					throw new AuthenticationException(SecurityReasons.AccountUnapproved);
-			}
-		}
-
-		return base.VerifySecretAsync(requirement, state, cancellation);
-	}
-
-	protected override async ValueTask<IUser> GetUserAsync(Ticket ticket, CancellationToken cancellation)
-	{
-		var criteria = UserUtility.GetIdentity(ticket.Identity);
-		var result = this.Accessor.SelectAsync<Models.UserModel>(criteria, cancellation);
-		await foreach(var user in result)
-			return user;
-		return null;
-	}
-
 	protected override TimeSpan GetPeriod(string scenario)
 	{
 		var period = TimeSpan.Zero;

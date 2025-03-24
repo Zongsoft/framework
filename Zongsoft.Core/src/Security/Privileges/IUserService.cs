@@ -42,6 +42,9 @@ namespace Zongsoft.Security.Privileges;
 /// </summary>
 public partial interface IUserService<TUser> where TUser : IUser
 {
+	/// <summary>获取用户密码器。</summary>
+	Passworder Passworder { get; }
+
 	/// <summary>确定指定的用户是否存在。</summary>
 	/// <param name="identifier">指定要查找的用户标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>

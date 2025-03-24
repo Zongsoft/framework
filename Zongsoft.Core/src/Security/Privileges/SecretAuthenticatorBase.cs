@@ -43,13 +43,14 @@ namespace Zongsoft.Security.Privileges;
 public abstract class SecretAuthenticatorBase : IAuthenticator<string, string>
 {
 	#region 构造函数
-	protected SecretAuthenticatorBase() { }
+	protected SecretAuthenticatorBase()
+	{
+		this.Attempter = Authentication.Attempter;
+	}
 	#endregion
 
 	#region 公共属性
 	public string Name => "Secret";
-
-	[ServiceDependency]
 	public IAttempter Attempter { get; set; }
 
 	[ServiceDependency]
@@ -120,7 +121,7 @@ public abstract class SecretAuthenticatorBase : IAuthenticator<string, string>
 	#region 虚拟方法
 	protected virtual TimeSpan GetPeriod(string scenario) => TimeSpan.FromHours(2);
 	protected virtual ClaimsIdentity Identity(IUser user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
-	protected abstract ValueTask<IUser> GetUserAsync(string identifier, CancellationToken cancellation);
+	protected virtual ValueTask<IUser> GetUserAsync(string identifier, CancellationToken cancellation) => Authentication.Servicer.Users.GetAsync(new Components.Identifier(typeof(IUser), identifier), cancellation);
 	#endregion
 
 	#region 私有方法

@@ -36,7 +36,7 @@ namespace Zongsoft.Security.Privileges;
 
 public static class UserUtility
 {
-	public static ICondition GetIdentity(string identity, string @namespace = null)
+	public static ICondition GetCriteria(string identity, string @namespace = null)
 	{
 		if(string.IsNullOrEmpty(identity))
 			return null;

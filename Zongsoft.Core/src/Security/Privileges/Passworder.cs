@@ -28,26 +28,31 @@
  */
 
 using System;
-using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Data;
+using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-internal static class Utility
+public abstract class Passworder
 {
-	private const string NAMESPACE_FIELD = "Namespace";
-	private const string NAME_FIELD = "Name";
+	public abstract ValueTask<Cipher> GetAsync(string identity, string @namespace, CancellationToken cancellation);
+	public abstract ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation);
 
-	public static ICondition GetCriteria(string @namespace, string name)
+	public class Cipher
 	{
-		if(string.IsNullOrEmpty(@namespace) || @namespace[0] == '*')
-			return string.IsNullOrEmpty(name) || name == "*" ? null : Condition.Equal(NAME_FIELD, name.ToString());
+		public Cipher() { }
+		public Cipher(string name, byte[] value, byte[] nonce)
+		{
+			this.Name = name;
+			this.Value = value;
+			this.Nonce = nonce;
+		}
 
-		if(string.IsNullOrEmpty(name) || name == "*")
-			return Condition.Equal(NAMESPACE_FIELD, @namespace.ToString());
-
-		return Condition.Equal(NAMESPACE_FIELD, @namespace.ToString()) &
-		       Condition.Equal(NAME_FIELD, name.ToString());
+		public virtual Identifier Identifier { get; }
+		public string Name { get; set; }
+		public byte[] Value { get; set; }
+		public byte[] Nonce { get; set; }
 	}
 }

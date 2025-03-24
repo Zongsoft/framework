@@ -34,10 +34,8 @@ using System.Security.Claims;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Collections;
-using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Security.Privileges;
 
@@ -57,6 +55,7 @@ public static class Authentication
 	private static readonly KeyedCollection<string, IAuthenticator> _authenticators;
 	private static readonly List<IChallenger> _challengers;
 	private static IClaimsPrincipalTransformer _transformer;
+	private static IAttempter _attempter;
 	#endregion
 
 	#region 静态构造
@@ -87,7 +86,7 @@ public static class Authentication
 	public static IClaimsPrincipalTransformer Transformer { get => _transformer; set => _transformer = value ?? throw new ArgumentNullException(); }
 
 	/// <summary>获取或设置验证失败阻止器。</summary>
-	public static IAttempter Attempter { get; set; }
+	public static IAttempter Attempter { get => _attempter ??= ApplicationContext.Current?.Services?.Resolve<IAttempter>(); set => _attempter = value; }
 
 	/// <summary>获取身份验证服务提供程序。</summary>
 	public static AuthenticationServicer Servicer { get; }

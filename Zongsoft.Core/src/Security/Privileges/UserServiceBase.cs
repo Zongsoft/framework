@@ -44,8 +44,13 @@ namespace Zongsoft.Security.Privileges;
 
 public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, IMatchable<ClaimsPrincipal> where TUser : IUser
 {
+	#region 构造函数
+	protected UserServiceBase(Passworder passworder = null) => this.Passworder = passworder;
+	#endregion
+
 	#region 公共属性
 	public virtual string Name => this.Accessor.Naming.Get<TUser>();
+	public Passworder Passworder { get; protected set; }
 	#endregion
 
 	#region 保护属性
@@ -200,15 +205,11 @@ public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, 
 		if(string.IsNullOrEmpty(keyword) || keyword == "*")
 			return null;
 
-		var index = keyword.IndexOf(':');
-
-		if(index >= 0)
-			return Utility.GetCriteria(keyword[..index], keyword[(index + 1)..]);
-
-		return Condition.Like(nameof(IUser.Name), keyword) |
-		       Condition.Like(nameof(IUser.Email), keyword) |
-		       Condition.Like(nameof(IUser.Phone), keyword) |
-		       Condition.Like(nameof(IUser.Nickname), keyword);
+		return UserUtility.GetCriteria(keyword) |
+			Condition.Like(nameof(IUser.Name), keyword) |
+			Condition.Like(nameof(IUser.Email), keyword) |
+			Condition.Like(nameof(IUser.Phone), keyword) |
+			Condition.Like(nameof(IUser.Nickname), keyword);
 	}
 
 	protected virtual ICondition GetCriteria(Identifier identifier)
@@ -217,14 +218,7 @@ public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, 
 			return null;
 
 		if(identifier.Validate(out string qualifiedName))
-		{
-			var index = qualifiedName.IndexOf(':');
-
-			if(index >= 0)
-				return Utility.GetCriteria(qualifiedName[..index], qualifiedName[(index + 1)..]);
-
-			return Condition.Equal(nameof(IUser.Name), qualifiedName);
-		}
+			return UserUtility.GetCriteria(qualifiedName);
 
 		throw OperationException.Argument();
 	}

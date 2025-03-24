@@ -42,8 +42,12 @@ using Zongsoft.Security.Privileges.Models;
 namespace Zongsoft.Security.Privileges;
 
 [Service<IUserService<IUser>, IUserService<UserModel>>]
-public class UserService : UserServiceBase<UserModel>, IUserService<IUser>
+public partial class UserService : UserServiceBase<UserModel>, IUserService<IUser>
 {
+	#region 构造函数
+	public UserService() => base.Passworder = new Passworder(this);
+	#endregion
+
 	#region 重写方法
 	protected override IDataAccess Accessor => Module.Current.Accessor;
 	protected override ICondition GetCriteria(Identifier identifier)
@@ -65,4 +69,66 @@ public class UserService : UserServiceBase<UserModel>, IUserService<IUser>
 	ValueTask<int> IUserService<IUser>.CreateAsync(IEnumerable<IUser> users, CancellationToken cancellation) => this.CreateAsync(users.Cast<UserModel>(), cancellation);
 	ValueTask<bool> IUserService<IUser>.UpdateAsync(IUser user, CancellationToken cancellation) => this.UpdateAsync(user as UserModel, cancellation);
 	#endregion
+}
+
+partial class UserService
+{
+	public new class Passworder(UserService service) : Privileges.Passworder
+	{
+		private readonly UserService _service = service ?? throw new ArgumentNullException(nameof(service));
+
+		public override async ValueTask<Cipher> GetAsync(string identity, string @namespace, CancellationToken cancellation)
+		{
+			var result = _service.Accessor.SelectAsync<UserCipher>(
+				_service.Name,
+				UserUtility.GetCriteria(identity, @namespace),
+				$"{nameof(UserCipher.UserId)}," +
+				$"{nameof(UserCipher.Status)}," +
+				$"{nameof(UserCipher.Password)}," +
+				$"{nameof(UserCipher.PasswordSalt)},",
+				cancellation);
+
+			await using var enumerator = result.GetAsyncEnumerator(cancellation);
+			return await enumerator.MoveNextAsync() ? enumerator.Current : null;
+		}
+
+		public override ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation)
+		{
+			if(cipher is UserCipher user)
+			{
+				//确认用户状态
+				switch(user.Status)
+				{
+					case UserStatus.Disabled:
+						throw new AuthenticationException(SecurityReasons.AccountDisabled);
+					case UserStatus.Unapproved:
+						throw new AuthenticationException(SecurityReasons.AccountUnapproved);
+				}
+			}
+
+			return ValueTask.FromResult(PasswordUtility.VerifyPassword(password, cipher.Value, cipher.Nonce, cipher.Name));
+		}
+
+		public class UserCipher : Cipher
+		{
+			public UserCipher() => this.Name = "SHA1";
+
+			public uint UserId { get; set; }
+			public UserStatus Status { get; set; }
+
+			public byte[] Password
+			{
+				get => this.Value;
+				set => this.Value = value;
+			}
+
+			public long PasswordSalt
+			{
+				get => BitConverter.ToInt64(this.Nonce);
+				set => this.Nonce = BitConverter.GetBytes(value);
+			}
+
+			public override Identifier Identifier => new(typeof(IUser), this.UserId);
+		}
+	}
 }

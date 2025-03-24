@@ -44,13 +44,15 @@ namespace Zongsoft.Security.Privileges;
 public abstract class IdentityAuthenticatorBase : IAuthenticator<IdentityAuthenticatorBase.Requirement, IdentityAuthenticatorBase.Ticket>
 {
 	#region 构造函数
-	protected IdentityAuthenticatorBase() => this.Name = string.Empty;
+	protected IdentityAuthenticatorBase()
+	{
+		this.Name = string.Empty;
+		this.Attempter = Authentication.Attempter;
+	}
 	#endregion
 
 	#region 公共属性
 	public string Name { get; }
-
-	[ServiceDependency]
 	public IAttempter Attempter { get; set; }
 	#endregion
 
@@ -85,30 +87,27 @@ public abstract class IdentityAuthenticatorBase : IAuthenticator<IdentityAuthent
 		if(attempter != null && !attempter.Verify(requirement.Identity, requirement.Namespace))
 			throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
-		//获取当前用户的密码及相关密钥信息
-		var secret = await this.GetSecretAsync(requirement.Identity, requirement.Namespace, cancellation);
+		//获取当前用户的密钥信息
+		var cipher = await Authentication.Servicer.Users.Passworder.GetAsync(requirement.Identity, requirement.Namespace, cancellation);
 
-		//如果帐户不存在则返回无效账户
-		if(secret == null || secret.Identifier.IsEmpty)
+		//如果帐户不存在则验证失败
+		if(cipher == null)
 			throw new AuthenticationException(SecurityReasons.InvalidIdentity);
 
-		//如果账户状态异常则返回账户状态异常
-		//if(status != UserStatus.Active)
-		//	throw new AuthenticationException(SecurityReasons.AccountDisabled);
-
-		//密码校验失败则返回密码验证失败
-		if(!await this.VerifySecretAsync(requirement, secret, cancellation))
+		//执行密码验证，如果成功则返回验证成功的票证
+		if(await Authentication.Servicer.Users.Passworder.VerifyAsync(requirement.Password, cipher, cancellation))
 		{
-			//通知验证尝试失败
-			attempter?.Fail(requirement.Identity, requirement.Namespace);
-			throw new AuthenticationException(SecurityReasons.InvalidPassword);
+			//通知验证尝试成功，即清空验证失败记录
+			attempter?.Done(requirement.Identity, requirement.Namespace);
+
+			//返回验证成功的票证
+			return this.CreateTicket(cipher.Identifier, requirement);
 		}
 
-		//通知验证尝试成功，即清空验证失败记录
-		attempter?.Done(requirement.Identity, requirement.Namespace);
-
-		//返回验证成功的票证
-		return this.CreateTicket(secret.Identifier, requirement);
+		//通知验证尝试失败
+		attempter?.Fail(requirement.Identity, requirement.Namespace);
+		//抛出验证失败异常
+		throw new AuthenticationException(SecurityReasons.InvalidPassword);
 	}
 	#endregion
 
@@ -134,14 +133,8 @@ public abstract class IdentityAuthenticatorBase : IAuthenticator<IdentityAuthent
 	#endregion
 
 	#region 虚拟方法
-	protected abstract ValueTask<Secret> GetSecretAsync(string identity, string @namespace, CancellationToken cancellation);
-	protected virtual ValueTask<bool> VerifySecretAsync(Requirement requirement, Secret secret, CancellationToken cancellation)
-	{
-		return ValueTask.FromResult(PasswordUtility.VerifyPassword(requirement.Password, secret.Password, secret.PasswordSalt, "SHA1"));
-	}
-
 	protected virtual Ticket CreateTicket(Identifier identifier, Requirement requirement) => new(identifier, requirement.Identity, requirement.Namespace);
-	protected abstract ValueTask<IUser> GetUserAsync(Ticket ticket, CancellationToken cancellation);
+	protected virtual ValueTask<IUser> GetUserAsync(Ticket ticket, CancellationToken cancellation) => Authentication.Servicer.Users.GetAsync(ticket.Identifier, cancellation);
 	protected virtual TimeSpan GetPeriod(string scenario) => TimeSpan.FromHours(4);
 	protected virtual ClaimsIdentity Identity(IUser user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
 	#endregion
