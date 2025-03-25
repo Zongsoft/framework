@@ -134,7 +134,7 @@ public class StashTest
 		//设置触发周期
 		stash.Period = TimeSpan.FromMilliseconds(1);
 		//等待周期刷新
-		SpinWait.SpinUntil(() => flusher.Count <= 0, 500);
+		SpinWait.SpinUntil(() => flusher.Count > 0, 500);
 
 		Assert.True(stash.IsEmpty);
 		Assert.Equal(3, flusher.Count);
