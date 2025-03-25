@@ -39,11 +39,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Web;
-using Zongsoft.Data;
-using Zongsoft.Services;
+using Zongsoft.Web.Http;
 using Zongsoft.Components;
 using Zongsoft.Collections;
-using Zongsoft.Web.Http;
 using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Security.Web.Controllers;

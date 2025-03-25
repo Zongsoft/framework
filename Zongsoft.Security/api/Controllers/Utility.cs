@@ -62,4 +62,16 @@ internal static class Utility
 			contract.GenericTypeArguments[0] != modelType &&
 			modelType.IsAssignableFrom(contract.GenericTypeArguments[0]);
 	}
+
+	public static (string identity, string @namespace) Identify(string identifier)
+	{
+		if(string.IsNullOrEmpty(identifier))
+			return default;
+
+		var index = identifier.IndexOf(':');
+		if(index < 0)
+			return (identifier, null);
+
+		return (identifier[(index + 1)..], identifier[..index]);
+	}
 }
