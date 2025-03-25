@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Security;
+namespace Zongsoft.Components;
 
 /// <summary>
 /// 表示尝试器的接口。
@@ -40,19 +40,16 @@ public interface IAttempter
 	IAttempterOptions Options { get; set; }
 
 	/// <summary>校验指定身份是否可以继续验证。</summary>
-	/// <param name="identity">指定待验证的身份标识。</param>
-	/// <param name="namespace">表示身份标识所属的命名空间。</param>
-	/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
-	bool Verify(string identity, string @namespace = null);
+	/// <param name="key">指定的尝试标识。</param>
+	/// <returns>如果校验成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	bool Verify(string key);
 
-	/// <summary>验证成功方法。</summary>
-	/// <param name="identity">指定验证成功的身份标识。</param>
-	/// <param name="namespace">表示身份标识所属的命名空间。</param>
-	void Done(string identity, string @namespace = null);
+	/// <summary>尝试成功方法。</summary>
+	/// <param name="key">指定的尝试标识。</param>
+	void Done(string key);
 
-	/// <summary>验证失败方法。</summary>
-	/// <param name="identity">指定验证失败的身份标识。</param>
-	/// <param name="namespace">表示身份标识所属的命名空间。</param>
-	/// <returns>返回验证失败是否超过阈值，如果返回真(True)则表示失败次数超过阈值。</returns>
-	bool Fail(string identity, string @namespace = null);
+	/// <summary>尝试失败方法。</summary>
+	/// <param name="key">指定的尝试标识。</param>
+	/// <returns>返回验证失败是否超过阈值，如果返回真(<c>True</c>)则表示失败次数超过阈值。</returns>
+	bool Fail(string key);
 }

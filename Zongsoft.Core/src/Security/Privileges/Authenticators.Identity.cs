@@ -94,9 +94,10 @@ partial class Authentication
 
 			//获取验证失败的解决器
 			var attempter = this.Attempter;
+			var attempterKey = $"{this.GetType().Name}:{requirement.Identity}@{requirement.Namespace}";
 
 			//确认验证失败是否超出限制数，如果超出则返回账号被禁用
-			if(attempter != null && !attempter.Verify(requirement.Identity, requirement.Namespace))
+			if(attempter != null && !attempter.Verify(attempterKey))
 				throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
 			//获取当前用户的密钥信息
@@ -110,14 +111,14 @@ partial class Authentication
 			if(await Authentication.Servicer.Users.Passworder.VerifyAsync(requirement.Password, cipher, cancellation))
 			{
 				//通知验证尝试成功，即清空验证失败记录
-				attempter?.Done(requirement.Identity, requirement.Namespace);
+				attempter?.Done(attempterKey);
 
 				//返回验证成功的票证
 				return this.CreateTicket(cipher.Identifier, requirement);
 			}
 
 			//通知验证尝试失败
-			attempter?.Fail(requirement.Identity, requirement.Namespace);
+			attempter?.Fail(attempterKey);
 			//抛出验证失败异常
 			throw new AuthenticationException(SecurityReasons.InvalidPassword);
 		}

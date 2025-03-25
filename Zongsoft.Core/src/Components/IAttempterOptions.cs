@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,22 +30,22 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Security;
+namespace Zongsoft.Components;
 
 /// <summary>
 /// 表示尝试器的配置选项。
 /// </summary>
 public interface IAttempterOptions
 {
-	/// <summary>获取或设置验证失败的阈值，零表示不限制。</summary>
+	/// <summary>获取或设置尝试失败的阈值，零表示不限制。</summary>
 	[DefaultValue(3)]
-	public int Threshold { get; set; }
+	int Limit { get; set; }
 
-	/// <summary>获取或设置验证失败的窗口期，默认为1分钟。</summary>
+	/// <summary>获取或设置尝试失败的窗口期，默认为1分钟。</summary>
 	[DefaultValue("0:1:0")]
-	public TimeSpan Window { get; set; }
+	TimeSpan Window { get; set; }
 
-	/// <summary>获取或设置验证失败超过指定的阈值后锁定时长，默认为10分钟。</summary>
+	/// <summary>获取或设置尝试失败超过阈值后的锁定时长，默认为10分钟。</summary>
 	[DefaultValue("0:10:0")]
-	public TimeSpan Period { get; set; }
+	TimeSpan Period { get; set; }
 }

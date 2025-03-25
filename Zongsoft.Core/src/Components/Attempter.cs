@@ -9,22 +9,22 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Security library.
+ * This file is part of Zongsoft.Core library.
  *
- * The Zongsoft.Security is free software: you can redistribute it and/or modify
+ * The Zongsoft.Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Security is distributed in the hope that it will be useful,
+ * The Zongsoft.Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Security library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
@@ -32,55 +32,59 @@ using System;
 using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Services;
-using Zongsoft.Configuration.Options;
 
-namespace Zongsoft.Security;
+namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示用户验证失败的处理器。
-/// </summary>
-[Service(typeof(IAttempter))]
 public class Attempter : IAttempter
 {
-	#region 公共属性
-	[ServiceDependency("~", IsRequired = true)]
-	public IDistributedCache Cache { get; set; }
+	#region 成员字段
+	private IDistributedCache _cache;
+	private IAttempterOptions _options;
+	#endregion
 
-	[Options("Security/Membership/Authentication/Attempter")]
-	public Configuration.AttempterOptions Options { get; set; }
-	IAttempterOptions IAttempter.Options
+	#region 构造函数
+	public Attempter()
 	{
-		get => this.Options;
-		set => this.Options = value as Configuration.AttempterOptions;
+		_options = new AttempterOptions();
+	}
+	#endregion
+
+	#region 公共属性
+	public IDistributedCache Cache
+	{
+		get => _cache ??= ApplicationContext.Current?.Services.ResolveRequired<IDistributedCache>();
+		set => _cache = value ?? throw new ArgumentNullException(nameof(value));
+	}
+
+	public IAttempterOptions Options
+	{
+		get => _options;
+		set => _options = value ?? throw new ArgumentNullException(nameof(value));
 	}
 	#endregion
 
 	#region 公共方法
-	public bool Verify(string identity, string @namespace = null)
+	public bool Verify(string key)
 	{
-		if(string.IsNullOrEmpty(identity))
+		if(string.IsNullOrEmpty(key))
 			return false;
 
 		var option = this.Options;
-
-		if(option == null || option.Threshold < 1)
+		if(option == null || option.Limit < 1)
 			return true;
 
-		return Common.Convert.TryConvertValue<int>(this.Cache.GetValue(GetCacheKey(identity, @namespace)), out var number) &&
-		       number < option.Threshold;
+		return Common.Convert.TryConvertValue<int>(this.Cache.GetValue(GetCacheKey(key)), out var number) && number < option.Limit;
 	}
 
-	public void Done(string identity, string @namespace = null)
+	public void Done(string key)
 	{
-		if(string.IsNullOrEmpty(identity))
-			return;
-
-		this.Cache.Remove(GetCacheKey(identity, @namespace));
+		if(key != null && key.Length > 0)
+			this.Cache.Remove(GetCacheKey(key));
 	}
 
-	public bool Fail(string identity, string @namespace = null)
+	public bool Fail(string key)
 	{
-		if(string.IsNullOrEmpty(identity))
+		if(string.IsNullOrEmpty(key))
 			return false;
 
 		if(this.Cache is not ISequence sequence)
@@ -92,7 +96,7 @@ public class Attempter : IAttempter
 		if(threshold < 1 || window == TimeSpan.Zero)
 			return false;
 
-		var KEY = GetCacheKey(identity, @namespace);
+		var KEY = GetCacheKey(key);
 		var attempts = sequence.Increase(KEY);
 
 		if(attempts < threshold)
@@ -116,7 +120,7 @@ public class Attempter : IAttempter
 
 		if(option != null)
 		{
-			threshold = Math.Max(option.Threshold, 1);
+			threshold = Math.Max(option.Limit, 1);
 
 			if(option.Window > TimeSpan.Zero)
 				window = option.Window;
@@ -127,13 +131,10 @@ public class Attempter : IAttempter
 	}
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static string GetCacheKey(string identity, string @namespace)
+	private static string GetCacheKey(string key)
 	{
 		const string KEY_PREFIX = "Zongsoft.Security.Attempts";
-
-		return string.IsNullOrEmpty(@namespace) ?
-			$"{KEY_PREFIX}:{identity.ToLowerInvariant().Trim()}" :
-			$"{KEY_PREFIX}:{identity.ToLowerInvariant().Trim()}!{@namespace.ToLowerInvariant().Trim()}";
+		return $"{KEY_PREFIX}:{key.ToLowerInvariant().Trim()}";
 	}
 	#endregion
 }

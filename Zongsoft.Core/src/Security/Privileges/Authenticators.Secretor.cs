@@ -36,6 +36,7 @@ using System.Security.Claims;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;

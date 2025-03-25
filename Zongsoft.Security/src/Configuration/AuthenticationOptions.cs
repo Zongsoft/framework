@@ -53,9 +53,6 @@ namespace Zongsoft.Security.Configuration
 		/// <summary>获取或设置凭证的默认有效期时长。</summary>
 		public TimeSpan Period { get; set; }
 
-		/// <summary>获取或设置恶意检测器的配置项。</summary>
-		public AttempterOptions Attempter { get; set; }
-
 		/// <summary>获取凭证过期配置集。</summary>
 		public ExpirationScenarioCollection Expiration { get; }
 		#endregion

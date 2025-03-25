@@ -32,9 +32,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;

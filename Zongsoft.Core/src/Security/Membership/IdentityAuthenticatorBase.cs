@@ -35,8 +35,8 @@ using System.Security.Claims;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
-using Zongsoft.Common;
 using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Serialization;
 
 namespace Zongsoft.Security.Membership
@@ -79,8 +79,10 @@ namespace Zongsoft.Security.Membership
 			//获取验证失败的解决器
 			var attempter = this.Attempter;
 
+			var attempterKey = $"{this.GetType().Name}:{data.Identity}@{data.Namespace}";
+
 			//确认验证失败是否超出限制数，如果超出则返回账号被禁用
-			if(attempter != null && !attempter.Verify(data.Identity, data.Namespace))
+			if(attempter != null && !attempter.Verify(attempterKey))
 				throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
 			//获取当前用户的密码及密码盐
@@ -98,13 +100,13 @@ namespace Zongsoft.Security.Membership
 			if(!PasswordUtility.VerifyPassword(data.Password, storedPassword, storedPasswordSalt, "SHA1"))
 			{
 				//通知验证尝试失败
-				attempter?.Fail(data.Identity, data.Namespace);
+				attempter?.Fail(attempterKey);
 
 				throw new AuthenticationException(SecurityReasons.InvalidPassword);
 			}
 
 			//通知验证尝试成功，即清空验证失败记录
-			attempter?.Done(data.Identity, data.Namespace);
+			attempter?.Done(attempterKey);
 
 			return ValueTask.FromResult<IIdentityTicket>(new Ticket(data.Namespace, data.Identity));
 		}

@@ -34,8 +34,8 @@ using System.Security.Claims;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-using Zongsoft.Common;
 using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Security.Membership
 {

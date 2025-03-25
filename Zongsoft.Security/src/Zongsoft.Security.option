@@ -3,13 +3,16 @@
 <options>
 	<option path="/Security/Privileges">
 		<identity verification="none"
-		          passwordLength="0" passwordStrength="None" />
+		          passwordLength="0"
+				  passwordStrength="None" />
+
+		<attempter limit="3"
+				   window="00:01:00"
+				   period="01:00:00" />
 
 		<authorization roles="security,securities" />
 
 		<authentication period="08:00:00">
-			<attempter threshold="3" window="00:01:00" period="01:00:00" />
-
 			<expiration>
 				<scenario scenario.name="web" period="1.00:00:00" />
 				<scenario scenario.name="api" period="1.00:00:00" />
