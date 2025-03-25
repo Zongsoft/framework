@@ -79,7 +79,7 @@ partial class UserServiceBase<TUser>
 		var attempter = this.Attempter;
 
 		//确认验证失败是否超出限制数，如果超出则抛出账号被禁用的异常
-		if(attempter != null && !attempter.Verify($"{ATTEMPTER_PREFIX}#{identifier.Value}"))
+		if(attempter != null && !await attempter.CheckAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation))
 			throw new SecurityException(nameof(SecurityReasons.AccountSuspended));
 
 		//获取用户密钥信息
@@ -90,12 +90,14 @@ partial class UserServiceBase<TUser>
 		if(await this.Passworder.VerifyAsync(oldPassword, cipher, cancellation))
 		{
 			//通知验证尝试成功，即清空验证失败记录
-			attempter?.Done($"{ATTEMPTER_PREFIX}#{identifier.Value}");
+			if(attempter != null)
+				await attempter.DoneAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation);
 		}
 		else
 		{
 			//通知验证尝试失败
-			attempter?.Fail($"{ATTEMPTER_PREFIX}#{identifier.Value}");
+			if(attempter != null)
+				await attempter.FailAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation);
 
 			//抛出验证失败异常
 			throw new SecurityException(SecurityReasons.InvalidPassword);
@@ -248,7 +250,7 @@ partial class UserServiceBase<TUser>
 		var attempter = this.Attempter;
 
 		//确认验证失败是否超出限制数，如果超出则抛出账号被禁用的异常
-		if(attempter != null && !attempter.Verify($"{ATTEMPTER_PREFIX}#{identifier.Value}"))
+		if(attempter != null && !await attempter.CheckAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation))
 			throw new SecurityException(nameof(SecurityReasons.AccountSuspended));
 
 		//获取用户密钥信息
@@ -259,12 +261,14 @@ partial class UserServiceBase<TUser>
 		if(await this.Passworder.VerifyAsync(password, cipher, cancellation))
 		{
 			//通知验证尝试成功，即清空验证失败记录
-			attempter?.Done($"{ATTEMPTER_PREFIX}#{identifier.Value}");
+			if(attempter != null)
+				await attempter.DoneAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation);
 		}
 		else
 		{
 			//通知验证尝试失败
-			attempter?.Fail($"{ATTEMPTER_PREFIX}#{identifier.Value}");
+			if(attempter != null)
+				await attempter.FailAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation);
 
 			//抛出验证失败异常
 			throw new SecurityException(SecurityReasons.InvalidPassword);

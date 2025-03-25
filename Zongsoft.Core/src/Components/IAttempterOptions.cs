@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Components;
 
@@ -38,14 +37,11 @@ namespace Zongsoft.Components;
 public interface IAttempterOptions
 {
 	/// <summary>获取或设置尝试失败的阈值，零表示不限制。</summary>
-	[DefaultValue(3)]
 	int Limit { get; set; }
 
-	/// <summary>获取或设置尝试失败的窗口期，默认为1分钟。</summary>
-	[DefaultValue("0:1:0")]
+	/// <summary>获取或设置尝试失败的窗口期。</summary>
 	TimeSpan Window { get; set; }
 
-	/// <summary>获取或设置尝试失败超过阈值后的锁定时长，默认为10分钟。</summary>
-	[DefaultValue("0:10:0")]
+	/// <summary>获取或设置尝试失败超过阈值后的锁定时长。</summary>
 	TimeSpan Period { get; set; }
 }

@@ -55,7 +55,6 @@ public static partial class Authentication
 	private static readonly AuthenticatorCollection _authenticators;
 	private static readonly List<IChallenger> _challengers;
 	private static IClaimsPrincipalTransformer _transformer;
-	private static IAttempter _attempter;
 	#endregion
 
 	#region 静态构造
@@ -65,6 +64,7 @@ public static partial class Authentication
 		_challengers = new List<IChallenger>();
 		_transformer = ClaimsPrincipalTransformer.Default;
 		Servicer = new();
+		Attempter = new Attempter();
 	}
 	#endregion
 
@@ -86,7 +86,7 @@ public static partial class Authentication
 	public static IClaimsPrincipalTransformer Transformer { get => _transformer; set => _transformer = value ?? throw new ArgumentNullException(); }
 
 	/// <summary>获取或设置验证失败阻止器。</summary>
-	public static IAttempter Attempter { get => _attempter ??= ApplicationContext.Current?.Services?.Resolve<IAttempter>(); set => _attempter = value; }
+	public static IAttempter Attempter { get; set; }
 
 	/// <summary>获取身份验证服务提供程序。</summary>
 	public static AuthenticationServicer Servicer { get; }

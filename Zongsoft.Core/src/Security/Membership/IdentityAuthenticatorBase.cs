@@ -66,7 +66,7 @@ namespace Zongsoft.Security.Membership
 			return await this.VerifyAsync(key, GetTicket(data), scenario, parameters, cancellation);
 		}
 
-		public ValueTask<IIdentityTicket> VerifyAsync(string key, Ticket data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public async ValueTask<IIdentityTicket> VerifyAsync(string key, Ticket data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(data.Identity))
 			{
@@ -82,7 +82,7 @@ namespace Zongsoft.Security.Membership
 			var attempterKey = $"{this.GetType().Name}:{data.Identity}@{data.Namespace}";
 
 			//确认验证失败是否超出限制数，如果超出则返回账号被禁用
-			if(attempter != null && !attempter.Verify(attempterKey))
+			if(attempter != null && !await attempter.CheckAsync(attempterKey, cancellation))
 				throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
 			//获取当前用户的密码及密码盐
@@ -100,15 +100,17 @@ namespace Zongsoft.Security.Membership
 			if(!PasswordUtility.VerifyPassword(data.Password, storedPassword, storedPasswordSalt, "SHA1"))
 			{
 				//通知验证尝试失败
-				attempter?.Fail(attempterKey);
+				if(attempter != null)
+					await attempter.FailAsync(attempterKey, cancellation);
 
 				throw new AuthenticationException(SecurityReasons.InvalidPassword);
 			}
 
 			//通知验证尝试成功，即清空验证失败记录
-			attempter?.Done(attempterKey);
+			if(attempter != null)
+				await attempter.DoneAsync(attempterKey, cancellation);
 
-			return ValueTask.FromResult<IIdentityTicket>(new Ticket(data.Namespace, data.Identity));
+			return new Ticket(data.Namespace, data.Identity);
 		}
 		#endregion
 

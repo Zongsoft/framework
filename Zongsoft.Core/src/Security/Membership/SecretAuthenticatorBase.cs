@@ -65,7 +65,7 @@ namespace Zongsoft.Security.Membership
 			return await this.VerifyAsync(key, await GetTicketAsync(data, cancellation), scenario, parameters, cancellation);
 		}
 
-		public ValueTask<string> VerifyAsync(string key, string data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		public async ValueTask<string> VerifyAsync(string key, string data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(data))
 				throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Missing the required authentication token.");
@@ -74,7 +74,7 @@ namespace Zongsoft.Security.Membership
 			var attempter = this.Attempter;
 
 			//确认验证失败是否超出限制数，如果超出则返回账号被禁用
-			if(attempter != null && !attempter.Verify(key))
+			if(attempter != null && !await attempter.CheckAsync(key, cancellation))
 				throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
 			var secret = data.Trim();
@@ -82,14 +82,16 @@ namespace Zongsoft.Security.Membership
 			if(this.Secretor.Verify(key, secret, out var extra))
 			{
 				//通知验证尝试成功，即清空验证失败记录
-				attempter?.Done(key);
+				if(attempter != null)
+					await attempter.DoneAsync(key, cancellation);
 
 				//返回成功
-				return ValueTask.FromResult(extra);
+				return extra;
 			}
 
 			//通知验证尝试失败
-			attempter?.Fail(key);
+			if(attempter != null)
+				await attempter.FailAsync(key, cancellation);
 
 			//抛出验证失败的异常
 			throw new AuthenticationException(SecurityReasons.VerifyFaild);

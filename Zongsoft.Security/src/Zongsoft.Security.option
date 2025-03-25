@@ -6,9 +6,9 @@
 		          passwordLength="0"
 				  passwordStrength="None" />
 
-		<attempter limit="3"
+		<attempter limit="5"
 				   window="00:01:00"
-				   period="01:00:00" />
+				   period="00:05:00" />
 
 		<authorization roles="security,securities" />
 

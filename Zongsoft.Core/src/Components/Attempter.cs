@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Caching;
@@ -43,16 +45,13 @@ public class Attempter : IAttempter
 	#endregion
 
 	#region 构造函数
-	public Attempter()
-	{
-		_options = new AttempterOptions();
-	}
+	public Attempter(IAttempterOptions options = null) => _options = options ?? new AttempterOptions();
 	#endregion
 
 	#region 公共属性
 	public IDistributedCache Cache
 	{
-		get => _cache ??= ApplicationContext.Current?.Services.ResolveRequired<IDistributedCache>();
+		get => _cache ??= ApplicationContext.Current?.Services.ResolveRequired<IServiceProvider<IDistributedCache>>().GetService();
 		set => _cache = value ?? throw new ArgumentNullException(nameof(value));
 	}
 
@@ -64,7 +63,7 @@ public class Attempter : IAttempter
 	#endregion
 
 	#region 公共方法
-	public bool Verify(string key)
+	public async ValueTask<bool> CheckAsync(string key, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
 			return false;
@@ -73,16 +72,19 @@ public class Attempter : IAttempter
 		if(option == null || option.Limit < 1)
 			return true;
 
-		return Common.Convert.TryConvertValue<int>(this.Cache.GetValue(GetCacheKey(key)), out var number) && number < option.Limit;
+		var value = await this.Cache.GetValueAsync(GetCacheKey(key), cancellation);
+		return Common.Convert.TryConvertValue<int>(value, out var limit) && limit < option.Limit;
 	}
 
-	public void Done(string key)
+	public ValueTask<bool> DoneAsync(string key, CancellationToken cancellation = default)
 	{
 		if(key != null && key.Length > 0)
-			this.Cache.Remove(GetCacheKey(key));
+			return this.Cache.RemoveAsync(GetCacheKey(key), cancellation);
+
+		return ValueTask.FromResult(false);
 	}
 
-	public bool Fail(string key)
+	public async ValueTask<bool> FailAsync(string key, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
 			return false;
@@ -91,28 +93,28 @@ public class Attempter : IAttempter
 			throw new InvalidOperationException($"The cache of authentication failover does not support the increment(ISequence) operation.");
 
 		//获取验证失败的阈值和锁定时长
-		this.GetAttempts(out var threshold, out var window, out var period);
+		this.GetAttempts(out var limit, out var window, out var period);
 
-		if(threshold < 1 || window == TimeSpan.Zero)
+		if(limit < 1 || window == TimeSpan.Zero)
 			return false;
 
 		var KEY = GetCacheKey(key);
-		var attempts = sequence.Increase(KEY);
+		var attempts = await sequence.IncreaseAsync(KEY, cancellation: cancellation);
 
-		if(attempts < threshold)
-			this.Cache.SetExpiry(KEY, window);
-		else if(attempts == threshold)
-			this.Cache.SetExpiry(KEY, period);
+		if(attempts < limit)
+			await this.Cache.SetExpiryAsync(KEY, window, cancellation);
+		else if(attempts == limit)
+			await this.Cache.SetExpiryAsync(KEY, period, cancellation);
 
-		return attempts >= threshold;
+		return attempts >= limit;
 	}
 	#endregion
 
 	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private void GetAttempts(out int threshold, out TimeSpan window, out TimeSpan period)
+	private void GetAttempts(out int limit, out TimeSpan window, out TimeSpan period)
 	{
-		threshold = 3;
+		limit = 3;
 		window = TimeSpan.FromMinutes(1);
 		period = TimeSpan.FromMinutes(60);
 
@@ -120,7 +122,7 @@ public class Attempter : IAttempter
 
 		if(option != null)
 		{
-			threshold = Math.Max(option.Limit, 1);
+			limit = Math.Max(option.Limit, 1);
 
 			if(option.Window > TimeSpan.Zero)
 				window = option.Window;

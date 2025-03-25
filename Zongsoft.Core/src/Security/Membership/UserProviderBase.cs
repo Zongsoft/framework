@@ -36,6 +36,7 @@ using Zongsoft.Data;
 using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Components;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Security.Membership
 {
@@ -558,7 +559,7 @@ namespace Zongsoft.Security.Membership
 			var attempterKey = $"User.ChangePassword:{userId}";
 
 			//确认验证失败是否超出限制数，如果超出则抛出账号被禁用的异常
-			if(attempter != null && !attempter.Verify(attempterKey))
+			if(attempter != null && !attempter.CheckAsync(attempterKey).AsTask().GetAwaiter().GetResult())
 				throw new SecurityException(nameof(SecurityReasons.AccountSuspended));
 
 			//获取用户密码及密码盐
@@ -571,7 +572,7 @@ namespace Zongsoft.Security.Membership
 			{
 				//通知验证尝试失败
 				if(attempter != null)
-					attempter.Fail(attempterKey);
+					attempter.FailAsync(attempterKey).AsTask().GetAwaiter().GetResult();
 
 				//抛出验证失败异常
 				throw new SecurityException(SecurityReasons.InvalidPassword);
@@ -579,7 +580,7 @@ namespace Zongsoft.Security.Membership
 
 			//通知验证尝试成功，即清空验证失败记录
 			if(attempter != null)
-				attempter.Done(attempterKey);
+				attempter.DoneAsync(attempterKey).AsTask().GetAwaiter().GetResult();
 
 			var passwordSalt = GetPasswordSalt();
 

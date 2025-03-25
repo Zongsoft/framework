@@ -36,6 +36,9 @@
 	<!-- 挂载验证和授权集成模块 -->
 	<extension path="/Workbench/Security">
 		<object name="Authentication" value="{static:Zongsoft.Security.Privileges.Authentication.Authenticators, Zongsoft.Core}">
+			<expose name="Attempter" value="{static:Zongsoft.Security.Privileges.Authentication.Attempter, Zongsoft.Core}"
+					options="{opt:/Security/Privileges/Attempter}" />
+
 			<expose name="Servicer" value="{static:Zongsoft.Security.Privileges.Authentication.Servicer, Zongsoft.Core}" />
 			<expose name="Challengers" value="{static:Zongsoft.Security.Privileges.Authentication.Challengers, Zongsoft.Core}" />
 			<expose name="Transformers" value="{static:Zongsoft.Security.Privileges.Authentication.Transformer, Zongsoft.Core}" />
