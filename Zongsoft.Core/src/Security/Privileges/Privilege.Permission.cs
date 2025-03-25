@@ -67,7 +67,7 @@ partial class Privilege
 			string.Equals(this.Action, other.Action, StringComparison.OrdinalIgnoreCase);
 		public override bool Equals(object obj) => obj is Permission other && this.Equals(other);
 		public override int GetHashCode() => _hashcode;
-		public override string ToString() => $"{this.Target}#{this.Action}";
+		public override string ToString() => $"{this.Target}:{this.Action}";
 		#endregion
 
 		#region 显式实现

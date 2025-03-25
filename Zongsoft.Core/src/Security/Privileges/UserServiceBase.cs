@@ -42,7 +42,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, IMatchable<ClaimsPrincipal> where TUser : IUser
+public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, IMatchable<ClaimsPrincipal> where TUser : IUser
 {
 	#region 构造函数
 	protected UserServiceBase(Passworder passworder = null) => this.Passworder = passworder;
@@ -222,6 +222,8 @@ public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, 
 
 		throw OperationException.Argument();
 	}
+
+	protected virtual ICondition GetCriteria(string identity, string @namespace) => UserUtility.GetCriteria(identity, @namespace);
 	#endregion
 
 	#region 服务匹配
@@ -229,4 +231,29 @@ public abstract class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, 
 	bool IMatchable<ClaimsPrincipal>.Match(ClaimsPrincipal argument) => this.OnMatch(argument);
 	protected virtual bool OnMatch(ClaimsPrincipal principal) => principal != null && principal.Identity != null && principal.Identity.IsAuthenticated;
 	#endregion
+}
+
+partial class UserServiceBase<TUser>
+{
+	public class PassworderBase<TCipher>(UserServiceBase<TUser> service) : Passworder where TCipher : Passworder.Cipher
+	{
+		protected UserServiceBase<TUser> Service { get; } = service ?? throw new ArgumentNullException(nameof(service));
+
+		public override async ValueTask<Cipher> GetAsync(string identity, string @namespace, CancellationToken cancellation)
+		{
+			var result = this.OnGetAsync(identity, @namespace, cancellation);
+			await using var enumerator = result.GetAsyncEnumerator(cancellation);
+			return await enumerator.MoveNextAsync() ? enumerator.Current : null;
+		}
+
+		public override ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation)
+		{
+			return this.OnVerifyAsync(password, cipher as TCipher, cancellation);
+		}
+
+		protected virtual IAsyncEnumerable<TCipher> OnGetAsync(string identity, string @namespace, CancellationToken cancellation) =>
+			this.Service.Accessor.SelectAsync<TCipher>(this.Service.Name, this.Service.GetCriteria(identity, @namespace), cancellation);
+		protected virtual ValueTask<bool> OnVerifyAsync(string password, TCipher cipher, CancellationToken cancellation) =>
+			ValueTask.FromResult(PasswordUtility.VerifyPassword(password, cipher.Value, cipher.Nonce, cipher.Name));
+	}
 }

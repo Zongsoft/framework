@@ -28,49 +28,46 @@
  */
 
 using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Zongsoft.Data;
+using Zongsoft.Services;
+using Zongsoft.Configuration;
 using Zongsoft.Configuration.Options;
-using Zongsoft.Security.Privileges.Models;
 
 namespace Zongsoft.Security.Privileges;
 
-public class SecretAuthenticator : SecretAuthenticatorBase
+partial class Authenticators
 {
-	#region 构造函数
-	public SecretAuthenticator() { }
-	#endregion
-
-	#region 公共属性
-	[Options("Security/Membership/Authentication")]
-	public Configuration.AuthenticationOptions Options { get; set; }
-	#endregion
-
-	#region 重写方法
-	protected override async ValueTask<IUser> GetUserAsync(string identifier, CancellationToken cancellation)
+	public class IdentityAuthenticator() : Authentication.IdentityAuthenticatorBase(Module.Current.Services)
 	{
-		ICondition criteria = UserUtility.GetCriteria(identifier);
-		var result = Module.Current.Accessor.SelectAsync<UserModel>(criteria, cancellation);
+		#region 成员字段
+		private Configuration.AuthenticationOptions _options;
+		#endregion
 
-		await using var enumerator = result.GetAsyncEnumerator(cancellation);
-		if(await enumerator.MoveNextAsync())
-			return enumerator.Current;
-		else
-			return null;
+		#region 公共属性
+		[Options("Security/Privileges/Authentication")]
+		public Configuration.AuthenticationOptions Options
+		{
+			get => _options ??= ApplicationContext.Current.Configuration.GetOption<Configuration.AuthenticationOptions>("Security/Privileges/Authentication");
+			set => _options = value;
+		}
+		#endregion
+
+		#region 重写属性
+		protected override IDataAccess Accessor => Module.Current.Accessor;
+		#endregion
+
+		#region 重写方法
+		protected override TimeSpan GetPeriod(string scenario)
+		{
+			var period = TimeSpan.Zero;
+
+			//获取指定场景对应的凭证有效期
+			if(this.Options != null && this.Options.Expiration.TryGetValue(scenario, out var option))
+				period = option.Period;
+
+			return period > TimeSpan.Zero ? period : TimeSpan.FromHours(4);
+		}
+		#endregion
 	}
-
-	protected override TimeSpan GetPeriod(string scenario)
-	{
-		var period = TimeSpan.Zero;
-
-		//获取指定场景对应的凭证有效期
-		if(this.Options != null && this.Options.Expiration.TryGetValue(scenario, out var option))
-			period = option.Period;
-
-		return period > TimeSpan.Zero ? period : TimeSpan.FromHours(4);
-	}
-	#endregion
 }

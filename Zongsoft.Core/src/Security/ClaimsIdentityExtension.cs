@@ -374,6 +374,30 @@ public static class ClaimsIdentityExtension
 		return claims != null && claims.Length > 0;
 	}
 
+	public static Claim SetClaim(this IIdentity identity, string name, object value, string issuer = null, string originalIssuer = null) =>
+		SetClaim(identity as ClaimsIdentity, name, value, issuer, originalIssuer);
+	public static Claim SetClaim(this ClaimsIdentity identity, string name, object value, string issuer = null, string originalIssuer = null)
+	{
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		if(identity == null)
+			return null;
+
+		if(string.IsNullOrEmpty(issuer))
+			issuer = ClaimsIdentity.DefaultIssuer;
+		if(string.IsNullOrEmpty(originalIssuer))
+			originalIssuer = ClaimsIdentity.DefaultIssuer;
+
+		identity.RemoveClaim(name);
+		if(value == null)
+			return null;
+
+		var claim = new Claim(name, Common.Convert.ConvertValue<string>(value), ClaimUtility.GetValueType(value.GetType()), issuer, originalIssuer, identity);
+		identity.AddClaim(claim);
+		return claim;
+	}
+
 	public static Claim SetClaim(this IIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null) =>
 		SetClaim(identity as ClaimsIdentity, name, value, valueType, issuer, originalIssuer);
 	public static Claim SetClaim(this ClaimsIdentity identity, string name, string value, string valueType, string issuer = null, string originalIssuer = null)
@@ -390,6 +414,9 @@ public static class ClaimsIdentityExtension
 			originalIssuer = ClaimsIdentity.DefaultIssuer;
 
 		identity.RemoveClaim(name);
+		if(value == null)
+			return null;
+
 		var claim = new Claim(name, value, valueType, issuer, originalIssuer, identity);
 		identity.AddClaim(claim);
 		return claim;

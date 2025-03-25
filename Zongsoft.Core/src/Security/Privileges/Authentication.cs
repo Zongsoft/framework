@@ -43,7 +43,7 @@ namespace Zongsoft.Security.Privileges;
 /// 提供身份验证的平台类。
 /// </summary>
 [System.Reflection.DefaultMember(nameof(Authenticators))]
-public static class Authentication
+public static partial class Authentication
 {
 	#region 事件定义
 	public static event EventHandler<AuthenticatedEventArgs> Authenticated;
@@ -52,7 +52,7 @@ public static class Authentication
 
 	#region 成员字段
 	private static ICredentialProvider _authority;
-	private static readonly KeyedCollection<string, IAuthenticator> _authenticators;
+	private static readonly AuthenticatorCollection _authenticators;
 	private static readonly List<IChallenger> _challengers;
 	private static IClaimsPrincipalTransformer _transformer;
 	private static IAttempter _attempter;
@@ -77,7 +77,7 @@ public static class Authentication
 	}
 
 	/// <summary>获取一个身份验证器集合。</summary>
-	public static KeyedCollection<string, IAuthenticator> Authenticators => _authenticators;
+	public static AuthenticatorCollection Authenticators => _authenticators;
 
 	/// <summary>获取一个身份验证质询器集合。</summary>
 	public static ICollection<IChallenger> Challengers => _challengers;

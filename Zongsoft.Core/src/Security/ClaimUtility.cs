@@ -34,6 +34,25 @@ namespace Zongsoft.Security;
 
 public static class ClaimUtility
 {
+	public static T GetValue<T>(this Claim claim)
+	{
+		if(claim == null)
+			throw new ArgumentNullException(nameof(claim));
+
+		return Common.Convert.ConvertValue<T>(claim.Value);
+	}
+
+	public static bool TryGetValue<T>(this Claim claim, out T value)
+	{
+		if(claim == null)
+		{
+			value = default;
+			return false;
+		}
+
+		return Common.Convert.TryConvertValue(claim.Value, out value);
+	}
+
 	public static object GetValue(this Claim claim) => GetValue(claim, out _);
 	public static object GetValue(this Claim claim, out Type type)
 	{
@@ -69,6 +88,27 @@ public static class ClaimUtility
 		ClaimValueTypes.Email or
 		ClaimValueTypes.String or
 		ClaimValueTypes.DnsName => typeof(string),
+		ClaimValueTypes.DaytimeDuration or
+		ClaimValueTypes.YearMonthDuration => typeof(TimeSpan),
 		_ => Common.TypeAlias.TryParse(claim.ValueType, out var type) ? type : typeof(string),
 	};
+
+	public static string GetValueType(Type type)
+	{
+		if(type == null)
+			return ClaimValueTypes.String;
+
+		return Type.GetTypeCode(type) switch
+		{
+			TypeCode.String => ClaimValueTypes.String,
+			TypeCode.Boolean => ClaimValueTypes.Boolean,
+			TypeCode.DateTime => ClaimValueTypes.DateTime,
+			TypeCode.Int32 => ClaimValueTypes.Integer32,
+			TypeCode.Int64 => ClaimValueTypes.Integer64,
+			TypeCode.UInt32 => ClaimValueTypes.UInteger32,
+			TypeCode.UInt64 => ClaimValueTypes.UInteger64,
+			TypeCode.Double => ClaimValueTypes.Double,
+			_ => Common.TypeAlias.GetAlias(type),
+		};
+	}
 }

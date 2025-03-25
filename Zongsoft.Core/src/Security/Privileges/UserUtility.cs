@@ -36,7 +36,7 @@ namespace Zongsoft.Security.Privileges;
 
 public static class UserUtility
 {
-	public static ICondition GetCriteria(string identity, string @namespace = null)
+	internal static ICondition GetCriteria(string identity, string @namespace = null)
 	{
 		if(string.IsNullOrEmpty(identity))
 			return null;
@@ -62,9 +62,12 @@ public static class UserUtility
 
 		return Condition.Equal(nameof(IUser.Name), identity) & GetNamespace(@namespace);
 
-		static Condition GetNamespace(string @namespace) => string.IsNullOrEmpty(@namespace) ?
-			Condition.Equal(nameof(IUser.Namespace), null) :
-			Condition.Equal(nameof(IUser.Namespace), @namespace);
+		static Condition GetNamespace(string @namespace) => @namespace switch
+		{
+			null or "*" => null,
+			"" => Condition.Equal(nameof(IUser.Namespace), null),
+			_ => Condition.Equal(nameof(IUser.Namespace), @namespace),
+		};
 	}
 
 	public static ClaimsIdentity Identity(this IUser user, string scheme, string issuer, TimeSpan? expiration = null)
@@ -90,26 +93,26 @@ public static class UserUtility
 		if(!string.IsNullOrWhiteSpace(user.Nickname))
 			identity.Label = user.Nickname;
 
-		identity.AddClaim(new Claim(identity.NameClaimType, user.Name, ClaimValueTypes.String));
-		identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Identifier.Value.ToString()));
+		identity.SetClaim(identity.NameClaimType, user.Name, ClaimValueTypes.String);
+		identity.SetClaim(ClaimTypes.NameIdentifier, user.Identifier.Value);
 
 		if(!string.IsNullOrEmpty(user.Email))
-			identity.AddClaim(new Claim(ClaimTypes.Email, user.Email, ClaimValueTypes.String));
+			identity.SetClaim(ClaimTypes.Email, user.Email, ClaimValueTypes.Email);
 		if(!string.IsNullOrEmpty(user.Phone))
-			identity.AddClaim(new Claim(ClaimTypes.MobilePhone, user.Phone, ClaimValueTypes.String));
+			identity.SetClaim(ClaimTypes.MobilePhone, user.Phone, ClaimValueTypes.String);
 
 		if(!string.IsNullOrEmpty(user.Gender))
-			identity.AddClaim(new Claim(ClaimTypes.Gender, user.Gender, ClaimValueTypes.String));
+			identity.SetClaim(ClaimTypes.Gender, user.Gender, ClaimValueTypes.String);
 		if(!string.IsNullOrEmpty(user.Avatar))
-			identity.AddClaim(new Claim(nameof(user.Avatar), user.Avatar, ClaimValueTypes.String));
+			identity.SetClaim(nameof(user.Avatar), user.Avatar, ClaimValueTypes.String);
 
 		if(!string.IsNullOrEmpty(user.Namespace))
-			identity.AddClaim(new Claim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String));
+			identity.SetClaim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String);
 		if(!string.IsNullOrEmpty(user.Description))
-			identity.AddClaim(new Claim(ClaimNames.Description, user.Description, ClaimValueTypes.String));
+			identity.SetClaim(ClaimNames.Description, user.Description, ClaimValueTypes.String);
 
 		if(expiration.HasValue && expiration.Value > TimeSpan.Zero)
-			identity.AddClaim(new Claim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration));
+			identity.SetClaim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration);
 
 		return true;
 	}

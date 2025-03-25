@@ -49,27 +49,27 @@
 
 	<!-- 挂载安全鉴证器 -->
 	<extension path="/Workbench/Security/Authentication">
-		<object name="Identity" type="Zongsoft.Security.Privileges.IdentityAuthenticator, Zongsoft.Security" />
-		<object name="Secretor" type="Zongsoft.Security.Privileges.SecretAuthenticator, Zongsoft.Security" />
+		<object name="Identity" value="{static:Zongsoft.Security.Privileges.Authenticators.Identity, Zongsoft.Security}" />
+		<object name="Secretor" value="{static:Zongsoft.Security.Privileges.Authenticators.Secretor, Zongsoft.Security}" />
 	</extension>
 
 	<!-- 挂载身份验证服务 -->
 	<extension path="/Workbench/Security/Authentication">
 		<servicer.roles>
-			<object name="zongsoft_roles" type="Zongsoft.Security.Privileges.RoleService, Zongsoft.Security" />
+			<object type="Zongsoft.Security.Privileges.RoleService, Zongsoft.Security" />
 		</servicer.roles>
 		<servicer.users>
-			<object name="zongsoft_users" type="Zongsoft.Security.Privileges.UserService, Zongsoft.Security" />
+			<object type="Zongsoft.Security.Privileges.UserService, Zongsoft.Security" />
 		</servicer.users>
 		<servicer.members>
-			<object name="zongsoft_members" type="Zongsoft.Security.Privileges.MemberService, Zongsoft.Security" />
+			<object type="Zongsoft.Security.Privileges.MemberService, Zongsoft.Security" />
 		</servicer.members>
 	</extension>
 
 	<!-- 挂载身份授权服务 -->
 	<extension path="/Workbench/Security/Authorization">
 		<servicer.privileges>
-			<object name="zongsoft_privileges" type="Zongsoft.Security.Privileges.PrivilegeService, Zongsoft.Security" />
+			<object type="Zongsoft.Security.Privileges.PrivilegeService, Zongsoft.Security" />
 		</servicer.privileges>
 	</extension>
 </plugin>

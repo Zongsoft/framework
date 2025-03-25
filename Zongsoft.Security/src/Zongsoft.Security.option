@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
 <options>
-	<option path="/Security/Membership">
+	<option path="/Security/Privileges">
 		<identity verification="none"
 		          passwordLength="0" passwordStrength="None" />
 

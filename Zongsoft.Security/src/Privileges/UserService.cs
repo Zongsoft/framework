@@ -73,40 +73,20 @@ public partial class UserService : UserServiceBase<UserModel>, IUserService<IUse
 
 partial class UserService
 {
-	public new class Passworder(UserService service) : Privileges.Passworder
+	public new class Passworder(UserService service) : PassworderBase<Passworder.UserCipher>(service)
 	{
-		private readonly UserService _service = service ?? throw new ArgumentNullException(nameof(service));
-
-		public override async ValueTask<Cipher> GetAsync(string identity, string @namespace, CancellationToken cancellation)
+		protected override ValueTask<bool> OnVerifyAsync(string password, UserCipher cipher, CancellationToken cancellation)
 		{
-			var result = _service.Accessor.SelectAsync<UserCipher>(
-				_service.Name,
-				UserUtility.GetCriteria(identity, @namespace),
-				$"{nameof(UserCipher.UserId)}," +
-				$"{nameof(UserCipher.Status)}," +
-				$"{nameof(UserCipher.Password)}," +
-				$"{nameof(UserCipher.PasswordSalt)},",
-				cancellation);
-
-			await using var enumerator = result.GetAsyncEnumerator(cancellation);
-			return await enumerator.MoveNextAsync() ? enumerator.Current : null;
-		}
-
-		public override ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation)
-		{
-			if(cipher is UserCipher user)
+			//确认用户状态
+			switch(cipher.Status)
 			{
-				//确认用户状态
-				switch(user.Status)
-				{
-					case UserStatus.Disabled:
-						throw new AuthenticationException(SecurityReasons.AccountDisabled);
-					case UserStatus.Unapproved:
-						throw new AuthenticationException(SecurityReasons.AccountUnapproved);
-				}
+				case UserStatus.Disabled:
+					throw new AuthenticationException(SecurityReasons.AccountDisabled);
+				case UserStatus.Unapproved:
+					throw new AuthenticationException(SecurityReasons.AccountUnapproved);
 			}
 
-			return ValueTask.FromResult(PasswordUtility.VerifyPassword(password, cipher.Value, cipher.Nonce, cipher.Name));
+			return base.OnVerifyAsync(password, cipher, cancellation);
 		}
 
 		public class UserCipher : Cipher
