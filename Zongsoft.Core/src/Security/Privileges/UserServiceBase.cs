@@ -44,6 +44,10 @@ namespace Zongsoft.Security.Privileges;
 
 public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUserService, IMatchable, IMatchable<ClaimsPrincipal> where TUser : IUser
 {
+	#region 成员字段
+	private ISecretor _secretor;
+	#endregion
+
 	#region 构造函数
 	protected UserServiceBase(Passworder passworder = null) => this.Passworder = passworder;
 	#endregion
@@ -51,10 +55,16 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	#region 公共属性
 	public virtual string Name => this.Accessor.Naming.Get<TUser>();
 	public Passworder Passworder { get; protected set; }
+	public ISecretor Secretor
+	{
+		get => _secretor ??= this.Services.Resolve<ISecretor>();
+		set => _secretor = value;
+	}
 	#endregion
 
 	#region 保护属性
 	protected abstract IDataAccess Accessor { get; }
+	protected virtual IServiceProvider Services => ApplicationContext.Current?.Services;
 	protected virtual ClaimsPrincipal Principal => ApplicationContext.Current?.Principal;
 	#endregion
 
@@ -213,6 +223,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	}
 
 	protected virtual ICondition GetCriteria(string identity, string @namespace) => UserUtility.GetCriteria(identity, @namespace);
+	protected virtual ICondition GetCriteria(string identity, string @namespace, out string identityType) => UserUtility.GetCriteria(identity, @namespace, out identityType);
 	#endregion
 
 	#region 显式实现

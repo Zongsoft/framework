@@ -50,32 +50,24 @@ namespace Zongsoft.Security
 		#endregion
 
 		#region 方法定义
-		/// <summary>
-		/// 判断指定名称的秘密（验证码）是否存在。
-		/// </summary>
+		/// <summary>判断指定名称的秘密（验证码）是否存在。</summary>
 		/// <param name="name">指定的验证码名称。</param>
 		/// <returns>返回一个值，指示指定名称的验证码是否存在（有效）。</returns>
 		bool Exists(string name);
 
-		/// <summary>
-		/// 判断指定名称的秘密（验证码）是否存在。
-		/// </summary>
+		/// <summary>判断指定名称的秘密（验证码）是否存在。</summary>
 		/// <param name="name">指定的验证码名称。</param>
 		/// <param name="duration">输出参数，如果指定名称的秘密存在则输出其生成的时长。</param>
 		/// <returns>返回一个值，指示指定名称的验证码是否存在（有效）。</returns>
 		bool Exists(string name, out TimeSpan duration);
 
-		/// <summary>
-		/// 生成一个指定名称的秘密（验证码）。
-		/// </summary>
+		/// <summary>生成一个指定名称的秘密（验证码）。</summary>
 		/// <param name="name">指定的验证码名称，该名称通常包含对应目标标识（譬如：user.forget:100、user.email:100，其中数字100表示用户的唯一编号），调用者应确保该名称全局唯一。</param>
 		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="Verify(string, string, out string)"/>方法验证通过后获取到。</param>
 		/// <returns>返回生成成功的验证码，关于验证码的具体生成规则请参考特定实现版本。</returns>
 		string Generate(string name, string extra = null);
 
-		/// <summary>
-		/// 生成一个指定名称的秘密（验证码）。
-		/// </summary>
+		/// <summary>生成一个指定名称的秘密（验证码）。</summary>
 		/// <param name="name">指定的验证码名称，该名称通常包含对应的目标标识（譬如：user.forget:100、user.phone:13812345678，其中数字100表示用户的唯一编号)，调用者应确保该名称全局唯一。</param>
 		/// <param name="pattern">指定的验证码生成模式，基本定义参考备注说明。</param>
 		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="Verify(string, string, out string)"/>方法验证通过后获取到。</param>
@@ -92,35 +84,27 @@ namespace Zongsoft.Security
 		/// </remarks>
 		string Generate(string name, string pattern, string extra);
 
-		/// <summary>
-		/// 验证指定名称的秘密（验证码）是否正确并删除它。
-		/// </summary>
+		/// <summary>验证指定名称的秘密（验证码）是否正确并删除它。</summary>
 		/// <param name="name">指定的验证码名称。</param>
 		/// <param name="secret">指定待确认的验证码。</param>
 		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
 		bool Remove(string name, string secret);
 
-		/// <summary>
-		/// 验证指定名称的秘密（验证码）是否正确并删除它。
-		/// </summary>
+		/// <summary>验证指定名称的秘密（验证码）是否正确并删除它。</summary>
 		/// <param name="name">指定的验证码名称。</param>
 		/// <param name="secret">指定待确认的验证码。</param>
 		/// <param name="extra">输出参数，表示验证通过后该验证码生成时绑定的附加文本。</param>
 		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
 		bool Remove(string name, string secret, out string extra);
 
-		/// <summary>
-		/// 验证指定名称的秘密（验证码）是否正确。
-		/// </summary>
+		/// <summary>验证指定名称的秘密（验证码）是否正确。</summary>
 		/// <param name="name">指定的验证码名称。</param>
 		/// <param name="secret">指定待确认的验证码。</param>
 		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
 		/// <remarks>验证成功并不会立即删除对应的缓存项（即可重复验证），如果希望验证后立即失效应使用<see cref="Remove(string, string)"/>方法。</remarks>
 		bool Verify(string name, string secret);
 
-		/// <summary>
-		/// 验证指定名称的秘密（验证码）是否正确。
-		/// </summary>
+		/// <summary>验证指定名称的秘密（验证码）是否正确。</summary>
 		/// <param name="name">指定的验证码名称。</param>
 		/// <param name="secret">指定待确认的验证码。</param>
 		/// <param name="extra">输出参数，表示验证通过后该验证码生成时绑定的附加文本。</param>

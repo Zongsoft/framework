@@ -433,8 +433,15 @@ namespace Zongsoft.Security
 				if(string.IsNullOrEmpty(destination) && string.IsNullOrEmpty(template))
 					return null;
 
-				var key = string.IsNullOrEmpty(channel) ? $"{scheme}:{destination}@{template}?{scenario}" : $"{scheme}.{channel}:{destination}@{template}?{scenario}";
-				var hash = _hasher.ComputeHash(System.Text.Encoding.UTF8.GetBytes(key.ToLowerInvariant()));
+				//组合参数为固定格式
+				var argument = string.IsNullOrEmpty(channel) ?
+					$"{scheme}:{destination}@{template}?{scenario}" :
+					$"{scheme}.{channel}:{destination}@{template}?{scenario}";
+
+				//计算组合键的哈希值
+				var hash = _hasher.ComputeHash(System.Text.Encoding.UTF8.GetBytes(argument.ToLowerInvariant()));
+
+				//返回键哈希值的十六进制字符串作为缓存键
 				return System.Convert.ToHexString(hash);
 			}
 			#endregion

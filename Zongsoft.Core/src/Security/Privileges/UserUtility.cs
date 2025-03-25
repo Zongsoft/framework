@@ -36,18 +36,23 @@ namespace Zongsoft.Security.Privileges;
 
 public static class UserUtility
 {
-	internal static ICondition GetCriteria(string identity, string @namespace = null)
+	internal static ICondition GetCriteria(string identity, string @namespace = null) => GetCriteria(identity, @namespace, out _);
+	internal static ICondition GetCriteria(string identity, out string identityType) => GetCriteria(identity, null, out identityType);
+	internal static ICondition GetCriteria(string identity, string @namespace, out string identityType)
 	{
 		if(string.IsNullOrEmpty(identity))
+		{
+			identityType = null;
 			return null;
+		}
 
 		var index = identity.IndexOf(':');
 
 		if(index > 0 && index < identity.Length)
 		{
-			var prefix = identity[..index];
+			identityType = identity[..index];
 
-			return prefix.ToLowerInvariant() switch
+			return identityType.ToLowerInvariant() switch
 			{
 				"phone" => Condition.Equal(nameof(IUser.Phone), identity[(index + 1)..]) & GetNamespace(@namespace),
 				"email" => Condition.Equal(nameof(IUser.Email), identity[(index + 1)..]) & GetNamespace(@namespace),
@@ -56,10 +61,18 @@ public static class UserUtility
 		}
 
 		if(identity.Contains('@'))
+		{
+			identityType = nameof(IUser.Email);
 			return Condition.Equal(nameof(IUser.Email), identity) & GetNamespace(@namespace);
-		if(char.IsDigit(identity[0]))
-			return Condition.Equal(nameof(IUser.Phone), identity) & GetNamespace(@namespace);
+		}
 
+		if(IsPhone(identity))
+		{
+			identityType = nameof(IUser.Phone);
+			return Condition.Equal(nameof(IUser.Phone), identity) & GetNamespace(@namespace);
+		}
+
+		identityType = nameof(IUser.Name);
 		return Condition.Equal(nameof(IUser.Name), identity) & GetNamespace(@namespace);
 
 		static Condition GetNamespace(string @namespace) => @namespace switch
@@ -68,6 +81,20 @@ public static class UserUtility
 			"" => Condition.Equal(nameof(IUser.Namespace), null),
 			_ => Condition.Equal(nameof(IUser.Namespace), @namespace),
 		};
+
+		static bool IsPhone(ReadOnlySpan<char> text)
+		{
+			if(text.IsEmpty)
+				return false;
+
+			for(int i = 0; i < text.Length; i++)
+			{
+				if(!char.IsDigit(text[i]) && text[i] != '+')
+					return false;
+			}
+
+			return true;
+		}
 	}
 
 	public static ClaimsIdentity Identity(this IUser user, string scheme, string issuer, TimeSpan? expiration = null)

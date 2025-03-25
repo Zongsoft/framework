@@ -35,7 +35,7 @@ namespace Zongsoft.Security.Configuration
 	/// <summary>
 	/// 表示恶意检测器的配置选项。
 	/// </summary>
-	public class AttempterOptions
+	public class AttempterOptions : IAttempterOptions
 	{
 		public AttempterOptions()
 		{

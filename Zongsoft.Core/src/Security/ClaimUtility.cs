@@ -67,7 +67,11 @@ public static class ClaimUtility
 	public static bool TryGetValue(this Claim claim, out Type type, out object value)
 	{
 		if(claim == null)
-			throw new ArgumentNullException(nameof(claim));
+		{
+			type = null;
+			value = null;
+			return false;
+		}
 
 		type = claim.GetValueType();
 		return Common.Convert.TryConvertValue(claim.Value, type, out value);

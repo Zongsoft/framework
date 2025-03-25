@@ -110,8 +110,8 @@ public static class ClaimsIdentityExtension
 		);
 	}
 
-	public static string GetIdentifier(this IIdentity identity) => GetIdentifier(identity as ClaimsIdentity);
-	public static string GetIdentifier(this ClaimsIdentity identity) => identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+	public static object GetIdentifier(this IIdentity identity) => GetIdentifier(identity as ClaimsIdentity);
+	public static object GetIdentifier(this ClaimsIdentity identity) => identity != null && identity.FindFirst(ClaimTypes.NameIdentifier).TryGetValue(out var value) ? value : null;
 	public static T GetIdentifier<T>(this IIdentity identity) => GetIdentifier<T>(identity as ClaimsIdentity);
 	public static T GetIdentifier<T>(this ClaimsIdentity identity)
 	{

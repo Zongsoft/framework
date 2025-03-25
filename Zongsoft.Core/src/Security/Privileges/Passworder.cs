@@ -35,13 +35,22 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
+/// <summary>
+/// 提供密码获取、设置、校验功能的基类。
+/// </summary>
 public abstract class Passworder
 {
+	#region 公共方法
+	public abstract Cipher GetCipher(string password, string algorithm = null);
+	public abstract ValueTask<Cipher> GetAsync(Identifier identifier, CancellationToken cancellation);
 	public abstract ValueTask<Cipher> GetAsync(string identity, string @namespace, CancellationToken cancellation);
+	public abstract ValueTask<bool> SetAsync(Identifier identifier, Cipher cipher, CancellationToken cancellation);
 	public abstract ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation);
+	#endregion
 
 	public class Cipher
 	{
+		#region 构造函数
 		public Cipher() { }
 		public Cipher(string name, byte[] value, byte[] nonce)
 		{
@@ -49,10 +58,57 @@ public abstract class Passworder
 			this.Value = value;
 			this.Nonce = nonce;
 		}
+		#endregion
 
+		#region 公共属性
+		/// <summary>获取密钥所有者标识，通常为用户标识。</summary>
 		public virtual Identifier Identifier { get; }
+		/// <summary>获取或设置密钥名称，通常为哈希算法。</summary>
 		public string Name { get; set; }
+		/// <summary>获取或设置密钥内容，通常为密码哈希值。</summary>
 		public byte[] Value { get; set; }
+		/// <summary>获取或设置密钥随机，通常为密码随机盐。</summary>
 		public byte[] Nonce { get; set; }
+		#endregion
+
+		#region 公共方法
+		public void Reset(string password, string algorithm = null)
+		{
+			if(string.IsNullOrEmpty(algorithm))
+				algorithm = "SHA1";
+
+			this.Name = algorithm;
+
+			if(string.IsNullOrEmpty(password))
+			{
+				this.Value = null;
+				this.Nonce = null;
+			}
+			else
+			{
+				this.Nonce = BitConverter.GetBytes(Random.Shared.NextInt64());
+				this.Value = PasswordUtility.HashPassword(password, this.Nonce, algorithm);
+			}
+		}
+
+		public void Reset(string password, byte[] nonce, string algorithm = null)
+		{
+			if(string.IsNullOrEmpty(algorithm))
+				algorithm = "SHA1";
+
+			this.Name = algorithm;
+
+			if(string.IsNullOrEmpty(password))
+			{
+				this.Value = null;
+				this.Nonce = null;
+			}
+			else
+			{
+				this.Nonce = nonce;
+				this.Value = PasswordUtility.HashPassword(password, nonce, algorithm);
+			}
+		}
+		#endregion
 	}
 }

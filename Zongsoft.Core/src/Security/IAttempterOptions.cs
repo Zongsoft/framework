@@ -28,31 +28,24 @@
  */
 
 using System;
+using System.ComponentModel;
 
 namespace Zongsoft.Security;
 
 /// <summary>
-/// 表示尝试器的接口。
+/// 表示尝试器的配置选项。
 /// </summary>
-public interface IAttempter
+public interface IAttempterOptions
 {
-	/// <summary>获取或设置尝试器选项。</summary>
-	IAttempterOptions Options { get; set; }
+	/// <summary>获取或设置验证失败的阈值，零表示不限制。</summary>
+	[DefaultValue(3)]
+	public int Threshold { get; set; }
 
-	/// <summary>校验指定身份是否可以继续验证。</summary>
-	/// <param name="identity">指定待验证的身份标识。</param>
-	/// <param name="namespace">表示身份标识所属的命名空间。</param>
-	/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
-	bool Verify(string identity, string @namespace = null);
+	/// <summary>获取或设置验证失败的窗口期，默认为1分钟。</summary>
+	[DefaultValue("0:1:0")]
+	public TimeSpan Window { get; set; }
 
-	/// <summary>验证成功方法。</summary>
-	/// <param name="identity">指定验证成功的身份标识。</param>
-	/// <param name="namespace">表示身份标识所属的命名空间。</param>
-	void Done(string identity, string @namespace = null);
-
-	/// <summary>验证失败方法。</summary>
-	/// <param name="identity">指定验证失败的身份标识。</param>
-	/// <param name="namespace">表示身份标识所属的命名空间。</param>
-	/// <returns>返回验证失败是否超过阈值，如果返回真(True)则表示失败次数超过阈值。</returns>
-	bool Fail(string identity, string @namespace = null);
+	/// <summary>获取或设置验证失败超过指定的阈值后锁定时长，默认为10分钟。</summary>
+	[DefaultValue("0:10:0")]
+	public TimeSpan Period { get; set; }
 }

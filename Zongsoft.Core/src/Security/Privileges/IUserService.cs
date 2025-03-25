@@ -34,6 +34,7 @@ using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Components;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
@@ -104,11 +105,12 @@ public partial interface IUserService
 	ValueTask<bool> ChangePasswordAsync(Identifier identifier, string oldPassword, string newPassword, CancellationToken cancellation = default);
 
 	/// <summary>准备重置指定用户的密码。</summary>
-	/// <param name="identity">要重置密码的用户标识，仅限用户的“邮箱地址”或“手机号码”。</param>
+	/// <param name="identity">要重置密码的用户标识。</param>
 	/// <param name="namespace">指定的用户标识所属的命名空间。</param>
+	/// <param name="parameters">指定的操作参数集。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回忘记密码重置的令牌，如果指定用户标识不存在则返回空(<c>null</c>)。</returns>
-	ValueTask<string> ForgetPasswordAsync(string identity, string @namespace, CancellationToken cancellation = default);
+	ValueTask<string> ForgetPasswordAsync(string identity, string @namespace, Parameters parameters, CancellationToken cancellation = default);
 
 	/// <summary>重置指定用户的密码，以验证码摘要的方式进行密码重置。</summary>
 	/// <param name="token">要重置的令牌。</param>

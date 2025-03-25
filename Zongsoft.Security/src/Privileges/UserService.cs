@@ -48,6 +48,7 @@ public partial class UserService : UserServiceBase<UserModel>
 
 	#region 重写方法
 	protected override IDataAccess Accessor => Module.Current.Accessor;
+	protected override IServiceProvider Services => Module.Current.Services;
 	protected override ICondition GetCriteria(Identifier identifier)
 	{
 		if(identifier.Validate(out uint userId))
