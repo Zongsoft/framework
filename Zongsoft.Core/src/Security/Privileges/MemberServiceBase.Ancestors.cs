@@ -41,6 +41,7 @@ namespace Zongsoft.Security.Privileges;
 
 partial class MemberServiceBase<TRole, TMember>
 {
+	#region 公共方法
 	public async IAsyncEnumerable<TRole> GetAncestorsAsync(Member member, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
 		var members = new Stack<Identifier>();
@@ -135,7 +136,13 @@ partial class MemberServiceBase<TRole, TMember>
 				cancellation
 			).Map(id => new Identifier(typeof(IRole), id));
 	}
+	#endregion
 
+	#region 显式实现
+	IAsyncEnumerable<IRole> IMemberService.GetAncestorsAsync(Member member, CancellationToken cancellation) => this.GetAncestorsAsync(member, cancellation).Map(role => (IRole)role);
+	#endregion
+
+	#region 嵌套子类
 	private class RoleComparer : IEqualityComparer<TRole>
 	{
 		public static readonly RoleComparer Instance = new();
@@ -150,4 +157,5 @@ partial class MemberServiceBase<TRole, TMember>
 
 		public int GetHashCode(TRole role) => role.Identifier.GetHashCode();
 	}
+	#endregion
 }

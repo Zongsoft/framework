@@ -34,12 +34,16 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-public interface IMember<TRole> : IEquatable<IMember<TRole>> where TRole : IRole
+public interface IMember : IEquatable<IMember>
 {
 	Identifier RoleId { get; }
 	Identifier MemberId { get; }
 	MemberType MemberType { get; }
 
-	TRole Role { get; }
 	object Member { get; }
+}
+
+public interface IMember<TRole> : IMember, IEquatable<IMember<TRole>> where TRole : IRole
+{
+	TRole Role { get; }
 }

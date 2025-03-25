@@ -42,7 +42,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IMatchable, IMatchable<ClaimsPrincipal> where TUser : IUser
+public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUserService, IMatchable, IMatchable<ClaimsPrincipal> where TUser : IUser
 {
 	#region 构造函数
 	protected UserServiceBase(Passworder passworder = null) => this.Passworder = passworder;
@@ -188,17 +188,6 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IMat
 	}
 	#endregion
 
-	#region 密码操作
-	public ValueTask<bool> HasPasswordAsync(Identifier identifier, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask<bool> ChangePasswordAsync(Identifier identifier, string oldPassword, string newPassword, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask<string> ForgetPasswordAsync(string identity, string @namespace, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask<bool> ResetPasswordAsync(string token, string secret, string password = null, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask<bool> ResetPasswordAsync(string identity, string @namespace, string[] passwordAnswers, string newPassword = null, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask<string[]> GetPasswordQuestionsAsync(Identifier identifier, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask<string[]> GetPasswordQuestionsAsync(string identity, string @namespace, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask<bool> SetPasswordQuestionsAndAnswersAsync(Identifier identifier, string password, string[] passwordQuestions, string[] passwordAnswers, CancellationToken cancellation = default) => throw new NotImplementedException();
-	#endregion
-
 	#region 虚拟方法
 	protected virtual ICondition GetCriteria(string keyword)
 	{
@@ -226,34 +215,20 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IMat
 	protected virtual ICondition GetCriteria(string identity, string @namespace) => UserUtility.GetCriteria(identity, @namespace);
 	#endregion
 
+	#region 显式实现
+	async ValueTask<IUser> IUserService.GetAsync(Identifier identifier, CancellationToken cancellation) => await this.GetAsync(identifier, cancellation);
+	async ValueTask<IUser> IUserService.GetAsync(Identifier identifier, string schema, CancellationToken cancellation) => await this.GetAsync(identifier, schema, cancellation);
+	IAsyncEnumerable<IUser> IUserService.FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation) => this.FindAsync(keyword, schema, paging, cancellation).Map(user => (IUser)user);
+	IAsyncEnumerable<IUser> IUserService.FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation) => this.FindAsync(criteria, schema, paging, cancellation).Map(user => (IUser)user);
+	ValueTask<bool> IUserService.CreateAsync(IUser user, CancellationToken cancellation) => this.CreateAsync(user is TUser model ? model : default, cancellation);
+	ValueTask<bool> IUserService.CreateAsync(IUser user, string password, CancellationToken cancellation) => this.CreateAsync(user is TUser model ? model : default, password, cancellation);
+	ValueTask<int> IUserService.CreateAsync(IEnumerable<IUser> users, CancellationToken cancellation) => this.CreateAsync(users.Cast<TUser>(), cancellation);
+	ValueTask<bool> IUserService.UpdateAsync(IUser user, CancellationToken cancellation) => this.UpdateAsync(user is TUser model ? model : default, cancellation);
+	#endregion
+
 	#region 服务匹配
 	bool IMatchable.Match(object argument) => argument is ClaimsPrincipal principal && this.OnMatch(principal);
 	bool IMatchable<ClaimsPrincipal>.Match(ClaimsPrincipal argument) => this.OnMatch(argument);
 	protected virtual bool OnMatch(ClaimsPrincipal principal) => principal != null && principal.Identity != null && principal.Identity.IsAuthenticated;
 	#endregion
-}
-
-partial class UserServiceBase<TUser>
-{
-	public class PassworderBase<TCipher>(UserServiceBase<TUser> service) : Passworder where TCipher : Passworder.Cipher
-	{
-		protected UserServiceBase<TUser> Service { get; } = service ?? throw new ArgumentNullException(nameof(service));
-
-		public override async ValueTask<Cipher> GetAsync(string identity, string @namespace, CancellationToken cancellation)
-		{
-			var result = this.OnGetAsync(identity, @namespace, cancellation);
-			await using var enumerator = result.GetAsyncEnumerator(cancellation);
-			return await enumerator.MoveNextAsync() ? enumerator.Current : null;
-		}
-
-		public override ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation)
-		{
-			return this.OnVerifyAsync(password, cipher as TCipher, cancellation);
-		}
-
-		protected virtual IAsyncEnumerable<TCipher> OnGetAsync(string identity, string @namespace, CancellationToken cancellation) =>
-			this.Service.Accessor.SelectAsync<TCipher>(this.Service.Name, this.Service.GetCriteria(identity, @namespace), cancellation);
-		protected virtual ValueTask<bool> OnVerifyAsync(string password, TCipher cipher, CancellationToken cancellation) =>
-			ValueTask.FromResult(PasswordUtility.VerifyPassword(password, cipher.Value, cipher.Nonce, cipher.Name));
-	}
 }

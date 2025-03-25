@@ -34,7 +34,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-public class Member<TRole> : IMember<TRole>, IEquatable<Member<TRole>>, IEquatable<IMember<TRole>> where TRole : IRole
+public class Member<TRole> : IMember<TRole>, IMember, IEquatable<Member<TRole>>, IEquatable<IMember<TRole>> where TRole : IRole
 {
 	#region 构造函数
 	protected Member(Identifier roleId, Member member)
@@ -57,7 +57,7 @@ public class Member<TRole> : IMember<TRole>, IEquatable<Member<TRole>>, IEquatab
 	public Identifier MemberId { get; protected set; }
 	public MemberType MemberType { get; protected set; }
 	public TRole Role { get; protected set; }
-	object IMember<TRole>.Member => this.GetMember();
+	object IMember.Member => this.GetMember();
 	#endregion
 
 	#region 虚拟方法
@@ -65,11 +65,15 @@ public class Member<TRole> : IMember<TRole>, IEquatable<Member<TRole>>, IEquatab
 	#endregion
 
 	#region 重写方法
-	public bool Equals(Member<TRole> other) => other is not null &&
+	public bool Equals(IMember other) => other is not null &&
 		this.RoleId == other.RoleId &&
 		this.MemberId == other.MemberId &&
 		this.MemberType == other.MemberType;
 	public bool Equals(IMember<TRole> other) => other is not null &&
+		this.RoleId == other.RoleId &&
+		this.MemberId == other.MemberId &&
+		this.MemberType == other.MemberType;
+	public bool Equals(Member<TRole> other) => other is not null &&
 		this.RoleId == other.RoleId &&
 		this.MemberId == other.MemberId &&
 		this.MemberType == other.MemberType;

@@ -40,48 +40,20 @@ namespace Zongsoft.Security.Privileges;
 /// <summary>
 /// 提供角色服务的接口。
 /// </summary>
-public interface IRoleService
+public interface IRoleService<TRole> : IRoleService where TRole : IRole
 {
-	#region 通用方法
-	/// <summary>确定指定的角色是否存在。</summary>
-	/// <param name="identifier">指定要查找的角色标识。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果指定的角色是存在的则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> ExistsAsync(Identifier identifier, CancellationToken cancellation = default);
-
-	/// <summary>更改角色名称。</summary>
-	/// <param name="identifier">要更名的角色标识。</param>
-	/// <param name="name">要更名的新名称。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果更名成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default);
-
-	/// <summary>删除一个角色。</summary>
-	/// <param name="identifier">要删除的角色标识。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果删除成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> DeleteAsync(Identifier identifier, CancellationToken cancellation = default);
-
-	/// <summary>删除多个角色。</summary>
-	/// <param name="identifiers">要删除的角色标识集。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回删除成功的角色数量。</returns>
-	ValueTask<int> DeleteAsync(IEnumerable<Identifier> identifiers, CancellationToken cancellation = default);
-	#endregion
-
-	#region 接口参数
 	/// <summary>获取指定的角色对象。</summary>
 	/// <param name="identifier">要查找的角色标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回由<paramref name="identifier"/>参数指定的角色对象，如果没有找到则返回空(<c>null</c>)。</returns>
-	ValueTask<IRole> GetAsync(Identifier identifier, CancellationToken cancellation = default);
+	new ValueTask<TRole> GetAsync(Identifier identifier, CancellationToken cancellation = default);
 
 	/// <summary>获取指定的角色对象。</summary>
 	/// <param name="identifier">要查找的角色标识。</param>
 	/// <param name="schema">获取的数据模式。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回由<paramref name="identifier"/>参数指定的角色对象，如果没有找到则返回空(<c>null</c>)。</returns>
-	ValueTask<IRole> GetAsync(Identifier identifier, string schema, CancellationToken cancellation = default);
+	new ValueTask<TRole> GetAsync(Identifier identifier, string schema, CancellationToken cancellation = default);
 
 	/// <summary>查找指定关键字的角色。</summary>
 	/// <param name="keyword">指定的查找关键字。</param>
@@ -89,7 +61,7 @@ public interface IRoleService
 	/// <param name="paging">查找的分页设置。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回找到的角色结果集。</returns>
-	IAsyncEnumerable<IRole> FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TRole> FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation = default);
 
 	/// <summary>查找指定条件的角色。</summary>
 	/// <param name="criteria">指定的查找条件。</param>
@@ -97,24 +69,23 @@ public interface IRoleService
 	/// <param name="paging">查找的分页设置。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回找到的角色结果集。</returns>
-	IAsyncEnumerable<IRole> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TRole> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
 
 	/// <summary>创建一个角色。</summary>
 	/// <param name="role">要创建的角色对象。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果创建成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> CreateAsync(IRole role, CancellationToken cancellation = default);
+	ValueTask<bool> CreateAsync(TRole role, CancellationToken cancellation = default);
 
 	/// <summary>创建多个角色。</summary>
 	/// <param name="roles">要创建的角色对象集。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回创建成功的角色数量。</returns>
-	ValueTask<int> CreateAsync(IEnumerable<IRole> roles, CancellationToken cancellation = default);
+	ValueTask<int> CreateAsync(IEnumerable<TRole> roles, CancellationToken cancellation = default);
 
 	/// <summary>更新角色信息。</summary>
 	/// <param name="role">要更新的角色对象。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果更新成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> UpdateAsync(IRole role, CancellationToken cancellation = default);
-	#endregion
+	ValueTask<bool> UpdateAsync(TRole role, CancellationToken cancellation = default);
 }

@@ -28,10 +28,6 @@
  */
 
 using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
@@ -41,8 +37,7 @@ using Zongsoft.Security.Privileges.Models;
 
 namespace Zongsoft.Security.Privileges;
 
-[Service<IRoleService<IRole>, IRoleService<RoleModel>>]
-public partial class RoleService : RoleServiceBase<RoleModel>, IRoleService<IRole>
+public partial class RoleService : RoleServiceBase<RoleModel>
 {
 	#region 重写方法
 	protected override IDataAccess Accessor => Module.Current.Accessor;
@@ -53,15 +48,5 @@ public partial class RoleService : RoleServiceBase<RoleModel>, IRoleService<IRol
 
 		return base.GetCriteria(identifier);
 	}
-	#endregion
-
-	#region 显式实现
-	async ValueTask<IRole> IRoleService<IRole>.GetAsync(Identifier identifier, CancellationToken cancellation) => await this.GetAsync(identifier, cancellation);
-	async ValueTask<IRole> IRoleService<IRole>.GetAsync(Identifier identifier, string schema, CancellationToken cancellation) => await this.GetAsync(identifier, schema, cancellation);
-	IAsyncEnumerable<IRole> IRoleService<IRole>.FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation) => this.FindAsync(keyword, schema, paging, cancellation).Map(role => (IRole)role);
-	IAsyncEnumerable<IRole> IRoleService<IRole>.FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation) => this.FindAsync(criteria, schema, paging, cancellation).Map(role => (IRole)role);
-	ValueTask<bool> IRoleService<IRole>.CreateAsync(IRole role, CancellationToken cancellation) => this.CreateAsync(role as RoleModel, cancellation);
-	ValueTask<int> IRoleService<IRole>.CreateAsync(IEnumerable<IRole> roles, CancellationToken cancellation) => this.CreateAsync(roles.Cast<RoleModel>(), cancellation);
-	ValueTask<bool> IRoleService<IRole>.UpdateAsync(IRole role, CancellationToken cancellation) => this.UpdateAsync(role as RoleModel, cancellation);
 	#endregion
 }

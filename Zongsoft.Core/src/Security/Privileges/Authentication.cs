@@ -161,9 +161,9 @@ public static partial class Authentication
 	public sealed class AuthenticationServicer
 	{
 		internal AuthenticationServicer() { }
-		public IRoleService<IRole> Roles { get; set; }
-		public IUserService<IUser> Users { get; set; }
-		public IMemberService<IRole, IMember<IRole>> Members { get; set; }
+		public IRoleService Roles { get; set; }
+		public IUserService Users { get; set; }
+		public IMemberService Members { get; set; }
 	}
 	#endregion
 }

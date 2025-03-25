@@ -41,7 +41,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService<TRole, TMember>, IMatchable, IMatchable<ClaimsPrincipal>
+public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService<TRole, TMember>, IMemberService, IMatchable, IMatchable<ClaimsPrincipal>
 	where TRole : IRole
 	where TMember : IMember<TRole>
 {
@@ -197,6 +197,14 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 
 		return Condition.Equal(nameof(IMember<TRole>.RoleId), identifier.Value);
 	}
+	#endregion
+
+	#region 显式实现
+	IAsyncEnumerable<IRole> IMemberService.GetParentsAsync(Member member, CancellationToken cancellation) => this.GetParentsAsync(member, cancellation).Map(role => (IRole)role);
+	IAsyncEnumerable<IMember> IMemberService.GetAsync(Identifier role, CancellationToken cancellation) => this.GetAsync(role, cancellation).Map(member => (IMember)member);
+	IAsyncEnumerable<IMember> IMemberService.GetAsync(Identifier role, string schema, CancellationToken cancellation) => this.GetAsync(role, schema, cancellation).Map(member => (IMember)member);
+	ValueTask<int> IMemberService.SetAsync(IEnumerable<IMember> members, CancellationToken cancellation) => this.SetAsync(members.Cast<TMember>(), cancellation);
+	ValueTask<int> IMemberService.RemoveAsync(IEnumerable<IMember> members, CancellationToken cancellation) => this.RemoveAsync(members.Cast<TMember>(), cancellation);
 	#endregion
 
 	#region 服务匹配

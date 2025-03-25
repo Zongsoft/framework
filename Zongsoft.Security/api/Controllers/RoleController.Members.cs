@@ -53,7 +53,7 @@ partial class RoleController
 	public class MemberController : ControllerBase
 	{
 		#region 公共属性
-		public IMemberService<IRole, IMember<IRole>> Service => Authentication.Servicer.Members;
+		public IMemberService Service => Authentication.Servicer.Members;
 		#endregion
 
 		#region 上级角色
@@ -107,7 +107,7 @@ partial class RoleController
 
 		#region 下级成员
 		[HttpGet("/[area]/{id}/[controller]")]
-		public IAsyncEnumerable<IMember<IRole>> Get(string id, CancellationToken cancellation = default)
+		public IAsyncEnumerable<IMember> Get(string id, CancellationToken cancellation = default)
 		{
 			return this.Service.GetAsync(new Identifier(typeof(IRole), id), this.Request.Headers.GetDataSchema(), cancellation);
 		}

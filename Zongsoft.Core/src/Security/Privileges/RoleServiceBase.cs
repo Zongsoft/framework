@@ -42,7 +42,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IMatchable, IMatchable<ClaimsPrincipal> where TRole : IRole
+public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService, IMatchable, IMatchable<ClaimsPrincipal> where TRole : IRole
 {
 	#region 公共属性
 	public virtual string Name => this.Accessor.Naming.Get<TRole>();
@@ -194,6 +194,16 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IMatchable, 
 
 		throw OperationException.Argument();
 	}
+	#endregion
+
+	#region 显式实现
+	async ValueTask<IRole> IRoleService.GetAsync(Identifier identifier, CancellationToken cancellation) => await this.GetAsync(identifier, cancellation);
+	async ValueTask<IRole> IRoleService.GetAsync(Identifier identifier, string schema, CancellationToken cancellation) => await this.GetAsync(identifier, schema, cancellation);
+	IAsyncEnumerable<IRole> IRoleService.FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation) => this.FindAsync(keyword, schema, paging, cancellation).Map(role => (IRole)role);
+	IAsyncEnumerable<IRole> IRoleService.FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation) => this.FindAsync(criteria, schema, paging, cancellation).Map(role => (IRole)role);
+	ValueTask<bool> IRoleService.CreateAsync(IRole role, CancellationToken cancellation) => this.CreateAsync(role is TRole model ? model : default, cancellation);
+	ValueTask<int> IRoleService.CreateAsync(IEnumerable<IRole> roles, CancellationToken cancellation) => this.CreateAsync(roles.Cast<TRole>(), cancellation);
+	ValueTask<bool> IRoleService.UpdateAsync(IRole role, CancellationToken cancellation) => this.UpdateAsync(role is TRole model ? model : default, cancellation);
 	#endregion
 
 	#region 服务匹配

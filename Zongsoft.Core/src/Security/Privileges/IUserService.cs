@@ -40,45 +40,19 @@ namespace Zongsoft.Security.Privileges;
 /// <summary>
 /// 提供用户服务的接口。
 /// </summary>
-public partial interface IUserService<TUser> where TUser : IUser
+public partial interface IUserService
 {
+	#region 属性定义
 	/// <summary>获取用户密码器。</summary>
 	Passworder Passworder { get; }
+	#endregion
 
+	#region 通用方法
 	/// <summary>确定指定的用户是否存在。</summary>
 	/// <param name="identifier">指定要查找的用户标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果指定的用户是存在的则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	ValueTask<bool> ExistsAsync(Identifier identifier, CancellationToken cancellation = default);
-
-	/// <summary>获取指定的用户对象。</summary>
-	/// <param name="identifier">要查找的用户标识。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回由<paramref name="identifier"/>参数指定的用户对象，如果没有找到则返回空(<c>null</c>)。</returns>
-	ValueTask<TUser> GetAsync(Identifier identifier, CancellationToken cancellation = default);
-
-	/// <summary>获取指定的用户对象。</summary>
-	/// <param name="identifier">要查找的用户标识。</param>
-	/// <param name="schema">获取的数据模式。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回由<paramref name="identifier"/>参数指定的用户对象，如果没有找到则返回空(<c>null</c>)。</returns>
-	ValueTask<TUser> GetAsync(Identifier identifier, string schema, CancellationToken cancellation = default);
-
-	/// <summary>查找指定关键字的用户。</summary>
-	/// <param name="keyword">指定的查找关键字。</param>
-	/// <param name="schema">查找的数据模式。</param>
-	/// <param name="paging">查找的分页设置。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回找到的用户结果集。</returns>
-	IAsyncEnumerable<TUser> FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation = default);
-
-	/// <summary>查找指定条件的用户。</summary>
-	/// <param name="criteria">指定的查找条件。</param>
-	/// <param name="schema">查找的数据模式。</param>
-	/// <param name="paging">查找的分页设置。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回找到的用户结果集。</returns>
-	IAsyncEnumerable<TUser> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
 
 	/// <summary>更改用户名称。</summary>
 	/// <param name="identifier">要更名的用户标识。</param>
@@ -103,25 +77,6 @@ public partial interface IUserService<TUser> where TUser : IUser
 	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	ValueTask<bool> SetPhoneAsync(Identifier identifier, string phone, bool verifiable = true, CancellationToken cancellation = default);
 
-	/// <summary>创建一个用户。</summary>
-	/// <param name="user">要创建的用户对象。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果创建成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> CreateAsync(TUser user, CancellationToken cancellation = default);
-
-	/// <summary>创建一个用户，并为其设置密码。</summary>
-	/// <param name="user">要创建的用户对象。</param>
-	/// <param name="password">新建用户的初始密码。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果创建成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> CreateAsync(TUser user, string password, CancellationToken cancellation = default);
-
-	/// <summary>创建多个用户。</summary>
-	/// <param name="users">要创建的用户对象集。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回创建成功的用户数量。</returns>
-	ValueTask<int> CreateAsync(IEnumerable<TUser> users, CancellationToken cancellation = default);
-
 	/// <summary>删除一个用户。</summary>
 	/// <param name="identifier">要删除的用户标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
@@ -134,15 +89,6 @@ public partial interface IUserService<TUser> where TUser : IUser
 	/// <returns>返回删除成功的用户数量。</returns>
 	ValueTask<int> DeleteAsync(IEnumerable<Identifier> identifiers, CancellationToken cancellation = default);
 
-	/// <summary>更新用户信息。</summary>
-	/// <param name="user">要更新的用户对象。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果更新成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> UpdateAsync(TUser user, CancellationToken cancellation = default);
-}
-
-partial interface IUserService<TUser>
-{
 	/// <summary>判断指定编号的用户是否设置了密码。</summary>
 	/// <param name="identifier">指定要查找的用户标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
@@ -208,4 +154,61 @@ partial interface IUserService<TUser>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果设置成则返回真(True)，否则返回假(False)。</returns>
 	ValueTask<bool> SetPasswordQuestionsAndAnswersAsync(Identifier identifier, string password, string[] passwordQuestions, string[] passwordAnswers, CancellationToken cancellation = default);
+	#endregion
+
+	#region 接口参数
+	/// <summary>获取指定的用户对象。</summary>
+	/// <param name="identifier">要查找的用户标识。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回由<paramref name="identifier"/>参数指定的用户对象，如果没有找到则返回空(<c>null</c>)。</returns>
+	ValueTask<IUser> GetAsync(Identifier identifier, CancellationToken cancellation = default);
+
+	/// <summary>获取指定的用户对象。</summary>
+	/// <param name="identifier">要查找的用户标识。</param>
+	/// <param name="schema">获取的数据模式。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回由<paramref name="identifier"/>参数指定的用户对象，如果没有找到则返回空(<c>null</c>)。</returns>
+	ValueTask<IUser> GetAsync(Identifier identifier, string schema, CancellationToken cancellation = default);
+
+	/// <summary>查找指定关键字的用户。</summary>
+	/// <param name="keyword">指定的查找关键字。</param>
+	/// <param name="schema">查找的数据模式。</param>
+	/// <param name="paging">查找的分页设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回找到的用户结果集。</returns>
+	IAsyncEnumerable<IUser> FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation = default);
+
+	/// <summary>查找指定条件的用户。</summary>
+	/// <param name="criteria">指定的查找条件。</param>
+	/// <param name="schema">查找的数据模式。</param>
+	/// <param name="paging">查找的分页设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回找到的用户结果集。</returns>
+	IAsyncEnumerable<IUser> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default);
+
+	/// <summary>创建一个用户。</summary>
+	/// <param name="user">要创建的用户对象。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果创建成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> CreateAsync(IUser user, CancellationToken cancellation = default);
+
+	/// <summary>创建一个用户，并为其设置密码。</summary>
+	/// <param name="user">要创建的用户对象。</param>
+	/// <param name="password">新建用户的初始密码。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果创建成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> CreateAsync(IUser user, string password, CancellationToken cancellation = default);
+
+	/// <summary>创建多个用户。</summary>
+	/// <param name="users">要创建的用户对象集。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回创建成功的用户数量。</returns>
+	ValueTask<int> CreateAsync(IEnumerable<IUser> users, CancellationToken cancellation = default);
+
+	/// <summary>更新用户信息。</summary>
+	/// <param name="user">要更新的用户对象。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果更新成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> UpdateAsync(IUser user, CancellationToken cancellation = default);
+	#endregion
 }

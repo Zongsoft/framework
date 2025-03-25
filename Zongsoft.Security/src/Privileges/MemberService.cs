@@ -28,10 +28,6 @@
  */
 
 using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
@@ -41,8 +37,7 @@ using Zongsoft.Security.Privileges.Models;
 
 namespace Zongsoft.Security.Privileges;
 
-[Service<IMemberService<IRole, IMember<IRole>>>]
-public class MemberService : MemberServiceBase<RoleModel, MemberModel>, IMemberService<IRole, IMember<IRole>>
+public class MemberService : MemberServiceBase<RoleModel, MemberModel>
 {
 	#region 重写方法
 	protected override IDataAccess Accessor => Module.Current.Accessor;
@@ -52,14 +47,5 @@ public class MemberService : MemberServiceBase<RoleModel, MemberModel>, IMemberS
 		model.MemberId = (uint)member.MemberId;
 		model.MemberType = member.MemberType;
 	});
-	#endregion
-
-	#region 显式实现
-	IAsyncEnumerable<IRole> IMemberService<IRole, IMember<IRole>>.GetAncestorsAsync(Member member, CancellationToken cancellation) => this.GetAncestorsAsync(member, cancellation);
-	IAsyncEnumerable<IRole> IMemberService<IRole, IMember<IRole>>.GetParentsAsync(Member member, CancellationToken cancellation) => this.GetParentsAsync(member, cancellation);
-	IAsyncEnumerable<IMember<IRole>> IMemberService<IRole, IMember<IRole>>.GetAsync(Identifier role, CancellationToken cancellation) => this.GetAsync(role, cancellation);
-	IAsyncEnumerable<IMember<IRole>> IMemberService<IRole, IMember<IRole>>.GetAsync(Identifier role, string schema, CancellationToken cancellation) => this.GetAsync(role, schema, cancellation);
-	ValueTask<int> IMemberService<IRole, IMember<IRole>>.SetAsync(IEnumerable<IMember<IRole>> members, CancellationToken cancellation) => this.SetAsync(members.Cast<MemberModel>(), cancellation);
-	ValueTask<int> IMemberService<IRole, IMember<IRole>>.RemoveAsync(IEnumerable<IMember<IRole>> members, CancellationToken cancellation) => this.RemoveAsync(members.Cast<MemberModel>(), cancellation);
 	#endregion
 }

@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Web.Controllers;
 public partial class RoleController : ControllerBase
 {
 	#region 公共属性
-	public IRoleService<IRole> Service => Authentication.Servicer.Roles;
+	public IRoleService Service => Authentication.Servicer.Roles;
 	#endregion
 
 	#region 公共方法

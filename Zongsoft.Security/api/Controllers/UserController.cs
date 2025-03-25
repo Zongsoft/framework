@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Web.Controllers;
 public partial class UserController : ControllerBase
 {
 	#region 公共属性
-	public IUserService<IUser> Service => Authentication.Servicer.Users;
+	public IUserService Service => Authentication.Servicer.Users;
 	#endregion
 
 	#region 公共方法

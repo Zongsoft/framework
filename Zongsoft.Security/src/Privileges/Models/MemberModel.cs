@@ -35,7 +35,7 @@ using Zongsoft.Components;
 namespace Zongsoft.Security.Privileges.Models;
 
 [Model($"{Module.NAME}.Member")]
-public abstract class MemberModel : IMember<RoleModel>, IMember<IRole>, IEquatable<MemberModel>
+public abstract class MemberModel : IMember<RoleModel>, IMember, IEquatable<MemberModel>
 {
 	#region 公共属性
 	public abstract uint RoleId { get; set; }
@@ -59,21 +59,11 @@ public abstract class MemberModel : IMember<RoleModel>, IMember<IRole>, IEquatab
 	#endregion
 
 	#region 显式实现
-	IRole IMember<IRole>.Role => this.Role;
-	Identifier IMember<IRole>.RoleId => new Identifier<uint>(typeof(IMember<IRole>), this.RoleId);
-	Identifier IMember<RoleModel>.RoleId => new Identifier<uint>(typeof(RoleModel), this.RoleId);
-
-	Identifier IMember<IRole>.MemberId => this.MemberType switch
+	Identifier IMember.RoleId => new Identifier<uint>(typeof(IMember<IRole>), this.RoleId);
+	Identifier IMember.MemberId => this.MemberType switch
 	{
 		MemberType.Role => new Identifier<uint>(typeof(IMember<IRole>), this.MemberId),
 		MemberType.User => new Identifier<uint>(typeof(IMember<IRole>), this.MemberId),
-		_ => default,
-	};
-
-	Identifier IMember<RoleModel>.MemberId => this.MemberType switch
-	{
-		MemberType.Role => new Identifier<uint>(typeof(RoleModel), this.MemberId),
-		MemberType.User => new Identifier<uint>(typeof(UserModel), this.MemberId),
 		_ => default,
 	};
 	#endregion
@@ -83,10 +73,19 @@ public abstract class MemberModel : IMember<RoleModel>, IMember<IRole>, IEquatab
 		this.RoleId == other.RoleId &&
 		this.MemberId == other.MemberId &&
 		this.MemberType == other.MemberType;
-	public bool Equals(IMember<RoleModel> member) => member is MemberModel other && this.Equals(other);
+
+	bool IEquatable<IMember>.Equals(IMember other) => other is not null &&
+		object.Equals(this.RoleId, other.RoleId) &&
+		object.Equals(this.MemberId, other.MemberId) &&
+		this.MemberType == other.MemberType;
+
+	public bool Equals(IMember<RoleModel> other) => other is not null &&
+		object.Equals(this.RoleId, other.RoleId) &&
+		object.Equals(this.MemberId, other.MemberId) &&
+		this.MemberType == other.MemberType;
+
 	public override bool Equals(object obj) => obj is MemberModel other && this.Equals(other);
 	public override int GetHashCode() => HashCode.Combine(this.RoleId, this.MemberId, this.MemberType);
 	public override string ToString() => $"{this.RoleId}:{this.MemberId}@{this.MemberType}";
-	bool IEquatable<IMember<IRole>>.Equals(IMember<IRole> other) => throw new NotImplementedException();
 	#endregion
 }
