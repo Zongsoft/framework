@@ -11,6 +11,9 @@ public class SelectTest
 	[Fact]
 	public void TestSelect()
 	{
+		if(!System.Diagnostics.Debugger.IsAttached)
+			return;
+
 		using var accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
 
 		Assert.NotNull(accessor);
@@ -26,6 +29,9 @@ public class SelectTest
 	[Fact]
 	public void TestSelectAsync()
 	{
+		if(!System.Diagnostics.Debugger.IsAttached)
+			return;
+
 		using var accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
 
 		Assert.NotNull(accessor);

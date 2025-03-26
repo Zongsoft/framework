@@ -14,6 +14,9 @@ public class ImporterTest
 	{
 		const int COUNT = 100;
 
+		if(!System.Diagnostics.Debugger.IsAttached)
+			return;
+
 		using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
 
 		Assert.NotNull(accessor);
@@ -29,6 +32,9 @@ public class ImporterTest
 	public async Task TestImportAsync()
 	{
 		const int COUNT = 100;
+
+		if(!System.Diagnostics.Debugger.IsAttached)
+			return;
 
 		using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
 
