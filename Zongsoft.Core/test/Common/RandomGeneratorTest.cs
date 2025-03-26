@@ -3,23 +3,21 @@ using System.Collections.Generic;
 
 using Xunit;
 
-namespace Zongsoft.Common.Tests
+namespace Zongsoft.Common.Tests;
+
+public class RandomGeneratorTest
 {
-	public class RandomGeneratorTest
+	[Fact]
+	public void TestGenerateString()
 	{
-		[Fact]
-		public void TestGenerateString()
+		var data = new string[100];
+
+		for(int i = 0; i < data.Length; i++)
 		{
-			var data = new string[100];
-
-			for(int i = 0; i < data.Length; i++)
+			for(int j = 1; j <= 128; j++)
 			{
-				for(int j = 1; j <= 128; j++)
-				{
-					data[i] = Zongsoft.Common.Randomizer.GenerateString(j);
-
-					Assert.True(!string.IsNullOrEmpty(data[i]) && data[i].Length == j);
-				}
+				data[i] = Randomizer.GenerateString(j);
+				Assert.True(!string.IsNullOrEmpty(data[i]) && data[i].Length == j);
 			}
 		}
 	}
