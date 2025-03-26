@@ -45,61 +45,61 @@ namespace Zongsoft.Services
 	///		<para>服务解析支持如下几种表达式：</para>
 	///		<list type="table">
 	///			<item>
-	///				<term>{srv:}</term>
+	///				<term>{service:}</term>
 	///				<description>暂不支持(返回空)。</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:@}</term>
+	///				<term>{service:@}</term>
 	///				<description>获取默认服务容器（即返回默认服务容器本身）。</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:ServiceName@ProviderName}</term>
+	///				<term>{service:ServiceName@ProviderName}</term>
 	///				<description>从指定名称的服务容器中获取指定名称的服务，如果其中一个不存在则返回空。</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:ServiceName}</term>
+	///				<term>{service:ServiceName}</term>
 	///				<description>
 	///					<para>从当前构件所属的服务容器或默认服务容器中，获取指定名称的服务，如果不存在则返回空。</para>
 	///					<para>当前构件所属服务容器：是指以当前构件的父节点名称为服务容器名的那个服务容器，如果该名称的服务容器不存在则使用默认服务容器。</para>
 	///				</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:~}</term>
+	///				<term>{service:~}</term>
 	///				<description>
 	///					<para>从当前构件所属的服务容器或默认服务容器中，获取匹配目标成员类型的服务。</para>
 	///					<para>当前构件所属服务容器：是指以当前构件的父节点名称为服务容器名的那个服务容器，如果该名称的服务容器不存在则使用默认服务容器。</para>
 	///				</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:*}</term>
+	///				<term>{service:*}</term>
 	///				<description>
 	///					<para>从当前构件所属的服务容器或默认服务容器中，获取匹配目标成员类型的所有服务。</para>
 	///					<para>当前构件所属服务容器：是指以当前构件的父节点名称为服务容器名的那个服务容器，如果该名称的服务容器不存在则使用默认服务容器。</para>
 	///				</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:~@}</term>
+	///				<term>{service:~@}</term>
 	///				<description>从默认服务容器中，获取匹配目标成员类型的服务。</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:*@}</term>
+	///				<term>{service:*@}</term>
 	///				<description>从默认服务容器中，获取匹配目标成员类型的所有服务。</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:~@ProviderName}</term>
+	///				<term>{service:~@ProviderName}</term>
 	///				<description>从指定名称的服务容器中，获取匹配目标成员类型的服务。</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:*@ProviderName}</term>
+	///				<term>{service:*@ProviderName}</term>
 	///				<description>从指定名称的服务容器中，获取匹配目标成员类型的所有服务。</description>
 	///			</item>
 	///			<item>
-	///				<term>{srv:@ProviderName}</term>
+	///				<term>{service:@ProviderName}</term>
 	///				<description>获取指定名称的服务容器（即返回指定名称的服务容器本身）。</description>
 	///			</item>
 	///		</list>
 	///		
-	///		<para>注意：所有格式均支持对服务对象的属性或字段进行导航，属性或字段之间使用句点符(.)进行分隔。譬如：{srv:ServiceName.Property.SubProperty@Provider} 或 {srv:~.Property.SubProperty} 等等。</para>
+	///		<para>注意：所有格式均支持对服务对象的属性或字段进行导航，属性或字段之间使用句点符(.)进行分隔。譬如：{service:ServiceName.Property.SubProperty@Provider} 或 {service:~.Property.SubProperty} 等等。</para>
 	/// </remarks>
 	public class ServicesParser : Parser
 	{

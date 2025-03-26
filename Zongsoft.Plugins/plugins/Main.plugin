@@ -4,7 +4,7 @@
         title="Main Plugin"
         author="Zongsoft Studio(zongsoft@qq.com)"
         copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
-        description="Created Date: 2012-06-09 by Popeye Zhong, Modified Date: 2020-04-25 by Popeye Zhong.">
+        description="Created Date: 2012-06-09 by Popeye Zhong, Modified Date: 2025-03-25 by Popeye Zhong.">
 
 	<builders>
 		<builder name="lazy" type="Zongsoft.Plugins.Builders.LazyBuilder, Zongsoft.Plugins"/>
@@ -17,10 +17,10 @@
 		<parser name="type" type="Zongsoft.Plugins.Parsers.TypeParser, Zongsoft.Plugins" />
 		<parser name="object" type="Zongsoft.Plugins.Parsers.ObjectParser, Zongsoft.Plugins" />
 		<parser name="static" type="Zongsoft.Plugins.Parsers.StaticParser, Zongsoft.Plugins" />
-		<parser name="res" type="Zongsoft.Resources.ResourceParser, Zongsoft.Plugins" />
-		<parser name="opt" type="Zongsoft.Configuration.OptionParser, Zongsoft.Plugins" />
-		<parser name="cmd" type="Zongsoft.Services.CommandParser, Zongsoft.Plugins" />
-		<parser name="srv" type="Zongsoft.Services.ServicesParser, Zongsoft.Plugins" />
+		<parser name="option" type="Zongsoft.Configuration.OptionParser, Zongsoft.Plugins" />
+		<parser name="command" type="Zongsoft.Services.CommandParser, Zongsoft.Plugins" />
+		<parser name="service" type="Zongsoft.Services.ServicesParser, Zongsoft.Plugins" />
+		<parser name="resource" type="Zongsoft.Resources.ResourceParser, Zongsoft.Plugins" />
 		<parser name="predicate" type="Zongsoft.Plugins.Parsers.PredicateParser, Zongsoft.Plugins" />
 	</parsers>
 
@@ -28,9 +28,6 @@
 	<extension path="/Workbench">
 		<!-- 挂载当前应用的模块集 -->
 		<object name="Modules" value="{path:/Workspace/Environment/ApplicationContext@Modules}" />
-
-		<!-- 挂载当前应用的模式集 -->
-		<object name="Schemas" value="{path:/Workspace/Environment/ApplicationContext@Schemas}" />
 
 		<!-- 挂载当前应用的服务容器 -->
 		<object name="Services" value="{path:/Workspace/Environment/ApplicationContext@Services}" />

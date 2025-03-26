@@ -36,7 +36,7 @@
 	<extension path="/Workbench/Security">
 		<object name="Authentication" value="{static:Zongsoft.Security.Privileges.Authentication.Authenticators, Zongsoft.Core}">
 			<expose name="Attempter" value="{static:Zongsoft.Security.Privileges.Authentication.Attempter, Zongsoft.Core}"
-					options="{opt:/Security/Attempter}" />
+					options="{option:/Security/Attempter}" />
 
 			<expose name="Servicer" value="{static:Zongsoft.Security.Privileges.Authentication.Servicer, Zongsoft.Core}" />
 			<expose name="Challengers" value="{static:Zongsoft.Security.Privileges.Authentication.Challengers, Zongsoft.Core}" />
