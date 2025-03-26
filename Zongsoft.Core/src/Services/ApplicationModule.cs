@@ -28,18 +28,14 @@
  */
 
 using System;
-using System.Reflection;
-using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Components;
 using Zongsoft.Collections;
-using Zongsoft.ComponentModel;
 
 namespace Zongsoft.Services
 {
-	[DefaultMember(nameof(Schemas))]
 	public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 	{
 		#region 成员字段
@@ -55,14 +51,12 @@ namespace Zongsoft.Services
 			this.Name = name == null ? string.Empty : name.Trim();
 			this.Title = title;
 			this.Description = description;
-			this.Schemas = new SchemaCollection();
 			this.Properties = new Parameters();
 		}
 		#endregion
 
 		#region 公共属性
 		public string Name { get; protected set; }
-		public SchemaCollection Schemas { get; }
 		public Parameters Properties { get; }
 
 		public string Title

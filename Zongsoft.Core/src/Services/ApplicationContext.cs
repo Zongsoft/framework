@@ -81,7 +81,6 @@ namespace Zongsoft.Services
 			_workers = new List<IWorker>();
 
 			this.Modules = new ApplicationModuleCollection();
-			this.Schemas = new ComponentModel.SchemaCollection();
 			this.Properties = new Collections.Parameters();
 
 			var lifetime = _services.GetService<IHostApplicationLifetime>();
@@ -149,7 +148,6 @@ namespace Zongsoft.Services
 		public virtual IDictionary<string, object> Session { get; init; }
 		public Components.EventManager Events => Components.EventManager.Global;
 		public ApplicationModuleCollection Modules { get; }
-		public ComponentModel.SchemaCollection Schemas { get; }
 		public ICollection<IApplicationInitializer> Initializers => _initializers;
 		public ICollection<IWorker> Workers => _workers;
 		public Collections.Parameters Properties { get; }
