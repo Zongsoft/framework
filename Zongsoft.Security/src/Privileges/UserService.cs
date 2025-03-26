@@ -46,6 +46,20 @@ public partial class UserService : UserServiceBase<UserModel>
 	public UserService() => base.Passworder = new Passworder(this);
 	#endregion
 
+	#region 操作方法
+	public override async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
+	{
+		var criteria = this.GetCriteria(identifier);
+		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Status = UserStatus.Active }, criteria, cancellation) > 0;
+	}
+
+	public override async ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default)
+	{
+		var criteria = this.GetCriteria(identifier);
+		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Status = UserStatus.Disabled }, criteria, cancellation) > 0;
+	}
+	#endregion
+
 	#region 重写方法
 	protected override IDataAccess Accessor => Module.Current.Accessor;
 	protected override IServiceProvider Services => Module.Current.Services;

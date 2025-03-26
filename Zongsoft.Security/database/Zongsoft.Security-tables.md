@@ -8,7 +8,7 @@ UserId            | int       | 4   | ✗ | 主键，用户编号
 Namespace         | varchar   | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
 Name              | varchar   | 50  | ✗ | 用户名称(_在所属命名空间内具有唯一性_)
 Nickname          | nvarchar  | 50  | ✓ | 用户昵称
-Avatar            | nvarchar  | 50  | ✓ | 用户头像
+Avatar            | nvarchar  | 100 | ✓ | 用户头像
 Password          | varbinary | 64  | ✓ | 登录密码
 PasswordSalt      | bigint    | 8   | ✓ | 密码盐(_随机数_)
 Email             | varchar   | 50  | ✓ | 绑定的电子邮箱(_在所属命名空间内具有唯一性_)
@@ -33,8 +33,9 @@ Description       | nvarchar  | 500 | ✓ | 描述信息
 RoleId      | int      | 4   | ✗ | 主键，角色编号
 Namespace   | varchar  | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
 Name        | varchar  | 50  | ✗ | 角色名称(_在所属命名空间内具有唯一性_)
+Enabled     | bool     | -   | ✗ | 是否可用
 Nickname    | nvarchar | 50  | ✓ | 角色昵称
-Avatar      | nvarchar | 50  | ✓ | 角色头像
+Avatar      | nvarchar | 100 | ✓ | 角色头像
 Description | nvarchar | 500 | ✓ | 描述信息
 
 

@@ -49,6 +49,18 @@ public partial interface IUserService
 	#endregion
 
 	#region 通用方法
+	/// <summary>启用指定的用户。</summary>
+	/// <param name="identifier">指定的用户标识。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果启用成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default);
+
+	/// <summary>禁用指定的用户。</summary>
+	/// <param name="identifier">指定的用户标识。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果禁用成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default);
+
 	/// <summary>确定指定的用户是否存在。</summary>
 	/// <param name="identifier">指定要查找的用户标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
@@ -65,18 +77,46 @@ public partial interface IUserService
 	/// <summary>设置指定用户的邮箱地址。</summary>
 	/// <param name="identifier">要设置的用户标识。</param>
 	/// <param name="email">要设置的邮箱地址。</param>
-	/// <param name="verifiable">指定一个值，指示是否必须对设置的邮箱地址进行验证。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> SetEmailAsync(Identifier identifier, string email, bool verifiable = true, CancellationToken cancellation = default);
+	ValueTask<bool> SetEmailAsync(Identifier identifier, string email, CancellationToken cancellation = default);
+
+	/// <summary>校验并设置邮箱地址。</summary>
+	/// <param name="token">指定的校验令牌。</param>
+	/// <param name="secret">指定的校验密钥。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> SetEmailAsync(string token, string secret, CancellationToken cancellation);
+
+	/// <summary>校验指定用户的邮箱地址。</summary>
+	/// <param name="identifier">要设置的用户标识。</param>
+	/// <param name="email">要设置的邮箱地址。</param>
+	/// <param name="parameters">指定的校验参数集。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果指定的用户存在则返回待确认的校验令牌。</returns>
+	ValueTask<string> SetEmailAsync(Identifier identifier, string email, Parameters parameters, CancellationToken cancellation = default);
 
 	/// <summary>设置指定用户的手机号码。</summary>
 	/// <param name="identifier">要设置的用户标识。</param>
 	/// <param name="phone">要设置的手机号码。</param>
-	/// <param name="verifiable">指定一个值，指示是否必须对设置的手机号码进行验证。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> SetPhoneAsync(Identifier identifier, string phone, bool verifiable = true, CancellationToken cancellation = default);
+	ValueTask<bool> SetPhoneAsync(Identifier identifier, string phone, CancellationToken cancellation = default);
+
+	/// <summary>校验并设置手机号码。</summary>
+	/// <param name="token">指定的校验令牌。</param>
+	/// <param name="secret">指定的校验密钥。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> SetPhoneAsync(string token, string secret, CancellationToken cancellation);
+
+	/// <summary>校验指定用户的手机号码。</summary>
+	/// <param name="identifier">要设置的用户标识。</param>
+	/// <param name="phone">要设置的手机号码。</param>
+	/// <param name="parameters">指定的校验参数集。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果指定的用户存在则返回待确认的校验令牌。</returns>
+	ValueTask<string> SetPhoneAsync(Identifier identifier, string phone, Parameters parameters, CancellationToken cancellation = default);
 
 	/// <summary>删除一个用户。</summary>
 	/// <param name="identifier">要删除的用户标识。</param>
@@ -90,10 +130,10 @@ public partial interface IUserService
 	/// <returns>返回删除成功的用户数量。</returns>
 	ValueTask<int> DeleteAsync(IEnumerable<Identifier> identifiers, CancellationToken cancellation = default);
 
-	/// <summary>判断指定编号的用户是否设置了密码。</summary>
+	/// <summary>判断指定的用户是否设置了密码。</summary>
 	/// <param name="identifier">指定要查找的用户标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果返回真(True)表示指定编号的用户已经设置了密码，否则未设置密码。</returns>
+	/// <returns>如果指定的用户已经设置了密码则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	ValueTask<bool> HasPasswordAsync(Identifier identifier, CancellationToken cancellation = default);
 
 	/// <summary>修改指定用户的密码。</summary>

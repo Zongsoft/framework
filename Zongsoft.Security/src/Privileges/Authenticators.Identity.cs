@@ -41,14 +41,14 @@ partial class Authenticators
 	public class IdentityAuthenticator() : Authentication.IdentityAuthenticatorBase(Module.Current.Services)
 	{
 		#region 成员字段
-		private Configuration.AuthenticationOptions _options;
+		private Configuration.AuthorityOptions _options;
 		#endregion
 
 		#region 公共属性
 		[Options("Security/Privileges/Authentication")]
-		public Configuration.AuthenticationOptions Options
+		public Configuration.AuthorityOptions Options
 		{
-			get => _options ??= ApplicationContext.Current.Configuration.GetOption<Configuration.AuthenticationOptions>("Security/Privileges/Authentication");
+			get => _options ??= ApplicationContext.Current.Configuration.GetOption<Configuration.AuthorityOptions>("Security/Privileges/Authentication");
 			set => _options = value;
 		}
 		#endregion

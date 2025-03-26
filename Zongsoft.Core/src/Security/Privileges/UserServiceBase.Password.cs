@@ -148,7 +148,7 @@ partial class UserServiceBase<TUser>
 			this.OnValidatePassword(password);
 
 			//更新用户的新密码
-			return this.Passworder.SetAsync(new Identifier(typeof(TUser), extra), this.Passworder.GetCipher(password), cancellation);
+			return this.Passworder.SetAsync(new Identifier(typeof(TUser), extra), password, cancellation);
 		}
 
 		//返回重置密码失败
@@ -192,7 +192,7 @@ partial class UserServiceBase<TUser>
 		//更新用户的新密码
 		return await this.Passworder.SetAsync(
 			user.Identifier,
-			this.Passworder.GetCipher(newPassword),
+			newPassword,
 			cancellation);
 	}
 
@@ -282,9 +282,7 @@ partial class UserServiceBase<TUser>
 	protected virtual void OnValidatePassword(string password)
 	{
 		var validator = this.Services?.Resolve<IValidator<string>>("password");
-
-		if(validator != null)
-			validator.Validate(password, message => throw new SecurityException("password.illegality", message));
+		validator?.Validate(password, message => throw new SecurityException("password.illegality", message));
 	}
 
 	protected virtual ValueTask<string> OnForgetPasswordAsync(TUser user, Parameters parameters, CancellationToken cancellation)
@@ -390,25 +388,6 @@ partial class UserServiceBase<TUser>
 	#endregion
 
 	#region 私有方法
-	private static Identifier EnsureIdentity(Identifier userId)
-	{
-		if(userId.IsEmpty)
-			return new Identifier(typeof(TUser), ApplicationContext.Current.Principal.Identity.GetIdentifier());
-
-		/*
-		 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
-		 *   1) 指定的用户就是当前用户自己；
-		 *   2) 当前用户是系统管理员(Administrators)或安全管理员角色(Security)成员。
-		 */
-
-		var current = ApplicationContext.Current.Principal.Identity.GetIdentifier();
-
-		if(object.Equals(current, userId.Value) || ApplicationContext.Current.Principal.InRoles([IRole.Administrators, IRole.Security]))
-			return userId;
-
-		throw new AuthorizationException($"The current user cannot operate on other user information.");
-	}
-
 	private static byte[] GetPasswordAnswerSalt(Identifier identifier, int index) => System.Text.Encoding.ASCII.GetBytes($"Zongsoft.Security.User:{identifier.Value}:Password.Answer[{index}]");
 	private static byte[] HashPasswordAnswer(string answer, Identifier identifier, int index)
 	{
@@ -436,13 +415,6 @@ partial class UserServiceBase<TUser>
 		#endregion
 
 		#region 公共方法
-		public override Cipher GetCipher(string password, string algorithm = null)
-		{
-			var cipher = new TCipher();
-			cipher.Reset(password, algorithm);
-			return cipher;
-		}
-
 		public override async ValueTask<Cipher> GetAsync(Identifier identifier, CancellationToken cancellation)
 		{
 			if(identifier.IsEmpty)
@@ -474,6 +446,15 @@ partial class UserServiceBase<TUser>
 		public override ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation)
 		{
 			return this.OnVerifyAsync(password, cipher as TCipher, cancellation);
+		}
+		#endregion
+
+		#region 保护方法
+		protected override Cipher GetCipher(string password, string algorithm = null)
+		{
+			var cipher = new TCipher();
+			cipher.Reset(password, algorithm);
+			return cipher;
 		}
 		#endregion
 

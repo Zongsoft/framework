@@ -41,11 +41,16 @@ namespace Zongsoft.Security.Privileges;
 public abstract class Passworder
 {
 	#region 公共方法
-	public abstract Cipher GetCipher(string password, string algorithm = null);
 	public abstract ValueTask<Cipher> GetAsync(Identifier identifier, CancellationToken cancellation);
 	public abstract ValueTask<Cipher> GetAsync(string identity, string @namespace, CancellationToken cancellation);
 	public abstract ValueTask<bool> SetAsync(Identifier identifier, Cipher cipher, CancellationToken cancellation);
 	public abstract ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation);
+
+	public ValueTask<bool> SetAsync(Identifier identifier, string password, CancellationToken cancellation) => this.SetAsync(identifier, this.GetCipher(password), cancellation);
+	#endregion
+
+	#region 保护方法
+	protected abstract Cipher GetCipher(string password, string algorithm = null);
 	#endregion
 
 	public class Cipher

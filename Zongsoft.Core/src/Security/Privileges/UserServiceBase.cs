@@ -94,10 +94,25 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		return this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation);
 	}
 
+	public virtual async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
+	{
+		var criteria = this.GetCriteria(identifier);
+		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = true }, criteria, cancellation) > 0;
+	}
+
+	public virtual async ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default)
+	{
+		var criteria = this.GetCriteria(identifier);
+		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = false }, criteria, cancellation) > 0;
+	}
+
 	public async ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default)
 	{
-		if(identifier.IsEmpty || string.IsNullOrEmpty(name))
-			return false;
+		//确认指定的用户标识是否有效
+		identifier = EnsureIdentity(identifier);
+
+		//验证指定的名称是否合法
+		this.OnValidateName(name);
 
 		var criteria = this.GetCriteria(identifier);
 		if(criteria == null)
@@ -106,28 +121,88 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		return await this.Accessor.UpdateAsync(this.Name, new { Name = name }, criteria, cancellation) > 0;
 	}
 
-	public async ValueTask<bool> SetEmailAsync(Identifier identifier, string email, bool verifiable = true, CancellationToken cancellation = default)
+	public async ValueTask<bool> SetEmailAsync(Identifier identifier, string email, CancellationToken cancellation = default)
 	{
-		if(identifier.IsEmpty || string.IsNullOrEmpty(email))
-			return false;
+		//确认指定的用户标识是否有效
+		identifier = EnsureIdentity(identifier);
 
 		var criteria = this.GetCriteria(identifier);
 		if(criteria == null)
 			return false;
 
-		return await this.Accessor.UpdateAsync(this.Name, new { Email = email }, criteria, cancellation) > 0;
+		return await this.Accessor.UpdateAsync(this.Name, new
+		{
+			Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim()
+		}, criteria, cancellation) > 0;
 	}
 
-	public async ValueTask<bool> SetPhoneAsync(Identifier identifier, string phone, bool verifiable = true, CancellationToken cancellation = default)
+	public ValueTask<bool> SetEmailAsync(string token, string secret, CancellationToken cancellation) => this.VerifyAsync("email", token, secret, cancellation);
+	public async ValueTask<string> SetEmailAsync(Identifier identifier, string email, Parameters parameters, CancellationToken cancellation = default)
 	{
-		if(identifier.IsEmpty || string.IsNullOrEmpty(phone))
-			return false;
+		const string SCHEME = "email";
+
+		//确认指定的用户标识是否有效
+		identifier = EnsureIdentity(identifier);
+
+		//确保指定用户是存在的
+		if(await this.ExistsAsync(identifier, cancellation))
+			return await this.Secretor.Transmitter.TransmitAsync(
+				SCHEME,
+				email,
+				GetTemplate(parameters),
+				GetScenario(parameters),
+				GetCaptcha(parameters),
+				GetChannel(parameters),
+				$"{SCHEME}:{identifier.Value}|{email}", cancellation);
+
+		return null;
+
+		static string GetTemplate(Parameters parameters) => parameters.TryGetValue("template", out var value) && value is string text ? text : "User.Email";
+		static string GetScenario(Parameters parameters) => parameters.TryGetValue("scenario", out var value) && value is string text ? text : null;
+		static string GetCaptcha(Parameters parameters) => parameters.TryGetValue("captcha", out var value) && value is string text ? text : null;
+		static string GetChannel(Parameters parameters) => parameters.TryGetValue("channel", out var value) && value is string text ? text : null;
+	}
+
+	public async ValueTask<bool> SetPhoneAsync(Identifier identifier, string phone, CancellationToken cancellation = default)
+	{
+		//确认指定的用户标识是否有效
+		identifier = EnsureIdentity(identifier);
 
 		var criteria = this.GetCriteria(identifier);
 		if(criteria == null)
 			return false;
 
-		return await this.Accessor.UpdateAsync(this.Name, new { Phone = phone }, criteria, cancellation) > 0;
+		return await this.Accessor.UpdateAsync(this.Name, new
+		{
+			Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim()
+		}, criteria, cancellation) > 0;
+	}
+
+	public ValueTask<bool> SetPhoneAsync(string token, string secret, CancellationToken cancellation) => this.VerifyAsync("phone", token, secret, cancellation);
+	public async ValueTask<string> SetPhoneAsync(Identifier identifier, string phone, Parameters parameters, CancellationToken cancellation = default)
+	{
+		const string SCHEME = "phone";
+
+		//确认指定的用户标识是否有效
+		identifier = EnsureIdentity(identifier);
+
+		//确保指定用户是存在的
+		if(await this.ExistsAsync(identifier, cancellation))
+			return await this.Secretor.Transmitter.TransmitAsync(
+				SCHEME,
+				phone,
+				GetTemplate(parameters),
+				GetScenario(parameters),
+				GetCaptcha(parameters),
+				GetChannel(parameters),
+				$"{SCHEME}:{identifier.Value}|{phone}", cancellation);
+
+		return null;
+
+		static string GetTemplate(Parameters parameters) => parameters.TryGetValue("template", out var value) && value is string text ? text : "User.Email";
+		static string GetScenario(Parameters parameters) => parameters.TryGetValue("scenario", out var value) && value is string text ? text : null;
+		static string GetCaptcha(Parameters parameters) => parameters.TryGetValue("captcha", out var value) && value is string text ? text : null;
+		static string GetChannel(Parameters parameters) => parameters.TryGetValue("channel", out var value) && value is string text ? text : null;
 	}
 
 	public ValueTask<bool> CreateAsync(TUser user, CancellationToken cancellation = default) => this.CreateAsync(user, null, cancellation);
@@ -136,15 +211,64 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(user == null)
 			return false;
 
-		return await this.Accessor.InsertAsync(user, cancellation) > 0;
+		//确认待创建的用户实体
+		this.OnCreating(user);
+
+		//验证指定的名称是否合法
+		this.OnValidateName(user.Name);
+
+		//确认新密码是否符合密码规则
+		this.OnValidatePassword(password);
+
+		if(await this.Accessor.InsertAsync(user, cancellation) > 0)
+		{
+			//有效的密码不能为空或全空格字符串
+			if(!string.IsNullOrWhiteSpace(password))
+				await this.Passworder.SetAsync(user.Identifier, password, cancellation);
+
+			//通知用户创建完成
+			this.OnCreated(user);
+
+			//返回成功
+			return true;
+		}
+
+		//返回失败
+		return false;
 	}
 
-	public ValueTask<int> CreateAsync(IEnumerable<TUser> users, CancellationToken cancellation = default)
+	public async ValueTask<int> CreateAsync(IEnumerable<TUser> users, CancellationToken cancellation = default)
 	{
 		if(users == null)
-			return ValueTask.FromResult(0);
+			return 0;
 
-		return this.Accessor.InsertAsync(users, cancellation);
+		foreach(var user in users)
+		{
+			if(user == null)
+				continue;
+
+			//确认待创建的用户实体
+			this.OnCreating(user);
+
+			//确认待创建的用户实体
+			this.OnCreating(user);
+
+			//验证指定的名称是否合法
+			this.OnValidateName(user.Name);
+		}
+
+		var count = await this.Accessor.InsertAsync(users, cancellation);
+
+		if(count > 0)
+		{
+			foreach(var user in users)
+			{
+				if(user != null && user.Identifier.HasValue)
+					this.OnCreated(user);
+			}
+		}
+
+		return count;
 	}
 
 	public async ValueTask<bool> DeleteAsync(Identifier identifier, CancellationToken cancellation = default)
@@ -198,6 +322,41 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	}
 	#endregion
 
+	#region 秘密校验
+	private ValueTask<bool> VerifyAsync(string type, string token, string secret, CancellationToken cancellation)
+	{
+		if(string.IsNullOrEmpty(type))
+			throw new ArgumentNullException(nameof(type));
+
+		if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
+			return ValueTask.FromResult(false);
+
+		//校验指定的密文
+		var succeed = this.Secretor.Verify(token, secret, out var extra);
+
+		//如果校验成功并且密文中有附加数据
+		if(succeed && (extra != null && extra.Length > 0))
+		{
+			var index = extra.IndexOf(':');
+			if(index < 1 || !string.Equals(type, extra[..index], StringComparison.OrdinalIgnoreCase))
+				return ValueTask.FromResult(false);
+
+			var parts = extra[(index + 1)..].Split('|');
+			if(parts.Length < 2)
+				return ValueTask.FromResult(false);
+
+			return type switch
+			{
+				"email" => this.SetEmailAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
+				"phone" => this.SetPhoneAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
+				_ => ValueTask.FromResult(false),
+			};
+		}
+
+		return ValueTask.FromResult(false);
+	}
+	#endregion
+
 	#region 虚拟方法
 	protected virtual ICondition GetCriteria(string keyword)
 	{
@@ -224,6 +383,54 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 
 	protected virtual ICondition GetCriteria(string identity, string @namespace) => UserUtility.GetCriteria(identity, @namespace);
 	protected virtual ICondition GetCriteria(string identity, string @namespace, out string identityType) => UserUtility.GetCriteria(identity, @namespace, out identityType);
+
+	protected virtual void OnCreating(TUser user)
+	{
+		if(string.IsNullOrWhiteSpace(user.Name))
+		{
+			if(string.IsNullOrWhiteSpace(user.Phone) && string.IsNullOrWhiteSpace(user.Email))
+				throw new ArgumentException("The user name is empty.");
+
+			//虽然用户名为空但是指定了绑定的“Phone”或“Email”，则将用户名设置为随机值
+			user.Name = "$U" + Randomizer.GenerateString();
+		}
+
+		if(string.IsNullOrWhiteSpace(user.Namespace))
+			user.Namespace = null;
+	}
+
+	protected virtual void OnCreated(TUser user) { }
+
+	protected virtual void OnValidateName(string name)
+	{
+		//验证指定的名称是否为系统内置名
+		if(string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
+			throw new SecurityException("username.illegality", "The user name specified to be update cannot be a built-in name.");
+
+		var validator = this.Services?.Resolve<IValidator<string>>("user.name");
+		validator?.Validate(name, message => throw new SecurityException("username.illegality", message));
+	}
+	#endregion
+
+	#region 私有方法
+	private static Identifier EnsureIdentity(Identifier identifier)
+	{
+		if(identifier.IsEmpty)
+			return new Identifier(typeof(TUser), ApplicationContext.Current.Principal.Identity.GetIdentifier());
+
+		/*
+		 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
+		 *   1) 指定的用户就是当前用户自己；
+		 *   2) 当前用户是系统管理员(Administrators)或安全管理员角色(Security)成员。
+		 */
+
+		var current = ApplicationContext.Current.Principal.Identity.GetIdentifier();
+
+		if(object.Equals(current, identifier.Value) || ApplicationContext.Current.Principal.InRoles([IRole.Administrators, IRole.Security]))
+			return identifier;
+
+		throw new AuthorizationException($"The current user cannot operate on other user information.");
+	}
 	#endregion
 
 	#region 显式实现

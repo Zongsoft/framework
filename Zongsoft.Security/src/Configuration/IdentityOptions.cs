@@ -28,30 +28,20 @@
  */
 
 using System;
-using System.ComponentModel;
 
-using Zongsoft.Security.Membership;
+namespace Zongsoft.Security.Configuration;
 
-namespace Zongsoft.Security.Configuration
+/// <summary>
+/// 表示用户管理的配置选项。
+/// </summary>
+public class IdentityOptions
 {
-	/// <summary>
-	/// 表示用户管理的配置选项。
-	/// </summary>
-	public class IdentityOptions
-	{
-		/// <summary>
-		/// 获取或设置密码的最小长度，零表示不限制。
-		/// </summary>
-		public int PasswordLength { get; set; }
+	/// <summary>获取或设置密码的最小长度，零表示不限制。</summary>
+	public int PasswordLength { get; set; }
 
-		/// <summary>
-		/// 获取或设置密码的强度。
-		/// </summary>
-		public PasswordStrength PasswordStrength { get; set; }
+	/// <summary>获取或设置密码的强度。</summary>
+	public PasswordStrength PasswordStrength { get; set; }
 
-		/// <summary>
-		/// 获取或设置用户信息的有效性校验项。
-		/// </summary>
-		public IdentityVerification Verification { get; set; }
-	}
+	/// <summary>获取或设置用户信息的有效性校验项。</summary>
+	public IdentityVerification Verification { get; set; }
 }

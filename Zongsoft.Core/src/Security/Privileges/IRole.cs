@@ -48,6 +48,9 @@ public interface IRole : Zongsoft.Components.IIdentifiable
 	/// <summary>获取或设置角色名称。</summary>
 	string Name { get; set; }
 
+	/// <summary>获取或设置角色是否可用。</summary>
+	bool Enabled { get; set; }
+
 	/// <summary>获取或设置角色头像。</summary>
 	string Avatar { get; set; }
 

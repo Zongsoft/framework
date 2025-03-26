@@ -50,7 +50,7 @@ public class PrivilegeEvaluator : PrivilegeEvaluatorBase
 		if(!TryGetMember(context.Identifier, out var memberId, out var memberType))
 			yield break;
 
-		var members = Module.Current.Services.ResolveRequired<IMemberService<IRole, IMember<IRole>>>();
+		var members = Authentication.Servicer.Members;
 		var ancestors = members.GetAncestorsAsync(Member.Create(memberType, memberId), -1, cancellation);
 
 		await foreach(var ancestor in ancestors)

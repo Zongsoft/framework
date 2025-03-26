@@ -43,6 +43,18 @@ namespace Zongsoft.Security.Privileges;
 public interface IRoleService
 {
 	#region 通用方法
+	/// <summary>启用指定的角色。</summary>
+	/// <param name="identifier">指定的角色标识。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果启用成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default);
+
+	/// <summary>禁用指定的角色。</summary>
+	/// <param name="identifier">指定的角色标识。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果禁用成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default);
+
 	/// <summary>确定指定的角色是否存在。</summary>
 	/// <param name="identifier">指定要查找的角色标识。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>

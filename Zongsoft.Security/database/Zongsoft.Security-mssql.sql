@@ -3,7 +3,8 @@ CREATE TABLE [dbo].[Security_Role] (
   [Namespace]   VARCHAR(50)   NULL,
   [Name]        VARCHAR(50)   NOT NULL,
   [Nickname]    NVARCHAR(50)  NULL,
-  [Avatar]      NVARCHAR(50)  NULL,
+  [Avatar]      NVARCHAR(100) NULL,
+  [Enabled]     BIT           NOT NULL DEFAULT 1,
   [Description] NVARCHAR(500) NULL,
   CONSTRAINT [PK_Security_Role] PRIMARY KEY CLUSTERED ([RoleId]),
   CONSTRAINT [UX_Security_Role_Name] UNIQUE NONCLUSTERED ([Namespace], [Module], [Name])
@@ -15,7 +16,7 @@ CREATE TABLE [dbo].[Security_User] (
   [Namespace]         VARCHAR(50)   NULL,
   [Name]              VARCHAR(50)   NOT NULL,
   [Nickname]          NVARCHAR(50)  NULL,
-  [Avatar]            NVARCHAR(50)  NULL,
+  [Avatar]            NVARCHAR(100) NULL,
   [Password]          VARBINARY(64) NULL,
   [PasswordSalt]      BIGINT        NULL,
   [Email]             VARCHAR(50)   NULL,
@@ -80,6 +81,7 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'命名空间�
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'角色名称，所属命名空间内具有唯一性', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Name'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'角色昵称', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Nickname'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'角色头像', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Avatar'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'是否可用', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Enabled'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'描述信息', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_Role', @level2type=N'COLUMN',@level2name=N'Description'
 GO
 

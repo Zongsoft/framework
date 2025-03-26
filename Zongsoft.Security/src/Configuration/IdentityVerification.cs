@@ -29,21 +29,20 @@
 
 using System;
 
-namespace Zongsoft.Security.Configuration
+namespace Zongsoft.Security.Configuration;
+
+/// <summary>
+/// 表示身份验证方式的枚举。
+/// </summary>
+[Flags]
+public enum IdentityVerification
 {
-	/// <summary>
-	/// 表示身份验证方式的枚举。
-	/// </summary>
-	[Flags]
-	public enum IdentityVerification
-	{
-		/// <summary>无验证。</summary>
-		None,
+	/// <summary>无验证。</summary>
+	None,
 
-		/// <summary>验证电子邮箱的有效性。</summary>
-		Email,
+	/// <summary>验证电子邮箱的有效性。</summary>
+	Email,
 
-		/// <summary>验证手机号码的有效性。</summary>
-		Phone,
-	}
+	/// <summary>验证手机号码的有效性。</summary>
+	Phone,
 }

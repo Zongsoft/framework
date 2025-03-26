@@ -51,6 +51,9 @@ public interface IUser : Zongsoft.Components.IIdentifiable
 	/// <summary>获取或设置用户的电话号码。</summary>
 	string Phone { get; set; }
 
+	/// <summary>获取或设置用户是否可用。</summary>
+	bool Enabled { get; set; }
+
 	/// <summary>获取或设置用户性别。</summary>
 	string Gender { get; set; }
 

@@ -28,28 +28,26 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Security.Membership
+namespace Zongsoft.Security.Configuration;
+
+/// <summary>
+/// 表示密码强度的枚举。
+/// </summary>
+public enum PasswordStrength
 {
-	/// <summary>
-	/// 表示密码强度的枚举。
-	/// </summary>
-	public enum PasswordStrength
-	{
-		/// <summary>无强度约束。</summary>
-		None,
+	/// <summary>无强度约束。</summary>
+	None,
 
-		/// <summary>全数字（只能是数字），适用于只有数字输入设备的场景。</summary>
-		Digits,
+	/// <summary>全数字（只能是数字），适用于只有数字输入设备的场景。</summary>
+	Digits,
 
-		/// <summary>最低强度。</summary>
-		Lowest,
+	/// <summary>最低强度。</summary>
+	Lowest,
 
-		/// <summary>中等强度。</summary>
-		Normal,
+	/// <summary>中等强度。</summary>
+	Normal,
 
-		/// <summary>最高强度。</summary>
-		Highest
-	}
+	/// <summary>最高强度。</summary>
+	Highest
 }

@@ -4,7 +4,7 @@
         title="Zongsoft Security Plugin"
         author="Zongsoft Studio(zongsoft@qq.com)"
         copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
-        description="Created Date: 2015-07-17 by Popeye Zhong, Modified Date: 2020-04 by Popeye Zhong.">
+        description="Created Date: 2015-07-17 by Popeye Zhong, Modified Date: 2025-03 by Popeye Zhong.">
 
 	<manifest>
 		<assemblies>
@@ -23,7 +23,6 @@
 			</expose>
 
 			<expose name="Events" value="{path:../@Events}" />
-			<expose name="Schemas" value="{path:../@Schemas}" />
 			<expose name="Properties" value="{path:../@Properties}" />
 		</object>
 	</extension>
@@ -33,11 +32,11 @@
 		<object name="Mapping" value="{static:Zongsoft.Security.Membership.Mapping.Instance, Zongsoft.Core}" />
 	</extension>
 
-	<!-- 挂载验证和授权集成模块 -->
+	<!-- 挂载验证和授权 -->
 	<extension path="/Workbench/Security">
 		<object name="Authentication" value="{static:Zongsoft.Security.Privileges.Authentication.Authenticators, Zongsoft.Core}">
 			<expose name="Attempter" value="{static:Zongsoft.Security.Privileges.Authentication.Attempter, Zongsoft.Core}"
-					options="{opt:/Security/Privileges/Attempter}" />
+					options="{opt:/Security/Attempter}" />
 
 			<expose name="Servicer" value="{static:Zongsoft.Security.Privileges.Authentication.Servicer, Zongsoft.Core}" />
 			<expose name="Challengers" value="{static:Zongsoft.Security.Privileges.Authentication.Challengers, Zongsoft.Core}" />
@@ -50,13 +49,13 @@
 		</object>
 	</extension>
 
-	<!-- 挂载安全鉴证器 -->
+	<!-- 挂载身份验证器 -->
 	<extension path="/Workbench/Security/Authentication">
 		<object name="Identity" value="{static:Zongsoft.Security.Privileges.Authenticators.Identity, Zongsoft.Security}" />
 		<object name="Secretor" value="{static:Zongsoft.Security.Privileges.Authenticators.Secretor, Zongsoft.Security}" />
 	</extension>
 
-	<!-- 挂载身份验证服务 -->
+	<!-- 挂载验证服务 -->
 	<extension path="/Workbench/Security/Authentication">
 		<servicer.roles>
 			<object type="Zongsoft.Security.Privileges.RoleService, Zongsoft.Security" />
@@ -69,7 +68,7 @@
 		</servicer.members>
 	</extension>
 
-	<!-- 挂载身份授权服务 -->
+	<!-- 挂载授权服务 -->
 	<extension path="/Workbench/Security/Authorization">
 		<servicer.privileges>
 			<object type="Zongsoft.Security.Privileges.PrivilegeService, Zongsoft.Security" />

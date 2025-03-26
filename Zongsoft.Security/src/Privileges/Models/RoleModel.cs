@@ -40,6 +40,7 @@ public abstract class RoleModel : IRole, IIdentifiable, IIdentifiable<uint>, IEq
 {
 	public abstract uint RoleId { get; set; }
 	public abstract string Name { get; set; }
+	public abstract bool Enabled { get; set; }
 	public abstract string Avatar { get; set; }
 	public abstract string Nickname { get; set; }
 	public abstract string Namespace { get; set; }

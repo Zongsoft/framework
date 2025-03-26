@@ -9,7 +9,8 @@
 
 			<property name="RoleId" type="uint" nullable="false" sequence="#" />
 			<property name="Name" type="string" length="50" nullable="false" />
-			<property name="Avatar" type="string" length="50" nullable="false" />
+			<property name="Avatar" type="string" length="100" nullable="false" />
+			<property name="Enabled" type="bool" nullable="false" default="true" />
 			<property name="Nickname" type="string" length="50" nullable="true" />
 			<property name="Namespace" type="string" length="50" nullable="false" />
 			<property name="Description" type="string" length="500" nullable="true" />
@@ -50,7 +51,7 @@
 
 			<property name="UserId" type="uint" nullable="false" sequence="#" />
 			<property name="Name" type="string" length="50" nullable="false" />
-			<property name="Avatar" type="string" length="50" nullable="false" />
+			<property name="Avatar" type="string" length="100" nullable="false" />
 			<property name="Nickname" type="string" length="50" nullable="true" />
 			<property name="Namespace" type="string" length="50" nullable="true" />
 			<property name="Password" type="binary" length="64" nullable="true" />

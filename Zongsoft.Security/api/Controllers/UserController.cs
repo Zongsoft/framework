@@ -41,6 +41,7 @@ using Zongsoft.Web;
 using Zongsoft.Web.Http;
 using Zongsoft.Data;
 using Zongsoft.Components;
+using Zongsoft.Collections;
 using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Security.Web.Controllers;
@@ -120,17 +121,95 @@ public partial class UserController : ControllerBase
 	}
 
 	[HttpPatch("{id}/Name")]
+	[HttpPatch("{id}/Rename")]
 	public async Task<IActionResult> Rename(string id, CancellationToken cancellation = default)
 	{
-		if(string.IsNullOrEmpty(id))
-			return this.BadRequest();
-
 		var content = await this.Request.ReadAsStringAsync();
 
 		if(string.IsNullOrWhiteSpace(content))
 			return this.BadRequest();
 
-		return await this.Service.RenameAsync(new Identifier(typeof(IUser), id), content, cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.RenameAsync(new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id), content, cancellation) ? this.NoContent() : this.NotFound();
+	}
+
+	[ActionName("Email")]
+	[HttpPatch("{id}/[action]")]
+	public async Task<IActionResult> SetEmail(string id, CancellationToken cancellation = default)
+	{
+		var email = await this.Request.ReadAsStringAsync();
+
+		if(string.IsNullOrWhiteSpace(email))
+			return this.BadRequest();
+
+		return await this.Service.SetEmailAsync(new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id), email, cancellation) ? this.NoContent() : this.NotFound();
+	}
+
+	[ActionName("Email")]
+	[HttpPost("{id}/[action]/Verify")]
+	public async Task<IActionResult> SetEmailVerify(string id, CancellationToken cancellation = default)
+	{
+		var email = await this.Request.ReadAsStringAsync();
+
+		if(string.IsNullOrWhiteSpace(email))
+			return this.BadRequest();
+
+		var token = await this.Service.SetEmailAsync(
+			new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id),
+			email,
+			new Parameters(this.Request.GetParameters()),
+			cancellation);
+
+		return string.IsNullOrEmpty(token) ? this.NotFound() : this.Content(token);
+	}
+
+	[ActionName("Email")]
+	[HttpPost("[action]/{token}")]
+	public async Task<IActionResult> SetEmail(string token, [FromQuery]string secret, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
+			return this.BadRequest();
+
+		return await this.Service.SetEmailAsync(token, secret, cancellation) ? this.NoContent() : this.NotFound();
+	}
+
+	[ActionName("Phone")]
+	[HttpPatch("{id}/[action]")]
+	public async Task<IActionResult> SetPhone(string id, CancellationToken cancellation = default)
+	{
+		var phone = await this.Request.ReadAsStringAsync();
+
+		if(string.IsNullOrWhiteSpace(phone))
+			return this.BadRequest();
+
+		return await this.Service.SetPhoneAsync(new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id), phone, cancellation) ? this.NoContent() : this.NotFound();
+	}
+
+	[ActionName("Phone")]
+	[HttpPost("{id}/[action]/Verify")]
+	public async Task<IActionResult> SetPhoneVerify(string id, CancellationToken cancellation = default)
+	{
+		var phone = await this.Request.ReadAsStringAsync();
+
+		if(string.IsNullOrWhiteSpace(phone))
+			return this.BadRequest();
+
+		var token = await this.Service.SetPhoneAsync(
+			new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id),
+			phone,
+			new Parameters(this.Request.GetParameters()),
+			cancellation);
+
+		return string.IsNullOrEmpty(token) ? this.NotFound() : this.Content(token);
+	}
+
+	[ActionName("Phone")]
+	[HttpPost("[action]/{token}")]
+	public async Task<IActionResult> SetPhone(string token, [FromQuery]string secret, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
+			return this.BadRequest();
+
+		return await this.Service.SetPhoneAsync(token, secret, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpHead("{id:required}")]

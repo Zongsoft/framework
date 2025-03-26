@@ -50,6 +50,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 
 	#region 保护属性
 	internal protected abstract IDataAccess Accessor { get; }
+	protected virtual IServiceProvider Services => ApplicationContext.Current?.Services;
 	protected virtual ClaimsPrincipal Principal => ApplicationContext.Current?.Principal;
 	#endregion
 
@@ -79,10 +80,25 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		return this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation);
 	}
 
+	public virtual async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
+	{
+		var criteria = this.GetCriteria(identifier);
+		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = true }, criteria, cancellation) > 0;
+	}
+
+	public virtual async ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default)
+	{
+		var criteria = this.GetCriteria(identifier);
+		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = false }, criteria, cancellation) > 0;
+	}
+
 	public async ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty || string.IsNullOrEmpty(name))
 			return false;
+
+		//验证指定的名称是否合法
+		this.OnValidateName(name);
 
 		var criteria = this.GetCriteria(identifier);
 		if(criteria == null)
@@ -96,15 +112,50 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		if(role == null)
 			return false;
 
-		return await this.Accessor.InsertAsync(role, cancellation) > 0;
+		//确认待创建的角色实体
+		this.OnCreating(role);
+
+		//验证指定的名称是否合法
+		this.OnValidateName(role.Name);
+
+		if(await this.Accessor.InsertAsync(role, cancellation) > 0)
+		{
+			this.OnCreated(role);
+			return true;
+		}
+
+		return false;
 	}
 
-	public ValueTask<int> CreateAsync(IEnumerable<TRole> roles, CancellationToken cancellation = default)
+	public async ValueTask<int> CreateAsync(IEnumerable<TRole> roles, CancellationToken cancellation = default)
 	{
 		if(roles == null)
-			return ValueTask.FromResult(0);
+			return 0;
 
-		return this.Accessor.InsertAsync(roles, cancellation);
+		foreach(var role in roles)
+		{
+			if(role == null)
+				continue;
+
+			//确认待创建的角色实体
+			this.OnCreating(role);
+
+			//验证指定的名称是否合法
+			this.OnValidateName(role.Name);
+		}
+
+		var count = await this.Accessor.InsertAsync(roles, cancellation);
+
+		if(count > 0)
+		{
+			foreach(var role in roles)
+			{
+				if(role != null && role.Identifier.HasValue)
+					this.OnCreated(role);
+			}
+		}
+
+		return count;
 	}
 
 	public async ValueTask<bool> DeleteAsync(Identifier identifier, CancellationToken cancellation = default)
@@ -116,7 +167,18 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		if(criteria == null)
 			return false;
 
-		return await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation) > 0;
+		if(await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation) > 0)
+		{
+			//删除成员表中当前角色的所有子集
+			await Authentication.Servicer.Members.RemoveAsync(identifier, null, cancellation);
+
+			//删除成员表中当前角色的所有父级
+			await Authentication.Servicer.Members.RemoveAsync(Member.Role(identifier), cancellation);
+
+			return true;
+		}
+
+		return false;
 	}
 
 	public async ValueTask<int> DeleteAsync(IEnumerable<Identifier> identifiers, CancellationToken cancellation = default)
@@ -125,7 +187,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 			return 0;
 
 		//删除数量
-		var count = 0;
+		var total = 0;
 
 		//创建事务
 		using var transaction = new Zongsoft.Transactions.Transaction();
@@ -139,14 +201,25 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 			if(criteria == null)
 				continue;
 
-			count += await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+			var count = await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+
+			if(count > 0)
+			{
+				total += count;
+
+				//删除成员表中当前角色的所有子集
+				await Authentication.Servicer.Members.RemoveAsync(identifier, null, cancellation);
+
+				//删除成员表中当前角色的所有父级
+				await Authentication.Servicer.Members.RemoveAsync(Member.Role(identifier), cancellation);
+			}
 		}
 
 		//提交事务
 		transaction.Commit();
 
 		//返回删除数量
-		return count;
+		return total;
 	}
 
 	public async ValueTask<bool> UpdateAsync(TRole role, CancellationToken cancellation = default)
@@ -159,6 +232,32 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 	#endregion
 
 	#region 虚拟方法
+	protected virtual void OnCreating(TRole role)
+	{
+		if(string.IsNullOrWhiteSpace(role.Name))
+		{
+			//如果未指定角色名，则为其设置一个随机名
+			if(string.IsNullOrWhiteSpace(role.Name))
+				role.Name = "R" + Randomizer.GenerateString();
+		}
+
+		if(string.IsNullOrWhiteSpace(role.Namespace))
+			role.Namespace = null;
+	}
+
+	protected virtual void OnCreated(TRole role) { }
+
+	protected virtual void OnValidateName(string name)
+	{
+		//验证指定的名称是否为系统内置名
+		if(string.Equals(name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
+		   string.Equals(name, IRole.Security, StringComparison.OrdinalIgnoreCase))
+			throw new SecurityException("rolename.illegality", "The role name specified to be update cannot be a built-in name.");
+
+		var validator = this.Services.Resolve<IValidator<string>>("role.name");
+		validator?.Validate(name, message => throw new SecurityException("rolename.illegality", message));
+	}
+
 	protected virtual ICondition GetCriteria(string keyword)
 	{
 		if(string.IsNullOrEmpty(keyword) || keyword == "*")

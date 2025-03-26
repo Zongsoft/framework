@@ -64,7 +64,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 				Condition.Equal(nameof(PrivilegeFilteringModel.MemberId), memberId) &
 				Condition.Equal(nameof(PrivilegeFilteringModel.MemberType), memberType);
 
-			return Module.Current.Accessor
+			return this.Accessor
 				.SelectAsync<PrivilegeFilteringModel>(criteria, cancellation)
 				.Map(model => new PrivilegeFilteringRequirement(model.PrivilegeName, model.PrivilegeFilter));
 		}
@@ -74,7 +74,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 				Condition.Equal(nameof(PrivilegeModel.MemberId), memberId) &
 				Condition.Equal(nameof(PrivilegeModel.MemberType), memberType);
 
-			return Module.Current.Accessor
+			return this.Accessor
 				.SelectAsync<PrivilegeModel>(criteria, cancellation)
 				.Map(model => new PrivilegeRequirement(model.PrivilegeName, model.PrivilegeMode));
 		}
@@ -88,11 +88,11 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 			return ValueTask.FromResult(0);
 
 		if(IsFiltering(parameters))
-			return Module.Current.Accessor.DeleteAsync<PrivilegeFilteringModel>(
+			return this.Accessor.DeleteAsync<PrivilegeFilteringModel>(
 					Condition.Equal(nameof(PrivilegeFilteringModel.MemberId), memberId) &
 					Condition.Equal(nameof(PrivilegeFilteringModel.MemberType), memberType), string.Empty, cancellation);
 		else
-			return Module.Current.Accessor.DeleteAsync<PrivilegeModel>(
+			return this.Accessor.DeleteAsync<PrivilegeModel>(
 					Condition.Equal(nameof(PrivilegeModel.MemberId), memberId) &
 					Condition.Equal(nameof(PrivilegeModel.MemberType), memberType), string.Empty, cancellation);
 	}
@@ -117,7 +117,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 
 			//删除过滤字段为空值的权限设置
 			if(requirements.Length > 0)
-				count = await Module.Current.Accessor.DeleteAsync<PrivilegeFilteringModel>(
+				count = await this.Accessor.DeleteAsync<PrivilegeFilteringModel>(
 					Condition.Equal(nameof(PrivilegeFilteringModel.MemberId), memberId) &
 					Condition.Equal(nameof(PrivilegeFilteringModel.MemberType), memberType) &
 					Condition.In(nameof(PrivilegeFilteringModel.PrivilegeName), requirements), cancellation: cancellation);
@@ -133,7 +133,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 					model.PrivilegeFilter = privilege.Filter;
 				}));
 
-			return count + await Module.Current.Accessor.UpsertManyAsync(models, cancellation);
+			return count + await this.Accessor.UpsertManyAsync(models, cancellation);
 		}
 		else
 		{
@@ -145,7 +145,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 
 			//删除授权方式为空值的权限设置
 			if(requirements.Length > 0)
-				count = await Module.Current.Accessor.DeleteAsync<PrivilegeModel>(
+				count = await this.Accessor.DeleteAsync<PrivilegeModel>(
 					Condition.Equal(nameof(PrivilegeModel.MemberId), memberId) &
 					Condition.Equal(nameof(PrivilegeModel.MemberType), memberType) &
 					Condition.In(nameof(PrivilegeModel.PrivilegeName), requirements), cancellation: cancellation);
@@ -161,7 +161,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 					model.PrivilegeMode = privilege.Mode.Value;
 				}));
 
-			return count + await Module.Current.Accessor.UpsertManyAsync(models, cancellation);
+			return count + await this.Accessor.UpsertManyAsync(models, cancellation);
 		}
 	}
 	#endregion

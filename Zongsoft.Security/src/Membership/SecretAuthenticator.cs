@@ -43,7 +43,7 @@ namespace Zongsoft.Security.Membership
 
 		#region 公共属性
 		[Options("Security/Membership/Authentication")]
-		public Configuration.AuthenticationOptions Options { get; set; }
+		public Configuration.AuthorityOptions Options { get; set; }
 		#endregion
 
 		#region 重写方法

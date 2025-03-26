@@ -1,18 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
 <options>
-	<option path="/Security/Privileges">
+	<option path="/Security">
 		<identity verification="none"
 		          passwordLength="0"
-				  passwordStrength="None" />
+		          passwordStrength="None" />
 
 		<attempter limit="5"
-				   window="00:01:00"
-				   period="00:05:00" />
+		           window="00:01:00"
+		           period="00:05:00" />
 
 		<authorization roles="security,securities" />
 
-		<authentication period="08:00:00">
+		<authority period="08:00:00">
 			<expiration>
 				<scenario scenario.name="web" period="1.00:00:00" />
 				<scenario scenario.name="api" period="1.00:00:00" />
@@ -20,6 +20,6 @@
 				<scenario scenario.name="applet" period="1.00:00:00" />
 				<scenario scenario.name="mobile" period="1.00:00:00" />
 			</expiration>
-		</authentication>
+		</authority>
 	</option>
 </options>

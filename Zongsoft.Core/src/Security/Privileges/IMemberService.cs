@@ -96,6 +96,12 @@ public interface IMemberService
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果删除成功则返回删除的数量，否则返回零。</returns>
 	ValueTask<int> RemoveAsync(Identifier role, IEnumerable<Member> members, CancellationToken cancellation = default);
+
+	/// <summary>删除多个角色成员。</summary>
+	/// <param name="member">指定要删除的成员。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果删除成功则返回删除的数量，否则返回零。</returns>
+	ValueTask<int> RemoveAsync(Member member, CancellationToken cancellation = default);
 	#endregion
 
 	#region 接口参数

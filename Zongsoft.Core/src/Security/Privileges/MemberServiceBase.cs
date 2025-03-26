@@ -111,6 +111,15 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 
 	public ValueTask<int> SetAsync(IEnumerable<TMember> members, CancellationToken cancellation = default) => this.Accessor.UpsertManyAsync(members, cancellation);
 
+	public ValueTask<int> RemoveAsync(Member member, CancellationToken cancellation = default)
+	{
+		var criteria = this.GetCriteria(member);
+		if(criteria == null)
+			return ValueTask.FromResult(0);
+
+		return this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+	}
+
 	public async ValueTask<bool> RemoveAsync(Identifier role, Member member, CancellationToken cancellation = default)
 	{
 		if(role.IsEmpty)
@@ -180,6 +189,15 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 
 		return Condition.Equal(nameof(IMember<TRole>.RoleId), member.RoleId.Value) &
 			Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId.Value) &
+			Condition.Equal(nameof(IMember<TRole>.MemberType), member.MemberType);
+	}
+
+	protected virtual ICondition GetCriteria(Member member)
+	{
+		if(member.MemberId.IsEmpty)
+			return null;
+
+		return Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId.Value) &
 			Condition.Equal(nameof(IMember<TRole>.MemberType), member.MemberType);
 	}
 
