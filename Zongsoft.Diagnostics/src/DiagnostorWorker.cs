@@ -131,7 +131,6 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 		"System.Net.Http",
 		"System.Net.NameResolution",
 		"Microsoft.Extensions.Diagnostics.HealthChecks",
-		"Microsoft.Extensions.Diagnostics.ResourceMonitoring",
 		"Microsoft.AspNetCore.Hosting",
 		"Microsoft.AspNetCore.Routing",
 		"Microsoft.AspNetCore.Diagnostics",

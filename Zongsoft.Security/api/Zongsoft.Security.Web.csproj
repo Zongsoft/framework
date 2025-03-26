@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>7.0.0</Version>
+		<Version>7.1.0</Version>
 		<Product>Zongsoft Security Web Library</Product>
 		<Description>This is a web class library about security development.</Description>
 		<RootNamespace>Zongsoft.Security</RootNamespace>
@@ -34,8 +34,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.0.0" />
-				<PackageReference Include="Zongsoft.Web" VersionOverride="7.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.4.0" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="7.2.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
