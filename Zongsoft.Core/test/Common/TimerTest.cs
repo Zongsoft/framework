@@ -18,7 +18,7 @@ public class TimerTest
 	#endregion
 
 	#region 构造函数
-	public TimerTest() => _timer = new Timer(TimeSpan.FromMilliseconds(10), this.OnTick);
+	public TimerTest() => _timer = new Timer(TimeSpan.FromMilliseconds(1), this.OnTick);
 	#endregion
 
 	#region 测试方法
@@ -26,7 +26,7 @@ public class TimerTest
 	public void Test()
 	{
 		_timer.Start();
-		SpinWait.SpinUntil(() => _count >= LIMIT, 2000);
+		SpinWait.SpinUntil(() => _count >= LIMIT, 1000 * 2);
 		Assert.Equal(LIMIT, _count);
 	}
 	#endregion

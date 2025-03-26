@@ -54,16 +54,22 @@ public class Timer : IDisposable
 	public void Start(CancellationToken cancellation = default) => this.Start(null, cancellation);
 	public async void Start(object state, CancellationToken cancellation = default)
 	{
-		try
-		{
-			_cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+		if(cancellation.IsCancellationRequested)
+			return;
 
-			while(await _timer.WaitForNextTickAsync(_cancellation.Token))
+		_cancellation = new();
+
+		await Task.Factory.StartNew(async state =>
+		{
+			try
 			{
-				await this.OnTickAsync(state, _cancellation.Token);
+				while(await _timer.WaitForNextTickAsync(_cancellation.Token))
+				{
+					await this.OnTickAsync(state, _cancellation.Token);
+				}
 			}
-		}
-		catch(OperationCanceledException) { }
+			catch(OperationCanceledException) { }
+		}, state, cancellation, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 	}
 	#endregion
 
