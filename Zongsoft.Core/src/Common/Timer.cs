@@ -69,15 +69,13 @@ public class Timer : IDisposable
 				}
 			}
 			catch(OperationCanceledException) { }
+			catch(Exception ex) { Zongsoft.Diagnostics.Logger.GetLogger<Timer>().Error(ex); }
 		}, state, cancellation, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual ValueTask OnTickAsync(object state, CancellationToken cancellation)
-	{
-		return _tick == null ? default : _tick(state, cancellation);
-	}
+	protected virtual ValueTask OnTickAsync(object state, CancellationToken cancellation) => _tick?.Invoke(state, cancellation) ?? default;
 	#endregion
 
 	#region 释放方法
@@ -96,7 +94,10 @@ public class Timer : IDisposable
 		_cancellation?.Cancel();
 
 		if(disposing)
+		{
 			_timer.Dispose();
+			_cancellation.Dispose();
+		}
 
 		_tick = null;
 		_cancellation = null;

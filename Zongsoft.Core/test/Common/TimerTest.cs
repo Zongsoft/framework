@@ -28,6 +28,7 @@ public class TimerTest
 		_timer.Start();
 		SpinWait.SpinUntil(() => _count >= LIMIT, 1000 * 2);
 		Assert.Equal(LIMIT, _count);
+		_timer.Stop();
 	}
 	#endregion
 
