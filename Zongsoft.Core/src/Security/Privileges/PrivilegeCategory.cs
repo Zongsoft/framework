@@ -46,10 +46,8 @@ public class PrivilegeCategory : CategoryBase<PrivilegeCategory>, IDiscriminator
 	#endregion
 
 	#region 公共构造
-	public PrivilegeCategory(string name, string title = null, string description = null) : this(null, name, true, title, description) { }
-	public PrivilegeCategory(string name, bool visible, string title = null, string description = null) : this(null, name, visible, title, description) { }
-	public PrivilegeCategory(IResource resource, string name, string title = null, string description = null) : this(resource, name, true, title, description) { }
-	public PrivilegeCategory(IResource resource, string name, bool visible, string title = null, string description = null) : base(resource, name, visible, title, description)
+	public PrivilegeCategory(string name, string title = null, string description = null) : this(null, name, title, description) { }
+	public PrivilegeCategory(IResource resource, string name, string title = null, string description = null) : base(resource, name, title, description)
 	{
 		this.Privileges = new(this);
 		this.Categories = new(this);
@@ -64,6 +62,66 @@ public class PrivilegeCategory : CategoryBase<PrivilegeCategory>, IDiscriminator
 
 	#region 重写方法
 	protected override IHierarchicalNodeCollection<PrivilegeCategory> Nodes => this.Categories;
+
+	/// <summary>获取权限类别的本地化标题。</summary>
+	/// <returns>返回本地化标题文本，如果失败则返回空(<c>null</c>)。</returns>
+	/// <remarks>
+	///		<para>标题对应的资源键按优先顺序，依次如下：</para>
+	///		<para>提示：其 <c>{name}</c> 表示 <see cref="HierarchicalNode.Name"/> 属性的值；<c>{path}</c> 表示 <see cref="HierarchicalNode.FullPath"/> 属性的值。</para>
+	///		<list type="number">
+	///			<item>Privilege.{path}.Category.Title</item>
+	///			<item>Privilege.{path}.Category</item>
+	///			<item>Privilege.{path}.Title</item>
+	///			<item>Privilege.{path}</item>
+	///			<item>Privilege.{name}.Category.Title</item>
+	///			<item>Privilege.{name}.Category</item>
+	///			<item>Privilege.{name}.Title</item>
+	///			<item>Privilege.{name}</item>
+	///			<item>{path}.Category.Title</item>
+	///			<item>{path}.Category</item>
+	///			<item>{path}.Title</item>
+	///			<item>{path}</item>
+	///			<item>{name}.Category.Title</item>
+	///			<item>{name}.Category</item>
+	///			<item>{name}.Title</item>
+	///			<item>{name}</item>
+	///		</list>
+	/// </remarks>
+	protected override string GetTitle() => this.Resource.GetString(
+	[
+		$"{nameof(Privilege)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Title)}",
+		$"{nameof(Privilege)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}",
+		$"{nameof(Privilege)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Title)}",
+		$"{nameof(Privilege)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}",
+		$"{nameof(Privilege)}.{this.Name}.{nameof(Category)}.{nameof(this.Title)}",
+		$"{nameof(Privilege)}.{this.Name}.{nameof(Category)}",
+		$"{nameof(Privilege)}.{this.Name}.{nameof(this.Title)}",
+		$"{nameof(Privilege)}.{this.Name}",
+	]) ?? base.GetTitle();
+
+	/// <summary>获取权限类别的本地化描述。</summary>
+	/// <returns>返回本地化描述文本，如果失败则返回空(<c>null</c>)。</returns>
+	/// <remarks>
+	///		<para>对应的资源键按优先顺序，依次如下：</para>
+	///		<para>提示：其 <c>{name}</c> 表示 <see cref="HierarchicalNode.Name"/> 属性的值；<c>{path}</c> 表示 <see cref="HierarchicalNode.FullPath"/> 属性的值。</para>
+	///		<list type="number">
+	///			<item>Privilege.{path}.Category.Description</item>
+	///			<item>Privilege.{path}.Description</item>
+	///			<item>Privilege.{name}.Category.Description</item>
+	///			<item>Privilege.{name}.Description</item>
+	///			<item>{path}.Category.Description</item>
+	///			<item>{path}.Description</item>
+	///			<item>{name}.Category.Description</item>
+	///			<item>{name}.Description</item>
+	///		</list>
+	/// </remarks>
+	protected override string GetDescription() => this.Resource.GetString(
+	[
+		$"{nameof(Privilege)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Description)}",
+		$"{nameof(Privilege)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Description)}",
+		$"{nameof(Privilege)}.{this.Name}.{nameof(Category)}.{nameof(this.Description)}",
+		$"{nameof(Privilege)}.{this.Name}.{nameof(this.Description)}",
+	]) ?? base.GetDescription();
 	#endregion
 
 	#region 显式实现

@@ -48,13 +48,21 @@ public partial class Privilege : IPrivilege, IIdentifiable, IIdentifiable<string
 	#endregion
 
 	#region 构造函数
-	public Privilege(string name, params IEnumerable<Permission> permissions) : this(null, name, null, null, permissions) { }
-	public Privilege(string name, string label, params IEnumerable<Permission> permissions) : this(null, name, label, null, permissions) { }
-	public Privilege(string name, string label, string description, params IEnumerable<Permission> permissions) : this(null, name, label, description, permissions) { }
+	public Privilege(string name, params IEnumerable<Permission> permissions) : this(null, name, false, null, null, permissions) { }
+	public Privilege(string name, string label, params IEnumerable<Permission> permissions) : this(null, name, false, label, null, permissions) { }
+	public Privilege(string name, string label, string description, params IEnumerable<Permission> permissions) : this(null, name, false, label, description, permissions) { }
 
-	public Privilege(IResource resource, string name, params IEnumerable<Permission> permissions) : this(resource, name, null, null, permissions) { }
-	public Privilege(IResource resource, string name, string label, params IEnumerable<Permission> permissions) : this(resource, name, label, null, permissions) { }
-	public Privilege(IResource resource, string name, string label, string description, params IEnumerable<Permission> permissions)
+	public Privilege(string name, bool required, params IEnumerable<Permission> permissions) : this(null, name, required, null, null, permissions) { }
+	public Privilege(string name, bool required, string label, params IEnumerable<Permission> permissions) : this(null, name, required, label, null, permissions) { }
+	public Privilege(string name, bool required, string label, string description, params IEnumerable<Permission> permissions) : this(null, name, required, label, description, permissions) { }
+
+	public Privilege(IResource resource, string name, params IEnumerable<Permission> permissions) : this(resource, name, false, null, null, permissions) { }
+	public Privilege(IResource resource, string name, string label, params IEnumerable<Permission> permissions) : this(resource, name, false, label, null, permissions) { }
+	public Privilege(IResource resource, string name, string label, string description, params IEnumerable<Permission> permissions) : this(resource, name, false, label, description, permissions) { }
+
+	public Privilege(IResource resource, string name, bool required, params IEnumerable<Permission> permissions) : this(resource, name, required, null, null, permissions) { }
+	public Privilege(IResource resource, string name, bool required, string label, params IEnumerable<Permission> permissions) : this(resource, name, required, label, null, permissions) { }
+	public Privilege(IResource resource, string name, bool required, string label, string description, params IEnumerable<Permission> permissions)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -63,6 +71,7 @@ public partial class Privilege : IPrivilege, IIdentifiable, IIdentifiable<string
 
 		this.Name = name;
 		this.Label = label;
+		this.Required = required;
 		this.Description = description;
 		this.Permissions = new(permissions);
 	}
@@ -70,21 +79,45 @@ public partial class Privilege : IPrivilege, IIdentifiable, IIdentifiable<string
 
 	#region 公共属性
 	public string Name { get; }
+	public bool Required { get; set; }
 	public string Label { get => _label ?? this.GetLabel(); set => _label = value; }
 	public string Description { get => _description ?? this.GetDescription(); set => _description = value; }
 	public PermissionCollection Permissions { get; }
 	#endregion
 
 	#region 虚拟方法
+	/// <summary>获取权限的本地化标题。</summary>
+	/// <returns>返回本地化标题文本，如果失败则返回空(<c>null</c>)。</returns>
+	/// <remarks>
+	///		对应的资源键按优先顺序，依次如下（其 <c>{name}</c> 表示 <see cref="Name"/> 属性的值。）：
+	///		<list type="number">
+	///			<item>Privilege.{name}.Label</item>
+	///			<item>Privilege.{name}</item>
+	///			<item>{name}.Label</item>
+	///			<item>{name}</item>
+	///		</list>
+	/// </remarks>
 	protected virtual string GetLabel() => ResourceUtility.GetString(_resource,
 	[
+		$"{nameof(Privilege)}.{this.Name}.{nameof(this.Label)}",
+		$"{nameof(Privilege)}.{this.Name}",
 		$"{this.Name}.{nameof(this.Label)}",
-		this.Name
+		this.Name,
 	]);
 
+	/// <summary>获取权限的本地化描述。</summary>
+	/// <returns>返回本地化描述文本，如果失败则返回空(<c>null</c>)。</returns>
+	/// <remarks>
+	///		对应的资源键按优先顺序，依次如下（其 <c>{name}</c> 表示 <see cref="Name"/> 属性的值。）：
+	///		<list type="number">
+	///			<item>Privilege.{name}.Description</item>
+	///			<item>{name}.Description</item>
+	///		</list>
+	/// </remarks>
 	protected virtual string GetDescription() => ResourceUtility.GetString(_resource,
 	[
-		$"{this.Name}.{nameof(this.Description)}"
+		$"{nameof(Privilege)}.{this.Name}.{nameof(this.Description)}",
+		$"{this.Name}.{nameof(this.Description)}",
 	]);
 	#endregion
 
@@ -100,6 +133,6 @@ public partial class Privilege : IPrivilege, IIdentifiable, IIdentifiable<string
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => $"{this.Name}";
+	public override string ToString() => this.Required ? $"{this.Name}(required)" : $"{this.Name}(optional)";
 	#endregion
 }

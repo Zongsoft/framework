@@ -37,12 +37,10 @@ public class Category : CategoryBase<Category>
 {
 	#region 构造函数
 	public Category() => this.Categories = new(this);
-	public Category(string name, string title = null, string description = null) : this(null, name, true, title, description) { }
-	public Category(string name, bool visible, string title = null, string description = null) : this(null, name, visible, title, description) { }
+	public Category(string name, string title = null, string description = null) : this(null, name, title, description) { }
 
 	public Category(Resources.IResource resource) : base(resource) => this.Categories = new(this);
-	public Category(Resources.IResource resource, string name, string title = null, string description = null) : this(resource, name, true, title, description) { }
-	public Category(Resources.IResource resource, string name, bool visible, string title = null, string description = null) : base(resource, name, visible, title, description)
+	public Category(Resources.IResource resource, string name, string title = null, string description = null) : base(resource, name, title, description)
 	{
 		this.Categories = new(this);
 	}

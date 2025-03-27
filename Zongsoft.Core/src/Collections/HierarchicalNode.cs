@@ -78,6 +78,8 @@ namespace Zongsoft.Collections
 		public string Path => _path ?? this.GetPath();
 
 		/// <summary>获取层次结构节点的完整路径，即节点路径与名称的组合。</summary>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
 		public string FullPath
 		{
 			get

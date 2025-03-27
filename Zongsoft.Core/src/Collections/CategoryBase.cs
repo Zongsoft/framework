@@ -34,68 +34,119 @@ namespace Zongsoft.Collections;
 public abstract class CategoryBase<TSelf> : HierarchicalNode<TSelf> where TSelf : CategoryBase<TSelf>
 {
 	#region 成员字段
-	private bool _visible;
 	private TSelf _parent;
+	private string _icon;
 	private string _title;
 	private string _description;
+	private string[] _tags;
 	private readonly Resources.IResource _resource;
 	#endregion
 
 	#region 构造函数
 	protected CategoryBase() { }
-	protected CategoryBase(string name, string title = null, string description = null) : this(null, name, true, title, description) { }
-	protected CategoryBase(string name, bool visible, string title = null, string description = null) : this(null, name, visible, title, description) { }
+	protected CategoryBase(string name, string title = null, string description = null) : this(null, name, title, description) { }
 
 	protected CategoryBase(Resources.IResource resource) => _resource = resource;
-	protected CategoryBase(Resources.IResource resource, string name, string title = null, string description = null) : this(resource, name, true, title, description) { }
-	protected CategoryBase(Resources.IResource resource, string name, bool visible, string title = null, string description = null) : base(name)
+	protected CategoryBase(Resources.IResource resource, string name, string title = null, string description = null) : base(name)
 	{
 		_resource = resource;
-		_visible = visible;
 		_title = title;
 		_description = description;
 	}
 	#endregion
 
 	#region 公共属性
-	public bool Visible
+	public string Icon
 	{
-		get => _visible;
+		get => _icon;
 		set
 		{
-			if(_visible != value)
-				return;
-
-			_visible = value;
-			this.OnPropertyChanged(nameof(this.Visible));
+			_icon = value;
+			this.OnPropertyChanged(nameof(this.Icon));
 		}
 	}
 
 	public string Title
 	{
 		get => _title ?? this.GetTitle();
-		set => _title = value;
+		set
+		{
+			_title = value;
+			this.OnPropertyChanged(nameof(this.Title));
+		}
 	}
 
 	public string Description
 	{
 		get => _description ?? this.GetDescription();
-		set => _description = value;
+		set
+		{
+			_description = value;
+			this.OnPropertyChanged(nameof(this.Description));
+		}
+	}
+
+	public string[] Tags
+	{
+		get => _tags;
+		set
+		{
+			_tags = value;
+			this.OnPropertyChanged(nameof(this.Tags));
+		}
 	}
 	#endregion
 
+	#region 保护属性
+	protected Resources.IResource Resource => _resource;
+	#endregion
+
 	#region 虚拟方法
+	/// <summary>获取类别的本地化标题。</summary>
+	/// <returns>返回本地化标题文本，如果失败则返回空(<c>null</c>)。</returns>
+	/// <remarks>
+	///		<para>对应的资源键按优先顺序，依次如下：</para>
+	///		<para>提示：其 <c>{name}</c> 表示 <see cref="HierarchicalNode.Name"/> 属性的值；<c>{path}</c> 表示 <see cref="HierarchicalNode.FullPath"/> 属性的值。</para>
+	///		<list type="number">
+	///			<item>{path}.Category.Title</item>
+	///			<item>{path}.Category</item>
+	///			<item>{path}.Title</item>
+	///			<item>{path}</item>
+	///			<item>{name}.Category.Title</item>
+	///			<item>{name}.Category</item>
+	///			<item>{name}.Title</item>
+	///			<item>{name}</item>
+	///		</list>
+	/// </remarks>
 	protected virtual string GetTitle() => Resources.ResourceUtility.GetString(_resource,
 	[
-		$"{this.FullPath}.{nameof(this.Title)}",
-		this.FullPath,
+		$"{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Title)}",
+		$"{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}",
+		$"{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Title)}",
+		this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.'),
+		$"{this.Name}.{nameof(Category)}.{nameof(this.Title)}",
+		$"{this.Name}.{nameof(Category)}",
 		$"{this.Name}.{nameof(this.Title)}",
 		this.Name,
 	]);
 
+	/// <summary>获取类别的本地化描述。</summary>
+	/// <returns>返回本地化描述文本，如果失败则返回空(<c>null</c>)。</returns>
+	/// <remarks>
+	///		<para>对应的资源键按优先顺序，依次如下：</para>
+	///		<para>提示：其 <c>{name}</c> 表示 <see cref="HierarchicalNode.Name"/> 属性的值；<c>{path}</c> 表示 <see cref="HierarchicalNode.FullPath"/> 属性的值。</para>
+	///		<list type="number">
+	///			<item>{path}.Category.Description</item>
+	///			<item>{path}.Description</item>
+	///			<item>{name}.Category.Description</item>
+	///			<item>{name}.Description</item>
+	///		</list>
+	/// </remarks>
 	protected virtual string GetDescription() => Resources.ResourceUtility.GetString(_resource,
 	[
-		$"{this.FullPath}.{nameof(this.Description)}",
+		$"{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Description)}",
+		$"{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Description)}",
+		$"{this.Name}.{nameof(Category)}.{nameof(this.Description)}",
 		$"{this.Name}.{nameof(this.Description)}",
 	]);
 	#endregion
