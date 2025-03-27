@@ -455,7 +455,10 @@ namespace Zongsoft.Plugins
 				return null;
 
 			if(plugin.Manifest.Assemblies.Count == 0)
-				return GetPluginAssembly(plugin.Parent);
+			{
+				var assembly = GetAssemblyFromDependencies(plugin);
+				return assembly ?? GetPluginAssembly(plugin.Parent);
+			}
 
 			foreach(var assembly in plugin.Manifest.Assemblies)
 			{
@@ -464,6 +467,35 @@ namespace Zongsoft.Plugins
 			}
 
 			return plugin.Manifest.Assemblies[0];
+
+			static Assembly GetAssemblyFromDependencies(Plugin plugin)
+			{
+				if(plugin == null || !plugin.Manifest.HasDependencies)
+					return null;
+
+				var name = plugin.Name;
+				var index = name.LastIndexOf('.');
+
+				while(index > 0)
+				{
+					var findable = name[..index];
+
+					foreach(var dependency in plugin.Manifest.Dependencies)
+					{
+						if(string.Equals(dependency.Name, findable, StringComparison.OrdinalIgnoreCase))
+						{
+							var assembly = GetPluginAssembly(dependency.Plugin);
+							if(assembly != null)
+								return assembly;
+						}
+					}
+
+					//继续向前查找
+					index = name.LastIndexOf('.', index - 1);
+				}
+
+				return null;
+			}
 		}
 
 		internal static IApplicationModule FindApplicationModule(PluginElement element) => FindApplicationModule(element, out _);
