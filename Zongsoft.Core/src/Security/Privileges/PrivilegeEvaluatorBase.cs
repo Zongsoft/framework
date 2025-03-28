@@ -51,7 +51,14 @@ public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator, IMatchable, 
 	public IAsyncEnumerable<IPrivilegeEvaluatorResult> EvaluateAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty)
-			return Zongsoft.Collections.Enumerable.Empty<IPrivilegeEvaluatorResult>();
+		{
+			var principal = this.Principal;
+
+			if(principal == null || principal.Identity.IsAnonymous())
+				return Zongsoft.Collections.Enumerable.Empty<IPrivilegeEvaluatorResult>();
+
+			identifier = new Identifier(typeof(IUser), principal.Identity.GetIdentifier());
+		}
 
 		var context = this.CreateContext(identifier, parameters);
 		return this.OnEvaluateAsync(context, cancellation);

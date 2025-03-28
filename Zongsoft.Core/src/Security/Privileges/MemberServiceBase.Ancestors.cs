@@ -97,6 +97,9 @@ partial class MemberServiceBase<TRole, TMember>
 		//获取最上层的角色集
 		while(result.TryPeek(out var roles))
 		{
+			if(roles == null || roles.Count == 0)
+				break;
+
 			//如果指定了最大层级数则递增当前层级数；
 			//如果当前层级数已经到达了最大层级数则中断
 			if(depth > 0 && ++current == depth)

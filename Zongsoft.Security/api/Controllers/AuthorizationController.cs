@@ -35,7 +35,9 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 
 using Zongsoft.Web;
-using Zongsoft.Services;
+using Zongsoft.Web.Http;
+using Zongsoft.Components;
+using Zongsoft.Collections;
 using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Security.Web.Controllers;
@@ -44,6 +46,9 @@ namespace Zongsoft.Security.Web.Controllers;
 [ControllerName]
 public class AuthorizationController : ControllerBase
 {
+	/// <summary>获取指定授权方案的权限定义集。</summary>
+	/// <param name="scheme">指定的授权方案。</param>
+	/// <returns>返回的权限定义集，如果指定的授权方案不存在则返回 <c>NotFound</c> 状态码。</returns>
 	[HttpGet("{scheme?}")]
 	public IActionResult Get(string scheme = null)
 	{
@@ -59,5 +64,29 @@ public class AuthorizationController : ControllerBase
 			authorizer.Privileger.Categories,
 			authorizer.Privileger.Privileges,
 		});
+	}
+
+	/// <summary>获取指定授权方案的最终授权集。</summary>
+	/// <param name="scheme">指定的授权方案。</param>
+	/// <returns>返回的最终授权集，如果指定的授权方案不存在则返回 <c>NotFound</c> 状态码。</returns>
+	[ActionName("Privileges")]
+	[HttpGet("[action]/{id?}")]
+	[HttpGet("{scheme:required}/[action]/{id?}")]
+	public IActionResult GetPrivileges(string id, string scheme = null, CancellationToken cancellation = default)
+	{
+		var authorizer = string.IsNullOrEmpty(scheme) ?
+			Authorization.Authorizer :
+			Authorization.Authorizers.TryGetValue(scheme, out var value) ? value : null;
+
+		if(authorizer == null)
+			return this.NotFound();
+
+		if(string.IsNullOrEmpty(id))
+			return this.Ok(authorizer.Evaluator.EvaluateAsync(default, new Parameters(this.Request.GetParameters()), cancellation));
+
+		if(!Member.TryParse(id, out var member))
+			return this.BadRequest();
+
+		return this.Ok(authorizer.Evaluator.EvaluateAsync(member, new Parameters(this.Request.GetParameters()), cancellation));
 	}
 }

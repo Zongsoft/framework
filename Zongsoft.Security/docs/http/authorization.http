@@ -1,5 +1,27 @@
-### 授权权限
-# @prompt scheme 身份标识
+### 权限定义
+GET /Security/Authorization HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 权限定义（授权方案）
+# @prompt scheme 授权方案
 GET /Security/Authorization/{{scheme}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 最终授权（当前用户）
+GET /Security/Authorization/Privileges HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 最终授权（指定用户）
+# @prompt id 用户标识
+GET /Security/Authorization/Privileges/user:{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 最终授权（指定角色）
+# @prompt id 角色标识
+GET /Security/Authorization/Privileges/role:{{id}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}

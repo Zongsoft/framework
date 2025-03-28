@@ -49,6 +49,26 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	public MemberType MemberType { get; }
 	#endregion
 
+	#region 公共方法
+	public bool IsRole<T>(out T id)
+	{
+		if(this.MemberType == MemberType.Role)
+			return this.MemberId.Validate<IRole, T>(out id);
+
+		id = default;
+		return false;
+	}
+
+	public bool IsUser<T>(out T id)
+	{
+		if(this.MemberType == MemberType.User)
+			return this.MemberId.Validate<IUser, T>(out id);
+
+		id = default;
+		return false;
+	}
+	#endregion
+
 	#region 静态方法
 	public static Member Create(MemberType memberType, int id) => memberType switch
 	{

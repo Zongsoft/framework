@@ -55,6 +55,9 @@ public class PrivilegeEvaluator : PrivilegeEvaluatorBase
 
 		await foreach(var ancestor in ancestors)
 		{
+			if(ancestor == null || ancestor.Count == 0)
+				continue;
+
 			//依次获取每层上级角色的授权集
 			var privileges = Module.Current.Accessor.SelectAsync<PrivilegeModel>(
 				Condition.In(nameof(PrivilegeModel.MemberId), ancestor.Select(id => (uint)id)) &

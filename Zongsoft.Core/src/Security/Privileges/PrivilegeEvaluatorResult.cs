@@ -27,9 +27,15 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace Zongsoft.Security.Privileges;
 
-public class PrivilegeEvaluatorResult : IPrivilegeEvaluatorResult
+[JsonConverter(typeof(JsonConverter))]
+public partial class PrivilegeEvaluatorResult : IPrivilegeEvaluatorResult
 {
 	#region 构造函数
 	public PrivilegeEvaluatorResult(string privilege) => this.Privilege = privilege;
@@ -38,4 +44,26 @@ public class PrivilegeEvaluatorResult : IPrivilegeEvaluatorResult
 	#region 公共属性
 	public string Privilege { get; }
 	#endregion
+}
+
+partial class PrivilegeEvaluatorResult
+{
+	private class JsonConverter : JsonConverter<PrivilegeEvaluatorResult>
+	{
+		public override PrivilegeEvaluatorResult Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			if(reader.TokenType == JsonTokenType.String)
+				return new PrivilegeEvaluatorResult(reader.GetString());
+
+			return null;
+		}
+
+		public override void Write(Utf8JsonWriter writer, PrivilegeEvaluatorResult value, JsonSerializerOptions options)
+		{
+			if(value == null || string.IsNullOrEmpty(value.Privilege))
+				return;
+
+			writer.WriteStringValue(value.Privilege);
+		}
+	}
 }
