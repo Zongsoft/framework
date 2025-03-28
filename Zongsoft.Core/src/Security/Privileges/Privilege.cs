@@ -82,6 +82,8 @@ public partial class Privilege : IPrivilege, IIdentifiable, IIdentifiable<string
 	public bool Required { get; set; }
 	public string Label { get => _label ?? this.GetLabel(); set => _label = value; }
 	public string Description { get => _description ?? this.GetDescription(); set => _description = value; }
+	[TypeConverter(typeof(Components.Converters.CollectionConverter))]
+	public string[] Tags { get; set; }
 	public PermissionCollection Permissions { get; }
 	#endregion
 

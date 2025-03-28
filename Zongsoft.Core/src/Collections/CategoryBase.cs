@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.ComponentModel;
 
 namespace Zongsoft.Collections;
 
@@ -86,6 +87,7 @@ public abstract class CategoryBase<TSelf> : HierarchicalNode<TSelf> where TSelf 
 		}
 	}
 
+	[TypeConverter(typeof(Components.Converters.CollectionConverter))]
 	public string[] Tags
 	{
 		get => _tags;
