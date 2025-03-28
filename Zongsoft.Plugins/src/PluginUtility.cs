@@ -150,16 +150,11 @@ namespace Zongsoft.Plugins
 							};
 						}
 
-						var converterTypeName = ctx.Member.GetCustomAttribute<TypeConverterAttribute>(true)?.ConverterTypeName;
-
 						//更新扩展属性的类型转换器
-						if(converterTypeName != null && converterTypeName.Length > 0)
-						{
-							property.Converter = Activator.CreateInstance(GetType(converterTypeName, builtin)) as TypeConverter ??
-							                     throw new InvalidOperationException($"The '{converterTypeName}' type declared by the '{property.Name}' member of type '{target.GetType().FullName}' is not a type converter.");
-						}
+						property.Converter = Common.Convert.GetTypeConverter(ctx.Member);
 
-						return property.Value;
+						//如果属性值转换成功则返回转换后的值，否则返回内部值
+						return Common.Convert.TryConvertValue(property.RawValue, property.Type, () => property.Converter, out var value) ? value : property.Value;
 					});
 				}
 				catch(Exception ex)
