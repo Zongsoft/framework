@@ -501,7 +501,7 @@ public class ConfigurationResolver : IConfigurationResolver
 		public PropertyToken(PropertyInfo property)
 		{
 			this.Property = property ?? throw new ArgumentNullException(nameof(property));
-			this.Converter = ConfigurationUtility.GetConverter(property);
+			this.Converter = Common.Convert.GetTypeConverter(property);
 			this.Alias = property.Name;
 
 			var attribute = property.GetCustomAttribute<ConfigurationPropertyAttribute>(true);

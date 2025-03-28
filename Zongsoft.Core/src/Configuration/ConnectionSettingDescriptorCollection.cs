@@ -180,7 +180,7 @@ public class ConnectionSettingDescriptorCollection(IConnectionSettingsDriver dri
 			Label = GetDisplayName(property),
 			Description = GetDescription(property),
 			DefaultValue = GetDefaultValue(property),
-			Converter = ConfigurationUtility.GetConverter(property),
+			Converter = Common.Convert.GetTypeConverter(property),
 		};
 
 		//如果当前属性未显式声明转换器，并且属性类型为集合类型则需要为其指定一个特定的转换器

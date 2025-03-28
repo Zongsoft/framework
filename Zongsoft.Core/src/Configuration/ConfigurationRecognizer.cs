@@ -99,7 +99,7 @@ public class ConfigurationRecognizer : IConfigurationRecognizer
 			}
 		}
 
-		if(dictionary != null && Common.Convert.TryConvertValue(configuration.Value, _dictionaryType.GenericTypeArguments[1], () => ConfigurationUtility.GetConverter(_unrecognizedProperty), out var convertedValue))
+		if(dictionary != null && Common.Convert.TryConvertValue(configuration.Value, _dictionaryType.GenericTypeArguments[1], () => Common.Convert.GetTypeConverter(_unrecognizedProperty), out var convertedValue))
 			Reflection.Reflector.SetValue(ref dictionary, "Item", convertedValue, new object[] { configuration.Key });
 	}
 	#endregion
