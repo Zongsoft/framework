@@ -426,7 +426,7 @@ namespace Zongsoft.Data
 					this.Type = member switch { PropertyInfo property => property.PropertyType, FieldInfo field => field.FieldType, _ => null };
 					this.IsExactly = isExactly;
 
-					var converter = TypeDescriptor.GetConverter(member);
+					var converter = Common.Convert.GetTypeConverter(member);
 
 					if(converter.GetType() != typeof(TypeConverter))
 						this.Converter = converter;
