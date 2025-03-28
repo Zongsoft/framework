@@ -99,22 +99,18 @@ namespace Zongsoft.Plugins
 		#region 内部方法
 		internal PluginExtendedProperty Set(string name, object value, Plugin plugin = null)
 		{
-			PluginExtendedProperty property = null;
-
-			if(value is Builtin)
-				property = new PluginExtendedProperty(_owner, name, ((Builtin)value).Node, plugin ?? ((Builtin)value).Plugin);
-			else if(value is PluginTreeNode)
-				property = new PluginExtendedProperty(_owner, name, (PluginTreeNode)value, plugin ?? ((PluginTreeNode)value).Plugin);
-			else if(value is string)
-				property = new PluginExtendedProperty(_owner, name, (string)value, plugin ?? _owner.Plugin);
-			else
-				throw new PluginException("Invalid value of the plugin extended property.");
+			var property = value switch
+			{
+				Builtin builtin => new PluginExtendedProperty(_owner, name, builtin.Node, plugin ?? builtin.Plugin),
+				PluginTreeNode node => new PluginExtendedProperty(_owner, name, node, plugin ?? node.Plugin),
+				string text => new PluginExtendedProperty(_owner, name, text, plugin ?? _owner.Plugin),
+				_ => throw new PluginException("Invalid value of the plugin extended property."),
+			};
 
 			if(this.Contains(name))
 				this.Remove(name);
 
 			this.Add(property);
-
 			return property;
 		}
 		#endregion

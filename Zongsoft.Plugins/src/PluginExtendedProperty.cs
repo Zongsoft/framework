@@ -33,36 +33,25 @@ namespace Zongsoft.Plugins
 {
 	public class PluginExtendedProperty : PluginElementProperty
 	{
-		#region 成员字段
-		private Plugin _plugin;
-		#endregion
-
 		#region 构造函数
 		internal PluginExtendedProperty(PluginElement owner, string name, string rawValue, Plugin plugin) : base(owner, name, rawValue)
 		{
-			_plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
+			this.Plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
 		}
 
 		internal PluginExtendedProperty(PluginElement owner, string name, PluginTreeNode valueNode, Plugin plugin) : base(owner, name, valueNode)
 		{
-			_plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
+			this.Plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
 		}
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取当前扩展属性的定义插件。
-		/// </summary>
+		/// <summary>获取当前扩展属性的定义插件。</summary>
 		/// <remarks>
-		///		<para>注意：该属性值表示本扩展属性是由哪个插件扩展的。因此它未必等同于<see cref="PluginElementProperty.Owner"/>属性对应的<seealso cref="PluginElement"/>类型中的Plugin属性值。</para>
+		///		<para>注意：该属性值表示本扩展属性是由哪个插件扩展的。</para>
+		///		<para>因此它未必等同于 <see cref="PluginElementProperty.Owner"/> 属性对应的 <seealso cref="PluginElement"/> 类型中的 <see cref="PluginElement.Plugin"/> 属性值。</para>
 		/// </remarks>
-		public Plugin Plugin
-		{
-			get
-			{
-				return _plugin;
-			}
-		}
+		public Plugin Plugin { get; }
 		#endregion
 	}
 }
