@@ -30,13 +30,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 
 using Zongsoft.Web;
 using Zongsoft.Web.Http;
-using Zongsoft.Components;
 using Zongsoft.Collections;
 using Zongsoft.Security.Privileges;
 
@@ -67,7 +65,9 @@ public class AuthorizationController : ControllerBase
 	}
 
 	/// <summary>获取指定授权方案的最终授权集。</summary>
+	/// <param name="id">指定的以冒号分隔的用户或角色标识，譬如：<c>user:100</c> 或 <c>role:200</c>。<para>注：如果未指定该参数则表示当前用户。</para></param>
 	/// <param name="scheme">指定的授权方案。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回的最终授权集，如果指定的授权方案不存在则返回 <c>NotFound</c> 状态码。</returns>
 	[ActionName("Privileges")]
 	[HttpGet("[action]/{id?}")]
