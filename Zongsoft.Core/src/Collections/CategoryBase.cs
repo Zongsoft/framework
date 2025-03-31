@@ -57,6 +57,7 @@ public abstract class CategoryBase<TSelf> : HierarchicalNode<TSelf> where TSelf 
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取或设置图标标识。</summary>
 	public string Icon
 	{
 		get => _icon;
@@ -67,6 +68,7 @@ public abstract class CategoryBase<TSelf> : HierarchicalNode<TSelf> where TSelf 
 		}
 	}
 
+	/// <summary>获取或设置分类标题。</summary>
 	public string Title
 	{
 		get => _title ?? this.GetTitle();
@@ -77,6 +79,7 @@ public abstract class CategoryBase<TSelf> : HierarchicalNode<TSelf> where TSelf 
 		}
 	}
 
+	/// <summary>获取或设置描述信息。</summary>
 	public string Description
 	{
 		get => _description ?? this.GetDescription();
@@ -87,6 +90,10 @@ public abstract class CategoryBase<TSelf> : HierarchicalNode<TSelf> where TSelf 
 		}
 	}
 
+	/// <summary>获取或设置排列顺序。</summary>
+	public int Ordinal { get; set; }
+
+	/// <summary>获取或设置标签数组。</summary>
 	[TypeConverter(typeof(Components.Converters.CollectionConverter))]
 	public string[] Tags
 	{
@@ -156,6 +163,7 @@ public abstract class CategoryBase<TSelf> : HierarchicalNode<TSelf> where TSelf 
 	#region 重写方法
 	protected override TSelf Parent => _parent;
 	protected override string GetPath() => _parent == null ? string.Empty : _parent.FullPath;
+	public override string ToString() => $"{this.FullPath}@{this.Ordinal}";
 	#endregion
 
 	#region 内部方法

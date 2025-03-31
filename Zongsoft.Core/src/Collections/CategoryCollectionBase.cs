@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Collections;
@@ -46,12 +47,55 @@ public abstract class CategoryCollectionBase<TCategory> : HierarchicalNodeCollec
 		if(categories == null)
 			return;
 
-		foreach(var category in categories)
+		foreach(var category in categories.OrderBy(category => category.Ordinal))
 			this.Add(category);
 	}
 	#endregion
 
 	#region 重写方法
-	protected override void SetOwner(TCategory owner, TCategory node) => node?.SetParent(owner);
+	protected override void SetOwner(TCategory owner, TCategory category) => category?.SetParent(owner);
+	protected override void InsertItem(int index, TCategory category)
+	{
+		index = Locate(this.Items, category.Ordinal);
+		base.InsertItem(index, category);
+	}
+	#endregion
+
+	#region 私有方法
+	private static int Locate(IList<TCategory> categories, int value)
+	{
+		int left = 0, right = categories.Count - 1;
+
+		while(left <= right)
+		{
+			int middle = left + (right - left) / 2;
+
+			if(categories[middle].Ordinal == value)
+				return middle;
+
+			if(categories[middle].Ordinal < value)
+			{
+				left = middle + 1;
+
+				if(left >= categories.Count)
+					return categories.Count;
+
+				if(value < categories[left].Ordinal)
+					return left;
+			}
+			else
+			{
+				right = middle - 1;
+
+				if(right < 0)
+					return 0;
+
+				if(value > categories[right].Ordinal)
+					return middle;
+			}
+		}
+
+		return 0;
+	}
 	#endregion
 }
