@@ -31,7 +31,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+
+using Zongsoft.Common;
+using Zongsoft.Services;
 
 namespace Zongsoft.Web;
 
@@ -42,15 +46,22 @@ public class ControllerServiceDescriptorCollection : KeyedCollection<string, Con
 	{
 		foreach(var controller in controllers)
 		{
-			var descriptor = ControllerServiceDescriptor.Get(controller);
-			this.Add(descriptor);
-			controller.SetService(descriptor);
+			var qualifiedName = ControllerServiceDescriptor.GetQualifiedName(controller);
+
+			if(this.TryGetValue(qualifiedName, out var descriptor))
+				descriptor.Controllers.Add(new ControllerServiceDescriptor.ControllerDescriptor(controller));
+			else
+			{
+				descriptor = ControllerServiceDescriptor.Create(controller);
+				this.Add(descriptor);
+				controller.SetService(descriptor);
+			}
 		}
 	}
 	#endregion
 
 	#region 公共方法
-	public bool TryGetValue(Services.IApplicationModule module, string name, out ControllerServiceDescriptor value) => this.TryGetValue(module?.Name, name, out value);
+	public bool TryGetValue(IApplicationModule module, string name, out ControllerServiceDescriptor value) => this.TryGetValue(module?.Name, name, out value);
 	public bool TryGetValue(string module, string name, out ControllerServiceDescriptor value)
 	{
 		if(string.IsNullOrEmpty(name))

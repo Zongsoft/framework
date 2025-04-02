@@ -61,7 +61,7 @@ public static class ControllerUtility
 			descriptor.QualifiedName,
 			descriptor.Type,
 			descriptor.Model,
-			Actions = descriptor.Controller.Actions.Select(action => action.Serializable()),
+			Actions = descriptor.Controllers.SelectMany(controller => controller.Actions.Select(action => action.Serializable())),
 		};
 	}
 

@@ -28,11 +28,12 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public interface IServiceDescriptorProvider
+public class ServiceDescriptor<TOperations>(Type type, string name = null, string qualifiedName = null) : ServiceDescriptor(type, name, qualifiedName) where TOperations : IReadOnlyCollection<ServiceDescriptor.Operation>
 {
-	bool Support(Type type);
-	ServiceDescriptor GetDescriptor(Type type);
+	/// <summary>获取服务的操作集合。</summary>
+	public TOperations Operations { get; protected init; }
 }

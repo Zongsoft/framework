@@ -30,6 +30,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
@@ -38,71 +39,74 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Zongsoft.Data;
 using Zongsoft.Common;
 using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Web;
 
-public class ControllerServiceDescriptor : IEquatable<ControllerServiceDescriptor>
+public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDescriptor.ControllerOperationDescriptorCollection>, IEquatable<ControllerServiceDescriptor>
 {
 	#region 私有构造
-	private ControllerServiceDescriptor(ControllerModel controller, string module, string @namespace, string serviceName, Type serviceType, ModelDescriptor model)
+	private ControllerServiceDescriptor(string module, string @namespace, string serviceName, Type serviceType) : base(serviceType, serviceName, GetQualifiedName(module, @namespace, serviceName))
 	{
 		if(string.IsNullOrEmpty(serviceName))
 			throw new ArgumentNullException(nameof(serviceName));
 
-		this.Controller = controller ?? throw new ArgumentNullException(nameof(controller));
 		this.Module = module;
 		this.Namespace = @namespace;
-		this.Name = serviceName;
-		this.Type = serviceType;
-		this.Model = model;
-
-		if(string.IsNullOrEmpty(module))
-			this.QualifiedName = string.IsNullOrEmpty(@namespace) ? serviceName : $"{@namespace}{Type.Delimiter}{serviceName}";
-		else
-			this.QualifiedName = string.IsNullOrEmpty(@namespace) ? $"{module}:{serviceName}" : $"{module}:{@namespace}{Type.Delimiter}{serviceName}";
+		this.Controllers = new List<ControllerDescriptor>();
+		this.Operations = new ControllerOperationDescriptorCollection(this);
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取服务名称。</summary>
-	public string Name { get; }
-	/// <summary>获取服务类型。</summary>
-	public Type Type { get; }
 	/// <summary>获取模块名称。</summary>
 	public string Module { get; }
 	/// <summary>获取服务命名空间。</summary>
 	public string Namespace { get; }
-	/// <summary>获取服务限定名称。</summary>
-	public string QualifiedName { get; }
 	/// <summary>获取服务模型描述。</summary>
 	public ModelDescriptor Model { get; }
-	/// <summary>获取控制器描述器。</summary>
-	public ControllerModel Controller { get; }
+	/// <summary>获取控制器描述器集合。</summary>
+	public ICollection<ControllerDescriptor> Controllers { get; }
 	#endregion
 
 	#region 重写方法
 	public bool Equals(ControllerServiceDescriptor other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
-	public override bool Equals(object obj) => this.Equals(obj as ControllerServiceDescriptor);
-	public override int GetHashCode() => this.QualifiedName.GetHashCode();
-	public override string ToString() => this.QualifiedName;
 	#endregion
 
 	#region 静态方法
-	public static ControllerServiceDescriptor Get(ControllerModel controller)
+	private static string GetQualifiedName(string module, string @namespace, string serviceName)
+	{
+		if(string.IsNullOrEmpty(module))
+			return string.IsNullOrEmpty(@namespace) ? serviceName : $"{@namespace}{Type.Delimiter}{serviceName}";
+		else
+			return string.IsNullOrEmpty(@namespace) ? $"{module}:{serviceName}" : $"{module}:{@namespace}{Type.Delimiter}{serviceName}";
+	}
+
+	internal static string GetQualifiedName(ControllerModel controller)
+	{
+		var @namespace = GetNamespace(controller.ControllerType);
+		(var _, var serviceType) = GetServiceInfo(controller.ControllerType);
+
+		return serviceType != null ?
+			GetQualifiedName(ApplicationModuleAttribute.Find(serviceType)?.Name, @namespace, GetServiceName(serviceType)) :
+			GetQualifiedName(ApplicationModuleAttribute.Find(controller.ControllerType)?.Name, @namespace, GetControllerName(controller.ControllerType));
+	}
+
+	public static ControllerServiceDescriptor Create(ControllerModel controller)
 	{
 		if(controller == null)
 			throw new ArgumentNullException(nameof(controller));
 
 		var @namespace = GetNamespace(controller.ControllerType);
-		(var modelType, var serviceType) = GetServiceInfo(controller.ControllerType);
+		(_, var serviceType) = GetServiceInfo(controller.ControllerType);
 
-		if(serviceType != null)
-		{
-			var model = Zongsoft.Data.Model.GetDescriptor(modelType);
-			return new ControllerServiceDescriptor(controller, ApplicationModuleAttribute.Find(serviceType)?.Name, @namespace, GetServiceName(serviceType), serviceType, model);
-		}
+		var result = serviceType != null ?
+			new ControllerServiceDescriptor(ApplicationModuleAttribute.Find(serviceType)?.Name, @namespace, GetServiceName(serviceType), serviceType) :
+			new ControllerServiceDescriptor(ApplicationModuleAttribute.Find(controller.ControllerType)?.Name, @namespace, GetControllerName(controller.ControllerType), null);
 
-		return new ControllerServiceDescriptor(controller, ApplicationModuleAttribute.Find(controller.ControllerType)?.Name, @namespace, GetControllerName(controller.ControllerType), null, null);
+		result.Controllers.Add(new ControllerDescriptor(controller));
+
+		return result;
 	}
 	#endregion
 
@@ -188,6 +192,52 @@ public class ControllerServiceDescriptor : IEquatable<ControllerServiceDescripto
 			return (genericTypes[0].GenericTypeArguments[0], genericTypes[0].GenericTypeArguments[1]);
 		else
 			return default;
+	}
+	#endregion
+
+	#region 嵌套子类
+	public sealed class ControllerDescriptor : ControllerModel
+	{
+		public ControllerDescriptor(ControllerModel controller) : base(controller)
+		{
+			(var modelType, var serviceType) = GetServiceInfo(controller.ControllerType);
+			this.Model = modelType == null ? null : Zongsoft.Data.Model.GetDescriptor(modelType);
+			this.ServiceType = serviceType;
+		}
+
+		/// <summary>获取服务模型描述。</summary>
+		public ModelDescriptor Model { get; }
+
+		/// <summary>获取服务类型。</summary>
+		public Type ServiceType { get; }
+	}
+
+	public sealed class ControllerOperationDescriptor : Operation
+	{
+		public ControllerOperationDescriptor(ControllerServiceDescriptor service, ActionModel action) : base(service, action.ActionMethod)
+		{
+			this.Action = action;
+			this.Name = action.ActionName;
+		}
+
+		public ActionModel Action { get; }
+	}
+
+	public sealed class ControllerOperationDescriptorCollection(ControllerServiceDescriptor service) : IReadOnlyCollection<ControllerOperationDescriptor>
+	{
+		private readonly ControllerServiceDescriptor _service = service ?? throw new ArgumentNullException(nameof(service));
+
+		public int Count => _service.Controllers.Sum(controller => controller.Actions.Count);
+
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<ControllerOperationDescriptor> GetEnumerator()
+		{
+			foreach(var controller in _service.Controllers)
+			{
+				foreach(var action in controller.Actions)
+					yield return new ControllerOperationDescriptor(_service, action);
+			}
+		}
 	}
 	#endregion
 }

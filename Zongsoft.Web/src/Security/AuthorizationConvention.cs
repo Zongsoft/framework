@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Authorization;
@@ -49,16 +48,19 @@ public class AuthorizationConvention : IApplicationModelConvention
 
 		foreach(var descriptor in descriptors)
 		{
-			var controllerAuthorizable = IsAuthorizable(descriptor.Controller.Attributes, false);
-
-			foreach(var action in descriptor.Controller.Actions)
+			foreach(var controller in descriptor.Controllers)
 			{
-				var authorizable = IsAuthorizable(action.Attributes, controllerAuthorizable);
-				if(!authorizable)
-					continue;
+				var controllerAuthorizable = IsAuthorizable(controller.Attributes, false);
 
-				for(int i = 0; i < action.Selectors.Count; i++)
-					action.Selectors[i].EndpointMetadata.Add(new RequirementData(action));
+				foreach(var action in controller.Actions)
+				{
+					var authorizable = IsAuthorizable(action.Attributes, controllerAuthorizable);
+					if(!authorizable)
+						continue;
+
+					for(int i = 0; i < action.Selectors.Count; i++)
+						action.Selectors[i].EndpointMetadata.Add(new RequirementData(action));
+				}
 			}
 		}
 	}

@@ -29,29 +29,25 @@
 
 using System;
 using System.Reflection;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
 public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 {
-	#region 常量定义
-	#endregion
-
 	#region 成员字段
+	private int? _hashcode;
 	private string _title;
 	private string _description;
 	private string _qualifiedName;
 	#endregion
 
 	#region 构造函数
-	public ServiceDescriptor(Type type) : this(null, type) { }
-	public ServiceDescriptor(string name, Type type)
+	public ServiceDescriptor(Type type, string name, string qualifiedName = null)
 	{
-		this.Type = type ?? throw new ArgumentNullException(nameof(type));
+		this.Type = type;
 		this.Name = string.IsNullOrEmpty(name) ? GetFullName(type) : name;
-		this.Operations = new(this);
+		_qualifiedName = qualifiedName;
 	}
 	#endregion
 
@@ -78,21 +74,31 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 		get => _description ?? this.GetDescription();
 		set => _description = value;
 	}
-
-	/// <summary>获取服务操作集。</summary>
-	public OperationCollection Operations { get; }
 	#endregion
 
 	#region 重写方法
-	public bool Equals(ServiceDescriptor other) => string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
+	public bool Equals(ServiceDescriptor other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj is ServiceDescriptor other && this.Equals(other);
-	public override int GetHashCode() => this.QualifiedName.GetHashCode();
+	public override int GetHashCode() => _hashcode ??= this.QualifiedName.ToUpperInvariant().GetHashCode();
 	public override string ToString() => string.IsNullOrEmpty(this.Title) ? this.QualifiedName : $"{this.QualifiedName}[{this.Title}]";
+	#endregion
+
+	#region 虚拟方法
+	protected virtual string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Type,
+	[
+		$"{this.Name}.{nameof(this.Title)}",
+		this.Name
+	]);
+
+	protected virtual string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(this.Description)}");
 	#endregion
 
 	#region 私有方法
 	private static string GetQualifiedName(Type type)
 	{
+		if(type == null)
+			return null;
+
 		var attribute = Services.ApplicationModuleAttribute.Find(type);
 
 		if(attribute == null)
@@ -103,6 +109,9 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 
 	private static string GetFullName(Type type)
 	{
+		if(type == null)
+			return null;
+
 		if(!type.IsNested)
 			return GetName(type);
 
@@ -130,14 +139,6 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 			return type.Name;
 		}
 	}
-
-	private string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Type,
-	[
-		$"{this.Name}.{nameof(this.Title)}",
-		this.Name
-	]);
-
-	private string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(this.Description)}");
 	#endregion
 
 	public class Operation
@@ -145,21 +146,20 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 		#region 成员字段
 		private string _title;
 		private string _description;
-		private readonly ServiceDescriptor _service;
 		#endregion
 
 		#region 构造函数
-		internal Operation(ServiceDescriptor service, MethodInfo method)
+		internal protected Operation(ServiceDescriptor service, MethodInfo method)
 		{
-			_service = service ?? throw new ArgumentNullException(nameof(service));
+			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			this.Method = method ?? throw new ArgumentNullException(nameof(method));
 			this.Name = method.Name;
 			this.Alias = method.GetCustomAttribute<AliasAttribute>()?.Alias;
 		}
 
-		internal Operation(ServiceDescriptor service, string name, string alias = null)
+		internal protected Operation(ServiceDescriptor service, string name, string alias = null)
 		{
-			_service = service ?? throw new ArgumentNullException(nameof(service));
+			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			this.Name = name ?? throw new ArgumentNullException(nameof(name));
 			this.Alias = alias;
 		}
@@ -167,13 +167,13 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 
 		#region 公共属性
 		/// <summary>获取操作名称。</summary>
-		public string Name { get; }
+		public string Name { get; protected init; }
 
 		/// <summary>获取操作别名。</summary>
-		public string Alias { get; }
+		public string Alias { get; protected init; }
 
 		/// <summary>获取操作的方法。</summary>
-		public MethodInfo Method { get; }
+		public MethodInfo Method { get; protected init; }
 
 		/// <summary>获取操作的显示名。</summary>
 		public string Title
@@ -190,48 +190,18 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 		}
 		#endregion
 
+		#region 保护属性
+		protected ServiceDescriptor Service { get; }
+		#endregion
+
 		#region 私有方法
-		private string GetTitle() => Resources.ResourceUtility.GetResourceString(_service.Type,
+		protected virtual string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Service.Type,
 		[
-			$"{_service.Name}.{this.Name}.{nameof(ServiceDescriptor.Title)}",
-			$"{_service.Name}.{this.Name}"
+			$"{this.Service.Name}.{this.Name}.{nameof(ServiceDescriptor.Title)}",
+			$"{this.Service.Name}.{this.Name}"
 		]);
 
-		private string GetDescription() => Resources.ResourceUtility.GetResourceString(_service.Type, $"{_service.Name}.{this.Name}.{nameof(ServiceDescriptor.Description)}");
-		#endregion
-	}
-
-	public sealed class OperationCollection(ServiceDescriptor service) : IReadOnlyCollection<Operation>
-	{
-		#region 私有字段
-		private readonly ServiceDescriptor _service = service;
-		private readonly Dictionary<string, Operation> _operations = new();
-		#endregion
-
-		#region 公共属性
-		public int Count => _operations.Count;
-		public Operation this[string name] => _operations[name];
-		#endregion
-
-		#region 公共方法
-		public bool TryGetValue(string name, out Operation value) => _operations.TryGetValue(name, out value);
-
-		public Operation Add(MethodInfo method)
-		{
-			var operation = new Operation(_service, method);
-			_operations.Add(operation.Name, operation);
-			return operation;
-		}
-
-		public Operation Add(string name, string alias = null)
-		{
-			var operation = new Operation(_service, name, alias);
-			_operations.Add(name, operation);
-			return operation;
-		}
-
-		public IEnumerator<Operation> GetEnumerator() => _operations.Values.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		protected virtual string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Service.Type, $"{this.Service.Name}.{this.Name}.{nameof(ServiceDescriptor.Description)}");
 		#endregion
 	}
 }
