@@ -48,44 +48,24 @@ public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 	internal const string NAME = "Lua";
 	#endregion
 
-	#region 成员字段
-	private volatile NLua.Lua _engine;
-	private readonly Assistant _assistant;
-	#endregion
-
 	#region 构造函数
 	public LuaExpressionEvaluator() : base(NAME)
 	{
-		_engine = new NLua.Lua();
-
-		//设置引擎的文本编码方式
-		_engine.State.Encoding = Encoding.UTF8;
-
-		//加载 .NET CLR 程序集
-		_engine.LoadCLRPackage();
-
-		//设置默认的 Json 解析器
-		_engine[nameof(Json)] = new Json();
-
 		//初始化全局变量集
-		this.Global = new Variables(_engine);
+		this.Global = new Dictionary<string, object>();
 
 		//设置全局默认选项
 		this.Options = new ExpressionEvaluatorOptions();
-
-		//注册辅助方法
-		_assistant = new Assistant(this.Options);
-		_assistant.Register(_engine);
 	}
 	#endregion
 
 	#region 公共方法
 	public override object Evaluate(string expression, IExpressionEvaluatorOptions options, IDictionary<string, object> variables = null)
 	{
-		var engine = _engine ?? throw new ObjectDisposedException(nameof(LuaExpressionEvaluator));
-
 		if(string.IsNullOrEmpty(expression))
 			return null;
+
+		using var engine = this.Create(options);
 
 		if(variables != null)
 		{
@@ -93,15 +73,41 @@ public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 				SetVariable(engine, variable);
 		}
 
-		if(options != null)
-			_assistant.Switch(options);
-
 		var result = engine.DoString(expression);
 		return result != null && result.Length == 1 ? Utility.Convert(result[0]) : Utility.Convert(result);
 	}
 	#endregion
 
 	#region 私有方法
+	private NLua.Lua Create(IExpressionEvaluatorOptions options)
+	{
+		var engine = new NLua.Lua();
+
+		//设置引擎的文本编码方式
+		engine.State.Encoding = Encoding.UTF8;
+
+		//加载 .NET CLR 程序集
+		engine.LoadCLRPackage();
+
+		//设置默认的 Json 解析器
+		engine[nameof(Json)] = new Json();
+
+		//创建辅助对象
+		var assistant = new Assistant(options ?? this.Options);
+
+		//注册辅助方法
+		assistant.Register(engine);
+
+		//设置全局变量
+		if(this.Global != null && this.Global.Count > 0)
+		{
+			foreach(var variable in this.Global)
+				SetVariable(engine, variable);
+		}
+
+		return engine;
+	}
+
 	private static void SetVariable(NLua.Lua engine, KeyValuePair<string, object> variable) => SetVariable(engine, variable.Key, variable.Value);
 	private static void SetVariable(NLua.Lua engine, string name, object value)
 	{
@@ -116,56 +122,24 @@ public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 	protected override void Dispose(bool disposing)
 	{
 		base.Dispose(disposing);
-		Interlocked.Exchange(ref _engine, null)?.Dispose();
+
+		if(disposing)
+			this.Global?.Clear();
 	}
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Variables(NLua.Lua lua) : IDictionary<string, object>
+	private sealed class Assistant(IExpressionEvaluatorOptions options)
 	{
-		private readonly NLua.Lua _lua = lua;
+		private static readonly MethodInfo ListMethod = typeof(Assistant).GetMethod(nameof(List), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+		private static readonly MethodInfo ArrayMethod = typeof(Assistant).GetMethod(nameof(Array), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+		private static readonly MethodInfo DictionaryMethod = typeof(Assistant).GetMethod(nameof(Dictionary), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 
-		public ICollection<string> Keys => _lua.Globals.ToArray();
-		public ICollection<object> Values => _lua.Globals.Select(_lua.GetObjectFromPath).ToArray();
-		public object this[string name]
-		{
-			get => _lua[name];
-			set => _lua[name] = value;
-		}
+		private static readonly MethodInfo ErrorMethod = typeof(Assistant).GetMethod(nameof(Error), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		private static readonly MethodInfo PrintMethod = typeof(Assistant).GetMethod(nameof(Print), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-		public int Count => _lua.Globals.Count();
-		bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
+		private readonly IExpressionEvaluatorOptions _options = options;
 
-		public void Add(string name, object value) => SetVariable(_lua, name, value);
-		void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> variable) => SetVariable(_lua, variable);
-		public void Clear() { }
-		bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> variable) => this.ContainsKey(variable.Key);
-		public bool ContainsKey(string name) => _lua.Globals.Contains(name);
-		void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex) => throw new NotSupportedException();
-		public bool Remove(string name){ _lua.SetObjectToPath(name, null); return name != null; }
-		bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> variable) => this.Remove(variable.Key);
-		public bool TryGetValue(string name, out object value) { value = _lua.GetObjectFromPath(name); return value != null; }
-
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-		{
-			foreach(var name in _lua.Globals)
-				yield return new(name, _lua.GetObjectFromPath(name));
-		}
-	}
-
-	private class Assistant(IExpressionEvaluatorOptions options)
-	{
-		private static MethodInfo ListMethod = typeof(Assistant).GetMethod(nameof(List), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-		private static MethodInfo ArrayMethod = typeof(Assistant).GetMethod(nameof(Array), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-		private static MethodInfo DictionaryMethod = typeof(Assistant).GetMethod(nameof(Dictionary), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-
-		private static MethodInfo ErrorMethod = typeof(Assistant).GetMethod(nameof(Error), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-		private static MethodInfo PrintMethod = typeof(Assistant).GetMethod(nameof(Print), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-		private IExpressionEvaluatorOptions _options = options;
-
-		public void Switch(IExpressionEvaluatorOptions options) => _options = options;
 		public void Register(NLua.Lua lua)
 		{
 			if(lua == null)
