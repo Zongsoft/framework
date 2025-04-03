@@ -2,6 +2,6 @@ artifacts/Zongsoft.Web.OpenApi.plugin
 lib/$(Framework)/Zongsoft.Web.OpenApi.*
 lib/$(Framework)/*/Zongsoft.Web.OpenApi.resources.*
 
-nuget:Scalar.AspNetCore@2.0.26
-nuget:Microsoft.OpenApi@1.6.23
+nuget:Scalar.AspNetCore@2.1.5
+nuget:Microsoft.OpenApi@1.6.24
 nuget:Microsoft.AspNetCore.OpenApi@9.0.2

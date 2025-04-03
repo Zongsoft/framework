@@ -63,8 +63,6 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 	public string Module { get; }
 	/// <summary>获取服务命名空间。</summary>
 	public string Namespace { get; }
-	/// <summary>获取服务模型描述。</summary>
-	public ModelDescriptor Model { get; }
 	/// <summary>获取控制器描述器集合。</summary>
 	public ICollection<ControllerDescriptor> Controllers { get; }
 	#endregion

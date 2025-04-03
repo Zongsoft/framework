@@ -95,8 +95,8 @@ public class Timer : IDisposable
 
 		if(disposing)
 		{
-			_timer.Dispose();
-			_cancellation.Dispose();
+			timer.Dispose();
+			_cancellation?.Dispose();
 		}
 
 		_tick = null;

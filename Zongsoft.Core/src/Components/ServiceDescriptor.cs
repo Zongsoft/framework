@@ -179,6 +179,8 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 		public string Alias { get; protected init; }
 
 		/// <summary>获取操作的方法。</summary>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
 		public MethodInfo Method { get; protected init; }
 
 		/// <summary>获取操作的显示名。</summary>
@@ -200,14 +202,20 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 		protected ServiceDescriptor Service { get; }
 		#endregion
 
-		#region 私有方法
+		#region 虚拟方法
 		protected virtual string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Service.Type,
 		[
+			$"{this.Service.QualifiedName}.{this.Name}.{nameof(ServiceDescriptor.Title)}",
+			$"{this.Service.QualifiedName}.{this.Name}",
 			$"{this.Service.Name}.{this.Name}.{nameof(ServiceDescriptor.Title)}",
-			$"{this.Service.Name}.{this.Name}"
+			$"{this.Service.Name}.{this.Name}",
 		]);
 
-		protected virtual string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Service.Type, $"{this.Service.Name}.{this.Name}.{nameof(ServiceDescriptor.Description)}");
+		protected virtual string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Service.Type,
+		[
+			$"{this.Service.QualifiedName}.{this.Name}.{nameof(ServiceDescriptor.Description)}",
+			$"{this.Service.Name}.{this.Name}.{nameof(ServiceDescriptor.Description)}",
+		]);
 		#endregion
 	}
 }

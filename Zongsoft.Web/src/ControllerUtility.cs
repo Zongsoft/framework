@@ -60,8 +60,24 @@ public static class ControllerUtility
 			descriptor.Namespace,
 			descriptor.QualifiedName,
 			descriptor.Type,
-			descriptor.Model,
-			Actions = descriptor.Controllers.SelectMany(controller => controller.Actions.Select(action => action.Serializable())),
+			descriptor.Title,
+			descriptor.Description,
+			Controllers = descriptor.Controllers.Select(controller => new
+			{
+				controller.ControllerName,
+				controller.ControllerType,
+				controller.ServiceType,
+				controller.Model,
+				Routes = controller.Selectors.Select(selector => Serializable(selector)),
+			}),
+			Operations = descriptor.Operations.Select(operation => new
+			{
+				operation.Name,
+				operation.Alias,
+				operation.Title,
+				operation.Description,
+				Action = operation.Action.Serializable(),
+			}),
 		};
 	}
 
@@ -73,29 +89,29 @@ public static class ControllerUtility
 		return new
 		{
 			Name = action.ActionName,
-			Routes = GetRoutes(action),
+			Routes = action.Selectors.Select(selector => Serializable(selector)),
 			Parameters = action.Parameters
 				.Where(parameter => IsRequestParameter(parameter))
 				.Select(parameter => parameter.Serializable()),
 		};
 
-		static IEnumerable<object> GetRoutes(ActionModel action)
-		{
-			if(action == null)
-				yield break;
+		static bool IsRequestParameter(ParameterModel parameter) =>
+			parameter != null &&
+			parameter.BindingInfo != null &&
+			parameter.BindingInfo.BindingSource != null &&
+			parameter.BindingInfo.BindingSource.IsFromRequest;
+	}
 
-			foreach(var selector in action.Selectors)
-			{
-				if(selector.AttributeRouteModel != null)
-				{
-					var method = GetMethod(selector.AttributeRouteModel.Attribute);
+	public static object Serializable(this SelectorModel selector)
+	{
+		if(selector == null || selector.AttributeRouteModel == null)
+			return null;
 
-					yield return string.IsNullOrEmpty(method) ?
-						selector.AttributeRouteModel.Template :
-						$"{method} {selector.AttributeRouteModel.Template}";
-				}
-			}
-		}
+		var method = GetMethod(selector.AttributeRouteModel.Attribute);
+
+		return string.IsNullOrEmpty(method) ?
+			selector.AttributeRouteModel.Template :
+			$"{method} {selector.AttributeRouteModel.Template}";
 
 		static string GetMethod(object metadata)
 		{
@@ -104,12 +120,6 @@ public static class ControllerUtility
 
 			return null;
 		}
-
-		static bool IsRequestParameter(ParameterModel parameter) =>
-			parameter != null &&
-			parameter.BindingInfo != null &&
-			parameter.BindingInfo.BindingSource != null &&
-			parameter.BindingInfo.BindingSource.IsFromRequest;
 	}
 
 	public static object Serializable(this ParameterModel parameter)
