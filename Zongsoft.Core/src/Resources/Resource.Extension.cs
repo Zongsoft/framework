@@ -43,7 +43,7 @@ partial class Resource
 	public static IResource GetResource(MemberInfo member, IResourceLocator locator = null)
 	{
 		if(member == null)
-			throw new ArgumentNullException(nameof(member));
+			return null;
 
 		if(member is Type type)
 			return GetResource(type);
@@ -56,10 +56,7 @@ partial class Resource
 	public static IResource GetResource<T>(IResourceLocator locator = null) => GetResource(typeof(T).Assembly, locator);
 	public static IResource GetResource(Assembly assembly, IResourceLocator locator = null)
 	{
-		if(assembly == null)
-			throw new ArgumentNullException(nameof(assembly));
-
-		return _cache.GetOrAdd(assembly.GetName().FullName, (key, argument) => new Resource(assembly, argument), locator);
+		return assembly == null ? null : _cache.GetOrAdd(assembly.GetName().FullName, (key, argument) => new Resource(assembly, argument), locator);
 	}
 	#endregion
 }
