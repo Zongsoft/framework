@@ -134,6 +134,26 @@ public partial class RoleController : ControllerBase
 		return await this.Service.RenameAsync(new Identifier(typeof(IRole), id), content, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
+	[HttpPost("{id}/[action]")]
+	[HttpPatch("{id}/[action]")]
+	public async Task<IActionResult> EnableAsync(string id, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(id))
+			return this.BadRequest();
+
+		return await this.Service.EnableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+	}
+
+	[HttpPost("{id}/[action]")]
+	[HttpPatch("{id}/[action]")]
+	public async Task<IActionResult> DisableAsync(string id, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(id))
+			return this.BadRequest();
+
+		return await this.Service.DisableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+	}
+
 	[HttpHead("{id:required}")]
 	[HttpGet("{id}/[action]")]
 	[HttpGet("[action]/{id}")]

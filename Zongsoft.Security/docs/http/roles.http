@@ -31,6 +31,18 @@ GET /Security/Roles/{{namespace}}:{{identity}}/Exists HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
+### 启用角色
+# @prompt id 角色标识
+POST /Security/Roles/{{id}}/Enable HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 禁用角色
+# @prompt id 角色标识
+POST /Security/Roles/{{id}}/Disable HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
 ### 角色新增
 # @prompt name 角色名称
 POST /Security/Roles HTTP/1.1

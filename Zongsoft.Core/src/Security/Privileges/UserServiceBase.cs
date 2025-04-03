@@ -96,13 +96,15 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 
 	public virtual async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
-		var criteria = this.GetCriteria(identifier);
+		//确保不能设置内置用户
+		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = true }, criteria, cancellation) > 0;
 	}
 
 	public virtual async ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
-		var criteria = this.GetCriteria(identifier);
+		//确保不能禁用内置用户
+		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = false }, criteria, cancellation) > 0;
 	}
 
@@ -114,7 +116,8 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		//验证指定的名称是否合法
 		this.OnValidateName(name);
 
-		var criteria = this.GetCriteria(identifier);
+		//确保不能更名内置用户
+		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
 		if(criteria == null)
 			return false;
 
@@ -276,7 +279,8 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(identifier.IsEmpty)
 			return false;
 
-		var criteria = this.GetCriteria(identifier);
+		//确保不能删除内置用户
+		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
 		if(criteria == null)
 			return false;
 
@@ -299,7 +303,8 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 			if(identifier.IsEmpty)
 				continue;
 
-			var criteria = this.GetCriteria(identifier);
+			//确保不能禁用内置用户
+			var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
 			if(criteria == null)
 				continue;
 
@@ -316,6 +321,14 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	public async ValueTask<bool> UpdateAsync(TUser user, CancellationToken cancellation = default)
 	{
 		if(user == null)
+			return false;
+
+		//验证指定的名称是否合法
+		this.OnValidateName(user.Name);
+
+		//确保修改的不是内置用户
+		var criteria = this.GetCriteria(user.Identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
+		if(await this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation))
 			return false;
 
 		return await this.Accessor.UpdateAsync(user, cancellation) > 0;

@@ -212,6 +212,26 @@ public partial class UserController : ControllerBase
 		return await this.Service.SetPhoneAsync(token, secret, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
+	[HttpPost("{id}/[action]")]
+	[HttpPatch("{id}/[action]")]
+	public async Task<IActionResult> EnableAsync(string id, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(id))
+			return this.BadRequest();
+
+		return await this.Service.EnableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+	}
+
+	[HttpPost("{id}/[action]")]
+	[HttpPatch("{id}/[action]")]
+	public async Task<IActionResult> DisableAsync(string id, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(id))
+			return this.BadRequest();
+
+		return await this.Service.DisableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+	}
+
 	[HttpHead("{id:required}")]
 	[HttpGet("{id}/[action]")]
 	[HttpGet("[action]/{id}")]
