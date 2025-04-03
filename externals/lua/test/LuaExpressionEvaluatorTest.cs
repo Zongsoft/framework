@@ -226,8 +226,8 @@ public class LuaExpressionEvaluatorTest
 	public void TestEvaluateInvoke()
 	{
 		using var evaluator = new LuaExpressionEvaluator();
-		evaluator.Global["add"] = Add;
-		evaluator.Global["subtract"] = Subtract;
+		evaluator.Global["add"] = (Delegate)Add;
+		evaluator.Global["subtract"] = (Delegate)Subtract;
 
 		var result = evaluator.Evaluate("return 1+2", null);
 		Assert.NotNull(result);
