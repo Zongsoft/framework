@@ -53,7 +53,7 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 
 		this.Module = module;
 		this.Namespace = @namespace;
-		this.Controllers = new List<ControllerDescriptor>();
+		this.Controllers = new HashSet<ControllerDescriptor>();
 		this.Operations = new ControllerOperationDescriptorCollection(this);
 	}
 	#endregion
@@ -196,20 +196,31 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 	#endregion
 
 	#region 嵌套子类
-	public sealed class ControllerDescriptor : ControllerModel
+	public sealed class ControllerDescriptor : ControllerModel, IEquatable<ControllerDescriptor>
 	{
+		#region 构造函数
 		public ControllerDescriptor(ControllerModel controller) : base(controller)
 		{
 			(var modelType, var serviceType) = GetServiceInfo(controller.ControllerType);
 			this.Model = modelType == null ? null : Zongsoft.Data.Model.GetDescriptor(modelType);
 			this.ServiceType = serviceType;
 		}
+		#endregion
 
-		/// <summary>获取服务模型描述。</summary>
+		#region 公共属性
+		/// <summary>获取服务模型。</summary>
 		public ModelDescriptor Model { get; }
 
 		/// <summary>获取服务类型。</summary>
 		public Type ServiceType { get; }
+		#endregion
+
+		#region 重写方法
+		public bool Equals(ControllerDescriptor other) => other is not null && this.ControllerType == other.ControllerType;
+		public override bool Equals(object obj) => obj is ControllerDescriptor other && this.Equals(other);
+		public override int GetHashCode() => this.ControllerType.GetHashCode();
+		public override string ToString() => base.DisplayName;
+		#endregion
 	}
 
 	public sealed class ControllerOperationDescriptor : Operation
