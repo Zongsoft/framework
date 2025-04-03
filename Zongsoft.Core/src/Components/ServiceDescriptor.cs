@@ -86,11 +86,17 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 	#region 虚拟方法
 	protected virtual string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Type,
 	[
+		$"{this.QualifiedName}.{nameof(this.Title)}",
+		$"{this.QualifiedName}",
 		$"{this.Name}.{nameof(this.Title)}",
 		this.Name
 	]);
 
-	protected virtual string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(this.Description)}");
+	protected virtual string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type,
+	[
+		$"{this.QualifiedName}.{nameof(this.Description)}",
+		$"{this.Name}.{nameof(this.Description)}",
+	]);
 	#endregion
 
 	#region 私有方法

@@ -70,6 +70,48 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 	#endregion
 
 	#region 重写方法
+	protected override string GetTitle()
+	{
+		if(this.Type == null && this.Controllers.Count > 0)
+		{
+			foreach(var controller in this.Controllers)
+			{
+				var result = Resources.ResourceUtility.GetResourceString(controller.ControllerType,
+				[
+					$"{this.QualifiedName}.{nameof(this.Title)}",
+					$"{this.QualifiedName}",
+					$"{this.Name}.{nameof(this.Title)}",
+					$"{this.Name}",
+				]);
+
+				if(!string.IsNullOrEmpty(result))
+					return result;
+			}
+		}
+
+		return base.GetTitle();
+	}
+
+	protected override string GetDescription()
+	{
+		if(this.Type == null && this.Controllers.Count > 0)
+		{
+			foreach(var controller in this.Controllers)
+			{
+				var result = Resources.ResourceUtility.GetResourceString(controller.ControllerType,
+				[
+					$"{this.QualifiedName}.{nameof(this.Description)}",
+					$"{this.Name}.{nameof(this.Description)}",
+				]);
+
+				if(!string.IsNullOrEmpty(result))
+					return result;
+			}
+		}
+
+		return base.GetTitle();
+	}
+
 	public bool Equals(ControllerServiceDescriptor other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
 	#endregion
 
