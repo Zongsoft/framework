@@ -55,7 +55,8 @@ public interface IUser : Zongsoft.Components.IIdentifiable
 	bool Enabled { get; set; }
 
 	/// <summary>获取或设置用户性别。</summary>
-	string Gender { get; set; }
+	/// <remarks>提示：真(<c>True</c>)表示男，假(<c>False</c>)表示女，空(<c>null</c>)表示未定义。</remarks>
+	bool? Gender { get; set; }
 
 	/// <summary>获取或设置用户头像。</summary>
 	string Avatar { get; set; }

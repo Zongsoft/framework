@@ -51,8 +51,8 @@ public static class AuthenticatorExtension
 			identity.AddClaim(new Claim(ClaimTypes.Email, user.Email, ClaimValueTypes.String, issuer, issuer, identity));
 		if(!string.IsNullOrEmpty(user.Phone))
 			identity.AddClaim(new Claim(ClaimTypes.MobilePhone, user.Phone, ClaimValueTypes.String, issuer, issuer, identity));
-		if(!string.IsNullOrEmpty(user.Gender))
-			identity.AddClaim(new Claim(nameof(user.Gender), user.Gender, ClaimValueTypes.String, issuer, issuer, identity));
+		if(user.Gender.HasValue)
+			identity.AddClaim(new Claim(nameof(user.Gender), user.Gender.ToString(), ClaimValueTypes.Boolean, issuer, issuer, identity));
 		if(!string.IsNullOrEmpty(user.Avatar))
 			identity.AddClaim(new Claim(nameof(user.Avatar), user.Avatar, ClaimValueTypes.String, issuer, issuer, identity));
 		if(!string.IsNullOrEmpty(user.Namespace))

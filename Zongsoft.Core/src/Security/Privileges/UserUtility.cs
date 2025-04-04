@@ -128,8 +128,8 @@ public static class UserUtility
 		if(!string.IsNullOrEmpty(user.Phone))
 			identity.SetClaim(ClaimTypes.MobilePhone, user.Phone, ClaimValueTypes.String);
 
-		if(!string.IsNullOrEmpty(user.Gender))
-			identity.SetClaim(ClaimTypes.Gender, user.Gender, ClaimValueTypes.String);
+		if(user.Gender.HasValue)
+			identity.SetClaim(ClaimTypes.Gender, user.Gender, ClaimValueTypes.Boolean);
 		if(!string.IsNullOrEmpty(user.Avatar))
 			identity.SetClaim(nameof(user.Avatar), user.Avatar, ClaimValueTypes.String);
 
