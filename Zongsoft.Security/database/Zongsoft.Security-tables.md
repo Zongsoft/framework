@@ -13,8 +13,8 @@ Password          | varbinary | 64  | ✓ | 登录密码
 PasswordSalt      | bigint    | 8   | ✓ | 密码盐(_随机数_)
 Email             | varchar   | 50  | ✓ | 绑定的电子邮箱(_在所属命名空间内具有唯一性_)
 Phone             | varchar   | 50  | ✓ | 绑定的手机号码(_在所属命名空间内具有唯一性_)
-Status            | byte      | 1   | ✗ | 用户状态(_0:正常; 1:待批准; 2:已禁用_)
-StatusTimestamp   | datetime  | -   | ✓ | 状态更改时间
+Gender            | bool      | -   | ✓ | 用户性别(_1:男; 0:女_)
+Enabled           | bool      | -   | ✗ | 是否可用
 PasswordQuestion1 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[1]
 PasswordAnswer1   | varbinary | 64  | ✓ | 用户的密码问答的答案[1] (_哈希值_)
 PasswordQuestion2 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[2]

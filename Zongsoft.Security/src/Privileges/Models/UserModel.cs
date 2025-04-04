@@ -43,17 +43,11 @@ public abstract class UserModel : IUser, IIdentifiable, IIdentifiable<uint>, IEq
 	public abstract string Email { get; set; }
 	public abstract string Phone { get; set; }
 	public abstract bool? Gender { get; set; }
+	public abstract bool Enabled { get; set; }
 	public abstract string Avatar { get; set; }
 	public abstract string Nickname { get; set; }
 	public abstract string Namespace { get; set; }
-	public abstract UserStatus Status { get; set; }
 	public abstract string Description { get; set; }
-
-	public bool Enabled
-	{
-		get => this.Status == UserStatus.Active;
-		set => this.Status = value ? UserStatus.Active : UserStatus.Disabled;
-	}
 
 	public void Identify<T>(T value)
 	{

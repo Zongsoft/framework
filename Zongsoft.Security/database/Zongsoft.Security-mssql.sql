@@ -21,8 +21,8 @@ CREATE TABLE [dbo].[Security_User] (
   [PasswordSalt]      BIGINT        NULL,
   [Email]             VARCHAR(50)   NULL,
   [Phone]             VARCHAR(50)   NULL,
-  [Status]            TINYINT       NOT NULL DEFAULT 0,
-  [StatusTimestamp]   DATETIME      NULL,
+  [Gender]            BIT           NULL,
+  [Enabled]           BIT           NOT NULL DEFAULT 1,
   [PasswordQuestion1] NVARCHAR(50)  NULL,
   [PasswordAnswer1]   VARBINARY(64) NULL,
   [PasswordQuestion2] NVARCHAR(50)  NULL,
@@ -94,8 +94,8 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户昵称',
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户头像', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Avatar'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的电子邮箱，该邮箱地址在所属命名空间内具有唯一性', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Email'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的手机号码，该手机号码在所属命名空间内具有唯一性', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Phone'
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户状态（0:正常; 1:待批准; 2:已停用）', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Status'
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'状态更新时间', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'StatusTimestamp'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户性别（0:女; 1:男）', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Gender'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'是否可用', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Enabled'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答的题面(1)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordQuestion1'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答的答案(1)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordAnswer1'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答的题面(2)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordQuestion2'

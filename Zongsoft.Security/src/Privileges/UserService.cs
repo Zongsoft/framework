@@ -46,20 +46,6 @@ public partial class UserService : UserServiceBase<UserModel>
 	public UserService() => base.Passworder = new Passworder(this);
 	#endregion
 
-	#region 操作方法
-	public override async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
-	{
-		var criteria = this.GetCriteria(identifier);
-		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Status = UserStatus.Active }, criteria, cancellation) > 0;
-	}
-
-	public override async ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default)
-	{
-		var criteria = this.GetCriteria(identifier);
-		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Status = UserStatus.Disabled }, criteria, cancellation) > 0;
-	}
-	#endregion
-
 	#region 重写方法
 	protected override IDataAccess Accessor => Module.Current.Accessor;
 	protected override IServiceProvider Services => Module.Current.Services;
@@ -80,13 +66,8 @@ partial class UserService
 		protected override ValueTask<bool> OnVerifyAsync(string password, UserCipher cipher, CancellationToken cancellation)
 		{
 			//确认用户状态
-			switch(cipher.Status)
-			{
-				case UserStatus.Disabled:
-					throw new AuthenticationException(SecurityReasons.AccountDisabled);
-				case UserStatus.Unapproved:
-					throw new AuthenticationException(SecurityReasons.AccountUnapproved);
-			}
+			if(!cipher.Enabled)
+				throw new AuthenticationException(SecurityReasons.AccountDisabled);
 
 			return base.OnVerifyAsync(password, cipher, cancellation);
 		}
@@ -96,7 +77,7 @@ partial class UserService
 			public UserCipher() => this.Name = "SHA1";
 
 			public uint UserId { get; set; }
-			public UserStatus Status { get; set; }
+			public bool Enabled { get; set; }
 
 			public byte[] Password
 			{

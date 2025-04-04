@@ -31,6 +31,18 @@ GET /Security/Users/{{namespace}}:{{identity}}/Exists HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
+### 启用用户
+# @prompt id 用户标识
+POST /Security/Users/{{id}}/Enable HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 禁用用户
+# @prompt id 用户标识
+POST /Security/Users/{{id}}/Disable HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
 ### 用户新增
 # @prompt username 用户名称
 # @prompt password 用户密码
