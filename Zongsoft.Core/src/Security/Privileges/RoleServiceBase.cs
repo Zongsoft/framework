@@ -82,13 +82,15 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 
 	public virtual async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
-		var criteria = this.GetCriteria(identifier);
+		//确保不能设置内置角色
+		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = true }, criteria, cancellation) > 0;
 	}
 
 	public virtual async ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
-		var criteria = this.GetCriteria(identifier);
+		//确保不能禁用内置角色
+		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = false }, criteria, cancellation) > 0;
 	}
 
@@ -100,7 +102,8 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		//验证指定的名称是否合法
 		this.OnValidateName(name);
 
-		var criteria = this.GetCriteria(identifier);
+		//确保不能更名内置角色
+		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
 		if(criteria == null)
 			return false;
 
@@ -163,7 +166,8 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		if(identifier.IsEmpty)
 			return false;
 
-		var criteria = this.GetCriteria(identifier);
+		//确保不能删除内置角色
+		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
 		if(criteria == null)
 			return false;
 
@@ -197,7 +201,8 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 			if(identifier.IsEmpty)
 				continue;
 
-			var criteria = this.GetCriteria(identifier);
+			//确保不能删除内置角色
+			var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
 			if(criteria == null)
 				continue;
 
@@ -225,6 +230,11 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 	public async ValueTask<bool> UpdateAsync(TRole role, CancellationToken cancellation = default)
 	{
 		if(role == null)
+			return false;
+
+		//确保修改的不是内置角色
+		var criteria = this.GetCriteria(role.Identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
+		if(await this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation))
 			return false;
 
 		return await this.Accessor.UpdateAsync(role, cancellation) > 0;

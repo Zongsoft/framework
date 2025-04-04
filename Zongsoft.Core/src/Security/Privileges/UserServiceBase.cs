@@ -293,7 +293,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 			return 0;
 
 		//删除数量
-		var count = 0;
+		var total = 0;
 
 		//创建事务
 		using var transaction = new Zongsoft.Transactions.Transaction();
@@ -308,14 +308,21 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 			if(criteria == null)
 				continue;
 
-			count += await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+			var count = await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+			if(count > 0)
+			{
+				total += count;
+
+				//删除成员表中当前用户的所有父级
+				await Authentication.Servicer.Members.RemoveAsync(Member.User(identifier), cancellation);
+			}
 		}
 
 		//提交事务
 		transaction.Commit();
 
 		//返回删除数量
-		return count;
+		return total;
 	}
 
 	public async ValueTask<bool> UpdateAsync(TUser user, CancellationToken cancellation = default)
