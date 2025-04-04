@@ -17,7 +17,7 @@ public class PythonExpressionEvaluatorTest
 		Assert.NotNull(result);
 		Assert.Equal(3, Zongsoft.Common.Convert.ConvertValue<int>(result));
 
-		variables["subtract"] = Subtract;
+		variables["subtract"] = (Delegate)Subtract;
 		result = evaluator.Evaluate("subtract(100, 20)", variables);
 		Assert.NotNull(result);
 		Assert.Equal(80, Zongsoft.Common.Convert.ConvertValue<int>(result));
@@ -32,8 +32,8 @@ public class PythonExpressionEvaluatorTest
 	public void TestEvaluate2()
 	{
 		var evaluator = new PythonExpressionEvaluator();
-		evaluator.Global["add"] = Add;
-		evaluator.Global["subtract"] = Subtract;
+		evaluator.Global["add"] = (Delegate)Add;
+		evaluator.Global["subtract"] = (Delegate)Subtract;
 
 		var variables = new Dictionary<string, object>
 		{
