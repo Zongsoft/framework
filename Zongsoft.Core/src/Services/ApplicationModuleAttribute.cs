@@ -73,14 +73,15 @@ public class ApplicationModuleAttribute : Attribute
 		while(index > 0)
 		{
 			var findable = name[..index];
-			var assemblies = assembly.GetReferencedAssemblies();
+			var assemblies = assembly.GetReferencedAssemblies().AsSpan();
 
+			//优先从当前程序的引用中查找
 			for(int i = 0; i < assemblies.Length; i++)
 			{
 				if(assemblies[i].Name != findable)
 					continue;
 
-				var found = Match(assemblies[i]);
+				var found = GetAssembly(assemblies[i]);
 
 				if(found != null)
 				{
@@ -93,13 +94,39 @@ public class ApplicationModuleAttribute : Attribute
 				}
 			}
 
+			//再从当前进程已加载程序集中查找
+			attribute = Find(findable);
+			if(attribute != null)
+				return attribute;
+
 			//继续向前查找
 			index = name.LastIndexOf('.', index - 1);
 		}
 
 		return null;
 
-		static Assembly Match(AssemblyName name)
+		static ApplicationModuleAttribute Find(string name)
+		{
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+			for(int i = 0; i < assemblies.Length; i++)
+			{
+				if(assemblies[i].IsDynamic || assemblies[i].ReflectionOnly)
+					continue;
+
+				if(assemblies[i].GetName().Name == name)
+				{
+					var attribute = assemblies[i].GetCustomAttribute<ApplicationModuleAttribute>();
+
+					if(attribute != null)
+						return attribute;
+				}
+			}
+
+			return null;
+		}
+
+		static Assembly GetAssembly(AssemblyName name)
 		{
 			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
