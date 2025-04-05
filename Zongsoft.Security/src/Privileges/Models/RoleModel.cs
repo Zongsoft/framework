@@ -38,6 +38,7 @@ namespace Zongsoft.Security.Privileges.Models;
 [Model($"{Module.NAME}.Role")]
 public abstract class RoleModel : IRole, IIdentifiable, IIdentifiable<uint>, IEquatable<RoleModel>
 {
+	#region 公共属性
 	public abstract uint RoleId { get; set; }
 	public abstract string Name { get; set; }
 	public abstract bool Enabled { get; set; }
@@ -45,7 +46,23 @@ public abstract class RoleModel : IRole, IIdentifiable, IIdentifiable<uint>, IEq
 	public abstract string Nickname { get; set; }
 	public abstract string Namespace { get; set; }
 	public abstract string Description { get; set; }
+	#endregion
 
+	#region 标识属性
+	Identifier IIdentifiable.Identifier
+	{
+		get => new(typeof(RoleModel), this.RoleId, this.Name, this.Description);
+		set => this.RoleId = value.Validate<IRole, uint>(out var id) ? id : throw new ArgumentException();
+	}
+
+	Identifier<uint> IIdentifiable<uint>.Identifier
+	{
+		get => new(typeof(RoleModel), this.RoleId, this.Name, this.Description);
+		set => this.RoleId = value.Validate<IRole>(out var id) ? id : throw new ArgumentException();
+	}
+	#endregion
+
+	#region 公共方法
 	public void Identify<T>(T value)
 	{
 		switch(value)
@@ -67,21 +84,12 @@ public abstract class RoleModel : IRole, IIdentifiable, IIdentifiable<uint>, IEq
 				throw new InvalidOperationException($"The specified '{value}' value cannot be converted to a role identifier.");
 		}
 	}
+	#endregion
 
+	#region 重写方法
 	public virtual bool Equals(RoleModel other) => other is not null && this.RoleId == other.RoleId;
 	public override bool Equals(object obj) => obj is RoleModel other && this.Equals(other);
 	public override int GetHashCode() => this.RoleId.GetHashCode();
 	public override string ToString() => string.IsNullOrEmpty(this.Namespace) ? $"[{this.RoleId}]{this.Name}" : $"[{this.RoleId}]{this.Namespace}:{this.Name}";
-
-	Identifier IIdentifiable.Identifier
-	{
-		get => new(typeof(RoleModel), this.RoleId, this.Name, this.Description);
-		set => this.RoleId = value.Validate<IRole, uint>(out var id) ? id : throw new ArgumentException();
-	}
-
-	Identifier<uint> IIdentifiable<uint>.Identifier
-	{
-		get => new (typeof(RoleModel), this.RoleId, this.Name, this.Description);
-		set => this.RoleId = value.Validate<IRole>(out var id) ? id : throw new ArgumentException();
-	}
+	#endregion
 }
