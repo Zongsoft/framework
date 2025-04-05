@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Text.Json;
@@ -37,16 +39,17 @@ namespace Zongsoft.Serialization.Json.Converters;
 
 public class ModelConverterFactory : JsonConverterFactory
 {
+	private static readonly ConcurrentDictionary<Type, Type> _mapping = new();
+	private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _properties = new();
+
 	public override bool CanConvert(Type type) => (type.IsInterface || type.IsAbstract) && !Common.TypeExtension.IsEnumerable(type);
 	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => (JsonConverter)Activator.CreateInstance(typeof(ModelConverter<>).MakeGenericType(type));
 
 	private class ModelConverter<T> : JsonConverter<T> where T : class
 	{
-		private static readonly ConcurrentDictionary<Type, Type> _mapping_ = new();
-
 		public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
-			var actualType = _mapping_.GetOrAdd(type, key => Data.Model.Build<T>().GetType());
+			var actualType = _mapping.GetOrAdd(type, key => Data.Model.Build<T>().GetType());
 			return (T)JsonSerializer.Deserialize(ref reader, actualType, options);
 		}
 
@@ -59,7 +62,7 @@ public class ModelConverterFactory : JsonConverterFactory
 			}
 
 			if(value is Data.IModel model)
-				WriteModel(writer, model.GetChanges(), options);
+				WriteModel(writer, model.GetChanges().Concat(GetProperties(model, options)), options);
 			else
 				JsonSerializer.Serialize(writer, value, typeof(object), options);
 
@@ -84,6 +87,30 @@ public class ModelConverterFactory : JsonConverterFactory
 				}
 
 				writer.WriteEndObject();
+			}
+		}
+
+		private static PropertyInfo[] GetProperties(Type type)
+		{
+			if(type.IsInterface)
+				return [];
+
+			return _properties.GetOrAdd(type, key =>
+				key.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+				.Where(property => property.CanRead && !property.GetMethod.IsAbstract && property.GetIndexParameters().Length == 0)
+				.ToArray());
+		}
+
+		private static IEnumerable<KeyValuePair<string, object>> GetProperties(Data.IModel model, JsonSerializerOptions options)
+		{
+			var properties = GetProperties(Data.Model.GetModelType(model));
+
+			for(int i = 0; i < properties.Length; i++)
+			{
+				var value = Zongsoft.Reflection.Reflector.GetValue(properties[i], ref model);
+
+				if(value != null || (options.DefaultIgnoreCondition & JsonIgnoreCondition.WhenWritingNull) != JsonIgnoreCondition.WhenWritingNull)
+					yield return new KeyValuePair<string, object>(properties[i].Name, value);
 			}
 		}
 	}
