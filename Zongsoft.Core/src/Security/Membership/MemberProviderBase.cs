@@ -60,10 +60,11 @@ namespace Zongsoft.Security.Membership
 
 					if(_dataAccess != null && !string.IsNullOrEmpty(Mapping.Instance.Member))
 					{
-						_dataAccess.Naming.Map<Member>(Mapping.Instance.Member);
-						_dataAccess.Naming.Map<Member<TRole, TUser>>(Mapping.Instance.Member);
+						Model.Naming.Map<Member>(Mapping.Instance.Member);
+						Model.Naming.Map<Member<TRole, TUser>>(Mapping.Instance.Member);
 					}
 				}
+
 				return _dataAccess;
 			}
 		}

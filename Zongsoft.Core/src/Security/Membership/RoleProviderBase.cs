@@ -65,9 +65,10 @@ namespace Zongsoft.Security.Membership
 
 					if(_dataAccess != null && !string.IsNullOrEmpty(Mapping.Instance.Role))
 					{
-						_dataAccess.Naming.Map<TRole>(Mapping.Instance.Role);
+						Model.Naming.Map<TRole>(Mapping.Instance.Role);
 					}
 				}
+
 				return _dataAccess;
 			}
 		}
@@ -344,7 +345,7 @@ namespace Zongsoft.Security.Membership
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private Condition GetNamespace(string @namespace)
 		{
-			return Mapping.Instance.Namespace.GetCondition(this.DataAccess.Naming.Get<TRole>(), @namespace);
+			return Mapping.Instance.Namespace.GetCondition(Model.Naming.Get<TRole>(), @namespace);
 		}
 		#endregion
 	}

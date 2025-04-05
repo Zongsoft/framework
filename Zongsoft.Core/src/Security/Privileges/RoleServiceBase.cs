@@ -45,7 +45,7 @@ namespace Zongsoft.Security.Privileges;
 public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService, IMatchable, IMatchable<ClaimsPrincipal> where TRole : IRole
 {
 	#region 公共属性
-	public virtual string Name => this.Accessor.Naming.Get<TRole>();
+	public virtual string Name => Model.Naming.Get<TRole>();
 	#endregion
 
 	#region 保护属性

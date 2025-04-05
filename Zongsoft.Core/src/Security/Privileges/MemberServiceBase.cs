@@ -46,7 +46,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 	where TMember : IMember<TRole>
 {
 	#region 公共属性
-	public virtual string Name => this.Accessor.Naming.Get<TMember>();
+	public virtual string Name => Model.Naming.Get<TMember>();
 	#endregion
 
 	#region 保护属性

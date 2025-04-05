@@ -59,9 +59,9 @@ namespace Zongsoft.Security.Membership
 					if(_dataAccess != null)
 					{
 						if(!string.IsNullOrEmpty(Mapping.Instance.Permission))
-							_dataAccess.Naming.Map<PermissionModel>(Mapping.Instance.Permission);
+							Model.Naming.Map<PermissionModel>(Mapping.Instance.Permission);
 						if(!string.IsNullOrEmpty(Mapping.Instance.PermissionFilter))
-							_dataAccess.Naming.Map<PermissionFilterModel>(Mapping.Instance.PermissionFilter);
+							Model.Naming.Map<PermissionFilterModel>(Mapping.Instance.PermissionFilter);
 					}
 				}
 

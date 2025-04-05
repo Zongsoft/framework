@@ -81,7 +81,6 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	private string _name;
 	private ISchemaParser _schema;
 	private IDataSequencer _sequencer;
-	private IDataAccessNaming _naming;
 	private DataAccessFilterCollection _filters;
 	#endregion
 
@@ -89,14 +88,6 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	protected DataAccessBase(string name)
 	{
 		_name = name ?? string.Empty;
-		_naming = new DataAccessNaming();
-		_filters = new DataAccessFilterCollection();
-	}
-
-	protected DataAccessBase(string name, IDataAccessNaming naming)
-	{
-		_name = name ?? string.Empty;
-		_naming = naming ?? throw new ArgumentNullException(nameof(naming));
 		_filters = new DataAccessFilterCollection();
 	}
 	#endregion
@@ -108,9 +99,6 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		get => _name;
 		set => _name = value ?? string.Empty;
 	}
-
-	/// <summary>获取数据访问名称映射器。</summary>
-	public IDataAccessNaming Naming => _naming;
 
 	/// <summary>获取数据模式解析器。</summary>
 	public ISchemaParser Schema => _schema ??= this.CreateSchema();
@@ -1921,7 +1909,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	private string GetName<T>() => this.GetName(typeof(T));
 	protected virtual string GetName(Type type)
 	{
-		var name = _naming.Get(type);
+		var name = Model.Naming.Get(type);
 
 		if(string.IsNullOrEmpty(name))
 			throw new InvalidOperationException($"Missing data access name mapping of the '{type.FullName}' type.");

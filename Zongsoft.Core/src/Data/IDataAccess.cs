@@ -72,9 +72,6 @@ public interface IDataAccess : IDisposable
 	/// <summary>获取数据访问的应用（子系统/业务模块）名。</summary>
 	string Name { get; }
 
-	/// <summary>获取数据访问名映射器。</summary>
-	IDataAccessNaming Naming { get; }
-
 	/// <summary>获取数据模式解析器。</summary>
 	ISchemaParser Schema { get; }
 

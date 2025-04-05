@@ -62,7 +62,7 @@ namespace Zongsoft.Data
 
 		#region 递增方法
 		public static long Increase<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options = null) => Increase<T>(dataAccess, member, criteria, 1, options);
-		public static long Increase<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase(dataAccess, dataAccess.Naming.Get<T>(), member, criteria, interval, options);
+		public static long Increase<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase(dataAccess, Model.Naming.Get<T>(), member, criteria, interval, options);
 		public static long Increase(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options = null) => Increase(dataAccess, name, member, criteria, 1, options);
 		public static long Increase(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options = null)
 		{
@@ -82,7 +82,7 @@ namespace Zongsoft.Data
 		public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, 1, null, cancellation);
 		public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, 1, options, cancellation);
 		public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, interval, null, cancellation);
-		public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, dataAccess.Naming.Get<T>(), member, criteria, interval, options, cancellation);
+		public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, Model.Naming.Get<T>(), member, criteria, interval, options, cancellation);
 		public static ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, 1, null, cancellation);
 		public static ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, 1, options, cancellation);
 		public static ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, interval, null, cancellation);

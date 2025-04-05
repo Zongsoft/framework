@@ -305,12 +305,7 @@ namespace Zongsoft.Data
 			get
 			{
 				if(string.IsNullOrEmpty(_name))
-				{
-					var dataAccess = this.DataAccess;
-
-					if(dataAccess != null && dataAccess.Naming != null)
-						_name = dataAccess.Naming.Get<TModel>();
-				}
+					_name = Model.Naming.Get<TModel>();
 
 				return _name;
 			}

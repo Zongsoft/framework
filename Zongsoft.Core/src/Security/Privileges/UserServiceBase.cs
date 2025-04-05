@@ -53,7 +53,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	#endregion
 
 	#region 公共属性
-	public virtual string Name => this.Accessor.Naming.Get<TUser>();
+	public virtual string Name => Model.Naming.Get<TUser>();
 	public Passworder Passworder { get; protected set; }
 	public ISecretor Secretor
 	{

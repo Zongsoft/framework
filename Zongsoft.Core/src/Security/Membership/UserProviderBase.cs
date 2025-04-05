@@ -83,9 +83,10 @@ namespace Zongsoft.Security.Membership
 
 					if(_dataAccess != null && !string.IsNullOrEmpty(Mapping.Instance.User))
 					{
-						_dataAccess.Naming.Map<TUser>(Mapping.Instance.User);
+						Model.Naming.Map<TUser>(Mapping.Instance.User);
 					}
 				}
+
 				return _dataAccess;
 			}
 		}
@@ -813,7 +814,7 @@ namespace Zongsoft.Security.Membership
 		protected virtual PasswordToken GetPassword(uint userId)
 		{
 			return this.DataAccess.Select<PasswordToken>(
-				this.DataAccess.Naming.Get<TUser>(),
+				Model.Naming.Get<TUser>(),
 				Condition.Equal(nameof(IUserModel.UserId), userId)).FirstOrDefault();
 		}
 
@@ -849,7 +850,7 @@ namespace Zongsoft.Security.Membership
 			if(criteria == null)
 				throw new ArgumentNullException(nameof(criteria));
 
-			var question = this.DataAccess.Select<string>(this.DataAccess.Naming.Get<TUser>(), criteria, nameof(UserSecretRecord.SecretQuestion)).FirstOrDefault();
+			var question = this.DataAccess.Select<string>(Model.Naming.Get<TUser>(), criteria, nameof(UserSecretRecord.SecretQuestion)).FirstOrDefault();
 
 			if(string.IsNullOrEmpty(question))
 				return null;
@@ -860,7 +861,7 @@ namespace Zongsoft.Security.Membership
 		protected virtual IReadOnlyList<byte[]> GetSecretAnswer(string identity, string @namespace, out uint userId)
 		{
 			var record = this.DataAccess.Select<UserSecretRecord>(
-				this.DataAccess.Naming.Get<TUser>(),
+				Model.Naming.Get<TUser>(),
 				MembershipUtility.GetIdentityCondition(identity) & this.GetNamespace(@namespace),
 				$"{nameof(UserSecretRecord.UserId)}," +
 				$"{nameof(UserSecretRecord.SecretQuestion)}," +
@@ -983,7 +984,7 @@ namespace Zongsoft.Security.Membership
 
 		#region 私有方法
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private Condition GetNamespace(string @namespace) => Mapping.Instance.Namespace.GetCondition(this.DataAccess.Naming.Get<TUser>(), @namespace);
+		private Condition GetNamespace(string @namespace) => Mapping.Instance.Namespace.GetCondition(Model.Naming.Get<TUser>(), @namespace);
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static uint GetUserId(uint userId)
@@ -1018,7 +1019,7 @@ namespace Zongsoft.Security.Membership
 				userId = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
 
 			var current = ApplicationContext.Current.Principal.Identity.GetIdentifier<uint>();
-			secured = ApplicationContext.Current.Principal.InRoles(new[] { IRoleModel.Administrators, IRoleModel.Security });
+			secured = ApplicationContext.Current.Principal.InRoles([IRoleModel.Administrators, IRoleModel.Security]);
 
 			if(current == userId || secured)
 				return userId;
