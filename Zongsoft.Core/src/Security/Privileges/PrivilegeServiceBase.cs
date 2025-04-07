@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Claims;
@@ -49,6 +50,7 @@ public abstract class PrivilegeServiceBase : IPrivilegeService, IMatchable, IMat
 
 	#region 获取方法
 	public IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default) => this.OnGetPrivilegesAsync(identifier, parameters, cancellation);
+	public IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(IEnumerable<Identifier> identifiers, Parameters parameters, CancellationToken cancellation = default) => this.OnGetPrivilegesAsync(identifiers, parameters, cancellation);
 	#endregion
 
 	#region 设置方法
@@ -66,7 +68,8 @@ public abstract class PrivilegeServiceBase : IPrivilegeService, IMatchable, IMat
 	#endregion
 
 	#region 抽象方法
-	protected abstract IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation);
+	protected virtual IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation) => this.OnGetPrivilegesAsync([identifier], parameters, cancellation);
+	protected abstract IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(IEnumerable<Identifier> identifiers, Parameters parameters, CancellationToken cancellation);
 	protected abstract ValueTask<int> OnResetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation);
 	protected abstract ValueTask<int> OnSetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation);
 	#endregion
