@@ -561,7 +561,7 @@ namespace Zongsoft.Reflection
 		#endregion
 
 		#region 辅助方法
-		private static Type GetMemberType(this MemberInfo member) => member.MemberType switch
+		internal static Type GetMemberType(this MemberInfo member) => member.MemberType switch
 		{
 			MemberTypes.Field => ((FieldInfo)member).FieldType,
 			MemberTypes.Property => ((PropertyInfo)member).PropertyType,

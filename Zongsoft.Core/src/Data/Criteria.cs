@@ -34,6 +34,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 using Zongsoft.Common;
+using Zongsoft.Reflection;
 
 namespace Zongsoft.Data
 {
@@ -96,58 +97,62 @@ namespace Zongsoft.Data
 				throw new ArgumentException($"The specified ‘{criteriaType.FullName}’ type is not a valid criteria type.");
 
 			var instance = (IModel)(criteriaType.IsAbstract ? Model.Build(criteriaType) : Activator.CreateInstance(criteriaType));
-			var descriptor = _cache.GetOrAdd(criteriaType, type => new CriteriaDescriptor(type));
-			var properties = new List<CriteriaPropertyDescripor>();
 
 			foreach(var member in members)
 			{
-				if(descriptor.Properties.TryGetValue(member.Key, out var property))
+				var expression = Reflection.Expressions.MemberExpressionParser.Parse(member.Key);
+
+				var succeed = Reflection.Expressions.MemberExpressionEvaluator.Default.SetValue(expression, instance, ctx =>
 				{
-					properties.Add(property);
+					var memberType = ctx.Member.GetMemberType();
 
-					object propertyValue;
-
-					if(property.PropertyType.IsArray || property.PropertyType.IsCollection())
+					if(memberType.IsArray || memberType.IsCollection())
 					{
-						var elementType = property.PropertyType.GetElementType();
+						var elementType = memberType.GetElementType();
 						var parts = member.Value.Trim('(', ')', '[', ']').Slice(',').Select(p => Common.Convert.ConvertValue(p, elementType)).ToArray();
 
-						if(property.PropertyType.IsArray)
+						if(memberType.IsArray)
 						{
-							propertyValue = Array.CreateInstance(elementType, parts.Length);
-							Array.Copy(parts, (Array)propertyValue, parts.Length);
+							ctx.Value = Array.CreateInstance(elementType, parts.Length);
+							Array.Copy(parts, (Array)ctx.Value, parts.Length);
 						}
 						else
 						{
-							propertyValue = Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+							ctx.Value = Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
 
 							for(int i = 0; i < parts.Length; i++)
-								((System.Collections.IList)propertyValue).Add(parts[i]);
+								((System.Collections.IList)ctx.Value).Add(parts[i]);
 						}
 					}
 					else
 					{
-						if((property.PropertyType == typeof(bool) || property.PropertyType == typeof(bool?)) && string.IsNullOrEmpty(member.Value))
-							propertyValue = true;
+						if((memberType == typeof(bool) || memberType == typeof(bool?)) && string.IsNullOrEmpty(member.Value))
+							ctx.Value = true;
 						else
-							propertyValue = Common.Convert.ConvertValue(member.Value, property.PropertyType);
+							ctx.Value = Common.Convert.ConvertValue(member.Value, memberType);
 					}
 
-					Reflection.Reflector.SetValue(property.PropertyInfo, ref instance, propertyValue);
-				}
-				else
+					return ctx.Value;
+				}, ctx =>
 				{
-					if(strict)
-						throw new DataArgumentException(member.Key, $"The specified ‘{member.Key}’ condition is undefined in the '{criteriaType.FullName}' type.");
-				}
+					if(ctx.HasNext)
+					{
+						var memberType = ctx.Member.GetMemberType();
+
+						if(memberType.IsAbstract)
+							ctx.Value = Model.Build(memberType);
+						else
+							ctx.Value = Activator.CreateInstance(memberType);
+
+						Reflector.SetValue(ctx.Member, ref ctx.Owner, ctx.Value);
+					}
+				});
+
+				if(!succeed && strict)
+					throw new DataArgumentException(member.Key, $"The specified ‘{member.Key}’ condition is undefined in the '{criteriaType.FullName}' type.");
 			}
 
-			if(properties.Count == 0)
-				return null;
-
-			return properties.Count == 1 ?
-				GetCondition(instance, properties[0]) :
-				ConditionCollection.And(properties.Select(p => GetCondition(instance, p)));
+			return Transform(instance);
 		}
 		#endregion
 
@@ -207,7 +212,7 @@ namespace Zongsoft.Data
 					this.Properties.Add(property.Name, new CriteriaPropertyDescripor(property, attribute));
 
 					foreach(var alias in property.GetCustomAttributes<Components.AliasAttribute>(true))
-						this.Properties.Add(alias.Alias, new CriteriaPropertyDescripor(property, attribute));
+						this.Properties.TryAdd(alias.Alias, new CriteriaPropertyDescripor(property, attribute));
 				}
 			}
 		}
