@@ -234,7 +234,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 
 		//确保修改的不是内置角色
 		var criteria = this.GetCriteria(role.Identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
-		if(await this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation))
+		if(!await this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation))
 			return false;
 
 		return await this.Accessor.UpdateAsync(role, cancellation) > 0;

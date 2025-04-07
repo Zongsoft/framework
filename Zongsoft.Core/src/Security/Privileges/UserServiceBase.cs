@@ -335,7 +335,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 
 		//确保修改的不是内置用户
 		var criteria = this.GetCriteria(user.Identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
-		if(await this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation))
+		if(!await this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation))
 			return false;
 
 		return await this.Accessor.UpdateAsync(user, cancellation) > 0;
