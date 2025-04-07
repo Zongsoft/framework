@@ -58,8 +58,6 @@ public class PrivilegeEvaluator : PrivilegeEvaluatorBase
 			if(ancestor == null || ancestor.Count == 0)
 				continue;
 
-			Authorization.Servicer.Privileges.GetPrivilegesAsync(ancestor, context.Parameters, cancellation);
-
 			//依次获取每层上级角色的授权集
 			var privileges = Module.Current.Accessor.SelectAsync<PrivilegeModel>(
 				Condition.In(nameof(PrivilegeModel.MemberId), ancestor.Select(id => (uint)id)) &

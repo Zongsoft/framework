@@ -112,7 +112,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 			//找出过滤字段为空值的权限
 			var requirements = privileges
 				.OfType<PrivilegeFilteringRequirement>()
-				.Where(privilege => string.IsNullOrWhiteSpace(privilege.Filter))
+				.Where(privilege => privilege.IsEmpty)
 				.Select(privilege => privilege.Name).ToArray();
 
 			//删除过滤字段为空值的权限设置
@@ -124,7 +124,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 
 			var models = privileges
 				.OfType<PrivilegeFilteringRequirement>()
-				.Where(privilege => !string.IsNullOrWhiteSpace(privilege.Filter))
+				.Where(privilege => !privilege.IsEmpty)
 				.Select(privilege => Model.Build<PrivilegeFilteringModel>(model =>
 				{
 					model.MemberId = memberId;
@@ -140,7 +140,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 			//找出授权方式为空值的权限
 			var requirements = privileges
 				.OfType<PrivilegeRequirement>()
-				.Where(privilege => privilege.Mode == null || privilege.Mode == PrivilegeMode.Revoked)
+				.Where(privilege => privilege.IsEmpty)
 				.Select(privilege => privilege.Name).ToArray();
 
 			//删除授权方式为空值的权限设置
@@ -152,7 +152,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 
 			var models = privileges
 				.OfType<PrivilegeRequirement>()
-				.Where(privilege => privilege.Mode.HasValue && (privilege.Mode == PrivilegeMode.Denied || privilege.Mode == PrivilegeMode.Granted))
+				.Where(privilege => !privilege.IsEmpty)
 				.Select(privilege => Model.Build<PrivilegeModel>(model =>
 				{
 					model.MemberId = memberId;
@@ -209,6 +209,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 		#region 公共属性
 		public string Name { get; set; }
 		public PrivilegeMode? Mode { get; set; }
+		public bool IsEmpty => string.IsNullOrEmpty(this.Name) || this.Mode == null || this.Mode == PrivilegeMode.Revoked;
 		#endregion
 
 		#region 重写方法
@@ -234,6 +235,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 		#region 公共属性
 		public string Name { get; set; }
 		public string Filter { get; set; }
+		public bool IsEmpty => string.IsNullOrEmpty(this.Name) || string.IsNullOrEmpty(this.Filter);
 		#endregion
 
 		#region 重写方法
