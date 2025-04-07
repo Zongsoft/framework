@@ -62,7 +62,7 @@ public class ModelConverterFactory : JsonConverterFactory
 			}
 
 			if(value is Data.IModel model)
-				WriteModel(writer, model.GetChanges().Concat(GetProperties(model, options)), options);
+				WriteModel(writer, model.GetChanges().Concat(GetProperties(value, options)), options);
 			else
 				JsonSerializer.Serialize(writer, value, typeof(object), options);
 
@@ -101,7 +101,7 @@ public class ModelConverterFactory : JsonConverterFactory
 				.ToArray());
 		}
 
-		private static IEnumerable<KeyValuePair<string, object>> GetProperties(Data.IModel model, JsonSerializerOptions options)
+		private static IEnumerable<KeyValuePair<string, object>> GetProperties(T model, JsonSerializerOptions options)
 		{
 			var properties = GetProperties(Data.Model.GetModelType(model));
 
