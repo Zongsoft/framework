@@ -62,7 +62,15 @@ public class ModelConverterFactory : JsonConverterFactory
 			}
 
 			if(value is Data.IModel model)
-				WriteModel(writer, model.GetChanges().Concat(GetProperties(value, options)), options);
+			{
+				var changes = model.GetChanges();
+				var properties = GetProperties(value, options);
+
+				if(changes == null)
+					WriteModel(writer, properties, options);
+				else
+					WriteModel(writer, changes.Concat(properties), options);
+			}
 			else
 				JsonSerializer.Serialize(writer, value, typeof(object), options);
 
