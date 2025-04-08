@@ -78,6 +78,9 @@ public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator, IMatchable, 
 		//上下文中的权限声明集已确保按层级由远及近的访问方式
 		foreach(var statements in context.Statements)
 		{
+			if(statements == null || statements.Count == 0)
+				continue;
+
 			//同级拒绝优先
 			foreach(var statement in statements)
 			{
@@ -163,6 +166,7 @@ public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator, IMatchable, 
 		public void Clear() => _statements.Clear();
 		public bool Contains(Statement statement) => statement != null && _statements.Contains(statement);
 		public bool Remove(Statement statement) => statement != null && _statements.Remove(statement);
+		public bool Add(string name, PrivilegeMode mode) => !string.IsNullOrEmpty(name) && _statements.Add(new Statement(name, mode));
 		public bool Add(Statement statement) => statement != null && _statements.Add(statement);
 		public void Add(IEnumerable<Statement> statements) => _statements.UnionWith(statements);
 		#endregion

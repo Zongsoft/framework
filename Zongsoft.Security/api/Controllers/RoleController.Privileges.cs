@@ -70,12 +70,12 @@ partial class RoleController
 				return this.BadRequest();
 
 			var parameters = new Parameters(this.Request.GetParameters());
-			var modelType = this.Service is IDiscriminator discriminator ? discriminator.Discriminate(parameters) as Type : null;
+			var modelType = Utility.GetModelType(this.Service, typeof(IPrivilege), typeof(IPrivilegeService<>));
 			if(modelType == null)
 				return this.StatusCode(StatusCodes.Status501NotImplemented);
 
-			var requirements = (IEnumerable)await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType.MakeArrayType(), cancellation);
-			var count = await this.Service.SetPrivilegesAsync(new Identifier(typeof(IRole), id), requirements.OfType<IPrivilege>(), reset, parameters, cancellation);
+			var privileges = (IEnumerable)await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType.MakeArrayType(), cancellation);
+			var count = await this.Service.SetPrivilegesAsync(new Identifier(typeof(IRole), id), privileges.OfType<IPrivilege>(), reset, parameters, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 		#endregion

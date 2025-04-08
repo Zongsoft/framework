@@ -39,6 +39,9 @@ namespace Zongsoft.Security.Privileges;
 
 public interface IPrivilegeService
 {
+	/// <summary>获取权限过滤服务。</summary>
+	IPrivilegeService Filtering { get; }
+
 	IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default);
 	IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(IEnumerable<Identifier> identifiers, Parameters parameters, CancellationToken cancellation = default);
 

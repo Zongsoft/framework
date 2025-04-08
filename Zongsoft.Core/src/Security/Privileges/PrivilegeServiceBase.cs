@@ -41,10 +41,10 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class PrivilegeServiceBase<TModel> : IPrivilegeService, IMatchable, IMatchable<ClaimsPrincipal>
+public abstract class PrivilegeServiceBase<TPrivilege> : IPrivilegeService<TPrivilege>, IPrivilegeService, IMatchable, IMatchable<ClaimsPrincipal> where TPrivilege : IPrivilege
 {
 	#region 公共属性
-	public virtual string Name => Model.Naming.Get<TModel>();
+	public IPrivilegeService Filtering { get; protected init; }
 	#endregion
 
 	#region 保护属性
@@ -53,26 +53,7 @@ public abstract class PrivilegeServiceBase<TModel> : IPrivilegeService, IMatchab
 	#endregion
 
 	#region 获取方法
-	public IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default) => this.OnGetPrivilegesAsync(identifier, parameters, cancellation);
-	public IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(IEnumerable<Identifier> identifiers, Parameters parameters, CancellationToken cancellation = default) => this.OnGetPrivilegesAsync(identifiers, parameters, cancellation);
-	#endregion
-
-	#region 设置方法
-	public ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation = default) => this.SetPrivilegesAsync(identifier, privileges, false, parameters, cancellation);
-	public async ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default)
-	{
-		if(identifier.IsEmpty || privileges == null)
-			return 0;
-
-		if(shouldResetting)
-			await this.OnResetPrivilegesAsync(identifier, parameters, cancellation);
-
-		return await this.OnSetPrivilegesAsync(identifier, privileges, parameters, cancellation);
-	}
-	#endregion
-
-	#region 虚拟方法
-	protected virtual IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation)
+	public IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty)
 			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
@@ -81,10 +62,10 @@ public abstract class PrivilegeServiceBase<TModel> : IPrivilegeService, IMatchab
 		if(criteria == null)
 			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
 
-		return this.Accessor.SelectAsync<TModel>(this.Name, criteria, cancellation).Map(model => (IPrivilege)this.Map(model));
+		return this.OnGetPrivilegesAsync(criteria, parameters, cancellation).Map(privilege => (IPrivilege)privilege);
 	}
 
-	protected virtual IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(IEnumerable<Identifier> identifiers, Parameters parameters, CancellationToken cancellation)
+	public IAsyncEnumerable<IPrivilege> GetPrivilegesAsync(IEnumerable<Identifier> identifiers, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(identifiers == null)
 			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
@@ -93,55 +74,73 @@ public abstract class PrivilegeServiceBase<TModel> : IPrivilegeService, IMatchab
 		if(criteria == null)
 			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
 
-		return this.Accessor.SelectAsync<TModel>(this.Name, criteria, cancellation).Map(model => (IPrivilege)this.Map(model));
+		return this.OnGetPrivilegesAsync(criteria, parameters, cancellation).Map(privilege => (IPrivilege)privilege);
 	}
+	#endregion
 
-	protected virtual ValueTask<int> OnResetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation)
-	{
-		if(identifier.IsEmpty)
-			return ValueTask.FromResult(0);
+	#region 设置方法
+	ValueTask<int> IPrivilegeService.SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation) => this.SetPrivilegesAsync(identifier, privileges.Cast<TPrivilege>(), false, parameters, cancellation);
+	ValueTask<int> IPrivilegeService.SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation) => this.SetPrivilegesAsync(identifier, privileges.Cast<TPrivilege>(), shouldResetting, parameters, cancellation);
 
-		var criteria = this.GetCriteria(identifier);
-		if(criteria == null)
-			return ValueTask.FromResult(0);
-
-		return this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
-	}
-
-	protected virtual async ValueTask<int> OnSetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation)
+	public ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<TPrivilege> privileges, Parameters parameters, CancellationToken cancellation = default) => this.SetPrivilegesAsync(identifier, privileges, false, parameters, cancellation);
+	public async ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<TPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty || privileges == null)
 			return 0;
 
 		int count = 0;
 
-		//找出授权方式为空值的权限
-		var requirements = privileges
-			.Where(privilege => privilege.IsEmpty)
-			.Select(privilege => privilege.Name).ToArray();
-
-		//删除授权方式为空值的权限设置
-		if(requirements.Length > 0)
+		if(shouldResetting)
 		{
-			var criteria = this.GetCriteria(identifier, requirements);
+			var criteria = this.GetCriteria(identifier);
 
 			if(criteria != null)
-				count = await this.Accessor.DeleteAsync(this.Name, this.GetCriteria(identifier, requirements), cancellation: cancellation);
+				await this.OnResetPrivilegesAsync(criteria, parameters, cancellation);
+		}
+		else
+		{
+			//找出授权方式为空值的权限
+			var requirements = privileges
+				.Where(privilege => privilege != null && privilege.IsEmpty)
+				.Select(privilege => privilege.Name).ToArray();
+
+			//删除授权方式为空值的权限设置
+			if(requirements.Length > 0)
+			{
+				var criteria = this.GetCriteria(identifier, requirements);
+
+				if(criteria != null)
+					count = await this.OnResetPrivilegesAsync(criteria, parameters, cancellation);
+			}
 		}
 
-		var models = privileges
-			.Where(privilege => !privilege.IsEmpty)
-			.Select(privilege => this.Map(identifier, privilege));
+		return count + await this.OnSetPrivilegesAsync(identifier, privileges.Where(privilege => privilege != null && !privilege.IsEmpty), parameters, cancellation);
+	}
+	#endregion
 
-		return count + await this.Accessor.UpsertManyAsync(this.Name, models, cancellation);
+	#region 虚拟方法
+	protected virtual IAsyncEnumerable<TPrivilege> OnGetPrivilegesAsync(ICondition criteria, Parameters parameters, CancellationToken cancellation)
+	{
+		return this.Accessor.SelectAsync<TPrivilege>(criteria, new DataSelectOptions(parameters), cancellation);
+	}
+
+	protected virtual ValueTask<int> OnResetPrivilegesAsync(ICondition criteria, Parameters parameters, CancellationToken cancellation)
+	{
+		return this.Accessor.DeleteAsync<TPrivilege>(criteria, new DataDeleteOptions(parameters), cancellation);
+	}
+
+	protected virtual ValueTask<int> OnSetPrivilegesAsync(Identifier identifier, IEnumerable<TPrivilege> privileges, Parameters parameters, CancellationToken cancellation)
+	{
+		if(identifier.IsEmpty || privileges == null)
+			return ValueTask.FromResult(0);
+
+		return this.Accessor.UpsertManyAsync(privileges, cancellation);
 	}
 	#endregion
 
 	#region 抽象方法
 	protected abstract ICondition GetCriteria(Identifier identifier, params string[] privileges);
 	protected abstract ICondition GetCriteria(IEnumerable<Identifier> identifiers);
-	protected abstract IPrivilege Map(TModel model);
-	protected abstract TModel Map(Identifier identifier, IPrivilege privilege);
 	#endregion
 
 	#region 服务匹配

@@ -59,21 +59,17 @@ public class PrivilegeEvaluator : PrivilegeEvaluatorBase
 				continue;
 
 			//依次获取每层上级角色的授权集
-			var privileges = Module.Current.Accessor.SelectAsync<PrivilegeModel>(
-				Condition.In(nameof(PrivilegeModel.MemberId), ancestor.Select(id => (uint)id)) &
-				Condition.Equal(nameof(PrivilegeModel.MemberType), MemberType.Role),
-				cancellation);
+			var privileges = Authorization.Servicer.Privileges.GetPrivilegesAsync(ancestor, context.Parameters, cancellation);
 
-			context.Statements.Add(new StatementCollection(privileges.Synchronize(cancellation).Select(privilege => new Statement(privilege.PrivilegeName, privilege.PrivilegeMode))));
+			//将权限声明集加入到上下文的授权层级集合中
+			context.Statements.Add(await GetStatements(privileges));
 		}
 
 		//获取当前成员的授权集
-		var currents = Module.Current.Accessor.SelectAsync<PrivilegeModel>(
-			Condition.Equal(nameof(PrivilegeModel.MemberId), memberId) &
-			Condition.Equal(nameof(PrivilegeModel.MemberType), memberType),
-			cancellation);
+		var currents = Authorization.Servicer.Privileges.GetPrivilegesAsync(context.Identifier, context.Parameters, cancellation);
 
-		context.Statements.Add(new StatementCollection(currents.Synchronize(cancellation).Select(privilege => new Statement(privilege.PrivilegeName, privilege.PrivilegeMode))));
+		//将权限声明集加入到上下文的授权层级集合中
+		context.Statements.Add(await GetStatements(currents));
 
 		await foreach(var result in base.OnEvaluateAsync(context, cancellation))
 			yield return result;
@@ -96,5 +92,18 @@ public class PrivilegeEvaluator : PrivilegeEvaluatorBase
 		memberId = 0;
 		memberType = 0;
 		return false;
+	}
+
+	private static async ValueTask<StatementCollection> GetStatements(IAsyncEnumerable<IPrivilege> privileges)
+	{
+		var statements = new StatementCollection();
+
+		await foreach(var privilege in privileges)
+		{
+			if(privilege is IPrivilegable privilegable)
+				statements.Add(privilegable.Name, privilegable.Mode);
+		}
+
+		return statements;
 	}
 }
