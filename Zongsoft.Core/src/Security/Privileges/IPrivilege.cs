@@ -31,8 +31,14 @@ using System;
 
 namespace Zongsoft.Security.Privileges;
 
+/// <summary>
+/// 表示授权定义项的接口。
+/// </summary>
 public interface IPrivilege : IEquatable<IPrivilege>
 {
+	/// <summary>获取权限名称。</summary>
 	string Name { get; }
+
+	/// <summary>获取一个值，指示是否为空的授权项。</summary>
 	bool IsEmpty { get; }
 }

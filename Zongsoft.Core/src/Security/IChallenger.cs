@@ -32,8 +32,14 @@ using System.Security.Claims;
 
 namespace Zongsoft.Security
 {
+	/// <summary>
+	/// 提供身份质询的接口。
+	/// </summary>
 	public interface IChallenger
 	{
+		/// <summary>身份质询。</summary>
+		/// <param name="principal">指定的质询身份主体。</param>
+		/// <param name="scenario">指定的质询场景。</param>
 		void Challenge(ClaimsPrincipal principal, string scenario);
 	}
 }

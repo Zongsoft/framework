@@ -20,3 +20,26 @@ Content-Type: application/json
 		"Mode":"{{mode}}"
 	}
 ]
+
+### 权限过滤列表
+# @prompt id 角色编号
+GET /Security/Roles/{{id}}/Privileges/Filtering HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 设置权限过滤
+### 提示：如果过滤表达式为空或空字符串，表示删除该授权记录。
+# @prompt id     角色编号
+# @prompt name   权限标识
+# @prompt filter 过滤表达式
+PUT /Security/Roles/{{id}}/Privileges/Filtering HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+[
+	{
+		"Name":"{{name}}",
+		"Filter":"{{filter}}"
+	}
+]

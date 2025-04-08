@@ -73,7 +73,8 @@ public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator, IMatchable, 
 		if(context.Statements == null || context.Statements.Count == 0)
 			return Zongsoft.Collections.Enumerable.Empty<IPrivilegeEvaluatorResult>();
 
-		var privileges = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		var denies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		var privileges = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		//上下文中的权限声明集已确保按层级由远及近的访问方式
 		foreach(var statements in context.Statements)
@@ -81,16 +82,21 @@ public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator, IMatchable, 
 			if(statements == null || statements.Count == 0)
 				continue;
 
+			//清除同级拒绝
+			denies.Clear();
+
 			//同级拒绝优先
 			foreach(var statement in statements)
 			{
 				switch(statement.PrivilegeMode)
 				{
 					case PrivilegeMode.Denied:
-						privileges.Remove(statement.PrivilegeName);
+						if(denies.Add(statement.PrivilegeName))
+							privileges.Remove(statement.PrivilegeName);
 						break;
 					case PrivilegeMode.Granted:
-						privileges.Add(statement.PrivilegeName);
+						if(!denies.Contains(statement.PrivilegeName))
+							privileges.Add(statement.PrivilegeName);
 						break;
 				}
 			}

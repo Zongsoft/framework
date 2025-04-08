@@ -49,10 +49,6 @@ public partial class PrivilegeService : PrivilegeServiceBase<PrivilegeService.Pr
 	public PrivilegeService() => this.Filtering = new FilteringService(this);
 	#endregion
 
-	#region 公共属性
-	public IPrivilegeService Filtering { get; }
-	#endregion
-
 	#region 重写属性
 	protected override IDataAccess Accessor => Module.Current.Accessor;
 	#endregion

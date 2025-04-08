@@ -63,6 +63,14 @@ partial class RoleController
 			return this.Service.GetPrivilegesAsync(new Identifier(typeof(IRole), id), new Parameters(this.Request.GetParameters()), cancellation);
 		}
 
+		[ActionName("Filtering")]
+		[HttpGet("/[area]/{id}/[controller]/[action]")]
+		public IAsyncEnumerable<IPrivilege> GetFiltering(string id, CancellationToken cancellation = default)
+		{
+			var filtering = this.Service.Filtering ?? throw new BadHttpRequestException(null, StatusCodes.Status501NotImplemented);
+			return filtering.GetPrivilegesAsync(new Identifier(typeof(IRole), id), new Parameters(this.Request.GetParameters()), cancellation);
+		}
+
 		[HttpPut("/[area]/{id}/[controller]")]
 		public async Task<IActionResult> Set(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
 		{
@@ -76,6 +84,27 @@ partial class RoleController
 
 			var privileges = (IEnumerable)await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType.MakeArrayType(), cancellation);
 			var count = await this.Service.SetPrivilegesAsync(new Identifier(typeof(IRole), id), privileges.OfType<IPrivilege>(), reset, parameters, cancellation);
+			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
+		}
+
+		[ActionName("Filtering")]
+		[HttpPut("/[area]/{id}/[controller]/[action]")]
+		public async Task<IActionResult> SetFiltering(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(id))
+				return this.BadRequest();
+
+			var filtering = this.Service.Filtering;
+			if(filtering == null)
+				return this.StatusCode(StatusCodes.Status501NotImplemented);
+
+			var parameters = new Parameters(this.Request.GetParameters());
+			var modelType = Utility.GetModelType(filtering, typeof(IPrivilege), typeof(IPrivilegeService<>));
+			if(modelType == null)
+				return this.StatusCode(StatusCodes.Status501NotImplemented);
+
+			var privileges = (IEnumerable)await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType.MakeArrayType(), cancellation);
+			var count = await filtering.SetPrivilegesAsync(new Identifier(typeof(IRole), id), privileges.OfType<IPrivilege>(), reset, parameters, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 		#endregion
