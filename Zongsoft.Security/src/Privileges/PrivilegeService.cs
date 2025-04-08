@@ -43,7 +43,7 @@ using Zongsoft.Security.Privileges.Models;
 namespace Zongsoft.Security.Privileges;
 
 [Service<IPrivilegeService>]
-public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
+public class PrivilegeService : PrivilegeServiceBase<PrivilegeModel>, IDiscriminator
 {
 	#region 重写属性
 	protected override IDataAccess Accessor => Module.Current.Accessor;
@@ -97,7 +97,7 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 					Condition.Equal(nameof(PrivilegeModel.MemberType), memberType), string.Empty, cancellation);
 	}
 
-	protected override async ValueTask<int> OnSetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation = default)
+	protected override async ValueTask<int> OnSetPrivilegesAsync(Identifier identifier, IEnumerable<PrivilegeRequirement> privileges, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty || privileges == null)
 			return 0;
@@ -165,6 +165,77 @@ public class PrivilegeService : PrivilegeServiceBase, IDiscriminator
 		}
 	}
 	#endregion
+
+	protected override ICondition GetCriteria(Identifier identifier, params string[] privileges)
+	{
+		if(identifier.IsEmpty)
+			return privileges == null || privileges.Length == 0 ? null : Condition.In(nameof(PrivilegeModel.PrivilegeName), privileges);
+
+		if(!TryGetMember(ref identifier, out var memberId, out var memberType))
+			return null;
+
+		return privileges == null || privileges.Length == 0 ?
+				Condition.Equal(nameof(PrivilegeModel.MemberId), memberId) &
+				Condition.Equal(nameof(PrivilegeModel.MemberType), memberType):
+				Condition.Equal(nameof(PrivilegeModel.MemberId), memberId) &
+				Condition.Equal(nameof(PrivilegeModel.MemberType), memberType) &
+				Condition.In(nameof(PrivilegeModel.PrivilegeName), privileges);
+	}
+
+	protected override ICondition GetCriteria(IEnumerable<Identifier> identifiers)
+	{
+		if(identifiers == null)
+			return null;
+
+		ICondition criteria = null;
+		var users = identifiers.Select(identifier => identifier.IsUser(out uint userId) ? userId : 0U).Where(id => id > 0).Distinct().ToArray();
+		var roles = identifiers.Select(identifier => identifier.IsRole(out uint roleId) ? roleId : 0U).Where(id => id > 0).Distinct().ToArray();
+
+		if(users != null && users.Length > 0)
+			criteria &= Condition.Equal(nameof(PrivilegeModel.MemberType), MemberType.User) & Condition.In(nameof(PrivilegeModel.MemberId), users);
+		if(roles != null && roles.Length > 0)
+			criteria &= Condition.Equal(nameof(PrivilegeModel.MemberType), MemberType.Role) & Condition.In(nameof(PrivilegeModel.MemberId), roles);
+
+		return criteria;
+	}
+
+	protected override IPrivilege Map(PrivilegeModel model) => new PrivilegeRequirement(model.PrivilegeName, model.PrivilegeMode);
+	protected override PrivilegeModel Map(Identifier identifier, IPrivilege privilege)
+	{
+		if(privilege == null)
+			return null;
+
+		if(!TryGetMember(ref identifier, out var memberId, out var memberType))
+			return null;
+
+		switch(privilege)
+		{
+			case PrivilegeRequirement requirement:
+				return Model.Build<PrivilegeModel>(model =>
+			{
+				model.MemberId = memberId;
+				model.MemberType = memberType;
+				model.PrivilegeName = privilege.Name;
+				model.PrivilegeMode = requirement.Mode.Value;
+			});
+			case PrivilegeFilteringRequirement filtering:
+				return Model.Build<PrivilegeFilteringModel>(model =>
+			{
+				model.MemberId = memberId;
+				model.MemberType = memberType;
+				model.PrivilegeName = privilege.Name;
+				model.PrivilegeFilter = filtering.Filter;
+			});
+		};
+
+		return Model.Build<PrivilegeModel>(model =>
+		{
+			model.MemberId = memberId;
+			model.MemberType = memberType;
+			model.PrivilegeName = privilege.Name;
+			model.PrivilegeMode = privilege.Mode.Value;
+		});
+	}
 
 	#region 显式实现
 	object IDiscriminator.Discriminate(object argument) => argument is Parameters parameters && IsFiltering(parameters) ?

@@ -39,7 +39,7 @@ namespace Zongsoft.Security.Privileges;
 
 [DefaultMember(nameof(Permissions))]
 [DefaultProperty(nameof(Permissions))]
-public partial class Privilege : IPrivilege, IIdentifiable, IIdentifiable<string>, IEquatable<IPrivilege>
+public partial class Privilege : IIdentifiable, IIdentifiable<string>
 {
 	#region 成员字段
 	private IResource _resource;
@@ -126,7 +126,6 @@ public partial class Privilege : IPrivilege, IIdentifiable, IIdentifiable<string
 	#region 显式实现
 	Identifier IIdentifiable.Identifier { get => (Identifier)this; set => throw new NotSupportedException(); }
 	Identifier<string> IIdentifiable<string>.Identifier { get => (Identifier<string>)this; set => throw new NotSupportedException(); }
-	bool IEquatable<IPrivilege>.Equals(IPrivilege other) => other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
 	#endregion
 
 	#region 隐式转换

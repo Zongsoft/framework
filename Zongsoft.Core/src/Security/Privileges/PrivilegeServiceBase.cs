@@ -41,8 +41,12 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-public abstract class PrivilegeServiceBase : IPrivilegeService, IMatchable, IMatchable<ClaimsPrincipal>
+public abstract class PrivilegeServiceBase<TModel> : IPrivilegeService, IMatchable, IMatchable<ClaimsPrincipal>
 {
+	#region 公共属性
+	public virtual string Name => Model.Naming.Get<TModel>();
+	#endregion
+
 	#region 保护属性
 	protected abstract IDataAccess Accessor { get; }
 	protected virtual ClaimsPrincipal Principal => ApplicationContext.Current?.Principal;
@@ -67,16 +71,82 @@ public abstract class PrivilegeServiceBase : IPrivilegeService, IMatchable, IMat
 	}
 	#endregion
 
+	#region 虚拟方法
+	protected virtual IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation)
+	{
+		if(identifier.IsEmpty)
+			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
+
+		var criteria = this.GetCriteria(identifier);
+		if(criteria == null)
+			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
+
+		return this.Accessor.SelectAsync<TModel>(this.Name, criteria, cancellation).Map(model => (IPrivilege)this.Map(model));
+	}
+
+	protected virtual IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(IEnumerable<Identifier> identifiers, Parameters parameters, CancellationToken cancellation)
+	{
+		if(identifiers == null)
+			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
+
+		var criteria = this.GetCriteria(identifiers);
+		if(criteria == null)
+			return Zongsoft.Collections.Enumerable.Empty<IPrivilege>();
+
+		return this.Accessor.SelectAsync<TModel>(this.Name, criteria, cancellation).Map(model => (IPrivilege)this.Map(model));
+	}
+
+	protected virtual ValueTask<int> OnResetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation)
+	{
+		if(identifier.IsEmpty)
+			return ValueTask.FromResult(0);
+
+		var criteria = this.GetCriteria(identifier);
+		if(criteria == null)
+			return ValueTask.FromResult(0);
+
+		return this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+	}
+
+	protected virtual async ValueTask<int> OnSetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation)
+	{
+		if(identifier.IsEmpty || privileges == null)
+			return 0;
+
+		int count = 0;
+
+		//找出授权方式为空值的权限
+		var requirements = privileges
+			.Where(privilege => privilege.IsEmpty)
+			.Select(privilege => privilege.Name).ToArray();
+
+		//删除授权方式为空值的权限设置
+		if(requirements.Length > 0)
+		{
+			var criteria = this.GetCriteria(identifier, requirements);
+
+			if(criteria != null)
+				count = await this.Accessor.DeleteAsync(this.Name, this.GetCriteria(identifier, requirements), cancellation: cancellation);
+		}
+
+		var models = privileges
+			.Where(privilege => !privilege.IsEmpty)
+			.Select(privilege => this.Map(identifier, privilege));
+
+		return count + await this.Accessor.UpsertManyAsync(this.Name, models, cancellation);
+	}
+	#endregion
+
 	#region 抽象方法
-	protected virtual IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation) => this.OnGetPrivilegesAsync([identifier], parameters, cancellation);
-	protected abstract IAsyncEnumerable<IPrivilege> OnGetPrivilegesAsync(IEnumerable<Identifier> identifiers, Parameters parameters, CancellationToken cancellation);
-	protected abstract ValueTask<int> OnResetPrivilegesAsync(Identifier identifier, Parameters parameters, CancellationToken cancellation);
-	protected abstract ValueTask<int> OnSetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, Parameters parameters, CancellationToken cancellation);
+	protected abstract ICondition GetCriteria(Identifier identifier, params string[] privileges);
+	protected abstract ICondition GetCriteria(IEnumerable<Identifier> identifiers);
+	protected abstract IPrivilege Map(TModel model);
+	protected abstract TModel Map(Identifier identifier, IPrivilege privilege);
 	#endregion
 
 	#region 服务匹配
 	bool IMatchable.Match(object argument) => argument is ClaimsPrincipal principal && this.OnMatch(principal);
-	bool IMatchable<ClaimsPrincipal>.Match(ClaimsPrincipal argument) => this.OnMatch(argument);
+	bool IMatchable<ClaimsPrincipal>.Match(ClaimsPrincipal principal) => this.OnMatch(principal);
 	protected virtual bool OnMatch(ClaimsPrincipal principal) => principal != null && principal.Identity != null && principal.Identity.IsAuthenticated;
 	#endregion
 }

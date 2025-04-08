@@ -34,4 +34,5 @@ namespace Zongsoft.Security.Privileges;
 public interface IPrivilege : IEquatable<IPrivilege>
 {
 	string Name { get; }
+	bool IsEmpty { get; }
 }
