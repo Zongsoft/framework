@@ -78,7 +78,7 @@ public class AuthorizationConvention : IApplicationModelConvention
 		{
 			if(typeof(IAllowAnonymous).IsAssignableFrom(attribute.GetType()))
 				return false;
-			if(typeof(IAuthorizeData).IsAssignableFrom(attribute.GetType()))
+			if(typeof(AuthorizationAttribute).IsAssignableFrom(attribute.GetType()))
 				result = true;
 		}
 
