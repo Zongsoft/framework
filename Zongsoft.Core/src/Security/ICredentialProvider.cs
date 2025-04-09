@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Security
@@ -54,40 +56,47 @@ namespace Zongsoft.Security
 		#region 方法定义
 		/// <summary>将指定的凭证主体注册到凭证容器中。</summary>
 		/// <param name="principal">指定要注册的凭证主体对象。</param>
-		void Register(CredentialPrincipal principal);
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		ValueTask RegisterAsync(CredentialPrincipal principal, CancellationToken cancellation = default);
 
 		/// <summary>从安全凭证容器中注销指定的凭证。</summary>
 		/// <param name="credentialId">指定的要注销的安全凭证编号。</param>
-		void Unregister(string credentialId);
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		ValueTask UnregisterAsync(string credentialId, CancellationToken cancellation = default);
 
 		/// <summary>续约指定的凭证主体。</summary>
 		/// <param name="credentialId">指定要续约的安全凭证编号。</param>
 		/// <param name="token">续约的安全标记。</param>
-		/// <returns>返回续约成功的凭证主体对象，如果续约失败则返回空(null)。</returns>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回续约成功的凭证主体对象，如果续约失败则返回空(<c>null</c>)。</returns>
 		/// <remarks>注：续约操作会依次激发“Unregistered”和“Registered”事件。</remarks>
-		CredentialPrincipal Renew(string credentialId, string token);
+		ValueTask<CredentialPrincipal> RenewAsync(string credentialId, string token, CancellationToken cancellation = default);
 
 		/// <summary>刷新指定编号的凭证主体。</summary>
 		/// <param name="credentialId">指定要刷新的安全凭证编号。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回刷新成功的凭证主体。</returns>
-		CredentialPrincipal Refresh(string credentialId);
+		ValueTask<CredentialPrincipal> RefreshAsync(string credentialId, CancellationToken cancellation = default);
 
 		/// <summary>刷新指定标识及应用场景对应的凭证主体。</summary>
 		/// <param name="identifier">指定要刷新的安全凭证对应的用户唯一标识，通常为用户主键。</param>
 		/// <param name="scenario">指定要刷新的安全凭证对应的应用场景，为空<c>null</c>或星号表示不限场景。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回刷新成功的凭证主体集。</returns>
-		IEnumerable<CredentialPrincipal> Refresh(string identifier, string scenario = null);
+		IAsyncEnumerable<CredentialPrincipal> RefreshAsync(string identifier, string scenario, CancellationToken cancellation = default);
 
 		/// <summary>获取指定安全凭证编号对应的凭证主体。</summary>
 		/// <param name="credentialId">指定要获取的安全凭证编号。</param>
-		/// <returns>返回的对应的凭证主体，如果指定的安全凭证编号不存在则返回空(null)。</returns>
-		CredentialPrincipal GetPrincipal(string credentialId);
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的对应的凭证主体，如果指定的安全凭证编号不存在则返回空(<c>null</c>)。</returns>
+		ValueTask<CredentialPrincipal> GetPrincipalAsync(string credentialId, CancellationToken cancellation = default);
 
 		/// <summary>获取指定标识及应用场景对应的凭证主体集。</summary>
 		/// <param name="identifier">指定要获取的安全凭证对应的用户唯一标识，通常为用户主键。</param>
-		/// <param name="scenario">指定要获取的安全凭证对应的应用场景，为空<c>null</c>或星号表示不限场景。。</param>
+		/// <param name="scenario">指定要获取的安全凭证对应的应用场景，为空<c>null</c>或星号表示不限场景。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回成功的凭证主体集。</returns>
-		IEnumerable<CredentialPrincipal> GetPrincipals(string identifier, string scenario = null);
+		IAsyncEnumerable<CredentialPrincipal> GetPrincipalsAsync(string identifier, string scenario, CancellationToken cancellation = default);
 		#endregion
 	}
 }

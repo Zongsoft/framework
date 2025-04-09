@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Security.Claims;
 
 namespace Zongsoft.Security
@@ -40,6 +42,8 @@ namespace Zongsoft.Security
 		/// <summary>身份质询。</summary>
 		/// <param name="principal">指定的质询身份主体。</param>
 		/// <param name="scenario">指定的质询场景。</param>
-		void Challenge(ClaimsPrincipal principal, string scenario);
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回的异步操作任务。</returns>
+		ValueTask ChallengeAsync(ClaimsPrincipal principal, string scenario, CancellationToken cancellation = default);
 	}
 }

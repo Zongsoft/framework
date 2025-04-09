@@ -73,7 +73,7 @@ public class AuthenticationController : ControllerBase
 			var principal = await Authentication.AuthenticateAsync(scheme, key, this.Request.Body, scenario, new(this.Request.GetParameters()), cancellation);
 
 			return principal != null ?
-				this.Ok(this.Transform(principal)) :
+				this.Ok(Transform(principal)) :
 				this.StatusCode(403, new { Reason = SecurityReasons.Unknown });
 		}
 		catch(AuthenticationException ex)
@@ -83,29 +83,26 @@ public class AuthenticationController : ControllerBase
 	}
 
 	[HttpPost("[action]")]
-	public void Signout()
+	public async ValueTask Signout(CancellationToken cancellation = default)
 	{
 		if(this.User is CredentialPrincipal credential && credential.CredentialId != null)
-			Authentication.Authority?.Unregister(credential.CredentialId);
+			await Authentication.Authority.UnregisterAsync(credential.CredentialId, cancellation);
 	}
 
 	[Authorize]
 	[HttpPost("[action]/{id:required}")]
-	public Task<IActionResult> Renew(string id)
+	public async ValueTask<IActionResult> Renew(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrWhiteSpace(id))
-			return Task.FromResult((IActionResult)this.BadRequest());
+			return this.BadRequest();
 
 		if(this.User is CredentialPrincipal credential)
 		{
-			var principal = Authentication.Authority.Renew(credential.CredentialId, id);
-
-			return principal == null ?
-				Task.FromResult((IActionResult)this.NotFound()) :
-				Task.FromResult((IActionResult)this.Ok(this.Transform(principal)));
+			var principal = await Authentication.Authority.RenewAsync(credential.CredentialId, id, cancellation);
+			return principal == null ? this.NotFound() : this.Ok(Transform(principal));
 		}
 
-		return Task.FromResult((IActionResult)this.Unauthorized());
+		return this.Unauthorized();
 	}
 
 	[HttpPost("[action]/{scheme}:{destination}")]
@@ -117,7 +114,7 @@ public class AuthenticationController : ControllerBase
 		if(destination.IndexOfAny(InvalidDestinationCharacters) >= 0)
 			return this.BadRequest($"The specified destination parameter contains illegal characters.");
 
-		var captcha = this.Request.Headers.TryGetValue(Zongsoft.Web.Http.Headers.Captcha, out var text) ? text.ToString() : null;
+		var captcha = this.Request.Headers.TryGetValue(Headers.Captcha, out var text) ? text.ToString() : null;
 		var result = await this.Secretor.Transmitter.TransmitAsync(scheme, destination, "Authentication", "Singin:" + scenario, captcha, channel, destination, cancellation);
 		return this.Content(result);
 	}
@@ -144,11 +141,12 @@ public class AuthenticationController : ControllerBase
 				return this.BadRequest();
 		}
 
-		return this.Secretor.Verify(token, secret) ? this.NoContent() : this.BadRequest();
+		(var succeed, var _) = await this.Secretor.VerifyAsync(token, secret, cancellation);
+		return succeed ? this.NoContent() : this.BadRequest();
 	}
 	#endregion
 
 	#region 私有方法
-	private object Transform(System.Security.Claims.ClaimsPrincipal principal) => Authentication.Transformer.Transform(principal);
+	private static object Transform(System.Security.Claims.ClaimsPrincipal principal) => Authentication.Transformer.Transform(principal);
 	#endregion
 }

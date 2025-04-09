@@ -38,7 +38,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Zongsoft.Data;
 using Zongsoft.Common;
 using Zongsoft.Security;
-using Zongsoft.Security.Membership;
+using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Web.Filters;
 

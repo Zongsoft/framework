@@ -37,7 +37,7 @@ namespace Zongsoft.Web.Security
 	public class CredentialAuthenticationOptions : AuthenticationSchemeOptions
 	{
 		#region 公共属性
-		public Zongsoft.Security.ICredentialProvider Authority => Zongsoft.Security.Membership.Authentication.Instance.Authority;
+		public Zongsoft.Security.ICredentialProvider Authority => Zongsoft.Security.Privileges.Authentication.Authority;
 		#endregion
 	}
 }

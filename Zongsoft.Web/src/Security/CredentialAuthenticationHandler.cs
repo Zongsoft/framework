@@ -68,21 +68,21 @@ namespace Zongsoft.Web.Security
 			return Task.CompletedTask;
 		}
 
-		protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+		protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
 		{
 			if(string.IsNullOrEmpty(_credentialId))
-				return Task.FromResult(AuthenticateResult.NoResult());
+				return AuthenticateResult.NoResult();
 
 			var authority = this.Options.Authority;
 
 			if(authority == null)
-				return Task.FromResult(AuthenticateResult.Fail("Missing the required credential authority."));
+				return AuthenticateResult.Fail("Missing the required credential authority.");
 
-			var principal = authority.GetPrincipal(_credentialId);
+			var principal = await authority.GetPrincipalAsync(_credentialId);
 
 			return principal == null ?
-				Task.FromResult(AuthenticateResult.Fail("Invalid credential Id.")) :
-				Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, this.Scheme.Name)));
+				AuthenticateResult.Fail("Invalid credential Id.") :
+				AuthenticateResult.Success(new AuthenticationTicket(principal, this.Scheme.Name));
 		}
 
 		protected override async Task HandleForbiddenAsync(AuthenticationProperties properties)

@@ -343,37 +343,37 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	#endregion
 
 	#region 秘密校验
-	private ValueTask<bool> VerifyAsync(string type, string token, string secret, CancellationToken cancellation)
+	private async ValueTask<bool> VerifyAsync(string type, string token, string secret, CancellationToken cancellation)
 	{
 		if(string.IsNullOrEmpty(type))
 			throw new ArgumentNullException(nameof(type));
 
 		if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
-			return ValueTask.FromResult(false);
+			return false;
 
 		//校验指定的密文
-		var succeed = this.Secretor.Verify(token, secret, out var extra);
+		(var succeed, var extra) = await this.Secretor.VerifyAsync(token, secret, cancellation);
 
 		//如果校验成功并且密文中有附加数据
 		if(succeed && (extra != null && extra.Length > 0))
 		{
 			var index = extra.IndexOf(':');
 			if(index < 1 || !string.Equals(type, extra[..index], StringComparison.OrdinalIgnoreCase))
-				return ValueTask.FromResult(false);
+				return false;
 
 			var parts = extra[(index + 1)..].Split('|');
 			if(parts.Length < 2)
-				return ValueTask.FromResult(false);
+				return false;
 
 			return type switch
 			{
-				"email" => this.SetEmailAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
-				"phone" => this.SetPhoneAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
-				_ => ValueTask.FromResult(false),
+				"email" => await this.SetEmailAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
+				"phone" => await this.SetPhoneAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
+				_ => false,
 			};
 		}
 
-		return ValueTask.FromResult(false);
+		return false;
 	}
 	#endregion
 

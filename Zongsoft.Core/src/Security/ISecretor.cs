@@ -52,25 +52,22 @@ namespace Zongsoft.Security
 		#region 方法定义
 		/// <summary>判断指定名称的秘密（验证码）是否存在。</summary>
 		/// <param name="name">指定的验证码名称。</param>
-		/// <returns>返回一个值，指示指定名称的验证码是否存在（有效）。</returns>
-		bool Exists(string name);
-
-		/// <summary>判断指定名称的秘密（验证码）是否存在。</summary>
-		/// <param name="name">指定的验证码名称。</param>
-		/// <param name="duration">输出参数，如果指定名称的秘密存在则输出其生成的时长。</param>
-		/// <returns>返回一个值，指示指定名称的验证码是否存在（有效）。</returns>
-		bool Exists(string name, out TimeSpan duration);
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回一个元组，分别表示指定名称的验证码是否存在（有效），以及其有效期时长。</returns>
+		ValueTask<(bool existed, TimeSpan duration)> ExistsAsync(string name, CancellationToken cancellation = default);
 
 		/// <summary>生成一个指定名称的秘密（验证码）。</summary>
 		/// <param name="name">指定的验证码名称，该名称通常包含对应目标标识（譬如：user.forget:100、user.email:100，其中数字100表示用户的唯一编号），调用者应确保该名称全局唯一。</param>
-		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="Verify(string, string, out string)"/>方法验证通过后获取到。</param>
+		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="VerifyAsync(string, string, out string)"/>方法验证通过后获取到。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回生成成功的验证码，关于验证码的具体生成规则请参考特定实现版本。</returns>
-		string Generate(string name, string extra = null);
+		ValueTask<string> GenerateAsync(string name, string extra, CancellationToken cancellation = default);
 
 		/// <summary>生成一个指定名称的秘密（验证码）。</summary>
 		/// <param name="name">指定的验证码名称，该名称通常包含对应的目标标识（譬如：user.forget:100、user.phone:13812345678，其中数字100表示用户的唯一编号)，调用者应确保该名称全局唯一。</param>
 		/// <param name="pattern">指定的验证码生成模式，基本定义参考备注说明。</param>
-		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="Verify(string, string, out string)"/>方法验证通过后获取到。</param>
+		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="VerifyAsync(string, string, out string)"/>方法验证通过后获取到。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回生成成功的验证码，关于验证码的生成规则由<paramref name="pattern"/>参数定义。</returns>
 		/// <remarks>
 		/// 	<para>参数<paramref name="pattern"/>用来定义生成验证码的模式，如果为空(null)或空字符串则由特定实现版本自行定义（建议生成6位数字的验证码）；也可以表示生成验证码的规则，基本模式定义如下：</para>
@@ -82,35 +79,22 @@ namespace Zongsoft.Security
 		/// 	</list>
 		/// 	<para>注：如果<paramref name="pattern"/>参数不匹配模式定义，则表示其即为要生成的秘密（验证码）值，这样的固定秘密（验证码）应只由字母和数字组成，不要包含其他符号。</para>
 		/// </remarks>
-		string Generate(string name, string pattern, string extra);
+		ValueTask<string> GenerateAsync(string name, string pattern, string extra, CancellationToken cancellation = default);
 
 		/// <summary>验证指定名称的秘密（验证码）是否正确并删除它。</summary>
 		/// <param name="name">指定的验证码名称。</param>
 		/// <param name="secret">指定待确认的验证码。</param>
-		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
-		bool Remove(string name, string secret);
-
-		/// <summary>验证指定名称的秘密（验证码）是否正确并删除它。</summary>
-		/// <param name="name">指定的验证码名称。</param>
-		/// <param name="secret">指定待确认的验证码。</param>
-		/// <param name="extra">输出参数，表示验证通过后该验证码生成时绑定的附加文本。</param>
-		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
-		bool Remove(string name, string secret, out string extra);
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回一个元组，分别表示验证是否成功，以及其绑定的附加文本。</returns>
+		ValueTask<(bool succeed, string extra)> RemoveAsync(string name, string secret, CancellationToken cancellation = default);
 
 		/// <summary>验证指定名称的秘密（验证码）是否正确。</summary>
 		/// <param name="name">指定的验证码名称。</param>
 		/// <param name="secret">指定待确认的验证码。</param>
-		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
-		/// <remarks>验证成功并不会立即删除对应的缓存项（即可重复验证），如果希望验证后立即失效应使用<see cref="Remove(string, string)"/>方法。</remarks>
-		bool Verify(string name, string secret);
-
-		/// <summary>验证指定名称的秘密（验证码）是否正确。</summary>
-		/// <param name="name">指定的验证码名称。</param>
-		/// <param name="secret">指定待确认的验证码。</param>
-		/// <param name="extra">输出参数，表示验证通过后该验证码生成时绑定的附加文本。</param>
-		/// <returns>如果验证成功则返回真(True)，否则返回假(False)。</returns>
-		/// <remarks>验证成功并不会立即删除对应的缓存项（即可重复验证），如果希望验证后立即失效应使用<see cref="Remove(string, string, out string)"/>方法。</remarks>
-		bool Verify(string name, string secret, out string extra);
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
+		/// <returns>返回一个元组，分别表示验证是否成功，以及其绑定的附加文本。</returns>
+		/// <remarks>验证成功并不会立即删除对应的缓存项（即可重复验证），如果希望验证后立即失效应使用<see cref="RemoveAsync(string, string, CancellationToken)"/>方法。</remarks>
+		ValueTask<(bool succeed, string extra)> VerifyAsync(string name, string secret, CancellationToken cancellation = default);
 		#endregion
 
 		#region 嵌套接口

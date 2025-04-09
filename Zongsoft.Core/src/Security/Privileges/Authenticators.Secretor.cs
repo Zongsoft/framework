@@ -105,7 +105,10 @@ partial class Authentication
 
 			var secret = data.Trim();
 
-			if(this.Secretor.Verify(key, secret, out var extra))
+			//验证指定的秘密
+			(var succeed, var extra) = await this.Secretor.VerifyAsync(key, secret, cancellation);
+
+			if(succeed)
 			{
 				//通知验证尝试成功，即清空验证失败记录
 				if(attempter != null)

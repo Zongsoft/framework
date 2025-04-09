@@ -474,7 +474,7 @@ namespace Zongsoft.Data
 			else
 			{
 				if(Security.ClaimsPrincipalExtension.IsAnonymous(this.Principal))
-					throw new Security.Membership.AuthorizationException();
+					throw new Security.Privileges.AuthorizationException();
 			}
 		}
 		#endregion
@@ -2348,7 +2348,7 @@ namespace Zongsoft.Data
 			public void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options)
 			{
 				if(_authorize != null && !_authorize(service, method, options))
-					throw new Security.Membership.AuthorizationException();
+					throw new Security.Privileges.AuthorizationException();
 			}
 		}
 
@@ -2362,7 +2362,7 @@ namespace Zongsoft.Data
 			public void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options)
 			{
 				if(Zongsoft.Security.ClaimsPrincipalExtension.IsAnonymous(service.Principal) || (_authorize != null && !_authorize(service, method, options)))
-					throw new Security.Membership.AuthorizationException();
+					throw new Security.Privileges.AuthorizationException();
 			}
 		}
 		#endregion

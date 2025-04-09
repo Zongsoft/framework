@@ -86,9 +86,9 @@ namespace Zongsoft.Security.Commands
 			switch(context.Expression.Arguments.Length)
 			{
 				case 0:
-					return secretor.Generate(name, pattern, null);
+					return secretor.GenerateAsync(name, pattern, null).GetAwaiter().GetResult();
 				case 1:
-					return secretor.Generate(name, pattern, context.Expression.Arguments[0]);
+					return secretor.GenerateAsync(name, pattern, context.Expression.Arguments[0]).GetAwaiter().GetResult();
 			}
 
 			//定义返回验证码的数组
@@ -96,7 +96,7 @@ namespace Zongsoft.Security.Commands
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				results[i] = secretor.Generate(name, pattern, context.Expression.Arguments[i]);
+				results[i] = secretor.GenerateAsync(name, pattern, context.Expression.Arguments[i]).GetAwaiter().GetResult();
 			}
 
 			return results;

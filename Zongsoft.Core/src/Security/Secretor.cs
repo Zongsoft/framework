@@ -115,71 +115,52 @@ namespace Zongsoft.Security
 		}
 		#endregion
 
-		#region 存在方法
-		public bool Exists(string name)
+		#region 公共方法
+		public async ValueTask<(bool, TimeSpan)> ExistsAsync(string name, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
-				return false;
+				return default;
 
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = PruneKey(name);
 
-			return this.Cache.Exists(name);
-		}
-
-		public bool Exists(string name, out TimeSpan duration)
-		{
-			duration = TimeSpan.Zero;
-
-			if(string.IsNullOrEmpty(name))
-				return false;
-
-			//修复秘密名（转换成小写并剔除收尾空格）
-			name = PruneKey(name);
+			//从缓存中异步获取缓存内容
+			(var existed, var cacheValue) = await this.Cache.TryGetValueAsync<string>(name, cancellation);
 
 			//从缓存内容解析出对应的缓存值和发出时间
-			if(this.Cache.TryGetValue(name, out string cacheValue) && this.Unpack(cacheValue, out var _, out var timestamp, out _))
-			{
-				duration = DateTime.UtcNow - timestamp;
-				return true;
-			}
+			if(existed && this.Unpack(cacheValue, out var _, out var timestamp, out _))
+				return (true, DateTime.UtcNow - timestamp);
 
-			return false;
+			return default;
 		}
 
-		public bool Remove(string name, string secret) => this.Remove(name, secret, out _);
-		public bool Remove(string name, string secret, out string extra)
+		public async ValueTask<(bool, string)> RemoveAsync(string name, string secret, CancellationToken cancellation = default)
 		{
-			extra = null;
-
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			if(string.IsNullOrEmpty(secret))
-				return false;
+			if(string.IsNullOrEmpty(name) || string.IsNullOrEmpty(secret))
+				return (false, null);
 
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = PruneKey(name);
 
+			//从缓存中异步获取缓存内容
+			(var existed, var cacheValue) = await this.Cache.TryGetValueAsync<string>(name, cancellation);
+
 			//从缓存内容解析出对应的秘密值并且比对秘密内容成功
-			if(this.Cache.TryGetValue(name, out string cacheValue) &&
-			   this.Unpack(cacheValue, out var cachedSecret, out var timestamp, out extra) &&
+			if(existed && this.Unpack(cacheValue, out var cachedSecret, out _, out var extra) &&
 			   string.Equals(secret, cachedSecret, StringComparison.OrdinalIgnoreCase))
 			{
-				this.Cache.Remove(name);
+				await this.Cache.RemoveAsync(name, cancellation);
 
 				//返回校验成功
-				return true;
+				return (true, extra);
 			}
 
 			//返回校验失败
-			return false;
+			return (false, null);
 		}
-		#endregion
 
-		#region 生成方法
-		public string Generate(string name, string extra = null) => this.Generate(name, null, extra);
-		public string Generate(string name, string pattern, string extra)
+		public ValueTask<string> GenerateAsync(string name, string extra = null, CancellationToken cancellation = default) => this.GenerateAsync(name, null, extra, cancellation);
+		public async ValueTask<string> GenerateAsync(string name, string pattern, string extra, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
@@ -187,8 +168,10 @@ namespace Zongsoft.Security
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = PruneKey(name);
 
-			//从缓存容器中获取对应的内容
-			if(this.Cache.TryGetValue(name, out string text) && !string.IsNullOrWhiteSpace(text))
+			//从缓存容器中异步获取对应的内容
+			(var existed, var text) = await this.Cache.TryGetValueAsync<string>(name, cancellation);
+
+			if(existed && !string.IsNullOrWhiteSpace(text))
 			{
 				//尚未验证：则必须确保在最小时间间隔之后才能重新生成
 				if(_period > TimeSpan.Zero &&
@@ -201,30 +184,23 @@ namespace Zongsoft.Security
 			var secret = this.GenerateSecret(name, pattern);
 
 			//将秘密内容保存到缓存容器中（如果指定的过期时长为零则采用默认过期时长）
-			this.Cache.SetValue(name, this.Pack(secret, extra), _expiry);
+			await this.Cache.SetValueAsync(name, this.Pack(secret, extra), _expiry, CacheRequisite.Always, cancellation);
 
 			return secret;
 		}
-		#endregion
 
-		#region 校验方法
-		public bool Verify(string name, string secret) => this.Verify(name, secret, out _);
-		public bool Verify(string name, string secret, out string extra)
+		public async ValueTask<(bool, string)> VerifyAsync(string name, string secret, CancellationToken cancellation = default)
 		{
-			extra = null;
-
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			if(string.IsNullOrEmpty(secret))
-				return false;
+			if(string.IsNullOrEmpty(name) || string.IsNullOrEmpty(secret))
+				return (false, null);
 
 			//修复秘密名（转换成小写并剔除收尾空格）
 			name = PruneKey(name);
 
+			(var existed, var cacheValue) = await this.Cache.TryGetValueAsync<string>(name, cancellation);
+
 			//从缓存内容解析出对应的秘密值并且比对秘密内容成功
-			if(this.Cache.TryGetValue(name, out string cacheValue) &&
-			   this.Unpack(cacheValue, out var cachedSecret, out var timestamp, out extra) &&
+			if(existed && this.Unpack(cacheValue, out var cachedSecret, out _, out var extra) &&
 			   string.Equals(secret, cachedSecret, StringComparison.OrdinalIgnoreCase))
 			{
 				/*
@@ -233,11 +209,11 @@ namespace Zongsoft.Security
 				 */
 
 				//返回校验成功
-				return true;
+				return (true, extra);
 			}
 
 			//返回校验失败
-			return false;
+			return (false, null);
 		}
 		#endregion
 
@@ -245,21 +221,21 @@ namespace Zongsoft.Security
 		protected virtual string GenerateSecret(string name, string pattern = null)
 		{
 			if(string.IsNullOrWhiteSpace(pattern))
-				return Common.Randomizer.GenerateString(6, true);
+				return Randomizer.GenerateString(6, true);
 
 			if(string.Equals(pattern, "guid", StringComparison.OrdinalIgnoreCase) || string.Equals(pattern, "uuid", StringComparison.OrdinalIgnoreCase))
 				return Guid.NewGuid().ToString("N");
 
 			if(pattern.Length > 1 && (pattern[0] == '?' || pattern[0] == '*' || pattern[0] == '#'))
 			{
-				if(int.TryParse(pattern.Substring(1), out var count))
-					return Common.Randomizer.GenerateString(count, pattern[0] == '#');
+				if(int.TryParse(pattern.AsSpan(1), out var count))
+					return Randomizer.GenerateString(count, pattern[0] == '#');
 
 				throw new ArgumentException("Invalid secret pattern.");
 			}
 			else
 			{
-				if(pattern.Contains(":") | pattern.Contains("|"))
+				if(pattern.Contains(':') | pattern.Contains('|'))
 					throw new ArgumentException("The secret argument contains illegal characters.");
 			}
 
@@ -296,14 +272,14 @@ namespace Zongsoft.Security
 					switch(index++)
 					{
 						case 0:
-							secret = text.Substring(0, i);
+							secret = text[..i];
 							break;
 						case 1:
-							if(ulong.TryParse(text.Substring(last, i - last), out number))
+							if(ulong.TryParse(text.AsSpan(last, i - last), out number))
 								timestamp = Timestamp.Millennium.Epoch.AddSeconds(number);
 
 							if(i < text.Length - 1)
-								extra = text.Substring(i + 1);
+								extra = text[(i + 1)..];
 
 							return true;
 					}
@@ -312,7 +288,7 @@ namespace Zongsoft.Security
 				}
 			}
 
-			if(last < text.Length && ulong.TryParse(text.Substring(last), out number))
+			if(last < text.Length && ulong.TryParse(text.AsSpan(last), out number))
 				timestamp = Timestamp.Millennium.Epoch.AddSeconds(number);
 
 			return !string.IsNullOrEmpty(secret);
@@ -377,7 +353,7 @@ namespace Zongsoft.Security
 					}
 
 					var token = GetKey(scheme, destination, template, scenario, channel);
-					var value = _secretor.Generate(token, null, extra);
+					var value = await _secretor.GenerateAsync(token, null, extra, cancellation);
 
 					//发送验证码到目的地
 					await transmitter.TransmitAsync(destination, channel, template, new SecretTemplateData(value), cancellation);

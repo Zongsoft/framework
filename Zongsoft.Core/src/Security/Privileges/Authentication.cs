@@ -107,11 +107,11 @@ public static partial class Authentication
 		//遍历安全质询器集合并依次质询
 		foreach(var challenger in _challengers)
 		{
-			challenger.Challenge(principal, scenario);
+			await challenger.ChallengeAsync(principal, scenario, cancellation);
 		}
 
 		//通知验证完成
-		OnAuthenticated(principal, scenario, parameters);
+		await OnAuthenticatedAsync(principal, scenario, parameters, cancellation);
 
 		//返回成功
 		return principal;
@@ -135,12 +135,12 @@ public static partial class Authentication
 		return identity;
 	}
 
-	private static void OnAuthenticated(CredentialPrincipal principal, string scenario, Parameters parameters)
+	private static async Task OnAuthenticatedAsync(CredentialPrincipal principal, string scenario, Parameters parameters, CancellationToken cancellation)
 	{
 		var authority = Authority ?? throw new AuthenticationException("NoAuthority", $"Missing the required credential provider.");
 
 		//注册凭证
-		authority.Register(principal);
+		await authority.RegisterAsync(principal, cancellation);
 
 		//激发“Authenticated”事件
 		OnAuthenticated(new AuthenticatedEventArgs(principal, scenario, parameters));

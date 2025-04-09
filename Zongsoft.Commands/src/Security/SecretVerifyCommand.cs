@@ -71,7 +71,9 @@ namespace Zongsoft.Security.Commands
 			if(secretor == null)
 				throw new CommandException("Missing required secretor for the command.");
 
-			if(secretor.Verify(context.Expression.Options.GetValue<string>(KEY_NAME_OPTION), context.Expression.Arguments[0], out var extra))
+			(var succeed, var extra) = secretor.VerifyAsync(context.Expression.Options.GetValue<string>(KEY_NAME_OPTION), context.Expression.Arguments[0]).GetAwaiter().GetResult();
+
+			if(succeed)
 			{
 				if(extra != null && extra.Length > 0)
 					context.Output.WriteLine(extra);

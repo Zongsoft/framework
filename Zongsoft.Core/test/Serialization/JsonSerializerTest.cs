@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Xunit;
 
 using Zongsoft.Data;
-using Zongsoft.Security.Membership;
+using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Serialization.Tests;
 
@@ -21,7 +21,7 @@ public class JsonSerializerTest
 		var user = CreateUser();
 		var json = Serializer.Json.Serialize(user);
 		Assert.NotEmpty(json);
-		var userResult = Serializer.Json.Deserialize<IUserModel>(json);
+		var userResult = Serializer.Json.Deserialize<IUser>(json);
 		Assert.NotNull(userResult);
 		Assert.Equal(((IModel)user).GetCount(), ((IModel)userResult).GetCount());
 		Assert.True(UserComparer.Instance.Equals(user, userResult));
@@ -93,8 +93,8 @@ public class JsonSerializerTest
 			Assert.True(result.Contains(entry.Key));
 			var value = result[entry.Key];
 
-			if(value is IUserModel user)
-				Assert.True(UserComparer.Instance.Equals((IUserModel)entry.Value, user));
+			if(value is IUser user)
+				Assert.True(UserComparer.Instance.Equals((IUser)entry.Value, user));
 			else
 				Assert.Equal(entry.Value, value);
 		}
@@ -149,8 +149,8 @@ public class JsonSerializerTest
 		{
 			Assert.True(result.TryGetValue(entry.Key, out var value));
 
-			if(value is IUserModel user)
-				Assert.True(UserComparer.Instance.Equals((IUserModel)entry.Value, user));
+			if(value is IUser user)
+				Assert.True(UserComparer.Instance.Equals((IUser)entry.Value, user));
 			else
 				Assert.Equal(entry.Value, value);
 		}
@@ -174,11 +174,10 @@ public class JsonSerializerTest
 ""Expiration"": ""04:00:00"",
 ""Count"":""69"",
 ""User"": {
-	""creation"": ""2020-05-12T23:33:51"",
 	""properties"": {
 		""roles"": [""Administrators"", ""Users"" ]
 	},
-	""userId"": 100,
+	""identifier"": 100,
 	""name"": ""Popeye"",
 	""nickname"": ""钟少"",
 	""namespace"": ""automao"",
@@ -194,10 +193,10 @@ public class JsonSerializerTest
 		Assert.Equal(TimeSpan.FromHours(4), credential.Expiration);
 
 		Assert.NotNull(credential.User);
-		Assert.Equal(100u, credential.User.UserId);
+		Assert.True(credential.User.Identifier.Validate(out int userId));
+		Assert.Equal(100, userId);
 		Assert.Equal("Popeye", credential.User.Name);
 		Assert.Equal("钟少", credential.User.Nickname);
-		Assert.Equal(DateTime.Parse("2020-05-12T23:33:51"), credential.User.Creation);
 	}
 
 	[Fact]
@@ -324,9 +323,9 @@ public class JsonSerializerTest
 		Assert.Null(array[2]);
 	}
 
-	private static IUserModel CreateUser() => Model.Build<IUserModel>(p =>
+	private static IUser CreateUser() => Model.Build<IUser>(p =>
 	{
-		p.UserId = 100;
+		p.Identifier = new Zongsoft.Components.Identifier(typeof(IUser), 100);
 		p.Name = "Popeye";
 		p.Nickname = "钟少";
 	});
@@ -345,7 +344,7 @@ public class JsonSerializerTest
 		public string RenewalToken { get; set; }
 		public TimeSpan Expiration { get; set; }
 		public int Count { get; set; }
-		public IUserModel User { get; set; }
+		public IUser User { get; set; }
 
 		public bool Equals(Credential other) => other is not null &&
 			this.CredentialId == other.CredentialId &&
@@ -359,27 +358,26 @@ public class JsonSerializerTest
 		public override string ToString() => $"[{this.Expiration}] {this.CredentialId} ({this.RenewalToken})";
 	}
 
-	public sealed class UserComparer : IEqualityComparer<IUserModel>
+	public sealed class UserComparer : IEqualityComparer<IUser>
 	{
 		public static readonly UserComparer Instance = new();
 
-		public bool Equals(IUserModel x, IUserModel y)
+		public bool Equals(IUser x, IUser y)
 		{
 			if(x is null)
 				return y is null;
 			if(y is null)
 				return false;
 
-			return x.UserId == y.UserId &&
+			return object.Equals(x.Identifier.Value, y.Identifier.Value) &&
 				x.Name == y.Name &&
 				x.Nickname == y.Nickname &&
 				x.Namespace == y.Namespace &&
 				x.Email == y.Email &&
 				x.Phone == y.Phone &&
-				x.Status == y.Status &&
-				x.StatusTimestamp == y.StatusTimestamp;
+				x.Enabled == y.Enabled;
 		}
 
-		public int GetHashCode(IUserModel user) => user is null ? 0 : HashCode.Combine(user.UserId, user.Name.ToUpperInvariant(), user.Namespace.ToUpperInvariant());
+		public int GetHashCode(IUser user) => user is null ? 0 : HashCode.Combine(user.Identifier, user.Name.ToUpperInvariant(), user.Namespace.ToUpperInvariant());
 	}
 }

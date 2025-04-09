@@ -31,12 +31,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Claims;
-using System.Collections.Generic;
 
-using Zongsoft.Common;
-using Zongsoft.Services;
-using Zongsoft.Security;
-using Zongsoft.Security.Membership;
+using Zongsoft.Collections;
+using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Externals.Wechat.Security
 {
@@ -50,13 +47,13 @@ namespace Zongsoft.Externals.Wechat.Security
 		#endregion
 
 		#region 公共属性
-		public string Name { get => "Wechat"; }
+		public string Name => "Wechat";
 		public IServiceProvider ServiceProvider { get; }
 		#endregion
 
 		#region 身份校验
-		async ValueTask<object> IAuthenticator.VerifyAsync(string key, object data, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation) => await this.VerifyAsync(key, await GetSecretAsync(data, cancellation), scenario, parameters, cancellation);
-		public async ValueTask<Identity> VerifyAsync(string key, string secret, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		async ValueTask<object> IAuthenticator.VerifyAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation) => await this.VerifyAsync(key, await GetSecretAsync(data, cancellation), scenario, parameters, cancellation);
+		public async ValueTask<Identity> VerifyAsync(string key, string secret, string scenario, Parameters parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(secret))
 				throw new ArgumentNullException(nameof(secret));
@@ -74,8 +71,8 @@ namespace Zongsoft.Externals.Wechat.Security
 		#endregion
 
 		#region 身份签发
-		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object identity, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation) => this.IssueAsync((Identity)identity, scenario, parameters);
-		public ValueTask<ClaimsIdentity> IssueAsync(Identity identity, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object identity, string scenario, Parameters parameters, CancellationToken cancellation) => this.IssueAsync((Identity)identity, scenario, parameters);
+		public ValueTask<ClaimsIdentity> IssueAsync(Identity identity, string scenario, Parameters parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(identity.OpenId))
 				return ValueTask.FromResult<ClaimsIdentity>(null);
@@ -83,11 +80,11 @@ namespace Zongsoft.Externals.Wechat.Security
 			return this.OnIssueAsync(identity, scenario, parameters, cancellation);
 		}
 
-		protected abstract ValueTask<ClaimsIdentity> OnIssueAsync(Identity identity, string scenario, IDictionary<string, object> parameters, CancellationToken cancellation);
+		protected abstract ValueTask<ClaimsIdentity> OnIssueAsync(Identity identity, string scenario, Parameters parameters, CancellationToken cancellation);
 		#endregion
 
 		#region 私有方法
-		private static async ValueTask<Identity> GetAppletToken(Applet applet, string code, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		private static async ValueTask<Identity> GetAppletToken(Applet applet, string code, Parameters parameters, CancellationToken cancellation = default)
 		{
 			var result = await applet.LoginAsync(code, cancellation);
 			var info = await applet.Users.GetInfoAsync(result.OpenId, cancellation);
@@ -97,7 +94,7 @@ namespace Zongsoft.Externals.Wechat.Security
 				new Identity(applet.Account, result.OpenId, info.UnionId, info.Nickname, info.Avatar, info.Description);
 		}
 
-		private static async ValueTask<Identity> GetChannelToken(Channel channel, string code, IDictionary<string, object> parameters, CancellationToken cancellation = default)
+		private static async ValueTask<Identity> GetChannelToken(Channel channel, string code, Parameters parameters, CancellationToken cancellation = default)
 		{
 			var credential = await channel.Authentication.AuthenticateAsync(code, cancellation);
 			var openId = credential.OpenId;
@@ -132,7 +129,7 @@ namespace Zongsoft.Externals.Wechat.Security
 		#region 嵌套结构
 		public struct Identity
 		{
-			public Identity(in Account account, string openId, string unionId, IDictionary<string, object> parameters)
+			public Identity(in Account account, string openId, string unionId, Parameters parameters)
 			{
 				this.Account = account;
 				this.OpenId = openId;
@@ -143,7 +140,7 @@ namespace Zongsoft.Externals.Wechat.Security
 				this.Parameters = parameters;
 			}
 
-			public Identity(in Account account, string openId, string nickname, string avatar, string description = null, IDictionary<string, object> parameters = null)
+			public Identity(in Account account, string openId, string nickname, string avatar, string description = null, Parameters parameters = null)
 			{
 				this.Account = account;
 				this.OpenId = openId;
@@ -154,7 +151,7 @@ namespace Zongsoft.Externals.Wechat.Security
 				this.Parameters = parameters;
 			}
 
-			public Identity(in Account account, string openId, string unionId, string nickname, string avatar, string description = null, IDictionary<string, object> parameters = null)
+			public Identity(in Account account, string openId, string unionId, string nickname, string avatar, string description = null, Parameters parameters = null)
 			{
 				this.Account = account;
 				this.OpenId = openId;
@@ -171,7 +168,7 @@ namespace Zongsoft.Externals.Wechat.Security
 			public readonly string Nickname;
 			public readonly string Avatar;
 			public readonly string Description;
-			public readonly IDictionary<string, object> Parameters;
+			public readonly Parameters Parameters;
 		}
 		#endregion
 	}

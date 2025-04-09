@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Caching;
@@ -68,7 +70,7 @@ public class CredentialProvider : ICredentialProvider
 	#endregion
 
 	#region 公共方法
-	public void Register(CredentialPrincipal principal)
+	public async ValueTask RegisterAsync(CredentialPrincipal principal, CancellationToken cancellation)
 	{
 		if(principal == null || principal.Identity == null)
 			return;
@@ -76,10 +78,10 @@ public class CredentialProvider : ICredentialProvider
 		var cache = this.Cache;
 
 		//确保同个用户在相同场景下只能存在一个凭证
-		if(cache.GetValue(GetCacheKeyOfUser(principal.Identity.GetIdentifier<string>(), principal.Scenario)) is string credentialId && credentialId.Length > 0)
+		if(await cache.GetValueAsync(GetCacheKeyOfUser(principal.Identity.GetIdentifier<string>(), principal.Scenario), cancellation) is string credentialId && credentialId.Length > 0)
 		{
 			//将同名用户及场景下的原来的凭证删除（即踢下线）
-			cache.Remove(GetCacheKeyOfCredential(credentialId));
+			await cache.RemoveAsync(GetCacheKeyOfCredential(credentialId), cancellation);
 
 			//将本地内存缓存中的凭证对象删除
 			_memoryCache.Remove(credentialId);
@@ -93,10 +95,10 @@ public class CredentialProvider : ICredentialProvider
 		this.OnRegistering(principal);
 
 		//将当前凭证主体保存到分布式缓存中
-		cache.SetValue(GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Validity);
+		await cache.SetValueAsync(GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Validity, CacheRequisite.Always, cancellation);
 
 		//设置当前用户及场景所对应的唯一凭证号为新注册的凭证号
-		cache.SetValue(GetCacheKeyOfUser(principal.Identity.GetIdentifier<string>(), principal.Scenario), principal.CredentialId, principal.Validity);
+		await cache.SetValueAsync(GetCacheKeyOfUser(principal.Identity.GetIdentifier<string>(), principal.Scenario), principal.CredentialId, principal.Validity, CacheRequisite.Always, cancellation);
 
 		//将凭证对象保存到本地内存缓存中
 		_memoryCache.SetValue(
@@ -109,7 +111,7 @@ public class CredentialProvider : ICredentialProvider
 		this.OnRegistered(principal, false);
 	}
 
-	public void Unregister(string credentialId)
+	public async ValueTask UnregisterAsync(string credentialId, CancellationToken cancellation)
 	{
 		if(string.IsNullOrEmpty(credentialId))
 			return;
@@ -120,12 +122,12 @@ public class CredentialProvider : ICredentialProvider
 		this.OnUnregistering(credentialId);
 
 		//将凭证资料从分布式缓存中删除
-		cache.Remove(GetCacheKeyOfCredential(credentialId));
+		await cache.RemoveAsync(GetCacheKeyOfCredential(credentialId), cancellation);
 
 		//将当前用户及场景对应的凭证号记录删除
 		if(_memoryCache.TryGetValue<CredentialToken>(credentialId, out var token))
 		{
-			cache.Remove(GetCacheKeyOfUser(token.Principal.Identity.GetIdentifier<string>(), token.Principal.Scenario));
+			await cache.RemoveAsync(GetCacheKeyOfUser(token.Principal.Identity.GetIdentifier<string>(), token.Principal.Scenario), cancellation);
 
 			//从本地内存缓存中把指定编号的凭证对象删除
 			_memoryCache.Remove(credentialId);
@@ -135,12 +137,12 @@ public class CredentialProvider : ICredentialProvider
 		this.OnUnregistered(credentialId, false);
 	}
 
-	public CredentialPrincipal Renew(string credentialId, string token)
+	public async ValueTask<CredentialPrincipal> RenewAsync(string credentialId, string token, CancellationToken cancellation)
 	{
 		if(string.IsNullOrEmpty(credentialId))
 			throw new ArgumentNullException(nameof(credentialId));
 
-		var principal = this.GetPrincipal(credentialId);
+		var principal = await this.GetPrincipalAsync(credentialId, cancellation);
 
 		if(principal == null || token != principal.RenewalToken)
 			return null;
@@ -154,10 +156,10 @@ public class CredentialProvider : ICredentialProvider
 		principal = principal.Clone();
 
 		//将当前用户身份保存到分布式缓存中
-		cache.SetValue(GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Validity);
+		await cache.SetValueAsync(GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Validity, CacheRequisite.Always, cancellation);
 
 		//将当前用户及场景对应的凭证号更改为新创建的凭证号
-		cache.SetValue(GetCacheKeyOfUser(principal.Identity.GetIdentifier<string>(), principal.Scenario), principal.CredentialId, principal.Validity);
+		await cache.SetValueAsync(GetCacheKeyOfUser(principal.Identity.GetIdentifier<string>(), principal.Scenario), principal.CredentialId, principal.Validity, CacheRequisite.Always, cancellation);
 
 		//将新建的凭证保存到本地内存缓存中
 		_memoryCache.SetValue(
@@ -167,7 +169,7 @@ public class CredentialProvider : ICredentialProvider
 			TimeSpan.FromTicks(principal.Validity.Ticks));
 
 		//将原来的凭证从分布式缓存中删除
-		cache.Remove(GetCacheKeyOfCredential(credentialId));
+		await cache.RemoveAsync(GetCacheKeyOfCredential(credentialId), cancellation);
 
 		//将原来的凭证从本地内存缓存中删除
 		_memoryCache.Remove(credentialId);
@@ -179,17 +181,17 @@ public class CredentialProvider : ICredentialProvider
 		return principal;
 	}
 
-	public CredentialPrincipal Refresh(string credentialId)
+	public async ValueTask<CredentialPrincipal> RefreshAsync(string credentialId, CancellationToken cancellation)
 	{
-		var principal = this.GetPrincipal(credentialId);
+		var principal = await this.GetPrincipalAsync(credentialId, cancellation);
 		if(principal == null)
 			return null;
 
 		foreach(var challenger in Privileges.Authentication.Challengers)
-			challenger.Challenge(principal, principal.Scenario);
+			await challenger.ChallengeAsync(principal, principal.Scenario, cancellation);
 
 		//将刷新后的凭证主体保存到分布式缓存中
-		this.Cache.SetValue(GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Validity);
+		await this.Cache.SetValueAsync(GetCacheKeyOfCredential(principal.CredentialId), principal.Serialize(), principal.Validity, CacheRequisite.Always, cancellation);
 
 		//将凭证对象保存到本地内存缓存中
 		_memoryCache.SetValue(
@@ -201,33 +203,33 @@ public class CredentialProvider : ICredentialProvider
 		return principal;
 	}
 
-	public IEnumerable<CredentialPrincipal> Refresh(string identifier, string scenario = null)
+	public async IAsyncEnumerable<CredentialPrincipal> RefreshAsync(string identifier, string scenario, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 	{
 		if(string.IsNullOrEmpty(identifier))
 			yield break;
 
 		if(string.IsNullOrEmpty(scenario) || scenario == "*")
 		{
-			var keys = this.Cache.Find(GetCacheKeyOfUser(identifier, "*"));
+			var keys = this.Cache.FindAsync(GetCacheKeyOfUser(identifier, "*"), cancellation);
 
-			foreach(var key in keys)
+			await foreach(var key in keys)
 			{
-				var credentialId = this.Cache.GetValue<string>(key);
+				var credentialId = await this.Cache.GetValueAsync<string>(key, cancellation);
 
 				if(!string.IsNullOrEmpty(credentialId))
-					yield return this.Refresh(this.Cache.GetValue<string>(key));
+					yield return await this.RefreshAsync(await this.Cache.GetValueAsync<string>(key, cancellation), cancellation);
 			}
 		}
 		else
 		{
-			var credentialId = this.Cache.GetValue<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()));
+			var credentialId = await this.Cache.GetValueAsync<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()), cancellation);
 
 			if(!string.IsNullOrEmpty(credentialId))
-				yield return this.Refresh(credentialId);
+				yield return await this.RefreshAsync(credentialId, cancellation);
 		}
 	}
 
-	public CredentialPrincipal GetPrincipal(string credentialId)
+	public async ValueTask<CredentialPrincipal> GetPrincipalAsync(string credentialId, CancellationToken cancellation)
 	{
 		if(string.IsNullOrEmpty(credentialId))
 			return null;
@@ -236,13 +238,13 @@ public class CredentialProvider : ICredentialProvider
 		if(_memoryCache.GetValue(credentialId) is CredentialToken token)
 		{
 			if(token.Active())
-				this.Refresh(credentialId, token);
+				await this.RefreshAsync(credentialId, token, cancellation);
 
 			return token.Principal;
 		}
 
 		var cache = this.Cache;
-		var buffer = cache.GetValue<byte[]>(GetCacheKeyOfCredential(credentialId));
+		var buffer = await cache.GetValueAsync<byte[]>(GetCacheKeyOfCredential(credentialId), cancellation);
 
 		if(buffer == null || buffer.Length == 0)
 			return null;
@@ -250,10 +252,10 @@ public class CredentialProvider : ICredentialProvider
 		var principal = CredentialPrincipal.Deserialize(buffer);
 
 		//顺延当前用户及场景对应凭证号的缓存项的过期时长
-		cache.SetExpiry(GetCacheKeyOfUser(principal.Identity.GetIdentifier<string>(), principal.Scenario), principal.Validity);
+		await cache.SetExpiryAsync(GetCacheKeyOfUser(principal.Identity.GetIdentifier<string>(), principal.Scenario), principal.Validity, cancellation);
 
 		//顺延当前凭证缓存项的过期时长
-		cache.SetExpiry(GetCacheKeyOfCredential(credentialId), principal.Validity);
+		await cache.SetExpiryAsync(GetCacheKeyOfCredential(credentialId), principal.Validity, cancellation);
 
 		//将获取到的凭证保存到本地内存缓存中
 		_memoryCache.SetValue(
@@ -265,29 +267,29 @@ public class CredentialProvider : ICredentialProvider
 		return principal;
 	}
 
-	public IEnumerable<CredentialPrincipal> GetPrincipals(string identifier, string scenario = null)
+	public async IAsyncEnumerable<CredentialPrincipal> GetPrincipalsAsync(string identifier, string scenario, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 	{
 		if(string.IsNullOrEmpty(identifier))
 			yield break;
 
 		if(string.IsNullOrEmpty(scenario) || scenario == "*")
 		{
-			var keys = this.Cache.Find(GetCacheKeyOfUser(identifier, "*"));
+			var keys = this.Cache.FindAsync(GetCacheKeyOfUser(identifier, "*"), cancellation);
 
-			foreach(var key in keys)
+			await foreach(var key in keys)
 			{
-				var credentialId = this.Cache.GetValue<string>(key);
+				var credentialId = await this.Cache.GetValueAsync<string>(key, cancellation);
 
 				if(!string.IsNullOrEmpty(credentialId))
-					yield return this.GetPrincipal(this.Cache.GetValue<string>(key));
+					yield return await this.GetPrincipalAsync(await this.Cache.GetValueAsync<string>(key, cancellation), cancellation);
 			}
 		}
 		else
 		{
-			var credentialId = this.Cache.GetValue<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()));
+			var credentialId = await this.Cache.GetValueAsync<string>(GetCacheKeyOfUser(identifier, scenario?.Trim().ToLowerInvariant()), cancellation);
 
 			if(!string.IsNullOrEmpty(credentialId))
-				yield return this.GetPrincipal(credentialId);
+				yield return await this.GetPrincipalAsync(credentialId, cancellation);
 		}
 	}
 	#endregion
@@ -310,13 +312,13 @@ public class CredentialProvider : ICredentialProvider
 	#endregion
 
 	#region 私有方法
-	private void Refresh(string credentialId, CredentialToken token)
+	private async ValueTask RefreshAsync(string credentialId, CredentialToken token, CancellationToken cancellation)
 	{
 		//顺延当前用户及场景对应凭证号的缓存项的过期时长
-		this.Cache.SetExpiry(GetCacheKeyOfUser(token.Principal.Identity.GetIdentifier<string>(), token.Principal.Scenario), token.Principal.Validity);
+		await this.Cache.SetExpiryAsync(GetCacheKeyOfUser(token.Principal.Identity.GetIdentifier<string>(), token.Principal.Scenario), token.Principal.Validity, cancellation);
 
 		//顺延当前凭证缓存项的过期时长
-		this.Cache.SetExpiry(GetCacheKeyOfCredential(credentialId), token.Principal.Validity);
+		await this.Cache.SetExpiryAsync(GetCacheKeyOfCredential(credentialId), token.Principal.Validity, cancellation);
 
 		//重置本地缓存的时间信息
 		token.Reset();

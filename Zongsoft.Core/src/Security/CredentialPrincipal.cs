@@ -122,13 +122,10 @@ namespace Zongsoft.Security
 
 		public byte[] Serialize()
 		{
-			using(var memory = new MemoryStream())
-			{
-				using(var writer = new BinaryWriter(memory, System.Text.Encoding.UTF8, true))
-					this.WriteTo(writer, null);
-
-				return memory.ToArray();
-			}
+			using var memory = new MemoryStream();
+			using var writer = new BinaryWriter(memory, System.Text.Encoding.UTF8, true);
+			this.WriteTo(writer, null);
+			return memory.ToArray();
 		}
 
 		public static CredentialPrincipal Deserialize(byte[] buffer)
@@ -136,11 +133,9 @@ namespace Zongsoft.Security
 			if(buffer == null || buffer.Length == 0)
 				return null;
 
-			using(var memory = new MemoryStream(buffer))
-			{
-				using(var reader = new BinaryReader(memory))
-					return new CredentialPrincipal(reader);
-			}
+			using var memory = new MemoryStream(buffer);
+			using var reader = new BinaryReader(memory);
+			return new CredentialPrincipal(reader);
 		}
 
 		public static CredentialPrincipal Deserialize(Stream stream)

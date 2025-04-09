@@ -131,28 +131,31 @@ partial class UserServiceBase<TUser>
 		return this.OnForgetPasswordAsync(user, parameters, cancellation);
 	}
 
-	public ValueTask<bool> ResetPasswordAsync(string token, string secret, string password = null, CancellationToken cancellation = default)
+	public async ValueTask<bool> ResetPasswordAsync(string token, string secret, string password = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(token))
 			throw new ArgumentNullException(nameof(token));
 
 		if(string.IsNullOrEmpty(secret))
-			return ValueTask.FromResult(false);
+			return false;
 
 		var secretor = this.Secretor ?? throw new InvalidOperationException($"Missing the required secretor.");
 
+		//执行校验码验证
+		(var succeed, var extra) = await secretor.VerifyAsync(token, secret, cancellation);
+
 		//如果重置密码的校验码验证成功
-		if(secretor.Verify(token, secret, out var extra) && !string.IsNullOrEmpty(extra))
+		if(succeed && !string.IsNullOrEmpty(extra))
 		{
 			//确认新密码是否符合密码规则
 			this.OnValidatePassword(password);
 
 			//更新用户的新密码
-			return this.Passworder.SetAsync(new Identifier(typeof(TUser), extra), password, cancellation);
+			return await this.Passworder.SetAsync(new Identifier(typeof(TUser), extra), password, cancellation);
 		}
 
 		//返回重置密码失败
-		return ValueTask.FromResult(false);
+		return false;
 	}
 
 	public async ValueTask<bool> ResetPasswordAsync(string identity, string @namespace, string[] passwordAnswers, string newPassword = null, CancellationToken cancellation = default)

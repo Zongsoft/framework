@@ -27,11 +27,6 @@
 		</object>
 	</extension>
 
-	<!-- 挂载数据访问映射 -->
-	<extension path="/Workbench/Security">
-		<object name="Mapping" value="{static:Zongsoft.Security.Membership.Mapping.Instance, Zongsoft.Core}" />
-	</extension>
-
 	<!-- 挂载验证和授权 -->
 	<extension path="/Workbench/Security">
 		<object name="Authentication" value="{static:Zongsoft.Security.Privileges.Authentication.Authenticators, Zongsoft.Core}">
