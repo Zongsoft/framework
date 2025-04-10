@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<schema xmlns="http://schemas.zongsoft.com/data">
+	<container name="">
+		<entity name="GatewayHistory" table="GatewayHistory" driver="TDengine">
+			<key>
+				<member name="Timestamp"/>
+			</key>
+
+			<property name="GatewayId" type="uint" nullable="false" hint="tag" />
+			<property name="MetricId" type="ulong" nullable="false" hint="tag" />
+			<property name="Value" type="double" nullable="false" />
+			<property name="Text" type="varchar" length="100" nullable="true" />
+			<property name="FailureCode" type="int" nullable="false" />
+			<property name="FailureMessage" type="nvarchar" length="500" nullable="true" />
+			<property name="Timestamp" type="timestamp" nullable="false" default="now()" />
+		</entity>
+
+		<entity name="DeviceHistory" table="DeviceHistory" driver="TDengine">
+			<key>
+				<member name="Timestamp"/>
+			</key>
+
+			<property name="DeviceId" type="ulong" nullable="false" hint="tag" />
+			<property name="MetricId" type="ulong" nullable="false" hint="tag" />
+			<property name="Value" type="double" nullable="false" />
+			<property name="Text" type="varchar" length="100" nullable="true" />
+			<property name="FailureCode" type="int" nullable="false" />
+			<property name="FailureMessage" type="nvarchar" length="500" nullable="true" />
+			<property name="Timestamp" type="timestamp" nullable="false" default="now()" />
+		</entity>
+
+		<entity name="MachineHistory" table="MachineHistory" driver="TDengine">
+			<key>
+				<member name="Timestamp" />
+			</key>
+
+			<property name="Timestamp" type="timestamp" nullable="false" hint="timestamp"/>
+			<property name="MachineId" type="uint" nullable="false" hint="tag" />
+			<property name="MetricId" type="ulong" nullable="false" hint="tag" />
+			<property name="Value" type="double" nullable="false" />
+			<property name="Text" type="varchar" length="100" nullable="true" />
+			<property name="FailureCode" type="int" nullable="false" />
+			<property name="FailureMessage" type="nvarchar" length="500" nullable="true" />
+		</entity>
+	</container>
+</schema>
