@@ -19,9 +19,7 @@
 				<Reference Include="Zongsoft.Web">
 					<HintPath>..\..\..\Zongsoft.Web\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Web.dll</HintPath>
 				</Reference>
-				<Reference Include="Zongsoft.Externals.Wechat">
-					<HintPath>..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Externals.Wechat.dll</HintPath>
-				</Reference>
+				<ProjectReference Include="..\src\Zongsoft.Externals.Wechat.csproj" />
 			</ItemGroup>
 		</When>
 		<Otherwise>
