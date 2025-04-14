@@ -58,7 +58,7 @@ namespace Zongsoft.Security
 
 		/// <summary>生成一个指定名称的秘密（验证码）。</summary>
 		/// <param name="name">指定的验证码名称，该名称通常包含对应目标标识（譬如：user.forget:100、user.email:100，其中数字100表示用户的唯一编号），调用者应确保该名称全局唯一。</param>
-		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="VerifyAsync(string, string, out string)"/>方法验证通过后获取到。</param>
+		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="VerifyAsync(string, string, CancellationToken)"/>方法验证通过后获取到。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回生成成功的验证码，关于验证码的具体生成规则请参考特定实现版本。</returns>
 		ValueTask<string> GenerateAsync(string name, string extra, CancellationToken cancellation = default);
@@ -66,7 +66,7 @@ namespace Zongsoft.Security
 		/// <summary>生成一个指定名称的秘密（验证码）。</summary>
 		/// <param name="name">指定的验证码名称，该名称通常包含对应的目标标识（譬如：user.forget:100、user.phone:13812345678，其中数字100表示用户的唯一编号)，调用者应确保该名称全局唯一。</param>
 		/// <param name="pattern">指定的验证码生成模式，基本定义参考备注说明。</param>
-		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="VerifyAsync(string, string, out string)"/>方法验证通过后获取到。</param>
+		/// <param name="extra">指定的附加文本，该附加文本可通过<see cref="VerifyAsync(string, string, CancellationToken)"/>方法验证通过后获取到。</param>
 		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回生成成功的验证码，关于验证码的生成规则由<paramref name="pattern"/>参数定义。</returns>
 		/// <remarks>

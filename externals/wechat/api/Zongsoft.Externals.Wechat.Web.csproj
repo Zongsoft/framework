@@ -10,10 +10,6 @@
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/wechat/api</RepositoryUrl>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\src\Zongsoft.Externals.Wechat.csproj" />
-	</ItemGroup>
-
 	<Choose>
 		<When Condition="$(Configuration)=='Debug'">
 			<ItemGroup>
@@ -23,12 +19,16 @@
 				<Reference Include="Zongsoft.Web">
 					<HintPath>..\..\..\Zongsoft.Web\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Web.dll</HintPath>
 				</Reference>
+				<Reference Include="Zongsoft.Externals.Wechat">
+					<HintPath>..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Externals.Wechat.dll</HintPath>
+				</Reference>
 			</ItemGroup>
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.0.0" />
-				<PackageReference Include="Zongsoft.Web" VersionOverride="7.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.7.0" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="7.4.0" />
+				<PackageReference Include="Zongsoft.Externals.Wechat" VersionOverride="7.1.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

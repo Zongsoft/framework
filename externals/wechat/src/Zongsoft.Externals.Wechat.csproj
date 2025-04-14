@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.0.0</Version>
+		<Version>7.1.0</Version>
 		<Product>Zongsoft Wechat Library</Product>
 		<Description>This is a library about Wechat SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Wechat</RootNamespace>
@@ -33,7 +33,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.7.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

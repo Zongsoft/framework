@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Security library.
  *
@@ -35,14 +35,14 @@ namespace Zongsoft.Security.Configuration;
 /// <summary>
 /// 表示身份验证的配置选项。
 /// </summary>
-public class AuthorityOptions
+public class AuthenticationOptions
 {
 	#region 静态字段
 	public static readonly TimeSpan DefaultPeriod = TimeSpan.FromHours(8);
 	#endregion
 
 	#region 构造函数
-	public AuthorityOptions()
+	public AuthenticationOptions()
 	{
 		this.Period = DefaultPeriod;
 		this.Expiration = new ExpirationScenarioCollection();

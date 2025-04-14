@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 
 using Zongsoft.Data;
@@ -108,7 +109,6 @@ public static class UserUtility
 		};
 
 		SetClaims(identity, user, expiration);
-
 		return identity;
 	}
 

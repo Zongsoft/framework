@@ -146,7 +146,7 @@ public static class ClaimsIdentityExtension
 			var index = text.LastIndexOf('/');
 
 			if(index >= 0 && index < text.Length - 1)
-				return text.Substring(index + 1);
+				return text[(index + 1)..];
 
 			return text;
 		}
@@ -164,12 +164,12 @@ public static class ClaimsIdentityExtension
 				if(value is ICollection<string> collection)
 					collection.Add(claim.Value);
 				else
-					properties[key] = new List<string>(new[] { value?.ToString(), claim.Value });
+					properties[key] = new List<string>([value?.ToString(), claim.Value]);
 			}
 			else
 			{
 				if(isMultiple)
-					properties.Add(key, new List<string>(new[] { claim.Value }));
+					properties.Add(key, new List<string>([claim.Value]));
 				else
 					properties.Add(key, claim.Value);
 			}

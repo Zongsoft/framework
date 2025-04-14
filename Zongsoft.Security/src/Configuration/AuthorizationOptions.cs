@@ -39,9 +39,11 @@ namespace Zongsoft.Security.Configuration;
 /// </summary>
 public class AuthorizationOptions
 {
+	#region 公共属性
 	/// <summary>获取一个可以进行授权管理的角色集。</summary>
 	[TypeConverter(typeof(RolesConverter))]
 	public ISet<string> Roles { get; set; }
+	#endregion
 
 	#region 嵌套子类
 	private class RolesConverter : TypeConverter

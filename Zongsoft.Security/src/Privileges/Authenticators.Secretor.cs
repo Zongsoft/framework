@@ -45,14 +45,14 @@ partial class Authenticators
 	public class SecretorAuthenticator() : Authentication.SecretorAuthenticatorBase(Module.Current.Services)
 	{
 		#region 成员字段
-		private Configuration.AuthorityOptions _options;
+		private Configuration.AuthenticationOptions _options;
 		#endregion
 
 		#region 公共属性
-		[Options("Security/Privileges/Authentication")]
-		public Configuration.AuthorityOptions Options
+		[Options("Security/Authentication")]
+		public Configuration.AuthenticationOptions Options
 		{
-			get => _options ??= ApplicationContext.Current.Configuration.GetOption<Configuration.AuthorityOptions>("Security/Privileges/Authentication");
+			get => _options ??= ApplicationContext.Current.Configuration.GetOption<Configuration.AuthenticationOptions>("Security/Authentication");
 			set => _options = value;
 		}
 		#endregion
@@ -77,7 +77,7 @@ partial class Authenticators
 			if(this.Options != null && this.Options.Expiration.TryGetValue(scenario, out var option))
 				period = option.Period;
 
-			return period > TimeSpan.Zero ? period : TimeSpan.FromHours(4);
+			return period > TimeSpan.Zero ? period : TimeSpan.FromHours(8);
 		}
 		#endregion
 	}

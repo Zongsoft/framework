@@ -63,7 +63,7 @@ public class CredentialProvider : ICredentialProvider
 
 	#region 公共属性
 	[Options("Security/Authority")]
-	public Configuration.AuthorityOptions Options { get; set; }
+	public Configuration.AuthenticationOptions Options { get; set; }
 
 	[ServiceDependency("~", IsRequired = true)]
 	public IDistributedCache Cache { get; set; }
