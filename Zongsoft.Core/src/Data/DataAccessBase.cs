@@ -2104,11 +2104,11 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		#endregion
 
 		#region 公共方法
-		public long Increase(string name, string field, int interval = 1) => this.Increase(this.GetProperty(name, field), interval);
+		public long Increase(string name, string field, int interval = 1) => this.Increase(GetProperty(name, field), interval);
 		public abstract long Increase(Metadata.IDataEntitySimplexProperty property, int interval = 1);
 
 		public ValueTask<long> IncreaseAsync(string name, string field, CancellationToken cancellation = default) => this.IncreaseAsync(name, field, 1, cancellation);
-		public ValueTask<long> IncreaseAsync(string name, string field, int interval, CancellationToken cancellation = default) => this.IncreaseAsync(this.GetProperty(name, field), interval, cancellation);
+		public ValueTask<long> IncreaseAsync(string name, string field, int interval, CancellationToken cancellation = default) => this.IncreaseAsync(GetProperty(name, field), interval, cancellation);
 
 		public ValueTask<long> IncreaseAsync(Metadata.IDataEntitySimplexProperty property, CancellationToken cancellation = default) => this.IncreaseAsync(property, 1, cancellation);
 		public abstract ValueTask<long> IncreaseAsync(Metadata.IDataEntitySimplexProperty property, int interval, CancellationToken cancellation = default);
@@ -2128,7 +2128,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		#endregion
 
 		#region 私有方法
-		private Metadata.IDataEntitySimplexProperty GetProperty(string name, string field)
+		private static Metadata.IDataEntitySimplexProperty GetProperty(string name, string field)
 		{
 			if(!Mapping.Entities.TryGetValue(name, out var entity))
 				throw new InvalidOperationException($"The entity specified with the name '{name}' does not exist.");
