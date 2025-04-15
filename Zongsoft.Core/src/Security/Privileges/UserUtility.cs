@@ -28,14 +28,13 @@
  */
 
 using System;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
 
 using Zongsoft.Data;
 
 namespace Zongsoft.Security.Privileges;
 
-public static class UserUtility
+internal static class UserUtility
 {
 	internal static ICondition GetCriteria(string identity, string @namespace = null) => GetCriteria(identity, @namespace, out _);
 	internal static ICondition GetCriteria(string identity, out string identityType) => GetCriteria(identity, null, out identityType);
@@ -112,7 +111,7 @@ public static class UserUtility
 		return identity;
 	}
 
-	public static bool SetClaims(this ClaimsIdentity identity, IUser user, TimeSpan? expiration = null)
+	private static bool SetClaims(this ClaimsIdentity identity, IUser user, TimeSpan? expiration = null)
 	{
 		if(identity == null || user == null)
 			return false;
