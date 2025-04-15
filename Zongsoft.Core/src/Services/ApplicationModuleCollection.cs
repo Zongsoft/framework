@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public class ApplicationModuleCollection() : KeyedCollection<string, IApplicationModule>(StringComparer.OrdinalIgnoreCase)
 {
-	public class ApplicationModuleCollection() : KeyedCollection<string, IApplicationModule>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(IApplicationModule module) => module.Name;
-	}
+	protected override string GetKeyForItem(IApplicationModule module) => module.Name;
 }

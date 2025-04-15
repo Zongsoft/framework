@@ -28,12 +28,10 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public interface IDataSearcherConditioner
 {
-	public interface IDataSearcherConditioner
-	{
-		ICondition Resolve(string method, string keyword, IDataOptions options = null);
-	}
+	ICondition Resolve(string method, string keyword, IDataOptions options = null);
 }

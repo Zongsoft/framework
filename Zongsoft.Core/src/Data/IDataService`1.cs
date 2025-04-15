@@ -32,65 +32,64 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据服务的泛型接口。
+/// </summary>
+/// <typeparam name="TModel">关于数据服务对应的数据模型类型。</typeparam>
+public interface IDataService<TModel> : IDataService
 {
-	/// <summary>
-	/// 表示数据服务的泛型接口。
-	/// </summary>
-	/// <typeparam name="TModel">关于数据服务对应的数据模型类型。</typeparam>
-	public interface IDataService<TModel> : IDataService
-	{
-		#region 事件定义
-		event EventHandler<DataGettedEventArgs<TModel>> Getted;
-		event EventHandler<DataGettingEventArgs<TModel>> Getting;
-		#endregion
+	#region 事件定义
+	event EventHandler<DataGettedEventArgs<TModel>> Getted;
+	event EventHandler<DataGettingEventArgs<TModel>> Getting;
+	#endregion
 
-		#region 属性定义
-		/// <summary>获取数据搜索器对象。</summary>
-		IDataSearcher<TModel> Searcher { get; }
+	#region 属性定义
+	/// <summary>获取数据搜索器对象。</summary>
+	IDataSearcher<TModel> Searcher { get; }
 
-		/// <summary>获取数据服务授权验证器。</summary>
-		IDataServiceAuthorizer<TModel> Authorizer { get; }
+	/// <summary>获取数据服务授权验证器。</summary>
+	IDataServiceAuthorizer<TModel> Authorizer { get; }
 
-		/// <summary>获取数据服务操作验证器。</summary>
-		new IDataServiceValidator<TModel> Validator { get; }
+	/// <summary>获取数据服务操作验证器。</summary>
+	new IDataServiceValidator<TModel> Validator { get; }
 
-		/// <summary>获取数据服务过滤器集合。</summary>
-		ICollection<IDataServiceFilter<TModel>> Filters { get; }
-		#endregion
+	/// <summary>获取数据服务过滤器集合。</summary>
+	ICollection<IDataServiceFilter<TModel>> Filters { get; }
+	#endregion
 
-		#region 同步查询
-		new IEnumerable<TModel> Select(DataSelectOptions options = null, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, DataSelectOptions options, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, string schema, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
-		#endregion
+	#region 同步查询
+	new IEnumerable<TModel> Select(DataSelectOptions options = null, params Sorting[] sortings);
+	new IEnumerable<TModel> Select(ICondition criteria, params Sorting[] sortings);
+	new IEnumerable<TModel> Select(ICondition criteria, DataSelectOptions options, params Sorting[] sortings);
+	new IEnumerable<TModel> Select(ICondition criteria, Paging paging, params Sorting[] sortings);
+	new IEnumerable<TModel> Select(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	new IEnumerable<TModel> Select(ICondition criteria, string schema, params Sorting[] sortings);
+	new IEnumerable<TModel> Select(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
+	new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
+	new IEnumerable<TModel> Select(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	#endregion
 
-		#region 异步查询
-		new IAsyncEnumerable<TModel> SelectAsync(CancellationToken cancellation = default);
-		new IAsyncEnumerable<TModel> SelectAsync(DataSelectOptions options, params Sorting[] sortings);
-		new IAsyncEnumerable<TModel> SelectAsync(DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, params Sorting[] sortings);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Sorting[] sortings, CancellationToken cancellation = default);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, DataSelectOptions options, params Sorting[] sortings);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Paging paging, params Sorting[] sortings);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, params Sorting[] sortings);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
-		new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
-		#endregion
-	}
+	#region 异步查询
+	new IAsyncEnumerable<TModel> SelectAsync(CancellationToken cancellation = default);
+	new IAsyncEnumerable<TModel> SelectAsync(DataSelectOptions options, params Sorting[] sortings);
+	new IAsyncEnumerable<TModel> SelectAsync(DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, params Sorting[] sortings);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Sorting[] sortings, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, DataSelectOptions options, params Sorting[] sortings);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Paging paging, params Sorting[] sortings);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, params Sorting[] sortings);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	new IAsyncEnumerable<TModel> SelectAsync(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+	#endregion
 }

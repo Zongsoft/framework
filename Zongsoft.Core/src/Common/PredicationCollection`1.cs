@@ -30,57 +30,56 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Common
+namespace Zongsoft.Common;
+
+public class PredicationCollection<T> : Collection<IPredication<T>>, IPredication<T>
 {
-	public class PredicationCollection<T> : Collection<IPredication<T>>, IPredication<T>
+	#region 成员字段
+	private readonly PredicationCombination _combination;
+	#endregion
+
+	#region 构造函数
+	public PredicationCollection() : this(PredicationCombination.And) { }
+	public PredicationCollection(PredicationCombination combination) => _combination = combination;
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置断言集合内各断言的逻辑组合方式。</summary>
+	public PredicationCombination Combination => _combination;
+	#endregion
+
+	#region 参数转换
+	protected virtual bool TryConertParameter(object parameter, out T result) => Zongsoft.Common.Convert.TryConvertValue<T>(parameter, out result);
+	#endregion
+
+	#region 断言方法
+	public bool Predicate(T parameter)
 	{
-		#region 成员字段
-		private readonly PredicationCombination _combination;
-		#endregion
+		var predications = base.Items;
 
-		#region 构造函数
-		public PredicationCollection() : this(PredicationCombination.And) { }
-		public PredicationCollection(PredicationCombination combination) => _combination = combination;
-		#endregion
+		if(predications == null || predications.Count < 1)
+			return true;
 
-		#region 公共属性
-		/// <summary>获取或设置断言集合内各断言的逻辑组合方式。</summary>
-		public PredicationCombination Combination => _combination;
-		#endregion
-
-		#region 参数转换
-		protected virtual bool TryConertParameter(object parameter, out T result) => Zongsoft.Common.Convert.TryConvertValue<T>(parameter, out result);
-		#endregion
-
-		#region 断言方法
-		public bool Predicate(T parameter)
+		foreach(var predication in predications)
 		{
-			var predications = base.Items;
+			if(predication == null)
+				continue;
 
-			if(predications == null || predications.Count < 1)
-				return true;
-
-			foreach(var predication in predications)
+			if(predication.Predicate(parameter))
 			{
-				if(predication == null)
-					continue;
-
-				if(predication.Predicate(parameter))
-				{
-					if(_combination == PredicationCombination.Or)
-						return true;
-				}
-				else
-				{
-					if(_combination == PredicationCombination.And)
-						return false;
-				}
+				if(_combination == PredicationCombination.Or)
+					return true;
 			}
-
-			return _combination == PredicationCombination.Or ? false : true;
+			else
+			{
+				if(_combination == PredicationCombination.And)
+					return false;
+			}
 		}
 
-		bool IPredication.Predicate(object parameter) => this.TryConertParameter(parameter, out var stronglyParameter) && this.Predicate(stronglyParameter);
-		#endregion
+		return _combination == PredicationCombination.Or ? false : true;
 	}
+
+	bool IPredication.Predicate(object parameter) => this.TryConertParameter(parameter, out var stronglyParameter) && this.Predicate(stronglyParameter);
+	#endregion
 }

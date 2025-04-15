@@ -34,419 +34,418 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.ComponentModel;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class DataSearcher<TModel> : IDataSearcher<TModel>, IDataSearcher
 {
-	public class DataSearcher<TModel> : IDataSearcher<TModel>, IDataSearcher
+	#region 成员字段
+	private IDataSearcherConditioner _conditioner;
+	#endregion
+
+	#region 构造函数
+	public DataSearcher(IDataService<TModel> dataService)
 	{
-		#region 成员字段
-		private IDataSearcherConditioner _conditioner;
+		this.DataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+
+		var attributes = dataService.GetType().GetCustomAttributes<DataSearcherAttribute>(true).ToArray();
+		if(attributes != null && attributes.Length > 0)
+			this.Conditioner = DataSearcherResolver.Create(typeof(TModel).GetTypeInfo(), attributes);
+	}
+	#endregion
+
+	#region 公共属性
+	public string Name => this.DataService.Name;
+	public IDataService<TModel> DataService { get; }
+	public IDataSearcherConditioner Conditioner
+	{
+		get => _conditioner;
+		set => _conditioner = value ?? throw new ArgumentNullException();
+	}
+	#endregion
+
+	#region 计数方法
+	public int Count(string keyword, IDataOptions options = null) => this.OnCount(this.Resolve(nameof(Count), keyword, options), options);
+	protected virtual int OnCount(ICondition criteria, IDataOptions options = null)
+	{
+		return this.DataService.Count(
+			criteria,
+			string.Empty,
+			options as DataAggregateOptions);
+	}
+	#endregion
+
+	#region 存在方法
+	public bool Exists(string keyword, IDataOptions options = null) => this.OnExists(this.Resolve(nameof(Exists), keyword, options), options);
+	protected virtual bool OnExists(ICondition criteria, IDataOptions options = null)
+	{
+		return this.DataService.Exists(criteria, options as DataExistsOptions);
+	}
+	#endregion
+
+	#region 搜索方法
+	public IEnumerable<TModel> Search(string keyword, params Sorting[] sortings)
+	{
+		return this.Search(keyword, string.Empty, null, null, sortings);
+	}
+
+	public IEnumerable<TModel> Search(string keyword, IDataOptions options, params Sorting[] sortings)
+	{
+		return this.Search(keyword, string.Empty, null, options, sortings);
+	}
+
+	public IEnumerable<TModel> Search(string keyword, Paging paging, params Sorting[] sortings)
+	{
+		return this.Search(keyword, string.Empty, paging, null, sortings);
+	}
+
+	public IEnumerable<TModel> Search(string keyword, string schema, params Sorting[] sortings)
+	{
+		return this.Search(keyword, schema, null, null, sortings);
+	}
+
+	public IEnumerable<TModel> Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings)
+	{
+		return this.Search(keyword, schema, null, options, sortings);
+	}
+
+	public IEnumerable<TModel> Search(string keyword, string schema, Paging paging, params Sorting[] sortings)
+	{
+		return this.Search(keyword, schema, paging, null, sortings);
+	}
+
+	public IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
+	{
+		return this.OnSearch(
+			this.Resolve(nameof(Search), keyword, options),
+			schema,
+			paging,
+			options,
+			sortings);
+	}
+
+	protected virtual IEnumerable<TModel> OnSearch(ICondition criteria, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
+	{
+		return this.DataService.Select(
+			criteria,
+			schema,
+			paging,
+			options as DataSelectOptions,
+			sortings);
+	}
+	#endregion
+
+	#region 条件解析
+	protected virtual ICondition Resolve(string method, string keyword, IDataOptions options = null)
+	{
+		var conditioner = this.Conditioner;
+
+		if(conditioner == null)
+			throw new InvalidOperationException("Missing the required keyword condition resolver.");
+
+		return conditioner.Resolve(method, keyword, options);
+	}
+	#endregion
+
+	#region 显式实现
+	IEnumerable IDataSearcher.Search(string keyword, params Sorting[] sortings)
+	{
+		return this.Search(keyword, string.Empty, null, null, sortings);
+	}
+
+	IEnumerable IDataSearcher.Search(string keyword, IDataOptions options, params Sorting[] sortings)
+	{
+		return this.Search(keyword, string.Empty, null, options, sortings);
+	}
+
+	IEnumerable IDataSearcher.Search(string keyword, Paging paging, params Sorting[] sortings)
+	{
+		return this.Search(keyword, string.Empty, paging, null, sortings);
+	}
+
+	IEnumerable IDataSearcher.Search(string keyword, string schema, params Sorting[] sortings)
+	{
+		return this.Search(keyword, schema, null, null, sortings);
+	}
+
+	IEnumerable IDataSearcher.Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings)
+	{
+		return this.Search(keyword, schema, null, options, sortings);
+	}
+
+	IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, params Sorting[] sortings)
+	{
+		return this.Search(keyword, schema, paging, null, sortings);
+	}
+
+	IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
+	{
+		return this.Search(keyword, schema, paging, options, sortings);
+	}
+	#endregion
+
+	#region 嵌套子类
+	private class DataSearcherResolver : IDataSearcherConditioner
+	{
+		#region 私有变量
+		private readonly IDictionary<string, ConditionToken> _mapping;
 		#endregion
 
 		#region 构造函数
-		public DataSearcher(IDataService<TModel> dataService)
+		private DataSearcherResolver(IDictionary<string, ConditionToken> mapping)
 		{
-			this.DataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-
-			var attributes = dataService.GetType().GetCustomAttributes<DataSearcherAttribute>(true).ToArray();
-			if(attributes != null && attributes.Length > 0)
-				this.Conditioner = DataSearcherResolver.Create(typeof(TModel).GetTypeInfo(), attributes);
+			_mapping = mapping ?? throw new ArgumentNullException(nameof(mapping));
 		}
 		#endregion
 
-		#region 公共属性
-		public string Name => this.DataService.Name;
-		public IDataService<TModel> DataService { get; }
-		public IDataSearcherConditioner Conditioner
+		#region 解析方法
+		public ICondition Resolve(string method, string keyword, IDataOptions options = null)
 		{
-			get => _conditioner;
-			set => _conditioner = value ?? throw new ArgumentNullException();
+			if(string.IsNullOrWhiteSpace(keyword))
+				return null;
+
+			var index = keyword.IndexOf(':');
+
+			if(!_mapping.TryGetValue(index < 0 ? string.Empty : keyword.Substring(0, index).Trim(), out var token))
+				return null;
+
+			if(token.Members.Length == 1)
+				return GetCondition(token.Members[0], keyword.Substring(index + 1).Trim());
+
+			var conditions = new ConditionCollection(token.Combination);
+
+			foreach(var member in token.Members)
+			{
+				conditions.Add(GetCondition(member, keyword.Substring(index + 1).Trim()));
+			}
+
+			return conditions;
+
+			static Condition GetCondition(ConditionMemberToken member, string literal)
+			{
+				return member.IsExactly ?
+					Condition.Equal(member.Name, Common.Convert.ConvertValue(literal, member.Type, () => member.Converter)) :
+					Condition.Like(member.Name, literal + "%");
+			}
 		}
 		#endregion
 
-		#region 计数方法
-		public int Count(string keyword, IDataOptions options = null) => this.OnCount(this.Resolve(nameof(Count), keyword, options), options);
-		protected virtual int OnCount(ICondition criteria, IDataOptions options = null)
+		#region 静态方法
+		public static DataSearcherResolver Create(TypeInfo type, DataSearcherAttribute[] attributes)
 		{
-			return this.DataService.Count(
-				criteria,
-				string.Empty,
-				options as DataAggregateOptions);
+			if(attributes == null || attributes.Length == 0)
+				return null;
+
+			var mapping = new Dictionary<string, ConditionToken>(StringComparer.OrdinalIgnoreCase);
+
+			foreach(var attribute in attributes)
+			{
+				foreach(var pattern in attribute.Patterns)
+				{
+					var index = pattern.IndexOf(':');
+
+					if(index > 0)
+					{
+						var keys = pattern.Substring(0, index).Split(',');
+						var token = ConditionToken.Create(type, pattern.Substring(index + 1).Split(','));
+
+						if(keys.Length == 1)
+						{
+							mapping[keys[0].Trim()] = token;
+						}
+						else
+						{
+							foreach(var key in keys)
+							{
+								mapping[key.Trim()] = token;
+							}
+						}
+					}
+					else
+					{
+						var token = ConditionToken.Create(type, pattern.Split(','));
+
+						if(token.Members.Length == 1)
+							mapping[token.Members[0].Name] = token;
+						else
+						{
+							mapping[string.Empty] = token;
+
+							foreach(var field in token.Members)
+							{
+								mapping[field.Name] = token;
+							}
+						}
+					}
+				}
+			}
+
+			return new DataSearcherResolver(mapping);
 		}
 		#endregion
 
-		#region 存在方法
-		public bool Exists(string keyword, IDataOptions options = null) => this.OnExists(this.Resolve(nameof(Exists), keyword, options), options);
-		protected virtual bool OnExists(ICondition criteria, IDataOptions options = null)
+		#region 内部结构
+		private struct ConditionToken
 		{
-			return this.DataService.Exists(criteria, options as DataExistsOptions);
-		}
-		#endregion
+			#region 公共字段
+			/// <summary>条件组合方式</summary>
+			public ConditionCombination Combination;
 
-		#region 搜索方法
-		public IEnumerable<TModel> Search(string keyword, params Sorting[] sortings)
-		{
-			return this.Search(keyword, string.Empty, null, null, sortings);
-		}
-
-		public IEnumerable<TModel> Search(string keyword, IDataOptions options, params Sorting[] sortings)
-		{
-			return this.Search(keyword, string.Empty, null, options, sortings);
-		}
-
-		public IEnumerable<TModel> Search(string keyword, Paging paging, params Sorting[] sortings)
-		{
-			return this.Search(keyword, string.Empty, paging, null, sortings);
-		}
-
-		public IEnumerable<TModel> Search(string keyword, string schema, params Sorting[] sortings)
-		{
-			return this.Search(keyword, schema, null, null, sortings);
-		}
-
-		public IEnumerable<TModel> Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings)
-		{
-			return this.Search(keyword, schema, null, options, sortings);
-		}
-
-		public IEnumerable<TModel> Search(string keyword, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Search(keyword, schema, paging, null, sortings);
-		}
-
-		public IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
-		{
-			return this.OnSearch(
-				this.Resolve(nameof(Search), keyword, options),
-				schema,
-				paging,
-				options,
-				sortings);
-		}
-
-		protected virtual IEnumerable<TModel> OnSearch(ICondition criteria, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
-		{
-			return this.DataService.Select(
-				criteria,
-				schema,
-				paging,
-				options as DataSelectOptions,
-				sortings);
-		}
-		#endregion
-
-		#region 条件解析
-		protected virtual ICondition Resolve(string method, string keyword, IDataOptions options = null)
-		{
-			var conditioner = this.Conditioner;
-
-			if(conditioner == null)
-				throw new InvalidOperationException("Missing the required keyword condition resolver.");
-
-			return conditioner.Resolve(method, keyword, options);
-		}
-		#endregion
-
-		#region 显式实现
-		IEnumerable IDataSearcher.Search(string keyword, params Sorting[] sortings)
-		{
-			return this.Search(keyword, string.Empty, null, null, sortings);
-		}
-
-		IEnumerable IDataSearcher.Search(string keyword, IDataOptions options, params Sorting[] sortings)
-		{
-			return this.Search(keyword, string.Empty, null, options, sortings);
-		}
-
-		IEnumerable IDataSearcher.Search(string keyword, Paging paging, params Sorting[] sortings)
-		{
-			return this.Search(keyword, string.Empty, paging, null, sortings);
-		}
-
-		IEnumerable IDataSearcher.Search(string keyword, string schema, params Sorting[] sortings)
-		{
-			return this.Search(keyword, schema, null, null, sortings);
-		}
-
-		IEnumerable IDataSearcher.Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings)
-		{
-			return this.Search(keyword, schema, null, options, sortings);
-		}
-
-		IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, params Sorting[] sortings)
-		{
-			return this.Search(keyword, schema, paging, null, sortings);
-		}
-
-		IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
-		{
-			return this.Search(keyword, schema, paging, options, sortings);
-		}
-		#endregion
-
-		#region 嵌套子类
-		private class DataSearcherResolver : IDataSearcherConditioner
-		{
-			#region 私有变量
-			private readonly IDictionary<string, ConditionToken> _mapping;
+			/// <summary>条件成员数组</summary>
+			public ConditionMemberToken[] Members;
 			#endregion
 
 			#region 构造函数
-			private DataSearcherResolver(IDictionary<string, ConditionToken> mapping)
+			public ConditionToken(ConditionMemberToken[] members)
 			{
-				_mapping = mapping ?? throw new ArgumentNullException(nameof(mapping));
-			}
-			#endregion
-
-			#region 解析方法
-			public ICondition Resolve(string method, string keyword, IDataOptions options = null)
-			{
-				if(string.IsNullOrWhiteSpace(keyword))
-					return null;
-
-				var index = keyword.IndexOf(':');
-
-				if(!_mapping.TryGetValue(index < 0 ? string.Empty : keyword.Substring(0, index).Trim(), out var token))
-					return null;
-
-				if(token.Members.Length == 1)
-					return GetCondition(token.Members[0], keyword.Substring(index + 1).Trim());
-
-				var conditions = new ConditionCollection(token.Combination);
-
-				foreach(var member in token.Members)
-				{
-					conditions.Add(GetCondition(member, keyword.Substring(index + 1).Trim()));
-				}
-
-				return conditions;
-
-				static Condition GetCondition(ConditionMemberToken member, string literal)
-				{
-					return member.IsExactly ?
-						Condition.Equal(member.Name, Common.Convert.ConvertValue(literal, member.Type, () => member.Converter)) :
-						Condition.Like(member.Name, literal + "%");
-				}
+				this.Members = members;
+				this.Combination = ConditionCombination.Or;
 			}
 			#endregion
 
 			#region 静态方法
-			public static DataSearcherResolver Create(TypeInfo type, DataSearcherAttribute[] attributes)
+			public static ConditionToken Create(TypeInfo type, string[] members)
 			{
-				if(attributes == null || attributes.Length == 0)
-					return null;
+				if(members == null || members.Length == 0)
+					throw new ArgumentNullException(nameof(members));
 
-				var mapping = new Dictionary<string, ConditionToken>(StringComparer.OrdinalIgnoreCase);
+				var tokens = new List<ConditionMemberToken>(members.Length);
 
-				foreach(var attribute in attributes)
+				foreach(var member in members)
 				{
-					foreach(var pattern in attribute.Patterns)
-					{
-						var index = pattern.IndexOf(':');
-
-						if(index > 0)
-						{
-							var keys = pattern.Substring(0, index).Split(',');
-							var token = ConditionToken.Create(type, pattern.Substring(index + 1).Split(','));
-
-							if(keys.Length == 1)
-							{
-								mapping[keys[0].Trim()] = token;
-							}
-							else
-							{
-								foreach(var key in keys)
-								{
-									mapping[key.Trim()] = token;
-								}
-							}
-						}
-						else
-						{
-							var token = ConditionToken.Create(type, pattern.Split(','));
-
-							if(token.Members.Length == 1)
-								mapping[token.Members[0].Name] = token;
-							else
-							{
-								mapping[string.Empty] = token;
-
-								foreach(var field in token.Members)
-								{
-									mapping[field.Name] = token;
-								}
-							}
-						}
-					}
+					if(TryGetMember(type, member, out var path, out var memberInfo, out var isExactly))
+						tokens.Add(new ConditionMemberToken(path, memberInfo, isExactly));
 				}
 
-				return new DataSearcherResolver(mapping);
+				if(tokens.Count == 0)
+					throw new InvalidOperationException("Missing specified search member definitions.");
+
+				return new ConditionToken(tokens.ToArray());
+			}
+
+			private static bool TryGetMember(TypeInfo type, string pattern, out string path, out MemberInfo member, out bool isExactly)
+			{
+				path = null;
+				member = null;
+				isExactly = true;
+
+				if(string.IsNullOrEmpty(pattern))
+					return false;
+
+				isExactly = pattern[0] == '!' || pattern[pattern.Length - 1] == '!' || (pattern[0] != '?' && pattern[pattern.Length - 1] != '?');
+
+				if(type == null || type.IsPrimitive || type == typeof(object).GetTypeInfo())
+					return false;
+
+				path = isExactly ? pattern.Trim('!') : pattern.Trim('?');
+				var parts = path.Split('.');
+				var inherits = new Stack<Type>();
+
+				for(int i = 0; i < parts.Length; i++)
+				{
+					inherits.Clear();
+
+					do
+					{
+						member = type.DeclaredMembers.FirstOrDefault(m => string.Equals(m.Name, parts[i], StringComparison.OrdinalIgnoreCase));
+
+						if(member != null)
+							break;
+
+						if(type.BaseType != null)
+							inherits.Push(type.BaseType);
+
+						if(type.ImplementedInterfaces != null)
+						{
+							foreach(var contract in type.ImplementedInterfaces)
+								inherits.Push(contract);
+						}
+
+						type = inherits.TryPop(out var inheritance) ? inheritance.GetTypeInfo() : null;
+					} while(type != null && type != typeof(object).GetTypeInfo());
+
+					if(member == null)
+						return false;
+
+					type = member.MemberType switch
+					{
+						MemberTypes.Field => ((FieldInfo)member).FieldType.GetTypeInfo(),
+						MemberTypes.Property => ((PropertyInfo)member).PropertyType.GetTypeInfo(),
+						MemberTypes.Method => ((MethodInfo)member).ReturnType.GetTypeInfo(),
+						_ => null,
+					};
+
+					if(type == null)
+						return false;
+				}
+
+				return member != null;
 			}
 			#endregion
 
-			#region 内部结构
-			private struct ConditionToken
+			#region 重写方法
+			public override string ToString()
 			{
-				#region 公共字段
-				/// <summary>条件组合方式</summary>
-				public ConditionCombination Combination;
+				var text = new System.Text.StringBuilder();
 
-				/// <summary>条件成员数组</summary>
-				public ConditionMemberToken[] Members;
-				#endregion
-
-				#region 构造函数
-				public ConditionToken(ConditionMemberToken[] members)
+				for(int i = 0; i < this.Members.Length; i++)
 				{
-					this.Members = members;
-					this.Combination = ConditionCombination.Or;
-				}
-				#endregion
+					if(i > 0)
+						text.Append(" " + this.Combination.ToString() + " ");
 
-				#region 静态方法
-				public static ConditionToken Create(TypeInfo type, string[] members)
-				{
-					if(members == null || members.Length == 0)
-						throw new ArgumentNullException(nameof(members));
-
-					var tokens = new List<ConditionMemberToken>(members.Length);
-
-					foreach(var member in members)
-					{
-						if(TryGetMember(type, member, out var path, out var memberInfo, out var isExactly))
-							tokens.Add(new ConditionMemberToken(path, memberInfo, isExactly));
-					}
-
-					if(tokens.Count == 0)
-						throw new InvalidOperationException("Missing specified search member definitions.");
-
-					return new ConditionToken(tokens.ToArray());
+					text.Append(this.Members[i].ToString());
 				}
 
-				private static bool TryGetMember(TypeInfo type, string pattern, out string path, out MemberInfo member, out bool isExactly)
-				{
-					path = null;
-					member = null;
-					isExactly = true;
-
-					if(string.IsNullOrEmpty(pattern))
-						return false;
-
-					isExactly = pattern[0] == '!' || pattern[pattern.Length - 1] == '!' || (pattern[0] != '?' && pattern[pattern.Length - 1] != '?');
-
-					if(type == null || type.IsPrimitive || type == typeof(object).GetTypeInfo())
-						return false;
-
-					path = isExactly ? pattern.Trim('!') : pattern.Trim('?');
-					var parts = path.Split('.');
-					var inherits = new Stack<Type>();
-
-					for(int i = 0; i < parts.Length; i++)
-					{
-						inherits.Clear();
-
-						do
-						{
-							member = type.DeclaredMembers.FirstOrDefault(m => string.Equals(m.Name, parts[i], StringComparison.OrdinalIgnoreCase));
-
-							if(member != null)
-								break;
-
-							if(type.BaseType != null)
-								inherits.Push(type.BaseType);
-
-							if(type.ImplementedInterfaces != null)
-							{
-								foreach(var contract in type.ImplementedInterfaces)
-									inherits.Push(contract);
-							}
-
-							type = inherits.TryPop(out var inheritance) ? inheritance.GetTypeInfo() : null;
-						} while(type != null && type != typeof(object).GetTypeInfo());
-
-						if(member == null)
-							return false;
-
-						type = member.MemberType switch
-						{
-							MemberTypes.Field => ((FieldInfo)member).FieldType.GetTypeInfo(),
-							MemberTypes.Property => ((PropertyInfo)member).PropertyType.GetTypeInfo(),
-							MemberTypes.Method => ((MethodInfo)member).ReturnType.GetTypeInfo(),
-							_ => null,
-						};
-
-						if(type == null)
-							return false;
-					}
-
-					return member != null;
-				}
-				#endregion
-
-				#region 重写方法
-				public override string ToString()
-				{
-					var text = new System.Text.StringBuilder();
-
-					for(int i = 0; i < this.Members.Length; i++)
-					{
-						if(i > 0)
-							text.Append(" " + this.Combination.ToString() + " ");
-
-						text.Append(this.Members[i].ToString());
-					}
-
-					return text.ToString();
-				}
-				#endregion
+				return text.ToString();
 			}
+			#endregion
+		}
 
-			private readonly struct ConditionMemberToken
+		private readonly struct ConditionMemberToken
+		{
+			#region 公共字段
+			/// <summary>成员名称</summary>
+			public readonly string Name;
+
+			/// <summary>成员类型</summary>
+			public readonly Type Type;
+
+			/// <summary>是否精确匹配</summary>
+			public readonly bool IsExactly;
+
+			/// <summary>类型转换器。</summary>
+			public readonly TypeConverter Converter;
+			#endregion
+
+			#region 构造函数
+			public ConditionMemberToken(string name, MemberInfo member, bool isExactly)
 			{
-				#region 公共字段
-				/// <summary>成员名称</summary>
-				public readonly string Name;
+				if(member == null)
+					throw new ArgumentNullException(nameof(member));
 
-				/// <summary>成员类型</summary>
-				public readonly Type Type;
+				this.Name = name;
+				this.Type = member switch { PropertyInfo property => property.PropertyType, FieldInfo field => field.FieldType, _ => null };
+				this.IsExactly = isExactly;
 
-				/// <summary>是否精确匹配</summary>
-				public readonly bool IsExactly;
+				var converter = Common.Convert.GetTypeConverter(member);
 
-				/// <summary>类型转换器。</summary>
-				public readonly TypeConverter Converter;
-				#endregion
+				if(converter.GetType() != typeof(TypeConverter))
+					this.Converter = converter;
+				else
+					this.Converter = null;
+			}
+			#endregion
 
-				#region 构造函数
-				public ConditionMemberToken(string name, MemberInfo member, bool isExactly)
-				{
-					if(member == null)
-						throw new ArgumentNullException(nameof(member));
-
-					this.Name = name;
-					this.Type = member switch { PropertyInfo property => property.PropertyType, FieldInfo field => field.FieldType, _ => null };
-					this.IsExactly = isExactly;
-
-					var converter = Common.Convert.GetTypeConverter(member);
-
-					if(converter.GetType() != typeof(TypeConverter))
-						this.Converter = converter;
-					else
-						this.Converter = null;
-				}
-				#endregion
-
-				#region 重写方法
-				public override string ToString()
-				{
-					if(this.IsExactly)
-						return this.Name;
-					else
-						return this.Name + "?";
-				}
-				#endregion
+			#region 重写方法
+			public override string ToString()
+			{
+				if(this.IsExactly)
+					return this.Name;
+				else
+					return this.Name + "?";
 			}
 			#endregion
 		}
 		#endregion
 	}
+	#endregion
 }

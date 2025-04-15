@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Scheduling
+namespace Zongsoft.Scheduling;
+
+public interface ITriggerBuilder
 {
-	public interface ITriggerBuilder
-	{
-		ITrigger Build<TOptions>(TOptions options);
-	}
+	ITrigger Build<TOptions>(TOptions options);
 }

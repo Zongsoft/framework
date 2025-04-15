@@ -30,48 +30,47 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 表示命令执行结果的包装类。
+/// </summary>
+[Obsolete]
+public class CommandResult : ICommandResult
 {
-	/// <summary>
-	/// 表示命令执行结果的包装类。
-	/// </summary>
-	[Obsolete]
-	public class CommandResult : ICommandResult
+	#region 成员字段
+	private bool _succeed;
+	private string _code;
+	private string _message;
+	private object _result;
+	#endregion
+
+	#region 构造函数
+	public CommandResult(bool succeed, object result, string code, string message)
 	{
-		#region 成员字段
-		private bool _succeed;
-		private string _code;
-		private string _message;
-		private object _result;
-		#endregion
-
-		#region 构造函数
-		public CommandResult(bool succeed, object result, string code, string message)
-		{
-			_succeed = succeed;
-			_code = code;
-			_message = message;
-			_result = result;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取一个值，指示命令执行是否成功。</summary>
-		public bool Succeed => _succeed;
-
-		/// <summary>获取命令执行失败的代码。</summary>
-		public string Code => _code;
-
-		/// <summary>获取命令执行失败的消息。</summary>
-		public string Message => _message;
-
-		/// <summary>获取命令执行的结果。</summary>
-		public object Result => _result;
-		#endregion
-
-		#region 静态方法
-		public static CommandResult Success(object result, string message = null, string code = null) => new CommandResult(true, result, code, message);
-		public static CommandResult Failure(string code, string message, object result = null) => new CommandResult(false, result, code, message);
-		#endregion
+		_succeed = succeed;
+		_code = code;
+		_message = message;
+		_result = result;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取一个值，指示命令执行是否成功。</summary>
+	public bool Succeed => _succeed;
+
+	/// <summary>获取命令执行失败的代码。</summary>
+	public string Code => _code;
+
+	/// <summary>获取命令执行失败的消息。</summary>
+	public string Message => _message;
+
+	/// <summary>获取命令执行的结果。</summary>
+	public object Result => _result;
+	#endregion
+
+	#region 静态方法
+	public static CommandResult Success(object result, string message = null, string code = null) => new CommandResult(true, result, code, message);
+	public static CommandResult Failure(string code, string message, object result = null) => new CommandResult(false, result, code, message);
+	#endregion
 }

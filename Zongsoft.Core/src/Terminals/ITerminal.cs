@@ -31,52 +31,27 @@ using System;
 using System.IO;
 using System.ComponentModel;
 
-namespace Zongsoft.Terminals
+namespace Zongsoft.Terminals;
+
+public interface ITerminal : Zongsoft.Services.ICommandOutlet
 {
-	public interface ITerminal : Zongsoft.Services.ICommandOutlet
-	{
-		#region 事件定义
-		event EventHandler Resetted;
-		event EventHandler Resetting;
-		event CancelEventHandler Aborting;
-		#endregion
+	#region 事件定义
+	event EventHandler Resetted;
+	event EventHandler Resetting;
+	event CancelEventHandler Aborting;
+	#endregion
 
-		#region 属性定义
-		Zongsoft.Services.CommandOutletColor BackgroundColor
-		{
-			get;
-			set;
-		}
+	#region 属性定义
+	Zongsoft.Services.CommandOutletColor BackgroundColor { get; set; }
+	Zongsoft.Services.CommandOutletColor ForegroundColor { get; set; }
+	TextWriter Error { get; set; }
+	TextReader Input { get; set; }
+	TextWriter Output { get; set; }
+	#endregion
 
-		Zongsoft.Services.CommandOutletColor ForegroundColor
-		{
-			get;
-			set;
-		}
-
-		TextReader Input
-		{
-			get;
-			set;
-		}
-
-		TextWriter Output
-		{
-			get;
-			set;
-		}
-
-		TextWriter Error
-		{
-			get;
-			set;
-		}
-		#endregion
-
-		#region 方法定义
-		void Clear();
-		void Reset();
-		void ResetStyles(TerminalStyles styles);
-		#endregion
-	}
+	#region 方法定义
+	void Clear();
+	void Reset();
+	void ResetStyles(TerminalStyles styles);
+	#endregion
 }

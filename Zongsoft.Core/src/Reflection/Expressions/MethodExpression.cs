@@ -30,48 +30,29 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reflection.Expressions
+namespace Zongsoft.Reflection.Expressions;
+
+public class MethodExpression : MemberExpression
 {
-	public class MethodExpression : MemberExpression
+	#region 构造函数
+	public MethodExpression(string name, IMemberExpression[] arguments = null)
 	{
-		#region 构造函数
-		public MethodExpression(string name, IMemberExpression[] arguments = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Name = name;
+		this.Name = name;
 
-			if(arguments == null || arguments.Length == 0)
-				this.Arguments = new List<IMemberExpression>();
-			else
-				this.Arguments = new List<IMemberExpression>(arguments);
-		}
-		#endregion
-
-		#region 公共属性
-		public override MemberExpressionType ExpressionType
-		{
-			get
-			{
-				return MemberExpressionType.Method;
-			}
-		}
-
-		public string Name
-		{
-			get;
-		}
-
-		public bool HasArguments
-		{
-			get => this.Arguments != null && this.Arguments.Count > 0;
-		}
-
-		public IList<IMemberExpression> Arguments
-		{
-			get;
-		}
-		#endregion
+		if(arguments == null || arguments.Length == 0)
+			this.Arguments = new List<IMemberExpression>();
+		else
+			this.Arguments = new List<IMemberExpression>(arguments);
 	}
+	#endregion
+
+	#region 公共属性
+	public override MemberExpressionType ExpressionType => MemberExpressionType.Method;
+	public string Name { get; }
+	public bool HasArguments => this.Arguments != null && this.Arguments.Count > 0;
+	public IList<IMemberExpression> Arguments { get; }
+	#endregion
 }

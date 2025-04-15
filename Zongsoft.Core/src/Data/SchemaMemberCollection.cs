@@ -31,23 +31,22 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class SchemaMemberCollection<T> : KeyedCollection<string, T> where T : SchemaMemberBase
 {
-	public class SchemaMemberCollection<T> : KeyedCollection<string, T> where T : SchemaMemberBase
+	public SchemaMemberCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+	public SchemaMemberCollection(IEnumerable<T> members) : base(StringComparer.OrdinalIgnoreCase)
 	{
-		public SchemaMemberCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		public SchemaMemberCollection(IEnumerable<T> members) : base(StringComparer.OrdinalIgnoreCase)
+		if(members != null)
 		{
-			if(members != null)
+			foreach(var member in members)
 			{
-				foreach(var member in members)
-				{
-					if(member != null)
-						this.Add(member);
-				}
+				if(member != null)
+					this.Add(member);
 			}
 		}
-
-		protected override string GetKeyForItem(T member) => member.Name;
 	}
+
+	protected override string GetKeyForItem(T member) => member.Name;
 }

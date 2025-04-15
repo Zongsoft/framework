@@ -29,19 +29,18 @@
 
 using System;
 
-namespace Zongsoft.Services
-{
-	public class CommandOptionValueException : CommandOptionException
-	{
-		#region 构造函数
-		public CommandOptionValueException(string optionName, object optionValue) : base(optionName, string.Format(Properties.Resources.InvalidCommandOptionValue, optionName, optionValue))
-		{
-			this.OptionValue = optionValue;
-		}
-		#endregion
+namespace Zongsoft.Services;
 
-		#region 公共属性
-		public object OptionValue { get; }
-		#endregion
+public class CommandOptionValueException : CommandOptionException
+{
+	#region 构造函数
+	public CommandOptionValueException(string optionName, object optionValue) : base(optionName, string.Format(Properties.Resources.InvalidCommandOptionValue, optionName, optionValue))
+	{
+		this.OptionValue = optionValue;
 	}
+	#endregion
+
+	#region 公共属性
+	public object OptionValue { get; }
+	#endregion
 }

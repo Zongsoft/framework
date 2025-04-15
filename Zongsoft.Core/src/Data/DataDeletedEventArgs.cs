@@ -28,19 +28,15 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 为数据访问的删除事件提供数据。
+/// </summary>
+public class DataDeletedEventArgs : DataAccessEventArgs<DataDeleteContextBase>
 {
-	/// <summary>
-	/// 为数据访问的删除事件提供数据。
-	/// </summary>
-	public class DataDeletedEventArgs : DataAccessEventArgs<DataDeleteContextBase>
-	{
-		#region 构造函数
-		public DataDeletedEventArgs(DataDeleteContextBase context) : base(context)
-		{
-		}
-		#endregion
-	}
+	#region 构造函数
+	public DataDeletedEventArgs(DataDeleteContextBase context) : base(context) { }
+	#endregion
 }

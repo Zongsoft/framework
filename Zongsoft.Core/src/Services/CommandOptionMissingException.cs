@@ -29,12 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public class CommandOptionMissingException : CommandOptionException
 {
-	public class CommandOptionMissingException : CommandOptionException
-	{
-		public CommandOptionMissingException(string optionName) : base(optionName, string.Format(Properties.Resources.MissingCommandOption, optionName))
-		{
-		}
-	}
+	public CommandOptionMissingException(string optionName) : base(optionName, string.Format(Properties.Resources.MissingCommandOption, optionName)) { }
 }

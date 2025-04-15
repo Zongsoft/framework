@@ -29,44 +29,28 @@
 
 using System;
 
-namespace Zongsoft.Collections
+namespace Zongsoft.Collections;
+
+[Serializable]
+public class DequeuedEventArgs : EventArgs
 {
-	[Serializable]
-	public class DequeuedEventArgs : EventArgs
+	#region 构造函数
+	public DequeuedEventArgs(object value, object settings, CollectionRemovedReason reason)
 	{
-		#region 构造函数
-		public DequeuedEventArgs(object value, object settings, CollectionRemovedReason reason)
-		{
-			this.Value = value;
-			this.Settings = settings;
-			this.Reason = reason;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取出队的内容值。
-		/// </summary>
-		public object Value
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取出队操作的设置选项。
-		/// </summary>
-		public object Settings
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取出队事件被激发的原因。
-		/// </summary>
-		public CollectionRemovedReason Reason
-		{
-			get;
-		}
-		#endregion
+		this.Value = value;
+		this.Settings = settings;
+		this.Reason = reason;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取出队的内容值。</summary>
+	public object Value { get; }
+
+	/// <summary>获取出队操作的设置选项。</summary>
+	public object Settings { get; }
+
+	/// <summary>获取出队事件被激发的原因。</summary>
+	public CollectionRemovedReason Reason { get; }
+	#endregion
 }

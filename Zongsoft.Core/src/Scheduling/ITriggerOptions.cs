@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Scheduling
+namespace Zongsoft.Scheduling;
+
+public interface ITriggerOptions
 {
-	public interface ITriggerOptions
-	{
-		string Identifier { get; set; }
-	}
+	string Identifier { get; set; }
 }

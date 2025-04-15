@@ -29,15 +29,14 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据操作无效的异常类。
+/// </summary>
+public class DataOperationException : DataException
 {
-	/// <summary>
-	/// 表示数据操作无效的异常类。
-	/// </summary>
-	public class DataOperationException : DataException
-	{
-		public DataOperationException() { }
-		public DataOperationException(string message) : base(message) { }
-		public DataOperationException(string message, Exception innerException) : base(message, innerException) { }
-	}
+	public DataOperationException() { }
+	public DataOperationException(string message) : base(message) { }
+	public DataOperationException(string message, Exception innerException) : base(message, innerException) { }
 }

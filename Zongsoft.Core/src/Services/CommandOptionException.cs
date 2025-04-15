@@ -29,25 +29,24 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+[Serializable]
+public class CommandOptionException : Zongsoft.Services.CommandException
 {
-	[Serializable]
-	public class CommandOptionException : Zongsoft.Services.CommandException
+	#region 构造函数
+	public CommandOptionException(string optionName) : this(optionName, null) { }
+	public CommandOptionException(string optionName, string message) : base(message)
 	{
-		#region 构造函数
-		public CommandOptionException(string optionName) : this(optionName, null) { }
-		public CommandOptionException(string optionName, string message) : base(message)
-		{
-			if(string.IsNullOrEmpty(optionName))
-				throw new ArgumentNullException(nameof(optionName));
+		if(string.IsNullOrEmpty(optionName))
+			throw new ArgumentNullException(nameof(optionName));
 
-			this.OptionName = optionName.Trim();
-		}
-		#endregion
-
-		#region 公共属性
-		public string OptionName { get; }
-		public override string Message => this.HasMessage ? base.Message : string.Format(Properties.Resources.InvalidCommandOption, this.OptionName);
-		#endregion
+		this.OptionName = optionName.Trim();
 	}
+	#endregion
+
+	#region 公共属性
+	public string OptionName { get; }
+	public override string Message => this.HasMessage ? base.Message : string.Format(Properties.Resources.InvalidCommandOption, this.OptionName);
+	#endregion
 }

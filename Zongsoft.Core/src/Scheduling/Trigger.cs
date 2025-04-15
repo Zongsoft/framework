@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Scheduling
+namespace Zongsoft.Scheduling;
+
+public class Trigger
 {
-	public class Trigger
-	{
-		public static ITriggerOptions Options => null;
-	}
+	public static ITriggerOptions Options => null;
 }

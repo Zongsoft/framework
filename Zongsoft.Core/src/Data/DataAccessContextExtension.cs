@@ -30,61 +30,60 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public static class DataAccessContextExtension
 {
-	public static class DataAccessContextExtension
+	public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataInsertContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
+	public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataUpsertContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
+	public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataUpdateContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
+
+	private static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this IDataMutateContextBase context)
 	{
-		public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataInsertContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
-		public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataUpsertContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
-		public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataUpdateContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
+		if(context == null)
+			throw new ArgumentNullException(nameof(context));
 
-		private static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this IDataMutateContextBase context)
+		if(context.Count < 1)
+			return Array.Empty<IDataDictionary<T>>();
+
+		if(context.IsMultiple)
+			return DataDictionary.GetDictionaries<T>((System.Collections.IEnumerable)context.Data);
+
+		return new IDataDictionary<T>[] { DataDictionary.GetDictionary<T>(context.Data) };
+	}
+
+	public static bool Validate(this IDataMutateContextBase context, DataAccessMethod method, Metadata.IDataEntityProperty property, out object value)
+	{
+		if(context == null)
+			throw new ArgumentNullException(nameof(context));
+
+		if(!context.Options.ValidatorSuppressed)
 		{
-			if(context == null)
-				throw new ArgumentNullException(nameof(context));
+			var validator = context.Validator;
 
-			if(context.Count < 1)
-				return Array.Empty<IDataDictionary<T>>();
-
-			if(context.IsMultiple)
-				return DataDictionary.GetDictionaries<T>((System.Collections.IEnumerable)context.Data);
-
-			return new IDataDictionary<T>[] { DataDictionary.GetDictionary<T>(context.Data) };
-		}
-
-		public static bool Validate(this IDataMutateContextBase context, DataAccessMethod method, Metadata.IDataEntityProperty property, out object value)
-		{
-			if(context == null)
-				throw new ArgumentNullException(nameof(context));
-
-			if(!context.Options.ValidatorSuppressed)
+			if(validator != null)
 			{
-				var validator = context.Validator;
-
-				if(validator != null)
+				switch(method)
 				{
-					switch(method)
-					{
-						case DataAccessMethod.Insert:
-							return validator.OnInsert(context, property, out value);
-						case DataAccessMethod.Update:
-							return validator.OnUpdate(context, property, out value);
-					}
+					case DataAccessMethod.Insert:
+						return validator.OnInsert(context, property, out value);
+					case DataAccessMethod.Update:
+						return validator.OnUpdate(context, property, out value);
 				}
 			}
-
-			value = null;
-			return false;
 		}
 
-		public static bool Validate(this DataInsertContextBase context, Metadata.IDataEntityProperty property, out object value)
-		{
-			return Validate(context, DataAccessMethod.Insert, property, out value);
-		}
+		value = null;
+		return false;
+	}
 
-		public static bool Validate(this DataUpdateContextBase context, Metadata.IDataEntityProperty property, out object value)
-		{
-			return Validate(context, DataAccessMethod.Update, property, out value);
-		}
+	public static bool Validate(this DataInsertContextBase context, Metadata.IDataEntityProperty property, out object value)
+	{
+		return Validate(context, DataAccessMethod.Insert, property, out value);
+	}
+
+	public static bool Validate(this DataUpdateContextBase context, Metadata.IDataEntityProperty property, out object value)
+	{
+		return Validate(context, DataAccessMethod.Update, property, out value);
 	}
 }

@@ -31,53 +31,52 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Distributing
+namespace Zongsoft.Distributing;
+
+/// <summary>
+/// 表示分布式锁的接口。
+/// </summary>
+/// <example>
+/// <code>
+/// class MyService
+/// {
+/// 	[ServiceDependency("~")]
+/// 	public IDistributedLockManager Locker { get; set; }
+/// 
+/// 	async Task FooAsync(MyModel model, CancellationToken cancellation)
+/// 	{
+/// 		using var locker = await this.Locker.AcquireAsync($"LOCKER:{nameof(MyService)}:{model.Key}", TimeSpan.FromSeconds(60), cancellation);
+/// 		await locker.EnterAsync(cancellation);
+/// 
+/// 		//TODO: Some business code implementation.
+/// 
+/// 
+/// 		//Optional: Manually release the distributed lock.
+/// 		await locker.DisposeAsync();
+/// 	}
+/// }
+/// </code>
+/// </example>
+public interface IDistributedLock : IDisposable, IAsyncDisposable
 {
-	/// <summary>
-	/// 表示分布式锁的接口。
-	/// </summary>
-	/// <example>
-	/// <code>
-	/// class MyService
-	/// {
-	/// 	[ServiceDependency("~")]
-	/// 	public IDistributedLockManager Locker { get; set; }
-	/// 
-	/// 	async Task FooAsync(MyModel model, CancellationToken cancellation)
-	/// 	{
-	/// 		using var locker = await this.Locker.AcquireAsync($"LOCKER:{nameof(MyService)}:{model.Key}", TimeSpan.FromSeconds(60), cancellation);
-	/// 		await locker.EnterAsync(cancellation);
-	/// 
-	/// 		//TODO: Some business code implementation.
-	/// 
-	/// 
-	/// 		//Optional: Manually release the distributed lock.
-	/// 		await locker.DisposeAsync();
-	/// 	}
-	/// }
-	/// </code>
-	/// </example>
-	public interface IDistributedLock : IDisposable, IAsyncDisposable
-	{
-		/// <summary>获取分布式锁的标识。</summary>
-		string Key { get; }
-		/// <summary>获取分布式锁的令牌。</summary>
-		byte[] Token { get; }
+	/// <summary>获取分布式锁的标识。</summary>
+	string Key { get; }
+	/// <summary>获取分布式锁的令牌。</summary>
+	byte[] Token { get; }
 
-		/// <summary>获取一个值，指示锁是否已过期。</summary>
-		bool IsExpired { get; }
-		/// <summary>获取一个值，指示当前是否处于持有状态。</summary>
-		bool IsHeld { get; }
-		/// <summary>获取一个值，指示当前是否处于未持有状态。</summary>
-		bool IsUnheld { get; }
-		/// <summary>获取一个值，指示当前是否处于锁定（持有且未过期）状态。</summary>
-		bool IsLocked { get; }
-		/// <summary>获取一个值，指示当前是否处于未锁定（未持有或已过期）状态。</summary>
-		bool IsUnlocked { get; }
+	/// <summary>获取一个值，指示锁是否已过期。</summary>
+	bool IsExpired { get; }
+	/// <summary>获取一个值，指示当前是否处于持有状态。</summary>
+	bool IsHeld { get; }
+	/// <summary>获取一个值，指示当前是否处于未持有状态。</summary>
+	bool IsUnheld { get; }
+	/// <summary>获取一个值，指示当前是否处于锁定（持有且未过期）状态。</summary>
+	bool IsLocked { get; }
+	/// <summary>获取一个值，指示当前是否处于未锁定（未持有或已过期）状态。</summary>
+	bool IsUnlocked { get; }
 
-		/// <summary>进入分布式锁的临界区。</summary>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回异步操作任务。</returns>
-		ValueTask EnterAsync(CancellationToken cancellation = default);
-	}
+	/// <summary>进入分布式锁的临界区。</summary>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回异步操作任务。</returns>
+	ValueTask EnterAsync(CancellationToken cancellation = default);
 }

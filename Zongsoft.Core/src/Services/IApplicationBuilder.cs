@@ -33,14 +33,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Services
-{
-	public interface IApplicationBuilder<TApplication> where TApplication : IHost
-	{
-		IServiceCollection Services { get; }
-		ConfigurationManager Configuration { get; }
-		IHostEnvironment Environment { get; }
+namespace Zongsoft.Services;
 
-		TApplication Build();
-	}
+public interface IApplicationBuilder<TApplication> where TApplication : IHost
+{
+	IServiceCollection Services { get; }
+	ConfigurationManager Configuration { get; }
+	IHostEnvironment Environment { get; }
+
+	TApplication Build();
 }

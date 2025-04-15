@@ -28,15 +28,13 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示条件转换器的接口。
+/// </summary>
+public interface IConditionConverter
 {
-	/// <summary>
-	/// 表示条件转换器的接口。
-	/// </summary>
-	public interface IConditionConverter
-	{
-		ICondition Convert(ConditionConverterContext context);
-	}
+	ICondition Convert(ConditionConverterContext context);
 }

@@ -29,32 +29,27 @@
 
 using System;
 
-namespace Zongsoft.Data
-{
-	/// <summary>
-	/// 提供数据服务的条件和数据进行验证功能的接口。
-	/// </summary>
-	/// <typeparam name="TModel">关于数据服务验证对应的数据模型类型。</typeparam>
-	public interface IDataServiceValidator<TModel> : IDataServiceValidator
-	{
-		/// <summary>
-		/// 验证指定数据服务方法的过滤条件。
-		/// </summary>
-		/// <param name="service">指定的数据服务对象。</param>
-		/// <param name="method">待验证数据服务方法。</param>
-		/// <param name="criteria">待验证的数据过滤条件。</param>
-		/// <param name="options">待验证方法的选项参数。</param>
-		/// <returns>返回验证后的过滤条件。</returns>
-		ICondition Validate(IDataService<TModel> service, DataServiceMethod method, ICondition criteria, IDataOptions options);
+namespace Zongsoft.Data;
 
-		/// <summary>
-		/// 验证指定数据服务方法的写入数据。
-		/// </summary>
-		/// <param name="service">指定的数据服务对象。</param>
-		/// <param name="method">待验证的数据服务方法。</param>
-		/// <param name="schema">待验证的数据模式。</param>
-		/// <param name="data">待验证的写入数据。</param>
-		/// <param name="options">待验证方法的选项参数。</param>
-		void Validate(IDataService<TModel> service, DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options);
-	}
+/// <summary>
+/// 提供数据服务的条件和数据进行验证功能的接口。
+/// </summary>
+/// <typeparam name="TModel">关于数据服务验证对应的数据模型类型。</typeparam>
+public interface IDataServiceValidator<TModel> : IDataServiceValidator
+{
+	/// <summary>验证指定数据服务方法的过滤条件。</summary>
+	/// <param name="service">指定的数据服务对象。</param>
+	/// <param name="method">待验证数据服务方法。</param>
+	/// <param name="criteria">待验证的数据过滤条件。</param>
+	/// <param name="options">待验证方法的选项参数。</param>
+	/// <returns>返回验证后的过滤条件。</returns>
+	ICondition Validate(IDataService<TModel> service, DataServiceMethod method, ICondition criteria, IDataOptions options);
+
+	/// <summary>验证指定数据服务方法的写入数据。</summary>
+	/// <param name="service">指定的数据服务对象。</param>
+	/// <param name="method">待验证的数据服务方法。</param>
+	/// <param name="schema">待验证的数据模式。</param>
+	/// <param name="data">待验证的写入数据。</param>
+	/// <param name="options">待验证方法的选项参数。</param>
+	void Validate(IDataService<TModel> service, DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options);
 }

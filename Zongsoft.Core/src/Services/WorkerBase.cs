@@ -31,343 +31,342 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 这是工作器的基类。
+/// </summary>
+/// <remarks>
+///		<para>该实现提供了对<see cref="OnStartAsync(string[], CancellationToken)"/>、<see cref="OnStopAsync(string[], CancellationToken)"/>、<see cref="OnPauseAsync"/>、<see cref="OnResumeAsync"/>这四个方法之间的线程重入的隔离。</para>
+///		<para>对于子类的实现者而言，无需担心这些方法会在多线程中会导致状态的不一致，并确保了它们不会发生线程重入。</para>
+/// </remarks>
+public abstract class WorkerBase : IWorker, IDisposable
 {
-	/// <summary>
-	/// 这是工作器的基类。
-	/// </summary>
-	/// <remarks>
-	///		<para>该实现提供了对<see cref="OnStartAsync(string[], CancellationToken)"/>、<see cref="OnStopAsync(string[], CancellationToken)"/>、<see cref="OnPauseAsync"/>、<see cref="OnResumeAsync"/>这四个方法之间的线程重入的隔离。</para>
-	///		<para>对于子类的实现者而言，无需担心这些方法会在多线程中会导致状态的不一致，并确保了它们不会发生线程重入。</para>
-	/// </remarks>
-	public abstract class WorkerBase : IWorker, IDisposable
+	#region 常量定义
+	private const int DISPOSED = -1;
+	private const int DISPOSING = 1;
+	#endregion
+
+	#region 事件声明
+	public event EventHandler<WorkerStateChangedEventArgs> StateChanged;
+	#endregion
+
+	#region 成员字段
+	private string _name;
+	private bool _enabled;
+	private bool _canPauseAndContinue;
+	private int _state;
+	private volatile int _disposing;
+	private readonly AutoResetEvent _semaphore;
+	#endregion
+
+	#region 构造函数
+	protected WorkerBase() : this(null) { }
+	protected WorkerBase(string name)
 	{
-		#region 常量定义
-		private const int DISPOSED = -1;
-		private const int DISPOSING = 1;
-		#endregion
+		_name = string.IsNullOrWhiteSpace(name) ? this.GetType().Name : name.Trim();
+		_enabled = true;
+		_canPauseAndContinue = false;
+		_state = (int)WorkerState.Stopped;
+		_semaphore = new AutoResetEvent(true);
+	}
+	#endregion
 
-		#region 事件声明
-		public event EventHandler<WorkerStateChangedEventArgs> StateChanged;
-		#endregion
+	#region 公共属性
+	/// <summary>获取或设置工作器的名称。</summary>
+	public string Name
+	{
+		get => _name;
+		protected set => _name = value ?? throw new ArgumentNullException();
+	}
 
-		#region 成员字段
-		private string _name;
-		private bool _enabled;
-		private bool _canPauseAndContinue;
-		private int _state;
-		private volatile int _disposing;
-		private readonly AutoResetEvent _semaphore;
-		#endregion
-
-		#region 构造函数
-		protected WorkerBase() : this(null) { }
-		protected WorkerBase(string name)
+	/// <summary>获取或设置是否禁用当前工作器。</summary>
+	/// <remarks>如果当前工作器</remarks>
+	public bool Enabled
+	{
+		get => _enabled;
+		set
 		{
-			_name = string.IsNullOrWhiteSpace(name) ? this.GetType().Name : name.Trim();
-			_enabled = true;
-			_canPauseAndContinue = false;
-			_state = (int)WorkerState.Stopped;
-			_semaphore = new AutoResetEvent(true);
+			if(_enabled == value)
+				return;
+
+			_enabled = value;
+
+			if(!value)
+				this.Stop();
 		}
-		#endregion
+	}
 
-		#region 公共属性
-		/// <summary>获取或设置工作器的名称。</summary>
-		public string Name
+	/// <summary>获取或设置工作器工作器是否可以暂停和继续。</summary>
+	public bool CanPauseAndContinue
+	{
+		get => _canPauseAndContinue;
+		protected set
 		{
-			get => _name;
-			protected set => _name = value ?? throw new ArgumentNullException();
+			if(_state != (int)WorkerState.Stopped)
+				throw new InvalidOperationException();
+
+			_canPauseAndContinue = value;
 		}
+	}
 
-		/// <summary>获取或设置是否禁用当前工作器。</summary>
-		/// <remarks>如果当前工作器</remarks>
-		public bool Enabled
+	/// <summary>获取工作器的状态。</summary>
+	public WorkerState State => (WorkerState)_state;
+	public bool IsDisposed => _disposing == DISPOSED;
+	#endregion
+
+	#region 公共方法
+	public void Start(params string[] args) => this.StartAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+	public async Task StartAsync(string[] args, CancellationToken cancellation = default)
+	{
+		if(this.IsDisposed)
+			throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+
+		//如果不可用或当前状态不是已停止则返回
+		if(!_enabled || _state != (int)WorkerState.Stopped)
+			return;
+
+		try
 		{
-			get => _enabled;
-			set
-			{
-				if(_enabled == value)
-					return;
+			//等待信号量
+			_semaphore.WaitOne();
 
-				_enabled = value;
-
-				if(!value)
-					this.Stop();
-			}
-		}
-
-		/// <summary>获取或设置工作器工作器是否可以暂停和继续。</summary>
-		public bool CanPauseAndContinue
-		{
-			get => _canPauseAndContinue;
-			protected set
-			{
-				if(_state != (int)WorkerState.Stopped)
-					throw new InvalidOperationException();
-
-				_canPauseAndContinue = value;
-			}
-		}
-
-		/// <summary>获取工作器的状态。</summary>
-		public WorkerState State => (WorkerState)_state;
-		public bool IsDisposed => _disposing == DISPOSED;
-		#endregion
-
-		#region 公共方法
-		public void Start(params string[] args) => this.StartAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
-		public async Task StartAsync(string[] args, CancellationToken cancellation = default)
-		{
-			if(this.IsDisposed)
-				throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
-
-			//如果不可用或当前状态不是已停止则返回
 			if(!_enabled || _state != (int)WorkerState.Stopped)
 				return;
 
-			try
-			{
-				//等待信号量
-				_semaphore.WaitOne();
+			//更新当前状态为“正在启动中”
+			_state = (int)WorkerState.Starting;
 
-				if(!_enabled || _state != (int)WorkerState.Stopped)
-					return;
+			//调用启动抽象方法，以执行实际的启动操作
+			await this.OnStartAsync(args, cancellation);
 
-				//更新当前状态为“正在启动中”
-				_state = (int)WorkerState.Starting;
+			//更新当前状态为“运行中”
+			_state = (int)WorkerState.Running;
 
-				//调用启动抽象方法，以执行实际的启动操作
-				await this.OnStartAsync(args, cancellation);
-
-				//更新当前状态为“运行中”
-				_state = (int)WorkerState.Running;
-
-				//激发“StateChanged”事件
-				this.OnStateChanged(nameof(Start), WorkerState.Running);
-			}
-			catch(Exception ex)
-			{
-				_state = (int)WorkerState.Stopped;
-
-				//激发“StateChanged”事件
-				this.OnStateChanged(nameof(Start), WorkerState.Stopped, ex);
-
-				if(System.Diagnostics.Debugger.IsAttached)
-					throw;
-				else
-					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
-			}
-			finally
-			{
-				//释放信号量
-				_semaphore.Set();
-			}
+			//激发“StateChanged”事件
+			this.OnStateChanged(nameof(Start), WorkerState.Running);
 		}
-
-		public void Stop(params string[] args) => this.StopAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
-		public async Task StopAsync(string[] args, CancellationToken cancellation = default)
+		catch(Exception ex)
 		{
+			_state = (int)WorkerState.Stopped;
+
+			//激发“StateChanged”事件
+			this.OnStateChanged(nameof(Start), WorkerState.Stopped, ex);
+
+			if(System.Diagnostics.Debugger.IsAttached)
+				throw;
+			else
+				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+		}
+		finally
+		{
+			//释放信号量
+			_semaphore.Set();
+		}
+	}
+
+	public void Stop(params string[] args) => this.StopAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+	public async Task StopAsync(string[] args, CancellationToken cancellation = default)
+	{
+		if(_state == (int)WorkerState.Stopping || _state == (int)WorkerState.Stopped)
+			return;
+
+		int originalState = -1;
+
+		try
+		{
+			//等待信号量
+			_semaphore.WaitOne();
+
 			if(_state == (int)WorkerState.Stopping || _state == (int)WorkerState.Stopped)
 				return;
 
-			int originalState = -1;
+			//更新当前状态为“正在停止中”，并保存原来的状态
+			originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Stopping);
 
-			try
-			{
-				//等待信号量
-				_semaphore.WaitOne();
+			//调用停止抽象方法，以执行实际的停止操作
+			await this.OnStopAsync(args, cancellation);
 
-				if(_state == (int)WorkerState.Stopping || _state == (int)WorkerState.Stopped)
-					return;
+			//更新当前状态为已停止
+			_state = (int)WorkerState.Stopped;
 
-				//更新当前状态为“正在停止中”，并保存原来的状态
-				originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Stopping);
-
-				//调用停止抽象方法，以执行实际的停止操作
-				await this.OnStopAsync(args, cancellation);
-
-				//更新当前状态为已停止
-				_state = (int)WorkerState.Stopped;
-
-				//激发“StateChanged”事件
-				this.OnStateChanged(nameof(Stop), WorkerState.Stopped);
-			}
-			catch(Exception ex)
-			{
-				//还原状态
-				_state = originalState;
-
-				//激发“StateChanged”事件
-				this.OnStateChanged(nameof(Stop), (WorkerState)originalState, ex);
-
-				if(System.Diagnostics.Debugger.IsAttached)
-					throw;
-				else
-					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
-			}
-			finally
-			{
-				//释放信号量
-				_semaphore.Set();
-			}
+			//激发“StateChanged”事件
+			this.OnStateChanged(nameof(Stop), WorkerState.Stopped);
 		}
-
-		public void Pause() => this.PauseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async Task PauseAsync(CancellationToken cancellation = default)
+		catch(Exception ex)
 		{
-			if(this.IsDisposed)
-				throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+			//还原状态
+			_state = originalState;
 
-			//如果不可用则退出
-			if(!_enabled)
-				return;
+			//激发“StateChanged”事件
+			this.OnStateChanged(nameof(Stop), (WorkerState)originalState, ex);
 
-			//如果不支持暂停继续则抛出异常
-			if(!_canPauseAndContinue)
-				throw new NotSupportedException($"The {_name} worker does not support the Pause/Resume operation.");
+			if(System.Diagnostics.Debugger.IsAttached)
+				throw;
+			else
+				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+		}
+		finally
+		{
+			//释放信号量
+			_semaphore.Set();
+		}
+	}
+
+	public void Pause() => this.PauseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+	public async Task PauseAsync(CancellationToken cancellation = default)
+	{
+		if(this.IsDisposed)
+			throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+
+		//如果不可用则退出
+		if(!_enabled)
+			return;
+
+		//如果不支持暂停继续则抛出异常
+		if(!_canPauseAndContinue)
+			throw new NotSupportedException($"The {_name} worker does not support the Pause/Resume operation.");
+
+		if(_state != (int)WorkerState.Running)
+			return;
+
+		int originalState = -1;
+
+		try
+		{
+			//等待信号量
+			_semaphore.WaitOne();
 
 			if(_state != (int)WorkerState.Running)
 				return;
 
-			int originalState = -1;
+			//更新当前状态为“正在暂停中”，并保存原来的状态
+			originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Pausing);
 
-			try
-			{
-				//等待信号量
-				_semaphore.WaitOne();
+			//执行暂停操作
+			await this.OnPauseAsync(cancellation);
 
-				if(_state != (int)WorkerState.Running)
-					return;
+			//更新当前状态为“已经暂停”
+			_state = (int)WorkerState.Paused;
 
-				//更新当前状态为“正在暂停中”，并保存原来的状态
-				originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Pausing);
-
-				//执行暂停操作
-				await this.OnPauseAsync(cancellation);
-
-				//更新当前状态为“已经暂停”
-				_state = (int)WorkerState.Paused;
-
-				//激发“StateChanged”事件
-				this.OnStateChanged(nameof(Pause), WorkerState.Paused);
-			}
-			catch(Exception ex)
-			{
-				//还原状态
-				_state = originalState;
-
-				//激发“StateChanged”事件
-				this.OnStateChanged(nameof(Pause), (WorkerState)originalState, ex);
-
-				if(System.Diagnostics.Debugger.IsAttached)
-					throw;
-				else
-					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
-			}
-			finally
-			{
-				//释放信号量
-				_semaphore.Set();
-			}
+			//激发“StateChanged”事件
+			this.OnStateChanged(nameof(Pause), WorkerState.Paused);
 		}
-
-		public void Resume() => this.ResumeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async Task ResumeAsync(CancellationToken cancellation = default)
+		catch(Exception ex)
 		{
-			if(this.IsDisposed)
-				throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+			//还原状态
+			_state = originalState;
 
-			//如果不可用则退出
-			if(!_enabled)
-				return;
+			//激发“StateChanged”事件
+			this.OnStateChanged(nameof(Pause), (WorkerState)originalState, ex);
 
-			//如果不支持暂停继续则抛出异常
-			if(!_canPauseAndContinue)
-				throw new NotSupportedException($"The {_name} worker does not support the Pause/Resume operation.");
+			if(System.Diagnostics.Debugger.IsAttached)
+				throw;
+			else
+				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+		}
+		finally
+		{
+			//释放信号量
+			_semaphore.Set();
+		}
+	}
+
+	public void Resume() => this.ResumeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+	public async Task ResumeAsync(CancellationToken cancellation = default)
+	{
+		if(this.IsDisposed)
+			throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+
+		//如果不可用则退出
+		if(!_enabled)
+			return;
+
+		//如果不支持暂停继续则抛出异常
+		if(!_canPauseAndContinue)
+			throw new NotSupportedException($"The {_name} worker does not support the Pause/Resume operation.");
+
+		if(_state != (int)WorkerState.Paused)
+			return;
+
+		int originalState = -1;
+
+		try
+		{
+			//等待信号量
+			_semaphore.WaitOne();
 
 			if(_state != (int)WorkerState.Paused)
 				return;
 
-			int originalState = -1;
+			//更新当前状态为“正在恢复中”，并保存原来的状态
+			originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Resuming);
 
-			try
-			{
-				//等待信号量
-				_semaphore.WaitOne();
+			//执行恢复操作
+			await this.OnResumeAsync(cancellation);
 
-				if(_state != (int)WorkerState.Paused)
-					return;
+			_state = (int)WorkerState.Running;
 
-				//更新当前状态为“正在恢复中”，并保存原来的状态
-				originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Resuming);
-
-				//执行恢复操作
-				await this.OnResumeAsync(cancellation);
-
-				_state = (int)WorkerState.Running;
-
-				//激发“StateChanged”事件
-				this.OnStateChanged(nameof(Resume), WorkerState.Running);
-			}
-			catch(Exception ex)
-			{
-				//还原状态
-				_state = originalState;
-
-				//激发“StateChanged”事件
-				this.OnStateChanged(nameof(Resume), (WorkerState)originalState, ex);
-
-				if(System.Diagnostics.Debugger.IsAttached)
-					throw;
-				else
-					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
-			}
-			finally
-			{
-				//释放信号量
-				_semaphore.Set();
-			}
+			//激发“StateChanged”事件
+			this.OnStateChanged(nameof(Resume), WorkerState.Running);
 		}
-		#endregion
-
-		#region 抽象方法
-		protected abstract Task OnStartAsync(string[] args, CancellationToken cancellation);
-		protected abstract Task OnStopAsync(string[] args, CancellationToken cancellation);
-		protected virtual Task OnPauseAsync(CancellationToken cancellation) => Task.CompletedTask;
-		protected virtual Task OnResumeAsync(CancellationToken cancellation) => Task.CompletedTask;
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => _enabled ? $"[{_state}] {_name}" : $"[{_state}](Disabled) {_name}";
-		#endregion
-
-		#region 事件激发
-		protected virtual void OnStateChanged(string actionName, WorkerState state, Exception exception = null)
+		catch(Exception ex)
 		{
-			this.StateChanged?.Invoke(this, new WorkerStateChangedEventArgs(actionName, state, exception));
-		}
-		#endregion
+			//还原状态
+			_state = originalState;
 
-		#region 释放资源
-		protected virtual void Dispose(bool disposing) => this.Stop();
-		void IDisposable.Dispose()
+			//激发“StateChanged”事件
+			this.OnStateChanged(nameof(Resume), (WorkerState)originalState, ex);
+
+			if(System.Diagnostics.Debugger.IsAttached)
+				throw;
+			else
+				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+		}
+		finally
 		{
-			var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
-			if(disposing != 0)
-				return;
-
-			try
-			{
-				this.Dispose(true);
-				_semaphore.Dispose();
-				GC.SuppressFinalize(this);
-			}
-			finally
-			{
-				_disposing = DISPOSED;
-			}
+			//释放信号量
+			_semaphore.Set();
 		}
-		#endregion
 	}
+	#endregion
+
+	#region 抽象方法
+	protected abstract Task OnStartAsync(string[] args, CancellationToken cancellation);
+	protected abstract Task OnStopAsync(string[] args, CancellationToken cancellation);
+	protected virtual Task OnPauseAsync(CancellationToken cancellation) => Task.CompletedTask;
+	protected virtual Task OnResumeAsync(CancellationToken cancellation) => Task.CompletedTask;
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => _enabled ? $"[{_state}] {_name}" : $"[{_state}](Disabled) {_name}";
+	#endregion
+
+	#region 事件激发
+	protected virtual void OnStateChanged(string actionName, WorkerState state, Exception exception = null)
+	{
+		this.StateChanged?.Invoke(this, new WorkerStateChangedEventArgs(actionName, state, exception));
+	}
+	#endregion
+
+	#region 释放资源
+	protected virtual void Dispose(bool disposing) => this.Stop();
+	void IDisposable.Dispose()
+	{
+		var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
+		if(disposing != 0)
+			return;
+
+		try
+		{
+			this.Dispose(true);
+			_semaphore.Dispose();
+			GC.SuppressFinalize(this);
+		}
+		finally
+		{
+			_disposing = DISPOSED;
+		}
+	}
+	#endregion
 }

@@ -29,34 +29,33 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示属性的语义角色的枚举。
+/// </summary>
+public enum ModelPropertyRole
 {
-	/// <summary>
-	/// 表示属性的语义角色的枚举。
-	/// </summary>
-	public enum ModelPropertyRole
-	{
-		/// <summary>未定义</summary>
-		None = 0,
-		/// <summary>代码</summary>
-		Code,
-		/// <summary>名称</summary>
-		Name,
-		/// <summary>性别</summary>
-		Gender,
-		/// <summary>生日</summary>
-		Birthday,
-		/// <summary>邮箱</summary>
-		Email,
-		/// <summary>电话</summary>
-		Phone,
-		/// <summary>地址</summary>
-		Address,
-		/// <summary>货币</summary>
-		Currency,
-		/// <summary>密码</summary>
-		Password,
-		/// <summary>描述文本</summary>
-		Description,
-	}
+	/// <summary>未定义</summary>
+	None = 0,
+	/// <summary>代码</summary>
+	Code,
+	/// <summary>名称</summary>
+	Name,
+	/// <summary>性别</summary>
+	Gender,
+	/// <summary>生日</summary>
+	Birthday,
+	/// <summary>邮箱</summary>
+	Email,
+	/// <summary>电话</summary>
+	Phone,
+	/// <summary>地址</summary>
+	Address,
+	/// <summary>货币</summary>
+	Currency,
+	/// <summary>密码</summary>
+	Password,
+	/// <summary>描述文本</summary>
+	Description,
 }

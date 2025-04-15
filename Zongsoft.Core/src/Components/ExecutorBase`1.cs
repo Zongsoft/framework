@@ -33,110 +33,109 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<TArgument>, IFilterable<IExecutorContext>
 {
-	public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<TArgument>, IFilterable<IExecutorContext>
+	#region 构造函数
+	protected ExecutorBase() => this.Filters = new List<IFilter<IExecutorContext>>();
+	protected ExecutorBase(IHandlerLocator<IExecutorContext> locator)
 	{
-		#region 构造函数
-		protected ExecutorBase() => this.Filters = new List<IFilter<IExecutorContext>>();
-		protected ExecutorBase(IHandlerLocator<IExecutorContext> locator)
-		{
-			this.Locator = locator;
-			this.Filters = new List<IFilter<IExecutorContext>>();
-		}
-		#endregion
-
-		#region 公共属性
-		public IHandlerLocator<IExecutorContext> Locator { get; }
-		public ICollection<IFilter<IExecutorContext>> Filters { get; }
-		#endregion
-
-		#region 执行方法
-		public void Execute(TArgument argument, Collections.Parameters parameters = null) => this.Execute(this.CreateContext(argument, parameters));
-		protected void Execute(IExecutorContext<TArgument> context)
-		{
-			var task = this.ExecuteAsync(context, default);
-			if(!task.IsCompletedSuccessfully)
-				task.GetAwaiter().GetResult();
-		}
-
-		public ValueTask ExecuteAsync(TArgument argument, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, null), cancellation);
-		public ValueTask ExecuteAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, parameters), cancellation);
-		protected async ValueTask ExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default)
-		{
-			var filters = this.Filters;
-
-			if(filters != null)
-			{
-				foreach(var filter in filters)
-					await this.OnFiltering(filter, context, cancellation);
-			}
-
-			await this.OnExecuteAsync(context, cancellation);
-
-			if(filters != null)
-			{
-				foreach(var filter in filters)
-					await this.OnFiltered(filter, context, cancellation);
-			}
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected abstract IExecutorContext<TArgument> CreateContext(TArgument argument, Collections.Parameters parameters);
-		protected virtual IExecutorContext<TArgument> CreateContext(object data, Collections.Parameters parameters) => data switch
-		{
-			IExecutorContext<TArgument> context => context,
-			TArgument argument => this.CreateContext(argument, parameters),
-			_ => throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
-		};
-		protected virtual IHandler GetHandler(IExecutorContext<TArgument> context) => this.Locator?.Locate(context);
-		protected virtual ValueTask OnExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default) => this.GetHandler(context) switch
-		{
-			IHandler<TArgument> handler => handler.HandleAsync(context.Argument, context.Parameters, cancellation),
-			IHandler<IExecutorContext> handler => handler.HandleAsync(context, context.Parameters, cancellation),
-			IHandler<IExecutorContext<TArgument>> handler => handler.HandleAsync(context, context.Parameters, cancellation),
-			IHandler handler => handler.HandleAsync(context.Argument, context.Parameters, cancellation),
-			_ => ValueTask.CompletedTask,
-		};
-
-		protected virtual ValueTask OnFiltered(IFilter<IExecutorContext<TArgument>> filter, IExecutorContext<TArgument> context, CancellationToken cancellation) => filter?.OnFiltered(context, cancellation) ?? ValueTask.CompletedTask;
-		protected virtual ValueTask OnFiltering(IFilter<IExecutorContext<TArgument>> filter, IExecutorContext<TArgument> context, CancellationToken cancellation) => filter?.OnFiltering(context, cancellation) ?? ValueTask.CompletedTask;
-		#endregion
-
-		#region 显式实现
-		void IExecutor.Execute(object data, Collections.Parameters parameters)
-		{
-			if(data == null)
-				this.Execute(default, parameters);
-
-			switch(data)
-			{
-				case TArgument argument:
-					this.Execute(argument, parameters);
-					break;
-				case IExecutorContext<TArgument> context:
-					this.Execute(context);
-					break;
-			};
-		}
-		ValueTask IExecutor.ExecuteAsync(object data, CancellationToken cancellation) => data switch
-		{
-			TArgument argument => this.ExecuteAsync(argument, null, cancellation),
-			IExecutorContext<TArgument> context => this.ExecuteAsync(context, cancellation),
-			_ => data == null ? this.ExecuteAsync(default, null, cancellation) : throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
-		};
-		ValueTask IExecutor.ExecuteAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => data switch
-		{
-			TArgument argument => this.ExecuteAsync(argument, parameters, cancellation),
-			IExecutorContext<TArgument> context => this.ExecuteAsync(context, cancellation),
-			_ => data == null ? this.ExecuteAsync(default, parameters, cancellation) : throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
-		};
-
-		ValueTask IHandler.HandleAsync(object data, CancellationToken cancellation) => this.ExecuteAsync(this.CreateContext(data, null), cancellation);
-		ValueTask IHandler.HandleAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(CreateContext(data, parameters), cancellation);
-		ValueTask IHandler<TArgument>.HandleAsync(TArgument argument, CancellationToken cancellation) => this.ExecuteAsync(argument, null, cancellation);
-		ValueTask IHandler<TArgument>.HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
-		#endregion
+		this.Locator = locator;
+		this.Filters = new List<IFilter<IExecutorContext>>();
 	}
+	#endregion
+
+	#region 公共属性
+	public IHandlerLocator<IExecutorContext> Locator { get; }
+	public ICollection<IFilter<IExecutorContext>> Filters { get; }
+	#endregion
+
+	#region 执行方法
+	public void Execute(TArgument argument, Collections.Parameters parameters = null) => this.Execute(this.CreateContext(argument, parameters));
+	protected void Execute(IExecutorContext<TArgument> context)
+	{
+		var task = this.ExecuteAsync(context, default);
+		if(!task.IsCompletedSuccessfully)
+			task.GetAwaiter().GetResult();
+	}
+
+	public ValueTask ExecuteAsync(TArgument argument, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, null), cancellation);
+	public ValueTask ExecuteAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, parameters), cancellation);
+	protected async ValueTask ExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default)
+	{
+		var filters = this.Filters;
+
+		if(filters != null)
+		{
+			foreach(var filter in filters)
+				await this.OnFiltering(filter, context, cancellation);
+		}
+
+		await this.OnExecuteAsync(context, cancellation);
+
+		if(filters != null)
+		{
+			foreach(var filter in filters)
+				await this.OnFiltered(filter, context, cancellation);
+		}
+	}
+	#endregion
+
+	#region 虚拟方法
+	protected abstract IExecutorContext<TArgument> CreateContext(TArgument argument, Collections.Parameters parameters);
+	protected virtual IExecutorContext<TArgument> CreateContext(object data, Collections.Parameters parameters) => data switch
+	{
+		IExecutorContext<TArgument> context => context,
+		TArgument argument => this.CreateContext(argument, parameters),
+		_ => throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
+	};
+	protected virtual IHandler GetHandler(IExecutorContext<TArgument> context) => this.Locator?.Locate(context);
+	protected virtual ValueTask OnExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default) => this.GetHandler(context) switch
+	{
+		IHandler<TArgument> handler => handler.HandleAsync(context.Argument, context.Parameters, cancellation),
+		IHandler<IExecutorContext> handler => handler.HandleAsync(context, context.Parameters, cancellation),
+		IHandler<IExecutorContext<TArgument>> handler => handler.HandleAsync(context, context.Parameters, cancellation),
+		IHandler handler => handler.HandleAsync(context.Argument, context.Parameters, cancellation),
+		_ => ValueTask.CompletedTask,
+	};
+
+	protected virtual ValueTask OnFiltered(IFilter<IExecutorContext<TArgument>> filter, IExecutorContext<TArgument> context, CancellationToken cancellation) => filter?.OnFiltered(context, cancellation) ?? ValueTask.CompletedTask;
+	protected virtual ValueTask OnFiltering(IFilter<IExecutorContext<TArgument>> filter, IExecutorContext<TArgument> context, CancellationToken cancellation) => filter?.OnFiltering(context, cancellation) ?? ValueTask.CompletedTask;
+	#endregion
+
+	#region 显式实现
+	void IExecutor.Execute(object data, Collections.Parameters parameters)
+	{
+		if(data == null)
+			this.Execute(default, parameters);
+
+		switch(data)
+		{
+			case TArgument argument:
+				this.Execute(argument, parameters);
+				break;
+			case IExecutorContext<TArgument> context:
+				this.Execute(context);
+				break;
+		};
+	}
+	ValueTask IExecutor.ExecuteAsync(object data, CancellationToken cancellation) => data switch
+	{
+		TArgument argument => this.ExecuteAsync(argument, null, cancellation),
+		IExecutorContext<TArgument> context => this.ExecuteAsync(context, cancellation),
+		_ => data == null ? this.ExecuteAsync(default, null, cancellation) : throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
+	};
+	ValueTask IExecutor.ExecuteAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => data switch
+	{
+		TArgument argument => this.ExecuteAsync(argument, parameters, cancellation),
+		IExecutorContext<TArgument> context => this.ExecuteAsync(context, cancellation),
+		_ => data == null ? this.ExecuteAsync(default, parameters, cancellation) : throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
+	};
+
+	ValueTask IHandler.HandleAsync(object data, CancellationToken cancellation) => this.ExecuteAsync(this.CreateContext(data, null), cancellation);
+	ValueTask IHandler.HandleAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(CreateContext(data, parameters), cancellation);
+	ValueTask IHandler<TArgument>.HandleAsync(TArgument argument, CancellationToken cancellation) => this.ExecuteAsync(argument, null, cancellation);
+	ValueTask IHandler<TArgument>.HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
+	#endregion
 }

@@ -28,58 +28,33 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public class WorkerStateChangedEventArgs : EventArgs
 {
-	public class WorkerStateChangedEventArgs : EventArgs
+	#region 成员字段
+	private string _actionName;
+	private WorkerState _state;
+	private Exception _exception;
+	#endregion
+
+	#region 构造函数
+	public WorkerStateChangedEventArgs(string actionName, WorkerState state) : this(actionName, state, null) { }
+	public WorkerStateChangedEventArgs(string actionName, WorkerState state, Exception exception)
 	{
-		#region 成员字段
-		private string _actionName;
-		private WorkerState _state;
-		private Exception _exception;
-		#endregion
+		if(string.IsNullOrWhiteSpace(actionName))
+			throw new ArgumentNullException(nameof(actionName));
 
-		#region 构造函数
-		public WorkerStateChangedEventArgs(string actionName, WorkerState state) : this(actionName, state, null)
-		{
-		}
-
-		public WorkerStateChangedEventArgs(string actionName, WorkerState state, Exception exception)
-		{
-			if(string.IsNullOrWhiteSpace(actionName))
-				throw new ArgumentNullException("actionName");
-
-			_actionName = actionName.Trim();
-			_state = state;
-			_exception = exception;
-		}
-		#endregion
-
-		#region 公共属性
-		public string ActionName
-		{
-			get
-			{
-				return _actionName;
-			}
-		}
-
-		public WorkerState State
-		{
-			get
-			{
-				return _state;
-			}
-		}
-
-		public Exception Exception
-		{
-			get
-			{
-				return _exception;
-			}
-		}
-		#endregion
+		_actionName = actionName.Trim();
+		_state = state;
+		_exception = exception;
 	}
+	#endregion
+
+	#region 公共属性
+	public string ActionName => _actionName;
+	public WorkerState State => _state;
+	public Exception Exception => _exception;
+	#endregion
 }

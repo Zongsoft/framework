@@ -28,15 +28,13 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据模式解析器的接口。
+/// </summary>
+public interface ISchemaParser
 {
-	/// <summary>
-	/// 表示数据模式解析器的接口。
-	/// </summary>
-	public interface ISchemaParser
-	{
-		ISchema Parse(string name, string expression, Type entityType = null);
-	}
+	ISchema Parse(string name, string expression, Type entityType = null);
 }

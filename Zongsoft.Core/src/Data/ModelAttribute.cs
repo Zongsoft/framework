@@ -29,18 +29,17 @@
 
 using System;
 
-namespace Zongsoft.Data
-{
-	[AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
-	public class ModelAttribute : Attribute
-	{
-		#region 构造函数
-		public ModelAttribute(string name) => this.Name = name;
-		#endregion
+namespace Zongsoft.Data;
 
-		#region 公共属性
-		/// <summary>获取数据访问的名称。</summary>
-		public string Name { get; }
-		#endregion
-	}
+[AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
+public class ModelAttribute : Attribute
+{
+	#region 构造函数
+	public ModelAttribute(string name) => this.Name = name;
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取数据访问的名称。</summary>
+	public string Name { get; }
+	#endregion
 }

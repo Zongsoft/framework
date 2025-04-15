@@ -29,53 +29,57 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据访问的上下文基类。
+/// </summary>
+public abstract class DataAccessContextBase<TOptions> : IDataAccessContextBase<TOptions>, IDisposable where TOptions : IDataOptions
 {
-	/// <summary>
-	/// 表示数据访问的上下文基类。
-	/// </summary>
-	public abstract class DataAccessContextBase<TOptions> : IDataAccessContextBase<TOptions>, IDisposable where TOptions : IDataOptions
+	#region 构造函数
+	protected DataAccessContextBase(IDataAccess dataAccess, string name, DataAccessMethod method, TOptions options)
 	{
-		#region 构造函数
-		protected DataAccessContextBase(IDataAccess dataAccess, string name, DataAccessMethod method, TOptions options)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Name = name;
-			this.Method = method;
-			this.DataAccess = dataAccess ?? throw new ArgumentNullException(nameof(dataAccess));
-			this.Options = options ?? throw new ArgumentNullException(nameof(options));
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取数据访问的名称。</summary>
-		public string Name { get; }
-
-		/// <summary>获取数据驱动的名称。</summary>
-		public abstract string Driver { get; }
-
-		/// <summary>获取数据访问的方法。</summary>
-		public DataAccessMethod Method { get; }
-
-		/// <summary>获取当前上下文关联的数据访问器。</summary>
-		public IDataAccess DataAccess { get; }
-
-		/// <summary>获取当前上下文关联的用户主体。</summary>
-		public System.Security.Claims.ClaimsPrincipal Principal => Services.ApplicationContext.Current?.Principal;
-
-		/// <summary>获取当前数据访问操作的选项对象。</summary>
-		public TOptions Options { get; }
-		#endregion
-
-		#region 处置方法
-		public void Dispose() => this.Dispose(true);
-		protected virtual void Dispose(bool disposing) { }
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => $"[{this.Method}] {this.Name}";
-		#endregion
+		this.Name = name;
+		this.Method = method;
+		this.DataAccess = dataAccess ?? throw new ArgumentNullException(nameof(dataAccess));
+		this.Options = options ?? throw new ArgumentNullException(nameof(options));
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取数据访问的名称。</summary>
+	public string Name { get; }
+
+	/// <summary>获取数据驱动的名称。</summary>
+	public abstract string Driver { get; }
+
+	/// <summary>获取数据访问的方法。</summary>
+	public DataAccessMethod Method { get; }
+
+	/// <summary>获取当前上下文关联的数据访问器。</summary>
+	public IDataAccess DataAccess { get; }
+
+	/// <summary>获取当前上下文关联的用户主体。</summary>
+	public System.Security.Claims.ClaimsPrincipal Principal => Services.ApplicationContext.Current?.Principal;
+
+	/// <summary>获取当前数据访问操作的选项对象。</summary>
+	public TOptions Options { get; }
+	#endregion
+
+	#region 处置方法
+	public void Dispose()
+	{
+		this.Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	protected virtual void Dispose(bool disposing) { }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"[{this.Method}] {this.Name}";
+	#endregion
 }

@@ -31,47 +31,46 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public abstract class ExecutorContextBase : IExecutorContext
 {
-	public abstract class ExecutorContextBase : IExecutorContext
+	#region 成员字段
+	private Exception _exception;
+	#endregion
+
+	#region 构造函数
+	protected ExecutorContextBase(IExecutor executor)
 	{
-		#region 成员字段
-		private Exception _exception;
-		#endregion
-
-		#region 构造函数
-		protected ExecutorContextBase(IExecutor executor)
-		{
-			this.Executor = executor;
-			this.Parameters = new Collections.Parameters();
-		}
-
-		protected ExecutorContextBase(IExecutor executor, Collections.Parameters parameters)
-		{
-			this.Executor = executor;
-			this.Parameters = parameters ?? new Collections.Parameters();
-		}
-
-		protected ExecutorContextBase(IExecutor executor, IEnumerable<KeyValuePair<string, object>> parameters)
-		{
-			this.Executor = executor;
-			this.Parameters = new Collections.Parameters(parameters);
-		}
-		#endregion
-
-		#region 公共属性
-		public IExecutor Executor { get; }
-		public Collections.Parameters Parameters { get; }
-		#endregion
-
-		#region 显式实现
-		protected abstract object GetArgument();
-		object IExecutorContext.Argument => this.GetArgument();
-		#endregion
-
-		#region 公共方法
-		public void Error(Exception exception) => _exception = exception;
-		public bool HasError(out Exception exception) => (exception = _exception) != null;
-		#endregion
+		this.Executor = executor;
+		this.Parameters = new Collections.Parameters();
 	}
+
+	protected ExecutorContextBase(IExecutor executor, Collections.Parameters parameters)
+	{
+		this.Executor = executor;
+		this.Parameters = parameters ?? new Collections.Parameters();
+	}
+
+	protected ExecutorContextBase(IExecutor executor, IEnumerable<KeyValuePair<string, object>> parameters)
+	{
+		this.Executor = executor;
+		this.Parameters = new Collections.Parameters(parameters);
+	}
+	#endregion
+
+	#region 公共属性
+	public IExecutor Executor { get; }
+	public Collections.Parameters Parameters { get; }
+	#endregion
+
+	#region 显式实现
+	protected abstract object GetArgument();
+	object IExecutorContext.Argument => this.GetArgument();
+	#endregion
+
+	#region 公共方法
+	public void Error(Exception exception) => _exception = exception;
+	public bool HasError(out Exception exception) => (exception = _exception) != null;
+	#endregion
 }

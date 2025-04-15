@@ -28,32 +28,30 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 关于<seealso cref="IWorker"/>的状态信息。
+/// </summary>
+public enum WorkerState
 {
-	/// <summary>
-	/// 关于<seealso cref="IWorker"/>的状态信息。
-	/// </summary>
-	public enum WorkerState
-	{
-		/// <summary>未运行/已停止。</summary>
-		Stopped = 0,
-		/// <summary>运行中。</summary>
-		Running = 1,
+	/// <summary>未运行/已停止。</summary>
+	Stopped = 0,
+	/// <summary>运行中。</summary>
+	Running = 1,
 
-		/// <summary>正在启动中。</summary>
-		Starting,
-		/// <summary>正在停止中。</summary>
-		Stopping,
+	/// <summary>正在启动中。</summary>
+	Starting,
+	/// <summary>正在停止中。</summary>
+	Stopping,
 
-		/// <summary>正在暂停中。</summary>
-		Pausing,
+	/// <summary>正在暂停中。</summary>
+	Pausing,
 
-		/// <summary>已经暂停。</summary>
-		Paused,
+	/// <summary>已经暂停。</summary>
+	Paused,
 
-		/// <summary>正在恢复中。</summary>
-		Resuming,
-	}
+	/// <summary>正在恢复中。</summary>
+	Resuming,
 }

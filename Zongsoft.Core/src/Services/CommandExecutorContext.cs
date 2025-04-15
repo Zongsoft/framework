@@ -31,73 +31,72 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 表示命令执行器的上下文（命令执行会话）类。
+/// </summary>
+public class CommandExecutorContext
 {
-	/// <summary>
-	/// 表示命令执行器的上下文（命令执行会话）类。
-	/// </summary>
-	public class CommandExecutorContext
+	#region 成员字段
+	private ICommandExecutor _executor;
+	private CommandExpression _expression;
+	private object _parameter;
+	private object _result;
+	private IDictionary<string, object> _states;
+	#endregion
+
+	#region 构造函数
+	public CommandExecutorContext(ICommandExecutor executor, CommandExpression expression, object parameter)
 	{
-		#region 成员字段
-		private ICommandExecutor _executor;
-		private CommandExpression _expression;
-		private object _parameter;
-		private object _result;
-		private IDictionary<string, object> _states;
-		#endregion
+		if(executor == null)
+			throw new ArgumentNullException(nameof(executor));
 
-		#region 构造函数
-		public CommandExecutorContext(ICommandExecutor executor, CommandExpression expression, object parameter)
-		{
-			if(executor == null)
-				throw new ArgumentNullException(nameof(executor));
+		if(expression == null)
+			throw new ArgumentNullException(nameof(expression));
 
-			if(expression == null)
-				throw new ArgumentNullException(nameof(expression));
-
-			_executor = executor;
-			_expression = expression;
-			_parameter = parameter;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取当前命令执行器对象。</summary>
-		public ICommandExecutor Executor => _executor;
-
-		/// <summary>获取当前命令执行器的命令表达式。</summary>
-		public CommandExpression Expression => _expression;
-
-		/// <summary>获取从命令执行器传入的参数值。</summary>
-		public object Parameter => _parameter;
-
-		/// <summary>获取或设置命令执行器的最终结果。</summary>
-		public object Result
-		{
-			get => _result;
-			set => _result = value;
-		}
-
-		/// <summary>获取当前命令执行器的标准输出器。</summary>
-		public ICommandOutlet Output => _executor.Output;
-
-		/// <summary>获取当前命令执行器的错误输出器。</summary>
-		public TextWriter Error => _executor.Error;
-
-		/// <summary>获取一个值，指示命令执行会话是否包含状态字典。</summary>
-		public bool HasStates => _states != null && _states.Count > 0;
-
-		/// <summary>获取当前命令执行会话的状态字典。</summary>
-		public IDictionary<string, object> States
-		{
-			get
-			{
-				if(_states == null)
-					System.Threading.Interlocked.CompareExchange(ref _states, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-				return _states;
-			}
-		}
-		#endregion
+		_executor = executor;
+		_expression = expression;
+		_parameter = parameter;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取当前命令执行器对象。</summary>
+	public ICommandExecutor Executor => _executor;
+
+	/// <summary>获取当前命令执行器的命令表达式。</summary>
+	public CommandExpression Expression => _expression;
+
+	/// <summary>获取从命令执行器传入的参数值。</summary>
+	public object Parameter => _parameter;
+
+	/// <summary>获取或设置命令执行器的最终结果。</summary>
+	public object Result
+	{
+		get => _result;
+		set => _result = value;
+	}
+
+	/// <summary>获取当前命令执行器的标准输出器。</summary>
+	public ICommandOutlet Output => _executor.Output;
+
+	/// <summary>获取当前命令执行器的错误输出器。</summary>
+	public TextWriter Error => _executor.Error;
+
+	/// <summary>获取一个值，指示命令执行会话是否包含状态字典。</summary>
+	public bool HasStates => _states != null && _states.Count > 0;
+
+	/// <summary>获取当前命令执行会话的状态字典。</summary>
+	public IDictionary<string, object> States
+	{
+		get
+		{
+			if(_states == null)
+				System.Threading.Interlocked.CompareExchange(ref _states, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+
+			return _states;
+		}
+	}
+	#endregion
 }

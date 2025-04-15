@@ -29,33 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class DataExistingEventArgs : DataExistedEventArgs
 {
-	public class DataExistingEventArgs : DataExistedEventArgs
-	{
-		#region 成员字段
-		private bool _cancel;
-		#endregion
+	#region 构造函数
+	public DataExistingEventArgs(DataExistContextBase context) : base(context) => this.Cancel = false;
+	#endregion
 
-		#region 构造函数
-		public DataExistingEventArgs(DataExistContextBase context) : base(context)
-		{
-			_cancel = false;
-		}
-		#endregion
-
-		#region 公共属性
-		public bool Cancel
-		{
-			get
-			{
-				return _cancel;
-			}
-			set
-			{
-				_cancel = value;
-			}
-		}
-		#endregion
-	}
+	#region 公共属性
+	public bool Cancel { get; set; }
+	#endregion
 }

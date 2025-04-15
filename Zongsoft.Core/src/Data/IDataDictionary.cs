@@ -31,31 +31,30 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public interface IDataDictionary : IDictionary, IDictionary<string, object>
 {
-	public interface IDataDictionary : IDictionary, IDictionary<string, object>
-	{
-		object Data { get; }
-		bool IsEmpty { get; }
+	object Data { get; }
+	bool IsEmpty { get; }
 
-		T AsModel<T>();
+	T AsModel<T>();
 
-		bool Contains(string name);
+	bool Contains(string name);
 
-		bool HasChanges(params string[] names);
-		void Reset(params string[] names);
-		bool Reset(string name, out object value);
+	bool HasChanges(params string[] names);
+	void Reset(params string[] names);
+	bool Reset(string name, out object value);
 
-		object GetValue(string name);
-		TValue GetValue<TValue>(string name, TValue defaultValue);
+	object GetValue(string name);
+	TValue GetValue<TValue>(string name, TValue defaultValue);
 
-		void SetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null);
-		void SetValue<TValue>(string name, Func<TValue> valueFactory, Func<TValue, bool> predicate = null);
+	void SetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null);
+	void SetValue<TValue>(string name, Func<TValue> valueFactory, Func<TValue, bool> predicate = null);
 
-		bool TryGetValue<TValue>(string name, out TValue value);
-		bool TryGetValue<TValue>(string name, Action<TValue> got);
+	bool TryGetValue<TValue>(string name, out TValue value);
+	bool TryGetValue<TValue>(string name, Action<TValue> got);
 
-		bool TrySetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null);
-		bool TrySetValue<TValue>(string name, Func<TValue> valueFactory, Func<TValue, bool> predicate = null);
-	}
+	bool TrySetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null);
+	bool TrySetValue<TValue>(string name, Func<TValue> valueFactory, Func<TValue, bool> predicate = null);
 }

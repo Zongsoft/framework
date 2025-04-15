@@ -29,14 +29,13 @@
 
 using System;
 
-namespace Zongsoft.Components
-{
-	public class EventLocator : EventLocatorBase<IExecutorContext>
-	{
-		public EventLocator() { }
-		public EventLocator(EventRegistryBase registry) : base(registry) { }
+namespace Zongsoft.Components;
 
-		protected override string GetName(IExecutorContext context) =>
-			context.Parameters.TryGetValue("name", out var value) && value is string name ? name : null;
-	}
+public class EventLocator : EventLocatorBase<IExecutorContext>
+{
+	public EventLocator() { }
+	public EventLocator(EventRegistryBase registry) : base(registry) { }
+
+	protected override string GetName(IExecutorContext context) =>
+		context.Parameters.TryGetValue("name", out var value) && value is string name ? name : null;
 }

@@ -32,24 +32,23 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public sealed class ServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
 {
-	public sealed class ServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
+	#region 私有变量
+	private readonly ServiceProviderOptions _options;
+	#endregion
+
+	#region 构造函数
+	public ServiceProviderFactory(ServiceProviderOptions options = null)
 	{
-		#region 私有变量
-		private readonly ServiceProviderOptions _options;
-		#endregion
-
-		#region 构造函数
-		public ServiceProviderFactory(ServiceProviderOptions options = null)
-		{
-			_options = options ?? new ServiceProviderOptions();
-		}
-		#endregion
-
-		#region 公共方法
-		public IServiceCollection CreateBuilder(IServiceCollection services) => services;
-		public System.IServiceProvider CreateServiceProvider(IServiceCollection services) => new ServiceProvider(services, _options);
-		#endregion
+		_options = options ?? new ServiceProviderOptions();
 	}
+	#endregion
+
+	#region 公共方法
+	public IServiceCollection CreateBuilder(IServiceCollection services) => services;
+	public System.IServiceProvider CreateServiceProvider(IServiceCollection services) => new ServiceProvider(services, _options);
+	#endregion
 }

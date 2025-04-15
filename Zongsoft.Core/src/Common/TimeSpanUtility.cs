@@ -29,62 +29,61 @@
 
 using System;
 
-namespace Zongsoft.Common
+namespace Zongsoft.Common;
+
+public static class TimeSpanUtility
 {
-	public static class TimeSpanUtility
+	public static bool TryParse(string text, out TimeSpan value) => TryParse(string.IsNullOrEmpty(text) ? default : text.AsSpan(), out value);
+	public static bool TryParse(ReadOnlySpan<char> text, out TimeSpan value)
 	{
-		public static bool TryParse(string text, out TimeSpan value) => TryParse(string.IsNullOrEmpty(text) ? default : text.AsSpan(), out value);
-		public static bool TryParse(ReadOnlySpan<char> text, out TimeSpan value)
+		if(text.IsEmpty || text.Length < 2)
 		{
-			if(text.IsEmpty || text.Length < 2)
-			{
-				value = TimeSpan.Zero;
-				return false;
-			}
-
-			double number;
-
-			switch(text[^1])
-			{
-				case 'd':
-				case 'D':
-					if(double.TryParse(text[0..^1], out number))
-					{
-						value = TimeSpan.FromDays(number);
-						return true;
-					}
-
-					break;
-				case 'h':
-				case 'H':
-					if(double.TryParse(text[0..^1], out number))
-					{
-						value = TimeSpan.FromHours(number);
-						return true;
-					}
-
-					break;
-				case 'm':
-				case 'M':
-					if(double.TryParse(text[0..^1], out number))
-					{
-						value = TimeSpan.FromMinutes(number);
-						return true;
-					}
-
-					break;
-				case 's':
-				case 'S':
-					if(double.TryParse(text[0..^1], out number))
-					{
-						value = TimeSpan.FromSeconds(number);
-						return true;
-					}
-
-					break;
-			}
-
-			return TimeSpan.TryParse(text, out value);
+			value = TimeSpan.Zero;
+			return false;
 		}
+
+		double number;
+
+		switch(text[^1])
+		{
+			case 'd':
+			case 'D':
+				if(double.TryParse(text[0..^1], out number))
+				{
+					value = TimeSpan.FromDays(number);
+					return true;
+				}
+
+				break;
+			case 'h':
+			case 'H':
+				if(double.TryParse(text[0..^1], out number))
+				{
+					value = TimeSpan.FromHours(number);
+					return true;
+				}
+
+				break;
+			case 'm':
+			case 'M':
+				if(double.TryParse(text[0..^1], out number))
+				{
+					value = TimeSpan.FromMinutes(number);
+					return true;
+				}
+
+				break;
+			case 's':
+			case 'S':
+				if(double.TryParse(text[0..^1], out number))
+				{
+					value = TimeSpan.FromSeconds(number);
+					return true;
+				}
+
+				break;
+		}
+
+		return TimeSpan.TryParse(text, out value);
 	}
 }

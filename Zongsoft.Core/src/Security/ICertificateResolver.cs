@@ -30,18 +30,17 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Security
-{
-	/// <summary>
-	/// 提供数字证书解析功能的接口。
-	/// </summary>
-	public interface ICertificateResolver
-	{
-		/// <summary>获取数字证书解析器名称，通常对应数字证书的格式名。</summary>
-		string Name { get; }
+namespace Zongsoft.Security;
 
-		ICertificate Resolve(byte[] data, string secret = null, CertificateDescriptor descriptor = default);
-		ICertificate Resolve(Stream stream, string secret = null, CertificateDescriptor descriptor = default);
-		ICertificate Resolve(string filePath, string secret = null, CertificateDescriptor descriptor = default);
-	}
+/// <summary>
+/// 提供数字证书解析功能的接口。
+/// </summary>
+public interface ICertificateResolver
+{
+	/// <summary>获取数字证书解析器名称，通常对应数字证书的格式名。</summary>
+	string Name { get; }
+
+	ICertificate Resolve(byte[] data, string secret = null, CertificateDescriptor descriptor = default);
+	ICertificate Resolve(Stream stream, string secret = null, CertificateDescriptor descriptor = default);
+	ICertificate Resolve(string filePath, string secret = null, CertificateDescriptor descriptor = default);
 }

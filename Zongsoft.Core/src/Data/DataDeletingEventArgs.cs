@@ -28,41 +28,20 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 为数据访问的删除事件提供数据。
+/// </summary>
+public class DataDeletingEventArgs : DataDeletedEventArgs
 {
-	/// <summary>
-	/// 为数据访问的删除事件提供数据。
-	/// </summary>
-	public class DataDeletingEventArgs : DataDeletedEventArgs
-	{
-		#region 成员字段
-		private bool _cancel;
-		#endregion
+	#region 构造函数
+	public DataDeletingEventArgs(DataDeleteContextBase context) : base(context) => this.Cancel = false;
+	#endregion
 
-		#region 构造函数
-		public DataDeletingEventArgs(DataDeleteContextBase context) : base(context)
-		{
-			_cancel = false;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取或设置一个值，表示是否取消当前操作。
-		/// </summary>
-		public bool Cancel
-		{
-			get
-			{
-				return _cancel;
-			}
-			set
-			{
-				_cancel = value;
-			}
-		}
-		#endregion
-	}
+	#region 公共属性
+	/// <summary>获取或设置一个值，表示是否取消当前操作。</summary>
+	public bool Cancel { get; set; }
+	#endregion
 }

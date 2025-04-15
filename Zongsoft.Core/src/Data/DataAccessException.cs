@@ -29,47 +29,42 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据访问的异常类。
+/// </summary>
+public class DataAccessException : DataException
 {
-	/// <summary>
-	/// 表示数据访问的异常类。
-	/// </summary>
-	public class DataAccessException : DataException
+	#region 构造函数
+	public DataAccessException(string driverName, int code, Exception innerException = null) : base(null, innerException)
 	{
-		#region 构造函数
-		public DataAccessException(string driverName, int code, Exception innerException = null) : base(null, innerException)
-		{
-			this.Code = code;
-			this.DriverName = driverName;
-		}
-
-		public DataAccessException(string driverName, int code, string message, Exception innerException = null) : base(message, innerException)
-		{
-			this.Code = code;
-			this.DriverName = driverName;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取数据访问的错误代码。
-		/// </summary>
-		public int Code { get; }
-
-		/// <summary>
-		/// 获取数据访问驱动程序的名称。
-		/// </summary>
-		public string DriverName { get; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			if(string.IsNullOrEmpty(this.Message))
-				return $"{this.DriverName}:{this.Code}";
-			else
-				return $"{this.DriverName}:{this.Code}{Environment.NewLine}{this.Message}";
-		}
-		#endregion
+		this.Code = code;
+		this.DriverName = driverName;
 	}
+
+	public DataAccessException(string driverName, int code, string message, Exception innerException = null) : base(message, innerException)
+	{
+		this.Code = code;
+		this.DriverName = driverName;
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取数据访问的错误代码。</summary>
+	public int Code { get; }
+
+	/// <summary>获取数据访问驱动程序的名称。</summary>
+	public string DriverName { get; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString()
+	{
+		if(string.IsNullOrEmpty(this.Message))
+			return $"{this.DriverName}:{this.Code}";
+		else
+			return $"{this.DriverName}:{this.Code}{Environment.NewLine}{this.Message}";
+	}
+	#endregion
 }

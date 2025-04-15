@@ -29,43 +29,42 @@
 
 using System;
 
-namespace Zongsoft.Caching
+namespace Zongsoft.Caching;
+
+[Serializable]
+public class CacheChangedEventArgs : EventArgs
 {
-	[Serializable]
-	public class CacheChangedEventArgs : EventArgs
+	#region 构造函数
+	public CacheChangedEventArgs(CacheChangedReason reason, string key, object oldValue, object newValue = null)
 	{
-		#region 构造函数
-		public CacheChangedEventArgs(CacheChangedReason reason, string key, object oldValue, object newValue = null)
-		{
-			this.Reason = reason;
-			this.Key = key;
-			this.NewValue = newValue;
-			this.OldValue = oldValue;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Key { get; }
-		public object OldValue { get; }
-		public object NewValue { get; }
-		public CacheChangedReason Reason { get; }
-		#endregion
-
-		#region 静态方法
-		public static CacheChangedEventArgs Updated(string key, object newValue, object oldValue)
-		{
-			return new CacheChangedEventArgs(CacheChangedReason.Updated, key, oldValue: oldValue, newValue:newValue);
-		}
-
-		public static CacheChangedEventArgs Removed(string key, object value)
-		{
-			return new CacheChangedEventArgs(CacheChangedReason.Removed, key, oldValue: value);
-		}
-
-		public static CacheChangedEventArgs Expired(string key, object value)
-		{
-			return new CacheChangedEventArgs(CacheChangedReason.Expired, key, oldValue: value);
-		}
-		#endregion
+		this.Reason = reason;
+		this.Key = key;
+		this.NewValue = newValue;
+		this.OldValue = oldValue;
 	}
+	#endregion
+
+	#region 公共属性
+	public string Key { get; }
+	public object OldValue { get; }
+	public object NewValue { get; }
+	public CacheChangedReason Reason { get; }
+	#endregion
+
+	#region 静态方法
+	public static CacheChangedEventArgs Updated(string key, object newValue, object oldValue)
+	{
+		return new CacheChangedEventArgs(CacheChangedReason.Updated, key, oldValue: oldValue, newValue:newValue);
+	}
+
+	public static CacheChangedEventArgs Removed(string key, object value)
+	{
+		return new CacheChangedEventArgs(CacheChangedReason.Removed, key, oldValue: value);
+	}
+
+	public static CacheChangedEventArgs Expired(string key, object value)
+	{
+		return new CacheChangedEventArgs(CacheChangedReason.Expired, key, oldValue: value);
+	}
+	#endregion
 }

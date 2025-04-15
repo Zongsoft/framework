@@ -29,25 +29,24 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public interface IModularService
 {
-	public interface IModularService
+	object GetValue(IServiceProvider provider);
+}
+
+public abstract class ModularServiceBase<TContract> : IModularService where TContract : class
+{
+	private readonly object _service;
+	private readonly Type _serviceType;
+
+	protected ModularServiceBase(Type serviceType) => _serviceType = serviceType;
+	protected ModularServiceBase(object service)
 	{
-		object GetValue(IServiceProvider provider);
+		_service = service;
+		_serviceType = service?.GetType();
 	}
 
-	public abstract class ModularServiceBase<TContract> : IModularService where TContract : class
-	{
-		private readonly object _service;
-		private readonly Type _serviceType;
-
-		protected ModularServiceBase(Type serviceType) => _serviceType = serviceType;
-		protected ModularServiceBase(object service)
-		{
-			_service = service;
-			_serviceType = service?.GetType();
-		}
-
-		public object GetValue(IServiceProvider provider) => _service ?? (_serviceType == null ? null : provider.GetService(_serviceType));
-	}
+	public object GetValue(IServiceProvider provider) => _service ?? (_serviceType == null ? null : provider.GetService(_serviceType));
 }

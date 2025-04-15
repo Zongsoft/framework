@@ -29,20 +29,19 @@
 
 using System;
 
-namespace Zongsoft.Caching
+namespace Zongsoft.Caching;
+
+/// <summary>
+/// 表示缓存设置项的必须条件的枚举。
+/// </summary>
+public enum CacheRequisite
 {
-	/// <summary>
-	/// 表示缓存设置项的必须条件的枚举。
-	/// </summary>
-	public enum CacheRequisite
-	{
-		/// <summary>无约束，即无论缓存项是否存在都能被设置。</summary>
-		Always,
+	/// <summary>无约束，即无论缓存项是否存在都能被设置。</summary>
+	Always,
 
-		/// <summary>存在，即只有当缓存项存在时才能被更新。</summary>
-		Exists,
+	/// <summary>存在，即只有当缓存项存在时才能被更新。</summary>
+	Exists,
 
-		/// <summary>不存在，即只有当缓存项不存在时才能被设置。</summary>
-		NotExists,
-	}
+	/// <summary>不存在，即只有当缓存项不存在时才能被设置。</summary>
+	NotExists,
 }

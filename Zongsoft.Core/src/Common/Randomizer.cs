@@ -31,183 +31,182 @@
 using System;
 using System.Buffers;
 
-namespace Zongsoft.Common
+namespace Zongsoft.Common;
+
+/// <summary>
+/// 提供随机数生成的静态类。
+/// </summary>
+public static class Randomizer
 {
-	/// <summary>
-	/// 提供随机数生成的静态类。
-	/// </summary>
-	public static class Randomizer
+	#region 常量定义
+	private const string Digits = "0123456789ABCDEFGHJKMNPRSTUVWXYZ";
+	#endregion
+
+	#region 静态字段
+	private static readonly System.Security.Cryptography.RandomNumberGenerator _random = System.Security.Cryptography.RandomNumberGenerator.Create();
+	#endregion
+
+	#region 公共方法
+	public static byte[] Generate(int length)
 	{
-		#region 常量定义
-		private const string Digits = "0123456789ABCDEFGHJKMNPRSTUVWXYZ";
-		#endregion
+		if(length < 1)
+			throw new ArgumentOutOfRangeException(nameof(length));
 
-		#region 静态字段
-		private static readonly System.Security.Cryptography.RandomNumberGenerator _random = System.Security.Cryptography.RandomNumberGenerator.Create();
-		#endregion
-
-		#region 公共方法
-		public static byte[] Generate(int length)
-		{
-			if(length < 1)
-				throw new ArgumentOutOfRangeException(nameof(length));
-
-			var bytes = new byte[length];
-			_random.GetBytes(bytes);
-			return bytes;
-		}
-
-		public static short GenerateInt16()
-		{
-			var bytes = ArrayPool<byte>.Shared.Rent(2);
-
-			try
-			{
-				_random.GetBytes(bytes, 0, 2);
-				return BitConverter.ToInt16(bytes, 0);
-			}
-			finally
-			{
-				if(bytes != null)
-					ArrayPool<byte>.Shared.Return(bytes);
-			}
-		}
-
-		public static ushort GenerateUInt16()
-		{
-			var bytes = ArrayPool<byte>.Shared.Rent(2);
-
-			try
-			{
-				_random.GetBytes(bytes, 0, 2);
-				return BitConverter.ToUInt16(bytes, 0);
-			}
-			finally
-			{
-				if(bytes != null)
-					ArrayPool<byte>.Shared.Return(bytes);
-			}
-		}
-
-		public static int GenerateInt32()
-		{
-			var bytes = ArrayPool<byte>.Shared.Rent(4);
-
-			try
-			{
-				_random.GetBytes(bytes, 0, 4);
-				return BitConverter.ToInt32(bytes, 0);
-			}
-			finally
-			{
-				if(bytes != null)
-					ArrayPool<byte>.Shared.Return(bytes);
-			}
-		}
-
-		public static uint GenerateUInt32()
-		{
-			var bytes = ArrayPool<byte>.Shared.Rent(4);
-
-			try
-			{
-				_random.GetBytes(bytes, 0, 4);
-				return BitConverter.ToUInt32(bytes, 0);
-			}
-			finally
-			{
-				if(bytes != null)
-					ArrayPool<byte>.Shared.Return(bytes);
-			}
-		}
-
-		public static long GenerateInt64()
-		{
-			var bytes = ArrayPool<byte>.Shared.Rent(8);
-
-			try
-			{
-				_random.GetBytes(bytes, 0, 8);
-				return BitConverter.ToInt64(bytes, 0);
-			}
-			finally
-			{
-				if(bytes != null)
-					ArrayPool<byte>.Shared.Return(bytes);
-			}
-		}
-
-		public static ulong GenerateUInt64()
-		{
-			var bytes = ArrayPool<byte>.Shared.Rent(8);
-
-			try
-			{
-				_random.GetBytes(bytes, 0, 8);
-				return BitConverter.ToUInt64(bytes, 0);
-			}
-			finally
-			{
-				if(bytes != null)
-					ArrayPool<byte>.Shared.Return(bytes);
-			}
-		}
-
-		public static string GenerateString() => GenerateString(8);
-		public static string GenerateString(int length, bool digitOnly = false)
-		{
-			if(length < 1 || length > 1024)
-				throw new ArgumentOutOfRangeException(nameof(length));
-
-			var result = new char[length];
-			var data = new byte[length];
-
-			_random.GetBytes(data);
-
-			//确保首位字符始终为数字字符
-			result[0] = Digits[data[0] % 10];
-
-			for(int i = 1; i < length; i++)
-			{
-				result[i] = Digits[data[i] % (digitOnly ? 10 : 32)];
-			}
-
-			return new string(result);
-		}
-
-		[Obsolete]
-		public static string GenerateStringEx(int length = 8)
-		{
-			if(length < 1 || length > 1024)
-				throw new ArgumentOutOfRangeException(nameof(length));
-
-			var result = new char[length];
-			var data = new byte[(int)Math.Ceiling((length * 5) / 8.0)];
-
-			_random.GetBytes(data);
-
-			int value;
-
-			for(int i = 0; i < length; i++)
-			{
-				int index = i * 5 / 8;
-				var bitCount = i * 5 % 8;//当前字节中已获取的位数
-				var takeCount = 8 - bitCount;
-
-				if(takeCount < 5)
-				{
-					value = (((byte)(255 << bitCount)) & data[index]) >> bitCount;
-					var count = 8 - (5 - takeCount);
-					value += ((byte)(data[index + 1] << count) >> (count - takeCount));
-				}
-				else
-					value = data[index] & (((255 >> (takeCount - 5)) - (255 >> takeCount)) >> bitCount);
-
-				result[i] = Digits[value % 32];
-			}
-
-			return new string(result);
-		}
-		#endregion
+		var bytes = new byte[length];
+		_random.GetBytes(bytes);
+		return bytes;
 	}
+
+	public static short GenerateInt16()
+	{
+		var bytes = ArrayPool<byte>.Shared.Rent(2);
+
+		try
+		{
+			_random.GetBytes(bytes, 0, 2);
+			return BitConverter.ToInt16(bytes, 0);
+		}
+		finally
+		{
+			if(bytes != null)
+				ArrayPool<byte>.Shared.Return(bytes);
+		}
+	}
+
+	public static ushort GenerateUInt16()
+	{
+		var bytes = ArrayPool<byte>.Shared.Rent(2);
+
+		try
+		{
+			_random.GetBytes(bytes, 0, 2);
+			return BitConverter.ToUInt16(bytes, 0);
+		}
+		finally
+		{
+			if(bytes != null)
+				ArrayPool<byte>.Shared.Return(bytes);
+		}
+	}
+
+	public static int GenerateInt32()
+	{
+		var bytes = ArrayPool<byte>.Shared.Rent(4);
+
+		try
+		{
+			_random.GetBytes(bytes, 0, 4);
+			return BitConverter.ToInt32(bytes, 0);
+		}
+		finally
+		{
+			if(bytes != null)
+				ArrayPool<byte>.Shared.Return(bytes);
+		}
+	}
+
+	public static uint GenerateUInt32()
+	{
+		var bytes = ArrayPool<byte>.Shared.Rent(4);
+
+		try
+		{
+			_random.GetBytes(bytes, 0, 4);
+			return BitConverter.ToUInt32(bytes, 0);
+		}
+		finally
+		{
+			if(bytes != null)
+				ArrayPool<byte>.Shared.Return(bytes);
+		}
+	}
+
+	public static long GenerateInt64()
+	{
+		var bytes = ArrayPool<byte>.Shared.Rent(8);
+
+		try
+		{
+			_random.GetBytes(bytes, 0, 8);
+			return BitConverter.ToInt64(bytes, 0);
+		}
+		finally
+		{
+			if(bytes != null)
+				ArrayPool<byte>.Shared.Return(bytes);
+		}
+	}
+
+	public static ulong GenerateUInt64()
+	{
+		var bytes = ArrayPool<byte>.Shared.Rent(8);
+
+		try
+		{
+			_random.GetBytes(bytes, 0, 8);
+			return BitConverter.ToUInt64(bytes, 0);
+		}
+		finally
+		{
+			if(bytes != null)
+				ArrayPool<byte>.Shared.Return(bytes);
+		}
+	}
+
+	public static string GenerateString() => GenerateString(8);
+	public static string GenerateString(int length, bool digitOnly = false)
+	{
+		if(length < 1 || length > 1024)
+			throw new ArgumentOutOfRangeException(nameof(length));
+
+		var result = new char[length];
+		var data = new byte[length];
+
+		_random.GetBytes(data);
+
+		//确保首位字符始终为数字字符
+		result[0] = Digits[data[0] % 10];
+
+		for(int i = 1; i < length; i++)
+		{
+			result[i] = Digits[data[i] % (digitOnly ? 10 : 32)];
+		}
+
+		return new string(result);
+	}
+
+	[Obsolete]
+	public static string GenerateStringEx(int length = 8)
+	{
+		if(length < 1 || length > 1024)
+			throw new ArgumentOutOfRangeException(nameof(length));
+
+		var result = new char[length];
+		var data = new byte[(int)Math.Ceiling((length * 5) / 8.0)];
+
+		_random.GetBytes(data);
+
+		int value;
+
+		for(int i = 0; i < length; i++)
+		{
+			int index = i * 5 / 8;
+			var bitCount = i * 5 % 8;//当前字节中已获取的位数
+			var takeCount = 8 - bitCount;
+
+			if(takeCount < 5)
+			{
+				value = (((byte)(255 << bitCount)) & data[index]) >> bitCount;
+				var count = 8 - (5 - takeCount);
+				value += ((byte)(data[index + 1] << count) >> (count - takeCount));
+			}
+			else
+				value = data[index] & (((255 >> (takeCount - 5)) - (255 >> takeCount)) >> bitCount);
+
+			result[i] = Digits[value % 32];
+		}
+
+		return new string(result);
+	}
+	#endregion
 }

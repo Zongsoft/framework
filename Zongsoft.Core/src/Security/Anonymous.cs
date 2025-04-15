@@ -31,25 +31,24 @@ using System;
 using System.Security.Claims;
 using System.Security.Principal;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Security;
+
+internal static class Anonymous
 {
-	internal static class Anonymous
+	public static readonly IIdentity Identity = new AnonymousIdentity();
+	public static readonly ClaimsPrincipal Principal = new AnonymousPrincipal();
+
+	private class AnonymousPrincipal : ClaimsPrincipal
 	{
-		public static readonly IIdentity Identity = new AnonymousIdentity();
-		public static readonly ClaimsPrincipal Principal = new AnonymousPrincipal();
+		public AnonymousPrincipal() : base(Anonymous.Identity) { }
+	}
 
-		private class AnonymousPrincipal : ClaimsPrincipal
-		{
-			public AnonymousPrincipal() : base(Anonymous.Identity) { }
-		}
+	private class AnonymousIdentity : IIdentity
+	{
+		public AnonymousIdentity() { }
 
-		private class AnonymousIdentity : IIdentity
-		{
-			public AnonymousIdentity() { }
-
-			public string AuthenticationType => string.Empty;
-			public bool IsAuthenticated => false;
-			public string Name => string.Empty;
-		}
+		public string AuthenticationType => string.Empty;
+		public bool IsAuthenticated => false;
+		public string Name => string.Empty;
 	}
 }

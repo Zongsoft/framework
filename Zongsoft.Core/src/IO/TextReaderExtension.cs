@@ -33,76 +33,75 @@ using System.Text;
 using System.Buffers;
 using System.Threading.Tasks;
 
-namespace Zongsoft.IO
+namespace Zongsoft.IO;
+
+public static class TextReaderExtension
 {
-	public static class TextReaderExtension
+	#region 常量定义
+	private const int BUFFER_SIZE = 1024;
+	#endregion
+
+	public static void CopyTo(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE) => CopyTo(reader, destination, null, bufferSize);
+	public static void CopyTo(this TextReader reader, Stream destination, Encoding encoding, int bufferSize = BUFFER_SIZE)
 	{
-		#region 常量定义
-		private const int BUFFER_SIZE = 1024;
-		#endregion
+		if(reader == null)
+			throw new ArgumentNullException(nameof(reader));
+		if(destination == null)
+			throw new ArgumentNullException(nameof(destination));
 
-		public static void CopyTo(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE) => CopyTo(reader, destination, null, bufferSize);
-		public static void CopyTo(this TextReader reader, Stream destination, Encoding encoding, int bufferSize = BUFFER_SIZE)
+		if(!destination.CanWrite)
+			throw new NotSupportedException("The destination stream does not support writing.");
+
+		if(encoding == null)
+			encoding = Encoding.UTF8;
+
+		var buffer = ArrayPool<char>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
+
+		try
 		{
-			if(reader == null)
-				throw new ArgumentNullException(nameof(reader));
-			if(destination == null)
-				throw new ArgumentNullException(nameof(destination));
+			int bufferRead;
 
-			if(!destination.CanWrite)
-				throw new NotSupportedException("The destination stream does not support writing.");
-
-			if(encoding == null)
-				encoding = Encoding.UTF8;
-
-			var buffer = ArrayPool<char>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
-
-			try
+			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
 			{
-				int bufferRead;
-
-				while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
-				{
-					var bytes = encoding.GetBytes(buffer, 0, bufferRead);
-					destination.Write(bytes, 0, bytes.Length);
-				}
-			}
-			finally
-			{
-				ArrayPool<char>.Shared.Return(buffer);
+				var bytes = encoding.GetBytes(buffer, 0, bufferRead);
+				destination.Write(bytes, 0, bytes.Length);
 			}
 		}
-
-		public static ValueTask CopyToAsync(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE) => CopyToAsync(reader, destination, null, bufferSize);
-		public static async ValueTask CopyToAsync(this TextReader reader, Stream destination, Encoding encoding, int bufferSize = BUFFER_SIZE)
+		finally
 		{
-			if(reader == null)
-				throw new ArgumentNullException(nameof(reader));
-			if(destination == null)
-				throw new ArgumentNullException(nameof(destination));
+			ArrayPool<char>.Shared.Return(buffer);
+		}
+	}
 
-			if(!destination.CanWrite)
-				throw new NotSupportedException("The destination stream does not support writing.");
+	public static ValueTask CopyToAsync(this TextReader reader, Stream destination, int bufferSize = BUFFER_SIZE) => CopyToAsync(reader, destination, null, bufferSize);
+	public static async ValueTask CopyToAsync(this TextReader reader, Stream destination, Encoding encoding, int bufferSize = BUFFER_SIZE)
+	{
+		if(reader == null)
+			throw new ArgumentNullException(nameof(reader));
+		if(destination == null)
+			throw new ArgumentNullException(nameof(destination));
 
-			if(encoding == null)
-				encoding = Encoding.UTF8;
+		if(!destination.CanWrite)
+			throw new NotSupportedException("The destination stream does not support writing.");
 
-			var buffer = ArrayPool<char>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
+		if(encoding == null)
+			encoding = Encoding.UTF8;
 
-			try
+		var buffer = ArrayPool<char>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
+
+		try
+		{
+			int bufferRead;
+
+			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
 			{
-				int bufferRead;
-
-				while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
-				{
-					var bytes = encoding.GetBytes(buffer, 0, bufferRead);
-					await destination.WriteAsync(bytes);
-				}
+				var bytes = encoding.GetBytes(buffer, 0, bufferRead);
+				await destination.WriteAsync(bytes);
 			}
-			finally
-			{
-				ArrayPool<char>.Shared.Return(buffer);
-			}
+		}
+		finally
+		{
+			ArrayPool<char>.Shared.Return(buffer);
 		}
 	}
 }

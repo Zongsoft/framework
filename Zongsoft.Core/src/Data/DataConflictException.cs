@@ -29,32 +29,31 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据冲突的异常类。
+/// </summary>
+public class DataConflictException : DataAccessException
 {
-	/// <summary>
-	/// 表示数据冲突的异常类。
-	/// </summary>
-	public class DataConflictException : DataAccessException
+	#region 构造函数
+	public DataConflictException(string driverName, int code, string key, string value, string[] fields, Exception innerException = null) :
+		base(driverName, code, string.Format(Properties.Resources.DataConflictException_Message, key, value), innerException)
 	{
-		#region 构造函数
-		public DataConflictException(string driverName, int code, string key, string value, string[] fields, Exception innerException = null) :
-			base(driverName, code, string.Format(Properties.Resources.DataConflictException_Message, key, value), innerException)
-		{
-			this.Key = key;
-			this.Value = value;
-			this.Fields = fields;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置数据冲突的键名。</summary>
-		public string Key { get; set; }
-
-		/// <summary>获取或设置数据冲突的键值。</summary>
-		public string Value { get; set; }
-
-		/// <summary>获取或设置冲突的字段名数组。</summary>
-		public string[] Fields { get; set; }
-		#endregion
+		this.Key = key;
+		this.Value = value;
+		this.Fields = fields;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置数据冲突的键名。</summary>
+	public string Key { get; set; }
+
+	/// <summary>获取或设置数据冲突的键值。</summary>
+	public string Value { get; set; }
+
+	/// <summary>获取或设置冲突的字段名数组。</summary>
+	public string[] Fields { get; set; }
+	#endregion
 }

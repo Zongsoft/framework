@@ -29,19 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 提供数据服务授权验证功能的接口。
+/// </summary>
+public interface IDataServiceAuthorizer<TModel>
 {
-	/// <summary>
-	/// 提供数据服务授权验证功能的接口。
-	/// </summary>
-	public interface IDataServiceAuthorizer<TModel>
-	{
-		/// <summary>
-		/// 对数据服务方法进行授权验证。
-		/// </summary>
-		/// <param name="service">指定的数据服务对象。</param>
-		/// <param name="method">待验证的数据服务方法。</param>
-		/// <param name="options">待验证方法的选项参数。</param>
-		void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options);
-	}
+	/// <summary>对数据服务方法进行授权验证。</summary>
+	/// <param name="service">指定的数据服务对象。</param>
+	/// <param name="method">待验证的数据服务方法。</param>
+	/// <param name="options">待验证方法的选项参数。</param>
+	void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options);
 }

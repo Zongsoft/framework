@@ -29,11 +29,10 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public interface ICommand<in TArgument> : ICommand
 {
-	public interface ICommand<in TArgument> : ICommand
-	{
-		bool CanExecute(TArgument argument);
-		object Execute(TArgument argument);
-	}
+	bool CanExecute(TArgument argument);
+	object Execute(TArgument argument);
 }

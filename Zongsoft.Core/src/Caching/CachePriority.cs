@@ -29,16 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Caching
+namespace Zongsoft.Caching;
+
+/// <summary>
+/// 表示缓存项优先级(重要性)的枚举。
+/// </summary>
+public enum CachePriority
 {
-	/// <summary>
-	/// 表示缓存项优先级(重要性)的枚举。
-	/// </summary>
-	public enum CachePriority
-	{
-		Low,
-		Normal,
-		High,
-		NeverRemove,
-	}
+	Low,
+	Normal,
+	High,
+	NeverRemove,
 }

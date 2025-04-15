@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Data
-{
-	[AttributeUsage(AttributeTargets.Class)]
-	public class DataServiceFilterAttribute : Attribute
-	{
-		#region 构造函数
-		public DataServiceFilterAttribute(params string[] names) => this.Names = names;
-		#endregion
+namespace Zongsoft.Data;
 
-		#region 公共属性
-		public string[] Names { get; }
-		#endregion
-	}
+[AttributeUsage(AttributeTargets.Class)]
+public class DataServiceFilterAttribute : Attribute
+{
+	#region 构造函数
+	public DataServiceFilterAttribute(params string[] names) => this.Names = names;
+	#endregion
+
+	#region 公共属性
+	public string[] Names { get; }
+	#endregion
 }

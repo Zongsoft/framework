@@ -29,54 +29,53 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+public class ServiceAttribute : Attribute
 {
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-	public class ServiceAttribute : Attribute
+	#region 构造函数
+	public ServiceAttribute(params Type[] contracts) : this(null, contracts) { }
+	public ServiceAttribute(string name, params Type[] contracts)
 	{
-		#region 构造函数
-		public ServiceAttribute(params Type[] contracts) : this(null, contracts) { }
-		public ServiceAttribute(string name, params Type[] contracts)
-		{
-			this.Name = name;
-			this.Contracts = contracts;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取服务的名称。</summary>
-		public string Name { get; }
-
-		/// <summary>获取服务的契约类型数组，如果为空则表示服务的类型即为该注解所标示的类型。</summary>
-		public Type[] Contracts { get; }
-
-		/// <summary>获取或设置该注解所标示的静态类的成员名(属性或字段)，多个成员名之间采用逗号分隔。</summary>
-		public string Members { get; set; }
-		#endregion
+		this.Name = name;
+		this.Contracts = contracts;
 	}
+	#endregion
 
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-	public class ServiceAttribute<TContract>(string name = null) : ServiceAttribute(name, typeof(TContract))
-	{
-	}
+	#region 公共属性
+	/// <summary>获取服务的名称。</summary>
+	public string Name { get; }
 
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-	public class ServiceAttribute<TContract1, TContract2>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2))
-	{
-	}
+	/// <summary>获取服务的契约类型数组，如果为空则表示服务的类型即为该注解所标示的类型。</summary>
+	public Type[] Contracts { get; }
 
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-	public class ServiceAttribute<TContract1, TContract2, TContract3>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2), typeof(TContract3))
-	{
-	}
+	/// <summary>获取或设置该注解所标示的静态类的成员名(属性或字段)，多个成员名之间采用逗号分隔。</summary>
+	public string Members { get; set; }
+	#endregion
+}
 
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-	public class ServiceAttribute<TContract1, TContract2, TContract3, TContract4>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2), typeof(TContract3), typeof(TContract4))
-	{
-	}
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+public class ServiceAttribute<TContract>(string name = null) : ServiceAttribute(name, typeof(TContract))
+{
+}
 
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-	public class ServiceAttribute<TContract1, TContract2, TContract3, TContract4, TContract5>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2), typeof(TContract3), typeof(TContract4), typeof(TContract5))
-	{
-	}
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+public class ServiceAttribute<TContract1, TContract2>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2))
+{
+}
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+public class ServiceAttribute<TContract1, TContract2, TContract3>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2), typeof(TContract3))
+{
+}
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+public class ServiceAttribute<TContract1, TContract2, TContract3, TContract4>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2), typeof(TContract3), typeof(TContract4))
+{
+}
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+public class ServiceAttribute<TContract1, TContract2, TContract3, TContract4, TContract5>(string name = null) : ServiceAttribute(name, typeof(TContract1), typeof(TContract2), typeof(TContract3), typeof(TContract4), typeof(TContract5))
+{
 }

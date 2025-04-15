@@ -31,39 +31,38 @@ using System;
 using System.IO;
 using System.Security.Claims;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Security;
+
+public class CredentialIdentity : ClaimsIdentity
 {
-	public class CredentialIdentity : ClaimsIdentity
+	#region 成员字段
+	private readonly string _name;
+	#endregion
+
+	#region 构造函数
+	public CredentialIdentity(string name, string authenticationType, string issuer, string originalIssuer = null) : base(authenticationType)
 	{
-		#region 成员字段
-		private readonly string _name;
-		#endregion
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
 
-		#region 构造函数
-		public CredentialIdentity(string name, string authenticationType, string issuer, string originalIssuer = null) : base(authenticationType)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
+		_name = name.Trim();
 
-			_name = name.Trim();
+		//尝试设置身份签发者的Claim
+		if(!string.IsNullOrEmpty(issuer))
+			base.AddClaim(new Claim(ClaimTypes.System, issuer, ClaimValueTypes.String, issuer, originalIssuer, this));
 
-			//尝试设置身份签发者的Claim
-			if(!string.IsNullOrEmpty(issuer))
-				base.AddClaim(new Claim(ClaimTypes.System, issuer, ClaimValueTypes.String, issuer, originalIssuer, this));
-
-			//设置身份名称对应的Claim
-			base.AddClaim(new Claim(base.NameClaimType, _name, ClaimValueTypes.String, issuer, originalIssuer, this));
-		}
-
-		public CredentialIdentity(BinaryReader reader) : base(reader)
-		{
-			_name = base.Name;
-		}
-		#endregion
-
-		#region 重写属性
-		public override string Name => _name;
-		public override bool IsAuthenticated => _name != null && _name.Length > 0;
-		#endregion
+		//设置身份名称对应的Claim
+		base.AddClaim(new Claim(base.NameClaimType, _name, ClaimValueTypes.String, issuer, originalIssuer, this));
 	}
+
+	public CredentialIdentity(BinaryReader reader) : base(reader)
+	{
+		_name = base.Name;
+	}
+	#endregion
+
+	#region 重写属性
+	public override string Name => _name;
+	public override bool IsAuthenticated => _name != null && _name.Length > 0;
+	#endregion
 }

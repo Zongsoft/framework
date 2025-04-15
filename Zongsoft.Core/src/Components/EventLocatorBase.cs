@@ -31,40 +31,38 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public abstract class EventLocatorBase<TContext> : IHandlerLocator<TContext> where TContext : class
 {
-	public abstract class EventLocatorBase<TContext> : IHandlerLocator<TContext> where TContext : class
+	#region 构造函数
+	protected EventLocatorBase() { }
+	protected EventLocatorBase(EventRegistryBase registry) => this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置事件注册表。</summary>
+	public EventRegistryBase Registry { get; set; }
+	#endregion
+
+	#region 公共方法
+	public virtual IHandler Locate(TContext context) => this.Registry.Events.TryGetValue(this.GetName(context), out var descriptor) ? new EventHandler(descriptor) : null;
+	#endregion
+
+	#region 抽象方法
+	/// <summary>根据上下文对象获取对应的事件名。</summary>
+	/// <param name="context">指定的上下文对象。</param>
+	/// <returns>如果成功则返回对应的事件名，否则返回空(null)。</returns>
+	protected abstract string GetName(TContext context);
+	#endregion
+
+	#region 嵌套结构
+	private class EventHandler : IHandler
 	{
-		#region 构造函数
-		protected EventLocatorBase() { }
-		protected EventLocatorBase(EventRegistryBase registry) => this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置事件注册表。</summary>
-		public EventRegistryBase Registry { get; set; }
-		#endregion
-
-		#region 公共方法
-		public virtual IHandler Locate(TContext context) =>
-			this.Registry.Events.TryGetValue(GetName(context), out var descriptor) ? new EventHandler(descriptor) : null;
-		#endregion
-
-		#region 抽象方法
-		/// <summary>根据上下文对象获取对应的事件名。</summary>
-		/// <param name="context">指定的上下文对象。</param>
-		/// <returns>如果成功则返回对应的事件名，否则返回空(null)。</returns>
-		protected abstract string GetName(TContext context);
-		#endregion
-
-		#region 嵌套结构
-		private class EventHandler : IHandler
-		{
-			private readonly EventDescriptor _descriptor;
-			public EventHandler(EventDescriptor descriptor) => _descriptor = descriptor;
-			public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-			public ValueTask HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default) => _descriptor.HandleAsync(argument, parameters, cancellation);
-		}
-		#endregion
+		private readonly EventDescriptor _descriptor;
+		public EventHandler(EventDescriptor descriptor) => _descriptor = descriptor;
+		public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
+		public ValueTask HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default) => _descriptor.HandleAsync(argument, parameters, cancellation);
 	}
+	#endregion
 }

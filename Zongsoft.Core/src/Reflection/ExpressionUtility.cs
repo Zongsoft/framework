@@ -29,93 +29,69 @@
 
 using System;
 using System.Reflection;
-using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Collections.Generic;
 
-namespace Zongsoft.Reflection
+namespace Zongsoft.Reflection;
+
+internal static class ExpressionUtility
 {
-	internal static class ExpressionUtility
+	internal static string GetMemberName(Expression expression) => GetMember(expression).Name;
+	internal static MemberToken GetMember(Expression expression)
 	{
-		internal static string GetMemberName(Expression expression)
+		var token = ResolveMemberExpression(expression, new Stack<MemberInfo>());
+		return token ?? throw new ArgumentException("Invalid member expression.");
+	}
+
+	private static MemberToken? ResolveMemberExpression(Expression expression, Stack<MemberInfo> stack)
+	{
+		if(expression.NodeType == ExpressionType.Lambda)
+			return ResolveMemberExpression(((LambdaExpression)expression).Body, stack);
+
+		switch(expression.NodeType)
 		{
-			return GetMember(expression).Name;
+			case ExpressionType.MemberAccess:
+				stack.Push(((MemberExpression)expression).Member);
+
+				if(((MemberExpression)expression).Expression != null)
+					return ResolveMemberExpression(((MemberExpression)expression).Expression, stack);
+
+				break;
+			case ExpressionType.Convert:
+			case ExpressionType.ConvertChecked:
+				return ResolveMemberExpression(((UnaryExpression)expression).Operand, stack);
 		}
 
-		internal static MemberToken GetMember(Expression expression)
+		if(stack == null || stack.Count == 0)
+			return null;
+
+		var path = string.Empty;
+		var type = typeof(object);
+		MemberInfo member = null;
+
+		while(stack.Count > 0)
 		{
-			var token = ResolveMemberExpression(expression, new Stack<MemberInfo>());
+			member = stack.Pop();
 
-			if(token == null)
-				throw new ArgumentException("Invalid member expression.");
+			if(path.Length > 0)
+				path += ".";
 
-			return token.Value;
+			path += member.Name;
 		}
 
-		private static MemberToken? ResolveMemberExpression(Expression expression, Stack<MemberInfo> stack)
+		return new MemberToken(path, member);
+	}
+
+	internal struct MemberToken(string name, MemberInfo member)
+	{
+		public string Name = name;
+		public MemberInfo Member = member;
+
+		public readonly Type MemberType => this.Member.MemberType switch
 		{
-			if(expression.NodeType == ExpressionType.Lambda)
-				return ResolveMemberExpression(((LambdaExpression)expression).Body, stack);
-
-			switch(expression.NodeType)
-			{
-				case ExpressionType.MemberAccess:
-					stack.Push(((MemberExpression)expression).Member);
-
-					if(((MemberExpression)expression).Expression != null)
-						return ResolveMemberExpression(((MemberExpression)expression).Expression, stack);
-
-					break;
-				case ExpressionType.Convert:
-				case ExpressionType.ConvertChecked:
-					return ResolveMemberExpression(((UnaryExpression)expression).Operand, stack);
-			}
-
-			if(stack == null || stack.Count == 0)
-				return null;
-
-			var path = string.Empty;
-			var type = typeof(object);
-			MemberInfo member = null;
-
-			while(stack.Count > 0)
-			{
-				member = stack.Pop();
-
-				if(path.Length > 0)
-					path += ".";
-
-				path += member.Name;
-			}
-
-			return new MemberToken(path, member);
-		}
-
-		internal struct MemberToken
-		{
-			public string Name;
-			public MemberInfo Member;
-
-			public MemberToken(string name, MemberInfo member)
-			{
-				this.Name = name;
-				this.Member = member;
-			}
-
-			public Type MemberType
-			{
-				get
-				{
-					switch(this.Member.MemberType)
-					{
-						case MemberTypes.Property:
-							return ((PropertyInfo)this.Member).PropertyType;
-						case MemberTypes.Field:
-							return ((FieldInfo)this.Member).FieldType;
-						default:
-							return null;
-					}
-				}
-			}
-		}
+			MemberTypes.Property => ((PropertyInfo)this.Member).PropertyType,
+			MemberTypes.Field => ((FieldInfo)this.Member).FieldType,
+			_ => null,
+		};
 	}
 }

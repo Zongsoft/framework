@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public interface IHandleable
 {
-	public interface IHandleable
-	{
-		IHandler Handler { get; set; }
-	}
+	IHandler Handler { get; set; }
 }

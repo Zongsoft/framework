@@ -31,21 +31,18 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Communication
-{
-	/// <summary>
-	/// 提供关于通讯侦听的功能的接口。
-	/// </summary>
-	public interface IListener<T> : Services.IWorker, IDisposable
-	{
-		/// <summary>获取当前是否处于侦听状态。</summary>
-		bool IsListening { get; }
+namespace Zongsoft.Communication;
 
-		/// <summary>
-		/// 处理请求。
-		/// </summary>
-		/// <param name="package">处理的请求包。</param>
-		/// <param name="cancellation">指定的异步取消标记。</param>
-		ValueTask HandleAsync(T package, CancellationToken cancellation = default);
-	}
+/// <summary>
+/// 提供关于通讯侦听的功能的接口。
+/// </summary>
+public interface IListener<T> : Services.IWorker, IDisposable
+{
+	/// <summary>获取当前是否处于侦听状态。</summary>
+	bool IsListening { get; }
+
+	/// <summary>处理请求。</summary>
+	/// <param name="package">处理的请求包。</param>
+	/// <param name="cancellation">指定的异步取消标记。</param>
+	ValueTask HandleAsync(T package, CancellationToken cancellation = default);
 }

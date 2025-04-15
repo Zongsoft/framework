@@ -30,36 +30,35 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public class EventDescriptorCollection : KeyedCollection<string, EventDescriptor>
 {
-	public class EventDescriptorCollection : KeyedCollection<string, EventDescriptor>
+	#region 成员字段
+	private readonly EventRegistryBase _registry;
+	#endregion
+
+	#region 构造函数
+	internal EventDescriptorCollection(EventRegistryBase registry) : base(StringComparer.OrdinalIgnoreCase, 3) => _registry = registry;
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(EventDescriptor descriptor) => descriptor.Name;
+	protected override void InsertItem(int index, EventDescriptor descriptor)
 	{
-		#region 成员字段
-		private readonly EventRegistryBase _registry;
-		#endregion
+		if(descriptor == null)
+			throw new ArgumentNullException(nameof(descriptor));
 
-		#region 构造函数
-		internal EventDescriptorCollection(EventRegistryBase registry) : base(StringComparer.OrdinalIgnoreCase, 3) => _registry = registry;
-		#endregion
-
-		#region 重写方法
-		protected override string GetKeyForItem(EventDescriptor descriptor) => descriptor.Name;
-		protected override void InsertItem(int index, EventDescriptor descriptor)
-		{
-			if(descriptor == null)
-				throw new ArgumentNullException(nameof(descriptor));
-
-			base.InsertItem(index, descriptor);
-			descriptor.SetRegistry(_registry);
-		}
-		protected override void SetItem(int index, EventDescriptor descriptor)
-		{
-			if(descriptor == null)
-				throw new ArgumentNullException(nameof(descriptor));
-
-			base.SetItem(index, descriptor);
-			descriptor.SetRegistry(_registry);
-		}
-		#endregion
+		base.InsertItem(index, descriptor);
+		descriptor.SetRegistry(_registry);
 	}
+	protected override void SetItem(int index, EventDescriptor descriptor)
+	{
+		if(descriptor == null)
+			throw new ArgumentNullException(nameof(descriptor));
+
+		base.SetItem(index, descriptor);
+		descriptor.SetRegistry(_registry);
+	}
+	#endregion
 }

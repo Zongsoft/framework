@@ -32,56 +32,55 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+/// <summary>
+/// 表示处理程序的基类。
+/// </summary>
+/// <typeparam name="TArgument">处理程序的请求参数类型。</typeparam>
+public abstract class HandlerBase<TArgument> : IHandler<TArgument>, IHandler
 {
-	/// <summary>
-	/// 表示处理程序的基类。
-	/// </summary>
-	/// <typeparam name="TArgument">处理程序的请求参数类型。</typeparam>
-	public abstract class HandlerBase<TArgument> : IHandler<TArgument>, IHandler
+	#region 构造函数
+	protected HandlerBase() { }
+	#endregion
+
+	#region 公共方法
+	public virtual void Handle(TArgument argument, Collections.Parameters parameters = null)
 	{
-		#region 构造函数
-		protected HandlerBase() { }
-		#endregion
+		var task = this.HandleAsync(argument, parameters, CancellationToken.None);
 
-		#region 公共方法
-		public virtual void Handle(TArgument argument, Collections.Parameters parameters = null)
-		{
-			var task = this.HandleAsync(argument, parameters, CancellationToken.None);
+		if(task.IsCompletedSuccessfully)
+			return;
 
-			if(task.IsCompletedSuccessfully)
-				return;
-
-			task.AsTask().GetAwaiter().GetResult();
-		}
-
-		public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(argument, Collections.Parameters.Parameter(), cancellation);
-		public ValueTask HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
-		{
-			if(parameters == null)
-				return this.OnHandleAsync(argument, null, cancellation);
-			else
-				return this.OnHandleAsync(argument, parameters, cancellation);
-		}
-		#endregion
-
-		#region 抽象方法
-		protected abstract ValueTask OnHandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation);
-		#endregion
-
-		#region 显式实现
-		ValueTask IHandler.HandleAsync(object argument, CancellationToken cancellation) => this.HandleAsync(this.Convert(argument), null, cancellation);
-		ValueTask IHandler.HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation) => this.HandleAsync(this.Convert(argument), parameters, cancellation);
-		#endregion
-
-		#region 参数转换
-		protected virtual TArgument Convert(object argument)
-		{
-			if(argument == null)
-				return default;
-
-			return Common.Convert.TryConvertValue<TArgument>(argument, out var value) ? value : throw new ArgumentException($"The specified argument cannot be converted to '{typeof(TArgument).FullName}' type.", nameof(argument));
-		}
-		#endregion
+		task.AsTask().GetAwaiter().GetResult();
 	}
+
+	public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(argument, Collections.Parameters.Parameter(), cancellation);
+	public ValueTask HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
+	{
+		if(parameters == null)
+			return this.OnHandleAsync(argument, null, cancellation);
+		else
+			return this.OnHandleAsync(argument, parameters, cancellation);
+	}
+	#endregion
+
+	#region 抽象方法
+	protected abstract ValueTask OnHandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation);
+	#endregion
+
+	#region 显式实现
+	ValueTask IHandler.HandleAsync(object argument, CancellationToken cancellation) => this.HandleAsync(this.Convert(argument), null, cancellation);
+	ValueTask IHandler.HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation) => this.HandleAsync(this.Convert(argument), parameters, cancellation);
+	#endregion
+
+	#region 参数转换
+	protected virtual TArgument Convert(object argument)
+	{
+		if(argument == null)
+			return default;
+
+		return Common.Convert.TryConvertValue<TArgument>(argument, out var value) ? value : throw new ArgumentException($"The specified argument cannot be converted to '{typeof(TArgument).FullName}' type.", nameof(argument));
+	}
+	#endregion
 }

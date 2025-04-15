@@ -31,49 +31,45 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class ModelPropertyDescriptorCollection(ModelDescriptor model) : KeyedCollection<string, ModelPropertyDescriptor>(StringComparer.OrdinalIgnoreCase)
 {
-	public class ModelPropertyDescriptorCollection : KeyedCollection<string, ModelPropertyDescriptor>
+	private readonly ModelDescriptor _model = model ?? throw new ArgumentNullException(nameof(model));
+
+	internal int AddRange(IEnumerable<ModelPropertyDescriptor> properties)
 	{
-		private readonly ModelDescriptor _model;
+		if(properties == null)
+			throw new ArgumentNullException(nameof(properties));
 
-        public ModelPropertyDescriptorCollection(ModelDescriptor model) : base(StringComparer.OrdinalIgnoreCase) =>
-			_model = model ?? throw new ArgumentNullException(nameof(model));
+		int count = 0;
 
-		internal int AddRange(IEnumerable<ModelPropertyDescriptor> properties)
+		foreach(var property in properties)
 		{
-			if(properties == null)
-				throw new ArgumentNullException(nameof(properties));
-
-			int count = 0;
-
-			foreach(var property in properties)
-			{
-				this.Add(property);
-				count++;
-			}
-
-			return count;
+			this.Add(property);
+			count++;
 		}
 
-		protected override string GetKeyForItem(ModelPropertyDescriptor item) => item.Name;
+		return count;
+	}
 
-		protected override void InsertItem(int index, ModelPropertyDescriptor item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+	protected override string GetKeyForItem(ModelPropertyDescriptor item) => item.Name;
 
-			item.SetModel(_model);
-			base.InsertItem(index, item);
-		}
+	protected override void InsertItem(int index, ModelPropertyDescriptor item)
+	{
+		if(item == null)
+			throw new ArgumentNullException(nameof(item));
 
-		protected override void SetItem(int index, ModelPropertyDescriptor item)
-		{
-			if(item == null)
-				throw new ArgumentNullException(nameof(item));
+		item.SetModel(_model);
+		base.InsertItem(index, item);
+	}
 
-			item.SetModel(_model);
-			base.SetItem(index, item);
-		}
+	protected override void SetItem(int index, ModelPropertyDescriptor item)
+	{
+		if(item == null)
+			throw new ArgumentNullException(nameof(item));
+
+		item.SetModel(_model);
+		base.SetItem(index, item);
 	}
 }

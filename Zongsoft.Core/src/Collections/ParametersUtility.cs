@@ -29,36 +29,35 @@
 
 using System;
 
-namespace Zongsoft.Collections
+namespace Zongsoft.Collections;
+
+public static class ParametersUtility
 {
-	public static class ParametersUtility
+	public static Parameters Parameter(this Parameters parameters, string name, object value)
 	{
-		public static Parameters Parameter(this Parameters parameters, string name, object value)
-		{
-			parameters ??= new Parameters();
-			parameters.SetValue(name, value);
-			return parameters;
-		}
+		parameters ??= new Parameters();
+		parameters.SetValue(name, value);
+		return parameters;
+	}
 
-		public static Parameters Parameter(this Parameters parameters, Type type, object value)
-		{
-			parameters ??= new Parameters();
-			parameters.SetValue(type, value);
-			return parameters;
-		}
+	public static Parameters Parameter(this Parameters parameters, Type type, object value)
+	{
+		parameters ??= new Parameters();
+		parameters.SetValue(type, value);
+		return parameters;
+	}
 
-		public static Parameters Parameter<T>(this Parameters parameters, object value)
-		{
-			parameters ??= new Parameters();
-			parameters.SetValue<T>(value);
-			return parameters;
-		}
+	public static Parameters Parameter<T>(this Parameters parameters, object value)
+	{
+		parameters ??= new Parameters();
+		parameters.SetValue<T>(value);
+		return parameters;
+	}
 
-		public static Parameters Parameter(this Parameters parameters, object value)
-		{
-			parameters ??= new Parameters();
-			parameters.SetValue(value);
-			return parameters;
-		}
+	public static Parameters Parameter(this Parameters parameters, object value)
+	{
+		parameters ??= new Parameters();
+		parameters.SetValue(value);
+		return parameters;
 	}
 }

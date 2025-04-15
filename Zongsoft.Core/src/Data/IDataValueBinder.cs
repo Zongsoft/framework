@@ -28,22 +28,18 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 提供数据实体属性写入值的校验和绑定的接口。
+/// </summary>
+public interface IDataValueBinder
 {
-	/// <summary>
-	/// 提供数据实体属性写入值的校验和绑定的接口。
-	/// </summary>
-	public interface IDataValueBinder
-	{
-		/// <summary>
-		/// 绑定数据写入时指定属性的值。
-		/// </summary>
-		/// <param name="context">当前数据访问上下文对象。</param>
-		/// <param name="data">待写入的数据项。</param>
-		/// <param name="value">待写入的属性值。</param>
-		/// <returns>返回写入的数据值。</returns>
-		object Bind(IDataMutateContextBase context, object data, object value);
-	}
+	/// <summary>绑定数据写入时指定属性的值。</summary>
+	/// <param name="context">当前数据访问上下文对象。</param>
+	/// <param name="data">待写入的数据项。</param>
+	/// <param name="value">待写入的属性值。</param>
+	/// <returns>返回写入的数据值。</returns>
+	object Bind(IDataMutateContextBase context, object data, object value);
 }

@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   �ӷ�(Popeye Zhonzongsoft@qq.com.com>
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
@@ -28,21 +28,16 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示条件组合方式的枚举。
+/// </summary>
+public enum ConditionCombination
 {
-	/// <summary>
-	/// ��ʾ��������Ϸ�ʽ��
-	/// </summary>
-	public enum ConditionCombination
-	{
-		/// <summary>�������롱��ϡ�</summary>
-		[Description("���롹���")]
-		And,
-
-		/// <summary>����������ϡ�</summary>
-		[Description("�������")]
-		Or
-	}
+	/// <summary>条件「与」组合。</summary>
+	And,
+	/// <summary>条件「或」组合。</summary>
+	Or
 }

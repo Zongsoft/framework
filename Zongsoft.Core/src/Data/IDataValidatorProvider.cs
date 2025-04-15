@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public interface IDataValidatorProvider
 {
-	public interface IDataValidatorProvider
-	{
-		IDataValidator GetValidator(IDataAccessContextBase context);
-	}
+	IDataValidator GetValidator(IDataAccessContextBase context);
 }

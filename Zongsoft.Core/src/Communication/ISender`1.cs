@@ -31,10 +31,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Communication
+namespace Zongsoft.Communication;
+
+public interface ISender<in T>
 {
-	public interface ISender<in T>
-	{
-		ValueTask SendAsync(T data, CancellationToken cancellation = default);
-	}
+	ValueTask SendAsync(T data, CancellationToken cancellation = default);
 }

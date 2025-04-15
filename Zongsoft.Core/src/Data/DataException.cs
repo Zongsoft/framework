@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据的异常基类。
+/// </summary>
+public class DataException : Exception
 {
-	/// <summary>
-	/// 表示数据的异常基类。
-	/// </summary>
-	public class DataException : Exception
-	{
-		#region 构造函数
-		public DataException() { }
-		public DataException(string message) : base(message) { }
-		public DataException(string message, Exception innerException = null) : base(message, innerException) { }
-		#endregion
-	}
+	#region 构造函数
+	public DataException() { }
+	public DataException(string message) : base(message) { }
+	public DataException(string message, Exception innerException = null) : base(message, innerException) { }
+	#endregion
 }

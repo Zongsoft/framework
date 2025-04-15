@@ -29,20 +29,19 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public class CommandNotFoundException : CommandException
 {
-	public class CommandNotFoundException : CommandException
-	{
-		#region 构造函数
-		public CommandNotFoundException(string path) => this.Path = path ?? string.Empty;
-		#endregion
+	#region 构造函数
+	public CommandNotFoundException(string path) => this.Path = path ?? string.Empty;
+	#endregion
 
-		#region 公共属性
-		public string Path { get; }
-		#endregion
+	#region 公共属性
+	public string Path { get; }
+	#endregion
 
-		#region 重写属性
-		public override string Message => string.Format(Properties.Resources.CommandNotFound_Message, this.Path);
-		#endregion
-	}
+	#region 重写属性
+	public override string Message => string.Format(Properties.Resources.CommandNotFound_Message, this.Path);
+	#endregion
 }

@@ -28,22 +28,20 @@
  */
 
 using System;
-using System.Collections;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 为数据访问的导入事件提供数据。
+/// </summary>
+public class DataImportingEventArgs : DataImportedEventArgs
 {
-	/// <summary>
-	/// 为数据访问的导入事件提供数据。
-	/// </summary>
-	public class DataImportingEventArgs : DataImportedEventArgs
-	{
-		#region 构造函数
-		public DataImportingEventArgs(DataImportContextBase context) : base(context) { }
-		#endregion
+	#region 构造函数
+	public DataImportingEventArgs(DataImportContextBase context) : base(context) { }
+	#endregion
 
-		#region 公共属性
-		/// <summary>获取或设置一个值，表示是否取消当前操作。</summary>
-		public bool Cancel { get; set; }
-		#endregion
-	}
+	#region 公共属性
+	/// <summary>获取或设置一个值，表示是否取消当前操作。</summary>
+	public bool Cancel { get; set; }
+	#endregion
 }

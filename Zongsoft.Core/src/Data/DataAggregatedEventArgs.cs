@@ -28,17 +28,15 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 为数据访问的聚合事件提供数据。
+/// </summary>
+public class DataAggregatedEventArgs : DataAccessEventArgs<DataAggregateContextBase>
 {
-	/// <summary>
-	/// 为数据访问的聚合事件提供数据。
-	/// </summary>
-	public class DataAggregatedEventArgs : DataAccessEventArgs<DataAggregateContextBase>
-	{
-		#region 构造函数
-		public DataAggregatedEventArgs(DataAggregateContextBase context) : base(context) { }
-		#endregion
-	}
+	#region 构造函数
+	public DataAggregatedEventArgs(DataAggregateContextBase context) : base(context) { }
+	#endregion
 }

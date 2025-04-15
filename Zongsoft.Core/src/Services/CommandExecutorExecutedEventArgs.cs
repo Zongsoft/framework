@@ -29,13 +29,12 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+[Serializable]
+public class CommandExecutorExecutedEventArgs : CommandExecutorEventArgs
 {
-	[Serializable]
-	public class CommandExecutorExecutedEventArgs : CommandExecutorEventArgs
-	{
-		#region 构造函数
-		public CommandExecutorExecutedEventArgs(CommandExecutorContext context) : base(context) { }
-		#endregion
-	}
+	#region 构造函数
+	public CommandExecutorExecutedEventArgs(CommandExecutorContext context) : base(context) { }
+	#endregion
 }

@@ -29,39 +29,34 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class DataAccessErrorEventArgs : DataAccessEventArgs<IDataAccessContextBase>
 {
-	public class DataAccessErrorEventArgs : DataAccessEventArgs<IDataAccessContextBase>
+	#region 成员字段
+	private Exception _exception;
+	#endregion
+
+	#region 构造函数
+	public DataAccessErrorEventArgs(IDataAccessContextBase context, Exception exception) : base(context)
 	{
-		#region 成员字段
-		private Exception _exception;
-		#endregion
-
-		#region 构造函数
-		public DataAccessErrorEventArgs(IDataAccessContextBase context, Exception exception) : base(context)
-		{
-			this.Exception = exception;
-		}
-		#endregion
-
-		#region 公共属性
-		public Exception Exception
-		{
-			get => _exception;
-			set
-			{
-				_exception = value;
-
-				if(value == null)
-					this.ExceptionHandled = true;
-			}
-		}
-
-		public bool ExceptionHandled
-		{
-			get;
-			set;
-		}
-		#endregion
+		this.Exception = exception;
 	}
+	#endregion
+
+	#region 公共属性
+	public Exception Exception
+	{
+		get => _exception;
+		set
+		{
+			_exception = value;
+
+			if(value == null)
+				this.ExceptionHandled = true;
+		}
+	}
+
+	public bool ExceptionHandled { get; set; }
+	#endregion
 }

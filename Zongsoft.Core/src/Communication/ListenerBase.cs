@@ -35,76 +35,75 @@ using System.Threading.Tasks;
 using Zongsoft.Services;
 using Zongsoft.Components;
 
-namespace Zongsoft.Communication
+namespace Zongsoft.Communication;
+
+/// <summary>
+/// 提供通讯侦听功能的抽象基类。
+/// </summary>
+public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver, IHandleable<T>, IHandleable
 {
-	/// <summary>
-	/// 提供通讯侦听功能的抽象基类。
-	/// </summary>
-	public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver, IHandleable<T>, IHandleable
+	#region 成员变量
+	private IHandler<T> _handler;
+	#endregion
+
+	#region 构造函数
+	protected ListenerBase(string name) : base(name) { }
+	#endregion
+
+	#region 公共属性
+	public virtual bool IsListening => this.State == WorkerState.Running;
+	public virtual IPacketizer<T> Packetizer { get; }
+	public IHandler<T> Handler { get => _handler; set => _handler = value; }
+	IHandler IHandleable.Handler { get => _handler; set => _handler = value as IHandler<T> ?? throw new ArgumentException($"The specified ‘{value}’ handler does not match."); }
+	#endregion
+
+	#region 虚拟方法
+	protected virtual ValueTask OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation)
 	{
-		#region 成员变量
-		private IHandler<T> _handler;
-		#endregion
+		var message = data;
 
-		#region 构造函数
-		protected ListenerBase(string name) : base(name) { }
-		#endregion
-
-		#region 公共属性
-		public virtual bool IsListening => this.State == WorkerState.Running;
-		public virtual IPacketizer<T> Packetizer { get; }
-		public IHandler<T> Handler { get => _handler; set => _handler = value; }
-		IHandler IHandleable.Handler { get => _handler; set => _handler = value as IHandler<T> ?? throw new ArgumentException($"The specified ‘{value}’ handler does not match."); }
-		#endregion
-
-		#region 虚拟方法
-		protected virtual ValueTask OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation)
+		if(this.OnDeserialize(ref message, out var value))
 		{
-			var message = data;
+			var task = this.OnHandleAsync(value, cancellation);
 
-			if(this.OnDeserialize(ref message, out var value))
-			{
-				var task = this.OnHandleAsync(value, cancellation);
-
-				if(!task.IsCompletedSuccessfully)
-					return new ValueTask(task.AsTask());
-			}
-
-			return ValueTask.CompletedTask;
+			if(!task.IsCompletedSuccessfully)
+				return new ValueTask(task.AsTask());
 		}
 
-		protected virtual ValueTask OnHandleAsync(T package, CancellationToken cancellation) => this.Handler?.HandleAsync(package, cancellation) ?? ValueTask.FromCanceled(cancellation);
-		#endregion
-
-		#region 协议转换
-		protected virtual bool OnDeserialize(ref ReadOnlySequence<byte> data, out T result)
-		{
-			var packetizer = this.Packetizer;
-
-			if(packetizer == null)
-				throw new InvalidOperationException("Missing the required packetizer for the receive operation.");
-
-			return packetizer.Unpack(ref data, out result);
-		}
-		#endregion
-
-		#region 显式实现
-		ValueTask IListener<T>.HandleAsync(T package, CancellationToken cancellation)
-		{
-			var task = this.OnHandleAsync(package, cancellation);
-			return task.IsCompletedSuccessfully ? ValueTask.CompletedTask : new ValueTask(task.AsTask());
-		}
-		ValueTask IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
-		#endregion
-
-		#region 释放资源
-		protected override void Dispose(bool disposing)
-		{
-			var handler = Interlocked.Exchange(ref _handler, null);
-
-			if(handler is IDisposable disposable)
-				disposable.Dispose();
-		}
-		#endregion
+		return ValueTask.CompletedTask;
 	}
+
+	protected virtual ValueTask OnHandleAsync(T package, CancellationToken cancellation) => this.Handler?.HandleAsync(package, cancellation) ?? ValueTask.FromCanceled(cancellation);
+	#endregion
+
+	#region 协议转换
+	protected virtual bool OnDeserialize(ref ReadOnlySequence<byte> data, out T result)
+	{
+		var packetizer = this.Packetizer;
+
+		if(packetizer == null)
+			throw new InvalidOperationException("Missing the required packetizer for the receive operation.");
+
+		return packetizer.Unpack(ref data, out result);
+	}
+	#endregion
+
+	#region 显式实现
+	ValueTask IListener<T>.HandleAsync(T package, CancellationToken cancellation)
+	{
+		var task = this.OnHandleAsync(package, cancellation);
+		return task.IsCompletedSuccessfully ? ValueTask.CompletedTask : new ValueTask(task.AsTask());
+	}
+	ValueTask IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
+	#endregion
+
+	#region 释放资源
+	protected override void Dispose(bool disposing)
+	{
+		var handler = Interlocked.Exchange(ref _handler, null);
+
+		if(handler is IDisposable disposable)
+			disposable.Dispose();
+	}
+	#endregion
 }

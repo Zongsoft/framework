@@ -29,24 +29,23 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 表示包装命令执行结果的接口。
+/// </summary>
+[Obsolete]
+public interface ICommandResult
 {
-	/// <summary>
-	/// 表示包装命令执行结果的接口。
-	/// </summary>
-	[Obsolete]
-	public interface ICommandResult
-	{
-		/// <summary>获取一个值，指示命令是否执行成功。</summary>
-		bool Succeed { get; }
+	/// <summary>获取一个值，指示命令是否执行成功。</summary>
+	bool Succeed { get; }
 
-		/// <summary>获取命令执行失败的原因代号。</summary>
-		string Code { get; }
+	/// <summary>获取命令执行失败的原因代号。</summary>
+	string Code { get; }
 
-		/// <summary>获取命令执行失败的消息。</summary>
-		string Message { get; }
+	/// <summary>获取命令执行失败的消息。</summary>
+	string Message { get; }
 
-		/// <summary>获取命令执行结果。</summary>
-		object Result { get; }
-	}
+	/// <summary>获取命令执行结果。</summary>
+	object Result { get; }
 }

@@ -30,57 +30,56 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.IO
+namespace Zongsoft.IO;
+
+[Serializable]
+public class FileInfo : PathInfo, IEquatable<FileInfo>
 {
-	[Serializable]
-	public class FileInfo : PathInfo, IEquatable<FileInfo>
+	#region 成员字段
+	private long _size;
+	private string _type;
+	#endregion
+
+	#region 构造函数
+	protected FileInfo()
 	{
-		#region 成员字段
-		private long _size;
-		private string _type;
-		#endregion
-
-		#region 构造函数
-		protected FileInfo()
-		{
-			_size = -1;
-			_type = string.Empty;
-		}
-
-		public FileInfo(string path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
-			: base(path, createdTime, modifiedTime, url)
-		{
-			_size = size;
-		}
-
-		public FileInfo(Path path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
-			: base(path, createdTime, modifiedTime, url)
-		{
-			_size = size;
-		}
-		#endregion
-
-		#region 公共属性
-		public long Size
-		{
-			get => _size;
-			set => _size = value;
-		}
-
-		public string Type
-		{
-			get => _type;
-			set => _type = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
-		}
-
-		public override bool IsFile => true;
-		public override bool IsDirectory => false;
-		#endregion
-
-		#region 重写方法
-		public bool Equals(FileInfo info) => info != null && _size == info._size && base.Equals(info);
-		public override bool Equals(object obj) => obj is FileInfo info && this.Equals(info);
-		public override int GetHashCode() => HashCode.Combine(base.GetHashCode(), _size);
-		#endregion
+		_size = -1;
+		_type = string.Empty;
 	}
+
+	public FileInfo(string path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
+		: base(path, createdTime, modifiedTime, url)
+	{
+		_size = size;
+	}
+
+	public FileInfo(Path path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
+		: base(path, createdTime, modifiedTime, url)
+	{
+		_size = size;
+	}
+	#endregion
+
+	#region 公共属性
+	public long Size
+	{
+		get => _size;
+		set => _size = value;
+	}
+
+	public string Type
+	{
+		get => _type;
+		set => _type = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+	}
+
+	public override bool IsFile => true;
+	public override bool IsDirectory => false;
+	#endregion
+
+	#region 重写方法
+	public bool Equals(FileInfo info) => info != null && _size == info._size && base.Equals(info);
+	public override bool Equals(object obj) => obj is FileInfo info && this.Equals(info);
+	public override int GetHashCode() => HashCode.Combine(base.GetHashCode(), _size);
+	#endregion
 }

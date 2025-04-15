@@ -30,120 +30,116 @@
 using System;
 using System.Linq;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public readonly struct Mixture<T> : IEquatable<Mixture<T>> where T : struct, IEquatable<T>, IComparable<T>
 {
-	public readonly struct Mixture<T> : IEquatable<Mixture<T>> where T : struct, IEquatable<T>, IComparable<T>
+	#region 构造函数
+	public Mixture(T value)
 	{
-		#region 构造函数
-		public Mixture(T value)
+		this.Array = null;
+		this.Range = new Range<T>(value);
+	}
+
+	public Mixture(T[] array)
+	{
+		this.Array = array;
+		this.Range = default;
+	}
+
+	public Mixture(Range<T> range)
+	{
+		this.Array = null;
+		this.Range = range;
+	}
+	#endregion
+
+	#region 公共属性
+	public T Value => this.Range.Minimum ?? default;
+	public readonly T[] Array;
+	public readonly Range<T> Range;
+
+	public bool HasValue => (this.Array != null && this.Array.Length > 0) || this.Range.HasValue;
+	public bool IsEmpty => (this.Array == null || this.Array.Length == 0) && this.Range.IsEmpty;
+	#endregion
+
+	#region 重写方法
+	public bool Equals(Mixture<T> other)
+	{
+		if(this.Array != null && this.Array.Length > 0)
 		{
-			this.Array = null;
-			this.Range = new Range<T>(value);
-		}
+			if(other.Array == null || other.Array.Length != this.Array.Length)
+				return false;
 
-		public Mixture(T[] array)
-		{
-			this.Array = array;
-			this.Range = default;
-		}
-
-		public Mixture(Range<T> range)
-		{
-			this.Array = null;
-			this.Range = range;
-		}
-		#endregion
-
-		#region 公共属性
-		public T Value => this.Range.Minimum ?? default;
-		public readonly T[] Array;
-		public readonly Range<T> Range;
-
-		public bool HasValue => (this.Array != null && this.Array.Length > 0) || this.Range.HasValue;
-		public bool IsEmpty => (this.Array == null || this.Array.Length == 0) && this.Range.IsEmpty;
-		#endregion
-
-		#region 重写方法
-		public bool Equals(Mixture<T> other)
-		{
-			if(this.Array != null && this.Array.Length > 0)
+			for(int i = 0; i < this.Array.Length; i++)
 			{
-				if(other.Array == null || other.Array.Length != this.Array.Length)
+				if(!this.Array[i].Equals(other.Array[i]))
 					return false;
-
-				for(int i = 0; i < this.Array.Length; i++)
-				{
-					if(!this.Array[i].Equals(other.Array[i]))
-						return false;
-				}
-
-				return true;
 			}
 
-			return this.Range.Equals(other.Range);
-		}
-		public override bool Equals(object obj) => obj is Mixture<T> other && this.Equals(other);
-
-		public override int GetHashCode()
-		{
-			if(this.Array != null && this.Array.Length > 0)
-			{
-				var hashcode = new HashCode();
-
-				for(int i = 0; i < this.Array.Length; i++)
-					hashcode.Add(this.Array[i]);
-
-				return hashcode.ToHashCode();
-			}
-
-			return this.Range.GetHashCode();
+			return true;
 		}
 
-		public override string ToString()
-		{
-			return this.Array != null && this.Array.Length > 0 ?
-				string.Join(',', this.Array) :
-				this.Range.ToString();
-		}
-		#endregion
-
-		#region 解析方法
-		public static bool TryParse(string text, out Mixture<T> result)
-		{
-			if(Range<T>.TryParse(text, out var range))
-				result = new Mixture<T>(range);
-			else
-				result = new Mixture<T>(Common.StringExtension.Slice<T>(text, ',', Common.Convert.TryConvertValue).ToArray());
-
-			return result.HasValue;
-		}
-		#endregion
-
-		#region 符号重写
-		public static bool operator ==(Mixture<T> left, Mixture<T> right) => left.Equals(right);
-		public static bool operator !=(Mixture<T> left, Mixture<T> right) => !(left == right);
-		#endregion
+		return this.Range.Equals(other.Range);
 	}
+	public override bool Equals(object obj) => obj is Mixture<T> other && this.Equals(other);
 
-	public static class MixtureUtility
+	public override int GetHashCode()
 	{
-		public static Condition ToCondition<T>(this Mixture<T> mixture, string name) where T : struct, IEquatable<T>, IComparable<T>
+		if(this.Array != null && this.Array.Length > 0)
 		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+			var hashcode = new HashCode();
 
-			if(mixture.Array != null && mixture.Array.Length > 0)
-				return Condition.In(name, mixture.Array);
+			for(int i = 0; i < this.Array.Length; i++)
+				hashcode.Add(this.Array[i]);
 
-			if(mixture.Range.HasValue)
-				return Condition.Between(name, mixture.Range);
-
-			return null;
+			return hashcode.ToHashCode();
 		}
+
+		return this.Range.GetHashCode();
 	}
 
-	public class MixtureConverter<T> : IConditionConverter where T : struct, IEquatable<T>, IComparable<T>
+	public override string ToString() => this.Array != null && this.Array.Length > 0 ?
+		string.Join(',', this.Array) :
+		this.Range.ToString();
+	#endregion
+
+	#region 解析方法
+	public static bool TryParse(string text, out Mixture<T> result)
 	{
-		public ICondition Convert(ConditionConverterContext context) => context.Value is Mixture<T> mixture ? mixture.ToCondition(context.GetFullName()) : null;
+		if(Range<T>.TryParse(text, out var range))
+			result = new Mixture<T>(range);
+		else
+			result = new Mixture<T>(Common.StringExtension.Slice<T>(text, ',', Common.Convert.TryConvertValue).ToArray());
+
+		return result.HasValue;
 	}
+	#endregion
+
+	#region 符号重写
+	public static bool operator ==(Mixture<T> left, Mixture<T> right) => left.Equals(right);
+	public static bool operator !=(Mixture<T> left, Mixture<T> right) => !(left == right);
+	#endregion
+}
+
+public static class MixtureUtility
+{
+	public static Condition ToCondition<T>(this Mixture<T> mixture, string name) where T : struct, IEquatable<T>, IComparable<T>
+	{
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		if(mixture.Array != null && mixture.Array.Length > 0)
+			return Condition.In(name, mixture.Array);
+
+		if(mixture.Range.HasValue)
+			return Condition.Between(name, mixture.Range);
+
+		return null;
+	}
+}
+
+public class MixtureConverter<T> : IConditionConverter where T : struct, IEquatable<T>, IComparable<T>
+{
+	public ICondition Convert(ConditionConverterContext context) => context.Value is Mixture<T> mixture ? mixture.ToCondition(context.GetFullName()) : null;
 }

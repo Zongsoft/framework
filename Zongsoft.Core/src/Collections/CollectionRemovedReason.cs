@@ -28,25 +28,23 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Collections
+namespace Zongsoft.Collections;
+
+/// <summary>
+/// 表示集合元素被删除的原因。
+/// </summary>
+public enum CollectionRemovedReason
 {
-	/// <summary>
-	/// 表示集合元素被删除的原因。
-	/// </summary>
-	public enum CollectionRemovedReason
-	{
-		/// <summary>通过删除方法。</summary>
-		Remove,
+	/// <summary>通过删除方法。</summary>
+	Remove,
 
-		/// <summary>因为集合溢出而激发的自动删除。</summary>
-		Overflow,
+	/// <summary>因为集合溢出而激发的自动删除。</summary>
+	Overflow,
 
-		/// <summary>因为缓存项过期而被删除。</summary>
-		Expired,
+	/// <summary>因为缓存项过期而被删除。</summary>
+	Expired,
 
-		/// <summary>其他原因。</summary>
-		Other,
-	}
+	/// <summary>其他原因。</summary>
+	Other,
 }

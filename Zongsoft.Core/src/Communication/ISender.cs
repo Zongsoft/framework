@@ -31,10 +31,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Communication
+namespace Zongsoft.Communication;
+
+public interface ISender
 {
-	public interface ISender
-	{
-		ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default);
-	}
+	ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default);
 }

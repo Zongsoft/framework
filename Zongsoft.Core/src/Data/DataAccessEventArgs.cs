@@ -29,32 +29,18 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class DataAccessEventArgs<TContext> : EventArgs where TContext : IDataAccessContextBase
 {
-	public class DataAccessEventArgs<TContext> : EventArgs where TContext : IDataAccessContextBase
+	#region 构造函数
+	protected DataAccessEventArgs(TContext context)
 	{
-		#region 成员字段
-		private TContext _context;
-		#endregion
-
-		#region 构造函数
-		protected DataAccessEventArgs(TContext context)
-		{
-			if(context == null)
-				throw new ArgumentNullException(nameof(context));
-
-			_context = context;
-		}
-		#endregion
-
-		#region 公共属性
-		public TContext Context
-		{
-			get
-			{
-				return _context;
-			}
-		}
-		#endregion
+		this.Context = context ?? throw new ArgumentNullException(nameof(context));
 	}
+	#endregion
+
+	#region 公共属性
+	public TContext Context { get; }
+	#endregion
 }

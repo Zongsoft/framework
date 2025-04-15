@@ -30,20 +30,19 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据搜索器的泛型接口。
+/// </summary>
+/// <typeparam name="TModel">关于搜索服务对应的数据模型类型。</typeparam>
+public interface IDataSearcher<TModel> : IDataSearcher
 {
-	/// <summary>
-	/// 表示数据搜索器的泛型接口。
-	/// </summary>
-	/// <typeparam name="TModel">关于搜索服务对应的数据模型类型。</typeparam>
-	public interface IDataSearcher<TModel> : IDataSearcher
-	{
-		new IEnumerable<TModel> Search(string keyword, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, IDataOptions options, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, string schema, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, params Sorting[] sortings);
-		new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings);
-	}
+	new IEnumerable<TModel> Search(string keyword, params Sorting[] sortings);
+	new IEnumerable<TModel> Search(string keyword, IDataOptions options, params Sorting[] sortings);
+	new IEnumerable<TModel> Search(string keyword, Paging paging, params Sorting[] sortings);
+	new IEnumerable<TModel> Search(string keyword, string schema, params Sorting[] sortings);
+	new IEnumerable<TModel> Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings);
+	new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, params Sorting[] sortings);
+	new IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings);
 }

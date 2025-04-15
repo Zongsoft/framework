@@ -29,13 +29,12 @@
 
 using System;
 
-namespace Zongsoft.IO
+namespace Zongsoft.IO;
+
+public class PathException : ApplicationException
 {
-	public class PathException : ApplicationException
-	{
-		#region 构造函数
-		public PathException(string message) : base(message) { }
-		public PathException(string message, Exception innerException) : base(message, innerException) { }
-		#endregion
-	}
+	#region 构造函数
+	public PathException(string message) : base(message) { }
+	public PathException(string message, Exception innerException) : base(message, innerException) { }
+	#endregion
 }

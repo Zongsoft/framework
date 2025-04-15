@@ -30,10 +30,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public interface IFilterable<TContext> where TContext : class
 {
-	public interface IFilterable<TContext> where TContext : class
-	{
-		ICollection<IFilter<TContext>> Filters { get; }
-	}
+	ICollection<IFilter<TContext>> Filters { get; }
 }

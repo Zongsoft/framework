@@ -29,44 +29,43 @@
 
 using System;
 
-namespace Zongsoft.Common
+namespace Zongsoft.Common;
+
+public abstract class PredicationBase<T> : IPredication<T>, Services.IMatchable
 {
-	public abstract class PredicationBase<T> : IPredication<T>, Services.IMatchable
+	#region 成员字段
+	private readonly string _name;
+	#endregion
+
+	#region 构造函数
+	protected PredicationBase(string name)
 	{
-		#region 成员字段
-		private readonly string _name;
-		#endregion
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
 
-		#region 构造函数
-		protected PredicationBase(string name)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
-
-			_name = name.Trim();
-		}
-		#endregion
-
-		#region 公共属性
-		public virtual string Name => _name;
-		#endregion
-
-		#region 断言方法
-		public abstract bool Predicate(T parameter);
-		bool IPredication.Predicate(object parameter) => this.Predicate(this.ConvertParameter(parameter));
-		#endregion
-
-		#region 虚拟方法
-		protected virtual T ConvertParameter(object parameter) => Zongsoft.Common.Convert.ConvertValue<T>(parameter);
-		#endregion
-
-		#region 服务匹配
-		public virtual bool Match(string parameter) => string.Equals(this.Name, parameter, StringComparison.OrdinalIgnoreCase);
-		bool Services.IMatchable.Match(object parameter) => parameter != null && this.Match(parameter.ToString());
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => $"{this.Name} ({this.GetType().Name})";
-		#endregion
+		_name = name.Trim();
 	}
+	#endregion
+
+	#region 公共属性
+	public virtual string Name => _name;
+	#endregion
+
+	#region 断言方法
+	public abstract bool Predicate(T parameter);
+	bool IPredication.Predicate(object parameter) => this.Predicate(this.ConvertParameter(parameter));
+	#endregion
+
+	#region 虚拟方法
+	protected virtual T ConvertParameter(object parameter) => Zongsoft.Common.Convert.ConvertValue<T>(parameter);
+	#endregion
+
+	#region 服务匹配
+	public virtual bool Match(string parameter) => string.Equals(this.Name, parameter, StringComparison.OrdinalIgnoreCase);
+	bool Services.IMatchable.Match(object parameter) => parameter != null && this.Match(parameter.ToString());
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"{this.Name} ({this.GetType().Name})";
+	#endregion
 }

@@ -34,97 +34,96 @@ using Microsoft.Extensions.DependencyInjection;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 {
-	public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
+	#region 成员字段
+	private string _title;
+	private string _description;
+	private ServiceProvider _services;
+	private readonly object _syncRoot = new object();
+	#endregion
+
+	#region 构造函数
+	public ApplicationModule(string name, string title = null, string description = null)
 	{
-		#region 成员字段
-		private string _title;
-		private string _description;
-		private ServiceProvider _services;
-		private readonly object _syncRoot = new object();
-		#endregion
+		this.Name = name == null ? string.Empty : name.Trim();
+		this.Title = title;
+		this.Description = description;
+		this.Properties = new Parameters();
+	}
+	#endregion
 
-		#region 构造函数
-		public ApplicationModule(string name, string title = null, string description = null)
+	#region 公共属性
+	public string Name { get; protected set; }
+	public Parameters Properties { get; }
+
+	public string Title
+	{
+		get => string.IsNullOrEmpty(_title) ? Resources.ResourceUtility.GetResourceString(this.GetType(), [$"{this.Name}.{nameof(this.Title)}", this.Name]) : _title;
+		set => _title = value;
+	}
+
+	public string Description
+	{
+		get => string.IsNullOrEmpty(_description) ? Resources.ResourceUtility.GetResourceString(this.GetType(), $"{this.Name}.{nameof(this.Description)}") : _description;
+		set => _description = value;
+	}
+
+	public virtual IServiceProvider Services
+	{
+		get
 		{
-			this.Name = name == null ? string.Empty : name.Trim();
-			this.Title = title;
-			this.Description = description;
-			this.Properties = new Parameters();
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name { get; protected set; }
-		public Parameters Properties { get; }
-
-		public string Title
-		{
-			get => string.IsNullOrEmpty(_title) ? Resources.ResourceUtility.GetResourceString(this.GetType(), [$"{this.Name}.{nameof(this.Title)}", this.Name]) : _title;
-			set => _title = value;
-		}
-
-		public string Description
-		{
-			get => string.IsNullOrEmpty(_description) ? Resources.ResourceUtility.GetResourceString(this.GetType(), $"{this.Name}.{nameof(this.Description)}") : _description;
-			set => _description = value;
-		}
-
-		public virtual IServiceProvider Services
-		{
-			get
+			if(_services == null)
 			{
-				if(_services == null)
+				lock(_syncRoot)
 				{
-					lock(_syncRoot)
-					{
-						_services ??= new ServiceProvider(this.Name, ApplicationContext.Current.Services.CreateScope().ServiceProvider);
-					}
+					_services ??= new ServiceProvider(this.Name, ApplicationContext.Current.Services.CreateScope().ServiceProvider);
 				}
-
-				return _services;
 			}
+
+			return _services;
 		}
-		#endregion
-
-		#region 匹配方法
-		bool IMatchable.Match(object parameter) => parameter != null && string.Equals(this.Name, parameter.ToString(), StringComparison.OrdinalIgnoreCase);
-		#endregion
-
-		#region 处置方法
-		public void Dispose()
-		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing) => _services?.Dispose();
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			if(string.IsNullOrEmpty(this.Title) || string.Equals(this.Name, this.Title))
-				return this.Name;
-			else
-				return $"[{this.Name}]{this.Title}";
-		}
-		#endregion
 	}
+	#endregion
 
-	public class ApplicationModule<TEvents> : ApplicationModule where TEvents : EventRegistryBase, new()
+	#region 匹配方法
+	bool IMatchable.Match(object parameter) => parameter != null && string.Equals(this.Name, parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+	#endregion
+
+	#region 处置方法
+	public void Dispose()
 	{
-		#region 构造函数
-		public ApplicationModule(string name, string title = null, string description = null) : base(name, title, description)
-        {
-			this.Events = new TEvents();
-        }
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取本模块的事件注册表。</summary>
-		public TEvents Events { get; }
-		#endregion
+		this.Dispose(true);
+		GC.SuppressFinalize(this);
 	}
+
+	protected virtual void Dispose(bool disposing) => _services?.Dispose();
+	#endregion
+
+	#region 重写方法
+	public override string ToString()
+	{
+		if(string.IsNullOrEmpty(this.Title) || string.Equals(this.Name, this.Title))
+			return this.Name;
+		else
+			return $"[{this.Name}]{this.Title}";
+	}
+	#endregion
+}
+
+public class ApplicationModule<TEvents> : ApplicationModule where TEvents : EventRegistryBase, new()
+{
+	#region 构造函数
+	public ApplicationModule(string name, string title = null, string description = null) : base(name, title, description)
+        {
+		this.Events = new TEvents();
+        }
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取本模块的事件注册表。</summary>
+	public TEvents Events { get; }
+	#endregion
 }

@@ -31,35 +31,34 @@ using System;
 using System.Reflection;
 using System.ComponentModel;
 
-namespace Zongsoft.Common
+namespace Zongsoft.Common;
+
+public static class AnnotationUtility
 {
-	public static class AnnotationUtility
+	public static string GetCategory(MemberInfo member, bool inherit = false)
 	{
-		public static string GetCategory(MemberInfo member, bool inherit = false)
-		{
-			if(member == null)
-				throw new ArgumentNullException(nameof(member));
+		if(member == null)
+			throw new ArgumentNullException(nameof(member));
 
-			var attribute = member.GetCustomAttribute<CategoryAttribute>(inherit);
-			return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member, attribute.Category) ?? attribute.Category);
-		}
+		var attribute = member.GetCustomAttribute<CategoryAttribute>(inherit);
+		return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member, attribute.Category) ?? attribute.Category);
+	}
 
-		public static string GetDisplayName(MemberInfo member, bool inherit = false)
-		{
-			if(member == null)
-				throw new ArgumentNullException(nameof(member));
+	public static string GetDisplayName(MemberInfo member, bool inherit = false)
+	{
+		if(member == null)
+			throw new ArgumentNullException(nameof(member));
 
-			var attribute = member.GetCustomAttribute<DisplayNameAttribute>(inherit);
-			return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member, attribute.DisplayName) ?? attribute.DisplayName);
-		}
+		var attribute = member.GetCustomAttribute<DisplayNameAttribute>(inherit);
+		return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member, attribute.DisplayName) ?? attribute.DisplayName);
+	}
 
-		public static string GetDescription(MemberInfo member, bool inherit = false)
-		{
-			if(member == null)
-				throw new ArgumentNullException(nameof(member));
+	public static string GetDescription(MemberInfo member, bool inherit = false)
+	{
+		if(member == null)
+			throw new ArgumentNullException(nameof(member));
 
-			var attribute = member.GetCustomAttribute<DescriptionAttribute>(inherit);
-			return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member, attribute.Description) ?? attribute.Description);
-		}
+		var attribute = member.GetCustomAttribute<DescriptionAttribute>(inherit);
+		return attribute == null ? null : (Resources.ResourceUtility.GetResourceString(member, attribute.Description) ?? attribute.Description);
 	}
 }

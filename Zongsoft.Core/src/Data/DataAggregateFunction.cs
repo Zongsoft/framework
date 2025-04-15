@@ -29,41 +29,40 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示聚合函数的枚举。
+/// </summary>
+public enum DataAggregateFunction
 {
-	/// <summary>
-	/// 表示聚合函数的枚举。
-	/// </summary>
-	public enum DataAggregateFunction
-	{
-		/// <summary>数量</summary>
-		Count,
+	/// <summary>数量</summary>
+	Count,
 
-		/// <summary>总和</summary>
-		Sum,
+	/// <summary>总和</summary>
+	Sum,
 
-		/// <summary>平均值</summary>
-		Average,
+	/// <summary>平均值</summary>
+	Average,
 
-		/// <summary>中间值</summary>
-		Median,
+	/// <summary>中间值</summary>
+	Median,
 
-		/// <summary>最大值</summary>
-		Maximum,
+	/// <summary>最大值</summary>
+	Maximum,
 
-		/// <summary>最小值</summary>
-		Minimum,
+	/// <summary>最小值</summary>
+	Minimum,
 
-		/// <summary>标准偏差</summary>
-		Deviation,
+	/// <summary>标准偏差</summary>
+	Deviation,
 
-		/// <summary>总体标准偏差</summary>
-		DeviationPopulation,
+	/// <summary>总体标准偏差</summary>
+	DeviationPopulation,
 
-		/// <summary>方差</summary>
-		Variance,
+	/// <summary>方差</summary>
+	Variance,
 
-		/// <summary>总体方差</summary>
-		VariancePopulation,
-	}
+	/// <summary>总体方差</summary>
+	VariancePopulation,
 }

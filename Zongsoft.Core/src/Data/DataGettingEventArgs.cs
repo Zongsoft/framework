@@ -29,23 +29,19 @@
 
 using System;
 
-namespace Zongsoft.Data
-{
-	/// <summary>
-	/// 为数据服务的获取事件提供数据。
-	/// </summary>
-	public class DataGettingEventArgs<T> : DataGettedEventArgs<T>
-	{
-		#region 构造函数
-		public DataGettingEventArgs(DataSelectContextBase context) : base(context)
-		{
-			this.Cancel = false;
-		}
-		#endregion
+namespace Zongsoft.Data;
 
-		#region 公共属性
-		/// <summary>获取或设置一个值，表示是否取消当前操作。</summary>
-		public bool Cancel { get; set; }
-		#endregion
-	}
+/// <summary>
+/// 为数据服务的获取事件提供数据。
+/// </summary>
+public class DataGettingEventArgs<T> : DataGettedEventArgs<T>
+{
+	#region 构造函数
+	public DataGettingEventArgs(DataSelectContextBase context) : base(context) => this.Cancel = false;
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置一个值，表示是否取消当前操作。</summary>
+	public bool Cancel { get; set; }
+	#endregion
 }

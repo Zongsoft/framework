@@ -28,35 +28,33 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据访问的上下文的基本接口。
+/// </summary>
+public interface IDataAccessContextBase
 {
-	/// <summary>
-	/// 表示数据访问的上下文的基本接口。
-	/// </summary>
-	public interface IDataAccessContextBase
-	{
-		/// <summary>获取数据访问的名称。</summary>
-		string Name { get; }
+	/// <summary>获取数据访问的名称。</summary>
+	string Name { get; }
 
-		/// <summary>获取数据驱动的名称。</summary>
-		string Driver { get; }
+	/// <summary>获取数据驱动的名称。</summary>
+	string Driver { get; }
 
-		/// <summary>获取数据访问的方法。</summary>
-		DataAccessMethod Method { get; }
+	/// <summary>获取数据访问的方法。</summary>
+	DataAccessMethod Method { get; }
 
-		/// <summary>获取当前上下文关联的数据访问器。</summary>
-		IDataAccess DataAccess { get; }
-	}
+	/// <summary>获取当前上下文关联的数据访问器。</summary>
+	IDataAccess DataAccess { get; }
+}
 
-	/// <summary>
-	/// 表示数据访问的上下文的基本接口。
-	/// </summary>
-	/// <typeparam name="TOptions">当前数据操作的选项类型。</typeparam>
-	public interface IDataAccessContextBase<TOptions> : IDataAccessContextBase where TOptions : IDataOptions
-	{
-		/// <summary>获取当前数据访问操作的选项对象。</summary>
-		TOptions Options { get; }
-	}
+/// <summary>
+/// 表示数据访问的上下文的基本接口。
+/// </summary>
+/// <typeparam name="TOptions">当前数据操作的选项类型。</typeparam>
+public interface IDataAccessContextBase<TOptions> : IDataAccessContextBase where TOptions : IDataOptions
+{
+	/// <summary>获取当前数据访问操作的选项对象。</summary>
+	TOptions Options { get; }
 }

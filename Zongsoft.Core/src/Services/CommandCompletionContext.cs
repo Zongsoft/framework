@@ -29,36 +29,35 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 表示命令会话执行完成的上下文类。
+/// </summary>
+public class CommandCompletionContext : CommandContext
 {
-	/// <summary>
-	/// 表示命令会话执行完成的上下文类。
-	/// </summary>
-	public class CommandCompletionContext : CommandContext
+	#region 成员字段
+	private object _result;
+	private Exception _exception;
+	#endregion
+
+	#region 构造函数
+	public CommandCompletionContext(CommandContext context, object result, Exception exception = null) : base(context)
 	{
-		#region 成员字段
-		private object _result;
-		private Exception _exception;
-		#endregion
-
-		#region 构造函数
-		public CommandCompletionContext(CommandContext context, object result, Exception exception = null) : base(context)
-		{
-			_result = result;
-			_exception = exception;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取当前命令的执行结果。</summary>
-		public object Result => _result;
-
-		/// <summary>获取命令执行中发生的异常。</summary>
-		public Exception Exception
-		{
-			get => _exception;
-			internal set => _exception = value;
-		}
-		#endregion
+		_result = result;
+		_exception = exception;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取当前命令的执行结果。</summary>
+	public object Result => _result;
+
+	/// <summary>获取命令执行中发生的异常。</summary>
+	public Exception Exception
+	{
+		get => _exception;
+		internal set => _exception = value;
+	}
+	#endregion
 }

@@ -30,22 +30,19 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Text
-{
-	/// <summary>
-	/// 表示模板的接口。
-	/// </summary>
-	public interface ITemplate
-	{
-		/// <summary>获取模板名称。</summary>
-		string Name { get; }
+namespace Zongsoft.Text;
 
-		/// <summary>
-		/// 应用模板。
-		/// </summary>
-		/// <param name="data">待应用的模板数据。</param>
-		/// <param name="arguments">附加参数集。</param>
-		/// <returns>返回应用后的文本。</returns>
-		string Evaluate(object data, params object[] arguments);
-	}
+/// <summary>
+/// 表示模板的接口。
+/// </summary>
+public interface ITemplate
+{
+	/// <summary>获取模板名称。</summary>
+	string Name { get; }
+
+	/// <summary>应用模板。</summary>
+	/// <param name="data">待应用的模板数据。</param>
+	/// <param name="arguments">附加参数集。</param>
+	/// <returns>返回应用后的文本。</returns>
+	string Evaluate(object data, params object[] arguments);
 }

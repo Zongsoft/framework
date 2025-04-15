@@ -29,25 +29,24 @@
 
 using System;
 
-namespace Zongsoft.Services
-{
-	[Serializable]
-	public class CommandExecutorEventArgs : EventArgs
-	{
-		#region 构造函数
-		public CommandExecutorEventArgs(CommandExecutorContext context)
-		{
-			this.Context = context ?? throw new ArgumentNullException(nameof(context));
-		}
-		#endregion
+namespace Zongsoft.Services;
 
-		#region 公共属性
-		public CommandExecutorContext Context { get; }
-		public object Result
-		{
-			get => this.Context.Result;
-			set => this.Context.Result = value;
-		}
-		#endregion
+[Serializable]
+public class CommandExecutorEventArgs : EventArgs
+{
+	#region 构造函数
+	public CommandExecutorEventArgs(CommandExecutorContext context)
+	{
+		this.Context = context ?? throw new ArgumentNullException(nameof(context));
 	}
+	#endregion
+
+	#region 公共属性
+	public CommandExecutorContext Context { get; }
+	public object Result
+	{
+		get => this.Context.Result;
+		set => this.Context.Result = value;
+	}
+	#endregion
 }

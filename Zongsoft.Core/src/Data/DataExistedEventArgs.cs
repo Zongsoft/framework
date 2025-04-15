@@ -29,14 +29,11 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class DataExistedEventArgs : DataAccessEventArgs<DataExistContextBase>
 {
-	public class DataExistedEventArgs : DataAccessEventArgs<DataExistContextBase>
-	{
-		#region 构造函数
-		public DataExistedEventArgs(DataExistContextBase context) : base(context)
-		{
-		}
-		#endregion
-	}
+	#region 构造函数
+	public DataExistedEventArgs(DataExistContextBase context) : base(context) { }
+	#endregion
 }

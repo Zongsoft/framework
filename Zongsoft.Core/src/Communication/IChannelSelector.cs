@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Communication
+namespace Zongsoft.Communication;
+
+public interface IChannelSelector<in T>
 {
-	public interface IChannelSelector<in T>
-	{
-		IChannel Select(T key);
-	}
+	IChannel Select(T key);
 }

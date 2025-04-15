@@ -29,48 +29,47 @@
 
 using System;
 
-namespace Zongsoft.Communication
+namespace Zongsoft.Communication;
+
+public static class TransmitterUtility
 {
-	public static class TransmitterUtility
+	public static TransmitterDescriptor.Channel Channel(this TransmitterDescriptor descriptor, string name, string title = null, string description = null)
 	{
-		public static TransmitterDescriptor.Channel Channel(this TransmitterDescriptor descriptor, string name, string title = null, string description = null)
-		{
-			if(descriptor == null || name == null)
-				return null;
+		if(descriptor == null || name == null)
+			return null;
 
-			var channel = new TransmitterDescriptor.Channel(name, title, description);
-			descriptor.Channels.Add(channel);
-			return channel;
-		}
+		var channel = new TransmitterDescriptor.Channel(name, title, description);
+		descriptor.Channels.Add(channel);
+		return channel;
+	}
 
-		public static TransmitterDescriptor.Template Template(this TransmitterDescriptor descriptor, string name, string title = null, string description = null)
-		{
-			if(descriptor == null || name == null)
-				return null;
+	public static TransmitterDescriptor.Template Template(this TransmitterDescriptor descriptor, string name, string title = null, string description = null)
+	{
+		if(descriptor == null || name == null)
+			return null;
 
-			var template = new TransmitterDescriptor.Template(name, title, description);
-			descriptor.Templates.Add(template);
-			return template;
-		}
+		var template = new TransmitterDescriptor.Template(name, title, description);
+		descriptor.Templates.Add(template);
+		return template;
+	}
 
-		public static TransmitterDescriptor.Template Template(this TransmitterDescriptor.Channel channel, string name, string title = null, string description = null)
-		{
-			if(channel == null || name == null)
-				return null;
+	public static TransmitterDescriptor.Template Template(this TransmitterDescriptor.Channel channel, string name, string title = null, string description = null)
+	{
+		if(channel == null || name == null)
+			return null;
 
-			var template = new TransmitterDescriptor.Template(name, title, description);
-			channel.Templates.Add(template);
-			return template;
-		}
+		var template = new TransmitterDescriptor.Template(name, title, description);
+		channel.Templates.Add(template);
+		return template;
+	}
 
-		public static TransmitterDescriptor.Template.Parameter Parameter(this TransmitterDescriptor.Template template, string name, string title = null, string description = null)
-		{
-			if(template == null || name == null)
-				return null;
+	public static TransmitterDescriptor.Template.Parameter Parameter(this TransmitterDescriptor.Template template, string name, string title = null, string description = null)
+	{
+		if(template == null || name == null)
+			return null;
 
-			var parameter = new TransmitterDescriptor.Template.Parameter(name, title, description);
-			template.Parameters.Add(parameter);
-			return parameter;
-		}
+		var parameter = new TransmitterDescriptor.Template.Parameter(name, title, description);
+		template.Parameters.Add(parameter);
+		return parameter;
 	}
 }

@@ -30,20 +30,19 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Serialization
+namespace Zongsoft.Serialization;
+
+/// <summary>
+/// 表示命名转换的枚举。
+/// </summary>
+public enum SerializationNamingConvention
 {
-	/// <summary>
-	/// 表示命名转换的枚举。
-	/// </summary>
-	public enum SerializationNamingConvention
-	{
-		/// <summary>无转换</summary>
-		None,
+	/// <summary>无转换</summary>
+	None,
 
-		/// <summary>驼峰(小驼峰)命名</summary>
-		Camel,
+	/// <summary>驼峰(小驼峰)命名</summary>
+	Camel,
 
-		/// <summary>帕斯卡(大驼峰)命名</summary>
-		Pascal,
-	}
+	/// <summary>帕斯卡(大驼峰)命名</summary>
+	Pascal,
 }

@@ -28,19 +28,15 @@
  */
 
 using System;
-using System.Collections;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 为数据访问的查询事件提供数据。
+/// </summary>
+public class DataSelectedEventArgs : DataAccessEventArgs<DataSelectContextBase>
 {
-	/// <summary>
-	/// 为数据访问的查询事件提供数据。
-	/// </summary>
-	public class DataSelectedEventArgs : DataAccessEventArgs<DataSelectContextBase>
-	{
-		#region 构造函数
-		public DataSelectedEventArgs(DataSelectContextBase context) : base(context)
-		{
-		}
-		#endregion
-	}
+	#region 构造函数
+	public DataSelectedEventArgs(DataSelectContextBase context) : base(context) { }
+	#endregion
 }

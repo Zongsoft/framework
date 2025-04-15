@@ -29,16 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 提供应用初始化功能的接口。
+/// </summary>
+/// <typeparam name="TBuilder">指定的应用构建器的泛型参数。</typeparam>
+public interface IApplicationInitializer<TBuilder>
 {
-	/// <summary>
-	/// 提供应用初始化功能的接口。
-	/// </summary>
-	/// <typeparam name="TBuilder">指定的应用构建器的泛型参数。</typeparam>
-	public interface IApplicationInitializer<TBuilder>
-	{
-		/// <summary>初始化应用扩展模块，并使其为处理请求做好准备。</summary>
-		/// <param name="builder">应用构建器对象。</param>
-		void Initialize(TBuilder builder);
-	}
+	/// <summary>初始化应用扩展模块，并使其为处理请求做好准备。</summary>
+	/// <param name="builder">应用构建器对象。</param>
+	void Initialize(TBuilder builder);
 }

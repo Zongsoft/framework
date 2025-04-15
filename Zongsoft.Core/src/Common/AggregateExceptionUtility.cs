@@ -30,33 +30,32 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Common
+namespace Zongsoft.Common;
+
+public static class AggregateExceptionUtility
 {
-	public static class AggregateExceptionUtility
+	public static object Handle<TException>(this AggregateException exception, Func<TException, object> handler) where TException : Exception
 	{
-		public static object Handle<TException>(this AggregateException exception, Func<TException, object> handler) where TException : Exception
-		{
-			if(exception == null)
-				return null;
-
-			if(handler == null)
-				throw new ArgumentNullException(nameof(handler));
-
-			List<Exception> unhandledExceptions = null;
-
-			foreach(var innerException in exception.Flatten().InnerExceptions)
-			{
-				if(innerException is TException expected)
-					return handler(expected);
-
-				unhandledExceptions ??= new List<Exception>();
-				unhandledExceptions.Add(innerException);
-			}
-
-			if(unhandledExceptions != null)
-				throw new AggregateException(exception.Message, unhandledExceptions);
-
+		if(exception == null)
 			return null;
+
+		if(handler == null)
+			throw new ArgumentNullException(nameof(handler));
+
+		List<Exception> unhandledExceptions = null;
+
+		foreach(var innerException in exception.Flatten().InnerExceptions)
+		{
+			if(innerException is TException expected)
+				return handler(expected);
+
+			unhandledExceptions ??= new List<Exception>();
+			unhandledExceptions.Add(innerException);
 		}
+
+		if(unhandledExceptions != null)
+			throw new AggregateException(exception.Message, unhandledExceptions);
+
+		return null;
 	}
 }

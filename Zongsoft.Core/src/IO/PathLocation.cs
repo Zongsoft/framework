@@ -33,98 +33,97 @@ using System.Text.Json.Serialization;
 using System.Globalization;
 using System.ComponentModel;
 
-namespace Zongsoft.IO
+namespace Zongsoft.IO;
+
+[TypeConverter(typeof(LocationTypeConverter))]
+[JsonConverter(typeof(LocationJsonConverter))]
+public readonly struct PathLocation : IEquatable<PathLocation>
 {
-	[TypeConverter(typeof(LocationTypeConverter))]
-	[JsonConverter(typeof(LocationJsonConverter))]
-	public readonly struct PathLocation : IEquatable<PathLocation>
+	#region 构造函数
+	public PathLocation(string path)
 	{
-		#region 构造函数
-		public PathLocation(string path)
+		this.Path = path;
+		this.Url = string.IsNullOrEmpty(path) ? null : Zongsoft.IO.FileSystem.GetUrl(path);
+	}
+	#endregion
+
+	#region 公共属性
+	public string Path { get; }
+	public string Url { get; }
+
+	[JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	public bool IsEmpty => string.IsNullOrEmpty(this.Path);
+	#endregion
+
+	#region 重写方法
+	public bool Equals(PathLocation other) => string.Equals(this.Path, other.Path);
+	public override bool Equals(object obj) => obj is PathLocation other && Equals(other);
+	public override int GetHashCode() => this.Path.GetHashCode();
+	public override string ToString() => this.Path;
+	#endregion
+
+	#region 重写符号
+	public static bool operator ==(PathLocation left, PathLocation right) => left.Equals(right);
+	public static bool operator !=(PathLocation left, PathLocation right) => !(left == right);
+
+	public static implicit operator string(PathLocation location) => location.Path;
+	public static implicit operator PathLocation(string path) => new PathLocation(path);
+	#endregion
+
+	#region 类型转换
+	private class LocationTypeConverter : TypeConverter
+	{
+		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string);
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
+		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => value is PathLocation location ? location.Path : null;
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => new PathLocation(value as string);
+	}
+
+	private class LocationJsonConverter : JsonConverter<PathLocation>
+	{
+		public override PathLocation Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
-			this.Path = path;
-			this.Url = string.IsNullOrEmpty(path) ? null : Zongsoft.IO.FileSystem.GetUrl(path);
-		}
-		#endregion
+			if(reader.TokenType == JsonTokenType.Null)
+				return default;
+			if(reader.TokenType == JsonTokenType.String)
+				return new PathLocation(reader.GetString());
 
-		#region 公共属性
-		public string Path { get; }
-		public string Url { get; }
-
-		[JsonIgnore]
-		[Serialization.SerializationMember(Ignored = true)]
-		public bool IsEmpty => string.IsNullOrEmpty(this.Path);
-		#endregion
-
-		#region 重写方法
-		public bool Equals(PathLocation other) => string.Equals(this.Path, other.Path);
-		public override bool Equals(object obj) => obj is PathLocation other && Equals(other);
-		public override int GetHashCode() => this.Path.GetHashCode();
-		public override string ToString() => this.Path;
-		#endregion
-
-		#region 重写符号
-		public static bool operator ==(PathLocation left, PathLocation right) => left.Equals(right);
-		public static bool operator !=(PathLocation left, PathLocation right) => !(left == right);
-
-		public static implicit operator string(PathLocation location) => location.Path;
-		public static implicit operator PathLocation(string path) => new PathLocation(path);
-		#endregion
-
-		#region 类型转换
-		private class LocationTypeConverter : TypeConverter
-		{
-			public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string);
-			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
-			public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => value is PathLocation location ? location.Path : null;
-			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => new PathLocation(value as string);
-		}
-
-		private class LocationJsonConverter : JsonConverter<PathLocation>
-		{
-			public override PathLocation Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			if(reader.TokenType == JsonTokenType.StartObject)
 			{
-				if(reader.TokenType == JsonTokenType.Null)
-					return default;
-				if(reader.TokenType == JsonTokenType.String)
-					return new PathLocation(reader.GetString());
+				var depth = reader.CurrentDepth;
+				var result = default(PathLocation);
 
-				if(reader.TokenType == JsonTokenType.StartObject)
+				while(reader.Read())
 				{
-					var depth = reader.CurrentDepth;
-					var result = default(PathLocation);
-
-					while(reader.Read())
+					if(reader.TokenType == JsonTokenType.PropertyName && string.Equals(reader.GetString(), nameof(PathLocation.Path), StringComparison.OrdinalIgnoreCase))
 					{
-						if(reader.TokenType == JsonTokenType.PropertyName && string.Equals(reader.GetString(), nameof(PathLocation.Path), StringComparison.OrdinalIgnoreCase))
-						{
-							if(reader.Read())
-								result = new PathLocation(reader.GetString());
-						}
-
-						if(reader.CurrentDepth == depth)
-							break;
+						if(reader.Read())
+							result = new PathLocation(reader.GetString());
 					}
 
-					return result;
+					if(reader.CurrentDepth == depth)
+						break;
 				}
 
-				return default;
+				return result;
 			}
 
-			public override void Write(Utf8JsonWriter writer, PathLocation value, JsonSerializerOptions options)
+			return default;
+		}
+
+		public override void Write(Utf8JsonWriter writer, PathLocation value, JsonSerializerOptions options)
+		{
+			if(value.IsEmpty)
+				writer.WriteNullValue();
+			else
 			{
-				if(value.IsEmpty)
-					writer.WriteNullValue();
-				else
-				{
-					writer.WriteStartObject();
-					writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Path)) ?? nameof(Path), value.Path);
-					writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Url)) ?? nameof(Url), value.Url);
-					writer.WriteEndObject();
-				}
+				writer.WriteStartObject();
+				writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Path)) ?? nameof(Path), value.Path);
+				writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Url)) ?? nameof(Url), value.Url);
+				writer.WriteEndObject();
 			}
 		}
-		#endregion
 	}
+	#endregion
 }

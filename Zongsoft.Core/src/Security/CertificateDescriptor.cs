@@ -29,32 +29,31 @@
 
 using System;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Security;
+
+public struct CertificateDescriptor
 {
-	public struct CertificateDescriptor
+	#region 构造函数
+	public CertificateDescriptor(string identifier, CertificateValidity validity = default, ICertificateIssuer issuer = null, ICertificateSubject subject = null)
 	{
-		#region 构造函数
-		public CertificateDescriptor(string identifier, CertificateValidity validity = default, ICertificateIssuer issuer = null, ICertificateSubject subject = null)
-		{
-			this.Identifier = identifier;
-			this.Validity = validity;
-			this.Issuer = issuer;
-			this.Subject = subject;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取证书标识。</summary>
-		public string Identifier { get; }
-
-		/// <summary>获取证书签发者信息。</summary>
-		public ICertificateIssuer Issuer { get; }
-
-		/// <summary>获取证书持有者信息。</summary>
-		public ICertificateSubject Subject { get; }
-
-		/// <summary>获取证书有效期。</summary>
-		public CertificateValidity Validity { get; }
-		#endregion
+		this.Identifier = identifier;
+		this.Validity = validity;
+		this.Issuer = issuer;
+		this.Subject = subject;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取证书标识。</summary>
+	public string Identifier { get; }
+
+	/// <summary>获取证书签发者信息。</summary>
+	public ICertificateIssuer Issuer { get; }
+
+	/// <summary>获取证书持有者信息。</summary>
+	public ICertificateSubject Subject { get; }
+
+	/// <summary>获取证书有效期。</summary>
+	public CertificateValidity Validity { get; }
+	#endregion
 }

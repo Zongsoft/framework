@@ -33,66 +33,65 @@ using System.Text;
 using System.Buffers;
 using System.Threading.Tasks;
 
-namespace Zongsoft.IO
+namespace Zongsoft.IO;
+
+public static class BinaryReaderExtension
 {
-	public static class BinaryReaderExtension
+	#region 常量定义
+	private const int BUFFER_SIZE = 1024;
+	#endregion
+
+	public static void CopyTo(this BinaryReader reader, Stream destination, int bufferSize = BUFFER_SIZE)
 	{
-		#region 常量定义
-		private const int BUFFER_SIZE = 1024;
-		#endregion
+		if(reader == null)
+			throw new ArgumentNullException(nameof(reader));
+		if(destination == null)
+			throw new ArgumentNullException(nameof(destination));
 
-		public static void CopyTo(this BinaryReader reader, Stream destination, int bufferSize = BUFFER_SIZE)
+		if(!destination.CanWrite)
+			throw new NotSupportedException("The destination stream does not support writing.");
+
+		var buffer = ArrayPool<byte>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
+
+		try
 		{
-			if(reader == null)
-				throw new ArgumentNullException(nameof(reader));
-			if(destination == null)
-				throw new ArgumentNullException(nameof(destination));
+			int bufferRead;
 
-			if(!destination.CanWrite)
-				throw new NotSupportedException("The destination stream does not support writing.");
-
-			var buffer = ArrayPool<byte>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
-
-			try
+			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
 			{
-				int bufferRead;
-
-				while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
-				{
-					destination.Write(buffer, 0, bufferRead);
-				}
-			}
-			finally
-			{
-				ArrayPool<byte>.Shared.Return(buffer);
+				destination.Write(buffer, 0, bufferRead);
 			}
 		}
-
-		public static async ValueTask CopyToAsync(this BinaryReader reader, Stream destination, int bufferSize = BUFFER_SIZE)
+		finally
 		{
-			if(reader == null)
-				throw new ArgumentNullException(nameof(reader));
-			if(destination == null)
-				throw new ArgumentNullException(nameof(destination));
+			ArrayPool<byte>.Shared.Return(buffer);
+		}
+	}
 
-			if(!destination.CanWrite)
-				throw new NotSupportedException("The destination stream does not support writing.");
+	public static async ValueTask CopyToAsync(this BinaryReader reader, Stream destination, int bufferSize = BUFFER_SIZE)
+	{
+		if(reader == null)
+			throw new ArgumentNullException(nameof(reader));
+		if(destination == null)
+			throw new ArgumentNullException(nameof(destination));
 
-			var buffer = ArrayPool<byte>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
+		if(!destination.CanWrite)
+			throw new NotSupportedException("The destination stream does not support writing.");
 
-			try
+		var buffer = ArrayPool<byte>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
+
+		try
+		{
+			int bufferRead;
+
+			while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
 			{
-				int bufferRead;
-
-				while((bufferRead = reader.Read(buffer, 0, buffer.Length)) > 0)
-				{
-					await destination.WriteAsync(buffer.AsMemory(0, bufferRead));
-				}
+				await destination.WriteAsync(buffer.AsMemory(0, bufferRead));
 			}
-			finally
-			{
-				ArrayPool<byte>.Shared.Return(buffer);
-			}
+		}
+		finally
+		{
+			ArrayPool<byte>.Shared.Return(buffer);
 		}
 	}
 }

@@ -29,18 +29,17 @@
 
 using System;
 
-namespace Zongsoft.Services
-{
-	[Serializable]
-	public class CommandExecutorFailureEventArgs : Zongsoft.Diagnostics.FailureEventArgs
-	{
-		#region 构造函数
-		public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception) : base(exception, false) => this.Context = context;
-		public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception, bool handled) : base(exception, handled) => this.Context = context;
-		#endregion
+namespace Zongsoft.Services;
 
-		#region 公共属性
-		public CommandExecutorContext Context { get; }
-		#endregion
-	}
+[Serializable]
+public class CommandExecutorFailureEventArgs : Zongsoft.Diagnostics.FailureEventArgs
+{
+	#region 构造函数
+	public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception) : base(exception, false) => this.Context = context;
+	public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception, bool handled) : base(exception, handled) => this.Context = context;
+	#endregion
+
+	#region 公共属性
+	public CommandExecutorContext Context { get; }
+	#endregion
 }

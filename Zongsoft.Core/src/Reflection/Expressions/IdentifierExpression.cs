@@ -29,33 +29,22 @@
 
 using System;
 
-namespace Zongsoft.Reflection.Expressions
+namespace Zongsoft.Reflection.Expressions;
+
+public class IdentifierExpression : MemberExpression
 {
-	public class IdentifierExpression : MemberExpression
+	#region 构造函数
+	public IdentifierExpression(string name)
 	{
-		#region 构造函数
-		public IdentifierExpression(string name)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Name = name;
-		}
-		#endregion
-
-		#region 公共属性
-		public override MemberExpressionType ExpressionType
-		{
-			get
-			{
-				return MemberExpressionType.Identifier;
-			}
-		}
-
-		public string Name
-		{
-			get;
-		}
-		#endregion
+		this.Name = name;
 	}
+	#endregion
+
+	#region 公共属性
+	public override MemberExpressionType ExpressionType => MemberExpressionType.Identifier;
+	public string Name { get; }
+	#endregion
 }

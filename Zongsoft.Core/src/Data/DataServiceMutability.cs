@@ -29,136 +29,135 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据服务可变性的结构。
+/// </summary>
+public readonly struct DataServiceMutability : IEquatable<DataServiceMutability>
 {
-	/// <summary>
-	/// 表示数据服务可变性的结构。
-	/// </summary>
-	public readonly struct DataServiceMutability : IEquatable<DataServiceMutability>
+	#region 常量定义
+	private const byte DELETABLE_VALUE  = 0x01;
+	private const byte UPDATABLE_VALUE  = 0x02;
+	private const byte INSERTABLE_VALUE = 0x04;
+	private const byte UPSERTABLE_VALUE = 0x08;
+	private const byte UPSERTABLE_FLAG  = 0x80;
+	#endregion
+
+	#region 成员字段
+	private readonly byte _value;
+	#endregion
+
+	#region 构造函数
+	private DataServiceMutability(byte value) => _value = value;
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置一个值，指示是否可删除。</summary>
+	public bool Deletable
 	{
-		#region 常量定义
-		private const byte DELETABLE_VALUE  = 0x01;
-		private const byte UPDATABLE_VALUE  = 0x02;
-		private const byte INSERTABLE_VALUE = 0x04;
-		private const byte UPSERTABLE_VALUE = 0x08;
-		private const byte UPSERTABLE_FLAG  = 0x80;
-		#endregion
+		get => (_value & DELETABLE_VALUE) == DELETABLE_VALUE;
+		init => _value |= DELETABLE_VALUE;
+	}
 
-		#region 成员字段
-		private readonly byte _value;
-		#endregion
+	/// <summary>获取或设置一个值，指示是否可更新。</summary>
+	public bool Updatable
+	{
+		get => (_value & UPDATABLE_VALUE) == UPDATABLE_VALUE;
+		init => _value |= UPDATABLE_VALUE;
+	}
 
-		#region 构造函数
-		private DataServiceMutability(byte value) => _value = value;
-		#endregion
+	/// <summary>获取或设置一个值，指示是否可新增。</summary>
+	public bool Insertable
+	{
+		get => (_value & INSERTABLE_VALUE) == INSERTABLE_VALUE;
+		init => _value |= INSERTABLE_VALUE;
+	}
 
-		#region 公共属性
-		/// <summary>获取或设置一个值，指示是否可删除。</summary>
-		public bool Deletable
+	/// <summary>获取或设置一个值，指示是否可增改。</summary>
+	public bool Upsertable
+	{
+		get => (_value & UPSERTABLE_FLAG) == UPSERTABLE_FLAG ? (_value & UPSERTABLE_VALUE) == UPSERTABLE_VALUE : this.Insertable && this.Updatable;
+		init => _value |= (UPSERTABLE_VALUE | UPSERTABLE_FLAG);
+	}
+	#endregion
+
+	#region 重写方法
+	public bool Equals(DataServiceMutability other) => _value == other._value;
+	public override bool Equals(object obj) => obj is DataServiceMutability other && this.Equals(other);
+	public override int GetHashCode() => _value;
+	public override string ToString() => _value == 0 ?
+		nameof(None) :
+		$"{(this.Deletable ? nameof(this.Deletable) : null)}," +
+		$"{(this.Updatable ? nameof(this.Updatable) : null)}," +
+		$"{(this.Insertable ? nameof(this.Insertable) : null)}," +
+		$"{(this.Upsertable ? nameof(this.Upsertable) : null)}";
+	#endregion
+
+	#region 符号重写
+	public static bool operator ==(DataServiceMutability left, DataServiceMutability right) => left._value == right._value;
+	public static bool operator !=(DataServiceMutability left, DataServiceMutability right) => left._value != right._value;
+	#endregion
+
+	#region 静态属性
+	/// <summary>获取一个空的可变性，即没有任何可变性。</summary>
+	public static DataServiceMutability None => default;
+
+	/// <summary>获取一个具有全部的可变性，支持“删除”、“新增”、“更新”、“增改”。</summary>
+	public static DataServiceMutability All => new (DELETABLE_VALUE | UPDATABLE_VALUE | INSERTABLE_VALUE | UPSERTABLE_VALUE);
+
+	/// <summary>获取一个默认的可变性，支持“新增”和“更新”。</summary>
+	public static DataServiceMutability Default => new (UPDATABLE_VALUE | INSERTABLE_VALUE);
+	#endregion
+
+	#region 解析方法
+	public static DataServiceMutability Parse(string text) => TryParse(text, out var result) ? result : throw new ArgumentException($"Illegal format parameter value.", nameof(text));
+	public static bool TryParse(string text, out DataServiceMutability result)
+	{
+		if(string.IsNullOrEmpty(text))
 		{
-			get => (_value & DELETABLE_VALUE) == DELETABLE_VALUE;
-			init => _value |= DELETABLE_VALUE;
-		}
-
-		/// <summary>获取或设置一个值，指示是否可更新。</summary>
-		public bool Updatable
-		{
-			get => (_value & UPDATABLE_VALUE) == UPDATABLE_VALUE;
-			init => _value |= UPDATABLE_VALUE;
-		}
-
-		/// <summary>获取或设置一个值，指示是否可新增。</summary>
-		public bool Insertable
-		{
-			get => (_value & INSERTABLE_VALUE) == INSERTABLE_VALUE;
-			init => _value |= INSERTABLE_VALUE;
-		}
-
-		/// <summary>获取或设置一个值，指示是否可增改。</summary>
-		public bool Upsertable
-		{
-			get => (_value & UPSERTABLE_FLAG) == UPSERTABLE_FLAG ? (_value & UPSERTABLE_VALUE) == UPSERTABLE_VALUE : this.Insertable && this.Updatable;
-			init => _value |= (UPSERTABLE_VALUE | UPSERTABLE_FLAG);
-		}
-		#endregion
-
-		#region 重写方法
-		public bool Equals(DataServiceMutability other) => _value == other._value;
-		public override bool Equals(object obj) => obj is DataServiceMutability other && this.Equals(other);
-		public override int GetHashCode() => _value;
-		public override string ToString() => _value == 0 ?
-			nameof(None) :
-			$"{(this.Deletable ? nameof(this.Deletable) : null)}," +
-			$"{(this.Updatable ? nameof(this.Updatable) : null)}," +
-			$"{(this.Insertable ? nameof(this.Insertable) : null)}," +
-			$"{(this.Upsertable ? nameof(this.Upsertable) : null)}";
-		#endregion
-
-		#region 符号重写
-		public static bool operator ==(DataServiceMutability left, DataServiceMutability right) => left._value == right._value;
-		public static bool operator !=(DataServiceMutability left, DataServiceMutability right) => left._value != right._value;
-		#endregion
-
-		#region 静态属性
-		/// <summary>获取一个空的可变性，即没有任何可变性。</summary>
-		public static DataServiceMutability None => default;
-
-		/// <summary>获取一个具有全部的可变性，支持“删除”、“新增”、“更新”、“增改”。</summary>
-		public static DataServiceMutability All => new (DELETABLE_VALUE | UPDATABLE_VALUE | INSERTABLE_VALUE | UPSERTABLE_VALUE);
-
-		/// <summary>获取一个默认的可变性，支持“新增”和“更新”。</summary>
-		public static DataServiceMutability Default => new (UPDATABLE_VALUE | INSERTABLE_VALUE);
-		#endregion
-
-		#region 解析方法
-		public static DataServiceMutability Parse(string text) => TryParse(text, out var result) ? result : throw new ArgumentException($"Illegal format parameter value.", nameof(text));
-		public static bool TryParse(string text, out DataServiceMutability result)
-		{
-			if(string.IsNullOrEmpty(text))
-			{
-				result = default;
-				return true;
-			}
-
-			byte value = 0;
-			var parts = text.Split(new[] { ',', '|' }, StringSplitOptions.TrimEntries);
-
-			for(int i = 0; i < parts.Length; i++)
-			{
-				var part = parts[i];
-
-				if(string.IsNullOrWhiteSpace(part))
-					continue;
-
-				switch(part.ToUpperInvariant())
-				{
-					case "NONE":
-						break;
-					case "DELETE":
-					case "DELETABLE":
-						value |= DELETABLE_VALUE;
-						break;
-					case "INSERT":
-					case "INSERTABLE":
-						value |= INSERTABLE_VALUE;
-						break;
-					case "UPDATE":
-					case "UPDATABLE":
-						value |= UPDATABLE_VALUE;
-						break;
-					case "UPSERT":
-					case "UPSERTABLE":
-						value |= (UPSERTABLE_VALUE | UPSERTABLE_FLAG);
-						break;
-					default:
-						result = default;
-						return false;
-				}
-			}
-
-			result = new DataServiceMutability(value);
+			result = default;
 			return true;
 		}
-		#endregion
+
+		byte value = 0;
+		var parts = text.Split(new[] { ',', '|' }, StringSplitOptions.TrimEntries);
+
+		for(int i = 0; i < parts.Length; i++)
+		{
+			var part = parts[i];
+
+			if(string.IsNullOrWhiteSpace(part))
+				continue;
+
+			switch(part.ToUpperInvariant())
+			{
+				case "NONE":
+					break;
+				case "DELETE":
+				case "DELETABLE":
+					value |= DELETABLE_VALUE;
+					break;
+				case "INSERT":
+				case "INSERTABLE":
+					value |= INSERTABLE_VALUE;
+					break;
+				case "UPDATE":
+				case "UPDATABLE":
+					value |= UPDATABLE_VALUE;
+					break;
+				case "UPSERT":
+				case "UPSERTABLE":
+					value |= (UPSERTABLE_VALUE | UPSERTABLE_FLAG);
+					break;
+				default:
+					result = default;
+					return false;
+			}
+		}
+
+		result = new DataServiceMutability(value);
+		return true;
 	}
+	#endregion
 }

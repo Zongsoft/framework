@@ -28,19 +28,15 @@
  */
 
 using System;
-using System.Collections;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 为数据访问的新增或更新事件提供数据。
+/// </summary>
+public class DataUpsertedEventArgs : DataAccessEventArgs<DataUpsertContextBase>
 {
-	/// <summary>
-	/// 为数据访问的新增或更新事件提供数据。
-	/// </summary>
-	public class DataUpsertedEventArgs : DataAccessEventArgs<DataUpsertContextBase>
-	{
-		#region 构造函数
-		public DataUpsertedEventArgs(DataUpsertContextBase context) : base(context)
-		{
-		}
-		#endregion
-	}
+	#region 构造函数
+	public DataUpsertedEventArgs(DataUpsertContextBase context) : base(context) { }
+	#endregion
 }

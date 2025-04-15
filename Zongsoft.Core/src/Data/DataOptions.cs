@@ -30,50 +30,49 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public abstract class DataOptionsBase : IDataOptions
 {
-	public abstract class DataOptionsBase : IDataOptions
-	{
-		#region 构造函数
-		protected DataOptionsBase() => this.Parameters = new Collections.Parameters();
-		protected DataOptionsBase(Collections.Parameters parameters) => this.Parameters = parameters ?? new Collections.Parameters();
-		protected DataOptionsBase(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameters = new Collections.Parameters(parameters);
-		#endregion
+	#region 构造函数
+	protected DataOptionsBase() => this.Parameters = new Collections.Parameters();
+	protected DataOptionsBase(Collections.Parameters parameters) => this.Parameters = parameters ?? new Collections.Parameters();
+	protected DataOptionsBase(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameters = new Collections.Parameters(parameters);
+	#endregion
 
-		#region 公共属性
-		public Collections.Parameters Parameters { get; }
-		#endregion
-	}
+	#region 公共属性
+	public Collections.Parameters Parameters { get; }
+	#endregion
+}
 
-	public abstract class DataOptionsBuilder<TOptions> : IDataOptionsBuilder<TOptions> where TOptions : IDataOptions
-	{
-		protected DataOptionsBuilder() => this.Parameters = new Collections.Parameters();
-		public Collections.Parameters Parameters { get; }
+public abstract class DataOptionsBuilder<TOptions> : IDataOptionsBuilder<TOptions> where TOptions : IDataOptions
+{
+	protected DataOptionsBuilder() => this.Parameters = new Collections.Parameters();
+	public Collections.Parameters Parameters { get; }
 
-		public abstract TOptions Build();
-		public static implicit operator TOptions(DataOptionsBuilder<TOptions> builder) => builder.Build();
-	}
+	public abstract TOptions Build();
+	public static implicit operator TOptions(DataOptionsBuilder<TOptions> builder) => builder.Build();
+}
 
-	public interface IDataMutateOptions : IDataOptions
-	{
-		/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
-		bool ValidatorSuppressed { get; set; }
-	}
+public interface IDataMutateOptions : IDataOptions
+{
+	/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
+	bool ValidatorSuppressed { get; set; }
+}
 
-	public abstract class DataMutateOptions : DataOptionsBase, IDataMutateOptions
-	{
-		#region 构造函数
-		protected DataMutateOptions() { }
-		protected DataMutateOptions(Collections.Parameters parameters) : base(parameters) { }
-		protected DataMutateOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
-		#endregion
+public abstract class DataMutateOptions : DataOptionsBase, IDataMutateOptions
+{
+	#region 构造函数
+	protected DataMutateOptions() { }
+	protected DataMutateOptions(Collections.Parameters parameters) : base(parameters) { }
+	protected DataMutateOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
+	#endregion
 
-		public bool ValidatorSuppressed { get; set; }
-	}
+	public bool ValidatorSuppressed { get; set; }
+}
 
-	public abstract class DataMutateOptionsBuilder<TOptions> : DataOptionsBuilder<TOptions> where TOptions : IDataMutateOptions
-	{
-		/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
-		public bool ValidatorSuppressed { get; set; }
-	}
+public abstract class DataMutateOptionsBuilder<TOptions> : DataOptionsBuilder<TOptions> where TOptions : IDataMutateOptions
+{
+	/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
+	public bool ValidatorSuppressed { get; set; }
 }

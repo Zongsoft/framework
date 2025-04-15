@@ -29,40 +29,37 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 为数据服务的获取事件提供数据。
+/// </summary>
+public class DataGettedEventArgs<T> : DataAccessEventArgs<DataSelectContextBase>
 {
+	#region 构造函数
+	public DataGettedEventArgs(DataSelectContextBase context) : base(context) { }
+	#endregion
+
+	#region 公共属性
 	/// <summary>
-	/// 为数据服务的获取事件提供数据。
+	/// 获取查询操作的首条数据。
 	/// </summary>
-	public class DataGettedEventArgs<T> : DataAccessEventArgs<DataSelectContextBase>
+	public T Result
 	{
-		#region 构造函数
-		public DataGettedEventArgs(DataSelectContextBase context) : base(context)
+		get
 		{
-		}
-		#endregion
+			var items = this.Context.Result;
 
-		#region 公共属性
-		/// <summary>
-		/// 获取查询操作的首条数据。
-		/// </summary>
-		public T Result
-		{
-			get
+			if(items != null)
 			{
-				var items = this.Context.Result;
+				var iterator = items.GetEnumerator();
 
-				if(items != null)
-				{
-					var iterator = items.GetEnumerator();
-
-					if(iterator != null && iterator.MoveNext())
-						return (T)iterator.Current;
-				}
-
-				return default(T);
+				if(iterator != null && iterator.MoveNext())
+					return (T)iterator.Current;
 			}
+
+			return default;
 		}
-		#endregion
 	}
+	#endregion
 }

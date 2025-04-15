@@ -29,14 +29,13 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public interface IDataServiceContext<TModel>
 {
-	public interface IDataServiceContext<TModel>
-	{
-		IDataService<TModel> Service { get; }
-		DataServiceMethod Method { get; }
-		IDataAccessContextBase AccessContext { get; }
-		object Result { get; set; }
-		object[] Arguments { get; }
-	}
+	IDataService<TModel> Service { get; }
+	DataServiceMethod Method { get; }
+	IDataAccessContextBase AccessContext { get; }
+	object Result { get; set; }
+	object[] Arguments { get; }
 }

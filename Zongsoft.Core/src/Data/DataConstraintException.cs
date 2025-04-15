@@ -29,28 +29,27 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据约束失败的异常类。
+/// </summary>
+public class DataConstraintException : DataException
 {
-	/// <summary>
-	/// 表示数据约束失败的异常类。
-	/// </summary>
-	public class DataConstraintException : DataException
+	#region 构造函数
+	public DataConstraintException(string field, Exception innerException = null) : base(Properties.Resources.DataConstraintException_Message, innerException)
 	{
-		#region 构造函数
-		public DataConstraintException(string field, Exception innerException = null) : base(Properties.Resources.DataConstraintException_Message, innerException)
-		{
-			this.Field = field;
-		}
-
-		public DataConstraintException(string field, string message, Exception innerException = null) : base(message, innerException)
-		{
-			this.Field = field;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置不符合约束的字段名。</summary>
-		public string Field { get; set; }
-		#endregion
+		this.Field = field;
 	}
+
+	public DataConstraintException(string field, string message, Exception innerException = null) : base(message, innerException)
+	{
+		this.Field = field;
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置不符合约束的字段名。</summary>
+	public string Field { get; set; }
+	#endregion
 }

@@ -29,33 +29,32 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+public class ModelPropertyAttribute : Attribute
 {
-	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-	public class ModelPropertyAttribute : Attribute
+	#region 构造函数
+	public ModelPropertyAttribute(ModelPropertyRole role) => this.Role = role;
+	public ModelPropertyAttribute(ModelPropertyRole role, ModelPropertyFlags flags)
 	{
-		#region 构造函数
-		public ModelPropertyAttribute(ModelPropertyRole role) => this.Role = role;
-		public ModelPropertyAttribute(ModelPropertyRole role, ModelPropertyFlags flags)
-		{
-			this.Role = role;
-			this.Flags = flags;
-		}
-
-		public ModelPropertyAttribute(ModelPropertyFlags flags) => this.Flags = flags;
-		public ModelPropertyAttribute(ModelPropertyFlags flags, ModelPropertyRole role)
-		{
-			this.Role = role;
-			this.Flags = flags;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置属性的语义角色。</summary>
-		public ModelPropertyRole? Role { get; set; }
-
-		/// <summary>获取或设置属性的标记。</summary>
-		public ModelPropertyFlags? Flags { get; set; }
-		#endregion
+		this.Role = role;
+		this.Flags = flags;
 	}
+
+	public ModelPropertyAttribute(ModelPropertyFlags flags) => this.Flags = flags;
+	public ModelPropertyAttribute(ModelPropertyFlags flags, ModelPropertyRole role)
+	{
+		this.Role = role;
+		this.Flags = flags;
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置属性的语义角色。</summary>
+	public ModelPropertyRole? Role { get; set; }
+
+	/// <summary>获取或设置属性的标记。</summary>
+	public ModelPropertyFlags? Flags { get; set; }
+	#endregion
 }

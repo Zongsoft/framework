@@ -33,40 +33,39 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Zongsoft.IO
+namespace Zongsoft.IO;
+
+/// <summary>
+/// 提供用于创建、复制、删除、移动和打开文件等功能的抽象接口，该接口将提供不同文件系统的文件支持。
+/// </summary>
+public interface IFile
 {
-	/// <summary>
-	/// 提供用于创建、复制、删除、移动和打开文件等功能的抽象接口，该接口将提供不同文件系统的文件支持。
-	/// </summary>
-	public interface IFile
-	{
-		/// <summary>获取指定文件路径对应的<see cref="FileInfo"/>描述信息。</summary>
-		/// <param name="path">指定的文件路径。</param>
-		/// <returns>如果指定的路径是存在的则返回对应的<see cref="FileInfo"/>，否则返回空(<c>null</c>)。</returns>
-		FileInfo GetInfo(string path);
-		ValueTask<FileInfo> GetInfoAsync(string path);
+	/// <summary>获取指定文件路径对应的<see cref="FileInfo"/>描述信息。</summary>
+	/// <param name="path">指定的文件路径。</param>
+	/// <returns>如果指定的路径是存在的则返回对应的<see cref="FileInfo"/>，否则返回空(<c>null</c>)。</returns>
+	FileInfo GetInfo(string path);
+	ValueTask<FileInfo> GetInfoAsync(string path);
 
-		bool SetInfo(string path, IDictionary<string, object> properties);
-		ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties);
+	bool SetInfo(string path, IDictionary<string, object> properties);
+	ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties);
 
-		bool Delete(string path);
-		ValueTask<bool> DeleteAsync(string path);
+	bool Delete(string path);
+	ValueTask<bool> DeleteAsync(string path);
 
-		bool Exists(string path);
-		ValueTask<bool> ExistsAsync(string path);
+	bool Exists(string path);
+	ValueTask<bool> ExistsAsync(string path);
 
-		void Copy(string source, string destination);
-		void Copy(string source, string destination, bool overwrite);
+	void Copy(string source, string destination);
+	void Copy(string source, string destination, bool overwrite);
 
-		ValueTask CopyAsync(string source, string destination);
-		ValueTask CopyAsync(string source, string destination, bool overwrite);
+	ValueTask CopyAsync(string source, string destination);
+	ValueTask CopyAsync(string source, string destination, bool overwrite);
 
-		void Move(string source, string destination);
-		ValueTask MoveAsync(string source, string destination);
+	void Move(string source, string destination);
+	ValueTask MoveAsync(string source, string destination);
 
-		Stream Open(string path, IDictionary<string, object> properties = null);
-		Stream Open(string path, FileMode mode, IDictionary<string, object> properties = null);
-		Stream Open(string path, FileMode mode, FileAccess access, IDictionary<string, object> properties = null);
-		Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IDictionary<string, object> properties = null);
-	}
+	Stream Open(string path, IDictionary<string, object> properties = null);
+	Stream Open(string path, FileMode mode, IDictionary<string, object> properties = null);
+	Stream Open(string path, FileMode mode, FileAccess access, IDictionary<string, object> properties = null);
+	Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IDictionary<string, object> properties = null);
 }

@@ -32,31 +32,30 @@ using System.ComponentModel;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Terminals.Commands
+namespace Zongsoft.Terminals.Commands;
+
+[DisplayName("ExitCommand.Name")]
+[Description("ExitCommand.Description")]
+[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
+public class ExitCommand : Zongsoft.Services.CommandBase<TerminalCommandContext>
 {
-	[DisplayName("ExitCommand.Name")]
-	[Description("ExitCommand.Description")]
-	[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-	public class ExitCommand : Zongsoft.Services.CommandBase<TerminalCommandContext>
+	#region 构造函数
+	public ExitCommand() : base("Exit") { }
+	public ExitCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override object OnExecute(TerminalCommandContext context)
 	{
-		#region 构造函数
-		public ExitCommand() : base("Exit") { }
-		public ExitCommand(string name) : base(name) { }
-		#endregion
+		if(context.Expression.Options.Contains("yes"))
+			throw new TerminalCommandExecutor.ExitException();
 
-		#region 重写方法
-		protected override object OnExecute(TerminalCommandContext context)
-		{
-			if(context.Expression.Options.Contains("yes"))
-				throw new TerminalCommandExecutor.ExitException();
+		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
 
-			context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
+		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
+			throw new TerminalCommandExecutor.ExitException();
 
-			if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-				throw new TerminalCommandExecutor.ExitException();
-
-			return null;
-		}
-		#endregion
+		return null;
 	}
+	#endregion
 }

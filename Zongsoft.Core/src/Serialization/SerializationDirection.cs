@@ -28,22 +28,20 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Serialization
+namespace Zongsoft.Serialization;
+
+/// <summary>
+/// 表示序列化方向的枚举。
+/// </summary>
+public enum SerializationDirection
 {
-	/// <summary>
-	/// 表示序列化方向的枚举。
-	/// </summary>
-	public enum SerializationDirection
-	{
-		/// <summary>未定义。</summary>
-		None,
+	/// <summary>未定义。</summary>
+	None,
 
-		/// <summary>输入，即反序列化调用。</summary>
-		Input,
+	/// <summary>输入，即反序列化调用。</summary>
+	Input,
 
-		/// <summary>输出，即序列化调用。</summary>
-		Output,
-	}
+	/// <summary>输出，即序列化调用。</summary>
+	Output,
 }

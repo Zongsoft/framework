@@ -30,67 +30,66 @@
 using System;
 using System.Threading;
 
-namespace Zongsoft.Common
+namespace Zongsoft.Common;
+
+public struct BitVector64 : IEquatable<BitVector64>
 {
-	public struct BitVector64 : IEquatable<BitVector64>
+	#region 成员字段
+	private long _data;
+	#endregion
+
+	#region 构造函数
+	public BitVector64(int data) => _data = data;
+	public BitVector64(long data) => _data = data;
+	#endregion
+
+	#region 公共属性
+	public readonly long Data => _data;
+
+	public bool this[long bit]
 	{
-		#region 成员字段
-		private long _data;
-		#endregion
-
-		#region 构造函数
-		public BitVector64(int data) => _data = data;
-		public BitVector64(long data) => _data = data;
-		#endregion
-
-		#region 公共属性
-		public readonly long Data => _data;
-
-		public bool this[long bit]
+		get
 		{
-			get
+			var data = _data;
+			return (data & bit) == bit;
+		}
+		set
+		{
+			while(true)
 			{
-				var data = _data;
-				return (data & bit) == bit;
-			}
-			set
-			{
-				while(true)
-				{
-					long oldData = _data;
-					long newData;
+				long oldData = _data;
+				long newData;
 
-					if(value)
-						newData = oldData | bit;
-					else
-						newData = oldData & ~bit;
+				if(value)
+					newData = oldData | bit;
+				else
+					newData = oldData & ~bit;
 
-					var result = Interlocked.CompareExchange(ref _data, newData, oldData);
+				var result = Interlocked.CompareExchange(ref _data, newData, oldData);
 
-					if(result == oldData)
-						break;
-				}
+				if(result == oldData)
+					break;
 			}
 		}
-		#endregion
-
-		#region 类型转换
-		public static implicit operator long(BitVector64 vector) => vector._data;
-		public static implicit operator BitVector64(long data) => new(data);
-		public static implicit operator BitVector64(BitVector32 vector) => new(vector.Data);
-		#endregion
-
-		#region 符号重写
-		public static bool operator ==(BitVector64 left, BitVector64 right) => left._data == right._data;
-		public static bool operator !=(BitVector64 left, BitVector64 right) => left._data != right._data;
-		#endregion
-
-		#region 重写方法
-		public readonly bool Equals(BitVector32 other) => _data == other.Data;
-		public readonly bool Equals(BitVector64 other) => _data == other._data;
-		public override readonly bool Equals(object obj) => obj is BitVector64 other && this.Equals(other);
-		public override readonly int GetHashCode() => _data.GetHashCode();
-		public override readonly string ToString() => _data.ToString();
-		#endregion
 	}
+	#endregion
+
+	#region 类型转换
+	public static implicit operator long(BitVector64 vector) => vector._data;
+	public static implicit operator BitVector64(long data) => new(data);
+	public static implicit operator BitVector64(BitVector32 vector) => new(vector.Data);
+	#endregion
+
+	#region 符号重写
+	public static bool operator ==(BitVector64 left, BitVector64 right) => left._data == right._data;
+	public static bool operator !=(BitVector64 left, BitVector64 right) => left._data != right._data;
+	#endregion
+
+	#region 重写方法
+	public readonly bool Equals(BitVector32 other) => _data == other.Data;
+	public readonly bool Equals(BitVector64 other) => _data == other._data;
+	public override readonly bool Equals(object obj) => obj is BitVector64 other && this.Equals(other);
+	public override readonly int GetHashCode() => _data.GetHashCode();
+	public override readonly string ToString() => _data.ToString();
+	#endregion
 }

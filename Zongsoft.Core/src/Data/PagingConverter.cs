@@ -32,83 +32,82 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 提供 <see cref="Paging"/> 分页设置的解析功能，关于支持的解析语法请查看备注说明。
+/// </summary>
+/// <remarks>
+/// 支持两种解析格式：
+/// <list type="bullet">
+///		<item>
+///			<term>PageIndex|PageSize</term>
+///			<description>分页条件：页号与每页记录数之间采用“|”或“@”符号分隔，其中每页记录数可选（忽略则表示系统默认值）。
+///				<para>如果页号为数字零或“*”星号，则表示不分页（参见：<seealso cref="Paging.Disabled"/>）。</para>
+///			</description>
+///		</item>
+///		<item>
+///			<term>PageIndex/PageCount(TotalCount)</term>
+///			<description>分页结果：页号与分页数之间采用“/”符号分隔，之后的记录总数(采用圆括号包裹)可选。</description>
+///		</item>
+/// </list>
+/// </remarks>
+public class PagingConverter : TypeConverter
 {
-	/// <summary>
-	/// 提供 <see cref="Paging"/> 分页设置的解析功能，关于支持的解析语法请查看备注说明。
-	/// </summary>
-	/// <remarks>
-	/// 支持两种解析格式：
-	/// <list type="bullet">
-	///		<item>
-	///			<term>PageIndex|PageSize</term>
-	///			<description>分页条件：页号与每页记录数之间采用“|”或“@”符号分隔，其中每页记录数可选（忽略则表示系统默认值）。
-	///				<para>如果页号为数字零或“*”星号，则表示不分页（参见：<seealso cref="Paging.Disabled"/>）。</para>
-	///			</description>
-	///		</item>
-	///		<item>
-	///			<term>PageIndex/PageCount(TotalCount)</term>
-	///			<description>分页结果：页号与分页数之间采用“/”符号分隔，之后的记录总数(采用圆括号包裹)可选。</description>
-	///		</item>
-	/// </list>
-	/// </remarks>
-	public class PagingConverter : TypeConverter
+	private static readonly Regex _regex_ = new Regex(@"^(?<index>\d+)(([|@](?<size>\d+))|(/(?<count>\d+)(\((?<total>\d+)\))?))?$", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000));
+
+	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{
-		private static readonly Regex _regex_ = new Regex(@"^(?<index>\d+)(([|@](?<size>\d+))|(/(?<count>\d+)(\((?<total>\d+)\))?))?$", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000));
+		return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+	}
 
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-		{
-			return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-		}
+	public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+	{
+		return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+	}
 
-		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+	public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+	{
+		if(value is string text)
 		{
-			return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
-		}
+			if(string.IsNullOrEmpty(text))
+				return Paging.Page(1);
 
-		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-		{
-			if(value is string text)
+			if(text == "*" || text == "0")
+				return Paging.Disabled;
+
+			var match = _regex_.Match(text);
+
+			if(match.Success && match.Groups["index"].Success)
 			{
-				if(string.IsNullOrEmpty(text))
-					return Paging.Page(1);
-
-				if(text == "*" || text == "0")
-					return Paging.Disabled;
-
-				var match = _regex_.Match(text);
-
-				if(match.Success && match.Groups["index"].Success)
+				if(match.Groups["count"].Success)
 				{
-					if(match.Groups["count"].Success)
-					{
-						var total = match.Groups["total"].Success ? long.Parse(match.Groups["total"].Value) : 0;
+					var total = match.Groups["total"].Success ? long.Parse(match.Groups["total"].Value) : 0;
 
-						if(total > 0)
-							return new Paging(int.Parse(match.Groups["index"].Value), (int)total / int.Parse(match.Groups["count"].Value)) { TotalCount = total };
-						else
-							return new Paging(int.Parse(match.Groups["index"].Value));
-					}
-
-					return match.Groups["size"].Success ?
-					       Paging.Page(int.Parse(match.Groups["index"].Value), int.Parse(match.Groups["size"].Value)) :
-					       Paging.Page(int.Parse(match.Groups["index"].Value));
+					if(total > 0)
+						return new Paging(int.Parse(match.Groups["index"].Value), (int)total / int.Parse(match.Groups["count"].Value)) { TotalCount = total };
+					else
+						return new Paging(int.Parse(match.Groups["index"].Value));
 				}
-			}
 
-			return base.ConvertFrom(context, culture, value);
+				return match.Groups["size"].Success ?
+				       Paging.Page(int.Parse(match.Groups["index"].Value), int.Parse(match.Groups["size"].Value)) :
+				       Paging.Page(int.Parse(match.Groups["index"].Value));
+			}
 		}
 
-		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+		return base.ConvertFrom(context, culture, value);
+	}
+
+	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+	{
+		if(value is Paging paging)
 		{
-			if(value is Paging paging)
-			{
-				return paging.TotalCount > 0 ?
-					$"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})" :
-					$"{paging.PageIndex}|{paging.PageSize}";
-			}
-
-			return base.ConvertTo(context, culture, value, destinationType);
+			return paging.TotalCount > 0 ?
+				$"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})" :
+				$"{paging.PageIndex}|{paging.PageSize}";
 		}
+
+		return base.ConvertTo(context, culture, value, destinationType);
 	}
 }

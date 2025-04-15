@@ -29,12 +29,11 @@
 
 using System;
 
-namespace Zongsoft.Distributing
+namespace Zongsoft.Distributing;
+
+public interface IDistributedLockTokenizer
 {
-	public interface IDistributedLockTokenizer
-	{
-		string Name { get; }
-		byte[] Tokenize();
-		string GetString(ReadOnlySpan<byte> value);
-	}
+	string Name { get; }
+	byte[] Tokenize();
+	string GetString(ReadOnlySpan<byte> value);
 }

@@ -29,29 +29,28 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示写入操作上下文的基础接口。
+/// </summary>
+public interface IDataMutateContextBase : IDataAccessContextBase
 {
-	/// <summary>
-	/// 表示写入操作上下文的基础接口。
-	/// </summary>
-	public interface IDataMutateContextBase : IDataAccessContextBase
-	{
-		/// <summary>获取写入操作对应的实体。</summary>
-		Metadata.IDataEntity Entity { get; }
+	/// <summary>获取写入操作对应的实体。</summary>
+	Metadata.IDataEntity Entity { get; }
 
-		/// <summary>获取或设置写入操作的受影响记录数。</summary>
-		int Count { get; set; }
+	/// <summary>获取或设置写入操作的受影响记录数。</summary>
+	int Count { get; set; }
 
-		/// <summary>获取或设置写入操作的数据。</summary>
-		object Data { get; set; }
+	/// <summary>获取或设置写入操作的数据。</summary>
+	object Data { get; set; }
 
-		/// <summary>获取一个值，指示是否为批量写入操作。</summary>
-		bool IsMultiple { get; }
+	/// <summary>获取一个值，指示是否为批量写入操作。</summary>
+	bool IsMultiple { get; }
 
-		/// <summary>获取写入操作的选项。</summary>
-		IDataMutateOptions Options { get; }
+	/// <summary>获取写入操作的选项。</summary>
+	IDataMutateOptions Options { get; }
 
-		/// <summary>获取写入操作的验证器。</summary>
-		IDataValidator Validator { get; }
-	}
+	/// <summary>获取写入操作的验证器。</summary>
+	IDataValidator Validator { get; }
 }

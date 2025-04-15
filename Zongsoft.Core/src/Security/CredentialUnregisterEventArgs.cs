@@ -29,34 +29,23 @@
 
 using System;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Security;
+
+public class CredentialUnregisterEventArgs : EventArgs
 {
-	public class CredentialUnregisterEventArgs : EventArgs
+	#region 构造函数
+	public CredentialUnregisterEventArgs(string credentialId, bool renewal = false)
 	{
-		#region 构造函数
-		public CredentialUnregisterEventArgs(string credentialId, bool renewal = false)
-		{
-			this.IsRenewal = renewal;
-			this.CredentialId = credentialId;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取注销的凭证编号。
-		/// </summary>
-		public string CredentialId
-		{
-			get;
-		}
-
-		/// <summary>
-		/// 获取一个值，指示当前注销是否为续约引发。
-		/// </summary>
-		public bool IsRenewal
-		{
-			get;
-		}
-		#endregion
+		this.IsRenewal = renewal;
+		this.CredentialId = credentialId;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取注销的凭证编号。</summary>
+	public string CredentialId { get; }
+
+	/// <summary>获取一个值，指示当前注销是否为续约引发。</summary>
+	public bool IsRenewal { get; }
+	#endregion
 }

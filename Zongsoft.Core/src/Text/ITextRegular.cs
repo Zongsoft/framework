@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Text
+namespace Zongsoft.Text;
+
+public interface ITextRegular : Services.IMatchable
 {
-	public interface ITextRegular : Services.IMatchable
-	{
-		bool IsMatch(string text, out string result);
-	}
+	bool IsMatch(string text, out string result);
 }

@@ -29,39 +29,38 @@
 
 using System;
 
-namespace Zongsoft.Scheduling
+namespace Zongsoft.Scheduling;
+
+public static class TriggerOptionsExtension
 {
-	public static class TriggerOptionsExtension
+	public static ITriggerOptions Identifier(this ITriggerOptions options, string id)
 	{
-		public static ITriggerOptions Identifier(this ITriggerOptions options, string id)
-		{
-			if(options == null)
-				return string.IsNullOrEmpty(id) ? null : new TriggerOptions(id);
+		if(options == null)
+			return string.IsNullOrEmpty(id) ? null : new TriggerOptions(id);
 
-			options.Identifier = id;
-			return options;
+		options.Identifier = id;
+		return options;
+	}
+
+	public static TriggerOptions.Cron Cron(this ITriggerOptions options, string expression)
+	{
+		if(options is TriggerOptions.Cron cron)
+		{
+			cron.Expression = expression;
+			return cron;
 		}
 
-		public static TriggerOptions.Cron Cron(this ITriggerOptions options, string expression)
-		{
-			if(options is TriggerOptions.Cron cron)
-			{
-				cron.Expression = expression;
-				return cron;
-			}
+		return options is null ? new (expression) : new(options.Identifier, expression);
+	}
 
-			return options is null ? new (expression) : new(options.Identifier, expression);
+	public static TriggerOptions.Latency Delay(this ITriggerOptions options, TimeSpan duration)
+	{
+		if(options is TriggerOptions.Latency latency)
+		{
+			latency.Duration = duration;
+			return latency;
 		}
 
-		public static TriggerOptions.Latency Delay(this ITriggerOptions options, TimeSpan duration)
-		{
-			if(options is TriggerOptions.Latency latency)
-			{
-				latency.Duration = duration;
-				return latency;
-			}
-
-			return options is null ? new (duration) : new(options.Identifier, duration);
-		}
+		return options is null ? new (duration) : new(options.Identifier, duration);
 	}
 }

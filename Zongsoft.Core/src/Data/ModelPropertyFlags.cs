@@ -29,18 +29,17 @@
 
 using System;
 
-namespace Zongsoft.Data
-{
-	/// <summary>
-	/// 表示属性的标记的枚举。
-	/// </summary>
-	[Flags]
-	public enum ModelPropertyFlags
-	{
-		/// <summary>未定义</summary>
-		None = 0,
+namespace Zongsoft.Data;
 
-		/// <summary>必须的（不可或缺也不能为空的）。</summary>
-		Required,
-	}
+/// <summary>
+/// 表示属性的标记的枚举。
+/// </summary>
+[Flags]
+public enum ModelPropertyFlags
+{
+	/// <summary>未定义</summary>
+	None = 0,
+
+	/// <summary>必须的（不可或缺也不能为空的）。</summary>
+	Required,
 }

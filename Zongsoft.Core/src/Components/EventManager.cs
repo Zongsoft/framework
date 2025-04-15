@@ -31,63 +31,62 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Zongsoft.Components
-{
-	/// <summary>
-	/// 提供全局事件管理功能的类。
-	/// </summary>
-	public sealed class EventManager : IEnumerable<EventDescriptor>
-	{
-		#region 单例字段
-		/// <summary>获取全局事件管理器的单例对象。</summary>
-		public static readonly EventManager Global = new();
-		#endregion
+namespace Zongsoft.Components;
 
-		#region 私有构造
-		private EventManager()
-		{
-			this.Events = new EventCollectionView();
-			this.Filters = new List<IFilter<EventContext>>();
-		}
+/// <summary>
+/// 提供全局事件管理功能的类。
+/// </summary>
+public sealed class EventManager : IEnumerable<EventDescriptor>
+{
+	#region 单例字段
+	/// <summary>获取全局事件管理器的单例对象。</summary>
+	public static readonly EventManager Global = new();
+	#endregion
+
+	#region 私有构造
+	private EventManager()
+	{
+		this.Events = new EventCollectionView();
+		this.Filters = new List<IFilter<EventContext>>();
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取事件描述器集合。</summary>
+	public EventCollectionView Events { get; }
+
+	/// <summary>获取事件过滤器集合。</summary>
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	public ICollection<IFilter<EventContext>> Filters { get; }
+
+	/// <summary>获取指定名称的事件描述器。</summary>
+	/// <param name="name">指定的事件名称。</param>
+	/// <returns>返回对应名称的事件描述器。</returns>
+	public EventDescriptor this[string name] => this.Events[name];
+	#endregion
+
+	#region 遍历枚举
+	public IEnumerator<EventDescriptor> GetEnumerator() => this.Events.GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => this.Events.GetEnumerator();
+	#endregion
+
+	#region 嵌套子类
+	public class EventCollectionView : IReadOnlyCollection<EventDescriptor>
+	{
+		#region 内部构造
+		internal EventCollectionView() { }
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取事件描述器集合。</summary>
-		public EventCollectionView Events { get; }
-
-		/// <summary>获取事件过滤器集合。</summary>
-		[System.Text.Json.Serialization.JsonIgnore]
-		[Serialization.SerializationMember(Ignored = true)]
-		public ICollection<IFilter<EventContext>> Filters { get; }
-
-		/// <summary>获取指定名称的事件描述器。</summary>
-		/// <param name="name">指定的事件名称。</param>
-		/// <returns>返回对应名称的事件描述器。</returns>
-		public EventDescriptor this[string name] => this.Events[name];
+		public int Count => Components.Events.GetCount();
+		public EventDescriptor this[string name] => Components.Events.GetEvent(name);
 		#endregion
 
-		#region 遍历枚举
-		public IEnumerator<EventDescriptor> GetEnumerator() => this.Events.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => this.Events.GetEnumerator();
-		#endregion
-
-		#region 嵌套子类
-		public class EventCollectionView : IReadOnlyCollection<EventDescriptor>
-		{
-			#region 内部构造
-			internal EventCollectionView() { }
-			#endregion
-
-			#region 公共属性
-			public int Count => Components.Events.GetCount();
-			public EventDescriptor this[string name] => Components.Events.GetEvent(name);
-			#endregion
-
-			#region 重写方法
-			public IEnumerator<EventDescriptor> GetEnumerator() => Components.Events.GetEvents().GetEnumerator();
-			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-			#endregion
-		}
+		#region 重写方法
+		public IEnumerator<EventDescriptor> GetEnumerator() => Components.Events.GetEvents().GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		#endregion
 	}
+	#endregion
 }

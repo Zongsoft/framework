@@ -28,40 +28,20 @@
  */
 
 using System;
-using System.Collections;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 为数据访问的更新事件提供数据。
+/// </summary>
+public class DataUpdatingEventArgs : DataUpdatedEventArgs
 {
-	/// <summary>
-	/// 为数据访问的更新事件提供数据。
-	/// </summary>
-	public class DataUpdatingEventArgs : DataUpdatedEventArgs
-	{
-		#region 成员字段
-		private bool _cancel;
-		#endregion
+	#region 构造函数
+	public DataUpdatingEventArgs(DataUpdateContextBase context) : base(context) { }
+	#endregion
 
-		#region 构造函数
-		public DataUpdatingEventArgs(DataUpdateContextBase context) : base(context)
-		{
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取或设置一个值，表示是否取消当前操作。
-		/// </summary>
-		public bool Cancel
-		{
-			get
-			{
-				return _cancel;
-			}
-			set
-			{
-				_cancel = value;
-			}
-		}
-		#endregion
-	}
+	#region 公共属性
+	/// <summary>获取或设置一个值，表示是否取消当前操作。</summary>
+	public bool Cancel { get; set; }
+	#endregion
 }

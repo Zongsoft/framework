@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Data
-{
-	/// <summary>
-	/// 表示支持分页的接口。
-	/// </summary>
-	public interface IPageable
-	{
-		/// <summary>表示完成分页的事件。</summary>
-		event EventHandler<PagingEventArgs> Paginated;
+namespace Zongsoft.Data;
 
-		/// <summary>获取一个值，指示当前分页集是否被禁用。</summary>
-		bool Suppressed { get; }
-	}
+/// <summary>
+/// 表示支持分页的接口。
+/// </summary>
+public interface IPageable
+{
+	/// <summary>表示完成分页的事件。</summary>
+	event EventHandler<PagingEventArgs> Paginated;
+
+	/// <summary>获取一个值，指示当前分页集是否被禁用。</summary>
+	bool Suppressed { get; }
 }

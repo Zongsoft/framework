@@ -30,13 +30,12 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 表示服务注册的接口。
+/// </summary>
+public interface IServiceRegistration
 {
-	/// <summary>
-	/// 表示服务注册的接口。
-	/// </summary>
-	public interface IServiceRegistration
-	{
-		void Register(IServiceCollection services, IConfiguration configuration);
-	}
+	void Register(IServiceCollection services, IConfiguration configuration);
 }

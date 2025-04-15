@@ -31,26 +31,25 @@ using System;
 
 using Zongsoft.Collections;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 表示应用模块（应用子系统）的接口。
+/// </summary>
+public interface IApplicationModule
 {
-	/// <summary>
-	/// 表示应用模块（应用子系统）的接口。
-	/// </summary>
-	public interface IApplicationModule
-	{
-		/// <summary>获取应用模块名称。</summary>
-		string Name { get; }
+	/// <summary>获取应用模块名称。</summary>
+	string Name { get; }
 
-		/// <summary>获取应用模块的标题。</summary>
-		string Title { get; }
+	/// <summary>获取应用模块的标题。</summary>
+	string Title { get; }
 
-		/// <summary>获取应用模块的描述文本。</summary>
-		string Description { get; }
+	/// <summary>获取应用模块的描述文本。</summary>
+	string Description { get; }
 
-		/// <summary>获取应用模块的服务容器。</summary>
-		IServiceProvider Services { get; }
+	/// <summary>获取应用模块的服务容器。</summary>
+	IServiceProvider Services { get; }
 
-		/// <summary>获取应用模块的自定义属性集。</summary>
-		Parameters Properties { get; }
-	}
+	/// <summary>获取应用模块的自定义属性集。</summary>
+	Parameters Properties { get; }
 }

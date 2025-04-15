@@ -31,11 +31,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public interface IFilter<in TContext> where TContext : class
 {
-	public interface IFilter<in TContext> where TContext : class
-	{
-		ValueTask OnFiltered(TContext context, CancellationToken cancellation);
-		ValueTask OnFiltering(TContext context, CancellationToken cancellation);
-	}
+	ValueTask OnFiltered(TContext context, CancellationToken cancellation);
+	ValueTask OnFiltering(TContext context, CancellationToken cancellation);
 }

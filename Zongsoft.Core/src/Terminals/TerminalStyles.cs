@@ -28,19 +28,17 @@
  */
 
 using System;
-using System.Text;
 
-namespace Zongsoft.Terminals
+namespace Zongsoft.Terminals;
+
+[Flags]
+public enum TerminalStyles
 {
-	[Flags]
-	public enum TerminalStyles
-	{
-		BackgroundColor = 1,
-		ForegroundColor = 2,
-		Color = 3,
-		FontName = 4,
-		FontStyle = 8,
-		FontSize = 16,
-		Font = 28,
-	}
+	BackgroundColor = 1,
+	ForegroundColor = 2,
+	Color = 3,
+	FontName = 4,
+	FontStyle = 8,
+	FontSize = 16,
+	Font = 28,
 }

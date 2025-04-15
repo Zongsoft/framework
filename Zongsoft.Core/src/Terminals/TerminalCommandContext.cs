@@ -32,28 +32,16 @@ using System.Collections.Generic;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Terminals
+namespace Zongsoft.Terminals;
+
+public class TerminalCommandContext : Zongsoft.Services.CommandContext
 {
-	public class TerminalCommandContext : Zongsoft.Services.CommandContext
-	{
-		#region 构造函数
-		public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, ICommand command, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, command, parameter, extendedProperties) { }
-		public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode commandNode, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, commandNode, parameter, extendedProperties) { }
-		#endregion
+	#region 构造函数
+	public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, ICommand command, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, command, parameter, extendedProperties) { }
+	public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode commandNode, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, commandNode, parameter, extendedProperties) { }
+	#endregion
 
-		#region 公共属性
-		public ITerminal Terminal
-		{
-			get
-			{
-				var executor = this.Executor as TerminalCommandExecutor;
-
-				if(executor != null)
-					return executor.Terminal;
-
-				return null;
-			}
-		}
-		#endregion
-	}
+	#region 公共属性
+	public ITerminal Terminal => this.Executor is TerminalCommandExecutor executor ? executor.Terminal : null;
+	#endregion
 }

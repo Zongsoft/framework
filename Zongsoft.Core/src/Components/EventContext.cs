@@ -30,41 +30,40 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public class EventContext
 {
-	public class EventContext
+	#region 构造函数
+	public EventContext(EventRegistryBase registry, string name, Collections.Parameters parameters = null)
 	{
-		#region 构造函数
-		public EventContext(EventRegistryBase registry, string name, Collections.Parameters parameters = null)
-		{
-			this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
-			this.Name = name;
-			this.QualifiedName = string.IsNullOrEmpty(registry.Name) ? name : $"{registry.Name}:{name}";
-			this.Parameters = parameters ?? new Collections.Parameters();
-		}
-		#endregion
-
-		#region 公共属性
-		[System.Text.Json.Serialization.JsonIgnore]
-		[Serialization.SerializationMember(Ignored = true)]
-		public EventRegistryBase Registry { get; }
-		public string Name { get; }
-		public string QualifiedName { get; }
-		public Collections.Parameters Parameters { get; }
-		#endregion
+		this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
+		this.Name = name;
+		this.QualifiedName = string.IsNullOrEmpty(registry.Name) ? name : $"{registry.Name}:{name}";
+		this.Parameters = parameters ?? new Collections.Parameters();
 	}
+	#endregion
 
-	public class EventContext<TArgument> : EventContext
+	#region 公共属性
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	public EventRegistryBase Registry { get; }
+	public string Name { get; }
+	public string QualifiedName { get; }
+	public Collections.Parameters Parameters { get; }
+	#endregion
+}
+
+public class EventContext<TArgument> : EventContext
+{
+	#region 构造函数
+	public EventContext(EventRegistryBase registry, string name, TArgument argument, Collections.Parameters parameters = null) : base(registry, name, parameters)
 	{
-		#region 构造函数
-		public EventContext(EventRegistryBase registry, string name, TArgument argument, Collections.Parameters parameters = null) : base(registry, name, parameters)
-		{
-			this.Argument = argument;
-		}
-		#endregion
-
-		#region 公共属性
-		public TArgument Argument { get; set; }
-		#endregion
+		this.Argument = argument;
 	}
+	#endregion
+
+	#region 公共属性
+	public TArgument Argument { get; set; }
+	#endregion
 }

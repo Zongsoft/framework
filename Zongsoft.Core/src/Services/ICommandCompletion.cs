@@ -29,13 +29,12 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 表示命令链执行完成的回调接口。
+/// </summary>
+public interface ICommandCompletion
 {
-	/// <summary>
-	/// 表示命令链执行完成的回调接口。
-	/// </summary>
-	public interface ICommandCompletion
-	{
-		void OnCompleted(CommandCompletionContext context);
-	}
+	void OnCompleted(CommandCompletionContext context);
 }

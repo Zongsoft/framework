@@ -28,30 +28,24 @@
  */
 
 using System;
-using System.Security.Claims;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Security;
+
+public class CredentialRegisterEventArgs : EventArgs
 {
-	public class CredentialRegisterEventArgs : EventArgs
+	#region 构造函数
+	public CredentialRegisterEventArgs(CredentialPrincipal principal, bool renewal = false)
 	{
-		#region 构造函数
-		public CredentialRegisterEventArgs(CredentialPrincipal principal, bool renewal = false)
-		{
-			this.IsRenewal = renewal;
-			this.Principal = principal ?? throw new ArgumentNullException(nameof(principal));
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取注册的凭证主体对象。
-		/// </summary>
-		public CredentialPrincipal Principal { get; }
-
-		/// <summary>
-		/// 获取一个值，指示当前注册是否为续约引发。
-		/// </summary>
-		public bool IsRenewal { get; }
-		#endregion
+		this.IsRenewal = renewal;
+		this.Principal = principal ?? throw new ArgumentNullException(nameof(principal));
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取注册的凭证主体对象。</summary>
+	public CredentialPrincipal Principal { get; }
+
+	/// <summary>获取一个值，指示当前注册是否为续约引发。</summary>
+	public bool IsRenewal { get; }
+	#endregion
 }

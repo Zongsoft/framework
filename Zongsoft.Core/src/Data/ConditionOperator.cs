@@ -28,53 +28,51 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public enum ConditionOperator
 {
-	public enum ConditionOperator
-	{
-		/// <summary>等于</summary>
-		[Components.Alias("==")]
-		Equal,
+	/// <summary>等于</summary>
+	[Components.Alias("==")]
+	Equal,
 
-		/// <summary>不等于</summary>
-		[Components.Alias("!=")]
-		NotEqual,
+	/// <summary>不等于</summary>
+	[Components.Alias("!=")]
+	NotEqual,
 
-		/// <summary>大于</summary>
-		[Components.Alias(">")]
-		GreaterThan,
+	/// <summary>大于</summary>
+	[Components.Alias(">")]
+	GreaterThan,
 
-		/// <summary>大于或等于</summary>
-		[Components.Alias(">=")]
-		GreaterThanEqual,
+	/// <summary>大于或等于</summary>
+	[Components.Alias(">=")]
+	GreaterThanEqual,
 
-		/// <summary>小于</summary>
-		[Components.Alias("<")]
-		LessThan,
+	/// <summary>小于</summary>
+	[Components.Alias("<")]
+	LessThan,
 
-		/// <summary>小于或等于</summary>
-		[Components.Alias("<=")]
-		LessThanEqual,
+	/// <summary>小于或等于</summary>
+	[Components.Alias("<=")]
+	LessThanEqual,
 
-		/// <summary>模糊匹配</summary>
-		[Components.Alias("*=")]
-		Like,
+	/// <summary>模糊匹配</summary>
+	[Components.Alias("*=")]
+	Like,
 
-		/// <summary>介于</summary>
-		Between,
+	/// <summary>介于</summary>
+	Between,
 
-		/// <summary>范围</summary>
-		In,
+	/// <summary>范围</summary>
+	In,
 
-		/// <summary>排除范围</summary>
-		NotIn,
+	/// <summary>排除范围</summary>
+	NotIn,
 
-		/// <summary>存在(单目运算符)</summary>
-		Exists,
+	/// <summary>存在(单目运算符)</summary>
+	Exists,
 
-		/// <summary>不存在(单目运算符)</summary>
-		NotExists,
-	}
+	/// <summary>不存在(单目运算符)</summary>
+	NotExists,
 }

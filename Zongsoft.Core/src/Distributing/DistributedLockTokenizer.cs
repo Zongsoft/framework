@@ -29,29 +29,28 @@
 
 using System;
 
-namespace Zongsoft.Distributing
+namespace Zongsoft.Distributing;
+
+public class DistributedLockTokenizer
 {
-	public class DistributedLockTokenizer
+	#region 单例字段
+	public static readonly IDistributedLockTokenizer Guid = new GuidNormalizer();
+	public static readonly IDistributedLockTokenizer Random = new RandomNormalizer();
+	#endregion
+
+	#region 嵌套子类
+	private class GuidNormalizer : IDistributedLockTokenizer
 	{
-		#region 单例字段
-		public static readonly IDistributedLockTokenizer Guid = new GuidNormalizer();
-		public static readonly IDistributedLockTokenizer Random = new RandomNormalizer();
-		#endregion
-
-		#region 嵌套子类
-		private class GuidNormalizer : IDistributedLockTokenizer
-		{
-			public string Name => "Guid";
-			public byte[] Tokenize() => System.Guid.NewGuid().ToByteArray();
-			public string GetString(ReadOnlySpan<byte> value) => value.IsEmpty ? null : (new Guid(value)).ToString("N");
-		}
-
-		private class RandomNormalizer : IDistributedLockTokenizer
-		{
-			public string Name => "Random";
-			public byte[] Tokenize() => BitConverter.GetBytes(Zongsoft.Common.Randomizer.GenerateUInt64());
-			public string GetString(ReadOnlySpan<byte> value) => value.IsEmpty ? null : BitConverter.ToUInt64(value).ToString("X");
-		}
-		#endregion
+		public string Name => "Guid";
+		public byte[] Tokenize() => System.Guid.NewGuid().ToByteArray();
+		public string GetString(ReadOnlySpan<byte> value) => value.IsEmpty ? null : (new Guid(value)).ToString("N");
 	}
+
+	private class RandomNormalizer : IDistributedLockTokenizer
+	{
+		public string Name => "Random";
+		public byte[] Tokenize() => BitConverter.GetBytes(Zongsoft.Common.Randomizer.GenerateUInt64());
+		public string GetString(ReadOnlySpan<byte> value) => value.IsEmpty ? null : BitConverter.ToUInt64(value).ToString("X");
+	}
+	#endregion
 }

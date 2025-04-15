@@ -30,20 +30,19 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Collections
-{
-	public interface IStack<T> : IReadOnlyCollection<T>, IEnumerable<T>
-	{
-		T Pop();
-		T Peek();
-		T Take(int index);
-		T[] Take(int index, int count);
-		void Push(T value);
-		void Clear();
+namespace Zongsoft.Collections;
 
-		bool TryPop(out T value);
-		bool TryPeek(out T value);
-		bool TryTake(int index, out T value);
-		bool TryTake(int index, int count, out T[] values);
-	}
+public interface IStack<T> : IReadOnlyCollection<T>, IEnumerable<T>
+{
+	T Pop();
+	T Peek();
+	T Take(int index);
+	T[] Take(int index, int count);
+	void Push(T value);
+	void Clear();
+
+	bool TryPop(out T value);
+	bool TryPeek(out T value);
+	bool TryTake(int index, out T value);
+	bool TryTake(int index, int count, out T[] values);
 }

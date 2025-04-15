@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data
 {
@@ -38,9 +37,7 @@ namespace Zongsoft.Data
 	public class DataExecutedEventArgs : DataAccessEventArgs<DataExecuteContextBase>
 	{
 		#region 构造函数
-		public DataExecutedEventArgs(DataExecuteContextBase context) : base(context)
-		{
-		}
+		public DataExecutedEventArgs(DataExecuteContextBase context) : base(context) { }
 		#endregion
 	}
 }

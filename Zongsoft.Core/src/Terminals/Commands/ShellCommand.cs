@@ -31,69 +31,68 @@ using System;
 using System.Diagnostics;
 using System.ComponentModel;
 
-namespace Zongsoft.Terminals.Commands
+namespace Zongsoft.Terminals.Commands;
+
+[DisplayName("ShellCommand.Name")]
+[Description("ShellCommand.Description")]
+[Zongsoft.Services.CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "ShellCommand.Options.Timeout")]
+public class ShellCommand : Zongsoft.Services.CommandBase<TerminalCommandContext>
 {
-	[DisplayName("ShellCommand.Name")]
-	[Description("ShellCommand.Description")]
-	[Zongsoft.Services.CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "ShellCommand.Options.Timeout")]
-	public class ShellCommand : Zongsoft.Services.CommandBase<TerminalCommandContext>
+	#region 构造函数
+	public ShellCommand() : base("Shell") { }
+	public ShellCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override object OnExecute(TerminalCommandContext context)
 	{
-		#region 构造函数
-		public ShellCommand() : base("Shell") { }
-		public ShellCommand(string name) : base(name) { }
-		#endregion
+		if(Environment.OSVersion.Platform == PlatformID.MacOSX ||
+		   Environment.OSVersion.Platform == PlatformID.Unix)
+			throw new NotSupportedException(string.Format("Not supported in the {0} OS.", Environment.OSVersion));
 
-		#region 重写方法
-		protected override object OnExecute(TerminalCommandContext context)
+		if(context.Expression.Arguments.Length < 1)
+			return 0;
+
+		ProcessStartInfo info = new ProcessStartInfo(@"cmd.exe", " /C " + context.Expression.Arguments[0])
 		{
-			if(Environment.OSVersion.Platform == PlatformID.MacOSX ||
-			   Environment.OSVersion.Platform == PlatformID.Unix)
-				throw new NotSupportedException(string.Format("Not supported in the {0} OS.", Environment.OSVersion));
+			CreateNoWindow = true,
+			UseShellExecute = false,
+			RedirectStandardError = true,
+			RedirectStandardInput = true,
+			RedirectStandardOutput = true,
+		};
 
-			if(context.Expression.Arguments.Length < 1)
-				return 0;
-
-			ProcessStartInfo info = new ProcessStartInfo(@"cmd.exe", " /C " + context.Expression.Arguments[0])
+		using(var process = Process.Start(info))
+		{
+			process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs eventArgs)
 			{
-				CreateNoWindow = true,
-				UseShellExecute = false,
-				RedirectStandardError = true,
-				RedirectStandardInput = true,
-				RedirectStandardOutput = true,
+				context.Terminal.WriteLine(eventArgs.Data);
 			};
 
-			using(var process = Process.Start(info))
+			process.BeginOutputReadLine();
+
+			//while(!process.StandardOutput.EndOfStream)
+			//{
+			//	context.Terminal.WriteLine(process.StandardOutput.ReadLine());
+			//}
+
+			//context.Terminal.Write(process.StandardOutput.ReadToEnd());
+
+			//process.WaitForExit();
+
+			if(!process.HasExited)
 			{
-				process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs eventArgs)
+				var timeout = context.Expression.Options.GetValue<int>("timeout");
+
+				if(!process.WaitForExit(timeout > 0 ? timeout : int.MaxValue))
 				{
-					context.Terminal.WriteLine(eventArgs.Data);
-				};
-
-				process.BeginOutputReadLine();
-
-				//while(!process.StandardOutput.EndOfStream)
-				//{
-				//	context.Terminal.WriteLine(process.StandardOutput.ReadLine());
-				//}
-
-				//context.Terminal.Write(process.StandardOutput.ReadToEnd());
-
-				//process.WaitForExit();
-
-				if(!process.HasExited)
-				{
-					var timeout = context.Expression.Options.GetValue<int>("timeout");
-
-					if(!process.WaitForExit(timeout > 0 ? timeout : int.MaxValue))
-					{
-						process.Close();
-						return -1;
-					}
+					process.Close();
+					return -1;
 				}
-
-				return process.ExitCode;
 			}
+
+			return process.ExitCode;
 		}
-		#endregion
 	}
+	#endregion
 }

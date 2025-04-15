@@ -32,10 +32,9 @@ using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Communication
+namespace Zongsoft.Communication;
+
+public interface IReceiver
 {
-	public interface IReceiver
-	{
-		ValueTask ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation = default);
-	}
+	ValueTask ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation = default);
 }

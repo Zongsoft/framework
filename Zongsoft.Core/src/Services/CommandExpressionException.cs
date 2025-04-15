@@ -29,14 +29,13 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public class CommandExpressionException : ApplicationException
 {
-	public class CommandExpressionException : ApplicationException
-	{
-		#region 构造函数
-		public CommandExpressionException() { }
-		public CommandExpressionException(string message) : base(message) { }
-		public CommandExpressionException(string message, Exception innerException) : base(message, innerException) { }
-		#endregion
-	}
+	#region 构造函数
+	public CommandExpressionException() { }
+	public CommandExpressionException(string message) : base(message) { }
+	public CommandExpressionException(string message, Exception innerException) : base(message, innerException) { }
+	#endregion
 }

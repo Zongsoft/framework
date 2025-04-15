@@ -30,14 +30,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+/// <summary>
+/// 表示执行器上下文的接口。
+/// </summary>
+public interface IExecutorContext<out TArgument> : IExecutorContext
 {
-	/// <summary>
-	/// 表示执行器上下文的接口。
-	/// </summary>
-	public interface IExecutorContext<out TArgument> : IExecutorContext
-	{
-		/// <summary>获取执行请求对象。</summary>
-		new TArgument Argument { get; }
-	}
+	/// <summary>获取执行请求对象。</summary>
+	new TArgument Argument { get; }
 }

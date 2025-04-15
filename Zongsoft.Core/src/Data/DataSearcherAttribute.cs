@@ -28,28 +28,23 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+public class DataSearcherAttribute : Attribute
 {
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-	public class DataSearcherAttribute : Attribute
+	#region 构造函数
+	public DataSearcherAttribute(params string[] patterns)
 	{
-		#region 构造函数
-		public DataSearcherAttribute(params string[] patterns)
-		{
-			if(patterns == null || patterns.Length == 0)
-				throw new ArgumentNullException(nameof(patterns));
+		if(patterns == null || patterns.Length == 0)
+			throw new ArgumentNullException(nameof(patterns));
 
-			this.Patterns = patterns;
-		}
-		#endregion
-
-		#region 公共属性
-		public string[] Patterns
-		{
-			get;
-		}
-		#endregion
+		this.Patterns = patterns;
 	}
+	#endregion
+
+	#region 公共属性
+	public string[] Patterns { get; }
+	#endregion
 }

@@ -33,24 +33,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示提供数据导出功能的接口。
+/// </summary>
+public interface IDataExportable
 {
-	/// <summary>
-	/// 表示提供数据导出功能的接口。
-	/// </summary>
-	public interface IDataExportable
-	{
-		/// <summary>获取一个值，指示是否支持导出操作。</summary>
-		bool CanExport { get; }
+	/// <summary>获取一个值，指示是否支持导出操作。</summary>
+	bool CanExport { get; }
 
-		void Export(Stream output, object data, string format = null, DataExportOptions options = null);
-		void Export(Stream output, object data, string[] members, string format = null, DataExportOptions options = null);
-		ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, object data, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
-		ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
+	void Export(Stream output, object data, string format = null, DataExportOptions options = null);
+	void Export(Stream output, object data, string[] members, string format = null, DataExportOptions options = null);
+	ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, object data, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
+	ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
 
-		void Export(Stream output, string template, object argument, string format = null, DataExportOptions options = null);
-		void Export(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null);
-		ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
-		ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
-	}
+	void Export(Stream output, string template, object argument, string format = null, DataExportOptions options = null);
+	void Export(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null);
+	ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
+	ValueTask<Templates.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
 }

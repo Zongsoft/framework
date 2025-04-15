@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.IO
+namespace Zongsoft.IO;
+
+public class FileSystemCollection() : KeyedCollection<string, IFileSystem>(StringComparer.OrdinalIgnoreCase)
 {
-	public class FileSystemCollection() : KeyedCollection<string, IFileSystem>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(IFileSystem item) => item.Scheme;
-	}
+	protected override string GetKeyForItem(IFileSystem item) => item.Scheme;
 }

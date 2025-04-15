@@ -29,23 +29,22 @@
 
 using System;
 
-namespace Zongsoft.Reflection.Expressions
+namespace Zongsoft.Reflection.Expressions;
+
+/// <summary>
+/// 表示成员表达式类型的枚举。
+/// </summary>
+public enum MemberExpressionType
 {
-	/// <summary>
-	/// 表示成员表达式类型的枚举。
-	/// </summary>
-	public enum MemberExpressionType
-	{
-		/// <summary>常量表达式</summary>
-		Constant,
+	/// <summary>常量表达式</summary>
+	Constant,
 
-		/// <summary>标识表达式</summary>
-		Identifier,
+	/// <summary>标识表达式</summary>
+	Identifier,
 
-		/// <summary>索引器表达式</summary>
-		Indexer,
+	/// <summary>索引器表达式</summary>
+	Indexer,
 
-		/// <summary>方法调用表达式</summary>
-		Method,
-	}
+	/// <summary>方法调用表达式</summary>
+	Method,
 }

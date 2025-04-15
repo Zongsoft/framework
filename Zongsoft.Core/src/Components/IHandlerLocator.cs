@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public interface IHandlerLocator<in TContext> where TContext : class
 {
-	public interface IHandlerLocator<in TContext> where TContext : class
-	{
-		IHandler Locate(TContext context);
-	}
+	IHandler Locate(TContext context);
 }

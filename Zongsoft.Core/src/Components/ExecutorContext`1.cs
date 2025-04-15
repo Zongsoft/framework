@@ -30,28 +30,27 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public class ExecutorContext<TArgument> : ExecutorContextBase, IExecutorContext<TArgument>
 {
-	public class ExecutorContext<TArgument> : ExecutorContextBase, IExecutorContext<TArgument>
+	#region 构造函数
+	public ExecutorContext(IExecutor executor, TArgument argument, Collections.Parameters parameters = null) : base(executor, parameters)
 	{
-		#region 构造函数
-		public ExecutorContext(IExecutor executor, TArgument argument, Collections.Parameters parameters = null) : base(executor, parameters)
-		{
-			this.Argument = argument;
-		}
-
-		public ExecutorContext(IExecutor executor, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, parameters)
-		{
-			this.Argument = argument;
-		}
-		#endregion
-
-		#region 公共属性
-		public TArgument Argument { get; }
-		#endregion
-
-		#region 重写方法
-		protected override object GetArgument() => this.Argument;
-		#endregion
+		this.Argument = argument;
 	}
+
+	public ExecutorContext(IExecutor executor, TArgument argument, IEnumerable<KeyValuePair<string, object>> parameters = null) : base(executor, parameters)
+	{
+		this.Argument = argument;
+	}
+	#endregion
+
+	#region 公共属性
+	public TArgument Argument { get; }
+	#endregion
+
+	#region 重写方法
+	protected override object GetArgument() => this.Argument;
+	#endregion
 }

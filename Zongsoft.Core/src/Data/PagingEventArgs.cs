@@ -45,21 +45,11 @@ namespace Zongsoft.Data
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 表示分页源的名称。
-		/// </summary>
-		public string Name
-		{
-			get;
-		}
+		/// <summary>表示分页源的名称。</summary>
+		public string Name { get; }
 
-		/// <summary>
-		/// 表示分页的信息。
-		/// </summary>
-		public Paging Paging
-		{
-			get;
-		}
+		/// <summary>表示分页的信息。</summary>
+		public Paging Paging { get; }
 		#endregion
 	}
 }

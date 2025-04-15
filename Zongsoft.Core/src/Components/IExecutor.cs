@@ -31,12 +31,11 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public interface IExecutor
 {
-	public interface IExecutor
-	{
-		void Execute(object argument, Collections.Parameters parameters = null);
-		ValueTask ExecuteAsync(object argument, CancellationToken cancellation = default);
-		ValueTask ExecuteAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default);
-	}
+	void Execute(object argument, Collections.Parameters parameters = null);
+	ValueTask ExecuteAsync(object argument, CancellationToken cancellation = default);
+	ValueTask ExecuteAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 }

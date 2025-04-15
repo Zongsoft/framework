@@ -29,25 +29,24 @@
 
 using System;
 
-namespace Zongsoft.Collections
+namespace Zongsoft.Collections;
+
+[Serializable]
+public class EnqueuedEventArgs : EventArgs
 {
-	[Serializable]
-	public class EnqueuedEventArgs : EventArgs
+	#region 构造函数
+	public EnqueuedEventArgs(object value, object settings)
 	{
-		#region 构造函数
-		public EnqueuedEventArgs(object value, object settings)
-		{
-			this.Value = value;
-			this.Settings = settings;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取入队的内容值。</summary>
-		public object Value { get; }
-
-		/// <summary>获取入队操作的设置选项。</summary>
-		public object Settings { get; }
-		#endregion
+		this.Value = value;
+		this.Settings = settings;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取入队的内容值。</summary>
+	public object Value { get; }
+
+	/// <summary>获取入队操作的设置选项。</summary>
+	public object Settings { get; }
+	#endregion
 }

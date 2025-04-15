@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+/// <summary>
+/// 表示匹配器的接口。
+/// </summary>
+public interface IMatcher<in T>
 {
-	/// <summary>
-	/// 表示匹配器的接口。
-	/// </summary>
-	public interface IMatcher<in T>
-	{
-		/// <summary>判断指定对象是否匹配某种规则。</summary>
-		/// <param name="target">指定的待匹配的对象。</param>
-		/// <param name="argument">指定的匹配参数。</param>
-		/// <returns>如果指定对象匹配成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-		bool Match(T target, object argument);
-	}
+	/// <summary>判断指定对象是否匹配某种规则。</summary>
+	/// <param name="target">指定的待匹配的对象。</param>
+	/// <param name="argument">指定的匹配参数。</param>
+	/// <returns>如果指定对象匹配成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	bool Match(T target, object argument);
 }

@@ -33,37 +33,36 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public class SortingConverter : TypeConverter
 {
-	public class SortingConverter : TypeConverter
+	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-		{
-			return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-		}
+		return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+	}
 
-		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-		{
-			return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
-		}
+	public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+	{
+		return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+	}
 
-		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-		{
-			if(value is string text)
-				return Common.StringExtension.Slice<Sorting>(text, ',', Sorting.TryParse).ToArray();
+	public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+	{
+		if(value is string text)
+			return Common.StringExtension.Slice<Sorting>(text, ',', Sorting.TryParse).ToArray();
 
-			return base.ConvertFrom(context, culture, value);
-		}
+		return base.ConvertFrom(context, culture, value);
+	}
 
-		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
-		{
-			if(value is Sorting sorting)
-				return sorting.Mode == SortingMode.Descending ? "-" + sorting.Name : sorting.Name;
+	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+	{
+		if(value is Sorting sorting)
+			return sorting.Mode == SortingMode.Descending ? "-" + sorting.Name : sorting.Name;
 
-			if(value is IEnumerable<Sorting> sortings)
-				return string.Join(',', sortings.Select(sorting => sorting.Mode == SortingMode.Descending ? "-" + sorting.Name : sorting.Name));
+		if(value is IEnumerable<Sorting> sortings)
+			return string.Join(',', sortings.Select(sorting => sorting.Mode == SortingMode.Descending ? "-" + sorting.Name : sorting.Name));
 
-			return base.ConvertTo(context, culture, value, destinationType);
-		}
+		return base.ConvertTo(context, culture, value, destinationType);
 	}
 }

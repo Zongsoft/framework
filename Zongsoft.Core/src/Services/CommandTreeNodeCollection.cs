@@ -31,64 +31,63 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public class CommandTreeNodeCollection : Collections.HierarchicalNodeCollection<CommandTreeNode>, ICollection<ICommand>
 {
-	public class CommandTreeNodeCollection : Collections.HierarchicalNodeCollection<CommandTreeNode>, ICollection<ICommand>
+	#region 构造函数
+	public CommandTreeNodeCollection() : base(null) { }
+	internal CommandTreeNodeCollection(CommandTreeNode owner) : base(owner) { }
+	#endregion
+
+	#region 公共方法
+	public CommandTreeNode Add(string name)
 	{
-		#region 构造函数
-		public CommandTreeNodeCollection() : base(null) { }
-		internal CommandTreeNodeCollection(CommandTreeNode owner) : base(owner) { }
-		#endregion
-
-		#region 公共方法
-		public CommandTreeNode Add(string name)
-		{
-			var node = new CommandTreeNode(name);
-			this.Add(node);
-			return node;
-		}
-
-		public CommandTreeNode Add(ICommand command)
-		{
-			var node = new CommandTreeNode(command ?? throw new ArgumentNullException(nameof(command)));
-			this.Add(node);
-			return node;
-		}
-
-		public bool Remove(ICommand command) => command != null && base.Remove(command.Name);
-		public bool Contains(ICommand command) => command != null && this.Contains(command.Name);
-		public void CopyTo(ICommand[] array, int arrayIndex)
-		{
-			if(array == null)
-				throw new ArgumentNullException(nameof(array));
-
-			if(arrayIndex < 0 || arrayIndex >= array.Length)
-				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-
-			var iterator = base.GetEnumerator();
-
-			for(int i = arrayIndex; i < array.Length; i++)
-			{
-				if(iterator.MoveNext())
-					array[i] = iterator.Current?.Command;
-			}
-		}
-		#endregion
-
-		#region 重写方法
-		protected override void SetOwner(CommandTreeNode owner, CommandTreeNode node) => node?.SetParent(owner);
-		#endregion
-
-		#region 接口实现
-		bool ICollection<ICommand>.IsReadOnly => false;
-		void ICollection<ICommand>.Add(ICommand command) => this.Add(command);
-		IEnumerator<ICommand> IEnumerable<ICommand>.GetEnumerator()
-		{
-			var iterator = base.GetEnumerator();
-
-			while(iterator.MoveNext())
-				yield return iterator.Current?.Command;
-		}
-		#endregion
+		var node = new CommandTreeNode(name);
+		this.Add(node);
+		return node;
 	}
+
+	public CommandTreeNode Add(ICommand command)
+	{
+		var node = new CommandTreeNode(command ?? throw new ArgumentNullException(nameof(command)));
+		this.Add(node);
+		return node;
+	}
+
+	public bool Remove(ICommand command) => command != null && base.Remove(command.Name);
+	public bool Contains(ICommand command) => command != null && this.Contains(command.Name);
+	public void CopyTo(ICommand[] array, int arrayIndex)
+	{
+		if(array == null)
+			throw new ArgumentNullException(nameof(array));
+
+		if(arrayIndex < 0 || arrayIndex >= array.Length)
+			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+
+		var iterator = base.GetEnumerator();
+
+		for(int i = arrayIndex; i < array.Length; i++)
+		{
+			if(iterator.MoveNext())
+				array[i] = iterator.Current?.Command;
+		}
+	}
+	#endregion
+
+	#region 重写方法
+	protected override void SetOwner(CommandTreeNode owner, CommandTreeNode node) => node?.SetParent(owner);
+	#endregion
+
+	#region 接口实现
+	bool ICollection<ICommand>.IsReadOnly => false;
+	void ICollection<ICommand>.Add(ICommand command) => this.Add(command);
+	IEnumerator<ICommand> IEnumerable<ICommand>.GetEnumerator()
+	{
+		var iterator = base.GetEnumerator();
+
+		while(iterator.MoveNext())
+			yield return iterator.Current?.Command;
+	}
+	#endregion
 }

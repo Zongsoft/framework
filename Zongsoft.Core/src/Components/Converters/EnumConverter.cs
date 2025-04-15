@@ -28,10 +28,8 @@
  */
 
 using System;
-using System.Reflection;
 using System.Globalization;
 using System.ComponentModel;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components.Converters;
 
@@ -97,11 +95,11 @@ public class EnumConverter : System.ComponentModel.EnumConverter
 
 			return Enum.ToObject(this.EnumType, value);
 		}
-		else if(value is Enum[])
+		else if(value is Enum[] enumerates)
 		{
 			var enumValue = 0L;
 
-			foreach(var item in (Enum[])value)
+			foreach(var item in enumerates)
 				enumValue |= Convert.ToInt64(item, culture);
 
 			return Enum.ToObject(this.EnumType, enumValue);

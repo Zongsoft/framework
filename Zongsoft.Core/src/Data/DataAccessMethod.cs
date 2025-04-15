@@ -29,38 +29,37 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示数据访问的方法名的枚举。
+/// </summary>
+public enum DataAccessMethod
 {
-	/// <summary>
-	/// 表示数据访问的方法名的枚举。
-	/// </summary>
-	public enum DataAccessMethod
-	{
-		/// <summary>执行方法</summary>
-		Execute,
+	/// <summary>执行方法</summary>
+	Execute,
 
-		/// <summary>是否存在</summary>
-		Exists,
+	/// <summary>是否存在</summary>
+	Exists,
 
-		/// <summary>聚合方法</summary>
-		Aggregate,
+	/// <summary>聚合方法</summary>
+	Aggregate,
 
-		/// <summary>导入方法</summary>
-		Import,
+	/// <summary>导入方法</summary>
+	Import,
 
-		/// <summary>查询方法</summary>
-		Select,
+	/// <summary>查询方法</summary>
+	Select,
 
-		/// <summary>删除方法</summary>
-		Delete,
+	/// <summary>删除方法</summary>
+	Delete,
 
-		/// <summary>新增方法</summary>
-		Insert,
+	/// <summary>新增方法</summary>
+	Insert,
 
-		/// <summary>更新方法</summary>
-		Update,
+	/// <summary>更新方法</summary>
+	Update,
 
-		/// <summary>增改方法</summary>
-		Upsert,
-	}
+	/// <summary>增改方法</summary>
+	Upsert,
 }

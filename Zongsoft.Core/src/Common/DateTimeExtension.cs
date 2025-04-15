@@ -29,13 +29,12 @@
 
 using System;
 
-namespace Zongsoft.Common
+namespace Zongsoft.Common;
+
+public static class DateTimeExtension
 {
-	public static class DateTimeExtension
-	{
-		public static TimeSpan GetElapsed(this DateTime start) => start.Kind == DateTimeKind.Utc ? DateTime.UtcNow - start : DateTime.Now - start;
-		public static TimeSpan GetElapsed(this DateTimeOffset start) => DateTimeOffset.UtcNow - start;
-		public static long GetElapsedMilliseconds(this DateTime start) => (long)GetElapsed(start).TotalMilliseconds;
-		public static long GetElapsedMilliseconds(this DateTimeOffset start) => (long)GetElapsed(start).TotalMilliseconds;
-	}
+	public static TimeSpan GetElapsed(this DateTime start) => start.Kind == DateTimeKind.Utc ? DateTime.UtcNow - start : DateTime.Now - start;
+	public static TimeSpan GetElapsed(this DateTimeOffset start) => DateTimeOffset.UtcNow - start;
+	public static long GetElapsedMilliseconds(this DateTime start) => (long)GetElapsed(start).TotalMilliseconds;
+	public static long GetElapsedMilliseconds(this DateTimeOffset start) => (long)GetElapsed(start).TotalMilliseconds;
 }

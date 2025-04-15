@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Services
-{
-	[Serializable]
-	public class CommandExecutorExecutingEventArgs : CommandExecutorEventArgs
-	{
-		#region 构造函数
-		public CommandExecutorExecutingEventArgs(CommandExecutorContext context, bool cancel = false) : base(context) => this.Cancel = cancel;
-		#endregion
+namespace Zongsoft.Services;
 
-		#region 公共属性
-		public bool Cancel { get; set; }
-		#endregion
-	}
+[Serializable]
+public class CommandExecutorExecutingEventArgs : CommandExecutorEventArgs
+{
+	#region 构造函数
+	public CommandExecutorExecutingEventArgs(CommandExecutorContext context, bool cancel = false) : base(context) => this.Cancel = cancel;
+	#endregion
+
+	#region 公共属性
+	public bool Cancel { get; set; }
+	#endregion
 }

@@ -29,38 +29,24 @@
 
 using System;
 
-namespace Zongsoft.Reflection.Expressions
+namespace Zongsoft.Reflection.Expressions;
+
+public class ConstantExpression : MemberExpression
 {
-	public class ConstantExpression : MemberExpression
+	#region 单例字段
+	public static readonly ConstantExpression Null = new();
+	#endregion
+
+	#region 构造函数
+	private ConstantExpression() { }
+	public ConstantExpression(object value)
 	{
-		#region 单例字段
-		public static readonly ConstantExpression Null = new ConstantExpression();
-		#endregion
-
-		#region 构造函数
-		private ConstantExpression()
-		{
-		}
-
-		public ConstantExpression(object value)
-		{
-			this.Value = value ?? throw new ArgumentNullException(nameof(value));
-		}
-		#endregion
-
-		#region 公共属性
-		public override MemberExpressionType ExpressionType
-		{
-			get
-			{
-				return MemberExpressionType.Constant;
-			}
-		}
-
-		public object Value
-		{
-			get;
-		}
-		#endregion
+		this.Value = value ?? throw new ArgumentNullException(nameof(value));
 	}
+	#endregion
+
+	#region 公共属性
+	public override MemberExpressionType ExpressionType => MemberExpressionType.Constant;
+	public object Value { get; }
+	#endregion
 }

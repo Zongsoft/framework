@@ -34,259 +34,252 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示特定类型的数据模式。
+/// </summary>
+/// <typeparam name="T">特定类型的泛型参数。</typeparam>
+public abstract class Schema<T> : ISchemaMemberProvider
 {
-	/// <summary>
-	/// 表示特定类型的数据模式。
-	/// </summary>
-	/// <typeparam name="T">特定类型的泛型参数。</typeparam>
-	public abstract class Schema<T> : ISchemaMemberProvider
+	#region 成员字段
+	private readonly SchemaMemberCollection _members;
+	#endregion
+
+	#region 构造函数
+	protected Schema()
 	{
-		#region 成员字段
-		private readonly SchemaMemberCollection _members;
-		#endregion
+		_members = new SchemaMemberCollection();
+	}
+	#endregion
 
-		#region 构造函数
-		protected Schema()
+	#region 公共方法
+	/// <summary>清空当前模式的成员。</summary>
+	/// <returns>返回当前模式。</returns>
+	public Schema<T> Clear()
+	{
+		_members.Clear();
+		return this;
+	}
+
+	/// <summary>将指定 Lambda 表达式中的成员访问式添加到当前模式成员中。</summary>
+	/// <typeparam name="TMember">泛型参数，表示成员访问表达式类型。</typeparam>
+	/// <param name="expression">指定的包含成员访问的 Lambda 表达式。</param>
+	/// <returns>返回当前模式。</returns>
+	/// <example>
+	/// <code>
+	/// Schema.Empty&lt;Apartment&gt;()
+	///		.Include(p => p.ApartmentId)
+	///		.Include(p => p.ApartmentNo)
+	///		.Include(p => p.Building.BuildingId)
+	///		.Include(p => p.Building.BuildingNo)
+	///		.Include(p => p.Building.ParkId)
+	///		.Include(p => p.Building.Park.ParkId)
+	///		.Include(p => p.Building.Park.ParkNo)
+	///		.Include(p => p.Building.Park.Name)
+	/// </code>
+	/// </example>
+	public Schema<T> Include<TMember>(Expression<Func<T, TMember>> expression)
+	{
+		ISchemaMember parent = null;
+		var members = GetMembers(expression);
+
+		foreach(var member in members)
 		{
-			_members = new SchemaMemberCollection();
-		}
-		#endregion
+			var children = parent == null ? _members : parent.Children;
 
-		#region 公共方法
-		/// <summary>
-		/// 清空当前模式的成员。
-		/// </summary>
-		/// <returns>返回当前模式。</returns>
-		public Schema<T> Clear()
-		{
-			_members.Clear();
-			return this;
-		}
-
-		/// <summary>
-		/// 将指定 Lambda 表达式中的成员访问式添加到当前模式成员中。
-		/// </summary>
-		/// <typeparam name="TMember">泛型参数，表示成员访问表达式类型。</typeparam>
-		/// <param name="expression">指定的包含成员访问的 Lambda 表达式。</param>
-		/// <returns>返回当前模式。</returns>
-		/// <example>
-		/// <code>
-		/// Schema.Empty&lt;Apartment&gt;()
-		///		.Include(p => p.ApartmentId)
-		///		.Include(p => p.ApartmentNo)
-		///		.Include(p => p.Building.BuildingId)
-		///		.Include(p => p.Building.BuildingNo)
-		///		.Include(p => p.Building.ParkId)
-		///		.Include(p => p.Building.Park.ParkId)
-		///		.Include(p => p.Building.Park.ParkNo)
-		///		.Include(p => p.Building.Park.Name)
-		/// </code>
-		/// </example>
-		public Schema<T> Include<TMember>(Expression<Func<T, TMember>> expression)
-		{
-			ISchemaMember parent = null;
-			var members = GetMembers(expression);
-
-			foreach(var member in members)
+			if(!children.TryGetValue(member.Name, out var child))
 			{
-				var children = parent == null ? _members : parent.Children;
+				child = this.GetMember(member.Name, parent);
 
-				if(!children.TryGetValue(member.Name, out var child))
-				{
-					child = this.GetMember(member.Name, parent);
+				if(child == null)
+					throw new DataArgumentException(member.Name);
 
-					if(child == null)
-						throw new DataArgumentException(member.Name);
-
-					children.Add(child);
-				}
-
-				parent = child;
+				children.Add(child);
 			}
 
-			return this;
+			parent = child;
 		}
 
-		/// <summary>
-		/// 将指定 Lambda 表达式中的成员访问式从当前模式成员中移除。
-		/// </summary>
-		/// <typeparam name="TMember">泛型参数，表示成员访问表达式类型。</typeparam>
-		/// <param name="expression">指定的包含成员访问的 Lambda 表达式。</param>
-		/// <returns>返回当前模式。</returns>
-		/// <example>
-		/// <code>
-		/// Schema.Empty&lt;Apartment&gt;()
-		///		.Exclude(p => p.ApartmentId)
-		///		.Exclude(p => p.ApartmentNo)
-		///		.Exclude(p => p.Building.BuildingId)
-		///		.Exclude(p => p.Building.BuildingNo)
-		///		.Exclude(p => p.Building.Park)
-		/// </code>
-		/// </example>
-		public Schema<T> Exclude<TMember>(Expression<Func<T, TMember>> expression)
+		return this;
+	}
+
+	/// <summary>将指定 Lambda 表达式中的成员访问式从当前模式成员中移除。</summary>
+	/// <typeparam name="TMember">泛型参数，表示成员访问表达式类型。</typeparam>
+	/// <param name="expression">指定的包含成员访问的 Lambda 表达式。</param>
+	/// <returns>返回当前模式。</returns>
+	/// <example>
+	/// <code>
+	/// Schema.Empty&lt;Apartment&gt;()
+	///		.Exclude(p => p.ApartmentId)
+	///		.Exclude(p => p.ApartmentNo)
+	///		.Exclude(p => p.Building.BuildingId)
+	///		.Exclude(p => p.Building.BuildingNo)
+	///		.Exclude(p => p.Building.Park)
+	/// </code>
+	/// </example>
+	public Schema<T> Exclude<TMember>(Expression<Func<T, TMember>> expression)
+	{
+		var members = GetMembers(expression);
+		ISchemaMember parent = null, child = null;
+
+		foreach(var member in members)
 		{
-			var members = GetMembers(expression);
-			ISchemaMember parent = null, child = null;
+			if(child != null)
+				parent = child;
 
-			foreach(var member in members)
+			if(parent == null)
 			{
-				if(child != null)
-					parent = child;
-
-				if(parent == null)
-				{
-					if(!_members.TryGetValue(member.Name, out child))
-						return this;
-				}
-				else if(!parent.HasChildren || !parent.Children.TryGetValue(member.Name, out child))
+				if(!_members.TryGetValue(member.Name, out child))
 					return this;
 			}
-
-			if(child != null)
-			{
-				if(parent == null)
-					_members.Remove(child);
-				else if(parent.HasChildren)
-					parent.Children.Remove(child);
-			}
-
-			return this;
-		}
-		#endregion
-
-		#region 抽象方法
-		protected abstract ISchemaMember GetMember(string name, ISchemaMember parent);
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			if(_members == null || _members.Count == 0)
-				return string.Empty;
-
-			var text = new System.Text.StringBuilder();
-
-			foreach(var member in _members)
-			{
-				if(text.Length > 0)
-					text.Append(',');
-
-				WriteMember(text, member);
-			}
-
-			return text.ToString();
-		}
-		#endregion
-
-		#region 私有方法
-		private static IEnumerable<MemberInfo> GetMembers(Expression expression)
-		{
-			switch(expression.NodeType)
-			{
-				case ExpressionType.MemberAccess:
-					yield return ((MemberExpression)expression).Member;
-
-					if(((MemberExpression)expression).Expression != null)
-					{
-						foreach(var member in GetMembers(((MemberExpression)expression).Expression))
-							yield return member;
-					}
-
-					break;
-				case ExpressionType.Lambda:
-					foreach(var member in GetMembers(((LambdaExpression)expression).Body))
-						yield return member;
-
-					break;
-			}
+			else if(!parent.HasChildren || !parent.Children.TryGetValue(member.Name, out child))
+				return this;
 		}
 
-		private static void WriteMember(System.Text.StringBuilder text, ISchemaMember member)
+		if(child != null)
 		{
-			text.Append(member.Name);
+			if(parent == null)
+				_members.Remove(child);
+			else if(parent.HasChildren)
+				parent.Children.Remove(child);
+		}
 
-			if(member.Paging != null && member.Paging.Enabled)
-			{
-				text.Append(':');
-				text.Append(member.Paging.PageIndex.ToString());
-				text.Append('/');
-				text.Append(member.Paging.PageSize.ToString());
-			}
+		return this;
+	}
+	#endregion
 
-			if(member.Sortings != null && member.Sortings.Length > 0)
-			{
-				text.Append('(');
+	#region 抽象方法
+	protected abstract ISchemaMember GetMember(string name, ISchemaMember parent);
+	#endregion
 
-				for(int i = 0; i < member.Sortings.Length; i++)
+	#region 重写方法
+	public override string ToString()
+	{
+		if(_members == null || _members.Count == 0)
+			return string.Empty;
+
+		var text = new System.Text.StringBuilder();
+
+		foreach(var member in _members)
+		{
+			if(text.Length > 0)
+				text.Append(',');
+
+			WriteMember(text, member);
+		}
+
+		return text.ToString();
+	}
+	#endregion
+
+	#region 私有方法
+	private static IEnumerable<MemberInfo> GetMembers(Expression expression)
+	{
+		switch(expression.NodeType)
+		{
+			case ExpressionType.MemberAccess:
+				yield return ((MemberExpression)expression).Member;
+
+				if(((MemberExpression)expression).Expression != null)
 				{
-					if(i > 0)
-						text.Append(',');
-
-					text.Append(member.Sortings[i].ToString());
+					foreach(var member in GetMembers(((MemberExpression)expression).Expression))
+						yield return member;
 				}
 
-				text.Append(')');
-			}
+				break;
+			case ExpressionType.Lambda:
+				foreach(var member in GetMembers(((LambdaExpression)expression).Body))
+					yield return member;
 
-			if(member.Criteria != null)
-			{
-				text.Append('?');
-				text.Append(member.Criteria.ToString());
-			}
+				break;
+		}
+	}
 
-			if(member.HasChildren)
-			{
-				text.Append('{');
-				WriteMembers(text, member.Children);
-				text.Append('}');
-			}
+	private static void WriteMember(System.Text.StringBuilder text, ISchemaMember member)
+	{
+		text.Append(member.Name);
+
+		if(member.Paging != null && member.Paging.Enabled)
+		{
+			text.Append(':');
+			text.Append(member.Paging.PageIndex.ToString());
+			text.Append('/');
+			text.Append(member.Paging.PageSize.ToString());
 		}
 
-		private static void WriteMembers(System.Text.StringBuilder text, IEnumerable<ISchemaMember> members)
+		if(member.Sortings != null && member.Sortings.Length > 0)
 		{
-			var index = 0;
+			text.Append('(');
 
-			foreach(var member in members)
+			for(int i = 0; i < member.Sortings.Length; i++)
 			{
-				if(index++ > 0)
+				if(i > 0)
 					text.Append(',');
 
-				WriteMember(text, member);
+				text.Append(member.Sortings[i].ToString());
 			}
+
+			text.Append(')');
 		}
-		#endregion
 
-		#region 显式接口
-		ISchemaMember ISchemaMemberProvider.GetMember(string name, ISchemaMember parent) => this.GetMember(name, parent);
-		#endregion
+		if(member.Criteria != null)
+		{
+			text.Append('?');
+			text.Append(member.Criteria.ToString());
+		}
+
+		if(member.HasChildren)
+		{
+			text.Append('{');
+			WriteMembers(text, member.Children);
+			text.Append('}');
+		}
 	}
 
-	public class SchemaMemberCollection : KeyedCollection<string, ISchemaMember>
+	private static void WriteMembers(System.Text.StringBuilder text, IEnumerable<ISchemaMember> members)
 	{
-		public SchemaMemberCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		protected override string GetKeyForItem(ISchemaMember member) => member.Name;
+		var index = 0;
+
+		foreach(var member in members)
+		{
+			if(index++ > 0)
+				text.Append(',');
+
+			WriteMember(text, member);
+		}
 	}
+	#endregion
 
-	public interface ISchemaMember
-	{
-		string Name { get; }
-		string Path { get; }
-		string FullPath { get; }
-		ISchemaMember Parent { get; }
-		MemberInfo Member { get; }
-		Metadata.IDataEntityProperty Property { get; }
+	#region 显式接口
+	ISchemaMember ISchemaMemberProvider.GetMember(string name, ISchemaMember parent) => this.GetMember(name, parent);
+	#endregion
+}
 
-		Paging Paging { get; }
-		Sorting[] Sortings { get; }
-		ICondition Criteria { get; }
+public class SchemaMemberCollection : KeyedCollection<string, ISchemaMember>
+{
+	public SchemaMemberCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+	protected override string GetKeyForItem(ISchemaMember member) => member.Name;
+}
 
-		bool HasChildren { get; }
-		SchemaMemberCollection Children { get; }
-	}
+public interface ISchemaMember
+{
+	string Name { get; }
+	string Path { get; }
+	string FullPath { get; }
+	ISchemaMember Parent { get; }
+	MemberInfo Member { get; }
+	Metadata.IDataEntityProperty Property { get; }
 
-	public interface ISchemaMemberProvider
-	{
-		ISchemaMember GetMember(string name, ISchemaMember parent);
-	}
+	Paging Paging { get; }
+	Sorting[] Sortings { get; }
+	ICondition Criteria { get; }
+
+	bool HasChildren { get; }
+	SchemaMemberCollection Children { get; }
+}
+
+public interface ISchemaMemberProvider
+{
+	ISchemaMember GetMember(string name, ISchemaMember parent);
 }

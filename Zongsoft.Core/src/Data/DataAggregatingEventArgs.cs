@@ -28,35 +28,20 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 为数据访问的聚合事件提供数据。
+/// </summary>
+public class DataAggregatingEventArgs : DataAggregatedEventArgs
 {
-	/// <summary>
-	/// 为数据访问的聚合事件提供数据。
-	/// </summary>
-	public class DataAggregatingEventArgs : DataAggregatedEventArgs
-	{
-		#region 成员字段
-		private bool _cancel;
-		#endregion
+	#region 构造函数
+	public DataAggregatingEventArgs(DataAggregateContextBase context) : base(context) => this.Cancel = false;
+	#endregion
 
-		#region 构造函数
-		public DataAggregatingEventArgs(DataAggregateContextBase context) : base(context)
-		{
-			_cancel = false;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取或设置一个值，表示是否取消当前操作。
-		/// </summary>
-		public bool Cancel
-		{
-			get => _cancel;
-			set => _cancel = value;
-		}
-		#endregion
-	}
+	#region 公共属性
+	/// <summary>获取或设置一个值，表示是否取消当前操作。</summary>
+	public bool Cancel { get; set; }
+	#endregion
 }

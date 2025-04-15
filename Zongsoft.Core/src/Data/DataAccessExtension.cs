@@ -32,89 +32,88 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+public static class DataAccessExtension
 {
-	public static class DataAccessExtension
+	#region 聚合方法
+	public static TValue? Count<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Count, member, criteria, options);
+	public static TValue? Sum<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Sum, member, criteria, options);
+	public static TValue? Average<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Average, member, criteria, options);
+	public static TValue? Median<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Median, member, criteria, options);
+	public static TValue? Maximum<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Maximum, member, criteria, options);
+	public static TValue? Minimum<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Minimum, member, criteria, options);
+	public static TValue? Deviation<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Deviation, member, criteria, options);
+	public static TValue? DeviationPopulation<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.DeviationPopulation, member, criteria, options);
+	public static TValue? Variance<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Variance, member, criteria, options);
+	public static TValue? VariancePopulation<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.VariancePopulation, member, criteria, options);
+
+	public static TValue? Count<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	public static TValue? Sum<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	public static TValue? Average<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	public static TValue? Median<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	public static TValue? Maximum<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	public static TValue? Minimum<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	public static TValue? Deviation<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	public static TValue? DeviationPopulation<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	public static TValue? Variance<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	public static TValue? VariancePopulation<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
+	#endregion
+
+	#region 递增方法
+	public static long Increase<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options = null) => Increase<T>(dataAccess, member, criteria, 1, options);
+	public static long Increase<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase(dataAccess, Model.Naming.Get<T>(), member, criteria, interval, options);
+	public static long Increase(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options = null) => Increase(dataAccess, name, member, criteria, 1, options);
+	public static long Increase(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options = null)
 	{
-		#region 聚合方法
-		public static TValue? Count<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Count, member, criteria, options);
-		public static TValue? Sum<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Sum, member, criteria, options);
-		public static TValue? Average<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Average, member, criteria, options);
-		public static TValue? Median<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Median, member, criteria, options);
-		public static TValue? Maximum<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Maximum, member, criteria, options);
-		public static TValue? Minimum<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Minimum, member, criteria, options);
-		public static TValue? Deviation<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Deviation, member, criteria, options);
-		public static TValue? DeviationPopulation<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.DeviationPopulation, member, criteria, options);
-		public static TValue? Variance<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.Variance, member, criteria, options);
-		public static TValue? VariancePopulation<TValue>(this IDataAccess dataAccess, string name, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, DataAggregateFunction.VariancePopulation, member, criteria, options);
+		if(options == null)
+			options = DataUpdateOptions.Return([member]);
+		else
+			options.Returning.Newer.TryAdd(member, null);
 
-		public static TValue? Count<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		public static TValue? Sum<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		public static TValue? Average<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		public static TValue? Median<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		public static TValue? Maximum<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		public static TValue? Minimum<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		public static TValue? Deviation<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		public static TValue? DeviationPopulation<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		public static TValue? Variance<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		public static TValue? VariancePopulation<TValue>(this IDataAccess dataAccess, string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => dataAccess.Aggregate<TValue>(name, aggregate, criteria, options, aggregating, aggregated);
-		#endregion
+		var field = (interval > 0 ? Operand.Field(member) + interval : Operand.Field(member) - (-interval));
 
-		#region 递增方法
-		public static long Increase<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options = null) => Increase<T>(dataAccess, member, criteria, 1, options);
-		public static long Increase<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase(dataAccess, Model.Naming.Get<T>(), member, criteria, interval, options);
-		public static long Increase(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options = null) => Increase(dataAccess, name, member, criteria, 1, options);
-		public static long Increase(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options = null)
-		{
-			if(options == null)
-				options = DataUpdateOptions.Return([member]);
-			else
-				options.Returning.Newer.TryAdd(member, null);
+		if(dataAccess.Update(name, new Dictionary<string, object>([new KeyValuePair<string, object>(member, field)]), criteria, options) > 0)
+			return options.Returning.Newer.TryGetValue(member, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
 
-			var field = (interval > 0 ? Operand.Field(member) + interval : Operand.Field(member) - (-interval));
-
-			if(dataAccess.Update(name, new Dictionary<string, object>([new KeyValuePair<string, object>(member, field)]), criteria, options) > 0)
-				return options.Returning.Newer.TryGetValue(member, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
-
-			return 0L;
-		}
-
-		public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, 1, null, cancellation);
-		public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, 1, options, cancellation);
-		public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, interval, null, cancellation);
-		public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, Model.Naming.Get<T>(), member, criteria, interval, options, cancellation);
-		public static ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, 1, null, cancellation);
-		public static ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, 1, options, cancellation);
-		public static ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, interval, null, cancellation);
-		public static async ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default)
-		{
-			if(options == null)
-				options = DataUpdateOptions.Return([member]);
-			else
-				options.Returning.Newer.TryAdd(member, null);
-
-			var field = (interval > 0 ? Operand.Field(member) + interval : Operand.Field(member) - (-interval));
-
-			if(await dataAccess.UpdateAsync(name, new Dictionary<string, object>([new KeyValuePair<string, object>(member, field)]), criteria, options, cancellation) > 0)
-				return options.Returning.Newer.TryGetValue(member, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
-
-			return 0L;
-		}
-		#endregion
-
-		#region 递减方法
-		public static long Decrease<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options = null) => Increase<T>(dataAccess, member, criteria, -1, options);
-		public static long Decrease<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase<T>(dataAccess, member, criteria, -interval, options);
-		public static long Decrease(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options = null) => Increase(dataAccess, name, member, criteria, -1, options);
-		public static long Decrease(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase(dataAccess, name, member, criteria, -interval, options);
-		public static ValueTask<long> DecreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, -1, null, cancellation);
-		public static ValueTask<long> DecreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, -1, options, cancellation);
-		public static ValueTask<long> DecreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, -interval, null, cancellation);
-		public static ValueTask<long> DecreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, -interval, options, cancellation);
-		public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -1, null, cancellation);
-		public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -1, options, cancellation);
-		public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -interval, null, cancellation);
-		public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -interval, options, cancellation);
-		#endregion
+		return 0L;
 	}
+
+	public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, 1, null, cancellation);
+	public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, 1, options, cancellation);
+	public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, interval, null, cancellation);
+	public static ValueTask<long> IncreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, Model.Naming.Get<T>(), member, criteria, interval, options, cancellation);
+	public static ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, 1, null, cancellation);
+	public static ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, 1, options, cancellation);
+	public static ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, interval, null, cancellation);
+	public static async ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default)
+	{
+		if(options == null)
+			options = DataUpdateOptions.Return([member]);
+		else
+			options.Returning.Newer.TryAdd(member, null);
+
+		var field = (interval > 0 ? Operand.Field(member) + interval : Operand.Field(member) - (-interval));
+
+		if(await dataAccess.UpdateAsync(name, new Dictionary<string, object>([new KeyValuePair<string, object>(member, field)]), criteria, options, cancellation) > 0)
+			return options.Returning.Newer.TryGetValue(member, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
+
+		return 0L;
+	}
+	#endregion
+
+	#region 递减方法
+	public static long Decrease<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options = null) => Increase<T>(dataAccess, member, criteria, -1, options);
+	public static long Decrease<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase<T>(dataAccess, member, criteria, -interval, options);
+	public static long Decrease(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options = null) => Increase(dataAccess, name, member, criteria, -1, options);
+	public static long Decrease(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase(dataAccess, name, member, criteria, -interval, options);
+	public static ValueTask<long> DecreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, -1, null, cancellation);
+	public static ValueTask<long> DecreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, -1, options, cancellation);
+	public static ValueTask<long> DecreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, -interval, null, cancellation);
+	public static ValueTask<long> DecreaseAsync<T>(this IDataAccess dataAccess, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync<T>(dataAccess, member, criteria, -interval, options, cancellation);
+	public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -1, null, cancellation);
+	public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -1, options, cancellation);
+	public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -interval, null, cancellation);
+	public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -interval, options, cancellation);
+	#endregion
 }

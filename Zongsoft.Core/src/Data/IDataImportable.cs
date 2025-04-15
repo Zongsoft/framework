@@ -32,20 +32,19 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示提供数据导入功能的接口。
+/// </summary>
+public interface IDataImportable
 {
-	/// <summary>
-	/// 表示提供数据导入功能的接口。
-	/// </summary>
-	public interface IDataImportable
-	{
-		/// <summary>获取一个值，指示是否支持导入操作。</summary>
-		bool CanImport { get; }
+	/// <summary>获取一个值，指示是否支持导入操作。</summary>
+	bool CanImport { get; }
 
-		int Import(Stream input, DataImportOptions options = null);
-		int Import(Stream input, string format, DataImportOptions options = null);
+	int Import(Stream input, DataImportOptions options = null);
+	int Import(Stream input, string format, DataImportOptions options = null);
 
-		ValueTask<int> ImportAsync(Stream input, DataImportOptions options = null, CancellationToken cancellation = default);
-		ValueTask<int> ImportAsync(Stream input, string format, DataImportOptions options = null, CancellationToken cancellation = default);
-	}
+	ValueTask<int> ImportAsync(Stream input, DataImportOptions options = null, CancellationToken cancellation = default);
+	ValueTask<int> ImportAsync(Stream input, string format, DataImportOptions options = null, CancellationToken cancellation = default);
 }

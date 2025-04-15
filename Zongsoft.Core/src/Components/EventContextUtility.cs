@@ -32,40 +32,39 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Collections.Concurrent;
 
-namespace Zongsoft.Components
+namespace Zongsoft.Components;
+
+public static class EventContextUtility
 {
-	public static class EventContextUtility
+	private static readonly ConcurrentDictionary<Type, Func<EventContext, object>> _accessors = new();
+
+	public static object GetArgument(this EventContext context) => GetArgument(context, out _);
+	public static object GetArgument(this EventContext context, out Type argumentType)
 	{
-		private static readonly ConcurrentDictionary<Type, Func<EventContext, object>> _accessors = new();
-
-		public static object GetArgument(this EventContext context) => GetArgument(context, out _);
-		public static object GetArgument(this EventContext context, out Type argumentType)
-		{
-			argumentType = null;
-			if(context == null)
-				return null;
-
-			if(context.GetType().IsGenericType)
-			{
-				argumentType = context.GetType().GetGenericArguments()[0];
-
-				var accessor = _accessors.GetOrAdd(argumentType, type =>
-				{
-					var property = context.GetType().GetProperty(nameof(EventContext<object>.Argument), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-					var parameter = Expression.Parameter(typeof(EventContext), "context");
-					var converter = Expression.Convert(parameter, typeof(EventContext<>).MakeGenericType(type));
-					var invoke = Expression.Call(converter, property.GetMethod);
-
-					var expression = type.IsValueType ?
-						Expression.Convert(invoke, typeof(object)) : (Expression)invoke;
-
-					return Expression.Lambda<Func<EventContext, object>>(expression, parameter).Compile();
-				});
-
-				return accessor.Invoke(context);
-			}
-
+		argumentType = null;
+		if(context == null)
 			return null;
+
+		if(context.GetType().IsGenericType)
+		{
+			argumentType = context.GetType().GetGenericArguments()[0];
+
+			var accessor = _accessors.GetOrAdd(argumentType, type =>
+			{
+				var property = context.GetType().GetProperty(nameof(EventContext<object>.Argument), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+				var parameter = Expression.Parameter(typeof(EventContext), "context");
+				var converter = Expression.Convert(parameter, typeof(EventContext<>).MakeGenericType(type));
+				var invoke = Expression.Call(converter, property.GetMethod);
+
+				var expression = type.IsValueType ?
+					Expression.Convert(invoke, typeof(object)) : (Expression)invoke;
+
+				return Expression.Lambda<Func<EventContext, object>>(expression, parameter).Compile();
+			});
+
+			return accessor.Invoke(context);
 		}
+
+		return null;
 	}
 }

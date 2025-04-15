@@ -29,22 +29,21 @@
 
 using System;
 
-namespace Zongsoft.IO
-{
-	[Serializable]
-	public class DirectoryInfo : PathInfo
-	{
-		#region 构造函数
-		protected DirectoryInfo() { }
-		public DirectoryInfo(string path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
-			: base(path, createdTime, modifiedTime, url) { }
-		public DirectoryInfo(Path path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
-			: base(path, createdTime, modifiedTime, url) { }
-		#endregion
+namespace Zongsoft.IO;
 
-		#region 重写属性
-		public override bool IsFile => false;
-		public override bool IsDirectory => true;
-		#endregion
-	}
+[Serializable]
+public class DirectoryInfo : PathInfo
+{
+	#region 构造函数
+	protected DirectoryInfo() { }
+	public DirectoryInfo(string path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
+		: base(path, createdTime, modifiedTime, url) { }
+	public DirectoryInfo(Path path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
+		: base(path, createdTime, modifiedTime, url) { }
+	#endregion
+
+	#region 重写属性
+	public override bool IsFile => false;
+	public override bool IsDirectory => true;
+	#endregion
 }

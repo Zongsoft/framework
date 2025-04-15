@@ -35,89 +35,88 @@ using System.Security.Claims;
 using System.Security.Principal;
 using System.Collections.Generic;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Security;
+
+[DefaultMember(nameof(Transformers))]
+public class ClaimsPrincipalTransformer : IClaimsPrincipalTransformer
 {
-	[DefaultMember(nameof(Transformers))]
-	public class ClaimsPrincipalTransformer : IClaimsPrincipalTransformer
+	#region 单例字段
+	public static readonly ClaimsPrincipalTransformer Default = new ClaimsPrincipalTransformer();
+	#endregion
+
+	#region 构造函数
+	protected ClaimsPrincipalTransformer() => this.Transformers = new List<IClaimsIdentityTransformer>();
+	#endregion
+
+	#region 公共属性
+	public ICollection<IClaimsIdentityTransformer> Transformers { get; }
+	#endregion
+
+	#region 公共方法
+	public object Transform(ClaimsPrincipal principal, Func<ClaimsIdentity, object> transform = null)
 	{
-		#region 单例字段
-		public static readonly ClaimsPrincipalTransformer Default = new ClaimsPrincipalTransformer();
-		#endregion
+		if(principal == null)
+			return null;
 
-		#region 构造函数
-		protected ClaimsPrincipalTransformer() => this.Transformers = new List<IClaimsIdentityTransformer>();
-		#endregion
+		var type = principal.GetType();
+		var result = new Dictionary<string, object>();
 
-		#region 公共属性
-		public ICollection<IClaimsIdentityTransformer> Transformers { get; }
-		#endregion
-
-		#region 公共方法
-		public object Transform(ClaimsPrincipal principal, Func<ClaimsIdentity, object> transform = null)
+		if(type != typeof(ClaimsPrincipal) && type != typeof(GenericPrincipal))
 		{
-			if(principal == null)
-				return null;
+			var properties = type.GetTypeInfo().DeclaredProperties.Where(p =>
+				p.CanRead && !p.IsSpecialName &&
+				p.GetMethod.IsPublic && !p.GetMethod.IsStatic
+			);
 
-			var type = principal.GetType();
-			var result = new Dictionary<string, object>();
-
-			if(type != typeof(ClaimsPrincipal) && type != typeof(GenericPrincipal))
+			foreach(var property in properties)
 			{
-				var properties = type.GetTypeInfo().DeclaredProperties.Where(p =>
-					p.CanRead && !p.IsSpecialName &&
-					p.GetMethod.IsPublic && !p.GetMethod.IsStatic
-				);
+				if(property.PropertyType == typeof(CancellationToken) ||
+				   property.PropertyType == typeof(CancellationTokenSource) ||
+				   typeof(Microsoft.Extensions.Primitives.IChangeToken).IsAssignableFrom(property.PropertyType))
+					continue;
 
-				foreach(var property in properties)
-				{
-					if(property.PropertyType == typeof(CancellationToken) ||
-					   property.PropertyType == typeof(CancellationTokenSource) ||
-					   typeof(Microsoft.Extensions.Primitives.IChangeToken).IsAssignableFrom(property.PropertyType))
-						continue;
-
-					if(property.PropertyType == typeof(TimeSpan))
-						result.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal).ToString());
-					else
-						result.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal));
-				}
-			}
-
-			if(principal.Identity != null)
-			{
-				if(transform == null)
-					result.Add(nameof(ClaimsPrincipal.Identity), this.OnTransform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
+				if(property.PropertyType == typeof(TimeSpan))
+					result.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal).ToString());
 				else
-					result.Add(nameof(ClaimsPrincipal.Identity), transform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
+					result.Add(property.Name, Reflection.Reflector.GetValue(property, ref principal));
 			}
-
-			if(principal.Identities != null)
-			{
-				var identities = principal.Identities
-					.Where(identity => identity != principal.Identity)
-					.Select(identity => new
-					{
-						Scheme = identity.AuthenticationType,
-						Identity = transform == null ? this.OnTransform(identity) : transform(identity)
-					});
-
-				result.Add(nameof(ClaimsPrincipal.Identities), identities);
-			}
-
-			return result;
 		}
-		#endregion
 
-		#region 虚拟方法
-		protected virtual object OnTransform(ClaimsIdentity identity)
+		if(principal.Identity != null)
 		{
-			foreach(var transformer in this.Transformers)
-			{
-				if(transformer.CanTransform(identity))
-					return transformer.Transform(identity);
-			}
-
-			return identity.AsModel<Privileges.IUser>();
+			if(transform == null)
+				result.Add(nameof(ClaimsPrincipal.Identity), this.OnTransform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
+			else
+				result.Add(nameof(ClaimsPrincipal.Identity), transform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
 		}
-		#endregion
+
+		if(principal.Identities != null)
+		{
+			var identities = principal.Identities
+				.Where(identity => identity != principal.Identity)
+				.Select(identity => new
+				{
+					Scheme = identity.AuthenticationType,
+					Identity = transform == null ? this.OnTransform(identity) : transform(identity)
+				});
+
+			result.Add(nameof(ClaimsPrincipal.Identities), identities);
+		}
+
+		return result;
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual object OnTransform(ClaimsIdentity identity)
+	{
+		foreach(var transformer in this.Transformers)
+		{
+			if(transformer.CanTransform(identity))
+				return transformer.Transform(identity);
+		}
+
+		return identity.AsModel<Privileges.IUser>();
+	}
+	#endregion
 }
