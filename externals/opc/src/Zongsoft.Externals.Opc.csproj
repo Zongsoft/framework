@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Version>1.0.0</Version>
+		<Product>Zongsoft Opc Library</Product>
+		<Description>This is a library about OPC-UA SDK.</Description>
+		<RootNamespace>Zongsoft.Externals.Opc</RootNamespace>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/master/externals/opc</RepositoryUrl>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" VersionOverride="1.5.375.457" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Core" VersionOverride="1.5.375.457" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" VersionOverride="1.5.375.457" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Server" VersionOverride="1.5.375.457" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Configuration" VersionOverride="1.5.375.457" />
+	</ItemGroup>
+
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.7.0" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Opc"
+        title="Zongsoft.Externals.Opc Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
+        description="Created Date: 2025-04-15 by Popeye Zhong" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Opc" />
+		</assemblies>
+	</manifest>
+</plugin>
