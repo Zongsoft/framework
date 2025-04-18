@@ -51,6 +51,7 @@ public partial class OpcServer : WorkerBase
 	{
 		var configuration = GetConfiguration(this.Name);
 
+		//验证服务配置
 		configuration.Validate(ApplicationType.Server);
 
 		_launcher = new ApplicationInstance()
@@ -60,6 +61,7 @@ public partial class OpcServer : WorkerBase
 			ApplicationConfiguration = configuration,
 		};
 
+		//必须：检查应用启动器的安全证书
 		_launcher.CheckApplicationInstanceCertificates(false);
 
 		_server = new Server();
@@ -70,22 +72,22 @@ public partial class OpcServer : WorkerBase
 		ApplicationName = "OpcServer",
 		ApplicationUri = Utils.Format(@"urn:{0}:OpcServer", System.Net.Dns.GetHostName()),
 		ApplicationType = ApplicationType.Server,
+		ProductUri = ApplicationContext.Current?.Name,
 
 		ServerConfiguration = new ServerConfiguration()
 		{
-			BaseAddresses = { "opc.tcp://localhost:4844/OpcServer", "https://localhost:4841/OpcServer" },
+			BaseAddresses = { "opc.tcp://localhost:4841/OpcServer" },
 			DiagnosticsEnabled = true,
 			MinRequestThreadCount = 5,
 			MaxRequestThreadCount = 100,
 			MaxQueuedRequestCount = 200,
 
-			RegistrationEndpoint = new EndpointDescription("opc.tcp://localhost:4848")
+			RegistrationEndpoint = new EndpointDescription("opc.tcp://localhost:4840")
 			{
+				SecurityMode = MessageSecurityMode.None,
 				Server = new ApplicationDescription()
 				{
 					ApplicationType = ApplicationType.DiscoveryServer,
-					ApplicationUri = "opc.tcp://localhost:4848",
-					DiscoveryUrls = ["opc.tcp://localhost:4848"],
 				}
 			},
 
@@ -95,7 +97,17 @@ public partial class OpcServer : WorkerBase
 				{
 					SecurityMode = MessageSecurityMode.None,
 					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#None"
-				}
+				},
+				new ServerSecurityPolicy()
+				{
+					SecurityMode = MessageSecurityMode.Sign,
+					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
+				},
+				new ServerSecurityPolicy()
+				{
+					SecurityMode = MessageSecurityMode.SignAndEncrypt,
+					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
+				},
 			],
 			UserTokenPolicies =
 			[
@@ -105,7 +117,11 @@ public partial class OpcServer : WorkerBase
 				},
 				new UserTokenPolicy(UserTokenType.UserName)
 				{
-					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256",
+					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
+				},
+				new UserTokenPolicy(UserTokenType.Certificate)
+				{
+					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
 				}
 			],
 		},
@@ -114,12 +130,12 @@ public partial class OpcServer : WorkerBase
 			ApplicationCertificate = new CertificateIdentifier
 			{
 				StoreType = @"Directory",
-				StorePath = @"%CommonApplicationData%\OPC Foundation\CertificateStores\MachineDefault",
+				StorePath = @"certificates",
 				SubjectName = $"CN={name}, DC={System.Net.Dns.GetHostName()}",
 			},
-			//TrustedIssuerCertificates = new CertificateTrustList { StoreType = @"Directory", StorePath = @"%CommonApplicationData%\OPC Foundation\CertificateStores\UA Certificate Authorities" },
-			//TrustedPeerCertificates = new CertificateTrustList { StoreType = @"Directory", StorePath = @"%CommonApplicationData%\OPC Foundation\CertificateStores\UA Applications" },
-			//RejectedCertificateStore = new CertificateTrustList { StoreType = @"Directory", StorePath = @"%CommonApplicationData%\OPC Foundation\CertificateStores\RejectedCertificates" },
+			//TrustedIssuerCertificates = new CertificateTrustList { StoreType = @"Directory", StorePath = @"certificates/authorities" },
+			//TrustedPeerCertificates = new CertificateTrustList { StoreType = @"Directory", StorePath = @"certificates/applications" },
+			//RejectedCertificateStore = new CertificateTrustList { StoreType = @"Directory", StorePath = @"certificates/rejected" },
 			AutoAcceptUntrustedCertificates = true,
 			AddAppCertToTrustedStore = true
 		},
@@ -137,12 +153,54 @@ partial class OpcServer
 {
 	private sealed class Server : StandardServer
 	{
-		protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration) =>
-			new MasterNodeManager(server, configuration, null, [new MyNodeManager(this.ServerInternal, this.Configuration)]);
+		private NodeManager _manager;
+
+		protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration)
+		{
+			_manager = new NodeManager(server, configuration);
+			return new MasterNodeManager(server, configuration, null, [_manager]);
+		}
 
 		protected override void OnNodeManagerStarted(IServerInternal server)
 		{
 			base.OnNodeManagerStarted(server);
+		}
+
+		public override ResponseHeader AddNodes(RequestHeader requestHeader, AddNodesItemCollection nodesToAdd, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnosticInfos)
+		{
+			var context = this.ValidateRequest(requestHeader, RequestType.AddNodes);
+
+			try
+			{
+				if(nodesToAdd == null || nodesToAdd.Count == 0)
+					throw new ServiceResultException(StatusCodes.BadNothingToDo);
+
+				_manager.AddNodes(
+					context,
+					nodesToAdd,
+					out results,
+					out diagnosticInfos);
+
+				return this.CreateResponse(requestHeader, context.StringTable);
+			}
+			catch(ServiceResultException ex)
+			{
+				lock(this.ServerInternal.DiagnosticsLock)
+				{
+					this.ServerInternal.ServerDiagnostics.RejectedRequestsCount++;
+
+					if(this.IsSecurityError(ex.StatusCode))
+					{
+						this.ServerInternal.ServerDiagnostics.SecurityRejectedRequestsCount++;
+					}
+				}
+
+				throw this.TranslateException(context, ex);
+			}
+			finally
+			{
+				this.OnRequestComplete(context);
+			}
 		}
 	}
 }

@@ -65,6 +65,9 @@ internal class Program
 					//		await subscriber.UnsubscribeAsync();
 					//}
 					break;
+				case "connect":
+					await _client.ConnectAsync(parts.Length > 1 ? parts[1] : "opc.tcp://localhost:4841/OpcServer");
+					break;
 				case "read":
 					break;
 				case "write":

@@ -58,7 +58,21 @@ public class OpcClient : IDisposable
 		{
 			ApplicationName = this.Name,
 			ApplicationType = ApplicationType.Client,
+			ProductUri = ApplicationContext.Current?.Name,
+
+			ClientConfiguration = new ClientConfiguration()
+			{
+				DefaultSessionTimeout = 60 * 1000,
+				OperationLimits = new OperationLimits() { },
+			},
+			TransportQuotas = new TransportQuotas()
+			{
+				OperationTimeout = 30 * 1000,
+			},
 		};
+
+		//验证客户端配置
+		_configuration.Validate(ApplicationType.Client);
 	}
 	#endregion
 
@@ -69,7 +83,7 @@ public class OpcClient : IDisposable
 	#region 公共方法
 	public async ValueTask ConnectAsync(string url, CancellationToken cancellation = default)
 	{
-		var endpointDescription = CoreClientUtils.SelectEndpoint(_configuration, url, false, 1000 * 3);
+		var endpointDescription = CoreClientUtils.SelectEndpoint(_configuration, url, false, 1000 * 10);
 		var endpointConfiguration = EndpointConfiguration.Create(_configuration);
 		var endpoint = new ConfiguredEndpoint(null, endpointDescription, endpointConfiguration);
 
@@ -80,10 +94,23 @@ public class OpcClient : IDisposable
 			this.Name,
 			1000,
 			new UserIdentity(),
-			null,
+			["zh", "en"],
 			cancellation);
 
-		await _session.OpenAsync(this.Name, new UserIdentity(), cancellation);
+		if(!_session.Connected)
+			await _session.OpenAsync(this.Name, new UserIdentity(), cancellation);
+	}
+
+	public async ValueTask DisconnectAsync(CancellationToken cancellation = default)
+	{
+		var session = _session;
+		if(session == null || !session.Connected)
+			return;
+
+		if(session.Subscriptions != null)
+			await session.RemoveSubscriptionsAsync(session.Subscriptions, cancellation);
+
+		await session.CloseAsync(cancellation);
 	}
 
 	public async ValueTask WriteAsync(string key, object value, CancellationToken cancellation = default)
@@ -91,16 +118,44 @@ public class OpcClient : IDisposable
 		if(string.IsNullOrEmpty(key))
 			throw new ArgumentNullException(nameof(key));
 
+		var folder = new FolderState(null)
+		{
+			SymbolicName = "MyFolder",
+			ReferenceTypeId = ReferenceTypes.Organizes,
+			TypeDefinitionId = ObjectTypeIds.FolderType,
+			NodeId = new NodeId("MyFolder", 2),
+			BrowseName = new QualifiedName("MyFolder", 2),
+			DisplayName = new LocalizedText("en", "MyFolder"),
+			WriteMask = AttributeWriteMask.None,
+			UserWriteMask = AttributeWriteMask.None,
+			EventNotifier = EventNotifiers.None
+		};
+
+		folder.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectsFolder);
+		folder.ClearChangeMasks(_session.SystemContext, true);
+
 		var request = new RequestHeader()
 		{
 			Timestamp = DateTime.UtcNow,
 		};
 
+		var root = _session.NodeCache.FindAsync(Objects.RootFolder);
+
+		var node = new AddNodesItem()
+		{
+			BrowseName = new QualifiedName("MyNode", 2),
+			NodeClass = NodeClass.Object,
+			TypeDefinition = ReferenceTypeIds.Organizes,
+		};
+
+		var response = await _session.AddNodesAsync(request, [node], cancellation);
+
 		var values = new WriteValueCollection();
 		values.Add(new WriteValue()
 		{
-			NodeId = "ns=2;i=100",
-			Value = new DataValue(new Variant(100)),
+			NodeId = "ns=2;s=111",
+			AttributeId = Attributes.Value,
+			Value = new DataValue(new Variant(123.50, TypeInfo.Scalars.Double)),
 		});
 
 		var result = await _session.WriteAsync(request, values, cancellation);
