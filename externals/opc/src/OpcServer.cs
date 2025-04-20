@@ -44,9 +44,12 @@ namespace Zongsoft.Externals.Opc;
 
 public partial class OpcServer : WorkerBase
 {
+	#region 成员字段
 	private ApplicationInstance _launcher;
 	private Server _server;
+	#endregion
 
+	#region 构造函数
 	public OpcServer(string name = null) : base(name)
 	{
 		var configuration = GetConfiguration(this.Name);
@@ -66,7 +69,9 @@ public partial class OpcServer : WorkerBase
 
 		_server = new Server();
 	}
+	#endregion
 
+	#region 配置方法
 	private static ApplicationConfiguration GetConfiguration(string name) => new()
 	{
 		ApplicationName = "OpcServer",
@@ -140,21 +145,32 @@ public partial class OpcServer : WorkerBase
 			AddAppCertToTrustedStore = true
 		},
 		//TransportConfigurations = new TransportConfigurationCollection(),
-		TransportQuotas = new TransportQuotas { OperationTimeout = 15000 },
+		TransportQuotas = new TransportQuotas
+		{
+			OperationTimeout = 60000,
+			ChannelLifetime = 60000,
+			SecurityTokenLifetime = 3600000,
+		},
 		//ClientConfiguration = new ClientConfiguration { DefaultSessionTimeout = 60000 },
 		//TraceConfiguration = new TraceConfiguration()
 	};
+	#endregion
 
+	#region 重写方法
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation) => _launcher.Start(_server);
 	protected override Task OnStopAsync(string[] args, CancellationToken cancellation) { _launcher.Stop(); return Task.CompletedTask; }
+	#endregion
 }
 
 partial class OpcServer
 {
 	private sealed class Server : StandardServer
 	{
+		#region 成员字段
 		private NodeManager _manager;
+		#endregion
 
+		#region 重写方法
 		protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration)
 		{
 			_manager = new NodeManager(server, configuration);
@@ -166,22 +182,18 @@ partial class OpcServer
 			base.OnNodeManagerStarted(server);
 		}
 
-		public override ResponseHeader AddNodes(RequestHeader requestHeader, AddNodesItemCollection nodesToAdd, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnosticInfos)
+		public override ResponseHeader AddNodes(RequestHeader requestHeader, AddNodesItemCollection nodes, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnostics)
 		{
 			var context = this.ValidateRequest(requestHeader, RequestType.AddNodes);
 
 			try
 			{
-				if(nodesToAdd == null || nodesToAdd.Count == 0)
+				if(nodes == null || nodes.Count == 0)
 					throw new ServiceResultException(StatusCodes.BadNothingToDo);
 
-				_manager.AddNodes(
-					context,
-					nodesToAdd,
-					out results,
-					out diagnosticInfos);
+				_manager.AddNodes(context, nodes, out results, out diagnostics);
 
-				return this.CreateResponse(requestHeader, context.StringTable);
+				return this.CreateResponse(requestHeader, StatusCodes.Good);
 			}
 			catch(ServiceResultException ex)
 			{
@@ -202,5 +214,6 @@ partial class OpcServer
 				this.OnRequestComplete(context);
 			}
 		}
+		#endregion
 	}
 }

@@ -36,6 +36,7 @@ using System.Collections.Generic;
 using Opc.Ua;
 using Opc.Ua.Server;
 using Opc.Ua.Configuration;
+using Org.BouncyCastle.Tls.Crypto;
 
 namespace Zongsoft.Externals.Opc;
 
@@ -43,6 +44,8 @@ partial class OpcServer
 {
 	internal class NodeManager : CustomNodeManager2
 	{
+		private IList<IReference> _references;
+
 		#region 构造函数
 		public NodeManager(IServerInternal server, ApplicationConfiguration configuration) : base(server, configuration, ["http://zongsoft.com/opc/ua", "http://zongsoft.com/opc-ua"])
 		{
@@ -50,41 +53,119 @@ partial class OpcServer
 		#endregion
 
 		#region 公共方法
-		public void AddNodes(OperationContext context, AddNodesItemCollection nodesToAdd, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnosticInfos)
+		public void AddNodes(OperationContext context, AddNodesItemCollection nodes, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnostics)
 		{
-			// Validate nodesToAdd parameter
-			if(nodesToAdd == null)
+			if(nodes == null)
+				throw new ServiceResultException(StatusCodes.BadInvalidArgument);
+
+			results = new AddNodesResultCollection(nodes.Count);
+			diagnostics = new DiagnosticInfoCollection(nodes.Count);
+
+			for(int i = 0; i < nodes.Count; i++)
 			{
-				throw new ServiceResultException(StatusCodes.BadInvalidArgument, "The nodesToAdd parameter is null.");
-			}
+				(var result, var diagnostic) = this.AddNode(context, nodes[i]);
 
-			// Create result lists
-			results = new AddNodesResultCollection(nodesToAdd.Count);
-			diagnosticInfos = new DiagnosticInfoCollection(nodesToAdd.Count);
-
-			for(int ii = 0; ii < nodesToAdd.Count; ii++)
-			{
-				// Call AddNode and update results
-				AddNodesResult addResult;
-				DiagnosticInfo diagnosticInfo;
-
-				AddNode(context, nodesToAdd[ii], out addResult, out diagnosticInfo);
-
-				results.Add(addResult);
-				diagnosticInfos.Add(diagnosticInfo);
+				if(result != null)
+					results.Add(result);
+				if(diagnostic != null)
+					diagnostics.Add(diagnostic);
 			}
 		}
 
-		private void AddNode(OperationContext context, AddNodesItem nodeToAdd, out AddNodesResult result, out DiagnosticInfo diagnosticInfo)
+		private (AddNodesResult result, DiagnosticInfo diagnostic) AddNode(OperationContext context, AddNodesItem node)
 		{
-			result = new AddNodesResult();
-			diagnosticInfo = new DiagnosticInfo();
-
-			try
+			if(node.NodeClass == NodeClass.Object)
 			{
-				// TODO: Add node in Address space
+				if(node.TypeDefinition == ObjectTypeIds.FolderType)
+				{
+					var displayName = node.BrowseName.Name;
+					var description = (string)null;
+
+					if(node.NodeAttributes?.Body is ObjectAttributes attributes)
+					{
+						displayName = attributes.DisplayName?.Text;
+						description = attributes.Description?.Text;
+					}
+
+					var root = this.Server.CoreNodeManager.Find(ObjectIds.ObjectsFolder, null);
+					var folder = this.AddPredefinedFolder(null, node.RequestedNewNodeId, node.BrowseName.Name, displayName, description);
+
+					return (new AddNodesResult()
+					{
+						StatusCode = StatusCodes.Good,
+						AddedNodeId = folder.NodeId,
+					}, null);
+				}
+				else
+				{
+					throw new ServiceResultException(StatusCodes.BadTypeDefinitionInvalid);
+				}
 			}
-			catch { }
+
+			throw new ServiceResultException(StatusCodes.BadNodeClassInvalid);
+		}
+		#endregion
+
+		public override void CreateAddressSpace(IDictionary<NodeId, IList<IReference>> externalReferences)
+		{
+			//if(!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out _references))
+			//{
+			//	externalReferences[ObjectIds.ObjectsFolder] = _references = new List<IReference>();
+			//}
+
+			this.AddPredefinedFolder(null, null, "MyFirstFolder", "My First Folder", "This is my first folder node.");
+
+			base.CreateAddressSpace(externalReferences);
+		}
+
+		protected override NodeStateCollection LoadPredefinedNodes(ISystemContext context)
+		{
+			var nodes = new NodeStateCollection
+			{
+				this.CreateFolder(null, null, "MyFirstFolderEx", "My First Folder Ex", "This is my first folder node(Ex).")
+			};
+
+			return nodes;
+		}
+
+		#region 私有方法
+		private FolderState AddPredefinedFolder(FolderState parent, ExpandedNodeId id, string name, string displayName, string description)
+		{
+			var folder = this.CreateFolder(parent, id, name, displayName, description);
+			//folder.EventNotifier = EventNotifiers.SubscribeToEvents;
+
+			//folder.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectsFolder);
+			_references?.Add(new NodeStateReference(ReferenceTypes.Organizes, false, folder.NodeId));
+
+			//this.AddRootNotifier(folder);
+			this.AddPredefinedNode(this.SystemContext, folder);
+			return folder;
+		}
+
+		private FolderState CreateFolder(FolderState parent, ExpandedNodeId id, string name, string displayName, string description)
+		{
+			var nodeId = id == null || id.IsNull ? new NodeId(Guid.NewGuid(), this.NamespaceIndex) : (NodeId)id;
+
+			var folder = new FolderState(parent)
+			{
+				SymbolicName = name,
+				ReferenceTypeId = ReferenceTypes.Organizes,
+				TypeDefinitionId = ObjectTypeIds.FolderType,
+				NodeId = nodeId,
+				BrowseName = new QualifiedName(name, this.NamespaceIndex),
+				DisplayName = displayName,
+				Description = description,
+				WriteMask = AttributeWriteMask.None,
+				UserWriteMask = AttributeWriteMask.None,
+				EventNotifier = EventNotifiers.None
+			};
+
+			if(parent != null)
+				parent.AddChild(folder);
+
+			folder.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectsFolder);
+
+			return folder;
 		}
 		#endregion
 	}

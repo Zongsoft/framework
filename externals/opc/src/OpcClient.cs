@@ -67,7 +67,7 @@ public class OpcClient : IDisposable
 			},
 			TransportQuotas = new TransportQuotas()
 			{
-				OperationTimeout = 30 * 1000,
+				OperationTimeout = 60 * 1000,
 			},
 		};
 
@@ -92,7 +92,7 @@ public class OpcClient : IDisposable
 			endpoint,
 			false,
 			this.Name,
-			1000,
+			60 * 1000,
 			new UserIdentity(),
 			["zh", "en"],
 			cancellation);
@@ -118,47 +118,67 @@ public class OpcClient : IDisposable
 		if(string.IsNullOrEmpty(key))
 			throw new ArgumentNullException(nameof(key));
 
-		var folder = new FolderState(null)
-		{
-			SymbolicName = "MyFolder",
-			ReferenceTypeId = ReferenceTypes.Organizes,
-			TypeDefinitionId = ObjectTypeIds.FolderType,
-			NodeId = new NodeId("MyFolder", 2),
-			BrowseName = new QualifiedName("MyFolder", 2),
-			DisplayName = new LocalizedText("en", "MyFolder"),
-			WriteMask = AttributeWriteMask.None,
-			UserWriteMask = AttributeWriteMask.None,
-			EventNotifier = EventNotifiers.None
-		};
-
-		folder.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectsFolder);
-		folder.ClearChangeMasks(_session.SystemContext, true);
-
 		var request = new RequestHeader()
 		{
 			Timestamp = DateTime.UtcNow,
 		};
 
-		var root = _session.NodeCache.FindAsync(Objects.RootFolder);
+		var root = await _session.NodeCache.FindAsync(Objects.RootFolder, cancellation);
 
-		var node = new AddNodesItem()
+		var folderNode = new AddNodesItem()
 		{
 			BrowseName = new QualifiedName("MyNode", 2),
 			NodeClass = NodeClass.Object,
-			TypeDefinition = ReferenceTypeIds.Organizes,
+			ReferenceTypeId = ReferenceTypes.Organizes,
+			TypeDefinition = ObjectTypeIds.FolderType,
+			RequestedNewNodeId = new ExpandedNodeId(10515, 2),
+			NodeAttributes = new ExtensionObject(new ObjectAttributes()
+			{
+				DisplayName = new LocalizedText("MyNode"),
+				Description = new LocalizedText("MyNode Description"),
+				EventNotifier = EventNotifiers.None,
+				WriteMask = (uint)AttributeWriteMask.None,
+				UserWriteMask = (uint)AttributeWriteMask.None,
+				SpecifiedAttributes = (uint)(NodeAttributesMask.DisplayName | NodeAttributesMask.Description | NodeAttributesMask.EventNotifier | NodeAttributesMask.WriteMask | NodeAttributesMask.UserWriteMask),
+			}),
 		};
 
-		var response = await _session.AddNodesAsync(request, [node], cancellation);
-
-		var values = new WriteValueCollection();
-		values.Add(new WriteValue()
+		var variableNode = new AddNodesItem
 		{
-			NodeId = "ns=2;s=111",
-			AttributeId = Attributes.Value,
-			Value = new DataValue(new Variant(123.50, TypeInfo.Scalars.Double)),
-		});
+			ReferenceTypeId = ReferenceTypes.HasComponent,
+			RequestedNewNodeId = null,
+			BrowseName = new QualifiedName("DataVariable1"),
+			NodeClass = NodeClass.Variable,
+			TypeDefinition = VariableTypeIds.BaseDataVariableType,
+			NodeAttributes = new ExtensionObject(new VariableAttributes()
+			{
+				DisplayName = "DataVariable1",
+				Description = "DataVariable1 Description",
+				Value = new Variant(123),
+				DataType = (uint)BuiltInType.Int32,
+				ValueRank = ValueRanks.Scalar,
+				ArrayDimensions = new UInt32Collection(),
+				AccessLevel = AccessLevels.CurrentReadOrWrite,
+				UserAccessLevel = AccessLevels.CurrentReadOrWrite,
+				MinimumSamplingInterval = 0,
+				Historizing = false,
+				WriteMask = (uint)AttributeWriteMask.None,
+				UserWriteMask = (uint)AttributeWriteMask.None,
+				SpecifiedAttributes = (uint)NodeAttributesMask.All,
+			}),
+		};
 
-		var result = await _session.WriteAsync(request, values, cancellation);
+		var response = await _session.AddNodesAsync(request, [folderNode], cancellation);
+
+		//var values = new WriteValueCollection();
+		//values.Add(new WriteValue()
+		//{
+		//	NodeId = "ns=2;s=111",
+		//	AttributeId = Attributes.Value,
+		//	Value = new DataValue(new Variant(123.50, TypeInfo.Scalars.Double)),
+		//});
+
+		//var result = await _session.WriteAsync(request, values, cancellation);
 	}
 	#endregion
 
