@@ -159,20 +159,29 @@ public static class Randomizer
 		if(length < 1 || length > 1024)
 			throw new ArgumentOutOfRangeException(nameof(length));
 
-		var result = new char[length];
-		var data = new byte[length];
+#if NET8_0_OR_GREATER
+		if(digitOnly)
+		{
+			var characters = Random.Shared.GetItems(Digits.AsSpan(..10), length);
+			return new string(characters);
+		}
 
-		_random.GetBytes(data);
+		return System.Security.Cryptography.RandomNumberGenerator.GetString(Digits, length);
+#else
+		var result = new char[length];
+		var data = System.Security.Cryptography.RandomNumberGenerator.GetBytes(length);
 
 		//确保首位字符始终为数字字符
 		result[0] = Digits[data[0] % 10];
+		var divisor = digitOnly ? 10 : 32;
 
 		for(int i = 1; i < length; i++)
 		{
-			result[i] = Digits[data[i] % (digitOnly ? 10 : 32)];
+			result[i] = Digits[data[i] % divisor];
 		}
 
 		return new string(result);
+#endif
 	}
 
 	[Obsolete]
