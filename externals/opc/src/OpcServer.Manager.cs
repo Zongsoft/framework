@@ -88,7 +88,19 @@ partial class OpcServer
 					}
 
 					var root = this.Server.CoreNodeManager.Find(ObjectIds.ObjectsFolder, null);
-					var folder = this.AddPredefinedFolder(null, node.RequestedNewNodeId, node.BrowseName.Name, displayName, description);
+					var folder = this.AddPredefinedFolder(null, null, node.BrowseName.Name, displayName, description);
+					//this.AddPredefinedFolder(null, null, "MyFirstFolder100", "My First Folder100", "This is my first folder node(100).");
+
+					var found = this.PredefinedNodes.Values.FirstOrDefault(node => string.Equals(node.SymbolicName, "MyFirstFolder"));
+					var variable = this.CreateVariable(found, "variable1", 100.0, "My Variable #1", DataTypeIds.Double, 0);
+					this.AddPredefinedNode(this.SystemContext, variable);
+					found.ClearChangeMasks(this.SystemContext, false);
+
+					//var rootNode = this.FindNodeInAddressSpace(ObjectIds.ObjectsFolder);
+					//rootNode.AddReference(folder.TypeDefinitionId, false, folder.NodeId);
+
+					//rootNode?.ClearChangeMasks(this.SystemContext, true);
+					//folder.ClearChangeMasks(this.SystemContext, true);
 
 					return (new AddNodesResult()
 					{
@@ -108,10 +120,10 @@ partial class OpcServer
 
 		public override void CreateAddressSpace(IDictionary<NodeId, IList<IReference>> externalReferences)
 		{
-			//if(!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out _references))
-			//{
-			//	externalReferences[ObjectIds.ObjectsFolder] = _references = new List<IReference>();
-			//}
+			if(!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out _references))
+			{
+				externalReferences[ObjectIds.ObjectsFolder] = _references = new List<IReference>();
+			}
 
 			this.AddPredefinedFolder(null, null, "MyFirstFolder", "My First Folder", "This is my first folder node.");
 
@@ -122,7 +134,7 @@ partial class OpcServer
 		{
 			var nodes = new NodeStateCollection
 			{
-				this.CreateFolder(null, null, "MyFirstFolderEx", "My First Folder Ex", "This is my first folder node(Ex).")
+				this.AddPredefinedFolder(null, null, "MyFirstFolderEx", "My First Folder Ex", "This is my first folder node(Ex).")
 			};
 
 			return nodes;
@@ -132,13 +144,15 @@ partial class OpcServer
 		private FolderState AddPredefinedFolder(FolderState parent, ExpandedNodeId id, string name, string displayName, string description)
 		{
 			var folder = this.CreateFolder(parent, id, name, displayName, description);
-			//folder.EventNotifier = EventNotifiers.SubscribeToEvents;
 
-			//folder.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectsFolder);
+			folder.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectsFolder);
 			_references?.Add(new NodeStateReference(ReferenceTypes.Organizes, false, folder.NodeId));
 
-			//this.AddRootNotifier(folder);
+			folder.EventNotifier = EventNotifiers.SubscribeToEvents;
+			this.AddRootNotifier(folder);
+
 			this.AddPredefinedNode(this.SystemContext, folder);
+
 			return folder;
 		}
 
@@ -163,9 +177,83 @@ partial class OpcServer
 			if(parent != null)
 				parent.AddChild(folder);
 
-			folder.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectsFolder);
-
 			return folder;
+		}
+
+		private BaseDataVariableState CreateVariable(NodeState parent, string name, object value, string displayName, NodeId dataType, int valueRank)
+		{
+			var variable = new BaseDataVariableState(parent)
+			{
+				SymbolicName = displayName,
+				ReferenceTypeId = ReferenceTypes.Organizes,
+				TypeDefinitionId = VariableTypeIds.BaseDataVariableType,
+				NodeId = new NodeId(name, this.NamespaceIndex),
+				BrowseName = new QualifiedName(name, this.NamespaceIndex),
+				DisplayName = new LocalizedText("en", displayName),
+				WriteMask = AttributeWriteMask.DisplayName | AttributeWriteMask.Description,
+				UserWriteMask = AttributeWriteMask.DisplayName | AttributeWriteMask.Description,
+				DataType = dataType,
+				ValueRank = valueRank,
+				AccessLevel = AccessLevels.CurrentReadOrWrite,
+				UserAccessLevel = AccessLevels.CurrentReadOrWrite,
+				Historizing = false,
+				Value = value,
+				StatusCode = StatusCodes.Good,
+				Timestamp = DateTime.Now,
+				OnWriteValue = OnWriteDataValue
+			};
+
+			if(valueRank == ValueRanks.OneDimension)
+			{
+				variable.ArrayDimensions = new ReadOnlyList<uint>([0]);
+			}
+			else if(valueRank == ValueRanks.TwoDimensions)
+			{
+				variable.ArrayDimensions = new ReadOnlyList<uint>([0, 0]);
+			}
+
+			if(parent != null)
+				parent.AddChild(variable);
+
+			return variable;
+		}
+
+		private ServiceResult OnWriteDataValue(
+			ISystemContext context,
+			NodeState node,
+			NumericRange indexRange,
+			QualifiedName dataEncoding,
+			ref object value,
+			ref StatusCode statusCode,
+			ref DateTime timestamp)
+		{
+			var variable = node as BaseDataVariableState;
+
+			try
+			{
+				//验证数据类型
+				TypeInfo typeInfo = TypeInfo.IsInstanceOfDataType(
+					value,
+					variable.DataType,
+					variable.ValueRank,
+					context.NamespaceUris,
+					context.TypeTable);
+
+				if(typeInfo == null || typeInfo == TypeInfo.Unknown)
+					return StatusCodes.BadTypeMismatch;
+
+				if(typeInfo.BuiltInType == BuiltInType.Double)
+				{
+					double number = Convert.ToDouble(value);
+					value = TypeInfo.Cast(number, typeInfo.BuiltInType);
+				}
+
+				return ServiceResult.Good;
+			}
+			catch(Exception)
+			{
+				return StatusCodes.BadTypeMismatch;
+			}
 		}
 		#endregion
 	}
