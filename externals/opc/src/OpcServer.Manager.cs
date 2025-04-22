@@ -44,11 +44,15 @@ partial class OpcServer
 {
 	internal class NodeManager : CustomNodeManager2
 	{
-		private IList<IReference> _references;
+		#region 私有字段
+		private uint _nodeId;
+		private IList<IReference> _references; //外部引用
+		#endregion
 
 		#region 构造函数
 		public NodeManager(IServerInternal server, ApplicationConfiguration configuration) : base(server, configuration, ["http://zongsoft.com/opc/ua", "http://zongsoft.com/opc-ua"])
 		{
+			this.SystemContext.NodeIdFactory = this;
 		}
 		#endregion
 
@@ -91,8 +95,8 @@ partial class OpcServer
 					var folder = this.AddPredefinedFolder(null, null, node.BrowseName.Name, displayName, description);
 					//this.AddPredefinedFolder(null, null, "MyFirstFolder100", "My First Folder100", "This is my first folder node(100).");
 
-					var found = this.PredefinedNodes.Values.FirstOrDefault(node => string.Equals(node.SymbolicName, "MyFirstFolder"));
-					var variable = this.CreateVariable(found, "variable1", 100.0, "My Variable #1", DataTypeIds.Double, 0);
+					var found = this.PredefinedNodes.Values.FirstOrDefault(node => string.Equals(node.SymbolicName, "MyFirstFolderEx"));
+					var variable = this.CreateVariable(found, "variable1", Random.Shared.NextDouble(), "My Variable #1", DataTypeIds.Double, 0);
 					this.AddPredefinedNode(this.SystemContext, variable);
 					found.ClearChangeMasks(this.SystemContext, false);
 
@@ -118,14 +122,11 @@ partial class OpcServer
 		}
 		#endregion
 
+		#region 重写方法
 		public override void CreateAddressSpace(IDictionary<NodeId, IList<IReference>> externalReferences)
 		{
 			if(!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out _references))
-			{
 				externalReferences[ObjectIds.ObjectsFolder] = _references = new List<IReference>();
-			}
-
-			this.AddPredefinedFolder(null, null, "MyFirstFolder", "My First Folder", "This is my first folder node.");
 
 			base.CreateAddressSpace(externalReferences);
 		}
@@ -139,6 +140,20 @@ partial class OpcServer
 
 			return nodes;
 		}
+
+		public override NodeId New(ISystemContext context, NodeState node)
+		{
+			if(node == null || node.NodeId.IsNullNodeId)
+				return new NodeId(++_nodeId, this.NamespaceIndex);
+
+			return base.New(context, node);
+		}
+
+		public override void Write(OperationContext context, IList<WriteValue> nodes, IList<ServiceResult> errors)
+		{
+			base.Write(context, nodes, errors);
+		}
+		#endregion
 
 		#region 私有方法
 		private FolderState AddPredefinedFolder(FolderState parent, ExpandedNodeId id, string name, string displayName, string description)

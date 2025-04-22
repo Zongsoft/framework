@@ -151,7 +151,6 @@ public partial class OpcServer : WorkerBase
 			ChannelLifetime = 60000,
 			SecurityTokenLifetime = 3600000,
 		},
-		//ClientConfiguration = new ClientConfiguration { DefaultSessionTimeout = 60000 },
 		//TraceConfiguration = new TraceConfiguration()
 	};
 	#endregion

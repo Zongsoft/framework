@@ -70,6 +70,13 @@ internal class Program
 					break;
 				case "read":
 					break;
+				case "get":
+					var value = await _client.GetValueAsync(parts[1]);
+					Console.WriteLine(value);
+					break;
+				case "set":
+					await _client.SetValueAsync(parts[1], double.Parse(parts[2]));
+					break;
 				case "write":
 					await WriteAsync(parts[1], parts[2]);
 					break;

@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -111,6 +112,104 @@ public class OpcClient : IDisposable
 			await session.RemoveSubscriptionsAsync(session.Subscriptions, cancellation);
 
 		await session.CloseAsync(cancellation);
+	}
+
+	public async ValueTask<object> GetValueAsync(string identifier, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(identifier))
+			throw new ArgumentNullException(nameof(identifier));
+
+		var id = NodeId.Parse(identifier);
+		var result = await _session.ReadValueAsync(id, cancellation);
+
+		if(StatusCode.IsBad(result.StatusCode))
+			throw new InvalidOperationException($"[{result.StatusCode}] Failed to read the value of the “{identifier}” node.");
+
+		if(result.Value is ExtensionObject extension)
+			return extension.Body;
+
+		return result.Value;
+	}
+
+	public async ValueTask<(IEnumerable<object> result, IEnumerable<Failure> failures)> GetValuesAsync(IEnumerable<string> identifiers, CancellationToken cancellation = default)
+	{
+		if(identifiers == null)
+			throw new ArgumentNullException(nameof(identifiers));
+
+		(var result, var failures) = await _session.ReadValuesAsync([.. identifiers.Select(NodeId.Parse)], cancellation);
+
+		return (
+			result
+				.Where(entry => StatusCode.IsGood(entry.StatusCode))
+				.Select(entry => entry.Value is ExtensionObject extension ? extension.Body : entry.Value),
+			failures
+				.Where(failure => StatusCode.IsBad(failure.StatusCode))
+				.Select(failure => new Failure((int)failure.Code, failure.SymbolicId, failure.ToString()))
+		);
+	}
+
+	public async ValueTask SetValueAsync<T>(string identifier, T value, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(identifier))
+			throw new ArgumentNullException(nameof(identifier));
+
+		var request = new RequestHeader()
+		{
+			Timestamp = DateTime.UtcNow,
+		};
+
+		var response = await _session.WriteAsync(
+			request,
+			[
+				new WriteValue()
+				{
+					NodeId = NodeId.Parse(identifier),
+					Value = new DataValue(new Variant(value)),
+					AttributeId = Attributes.Value,
+				}
+			],
+			cancellation);
+
+		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
+			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to write the value of the “{identifier}” node.");
+
+		if(response.Results != null && response.Results.Count > 0)
+		{
+			var failures = response.Results.Where(StatusCode.IsBad);
+
+			if(failures.Any())
+				throw new InvalidOperationException($"[{string.Join(',', failures)}] Failed to write the value of the “{identifier}” node.");
+		}
+	}
+
+	public async ValueTask SetValuesAsync(IEnumerable<KeyValuePair<string, object>> entries, CancellationToken cancellation = default)
+	{
+		if(entries == null)
+			throw new ArgumentNullException(nameof(entries));
+
+		var request = new RequestHeader()
+		{
+			Timestamp = DateTime.UtcNow,
+		};
+
+		var nodes = entries.Select(entry => new WriteValue()
+		{
+			NodeId = NodeId.Parse(entry.Key),
+			Value = new DataValue(new Variant(entry.Value)),
+		});
+
+		var response = await _session.WriteAsync(request, [..nodes], cancellation);
+
+		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
+			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to write node value.");
+
+		if(response.Results != null && response.Results.Count > 0)
+		{
+			var failures = response.Results.Where(StatusCode.IsBad);
+
+			if(failures.Any())
+				throw new InvalidOperationException($"[{string.Join(',', failures)}] Failed to write node value.");
+		}
 	}
 
 	public async ValueTask WriteAsync(string key, object value, CancellationToken cancellation = default)
