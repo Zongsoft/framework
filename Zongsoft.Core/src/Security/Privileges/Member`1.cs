@@ -61,7 +61,12 @@ public class Member<TRole> : IMember<TRole>, IMember, IEquatable<Member<TRole>>,
 	#endregion
 
 	#region 虚拟方法
-	protected virtual object GetMember() => null;
+	protected virtual object GetMember() => this.MemberType switch
+	{
+		MemberType.Role => Member.Role(this.MemberId),
+		MemberType.User => Member.User(this.MemberId),
+		_ => null,
+	};
 	#endregion
 
 	#region 重写方法
