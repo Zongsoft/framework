@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
@@ -167,13 +168,31 @@ partial class RoleController
 		private async ValueTask<IEnumerable<Member>> GetRequestAsync(CancellationToken cancellation)
 		{
 			if(this.Request.HasJsonContentType())
-				return await Serialization.Serializer.Json.DeserializeAsync<Member[]>(this.Request.Body, cancellation);
+			{
+				var modelType = Utility.GetModelType(this.Service, typeof(IMember), typeof(IMemberService<,>), 1) ?? throw new NotSupportedException();
+				var data = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType.MakeArrayType(), cancellation);
+				return GetMembers(data);
+			}
 
 			var content = await this.Request.ReadAsStringAsync();
 			if(string.IsNullOrEmpty(content))
 				return null;
 
 			return Common.StringExtension.Slice<Member>(content, [',', ';', '\n'], Member.TryParse);
+		}
+
+		private static IEnumerable<Member> GetMembers(object data)
+		{
+			if(data is IEnumerable entries)
+			{
+				foreach(var entry in entries.OfType<IMember>())
+				{
+					if(entry.Member is Member member)
+						yield return member;
+					else if(entry.MemberId.HasValue)
+						yield return new Member(entry.MemberId, entry.MemberType);
+				}
+			}
 		}
 		#endregion
 	}

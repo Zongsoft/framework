@@ -36,10 +36,15 @@ internal static class Utility
 {
 	private static readonly ConcurrentDictionary<Type, Type> _types = new();
 
-	public static Type GetModelType(object service, Type modelType, Type servicePrototype)
+	public static Type GetModelType(object service, Type modelType, Type servicePrototype, int position = 0)
 	{
-		if(service == null)
+		if(service == null || modelType == null || servicePrototype == null)
 			return null;
+
+		if(position < 0)
+			throw new ArgumentOutOfRangeException(nameof(position));
+		if(!servicePrototype.IsGenericTypeDefinition)
+			throw new ArgumentException($"The specified '{servicePrototype.FullName}' service prototype must be a generic type definition.");
 
 		return _types.GetOrAdd(service.GetType(), type =>
 		{
@@ -49,18 +54,18 @@ internal static class Utility
 			{
 				var contract = contracts[i];
 
-				if(IsModel(contract, modelType, servicePrototype))
-					return contract.GenericTypeArguments[0];
+				if(IsModelType(contract, modelType, servicePrototype, position))
+					return contract.GenericTypeArguments[position];
 			}
 
 			return null;
 		});
 
-		static bool IsModel(Type contract, Type modelType, Type servicePrototype) =>
+		static bool IsModelType(Type contract, Type modelType, Type servicePrototype, int position) =>
 			contract.IsGenericType &&
+			contract.GenericTypeArguments.Length > position &&
 			contract.GetGenericTypeDefinition() == servicePrototype &&
-			contract.GenericTypeArguments[0] != modelType &&
-			modelType.IsAssignableFrom(contract.GenericTypeArguments[0]);
+			modelType.IsAssignableFrom(contract.GenericTypeArguments[position]);
 	}
 
 	public static (string identity, string @namespace) Identify(string identifier)
