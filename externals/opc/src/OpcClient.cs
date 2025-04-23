@@ -114,6 +114,14 @@ public class OpcClient : IDisposable
 		await session.CloseAsync(cancellation);
 	}
 
+	public ValueTask<bool> ExistsAsync(string identifier, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(identifier))
+			throw new ArgumentNullException(nameof(identifier));
+
+		return ValueTask.FromResult(_session.NodeCache.Exists(NodeId.Parse(identifier)));
+	}
+
 	public async ValueTask<object> GetValueAsync(string identifier, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(identifier))
@@ -148,14 +156,14 @@ public class OpcClient : IDisposable
 		);
 	}
 
-	public async ValueTask SetValueAsync<T>(string identifier, T value, CancellationToken cancellation = default)
+	public async ValueTask<bool> SetValueAsync<T>(string identifier, T value, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(identifier))
 			throw new ArgumentNullException(nameof(identifier));
 
 		var request = new RequestHeader()
 		{
-			Timestamp = DateTime.UtcNow,
+			Timestamp = DateTime.UtcNow
 		};
 
 		var response = await _session.WriteAsync(
@@ -164,7 +172,7 @@ public class OpcClient : IDisposable
 				new WriteValue()
 				{
 					NodeId = NodeId.Parse(identifier),
-					Value = new DataValue(new Variant(value)),
+					Value = new DataValue(new Variant(value), StatusCodes.Good),
 					AttributeId = Attributes.Value,
 				}
 			],
@@ -175,14 +183,20 @@ public class OpcClient : IDisposable
 
 		if(response.Results != null && response.Results.Count > 0)
 		{
+			//如果失败原因为指定标识不存在则返回失败（不触发异常）
+			if(response.Results[0] == StatusCodes.BadNodeIdUnknown)
+				return false;
+
 			var failures = response.Results.Where(StatusCode.IsBad);
 
 			if(failures.Any())
 				throw new InvalidOperationException($"[{string.Join(',', failures)}] Failed to write the value of the “{identifier}” node.");
 		}
+
+		return true;
 	}
 
-	public async ValueTask SetValuesAsync(IEnumerable<KeyValuePair<string, object>> entries, CancellationToken cancellation = default)
+	public async ValueTask<Failure[]> SetValuesAsync(IEnumerable<KeyValuePair<string, object>> entries, CancellationToken cancellation = default)
 	{
 		if(entries == null)
 			throw new ArgumentNullException(nameof(entries));
@@ -204,12 +218,9 @@ public class OpcClient : IDisposable
 			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to write node value.");
 
 		if(response.Results != null && response.Results.Count > 0)
-		{
-			var failures = response.Results.Where(StatusCode.IsBad);
+			return response.Results.Where(StatusCode.IsBad).Select(Failure.GetFailure).ToArray();
 
-			if(failures.Any())
-				throw new InvalidOperationException($"[{string.Join(',', failures)}] Failed to write node value.");
-		}
+		return null;
 	}
 
 	public async ValueTask WriteAsync(string key, object value, CancellationToken cancellation = default)

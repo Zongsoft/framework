@@ -36,7 +36,6 @@ using System.Collections.Generic;
 using Opc.Ua;
 using Opc.Ua.Server;
 using Opc.Ua.Configuration;
-using Org.BouncyCastle.Tls.Crypto;
 
 namespace Zongsoft.Externals.Opc;
 
@@ -46,7 +45,8 @@ partial class OpcServer
 	{
 		#region 私有字段
 		private uint _nodeId;
-		private IList<IReference> _references; //外部引用
+		private IList<IReference> _objectReferences;
+		private IList<IReference> _serverReferences;
 		#endregion
 
 		#region 构造函数
@@ -92,11 +92,11 @@ partial class OpcServer
 					}
 
 					var root = this.Server.CoreNodeManager.Find(ObjectIds.ObjectsFolder, null);
-					var folder = this.AddPredefinedFolder(null, null, node.BrowseName.Name, displayName, description);
-					//this.AddPredefinedFolder(null, null, "MyFirstFolder100", "My First Folder100", "This is my first folder node(100).");
+					var folder = this.CreateFolder(null, null, node.BrowseName.Name, displayName, description);
+					this.AddPredefinedNode(this.SystemContext, folder);
 
 					var found = this.PredefinedNodes.Values.FirstOrDefault(node => string.Equals(node.SymbolicName, "MyFirstFolderEx"));
-					var variable = this.CreateVariable(found, "variable1", Random.Shared.NextDouble(), "My Variable #1", DataTypeIds.Double, 0);
+					var variable = this.CreateVariable(found, "variable1", Random.Shared.NextDouble(), "My Variable #1", DataTypeIds.Double, ValueRanks.Scalar);
 					this.AddPredefinedNode(this.SystemContext, variable);
 					found.ClearChangeMasks(this.SystemContext, false);
 
@@ -125,25 +125,94 @@ partial class OpcServer
 		#region 重写方法
 		public override void CreateAddressSpace(IDictionary<NodeId, IList<IReference>> externalReferences)
 		{
-			if(!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out _references))
-				externalReferences[ObjectIds.ObjectsFolder] = _references = new List<IReference>();
+			if(!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out _objectReferences))
+				externalReferences[ObjectIds.ObjectsFolder] = _objectReferences = new List<IReference>();
+
+			if(!externalReferences.TryGetValue(ObjectIds.Server, out _serverReferences))
+				externalReferences[ObjectIds.Server] = _serverReferences = new List<IReference>();
 
 			base.CreateAddressSpace(externalReferences);
 		}
 
 		protected override NodeStateCollection LoadPredefinedNodes(ISystemContext context)
 		{
+			var trigger = new BaseObjectState(null)
+			{
+				SymbolicName = "Trigger",
+				BrowseName = new QualifiedName("Trigger", this.NamespaceIndex),
+				DisplayName = "TriggerTitle",
+				TypeDefinitionId = ObjectTypeIds.BaseObjectType,
+				EventNotifier = EventNotifiers.SubscribeToEvents,
+			};
+
+			var property = new PropertyState(trigger)
+			{
+				BrowseName = new QualifiedName("MyProperty", this.NamespaceIndex),
+				DisplayName = "MyPropertyLable",
+				TypeDefinitionId = VariableTypeIds.PropertyType,
+				ReferenceTypeId = ReferenceTypeIds.HasProperty,
+				DataType = DataTypeIds.Int32,
+				ValueRank = ValueRanks.TwoDimensions,
+				ArrayDimensions = new ReadOnlyList<uint>([2, 2])
+			};
+
+			trigger.AddChild(property);
+
 			var nodes = new NodeStateCollection
 			{
-				this.AddPredefinedFolder(null, null, "MyFirstFolderEx", "My First Folder Ex", "This is my first folder node(Ex).")
+				trigger,
+				this.CreateFolder(null, null, "MyFirstFolderEx", "My First Folder Ex", "This is my first folder node(Ex).")
 			};
 
 			return nodes;
 		}
 
+		protected override void AddPredefinedNode(ISystemContext context, NodeState node)
+		{
+			if(node.NodeId == null || node.NodeId.IsNullNodeId)
+				node.NodeId = this.New(context, node);
+
+			switch(node)
+			{
+				case BaseObjectState instance:
+					if(instance.Parent == null)
+						instance.AddReference(ReferenceTypeIds.Organizes, true, ObjectIds.ObjectsFolder);
+
+					if(instance.EventNotifier != EventNotifiers.None)
+						this.AddRootNotifier(instance);
+
+					if(node.SymbolicName != null)
+					{
+						var referenceType = new ReferenceTypeState
+						{
+							NodeId = new NodeId(Guid.NewGuid(), node.NodeId.NamespaceIndex),
+							SymbolicName = $"{node.SymbolicName}Type",
+							BrowseName = new QualifiedName($"{node.BrowseName}Type", node.NodeId.NamespaceIndex),
+							DisplayName = $"{node.DisplayName}Type",
+							InverseName = new LocalizedText($"IsTypeOf{node.BrowseName}"),
+							SuperTypeId = ReferenceTypeIds.NonHierarchicalReferences,
+						};
+
+						instance.AddReference(referenceType.NodeId, false, ObjectIds.Server);
+						this.AddPredefinedNode(context, referenceType);
+					}
+
+					break;
+			}
+
+			if(node is BaseObjectState instanceState && instanceState.EventNotifier != EventNotifiers.None)
+				this.AddRootNotifier(instanceState);
+
+			base.AddPredefinedNode(context, node);
+		}
+
+		public override void AddReferences(IDictionary<NodeId, IList<IReference>> references) => base.AddReferences(references);
+
+		protected override void AddReverseReferences(IDictionary<NodeId, IList<IReference>> externalReferences) => base.AddReverseReferences(externalReferences);
+
 		public override NodeId New(ISystemContext context, NodeState node)
 		{
-			if(node == null || node.NodeId.IsNullNodeId)
+			if(node.NodeId == null || node.NodeId.IsNullNodeId)
 				return new NodeId(++_nodeId, this.NamespaceIndex);
 
 			return base.New(context, node);
@@ -156,21 +225,6 @@ partial class OpcServer
 		#endregion
 
 		#region 私有方法
-		private FolderState AddPredefinedFolder(FolderState parent, ExpandedNodeId id, string name, string displayName, string description)
-		{
-			var folder = this.CreateFolder(parent, id, name, displayName, description);
-
-			folder.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectsFolder);
-			_references?.Add(new NodeStateReference(ReferenceTypes.Organizes, false, folder.NodeId));
-
-			folder.EventNotifier = EventNotifiers.SubscribeToEvents;
-			this.AddRootNotifier(folder);
-
-			this.AddPredefinedNode(this.SystemContext, folder);
-
-			return folder;
-		}
-
 		private FolderState CreateFolder(FolderState parent, ExpandedNodeId id, string name, string displayName, string description)
 		{
 			var nodeId = id == null || id.IsNull ? new NodeId(Guid.NewGuid(), this.NamespaceIndex) : (NodeId)id;
@@ -199,7 +253,7 @@ partial class OpcServer
 		{
 			var variable = new BaseDataVariableState(parent)
 			{
-				SymbolicName = displayName,
+				SymbolicName = name,
 				ReferenceTypeId = ReferenceTypes.Organizes,
 				TypeDefinitionId = VariableTypeIds.BaseDataVariableType,
 				NodeId = new NodeId(name, this.NamespaceIndex),
@@ -215,7 +269,7 @@ partial class OpcServer
 				Value = value,
 				StatusCode = StatusCodes.Good,
 				Timestamp = DateTime.Now,
-				OnWriteValue = OnWriteDataValue
+				//OnWriteValue = OnWriteDataValue
 			};
 
 			if(valueRank == ValueRanks.OneDimension)

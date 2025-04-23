@@ -68,6 +68,11 @@ internal class Program
 				case "connect":
 					await _client.ConnectAsync(parts.Length > 1 ? parts[1] : "opc.tcp://localhost:4841/OpcServer");
 					break;
+				case "exist":
+				case "exists":
+					var existed = await _client.ExistsAsync(parts[1]);
+					Console.WriteLine(existed ? $"The node exists." : "Not found.");
+					break;
 				case "read":
 					break;
 				case "get":
