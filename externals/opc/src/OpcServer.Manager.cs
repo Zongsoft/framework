@@ -29,13 +29,15 @@
 
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Opc.Ua;
 using Opc.Ua.Server;
-using Opc.Ua.Configuration;
+
+using Zongsoft.Common;
 
 namespace Zongsoft.Externals.Opc;
 
@@ -47,6 +49,7 @@ partial class OpcServer
 		private uint _nodeId;
 		private IList<IReference> _objectReferences;
 		private IList<IReference> _serverReferences;
+		private Dictionary<Type, NodeId> _types = new();
 		#endregion
 
 		#region 构造函数
@@ -158,9 +161,39 @@ partial class OpcServer
 
 			trigger.AddChild(property);
 
+			//var personType = this.GenerateType(typeof(Person));
+			//var children = new List<BaseInstanceState>();
+			//personType.GetChildren(context, children);
+
+			//var personState = new BaseObjectState(null)
+			//{
+			//	SymbolicName = "Person1",
+			//	BrowseName = new QualifiedName("Person1", this.NamespaceIndex),
+			//	DisplayName = "Person1",
+			//	ReferenceTypeId = personType.NodeId,
+			//	TypeDefinitionId = personType.NodeId,
+			//};
+
+			//foreach(var child in children)
+			//{
+			//	this.AppendChildren(personState, child);
+			//}
+
+			//var definedType = this.DefineType(typeof(Person));
+			var person = this.DefineObject(new Person()
+			{
+				Name = "Popeye Zhong",
+				Gender = true,
+				Birthday = new DateTime(1980, 10, 15),
+			});
+
 			var nodes = new NodeStateCollection
 			{
 				trigger,
+				//this.GenerateType(typeof(Person)),
+				//personState,
+				//definedType,
+				person,
 				this.CreateFolder(null, null, "MyFirstFolderEx", "My First Folder Ex", "This is my first folder node(Ex).")
 			};
 
@@ -225,6 +258,203 @@ partial class OpcServer
 		#endregion
 
 		#region 私有方法
+		public BaseDataVariableState DefineVariable(string name, Type type, string label, string description = null)
+		{
+			if(TypeExtension.IsNullable(type, out var underlyingType))
+				type = underlyingType;
+
+			var elementType = TypeExtension.GetElementType(type);
+			var variable = this.CreateVariable(null, name, null, label, Utility.GetDataType(elementType ?? type), elementType == null ? ValueRanks.Scalar : ValueRanks.OneOrMoreDimensions);
+			this.AddPredefinedNode(this.SystemContext, variable);
+			return variable;
+		}
+
+		public BaseObjectState DefineObject(object instance, string name = null) => this.DefineObject(null, instance, name);
+		public BaseObjectState DefineObject(NodeId identifier, object instance, string name = null)
+		{
+			if(instance == null)
+				return null;
+
+			if(string.IsNullOrEmpty(name))
+				name = instance.GetType().Name;
+
+			var type = this.DefineType(instance.GetType());
+			var state = new BaseObjectState(null)
+			{
+				NodeId = identifier,
+				SymbolicName = name,
+				BrowseName = new QualifiedName(name, this.NamespaceIndex),
+				DisplayName = name,
+				ReferenceTypeId = type.NodeId,
+				TypeDefinitionId = type.NodeId,
+			};
+
+			var children = new List<BaseInstanceState>();
+			type.GetChildren(this.SystemContext, children);
+
+			foreach(var child in children)
+			{
+				this.AppendChildren(state, child);
+			}
+
+			return state;
+		}
+
+		public BaseObjectTypeState DefineType(Type type)
+		{
+			lock(this.Lock)
+			{
+				if(_types.TryGetValue(type, out var identifer))
+					return this.FindPredefinedNode(identifer, null) as BaseObjectTypeState;
+
+				var definition = new BaseObjectTypeState()
+				{
+					NodeId = new NodeId(++_nodeId, this.NamespaceIndex),
+					IsAbstract = type.IsAbstract,
+					SymbolicName = $"{type.Name}Type",
+					BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
+					DisplayName = $"{type.Namespace}.{type.Name}",
+					SuperTypeId = ReferenceTypeIds.HasSubtype,
+				};
+
+				foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+				{
+					this.DefineProperty(definition, property);
+				}
+
+				definition.AddReference(definition.NodeId, true, ObjectIds.ObjectTypesFolder);
+				if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
+					this.AddPredefinedNode(this.SystemContext, definition);
+
+				_types.TryAdd(type, definition.NodeId);
+				return definition;
+			}
+		}
+
+		private PropertyState DefineProperty(BaseObjectTypeState type, PropertyInfo property)
+		{
+			var propertyType = TypeExtension.IsNullable(property.PropertyType, out var underlyingType) ? underlyingType : property.PropertyType;
+			var elementType = TypeExtension.GetCollectionElementType(propertyType);
+
+			var propertyState = new PropertyState(type)
+			{
+				NodeId = new NodeId(Guid.NewGuid(), this.NamespaceIndex),
+				ReferenceTypeId = ReferenceTypes.HasProperty,
+				TypeDefinitionId = VariableTypeIds.PropertyType,
+				SymbolicName = property.Name,
+				BrowseName = property.Name,
+				DisplayName = property.Name,
+				DataType = Utility.GetDataType(elementType ?? propertyType),
+				ValueRank = elementType == null ? ValueRanks.Scalar : ValueRanks.OneOrMoreDimensions,
+				AccessLevel = AccessLevels.CurrentRead,
+				UserAccessLevel = AccessLevels.CurrentRead,
+				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
+			};
+
+			if(propertyState.DataType == DataTypeIds.ObjectTypeNode)
+			{
+				var definition = this.DefineType(elementType ?? propertyType);
+				propertyState.DataType = definition.NodeId;
+				//propertyState.TypeDefinitionId = definition.NodeId;
+				//propertyState.ReferenceTypeId = definition.NodeId;
+
+				propertyState.AddReference(propertyState.NodeId, true, definition.NodeId);
+
+				if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
+					this.AddPredefinedNode(this.SystemContext, definition);
+			}
+
+			type.AddChild(propertyState);
+			return propertyState;
+		}
+
+		private BaseObjectTypeState GenerateType(Type type)
+		{
+			var objectType = new BaseObjectTypeState()
+			{
+				NodeId = new NodeId(++_nodeId, this.NamespaceIndex),
+				IsAbstract = type.IsAbstract,
+				SymbolicName = $"{type.Name}Type",
+				BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
+				DisplayName = $"{type.Namespace}.{type.Name}",
+				SuperTypeId = ReferenceTypeIds.HasSubtype,
+			};
+
+			var instance = new BaseObjectState(objectType)
+			{
+				NodeId = new NodeId(++_nodeId, this.NamespaceIndex),
+				SymbolicName = type.Name,
+				BrowseName = type.Name,
+				DisplayName = type.Name,
+				TypeDefinitionId = objectType.NodeId,
+				ReferenceTypeId = objectType.NodeId,
+			};
+
+			objectType.AddChild(instance);
+
+			uint index = 1;
+
+			foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+			{
+				index++;
+
+				var propertyState = new PropertyState(objectType)
+				{
+					NodeId = new NodeId(2000 + index, this.NamespaceIndex),
+					SymbolicName = property.Name,
+					DisplayName = property.Name,
+					DataType = DataTypeIds.Int32,
+					ReferenceTypeId = ReferenceTypes.HasProperty,
+					TypeDefinitionId = VariableTypeIds.PropertyType,
+				};
+
+				propertyState.AddReference(propertyState.NodeId, true, instance.NodeId);
+				instance.AddChild(propertyState);
+			}
+
+			var propertyStateEx = new PropertyState(objectType)
+			{
+				ReferenceTypeId = ReferenceTypes.HasProperty,
+				TypeDefinitionId = VariableTypeIds.PropertyType,
+				SymbolicName = $"Property{index}",
+				BrowseName = $"Property{index}",
+				DisplayName = $"Property{index}",
+				DataType = Utility.GetDataType(typeof(string)),
+				ValueRank = ValueRanks.OneOrMoreDimensions,
+				AccessLevel = AccessLevels.CurrentRead,
+				UserAccessLevel = AccessLevels.CurrentRead,
+				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
+			};
+
+			objectType.AddChild(propertyStateEx);
+
+			objectType.AddReference(objectType.NodeId, true, ObjectIds.ObjectTypesFolder);
+
+			return objectType;
+		}
+
+		private void AppendChildren(BaseInstanceState owner, BaseInstanceState child)
+		{
+			var replica = child.Clone();
+
+			if(replica is BaseInstanceState instance)
+			{
+				instance.BrowseName = child.BrowseName;
+				instance.DisplayName = child.DisplayName;
+				instance.Description = child.Description;
+
+				owner.AddChild(instance);
+
+				var children = new List<BaseInstanceState>();
+				child.GetChildren(this.SystemContext, children);
+
+				foreach(var node in children)
+				{
+					this.AppendChildren(instance, node);
+				}
+			}
+		}
+
 		private FolderState CreateFolder(FolderState parent, ExpandedNodeId id, string name, string displayName, string description)
 		{
 			var nodeId = id == null || id.IsNull ? new NodeId(Guid.NewGuid(), this.NamespaceIndex) : (NodeId)id;
@@ -286,44 +516,25 @@ partial class OpcServer
 
 			return variable;
 		}
-
-		private ServiceResult OnWriteDataValue(
-			ISystemContext context,
-			NodeState node,
-			NumericRange indexRange,
-			QualifiedName dataEncoding,
-			ref object value,
-			ref StatusCode statusCode,
-			ref DateTime timestamp)
-		{
-			var variable = node as BaseDataVariableState;
-
-			try
-			{
-				//验证数据类型
-				TypeInfo typeInfo = TypeInfo.IsInstanceOfDataType(
-					value,
-					variable.DataType,
-					variable.ValueRank,
-					context.NamespaceUris,
-					context.TypeTable);
-
-				if(typeInfo == null || typeInfo == TypeInfo.Unknown)
-					return StatusCodes.BadTypeMismatch;
-
-				if(typeInfo.BuiltInType == BuiltInType.Double)
-				{
-					double number = Convert.ToDouble(value);
-					value = TypeInfo.Cast(number, typeInfo.BuiltInType);
-				}
-
-				return ServiceResult.Good;
-			}
-			catch(Exception)
-			{
-				return StatusCodes.BadTypeMismatch;
-			}
-		}
 		#endregion
+	}
+
+	public class Person
+	{
+		public string Name { get; set; }
+		public bool? Gender { get; set; }
+		public DateTime? Birthday { get; set; }
+		public Address? HomeAddress { get; set; }
+		public Address? OfficeAddress { get; set; }
+	}
+
+	public struct Address
+	{
+		public int Country { get; set; }
+		public string Province { get; set; }
+		public string City { get; set; }
+		public string Street { get; set; }
+		public string Detail { get; set; }
+		public string PostalCode { get; set; }
 	}
 }
