@@ -115,8 +115,11 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 			//获取当前被观察对象的生命周期，如果其未设置则应用监测器的默认值
 			var lifecycle = this.GetOptions(observable).Lifecycle;
 
+			//创建观察器对象
+			var observer = new Observer(this, (IObservable<T>)observable);
+
 			//注意：如果缓存项的有效期为零则不会进行缓存驱逐事件的监听，因此对于无限期的被观察者必须返回对应的缓存期限设置为最大值
-			return (new Observer(this, (IObservable<T>)observable), lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.MaxValue, key);
+			return (observer, Notification.GetToken(observer.Failure), lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.MaxValue, key);
 		});
 
 		if(key != null)
@@ -168,6 +171,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		this.OnUnsupervised(args.State, (IObservable<T>)args.Key, args.Reason switch
 		{
 			CacheEvictedReason.Expired => SupervisableReason.Inactived,
+			CacheEvictedReason.Depended => SupervisableReason.Inactived,
 			_ => SupervisableReason.Manual,
 		});
 	}
@@ -290,6 +294,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		private Superviser<T> _superviser;
 		private IObservable<T> _observable;
 		private IDisposable _subscriber;
+		private CancellationTokenSource _failure;
 		private uint _errors;
 		#endregion
 
@@ -299,6 +304,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 			_lock = new();
 			_superviser = superviser;
 			_observable = observable;
+			_failure = new CancellationTokenSource();
 		}
 		#endregion
 
@@ -322,7 +328,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		{
 			//通知监测器进行错误处理，如果返回真则取消观察，否则更新被观察对象的最后访问时间以顺延过期
 			if(_superviser.OnError(_observable, exception, Interlocked.Increment(ref _errors)))
-				_superviser.Unsupervise(_observable);
+				_failure.Cancel();
 			else
 				_superviser.Touch(_observable);
 		}
@@ -330,6 +336,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 		#region 公共属性
 		public bool IsSubscribed => _subscriber != null;
+		internal CancellationTokenSource Failure => _failure;
 		#endregion
 
 		#region 订阅方法
@@ -379,6 +386,10 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 			//将被观察对象从监测器中移除
 			superviser?.Unsupervise(_observable);
+
+			//释放任务取消标记
+			_failure?.Dispose();
+			_failure = null;
 		}
 		#endregion
 
