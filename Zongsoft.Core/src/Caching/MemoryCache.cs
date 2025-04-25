@@ -143,22 +143,24 @@ public class MemoryCache : IDisposable
 	///			</item>
 	///			<item>
 	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的相对过期时长。</description>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
 	///			</item>
 	///		</list>
 	/// </param>
 	/// <returns>返回指定键的缓存值。</returns>
-	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, TimeSpan Expiration)> factory)
+	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, Expiration Expiration)> factory)
 	{
 		var result = _cache.GetOrCreate(key, entry =>
 		{
 			(var value, var expiration) = factory(entry.Key);
 
-			if(expiration > TimeSpan.Zero)
-			{
-				entry.SlidingExpiration = expiration;
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(expiration.HasValue)
 				entry.RegisterPostEvictionCallback(this.OnEvicted);
-			}
 
 			return value;
 		});
@@ -185,23 +187,25 @@ public class MemoryCache : IDisposable
 	///			</item>
 	///			<item>
 	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的相对过期时长。</description>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
 	///			</item>
 	///		</list>
 	/// </param>
 	/// <returns>返回指定键的缓存值。</returns>
-	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, TimeSpan Expiration)> factory)
+	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, Expiration Expiration)> factory)
 	{
 		var result = _cache.GetOrCreate(key, entry =>
 		{
 			(var value, var priority, var expiration) = factory(entry.Key);
 			entry.Priority = GetPriority(priority);
 
-			if(expiration > TimeSpan.Zero)
-			{
-				entry.SlidingExpiration = expiration;
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(expiration.HasValue)
 				entry.RegisterPostEvictionCallback(this.OnEvicted);
-			}
 
 			return value;
 		});
@@ -224,7 +228,7 @@ public class MemoryCache : IDisposable
 	///			</item>
 	///			<item>
 	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的相对过期时长。</description>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
 	///			</item>
 	///			<item>
 	///				<term><c>State</c></term>
@@ -233,17 +237,19 @@ public class MemoryCache : IDisposable
 	///		</list>
 	/// </param>
 	/// <returns>返回指定键的缓存值。</returns>
-	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, TimeSpan Expiration, object State)> factory)
+	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, Expiration Expiration, object State)> factory)
 	{
 		var result = _cache.GetOrCreate(key, entry =>
 		{
 			(var value, var expiration, var state) = factory(entry.Key);
 
-			if(expiration > TimeSpan.Zero)
-			{
-				entry.SlidingExpiration = expiration;
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(expiration.HasValue)
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-			}
 
 			return value;
 		});
@@ -270,7 +276,7 @@ public class MemoryCache : IDisposable
 	///			</item>
 	///			<item>
 	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的相对过期时长。</description>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
 	///			</item>
 	///			<item>
 	///				<term><c>State</c></term>
@@ -279,188 +285,20 @@ public class MemoryCache : IDisposable
 	///		</list>
 	/// </param>
 	/// <returns>返回指定键的缓存值。</returns>
-	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, TimeSpan Expiration, object State)> factory)
+	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, Expiration Expiration, object State)> factory)
 	{
 		var result = _cache.GetOrCreate(key, entry =>
 		{
 			(var value, var priority, var expiration, var state) = factory(entry.Key);
 			entry.Priority = GetPriority(priority);
 
-			if(expiration > TimeSpan.Zero)
-			{
-				entry.SlidingExpiration = expiration;
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(expiration.HasValue)
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-			}
-
-			return value;
-		});
-
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
-			this.OnLimited(_cache.Count - limit);
-
-		return result;
-	}
-
-	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
-	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
-	/// <param name="key">指定的缓存项的键。</param>
-	/// <param name="factory">
-	///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
-	///		<list type="bullet">
-	///			<item>
-	///				<term><c>Value</c></term>
-	///				<description>缓存值。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的绝对过期时间。</description>
-	///			</item>
-	///		</list>
-	/// </param>
-	/// <returns>返回指定键的缓存值。</returns>
-	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, DateTimeOffset Expiration)> factory)
-	{
-		var result = _cache.GetOrCreate(key, entry =>
-		{
-			(var value, var expiration) = factory(entry.Key);
-
-			if(expiration > DateTimeOffset.MinValue)
-			{
-				entry.AbsoluteExpiration = expiration;
-				entry.RegisterPostEvictionCallback(this.OnEvicted);
-			}
-
-			return value;
-		});
-
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
-			this.OnLimited(_cache.Count - limit);
-
-		return result;
-	}
-
-	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
-	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
-	/// <param name="key">指定的缓存项的键。</param>
-	/// <param name="factory">
-	///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
-	///		<list type="bullet">
-	///			<item>
-	///				<term><c>Value</c></term>
-	///				<description>缓存值。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Priority</c></term>
-	///				<description>缓存项的优先级别。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的绝对过期时间。</description>
-	///			</item>
-	///		</list>
-	/// </param>
-	/// <returns>返回指定键的缓存值。</returns>
-	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, DateTimeOffset Expiration)> factory)
-	{
-		var result = _cache.GetOrCreate(key, entry =>
-		{
-			(var value, var priority, var expiration) = factory(entry.Key);
-			entry.Priority = GetPriority(priority);
-
-			if(expiration > DateTimeOffset.MinValue)
-			{
-				entry.AbsoluteExpiration = expiration;
-				entry.RegisterPostEvictionCallback(this.OnEvicted);
-			}
-
-			return value;
-		});
-
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
-			this.OnLimited(_cache.Count - limit);
-
-		return result;
-	}
-
-	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
-	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
-	/// <param name="key">指定的缓存项的键。</param>
-	/// <param name="factory">
-	///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
-	///		<list type="bullet">
-	///			<item>
-	///				<term><c>Value</c></term>
-	///				<description>缓存值。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的绝对过期时间。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>State</c></term>
-	///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
-	///			</item>
-	///		</list>
-	/// </param>
-	/// <returns>返回指定键的缓存值。</returns>
-	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, DateTimeOffset Expiration, object State)> factory)
-	{
-		var result = _cache.GetOrCreate(key, entry =>
-		{
-			(var value, var expiration, var state) = factory(entry.Key);
-
-			if(expiration > DateTimeOffset.MinValue)
-			{
-				entry.AbsoluteExpiration = expiration;
-				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-			}
-
-			return value;
-		});
-
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
-			this.OnLimited(_cache.Count - limit);
-
-		return result;
-	}
-
-	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
-	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
-	/// <param name="key">指定的缓存项的键。</param>
-	/// <param name="factory">
-	///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
-	///		<list type="bullet">
-	///			<item>
-	///				<term><c>Value</c></term>
-	///				<description>缓存值。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Priority</c></term>
-	///				<description>缓存项的优先级别。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的绝对过期时间。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>State</c></term>
-	///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
-	///			</item>
-	///		</list>
-	/// </param>
-	/// <returns>返回指定键的缓存值。</returns>
-	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, DateTimeOffset Expiration, object State)> factory)
-	{
-		var result = _cache.GetOrCreate(key, entry =>
-		{
-			(var value, var priority, var expiration, var state) = factory(entry.Key);
-			entry.Priority = GetPriority(priority);
-
-			if(expiration > DateTimeOffset.MinValue)
-			{
-				entry.AbsoluteExpiration = expiration;
-				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-			}
 
 			return value;
 		});
@@ -641,6 +479,208 @@ public class MemoryCache : IDisposable
 		return result;
 	}
 
+	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+	/// <param name="key">指定的缓存项的键。</param>
+	/// <param name="factory">
+	///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+	///		<list type="bullet">
+	///			<item>
+	///				<term><c>Value</c></term>
+	///				<description>缓存值。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Dependency</c></term>
+	///				<description>缓存项的废除依赖。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Expiration</c></term>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
+	///			</item>
+	///		</list>
+	/// </param>
+	/// <returns>返回指定键的缓存值。</returns>
+	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, IChangeToken Dependency, Expiration Expiration)> factory)
+	{
+		var result = _cache.GetOrCreate(key, entry =>
+		{
+			(var value, var dependency, var expiration) = factory(entry.Key);
+
+			if(dependency != null)
+				entry.AddExpirationToken(dependency);
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(dependency != null || expiration.HasValue)
+				entry.RegisterPostEvictionCallback(this.OnEvicted);
+
+			return value;
+		});
+
+		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+			this.OnLimited(_cache.Count - limit);
+
+		return result;
+	}
+
+	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+	/// <param name="key">指定的缓存项的键。</param>
+	/// <param name="factory">
+	///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+	///		<list type="bullet">
+	///			<item>
+	///				<term><c>Value</c></term>
+	///				<description>缓存值。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Priority</c></term>
+	///				<description>缓存项的优先级别。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Dependency</c></term>
+	///				<description>缓存项的废除依赖。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Expiration</c></term>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
+	///			</item>
+	///		</list>
+	/// </param>
+	/// <returns>返回指定键的缓存值。</returns>
+	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, IChangeToken Dependency, Expiration Expiration)> factory)
+	{
+		var result = _cache.GetOrCreate(key, entry =>
+		{
+			(var value, var priority, var dependency, var expiration) = factory(entry.Key);
+			entry.Priority = GetPriority(priority);
+
+			if(dependency != null)
+				entry.AddExpirationToken(dependency);
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(dependency != null || expiration.HasValue)
+				entry.RegisterPostEvictionCallback(this.OnEvicted);
+
+			return value;
+		});
+
+		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+			this.OnLimited(_cache.Count - limit);
+
+		return result;
+	}
+
+	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+	/// <param name="key">指定的缓存项的键。</param>
+	/// <param name="factory">
+	///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+	///		<list type="bullet">
+	///			<item>
+	///				<term><c>Value</c></term>
+	///				<description>缓存值。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Dependency</c></term>
+	///				<description>缓存项的废除依赖。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Expiration</c></term>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>State</c></term>
+	///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+	///			</item>
+	///		</list>
+	/// </param>
+	/// <returns>返回指定键的缓存值。</returns>
+	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, IChangeToken Dependency, Expiration Expiration, object State)> factory)
+	{
+		var result = _cache.GetOrCreate(key, entry =>
+		{
+			(var value, var dependency, var expiration, var state) = factory(entry.Key);
+
+			if(dependency != null)
+				entry.AddExpirationToken(dependency);
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(dependency != null || expiration.HasValue)
+				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
+
+			return value;
+		});
+
+		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+			this.OnLimited(_cache.Count - limit);
+
+		return result;
+	}
+
+	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+	/// <param name="key">指定的缓存项的键。</param>
+	/// <param name="factory">
+	///		当指定键的缓存项不存在时构建缓存项的方法，返回结果包括：
+	///		<list type="bullet">
+	///			<item>
+	///				<term><c>Value</c></term>
+	///				<description>缓存值。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Priority</c></term>
+	///				<description>缓存项的优先级别。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Dependency</c></term>
+	///				<description>缓存项的废除依赖。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Expiration</c></term>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>State</c></term>
+	///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+	///			</item>
+	///		</list>
+	/// </param>
+	/// <returns>返回指定键的缓存值。</returns>
+	public TValue GetOrCreate<TValue>(object key, Func<object, (TValue Value, CachePriority Priority, IChangeToken Dependency, Expiration Expiration, object State)> factory)
+	{
+		var result = _cache.GetOrCreate(key, entry =>
+		{
+			(var value, var priority, var dependency, var expiration, var state) = factory(entry.Key);
+			entry.Priority = GetPriority(priority);
+
+			if(dependency != null)
+				entry.AddExpirationToken(dependency);
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(dependency != null || expiration.HasValue)
+				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
+
+			return value;
+		});
+
+		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+			this.OnLimited(_cache.Count - limit);
+
+		return result;
+	}
+
 	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法将其返回的结果作为缓存项值进行缓存。</summary>
 	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
 	/// <param name="key">指定的缓存项的键。</param>
@@ -669,22 +709,24 @@ public class MemoryCache : IDisposable
 	///			</item>
 	///			<item>
 	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的相对过期时长。</description>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
 	///			</item>
 	///		</list>
 	/// </param>
 	/// <returns>返回指定键的缓存值的异步任务。</returns>
-	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration)> factory)
+	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, Expiration Expiration)> factory)
 	{
 		var result = await _cache.GetOrCreateAsync(key, entry =>
 		{
 			(var value, var expiration) = factory(entry.Key);
 
-			if(expiration > TimeSpan.Zero)
-			{
-				entry.SlidingExpiration = expiration;
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(expiration.HasValue)
 				entry.RegisterPostEvictionCallback(this.OnEvicted);
-			}
 
 			return value;
 		});
@@ -711,23 +753,25 @@ public class MemoryCache : IDisposable
 	///			</item>
 	///			<item>
 	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的相对过期时长。</description>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
 	///			</item>
 	///		</list>
 	/// </param>
 	/// <returns>返回指定键的缓存值的异步任务。</returns>
-	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration)> factory)
+	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, Expiration Expiration)> factory)
 	{
 		var result = await _cache.GetOrCreateAsync(key, entry =>
 		{
 			(var value, var priority, var expiration) = factory(entry.Key);
 			entry.Priority = GetPriority(priority);
 
-			if(expiration > TimeSpan.Zero)
-			{
-				entry.SlidingExpiration = expiration;
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(expiration.HasValue)
 				entry.RegisterPostEvictionCallback(this.OnEvicted);
-			}
 
 			return value;
 		});
@@ -750,7 +794,7 @@ public class MemoryCache : IDisposable
 	///			</item>
 	///			<item>
 	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的相对过期时长。</description>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
 	///			</item>
 	///			<item>
 	///				<term><c>State</c></term>
@@ -759,17 +803,19 @@ public class MemoryCache : IDisposable
 	///		</list>
 	/// </param>
 	/// <returns>返回指定键的缓存值的异步任务。</returns>
-	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, TimeSpan Expiration, object State)> factory)
+	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, Expiration Expiration, object State)> factory)
 	{
 		var result = await _cache.GetOrCreateAsync(key, entry =>
 		{
 			(var value, var expiration, var state) = factory(entry.Key);
 
-			if(expiration > TimeSpan.Zero)
-			{
-				entry.SlidingExpiration = expiration;
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(expiration.HasValue)
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-			}
 
 			return value;
 		});
@@ -796,7 +842,7 @@ public class MemoryCache : IDisposable
 	///			</item>
 	///			<item>
 	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的相对过期时长。</description>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
 	///			</item>
 	///			<item>
 	///				<term><c>State</c></term>
@@ -805,188 +851,20 @@ public class MemoryCache : IDisposable
 	///		</list>
 	/// </param>
 	/// <returns>返回指定键的缓存值的异步任务。</returns>
-	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, TimeSpan Expiration, object State)> factory)
+	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, Expiration Expiration, object State)> factory)
 	{
 		var result = await _cache.GetOrCreateAsync(key, entry =>
 		{
 			(var value, var priority, var expiration, var state) = factory(entry.Key);
 			entry.Priority = GetPriority(priority);
 
-			if(expiration > TimeSpan.Zero)
-			{
-				entry.SlidingExpiration = expiration;
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(expiration.HasValue)
 				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-			}
-
-			return value;
-		});
-
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
-			this.OnLimited(_cache.Count - limit);
-
-		return result;
-	}
-
-	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
-	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
-	/// <param name="key">指定的缓存项的键。</param>
-	/// <param name="factory">
-	///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
-	///		<list type="bullet">
-	///			<item>
-	///				<term><c>Value</c></term>
-	///				<description>缓存值的异步任务。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的绝对过期时间。</description>
-	///			</item>
-	///		</list>
-	/// </param>
-	/// <returns>返回指定键的缓存值的异步任务。</returns>
-	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration)> factory)
-	{
-		var result = await _cache.GetOrCreateAsync(key, entry =>
-		{
-			(var value, var expiration) = factory(entry.Key);
-
-			if(expiration > DateTimeOffset.MinValue)
-			{
-				entry.AbsoluteExpiration = expiration;
-				entry.RegisterPostEvictionCallback(this.OnEvicted);
-			}
-
-			return value;
-		});
-
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
-			this.OnLimited(_cache.Count - limit);
-
-		return result;
-	}
-
-	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
-	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
-	/// <param name="key">指定的缓存项的键。</param>
-	/// <param name="factory">
-	///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
-	///		<list type="bullet">
-	///			<item>
-	///				<term><c>Value</c></term>
-	///				<description>缓存值的异步任务。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Priority</c></term>
-	///				<description>缓存项的优先级别。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的绝对过期时间。</description>
-	///			</item>
-	///		</list>
-	/// </param>
-	/// <returns>返回指定键的缓存值异步任务。</returns>
-	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration)> factory)
-	{
-		var result = await _cache.GetOrCreateAsync(key, entry =>
-		{
-			(var value, var priority, var expiration) = factory(entry.Key);
-			entry.Priority = GetPriority(priority);
-
-			if(expiration > DateTimeOffset.MinValue)
-			{
-				entry.AbsoluteExpiration = expiration;
-				entry.RegisterPostEvictionCallback(this.OnEvicted);
-			}
-
-			return value;
-		});
-
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
-			this.OnLimited(_cache.Count - limit);
-
-		return result;
-	}
-
-	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
-	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
-	/// <param name="key">指定的缓存项的键。</param>
-	/// <param name="factory">
-	///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
-	///		<list type="bullet">
-	///			<item>
-	///				<term><c>Value</c></term>
-	///				<description>缓存值的异步任务。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的绝对过期时间。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>State</c></term>
-	///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
-	///			</item>
-	///		</list>
-	/// </param>
-	/// <returns>返回指定键的缓存值的异步任务。</returns>
-	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, DateTimeOffset Expiration, object State)> factory)
-	{
-		var result = await _cache.GetOrCreateAsync(key, entry =>
-		{
-			(var value, var expiration, var state) = factory(entry.Key);
-
-			if(expiration > DateTimeOffset.MinValue)
-			{
-				entry.AbsoluteExpiration = expiration;
-				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-			}
-
-			return value;
-		});
-
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
-			this.OnLimited(_cache.Count - limit);
-
-		return result;
-	}
-
-	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
-	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
-	/// <param name="key">指定的缓存项的键。</param>
-	/// <param name="factory">
-	///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
-	///		<list type="bullet">
-	///			<item>
-	///				<term><c>Value</c></term>
-	///				<description>缓存值的异步任务。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Priority</c></term>
-	///				<description>缓存项的优先级别。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>Expiration</c></term>
-	///				<description>缓存项的绝对过期时间。</description>
-	///			</item>
-	///			<item>
-	///				<term><c>State</c></term>
-	///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
-	///			</item>
-	///		</list>
-	/// </param>
-	/// <returns>返回指定键的缓存值的异步任务。</returns>
-	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, DateTimeOffset Expiration, object State)> factory)
-	{
-		var result = await _cache.GetOrCreateAsync(key, entry =>
-		{
-			(var value, var priority, var expiration, var state) = factory(entry.Key);
-			entry.Priority = GetPriority(priority);
-
-			if(expiration > DateTimeOffset.MinValue)
-			{
-				entry.AbsoluteExpiration = expiration;
-				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-			}
 
 			return value;
 		});
@@ -1166,6 +1044,208 @@ public class MemoryCache : IDisposable
 
 		return result;
 	}
+
+	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+	/// <param name="key">指定的缓存项的键。</param>
+	/// <param name="factory">
+	///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+	///		<list type="bullet">
+	///			<item>
+	///				<term><c>Value</c></term>
+	///				<description>缓存值的异步任务。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Dependency</c></term>
+	///				<description>缓存项的废除依赖。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Expiration</c></term>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
+	///			</item>
+	///		</list>
+	/// </param>
+	/// <returns>返回指定键的缓存值的异步任务。</returns>
+	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, IChangeToken Dependency, Expiration Expiration)> factory)
+	{
+		var result = await _cache.GetOrCreateAsync(key, entry =>
+		{
+			(var value, var dependency, var expiration) = factory(entry.Key);
+
+			if(dependency != null)
+				entry.AddExpirationToken(dependency);
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(dependency != null || expiration.HasValue)
+				entry.RegisterPostEvictionCallback(this.OnEvicted);
+
+			return value;
+		});
+
+		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+			this.OnLimited(_cache.Count - limit);
+
+		return result;
+	}
+
+	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+	/// <param name="key">指定的缓存项的键。</param>
+	/// <param name="factory">
+	///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+	///		<list type="bullet">
+	///			<item>
+	///				<term><c>Value</c></term>
+	///				<description>缓存值的异步任务。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Priority</c></term>
+	///				<description>缓存项的优先级别。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Dependency</c></term>
+	///				<description>缓存项的废除依赖。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Expiration</c></term>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
+	///			</item>
+	///		</list>
+	/// </param>
+	/// <returns>返回指定键的缓存值的异步任务。</returns>
+	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, IChangeToken Dependency, Expiration Expiration)> factory)
+	{
+		var result = await _cache.GetOrCreateAsync(key, entry =>
+		{
+			(var value, var priority, var dependency, var expiration) = factory(entry.Key);
+			entry.Priority = GetPriority(priority);
+
+			if(dependency != null)
+				entry.AddExpirationToken(dependency);
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(dependency != null || expiration.HasValue)
+				entry.RegisterPostEvictionCallback(this.OnEvicted);
+
+			return value;
+		});
+
+		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+			this.OnLimited(_cache.Count - limit);
+
+		return result;
+	}
+
+	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+	/// <param name="key">指定的缓存项的键。</param>
+	/// <param name="factory">
+	///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+	///		<list type="bullet">
+	///			<item>
+	///				<term><c>Value</c></term>
+	///				<description>缓存值的异步任务。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Dependency</c></term>
+	///				<description>缓存项的废除依赖。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Expiration</c></term>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>State</c></term>
+	///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+	///			</item>
+	///		</list>
+	/// </param>
+	/// <returns>返回指定键的缓存值的异步任务。</returns>
+	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, IChangeToken Dependency, Expiration Expiration, object State)> factory)
+	{
+		var result = await _cache.GetOrCreateAsync(key, entry =>
+		{
+			(var value, var dependency, var expiration, var state) = factory(entry.Key);
+
+			if(dependency != null)
+				entry.AddExpirationToken(dependency);
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(dependency != null || expiration.HasValue)
+				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
+
+			return value;
+		});
+
+		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+			this.OnLimited(_cache.Count - limit);
+
+		return result;
+	}
+
+	/// <summary>获取指定键对应的缓存项，如果指定键的缓存项不存在则调用<paramref name="factory"/>参数的构建方法并根据其结果设置新建缓存项的值及相关设置。</summary>
+	/// <typeparam name="TValue">泛型参数，表示缓存值的类型。</typeparam>
+	/// <param name="key">指定的缓存项的键。</param>
+	/// <param name="factory">
+	///		当指定键的缓存项不存在时构建缓存项的异步方法，返回结果包括：
+	///		<list type="bullet">
+	///			<item>
+	///				<term><c>Value</c></term>
+	///				<description>缓存值的异步任务。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Priority</c></term>
+	///				<description>缓存项的优先级别。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Dependency</c></term>
+	///				<description>缓存项的废除依赖。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>Expiration</c></term>
+	///				<description>缓存项的过期时间（支持滑动过期和绝对过期）。</description>
+	///			</item>
+	///			<item>
+	///				<term><c>State</c></term>
+	///				<description>缓存项 <see cref="Evicted"/> 废除事件的 <see cref="CacheEvictedEventArgs.State"/> 参数值。</description>
+	///			</item>
+	///		</list>
+	/// </param>
+	/// <returns>返回指定键的缓存值的异步任务。</returns>
+	public async ValueTask<TValue> GetOrCreateAsync<TValue>(object key, Func<object, (Task<TValue> Value, CachePriority Priority, IChangeToken Dependency, Expiration Expiration, object State)> factory)
+	{
+		var result = await _cache.GetOrCreateAsync(key, entry =>
+		{
+			(var value, var priority, var dependency, var expiration, var state) = factory(entry.Key);
+			entry.Priority = GetPriority(priority);
+
+			if(dependency != null)
+				entry.AddExpirationToken(dependency);
+			if(expiration.IsSliding(out var sliding))
+				entry.SlidingExpiration = sliding;
+			if(expiration.IsAbsolute(out var absolute))
+				entry.AbsoluteExpiration = absolute;
+
+			if(dependency != null || expiration.HasValue)
+				entry.RegisterPostEvictionCallback(this.OnEvicted, state);
+
+			return value;
+		});
+
+		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+			this.OnLimited(_cache.Count - limit);
+
+		return result;
+	}
 	#endregion
 
 	#region 设置方法
@@ -1183,35 +1263,20 @@ public class MemoryCache : IDisposable
 			this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
 	}
 
-	public void SetValue<TValue>(object key, TValue value, TimeSpan expiration, object state = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state);
-	public void SetValue<TValue>(object key, TValue value, CachePriority priority, TimeSpan expiration, object state = null)
+	public void SetValue<TValue>(object key, TValue value, Expiration expiration, object state = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state);
+	public void SetValue<TValue>(object key, TValue value, CachePriority priority, Expiration expiration, object state = null)
 	{
 		using var entry = _cache.CreateEntry(key);
 		entry.Value = value;
 		entry.Priority = GetPriority(priority);
 
-		if(expiration > TimeSpan.Zero)
-		{
-			entry.SlidingExpiration = expiration;
+		if(expiration.IsSliding(out var sliding))
+			entry.SlidingExpiration = sliding;
+		if(expiration.IsAbsolute(out var absolute))
+			entry.AbsoluteExpiration = absolute;
+
+		if(expiration.HasValue)
 			entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-		}
-
-		if(_options.IsLimit(out var limit) && _cache.Count >= limit)
-			this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
-	}
-
-	public void SetValue<TValue>(object key, TValue value, DateTimeOffset expiration, object state = null) => this.SetValue(key, value, CachePriority.Normal, expiration, state);
-	public void SetValue<TValue>(object key, TValue value, CachePriority priority, DateTimeOffset expiration, object state = null)
-	{
-		using var entry = _cache.CreateEntry(key);
-		entry.Value = value;
-		entry.Priority = GetPriority(priority);
-
-		if(expiration > DateTimeOffset.MinValue)
-		{
-			entry.AbsoluteExpiration = expiration;
-			entry.RegisterPostEvictionCallback(this.OnEvicted, state);
-		}
 
 		if(_options.IsLimit(out var limit) && _cache.Count >= limit)
 			this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
@@ -1229,6 +1294,27 @@ public class MemoryCache : IDisposable
 			entry.AddExpirationToken(dependency);
 			entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 		}
+
+		if(_options.IsLimit(out var limit) && _cache.Count >= limit)
+			this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
+	}
+
+	public void SetValue<TValue>(object key, TValue value, IChangeToken dependency, Expiration expiration, object state = null) => this.SetValue(key, value, CachePriority.Normal, dependency, expiration, state);
+	public void SetValue<TValue>(object key, TValue value, CachePriority priority, IChangeToken dependency, Expiration expiration, object state = null)
+	{
+		using var entry = _cache.CreateEntry(key);
+		entry.Value = value;
+		entry.Priority = GetPriority(priority);
+
+		if(dependency != null)
+			entry.AddExpirationToken(dependency);
+		if(expiration.IsSliding(out var sliding))
+			entry.SlidingExpiration = sliding;
+		if(expiration.IsAbsolute(out var absolute))
+			entry.AbsoluteExpiration = absolute;
+
+		if(dependency != null || expiration.HasValue)
+			entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 
 		if(_options.IsLimit(out var limit) && _cache.Count >= limit)
 			this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
@@ -1295,6 +1381,83 @@ public class MemoryCache : IDisposable
 
 			cache.Dispose();
 		}
+	}
+	#endregion
+
+	#region 嵌套结构
+	public readonly struct Expiration : IEquatable<Expiration>
+	{
+		#region 私有字段
+		private readonly TimeSpan       _sliding;
+		private readonly DateTimeOffset _absolute;
+		#endregion
+
+		#region 构造函数
+		public Expiration(TimeSpan value) : this(value, DateTimeOffset.MinValue) { }
+		public Expiration(DateTimeOffset value) : this(value, TimeSpan.Zero) { }
+
+		public Expiration(TimeSpan sliding, DateTimeOffset absolute)
+		{
+			_sliding = sliding;
+			_absolute = absolute;
+		}
+
+		public Expiration(DateTimeOffset absolute, TimeSpan sliding)
+		{
+			_sliding = sliding;
+			_absolute = absolute;
+		}
+		#endregion
+
+		#region 公共属性
+		public bool IsEmpty => _sliding <= TimeSpan.Zero && _absolute <= DateTimeOffset.MinValue;
+		public bool HasValue => _sliding > TimeSpan.Zero || _absolute > DateTimeOffset.MinValue;
+		#endregion
+
+		#region 公共方法
+		public bool IsSliding(out TimeSpan value)
+		{
+			value = _sliding;
+			return value > TimeSpan.Zero;
+		}
+
+		public bool IsAbsolute(out DateTimeOffset value)
+		{
+			value = _absolute;
+			return _absolute > DateTimeOffset.MinValue;
+		}
+		#endregion
+
+		#region 重写方法
+		public bool Equals(Expiration other) => this._sliding == other._sliding && this._absolute == other._absolute;
+		public override bool Equals(object obj) => obj is Expiration other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(_sliding, _absolute);
+		public override string ToString()
+		{
+			if(_sliding > TimeSpan.Zero)
+			{
+				if(_absolute > DateTimeOffset.MinValue)
+					return $"Sliding: {_sliding}; Absolute: {_absolute}";
+				else
+					return $"Sliding: {_sliding}";
+			}
+
+			return _absolute > DateTimeOffset.MinValue ? $"Absolute: {_absolute}" : string.Empty;
+		}
+		#endregion
+
+		#region 符号重写
+		public static bool operator ==(Expiration left, Expiration right) => left.Equals(right);
+		public static bool operator !=(Expiration left, Expiration right) => !(left == right);
+
+		public static implicit operator Expiration(TimeSpan value) => new(value);
+		public static implicit operator Expiration(DateTime value) => new(value);
+		public static implicit operator Expiration(DateTimeOffset value) => new(value);
+		public static implicit operator Expiration(ValueTuple<TimeSpan, DateTime> value) => new(value.Item1, value.Item2);
+		public static implicit operator Expiration(ValueTuple<TimeSpan, DateTimeOffset> value) => new(value.Item1, value.Item2);
+		public static implicit operator Expiration(ValueTuple<DateTime, TimeSpan> value) => new(value.Item1, value.Item2);
+		public static implicit operator Expiration(ValueTuple<DateTimeOffset, TimeSpan> value) => new(value.Item1, value.Item2);
+		#endregion
 	}
 	#endregion
 }
