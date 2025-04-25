@@ -48,6 +48,9 @@ public enum CacheEvictedReason
 	/// <summary>被手动替换的。</summary>
 	Replaced,
 
+	/// <summary>依赖变更触发。</summary>
+	Depended,
+
 	/// <summary>溢出，超出容量。</summary>
 	Overfull,
 }

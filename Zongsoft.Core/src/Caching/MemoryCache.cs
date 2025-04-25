@@ -79,7 +79,10 @@ public class MemoryCache : IDisposable
 	#endregion
 
 	#region 压缩方法
-	public void Compact(double percentage) => _cache.Compact(percentage);
+	/// <summary>清理缓存。</summary>
+	/// <param name="percentage">指定的清理百分比，介于<c>0</c>至<c>1</c>之间的浮点数。</param>
+	/// <remarks>因为缓存不会实时清理内存，因此会存在某些过期或依赖项失效的缓存项仍然贮存在缓存中，可调用该方法触发清理动作。</remarks>
+	public void Compact(double percentage = 0) => _cache.Compact(percentage);
 	#endregion
 
 	#region 删除方法
@@ -1258,7 +1261,7 @@ public class MemoryCache : IDisposable
 		EvictionReason.Expired => CacheEvictedReason.Expired,
 		EvictionReason.Capacity => CacheEvictedReason.Overfull,
 		EvictionReason.Replaced => CacheEvictedReason.Replaced,
-		EvictionReason.TokenExpired => CacheEvictedReason.Expired,
+		EvictionReason.TokenExpired => CacheEvictedReason.Depended,
 		_ => CacheEvictedReason.None,
 	};
 	#endregion

@@ -38,6 +38,7 @@ public class MemoryCacheTest
 	public void TestDependency()
 	{
 		var cache = new MemoryCache();
+		cache.Evicted += this.Cache_Evicted;
 
 		var cancellation = new CancellationTokenSource();
 		var value = cache.GetOrCreate("KEY", key =>
@@ -53,6 +54,12 @@ public class MemoryCacheTest
 		cancellation.Cancel();
 		Assert.False(cache.Contains("KEY"));
 		Assert.Equal(0, cache.Count);
+
+		//清理缓存
+		cache.Compact();
+
+		//确认缓存过期的原因
+		Assert.Equal(CacheEvictedReason.Depended, _reason);
 
 		//创建一个已经过期的缓存项
 		value = cache.GetOrCreate("KEY", key =>
@@ -76,4 +83,7 @@ public class MemoryCacheTest
 		Assert.False(cache.Contains("KEY"));
 		Assert.Equal(0, cache.Count);
 	}
+
+	private CacheEvictedReason? _reason;
+	private void Cache_Evicted(object sender, CacheEvictedEventArgs args) => _reason = args.Reason;
 }
