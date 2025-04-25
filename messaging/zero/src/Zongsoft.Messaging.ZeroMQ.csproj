@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.1.0</Version>
+		<Version>1.2.0</Version>
 		<Product>Zongsoft ZeroMQ Library</Product>
 		<Description>This is a library about the ZeroMQ messaging development.</Description>
 		<RootNamespace>Zongsoft.Messaging.ZeroMQ</RootNamespace>
@@ -29,7 +29,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.4.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.8.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
