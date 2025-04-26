@@ -134,6 +134,7 @@ partial class OpcServer
 			if(!externalReferences.TryGetValue(ObjectIds.Server, out _serverReferences))
 				externalReferences[ObjectIds.Server] = _serverReferences = new List<IReference>();
 
+			this.DefineVariable("MyVar1", typeof(float), "MyVariable#1");
 			base.CreateAddressSpace(externalReferences);
 		}
 
@@ -187,14 +188,18 @@ partial class OpcServer
 				Birthday = new DateTime(1980, 10, 15),
 			});
 
+			var folder = this.CreateFolder(null, null, "MyFirstFolderEx", "My First Folder Ex", "This is my first folder node(Ex).");
+			var variable = this.CreateVariable(folder, "MyVariable", 123.50, "My Variable", DataTypeIds.Double, ValueRanks.Scalar);
+
 			var nodes = new NodeStateCollection
 			{
 				trigger,
 				//this.GenerateType(typeof(Person)),
 				//personState,
 				//definedType,
+				folder,
+				variable,
 				person,
-				this.CreateFolder(null, null, "MyFirstFolderEx", "My First Folder Ex", "This is my first folder node(Ex).")
 			};
 
 			return nodes;
