@@ -58,6 +58,9 @@ public class MemoryCacheTest
 		//清理缓存
 		cache.Compact();
 
+		//等待缓存项过期事件的触发
+		SpinWait.SpinUntil(() => _reason.HasValue);
+
 		//确认缓存过期的原因
 		Assert.Equal(CacheEvictedReason.Depended, _reason);
 
