@@ -81,6 +81,24 @@ partial class OpcServer
 
 		private (AddNodesResult result, DiagnosticInfo diagnostic) AddNode(OperationContext context, AddNodesItem node)
 		{
+			var parent = node.ParentNodeId == null || node.ParentNodeId.IsNull ? null : this.FindPredefinedNode((NodeId)node.ParentNodeId, null);
+
+			if(parent == null)
+			{
+				var index = node.BrowseName.Name.LastIndexOf('/');
+				if(index > 0 && index < node.BrowseName.Name.Length - 1)
+				{
+					parent = this.Find(node.BrowseName.Name[..index]);
+					node.BrowseName = new QualifiedName(node.BrowseName.Name[(index + 1)..], this.NamespaceIndex);
+				}
+
+				//最后确认父节点为首个预定义的文件夹节点
+				parent ??= this.PredefinedNodes.FirstOrDefault(entry => entry.Value is FolderState).Value;
+
+				if(parent == null)
+					throw new ServiceResultException(StatusCodes.BadParentNodeIdInvalid);
+			}
+
 			if(node.NodeClass == NodeClass.Object)
 			{
 				if(node.TypeDefinition == ObjectTypeIds.FolderType)
@@ -94,20 +112,8 @@ partial class OpcServer
 						description = attributes.Description?.Text;
 					}
 
-					var root = this.Server.CoreNodeManager.Find(ObjectIds.ObjectsFolder, null);
-					var folder = this.CreateFolder(null, null, node.BrowseName.Name, displayName, description);
+					var folder = this.CreateFolder(parent, null, node.BrowseName.Name, displayName, description);
 					this.AddPredefinedNode(this.SystemContext, folder);
-
-					var found = this.PredefinedNodes.Values.FirstOrDefault(node => string.Equals(node.SymbolicName, "MyFirstFolderEx"));
-					var variable = this.CreateVariable(found, "variable1", Random.Shared.NextDouble(), "My Variable #1", DataTypeIds.Double, ValueRanks.Scalar);
-					this.AddPredefinedNode(this.SystemContext, variable);
-					found.ClearChangeMasks(this.SystemContext, false);
-
-					//var rootNode = this.FindNodeInAddressSpace(ObjectIds.ObjectsFolder);
-					//rootNode.AddReference(folder.TypeDefinitionId, false, folder.NodeId);
-
-					//rootNode?.ClearChangeMasks(this.SystemContext, true);
-					//folder.ClearChangeMasks(this.SystemContext, true);
 
 					return (new AddNodesResult()
 					{
@@ -120,8 +126,65 @@ partial class OpcServer
 					throw new ServiceResultException(StatusCodes.BadTypeDefinitionInvalid);
 				}
 			}
+			else if(node.NodeClass == NodeClass.Variable)
+			{
+				if(node.NodeAttributes?.Body is VariableAttributes attributes)
+				{
+					var variable = this.CreateVariable(parent, node.BrowseName.Name, attributes.Value, attributes.DisplayName.Text, attributes.DataType, attributes.ValueRank);
+					variable.Historizing = attributes.Historizing;
+					variable.AccessLevel = attributes.AccessLevel;
+					variable.UserAccessLevel = attributes.UserAccessLevel;
+					variable.WriteMask = (AttributeWriteMask)attributes.WriteMask;
+					variable.UserWriteMask = (AttributeWriteMask)attributes.UserWriteMask;
+					variable.ArrayDimensions = attributes.ArrayDimensions?.ToArray();
+					variable.Description = attributes.Description;
+
+					this.AddPredefinedNode(this.SystemContext, variable);
+
+					if(parent != null)
+						parent.ClearChangeMasks(this.SystemContext, true);
+
+					return (new AddNodesResult()
+					{
+						StatusCode = StatusCodes.Good,
+						AddedNodeId = variable.NodeId,
+					}, null);
+				}
+				else
+					throw new ServiceResultException(StatusCodes.BadNodeAttributesInvalid);
+			}
 
 			throw new ServiceResultException(StatusCodes.BadNodeClassInvalid);
+		}
+
+		public NodeState Find(string path)
+		{
+			foreach(var node in this.PredefinedNodes)
+			{
+				if(node.Value is BaseInstanceState state)
+				{
+					var found = string.Equals(state.SymbolicName, path, StringComparison.OrdinalIgnoreCase) ? state : state.FindChildBySymbolicName(this.SystemContext, path);
+
+					if(found != null)
+						return found;
+				}
+			}
+
+			return null;
+		}
+
+		public bool Write<T>(NodeId nodeId, T value)
+		{
+			var item = new WriteValue()
+			{
+				NodeId = nodeId,
+				AttributeId = Attributes.Value,
+				Value = new DataValue(new Variant(value), StatusCodes.Good),
+			};
+
+			var errors = new ServiceResult[1];
+			this.Write(this.SystemContext.OperationContext, [item], errors);
+			return ServiceResult.IsGood(errors[0]);
 		}
 		#endregion
 
@@ -188,7 +251,7 @@ partial class OpcServer
 				Birthday = new DateTime(1980, 10, 15),
 			});
 
-			var folder = this.CreateFolder(null, null, "MyFirstFolderEx", "My First Folder Ex", "This is my first folder node(Ex).");
+			var folder = this.CreateFolder(null, null, "MyFolder", "My Folder", "This is my first folder node.");
 			var variable = this.CreateVariable(folder, "MyVariable", 123.50, "My Variable", DataTypeIds.Double, ValueRanks.Scalar);
 
 			var nodes = new NodeStateCollection
@@ -460,7 +523,7 @@ partial class OpcServer
 			}
 		}
 
-		private FolderState CreateFolder(FolderState parent, ExpandedNodeId id, string name, string displayName, string description)
+		private FolderState CreateFolder(NodeState parent, ExpandedNodeId id, string name, string displayName, string description)
 		{
 			var nodeId = id == null || id.IsNull ? new NodeId(Guid.NewGuid(), this.NamespaceIndex) : (NodeId)id;
 

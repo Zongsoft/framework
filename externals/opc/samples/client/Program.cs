@@ -54,16 +54,13 @@ internal class Program
 					break;
 				case "sub":
 				case "subscribe":
-					//for(int i = 1; i < parts.Length; i++)
-					//	await _client.SubscribeAsync(parts[i], _handler);
+					if(parts.Length > 1)
+						await _client.SubscribeAsync(parts.AsSpan(1).ToArray(), null);
 					break;
 				case "unsub":
 				case "unsubscribe":
-					//for(int i = 0; i < parts.Length; i++)
-					//{
-					//	if(_client.Subscribers.TryGetValue(parts[i], out var subscriber))
-					//		await subscriber.UnsubscribeAsync();
-					//}
+					if(parts.Length > 1)
+						await _client.UnsubscribeAsync(parts.AsSpan(1).ToArray());
 					break;
 				case "connect":
 					await _client.ConnectAsync(parts.Length > 1 ? parts[1] : "opc.tcp://localhost:4841/OpcServer");

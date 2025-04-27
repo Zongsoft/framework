@@ -40,6 +40,7 @@ using Opc.Ua.Configuration;
 using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Communication;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Opc;
 
@@ -79,24 +80,45 @@ public class OpcClient : IDisposable
 
 	#region 公共属性
 	public string Name { get; }
+	public bool IsConnected => _session?.Connected ?? false;
 	#endregion
 
 	#region 公共方法
-	public async ValueTask ConnectAsync(string url, CancellationToken cancellation = default)
+	public ValueTask ConnectAsync(string url, CancellationToken cancellation = default)
 	{
-		var endpointDescription = CoreClientUtils.SelectEndpoint(_configuration, url, false, 1000 * 10);
+		if(string.IsNullOrEmpty(url))
+			throw new ArgumentNullException(nameof(url));
+
+		return this.ConnectAsync(Configuration.OpcConnectionSettingsDriver.Instance.GetSettings($"{nameof(Configuration.OpcConnectionSettings.Url)}={url}"), cancellation);
+	}
+
+	public async ValueTask ConnectAsync(Configuration.OpcConnectionSettings settings, CancellationToken cancellation = default)
+	{
+		if(settings == null || string.IsNullOrEmpty(settings.Url))
+			throw new ArgumentNullException(nameof(settings));
+
+		var endpointDescription = CoreClientUtils.SelectEndpoint(_configuration, settings.Url, false, 1000 * 10);
 		var endpointConfiguration = EndpointConfiguration.Create(_configuration);
 		var endpoint = new ConfiguredEndpoint(null, endpointDescription, endpointConfiguration);
+
+		var name = this.Name;
+		if(string.IsNullOrEmpty(settings.Client))
+			;
+		else
+			name = string.IsNullOrEmpty(settings.Instance) ? settings.Client : $"{settings.Client}:{settings.Instance}";
 
 		_session = await Session.Create(
 			_configuration,
 			endpoint,
 			false,
-			this.Name,
-			60 * 1000,
+			name,
+			(uint)settings.Timeout.TotalMilliseconds,
 			new UserIdentity(),
 			["zh", "en"],
 			cancellation);
+
+		_session.KeepAliveInterval = (int)settings.Heartbeat.TotalMilliseconds;
+		_session.DeleteSubscriptionsOnClose = true;
 
 		if(!_session.Connected)
 			await _session.OpenAsync(this.Name, new UserIdentity(), cancellation);
@@ -223,29 +245,25 @@ public class OpcClient : IDisposable
 		return null;
 	}
 
-	public async ValueTask WriteAsync(string key, object value, CancellationToken cancellation = default)
+	public async ValueTask<bool> CreateFolderAsync(string name, string description = null, CancellationToken cancellation = default)
 	{
-		if(string.IsNullOrEmpty(key))
-			throw new ArgumentNullException(nameof(key));
-
 		var request = new RequestHeader()
 		{
 			Timestamp = DateTime.UtcNow,
 		};
 
-		var root = await _session.NodeCache.FindAsync(Objects.RootFolder, cancellation);
+		var root = await _session.NodeCache.FindAsync(ObjectIds.ObjectsFolder, cancellation);
 
 		var folderNode = new AddNodesItem()
 		{
-			BrowseName = new QualifiedName("MyNode", 2),
+			BrowseName = new QualifiedName(name),
 			NodeClass = NodeClass.Object,
 			ReferenceTypeId = ReferenceTypes.Organizes,
 			TypeDefinition = ObjectTypeIds.FolderType,
-			RequestedNewNodeId = new ExpandedNodeId(10515, 2),
 			NodeAttributes = new ExtensionObject(new ObjectAttributes()
 			{
-				DisplayName = new LocalizedText("MyNode"),
-				Description = new LocalizedText("MyNode Description"),
+				DisplayName = new LocalizedText(name),
+				Description = new LocalizedText(description),
 				EventNotifier = EventNotifiers.None,
 				WriteMask = (uint)AttributeWriteMask.None,
 				UserWriteMask = (uint)AttributeWriteMask.None,
@@ -253,19 +271,46 @@ public class OpcClient : IDisposable
 			}),
 		};
 
+		var response = await _session.AddNodesAsync(request, [folderNode], cancellation);
+
+		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
+			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to create the folder node.");
+
+		if(response.Results != null && response.Results.Count > 0)
+		{
+			//如果失败原因为指定标识不存在则返回失败（不触发异常）
+			if(response.Results[0].StatusCode == StatusCodes.BadNodeIdUnknown)
+				return false;
+
+			var failures = response.Results.Where(result => StatusCode.IsBad(result.StatusCode));
+
+			if(failures.Any())
+				throw new InvalidOperationException($"[{string.Join(',', failures)}] Failed to create the folder node.");
+		}
+
+		return true;
+	}
+
+	public async ValueTask<bool> CreateVariableAsync(string name, Type type, string label, string description = null, CancellationToken cancellation = default)
+	{
+		var request = new RequestHeader()
+		{
+			Timestamp = DateTime.UtcNow,
+		};
+
 		var variableNode = new AddNodesItem
 		{
 			ReferenceTypeId = ReferenceTypes.HasComponent,
 			RequestedNewNodeId = null,
-			BrowseName = new QualifiedName("DataVariable1"),
+			BrowseName = new QualifiedName(name),
 			NodeClass = NodeClass.Variable,
 			TypeDefinition = VariableTypeIds.BaseDataVariableType,
 			NodeAttributes = new ExtensionObject(new VariableAttributes()
 			{
-				DisplayName = "DataVariable1",
-				Description = "DataVariable1 Description",
+				DisplayName = label,
+				Description = description,
 				Value = new Variant(123),
-				DataType = (uint)BuiltInType.Int32,
+				DataType = Utility.GetDataType(type),
 				ValueRank = ValueRanks.Scalar,
 				ArrayDimensions = new UInt32Collection(),
 				AccessLevel = AccessLevels.CurrentReadOrWrite,
@@ -278,19 +323,118 @@ public class OpcClient : IDisposable
 			}),
 		};
 
-		var response = await _session.AddNodesAsync(request, [folderNode], cancellation);
+		var response = await _session.AddNodesAsync(request, [variableNode], cancellation);
 
-		//var values = new WriteValueCollection();
-		//values.Add(new WriteValue()
-		//{
-		//	NodeId = "ns=2;s=111",
-		//	AttributeId = Attributes.Value,
-		//	Value = new DataValue(new Variant(123.50, TypeInfo.Scalars.Double)),
-		//});
+		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
+			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to create the variable node.");
 
-		//var result = await _session.WriteAsync(request, values, cancellation);
+		if(response.Results != null && response.Results.Count > 0)
+		{
+			//如果失败原因为指定标识不存在则返回失败（不触发异常）
+			if(response.Results[0].StatusCode == StatusCodes.BadNodeIdUnknown)
+				return false;
+
+			var failures = response.Results.Where(result => StatusCode.IsBad(result.StatusCode));
+
+			if(failures.Any())
+				throw new InvalidOperationException($"[{string.Join(',', failures)}] Failed to create the variable node.");
+		}
+
+		return true;
+	}
+
+	public async ValueTask<bool> SubscribeAsync(IEnumerable<string> identifiers, SubscriptionOptions options, CancellationToken cancellation = default)
+	{
+		if(identifiers == null)
+			throw new ArgumentNullException(nameof(identifiers));
+
+		var subscription = new Subscription(_session.DefaultSubscription)
+		{
+			Handle = this,
+			PublishingEnabled = true,
+			PublishingInterval = options.GetPublishingInterval(),
+			MinLifetimeInterval = options.GetMinLifetimeInterval(),
+			KeepAliveCount = (uint)options.GetKeepAliveCount(),
+			LifetimeCount = (uint)options.GetLifetimeCount(),
+			TimestampsToReturn = TimestampsToReturn.Both,
+		};
+
+		subscription.StateChanged += Subscription_StateChanged;
+		subscription.PublishStatusChanged += Subscription_PublishStatusChanged;
+
+		var items = identifiers.Where(identifier => !string.IsNullOrEmpty(identifier)).Select(identifier =>
+		{
+			var item = new MonitoredItem(subscription.DefaultItem)
+			{
+				Handle = identifier,
+				StartNodeId = NodeId.Parse(identifier),
+				AttributeId = Attributes.Value,
+				SamplingInterval = options.GetSamplingInterval(),
+				DiscardOldest = true,
+				QueueSize = (uint)options.GetQueueSize(),
+				DisplayName = identifier,
+			};
+
+			item.Notification += MonitoredItem_Notification;
+
+			return item;
+		});
+
+		subscription.AddItems(items);
+
+		if(_session.AddSubscription(subscription))
+		{
+			await subscription.CreateAsync(cancellation);
+			await subscription.ApplyChangesAsync(cancellation);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	public async ValueTask<int> UnsubscribeAsync(IEnumerable<string> identifiers, CancellationToken cancellation = default)
+	{
+		if(identifiers == null)
+			return 0;
+
+		foreach(var subscription in _session.Subscriptions)
+		{
+			foreach(var item in subscription.MonitoredItems)
+			{
+				//item.Notification -= MonitoredItem_Notification;
+				subscription.RemoveItem(item);
+			}
+		}
+
+		return 0;
+	}
+
+	public async ValueTask WriteAsync(string key, object value, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+
+		var response1 = await this.CreateFolderAsync("SubFolderX", null, cancellation);
+		var response2 = await this.CreateVariableAsync("MyFolder/VariableX", typeof(int), "My Variable X", "这是一个动态变量。", cancellation);
 	}
 	#endregion
+
+	private void Subscription_StateChanged(Subscription subscription, SubscriptionStateChangedEventArgs args)
+	{
+	}
+
+	private void Subscription_PublishStatusChanged(Subscription subscription, PublishStateChangedEventArgs args)
+	{
+	}
+
+	private void MonitoredItem_Notification(MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs args)
+	{
+		if(args.NotificationValue is MonitoredItemNotification notification)
+			Console.WriteLine($"[Notification] {monitoredItem.StartNodeId} => {notification.Value}");
+		else
+			Console.WriteLine($"[Notification] {monitoredItem.StartNodeId} => {args.NotificationValue}");
+	}
 
 	#region 处置方法
 	public void Dispose()
