@@ -83,7 +83,7 @@ partial class Scheduler
 				options.Identifier = $"X{Common.Randomizer.GenerateString()}";
 
 			var job = HandlerFactory.GetJob(name, cancellation);
-			this.Client.AddOrUpdate(options.Identifier, job, options.Expression, new RecurringJobOptions() { TimeZone = options?.Timezone });
+			this.Client.AddOrUpdate(options.Identifier, job, options.Expression, new RecurringJobOptions() { TimeZone = options.Timezone });
 			return ValueTask.FromResult(options.Identifier);
 		}
 
