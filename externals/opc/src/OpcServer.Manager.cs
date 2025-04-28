@@ -46,7 +46,7 @@ partial class OpcServer
 	internal class NodeManager : CustomNodeManager2
 	{
 		#region 私有字段
-		private uint _nodeId;
+		private volatile uint _nodeId;
 		private IList<IReference> _objectReferences;
 		private IList<IReference> _serverReferences;
 		private Dictionary<Type, NodeId> _types = new();
@@ -92,11 +92,7 @@ partial class OpcServer
 					node.BrowseName = new QualifiedName(node.BrowseName.Name[(index + 1)..], this.NamespaceIndex);
 				}
 
-				//最后确认父节点为首个预定义的文件夹节点
-				parent ??= this.PredefinedNodes.FirstOrDefault(entry => entry.Value is FolderState).Value;
-
-				if(parent == null)
-					throw new ServiceResultException(StatusCodes.BadParentNodeIdInvalid);
+				parent ??= this.FindNodeInAddressSpace(Objects.ObjectsFolder);
 			}
 
 			if(node.NodeClass == NodeClass.Object)
@@ -122,9 +118,7 @@ partial class OpcServer
 					}, null);
 				}
 				else
-				{
 					throw new ServiceResultException(StatusCodes.BadTypeDefinitionInvalid);
-				}
 			}
 			else if(node.NodeClass == NodeClass.Variable)
 			{
@@ -197,7 +191,6 @@ partial class OpcServer
 			if(!externalReferences.TryGetValue(ObjectIds.Server, out _serverReferences))
 				externalReferences[ObjectIds.Server] = _serverReferences = new List<IReference>();
 
-			this.DefineVariable("MyVar1", typeof(float), "MyVariable#1");
 			base.CreateAddressSpace(externalReferences);
 		}
 
@@ -251,6 +244,7 @@ partial class OpcServer
 				Birthday = new DateTime(1980, 10, 15),
 			});
 
+			var root = this.FindNodeInAddressSpace(Objects.ObjectsFolder);
 			var folder = this.CreateFolder(null, null, "MyFolder", "My Folder", "This is my first folder node.");
 			var variable = this.CreateVariable(folder, "MyVariable", 123.50, "My Variable", DataTypeIds.Double, ValueRanks.Scalar);
 
@@ -314,14 +308,14 @@ partial class OpcServer
 		public override NodeId New(ISystemContext context, NodeState node)
 		{
 			if(node.NodeId == null || node.NodeId.IsNullNodeId)
-				return new NodeId(++_nodeId, this.NamespaceIndex);
+				return this.GenerateId();
 
 			return base.New(context, node);
 		}
 
-		public override void Write(OperationContext context, IList<WriteValue> nodes, IList<ServiceResult> errors)
+		public override void Write(OperationContext context, IList<WriteValue> nodesToWrite, IList<ServiceResult> errors)
 		{
-			base.Write(context, nodes, errors);
+			base.Write(context, nodesToWrite, errors);
 		}
 		#endregion
 
@@ -417,6 +411,7 @@ partial class OpcServer
 				AccessLevel = AccessLevels.CurrentRead,
 				UserAccessLevel = AccessLevels.CurrentRead,
 				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
+				OnWriteValue = this.OnWriteValue,
 			};
 
 			if(propertyState.DataType == DataTypeIds.ObjectTypeNode)
@@ -434,71 +429,6 @@ partial class OpcServer
 
 			type.AddChild(propertyState);
 			return propertyState;
-		}
-
-		private BaseObjectTypeState GenerateType(Type type)
-		{
-			var objectType = new BaseObjectTypeState()
-			{
-				NodeId = new NodeId(++_nodeId, this.NamespaceIndex),
-				IsAbstract = type.IsAbstract,
-				SymbolicName = $"{type.Name}Type",
-				BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
-				DisplayName = $"{type.Namespace}.{type.Name}",
-				SuperTypeId = ReferenceTypeIds.HasSubtype,
-			};
-
-			var instance = new BaseObjectState(objectType)
-			{
-				NodeId = new NodeId(++_nodeId, this.NamespaceIndex),
-				SymbolicName = type.Name,
-				BrowseName = type.Name,
-				DisplayName = type.Name,
-				TypeDefinitionId = objectType.NodeId,
-				ReferenceTypeId = objectType.NodeId,
-			};
-
-			objectType.AddChild(instance);
-
-			uint index = 1;
-
-			foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
-			{
-				index++;
-
-				var propertyState = new PropertyState(objectType)
-				{
-					NodeId = new NodeId(2000 + index, this.NamespaceIndex),
-					SymbolicName = property.Name,
-					DisplayName = property.Name,
-					DataType = DataTypeIds.Int32,
-					ReferenceTypeId = ReferenceTypes.HasProperty,
-					TypeDefinitionId = VariableTypeIds.PropertyType,
-				};
-
-				propertyState.AddReference(propertyState.NodeId, true, instance.NodeId);
-				instance.AddChild(propertyState);
-			}
-
-			var propertyStateEx = new PropertyState(objectType)
-			{
-				ReferenceTypeId = ReferenceTypes.HasProperty,
-				TypeDefinitionId = VariableTypeIds.PropertyType,
-				SymbolicName = $"Property{index}",
-				BrowseName = $"Property{index}",
-				DisplayName = $"Property{index}",
-				DataType = Utility.GetDataType(typeof(string)),
-				ValueRank = ValueRanks.OneOrMoreDimensions,
-				AccessLevel = AccessLevels.CurrentRead,
-				UserAccessLevel = AccessLevels.CurrentRead,
-				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
-			};
-
-			objectType.AddChild(propertyStateEx);
-
-			objectType.AddReference(objectType.NodeId, true, ObjectIds.ObjectTypesFolder);
-
-			return objectType;
 		}
 
 		private void AppendChildren(BaseInstanceState owner, BaseInstanceState child)
@@ -523,9 +453,10 @@ partial class OpcServer
 			}
 		}
 
+		private NodeId GenerateId() => new(Interlocked.Increment(ref _nodeId), this.NamespaceIndex);
 		private FolderState CreateFolder(NodeState parent, ExpandedNodeId id, string name, string displayName, string description)
 		{
-			var nodeId = id == null || id.IsNull ? new NodeId(Guid.NewGuid(), this.NamespaceIndex) : (NodeId)id;
+			var nodeId = id == null || id.IsNull ? this.GenerateId() : (NodeId)id;
 
 			var folder = new FolderState(parent)
 			{
@@ -567,7 +498,7 @@ partial class OpcServer
 				Value = value,
 				StatusCode = StatusCodes.Good,
 				Timestamp = DateTime.Now,
-				//OnWriteValue = OnWriteDataValue
+				OnWriteValue = this.OnWriteValue
 			};
 
 			if(valueRank == ValueRanks.OneDimension)
@@ -583,6 +514,21 @@ partial class OpcServer
 				parent.AddChild(variable);
 
 			return variable;
+		}
+		#endregion
+
+		#region 写值处理
+		ServiceResult OnWriteValue(ISystemContext context, NodeState node, NumericRange indexRange, QualifiedName dataEncoding,
+			ref object value,
+			ref StatusCode statusCode,
+			ref DateTime timestamp)
+		{
+			if(node is BaseVariableState variable)
+			{
+				return ServiceResult.Good;
+			}
+
+			return new ServiceResult(StatusCodes.BadNodeClassInvalid);
 		}
 		#endregion
 	}

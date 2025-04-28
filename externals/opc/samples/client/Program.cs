@@ -61,6 +61,8 @@ internal class Program
 				case "unsubscribe":
 					if(parts.Length > 1)
 						await _client.UnsubscribeAsync(parts.AsSpan(1).ToArray());
+					else
+						await _client.UnsubscribeAsync();
 					break;
 				case "connect":
 					await _client.ConnectAsync(parts.Length > 1 ? parts[1] : "opc.tcp://localhost:4841/OpcServer");

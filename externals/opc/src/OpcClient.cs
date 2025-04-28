@@ -32,6 +32,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -47,8 +48,9 @@ namespace Zongsoft.Externals.Opc;
 public class OpcClient : IDisposable
 {
 	#region 成员字段
-	private ApplicationConfiguration _configuration;
 	private Session _session;
+	private ApplicationConfiguration _configuration;
+	private ConcurrentDictionary<string, MonitoredItem> _monitoredItems;
 	#endregion
 
 	#region 构造函数
@@ -75,6 +77,8 @@ public class OpcClient : IDisposable
 
 		//验证客户端配置
 		_configuration.Validate(ApplicationType.Client);
+
+		_monitoredItems = new ConcurrentDictionary<string, MonitoredItem>();
 	}
 	#endregion
 
@@ -359,10 +363,12 @@ public class OpcClient : IDisposable
 			TimestampsToReturn = TimestampsToReturn.Both,
 		};
 
-		subscription.StateChanged += Subscription_StateChanged;
-		subscription.PublishStatusChanged += Subscription_PublishStatusChanged;
+		subscription.StateChanged += this.Subscription_StateChanged;
+		subscription.PublishStatusChanged += this.Subscription_PublishStatusChanged;
 
-		var items = identifiers.Where(identifier => !string.IsNullOrEmpty(identifier)).Select(identifier =>
+		var items = identifiers
+			.Where(identifier => !string.IsNullOrEmpty(identifier) && !_monitoredItems.ContainsKey(identifier))
+			.Select(identifier =>
 		{
 			var item = new MonitoredItem(subscription.DefaultItem)
 			{
@@ -375,7 +381,7 @@ public class OpcClient : IDisposable
 				DisplayName = identifier,
 			};
 
-			item.Notification += MonitoredItem_Notification;
+			item.Notification += this.MonitoredItem_Notification;
 
 			return item;
 		});
@@ -387,10 +393,38 @@ public class OpcClient : IDisposable
 			await subscription.CreateAsync(cancellation);
 			await subscription.ApplyChangesAsync(cancellation);
 
+			foreach(var item in subscription.MonitoredItems)
+				_monitoredItems.TryAdd(item.StartNodeId.ToString(), item);
+
 			return true;
 		}
 
 		return false;
+	}
+
+	public async ValueTask UnsubscribeAsync(CancellationToken cancellation = default)
+	{
+		var session = _session;
+		if(session == null || session.SubscriptionCount == 0)
+			return;
+
+		foreach(var subscription in session.Subscriptions)
+		{
+			foreach(var item in subscription.MonitoredItems)
+			{
+				item.Notification -= this.MonitoredItem_Notification;
+			}
+
+			subscription.RemoveItems(subscription.MonitoredItems);
+
+			if(subscription.MonitoredItemCount == 0)
+			{
+				subscription.StateChanged -= this.Subscription_StateChanged;
+				subscription.PublishStatusChanged -= this.Subscription_PublishStatusChanged;
+			}
+		}
+
+		await session.RemoveSubscriptionsAsync(session.Subscriptions.ToArray(), cancellation);
 	}
 
 	public async ValueTask<int> UnsubscribeAsync(IEnumerable<string> identifiers, CancellationToken cancellation = default)
@@ -398,16 +432,38 @@ public class OpcClient : IDisposable
 		if(identifiers == null)
 			return 0;
 
-		foreach(var subscription in _session.Subscriptions)
+		var session = _session;
+		if(session == null || session.SubscriptionCount == 0)
+			return 0;
+
+		var count = 0;
+
+		foreach(var identifier in identifiers)
 		{
-			foreach(var item in subscription.MonitoredItems)
+			if(identifier != null && _monitoredItems.Remove(identifier, out var item))
 			{
-				//item.Notification -= MonitoredItem_Notification;
-				subscription.RemoveItem(item);
+				item.Notification -= this.MonitoredItem_Notification;
+				item.Subscription.RemoveItem(item);
+				count++;
 			}
 		}
 
-		return 0;
+		var removables = new List<Subscription>();
+
+		foreach(var subscription in session.Subscriptions)
+		{
+			if(subscription.MonitoredItemCount == 0)
+			{
+				subscription.StateChanged -= this.Subscription_StateChanged;
+				subscription.PublishStatusChanged -= this.Subscription_PublishStatusChanged;
+				removables.Add(subscription);
+			}
+		}
+
+		if(removables != null && removables.Count > 0)
+			await session.RemoveSubscriptionsAsync(removables, cancellation);
+
+		return count;
 	}
 
 	public async ValueTask WriteAsync(string key, object value, CancellationToken cancellation = default)
@@ -420,12 +476,15 @@ public class OpcClient : IDisposable
 	}
 	#endregion
 
+	#region 事件处理
 	private void Subscription_StateChanged(Subscription subscription, SubscriptionStateChangedEventArgs args)
 	{
+		Console.WriteLine($"[Subscription.StateChanged] {args.Status}");
 	}
 
 	private void Subscription_PublishStatusChanged(Subscription subscription, PublishStateChangedEventArgs args)
 	{
+		Console.WriteLine($"[Subscription.PublishStatusChanged] {args.Status}");
 	}
 
 	private void MonitoredItem_Notification(MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs args)
@@ -435,6 +494,7 @@ public class OpcClient : IDisposable
 		else
 			Console.WriteLine($"[Notification] {monitoredItem.StartNodeId} => {args.NotificationValue}");
 	}
+	#endregion
 
 	#region 处置方法
 	public void Dispose()
