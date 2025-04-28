@@ -42,11 +42,12 @@ public static class TriggerOptionsExtension
 		return options;
 	}
 
-	public static TriggerOptions.Cron Cron(this ITriggerOptions options, string expression)
+	public static TriggerOptions.Cron Cron(this ITriggerOptions options, string expression, TimeZoneInfo timezone = null)
 	{
 		if(options is TriggerOptions.Cron cron)
 		{
 			cron.Expression = expression;
+			cron.Timezone = timezone;
 			return cron;
 		}
 

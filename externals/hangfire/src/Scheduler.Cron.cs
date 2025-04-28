@@ -83,7 +83,7 @@ partial class Scheduler
 				options.Identifier = $"X{Common.Randomizer.GenerateString()}";
 
 			var job = HandlerFactory.GetJob(name, cancellation);
-			this.Client.AddOrUpdate(options.Identifier, job, options.Expression, new RecurringJobOptions());
+			this.Client.AddOrUpdate(options.Identifier, job, options.Expression, new RecurringJobOptions() { TimeZone = options?.Timezone });
 			return ValueTask.FromResult(options.Identifier);
 		}
 
@@ -98,7 +98,7 @@ partial class Scheduler
 				options.Identifier = $"X{Common.Randomizer.GenerateString()}";
 
 			var job = HandlerFactory.GetJob(name, argument, cancellation);
-			this.Client.AddOrUpdate(options.Identifier, job, options.Expression, new RecurringJobOptions());
+			this.Client.AddOrUpdate(options.Identifier, job, options.Expression, new RecurringJobOptions() { TimeZone = options.Timezone });
 			return ValueTask.FromResult(options.Identifier);
 		}
 

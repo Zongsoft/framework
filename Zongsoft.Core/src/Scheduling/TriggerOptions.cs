@@ -44,10 +44,24 @@ public class TriggerOptions : ITriggerOptions
 	#region 嵌套子类
 	public class Cron : TriggerOptions
 	{
-		public Cron(string expression) => this.Expression = expression;
-		public Cron(string id, string expression) : base(id) => this.Expression = expression;
+		private TimeZoneInfo _timezone;
 
+		public Cron(string expression, TimeZoneInfo timezone = null) : this(null, expression, timezone) { }
+		public Cron(string id, string expression, TimeZoneInfo timezone = null) : base(id)
+		{
+			this.Expression = expression;
+			this.Timezone = timezone;
+		}
+
+		/// <summary>获取或设置 Cron 表达式文本。</summary>
 		public string Expression { get; set; }
+
+		/// <summary>获取或设置时区信息，默认为 <see cref="TimeZoneInfo.Utc"/> 时区。</summary>
+		public TimeZoneInfo Timezone
+		{
+			get => _timezone ?? TimeZoneInfo.Utc;
+			set => _timezone = value;
+		}
 	}
 
 	public class Latency : TriggerOptions
@@ -55,6 +69,7 @@ public class TriggerOptions : ITriggerOptions
 		public Latency(TimeSpan duration) => this.Duration = duration;
 		public Latency(string id, TimeSpan duration) : base(id) => this.Duration = duration;
 
+		/// <summary>获取或设置延迟的时长。</summary>
 		public TimeSpan Duration { get; set; }
 	}
 	#endregion
