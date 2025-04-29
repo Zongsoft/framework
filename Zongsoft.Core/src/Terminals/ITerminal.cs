@@ -33,7 +33,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Terminals;
 
-public interface ITerminal : Zongsoft.Services.ICommandOutlet
+public interface ITerminal : Components.ICommandOutlet
 {
 	#region 事件定义
 	event EventHandler Resetted;
@@ -42,8 +42,8 @@ public interface ITerminal : Zongsoft.Services.ICommandOutlet
 	#endregion
 
 	#region 属性定义
-	Zongsoft.Services.CommandOutletColor BackgroundColor { get; set; }
-	Zongsoft.Services.CommandOutletColor ForegroundColor { get; set; }
+	Zongsoft.Components.CommandOutletColor BackgroundColor { get; set; }
+	Zongsoft.Components.CommandOutletColor ForegroundColor { get; set; }
 	TextWriter Error { get; set; }
 	TextReader Input { get; set; }
 	TextWriter Output { get; set; }

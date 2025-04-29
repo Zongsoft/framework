@@ -28,36 +28,36 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+/// <summary>
+/// 表示命令会话执行完成的上下文类。
+/// </summary>
+public class CommandCompletionContext : CommandContext
 {
-	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
+	#region 成员字段
+	private object _result;
+	private Exception _exception;
 	#endregion
 
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	#region 构造函数
+	public CommandCompletionContext(CommandContext context, object result, Exception exception = null) : base(context)
 	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
+		_result = result;
+		_exception = exception;
+	}
+	#endregion
 
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
+	#region 公共属性
+	/// <summary>获取当前命令的执行结果。</summary>
+	public object Result => _result;
 
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
-
-		return ValueTask.FromResult<object>(null);
+	/// <summary>获取命令执行中发生的异常。</summary>
+	public Exception Exception
+	{
+		get => _exception;
+		internal set => _exception = value;
 	}
 	#endregion
 }

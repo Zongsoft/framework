@@ -28,36 +28,30 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
+using System.Collections.Generic;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components.Commands;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+internal static class Utility
 {
-	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
-	#endregion
-
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	public static CommandOutletColor GetStateColor(WorkerState state) => state switch
 	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
+		WorkerState.Pausing or WorkerState.Paused => CommandOutletColor.Yellow,
+		WorkerState.Resuming or WorkerState.Starting => CommandOutletColor.DarkCyan,
+		WorkerState.Stopped or WorkerState.Stopping => CommandOutletColor.DarkGray,
+		_ => CommandOutletColor.Green,
+	};
 
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
+	public static CommandOutletContent GetWorkerActionContent(IWorker worker, string message, CommandOutletColor? color = null)
+	{
+		var content = CommandOutletContent.Create(CommandOutletColor.DarkCyan, worker.Name)
+			.Append(CommandOutletColor.DarkGray, "(")
+			.Append(GetStateColor(worker.State), worker.State.ToString())
+			.Append(CommandOutletColor.DarkGray, ") ");
 
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
-
-		return ValueTask.FromResult<object>(null);
+		if(color == null)
+			return content.Append(message);
+		else
+			return content.Append(color.Value, message);
 	}
-	#endregion
 }

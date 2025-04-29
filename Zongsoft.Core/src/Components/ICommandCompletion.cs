@@ -28,36 +28,13 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+/// <summary>
+/// 表示命令链执行完成的回调接口。
+/// </summary>
+public interface ICommandCompletion
 {
-	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
-	#endregion
-
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
-	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
-
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
-
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
-
-		return ValueTask.FromResult<object>(null);
-	}
-	#endregion
+	void OnCompleted(CommandCompletionContext context);
 }

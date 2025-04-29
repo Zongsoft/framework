@@ -28,36 +28,20 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+public class CommandNotFoundException : CommandException
 {
 	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
+	public CommandNotFoundException(string path) => this.Path = path ?? string.Empty;
 	#endregion
 
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
-	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
+	#region 公共属性
+	public string Path { get; }
+	#endregion
 
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
-
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
-
-		return ValueTask.FromResult<object>(null);
-	}
+	#region 重写属性
+	public override string Message => string.Format(Properties.Resources.CommandNotFound_Message, this.Path);
 	#endregion
 }

@@ -28,36 +28,25 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+[Serializable]
+public class CommandExecutorEventArgs : EventArgs
 {
 	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
+	public CommandExecutorEventArgs(CommandExecutorContext context)
+	{
+		this.Context = context ?? throw new ArgumentNullException(nameof(context));
+	}
 	#endregion
 
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	#region 公共属性
+	public CommandExecutorContext Context { get; }
+	public object Result
 	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
-
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
-
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
-
-		return ValueTask.FromResult<object>(null);
+		get => this.Context.Result;
+		set => this.Context.Result = value;
 	}
 	#endregion
 }

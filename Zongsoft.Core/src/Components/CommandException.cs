@@ -28,36 +28,29 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+[Serializable]
+public class CommandException : ApplicationException
 {
 	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
+	public CommandException() => this.Code = 0;
+	public CommandException(string message) : this(0, message, null) { }
+	public CommandException(string message, Exception innerException) : this(0, message, innerException) { }
+	public CommandException(int code, string message) : this(code, message, null) { }
+	public CommandException(int code, string message, Exception innerException) : base(message, innerException)
+	{
+		this.Code = code;
+		this.HasMessage = !string.IsNullOrEmpty(message);
+	}
 	#endregion
 
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
-	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
+	#region 保护属性
+	protected bool HasMessage { get; }
+	#endregion
 
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
-
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
-
-		return ValueTask.FromResult<object>(null);
-	}
+	#region 公共属性
+	public int Code { get; }
 	#endregion
 }

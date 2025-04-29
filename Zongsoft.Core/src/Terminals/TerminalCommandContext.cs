@@ -30,11 +30,11 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Terminals;
 
-public class TerminalCommandContext : Zongsoft.Services.CommandContext
+public class TerminalCommandContext : CommandContext
 {
 	#region 构造函数
 	public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, ICommand command, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, command, parameter, extendedProperties) { }

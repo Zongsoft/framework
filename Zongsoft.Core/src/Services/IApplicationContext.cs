@@ -69,7 +69,7 @@ public interface IApplicationContext : IApplicationModule
 	ICollection<IApplicationInitializer> Initializers { get; }
 
 	/// <summary>获取当前应用程序的后台工作者集。</summary>
-	ICollection<IWorker> Workers { get; }
+	ICollection<Components.IWorker> Workers { get; }
 	#endregion
 
 	#region 方法定义

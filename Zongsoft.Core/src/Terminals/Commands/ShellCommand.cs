@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Diagnostics;
 using System.ComponentModel;
 
@@ -35,8 +37,8 @@ namespace Zongsoft.Terminals.Commands;
 
 [DisplayName("ShellCommand.Name")]
 [Description("ShellCommand.Description")]
-[Zongsoft.Services.CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "ShellCommand.Options.Timeout")]
-public class ShellCommand : Zongsoft.Services.CommandBase<TerminalCommandContext>
+[Zongsoft.Components.CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "ShellCommand.Options.Timeout")]
+public class ShellCommand : Zongsoft.Components.CommandBase<TerminalCommandContext>
 {
 	#region 构造函数
 	public ShellCommand() : base("Shell") { }
@@ -44,14 +46,14 @@ public class ShellCommand : Zongsoft.Services.CommandBase<TerminalCommandContext
 	#endregion
 
 	#region 重写方法
-	protected override object OnExecute(TerminalCommandContext context)
+	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
 	{
 		if(Environment.OSVersion.Platform == PlatformID.MacOSX ||
 		   Environment.OSVersion.Platform == PlatformID.Unix)
 			throw new NotSupportedException(string.Format("Not supported in the {0} OS.", Environment.OSVersion));
 
 		if(context.Expression.Arguments.Length < 1)
-			return 0;
+			return ValueTask.FromResult<object>(0);
 
 		ProcessStartInfo info = new ProcessStartInfo(@"cmd.exe", " /C " + context.Expression.Arguments[0])
 		{
@@ -87,11 +89,11 @@ public class ShellCommand : Zongsoft.Services.CommandBase<TerminalCommandContext
 				if(!process.WaitForExit(timeout > 0 ? timeout : int.MaxValue))
 				{
 					process.Close();
-					return -1;
+					return ValueTask.FromResult<object>(-1);
 				}
 			}
 
-			return process.ExitCode;
+			return ValueTask.FromResult<object>(process.ExitCode);
 		}
 	}
 	#endregion

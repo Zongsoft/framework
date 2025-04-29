@@ -29,8 +29,10 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Terminals;
 
@@ -95,12 +97,14 @@ public class TerminalCommandExecutor : CommandExecutor
 	#endregion
 
 	#region 运行方法
-	public int Run()
+	public Task<int> RunAsync(CancellationToken cancellation = default) => this.RunAsync(null, cancellation);
+	public async Task<int> RunAsync(string splash, CancellationToken cancellation = default)
 	{
 		if(this.Root.Children.Count < 1)
 			return 0;
 
-		const string splash = @"
+		if(string.IsNullOrEmpty(splash))
+			splash = @"
      _____                                ___ __
     /_   /  ____  ____  ____  ____ ____  / __/ /_
       / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -117,12 +121,20 @@ public class TerminalCommandExecutor : CommandExecutor
 			//重置控制台，准备执行命令
 			_terminal.Reset();
 
+			//如果已经取消运行则退出
+			if(cancellation.IsCancellationRequested)
+				return 0;
+
 			try
 			{
 				var commandText = _terminal.Input.ReadLine();
 
 				if(!string.IsNullOrWhiteSpace(commandText))
-					this.Execute(commandText);
+					await this.ExecuteAsync(commandText, null, cancellation);
+			}
+			catch(OperationCanceledException)
+			{
+				return 0;
 			}
 			catch(ExitException ex)
 			{
@@ -160,7 +172,7 @@ public class TerminalCommandExecutor : CommandExecutor
 	#endregion
 
 	#region 重写方法
-	protected override CommandContext CreateCommandContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode node, object parameter)
+	protected override CommandContext CreateContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode node, object parameter)
 	{
 		return node == null || node.Command == null ? null : new TerminalCommandContext(session, expression, node, parameter);
 	}

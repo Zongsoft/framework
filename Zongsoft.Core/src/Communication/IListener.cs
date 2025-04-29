@@ -36,7 +36,7 @@ namespace Zongsoft.Communication;
 /// <summary>
 /// 提供关于通讯侦听的功能的接口。
 /// </summary>
-public interface IListener<T> : Services.IWorker, IDisposable
+public interface IListener<T> : Components.IWorker, IDisposable
 {
 	/// <summary>获取当前是否处于侦听状态。</summary>
 	bool IsListening { get; }

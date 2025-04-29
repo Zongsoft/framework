@@ -28,36 +28,32 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
+using System.IO;
+using System.Text;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+public interface ICommandOutlet
 {
-	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
-	#endregion
+	Encoding Encoding { get; set; }
+	TextWriter Writer { get; }
 
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
-	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
+	void Write(string text);
+	void Write(object value);
+	void Write(string format, params object[] args);
+	void Write(CommandOutletContent content);
+	void Write(CommandOutletColor color, CommandOutletContent content);
+	void Write(CommandOutletColor color, string text);
+	void Write(CommandOutletColor color, object value);
+	void Write(CommandOutletColor color, string format, params object[] args);
 
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
-
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
-
-		return ValueTask.FromResult<object>(null);
-	}
-	#endregion
+	void WriteLine();
+	void WriteLine(string text);
+	void WriteLine(object value);
+	void WriteLine(string format, params object[] args);
+	void WriteLine(CommandOutletContent content);
+	void WriteLine(CommandOutletColor color, CommandOutletContent content);
+	void WriteLine(CommandOutletColor color, string text);
+	void WriteLine(CommandOutletColor color, object value);
+	void WriteLine(CommandOutletColor color, string format, params object[] args);
 }

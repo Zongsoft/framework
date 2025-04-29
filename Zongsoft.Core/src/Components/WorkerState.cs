@@ -28,36 +28,30 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+/// <summary>
+/// 关于<seealso cref="IWorker"/>的状态信息。
+/// </summary>
+public enum WorkerState
 {
-	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
-	#endregion
+	/// <summary>未运行/已停止。</summary>
+	Stopped = 0,
+	/// <summary>运行中。</summary>
+	Running = 1,
 
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
-	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
+	/// <summary>正在启动中。</summary>
+	Starting,
+	/// <summary>正在停止中。</summary>
+	Stopping,
 
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
+	/// <summary>正在暂停中。</summary>
+	Pausing,
 
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
+	/// <summary>已经暂停。</summary>
+	Paused,
 
-		return ValueTask.FromResult<object>(null);
-	}
-	#endregion
+	/// <summary>正在恢复中。</summary>
+	Resuming,
 }

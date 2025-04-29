@@ -28,36 +28,48 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
+using System.Collections.Generic;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+public abstract class CommandLoaderBase : ICommandLoader
 {
-	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
+	#region 同步变量
+	private readonly object _syncRoot = new object();
 	#endregion
 
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	#region 构造函数
+	protected CommandLoaderBase() { }
+	#endregion
+
+	#region 成员字段
+	private bool _isLoaded;
+	#endregion
+
+	#region 公共属性
+	public bool IsLoaded => _isLoaded;
+	#endregion
+
+	#region 公共方法
+	public void Load(CommandTreeNode node)
 	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
+		if(node == null || _isLoaded)
+			return;
 
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
+		lock(_syncRoot)
+		{
+			if(_isLoaded)
+				return;
 
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
-
-		return ValueTask.FromResult<object>(null);
+			_isLoaded = this.OnLoad(node);
+		}
 	}
+	#endregion
+
+	#region 抽象方法
+	/// <summary>执行加载命令的实际操作。</summary>
+	/// <param name="node">待加载的命令树节点。</param>
+	/// <returns>如果加载成功则返回真(true)，否则返回假(false)。</returns>
+	protected abstract bool OnLoad(CommandTreeNode node);
 	#endregion
 }

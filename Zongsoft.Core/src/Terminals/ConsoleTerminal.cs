@@ -32,7 +32,7 @@ using System.IO;
 using System.Text;
 using System.ComponentModel;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Terminals;
 

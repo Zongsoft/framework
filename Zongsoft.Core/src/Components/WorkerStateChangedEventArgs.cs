@@ -28,36 +28,33 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.ComponentModel;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals.Commands;
-
-[DisplayName("ExitCommand.Name")]
-[Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+public class WorkerStateChangedEventArgs : EventArgs
 {
-	#region 构造函数
-	public ExitCommand() : base("Exit") { }
-	public ExitCommand(string name) : base(name) { }
+	#region 成员字段
+	private string _actionName;
+	private WorkerState _state;
+	private Exception _exception;
 	#endregion
 
-	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	#region 构造函数
+	public WorkerStateChangedEventArgs(string actionName, WorkerState state) : this(actionName, state, null) { }
+	public WorkerStateChangedEventArgs(string actionName, WorkerState state, Exception exception)
 	{
-		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
+		if(string.IsNullOrWhiteSpace(actionName))
+			throw new ArgumentNullException(nameof(actionName));
 
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
-
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
-
-		return ValueTask.FromResult<object>(null);
+		_actionName = actionName.Trim();
+		_state = state;
+		_exception = exception;
 	}
+	#endregion
+
+	#region 公共属性
+	public string ActionName => _actionName;
+	public WorkerState State => _state;
+	public Exception Exception => _exception;
 	#endregion
 }

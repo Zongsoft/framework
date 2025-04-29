@@ -30,25 +30,60 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.ComponentModel;
 
-namespace Zongsoft.Terminals.Commands;
+namespace Zongsoft.Components.Commands;
 
-[DisplayName("ClearCommand.Name")]
-[Description("ClearCommand.Description")]
-public class ClearCommand : Zongsoft.Components.CommandBase<TerminalCommandContext>
+public abstract class HostCommandBase<THost> : CommandBase<CommandContext> where THost : class
 {
+	#region 成员字段
+	private THost _host;
+	#endregion
+
 	#region 构造函数
-	public ClearCommand() : base("Clear") { }
-	public ClearCommand(string name) : base(name) { }
+	protected HostCommandBase(string name, IServiceProvider serviceProvider = null) : base(name)
+	{
+		this.ServiceProvider = serviceProvider;
+	}
+
+	protected HostCommandBase(string name, bool enabled, IServiceProvider serviceProvider = null) : base(name, enabled)
+	{
+		this.ServiceProvider = serviceProvider;
+	}
+	#endregion
+
+	#region 保护属性
+	internal protected THost Host
+	{
+		get => _host;
+		set
+		{
+			if(value == null)
+				throw new ArgumentNullException();
+
+			//如果引用相等则不用处理
+			if(object.ReferenceEquals(value, _host))
+				return;
+
+			//更新新的工作器
+			_host = value;
+
+			//激发“PropertyChanged”事件
+			this.OnPropertyChanged(nameof(Host));
+		}
+	}
+
+	protected IServiceProvider ServiceProvider { get; set; }
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		//清空当前终端的显示缓存
-		context.Terminal.Clear();
-		return ValueTask.FromResult<object>(null);
+		//如果传入的参数对象是一个工作者，则将其设为关联者
+		if(context.Parameter is THost host)
+			this.Host = host;
+
+		//始终返回关联的工作者对象
+		return ValueTask.FromResult<object>(_host);
 	}
 	#endregion
 }

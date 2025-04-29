@@ -63,7 +63,7 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	private string _description;
 
 	private readonly ServiceProvider _services;
-	private readonly List<IWorker> _workers;
+	private readonly List<Components.IWorker> _workers;
 	private List<IApplicationInitializer> _initializers;
 
 	private readonly CancellationTokenRegistration _applicationStarted;
@@ -78,7 +78,7 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 
 		_services = services as ServiceProvider ?? services.GetRequiredService<ServiceProvider>();
 		_initializers = new List<IApplicationInitializer>();
-		_workers = new List<IWorker>();
+		_workers = new List<Components.IWorker>();
 
 		this.Modules = new ApplicationModuleCollection();
 		this.Properties = new Collections.Parameters();
@@ -149,7 +149,7 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	public Components.EventManager Events => Components.EventManager.Global;
 	public ApplicationModuleCollection Modules { get; }
 	public ICollection<IApplicationInitializer> Initializers => _initializers;
-	public ICollection<IWorker> Workers => _workers;
+	public ICollection<Components.IWorker> Workers => _workers;
 	public Collections.Parameters Properties { get; }
 	#endregion
 
