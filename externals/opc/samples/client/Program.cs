@@ -62,6 +62,8 @@ internal class Program
 				else
 					context.Output.WriteLine(CommandOutletColor.DarkRed, $"The '{context.Expression.Arguments[i]}' node was not found.");
 			}
+
+			return true;
 		});
 
 		executor.Command("get", async (context, cancellation) =>

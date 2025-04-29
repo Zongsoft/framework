@@ -158,7 +158,10 @@ public class OpcClient : IDisposable
 			throw new ArgumentNullException(nameof(identifier));
 
 		var id = NodeId.Parse(identifier);
-		var result = await _session.ReadValueAsync(id, cancellation);
+		var result = await ReadValueAsync(_session, id, cancellation);
+
+		if(result == null)
+			return null;
 
 		if(StatusCode.IsBad(result.StatusCode))
 			throw new InvalidOperationException($"[{result.StatusCode}] Failed to read the value of the “{identifier}” node.");
@@ -167,6 +170,18 @@ public class OpcClient : IDisposable
 			return extension.Body;
 
 		return result.Value;
+
+		static async ValueTask<DataValue> ReadValueAsync(Session session, NodeId id, CancellationToken cancellation)
+		{
+			try
+			{
+				return await session.ReadValueAsync(id, cancellation);
+			}
+			catch(ServiceResultException ex) when (ex.StatusCode == StatusCodes.BadNodeIdUnknown)
+			{
+				return null;
+			}
+		}
 	}
 
 	public async ValueTask<(IEnumerable<object> result, IEnumerable<Failure> failures)> GetValuesAsync(IEnumerable<string> identifiers, CancellationToken cancellation = default)
