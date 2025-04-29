@@ -30,7 +30,7 @@
 using System;
 using System.ComponentModel;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Security.Commands
 {

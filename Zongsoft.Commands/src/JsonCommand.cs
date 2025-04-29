@@ -32,7 +32,7 @@ using System.IO;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Serialization;
 
 namespace Zongsoft.Commands

@@ -32,7 +32,7 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.IO.Commands
 {

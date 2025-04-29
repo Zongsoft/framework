@@ -30,7 +30,7 @@
 using System;
 using System.Linq;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.IO.Commands
 {

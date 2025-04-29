@@ -31,7 +31,7 @@ using System;
 using System.Linq;
 using System.ComponentModel;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.Commands
@@ -39,7 +39,7 @@ namespace Zongsoft.Messaging.Commands
 	[DisplayName("Text.QueueCommand.Name")]
 	[Description("Text.QueueCommand.Description")]
 	[CommandOption("name", typeof(string), Description = "Text.QueueCommand.Options.Name")]
-	public class QueueCommand : Services.Commands.HostCommandBase<IMessageQueue>
+	public class QueueCommand : Components.Commands.HostCommandBase<IMessageQueue>
 	{
 		#region 成员字段
 		private readonly IServiceProvider _serviceProvider;

@@ -31,7 +31,7 @@ using System;
 using System.ComponentModel;
 
 using Zongsoft.Caching;
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Security.Commands
 {

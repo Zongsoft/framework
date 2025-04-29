@@ -33,7 +33,7 @@ using System.ComponentModel;
 
 using Microsoft.Extensions.Configuration;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Configuration.Commands
 {

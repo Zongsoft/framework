@@ -33,7 +33,7 @@ using System.Text;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Commands
 {

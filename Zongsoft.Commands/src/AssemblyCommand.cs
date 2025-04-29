@@ -33,27 +33,22 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Linq;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Commands
 {
 	[DisplayName("Text.AssemblyCommand.Name")]
 	[Description("Text.AssemblyCommand.Description")]
 	[CommandOption("sort", Type = typeof(SortMode), DefaultValue=SortMode.None, Description = "Text.SortMode")]
-	public class AssemblyCommand : Zongsoft.Services.CommandBase<CommandContext>
+	public class AssemblyCommand : CommandBase<CommandContext>
 	{
 		#region 成员变量
 		private Assembly[] _assemblies;
 		#endregion
 
 		#region 构造函数
-		public AssemblyCommand() : base("Assembly")
-		{
-		}
-
-		public AssemblyCommand(string name) : base(name)
-		{
-		}
+		public AssemblyCommand() : base("Assembly") { }
+		public AssemblyCommand(string name) : base(name) { }
 		#endregion
 
 		#region 公共属性

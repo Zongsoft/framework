@@ -41,7 +41,7 @@ namespace Zongsoft.Messaging.Commands
 {
 	[CommandOption("acknowledgeable", typeof(bool), true, "Text.QueueSubscribeCommand.Acknowledgeable")]
 	[CommandOption("format", typeof(QueueMessageFormat), QueueMessageFormat.Raw, "Text.QueueSubscribeCommand.Format")]
-	public class QueueSubscribeCommand : Zongsoft.Services.Commands.HostListenCommandBase<IMessageQueue>
+	public class QueueSubscribeCommand : Zongsoft.Components.Commands.HostListenCommandBase<IMessageQueue>
 	{
 		#region 私有变量
 		private ICollection<IMessageConsumer> _consumers;

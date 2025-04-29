@@ -31,7 +31,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.IO.Commands
 {
