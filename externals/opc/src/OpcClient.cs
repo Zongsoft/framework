@@ -50,6 +50,7 @@ public class OpcClient : IDisposable
 	#region 成员字段
 	private Session _session;
 	private ApplicationConfiguration _configuration;
+	private Configuration.OpcConnectionSettings _settings;
 	private ConcurrentDictionary<string, MonitoredItem> _monitoredItems;
 	#endregion
 
@@ -84,7 +85,9 @@ public class OpcClient : IDisposable
 
 	#region 公共属性
 	public string Name { get; }
+	public Configuration.OpcConnectionSettings Settings => _settings;
 	public bool IsConnected => _session?.Connected ?? false;
+	public IEnumerable<Subscription> Subscriptions => _session?.Subscriptions ?? [];
 	#endregion
 
 	#region 公共方法
@@ -121,6 +124,7 @@ public class OpcClient : IDisposable
 			["zh", "en"],
 			cancellation);
 
+		_settings = settings;
 		_session.KeepAliveInterval = (int)settings.Heartbeat.TotalMilliseconds;
 		_session.DeleteSubscriptionsOnClose = true;
 
@@ -313,7 +317,6 @@ public class OpcClient : IDisposable
 			{
 				DisplayName = label,
 				Description = description,
-				Value = new Variant(123),
 				DataType = Utility.GetDataType(type),
 				ValueRank = ValueRanks.Scalar,
 				ArrayDimensions = new UInt32Collection(),
@@ -402,17 +405,20 @@ public class OpcClient : IDisposable
 		return false;
 	}
 
-	public async ValueTask UnsubscribeAsync(CancellationToken cancellation = default)
+	public async ValueTask<int> UnsubscribeAsync(CancellationToken cancellation = default)
 	{
 		var session = _session;
 		if(session == null || session.SubscriptionCount == 0)
-			return;
+			return 0;
+
+		int count = 0;
 
 		foreach(var subscription in session.Subscriptions)
 		{
 			foreach(var item in subscription.MonitoredItems)
 			{
 				item.Notification -= this.MonitoredItem_Notification;
+				count++;
 			}
 
 			subscription.RemoveItems(subscription.MonitoredItems);
@@ -425,6 +431,7 @@ public class OpcClient : IDisposable
 		}
 
 		await session.RemoveSubscriptionsAsync(session.Subscriptions.ToArray(), cancellation);
+		return count;
 	}
 
 	public async ValueTask<int> UnsubscribeAsync(IEnumerable<string> identifiers, CancellationToken cancellation = default)
@@ -465,15 +472,6 @@ public class OpcClient : IDisposable
 
 		return count;
 	}
-
-	public async ValueTask WriteAsync(string key, object value, CancellationToken cancellation = default)
-	{
-		if(string.IsNullOrEmpty(key))
-			throw new ArgumentNullException(nameof(key));
-
-		var response1 = await this.CreateFolderAsync("SubFolderX", null, cancellation);
-		var response2 = await this.CreateVariableAsync("MyFolder/VariableX", typeof(int), "My Variable X", "这是一个动态变量。", cancellation);
-	}
 	#endregion
 
 	#region 事件处理
@@ -505,8 +503,10 @@ public class OpcClient : IDisposable
 
 	protected virtual void Dispose(bool disposing)
 	{
-		if(!_session.Disposed)
-			_session.Dispose();
+		var session = _session;
+
+		if(session != null && !session.Disposed)
+			session.Dispose();
 
 		_configuration = null;
 	}
