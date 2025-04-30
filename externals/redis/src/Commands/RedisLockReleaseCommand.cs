@@ -28,68 +28,74 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Distributing;
 
-namespace Zongsoft.Externals.Redis.Commands
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisLockReleaseCommand.Name")]
+[Description("Text.RedisLockReleaseCommand.Description")]
+public class RedisLockReleaseCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.RedisLockReleaseCommand.Name")]
-	[Description("Text.RedisLockReleaseCommand.Description")]
-	public class RedisLockReleaseCommand : CommandBase<CommandContext>
+	#region 构造函数
+	public RedisLockReleaseCommand() : base("Release") { }
+	public RedisLockReleaseCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public RedisLockReleaseCommand() : base("Release") { }
-		public RedisLockReleaseCommand(string name) : base(name) { }
-		#endregion
+		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
+		if(context.Parameter is IDistributedLock locker)
 		{
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-
-			if(context.Parameter is IDistributedLock locker)
-			{
-				locker.Dispose();
-			}
-			else if(context.Parameter is IEnumerable<IDistributedLock> lockers)
-			{
-				foreach(var entry in lockers)
-					entry.DisposeAsync().AsTask().Wait();
-			}
-
-			if(context.Expression.Arguments.Length != 2)
-				return false;
-
-			return Print(context.Output, redis.ReleaseAsync(context.Expression.Arguments[0], GetToken(redis.Tokenizer.Name, context.Expression.Arguments[1])).AsTask().GetAwaiter().GetResult());
+			locker.Dispose();
 		}
-		#endregion
-
-		#region 私有方法
-		private static bool Print(ICommandOutlet output, bool result)
+		else if(context.Parameter is IEnumerable<IDistributedLock> lockers)
 		{
-			if(result)
-				output.WriteLine(CommandOutletColor.Green, "Succeed.");
-			else
-				output.WriteLine(CommandOutletColor.DarkRed, "Faild.");
-
-			return result;
+			foreach(var entry in lockers)
+				await entry.DisposeAsync();
 		}
 
-		private static byte[] GetToken(string name, string text)
-		{
-			if(string.IsNullOrEmpty(name) || string.IsNullOrEmpty(text))
-				return null;
+		if(context.Expression.Arguments.Length != 2)
+			return false;
 
-			return name.ToLowerInvariant() switch
-			{
-				"guid" => Guid.TryParse(text, out var guid) ? guid.ToByteArray() : null,
-				"random" => ulong.TryParse(text, out var number) ? BitConverter.GetBytes(number) : null,
-				_ => null,
-			};
-		}
-		#endregion
+		var result = await redis.ReleaseAsync(
+			context.Expression.Arguments[0],
+			GetToken(redis.Tokenizer.Name, context.Expression.Arguments[1]),
+			cancellation);
+
+		return Print(context.Output, result);
 	}
+	#endregion
+
+	#region 私有方法
+	private static bool Print(ICommandOutlet output, bool result)
+	{
+		if(result)
+			output.WriteLine(CommandOutletColor.Green, "Succeed.");
+		else
+			output.WriteLine(CommandOutletColor.DarkRed, "Faild.");
+
+		return result;
+	}
+
+	private static byte[] GetToken(string name, string text)
+	{
+		if(string.IsNullOrEmpty(name) || string.IsNullOrEmpty(text))
+			return null;
+
+		return name.ToLowerInvariant() switch
+		{
+			"guid" => Guid.TryParse(text, out var guid) ? guid.ToByteArray() : null,
+			"random" => ulong.TryParse(text, out var number) ? BitConverter.GetBytes(number) : null,
+			_ => null,
+		};
+	}
+	#endregion
 }

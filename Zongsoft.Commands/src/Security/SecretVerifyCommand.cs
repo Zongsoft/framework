@@ -28,61 +28,54 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.Security.Commands
+namespace Zongsoft.Security.Commands;
+
+/// <summary>
+/// 提供验证码校验的命令类。
+/// </summary>
+/// <example>
+///		<code>secret.verify -name:'user.email:100' 123456</code>
+/// </example>
+[DisplayName("Text.SecretVerifyCommand.Name")]
+[Description("Text.SecretVerifyCommand.Description")]
+[CommandOption(KEY_NAME_OPTION, typeof(string), null, true, "Text.SecretVerifyCommand.Options.Name")]
+public class SecretVerifyCommand : CommandBase<CommandContext>
 {
-	/// <summary>
-	/// 提供验证码校验的命令类。
-	/// </summary>
-	/// <example>
-	///		<code>secret.verify -name:'user.email:100' 123456</code>
-	/// </example>
-	[DisplayName("Text.SecretVerifyCommand.Name")]
-	[Description("Text.SecretVerifyCommand.Description")]
-	[CommandOption(KEY_NAME_OPTION, typeof(string), null, true, "Text.SecretVerifyCommand.Options.Name")]
-	public class SecretVerifyCommand : CommandBase<CommandContext>
+	#region 常量定义
+	private const string KEY_NAME_OPTION = "name";
+	#endregion
+
+	#region 构造函数
+	public SecretVerifyCommand() : base("Verify") { }
+	public SecretVerifyCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 常量定义
-		private const string KEY_NAME_OPTION = "name";
-		#endregion
+		if(context.Expression.Arguments.Length == 0)
+			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
-		#region 构造函数
-		public SecretVerifyCommand() : base("Verify")
+		//从环境中查找秘密提供程序
+		var secretor = (context.CommandNode.Find<SecretCommand>(true)?.Secretor) ?? throw new CommandException("Missing required secretor for the command.");
+
+		(var succeed, var extra) = await secretor.VerifyAsync(context.Expression.Options.GetValue<string>(KEY_NAME_OPTION), context.Expression.Arguments[0], cancellation);
+
+		if(succeed)
 		{
+			if(extra != null && extra.Length > 0)
+				context.Output.WriteLine(extra);
+
+			return true;
 		}
 
-		public SecretVerifyCommand(string name) : base(name)
-		{
-		}
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			if(context.Expression.Arguments.Length == 0)
-				throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
-
-			//从环境中查找秘密提供程序
-			var secretor = context.CommandNode.Find<SecretCommand>(true)?.Secretor;
-
-			if(secretor == null)
-				throw new CommandException("Missing required secretor for the command.");
-
-			(var succeed, var extra) = secretor.VerifyAsync(context.Expression.Options.GetValue<string>(KEY_NAME_OPTION), context.Expression.Arguments[0]).GetAwaiter().GetResult();
-
-			if(succeed)
-			{
-				if(extra != null && extra.Length > 0)
-					context.Output.WriteLine(extra);
-
-				return true;
-			}
-
-			return false;
-		}
-		#endregion
+		return false;
 	}
+	#endregion
 }

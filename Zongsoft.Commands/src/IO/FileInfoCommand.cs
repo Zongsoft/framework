@@ -29,47 +29,43 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Components;
 using Zongsoft.Serialization;
 
-namespace Zongsoft.IO.Commands
+namespace Zongsoft.IO.Commands;
+
+public class FileInfoCommand : CommandBase<CommandContext>
 {
-	public class FileInfoCommand : CommandBase<CommandContext>
+	#region 构造函数
+	public FileInfoCommand() : base("Info") { }
+	public FileInfoCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public FileInfoCommand() : base("Info")
+		if(context.Expression.Arguments.Length == 0)
+			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+
+		async ValueTask<FileInfo> GetInfoAsync(string path)
 		{
-		}
+			var info = await FileSystem.File.GetInfoAsync(path);
 
-		public FileInfoCommand(string name) : base(name)
-		{
-		}
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			if(context.Expression.Arguments.Length == 0)
-				throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
-
-			FileInfo GetInfo(string path)
-			{
-				var info = FileSystem.File.GetInfo(path);
-
-				if(info == null)
-					context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.Text_FileNotExisted, path));
-				else
-					context.Output.WriteLine(Serializer.Json.Serialize(info, new TextSerializationOptions() { Indented = true }));
-
-				return info;
-			}
-
-			if(context.Expression.Arguments.Length == 1)
-				return GetInfo(context.Expression.Arguments[0]);
+			if(info == null)
+				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.Text_FileNotExisted, path));
 			else
-				return context.Expression.Arguments.Select(path => GetInfo(path)).ToArray();
+				context.Output.WriteLine(Serializer.Json.Serialize(info, new TextSerializationOptions() { Indented = true }));
+
+			return info;
 		}
-		#endregion
+
+		if(context.Expression.Arguments.Length == 1)
+			return await GetInfoAsync(context.Expression.Arguments[0]);
+		else
+			return context.Expression.Arguments.Select(async path => await GetInfoAsync(path)).ToArray();
 	}
+	#endregion
 }

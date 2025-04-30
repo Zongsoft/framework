@@ -244,7 +244,7 @@ namespace Zongsoft.Externals.Redis
 			//确保连接成功
 			this.Connect();
 
-			var entryKey = GetKey(key);
+			var entryKey = this.GetKey(key);
 			entryType = _database.KeyType(entryKey) switch
 			{
 				RedisType.String => RedisEntryType.String,
@@ -277,7 +277,7 @@ namespace Zongsoft.Externals.Redis
 			//确保连接成功
 			this.Connect();
 
-			var entryKey = GetKey(key);
+			var entryKey = this.GetKey(key);
 			expiry = _database.KeyTimeToLive(entryKey);
 			entryType = _database.KeyType(entryKey) switch
 			{
@@ -302,6 +302,41 @@ namespace Zongsoft.Externals.Redis
 			};
 		}
 
+		public async Task<(object value, RedisEntryType entryType, TimeSpan? expiry)> GetEntryAsync(string key, CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(key))
+				throw new ArgumentNullException(nameof(key));
+
+			//确保连接成功
+			await this.ConnectAsync(cancellation);
+
+			var entryKey = this.GetKey(key);
+			var expiry = await _database.KeyTimeToLiveAsync(entryKey);
+			var entryType = await _database.KeyTypeAsync(entryKey) switch
+			{
+				RedisType.String => RedisEntryType.String,
+				RedisType.Hash => RedisEntryType.Dictionary,
+				RedisType.List => RedisEntryType.List,
+				RedisType.Set => RedisEntryType.Set,
+				RedisType.SortedSet => RedisEntryType.SortedSet,
+				RedisType.Stream => RedisEntryType.Stream,
+				_ => RedisEntryType.None,
+			};
+
+			object value = entryType switch
+			{
+				RedisEntryType.String => await _database.StringGetAsync(entryKey),
+				RedisEntryType.Dictionary => new RedisDictionary(_database, entryKey),
+				RedisEntryType.List => throw new NotSupportedException(),
+				RedisEntryType.Set => new RedisHashset(_database, entryKey),
+				RedisEntryType.SortedSet => throw new NotSupportedException(),
+				RedisEntryType.Stream => new Messaging.RedisQueue(entryKey, _database),
+				_ => null,
+			};
+
+			return (value, entryType, expiry);
+		}
+
 		public bool SetEntry(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always)
 		{
 			if(string.IsNullOrEmpty(key))
@@ -312,7 +347,7 @@ namespace Zongsoft.Externals.Redis
 			if(value == null)
 				return _database.KeyDelete(key);
 
-			key = GetKey(key);
+			key = this.GetKey(key);
 
 			if(value is MemoryStream memory)
 				return _database.StringSet(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
@@ -392,7 +427,7 @@ namespace Zongsoft.Externals.Redis
 			if(value == null)
 				return await _database.KeyDeleteAsync(key);
 
-			key = GetKey(key);
+			key = this.GetKey(key);
 
 			if(value is MemoryStream memory)
 				return await _database.StringSetAsync(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);

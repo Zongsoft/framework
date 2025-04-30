@@ -28,48 +28,49 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
-namespace Zongsoft.Externals.Redis.Commands
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisCommand.Name")]
+[Description("Text.RedisCommand.Description")]
+[CommandOption("name")]
+public class RedisCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.RedisCommand.Name")]
-	[Description("Text.RedisCommand.Description")]
-	[CommandOption("name")]
-	public class RedisCommand : CommandBase<CommandContext>
+	#region 成员字段
+	private RedisService _redis;
+	#endregion
+
+	#region 构造函数
+	public RedisCommand() : base("Redis") { }
+	#endregion
+
+	#region 公共属性
+	public RedisService Redis
 	{
-		#region 成员字段
-		private RedisService _redis;
-		#endregion
-
-		#region 构造函数
-		public RedisCommand() : base("Redis") { }
-		#endregion
-
-		#region 公共属性
-		public RedisService Redis
-		{
-			get => _redis;
-			set => _redis = value ?? throw new ArgumentNullException();
-		}
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			var name = context.Expression.Options.GetValue<string>("name");
-
-			if(!string.IsNullOrEmpty(name))
-				_redis = RedisServiceProvider.GetRedis(name) ?? throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
-
-			if(_redis == null)
-				context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoRedis);
-			else
-				context.Output.WriteLine(CommandOutletColor.Green, _redis.Settings);
-
-			return _redis;
-		}
-		#endregion
+		get => _redis;
+		set => _redis = value ?? throw new ArgumentNullException();
 	}
+	#endregion
+
+	#region 重写方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		var name = context.Expression.Options.GetValue<string>("name");
+
+		if(!string.IsNullOrEmpty(name))
+			_redis = RedisServiceProvider.GetRedis(name) ?? throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
+
+		if(_redis == null)
+			context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoRedis);
+		else
+			context.Output.WriteLine(CommandOutletColor.Green, _redis.Settings);
+
+		return ValueTask.FromResult<object>(_redis);
+	}
+	#endregion
 }

@@ -28,28 +28,29 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
-namespace Zongsoft.Externals.Redis.Commands
-{
-	[DisplayName("Text.RedisCountCommand.Name")]
-	[Description("Text.RedisCountCommand.Description")]
-	public class RedisCountCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
-	{
-		#region 构造函数
-		public RedisCountCommand() : base("Count")
-		{
-		}
-		#endregion
+using Zongsoft.Components;
 
-		#region 执行方法
-		protected override object OnExecute(Services.CommandContext context)
-		{
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-			var count = redis.GetCount();
-			context.Output.WriteLine(count.ToString());
-			return count;
-		}
-		#endregion
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisCountCommand.Name")]
+[Description("Text.RedisCountCommand.Description")]
+public class RedisCountCommand : CommandBase<CommandContext>
+{
+	#region 构造函数
+	public RedisCountCommand() : base("Count") { }
+	#endregion
+
+	#region 执行方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var count = await redis.GetCountAsync(cancellation);
+		context.Output.WriteLine(count.ToString());
+		return count;
 	}
+	#endregion
 }

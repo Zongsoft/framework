@@ -31,76 +31,75 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
-namespace Zongsoft.Plugins.Commands
+namespace Zongsoft.Plugins.Commands;
+
+internal static class Utility
 {
-	internal static class Utility
+	public static void PrintPluginNode(ICommandOutlet output, PluginTreeNode node, ObtainMode obtainMode, int maxDepth)
 	{
-		public static void PrintPluginNode(ICommandOutlet output, PluginTreeNode node, ObtainMode obtainMode, int maxDepth)
+		if(node == null)
+			return;
+
+		output.Write(CommandOutletColor.DarkYellow, "[{0}]", node.NodeType);
+		output.WriteLine(node.FullPath);
+		output.Write(CommandOutletColor.DarkYellow, "Plugin File: ");
+
+		if(node.Plugin == null)
+			output.WriteLine(CommandOutletColor.Red, "N/A");
+		else
+			output.WriteLine(node.Plugin.FilePath);
+
+		output.Write(CommandOutletColor.DarkYellow, "Node Properties: ");
+		output.WriteLine(node.Properties.Count);
+
+		if(node.Properties.Count > 0)
 		{
-			if(node == null)
-				return;
+			output.WriteLine(CommandOutletColor.Gray, "{");
 
-			output.Write(CommandOutletColor.DarkYellow, "[{0}]", node.NodeType);
-			output.WriteLine(node.FullPath);
-			output.Write(CommandOutletColor.DarkYellow, "Plugin File: ");
-
-			if(node.Plugin == null)
-				output.WriteLine(CommandOutletColor.Red, "N/A");
-			else
-				output.WriteLine(node.Plugin.FilePath);
-
-			output.Write(CommandOutletColor.DarkYellow, "Node Properties: ");
-			output.WriteLine(node.Properties.Count);
-
-			if(node.Properties.Count > 0)
+			foreach(PluginExtendedProperty property in node.Properties)
 			{
-				output.WriteLine(CommandOutletColor.Gray, "{");
+				output.Write(CommandOutletColor.DarkYellow, "\t" + property.Name);
+				output.Write(" = ");
+				output.Write(property.RawValue);
 
-				foreach(PluginExtendedProperty property in node.Properties)
+				if(property.Value != null)
 				{
-					output.Write(CommandOutletColor.DarkYellow, "\t" + property.Name);
-					output.Write(" = ");
-					output.Write(property.RawValue);
-
-					if(property.Value != null)
-					{
-						output.Write(CommandOutletColor.DarkGray, " [");
-						output.Write(CommandOutletColor.Blue, property.Value.GetType().FullName);
-						output.Write(CommandOutletColor.DarkGray, "]");
-					}
-
-					output.WriteLine();
+					output.Write(CommandOutletColor.DarkGray, " [");
+					output.Write(CommandOutletColor.Blue, property.Value.GetType().FullName);
+					output.Write(CommandOutletColor.DarkGray, "]");
 				}
 
-				output.WriteLine(CommandOutletColor.Gray, "}");
-			}
-
-			output.WriteLine(CommandOutletColor.DarkYellow, "Children: {0}", node.Children.Count);
-			if(node.Children.Count > 0)
-			{
 				output.WriteLine();
-
-				foreach(var child in node.Children)
-				{
-					output.WriteLine(child);
-				}
 			}
 
-			object value = node.UnwrapValue(obtainMode);
-			if(value != null)
+			output.WriteLine(CommandOutletColor.Gray, "}");
+		}
+
+		output.WriteLine(CommandOutletColor.DarkYellow, "Children: {0}", node.Children.Count);
+		if(node.Children.Count > 0)
+		{
+			output.WriteLine();
+
+			foreach(var child in node.Children)
 			{
-				var json = JsonSerializer.Serialize(value, new JsonSerializerOptions()
-				{
-					MaxDepth = maxDepth,
-					WriteIndented = true,
-					ReferenceHandler = ReferenceHandler.Preserve,
-				});
-
-				output.WriteLine();
-				output.WriteLine(json);
+				output.WriteLine(child);
 			}
+		}
+
+		object value = node.UnwrapValue(obtainMode);
+		if(value != null)
+		{
+			var json = JsonSerializer.Serialize(value, new JsonSerializerOptions()
+			{
+				MaxDepth = maxDepth,
+				WriteIndented = true,
+				ReferenceHandler = ReferenceHandler.Preserve,
+			});
+
+			output.WriteLine();
+			output.WriteLine(json);
 		}
 	}
 }

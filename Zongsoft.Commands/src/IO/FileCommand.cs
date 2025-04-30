@@ -30,73 +30,66 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.IO.Commands
+namespace Zongsoft.IO.Commands;
+
+[CommandOption(KEY_MODE_OPTION, typeof(FileMode), FileMode.Open, "Text.FileCommand.Options.Mode")]
+[CommandOption(KEY_SHARE_OPTION, typeof(FileShare), FileShare.Read, "Text.FileCommand.Options.Share")]
+[CommandOption(KEY_ACCESS_OPTION, typeof(FileAccess), FileAccess.Read, "Text.FileCommand.Options.Access")]
+[CommandOption(KEY_ENCODING_OPTION, typeof(Encoding), null, "Text.FileCommand.Options.Encoding")]
+public class FileCommand : CommandBase<CommandContext>, ICommandCompletion
 {
-	[CommandOption(KEY_MODE_OPTION, typeof(FileMode), FileMode.Open, "Text.FileCommand.Options.Mode")]
-	[CommandOption(KEY_SHARE_OPTION, typeof(FileShare), FileShare.Read, "Text.FileCommand.Options.Share")]
-	[CommandOption(KEY_ACCESS_OPTION, typeof(FileAccess), FileAccess.Read, "Text.FileCommand.Options.Access")]
-	[CommandOption(KEY_ENCODING_OPTION, typeof(Encoding), null, "Text.FileCommand.Options.Encoding")]
-	public class FileCommand : CommandBase<CommandContext>, ICommandCompletion
+	#region 常量定义
+	private const string KEY_MODE_OPTION = "mode";
+	private const string KEY_SHARE_OPTION = "share";
+	private const string KEY_ACCESS_OPTION = "access";
+	private const string KEY_ENCODING_OPTION = "encoding";
+	#endregion
+
+	#region 构造函数
+	public FileCommand() : base("File") { }
+	public FileCommand(string name) : base(name) { }
+	#endregion
+
+	#region 执行方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 常量定义
-		private const string KEY_MODE_OPTION = "mode";
-		private const string KEY_SHARE_OPTION = "share";
-		private const string KEY_ACCESS_OPTION = "access";
-		private const string KEY_ENCODING_OPTION = "encoding";
-		#endregion
+		bool isSaving = context.Expression.Index > 0 && context.Expression.Next == null;
 
-		#region 构造函数
-		public FileCommand() : base("File")
-		{
-		}
+		if(!context.Expression.Options.TryGetValue<FileMode>(KEY_MODE_OPTION, out var mode))
+			mode = isSaving ? FileMode.Create : FileMode.Open;
 
-		public FileCommand(string name) : base(name)
-		{
-		}
-		#endregion
+		if(!context.Expression.Options.TryGetValue<FileAccess>(KEY_ACCESS_OPTION, out var access))
+			access = isSaving ? FileAccess.ReadWrite : FileAccess.Read;
 
-		#region 执行方法
-		protected override object OnExecute(CommandContext context)
-		{
-			bool isSaving = context.Expression.Index > 0 && context.Expression.Next == null;
+		//打开一个或多个文件流
+		var result = FileUtility.OpenFile(context, mode, access, context.Expression.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
 
-			if(!context.Expression.Options.TryGetValue<FileMode>(KEY_MODE_OPTION, out var mode))
-				mode = isSaving ? FileMode.Create : FileMode.Open;
+		//如果是写入操作则执行保存方法
+		if(isSaving && result != null)
+			FileUtility.Save(result, context.Parameter, context.Expression.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
 
-			if(!context.Expression.Options.TryGetValue<FileAccess>(KEY_ACCESS_OPTION, out var access))
-				access = isSaving ? FileAccess.ReadWrite : FileAccess.Read;
-
-			//打开一个或多个文件流
-			var result = FileUtility.OpenFile(context, mode, access, context.Expression.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
-
-			//如果是写入操作则执行保存方法
-			if(isSaving && result != null)
-				FileUtility.Save(result, context.Parameter, context.Expression.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
-
-			return result;
-		}
-		#endregion
-
-		#region 执行完成
-		public void OnCompleted(CommandCompletionContext context)
-		{
-			if(context.Result is IEnumerable<Stream> streams)
-			{
-				foreach(var stream in streams)
-				{
-					if(stream != null)
-						stream.Close();
-				}
-			}
-			else if(context.Result is Stream stream)
-			{
-				stream.Close();
-			}
-		}
-		#endregion
+		return ValueTask.FromResult(result);
 	}
+	#endregion
+
+	#region 执行完成
+	public void OnCompleted(CommandCompletionContext context)
+	{
+		if(context.Result is IEnumerable<Stream> streams)
+		{
+			foreach(var stream in streams)
+				stream?.Close();
+		}
+		else if(context.Result is Stream stream)
+		{
+			stream.Close();
+		}
+	}
+	#endregion
 }

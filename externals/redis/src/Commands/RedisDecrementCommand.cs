@@ -28,46 +28,47 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
-namespace Zongsoft.Externals.Redis.Commands
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisDecreaseCommand.Name")]
+[Description("Text.RedisDecreaseCommand.Description")]
+[CommandOption("seed", Type = typeof(int), DefaultValue = 0, Description = "Text.RedisDecreaseCommand.Options.Seed")]
+[CommandOption("interval", Type = typeof(int), DefaultValue = 1, Description = "Text.RedisDecreaseCommand.Options.Interval")]
+[CommandOption("expiry", Type = typeof(TimeSpan), Description = "Text.RedisDecreaseCommand.Options.Expiry")]
+public class RedisDecrementCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.RedisDecreaseCommand.Name")]
-	[Description("Text.RedisDecreaseCommand.Description")]
-	[CommandOption("seed", Type = typeof(int), DefaultValue = 0, Description = "Text.RedisDecreaseCommand.Options.Seed")]
-	[CommandOption("interval", Type = typeof(int), DefaultValue = 1, Description = "Text.RedisDecreaseCommand.Options.Interval")]
-	[CommandOption("expiry", Type = typeof(TimeSpan), Description = "Text.RedisDecreaseCommand.Options.Expiry")]
-	public class RedisDecrementCommand : CommandBase<CommandContext>
+	#region 构造函数
+	public RedisDecrementCommand() : base("Decrease") { }
+	#endregion
+
+	#region 执行方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public RedisDecrementCommand() : base("Decrease") { }
-		#endregion
+		if(context.Expression.Arguments.Length < 1)
+			throw new CommandException("Missing arguments.");
 
-		#region 执行方法
-		protected override object OnExecute(CommandContext context)
+		int seed = context.Expression.Options.GetValue<int>("seed");
+		var interval = context.Expression.Options.GetValue<int>("interval");
+		var expiry = context.Expression.Options.GetValue<TimeSpan>("expiry");
+		var result = new long[context.Expression.Arguments.Length];
+
+		for(int i = 0; i < context.Expression.Arguments.Length; i++)
 		{
-			if(context.Expression.Arguments.Length < 1)
-				throw new CommandException("Missing arguments.");
-
-			int seed = context.Expression.Options.GetValue<int>("seed");
-			var interval = context.Expression.Options.GetValue<int>("interval");
-			var expiry = context.Expression.Options.GetValue<TimeSpan>("expiry");
-			var result = new long[context.Expression.Arguments.Length];
-
-			for(int i = 0; i < context.Expression.Arguments.Length; i++)
-			{
-				var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-				result[i] = redis.Decrease(context.Expression.Arguments[i], interval, seed, expiry);
-				context.Output.WriteLine(result[i].ToString());
-			}
-
-			if(result.Length == 1)
-				return result[0];
-			else
-				return result;
+			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+			result[i] = await redis.DecreaseAsync(context.Expression.Arguments[i], interval, seed, expiry, cancellation);
+			context.Output.WriteLine(result[i].ToString());
 		}
-		#endregion
+
+		if(result.Length == 1)
+			return result[0];
+		else
+			return result;
 	}
+	#endregion
 }

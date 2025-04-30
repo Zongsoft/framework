@@ -29,121 +29,122 @@
 
 using System;
 using System.IO;
-using System.ComponentModel;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using System.ComponentModel;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.Commands
+namespace Zongsoft.Commands;
+
+[DisplayName("Text.AssemblyCommand.Name")]
+[Description("Text.AssemblyCommand.Description")]
+[CommandOption("sort", Type = typeof(SortMode), DefaultValue=SortMode.None, Description = "Text.SortMode")]
+public class AssemblyCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.AssemblyCommand.Name")]
-	[Description("Text.AssemblyCommand.Description")]
-	[CommandOption("sort", Type = typeof(SortMode), DefaultValue=SortMode.None, Description = "Text.SortMode")]
-	public class AssemblyCommand : CommandBase<CommandContext>
+	#region 成员变量
+	private Assembly[] _assemblies;
+	#endregion
+
+	#region 构造函数
+	public AssemblyCommand() : base("Assembly") { }
+	public AssemblyCommand(string name) : base(name) { }
+	#endregion
+
+	#region 公共属性
+	public Assembly[] Assemblies
 	{
-		#region 成员变量
-		private Assembly[] _assemblies;
-		#endregion
-
-		#region 构造函数
-		public AssemblyCommand() : base("Assembly") { }
-		public AssemblyCommand(string name) : base(name) { }
-		#endregion
-
-		#region 公共属性
-		public Assembly[] Assemblies
+		get
 		{
-			get
-			{
-				if(_assemblies == null || _assemblies.Length < 1)
-					_assemblies = this.GetAssemblies();
+			if(_assemblies == null || _assemblies.Length < 1)
+				_assemblies = this.GetAssemblies();
 
-				return _assemblies;
-			}
+			return _assemblies;
 		}
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			//设置遍历的程序集列表
-			Assembly[] assemblies = this.Assemblies;
-
-			switch(context.Expression.Options.GetValue<SortMode>("sort"))
-			{
-				case SortMode.Asc:
-					assemblies = this.Assemblies.OrderBy(p => p.FullName).ToArray();
-					break;
-				case SortMode.Desc:
-					assemblies = this.Assemblies.OrderByDescending(p => p.FullName).ToArray();
-					break;
-			}
-
-			for(int i = 0; i < assemblies.Length; i++)
-			{
-				//显示程序集序号
-				context.Output.Write(CommandOutletColor.DarkGray, "[");
-				context.Output.Write(CommandOutletColor.Magenta, i + 1);
-				context.Output.Write(CommandOutletColor.DarkGray, "] ");
-
-				//显示当前程序集的详细信息
-				this.PrintAssemblyInfo(context, assemblies[i]);
-
-				if(i < this.Assemblies.Length - 1)
-					context.Output.WriteLine();
-			}
-
-			return assemblies;
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual Assembly[] GetAssemblies()
-		{
-			return AppDomain.CurrentDomain.GetAssemblies();
-		}
-
-		protected virtual void PrintAssemblyInfo(CommandContext context, Assembly assembly)
-		{
-			if(assembly == null)
-				return;
-
-			if(assembly.IsDynamic)
-			{
-				context.Output.Write("{0}", assembly.FullName);
-				context.Output.WriteLine(CommandOutletColor.DarkMagenta, "(Dynamic)");
-
-				int index = 0;
-
-				foreach(var type in assembly.DefinedTypes)
-				{
-					context.Output.Write(CommandOutletColor.DarkCyan, $"#{++index:00} ");
-					context.Output.Write(CommandOutletColor.DarkYellow, type.FullName);
-					context.Output.WriteLine(CommandOutletColor.DarkGray, $" [{type.Attributes}]");
-				}
-			}
-			else
-			{
-				context.Output.WriteLine("{0}", assembly.FullName);
-				context.Output.Write(CommandOutletColor.DarkYellow, "{0}", assembly.Location);
-				context.Output.WriteLine(CommandOutletColor.DarkGray, " [{0}]", File.GetLastWriteTime(assembly.Location));
-			}
-		}
-		#endregion
-
-		#region 枚举定义
-		public enum SortMode
-		{
-			[Description("Text.SortMode.None")]
-			None,
-
-			[Description("Text.SortMode.Asc")]
-			Asc,
-
-			[Description("Text.SortMode.Desc")]
-			Desc,
-		}
-		#endregion
 	}
+	#endregion
+
+	#region 重写方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		//设置遍历的程序集列表
+		Assembly[] assemblies = this.Assemblies;
+
+		switch(context.Expression.Options.GetValue<SortMode>("sort"))
+		{
+			case SortMode.Asc:
+				assemblies = this.Assemblies.OrderBy(p => p.FullName).ToArray();
+				break;
+			case SortMode.Desc:
+				assemblies = this.Assemblies.OrderByDescending(p => p.FullName).ToArray();
+				break;
+		}
+
+		for(int i = 0; i < assemblies.Length; i++)
+		{
+			//显示程序集序号
+			context.Output.Write(CommandOutletColor.DarkGray, "[");
+			context.Output.Write(CommandOutletColor.Magenta, i + 1);
+			context.Output.Write(CommandOutletColor.DarkGray, "] ");
+
+			//显示当前程序集的详细信息
+			this.PrintAssemblyInfo(context, assemblies[i]);
+
+			if(i < this.Assemblies.Length - 1)
+				context.Output.WriteLine();
+		}
+
+		return ValueTask.FromResult<object>(assemblies);
+	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual Assembly[] GetAssemblies()
+	{
+		return AppDomain.CurrentDomain.GetAssemblies();
+	}
+
+	protected virtual void PrintAssemblyInfo(CommandContext context, Assembly assembly)
+	{
+		if(assembly == null)
+			return;
+
+		if(assembly.IsDynamic)
+		{
+			context.Output.Write("{0}", assembly.FullName);
+			context.Output.WriteLine(CommandOutletColor.DarkMagenta, "(Dynamic)");
+
+			int index = 0;
+
+			foreach(var type in assembly.DefinedTypes)
+			{
+				context.Output.Write(CommandOutletColor.DarkCyan, $"#{++index:00} ");
+				context.Output.Write(CommandOutletColor.DarkYellow, type.FullName);
+				context.Output.WriteLine(CommandOutletColor.DarkGray, $" [{type.Attributes}]");
+			}
+		}
+		else
+		{
+			context.Output.WriteLine("{0}", assembly.FullName);
+			context.Output.Write(CommandOutletColor.DarkYellow, "{0}", assembly.Location);
+			context.Output.WriteLine(CommandOutletColor.DarkGray, " [{0}]", File.GetLastWriteTime(assembly.Location));
+		}
+	}
+	#endregion
+
+	#region 枚举定义
+	public enum SortMode
+	{
+		[Description("Text.SortMode.None")]
+		None,
+
+		[Description("Text.SortMode.Asc")]
+		Asc,
+
+		[Description("Text.SortMode.Desc")]
+		Desc,
+	}
+	#endregion
 }

@@ -29,9 +29,11 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Plugins.Commands
 {
@@ -44,10 +46,7 @@ namespace Zongsoft.Plugins.Commands
 		#endregion
 
 		#region 构造函数
-		public ListCommand(PluginTree pluginTree) : this("List", pluginTree)
-		{
-		}
-
+		public ListCommand(PluginTree pluginTree) : this("List", pluginTree) { }
 		public ListCommand(string name, PluginTree pluginTree) : base(name)
 		{
 			_pluginTree = pluginTree ?? throw new ArgumentNullException(nameof(pluginTree));
@@ -55,14 +54,14 @@ namespace Zongsoft.Plugins.Commands
 		#endregion
 
 		#region 重写方法
-		protected override object OnExecute(CommandContext context)
+		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			int index = 0;
 
 			foreach(var plugin in _pluginTree.Plugins)
 				WritePlugin(context.Output, plugin, 0, index++);
 
-			return _pluginTree.Plugins;
+			return ValueTask.FromResult<object>(_pluginTree.Plugins);
 		}
 		#endregion
 

@@ -28,82 +28,83 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Distributing;
 
-namespace Zongsoft.Externals.Redis.Commands
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisLockAcquireCommand.Name")]
+[Description("Text.RedisLockAcquireCommand.Description")]
+[CommandOption(COMMAND_EXPIRY_OPTION, typeof(string), "60s", false, "")]
+public class RedisLockAcquireCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.RedisLockAcquireCommand.Name")]
-	[Description("Text.RedisLockAcquireCommand.Description")]
-	[CommandOption(COMMAND_EXPIRY_OPTION, typeof(string), "60s", false, "")]
-	public class RedisLockAcquireCommand : CommandBase<CommandContext>
+	#region 常量定义
+	private const string COMMAND_EXPIRY_OPTION = "expiry";
+	#endregion
+
+	#region 构造函数
+	public RedisLockAcquireCommand() : base("Acquire") { }
+	public RedisLockAcquireCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 常量定义
-		private const string COMMAND_EXPIRY_OPTION = "expiry";
-		#endregion
+		if(context.Expression.Arguments.Length == 0)
+			throw new CommandException();
 
-		#region 构造函数
-		public RedisLockAcquireCommand() : base("Acquire") { }
-		public RedisLockAcquireCommand(string name) : base(name) { }
-		#endregion
+		var expiry = TimeSpan.FromMinutes(1);
 
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
+		if(context.Expression.Options.TryGetValue<string>(COMMAND_EXPIRY_OPTION, out var value))
 		{
-			if(context.Expression.Arguments.Length == 0)
-				throw new CommandException();
-
-			var expiry = TimeSpan.FromMinutes(1);
-
-			if(context.Expression.Options.TryGetValue<string>(COMMAND_EXPIRY_OPTION, out var value))
-			{
-				if(!Zongsoft.Common.TimeSpanUtility.TryParse(value, out expiry))
-					expiry = TimeSpan.FromMinutes(1);
-			}
-
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-			var lockers = new List<IDistributedLock>(context.Expression.Arguments.Length);
-
-			for(int i = 0; i < context.Expression.Arguments.Length; i++)
-			{
-				var key = context.Expression.Arguments[i];
-				var locker = redis.AcquireAsync(key, expiry).AsTask().GetAwaiter().GetResult();
-				Print(context.Output, i + 1, key, locker, redis.Tokenizer);
-
-				if(locker != null)
-					lockers.Add(locker);
-			}
-
-			return lockers;
-		}
-		#endregion
-
-		#region 私有方法
-		private static void Print(ICommandOutlet output, int index, string key, IDistributedLock locker, IDistributedLockTokenizer tokenizer)
-		{
-			var content = CommandOutletContent.Create(CommandOutletColor.Gray, $"[{index}] ")
-				.Append(CommandOutletColor.DarkGreen, key);
-
-			if(locker == null)
-			{
-				content.Append(CommandOutletColor.DarkRed, " NULL");
-			}
-			else
-			{
-				content.Append(CommandOutletColor.DarkYellow, $" {GetTokenString(tokenizer, locker.Token)}")
-				       .Append(CommandOutletColor.DarkMagenta, $" {nameof(locker.IsHeld)}:{locker.IsHeld}");
-			}
-
-			output.WriteLine(content);
+			if(!Zongsoft.Common.TimeSpanUtility.TryParse(value, out expiry))
+				expiry = TimeSpan.FromMinutes(1);
 		}
 
-		private static string GetTokenString(IDistributedLockTokenizer tokenizer, byte[] token)
+		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var lockers = new List<IDistributedLock>(context.Expression.Arguments.Length);
+
+		for(int i = 0; i < context.Expression.Arguments.Length; i++)
 		{
-			return tokenizer == null || token == null || token.Length == 0 ? null : tokenizer.GetString(token);
+			var key = context.Expression.Arguments[i];
+			var locker = await redis.AcquireAsync(key, expiry, cancellation);
+			Print(context.Output, i + 1, key, locker, redis.Tokenizer);
+
+			if(locker != null)
+				lockers.Add(locker);
 		}
-		#endregion
+
+		return lockers;
 	}
+	#endregion
+
+	#region 私有方法
+	private static void Print(ICommandOutlet output, int index, string key, IDistributedLock locker, IDistributedLockTokenizer tokenizer)
+	{
+		var content = CommandOutletContent.Create(CommandOutletColor.Gray, $"[{index}] ")
+			.Append(CommandOutletColor.DarkGreen, key);
+
+		if(locker == null)
+		{
+			content.Append(CommandOutletColor.DarkRed, " NULL");
+		}
+		else
+		{
+			content.Append(CommandOutletColor.DarkYellow, $" {GetTokenString(tokenizer, locker.Token)}")
+			       .Append(CommandOutletColor.DarkMagenta, $" {nameof(locker.IsHeld)}:{locker.IsHeld}");
+		}
+
+		output.WriteLine(content);
+	}
+
+	private static string GetTokenString(IDistributedLockTokenizer tokenizer, byte[] token)
+	{
+		return tokenizer == null || token == null || token.Length == 0 ? null : tokenizer.GetString(token);
+	}
+	#endregion
 }

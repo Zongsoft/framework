@@ -28,46 +28,49 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
-namespace Zongsoft.Externals.Redis.Commands
+using Zongsoft.Components;
+
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisSetCommand.Name")]
+[Description("Text.RedisSetCommand.Description")]
+[CommandOption(REQUISITE_OPTION, Type = typeof(Caching.CacheRequisite), DefaultValue = Caching.CacheRequisite.Always, Description = "Text.RedisSetCommand.Options.Requisite")]
+[CommandOption(EXPIRY_OPTION, Type = typeof(TimeSpan?), DefaultValue = null, Description = "Text.RedisSetCommand.Options.Expiry")]
+public class RedisSetCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.RedisSetCommand.Name")]
-	[Description("Text.RedisSetCommand.Description")]
-	[Zongsoft.Services.CommandOption(REQUISITE_OPTION, Type = typeof(Caching.CacheRequisite), DefaultValue = Caching.CacheRequisite.Always, Description = "Text.RedisSetCommand.Options.Requisite")]
-	[Zongsoft.Services.CommandOption(EXPIRY_OPTION, Type = typeof(TimeSpan?), DefaultValue = null, Description = "Text.RedisSetCommand.Options.Expiry")]
-	public class RedisSetCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
+	#region 常量定义
+	private const string REQUISITE_OPTION = "requisite";
+	private const string EXPIRY_OPTION = "expiry";
+	#endregion
+
+	#region 构造函数
+	public RedisSetCommand() : base("Set") { }
+	#endregion
+
+	#region 执行方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 常量定义
-		private const string REQUISITE_OPTION = "requisite";
-		private const string EXPIRY_OPTION = "expiry";
-		#endregion
+		if(context.Expression.Arguments.Length == 0)
+			throw new CommandException("Missing arguments.");
 
-		#region 构造函数
-		public RedisSetCommand() : base("Set") { }
-		#endregion
+		var expiry = context.Expression.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
+		var requisite = context.Expression.Options.GetValue<Caching.CacheRequisite>(REQUISITE_OPTION);
 
-		#region 执行方法
-		protected override object OnExecute(Services.CommandContext context)
+		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+
+		if(context.Expression.Arguments.Length == 1)
 		{
-			if(context.Expression.Arguments.Length == 0)
-				throw new Zongsoft.Services.CommandException("Missing arguments.");
+			if(context.Parameter != null)
+				return await redis.SetValueAsync(context.Expression.Arguments[0], context.Parameter, expiry, requisite, cancellation);
 
-			var expiry = context.Expression.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
-			var requisite = context.Expression.Options.GetValue<Caching.CacheRequisite>(REQUISITE_OPTION);
-
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-
-			if(context.Expression.Arguments.Length == 1)
-			{
-				if(context.Parameter != null)
-					return redis.SetValue(context.Expression.Arguments[0], context.Parameter, expiry, requisite);
-
-				throw new Zongsoft.Services.CommandException("Missing arguments.");
-			}
-
-			return redis.SetValue(context.Expression.Arguments[0], context.Expression.Arguments[1], expiry, requisite);
+			throw new CommandException("Missing arguments.");
 		}
-		#endregion
+
+		return await redis.SetValueAsync(context.Expression.Arguments[0], context.Expression.Arguments[1], expiry, requisite, cancellation);
 	}
+	#endregion
 }

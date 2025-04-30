@@ -28,45 +28,38 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.IO.Commands
+namespace Zongsoft.IO.Commands;
+
+public class FileDeleteCommand : CommandBase<CommandContext>
 {
-	public class FileDeleteCommand : CommandBase<CommandContext>
+	#region 构造函数
+	public FileDeleteCommand() : base("Delete") { }
+	public FileDeleteCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public FileDeleteCommand() : base("Delete")
+		if(context.Expression.Arguments.Length == 0)
+			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+
+		for(int i=0; i< context.Expression.Arguments.Length; i++)
 		{
+			var filePath = context.Expression.Arguments[i];
+			var succeed = await FileSystem.File.DeleteAsync(filePath);
+			var message = succeed ?
+				Properties.Resources.Text_FileDeleteSucceed_Message :
+				Properties.Resources.Text_FileDeleteFailed_Message;
+
+			context.Output.WriteLine((succeed ? CommandOutletColor.Green : CommandOutletColor.Red), $"[{i+1}] `{filePath}` {message}");
 		}
 
-		public FileDeleteCommand(string name) : base(name)
-		{
-		}
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			if(context.Expression.Arguments.Length == 0)
-				throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
-
-			for(int i=0; i< context.Expression.Arguments.Length; i++)
-			{
-				var filePath = context.Expression.Arguments[i];
-				var succeed = FileSystem.File.Delete(filePath);
-				string message;
-
-				if(succeed)
-					message = Properties.Resources.Text_FileDeleteSucceed_Message;
-				else
-					message = Properties.Resources.Text_FileDeleteFailed_Message;
-
-				context.Output.WriteLine((succeed ? CommandOutletColor.Green : CommandOutletColor.Red), $"[{i+1}] `{filePath}` {message}");
-			}
-
-			return null;
-		}
-		#endregion
+		return null;
 	}
+	#endregion
 }

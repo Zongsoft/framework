@@ -28,64 +28,64 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 
-namespace Zongsoft.Externals.Redis.Commands
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisInfoCommand.Name")]
+[Description("Text.RedisInfoCommand.Description")]
+public class RedisInfoCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.RedisInfoCommand.Name")]
-	[Description("Text.RedisInfoCommand.Description")]
-	public class RedisInfoCommand : CommandBase<Zongsoft.Services.CommandContext>
+	#region 构造函数
+	public RedisInfoCommand() : base("Info") { }
+	#endregion
+
+	#region 重写方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public RedisInfoCommand() : base("Info")
+		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var info = await redis.GetInfoAsync(cancellation);
+
+		var content = CommandOutletContent
+			.Create(CommandOutletColor.DarkMagenta, "#" + info.DatabaseId.ToString() + " ")
+			.Append(info.Name);
+
+		if(!string.IsNullOrEmpty(info.Namespace))
 		{
+			content.Append(CommandOutletColor.Gray + "@")
+			       .Append(CommandOutletColor.DarkYellow, info.Namespace);
 		}
-		#endregion
 
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
+		content.AppendLine().AppendLine(CommandOutletColor.DarkGray, info.Settings.ToString());
+
+		if(info.Servers != null && info.Servers.Length > 0)
 		{
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-			var info = redis.GetInfo();
-			var content = CommandOutletContent
-				.Create(CommandOutletColor.DarkMagenta, "#" + info.DatabaseId.ToString() + " ")
-				.Append(info.Name);
+			content.AppendLine();
 
-			if(!string.IsNullOrEmpty(info.Namespace))
+			for(int i = 0; i < info.Servers.Length; i++)
 			{
-				content.Append(CommandOutletColor.Gray + "@")
-				       .Append(CommandOutletColor.DarkYellow, info.Namespace);
+				content.Append(CommandOutletColor.DarkGray, "  [" + (i + 1).ToString() + "] ")
+					   .Append(CommandOutletColor.DarkYellow, info.Servers[i].ServerType.ToString())
+					   .Append(CommandOutletColor.DarkGreen, " " + info.Servers[i].EndPoint.ToString())
+					   .Append(CommandOutletColor.DarkGray, "(")
+					   .Append(CommandOutletColor.DarkYellow, "ver " + info.Servers[i].Version.ToString())
+					   .Append(CommandOutletColor.DarkGray, ") ")
+					   .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsSlave ? "Slave" : "Master")
+					   .Append(CommandOutletColor.DarkGray, ":");
+
+				if(info.Servers[i].IsConnected)
+					content.AppendLine(CommandOutletColor.Green, "Connected");
+				else
+					content.AppendLine(CommandOutletColor.DarkRed, "Unconnected");
 			}
-
-			content.AppendLine().AppendLine(CommandOutletColor.DarkGray, info.Settings.ToString());
-
-			if(info.Servers != null && info.Servers.Length > 0)
-			{
-				content.AppendLine();
-
-				for(int i = 0; i < info.Servers.Length; i++)
-				{
-					content.Append(CommandOutletColor.DarkGray, "  [" + (i + 1).ToString() + "] ")
-						   .Append(CommandOutletColor.DarkYellow, info.Servers[i].ServerType.ToString())
-						   .Append(CommandOutletColor.DarkGreen, " " + info.Servers[i].EndPoint.ToString())
-						   .Append(CommandOutletColor.DarkGray, "(")
-						   .Append(CommandOutletColor.DarkYellow, "ver " + info.Servers[i].Version.ToString())
-						   .Append(CommandOutletColor.DarkGray, ") ")
-						   .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsSlave ? "Slave" : "Master")
-						   .Append(CommandOutletColor.DarkGray, ":");
-
-					if(info.Servers[i].IsConnected)
-						content.AppendLine(CommandOutletColor.Green, "Connected");
-					else
-						content.AppendLine(CommandOutletColor.DarkRed, "Unconnected");
-				}
-			}
-
-			context.Output.WriteLine(content);
-			return info;
 		}
-		#endregion
+
+		context.Output.WriteLine(content);
+		return info;
 	}
+	#endregion
 }

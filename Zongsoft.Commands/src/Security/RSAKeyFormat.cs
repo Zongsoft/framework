@@ -28,19 +28,17 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Security
+namespace Zongsoft.Security;
+
+/// <summary>
+/// 表示RSA密钥格式的枚举。
+/// </summary>
+public enum RSAKeyFormat
 {
-	/// <summary>
-	/// 表示RSA密钥格式的枚举。
-	/// </summary>
-	public enum RSAKeyFormat
-	{
-		/// <summary>无</summary>
-		None,
+	/// <summary>无</summary>
+	None,
 
-		/// <summary>仅限私钥的PKCS8格式</summary>
-		Pkcs8,
-	}
+	/// <summary>仅限私钥的PKCS8格式</summary>
+	Pkcs8,
 }

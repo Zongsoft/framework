@@ -28,8 +28,11 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Scheduling;
 
 namespace Zongsoft.Externals.Hangfire.Commands
@@ -41,7 +44,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 		#endregion
 
 		#region 重写方法
-		protected override object OnExecute(CommandContext context)
+		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Expression.Arguments.Length > 0)
 				this.Scheduler = ApplicationContext.Current.Services.Resolve<IScheduler>(context.Expression.Arguments[0]);
@@ -50,7 +53,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 			else if(context.Parameter is IScheduler scheduler)
 				this.Scheduler = scheduler;
 
-			return this.Scheduler;
+			return ValueTask.FromResult<object>(this.Scheduler);
 		}
 		#endregion
 	}

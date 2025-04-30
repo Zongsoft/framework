@@ -33,117 +33,115 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
-namespace Zongsoft.Messaging.Commands
+namespace Zongsoft.Messaging.Commands;
+
+[CommandOption("acknowledgeable", typeof(bool), true, "Text.QueueSubscribeCommand.Acknowledgeable")]
+[CommandOption("format", typeof(QueueMessageFormat), QueueMessageFormat.Raw, "Text.QueueSubscribeCommand.Format")]
+public class QueueSubscribeCommand : Zongsoft.Components.Commands.HostListenCommandBase<IMessageQueue>
 {
-	[CommandOption("acknowledgeable", typeof(bool), true, "Text.QueueSubscribeCommand.Acknowledgeable")]
-	[CommandOption("format", typeof(QueueMessageFormat), QueueMessageFormat.Raw, "Text.QueueSubscribeCommand.Format")]
-	public class QueueSubscribeCommand : Zongsoft.Components.Commands.HostListenCommandBase<IMessageQueue>
+	#region 私有变量
+	private ICollection<IMessageConsumer> _consumers;
+	#endregion
+
+	#region 构造函数
+	public QueueSubscribeCommand() : this("Subscribe") { }
+	public QueueSubscribeCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnListening(CommandContext context, IMessageQueue queue)
 	{
-		#region 私有变量
-		private ICollection<IMessageConsumer> _consumers;
-		#endregion
+		context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.QueueSubscribeCommand_Welcome, queue.Name));
+		context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.QueueSubscribeCommand_Prompt + Environment.NewLine);
 
-		#region 构造函数
-		public QueueSubscribeCommand() : this("Subscribe") { }
-		public QueueSubscribeCommand(string name) : base(name) { }
-		#endregion
+		var handler = new QueueHandler(context);
+		_consumers = new List<IMessageConsumer>(context.Expression.Arguments.Length);
 
-		#region 重写方法
-		protected override void OnListening(CommandContext context, IMessageQueue queue)
+		foreach(var argument in context.Expression.Arguments)
 		{
-			context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.QueueSubscribeCommand_Welcome, queue.Name));
-			context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.QueueSubscribeCommand_Prompt + Environment.NewLine);
+			var index = argument.IndexOfAny([':', '?']);
+			var consumer = index > 0 && index < argument.Length ?
+				queue.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1), handler).AsTask().GetAwaiter().GetResult() :
+				queue.SubscribeAsync(argument, handler).AsTask().GetAwaiter().GetResult();
 
-			var handler = new QueueHandler(context);
-			_consumers = new List<IMessageConsumer>(context.Expression.Arguments.Length);
-
-			foreach(var argument in context.Expression.Arguments)
-			{
-				var index = argument.IndexOfAny(new[] { ':', '?' });
-				var consumer = index > 0 && index < argument.Length ?
-					queue.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1), handler).AsTask().GetAwaiter().GetResult() :
-					queue.SubscribeAsync(argument, handler).AsTask().GetAwaiter().GetResult();
-
-				_consumers.Add(consumer);
-			}
+			_consumers.Add(consumer);
 		}
-
-		protected override void OnListened(CommandContext context, IMessageQueue queue)
-		{
-			var consumers = Interlocked.Exchange(ref _consumers, null);
-
-			if(consumers != null)
-			{
-				foreach(var consumer in consumers)
-					consumer.UnsubscribeAsync().AsTask().GetAwaiter().GetResult();
-			}
-		}
-		#endregion
-
-		#region 嵌套子类
-		private class QueueHandler : HandlerBase<Message>
-		{
-			private int _count;
-			private readonly bool _acknowledgeable;
-			private readonly CommandContext _context;
-			private readonly QueueMessageFormat _format;
-
-			public QueueHandler(CommandContext context)
-			{
-				_context = context;
-				_format = context.Expression.Options.GetValue<QueueMessageFormat>("format");
-				_acknowledgeable = context.Expression.Options.GetValue<bool>("acknowledgeable");
-			}
-
-			protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
-			{
-				var topic = string.IsNullOrEmpty(message.Topic) ? "*" : message.Topic;
-				var content = CommandOutletContent
-					.Create(CommandOutletColor.DarkGray, $"[{Interlocked.Increment(ref _count)}] ")
-					.Append(CommandOutletColor.DarkGreen, topic);
-
-				if(!string.IsNullOrEmpty(message.Tags))
-					content.Append(CommandOutletColor.DarkGray, $"({message.Tags})");
-
-				if(!string.IsNullOrEmpty(message.Identity))
-					content.Append(CommandOutletColor.DarkCyan, $"@{message.Identity}");
-
-				content.Append(CommandOutletColor.DarkYellow, $" {message.Timestamp.ToLocalTime()} ");
-				content.AppendLine(CommandOutletColor.DarkMagenta, message.Identifier);
-				content.Append(
-					_format == QueueMessageFormat.Text ?
-					Encoding.UTF8.GetString(message.Data) :
-					System.Convert.ToBase64String(message.Data)
-				);
-
-				if(_acknowledgeable)
-				{
-					//输出内容
-					_context.Output.Write(content);
-
-					//应答消息
-					await message.AcknowledgeAsync(cancellation);
-
-					//追加“已应答”提示文本
-					_context.Output.WriteLine(CommandOutletColor.Blue, $" ({Properties.Resources.Text_Acknowledged})");
-				}
-				else
-				{
-					//输出内容
-					_context.Output.WriteLine(content);
-				}
-			}
-		}
-		#endregion
 	}
 
-	public enum QueueMessageFormat
+	protected override void OnListened(CommandContext context, IMessageQueue queue)
 	{
-		Raw,
-		Text,
+		var consumers = Interlocked.Exchange(ref _consumers, null);
+
+		if(consumers != null)
+		{
+			foreach(var consumer in consumers)
+				consumer.UnsubscribeAsync().AsTask().GetAwaiter().GetResult();
+		}
 	}
+	#endregion
+
+	#region 嵌套子类
+	private class QueueHandler : HandlerBase<Message>
+	{
+		private int _count;
+		private readonly bool _acknowledgeable;
+		private readonly CommandContext _context;
+		private readonly QueueMessageFormat _format;
+
+		public QueueHandler(CommandContext context)
+		{
+			_context = context;
+			_format = context.Expression.Options.GetValue<QueueMessageFormat>("format");
+			_acknowledgeable = context.Expression.Options.GetValue<bool>("acknowledgeable");
+		}
+
+		protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
+		{
+			var topic = string.IsNullOrEmpty(message.Topic) ? "*" : message.Topic;
+			var content = CommandOutletContent
+				.Create(CommandOutletColor.DarkGray, $"[{Interlocked.Increment(ref _count)}] ")
+				.Append(CommandOutletColor.DarkGreen, topic);
+
+			if(!string.IsNullOrEmpty(message.Tags))
+				content.Append(CommandOutletColor.DarkGray, $"({message.Tags})");
+
+			if(!string.IsNullOrEmpty(message.Identity))
+				content.Append(CommandOutletColor.DarkCyan, $"@{message.Identity}");
+
+			content.Append(CommandOutletColor.DarkYellow, $" {message.Timestamp.ToLocalTime()} ");
+			content.AppendLine(CommandOutletColor.DarkMagenta, message.Identifier);
+			content.Append(
+				_format == QueueMessageFormat.Text ?
+				Encoding.UTF8.GetString(message.Data) :
+				System.Convert.ToBase64String(message.Data)
+			);
+
+			if(_acknowledgeable)
+			{
+				//输出内容
+				_context.Output.Write(content);
+
+				//应答消息
+				await message.AcknowledgeAsync(cancellation);
+
+				//追加“已应答”提示文本
+				_context.Output.WriteLine(CommandOutletColor.Blue, $" ({Properties.Resources.Text_Acknowledged})");
+			}
+			else
+			{
+				//输出内容
+				_context.Output.WriteLine(content);
+			}
+		}
+	}
+	#endregion
+}
+
+public enum QueueMessageFormat
+{
+	Raw,
+	Text,
 }

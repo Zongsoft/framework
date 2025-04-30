@@ -28,68 +28,64 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
 using Zongsoft.Components;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Configuration.Commands
+namespace Zongsoft.Configuration.Commands;
+
+/// <summary>
+/// 该命令名为“get”，本命令获取当前选项提供程序中的指定选项路径的配置信息。
+/// </summary>
+/// <remarks>
+///		<para>该命令的用法如下：</para>
+///		<code>[configuration.]get path1 path2 path3...</code>
+///		<para>通过 arguments 来指定要查找的选项路径。</para>
+/// </remarks>
+[DisplayName("Text.ConfigurationGetCommand.Name")]
+[Description("Text.ConfigurationGetCommand.Description")]
+[CommandOption(KEY_SIMPLIFY_OPTION, DefaultValue = false, Description = "Text.ConfigurationCommand.Options.Simplify")]
+public class ConfigurationGetCommand : CommandBase<CommandContext>
 {
-	/// <summary>
-	/// 该命令名为“get”，本命令获取当前选项提供程序中的指定选项路径的配置信息。
-	/// </summary>
-	/// <remarks>
-	///		<para>该命令的用法如下：</para>
-	///		<code>[configuration.]get path1 path2 path3...</code>
-	///		<para>通过 arguments 来指定要查找的选项路径。</para>
-	/// </remarks>
-	[DisplayName("Text.ConfigurationGetCommand.Name")]
-	[Description("Text.ConfigurationGetCommand.Description")]
-	[CommandOption(KEY_SIMPLIFY_OPTION, DefaultValue = false, Description = "Text.ConfigurationCommand.Options.Simplify")]
-	public class ConfigurationGetCommand : CommandBase<CommandContext>
+	#region 常量定义
+	private const string KEY_SIMPLIFY_OPTION = "simplify";
+	#endregion
+
+	#region 构造函数
+	public ConfigurationGetCommand() : base("Get") { }
+	public ConfigurationGetCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 常量定义
-		private const string KEY_SIMPLIFY_OPTION = "simplify";
-		#endregion
+		var configuration = context.CommandNode.Find<ConfigurationCommand>(true)?.Configuration;
 
-		#region 构造函数
-		public ConfigurationGetCommand() : base("Get")
+		if(configuration == null)
+			throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Configuration"));
+
+		if(context.Expression.Arguments.Length == 0)
+			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+
+		if(context.Expression.Arguments.Length == 1)
 		{
+			var section = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[0]));
+			ConfigurationCommand.Print(section, context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);
+			return ValueTask.FromResult<object>(section);
 		}
 
-		public ConfigurationGetCommand(string name) : base(name)
+		var sections = new Microsoft.Extensions.Configuration.IConfigurationSection[context.Expression.Arguments.Length];
+
+		for(int i = 0; i < context.Expression.Arguments.Length; i++)
 		{
+			sections[i] = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[i]));
+			ConfigurationCommand.Print(sections[i], context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);
 		}
-		#endregion
 
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			var configuration = context.CommandNode.Find<ConfigurationCommand>(true)?.Configuration;
-
-			if(configuration == null)
-				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Configuration"));
-
-			if(context.Expression.Arguments.Length == 0)
-				throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
-
-			if(context.Expression.Arguments.Length == 1)
-			{
-				var section = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[0]));
-				ConfigurationCommand.Print(section, context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);
-				return section;
-			}
-
-			var sections = new Microsoft.Extensions.Configuration.IConfigurationSection[context.Expression.Arguments.Length];
-
-			for(int i = 0; i < context.Expression.Arguments.Length; i++)
-			{
-				sections[i] = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[i]));
-				ConfigurationCommand.Print(sections[i], context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);
-			}
-
-			return sections;
-		}
-		#endregion
+		return ValueTask.FromResult<object>(sections);
 	}
+	#endregion
 }

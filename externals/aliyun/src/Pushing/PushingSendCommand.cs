@@ -28,9 +28,12 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Aliyun.Pushing
 {
@@ -48,13 +51,8 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#endregion
 
 		#region 构造函数
-		public PushingSendCommand() : base("Send")
-		{
-		}
-
-		public PushingSendCommand(string name) : base(name)
-		{
-		}
+		public PushingSendCommand() : base("Send") { }
+		public PushingSendCommand(string name) : base(name) { }
 		#endregion
 
 		#region 公共属性
@@ -67,7 +65,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#endregion
 
 		#region 执行方法
-		protected override object OnExecute(CommandContext context)
+		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Parameter == null && context.Expression.Arguments.Length == 0)
 				throw new CommandException(Properties.Resources.Text_MissingCommandArguments);
@@ -86,12 +84,13 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 
 			if(context.Parameter != null)
 			{
-				var content = GetContent(context.Parameter);
+				var content = await GetContentAsync(context.Parameter, cancellation);
 
-				var result = this.Send(
+				var result = await this.SendAsync(
 					context.Expression.Options.GetValue<string>("name"),
 					context.Expression.Options.GetValue<string>("title"),
-					content, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild));
+					content, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild),
+					cancellation);
 
 				if(result != null)
 					results.Add(result);
@@ -99,10 +98,11 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 
 			foreach(var argument in context.Expression.Arguments)
 			{
-				var result = this.Send(
+				var result = await this.SendAsync(
 					context.Expression.Options.GetValue<string>("name"),
 					context.Expression.Options.GetValue<string>("title"),
-					argument, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild));
+					argument, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild),
+					cancellation);
 
 				if(result != null)
 					results.Add(result);
@@ -118,9 +118,9 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#endregion
 
 		#region 私有方法
-		private PushingResult Send(string name, string title, string content, string destination, PushingSenderSettings settings, Action<PushingResult> onFaild)
+		private async ValueTask<PushingResult> SendAsync(string name, string title, string content, string destination, PushingSenderSettings settings, Action<PushingResult> onFaild, CancellationToken cancellation)
 		{
-			var result = Utility.ExecuteTask(() => _sender.SendAsync(name, title, content, destination, settings));
+			var result = await _sender.SendAsync(name, title, content, destination, settings, cancellation);
 
 			if(result != null)
 			{
@@ -131,18 +131,18 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 			return result;
 		}
 
-		private static string GetContent(object value)
+		private static ValueTask<string> GetContentAsync(object value, CancellationToken cancellation)
 		{
 			if(value == null)
-				return null;
+				return ValueTask.FromResult<string>(null);
 
 			if(value is string text)
-				return text;
+				return ValueTask.FromResult(text);
 
 			if(value is System.Text.StringBuilder || Zongsoft.Common.TypeExtension.IsScalarType(value.GetType()))
-				return value.ToString();
+				return ValueTask.FromResult(value.ToString());
 
-			return Zongsoft.Serialization.Serializer.Json.Serialize(value);
+			return Zongsoft.Serialization.Serializer.Json.SerializeAsync(value, cancellation);
 		}
 		#endregion
 	}

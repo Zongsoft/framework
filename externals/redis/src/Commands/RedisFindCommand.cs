@@ -28,52 +28,56 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
-using System.Linq;
+using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Redis.Commands
+using Zongsoft.Components;
+
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisFindCommand.Name")]
+[Description("Text.RedisFindCommand.Description")]
+[CommandOption(COUNT_OPTION, typeof(int), DefaultValue = 100, Description = "Text.RedisFindCommand.Options.Count")]
+public class RedisFindCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.RedisFindCommand.Name")]
-	[Description("Text.RedisFindCommand.Description")]
-	[Zongsoft.Services.CommandOption(COUNT_OPTION, typeof(int), DefaultValue = 100, Description = "Text.RedisFindCommand.Options.Count")]
-	public class RedisFindCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
+	#region 常量定义
+	private const string COUNT_OPTION = "count";
+	#endregion
+
+	#region 构造函数
+	public RedisFindCommand() : base("Find") { }
+	#endregion
+
+	#region 执行方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 常量定义
-		private const string COUNT_OPTION = "count";
-		#endregion
+		if(context.Expression.Arguments.Length == 0)
+			throw new CommandException("Missing arguments.");
 
-		#region 构造函数
-		public RedisFindCommand() : base("Find")
+		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+
+		//查找指定模式的键名集
+		var result = redis.FindAsync(context.Expression.Arguments[0], cancellation);
+
+		//定义遍历序号
+		var index = 1;
+
+		var count = context.Expression.Options.GetValue<int>(COUNT_OPTION);
+		var list = new List<string>(count > 0 ? count : 16);
+
+		await foreach(var key in result)
 		{
+			if(count > 0 && index > count)
+				break;
+
+			list.Add(key);
+			context.Output.Write(CommandOutletColor.DarkGray, $"[{index++}] ");
+			context.Output.WriteLine(key);
 		}
-		#endregion
 
-		#region 执行方法
-		protected override object OnExecute(Services.CommandContext context)
-		{
-			if(context.Expression.Arguments.Length == 0)
-				throw new Zongsoft.Services.CommandException("Missing arguments.");
-
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-
-			//查找指定模式的键名集
-			var result = redis.Find(context.Expression.Arguments[0]);
-
-			var count = context.Expression.Options.GetValue<int>(COUNT_OPTION);
-			if(count > 0)
-				result = result.Take(count);
-
-			//定义遍历序号
-			var index = 1;
-
-			foreach(var key in result)
-			{
-				context.Output.Write(Services.CommandOutletColor.DarkGray, $"[{index++}] ");
-				context.Output.WriteLine(key);
-			}
-
-			return result;
-		}
-		#endregion
+		return list;
 	}
+	#endregion
 }

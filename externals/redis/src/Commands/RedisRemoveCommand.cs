@@ -28,35 +28,38 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
-namespace Zongsoft.Externals.Redis.Commands
+using Zongsoft.Components;
+
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisRemoveCommand.Name")]
+[Description("Text.RedisRemoveCommand.Description")]
+public class RedisRemoveCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.RedisRemoveCommand.Name")]
-	[Description("Text.RedisRemoveCommand.Description")]
-	public class RedisRemoveCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
+	#region 构造函数
+	public RedisRemoveCommand() : base("Remove") { }
+	#endregion
+
+	#region 执行方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public RedisRemoveCommand() : base("Remove")
+		if(context.Expression.Arguments.Length < 1)
+			throw new CommandException("Invalid arguments of command.");
+
+		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+
+		if(context.Expression.Arguments.Length == 1)
 		{
+			var removed = await redis.RemoveAsync(context.Expression.Arguments[0], cancellation);
+			return removed;
 		}
-		#endregion
 
-		#region 执行方法
-		protected override object OnExecute(Services.CommandContext context)
-		{
-			if(context.Expression.Arguments.Length < 1)
-				throw new Zongsoft.Services.CommandException("Invalid arguments of command.");
-
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-
-			if(context.Expression.Arguments.Length == 1)
-				redis.Remove(context.Expression.Arguments[0]);
-			else
-				redis.Remove(context.Expression.Arguments);
-
-			return null;
-		}
-		#endregion
+		var count = await redis.RemoveAsync(context.Expression.Arguments, cancellation);
+		return count;
 	}
+	#endregion
 }

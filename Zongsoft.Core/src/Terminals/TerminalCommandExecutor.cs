@@ -100,53 +100,7 @@ public class TerminalCommandExecutor : CommandExecutor
 	public int Run(CancellationToken cancellation = default) => this.Run(null, cancellation);
 	public int Run(string splash, CancellationToken cancellation = default)
 	{
-		if(this.Root.Children.Count < 1)
-			return 0;
-
-		if(string.IsNullOrEmpty(splash))
-			splash = @"
-     _____                                ___ __
-    /_   /  ____  ____  ____  ____ ____  / __/ /_
-      / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
-     / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
-    /____/\____/_/ /_/\__  /____/\____/_/  \__/
-                     /____/
-";
-
-		//打印闪屏信息
-		_terminal.WriteLine(splash);
-
-		while(true)
-		{
-			//重置控制台，准备执行命令
-			_terminal.Reset();
-
-			//如果已经取消运行则退出
-			if(cancellation.IsCancellationRequested)
-				return 0;
-
-			try
-			{
-				var commandText = _terminal.Input.ReadLine();
-
-				if(!string.IsNullOrWhiteSpace(commandText))
-				{
-					var task = this.ExecuteAsync(commandText, null, cancellation).AsTask();
-
-					if(!task.IsCompleted)
-						task.RunSynchronously();
-				}
-			}
-			catch(OperationCanceledException)
-			{
-				return 0;
-			}
-			catch(ExitException ex)
-			{
-				if(this.RaiseExit(ex.ExitCode))
-					return ex.ExitCode;
-			}
-		}
+		return this.RunAsync(splash, cancellation).ConfigureAwait(false).GetAwaiter().GetResult();
 	}
 
 	public Task<int> RunAsync(CancellationToken cancellation = default) => this.RunAsync(null, cancellation);

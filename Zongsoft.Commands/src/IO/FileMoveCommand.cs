@@ -29,33 +29,28 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.IO.Commands
+namespace Zongsoft.IO.Commands;
+
+public class FileMoveCommand : CommandBase<CommandContext>
 {
-	public class FileMoveCommand : CommandBase<CommandContext>
+	#region 构造函数
+	public FileMoveCommand() : base("Move") { }
+	public FileMoveCommand(string name) : base(name) { }
+	#endregion
+
+	#region 执行方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public FileMoveCommand() : base("Move")
-		{
-		}
+		if(context.Expression.Arguments.Length != 2)
+			throw new CommandException(string.Format(Properties.Resources.Text_Command_RequiresCountOfArguments, "2"));
 
-		public FileMoveCommand(string name) : base(name)
-		{
-		}
-		#endregion
-
-		#region 执行方法
-		protected override object OnExecute(CommandContext context)
-		{
-			if(context.Expression.Arguments.Length != 2)
-				throw new CommandException(string.Format(Properties.Resources.Text_Command_RequiresCountOfArguments, "2"));
-
-			FileSystem.File.Move(context.Expression.Arguments[0], context.Expression.Arguments[1]);
-
-			return null;
-		}
-		#endregion
+		await FileSystem.File.MoveAsync(context.Expression.Arguments[0], context.Expression.Arguments[1]);
+		return null;
 	}
+	#endregion
 }

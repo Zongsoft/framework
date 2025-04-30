@@ -28,35 +28,35 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Services;
 using Zongsoft.Plugins.Parsers;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Components;
+
+public class CommandParser : Parser
 {
-	public class CommandParser : Parser
+	#region 解析方法
+	public override object Parse(ParserContext context) => new DelegateCommand(context.Text);
+	#endregion
+
+	#region 嵌套子类
+	private class DelegateCommand(string commandText) : CommandBase
 	{
-		#region 解析方法
-		public override object Parse(ParserContext context) => new DelegateCommand(context.Text);
+		#region 私有变量
+		private readonly string _commandText = commandText;
 		#endregion
 
-		#region 嵌套子类
-		private class DelegateCommand(string commandText) : CommandBase
+		#region 执行方法
+		protected override ValueTask<object> OnExecuteAsync(object parameter, CancellationToken cancellation)
 		{
-			#region 私有变量
-			private readonly string _commandText = commandText;
-			#endregion
+			var commandExecutor = CommandExecutor.Default ??
+				throw new InvalidOperationException("Can not get the CommandExecutor from 'Zongsoft.Services.CommandExecutor.Default' static member.");
 
-			#region 执行方法
-			protected override object OnExecute(object parameter)
-			{
-				var commandExecutor = CommandExecutor.Default ??
-					throw new InvalidOperationException("Can not get the CommandExecutor from 'Zongsoft.Services.CommandExecutor.Default' static member.");
-
-				return commandExecutor.Execute(_commandText, parameter);
-			}
-			#endregion
+			return commandExecutor.ExecuteAsync(_commandText, parameter, cancellation);
 		}
 		#endregion
 	}
+	#endregion
 }

@@ -126,6 +126,14 @@ public class ConsoleTerminal : ITerminal, ICommandOutlet
 			Console.ResetColor();
 	}
 
+	public void Write(char character)
+	{
+		lock(_syncRoot)
+		{
+			Console.Write(character);
+		}
+	}
+
 	public void Write(string text)
 	{
 		lock(_syncRoot)
@@ -139,6 +147,19 @@ public class ConsoleTerminal : ITerminal, ICommandOutlet
 		lock(_syncRoot)
 		{
 			Console.Write(value);
+		}
+	}
+
+	public void Write(CommandOutletColor foregroundColor, char character)
+	{
+		lock(_syncRoot)
+		{
+			var originalColor = this.ForegroundColor;
+			this.ForegroundColor = foregroundColor;
+
+			Console.Write(character);
+
+			this.ForegroundColor = originalColor;
 		}
 	}
 
@@ -207,6 +228,14 @@ public class ConsoleTerminal : ITerminal, ICommandOutlet
 		}
 	}
 
+	public void WriteLine(char character)
+	{
+		lock(_syncRoot)
+		{
+			Console.WriteLine(character);
+		}
+	}
+
 	public void WriteLine(string text)
 	{
 		lock(_syncRoot)
@@ -220,6 +249,19 @@ public class ConsoleTerminal : ITerminal, ICommandOutlet
 		lock(_syncRoot)
 		{
 			Console.WriteLine(value);
+		}
+	}
+
+	public void WriteLine(CommandOutletColor foregroundColor, char character)
+	{
+		lock(_syncRoot)
+		{
+			var originalColor = this.ForegroundColor;
+			this.ForegroundColor = foregroundColor;
+
+			Console.WriteLine(character);
+
+			this.ForegroundColor = originalColor;
 		}
 	}
 

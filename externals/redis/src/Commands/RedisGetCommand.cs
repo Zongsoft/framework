@@ -28,103 +28,106 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Redis.Commands
+using Zongsoft.Components;
+
+namespace Zongsoft.Externals.Redis.Commands;
+
+[DisplayName("Text.RedisGetCommand.Name")]
+[Description("Text.RedisGetCommand.Description")]
+public class RedisGetCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.RedisGetCommand.Name")]
-	[Description("Text.RedisGetCommand.Description")]
-	public class RedisGetCommand : Zongsoft.Services.CommandBase<Zongsoft.Services.CommandContext>
+	#region 构造函数
+	public RedisGetCommand() : base("Get") { }
+	#endregion
+
+	#region 执行方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public RedisGetCommand() : base("Get") { }
-		#endregion
+		if(context.Expression.Arguments.Length < 1)
+			throw new CommandException("Missing arguments.");
 
-		#region 执行方法
-		protected override object OnExecute(Services.CommandContext context)
+		int index = 0;
+		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var result = new List<object>(context.Expression.Arguments.Length);
+
+		for(int i = 0; i < context.Expression.Arguments.Length; i++)
 		{
-			if(context.Expression.Arguments.Length < 1)
-				throw new Zongsoft.Services.CommandException("Missing arguments.");
-
-			int index = 0;
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-			var result = new List<object>(context.Expression.Arguments.Length);
-
-			for(int i = 0; i < context.Expression.Arguments.Length; i++)
+			if(!await redis.ExistsAsync(context.Expression.Arguments[i], cancellation))
 			{
-				if(!redis.Exists(context.Expression.Arguments[i]))
+				context.Output.WriteLine(CommandOutletColor.Red, $"The '{context.Expression.Arguments[i]}' entry is not existed.");
+			}
+			else
+			{
+				(var entry, var entryType, var expiry) = await redis.GetEntryAsync(context.Expression.Arguments[i], cancellation);
+				result.Add(entry);
+
+				context.Output.Write(CommandOutletColor.DarkGray, $"[{entryType}] ");
+				if(expiry.HasValue)
+					context.Output.Write(CommandOutletColor.DarkCyan, expiry.Value.ToString() + " ");
+
+				switch(entryType)
 				{
-					context.Output.WriteLine(Services.CommandOutletColor.Red, $"The '{context.Expression.Arguments[i]}' entry is not existed.");
-				}
-				else
-				{
-					var entry = redis.GetEntry(context.Expression.Arguments[i], out var entryType, out var expiry);
-					result.Add(entry);
+					case RedisEntryType.String:
+						context.Output.WriteLine(entry);
+						break;
+					case RedisEntryType.Dictionary:
+						context.Output.WriteLine(CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' dictionary have {((IDictionary<string, string>)entry).Count} entries.");
 
-					context.Output.Write(Services.CommandOutletColor.DarkGray, $"[{entryType}] ");
-					if(expiry.HasValue)
-						context.Output.Write(Services.CommandOutletColor.DarkCyan, expiry.Value.ToString() + " ");
+						foreach(KeyValuePair<string, string> item in (IDictionary<string, string>)entry)
+						{
+							context.Output.Write(CommandOutletColor.Gray, $"[{++index}] ");
+							context.Output.Write(CommandOutletColor.DarkGreen, item.Key);
+							context.Output.Write(CommandOutletColor.Magenta, " : ");
+							context.Output.WriteLine(CommandOutletColor.DarkGreen, item.Value);
+						}
 
-					switch(entryType)
-					{
-						case RedisEntryType.String:
-							context.Output.WriteLine(entry);
-							break;
-						case RedisEntryType.Dictionary:
-							context.Output.WriteLine(Services.CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' dictionary have {((IDictionary<string, string>)entry).Count} entries.");
+						break;
+					case RedisEntryType.List:
+						context.Output.WriteLine(CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' list(queue) have {((ICollection<string>)entry).Count} entries.");
 
-							foreach(KeyValuePair<string, string> item in (IDictionary<string, string>)entry)
-							{
-								context.Output.Write(Services.CommandOutletColor.Gray, $"[{++index}] ");
-								context.Output.Write(Services.CommandOutletColor.DarkGreen, item.Key);
-								context.Output.Write(Services.CommandOutletColor.Magenta, " : ");
-								context.Output.WriteLine(Services.CommandOutletColor.DarkGreen, item.Value);
-							}
+						foreach(object item in (IEnumerable)entry)
+						{
+							context.Output.Write(CommandOutletColor.Gray, $"[{++index}] ");
 
-							break;
-						case RedisEntryType.List:
-							context.Output.WriteLine(Services.CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' list(queue) have {((ICollection<string>)entry).Count} entries.");
+							if(item == null)
+								context.Output.WriteLine(CommandOutletColor.DarkGray, "NULL");
+							else
+								context.Output.WriteLine(CommandOutletColor.DarkGreen, item.ToString());
+						}
 
-							foreach(object item in (IEnumerable)entry)
-							{
-								context.Output.Write(Services.CommandOutletColor.Gray, $"[{++index}] ");
+						break;
+					case RedisEntryType.Set:
+					case RedisEntryType.SortedSet:
+						context.Output.WriteLine(CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' hashset have {((ISet<string>)entry).Count} entries.");
 
-								if(item == null)
-									context.Output.WriteLine(Services.CommandOutletColor.DarkGray, "NULL");
-								else
-									context.Output.WriteLine(Services.CommandOutletColor.DarkGreen, item.ToString());
-							}
+						foreach(object item in (IEnumerable)entry)
+						{
+							context.Output.Write(CommandOutletColor.Gray, $"[{++index}] ");
 
-							break;
-						case RedisEntryType.Set:
-						case RedisEntryType.SortedSet:
-							context.Output.WriteLine(Services.CommandOutletColor.DarkYellow, $"The '{context.Expression.Arguments[i]}' hashset have {((ISet<string>)entry).Count} entries.");
+							if(item == null)
+								context.Output.WriteLine(CommandOutletColor.DarkGray, "NULL");
+							else
+								context.Output.WriteLine(CommandOutletColor.DarkGreen, item.ToString());
+						}
 
-							foreach(object item in (IEnumerable)entry)
-							{
-								context.Output.Write(Services.CommandOutletColor.Gray, $"[{++index}] ");
-
-								if(item == null)
-									context.Output.WriteLine(Services.CommandOutletColor.DarkGray, "NULL");
-								else
-									context.Output.WriteLine(Services.CommandOutletColor.DarkGreen, item.ToString());
-							}
-
-							break;
-						default:
-							context.Output.WriteLine();
-							break;
-					}
+						break;
+					default:
+						context.Output.WriteLine();
+						break;
 				}
 			}
-
-			if(result.Count == 1)
-				return result[0];
-			else
-				return result;
 		}
-		#endregion
+
+		if(result.Count == 1)
+			return result[0];
+		else
+			return result;
 	}
+	#endregion
 }

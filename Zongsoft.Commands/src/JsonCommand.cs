@@ -29,71 +29,67 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Components;
 using Zongsoft.Serialization;
 
-namespace Zongsoft.Commands
+namespace Zongsoft.Commands;
+
+[DisplayName("Text.JsonCommand.Name")]
+[Description("Text.JsonCommand.Description")]
+[CommandOption(KEY_DEPTH_OPTION, typeof(int), 3, "Text.JsonCommand.Options.Depth")]
+[CommandOption(KEY_TYPED_OPTION, typeof(bool), false, "Text.JsonCommand.Options.Typed")]
+[CommandOption(KEY_INDENTED_OPTION, typeof(bool), true, "Text.JsonCommand.Options.Indented")]
+[CommandOption(KEY_CASING_OPTION, typeof(SerializationNamingConvention), SerializationNamingConvention.None, "Text.JsonCommand.Options.Casing")]
+public class JsonCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.JsonCommand.Name")]
-	[Description("Text.JsonCommand.Description")]
-	[CommandOption(KEY_DEPTH_OPTION, typeof(int), 3, "Text.JsonCommand.Options.Depth")]
-	[CommandOption(KEY_TYPED_OPTION, typeof(bool), false, "Text.JsonCommand.Options.Typed")]
-	[CommandOption(KEY_INDENTED_OPTION, typeof(bool), true, "Text.JsonCommand.Options.Indented")]
-	[CommandOption(KEY_CASING_OPTION, typeof(SerializationNamingConvention), SerializationNamingConvention.None, "Text.JsonCommand.Options.Casing")]
-	public class JsonCommand : CommandBase<CommandContext>
+	#region 常量定义
+	private const string KEY_DEPTH_OPTION = "depth";
+	private const string KEY_TYPED_OPTION = "typed";
+	private const string KEY_CASING_OPTION = "casing";
+	private const string KEY_INDENTED_OPTION = "indented";
+	#endregion
+
+	#region 构造函数
+	public JsonCommand() : base("Json") { }
+	public JsonCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 常量定义
-		private const string KEY_DEPTH_OPTION = "depth";
-		private const string KEY_TYPED_OPTION = "typed";
-		private const string KEY_CASING_OPTION = "casing";
-		private const string KEY_INDENTED_OPTION = "indented";
-		#endregion
+		var graph = context.Parameter;
 
-		#region 构造函数
-		public JsonCommand() : base("Json")
+		if(graph == null)
+			return null;
+
+		//如果输入参数是文本或流或文本读取器，则反序列化它并返回
+		if(graph is string raw)
+			return await Serializer.Json.DeserializeAsync<Dictionary<string, object>>(raw, cancellation);
+		if(graph is System.Text.StringBuilder text)
+			return await Serializer.Json.DeserializeAsync<Dictionary<string, object>>(text.ToString(), cancellation);
+		if(graph is Stream stream)
+			return await Serializer.Json.DeserializeAsync<Dictionary<string, object>>(stream, cancellation);
+
+		var options = new TextSerializationOptions()
 		{
-		}
+			MaximumDepth = context.Expression.Options.GetValue<int>(KEY_DEPTH_OPTION),
+			Typified = context.Expression.Options.GetValue<bool>(KEY_TYPED_OPTION),
+			Indented = context.Expression.Options.GetValue<bool>(KEY_INDENTED_OPTION),
+			NamingConvention = context.Expression.Options.GetValue<SerializationNamingConvention>(KEY_CASING_OPTION),
+			IncludeFields = true,
+		};
 
-		public JsonCommand(string name) : base(name)
-		{
-		}
-		#endregion
+		var json = await Serializer.Json.SerializeAsync(graph, options, cancellation);
 
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			var graph = context.Parameter;
+		if(json != null)
+			context.Output.WriteLine(json);
 
-			if(graph == null)
-				return null;
-
-			//如果输入参数是文本或流或文本读取器，则反序列化它并返回
-			if(graph is string raw)
-				return Serializer.Json.Deserialize<Dictionary<string, object>>(raw);
-			if(graph is System.Text.StringBuilder text)
-				return Serializer.Json.Deserialize<Dictionary<string, object>>(text.ToString());
-			if(graph is Stream stream)
-				return Serializer.Json.Deserialize<Dictionary<string, object>>(stream);
-
-			var options = new TextSerializationOptions()
-			{
-				MaximumDepth = context.Expression.Options.GetValue<int>(KEY_DEPTH_OPTION),
-				Typified = context.Expression.Options.GetValue<bool>(KEY_TYPED_OPTION),
-				Indented = context.Expression.Options.GetValue<bool>(KEY_INDENTED_OPTION),
-				NamingConvention = context.Expression.Options.GetValue<SerializationNamingConvention>(KEY_CASING_OPTION),
-				IncludeFields = true,
-			};
-
-			var json = Serializer.Json.Serialize(graph, options);
-
-			if(json != null)
-				context.Output.WriteLine(json);
-
-			return json;
-		}
-		#endregion
+		return json;
 	}
+	#endregion
 }

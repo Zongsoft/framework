@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.1.0</Version>
+		<Version>1.2.0</Version>
 		<Product>Zongsoft Diagnostics Library</Product>
 		<Description>This is a class library for OpenTelemetry protocols.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -43,7 +43,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.10.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

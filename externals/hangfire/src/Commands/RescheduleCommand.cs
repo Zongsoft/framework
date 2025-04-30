@@ -32,7 +32,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Scheduling;
 
 namespace Zongsoft.Externals.Hangfire.Commands
@@ -41,7 +41,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 	{
 		public RescheduleCommand() : base("Reschedule") { }
 
-		protected override object OnExecute(CommandContext context)
+		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Expression.Arguments == null || context.Expression.Arguments.Length == 0)
 				throw new CommandException($"Missing the required arguments.");
@@ -50,7 +50,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				var rescheduled = scheduler.RescheduleAsync(context.Expression.Arguments[i]).AsTask().Result;
+				var rescheduled = await scheduler.RescheduleAsync(context.Expression.Arguments[i], cancellation);
 
 				context.Output.Write($"[{i + 1}] ");
 				context.Output.Write(CommandOutletColor.DarkYellow, context.Expression.Arguments[i]);
@@ -62,7 +62,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 					context.Output.WriteLine(CommandOutletColor.DarkRed, "Failed");
 			}
 
-			return null;
+			return ValueTask.FromResult<object>(null);
 		}
 	}
 }

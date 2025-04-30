@@ -31,7 +31,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Serialization;
 
 namespace Zongsoft.Externals.Aliyun.Telecom
@@ -61,31 +61,32 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#endregion
 
 		#region 执行方法
-		protected override object OnExecute(CommandContext context)
+		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Expression.Arguments == null || context.Expression.Arguments.Length == 0)
 				throw new CommandException("Missing arguments.");
 
-			return Utility.ExecuteTask(() =>
-				this.CallAsync(
-					context.Expression.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
-					context.Expression.Arguments,
-					context.Parameter ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
-					context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION),
-					context.Expression.Options.Contains(KEY_INTERACTIVE_OPTION))
-			);
+			var result = await this.CallAsync(
+				context.Expression.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
+				context.Expression.Arguments,
+				context.Parameter ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
+				context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION),
+				context.Expression.Options.Contains(KEY_INTERACTIVE_OPTION),
+				cancellation);
+
+			return result;
 		}
 
-		private async Task<Phone.Result[]> CallAsync(string templateCode, string[] phoneNumbers, object parameter, string extra, bool interactive = false)
+		private async Task<Phone.Result[]> CallAsync(string templateCode, string[] phoneNumbers, object parameter, string extra, bool interactive, CancellationToken cancellation)
 		{
 			var results = new Phone.Result[phoneNumbers.Length];
 
 			for(int i = 0; i < phoneNumbers.Length; i++)
 			{
 				if(interactive)
-					results[i] = await _phone.CallAsync(templateCode, phoneNumbers[i], string.IsNullOrEmpty(extra) ? null : new Phone.InteractionArgument(extra), CancellationToken.None);
+					results[i] = await _phone.CallAsync(templateCode, phoneNumbers[i], string.IsNullOrEmpty(extra) ? null : new Phone.InteractionArgument(extra), cancellation);
 				else
-					results[i] = await _phone.CallAsync(templateCode, phoneNumbers[i], parameter, extra, CancellationToken.None);
+					results[i] = await _phone.CallAsync(templateCode, phoneNumbers[i], parameter, extra, cancellation);
 			}
 
 			return results;

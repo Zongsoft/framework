@@ -29,9 +29,10 @@
 
 using System;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 
 namespace Zongsoft.Externals.Aliyun.Pushing
 {
@@ -54,9 +55,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#endregion
 
 		#region 公共属性
-		/// <summary>
-		/// 获取或设置移动推送配置信息。
-		/// </summary>
+		/// <summary>获取或设置移动推送配置信息。</summary>
 		[Zongsoft.Configuration.Options.Options("Externals/Aliyun/Pushing")]
 		public Options.PushingOptions Options
 		{
@@ -66,16 +65,15 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#endregion
 
 		#region 公共方法
-		/// <summary>
-		/// 发送消息或通知到移动设备。
-		/// </summary>
+		/// <summary>发送消息或通知到移动设备。</summary>
 		/// <param name="name">指定的消息推送应用的名字。</param>
 		/// <param name="title">指定的消息或通知的标题。</param>
 		/// <param name="content">指定的消息或通知的内容。</param>
 		/// <param name="destination">指定的推送目标。</param>
 		/// <param name="settings">指定的推送设置参数。</param>
+		/// <param name="cancellation">指定的异步操作取消标记。</param>
 		/// <returns>返回推送的结果。</returns>
-		public async Task<PushingResult> SendAsync(string name, string title, string content, string destination, PushingSenderSettings settings)
+		public async Task<PushingResult> SendAsync(string name, string title, string content, string destination, PushingSenderSettings settings, CancellationToken cancellation)
 		{
 			if(string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException(nameof(name));
@@ -114,9 +112,9 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 			var http = this.GetHttpClient(certificate);
 
 			//提交移动推送请求
-			var response = await http.SendAsync(request);
+			var response = await http.SendAsync(request, cancellation);
 
-			return await this.GetResultAsync(response.Content);
+			return await GetResultAsync(response.Content);
 		}
 		#endregion
 
@@ -196,7 +194,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 			});
 		}
 
-		private async Task<PushingResult> GetResultAsync(HttpContent content)
+		private static async ValueTask<PushingResult> GetResultAsync(HttpContent content)
 		{
 			var text = await content.ReadAsStringAsync();
 

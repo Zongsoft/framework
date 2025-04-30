@@ -29,72 +29,74 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
+using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Messaging.Commands
+namespace Zongsoft.Messaging.Commands;
+
+[DisplayName("Text.QueueCommand.Name")]
+[Description("Text.QueueCommand.Description")]
+[CommandOption("name", typeof(string), Description = "Text.QueueCommand.Options.Name")]
+public class QueueCommand : Components.Commands.HostCommandBase<IMessageQueue>
 {
-	[DisplayName("Text.QueueCommand.Name")]
-	[Description("Text.QueueCommand.Description")]
-	[CommandOption("name", typeof(string), Description = "Text.QueueCommand.Options.Name")]
-	public class QueueCommand : Components.Commands.HostCommandBase<IMessageQueue>
+	#region 成员字段
+	private readonly IServiceProvider _serviceProvider;
+	#endregion
+
+	#region 构造函数
+	public QueueCommand(IServiceProvider serviceProvider) : base("Queue")
 	{
-		#region 成员字段
-		private readonly IServiceProvider _serviceProvider;
-		#endregion
-
-		#region 构造函数
-		public QueueCommand(IServiceProvider serviceProvider) : base("Queue")
-		{
-			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-		}
-
-		public QueueCommand(IServiceProvider serviceProvider, string name) : base(name)
-		{
-			_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-
-			foreach(var provider in serviceProvider.ResolveAll<IMessageQueueProvider>())
-			{
-				if(!provider.Exists(name))
-					continue;
-
-				var queue = provider.Queue(name);
-
-				if(queue != null)
-				{
-					this.Queue = queue;
-					break;
-				}
-			}
-		}
-		#endregion
-
-		#region 公共属性
-		public IMessageQueue Queue { get => this.Host; set => this.Host = value; }
-		#endregion
-
-		#region 执行方法
-		protected override object OnExecute(CommandContext context)
-		{
-			if(context.Expression.Options.TryGetValue<string>("name", out var name))
-			{
-				if(string.IsNullOrEmpty(name))
-					return this.Queue;
-
-				//根据名称获取对应的消息队列
-				this.Queue = MessageQueueConverter.Resolve(name) ??
-					throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
-			}
-
-			if(this.Queue == null)
-				context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoQueue);
-			else
-				context.Output.WriteLine(CommandOutletColor.Green, this.Queue.ToString());
-
-			return this.Queue;
-		}
-		#endregion
+		_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 	}
+
+	public QueueCommand(IServiceProvider serviceProvider, string name) : base(name)
+	{
+		_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
+		foreach(var provider in serviceProvider.ResolveAll<IMessageQueueProvider>())
+		{
+			if(!provider.Exists(name))
+				continue;
+
+			var queue = provider.Queue(name);
+
+			if(queue != null)
+			{
+				this.Queue = queue;
+				break;
+			}
+		}
+	}
+	#endregion
+
+	#region 公共属性
+	public IMessageQueue Queue { get => this.Host; set => this.Host = value; }
+	#endregion
+
+	#region 执行方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		if(context.Expression.Options.TryGetValue<string>("name", out var name))
+		{
+			if(string.IsNullOrEmpty(name))
+				return ValueTask.FromResult<object>(this.Queue);
+
+			//根据名称获取对应的消息队列
+			this.Queue = MessageQueueConverter.Resolve(name) ??
+				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
+		}
+
+		if(this.Queue == null)
+			context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoQueue);
+		else
+			context.Output.WriteLine(CommandOutletColor.Green, this.Queue.ToString());
+
+		return ValueTask.FromResult<object>(this.Queue);
+	}
+	#endregion
 }

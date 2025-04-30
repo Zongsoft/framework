@@ -28,50 +28,44 @@
  */
 
 using System;
-using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.Security.Commands
+namespace Zongsoft.Security.Commands;
+
+[CommandOption(TYPE_OPTION, typeof(RSAKeyType))]
+[CommandOption(FORMAT_OPTION, typeof(RSAKeyFormat))]
+public class RSAExportCommand : CommandBase<CommandContext>
 {
-	[CommandOption(TYPE_OPTION, typeof(RSAKeyType))]
-	[CommandOption(FORMAT_OPTION, typeof(RSAKeyFormat))]
-	public class RSAExportCommand : CommandBase<CommandContext>
+	#region 常量定义
+	private const string TYPE_OPTION = "type";
+	private const string FORMAT_OPTION = "format";
+	#endregion
+
+	#region 构造函数
+	public RSAExportCommand() : base("Export") { }
+	public RSAExportCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 常量定义
-		private const string TYPE_OPTION = "type";
-		private const string FORMAT_OPTION = "format";
-		#endregion
+		var rsa = (context.CommandNode.Find<RSACommand>(true)?.RSA) ?? throw new CommandException("Missing the required RSA.");
 
-		#region 构造函数
-		public RSAExportCommand() : base("Export") { }
-		public RSAExportCommand(string name) : base(name) { }
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
+		object result = context.Expression.Options.GetValue<RSAKeyType>(TYPE_OPTION) switch
 		{
-			var rsa = context.CommandNode.Find<RSACommand>(true)?.RSA;
+			RSAKeyType.All => rsa.ToXmlString(true),
+			RSAKeyType.Public => rsa.ExportRSAPublicKey(),
+			RSAKeyType.Private => context.Expression.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8 ?
+				rsa.ExportPkcs8PrivateKey() :
+				rsa.ExportRSAPrivateKey(),
+			RSAKeyType.Subject => rsa.ExportSubjectPublicKeyInfo(),
+			_ => rsa.ExportSubjectPublicKeyInfo(),
+		};
 
-			if(rsa == null)
-				throw new CommandException("Missing the required RSA.");
-
-			switch(context.Expression.Options.GetValue<RSAKeyType>(TYPE_OPTION))
-			{
-				case RSAKeyType.All:
-					return rsa.ToXmlString(true);
-				case RSAKeyType.Public:
-					return rsa.ExportRSAPublicKey();
-				case RSAKeyType.Private:
-					return context.Expression.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8 ?
-						rsa.ExportPkcs8PrivateKey() :
-						rsa.ExportRSAPrivateKey();
-				case RSAKeyType.Subject:
-					return rsa.ExportSubjectPublicKeyInfo();
-				default:
-					return rsa.ExportSubjectPublicKeyInfo();
-			}
-		}
-		#endregion
+		return ValueTask.FromResult(result);
 	}
+	#endregion
 }

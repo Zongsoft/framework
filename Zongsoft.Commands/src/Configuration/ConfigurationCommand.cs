@@ -29,116 +29,117 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
 using Microsoft.Extensions.Configuration;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.Configuration.Commands
+namespace Zongsoft.Configuration.Commands;
+
+[DisplayName("Text.ConfigurationCommand.Name")]
+[Description("Text.ConfigurationCommand.Description")]
+public class ConfigurationCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.ConfigurationCommand.Name")]
-	[Description("Text.ConfigurationCommand.Description")]
-	public class ConfigurationCommand : CommandBase<CommandContext>
+	#region 成员字段
+	private IConfiguration _configuration;
+	#endregion
+
+	#region 构造函数
+	public ConfigurationCommand() : base("Options")
 	{
-		#region 成员字段
-		private IConfiguration _configuration;
-		#endregion
-
-		#region 构造函数
-		public ConfigurationCommand() : base("Options")
-		{
-			_configuration = Zongsoft.Services.ApplicationContext.Current.Configuration;
-		}
-
-		public ConfigurationCommand(string name) : base(name)
-		{
-			_configuration = Zongsoft.Services.ApplicationContext.Current.Configuration;
-		}
-		#endregion
-
-		#region 公共属性
-		public IConfiguration Configuration
-		{
-			get => _configuration;
-			set => _configuration = value ?? throw new ArgumentNullException();
-		}
-		#endregion
-
-		#region 执行方法
-		protected override object OnExecute(CommandContext context)
-		{
-			if(context.Parameter is IConfiguration configuration)
-				_configuration = configuration;
-
-			//打印配置信息
-			Print(_configuration, context.Output, false, 0);
-
-			return _configuration;
-		}
-		#endregion
-
-		#region 静态方法
-		internal static void Print(IConfiguration configuration, ICommandOutlet output, bool simplify, int depth)
-		{
-			if(configuration == null)
-				return;
-
-			if(configuration is IConfigurationRoot root)
-			{
-				int index = 0;
-
-				foreach(var provider in root.Providers)
-				{
-					output.WriteLine(CommandOutletContent
-						.Create(CommandOutletColor.Gray, $"[{++index}] ")
-						.AppendLine(CommandOutletColor.DarkYellow, provider.GetType().FullName)
-						.Append(CommandOutletColor.DarkGray, provider.ToString())
-					);
-
-					var keys = provider.GetChildKeys(Array.Empty<string>(), null).Distinct(StringComparer.OrdinalIgnoreCase);
-
-					foreach(var key in keys)
-					{
-						output.WriteLine("\t" + key);
-					}
-
-					if(keys.Any())
-						output.WriteLine();
-				}
-			}
-			else if(configuration is IConfigurationSection section)
-			{
-				if(depth > 0)
-					output.Write(new string(' ', depth * 4));
-
-				if(section.Value == null)
-				{
-					if(depth > 0 && simplify)
-						output.WriteLine(CommandOutletColor.DarkYellow, section.Key);
-					else
-						output.WriteLine(CommandOutletColor.DarkYellow, section.Path);
-				}
-				else
-				{
-					var content = simplify ?
-						CommandOutletContent.Create("") :
-						CommandOutletContent.Create(CommandOutletColor.DarkGreen, ConfigurationPath.GetParentPath(section.Path))
-						                    .Append(CommandOutletColor.DarkCyan, ":");
-
-					output.WriteLine(content
-						.Append(CommandOutletColor.Green, section.Key)
-						.Append(CommandOutletColor.DarkMagenta, "=")
-						.Append(CommandOutletColor.DarkGray, section.Value)
-					);
-				}
-
-				foreach(var child in section.GetChildren())
-				{
-					Print(child, output, simplify, depth + 1);
-				}
-			}
-		}
-		#endregion
+		_configuration = Zongsoft.Services.ApplicationContext.Current.Configuration;
 	}
+
+	public ConfigurationCommand(string name) : base(name)
+	{
+		_configuration = Zongsoft.Services.ApplicationContext.Current.Configuration;
+	}
+	#endregion
+
+	#region 公共属性
+	public IConfiguration Configuration
+	{
+		get => _configuration;
+		set => _configuration = value ?? throw new ArgumentNullException();
+	}
+	#endregion
+
+	#region 执行方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		if(context.Parameter is IConfiguration configuration)
+			_configuration = configuration;
+
+		//打印配置信息
+		Print(_configuration, context.Output, false, 0);
+
+		return ValueTask.FromResult<object>(_configuration);
+	}
+	#endregion
+
+	#region 静态方法
+	internal static void Print(IConfiguration configuration, ICommandOutlet output, bool simplify, int depth)
+	{
+		if(configuration == null)
+			return;
+
+		if(configuration is IConfigurationRoot root)
+		{
+			int index = 0;
+
+			foreach(var provider in root.Providers)
+			{
+				output.WriteLine(CommandOutletContent
+					.Create(CommandOutletColor.Gray, $"[{++index}] ")
+					.AppendLine(CommandOutletColor.DarkYellow, provider.GetType().FullName)
+					.Append(CommandOutletColor.DarkGray, provider.ToString())
+				);
+
+				var keys = provider.GetChildKeys(Array.Empty<string>(), null).Distinct(StringComparer.OrdinalIgnoreCase);
+
+				foreach(var key in keys)
+				{
+					output.WriteLine("\t" + key);
+				}
+
+				if(keys.Any())
+					output.WriteLine();
+			}
+		}
+		else if(configuration is IConfigurationSection section)
+		{
+			if(depth > 0)
+				output.Write(new string(' ', depth * 4));
+
+			if(section.Value == null)
+			{
+				if(depth > 0 && simplify)
+					output.WriteLine(CommandOutletColor.DarkYellow, section.Key);
+				else
+					output.WriteLine(CommandOutletColor.DarkYellow, section.Path);
+			}
+			else
+			{
+				var content = simplify ?
+					CommandOutletContent.Create("") :
+					CommandOutletContent.Create(CommandOutletColor.DarkGreen, ConfigurationPath.GetParentPath(section.Path))
+					                    .Append(CommandOutletColor.DarkCyan, ":");
+
+				output.WriteLine(content
+					.Append(CommandOutletColor.Green, section.Key)
+					.Append(CommandOutletColor.DarkMagenta, "=")
+					.Append(CommandOutletColor.DarkGray, section.Value)
+				);
+			}
+
+			foreach(var child in section.GetChildren())
+			{
+				Print(child, output, simplify, depth + 1);
+			}
+		}
+	}
+	#endregion
 }

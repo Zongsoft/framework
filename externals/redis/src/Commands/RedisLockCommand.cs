@@ -31,29 +31,28 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Distributing;
 
-namespace Zongsoft.Externals.Redis.Commands
+namespace Zongsoft.Externals.Redis.Commands;
+
+public class RedisLockCommand : CommandBase<CommandContext>
 {
-	public class RedisLockCommand : CommandBase<CommandContext>
+	#region 构造函数
+	public RedisLockCommand() : base("Lock") { }
+	public RedisLockCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public RedisLockCommand() : base("Lock") { }
-		public RedisLockCommand(string name) : base(name) { }
-		#endregion
+		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var normalizer = redis?.Tokenizer;
 
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new Zongsoft.Services.CommandException($"Missing the required redis service.");
-			var normalizer = redis?.Tokenizer;
+		if(normalizer != null)
+			context.Output.WriteLine(normalizer.Name);
 
-			if(normalizer != null)
-				context.Output.WriteLine(normalizer.Name);
-
-			return redis;
-		}
-		#endregion
+		return ValueTask.FromResult<object>(redis);
 	}
+	#endregion
 }

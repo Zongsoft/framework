@@ -28,33 +28,34 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.Commands
+namespace Zongsoft.Commands;
+
+[DisplayName("Text.EchoCommand.Name")]
+[Description("Text.EchoCommand.Description")]
+public class EchoCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.EchoCommand.Name")]
-	[Description("Text.EchoCommand.Description")]
-	public class EchoCommand : CommandBase<CommandContext>
+	#region 重写方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
+		if(context.Expression.Arguments.Length == 0)
+			return ValueTask.FromResult(context.Parameter);
+
+		if(context.Expression.Arguments.Length == 1)
 		{
-			if(context.Expression.Arguments.Length == 0)
-				return context.Parameter;
-
-			if(context.Expression.Arguments.Length == 1)
-			{
-				context.Output.Write(context.Expression.Arguments[0]);
-				return context.Expression.Arguments[0];
-			}
-
-			foreach(var argument in context.Expression.Arguments)
-				context.Output.WriteLine(argument);
-
-			return context.Expression.Arguments;
+			context.Output.Write(context.Expression.Arguments[0]);
+			return ValueTask.FromResult<object>(context.Expression.Arguments[0]);
 		}
-		#endregion
+
+		foreach(var argument in context.Expression.Arguments)
+			context.Output.WriteLine(argument);
+
+		return ValueTask.FromResult<object>(context.Expression.Arguments);
 	}
+	#endregion
 }

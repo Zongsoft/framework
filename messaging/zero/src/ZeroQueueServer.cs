@@ -34,8 +34,7 @@ using System.Threading.Tasks;
 using NetMQ;
 using NetMQ.Sockets;
 
-using Zongsoft.Common;
-using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 

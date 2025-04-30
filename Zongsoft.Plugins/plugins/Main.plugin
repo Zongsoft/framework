@@ -18,7 +18,7 @@
 		<parser name="object" type="Zongsoft.Plugins.Parsers.ObjectParser, Zongsoft.Plugins" />
 		<parser name="static" type="Zongsoft.Plugins.Parsers.StaticParser, Zongsoft.Plugins" />
 		<parser name="option" type="Zongsoft.Configuration.OptionParser, Zongsoft.Plugins" />
-		<parser name="command" type="Zongsoft.Services.CommandParser, Zongsoft.Plugins" />
+		<parser name="command" type="Zongsoft.Components.CommandParser, Zongsoft.Plugins" />
 		<parser name="service" type="Zongsoft.Services.ServicesParser, Zongsoft.Plugins" />
 		<parser name="resource" type="Zongsoft.Resources.ResourceParser, Zongsoft.Plugins" />
 		<parser name="predicate" type="Zongsoft.Plugins.Parsers.PredicateParser, Zongsoft.Plugins" />
@@ -47,7 +47,7 @@
 		</object>
 
 		<!-- 将默认的命令执行器挂载到插件树 -->
-		<object name="Executor" value="{static:Zongsoft.Services.CommandExecutor.Default, Zongsoft.Core}">
+		<object name="Executor" value="{static:Zongsoft.Components.CommandExecutor.Default, Zongsoft.Core}">
 			<!-- 将默认命令执行器的根节点暴露出来 -->
 			<object name="Commands" value="{path:../@Root.Children}">
 				<!-- 挂载插件命令集 -->

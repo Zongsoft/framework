@@ -28,10 +28,11 @@
  */
 
 using System;
-using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Common;
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Scheduling;
 
 namespace Zongsoft.Externals.Hangfire.Commands
@@ -43,7 +44,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 	{
 		public ScheduleCommand() : base("Schedule") { }
 
-		protected override object OnExecute(CommandContext context)
+		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Expression.Arguments == null || context.Expression.Arguments.Length == 0)
 				throw new CommandException($"Missing the required argments.");
@@ -57,11 +58,11 @@ namespace Zongsoft.Externals.Hangfire.Commands
 			string[] identifiers;
 
 			if(context.Expression.Options.TryGetValue<string>("cron", out var cron) && !string.IsNullOrEmpty(cron))
-				identifiers = Schedule(scheduler, context.Expression.Arguments, context.Parameter, options.Cron(cron));
+				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Parameter, options.Cron(cron), cancellation);
 			else if(context.Expression.Options.TryGetValue<TimeSpan>("delay", out var duration) && duration > TimeSpan.Zero)
-				identifiers = Schedule(scheduler, context.Expression.Arguments, context.Parameter, options.Delay(duration));
+				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Parameter, options.Delay(duration), cancellation);
 			else
-				identifiers = Schedule(scheduler, context.Expression.Arguments, context.Parameter, options);
+				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Parameter, options, cancellation);
 
 			context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]");
 
@@ -74,13 +75,13 @@ namespace Zongsoft.Externals.Hangfire.Commands
 			return identifiers;
 		}
 
-		private static string[] Schedule(IScheduler scheduler, string[] names, object parameter, ITriggerOptions options)
+		private static async ValueTask<string[]> ScheduleAsync(IScheduler scheduler, string[] names, object parameter, ITriggerOptions options, CancellationToken cancellation)
 		{
 			var result = new string[names.Length];
 
 			for(int i = 0; i < names.Length; i++)
 			{
-				result[i] = scheduler.ScheduleAsync(names[i], parameter, options).AsTask().Result;
+				result[i] = await scheduler.ScheduleAsync(names[i], parameter, options, cancellation);
 			}
 
 			return result;

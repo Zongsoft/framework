@@ -39,6 +39,7 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
 
 using Zongsoft.Services;
+using Zongsoft.Components;
 
 namespace Zongsoft.Diagnostics;
 

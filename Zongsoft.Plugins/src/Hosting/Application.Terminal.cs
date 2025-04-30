@@ -35,6 +35,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Services;
 using Zongsoft.Terminals;
+using Zongsoft.Components;
 
 namespace Zongsoft.Plugins.Hosting
 {

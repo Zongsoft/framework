@@ -29,46 +29,42 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.IO.Commands
+namespace Zongsoft.IO.Commands;
+
+public class FileExistsCommand : CommandBase<CommandContext>
 {
-	public class FileExistsCommand : CommandBase<CommandContext>
+	#region 构造函数
+	public FileExistsCommand() : base("Exists") { }
+	public FileExistsCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public FileExistsCommand() : base("Exists")
+		if(context.Expression.Arguments.Length == 0)
+			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+
+		async ValueTask<bool> DeleteFileAsync(string path)
 		{
-		}
+			var existed = await FileSystem.File.ExistsAsync(path);
 
-		public FileExistsCommand(string name) : base(name)
-		{
-		}
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			if(context.Expression.Arguments.Length == 0)
-				throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
-
-			bool DeleteFile(string path)
-			{
-				var existed = FileSystem.File.Exists(path);
-
-				if(existed)
-					context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.Text_FileExisted, path));
-				else
-					context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.Text_FileNotExisted, path));
-
-				return existed;
-			}
-
-			if(context.Expression.Arguments.Length == 1)
-				return DeleteFile(context.Expression.Arguments[0]);
+			if(existed)
+				context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.Text_FileExisted, path));
 			else
-				return context.Expression.Arguments.Select(path => DeleteFile(path)).ToArray();
+				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.Text_FileNotExisted, path));
+
+			return existed;
 		}
-		#endregion
+
+		if(context.Expression.Arguments.Length == 1)
+			return await DeleteFileAsync(context.Expression.Arguments[0]);
+		else
+			return context.Expression.Arguments.Select(async path => await DeleteFileAsync(path)).ToArray();
 	}
+	#endregion
 }

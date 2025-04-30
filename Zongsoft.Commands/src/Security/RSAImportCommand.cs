@@ -29,106 +29,106 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.Security.Commands
+namespace Zongsoft.Security.Commands;
+
+[CommandOption(TYPE_OPTION, typeof(RSAKeyType))]
+[CommandOption(FORMAT_OPTION, typeof(RSAKeyFormat))]
+public class RSAImportCommand : CommandBase<CommandContext>
 {
-	[CommandOption(TYPE_OPTION, typeof(RSAKeyType))]
-	[CommandOption(FORMAT_OPTION, typeof(RSAKeyFormat))]
-	public class RSAImportCommand : CommandBase<CommandContext>
+	#region 常量定义
+	private const string TYPE_OPTION = "type";
+	private const string FORMAT_OPTION = "format";
+	#endregion
+
+	#region 构造函数
+	public RSAImportCommand() : base("Import") { }
+	public RSAImportCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 常量定义
-		private const string TYPE_OPTION = "type";
-		private const string FORMAT_OPTION = "format";
-		#endregion
+		var rsa = (context.CommandNode.Find<RSACommand>(true)?.RSA) ?? throw new CommandException("Missing the required RSA.");
 
-		#region 构造函数
-		public RSAImportCommand() : base("Import") { }
-		public RSAImportCommand(string name) : base(name) { }
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
+		switch(context.Expression.Options.GetValue<RSAKeyType>(TYPE_OPTION))
 		{
-			var rsa = context.CommandNode.Find<RSACommand>(true)?.RSA;
-
-			if(rsa == null)
-				throw new CommandException("Missing the required RSA.");
-
-			switch(context.Expression.Options.GetValue<RSAKeyType>(TYPE_OPTION))
-			{
-				case RSAKeyType.All:
-					if(TryGetInputXml(context.Parameter, out var xml))
-						rsa.FromXmlString(xml);
-					break;
-				case RSAKeyType.Public:
-					if(TryGetInput(context.Parameter, out var publicKey))
-						rsa.ImportRSAPublicKey(publicKey, out _);
-					break;
-				case RSAKeyType.Subject:
-					if(TryGetInput(context.Parameter, out var subject))
-						rsa.ImportSubjectPublicKeyInfo(subject, out _);
-					break;
-				case RSAKeyType.Private:
-					if(TryGetInput(context.Parameter, out var privateKey))
-					{
-						if(context.Expression.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8)
-							rsa.ImportPkcs8PrivateKey(privateKey, out _);
-						else
-							rsa.ImportRSAPrivateKey(privateKey, out _);
-					}
-					break;
-			}
-
-			return rsa;
+			case RSAKeyType.All:
+				if(TryGetInputXml(context.Parameter, out var xml))
+					rsa.FromXmlString(xml);
+				break;
+			case RSAKeyType.Public:
+				if(TryGetInput(context.Parameter, out var publicKey))
+					rsa.ImportRSAPublicKey(publicKey, out _);
+				break;
+			case RSAKeyType.Subject:
+				if(TryGetInput(context.Parameter, out var subject))
+					rsa.ImportSubjectPublicKeyInfo(subject, out _);
+				break;
+			case RSAKeyType.Private:
+				if(TryGetInput(context.Parameter, out var privateKey))
+				{
+					if(context.Expression.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8)
+						rsa.ImportPkcs8PrivateKey(privateKey, out _);
+					else
+						rsa.ImportRSAPrivateKey(privateKey, out _);
+				}
+				break;
 		}
-		#endregion
 
-		private static bool TryGetInputXml(object parameter, out string result)
+		return ValueTask.FromResult<object>(rsa);
+	}
+	#endregion
+
+	#region 私有方法
+	private static bool TryGetInputXml(object parameter, out string result)
+	{
+		if(parameter == null)
 		{
-			if(parameter == null)
-			{
-				result = null;
-				return false;
-			}
+			result = null;
+			return false;
+		}
 
-			if(parameter is Stream stream)
-			{
-				var reader = new StreamReader(stream, System.Text.Encoding.UTF8);
-				result = reader.ReadToEnd();
-				return !string.IsNullOrEmpty(result);
-			}
-
-			result = parameter as string;
+		if(parameter is Stream stream)
+		{
+			var reader = new StreamReader(stream, System.Text.Encoding.UTF8);
+			result = reader.ReadToEnd();
 			return !string.IsNullOrEmpty(result);
 		}
 
-		private static bool TryGetInput(object parameter, out ReadOnlySpan<byte> result)
-		{
-			if(parameter == null)
-			{
-				result = ReadOnlySpan<byte>.Empty;
-				return false;
-			}
-
-			if(parameter is Stream stream)
-			{
-				var memory = new MemoryStream();
-				stream.CopyTo(memory);
-				result = memory.ToArray().AsSpan();
-				return true;
-			}
-
-			result = parameter switch
-			{
-				byte[] bytes => bytes.AsSpan(),
-				Memory<byte> memory => memory.Span,
-				ReadOnlyMemory<byte> memory => memory.Span,
-				_ => default,
-			};
-
-			return !result.IsEmpty;
-		}
+		result = parameter as string;
+		return !string.IsNullOrEmpty(result);
 	}
+
+	private static bool TryGetInput(object parameter, out ReadOnlySpan<byte> result)
+	{
+		if(parameter == null)
+		{
+			result = [];
+			return false;
+		}
+
+		if(parameter is Stream stream)
+		{
+			var memory = new MemoryStream();
+			stream.CopyTo(memory);
+			result = memory.ToArray().AsSpan();
+			return true;
+		}
+
+		result = parameter switch
+		{
+			byte[] bytes => bytes.AsSpan(),
+			Memory<byte> memory => memory.Span,
+			ReadOnlyMemory<byte> memory => memory.Span,
+			_ => default,
+		};
+
+		return !result.IsEmpty;
+	}
+	#endregion
 }

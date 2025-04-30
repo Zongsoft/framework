@@ -28,8 +28,10 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Services;
+using Zongsoft.Components;
 using Zongsoft.Serialization;
 
 namespace Zongsoft.Externals.Aliyun.Telecom
@@ -59,17 +61,17 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#endregion
 
 		#region 执行方法
-		protected override object OnExecute(CommandContext context)
+		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Expression.Arguments == null || context.Expression.Arguments.Length == 0)
 				throw new CommandException("Missing arguments.");
 
-			var result = Utility.ExecuteTask(() => _phone.SendAsync(
+			var result = await _phone.SendAsync(
 				context.Expression.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
 				context.Expression.Arguments,
 				context.Parameter ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
 				context.Expression.Options.GetValue<string>(KEY_SCHEME_OPTION),
-				context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION)));
+				context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION), cancellation);
 
 			return result;
 		}

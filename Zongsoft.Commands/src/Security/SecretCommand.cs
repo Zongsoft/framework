@@ -28,48 +28,45 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
 
 using Zongsoft.Caching;
+using Zongsoft.Services;
 using Zongsoft.Components;
 
-namespace Zongsoft.Security.Commands
+namespace Zongsoft.Security.Commands;
+
+[DisplayName("Text.SecretCommand.Name")]
+[Description("Text.SecretCommand.Description")]
+public class SecretCommand : CommandBase<CommandContext>
 {
-	[DisplayName("Text.SecretCommand.Name")]
-	[Description("Text.SecretCommand.Description")]
-	public class SecretCommand : CommandBase<CommandContext>
+	#region 构造函数
+	public SecretCommand() : base("Secret") { }
+	public SecretCommand(string name) : base(name) { }
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置验证码提供程序。</summary>
+	[ServiceDependency]
+	public ISecretor Secretor { get; set; }
+	#endregion
+
+	#region 重写方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		#region 构造函数
-		public SecretCommand() : base("Secret")
+		switch(context.Parameter)
 		{
+			case ISecretor secretor:
+				this.Secretor = secretor;
+				break;
+			case IDistributedCache cache:
+				this.Secretor = new Secretor(cache, ApplicationContext.Current.Services);
+				break;
 		}
 
-		public SecretCommand(string name) : base(name)
-		{
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置验证码提供程序。</summary>
-		[ServiceDependency]
-		public ISecretor Secretor { get; set; }
-		#endregion
-
-		#region 重写方法
-		protected override object OnExecute(CommandContext context)
-		{
-			switch(context.Parameter)
-			{
-				case ISecretor secretor:
-					this.Secretor = secretor;
-					break;
-				case IDistributedCache cache:
-					this.Secretor = new Secretor(cache, ApplicationContext.Current.Services);
-					break;
-			}
-
-			return this.Secretor;
-		}
-		#endregion
+		return ValueTask.FromResult<object>(this.Secretor);
 	}
+	#endregion
 }
