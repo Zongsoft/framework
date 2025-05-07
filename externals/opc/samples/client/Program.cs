@@ -48,7 +48,7 @@ internal class Program
 			if(context.Expression.Arguments.Length == 0)
 				return _client.UnsubscribeAsync(cancellation);
 			else
-				return _client.UnsubscribeAsync(context.Expression.Arguments.AsSpan(1).ToArray(), cancellation);
+				return _client.UnsubscribeAsync(context.Expression.Arguments, cancellation);
 		});
 
 		executor.Command("exist", async (context, cancellation) =>

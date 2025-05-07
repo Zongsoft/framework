@@ -406,7 +406,7 @@ public class OpcClient : IDisposable
 
 		subscription.AddItems(items);
 
-		if(_session.AddSubscription(subscription))
+		if(subscription.MonitoredItemCount > 0 && _session.AddSubscription(subscription))
 		{
 			await subscription.CreateAsync(cancellation);
 			await subscription.ApplyChangesAsync(cancellation);
@@ -433,6 +433,7 @@ public class OpcClient : IDisposable
 			foreach(var item in subscription.MonitoredItems)
 			{
 				item.Notification -= this.MonitoredItem_Notification;
+				_monitoredItems.Remove(item.StartNodeId.ToString(), out _);
 				count++;
 			}
 
@@ -445,7 +446,18 @@ public class OpcClient : IDisposable
 			}
 		}
 
+		foreach(var subscription in session.Subscriptions)
+			await subscription.DeleteAsync(false, cancellation);
+
 		await session.RemoveSubscriptionsAsync(session.Subscriptions.ToArray(), cancellation);
+
+		var request = new RequestHeader()
+		{
+			Timestamp = DateTime.UtcNow,
+		};
+
+		//await session.DeleteSubscriptionsAsync(request, session.Subscriptions.Select(subscription => subscription.Id).ToArray(), cancellation);
+
 		return count;
 	}
 
@@ -483,7 +495,15 @@ public class OpcClient : IDisposable
 		}
 
 		if(removables != null && removables.Count > 0)
+		{
+			var request = new RequestHeader()
+			{
+				Timestamp = DateTime.UtcNow,
+			};
+
 			await session.RemoveSubscriptionsAsync(removables, cancellation);
+			await session.DeleteSubscriptionsAsync(request, removables.Select(subscription => subscription.Id).ToArray(), cancellation);
+		}
 
 		return count;
 	}

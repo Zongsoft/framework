@@ -19,7 +19,7 @@ internal class Commands
 {
 	public static void Info(TerminalCommandContext context, OpcClient client)
 	{
-		if(client == null)
+		if(context == null || client == null)
 			return;
 
 		var content = CommandOutletContent.Create(CommandOutletColor.DarkGreen, client.Name)
@@ -87,7 +87,7 @@ internal class Commands
 
 			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.LastNotification)}")
 			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.LastNotification.ToString())
+			.AppendLine(CommandOutletColor.DarkYellow, subscription.LastNotification?.ToString())
 
 			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.LastNotificationTime)}")
 			.Append(CommandOutletColor.DarkGray, ":")
