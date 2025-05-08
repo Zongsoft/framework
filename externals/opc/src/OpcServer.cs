@@ -67,8 +67,12 @@ public partial class OpcServer : WorkerBase
 		//必须：检查应用启动器的安全证书
 		_launcher.CheckApplicationInstanceCertificates(false);
 
-		_server = new Server();
+		_server = new Server(this);
 	}
+	#endregion
+
+	#region 公共属性
+	public Security.IAuthenticator Authenticator { get; set; }
 	#endregion
 
 	#region 配置方法
@@ -163,13 +167,21 @@ public partial class OpcServer : WorkerBase
 
 partial class OpcServer
 {
-	private sealed class Server : StandardServer
+	private sealed class Server(OpcServer server) : StandardServer
 	{
 		#region 成员字段
+		private readonly OpcServer _server = server;
 		private NodeManager _manager;
 		#endregion
 
 		#region 重写方法
+		protected override void OnServerStarting(ApplicationConfiguration configuration) => base.OnServerStarting(configuration);
+		protected override void OnServerStarted(IServerInternal server)
+		{
+			server.SessionManager.ImpersonateUser += this.SessionManager_ImpersonateUser;
+			base.OnServerStarted(server);
+		}
+
 		protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration)
 		{
 			_manager = new NodeManager(server, configuration);
@@ -211,6 +223,27 @@ partial class OpcServer
 			finally
 			{
 				this.OnRequestComplete(context);
+			}
+		}
+		#endregion
+
+		#region 身份验证
+		private void SessionManager_ImpersonateUser(Session session, ImpersonateEventArgs args)
+		{
+			var authenticator = _server.Authenticator;
+
+			args.IdentityValidationError = new ServiceResult(StatusCodes.BadSecurityChecksFailed);
+
+			if(authenticator == null)
+				return;
+
+			try
+			{
+				args.Identity = authenticator.AuthenticateAsync(args.NewIdentity).AsTask().GetAwaiter().GetResult();
+			}
+			catch(Exception ex)
+			{
+				args.IdentityValidationError = new ServiceResult(StatusCodes.BadSecurityChecksFailed, ex);
 			}
 		}
 		#endregion
