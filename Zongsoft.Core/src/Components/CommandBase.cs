@@ -174,7 +174,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 		try
 		{
 			//执行具体的工作
-			result = this.OnExecuteAsync(argument, cancellation);
+			result = await this.OnExecuteAsync(argument, cancellation);
 		}
 		catch(AggregateException ex)
 		{
@@ -207,7 +207,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 		executedArgs = CreateExecutedEventArgs(argument, result);
 
 		//激发“Executed”事件
-		OnExecuted(executedArgs);
+		this.OnExecuted(executedArgs);
 
 		//返回执行成功的结果
 		return executedArgs.Result;
