@@ -28,12 +28,17 @@
  */
 
 using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 using Opc.Ua;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Externals.Opc;
 
-internal class Utility
+internal static class Utility
 {
 	public static NodeId GetDataType(Type type)
 	{
@@ -69,5 +74,83 @@ internal class Utility
 			TypeCode.Object => DataTypeIds.ObjectTypeNode,
 			_ => DataTypeIds.ObjectTypeNode,
 		};
+	}
+
+	public static IUserIdentity GetIdentity(this Configuration.OpcConnectionSettings settings)
+	{
+		if(settings == null)
+			return null;
+
+		if(!string.IsNullOrEmpty(settings.UserName))
+			return new UserIdentity(settings.UserName, settings.Password);
+
+		if(!string.IsNullOrEmpty(settings.Certificate))
+			return new UserIdentity(GetCertificate(settings.Certificate, settings.CertificateSecret));
+
+		return null;
+	}
+
+	private static X509Certificate2 GetCertificate(string text, string secret = null)
+	{
+		if(string.IsNullOrEmpty(text))
+			return null;
+
+		//适用竖线来表达证书存储器名称和位置
+		var index = text.IndexOf('|');
+
+		if(index > 0 && index < text.Length)
+		{
+			using var store = GetX509Store(text.AsSpan()[..index]);
+			var result = store.Certificates.Find(X509FindType.FindBySerialNumber, text[(index + 1)..], false);
+
+			if(result == null || result.Count == 0)
+				throw new InvalidOperationException($"Unable to find “{text[(index + 1)..]}” certificate in “{store.Name}@{store.Location}” store.");
+
+			return result[0];
+		}
+
+		//如果证书文本包含冒号则表示采用虚拟文件路径
+		if(text.Contains(':'))
+		{
+			using var stream = Zongsoft.IO.FileSystem.File.Open(text, FileMode.Open, FileAccess.Read);
+			return LoadX509(stream, secret);
+		}
+
+		//解析相对文件路径
+		if(!Path.IsPathRooted(text))
+		{
+			text = Path.Combine(typeof(Utility).Assembly.Location, "certificates", text);
+			if(!File.Exists(text))
+				text = Path.Combine(ApplicationContext.Current.ApplicationPath, "certificates", text);
+		}
+
+		using var file = File.OpenRead(text);
+		return LoadX509(file, secret);
+
+		static X509Store GetX509Store(ReadOnlySpan<char> identifier)
+		{
+			if(identifier.IsEmpty)
+				return new X509Store();
+
+			var index = identifier.IndexOf('@');
+
+			if(index < 0)
+				return new(identifier.ToString(), StoreLocation.CurrentUser);
+			else
+				return new(identifier[..index].ToString(), StoreLocation.CurrentUser);
+		}
+
+		static X509Certificate2 LoadX509(Stream stream, string secret)
+		{
+			var data = new byte[stream.Length];
+
+			#if NET9_0_OR_GREATER
+			stream.ReadExactly(data, 0, data.Length);
+			return string.IsNullOrEmpty(secret) ? X509CertificateLoader.LoadCertificate([.. data]) : X509CertificateLoader.LoadPkcs12(data, secret);
+			#else
+			stream.Read(data, 0, data.Length);
+			return string.IsNullOrEmpty(secret) ? new X509Certificate2(data) : new X509Certificate2(data, secret);
+			#endif
+		}
 	}
 }

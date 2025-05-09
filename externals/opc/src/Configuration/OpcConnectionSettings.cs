@@ -93,5 +93,37 @@ public class OpcConnectionSettings : ConnectionSettingsBase<OpcConnectionSetting
 		get => this.GetValue<TimeSpan>();
 		set => this.SetValue(value);
 	}
+
+	public string UserName
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	public string Password
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[Category("Security")]
+	public string Certificate
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[Category("Security")]
+	public string CertificateSecret
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	public string Locales
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
 	#endregion
 }

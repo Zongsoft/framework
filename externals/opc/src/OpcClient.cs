@@ -108,11 +108,14 @@ public class OpcClient : IDisposable
 		var endpointConfiguration = EndpointConfiguration.Create(_configuration);
 		var endpoint = new ConfiguredEndpoint(null, endpointDescription, endpointConfiguration);
 
-		var name = this.Name;
+		string name;
+
 		if(string.IsNullOrEmpty(settings.Client))
-			;
+			name = string.IsNullOrEmpty(settings.Instance) ? $"{this.Name}#{Common.Randomizer.GenerateString()}" : $"{this.Name}.{settings.Instance}";
 		else
 			name = string.IsNullOrEmpty(settings.Instance) ? settings.Client : $"{settings.Client}:{settings.Instance}";
+
+		var locales = string.IsNullOrEmpty(settings.Locales) ? ["en"] : settings.Locales.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
 		_session = await Session.Create(
 			_configuration,
@@ -120,8 +123,8 @@ public class OpcClient : IDisposable
 			false,
 			name,
 			(uint)settings.Timeout.TotalMilliseconds,
-			new UserIdentity(),
-			["zh", "en"],
+			settings.GetIdentity(),
+			locales,
 			cancellation);
 
 		_settings = settings;
