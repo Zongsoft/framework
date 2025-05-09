@@ -38,7 +38,7 @@ namespace Zongsoft.Security;
 
 public partial class Certificate
 {
-	internal class X509 : ICertificate
+	internal class X509 : ICertificate, IDisposable
 	{
 		#region 静态字段
 		public static readonly ICertificateResolver Resolver = new CertificateResolver();
@@ -84,7 +84,7 @@ public partial class Certificate
 		#region 处置方法
 		public void Dispose()
 		{
-			Dispose(true);
+			this.Dispose(true);
 			GC.SuppressFinalize(this);
 		}
 
