@@ -37,7 +37,7 @@ namespace Zongsoft.Components.Commands;
 public class WorkerStopCommand : CommandBase<CommandContext>
 {
 	#region 单例字段
-	public static readonly WorkerStopCommand Default = new WorkerStopCommand();
+	public static readonly WorkerStopCommand Default = new();
 	#endregion
 
 	#region 常量定义
@@ -81,18 +81,18 @@ public class WorkerStopCommand : CommandBase<CommandContext>
 		switch(worker.State)
 		{
 			case WorkerState.Stopped:
-				this.OnSucceed(context.Output, worker);
+				OnSucceed(context.Output, worker);
 				break;
 			case WorkerState.Running:
-				this.OnFailed(context.Output, worker);
+				OnFailed(context.Output, worker);
 				break;
 			case WorkerState.Stopping:
 				SpinWait.SpinUntil(() => worker.State == WorkerState.Stopped, timeout);
 
 				if(worker.State == WorkerState.Stopped)
-					this.OnSucceed(context.Output, worker);
+					OnSucceed(context.Output, worker);
 				else
-					this.OnFailed(context.Output, worker);
+					OnFailed(context.Output, worker);
 
 				break;
 		}
@@ -100,12 +100,12 @@ public class WorkerStopCommand : CommandBase<CommandContext>
 	#endregion
 
 	#region 私有方法
-	private void OnFailed(ICommandOutlet output, IWorker worker)
+	private static void OnFailed(ICommandOutlet output, IWorker worker)
 	{
 		output.WriteLine(Utility.GetWorkerActionContent(worker, string.Format(Properties.Resources.Command_ExecutionFailed_Message, Properties.Resources.WorkerStopCommand_Name), CommandOutletColor.DarkRed));
 	}
 
-	private void OnSucceed(ICommandOutlet output, IWorker worker)
+	private static void OnSucceed(ICommandOutlet output, IWorker worker)
 	{
 		output.WriteLine(Utility.GetWorkerActionContent(worker, string.Format(Properties.Resources.Command_ExecutionSucceed_Message, Properties.Resources.WorkerStopCommand_Name), CommandOutletColor.DarkGreen));
 	}

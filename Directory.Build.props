@@ -20,6 +20,7 @@
 	<PropertyGroup>
 		<IsTestProject>$(MSBuildProjectName.Contains('Tests'))</IsTestProject>
 		<NoWarn>$(NoWarn);1701;1702;CS1591;NU1701;NU5048;SYSLIB0001;NETSDK1138;</NoWarn>
+		<WarningsAsErrors>CS4014;CA2012</WarningsAsErrors>
 		<GenerateDocumentationFile Condition=" '$(Configuration)' == 'Release' ">true</GenerateDocumentationFile>
 	</PropertyGroup>
 

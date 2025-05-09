@@ -169,7 +169,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			#endregion
 
 			#region 公共方法
-			public bool Create(string path, IDictionary<string, object> properties = null) => this.CreateAsync(path, properties).ConfigureAwait(false).GetAwaiter().GetResult();
+			public bool Create(string path, IDictionary<string, object> properties = null) => this.CreateAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public ValueTask<bool> CreateAsync(string path, IDictionary<string, object> properties = null)
 			{
 				var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -177,7 +177,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return client.CreateAsync(directory, properties);
 			}
 
-			public bool Delete(string path, bool recursive = false) => this.DeleteAsync(path, recursive).ConfigureAwait(false).GetAwaiter().GetResult();
+			public bool Delete(string path, bool recursive = false) => this.DeleteAsync(path, recursive).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public ValueTask<bool> DeleteAsync(string path, bool recursive = false)
 			{
 				if(recursive)
@@ -191,7 +191,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			public void Move(string source, string destination) => throw new NotSupportedException();
 			public ValueTask MoveAsync(string source, string destination) => throw new NotSupportedException();
 
-			public bool Exists(string path) => this.ExistsAsync(path).ConfigureAwait(false).GetAwaiter().GetResult();
+			public bool Exists(string path) => this.ExistsAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public ValueTask<bool> ExistsAsync(string path)
 			{
 				var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -199,7 +199,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return client.ExistsAsync(directory);
 			}
 
-			public Zongsoft.IO.DirectoryInfo GetInfo(string path) => this.GetInfoAsync(path).ConfigureAwait(false).GetAwaiter().GetResult();
+			public Zongsoft.IO.DirectoryInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public async ValueTask<Zongsoft.IO.DirectoryInfo> GetInfoAsync(string path)
 			{
 				var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -208,7 +208,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return this.GenerateInfo(path, properties);
 			}
 
-			public bool SetInfo(string path, IDictionary<string, object> properties) => this.SetInfoAsync(path, properties).ConfigureAwait(false).GetAwaiter().GetResult();
+			public bool SetInfo(string path, IDictionary<string, object> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties)
 			{
 				var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -372,7 +372,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			#endregion
 
 			#region 公共方法
-			public bool Delete(string path) => this.DeleteAsync(path).ConfigureAwait(false).GetAwaiter().GetResult();
+			public bool Delete(string path) => this.DeleteAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public ValueTask<bool> DeleteAsync(string path)
 			{
 				path = this.EnsureFilePath(path, out var bucketName);
@@ -380,7 +380,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return client.DeleteAsync(path);
 			}
 
-			public bool Exists(string path) => this.ExistsAsync(path).ConfigureAwait(false).GetAwaiter().GetResult();
+			public bool Exists(string path) => this.ExistsAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public ValueTask<bool> ExistsAsync(string path)
 			{
 				path = this.EnsureFilePath(path, out var bucketName);
@@ -389,7 +389,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			}
 
 			public void Copy(string source, string destination) => this.Copy(source, destination, false);
-			public void Copy(string source, string destination, bool overwrite) => this.CopyAsync(source, destination, overwrite).ConfigureAwait(false).GetAwaiter().GetResult();
+			public void Copy(string source, string destination, bool overwrite) => this.CopyAsync(source, destination, overwrite).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public ValueTask CopyAsync(string source, string destination) => this.CopyAsync(source, destination, false);
 			public async ValueTask CopyAsync(string source, string destination, bool overwrite)
 			{
@@ -429,7 +429,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				}
 			}
 
-			public void Move(string source, string destination) => this.MoveAsync(source, destination).ConfigureAwait(false).GetAwaiter().GetResult();
+			public void Move(string source, string destination) => this.MoveAsync(source, destination).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public async ValueTask MoveAsync(string source, string destination)
 			{
 				source = this.EnsureFilePath(source, out var sourceBucket);
@@ -465,7 +465,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				}
 			}
 
-			public Zongsoft.IO.FileInfo GetInfo(string path) => this.GetInfoAsync(path).ConfigureAwait(false).GetAwaiter().GetResult();
+			public Zongsoft.IO.FileInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public async ValueTask<Zongsoft.IO.FileInfo> GetInfoAsync(string path)
 			{
 				path = this.EnsureFilePath(path, out var bucketName);
@@ -476,7 +476,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				return this.GenerateInfo(path, properties);
 			}
 
-			public bool SetInfo(string path, IDictionary<string, object> properties) => this.SetInfoAsync(path, properties).ConfigureAwait(false).GetAwaiter().GetResult();
+			public bool SetInfo(string path, IDictionary<string, object> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			public async ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties)
 			{
 				path = this.EnsureFilePath(path, out var bucketName);
@@ -497,7 +497,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				if(writable)
 					return new StorageFileStream(client.GetUploader(path, properties));
 
-				return client.DownloadAsync(path, properties).ConfigureAwait(false).GetAwaiter().GetResult();
+				return client.DownloadAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			}
 			#endregion
 
@@ -578,7 +578,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				public override void Write(byte[] buffer, int offset, int count)
 				{
 					var uploader = this.EnsureUploader();
-					uploader.WriteAsync(buffer, offset, count).GetAwaiter().GetResult();
+					uploader.WriteAsync(buffer, offset, count).AsTask().GetAwaiter().GetResult();
 				}
 
 				public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellation)
@@ -590,7 +590,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 				public override void Flush()
 				{
 					var uploader = this.EnsureUploader();
-					uploader.FlushAsync().GetAwaiter().GetResult();
+					uploader.FlushAsync().AsTask().GetAwaiter().GetResult();
 				}
 
 				public override Task FlushAsync(CancellationToken cancellation)

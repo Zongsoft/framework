@@ -46,7 +46,7 @@ namespace Zongsoft.Net
 		private class HeadlessServer : TcpServer<IMemoryOwner<byte>>, ISender
 		{
 			public HeadlessServer() : base(HeadlessPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
-			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray());
+			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 			public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 			{
 				var task = base.BroadcastAsync(data, cancellation);
@@ -64,7 +64,7 @@ namespace Zongsoft.Net
 		private class HeadedServer : TcpServer<ReadOnlySequence<byte>>, ISender
 		{
 			public HeadedServer() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
-			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray());
+			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 			public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 			{
 				var task = base.BroadcastAsync(data, cancellation);

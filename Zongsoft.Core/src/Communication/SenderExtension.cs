@@ -37,9 +37,9 @@ namespace Zongsoft.Communication;
 
 public static class SenderExtension
 {
-	public static void Send(this ISender sender, byte[] data) => sender.SendAsync(data).GetAwaiter().GetResult();
-	public static void Send(this ISender sender, byte[] data, int offset) => sender.SendAsync(data.AsMemory(offset)).GetAwaiter().GetResult();
-	public static void Send(this ISender sender, byte[] data, int offset, int count) => sender.SendAsync(data.AsMemory(offset, count)).GetAwaiter().GetResult();
+	public static void Send(this ISender sender, byte[] data) => sender.SendAsync(data).AsTask().GetAwaiter().GetResult();
+	public static void Send(this ISender sender, byte[] data, int offset) => sender.SendAsync(data.AsMemory(offset)).AsTask().GetAwaiter().GetResult();
+	public static void Send(this ISender sender, byte[] data, int offset, int count) => sender.SendAsync(data.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
 	public static void Send(this ISender sender, string text, Encoding encoding = null)
 	{
 		if(sender == null)
@@ -48,16 +48,14 @@ public static class SenderExtension
 		if(string.IsNullOrEmpty(text))
 			return;
 
-		if(encoding == null)
-			encoding = Encoding.UTF8;
-
+		encoding ??= Encoding.UTF8;
 		var count = encoding.GetByteCount(text);
 		var buffer = ArrayPool<byte>.Shared.Rent(count);
 
 		try
 		{
 			encoding.GetBytes(text, 0, text.Length, buffer, 0);
-			sender.SendAsync(buffer).GetAwaiter().GetResult();
+			sender.SendAsync(buffer).AsTask().GetAwaiter().GetResult();
 		}
 		finally
 		{
@@ -71,7 +69,7 @@ public static class SenderExtension
 
 		try
 		{
-			sender.SendAsync(data.Memory).GetAwaiter().GetResult();
+			sender.SendAsync(data.Memory).AsTask().GetAwaiter().GetResult();
 		}
 		finally { data.Dispose(); }
 	}
@@ -87,9 +85,7 @@ public static class SenderExtension
 		if(string.IsNullOrEmpty(text))
 			return;
 
-		if(encoding == null)
-			encoding = Encoding.UTF8;
-
+		encoding ??= Encoding.UTF8;
 		var count = encoding.GetByteCount(text);
 		var buffer = ArrayPool<byte>.Shared.Rent(count);
 
@@ -105,7 +101,7 @@ public static class SenderExtension
 	}
 	public static ValueTask SendAsync(this ISender sender, IMemoryOwner<byte> data, CancellationToken cancellation = default)
 	{
-		async ValueTask Awaited(IMemoryOwner<byte> mmemory, ValueTask write)
+		static async ValueTask Awaited(IMemoryOwner<byte> mmemory, ValueTask write)
 		{
 			using(mmemory)
 			{

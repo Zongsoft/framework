@@ -129,7 +129,7 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	#endregion
 
 	#region 入队方法
-	public string Enqueue(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options, CancellationToken.None).GetAwaiter().GetResult();
+	public string Enqueue(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options, CancellationToken.None).AsTask().GetAwaiter().GetResult();
 	public ValueTask<string> EnqueueAsync(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
 	public async ValueTask<string> EnqueueAsync(byte[] data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 	{

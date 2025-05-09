@@ -53,13 +53,7 @@ public abstract class ExecutorBase<TArgument, TResult> : IExecutor<TArgument, TR
 
 	#region 执行方法
 	public TResult Execute(TArgument argument, Collections.Parameters parameters = null) => this.Execute(this.CreateContext(argument, parameters));
-	protected TResult Execute(IExecutorContext<TArgument, TResult> context)
-	{
-		var task = this.ExecuteAsync(context, default);
-		return task.IsCompletedSuccessfully ?
-			task.Result :
-			task.GetAwaiter().GetResult();
-	}
+	protected TResult Execute(IExecutorContext<TArgument, TResult> context) => this.ExecuteAsync(context).AsTask().GetAwaiter().GetResult();
 
 	public ValueTask<TResult> ExecuteAsync(TArgument argument, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, null), cancellation);
 	public ValueTask<TResult> ExecuteAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, parameters), cancellation);
@@ -182,7 +176,7 @@ public abstract class ExecutorBase<TArgument, TResult> : IExecutor<TArgument, TR
 		}
 	}
 	async ValueTask IHandler.HandleAsync(object data, CancellationToken cancellation) => await this.ExecuteAsync(this.CreateContext(data, null), cancellation);
-	async ValueTask IHandler.HandleAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => await this.ExecuteAsync(CreateContext(data, parameters), cancellation);
+	async ValueTask IHandler.HandleAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => await this.ExecuteAsync(this.CreateContext(data, parameters), cancellation);
 	ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(TArgument argument, CancellationToken cancellation) => this.ExecuteAsync(argument, null, cancellation);
 	ValueTask<TResult> IHandler<TArgument, TResult>.HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
 	#endregion

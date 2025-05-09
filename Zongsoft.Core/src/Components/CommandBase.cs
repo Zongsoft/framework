@@ -71,7 +71,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 				throw new ArgumentNullException(nameof(value));
 
 			if(value.Contains('.') || value.Contains('/'))
-				throw new ArgumentException(nameof(value));
+				throw new ArgumentException(null, nameof(value));
 
 			if(string.Equals(_name, value.Trim(), StringComparison.Ordinal))
 				return;
@@ -79,7 +79,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 			_name = value.Trim();
 
 			//激发“PropertyChanged”事件
-			this.OnPropertyChanged(nameof(Name));
+			this.OnPropertyChanged(nameof(this.Name));
 		}
 	}
 
@@ -95,7 +95,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 			_predication = value;
 
 			//激发“PropertyChanged”事件
-			this.OnPropertyChanged("Predication");
+			this.OnPropertyChanged(nameof(this.Predication));
 		}
 	}
 
@@ -115,7 +115,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 			this.OnEnabledChanged(EventArgs.Empty);
 
 			//激发“PropertyChanged”事件
-			this.OnPropertyChanged("Enabled");
+			this.OnPropertyChanged(nameof(this.Enabled));
 		}
 	}
 	#endregion
@@ -168,7 +168,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 		if(executingArgs.Cancel)
 			return executingArgs.Result;
 
-		object result = executingArgs.Result;
+		object result;
 		CommandExecutedEventArgs executedArgs;
 
 		try

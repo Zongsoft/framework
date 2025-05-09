@@ -62,7 +62,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 					context.Output.WriteLine(CommandOutletColor.DarkRed, "Failed");
 			}
 
-			return ValueTask.FromResult<object>(null);
+			return null;
 		}
 	}
 }

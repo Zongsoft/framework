@@ -53,12 +53,7 @@ public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<T
 
 	#region 执行方法
 	public void Execute(TArgument argument, Collections.Parameters parameters = null) => this.Execute(this.CreateContext(argument, parameters));
-	protected void Execute(IExecutorContext<TArgument> context)
-	{
-		var task = this.ExecuteAsync(context, default);
-		if(!task.IsCompletedSuccessfully)
-			task.GetAwaiter().GetResult();
-	}
+	protected void Execute(IExecutorContext<TArgument> context) => this.ExecuteAsync(context).AsTask().GetAwaiter().GetResult();
 
 	public ValueTask ExecuteAsync(TArgument argument, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, null), cancellation);
 	public ValueTask ExecuteAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, parameters), cancellation);
@@ -134,7 +129,7 @@ public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<T
 	};
 
 	ValueTask IHandler.HandleAsync(object data, CancellationToken cancellation) => this.ExecuteAsync(this.CreateContext(data, null), cancellation);
-	ValueTask IHandler.HandleAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(CreateContext(data, parameters), cancellation);
+	ValueTask IHandler.HandleAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(this.CreateContext(data, parameters), cancellation);
 	ValueTask IHandler<TArgument>.HandleAsync(TArgument argument, CancellationToken cancellation) => this.ExecuteAsync(argument, null, cancellation);
 	ValueTask IHandler<TArgument>.HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation) => this.ExecuteAsync(argument, parameters, cancellation);
 	#endregion

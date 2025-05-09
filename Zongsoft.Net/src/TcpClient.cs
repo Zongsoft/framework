@@ -49,14 +49,14 @@ namespace Zongsoft.Net
 		private class HeadlessClient : TcpClient<IMemoryOwner<byte>>, ISender
 		{
 			public HeadlessClient() : base(HeadlessPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
-			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray());
+			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 			public new ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
 		}
 
 		private class HeadedClient : TcpClient<ReadOnlySequence<byte>>, ISender
 		{
 			public HeadedClient() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
-			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray());
+			public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 			public new ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
 
 			protected override TcpClientChannel<ReadOnlySequence<byte>> CreateChannel(SocketConnection connection, EndPoint address) => new SizedChannel(this, connection, address);
@@ -126,7 +126,7 @@ namespace Zongsoft.Net
 		#endregion
 
 		#region 发送方法
-		public void Send(in T package) => this.SendAsync(package).ConfigureAwait(false);
+		public void Send(in T package) => this.SendAsync(package).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		public async ValueTask SendAsync(T package, CancellationToken cancellation = default)
 		{
 			await this.ConnectAsync();
