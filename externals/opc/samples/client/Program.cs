@@ -4,9 +4,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Opc.Ua;
-using Opc.Ua.Client;
-
 using Zongsoft.Common;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
@@ -15,6 +12,8 @@ namespace Zongsoft.Externals.Opc.Samples;
 
 internal class Program
 {
+	private const string CONNECTION_SETTINGS = "server=opc.tcp://localhost:4841/OpcServer;user=admin;password=123456;";
+
 	private static OpcClient _client;
 
 	static void Main(string[] args)
@@ -29,8 +28,8 @@ internal class Program
 
 		executor.Command("connect", (context, cancellation) =>
 		{
-			var url = context.Expression.Arguments.Length == 0 ? "opc.tcp://localhost:4841/OpcServer" : context.Expression.Arguments[0];
-			return _client.ConnectAsync(url, cancellation);
+			var settings = context.Expression.Arguments.Length == 0 ? CONNECTION_SETTINGS : context.Expression.Arguments[0];
+			return _client.ConnectAsync(settings, cancellation);
 		});
 
 		executor.Command("disconnect", (context, cancellation) => _client.DisconnectAsync(cancellation));
@@ -66,16 +65,46 @@ internal class Program
 			return true;
 		});
 
-		executor.Command("get", async (context, cancellation) =>
+		executor.Command("type", async (context, cancellation) =>
 		{
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{
-				var value = await _client.GetValueAsync(context.Expression.Arguments[i], cancellation);
+				var type = await _client.GetDataTypeAsync(context.Expression.Arguments[i], cancellation);
+
+				if(type != null)
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, TypeAlias.GetAlias(type));
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The '{context.Expression.Arguments[i]}' node not found.");
+			}
+		});
+
+		executor.Command("get", async (context, cancellation) =>
+		{
+			if(context.Expression.Arguments.IsEmpty())
+				return;
+
+			if(context.Expression.Arguments.Length == 1)
+			{
+				var value = await _client.GetValueAsync(context.Expression.Arguments[0], cancellation);
 
 				if(value != null)
 					context.Output.WriteLine(CommandOutletColor.DarkGreen, value);
 				else
-					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The '{context.Expression.Arguments[i]}' node not found.");
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The '{context.Expression.Arguments[0]}' node not found.");
+
+				return;
+			}
+
+			(var values, var failures) = await _client.GetValuesAsync(context.Expression.Arguments, cancellation);
+
+			foreach(var failure in failures)
+			{
+				context.Output.WriteLine(CommandOutletColor.DarkRed, failure);
+			}
+
+			foreach(var value in values)
+			{
+				context.Output.WriteLine(CommandOutletColor.DarkGreen, value);
 			}
 		});
 

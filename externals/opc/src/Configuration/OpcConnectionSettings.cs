@@ -43,6 +43,7 @@ public class OpcConnectionSettings : ConnectionSettingsBase<OpcConnectionSetting
 	#endregion
 
 	#region 公共属性
+	[Alias("Server")]
 	[ConnectionSetting(true)]
 	public string Url
 	{
@@ -94,6 +95,7 @@ public class OpcConnectionSettings : ConnectionSettingsBase<OpcConnectionSetting
 		set => this.SetValue(value);
 	}
 
+	[Alias("User")]
 	public string UserName
 	{
 		get => this.GetValue<string>();

@@ -40,18 +40,22 @@ using Opc.Ua.Configuration;
 
 using Zongsoft.Services;
 using Zongsoft.Components;
-using Zongsoft.Communication;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Opc;
 
-public class OpcClient : IDisposable
+public partial class OpcClient : IDisposable
 {
+	#region 事件定义
+	public event EventHandler<SubscriptionArrivedEventArgs> Arrived;
+	public event EventHandler<SubscriptionEventArgs> Subscription;
+	#endregion
+
 	#region 成员字段
 	private Session _session;
 	private ApplicationConfiguration _configuration;
 	private Configuration.OpcConnectionSettings _settings;
 	private ConcurrentDictionary<string, MonitoredItem> _monitoredItems;
+	private SubscriberCollection _subscribers;
 	#endregion
 
 	#region 构造函数
@@ -64,7 +68,20 @@ public class OpcClient : IDisposable
 			ApplicationName = this.Name,
 			ApplicationType = ApplicationType.Client,
 			ProductUri = ApplicationContext.Current?.Name,
+			SecurityConfiguration = new SecurityConfiguration
+			{
+				AutoAcceptUntrustedCertificates = true,
+				AddAppCertToTrustedStore = true,
+				UseValidatedCertificates = false,
+				RejectSHA1SignedCertificates = false,
 
+				ApplicationCertificate = new CertificateIdentifier
+				{
+					StoreType = @"Directory",
+					StorePath = @"certificates",
+					SubjectName = $"CN={name}, DC={System.Net.Dns.GetHostName()}",
+				},
+			},
 			ClientConfiguration = new ClientConfiguration()
 			{
 				DefaultSessionTimeout = 60 * 1000,
@@ -79,6 +96,7 @@ public class OpcClient : IDisposable
 		//验证客户端配置
 		_configuration.Validate(ApplicationType.Client);
 
+		_subscribers = new SubscriberCollection();
 		_monitoredItems = new ConcurrentDictionary<string, MonitoredItem>();
 	}
 	#endregion
@@ -87,16 +105,16 @@ public class OpcClient : IDisposable
 	public string Name { get; }
 	public Configuration.OpcConnectionSettings Settings => _settings;
 	public bool IsConnected => _session?.Connected ?? false;
-	public IEnumerable<Subscription> Subscriptions => _session?.Subscriptions ?? [];
+	public SubscriberCollection Subscribers => _subscribers;
 	#endregion
 
 	#region 公共方法
-	public ValueTask ConnectAsync(string url, CancellationToken cancellation = default)
+	public ValueTask ConnectAsync(string settings, CancellationToken cancellation = default)
 	{
-		if(string.IsNullOrEmpty(url))
-			throw new ArgumentNullException(nameof(url));
+		if(string.IsNullOrEmpty(settings))
+			throw new ArgumentNullException(nameof(settings));
 
-		return this.ConnectAsync(Configuration.OpcConnectionSettingsDriver.Instance.GetSettings($"{nameof(Configuration.OpcConnectionSettings.Url)}={url}"), cancellation);
+		return this.ConnectAsync(Configuration.OpcConnectionSettingsDriver.Instance.GetSettings(settings), cancellation);
 	}
 
 	public async ValueTask ConnectAsync(Configuration.OpcConnectionSettings settings, CancellationToken cancellation = default)
@@ -116,6 +134,7 @@ public class OpcClient : IDisposable
 			name = string.IsNullOrEmpty(settings.Instance) ? settings.Client : $"{settings.Client}:{settings.Instance}";
 
 		var locales = string.IsNullOrEmpty(settings.Locales) ? ["en"] : settings.Locales.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+		var identity = settings.GetIdentity();
 
 		_session = await Session.Create(
 			_configuration,
@@ -123,16 +142,16 @@ public class OpcClient : IDisposable
 			false,
 			name,
 			(uint)settings.Timeout.TotalMilliseconds,
-			settings.GetIdentity(),
+			identity,
 			locales,
 			cancellation);
 
 		_settings = settings;
-		_session.KeepAliveInterval = (int)settings.Heartbeat.TotalMilliseconds;
 		_session.DeleteSubscriptionsOnClose = true;
+		_session.KeepAliveInterval = (int)settings.Heartbeat.TotalMilliseconds;
 
 		if(!_session.Connected)
-			await _session.OpenAsync(this.Name, new UserIdentity(), cancellation);
+			await _session.OpenAsync(name, identity, cancellation);
 	}
 
 	public async ValueTask DisconnectAsync(CancellationToken cancellation = default)
@@ -141,8 +160,11 @@ public class OpcClient : IDisposable
 		if(session == null || !session.Connected)
 			return;
 
-		if(session.Subscriptions != null)
-			await session.RemoveSubscriptionsAsync(session.Subscriptions, cancellation);
+		try
+		{
+			await this.UnsubscribeAsync(cancellation);
+		}
+		catch { }
 
 		await session.CloseAsync(cancellation);
 	}
@@ -152,7 +174,40 @@ public class OpcClient : IDisposable
 		if(string.IsNullOrEmpty(identifier))
 			throw new ArgumentNullException(nameof(identifier));
 
-		return ValueTask.FromResult(_session.NodeCache.Exists(NodeId.Parse(identifier)));
+		var session = this.GetSession();
+		return ValueTask.FromResult(session.NodeCache.Exists(NodeId.Parse(identifier)));
+	}
+
+	public async ValueTask<Type> GetDataTypeAsync(string identifier, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(identifier))
+			throw new ArgumentNullException(nameof(identifier));
+
+		var id = NodeId.Parse(identifier);
+		var session = this.GetSession();
+
+		var request = new RequestHeader()
+		{
+			Timestamp = DateTime.UtcNow,
+		};
+
+		var response = await session.ReadAsync(
+			request, 0, TimestampsToReturn.Server,
+			[
+				new ReadValueId()
+				{
+					NodeId = id,
+					AttributeId = Attributes.DataType,
+				}
+			], cancellation);
+
+		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
+			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to get the data type of the “{identifier}” node.");
+
+		if(response.Results.Count < 1)
+			return null;
+
+		return response.Results[0].GetDataType();
 	}
 
 	public async ValueTask<object> GetValueAsync(string identifier, CancellationToken cancellation = default)
@@ -161,7 +216,8 @@ public class OpcClient : IDisposable
 			throw new ArgumentNullException(nameof(identifier));
 
 		var id = NodeId.Parse(identifier);
-		var result = await ReadValueAsync(_session, id, cancellation);
+		var session = this.GetSession();
+		var result = await ReadValueAsync(session, id, cancellation);
 
 		if(result == null)
 			return null;
@@ -192,7 +248,8 @@ public class OpcClient : IDisposable
 		if(identifiers == null)
 			throw new ArgumentNullException(nameof(identifiers));
 
-		(var result, var failures) = await _session.ReadValuesAsync([.. identifiers.Select(NodeId.Parse)], cancellation);
+		var session = this.GetSession();
+		(var result, var failures) = await session.ReadValuesAsync([.. identifiers.Select(NodeId.Parse)], cancellation);
 
 		return (
 			result
@@ -209,12 +266,13 @@ public class OpcClient : IDisposable
 		if(string.IsNullOrEmpty(identifier))
 			throw new ArgumentNullException(nameof(identifier));
 
+		var session = this.GetSession();
 		var request = new RequestHeader()
 		{
 			Timestamp = DateTime.UtcNow
 		};
 
-		var response = await _session.WriteAsync(
+		var response = await session.WriteAsync(
 			request,
 			[
 				new WriteValue()
@@ -260,7 +318,8 @@ public class OpcClient : IDisposable
 			Value = new DataValue(new Variant(entry.Value)),
 		});
 
-		var response = await _session.WriteAsync(request, [..nodes], cancellation);
+		var session = this.GetSession();
+		var response = await session.WriteAsync(request, [..nodes], cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
 			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to write node value.");
@@ -278,7 +337,8 @@ public class OpcClient : IDisposable
 			Timestamp = DateTime.UtcNow,
 		};
 
-		var root = await _session.NodeCache.FindAsync(ObjectIds.ObjectsFolder, cancellation);
+		var session = this.GetSession();
+		var root = await session.NodeCache.FindAsync(ObjectIds.ObjectsFolder, cancellation);
 
 		var folderNode = new AddNodesItem()
 		{
@@ -297,7 +357,7 @@ public class OpcClient : IDisposable
 			}),
 		};
 
-		var response = await _session.AddNodesAsync(request, [folderNode], cancellation);
+		var response = await session.AddNodesAsync(request, [folderNode], cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
 			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to create the folder node.");
@@ -348,7 +408,8 @@ public class OpcClient : IDisposable
 			}),
 		};
 
-		var response = await _session.AddNodesAsync(request, [variableNode], cancellation);
+		var session = this.GetSession();
+		var response = await session.AddNodesAsync(request, [variableNode], cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
 			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to create the variable node.");
@@ -373,7 +434,8 @@ public class OpcClient : IDisposable
 		if(identifiers == null)
 			throw new ArgumentNullException(nameof(identifiers));
 
-		var subscription = new Subscription(_session.DefaultSubscription)
+		var session = this.GetSession();
+		var subscription = new Subscription(session.DefaultSubscription)
 		{
 			Handle = this,
 			PublishingEnabled = true,
@@ -409,7 +471,7 @@ public class OpcClient : IDisposable
 
 		subscription.AddItems(items);
 
-		if(subscription.MonitoredItemCount > 0 && _session.AddSubscription(subscription))
+		if(subscription.MonitoredItemCount > 0 && session.AddSubscription(subscription))
 		{
 			await subscription.CreateAsync(cancellation);
 			await subscription.ApplyChangesAsync(cancellation);
@@ -515,20 +577,54 @@ public class OpcClient : IDisposable
 	#region 事件处理
 	private void Subscription_StateChanged(Subscription subscription, SubscriptionStateChangedEventArgs args)
 	{
-		Console.WriteLine($"[Subscription.StateChanged] {args.Status}");
+		if(args.Status == SubscriptionChangeMask.None)
+			return;
+
+		if((args.Status & SubscriptionChangeMask.Created) == SubscriptionChangeMask.Created)
+		{
+			var subscriber = new Subscriber(subscription);
+			_subscribers.Add(subscriber);
+			this.Subscription?.Invoke(this, new SubscriptionEventArgs(subscriber, SubscriptionReason.Created));
+		}
+		else if((args.Status & SubscriptionChangeMask.Deleted) == SubscriptionChangeMask.Deleted)
+		{
+			if(_subscribers.TryRemove(subscription.Id.ToString(), out var subscriber))
+				this.Subscription?.Invoke(this, new SubscriptionEventArgs(subscriber, SubscriptionReason.Deleted));
+		}
+		else if((args.Status & SubscriptionChangeMask.Modified) == SubscriptionChangeMask.Modified)
+		{
+			if(_subscribers.TryGetValue(subscription.Id.ToString(), out var subscriber))
+				this.Subscription?.Invoke(this, new SubscriptionEventArgs(subscriber, SubscriptionReason.Changed));
+		}
+		else
+		{
+			if(_subscribers.TryGetValue(subscription.Id.ToString(), out var subscriber))
+				this.Subscription?.Invoke(this, new SubscriptionEventArgs(subscriber, SubscriptionReason.Changed));
+		}
 	}
 
 	private void Subscription_PublishStatusChanged(Subscription subscription, PublishStateChangedEventArgs args)
 	{
-		Console.WriteLine($"[Subscription.PublishStatusChanged] {args.Status}");
 	}
 
 	private void MonitoredItem_Notification(MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs args)
 	{
-		if(args.NotificationValue is MonitoredItemNotification notification)
-			Console.WriteLine($"[Notification] {monitoredItem.StartNodeId} => {notification.Value}");
-		else
-			Console.WriteLine($"[Notification] {monitoredItem.StartNodeId} => {args.NotificationValue}");
+		if(_subscribers.TryGetValue(monitoredItem.Subscription?.Id.ToString(), out var subscriber) &&
+			subscriber.Entries.TryGetValue(monitoredItem.StartNodeId.ToString(), out var entry))
+		{
+			var value = args.NotificationValue is MonitoredItemNotification notification ?
+				notification.Value.Value :
+				args.NotificationValue;
+
+			this.Arrived?.Invoke(this, new SubscriptionArrivedEventArgs(subscriber, entry, value));
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private Session GetSession()
+	{
+		return _session ?? throw new InvalidOperationException($"The current client is not connected.");
 	}
 	#endregion
 

@@ -232,8 +232,6 @@ partial class OpcServer
 		{
 			var authenticator = _server.Authenticator;
 
-			args.IdentityValidationError = new ServiceResult(StatusCodes.BadSecurityChecksFailed);
-
 			if(authenticator == null)
 				return;
 

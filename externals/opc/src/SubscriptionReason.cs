@@ -31,10 +31,10 @@ using System;
 
 namespace Zongsoft.Externals.Opc;
 
-public class Metric
+public enum SubscriptionReason
 {
-	public string Name { get; set; }
-	public Type   Type { get; set; }
-	public string Label { get; set; }
-	public string Description { get; set; }
+	Created,
+	Changed,
+	Deleted,
+	Transferred,
 }

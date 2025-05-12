@@ -40,7 +40,7 @@ namespace Zongsoft.Externals.Opc;
 
 internal static class Utility
 {
-	public static NodeId GetDataType(Type type)
+	public static NodeId GetDataType(this Type type)
 	{
 		if(type == null)
 			throw new ArgumentNullException(nameof(type));
@@ -75,6 +75,53 @@ internal static class Utility
 			_ => DataTypeIds.ObjectTypeNode,
 		};
 	}
+
+	public static Type GetDataType(this DataValue data)
+	{
+		if(data == null || data.Value == null)
+			return null;
+
+		if(data.WrappedValue.TypeInfo.BuiltInType == BuiltInType.NodeId)
+		{
+			var node = data.GetValue<NodeId>(null);
+
+			if(node != null)
+			{
+				var type = Common.Convert.ConvertValue(node.Identifier, BuiltInType.Null);
+				return GetDataType(type, data.WrappedValue.TypeInfo.ValueRank);
+			}
+		}
+
+		return null;
+	}
+
+	public static Type GetDataType(this BuiltInType type, int rank) => type switch
+	{
+		BuiltInType.Null => null,
+		BuiltInType.Boolean => rank == ValueRanks.Scalar ? typeof(bool) : typeof(bool[]),
+		BuiltInType.Byte => rank == ValueRanks.Scalar ? typeof(byte) : typeof(byte[]),
+		BuiltInType.SByte => rank == ValueRanks.Scalar ? typeof(sbyte) : typeof(sbyte[]),
+		BuiltInType.Int16 => rank == ValueRanks.Scalar ? typeof(short) : typeof(short[]),
+		BuiltInType.Int32 => rank == ValueRanks.Scalar ? typeof(int) : typeof(int[]),
+		BuiltInType.Int64 => rank == ValueRanks.Scalar ? typeof(long) : typeof(long[]),
+		BuiltInType.UInt16 => rank == ValueRanks.Scalar ? typeof(ushort) : typeof(ushort[]),
+		BuiltInType.UInt32 => rank == ValueRanks.Scalar ? typeof(uint) : typeof(uint[]),
+		BuiltInType.UInt64 => rank == ValueRanks.Scalar ? typeof(ulong) : typeof(ulong[]),
+		BuiltInType.Float => rank == ValueRanks.Scalar ? typeof(float) : typeof(float[]),
+		BuiltInType.Double => rank == ValueRanks.Scalar ? typeof(double) : typeof(double[]),
+		BuiltInType.Integer => rank == ValueRanks.Scalar ? typeof(int) : typeof(int[]),
+		BuiltInType.UInteger => rank == ValueRanks.Scalar ? typeof(uint) : typeof(uint[]),
+		BuiltInType.Number => rank == ValueRanks.Scalar ? typeof(double) : typeof(double[]),
+		BuiltInType.String => rank == ValueRanks.Scalar ? typeof(string) : typeof(string[]),
+		BuiltInType.ByteString => rank == ValueRanks.Scalar ? typeof(string) : typeof(string[]),
+		BuiltInType.LocalizedText => rank == ValueRanks.Scalar ? typeof(string) : typeof(string[]),
+		BuiltInType.DateTime => rank == ValueRanks.Scalar ? typeof(DateTime) : typeof(DateTime[]),
+		BuiltInType.Guid => rank == ValueRanks.Scalar ? typeof(Guid) : typeof(Guid[]),
+		BuiltInType.Enumeration => rank == ValueRanks.Scalar ? typeof(Enum) : typeof(Enum[]),
+		BuiltInType.ExtensionObject => rank == ValueRanks.Scalar ? typeof(object) : typeof(object[]),
+		BuiltInType.StatusCode => rank == ValueRanks.Scalar ? typeof(string) : typeof(string[]),
+		_ => typeof(object),
+	};
 
 	public static IUserIdentity GetIdentity(this Configuration.OpcConnectionSettings settings)
 	{

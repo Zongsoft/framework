@@ -28,16 +28,16 @@ internal class Commands
 			.AppendLine(CommandOutletColor.DarkGray, ")")
 			.AppendLine(CommandOutletColor.DarkYellow, client.Settings?.ToString());
 
-		if(client.Subscriptions.Any())
+		if(client.Subscribers.Count > 0)
 		{
 			int index = 0;
 
 			content.AppendLine("[Subscriptions]");
 			content.AppendLine(" ------------- ");
 
-			foreach(var subscription in client.Subscriptions)
+			foreach(var subscriber in client.Subscribers)
 			{
-				PrintSubscription(content, subscription, index++);
+				PrintSubscription(content, subscriber.Subscription as Subscription, index++);
 			}
 		}
 
