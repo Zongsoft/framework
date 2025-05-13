@@ -12,7 +12,7 @@ namespace Zongsoft.Externals.Opc.Samples;
 
 internal class Program
 {
-	private const string CONNECTION_SETTINGS = "server=opc.tcp://localhost:4841/OpcServer;user=admin;password=123456;";
+	private const string CONNECTION_SETTINGS = "Server=opc.tcp://localhost:4841/OpcServer;UserName=program;Password=xxxxxx;";
 
 	private static OpcClient _client;
 
@@ -87,10 +87,22 @@ internal class Program
 			{
 				var value = await _client.GetValueAsync(context.Expression.Arguments[0], cancellation);
 
-				if(value != null)
-					context.Output.WriteLine(CommandOutletColor.DarkGreen, value);
-				else
+				if(value == null)
+				{
 					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The '{context.Expression.Arguments[0]}' node not found.");
+					return;
+				}
+
+				if(value is byte[] binary)
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, System.Convert.ToHexString(binary));
+				else if(value is Array array)
+					for(int i = 0; i < array.Length; i++)
+					{
+						context.Output.Write(CommandOutletColor.DarkGray, $"[{i}] ");
+						context.Output.WriteLine(CommandOutletColor.DarkGreen, array.GetValue(i));
+					}
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, value);
 
 				return;
 			}
@@ -110,15 +122,39 @@ internal class Program
 
 		executor.Command("set", async (context, cancellation) =>
 		{
-			for(int i = 0; i < context.Expression.Arguments.Length; i++)
-			{
-				var succeed = await _client.SetValueAsync(context.Expression.Arguments[i], context.Expression.Arguments[++i], cancellation);
+			if(context.Expression.Arguments.Length < 2)
+				throw new CommandException($"Missing required argument of the command.");
 
-				if(succeed)
-					context.Output.WriteLine(CommandOutletColor.DarkGreen, "The set operation was successful.");
-				else
-					context.Output.WriteLine(CommandOutletColor.DarkRed, "The set operation failed.");
+			//获取指定键对应的数据类型
+			var type = await _client.GetDataTypeAsync(context.Expression.Arguments[0], cancellation) ??
+				throw new CommandException($"The specified '{context.Expression.Arguments[0]}' does not exist, or its data type is not available.");
+
+			object value = null;
+
+			if(type.IsArray)
+			{
+				type = type.GetElementType();
+				value = Array.CreateInstance(type, context.Expression.Arguments.Length - 1);
+
+				for(int i = 1; i < context.Expression.Arguments.Length; i++)
+				{
+					((Array)value).SetValue(Common.Convert.ConvertValue(context.Expression.Arguments[i], type), i - 1);
+				}
 			}
+			else
+			{
+				if(context.Expression.Arguments.Length > 2)
+					throw new CommandException($"Too many command arguments.");
+
+				value = Common.Convert.ConvertValue(context.Expression.Arguments[1], type);
+			}
+
+			var succeed = await _client.SetValueAsync(context.Expression.Arguments[0], value, cancellation);
+
+			if(succeed)
+				context.Output.WriteLine(CommandOutletColor.DarkGreen, "The set operation was successful.");
+			else
+				context.Output.WriteLine(CommandOutletColor.DarkRed, "The set operation failed.");
 		});
 
 		executor.Command("folder", async (context, cancellation) =>

@@ -326,7 +326,7 @@ partial class OpcServer
 				type = underlyingType;
 
 			var elementType = TypeExtension.GetElementType(type);
-			var variable = this.CreateVariable(null, name, null, label, Utility.GetDataType(elementType ?? type), elementType == null ? ValueRanks.Scalar : ValueRanks.OneOrMoreDimensions);
+			var variable = this.CreateVariable(null, name, null, label, Utility.GetDataType(elementType ?? type, out var rank), rank);
 			this.AddPredefinedNode(this.SystemContext, variable);
 			return variable;
 		}
@@ -406,8 +406,8 @@ partial class OpcServer
 				SymbolicName = property.Name,
 				BrowseName = property.Name,
 				DisplayName = property.Name,
-				DataType = Utility.GetDataType(elementType ?? propertyType),
-				ValueRank = elementType == null ? ValueRanks.Scalar : ValueRanks.OneOrMoreDimensions,
+				DataType = Utility.GetDataType(elementType ?? propertyType, out var rank),
+				ValueRank = rank,
 				AccessLevel = AccessLevels.CurrentRead,
 				UserAccessLevel = AccessLevels.CurrentRead,
 				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,

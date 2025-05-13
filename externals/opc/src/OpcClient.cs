@@ -198,16 +198,28 @@ public partial class OpcClient : IDisposable
 				{
 					NodeId = id,
 					AttributeId = Attributes.DataType,
-				}
+				},
+				new ReadValueId()
+				{
+					NodeId = id,
+					AttributeId = Attributes.ValueRank,
+				},
+				new ReadValueId()
+				{
+					NodeId = id,
+					AttributeId = Attributes.ArrayDimensions,
+				},
 			], cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
 			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to get the data type of the “{identifier}” node.");
 
-		if(response.Results.Count < 1)
+		if(response.Results.Count < 2)
 			return null;
 
-		return response.Results[0].GetDataType();
+		var elementType = response.Results[0].GetDataType();
+		var rank = response.Results[1].GetValueOrDefault<int>();
+		return rank > 0 ? elementType.MakeArrayType(rank) : elementType;
 	}
 
 	public async ValueTask<object> GetValueAsync(string identifier, CancellationToken cancellation = default)
@@ -395,9 +407,9 @@ public partial class OpcClient : IDisposable
 			{
 				DisplayName = label,
 				Description = description,
-				DataType = Utility.GetDataType(type),
-				ValueRank = ValueRanks.Scalar,
-				ArrayDimensions = new UInt32Collection(),
+				DataType = Utility.GetDataType(type, out var rank),
+				ValueRank = rank,
+				ArrayDimensions = [],
 				AccessLevel = AccessLevels.CurrentReadOrWrite,
 				UserAccessLevel = AccessLevels.CurrentReadOrWrite,
 				MinimumSamplingInterval = 0,
