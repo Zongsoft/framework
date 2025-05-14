@@ -42,12 +42,13 @@ namespace Zongsoft.Externals.Opc;
 public class SubscriberCollection : IReadOnlyCollection<Subscriber>
 {
 	#region 成员字段
-	private readonly ConcurrentDictionary<string, Subscriber> _subscribers = new();
+	private readonly ConcurrentDictionary<uint, Subscriber> _subscribers = new();
 	#endregion
 
 	#region 公共方法
 	public int Count => _subscribers.Count;
-	public bool TryGetValue(string key, out Subscriber value) => _subscribers.TryGetValue(key, out value);
+	public bool TryGetValue(int id, out Subscriber value) => _subscribers.TryGetValue((uint)id, out value);
+	public bool TryGetValue(uint id, out Subscriber value) => _subscribers.TryGetValue(id, out value);
 
 	public async ValueTask UnsubscribeAsync(CancellationToken cancellation = default)
 	{
@@ -71,22 +72,18 @@ public class SubscriberCollection : IReadOnlyCollection<Subscriber>
 		if(subscriber.Subscription is not Subscription subscription)
 			throw new ArgumentException(nameof(subscriber));
 
+		if(subscription.Created)
+			throw new InvalidOperationException($"The specified '{subscription.Id}' subscription has been registered.");
+
+		//从服务器中创建指定的订阅
+		await subscription.CreateAsync(cancellation);
+
 		if(_subscribers.TryAdd(subscriber.Identifier, subscriber))
 		{
 			//当订阅者被注销则将其从订阅者集合中删除
-			subscriber.Disposed.RegisterChangeCallback(state => _subscribers.TryRemove((string)state, out _), subscriber.Identifier);
+			subscriber.Disposed.RegisterChangeCallback(state => _subscribers.TryRemove((uint)state, out _), subscriber.Identifier);
 
-			try
-			{
-				await subscription.CreateAsync(cancellation);
-				await subscription.ApplyChangesAsync(cancellation);
-
-				return true;
-			}
-			catch
-			{
-				_subscribers.TryRemove(subscriber.Identifier, out _);
-			}
+			return true;
 		}
 
 		return false;

@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Reflection;
 
-using Opc.Ua;
-using Opc.Ua.Client;
-
-using Zongsoft.Services;
+using Zongsoft.Common;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
 
@@ -35,83 +29,64 @@ internal class Commands
 			foreach(var subscriber in client.Subscribers)
 			{
 				context.Output.WriteLine();
-				PrintSubscription(content, subscriber.Subscription as Subscription, index++);
+				PrintSubscriber(content, subscriber, index++);
 			}
 		}
 
 		context.Output.Write(content);
 	}
 
-	private static void PrintSubscription(CommandOutletContent content, Subscription subscription, int index)
+	private static void PrintSubscriber(CommandOutletContent content, Subscriber subscriber, int index)
 	{
-		if(subscription == null)
+		if(subscriber == null)
 			return;
 
 		content.Append(CommandOutletColor.DarkMagenta, $"#{index}")
-			.Append(CommandOutletColor.DarkCyan, $" [{subscription.Id}]")
-			.Append(CommandOutletColor.DarkYellow, subscription.DisplayName)
+			.Append(CommandOutletColor.DarkCyan, $" [{subscriber.Identifier}]")
+			.Append(CommandOutletColor.DarkYellow, subscriber.Description)
 			.Append(CommandOutletColor.DarkGray, " (")
-			.Append(subscription.Created ? CommandOutletColor.Green : CommandOutletColor.Magenta, subscription.Created ? "Created" : "Uncreated")
-			.AppendLine(CommandOutletColor.DarkGray, ")")
-			.AppendLine(CommandOutletColor.Gray, "{")
+			.Append(subscriber.Registered ? CommandOutletColor.Green : CommandOutletColor.Magenta, subscriber.Registered ? "Registered" : "Unregistered")
+			.AppendLine(CommandOutletColor.DarkGray, ")");
 
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.Handle)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.Handle == null ? "<NULL>" : subscription.Handle.ToString())
+		for(int i = 0; i < subscriber.Entries.Count; i++)
+		{
+			content
+				.Append(CommandOutletColor.DarkGray, $"\t[{i + 1}] ")
+				.Append(CommandOutletColor.DarkGreen, subscriber[i].Name);
 
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.CurrentLifetimeCount)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.CurrentLifetimeCount.ToString())
+			if(subscriber[i].Type == null)
+				content.AppendLine();
+			else
+				content
+					.Append(CommandOutletColor.DarkGray, "@")
+					.AppendLine(CommandOutletColor.DarkYellow, TypeAlias.GetAlias(subscriber[i].Type));
+		}
 
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.CurrentKeepAliveCount)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.CurrentKeepAliveCount.ToString())
+		if(subscriber.Subscription != null)
+		{
+			content.AppendLine(CommandOutletColor.Gray, "{");
 
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.CurrentPriority)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.CurrentPriority.ToString())
+			//获取订阅对象的公共实例属性集
+			var properties = subscriber.Subscription.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.CurrentPublishingEnabled)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.CurrentPublishingEnabled.ToString())
+			foreach(var property in properties)
+			{
+				if(!property.CanRead || property.GetIndexParameters().Length > 0)
+					continue;
 
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.CurrentPublishingInterval)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.CurrentPublishingInterval.ToString())
+				content.Append(CommandOutletColor.DarkGreen, $"\t{property.Name}")
+					   .Append(CommandOutletColor.DarkGray, " : ")
+					   .Append(CommandOutletColor.DarkCyan, $"({TypeAlias.GetAlias(property.PropertyType)}) ");
 
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.KeepAliveCount)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.KeepAliveCount.ToString())
+				var value = property.GetValue(subscriber.Subscription);
 
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.LastNotification)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.LastNotification?.ToString())
+				if(value == null)
+					content.AppendLine(CommandOutletColor.DarkGray, "NULL");
+				else
+					content.AppendLine(CommandOutletColor.DarkYellow, value.ToString());
+			}
 
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.LastNotificationTime)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.LastNotificationTime.ToString())
-
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.LifetimeCount)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.LifetimeCount.ToString())
-
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.MaxMessageCount)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.MaxMessageCount.ToString())
-
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.MaxNotificationsPerPublish)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.MaxNotificationsPerPublish.ToString())
-
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.MinLifetimeInterval)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.MinLifetimeInterval.ToString())
-
-			.Append(CommandOutletColor.Blue, $"\t{nameof(subscription.NotificationCount)}")
-			.Append(CommandOutletColor.DarkGray, ":")
-			.AppendLine(CommandOutletColor.DarkYellow, subscription.NotificationCount.ToString())
-
-			.AppendLine(CommandOutletColor.Gray, "}");
-
+			content.AppendLine(CommandOutletColor.Gray, "}");
+		}
 	}
 }

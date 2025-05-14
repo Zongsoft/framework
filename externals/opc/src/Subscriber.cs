@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -38,7 +39,7 @@ using Opc.Ua.Client;
 
 namespace Zongsoft.Externals.Opc;
 
-public class Subscriber : IEquatable<Subscriber>, IAsyncDisposable
+public class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber.Entry>, IAsyncDisposable
 {
 	#region 成员字段
 	private Session _session;
@@ -67,7 +68,6 @@ public class Subscriber : IEquatable<Subscriber>, IAsyncDisposable
 		_subscription.StateChanged += this.Subscription_StateChanged;
 		_subscription.PublishStatusChanged += this.Subscription_PublishStatusChanged;
 
-		this.Identifier = _subscription.Id.ToString();
 		this.Entries = new EntryCollection(this);
 	}
 	#endregion
@@ -75,15 +75,20 @@ public class Subscriber : IEquatable<Subscriber>, IAsyncDisposable
 	#region 公共属性
 	public object Subscription => _subscription;
 	public SubscriberOptions Options { get; }
-	public string Identifier { get; }
+	public uint Identifier => _subscription?.Id ?? 0;
+	public string Description { get; set; }
+	public bool Registered => _subscription?.Created ?? false;
 	public EntryCollection Entries { get; }
+
+	public Entry this[int index] => this.Entries[index];
+	public Entry this[string name] => this.Entries[name];
 	#endregion
 
 	#region 重写方法
-	public bool Equals(Subscriber other) => other is not null && string.Equals(this.Identifier, other.Identifier, StringComparison.OrdinalIgnoreCase);
+	public bool Equals(Subscriber other) => other is not null && this.Identifier == other.Identifier;
 	public override bool Equals(object obj) => this.Equals(obj as Subscriber);
 	public override int GetHashCode() => HashCode.Combine(this.Identifier);
-	public override string ToString() => this.Identifier;
+	public override string ToString() => $"{nameof(Subscriber)}#{this.Identifier}";
 	#endregion
 
 	#region 取消订阅
@@ -165,6 +170,11 @@ public class Subscriber : IEquatable<Subscriber>, IAsyncDisposable
 	}
 	#endregion
 
+	#region 枚举遍历
+	public IEnumerator<Entry> GetEnumerator() => this.Entries.GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	#endregion
+
 	public class Entry : IEquatable<Entry>
 	{
 		#region 构造函数
@@ -192,7 +202,7 @@ public class Subscriber : IEquatable<Subscriber>, IAsyncDisposable
 		public bool Equals(Entry other) => other is not null && string.Equals(this.Name, other.Name);
 		public override bool Equals(object obj) => this.Equals(obj as Entry);
 		public override int GetHashCode() => HashCode.Combine(this.Name);
-		public override string ToString() => this.Name;
+		public override string ToString() => this.Type == null ? this.Name : $"{this.Name}@{Common.TypeAlias.GetAlias(this.Type)}";
 		#endregion
 	}
 

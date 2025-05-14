@@ -39,7 +39,28 @@ internal class Program
 			if(context.Expression.Arguments.Length == 0)
 				throw new CommandException($"Missing required arguments of the subscribe command.");
 
-			var subscriber = await _client.SubscribeAsync(context.Expression.Arguments, OnConsume, cancellation);
+			Subscriber subscriber = null;
+
+			if(context.Expression.Options.TryGetValue<uint>("s", out var id))
+			{
+				if(!_client.Subscribers.TryGetValue(id, out subscriber))
+				{
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{id}' subscription does not exist.");
+					return null;
+				}
+
+				foreach(var identifier in context.Expression.Arguments)
+					subscriber.Entries.Add(identifier);
+
+				return subscriber;
+			}
+			else
+			{
+				subscriber = await _client.SubscribeAsync(context.Expression.Arguments, OnConsume, cancellation);
+				context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The '#{subscriber.Identifier}' subscription was successful.");
+			}
+
+			return subscriber;
 		});
 
 		executor.Command("unsub", async (context, cancellation) =>
@@ -52,13 +73,20 @@ internal class Program
 
 			foreach(var key in context.Expression.Arguments)
 			{
-				if(_client.Subscribers.TryGetValue(key, out var subscriber))
+				if(!uint.TryParse(key, out var id))
 				{
-					await subscriber.DisposeAsync();
-					context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The specified '{key}' unsubscribed successfully.");
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{key}' subscription identifier is an illegal integer.");
+					continue;
 				}
-				else
+
+				if(!_client.Subscribers.TryGetValue(id, out var subscriber))
+				{
 					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{key}' subscription does not exist.");
+					continue;
+				}
+
+				await subscriber.DisposeAsync();
+				context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The specified '{key}' unsubscribed successfully.");
 			}
 		});
 
