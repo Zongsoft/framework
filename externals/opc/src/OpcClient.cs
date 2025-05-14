@@ -46,22 +46,21 @@ namespace Zongsoft.Externals.Opc;
 public partial class OpcClient : IDisposable
 {
 	#region 事件定义
-	public event EventHandler<SubscriptionArrivedEventArgs> Arrived;
-	public event EventHandler<SubscriptionEventArgs> Subscription;
+	public event EventHandler<HeartbeatEventArgs> Heartbeat;
 	#endregion
 
 	#region 成员字段
 	private Session _session;
+	private OpcClientState _state;
 	private ApplicationConfiguration _configuration;
 	private Configuration.OpcConnectionSettings _settings;
-	private ConcurrentDictionary<string, MonitoredItem> _monitoredItems;
 	private SubscriberCollection _subscribers;
 	#endregion
 
 	#region 构造函数
 	public OpcClient(string name = null)
 	{
-		this.Name = string.IsNullOrEmpty(name) ? "Opc Client" : name;
+		this.Name = string.IsNullOrEmpty(name) ? "Opc.UA Client" : name;
 
 		_configuration = new ApplicationConfiguration()
 		{
@@ -97,7 +96,6 @@ public partial class OpcClient : IDisposable
 		_configuration.Validate(ApplicationType.Client);
 
 		_subscribers = new SubscriberCollection();
-		_monitoredItems = new ConcurrentDictionary<string, MonitoredItem>();
 	}
 	#endregion
 
@@ -105,6 +103,7 @@ public partial class OpcClient : IDisposable
 	public string Name { get; }
 	public Configuration.OpcConnectionSettings Settings => _settings;
 	public bool IsConnected => _session?.Connected ?? false;
+	public OpcClientState State => _state ?? OpcClientState.Empty;
 	public SubscriberCollection Subscribers => _subscribers;
 	#endregion
 
@@ -136,7 +135,11 @@ public partial class OpcClient : IDisposable
 		var locales = string.IsNullOrEmpty(settings.Locales) ? ["en"] : settings.Locales.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 		var identity = settings.GetIdentity();
 
-		_session = await Session.Create(
+		//断开原有会话
+		await this.DisconnectAsync(cancellation);
+
+		//创建新的会话
+		var session = await Session.Create(
 			_configuration,
 			endpoint,
 			false,
@@ -146,12 +149,22 @@ public partial class OpcClient : IDisposable
 			locales,
 			cancellation);
 
+		//保存当前连接设置
 		_settings = settings;
-		_session.DeleteSubscriptionsOnClose = true;
-		_session.KeepAliveInterval = (int)settings.Heartbeat.TotalMilliseconds;
 
-		if(!_session.Connected)
-			await _session.OpenAsync(name, identity, cancellation);
+		//构建会话状态信息
+		_state = new OpcClientState(session);
+
+		//设置会话相关信息
+		session.DeleteSubscriptionsOnClose = true;
+		session.KeepAliveInterval = (int)settings.Heartbeat.TotalMilliseconds;
+		session.KeepAlive += this.Session_KeepAlive;
+
+		if(!session.Connected)
+			await session.OpenAsync(name, identity, cancellation);
+
+		//保存当前为新建会话
+		_session = session;
 	}
 
 	public async ValueTask DisconnectAsync(CancellationToken cancellation = default)
@@ -162,11 +175,15 @@ public partial class OpcClient : IDisposable
 
 		try
 		{
-			await this.UnsubscribeAsync(cancellation);
+			foreach(var subscriber in _subscribers)
+				await subscriber.DisposeAsync();
 		}
 		catch { }
 
-		await session.CloseAsync(cancellation);
+		var status = await session.CloseAsync(cancellation);
+
+		if(StatusCode.IsGood(status))
+			session.KeepAlive -= this.Session_KeepAlive;
 	}
 
 	public ValueTask<bool> ExistsAsync(string identifier, CancellationToken cancellation = default)
@@ -255,22 +272,28 @@ public partial class OpcClient : IDisposable
 		}
 	}
 
-	public async ValueTask<(IEnumerable<object> result, IEnumerable<Failure> failures)> GetValuesAsync(IEnumerable<string> identifiers, CancellationToken cancellation = default)
+	public async IAsyncEnumerable<KeyValuePair<string, object>> GetValuesAsync(IEnumerable<string> identifiers, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
 		if(identifiers == null)
 			throw new ArgumentNullException(nameof(identifiers));
 
 		var session = this.GetSession();
-		(var result, var failures) = await session.ReadValuesAsync([.. identifiers.Select(NodeId.Parse)], cancellation);
+		NodeId[] nodes = [..identifiers.Select(NodeId.Parse)];
 
-		return (
-			result
-				.Where(entry => StatusCode.IsGood(entry.StatusCode))
-				.Select(entry => entry.Value is ExtensionObject extension ? extension.Body : entry.Value),
-			failures
-				.Where(failure => StatusCode.IsBad(failure.StatusCode))
-				.Select(failure => new Failure((int)failure.Code, failure.SymbolicId, failure.ToString()))
-		);
+		(var result, var failures) = await session.ReadValuesAsync(nodes, cancellation);
+
+		if(result.Count != nodes.Length)
+			yield break;
+
+		for(int i = 0; i < nodes.Length; i++)
+		{
+			var entry = result[i];
+
+			if(StatusCode.IsGood(entry.StatusCode))
+				yield return new(nodes[i].ToString(), entry.Value is ExtensionObject extension ? extension.Body : entry.Value);
+			else
+				yield return new(nodes[i].ToString(), new Failure((int)entry.StatusCode.Code, entry.StatusCode.ToString()));
+		}
 	}
 
 	public async ValueTask<bool> SetValueAsync<T>(string identifier, T value, CancellationToken cancellation = default)
@@ -441,196 +464,28 @@ public partial class OpcClient : IDisposable
 		return true;
 	}
 
-	public async ValueTask<bool> SubscribeAsync(IEnumerable<string> identifiers, SubscriptionOptions options, CancellationToken cancellation = default)
+	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, null, consumer, cancellation);
+	public async ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, SubscriberOptions options, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default)
 	{
 		if(identifiers == null)
 			throw new ArgumentNullException(nameof(identifiers));
 
 		var session = this.GetSession();
-		var subscription = new Subscription(session.DefaultSubscription)
-		{
-			Handle = this,
-			PublishingEnabled = true,
-			PublishingInterval = options.GetPublishingInterval(),
-			MinLifetimeInterval = options.GetMinLifetimeInterval(),
-			KeepAliveCount = (uint)options.GetKeepAliveCount(),
-			LifetimeCount = (uint)options.GetLifetimeCount(),
-			TimestampsToReturn = TimestampsToReturn.Both,
-		};
-
-		subscription.StateChanged += this.Subscription_StateChanged;
-		subscription.PublishStatusChanged += this.Subscription_PublishStatusChanged;
-
-		var items = identifiers
-			.Where(identifier => !string.IsNullOrEmpty(identifier) && !_monitoredItems.ContainsKey(identifier))
-			.Select(identifier =>
-		{
-			var item = new MonitoredItem(subscription.DefaultItem)
-			{
-				Handle = identifier,
-				StartNodeId = NodeId.Parse(identifier),
-				AttributeId = Attributes.Value,
-				SamplingInterval = options.GetSamplingInterval(),
-				DiscardOldest = true,
-				QueueSize = (uint)options.GetQueueSize(),
-				DisplayName = identifier,
-			};
-
-			item.Notification += this.MonitoredItem_Notification;
-
-			return item;
-		});
-
-		subscription.AddItems(items);
-
-		if(subscription.MonitoredItemCount > 0 && session.AddSubscription(subscription))
-		{
-			await subscription.CreateAsync(cancellation);
-			await subscription.ApplyChangesAsync(cancellation);
-
-			foreach(var item in subscription.MonitoredItems)
-				_monitoredItems.TryAdd(item.StartNodeId.ToString(), item);
-
-			return true;
-		}
-
-		return false;
-	}
-
-	public async ValueTask<int> UnsubscribeAsync(CancellationToken cancellation = default)
-	{
-		var session = _session;
-		if(session == null || session.SubscriptionCount == 0)
-			return 0;
-
-		int count = 0;
-
-		foreach(var subscription in session.Subscriptions)
-		{
-			foreach(var item in subscription.MonitoredItems)
-			{
-				item.Notification -= this.MonitoredItem_Notification;
-				_monitoredItems.Remove(item.StartNodeId.ToString(), out _);
-				count++;
-			}
-
-			subscription.RemoveItems(subscription.MonitoredItems);
-
-			if(subscription.MonitoredItemCount == 0)
-			{
-				subscription.StateChanged -= this.Subscription_StateChanged;
-				subscription.PublishStatusChanged -= this.Subscription_PublishStatusChanged;
-			}
-		}
-
-		foreach(var subscription in session.Subscriptions)
-			await subscription.DeleteAsync(false, cancellation);
-
-		await session.RemoveSubscriptionsAsync(session.Subscriptions.ToArray(), cancellation);
-
-		var request = new RequestHeader()
-		{
-			Timestamp = DateTime.UtcNow,
-		};
-
-		//await session.DeleteSubscriptionsAsync(request, session.Subscriptions.Select(subscription => subscription.Id).ToArray(), cancellation);
-
-		return count;
-	}
-
-	public async ValueTask<int> UnsubscribeAsync(IEnumerable<string> identifiers, CancellationToken cancellation = default)
-	{
-		if(identifiers == null)
-			return 0;
-
-		var session = _session;
-		if(session == null || session.SubscriptionCount == 0)
-			return 0;
-
-		var count = 0;
+		var subscriber = new Subscriber(session, options, consumer);
 
 		foreach(var identifier in identifiers)
-		{
-			if(identifier != null && _monitoredItems.Remove(identifier, out var item))
-			{
-				item.Notification -= this.MonitoredItem_Notification;
-				item.Subscription.RemoveItem(item);
-				count++;
-			}
-		}
+			subscriber.Entries.Add(identifier);
 
-		var removables = new List<Subscription>();
+		if(session.AddSubscription((Subscription)subscriber.Subscription) && await _subscribers.RegisterAsync(subscriber, cancellation))
+			return subscriber;
 
-		foreach(var subscription in session.Subscriptions)
-		{
-			if(subscription.MonitoredItemCount == 0)
-			{
-				subscription.StateChanged -= this.Subscription_StateChanged;
-				subscription.PublishStatusChanged -= this.Subscription_PublishStatusChanged;
-				removables.Add(subscription);
-			}
-		}
-
-		if(removables != null && removables.Count > 0)
-		{
-			var request = new RequestHeader()
-			{
-				Timestamp = DateTime.UtcNow,
-			};
-
-			await session.RemoveSubscriptionsAsync(removables, cancellation);
-			await session.DeleteSubscriptionsAsync(request, removables.Select(subscription => subscription.Id).ToArray(), cancellation);
-		}
-
-		return count;
+		return null;
 	}
 	#endregion
 
 	#region 事件处理
-	private void Subscription_StateChanged(Subscription subscription, SubscriptionStateChangedEventArgs args)
-	{
-		if(args.Status == SubscriptionChangeMask.None)
-			return;
-
-		if((args.Status & SubscriptionChangeMask.Created) == SubscriptionChangeMask.Created)
-		{
-			var subscriber = new Subscriber(subscription);
-			_subscribers.Add(subscriber);
-			this.Subscription?.Invoke(this, new SubscriptionEventArgs(subscriber, SubscriptionReason.Created));
-		}
-		else if((args.Status & SubscriptionChangeMask.Deleted) == SubscriptionChangeMask.Deleted)
-		{
-			if(_subscribers.TryRemove(subscription.Id.ToString(), out var subscriber))
-				this.Subscription?.Invoke(this, new SubscriptionEventArgs(subscriber, SubscriptionReason.Deleted));
-		}
-		else if((args.Status & SubscriptionChangeMask.Modified) == SubscriptionChangeMask.Modified)
-		{
-			if(_subscribers.TryGetValue(subscription.Id.ToString(), out var subscriber))
-				this.Subscription?.Invoke(this, new SubscriptionEventArgs(subscriber, SubscriptionReason.Changed));
-		}
-		else
-		{
-			if(_subscribers.TryGetValue(subscription.Id.ToString(), out var subscriber))
-				this.Subscription?.Invoke(this, new SubscriptionEventArgs(subscriber, SubscriptionReason.Changed));
-		}
-	}
-
-	private void Subscription_PublishStatusChanged(Subscription subscription, PublishStateChangedEventArgs args)
-	{
-	}
-
-	private void MonitoredItem_Notification(MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs args)
-	{
-		if(_subscribers.TryGetValue(monitoredItem.Subscription?.Id.ToString(), out var subscriber) &&
-			subscriber.Entries.TryGetValue(monitoredItem.StartNodeId.ToString(), out var entry))
-		{
-			var value = args.NotificationValue is MonitoredItemNotification notification ?
-				notification.Value.Value :
-				args.NotificationValue;
-
-			this.Arrived?.Invoke(this, new SubscriptionArrivedEventArgs(subscriber, entry, value));
-		}
-	}
+	private void Session_KeepAlive(ISession session, KeepAliveEventArgs args) =>
+		this.Heartbeat?.Invoke(this, StatusCode.IsGood(args.Status.StatusCode) ? new(args.CurrentState.ToString()) : new(Failure.GetFailure(args.Status.StatusCode), args.CurrentState.ToString()));
 	#endregion
 
 	#region 私有方法
@@ -652,7 +507,10 @@ public partial class OpcClient : IDisposable
 		var session = _session;
 
 		if(session != null && !session.Disposed)
+		{
+			session.KeepAlive -= this.Session_KeepAlive;
 			session.Dispose();
+		}
 
 		_configuration = null;
 	}

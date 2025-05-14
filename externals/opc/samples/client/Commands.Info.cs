@@ -10,8 +10,6 @@ using Opc.Ua.Client;
 using Zongsoft.Services;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
-using Zongsoft.Collections;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Opc.Samples;
 
@@ -25,6 +23,8 @@ internal class Commands
 		var content = CommandOutletContent.Create(CommandOutletColor.DarkGreen, client.Name)
 			.Append(CommandOutletColor.DarkGray, " (")
 			.Append(client.IsConnected ? CommandOutletColor.Green : CommandOutletColor.Magenta, client.IsConnected ? "Connected" : "Unconnect")
+			.Append(CommandOutletColor.DarkGray, "|")
+			.Append(CommandOutletColor.Cyan, $"{client.State}")
 			.AppendLine(CommandOutletColor.DarkGray, ")")
 			.AppendLine(CommandOutletColor.DarkYellow, client.Settings?.ToString());
 
@@ -32,11 +32,9 @@ internal class Commands
 		{
 			int index = 0;
 
-			content.AppendLine("[Subscriptions]");
-			content.AppendLine(" ------------- ");
-
 			foreach(var subscriber in client.Subscribers)
 			{
+				context.Output.WriteLine();
 				PrintSubscription(content, subscriber.Subscription as Subscription, index++);
 			}
 		}

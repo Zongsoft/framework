@@ -34,20 +34,32 @@ internal class Program
 
 		executor.Command("disconnect", (context, cancellation) => _client.DisconnectAsync(cancellation));
 
-		executor.Command("sub", (context, cancellation) =>
-		{
-			if(context.Expression.Arguments.Length > 0)
-				return _client.SubscribeAsync(context.Expression.Arguments, null, cancellation);
-			else
-				return ValueTask.FromResult(false);
-		});
-
-		executor.Command("unsub", (context, cancellation) =>
+		executor.Command("sub", async (context, cancellation) =>
 		{
 			if(context.Expression.Arguments.Length == 0)
-				return _client.UnsubscribeAsync(cancellation);
-			else
-				return _client.UnsubscribeAsync(context.Expression.Arguments, cancellation);
+				throw new CommandException($"Missing required arguments of the subscribe command.");
+
+			var subscriber = await _client.SubscribeAsync(context.Expression.Arguments, OnConsume, cancellation);
+		});
+
+		executor.Command("unsub", async (context, cancellation) =>
+		{
+			if(context.Expression.Arguments.Length == 0)
+			{
+				await _client.Subscribers.UnsubscribeAsync(cancellation);
+				return;
+			}
+
+			foreach(var key in context.Expression.Arguments)
+			{
+				if(_client.Subscribers.TryGetValue(key, out var subscriber))
+				{
+					await subscriber.DisposeAsync();
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The specified '{key}' unsubscribed successfully.");
+				}
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{key}' subscription does not exist.");
+			}
 		});
 
 		executor.Command("exist", async (context, cancellation) =>
@@ -86,37 +98,22 @@ internal class Program
 			if(context.Expression.Arguments.Length == 1)
 			{
 				var value = await _client.GetValueAsync(context.Expression.Arguments[0], cancellation);
+				var content = CommandOutletContent.Create(string.Empty).AppendValue(value);
+				context.Output.Write(content);
+			}
+			else
+			{
+				var result = _client.GetValuesAsync(context.Expression.Arguments, cancellation);
 
-				if(value == null)
+				await foreach(var entry in result)
 				{
-					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The '{context.Expression.Arguments[0]}' node not found.");
-					return;
+					var content = CommandOutletContent
+						.Create(CommandOutletColor.DarkYellow, entry.Key)
+						.Append(CommandOutletColor.DarkGray, " : ")
+						.AppendValue(entry.Value);
+
+					context.Output.Write(content);
 				}
-
-				if(value is byte[] binary)
-					context.Output.WriteLine(CommandOutletColor.DarkGreen, System.Convert.ToHexString(binary));
-				else if(value is Array array)
-					for(int i = 0; i < array.Length; i++)
-					{
-						context.Output.Write(CommandOutletColor.DarkGray, $"[{i}] ");
-						context.Output.WriteLine(CommandOutletColor.DarkGreen, array.GetValue(i));
-					}
-				else
-					context.Output.WriteLine(CommandOutletColor.DarkGreen, value);
-
-				return;
-			}
-
-			(var values, var failures) = await _client.GetValuesAsync(context.Expression.Arguments, cancellation);
-
-			foreach(var failure in failures)
-			{
-				context.Output.WriteLine(CommandOutletColor.DarkRed, failure);
-			}
-
-			foreach(var value in values)
-			{
-				context.Output.WriteLine(CommandOutletColor.DarkGreen, value);
 			}
 		});
 
@@ -188,5 +185,17 @@ internal class Program
 		});
 
 		executor.Run($"Welcome to the OPC-UA Client.{Environment.NewLine}{new string('-', 50)}");
+	}
+
+	private static void OnConsume(Subscriber subscriber, Subscriber.Entry entry, object value)
+	{
+		var content = CommandOutletContent
+			.Create(CommandOutletColor.DarkGreen, $"[{nameof(Subscriber)}.Consumer]")
+			.Append(CommandOutletColor.DarkYellow, entry.Name)
+			.Append(CommandOutletColor.DarkGray, " : ")
+			.AppendValue(value);
+
+		ConsoleTerminal.Instance.WriteLine();
+		ConsoleTerminal.Instance.Write(content);
 	}
 }

@@ -31,10 +31,22 @@ using System;
 
 namespace Zongsoft.Externals.Opc;
 
-public enum SubscriptionReason
+partial class OpcClient
 {
-	Created,
-	Changed,
-	Deleted,
-	Transferred,
+	public class HeartbeatEventArgs : EventArgs
+	{
+		public HeartbeatEventArgs(string status = null)
+		{
+			this.Status = status;
+		}
+
+		public HeartbeatEventArgs(Failure failure, string status = null)
+		{
+			this.Failure = failure;
+			this.Status = status;
+		}
+
+		public Failure? Failure { get; }
+		public string Status { get; set; }
+	}
 }

@@ -45,6 +45,8 @@ public readonly struct Failure(int code, string reason, string message = null)
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => $"[{this.Code}]{this.Reason}\n{this.Message}";
+	public override string ToString() => string.IsNullOrEmpty(this.Message) ?
+		$"[{this.Code}]{this.Reason}" :
+		$"[{this.Code}]{this.Reason}\n{this.Message}";
 	#endregion
 }

@@ -51,18 +51,6 @@ public class OpcConnectionSettings : ConnectionSettingsBase<OpcConnectionSetting
 		set => this.SetValue(value);
 	}
 
-	public string Topic
-	{
-		get => this.GetValue<string>();
-		set => this.SetValue(value);
-	}
-
-	public string Group
-	{
-		get => this.GetValue<string>();
-		set => this.SetValue(value);
-	}
-
 	public string Client
 	{
 		get => this.GetValue<string>();
@@ -70,12 +58,6 @@ public class OpcConnectionSettings : ConnectionSettingsBase<OpcConnectionSetting
 	}
 
 	public string Instance
-	{
-		get => this.GetValue<string>();
-		set => this.SetValue(value);
-	}
-
-	public string Filter
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);

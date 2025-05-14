@@ -29,18 +29,35 @@
 
 using System;
 
+using Opc.Ua;
+using Opc.Ua.Client;
+
 namespace Zongsoft.Externals.Opc;
 
-public class SubscriptionArrivedEventArgs : EventArgs
+public sealed class OpcClientState
 {
-	public SubscriptionArrivedEventArgs(OpcClient.Subscriber subscriber, OpcClient.Subscriber.Entry entry, object value)
-	{
-		this.Subscriber = subscriber;
-		this.Entry = entry;
-		this.Value = value;
-	}
+	#region 单例字段
+	public static readonly OpcClientState Empty = new();
+	#endregion
 
-	public OpcClient.Subscriber Subscriber { get; }
-	public OpcClient.Subscriber.Entry Entry { get; }
-	public object Value { get; set; }
+	#region 私有字段
+	private readonly Session _session;
+	#endregion
+
+	#region 构造函数
+	private OpcClientState() { }
+	internal OpcClientState(Session session) => _session = session ?? throw new ArgumentNullException(nameof(session));
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取最近的心跳时间。</summary>
+	public DateTime? Timestamp => _session?.LastKeepAliveTime;
+
+	/// <summary>获取一个值，指示客户端是否活跃。</summary>
+	public bool IsAlive => _session != null && _session.Connected && !_session.KeepAliveStopped;
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => this.IsAlive ? $"{this.Timestamp?.ToLocalTime()}" : $"Dead";
+	#endregion
 }

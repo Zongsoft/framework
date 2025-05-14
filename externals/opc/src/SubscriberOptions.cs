@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Opc;
 
-public class SubscriptionOptions
+public class SubscriberOptions
 {
 	internal const int QUEUE_SIZE = 512 * 4;
 	internal const int KEEP_ALIVE_COUNT = 512 * 1000;
@@ -47,14 +47,14 @@ public class SubscriptionOptions
 	public byte Priority { get; set; }
 }
 
-public static class SubscriptionOptionsUtility
+public static class SubscriberOptionsUtility
 {
-	public static int GetSamplingInterval(this SubscriptionOptions options) => options == null ? 100 : (int)options.SamplingInterval.TotalMilliseconds;
-	public static int GetPublishingInterval(this SubscriptionOptions options) => options == null ? 100 : (int)options.PublishingInterval.TotalMilliseconds;
-	public static uint GetMinLifetimeInterval(this SubscriptionOptions options) => options == null ? 1000 : (uint)options.MinLifetimeInterval.TotalMilliseconds;
+	public static int GetSamplingInterval(this SubscriberOptions options) => options == null ? 100 : (int)options.SamplingInterval.TotalMilliseconds;
+	public static int GetPublishingInterval(this SubscriberOptions options) => options == null ? 1000 : (int)options.PublishingInterval.TotalMilliseconds;
+	public static uint GetMinLifetimeInterval(this SubscriberOptions options) => options == null ? 1000 : (uint)options.MinLifetimeInterval.TotalMilliseconds;
 
-	public static int GetQueueSize(this SubscriptionOptions options) => options == null ? 0 : options.QueueSize;
-	public static int GetKeepAliveCount(this SubscriptionOptions options) => options == null ? SubscriptionOptions.KEEP_ALIVE_COUNT : options.KeepAliveCount;
-	public static int GetLifetimeCount(this SubscriptionOptions options) => options == null ? SubscriptionOptions.LIFETIME_COUNT : options.LifetimeCount;
-	public static byte GetPriority(this SubscriptionOptions options) => options == null ? (byte)0 : options.Priority;
+	public static int GetQueueSize(this SubscriberOptions options) => options == null ? 0 : options.QueueSize;
+	public static int GetKeepAliveCount(this SubscriberOptions options) => options == null ? SubscriberOptions.KEEP_ALIVE_COUNT : options.KeepAliveCount;
+	public static int GetLifetimeCount(this SubscriberOptions options) => options == null ? SubscriberOptions.LIFETIME_COUNT : options.LifetimeCount;
+	public static byte GetPriority(this SubscriberOptions options) => options == null ? (byte)0 : options.Priority;
 }
