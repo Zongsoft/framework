@@ -470,16 +470,38 @@ public partial class OpcClient : IDisposable
 		if(identifiers == null)
 			throw new ArgumentNullException(nameof(identifiers));
 
-		var session = this.GetSession();
-		var subscriber = new Subscriber(session, options, consumer);
+		//确保待订阅的条目未被订阅
+		var entries = identifiers
+			.Where(id => !string.IsNullOrEmpty(id) && !Exists(id))
+			.Distinct()
+			.Select(id => new Subscriber.Entry(id))
+			.ToArray();
 
-		foreach(var identifier in identifiers)
-			subscriber.Entries.Add(identifier);
+		//如果待订阅的条目为空则退出
+		if(entries.Length == 0)
+			return null;
+
+		var session = this.GetSession();
+		var subscriber = new Subscriber(options, consumer);
+
+		for(int i = 0; i < entries.Length; i++)
+			subscriber.Entries.Add(entries[i]);
 
 		if(session.AddSubscription((Subscription)subscriber.Subscription) && await _subscribers.RegisterAsync(subscriber, cancellation))
 			return subscriber;
 
 		return null;
+
+		bool Exists(string identifier)
+		{
+			foreach(var subscriber in _subscribers)
+			{
+				if(subscriber.Entries.Contains(identifier))
+					return true;
+			}
+
+			return false;
+		}
 	}
 	#endregion
 

@@ -29,7 +29,7 @@ internal class Commands
 			foreach(var subscriber in client.Subscribers)
 			{
 				context.Output.WriteLine();
-				PrintSubscriber(content, subscriber, index++);
+				PrintSubscriber(content, subscriber, ++index);
 			}
 		}
 

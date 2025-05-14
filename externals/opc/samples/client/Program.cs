@@ -57,7 +57,11 @@ internal class Program
 			else
 			{
 				subscriber = await _client.SubscribeAsync(context.Expression.Arguments, OnConsume, cancellation);
-				context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The '#{subscriber.Identifier}' subscription was successful.");
+
+				if(subscriber == null)
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The subscription failed, possibly because the specified entries is already subscribed.");
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The '#{subscriber.Identifier}' subscription was successful.");
 			}
 
 			return subscriber;
@@ -217,8 +221,11 @@ internal class Program
 
 	private static void OnConsume(Subscriber subscriber, Subscriber.Entry entry, object value)
 	{
-		var content = CommandOutletContent
-			.Create(CommandOutletColor.DarkGreen, $"[{nameof(Subscriber)}.Consumer]")
+		var content = CommandOutletContent.Create(null)
+			.Append(CommandOutletColor.DarkGray, "[")
+			.Append(CommandOutletColor.DarkGreen, nameof(Subscriber))
+			.Append(CommandOutletColor.DarkCyan, subscriber.Identifier.ToString())
+			.Append(CommandOutletColor.DarkGray, "] ")
 			.Append(CommandOutletColor.DarkYellow, entry.Name)
 			.Append(CommandOutletColor.DarkGray, " : ")
 			.AppendValue(value);

@@ -39,18 +39,16 @@ using Opc.Ua.Client;
 
 namespace Zongsoft.Externals.Opc;
 
-public class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber.Entry>, IAsyncDisposable
+public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber.Entry>, IAsyncDisposable
 {
 	#region 成员字段
-	private Session _session;
 	private Subscription _subscription;
 	private Action<Subscriber, Entry, object> _consumer;
 	#endregion
 
 	#region 构造函数
-	internal Subscriber(Session session, SubscriberOptions options, Action<Subscriber, Entry, object> consumer)
+	internal Subscriber(SubscriberOptions options, Action<Subscriber, Entry, object> consumer)
 	{
-		_session = session ?? throw new ArgumentNullException(nameof(session));
 		_consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
 
 		this.Options = options;
@@ -94,21 +92,17 @@ public class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber.Entry>,
 	#region 取消订阅
 	private async ValueTask UnsubscribeAsync(CancellationToken cancellation = default)
 	{
-		var subscription = _subscription;
-		if(subscription == null)
-			return;
-
-		this.Entries.Clear();
+		try
+		{
+			//清空订阅的监视条目
+			this.Entries.Clear();
+		}
+		catch { }
 
 		try
 		{
 			//从服务器中删除当前订阅
-			await subscription.DeleteAsync(true, cancellation);
-
-			var session = _session;
-
-			if(session != null && session.Connected)
-				await session.RemoveSubscriptionAsync(subscription, cancellation);
+			await _subscription?.DeleteAsync(true, cancellation);
 		}
 		catch { }
 	}
@@ -146,10 +140,13 @@ public class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber.Entry>,
 
 		_subscription = null;
 		_consumer = null;
-		_session = null;
 
-		cancellation.Cancel();
-		cancellation.Dispose();
+		try
+		{
+			cancellation.Cancel();
+			cancellation.Dispose();
+		}
+		catch { }
 	}
 	#endregion
 
@@ -174,151 +171,4 @@ public class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber.Entry>,
 	public IEnumerator<Entry> GetEnumerator() => this.Entries.GetEnumerator();
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 	#endregion
-
-	public class Entry : IEquatable<Entry>
-	{
-		#region 构造函数
-		public Entry(string name, Type type, string label, string description = null)
-		{
-			this.Name = name;
-			this.Type = type;
-			this.Label = label;
-			this.Description = description;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name { get; }
-		public Type Type { get; set; }
-		public string Label { get; set; }
-		public string Description { get; set; }
-		#endregion
-
-		#region 内部属性
-		internal MonitoredItem Monitor { get; set; }
-		#endregion
-
-		#region 重写方法
-		public bool Equals(Entry other) => other is not null && string.Equals(this.Name, other.Name);
-		public override bool Equals(object obj) => this.Equals(obj as Entry);
-		public override int GetHashCode() => HashCode.Combine(this.Name);
-		public override string ToString() => this.Type == null ? this.Name : $"{this.Name}@{Common.TypeAlias.GetAlias(this.Type)}";
-		#endregion
-	}
-
-	public class EntryCollection : KeyedCollection<string, Entry>
-	{
-		#region 成员字段
-		private readonly Subscriber _subscriber;
-		private readonly Subscription _subscription;
-		#endregion
-
-		#region 构造函数
-		public EntryCollection(Subscriber subscriber, params IEnumerable<Entry> monitors) : base(StringComparer.OrdinalIgnoreCase)
-		{
-			_subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
-			_subscription = (Subscription)subscriber.Subscription;
-
-			if(monitors == null)
-			{
-				foreach(var monitor in monitors)
-					this.Add(monitor);
-			}
-		}
-		#endregion
-
-		#region 公共方法
-		public bool Add(string name)
-		{
-			if(string.IsNullOrEmpty(name))
-				return false;
-
-			if(this.Contains(name))
-				return false;
-
-			this.Add(new Entry(name, null, name));
-			return true;
-		}
-
-		public bool TryRemove(string key, out Entry result)
-		{
-			if(key != null && this.TryGetValue(key, out result))
-				return this.Remove(key);
-
-			result = null;
-			return false;
-		}
-		#endregion
-
-		#region 重写方法
-		protected override string GetKeyForItem(Entry entry) => entry.Name;
-		protected override void SetItem(int index, Entry item) => throw new NotSupportedException();
-
-		protected override void InsertItem(int index, Entry item)
-		{
-			if(item == null || string.IsNullOrEmpty(item.Name))
-				throw new ArgumentNullException(nameof(item));
-
-			var monitored = new MonitoredItem(_subscription.DefaultItem)
-			{
-				Handle = item,
-				StartNodeId = NodeId.Parse(item.Name),
-				AttributeId = Attributes.Value,
-				SamplingInterval = _subscriber.Options.GetSamplingInterval(),
-				DiscardOldest = true,
-				QueueSize = (uint)_subscriber.Options.GetQueueSize(),
-				DisplayName = string.IsNullOrEmpty(item.Label) ? item.Name : item.Label,
-			};
-
-			item.Monitor = monitored;
-			base.InsertItem(index, item);
-
-			monitored.Notification += _subscriber.OnNotification;
-			_subscription.AddItem(monitored);
-
-			//从服务器中执行订阅变更操作
-			if(_subscription.Created)
-				_subscription.ApplyChanges();
-		}
-
-		protected override void RemoveItem(int index)
-		{
-			var item = this[index];
-
-			if(item != null && item.Monitor != null)
-			{
-				_subscription.RemoveItem(item.Monitor);
-				item.Monitor.Notification -= _subscriber.OnNotification;
-				item.Monitor = null;
-			}
-
-			//调用基类同名方法
-			base.RemoveItem(index);
-
-			//从服务器中删除已取消的订阅项目
-			if(_subscription.Created)
-				_subscription.DeleteItems();
-		}
-
-		protected override void ClearItems()
-		{
-			foreach(var item in this.Items)
-			{
-				if(item == null || item.Monitor == null)
-					continue;
-
-				_subscription.RemoveItem(item.Monitor);
-				item.Monitor.Notification -= _subscriber.OnNotification;
-				item.Monitor = null;
-			}
-
-			//调用基类同名方法
-			base.ClearItems();
-
-			//从服务器中删除已取消的订阅项目
-			if(_subscription.Created)
-				_subscription.DeleteItems();
-		}
-		#endregion
-	}
 }
