@@ -467,7 +467,7 @@ partial class UserServiceBase<TUser>
 		protected virtual IAsyncEnumerable<TCipher> OnGetAsync(string identity, string @namespace, CancellationToken cancellation) =>
 			this.Service.Accessor.SelectAsync<TCipher>(this.Service.Name, this.Service.GetCriteria(identity, @namespace), cancellation);
 		protected virtual async ValueTask<bool> OnSetAsync(Identifier identifier, TCipher cipher, CancellationToken cancellation) =>
-			await this.Service.Accessor.UpdateAsync<TCipher>(this.Service.Name, this.Service.GetCriteria(identifier), cancellation) > 0;
+			await this.Service.Accessor.UpdateAsync(this.Service.Name, cipher, this.Service.GetCriteria(identifier), cancellation) > 0;
 		protected virtual ValueTask<bool> OnVerifyAsync(string password, TCipher cipher, CancellationToken cancellation) =>
 			ValueTask.FromResult(PasswordUtility.VerifyPassword(password, cipher.Value, cipher.Nonce, cipher.Name));
 		#endregion
