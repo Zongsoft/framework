@@ -170,7 +170,7 @@ public class ConnectionSettingDescriptorCollection(IConnectionSettingsDriver dri
 			return null;
 
 		var aliases = property
-			.GetCustomAttributes<Components.AliasAttribute>()
+			.GetCustomAttributes<Components.AliasAttribute>(true)
 			.Where(alias => !string.IsNullOrEmpty(alias.Alias) && !string.Equals(alias.Alias, property.Name, StringComparison.OrdinalIgnoreCase))
 			.Select(alias => alias.Alias)
 			.ToArray();

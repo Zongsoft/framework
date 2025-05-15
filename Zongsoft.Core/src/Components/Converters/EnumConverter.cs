@@ -176,13 +176,7 @@ public class EnumConverter : System.ComponentModel.EnumConverter
 				return true;
 			}
 
-			if(string.Equals(valueText, entry.Alias, StringComparison.OrdinalIgnoreCase))
-			{
-				underlyingValue = Convert.ToInt64(entry.Value);
-				return true;
-			}
-
-			if(string.Equals(valueText, entry.Description, StringComparison.OrdinalIgnoreCase))
+			if(entry.HasAlias(valueText))
 			{
 				underlyingValue = Convert.ToInt64(entry.Value);
 				return true;

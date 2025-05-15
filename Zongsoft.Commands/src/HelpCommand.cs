@@ -187,7 +187,7 @@ public class HelpCommand : CommandBase<CommandContext>
 				if(optionAttribute.Type != null && optionAttribute.Type.IsEnum)
 				{
 					var entries = Zongsoft.Common.EnumUtility.GetEnumEntries(optionAttribute.Type, false);
-					var maxEnumLength = entries.Max(entry => string.IsNullOrWhiteSpace(entry.Alias) ? entry.Name.Length : entry.Name.Length + entry.Alias.Length + 2);
+					var maxEnumLength = entries.Max(entry => entry.HasAliases ? entry.Name.Length + entry.Aliases.Sum(alias => alias.Length) + entry.Aliases.Length + 1 : entry.Name.Length);
 
 					foreach(var entry in entries)
 					{
@@ -197,13 +197,15 @@ public class HelpCommand : CommandBase<CommandContext>
 						output.Write("\t".PadRight(optionAttribute.Name.Length + 3));
 						output.Write(CommandOutletColor.DarkMagenta, entry.Name.ToLowerInvariant());
 
-						if(!string.IsNullOrWhiteSpace(entry.Alias))
+						if(entry.HasAliases)
 						{
+							var alias = string.Join(',', entry.Aliases);
+
 							output.Write(CommandOutletColor.DarkGray, "(");
-							output.Write(CommandOutletColor.DarkMagenta, entry.Alias);
+							output.Write(CommandOutletColor.DarkMagenta, alias);
 							output.Write(CommandOutletColor.DarkGray, ")");
 
-							enumPadding -= entry.Alias.Length + 2;
+							enumPadding -= alias.Length + 2;
 						}
 
 						if(!string.IsNullOrWhiteSpace(entry.Description))

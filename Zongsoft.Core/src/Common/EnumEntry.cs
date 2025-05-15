@@ -37,12 +37,12 @@ namespace Zongsoft.Common;
 public readonly struct EnumEntry : IFormattable, IFormatProvider, IEquatable<EnumEntry>
 {
 	#region 构造函数
-	public EnumEntry(Type type, string name, object value, string alias, string description)
+	public EnumEntry(Type type, string name, object value, string[] aliases, string description)
 	{
 		this.Type = type ?? throw new ArgumentNullException(nameof(type));
 		this.Name = name;
 		this.Value = value;
-		this.Alias = alias;
+		this.Aliases = aliases;
 		this.Description = description;
 	}
 	#endregion
@@ -57,13 +57,23 @@ public readonly struct EnumEntry : IFormattable, IFormatProvider, IEquatable<Enu
 	/// <summary>当前描述的枚举项值，该值有可能为枚举项的值也可能是对应的基元类型值。</summary>
 	public readonly object Value;
 
-	/// <summary>获取枚举项的别名，如果未定义建议创建者设置为枚举项的名称。</summary>
-	/// <remarks>枚举项的别名由<seealso cref="Components.AliasAttribute"/>自定义特性指定。</remarks>
-	public readonly string Alias;
+	/// <summary>获取枚举项的别名数组。</summary>
+	/// <remarks>枚举项的别名由 <seealso cref="Components.AliasAttribute"/> 注解指定。</remarks>
+	public readonly string[] Aliases;
 
-	/// <summary>当前描述枚举项的描述文本，如果未定义建议创建者设置为枚举项的名称。</summary>
-	/// <remarks>枚举项的描述由<seealso cref="System.ComponentModel.DescriptionAttribute"/>自定义特性指定。</remarks>
+	/// <summary>当前描述枚举项的描述文本。</summary>
+	/// <remarks>枚举项的描述由 <seealso cref="System.ComponentModel.DescriptionAttribute"/> 注解指定。</remarks>
 	public readonly string Description;
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取一个值，指示是否有别名。</summary>
+	public bool HasAliases => this.Aliases != null && this.Aliases.Length > 0;
+	#endregion
+
+	#region 公共方法
+	public bool HasAlias(string alias) => this.Aliases != null && this.Aliases.Length > 0 && alias != null && alias.Length > 0 &&
+		Array.Exists(this.Aliases, element => string.Equals(element, alias, StringComparison.OrdinalIgnoreCase));
 	#endregion
 
 	#region 重写方法
@@ -87,7 +97,7 @@ public readonly struct EnumEntry : IFormattable, IFormatProvider, IEquatable<Enu
 		return format.Trim().ToLowerInvariant() switch
 		{
 			"n" or "name" => this.Name,
-			"a" or "alias" => this.Alias,
+			"a" or "alias" => this.Aliases != null && this.Aliases.Length > 0 ? this.Aliases[0] : null,
 			"d" or "description" => this.Description,
 			"f" or "full" or "fullname" => this.ToString(),
 			_ => this.Value.ToString(),

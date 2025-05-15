@@ -114,9 +114,9 @@ public static class EnumUtility
 		}
 
 		entry = new EnumEntry(field.DeclaringType, field.Name,
-							underlyingType ? System.Convert.ChangeType(enumValue, Enum.GetUnderlyingType(enumValue.GetType())) : enumValue,
-							field.GetCustomAttribute<AliasAttribute>()?.Alias,
-							GetDescription(field));
+			underlyingType ? System.Convert.ChangeType(enumValue, Enum.GetUnderlyingType(enumValue.GetType())) : enumValue,
+			AliasAttribute.GetAliases(field, false),
+			GetDescription(field));
 
 		return true;
 	}
@@ -158,15 +158,15 @@ public static class EnumUtility
 		else
 		{
 			entries = new EnumEntry[fields.Length + 1];
-			entries[0] = new EnumEntry(enumType, string.Empty, nullValue, nullText, nullText);
+			entries[0] = new EnumEntry(enumType, string.Empty, nullValue, [], nullText);
 		}
 
 		for(int i = 0; i < fields.Length; i++)
 		{
 			entries[baseIndex + i] = new EnumEntry(enumType, fields[i].Name,
-												underlyingType ? System.Convert.ChangeType(fields[i].GetValue(null), Enum.GetUnderlyingType(enumType)) : fields[i].GetValue(null),
-												fields[i].GetCustomAttribute<AliasAttribute>()?.Alias,
-												GetDescription(fields[i]));
+				underlyingType ? System.Convert.ChangeType(fields[i].GetValue(null), Enum.GetUnderlyingType(enumType)) : fields[i].GetValue(null),
+				AliasAttribute.GetAliases(fields[i], false),
+				GetDescription(fields[i]));
 		}
 
 		return entries;

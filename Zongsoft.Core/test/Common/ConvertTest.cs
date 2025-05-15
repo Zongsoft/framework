@@ -59,12 +59,6 @@ public class ConvertTest
 		//根据枚举项的 AliasAttribute 值来解析
 		Assert.Equal(Gender.Male, Zongsoft.Common.Convert.ConvertValue<Gender>("M"));
 		Assert.Equal(Gender.Female, Zongsoft.Common.Convert.ConvertValue<Gender>("F"));
-
-		//根据枚举项的 DescriptionAttribute 值来解析
-		if(EnumUtility.TryGetEnumDescription(Gender.Male, out var description) && description != null)
-			Assert.Equal(Gender.Male, Zongsoft.Common.Convert.ConvertValue<Gender>(description));
-		if(EnumUtility.TryGetEnumDescription(Gender.Female, out description) && description != null)
-			Assert.Equal(Gender.Female, Zongsoft.Common.Convert.ConvertValue<Gender>(description));
 	}
 
 	[Fact]

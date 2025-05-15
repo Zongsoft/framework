@@ -73,8 +73,8 @@ public static class ControllerUtility
 			Operations = descriptor.Operations.Select(operation => new
 			{
 				operation.Name,
-				operation.Alias,
 				operation.Title,
+				operation.Aliases,
 				operation.Description,
 				Action = operation.Action.Serializable(),
 			}),

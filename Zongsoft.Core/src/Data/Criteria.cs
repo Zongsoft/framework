@@ -212,7 +212,10 @@ public static class Criteria
 				this.Properties.Add(property.Name, new CriteriaPropertyDescripor(property, attribute));
 
 				foreach(var alias in property.GetCustomAttributes<Components.AliasAttribute>(true))
-					this.Properties.TryAdd(alias.Alias, new CriteriaPropertyDescripor(property, attribute));
+				{
+					if(!string.IsNullOrWhiteSpace(alias.Alias))
+						this.Properties.TryAdd(alias.Alias, new CriteriaPropertyDescripor(property, attribute));
+				}
 			}
 		}
 	}

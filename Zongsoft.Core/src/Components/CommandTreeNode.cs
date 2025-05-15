@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -85,11 +84,14 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 		get => _command;
 		set
 		{
-			var aliases = GetAliases(_command);
-			_aliases.ExceptWith(aliases);
+			//将原命令的别名从节点别名集中移除
+			_aliases.ExceptWith(AliasAttribute.GetAliases(_command) ?? []);
 
+			//设置命令对象
 			_command = value;
-			_aliases.UnionWith(GetAliases(_command));
+
+			//将新命令的别名添加到节点别名集中
+			_aliases.UnionWith(AliasAttribute.GetAliases(_command) ?? []);
 		}
 	}
 
@@ -249,18 +251,6 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 			this.LoadChildren();
 
 		return childrenLoaded == 0;
-	}
-
-	private static IEnumerable<string> GetAliases(object command)
-	{
-		if(command == null)
-			return [];
-
-		var attributes = Attribute.GetCustomAttributes(command.GetType(), typeof(AliasAttribute), true);
-		if(attributes == null || attributes.Length == 0)
-			return [];
-
-		return attributes.OfType<AliasAttribute>().Select(attribute => attribute.Alias);
 	}
 
 	private static CommandTreeNode FindUp(CommandTreeNode current, Predicate<CommandTreeNode> predicate)

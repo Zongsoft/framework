@@ -160,14 +160,14 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			this.Method = method ?? throw new ArgumentNullException(nameof(method));
 			this.Name = method.Name;
-			this.Alias = method.GetCustomAttribute<AliasAttribute>()?.Alias;
+			this.Aliases = AliasAttribute.GetAliases(method);
 		}
 
-		internal protected Operation(ServiceDescriptor service, string name, string alias = null)
+		internal protected Operation(ServiceDescriptor service, string name, params string[] aliases)
 		{
 			this.Service = service ?? throw new ArgumentNullException(nameof(service));
 			this.Name = name ?? throw new ArgumentNullException(nameof(name));
-			this.Alias = alias;
+			this.Aliases = aliases ?? [];
 		}
 		#endregion
 
@@ -175,8 +175,8 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 		/// <summary>获取操作名称。</summary>
 		public string Name { get; protected init; }
 
-		/// <summary>获取操作别名。</summary>
-		public string Alias { get; protected init; }
+		/// <summary>获取操作别名数组。</summary>
+		public string[] Aliases { get; protected init; }
 
 		/// <summary>获取操作的方法。</summary>
 		[System.Text.Json.Serialization.JsonIgnore]
