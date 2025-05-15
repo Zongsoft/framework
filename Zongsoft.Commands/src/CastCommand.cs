@@ -69,7 +69,7 @@ public class CastCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Parameter == null)
+		if(context.Value == null)
 			return ValueTask.FromResult<object>(null);
 
 		var type = context.Expression.Options.GetValue<CastType>(KEY_TYPE_OPTION);
@@ -81,7 +81,7 @@ public class CastCommand : CommandBase<CommandContext>
 			throw new CommandOptionValueException(KEY_OFFSET_OPTION, offset);
 
 		//根据当前命令的参数获取对应的读取器
-		var reader = GetReader(context.Parameter, encoding) ?? throw new NotSupportedException();
+		var reader = GetReader(context.Value, encoding) ?? throw new NotSupportedException();
 
 		object result = type switch
 		{

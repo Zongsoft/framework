@@ -69,7 +69,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 			var result = await this.CallAsync(
 				context.Expression.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
 				context.Expression.Arguments,
-				context.Parameter ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
+				context.Value ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
 				context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION),
 				context.Expression.Options.Contains(KEY_INTERACTIVE_OPTION),
 				cancellation);

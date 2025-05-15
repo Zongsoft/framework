@@ -93,7 +93,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 
 		for(int i = 0; i < round; i++)
 		{
-			switch(context.Parameter)
+			switch(context.Value)
 			{
 				case byte[] buffer:
 					messageId = await invoke(buffer);

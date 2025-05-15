@@ -58,19 +58,19 @@ public class RSAImportCommand : CommandBase<CommandContext>
 		switch(context.Expression.Options.GetValue<RSAKeyType>(TYPE_OPTION))
 		{
 			case RSAKeyType.All:
-				if(TryGetInputXml(context.Parameter, out var xml))
+				if(TryGetInputXml(context.Value, out var xml))
 					rsa.FromXmlString(xml);
 				break;
 			case RSAKeyType.Public:
-				if(TryGetInput(context.Parameter, out var publicKey))
+				if(TryGetInput(context.Value, out var publicKey))
 					rsa.ImportRSAPublicKey(publicKey, out _);
 				break;
 			case RSAKeyType.Subject:
-				if(TryGetInput(context.Parameter, out var subject))
+				if(TryGetInput(context.Value, out var subject))
 					rsa.ImportSubjectPublicKeyInfo(subject, out _);
 				break;
 			case RSAKeyType.Private:
-				if(TryGetInput(context.Parameter, out var privateKey))
+				if(TryGetInput(context.Value, out var privateKey))
 				{
 					if(context.Expression.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8)
 						rsa.ImportPkcs8PrivateKey(privateKey, out _);

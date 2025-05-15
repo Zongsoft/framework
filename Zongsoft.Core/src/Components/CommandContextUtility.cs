@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Terminals;
+namespace Zongsoft.Components;
 
-[Flags]
-public enum TerminalStyles
+public static class CommandContextUtility
 {
-	BackgroundColor = 1,
-	ForegroundColor = 2,
-	Color = BackgroundColor | ForegroundColor,
-
-	FontName = 4,
-	FontStyle = 8,
-	FontSize = 16,
-	Font = FontName | FontSize | FontStyle,
+	public static CommandTreeNode Find(this CommandContext context, string path) =>
+		context?.CommandNode?.Find(path);
+	public static CommandTreeNode Find(this CommandContext context, ICommand command, bool rooting = false) =>
+		context?.CommandNode?.Find(command, rooting);
+	public static TCommand Find<TCommand>(this CommandContext context, bool rooting = false) where TCommand : class, ICommand =>
+		context?.CommandNode?.Find<TCommand>(rooting);
+	public static CommandTreeNode Find(this CommandContext context, Predicate<CommandTreeNode> predicate, bool rooting = false) =>
+		context?.CommandNode.Find(predicate, rooting);
 }

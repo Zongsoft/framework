@@ -33,6 +33,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Terminals;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
@@ -40,45 +41,44 @@ namespace Zongsoft.Messaging.Commands;
 
 [CommandOption("acknowledgeable", typeof(bool), true, "Text.QueueSubscribeCommand.Acknowledgeable")]
 [CommandOption("format", typeof(QueueMessageFormat), QueueMessageFormat.Raw, "Text.QueueSubscribeCommand.Format")]
-public class QueueSubscribeCommand : Zongsoft.Components.Commands.HostListenCommandBase<IMessageQueue>
+public class QueueSubscribeCommand : TerminalReactiveCommandBase
 {
-	#region 私有变量
-	private ICollection<IMessageConsumer> _consumers;
-	#endregion
-
 	#region 构造函数
 	public QueueSubscribeCommand() : this("Subscribe") { }
 	public QueueSubscribeCommand(string name) : base(name) { }
 	#endregion
 
 	#region 重写方法
-	protected override void OnListening(CommandContext context, IMessageQueue queue)
+	protected override async ValueTask OnEnterAsync(TerminalCommandContext context, CancellationToken cancellation)
 	{
+		var queue = context.Find<QueueCommand>(true)?.Queue ?? throw new CommandException($"Not found the required queue object.");
+
 		context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.QueueSubscribeCommand_Welcome, queue.Name));
 		context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.QueueSubscribeCommand_Prompt + Environment.NewLine);
 
 		var handler = new QueueHandler(context);
-		_consumers = new List<IMessageConsumer>(context.Expression.Arguments.Length);
+		var consumers = new List<IMessageConsumer>(context.Expression.Arguments.Length);
 
 		foreach(var argument in context.Expression.Arguments)
 		{
 			var index = argument.IndexOfAny([':', '?']);
 			var consumer = index > 0 && index < argument.Length ?
-				queue.SubscribeAsync(argument.Substring(0, index), argument.Substring(index + 1), handler).AsTask().GetAwaiter().GetResult() :
-				queue.SubscribeAsync(argument, handler).AsTask().GetAwaiter().GetResult();
+				await queue.SubscribeAsync(argument[..index], argument[(index + 1)..], handler, cancellation) :
+				await queue.SubscribeAsync(argument, handler, cancellation);
 
-			_consumers.Add(consumer);
+			consumers.Add(consumer);
 		}
+
+		if(consumers.Count > 0)
+			context.Result = consumers;
 	}
 
-	protected override void OnListened(CommandContext context, IMessageQueue queue)
+	protected override async ValueTask OnExitAsync(TerminalCommandContext context, Exception exception, CancellationToken cancellation)
 	{
-		var consumers = Interlocked.Exchange(ref _consumers, null);
-
-		if(consumers != null)
+		if(context.Result is IEnumerable<IMessageConsumer> consumers)
 		{
 			foreach(var consumer in consumers)
-				consumer.UnsubscribeAsync().AsTask().GetAwaiter().GetResult();
+				await consumer.UnsubscribeAsync(cancellation);
 		}
 	}
 	#endregion

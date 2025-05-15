@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -47,26 +48,34 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 
 	#region 成员字段
 	private ICommand _command;
-	private ICommandLoader _loader;
 	private CommandTreeNode _parent;
-	private CommandTreeNodeCollection _children;
+	private HashSet<string> _aliases;
+	private readonly CommandTreeNodeCollection _children;
 	#endregion
 
 	#region 构造函数
 	public CommandTreeNode()
 	{
 		_children = new CommandTreeNodeCollection(this);
+		_aliases = new(StringComparer.OrdinalIgnoreCase);
 	}
 
 	public CommandTreeNode(string name) : base(name)
 	{
 		_children = new CommandTreeNodeCollection(this);
+		_aliases = new(StringComparer.OrdinalIgnoreCase);
 	}
 
 	public CommandTreeNode(ICommand command) : base(command?.Name)
 	{
-		_command = command ?? throw new ArgumentNullException(nameof(command));
+		if(command == null)
+			throw new ArgumentNullException(nameof(command));
+
+		_aliases = new(StringComparer.OrdinalIgnoreCase);
 		_children = new CommandTreeNodeCollection(this);
+
+		//通过命令属性设置器来初始化别名集
+		this.Command = command;
 	}
 	#endregion
 
@@ -74,14 +83,18 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 	public ICommand Command
 	{
 		get => _command;
-		set => _command = value;
+		set
+		{
+			var aliases = GetAliases(_command);
+			_aliases.ExceptWith(aliases);
+
+			_command = value;
+			_aliases.UnionWith(GetAliases(_command));
+		}
 	}
 
-	public ICommandLoader Loader
-	{
-		get => _loader;
-		set => _loader = value;
-	}
+	public ISet<string> Aliases => _aliases;
+	public ICommandLoader Loader { get; set; }
 
 	public CommandTreeNodeCollection Children
 	{
@@ -131,10 +144,22 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 			}
 		}
 
-		if(parts == null)
-			parts = [path];
+		return base.FindNode(string.Join('/', parts ?? [path]), token =>
+		{
+			if(token.Current != null)
+				return token.Current;
 
-		return base.FindNode(string.Join('/', parts), null);
+			if(token.Parent != null)
+			{
+				foreach(var child in token.Parent.Children)
+				{
+					if(child.Aliases.Contains(token.Name))
+						return child;
+				}
+			}
+
+			return null;
+		});
 	}
 
 	public CommandTreeNode Find(ICommand command, bool rooting = false)
@@ -144,19 +169,19 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 
 		//向上查找（往根节点方向）
 		if(rooting)
-			return FindUp(this, node => node._command == command);
+			return FindUp(this, node => node.Command == command);
 
 		//确保当前加载器已经被加载过
 		this.EnsureChildren();
 
-		return FindDown(this, node => node._command == command);
+		return FindDown(this, node => node.Command == command);
 	}
 
 	public TCommand Find<TCommand>(bool rooting = false) where TCommand : class, ICommand
 	{
 		static bool Predicate(CommandTreeNode node)
 		{
-			var command = node._command;
+			var command = node.Command;
 
 			if(command == null)
 				return false;
@@ -169,12 +194,12 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 
 		//向上查找（往根节点方向）
 		if(rooting)
-			return (TCommand)FindUp(this, Predicate)?._command;
+			return (TCommand)FindUp(this, Predicate)?.Command;
 
 		//确保当前加载器已经被加载过
 		this.EnsureChildren();
 
-		return (TCommand)FindDown(this, Predicate)?._command;
+		return (TCommand)FindDown(this, Predicate)?.Command;
 	}
 
 	public CommandTreeNode Find(Predicate<CommandTreeNode> predicate, bool rooting = false)
@@ -196,7 +221,7 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 	#region 重写方法
 	protected void LoadChildren()
 	{
-		var loader = _loader;
+		var loader = this.Loader;
 
 		if(loader != null && (!loader.IsLoaded))
 			loader.Load(this);
@@ -224,6 +249,18 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 			this.LoadChildren();
 
 		return childrenLoaded == 0;
+	}
+
+	private static IEnumerable<string> GetAliases(object command)
+	{
+		if(command == null)
+			return [];
+
+		var attributes = Attribute.GetCustomAttributes(command.GetType(), typeof(AliasAttribute), true);
+		if(attributes == null || attributes.Length == 0)
+			return [];
+
+		return attributes.OfType<AliasAttribute>().Select(attribute => attribute.Alias);
 	}
 
 	private static CommandTreeNode FindUp(CommandTreeNode current, Predicate<CommandTreeNode> predicate)

@@ -67,23 +67,23 @@ public abstract class CommandBase<TContext> : CommandBase, ICommand<TContext> wh
 	#endregion
 
 	#region 抽象方法
-	protected virtual TContext CreateContext(object parameter) => parameter as TContext;
+	protected virtual TContext CreateContext(object argument) => argument as TContext;
 	protected abstract ValueTask<object> OnExecuteAsync(TContext context, CancellationToken cancellation);
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask<bool> CanExecuteAsync(object parameter, CancellationToken cancellation)
+	protected override ValueTask<bool> CanExecuteAsync(object argument, CancellationToken cancellation)
 	{
-		if(parameter is not TContext context)
-			context = this.CreateContext(parameter);
+		if(argument is not TContext context)
+			context = this.CreateContext(argument);
 
 		return this.CanExecuteAsync(context, cancellation);
 	}
 
-	protected override ValueTask<object> OnExecuteAsync(object parameter, CancellationToken cancellation)
+	protected override ValueTask<object> OnExecuteAsync(object argument, CancellationToken cancellation)
 	{
-		if(parameter is not TContext context)
-			context = this.CreateContext(parameter);
+		if(argument is not TContext context)
+			context = this.CreateContext(argument);
 
 		//执行具体的命令操作
 		return this.OnExecuteAsync(context, cancellation);

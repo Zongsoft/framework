@@ -64,8 +64,8 @@ public class RedisSetCommand : CommandBase<CommandContext>
 
 		if(context.Expression.Arguments.Length == 1)
 		{
-			if(context.Parameter != null)
-				return await redis.SetValueAsync(context.Expression.Arguments[0], context.Parameter, expiry, requisite, cancellation);
+			if(context.Value != null)
+				return await redis.SetValueAsync(context.Expression.Arguments[0], context.Value, expiry, requisite, cancellation);
 
 			throw new CommandException("Missing arguments.");
 		}

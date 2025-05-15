@@ -67,7 +67,7 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#region 执行方法
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(context.Parameter == null && context.Expression.Arguments.Length == 0)
+			if(context.Value == null && context.Expression.Arguments.Length == 0)
 				throw new CommandException(Properties.Resources.Text_MissingCommandArguments);
 
 			var destination = context.Expression.Options.GetValue<string>("target");
@@ -82,9 +82,9 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 
 			var results = new List<PushingResult>();
 
-			if(context.Parameter != null)
+			if(context.Value != null)
 			{
-				var content = await GetContentAsync(context.Parameter, cancellation);
+				var content = await GetContentAsync(context.Value, cancellation);
 
 				var result = await this.SendAsync(
 					context.Expression.Options.GetValue<string>("name"),

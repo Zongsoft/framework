@@ -35,8 +35,8 @@ namespace Zongsoft.Components;
 public class CommandExecutorFailureEventArgs : Zongsoft.Diagnostics.FailureEventArgs
 {
 	#region 构造函数
-	public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception) : base(exception, false) => this.Context = context;
-	public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception, bool handled) : base(exception, handled) => this.Context = context;
+	public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception) : base(exception, false) => this.Context = context ?? throw new ArgumentNullException(nameof(context));
+	public CommandExecutorFailureEventArgs(CommandExecutorContext context, Exception exception, bool handled) : base(exception, handled) => this.Context = context ?? throw new ArgumentNullException(nameof(context));
 	#endregion
 
 	#region 公共属性

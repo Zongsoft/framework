@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -36,7 +36,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public class CommandExecutor : ICommandExecutor
+public partial class CommandExecutor : ICommandExecutor
 {
 	#region 声明事件
 	public event EventHandler<CommandExecutorFailureEventArgs> Failed;
@@ -67,6 +67,7 @@ public class CommandExecutor : ICommandExecutor
 		_output = NullCommandOutlet.Instance;
 		_error = CommandErrorWriter.Instance;
 		_states = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+		this.Aliaser = new CommandTreeNodeAliaser(_root);
 	}
 	#endregion
 
@@ -90,6 +91,7 @@ public class CommandExecutor : ICommandExecutor
 
 	#region 公共属性
 	public CommandTreeNode Root => _root;
+	public CommandTreeNodeAliaser Aliaser { get; }
 	public IDictionary<string, object> States => _states;
 	public ICommandInvoker Invoker
 	{
@@ -121,29 +123,13 @@ public class CommandExecutor : ICommandExecutor
 	#endregion
 
 	#region 执行方法
-	public async ValueTask<object> ExecuteAsync(string expression, object argument = null, CancellationToken cancellation = default)
+	public async ValueTask<object> ExecuteAsync(string expression, object value = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrWhiteSpace(expression))
 			throw new ArgumentNullException(nameof(expression));
 
-		CommandExecutorContext context = null;
-
-		try
-		{
-			//创建命令执行器上下文对象
-			context = this.CreateContext(expression, argument);
-
-			if(context == null)
-				throw new InvalidOperationException("Create executor context failed.");
-		}
-		catch(Exception ex)
-		{
-			//激发“Error”事件
-			if(!this.OnFailed(context, ex))
-				throw;
-
-			return null;
-		}
+		//创建命令执行上下文
+		var context = this.CreateContext(expression, value);
 
 		//创建事件参数对象
 		var executingArgs = new CommandExecutorExecutingEventArgs(context);
@@ -226,44 +212,44 @@ public class CommandExecutor : ICommandExecutor
 		var completes = new List<CommandCompletionContext>();
 
 		//初始化第一个输入参数
-		var parameter = session.Parameter;
+		var value = session.Value;
 
 		while(queue.Count > 0)
 		{
 			var entry = queue.Dequeue();
 
 			//创建命令执行上下文
-			var context = this.CreateContext(session, entry.Item1, entry.Item2, parameter);
+			var context = this.CreateContext(session, entry.Item1, entry.Item2, value);
 
 			//如果命令上下文为空或命令空则直接返回
 			if(context == null || context.Command == null)
 				return default;
 
 			//执行当前命令
-			parameter = await this.OnExecuteAsync(context, cancellation);
+			value = await this.OnExecuteAsync(context, cancellation);
 
 			//判断命令是否需要完成通知，如果是则加入到清理列表中
 			if(context.Command is ICommandCompletion completion)
-				((ICollection<CommandCompletionContext>)completes).Add(new CommandCompletionContext(context, parameter));
+				((ICollection<CommandCompletionContext>)completes).Add(new CommandCompletionContext(context, value));
 		}
 
 		//返回最后一个命令的执行结果
-		return (parameter, completes);
+		return (value, completes);
 	}
 
 	protected virtual ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation) => this.Invoker.InvokeAsync(context, cancellation);
 	#endregion
 
 	#region 保护方法
-	protected virtual CommandExecutorContext CreateContext(string commandText, object parameter)
+	protected virtual CommandExecutorContext CreateContext(string commandText, object value)
 	{
 		//解析当前命令文本
 		var expression = this.OnParse(commandText) ?? throw new InvalidOperationException($"Invalid command expression text: {commandText}.");
-		return new CommandExecutorContext(this, expression, parameter);
+		return new CommandExecutorContext(this, expression, value);
 	}
 
-	protected virtual CommandContext CreateContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode node, object parameter) =>
-		node == null || node.Command == null ? null : new CommandContext(session, expression, node, parameter);
+	protected virtual CommandContext CreateContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode node, object value) =>
+		node == null || node.Command == null ? null : new CommandContext(session, expression, node, value);
 
 	protected virtual CommandExpression OnParse(string text) => _parser.Parse(text);
 	#endregion

@@ -66,7 +66,7 @@ public class FileSaveCommand : CommandBase<CommandContext>, ICommandCompletion
 			context.Expression.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
 
 		if(result != null)
-			FileUtility.Save(result, context.Parameter, context.Expression.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
+			FileUtility.Save(result, context.Value, context.Expression.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
 
 		return ValueTask.FromResult(result);
 	}

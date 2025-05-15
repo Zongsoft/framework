@@ -34,7 +34,7 @@ internal class Program
 
 		executor.Command("disconnect", (context, cancellation) => _client.DisconnectAsync(cancellation));
 
-		executor.Command("sub", async (context, cancellation) =>
+		executor.Command("subscribe", async (context, cancellation) =>
 		{
 			if(context.Expression.Arguments.Length == 0)
 				throw new CommandException($"Missing required arguments of the subscribe command.");
@@ -56,7 +56,7 @@ internal class Program
 			}
 			else
 			{
-				subscriber = await _client.SubscribeAsync(context.Expression.Arguments, OnConsume, cancellation);
+				subscriber = await _client.SubscribeAsync(context.Expression.Arguments, cancellation);
 
 				if(subscriber == null)
 					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The subscription failed, possibly because the specified entries is already subscribed.");
@@ -67,7 +67,7 @@ internal class Program
 			return subscriber;
 		});
 
-		executor.Command("unsub", async (context, cancellation) =>
+		executor.Command("unsubscribe", async (context, cancellation) =>
 		{
 			if(context.Expression.Arguments.Length == 0)
 			{
@@ -216,21 +216,13 @@ internal class Program
 				context.Output.WriteLine(CommandOutletColor.DarkRed, "The variable creation failed.");
 		});
 
+		//添加订阅事件监听命令
+		executor.Root.Children.Add(new Commands.ListenCommand(_client));
+
+		//设置相关命令的别名
+		executor.Aliaser.Set("subscribe", "sub");
+		executor.Aliaser.Set("unsubscribe", "unsub");
+
 		executor.Run($"Welcome to the OPC-UA Client.{Environment.NewLine}{new string('-', 50)}");
-	}
-
-	private static void OnConsume(Subscriber subscriber, Subscriber.Entry entry, object value)
-	{
-		var content = CommandOutletContent.Create(null)
-			.Append(CommandOutletColor.DarkGray, "[")
-			.Append(CommandOutletColor.DarkGreen, nameof(Subscriber))
-			.Append(CommandOutletColor.DarkCyan, subscriber.Identifier.ToString())
-			.Append(CommandOutletColor.DarkGray, "] ")
-			.Append(CommandOutletColor.DarkYellow, entry.Name)
-			.Append(CommandOutletColor.DarkGray, " : ")
-			.AppendValue(value);
-
-		ConsoleTerminal.Instance.WriteLine();
-		ConsoleTerminal.Instance.Write(content);
 	}
 }

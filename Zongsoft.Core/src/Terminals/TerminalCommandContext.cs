@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Components;
 
@@ -37,11 +36,11 @@ namespace Zongsoft.Terminals;
 public class TerminalCommandContext : CommandContext
 {
 	#region 构造函数
-	public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, ICommand command, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, command, parameter, extendedProperties) { }
-	public TerminalCommandContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode commandNode, object parameter, IDictionary<string, object> extendedProperties = null) : base(session, expression, commandNode, parameter, extendedProperties) { }
+	public TerminalCommandContext(CommandContextBase context, CommandExpression expression, ICommand command, object value) : base(context, expression, command, value) { }
+	public TerminalCommandContext(CommandContextBase context, CommandExpression expression, CommandTreeNode commandNode, object value) : base(context, expression, commandNode, value) { }
 	#endregion
 
 	#region 公共属性
-	public ITerminal Terminal => this.Executor is TerminalCommandExecutor executor ? executor.Terminal : null;
+	public ITerminal Terminal => (this.Executor as TerminalCommandExecutor)?.Terminal;
 	#endregion
 }

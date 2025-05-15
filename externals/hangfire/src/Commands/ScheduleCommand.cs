@@ -58,11 +58,11 @@ namespace Zongsoft.Externals.Hangfire.Commands
 			string[] identifiers;
 
 			if(context.Expression.Options.TryGetValue<string>("cron", out var cron) && !string.IsNullOrEmpty(cron))
-				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Parameter, options.Cron(cron), cancellation);
+				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Value, options.Cron(cron), cancellation);
 			else if(context.Expression.Options.TryGetValue<TimeSpan>("delay", out var duration) && duration > TimeSpan.Zero)
-				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Parameter, options.Delay(duration), cancellation);
+				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Value, options.Delay(duration), cancellation);
 			else
-				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Parameter, options, cancellation);
+				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Value, options, cancellation);
 
 			context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]");
 
@@ -75,13 +75,13 @@ namespace Zongsoft.Externals.Hangfire.Commands
 			return identifiers;
 		}
 
-		private static async ValueTask<string[]> ScheduleAsync(IScheduler scheduler, string[] names, object parameter, ITriggerOptions options, CancellationToken cancellation)
+		private static async ValueTask<string[]> ScheduleAsync(IScheduler scheduler, string[] names, object argument, ITriggerOptions options, CancellationToken cancellation)
 		{
 			var result = new string[names.Length];
 
 			for(int i = 0; i < names.Length; i++)
 			{
-				result[i] = await scheduler.ScheduleAsync(names[i], parameter, options, cancellation);
+				result[i] = await scheduler.ScheduleAsync(names[i], argument, options, cancellation);
 			}
 
 			return result;

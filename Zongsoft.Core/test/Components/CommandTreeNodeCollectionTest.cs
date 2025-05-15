@@ -100,10 +100,10 @@ public class CommandTreeNodeCollectionTest
 		#endregion
 
 		#region 公共方法
-		public ValueTask<bool> CanExecuteAsync(object parameter, CancellationToken cancellation) => ValueTask.FromResult(this.Enabled);
-		public ValueTask<object> ExecuteAsync(object parameter, CancellationToken cancellation)
+		public ValueTask<bool> CanExecuteAsync(object argument, CancellationToken cancellation) => ValueTask.FromResult(this.Enabled);
+		public ValueTask<object> ExecuteAsync(object argument, CancellationToken cancellation)
 		{
-			this.OnExecuting(new CommandExecutingEventArgs(parameter, null));
+			this.OnExecuting(new CommandExecutingEventArgs(argument));
 
 			try
 			{
@@ -111,7 +111,7 @@ public class CommandTreeNodeCollectionTest
 			}
 			finally
 			{
-				this.OnExecuted(new CommandExecutedEventArgs(parameter, null, null));
+				this.OnExecuted(new CommandExecutedEventArgs(argument));
 			}
 		}
 		#endregion

@@ -464,7 +464,9 @@ public partial class OpcClient : IDisposable
 		return true;
 	}
 
+	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, null, null, cancellation);
 	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, null, consumer, cancellation);
+	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, SubscriberOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, options, null, cancellation);
 	public async ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, SubscriberOptions options, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default)
 	{
 		if(identifiers == null)
@@ -513,7 +515,7 @@ public partial class OpcClient : IDisposable
 	#region 私有方法
 	private Session GetSession()
 	{
-		return _session ?? throw new InvalidOperationException($"The current client is not connected.");
+		return _session ?? throw new InvalidOperationException($"The {nameof(OpcClient)}({this.Name}) is not connected.");
 	}
 	#endregion
 

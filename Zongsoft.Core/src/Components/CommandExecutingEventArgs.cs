@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
@@ -36,94 +35,49 @@ namespace Zongsoft.Components;
 public class CommandExecutingEventArgs : EventArgs
 {
 	#region 成员变量
-	private CommandContext _context;
-	private IDictionary<string, object> _extendedProperties;
-	private object _parameter;
-	private object _result;
-	private bool _cancel;
+	private readonly CommandContext _context;
+	private object _value;
 	#endregion
 
 	#region 构造函数
 	public CommandExecutingEventArgs(CommandContext context, bool cancel = false)
 	{
-		if(context == null)
-			throw new ArgumentNullException(nameof(context));
-
-		_context = context;
-		_cancel = cancel;
+		_context = context ?? throw new ArgumentNullException(nameof(context));
+		this.Cancel = cancel;
+		this.Parameters = context.Parameters;
 	}
 
-	public CommandExecutingEventArgs(object parameter, IDictionary<string, object> extendedProperties = null, bool cancel = false)
+	public CommandExecutingEventArgs(object argument, bool cancel = false)
 	{
-		var context = parameter as CommandContext;
-
-		if(context != null)
+		if(argument is CommandContext context)
 		{
 			_context = context;
-
-			if(extendedProperties != null && extendedProperties.Count > 0)
-			{
-				foreach(var pair in extendedProperties)
-					context.States[pair.Key] = pair.Value;
-			}
+			this.Parameters = context.Parameters;
 		}
 		else
 		{
-			_parameter = parameter;
-			_extendedProperties = extendedProperties;
+			_value = argument;
+			this.Parameters = new();
 		}
 
-		_cancel = cancel;
+		this.Cancel = cancel;
 	}
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取或设置一个值，表示是否取消当前命令的执行。</summary>
-	public bool Cancel
-	{
-		get => _cancel;
-		set => _cancel = value;
-	}
+	public bool Cancel { get; set; }
 
 	/// <summary>获取命令的执行上下文对象。</summary>
 	public CommandContext Context => _context;
 
-	/// <summary>获取命令的执行参数对象。</summary>
-	public object Parameter => _context != null ? _context.Parameter : _parameter;
+	/// <summary>获取命令的输入值。</summary>
+	public object Value => _value ?? _context?.Value;
 
 	/// <summary>获取或设置命令的执行结果。</summary>
-	public object Result
-	{
-		get => _result;
-		set => _result = value;
-	}
+	public object Result { get; set; }
 
-	public bool HasExtendedProperties
-	{
-		get
-		{
-			if(_context != null)
-				return _context.HasStates;
-			else
-				return _extendedProperties != null && _extendedProperties.Count > 0;
-		}
-	}
-
-	/// <summary>
-	/// 获取可用于在命令执行过程中在各处理模块之间组织和共享数据的键/值集合。
-	/// </summary>
-	public IDictionary<string, object> ExtendedProperties
-	{
-		get
-		{
-			if(_context != null)
-				return _context.States;
-
-			if(_extendedProperties == null)
-				System.Threading.Interlocked.CompareExchange(ref _extendedProperties, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-			return _extendedProperties;
-		}
-	}
+	/// <summary>获取命令执行的附加参数集。</summary>
+	public Collections.Parameters Parameters { get; set; }
 	#endregion
 }

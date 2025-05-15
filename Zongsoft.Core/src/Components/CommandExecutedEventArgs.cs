@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
@@ -36,127 +35,75 @@ namespace Zongsoft.Components;
 public class CommandExecutedEventArgs : EventArgs
 {
 	#region 成员变量
-	private CommandContext _context;
-	private object _parameter;
-	private object _result;
-	private IDictionary<string, object> _extendedProperties;
-	private bool _exceptionHandled;
-	private Exception _exception;
+	private readonly CommandContext _context;
+	private object _value;
 	#endregion
 
 	#region 构造函数
-	public CommandExecutedEventArgs(CommandContext context, object result)
+	public CommandExecutedEventArgs(CommandContext context, object result = null)
 	{
-		if(context == null)
-			throw new ArgumentNullException(nameof(context));
-
-		_context = context;
-		_result = result;
+		_context = context ?? throw new ArgumentNullException(nameof(context));
+		this.Result = result;
+		this.Parameters = context.Parameters;
 	}
 
 	public CommandExecutedEventArgs(CommandContext context, Exception exception)
 	{
-		if(context == null)
-			throw new ArgumentNullException(nameof(context));
-
-		_context = context;
-		_exception = exception;
+		_context = context ?? throw new ArgumentNullException(nameof(context));
+		this.Exception = exception;
+		this.Parameters = context.Parameters;
 	}
 
-	/// <summary>构造一个命令执行成功的事件参数对象。</summary>
-	/// <param name="parameter">命令执行参数对象。</param>
-	/// <param name="result">命令执行的结果。</param>
-	/// <param name="extendedProperties">指定的扩展属性集。</param>
-	public CommandExecutedEventArgs(object parameter, object result, IDictionary<string, object> extendedProperties = null)
+	public CommandExecutedEventArgs(object argument, object result = null)
 	{
-		var context = parameter as CommandContext;
-
-		if(context != null)
+		if(argument is CommandContext context)
 		{
 			_context = context;
-
-			if(extendedProperties != null && extendedProperties.Count > 0)
-			{
-				foreach(var pair in extendedProperties)
-					context.States[pair.Key] = pair.Value;
-			}
+			this.Parameters = context.Parameters;
 		}
 		else
 		{
-			_parameter = parameter;
-			_extendedProperties = extendedProperties;
+			_value = argument;
+			this.Parameters = new();
 		}
 
-		_result = result;
+		this.Result = result;
 	}
 
-	/// <summary>构造一个命令执行失败的事件参数对象。</summary>
-	/// <param name="parameter">命令执行参数对象。</param>
-	/// <param name="exception">命令执行失败的异常对象。</param>
-	/// <param name="extendedProperties">指定的扩展属性集。</param>
-	public CommandExecutedEventArgs(object parameter, Exception exception, IDictionary<string, object> extendedProperties = null)
+	public CommandExecutedEventArgs(object argument, Exception exception)
 	{
-		var context = parameter as CommandContext;
-
-		if(context != null)
+		if(argument is CommandContext context)
 		{
 			_context = context;
-
-			if(extendedProperties != null && extendedProperties.Count > 0)
-			{
-				foreach(var pair in extendedProperties)
-					context.States[pair.Key] = pair.Value;
-			}
+			this.Parameters = context.Parameters;
 		}
 		else
 		{
-			_parameter = parameter;
-			_extendedProperties = extendedProperties;
+			_value = argument;
+			this.Parameters = new();
 		}
 
-		_exception = exception;
+		this.Exception = exception;
 	}
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取命令执行过程中的异常，如果返回空则表示为发生异常。</summary>
-	public Exception Exception => _exception;
+	public Exception Exception { get; }
 
 	/// <summary>获取或设置异常是否处理完成，如果返回假(<c>False</c>)则异常信息将被抛出。</summary>
-	public bool ExceptionHandled
-	{
-		get => _exceptionHandled;
-		set => _exceptionHandled = value;
-	}
+	public bool ExceptionHandled { get; set; }
 
 	/// <summary>获取命令的执行上下文对象。</summary>
 	public CommandContext Context => _context;
 
-	/// <summary>
-	/// 获取命令的执行参数对象。
-	/// </summary>
-	public object Parameter => _parameter;
+	/// <summary>获取命令的输入值。</summary>
+	public object Value => _value ?? _context?.Value;
 
-	public object Result
-	{
-		get => _result;
-		set => _result = value;
-	}
+	/// <summary>获取或设置命令的执行结果。</summary>
+	public object Result { get; set; }
 
-	public bool HasExtendedProperties => _extendedProperties != null && _extendedProperties.Count > 0;
-
-	/// <summary>
-	/// 获取可用于在命令执行过程中在各处理模块之间组织和共享数据的键/值集合。
-	/// </summary>
-	public IDictionary<string, object> ExtendedProperties
-	{
-		get
-		{
-			if(_extendedProperties == null)
-				System.Threading.Interlocked.CompareExchange(ref _extendedProperties, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-			return _extendedProperties;
-		}
-	}
+	/// <summary>获取命令执行的附加参数集。</summary>
+	public Collections.Parameters Parameters { get; set; }
 	#endregion
 }

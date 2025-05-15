@@ -354,7 +354,7 @@ public class CommandOutletContent
 	/// <summary>创建一个指定文本的新内容段。</summary>
 	/// <param name="text">指定的内容文本。</param>
 	/// <returns>返回新创建的内容段。</returns>
-	public static CommandOutletContent Create(string text) => new(null, text);
+	public static CommandOutletContent Create(string text = null) => new(null, text);
 
 	/// <summary>创建一个指定颜色和文本的新内容段。</summary>
 	/// <param name="color">指定的内容文本颜色。</param>

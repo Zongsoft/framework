@@ -32,7 +32,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -47,11 +46,8 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	#endregion
 
 	#region 构造函数
-	internal Subscriber(SubscriberOptions options, Action<Subscriber, Entry, object> consumer)
+	internal Subscriber(SubscriberOptions options, Action<Subscriber, Entry, object> consumer = null)
 	{
-		_consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
-
-		this.Options = options;
 		_subscription = new Subscription()
 		{
 			Handle = this,
@@ -66,6 +62,8 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 		_subscription.StateChanged += this.Subscription_StateChanged;
 		_subscription.PublishStatusChanged += this.Subscription_PublishStatusChanged;
 
+		_consumer = consumer;
+		this.Options = options;
 		this.Entries = new EntryCollection(this);
 	}
 	#endregion
@@ -87,6 +85,10 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	public override bool Equals(object obj) => this.Equals(obj as Subscriber);
 	public override int GetHashCode() => HashCode.Combine(this.Identifier);
 	public override string ToString() => $"{nameof(Subscriber)}#{this.Identifier}";
+	#endregion
+
+	#region 公共方法
+	public void Consume(Action<Subscriber, Entry, object> consumer = null) => _consumer = consumer;
 	#endregion
 
 	#region 取消订阅
@@ -156,13 +158,15 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 
 	internal void OnNotification(MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs args)
 	{
-		if(this.Entries.TryGetValue(monitoredItem.StartNodeId.ToString(), out var entry))
+		var consumer = _consumer;
+
+		if(consumer != null && this.Entries.TryGetValue(monitoredItem.StartNodeId.ToString(), out var entry))
 		{
 			var value = args.NotificationValue is MonitoredItemNotification notification ?
 				notification.Value.Value :
 				args.NotificationValue;
 
-			_consumer?.Invoke(this, entry, value);
+			consumer.Invoke(this, entry, value);
 		}
 	}
 	#endregion

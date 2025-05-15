@@ -7,7 +7,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Opc.Samples;
 
-internal class Commands
+internal partial class Commands
 {
 	public static void Info(TerminalCommandContext context, OpcClient client)
 	{
@@ -29,14 +29,14 @@ internal class Commands
 			foreach(var subscriber in client.Subscribers)
 			{
 				context.Output.WriteLine();
-				PrintSubscriber(content, subscriber, ++index);
+				PrintSubscriber(content, subscriber, ++index, context.Expression.Options.GetValue("detailed", false));
 			}
 		}
 
 		context.Output.Write(content);
 	}
 
-	private static void PrintSubscriber(CommandOutletContent content, Subscriber subscriber, int index)
+	private static void PrintSubscriber(CommandOutletContent content, Subscriber subscriber, int index, bool detailed)
 	{
 		if(subscriber == null)
 			return;
@@ -62,7 +62,7 @@ internal class Commands
 					.AppendLine(CommandOutletColor.DarkYellow, TypeAlias.GetAlias(subscriber[i].Type));
 		}
 
-		if(subscriber.Subscription != null)
+		if(detailed && subscriber.Subscription != null)
 		{
 			content.AppendLine(CommandOutletColor.Gray, "{");
 

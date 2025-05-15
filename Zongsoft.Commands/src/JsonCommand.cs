@@ -62,7 +62,7 @@ public class JsonCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var graph = context.Parameter;
+		var graph = context.Value;
 
 		if(graph == null)
 			return null;

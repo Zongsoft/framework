@@ -56,7 +56,7 @@ public class SecretCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		switch(context.Parameter)
+		switch(context.Value)
 		{
 			case ISecretor secretor:
 				this.Secretor = secretor;

@@ -22,6 +22,7 @@
 [string]$project_scriban          = 'externals/scriban/build.cake'
 [string]$project_python           = 'externals/python/build.cake'
 [string]$project_lua              = 'externals/lua/build.cake'
+[string]$project_opc              = 'externals/opc/build.cake'
 
 [string]$project_administratives  = '../Administratives/build.cake'
 
@@ -90,6 +91,9 @@ dotnet cake $project_python $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_lua $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_lua $CAKE_ARGS $ARGS
+
+Write-Host "dotnet cake $project_opc $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+dotnet cake $project_opc $CAKE_ARGS $ARGS
 
 if(Test-Path $project_administratives)
 {

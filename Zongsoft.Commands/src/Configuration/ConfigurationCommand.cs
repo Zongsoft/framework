@@ -70,7 +70,7 @@ public class ConfigurationCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Parameter is IConfiguration configuration)
+		if(context.Value is IConfiguration configuration)
 			_configuration = configuration;
 
 		//打印配置信息

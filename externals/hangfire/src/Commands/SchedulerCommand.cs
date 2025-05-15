@@ -48,9 +48,9 @@ namespace Zongsoft.Externals.Hangfire.Commands
 		{
 			if(context.Expression.Arguments.Length > 0)
 				this.Scheduler = ApplicationContext.Current.Services.Resolve<IScheduler>(context.Expression.Arguments[0]);
-			else if(context.Parameter is string name)
+			else if(context.Value is string name)
 				this.Scheduler = ApplicationContext.Current.Services.Resolve<IScheduler>(name);
-			else if(context.Parameter is IScheduler scheduler)
+			else if(context.Value is IScheduler scheduler)
 				this.Scheduler = scheduler;
 
 			return ValueTask.FromResult<object>(this.Scheduler);

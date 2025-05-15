@@ -79,7 +79,7 @@ public abstract class WorkerCommandBase : CommandBase<CommandContext>
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		//如果传入的参数对象是一个工作者，则将其设为关联者
-		if(context.Parameter is IWorker worker)
+		if(context.Value is IWorker worker)
 			this.Worker = worker;
 
 		//始终返回关联的工作者对象

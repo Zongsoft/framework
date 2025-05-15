@@ -57,7 +57,7 @@ public class ConsoleTerminal : ITerminal, ICommandOutlet
 	{
 		_syncRoot = new object();
 
-		if(!System.Diagnostics.Debugger.IsAttached)
+		//if(!System.Diagnostics.Debugger.IsAttached)
 		{
 			Console.TreatControlCAsInput = false;
 			Console.CancelKeyPress += this.Console_CancelKeyPress;

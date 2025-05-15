@@ -72,7 +72,7 @@ public class FileCommand : CommandBase<CommandContext>, ICommandCompletion
 
 		//如果是写入操作则执行保存方法
 		if(isSaving && result != null)
-			FileUtility.Save(result, context.Parameter, context.Expression.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
+			FileUtility.Save(result, context.Value, context.Expression.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
 
 		return ValueTask.FromResult(result);
 	}

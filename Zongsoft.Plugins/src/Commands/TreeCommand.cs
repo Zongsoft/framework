@@ -57,9 +57,9 @@ public class TreeCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Parameter is not PluginTreeNode node)
+		if(context.Value is not PluginTreeNode node)
 		{
-			if(context.Parameter != null)
+			if(context.Value != null)
 				throw new CommandException(string.Format(Properties.Resources.Text_Message_InvalidCommandParameter, context.CommandNode.FullPath));
 
 			if(context.Expression.Arguments.Length == 0)

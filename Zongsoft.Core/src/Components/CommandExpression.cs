@@ -92,7 +92,7 @@ public class CommandExpression
 		else
 			_options = new CommandOptionCollection(options);
 
-		_arguments = arguments ?? new string[0];
+		_arguments = arguments ?? [];
 	}
 	#endregion
 
@@ -157,7 +157,7 @@ public class CommandExpression
 					result += string.Format(" /{0}", option.Key);
 				else
 				{
-					if(option.Value.Contains("\""))
+					if(option.Value.Contains('"'))
 						result += $" -{option.Key}:'{option.Value}'";
 					else
 						result += $" -{option.Key}:\"{option.Value}\"";
@@ -169,7 +169,7 @@ public class CommandExpression
 		{
 			foreach(var argument in _arguments)
 			{
-				if(argument.Contains("\""))
+				if(argument.Contains('"'))
 					result += $" '{argument}'";
 				else
 					result += $" \"{argument}\"";

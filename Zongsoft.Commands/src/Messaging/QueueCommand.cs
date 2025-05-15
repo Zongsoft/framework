@@ -28,21 +28,19 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
 
 using Zongsoft.Services;
 using Zongsoft.Components;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.Commands;
 
 [DisplayName("Text.QueueCommand.Name")]
 [Description("Text.QueueCommand.Description")]
 [CommandOption("name", typeof(string), Description = "Text.QueueCommand.Options.Name")]
-public class QueueCommand : Components.Commands.HostCommandBase<IMessageQueue>
+public class QueueCommand : CommandBase<CommandContext>
 {
 	#region 成员字段
 	private readonly IServiceProvider _serviceProvider;
@@ -75,12 +73,15 @@ public class QueueCommand : Components.Commands.HostCommandBase<IMessageQueue>
 	#endregion
 
 	#region 公共属性
-	public IMessageQueue Queue { get => this.Host; set => this.Host = value; }
+	public IMessageQueue Queue { get; set; }
 	#endregion
 
 	#region 执行方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
+		if(context.Value is IMessageQueue queue)
+			this.Queue = queue;
+
 		if(context.Expression.Options.TryGetValue<string>("name", out var name))
 		{
 			if(string.IsNullOrEmpty(name))

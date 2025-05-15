@@ -52,11 +52,11 @@ public class RedisLockReleaseCommand : CommandBase<CommandContext>
 	{
 		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 
-		if(context.Parameter is IDistributedLock locker)
+		if(context.Value is IDistributedLock locker)
 		{
 			locker.Dispose();
 		}
-		else if(context.Parameter is IEnumerable<IDistributedLock> lockers)
+		else if(context.Value is IEnumerable<IDistributedLock> lockers)
 		{
 			foreach(var entry in lockers)
 				await entry.DisposeAsync();
