@@ -47,7 +47,7 @@ public class RedisInfoCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 		var info = await redis.GetInfoAsync(cancellation);
 
 		var content = CommandOutletContent

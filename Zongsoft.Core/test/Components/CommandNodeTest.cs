@@ -7,23 +7,23 @@ using Xunit;
 
 namespace Zongsoft.Components.Tests;
 
-public class CommandTreeNodeCollectionTest
+public class CommandNodeTest
 {
 	[Fact]
 	public void TestAdd()
 	{
-		var nodes = new CommandTreeNodeCollection();
+		var nodes = new CommandNodeCollection();
 
 		//测试增加空节点
 		Assert.NotNull(nodes.Add("Empty"));
 		Assert.NotNull(nodes["Empty"]);
-		Assert.Same(typeof(CommandTreeNode), nodes["Empty"].GetType());
+		Assert.Same(typeof(CommandNode), nodes["Empty"].GetType());
 		Assert.Null(nodes["Empty"].Command);
 
 		//以强类型的方式添加命令到命令树节点集合中
 		Assert.NotNull(nodes.Add(new DummyCommand("StronglyDummy")));
 		Assert.NotNull(nodes["StronglyDummy"]);
-		Assert.Same(typeof(CommandTreeNode), nodes["StronglyDummy"].GetType());
+		Assert.Same(typeof(CommandNode), nodes["StronglyDummy"].GetType());
 		Assert.NotNull(nodes["StronglyDummy"].Command);
 		Assert.Same(typeof(DummyCommand), nodes["StronglyDummy"].Command.GetType());
 
@@ -33,7 +33,7 @@ public class CommandTreeNodeCollectionTest
 		Assert.Equal(3, commands.Count);
 
 		Assert.NotNull(nodes["WeaklyDummy"]);
-		Assert.Same(typeof(CommandTreeNode), nodes["WeaklyDummy"].GetType());
+		Assert.Same(typeof(CommandNode), nodes["WeaklyDummy"].GetType());
 		Assert.NotNull(nodes["WeaklyDummy"].Command);
 		Assert.Same(typeof(DummyCommand), nodes["WeaklyDummy"].Command.GetType());
 	}

@@ -53,7 +53,7 @@ public class RedisGetCommand : CommandBase<CommandContext>
 			throw new CommandException("Missing arguments.");
 
 		int index = 0;
-		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 		var result = new List<object>(context.Expression.Arguments.Length);
 
 		for(int i = 0; i < context.Expression.Arguments.Length; i++)

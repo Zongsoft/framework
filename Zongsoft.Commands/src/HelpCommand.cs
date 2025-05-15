@@ -71,7 +71,7 @@ public class HelpCommand : CommandBase<CommandContext>
 				continue;
 			}
 
-			CommandTreeNode node = context.Executor.Find(argument);
+			var node = context.Executor.Find(argument);
 
 			if(node == null)
 			{
@@ -228,7 +228,7 @@ public class HelpCommand : CommandBase<CommandContext>
 	#endregion
 
 	#region 私有方法
-	private static void PrintCommandNode(ICommandOutlet output, CommandTreeNode node, int depth)
+	private static void PrintCommandNode(ICommandOutlet output, CommandNode node, int depth)
 	{
 		if(node == null)
 			return;

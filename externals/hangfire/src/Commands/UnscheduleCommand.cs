@@ -45,7 +45,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 			if(context.Expression.Arguments == null || context.Expression.Arguments.Length == 0)
 				throw new CommandException($"Missing the required arguments.");
 
-			var scheduler = context.CommandNode.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException($"Missing the required scheduler.");
+			var scheduler = context.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException($"Missing the required scheduler.");
 
 			for(int i = 0; i < context.Expression.Arguments.Length; i++)
 			{

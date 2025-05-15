@@ -49,7 +49,7 @@ public partial class CommandExecutor : ICommandExecutor
 	#endregion
 
 	#region 成员字段
-	private readonly CommandTreeNode _root;
+	private readonly CommandNode _root;
 	private readonly IDictionary<string, object> _states;
 	private ICommandExpressionParser _parser;
 	private ICommandInvoker _invoker;
@@ -61,13 +61,13 @@ public partial class CommandExecutor : ICommandExecutor
 	public CommandExecutor(ICommandExpressionParser parser = null) : this(null, parser) { }
 	public CommandExecutor(ICommandInvoker invoker, ICommandExpressionParser parser = null)
 	{
-		_root = new CommandTreeNode();
+		_root = new CommandNode();
 		_invoker = invoker ?? CommandInvoker.Default;
 		_parser = parser ?? CommandExpressionParser.Instance;
 		_output = NullCommandOutlet.Instance;
 		_error = CommandErrorWriter.Instance;
 		_states = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-		this.Aliaser = new CommandTreeNodeAliaser(_root);
+		this.Aliaser = new CommandNode.Aliaser(_root);
 	}
 	#endregion
 
@@ -90,8 +90,8 @@ public partial class CommandExecutor : ICommandExecutor
 	#endregion
 
 	#region 公共属性
-	public CommandTreeNode Root => _root;
-	public CommandTreeNodeAliaser Aliaser { get; }
+	public CommandNode Root => _root;
+	public CommandNode.Aliaser Aliaser { get; }
 	public IDictionary<string, object> States => _states;
 	public ICommandInvoker Invoker
 	{
@@ -119,7 +119,7 @@ public partial class CommandExecutor : ICommandExecutor
 	#endregion
 
 	#region 查找方法
-	public virtual CommandTreeNode Find(string path) => _root.Find(path);
+	public virtual CommandNode Find(string path) => _root.Find(path);
 	#endregion
 
 	#region 执行方法
@@ -181,7 +181,7 @@ public partial class CommandExecutor : ICommandExecutor
 	#region 执行实现
 	protected virtual async ValueTask<(object result, IEnumerable<CommandCompletionContext> completes)> OnExecuteAsync(CommandExecutorContext session, CancellationToken cancellation)
 	{
-		var queue = new Queue<Tuple<CommandExpression, CommandTreeNode>>();
+		var queue = new Queue<Tuple<CommandExpression, CommandNode>>();
 		var expression = session.Expression;
 
 		while(expression != null)
@@ -198,7 +198,7 @@ public partial class CommandExecutor : ICommandExecutor
 				expression.Options.Bind(node.Command);
 
 			//将找到的命令表达式和对应的节点加入队列中
-			queue.Enqueue(new Tuple<CommandExpression, CommandTreeNode>(expression, node));
+			queue.Enqueue(new Tuple<CommandExpression, CommandNode>(expression, node));
 
 			//设置下一个待搜索的命令表达式
 			expression = expression.Next;
@@ -240,7 +240,7 @@ public partial class CommandExecutor : ICommandExecutor
 	protected virtual ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation) => this.Invoker.InvokeAsync(context, cancellation);
 	#endregion
 
-	#region 保护方法
+	#region 虚拟方法
 	protected virtual CommandExecutorContext CreateContext(string commandText, object value)
 	{
 		//解析当前命令文本
@@ -248,8 +248,8 @@ public partial class CommandExecutor : ICommandExecutor
 		return new CommandExecutorContext(this, expression, value);
 	}
 
-	protected virtual CommandContext CreateContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode node, object value) =>
-		node == null || node.Command == null ? null : new CommandContext(session, expression, node, value);
+	protected virtual CommandContext CreateContext(CommandExecutorContext context, CommandExpression expression, CommandNode node, object value) =>
+		node == null || node.Command == null ? null : new CommandContext(context, expression, node, value);
 
 	protected virtual CommandExpression OnParse(string text) => _parser.Parse(text);
 	#endregion

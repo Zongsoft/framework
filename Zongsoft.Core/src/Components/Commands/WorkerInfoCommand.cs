@@ -48,11 +48,7 @@ public class WorkerInfoCommand : CommandBase<CommandContext>
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		//向上查找工作者命令对象，如果找到则获取其对应的工作者对象
-		var worker = context.CommandNode.Find<WorkerCommandBase>(true)?.Worker;
-
-		//如果指定的工作器查找失败，则抛出异常
-		if(worker == null)
-			throw new CommandException("Missing required worker of depends on.");
+		var worker = context.Find<WorkerCommandBase>(true)?.Worker ?? throw new CommandException("Missing required worker of depends on.");
 
 		//处理工作者信息
 		this.Info(context, worker);

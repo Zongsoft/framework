@@ -49,7 +49,7 @@ public class TerminalCommandExecutor : CommandExecutor
 
 	#region 成员字段
 	private ITerminal _terminal;
-	private CommandTreeNode _current;
+	private CommandNode _current;
 	#endregion
 
 	#region 构造函数
@@ -68,7 +68,7 @@ public class TerminalCommandExecutor : CommandExecutor
 
 	#region 公共属性
 	public ITerminal Terminal => _terminal;
-	public CommandTreeNode Current
+	public CommandNode Current
 	{
 		get => _current;
 		private set
@@ -152,7 +152,7 @@ public class TerminalCommandExecutor : CommandExecutor
 	#endregion
 
 	#region 查找方法
-	public override CommandTreeNode Find(string path)
+	public override CommandNode Find(string path)
 	{
 		if(string.IsNullOrWhiteSpace(path))
 			return null;
@@ -178,9 +178,9 @@ public class TerminalCommandExecutor : CommandExecutor
 	#endregion
 
 	#region 重写方法
-	protected override CommandContext CreateContext(CommandExecutorContext session, CommandExpression expression, CommandTreeNode node, object parameter)
+	protected override CommandContext CreateContext(CommandExecutorContext context, CommandExpression expression, CommandNode node, object value)
 	{
-		return node == null || node.Command == null ? null : new TerminalCommandContext(session, expression, node, parameter);
+		return node == null || node.Command == null ? null : new TerminalCommandContext(context, expression, node, value);
 	}
 
 	protected override void OnExecuted(CommandExecutorExecutedEventArgs args)

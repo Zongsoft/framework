@@ -42,7 +42,7 @@ public class CommandContext : CommandContextBase
 		this.Command = command ?? throw new ArgumentNullException(nameof(command));
 	}
 
-	public CommandContext(ICommandExecutor executor, CommandExpression expression, CommandTreeNode commandNode, object value) : base(executor, expression, value)
+	public CommandContext(ICommandExecutor executor, CommandExpression expression, CommandNode commandNode, object value) : base(executor, expression, value)
 	{
 		if(commandNode == null)
 			throw new ArgumentNullException(nameof(commandNode));
@@ -62,7 +62,7 @@ public class CommandContext : CommandContextBase
 		this.CommandNode = null;
 	}
 
-	internal protected CommandContext(CommandContextBase context, CommandExpression expression, CommandTreeNode commandNode, object value) : base(context, expression, value)
+	internal protected CommandContext(CommandContextBase context, CommandExpression expression, CommandNode commandNode, object value) : base(context, expression, value)
 	{
 		if(commandNode == null)
 			throw new ArgumentNullException(nameof(commandNode));
@@ -80,6 +80,6 @@ public class CommandContext : CommandContextBase
 	public ICommand Command { get; }
 
 	/// <summary>获取执行的命令所在节点。</summary>
-	public CommandTreeNode CommandNode { get; }
+	public CommandNode CommandNode { get; }
 	#endregion
 }

@@ -56,7 +56,7 @@ public class RedisFindCommand : CommandBase<CommandContext>
 		if(context.Expression.Arguments.Length == 0)
 			throw new CommandException("Missing arguments.");
 
-		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 
 		//查找指定模式的键名集
 		var result = redis.FindAsync(context.Expression.Arguments[0], cancellation);

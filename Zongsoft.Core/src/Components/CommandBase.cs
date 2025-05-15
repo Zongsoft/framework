@@ -70,10 +70,13 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 			if(string.IsNullOrWhiteSpace(value))
 				throw new ArgumentNullException(nameof(value));
 
-			if(value.Contains('.') || value.Contains('/'))
-				throw new ArgumentException(null, nameof(value));
+			if(value.Length > 100)
+				throw new ArgumentOutOfRangeException(nameof(value));
 
-			if(string.Equals(_name, value.Trim(), StringComparison.Ordinal))
+			if(value.Contains('.') || value.Contains('/') || value.Contains('\\'))
+				throw new ArgumentException($"The specified command name contains illegal characters.", nameof(value));
+
+			if(string.Equals(_name, value, StringComparison.Ordinal))
 				return;
 
 			_name = value.Trim();
@@ -238,6 +241,10 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 		argument is CommandContext context ?
 		new CommandExecutedEventArgs(context, exception) :
 		new CommandExecutedEventArgs(argument, exception);
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"{this.Name}";
 	#endregion
 
 	#region 显式实现

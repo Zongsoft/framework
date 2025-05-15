@@ -72,7 +72,7 @@ public class SecretGenerateCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		//从环境中查找秘密提供程序
-		var secretor = (context.CommandNode.Find<SecretCommand>(true)?.Secretor) ?? throw new CommandException("Missing required secretor for the command.");
+		var secretor = context.Find<SecretCommand>(true)?.Secretor ?? throw new CommandException("Missing required secretor for the command.");
 		var name = context.Expression.Options.GetValue<string>(KEY_NAME_OPTION);
 		var pattern = context.Expression.Options.GetValue<string>(KEY_PATTERN_OPTION);
 

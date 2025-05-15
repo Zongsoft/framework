@@ -33,12 +33,12 @@ namespace Zongsoft.Components;
 
 public static class CommandContextUtility
 {
-	public static CommandTreeNode Find(this CommandContext context, string path) =>
+	public static CommandNode Find(this CommandContext context, string path) =>
 		context?.CommandNode?.Find(path);
-	public static CommandTreeNode Find(this CommandContext context, ICommand command, bool rooting = false) =>
+	public static CommandNode Find(this CommandContext context, ICommand command, bool rooting = false) =>
 		context?.CommandNode?.Find(command, rooting);
 	public static TCommand Find<TCommand>(this CommandContext context, bool rooting = false) where TCommand : class, ICommand =>
 		context?.CommandNode?.Find<TCommand>(rooting);
-	public static CommandTreeNode Find(this CommandContext context, Predicate<CommandTreeNode> predicate, bool rooting = false) =>
+	public static CommandNode Find(this CommandContext context, Predicate<CommandNode> predicate, bool rooting = false) =>
 		context?.CommandNode.Find(predicate, rooting);
 }

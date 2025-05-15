@@ -33,53 +33,56 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public sealed class CommandTreeNodeAliaser(CommandTreeNode root) : IEnumerable<string>
+partial class CommandNode
 {
-	#region 成员字段
-	private readonly CommandTreeNode _root = root;
-	#endregion
-
-	#region 公共方法
-	public bool Set(string path, string alias)
+	public sealed class Aliaser(CommandNode root) : IEnumerable<string>
 	{
-		if(string.IsNullOrEmpty(path))
-			return false;
+		#region 成员字段
+		private readonly CommandNode _root = root;
+		#endregion
 
-		if(string.IsNullOrWhiteSpace(alias))
-			throw new ArgumentNullException(nameof(alias));
-
-		if(alias.Length > 100)
-			throw new ArgumentOutOfRangeException(nameof(alias));
-
-		if(alias.Contains('/') || alias.Contains('.') || alias.Contains('\\'))
-			throw new ArgumentException($"The specified alias contains illegal characters.", nameof(alias));
-
-		var node = _root.Find(path);
-		return node != null && node.Aliases.Add(alias);
-	}
-	#endregion
-
-	#region 私有方法
-	private static IEnumerable<string> GetAliases(CommandTreeNode node)
-	{
-		if(node == null)
-			yield break;
-
-		foreach(string alias in node.Aliases)
-			yield return alias;
-
-		foreach(var child in node.Children)
+		#region 公共方法
+		public bool Set(string path, string alias)
 		{
-			var aliases = GetAliases(child);
+			if(string.IsNullOrEmpty(path))
+				return false;
 
-			foreach(var alias in aliases)
-				yield return alias;
+			if(string.IsNullOrWhiteSpace(alias))
+				throw new ArgumentNullException(nameof(alias));
+
+			if(alias.Length > 100)
+				throw new ArgumentOutOfRangeException(nameof(alias));
+
+			if(alias.Contains('.') || alias.Contains('/') || alias.Contains('\\'))
+				throw new ArgumentException($"The specified alias contains illegal characters.", nameof(alias));
+
+			var node = _root.Find(path);
+			return node != null && node.Aliases.Add(alias);
 		}
-	}
-	#endregion
+		#endregion
 
-	#region 枚举遍历
-	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<string> GetEnumerator() => GetAliases(_root).GetEnumerator();
-	#endregion
+		#region 私有方法
+		private static IEnumerable<string> GetAliases(CommandNode node)
+		{
+			if(node == null)
+				yield break;
+
+			foreach(string alias in node.Aliases)
+				yield return alias;
+
+			foreach(var child in node.Children)
+			{
+				var aliases = GetAliases(child);
+
+				foreach(var alias in aliases)
+					yield return alias;
+			}
+		}
+		#endregion
+
+		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<string> GetEnumerator() => GetAliases(_root).GetEnumerator();
+		#endregion
+	}
 }

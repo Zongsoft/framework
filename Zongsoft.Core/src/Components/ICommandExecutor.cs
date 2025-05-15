@@ -48,7 +48,7 @@ public interface ICommandExecutor
 
 	#region 属性定义
 	/// <summary>获取命令执行器的根节点。</summary>
-	CommandTreeNode Root { get; }
+	CommandNode Root { get; }
 
 	/// <summary>获取或设置命令表达式解析器。</summary>
 	ICommandExpressionParser Parser { get; set; }
@@ -74,6 +74,6 @@ public interface ICommandExecutor
 	/// <summary>查找指定命令路径对应的命令节点。</summary>
 	/// <param name="path">指定的命令路径。</param>
 	/// <returns>返回指定命令路径对应的命令节点，如果指定的路径不存在则返回空(null)。</returns>
-	CommandTreeNode Find(string path);
+	CommandNode Find(string path);
 	#endregion
 }

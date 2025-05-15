@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -33,24 +33,24 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public class CommandTreeNodeCollection : Collections.HierarchicalNodeCollection<CommandTreeNode>, ICollection<ICommand>
+public class CommandNodeCollection : Collections.HierarchicalNodeCollection<CommandNode>, ICollection<ICommand>
 {
 	#region 构造函数
-	public CommandTreeNodeCollection() : base(null) { }
-	internal CommandTreeNodeCollection(CommandTreeNode owner) : base(owner) { }
+	public CommandNodeCollection() : base(null) { }
+	internal CommandNodeCollection(CommandNode owner) : base(owner) { }
 	#endregion
 
 	#region 公共方法
-	public CommandTreeNode Add(string name)
+	public CommandNode Add(string name)
 	{
-		var node = new CommandTreeNode(name);
+		var node = new CommandNode(name);
 		this.Add(node);
 		return node;
 	}
 
-	public CommandTreeNode Add(ICommand command)
+	public CommandNode Add(ICommand command)
 	{
-		var node = new CommandTreeNode(command ?? throw new ArgumentNullException(nameof(command)));
+		var node = new CommandNode(command ?? throw new ArgumentNullException(nameof(command)));
 		this.Add(node);
 		return node;
 	}
@@ -76,7 +76,7 @@ public class CommandTreeNodeCollection : Collections.HierarchicalNodeCollection<
 	#endregion
 
 	#region 重写方法
-	protected override void SetOwner(CommandTreeNode owner, CommandTreeNode node) => node?.SetParent(owner);
+	protected override void SetOwner(CommandNode owner, CommandNode node) => node?.SetParent(owner);
 	#endregion
 
 	#region 接口实现

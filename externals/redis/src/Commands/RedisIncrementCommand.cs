@@ -60,7 +60,7 @@ public class RedisIncrementCommand : CommandBase<CommandContext>
 
 		for(int i = 0; i < context.Expression.Arguments.Length; i++)
 		{
-			var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+			var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 			result[i] = await redis.IncreaseAsync(context.Expression.Arguments[i], interval, seed, expiry, cancellation);
 			context.Output.WriteLine(result[i].ToString());
 		}

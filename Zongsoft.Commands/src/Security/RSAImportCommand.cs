@@ -53,7 +53,7 @@ public class RSAImportCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var rsa = (context.CommandNode.Find<RSACommand>(true)?.RSA) ?? throw new CommandException("Missing the required RSA.");
+		var rsa = (context.Find<RSACommand>(true)?.RSA) ?? throw new CommandException("Missing the required RSA.");
 
 		switch(context.Expression.Options.GetValue<RSAKeyType>(TYPE_OPTION))
 		{

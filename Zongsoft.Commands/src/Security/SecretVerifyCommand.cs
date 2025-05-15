@@ -63,8 +63,7 @@ public class SecretVerifyCommand : CommandBase<CommandContext>
 			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
 		//从环境中查找秘密提供程序
-		var secretor = (context.CommandNode.Find<SecretCommand>(true)?.Secretor) ?? throw new CommandException("Missing required secretor for the command.");
-
+		var secretor = context.Find<SecretCommand>(true)?.Secretor ?? throw new CommandException("Missing required secretor for the command.");
 		(var succeed, var extra) = await secretor.VerifyAsync(context.Expression.Options.GetValue<string>(KEY_NAME_OPTION), context.Expression.Arguments[0], cancellation);
 
 		if(succeed)

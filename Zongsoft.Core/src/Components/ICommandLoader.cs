@@ -48,5 +48,5 @@ public interface ICommandLoader
 	/// <remarks>
 	///		<para>对实现者的提醒：应该确保该方法的实现是线程安全的。</para>
 	/// </remarks>
-	void Load(CommandTreeNode node);
+	void Load(CommandNode node);
 }

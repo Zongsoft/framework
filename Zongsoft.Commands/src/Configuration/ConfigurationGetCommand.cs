@@ -62,7 +62,7 @@ public class ConfigurationGetCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var configuration = context.CommandNode.Find<ConfigurationCommand>(true)?.Configuration;
+		var configuration = context.Find<ConfigurationCommand>(true)?.Configuration;
 
 		if(configuration == null)
 			throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Configuration"));

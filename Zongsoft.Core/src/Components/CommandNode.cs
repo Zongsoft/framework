@@ -35,7 +35,7 @@ namespace Zongsoft.Components;
 
 [System.Reflection.DefaultMember(nameof(Children))]
 [System.ComponentModel.DefaultProperty(nameof(Children))]
-public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTreeNode>
+public partial class CommandNode : Zongsoft.Collections.HierarchicalNode<CommandNode>
 {
 	#region 静态变量
 	private static readonly Regex _regex = new(@"^\s*((?<prefix>/|\.{1,2})/?)?(\s*(?<part>[^\.\\/]+|\.{2})?\s*[/.]?\s*)*", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
@@ -47,31 +47,31 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 
 	#region 成员字段
 	private ICommand _command;
-	private CommandTreeNode _parent;
-	private HashSet<string> _aliases;
-	private readonly CommandTreeNodeCollection _children;
+	private CommandNode _parent;
+	private readonly HashSet<string> _aliases;
+	private readonly CommandNodeCollection _children;
 	#endregion
 
 	#region 构造函数
-	public CommandTreeNode()
+	public CommandNode()
 	{
-		_children = new CommandTreeNodeCollection(this);
+		_children = new CommandNodeCollection(this);
 		_aliases = new(StringComparer.OrdinalIgnoreCase);
 	}
 
-	public CommandTreeNode(string name) : base(name)
+	public CommandNode(string name) : base(name)
 	{
-		_children = new CommandTreeNodeCollection(this);
+		_children = new CommandNodeCollection(this);
 		_aliases = new(StringComparer.OrdinalIgnoreCase);
 	}
 
-	public CommandTreeNode(ICommand command) : base(command?.Name)
+	public CommandNode(ICommand command) : base(command?.Name)
 	{
 		if(command == null)
 			throw new ArgumentNullException(nameof(command));
 
 		_aliases = new(StringComparer.OrdinalIgnoreCase);
-		_children = new CommandTreeNodeCollection(this);
+		_children = new CommandNodeCollection(this);
 
 		//通过命令属性设置器来初始化别名集
 		this.Command = command;
@@ -98,7 +98,7 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 	public ISet<string> Aliases => _aliases;
 	public ICommandLoader Loader { get; set; }
 
-	public CommandTreeNodeCollection Children
+	public CommandNodeCollection Children
 	{
 		get
 		{
@@ -114,11 +114,11 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 	#region 公共方法
 	/// <summary>查找指定的命令路径的命令节点。</summary>
 	/// <param name="path">指定的命令路径。</param>
-	/// <returns>返回查找的结果，如果为空则表示没有找到指定路径的<see cref="CommandTreeNode"/>命令节点。</returns>
+	/// <returns>返回查找的结果，如果为空则表示没有找到指定路径的<see cref="CommandNode"/>命令节点。</returns>
 	/// <remarks>
 	///		<para>如果路径以斜杠(/)打头则从根节点开始查找；如果以双点(../)打头则表示从上级节点开始查找；否则从当前节点开始查找。</para>
 	/// </remarks>
-	public CommandTreeNode Find(string path)
+	public CommandNode Find(string path)
 	{
 		if(string.IsNullOrWhiteSpace(path))
 			return null;
@@ -164,7 +164,7 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 		});
 	}
 
-	public CommandTreeNode Find(ICommand command, bool rooting = false)
+	public CommandNode Find(ICommand command, bool rooting = false)
 	{
 		if(command == null)
 			return null;
@@ -181,7 +181,7 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 
 	public TCommand Find<TCommand>(bool rooting = false) where TCommand : class, ICommand
 	{
-		static bool Predicate(CommandTreeNode node)
+		static bool Predicate(CommandNode node)
 		{
 			var command = node.Command;
 
@@ -204,7 +204,7 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 		return (TCommand)FindDown(this, Predicate)?.Command;
 	}
 
-	public CommandTreeNode Find(Predicate<CommandTreeNode> predicate, bool rooting = false)
+	public CommandNode Find(Predicate<CommandNode> predicate, bool rooting = false)
 	{
 		if(predicate == null)
 			throw new ArgumentNullException(nameof(predicate));
@@ -229,14 +229,16 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 			loader.Load(this);
 	}
 
-	protected override CommandTreeNode Parent => _parent;
-	protected override Collections.IHierarchicalNodeCollection<CommandTreeNode> Nodes => this.Children;
+	protected override CommandNode Parent => _parent;
+	protected override Collections.IHierarchicalNodeCollection<CommandNode> Nodes => this.Children;
 	protected override string GetPath() => _parent == null ? string.Empty : _parent.FullPath;
 	protected override void OnFinding(ReadOnlySpan<char> path) => this.EnsureChildren();
+
+	public override string ToString() => _aliases.Count == 0 ? base.ToString() : $"{this.FullPath}({string.Join(',', _aliases)})";
 	#endregion
 
 	#region 内部方法
-	internal void SetParent(CommandTreeNode parent) => _parent = parent;
+	internal void SetParent(CommandNode parent) => _parent = parent;
 	#endregion
 
 	#region 私有方法
@@ -253,7 +255,7 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 		return childrenLoaded == 0;
 	}
 
-	private static CommandTreeNode FindUp(CommandTreeNode current, Predicate<CommandTreeNode> predicate)
+	private static CommandNode FindUp(CommandNode current, Predicate<CommandNode> predicate)
 	{
 		if(current == null || predicate == null)
 			return null;
@@ -269,7 +271,7 @@ public class CommandTreeNode : Zongsoft.Collections.HierarchicalNode<CommandTree
 		return null;
 	}
 
-	private static CommandTreeNode FindDown(CommandTreeNode current, Predicate<CommandTreeNode> predicate)
+	private static CommandNode FindDown(CommandNode current, Predicate<CommandNode> predicate)
 	{
 		if(current == null || predicate == null)
 			return null;

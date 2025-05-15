@@ -62,7 +62,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var queue = context.CommandNode.Find<QueueCommand>(true)?.Queue;
+		var queue = context.Find<QueueCommand>(true)?.Queue;
 		if(queue == null)
 			return null;
 

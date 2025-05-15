@@ -51,7 +51,7 @@ public abstract class CommandLoaderBase : ICommandLoader
 	#endregion
 
 	#region 公共方法
-	public void Load(CommandTreeNode node)
+	public void Load(CommandNode node)
 	{
 		if(node == null || _isLoaded)
 			return;
@@ -70,6 +70,6 @@ public abstract class CommandLoaderBase : ICommandLoader
 	/// <summary>执行加载命令的实际操作。</summary>
 	/// <param name="node">待加载的命令树节点。</param>
 	/// <returns>如果加载成功则返回真(true)，否则返回假(false)。</returns>
-	protected abstract bool OnLoad(CommandTreeNode node);
+	protected abstract bool OnLoad(CommandNode node);
 	#endregion
 }

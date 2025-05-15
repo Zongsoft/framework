@@ -49,7 +49,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 			if(context.Expression.Arguments == null || context.Expression.Arguments.Length == 0)
 				throw new CommandException($"Missing the required argments.");
 
-			var scheduler = context.CommandNode.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException($"Missing the required scheduler.");
+			var scheduler = context.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException($"Missing the required scheduler.");
 
 			var options = string.IsNullOrEmpty(context.Expression.Options.GetValue<string>("id")) ?
 				Trigger.Options.Identifier(Timestamp.Millennium.Now.ToString()) :

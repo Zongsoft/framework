@@ -37,7 +37,7 @@ public class TerminalCommandContext : CommandContext
 {
 	#region 构造函数
 	public TerminalCommandContext(CommandContextBase context, CommandExpression expression, ICommand command, object value) : base(context, expression, command, value) { }
-	public TerminalCommandContext(CommandContextBase context, CommandExpression expression, CommandTreeNode commandNode, object value) : base(context, expression, commandNode, value) { }
+	public TerminalCommandContext(CommandContextBase context, CommandExpression expression, CommandNode commandNode, object value) : base(context, expression, commandNode, value) { }
 	#endregion
 
 	#region 公共属性

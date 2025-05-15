@@ -66,7 +66,7 @@ public class RedisLockAcquireCommand : CommandBase<CommandContext>
 				expiry = TimeSpan.FromMinutes(1);
 		}
 
-		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 		var lockers = new List<IDistributedLock>(context.Expression.Arguments.Length);
 
 		for(int i = 0; i < context.Expression.Arguments.Length; i++)

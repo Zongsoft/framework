@@ -60,7 +60,7 @@ public class RedisSetCommand : CommandBase<CommandContext>
 		var expiry = context.Expression.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
 		var requisite = context.Expression.Options.GetValue<Caching.CacheRequisite>(REQUISITE_OPTION);
 
-		var redis = context.CommandNode.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 
 		if(context.Expression.Arguments.Length == 1)
 		{
