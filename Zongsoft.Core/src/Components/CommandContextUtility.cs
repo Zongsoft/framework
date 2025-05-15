@@ -40,5 +40,5 @@ public static class CommandContextUtility
 	public static TCommand Find<TCommand>(this CommandContext context, bool rooting = false) where TCommand : class, ICommand =>
 		context?.CommandNode?.Find<TCommand>(rooting);
 	public static CommandNode Find(this CommandContext context, Predicate<CommandNode> predicate, bool rooting = false) =>
-		context?.CommandNode.Find(predicate, rooting);
+		context?.CommandNode?.Find(predicate, rooting);
 }
