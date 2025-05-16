@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,7 +31,6 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
@@ -59,8 +58,8 @@ public interface ICommandExecutor
 	/// <summary>获取或设置命令执行器的错误输出器。</summary>
 	TextWriter Error { get; set; }
 
-	/// <summary>获取命令执行器的状态字典。</summary>
-	IDictionary<string, object> States { get; }
+	/// <summary>获取命令执行器的状态信息集。</summary>
+	Collections.Parameters States { get; }
 	#endregion
 
 	#region 方法定义

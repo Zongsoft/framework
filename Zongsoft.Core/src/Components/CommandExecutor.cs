@@ -50,7 +50,6 @@ public partial class CommandExecutor : ICommandExecutor
 
 	#region 成员字段
 	private readonly CommandNode _root;
-	private readonly IDictionary<string, object> _states;
 	private ICommandExpressionParser _parser;
 	private ICommandInvoker _invoker;
 	private ICommandOutlet _output;
@@ -66,7 +65,7 @@ public partial class CommandExecutor : ICommandExecutor
 		_parser = parser ?? CommandExpressionParser.Instance;
 		_output = NullCommandOutlet.Instance;
 		_error = CommandErrorWriter.Instance;
-		_states = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+		this.States = new();
 		this.Aliaser = new CommandNode.Aliaser(_root);
 	}
 	#endregion
@@ -92,7 +91,8 @@ public partial class CommandExecutor : ICommandExecutor
 	#region 公共属性
 	public CommandNode Root => _root;
 	public CommandNode.Aliaser Aliaser { get; }
-	public IDictionary<string, object> States => _states;
+	public Collections.Parameters States { get; }
+
 	public ICommandInvoker Invoker
 	{
 		get => _invoker;
