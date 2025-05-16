@@ -42,11 +42,12 @@ public interface ITerminal : Components.ICommandOutlet
 	#endregion
 
 	#region 属性定义
-	Zongsoft.Components.CommandOutletColor BackgroundColor { get; set; }
-	Zongsoft.Components.CommandOutletColor ForegroundColor { get; set; }
+	ITerminalExecutor Executor { get; }
 	TextWriter Error { get; set; }
 	TextReader Input { get; set; }
 	TextWriter Output { get; set; }
+	Components.CommandOutletColor BackgroundColor { get; set; }
+	Components.CommandOutletColor ForegroundColor { get; set; }
 	#endregion
 
 	#region 方法定义

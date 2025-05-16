@@ -32,11 +32,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
 
+using Zongsoft.Components;
+
 namespace Zongsoft.Terminals.Commands;
 
 [DisplayName("ClearCommand.Name")]
 [Description("ClearCommand.Description")]
-public class ClearCommand : Zongsoft.Components.CommandBase<TerminalCommandContext>
+public class ClearCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
 	public ClearCommand() : base("Clear") { }
@@ -44,10 +46,10 @@ public class ClearCommand : Zongsoft.Components.CommandBase<TerminalCommandConte
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		//清空当前终端的显示缓存
-		context.Terminal.Clear();
+		context.GetTerminal()?.Clear();
 		return ValueTask.FromResult<object>(null);
 	}
 	#endregion

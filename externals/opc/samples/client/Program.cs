@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,11 +18,9 @@ internal class Program
 	{
 		_client = new OpcClient();
 
-		var executor = new TerminalCommandExecutor(ConsoleTerminal.Instance);
+		var executor = Terminal.Console.Executor;
 
 		executor.Command("info", Commands.Info, _client);
-		executor.Command("exit", context => { _client.Dispose(); throw new TerminalCommandExecutor.ExitException(); });
-		executor.Command("clear", context => context.Terminal.Clear());
 
 		executor.Command("connect", (context, cancellation) =>
 		{
@@ -223,6 +219,7 @@ internal class Program
 		executor.Aliaser.Set("subscribe", "sub");
 		executor.Aliaser.Set("unsubscribe", "unsub");
 
+		//运行终端命令执行器
 		executor.Run($"Welcome to the OPC-UA Client.{Environment.NewLine}{new string('-', 50)}");
 	}
 }

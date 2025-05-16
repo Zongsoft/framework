@@ -32,6 +32,7 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 
+using Zongsoft.Terminals;
 using Zongsoft.Components;
 
 namespace Zongsoft.IO.Commands;
@@ -44,8 +45,7 @@ internal static class FileUtility
 
 		if(context.Expression.Arguments.Length == 0)
 		{
-			if(context is not Terminals.TerminalCommandContext terminalContext)
-				throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+			var terminal = context.GetTerminal() ?? throw new CommandException($"No arguments are provided, and the '{context.Command.Name}' command is not running in a terminal environment, so the required arguments cannot be obtained through user interaction.");
 
 			var filePath = string.Empty;
 			var prompt = (access & FileAccess.Write) == FileAccess.Write ?
@@ -55,7 +55,7 @@ internal static class FileUtility
 			do
 			{
 				context.Output.Write(CommandOutletColor.DarkYellow, prompt);
-				filePath = terminalContext.Terminal.Input.ReadLine().Trim();
+				filePath = terminal.Input.ReadLine().Trim();
 			} while(string.IsNullOrEmpty(filePath));
 
 			paths = [filePath];

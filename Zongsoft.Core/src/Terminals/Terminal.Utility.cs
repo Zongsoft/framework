@@ -31,30 +31,25 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Components;
+
 namespace Zongsoft.Terminals;
 
-public abstract class TerminalReactiveCommandBase : Components.CommandBase<TerminalCommandContext>
+partial class Terminal
 {
-	#region 私有变量
-	private readonly AutoResetEvent _semaphore;
-	#endregion
+	public static ITerminal GetTerminal(this ICommandExecutor executor) => (executor as ITerminalExecutor)?.Terminal;
+	public static ITerminal GetTerminal(this CommandContextBase context) => (context?.Executor as ITerminalExecutor)?.Terminal;
 
-	#region 构造函数
-	protected TerminalReactiveCommandBase(string name) : base(name)
-	{
-		//创建信号量，默认为堵塞状态
-		_semaphore = new AutoResetEvent(false);
-	}
-	#endregion
-
-	#region 执行方法
-	protected override async ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	public static async ValueTask<object> ReactiveAsync(this CommandContext context, Func<CommandContext, CancellationToken, ValueTask> enter, Func<CommandContext, Exception, CancellationToken, ValueTask> exit, CancellationToken cancellation)
 	{
 		//获取当前命令执行器对应的终端
-		var terminal = context.Terminal ?? throw new NotSupportedException($"The {this.Name} command must be run in terminal environment.");
+		var terminal = context.GetTerminal() ?? throw new NotSupportedException($"The {context.Command?.Name} command must be run in terminal environment.");
+
+		//创建信号量，默认为堵塞状态
+		using var semaphore = new AutoResetEvent(false);
 
 		//挂载当前终端的中断事件
-		terminal.Aborting += this.Terminal_Aborting;
+		terminal.Aborting += Terminal_Aborting;
 
 		//定义异常对象
 		Exception exception = null;
@@ -62,7 +57,8 @@ public abstract class TerminalReactiveCommandBase : Components.CommandBase<Termi
 		try
 		{
 			//进入被动响应模式
-			await this.OnEnterAsync(context, cancellation);
+			if(enter != null)
+				await enter(context, cancellation);
 		}
 		catch(Exception ex)
 		{
@@ -70,36 +66,29 @@ public abstract class TerminalReactiveCommandBase : Components.CommandBase<Termi
 			exception = ex;
 
 			//释放信号量
-			_semaphore.Set();
+			semaphore.Set();
 		}
 
 		//等待信号量
-		_semaphore.WaitOne();
+		semaphore.WaitOne();
 
 		//注销当前终端的中断事件
-		terminal.Aborting -= this.Terminal_Aborting;
+		terminal.Aborting -= Terminal_Aborting;
 
 		//退出被动响应模式
-		await this.OnExitAsync(context, exception, cancellation);
+		if(exit != null)
+			await exit(context, exception, cancellation);
 
 		//返回结果
 		return context.Result;
+
+		void Terminal_Aborting(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			//阻止命令执行器被关闭
+			e.Cancel = true;
+
+			//释放信号量
+			semaphore?.Set();
+		}
 	}
-	#endregion
-
-	#region 抽象方法
-	protected abstract ValueTask OnEnterAsync(TerminalCommandContext context, CancellationToken cancellation);
-	protected abstract ValueTask OnExitAsync(TerminalCommandContext context, Exception exception, CancellationToken cancellation);
-	#endregion
-
-	#region 事件处理
-	private void Terminal_Aborting(object sender, System.ComponentModel.CancelEventArgs e)
-	{
-		//阻止命令执行器被关闭
-		e.Cancel = true;
-
-		//释放信号量
-		_semaphore.Set();
-	}
-	#endregion
 }

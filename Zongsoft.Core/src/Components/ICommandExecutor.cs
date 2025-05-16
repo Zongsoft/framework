@@ -49,6 +49,9 @@ public interface ICommandExecutor
 	/// <summary>获取命令执行器的根节点。</summary>
 	CommandNode Root { get; }
 
+	/// <summary>获取命令别名映射器。</summary>
+	ICommandAliaser Aliaser { get; }
+
 	/// <summary>获取或设置命令表达式解析器。</summary>
 	ICommandExpressionParser Parser { get; set; }
 

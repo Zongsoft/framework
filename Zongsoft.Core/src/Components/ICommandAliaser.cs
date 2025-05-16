@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2015-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,19 +28,12 @@
  */
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals;
-
-public class TerminalCommandContext : CommandContext
+public interface ICommandAliaser : IEnumerable<string>
 {
-	#region 构造函数
-	public TerminalCommandContext(CommandContextBase context, CommandExpression expression, ICommand command, object value) : base(context, expression, command, value) { }
-	public TerminalCommandContext(CommandContextBase context, CommandExpression expression, CommandNode commandNode, object value) : base(context, expression, commandNode, value) { }
-	#endregion
-
-	#region 公共属性
-	public ITerminal Terminal => (this.Executor as TerminalCommandExecutor)?.Terminal;
-	#endregion
+	bool Set(string path, string alias);
 }

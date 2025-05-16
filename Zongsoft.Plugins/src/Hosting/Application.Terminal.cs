@@ -86,13 +86,13 @@ namespace Zongsoft.Plugins.Hosting
 		private sealed class TerminalWorkbench(PluginApplicationContext applicationContext) : WorkbenchBase(applicationContext)
 		{
 			#region 成员字段
-			private TerminalCommandExecutor _executor;
+			private ITerminalExecutor _executor;
 			#endregion
 
 			#region 公共属性
-			public TerminalCommandExecutor Executor
+			public ITerminalExecutor Executor
 			{
-				get => _executor ?? CommandExecutor.Default as TerminalCommandExecutor;
+				get => _executor ?? Terminals.Terminal.Default.Executor;
 				set => _executor = value;
 			}
 			#endregion

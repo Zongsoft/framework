@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,19 +28,20 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Zongsoft.Components;
 
 namespace Zongsoft.Terminals;
 
-[Flags]
-public enum TerminalStyles
+public interface ITerminalExecutor : ICommandExecutor
 {
-	BackgroundColor = 1,
-	ForegroundColor = 2,
-	Color = BackgroundColor | ForegroundColor,
+	/// <summary>获取所属的终端。</summary>
+	ITerminal Terminal { get; }
 
-	FontName = 4,
-	FontSize = 8,
-	FontStyle = 16,
-	FontWeight = 32,
-	Font = FontName | FontSize | FontStyle | FontWeight,
+	int Run(CancellationToken cancellation = default);
+	int Run(string splash, CancellationToken cancellation = default);
+	Task<int> RunAsync(CancellationToken cancellation = default);
+	Task<int> RunAsync(string splash, CancellationToken cancellation = default);
 }

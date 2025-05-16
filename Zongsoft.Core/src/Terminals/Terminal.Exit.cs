@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,16 +31,37 @@ using System;
 
 namespace Zongsoft.Terminals;
 
-[Flags]
-public enum TerminalStyles
+partial class Terminal
 {
-	BackgroundColor = 1,
-	ForegroundColor = 2,
-	Color = BackgroundColor | ForegroundColor,
+	public class ExitException : ApplicationException
+	{
+		#region 构造函数
+		public ExitException() { }
+		public ExitException(int exitCode, string message = null) : base(message)
+		{
+			this.ExitCode = exitCode;
+		}
+		#endregion
 
-	FontName = 4,
-	FontSize = 8,
-	FontStyle = 16,
-	FontWeight = 32,
-	Font = FontName | FontSize | FontStyle | FontWeight,
+		#region 公共属性
+		public int ExitCode { get; }
+		#endregion
+	}
+
+	public class ExitEventArgs : EventArgs
+	{
+		#region 构造函数
+		public ExitEventArgs(int exitCode) : this(exitCode, false) { }
+		public ExitEventArgs(int exitCode, bool cancel)
+		{
+			this.Cancel = cancel;
+			this.ExitCode = exitCode;
+		}
+		#endregion
+
+		#region 公共属性
+		public bool Cancel { get; }
+		public int ExitCode { get; }
+		#endregion
+	}
 }

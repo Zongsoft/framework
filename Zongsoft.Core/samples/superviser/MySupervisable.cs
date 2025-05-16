@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading;
 
-using Zongsoft.Services;
+using Zongsoft.Terminals;
 using Zongsoft.Components;
-
-using Terminal = Zongsoft.Terminals.ConsoleTerminal;
 
 namespace Zongsoft.Samples;
 
@@ -61,7 +59,7 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	#region 重写方法
 	protected override Subscriber OnSubscribe(IObserver<string> observer)
 	{
-		Terminal.Instance.WriteLine(
+		Terminal.WriteLine(
 			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss}] ")
 			                    .Append(CommandOutletColor.DarkGreen, $"{this.Name} Subscribed."));
 
@@ -70,7 +68,7 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 
 	protected override void OnUnsupervised(ISuperviser<string> superviser, SupervisableReason reason)
 	{
-		Terminal.Instance.WriteLine(
+		Terminal.WriteLine(
 			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss}] ")
 			                    .Append(CommandOutletColor.DarkMagenta, $"{this.Name} Unsupervised<{reason}>."));
 
@@ -91,6 +89,6 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	#endregion
 
 	#region 处置方法
-	public void Dispose() => Terminal.Instance.WriteLine(CommandOutletColor.Magenta, $"The {this.Name} supervisable object was disposed.");
+	public void Dispose() => Terminal.WriteLine(CommandOutletColor.Magenta, $"The {this.Name} supervisable object was disposed.");
 	#endregion
 }

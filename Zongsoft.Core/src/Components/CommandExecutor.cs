@@ -66,31 +66,31 @@ public partial class CommandExecutor : ICommandExecutor
 		_output = NullCommandOutlet.Instance;
 		_error = CommandErrorWriter.Instance;
 		this.States = new();
-		this.Aliaser = new CommandNode.Aliaser(_root);
+		this.Aliaser = new CommandAliaser(_root);
 	}
 	#endregion
 
 	#region 静态属性
-	/// <summary>获取或设置默认的<see cref="CommandExecutor"/>命令执行器。</summary>
+	/// <summary>获取或设置默认的 <see cref="CommandExecutor"/> 命令执行器。</summary>
 	public static CommandExecutor Default
 	{
 		get
 		{
 			if(_default == null)
-				System.Threading.Interlocked.CompareExchange(ref _default, new CommandExecutor(), null);
+				Interlocked.CompareExchange(ref _default, new CommandExecutor(), null);
 
 			return _default;
 		}
 		set
 		{
-			_default = value ?? throw new ArgumentNullException();
+			_default = value ?? throw new ArgumentNullException(nameof(value));
 		}
 	}
 	#endregion
 
 	#region 公共属性
 	public CommandNode Root => _root;
-	public CommandNode.Aliaser Aliaser { get; }
+	public ICommandAliaser Aliaser { get; }
 	public Collections.Parameters States { get; }
 
 	public ICommandInvoker Invoker

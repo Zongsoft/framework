@@ -2,42 +2,23 @@
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Common;
+using Zongsoft.Terminals;
+using Zongsoft.Components;
+
 namespace Zongsoft.Externals.Opc.Samples;
 
 internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		Console.WriteLine("Welcome to the OPC-UA Server.");
-		Console.WriteLine(new string('-', 50));
-
 		using var server = new OpcServer("OpcServer");
 		await server.StartAsync(args);
 
-		while(true)
-		{
-			var text = Console.ReadLine()?.Trim();
+		var executor = Terminal.Console.Executor;
+		executor.Command("start", async (context, cancellation) => await server.StartAsync(args, cancellation));
+		executor.Command("stop", async (context, cancellation) => await server.StopAsync(args, cancellation));
 
-			if(string.IsNullOrEmpty(text))
-				continue;
-
-			switch(text.ToLowerInvariant())
-			{
-				case "exit":
-					((IDisposable)server).Dispose();
-					return;
-				case "stop":
-					await server.StopAsync(args);
-					break;
-				case "start":
-					await server.StartAsync(args);
-					break;
-				case "clear":
-					Console.Clear();
-					break;
-				default:
-					break;
-			}
-		}
+		await executor.RunAsync($"Welcome to the OPC-UA Server.{Environment.NewLine}{new string('-', 50)}");
 	}
 }

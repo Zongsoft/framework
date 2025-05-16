@@ -10,28 +10,19 @@ namespace Zongsoft.Externals.Opc.Samples;
 
 partial class Commands
 {
-	public sealed class ListenCommand(OpcClient client) : TerminalReactiveCommandBase("Listen")
+	public sealed class ListenCommand(OpcClient client) : CommandBase<CommandContext>("Listen")
 	{
 		#region 成员字段
 		private readonly OpcClient _client = client ?? throw new ArgumentNullException(nameof(client));
 		#endregion
 
 		#region 重写方法
-		protected override ValueTask OnExitAsync(TerminalCommandContext context, Exception exception, CancellationToken cancellation)
+		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(exception != null)
-				throw exception;
-
-			if(context.Result is IEnumerable<Subscriber> subscribers)
-			{
-				foreach(var subscriber in subscribers)
-					subscriber.Consume();
-			}
-
-			return ValueTask.CompletedTask;
+			return context.ReactiveAsync(this.OnEnterAsync, this.OnExitAsync, cancellation);
 		}
 
-		protected override ValueTask OnEnterAsync(TerminalCommandContext context, CancellationToken cancellation)
+		private ValueTask OnEnterAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(!_client.IsConnected)
 				throw new CommandException($"The {nameof(OpcClient)}({_client.Name}) is not connected.");
@@ -43,11 +34,11 @@ partial class Commands
 				foreach(var subscriber in _client.Subscribers)
 				{
 					subscribers.Add(subscriber);
-					subscriber.Consume(OnListen);
+					subscriber.Consume((subscriber, entry, value) => Print(context.Output, subscriber, entry, value));
 				}
 
 				//显示欢迎信息
-				Welcome(subscribers);
+				context.Output.WriteLine(Welcome(subscribers));
 
 				context.Result = subscribers;
 				return ValueTask.CompletedTask;
@@ -68,44 +59,50 @@ partial class Commands
 				}
 
 				subscribers.Add(subscriber);
-				subscriber.Consume(OnListen);
+				subscriber.Consume((subscriber, entry, value) => Print(context.Output, subscriber, entry, value));
 			}
 
 			//显示欢迎信息
-			Welcome(subscribers);
+			context.Output.WriteLine(Welcome(subscribers));
 
 			context.Result = subscribers;
+			return ValueTask.CompletedTask;
+		}
+
+		private ValueTask OnExitAsync(CommandContext context, Exception exception, CancellationToken cancellation)
+		{
+			if(exception != null)
+				throw exception;
+
+			if(context.Result is IEnumerable<Subscriber> subscribers)
+			{
+				foreach(var subscriber in subscribers)
+					subscriber.Consume();
+			}
+
 			return ValueTask.CompletedTask;
 		}
 		#endregion
 
 		#region 私有方法
-		private static void Welcome(IEnumerable<Subscriber> subscribers)
-		{
-			var content = CommandOutletContent.Create()
-				.AppendLine(new string('-', 80))
-				.Append(CommandOutletColor.DarkYellow, "  Welcome to subscription listening mode, press ")
-				.Append(CommandOutletColor.Magenta, "Ctrl+C")
-				.AppendLine(CommandOutletColor.DarkYellow, " key to exit this mode.")
-				.AppendLine(new string('-', 80));
+		private static CommandOutletContent Welcome(IEnumerable<Subscriber> subscribers) => CommandOutletContent.Create()
+			.AppendLine(new string('-', 80))
+			.Append(CommandOutletColor.DarkYellow, "  Welcome to subscription listening mode, press ")
+			.Append(CommandOutletColor.Magenta, "Ctrl+C")
+			.AppendLine(CommandOutletColor.DarkYellow, " key to exit this mode.")
+			.AppendLine(new string('-', 80));
 
-			ConsoleTerminal.Instance.WriteLine(content);
-		}
+		private static CommandOutletContent GetConsumer(Subscriber subscriber, Subscriber.Entry entry, object value) => CommandOutletContent.Create()
+			.Append(CommandOutletColor.DarkGray, "[")
+			.Append(CommandOutletColor.DarkGreen, nameof(Subscriber))
+			.Append(CommandOutletColor.DarkGray, "#")
+			.Append(CommandOutletColor.DarkCyan, $"{subscriber.Identifier}")
+			.Append(CommandOutletColor.DarkGray, "] ")
+			.Append(CommandOutletColor.DarkYellow, entry.Name)
+			.Append(CommandOutletColor.DarkGray, " : ")
+			.AppendValue(value);
 
-		private static void OnListen(Subscriber subscriber, Subscriber.Entry entry, object value)
-		{
-			var content = CommandOutletContent.Create()
-				.Append(CommandOutletColor.DarkGray, "[")
-				.Append(CommandOutletColor.DarkGreen, nameof(Subscriber))
-				.Append(CommandOutletColor.DarkGray, "#")
-				.Append(CommandOutletColor.DarkCyan, $"{subscriber.Identifier}")
-				.Append(CommandOutletColor.DarkGray, "] ")
-				.Append(CommandOutletColor.DarkYellow, entry.Name)
-				.Append(CommandOutletColor.DarkGray, " : ")
-				.AppendValue(value);
-
-			ConsoleTerminal.Instance.Write(content);
-		}
+		private static void Print(ICommandOutlet output, Subscriber subscriber, Subscriber.Entry entry, object value) => output.Write(GetConsumer(subscriber, entry, value));
 		#endregion
 	}
 }

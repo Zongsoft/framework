@@ -31,14 +31,12 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Components;
+namespace Zongsoft.Components;
 
-namespace Zongsoft.Terminals;
-
-public static class TerminalCommandExecutorUtility
+public static class CommandExecutorUtility
 {
 	#region 同步命令
-	public static ICommand Command(this TerminalCommandExecutor executor, string name, Action<TerminalCommandContext> command, string path = null)
+	public static ICommand Command(this ICommandExecutor executor, string name, Action<CommandContext> command, string path = null)
 	{
 		if(executor == null)
 			throw new ArgumentNullException(nameof(executor));
@@ -50,10 +48,10 @@ public static class TerminalCommandExecutorUtility
 		var node = string.IsNullOrEmpty(path) || path == "/" ?
 			executor.Root : executor.Find(path) ?? throw new CommandNotFoundException(path);
 
-		return node.Children.Add(new TerminalCommand<object>(name, command)).Command;
+		return node.Children.Add(new CommandWrapper<object>(name, command)).Command;
 	}
 
-	public static ICommand Command<TArgument>(this TerminalCommandExecutor executor, string name, Action<TerminalCommandContext, TArgument> command, TArgument argument, string path = null)
+	public static ICommand Command<TArgument>(this ICommandExecutor executor, string name, Action<CommandContext, TArgument> command, TArgument argument, string path = null)
 	{
 		if(executor == null)
 			throw new ArgumentNullException(nameof(executor));
@@ -65,10 +63,10 @@ public static class TerminalCommandExecutorUtility
 		var node = string.IsNullOrEmpty(path) || path == "/" ?
 			executor.Root : executor.Find(path) ?? throw new CommandNotFoundException(path);
 
-		return node.Children.Add(new TerminalCommand<TArgument, object>(name, command, argument)).Command;
+		return node.Children.Add(new CommandWrapper<TArgument, object>(name, command, argument)).Command;
 	}
 
-	public static ICommand Command<TResult>(this TerminalCommandExecutor executor, string name, Func<TerminalCommandContext, TResult> command, string path = null)
+	public static ICommand Command<TResult>(this ICommandExecutor executor, string name, Func<CommandContext, TResult> command, string path = null)
 	{
 		if(executor == null)
 			throw new ArgumentNullException(nameof(executor));
@@ -80,10 +78,10 @@ public static class TerminalCommandExecutorUtility
 		var node = string.IsNullOrEmpty(path) || path == "/" ?
 			executor.Root : executor.Find(path) ?? throw new CommandNotFoundException(path);
 
-		return node.Children.Add(new TerminalCommand<TResult>(name, command)).Command;
+		return node.Children.Add(new CommandWrapper<TResult>(name, command)).Command;
 	}
 
-	public static ICommand Command<TArgument, TResult>(this TerminalCommandExecutor executor, string name, Func<TerminalCommandContext, TArgument, TResult> command, TArgument argument, string path = null)
+	public static ICommand Command<TArgument, TResult>(this ICommandExecutor executor, string name, Func<CommandContext, TArgument, TResult> command, TArgument argument, string path = null)
 	{
 		if(executor == null)
 			throw new ArgumentNullException(nameof(executor));
@@ -95,12 +93,12 @@ public static class TerminalCommandExecutorUtility
 		var node = string.IsNullOrEmpty(path) || path == "/" ?
 			executor.Root : executor.Find(path) ?? throw new CommandNotFoundException(path);
 
-		return node.Children.Add(new TerminalCommand<TArgument, TResult>(name, command, argument)).Command;
+		return node.Children.Add(new CommandWrapper<TArgument, TResult>(name, command, argument)).Command;
 	}
 	#endregion
 
 	#region 异步命令
-	public static ICommand Command(this TerminalCommandExecutor executor, string name, Func<TerminalCommandContext, CancellationToken, ValueTask> command, string path = null)
+	public static ICommand Command(this ICommandExecutor executor, string name, Func<CommandContext, CancellationToken, ValueTask> command, string path = null)
 	{
 		if(executor == null)
 			throw new ArgumentNullException(nameof(executor));
@@ -112,10 +110,10 @@ public static class TerminalCommandExecutorUtility
 		var node = string.IsNullOrEmpty(path) || path == "/" ?
 			executor.Root : executor.Find(path) ?? throw new CommandNotFoundException(path);
 
-		return node.Children.Add(new TerminalAsyncCommand<object>(name, command)).Command;
+		return node.Children.Add(new AsyncCommandWrapper<object>(name, command)).Command;
 	}
 
-	public static ICommand Command<TResult>(this TerminalCommandExecutor executor, string name, Func<TerminalCommandContext, CancellationToken, ValueTask<TResult>> command, string path = null)
+	public static ICommand Command<TResult>(this ICommandExecutor executor, string name, Func<CommandContext, CancellationToken, ValueTask<TResult>> command, string path = null)
 	{
 		if(executor == null)
 			throw new ArgumentNullException(nameof(executor));
@@ -127,10 +125,10 @@ public static class TerminalCommandExecutorUtility
 		var node = string.IsNullOrEmpty(path) || path == "/" ?
 			executor.Root : executor.Find(path) ?? throw new CommandNotFoundException(path);
 
-		return node.Children.Add(new TerminalAsyncCommand<TResult>(name, command)).Command;
+		return node.Children.Add(new AsyncCommandWrapper<TResult>(name, command)).Command;
 	}
 
-	public static ICommand Command<TArgument>(this TerminalCommandExecutor executor, string name, Func<TerminalCommandContext, TArgument, CancellationToken, ValueTask> command, TArgument argument, string path = null)
+	public static ICommand Command<TArgument>(this ICommandExecutor executor, string name, Func<CommandContext, TArgument, CancellationToken, ValueTask> command, TArgument argument, string path = null)
 	{
 		if(executor == null)
 			throw new ArgumentNullException(nameof(executor));
@@ -142,10 +140,10 @@ public static class TerminalCommandExecutorUtility
 		var node = string.IsNullOrEmpty(path) || path == "/" ?
 			executor.Root : executor.Find(path) ?? throw new CommandNotFoundException(path);
 
-		return node.Children.Add(new TerminalAsyncCommand<TArgument, object>(name, command, argument)).Command;
+		return node.Children.Add(new AsyncCommandWrapper<TArgument, object>(name, command, argument)).Command;
 	}
 
-	public static ICommand Command<TArgument, TResult>(this TerminalCommandExecutor executor, string name, Func<TerminalCommandContext, TArgument, CancellationToken, ValueTask<TResult>> command, TArgument argument, string path = null)
+	public static ICommand Command<TArgument, TResult>(this ICommandExecutor executor, string name, Func<CommandContext, TArgument, CancellationToken, ValueTask<TResult>> command, TArgument argument, string path = null)
 	{
 		if(executor == null)
 			throw new ArgumentNullException(nameof(executor));
@@ -157,17 +155,17 @@ public static class TerminalCommandExecutorUtility
 		var node = string.IsNullOrEmpty(path) || path == "/" ?
 			executor.Root : executor.Find(path) ?? throw new CommandNotFoundException(path);
 
-		return node.Children.Add(new TerminalAsyncCommand<TArgument, TResult>(name, command, argument)).Command;
+		return node.Children.Add(new AsyncCommandWrapper<TArgument, TResult>(name, command, argument)).Command;
 	}
 	#endregion
 
 	#region 嵌套子类
 	[Command(IgnoreOptions = true)]
-	internal sealed class TerminalCommand<TResult> : CommandBase<TerminalCommandContext>
+	internal sealed class CommandWrapper<TResult> : CommandBase<CommandContext>
 	{
-		private readonly Func<TerminalCommandContext, TResult> _executor;
+		private readonly Func<CommandContext, TResult> _executor;
 
-		public TerminalCommand(string name, Action<TerminalCommandContext> executor) : base(name)
+		public CommandWrapper(string name, Action<CommandContext> executor) : base(name)
 		{
 			if(executor == null)
 				throw new ArgumentNullException(nameof(executor));
@@ -179,21 +177,21 @@ public static class TerminalCommandExecutorUtility
 			};
 		}
 
-		public TerminalCommand(string name, Func<TerminalCommandContext, TResult> executor) : base(name)
+		public CommandWrapper(string name, Func<CommandContext, TResult> executor) : base(name)
 		{
 			_executor = executor ?? throw new ArgumentNullException(nameof(executor));
 		}
 
-		protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation) => ValueTask.FromResult<object>(cancellation.IsCancellationRequested ? null : _executor(context));
+		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation) => ValueTask.FromResult<object>(cancellation.IsCancellationRequested ? null : _executor(context));
 	}
 
 	[Command(IgnoreOptions = true)]
-	internal sealed class TerminalCommand<TArgument, TResult> : CommandBase<TerminalCommandContext>
+	internal sealed class CommandWrapper<TArgument, TResult> : CommandBase<CommandContext>
 	{
 		private readonly TArgument _argument;
-		private readonly Func<TerminalCommandContext, TArgument, TResult> _executor;
+		private readonly Func<CommandContext, TArgument, TResult> _executor;
 
-		public TerminalCommand(string name, Action<TerminalCommandContext, TArgument> executor, TArgument argument) : base(name)
+		public CommandWrapper(string name, Action<CommandContext, TArgument> executor, TArgument argument) : base(name)
 		{
 			if(executor == null)
 				throw new ArgumentNullException(nameof(executor));
@@ -206,21 +204,21 @@ public static class TerminalCommandExecutorUtility
 			};
 		}
 
-		public TerminalCommand(string name, Func<TerminalCommandContext, TArgument, TResult> executor, TArgument argument) : base(name)
+		public CommandWrapper(string name, Func<CommandContext, TArgument, TResult> executor, TArgument argument) : base(name)
 		{
 			_argument = argument;
 			_executor = executor ?? throw new ArgumentNullException(nameof(executor));
 		}
 
-		protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation) => ValueTask.FromResult<object>(cancellation.IsCancellationRequested ? null : _executor(context, _argument));
+		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation) => ValueTask.FromResult<object>(cancellation.IsCancellationRequested ? null : _executor(context, _argument));
 	}
 
 	[Command(IgnoreOptions = true)]
-	internal sealed class TerminalAsyncCommand<TResult> : CommandBase<TerminalCommandContext>
+	internal sealed class AsyncCommandWrapper<TResult> : CommandBase<CommandContext>
 	{
-		private readonly Func<TerminalCommandContext, CancellationToken, ValueTask<TResult>> _executor;
+		private readonly Func<CommandContext, CancellationToken, ValueTask<TResult>> _executor;
 
-		public TerminalAsyncCommand(string name, Func<TerminalCommandContext, CancellationToken, ValueTask> executor) : base(name)
+		public AsyncCommandWrapper(string name, Func<CommandContext, CancellationToken, ValueTask> executor) : base(name)
 		{
 			if(executor == null)
 				throw new ArgumentNullException(nameof(executor));
@@ -232,24 +230,24 @@ public static class TerminalCommandExecutorUtility
 			};
 		}
 
-		public TerminalAsyncCommand(string name, Func<TerminalCommandContext, CancellationToken, ValueTask<TResult>> executor) : base(name)
+		public AsyncCommandWrapper(string name, Func<CommandContext, CancellationToken, ValueTask<TResult>> executor) : base(name)
 		{
 			_executor = executor ?? throw new ArgumentNullException(nameof(executor));
 		}
 
-		protected override async ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			return await _executor(context, cancellation);
 		}
 	}
 
 	[Command(IgnoreOptions = true)]
-	internal sealed class TerminalAsyncCommand<TArgument, TResult> : CommandBase<TerminalCommandContext>
+	internal sealed class AsyncCommandWrapper<TArgument, TResult> : CommandBase<CommandContext>
 	{
 		private readonly TArgument _argument;
-		private readonly Func<TerminalCommandContext, TArgument, CancellationToken, ValueTask<TResult>> _executor;
+		private readonly Func<CommandContext, TArgument, CancellationToken, ValueTask<TResult>> _executor;
 
-		public TerminalAsyncCommand(string name, Func<TerminalCommandContext, TArgument, CancellationToken, ValueTask> executor, TArgument argument) : base(name)
+		public AsyncCommandWrapper(string name, Func<CommandContext, TArgument, CancellationToken, ValueTask> executor, TArgument argument) : base(name)
 		{
 			if(executor == null)
 				throw new ArgumentNullException(nameof(executor));
@@ -262,13 +260,13 @@ public static class TerminalCommandExecutorUtility
 			};
 		}
 
-		public TerminalAsyncCommand(string name, Func<TerminalCommandContext, TArgument, CancellationToken, ValueTask<TResult>> executor, TArgument argument) : base(name)
+		public AsyncCommandWrapper(string name, Func<CommandContext, TArgument, CancellationToken, ValueTask<TResult>> executor, TArgument argument) : base(name)
 		{
 			_argument = argument;
 			_executor = executor ?? throw new ArgumentNullException(nameof(executor));
 		}
 
-		protected override async ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			return await _executor(context, _argument, cancellation);
 		}

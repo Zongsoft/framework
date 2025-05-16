@@ -3,8 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Services;
-
-using Terminal = Zongsoft.Terminals.ConsoleTerminal;
+using Zongsoft.Terminals;
 
 namespace Zongsoft.Components.Samples;
 
@@ -14,12 +13,12 @@ internal class Program
 	{
 		ApplicationContext context = new();
 
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `exit`  to quit the program.");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `start` to start the event exchanger.");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `stop`  to stop the event exchanger.");
-		Terminal.Instance.Write(CommandOutletColor.Red, "Tips: ");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkGray, "Input other text is added to the cache as value.");
-		Terminal.Instance.WriteLine();
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `exit`  to quit the program.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `start` to start the event exchanger.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `stop`  to stop the event exchanger.");
+		Terminal.Write(CommandOutletColor.Red, "Tips: ");
+		Terminal.WriteLine(CommandOutletColor.DarkGray, "Input other text is added to the cache as value.");
+		Terminal.WriteLine();
 
 		var text = string.Empty;
 		var sample = new EventExchangerSample();
@@ -34,23 +33,23 @@ internal class Program
 					return;
 				case "info":
 					foreach(var channel in EventExchanger.Instance.Channels)
-						Terminal.Instance.WriteLine(CommandOutletColor.DarkGray, $"{channel}");
+						Terminal.WriteLine(CommandOutletColor.DarkGray, $"{channel}");
 					break;
 				case "clear":
 					Console.Clear();
 					break;
 				case "reset":
 					sample.Reset();
-					Terminal.Instance.WriteLine(CommandOutletColor.DarkGreen, "The counter has reset.");
+					Terminal.WriteLine(CommandOutletColor.DarkGreen, "The counter has reset.");
 					break;
 				case "start":
 				case "restart":
 					EventExchanger.Instance.Start();
-					Terminal.Instance.WriteLine(CommandOutletColor.DarkGreen, "The event exchanger has started.");
+					Terminal.WriteLine(CommandOutletColor.DarkGreen, "The event exchanger has started.");
 					break;
 				case "stop":
 					EventExchanger.Instance.Stop();
-					Terminal.Instance.WriteLine(CommandOutletColor.DarkMagenta, "The event exchanger has stopped.");
+					Terminal.WriteLine(CommandOutletColor.DarkMagenta, "The event exchanger has stopped.");
 					break;
 				default:
 					if(string.IsNullOrWhiteSpace(text))
@@ -65,16 +64,16 @@ internal class Program
 							if(int.TryParse(parts[0], out quantity))
 								await sample.RaiseAsync(1, quantity);
 							else
-								Terminal.Instance.WriteLine(CommandOutletColor.Magenta, $"Invalid format.");
+								Terminal.WriteLine(CommandOutletColor.Magenta, $"Invalid format.");
 							break;
 						case 2:
 							if(int.TryParse(parts[0], out quantity) && int.TryParse(parts[1], out var round))
 								await sample.RaiseAsync(round, quantity);
 							else
-								Terminal.Instance.WriteLine(CommandOutletColor.Magenta, $"Invalid format.");
+								Terminal.WriteLine(CommandOutletColor.Magenta, $"Invalid format.");
 							break;
 						default:
-							Terminal.Instance.WriteLine(CommandOutletColor.Magenta, $"Invalid format.");
+							Terminal.WriteLine(CommandOutletColor.Magenta, $"Invalid format.");
 							break;
 					}
 

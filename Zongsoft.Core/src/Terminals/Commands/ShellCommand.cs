@@ -33,12 +33,14 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.ComponentModel;
 
+using Zongsoft.Components;
+
 namespace Zongsoft.Terminals.Commands;
 
 [DisplayName("ShellCommand.Name")]
 [Description("ShellCommand.Description")]
-[Zongsoft.Components.CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "ShellCommand.Options.Timeout")]
-public class ShellCommand : Zongsoft.Components.CommandBase<TerminalCommandContext>
+[CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "ShellCommand.Options.Timeout")]
+public class ShellCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
 	public ShellCommand() : base("Shell") { }
@@ -46,11 +48,13 @@ public class ShellCommand : Zongsoft.Components.CommandBase<TerminalCommandConte
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(Environment.OSVersion.Platform == PlatformID.MacOSX ||
 		   Environment.OSVersion.Platform == PlatformID.Unix)
 			throw new NotSupportedException(string.Format("Not supported in the {0} OS.", Environment.OSVersion));
+
+		var terminal = context.GetTerminal() ?? throw new NotSupportedException($"The `{this.Name}` command is only supported running in a terminal executor.");
 
 		if(context.Expression.Arguments.Length < 1)
 			return ValueTask.FromResult<object>(0);
@@ -68,17 +72,17 @@ public class ShellCommand : Zongsoft.Components.CommandBase<TerminalCommandConte
 		{
 			process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs eventArgs)
 			{
-				context.Terminal.WriteLine(eventArgs.Data);
+				terminal.WriteLine(eventArgs.Data);
 			};
 
 			process.BeginOutputReadLine();
 
 			//while(!process.StandardOutput.EndOfStream)
 			//{
-			//	context.Terminal.WriteLine(process.StandardOutput.ReadLine());
+			//	terminal.WriteLine(process.StandardOutput.ReadLine());
 			//}
 
-			//context.Terminal.Write(process.StandardOutput.ReadToEnd());
+			//terminal.Write(process.StandardOutput.ReadToEnd());
 
 			//process.WaitForExit();
 

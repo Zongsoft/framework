@@ -14,15 +14,8 @@
 
 	<extension path="/Workbench">
 		<!-- 将默认的命令执行器替换成控制台终端命令执行器 -->
-		<object name="Executor" value="{static:Zongsoft.Terminals.TerminalCommandExecutor.Console, Zongsoft.Core}">
+		<object name="Executor" value="{static:Zongsoft.Terminals.Terminal.Console.Executor, Zongsoft.Core}">
 			<object.property name="Default" target="{type:Zongsoft.Components.CommandExecutor, Zongsoft.Core}" value="{path:.}" />
 		</object>
-	</extension>
-
-	<!-- 挂载终端命令 -->
-	<extension path="/Workbench/Executor/Commands">
-		<object name="Exit" type="Zongsoft.Terminals.Commands.ExitCommand, Zongsoft.Core" />
-		<object name="Clear" type="Zongsoft.Terminals.Commands.ClearCommand, Zongsoft.Core" />
-		<object name="Shell" type="Zongsoft.Terminals.Commands.ShellCommand, Zongsoft.Core" />
 	</extension>
 </plugin>

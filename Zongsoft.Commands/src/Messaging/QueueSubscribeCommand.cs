@@ -41,7 +41,7 @@ namespace Zongsoft.Messaging.Commands;
 
 [CommandOption("acknowledgeable", typeof(bool), true, "Text.QueueSubscribeCommand.Acknowledgeable")]
 [CommandOption("format", typeof(QueueMessageFormat), QueueMessageFormat.Raw, "Text.QueueSubscribeCommand.Format")]
-public class QueueSubscribeCommand : TerminalReactiveCommandBase
+public class QueueSubscribeCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
 	public QueueSubscribeCommand() : this("Subscribe") { }
@@ -49,7 +49,10 @@ public class QueueSubscribeCommand : TerminalReactiveCommandBase
 	#endregion
 
 	#region 重写方法
-	protected override async ValueTask OnEnterAsync(TerminalCommandContext context, CancellationToken cancellation)
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation) =>
+		context.ReactiveAsync(this.OnEnterAsync, this.OnExitAsync, cancellation);
+
+	private async ValueTask OnEnterAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var queue = context.Find<QueueCommand>(true)?.Queue ?? throw new CommandException($"Not found the required queue object.");
 
@@ -73,7 +76,7 @@ public class QueueSubscribeCommand : TerminalReactiveCommandBase
 			context.Result = consumers;
 	}
 
-	protected override async ValueTask OnExitAsync(TerminalCommandContext context, Exception exception, CancellationToken cancellation)
+	private async ValueTask OnExitAsync(CommandContext context, Exception exception, CancellationToken cancellation)
 	{
 		if(context.Result is IEnumerable<IMessageConsumer> consumers)
 		{

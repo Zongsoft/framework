@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Zongsoft.Terminals;
 using Zongsoft.Components;
-
-using Terminal = Zongsoft.Terminals.ConsoleTerminal;
 
 namespace Zongsoft.Samples;
 
@@ -14,27 +12,27 @@ internal class Program
 	{
 		using var superviser = new MySuperviser(new SupervisableOptions(TimeSpan.FromSeconds(10), 5));
 
-		Terminal.Instance.WriteLine(CommandOutletColor.Gray, new string('·', 60));
-		Terminal.Instance.Write(CommandOutletColor.DarkMagenta, $"Lifecycle: ");
-		Terminal.Instance.Write(CommandOutletColor.DarkYellow, superviser.Options.Lifecycle);
-		Terminal.Instance.Write(CommandOutletColor.DarkGray, ",\t");
+		Terminal.WriteLine(CommandOutletColor.Gray, new string('·', 60));
+		Terminal.Write(CommandOutletColor.DarkMagenta, $"Lifecycle: ");
+		Terminal.Write(CommandOutletColor.DarkYellow, superviser.Options.Lifecycle);
+		Terminal.Write(CommandOutletColor.DarkGray, ",\t");
 
-		Terminal.Instance.Write(CommandOutletColor.DarkMagenta, $"Error Limit: ");
-		Terminal.Instance.Write(CommandOutletColor.DarkYellow, superviser.Options.ErrorLimit);
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkGray, ".");
-		Terminal.Instance.WriteLine(CommandOutletColor.Gray, new string('·', 60));
+		Terminal.Write(CommandOutletColor.DarkMagenta, $"Error Limit: ");
+		Terminal.Write(CommandOutletColor.DarkYellow, superviser.Options.ErrorLimit);
+		Terminal.WriteLine(CommandOutletColor.DarkGray, ".");
+		Terminal.WriteLine(CommandOutletColor.Gray, new string('·', 60));
 
-		Terminal.Instance.WriteLine();
+		Terminal.WriteLine();
 
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `exit` to quit the program.");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `info` to display the superviser information.");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `open` to start reporting of supervisable objects with the specified name.");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `close` to stop reporting of supervisable objects with the specified name.");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `clear` to clear all supervisable objects.");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `error` to enables error reporting for the supervisable objects with the specified name.");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `pause` to pause reporting of supervisable objects with the specified name.");
-		Terminal.Instance.WriteLine(CommandOutletColor.DarkYellow, "Input `resume` to resume reporting of supervisable objects with the specified name.");
-		Terminal.Instance.WriteLine();
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `exit` to quit the program.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `info` to display the superviser information.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `open` to start reporting of supervisable objects with the specified name.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `close` to stop reporting of supervisable objects with the specified name.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `clear` to clear all supervisable objects.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `error` to enables error reporting for the supervisable objects with the specified name.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `pause` to pause reporting of supervisable objects with the specified name.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `resume` to resume reporting of supervisable objects with the specified name.");
+		Terminal.WriteLine();
 
 		superviser.Supervise("S1", new MySupervisable("S1", new SupervisableOptions(TimeSpan.Zero, -1)));
 		superviser.Supervise("S2", new MySupervisable("S2", new SupervisableOptions(TimeSpan.Zero, 3)));
@@ -60,7 +58,7 @@ internal class Program
 				case "open":
 					if(parts.Length <= 1)
 					{
-						Terminal.Instance.WriteLine(CommandOutletColor.Red, $"The open command is missing required arguments.");
+						Terminal.WriteLine(CommandOutletColor.Red, $"The open command is missing required arguments.");
 						continue;
 					}
 
@@ -71,7 +69,7 @@ internal class Program
 				case "pause":
 					if(parts.Length <= 1)
 					{
-						Terminal.Instance.WriteLine(CommandOutletColor.Red, $"The pause command is missing required arguments.");
+						Terminal.WriteLine(CommandOutletColor.Red, $"The pause command is missing required arguments.");
 						continue;
 					}
 
@@ -82,7 +80,7 @@ internal class Program
 				case "resume":
 					if(parts.Length <= 1)
 					{
-						Terminal.Instance.WriteLine(CommandOutletColor.Red, $"The resume command is missing required arguments.");
+						Terminal.WriteLine(CommandOutletColor.Red, $"The resume command is missing required arguments.");
 						continue;
 					}
 
@@ -96,7 +94,7 @@ internal class Program
 				case "close":
 					if(parts.Length <= 1)
 					{
-						Terminal.Instance.WriteLine(CommandOutletColor.Red, $"The close command is missing required arguments.");
+						Terminal.WriteLine(CommandOutletColor.Red, $"The close command is missing required arguments.");
 						continue;
 					}
 
@@ -108,7 +106,7 @@ internal class Program
 				case "error":
 					if(parts.Length <= 1)
 					{
-						Terminal.Instance.WriteLine(CommandOutletColor.Red, $"The error command is missing required arguments.");
+						Terminal.WriteLine(CommandOutletColor.Red, $"The error command is missing required arguments.");
 						continue;
 					}
 
@@ -133,7 +131,7 @@ internal class Program
 
 			if(observable == null)
 			{
-				Terminal.Instance.WriteLine($"The specified “{names[i]}” supervisable object does not exist.");
+				Terminal.WriteLine($"The specified “{names[i]}” supervisable object does not exist.");
 				continue;
 			}
 

@@ -9,7 +9,7 @@ namespace Zongsoft.Externals.Opc.Samples;
 
 internal partial class Commands
 {
-	public static void Info(TerminalCommandContext context, OpcClient client)
+	public static void Info(CommandContext context, OpcClient client)
 	{
 		if(context == null || client == null)
 			return;

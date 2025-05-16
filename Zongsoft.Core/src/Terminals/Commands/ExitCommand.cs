@@ -39,7 +39,7 @@ namespace Zongsoft.Terminals.Commands;
 [DisplayName("ExitCommand.Name")]
 [Description("ExitCommand.Description")]
 [CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
-public class ExitCommand : CommandBase<TerminalCommandContext>
+public class ExitCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
 	public ExitCommand() : base("Exit") { }
@@ -47,15 +47,17 @@ public class ExitCommand : CommandBase<TerminalCommandContext>
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(TerminalCommandContext context, CancellationToken cancellation)
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
+		var terminal = context.GetTerminal() ?? throw new NotSupportedException($"The `{this.Name}` command is only supported running in a terminal executor.");
+
 		if(context.Expression.Options.Contains("yes"))
-			throw new TerminalCommandExecutor.ExitException();
+			throw new Terminal.ExitException();
 
-		context.Terminal.Write(Properties.Resources.ExitCommand_Confirm);
+		terminal.Write(Properties.Resources.ExitCommand_Confirm);
 
-		if(string.Equals(context.Terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
-			throw new TerminalCommandExecutor.ExitException();
+		if(string.Equals(terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
+			throw new Terminal.ExitException();
 
 		return ValueTask.FromResult<object>(null);
 	}
