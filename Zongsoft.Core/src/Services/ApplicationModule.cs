@@ -41,8 +41,9 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 	#region 成员字段
 	private string _title;
 	private string _description;
+	private Version _version;
 	private ServiceProvider _services;
-	private readonly object _syncRoot = new object();
+	private readonly object _syncRoot = new();
 	#endregion
 
 	#region 构造函数
@@ -58,6 +59,12 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 	#region 公共属性
 	public string Name { get; protected set; }
 	public Parameters Properties { get; }
+
+	public Version Version
+	{
+		get => _version ??= this.GetType().Assembly.GetName().Version;
+		set => _version = value;
+	}
 
 	public string Title
 	{

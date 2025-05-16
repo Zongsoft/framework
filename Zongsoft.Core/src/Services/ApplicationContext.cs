@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,7 +29,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Reflection;
 using System.Security.Claims;
@@ -61,6 +60,7 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 
 	private string _title;
 	private string _description;
+	private Version _version;
 
 	private readonly ServiceProvider _services;
 	private readonly List<Components.IWorker> _workers;
@@ -102,6 +102,12 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 
 	#region 公共属性
 	public virtual string Name => this.Services.GetService<IHostEnvironment>()?.ApplicationName;
+
+	public Version Version
+	{
+		get => _version ??= Assembly.GetEntryAssembly()?.GetName().Version ?? Assembly.GetExecutingAssembly().GetName().Version;
+		set => _version = value;
+	}
 
 	public string Title
 	{

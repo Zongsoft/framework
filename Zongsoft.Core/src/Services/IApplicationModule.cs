@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -40,6 +40,9 @@ public interface IApplicationModule
 {
 	/// <summary>获取应用模块名称。</summary>
 	string Name { get; }
+
+	/// <summary>获取应用模块版本。</summary>
+	Version Version { get; }
 
 	/// <summary>获取应用模块的标题。</summary>
 	string Title { get; }
