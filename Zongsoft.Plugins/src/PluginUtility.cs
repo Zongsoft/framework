@@ -39,804 +39,830 @@ using Zongsoft.Resources;
 using Zongsoft.Reflection;
 using Zongsoft.Reflection.Expressions;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public static class PluginUtility
 {
-	public static class PluginUtility
+	#region 委托定义
+	private delegate bool ParameterResolver(ParameterInfo parameter, out object result);
+	#endregion
+
+	#region 私有变量
+	private static volatile int _anonymousId;
+	#endregion
+
+	#region 获取类型
+	public static Type GetType(string typeFullName, PluginElement element)
 	{
-		#region 委托定义
-		private delegate bool ParameterResolver(ParameterInfo parameter, out object result);
-		#endregion
+		if(string.IsNullOrEmpty(typeFullName))
+			return null;
 
-		#region 私有变量
-		private static volatile int _anonymousId;
-		#endregion
-
-		#region 获取类型
-		public static Type GetType(string typeFullName, PluginElement element)
+		var type = Zongsoft.Common.TypeAlias.Parse(typeFullName, assemblyName =>
 		{
-			if(string.IsNullOrEmpty(typeFullName))
-				return null;
+			var assembly = ResolveAssembly(assemblyName);
 
-			var type = Zongsoft.Common.TypeAlias.Parse(typeFullName, assemblyName =>
-			{
-				var assembly = ResolveAssembly(assemblyName);
+			if(assembly == null)
+				assembly = LoadAssembly(assemblyName);
 
-				if(assembly == null)
-					assembly = LoadAssembly(assemblyName);
+			return assembly;
+		}, (assembly, typeName, ignoreCase) =>
+		{
+			if(assembly == null)
+				return Type.GetType(typeName, false, ignoreCase);
+			else
+				return assembly.GetType(typeName, false, ignoreCase);
+		}, false);
 
-				return assembly;
-			}, (assembly, typeName, ignoreCase) =>
-			{
-				if(assembly == null)
-					return Type.GetType(typeName, false, ignoreCase);
-				else
-					return assembly.GetType(typeName, false, ignoreCase);
-			}, false);
+		if(type == null)
+			throw new PluginException($"The '{typeFullName}' type resolve failed in {element}.");
+
+		return type;
+	}
+
+	public static Type GetType(Builtin builtin)
+	{
+		if(builtin == null)
+			return null;
+
+		if(builtin.BuiltinType != null)
+			return builtin.BuiltinType.Type;
+		else
+			return GetType(builtin.Properties.GetValue<string>("type"), builtin);
+	}
+	#endregion
+
+	#region 构建构件
+	public static object BuildBuiltin(Builtin builtin, Builders.BuilderSettings settings, IEnumerable<string> ignoredProperties)
+	{
+		if(builtin == null)
+			throw new ArgumentNullException(nameof(builtin));
+
+		object result;
+
+		if(builtin.BuiltinType != null)
+		{
+			result = BuildType(builtin.BuiltinType);
+		}
+		else
+		{
+			//获取所有者元素的类型，如果所有者不是泛型集合则返回空
+			var type = GetOwnerElementType(builtin.Node) ?? settings?.TargetType;
 
 			if(type == null)
-				throw new PluginException($"The '{typeFullName}' type resolve failed in {element}.");
+				throw new PluginException($"Unable to determine the target type of the '{builtin}' builtin.");
 
-			return type;
+			result = BuildType(type, builtin);
 		}
 
-		public static Type GetType(Builtin builtin)
+		//设置更新目标对象的属性集
+		if(result != null)
+			UpdateProperties(result, builtin, ignoredProperties);
+
+		return result;
+	}
+
+	internal static void UpdateProperties(object target, Builtin builtin, IEnumerable<string> ignoredProperties)
+	{
+		if(target == null || builtin == null)
+			return;
+
+		foreach(var property in builtin.GetProperties())
 		{
-			if(builtin == null)
-				return null;
+			//如果当前属性名为忽略属性则忽略设置
+			if(ignoredProperties != null && ignoredProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+				continue;
 
-			if(builtin.BuiltinType != null)
-				return builtin.BuiltinType.Type;
-			else
-				return GetType(builtin.Properties.GetValue<string>("type"), builtin);
-		}
-		#endregion
-
-		#region 构建构件
-		public static object BuildBuiltin(Builtin builtin, Builders.BuilderSettings settings, IEnumerable<string> ignoredProperties)
-		{
-			if(builtin == null)
-				throw new ArgumentNullException(nameof(builtin));
-
-			object result;
-
-			if(builtin.BuiltinType != null)
+			try
 			{
-				result = BuildType(builtin.BuiltinType);
-			}
-			else
-			{
-				//获取所有者元素的类型，如果所有者不是泛型集合则返回空
-				var type = GetOwnerElementType(builtin.Node) ?? settings?.TargetType;
+				var memberExpression = MemberExpression.Parse(property.Name);
 
-				if(type == null)
-					throw new PluginException($"Unable to determine the target type of the '{builtin}' builtin.");
-
-				result = BuildType(type, builtin);
-			}
-
-			//设置更新目标对象的属性集
-			if(result != null)
-				UpdateProperties(result, builtin, ignoredProperties);
-
-			return result;
-		}
-
-		internal static void UpdateProperties(object target, Builtin builtin, IEnumerable<string> ignoredProperties)
-		{
-			if(target == null || builtin == null)
-				return;
-
-			foreach(var property in builtin.GetProperties())
-			{
-				//如果当前属性名为忽略属性则忽略设置
-				if(ignoredProperties != null && ignoredProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
-					continue;
-
-				try
+				MemberExpressionEvaluator.Default.SetValue(memberExpression, target, ctx =>
 				{
-					var memberExpression = MemberExpression.Parse(property.Name);
-
-					MemberExpressionEvaluator.Default.SetValue(memberExpression, target, ctx =>
+					//更新扩展属性的类型
+					if(property.Type == null)
 					{
-						//更新扩展属性的类型
-						if(property.Type == null)
+						property.Type = ctx.Member switch
 						{
-							property.Type = ctx.Member switch
-							{
-								PropertyInfo propertyInfo => propertyInfo.PropertyType,
-								FieldInfo fieldInfo => fieldInfo.FieldType,
-								MethodInfo methodInfo => methodInfo.ReturnType,
-								_ => null,
-							};
-						}
+							PropertyInfo propertyInfo => propertyInfo.PropertyType,
+							FieldInfo fieldInfo => fieldInfo.FieldType,
+							MethodInfo methodInfo => methodInfo.ReturnType,
+							_ => null,
+						};
+					}
 
-						//更新扩展属性的类型转换器
-						property.Converter = Common.Convert.GetTypeConverter(ctx.Member);
+					//更新扩展属性的类型转换器
+					property.Converter = Common.Convert.GetTypeConverter(ctx.Member);
 
-						//如果属性值转换成功则返回转换后的值，否则返回内部值
-						return Common.Convert.TryConvertValue(property.RawValue, property.Type, () => property.Converter, out var value) ? value : property.Value;
-					});
-				}
-				catch(Exception ex)
+					//如果属性值转换成功则返回转换后的值，否则返回内部值
+					return Common.Convert.TryConvertValue(property.RawValue, property.Type, () => property.Converter, out var value) ? value : property.Value;
+				});
+			}
+			catch(Exception ex)
+			{
+				if(System.Diagnostics.Debugger.IsAttached)
+					throw;
+
+				var message = new StringBuilder();
+
+				message.AppendFormat("{0}[{1}]", ex.Message, ex.Source);
+				message.AppendLine();
+
+				if(ex.InnerException != null)
 				{
-					if(System.Diagnostics.Debugger.IsAttached)
-						throw;
-
-					var message = new StringBuilder();
-
-					message.AppendFormat("{0}[{1}]", ex.Message, ex.Source);
+					message.AppendFormat("\t{0}: {1}[{2}]", ex.GetType().FullName, ex.Message, ex.Source);
 					message.AppendLine();
-
-					if(ex.InnerException != null)
-					{
-						message.AppendFormat("\t{0}: {1}[{2}]", ex.GetType().FullName, ex.Message, ex.Source);
-						message.AppendLine();
-					}
-
-					message.AppendFormat("\tOccurred an error on set '{1}' property of '{0}' builtin, it's raw value is \"{2}\", The target type of builtin is '{3}'.",
-											builtin.ToString(),
-											property.Name,
-											builtin.Properties.GetRawValue(property.Name),
-											target.GetType().AssemblyQualifiedName);
-
-					throw new PluginException(message.ToString(), ex);
-				}
-			}
-		}
-
-		internal static object BuildType(BuiltinType builtinType)
-		{
-			if(builtinType == null)
-				throw new ArgumentNullException(nameof(builtinType));
-
-			if(builtinType.Constructor == null || builtinType.Constructor.Count == 0)
-				return BuildType(builtinType.Type, builtinType.Builtin);
-
-			object result;
-			(var info, var values) = MatchConstructor(builtinType.Constructor);
-
-			if(info == null || values == null)
-				throw new PluginException($"Missing matching constructor for builtin '{builtinType.Builtin}'.");
-
-			try
-			{
-				result = info.Invoke(values);
-			}
-			catch(Exception ex)
-			{
-				if(System.Diagnostics.Debugger.IsAttached)
-					throw;
-
-				throw new PluginException($"Create object of '{builtinType.TypeName}' type faild, The constructor is ({info.GetParameters()}).", ex);
-			}
-
-			//注入依赖属性
-			InjectProperties(result, builtinType.Builtin);
-
-			return result;
-
-			static (ConstructorInfo info, object[] values) MatchConstructor(BuiltinTypeConstructor constructor)
-			{
-				var type = constructor.BuiltinType.Type;
-				var values = new List<object>(constructor.Count * 2);
-
-				//优先匹配参数数量相同的构造函数
-				foreach(ConstructorInfo constructorInfo in type.GetConstructors().Where(ctor => ctor.GetParameters().Length == constructor.Count))
-				{
-					var parameters = constructorInfo.GetParameters();
-
-					for(int i = 0; i < parameters.Length; i++)
-					{
-						if(string.Equals(constructor.Parameters[i].Name, parameters[i].Name))
-							values.Add(constructor.Parameters[i].GetValue(parameters[i].ParameterType));
-						else if(constructor.Parameters[i].ParameterType == parameters[i].ParameterType)
-							values.Add(constructor.Parameters[i].GetValue(parameters[i].ParameterType));
-						else
-							break;
-					}
-
-					//如果匹配成功的参数数量与当前构造函数的参数数量相等则表示匹配成功
-					if(values.Count == parameters.Length)
-						return (constructorInfo, values.ToArray());
 				}
 
-				//按照构造函数参数数量多少依次匹配
-				foreach(ConstructorInfo constructorInfo in type.GetConstructors().OrderByDescending(ctor => ctor.GetParameters().Length))
-				{
-					var parameters = constructorInfo.GetParameters();
+				message.AppendFormat("\tOccurred an error on set '{1}' property of '{0}' builtin, it's raw value is \"{2}\", The target type of builtin is '{3}'.",
+										builtin.ToString(),
+										property.Name,
+										builtin.Properties.GetRawValue(property.Name),
+										target.GetType().AssemblyQualifiedName);
 
-					//如果构造函数的参数数量小于或等于声明的参数数量则匹配失败
-					if(parameters.Length <= constructor.Count)
-						continue;
-
-					for(int i = 0; i < parameters.Length; i++)
-					{
-						if(constructor.Parameters.TryGet(parameters[i].Name, out var parameter))
-							values.Add(parameter.GetValue(parameters[i].ParameterType));
-						else if(constructor.Parameters.TryGet(parameters[i].ParameterType, out parameter))
-							values.Add(parameter.GetValue(parameters[i].ParameterType));
-						else if(GetParameterValue(constructor.Builtin, parameters[i], out var value))
-							values.Add(value);
-						else
-							break;
-					}
-
-					//如果匹配成功的参数数量与当前构造函数的参数数量相等则表示匹配成功
-					if(values.Count == parameters.Length)
-						return (constructorInfo, values.ToArray());
-				}
-
-				return default;
+				throw new PluginException(message.ToString(), ex);
 			}
 		}
+	}
 
-		internal static object BuildType(string typeName, Builtin builtin)
+	internal static object BuildType(BuiltinType builtinType)
+	{
+		if(builtinType == null)
+			throw new ArgumentNullException(nameof(builtinType));
+
+		if(builtinType.Constructor == null || builtinType.Constructor.Count == 0)
+			return BuildType(builtinType.Type, builtinType.Builtin);
+
+		object result;
+		(var info, var values) = MatchConstructor(builtinType.Constructor);
+
+		if(info == null || values == null)
+			throw new PluginException($"Missing matching constructor for builtin '{builtinType.Builtin}'.");
+
+		try
 		{
-			Type type = PluginUtility.GetType(typeName, builtin);
+			result = info.Invoke(values);
+		}
+		catch(Exception ex)
+		{
+			if(System.Diagnostics.Debugger.IsAttached)
+				throw;
 
-			if(type == null)
-				throw new PluginException(string.Format("Can not get type from '{0}' text for '{1}' builtin.", typeName, builtin));
-
-			return BuildType(type, builtin);
+			throw new PluginException($"Create object of '{builtinType.TypeName}' type faild, The constructor is ({info.GetParameters()}).", ex);
 		}
 
-		internal static object BuildType(Type type, PluginElement element)
+		//注入依赖属性
+		InjectProperties(result, builtinType.Builtin);
+
+		return result;
+
+		static (ConstructorInfo info, object[] values) MatchConstructor(BuiltinTypeConstructor constructor)
 		{
-			object target;
+			var type = constructor.BuiltinType.Type;
+			var values = new List<object>(constructor.Count * 2);
 
-			try
+			//优先匹配参数数量相同的构造函数
+			foreach(ConstructorInfo constructorInfo in type.GetConstructors().Where(ctor => ctor.GetParameters().Length == constructor.Count))
 			{
-				target = BuildType(type, (ParameterInfo parameter, out object value) => GetParameterValue(element, parameter, out value));
-
-				if(target == null)
-					throw new PluginException(string.Format("Can not build instance of '{0}' type, Maybe that's cause type-generator not found matched constructor with parameters. in '{1}'.", type.FullName, element));
-			}
-			catch(Exception ex)
-			{
-				if(System.Diagnostics.Debugger.IsAttached)
-					throw;
-
-				throw new PluginException(string.Format("Occurred an exception on create a builtin instance of '{0}' type, at '{1}' builtin.", type.FullName, element), ex);
-			}
-
-			//注入依赖属性
-			InjectProperties(target, element);
-
-			return target;
-		}
-
-		private static object BuildType(Type type, ParameterResolver parameterResolver)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			if(parameterResolver == null)
-				throw new ArgumentNullException(nameof(parameterResolver));
-
-			if(type.IsInterface || type.IsAbstract)
-				throw new ArgumentException($"Unable to create an instance of the specified '{type.FullName}' type because it is an interface or an abstract class.");
-
-			var constructors = type.GetConstructors();
-
-			foreach(ConstructorInfo constructor in constructors.OrderByDescending(ctor => ctor.GetParameters().Length))
-			{
-				var parameters = constructor.GetParameters();
-
-				if(parameters.Length == 0)
-					return Activator.CreateInstance(type);
-
-				bool matched = false;
-				object[] values = new object[parameters.Length];
+				var parameters = constructorInfo.GetParameters();
 
 				for(int i = 0; i < parameters.Length; i++)
 				{
-					//依次获取当前构造函数的参数值
-					matched = parameterResolver(parameters[i], out values[i]);
-
-					//如果获取参数值失败，则当前构造函数匹配失败
-					if(!matched)
+					if(string.Equals(constructor.Parameters[i].Name, parameters[i].Name))
+						values.Add(constructor.Parameters[i].GetValue(parameters[i].ParameterType));
+					else if(constructor.Parameters[i].ParameterType == parameters[i].ParameterType)
+						values.Add(constructor.Parameters[i].GetValue(parameters[i].ParameterType));
+					else
 						break;
 				}
 
-				if(matched)
-					return Activator.CreateInstance(type, values);
+				//如果匹配成功的参数数量与当前构造函数的参数数量相等则表示匹配成功
+				if(values.Count == parameters.Length)
+					return (constructorInfo, values.ToArray());
 			}
 
-			return null;
-		}
-		#endregion
-
-		#region 参数回调
-		private static bool GetParameterValue(PluginElement element, ParameterInfo parameter, out object result)
-		{
-			if(parameter.ParameterType == typeof(string) && string.Equals(parameter.Name, "name", StringComparison.OrdinalIgnoreCase))
+			//按照构造函数参数数量多少依次匹配
+			foreach(ConstructorInfo constructorInfo in type.GetConstructors().OrderByDescending(ctor => ctor.GetParameters().Length))
 			{
-				result = element.Name;
-				return true;
-			}
+				var parameters = constructorInfo.GetParameters();
 
-			if(parameter.ParameterType == typeof(Assembly))
-			{
-				result = GetPluginAssembly(element.Plugin);
-				return result != null;
-			}
-
-			if(parameter.ParameterType == typeof(IResource) || parameter.ParameterType == typeof(Resource))
-			{
-				var assembly = GetPluginAssembly(element.Plugin);
-				result = assembly == null ? null : Resource.GetResource(assembly);
-				return result != null;
-			}
-
-			if(parameter.ParameterType == typeof(Builtin))
-			{
-				result = element as Builtin;
-				return result != null;
-			}
-
-			if(parameter.ParameterType == typeof(PluginTreeNode))
-			{
-				result = element.GetNode();
-				return result != null;
-			}
-
-			if(parameter.ParameterType == typeof(Plugin))
-			{
-				result = element.Plugin;
-				return result != null;
-			}
-
-			if(parameter.ParameterType == typeof(PluginTree))
-			{
-				result = element.Plugin?.PluginTree;
-				return result != null;
-			}
-
-			if(typeof(IApplicationContext).IsAssignableFrom(parameter.ParameterType))
-			{
-				result = ApplicationContext.Current;
-				return true;
-			}
-
-			if(typeof(IApplicationModule).IsAssignableFrom(parameter.ParameterType))
-			{
-				result = FindApplicationModule(element);
-				return result != null;
-			}
-
-			if(typeof(IServiceProvider).IsAssignableFrom(parameter.ParameterType))
-			{
-				result = FindServiceProvider(element);
-				return result != null;
-			}
-
-			if(element is Builtin builtin && builtin.HasProperties && builtin.Properties.TryGetValue(parameter.Name, out var property) && property.Value != null)
-			{
-				var converter = TypeDescriptor.GetConverter(parameter);
-				var propertyType = property.Type ?? property.Value?.GetType();
-
-				if(converter != null && propertyType != null && converter.CanConvertFrom(propertyType))
-				{
-					result = converter.ConvertFrom(property.Value);
-					return true;
-				}
-
-				if(Common.Convert.TryConvertValue(property.Value, parameter.ParameterType, out result))
-					return true;
-			}
-
-			var services = FindServiceProvider(element);
-			if(services != null)
-			{
-				result = services.GetService(parameter.ParameterType);
-				return result != null || parameter.HasDefaultValue;
-			}
-
-			if(parameter.HasDefaultValue)
-			{
-				result = parameter.DefaultValue;
-				return true;
-			}
-
-			result = null;
-			return false;
-		}
-		#endregion
-
-		#region 其他方法
-		internal static Assembly GetPluginAssembly(Plugin plugin)
-		{
-			if(plugin == null)
-				return null;
-
-			if(plugin.Manifest.Assemblies.Count == 0)
-			{
-				var assembly = GetAssemblyFromDependencies(plugin);
-				return assembly ?? GetPluginAssembly(plugin.Parent);
-			}
-
-			foreach(var assembly in plugin.Manifest.Assemblies)
-			{
-				if(string.Equals(plugin.Name, assembly.GetName().Name, StringComparison.OrdinalIgnoreCase))
-					return assembly;
-			}
-
-			return plugin.Manifest.Assemblies[0];
-
-			static Assembly GetAssemblyFromDependencies(Plugin plugin)
-			{
-				if(plugin == null || !plugin.Manifest.HasDependencies)
-					return null;
-
-				var name = plugin.Name;
-				var index = name.LastIndexOf('.');
-
-				while(index > 0)
-				{
-					var findable = name[..index];
-
-					foreach(var dependency in plugin.Manifest.Dependencies)
-					{
-						if(string.Equals(dependency.Name, findable, StringComparison.OrdinalIgnoreCase))
-						{
-							var assembly = GetPluginAssembly(dependency.Plugin);
-							if(assembly != null)
-								return assembly;
-						}
-					}
-
-					//继续向前查找
-					index = name.LastIndexOf('.', index - 1);
-				}
-
-				return null;
-			}
-		}
-
-		internal static IApplicationModule FindApplicationModule(PluginElement element) => FindApplicationModule(element, out _);
-		internal static IApplicationModule FindApplicationModule(PluginElement element, out PluginTreeNode node)
-		{
-			node = element.GetNode();
-
-			while(node != null)
-			{
-				var valueType = node.ValueType;
-
-				if(valueType == null || typeof(IApplicationModule).IsAssignableFrom(valueType))
-				{
-					var value = node.UnwrapValue(ObtainMode.Auto, Builders.BuilderSettings.Create(Builders.BuilderSettingsFlags.IgnoreChildren));
-
-					if(value != null && value is IApplicationModule module)
-						return module;
-				}
-
-				node = node.Parent;
-			}
-
-			return null;
-		}
-
-		internal static IServiceProvider FindServiceProvider(PluginElement element)
-		{
-			var module = FindApplicationModule(element, out var node);
-
-			if(module != null && module.Services != null)
-				return module.Services;
-
-			if(node != null && node.Parent != null && ApplicationContext.Current.Modules.TryGetValue(node.Parent.Name, out module))
-				return module.Services;
-
-			return ApplicationContext.Current.Services;
-		}
-
-		internal static PluginTreeNode GetNode(this PluginElement element) => element switch
-		{
-			PluginTreeNode node => node,
-			Builtin builtin => builtin.Node,
-			_ => null,
-		};
-
-		internal static int GetAnonymousId()
-		{
-			return System.Threading.Interlocked.Increment(ref _anonymousId);
-		}
-
-		internal static object ResolveValue(PluginElement element, string text, string memberName, Type memberType, TypeConverter converter, object defaultValue)
-		{
-			if(element == null)
-				throw new ArgumentNullException(nameof(element));
-
-			if(string.IsNullOrWhiteSpace(text))
-				return Zongsoft.Common.Convert.ConvertValue(text, memberType, () => converter, defaultValue);
-
-			object result = text;
-
-			//进行解析器处理，如果解析器无法处理将会返回传入的原始值
-			if(Parsers.Parser.CanParse(text))
-			{
-				if(element is Builtin)
-					result = Parsers.Parser.Parse(text, (Builtin)element, memberName, memberType);
-				else if(element is PluginTreeNode)
-					result = Parsers.Parser.Parse(text, (PluginTreeNode)element, memberName, memberType);
-				else
-					throw new NotSupportedException(string.Format("Can not support the '{0}' element type.", element.GetType()));
-			}
-
-			//对最后的结果进行类型转换，如果指定的类型为空，该转换操作不会执行任何动作
-			if(memberType == null)
-				return result;
-			else
-				return Zongsoft.Common.Convert.ConvertValue(result, memberType, () => converter, defaultValue);
-		}
-
-		internal static Assembly LoadAssembly(AssemblyName assemblyName)
-		{
-			if(assemblyName == null)
-				return null;
-
-			return AppDomain.CurrentDomain.Load(assemblyName);
-		}
-
-		internal static Assembly ResolveAssembly(AssemblyName assemblyName)
-		{
-			if(assemblyName == null)
-				return null;
-
-			var token = assemblyName.GetPublicKeyToken();
-			var assemblies = new List<Assembly>();
-
-			foreach(Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-			{
-				var matched = string.Equals(assembly.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase);
-
-				if(token != null && token.Length > 0)
-				{
-					var pk = assembly.GetName().GetPublicKeyToken();
-					matched = matched && pk != null && Enumerable.SequenceEqual(token, pk);
-				}
-
-				if(matched)
-					assemblies.Add(assembly);
-			}
-
-			if(assemblies.Count < 1)
-			{
-				if(assemblyName.Name.StartsWith("System."))
-					return AppDomain.CurrentDomain.Load(assemblyName.Name);
-
-				return null;
-			}
-
-			if(assemblies.Count == 1)
-				return assemblies[0];
-
-			var maxAssembly = assemblies[0];
-
-			foreach(Assembly assembly in assemblies)
-			{
-				if(assembly.GetName().Version == null)
+				//如果构造函数的参数数量小于或等于声明的参数数量则匹配失败
+				if(parameters.Length <= constructor.Count)
 					continue;
 
-				if(assembly.GetName().Version.CompareTo(maxAssembly.GetName().Version) > 0)
-					maxAssembly = assembly;
+				for(int i = 0; i < parameters.Length; i++)
+				{
+					if(constructor.Parameters.TryGet(parameters[i].Name, out var parameter))
+						values.Add(parameter.GetValue(parameters[i].ParameterType));
+					else if(constructor.Parameters.TryGet(parameters[i].ParameterType, out parameter))
+						values.Add(parameter.GetValue(parameters[i].ParameterType));
+					else if(GetParameterValue(constructor.Builtin, parameters[i], out var value))
+						values.Add(value);
+					else
+						break;
+				}
+
+				//如果匹配成功的参数数量与当前构造函数的参数数量相等则表示匹配成功
+				if(values.Count == parameters.Length)
+					return (constructorInfo, values.ToArray());
 			}
 
-			return maxAssembly;
+			return default;
+		}
+	}
+
+	internal static object BuildType(string typeName, Builtin builtin)
+	{
+		Type type = PluginUtility.GetType(typeName, builtin);
+
+		if(type == null)
+			throw new PluginException(string.Format("Can not get type from '{0}' text for '{1}' builtin.", typeName, builtin));
+
+		return BuildType(type, builtin);
+	}
+
+	internal static object BuildType(Type type, PluginElement element)
+	{
+		object target;
+
+		try
+		{
+			target = BuildType(type, (ParameterInfo parameter, out object value) => GetParameterValue(element, parameter, out value));
+
+			if(target == null)
+				throw new PluginException(string.Format("Can not build instance of '{0}' type, Maybe that's cause type-generator not found matched constructor with parameters. in '{1}'.", type.FullName, element));
+		}
+		catch(Exception ex)
+		{
+			if(System.Diagnostics.Debugger.IsAttached)
+				throw;
+
+			throw new PluginException(string.Format("Occurred an exception on create a builtin instance of '{0}' type, at '{1}' builtin.", type.FullName, element), ex);
 		}
 
-		internal static MemberInfo GetStaticMember(string qualifiedName)
+		//注入依赖属性
+		InjectProperties(target, element);
+
+		return target;
+	}
+
+	private static object BuildType(Type type, ParameterResolver parameterResolver)
+	{
+		if(type == null)
+			throw new ArgumentNullException(nameof(type));
+
+		if(parameterResolver == null)
+			throw new ArgumentNullException(nameof(parameterResolver));
+
+		if(type.IsInterface || type.IsAbstract)
+			throw new ArgumentException($"Unable to create an instance of the specified '{type.FullName}' type because it is an interface or an abstract class.");
+
+		var constructors = type.GetConstructors();
+
+		foreach(ConstructorInfo constructor in constructors.OrderByDescending(ctor => ctor.GetParameters().Length))
 		{
-			if(string.IsNullOrWhiteSpace(qualifiedName))
+			var parameters = constructor.GetParameters();
+
+			if(parameters.Length == 0)
+				return Activator.CreateInstance(type);
+
+			bool matched = false;
+			object[] values = new object[parameters.Length];
+
+			for(int i = 0; i < parameters.Length; i++)
+			{
+				//依次获取当前构造函数的参数值
+				matched = parameterResolver(parameters[i], out values[i]);
+
+				//如果获取参数值失败，则当前构造函数匹配失败
+				if(!matched)
+					break;
+			}
+
+			if(matched)
+				return Activator.CreateInstance(type, values);
+		}
+
+		return null;
+	}
+	#endregion
+
+	#region 参数回调
+	private static bool GetParameterValue(PluginElement element, ParameterInfo parameter, out object result)
+	{
+		if(parameter.ParameterType == typeof(string) && string.Equals(parameter.Name, "name", StringComparison.OrdinalIgnoreCase))
+		{
+			result = element.Name;
+			return true;
+		}
+
+		if(parameter.ParameterType == typeof(Assembly))
+		{
+			result = GetPluginAssembly(element.Plugin);
+			return result != null;
+		}
+
+		if(parameter.ParameterType == typeof(IResource) || parameter.ParameterType == typeof(Resource))
+		{
+			var assembly = GetPluginAssembly(element.Plugin);
+			result = assembly == null ? null : Resource.GetResource(assembly);
+			return result != null;
+		}
+
+		if(parameter.ParameterType == typeof(Builtin))
+		{
+			result = element as Builtin;
+			return result != null;
+		}
+
+		if(parameter.ParameterType == typeof(PluginTreeNode))
+		{
+			result = element.GetNode();
+			return result != null;
+		}
+
+		if(parameter.ParameterType == typeof(Plugin))
+		{
+			result = element.Plugin;
+			return result != null;
+		}
+
+		if(parameter.ParameterType == typeof(PluginTree))
+		{
+			result = element.Plugin?.PluginTree;
+			return result != null;
+		}
+
+		if(typeof(IApplicationContext).IsAssignableFrom(parameter.ParameterType))
+		{
+			result = ApplicationContext.Current;
+			return true;
+		}
+
+		if(typeof(IApplicationModule).IsAssignableFrom(parameter.ParameterType))
+		{
+			result = FindApplicationModule(element);
+			return result != null;
+		}
+
+		if(typeof(IServiceProvider).IsAssignableFrom(parameter.ParameterType))
+		{
+			result = FindServiceProvider(element);
+			return result != null;
+		}
+
+		if(element is Builtin builtin && builtin.HasProperties && builtin.Properties.TryGetValue(parameter.Name, out var property) && property.Value != null)
+		{
+			var converter = TypeDescriptor.GetConverter(parameter);
+			var propertyType = property.Type ?? property.Value?.GetType();
+
+			if(converter != null && propertyType != null && converter.CanConvertFrom(propertyType))
+			{
+				result = converter.ConvertFrom(property.Value);
+				return true;
+			}
+
+			if(Common.Convert.TryConvertValue(property.Value, parameter.ParameterType, out result))
+				return true;
+		}
+
+		var services = FindServiceProvider(element);
+		if(services != null)
+		{
+			result = services.GetService(parameter.ParameterType);
+			return result != null || parameter.HasDefaultValue;
+		}
+
+		if(parameter.HasDefaultValue)
+		{
+			result = parameter.DefaultValue;
+			return true;
+		}
+
+		result = null;
+		return false;
+	}
+	#endregion
+
+	#region 其他方法
+	internal static Assembly GetPluginAssembly(Plugin plugin)
+	{
+		if(plugin == null)
+			return null;
+
+		if(plugin.Manifest.Assemblies.Count == 0)
+		{
+			var assembly = GetAssemblyFromDependencies(plugin);
+			return assembly ?? GetPluginAssembly(plugin.Parent);
+		}
+
+		foreach(var assembly in plugin.Manifest.Assemblies)
+		{
+			if(string.Equals(plugin.Name, assembly.GetName().Name, StringComparison.OrdinalIgnoreCase))
+				return assembly;
+		}
+
+		return plugin.Manifest.Assemblies[0];
+
+		static Assembly GetAssemblyFromDependencies(Plugin plugin)
+		{
+			if(plugin == null || !plugin.Manifest.HasDependencies)
 				return null;
 
-			var parts = qualifiedName.Split(',');
+			var name = plugin.Name;
+			var index = name.LastIndexOf('.');
 
-			if(parts.Length != 2)
-				throw new ArgumentException(string.Format("Invalid qualified name '{0}'.", qualifiedName));
+			while(index > 0)
+			{
+				var findable = name[..index];
 
-			var assemblyName = parts[1].Trim();
+				foreach(var dependency in plugin.Manifest.Dependencies)
+				{
+					if(string.Equals(dependency.Name, findable, StringComparison.OrdinalIgnoreCase))
+					{
+						var assembly = GetPluginAssembly(dependency.Plugin);
+						if(assembly != null)
+							return assembly;
+					}
+				}
 
-			if(string.IsNullOrWhiteSpace(assemblyName))
-				throw new ArgumentException(string.Format("Missing assembly name in the qualified name '{0}'.", qualifiedName));
+				//继续向前查找
+				index = name.LastIndexOf('.', index - 1);
+			}
 
-			//根据指定程序集名称获取对应的程序集
-			var assembly = ResolveAssembly(new AssemblyName(assemblyName));
+			return null;
+		}
+	}
 
-			if(assembly == null)
-				throw new InvalidOperationException(string.Format("Not found '{0}' assembly in the runtimes, for '{1}' qualified type name.", assemblyName, qualifiedName));
+	internal static IApplicationModule FindApplicationModule(PluginElement element) => FindApplicationModule(element, out _);
+	internal static IApplicationModule FindApplicationModule(PluginElement element, out PluginTreeNode node)
+	{
+		node = element.GetNode();
+
+		while(node != null)
+		{
+			var valueType = node.ValueType;
+
+			if(valueType == null || typeof(IApplicationModule).IsAssignableFrom(valueType))
+			{
+				var value = node.UnwrapValue(ObtainMode.Auto, Builders.BuilderSettings.Create(Builders.BuilderSettingsFlags.IgnoreChildren));
+
+				if(value != null && value is IApplicationModule module)
+					return module;
+			}
+
+			node = node.Parent;
+		}
+
+		return null;
+	}
+
+	internal static IServiceProvider FindServiceProvider(PluginElement element)
+	{
+		var module = FindApplicationModule(element, out var node);
+
+		if(module != null && module.Services != null)
+			return module.Services;
+
+		if(node != null && node.Parent != null && ApplicationContext.Current.Modules.TryGetValue(node.Parent.Name, out module))
+			return module.Services;
+
+		return ApplicationContext.Current.Services;
+	}
+
+	internal static PluginTreeNode GetNode(this PluginElement element) => element switch
+	{
+		PluginTreeNode node => node,
+		Builtin builtin => builtin.Node,
+		_ => null,
+	};
+
+	internal static int GetAnonymousId()
+	{
+		return System.Threading.Interlocked.Increment(ref _anonymousId);
+	}
+
+	internal static object ResolveValue(PluginElement element, string text, string memberName, Type memberType, TypeConverter converter, object defaultValue)
+	{
+		if(element == null)
+			throw new ArgumentNullException(nameof(element));
+
+		if(string.IsNullOrWhiteSpace(text))
+			return Zongsoft.Common.Convert.ConvertValue(text, memberType, () => converter, defaultValue);
+
+		object result = text;
+
+		//进行解析器处理，如果解析器无法处理将会返回传入的原始值
+		if(Parsers.Parser.CanParse(text))
+		{
+			if(element is Builtin)
+				result = Parsers.Parser.Parse(text, (Builtin)element, memberName, memberType);
+			else if(element is PluginTreeNode)
+				result = Parsers.Parser.Parse(text, (PluginTreeNode)element, memberName, memberType);
+			else
+				throw new NotSupportedException(string.Format("Can not support the '{0}' element type.", element.GetType()));
+		}
+
+		//对最后的结果进行类型转换，如果指定的类型为空，该转换操作不会执行任何动作
+		if(memberType == null)
+			return result;
+		else
+			return Zongsoft.Common.Convert.ConvertValue(result, memberType, () => converter, defaultValue);
+	}
+
+	internal static Assembly LoadAssembly(AssemblyName assemblyName)
+	{
+		if(assemblyName == null)
+			return null;
+
+		return AppDomain.CurrentDomain.Load(assemblyName);
+	}
+
+	internal static Assembly ResolveAssembly(AssemblyName assemblyName)
+	{
+		if(assemblyName == null)
+			return null;
+
+		var token = assemblyName.GetPublicKeyToken();
+		var assemblies = new List<Assembly>();
+
+		foreach(Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+		{
+			var matched = string.Equals(assembly.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase);
+
+			if(token != null && token.Length > 0)
+			{
+				var pk = assembly.GetName().GetPublicKeyToken();
+				matched = matched && pk != null && Enumerable.SequenceEqual(token, pk);
+			}
+
+			if(matched)
+				assemblies.Add(assembly);
+		}
+
+		if(assemblies.Count < 1)
+		{
+			if(assemblyName.Name.StartsWith("System."))
+				return AppDomain.CurrentDomain.Load(assemblyName.Name);
+
+			return null;
+		}
+
+		if(assemblies.Count == 1)
+			return assemblies[0];
+
+		var maxAssembly = assemblies[0];
+
+		foreach(Assembly assembly in assemblies)
+		{
+			if(assembly.GetName().Version == null)
+				continue;
+
+			if(assembly.GetName().Version.CompareTo(maxAssembly.GetName().Version) > 0)
+				maxAssembly = assembly;
+		}
+
+		return maxAssembly;
+	}
+
+	internal static object GetStaticMemberValue(string qualifiedName)
+	{
+		if(string.IsNullOrWhiteSpace(qualifiedName))
+			return null;
+
+		var parts = qualifiedName.Split(',');
+
+		if(parts.Length != 2)
+			throw new ArgumentException(string.Format("Invalid qualified name '{0}'.", qualifiedName));
+
+		var assemblyName = parts[1].Trim();
+
+		if(string.IsNullOrWhiteSpace(assemblyName))
+			throw new ArgumentException(string.Format("Missing assembly name in the qualified name '{0}'.", qualifiedName));
+
+		//根据指定程序集名称获取对应的程序集
+		var assembly = ResolveAssembly(new AssemblyName(assemblyName)) ??
+			throw new InvalidOperationException(string.Format("Not found '{0}' assembly in the runtimes, for '{1}' qualified type name.", assemblyName, qualifiedName));
+
+		return GetValue(assembly, parts[0]);
+
+		static object GetValue(Assembly assembly, string path)
+		{
+			if(string.IsNullOrEmpty(path))
+				throw new ArgumentNullException(nameof(path));
 
 			//分解类型成员的完整路径
-			parts = parts[0].Split('.');
+			var parts = path.Split('.');
 
 			//不能小于三个部分，因为「Namespace.Type.Member」至少包含三个部分
 			if(parts.Length < 3)
-				return null;
+				throw new ArgumentException($"The specified '{path}' is an invalid static member expression.");
 
-			var typeFullName = string.Join(".", parts, 0, parts.Length - 1);
-			var type = assembly.GetType(typeFullName, false);
-
-			if(type == null)
-				throw new ArgumentException(string.Format("Cann't obtain the type by '{0}' type-name in the '{1}' assembly.", typeFullName, assembly.FullName));
-
-			//获取指定的成员信息
-			return type.GetMember(parts[parts.Length - 1], (MemberTypes.Field | MemberTypes.Property), BindingFlags.Public | BindingFlags.Static).FirstOrDefault();
-		}
-
-		private static void InjectProperties(object target, PluginElement element)
-		{
-			if(target == null || element == null)
-				return;
-
-			//使用服务注入器进行注入处理
-			ServiceInjector.Inject(FindServiceProvider(element), target);
-		}
-
-		internal static PluginTreeNode GetOwnerNode(PluginElement element)
-		{
-			var node = element.GetNode();
-			return node == null ? null : node.Tree.GetOwnerNode(node);
-		}
-
-		internal static Type GetOwnerElementType(PluginTreeNode node)
-		{
-			var ownerNode = node.Tree.GetOwnerNode(node);
-
-			if(ownerNode == null)
-				return null;
-
-			var ownerType = ownerNode.ValueType;
-
-			if(ownerType == null)
+			for(int i = 1; i < parts.Length; i++)
 			{
-				var owner = ownerNode.UnwrapValue(ObtainMode.Never);
+				var typeFullName = string.Join(".", parts, 0, parts.Length - i);
+				var type = assembly.GetType(typeFullName, false);
 
-				if(owner == null)
-					return null;
-
-				ownerType = owner.GetType();
-			}
-
-			var elementType = GetImplementedCollectionElementType(ownerType);
-
-			if(elementType != null)
-				return elementType;
-
-			return GetDefaultMemberType(ownerType);
-		}
-
-		internal static Type GetDefaultMemberType(Type ownerType)
-		{
-			var member = GetDefaultMemberInfo(ownerType);
-
-			if(member != null)
-			{
-				switch(member.MemberType)
+				if(type != null)
 				{
-					case MemberTypes.Field:
-						return GetImplementedCollectionElementType(((FieldInfo)member).FieldType);
-					case MemberTypes.Property:
-						return GetImplementedCollectionElementType(((PropertyInfo)member).PropertyType);
+					var index = parts.Length - i;
+					var members = type.GetMember(parts[index], MemberTypes.Field | MemberTypes.Property, BindingFlags.Public | BindingFlags.Static);
+
+					if(members == null || members.Length == 0)
+						throw new PluginException($"No static field or property for '{parts[index]}' was found in '{type.FullName}' type.");
+
+					var target = members[0] switch
+					{
+						FieldInfo field => field.GetValue(null),
+						PropertyInfo property => property.GetValue(null),
+						_ => throw new InvalidOperationException(),
+					};
+
+					if(index >= parts.Length - 1)
+						return target;
+
+					var expression = MemberExpression.Parse(string.Join('.', parts[(index + 1)..]));
+					return MemberExpressionEvaluator.Default.GetValue(expression, target);
 				}
 			}
 
+			throw new InvalidOperationException($"Unable to resolve the '{path}' static member in the '{assembly.FullName}' assembly.");
+		}
+	}
+
+	private static void InjectProperties(object target, PluginElement element)
+	{
+		if(target == null || element == null)
+			return;
+
+		//使用服务注入器进行注入处理
+		ServiceInjector.Inject(FindServiceProvider(element), target);
+	}
+
+	internal static PluginTreeNode GetOwnerNode(PluginElement element)
+	{
+		var node = element.GetNode();
+		return node == null ? null : node.Tree.GetOwnerNode(node);
+	}
+
+	internal static Type GetOwnerElementType(PluginTreeNode node)
+	{
+		var ownerNode = node.Tree.GetOwnerNode(node);
+
+		if(ownerNode == null)
 			return null;
-		}
 
-		private static MemberInfo GetDefaultMemberInfo(Type ownerType)
+		var ownerType = ownerNode.ValueType;
+
+		if(ownerType == null)
 		{
-			MemberInfo[] members = null;
-			var memberAttribute = ownerType.GetCustomAttribute<DefaultMemberAttribute>(true);
+			var owner = ownerNode.UnwrapValue(ObtainMode.Never);
 
-			if(memberAttribute != null)
-				members = ownerType.GetMember(memberAttribute.MemberName, BindingFlags.Public | BindingFlags.Instance);
-			else
-			{
-				var propertyAttribute = ownerType.GetCustomAttribute<DefaultPropertyAttribute>(true);
-				if(propertyAttribute != null)
-					members = ownerType.GetMember(propertyAttribute.Name, BindingFlags.Public | BindingFlags.Instance);
-			}
-
-			return members != null && members.Length > 0 ? members[0] : null;
-		}
-
-		internal static object GetDefaultMemberValue(object owner)
-		{
 			if(owner == null)
 				return null;
 
-			var member = GetDefaultMemberInfo(owner.GetType());
-			return Reflector.TryGetValue(member, ref owner, out var value) ? value : null;
+			ownerType = owner.GetType();
 		}
 
-		internal static Type GetImplementedCollectionElementType(Type instanceType)
-		{
-			if(instanceType == null)
-				return null;
+		var elementType = GetImplementedCollectionElementType(ownerType);
 
-			if(instanceType.IsGenericType)
+		if(elementType != null)
+			return elementType;
+
+		return GetDefaultMemberType(ownerType);
+	}
+
+	internal static Type GetDefaultMemberType(Type ownerType)
+	{
+		var member = GetDefaultMemberInfo(ownerType);
+
+		if(member != null)
+		{
+			switch(member.MemberType)
 			{
-				var prototype = instanceType.GetGenericTypeDefinition();
+				case MemberTypes.Field:
+					return GetImplementedCollectionElementType(((FieldInfo)member).FieldType);
+				case MemberTypes.Property:
+					return GetImplementedCollectionElementType(((PropertyInfo)member).PropertyType);
+			}
+		}
+
+		return null;
+	}
+
+	private static MemberInfo GetDefaultMemberInfo(Type ownerType)
+	{
+		MemberInfo[] members = null;
+		var memberAttribute = ownerType.GetCustomAttribute<DefaultMemberAttribute>(true);
+
+		if(memberAttribute != null)
+			members = ownerType.GetMember(memberAttribute.MemberName, BindingFlags.Public | BindingFlags.Instance);
+		else
+		{
+			var propertyAttribute = ownerType.GetCustomAttribute<DefaultPropertyAttribute>(true);
+			if(propertyAttribute != null)
+				members = ownerType.GetMember(propertyAttribute.Name, BindingFlags.Public | BindingFlags.Instance);
+		}
+
+		return members != null && members.Length > 0 ? members[0] : null;
+	}
+
+	internal static object GetDefaultMemberValue(object owner)
+	{
+		if(owner == null)
+			return null;
+
+		var member = GetDefaultMemberInfo(owner.GetType());
+		return Reflector.TryGetValue(member, ref owner, out var value) ? value : null;
+	}
+
+	internal static Type GetImplementedCollectionElementType(Type instanceType)
+	{
+		if(instanceType == null)
+			return null;
+
+		if(instanceType.IsGenericType)
+		{
+			var prototype = instanceType.GetGenericTypeDefinition();
+
+			if(prototype == typeof(IDictionary<,>))
+				return instanceType.GenericTypeArguments[1];
+			if(prototype == typeof(ICollection<>))
+				return instanceType.GenericTypeArguments[0];
+		}
+
+		var contracts = instanceType.GetInterfaces();
+
+		foreach(var contract in contracts)
+		{
+			if(contract.IsGenericType)
+			{
+				var prototype = contract.GetGenericTypeDefinition();
 
 				if(prototype == typeof(IDictionary<,>))
-					return instanceType.GenericTypeArguments[1];
+					return contract.GenericTypeArguments[1];
 				if(prototype == typeof(ICollection<>))
-					return instanceType.GenericTypeArguments[0];
+					return contract.GenericTypeArguments[0];
 			}
-
-			var contracts = instanceType.GetInterfaces();
-
-			foreach(var contract in contracts)
-			{
-				if(contract.IsGenericType)
-				{
-					var prototype = contract.GetGenericTypeDefinition();
-
-					if(prototype == typeof(IDictionary<,>))
-						return contract.GenericTypeArguments[1];
-					if(prototype == typeof(ICollection<>))
-						return contract.GenericTypeArguments[0];
-				}
-			}
-
-			return null;
 		}
 
-		internal static Type GetMemberType(IMemberExpression expression, Type originType)
-		{
-			if(originType == null)
-				throw new ArgumentNullException(nameof(originType));
-
-			if(expression == null)
-				return originType;
-
-			var element = expression;
-			var elementType = originType;
-
-			while(element != null)
-			{
-				switch(element.ExpressionType)
-				{
-					case MemberExpressionType.Constant:
-						elementType = ((ConstantExpression)element).Value?.GetType();
-						break;
-					case MemberExpressionType.Identifier:
-						var identifier = (IdentifierExpression)element;
-
-						elementType = elementType.GetProperty(identifier.Name)?.PropertyType ??
-									  elementType.GetField(identifier.Name)?.FieldType;
-						break;
-					case MemberExpressionType.Indexer:
-						var memberName = elementType.GetCustomAttribute<DefaultMemberAttribute>()?.MemberName;
-
-						if(string.IsNullOrEmpty(memberName))
-							throw new InvalidOperationException("");
-
-						elementType = elementType.GetProperty(memberName)?.PropertyType;
-						break;
-					case MemberExpressionType.Method:
-						var method = (MethodExpression)element;
-
-						if(method.HasArguments)
-						{
-							var parameterTypes = new Type[method.Arguments.Count];
-
-							for(var i = 0; i < method.Arguments.Count; i++)
-							{
-								parameterTypes[i] = GetMemberType(method.Arguments[i], originType);
-							}
-
-							elementType = elementType.GetMethod(method.Name, parameterTypes)?.ReturnType;
-						}
-						else
-							elementType = elementType.GetMethod(method.Name)?.ReturnType;
-						break;
-				}
-
-				element = element.Next;
-			}
-
-			return elementType;
-		}
-		#endregion
+		return null;
 	}
+
+	internal static Type GetMemberType(IMemberExpression expression, Type originType)
+	{
+		if(originType == null)
+			throw new ArgumentNullException(nameof(originType));
+
+		if(expression == null)
+			return originType;
+
+		var element = expression;
+		var elementType = originType;
+
+		while(element != null)
+		{
+			switch(element.ExpressionType)
+			{
+				case MemberExpressionType.Constant:
+					elementType = ((ConstantExpression)element).Value?.GetType();
+					break;
+				case MemberExpressionType.Identifier:
+					var identifier = (IdentifierExpression)element;
+
+					elementType = elementType.GetProperty(identifier.Name)?.PropertyType ??
+								  elementType.GetField(identifier.Name)?.FieldType;
+					break;
+				case MemberExpressionType.Indexer:
+					var memberName = elementType.GetCustomAttribute<DefaultMemberAttribute>()?.MemberName;
+
+					if(string.IsNullOrEmpty(memberName))
+						throw new InvalidOperationException("");
+
+					elementType = elementType.GetProperty(memberName)?.PropertyType;
+					break;
+				case MemberExpressionType.Method:
+					var method = (MethodExpression)element;
+
+					if(method.HasArguments)
+					{
+						var parameterTypes = new Type[method.Arguments.Count];
+
+						for(var i = 0; i < method.Arguments.Count; i++)
+						{
+							parameterTypes[i] = GetMemberType(method.Arguments[i], originType);
+						}
+
+						elementType = elementType.GetMethod(method.Name, parameterTypes)?.ReturnType;
+					}
+					else
+						elementType = elementType.GetMethod(method.Name)?.ReturnType;
+					break;
+			}
+
+			element = element.Next;
+		}
+
+		return elementType;
+	}
+	#endregion
 }

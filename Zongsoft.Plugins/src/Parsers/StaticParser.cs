@@ -28,31 +28,16 @@
  */
 
 using System;
-using System.Reflection;
 
-namespace Zongsoft.Plugins.Parsers
+namespace Zongsoft.Plugins.Parsers;
+
+public class StaticParser : Parser
 {
-	public class StaticParser : Parser
+	public override object Parse(ParserContext context)
 	{
-		public override object Parse(ParserContext context)
-		{
-			if(string.IsNullOrWhiteSpace(context.Text) || string.Equals(context.Text, "null", StringComparison.OrdinalIgnoreCase))
-				return null;
-
-			var member = PluginUtility.GetStaticMember(context.Text);
-
-			if(member != null)
-			{
-				switch(member.MemberType)
-				{
-					case (MemberTypes.Field):
-						return ((FieldInfo)member).GetValue(null);
-					case (MemberTypes.Property):
-						return ((PropertyInfo)member).GetValue(null, null);
-				}
-			}
-
+		if(string.IsNullOrWhiteSpace(context.Text) || string.Equals(context.Text, "null", StringComparison.OrdinalIgnoreCase))
 			return null;
-		}
+
+		return PluginUtility.GetStaticMemberValue(context.Text);
 	}
 }
