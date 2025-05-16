@@ -55,11 +55,20 @@ public abstract class Passworder
 
 	public class Cipher
 	{
+		#region 常量定义
+		private const string ALGORITHM = "SHA1";
+		#endregion
+
+		#region 成员字段
+		private string _algorithm;
+		#endregion
+
 		#region 构造函数
-		public Cipher() { }
-		public Cipher(string name, byte[] value, byte[] nonce)
+		public Cipher() => this.Algorithm = null;
+		public Cipher(string algorithm) => this.Algorithm = algorithm;
+		public Cipher(string algorithm, byte[] value, byte[] nonce)
 		{
-			this.Name = name;
+			this.Algorithm = algorithm;
 			this.Value = value;
 			this.Nonce = nonce;
 		}
@@ -68,21 +77,25 @@ public abstract class Passworder
 		#region 公共属性
 		/// <summary>获取密钥所有者标识，通常为用户标识。</summary>
 		public virtual Identifier Identifier { get; }
-		/// <summary>获取或设置密钥名称，通常为哈希算法。</summary>
-		public string Name { get; set; }
 		/// <summary>获取或设置密钥内容，通常为密码哈希值。</summary>
 		public byte[] Value { get; set; }
 		/// <summary>获取或设置密钥随机，通常为密码随机盐。</summary>
 		public byte[] Nonce { get; set; }
+		/// <summary>获取或设置密钥算法名称。</summary>
+		public string Algorithm
+		{
+			get => _algorithm;
+			set => _algorithm = string.IsNullOrEmpty(value) ? ALGORITHM : value.Trim();
+		}
 		#endregion
 
 		#region 公共方法
 		public void Reset(string password, string algorithm = null)
 		{
 			if(string.IsNullOrEmpty(algorithm))
-				algorithm = "SHA1";
+				algorithm = ALGORITHM;
 
-			this.Name = algorithm;
+			this.Algorithm = algorithm;
 
 			if(string.IsNullOrEmpty(password))
 			{
@@ -99,9 +112,9 @@ public abstract class Passworder
 		public void Reset(string password, byte[] nonce, string algorithm = null)
 		{
 			if(string.IsNullOrEmpty(algorithm))
-				algorithm = "SHA1";
+				algorithm = ALGORITHM;
 
-			this.Name = algorithm;
+			this.Algorithm = algorithm;
 
 			if(string.IsNullOrEmpty(password))
 			{

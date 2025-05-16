@@ -74,8 +74,6 @@ partial class UserService
 
 		public class UserCipher : Cipher
 		{
-			public UserCipher() => this.Name = "SHA1";
-
 			public uint UserId { get; set; }
 			public bool Enabled { get; set; }
 

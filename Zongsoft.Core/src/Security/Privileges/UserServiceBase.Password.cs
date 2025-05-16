@@ -469,7 +469,7 @@ partial class UserServiceBase<TUser>
 		protected virtual async ValueTask<bool> OnSetAsync(Identifier identifier, TCipher cipher, CancellationToken cancellation) =>
 			await this.Service.Accessor.UpdateAsync(this.Service.Name, cipher, this.Service.GetCriteria(identifier), cancellation) > 0;
 		protected virtual ValueTask<bool> OnVerifyAsync(string password, TCipher cipher, CancellationToken cancellation) =>
-			ValueTask.FromResult(PasswordUtility.VerifyPassword(password, cipher.Value, cipher.Nonce, cipher.Name));
+			ValueTask.FromResult(PasswordUtility.VerifyPassword(password, cipher.Value, cipher.Nonce, cipher.Algorithm));
 		#endregion
 	}
 	#endregion
