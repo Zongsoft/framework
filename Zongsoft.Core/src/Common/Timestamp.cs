@@ -64,9 +64,7 @@ public class Timestamp
 	#endregion
 
 	#region 公共方法
-	/// <summary>
-	/// 将指定的日期时间转换为时间戳。
-	/// </summary>
+	/// <summary>将指定的日期时间转换为时间戳。</summary>
 	/// <param name="datetime">指定的日期时间。</param>
 	/// <param name="unit">待转换的时间戳单位。</param>
 	/// <returns>返回的时间戳。</returns>
@@ -77,9 +75,7 @@ public class Timestamp
 			(long)(datetime.ToUniversalTime() - this.Epoch).TotalMilliseconds;
 	}
 
-	/// <summary>
-	/// 将指定的时间戳转换为日期时间。
-	/// </summary>
+	/// <summary>将指定的时间戳转换为日期时间。</summary>
 	/// <param name="timestamp">指定的时间戳。</param>
 	/// <param name="unit">待转换的时间戳单位。</param>
 	/// <returns>返回的日期时间。</returns>
