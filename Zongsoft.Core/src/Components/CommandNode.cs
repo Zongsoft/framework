@@ -121,7 +121,7 @@ public partial class CommandNode : Zongsoft.Collections.HierarchicalNode<Command
 	public CommandNode Find(string path)
 	{
 		if(string.IsNullOrWhiteSpace(path))
-			return null;
+			return this;
 
 		var match = _regex.Match(path);
 		string[] parts = null;
