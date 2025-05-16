@@ -28,78 +28,101 @@
  */
 
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
+using Zongsoft.Common;
 using Zongsoft.Components;
+using Zongsoft.Serialization;
 
 namespace Zongsoft.Plugins.Commands;
 
 internal static class Utility
 {
-	public static void PrintPluginNode(ICommandOutlet output, PluginTreeNode node, ObtainMode obtainMode, int maxDepth)
+	public static CommandOutletContent GetPluginNodeContent(PluginTreeNode node, ObtainMode obtainMode, int maxDepth)
 	{
 		if(node == null)
-			return;
+			return null;
 
-		output.Write(CommandOutletColor.DarkYellow, "[{0}]", node.NodeType);
-		output.WriteLine(node.FullPath);
-		output.Write(CommandOutletColor.DarkYellow, "Plugin File: ");
+		var content = CommandOutletContent.Create()
+			.Append(CommandOutletColor.DarkGray, "[")
+			.Append(CommandOutletColor.DarkCyan, node.NodeType.ToString())
+			.Append(CommandOutletColor.DarkGray, "]")
+			.Append(CommandOutletColor.DarkGreen, node.FullPath);
 
 		if(node.Plugin == null)
-			output.WriteLine(CommandOutletColor.Red, "N/A");
+			content.AppendLine();
 		else
-			output.WriteLine(node.Plugin.FilePath);
-
-		output.Write(CommandOutletColor.DarkYellow, "Node Properties: ");
-		output.WriteLine(node.Properties.Count);
+			content.Append(CommandOutletColor.DarkGray, "@")
+			       .AppendLine(CommandOutletColor.DarkCyan, node.Plugin.Name);
 
 		if(node.Properties.Count > 0)
 		{
-			output.WriteLine(CommandOutletColor.Gray, "{");
-
 			foreach(PluginExtendedProperty property in node.Properties)
 			{
-				output.Write(CommandOutletColor.DarkYellow, "\t" + property.Name);
-				output.Write(" = ");
-				output.Write(property.RawValue);
+				content
+					.Append(CommandOutletColor.DarkCyan, property.Name)
+					.Append(CommandOutletColor.DarkGray, "=")
+					.Append(CommandOutletColor.DarkYellow, property.RawValue);
 
 				if(property.Value != null)
 				{
-					output.Write(CommandOutletColor.DarkGray, " [");
-					output.Write(CommandOutletColor.Blue, property.Value.GetType().FullName);
-					output.Write(CommandOutletColor.DarkGray, "]");
+					content.Append(CommandOutletColor.DarkGray, " [");
+					content.Append(CommandOutletColor.DarkMagenta, property.Value.GetType().GetAlias());
+					content.Append(CommandOutletColor.DarkGray, "]");
 				}
 
-				output.WriteLine();
+				content.AppendLine();
 			}
-
-			output.WriteLine(CommandOutletColor.Gray, "}");
 		}
 
-		output.WriteLine(CommandOutletColor.DarkYellow, "Children: {0}", node.Children.Count);
 		if(node.Children.Count > 0)
 		{
-			output.WriteLine();
+			content.AppendLine();
 
 			foreach(var child in node.Children)
 			{
-				output.WriteLine(child);
+				content
+					.Append(CommandOutletColor.DarkGray, "[")
+					.Append(CommandOutletColor.DarkCyan, child.NodeType.ToString())
+					.Append(CommandOutletColor.DarkGray, "]")
+					.Append(CommandOutletColor.DarkGreen, child.Name);
+
+				if(child.Plugin == null)
+					content.AppendLine();
+				else
+					content.Append(CommandOutletColor.DarkGray, "@")
+					       .AppendLine(CommandOutletColor.DarkCyan, child.Plugin.Name);
 			}
 		}
 
 		object value = node.UnwrapValue(obtainMode);
+
 		if(value != null)
 		{
-			var json = JsonSerializer.Serialize(value, new JsonSerializerOptions()
-			{
-				MaxDepth = maxDepth,
-				WriteIndented = true,
-				ReferenceHandler = ReferenceHandler.Preserve,
-			});
+			content
+				.AppendLine()
+				.Append(CommandOutletColor.DarkGray, "[")
+				.Append(CommandOutletColor.Green, value.GetType().GetAlias())
+				.AppendLine(CommandOutletColor.DarkGray, "]");
 
-			output.WriteLine();
-			output.WriteLine(json);
+			try
+			{
+				var json = Serializer.Json.Serialize(value, new TextSerializationOptions()
+				{
+					MaximumDepth = maxDepth,
+					Indented = true,
+				});
+
+				content.AppendLine(json);
+			}
+			catch(Exception ex)
+			{
+				content
+					.Append(CommandOutletColor.Red, ex.GetType().GetAlias())
+					.Append(CommandOutletColor.Gray, ":")
+					.AppendLine(CommandOutletColor.Yellow, ex.Message);
+			}
 		}
+
+		return content;
 	}
 }

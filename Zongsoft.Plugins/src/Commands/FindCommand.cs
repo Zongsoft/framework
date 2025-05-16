@@ -31,6 +31,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 using Zongsoft.Components;
 
@@ -60,24 +61,32 @@ public class FindCommand : CommandBase<CommandContext>
 		if(context.Expression.Arguments.Length == 0)
 			throw new CommandException(Properties.Resources.Text_Message_MissingCommandArguments);
 
-		var result = new PluginTreeNode[context.Expression.Arguments.Length];
+		var result = new List<object>(context.Expression.Arguments.Length);
 
 		for(int i = 0; i < context.Expression.Arguments.Length; i++)
 		{
-			result[i] = _pluginTree.Find(context.Expression.Arguments[i]);
+			var node = _pluginTree.Find(context.Expression.Arguments[i]);
 
-			if(result[i] == null)
+			if(node == null)
 				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_Message_PluginNodeNotFound, context.Expression.Arguments[i]));
+			else
+			{
+				var mode = context.Expression.Options.GetValue<ObtainMode>("obtain");
+				var value = node.UnwrapValue(mode);
 
-			Utility.PrintPluginNode(context.Output, result[i],
-						context.Expression.Options.GetValue<ObtainMode>("obtain"),
-						context.Expression.Options.GetValue<int>("depth"));
+				if(value != null)
+					result.Add(value);
+
+				context.Output.Write(Utility.GetPluginNodeContent(node, mode, context.Expression.Options.GetValue<int>("depth")));
+			}
 		}
 
-		if(result.Length == 1)
-			return ValueTask.FromResult<object>(result[0]);
-
-		return ValueTask.FromResult<object>(result);
+		return result.Count switch
+		{
+			0 => ValueTask.FromResult<object>(null),
+			1 => ValueTask.FromResult<object>(result[0]),
+			_ => ValueTask.FromResult<object>(result)
+		};
 	}
 	#endregion
 }

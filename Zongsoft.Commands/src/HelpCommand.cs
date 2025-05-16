@@ -97,16 +97,18 @@ public class HelpCommand : CommandBase<CommandContext>
 		if(application == null)
 			return;
 
-		//打印应用名称(应用名称不会为空)
-		output.WriteLine(CommandOutletColor.Green, application.Name);
+		var content = CommandOutletContent.Create()
+			.Append(CommandOutletColor.Green, application.Name)
+			.Append(CommandOutletColor.DarkGray, " (")
+			.Append(CommandOutletColor.DarkYellow, application.Version.ToString())
+			.AppendLine(CommandOutletColor.DarkGray, ")");
 
 		if(!string.IsNullOrWhiteSpace(application.Title))
-			output.WriteLine(CommandOutletColor.DarkGreen, application.Title);
+			content.AppendLine(CommandOutletColor.DarkGreen, application.Title);
 		if(!string.IsNullOrWhiteSpace(application.Description))
-			output.WriteLine(CommandOutletColor.DarkGray, application.Description);
+			content.AppendLine(CommandOutletColor.DarkGray, application.Description);
 
-		//打印分隔行
-		output.WriteLine();
+		output.WriteLine(content);
 	}
 
 	public static void PrintHelpInfo(ICommandOutlet output, ICommand command)
