@@ -38,6 +38,28 @@ namespace Zongsoft.Collections;
 public static class DictionaryUtility
 {
 	#region 公共方法
+	public static bool TryGetEntry(object entry, out object key, out object value)
+	{
+		if(entry is DictionaryEntry dictionaryEntry)
+		{
+			key = dictionaryEntry.Key;
+			value = dictionaryEntry.Value;
+			return true;
+		}
+
+		var type = entry?.GetType();
+		if(type != null && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+		{
+			key = Reflection.Reflector.GetValue(ref entry, nameof(KeyValuePair<object, object>.Key));
+			value = Reflection.Reflector.GetValue(ref entry, nameof(KeyValuePair<object, object>.Value));
+			return true;
+		}
+
+		key = null;
+		value = null;
+		return false;
+	}
+
 	public static bool TryAdd(object target, object key, object value)
 	{
 		var added = false;
