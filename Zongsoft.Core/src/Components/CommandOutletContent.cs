@@ -85,9 +85,7 @@ public class CommandOutletContent
 			var current = this;
 
 			while(current._previous != null)
-			{
 				current = current._previous;
-			}
 
 			return current;
 		}
@@ -101,9 +99,7 @@ public class CommandOutletContent
 			var current = this;
 
 			while(current._next != null)
-			{
 				current = current._next;
-			}
 
 			return current;
 		}

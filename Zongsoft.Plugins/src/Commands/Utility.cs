@@ -98,21 +98,9 @@ internal static class Utility
 
 		if(value != null)
 		{
-			content
-				.AppendLine()
-				.Append(CommandOutletColor.DarkGray, "[")
-				.Append(CommandOutletColor.Green, value.GetType().GetAlias())
-				.AppendLine(CommandOutletColor.DarkGray, "]");
-
 			try
 			{
-				var json = Serializer.Json.Serialize(value, new TextSerializationOptions()
-				{
-					MaximumDepth = maxDepth,
-					Indented = true,
-				});
-
-				content.AppendLine(json);
+				content.Dump(value);
 			}
 			catch(Exception ex)
 			{
