@@ -94,20 +94,22 @@ partial class Terminal
 		#endregion
 
 		#region 运行方法
-		public int Run(CancellationToken cancellation = default) => this.Run(null, cancellation);
-		public int Run(string splash, CancellationToken cancellation = default)
+		public int Run(CancellationToken cancellation = default) => this.Run((CommandOutletContent)null, cancellation);
+		public int Run(string splash, CancellationToken cancellation = default) => this.Run(CommandOutletContent.Create(splash), cancellation);
+		public int Run(CommandOutletContent splash, CancellationToken cancellation = default)
 		{
 			return this.RunAsync(splash, cancellation).ConfigureAwait(false).GetAwaiter().GetResult();
 		}
 
-		public Task<int> RunAsync(CancellationToken cancellation = default) => this.RunAsync(null, cancellation);
-		public async Task<int> RunAsync(string splash, CancellationToken cancellation = default)
+		public Task<int> RunAsync(CancellationToken cancellation = default) => this.RunAsync((CommandOutletContent)null, cancellation);
+		public Task<int> RunAsync(string splash, CancellationToken cancellation = default) => this.RunAsync(CommandOutletContent.Create(splash), cancellation);
+		public async Task<int> RunAsync(CommandOutletContent splash, CancellationToken cancellation = default)
 		{
 			if(this.Root.Children.Count < 1)
 				return 0;
 
-			if(string.IsNullOrEmpty(splash))
-				splash = SPLASH;
+			if(splash == null || string.IsNullOrEmpty(splash.Text))
+				splash = CommandOutletContent.Create(SPLASH);
 
 			//打印闪屏信息
 			_terminal.WriteLine(splash);

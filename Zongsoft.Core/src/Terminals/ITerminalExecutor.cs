@@ -42,6 +42,9 @@ public interface ITerminalExecutor : ICommandExecutor
 
 	int Run(CancellationToken cancellation = default);
 	int Run(string splash, CancellationToken cancellation = default);
+	int Run(CommandOutletContent splash, CancellationToken cancellation = default);
+
 	Task<int> RunAsync(CancellationToken cancellation = default);
 	Task<int> RunAsync(string splash, CancellationToken cancellation = default);
+	Task<int> RunAsync(CommandOutletContent splash, CancellationToken cancellation = default);
 }
