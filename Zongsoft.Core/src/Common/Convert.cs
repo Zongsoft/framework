@@ -241,26 +241,9 @@ public static class Convert
 
 		try
 		{
-			//获取目标类型的转换器，如果转换类型为字符串则必须以待转换值的类型为准
-			var converter = converterFactory?.Invoke() ??
-			(
-				type == typeof(string) ? TypeDescriptor.GetConverter(value.GetType()) : TypeDescriptor.GetConverter(type)
-			);
-
-			if(converter != null && converter.GetType() != typeof(TypeConverter))
-			{
-				if(converter.CanConvertFrom(value.GetType())) //尝试从源类型进行转换
-				{
-					result = converter.ConvertFrom(value);
-					return true;
-				}
-
-				if(converter.CanConvertTo(type)) //尝试从目标类型进行转换
-				{
-					result = converter.ConvertTo(value, type);
-					return true;
-				}
-			}
+			//使用类型转换器进行转换
+			if(TryConvertWithConverter(value, type, converterFactory, out result))
+				return true;
 
 			if(value is string)
 			{
@@ -299,6 +282,43 @@ public static class Convert
 			result = null;
 			return false;
 		}
+	}
+
+	private static bool TryConvertWithConverter(object value, Type conversionType, Func<TypeConverter> converterFactory, out object result)
+	{
+		TypeConverter converter = converterFactory?.Invoke();
+
+		if(converter == null)
+		{
+			if(conversionType == typeof(string))
+			{
+				converter = TypeDescriptor.GetConverter(value.GetType());
+
+				if(converter != null && converter.GetType() != typeof(TypeConverter) && converter.CanConvertTo(conversionType))
+				{
+					result = converter.ConvertTo(value, conversionType);
+					return true;
+				}
+			}
+			else
+			{
+				converter = TypeDescriptor.GetConverter(conversionType);
+
+				if(converter != null && converter.GetType() != typeof(TypeConverter) && converter.CanConvertTo(value.GetType()))
+				{
+					result = converter.ConvertFrom(value);
+					return true;
+				}
+			}
+		}
+		else if(converter.GetType() != typeof(TypeConverter) && converter.CanConvertTo(conversionType))
+		{
+			result = converter.ConvertTo(value, conversionType);
+			return true;
+		}
+
+		result = null;
+		return false;
 	}
 	#endregion
 
