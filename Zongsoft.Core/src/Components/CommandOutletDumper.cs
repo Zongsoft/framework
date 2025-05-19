@@ -41,40 +41,46 @@ namespace Zongsoft.Components;
 
 public static class CommandOutletDumper
 {
-	#region 私有常量
-	private const string INDENT_SYMBOL = "    ";
-	private const BindingFlags BINDING = BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetField | BindingFlags.GetProperty;
+	#region 静态属性
+	public static ICollection<ICommandOutletDumper> Dumpers => [];
 	#endregion
 
 	#region 公共方法
-	public static CommandOutletContent Dump(object instance, int indent = 0) => Dump(instance, BINDING, indent);
-	public static CommandOutletContent Dump(object instance, BindingFlags binding, int indent = 0) => Dump((CommandOutletContent)null, instance, binding, indent);
+	public static CommandOutletContent Dump(object target, int indent = 0) => Dump(target, null, indent);
+	public static CommandOutletContent Dump(object target, CommandOutletDumperOptions options, int indent = 0) => Dump((CommandOutletContent)null, target, options, indent);
 
-	public static CommandOutletContent Dump(this ICommandOutlet output, object instance, int indent = 0) => Dump(output, instance, BINDING, indent);
-	public static CommandOutletContent Dump(this ICommandOutlet output, object instance, BindingFlags binding, int indent = 0)
+	public static CommandOutletContent Dump(this ICommandOutlet output, object target, int indent = 0) => Dump(output, target, null, indent);
+	public static CommandOutletContent Dump(this ICommandOutlet output, object target, CommandOutletDumperOptions options, int indent = 0)
 	{
-		var content = Dump(instance, binding, indent);
+		var content = Dump(target, options, indent);
 		output.Write(content);
 		return content;
 	}
 
-	public static CommandOutletContent Dump(this CommandOutletContent content, object instance, int indent = 0) => Dump(content, instance, BINDING, indent);
-	public static CommandOutletContent Dump(this CommandOutletContent content, object instance, BindingFlags binding, int indent = 0)
+	public static CommandOutletContent Dump(this CommandOutletContent content, object target, int indent = 0) => Dump(content, target, null, indent);
+	public static CommandOutletContent Dump(this CommandOutletContent content, object target, CommandOutletDumperOptions options, int indent = 0)
 	{
-		if(instance == null)
+		if(target == null)
 			return content;
 
 		content ??= CommandOutletContent.Create();
-		DumpValue(new Tracker(), content, instance, binding, indent);
+		DumpValue(content, options, target, indent);
 		return content;
 	}
 	#endregion
 
 	#region 私有方法
-	private static void DumpValue(Tracker tracker, CommandOutletContent content, object value, BindingFlags binding, int indent)
+	private static void DumpValue(CommandOutletContent content, CommandOutletDumperOptions options, object value, int indent)
 	{
-		if(indent > 10)
+		options ??= new CommandOutletDumperOptions();
+
+		//获取当前对象的输出器
+		var dumper = options.Selector?.Invoke(value);
+		if(dumper != null)
+		{
+			dumper.Dump(content, value, options, indent);
 			return;
+		}
 
 		switch(value)
 		{
@@ -116,7 +122,7 @@ public static class CommandOutletDumper
 				break;
 			case IEnumerable items:
 				content.AppendLine();
-				content.Indent(indent);
+				content.Indent(options, indent);
 				content.AppendLine(CommandOutletColor.Magenta, "{");
 
 				foreach(var item in items)
@@ -127,47 +133,17 @@ public static class CommandOutletDumper
 							.Append(CommandOutletColor.DarkYellow, entryKey.ToString())
 							.Append(CommandOutletColor.DarkGray, "=");
 
-						DumpValue(tracker, content, entryValue, binding, indent + 1);
+						DumpValue(content, options, entryValue, indent + 1);
 					}
 					else
-						DumpValue(tracker, content, item, binding, indent + 1);
+						DumpValue(content, options, item, indent + 1);
 				}
 
-				content.Indent(indent);
+				content.Indent(options, indent);
 				content.AppendLine(CommandOutletColor.Magenta, "}");
 				break;
 			default:
-				if(Common.Convert.TryConvertValue<string>(value, out var text))
-				{
-					DumpString(content, text);
-					return;
-				}
-
-				content.AppendLine();
-				var members = value.GetType().GetMembers(binding);
-
-				for(int i = 0; i < members.Length; i++)
-				{
-					switch(members[i])
-					{
-						case FieldInfo field:
-							var fieldValue = Reflector.GetValue(field, ref value);
-							DumpMember(tracker, content, fieldValue, field.Name, field.FieldType, binding, indent + 1);
-
-							break;
-						case PropertyInfo property:
-							if(property.IsIndexer())
-								break;
-
-							var propertyValue = Reflector.GetValue(property, ref value);
-							DumpMember(tracker, content, propertyValue, property.Name, property.PropertyType, binding, indent + 1);
-
-							break;
-						default:
-							break;
-					}
-				}
-
+				DumpObject(content, options, value, indent);
 				break;
 		}
 	}
@@ -189,9 +165,43 @@ public static class CommandOutletDumper
 			content.AppendLine(CommandOutletColor.DarkGreen, value);
 	}
 
-	private static void DumpMember(Tracker tracker, CommandOutletContent content, object value, string memberName, Type memberType, BindingFlags binding, int indent)
+	private static void DumpObject(CommandOutletContent content, CommandOutletDumperOptions options, object value, int indent)
 	{
-		content.Indent(indent);
+		if(Common.Convert.TryConvertValue<string>(value, out var text))
+		{
+			DumpString(content, text);
+			return;
+		}
+
+		content.AppendLine();
+		var members = options.GetMembers(value);
+
+		for(int i = 0; i < members.Length; i++)
+		{
+			switch(members[i])
+			{
+				case FieldInfo field:
+					var fieldValue = Reflector.GetValue(field, ref value);
+					DumpMember(content, options, fieldValue, field.Name, field.FieldType, indent + 1);
+
+					break;
+				case PropertyInfo property:
+					if(property.IsIndexer())
+						break;
+
+					var propertyValue = Reflector.GetValue(property, ref value);
+					DumpMember(content, options, propertyValue, property.Name, property.PropertyType, indent + 1);
+
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	private static void DumpMember(CommandOutletContent content, CommandOutletDumperOptions options, object value, string memberName, Type memberType, int indent)
+	{
+		content.Indent(options, indent);
 
 		content
 			.Append(CommandOutletColor.DarkCyan, memberName)
@@ -208,7 +218,7 @@ public static class CommandOutletDumper
 
 		content.Append(CommandOutletColor.DarkBlue, ")");
 
-		var trackable = tracker.CanTrack(value);
+		var trackable = options.Tracker.CanTrack(value);
 
 		if(trackable)
 		{
@@ -216,8 +226,8 @@ public static class CommandOutletDumper
 
 			try
 			{
-				if(tracked = tracker.Track(value))
-					DumpValue(tracker, content, value, binding, indent);
+				if(tracked = options.Tracker.Track(value))
+					DumpValue(content, options, value, indent);
 				else
 					content
 						.Append(CommandOutletColor.DarkGray, "<")
@@ -227,60 +237,24 @@ public static class CommandOutletDumper
 			finally
 			{
 				if(tracked)
-					tracker.Untrack();
+					options.Tracker.Untrack();
 			}
 		}
 		else
-			DumpValue(tracker, content, value, binding, indent);
+			DumpValue(content, options, value, indent);
 	}
 
-	private static CommandOutletContent Indent(this CommandOutletContent content, int indent)
+	private static CommandOutletContent Indent(this CommandOutletContent content, CommandOutletDumperOptions options, int indent)
 	{
 		if(indent > 0)
-			content.Append(string.Concat(System.Linq.Enumerable.Repeat(INDENT_SYMBOL, indent)));
+		{
+			var text = options.Indent(indent);
+
+			if(!string.IsNullOrEmpty(text))
+				content.Append(text);
+		}
 
 		return content;
-	}
-	#endregion
-
-	#region 嵌套子类
-	private sealed class Tracker
-	{
-		private readonly Stack<object> _stack = new();
-		private readonly HashSet<object> _hashset = new(ReferenceComparer.Instance);
-
-		public bool CanTrack(object value) => value != null && value is not string && value.GetType().IsClass;
-		public bool Track(object value)
-		{
-			if(!this.CanTrack(value))
-				throw new InvalidOperationException();
-
-			if(_hashset.Add(value))
-			{
-				_stack.Push(value);
-				return true;
-			}
-
-			return false;
-		}
-
-		public object Untrack()
-		{
-			if(_stack.TryPop(out var value))
-			{
-				_hashset.Remove(value);
-				return value;
-			}
-
-			return null;
-		}
-
-		private sealed class ReferenceComparer : IEqualityComparer<object>
-		{
-			public static readonly ReferenceComparer Instance = new();
-			bool IEqualityComparer<object>.Equals(object x, object y) => object.ReferenceEquals(x, y);
-			public int GetHashCode(object obj) => HashCode.Combine(obj);
-		}
 	}
 	#endregion
 }

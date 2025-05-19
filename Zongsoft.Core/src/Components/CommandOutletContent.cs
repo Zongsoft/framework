@@ -37,6 +37,14 @@ namespace Zongsoft.Components;
 /// </summary>
 public class CommandOutletContent
 {
+	#region 嵌套枚举
+	public enum Direction
+	{
+		Previous,
+		Next,
+	}
+	#endregion
+
 	#region 成员字段
 	private string _text;
 	private CommandOutletColor? _color;
@@ -113,6 +121,33 @@ public class CommandOutletContent
 	#endregion
 
 	#region 公共方法
+	/// <summary>获取指定方向的内容节点数。</summary>
+	/// <param name="direction">指定的计数方向。</param>
+	/// <returns>返回的内容节点数量。</returns>
+	public int Count(Direction direction)
+	{
+		return Count(this, direction);
+
+		static int Count(CommandOutletContent current, Direction direction)
+		{
+			int count = 0;
+
+			while(current != null)
+			{
+				count++;
+
+				current = direction switch
+				{
+					Direction.Previous => current._previous,
+					Direction.Next => current._next,
+					_ => null,
+				};
+			}
+
+			return count;
+		}
+	}
+
 	/// <summary>追加一个空行段。</summary>
 	/// <returns>返回当前内容段。</returns>
 	public CommandOutletContent AppendLine()
