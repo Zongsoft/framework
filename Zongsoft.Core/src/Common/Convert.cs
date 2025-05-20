@@ -304,17 +304,26 @@ public static class Convert
 			{
 				converter = TypeDescriptor.GetConverter(conversionType);
 
-				if(converter != null && converter.GetType() != typeof(TypeConverter) && converter.CanConvertTo(value.GetType()))
+				if(converter != null && converter.GetType() != typeof(TypeConverter) && converter.CanConvertFrom(value.GetType()))
 				{
 					result = converter.ConvertFrom(value);
 					return true;
 				}
 			}
 		}
-		else if(converter.GetType() != typeof(TypeConverter) && converter.CanConvertTo(conversionType))
+		else if(converter.GetType() != typeof(TypeConverter))
 		{
-			result = converter.ConvertTo(value, conversionType);
-			return true;
+			if(converter.CanConvertFrom(value.GetType()))
+			{
+				result = converter.ConvertFrom(value);
+				return true;
+			}
+
+			if(converter.CanConvertTo(conversionType))
+			{
+				result = converter.ConvertTo(value, conversionType);
+				return true;
+			}
 		}
 
 		result = null;

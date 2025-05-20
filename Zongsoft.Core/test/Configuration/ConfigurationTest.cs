@@ -330,7 +330,9 @@ public class Voices : Dictionary<string, Template>
 
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 		{
-			return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+			return destinationType == typeof(string[]) ||
+				destinationType == typeof(IReadOnlyCollection<string>) ||
+				destinationType == typeof(IEnumerable<string>);
 		}
 
 		public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
@@ -343,8 +345,8 @@ public class Voices : Dictionary<string, Template>
 
 		public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
 		{
-			if(value is IEnumerable<string> strings)
-				return string.Join(',', strings);
+			if(value is string text)
+				return text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
 			return base.ConvertTo(context, culture, value, destinationType);
 		}
