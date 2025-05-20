@@ -39,7 +39,7 @@ namespace Zongsoft.Security;
 public static class PasswordUtility
 {
 	#region 私有变量
-	private static readonly char[] PasswordSymbols = new char[] { '-', '+', '#', '@', '~', '$', '&', '.' };
+	private static readonly char[] PasswordSymbols = ['-', '+', '#', '@', '~', '$', '&', '.'];
 	#endregion
 
 	#region 公共方法
