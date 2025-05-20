@@ -35,11 +35,12 @@ namespace Zongsoft.Security;
 
 /// <summary>表示密码信息的结构。</summary>
 /// <remarks>
-/// 密码信息的字节数据定义：
-/// <list type="bullet">
-///		<item><c>identifier|algorithm|exponent|nonce-length|nonce|value</c></item>
-///		<item><c>2 bytes   |1 byte   |1 byte  |1 byte      |..n..|>=16 </c></item>
-/// </list>
+///		<para>其文本格式：<c>algorithm#exponent:nonce|value</c>，譬如：<c>SHA1:1A2B3C4D5E6F7890|xxxxxx</c> 或 <c>SHA1#10:1A2B3C4D5E6F7890|xxxxxx</c>。</para>
+///		<para>其字节格式：</para>
+///		<list type="bullet">
+///			<item><c>identifier|algorithm|exponent|nonce-length|nonce|value</c></item>
+///			<item><c>2 bytes   |1 byte   |1 byte  |1 byte      |..n..|>=16 </c></item>
+///		</list>
 /// </remarks>
 public readonly struct Password : IEquatable<Password>
 {
@@ -83,8 +84,8 @@ public readonly struct Password : IEquatable<Password>
 
 	public string Algorithm => _data != null && _data.Length >= MINIMUM_LENGTH ? GetAlgorithm(_data[ALGORITHM]) : null;
 	public byte Exponent => _data != null && _data.Length >= MINIMUM_LENGTH ? _data[EXPONENT] : (byte)0;
-	public ReadOnlySpan<byte> Nonce => _data.AsSpan().Slice(NONCE, GetNonceLength(_data));
-	public ReadOnlySpan<byte> Value => _data.AsSpan().Slice(NONCE_LENGTH + GetNonceLength(_data), GetValueLength(_data));
+	public ReadOnlySpan<byte> Nonce => _data == null ? default : _data.AsSpan().Slice(NONCE, GetNonceLength(_data));
+	public ReadOnlySpan<byte> Value => _data == null ? default : _data.AsSpan().Slice(NONCE_LENGTH + GetNonceLength(_data) + 1, GetValueLength(_data));
 	#endregion
 
 	#region 公共方法
@@ -97,7 +98,7 @@ public readonly struct Password : IEquatable<Password>
 			return false;
 
 		var data = Generate(password, this.Exponent, this.Nonce, this.Algorithm);
-		return _data.AsSpan().SequenceEqual(data);
+		return this.Value.SequenceEqual(data);
 	}
 	#endregion
 
@@ -108,8 +109,15 @@ public readonly struct Password : IEquatable<Password>
 
 	public override bool Equals(object obj) => obj is Password other && this.Equals(other);
 	public override int GetHashCode() => HashCode.Combine(_data);
-	public override string ToString() => _data == null || _data.Length == 0 ? string.Empty :
-		$"[{this.Algorithm}]{this.Exponent}:{Convert.ToHexString(this.Nonce)}#{Convert.ToBase64String(this.Value)}";
+	public override string ToString()
+	{
+		if(_data == null || _data.Length == 0)
+			return string.Empty;
+
+		return this.Exponent == 0 ?
+			$"{this.Algorithm}:{Convert.ToHexString(this.Nonce)}|{Convert.ToBase64String(this.Value)}" :
+			$"{this.Algorithm}#{this.Exponent}:{Convert.ToHexString(this.Nonce)}|{Convert.ToBase64String(this.Value)}";
+	}
 	#endregion
 
 	#region 符号重写
@@ -138,7 +146,39 @@ public readonly struct Password : IEquatable<Password>
 			return true;
 		}
 
-		throw new NotImplementedException();
+		if(data.Length < MINIMUM_LENGTH)
+		{
+			result = default;
+			return false;
+		}
+
+		if((data[0] != (byte)'Z' && data[0] != (byte)'z') || (data[1] != (byte)'S' && data[1] != (byte)'s'))
+		{
+			result = default;
+			return false;
+		}
+
+		if(string.IsNullOrEmpty(GetAlgorithm(data[ALGORITHM], out var length)))
+		{
+			result = default;
+			return false;
+		}
+
+		var nonce = GetNonceLength(data);
+		if(nonce == 0)
+		{
+			result = default;
+			return false;
+		}
+
+		if(data.Length != nonce + length + 5)
+		{
+			result = default;
+			return false;
+		}
+
+		result = new(data);
+		return true;
 	}
 
 	public static Password Generate(string password, string algorithm = "SHA1") => Generate(password, 10, algorithm);
@@ -148,26 +188,29 @@ public readonly struct Password : IEquatable<Password>
 			return default;
 
 		//获取哈希算法名及对应的算法代号和哈希值长度
-		var name = GetAlgorithm(algorithm, out var identifier, out var length);
+		var name = GetAlgorithm(algorithm, out var code, out var length);
 
 		if(name == default || length < 1)
 			throw new ArgumentException(null, nameof(algorithm));
 
-		var data = new byte[length + 13];
+		//获取随机数长度，介于8至16个字节之间
+		var size = (byte)Random.Shared.Next(8, 16);
+		var data = new byte[length + size + 5];
+		var span = data.AsSpan();
 
 		//设置标识符(ZS)
-		data[0] = (byte)'Z';
-		data[1] = (byte)'S';
+		span[0] = (byte)'Z';
+		span[1] = (byte)'S';
 		//设置算法标识
-		data[2] = identifier;
+		span[2] = code;
 		//设置哈希强度(指数)
-		data[3] = GetExponent(exponent);
+		span[3] = GetExponent(exponent);
 		//设置随机数长度
-		data[4] = 8;
+		span[4] = size;
 		//设置随机数内容
-		RandomNumberGenerator.Fill(data.AsSpan().Slice(5, 8));
+		RandomNumberGenerator.Fill(span.Slice(5, size));
 		//混淆哈希密码值
-		Rfc2898DeriveBytes.Pbkdf2(password.AsSpan(), data.AsSpan().Slice(5, 8), data.AsSpan().Slice(13, length), GetIteration(exponent), name);
+		Rfc2898DeriveBytes.Pbkdf2(password.AsSpan(), span.Slice(5, size), span.Slice(5 + size, length), GetIteration(exponent), name);
 
 		//返回密码信息结构
 		return new(data);
@@ -188,8 +231,8 @@ public readonly struct Password : IEquatable<Password>
 			length);
 	}
 
-	private static byte GetNonceLength(byte[] data) => data != null && data.Length >= MINIMUM_LENGTH ? data[NONCE_LENGTH] : (byte)0;
-	private static byte GetValueLength(byte[] data) => data != null && data.Length >= MINIMUM_LENGTH ? data[ALGORITHM] switch
+	private static byte GetNonceLength(ReadOnlySpan<byte> data) => data.Length >= MINIMUM_LENGTH ? data[NONCE_LENGTH] : (byte)0;
+	private static byte GetValueLength(ReadOnlySpan<byte> data) => data.Length >= MINIMUM_LENGTH ? data[ALGORITHM] switch
 	{
 		0 => (byte)16,
 		1 => (byte)20,
@@ -199,7 +242,7 @@ public readonly struct Password : IEquatable<Password>
 		_ => (byte)0,
 	} : (byte)0;
 
-	private static string GetAlgorithm(byte identifier) => identifier switch
+	private static string GetAlgorithm(byte code) => code switch
 	{
 		ALGORITHM_MD5 => HashAlgorithmName.MD5.Name,
 		ALGORITHM_SHA1 => HashAlgorithmName.SHA1.Name,
@@ -209,49 +252,74 @@ public readonly struct Password : IEquatable<Password>
 		_ => null,
 	};
 
-	private static HashAlgorithmName GetAlgorithm(string name, out byte identifier, out int length)
+	private static string GetAlgorithm(byte code, out int length)
+	{
+		switch(code)
+		{
+			case ALGORITHM_MD5:
+				length = 16;
+				return HashAlgorithmName.MD5.Name;
+			case ALGORITHM_SHA1:
+				length = 20;
+				return HashAlgorithmName.SHA1.Name;
+			case ALGORITHM_SHA256:
+				length = 32;
+				return HashAlgorithmName.SHA256.Name;
+			case ALGORITHM_SHA384:
+				length = 48;
+				return HashAlgorithmName.SHA384.Name;
+			case ALGORITHM_SHA512:
+				length = 64;
+				return HashAlgorithmName.SHA512.Name;
+			default:
+				length = 0;
+				return null;
+		}
+	}
+
+	private static HashAlgorithmName GetAlgorithm(string name, out byte code, out int length)
 	{
 		if(string.Equals(name, HashAlgorithmName.MD5.Name, StringComparison.OrdinalIgnoreCase))
 		{
 			length = 16;
-			identifier = ALGORITHM_MD5;
+			code = ALGORITHM_MD5;
 			return HashAlgorithmName.MD5;
 		}
 
 		if(string.Equals(name, HashAlgorithmName.SHA1.Name, StringComparison.OrdinalIgnoreCase))
 		{
 			length = 20;
-			identifier = ALGORITHM_SHA1;
+			code = ALGORITHM_SHA1;
 			return HashAlgorithmName.SHA1;
 		}
 
 		if(string.Equals(name, HashAlgorithmName.SHA256.Name, StringComparison.OrdinalIgnoreCase))
 		{
 			length = 32;
-			identifier = ALGORITHM_SHA256;
+			code = ALGORITHM_SHA256;
 			return HashAlgorithmName.SHA256;
 		}
 
 		if(string.Equals(name, HashAlgorithmName.SHA384.Name, StringComparison.OrdinalIgnoreCase))
 		{
 			length = 48;
-			identifier = ALGORITHM_SHA384;
+			code = ALGORITHM_SHA384;
 			return HashAlgorithmName.SHA384;
 		}
 
 		if(string.Equals(name, HashAlgorithmName.SHA512.Name, StringComparison.OrdinalIgnoreCase))
 		{
 			length = 64;
-			identifier = ALGORITHM_SHA512;
+			code = ALGORITHM_SHA512;
 			return HashAlgorithmName.SHA512;
 		}
 
+		code = 0;
 		length = 0;
-		identifier = 0;
 		return default;
 	}
 
-	private static byte GetExponent(int exponent) => (byte)Math.Clamp(exponent, 8, 31);
-	private static int GetIteration(int exponent) => (int)Math.Pow(2, Math.Clamp(exponent, 8, 31));
+	private static byte GetExponent(int exponent) => (byte)Math.Clamp(exponent, 0, 31);
+	private static int GetIteration(int exponent) => (int)Math.Pow(2, Math.Clamp(exponent, 0, 31));
 	#endregion
 }
