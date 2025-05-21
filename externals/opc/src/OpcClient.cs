@@ -69,7 +69,7 @@ public partial class OpcClient : IDisposable
 			ProductUri = ApplicationContext.Current?.Name,
 			SecurityConfiguration = new SecurityConfiguration
 			{
-				AutoAcceptUntrustedCertificates = true,
+				AutoAcceptUntrustedCertificates = false,
 				AddAppCertToTrustedStore = true,
 				UseValidatedCertificates = false,
 				RejectSHA1SignedCertificates = false,
@@ -79,6 +79,21 @@ public partial class OpcClient : IDisposable
 					StoreType = @"Directory",
 					StorePath = @"certificates",
 					SubjectName = $"CN={name}, DC={System.Net.Dns.GetHostName()}",
+				},
+				TrustedIssuerCertificates = new CertificateTrustList()
+				{
+					StoreType = @"Directory",
+					StorePath = @"certificates",
+				},
+				TrustedUserCertificates = new CertificateTrustList()
+				{
+					StoreType = @"Directory",
+					StorePath = @"certificates",
+				},
+				TrustedPeerCertificates = new CertificateTrustList()
+				{
+					StoreType = @"Directory",
+					StorePath = @"certificates",
 				},
 			},
 			ClientConfiguration = new ClientConfiguration()
@@ -91,6 +106,9 @@ public partial class OpcClient : IDisposable
 				OperationTimeout = 60 * 1000,
 			},
 		};
+
+		//挂载证书验证事件
+		_configuration.CertificateValidator.CertificateValidation += this.OnCertificateValidation;
 
 		//验证客户端配置
 		_configuration.Validate(ApplicationType.Client);
@@ -508,6 +526,11 @@ public partial class OpcClient : IDisposable
 	#endregion
 
 	#region 事件处理
+	private void OnCertificateValidation(CertificateValidator validator, CertificateValidationEventArgs args)
+	{
+		args.Accept = args.AcceptAll = true;
+	}
+
 	private void Session_KeepAlive(ISession session, KeepAliveEventArgs args) =>
 		this.Heartbeat?.Invoke(this, StatusCode.IsGood(args.Status.StatusCode) ? new(args.CurrentState.ToString()) : new(Failure.GetFailure(args.Status.StatusCode), args.CurrentState.ToString()));
 	#endregion

@@ -96,8 +96,11 @@ public partial class OpcServer : WorkerBase
 				SecurityMode = MessageSecurityMode.None,
 				Server = new ApplicationDescription()
 				{
+					ApplicationName = "OpcServer.Discovery",
+					ApplicationUri = Utils.Format(@"urn:{0}:OpcServer.Discovery", System.Net.Dns.GetHostName()),
 					ApplicationType = ApplicationType.DiscoveryServer,
-				}
+					DiscoveryUrls = [ "opc.tcp://localhost:4840" ],
+				},
 			},
 
 			SecurityPolicies =
@@ -142,9 +145,21 @@ public partial class OpcServer : WorkerBase
 				StorePath = @"certificates",
 				SubjectName = $"CN={name}, DC={System.Net.Dns.GetHostName()}",
 			},
-			//TrustedIssuerCertificates = new CertificateTrustList { StoreType = @"Directory", StorePath = @"certificates/authorities" },
-			//TrustedPeerCertificates = new CertificateTrustList { StoreType = @"Directory", StorePath = @"certificates/applications" },
-			//RejectedCertificateStore = new CertificateTrustList { StoreType = @"Directory", StorePath = @"certificates/rejected" },
+			TrustedIssuerCertificates = new CertificateTrustList
+			{
+				StoreType = @"Directory",
+				StorePath = @"certificates/authorities"
+			},
+			TrustedPeerCertificates = new CertificateTrustList
+			{
+				StoreType = @"Directory",
+				StorePath = @"certificates/applications"
+			},
+			RejectedCertificateStore = new CertificateTrustList
+			{
+				StoreType = @"Directory",
+				StorePath = @"certificates/rejected"
+			},
 			AutoAcceptUntrustedCertificates = true,
 			AddAppCertToTrustedStore = true
 		},

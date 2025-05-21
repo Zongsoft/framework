@@ -226,6 +226,7 @@ internal static class Utility
 		if(index > 0 && index < text.Length)
 		{
 			using var store = GetX509Store(text.AsSpan()[..index]);
+			store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
 			var result = store.Certificates.Find(X509FindType.FindBySerialNumber, text[(index + 1)..], false);
 
 			if(result == null || result.Count == 0)
@@ -271,10 +272,14 @@ internal static class Utility
 
 			#if NET9_0_OR_GREATER
 			stream.ReadExactly(data, 0, data.Length);
-			return string.IsNullOrEmpty(secret) ? X509CertificateLoader.LoadCertificate([.. data]) : X509CertificateLoader.LoadPkcs12(data, secret);
+			return string.IsNullOrEmpty(secret) ?
+				X509CertificateLoader.LoadCertificate([.. data]) :
+				X509CertificateLoader.LoadPkcs12(data, secret);
 			#else
 			stream.Read(data, 0, data.Length);
-			return string.IsNullOrEmpty(secret) ? new X509Certificate2(data) : new X509Certificate2(data, secret);
+			return string.IsNullOrEmpty(secret) ?
+				new X509Certificate2(data) :
+				new X509Certificate2(data, secret);
 			#endif
 		}
 	}
