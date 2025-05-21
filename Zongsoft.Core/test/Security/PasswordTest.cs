@@ -151,6 +151,9 @@ public class PasswordTest
 		Assert.True(Password.TryParse((string)null, out password));
 		Assert.True(password.IsEmpty);
 
+		//解析无效文本
+		Assert.False(Password.TryParse("1A2B3C4D5E6F7890", out _));
+
 		const string PASSWORD = "ABC1234567890XYZ";
 		var older = Password.Generate(PASSWORD, 0);
 		Assert.True(Password.TryParse(older.ToString(), out var newer));
@@ -177,7 +180,7 @@ public class PasswordTest
 	public void TestTryParseFromData()
 	{
 		//解析空数组
-		Assert.True(Password.TryParse([], out var password));
+		Assert.True(Password.TryParse((byte[])[], out var password));
 		Assert.True(password.IsEmpty);
 
 		//解析空对象
@@ -257,5 +260,30 @@ public class PasswordTest
 	[Fact]
 	public void TestJsonConvert()
 	{
+		const string PASSWORD = "I'm a good man!";
+
+		var cipher = new Cipher()
+		{
+			UserId = 100,
+			UserName = "Administrator",
+			Password = Password.Generate(PASSWORD),
+		};
+
+		var json = Serialization.Serializer.Json.Serialize(cipher);
+		Assert.NotNull(json);
+		Assert.NotEmpty(json);
+
+		var result = Serialization.Serializer.Json.Deserialize<Cipher>(json);
+		Assert.NotNull(result);
+		Assert.True(result.Password.HasValue);
+		Assert.False(result.Password.IsEmpty);
+		Assert.True(result.Password.Verify(PASSWORD));
+	}
+
+	private class Cipher
+	{
+		public int UserId { get; set; }
+		public string UserName { get; set; }
+		public Password Password { get; set; }
 	}
 }

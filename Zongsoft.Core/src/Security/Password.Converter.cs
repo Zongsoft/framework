@@ -67,7 +67,7 @@ partial struct Password
 			if(destinationType == typeof(string))
 				return password.IsEmpty ? null : password.ToString();
 			if(destinationType == typeof(byte[]))
-				return password.IsEmpty ? null : (byte[])value;
+				return password.IsEmpty ? null : (byte[])password;
 
 			throw new InvalidCastException();
 		}

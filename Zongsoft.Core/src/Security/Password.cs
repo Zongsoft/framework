@@ -122,37 +122,37 @@ public readonly partial struct Password : IEquatable<Password>
 	#endregion
 
 	#region 静态方法
-	public static bool TryParse(string text, out Password result)
+	public static bool TryParse(string text, out Password result) => TryParse(text.AsSpan(), out result);
+	public static bool TryParse(ReadOnlySpan<char> text, out Password result)
 	{
-		if(string.IsNullOrEmpty(text))
+		if(text.IsEmpty)
 		{
 			result = default;
 			return true;
 		}
 
-		var span = text.AsSpan();
-		var index = span.IndexOf(':');
+		var index = text.IndexOf(':');
 
-		if(index <= 0 || index >= span.Length - 1)
+		if(index <= 0 || index >= text.Length - 1)
 		{
 			result = default;
 			return false;
 		}
 
-		var offset = span[..index].LastIndexOf('#');
+		var offset = text[..index].LastIndexOf('#');
 		var algorithm = ReadOnlySpan<char>.Empty;
 		byte exponent = 0;
 
 		if(offset > 0)
 		{
-			algorithm = span[..offset];
+			algorithm = text[..offset];
 
-			if(byte.TryParse(span.Slice(offset + 1, index - offset - 1), out var number))
+			if(byte.TryParse(text.Slice(offset + 1, index - offset - 1), out var number))
 				exponent = number;
 		}
 		else
 		{
-			algorithm = span[..index];
+			algorithm = text[..index];
 		}
 
 		var name = GetAlgorithm(algorithm.ToString(), out var code, out var length);
@@ -162,7 +162,7 @@ public readonly partial struct Password : IEquatable<Password>
 			return false;
 		}
 
-		offset = IndexOf(span, '|', index);
+		offset = IndexOf(text, '|', index);
 
 		if(offset < index)
 		{
@@ -170,14 +170,14 @@ public readonly partial struct Password : IEquatable<Password>
 			return false;
 		}
 
-		var nonce = Convert.FromHexString(span.Slice(index + 1, offset - index - 1));
+		var nonce = Convert.FromHexString(text.Slice(index + 1, offset - index - 1));
 		if(nonce.Length < 1 || nonce.Length > byte.MaxValue)
 		{
 			result = default;
 			return false;
 		}
 
-		var value = Convert.FromBase64String(span[(offset + 1)..].ToString());
+		var value = Convert.FromBase64String(text[(offset + 1)..].ToString());
 		if(value.Length < 1 || value.Length != length)
 		{
 			result = default;
@@ -198,9 +198,10 @@ public readonly partial struct Password : IEquatable<Password>
 		return true;
 	}
 
-	public static bool TryParse(byte[] data, out Password result)
+	public static bool TryParse(byte[] data, out Password result) => TryParse(data.AsSpan(), out result);
+	public static bool TryParse(ReadOnlySpan<byte> data, out Password result)
 	{
-		if(data == null || data.Length == 0)
+		if(data.IsEmpty)
 		{
 			result = default;
 			return true;
@@ -237,7 +238,7 @@ public readonly partial struct Password : IEquatable<Password>
 			return false;
 		}
 
-		result = new(data);
+		result = new(data.ToArray());
 		return true;
 	}
 
