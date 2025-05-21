@@ -219,4 +219,43 @@ public class PasswordTest
 		Assert.True(result.Verify(PASSWORD));
 		Assert.True(password.Verify(PASSWORD));
 	}
+
+	[Fact]
+	public void TestTypeConvert()
+	{
+		const string PASSWORD = "1234567890";
+
+		var text = Common.Convert.ConvertValue<string>(default(Password));
+		Assert.Null(text);
+
+		text = Common.Convert.ConvertValue<string>(Password.Generate(PASSWORD));
+		Assert.NotNull(text);
+		Assert.NotEmpty(text);
+		Assert.True(Password.TryParse(text, out var result1));
+		Assert.True(result1.HasValue);
+		Assert.False(result1.IsEmpty);
+		Assert.True(result1.Verify(PASSWORD));
+		Assert.False(result1.Verify(null));
+		Assert.False(result1.Verify(string.Empty));
+		Assert.False(result1.Verify(PASSWORD + '!'));
+
+		var data = Common.Convert.ConvertValue<byte[]>(default(Password));
+		Assert.Null(data);
+
+		data = Common.Convert.ConvertValue<byte[]>(Password.Generate(PASSWORD));
+		Assert.NotNull(data);
+		Assert.NotEmpty(data);
+		Assert.True(Password.TryParse(data, out var result2));
+		Assert.True(result2.HasValue);
+		Assert.False(result2.IsEmpty);
+		Assert.True(result2.Verify(PASSWORD));
+		Assert.False(result2.Verify(null));
+		Assert.False(result2.Verify(string.Empty));
+		Assert.False(result2.Verify(PASSWORD + '!'));
+	}
+
+	[Fact]
+	public void TestJsonConvert()
+	{
+	}
 }

@@ -35,14 +35,14 @@ namespace Zongsoft.Security;
 
 /// <summary>表示密码信息的结构。</summary>
 /// <remarks>
-///		<para>其文本格式：<c>algorithm#exponent:nonce|value</c>，譬如：<c>SHA1:1A2B3C4D5E6F7890|xxxxxx</c> 或 <c>SHA1#10:1A2B3C4D5E6F7890|xxxxxx</c>。</para>
-///		<para>其字节格式：</para>
+///		<para>文本格式：<c>algorithm#exponent:nonce|value</c>，如果 <c>exponent</c> 为零，则该部分可省略。譬如：<c>SHA1:1A2B3C4D5E6F7890|xxxxxx</c> 或 <c>SHA1#10:1A2B3C4D5E6F7890|xxxxxx</c>。</para>
+///		<para>字节格式：</para>
 ///		<list type="bullet">
 ///			<item><c>identifier|algorithm|exponent|nonce-length|nonce|value</c></item>
 ///			<item><c>2 bytes   |1 byte   |1 byte  |1 byte      |..n..|>=16 </c></item>
 ///		</list>
 /// </remarks>
-public readonly struct Password : IEquatable<Password>
+public readonly partial struct Password : IEquatable<Password>
 {
 	#region 常量定义
 	private const int MINIMUM_LENGTH = 22;
@@ -74,12 +74,7 @@ public readonly struct Password : IEquatable<Password>
 	#endregion
 
 	#region 公共属性
-	[System.Text.Json.Serialization.JsonIgnore]
-	[Serialization.SerializationMember(Ignored = true)]
 	public bool IsEmpty => _data == null || _data.Length == 0;
-
-	[System.Text.Json.Serialization.JsonIgnore]
-	[Serialization.SerializationMember(Ignored = true)]
 	public bool HasValue => _data != null && _data.Length > 0;
 
 	public string Algorithm => _data != null && _data.Length >= MINIMUM_LENGTH ? GetAlgorithm(_data[ALGORITHM]) : null;
@@ -135,7 +130,72 @@ public readonly struct Password : IEquatable<Password>
 			return true;
 		}
 
-		throw new NotImplementedException();
+		var span = text.AsSpan();
+		var index = span.IndexOf(':');
+
+		if(index <= 0 || index >= span.Length - 1)
+		{
+			result = default;
+			return false;
+		}
+
+		var offset = span[..index].LastIndexOf('#');
+		var algorithm = ReadOnlySpan<char>.Empty;
+		byte exponent = 0;
+
+		if(offset > 0)
+		{
+			algorithm = span[..offset];
+
+			if(byte.TryParse(span.Slice(offset + 1, index - offset - 1), out var number))
+				exponent = number;
+		}
+		else
+		{
+			algorithm = span[..index];
+		}
+
+		var name = GetAlgorithm(algorithm.ToString(), out var code, out var length);
+		if(string.IsNullOrEmpty(name.Name))
+		{
+			result = default;
+			return false;
+		}
+
+		offset = IndexOf(span, '|', index);
+
+		if(offset < index)
+		{
+			result = default;
+			return false;
+		}
+
+		var nonce = Convert.FromHexString(span.Slice(index + 1, offset - index - 1));
+		if(nonce.Length < 1 || nonce.Length > byte.MaxValue)
+		{
+			result = default;
+			return false;
+		}
+
+		var value = Convert.FromBase64String(span[(offset + 1)..].ToString());
+		if(value.Length < 1 || value.Length != length)
+		{
+			result = default;
+			return false;
+		}
+
+		var data = new byte[nonce.Length + value.Length + 5];
+		data[0] = (byte)'Z';
+		data[1] = (byte)'S';
+		data[2] = code;
+		data[3] = exponent;
+		data[4] = (byte)nonce.Length;
+
+		nonce.CopyTo(data, 5);
+		value.CopyTo(data, 5 + nonce.Length);
+
+		result = new(data);
+		return true;
 	}
 
 	public static bool TryParse(byte[] data, out Password result)
@@ -201,7 +261,7 @@ public readonly struct Password : IEquatable<Password>
 		//设置标识符(ZS)
 		span[0] = (byte)'Z';
 		span[1] = (byte)'S';
-		//设置算法标识
+		//设置算法代号
 		span[2] = code;
 		//设置哈希强度(指数)
 		span[3] = GetExponent(exponent);
@@ -234,11 +294,11 @@ public readonly struct Password : IEquatable<Password>
 	private static byte GetNonceLength(ReadOnlySpan<byte> data) => data.Length >= MINIMUM_LENGTH ? data[NONCE_LENGTH] : (byte)0;
 	private static byte GetValueLength(ReadOnlySpan<byte> data) => data.Length >= MINIMUM_LENGTH ? data[ALGORITHM] switch
 	{
-		0 => (byte)16,
-		1 => (byte)20,
-		2 => (byte)32,
-		3 => (byte)48,
-		4 => (byte)64,
+		ALGORITHM_MD5 => (byte)16,
+		ALGORITHM_SHA1 => (byte)20,
+		ALGORITHM_SHA256 => (byte)32,
+		ALGORITHM_SHA384 => (byte)48,
+		ALGORITHM_SHA512 => (byte)64,
 		_ => (byte)0,
 	} : (byte)0;
 
@@ -321,5 +381,11 @@ public readonly struct Password : IEquatable<Password>
 
 	private static byte GetExponent(int exponent) => (byte)Math.Clamp(exponent, 0, 31);
 	private static int GetIteration(int exponent) => (int)Math.Pow(2, Math.Clamp(exponent, 0, 31));
+
+	private static int IndexOf<T>(ReadOnlySpan<T> data, T value, int offset) where T : IEquatable<T>
+	{
+		var position = MemoryExtensions.IndexOf(data[offset..], value);
+		return position < 0 ? position : position + offset;
+	}
 	#endregion
 }
