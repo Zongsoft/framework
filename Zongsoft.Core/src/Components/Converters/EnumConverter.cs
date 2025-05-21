@@ -44,18 +44,21 @@ public class EnumConverter : System.ComponentModel.EnumConverter
 	#endregion
 
 	#region 重写方法
-	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-	{
-		if(sourceType == typeof(string) || sourceType == typeof(DBNull) ||
-		   sourceType == typeof(byte) || sourceType == typeof(sbyte) ||
-		   sourceType == typeof(short) || sourceType == typeof(ushort) ||
-		   sourceType == typeof(int) || sourceType == typeof(uint) ||
-		   sourceType == typeof(long) || sourceType == typeof(ulong) ||
-		   sourceType == typeof(decimal) || sourceType == typeof(double) || sourceType == typeof(float))
-			return true;
+	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || sourceType == typeof(DBNull) ||
+		sourceType == typeof(byte) || sourceType == typeof(sbyte) ||
+		sourceType == typeof(short) || sourceType == typeof(ushort) ||
+		sourceType == typeof(int) || sourceType == typeof(uint) ||
+		sourceType == typeof(long) || sourceType == typeof(ulong) ||
+		sourceType == typeof(double) || sourceType == typeof(float) ||
+		sourceType == typeof(decimal) || base.CanConvertFrom(context, sourceType);
 
-		return base.CanConvertFrom(context, sourceType);
-	}
+	public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) ||
+		destinationType == typeof(byte) || destinationType == typeof(sbyte) ||
+		destinationType == typeof(short) || destinationType == typeof(ushort) ||
+		destinationType == typeof(int) || destinationType == typeof(uint) ||
+		destinationType == typeof(long) || destinationType == typeof(ulong) ||
+		destinationType == typeof(double) || destinationType == typeof(float) ||
+		destinationType == typeof(decimal) || base.CanConvertTo(context, destinationType);
 
 	public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
 	{
@@ -106,6 +109,16 @@ public class EnumConverter : System.ComponentModel.EnumConverter
 		}
 
 		return base.ConvertFrom(context, culture, value);
+	}
+
+	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+	{
+		if(destinationType == typeof(string))
+			return value?.ToString();
+
+		var underlyingType = Enum.GetUnderlyingType(value.GetType());
+		var underlyingValue = Convert.ChangeType(value, underlyingType);
+		return Convert.ChangeType(underlyingValue, destinationType);
 	}
 
 	public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
