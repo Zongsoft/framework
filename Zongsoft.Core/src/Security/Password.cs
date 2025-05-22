@@ -39,7 +39,7 @@ namespace Zongsoft.Security;
 ///		<para>字节格式：</para>
 ///		<list type="bullet">
 ///			<item><c>identifier|algorithm|exponent|nonce-length|nonce|value</c></item>
-///			<item><c>2 bytes   |1 byte   |1 byte  |1 byte      |..n..|>=16 </c></item>
+///			<item><c>2 bytes   |1 byte   |1 byte  |1 byte      |  n  |⩾16 </c></item>
 ///		</list>
 /// </remarks>
 public readonly partial struct Password : IEquatable<Password>
@@ -268,10 +268,17 @@ public readonly partial struct Password : IEquatable<Password>
 		span[3] = GetExponent(exponent);
 		//设置随机数长度
 		span[4] = size;
+
 		//设置随机数内容
 		RandomNumberGenerator.Fill(span.Slice(5, size));
+
 		//混淆哈希密码值
-		Rfc2898DeriveBytes.Pbkdf2(password.AsSpan(), span.Slice(5, size), span.Slice(5 + size, length), GetIteration(exponent), name);
+		Rfc2898DeriveBytes.Pbkdf2(
+			password.AsSpan(),
+			span.Slice(5, size),
+			span.Slice(5 + size, length),
+			GetIteration(exponent),
+			name);
 
 		//返回密码信息结构
 		return new(data);
