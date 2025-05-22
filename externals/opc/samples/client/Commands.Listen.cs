@@ -34,7 +34,7 @@ partial class Commands
 				foreach(var subscriber in _client.Subscribers)
 				{
 					subscribers.Add(subscriber);
-					subscriber.Consume((subscriber, entry, value) => Print(context.Output, subscriber, entry, value));
+					subscriber.Consume((subscriber, entry, value) => Dump(context.Output, subscriber, entry, value));
 				}
 
 				//显示欢迎信息
@@ -59,7 +59,9 @@ partial class Commands
 				}
 
 				subscribers.Add(subscriber);
-				subscriber.Consume((subscriber, entry, value) => Print(context.Output, subscriber, entry, value));
+
+				//挂载消费者的通知回调函数
+				subscriber.Consume((subscriber, entry, value) => Dump(context.Output, subscriber, entry, value));
 			}
 
 			//显示欢迎信息
@@ -76,6 +78,7 @@ partial class Commands
 
 			if(context.Result is IEnumerable<Subscriber> subscribers)
 			{
+				//依次取消所有订阅者的消费事件
 				foreach(var subscriber in subscribers)
 					subscriber.Consume();
 			}
@@ -102,7 +105,7 @@ partial class Commands
 			.Append(CommandOutletColor.DarkGray, " : ")
 			.AppendValue(value);
 
-		private static void Print(ICommandOutlet output, Subscriber subscriber, Subscriber.Entry entry, object value) => output.Write(GetConsumer(subscriber, entry, value));
+		private static void Dump(ICommandOutlet output, Subscriber subscriber, Subscriber.Entry entry, object value) => output.Write(GetConsumer(subscriber, entry, value));
 		#endregion
 	}
 }
