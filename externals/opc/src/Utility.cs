@@ -207,7 +207,7 @@ internal static class Utility
 			return null;
 
 		if(!string.IsNullOrEmpty(settings.UserName))
-			return new UserIdentity(settings.UserName, settings.Password);
+			return new UserIdentity(settings.UserName, settings.Password ?? string.Empty);
 
 		if(!string.IsNullOrEmpty(settings.Certificate))
 			return new UserIdentity(GetCertificate(settings.Certificate, settings.CertificateSecret));

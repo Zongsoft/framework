@@ -28,10 +28,8 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Opc.Ua;
 using Opc.Ua.Server;
@@ -42,141 +40,44 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Opc;
 
-public partial class OpcServer : WorkerBase
+public partial class OpcServer(string name = null) : WorkerBase(name)
 {
 	#region 成员字段
+	private OpcServerOptions _options;
 	private ApplicationInstance _launcher;
-	private Server _server;
 	#endregion
 
-	#region 构造函数
-	public OpcServer(string name = null) : base(name)
+	#region 公共属性
+	public Security.IAuthenticator Authenticator { get; set; }
+	public OpcServerOptions Options { get => _options; init => _options = value; }
+	#endregion
+
+	#region 重写方法
+	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		var configuration = GetConfiguration(this.Name);
+		//确认服务配置对象
+		_options ??= new OpcServerOptions(this.Name);
 
-		//验证服务配置
-		configuration.Validate(ApplicationType.Server);
-
+		//创建应用实例（服务启动器）
 		_launcher = new ApplicationInstance()
 		{
 			ApplicationName = this.Name,
 			ApplicationType = ApplicationType.Server,
-			ApplicationConfiguration = configuration,
+			ApplicationConfiguration = _options.GetConfiguration(),
 		};
 
 		//必须：检查应用启动器的安全证书
 		_launcher.CheckApplicationInstanceCertificates(false);
 
-		_server = new Server(this);
+		//启动服务器实例
+		return _launcher.Start(new Server(this));
 	}
-	#endregion
 
-	#region 公共属性
-	public Security.IAuthenticator Authenticator { get; set; }
-	#endregion
-
-	#region 配置方法
-	private static ApplicationConfiguration GetConfiguration(string name) => new()
+	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
-		ApplicationName = "OpcServer",
-		ApplicationUri = Utils.Format(@"urn:{0}:OpcServer", System.Net.Dns.GetHostName()),
-		ApplicationType = ApplicationType.Server,
-		ProductUri = ApplicationContext.Current?.Name,
-
-		ServerConfiguration = new ServerConfiguration()
-		{
-			BaseAddresses = { "opc.tcp://localhost:4841/OpcServer" },
-			DiagnosticsEnabled = true,
-			MinRequestThreadCount = 5,
-			MaxRequestThreadCount = 100,
-			MaxQueuedRequestCount = 200,
-
-			RegistrationEndpoint = new EndpointDescription("opc.tcp://localhost:4840")
-			{
-				SecurityMode = MessageSecurityMode.None,
-				Server = new ApplicationDescription()
-				{
-					ApplicationName = "OpcServer.Discovery",
-					ApplicationUri = Utils.Format(@"urn:{0}:OpcServer.Discovery", System.Net.Dns.GetHostName()),
-					ApplicationType = ApplicationType.DiscoveryServer,
-					DiscoveryUrls = [ "opc.tcp://localhost:4840" ],
-				},
-			},
-
-			SecurityPolicies =
-			[
-				new ServerSecurityPolicy()
-				{
-					SecurityMode = MessageSecurityMode.None,
-					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#None"
-				},
-				new ServerSecurityPolicy()
-				{
-					SecurityMode = MessageSecurityMode.Sign,
-					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
-				},
-				new ServerSecurityPolicy()
-				{
-					SecurityMode = MessageSecurityMode.SignAndEncrypt,
-					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
-				},
-			],
-			UserTokenPolicies =
-			[
-				new UserTokenPolicy(UserTokenType.Anonymous)
-				{
-					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#None",
-				},
-				new UserTokenPolicy(UserTokenType.UserName)
-				{
-					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
-				},
-				new UserTokenPolicy(UserTokenType.Certificate)
-				{
-					SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
-				}
-			],
-		},
-		SecurityConfiguration = new SecurityConfiguration
-		{
-			ApplicationCertificate = new CertificateIdentifier
-			{
-				StoreType = @"Directory",
-				StorePath = @"certificates",
-				SubjectName = $"CN={name}, DC={System.Net.Dns.GetHostName()}",
-			},
-			TrustedIssuerCertificates = new CertificateTrustList
-			{
-				StoreType = @"Directory",
-				StorePath = @"certificates/authorities"
-			},
-			TrustedPeerCertificates = new CertificateTrustList
-			{
-				StoreType = @"Directory",
-				StorePath = @"certificates/applications"
-			},
-			RejectedCertificateStore = new CertificateTrustList
-			{
-				StoreType = @"Directory",
-				StorePath = @"certificates/rejected"
-			},
-			AutoAcceptUntrustedCertificates = true,
-			AddAppCertToTrustedStore = true
-		},
-		//TransportConfigurations = new TransportConfigurationCollection(),
-		TransportQuotas = new TransportQuotas
-		{
-			OperationTimeout = 60000,
-			ChannelLifetime = 60000,
-			SecurityTokenLifetime = 3600000,
-		},
-		//TraceConfiguration = new TraceConfiguration()
-	};
-	#endregion
-
-	#region 重写方法
-	protected override Task OnStartAsync(string[] args, CancellationToken cancellation) => _launcher.Start(_server);
-	protected override Task OnStopAsync(string[] args, CancellationToken cancellation) { _launcher.Stop(); return Task.CompletedTask; }
+		_launcher.Stop();
+		return Task.CompletedTask;
+	}
 	#endregion
 }
 
