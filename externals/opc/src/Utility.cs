@@ -272,9 +272,14 @@ internal static class Utility
 
 			#if NET9_0_OR_GREATER
 			stream.ReadExactly(data, 0, data.Length);
-			return string.IsNullOrEmpty(secret) ?
-				X509CertificateLoader.LoadCertificate([.. data]) :
-				X509CertificateLoader.LoadPkcs12(data, secret);
+
+			//获取证书类型
+			var type = X509Certificate2.GetCertContentType(data);
+
+			//返回加载的证书
+			return type == X509ContentType.Pfx || type == X509ContentType.Pkcs12 || type == X509ContentType.Pkcs7 ?
+				X509CertificateLoader.LoadPkcs12(data, secret, X509KeyStorageFlags.Exportable) :
+				X509CertificateLoader.LoadCertificate([.. data]);
 			#else
 			stream.Read(data, 0, data.Length);
 			return string.IsNullOrEmpty(secret) ?

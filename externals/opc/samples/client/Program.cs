@@ -10,7 +10,7 @@ namespace Zongsoft.Externals.Opc.Samples;
 
 internal class Program
 {
-	private const string CONNECTION_SETTINGS = "Server=opc.tcp://localhost:4841/OpcServer;UserName=program;Password=xxxxxx;";
+	private const string CONNECTION_SETTINGS = "Server=opc.tcp://localhost:4841/OpcServer;Certificate=zfs.local:./certificates/certificate.pfx;CertificateSecret=;";
 
 	private static OpcClient _client;
 
