@@ -36,6 +36,8 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace Zongsoft.Caching;
 
+/// <summary>提供数据暂存(缓冲)功能的类。</summary>
+/// <typeparam name="T">指定的缓冲数据类型。</typeparam>
 public class Stash<T> : IDisposable
 {
 	#region 成员字段
@@ -207,7 +209,7 @@ public class Stash<T> : IDisposable
 
 		try
 		{
-			//推送数据
+			//刷新缓冲区
 			this.Flush();
 		}
 		finally

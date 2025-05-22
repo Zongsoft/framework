@@ -44,8 +44,12 @@ internal static class Utility
 			return content;
 		}
 
-		content.Append(CommandOutletColor.Blue, $"[{value.GetType().GetAlias()}] ");
-		content.AppendLine(CommandOutletColor.DarkGreen, value.ToString());
+		content
+			.Append(CommandOutletColor.DarkGreen, value.ToString())
+			.Append(CommandOutletColor.DarkGray, " (")
+			.Append(CommandOutletColor.Yellow, value.GetType().GetAlias())
+			.AppendLine(CommandOutletColor.DarkGray, ")");
+
 		return content;
 	}
 }
