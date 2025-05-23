@@ -144,6 +144,6 @@ public class StashTest
 	{
 		private int _count;
 		public int Count => _count;
-		public void OnFlush(IReadOnlyList<T> values) => Interlocked.Add(ref _count, values.Count);
+		public void OnFlush(IList<T> values) => Interlocked.Add(ref _count, values.Count);
 	}
 }

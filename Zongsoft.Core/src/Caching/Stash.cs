@@ -47,14 +47,14 @@ public class Stash<T> : IDisposable
 
 	#region 私有变量
 	private Timer _timer;
-	private List<T> _cache;
+	private IList<T> _cache;
 	private AutoResetEvent _semaphore;
-	private Action<IReadOnlyList<T>> _flusher;
-	private DefaultObjectPool<List<T>> _pool;
+	private Action<IList<T>> _flusher;
+	private DefaultObjectPool<IList<T>> _pool;
 	#endregion
 
 	#region 构造函数
-	public Stash(Action<IReadOnlyList<T>> flusher, TimeSpan period, int limit = 0) : this(period, limit)
+	public Stash(Action<IList<T>> flusher, TimeSpan period, int limit = 0) : this(period, limit)
 	{
 		_flusher = flusher ?? throw new ArgumentNullException(nameof(flusher));
 	}
@@ -62,9 +62,9 @@ public class Stash<T> : IDisposable
 	protected Stash(TimeSpan period, int limit = 0)
 	{
 		this.Period = period;
-		this.Limit = limit;
+		this.Limit = Math.Max(limit, 0);
 
-		_pool = new DefaultObjectPool<List<T>>(new StashPooledPolicy(this));
+		_pool = new DefaultObjectPool<IList<T>>(new StashPooledPolicy(this));
 		_cache = this.OnRent();
 		_semaphore = new AutoResetEvent(true);
 		_timer = new Timer(this.OnTick, null, _period, _period);
@@ -124,7 +124,19 @@ public class Stash<T> : IDisposable
 		try
 		{
 			_semaphore.WaitOne();
-			_cache.Add(value);
+
+			//如果设置失败，则触发刷新后重写
+			if(!this.OnPut(_cache, value))
+			{
+				//释放信号量
+				_semaphore.Set();
+
+				//刷新缓冲区
+				this.Flush();
+
+				//将设置失败的值写入新缓冲区
+				this.Put(value);
+			}
 		}
 		finally
 		{
@@ -163,7 +175,7 @@ public class Stash<T> : IDisposable
 
 	public void Flush()
 	{
-		List<T> cache;
+		IList<T> cache;
 
 		if(_cache == null)
 			return;
@@ -177,6 +189,10 @@ public class Stash<T> : IDisposable
 
 			//如果当前缓存为空，表示本实例已被处置
 			if(cache == null)
+				return;
+
+			//如果当前缓存无内容，则无需后续操作
+			if(cache.Count == 0)
 				return;
 
 			//重新租用一个新的缓存对象
@@ -196,9 +212,16 @@ public class Stash<T> : IDisposable
 	#endregion
 
 	#region 虚拟方法
-	protected virtual List<T> OnRent() => _pool.Get();
-	protected virtual void OnReturn(List<T> cache) => _pool.Return(cache);
-	protected virtual void OnFlush(List<T> cache) => _flusher?.Invoke(cache);
+	protected virtual bool OnPut(IList<T> cache, T value)
+	{
+		cache.Add(value);
+		return true;
+	}
+
+	protected virtual IList<T> OnRent() => _pool.Get();
+	protected virtual IList<T> OnCreate() => new List<T>(Math.Clamp(_limit, 16, 4 * 1024 * 1024));
+	protected virtual void OnReturn(IList<T> cache) => _pool.Return(cache);
+	protected virtual void OnFlush(IList<T> cache) => _flusher?.Invoke(cache);
 	#endregion
 
 	#region 时钟方法
@@ -251,11 +274,11 @@ public class Stash<T> : IDisposable
 	#endregion
 
 	#region 嵌套子类
-	private sealed class StashPooledPolicy(Stash<T> stash) : PooledObjectPolicy<List<T>>
+	private sealed class StashPooledPolicy(Stash<T> stash) : PooledObjectPolicy<IList<T>>
 	{
 		private readonly Stash<T> _stash = stash;
-		public override List<T> Create() => new(Math.Clamp(_stash.Limit, 16, 4 * 1024 * 1024));
-		public override bool Return(List<T> list) { list.Clear(); return true; }
+		public override IList<T> Create() => _stash.OnCreate();
+		public override bool Return(IList<T> list) { list.Clear(); return true; }
 	}
 	#endregion
 }
