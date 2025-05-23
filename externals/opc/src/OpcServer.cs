@@ -40,11 +40,16 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Opc;
 
-public partial class OpcServer(string name = null) : WorkerBase(name)
+public partial class OpcServer : WorkerBase
 {
 	#region 成员字段
 	private OpcServerOptions _options;
 	private ApplicationInstance _launcher;
+	#endregion
+
+	#region 构造函数
+	public OpcServer(OpcServerOptions options = null) : base(options.Name) => _options = options;
+	public OpcServer(string name, OpcServerOptions options = null) : base(name) => _options = options;
 	#endregion
 
 	#region 公共属性
@@ -64,6 +69,7 @@ public partial class OpcServer(string name = null) : WorkerBase(name)
 			ApplicationName = this.Name,
 			ApplicationType = ApplicationType.Server,
 			ApplicationConfiguration = _options.GetConfiguration(),
+			DisableCertificateAutoCreation = false,
 		};
 
 		//必须：检查应用启动器的安全证书
@@ -91,7 +97,11 @@ partial class OpcServer
 		#endregion
 
 		#region 重写方法
-		protected override void OnServerStarting(ApplicationConfiguration configuration) => base.OnServerStarting(configuration);
+		protected override void OnServerStarting(ApplicationConfiguration configuration)
+		{
+			base.OnServerStarting(configuration);
+		}
+
 		protected override void OnServerStarted(IServerInternal server)
 		{
 			server.SessionManager.ImpersonateUser += this.SessionManager_ImpersonateUser;

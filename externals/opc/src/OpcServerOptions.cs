@@ -75,14 +75,13 @@ public class OpcServerOptions
 				BaseAddresses = this.Urls,
 				DiagnosticsEnabled = true,
 
-				MinRequestThreadCount = 5,
+				MinRequestThreadCount = 10,
 				MaxRequestThreadCount = 100,
 				MaxQueuedRequestCount = 200,
+
 				MaxSubscriptionCount = 1000,
-				MaxMessageQueueSize = 1000,
-				MaxPublishRequestCount = 1000,
-				MaxSubscriptionLifetime = 3600000,
 				MaxNotificationsPerPublish = 1000,
+				MinMetadataSamplingInterval = 100,
 				RegistrationEndpoint = string.IsNullOrEmpty(this.Discovery) ? null : new EndpointDescription(this.Discovery),
 
 				SecurityPolicies =
@@ -121,6 +120,9 @@ public class OpcServerOptions
 			},
 			SecurityConfiguration = new SecurityConfiguration
 			{
+				AddAppCertToTrustedStore = true,
+				AutoAcceptUntrustedCertificates = true,
+
 				ApplicationCertificate = new CertificateIdentifier
 				{
 					StoreType = @"Directory",
@@ -142,8 +144,6 @@ public class OpcServerOptions
 					StoreType = @"Directory",
 					StorePath = @"certificates/rejected"
 				},
-				AutoAcceptUntrustedCertificates = true,
-				AddAppCertToTrustedStore = true
 			},
 			//TransportConfigurations = new TransportConfigurationCollection(),
 			TransportQuotas = new TransportQuotas
