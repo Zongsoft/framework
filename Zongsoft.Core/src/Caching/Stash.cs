@@ -62,7 +62,7 @@ public class Stash<T> : IDisposable
 	protected Stash(TimeSpan period, int limit = 0)
 	{
 		this.Period = period;
-		this.Limit = Math.Max(limit, 0);
+		this.Limit = limit;
 
 		_pool = new DefaultObjectPool<IList<T>>(new StashPooledPolicy(this));
 		_cache = this.OnRent();
