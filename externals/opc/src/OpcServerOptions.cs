@@ -145,14 +145,9 @@ public class OpcServerOptions
 					StorePath = @"certificates/rejected"
 				},
 			},
-			//TransportConfigurations = new TransportConfigurationCollection(),
-			TransportQuotas = new TransportQuotas
-			{
-				OperationTimeout = 60000,
-				ChannelLifetime = 60000,
-				SecurityTokenLifetime = 3600000,
-			},
-			//TraceConfiguration = new TraceConfiguration()
+			TransportQuotas = new TransportQuotas(),
+			//TransportConfigurations = [],
+			//TraceConfiguration = new TraceConfiguration(),
 		};
 
 		//验证服务配置

@@ -536,10 +536,7 @@ public partial class OpcClient : IDisposable
 	#endregion
 
 	#region 私有方法
-	private Session GetSession()
-	{
-		return _session ?? throw new InvalidOperationException($"The {nameof(OpcClient)}({this.Name}) is not connected.");
-	}
+	private Session GetSession() => _session ?? throw new InvalidOperationException($"The {nameof(OpcClient)}({this.Name}) is not connected.");
 	#endregion
 
 	#region 处置方法
