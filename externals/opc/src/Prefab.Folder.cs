@@ -37,8 +37,7 @@ partial class Prefab
 {
 	public class FolderPrefab : Prefab
 	{
-		public FolderPrefab(string name, string label = null, string description = null) : this(null, name, label, description) { }
-		public FolderPrefab(FolderPrefab folder, string name, string label = null, string description = null) : base(name, label, description)
+		internal FolderPrefab(FolderPrefab folder, string @namespace, string name, string label = null, string description = null) : base(@namespace, name, label, description)
 		{
 			this.Folder = folder;
 			this.Children = new(this);
@@ -57,7 +56,7 @@ partial class PrefabExtension
 		if(folder == null)
 			throw new ArgumentNullException(nameof(folder));
 
-		var result = new Prefab.FolderPrefab(folder, name, label, description);
+		var result = new Prefab.FolderPrefab(folder, folder.Namespace, name, label, description);
 		folder.Children.Add(result);
 		return result;
 	}

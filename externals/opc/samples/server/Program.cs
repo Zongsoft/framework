@@ -13,18 +13,86 @@ internal static class Program
 	static async Task Main(string[] args)
 	{
 		using var server = new OpcServer("OpcServer");
-		server.Options.Prefabs.Define();
+		server.Options.Storages.Define("http://zongsoft.com/opc/ua").Initialize();
 		await server.StartAsync(args);
 
 		var executor = Terminal.Console.Executor;
 		executor.Command("start", async (context, cancellation) => await server.StartAsync(args, cancellation));
 		executor.Command("stop", async (context, cancellation) => await server.StopAsync(args, cancellation));
 
+		executor.Command("get", async (context, cancellation) =>
+		{
+			if(context.Expression.Arguments.IsEmpty())
+				return;
+
+			if(context.Expression.Arguments.Length == 1)
+			{
+				var value = await server.GetValueAsync(context.Expression.Arguments[0], cancellation);
+				var content = CommandOutletContent.Create(string.Empty).AppendValue(value);
+				context.Output.Write(content);
+			}
+			else
+			{
+				var result = server.GetValuesAsync(context.Expression.Arguments, cancellation);
+
+				await foreach(var entry in result)
+				{
+					var content = CommandOutletContent
+						.Create(CommandOutletColor.DarkYellow, entry.Key)
+						.Append(CommandOutletColor.DarkGray, " : ")
+						.AppendValue(entry.Value);
+
+					context.Output.Write(content);
+				}
+			}
+		});
+
+		executor.Command("set", async (context, cancellation) =>
+		{
+			if(context.Expression.Arguments.Length < 2)
+				throw new CommandException($"Missing required argument of the command.");
+
+			//获取指定键对应的数据类型
+			var type = await server.GetDataTypeAsync(context.Expression.Arguments[0], cancellation) ??
+				throw new CommandException($"The specified '{context.Expression.Arguments[0]}' does not exist, or its data type is not available.");
+
+			object value = null;
+
+			if(type.IsArray)
+			{
+				type = type.GetElementType();
+				value = Array.CreateInstance(type, context.Expression.Arguments.Length - 1);
+
+				for(int i = 1; i < context.Expression.Arguments.Length; i++)
+				{
+					((Array)value).SetValue(Common.Convert.ConvertValue(context.Expression.Arguments[i], type), i - 1);
+				}
+			}
+			else
+			{
+				if(context.Expression.Arguments.Length > 2)
+					throw new CommandException($"Too many command arguments.");
+
+				value = Common.Convert.ConvertValue(context.Expression.Arguments[1], type);
+			}
+
+			var succeed = await server.SetValueAsync(context.Expression.Arguments[0], value, cancellation);
+
+			if(succeed)
+				context.Output.WriteLine(CommandOutletColor.DarkGreen, "The set operation was successful.");
+			else
+				context.Output.WriteLine(CommandOutletColor.DarkRed, "The set operation failed.");
+		});
+
 		await executor.RunAsync($"Welcome to the OPC-UA Server.{Environment.NewLine}{new string('-', 50)}");
 	}
 
-	private static void Define(this PrefabCollection prefabs)
+	private static void Initialize(this OpcServerOptions.StorageOptions storage) => Initialize(storage.Prefabs);
+	private static void Initialize(this PrefabCollection prefabs)
 	{
+		if(prefabs == null)
+			return;
+
 		prefabs.Folder("F0", "Folder #0");
 		prefabs.Folder("F1", "Folder #1")
 			.Variable<float>("x");

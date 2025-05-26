@@ -35,17 +35,16 @@ namespace Zongsoft.Externals.Opc;
 
 partial class Prefab
 {
-	public static TypePrefab Type(string name, Type type, string label = null, string description = null) => new(name, type, label, description);
-	public static TypePrefab Type<T>(string name, string label = null, string description = null) => new(name, typeof(T), label, description);
+	internal static TypePrefab Type<T>(string @namespace, string name, string label = null, string description = null) => new(@namespace, name, typeof(T), label, description);
 
 	public class TypePrefab : Prefab
 	{
-		public TypePrefab(string name, Type type, string label = null, string description = null) : base(name, label, description)
+		public TypePrefab(string @namespace, string name, Type type, string label = null, string description = null) : base(@namespace, name, label, description)
 		{
 			this.Type = type ?? throw new ArgumentNullException(nameof(type));
 		}
 
 		public override PrefabKind Kind => PrefabKind.Type;
-		public new Type Type { get; }
+		public Type Type { get; }
 	}
 }

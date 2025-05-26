@@ -37,12 +37,13 @@ namespace Zongsoft.Externals.Opc;
 
 public abstract partial class Prefab
 {
-	protected Prefab(string name, string label = null, string description = null)
+	protected Prefab(string @namespace, string name, string label = null, string description = null)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
 		this.Name = name;
+		this.Namespace = @namespace ?? string.Empty;
 		this.Label = string.IsNullOrEmpty(label) ? name : label;
 		this.Description = description;
 	}
@@ -50,8 +51,8 @@ public abstract partial class Prefab
 	public abstract PrefabKind Kind { get; }
 	public NodeState Node { get; internal set; }
 	public string Name { get; }
-	public string Label { get; }
 	public string Namespace { get; }
+	public string Label { get; set; }
 	public string Description { get; set; }
 
 	public override string ToString() => $"[{this.Kind}]{this.Name}";

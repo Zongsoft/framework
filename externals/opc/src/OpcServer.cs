@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -48,13 +49,23 @@ public partial class OpcServer : WorkerBase
 	#endregion
 
 	#region 构造函数
-	public OpcServer(OpcServerOptions options = null) : base(options.Name) => _options = options;
-	public OpcServer(string name, OpcServerOptions options = null) : base(name) => _options = options;
+	public OpcServer(OpcServerOptions options = null) : base(options?.Name)
+	{
+		_options = options;
+		this.Storages = new();
+	}
+
+	public OpcServer(string name, OpcServerOptions options = null) : base(name)
+	{
+		_options = options;
+		this.Storages = new();
+	}
 	#endregion
 
 	#region 公共属性
 	public Security.IAuthenticator Authenticator { get; set; }
 	public OpcServerOptions Options => _options ??= new OpcServerOptions(this.Name);
+	public StorageCollection Storages { get; }
 	#endregion
 
 	#region 重写方法
@@ -93,7 +104,6 @@ partial class OpcServer
 	{
 		#region 成员字段
 		private readonly OpcServer _server = server;
-		private NodeManager _manager;
 		#endregion
 
 		#region 重写方法
@@ -110,8 +120,13 @@ partial class OpcServer
 
 		protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration)
 		{
-			_manager = new NodeManager(server, configuration, _server.Options.Prefabs);
-			return new MasterNodeManager(server, configuration, null, [_manager]);
+			if(_server.Options.Storages.Count == 0)
+				_server.Options.Storages.Add(new OpcServerOptions.StorageOptions("http://zongsoft.com/opc/ua"));
+
+			foreach(var option in _server.Options.Storages)
+				_server.Storages.Add(new Storage(server, configuration, option));
+
+			return new MasterNodeManager(server, configuration, null, [.. _server.Storages.OfType<INodeManager>()]);
 		}
 
 		protected override void OnNodeManagerStarted(IServerInternal server)
@@ -128,9 +143,50 @@ partial class OpcServer
 				if(nodes == null || nodes.Count == 0)
 					throw new ServiceResultException(StatusCodes.BadNothingToDo);
 
-				_manager.AddNodes(context, nodes, out results, out diagnostics);
+				var succeed = true;
+				var storage = (Storage)null;
+				results = new AddNodesResultCollection(nodes.Count);
+				diagnostics = new DiagnosticInfoCollection(nodes.Count);
 
-				return this.CreateResponse(requestHeader, StatusCodes.Good);
+				foreach(var node in nodes)
+				{
+					if(node == null || node.RequestedNewNodeId == null || node.RequestedNewNodeId.IsNull)
+						storage = _server.Storages[0];
+					else
+						storage = string.IsNullOrEmpty(node.RequestedNewNodeId.NamespaceUri) ?
+							_server.Storages.Find(node.RequestedNewNodeId.NamespaceIndex) :
+							_server.Storages.Find(node.RequestedNewNodeId.NamespaceUri);
+
+					if(storage == null)
+					{
+						succeed = false;
+
+						results.Add(new AddNodesResult()
+						{
+							AddedNodeId = new NodeId(node.RequestedNewNodeId.Identifier, node.RequestedNewNodeId.NamespaceIndex),
+							StatusCode = StatusCodes.BadNodeIdInvalid,
+						});
+
+						diagnostics.Add(new DiagnosticInfo()
+						{
+							NamespaceUri = node.RequestedNewNodeId.NamespaceIndex,
+							InnerStatusCode = StatusCodes.BadNodeIdInvalid,
+						});
+
+						break;
+					}
+
+					(var result, var diagnostic) = storage.Manager.AddNode(context, node);
+
+					succeed &= StatusCode.IsGood(result.StatusCode);
+
+					if(result != null)
+						results.Add(result);
+					if(diagnostic != null)
+						diagnostics.Add(diagnostic);
+				}
+
+				return this.CreateResponse(requestHeader, succeed ? StatusCodes.Good : StatusCodes.UncertainNotAllNodesAvailable);
 			}
 			catch(ServiceResultException ex)
 			{

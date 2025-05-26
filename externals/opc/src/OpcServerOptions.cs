@@ -28,10 +28,11 @@
  */
 
 using System;
+using System.Collections;
+using System.Collections.ObjectModel;
 
 using Opc.Ua;
 using Opc.Ua.Server;
-using Opc.Ua.Configuration;
 
 namespace Zongsoft.Externals.Opc;
 
@@ -43,7 +44,7 @@ public class OpcServerOptions
 	{
 		this.Name = string.IsNullOrEmpty(name) ? "Zongsoft.OpcServer" : name;
 		this.Namespace = string.IsNullOrEmpty(@namespace) ? $"urn:{Environment.MachineName}:{this.Name}" : @namespace;
-		this.Prefabs = new();
+		this.Storages = new();
 
 		if(urls != null && urls.Length > 0)
 			this.Urls = urls;
@@ -60,7 +61,7 @@ public class OpcServerOptions
 	public string Namespace { get; init; }
 	public string Discovery { get; init; }
 	public string[] Urls { get; init; }
-	public PrefabCollection Prefabs { get; }
+	public StorageOptionsCollection Storages { get; }
 	#endregion
 
 	#region 内部方法
@@ -156,6 +157,41 @@ public class OpcServerOptions
 		configuration.Validate(ApplicationType.Server);
 
 		return configuration;
+	}
+	#endregion
+
+	#region 嵌套子类
+	public class StorageOptions
+	{
+		public StorageOptions(string @namespace)
+		{
+			if(string.IsNullOrEmpty(@namespace))
+				throw new ArgumentNullException(nameof(@namespace));
+
+			this.Namespace = @namespace;
+			this.Prefabs = new(this.Namespace);
+		}
+
+		public string Namespace { get; }
+		public PrefabCollection Prefabs { get; }
+	}
+
+	public class StorageOptionsCollection : KeyedCollection<string, StorageOptions>
+	{
+		public StorageOptions Define(string @namespace)
+		{
+			if(string.IsNullOrEmpty(@namespace))
+				throw new ArgumentNullException(nameof(@namespace));
+
+			if(this.TryGetValue(@namespace, out var result))
+				return result;
+
+			result = new StorageOptions(@namespace);
+			this.Add(result);
+			return result;
+		}
+
+		protected override string GetKeyForItem(StorageOptions storage) => storage.Namespace;
 	}
 	#endregion
 }

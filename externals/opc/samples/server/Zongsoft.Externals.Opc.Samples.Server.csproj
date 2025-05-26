@@ -8,6 +8,10 @@
 		<ProjectReference Include="..\..\src\Zongsoft.Externals.Opc.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Compile Include="..\Utility.cs" Link="Utility.cs" />
+	</ItemGroup>
+
 	<Choose>
 		<When Condition="$(Configuration)=='Debug'">
 			<ItemGroup>

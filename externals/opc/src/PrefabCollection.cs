@@ -36,11 +36,21 @@ namespace Zongsoft.Externals.Opc;
 
 public class PrefabCollection : KeyedCollection<string, Prefab>
 {
-	public PrefabCollection(Prefab.FolderPrefab folder = null) : base(StringComparer.OrdinalIgnoreCase)
+	public PrefabCollection(string @namespace) : base(StringComparer.OrdinalIgnoreCase)
 	{
-		this.Folder = folder;
+		if(string.IsNullOrEmpty(@namespace))
+			throw new ArgumentNullException(nameof(@namespace));
+
+		this.Namespace = @namespace;
 	}
 
+	public PrefabCollection(Prefab.FolderPrefab folder = null) : base(StringComparer.OrdinalIgnoreCase)
+	{
+		this.Folder = folder ?? throw new ArgumentNullException(nameof(folder));
+		this.Namespace = folder.Namespace;
+	}
+
+	public string Namespace { get; }
 	public Prefab.FolderPrefab Folder { get; }
 	protected override string GetKeyForItem(Prefab prefab) => prefab.Name;
 }
@@ -52,7 +62,7 @@ public static class PrefabCollectionExtension
 		if(prefabs == null)
 			throw new ArgumentNullException(nameof(prefabs));
 
-		var result = new Prefab.FolderPrefab(prefabs.Folder, name, label, description);
+		var result = new Prefab.FolderPrefab(prefabs.Folder, prefabs.Namespace, name, label, description);
 		prefabs.Add(result);
 		return result;
 	}
@@ -63,7 +73,7 @@ public static class PrefabCollectionExtension
 		if(prefabs == null)
 			throw new ArgumentNullException(nameof(prefabs));
 
-		var result = new Prefab.ObjectPrefab(prefabs.Folder, name, type, label, description) { Value = value };
+		var result = new Prefab.ObjectPrefab(prefabs.Folder, prefabs.Namespace, name, type, label, description) { Value = value };
 		prefabs.Add(result);
 		return result;
 	}
@@ -74,7 +84,7 @@ public static class PrefabCollectionExtension
 		if(prefabs == null)
 			throw new ArgumentNullException(nameof(prefabs));
 
-		var result = new Prefab.VariablePrefab(prefabs.Folder, name, type, label, description) { Value = value };
+		var result = new Prefab.VariablePrefab(prefabs.Folder, prefabs.Namespace, name, type, label, description) { Value = value };
 		prefabs.Add(result);
 		return result;
 	}
@@ -85,7 +95,7 @@ public static class PrefabCollectionExtension
 		if(prefabs == null)
 			throw new ArgumentNullException(nameof(prefabs));
 
-		var result = new Prefab.VariablePrefab(prefabs.Folder, name, typeof(T), label, description) { Value = value };
+		var result = new Prefab.VariablePrefab(prefabs.Folder, prefabs.Namespace, name, typeof(T), label, description) { Value = value };
 		prefabs.Add(result);
 		return result;
 	}

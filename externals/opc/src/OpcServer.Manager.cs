@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,41 +46,23 @@ partial class OpcServer
 	{
 		#region 私有字段
 		private volatile uint _nodeId;
-		private PrefabCollection _prefabs;
+		private OpcServerOptions.StorageOptions _options;
 		private IList<IReference> _objectReferences;
 		private IList<IReference> _serverReferences;
 		private Dictionary<Type, NodeId> _types = new();
 		#endregion
 
 		#region 构造函数
-		public NodeManager(IServerInternal server, ApplicationConfiguration configuration, PrefabCollection prefabs) : base(server, configuration, ["http://zongsoft.com/opc/ua", "http://zongsoft.com/opc-ua"])
+		internal NodeManager(IServerInternal server, ApplicationConfiguration configuration, OpcServerOptions.StorageOptions options) : base(server, configuration)
 		{
 			this.SystemContext.NodeIdFactory = this;
-			_prefabs = prefabs;
+			_options = options ?? throw new ArgumentNullException(nameof(options));
+			this.SetNamespaces(options.Namespace);
 		}
 		#endregion
 
 		#region 公共方法
-		public void AddNodes(OperationContext context, AddNodesItemCollection nodes, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnostics)
-		{
-			if(nodes == null)
-				throw new ServiceResultException(StatusCodes.BadInvalidArgument);
-
-			results = new AddNodesResultCollection(nodes.Count);
-			diagnostics = new DiagnosticInfoCollection(nodes.Count);
-
-			for(int i = 0; i < nodes.Count; i++)
-			{
-				(var result, var diagnostic) = this.AddNode(context, nodes[i]);
-
-				if(result != null)
-					results.Add(result);
-				if(diagnostic != null)
-					diagnostics.Add(diagnostic);
-			}
-		}
-
-		private (AddNodesResult result, DiagnosticInfo diagnostic) AddNode(OperationContext context, AddNodesItem node)
+		public (AddNodesResult result, DiagnosticInfo diagnostic) AddNode(OperationContext context, AddNodesItem node)
 		{
 			var parent = node.ParentNodeId == null || node.ParentNodeId.IsNull ? null : this.FindPredefinedNode((NodeId)node.ParentNodeId, null);
 
@@ -169,7 +150,7 @@ partial class OpcServer
 			return null;
 		}
 
-		public bool Write<T>(NodeId nodeId, T value)
+		public bool SetValue<T>(NodeId nodeId, T value)
 		{
 			var item = new WriteValue()
 			{
@@ -198,9 +179,9 @@ partial class OpcServer
 
 		protected override NodeStateCollection LoadPredefinedNodes(ISystemContext context)
 		{
-			var nodes = new NodeStateCollection(_prefabs.Count);
+			var nodes = new NodeStateCollection(_options.Prefabs.Count);
 
-			foreach(var prefab in _prefabs)
+			foreach(var prefab in _options.Prefabs)
 				this.FillPrefabs(prefab, nodes);
 
 			return nodes;
@@ -248,6 +229,11 @@ partial class OpcServer
 		public override void AddReferences(IDictionary<NodeId, IList<IReference>> references) => base.AddReferences(references);
 
 		protected override void AddReverseReferences(IDictionary<NodeId, IList<IReference>> externalReferences) => base.AddReverseReferences(externalReferences);
+
+		protected override NodeHandle GetManagerHandle(ServerSystemContext context, NodeId nodeId, IDictionary<NodeId, NodeState> cache)
+		{
+			return base.GetManagerHandle(context, nodeId, cache);
+		}
 
 		public override NodeId New(ISystemContext context, NodeState node)
 		{
@@ -432,7 +418,6 @@ partial class OpcServer
 			}
 		}
 
-		private NodeId GenerateId() => new(Interlocked.Increment(ref _nodeId), this.NamespaceIndex);
 		private FolderState CreateFolder(NodeState parent, ExpandedNodeId id, string name, string displayName, string description)
 		{
 			var nodeId = id == null || id.IsNull ? this.GenerateId() : (NodeId)id;
@@ -494,10 +479,12 @@ partial class OpcServer
 
 			return variable;
 		}
+
+		private NodeId GenerateId() => new(Interlocked.Increment(ref _nodeId), this.NamespaceIndex);
 		#endregion
 
 		#region 写值处理
-		ServiceResult OnWriteValue(ISystemContext context, NodeState node, NumericRange indexRange, QualifiedName dataEncoding,
+		private ServiceResult OnWriteValue(ISystemContext context, NodeState node, NumericRange indexRange, QualifiedName dataEncoding,
 			ref object value,
 			ref StatusCode statusCode,
 			ref DateTime timestamp)
