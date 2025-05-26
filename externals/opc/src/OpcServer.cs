@@ -54,7 +54,7 @@ public partial class OpcServer : WorkerBase
 
 	#region 公共属性
 	public Security.IAuthenticator Authenticator { get; set; }
-	public OpcServerOptions Options { get => _options; init => _options = value; }
+	public OpcServerOptions Options => _options ??= new OpcServerOptions(this.Name);
 	#endregion
 
 	#region 重写方法
@@ -110,7 +110,7 @@ partial class OpcServer
 
 		protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration)
 		{
-			_manager = new NodeManager(server, configuration);
+			_manager = new NodeManager(server, configuration, _server.Options.Prefabs);
 			return new MasterNodeManager(server, configuration, null, [_manager]);
 		}
 

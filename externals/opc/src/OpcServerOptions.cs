@@ -43,6 +43,7 @@ public class OpcServerOptions
 	{
 		this.Name = string.IsNullOrEmpty(name) ? "Zongsoft.OpcServer" : name;
 		this.Namespace = string.IsNullOrEmpty(@namespace) ? $"urn:{Environment.MachineName}:{this.Name}" : @namespace;
+		this.Prefabs = new();
 
 		if(urls != null && urls.Length > 0)
 			this.Urls = urls;
@@ -59,6 +60,7 @@ public class OpcServerOptions
 	public string Namespace { get; init; }
 	public string Discovery { get; init; }
 	public string[] Urls { get; init; }
+	public PrefabCollection Prefabs { get; }
 	#endregion
 
 	#region 内部方法

@@ -47,15 +47,17 @@ partial class OpcServer
 	{
 		#region 私有字段
 		private volatile uint _nodeId;
+		private PrefabCollection _prefabs;
 		private IList<IReference> _objectReferences;
 		private IList<IReference> _serverReferences;
 		private Dictionary<Type, NodeId> _types = new();
 		#endregion
 
 		#region 构造函数
-		public NodeManager(IServerInternal server, ApplicationConfiguration configuration) : base(server, configuration, ["http://zongsoft.com/opc/ua", "http://zongsoft.com/opc-ua"])
+		public NodeManager(IServerInternal server, ApplicationConfiguration configuration, PrefabCollection prefabs) : base(server, configuration, ["http://zongsoft.com/opc/ua", "http://zongsoft.com/opc-ua"])
 		{
 			this.SystemContext.NodeIdFactory = this;
+			_prefabs = prefabs;
 		}
 		#endregion
 
@@ -196,68 +198,10 @@ partial class OpcServer
 
 		protected override NodeStateCollection LoadPredefinedNodes(ISystemContext context)
 		{
-			var trigger = new BaseObjectState(null)
-			{
-				SymbolicName = "Trigger",
-				BrowseName = new QualifiedName("Trigger", this.NamespaceIndex),
-				DisplayName = "TriggerTitle",
-				TypeDefinitionId = ObjectTypeIds.BaseObjectType,
-				EventNotifier = EventNotifiers.SubscribeToEvents,
-			};
+			var nodes = new NodeStateCollection(_prefabs.Count);
 
-			var property = new PropertyState(trigger)
-			{
-				BrowseName = new QualifiedName("MyProperty", this.NamespaceIndex),
-				DisplayName = "MyPropertyLable",
-				TypeDefinitionId = VariableTypeIds.PropertyType,
-				ReferenceTypeId = ReferenceTypeIds.HasProperty,
-				DataType = DataTypeIds.Int32,
-				ValueRank = ValueRanks.TwoDimensions,
-				ArrayDimensions = new ReadOnlyList<uint>([2, 2])
-			};
-
-			trigger.AddChild(property);
-
-			//var personType = this.GenerateType(typeof(Person));
-			//var children = new List<BaseInstanceState>();
-			//personType.GetChildren(context, children);
-
-			//var personState = new BaseObjectState(null)
-			//{
-			//	SymbolicName = "Person1",
-			//	BrowseName = new QualifiedName("Person1", this.NamespaceIndex),
-			//	DisplayName = "Person1",
-			//	ReferenceTypeId = personType.NodeId,
-			//	TypeDefinitionId = personType.NodeId,
-			//};
-
-			//foreach(var child in children)
-			//{
-			//	this.AppendChildren(personState, child);
-			//}
-
-			//var definedType = this.DefineType(typeof(Person));
-			var person = this.DefineObject(new Person()
-			{
-				Name = "Popeye Zhong",
-				Gender = true,
-				Birthday = new DateTime(1980, 10, 15),
-			});
-
-			var root = this.FindNodeInAddressSpace(Objects.ObjectsFolder);
-			var folder = this.CreateFolder(null, null, "MyFolder", "My Folder", "This is my first folder node.");
-			var variable = this.CreateVariable(folder, "MyVariable", 123.50, "My Variable", DataTypeIds.Double, ValueRanks.Scalar);
-
-			var nodes = new NodeStateCollection
-			{
-				trigger,
-				//this.GenerateType(typeof(Person)),
-				//personState,
-				//definedType,
-				folder,
-				variable,
-				person,
-			};
+			foreach(var prefab in _prefabs)
+				this.FillPrefabs(prefab, nodes);
 
 			return nodes;
 		}
@@ -320,19 +264,54 @@ partial class OpcServer
 		#endregion
 
 		#region 私有方法
-		public BaseDataVariableState DefineVariable(string name, Type type, string label, string description = null)
+		private void FillPrefabs(Prefab prefab, NodeStateCollection nodes)
+		{
+			switch(prefab)
+			{
+				case Prefab.TypePrefab type:
+					prefab.Node = this.DefineType(type.Type);
+					break;
+				case Prefab.FolderPrefab folder:
+					prefab.Node = this.CreateFolder(folder.Folder?.Node, null, folder.Name, folder.Label, folder.Description);
+					break;
+				case Prefab.ObjectPrefab target:
+					prefab.Node = this.DefineObject(target.Folder?.Node, target.Name);
+					break;
+				case Prefab.VariablePrefab variable:
+					prefab.Node = this.DefineVariable(variable.Folder?.Node, variable.Name, variable.Type, variable.Value, variable.Label, variable.Description);
+					break;
+				default:
+					prefab.Node = null;
+					break;
+			}
+
+			if(prefab.Node != null)
+				nodes.Add(prefab.Node);
+
+			if(prefab.Kind == PrefabKind.Folder)
+			{
+				foreach(var child in ((Prefab.FolderPrefab)prefab).Children)
+					this.FillPrefabs(child, nodes);
+			}
+		}
+
+		public BaseDataVariableState DefineVariable(string name, Type type, string label, string description = null) => this.DefineVariable(null, name, type, null, label, description);
+		public BaseDataVariableState DefineVariable(string name, Type type, object value, string label, string description = null) => this.DefineVariable(null, name, type, value, label, description);
+		public BaseDataVariableState DefineVariable(NodeState parent, string name, Type type, string label, string description = null) => this.DefineVariable(parent, name, type, null, label, description);
+		public BaseDataVariableState DefineVariable(NodeState parent, string name, Type type, object value, string label, string description = null)
 		{
 			if(TypeExtension.IsNullable(type, out var underlyingType))
 				type = underlyingType;
 
-			var elementType = TypeExtension.GetElementType(type);
-			var variable = this.CreateVariable(null, name, null, label, Utility.GetDataType(elementType ?? type, out var rank), rank);
+			var variable = this.CreateVariable(parent, name, value, label, Utility.GetDataType(type, out var rank), rank);
 			this.AddPredefinedNode(this.SystemContext, variable);
 			return variable;
 		}
 
-		public BaseObjectState DefineObject(object instance, string name = null) => this.DefineObject(null, instance, name);
-		public BaseObjectState DefineObject(NodeId identifier, object instance, string name = null)
+		public BaseObjectState DefineObject(object instance, string name = null) => this.DefineObject(null, null, instance, name);
+		public BaseObjectState DefineObject(NodeState parent, object instance, string name = null) => this.DefineObject(parent, null, instance, name);
+		public BaseObjectState DefineObject(NodeId identifier, object instance, string name = null) => this.DefineObject(null, identifier, instance, name);
+		public BaseObjectState DefineObject(NodeState parent, NodeId identifier, object instance, string name = null)
 		{
 			if(instance == null)
 				return null;
@@ -341,7 +320,7 @@ partial class OpcServer
 				name = instance.GetType().Name;
 
 			var type = this.DefineType(instance.GetType());
-			var state = new BaseObjectState(null)
+			var state = new BaseObjectState(parent)
 			{
 				NodeId = identifier,
 				SymbolicName = name,
@@ -531,24 +510,5 @@ partial class OpcServer
 			return new ServiceResult(StatusCodes.BadNodeClassInvalid);
 		}
 		#endregion
-	}
-
-	public class Person
-	{
-		public string Name { get; set; }
-		public bool? Gender { get; set; }
-		public DateTime? Birthday { get; set; }
-		public Address? HomeAddress { get; set; }
-		public Address? OfficeAddress { get; set; }
-	}
-
-	public struct Address
-	{
-		public int Country { get; set; }
-		public string Province { get; set; }
-		public string City { get; set; }
-		public string Street { get; set; }
-		public string Detail { get; set; }
-		public string PostalCode { get; set; }
 	}
 }
