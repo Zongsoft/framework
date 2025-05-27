@@ -133,7 +133,7 @@ internal static class Utility
 				BuiltInType.LocalizedText => typeof(string),
 				BuiltInType.DateTime => typeof(DateTime),
 				BuiltInType.Guid => typeof(Guid),
-				BuiltInType.Enumeration => typeof(int),
+				BuiltInType.Enumeration => typeof(Enum),
 				BuiltInType.ExtensionObject => typeof(object),
 				BuiltInType.StatusCode => typeof(string),
 				BuiltInType.XmlElement => typeof(System.Xml.XmlElement),
@@ -162,7 +162,7 @@ internal static class Utility
 				BuiltInType.LocalizedText => typeof(string[]),
 				BuiltInType.DateTime => typeof(DateTime[]),
 				BuiltInType.Guid => typeof(Guid[]),
-				BuiltInType.Enumeration => typeof(int[]),
+				BuiltInType.Enumeration => typeof(Enum[]),
 				BuiltInType.ExtensionObject => typeof(object[]),
 				BuiltInType.StatusCode => typeof(string[]),
 				BuiltInType.XmlElement => typeof(System.Xml.XmlElement[]),
@@ -191,14 +191,94 @@ internal static class Utility
 				BuiltInType.LocalizedText => typeof(string).MakeArrayType(rank),
 				BuiltInType.DateTime => typeof(DateTime).MakeArrayType(rank),
 				BuiltInType.Guid => typeof(Guid).MakeArrayType(rank),
-				BuiltInType.Enumeration => typeof(int).MakeArrayType(rank),
+				BuiltInType.Enumeration => typeof(Enum).MakeArrayType(rank),
 				BuiltInType.ExtensionObject => typeof(object).MakeArrayType(rank),
 				BuiltInType.StatusCode => typeof(string).MakeArrayType(rank),
 				BuiltInType.XmlElement => typeof(System.Xml.XmlElement).MakeArrayType(rank),
 				_ => typeof(object).MakeArrayType(rank),
 			};
 
-		return typeof(object);
+		return null;
+	}
+
+	public static Type GetDataType(this NodeId id, int rank)
+	{
+		if(id == null || id.IsNullNodeId)
+			return null;
+
+		if(id == DataTypeIds.Byte)
+			return GetType(typeof(byte), rank);
+		if(id == DataTypeIds.SByte)
+			return GetType(typeof(sbyte), rank);
+		if(id == DataTypeIds.Boolean)
+			return GetType(typeof(bool), rank);
+		if(id == DataTypeIds.Int16)
+			return GetType(typeof(Int16), rank);
+		if(id == DataTypeIds.Int32 || id == DataTypeIds.Integer)
+			return GetType(typeof(Int32), rank);
+		if(id == DataTypeIds.Int64)
+			return GetType(typeof(Int64), rank);
+		if(id == DataTypeIds.UInt16)
+			return GetType(typeof(UInt16), rank);
+		if(id == DataTypeIds.UInt32 || id == DataTypeIds.UInteger)
+			return GetType(typeof(UInt32), rank);
+		if(id == DataTypeIds.UInt64)
+			return GetType(typeof(UInt64), rank);
+		if(id == DataTypeIds.Float)
+			return GetType(typeof(float), rank);
+		if(id == DataTypeIds.Double)
+			return GetType(typeof(double), rank);
+		if(id == DataTypeIds.Decimal)
+			return GetType(typeof(decimal), rank);
+		if(id == DataTypeIds.Number)
+			return GetType(typeof(double), rank);
+		if(id == DataTypeIds.String)
+			return GetType(typeof(string), rank);
+		if(id == DataTypeIds.ByteString)
+			return GetType(typeof(byte[]), rank);
+		if(id == DataTypeIds.LocalizedText)
+			return GetType(typeof(string), rank);
+		if(id == DataTypeIds.DateTime)
+			return GetType(typeof(DateTime), rank);
+		if(id == DataTypeIds.UtcTime)
+			return GetType(typeof(DateTimeOffset), rank);
+		if(id == DataTypeIds.Duration)
+			return GetType(typeof(TimeSpan), rank);
+		if(id == DataTypeIds.DurationString)
+			return GetType(typeof(string), rank);
+		if(id == DataTypeIds.Guid)
+			return GetType(typeof(Guid), rank);
+		if(id == DataTypeIds.Enumeration)
+			return GetType(typeof(Enum), rank);
+		if(id == DataTypeIds.StatusCode)
+			return GetType(typeof(string), rank);
+		if(id == DataTypeIds.XmlElement)
+			return GetType(typeof(System.Xml.XmlElement), rank);
+
+		if(rank == ValueRanks.Scalar)
+			return typeof(object);
+		if(rank == ValueRanks.OneDimension)
+			return typeof(object[]);
+		if(rank >= ValueRanks.TwoDimensions)
+			typeof(object).MakeArrayType(rank);
+
+		return null;
+	}
+
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private static Type GetType(Type type, int rank)
+	{
+		if(type == null)
+			return type;
+
+		if(rank == ValueRanks.Scalar)
+			return type;
+		if(rank == ValueRanks.OneDimension)
+			return type.MakeArrayType(1);
+		if(rank >= ValueRanks.TwoDimensions)
+			return type.MakeArrayType(rank);
+
+		return type;
 	}
 
 	public static IUserIdentity GetIdentity(this Configuration.OpcConnectionSettings settings)

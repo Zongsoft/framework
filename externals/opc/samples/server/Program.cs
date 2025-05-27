@@ -20,22 +20,28 @@ internal static class Program
 		executor.Command("start", async (context, cancellation) => await server.StartAsync(args, cancellation));
 		executor.Command("stop", async (context, cancellation) => await server.StopAsync(args, cancellation));
 
-		executor.Command("get", async (context, cancellation) =>
+		executor.Command("get", context =>
 		{
 			if(context.Expression.Arguments.IsEmpty())
 				return;
 
 			if(context.Expression.Arguments.Length == 1)
 			{
-				var value = await server.GetValueAsync(context.Expression.Arguments[0], cancellation);
-				var content = CommandOutletContent.Create(string.Empty).AppendValue(value);
+				var succeed = server.TryGetValue(context.Expression.Arguments[0], out var value);
+				var content = CommandOutletContent.Create(string.Empty);
+
+				if(succeed)
+					content.AppendValue(value);
+				else
+					content.AppendLine(CommandOutletColor.DarkRed, $"The value of '{context.Expression.Arguments[0]}' was not found.");
+
 				context.Output.Write(content);
 			}
 			else
 			{
-				var result = server.GetValuesAsync(context.Expression.Arguments, cancellation);
+				var result = server.GetValues(context.Expression.Arguments);
 
-				await foreach(var entry in result)
+				foreach(var entry in result)
 				{
 					var content = CommandOutletContent
 						.Create(CommandOutletColor.DarkYellow, entry.Key)
@@ -47,13 +53,13 @@ internal static class Program
 			}
 		});
 
-		executor.Command("set", async (context, cancellation) =>
+		executor.Command("set", context =>
 		{
 			if(context.Expression.Arguments.Length < 2)
 				throw new CommandException($"Missing required argument of the command.");
 
 			//获取指定键对应的数据类型
-			var type = await server.GetDataTypeAsync(context.Expression.Arguments[0], cancellation) ??
+			var type = server.GetDataType(context.Expression.Arguments[0]) ??
 				throw new CommandException($"The specified '{context.Expression.Arguments[0]}' does not exist, or its data type is not available.");
 
 			object value = null;
@@ -76,7 +82,7 @@ internal static class Program
 				value = Common.Convert.ConvertValue(context.Expression.Arguments[1], type);
 			}
 
-			var succeed = await server.SetValueAsync(context.Expression.Arguments[0], value, cancellation);
+			var succeed = server.SetValue(context.Expression.Arguments[0], value);
 
 			if(succeed)
 				context.Output.WriteLine(CommandOutletColor.DarkGreen, "The set operation was successful.");

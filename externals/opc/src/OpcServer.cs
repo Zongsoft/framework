@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Opc.Ua;
 using Opc.Ua.Server;
@@ -96,6 +97,59 @@ public partial class OpcServer : WorkerBase
 		return Task.CompletedTask;
 	}
 	#endregion
+
+	#region 公共方法
+	public Type GetDataType(string identifier)
+	{
+		if(string.IsNullOrEmpty(identifier))
+			return null;
+
+		var id = NodeId.Parse(identifier);
+		var storage = this.Storages.Find(id.NamespaceIndex);
+		return storage?.Manager.GetDataType(id);
+	}
+
+	public bool TryGetValue(string identifier, out object value)
+	{
+		value = null;
+
+		if(string.IsNullOrEmpty(identifier))
+			return false;
+
+		var id = NodeId.Parse(identifier);
+		var storage = this.Storages.Find(id.NamespaceIndex);
+		return storage != null && storage.Manager.TryGetValue(id, out value);
+	}
+
+	public IEnumerable<KeyValuePair<string, object>> GetValues(IEnumerable<string> identifiers)
+	{
+		if(identifiers == null)
+			return [];
+
+		var result = new List<KeyValuePair<string, object>>();
+		var groups = identifiers.Select(NodeId.Parse).GroupBy(id => id.NamespaceIndex);
+
+		foreach(var group in groups)
+		{
+			var storage = this.Storages.Find(group.Key);
+
+			if(storage != null)
+				result.AddRange(storage.Manager.GetValues(group).Select(entry => new KeyValuePair<string, object>(entry.Key.ToString(), entry.Value)));
+		}
+
+		return result;
+	}
+
+	public bool SetValue<T>(string identifier, T value)
+	{
+		if(string.IsNullOrEmpty(identifier))
+			return false;
+
+		var id = NodeId.Parse(identifier);
+		var storage = this.Storages.Find(id.NamespaceIndex);
+		return storage != null && storage.Manager.SetValue(id, value);
+	}
+	#endregion
 }
 
 partial class OpcServer
@@ -126,7 +180,7 @@ partial class OpcServer
 			foreach(var option in _server.Options.Storages)
 				_server.Storages.Add(new Storage(server, configuration, option));
 
-			return new MasterNodeManager(server, configuration, null, [.. _server.Storages.OfType<INodeManager>()]);
+			return new MasterNodeManager(server, configuration, null, [.. _server.Storages.Select(storage => storage.Manager)]);
 		}
 
 		protected override void OnNodeManagerStarted(IServerInternal server)

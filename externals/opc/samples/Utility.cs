@@ -25,7 +25,10 @@ internal static class Utility
 
 		if(value is byte[] binary)
 		{
-			content.AppendLine(CommandOutletColor.DarkGreen, System.Convert.ToHexString(binary));
+			content
+				.Append(CommandOutletColor.DarkGreen, System.Convert.ToHexString(binary))
+				.AppendType(binary.GetType());
+
 			return content;
 		}
 
@@ -42,10 +45,19 @@ internal static class Utility
 
 		content
 			.Append(CommandOutletColor.DarkGreen, value.ToString())
-			.Append(CommandOutletColor.DarkGray, " (")
-			.Append(CommandOutletColor.Yellow, value.GetType().GetAlias())
-			.AppendLine(CommandOutletColor.DarkGray, ")");
+			.AppendType(value.GetType());
 
 		return content;
+	}
+
+	private static void AppendType(this CommandOutletContent content, Type type)
+	{
+		if(type == null)
+			return;
+
+		content
+			.Append(CommandOutletColor.DarkGray, " (")
+			.Append(CommandOutletColor.Yellow, type.GetAlias())
+			.AppendLine(CommandOutletColor.DarkGray, ")");
 	}
 }

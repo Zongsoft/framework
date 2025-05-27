@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -150,9 +151,71 @@ partial class OpcServer
 			return null;
 		}
 
+		public bool TryGetValue(NodeId nodeId, out object value)
+		{
+			if(nodeId == null || nodeId.IsNullNodeId)
+			{
+				value = null;
+				return false;
+			}
+
+			var request = new ReadValueId()
+			{
+				NodeId = nodeId,
+				AttributeId = Attributes.Value,
+			};
+
+			var result = new DataValue[1];
+			var errors = new ServiceResult[1];
+
+			this.Read(this.SystemContext.OperationContext, 0, [request], result, errors);
+			value = result[0].Value;
+			return ServiceResult.IsGood(errors[0]);
+		}
+
+		public IEnumerable<KeyValuePair<NodeId, object>> GetValues(IEnumerable<NodeId> identifiers)
+		{
+			if(identifiers == null)
+				yield break;
+
+			var request = identifiers.Select(id => new ReadValueId
+			{
+				NodeId = id,
+				AttributeId = Attributes.Value,
+			}).ToArray();
+
+			var result = new DataValue[request.Length];
+			var errors = new ServiceResult[request.Length];
+
+			this.Read(this.SystemContext.OperationContext, 0, request, result, errors);
+
+			for(int i = 0; i < request.Length; i++)
+			{
+				if(result[i] == null || errors[i] == null) //NotFound
+					yield return new(request[i].NodeId, null);
+				else if(ServiceResult.IsGood(errors[i]))
+					yield return new(request[i].NodeId, result[i].Value);
+				else
+					yield return new(request[i].NodeId, Failure.GetFailure(errors[i].StatusCode));
+			}
+		}
+
+		public Type GetDataType(NodeId nodeId)
+		{
+			var metadata = this.GetNodeMetadata(
+				this.SystemContext.OperationContext,
+				this.GetManagerHandle(nodeId),
+				BrowseResultMask.NodeClass | BrowseResultMask.TypeDefinition);
+
+			return Utility.GetDataType(metadata.DataType, metadata.ValueRank);
+		}
+
 		public bool SetValue<T>(NodeId nodeId, T value)
 		{
-			var item = new WriteValue()
+			if(nodeId == null || nodeId.IsNullNodeId)
+				return false;
+
+			var request = new WriteValue()
 			{
 				NodeId = nodeId,
 				AttributeId = Attributes.Value,
@@ -160,7 +223,7 @@ partial class OpcServer
 			};
 
 			var errors = new ServiceResult[1];
-			this.Write(this.SystemContext.OperationContext, [item], errors);
+			this.Write(this.SystemContext.OperationContext, [request], errors);
 			return ServiceResult.IsGood(errors[0]);
 		}
 		#endregion

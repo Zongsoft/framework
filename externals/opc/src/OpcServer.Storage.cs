@@ -55,20 +55,6 @@ partial class OpcServer
 		#region 公共属性
 		public OpcServerOptions.StorageOptions Options { get; }
 		#endregion
-
-		#region 公共方法
-		public bool SetValue<T>(string identifier, T value)
-		{
-			if(string.IsNullOrEmpty(identifier))
-				throw new ArgumentNullException(nameof(identifier));
-
-			var id = identifier.IndexOfAny([';', '=']) > 0 ?
-				NodeId.Parse(identifier) :
-				new NodeId(identifier, this.Manager.NamespaceIndex);
-
-			return this.Manager.SetValue(id, value);
-		}
-		#endregion
 	}
 
 	public class StorageCollection : KeyedCollection<string, Storage>
