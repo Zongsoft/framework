@@ -149,6 +149,27 @@ public partial class OpcServer : WorkerBase
 		var storage = this.Storages.Find(id.NamespaceIndex);
 		return storage != null && storage.Manager.SetValue(id, value);
 	}
+
+	public Failure[] SetValues(IEnumerable<KeyValuePair<string, object>> entries)
+	{
+		if(entries == null)
+			return [];
+
+		var result = new List<Failure>();
+		var groups = entries
+			.Select(entry => new KeyValuePair<NodeId, object>(NodeId.Parse(entry.Key), entry.Value))
+			.GroupBy(entry => entry.Key.NamespaceIndex);
+
+		foreach(var group in groups)
+		{
+			var storage = this.Storages.Find(group.Key);
+
+			if(storage != null)
+				result.AddRange(storage.Manager.SetValues(group));
+		}
+
+		return [.. result];
+	}
 	#endregion
 }
 

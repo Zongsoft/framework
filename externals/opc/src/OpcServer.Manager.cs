@@ -226,6 +226,23 @@ partial class OpcServer
 			this.Write(this.SystemContext.OperationContext, [request], errors);
 			return ServiceResult.IsGood(errors[0]);
 		}
+
+		public IEnumerable<Failure> SetValues(IEnumerable<KeyValuePair<NodeId, object>> entries)
+		{
+			if(entries == null)
+				return [];
+
+			var request = entries.Select(entry => new WriteValue
+			{
+				NodeId = entry.Key,
+				AttributeId = Attributes.Value,
+				Value = new DataValue(new Variant(entry.Value), StatusCodes.Good),
+			}).ToArray();
+
+			var errors = new ServiceResult[request.Length];
+			this.Write(this.SystemContext.OperationContext, request, errors);
+			return errors.Where(ServiceResult.IsBad).Select(err => Failure.GetFailure(err.StatusCode));
+		}
 		#endregion
 
 		#region 重写方法

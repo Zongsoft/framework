@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.5.0</Version>
+		<Version>0.6.0</Version>
 		<Product>Zongsoft Opc Library</Product>
 		<Description>This is a library about OPC-UA SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Opc</RootNamespace>
