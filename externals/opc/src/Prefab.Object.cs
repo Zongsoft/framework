@@ -37,6 +37,15 @@ partial class Prefab
 {
 	public class ObjectPrefab : Prefab
 	{
+		internal ObjectPrefab(FolderPrefab folder, string @namespace, string name, Type type, string label = null, string description = null) : base(@namespace, name, label, description)
+		{
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
+
+			this.Type = Prefab.Type(@namespace, type);
+			this.Folder = folder;
+		}
+
 		internal ObjectPrefab(FolderPrefab folder, string @namespace, string name, TypePrefab type, string label = null, string description = null) : base(@namespace, name, label, description)
 		{
 			this.Type = type ?? throw new ArgumentNullException(nameof(type));
@@ -45,17 +54,31 @@ partial class Prefab
 
 		public override PrefabKind Kind => PrefabKind.Object;
 		public FolderPrefab Folder { get; }
-		public TypePrefab Type { get; }
+		public new TypePrefab Type { get; }
 		public object Value { get; set; }
 	}
 }
 
 partial class PrefabExtension
 {
+	public static Prefab.ObjectPrefab Object(this Prefab.FolderPrefab folder, string name, Type type, string label = null, string description = null)
+	{
+		if(folder == null)
+			throw new ArgumentNullException(nameof(folder));
+		if(type == null)
+			throw new ArgumentNullException(nameof(type));
+
+		var result = new Prefab.ObjectPrefab(folder, folder.Namespace, name, type, label, description);
+		folder.Children.Add(result);
+		return result;
+	}
+
 	public static Prefab.ObjectPrefab Object(this Prefab.FolderPrefab folder, string name, Prefab.TypePrefab type, string label = null, string description = null)
 	{
 		if(folder == null)
 			throw new ArgumentNullException(nameof(folder));
+		if(type == null)
+			throw new ArgumentNullException(nameof(type));
 
 		var result = new Prefab.ObjectPrefab(folder, folder.Namespace, name, type, label, description);
 		folder.Children.Add(result);

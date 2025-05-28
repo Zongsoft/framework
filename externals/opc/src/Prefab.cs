@@ -44,7 +44,7 @@ public abstract partial class Prefab
 
 		this.Name = name;
 		this.Namespace = @namespace ?? string.Empty;
-		this.Label = string.IsNullOrEmpty(label) ? name : label;
+		this.Label = label;
 		this.Description = description;
 	}
 

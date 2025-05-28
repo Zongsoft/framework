@@ -31,20 +31,25 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Common;
+
 namespace Zongsoft.Externals.Opc;
 
 partial class Prefab
 {
-	internal static TypePrefab Type<T>(string @namespace, string name, string label = null, string description = null) => new(@namespace, name, typeof(T), label, description);
+	public static TypePrefab Type(string @namespace, Type type, string label = null, string description = null) => new(@namespace, type.GetAlias(), type, label, description);
+	public static TypePrefab Type<T>(string @namespace, string label = null, string description = null) => new(@namespace, typeof(T).GetAlias(), typeof(T), label, description);
+	public static TypePrefab Type(string @namespace, string name, Type type, string label = null, string description = null) => new(@namespace, name, type, label, description);
+	public static TypePrefab Type<T>(string @namespace, string name, string label = null, string description = null) => new(@namespace, name, typeof(T), label, description);
 
 	public class TypePrefab : Prefab
 	{
-		public TypePrefab(string @namespace, string name, Type type, string label = null, string description = null) : base(@namespace, name, label, description)
+		internal TypePrefab(string @namespace, string name, Type type, string label = null, string description = null) : base(@namespace, name, label, description)
 		{
 			this.Type = type ?? throw new ArgumentNullException(nameof(type));
 		}
 
 		public override PrefabKind Kind => PrefabKind.Type;
-		public Type Type { get; }
+		public new Type Type { get; }
 	}
 }

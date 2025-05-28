@@ -67,6 +67,17 @@ public static class PrefabCollectionExtension
 		return result;
 	}
 
+	public static Prefab.ObjectPrefab Object(this PrefabCollection prefabs, string name, Type type, string label = null, string description = null) => Object(prefabs, name, type, null, label, description);
+	public static Prefab.ObjectPrefab Object(this PrefabCollection prefabs, string name, Type type, object value, string label = null, string description = null)
+	{
+		if(prefabs == null)
+			throw new ArgumentNullException(nameof(prefabs));
+
+		var result = new Prefab.ObjectPrefab(prefabs.Folder, prefabs.Namespace, name, type, label, description) { Value = value };
+		prefabs.Add(result);
+		return result;
+	}
+
 	public static Prefab.ObjectPrefab Object(this PrefabCollection prefabs, string name, Prefab.TypePrefab type, string label = null, string description = null) => Object(prefabs, name, type, null, label, description);
 	public static Prefab.ObjectPrefab Object(this PrefabCollection prefabs, string name, Prefab.TypePrefab type, object value, string label = null, string description = null)
 	{

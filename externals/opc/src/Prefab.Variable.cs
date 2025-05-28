@@ -37,26 +37,34 @@ partial class Prefab
 {
 	public class VariablePrefab : Prefab
 	{
+		#region 成员字段
 		private object _value;
+		#endregion
 
+		#region 内部构造
 		internal VariablePrefab(FolderPrefab folder, string @namespace, string name, Type type, string label = null, string description = null) : base(@namespace, name, label, description)
 		{
 			this.Type = type ?? throw new ArgumentNullException(nameof(type));
 			this.Folder = folder;
 		}
+		#endregion
 
+		#region 公共属性
 		public override PrefabKind Kind => PrefabKind.Variable;
 		public FolderPrefab Folder { get; }
-		public Type Type { get; }
+		public new Type Type { get; }
 		public object Value
 		{
 			get => _value;
 			set => _value = value != null && Common.Convert.TryConvertValue(value, this.Type, out var result) ? result : null;
 		}
+		#endregion
 
+		#region 重写方法
 		public override string ToString() => this.Value == null ?
 			$"[{this.Kind}]{this.Name}@{this.Type.GetAlias()}" :
 			$"[{this.Kind}]{this.Name}@{this.Type.GetAlias()}={this.Value}";
+		#endregion
 	}
 }
 

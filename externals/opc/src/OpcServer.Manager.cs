@@ -108,7 +108,15 @@ partial class OpcServer
 			{
 				if(node.NodeAttributes?.Body is VariableAttributes attributes)
 				{
-					var variable = this.CreateVariable(parent, node.BrowseName.Name, attributes.Value, attributes.DisplayName.Text, attributes.DataType, attributes.ValueRank);
+					var variable = this.CreateVariable(
+						parent,
+						node.BrowseName.Name,
+						attributes.Value,
+						attributes.DisplayName?.Text,
+						attributes.DataType,
+						attributes.ValueRank,
+						attributes.Description?.Text);
+
 					variable.Historizing = attributes.Historizing;
 					variable.AccessLevel = attributes.AccessLevel;
 					variable.UserAccessLevel = attributes.UserAccessLevel;
@@ -341,7 +349,7 @@ partial class OpcServer
 					prefab.Node = this.CreateFolder(folder.Folder?.Node, null, folder.Name, folder.Label, folder.Description);
 					break;
 				case Prefab.ObjectPrefab target:
-					prefab.Node = this.DefineObject(target.Folder?.Node, target.Name);
+					prefab.Node = this.DefineObject(target.Folder?.Node, target.Value, target.Name);
 					break;
 				case Prefab.VariablePrefab variable:
 					prefab.Node = this.DefineVariable(variable.Folder?.Node, variable.Name, variable.Type, variable.Value, variable.Label, variable.Description);
@@ -369,7 +377,15 @@ partial class OpcServer
 			if(TypeExtension.IsNullable(type, out var underlyingType))
 				type = underlyingType;
 
-			var variable = this.CreateVariable(parent, name, value, label, Utility.GetDataType(type, out var rank), rank);
+			var variable = this.CreateVariable(
+				parent,
+				name,
+				value,
+				label,
+				Utility.GetDataType(type, out var rank),
+				rank,
+				description);
+
 			this.AddPredefinedNode(this.SystemContext, variable);
 			return variable;
 		}
@@ -416,7 +432,7 @@ partial class OpcServer
 
 				var definition = new BaseObjectTypeState()
 				{
-					NodeId = new NodeId(++_nodeId, this.NamespaceIndex),
+					NodeId = this.GenerateId(),
 					IsAbstract = type.IsAbstract,
 					SymbolicName = $"{type.Name}Type",
 					BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
@@ -445,7 +461,7 @@ partial class OpcServer
 
 			var propertyState = new PropertyState(type)
 			{
-				NodeId = new NodeId(Guid.NewGuid(), this.NamespaceIndex),
+				NodeId = this.GenerateId(),
 				ReferenceTypeId = ReferenceTypes.HasProperty,
 				TypeDefinitionId = VariableTypeIds.PropertyType,
 				SymbolicName = property.Name,
@@ -509,7 +525,7 @@ partial class OpcServer
 				TypeDefinitionId = ObjectTypeIds.FolderType,
 				NodeId = nodeId,
 				BrowseName = new QualifiedName(name, this.NamespaceIndex),
-				DisplayName = displayName,
+				DisplayName = string.IsNullOrEmpty(displayName) ? name : displayName,
 				Description = description,
 				WriteMask = AttributeWriteMask.None,
 				UserWriteMask = AttributeWriteMask.None,
@@ -522,16 +538,22 @@ partial class OpcServer
 			return folder;
 		}
 
-		private BaseDataVariableState CreateVariable(NodeState parent, string name, object value, string displayName, NodeId dataType, int valueRank)
+		private BaseDataVariableState CreateVariable(NodeState parent, string name, object value, string displayName, NodeId dataType, int valueRank, string description = null)
 		{
+			var nodeId = this.GenerateId(name, out name);
+
+			if(string.IsNullOrEmpty(displayName))
+				displayName = name;
+
 			var variable = new BaseDataVariableState(parent)
 			{
 				SymbolicName = name,
 				ReferenceTypeId = ReferenceTypes.Organizes,
 				TypeDefinitionId = VariableTypeIds.BaseDataVariableType,
-				NodeId = new NodeId(name, this.NamespaceIndex),
+				NodeId = nodeId,
 				BrowseName = new QualifiedName(name, this.NamespaceIndex),
-				DisplayName = new LocalizedText("en", displayName),
+				DisplayName = displayName,
+				Description = description,
 				WriteMask = AttributeWriteMask.DisplayName | AttributeWriteMask.Description,
 				UserWriteMask = AttributeWriteMask.DisplayName | AttributeWriteMask.Description,
 				DataType = dataType,
@@ -561,6 +583,49 @@ partial class OpcServer
 		}
 
 		private NodeId GenerateId() => new(Interlocked.Increment(ref _nodeId), this.NamespaceIndex);
+		private NodeId GenerateId(out uint id)
+		{
+			id = Interlocked.Increment(ref _nodeId);
+			return new(id, this.NamespaceIndex);
+		}
+
+		private NodeId GenerateId(string identifier, out string name)
+		{
+			if(string.IsNullOrWhiteSpace(identifier))
+			{
+				var result = this.GenerateId(out var id);
+				name = $"{id}";
+				return result;
+			}
+
+			if(identifier[0] == '#')
+			{
+				if(identifier.Length == 1)
+				{
+					var result = this.GenerateId(out var id);
+					name = $"{id}";
+					return result;
+				}
+
+				name = identifier[1..];
+
+				if(uint.TryParse(identifier.AsSpan()[1..], out var integer))
+					return new NodeId(integer, this.NamespaceIndex);
+				if(Guid.TryParse(identifier.AsSpan()[1..], out var guid))
+					return new NodeId(guid, this.NamespaceIndex);
+			}
+
+			if(identifier.Equals("guid()", StringComparison.OrdinalIgnoreCase) ||
+			   identifier.Equals("uuid()", StringComparison.OrdinalIgnoreCase))
+			{
+				var guid = Guid.NewGuid();
+				name = guid.ToString();
+				return new NodeId(guid, this.NamespaceIndex);
+			}
+
+			name = identifier;
+			return new NodeId(identifier, this.NamespaceIndex);
+		}
 		#endregion
 
 		#region 写值处理

@@ -110,6 +110,13 @@ internal static class Program
 			.Folder("F3-A-1")
 			.Variable<byte[]>("z");
 
+		prefabs.Object("Person", typeof(Person), new Person()
+		{
+			Name = "Popeye",
+			Gender = true,
+			Birthday = new DateTime(2000, 1, 10),
+		});
+
 		var variables = prefabs.Folder("variables");
 		variables.Variable("double", typeof(double));
 		variables.Variable("float", typeof(float), 1.23);
@@ -119,6 +126,16 @@ internal static class Program
 		variables.Variable("guid", Guid.NewGuid());
 		variables.Variable("date", DateTime.Now);
 		variables.Variable<byte[]>("binary", [1, 2, 3, 4, 5]);
+
+		//特殊标识符
+		variables.Variable("#", "A");
+		variables.Variable($"#{int.MaxValue}", int.MaxValue);
+		variables.Variable($"#{uint.MaxValue}", uint.MaxValue);
+		variables.Variable($"#{short.MaxValue}", short.MaxValue);
+		variables.Variable($"#{ushort.MaxValue}", ushort.MaxValue);
+		variables.Variable("#01234567-1234-ABCD-5678-A1B2C3D4E5F6", Guid.NewGuid());
+		variables.Variable("guid()", Guid.NewGuid());
+		variables.Variable("uuid()", Guid.NewGuid());
 	}
 
 	public class Person
