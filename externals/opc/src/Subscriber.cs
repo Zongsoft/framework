@@ -75,9 +75,8 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	public string Description { get; set; }
 	public bool Registered => _subscription?.Created ?? false;
 	public EntryCollection Entries { get; }
-
-	public Entry this[int index] => this.Entries[index];
 	public Entry this[string name] => this.Entries[name];
+	internal Entry this[NodeId identifier] => this.Entries[identifier];
 	#endregion
 
 	#region 重写方法
@@ -160,7 +159,7 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	{
 		var consumer = _consumer;
 
-		if(consumer != null && this.Entries.TryGetValue(monitoredItem.StartNodeId.ToString(), out var entry))
+		if(consumer != null && this.Entries.TryGetValue(monitoredItem.StartNodeId, out var entry))
 		{
 			var value = args.NotificationValue is MonitoredItemNotification notification ?
 				notification.Value.Value :
@@ -172,7 +171,7 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	#endregion
 
 	#region 枚举遍历
-	public IEnumerator<Entry> GetEnumerator() => this.Entries.GetEnumerator();
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<Entry> GetEnumerator() => this.Entries.GetEnumerator();
 	#endregion
 }

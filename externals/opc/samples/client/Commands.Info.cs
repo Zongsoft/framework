@@ -29,14 +29,14 @@ internal partial class Commands
 			foreach(var subscriber in client.Subscribers)
 			{
 				context.Output.WriteLine();
-				PrintSubscriber(content, subscriber, ++index, context.Expression.Options.GetValue("detailed", false));
+				DumpSubscriber(content, subscriber, ++index, context.Expression.Options.GetValue("detailed", false));
 			}
 		}
 
 		context.Output.Write(content);
 	}
 
-	private static void PrintSubscriber(CommandOutletContent content, Subscriber subscriber, int index, bool detailed)
+	private static void DumpSubscriber(CommandOutletContent content, Subscriber subscriber, int index, bool detailed)
 	{
 		if(subscriber == null)
 			return;
@@ -48,18 +48,19 @@ internal partial class Commands
 			.Append(subscriber.Registered ? CommandOutletColor.Green : CommandOutletColor.Magenta, subscriber.Registered ? "Registered" : "Unregistered")
 			.AppendLine(CommandOutletColor.DarkGray, ")");
 
-		for(int i = 0; i < subscriber.Entries.Count; i++)
+		var entryIndex = 0;
+		foreach(var entry in subscriber.Entries)
 		{
 			content
-				.Append(CommandOutletColor.DarkGray, $"\t[{i + 1}] ")
-				.Append(CommandOutletColor.DarkGreen, subscriber[i].Name);
+				.Append(CommandOutletColor.DarkGray, $"\t[{++entryIndex}] ")
+				.Append(CommandOutletColor.DarkGreen, entry.Name);
 
-			if(subscriber[i].Type == null)
+			if(entry.Type == null)
 				content.AppendLine();
 			else
 				content
 					.Append(CommandOutletColor.DarkGray, "@")
-					.AppendLine(CommandOutletColor.DarkYellow, TypeAlias.GetAlias(subscriber[i].Type));
+					.AppendLine(CommandOutletColor.DarkYellow, TypeAlias.GetAlias(entry.Type));
 		}
 
 		if(detailed && subscriber.Subscription != null)

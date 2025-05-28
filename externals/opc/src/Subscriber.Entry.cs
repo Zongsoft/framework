@@ -28,8 +28,8 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -40,14 +40,23 @@ partial class Subscriber
 {
 	public class Entry : IEquatable<Entry>
 	{
+		#region 成员字段
+		private readonly NodeId _nodeId;
+		private MonitoredItem _monitor;
+		#endregion
+
 		#region 构造函数
 		public Entry(string name) : this(name, null, null, null) { }
 		public Entry(string name, Type type, string label = null, string description = null)
 		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
 			this.Name = name;
 			this.Type = type;
 			this.Label = label;
 			this.Description = description;
+			_nodeId = NodeId.Parse(name);
 		}
 		#endregion
 
@@ -59,7 +68,22 @@ partial class Subscriber
 		#endregion
 
 		#region 内部属性
-		internal MonitoredItem Monitor { get; set; }
+		internal NodeId Identifier => this.Monitor?.StartNodeId ?? _nodeId;
+		internal MonitoredItem Monitor => _monitor;
+		internal void Monitored(MonitoredItem monitor, MonitoredItemNotificationEventHandler handler)
+		{
+			if(handler != null)
+			{
+				var older = _monitor;
+				if(older != null)
+					older.Notification -= handler;
+
+				if(monitor != null)
+					monitor.Notification += handler;
+			}
+
+			_monitor = monitor;
+		}
 		#endregion
 
 		#region 重写方法
@@ -70,119 +94,151 @@ partial class Subscriber
 		#endregion
 	}
 
-	public class EntryCollection : KeyedCollection<string, Entry>
+	public class EntryCollection : IEnumerable<Entry>
 	{
 		#region 成员字段
 		private readonly Subscriber _subscriber;
 		private readonly Subscription _subscription;
+		private readonly Dictionary<NodeId, Entry> _dictionary;
 		#endregion
 
 		#region 构造函数
-		public EntryCollection(Subscriber subscriber, params IEnumerable<Entry> monitors) : base(StringComparer.OrdinalIgnoreCase)
+		public EntryCollection(Subscriber subscriber, params IEnumerable<Entry> entries)
 		{
 			_subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
 			_subscription = (Subscription)subscriber.Subscription;
+			_dictionary = new Dictionary<NodeId, Entry>();
 
-			if(monitors == null)
+			if(entries != null)
 			{
-				foreach(var monitor in monitors)
-					this.Add(monitor);
+				foreach(var entry in entries)
+					this.Add(entry);
 			}
 		}
 		#endregion
 
+		#region 公共属性
+		public int Count => _dictionary.Count;
+		public Entry this[string name] => string.IsNullOrEmpty(name) ? null : _dictionary[NodeId.Parse(name)];
+		internal Entry this[NodeId identifier] => identifier == null ? null : _dictionary[identifier];
+		#endregion
+
 		#region 公共方法
-		public bool Add(string name)
+		public bool Contains(string name) => name != null && _dictionary.ContainsKey(NodeId.Parse(name));
+		internal bool Contains(NodeId identifier) => identifier != null && _dictionary.ContainsKey(identifier);
+
+		public bool Add(string name) => !string.IsNullOrEmpty(name) && this.Add(new Entry(name));
+		public bool Add(Entry entry)
 		{
-			if(string.IsNullOrEmpty(name))
+			if(entry == null)
 				return false;
 
-			if(this.Contains(name))
-				return false;
+			if(_dictionary.TryAdd(entry.Identifier, entry))
+			{
+				var monitored = new MonitoredItem(_subscription.DefaultItem)
+				{
+					Handle = entry,
+					StartNodeId = entry.Identifier,
+					AttributeId = Attributes.Value,
+					SamplingInterval = _subscriber.Options.GetSamplingInterval(),
+					DiscardOldest = true,
+					QueueSize = (uint)_subscriber.Options.GetQueueSize(),
+					DisplayName = string.IsNullOrEmpty(entry.Label) ? entry.Name : entry.Label,
+				};
 
-			this.Add(new Entry(name));
-			return true;
+				entry.Monitored(monitored, _subscriber.OnNotification);
+				_subscription.AddItem(monitored);
+
+				//从服务器中执行订阅变更操作
+				if(_subscription.Created)
+					_subscription.ApplyChanges();
+
+				return true;
+			}
+
+			return false;
+		}
+
+		public void Clear()
+		{
+			foreach(var entry in _dictionary.Values)
+			{
+				if(entry == null || entry.Monitor == null)
+					continue;
+
+				_subscription.RemoveItem(entry.Monitor);
+				entry.Monitored(null, _subscriber.OnNotification);
+			}
+
+			//调用基类同名方法
+			_dictionary.Clear();
+
+			//从服务器中删除已取消的订阅项目
+			if(_subscription.Created)
+				_subscription.DeleteItems();
+		}
+
+		public bool TryGetValue(string name, out Entry value)
+		{
+			if(!string.IsNullOrEmpty(name))
+				return _dictionary.TryGetValue(NodeId.Parse(name), out value);
+
+			value = null;
+			return false;
+		}
+
+		internal bool TryGetValue(NodeId identifier, out Entry value)
+		{
+			if(identifier != null)
+				return _dictionary.TryGetValue(identifier, out value);
+
+			value = null;
+			return false;
 		}
 
 		public bool TryRemove(string name, out Entry result)
 		{
-			if(name != null && this.TryGetValue(name, out result))
-				return this.Remove(name);
+			if(!string.IsNullOrEmpty(name) && _dictionary.Remove(NodeId.Parse(name), out result))
+			{
+				this.OnRemoved(result);
+				return true;
+			}
+
+			result = null;
+			return false;
+		}
+
+		internal bool TryRemove(NodeId identifier, out Entry result)
+		{
+			if(identifier != null && _dictionary.Remove(identifier, out result))
+			{
+				this.OnRemoved(result);
+				return true;
+			}
 
 			result = null;
 			return false;
 		}
 		#endregion
 
-		#region 重写方法
-		protected override string GetKeyForItem(Entry entry) => entry.Name;
-		protected override void SetItem(int index, Entry item) => throw new NotSupportedException();
-
-		protected override void InsertItem(int index, Entry item)
+		#region 私有方法
+		private void OnRemoved(Entry entry)
 		{
-			if(item == null || string.IsNullOrEmpty(item.Name))
-				throw new ArgumentNullException(nameof(item));
-
-			var monitored = new MonitoredItem(_subscription.DefaultItem)
+			if(entry != null && entry.Monitor != null)
 			{
-				Handle = item,
-				StartNodeId = NodeId.Parse(item.Name),
-				AttributeId = Attributes.Value,
-				SamplingInterval = _subscriber.Options.GetSamplingInterval(),
-				DiscardOldest = true,
-				QueueSize = (uint)_subscriber.Options.GetQueueSize(),
-				DisplayName = string.IsNullOrEmpty(item.Label) ? item.Name : item.Label,
-			};
-
-			item.Monitor = monitored;
-			base.InsertItem(index, item);
-
-			monitored.Notification += _subscriber.OnNotification;
-			_subscription.AddItem(monitored);
-
-			//从服务器中执行订阅变更操作
-			if(_subscription.Created)
-				_subscription.ApplyChanges();
-		}
-
-		protected override void RemoveItem(int index)
-		{
-			var item = this[index];
-
-			if(item != null && item.Monitor != null)
-			{
-				_subscription.RemoveItem(item.Monitor);
-				item.Monitor.Notification -= _subscriber.OnNotification;
-				item.Monitor = null;
+				_subscription.RemoveItem(entry.Monitor);
+				entry.Monitored(null, _subscriber.OnNotification);
 			}
-
-			//调用基类同名方法
-			base.RemoveItem(index);
 
 			//从服务器中删除已取消的订阅项目
 			if(_subscription.Created)
 				_subscription.DeleteItems();
 		}
+		#endregion
 
-		protected override void ClearItems()
-		{
-			foreach(var item in this.Items)
-			{
-				if(item == null || item.Monitor == null)
-					continue;
-
-				_subscription.RemoveItem(item.Monitor);
-				item.Monitor.Notification -= _subscriber.OnNotification;
-				item.Monitor = null;
-			}
-
-			//调用基类同名方法
-			base.ClearItems();
-
-			//从服务器中删除已取消的订阅项目
-			if(_subscription.Created)
-				_subscription.DeleteItems();
-		}
+		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<Entry> GetEnumerator() => _dictionary.Values.GetEnumerator();
 		#endregion
 	}
 }
