@@ -54,17 +54,18 @@ public class Stash<T> : IDisposable
 	#endregion
 
 	#region 构造函数
-	public Stash(Action<IList<T>> flusher, TimeSpan period, int limit = 0) : this(period, limit)
-	{
+	public Stash(Action<IList<T>> flusher, TimeSpan period, int limit = 0) : this(period, limit) =>
 		_flusher = flusher ?? throw new ArgumentNullException(nameof(flusher));
-	}
+	public Stash(Action<IList<T>> flusher, bool pooling, TimeSpan period, int limit = 0) : this(pooling, period, limit) =>
+		_flusher = flusher ?? throw new ArgumentNullException(nameof(flusher));
 
-	protected Stash(TimeSpan period, int limit = 0)
+	protected Stash(TimeSpan period, int limit = 0) : this(true, period, limit) { }
+	protected Stash(bool pooling, TimeSpan period, int limit = 0)
 	{
 		this.Period = period;
 		this.Limit = limit;
 
-		_pool = new DefaultObjectPool<IList<T>>(new StashPooledPolicy(this));
+		_pool = pooling ? new DefaultObjectPool<IList<T>>(new StashPooledPolicy(this)) : null;
 		_cache = this.OnRent();
 		_semaphore = new AutoResetEvent(true);
 		_timer = new Timer(this.OnTick, null, _period, _period);
@@ -218,9 +219,9 @@ public class Stash<T> : IDisposable
 		return true;
 	}
 
-	protected virtual IList<T> OnRent() => _pool.Get();
+	protected virtual IList<T> OnRent() => _pool?.Get() ?? this.OnCreate();
 	protected virtual IList<T> OnCreate() => new List<T>(Math.Clamp(_limit, 16, 4 * 1024 * 1024));
-	protected virtual void OnReturn(IList<T> cache) => _pool.Return(cache);
+	protected virtual void OnReturn(IList<T> cache) => _pool?.Return(cache);
 	protected virtual void OnFlush(IList<T> cache) => _flusher?.Invoke(cache);
 	#endregion
 
