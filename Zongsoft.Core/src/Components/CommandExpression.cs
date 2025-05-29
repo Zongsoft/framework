@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -209,11 +209,16 @@ public class CommandExpression
 	#region 嵌套子类
 	public sealed class ArgumentCollection(string[] arguments) : IReadOnlyCollection<string>
 	{
+		#region 成员字段
 		private readonly string[] _arguments = arguments ?? [];
+		#endregion
 
+		#region 公共属性
 		public int Count => _arguments.Length;
 		public string this[int index] => _arguments[index];
+		#endregion
 
+		#region 公共方法
 		public bool TryGetValue<T>(int index, out T value)
 		{
 			if(index < 0 || index >= _arguments.Length)
@@ -236,31 +241,27 @@ public class CommandExpression
 			return Common.Convert.TryConvertValue(_arguments[index], type, out value);
 		}
 
-		public T GetValue<T>(int index)
-		{
-			if(index < 0 || index >= _arguments.Length)
-				throw new ArgumentOutOfRangeException(nameof(index));
-
-			return Common.Convert.ConvertValue<T>(_arguments[index]);
-		}
-
-		public T GetValue<T>(int index, T defaultValue)
+		public T GetValue<T>(int index, T defaultValue = default)
 		{
 			if(index < 0 || index >= _arguments.Length)
 				return defaultValue;
 
 			return Common.Convert.ConvertValue<T>(_arguments[index], defaultValue);
 		}
+		#endregion
 
+		#region 隐式转换
 		public static implicit operator string[](ArgumentCollection arguments) => arguments?._arguments;
-		public static explicit operator ArgumentCollection(string[] arguments) => new ArgumentCollection(arguments);
+		#endregion
 
+		#region 枚举遍历
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<string> GetEnumerator()
 		{
 			for(int i = 0; i < _arguments.Length; i++)
 				yield return _arguments[i];
 		}
+		#endregion
 	}
 	#endregion
 }
