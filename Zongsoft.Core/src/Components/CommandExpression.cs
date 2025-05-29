@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components;
@@ -41,7 +42,7 @@ public class CommandExpression
 	private string _fullPath;
 	private Zongsoft.IO.PathAnchor _anchor;
 	private CommandOptionCollection _options;
-	private string[] _arguments;
+	private ArgumentCollection _arguments;
 	private CommandExpression _next;
 	#endregion
 
@@ -92,7 +93,7 @@ public class CommandExpression
 		else
 			_options = new CommandOptionCollection(options);
 
-		_arguments = arguments ?? [];
+		_arguments = new(arguments);
 	}
 	#endregion
 
@@ -102,7 +103,7 @@ public class CommandExpression
 	public string Path => _path;
 	public string FullPath => _fullPath;
 	public CommandOptionCollection Options => _options;
-	public string[] Arguments => _arguments;
+	public ArgumentCollection Arguments => _arguments;
 	public int Index => _index;
 	public CommandExpression Next
 	{
@@ -165,7 +166,7 @@ public class CommandExpression
 			}
 		}
 
-		if(_arguments.Length > 0)
+		if(_arguments.Count > 0)
 		{
 			foreach(var argument in _arguments)
 			{
@@ -201,6 +202,64 @@ public class CommandExpression
 		{
 			current._index = ++value;
 			current = current._next;
+		}
+	}
+	#endregion
+
+	#region 嵌套子类
+	public sealed class ArgumentCollection(string[] arguments) : IReadOnlyCollection<string>
+	{
+		private readonly string[] _arguments = arguments ?? [];
+
+		public int Count => _arguments.Length;
+		public string this[int index] => _arguments[index];
+
+		public bool TryGetValue<T>(int index, out T value)
+		{
+			if(index < 0 || index >= _arguments.Length)
+			{
+				value = default;
+				return false;
+			}
+
+			return Common.Convert.TryConvertValue<T>(_arguments[index], out value);
+		}
+
+		public bool TryGetValue(int index, Type type, out object value)
+		{
+			if(index < 0 || index >= _arguments.Length)
+			{
+				value = default;
+				return false;
+			}
+
+			return Common.Convert.TryConvertValue(_arguments[index], type, out value);
+		}
+
+		public T GetValue<T>(int index)
+		{
+			if(index < 0 || index >= _arguments.Length)
+				throw new ArgumentOutOfRangeException(nameof(index));
+
+			return Common.Convert.ConvertValue<T>(_arguments[index]);
+		}
+
+		public T GetValue<T>(int index, T defaultValue)
+		{
+			if(index < 0 || index >= _arguments.Length)
+				return defaultValue;
+
+			return Common.Convert.ConvertValue<T>(_arguments[index], defaultValue);
+		}
+
+		public static implicit operator string[](ArgumentCollection arguments) => arguments?._arguments;
+		public static explicit operator ArgumentCollection(string[] arguments) => new ArgumentCollection(arguments);
+
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<string> GetEnumerator()
+		{
+			for(int i = 0; i < _arguments.Length; i++)
+				yield return _arguments[i];
 		}
 	}
 	#endregion

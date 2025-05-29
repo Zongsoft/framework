@@ -56,7 +56,7 @@ public class ShellCommand : CommandBase<CommandContext>
 
 		var terminal = context.GetTerminal() ?? throw new NotSupportedException($"The `{this.Name}` command is only supported running in a terminal executor.");
 
-		if(context.Expression.Arguments.Length < 1)
+		if(context.Expression.Arguments.Count < 1)
 			return ValueTask.FromResult<object>(0);
 
 		ProcessStartInfo info = new ProcessStartInfo(@"cmd.exe", " /C " + context.Expression.Arguments[0])

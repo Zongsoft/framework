@@ -128,7 +128,7 @@ public class CommandExpressionTest
 		Assert.Equal("sms/generate", expression.FullPath);
 		Assert.Equal(PathAnchor.None, expression.Anchor);
 		Assert.Equal(2, expression.Options.Count);
-		Assert.Equal(4, expression.Arguments.Length);
+		Assert.Equal(4, expression.Arguments.Count);
 		Assert.Equal("user.register", expression.Options["template"]);
 		Assert.Equal("12345", expression.Options["authenticode"]);
 		Assert.Equal("phonenumber'1", expression.Arguments[0]);
