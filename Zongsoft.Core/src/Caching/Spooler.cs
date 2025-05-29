@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
@@ -230,8 +229,11 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 			if(value is null)
 				return true;
 
-			_current.Add(value);
-			return true;
+			lock(_lock)
+			{
+				_current.Add(value);
+				return true;
+			}
 		}
 
 		public IEnumerable<T> Flush()
@@ -242,6 +244,11 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 			lock(_lock)
 			{
 				var current = _current;
+
+				if(current.IsEmpty)
+					return null;
+
+				//_current = new();
 
 				if(object.ReferenceEquals(_current, _cacheA))
 					_current = _cacheB;
@@ -287,7 +294,10 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 			if(value is null)
 				return true;
 
-			return _current.TryAdd(value, null);
+			lock(_lock)
+			{
+				return _current.TryAdd(value, null);
+			}
 		}
 
 		public IEnumerable<T> Flush()
@@ -299,10 +309,15 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 			{
 				var current = _current;
 
-				if(object.ReferenceEquals(_current, _cacheA))
-					_current = _cacheB;
-				else
-					_current = _cacheA;
+				if(current.IsEmpty)
+					return null;
+
+				_current = new();
+
+				//if(object.ReferenceEquals(_current, _cacheA))
+				//	_current = _cacheB;
+				//else
+				//	_current = _cacheA;
 
 				var result = current.Keys;
 				current.Clear();
