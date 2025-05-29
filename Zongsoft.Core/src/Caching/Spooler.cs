@@ -304,9 +304,9 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 				else
 					_current = _cacheA;
 
-				var result = current.ToArray();
+				var result = current.Keys;
 				current.Clear();
-				return result.Length > 0 ? result.Select(entry => entry.Key) : null;
+				return result.Count > 0 ? result : null;
 			}
 		}
 
