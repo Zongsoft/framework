@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
@@ -25,14 +26,14 @@ internal class Program
 		{
 			(var count, var collision) = GetCommandOptions(context);
 			stopwater.Restart();
-			TestStash(count, collision);
+			TestStasher(count, collision);
 			stopwater.Stop();
 
 			Terminal.Console.Write(CommandOutletColor.DarkMagenta, $"Elapsed: ");
 			Terminal.Console.Write(CommandOutletColor.Cyan, stopwater.Elapsed);
 		});
 
-		executor.Command("spooler", context =>
+		executor.Command("spool", context =>
 		{
 			(var count, var collision) = GetCommandOptions(context);
 			stopwater.Restart();
@@ -43,10 +44,15 @@ internal class Program
 			Terminal.Console.Write(CommandOutletColor.Cyan, stopwater.Elapsed);
 		});
 
-		executor.Run($"Welcome to the Stash & Spooler tester.{Environment.NewLine}{new string('-', 50)}");
+		var splash = CommandOutletContent.Create()
+			.AppendLine(CommandOutletColor.Yellow, new string('*', 50))
+			.AppendLine(CommandOutletColor.DarkCyan, "Welcome to the Stasher & Spooler sample.".Justify(50))
+			.AppendLine(CommandOutletColor.Yellow, new string('*', 50));
+
+		executor.Run(splash);
 	}
 
-	static void TestStash(int count, int collision = 0)
+	static void TestStasher(int count, int collision = 0)
 	{
 		using var stash = new Stash<int>(Handler.Handle, TimeSpan.FromMilliseconds(PERIOD), LIMIT);
 
@@ -106,14 +112,15 @@ internal class Program
 				{
 					content
 						.Append(CommandOutletColor.DarkCyan, $"[Completed] ")
-						.AppendLine(CommandOutletColor.DarkGray, "Waiting...");
+						.Append(CommandOutletColor.DarkGray, "Waiting...");
 
-					//等待最后一波的缓冲过期被刷新
-					SpinWait.SpinUntil(() => _count >= count, PERIOD);
+					//等待最后一波的缓冲过期（注意：等待的时长必须是计时器的倍数）
+					SpinWait.SpinUntil(() => _count >= count, PERIOD * 3);
 
 					content
-						.Append(CommandOutletColor.DarkCyan, $"[Completed] ")
-						.AppendLine(CommandOutletColor.DarkGreen, "Waiting was finished.");
+						.Append(CommandOutletColor.Gray, " (")
+						.Append(CommandOutletColor.Green, "Finished")
+						.AppendLine(CommandOutletColor.Gray, ")");
 				}
 
 				content.AppendLine()
@@ -138,7 +145,27 @@ internal class Program
 			var count = items.Count();
 			var total = Interlocked.Add(ref _count, count);
 
-			//Console.WriteLine($"[Flush#{Environment.CurrentManagedThreadId}] {count}/{total} @ {times}");
+			if(times < 100)
+			{
+				var content = CommandOutletContent.Create()
+					.Append(CommandOutletColor.DarkGray, "[")
+					.Append(CommandOutletColor.DarkCyan, "Flush")
+					.Append(CommandOutletColor.DarkYellow, "@")
+					.Append(CommandOutletColor.Cyan, $"T{Environment.CurrentManagedThreadId:00}")
+					.Append(CommandOutletColor.DarkGray, "]")
+					.Append(CommandOutletColor.DarkGray, " (")
+					.Append(CommandOutletColor.DarkMagenta, $"{times}")
+					.Append(CommandOutletColor.DarkGray, ") ")
+					.Append(CommandOutletColor.Yellow, $"{count}")
+					.Append(CommandOutletColor.DarkGray, "/")
+					.Append(CommandOutletColor.Green, $"{total}");
+
+				Terminal.Console.WriteLine(content);
+			}
+			else if(times == 100)
+			{
+				Terminal.Console.WriteLine(CommandOutletColor.Gray, "\t... ...");
+			}
 		}
 	}
 }
