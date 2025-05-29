@@ -239,7 +239,7 @@ public class Stash<T> : IDisposable
 		finally
 		{
 			//恢复计时器
-			_timer.Change(_period, _period);
+			_timer?.Change(_period, _period);
 		}
 	}
 	#endregion
