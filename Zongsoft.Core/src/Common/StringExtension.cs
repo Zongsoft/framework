@@ -37,6 +37,13 @@ public static class StringExtension
 {
 	public delegate bool TryParser<T>(string text, out T value);
 
+	public static string Justify(this string text, int totalWidth, char paddingChar = ' ')
+	{
+		int padding = totalWidth - text.Length;
+		int padLeft = padding / 2 + text.Length;
+		return text.PadLeft(padLeft, paddingChar).PadRight(totalWidth, paddingChar);
+	}
+
 	public static string RemoveAny(this string text, params char[] characters)
 	{
 		return RemoveAny(text, characters, 0, -1);
