@@ -108,7 +108,7 @@ partial class Terminal
 			if(this.Root.Children.Count < 1)
 				return 0;
 
-			if(splash == null || splash.Count(CommandOutletContent.Direction.Next) == 0)
+			if(splash == null || splash.IsEmpty)
 				splash = CommandOutletContent.Create(SPLASH);
 
 			//打印闪屏信息

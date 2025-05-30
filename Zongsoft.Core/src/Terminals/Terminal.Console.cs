@@ -401,16 +401,24 @@ partial class Terminal
 				if(foregroundColor == null)
 					foregroundColor = originalColor;
 
-				while(content != null)
+				//设置输出的开始节点
+				var cursor = content.Cursor == null ?
+					content.First :
+					content.Cursor.Next ?? content.First;
+
+				while(cursor != null)
 				{
-					//设置片段内容指定的颜色值
-					this.ForegroundColor = content.Color ?? foregroundColor.Value;
+					//设置当前颜色值
+					this.ForegroundColor = cursor.Color ?? foregroundColor.Value;
 
-					//输出指定的片段内容文本
-					System.Console.Write(content.Text);
+					//输出内容段文本
+					System.Console.Write(cursor.Text);
 
-					//将当前片段内容指定为下一个
-					content = content.Next;
+					//更新内容段游标
+					content.Cursor = cursor;
+
+					//移动当前游标
+					cursor = cursor.Next;
 				}
 
 				//还原原来的前景色

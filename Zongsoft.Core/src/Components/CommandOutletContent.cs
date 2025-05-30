@@ -85,6 +85,44 @@ public class CommandOutletContent
 		set => _color = value;
 	}
 
+	/// <summary>获取一个值，指示内容链是否为空（即内容链的所有节点文本都为空）。</summary>
+	public bool IsEmpty
+	{
+		get
+		{
+			if(!string.IsNullOrEmpty(_text))
+				return false;
+
+			var current = _previous;
+			while(current != null)
+			{
+				if(!IsEmpty(current))
+					return false;
+
+				current = current.Previous;
+			}
+
+			current = _next;
+			while(current != null)
+			{
+				if(!IsEmpty(current))
+					return false;
+
+				current = current.Next;
+			}
+
+			return true;
+
+			static bool IsEmpty(CommandOutletContent content)
+			{
+				return content == null || string.IsNullOrEmpty(content.Text);
+			}
+		}
+	}
+
+	/// <summary>获取或设置当前游标，即显示装置的定位。</summary>
+	public CommandOutletContent Cursor { get; set; }
+
 	/// <summary>获取当前内容链的首段。</summary>
 	public CommandOutletContent First
 	{
@@ -152,11 +190,8 @@ public class CommandOutletContent
 	/// <returns>返回当前内容段。</returns>
 	public CommandOutletContent AppendLine()
 	{
-		//获取当前内容链的最末尾段
-		var last = this.Last;
-
-		//将最末尾段的文本内容追加一个换行符
-		last._text += Environment.NewLine;
+		//将本节点文本内容追加一个换行符
+		_text += Environment.NewLine;
 
 		//返回当前内容段
 		return this;
@@ -164,165 +199,86 @@ public class CommandOutletContent
 
 	/// <summary>追加一个指定文本的内容段。</summary>
 	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回当前内容段。</returns>
-	public CommandOutletContent AppendLine(string text)
-	{
-		if(string.IsNullOrEmpty(text))
-			return this.AppendLine();
-		else
-			return this.Append(text + Environment.NewLine);
-	}
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent AppendLine(string text) => string.IsNullOrEmpty(text) ?
+		this.AppendLine() :
+		this.Append(text + Environment.NewLine);
 
 	/// <summary>追加一个指定颜色和文本的内容段。</summary>
 	/// <param name="color">指定的内容文本颜色。</param>
 	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回当前内容段。</returns>
-	public CommandOutletContent AppendLine(CommandOutletColor color, string text)
-	{
-		if(string.IsNullOrEmpty(text))
-			return this.AppendLine();
-		else
-			return this.Append(color, text + Environment.NewLine);
-	}
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent AppendLine(CommandOutletColor color, string text) => string.IsNullOrEmpty(text) ?
+		this.AppendLine() :
+		this.Append(color, text + Environment.NewLine);
 
 	/// <summary>追加一个指定文本的内容段。</summary>
 	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回当前内容段。</returns>
-	public CommandOutletContent Append(string text)
-	{
-		if(string.IsNullOrEmpty(text))
-			return this;
-
-		//获取当前内容链的最末尾段
-		var last = this.Last;
-
-		//在最末段追加一个片段
-		last.AfterCore(null, text);
-
-		//返回当前内容段
-		return this;
-	}
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append(string text) => this.AfterCore(null, text);
 
 	/// <summary>追加一个指定颜色和文本的内容段。</summary>
 	/// <param name="color">指定的内容文本颜色。</param>
 	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回当前内容段。</returns>
-	public CommandOutletContent Append(CommandOutletColor color, string text)
-	{
-		if(string.IsNullOrEmpty(text))
-			return this;
-
-		//获取当前内容链的最末尾段
-		var last = this.Last;
-
-		//在最末段追加一个片段
-		last.AfterCore(color, text);
-
-		//返回当前内容段
-		return this;
-	}
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append(CommandOutletColor color, string text) => this.AfterCore(color, text);
 
 	/// <summary>追加一个指定的内容段。</summary>
 	/// <param name="content">指定的内容段。</param>
 	/// <returns>返回当前内容段。</returns>
-	public CommandOutletContent Append(CommandOutletContent content)
+	public CommandOutletContent Append(CommandOutletContent content) => this.AfterCore(content);
+
+	/// <summary>前插一个空行段。</summary>
+	/// <returns>返回当前内容段。</returns>
+	public CommandOutletContent PrependLine()
 	{
-		if(content == null)
-			return this;
-
-		//获取当前内容链的最末尾段
-		var last = this.Last;
-
-		//在最末段追加一个片段
-		last.AfterCore(content);
+		//将本节点文本内容前插一个换行符
+		_text = Environment.NewLine + _text;
 
 		//返回当前内容段
 		return this;
 	}
 
+	/// <summary>前插一个指定文本的内容段。</summary>
+	/// <param name="text">指定的内容文本。</param>
+	/// <returns>返回前插后的内容段。</returns>
+	public CommandOutletContent PrependLine(string text) => string.IsNullOrEmpty(text) ?
+		this.PrependLine() :
+		this.Prepend(text + Environment.NewLine);
+
+	/// <summary>前插一个指定颜色和文本的内容段。</summary>
+	/// <param name="color">指定的内容文本颜色。</param>
+	/// <param name="text">指定的内容文本。</param>
+	/// <returns>返回前插后的内容段。</returns>
+	public CommandOutletContent PrependLine(CommandOutletColor color, string text) => string.IsNullOrEmpty(text) ?
+		this.PrependLine() :
+		this.Prepend(color, text + Environment.NewLine);
+
 	/// <summary>新增一个指定文本的内容段，并作为当前内容链的首部返回。</summary>
 	/// <param name="text">指定的内容文本。</param>
 	/// <returns>返回新增的首部内容段。</returns>
-	public CommandOutletContent Prepend(string text)
-	{
-		if(string.IsNullOrEmpty(text))
-			return this;
-
-		//获取当前内容链的首段
-		var first = this.First;
-
-		//在首段插入一个片段，并返回该新的首段
-		return first.BeforeCore(null, text);
-	}
+	public CommandOutletContent Prepend(string text) => this.BeforeCore(null, text);
 
 	/// <summary>新增一个指定颜色和文本的内容段，并作为当前内容链的首部返回。</summary>
 	/// <param name="color">指定的内容文本颜色。</param>
 	/// <param name="text">指定的内容文本。</param>
 	/// <returns>返回新增的首部内容段。</returns>
-	public CommandOutletContent Prepend(CommandOutletColor color, string text)
-	{
-		if(string.IsNullOrEmpty(text))
-			return this;
-
-		//获取当前内容链的首段
-		var first = this.First;
-
-		//在首段插入一个片段，并返回该新的首段
-		return first.BeforeCore(color, text);
-	}
+	public CommandOutletContent Prepend(CommandOutletColor color, string text) => this.BeforeCore(color, text);
 
 	/// <summary>将指定内容段置为当前内容链的首部。</summary>
 	/// <param name="content">指定的内容段。</param>
 	/// <returns>返回当前内容链的新首部。</returns>
-	public CommandOutletContent Prepend(CommandOutletContent content)
-	{
-		if(content == null)
-			return this;
+	public CommandOutletContent Prepend(CommandOutletContent content) => this.BeforeCore(content);
+	#endregion
 
-		//获取当前内容链的首段
-		var first = this.First;
-
-		//在首段插入一个片段，并返回该新的首段
-		return first.BeforeCore(content);
-	}
-
-	/// <summary>在当前内容段后面添加一个指定文本的内容段。</summary>
-	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回新添加的内容段。</returns>
-	public CommandOutletContent After(string text) => this.AfterCore(null, text);
-
-	/// <summary>在当前内容段后面添加一个指定颜色和文本的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回新添加的内容段。</returns>
-	public CommandOutletContent After(CommandOutletColor color, string text) => this.AfterCore(color, text);
-
-	/// <summary>将指定的内容段添加到当前内容段后面。</summary>
-	/// <param name="content">指定的内容段。</param>
-	/// <returns>返回新添加的内容段。</returns>
-	public CommandOutletContent After(CommandOutletContent content) => this.AfterCore(content);
-
-	/// <summary>在当前内容段前面插入一个指定文本的内容段。</summary>
-	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回新插入的内容段。</returns>
-	public CommandOutletContent Before(string text) => this.BeforeCore(null, text);
-
-	/// <summary>在当前内容段前面插入一个指定颜色和文本的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回新插入的内容段。</returns>
-	public CommandOutletContent Before(CommandOutletColor color, string text) => this.BeforeCore(color, text);
-
-	/// <summary>将指定的内容段插入到当前内容段前面。</summary>
-	/// <param name="content">指定的内容段。</param>
-	/// <returns>返回新插入的内容段。</returns>
-	public CommandOutletContent Before(CommandOutletContent content) => this.BeforeCore(content);
+	#region 重写方法
+	public override string ToString() => _color.HasValue ? $"[{_color}] {_text}" : _text ?? string.Empty;
 	#endregion
 
 	#region 私有方法
 	private CommandOutletContent AfterCore(CommandOutletContent content)
 	{
-		if(content == null)
+		if(content == null || string.IsNullOrEmpty(content.Text))
 			return this;
 
 		if(_next == null)
@@ -352,7 +308,7 @@ public class CommandOutletContent
 
 	private CommandOutletContent BeforeCore(CommandOutletContent content)
 	{
-		if(content == null)
+		if(content == null || string.IsNullOrEmpty(content.Text))
 			return this;
 
 		if(_previous == null)

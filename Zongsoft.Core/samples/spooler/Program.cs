@@ -111,19 +111,26 @@ internal class Program
 				if(_count != count)
 				{
 					content
-						.Append(CommandOutletColor.DarkCyan, $"[Completed] ")
-						.Append(CommandOutletColor.DarkGray, "Waiting...");
+						.Append(CommandOutletColor.DarkGray, "[")
+						.Append(CommandOutletColor.DarkYellow, $"Completed")
+						.Append(CommandOutletColor.DarkGray, "] ")
+						.AppendLine(CommandOutletColor.DarkGray, "Waiting...");
+
+					Terminal.Write(content);
 
 					//等待最后一波的缓冲过期（注意：等待的时长必须是计时器的倍数）
 					SpinWait.SpinUntil(() => _count >= count, PERIOD * 3);
 
-					content
-						.Append(CommandOutletColor.Gray, " (")
-						.Append(CommandOutletColor.Green, "Finished")
-						.AppendLine(CommandOutletColor.Gray, ")");
+					content.Last
+						.Append(CommandOutletColor.DarkGray, "[")
+						.Append(CommandOutletColor.DarkYellow, $"Completed")
+						.Append(CommandOutletColor.DarkGray, "] ")
+						.AppendLine(CommandOutletColor.Green, "Waiting was finished.");
+
+					Terminal.WriteLine(content);
 				}
 
-				content.AppendLine()
+				content.Last.AppendLine()
 					.AppendLine(CommandOutletColor.Yellow, new string('-', 30))
 					.Append(CommandOutletColor.DarkGray, "[")
 					.Append(CommandOutletColor.DarkMagenta, $"{_times}")
@@ -149,7 +156,7 @@ internal class Program
 			{
 				var content = CommandOutletContent.Create()
 					.Append(CommandOutletColor.DarkGray, "[")
-					.Append(CommandOutletColor.DarkCyan, "Flush")
+					.Append(CommandOutletColor.DarkCyan, "Flushed")
 					.Append(CommandOutletColor.DarkYellow, "@")
 					.Append(CommandOutletColor.Cyan, $"T{Environment.CurrentManagedThreadId:00}")
 					.Append(CommandOutletColor.DarkGray, "]")
@@ -158,7 +165,7 @@ internal class Program
 					.Append(CommandOutletColor.DarkGray, ") ")
 					.Append(CommandOutletColor.Yellow, $"{count}")
 					.Append(CommandOutletColor.DarkGray, "/")
-					.Append(CommandOutletColor.Green, $"{total}");
+					.Append(CommandOutletColor.DarkGreen, $"{total}");
 
 				Terminal.Console.WriteLine(content);
 			}
