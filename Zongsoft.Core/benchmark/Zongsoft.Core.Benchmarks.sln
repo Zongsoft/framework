@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Data.Benchmarks", "Zongsoft.Data.Benchmarks.csproj", "{19894F82-9612-477B-B0E6-FAC5FD2369C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Core.Benchmarks", "Zongsoft.Core.Benchmarks.csproj", "{19894F82-9612-477B-B0E6-FAC5FD2369C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,7 +12,6 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{19894F82-9612-477B-B0E6-FAC5FD2369C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{19894F82-9612-477B-B0E6-FAC5FD2369C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19894F82-9612-477B-B0E6-FAC5FD2369C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19894F82-9612-477B-B0E6-FAC5FD2369C7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
