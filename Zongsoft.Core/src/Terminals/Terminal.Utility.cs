@@ -40,10 +40,21 @@ partial class Terminal
 	public static ITerminal GetTerminal(this ICommandExecutor executor) => (executor as ITerminalExecutor)?.Terminal;
 	public static ITerminal GetTerminal(this CommandContextBase context) => (context?.Executor as ITerminalExecutor)?.Terminal;
 
-	public static async ValueTask<object> ReactiveAsync(this CommandContext context, Func<CommandContext, CancellationToken, ValueTask> enter, Func<CommandContext, Exception, CancellationToken, ValueTask> exit, CancellationToken cancellation)
+	/// <summary>执行响应命令。</summary>
+	/// <param name="context">指定的命令上下文对象。</param>
+	/// <param name="enter">进入被动响应模式的处理方法。</param>
+	/// <param name="exit">退出被动响应模式的处理方法。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回的响应命令结果。</returns>
+	/// <exception cref="NotSupportedException">当前命令执行器不是一个终端命令执行器。</exception>
+	public static async ValueTask<object> ReactiveAsync(this CommandContext context,
+		Func<CommandContext, CancellationToken, ValueTask> enter,
+		Func<CommandContext, Exception, CancellationToken, ValueTask> exit,
+		CancellationToken cancellation = default)
 	{
 		//获取当前命令执行器对应的终端
-		var terminal = context.GetTerminal() ?? throw new NotSupportedException($"The {context.Command?.Name} command must be run in terminal environment.");
+		var terminal = context.GetTerminal() ??
+			throw new NotSupportedException($"The {context.Command?.Name} command must be run in terminal environment.");
 
 		//创建信号量，默认为堵塞状态
 		using var semaphore = new AutoResetEvent(false);
