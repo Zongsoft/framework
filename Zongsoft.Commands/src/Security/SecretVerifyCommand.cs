@@ -59,7 +59,7 @@ public class SecretVerifyCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length == 0)
+		if(context.Expression.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
 		//从环境中查找秘密提供程序

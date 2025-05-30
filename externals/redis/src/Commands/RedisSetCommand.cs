@@ -54,7 +54,7 @@ public class RedisSetCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length == 0)
+		if(context.Expression.Arguments.IsEmpty)
 			throw new CommandException("Missing arguments.");
 
 		var expiry = context.Expression.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
@@ -62,7 +62,7 @@ public class RedisSetCommand : CommandBase<CommandContext>
 
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 
-		if(context.Expression.Arguments.Length == 1)
+		if(context.Expression.Arguments.Count == 1)
 		{
 			if(context.Value != null)
 				return await redis.SetValueAsync(context.Expression.Arguments[0], context.Value, expiry, requisite, cancellation);

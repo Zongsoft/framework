@@ -60,7 +60,7 @@ public class QueueSubscribeCommand : CommandBase<CommandContext>
 		context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.QueueSubscribeCommand_Prompt + Environment.NewLine);
 
 		var handler = new QueueHandler(context);
-		var consumers = new List<IMessageConsumer>(context.Expression.Arguments.Length);
+		var consumers = new List<IMessageConsumer>(context.Expression.Arguments.Count);
 
 		foreach(var argument in context.Expression.Arguments)
 		{

@@ -55,7 +55,7 @@ public class RedisLockAcquireCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length == 0)
+		if(context.Expression.Arguments.IsEmpty)
 			throw new CommandException();
 
 		var expiry = TimeSpan.FromMinutes(1);
@@ -67,9 +67,9 @@ public class RedisLockAcquireCommand : CommandBase<CommandContext>
 		}
 
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
-		var lockers = new List<IDistributedLock>(context.Expression.Arguments.Length);
+		var lockers = new List<IDistributedLock>(context.Expression.Arguments.Count);
 
-		for(int i = 0; i < context.Expression.Arguments.Length; i++)
+		for(int i = 0; i < context.Expression.Arguments.Count; i++)
 		{
 			var key = context.Expression.Arguments[i];
 			var locker = await redis.AcquireAsync(key, expiry, cancellation);

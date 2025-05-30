@@ -113,7 +113,7 @@ public class AssemblyCommand : CommandBase<CommandContext>
 
 		if(assembly.IsDynamic)
 		{
-			context.Output.Write("{0}", assembly.FullName);
+			context.Output.Write(assembly.FullName);
 			context.Output.WriteLine(CommandOutletColor.DarkMagenta, "(Dynamic)");
 
 			int index = 0;
@@ -127,9 +127,9 @@ public class AssemblyCommand : CommandBase<CommandContext>
 		}
 		else
 		{
-			context.Output.WriteLine("{0}", assembly.FullName);
-			context.Output.Write(CommandOutletColor.DarkYellow, "{0}", assembly.Location);
-			context.Output.WriteLine(CommandOutletColor.DarkGray, " [{0}]", File.GetLastWriteTime(assembly.Location));
+			context.Output.WriteLine(assembly.FullName);
+			context.Output.Write(CommandOutletColor.DarkYellow, assembly.Location);
+			context.Output.WriteLine(CommandOutletColor.DarkGray, $" [{File.GetLastWriteTime(assembly.Location)}]");
 		}
 	}
 	#endregion

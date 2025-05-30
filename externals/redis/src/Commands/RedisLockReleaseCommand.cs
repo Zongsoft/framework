@@ -62,7 +62,7 @@ public class RedisLockReleaseCommand : CommandBase<CommandContext>
 				await entry.DisposeAsync();
 		}
 
-		if(context.Expression.Arguments.Length != 2)
+		if(context.Expression.Arguments.Count != 2)
 			return false;
 
 		var result = await redis.ReleaseAsync(

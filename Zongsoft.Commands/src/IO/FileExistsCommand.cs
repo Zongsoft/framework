@@ -46,7 +46,7 @@ public class FileExistsCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length == 0)
+		if(context.Expression.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
 		async ValueTask<bool> DeleteFileAsync(string path)
@@ -61,7 +61,7 @@ public class FileExistsCommand : CommandBase<CommandContext>
 			return existed;
 		}
 
-		if(context.Expression.Arguments.Length == 1)
+		if(context.Expression.Arguments.Count == 1)
 			return await DeleteFileAsync(context.Expression.Arguments[0]);
 		else
 			return context.Expression.Arguments.Select(async path => await DeleteFileAsync(path)).ToArray();

@@ -67,19 +67,19 @@ public class ConfigurationGetCommand : CommandBase<CommandContext>
 		if(configuration == null)
 			throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Configuration"));
 
-		if(context.Expression.Arguments.Length == 0)
+		if(context.Expression.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
-		if(context.Expression.Arguments.Length == 1)
+		if(context.Expression.Arguments.Count == 1)
 		{
 			var section = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[0]));
 			ConfigurationCommand.Print(section, context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);
 			return ValueTask.FromResult<object>(section);
 		}
 
-		var sections = new Microsoft.Extensions.Configuration.IConfigurationSection[context.Expression.Arguments.Length];
+		var sections = new Microsoft.Extensions.Configuration.IConfigurationSection[context.Expression.Arguments.Count];
 
-		for(int i = 0; i < context.Expression.Arguments.Length; i++)
+		for(int i = 0; i < context.Expression.Arguments.Count; i++)
 		{
 			sections[i] = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[i]));
 			ConfigurationCommand.Print(sections[i], context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);

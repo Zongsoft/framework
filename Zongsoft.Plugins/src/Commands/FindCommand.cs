@@ -58,12 +58,12 @@ public class FindCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length == 0)
+		if(context.Expression.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Message_MissingCommandArguments);
 
-		var result = new List<object>(context.Expression.Arguments.Length);
+		var result = new List<object>(context.Expression.Arguments.Count);
 
-		for(int i = 0; i < context.Expression.Arguments.Length; i++)
+		for(int i = 0; i < context.Expression.Arguments.Count; i++)
 		{
 			var node = _pluginTree.Find(context.Expression.Arguments[i]);
 

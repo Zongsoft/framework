@@ -192,7 +192,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				break;
 			case ContentType.Date:
 			case ContentType.DateTime:
-				if(context.Expression.Arguments.Length < 1)
+				if(context.Expression.Arguments.IsEmpty)
 				{
 					var now = DateTime.Now;
 					data = Encoding.ASCII.GetBytes(now.ToString());
@@ -212,7 +212,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				break;
 			case ContentType.Guid:
-				if(context.Expression.Arguments.Length < 1)
+				if(context.Expression.Arguments.IsEmpty)
 				{
 					var guid = Guid.NewGuid();
 					data = guid.ToByteArray();

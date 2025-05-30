@@ -76,7 +76,7 @@ public class SecretGenerateCommand : CommandBase<CommandContext>
 		var name = context.Expression.Options.GetValue<string>(KEY_NAME_OPTION);
 		var pattern = context.Expression.Options.GetValue<string>(KEY_PATTERN_OPTION);
 
-		switch(context.Expression.Arguments.Length)
+		switch(context.Expression.Arguments.Count)
 		{
 			case 0:
 				return await secretor.GenerateAsync(name, pattern, null, cancellation);
@@ -85,9 +85,9 @@ public class SecretGenerateCommand : CommandBase<CommandContext>
 		}
 
 		//定义返回验证码的数组
-		var results = new string[context.Expression.Arguments.Length];
+		var results = new string[context.Expression.Arguments.Count];
 
-		for(int i = 0; i < context.Expression.Arguments.Length; i++)
+		for(int i = 0; i < context.Expression.Arguments.Count; i++)
 		{
 			results[i] = await secretor.GenerateAsync(name, pattern, context.Expression.Arguments[i], cancellation);
 		}

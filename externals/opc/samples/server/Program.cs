@@ -22,10 +22,10 @@ internal static class Program
 
 		executor.Command("get", context =>
 		{
-			if(context.Expression.Arguments.IsEmpty())
+			if(context.Expression.Arguments.IsEmpty)
 				return;
 
-			if(context.Expression.Arguments.Length == 1)
+			if(context.Expression.Arguments.Count == 1)
 			{
 				var succeed = server.TryGetValue(context.Expression.Arguments[0], out var value);
 				var content = CommandOutletContent.Create(string.Empty);
@@ -55,7 +55,7 @@ internal static class Program
 
 		executor.Command("set", context =>
 		{
-			if(context.Expression.Arguments.Length < 2)
+			if(context.Expression.Arguments.Count < 2)
 				throw new CommandException($"Missing required argument of the command.");
 
 			//获取指定键对应的数据类型
@@ -67,16 +67,16 @@ internal static class Program
 			if(type.IsArray)
 			{
 				type = type.GetElementType();
-				value = Array.CreateInstance(type, context.Expression.Arguments.Length - 1);
+				value = Array.CreateInstance(type, context.Expression.Arguments.Count - 1);
 
-				for(int i = 1; i < context.Expression.Arguments.Length; i++)
+				for(int i = 1; i < context.Expression.Arguments.Count; i++)
 				{
 					((Array)value).SetValue(Common.Convert.ConvertValue(context.Expression.Arguments[i], type), i - 1);
 				}
 			}
 			else
 			{
-				if(context.Expression.Arguments.Length > 2)
+				if(context.Expression.Arguments.Count > 2)
 					throw new CommandException($"Too many command arguments.");
 
 				value = Common.Convert.ConvertValue(context.Expression.Arguments[1], type);

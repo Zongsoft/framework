@@ -45,7 +45,7 @@ public class FileCopyCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length != 2)
+		if(context.Expression.Arguments.Count != 2)
 			throw new CommandException(string.Format(Properties.Resources.Text_Command_RequiresCountOfArguments, "2"));
 
 		await FileSystem.File.CopyAsync(context.Expression.Arguments[0], context.Expression.Arguments[1]);

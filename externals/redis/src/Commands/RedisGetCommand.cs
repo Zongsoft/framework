@@ -49,14 +49,14 @@ public class RedisGetCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length < 1)
+		if(context.Expression.Arguments.IsEmpty)
 			throw new CommandException("Missing arguments.");
 
 		int index = 0;
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
-		var result = new List<object>(context.Expression.Arguments.Length);
+		var result = new List<object>(context.Expression.Arguments.Count);
 
-		for(int i = 0; i < context.Expression.Arguments.Length; i++)
+		for(int i = 0; i < context.Expression.Arguments.Count; i++)
 		{
 			if(!await redis.ExistsAsync(context.Expression.Arguments[i], cancellation))
 			{

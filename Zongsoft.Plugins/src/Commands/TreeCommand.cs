@@ -62,10 +62,10 @@ public class TreeCommand : CommandBase<CommandContext>
 			if(context.Value != null)
 				throw new CommandException(string.Format(Properties.Resources.Text_Message_InvalidCommandParameter, context.CommandNode.FullPath));
 
-			if(context.Expression.Arguments.Length == 0)
+			if(context.Expression.Arguments.IsEmpty)
 				throw new CommandException(Properties.Resources.Text_Message_MissingCommandArguments);
 
-			if(context.Expression.Arguments.Length > 1)
+			if(context.Expression.Arguments.Count > 1)
 				throw new CommandException(Properties.Resources.Text_Message_CommandArgumentsTooMany);
 
 			node = _pluginTree.Find(context.Expression.Arguments[0]);
@@ -92,11 +92,11 @@ public class TreeCommand : CommandBase<CommandContext>
 
 		if(depth > 0)
 		{
-			output.Write(CommandOutletColor.DarkMagenta, indent + "[{0}.{1}] ", depth, index);
+			output.Write(CommandOutletColor.DarkMagenta, indent + $"[{depth}.{index}] ");
 		}
 
 		output.Write(qualified ? node.FullPath : node.Name);
-		output.Write(CommandOutletColor.DarkGray, " [{0}]", node.NodeType);
+		output.Write(CommandOutletColor.DarkGray, $" [{node.NodeType}]");
 
 		if(node.Plugin == null)
 			output.WriteLine();
@@ -108,7 +108,7 @@ public class TreeCommand : CommandBase<CommandContext>
 
 		var target = node.UnwrapValue(ObtainMode.Never);
 		if(target != null)
-			output.WriteLine(CommandOutletColor.DarkYellow, "{0}{1}", indent, target.GetType().FullName);
+			output.WriteLine(CommandOutletColor.DarkYellow, $"{indent}{target.GetType().FullName}");
 
 		if(maxDepth > 0 && depth >= maxDepth)
 			return;

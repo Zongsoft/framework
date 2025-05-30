@@ -43,10 +43,10 @@ public class EchoCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length == 0)
+		if(context.Expression.Arguments.IsEmpty)
 			return ValueTask.FromResult(context.Value);
 
-		if(context.Expression.Arguments.Length == 1)
+		if(context.Expression.Arguments.Count == 1)
 		{
 			context.Output.Write(context.Expression.Arguments[0]);
 			return ValueTask.FromResult<object>(context.Expression.Arguments[0]);

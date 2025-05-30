@@ -47,7 +47,7 @@ public class FileInfoCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length == 0)
+		if(context.Expression.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
 		async ValueTask<FileInfo> GetInfoAsync(string path)
@@ -62,7 +62,7 @@ public class FileInfoCommand : CommandBase<CommandContext>
 			return info;
 		}
 
-		if(context.Expression.Arguments.Length == 1)
+		if(context.Expression.Arguments.Count == 1)
 			return await GetInfoAsync(context.Expression.Arguments[0]);
 		else
 			return context.Expression.Arguments.Select(async path => await GetInfoAsync(path)).ToArray();

@@ -63,7 +63,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#region 执行方法
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(context.Expression.Arguments == null || context.Expression.Arguments.Length == 0)
+			if(context.Expression.Arguments == null || context.Expression.Arguments.IsEmpty)
 				throw new CommandException("Missing arguments.");
 
 			var result = await this.CallAsync(

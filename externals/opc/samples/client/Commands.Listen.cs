@@ -29,7 +29,7 @@ partial class Commands
 
 			var subscribers = new List<Subscriber>();
 
-			if(context.Expression.Arguments.Length == 0)
+			if(context.Expression.Arguments.IsEmpty)
 			{
 				foreach(var subscriber in _client.Subscribers)
 				{
@@ -44,7 +44,7 @@ partial class Commands
 				return ValueTask.CompletedTask;
 			}
 
-			for(int i = 0; i < context.Expression.Arguments.Length; i++)
+			for(int i = 0; i < context.Expression.Arguments.Count; i++)
 			{
 				if(!uint.TryParse(context.Expression.Arguments[i], out var id))
 				{

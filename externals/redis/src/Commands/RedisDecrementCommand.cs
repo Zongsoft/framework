@@ -50,15 +50,15 @@ public class RedisDecrementCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length < 1)
+		if(context.Expression.Arguments.IsEmpty)
 			throw new CommandException("Missing arguments.");
 
 		int seed = context.Expression.Options.GetValue<int>("seed");
 		var interval = context.Expression.Options.GetValue<int>("interval");
 		var expiry = context.Expression.Options.GetValue<TimeSpan>("expiry");
-		var result = new long[context.Expression.Arguments.Length];
+		var result = new long[context.Expression.Arguments.Count];
 
-		for(int i = 0; i < context.Expression.Arguments.Length; i++)
+		for(int i = 0; i < context.Expression.Arguments.Count; i++)
 		{
 			var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 			result[i] = await redis.DecreaseAsync(context.Expression.Arguments[i], interval, seed, expiry, cancellation);

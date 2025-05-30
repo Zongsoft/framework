@@ -46,7 +46,7 @@ namespace Zongsoft.Externals.Hangfire.Commands
 		#region 重写方法
 		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(context.Expression.Arguments.Length > 0)
+			if(context.Expression.Arguments.Count > 0)
 				this.Scheduler = ApplicationContext.Current.Services.Resolve<IScheduler>(context.Expression.Arguments[0]);
 			else if(context.Value is string name)
 				this.Scheduler = ApplicationContext.Current.Services.Resolve<IScheduler>(name);

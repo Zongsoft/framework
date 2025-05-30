@@ -53,7 +53,7 @@ public class HelpCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Length == 0)
+		if(context.Expression.Arguments.IsEmpty)
 		{
 			PrintApplication(context.Output);
 
@@ -122,7 +122,7 @@ public class HelpCommand : CommandBase<CommandContext>
 		output.Write(CommandOutletColor.Blue, command.Name + " ");
 
 		if(!command.Enabled)
-			output.Write(CommandOutletColor.DarkGray, "({0})", Properties.Resources.Text_Disabled);
+			output.Write(CommandOutletColor.DarkGray, $"({Properties.Resources.Text_Disabled})");
 
 		if(displayName == null || string.IsNullOrWhiteSpace(displayName.DisplayName))
 			output.Write(Properties.Resources.Text_Command);
@@ -133,7 +133,7 @@ public class HelpCommand : CommandBase<CommandContext>
 
 		if(optionAttributes != null && optionAttributes.Length > 0)
 		{
-			output.WriteLine("," + Properties.Resources.Text_CommandUsages, optionAttributes.Length);
+			output.WriteLine("," + string.Format(Properties.Resources.Text_CommandUsages, optionAttributes.Length));
 			output.WriteLine();
 
 			string commandName = command.Name;
@@ -239,12 +239,12 @@ public class HelpCommand : CommandBase<CommandContext>
 		var fulName = node.FullPath.Trim('/').Replace('/', '.');
 
 		if(node.Command == null)
-			output.WriteLine("{1}[{0}]", fulName, indent);
+			output.WriteLine($"{indent}[{fulName}]");
 		else
 		{
 			var displayName = (DisplayNameAttribute)Attribute.GetCustomAttribute(node.Command.GetType(), typeof(DisplayNameAttribute), true);
 
-			output.Write("{1}{0}", fulName, indent);
+			output.Write($"{indent}{fulName}");
 
 			if(displayName == null)
 				output.WriteLine();
