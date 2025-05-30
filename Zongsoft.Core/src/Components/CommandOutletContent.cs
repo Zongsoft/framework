@@ -204,6 +204,13 @@ public class CommandOutletContent
 		this.AppendLine() :
 		this.Append(text + Environment.NewLine);
 
+	/// <summary>追加一个指定值的内容段。</summary>
+	/// <param name="value">指定的内容对象。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent AppendLine(object value) => value == null ?
+		this.AppendLine() :
+		this.Append($"{value}{Environment.NewLine}");
+
 	/// <summary>追加一个指定颜色和文本的内容段。</summary>
 	/// <param name="color">指定的内容文本颜色。</param>
 	/// <param name="text">指定的内容文本。</param>
@@ -212,16 +219,35 @@ public class CommandOutletContent
 		this.AppendLine() :
 		this.Append(color, text + Environment.NewLine);
 
+	/// <summary>追加一个指定颜色和值的内容段。</summary>
+	/// <param name="color">指定的内容文本颜色。</param>
+	/// <param name="value">指定的内容对象。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent AppendLine(CommandOutletColor color, object value) => value == null ?
+		this.AppendLine() :
+		this.Append(color, $"{value}{Environment.NewLine}");
+
 	/// <summary>追加一个指定文本的内容段。</summary>
 	/// <param name="text">指定的内容文本。</param>
 	/// <returns>返回追加后的内容段。</returns>
 	public CommandOutletContent Append(string text) => this.AfterCore(null, text);
+
+	/// <summary>追加一个指定值的内容段。</summary>
+	/// <param name="value">指定的内容对象。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append(object value) => this.AfterCore(null, value?.ToString());
 
 	/// <summary>追加一个指定颜色和文本的内容段。</summary>
 	/// <param name="color">指定的内容文本颜色。</param>
 	/// <param name="text">指定的内容文本。</param>
 	/// <returns>返回追加后的内容段。</returns>
 	public CommandOutletContent Append(CommandOutletColor color, string text) => this.AfterCore(color, text);
+
+	/// <summary>追加一个指定颜色和值的内容段。</summary>
+	/// <param name="color">指定的内容文本颜色。</param>
+	/// <param name="value">指定的内容对象。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append(CommandOutletColor color, object value) => this.AfterCore(color, value?.ToString());
 
 	/// <summary>追加一个指定的内容段。</summary>
 	/// <param name="content">指定的内容段。</param>
@@ -246,6 +272,13 @@ public class CommandOutletContent
 		this.PrependLine() :
 		this.Prepend(text + Environment.NewLine);
 
+	/// <summary>前插一个指定值的内容段。</summary>
+	/// <param name="value">指定的内容对象。</param>
+	/// <returns>返回前插后的内容段。</returns>
+	public CommandOutletContent PrependLine(object value) => value == null ?
+		this.PrependLine() :
+		this.Prepend($"{value}{Environment.NewLine}");
+
 	/// <summary>前插一个指定颜色和文本的内容段。</summary>
 	/// <param name="color">指定的内容文本颜色。</param>
 	/// <param name="text">指定的内容文本。</param>
@@ -254,16 +287,35 @@ public class CommandOutletContent
 		this.PrependLine() :
 		this.Prepend(color, text + Environment.NewLine);
 
-	/// <summary>新增一个指定文本的内容段，并作为当前内容链的首部返回。</summary>
+	/// <summary>前插一个指定颜色和值的内容段。</summary>
+	/// <param name="color">指定的内容文本颜色。</param>
+	/// <param name="value">指定的内容对象。</param>
+	/// <returns>返回前插后的内容段。</returns>
+	public CommandOutletContent PrependLine(CommandOutletColor color, object value) => value == null ?
+		this.PrependLine() :
+		this.Prepend(color, $"{value}{Environment.NewLine}");
+
+	/// <summary>新增一个指定文本的内容段。</summary>
 	/// <param name="text">指定的内容文本。</param>
 	/// <returns>返回新增的首部内容段。</returns>
 	public CommandOutletContent Prepend(string text) => this.BeforeCore(null, text);
 
-	/// <summary>新增一个指定颜色和文本的内容段，并作为当前内容链的首部返回。</summary>
+	/// <summary>新增一个指定值的内容段。</summary>
+	/// <param name="value">指定的内容对象。</param>
+	/// <returns>返回新增的首部内容段。</returns>
+	public CommandOutletContent Prepend(object value) => this.BeforeCore(null, value?.ToString());
+
+	/// <summary>新增一个指定颜色和文本的内容段。</summary>
 	/// <param name="color">指定的内容文本颜色。</param>
 	/// <param name="text">指定的内容文本。</param>
 	/// <returns>返回新增的首部内容段。</returns>
 	public CommandOutletContent Prepend(CommandOutletColor color, string text) => this.BeforeCore(color, text);
+
+	/// <summary>新增一个指定颜色和值的内容段。</summary>
+	/// <param name="color">指定的内容文本颜色。</param>
+	/// <param name="value">指定的内容对象。</param>
+	/// <returns>返回新增的首部内容段。</returns>
+	public CommandOutletContent Prepend(CommandOutletColor color, object value) => this.BeforeCore(color, value?.ToString());
 
 	/// <summary>将指定内容段置为当前内容链的首部。</summary>
 	/// <param name="content">指定的内容段。</param>

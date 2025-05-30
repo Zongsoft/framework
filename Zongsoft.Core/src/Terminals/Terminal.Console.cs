@@ -203,27 +203,6 @@ partial class Terminal
 			this.WriteContent(content, false, foregroundColor);
 		}
 
-		public void Write(string format, params object[] args)
-		{
-			lock(_syncRoot)
-			{
-				System.Console.Write(format, args);
-			}
-		}
-
-		public void Write(CommandOutletColor foregroundColor, string format, params object[] args)
-		{
-			lock(_syncRoot)
-			{
-				var originalColor = this.ForegroundColor;
-				this.ForegroundColor = foregroundColor;
-
-				System.Console.Write(format, args);
-
-				this.ForegroundColor = originalColor;
-			}
-		}
-
 		public void WriteLine()
 		{
 			lock(_syncRoot)
@@ -303,27 +282,6 @@ partial class Terminal
 		public void WriteLine(CommandOutletColor foregroundColor, CommandOutletContent content)
 		{
 			this.WriteContent(content, true, foregroundColor);
-		}
-
-		public void WriteLine(string format, params object[] args)
-		{
-			lock(_syncRoot)
-			{
-				System.Console.WriteLine(format, args);
-			}
-		}
-
-		public void WriteLine(CommandOutletColor foregroundColor, string format, params object[] args)
-		{
-			lock(_syncRoot)
-			{
-				var originalColor = this.ForegroundColor;
-				this.ForegroundColor = foregroundColor;
-
-				System.Console.WriteLine(format, args);
-
-				this.ForegroundColor = originalColor;
-			}
 		}
 		#endregion
 

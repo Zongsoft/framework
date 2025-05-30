@@ -72,8 +72,6 @@ public static partial class Terminal
 	public static void Write(CommandOutletColor foregroundColor, object value) => Default.Write(foregroundColor, value);
 	public static void Write(CommandOutletContent content) => Default.Write(content);
 	public static void Write(CommandOutletColor foregroundColor, CommandOutletContent content) => Default.Write(foregroundColor, content);
-	public static void Write(string format, params object[] args) => Default.Write(format, args);
-	public static void Write(CommandOutletColor foregroundColor, string format, params object[] args) => Default.Write(foregroundColor, format, args);
 
 	public static void WriteLine() => Default.WriteLine();
 	public static void WriteLine(char character) => Default.WriteLine(character);
@@ -84,7 +82,5 @@ public static partial class Terminal
 	public static void WriteLine(CommandOutletColor foregroundColor, object value) => Default.WriteLine(foregroundColor, value);
 	public static void WriteLine(CommandOutletContent content) => Default.WriteLine(content);
 	public static void WriteLine(CommandOutletColor foregroundColor, CommandOutletContent content) => Default.WriteLine(foregroundColor, content);
-	public static void WriteLine(string format, params object[] args) => Default.WriteLine(format, args);
-	public static void WriteLine(CommandOutletColor foregroundColor, string format, params object[] args) => Default.WriteLine(foregroundColor, format, args);
 	#endregion
 }
