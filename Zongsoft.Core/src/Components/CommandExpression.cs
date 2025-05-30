@@ -216,10 +216,24 @@ public class CommandExpression
 		#region 公共属性
 		public int Count => _arguments.Length;
 		public bool IsEmpty => _arguments.Length == 0;
-		public string this[int index] => _arguments[index];
+		public string this[int index] => index >= 0 && index < _arguments.Length ? _arguments[index] : null;
 		#endregion
 
 		#region 公共方法
+		public bool Contains(string value, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
+		{
+			if(string.IsNullOrEmpty(value))
+				return false;
+
+			for(int i = 0; i < _arguments.Length; i++)
+			{
+				if(string.Equals(_arguments[i], value, comparison))
+					return true;
+			}
+
+			return false;
+		}
+
 		public bool TryGetValue<T>(int index, out T value)
 		{
 			if(index < 0 || index >= _arguments.Length)

@@ -54,7 +54,8 @@ public class ShellCommand : CommandBase<CommandContext>
 		   Environment.OSVersion.Platform == PlatformID.Unix)
 			throw new NotSupportedException(string.Format("Not supported in the {0} OS.", Environment.OSVersion));
 
-		var terminal = context.GetTerminal() ?? throw new NotSupportedException($"The `{this.Name}` command is only supported running in a terminal executor.");
+		var terminal = context.GetTerminal() ??
+			throw new NotSupportedException($"The `{this.Name}` command is only supported running in a terminal executor.");
 
 		if(context.Expression.Arguments.Count < 1)
 			return ValueTask.FromResult<object>(0);
