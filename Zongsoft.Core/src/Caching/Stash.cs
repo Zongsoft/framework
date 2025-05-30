@@ -38,6 +38,7 @@ namespace Zongsoft.Caching;
 
 /// <summary>提供数据暂存(缓冲)功能的类。</summary>
 /// <typeparam name="T">指定的缓冲数据类型。</typeparam>
+[Obsolete($"This class has been deprecated, Please use the {nameof(Spooler<T>)} class instead.")]
 public class Stash<T> : IDisposable
 {
 	#region 成员字段
@@ -229,7 +230,7 @@ public class Stash<T> : IDisposable
 	private void OnTick(object state)
 	{
 		//暂停计时器
-		_timer.Change(Timeout.Infinite, Timeout.Infinite);
+		_timer?.Change(Timeout.Infinite, Timeout.Infinite);
 
 		try
 		{

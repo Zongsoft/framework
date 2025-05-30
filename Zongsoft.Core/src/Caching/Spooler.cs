@@ -145,7 +145,7 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 	private void OnTick(object state)
 	{
 		//暂停计时器
-		_timer.Change(Timeout.Infinite, Timeout.Infinite);
+		_timer?.Change(Timeout.Infinite, Timeout.Infinite);
 
 		try
 		{
