@@ -14,13 +14,48 @@ namespace Zongsoft.Samples;
 
 internal class Program
 {
-	const int PERIOD = 100;
-	const int LIMIT  = 100000;
+	static int _PERIOD_    = 100;
+	static int _LIMIT_     = 100000;
+	static int _COUNT_     = 100_0000;
+	static int _COLLISION_ = 0;
 
 	static void Main(string[] args)
 	{
 		var stopwater = new Stopwatch();
 		var executor = Terminal.Console.Executor;
+
+		executor.Command("info", context =>
+		{
+			const int PADDING = 10;
+
+			if(context.Expression.Options.TryGetValue<int>("period", out var period))
+				_PERIOD_ = period;
+
+			if(context.Expression.Options.TryGetValue<int>("limit", out var limit))
+				_LIMIT_ = limit;
+
+			if(context.Expression.Options.TryGetValue<int>("count", out var count))
+				_COUNT_ = count;
+
+			if(context.Expression.Options.TryGetValue<int>("collision", out var collision))
+				_COLLISION_ = collision;
+
+			var content = CommandOutletContent.Create()
+				.Append(CommandOutletColor.DarkCyan, "Period".PadRight(PADDING))
+				.Append(CommandOutletColor.DarkGray, "= ")
+				.AppendLine(CommandOutletColor.DarkYellow, $"{_PERIOD_:#,####} ms")
+				.Append(CommandOutletColor.DarkCyan, "Limit".PadRight(PADDING))
+				.Append(CommandOutletColor.DarkGray, "= ")
+				.AppendLine(CommandOutletColor.DarkYellow, $"{_LIMIT_:#,####}")
+				.Append(CommandOutletColor.DarkCyan, "Count".PadRight(PADDING))
+				.Append(CommandOutletColor.DarkGray, "= ")
+				.AppendLine(CommandOutletColor.DarkYellow, $"{_COUNT_:#,####}")
+				.Append(CommandOutletColor.DarkCyan, "Collision".PadRight(PADDING))
+				.Append(CommandOutletColor.DarkGray, "= ")
+				.AppendLine(CommandOutletColor.DarkYellow, $"{_COLLISION_}");
+
+			Terminal.Write(content);
+		});
 
 		executor.Command("stash", context =>
 		{
@@ -54,7 +89,7 @@ internal class Program
 
 	static void TestStasher(int count, int collision = 0)
 	{
-		using var stash = new Stash<int>(Handler.Handle, TimeSpan.FromMilliseconds(PERIOD), LIMIT);
+		using var stash = new Stash<int>(Handler.Handle, TimeSpan.FromMilliseconds(_PERIOD_), _LIMIT_);
 
 		var result = Parallel.For(0, count, index =>
 		{
@@ -70,7 +105,7 @@ internal class Program
 
 	static void TestSpooler(int count, int collision = 0)
 	{
-		using var spooler = new Spooler<int>(Handler.Handle, collision > 0, TimeSpan.FromMilliseconds(PERIOD), LIMIT);
+		using var spooler = new Spooler<int>(Handler.Handle, collision > 0, TimeSpan.FromMilliseconds(_PERIOD_), _LIMIT_);
 
 		var result = Parallel.For(0, count, index =>
 		{
@@ -86,13 +121,11 @@ internal class Program
 
 	private static (int count, int collision) GetCommandOptions(CommandContext context)
 	{
-		const int COUNT = 100_0000;
-
 		if(!context.Expression.Options.TryGetValue<int>("count", out var count))
-			count = context.Expression.Arguments.GetValue(0, COUNT);
+			count = context.Expression.Arguments.GetValue(0, _COUNT_);
 
 		if(!context.Expression.Options.TryGetValue<int>("collision", out var collision))
-			collision = context.Expression.Arguments.GetValue(1, 0);
+			collision = context.Expression.Arguments.GetValue(1, _COLLISION_);
 
 		return (Math.Max(count, 100), collision);
 	}
@@ -119,7 +152,7 @@ internal class Program
 					Terminal.Write(content);
 
 					//等待最后一波的缓冲过期（注意：等待的时长必须是计时器的倍数）
-					SpinWait.SpinUntil(() => _count >= count, PERIOD * 3);
+					SpinWait.SpinUntil(() => _count >= count, _PERIOD_ * 3);
 
 					content.Last
 						.Append(CommandOutletColor.DarkGray, "[")
