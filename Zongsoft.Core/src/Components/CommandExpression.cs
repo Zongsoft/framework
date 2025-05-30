@@ -215,6 +215,7 @@ public class CommandExpression
 
 		#region 公共属性
 		public int Count => _arguments.Length;
+		public bool IsEmpty => _arguments.Length == 0;
 		public string this[int index] => _arguments[index];
 		#endregion
 
