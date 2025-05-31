@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Zongsoft.Data.Benchmarks;
+namespace Zongsoft.Benchmarks;
 
 public enum Gender
 {
@@ -32,4 +32,19 @@ public class PersonModel
 	public DateTime Birthdate { get; set; }
 	public string BloodType { get; set; }
 	public Address HomeAddress { get; set; }
+
+	public static PersonModel Create() => new()
+	{
+		Name = "Popeye Zhong",
+		Gender = Zongsoft.Benchmarks.Gender.Male,
+		Birthdate = DateTime.Now,
+		BloodType = "AB",
+		HomeAddress = new()
+		{
+			City = "Shanghai",
+			Detail = "Pudong New Area, Zhangjiang High-Tech Park",
+			PostalCode = "201203",
+			CountryId = 86,
+		},
+	};
 }

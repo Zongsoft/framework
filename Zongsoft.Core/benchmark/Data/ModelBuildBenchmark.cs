@@ -4,7 +4,9 @@ using BenchmarkDotNet;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Attributes;
 
-namespace Zongsoft.Data.Benchmarks;
+using Zongsoft.Data;
+
+namespace Zongsoft.Benchmarks;
 
 #if NET5_0
 [SimpleJob(RuntimeMoniker.Net50, 1, 0, 3)]
@@ -21,7 +23,7 @@ namespace Zongsoft.Data.Benchmarks;
 [RPlotExporter, HtmlExporter, MarkdownExporter]
 public class ModelBuildBenchmark
 {
-	[Params(100, 1000, 1_0000)]
+	[Params(100, 1_000, 1_0000, 10_0000)]
 	public int Count = 0;
 
 	[GlobalSetup]
