@@ -9,11 +9,18 @@ using Zongsoft.Reflection;
 
 namespace Zongsoft.Benchmarks;
 
+#if NET5_0
+[SimpleJob(RuntimeMoniker.Net50)]
+#elif NET6_0
+[SimpleJob(RuntimeMoniker.Net60)]
+#elif NET7_0
+[SimpleJob(RuntimeMoniker.Net70)]
+#elif NET8_0
+[SimpleJob(RuntimeMoniker.Net80)]
+#elif NET9_0
+[SimpleJob(RuntimeMoniker.Net90)]
+#endif
 [MemoryDiagnoser]
-[SimpleJob(RuntimeMoniker.Net60, 1, 0, 3)]
-[SimpleJob(RuntimeMoniker.Net70, 1, 0, 3)]
-[SimpleJob(RuntimeMoniker.Net80, 1, 0, 3)]
-[SimpleJob(RuntimeMoniker.Net90, 1, 0, 3)]
 [RPlotExporter, HtmlExporter, MarkdownExporter]
 public class PropertySetterBenchmark
 {
@@ -76,6 +83,28 @@ public class PropertySetterBenchmark
 		}
 	}
 
+	[Benchmark]
+	public void DirectSetProperty()
+	{
+		var count = this.Count;
+		var target = new PersonModel();
+		(var name, var gender, var birthdate, var address) = GetSetters();
+
+		for(int i = 0; i < count; i++)
+		{
+			name.Invoke(ref target, "Popeye Zhong");
+			gender.Invoke(ref target, Gender.Male);
+			birthdate.Invoke(ref target, DateTime.Now);
+			address.Invoke(ref target, new Address
+			{
+				City = "Shanghai",
+				Detail = "Pudong New Area, Zhangjiang High-Tech Park",
+				PostalCode = "201203",
+				CountryId = 86
+			});
+		}
+	}
+
 	private static (PropertyInfo name, PropertyInfo gender, PropertyInfo birthdate, PropertyInfo address) GetProperties()
 	{
 		return (
@@ -83,6 +112,16 @@ public class PropertySetterBenchmark
 			typeof(PersonModel).GetProperty(nameof(PersonModel.Gender), BindingFlags.Public | BindingFlags.Instance),
 			typeof(PersonModel).GetProperty(nameof(PersonModel.Birthdate), BindingFlags.Public | BindingFlags.Instance),
 			typeof(PersonModel).GetProperty(nameof(PersonModel.HomeAddress), BindingFlags.Public | BindingFlags.Instance)
+		);
+	}
+
+	private static (PropertyInfoExtension.Setter<PersonModel> name, PropertyInfoExtension.Setter<PersonModel> gender, PropertyInfoExtension.Setter<PersonModel> birthdate, PropertyInfoExtension.Setter<PersonModel> address) GetSetters()
+	{
+		return (
+			typeof(PersonModel).GetProperty(nameof(PersonModel.Name), BindingFlags.Public | BindingFlags.Instance).GetSetter<PersonModel>(),
+			typeof(PersonModel).GetProperty(nameof(PersonModel.Gender), BindingFlags.Public | BindingFlags.Instance).GetSetter<PersonModel>(),
+			typeof(PersonModel).GetProperty(nameof(PersonModel.Birthdate), BindingFlags.Public | BindingFlags.Instance).GetSetter<PersonModel>(),
+			typeof(PersonModel).GetProperty(nameof(PersonModel.HomeAddress), BindingFlags.Public | BindingFlags.Instance).GetSetter<PersonModel>()
 		);
 	}
 }

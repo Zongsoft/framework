@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 
 using BenchmarkDotNet;
@@ -9,11 +10,18 @@ using Zongsoft.Reflection;
 
 namespace Zongsoft.Benchmarks;
 
+#if NET5_0
+[SimpleJob(RuntimeMoniker.Net50)]
+#elif NET6_0
+[SimpleJob(RuntimeMoniker.Net60)]
+#elif NET7_0
+[SimpleJob(RuntimeMoniker.Net70)]
+#elif NET8_0
+[SimpleJob(RuntimeMoniker.Net80)]
+#elif NET9_0
+[SimpleJob(RuntimeMoniker.Net90)]
+#endif
 [MemoryDiagnoser]
-[SimpleJob(RuntimeMoniker.Net60, 1, 0, 3)]
-[SimpleJob(RuntimeMoniker.Net70, 1, 0, 3)]
-[SimpleJob(RuntimeMoniker.Net80, 1, 0, 3)]
-[SimpleJob(RuntimeMoniker.Net90, 1, 0, 3)]
 [RPlotExporter, HtmlExporter, MarkdownExporter]
 public class PropertyGetterBenchmark
 {
@@ -60,6 +68,22 @@ public class PropertyGetterBenchmark
 			{
 				var property = properties[j];
 				Reflector.GetValue(property, ref target);
+			}
+		}
+	}
+
+	[Benchmark]
+	public void DirectGetProperty()
+	{
+		var count = this.Count;
+		var target = PersonModel.Create();
+		var getters = GetProperties(target.GetType()).Select(property => property.GetGetter<PersonModel>()).ToArray();
+
+		for(int i = 0; i < count; i++)
+		{
+			for(int j = 0; j < getters.Length; j++)
+			{
+				getters[j].Invoke(ref target);
 			}
 		}
 	}
