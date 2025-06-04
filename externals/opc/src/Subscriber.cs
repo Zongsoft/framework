@@ -64,6 +64,7 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 
 		_consumer = consumer;
 		this.Options = options;
+		this.Statistics = new();
 		this.Entries = new EntryCollection(this);
 	}
 	#endregion
@@ -73,6 +74,7 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	public SubscriberOptions Options { get; }
 	public uint Identifier => _subscription?.Id ?? 0;
 	public string Description { get; set; }
+	public SubscriberStatistics Statistics { get; }
 	public bool Registered => _subscription?.Created ?? false;
 	public EntryCollection Entries { get; }
 	public Entry this[string name] => this.Entries[name];
@@ -158,6 +160,9 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	internal void OnNotification(MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs args)
 	{
 		var consumer = _consumer;
+
+		//累加统计项的相关计数器
+		this.Statistics.IncreaseNotificationCount();
 
 		if(consumer != null && this.Entries.TryGetValue(monitoredItem.StartNodeId, out var entry))
 		{
