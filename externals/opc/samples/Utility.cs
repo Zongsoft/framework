@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Terminals;
@@ -59,5 +61,24 @@ internal static class Utility
 			.Append(CommandOutletColor.DarkGray, " (")
 			.Append(CommandOutletColor.Yellow, type.GetAlias())
 			.AppendLine(CommandOutletColor.DarkGray, ")");
+	}
+
+	internal static IEnumerable<string> ReadLines(this StreamReader reader, Func<string, bool> filter = null)
+	{
+		if(reader == null)
+			throw new ArgumentNullException(nameof(reader));
+
+		if(filter == null)
+			filter = text => !string.IsNullOrEmpty(text);
+
+		string text = reader.ReadLine();
+
+		while(text != null)
+		{
+			if(filter(text))
+				yield return text;
+
+			text = reader.ReadLine();
+		}
 	}
 }

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.IO;
+using System.Linq;
 
 using Zongsoft.Common;
 using Zongsoft.Terminals;
@@ -32,9 +32,6 @@ internal class Program
 
 		executor.Command("subscribe", async (context, cancellation) =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
-				throw new CommandException($"Missing required arguments of the subscribe command.");
-
 			Subscriber subscriber = null;
 
 			if(context.Expression.Options.TryGetValue<uint>("s", out var id))
@@ -45,13 +42,41 @@ internal class Program
 					return null;
 				}
 
+				if(context.Expression.Arguments.IsEmpty)
+					throw new CommandException($"Missing required arguments of the subscribe command.");
+
 				foreach(var identifier in context.Expression.Arguments)
 					subscriber.Entries.Add(identifier);
 
 				return subscriber;
 			}
+			else if(context.Expression.Options.TryGetValue<string>("directory", out var directory))
+			{
+				if(string.IsNullOrEmpty(directory))
+					directory = Path.Combine(AppContext.BaseDirectory, "subscription");
+				else
+					directory = Path.Combine(AppContext.BaseDirectory, directory);
+
+				var paths = context.Expression.Arguments.IsEmpty ?
+					Directory.GetFiles(directory, "*.txt", SearchOption.TopDirectoryOnly) :
+					context.Expression.Arguments.Select(argument => Path.Combine(directory, argument));
+
+				foreach(var path in paths)
+				{
+					using var reader = File.OpenText(path);
+					subscriber = await _client.SubscribeAsync(reader.ReadLines(), cancellation);
+
+					if(subscriber == null)
+						context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The subscription failed, possibly because the specified entries is already subscribed.");
+					else
+						context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The '#{subscriber.Identifier}' subscription was successful.");
+				}
+			}
 			else
 			{
+				if(context.Expression.Arguments.IsEmpty)
+					throw new CommandException($"Missing required arguments of the subscribe command.");
+
 				subscriber = await _client.SubscribeAsync(context.Expression.Arguments, cancellation);
 
 				if(subscriber == null)
