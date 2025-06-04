@@ -37,7 +37,7 @@ internal partial class Commands
 			foreach(var subscriber in client.Subscribers)
 			{
 				if(index > 0)
-					context.Output.WriteLine();
+					content.Last.AppendLine();
 
 				DumpSubscriber(content.Last, subscriber, ++index, context.Expression.Options.GetValue("detailed", false));
 			}

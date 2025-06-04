@@ -20,7 +20,7 @@ partial class Commands
 	{
 		#region 成员字段
 		private readonly OpcClient _client = client ?? throw new ArgumentNullException(nameof(client));
-		private Spooler<KeyValuePair<string, object>> _spooler;
+		private Spooler<Metric> _spooler;
 		#endregion
 
 		#region 重写方法
@@ -63,10 +63,10 @@ partial class Commands
 			if(subscribers.Count == 0)
 				throw new CommandException($"No subscriptions.");
 
-			if(context.Expression.Options.GetValue("spooling", true))
+			if(context.Expression.Options.Contains("spooling"))
 				_spooler = new(
 					this.OnFlush,
-					context.Expression.Options.GetValue<bool>("distinct"),
+					context.Expression.Options.Contains("distinct"),
 					TimeSpan.FromMilliseconds(context.Expression.Options.GetValue<int>("period")),
 					context.Expression.Options.GetValue<int>("limit"));
 
@@ -101,6 +101,10 @@ partial class Commands
 			//处置释放缓冲器
 			_spooler?.Dispose();
 
+			//重置统计计数器
+			_total = 0;
+			_timestamp = DateTime.Now;
+
 			return ValueTask.CompletedTask;
 		}
 		#endregion
@@ -109,7 +113,7 @@ partial class Commands
 		private ulong _total;
 		private DateTime _timestamp;
 
-		private void OnFlush(IEnumerable<KeyValuePair<string, object>> entries)
+		private void OnFlush(IEnumerable<Metric> entries)
 		{
 			if(_total > 0 && (DateTime.Now - _timestamp).TotalMilliseconds > 500)
 				Terminal.WriteLine();
@@ -153,6 +157,19 @@ partial class Commands
 			.AppendValue(value);
 
 		private static void Dump(ICommandOutlet output, Subscriber subscriber, Subscriber.Entry entry, object value) => output.Write(DumpValue(subscriber, entry, value));
+		#endregion
+
+		#region 嵌套结构
+		internal readonly struct Metric(string identifier, object value) : IEquatable<Metric>
+		{
+			public readonly string Identifier = identifier;
+			public readonly object Value = value;
+
+			public bool Equals(Metric other) => string.Equals(this.Identifier, other.Identifier);
+			public override bool Equals(object obj) => obj is Metric metric && this.Equals(metric);
+			public override int GetHashCode() => HashCode.Combine(this.Identifier);
+			public override string ToString() => string.IsNullOrEmpty(this.Identifier) ? string.Empty : $"{this.Identifier}:{this.Value}";
+		}
 		#endregion
 	}
 }
