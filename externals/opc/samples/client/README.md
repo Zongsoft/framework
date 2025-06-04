@@ -2,7 +2,7 @@
 
 ### 连接命令 `connect`
 
-连接到指定的 OPC.UA 服务器，如果未指定参数则默认为本机。示例：
+连接到指定的 OPC.UA 服务器，如果未指定参数则默认为本机。
 
 - 以匿名用户连接到指定的服务器：
 
@@ -43,13 +43,13 @@ disconnect
 	- 订阅指标集
 	- 内部对象信息(需要打开 `detailed` 选项)
 
-- 显示所有订阅者信息
+- 显示所有订阅者信息：
 
 ```bash
 info
 ```
 
-- 显示指定订阅者信息，通过参数指定要显示的订阅者编号。
+- 显示指定订阅者信息，通过参数指定要显示的订阅者编号：
 
 ```bash
 info 11 12 13
@@ -93,6 +93,7 @@ subscribe -subscriber:11 ns=2;s=variable1 ns=2;i=1001 ns=2;g=E9DBF5F2-0AAB-49C0-
 - 从文件中获取订阅指标进行大批量订阅：
 
 ```bash
+subscribe -directory
 subscribe -directory        filename1.txt filename2.txt filenameN.txt
 subscribe -directory:subdir filename1.txt filename2.txt filenameN.txt
 ```
@@ -102,7 +103,7 @@ subscribe -directory:subdir filename1.txt filename2.txt filenameN.txt
 
 ### 取消订阅 `unsubscribe`
 
-订阅指定的指标数据，该命令别名为：`unsub`。
+取消订阅，该命令别名为：`unsub`。
 
 - 取消指定的订阅者，通过参数指定一个或多个 _(使用空格分隔)_ 订阅者编号：
 
@@ -130,6 +131,8 @@ unsubscribe
 > - distinct 选项：表示是否启用去重处理，默认不去重。
 
 - 监听
+
+> 注意：普通监听可能会因为订阅的数量过多而无法跟上数据的刷新频率，而导致积压。
 
 ```bash
 listen
