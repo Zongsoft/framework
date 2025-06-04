@@ -35,11 +35,11 @@ namespace Zongsoft.Externals.Opc;
 public sealed class SubscriberStatistics
 {
 	#region 成员字段
-	private long _notificationCount;
+	private ulong _notificationCount;
 	#endregion
 
 	#region 公共属性
-	public long NotificationCount => Interlocked.Read(ref _notificationCount);
+	public ulong NotificationCount => Interlocked.Read(ref _notificationCount);
 	#endregion
 
 	#region 公共方法
@@ -50,6 +50,6 @@ public sealed class SubscriberStatistics
 	#endregion
 
 	#region 内部方法
-	internal long IncreaseNotificationCount() => Interlocked.Increment(ref _notificationCount);
+	internal ulong IncreaseNotificationCount() => Interlocked.Increment(ref _notificationCount);
 	#endregion
 }
