@@ -22,10 +22,38 @@ internal class Program
 
 		executor.Command("info", Commands.Info, _client);
 
+		executor.Command("reset", context =>
+		{
+			if(context.Expression.Arguments.IsEmpty)
+			{
+				foreach(var subscriber in _client.Subscribers)
+					subscriber.Statistics.Reset();
+
+				return;
+			}
+
+			foreach(var key in context.Expression.Arguments)
+			{
+				if(!uint.TryParse(key, out var id))
+				{
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{key}' subscription identifier is an illegal integer.");
+					continue;
+				}
+
+				if(!_client.Subscribers.TryGetValue(id, out var subscriber))
+				{
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{key}' subscription does not exist.");
+					continue;
+				}
+
+				subscriber.Statistics.Reset();
+			}
+		});
+
 		executor.Command("connect", (context, cancellation) =>
 		{
 			var settings = context.Expression.Arguments.IsEmpty ? CONNECTION_SETTINGS : context.Expression.Arguments[0];
-			return _client.ConnectAsync(settings, cancellation);
+			return _client.ConnectAsync(settings.Contains('=') ? settings : $"Server={settings}", cancellation);
 		});
 
 		executor.Command("disconnect", (context, cancellation) => _client.DisconnectAsync(cancellation));
@@ -61,15 +89,31 @@ internal class Program
 					Directory.GetFiles(directory, "*.txt", SearchOption.TopDirectoryOnly) :
 					context.Expression.Arguments.Select(argument => Path.Combine(directory, argument));
 
+				var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
 				foreach(var path in paths)
 				{
+					stopwatch.Restart();
+
 					using var reader = File.OpenText(path);
 					subscriber = await _client.SubscribeAsync(reader.ReadLines(), cancellation);
 
+					stopwatch.Stop();
+
 					if(subscriber == null)
-						context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The subscription failed, possibly because the specified entries is already subscribed.");
+					{
+						context.Output.Write(CommandOutletColor.DarkMagenta, $"The subscription failed, possibly because the specified entries is already subscribed.");
+						context.Output.Write(CommandOutletColor.DarkGray, " (");
+						context.Output.Write(CommandOutletColor.DarkYellow, $"{stopwatch.Elapsed}");
+						context.Output.WriteLine(CommandOutletColor.DarkGray, ")");
+					}
 					else
-						context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The '#{subscriber.Identifier}' subscription was successful.");
+					{
+						context.Output.Write(CommandOutletColor.DarkGreen, $"The '#{subscriber.Identifier}' subscription was successful.");
+						context.Output.Write(CommandOutletColor.DarkGray, " (");
+						context.Output.Write(CommandOutletColor.DarkYellow, $"{stopwatch.Elapsed}");
+						context.Output.WriteLine(CommandOutletColor.DarkGray, ")");
+					}
 				}
 			}
 			else

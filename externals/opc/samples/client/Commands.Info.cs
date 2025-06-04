@@ -22,14 +22,24 @@ internal partial class Commands
 			.AppendLine(CommandOutletColor.DarkGray, ")")
 			.AppendLine(CommandOutletColor.DarkYellow, client.Settings?.ToString());
 
-		if(client.Subscribers.Count > 0)
+		if(context.Expression.Arguments.Count > 0)
+		{
+			for(int i = 0; i < context.Expression.Arguments.Count; i++)
+			{
+				if(context.Expression.Arguments.TryGetValue<uint>(i, out var id) && client.Subscribers.TryGetValue(id, out var subscriber))
+					DumpSubscriber(content.Last, subscriber, -1, context.Expression.Options.GetValue("detailed", false));
+			}
+		}
+		else if(client.Subscribers.Count > 0)
 		{
 			int index = 0;
 
 			foreach(var subscriber in client.Subscribers)
 			{
-				context.Output.WriteLine();
-				DumpSubscriber(content, subscriber, ++index, context.Expression.Options.GetValue("detailed", false));
+				if(index > 0)
+					context.Output.WriteLine();
+
+				DumpSubscriber(content.Last, subscriber, ++index, context.Expression.Options.GetValue("detailed", false));
 			}
 		}
 
@@ -41,31 +51,46 @@ internal partial class Commands
 		if(subscriber == null)
 			return;
 
-		content.Append(CommandOutletColor.DarkMagenta, $"#{index}")
-			.Append(CommandOutletColor.DarkCyan, $" [{subscriber.Identifier}]")
+		if(index >= 0)
+			content.Append(CommandOutletColor.DarkMagenta, $"#{index} ");
+
+		content.Last
+			.Append(CommandOutletColor.DarkCyan, $"[{subscriber.Identifier}]")
 			.Append(CommandOutletColor.DarkYellow, subscriber.Description)
 			.Append(CommandOutletColor.DarkGray, " (")
 			.Append(subscriber.Registered ? CommandOutletColor.Green : CommandOutletColor.Magenta, subscriber.Registered ? "Registered" : "Unregistered")
-			.AppendLine(CommandOutletColor.DarkGray, ")");
+			.Append(CommandOutletColor.DarkGray, ")")
+			.Append(CommandOutletColor.DarkGray, " {")
+			.Append(CommandOutletColor.Cyan, $"{subscriber.Statistics.NotificationCount:#,0000}")
+			.AppendLine(CommandOutletColor.DarkGray, "}");
 
-		var entryIndex = 0;
+		var entryIndex = 1;
 		foreach(var entry in subscriber.Entries)
 		{
-			content
-				.Append(CommandOutletColor.DarkGray, $"\t[{++entryIndex}] ")
+			if(subscriber.Entries.Count > 11 && entryIndex >= 10 && entryIndex != subscriber.Entries.Count)
+			{
+				if(entryIndex == 10)
+					content.Last.AppendLine(CommandOutletColor.Gray, "\t\t... ...");
+
+				entryIndex++;
+				continue;
+			}
+
+			content.Last
+				.Append(CommandOutletColor.DarkGray, $"\t[{entryIndex++}] ")
 				.Append(CommandOutletColor.DarkGreen, entry.Name);
 
 			if(entry.Type == null)
-				content.AppendLine();
+				content.Last.AppendLine();
 			else
-				content
+				content.Last
 					.Append(CommandOutletColor.DarkGray, "@")
 					.AppendLine(CommandOutletColor.DarkYellow, TypeAlias.GetAlias(entry.Type));
 		}
 
 		if(detailed && subscriber.Subscription != null)
 		{
-			content.AppendLine(CommandOutletColor.Gray, "{");
+			content.Last.AppendLine(CommandOutletColor.Gray, "{");
 
 			//获取订阅对象的公共实例属性集
 			var properties = subscriber.Subscription.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
@@ -75,19 +100,20 @@ internal partial class Commands
 				if(!property.CanRead || property.GetIndexParameters().Length > 0)
 					continue;
 
-				content.Append(CommandOutletColor.DarkGreen, $"\t{property.Name}")
-					   .Append(CommandOutletColor.DarkGray, " : ")
-					   .Append(CommandOutletColor.DarkCyan, $"({TypeAlias.GetAlias(property.PropertyType)}) ");
+				content.Last
+					.Append(CommandOutletColor.DarkGreen, $"\t{property.Name}")
+					.Append(CommandOutletColor.DarkGray, " : ")
+					.Append(CommandOutletColor.DarkCyan, $"({TypeAlias.GetAlias(property.PropertyType)}) ");
 
 				var value = property.GetValue(subscriber.Subscription);
 
 				if(value == null)
-					content.AppendLine(CommandOutletColor.DarkGray, "NULL");
+					content.Last.AppendLine(CommandOutletColor.DarkGray, "NULL");
 				else
-					content.AppendLine(CommandOutletColor.DarkYellow, value.ToString());
+					content.Last.AppendLine(CommandOutletColor.DarkYellow, value.ToString());
 			}
 
-			content.AppendLine(CommandOutletColor.Gray, "}");
+			content.Last.AppendLine(CommandOutletColor.Gray, "}");
 		}
 	}
 }

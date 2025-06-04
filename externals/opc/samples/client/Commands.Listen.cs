@@ -95,7 +95,7 @@ partial class Commands
 			.AppendLine(CommandOutletColor.DarkYellow, " key to exit this mode.")
 			.AppendLine(new string('-', 80));
 
-		private static CommandOutletContent GetConsumer(Subscriber subscriber, Subscriber.Entry entry, object value) => CommandOutletContent.Create()
+		private static CommandOutletContent DumpValue(Subscriber subscriber, Subscriber.Entry entry, object value) => CommandOutletContent.Create()
 			.Append(CommandOutletColor.DarkGray, "[")
 			.Append(CommandOutletColor.DarkGreen, nameof(Subscriber))
 			.Append(CommandOutletColor.DarkGray, "#")
@@ -105,7 +105,7 @@ partial class Commands
 			.Append(CommandOutletColor.DarkGray, " : ")
 			.AppendValue(value);
 
-		private static void Dump(ICommandOutlet output, Subscriber subscriber, Subscriber.Entry entry, object value) => output.Write(GetConsumer(subscriber, entry, value));
+		private static void Dump(ICommandOutlet output, Subscriber subscriber, Subscriber.Entry entry, object value) => output.Write(DumpValue(subscriber, entry, value));
 		#endregion
 	}
 }
