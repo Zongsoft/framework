@@ -62,7 +62,7 @@ internal class Program
 		{
 			Subscriber subscriber = null;
 
-			if(context.Expression.Options.TryGetValue<uint>("s", out var id))
+			if(context.Expression.Options.TryGetValue<uint>("subscriber", out var id))
 			{
 				if(!_client.Subscribers.TryGetValue(id, out subscriber))
 				{
