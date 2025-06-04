@@ -87,7 +87,7 @@ public class CommandOptionCollection : IEnumerable<KeyValuePair<string, string>>
 	#endregion
 
 	#region 公共方法
-	public bool Contains(string name) => _items.ContainsKey(name);
+	public bool Contains(string name) => name != null && _items.ContainsKey(name);
 	public object GetValue(string name)
 	{
 		if(string.IsNullOrWhiteSpace(name))
@@ -108,7 +108,7 @@ public class CommandOptionCollection : IEnumerable<KeyValuePair<string, string>>
 			throw new ArgumentNullException(nameof(name));
 
 		if(_items.TryGetValue(name, out var value))
-			return Common.Convert.ConvertValue<T>(value);
+			return Common.Convert.ConvertValue<T>(value, default(T));
 
 		if(_attributes != null && _attributes.TryGetValue(name, out var attribute))
 			return Common.Convert.ConvertValue<T>(attribute.DefaultValue);
@@ -122,7 +122,7 @@ public class CommandOptionCollection : IEnumerable<KeyValuePair<string, string>>
 			throw new ArgumentNullException(nameof(name));
 
 		if(_items.TryGetValue(name, out var value))
-			return Common.Convert.ConvertValue<T>(value);
+			return Common.Convert.ConvertValue<T>(value, defaultValue);
 
 		if(_attributes != null && _attributes.TryGetValue(name, out var attribute))
 			return Common.Convert.ConvertValue<T>(attribute.DefaultValue);
@@ -132,13 +132,10 @@ public class CommandOptionCollection : IEnumerable<KeyValuePair<string, string>>
 
 	public bool TryGetValue(string name, out object value)
 	{
-		if(string.IsNullOrWhiteSpace(name))
-			throw new ArgumentNullException(nameof(name));
-
-		if(_items.TryGetValue(name, out var result))
+		if(name != null && _items.TryGetValue(name, out var result))
 		{
 			if(_attributes != null && _attributes.TryGetValue(name, out var attribute))
-				value = attribute.Type == null ? result : Common.Convert.ConvertValue(result, attribute.Type);
+				value = attribute.Type == null ? result : Common.Convert.ConvertValue(result, attribute.Type, attribute.DefaultValue);
 			else
 				value = result;
 
@@ -151,12 +148,9 @@ public class CommandOptionCollection : IEnumerable<KeyValuePair<string, string>>
 
 	public bool TryGetValue<T>(string name, out T value)
 	{
-		if(string.IsNullOrWhiteSpace(name))
-			throw new ArgumentNullException(nameof(name));
-
-		if(_items.TryGetValue(name, out var result))
+		if(name != null && _items.TryGetValue(name, out var result))
 		{
-			value = Common.Convert.ConvertValue<T>(result);
+			value = Common.Convert.ConvertValue<T>(result, default(T));
 			return true;
 		}
 
@@ -218,22 +212,13 @@ public class CommandOptionCollection : IEnumerable<KeyValuePair<string, string>>
 		if(!_attributes.TryGetValue(name, out var attribute))
 			throw new CommandOptionException($"The '{name}' command option is not declared.");
 
-		if(attribute.Type == null)
+		if(attribute.Type == null || string.IsNullOrEmpty(value))
 			return;
 
 		if(attribute.Converter != null)
 		{
-			if(!attribute.Converter.CanConvertFrom(typeof(string)))
+			if(!Common.Convert.TryConvertValue(value, attribute.Type, () => attribute.Converter, out _))
 				throw new CommandOptionValueException(name, value);
-
-			try
-			{
-				attribute.Converter.ConvertFrom(value);
-			}
-			catch
-			{
-				throw new CommandOptionValueException(name, value);
-			}
 		}
 		else
 		{
