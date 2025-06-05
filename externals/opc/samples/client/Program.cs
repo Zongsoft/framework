@@ -287,8 +287,13 @@ internal class Program
 		executor.Aliaser.Set("subscribe", "sub");
 		executor.Aliaser.Set("unsubscribe", "unsub");
 
+		var splash = CommandOutletContent.Create()
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50))
+			.AppendLine(CommandOutletColor.Cyan, "Welcome to the OPC-UA Client.".Justify(50))
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
+
 		//运行终端命令执行器
-		executor.Run($"Welcome to the OPC-UA Client.{Environment.NewLine}{new string('-', 50)}");
+		executor.Run(splash);
 
 		//清场退出
 		await ShutdownAsync(client);

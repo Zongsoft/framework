@@ -90,7 +90,13 @@ internal static class Program
 				context.Output.WriteLine(CommandOutletColor.DarkRed, "The set operation failed.");
 		});
 
-		await executor.RunAsync($"Welcome to the OPC-UA Server.{Environment.NewLine}{new string('-', 50)}");
+		var splash = CommandOutletContent.Create()
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50))
+			.AppendLine(CommandOutletColor.Blue, "Welcome to the OPC-UA Server.".Justify(50))
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
+
+		//运行终端命令执行器
+		await executor.RunAsync(splash);
 	}
 
 	private static void Initialize(this OpcServerOptions.StorageOptions storage) => Initialize(storage.Prefabs);
