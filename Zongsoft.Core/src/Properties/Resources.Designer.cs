@@ -547,6 +547,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 发生错误： 的本地化字符串。
+        /// </summary>
+        internal static string ErrorOccurred_Label {
+            get {
+                return ResourceManager.GetString("ErrorOccurred.Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 您确认是否要退出(输入Yes则退出)？ 的本地化字符串。
         /// </summary>
         internal static string ExitCommand_Confirm {

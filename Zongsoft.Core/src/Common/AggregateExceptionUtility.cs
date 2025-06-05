@@ -49,7 +49,7 @@ public static class AggregateExceptionUtility
 			if(innerException is TException expected)
 				return handler(expected);
 
-			unhandledExceptions ??= new List<Exception>();
+			unhandledExceptions ??= [];
 			unhandledExceptions.Add(innerException);
 		}
 

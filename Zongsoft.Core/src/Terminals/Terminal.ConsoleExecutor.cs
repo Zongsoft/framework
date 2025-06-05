@@ -139,6 +139,16 @@ partial class Terminal
 					if(this.RaiseExit(ex.ExitCode))
 						return ex.ExitCode;
 				}
+				catch(Exception ex)
+				{
+					var content = CommandOutletContent.Create(CommandOutletColor.DarkRed, Properties.Resources.ErrorOccurred_Label)
+						.Append(CommandOutletColor.DarkGray, '[')
+						.Append(CommandOutletColor.DarkMagenta, ex.GetType().Name)
+						.Append(CommandOutletColor.DarkGray, "] ")
+						.Append(CommandOutletColor.DarkRed, ex.Message);
+
+					_terminal.WriteLine(content);
+				}
 			}
 		}
 		#endregion

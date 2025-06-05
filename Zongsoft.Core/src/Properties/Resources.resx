@@ -411,4 +411,7 @@
   <data name="Zongsoft.Security.Privileges.MemberType.User" xml:space="preserve">
     <value>用户</value>
   </data>
+  <data name="ErrorOccurred.Label" xml:space="preserve">
+    <value>发生错误：</value>
+  </data>
 </root>
