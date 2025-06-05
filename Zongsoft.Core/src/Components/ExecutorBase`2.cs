@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -38,15 +38,17 @@ namespace Zongsoft.Components;
 public abstract class ExecutorBase<TArgument, TResult> : IExecutor<TArgument, TResult>, IHandler<TArgument, TResult>, IFilterable<IExecutorContext>
 {
 	#region 构造函数
-	protected ExecutorBase() => this.Filters = new List<IFilter<IExecutorContext>>();
-	protected ExecutorBase(IHandlerLocator<IExecutorContext> locator)
+	protected ExecutorBase() : this(null, null) { }
+	protected ExecutorBase(IHandlerLocator<IExecutorContext> locator, ICollection<IFeature> features = null)
 	{
+		this.Filters = [];
 		this.Locator = locator;
-		this.Filters = new List<IFilter<IExecutorContext>>();
+		this.Features = features ?? [];
 	}
 	#endregion
 
 	#region 公共属性
+	public ICollection<IFeature> Features { get; }
 	public IHandlerLocator<IExecutorContext> Locator { get; }
 	public ICollection<IFilter<IExecutorContext>> Filters { get; }
 	#endregion

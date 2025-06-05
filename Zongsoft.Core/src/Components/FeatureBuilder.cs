@@ -1,4 +1,4 @@
-/*
+﻿/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,18 +28,17 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public interface IExecutor
+public class FeatureBuilder : IFeatureBuilder
 {
-	ICollection<IFeature> Features { get; }
-	ICollection<IFilter<IExecutorContext>> Filters { get; }
+	public FeatureBuilder(params IEnumerable<IFeature> features)
+	{
+		this.Features = [..features];
+	}
 
-	void Execute(object argument, Collections.Parameters parameters = null);
-	ValueTask ExecuteAsync(object argument, CancellationToken cancellation = default);
-	ValueTask ExecuteAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default);
+	public List<IFeature> Features { get; }
+	public ICollection<IFeature> Build() => this.Features;
 }

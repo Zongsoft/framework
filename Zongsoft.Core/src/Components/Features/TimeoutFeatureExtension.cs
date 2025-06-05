@@ -1,4 +1,4 @@
-/*
+﻿/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,18 +28,25 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
-namespace Zongsoft.Components;
+namespace Zongsoft.Components.Features;
 
-public interface IExecutor
+public static class TimeoutFeatureExtension
 {
-	ICollection<IFeature> Features { get; }
-	ICollection<IFilter<IExecutorContext>> Filters { get; }
+	public static IFeatureBuilder Timeout(this IFeatureBuilder builder, int timeout) => builder.Timeout(TimeSpan.FromMilliseconds(timeout));
+	public static IFeatureBuilder Timeout(this IFeatureBuilder builder, TimeSpan timeout)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new TimeoutFeature(timeout));
 
-	void Execute(object argument, Collections.Parameters parameters = null);
-	ValueTask ExecuteAsync(object argument, CancellationToken cancellation = default);
-	ValueTask ExecuteAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default);
+		if(builder is FeatureBuilder fb)
+		{
+			fb.Features.Add(new TimeoutFeature(timeout));
+			return fb;
+		}
+
+		var features = builder.Build();
+		features.Add(new TimeoutFeature(timeout));
+		return new FeatureBuilder(features);
+	}
 }
