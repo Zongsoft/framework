@@ -41,6 +41,7 @@ public static class Executor
 {
 	#region 公共属性
 	public static IFeatureBuilder Features { get; }
+	public static IFeaturePipelineManager Pipelines { get; set; }
 	#endregion
 
 	#region 处理器封装
@@ -66,6 +67,7 @@ public static class Executor
 	private sealed class ExecutorProxy<TArgument> : ExecutorBase<TArgument>
 	{
 		private readonly IHandler<TArgument> _handler;
+		private readonly ICollection<IFeature> _features;
 
 		public ExecutorProxy(IHandler<TArgument> handler, ICollection<IFeature> features) : base(null, features) =>
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
@@ -100,11 +102,20 @@ public static class Executor
 
 		protected override IHandler GetHandler(IExecutorContext<TArgument> context) => _handler;
 		protected override IExecutorContext<TArgument> CreateContext(TArgument argument, Parameters parameters) => new ExecutorContext<TArgument>(this, argument, parameters);
+		protected override ValueTask OnExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default)
+		{
+			var pipeline = Pipelines?.GetPipeline(this, _features);
+
+			return pipeline == null ?
+				base.OnExecuteAsync(context, cancellation) :
+				pipeline.ExecuteAsync(base.OnExecuteAsync, context, cancellation);
+		}
 	}
 
 	private sealed class ExecutorProxy<TArgument, TResult> : ExecutorBase<TArgument, TResult>
 	{
 		private readonly IHandler<TArgument, TResult> _handler;
+		private readonly ICollection<IFeature> _features;
 
 		public ExecutorProxy(IHandler<TArgument, TResult> handler, ICollection<IFeature> features) : base(null, features) =>
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
@@ -139,6 +150,14 @@ public static class Executor
 
 		protected override IHandler GetHandler(IExecutorContext<TArgument, TResult> context) => _handler;
 		protected override IExecutorContext<TArgument, TResult> CreateContext(TArgument argument, Parameters parameters) => new ExecutorContext<TArgument, TResult>(this, argument, parameters);
+		protected override ValueTask<TResult> OnExecuteAsync(IExecutorContext<TArgument, TResult> context, CancellationToken cancellation = default)
+		{
+			var pipeline = Pipelines?.GetPipeline(this, _features);
+
+			return pipeline == null ?
+				base.OnExecuteAsync(context, cancellation) :
+				pipeline.ExecuteAsync(base.OnExecuteAsync, context, cancellation);
+		}
 	}
 	#endregion
 }

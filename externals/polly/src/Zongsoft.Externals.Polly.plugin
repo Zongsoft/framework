@@ -3,8 +3,8 @@
 <plugin name="Zongsoft.Externals.Polly"
         title="Zongsoft.Externals.Polly Plugin"
         author="Zongsoft Studio(zongsoft@qq.com)"
-        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
-        description="Created Date: 2025-04-25 by Popeye Zhong" >
+        copyright="Copyright(C) Zongsoft Studio. 2020-2025. All rights reserved."
+        description="Created Date: 2025-06-01 by Popeye Zhong" >
 
 	<manifest>
 		<assemblies>
