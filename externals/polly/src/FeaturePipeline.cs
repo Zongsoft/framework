@@ -28,41 +28,101 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Polly;
 
-using Zongsoft.Common;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Externals.Polly;
 
-public sealed class FeaturePipeline : IFeaturePipeline
+public sealed class FeaturePipeline(IEnumerable<IFeature> features) : IFeaturePipeline
 {
-	private IEnumerable<IFeature> _features;
-	private ICollection<ResilienceStrategy> _strategies;
+	#region 成员字段
+	private readonly IEnumerable<IFeature> _features = features ?? throw new ArgumentNullException(nameof(features));
+	#endregion
 
+	#region 同步执行
 	public void Execute<TArgument>(Action<TArgument> executor, TArgument argument)
 	{
-		var builder = new ResiliencePipelineBuilder();
-		var pipeline = builder.Build();
+		var pipeline = GetPipeline(_features);
+		pipeline?.Execute(state => executor(state), argument);
 	}
 
-	public void Execute<TArgument>(Action<TArgument, Parameters> executor, TArgument argument, Parameters parameters) => throw new NotImplementedException();
-	public TResult Execute<TArgument, TResult>(Func<TArgument, TResult> executor, TArgument argument) => throw new NotImplementedException();
-	public TResult Execute<TArgument, TResult>(Func<TArgument, Parameters, TResult> executor, TArgument argument, Parameters parameters) => throw new NotImplementedException();
-	public ValueTask ExecuteAsync<TArgument>(Func<TArgument, CancellationToken, ValueTask> executor, TArgument argument, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask ExecuteAsync<TArgument>(Func<TArgument, Parameters, CancellationToken, ValueTask> executor, TArgument argument, Parameters parameters, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask<TResult> ExecuteAsync<TArgument, TResult>(Func<TArgument, CancellationToken, ValueTask<TResult>> executor, TArgument argument, CancellationToken cancellation = default) => throw new NotImplementedException();
-	public ValueTask<TResult> ExecuteAsync<TArgument, TResult>(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> executor, TArgument argument, Parameters parameters, CancellationToken cancellation = default) => throw new NotImplementedException();
-
-	private static ResilienceStrategy GetStrategy(IFeature feature)
+	public void Execute<TArgument>(Action<TArgument, Parameters> executor, TArgument argument, Parameters parameters)
 	{
-		if(feature == null)
+		var pipeline = GetPipeline(_features);
+		pipeline?.Execute(state => executor(state.argument, state.parameters), (argument, parameters));
+	}
+
+	public TResult Execute<TArgument, TResult>(Func<TArgument, TResult> executor, TArgument argument)
+	{
+		var pipeline = GetPipeline<TResult>(_features);
+		return pipeline == null ? default : pipeline.Execute(state => executor(state), argument);
+	}
+
+	public TResult Execute<TArgument, TResult>(Func<TArgument, Parameters, TResult> executor, TArgument argument, Parameters parameters)
+	{
+		var pipeline = GetPipeline<TResult>(_features);
+		return pipeline == null ? default : pipeline.Execute(state => executor(state.argument, state.parameters), (argument, parameters));
+	}
+	#endregion
+
+	#region 异步执行
+	public ValueTask ExecuteAsync<TArgument>(Func<TArgument, CancellationToken, ValueTask> executor, TArgument argument, CancellationToken cancellation = default)
+	{
+		var pipeline = GetPipeline(_features);
+		return pipeline == null ? default : pipeline.ExecuteAsync((state, cancellation) => executor(state, cancellation), argument, cancellation);
+	}
+
+	public ValueTask ExecuteAsync<TArgument>(Func<TArgument, Parameters, CancellationToken, ValueTask> executor, TArgument argument, Parameters parameters, CancellationToken cancellation = default)
+	{
+		var pipeline = GetPipeline(_features);
+		return pipeline == null ? default : pipeline.ExecuteAsync((state, cancellation) => executor(state.argument, state.parameters, cancellation), (argument, parameters), cancellation);
+	}
+
+	public ValueTask<TResult> ExecuteAsync<TArgument, TResult>(Func<TArgument, CancellationToken, ValueTask<TResult>> executor, TArgument argument, CancellationToken cancellation = default)
+	{
+		var pipeline = GetPipeline<TResult>(_features);
+		return pipeline == null ? default : pipeline.ExecuteAsync((state, cancellation) => executor(state, cancellation), argument, cancellation);
+	}
+
+	public ValueTask<TResult> ExecuteAsync<TArgument, TResult>(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> executor, TArgument argument, Parameters parameters, CancellationToken cancellation = default)
+	{
+		var pipeline = GetPipeline<TResult>(_features);
+		return pipeline == null ? default : pipeline.ExecuteAsync((state, cancellation) => executor(state.argument, state.parameters, cancellation), (argument, parameters), cancellation);
+	}
+	#endregion
+
+	#region 私有方法
+	private static ResiliencePipeline GetPipeline(IEnumerable<IFeature> features)
+	{
+		if(features == null || (features.TryGetNonEnumeratedCount(out var count) && count == 0))
 			return null;
 
+		var builder = new ResiliencePipelineBuilder();
+
+		foreach(var feature in features)
+			builder.AddStrategy(feature);
+
+		return builder.Build();
 	}
+
+	private static ResiliencePipeline<TResult> GetPipeline<TResult>(IEnumerable<IFeature> features)
+	{
+		if(features == null || (features.TryGetNonEnumeratedCount(out var count) && count == 0))
+			return null;
+
+		var builder = new ResiliencePipelineBuilder<TResult>();
+
+		foreach(var feature in features)
+			builder.AddStrategy(feature);
+
+		return builder.Build();
+	}
+	#endregion
 }

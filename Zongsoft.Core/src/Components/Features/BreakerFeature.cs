@@ -54,6 +54,8 @@ public class BreakerFeature : IFeature
 	public bool Enabled { get; set; }
 	/// <summary>获取或设置熔断的时长，默认值为 <c>5</c> 秒。</summary>
 	public TimeSpan Duration { get; set; }
+	/// <summary>获取或设置熔断时长的生成器。</summary>
+	public Func<BreakerFeature, int, double, TimeSpan> DurationFactory { get; set; }
 	/// <summary>获取或设置熔断的失败率，范围介于 <c>0</c> 至 <c>1</c> 之间，默认值为 <c>0.1</c>（即<c>10%</c>）。</summary>
 	public double FailureRatio { get; set; }
 	/// <summary>获取或设置评定失败率的采样时长。</summary>

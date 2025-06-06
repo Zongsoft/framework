@@ -30,8 +30,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-
-using Polly;
+using System.Collections.Concurrent;
 
 using Zongsoft.Common;
 using Zongsoft.Components;
@@ -40,14 +39,47 @@ namespace Zongsoft.Externals.Polly;
 
 public sealed class FeaturePipelineManager : IFeaturePipelineManager
 {
+	#region 私有字段
+	private readonly ConcurrentDictionary<object, FeaturePipeline> _pipelines = new(Comparer.Instance);
+	#endregion
+
+	#region 公共属性
 	public string Name => "Polly";
+	#endregion
+
+	#region 公共方法
 	public IFeaturePipeline GetPipeline(IEnumerable<IFeature> features) => this.GetPipeline(null, features);
 	public IFeaturePipeline GetPipeline(object identifier, IEnumerable<IFeature> features)
 	{
 		if(features == null || (features.TryGetNonEnumeratedCount(out var count) && count == 0))
 			return null;
 
-		var builder = new ResiliencePipelineBuilder();
-		return null;
+		if(identifier == null)
+			return new FeaturePipeline(features);
+
+		return _pipelines.GetOrAdd(identifier, key => new FeaturePipeline(features));
 	}
+	#endregion
+
+	#region 嵌套子类
+	private sealed class Comparer : IEqualityComparer<object>
+	{
+		public static readonly Comparer Instance = new();
+
+		public new bool Equals(object x, object y)
+		{
+			if(x == null && y == null)
+				return true;
+			if(x == null || y == null)
+				return false;
+
+			if(x is string a && y is string b)
+				return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+
+			return x.Equals(y);
+		}
+
+		public int GetHashCode(object obj) => obj is string text ? text.ToUpperInvariant().GetHashCode() : obj.GetHashCode();
+	}
+	#endregion
 }

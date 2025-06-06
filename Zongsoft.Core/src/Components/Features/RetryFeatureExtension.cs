@@ -33,25 +33,21 @@ namespace Zongsoft.Components.Features;
 
 public static class RetryFeatureExtension
 {
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, TimeSpan latency, int attempts = 0) =>
-		Retry(builder, RetryFeature.BackoffMode.None, latency, TimeSpan.Zero, attempts);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, TimeSpan latency, TimeSpan latencyLimit, int attempts = 0) =>
-		Retry(builder, RetryFeature.BackoffMode.None, latency, latencyLimit, attempts);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryFeature.BackoffMode mode, TimeSpan latency, int attempts = 0) =>
-		Retry(builder, mode, latency, TimeSpan.Zero, attempts);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryFeature.BackoffMode mode, TimeSpan latency, TimeSpan latencyLimit, int attempts = 0)
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0) =>
+		Retry(builder, RetryFeature.BackoffMode.None, latency, attempts);
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryFeature.BackoffMode mode, RetryLatency latency, int attempts = 0)
 	{
 		if(builder == null)
-			return new FeatureBuilder(new RetryFeature(mode, latency, latencyLimit, attempts));
+			return new FeatureBuilder(new RetryFeature(mode, latency, attempts));
 
 		if(builder is FeatureBuilder fb)
 		{
-			fb.Features.Add(new RetryFeature(mode, latency, latencyLimit, attempts));
+			fb.Features.Add(new RetryFeature(mode, latency, attempts));
 			return fb;
 		}
 
 		var features = builder.Build();
-		features.Add(new RetryFeature(mode, latency, latencyLimit, attempts));
+		features.Add(new RetryFeature(mode, latency, attempts));
 		return new FeatureBuilder(features);
 	}
 }
