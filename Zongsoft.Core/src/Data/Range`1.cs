@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -40,11 +40,7 @@ public struct Range<T> where T : struct, IComparable<T>
 	#endregion
 
 	#region 构造函数
-	public Range(T value)
-	{
-		_minimum = _maximum = value;
-	}
-
+	public Range(T value) => _minimum = _maximum = value;
 	public Range(T? minimum, T? maximum)
 	{
 		//如果两个参数都有值并且起始值大于截止值，则进行交换赋值
@@ -64,41 +60,33 @@ public struct Range<T> where T : struct, IComparable<T>
 	#region 公共属性
 	public T? Minimum
 	{
-		get => _minimum;
+		readonly get => _minimum;
 		set => _minimum = this.EnsureMinimum(value);
 	}
 
 	public T? Maximum
 	{
-		get => _maximum;
+		readonly get => _maximum;
 		set => _maximum = this.EnsureMaximum(value);
 	}
 
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
-	public bool HasValue
-	{
-		get => _minimum.HasValue || _maximum.HasValue;
-	}
+	public readonly bool HasValue => _minimum.HasValue || _maximum.HasValue;
 
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
-	public bool IsEmpty
-	{
-		get => _minimum == null && _maximum == null;
-	}
+	public readonly bool IsEmpty => _minimum == null && _maximum == null;
 
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
-	public bool IsZero
-	{
-		get => (_minimum == null || Comparer<T>.Default.Compare(_minimum.Value, default) == 0) &&
-		       (_maximum == null || Comparer<T>.Default.Compare(_maximum.Value, default) == 0);
-	}
+	public readonly bool IsZero =>
+		(_minimum == null || Comparer<T>.Default.Compare(_minimum.Value, default) == 0) &&
+		(_maximum == null || Comparer<T>.Default.Compare(_maximum.Value, default) == 0);
 	#endregion
 
 	#region 公共方法
-	public bool Contains(T value)
+	public readonly bool Contains(T value)
 	{
 		if(_minimum.HasValue)
 		{
@@ -116,7 +104,7 @@ public struct Range<T> where T : struct, IComparable<T>
 		}
 	}
 
-	public Condition ToCondition(string name)
+	public readonly Condition ToCondition(string name)
 	{
 		if(_minimum == null)
 			return _maximum == null ? null : new Condition(name, _maximum, ConditionOperator.LessThanEqual);
@@ -214,8 +202,8 @@ public struct Range<T> where T : struct, IComparable<T>
 	#endregion
 
 	#region 隐式转换
-	public static implicit operator Range<T>(T value) => new Range<T>(value);
-	public static implicit operator Range<T>(ValueTuple<T, T> tuple) => new Range<T>(tuple.Item1, tuple.Item2);
+	public static implicit operator Range<T>(T value) => new(value);
+	public static implicit operator Range<T>(ValueTuple<T, T> tuple) => new(tuple.Item1, tuple.Item2);
 	#endregion
 
 	#region 私有方法

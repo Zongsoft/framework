@@ -111,11 +111,7 @@ public static class Range
 		return range.Contains(value);
 	}
 
-	public static bool IsRange(object target)
-	{
-		return target == null ? false : IsRange(target.GetType());
-	}
-
+	public static bool IsRange(object target) => target != null && IsRange(target.GetType());
 	public static bool IsRange(object target, out Type underlyingType)
 	{
 		if(target != null)
@@ -183,11 +179,7 @@ public static class Range
 		throw new InvalidOperationException($"The specified '{nameof(target)}' parameter of type '{target.GetType()}' is not a Rang type and this operation is not supported.");
 	}
 
-	public static bool HasValue(object target)
-	{
-		return !IsEmpty(target);
-	}
-
+	public static bool HasValue(object target) => !IsEmpty(target);
 	public static bool HasValue(object target, Action<Func<string, Condition>> fallback)
 	{
 		if(target == null)
@@ -306,24 +298,14 @@ public static class Range
 	#region 嵌套子类
 	private static class EmptyRange<T> where T : struct, IComparable<T>
 	{
-		internal static readonly Range<T> Value = new Range<T>();
+		internal static readonly Range<T> Value = new();
 	}
 
-	private struct HasValueProxy
+	private struct HasValueProxy(object target, Range.RangeToken token)
 	{
-		private readonly object _target;
-		private readonly RangeToken _token;
-
-		public HasValueProxy(object target, RangeToken token)
-		{
-			_target = target;
-			_token = token;
-		}
-
-		public Condition Call(string name)
-		{
-			return _token.GetCondition(_target, name);
-		}
+		private readonly object _target = target;
+		private readonly RangeToken _token = token;
+		public Condition Call(string name) => _token.GetCondition(_target, name);
 	}
 
 	private class RangeToken
@@ -360,7 +342,7 @@ public static class Range
 				lock(this)
 				{
 					if(_isEmpty == null)
-						_isEmpty = CompileIsEmpty();
+						_isEmpty = CompileIsEmpty(_underlyingType);
 				}
 			}
 
@@ -374,7 +356,7 @@ public static class Range
 				lock(this)
 				{
 					if(_getCondition == null)
-						_getCondition = CompileGetCondition();
+						_getCondition = CompileGetCondition(_underlyingType);
 				}
 			}
 
@@ -388,7 +370,7 @@ public static class Range
 				lock(this)
 				{
 					if(_getRange == null)
-						_getRange = CompileGetRange();
+						_getRange = CompileGetRange(_underlyingType);
 				}
 			}
 
@@ -429,15 +411,15 @@ public static class Range
 		}
 		*/
 
-		private GetRangeDelegate CompileGetRange()
+		private static GetRangeDelegate CompileGetRange(Type type)
 		{
-			var rangeType = typeof(Range<>).MakeGenericType(_underlyingType);
-			var nullableType = typeof(Nullable<>).MakeGenericType(_underlyingType);
+			var rangeType = typeof(Range<>).MakeGenericType(type);
+			var nullableType = typeof(Nullable<>).MakeGenericType(type);
 
 			var method = new DynamicMethod(
-							"GetRange$" + _underlyingType.FullName.Replace('.', '-'),
+							"GetRange$" + type.FullName.Replace('.', '-'),
 							null,
-							new Type[] { typeof(object), typeof(object).MakeByRefType(), typeof(object).MakeByRefType() },
+							[typeof(object), typeof(object).MakeByRefType(), typeof(object).MakeByRefType()],
 							typeof(Range),
 							true);
 
@@ -482,7 +464,7 @@ public static class Range
 
 			generator.Emit(OpCodes.Ldloca_S, 1);
 			generator.Emit(OpCodes.Call, nullableType.GetProperty("Value").GetMethod);
-			generator.Emit(OpCodes.Box, _underlyingType);
+			generator.Emit(OpCodes.Box, type);
 			generator.Emit(OpCodes.Stind_Ref);
 
 			generator.MarkLabel(maximumIfLabel);
@@ -508,14 +490,14 @@ public static class Range
 
 			generator.Emit(OpCodes.Ldloca_S, 1);
 			generator.Emit(OpCodes.Call, nullableType.GetProperty("Value").GetMethod);
-			generator.Emit(OpCodes.Box, _underlyingType);
+			generator.Emit(OpCodes.Box, type);
 			generator.Emit(OpCodes.Stind_Ref);
 			generator.Emit(OpCodes.Ret);
 
 			return (GetRangeDelegate)method.CreateDelegate(typeof(GetRangeDelegate));
 		}
 
-		private GetRangeDelegate CompileGetRangeWithExpression(Type type)
+		private static GetRangeDelegate CompileGetRangeWithExpression(Type type)
 		{
 			var target = Expression.Parameter(typeof(object), "target");
 			var minimum = Expression.Parameter(typeof(object).MakeByRefType(), "minimum");
@@ -547,14 +529,14 @@ public static class Range
 			return Expression.Lambda<GetRangeDelegate>(Expression.Block(variables, statements), target, minimum, maximum).Compile();
 		}
 
-		private Func<object, bool> CompileIsEmpty()
+		private static Func<object, bool> CompileIsEmpty(Type type)
 		{
-			var rangeType = typeof(Range<>).MakeGenericType(_underlyingType);
+			var rangeType = typeof(Range<>).MakeGenericType(type);
 
 			var method = new DynamicMethod(
-							"IsEmpty$" + _underlyingType.FullName.Replace('.', '-'),
+							"IsEmpty$" + type.FullName.Replace('.', '-'),
 							typeof(bool),
-							new Type[] { typeof(object) },
+							[typeof(object)],
 							typeof(Range),
 							true);
 
@@ -578,14 +560,14 @@ public static class Range
 			return (Func<object, bool>)method.CreateDelegate(typeof(Func<object, bool>));
 		}
 
-		private Func<object, string, Condition> CompileGetCondition()
+		private static Func<object, string, Condition> CompileGetCondition(Type type)
 		{
-			var rangeType = typeof(Range<>).MakeGenericType(_underlyingType);
+			var rangeType = typeof(Range<>).MakeGenericType(type);
 
 			var method = new DynamicMethod(
-							"GetCondition" + _underlyingType.FullName.Replace('.', '-'),
+							"GetCondition" + type.FullName.Replace('.', '-'),
 							typeof(Condition),
-							new Type[] { typeof(object), typeof(string) },
+							[typeof(object), typeof(string)],
 							typeof(Range),
 							true);
 
