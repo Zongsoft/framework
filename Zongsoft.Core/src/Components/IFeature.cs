@@ -33,7 +33,11 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
+/// <summary>
+/// 表示某种功能或特性的接口。
+/// </summary>
 public interface IFeature
 {
+	/// <summary>获取或设置一个值，指示是否启用该功能或特性。</summary>
 	bool Enabled { get; set; }
 }

@@ -32,14 +32,32 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
 
+/// <summary>
+/// 提供回退(后备)功能的特性类。
+/// </summary>
 public class FallbackFeature : IFeature
 {
+	public FallbackFeature(Func<IExecutorContext, ValueTask> fallback, bool enabled = true)
+	{
+		this.Enabled = enabled;
+		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
+	}
+
 	public bool Enabled { get; set; }
 	public Func<IExecutorContext, ValueTask> Fallback { get; set; }
 }
 
+/// <summary>
+/// 提供回退(后备)功能的特性类。
+/// </summary>
 public class FallbackFeature<TResult> : IFeature
 {
+	public FallbackFeature(Func<IExecutorContext, ValueTask<TResult>> fallback, bool enabled = true)
+	{
+		this.Enabled = enabled;
+		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
+	}
+
 	public bool Enabled { get; set; }
 	public Func<IExecutorContext, ValueTask<TResult>> Fallback { get; set; }
 }

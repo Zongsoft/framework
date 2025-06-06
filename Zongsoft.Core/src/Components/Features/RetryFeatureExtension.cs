@@ -31,23 +31,27 @@ using System;
 
 namespace Zongsoft.Components.Features;
 
-/// <summary>
-/// 提供超时功能的特性类。
-/// </summary>
-public class TimeoutFeature : IFeature
+public static class RetryFeatureExtension
 {
-	#region 构造函数
-	public TimeoutFeature(bool enabled = true) : this(TimeSpan.FromSeconds(30), enabled) { }
-	public TimeoutFeature(TimeSpan timeout, bool enabled = true)
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, TimeSpan latency, int attempts = 0) =>
+		Retry(builder, RetryFeature.BackoffMode.None, latency, TimeSpan.Zero, attempts);
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, TimeSpan latency, TimeSpan latencyLimit, int attempts = 0) =>
+		Retry(builder, RetryFeature.BackoffMode.None, latency, latencyLimit, attempts);
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryFeature.BackoffMode mode, TimeSpan latency, int attempts = 0) =>
+		Retry(builder, mode, latency, TimeSpan.Zero, attempts);
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryFeature.BackoffMode mode, TimeSpan latency, TimeSpan latencyLimit, int attempts = 0)
 	{
-		this.Enabled = enabled;
-		this.Timeout = timeout;
-	}
-	#endregion
+		if(builder == null)
+			return new FeatureBuilder(new RetryFeature(mode, latency, latencyLimit, attempts));
 
-	#region 公共属性
-	public bool Enabled { get; set; }
-	/// <summary>获取或设置超时的时长（必须大于零才有效）。</summary>
-	public TimeSpan Timeout { get; set; }
-	#endregion
+		if(builder is FeatureBuilder fb)
+		{
+			fb.Features.Add(new RetryFeature(mode, latency, latencyLimit, attempts));
+			return fb;
+		}
+
+		var features = builder.Build();
+		features.Add(new RetryFeature(mode, latency, latencyLimit, attempts));
+		return new FeatureBuilder(features);
+	}
 }

@@ -31,23 +31,27 @@ using System;
 
 namespace Zongsoft.Components.Features;
 
-/// <summary>
-/// 提供超时功能的特性类。
-/// </summary>
-public class TimeoutFeature : IFeature
+public static class BreakerFeatureExtension
 {
-	#region 构造函数
-	public TimeoutFeature(bool enabled = true) : this(TimeSpan.FromSeconds(30), enabled) { }
-	public TimeoutFeature(TimeSpan timeout, bool enabled = true)
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder) =>
+		Breaker(builder, TimeSpan.Zero, 0, TimeSpan.Zero);
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, int threshold = 100) =>
+		Breaker(builder, duration, 0, TimeSpan.Zero, threshold);
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, int threshold = 100) =>
+		Breaker(builder, duration, ratio, TimeSpan.Zero, threshold);
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold = 100)
 	{
-		this.Enabled = enabled;
-		this.Timeout = timeout;
-	}
-	#endregion
+		if(builder == null)
+			return new FeatureBuilder(new BreakerFeature(duration, ratio, period, threshold));
 
-	#region 公共属性
-	public bool Enabled { get; set; }
-	/// <summary>获取或设置超时的时长（必须大于零才有效）。</summary>
-	public TimeSpan Timeout { get; set; }
-	#endregion
+		if(builder is FeatureBuilder fb)
+		{
+			fb.Features.Add(new BreakerFeature(duration, ratio, period, threshold));
+			return fb;
+		}
+
+		var features = builder.Build();
+		features.Add(new BreakerFeature(duration, ratio, period, threshold));
+		return new FeatureBuilder(features);
+	}
 }

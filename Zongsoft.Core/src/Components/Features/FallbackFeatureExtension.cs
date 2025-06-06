@@ -28,26 +28,42 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
 
-/// <summary>
-/// 提供超时功能的特性类。
-/// </summary>
-public class TimeoutFeature : IFeature
+public static class FallbackFeatureExtension
 {
-	#region 构造函数
-	public TimeoutFeature(bool enabled = true) : this(TimeSpan.FromSeconds(30), enabled) { }
-	public TimeoutFeature(TimeSpan timeout, bool enabled = true)
+	public static IFeatureBuilder Fallback(this IFeatureBuilder builder, Func<IExecutorContext, ValueTask> fallback, bool enabled = true)
 	{
-		this.Enabled = enabled;
-		this.Timeout = timeout;
-	}
-	#endregion
+		if(builder == null)
+			return new FeatureBuilder(new FallbackFeature(fallback, enabled));
 
-	#region 公共属性
-	public bool Enabled { get; set; }
-	/// <summary>获取或设置超时的时长（必须大于零才有效）。</summary>
-	public TimeSpan Timeout { get; set; }
-	#endregion
+		if(builder is FeatureBuilder fb)
+		{
+			fb.Features.Add(new FallbackFeature(fallback, enabled));
+			return fb;
+		}
+
+		var features = builder.Build();
+		features.Add(new FallbackFeature(fallback, enabled));
+		return new FeatureBuilder(features);
+	}
+
+	public static IFeatureBuilder Fallback<TResult>(this IFeatureBuilder builder, Func<IExecutorContext, ValueTask<TResult>> fallback, bool enabled = true)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new FallbackFeature<TResult>(fallback, enabled));
+
+		if(builder is FeatureBuilder fb)
+		{
+			fb.Features.Add(new FallbackFeature<TResult>(fallback, enabled));
+			return fb;
+		}
+
+		var features = builder.Build();
+		features.Add(new FallbackFeature<TResult>(fallback, enabled));
+		return new FeatureBuilder(features);
+	}
 }

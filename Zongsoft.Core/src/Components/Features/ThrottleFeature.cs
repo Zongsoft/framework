@@ -31,7 +31,16 @@ using System;
 
 namespace Zongsoft.Components.Features;
 
+/// <summary>
+/// 提供限流(限速)功能的特性类。
+/// </summary>
 public class ThrottleFeature : IFeature
 {
+	#region 构造函数
+	public ThrottleFeature(bool enabled = true) => this.Enabled = enabled;
+	#endregion
+
+	#region 公共属性
 	public bool Enabled { get; set; }
+	#endregion
 }

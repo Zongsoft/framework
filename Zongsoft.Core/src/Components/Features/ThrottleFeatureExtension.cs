@@ -31,23 +31,21 @@ using System;
 
 namespace Zongsoft.Components.Features;
 
-/// <summary>
-/// 提供超时功能的特性类。
-/// </summary>
-public class TimeoutFeature : IFeature
+public static class ThrottleFeatureExtension
 {
-	#region 构造函数
-	public TimeoutFeature(bool enabled = true) : this(TimeSpan.FromSeconds(30), enabled) { }
-	public TimeoutFeature(TimeSpan timeout, bool enabled = true)
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, bool enabled = true)
 	{
-		this.Enabled = enabled;
-		this.Timeout = timeout;
-	}
-	#endregion
+		if(builder == null)
+			return new FeatureBuilder(new ThrottleFeature(enabled));
 
-	#region 公共属性
-	public bool Enabled { get; set; }
-	/// <summary>获取或设置超时的时长（必须大于零才有效）。</summary>
-	public TimeSpan Timeout { get; set; }
-	#endregion
+		if(builder is FeatureBuilder fb)
+		{
+			fb.Features.Add(new ThrottleFeature(enabled));
+			return fb;
+		}
+
+		var features = builder.Build();
+		features.Add(new ThrottleFeature(enabled));
+		return new FeatureBuilder(features);
+	}
 }
