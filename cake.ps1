@@ -16,6 +16,7 @@
 
 [string]$project_aliyun           = 'externals/aliyun/build.cake'
 [string]$project_redis            = 'externals/redis/build.cake'
+[string]$project_polly            = 'externals/polly/build.cake'
 [string]$project_wechat           = 'externals/wechat/build.cake'
 [string]$project_closedxml        = 'externals/closedxml/build.cake'
 [string]$project_hangfire         = 'externals/hangfire/build.cake'
@@ -73,6 +74,9 @@ dotnet cake $project_aliyun $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_redis $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_redis $CAKE_ARGS $ARGS
+
+Write-Host "dotnet cake $project_polly $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+dotnet cake $project_polly $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_wechat $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_wechat $CAKE_ARGS $ARGS
