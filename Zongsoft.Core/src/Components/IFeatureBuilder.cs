@@ -34,5 +34,5 @@ namespace Zongsoft.Components;
 
 public interface IFeatureBuilder
 {
-	ICollection<IFeature> Build();
+	IEnumerable<IFeature> Build();
 }

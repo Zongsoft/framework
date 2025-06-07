@@ -40,5 +40,5 @@ public class FeatureBuilder : IFeatureBuilder
 	}
 
 	public List<IFeature> Features { get; }
-	public ICollection<IFeature> Build() => this.Features;
+	public IEnumerable<IFeature> Build() => this.Features;
 }

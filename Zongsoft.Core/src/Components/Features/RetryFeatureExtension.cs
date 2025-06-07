@@ -40,14 +40,12 @@ public static class RetryFeatureExtension
 		if(builder == null)
 			return new FeatureBuilder(new RetryFeature(mode, latency, attempts));
 
-		if(builder is FeatureBuilder fb)
+		if(builder is FeatureBuilder appender)
 		{
-			fb.Features.Add(new RetryFeature(mode, latency, attempts));
-			return fb;
+			appender.Features.Add(new RetryFeature(mode, latency, attempts));
+			return appender;
 		}
 
-		var features = builder.Build();
-		features.Add(new RetryFeature(mode, latency, attempts));
-		return new FeatureBuilder(features);
+		return new FeatureBuilder([.. builder.Build(), new RetryFeature(mode, latency, attempts)]);
 	}
 }

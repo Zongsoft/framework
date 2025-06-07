@@ -37,8 +37,8 @@ namespace Zongsoft.Components;
 public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<TArgument>, IFilterable<IExecutorContext>
 {
 	#region 构造函数
-	protected ExecutorBase() : this(null, null) { }
-	protected ExecutorBase(IHandlerLocator<IExecutorContext> locator, ICollection<IFeature> features = null)
+	protected ExecutorBase(params IEnumerable<IFeature> features) : this(null, features) { }
+	protected ExecutorBase(IHandlerLocator<IExecutorContext> locator, params IEnumerable<IFeature> features)
 	{
 		this.Filters = [];
 		this.Locator = locator;
@@ -47,7 +47,7 @@ public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<T
 	#endregion
 
 	#region 公共属性
-	public ICollection<IFeature> Features { get; }
+	public IEnumerable<IFeature> Features { get; }
 	public IHandlerLocator<IExecutorContext> Locator { get; }
 	public ICollection<IFilter<IExecutorContext>> Filters { get; }
 	#endregion

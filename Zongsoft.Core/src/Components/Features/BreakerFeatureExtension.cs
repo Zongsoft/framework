@@ -44,14 +44,12 @@ public static class BreakerFeatureExtension
 		if(builder == null)
 			return new FeatureBuilder(new BreakerFeature(duration, ratio, period, threshold));
 
-		if(builder is FeatureBuilder fb)
+		if(builder is FeatureBuilder appender)
 		{
-			fb.Features.Add(new BreakerFeature(duration, ratio, period, threshold));
-			return fb;
+			appender.Features.Add(new BreakerFeature(duration, ratio, period, threshold));
+			return appender;
 		}
 
-		var features = builder.Build();
-		features.Add(new BreakerFeature(duration, ratio, period, threshold));
-		return new FeatureBuilder(features);
+		return new FeatureBuilder([.. builder.Build(), new BreakerFeature(duration, ratio, period, threshold)]);
 	}
 }

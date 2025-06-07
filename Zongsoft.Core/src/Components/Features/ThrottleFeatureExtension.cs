@@ -38,14 +38,12 @@ public static class ThrottleFeatureExtension
 		if(builder == null)
 			return new FeatureBuilder(new ThrottleFeature(enabled));
 
-		if(builder is FeatureBuilder fb)
+		if(builder is FeatureBuilder appender)
 		{
-			fb.Features.Add(new ThrottleFeature(enabled));
-			return fb;
+			appender.Features.Add(new ThrottleFeature(enabled));
+			return appender;
 		}
 
-		var features = builder.Build();
-		features.Add(new ThrottleFeature(enabled));
-		return new FeatureBuilder(features);
+		return new FeatureBuilder([.. builder.Build(), new ThrottleFeature(enabled)]);
 	}
 }

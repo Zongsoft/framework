@@ -40,15 +40,13 @@ public static class FallbackFeatureExtension
 		if(builder == null)
 			return new FeatureBuilder(new FallbackFeature(fallback, enabled));
 
-		if(builder is FeatureBuilder fb)
+		if(builder is FeatureBuilder appender)
 		{
-			fb.Features.Add(new FallbackFeature(fallback, enabled));
-			return fb;
+			appender.Features.Add(new FallbackFeature(fallback, enabled));
+			return appender;
 		}
 
-		var features = builder.Build();
-		features.Add(new FallbackFeature(fallback, enabled));
-		return new FeatureBuilder(features);
+		return new FeatureBuilder([.. builder.Build(), new FallbackFeature(fallback, enabled)]);
 	}
 
 	public static IFeatureBuilder Fallback<TResult>(this IFeatureBuilder builder, Func<IExecutorContext, ValueTask<TResult>> fallback, bool enabled = true)
@@ -56,14 +54,12 @@ public static class FallbackFeatureExtension
 		if(builder == null)
 			return new FeatureBuilder(new FallbackFeature<TResult>(fallback, enabled));
 
-		if(builder is FeatureBuilder fb)
+		if(builder is FeatureBuilder appender)
 		{
-			fb.Features.Add(new FallbackFeature<TResult>(fallback, enabled));
-			return fb;
+			appender.Features.Add(new FallbackFeature<TResult>(fallback, enabled));
+			return appender;
 		}
 
-		var features = builder.Build();
-		features.Add(new FallbackFeature<TResult>(fallback, enabled));
-		return new FeatureBuilder(features);
+		return new FeatureBuilder([.. builder.Build(), new FallbackFeature<TResult>(fallback, enabled)]);
 	}
 }

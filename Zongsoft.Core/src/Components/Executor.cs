@@ -44,19 +44,32 @@ public static class Executor
 	public static IFeaturePipelineManager Pipelines { get; set; }
 	#endregion
 
-	#region 处理器封装
+	#region 处理程序
+	public static IExecutor Build<TArgument>(IHandler<TArgument> handler) => new ExecutorProxy<TArgument>(handler, null);
+	public static IExecutor Build<TArgument, TResult>(IHandler<TArgument, TResult> handler) => new ExecutorProxy<TArgument, TResult>(handler, null);
+
 	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, IHandler<TArgument> handler) => new ExecutorProxy<TArgument>(handler, builder?.Build());
 	public static IExecutor Build<TArgument, TResult>(this IFeatureBuilder builder, IHandler<TArgument, TResult> handler) => new ExecutorProxy<TArgument, TResult>(handler, builder?.Build());
 	#endregion
 
-	#region 同步执行器
+	#region 同步执行
+	public static IExecutor Build<TArgument>(Action<TArgument> execute) => new ExecutorProxy<TArgument>(execute, null);
+	public static IExecutor Build<TArgument>(Action<TArgument, Parameters> execute) => new ExecutorProxy<TArgument>(execute, null);
+	public static IExecutor Build<TArgument, TResult>(Func<TArgument, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
+	public static IExecutor Build<TArgument, TResult>(Func<TArgument, Parameters, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
+
 	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, Action<TArgument> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
 	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, Action<TArgument, Parameters> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
 	public static IExecutor Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
 	public static IExecutor Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, Parameters, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
 	#endregion
 
-	#region 异步执行器
+	#region 异步执行
+	public static IExecutor Build<TArgument>(Func<TArgument, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, null);
+	public static IExecutor Build<TArgument>(Func<TArgument, Parameters, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, null);
+	public static IExecutor Build<TArgument, TResult>(Func<TArgument, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
+	public static IExecutor Build<TArgument, TResult>(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
+
 	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, Func<TArgument, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
 	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, Func<TArgument, Parameters, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
 	public static IExecutor Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
@@ -67,32 +80,31 @@ public static class Executor
 	private sealed class ExecutorProxy<TArgument> : ExecutorBase<TArgument>
 	{
 		private readonly IHandler<TArgument> _handler;
-		private readonly ICollection<IFeature> _features;
 
-		public ExecutorProxy(IHandler<TArgument> handler, ICollection<IFeature> features) : base(null, features) =>
+		public ExecutorProxy(IHandler<TArgument> handler, IEnumerable<IFeature> features) : base(null, features) =>
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
-		public ExecutorProxy(Action<TArgument> handler, ICollection<IFeature> features) : base(null, features)
+		public ExecutorProxy(Action<TArgument> handler, IEnumerable<IFeature> features) : base(null, features)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
 			_handler = Handler.Handle(handler);
 		}
-		public ExecutorProxy(Action<TArgument, Parameters> handler, ICollection<IFeature> features) : base(null, features)
+		public ExecutorProxy(Action<TArgument, Parameters> handler, IEnumerable<IFeature> features) : base(null, features)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
 			_handler = Handler.Handle(handler);
 		}
-		public ExecutorProxy(Func<TArgument, CancellationToken, ValueTask> handler, ICollection<IFeature> features) : base(null, features)
+		public ExecutorProxy(Func<TArgument, CancellationToken, ValueTask> handler, IEnumerable<IFeature> features) : base(null, features)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
 			_handler = Handler.Handle(handler);
 		}
-		public ExecutorProxy(Func<TArgument, Parameters, CancellationToken, ValueTask> handler, ICollection<IFeature> features) : base(null, features)
+		public ExecutorProxy(Func<TArgument, Parameters, CancellationToken, ValueTask> handler, IEnumerable<IFeature> features) : base(null, features)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
@@ -104,7 +116,7 @@ public static class Executor
 		protected override IExecutorContext<TArgument> CreateContext(TArgument argument, Parameters parameters) => new ExecutorContext<TArgument>(this, argument, parameters);
 		protected override ValueTask OnExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default)
 		{
-			var pipeline = Pipelines?.GetPipeline(this, _features);
+			var pipeline = Pipelines?.GetPipeline(this, this.Features);
 
 			return pipeline == null ?
 				base.OnExecuteAsync(context, cancellation) :
@@ -115,32 +127,31 @@ public static class Executor
 	private sealed class ExecutorProxy<TArgument, TResult> : ExecutorBase<TArgument, TResult>
 	{
 		private readonly IHandler<TArgument, TResult> _handler;
-		private readonly ICollection<IFeature> _features;
 
-		public ExecutorProxy(IHandler<TArgument, TResult> handler, ICollection<IFeature> features) : base(null, features) =>
+		public ExecutorProxy(IHandler<TArgument, TResult> handler, IEnumerable<IFeature> features) : base(null, features) =>
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
-		public ExecutorProxy(Func<TArgument, TResult> handler, ICollection<IFeature> features) : base(null, features)
+		public ExecutorProxy(Func<TArgument, TResult> handler, IEnumerable<IFeature> features) : base(null, features)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
 			_handler = Handler.Handle(handler);
 		}
-		public ExecutorProxy(Func<TArgument, Parameters, TResult> handler, ICollection<IFeature> features) : base(null, features)
+		public ExecutorProxy(Func<TArgument, Parameters, TResult> handler, IEnumerable<IFeature> features) : base(null, features)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
 			_handler = Handler.Handle(handler);
 		}
-		public ExecutorProxy(Func<TArgument, CancellationToken, ValueTask<TResult>> handler, ICollection<IFeature> features) : base(null, features)
+		public ExecutorProxy(Func<TArgument, CancellationToken, ValueTask<TResult>> handler, IEnumerable<IFeature> features) : base(null, features)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
 			_handler = Handler.Handle(handler);
 		}
-		public ExecutorProxy(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> handler, ICollection<IFeature> features) : base(null, features)
+		public ExecutorProxy(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> handler, IEnumerable<IFeature> features) : base(null, features)
 		{
 			if(handler == null)
 				throw new ArgumentNullException(nameof(handler));
@@ -152,7 +163,7 @@ public static class Executor
 		protected override IExecutorContext<TArgument, TResult> CreateContext(TArgument argument, Parameters parameters) => new ExecutorContext<TArgument, TResult>(this, argument, parameters);
 		protected override ValueTask<TResult> OnExecuteAsync(IExecutorContext<TArgument, TResult> context, CancellationToken cancellation = default)
 		{
-			var pipeline = Pipelines?.GetPipeline(this, _features);
+			var pipeline = Pipelines?.GetPipeline(this, this.Features);
 
 			return pipeline == null ?
 				base.OnExecuteAsync(context, cancellation) :

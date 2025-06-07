@@ -36,9 +36,6 @@ namespace Zongsoft.Components;
 
 public interface IExecutor
 {
-	ICollection<IFeature> Features { get; }
-	ICollection<IFilter<IExecutorContext>> Filters { get; }
-
 	void Execute(object argument, Collections.Parameters parameters = null);
 	ValueTask ExecuteAsync(object argument, CancellationToken cancellation = default);
 	ValueTask ExecuteAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default);

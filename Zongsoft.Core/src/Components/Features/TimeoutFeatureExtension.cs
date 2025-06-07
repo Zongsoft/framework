@@ -39,14 +39,12 @@ public static class TimeoutFeatureExtension
 		if(builder == null)
 			return new FeatureBuilder(new TimeoutFeature(timeout));
 
-		if(builder is FeatureBuilder fb)
+		if(builder is FeatureBuilder appender)
 		{
-			fb.Features.Add(new TimeoutFeature(timeout));
-			return fb;
+			appender.Features.Add(new TimeoutFeature(timeout));
+			return appender;
 		}
 
-		var features = builder.Build();
-		features.Add(new TimeoutFeature(timeout));
-		return new FeatureBuilder(features);
+		return new FeatureBuilder([.. builder.Build(), new TimeoutFeature(timeout)]);
 	}
 }
