@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -35,7 +35,6 @@ namespace Zongsoft.Components;
 
 public interface IExecutor<in TArgument, TResult> : IExecutor
 {
-	TResult Execute(TArgument argument, Collections.Parameters parameters = null);
 	ValueTask<TResult> ExecuteAsync(TArgument argument, CancellationToken cancellation = default);
 	ValueTask<TResult> ExecuteAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 }

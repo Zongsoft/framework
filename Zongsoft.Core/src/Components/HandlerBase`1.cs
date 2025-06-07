@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -45,16 +44,6 @@ public abstract class HandlerBase<TArgument> : IHandler<TArgument>, IHandler
 	#endregion
 
 	#region 公共方法
-	public virtual void Handle(TArgument argument, Collections.Parameters parameters = null)
-	{
-		var task = this.HandleAsync(argument, parameters, CancellationToken.None);
-
-		if(task.IsCompletedSuccessfully)
-			return;
-
-		task.AsTask().GetAwaiter().GetResult();
-	}
-
 	public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(argument, Collections.Parameters.Parameter(), cancellation);
 	public ValueTask HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{

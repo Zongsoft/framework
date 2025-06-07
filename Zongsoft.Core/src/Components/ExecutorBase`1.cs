@@ -53,9 +53,6 @@ public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<T
 	#endregion
 
 	#region 执行方法
-	public void Execute(TArgument argument, Collections.Parameters parameters = null) => this.Execute(this.CreateContext(argument, parameters));
-	protected void Execute(IExecutorContext<TArgument> context) => this.ExecuteAsync(context).AsTask().GetAwaiter().GetResult();
-
 	public ValueTask ExecuteAsync(TArgument argument, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, null), cancellation);
 	public ValueTask ExecuteAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default) => this.ExecuteAsync(this.CreateContext(argument, parameters), cancellation);
 	protected async ValueTask ExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default)
@@ -101,21 +98,6 @@ public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<T
 	#endregion
 
 	#region 显式实现
-	void IExecutor.Execute(object data, Collections.Parameters parameters)
-	{
-		if(data == null)
-			this.Execute(default, parameters);
-
-		switch(data)
-		{
-			case TArgument argument:
-				this.Execute(argument, parameters);
-				break;
-			case IExecutorContext<TArgument> context:
-				this.Execute(context);
-				break;
-		};
-	}
 	ValueTask IExecutor.ExecuteAsync(object data, CancellationToken cancellation) => data switch
 	{
 		TArgument argument => this.ExecuteAsync(argument, null, cancellation),

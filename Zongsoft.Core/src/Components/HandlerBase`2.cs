@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -46,16 +45,6 @@ public abstract class HandlerBase<TArgument, TResult> : IHandler<TArgument, TRes
 	#endregion
 
 	#region 公共方法
-	public virtual TResult Handle(TArgument argument, Collections.Parameters parameters = null)
-	{
-		var task = this.HandleAsync(argument, null, CancellationToken.None);
-
-		if(task.IsCompletedSuccessfully)
-			return task.Result;
-
-		return task.AsTask().GetAwaiter().GetResult();
-	}
-
 	public ValueTask<TResult> HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(argument, null, cancellation);
 	public ValueTask<TResult> HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
