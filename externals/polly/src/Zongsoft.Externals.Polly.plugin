@@ -11,4 +11,10 @@
 			<assembly name="Zongsoft.Externals.Polly" />
 		</assemblies>
 	</manifest>
+
+	<extension path="/Workbench/Externals/Polly">
+		<object name="Pipelines" value="{static:Zongsoft.Externals.Polly.FeaturePipelineManager.Instance, Zongsoft.Externals.Polly}">
+			<object.property name="Pipelines" target="{type:Zongsoft.Components.Executor, Zongsoft.Core}" value="{path:.}" />
+		</object>
+	</extension>
 </plugin>

@@ -39,8 +39,16 @@ namespace Zongsoft.Externals.Polly;
 
 public sealed class FeaturePipelineManager : IFeaturePipelineManager
 {
+	#region 单例字段
+	public static readonly FeaturePipelineManager Instance = new();
+	#endregion
+
 	#region 私有字段
 	private readonly ConcurrentDictionary<object, FeaturePipeline> _pipelines = new(Comparer.Instance);
+	#endregion
+
+	#region 私有构造
+	private FeaturePipelineManager() { }
 	#endregion
 
 	#region 公共属性

@@ -32,6 +32,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Polly;
 
@@ -49,25 +50,25 @@ public sealed class FeaturePipeline(IEnumerable<IFeature> features) : IFeaturePi
 	#region 同步执行
 	public void Execute<TArgument>(Action<TArgument> executor, TArgument argument)
 	{
-		var pipeline = GetPipeline(_features);
+		var pipeline = this.GetPipeline(_features);
 		pipeline?.Execute(state => executor(state), argument);
 	}
 
 	public void Execute<TArgument>(Action<TArgument, Parameters> executor, TArgument argument, Parameters parameters)
 	{
-		var pipeline = GetPipeline(_features);
+		var pipeline = this.GetPipeline(_features);
 		pipeline?.Execute(state => executor(state.argument, state.parameters), (argument, parameters));
 	}
 
 	public TResult Execute<TArgument, TResult>(Func<TArgument, TResult> executor, TArgument argument)
 	{
-		var pipeline = GetPipeline<TResult>(_features);
+		var pipeline = this.GetPipeline<TResult>(_features);
 		return pipeline == null ? default : pipeline.Execute(state => executor(state), argument);
 	}
 
 	public TResult Execute<TArgument, TResult>(Func<TArgument, Parameters, TResult> executor, TArgument argument, Parameters parameters)
 	{
-		var pipeline = GetPipeline<TResult>(_features);
+		var pipeline = this.GetPipeline<TResult>(_features);
 		return pipeline == null ? default : pipeline.Execute(state => executor(state.argument, state.parameters), (argument, parameters));
 	}
 	#endregion
@@ -75,54 +76,62 @@ public sealed class FeaturePipeline(IEnumerable<IFeature> features) : IFeaturePi
 	#region 异步执行
 	public ValueTask ExecuteAsync<TArgument>(Func<TArgument, CancellationToken, ValueTask> executor, TArgument argument, CancellationToken cancellation = default)
 	{
-		var pipeline = GetPipeline(_features);
+		var pipeline = this.GetPipeline(_features);
 		return pipeline == null ? default : pipeline.ExecuteAsync((state, cancellation) => executor(state, cancellation), argument, cancellation);
 	}
 
 	public ValueTask ExecuteAsync<TArgument>(Func<TArgument, Parameters, CancellationToken, ValueTask> executor, TArgument argument, Parameters parameters, CancellationToken cancellation = default)
 	{
-		var pipeline = GetPipeline(_features);
+		var pipeline = this.GetPipeline(_features);
 		return pipeline == null ? default : pipeline.ExecuteAsync((state, cancellation) => executor(state.argument, state.parameters, cancellation), (argument, parameters), cancellation);
 	}
 
 	public ValueTask<TResult> ExecuteAsync<TArgument, TResult>(Func<TArgument, CancellationToken, ValueTask<TResult>> executor, TArgument argument, CancellationToken cancellation = default)
 	{
-		var pipeline = GetPipeline<TResult>(_features);
+		var pipeline = this.GetPipeline<TResult>(_features);
 		return pipeline == null ? default : pipeline.ExecuteAsync((state, cancellation) => executor(state, cancellation), argument, cancellation);
 	}
 
 	public ValueTask<TResult> ExecuteAsync<TArgument, TResult>(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> executor, TArgument argument, Parameters parameters, CancellationToken cancellation = default)
 	{
-		var pipeline = GetPipeline<TResult>(_features);
+		var pipeline = this.GetPipeline<TResult>(_features);
 		return pipeline == null ? default : pipeline.ExecuteAsync((state, cancellation) => executor(state.argument, state.parameters, cancellation), (argument, parameters), cancellation);
 	}
 	#endregion
 
 	#region 私有方法
-	private static ResiliencePipeline GetPipeline(IEnumerable<IFeature> features)
+	private readonly ConcurrentDictionary<Type, object> _pipelines = new();
+
+	private ResiliencePipeline GetPipeline(IEnumerable<IFeature> features)
 	{
 		if(features == null || (features.TryGetNonEnumeratedCount(out var count) && count == 0))
 			return null;
 
-		var builder = new ResiliencePipelineBuilder();
+		return (ResiliencePipeline)_pipelines.GetOrAdd(typeof(void), (_, features) =>
+		{
+			var builder = new ResiliencePipelineBuilder();
 
-		foreach(var feature in features)
-			builder.AddStrategy(feature);
+			foreach(var feature in features)
+				builder.AddStrategy(feature);
 
-		return builder.Build();
+			return builder.Build();
+		}, features);
 	}
 
-	private static ResiliencePipeline<TResult> GetPipeline<TResult>(IEnumerable<IFeature> features)
+	private ResiliencePipeline<TResult> GetPipeline<TResult>(IEnumerable<IFeature> features)
 	{
 		if(features == null || (features.TryGetNonEnumeratedCount(out var count) && count == 0))
 			return null;
 
-		var builder = new ResiliencePipelineBuilder<TResult>();
+		return (ResiliencePipeline<TResult>)_pipelines.GetOrAdd(typeof(TResult), (_, features) =>
+		{
+			var builder = new ResiliencePipelineBuilder<TResult>();
 
-		foreach(var feature in features)
-			builder.AddStrategy(feature);
+			foreach(var feature in features)
+				builder.AddStrategy(feature);
 
-		return builder.Build();
+			return builder.Build();
+		}, features);
 	}
 	#endregion
 }
