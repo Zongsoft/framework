@@ -30,107 +30,106 @@
 using System;
 using System.Text;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Diagnostics;
+
+public class XmlLogFormatter : ILogFormatter<string>
 {
-	public class XmlLogFormatter : ILogFormatter<string>
+	#region 单例字段
+	public static readonly XmlLogFormatter Instance = new();
+	#endregion
+
+	#region 私有构造
+	private XmlLogFormatter() { }
+	#endregion
+
+	#region 公共属性
+	public string Name => "xml";
+	#endregion
+
+	#region 公共方法
+	public string Format(LogEntry entry)
 	{
-		#region 单例字段
-		public static readonly XmlLogFormatter Instance = new XmlLogFormatter();
-		#endregion
+		if(entry == null)
+			return null;
 
-		#region 私有构造
-		private XmlLogFormatter() { }
-		#endregion
+		var builder = new StringBuilder(512);
 
-		#region 公共属性
-		public string Name => "xml";
-		#endregion
+		builder.Append($"<log level=\"{entry.Level}\" source=\"{entry.Source}\" timestamp=\"{entry.Timestamp:yyyy-MM-dd HH:mm:ss}\">");
+		builder.AppendLine();
+		builder.AppendLine($"\t<message><![CDATA[{entry.Message}]]></message>");
 
-		#region 公共方法
-		public string Format(LogEntry entry)
+		if(entry.Exception is AggregateException aggregateException)
 		{
-			if(entry == null)
-				return null;
-
-			var builder = new StringBuilder(512);
-
-			builder.Append($"<log level=\"{entry.Level}\" source=\"{entry.Source}\" timestamp=\"{entry.Timestamp:yyyy-MM-dd HH:mm:ss}\">");
-			builder.AppendLine();
-			builder.AppendLine($"\t<message><![CDATA[{entry.Message}]]></message>");
-
-			if(entry.Exception is AggregateException aggregateException)
+			if(aggregateException.InnerExceptions != null && aggregateException.InnerExceptions.Count > 0)
 			{
-				if(aggregateException.InnerExceptions != null && aggregateException.InnerExceptions.Count > 0)
-				{
-					foreach(var exception in aggregateException.InnerExceptions)
-						WriteException(builder, exception);
-				}
-				else
-				{
-					WriteException(builder, entry.Exception);
-				}
+				foreach(var exception in aggregateException.InnerExceptions)
+					WriteException(builder, exception);
 			}
 			else
 			{
 				WriteException(builder, entry.Exception);
 			}
-
-			if(entry.Data != null)
-			{
-				builder.AppendLine();
-				builder.AppendLine($"\t<data type=\"{Common.TypeAlias.GetAlias(entry.Data.GetType())}\">");
-				builder.AppendLine("\t<![CDATA[");
-
-				if(entry.Data is byte[] bytes)
-					builder.AppendLine(Convert.ToBase64String(bytes));
-				else
-					builder.AppendLine(System.Text.Json.JsonSerializer.Serialize(entry.Data));
-
-				builder.AppendLine("\t]]>");
-				builder.AppendLine("\t</data>");
-			}
-
-			if(!string.IsNullOrEmpty(entry.StackTrace))
-			{
-				builder.AppendLine();
-				builder.AppendLine("\t<stackTrace>");
-				builder.AppendLine("\t<![CDATA[");
-				builder.AppendLine(entry.StackTrace);
-				builder.AppendLine("\t]]>");
-				builder.AppendLine("\t</stackTrace>");
-			}
-
-			builder.AppendLine("</log>");
-			return builder.ToString();
 		}
-		#endregion
-
-		#region 私有方法
-		private static void WriteException(StringBuilder builder, Exception exception)
+		else
 		{
-			if(builder == null || exception == null)
-				return;
-
-			builder.AppendLine();
-			builder.AppendLine($"\t<exception type=\"{Common.TypeAlias.GetAlias(exception.GetType())}\">");
-
-			if(!string.IsNullOrEmpty(exception.Message))
-				builder.AppendLine($"\t\t<message><![CDATA[{exception.Message}]]></message>");
-
-			if(!string.IsNullOrEmpty(exception.StackTrace))
-			{
-				builder.AppendLine("\t\t<stackTrace>");
-				builder.AppendLine("\t\t<![CDATA[");
-				builder.AppendLine(exception.StackTrace);
-				builder.AppendLine("\t\t]]>");
-				builder.AppendLine("\t\t</stackTrace>");
-			}
-
-			builder.AppendLine("\t</exception>");
-
-			if(exception.InnerException != null && exception.InnerException != exception)
-				WriteException(builder, exception.InnerException);
+			WriteException(builder, entry.Exception);
 		}
-		#endregion
+
+		if(entry.Data != null)
+		{
+			builder.AppendLine();
+			builder.AppendLine($"\t<data type=\"{Common.TypeAlias.GetAlias(entry.Data.GetType())}\">");
+			builder.AppendLine("\t<![CDATA[");
+
+			if(entry.Data is byte[] bytes)
+				builder.AppendLine(Convert.ToBase64String(bytes));
+			else
+				builder.AppendLine(System.Text.Json.JsonSerializer.Serialize(entry.Data));
+
+			builder.AppendLine("\t]]>");
+			builder.AppendLine("\t</data>");
+		}
+
+		if(!string.IsNullOrEmpty(entry.StackTrace))
+		{
+			builder.AppendLine();
+			builder.AppendLine("\t<stackTrace>");
+			builder.AppendLine("\t<![CDATA[");
+			builder.AppendLine(entry.StackTrace);
+			builder.AppendLine("\t]]>");
+			builder.AppendLine("\t</stackTrace>");
+		}
+
+		builder.AppendLine("</log>");
+		return builder.ToString();
 	}
+	#endregion
+
+	#region 私有方法
+	private static void WriteException(StringBuilder builder, Exception exception)
+	{
+		if(builder == null || exception == null)
+			return;
+
+		builder.AppendLine();
+		builder.AppendLine($"\t<exception type=\"{Common.TypeAlias.GetAlias(exception.GetType())}\">");
+
+		if(!string.IsNullOrEmpty(exception.Message))
+			builder.AppendLine($"\t\t<message><![CDATA[{exception.Message}]]></message>");
+
+		if(!string.IsNullOrEmpty(exception.StackTrace))
+		{
+			builder.AppendLine("\t\t<stackTrace>");
+			builder.AppendLine("\t\t<![CDATA[");
+			builder.AppendLine(exception.StackTrace);
+			builder.AppendLine("\t\t]]>");
+			builder.AppendLine("\t\t</stackTrace>");
+		}
+
+		builder.AppendLine("\t</exception>");
+
+		if(exception.InnerException != null && exception.InnerException != exception)
+			WriteException(builder, exception.InnerException);
+	}
+	#endregion
 }

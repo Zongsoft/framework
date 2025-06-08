@@ -32,87 +32,86 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Diagnostics;
+
+public sealed class Logger
 {
-	public sealed class Logger
+	#region 静态字段
+	private static readonly ConcurrentDictionary<string, Logger> _factory = new(StringComparer.Ordinal);
+	private static readonly List<ILogger> _loggers = new();
+	#endregion
+
+	#region 私有构造
+	private Logger(string source) => this.Source = source ?? throw new ArgumentNullException(nameof(source));
+	#endregion
+
+	#region 静态属性
+	public static ICollection<ILogger> Loggers => _loggers;
+	#endregion
+
+	#region 实例属性
+	public string Source { get; }
+	#endregion
+
+	#region 静态方法
+	public static Logger GetLogger<T>(T instance) => GetLogger(instance == null ? typeof(T) : instance.GetType());
+	public static Logger GetLogger<T>() => GetLogger(typeof(T));
+	public static Logger GetLogger(Type type)
 	{
-		#region 静态字段
-		private static readonly ConcurrentDictionary<string, Logger> _factory = new(StringComparer.Ordinal);
-		private static readonly List<ILogger> _loggers = new();
-		#endregion
+		if(type == null)
+			throw new ArgumentNullException(nameof(type));
 
-		#region 私有构造
-		private Logger(string source) => this.Source = source ?? throw new ArgumentNullException(nameof(source));
-		#endregion
-
-		#region 静态属性
-		public static ICollection<ILogger> Loggers => _loggers;
-		#endregion
-
-		#region 实例属性
-		public string Source { get; }
-		#endregion
-
-		#region 静态方法
-		public static Logger GetLogger<T>(T instance) => GetLogger(instance == null ? typeof(T) : instance.GetType());
-		public static Logger GetLogger<T>() => GetLogger(typeof(T));
-		public static Logger GetLogger(Type type)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			return _factory.GetOrAdd(type.Assembly.GetName().Name, key => new Logger(key));
-		}
-		public static Logger GetLogger(Assembly assembly)
-		{
-			if(assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
-
-			return _factory.GetOrAdd(assembly.GetName().Name, key => new Logger(key));
-		}
-		public static Logger GetLogger(string source)
-		{
-			if(string.IsNullOrEmpty(source))
-				throw new ArgumentNullException(nameof(source));
-
-			return _factory.GetOrAdd(source, key => new Logger(key));
-		}
-		#endregion
-
-		#region 日志方法
-		public void Trace(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Source, exception, data));
-		public void Trace(string message, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Source, message, data));
-
-		public void Debug(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Debug, this.Source, exception, data));
-		public void Debug(string message, object data = null) => Log(new LogEntry(LogLevel.Debug, this.Source, message, data));
-
-		public void Info(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Info, this.Source, exception, data));
-		public void Info(string message, object data = null) => Log(new LogEntry(LogLevel.Info, this.Source, message, data));
-
-		public void Warn(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Warn, this.Source, exception, data));
-		public void Warn(string message, object data = null) => Log(new LogEntry(LogLevel.Warn, this.Source, message, data));
-
-		public void Error(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Error, this.Source, exception, data));
-		public void Error(string message, object data = null) => Log(new LogEntry(LogLevel.Error, this.Source, message, data));
-
-		public void Fatal(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Fatal, this.Source, exception, data));
-		public void Fatal(string message, object data = null) => Log(new LogEntry(LogLevel.Fatal, this.Source, message, data));
-
-		public void Log(LogLevel level, Exception exception, object data = null) => Log(new LogEntry(level, this.Source, exception, data));
-		public void Log(LogLevel level, string message, object data = null) => Log(new LogEntry(level, this.Source, message, data));
-		#endregion
-
-		#region 私有方法
-		private static void Log(LogEntry entry)
-		{
-			if(entry == null)
-				return;
-
-			if(_loggers.Count == 0)
-				TextFileLogger.Default.Log(entry);
-			else
-				System.Threading.Tasks.Parallel.ForEach(_loggers, logger => logger?.Log(entry));
-		}
-		#endregion
+		return _factory.GetOrAdd(type.Assembly.GetName().Name, key => new Logger(key));
 	}
+	public static Logger GetLogger(Assembly assembly)
+	{
+		if(assembly == null)
+			throw new ArgumentNullException(nameof(assembly));
+
+		return _factory.GetOrAdd(assembly.GetName().Name, key => new Logger(key));
+	}
+	public static Logger GetLogger(string source)
+	{
+		if(string.IsNullOrEmpty(source))
+			throw new ArgumentNullException(nameof(source));
+
+		return _factory.GetOrAdd(source, key => new Logger(key));
+	}
+	#endregion
+
+	#region 日志方法
+	public void Trace(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Source, exception, data));
+	public void Trace(string message, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Source, message, data));
+
+	public void Debug(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Debug, this.Source, exception, data));
+	public void Debug(string message, object data = null) => Log(new LogEntry(LogLevel.Debug, this.Source, message, data));
+
+	public void Info(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Info, this.Source, exception, data));
+	public void Info(string message, object data = null) => Log(new LogEntry(LogLevel.Info, this.Source, message, data));
+
+	public void Warn(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Warn, this.Source, exception, data));
+	public void Warn(string message, object data = null) => Log(new LogEntry(LogLevel.Warn, this.Source, message, data));
+
+	public void Error(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Error, this.Source, exception, data));
+	public void Error(string message, object data = null) => Log(new LogEntry(LogLevel.Error, this.Source, message, data));
+
+	public void Fatal(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Fatal, this.Source, exception, data));
+	public void Fatal(string message, object data = null) => Log(new LogEntry(LogLevel.Fatal, this.Source, message, data));
+
+	public void Log(LogLevel level, Exception exception, object data = null) => Log(new LogEntry(level, this.Source, exception, data));
+	public void Log(LogLevel level, string message, object data = null) => Log(new LogEntry(level, this.Source, message, data));
+	#endregion
+
+	#region 私有方法
+	private static void Log(LogEntry entry)
+	{
+		if(entry == null)
+			return;
+
+		if(_loggers.Count == 0)
+			TextFileLogger.Default.Log(entry);
+		else
+			System.Threading.Tasks.Parallel.ForEach(_loggers, logger => logger?.Log(entry));
+	}
+	#endregion
 }

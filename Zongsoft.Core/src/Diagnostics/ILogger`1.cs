@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Diagnostics;
+
+public interface ILogger<out T> : ILogger
 {
-	public interface ILogger<out T> : ILogger
-	{
-		ILogFormatter<T> Formatter { get; }
-	}
+	ILogFormatter<T> Formatter { get; }
 }

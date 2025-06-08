@@ -49,11 +49,11 @@ public class PredicationCollection<T> : Collection<IPredication<T>>, IPredicatio
 	#endregion
 
 	#region 参数转换
-	protected virtual bool TryConertParameter(object parameter, out T result) => Zongsoft.Common.Convert.TryConvertValue<T>(parameter, out result);
+	protected virtual bool OnConvert(object parameter, out T result) => Zongsoft.Common.Convert.TryConvertValue<T>(parameter, out result);
 	#endregion
 
 	#region 断言方法
-	public bool Predicate(T parameter)
+	public bool Predicate(T argument)
 	{
 		var predications = base.Items;
 
@@ -65,7 +65,7 @@ public class PredicationCollection<T> : Collection<IPredication<T>>, IPredicatio
 			if(predication == null)
 				continue;
 
-			if(predication.Predicate(parameter))
+			if(predication.Predicate(argument))
 			{
 				if(_combination == PredicationCombination.Or)
 					return true;
@@ -77,9 +77,9 @@ public class PredicationCollection<T> : Collection<IPredication<T>>, IPredicatio
 			}
 		}
 
-		return _combination == PredicationCombination.Or ? false : true;
+		return _combination != PredicationCombination.Or;
 	}
 
-	bool IPredication.Predicate(object parameter) => this.TryConertParameter(parameter, out var stronglyParameter) && this.Predicate(stronglyParameter);
+	bool IPredication.Predicate(object argument) => this.OnConvert(argument, out var stronglyArgument) && this.Predicate(stronglyArgument);
 	#endregion
 }

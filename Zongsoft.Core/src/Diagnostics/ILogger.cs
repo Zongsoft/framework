@@ -29,11 +29,10 @@
 
 using System;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Diagnostics;
+
+public interface ILogger
 {
-	public interface ILogger
-	{
-		Common.IPredication<LogEntry> Predication { get; }
-		void Log(LogEntry entry);
-	}
+	Common.IPredication<LogEntry> Predication { get; }
+	void Log(LogEntry entry);
 }

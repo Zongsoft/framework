@@ -52,17 +52,17 @@ public abstract class PredicationBase<T> : IPredication<T>, Services.IMatchable
 	#endregion
 
 	#region 断言方法
-	public abstract bool Predicate(T parameter);
-	bool IPredication.Predicate(object parameter) => this.Predicate(this.ConvertParameter(parameter));
+	public abstract bool Predicate(T argument);
+	bool IPredication.Predicate(object argument) => this.Predicate(this.OnConvert(argument));
 	#endregion
 
 	#region 虚拟方法
-	protected virtual T ConvertParameter(object parameter) => Zongsoft.Common.Convert.ConvertValue<T>(parameter);
+	protected virtual T OnConvert(object argument) => Zongsoft.Common.Convert.ConvertValue<T>(argument);
 	#endregion
 
 	#region 服务匹配
-	public virtual bool Match(string parameter) => string.Equals(this.Name, parameter, StringComparison.OrdinalIgnoreCase);
-	bool Services.IMatchable.Match(object parameter) => parameter != null && this.Match(parameter.ToString());
+	public virtual bool Match(string argument) => string.Equals(this.Name, argument, StringComparison.OrdinalIgnoreCase);
+	bool Services.IMatchable.Match(object argument) => argument != null && this.Match(argument.ToString());
 	#endregion
 
 	#region 重写方法

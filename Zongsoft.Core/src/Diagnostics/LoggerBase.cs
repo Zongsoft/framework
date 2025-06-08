@@ -29,30 +29,29 @@
 
 using System;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Diagnostics;
+
+public abstract class LoggerBase<T> : ILogger<T>
 {
-	public abstract class LoggerBase<T> : ILogger<T>
+	#region 公共属性
+	/// <summary>获取或设置日志格式化器。</summary>
+	public ILogFormatter<T> Formatter { get; protected set; }
+
+	/// <summary>获取或设置日志断言。</summary>
+	public Common.IPredication<LogEntry> Predication { get; protected set; }
+	#endregion
+
+	#region 公共方法
+	public void Log(LogEntry entry)
 	{
-		#region 公共属性
-		/// <summary>获取或设置日志格式化器。</summary>
-		public ILogFormatter<T> Formatter { get; protected set; }
+		var predication = this.Predication;
 
-		/// <summary>获取或设置日志断言。</summary>
-		public Common.IPredication<LogEntry> Predication { get; protected set; }
-		#endregion
-
-		#region 公共方法
-		public void Log(LogEntry entry)
-		{
-			var predication = this.Predication;
-
-			if(predication == null || predication.Predicate(entry))
-				this.OnLog(entry);
-		}
-		#endregion
-
-		#region 抽象方法
-		protected abstract void OnLog(LogEntry entry);
-		#endregion
+		if(predication == null || predication.Predicate(entry))
+			this.OnLog(entry);
 	}
+	#endregion
+
+	#region 抽象方法
+	protected abstract void OnLog(LogEntry entry);
+	#endregion
 }

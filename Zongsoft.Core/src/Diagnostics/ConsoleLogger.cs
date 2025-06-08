@@ -28,55 +28,50 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Diagnostics;
+
+public class ConsoleLogger : LoggerBase<string>
 {
-	public class ConsoleLogger : LoggerBase<string>
+	#region 公共方法
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
+	protected override void OnLog(LogEntry entry)
 	{
-		#region 公共方法
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
-		protected override void OnLog(LogEntry entry)
+		if(entry == null)
+			return;
+
+		//根据日志级别来调整控制台的前景色
+		switch(entry.Level)
 		{
-			if(entry == null)
-				return;
-
-			//根据日志级别来调整控制台的前景色
-			switch(entry.Level)
-			{
-				case LogLevel.Trace:
-					Console.ForegroundColor = ConsoleColor.Gray;
-					break;
-				case LogLevel.Debug:
-					Console.ForegroundColor = ConsoleColor.DarkGray;
-					break;
-				case LogLevel.Warn:
-					Console.ForegroundColor = ConsoleColor.Yellow;
-					break;
-				case LogLevel.Error:
-				case LogLevel.Fatal:
-					Console.ForegroundColor = ConsoleColor.Red;
-					break;
-			}
-
-			try
-			{
-				//打印日志信息
-				Console.WriteLine(this.Format(entry));
-			}
-			finally
-			{
-				//恢复默认颜色
-				Console.ResetColor();
-			}
+			case LogLevel.Trace:
+				Console.ForegroundColor = ConsoleColor.Gray;
+				break;
+			case LogLevel.Debug:
+				Console.ForegroundColor = ConsoleColor.DarkGray;
+				break;
+			case LogLevel.Warn:
+				Console.ForegroundColor = ConsoleColor.Yellow;
+				break;
+			case LogLevel.Error:
+			case LogLevel.Fatal:
+				Console.ForegroundColor = ConsoleColor.Red;
+				break;
 		}
-		#endregion
 
-		#region 虚拟方法
-		protected virtual string Format(LogEntry entry)
+		try
 		{
-			return (this.Formatter ?? XmlLogFormatter.Instance).Format(entry);
+			//打印日志信息
+			Console.WriteLine(this.Format(entry));
 		}
-		#endregion
+		finally
+		{
+			//恢复默认颜色
+			Console.ResetColor();
+		}
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual string Format(LogEntry entry) => (this.Formatter ?? XmlLogFormatter.Instance).Format(entry);
+	#endregion
 }

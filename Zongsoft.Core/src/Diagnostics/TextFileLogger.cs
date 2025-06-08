@@ -30,30 +30,29 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Diagnostics;
+
+public class TextFileLogger : FileLogger<string>
 {
-	public class TextFileLogger : FileLogger<string>
+	#region 单例字段
+	public static readonly TextFileLogger Default = new();
+	#endregion
+
+	#region 构造函数
+	public TextFileLogger()
 	{
-		#region 单例字段
-		public static readonly TextFileLogger Default = new TextFileLogger();
-		#endregion
-
-		#region 构造函数
-		public TextFileLogger()
-		{
-			this.Formatter = XmlLogFormatter.Instance;
-		}
-		#endregion
-
-		#region 重写方法
-		protected override void WriteLog(LogEntry entry, Stream stream)
-		{
-			//注意：此处不能关闭stream参数传入的流，该流由基类确保安全释放！
-			using(var writer = new StreamWriter(stream, System.Text.Encoding.UTF8, 1024 * 16, true))
-			{
-				writer.WriteLine(this.Format(entry));
-			}
-		}
-		#endregion
+		this.Formatter = XmlLogFormatter.Instance;
 	}
+	#endregion
+
+	#region 重写方法
+	protected override void WriteLog(LogEntry entry, Stream stream)
+	{
+		//注意：此处不能关闭stream参数传入的流，该流由基类确保安全释放！
+		using(var writer = new StreamWriter(stream, System.Text.Encoding.UTF8, 1024 * 16, true))
+		{
+			writer.WriteLine(this.Format(entry));
+		}
+	}
+	#endregion
 }

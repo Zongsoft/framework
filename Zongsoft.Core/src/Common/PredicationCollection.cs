@@ -50,12 +50,12 @@ public class PredicationCollection : Collection<IPredication>, IPredication
 
 	#region 断言方法
 	/// <summary>对断言集合内的所有断言进行遍历断言调用，并根据<see cref="Combination"/>属性值进行组合判断。</summary>
-	/// <param name="parameter">对断言集合内所有断言调用时的传入参数。</param>
+	/// <param name="argument">对断言集合内所有断言调用时的传入参数。</param>
 	/// <returns>集合内所有断言的组合结果，如果集合为空则始终返回真(true)。</returns>
 	/// <remarks>
 	///		<para>在调用过程中如果是“或”组合则会发生“真”短路；如果是“与”组合则会发生“假”短路。</para>
 	/// </remarks>
-	public bool Predicate(object parameter)
+	public bool Predicate(object argument)
 	{
 		var predications = base.Items;
 
@@ -67,7 +67,7 @@ public class PredicationCollection : Collection<IPredication>, IPredication
 			if(predication == null)
 				continue;
 
-			if(predication.Predicate(parameter))
+			if(predication.Predicate(argument))
 			{
 				if(_combination == PredicationCombination.Or)
 					return true;
@@ -79,7 +79,7 @@ public class PredicationCollection : Collection<IPredication>, IPredication
 			}
 		}
 
-		return _combination == PredicationCombination.Or ? false : true;
+		return _combination != PredicationCombination.Or;
 	}
 	#endregion
 }

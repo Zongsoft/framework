@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Diagnostics
+namespace Zongsoft.Diagnostics;
+
+public interface ILogFormatter<out T>
 {
-	public interface ILogFormatter<out T>
-	{
-		T Format(LogEntry entry);
-	}
+	T Format(LogEntry entry);
 }
