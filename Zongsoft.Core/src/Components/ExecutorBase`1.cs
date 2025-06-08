@@ -86,9 +86,9 @@ public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<T
 	protected virtual IHandler GetHandler(IExecutorContext<TArgument> context) => this.Locator?.Locate(context);
 	protected virtual ValueTask OnExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default) => this.GetHandler(context) switch
 	{
-		IHandler<TArgument> handler => handler.HandleAsync(context.Argument, context.Parameters, cancellation),
 		IHandler<IExecutorContext> handler => handler.HandleAsync(context, context.Parameters, cancellation),
 		IHandler<IExecutorContext<TArgument>> handler => handler.HandleAsync(context, context.Parameters, cancellation),
+		IHandler<TArgument> handler => handler.HandleAsync(context.Argument, context.Parameters, cancellation),
 		IHandler handler => handler.HandleAsync(context.Argument, context.Parameters, cancellation),
 		_ => ValueTask.CompletedTask,
 	};

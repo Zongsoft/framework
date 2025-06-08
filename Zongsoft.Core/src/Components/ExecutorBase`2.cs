@@ -92,12 +92,6 @@ public abstract class ExecutorBase<TArgument, TResult> : IExecutor<TArgument, TR
 
 		switch(executor)
 		{
-			case IHandler<TArgument> handler:
-				await handler.HandleAsync(context.Argument, context.Parameters, cancellation);
-				break;
-			case IHandler<TArgument, TResult> handler:
-				context.Result = await handler.HandleAsync(context.Argument, context.Parameters, cancellation);
-				break;
 			case IHandler<IExecutorContext> handler:
 				await handler.HandleAsync(context, context.Parameters, cancellation);
 				break;
@@ -106,6 +100,12 @@ public abstract class ExecutorBase<TArgument, TResult> : IExecutor<TArgument, TR
 				break;
 			case IHandler<IExecutorContext<TArgument, TResult>> handler:
 				await handler.HandleAsync(context, context.Parameters, cancellation);
+				break;
+			case IHandler<TArgument, TResult> handler:
+				context.Result = await handler.HandleAsync(context.Argument, context.Parameters, cancellation);
+				break;
+			case IHandler<TArgument> handler:
+				await handler.HandleAsync(context.Argument, context.Parameters, cancellation);
 				break;
 			case IHandler handler:
 				await handler.HandleAsync(context.Argument, context.Parameters, cancellation);
