@@ -34,18 +34,22 @@ namespace Zongsoft.Components.Features;
 public static class RetryFeatureExtension
 {
 	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0) =>
-		Retry(builder, RetryFeature.BackoffMode.None, latency, attempts);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryFeature.BackoffMode mode, RetryLatency latency, int attempts = 0)
+		Retry(builder, RetryBackoff.None, latency, true, attempts);
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts = 0) =>
+		Retry(builder, RetryBackoff.None, latency, jitterable, attempts);
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts = 0) =>
+		Retry(builder, backoff, latency, true, attempts);
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0)
 	{
 		if(builder == null)
-			return new FeatureBuilder(new RetryFeature(mode, latency, attempts));
+			return new FeatureBuilder(new RetryFeature(backoff, latency, jitterable, attempts));
 
 		if(builder is FeatureBuilder appender)
 		{
-			appender.Features.Add(new RetryFeature(mode, latency, attempts));
+			appender.Features.Add(new RetryFeature(backoff, latency, jitterable, attempts));
 			return appender;
 		}
 
-		return new FeatureBuilder([.. builder.Build(), new RetryFeature(mode, latency, attempts)]);
+		return new FeatureBuilder([.. builder.Build(), new RetryFeature(backoff, latency, jitterable, attempts)]);
 	}
 }

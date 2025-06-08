@@ -113,24 +113,20 @@ internal static class FeatureExtension
 		var strategy = new RetryStrategyOptions
 		{
 			Delay = feature.Latency.Value,
-			MaxDelay = feature.Latency.Limit,
-			MaxRetryAttempts = feature.Attempts,
+			MaxDelay = feature.Latency.Limit > TimeSpan.Zero ? feature.Latency.Limit : null,
+			MaxRetryAttempts = feature.Attempts > 0 ? feature.Attempts : int.MaxValue,
 			UseJitter = feature.Jitterable,
-			BackoffType = GetBackoffType(feature.Mode),
+			BackoffType = GetBackoffType(feature.Backoff),
 		};
 
 		if(feature.Latency.Generator != null)
-			strategy.DelayGenerator = argument => ValueTask.FromResult<TimeSpan?>(feature.Latency.Generator(feature, argument.AttemptNumber));
+			strategy.DelayGenerator = argument =>
+			{
+				var result = feature.Latency.Generator(feature, argument.AttemptNumber);
+				return ValueTask.FromResult<TimeSpan?>(result > TimeSpan.Zero ? result : null);
+			};
 
 		return strategy;
-
-		static DelayBackoffType GetBackoffType(RetryFeature.BackoffMode mode) => mode switch
-		{
-			RetryFeature.BackoffMode.None => DelayBackoffType.Constant,
-			RetryFeature.BackoffMode.Linear => DelayBackoffType.Linear,
-			RetryFeature.BackoffMode.Exponential => DelayBackoffType.Exponential,
-			_ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null)
-		};
 	}
 
 	public static RetryStrategyOptions<TResult> ToStrategy<TResult>(this RetryFeature feature)
@@ -141,24 +137,20 @@ internal static class FeatureExtension
 		var strategy = new RetryStrategyOptions<TResult>
 		{
 			Delay = feature.Latency.Value,
-			MaxDelay = feature.Latency.Limit,
-			MaxRetryAttempts = feature.Attempts,
+			MaxDelay = feature.Latency.Limit > TimeSpan.Zero ? feature.Latency.Limit : null,
+			MaxRetryAttempts = feature.Attempts > 0 ? feature.Attempts : int.MaxValue,
 			UseJitter = feature.Jitterable,
-			BackoffType = GetBackoffType(feature.Mode),
+			BackoffType = GetBackoffType(feature.Backoff),
 		};
 
 		if(feature.Latency.Generator != null)
-			strategy.DelayGenerator = argument => ValueTask.FromResult<TimeSpan?>(feature.Latency.Generator(feature, argument.AttemptNumber));
+			strategy.DelayGenerator = argument =>
+			{
+				var result = feature.Latency.Generator(feature, argument.AttemptNumber);
+				return ValueTask.FromResult<TimeSpan?>(result > TimeSpan.Zero ? result : null);
+			};
 
 		return strategy;
-
-		static DelayBackoffType GetBackoffType(RetryFeature.BackoffMode mode) => mode switch
-		{
-			RetryFeature.BackoffMode.None => DelayBackoffType.Constant,
-			RetryFeature.BackoffMode.Linear => DelayBackoffType.Linear,
-			RetryFeature.BackoffMode.Exponential => DelayBackoffType.Exponential,
-			_ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null)
-		};
 	}
 
 	public static CircuitBreakerStrategyOptions ToStrategy(this BreakerFeature feature)
@@ -206,9 +198,6 @@ internal static class FeatureExtension
 
 		var strategy = new RateLimiterStrategyOptions
 		{
-			DefaultRateLimiterOptions = new()
-			{
-			},
 		};
 
 		return strategy;
@@ -241,11 +230,19 @@ internal static class FeatureExtension
 		{
 			FallbackAction = async argument =>
 			{
-				await feature.Fallback(null);
-				return Outcome.FromResult<TResult>(default);
+				var result = await feature.Fallback(null);
+				return Outcome.FromResult(result);
 			},
 		};
 
 		return strategy;
 	}
+
+	private static DelayBackoffType GetBackoffType(RetryBackoff backoff) => backoff switch
+	{
+		RetryBackoff.None => DelayBackoffType.Constant,
+		RetryBackoff.Linear => DelayBackoffType.Linear,
+		RetryBackoff.Exponential => DelayBackoffType.Exponential,
+		_ => throw new ArgumentOutOfRangeException(nameof(backoff), backoff, null)
+	};
 }

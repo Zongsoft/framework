@@ -37,14 +37,16 @@ namespace Zongsoft.Components.Features;
 public class RetryFeature : IFeature
 {
 	#region 构造函数
-	public RetryFeature(RetryLatency latency, int attempts = 0) : this(BackoffMode.None, latency, attempts) { }
-	public RetryFeature(BackoffMode mode, RetryLatency latency, int attempts = 0)
+	public RetryFeature(RetryLatency latency, int attempts = 0) : this(RetryBackoff.None, latency, true, attempts) { }
+	public RetryFeature(RetryLatency latency, bool jitterable, int attempts = 0) : this(RetryBackoff.None, latency, jitterable, attempts) { }
+	public RetryFeature(RetryBackoff backoff, RetryLatency latency, int attempts = 0) : this(backoff, latency, true, attempts) { }
+	public RetryFeature(RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0)
 	{
 		this.Enabled = true;
-		this.Jitterable = true;
-		this.Mode = mode;
+		this.Backoff = backoff;
 		this.Latency = latency;
 		this.Attempts = attempts;
+		this.Jitterable = jitterable;
 	}
 	#endregion
 
@@ -55,23 +57,21 @@ public class RetryFeature : IFeature
 	/// <summary>获取或设置最大重试次数。</summary>
 	public int Attempts { get; set; }
 	/// <summary>获取或设置延迟补偿方式。</summary>
-	public BackoffMode Mode { get; set; }
+	public RetryBackoff Backoff { get; set; }
 	/// <summary>获取或设置重试延迟时长。</summary>
 	public RetryLatency Latency { get; set; }
 	#endregion
+}
 
-	#region 嵌套枚举
-	/// <summary>表示延迟补偿(回退)方式的枚举。</summary>
-	public enum BackoffMode
-	{
-		/// <summary>默认，即指定的固定延迟。</summary>
-		None,
-		/// <summary>线性递增。</summary>
-		Linear,
-		/// <summary>指数增长。</summary>
-		Exponential,
-	}
-	#endregion
+/// <summary>表示重试延迟补偿方式的枚举。</summary>
+public enum RetryBackoff
+{
+	/// <summary>默认，固定延迟。</summary>
+	None,
+	/// <summary>线性递增。</summary>
+	Linear,
+	/// <summary>指数增长。</summary>
+	Exponential,
 }
 
 /// <summary>
@@ -99,11 +99,15 @@ public struct RetryLatency
 	/// <summary>获取或设置延迟时长。</summary>
 	public TimeSpan Value { get; set; }
 
-	/// <summary>获取或设置延迟时长限制，即最大延迟时长。</summary>
+	/// <summary>获取或设置延迟时长限制，即最大延迟时长，默认为零（即无限制）。</summary>
 	public TimeSpan Limit { get; set; }
 
 	/// <summary>获取或设置重试延迟时长的生成器。</summary>
 	public Func<RetryFeature, int, TimeSpan> Generator { get; set; }
+	#endregion
+
+	#region 重写方法
+	public override readonly string ToString() => this.Limit > TimeSpan.Zero ? $"{this.Value}({this.Limit})" : this.Value.ToString();
 	#endregion
 
 	#region 符号重写
