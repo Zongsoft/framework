@@ -74,21 +74,23 @@ public class WorkerInfoCommand : CommandBase<CommandContext>
 		//构建可用内容部分
 		if(!worker.Enabled)
 		{
-			content.Append(CommandOutletColor.Gray, "(");
-			content.Append(CommandOutletColor.Red, Properties.Resources.Disabled);
-			content.Append(CommandOutletColor.Gray, ")");
+			content.Last
+				.Append(CommandOutletColor.Gray, "(")
+				.Append(CommandOutletColor.Red, Properties.Resources.Disabled)
+				.Append(CommandOutletColor.Gray, ")");
 		}
 
 		//构建名称内容部分
-		content.Append(" " + worker.Name);
+		content.Last.Append(" " + worker.Name);
 
 		//获取描述信息注解
 		var attribute = (System.ComponentModel.DescriptionAttribute)Attribute.GetCustomAttribute(worker.GetType(), typeof(System.ComponentModel.DescriptionAttribute), true);
 
 		if(attribute != null && !string.IsNullOrWhiteSpace(attribute.Description))
 		{
-			content.AppendLine();
-			content.Append(attribute.Description);
+			content.Last
+				.AppendLine()
+				.Append(attribute.Description);
 		}
 
 		return content;

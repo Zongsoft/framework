@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components.Commands;
 
@@ -50,8 +49,8 @@ internal static class Utility
 			.Append(CommandOutletColor.DarkGray, ") ");
 
 		if(color == null)
-			return content.Append(message);
+			return content.Last.Append(message);
 		else
-			return content.Append(color.Value, message);
+			return content.Last.Append(color.Value, message);
 	}
 }

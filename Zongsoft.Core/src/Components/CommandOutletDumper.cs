@@ -85,34 +85,34 @@ public static class CommandOutletDumper
 		switch(value)
 		{
 			case null:
-				content.AppendLine(CommandOutletColor.Gray, "NULL");
+				content.Last.AppendLine(CommandOutletColor.Gray, "NULL");
 				break;
 			case Type type:
-				content.AppendLine(type.GetAlias());
+				content.Last.AppendLine(type.GetAlias());
 				break;
 			case Assembly assembly:
-				content
+				content.Last
 					.Append(assembly.GetName().Name)
 					.Append(CommandOutletColor.DarkGray, "@")
 					.Append(CommandOutletColor.DarkGreen, assembly.GetName().Version.ToString());
 
 				if(!string.IsNullOrEmpty(assembly.Location))
-					content
+					content.Last
 						.Append(CommandOutletColor.Gray, "(")
 						.Append(CommandOutletColor.DarkYellow, assembly.Location)
 						.Append(CommandOutletColor.Gray, ")");
 
 				if(assembly.IsDynamic)
-					content
+					content.Last
 						.Append(CommandOutletColor.DarkGray, "(")
 						.Append(CommandOutletColor.DarkMagenta, "dynamic")
 						.Append(CommandOutletColor.DarkGray, ")");
 
-				content.AppendLine();
+				content.Last.AppendLine();
 
 				break;
 			case byte[] binary:
-				content.AppendLine(CommandOutletColor.DarkYellow, System.Convert.ToHexString(binary));
+				content.Last.AppendLine(CommandOutletColor.DarkYellow, System.Convert.ToHexString(binary));
 				break;
 			case string @string:
 				DumpString(content, @string);
@@ -121,15 +121,15 @@ public static class CommandOutletDumper
 				DumpString(content, builder.ToString());
 				break;
 			case IEnumerable items:
-				content.AppendLine();
-				content.Indent(options, indent);
-				content.AppendLine(CommandOutletColor.Magenta, "{");
+				content.Last.AppendLine();
+				content.Last.Indent(options, indent);
+				content.Last.AppendLine(CommandOutletColor.Magenta, "{");
 
 				foreach(var item in items)
 				{
 					if(DictionaryUtility.TryGetEntry(item, out var entryKey, out var entryValue))
 					{
-						content
+						content.Last
 							.Append(CommandOutletColor.DarkYellow, entryKey.ToString())
 							.Append(CommandOutletColor.DarkGray, "=");
 
@@ -139,8 +139,8 @@ public static class CommandOutletDumper
 						DumpValue(content, options, item, indent + 1);
 				}
 
-				content.Indent(options, indent);
-				content.AppendLine(CommandOutletColor.Magenta, "}");
+				content.Last.Indent(options, indent);
+				content.Last.AppendLine(CommandOutletColor.Magenta, "}");
 				break;
 			default:
 				DumpObject(content, options, value, indent);
@@ -152,17 +152,17 @@ public static class CommandOutletDumper
 	{
 		if(value == null)
 		{
-			content.AppendLine(CommandOutletColor.Gray, "NULL");
+			content.Last.AppendLine(CommandOutletColor.Gray, "NULL");
 			return;
 		}
 
 		if(string.IsNullOrWhiteSpace(value))
-			content
+			content.Last
 				.Append(CommandOutletColor.DarkGray, "<")
 				.Append(CommandOutletColor.Yellow, "Empty")
 				.AppendLine(CommandOutletColor.DarkGray, ">");
 		else
-			content.AppendLine(CommandOutletColor.DarkGreen, value);
+			content.Last.AppendLine(CommandOutletColor.DarkGreen, value);
 	}
 
 	private static void DumpObject(CommandOutletContent content, CommandOutletDumperOptions options, object value, int indent)
@@ -173,7 +173,7 @@ public static class CommandOutletDumper
 			return;
 		}
 
-		content.AppendLine();
+		content.Last.AppendLine();
 		var members = options.GetMembers(value);
 
 		for(int i = 0; i < members.Length; i++)
@@ -203,20 +203,20 @@ public static class CommandOutletDumper
 	{
 		content.Indent(options, indent);
 
-		content
+		content.Last
 			.Append(CommandOutletColor.DarkCyan, memberName)
 			.Append(CommandOutletColor.DarkGray, ":")
 			.Append(CommandOutletColor.DarkBlue, "(");
 
 		if(memberType.IsEnum)
-			content
+			content.Last
 				.Append(CommandOutletColor.Magenta, "enum")
 				.Append(CommandOutletColor.DarkGray, ":")
 				.Append(CommandOutletColor.DarkYellow, memberType.Name);
 		else
-			content.Append(CommandOutletColor.DarkYellow, memberType.GetAlias());
+			content.Last.Append(CommandOutletColor.DarkYellow, memberType.GetAlias());
 
-		content.Append(CommandOutletColor.DarkBlue, ")");
+		content.Last.Append(CommandOutletColor.DarkBlue, ")");
 
 		var trackable = options.Tracker.CanTrack(value);
 
@@ -229,7 +229,7 @@ public static class CommandOutletDumper
 				if(tracked = options.Tracker.Track(value))
 					DumpValue(content, options, value, indent);
 				else
-					content
+					content.Last
 						.Append(CommandOutletColor.DarkGray, "<")
 						.Append(CommandOutletColor.DarkRed, "Circular Reference")
 						.AppendLine(CommandOutletColor.DarkGray, ">");
@@ -251,7 +251,7 @@ public static class CommandOutletDumper
 			var text = options.Indent(indent);
 
 			if(!string.IsNullOrEmpty(text))
-				content.Append(text);
+				content.Last.Append(text);
 		}
 
 		return content;
