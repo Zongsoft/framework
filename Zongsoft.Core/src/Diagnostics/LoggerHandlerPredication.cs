@@ -29,73 +29,26 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Diagnostics;
 
 public class LoggerHandlerPredication : Common.IPredication<LogEntry>
 {
-	#region 成员字段
-	private string _source;
-	private LogLevel? _minLevel;
-	private LogLevel? _maxLevel;
-	private Type _exceptionType;
-	#endregion
-
 	#region 公共属性
-	public string Source
-	{
-		get
-		{
-			return _source;
-		}
-		set
-		{
-			_source = value;
-		}
-	}
-
-	public Type ExceptionType
-	{
-		get
-		{
-			return _exceptionType;
-		}
-		set
-		{
-			_exceptionType = value;
-		}
-	}
-
-	public LogLevel? MinLevel
-	{
-		get
-		{
-			return _minLevel;
-		}
-		set
-		{
-			_minLevel = value;
-		}
-	}
-
-	public LogLevel? MaxLevel
-	{
-		get
-		{
-			return _maxLevel;
-		}
-		set
-		{
-			_maxLevel = value;
-		}
-	}
+	public string Source { get; set; }
+	public Type ExceptionType { get; set; }
+	public LogLevel? MinLevel { get; set; }
+	public LogLevel? MaxLevel { get; set; }
 	#endregion
 
 	#region 断言方法
-	public bool Predicate(LogEntry entry)
+	ValueTask<bool> Common.IPredication.PredicateAsync(object argument, CancellationToken cancellation) => this.PredicateAsync(argument as LogEntry, cancellation);
+	public ValueTask<bool> PredicateAsync(LogEntry entry, CancellationToken cancellation = default)
 	{
 		if(entry == null)
-			return false;
+			return ValueTask.FromResult(false);
 
 		if(!string.IsNullOrWhiteSpace(this.Source))
 		{
@@ -106,7 +59,7 @@ public class LoggerHandlerPredication : Common.IPredication<LogEntry>
 			{
 				if(source[0] == '*')
 				{
-					if(source[source.Length - 1] == '*')
+					if(source[^1] == '*')
 						matched = entry.Source.Contains(source.Trim('*'));
 					else
 						matched = entry.Source.EndsWith(source.Trim('*'));
@@ -122,44 +75,35 @@ public class LoggerHandlerPredication : Common.IPredication<LogEntry>
 			}
 
 			if(!matched)
-				return false;
+				return ValueTask.FromResult(false);
 		}
 
 		if(this.MinLevel.HasValue)
 		{
 			if(entry.Level < this.MinLevel.Value)
-				return false;
+				return ValueTask.FromResult(false);
 		}
 
 		if(this.MaxLevel.HasValue)
 		{
 			if(entry.Level > this.MaxLevel.Value)
-				return false;
+				return ValueTask.FromResult(false);
 		}
 
 		if(this.ExceptionType != null)
 		{
 			if(entry.Exception == null)
-				return false;
+				return ValueTask.FromResult(false);
 
-			bool result;
-
-			if(entry.Exception.GetType() == typeof(AggregateException))
-			{
-				result = ((AggregateException)entry.Exception).InnerExceptions.Any(ex => this.ExceptionType.IsAssignableFrom(ex.GetType()));
-			}
-			else
-			{
-				result = this.ExceptionType.IsAssignableFrom(entry.Exception.GetType());
-			}
+			var result = entry.Exception.GetType() == typeof(AggregateException) ?
+				((AggregateException)entry.Exception).InnerExceptions.Any(ex => this.ExceptionType.IsAssignableFrom(ex.GetType())) :
+				this.ExceptionType.IsAssignableFrom(entry.Exception.GetType());
 
 			if(!result)
-				return false;
+				return ValueTask.FromResult(false);
 		}
 
-		return true;
+		return ValueTask.FromResult(true);
 	}
-
-	bool Common.IPredication.Predicate(object argument) => this.Predicate(argument as LogEntry);
 	#endregion
 }

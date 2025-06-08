@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Common;
 
@@ -52,8 +54,8 @@ public abstract class PredicationBase<T> : IPredication<T>, Services.IMatchable
 	#endregion
 
 	#region 断言方法
-	public abstract bool Predicate(T argument);
-	bool IPredication.Predicate(object argument) => this.Predicate(this.OnConvert(argument));
+	public abstract ValueTask<bool> PredicateAsync(T argument, CancellationToken cancellation = default);
+	ValueTask<bool> IPredication.PredicateAsync(object argument, CancellationToken cancellation) => this.PredicateAsync(this.OnConvert(argument), cancellation);
 	#endregion
 
 	#region 虚拟方法
@@ -62,7 +64,7 @@ public abstract class PredicationBase<T> : IPredication<T>, Services.IMatchable
 
 	#region 服务匹配
 	public virtual bool Match(string argument) => string.Equals(this.Name, argument, StringComparison.OrdinalIgnoreCase);
-	bool Services.IMatchable.Match(object argument) => argument != null && this.Match(argument.ToString());
+	bool Services.IMatchable.Match(object argument) => this.Match(argument as string);
 	#endregion
 
 	#region 重写方法

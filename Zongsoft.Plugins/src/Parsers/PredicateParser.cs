@@ -28,7 +28,8 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 
 using Zongsoft.Common;
@@ -70,15 +71,27 @@ namespace Zongsoft.Plugins.Parsers
 			if(predication != null)
 			{
 				string text = matches.Count <= 1 ? null : context.Text.Substring(matches[1].Index);
-				object parameter = text;
+				object argument = text;
 
 				if(TypeExtension.IsAssignableFrom(typeof(IPredication<PluginPredicationContext>), predication.GetType()))
-					parameter = new PluginPredicationContext(text, context.Builtin, context.Node, context.Plugin);
+					argument = new PluginPredicationContext(text, context.Builtin, context.Node, context.Plugin);
 
-				return predication.Predicate(parameter);
+				return Predicate(predication, argument);
 			}
 
 			return false;
+		}
+
+		private static bool Predicate(IPredication predication, object argument)
+		{
+			if(predication == null)
+				return false;
+
+			var task = predication.PredicateAsync(argument);
+			if(task.IsCompletedSuccessfully)
+				return task.Result;
+
+			return task.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		}
 	}
 }

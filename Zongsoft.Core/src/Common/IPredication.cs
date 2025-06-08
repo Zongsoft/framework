@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Common;
 
@@ -38,6 +40,7 @@ public interface IPredication
 {
 	/// <summary>确定指定对象是否符合某种条件。</summary>
 	/// <param name="argument">指定的条件参数对象。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果符合某种条件则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	bool Predicate(object argument);
+	ValueTask<bool> PredicateAsync(object argument, CancellationToken cancellation = default);
 }

@@ -42,26 +42,17 @@ public abstract class FileLogger<T> : LoggerBase<T>
 	#endregion
 
 	#region 成员字段
-	private readonly object _syncRoot;
+	private readonly object _lock;
 	private readonly ConcurrentQueue<LogEntry> _queue;
 	#endregion
 
 	#region 构造函数
-	protected FileLogger()
-	{
-		_syncRoot = new object();
-		_queue = new ConcurrentQueue<LogEntry>();
-		this.Limit = DEFAULT_LIMIT;
-	}
-
+	protected FileLogger() : this(null) { }
 	protected FileLogger(string filePath, int limit = DEFAULT_LIMIT)
 	{
-		if(string.IsNullOrWhiteSpace(filePath))
-			throw new ArgumentNullException(nameof(filePath));
-
-		_syncRoot = new object();
-		_queue = new ConcurrentQueue<LogEntry>();
-		this.FilePath = filePath.Trim();
+		_lock = new();
+		_queue = new();
+		this.FilePath = filePath?.Trim();
 		this.Limit = Math.Max(limit, 0);
 	}
 	#endregion
@@ -70,7 +61,7 @@ public abstract class FileLogger<T> : LoggerBase<T>
 	/// <summary>获取或设置文件路径。</summary>
 	public string FilePath { get; set; }
 
-	/// <summary>获取或设置日志文件的大小限制，单位为字节(Byte)，默认为1MB。</summary>
+	/// <summary>获取或设置日志文件的大小限制，单位为字节(Byte)，默认为<c>1</c>MB。</summary>
 	public int Limit { get; set; }
 	#endregion
 
@@ -100,7 +91,7 @@ public abstract class FileLogger<T> : LoggerBase<T>
 
 	private void LogFile(string filePath, LogEntry entry)
 	{
-		lock(_syncRoot)
+		lock(_lock)
 		{
 			//以写模式打开日志文件
 			using var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
@@ -117,7 +108,7 @@ public abstract class FileLogger<T> : LoggerBase<T>
 		try
 		{
 			//当前线程获取日志写入锁
-			Monitor.Enter(_syncRoot);
+			Monitor.Enter(_lock);
 
 			//以写模式打开日志文件
 			stream = new FileStream((string)filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
@@ -132,14 +123,14 @@ public abstract class FileLogger<T> : LoggerBase<T>
 		finally
 		{
 			//如果当前线程是日志写入线程
-			if(Monitor.IsEntered(_syncRoot))
+			if(Monitor.IsEntered(_lock))
 			{
 				//关闭日志文件流
 				if(stream != null)
 					stream.Dispose();
 
 				//释放日志写入锁
-				Monitor.Exit(_syncRoot);
+				Monitor.Exit(_lock);
 			}
 		}
 	}
@@ -152,9 +143,9 @@ public abstract class FileLogger<T> : LoggerBase<T>
 	#region 虚拟方法
 	protected virtual string GetFilePath(LogEntry entry)
 	{
-		var filePath = string.Empty;
+		var filePath = this.FilePath;
 
-		if(string.IsNullOrWhiteSpace(this.FilePath))
+		if(string.IsNullOrEmpty(filePath))
 			filePath = $"~/logs/{entry.Timestamp:yyyyMM}/{(string.IsNullOrEmpty(entry.Source) ? "default" : entry.Source)}-{{sequence}}.log";
 
 		filePath = filePath.Replace((Path.DirectorySeparatorChar == '/' ? '\\' : '/'), Path.DirectorySeparatorChar).Trim();

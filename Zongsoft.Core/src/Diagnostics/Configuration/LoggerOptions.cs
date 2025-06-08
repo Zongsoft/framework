@@ -31,32 +31,31 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Diagnostics.Configuration
+namespace Zongsoft.Diagnostics.Configuration;
+
+public class LoggerOptions
 {
-	public class LoggerOptions
+	public LoggerHandlerSettingCollection Handlers { get; set; }
+
+	[Zongsoft.Configuration.Configuration(nameof(Properties))]
+	public class LoggerHandlerSetting
 	{
-		public LoggerHandlerSettingCollection Handlers { get; set; }
+		public string Name { get; set; }
+		public string Type { get; set; }
+		public LoggerHandlerPredicationSetting Predication { get; set; }
+		public bool HasProperties => this.Properties?.Count > 0;
+		public IDictionary<string, string> Properties { get; set; }
+	}
 
-		[Zongsoft.Configuration.Configuration(nameof(Properties))]
-		public class LoggerHandlerSetting
-		{
-			public string Name { get; set; }
-			public string Type { get; set; }
-			public LoggerHandlerPredicationSetting Predication { get; set; }
-			public bool HasProperties => this.Properties?.Count > 0;
-			public IDictionary<string, string> Properties { get; set; }
-		}
+	public class LoggerHandlerSettingCollection() : KeyedCollection<string, LoggerHandlerSetting>(StringComparer.OrdinalIgnoreCase)
+	{
+		protected override string GetKeyForItem(LoggerHandlerSetting item) => item.Name;
+	}
 
-		public class LoggerHandlerSettingCollection() : KeyedCollection<string, LoggerHandlerSetting>(StringComparer.OrdinalIgnoreCase)
-		{
-			protected override string GetKeyForItem(LoggerHandlerSetting item) => item.Name;
-		}
-
-		public class LoggerHandlerPredicationSetting
-		{
-			public string Source { get; set; }
-			public LogLevel? MinLevel { get; set; }
-			public LogLevel? MaxLevel { get; set; }
-		}
+	public class LoggerHandlerPredicationSetting
+	{
+		public string Source { get; set; }
+		public LogLevel? MinLevel { get; set; }
+		public LogLevel? MaxLevel { get; set; }
 	}
 }

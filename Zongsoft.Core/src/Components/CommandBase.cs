@@ -141,7 +141,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 			return ValueTask.FromResult(this.Enabled);
 
 		//返回断言对象的断言测试的值
-		return ValueTask.FromResult(this.Enabled && predication.Predicate(argument));
+		return this.Enabled ? predication.PredicateAsync(argument, cancellation) : ValueTask.FromResult(false);
 	}
 
 	/// <summary>判断命令是否为指定要匹配的名称。</summary>

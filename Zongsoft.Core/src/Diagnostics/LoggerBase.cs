@@ -44,10 +44,23 @@ public abstract class LoggerBase<T> : ILogger<T>
 	#region 公共方法
 	public void Log(LogEntry entry)
 	{
-		var predication = this.Predication;
-
-		if(predication == null || predication.Predicate(entry))
+		if(this.CanLog(entry))
 			this.OnLog(entry);
+	}
+	#endregion
+
+	#region 保护方法
+	protected bool CanLog(LogEntry entry)
+	{
+		var predication = this.Predication;
+		if(predication == null)
+			return true;
+
+		var task = predication.PredicateAsync(entry);
+		if(task.IsCompletedSuccessfully)
+			return task.Result;
+
+		return task.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 	}
 	#endregion
 

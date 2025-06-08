@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 
 namespace Zongsoft.Common;
@@ -53,7 +55,10 @@ public class PredicationCollection<T> : Collection<IPredication<T>>, IPredicatio
 	#endregion
 
 	#region 断言方法
-	public bool Predicate(T argument)
+	ValueTask<bool> IPredication.PredicateAsync(object argument, CancellationToken cancellation) =>
+		this.OnConvert(argument, out var stronglyArgument) ? ValueTask.FromResult(false) : this.PredicateAsync(stronglyArgument, cancellation);
+
+	public async ValueTask<bool> PredicateAsync(T argument, CancellationToken cancellation = default)
 	{
 		var predications = base.Items;
 
@@ -65,7 +70,7 @@ public class PredicationCollection<T> : Collection<IPredication<T>>, IPredicatio
 			if(predication == null)
 				continue;
 
-			if(predication.Predicate(argument))
+			if(await predication.PredicateAsync(argument))
 			{
 				if(_combination == PredicationCombination.Or)
 					return true;
@@ -79,7 +84,5 @@ public class PredicationCollection<T> : Collection<IPredication<T>>, IPredicatio
 
 		return _combination != PredicationCombination.Or;
 	}
-
-	bool IPredication.Predicate(object argument) => this.OnConvert(argument, out var stronglyArgument) && this.Predicate(stronglyArgument);
 	#endregion
 }
