@@ -37,16 +37,16 @@ namespace Zongsoft.Components.Features;
 public class BreakerFeature : IFeature
 {
 	#region 构造函数
-	public BreakerFeature(bool enabled = true) : this(TimeSpan.Zero, 0, TimeSpan.Zero) => this.Enabled = enabled;
-	public BreakerFeature(TimeSpan duration, int threshold = 100) : this(duration, 0.1, TimeSpan.Zero, threshold) { }
-	public BreakerFeature(TimeSpan duration, double ratio, int threshold = 100) : this(duration, ratio, TimeSpan.Zero, threshold) { }
-	public BreakerFeature(TimeSpan duration, double ratio, TimeSpan period, int threshold = 100)
+	public BreakerFeature(TimeSpan duration, int threshold = 0, Common.IPredication<IExecutorContext> predicator = null) : this(duration, 0, TimeSpan.Zero, threshold, predicator) { }
+	public BreakerFeature(TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<IExecutorContext> predicator = null) : this(duration, ratio, TimeSpan.Zero, threshold, predicator) { }
+	public BreakerFeature(TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<IExecutorContext> predicator = null)
 	{
 		this.Enabled = true;
 		this.Duration = duration > TimeSpan.Zero ? duration : TimeSpan.FromSeconds(5);
 		this.FailureRatio = ratio <= 0 ? 0.1 : Math.Clamp(ratio, 0, 1);
 		this.FailurePeriod = period > TimeSpan.Zero ? period : TimeSpan.FromSeconds(30);
-		this.Threshold = Math.Max(threshold, 1);
+		this.Threshold = threshold <= 0 ? 100 : Math.Max(threshold, 2);
+		this.Predicator = predicator;
 	}
 	#endregion
 
@@ -58,9 +58,11 @@ public class BreakerFeature : IFeature
 	public Func<BreakerFeature, int, double, TimeSpan> DurationFactory { get; set; }
 	/// <summary>获取或设置熔断的失败率，范围介于 <c>0</c> 至 <c>1</c> 之间，默认值为 <c>0.1</c>（即<c>10%</c>）。</summary>
 	public double FailureRatio { get; set; }
-	/// <summary>获取或设置评定失败率的采样时长。</summary>
+	/// <summary>获取或设置评定失败率的采样时长，默认值为 <c>30</c> 秒。</summary>
 	public TimeSpan FailurePeriod { get; set; }
 	/// <summary>获取或设置熔断器的阈值(最小流量)，必须大于 <c>1</c> 才有效，默认值为 <c>100</c>。</summary>
 	public int Threshold { get; set; }
+	/// <summary>获取或设置熔断断言器。</summary>
+	public Common.IPredication<IExecutorContext> Predicator { get; set; }
 	#endregion
 }

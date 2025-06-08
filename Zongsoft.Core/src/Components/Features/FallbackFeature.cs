@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
@@ -37,13 +38,18 @@ namespace Zongsoft.Components.Features;
 /// </summary>
 public class FallbackFeature : IFeature
 {
-	public FallbackFeature(Func<IExecutorContext, ValueTask> fallback, bool enabled = true)
+	public FallbackFeature(Func<IExecutorContext, ValueTask> fallback, bool enabled = true) : this(fallback, null, enabled) { }
+	public FallbackFeature(Func<IExecutorContext, ValueTask> fallback, Common.IPredication<IExecutorContext> predicator, bool enabled = true)
 	{
 		this.Enabled = enabled;
 		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
+		this.Predicator = predicator;
 	}
 
 	public bool Enabled { get; set; }
+	/// <summary>获取或设置回退断言器。</summary>
+	public Common.IPredication<IExecutorContext> Predicator { get; set; }
+	/// <summary>获取或设置回退处理函数。</summary>
 	public Func<IExecutorContext, ValueTask> Fallback { get; set; }
 }
 
@@ -52,12 +58,17 @@ public class FallbackFeature : IFeature
 /// </summary>
 public class FallbackFeature<TResult> : IFeature
 {
-	public FallbackFeature(Func<IExecutorContext, ValueTask<TResult>> fallback, bool enabled = true)
+	public FallbackFeature(Func<IExecutorContext, ValueTask<TResult>> fallback, bool enabled = true) : this(fallback, null, enabled) { }
+	public FallbackFeature(Func<IExecutorContext, ValueTask<TResult>> fallback, Common.IPredication<IExecutorContext> predicator, bool enabled = true)
 	{
 		this.Enabled = enabled;
 		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
+		this.Predicator = predicator;
 	}
 
 	public bool Enabled { get; set; }
+	/// <summary>获取或设置回退断言器。</summary>
+	public Common.IPredication<IExecutorContext> Predicator { get; set; }
+	/// <summary>获取或设置回退处理函数。</summary>
 	public Func<IExecutorContext, ValueTask<TResult>> Fallback { get; set; }
 }

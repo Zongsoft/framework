@@ -37,16 +37,17 @@ namespace Zongsoft.Components.Features;
 public class RetryFeature : IFeature
 {
 	#region 构造函数
-	public RetryFeature(RetryLatency latency, int attempts = 0) : this(RetryBackoff.None, latency, true, attempts) { }
-	public RetryFeature(RetryLatency latency, bool jitterable, int attempts = 0) : this(RetryBackoff.None, latency, jitterable, attempts) { }
-	public RetryFeature(RetryBackoff backoff, RetryLatency latency, int attempts = 0) : this(backoff, latency, true, attempts) { }
-	public RetryFeature(RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0)
+	public RetryFeature(RetryLatency latency, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null) : this(RetryBackoff.None, latency, true, attempts, predicator) { }
+	public RetryFeature(RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null) : this(RetryBackoff.None, latency, jitterable, attempts, predicator) { }
+	public RetryFeature(RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null) : this(backoff, latency, true, attempts, predicator) { }
+	public RetryFeature(RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null)
 	{
 		this.Enabled = true;
 		this.Backoff = backoff;
 		this.Latency = latency;
 		this.Attempts = attempts;
 		this.Jitterable = jitterable;
+		this.Predicator = predicator;
 	}
 	#endregion
 
@@ -60,6 +61,8 @@ public class RetryFeature : IFeature
 	public RetryBackoff Backoff { get; set; }
 	/// <summary>获取或设置重试延迟时长。</summary>
 	public RetryLatency Latency { get; set; }
+	/// <summary>获取或设置重试断言器。</summary>
+	public Common.IPredication<IExecutorContext> Predicator { get; set; }
 	#endregion
 }
 
