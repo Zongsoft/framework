@@ -51,8 +51,10 @@
 		> 提供了时间任务调度相关功能，基于 [**H**angfire](https://www.hangfire.io) 开源项目的插件化。
 	- [redis](externals/redis/)
 		> 提供了分布式缓存、分布式锁、序列号生成等功能，基于 [**S**tack**E**xchange.**R**edis](https://github.com/StackExchange/StackExchange.Redis) 开源项目的插件化。
+	- [polly](externals/polly/)
+		> 提供了 超时 _(**T**imeout)_、重试 _(**R**etry)_、后备 _(**F**allback)_、熔断 _(**C**ircuit **B**reaker)_、限速 _(**R**ate **L**imiter)_ 等瞬态故障弹性处理相关功能，基于 [**P**olly](https://www.pollydocs.org) 开源项目的插件化。
 	- [opc](externals/opc/)
-		> 提供了 OPC 物联网协议的连接、读写、订阅等功能，基于 [**OPC** **F**oundation 基金会](https://github.com/OPCFoundation/UA-.NETStandard) 开源项目的插件化。
+		> 提供了 OPC 物联网协议的连接、读写、订阅等功能，基于 [**OPC** **F**oundation](https://github.com/OPCFoundation/UA-.NETStandard) 开源项目的插件化。
 	- [lua](externals/lua/)
 		> 提供了 [**L**ua](https://lua.org) 表达式解析计算、脚本执行等功能，基于 [**NL**ua](https://github.com/nlua/nlua) 开源项目的插件化。
 	- [python](externals/python/)
