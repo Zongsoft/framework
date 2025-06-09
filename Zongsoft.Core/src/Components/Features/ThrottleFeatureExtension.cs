@@ -33,17 +33,18 @@ namespace Zongsoft.Components.Features;
 
 public static class ThrottleFeatureExtension
 {
-	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, bool enabled = true)
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleLimiter limiter = null) => Throttle(builder, permitLimit, 0, limiter);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleLimiter limiter = null)
 	{
 		if(builder == null)
-			return new FeatureBuilder(new ThrottleFeature(enabled));
+			return new FeatureBuilder(new ThrottleFeature(permitLimit, queueLimit, limiter));
 
 		if(builder is FeatureBuilder appender)
 		{
-			appender.Features.Add(new ThrottleFeature(enabled));
+			appender.Features.Add(new ThrottleFeature(permitLimit, queueLimit, limiter));
 			return appender;
 		}
 
-		return new FeatureBuilder([.. builder.Build(), new ThrottleFeature(enabled)]);
+		return new FeatureBuilder([.. builder.Build(), new ThrottleFeature(permitLimit, queueLimit, limiter)]);
 	}
 }

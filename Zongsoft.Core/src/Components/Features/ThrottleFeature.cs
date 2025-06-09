@@ -37,10 +37,54 @@ namespace Zongsoft.Components.Features;
 public class ThrottleFeature : IFeature
 {
 	#region 构造函数
-	public ThrottleFeature(bool enabled = true) => this.Enabled = enabled;
+	public ThrottleFeature(int permitLimit = 0, int queueLimit = 0, ThrottleLimiter limiter = null)
+	{
+		this.Enabled = true;
+		this.PermitLimit = permitLimit <= 0 ? 1000 : permitLimit;
+		this.QueueLimit = Math.Max(queueLimit, 0);
+		this.Limiter = limiter;
+	}
 	#endregion
 
 	#region 公共属性
 	public bool Enabled { get; set; }
+	public int PermitLimit { get; set; }
+	public int QueueLimit { get; set; }
+	public ThrottleLimiter Limiter { get; set; }
 	#endregion
+}
+
+public class ThrottleLimiter
+{
+	public static TokenBucket Token(int threshold) => new(threshold);
+	public static FixedWindown Fixed(TimeSpan window) => new(window);
+	public static FixedWindown Fixed(int window) => new(TimeSpan.FromMilliseconds(window));
+	public static SlidingWindown Sliding(TimeSpan window, int windowSize = 0) => new(window, windowSize);
+	public static SlidingWindown Sliding(int window, int windowSize = 0) => new(TimeSpan.FromMilliseconds(window), windowSize);
+
+	public class TokenBucket : ThrottleLimiter
+	{
+		public TokenBucket(int threshold) => this.Threshold = threshold;
+
+		public int Threshold { get; set; }
+	}
+
+	public class FixedWindown : ThrottleLimiter
+	{
+		public FixedWindown(TimeSpan window) => this.Window = window;
+
+		public TimeSpan Window { get; set; }
+	}
+
+	public class SlidingWindown : ThrottleLimiter
+	{
+		public SlidingWindown(TimeSpan window, int windowSize = 0)
+		{
+			this.Window = window;
+			this.WindowSize = windowSize;
+		}
+
+		public TimeSpan Window { get; set; }
+		public int WindowSize { get; set; }
+	}
 }
