@@ -36,30 +36,10 @@ namespace Zongsoft.Components.Features;
 /// <summary>
 /// 提供回退(后备)功能的特性类。
 /// </summary>
-public class FallbackFeature : IFeature
-{
-	public FallbackFeature(Func<IExecutorContext, ValueTask> fallback, bool enabled = true) : this(fallback, null, enabled) { }
-	public FallbackFeature(Func<IExecutorContext, ValueTask> fallback, Common.IPredication<IExecutorContext> predicator, bool enabled = true)
-	{
-		this.Enabled = enabled;
-		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
-		this.Predicator = predicator;
-	}
-
-	public bool Enabled { get; set; }
-	/// <summary>获取或设置回退断言器。</summary>
-	public Common.IPredication<IExecutorContext> Predicator { get; set; }
-	/// <summary>获取或设置回退处理函数。</summary>
-	public Func<IExecutorContext, ValueTask> Fallback { get; set; }
-}
-
-/// <summary>
-/// 提供回退(后备)功能的特性类。
-/// </summary>
 public class FallbackFeature<TResult> : IFeature
 {
-	public FallbackFeature(Func<IExecutorContext, ValueTask<TResult>> fallback, bool enabled = true) : this(fallback, null, enabled) { }
-	public FallbackFeature(Func<IExecutorContext, ValueTask<TResult>> fallback, Common.IPredication<IExecutorContext> predicator, bool enabled = true)
+	public FallbackFeature(Func<Argument<TResult>, CancellationToken, ValueTask<TResult>> fallback, bool enabled = true) : this(fallback, null, enabled) { }
+	public FallbackFeature(Func<Argument<TResult>, CancellationToken, ValueTask<TResult>> fallback, Common.IPredication<Argument<TResult>> predicator, bool enabled = true)
 	{
 		this.Enabled = enabled;
 		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
@@ -68,7 +48,7 @@ public class FallbackFeature<TResult> : IFeature
 
 	public bool Enabled { get; set; }
 	/// <summary>获取或设置回退断言器。</summary>
-	public Common.IPredication<IExecutorContext> Predicator { get; set; }
+	public Common.IPredication<Argument<TResult>> Predicator { get; set; }
 	/// <summary>获取或设置回退处理函数。</summary>
-	public Func<IExecutorContext, ValueTask<TResult>> Fallback { get; set; }
+	public Func<Argument<TResult>, CancellationToken, ValueTask<TResult>> Fallback { get; set; }
 }

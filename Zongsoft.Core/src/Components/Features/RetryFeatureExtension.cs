@@ -33,22 +33,22 @@ namespace Zongsoft.Components.Features;
 
 public static class RetryFeatureExtension
 {
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, Common.IPredication<IExecutorContext> predicator, RetryLatency latency, int attempts = 0) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, Common.IPredication<RetryArgument> predicator, RetryLatency latency, int attempts = 0) =>
 		Retry(builder, RetryBackoff.None, latency, true, attempts, predicator);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, Common.IPredication<IExecutorContext> predicator, RetryLatency latency, bool jitterable, int attempts = 0) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, Common.IPredication<RetryArgument> predicator, RetryLatency latency, bool jitterable, int attempts = 0) =>
 		Retry(builder, RetryBackoff.None, latency, jitterable, attempts, predicator);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, Common.IPredication<IExecutorContext> predicator, RetryBackoff backoff, RetryLatency latency, int attempts = 0) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, Common.IPredication<RetryArgument> predicator, RetryBackoff backoff, RetryLatency latency, int attempts = 0) =>
 		Retry(builder, backoff, latency, true, attempts, predicator);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, Common.IPredication<IExecutorContext> predicator, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, Common.IPredication<RetryArgument> predicator, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0) =>
 		Retry(builder, backoff, latency, jitterable, attempts, predicator);
 
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument> predicator = null) =>
 		Retry(builder, RetryBackoff.None, latency, true, attempts, predicator);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument> predicator = null) =>
 		Retry(builder, RetryBackoff.None, latency, jitterable, attempts, predicator);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument> predicator = null) =>
 		Retry(builder, backoff, latency, true, attempts, predicator);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null)
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument> predicator = null)
 	{
 		if(builder == null)
 			return new FeatureBuilder(new RetryFeature(backoff, latency, jitterable, attempts, predicator));

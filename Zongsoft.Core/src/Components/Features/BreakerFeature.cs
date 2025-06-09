@@ -37,9 +37,9 @@ namespace Zongsoft.Components.Features;
 public class BreakerFeature : IFeature
 {
 	#region 构造函数
-	public BreakerFeature(TimeSpan duration, int threshold = 0, Common.IPredication<IExecutorContext> predicator = null) : this(duration, 0, TimeSpan.Zero, threshold, predicator) { }
-	public BreakerFeature(TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<IExecutorContext> predicator = null) : this(duration, ratio, TimeSpan.Zero, threshold, predicator) { }
-	public BreakerFeature(TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<IExecutorContext> predicator = null)
+	public BreakerFeature(TimeSpan duration, int threshold = 0, Common.IPredication<Argument> predicator = null) : this(duration, 0, TimeSpan.Zero, threshold, predicator) { }
+	public BreakerFeature(TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<Argument> predicator = null) : this(duration, ratio, TimeSpan.Zero, threshold, predicator) { }
+	public BreakerFeature(TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument> predicator = null)
 	{
 		this.Enabled = true;
 		this.Duration = duration > TimeSpan.Zero ? duration : TimeSpan.FromSeconds(5);
@@ -63,6 +63,6 @@ public class BreakerFeature : IFeature
 	/// <summary>获取或设置熔断器的阈值(最小流量)，必须大于 <c>1</c> 才有效，默认值为 <c>100</c>。</summary>
 	public int Threshold { get; set; }
 	/// <summary>获取或设置熔断断言器。</summary>
-	public Common.IPredication<IExecutorContext> Predicator { get; set; }
+	public Common.IPredication<Argument> Predicator { get; set; }
 	#endregion
 }

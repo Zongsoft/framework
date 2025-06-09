@@ -33,20 +33,20 @@ namespace Zongsoft.Components.Features;
 
 public static class BreakerFeatureExtension
 {
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<IExecutorContext> predicator = null) =>
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<Argument> predicator = null) =>
 		Breaker(builder, TimeSpan.Zero, 0, TimeSpan.Zero, 0, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<IExecutorContext> predicator, TimeSpan duration, int threshold = 0) =>
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<Argument> predicator, TimeSpan duration, int threshold = 0) =>
 		Breaker(builder, duration, 0, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<IExecutorContext> predicator, TimeSpan duration, double ratio, int threshold = 0) =>
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<Argument> predicator, TimeSpan duration, double ratio, int threshold = 0) =>
 		Breaker(builder, duration, ratio, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<IExecutorContext> predicator, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0) =>
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<Argument> predicator, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0) =>
 		Breaker(builder, duration, ratio, period, threshold, predicator);
 
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, int threshold = 0, Common.IPredication<IExecutorContext> predicator = null) =>
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, int threshold = 0, Common.IPredication<Argument> predicator = null) =>
 		Breaker(builder, duration, 0, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<IExecutorContext> predicator = null) =>
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<Argument> predicator = null) =>
 		Breaker(builder, duration, ratio, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<IExecutorContext> predicator = null)
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument> predicator = null)
 	{
 		if(builder == null)
 			return new FeatureBuilder(new BreakerFeature(duration, ratio, period, threshold, predicator));

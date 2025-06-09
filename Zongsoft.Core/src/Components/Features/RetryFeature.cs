@@ -37,10 +37,10 @@ namespace Zongsoft.Components.Features;
 public class RetryFeature : IFeature
 {
 	#region 构造函数
-	public RetryFeature(RetryLatency latency, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null) : this(RetryBackoff.None, latency, true, attempts, predicator) { }
-	public RetryFeature(RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null) : this(RetryBackoff.None, latency, jitterable, attempts, predicator) { }
-	public RetryFeature(RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null) : this(backoff, latency, true, attempts, predicator) { }
-	public RetryFeature(RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<IExecutorContext> predicator = null)
+	public RetryFeature(RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument> predicator = null) : this(RetryBackoff.None, latency, true, attempts, predicator) { }
+	public RetryFeature(RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument> predicator = null) : this(RetryBackoff.None, latency, jitterable, attempts, predicator) { }
+	public RetryFeature(RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument> predicator = null) : this(backoff, latency, true, attempts, predicator) { }
+	public RetryFeature(RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument> predicator = null)
 	{
 		this.Enabled = true;
 		this.Backoff = backoff;
@@ -62,7 +62,7 @@ public class RetryFeature : IFeature
 	/// <summary>获取或设置重试延迟时长。</summary>
 	public RetryLatency Latency { get; set; }
 	/// <summary>获取或设置重试断言器。</summary>
-	public Common.IPredication<IExecutorContext> Predicator { get; set; }
+	public Common.IPredication<RetryArgument> Predicator { get; set; }
 	#endregion
 }
 
@@ -75,6 +75,22 @@ public enum RetryBackoff
 	Linear,
 	/// <summary>指数增长。</summary>
 	Exponential,
+}
+
+/// <summary>
+/// 表示重试回调的参数类。
+/// </summary>
+public class RetryArgument : Argument
+{
+	#region 构造函数
+	public RetryArgument(int attempts, Exception exception) : base(exception) => this.Attempts = attempts;
+	public RetryArgument(int attempts, object value, Exception exception = null) : base(value, exception) => this.Attempts = attempts;
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取已尝试的次数。</summary>
+	public int Attempts { get; }
+	#endregion
 }
 
 /// <summary>

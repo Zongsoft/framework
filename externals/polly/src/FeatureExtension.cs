@@ -45,16 +45,6 @@ namespace Zongsoft.Externals.Polly;
 
 internal static class FeatureExtension
 {
-	public static ResilienceStrategyOptions GetStrategy(this IFeature feature) => feature switch
-	{
-		RetryFeature retry => retry.ToStrategy(),
-		TimeoutFeature timeout => timeout.ToStrategy(),
-		BreakerFeature breaker => breaker.ToStrategy(),
-		ThrottleFeature throttle => throttle.ToStrategy(),
-		FallbackFeature fallback => fallback.ToStrategy(),
-		_ => null
-	};
-
 	public static void AddStrategy(this ResiliencePipelineBuilder builder, IFeature feature)
 	{
 		if(builder == null || !feature.Usable())
@@ -126,6 +116,9 @@ internal static class FeatureExtension
 				return ValueTask.FromResult<TimeSpan?>(result > TimeSpan.Zero ? result : null);
 			};
 
+		if(feature.Predicator != null)
+			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+
 		return strategy;
 	}
 
@@ -150,6 +143,9 @@ internal static class FeatureExtension
 				return ValueTask.FromResult<TimeSpan?>(result > TimeSpan.Zero ? result : null);
 			};
 
+		if(feature.Predicator != null)
+			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+
 		return strategy;
 	}
 
@@ -168,6 +164,9 @@ internal static class FeatureExtension
 
 		if(feature.DurationFactory != null)
 			strategy.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
+
+		if(feature.Predicator != null)
+			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
 
 		return strategy;
 	}
@@ -188,6 +187,9 @@ internal static class FeatureExtension
 		if(feature.DurationFactory != null)
 			strategy.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
 
+		if(feature.Predicator != null)
+			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+
 		return strategy;
 	}
 
@@ -203,24 +205,6 @@ internal static class FeatureExtension
 		return strategy;
 	}
 
-	public static FallbackStrategyOptions<object> ToStrategy(this FallbackFeature feature)
-	{
-		if(!feature.Usable(feature => feature.Fallback != null))
-			return null;
-
-		var strategy = new FallbackStrategyOptions<object>
-		{
-			FallbackAction = async argument =>
-			{
-				await feature.Fallback(null);
-				return Outcome.FromResult<object>(null);
-			},
-			OnFallback = argument => feature.Fallback(null),
-		};
-
-		return strategy;
-	}
-
 	public static FallbackStrategyOptions<TResult> ToStrategy<TResult>(this FallbackFeature<TResult> feature)
 	{
 		if(!feature.Usable(feature => feature.Fallback != null))
@@ -230,13 +214,31 @@ internal static class FeatureExtension
 		{
 			FallbackAction = async argument =>
 			{
-				var result = await feature.Fallback(null);
-				return Outcome.FromResult(result);
+				try
+				{
+					var result = await feature.Fallback(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+					return Outcome.FromResult(result);
+				}
+				catch(Exception ex)
+				{
+					return Outcome.FromException<TResult>(ex);
+				}
 			},
 		};
 
+		if(feature.Predicator != null)
+			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+
 		return strategy;
 	}
+
+	private static Argument GetArgument(this Outcome<object> outcome) => new(outcome.Result, outcome.Exception.GetException());
+	private static Argument<T> GetArgument<T>(this Outcome<T> outcome) => new(outcome.Result, outcome.Exception.GetException());
+	private static Exception GetException(this Exception exception) => exception switch
+	{
+		TimeoutRejectedException => new TimeoutException(),
+		_ => exception,
+	};
 
 	private static DelayBackoffType GetBackoffType(RetryBackoff backoff) => backoff switch
 	{

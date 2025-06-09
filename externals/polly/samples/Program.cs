@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Terminals;
+using Zongsoft.Collections;
 using Zongsoft.Components;
 using Zongsoft.Components.Features;
 
@@ -26,9 +26,14 @@ internal class Program
 
 			foreach(var feature in features)
 			{
-				var content = CommandOutletContent.Create(CommandOutletColor.DarkYellow, feature.GetType().Name);
+				var content = CommandOutletContent
+					.Create(CommandOutletColor.DarkYellow, feature.GetType().GetAlias(true))
+					.AppendLine().Append(CommandOutletColor.DarkGray, '{');
+
 				CommandOutletDumper.Dump(content, feature);
-				context.Output.Write(content);
+
+				content.Last.AppendLine(CommandOutletColor.DarkGray, '}');
+				context.Output.WriteLine(content);
 			}
 		});
 
@@ -41,9 +46,9 @@ internal class Program
 		{
 			var delay = context.Expression.Options.GetValue("delay", TimeSpan.Zero);
 			var limit = context.Expression.Options.GetValue("limit", TimeSpan.Zero);
-			var attempts = context.Expression.Options.GetValue("attempts", 0);
+			var attempts = context.Expression.Options.GetValue("attempts", 3);
 			var backoff = context.Expression.Options.GetValue("backoff", RetryBackoff.None);
-			var jitterable = context.Expression.Options.GetValue("jitterable", true);
+			var jitterable = context.Expression.Options.GetValue("jitterable", false);
 
 			if(delay <= TimeSpan.Zero)
 				delay = TimeSpan.FromSeconds(1);
@@ -80,7 +85,10 @@ internal class Program
 
 		Terminal.Console.Executor.Command("fallback", context =>
 		{
-			_features = _features.Fallback(OnFallback);
+			_features = _features.Fallback<object>(
+				OnFallback,
+				Predication.Predicate<object>(argument => true),
+				true);
 		});
 
 		Terminal.Console.Executor.Command("execute", async (context, cancellation) =>
@@ -89,8 +97,9 @@ internal class Program
 				return;
 
 			var executor = _features.Build<object, object>(OnExecute);
-			var parameters = Collections.Parameters
-				.Parameter("delay", context.Expression.Options.GetValue("delay", TimeSpan.Zero));
+			var parameters = Parameters
+				.Parameter("delay", context.Expression.Options.GetValue("delay", TimeSpan.Zero))
+				.Parameter("throw", context.Expression.Options.Contains("throw"));
 
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 			var count = context.Expression.Options.GetValue("count", 1);
@@ -101,6 +110,9 @@ internal class Program
 
 				try
 				{
+					parameters.SetValue("round", i);
+					parameters.SetValue("index", 0);
+
 					await executor.ExecuteAsync(context.Value, parameters, cancellation);
 				}
 				catch(Exception ex)
@@ -109,6 +121,13 @@ internal class Program
 				}
 
 				stopwatch.Stop();
+
+				if(count > 1)
+				{
+					context.Output.Write(CommandOutletColor.DarkGray, "[");
+					context.Output.Write(CommandOutletColor.Red, $"{i + 1}");
+					context.Output.Write(CommandOutletColor.DarkGray, "] ");
+				}
 
 				context.Output.Write(CommandOutletColor.DarkCyan, $"Elapsed: ");
 				context.Output.WriteLine(CommandOutletColor.Green, $"{stopwatch.Elapsed}");
@@ -130,17 +149,66 @@ internal class Program
 		Terminal.Console.Executor.Run(splash);
 	}
 
-	static ValueTask<object> OnFallback(IExecutorContext context)
+	static ValueTask<T> OnFallback<T>(Argument<T> argument, CancellationToken cancellation)
 	{
-		Terminal.WriteLine(CommandOutletColor.Magenta, "The fallback action is executed.");
-		return ValueTask.FromResult((object)null);
+		var content = CommandOutletContent.Create()
+			.Append(CommandOutletColor.DarkGray, "[")
+			.Append(CommandOutletColor.Magenta, "Fallback")
+			.Append(CommandOutletColor.DarkGray, "] ");
+
+		if(argument.HasException(out var exception))
+		{
+			content.Last
+				.Append(CommandOutletColor.DarkYellow, exception.GetType().Name)
+				.Append(CommandOutletColor.DarkGray, ": ")
+				.Append(CommandOutletColor.DarkRed, exception.Message);
+		}
+		else
+		{
+			content.Last.Append(CommandOutletColor.DarkGreen, "The fallback result: ");
+
+			if(argument.Value != null)
+				content.Last.Dump(argument.Value);
+			else
+				content.Last.Append(CommandOutletColor.White, "NULL");
+		}
+
+		Terminal.WriteLine(content);
+
+		return ValueTask.FromResult(argument.Value);
 	}
 
-	static async ValueTask<object> OnExecute(object argument, Collections.Parameters parameters, CancellationToken cancellation)
+	static async ValueTask<T> OnExecute<T>(T argument, Parameters parameters, CancellationToken cancellation)
 	{
-		if(parameters != null && parameters.TryGetValue<TimeSpan>("delay", out var delay))
-			await Task.Delay(delay, cancellation);
+		parameters.TryGetValue<int>("round", out var round);
+		parameters.TryGetValue<int>("index", out var index);
 
-		return argument;
+		if(round > 0 && index == 0)
+			Terminal.WriteLine();
+
+		var content = CommandOutletContent.Create()
+			.Append(CommandOutletColor.DarkGray, "[")
+			.Append(CommandOutletColor.Yellow, "OnExecute")
+			.Append(CommandOutletColor.DarkGray, " #")
+			.Append(CommandOutletColor.DarkCyan, $"{round + 1}")
+			.Append(CommandOutletColor.DarkGray, ".")
+			.Append(CommandOutletColor.DarkGreen, $"{index + 1}")
+			.Append(CommandOutletColor.DarkGray, "] ");
+
+		Terminal.WriteLine(content);
+
+		try
+		{
+			if(parameters.TryGetValue<TimeSpan>("delay", out var delay) && delay > TimeSpan.Zero)
+				await Task.Delay(delay, cancellation);
+			if(parameters.TryGetValue<bool>("throw", out var throws) && throws)
+				throw new InvalidOperationException();
+
+			return argument;
+		}
+		finally
+		{
+			parameters.SetValue("index", index + 1);
+		}
 	}
 }
