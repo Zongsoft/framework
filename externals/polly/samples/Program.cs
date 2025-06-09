@@ -102,9 +102,9 @@ internal class Program
 				.Parameter("throw", context.Expression.Options.Contains("throw"));
 
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-			var count = context.Expression.Options.GetValue("count", 1);
+			var round = context.Expression.Options.GetValue("round", 1);
 
-			for(int i = 0; i < count; i++)
+			for(int i = 0; i < round; i++)
 			{
 				stopwatch.Restart();
 
@@ -117,12 +117,12 @@ internal class Program
 				}
 				catch(Exception ex)
 				{
-					context.Output.WriteLine(CommandOutletColor.Red, $"[{ex.GetType().Name}] {ex.Message}");
+					context.Output.WriteLine(CommandOutletColor.DarkRed, $"[{ex.GetType().Name}] {ex.Message}");
 				}
 
 				stopwatch.Stop();
 
-				if(count > 1)
+				if(round > 1)
 				{
 					context.Output.Write(CommandOutletColor.DarkGray, "[");
 					context.Output.Write(CommandOutletColor.Red, $"{i + 1}");
@@ -190,9 +190,9 @@ internal class Program
 			.Append(CommandOutletColor.DarkGray, "[")
 			.Append(CommandOutletColor.Yellow, "OnExecute")
 			.Append(CommandOutletColor.DarkGray, " #")
-			.Append(CommandOutletColor.DarkCyan, $"{round + 1}")
+			.Append(CommandOutletColor.Red, $"{round + 1}")
 			.Append(CommandOutletColor.DarkGray, ".")
-			.Append(CommandOutletColor.DarkGreen, $"{index + 1}")
+			.Append(CommandOutletColor.Cyan, $"{index}")
 			.Append(CommandOutletColor.DarkGray, "] ");
 
 		Terminal.WriteLine(content);
