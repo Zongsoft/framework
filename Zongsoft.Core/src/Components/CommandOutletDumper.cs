@@ -88,7 +88,7 @@ public static class CommandOutletDumper
 				content.Last.AppendLine(CommandOutletColor.Gray, "NULL");
 				break;
 			case Type type:
-				content.Last.AppendLine(type.GetAlias());
+				content.Last.AppendLine(type.GetAlias(true));
 				break;
 			case Assembly assembly:
 				content.Last
@@ -141,6 +141,39 @@ public static class CommandOutletDumper
 
 				content.Last.Indent(options, indent);
 				content.Last.AppendLine(CommandOutletColor.Magenta, "}");
+				break;
+			case Delegate function:
+				if(function.Target == null)
+					content.Last.Append(CommandOutletColor.Magenta, "static ");
+
+				content.Last
+					.Append(CommandOutletColor.Cyan, function.Method.DeclaringType.GetAlias(true))
+					.Append(CommandOutletColor.White, ':')
+					.Append(CommandOutletColor.DarkGreen, function.Method.Name);
+
+				if(function.Method.IsGenericMethod)
+				{
+					content.Last.Append(CommandOutletColor.DarkYellow, '<');
+
+					var types = function.Method.GetGenericArguments();
+					for(int i = 0; i < types.Length; i++)
+					{
+						if(i > 0)
+							content.Last.Append(CommandOutletColor.DarkGray, ", ");
+
+						content.Last.Append(types[i].GetAlias(true));
+					}
+
+					content.Last.Append(CommandOutletColor.DarkYellow, '>');
+				}
+
+				content.Last.Append(CommandOutletColor.DarkGray, '(');
+
+				if(function.Method.GetParameters().Length > 0)
+					content.Last.Append(CommandOutletColor.Gray, "...");
+
+				content.Last.AppendLine(CommandOutletColor.DarkGray, ')');
+
 				break;
 			default:
 				DumpObject(content, options, value, indent);
@@ -210,13 +243,13 @@ public static class CommandOutletDumper
 
 		if(memberType.IsEnum)
 			content.Last
-				.Append(CommandOutletColor.Magenta, "enum")
-				.Append(CommandOutletColor.DarkGray, ":")
+				.Append(CommandOutletColor.Magenta, "ENUM")
+				.Append(CommandOutletColor.DarkGray, "!")
 				.Append(CommandOutletColor.DarkYellow, memberType.Name);
 		else
-			content.Last.Append(CommandOutletColor.DarkYellow, memberType.GetAlias());
+			content.Last.Append(CommandOutletColor.DarkYellow, memberType.GetAlias(true));
 
-		content.Last.Append(CommandOutletColor.DarkBlue, ")");
+		content.Last.Append(CommandOutletColor.DarkBlue, ") ");
 
 		var trackable = options.Tracker.CanTrack(value);
 
