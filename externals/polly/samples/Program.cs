@@ -80,7 +80,26 @@ internal class Program
 
 		Terminal.Console.Executor.Command("throttle", context =>
 		{
-			_features = _features.Throttle();
+			var permit = context.Expression.Options.GetValue("permit", 100);
+			var queue = context.Expression.Options.GetValue("queue", 0);
+			var limit = context.Expression.Options.GetValue("limit", string.Empty);
+			var window = context.Expression.Options.GetValue("window", TimeSpan.FromSeconds(1));
+
+			switch(limit)
+			{
+				case "token":
+					_features = _features.Throttle(permit, queue, ThrottleLimiter.Token(context.Expression.Options.GetValue("threshold", 0)));
+					break;
+				case "fixed":
+					_features = _features.Throttle(permit, queue, ThrottleLimiter.Fixed(window));
+					break;
+				case "sliding":
+					_features = _features.Throttle(permit, queue, ThrottleLimiter.Sliding(window, context.Expression.Options.GetValue("windowSize", 0)));
+					break;
+				default:
+					_features = _features.Throttle(permit, queue);
+					break;
+			}
 		});
 
 		Terminal.Console.Executor.Command("fallback", context =>
@@ -136,8 +155,6 @@ internal class Program
 
 		Terminal.Console.Executor.Aliaser.Set("execute", "exe");
 		Terminal.Console.Executor.Aliaser.Set("execute", "exec");
-		Terminal.Console.Executor.Aliaser.Set("throttle", "limit");
-		Terminal.Console.Executor.Aliaser.Set("throttle", "limiter");
 
 		var splash = CommandOutletContent.Create()
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 60))

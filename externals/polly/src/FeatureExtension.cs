@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.RateLimiting;
 
 using Polly;
 using Polly.Retry;
@@ -198,9 +199,47 @@ internal static class FeatureExtension
 		if(!feature.Usable())
 			return null;
 
-		var strategy = new RateLimiterStrategyOptions
+		var strategy = new RateLimiterStrategyOptions();
+
+		if(feature.PermitLimit > 0)
+			strategy.DefaultRateLimiterOptions.PermitLimit = feature.PermitLimit;
+		if(feature.QueueLimit > 0)
+			strategy.DefaultRateLimiterOptions.QueueLimit = feature.QueueLimit;
+
+		switch(feature.Limiter)
 		{
-		};
+			case ThrottleLimiter.TokenBucket limiter:
+				var tokenOptions = new TokenBucketRateLimiterOptions()
+				{
+					TokenLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
+					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
+					TokensPerPeriod = limiter.Threshold,
+				};
+
+				strategy.RateLimiter = argument => (new TokenBucketRateLimiter(tokenOptions)).AcquireAsync(cancellationToken: argument.Context.CancellationToken);
+				break;
+			case ThrottleLimiter.FixedWindown limiter:
+				var fixedOptions = new FixedWindowRateLimiterOptions()
+				{
+					PermitLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
+					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
+					Window = limiter.Window,
+				};
+
+				strategy.RateLimiter = argument => (new FixedWindowRateLimiter(fixedOptions)).AcquireAsync(cancellationToken: argument.Context.CancellationToken);
+				break;
+			case ThrottleLimiter.SlidingWindown limiter:
+				var slidingOptions = new SlidingWindowRateLimiterOptions()
+				{
+					PermitLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
+					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
+					Window = limiter.Window,
+					SegmentsPerWindow = limiter.WindowSize,
+				};
+
+				strategy.RateLimiter = argument => (new SlidingWindowRateLimiter(slidingOptions)).AcquireAsync(cancellationToken: argument.Context.CancellationToken);
+				break;
+		}
 
 		return strategy;
 	}
