@@ -38,6 +38,7 @@ public static partial class TypeAlias
 {
 	#region 静态字段
 	private static readonly AliasCollection _aliases = new();
+	private static readonly HashSet<string> _assemblies = ["mscorlib", "netstandard", "System", "System.Core", "System.Private.CoreLib"];
 	#endregion
 
 	#region 静态属性
@@ -45,7 +46,14 @@ public static partial class TypeAlias
 	#endregion
 
 	#region 别名方法
-	public static string GetAlias(this Type type)
+	/// <summary>获取指定类型的别名。</summary>
+	/// <param name="type">指定的类型。</param>
+	/// <param name="assemblyless">返回的别名是否不包含程序集名称（注：通常只在仅需简要类型别名的地方开启该参数）。</param>
+	/// <returns>返回的类型别名。</returns>
+	/// <remarks>别名相对类型限定名的可读性更好。
+	/// 	<para>注意：可指定 <paramref name="assemblyless"/> 参数值为 <c>True</c> 而忽略类型的程序集名，但是无程序集名称的别名可能无法再解析回对应的类型。</para>
+	/// </remarks>
+	public static string GetAlias(this Type type, bool assemblyless = false)
 	{
 		if(type == null)
 			return null;
@@ -55,26 +63,26 @@ public static partial class TypeAlias
 		var code = Type.GetTypeCode(elementType);
 
 		string alias;
-		bool aliased;
+		bool simplified;
 
 		if(!elementType.IsEnum && code != TypeCode.Object)
 		{
 			alias = code.ToString();
-			aliased = true;
+			simplified = true;
 		}
 		else
 		{
 			var prototype = elementType.IsGenericType ? elementType.GetGenericTypeDefinition() : elementType;
-			aliased = _aliases.TryGet(prototype, out alias);
+			simplified = _aliases.TryGet(prototype, out alias);
 
-			if(!aliased)
+			if(!simplified)
 			{
 				var typeName = elementType.IsGenericType ?
 					elementType.Name[..(elementType.Name.Length - GetDigits(elementType.GenericTypeArguments.Length) - 1)] :
 					elementType.Name;
 
-				aliased = string.Equals(elementType.Namespace, nameof(System));
-				alias = aliased ? typeName : $"{elementType.Namespace}.{typeName}";
+				simplified = string.Equals(elementType.Namespace, nameof(System));
+				alias = simplified ? typeName : $"{elementType.Namespace}.{typeName}";
 			}
 
 			if(elementType.IsGenericType)
@@ -89,7 +97,7 @@ public static partial class TypeAlias
 						if(i > 0)
 							alias += ", ";
 
-						alias += GetAlias(arguments[i]);
+						alias += GetAlias(arguments[i], assemblyless);
 					}
 				}
 
@@ -103,7 +111,8 @@ public static partial class TypeAlias
 		if(type.IsArray)
 			alias += "[]";
 
-		return aliased ? alias : $"{alias}@{elementType.Assembly.GetName().Name}";
+		return simplified || assemblyless || _assemblies.Contains(elementType.Assembly.GetName().Name) ?
+			alias : $"{alias}@{elementType.Assembly.GetName().Name}";
 	}
 
 	/// <summary>获取指定整数的十进制数的位数。</summary>
