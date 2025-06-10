@@ -46,14 +46,15 @@ partial class Subscriber
 		#endregion
 
 		#region 构造函数
-		public Entry(string name) : this(name, null, null, null) { }
-		public Entry(string name, Type type, string label = null, string description = null)
+		public Entry(string name, object tag = null) : this(name, null, tag, null, null) { }
+		public Entry(string name, Type type, object tag = null, string label = null, string description = null)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name;
 			this.Type = type;
+			this.Tag = tag;
 			this.Label = label;
 			this.Description = description;
 			_nodeId = NodeId.Parse(name);
@@ -63,6 +64,7 @@ partial class Subscriber
 		#region 公共属性
 		public string Name { get; }
 		public Type Type { get; set; }
+		public object Tag { get; set; }
 		public string Label { get; set; }
 		public string Description { get; set; }
 		#endregion
@@ -127,7 +129,7 @@ partial class Subscriber
 		public bool Contains(string name) => name != null && _dictionary.ContainsKey(NodeId.Parse(name));
 		internal bool Contains(NodeId identifier) => identifier != null && _dictionary.ContainsKey(identifier);
 
-		public bool Add(string name) => !string.IsNullOrEmpty(name) && this.Add(new Entry(name));
+		public bool Add(string name, object tag = null) => !string.IsNullOrEmpty(name) && this.Add(new Entry(name, tag));
 		public bool Add(Entry entry)
 		{
 			if(entry == null)

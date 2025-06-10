@@ -485,16 +485,21 @@ public partial class OpcClient : IDisposable
 	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, null, null, cancellation);
 	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, null, consumer, cancellation);
 	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, SubscriberOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, options, null, cancellation);
-	public async ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, SubscriberOptions options, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default)
+	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<string> identifiers, SubscriberOptions options, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers?.Select(id => new KeyValuePair<string, object>(id, null)), options, consumer, cancellation);
+
+	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<KeyValuePair<string, object>> identifiers, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, null, null, cancellation);
+	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<KeyValuePair<string, object>> identifiers, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, null, consumer, cancellation);
+	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<KeyValuePair<string, object>> identifiers, SubscriberOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, options, null, cancellation);
+	public async ValueTask<Subscriber> SubscribeAsync(IEnumerable<KeyValuePair<string, object>> identifiers, SubscriberOptions options, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default)
 	{
 		if(identifiers == null)
 			throw new ArgumentNullException(nameof(identifiers));
 
 		//确保待订阅的条目未被订阅
 		var entries = identifiers
-			.Where(id => !string.IsNullOrEmpty(id) && !Exists(id))
-			.Distinct()
-			.Select(id => new Subscriber.Entry(id))
+			.Where(entry => !string.IsNullOrEmpty(entry.Key) && !Exists(entry.Key))
+			.DistinctBy(entry => entry.Key)
+			.Select(entry => new Subscriber.Entry(entry.Key, entry.Value))
 			.ToArray();
 
 		//如果待订阅的条目为空则退出
