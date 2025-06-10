@@ -22,12 +22,16 @@ internal class Program
 			if(_features == null)
 				return;
 
+			var index = 0;
 			var features = _features.Build();
 
 			foreach(var feature in features)
 			{
-				var content = CommandOutletContent
-					.Create(CommandOutletColor.DarkYellow, feature.GetType().GetAlias(true))
+				var content = CommandOutletContent.Create()
+					.Append(CommandOutletColor.DarkGray, "[")
+					.Append(CommandOutletColor.Magenta, $"{++index}")
+					.Append(CommandOutletColor.DarkGray, "] ")
+					.Append(CommandOutletColor.DarkYellow, feature.GetType().GetAlias(true))
 					.AppendLine().Append(CommandOutletColor.DarkGray, '{');
 
 				CommandOutletDumper.Dump(content, feature);
@@ -123,33 +127,43 @@ internal class Program
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 			var round = context.Expression.Options.GetValue("round", 1);
 
-			for(int i = 0; i < round; i++)
+			if(context.Expression.Options.Contains("concurrency"))
+			{
+				Parallel.For(0, round, async i => await ExecuteAsync(executor, parameters, round, i, stopwatch, cancellation));
+			}
+			else
+			{
+				for(int i = 0; i < round; i++)
+					await ExecuteAsync(executor, parameters, round, i, stopwatch, cancellation);
+			}
+
+			static async ValueTask ExecuteAsync(IExecutor executor, Parameters parameters, int round, int index, System.Diagnostics.Stopwatch stopwatch, CancellationToken cancellation)
 			{
 				stopwatch.Restart();
 
 				try
 				{
-					parameters.SetValue("round", i);
+					parameters.SetValue("round", index);
 					parameters.SetValue("index", 0);
 
-					await executor.ExecuteAsync(context.Value, parameters, cancellation);
+					await executor.ExecuteAsync(null, parameters, cancellation);
 				}
 				catch(Exception ex)
 				{
-					context.Output.WriteLine(CommandOutletColor.DarkRed, $"[{ex.GetType().Name}] {ex.Message}");
+					Terminal.WriteLine(CommandOutletColor.DarkRed, $"[{ex.GetType().Name}] {ex.Message}");
 				}
 
 				stopwatch.Stop();
 
 				if(round > 1)
 				{
-					context.Output.Write(CommandOutletColor.DarkGray, "[");
-					context.Output.Write(CommandOutletColor.Red, $"{i + 1}");
-					context.Output.Write(CommandOutletColor.DarkGray, "] ");
+					Terminal.Write(CommandOutletColor.DarkGray, "[");
+					Terminal.Write(CommandOutletColor.Red, $"{index + 1}");
+					Terminal.Write(CommandOutletColor.DarkGray, "] ");
 				}
 
-				context.Output.Write(CommandOutletColor.DarkCyan, $"Elapsed: ");
-				context.Output.WriteLine(CommandOutletColor.Green, $"{stopwatch.Elapsed}");
+				Terminal.Write(CommandOutletColor.DarkCyan, $"Elapsed: ");
+				Terminal.WriteLine(CommandOutletColor.Green, $"{stopwatch.Elapsed}");
 			}
 		});
 
@@ -219,7 +233,7 @@ internal class Program
 			if(parameters.TryGetValue<TimeSpan>("delay", out var delay) && delay > TimeSpan.Zero)
 				await Task.Delay(delay, cancellation);
 			if(parameters.TryGetValue<bool>("throw", out var throws) && throws)
-				throw new InvalidOperationException();
+				throw new InvalidOperationException("🚨🚨🚨 This is a simulation of an exception thrown during execution. 🚨🚨🚨");
 
 			return argument;
 		}
