@@ -108,6 +108,9 @@ partial class Terminal
 			if(this.Root.Children.Count < 1)
 				return 0;
 
+			//初始化终端文本编码方案
+			_terminal.Encoding = System.Text.Encoding.UTF8;
+
 			if(splash == null || splash.IsEmpty)
 				splash = CommandOutletContent.Create(SPLASH);
 
