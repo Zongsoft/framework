@@ -321,7 +321,7 @@ partial class OpcServer
 
 			try
 			{
-				args.Identity = authenticator.AuthenticateAsync(args.NewIdentity).AsTask().GetAwaiter().GetResult();
+				args.Identity = authenticator.AuthenticateAsync(args.NewIdentity).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 			}
 			catch(Exception ex)
 			{
