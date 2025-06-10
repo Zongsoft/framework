@@ -45,6 +45,7 @@ namespace Zongsoft.Externals.Opc;
 public partial class OpcServer : WorkerBase
 {
 	#region 成员字段
+	private DateTime? _started;
 	private OpcServerOptions _options;
 	private ApplicationInstance _launcher;
 	#endregion
@@ -54,19 +55,23 @@ public partial class OpcServer : WorkerBase
 	{
 		_options = options;
 		this.Storages = new();
+		this.Channels = new();
 	}
 
 	public OpcServer(string name, OpcServerOptions options = null) : base(name)
 	{
 		_options = options;
 		this.Storages = new();
+		this.Channels = new();
 	}
 	#endregion
 
 	#region 公共属性
+	public TimeSpan Elapsed => _started.HasValue ? Common.DateTimeExtension.GetElapsed(_started.Value) : TimeSpan.Zero;
 	public Security.IAuthenticator Authenticator { get; set; }
 	public OpcServerOptions Options => _options ??= new OpcServerOptions(this.Name);
 	public StorageCollection Storages { get; }
+	public ChannelCollection Channels { get; }
 	#endregion
 
 	#region 重写方法
@@ -182,15 +187,32 @@ partial class OpcServer
 		#endregion
 
 		#region 重写方法
-		protected override void OnServerStarting(ApplicationConfiguration configuration)
-		{
-			base.OnServerStarting(configuration);
-		}
-
 		protected override void OnServerStarted(IServerInternal server)
 		{
+			//设置服务器的启动时间
+			_server._started = DateTime.UtcNow;
+
+			server.SessionManager.SessionCreated += this.SessionManager_SessionCreated;
+			server.SessionManager.SessionClosing += this.SessionManager_SessionClosing;
 			server.SessionManager.ImpersonateUser += this.SessionManager_ImpersonateUser;
 			base.OnServerStarted(server);
+		}
+
+		protected override void OnServerStopping()
+		{
+			//清空所有会话通道
+			_server.Channels.Clear();
+
+			//注销所有相关事件处理
+			this.ServerInternal.SessionManager.SessionCreated -= this.SessionManager_SessionCreated;
+			this.ServerInternal.SessionManager.SessionClosing -= this.SessionManager_SessionClosing;
+			this.ServerInternal.SessionManager.ImpersonateUser -= this.SessionManager_ImpersonateUser;
+
+			//重置服务器的启动时间
+			_server._started = null;
+
+			//调用基类同名方法
+			base.OnServerStopping();
 		}
 
 		protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration)
@@ -202,11 +224,6 @@ partial class OpcServer
 				_server.Storages.Add(new Storage(server, configuration, option));
 
 			return new MasterNodeManager(server, configuration, null, [.. _server.Storages.Select(storage => storage.Manager)]);
-		}
-
-		protected override void OnNodeManagerStarted(IServerInternal server)
-		{
-			base.OnNodeManagerStarted(server);
 		}
 
 		public override ResponseHeader AddNodes(RequestHeader requestHeader, AddNodesItemCollection nodes, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnostics)
@@ -285,6 +302,16 @@ partial class OpcServer
 		#endregion
 
 		#region 身份验证
+		private void SessionManager_SessionCreated(Session session, SessionEventReason reason)
+		{
+			_server.Channels.Add(session);
+		}
+
+		private void SessionManager_SessionClosing(Session session, SessionEventReason reason)
+		{
+			_server.Channels.Remove(session?.Id.ToString());
+		}
+
 		private void SessionManager_ImpersonateUser(Session session, ImpersonateEventArgs args)
 		{
 			var authenticator = _server.Authenticator;

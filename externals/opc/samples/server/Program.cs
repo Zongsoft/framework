@@ -20,6 +20,24 @@ internal static class Program
 		executor.Command("start", async (context, cancellation) => await server.StartAsync(args, cancellation));
 		executor.Command("stop", async (context, cancellation) => await server.StopAsync(args, cancellation));
 
+		executor.Command("info", context =>
+		{
+			int index = 0;
+
+			context.Output.Write(CommandOutletColor.Cyan, "Elapsed: ");
+			context.Output.WriteLine(CommandOutletColor.Green, server.Elapsed.ToString());
+
+			foreach(var channel in server.Channels)
+			{
+				var content = CommandOutletContent.Create(CommandOutletColor.DarkYellow, nameof(OpcServer.Channel))
+					.Append(CommandOutletColor.DarkGray, " #")
+					.Append(CommandOutletColor.Magenta, $"{index++}");
+
+				content.Dump(channel);
+				context.Output.WriteLine(content);
+			}
+		});
+
 		executor.Command("get", context =>
 		{
 			if(context.Expression.Arguments.IsEmpty)
