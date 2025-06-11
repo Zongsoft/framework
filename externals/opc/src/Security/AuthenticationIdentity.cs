@@ -28,12 +28,30 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Zongsoft.Externals.Opc.Security;
 
-public interface IAuthenticator
+public class AuthenticationIdentity
 {
-	ValueTask<bool> AuthenticateAsync(AuthenticationIdentity identity, CancellationToken cancellation = default);
+	public sealed class Account : AuthenticationIdentity
+	{
+		public Account(string userName, string password)
+		{
+			this.UserName = userName;
+			this.Password = password;
+		}
+
+		public string UserName { get; }
+		public string Password { get; }
+
+		public override string ToString() => $"{this.UserName}";
+	}
+
+	public sealed class Certificate : AuthenticationIdentity
+	{
+		public Certificate(X509Certificate2 x509) => this.X509 = x509;
+		public X509Certificate2 X509 { get; }
+		public override string ToString() => this.X509?.ToString();
+	}
 }

@@ -31,39 +31,38 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Opc.Ua;
-using Opc.Ua.Server;
-
 namespace Zongsoft.Externals.Opc.Security;
 
-public class Authenticator : IAuthenticator
+public partial class Authenticator : IAuthenticator
 {
-	#region 公共方法
-	public ValueTask<IUserIdentity> AuthenticateAsync(UserIdentityToken token, CancellationToken cancellation = default)
-	{
-		if(token == null)
-			return ValueTask.FromResult<IUserIdentity>(null);
+	#region 单例字段
+	public static readonly Authenticator Default = new DefaultAuthenticator();
+	#endregion
 
-		return token switch
+	#region 公共方法
+	public ValueTask<bool> AuthenticateAsync(AuthenticationIdentity identity, CancellationToken cancellation = default)
+	{
+		if(identity == null)
+			return ValueTask.FromResult(false);
+
+		return identity switch
 		{
-			UserNameIdentityToken user => this.OnAuthenticateAsync(user, cancellation),
-			X509IdentityToken x509 => this.OnAuthenticateAsync(x509, cancellation),
-			_ => ValueTask.FromResult<IUserIdentity>(null),
+			AuthenticationIdentity.Account user => this.OnAuthenticateAsync(user, cancellation),
+			AuthenticationIdentity.Certificate x509 => this.OnAuthenticateAsync(x509, cancellation),
+			_ => ValueTask.FromResult(false),
 		};
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual ValueTask<IUserIdentity> OnAuthenticateAsync(UserNameIdentityToken token, CancellationToken cancellation = default)
+	protected virtual ValueTask<bool> OnAuthenticateAsync(AuthenticationIdentity.Account identity, CancellationToken cancellation = default)
 	{
-		return token == null || string.IsNullOrEmpty(token.UserName) ?
-			ValueTask.FromResult<IUserIdentity>(null) : ValueTask.FromResult<IUserIdentity>(new UserIdentity(token));
+		return ValueTask.FromResult(!string.IsNullOrEmpty(identity.UserName));
 	}
 
-	protected virtual ValueTask<IUserIdentity> OnAuthenticateAsync(X509IdentityToken token, CancellationToken cancellation = default)
+	protected virtual ValueTask<bool> OnAuthenticateAsync(AuthenticationIdentity.Certificate identity, CancellationToken cancellation = default)
 	{
-		return token == null || token.Certificate == null ?
-			ValueTask.FromResult<IUserIdentity>(null) : ValueTask.FromResult<IUserIdentity>(new UserIdentity(token));
+		return ValueTask.FromResult(identity.X509 != null && identity.X509.Verify());
 	}
 	#endregion
 }

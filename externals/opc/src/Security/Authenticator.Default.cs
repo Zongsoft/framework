@@ -33,7 +33,12 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Externals.Opc.Security;
 
-public interface IAuthenticator
+partial class Authenticator
 {
-	ValueTask<bool> AuthenticateAsync(AuthenticationIdentity identity, CancellationToken cancellation = default);
+	private sealed class DefaultAuthenticator(string root = null) : Authenticator
+	{
+		private readonly string _root = string.IsNullOrEmpty(root) ? AppContext.BaseDirectory : root;
+		protected override ValueTask<bool> OnAuthenticateAsync(AuthenticationIdentity.Account identity, CancellationToken cancellation = default) => base.OnAuthenticateAsync(identity, cancellation);
+		protected override ValueTask<bool> OnAuthenticateAsync(AuthenticationIdentity.Certificate identity, CancellationToken cancellation = default) => base.OnAuthenticateAsync(identity, cancellation);
+	}
 }

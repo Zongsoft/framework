@@ -56,6 +56,7 @@ public partial class OpcServer : WorkerBase
 		_options = options;
 		this.Storages = new();
 		this.Channels = new();
+		this.Authenticator = Security.Authenticator.Default;
 	}
 
 	public OpcServer(string name, OpcServerOptions options = null) : base(name)
@@ -63,6 +64,7 @@ public partial class OpcServer : WorkerBase
 		_options = options;
 		this.Storages = new();
 		this.Channels = new();
+		this.Authenticator = Security.Authenticator.Default;
 	}
 	#endregion
 
@@ -72,6 +74,10 @@ public partial class OpcServer : WorkerBase
 	public OpcServerOptions Options => _options ??= new OpcServerOptions(this.Name);
 	public StorageCollection Storages { get; }
 	public ChannelCollection Channels { get; }
+	#endregion
+
+	#region 内部属性
+	internal ApplicationConfiguration Configuration => _launcher.ApplicationConfiguration;
 	#endregion
 
 	#region 重写方法
@@ -301,7 +307,7 @@ partial class OpcServer
 		}
 		#endregion
 
-		#region 身份验证
+		#region 事件处理
 		private void SessionManager_SessionCreated(Session session, SessionEventReason reason)
 		{
 			_server.Channels.Add(session);
@@ -314,19 +320,64 @@ partial class OpcServer
 
 		private void SessionManager_ImpersonateUser(Session session, ImpersonateEventArgs args)
 		{
-			var authenticator = _server.Authenticator;
-
-			if(authenticator == null)
+			if(!this.CanAuthenticate(args.NewIdentity))
+			{
+				args.IdentityValidationError = new ServiceResult(StatusCodes.BadIdentityTokenRejected);
 				return;
+			}
 
 			try
 			{
-				args.Identity = authenticator.AuthenticateAsync(args.NewIdentity).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+				Security.AuthenticationIdentity identity = args.NewIdentity switch
+				{
+					UserNameIdentityToken user => new Security.AuthenticationIdentity.Account(user.UserName, user.DecryptedPassword),
+					X509IdentityToken x509 => new Security.AuthenticationIdentity.Certificate(x509.Certificate),
+					_ => throw new Zongsoft.Security.SecurityException(),
+				};
+
+				//执行身份验证
+				var authenticated = _server.Authenticator.AuthenticateAsync(identity).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+
+				if(authenticated)
+					args.Identity = new UserIdentity(args.NewIdentity);
+				else
+					args.IdentityValidationError = new ServiceResult(StatusCodes.BadSecurityChecksFailed);
 			}
 			catch(Exception ex)
 			{
 				args.IdentityValidationError = new ServiceResult(StatusCodes.BadSecurityChecksFailed, ex);
 			}
+		}
+		#endregion
+
+		#region 私有方法
+		private bool CanAuthenticate(UserIdentityToken token)
+		{
+			var configuration = _server?.Configuration;
+
+			if(configuration == null)
+				return false;
+
+			var tokenType = GetIdentityType(token);
+
+			if(token == null)
+				return configuration.ServerConfiguration.UserTokenPolicies.Find(policy => policy.TokenType == tokenType) != null;
+			else
+				return _server?.Authenticator != null && configuration.ServerConfiguration.UserTokenPolicies.Find(policy => policy.TokenType == tokenType) != null;
+		}
+
+		private static UserTokenType GetIdentityType(UserIdentityToken token)
+		{
+			if(token == null)
+				return UserTokenType.Anonymous;
+
+			return token switch
+			{
+				UserNameIdentityToken => UserTokenType.UserName,
+				X509IdentityToken => UserTokenType.Certificate,
+				IssuedIdentityToken => UserTokenType.IssuedToken,
+				_ => throw new Zongsoft.Security.SecurityException(),
+			};
 		}
 		#endregion
 	}
