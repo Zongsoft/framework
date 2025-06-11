@@ -74,10 +74,11 @@ public partial class OpcServer : WorkerBase
 	public OpcServerOptions Options => _options ??= new OpcServerOptions(this.Name);
 	public StorageCollection Storages { get; }
 	public ChannelCollection Channels { get; }
+	public System.Security.Cryptography.X509Certificates.X509Certificate2 Certificate => this.Configuration?.SecurityConfiguration?.ApplicationCertificate?.Certificate;
 	#endregion
 
 	#region 内部属性
-	internal ApplicationConfiguration Configuration => _launcher.ApplicationConfiguration;
+	internal ApplicationConfiguration Configuration => _launcher?.ApplicationConfiguration;
 	#endregion
 
 	#region 重写方法
@@ -328,12 +329,8 @@ partial class OpcServer
 
 			try
 			{
-				Security.AuthenticationIdentity identity = args.NewIdentity switch
-				{
-					UserNameIdentityToken user => new Security.AuthenticationIdentity.Account(user.UserName, user.DecryptedPassword),
-					X509IdentityToken x509 => new Security.AuthenticationIdentity.Certificate(x509.Certificate),
-					_ => throw new Zongsoft.Security.SecurityException(),
-				};
+				//获取请求的身份
+				var identity = Security.AuthenticationIdentity.GetIdentity(args.NewIdentity);
 
 				//执行身份验证
 				var authenticated = _server.Authenticator.AuthenticateAsync(identity).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();

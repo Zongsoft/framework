@@ -26,6 +26,36 @@ internal static class Program
 
 			context.Output.Write(CommandOutletColor.Cyan, "Elapsed: ");
 			context.Output.WriteLine(CommandOutletColor.Green, server.Elapsed.ToString());
+			context.Output.Write(CommandOutletColor.Cyan, "Certificate: ");
+			if(server.Certificate == null)
+				context.Output.WriteLine(CommandOutletColor.White, "NULL");
+			else
+			{
+				var content = CommandOutletContent.Create(Environment.NewLine)
+					.AppendLine(CommandOutletColor.DarkGray, '{')
+					.Append(CommandOutletColor.DarkYellow, $"    {nameof(server.Certificate.Issuer)}: ")
+					.AppendLine(CommandOutletColor.DarkGreen, server.Certificate.Issuer)
+					.Append(CommandOutletColor.DarkYellow, $"    {nameof(server.Certificate.Subject)}: ")
+					.AppendLine(CommandOutletColor.DarkGreen, server.Certificate.Subject)
+					.Append(CommandOutletColor.DarkYellow, $"    {nameof(server.Certificate.FriendlyName)}: ")
+					.AppendLine(CommandOutletColor.DarkGreen, server.Certificate.FriendlyName)
+					.Append(CommandOutletColor.DarkYellow, $"    {nameof(server.Certificate.SerialNumber)}: ")
+					.AppendLine(CommandOutletColor.DarkGreen, server.Certificate.SerialNumber)
+					.Append(CommandOutletColor.DarkYellow, $"    {nameof(server.Certificate.Thumbprint)}: ")
+					.AppendLine(CommandOutletColor.DarkGreen, server.Certificate.Thumbprint)
+					.Append(CommandOutletColor.DarkYellow, $"    {nameof(server.Certificate.Version)}: ")
+					.AppendLine(CommandOutletColor.DarkGreen, server.Certificate.Version)
+					.Append(CommandOutletColor.DarkYellow, $"    {nameof(server.Certificate.NotBefore)}: ")
+					.AppendLine(CommandOutletColor.DarkGreen, server.Certificate.NotBefore)
+					.Append(CommandOutletColor.DarkYellow, $"    {nameof(server.Certificate.NotAfter)}: ")
+					.AppendLine(CommandOutletColor.DarkGreen, server.Certificate.NotAfter)
+					.Append(CommandOutletColor.DarkYellow, $"    {nameof(server.Certificate.PublicKey)}: ")
+					.Append(CommandOutletColor.DarkMagenta, $" {server.Certificate.PublicKey.Oid.FriendlyName} ")
+					.AppendLine(CommandOutletColor.Yellow, $"{System.Convert.ToBase64String(server.Certificate.PublicKey.EncodedKeyValue.RawData)}")
+					.AppendLine(CommandOutletColor.DarkGray, '}');
+
+				context.Output.WriteLine(content);
+			}
 
 			foreach(var channel in server.Channels)
 			{
