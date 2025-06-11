@@ -42,9 +42,10 @@ partial class OpcServer
 	public sealed class Channel
 	{
 		#region 成员字段
-		private readonly DateTime _creation;
-		private readonly string _identifier;
 		private readonly Session _session;
+		private readonly string _identifier;
+		private readonly DateTime _creation;
+		private readonly ChannelStatistics _statistics;
 		#endregion
 
 		#region 构造函数
@@ -53,14 +54,17 @@ partial class OpcServer
 			_session = session;
 			_creation = DateTime.UtcNow;
 			_identifier = session.Id.ToString();
+			_statistics = new ChannelStatistics();
 		}
 		#endregion
 
 		#region 公共属性
 		public string Identifier => _identifier;
+		public string Name => _session.SessionDiagnostics.SessionName;
 		public bool Activated => _session.Activated;
 		public DateTime Creation => _creation;
 		public DateTime Timestamp => _session.ClientLastContactTime;
+		public ChannelStatistics Statistics => _statistics.Update(_session.SessionDiagnostics);
 		public Security.AuthenticationIdentity Identity => Security.AuthenticationIdentity.GetIdentity(_session.IdentityToken);
 		public System.Security.Cryptography.X509Certificates.X509Certificate Certificate => _session.ClientCertificate;
 		#endregion
@@ -70,6 +74,51 @@ partial class OpcServer
 			$"[Activated] {this.Identifier}@{this.Timestamp}" :
 			$"[Deactived] {this.Identifier}@{this.Timestamp}";
 		#endregion
+	}
+
+	public sealed class ChannelStatistics
+	{
+		public ChannelStatistics Update(SessionDiagnosticsDataType diagnostics)
+		{
+			if(diagnostics != null)
+			{
+				this.MonitoredCount = diagnostics.CurrentMonitoredItemsCount;
+				this.SubscriptionCount = diagnostics.CurrentSubscriptionsCount;
+				this.Readings = new(diagnostics.ReadCount);
+				this.Writings = new(diagnostics.WriteCount);
+				this.Requests = new(diagnostics.TotalRequestCount);
+				this.Browsings = new(diagnostics.BrowseCount);
+			}
+
+			return this;
+		}
+
+		public Count Requests { get; private set; }
+		public Count Readings { get; private set; }
+		public Count Writings { get; private set; }
+		public Count Browsings { get; private set; }
+		public uint MonitoredCount { get; private set; }
+		public uint SubscriptionCount { get; private set; }
+
+		public readonly struct Count
+		{
+			public Count(uint total, uint error)
+			{
+				this.Total = total;
+				this.Error = error;
+			}
+
+			internal Count(ServiceCounterDataType counter)
+			{
+				this.Total = counter.TotalCount;
+				this.Error = counter.ErrorCount;
+			}
+
+			public readonly uint Total;
+			public readonly uint Error;
+
+			public override string ToString() => $"{this.Error}/{this.Total}";
+		}
 	}
 
 	public sealed class ChannelCollection : IReadOnlyCollection<Channel>

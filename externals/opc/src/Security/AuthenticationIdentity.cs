@@ -30,28 +30,51 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
 
+using Opc.Ua;
+
 namespace Zongsoft.Externals.Opc.Security;
 
 public class AuthenticationIdentity
 {
-	public sealed class Account : AuthenticationIdentity
+	internal static AuthenticationIdentity GetIdentity(UserIdentityToken token) => token switch
 	{
+		AnonymousIdentityToken => null,
+		UserNameIdentityToken user => new Account(user.UserName, user.DecryptedPassword),
+		X509IdentityToken x509 => new Certificate(x509.Certificate),
+		IssuedIdentityToken => throw new Zongsoft.Security.SecurityException(),
+		_ => null,
+	};
+
+	public sealed class Account : AuthenticationIdentity, IEquatable<Account>, IEquatable<AuthenticationIdentity>
+	{
+		private readonly int _hashcode;
+
 		public Account(string userName, string password)
 		{
 			this.UserName = userName;
 			this.Password = password;
+			_hashcode = string.IsNullOrEmpty(userName) ? 0 : userName.ToUpperInvariant().GetHashCode();
 		}
 
 		public string UserName { get; }
 		public string Password { get; }
 
+		public bool Equals(Account other) => other is not null && string.Equals(this.UserName, other.UserName, StringComparison.OrdinalIgnoreCase);
+		public bool Equals(AuthenticationIdentity other) => this.Equals(other as Account);
+		public override bool Equals(object obj) => this.Equals(obj as Account);
+		public override int GetHashCode() => _hashcode;
 		public override string ToString() => $"{this.UserName}";
 	}
 
-	public sealed class Certificate : AuthenticationIdentity
+	public sealed class Certificate : AuthenticationIdentity, IEquatable<Certificate>, IEquatable<AuthenticationIdentity>
 	{
 		public Certificate(X509Certificate2 x509) => this.X509 = x509;
 		public X509Certificate2 X509 { get; }
+
+		public bool Equals(Certificate other) => other is not null && object.Equals(this.X509, other.X509);
+		public bool Equals(AuthenticationIdentity other) => this.Equals(other as Certificate);
+		public override bool Equals(object obj) => this.Equals(obj as Account);
+		public override int GetHashCode() => HashCode.Combine(this.X509);
 		public override string ToString() => this.X509?.ToString();
 	}
 }

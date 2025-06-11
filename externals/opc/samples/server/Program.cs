@@ -24,6 +24,8 @@ internal static class Program
 		{
 			int index = 0;
 
+			context.Output.Write(CommandOutletColor.Cyan, "State: ");
+			context.Output.WriteLine(server.State == WorkerState.Running ? CommandOutletColor.Green : CommandOutletColor.Magenta, server.State);
 			context.Output.Write(CommandOutletColor.Cyan, "Elapsed: ");
 			context.Output.WriteLine(CommandOutletColor.Green, server.Elapsed.ToString());
 			context.Output.Write(CommandOutletColor.Cyan, "Certificate: ");

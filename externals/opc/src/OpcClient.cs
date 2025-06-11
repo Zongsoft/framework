@@ -60,7 +60,7 @@ public partial class OpcClient : IDisposable
 	#region 构造函数
 	public OpcClient(string name = null)
 	{
-		this.Name = string.IsNullOrEmpty(name) ? "Opc.UA Client" : name;
+		this.Name = string.IsNullOrEmpty(name) ? "Zongsoft.OpcClient" : name;
 
 		_configuration = new ApplicationConfiguration()
 		{

@@ -333,7 +333,7 @@ partial class OpcServer
 				var identity = Security.AuthenticationIdentity.GetIdentity(args.NewIdentity);
 
 				//执行身份验证
-				var authenticated = _server.Authenticator.AuthenticateAsync(identity).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+				var authenticated = identity == null || _server.Authenticator.AuthenticateAsync(identity).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 
 				if(authenticated)
 					args.Identity = new UserIdentity(args.NewIdentity);
@@ -370,6 +370,7 @@ partial class OpcServer
 
 			return token switch
 			{
+				AnonymousIdentityToken => UserTokenType.Anonymous,
 				UserNameIdentityToken => UserTokenType.UserName,
 				X509IdentityToken => UserTokenType.Certificate,
 				IssuedIdentityToken => UserTokenType.IssuedToken,
