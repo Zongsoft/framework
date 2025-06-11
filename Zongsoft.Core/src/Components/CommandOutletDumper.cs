@@ -117,6 +117,9 @@ public static class CommandOutletDumper
 			case string @string:
 				DumpString(content, @string);
 				break;
+			case DateTime datetime:
+				DumpString(content, datetime.Kind == DateTimeKind.Utc ? new DateTimeOffset(datetime.ToLocalTime()).ToString() : datetime.ToString("yyyy-MM-dd HH:mm:ss"));
+				break;
 			case StringBuilder builder:
 				DumpString(content, builder.ToString());
 				break;

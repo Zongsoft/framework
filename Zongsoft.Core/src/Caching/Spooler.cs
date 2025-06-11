@@ -223,6 +223,8 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 		public int Count => _current.Count;
 		public bool IsEmpty => _current.IsEmpty;
 		public void Clear() => _current.Clear();
+		public bool TryTake(out T value) => _current.TryTake(out value);
+		public bool TryPeek(out T value) => _current.TryPeek(out value);
 
 		public bool Add(T value)
 		{

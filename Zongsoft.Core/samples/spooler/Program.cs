@@ -57,17 +57,6 @@ internal class Program
 			Terminal.Write(content);
 		});
 
-		executor.Command("stash", context =>
-		{
-			(var count, var collision) = GetCommandOptions(context);
-			stopwater.Restart();
-			TestStasher(count, collision);
-			stopwater.Stop();
-
-			Terminal.Console.Write(CommandOutletColor.DarkMagenta, $"Elapsed: ");
-			Terminal.Console.Write(CommandOutletColor.Cyan, stopwater.Elapsed);
-		});
-
 		executor.Command("spool", context =>
 		{
 			(var count, var collision) = GetCommandOptions(context);
@@ -85,22 +74,6 @@ internal class Program
 			.AppendLine(CommandOutletColor.Yellow, new string('*', 50));
 
 		executor.Run(splash);
-	}
-
-	static void TestStasher(int count, int collision = 0)
-	{
-		using var stash = new Stash<int>(Handler.Handle, TimeSpan.FromMilliseconds(_PERIOD_), _LIMIT_);
-
-		var result = Parallel.For(0, count, index =>
-		{
-			var value = collision > 0 ?
-				Random.Shared.Next(0, collision) :
-				Random.Shared.Next();
-
-			stash.Put(value);
-		});
-
-		Handler.Reset(result, count);
 	}
 
 	static void TestSpooler(int count, int collision = 0)
