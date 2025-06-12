@@ -35,5 +35,5 @@ namespace Zongsoft.Externals.Opc.Security;
 
 public interface IAuthenticator
 {
-	ValueTask<bool> AuthenticateAsync(AuthenticationIdentity identity, CancellationToken cancellation = default);
+	ValueTask<bool> AuthenticateAsync(OpcServer server, AuthenticationIdentity identity, CancellationToken cancellation = default);
 }

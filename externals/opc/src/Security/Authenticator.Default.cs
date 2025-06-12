@@ -38,7 +38,7 @@ partial class Authenticator
 	private sealed class DefaultAuthenticator(string root = null) : Authenticator
 	{
 		private readonly string _root = string.IsNullOrEmpty(root) ? AppContext.BaseDirectory : root;
-		protected override ValueTask<bool> OnAuthenticateAsync(AuthenticationIdentity.Account identity, CancellationToken cancellation = default) => base.OnAuthenticateAsync(identity, cancellation);
-		protected override ValueTask<bool> OnAuthenticateAsync(AuthenticationIdentity.Certificate identity, CancellationToken cancellation = default) => base.OnAuthenticateAsync(identity, cancellation);
+		protected override ValueTask<bool> OnAuthenticateAsync(OpcServer server, AuthenticationIdentity.Account identity, CancellationToken cancellation = default) => base.OnAuthenticateAsync(server, identity, cancellation);
+		protected override ValueTask<bool> OnAuthenticateAsync(OpcServer server, AuthenticationIdentity.Certificate identity, CancellationToken cancellation = default) => base.OnAuthenticateAsync(server, identity, cancellation);
 	}
 }
