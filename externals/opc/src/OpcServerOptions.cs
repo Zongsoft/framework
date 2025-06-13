@@ -44,6 +44,7 @@ public class OpcServerOptions
 	{
 		this.Name = string.IsNullOrEmpty(name) ? "Zongsoft.OpcServer" : name;
 		this.Namespace = string.IsNullOrEmpty(@namespace) ? $"urn:{Environment.MachineName}:{this.Name}" : @namespace;
+		this.Anonymous = true;
 		this.Storages = new();
 
 		if(urls != null && urls.Length > 0)
@@ -61,6 +62,7 @@ public class OpcServerOptions
 	public string Namespace { get; init; }
 	public string Discovery { get; init; }
 	public string[] Urls { get; init; }
+	public bool Anonymous { get; init; }
 	public StorageOptionsCollection Storages { get; }
 	#endregion
 
@@ -107,10 +109,6 @@ public class OpcServerOptions
 				],
 				UserTokenPolicies =
 				[
-					new UserTokenPolicy(UserTokenType.Anonymous)
-					{
-						SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#None",
-					},
 					new UserTokenPolicy(UserTokenType.UserName)
 					{
 						SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
@@ -152,6 +150,14 @@ public class OpcServerOptions
 			//TransportConfigurations = [],
 			//TraceConfiguration = new TraceConfiguration(),
 		};
+
+		if(this.Anonymous) //如果启用匿名登录则添加匿名策略
+		{
+			configuration.ServerConfiguration.UserTokenPolicies.Add(new UserTokenPolicy(UserTokenType.Anonymous)
+			{
+				SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#None",
+			});
+		}
 
 		//验证服务配置
 		configuration.Validate(ApplicationType.Server);
