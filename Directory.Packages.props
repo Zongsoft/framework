@@ -5,6 +5,8 @@
 
 	<ItemGroup Condition="$(TargetFramework) == 'net5.0'">
 		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="5.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Abstractions" Version="5.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Physical" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
@@ -28,6 +30,8 @@
 
 	<ItemGroup Condition="$(TargetFramework) == 'net6.0'">
 		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="6.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Abstractions" Version="6.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Physical" Version="6.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
@@ -51,6 +55,8 @@
 
 	<ItemGroup Condition="$(TargetFramework) == 'net7.0'">
 		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="7.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Abstractions" Version="7.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Physical" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
@@ -74,6 +80,8 @@
 
 	<ItemGroup Condition="$(TargetFramework) == 'net8.0'">
 		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Abstractions" Version="8.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Physical" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="8.0.13" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
@@ -101,6 +109,8 @@
 
 	<ItemGroup Condition="$(TargetFramework) == 'net9.0'">
 		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="9.0.2" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Abstractions" Version="9.0.2" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Physical" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
