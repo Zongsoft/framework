@@ -44,7 +44,7 @@ partial class Authenticator
 	{
 		#region 常量定义
 		private const string CERTIFICATES_DIRECTORY = "certificates";
-		private readonly string FILE_NAME = $"{typeof(OpcServer).Namespace}.Users.ini";
+		private readonly string FILE_NAME = $"{typeof(OpcServer).Namespace}.ini";
 		#endregion
 
 		#region 重写方法
