@@ -378,32 +378,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	#endregion
 
 	#region 虚拟方法
-	protected virtual ICondition GetCriteria(string keyword)
-	{
-		if(string.IsNullOrEmpty(keyword) || keyword == "*")
-			return null;
-
-		return UserUtility.GetCriteria(keyword) |
-			Condition.Like(nameof(IUser.Name), keyword) |
-			Condition.Like(nameof(IUser.Email), keyword) |
-			Condition.Like(nameof(IUser.Phone), keyword) |
-			Condition.Like(nameof(IUser.Nickname), keyword);
-	}
-
-	protected virtual ICondition GetCriteria(Identifier identifier)
-	{
-		if(identifier.IsEmpty)
-			return null;
-
-		if(identifier.Validate(out string qualifiedName))
-			return UserUtility.GetCriteria(qualifiedName);
-
-		throw OperationException.Argument();
-	}
-
-	protected virtual ICondition GetCriteria(string identity, string @namespace) => UserUtility.GetCriteria(identity, @namespace);
-	protected virtual ICondition GetCriteria(string identity, string @namespace, out string identityType) => UserUtility.GetCriteria(identity, @namespace, out identityType);
-
+	protected virtual void OnCreated(TUser user) { }
 	protected virtual void OnCreating(TUser user)
 	{
 		if(string.IsNullOrWhiteSpace(user.Name))
@@ -419,8 +394,6 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 			user.Namespace = null;
 	}
 
-	protected virtual void OnCreated(TUser user) { }
-
 	protected virtual void OnValidateName(string name)
 	{
 		//验证指定的名称是否为系统内置名
@@ -430,6 +403,30 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		var validator = this.Services?.Resolve<IValidator<string>>("user.name");
 		validator?.Validate(name, message => throw new SecurityException("username.illegality", message));
 	}
+
+	protected virtual ICondition GetCriteria(string keyword)
+	{
+		if(string.IsNullOrEmpty(keyword) || keyword == "*")
+			return null;
+
+		var criteria = UserUtility.GetCriteria(keyword, out var identityType);
+		return string.Equals(identityType, nameof(IUser.Name)) ?
+			criteria | Condition.Like(nameof(IUser.Nickname), keyword) : criteria;
+	}
+
+	protected virtual ICondition GetCriteria(Identifier identifier)
+	{
+		if(identifier.IsEmpty)
+			return null;
+
+		if(identifier.Validate(out string qualifiedName))
+			return UserUtility.GetCriteria(qualifiedName);
+
+		throw OperationException.Argument();
+	}
+
+	protected virtual ICondition GetCriteria(string identity, string @namespace) => UserUtility.GetCriteria(identity, @namespace);
+	protected virtual ICondition GetCriteria(string identity, string @namespace, out string identityType) => UserUtility.GetCriteria(identity, @namespace, out identityType);
 	#endregion
 
 	#region 私有方法

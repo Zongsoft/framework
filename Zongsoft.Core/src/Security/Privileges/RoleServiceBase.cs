@@ -242,6 +242,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 	#endregion
 
 	#region 虚拟方法
+	protected virtual void OnCreated(TRole role) { }
 	protected virtual void OnCreating(TRole role)
 	{
 		if(string.IsNullOrWhiteSpace(role.Name))
@@ -254,8 +255,6 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		if(string.IsNullOrWhiteSpace(role.Namespace))
 			role.Namespace = null;
 	}
-
-	protected virtual void OnCreated(TRole role) { }
 
 	protected virtual void OnValidateName(string name)
 	{
