@@ -57,10 +57,10 @@ public partial class UserController : ControllerBase
 
 	#region 公共方法
 	[HttpGet("{id?}")]
-	public async Task<IActionResult> Get(string id, [FromQuery]Paging page = null, CancellationToken cancellation = default)
+	public async Task<IActionResult> Get(string id, [FromQuery]string keyword = null, [FromQuery]Paging page = null, CancellationToken cancellation = default)
 	{
-		if(string.IsNullOrEmpty(id) || id == "*" || id.Contains(':'))
-			return this.Paginate(page ??= Paging.First(), this.Service.FindAsync(id, this.Request.Headers.GetDataSchema(), page, cancellation));
+		if(string.IsNullOrEmpty(id))
+			return this.Paginate(page ??= Paging.First(), this.Service.FindAsync(keyword, this.Request.Headers.GetDataSchema(), page, cancellation));
 
 		var result = await this.Service.GetAsync(new Identifier(typeof(IUser), id), this.Request.Headers.GetDataSchema(), cancellation);
 		return result != null ? this.Ok(result) : this.NoContent();
