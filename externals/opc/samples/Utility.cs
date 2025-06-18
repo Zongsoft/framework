@@ -45,6 +45,9 @@ internal static class Utility
 			return content;
 		}
 
+		if(value is DateTime datetime)
+			value = datetime.ToLocalTime();
+
 		content
 			.Append(CommandOutletColor.DarkGreen, value.ToString())
 			.AppendType(value.GetType());

@@ -132,12 +132,38 @@ internal static class Program
 				value = Common.Convert.ConvertValue(context.Expression.Arguments[1], type);
 			}
 
-			var succeed = server.SetValue(context.Expression.Arguments[0], value);
+			var round = context.Expression.Options.GetValue("round", 0);
 
-			if(succeed)
-				context.Output.WriteLine(CommandOutletColor.DarkGreen, "The set operation was successful.");
+			if(round > 0)
+			{
+				for(int i = 0; i < round; i++)
+				{
+					var succeed = server.SetValue(context.Expression.Arguments[0], Add(value, i));
+
+					Thread.Sleep(100);
+
+					var content = CommandOutletContent.Create()
+						.Append(CommandOutletColor.DarkGray, "[")
+						.Append(CommandOutletColor.Cyan, $"{i + 1}")
+						.Append(CommandOutletColor.DarkGray, "] ");
+
+					if(succeed)
+						content.Last.AppendLine(CommandOutletColor.DarkGreen, "The set operation was successful.");
+					else
+						content.Last.AppendLine(CommandOutletColor.DarkRed, "The set operation failed.");
+
+					context.Output.Write(content);
+				}
+			}
 			else
-				context.Output.WriteLine(CommandOutletColor.DarkRed, "The set operation failed.");
+			{
+				var succeed = server.SetValue(context.Expression.Arguments[0], value);
+
+				if(succeed)
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, "The set operation was successful.");
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkRed, "The set operation failed.");
+			}
 		});
 
 		var splash = CommandOutletContent.Create()
@@ -193,6 +219,26 @@ internal static class Program
 		variables.Variable("guid()", Guid.NewGuid());
 		variables.Variable("uuid()", Guid.NewGuid());
 	}
+
+	private static object Add(object value, int interval) => value switch
+	{
+		double number => number + interval,
+		float number => number + interval,
+		int number => number + interval,
+		uint number => number + interval,
+		short number => number + interval,
+		ushort number => number + interval,
+		long number => number + interval,
+		ulong number => number + (ulong)interval,
+		byte number => number + interval,
+		sbyte number => number + interval,
+		string => $"{value}#{interval}",
+		DateOnly date => date.AddDays(interval),
+		TimeOnly time => time.AddMinutes(interval),
+		DateTime datetime => datetime.AddSeconds(interval),
+		DateTimeOffset datetime => datetime.AddSeconds(interval),
+		_ => value,
+	};
 
 	public class Person
 	{

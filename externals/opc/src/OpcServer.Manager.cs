@@ -215,7 +215,7 @@ partial class OpcServer
 				this.GetManagerHandle(nodeId),
 				BrowseResultMask.NodeClass | BrowseResultMask.TypeDefinition);
 
-			return Utility.GetDataType(metadata.DataType, metadata.ValueRank);
+			return metadata == null ? null : Utility.GetDataType(metadata.DataType, metadata.ValueRank);
 		}
 
 		public bool SetValue<T>(NodeId nodeId, T value)
