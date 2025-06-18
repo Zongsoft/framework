@@ -82,24 +82,31 @@ public sealed class Logger
 	#region 日志方法
 	public void Trace(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Source, exception, data));
 	public void Trace(string message, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Source, message, data));
+	public void Trace(string message, Exception exception, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Source, message, exception, data));
 
 	public void Debug(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Debug, this.Source, exception, data));
 	public void Debug(string message, object data = null) => Log(new LogEntry(LogLevel.Debug, this.Source, message, data));
+	public void Debug(string message, Exception exception, object data = null) => Log(new LogEntry(LogLevel.Debug, this.Source, message, exception, data));
 
 	public void Info(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Info, this.Source, exception, data));
 	public void Info(string message, object data = null) => Log(new LogEntry(LogLevel.Info, this.Source, message, data));
+	public void Info(string message, Exception exception, object data = null) => Log(new LogEntry(LogLevel.Info, this.Source, message, exception, data));
 
 	public void Warn(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Warn, this.Source, exception, data));
 	public void Warn(string message, object data = null) => Log(new LogEntry(LogLevel.Warn, this.Source, message, data));
+	public void Warn(string message, Exception exception, object data = null) => Log(new LogEntry(LogLevel.Warn, this.Source, message, exception, data));
 
 	public void Error(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Error, this.Source, exception, data));
 	public void Error(string message, object data = null) => Log(new LogEntry(LogLevel.Error, this.Source, message, data));
+	public void Error(string message, Exception exception, object data = null) => Log(new LogEntry(LogLevel.Error, this.Source, message, exception, data));
 
 	public void Fatal(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Fatal, this.Source, exception, data));
 	public void Fatal(string message, object data = null) => Log(new LogEntry(LogLevel.Fatal, this.Source, message, data));
+	public void Fatal(string message, Exception exception, object data = null) => Log(new LogEntry(LogLevel.Fatal, this.Source, message, exception, data));
 
 	public void Log(LogLevel level, Exception exception, object data = null) => Log(new LogEntry(level, this.Source, exception, data));
 	public void Log(LogLevel level, string message, object data = null) => Log(new LogEntry(level, this.Source, message, data));
+	public void Log(LogLevel level, string message, Exception exception, object data = null) => Log(new LogEntry(level, this.Source, message, exception, data));
 	#endregion
 
 	#region 私有方法
