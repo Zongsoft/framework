@@ -91,6 +91,35 @@ public class RetryArgument : Argument
 	/// <summary>获取已尝试的次数。</summary>
 	public int Attempts { get; }
 	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"#{this.Attempts} {base.ToString()}";
+	#endregion
+}
+
+/// <summary>
+/// 表示重试回调的参数类。
+/// </summary>
+public class RetryArgument<T> : Argument<T>
+{
+	#region 构造函数
+	public RetryArgument(int attempts, Exception exception) : base(exception) => this.Attempts = attempts;
+	public RetryArgument(int attempts, T value, Exception exception = null) : base(value, exception) => this.Attempts = attempts;
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取已尝试的次数。</summary>
+	public int Attempts { get; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"#{this.Attempts} {base.ToString()}";
+	#endregion
+
+	#region 类型转换
+	public static implicit operator RetryArgument(RetryArgument<T> argument) => argument is null ? default : new(argument.Attempts, argument.Value, argument.Exception);
+	public static explicit operator RetryArgument<T>(RetryArgument argument) => argument is null ? default : (argument.Value is T value ? new(argument.Attempts, value, argument.Exception) : throw new InvalidCastException());
+	#endregion
 }
 
 /// <summary>

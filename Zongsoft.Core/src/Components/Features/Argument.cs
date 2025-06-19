@@ -89,4 +89,9 @@ public class Argument<T>
 	#region 重写方法
 	public override string ToString() => this.HasException(out var exception) ? $"[{exception.GetType().Name}] {exception.Message}" : $"{this.Value}";
 	#endregion
+
+	#region 类型转换
+	public static implicit operator Argument(Argument<T> argument) => argument is null ? default : new(argument.Value, argument.Exception);
+	public static explicit operator Argument<T>(Argument argument) => argument is null ? default : (argument.Value is T value ? new(value, argument.Exception) : throw new InvalidCastException());
+	#endregion
 }
