@@ -56,7 +56,7 @@ partial class UserServiceBase<TUser>
 	#endregion
 
 	#region 密码操作
-	public ValueTask<bool> HasPasswordAsync(Identifier identifier, CancellationToken cancellation = default)
+	public virtual ValueTask<bool> HasPasswordAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
 		return this.Accessor.ExistsAsync(
 			this.Name,
@@ -65,7 +65,7 @@ partial class UserServiceBase<TUser>
 			cancellation: cancellation);
 	}
 
-	public async ValueTask<bool> ChangePasswordAsync(Identifier identifier, string oldPassword, string newPassword, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> ChangePasswordAsync(Identifier identifier, string oldPassword, string newPassword, CancellationToken cancellation = default)
 	{
 		const string ATTEMPTER_PREFIX = "User.Password.Change";
 
@@ -110,7 +110,7 @@ partial class UserServiceBase<TUser>
 		return await this.Passworder.SetAsync(identifier, cipher, cancellation);
 	}
 
-	public ValueTask<string> ForgetPasswordAsync(string identity, string @namespace, Parameters parameters, CancellationToken cancellation = default)
+	public virtual ValueTask<string> ForgetPasswordAsync(string identity, string @namespace, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(identity))
 			throw new ArgumentNullException(nameof(identity));
@@ -131,7 +131,7 @@ partial class UserServiceBase<TUser>
 		return this.OnForgetPasswordAsync(user, parameters, cancellation);
 	}
 
-	public async ValueTask<bool> ResetPasswordAsync(string token, string secret, string password = null, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> ResetPasswordAsync(string token, string secret, string password = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(token))
 			throw new ArgumentNullException(nameof(token));
@@ -158,7 +158,7 @@ partial class UserServiceBase<TUser>
 		return false;
 	}
 
-	public async ValueTask<bool> ResetPasswordAsync(string identity, string @namespace, string[] passwordAnswers, string newPassword = null, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> ResetPasswordAsync(string identity, string @namespace, string[] passwordAnswers, string newPassword = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(identity))
 			throw new ArgumentNullException(nameof(identity));
@@ -233,7 +233,7 @@ partial class UserServiceBase<TUser>
 		return null;
 	}
 
-	public async ValueTask<bool> SetPasswordQuestionsAndAnswersAsync(Identifier identifier, string password, string[] passwordQuestions, string[] passwordAnswers, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> SetPasswordQuestionsAndAnswersAsync(Identifier identifier, string password, string[] passwordQuestions, string[] passwordAnswers, CancellationToken cancellation = default)
 	{
 		const string ATTEMPTER_PREFIX = "User.Password.Answers";
 

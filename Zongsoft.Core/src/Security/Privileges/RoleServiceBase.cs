@@ -56,7 +56,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 
 	#region 公共方法
 	public ValueTask<TRole> GetAsync(Identifier identifier, CancellationToken cancellation = default) => this.GetAsync(identifier, null, cancellation);
-	public async ValueTask<TRole> GetAsync(Identifier identifier, string schema, CancellationToken cancellation = default)
+	public virtual async ValueTask<TRole> GetAsync(Identifier identifier, string schema, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty)
 			return default;
@@ -69,9 +69,9 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 	}
 
 	public IAsyncEnumerable<TRole> FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation = default) => this.FindAsync(this.GetCriteria(keyword), schema, paging, cancellation);
-	public IAsyncEnumerable<TRole> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default) => this.Accessor.SelectAsync<TRole>(criteria, schema, paging, cancellation);
+	public virtual IAsyncEnumerable<TRole> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default) => this.Accessor.SelectAsync<TRole>(criteria, schema, paging, cancellation);
 
-	public ValueTask<bool> ExistsAsync(Identifier identifier, CancellationToken cancellation = default)
+	public virtual ValueTask<bool> ExistsAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
 		var criteria = this.GetCriteria(identifier);
 		if(criteria == null)
@@ -94,7 +94,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = false }, criteria, cancellation) > 0;
 	}
 
-	public async ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty || string.IsNullOrEmpty(name))
 			return false;
@@ -110,7 +110,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		return await this.Accessor.UpdateAsync(this.Name, new { Name = name }, criteria, cancellation) > 0;
 	}
 
-	public async ValueTask<bool> CreateAsync(TRole role, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> CreateAsync(TRole role, CancellationToken cancellation = default)
 	{
 		if(role == null)
 			return false;
@@ -130,7 +130,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		return false;
 	}
 
-	public async ValueTask<int> CreateAsync(IEnumerable<TRole> roles, CancellationToken cancellation = default)
+	public virtual async ValueTask<int> CreateAsync(IEnumerable<TRole> roles, CancellationToken cancellation = default)
 	{
 		if(roles == null)
 			return 0;
@@ -161,7 +161,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		return count;
 	}
 
-	public async ValueTask<bool> DeleteAsync(Identifier identifier, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> DeleteAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty)
 			return false;
@@ -185,7 +185,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		return false;
 	}
 
-	public async ValueTask<int> DeleteAsync(IEnumerable<Identifier> identifiers, CancellationToken cancellation = default)
+	public virtual async ValueTask<int> DeleteAsync(IEnumerable<Identifier> identifiers, CancellationToken cancellation = default)
 	{
 		if(identifiers == null)
 			return 0;
@@ -227,7 +227,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		return total;
 	}
 
-	public async ValueTask<bool> UpdateAsync(TRole role, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> UpdateAsync(TRole role, CancellationToken cancellation = default)
 	{
 		if(role == null)
 			return false;

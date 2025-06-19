@@ -42,7 +42,7 @@ namespace Zongsoft.Security.Privileges;
 partial class MemberServiceBase<TRole, TMember>
 {
 	#region 公共方法
-	public async IAsyncEnumerable<TRole> GetAncestorsAsync(Member member, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
+	public virtual async IAsyncEnumerable<TRole> GetAncestorsAsync(Member member, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
 		var members = new Stack<Identifier>();
 		var result = new HashSet<TRole>(RoleComparer.Instance);
@@ -74,7 +74,7 @@ partial class MemberServiceBase<TRole, TMember>
 			yield return role;
 	}
 
-	public async IAsyncEnumerable<ICollection<Identifier>> GetAncestorsAsync(Member member, int depth, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
+	public virtual async IAsyncEnumerable<ICollection<Identifier>> GetAncestorsAsync(Member member, int depth, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
 		var result = new Stack<HashSet<Identifier>>();
 

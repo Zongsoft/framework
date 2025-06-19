@@ -83,7 +83,7 @@ public abstract class PrivilegeServiceBase<TPrivilege> : IPrivilegeService<TPriv
 	ValueTask<int> IPrivilegeService.SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation) => this.SetPrivilegesAsync(identifier, privileges.Cast<TPrivilege>(), shouldResetting, parameters, cancellation);
 
 	public ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<TPrivilege> privileges, Parameters parameters, CancellationToken cancellation = default) => this.SetPrivilegesAsync(identifier, privileges, false, parameters, cancellation);
-	public async ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<TPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default)
+	public async ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<TPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default) 
 	{
 		if(identifier.IsEmpty || privileges == null)
 			return 0;

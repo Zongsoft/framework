@@ -70,7 +70,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 
 	#region 公共方法
 	public ValueTask<TUser> GetAsync(Identifier identifier, CancellationToken cancellation = default) => this.GetAsync(identifier, null, cancellation);
-	public async ValueTask<TUser> GetAsync(Identifier identifier, string schema, CancellationToken cancellation = default)
+	public virtual async ValueTask<TUser> GetAsync(Identifier identifier, string schema, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty)
 			return default;
@@ -83,9 +83,9 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	}
 
 	public IAsyncEnumerable<TUser> FindAsync(string keyword, string schema, Paging paging, CancellationToken cancellation = default) => this.FindAsync(this.GetCriteria(keyword), schema, paging, cancellation);
-	public IAsyncEnumerable<TUser> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default) => this.Accessor.SelectAsync<TUser>(criteria, schema, paging, cancellation);
+	public virtual IAsyncEnumerable<TUser> FindAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation = default) => this.Accessor.SelectAsync<TUser>(criteria, schema, paging, cancellation);
 
-	public ValueTask<bool> ExistsAsync(Identifier identifier, CancellationToken cancellation = default)
+	public virtual ValueTask<bool> ExistsAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
 		var criteria = this.GetCriteria(identifier);
 		if(criteria == null)
@@ -108,7 +108,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = false }, criteria, cancellation) > 0;
 	}
 
-	public async ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default)
 	{
 		//确认指定的用户标识是否有效
 		identifier = EnsureIdentity(identifier);
@@ -124,7 +124,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		return await this.Accessor.UpdateAsync(this.Name, new { Name = name }, criteria, cancellation) > 0;
 	}
 
-	public async ValueTask<bool> SetEmailAsync(Identifier identifier, string email, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> SetEmailAsync(Identifier identifier, string email, CancellationToken cancellation = default)
 	{
 		//确认指定的用户标识是否有效
 		identifier = EnsureIdentity(identifier);
@@ -139,8 +139,8 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		}, criteria, cancellation) > 0;
 	}
 
-	public ValueTask<bool> SetEmailAsync(string token, string secret, CancellationToken cancellation) => this.VerifyAsync("email", token, secret, cancellation);
-	public async ValueTask<string> SetEmailAsync(Identifier identifier, string email, Parameters parameters, CancellationToken cancellation = default)
+	public virtual ValueTask<bool> SetEmailAsync(string token, string secret, CancellationToken cancellation) => this.VerifyAsync("email", token, secret, cancellation);
+	public virtual async ValueTask<string> SetEmailAsync(Identifier identifier, string email, Parameters parameters, CancellationToken cancellation = default)
 	{
 		const string SCHEME = "email";
 
@@ -166,7 +166,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		static string GetChannel(Parameters parameters) => parameters.TryGetValue("channel", out var value) && value is string text ? text : null;
 	}
 
-	public async ValueTask<bool> SetPhoneAsync(Identifier identifier, string phone, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> SetPhoneAsync(Identifier identifier, string phone, CancellationToken cancellation = default)
 	{
 		//确认指定的用户标识是否有效
 		identifier = EnsureIdentity(identifier);
@@ -181,8 +181,8 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		}, criteria, cancellation) > 0;
 	}
 
-	public ValueTask<bool> SetPhoneAsync(string token, string secret, CancellationToken cancellation) => this.VerifyAsync("phone", token, secret, cancellation);
-	public async ValueTask<string> SetPhoneAsync(Identifier identifier, string phone, Parameters parameters, CancellationToken cancellation = default)
+	public virtual ValueTask<bool> SetPhoneAsync(string token, string secret, CancellationToken cancellation) => this.VerifyAsync("phone", token, secret, cancellation);
+	public virtual async ValueTask<string> SetPhoneAsync(Identifier identifier, string phone, Parameters parameters, CancellationToken cancellation = default)
 	{
 		const string SCHEME = "phone";
 
@@ -209,7 +209,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	}
 
 	public ValueTask<bool> CreateAsync(TUser user, CancellationToken cancellation = default) => this.CreateAsync(user, null, cancellation);
-	public async ValueTask<bool> CreateAsync(TUser user, string password, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> CreateAsync(TUser user, string password, CancellationToken cancellation = default)
 	{
 		if(user == null)
 			return false;
@@ -240,7 +240,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		return false;
 	}
 
-	public async ValueTask<int> CreateAsync(IEnumerable<TUser> users, CancellationToken cancellation = default)
+	public virtual async ValueTask<int> CreateAsync(IEnumerable<TUser> users, CancellationToken cancellation = default)
 	{
 		if(users == null)
 			return 0;
@@ -274,7 +274,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		return count;
 	}
 
-	public async ValueTask<bool> DeleteAsync(Identifier identifier, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> DeleteAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
 		if(identifier.IsEmpty)
 			return false;
@@ -287,7 +287,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		return await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation) > 0;
 	}
 
-	public async ValueTask<int> DeleteAsync(IEnumerable<Identifier> identifiers, CancellationToken cancellation = default)
+	public virtual async ValueTask<int> DeleteAsync(IEnumerable<Identifier> identifiers, CancellationToken cancellation = default)
 	{
 		if(identifiers == null)
 			return 0;
@@ -325,7 +325,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		return total;
 	}
 
-	public async ValueTask<bool> UpdateAsync(TUser user, CancellationToken cancellation = default)
+	public virtual async ValueTask<bool> UpdateAsync(TUser user, CancellationToken cancellation = default)
 	{
 		if(user == null)
 			return false;
@@ -339,41 +339,6 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 			return false;
 
 		return await this.Accessor.UpdateAsync(user, cancellation) > 0;
-	}
-	#endregion
-
-	#region 秘密校验
-	private async ValueTask<bool> VerifyAsync(string type, string token, string secret, CancellationToken cancellation)
-	{
-		if(string.IsNullOrEmpty(type))
-			throw new ArgumentNullException(nameof(type));
-
-		if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
-			return false;
-
-		//校验指定的密文
-		(var succeed, var extra) = await this.Secretor.VerifyAsync(token, secret, cancellation);
-
-		//如果校验成功并且密文中有附加数据
-		if(succeed && (extra != null && extra.Length > 0))
-		{
-			var index = extra.IndexOf(':');
-			if(index < 1 || !string.Equals(type, extra[..index], StringComparison.OrdinalIgnoreCase))
-				return false;
-
-			var parts = extra[(index + 1)..].Split('|');
-			if(parts.Length < 2)
-				return false;
-
-			return type switch
-			{
-				"email" => await this.SetEmailAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
-				"phone" => await this.SetPhoneAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
-				_ => false,
-			};
-		}
-
-		return false;
 	}
 	#endregion
 
@@ -427,6 +392,41 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 
 	protected virtual ICondition GetCriteria(string identity, string @namespace) => UserUtility.GetCriteria(identity, @namespace);
 	protected virtual ICondition GetCriteria(string identity, string @namespace, out string identityType) => UserUtility.GetCriteria(identity, @namespace, out identityType);
+	#endregion
+
+	#region 秘密校验
+	private async ValueTask<bool> VerifyAsync(string type, string token, string secret, CancellationToken cancellation)
+	{
+		if(string.IsNullOrEmpty(type))
+			throw new ArgumentNullException(nameof(type));
+
+		if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
+			return false;
+
+		//校验指定的密文
+		(var succeed, var extra) = await this.Secretor.VerifyAsync(token, secret, cancellation);
+
+		//如果校验成功并且密文中有附加数据
+		if(succeed && (extra != null && extra.Length > 0))
+		{
+			var index = extra.IndexOf(':');
+			if(index < 1 || !string.Equals(type, extra[..index], StringComparison.OrdinalIgnoreCase))
+				return false;
+
+			var parts = extra[(index + 1)..].Split('|');
+			if(parts.Length < 2)
+				return false;
+
+			return type switch
+			{
+				"email" => await this.SetEmailAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
+				"phone" => await this.SetPhoneAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
+				_ => false,
+			};
+		}
+
+		return false;
+	}
 	#endregion
 
 	#region 私有方法
