@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using Zongsoft.Common;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
 
@@ -12,112 +13,113 @@ internal class Program
 	{
 		using var superviser = new MySuperviser(new SupervisableOptions(TimeSpan.FromSeconds(10), 5));
 
-		Terminal.WriteLine(CommandOutletColor.Gray, new string('·', 60));
-		Terminal.Write(CommandOutletColor.DarkMagenta, $"Lifecycle: ");
-		Terminal.Write(CommandOutletColor.DarkYellow, superviser.Options.Lifecycle);
-		Terminal.Write(CommandOutletColor.DarkGray, ",\t");
-
-		Terminal.Write(CommandOutletColor.DarkMagenta, $"Error Limit: ");
-		Terminal.Write(CommandOutletColor.DarkYellow, superviser.Options.ErrorLimit);
-		Terminal.WriteLine(CommandOutletColor.DarkGray, ".");
-		Terminal.WriteLine(CommandOutletColor.Gray, new string('·', 60));
-
-		Terminal.WriteLine();
-
-		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `exit` to quit the program.");
-		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `info` to display the superviser information.");
-		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `open` to start reporting of supervisable objects with the specified name.");
-		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `close` to stop reporting of supervisable objects with the specified name.");
-		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `clear` to clear all supervisable objects.");
-		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `error` to enables error reporting for the supervisable objects with the specified name.");
-		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `pause` to pause reporting of supervisable objects with the specified name.");
-		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `resume` to resume reporting of supervisable objects with the specified name.");
-		Terminal.WriteLine();
-
 		superviser.Supervise("S1", new MySupervisable("S1", new SupervisableOptions(TimeSpan.Zero, -1)));
 		superviser.Supervise("S2", new MySupervisable("S2", new SupervisableOptions(TimeSpan.Zero, 3)));
 		superviser.Supervise("S3", new MySupervisable("S3", new SupervisableOptions(TimeSpan.FromSeconds(30), -1)));
 		superviser.Supervise("S4", new MySupervisable("S4", new SupervisableOptions(TimeSpan.FromSeconds(30), 3)));
 		superviser.Supervise("S5", new MySupervisable("S5"));
 
-		while(true)
+		Terminal.Console.Executor.Command("help", context =>
 		{
-			var parts = Console.ReadLine().Trim().Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `exit` to quit the program.");
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `info` to display the superviser information.");
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `open` to start reporting of supervisable objects with the specified name.");
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `close` to stop reporting of supervisable objects with the specified name.");
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `reset` to clear all supervisable objects.");
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `error` to enables error reporting for the supervisable objects with the specified name.");
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `pause` to pause reporting of supervisable objects with the specified name.");
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `resume` to resume reporting of supervisable objects with the specified name.");
+		});
 
-			if(parts == null || parts.Length == 0)
-				continue;
+		Terminal.Console.Executor.Command("info", context =>
+		{
+			var content = CommandOutletContent.Create()
+				.AppendLine(CommandOutletColor.Gray, new string('·', 60))
+				.Append(CommandOutletColor.DarkMagenta, $"Lifecycle: ")
+				.Append(CommandOutletColor.DarkYellow, superviser.Options.Lifecycle)
+				.Append(CommandOutletColor.DarkGray, ",\t")
+				.Append(CommandOutletColor.DarkMagenta, $"Error Limit: ")
+				.Append(CommandOutletColor.DarkYellow, superviser.Options.ErrorLimit)
+				.AppendLine(CommandOutletColor.DarkGray, ".")
+				.AppendLine(CommandOutletColor.Gray, new string('·', 60));
 
-			switch(parts[0])
+			context.Output.Write(content);
+
+			foreach(var observable in superviser)
+				context.Output.WriteLine(observable);
+		});
+
+		Terminal.Console.Executor.Command("reset", context =>
+		{
+			superviser.Clear();
+		});
+
+		Terminal.Console.Executor.Command("open", context =>
+		{
+			if(context.Expression.Arguments.IsEmpty)
 			{
-				case "exit":
-					return;
-				case "info":
-					foreach(var observable in superviser)
-						Console.WriteLine(observable);
-					break;
-				case "open":
-					if(parts.Length <= 1)
-					{
-						Terminal.WriteLine(CommandOutletColor.Red, $"The open command is missing required arguments.");
-						continue;
-					}
-
-					foreach(var supervisable in Get(superviser, parts[1..]))
-						supervisable.Open();
-
-					break;
-				case "pause":
-					if(parts.Length <= 1)
-					{
-						Terminal.WriteLine(CommandOutletColor.Red, $"The pause command is missing required arguments.");
-						continue;
-					}
-
-					foreach(var supervisable in Get(superviser, parts[1..]))
-						supervisable.Pause();
-
-					break;
-				case "resume":
-					if(parts.Length <= 1)
-					{
-						Terminal.WriteLine(CommandOutletColor.Red, $"The resume command is missing required arguments.");
-						continue;
-					}
-
-					foreach(var supervisable in Get(superviser, parts[1..]))
-						supervisable.Resume();
-
-					break;
-				case "clear":
-					superviser.Clear();
-					break;
-				case "close":
-					if(parts.Length <= 1)
-					{
-						Terminal.WriteLine(CommandOutletColor.Red, $"The close command is missing required arguments.");
-						continue;
-					}
-
-					foreach(var supervisable in Get(superviser, parts[1..]))
-						supervisable.Close();
-
-					break;
-				case "err":
-				case "error":
-					if(parts.Length <= 1)
-					{
-						Terminal.WriteLine(CommandOutletColor.Red, $"The error command is missing required arguments.");
-						continue;
-					}
-
-					foreach(var supervisable in Get(superviser, parts[1..]))
-						supervisable.Error();
-
-					break;
-				default:
-					break;
+				Terminal.WriteLine(CommandOutletColor.Red, $"The open command is missing required arguments.");
+				return;
 			}
-		}
+
+			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+				supervisable.Open();
+		});
+
+		Terminal.Console.Executor.Command("close", context =>
+		{
+			if(context.Expression.Arguments.IsEmpty)
+			{
+				Terminal.WriteLine(CommandOutletColor.Red, $"The open command is missing required arguments.");
+				return;
+			}
+
+			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+				supervisable.Close();
+		});
+
+		Terminal.Console.Executor.Command("pause", context =>
+		{
+			if(context.Expression.Arguments.IsEmpty)
+			{
+				Terminal.WriteLine(CommandOutletColor.Red, $"The pause command is missing required arguments.");
+				return;
+			}
+
+			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+				supervisable.Pause();
+		});
+
+		Terminal.Console.Executor.Command("resume", context =>
+		{
+			if(context.Expression.Arguments.IsEmpty)
+			{
+				Terminal.WriteLine(CommandOutletColor.Red, $"The resume command is missing required arguments.");
+				return;
+			}
+
+			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+				supervisable.Resume();
+		});
+
+		Terminal.Console.Executor.Command("error", context =>
+		{
+			if(context.Expression.Arguments.IsEmpty)
+			{
+				Terminal.WriteLine(CommandOutletColor.Red, $"The resume command is missing required arguments.");
+				return;
+			}
+
+			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+				supervisable.Error();
+		});
+
+		var splash = CommandOutletContent.Create()
+			.AppendLine(CommandOutletColor.Gray, new string('·', 60))
+			.AppendLine(CommandOutletColor.Cyan, $"Welcome to the Superviser & Supervisable sample.".Justify(60))
+			.AppendLine(CommandOutletColor.Gray, new string('·', 60));
+
+		Terminal.Console.Executor.Run(splash);
 	}
 
 	private static IEnumerable<MySupervisable> Get(MySuperviser superviser, params string[] names)
