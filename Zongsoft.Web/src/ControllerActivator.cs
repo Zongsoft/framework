@@ -37,51 +37,50 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 
-namespace Zongsoft.Web
+namespace Zongsoft.Web;
+
+public class ControllerActivator : IControllerActivator
 {
-	public class ControllerActivator : IControllerActivator
+	private static readonly ConcurrentDictionary<Type, ObjectFactory> _activators = new ConcurrentDictionary<Type, ObjectFactory>();
+
+	public object Create(ControllerContext context)
 	{
-		private static readonly ConcurrentDictionary<Type, ObjectFactory> _activators = new ConcurrentDictionary<Type, ObjectFactory>();
+		if(context == null)
+			throw new ArgumentNullException(nameof(context));
 
-		public object Create(ControllerContext context)
+		var creator = _activators.GetOrAdd(context.ActionDescriptor.ControllerTypeInfo.AsType(), type =>
 		{
-			if(context == null)
-				throw new ArgumentNullException(nameof(context));
+			if(Services.ServiceInjector.IsInjectable(type))
+				return (services, _) => Services.ServiceInjector.Inject(services, type);
+			else
+				return ActivatorUtilities.CreateFactory(type, Array.Empty<Type>());
+		});
 
-			var creator = _activators.GetOrAdd(context.ActionDescriptor.ControllerTypeInfo.AsType(), type =>
-			{
-				if(Services.ServiceInjector.IsInjectable(type))
-					return (services, _) => Services.ServiceInjector.Inject(services, type);
-				else
-					return ActivatorUtilities.CreateFactory(type, Array.Empty<Type>());
-			});
+		return creator(context.HttpContext.RequestServices, null);
+	}
 
-			return creator(context.HttpContext.RequestServices, null);
-		}
+	public void Release(ControllerContext context, object controller)
+	{
+		if(context == null)
+			throw new ArgumentNullException(nameof(context));
+		if(controller == null)
+			throw new ArgumentNullException(nameof(controller));
 
-		public void Release(ControllerContext context, object controller)
-		{
-			if(context == null)
-				throw new ArgumentNullException(nameof(context));
-			if(controller == null)
-				throw new ArgumentNullException(nameof(controller));
+		if(controller is IDisposable disposable)
+			disposable.Dispose();
+	}
 
-			if(controller is IDisposable disposable)
-				disposable.Dispose();
-		}
+	public ValueTask ReleaseAsync(ControllerContext context, object controller)
+	{
+		if(context == null)
+			throw new ArgumentNullException(nameof(context));
+		if(controller == null)
+			throw new ArgumentNullException(nameof(controller));
 
-		public ValueTask ReleaseAsync(ControllerContext context, object controller)
-		{
-			if(context == null)
-				throw new ArgumentNullException(nameof(context));
-			if(controller == null)
-				throw new ArgumentNullException(nameof(controller));
+		if(controller is IAsyncDisposable disposable)
+			return disposable.DisposeAsync();
 
-			if(controller is IAsyncDisposable disposable)
-				return disposable.DisposeAsync();
-
-			this.Release(context, controller);
-			return default;
-		}
+		this.Release(context, controller);
+		return default;
 	}
 }

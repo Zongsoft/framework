@@ -39,81 +39,80 @@ using Microsoft.AspNetCore.Http;
 using Zongsoft.Data;
 using Zongsoft.Web.Http;
 
-namespace Zongsoft.Web
+namespace Zongsoft.Web;
+
+public static class WebUtility
 {
-	public static class WebUtility
+	#region 常量定义
+	private static readonly Microsoft.Net.Http.Headers.MediaTypeHeaderValue TEXT = new("text/*");
+	#endregion
+
+	#region 公共方法
+	public static IActionResult Paginate(this ControllerBase controller, Paging paging, object data) => Paginate(controller, data, paging);
+	public static IActionResult Paginate(this ControllerBase controller, object data, Paging paging)
 	{
-		#region 常量定义
-		private static readonly Microsoft.Net.Http.Headers.MediaTypeHeaderValue TEXT = new("text/*");
-		#endregion
+		ArgumentNullException.ThrowIfNull(controller);
 
-		#region 公共方法
-		public static IActionResult Paginate(this ControllerBase controller, Paging paging, object data) => Paginate(controller, data, paging);
-		public static IActionResult Paginate(this ControllerBase controller, object data, Paging paging)
+		if(data == null)
+			return new NoContentResult();
+
+		if(data is IActionResult result)
+			return result;
+
+		//如果数据类型是值类型并且其值等于默认值，则返回HTTP状态为无内容
+		if(data.GetType().IsValueType && object.Equals(data, Zongsoft.Common.TypeExtension.GetDefaultValue(data.GetType())))
+			return new NoContentResult();
+
+		//如果数据是可分页类型则挂载其分页事件
+		if(data is IPageable pageable)
 		{
-			ArgumentNullException.ThrowIfNull(controller);
+			pageable.Paginated += OnPaginated;
+		}
+		else
+		{
+			//设置响应的分页头
+			controller.Response.Headers.SetPagination(paging);
 
-			if(data == null)
-				return new NoContentResult();
-
-			if(data is IActionResult result)
-				return result;
-
-			//如果数据类型是值类型并且其值等于默认值，则返回HTTP状态为无内容
-			if(data.GetType().IsValueType && object.Equals(data, Zongsoft.Common.TypeExtension.GetDefaultValue(data.GetType())))
-				return new NoContentResult();
-
-			//如果数据是可分页类型则挂载其分页事件
-			if(data is IPageable pageable)
+			//如果启用了分页并且无结果，则返回一个空集且设置一个零长度的分页头（注：这项特性是因为前端兼容性而临时添加）
+			if(paging != null && paging.Enabled && paging.IsEmpty)
 			{
-				pageable.Paginated += OnPaginated;
-			}
-			else
-			{
-				//设置响应的分页头
-				controller.Response.Headers.SetPagination(paging);
-
-				//如果启用了分页并且结果集为空，则返回204(NoContent)
-				if(paging != null && paging.Enabled && paging.IsEmpty)
-				{
-					controller.Response.Headers[Headers.Pagination] = $"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})";
-					return new OkObjectResult(Array.Empty<object>());
-				}
-			}
-
-			//返回数据
-			return new OkObjectResult(data);
-
-			void OnPaginated(object sender, PagingEventArgs args)
-			{
-				if(sender is IPageable pageable)
-					pageable.Paginated -= OnPaginated;
-
-				controller.Response.Headers.SetPagination(args.Paging);
+				controller.Response.Headers[Headers.Pagination] = $"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})";
+				return new OkObjectResult(Array.Empty<object>());
 			}
 		}
 
-		public static async Task<string> ReadAsStringAsync(this HttpRequest request)
+		//返回数据
+		return new OkObjectResult(data);
+
+		void OnPaginated(object sender, PagingEventArgs args)
 		{
-			if(request == null)
-				throw new ArgumentNullException(nameof(request));
+			if(sender is IPageable pageable)
+				pageable.Paginated -= OnPaginated;
 
-			var headers = request.GetTypedHeaders();
-			var encoding = headers.ContentType?.Encoding ?? Encoding.UTF8;
-
-			if(headers.ContentType == null || !headers.ContentType.IsSubsetOf(TEXT))
-				return null;
-
-			using(var reader = new StreamReader(
-				request.Body,
-				encoding,
-				detectEncodingFromByteOrderMarks: true,
-				bufferSize: 1024,
-				leaveOpen: true))
-			{
-				return await reader.ReadToEndAsync();
-			}
+			controller.Response.Headers.SetPagination(args.Paging);
 		}
-		#endregion
 	}
+
+	public static async Task<string> ReadAsStringAsync(this HttpRequest request)
+	{
+		if(request == null)
+			throw new ArgumentNullException(nameof(request));
+
+		var headers = request.GetTypedHeaders();
+		var encoding = headers.ContentType?.Encoding ?? Encoding.UTF8;
+
+		if(headers.ContentType == null || !headers.ContentType.IsSubsetOf(TEXT))
+			return null;
+
+		using(var reader = new StreamReader(
+			request.Body,
+			encoding,
+			detectEncodingFromByteOrderMarks: true,
+			bufferSize: 1024,
+			leaveOpen: true))
+		{
+			return await reader.ReadToEndAsync();
+		}
+	}
+	#endregion
 }
