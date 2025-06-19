@@ -61,7 +61,8 @@ internal class Program
 				backoff,
 				new RetryLatency(delay, limit),
 				jitterable,
-				attempts
+				attempts,
+				Predication.Predicate<RetryArgument>(argument => argument.Value == null || argument.Exception != null)
 			);
 		});
 
@@ -122,7 +123,8 @@ internal class Program
 			var executor = _features.Build<object, object>(OnExecute);
 			var parameters = Parameters
 				.Parameter("delay", context.Expression.Options.GetValue("delay", TimeSpan.Zero))
-				.Parameter("throw", context.Expression.Options.Contains("throw"));
+				.Parameter("throw", context.Expression.Options.Contains("throw"))
+				.Parameter("result", context.Expression.Options.GetValue<object>("result", null));
 
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 			var round = context.Expression.Options.GetValue("round", 1);
@@ -235,7 +237,7 @@ internal class Program
 			if(parameters.TryGetValue<bool>("throw", out var throws) && throws)
 				throw new InvalidOperationException("🚨🚨🚨 This is a simulation of an exception thrown during execution. 🚨🚨🚨");
 
-			return argument;
+			return argument ?? (parameters.TryGetValue("result", out T result) ? result : default);
 		}
 		finally
 		{

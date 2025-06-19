@@ -118,7 +118,7 @@ internal static class FeatureExtension
 			};
 
 		if(feature.Predicator != null)
-			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(new RetryArgument(argument.AttemptNumber, argument.Outcome.Result, argument.Outcome.Exception.GetException()), argument.Context.CancellationToken);
 
 		return strategy;
 	}
@@ -145,7 +145,7 @@ internal static class FeatureExtension
 			};
 
 		if(feature.Predicator != null)
-			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(new RetryArgument<TResult>(argument.AttemptNumber, argument.Outcome.Result, argument.Outcome.Exception.GetException()), argument.Context.CancellationToken);
 
 		return strategy;
 	}
