@@ -85,21 +85,28 @@ namespace Zongsoft.Data.MySql
 
 						break;
 					case 1062:
+					case 1586:
 						/*
-						 * 参考文档：https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry
+						 * 参考文档：唯一约束冲突
+						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry
+						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry_with_key_name
 						 */
-						if(TryGetConflict(error.Message, out var key, out var value))
-							return new DataConflictException(this.Name, error.Number, key, value, Array.Empty<string>());
+						if(TryGetConflict(error.Message, out var table, out var key, out var value))
+							return new DataConflictException(this.Name, error.Number, key, value);
 						else
-							return new DataConflictException(this.Name, error.Number, null, null, Array.Empty<string>(), error);
+							return new DataConflictException(this.Name, error.Number, null, null, error);
 					case 1216:
+					case 1217:
+					case 1451:
 					case 1452:
 						/*
-						 * 参考文档：
+						 * 参考文档：外键引用约束
 						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_no_referenced_row
+						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_row_is_referenced
+						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_row_is_referenced_2
 						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_no_referenced_row_2
 						 */
-						return new DataConflictException(this.Name, error.Number, null, null, Array.Empty<string>(), error);
+						return new DataConflictException(this.Name, error.Number, null, null, error);
 				}
 			}
 
@@ -123,9 +130,10 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 私有方法
-		private static bool TryGetConflict(string message, out string key, out string value)
+		private static bool TryGetConflict(string message, out string table, out string name, out string value)
 		{
-			key = null;
+			table = null;
+			name = null;
 			value = null;
 
 			if(string.IsNullOrEmpty(message))
@@ -136,7 +144,23 @@ namespace Zongsoft.Data.MySql
 
 			if(start > 0 && end > 0)
 			{
-				key = message.Substring(start + 1, end - start - 1);
+				var constraint = message.Substring(start + 1, end - start - 1);
+
+				if(constraint != null)
+				{
+					var index = constraint.IndexOf('.');
+
+					if(index > 0)
+					{
+						table = constraint[..index];
+						name = constraint[(index + 1)..];
+					}
+					else
+					{
+						table = null;
+						name = constraint;
+					}
+				}
 
 				end = message.LastIndexOf('\'', start - 1);
 				start = message.IndexOf('\'');
