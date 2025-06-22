@@ -227,7 +227,7 @@ namespace Zongsoft.Data.Common
 		protected virtual Exception OnError(IDataAccessContext context, Exception exception)
 		{
 			//通知数据驱动器发生了一个异常
-			exception = context.Source.Driver.OnError(exception);
+			exception = context.Source.Driver.OnError(context, exception);
 
 			//如果驱动器已经处理了异常则返回空
 			if(exception == null)

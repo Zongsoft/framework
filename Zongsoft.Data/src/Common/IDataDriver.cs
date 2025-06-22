@@ -51,9 +51,10 @@ namespace Zongsoft.Data.Common
 
 		#region 方法定义
 		/// <summary>当发生一个错误的通知方法。</summary>
+		/// <param name="context">发生异常的数据访问上下文。</param>
 		/// <param name="exception">发生的异常对象。</param>
 		/// <returns>返回的新异常，如果为空则忽略该异常。</returns>
-		Exception OnError(Exception exception);
+		Exception OnError(IDataAccessContext context, Exception exception);
 
 		/// <summary>创建一个数据命令对象。</summary>
 		/// <returns>返回创建的数据命令对象。</returns>
