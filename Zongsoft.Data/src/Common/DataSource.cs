@@ -81,7 +81,7 @@ namespace Zongsoft.Data.Common
 
 				foreach(var property in connectionSettings.Properties)
 				{
-					if(!string.Equals(property.Key, nameof(Mode), StringComparison.OrdinalIgnoreCase))
+					if(!string.Equals(property.Key, nameof(this.Mode), StringComparison.OrdinalIgnoreCase))
 						this.Properties[property.Key] = property.Value;
 				}
 			}

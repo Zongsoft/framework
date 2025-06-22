@@ -64,7 +64,7 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 公共方法
-		public override Exception OnError(Exception exception)
+		public override Exception OnError(IDataAccessContext context, Exception exception)
 		{
 			if(exception is MySqlException error)
 			{
@@ -91,7 +91,7 @@ namespace Zongsoft.Data.MySql
 						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry
 						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry_with_key_name
 						 */
-						if(TryGetConflict(error.Message, out var table, out var key, out var value))
+						if(TryGetConstraint(error.Message, out var table, out var key, out var value))
 							return new DataConflictException(this.Name, error.Number, key, value);
 						else
 							return new DataConflictException(this.Name, error.Number, null, null, error);
@@ -130,7 +130,7 @@ namespace Zongsoft.Data.MySql
 		#endregion
 
 		#region 私有方法
-		private static bool TryGetConflict(string message, out string table, out string name, out string value)
+		private static bool TryGetConstraint(string message, out string table, out string name, out string value)
 		{
 			table = null;
 			name = null;
