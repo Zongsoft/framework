@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
@@ -36,6 +37,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 using Zongsoft.Data;
+using Zongsoft.Data.Metadata;
 using Zongsoft.Common;
 using Zongsoft.Security;
 using Zongsoft.Security.Privileges;
@@ -78,21 +80,40 @@ public class ExceptionFilter : IExceptionFilter
 				context.Result = new ObjectResult(GetProblem(context, StatusCodes.Status400BadRequest));
 				break;
 			case DataConflictException conflictException:
-				if(!string.IsNullOrEmpty(conflictException.Key))
-					context.ModelState.AddModelError(conflictException.Key, conflictException.Message);
-
-				var problem = GetProblem(context, StatusCodes.Status409Conflict);
-
-				if(conflictException.Fields != null && conflictException.Fields.Length > 0)
-					problem.Extensions.Add(nameof(DataConflictException.Fields), conflictException.Fields);
-
-				context.Result = new ObjectResult(problem);
-				break;
-			case DataConstraintException constraintException:
-				if(!string.IsNullOrEmpty(constraintException.Field))
-					context.ModelState.AddModelError(constraintException.Field, constraintException.Message);
+				if(!string.IsNullOrEmpty(conflictException.Name))
+					context.ModelState.AddModelError(conflictException.Name, conflictException.Message);
 
 				context.Result = new ObjectResult(GetProblem(context, StatusCodes.Status409Conflict));
+				break;
+			case DataConstraintException constraintException:
+				if(!string.IsNullOrEmpty(constraintException.Name))
+					context.ModelState.AddModelError(constraintException.Name, constraintException.Message);
+
+				var problem = GetProblem(context, StatusCodes.Status409Conflict);
+				var principal = Translate(constraintException.Principal);
+				var foreigner = Translate(constraintException.Foreigner);
+
+				if(constraintException.Principal != null)
+				{
+					if(principal.IsEmpty)
+						problem.Extensions.Add(nameof(constraintException.Principal), constraintException.Principal);
+					else
+						problem.Extensions.Add(nameof(constraintException.Principal), principal);
+
+					problem.Title = problem.Detail = string.Format(Properties.Resources.ConstraintException_Unique_Message, principal.GetTitle(), principal.GetFields(), constraintException.Value);
+				}
+
+				if(constraintException.Foreigner != null)
+				{
+					if(foreigner.IsEmpty)
+						problem.Extensions.Add(nameof(constraintException.Foreigner), constraintException.Foreigner);
+					else
+						problem.Extensions.Add(nameof(constraintException.Foreigner), foreigner);
+
+					problem.Title = problem.Detail = string.Format(Properties.Resources.ConstraintException_Dependency_Message, principal.GetTitle(), principal.GetFields(), foreigner.GetTitle(), foreigner.GetFields(), constraintException.Value);
+				}
+
+				context.Result = new ObjectResult(problem);
 				break;
 			case DataOperationException:
 				context.Result = new ObjectResult(GetProblem(context, StatusCodes.Status412PreconditionFailed));
@@ -145,5 +166,62 @@ public class ExceptionFilter : IExceptionFilter
 		}
 
 		return result;
+	}
+
+	private static ConstraintDescriptor Translate(DataConstraintException.Actor actor)
+	{
+		if(actor == null || string.IsNullOrEmpty(actor.Name))
+			return default;
+
+		var entities = Mapping.Entities.Find(actor.Name);
+
+		if(entities == null || entities.Length == 0)
+			return default;
+
+		for(int i = 0; i < entities.Length; i++)
+		{
+			var fields = new List<ConstraintDescriptor.Field>(actor.Fields.Length);
+
+			for(int j = 0; j < actor.Fields.Length; j++)
+			{
+				if(entities[i].Properties.TryGetValue(actor.Fields[j], out var property))
+					fields.Add(new ConstraintDescriptor.Field(property.Name, property.GetLabel()));
+			}
+
+			if(fields.Count == actor.Fields.Length)
+				return new ConstraintDescriptor(entities[i].Name, entities[i].GetTitle(), fields);
+		}
+
+		return default;
+	}
+
+	private readonly struct ConstraintDescriptor
+	{
+		public ConstraintDescriptor(string name, params IEnumerable<Field> fields) : this(name, null, fields) { }
+		public ConstraintDescriptor(string name, string description, params IEnumerable<Field> fields)
+		{
+			this.Name = name;
+			this.Description = description;
+			this.Fields = fields;
+		}
+
+		public readonly string Name;
+		public readonly string Description;
+		public readonly IEnumerable<Field> Fields;
+
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
+		public readonly bool IsEmpty => string.IsNullOrEmpty(this.Name);
+
+		public string GetTitle() => string.IsNullOrWhiteSpace(this.Description) ? this.Name : this.Description;
+		public string GetFields(string separator = null) => string.Join(string.IsNullOrEmpty(separator) ? Properties.Resources.Separator : separator, this.Fields.Select(field => string.IsNullOrWhiteSpace(field.Label) ? field.Name : field.Label));
+		public override string ToString() => this.Name;
+
+		public readonly struct Field(string name, string label = null)
+		{
+			public readonly string Name = name;
+			public readonly string Label = label;
+			public override string ToString() => this.Name;
+		}
 	}
 }
