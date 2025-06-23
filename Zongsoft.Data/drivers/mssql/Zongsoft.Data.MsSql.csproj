@@ -12,7 +12,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Data.SqlClient" VersionOverride="5.2.2" />
+		<PackageReference Include="Microsoft.Data.SqlClient" VersionOverride="6.0.2" />
 	</ItemGroup>
 
 	<ItemGroup>
