@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Reflection;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -53,12 +54,24 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 		this.Title = title;
 		this.Description = description;
 		this.Properties = new Parameters();
+		this.Assembly = this.GetType().Assembly;
+	}
+
+	public ApplicationModule(string name, Assembly assembly)
+	{
+		this.Name = name == null ? string.Empty : name.Trim();
+		this.Properties = new Parameters();
+		this.Assembly = assembly ?? this.GetType().Assembly;
 	}
 	#endregion
 
 	#region 公共属性
 	public string Name { get; protected set; }
 	public Parameters Properties { get; }
+
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	public Assembly Assembly { get; }
 
 	public Version Version
 	{
@@ -68,13 +81,13 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 
 	public string Title
 	{
-		get => string.IsNullOrEmpty(_title) ? Resources.ResourceUtility.GetResourceString(this.GetType(), [$"{this.Name}.{nameof(this.Title)}", this.Name]) : _title;
+		get => string.IsNullOrEmpty(_title) ? Resources.ResourceUtility.GetResourceString(this.Assembly, [$"{this.Name}.{nameof(this.Title)}", this.Name]) : _title;
 		set => _title = value;
 	}
 
 	public string Description
 	{
-		get => string.IsNullOrEmpty(_description) ? Resources.ResourceUtility.GetResourceString(this.GetType(), $"{this.Name}.{nameof(this.Description)}") : _description;
+		get => string.IsNullOrEmpty(_description) ? Resources.ResourceUtility.GetResourceString(this.Assembly, $"{this.Name}.{nameof(this.Description)}") : _description;
 		set => _description = value;
 	}
 

@@ -121,6 +121,10 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 		protected set => _description = value;
 	}
 
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	public Assembly Assembly => Assembly.GetEntryAssembly();
+
 	public virtual string ApplicationType { get; }
 	public virtual string ApplicationPath => this.Services?.GetService<IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
 	public virtual IConfigurationRoot Configuration => this.Services?.GetService<IConfigurationRoot>() ?? this.Services?.GetService<IConfiguration>() as IConfigurationRoot;

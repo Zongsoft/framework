@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Reflection;
 
 using Zongsoft.Collections;
 
@@ -49,6 +50,9 @@ public interface IApplicationModule
 
 	/// <summary>获取应用模块的描述文本。</summary>
 	string Description { get; }
+
+	/// <summary>获取应用模块的程序集。</summary>
+	Assembly Assembly { get; }
 
 	/// <summary>获取应用模块的服务容器。</summary>
 	IServiceProvider Services { get; }
