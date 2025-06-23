@@ -64,7 +64,7 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 公共方法
-		public override Exception OnError(Exception exception)
+		public override Exception OnError(IDataAccessContext context, Exception exception)
 		{
 			if(exception is SqlException error)
 			{
@@ -73,9 +73,9 @@ namespace Zongsoft.Data.MsSql
 					case 2601:
 					case 2627:
 						if(TryGetConflict(error.Message, out var key, out var value))
-							return new DataConflictException(this.Name, error.Number, key, value, Array.Empty<string>());
+							return new DataConflictException(this.Name, error.Number, key, value);
 						else
-							return new DataConflictException(this.Name, error.Number, null, null, Array.Empty<string>(), error);
+							return new DataConflictException(this.Name, error.Number, null, null, error);
 				}
 			}
 

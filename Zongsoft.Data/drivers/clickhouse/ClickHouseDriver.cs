@@ -60,7 +60,7 @@ namespace Zongsoft.Data.ClickHouse
 		#endregion
 
 		#region 公共方法
-		public override Exception OnError(Exception exception)
+		public override Exception OnError(IDataAccessContext context, Exception exception)
 		{
 			if(exception is DbException error)
 			{

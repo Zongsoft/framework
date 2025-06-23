@@ -35,6 +35,7 @@ using MySqlConnector;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
+using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.MySql
 {
@@ -92,9 +93,12 @@ namespace Zongsoft.Data.MySql
 						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry_with_key_name
 						 */
 						if(TryGetConstraint(error.Message, out var table, out var key, out var value))
-							return new DataConflictException(this.Name, error.Number, key, value);
-						else
-							return new DataConflictException(this.Name, error.Number, null, null, error);
+						{
+							(var kind, var fields) = GetIndexer(context, table, key);
+							return new DataConstraintException(NAME, error.Number, kind, key, value, table, fields);
+						}
+
+						return new DataConflictException(NAME, error.Number, null, null, error);
 					case 1216:
 					case 1217:
 					case 1451:
@@ -106,7 +110,7 @@ namespace Zongsoft.Data.MySql
 						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_row_is_referenced_2
 						 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_no_referenced_row_2
 						 */
-						return new DataConflictException(this.Name, error.Number, null, null, error);
+						return new DataConflictException(NAME, error.Number, null, null, error);
 				}
 			}
 
@@ -172,6 +176,99 @@ namespace Zongsoft.Data.MySql
 			}
 
 			return false;
+		}
+
+		private static (DataConstraintKind, string[]) GetIndexer(IDataAccessContext context, string tableName, string indexName)
+		{
+			if(context == null || context.Source == null)
+				return default;
+
+			if(string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(indexName))
+				return default;
+
+			var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+
+			try
+			{
+				connection.Open();
+
+				var table = connection.GetSchema("Indexes");
+				var rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'");
+				if(rows == null || rows.Length == 0)
+					return default;
+
+				var isUnique = rows[0].Field<bool>("UNIQUE");
+				var isPrimary = rows[0].Field<bool>("PRIMARY");
+
+				table = connection.GetSchema("IndexColumns");
+				rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'", "ORDINAL_POSITION");
+
+				connection.Close();
+
+				var result = new string[rows.Length];
+				for(int i = 0; i < rows.Length; i++)
+				{
+					result[i] = rows[i].Field<string>("COLUMN_NAME");
+				}
+
+				return (isPrimary ? DataConstraintKind.PrimaryKey : DataConstraintKind.Unique, result);
+			}
+			catch
+			{
+				return default;
+			}
+			finally
+			{
+				connection?.Dispose();
+			}
+		}
+
+		private static (string, string[], string, string[]) GetForeignKey(IDataAccessContext context, string tableName, string foreignKey)
+		{
+			if(context == null || context.Source == null)
+				return default;
+
+			if(string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(foreignKey))
+				return default;
+
+			var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+
+			try
+			{
+				connection.Open();
+
+				var table = connection.GetSchema("KeyColumnUsage");
+				var rows = table.Select($"TABLE_NAME='{tableName}' AND CONSTRAINT_NAME='{foreignKey}'", "ORDINAL_POSITION");
+				if(rows == null || rows.Length == 0)
+					return default;
+
+				connection.Close();
+
+				var principalFields = new string[rows.Length];
+				var foreignerFields = new string[rows.Length];
+
+				for(int i = 0; i < rows.Length; i++)
+				{
+					principalFields[i] = rows[i].Field<string>("COLUMN_NAME");
+					foreignerFields[i] = rows[i].Field<string>("REFERENCED_COLUMN_NAME");
+				}
+
+				return new
+				(
+					rows[0].Field<string>("TABLE_NAME"),
+					principalFields,
+					rows[0].Field<string>("REFERENCED_TABLE_NAME"),
+					foreignerFields
+				);
+			}
+			catch
+			{
+				return default;
+			}
+			finally
+			{
+				connection?.Dispose();
+			}
 		}
 		#endregion
 	}

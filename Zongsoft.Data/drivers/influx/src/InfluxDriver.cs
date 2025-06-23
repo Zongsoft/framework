@@ -60,7 +60,7 @@ namespace Zongsoft.Data.Influx
 		#endregion
 
 		#region 公共方法
-		public override Exception OnError(Exception exception)
+		public override Exception OnError(IDataAccessContext context, Exception exception)
 		{
 			return exception;
 		}

@@ -60,7 +60,7 @@ namespace Zongsoft.Data.TDengine
 		#endregion
 
 		#region 公共方法
-		public override Exception OnError(Exception exception)
+		public override Exception OnError(IDataAccessContext context, Exception exception)
 		{
 			if(exception is TDengineError error)
 			{

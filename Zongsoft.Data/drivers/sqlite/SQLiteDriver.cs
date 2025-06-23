@@ -59,7 +59,7 @@ namespace Zongsoft.Data.SQLite
 		#endregion
 
 		#region 公共方法
-		public override Exception OnError(Exception exception)
+		public override Exception OnError(IDataAccessContext context, Exception exception)
 		{
 			if(exception is SqliteException error)
 			{
