@@ -35,7 +35,6 @@ using MySqlConnector;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
-using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.MySql
 {
