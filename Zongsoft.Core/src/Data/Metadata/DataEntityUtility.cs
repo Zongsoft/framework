@@ -29,6 +29,9 @@
 
 using System;
 
+using Zongsoft.Services;
+using Zongsoft.Resources;
+
 namespace Zongsoft.Data.Metadata;
 
 public static class DataEntityUtility
@@ -46,5 +49,49 @@ public static class DataEntityUtility
 			return result;
 
 		return Mapping.Entities[name];
+	}
+
+	public static string GetTitle(this IDataEntity entity)
+	{
+		if(entity == null || ApplicationContext.Current == null)
+			return null;
+
+		IApplicationModule module;
+
+		if(string.IsNullOrEmpty(entity.Namespace))
+		{
+			if(ApplicationContext.Current.Modules.TryGetValue(string.Empty, out module))
+				return ResourceUtility.GetResourceString(module.Assembly, [$"{entity.Name}.Title", entity.Name]);
+
+			if(ApplicationContext.Current.Modules.TryGetValue("Common", out module))
+				return ResourceUtility.GetResourceString(module.Assembly, [$"{entity.Name}.Title", entity.Name]);
+		}
+
+		if(ApplicationContext.Current.Modules.TryGetValue(entity.Namespace, out module))
+			return ResourceUtility.GetResourceString(module.Assembly, [$"{entity.Name}.Title", entity.Name]);
+
+		return null;
+	}
+
+	public static string GetDescription(this IDataEntity entity)
+	{
+		if(entity == null || ApplicationContext.Current == null)
+			return null;
+
+		IApplicationModule module;
+
+		if(string.IsNullOrEmpty(entity.Namespace))
+		{
+			if(ApplicationContext.Current.Modules.TryGetValue(string.Empty, out module))
+				return ResourceUtility.GetResourceString(module.Assembly, $"{entity.Name}.Description");
+
+			if(ApplicationContext.Current.Modules.TryGetValue("Common", out module))
+				return ResourceUtility.GetResourceString(module.Assembly, $"{entity.Name}.Description");
+		}
+
+		if(ApplicationContext.Current.Modules.TryGetValue(entity.Namespace, out module))
+			return ResourceUtility.GetResourceString(module.Assembly, $"{entity.Name}.Description");
+
+		return null;
 	}
 }
