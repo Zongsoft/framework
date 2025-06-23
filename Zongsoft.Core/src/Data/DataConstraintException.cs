@@ -37,6 +37,20 @@ namespace Zongsoft.Data;
 public class DataConstraintException : DataAccessException
 {
 	#region 构造函数
+	public DataConstraintException(string driverName, int code, DataConstraintKind kind, string name, string value, string table, string[] fields, Exception innerException = null) : this(driverName, code, kind, name, value, table, fields, null, null, innerException) { }
+	public DataConstraintException(string driverName, int code, DataConstraintKind kind, string name, string value, string table, string[] fields, string foreignTable, string[] foreignFields, Exception innerException = null) : base(driverName, code, Properties.Resources.DataConstraintException_Message, innerException)
+	{
+		this.Kind = kind;
+		this.Name = name;
+		this.Value = value;
+
+		if(!string.IsNullOrEmpty(table))
+			this.Principal = new Actor(table, fields);
+
+		if(!string.IsNullOrEmpty(foreignTable) )
+			this.Foreigner = new Actor(foreignTable, foreignFields);
+	}
+
 	public DataConstraintException(string driverName, int code, DataConstraintKind kind, string name, string value, Actor principal, Exception innerException = null) : this(driverName, code, kind, name, value, principal, null, innerException) { }
 	public DataConstraintException(string driverName, int code, DataConstraintKind kind, string name, string value, Actor principal, Actor foreigner, Exception innerException = null) : base(driverName, code, Properties.Resources.DataConstraintException_Message, innerException)
 	{
@@ -64,14 +78,12 @@ public class DataConstraintException : DataAccessException
 	public sealed class Actor
 	{
 		#region 构造函数
-		public Actor(string name, params Field[] fields) : this(name, null, fields) { }
-		public Actor(string name, string description, params Field[] fields)
+		public Actor(string name, params string[] fields)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
 
 			this.Name = name;
-			this.Description = description;
 			this.Fields = fields ?? [];
 		}
 		#endregion
@@ -79,10 +91,8 @@ public class DataConstraintException : DataAccessException
 		#region 公共属性
 		/// <summary>获取数据约束的表名。</summary>
 		public string Name { get; }
-		/// <summary>获取或设置数据约束的描述。</summary>
-		public string Description { get; set; }
 		/// <summary>获取或设置数据约束的字段集。</summary>
-		public Field[] Fields { get; set; }
+		public string[] Fields { get; set; }
 		#endregion
 
 		#region 重写方法
@@ -91,50 +101,5 @@ public class DataConstraintException : DataAccessException
 		public override int GetHashCode() => this.Name.GetHashCode();
 		public override string ToString() => this.Name;
 		#endregion
-
-		public sealed class Field
-		{
-			#region 构造函数
-			public Field(string name, Type type, string label = null, string description = null) : this(name, type, 0, false, label, description) { }
-			public Field(string name, Type type, int length, string label = null, string description = null) : this(name, type, length, false, label, description) { }
-			public Field(string name, Type type, bool nullable = false, string label = null, string description = null) : this(name, type, 0, nullable, label, description) { }
-			public Field(string name, Type type, int length, bool nullable = false, string label = null, string description = null)
-			{
-				if(string.IsNullOrEmpty(name))
-					throw new ArgumentNullException(nameof(name));
-
-				this.Name = name;
-				this.Type = type;
-				this.Length = length;
-				this.Nullable = nullable;
-				this.Label = label;
-				this.Description = description;
-			}
-			#endregion
-
-			#region 公共属性
-			/// <summary>获取字段名称。</summary>
-			public string Name { get; }
-			/// <summary>获取字段类型。</summary>
-			public Type Type { get; }
-			/// <summary>获取字段类型。</summary>
-			public int Length { get; }
-			/// <summary>获取字段是否可空。</summary>
-			public bool Nullable { get; }
-			/// <summary>获取或设置字段标题。</summary>
-			public string Label { get; set; }
-			/// <summary>获取或设置字段描述。</summary>
-			public string Description { get; set; }
-			#endregion
-
-			#region 重写方法
-			public bool Equals(Field other) => other is not null && string.Equals(this.Name, other.Name);
-			public override bool Equals(object obj) => this.Equals(obj as Field);
-			public override int GetHashCode() => this.Name.GetHashCode();
-			public override string ToString() => this.Length > 0 ?
-				$"{this.Name}@{Common.TypeAlias.GetAlias(this.Type)}({this.Length})" :
-				$"{this.Name}@{Common.TypeAlias.GetAlias(this.Type)}";
-			#endregion
-		}
 	}
 }
