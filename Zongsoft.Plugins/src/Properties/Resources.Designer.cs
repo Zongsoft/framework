@@ -19,7 +19,7 @@ namespace Zongsoft.Plugins.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -47,8 +47,8 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性
-        ///   重写当前线程的 CurrentUICulture 属性。
+        ///   重写当前线程的 CurrentUICulture 属性，对
+        ///   使用此强类型资源类的所有资源查找执行重写。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -61,7 +61,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 查找指定插件路径的命令。 的本地化字符串。
+        ///   查找类似 Command to find the specified plugin path. 的本地化字符串。
         /// </summary>
         internal static string Text_FindCommand_Description {
             get {
@@ -70,7 +70,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 插件查找命令 的本地化字符串。
+        ///   查找类似 Find command 的本地化字符串。
         /// </summary>
         internal static string Text_FindCommand_Name {
             get {
@@ -79,7 +79,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 显示目标对象成员的最大深度，默认是3。 的本地化字符串。
+        ///   查找类似 Displays the maximum depth of the target object members. The default is 3. 的本地化字符串。
         /// </summary>
         internal static string Text_FindCommand_Options_Depth {
             get {
@@ -88,7 +88,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 获取指定插件树节点的内容值的获取方式，默认是不解析(never)。 的本地化字符串。
+        ///   查找类似 The mode for obtaining the content of the specified plugin tree node. The default is: never. 的本地化字符串。
         /// </summary>
         internal static string Text_FindCommand_Options_ObtainMode {
             get {
@@ -97,7 +97,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 逐级显示当前应用程序中的所有插件信息。 的本地化字符串。
+        ///   查找类似 Display all plugin information in the current application in a hierarchical manner. 的本地化字符串。
         /// </summary>
         internal static string Text_ListCommand_Description {
             get {
@@ -106,7 +106,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 插件列表命令 的本地化字符串。
+        ///   查找类似 List command 的本地化字符串。
         /// </summary>
         internal static string Text_ListCommand_Name {
             get {
@@ -115,7 +115,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 指定了太多的命令参数。 的本地化字符串。
+        ///   查找类似 Too many command arguments specified. 的本地化字符串。
         /// </summary>
         internal static string Text_Message_CommandArgumentsTooMany {
             get {
@@ -124,7 +124,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 无效的命令参数，传入给{0}命令的参数不是一个期望的类型或值。 的本地化字符串。
+        ///   查找类似 Invalid command parameters. The parameters passed to the {0} command are not of the expected type or value. 的本地化字符串。
         /// </summary>
         internal static string Text_Message_InvalidCommandParameter {
             get {
@@ -133,7 +133,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 没有指定命令参数，请至少指定一个命令参数。 的本地化字符串。
+        ///   查找类似 No command arguments specified. Please specify at least one command argument. 的本地化字符串。
         /// </summary>
         internal static string Text_Message_MissingCommandArguments {
             get {
@@ -142,7 +142,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 指定的&apos;{0}‘插件路径是不存在的。 的本地化字符串。
+        ///   查找类似 The specified plugin path &quot;{0}&quot; does not exist. 的本地化字符串。
         /// </summary>
         internal static string Text_Message_PluginNodeNotFound {
             get {
@@ -151,7 +151,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 逐级显示当前应用程序插件树节点的信息。 的本地化字符串。
+        ///   查找类似 Display information about the current application plugin tree nodes in a hierarchical manner. 的本地化字符串。
         /// </summary>
         internal static string Text_TreeCommand_Description {
             get {
@@ -160,7 +160,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 插件树信息命令 的本地化字符串。
+        ///   查找类似 Tree command 的本地化字符串。
         /// </summary>
         internal static string Text_TreeCommand_Name {
             get {
@@ -169,7 +169,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 显示插件树的最大深度，默认是3。 的本地化字符串。
+        ///   查找类似 Displays the maximum depth of the plugin tree. The default is 3. 的本地化字符串。
         /// </summary>
         internal static string Text_TreeCommand_Options_Depth {
             get {
@@ -178,7 +178,7 @@ namespace Zongsoft.Plugins.Properties {
         }
         
         /// <summary>
-        ///   查找类似 显示插件树节点的完整全路径。 的本地化字符串。
+        ///   查找类似 Display the full path of the plugin tree node. 的本地化字符串。
         /// </summary>
         internal static string Text_TreeCommand_Options_Path {
             get {

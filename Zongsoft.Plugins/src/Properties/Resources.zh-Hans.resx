@@ -118,45 +118,45 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Text.FindCommand.Description" xml:space="preserve">
-    <value>Command to find the specified plugin path.</value>
+    <value>查找指定插件路径的命令。</value>
   </data>
   <data name="Text.FindCommand.Name" xml:space="preserve">
-    <value>Find command</value>
+    <value>插件查找命令</value>
   </data>
   <data name="Text.FindCommand.Options.Depth" xml:space="preserve">
-    <value>Displays the maximum depth of the target object members. The default is 3.</value>
+    <value>显示目标对象成员的最大深度，默认是3。</value>
   </data>
   <data name="Text.FindCommand.Options.ObtainMode" xml:space="preserve">
-    <value>The mode for obtaining the content of the specified plugin tree node. The default is: never.</value>
+    <value>获取指定插件树节点的内容值的获取方式，默认是不解析(never)。</value>
   </data>
   <data name="Text.ListCommand.Description" xml:space="preserve">
-    <value>Display all plugin information in the current application in a hierarchical manner.</value>
+    <value>逐级显示当前应用程序中的所有插件信息。</value>
   </data>
   <data name="Text.ListCommand.Name" xml:space="preserve">
-    <value>List command</value>
+    <value>插件列表命令</value>
   </data>
   <data name="Text.Message.CommandArgumentsTooMany" xml:space="preserve">
-    <value>Too many command arguments specified.</value>
+    <value>指定了太多的命令参数。</value>
   </data>
   <data name="Text.Message.InvalidCommandParameter" xml:space="preserve">
-    <value>Invalid command parameters. The parameters passed to the {0} command are not of the expected type or value.</value>
+    <value>无效的命令参数，传给 {0} 命令的参数不是一个期望的类型或值。</value>
   </data>
   <data name="Text.Message.MissingCommandArguments" xml:space="preserve">
-    <value>No command arguments specified. Please specify at least one command argument.</value>
+    <value>没有指定命令参数，请至少指定一个命令参数。</value>
   </data>
   <data name="Text.Message.PluginNodeNotFound" xml:space="preserve">
-    <value>The specified plugin path "{0}" does not exist.</value>
+    <value>指定的“{0}”插件路径是不存在的。</value>
   </data>
   <data name="Text.TreeCommand.Description" xml:space="preserve">
-    <value>Display information about the current application plugin tree nodes in a hierarchical manner.</value>
+    <value>逐级显示当前应用程序插件树节点的信息。</value>
   </data>
   <data name="Text.TreeCommand.Name" xml:space="preserve">
-    <value>Tree command</value>
+    <value>插件树信息命令</value>
   </data>
   <data name="Text.TreeCommand.Options.Depth" xml:space="preserve">
-    <value>Displays the maximum depth of the plugin tree. The default is 3.</value>
+    <value>显示插件树的最大深度，默认是3。</value>
   </data>
   <data name="Text.TreeCommand.Options.Path" xml:space="preserve">
-    <value>Display the full path of the plugin tree node.</value>
+    <value>显示插件树节点的完整全路径。</value>
   </data>
 </root>
