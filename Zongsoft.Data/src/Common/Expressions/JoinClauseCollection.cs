@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class JoinClauseCollection() : KeyedCollection<string, JoinClause>(StringComparer.OrdinalIgnoreCase)
 {
-	public class JoinClauseCollection() : KeyedCollection<string, JoinClause>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(JoinClause item) => item.Name;
-	}
+	protected override string GetKeyForItem(JoinClause item) => item.Name;
 }

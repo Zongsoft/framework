@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public interface ISelectStatementBase : IStatement, ISource
 {
-	public interface ISelectStatementBase : IStatement, ISource
-	{
-		SelectClause Select { get; }
-	}
+	SelectClause Select { get; }
 }

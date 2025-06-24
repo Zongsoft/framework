@@ -28,15 +28,13 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public enum JoinType
 {
-	public enum JoinType
-	{
-		Inner,
-		Left,
-		Right,
-		Full,
-	}
+	Inner,
+	Left,
+	Right,
+	Full,
 }

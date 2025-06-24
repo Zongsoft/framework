@@ -30,33 +30,32 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class AggregateStatementBuilder : IStatementBuilder<DataAggregateContext>
 {
-	public class AggregateStatementBuilder : IStatementBuilder<DataAggregateContext>
+	#region 公共方法
+	public IEnumerable<IStatementBase> Build(DataAggregateContext context)
 	{
-		#region 公共方法
-		public IEnumerable<IStatementBase> Build(DataAggregateContext context)
-		{
-			var statement = this.CreateStatement(context);
-			var argument = (IExpression)null;
+		var statement = this.CreateStatement(context);
+		var argument = (IExpression)null;
 
-			if(string.IsNullOrWhiteSpace(context.Aggregate.Name) || context.Aggregate.Name == "*")
-				argument = Expression.Literal("*");
-			else
-				argument = statement.From(context.Aggregate.Name, context.Aliaser, null, out var property).CreateField(property);
+		if(string.IsNullOrWhiteSpace(context.Aggregate.Name) || context.Aggregate.Name == "*")
+			argument = Expression.Literal("*");
+		else
+			argument = statement.From(context.Aggregate.Name, context.Aliaser, null, out var property).CreateField(property);
 
-			//添加返回的聚合函数成员
-			statement.Select.Members.Add(AggregateExpression.Aggregate(context.Aggregate, argument));
+		//添加返回的聚合函数成员
+		statement.Select.Members.Add(AggregateExpression.Aggregate(context.Aggregate, argument));
 
-			//生成条件子句
-			statement.Where = statement.Where(context.Validate(), context.Aliaser);
+		//生成条件子句
+		statement.Where = statement.Where(context.Validate(), context.Aliaser);
 
-			yield return statement;
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual AggregateStatement CreateStatement(DataAggregateContext context) => new(context.Entity);
-		#endregion
+		yield return statement;
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual AggregateStatement CreateStatement(DataAggregateContext context) => new(context.Entity);
+	#endregion
 }

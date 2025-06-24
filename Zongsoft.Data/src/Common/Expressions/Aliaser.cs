@@ -28,13 +28,15 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class Aliaser
 {
-	public class Aliaser
-	{
-		private int _count;
-		public string Generate(string prefix = null) => string.IsNullOrEmpty(prefix) ? $"T{++_count}" : $"{prefix}{++_count}";
-	}
+	private volatile int _count;
+
+	public string Generate(string prefix = null) => string.IsNullOrEmpty(prefix) ?
+		$"T{Interlocked.Increment(ref _count)}" :
+		$"{prefix}{Interlocked.Increment(ref _count)}";
 }

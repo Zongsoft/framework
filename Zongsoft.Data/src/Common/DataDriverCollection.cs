@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DataDriverCollection() : KeyedCollection<string, IDataDriver>(StringComparer.OrdinalIgnoreCase)
 {
-	public class DataDriverCollection() : KeyedCollection<string, IDataDriver>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(IDataDriver driver) => driver.Name;
-	}
+	protected override string GetKeyForItem(IDataDriver driver) => driver.Name;
 }

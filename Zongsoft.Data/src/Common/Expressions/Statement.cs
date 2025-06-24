@@ -28,91 +28,88 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Collections;
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+/// <summary>
+/// 表示带条件子句的语句基类。
+/// </summary>
+public class Statement : StatementBase, IStatement
 {
-	/// <summary>
-	/// 表示带条件子句的语句基类。
-	/// </summary>
-	public class Statement : StatementBase, IStatement
+	#region 构造函数
+	protected Statement(ParameterExpressionCollection parameters = null) : base(parameters) => this.From = new SourceCollection();
+	protected Statement(ISource source, ParameterExpressionCollection parameters = null) : base(parameters)
 	{
-		#region 构造函数
-		protected Statement(ParameterExpressionCollection parameters = null) : base(parameters) => this.From = new SourceCollection();
-		protected Statement(ISource source, ParameterExpressionCollection parameters = null) : base(parameters)
-		{
-			this.Table = source as TableIdentifier;
-			this.From = new SourceCollection();
+		this.Table = source as TableIdentifier;
+		this.From = new SourceCollection();
 
-			if(source != null)
-				this.From.Add(source);
-		}
-
-		protected Statement(IDataEntity entity, string alias = null, ParameterExpressionCollection parameters = null) : base(entity, alias, parameters)
-		{
-			this.From = new SourceCollection();
-			this.From.Add(this.Table);
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取一个值，指示<c>Form</c>属性是否有值。</summary>
-		public bool HasFrom => this.From?.Count > 0;
-
-		/// <summary>获取一个数据源的集合，可以在<c>Where</c>子句中引用的字段源。</summary>
-		public SourceCollection From { get; }
-
-		/// <summary>获取或设置条件子句。</summary>
-		public IExpression Where { get; set; }
-		#endregion
-
-		#region 公共方法
-		public JoinClause Join(Aliaser aliaser, ISource source, IDataEntity target, string fullPath = null)
-		{
-			var clause = JoinClause.Create(source,
-			                               target,
-			                               fullPath,
-			                               name => this.From.TryGetValue(name, out var join) ? (JoinClause)join : null,
-			                               entity => new TableIdentifier(entity, aliaser.Generate()));
-
-			if(!this.From.Contains(clause))
-				this.From.Add(clause);
-
-			return clause;
-		}
-
-		public JoinClause Join(Aliaser aliaser, ISource source, IDataEntityComplexProperty complex, string fullPath = null)
-		{
-			var joins = JoinClause.Create(source,
-			                              complex,
-			                              fullPath,
-			                              name => this.From.TryGetValue(name, out var join) ? (JoinClause)join : null,
-			                              entity => new TableIdentifier(entity, aliaser.Generate()));
-
-			JoinClause last = null;
-
-			foreach(var join in joins)
-			{
-				if(!this.From.Contains(join))
-					this.From.Add(join);
-
-				last = join;
-			}
-
-			//返回最后一个Join子句
-			return last;
-		}
-
-		public JoinClause Join(Aliaser aliaser, ISource source, SchemaMember schema)
-		{
-			if(schema.Token.Property.IsSimplex)
-				return null;
-
-			return this.Join(aliaser, source, (IDataEntityComplexProperty)schema.Token.Property, schema.FullPath);
-		}
-		#endregion
+		if(source != null)
+			this.From.Add(source);
 	}
+
+	protected Statement(IDataEntity entity, string alias = null, ParameterExpressionCollection parameters = null) : base(entity, alias, parameters)
+	{
+		this.From = [this.Table];
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取一个值，指示<c>Form</c>属性是否有值。</summary>
+	public bool HasFrom => this.From?.Count > 0;
+
+	/// <summary>获取一个数据源的集合，可以在<c>Where</c>子句中引用的字段源。</summary>
+	public SourceCollection From { get; }
+
+	/// <summary>获取或设置条件子句。</summary>
+	public IExpression Where { get; set; }
+	#endregion
+
+	#region 公共方法
+	public JoinClause Join(Aliaser aliaser, ISource source, IDataEntity target, string fullPath = null)
+	{
+		var clause = JoinClause.Create(source,
+		                               target,
+		                               fullPath,
+		                               name => this.From.TryGetValue(name, out var join) ? (JoinClause)join : null,
+		                               entity => new TableIdentifier(entity, aliaser.Generate()));
+
+		if(!this.From.Contains(clause))
+			this.From.Add(clause);
+
+		return clause;
+	}
+
+	public JoinClause Join(Aliaser aliaser, ISource source, IDataEntityComplexProperty complex, string fullPath = null)
+	{
+		var joins = JoinClause.Create(source,
+		                              complex,
+		                              fullPath,
+		                              name => this.From.TryGetValue(name, out var join) ? (JoinClause)join : null,
+		                              entity => new TableIdentifier(entity, aliaser.Generate()));
+
+		JoinClause last = null;
+
+		foreach(var join in joins)
+		{
+			if(!this.From.Contains(join))
+				this.From.Add(join);
+
+			last = join;
+		}
+
+		//返回最后一个Join子句
+		return last;
+	}
+
+	public JoinClause Join(Aliaser aliaser, ISource source, SchemaMember schema)
+	{
+		if(schema.Token.Property.IsSimplex)
+			return null;
+
+		return this.Join(aliaser, source, (IDataEntityComplexProperty)schema.Token.Property, schema.FullPath);
+	}
+	#endregion
 }

@@ -34,52 +34,51 @@ using System.Collections.Generic;
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DataSourceProvider : IDataSourceProvider
 {
-	public class DataSourceProvider : IDataSourceProvider
+	#region 成员字段
+	private readonly List<IDataSource> _sources;
+	#endregion
+
+	#region 构造函数
+	public DataSourceProvider(IEnumerable<IConnectionSettings> settings)
 	{
-		#region 成员字段
-		private readonly List<IDataSource> _sources;
-		#endregion
+		if(settings == null)
+			_sources = new();
+		else
+			_sources = new(settings.Select(setting => new DataSource(setting)));
+	}
+	#endregion
 
-		#region 构造函数
-		public DataSourceProvider(IEnumerable<IConnectionSettings> settings)
+	#region 公共方法
+	public IEnumerable<IDataSource> GetSources(string name)
+	{
+		if(_sources == null || _sources.Count == 0)
 		{
-			if(settings == null)
-				_sources = new();
-			else
-				_sources = new(settings.Select(setting => new DataSource(setting)));
-		}
-		#endregion
+			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Data/ConnectionSettings");
 
-		#region 公共方法
-		public IEnumerable<IDataSource> GetSources(string name)
-		{
-			if(_sources == null || _sources.Count == 0)
+			if(connectionSettings == null || connectionSettings.Count == 0)
+				return [];
+
+			if(string.IsNullOrEmpty(name))
 			{
-				var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Data/ConnectionSettings");
-
-				if(connectionSettings == null || connectionSettings.Count == 0)
-					return [];
+				name = connectionSettings.Default;
 
 				if(string.IsNullOrEmpty(name))
-				{
-					name = connectionSettings.Default;
-
-					if(string.IsNullOrEmpty(name))
-						return [];
-				}
-
-				foreach(var connectionSetting in connectionSettings)
-				{
-					if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
-					   connectionSetting.Name.StartsWith(name + DataSource.SEPARATOR, StringComparison.OrdinalIgnoreCase))
-						_sources.Add(new DataSource(connectionSetting));
-				}
+					return [];
 			}
 
-			return _sources;
+			foreach(var connectionSetting in connectionSettings)
+			{
+				if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
+				   connectionSetting.Name.StartsWith(name + DataSource.SEPARATOR, StringComparison.OrdinalIgnoreCase))
+					_sources.Add(new DataSource(connectionSetting));
+			}
 		}
-		#endregion
+
+		return _sources;
 	}
+	#endregion
 }

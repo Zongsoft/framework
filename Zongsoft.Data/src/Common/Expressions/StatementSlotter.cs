@@ -32,35 +32,34 @@ using System.Data;
 using System.Data.Common;
 using System.Text.RegularExpressions;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class StatementSlotter : IStatementSlotEvaluator
 {
-	public class StatementSlotter : IStatementSlotEvaluator
+	#region 静态字段
+	private static readonly Regex _regex = new(@"\$\{(?<placeholder>[a-zA-Z_][a-zA-Z0-9_]*)\}", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline);
+	#endregion
+
+	#region 公共属性
+	public IStatementSlotEvaluator Evaluator { get; set; }
+	#endregion
+
+	#region 公共方法
+	public void Evaluate(IDataAccessContext context, IStatementBase statement, DbCommand command)
 	{
-		#region 静态字段
-		private static readonly Regex _regex = new(@"\$\{(?<placeholder>[a-zA-Z_][a-zA-Z0-9_]*)\}", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline);
-		#endregion
+		if(this.Evaluator == null)
+			return;
 
-		#region 公共属性
-		public IStatementSlotEvaluator Evaluator { get; set; }
-		#endregion
-
-		#region 公共方法
-		public void Evaluate(IDataAccessContext context, IStatementBase statement, DbCommand command)
-		{
-			if(this.Evaluator == null)
-				return;
-
-			command.CommandText = _regex.Replace(command.CommandText, match => this.Evaluate(context, statement, this.GetSlot(context, statement, match.Groups["placeholder"].Value)));
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual StatementSlot GetSlot(IDataAccessContext context, IStatementBase statement, string placeholder) => statement.Slots.TryGetValue(placeholder, out var slot) ? slot : null;
-		protected virtual string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot) => slot != null && this.Evaluator != null ? this.Evaluator.Evaluate(context, statement, slot) : null;
-		#endregion
-
-		#region 显式实现
-		string IStatementSlotEvaluator.Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot) => this.Evaluate(context, statement, slot);
-		#endregion
+		command.CommandText = _regex.Replace(command.CommandText, match => this.Evaluate(context, statement, this.GetSlot(context, statement, match.Groups["placeholder"].Value)));
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual StatementSlot GetSlot(IDataAccessContext context, IStatementBase statement, string placeholder) => statement.Slots.TryGetValue(placeholder, out var slot) ? slot : null;
+	protected virtual string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot) => slot != null && this.Evaluator != null ? this.Evaluator.Evaluate(context, statement, slot) : null;
+	#endregion
+
+	#region 显式实现
+	string IStatementSlotEvaluator.Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot) => this.Evaluate(context, statement, slot);
+	#endregion
 }

@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class StatementSlotCollection : KeyedCollection<string, StatementSlot>
 {
-	public class StatementSlotCollection : KeyedCollection<string, StatementSlot>
-	{
-		protected override string GetKeyForItem(StatementSlot slot) => slot.Name;
-	}
+	protected override string GetKeyForItem(StatementSlot slot) => slot.Name;
 }

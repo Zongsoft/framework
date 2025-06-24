@@ -29,26 +29,25 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class LiteralExpression : Expression
 {
-	public class LiteralExpression : Expression
+	#region 构造函数
+	public LiteralExpression(string text)
 	{
-		#region 构造函数
-		public LiteralExpression(string text)
-		{
-			if(string.IsNullOrEmpty(text))
-				throw new ArgumentNullException(nameof(text));
+		if(string.IsNullOrEmpty(text))
+			throw new ArgumentNullException(nameof(text));
 
-			this.Text = text;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Text { get; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => this.Text;
-		#endregion
+		this.Text = text;
 	}
+	#endregion
+
+	#region 公共属性
+	public string Text { get; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => this.Text;
+	#endregion
 }

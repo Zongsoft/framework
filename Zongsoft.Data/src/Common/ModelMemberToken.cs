@@ -32,153 +32,152 @@ using System.Data;
 using System.Reflection;
 using System.ComponentModel;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public readonly struct ModelMemberToken : IEquatable<ModelMemberToken>
 {
-	public struct ModelMemberToken : IEquatable<ModelMemberToken>
+	#region 委托定义
+	private delegate void SetValueDelegate(ref object target, object value);
+	#endregion
+
+	#region 私有变量
+	private readonly MemberInfo _member;
+	private readonly SetValueDelegate _setter;
+	private readonly ModelMemberEmitter.Populator _populate;
+	#endregion
+
+	#region 公共字段
+	public readonly string Name;
+	public readonly Type Type;
+	public readonly TypeConverter Converter;
+	#endregion
+
+	#region 构造函数
+	public ModelMemberToken(FieldInfo field, TypeConverter converter, ModelMemberEmitter.Populator populate)
 	{
-		#region 委托定义
-		private delegate void SetValueDelegate(ref object target, object value);
-		#endregion
+		_member = field ?? throw new ArgumentNullException(nameof(field));
 
-		#region 私有变量
-		private readonly MemberInfo _member;
-		private readonly SetValueDelegate _setter;
-		private readonly ModelMemberEmitter.Populator _populate;
-		#endregion
+		this.Name = field.Name;
+		this.Type = field.FieldType;
+		this.Converter = converter;
 
-		#region 公共字段
-		public readonly string Name;
-		public readonly Type Type;
-		public readonly TypeConverter Converter;
-		#endregion
-
-		#region 构造函数
-		public ModelMemberToken(FieldInfo field, TypeConverter converter, ModelMemberEmitter.Populator populate)
-		{
-			_member = field ?? throw new ArgumentNullException(nameof(field));
-
-			this.Name = field.Name;
-			this.Type = field.FieldType;
-			this.Converter = converter;
-
-			_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
-			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
-		}
-
-		public ModelMemberToken(PropertyInfo property, TypeConverter converter, ModelMemberEmitter.Populator populate)
-		{
-			_member = property ?? throw new ArgumentNullException(nameof(property));
-
-			this.Name = property.Name;
-			this.Type = property.PropertyType;
-			this.Converter = converter;
-
-			_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
-			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
-		}
-		#endregion
-
-		#region 公共属性
-		public bool IsEmpty => _member == null;
-		#endregion
-
-		#region 公共方法
-		public void Populate(ref object entity, IDataRecord record, int ordinal) => _populate.Invoke(ref entity, record, ordinal, this.Converter);
-		public void SetValue(ref object entity, object value) => _setter.Invoke(ref entity, value);
-		#endregion
-
-		#region 内部方法
-		internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
-		internal void EnsureConvertFrom(Type type)
-		{
-			var converter = this.Converter;
-			if(converter != null && !converter.CanConvertFrom(type))
-				throw new DataException($"The '{converter.GetType().Name}' converter for the '{_member.DeclaringType.Name}.{_member.Name}' field does not support conversion from {type.Name} type to '{this.Type.Name}' type.");
-		}
-		#endregion
-
-		#region 重写方法
-		public bool Equals(ModelMemberToken other) => string.Equals(this.Name, other.Name);
-		public override bool Equals(object obj) => obj is ModelMemberToken other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Name);
-		public override string ToString() => $"{this.Name}:{this.Type.Name}";
-
-		public static bool operator ==(ModelMemberToken left, ModelMemberToken right) => left.Equals(right);
-		public static bool operator !=(ModelMemberToken left, ModelMemberToken right) => !(left == right);
-		#endregion
+		_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
+		_populate = populate ?? throw new ArgumentNullException(nameof(populate));
 	}
 
-	public struct ModelMemberToken<T> : IEquatable<ModelMemberToken<T>>
+	public ModelMemberToken(PropertyInfo property, TypeConverter converter, ModelMemberEmitter.Populator populate)
 	{
-		#region 委托定义
-		private delegate void SetValueDelegate(ref T target, object value);
-		#endregion
+		_member = property ?? throw new ArgumentNullException(nameof(property));
 
-		#region 私有变量
-		private readonly MemberInfo _member;
-		private readonly SetValueDelegate _setter;
-		private readonly ModelMemberEmitter.Populator<T> _populate;
-		#endregion
+		this.Name = property.Name;
+		this.Type = property.PropertyType;
+		this.Converter = converter;
 
-		#region 公共字段
-		public readonly string Name;
-		public readonly Type Type;
-		public readonly TypeConverter Converter;
-		#endregion
-
-		#region 构造函数
-		public ModelMemberToken(FieldInfo field, TypeConverter converter, ModelMemberEmitter.Populator<T> populate)
-		{
-			_member = field ?? throw new ArgumentNullException(nameof(field));
-
-			this.Name = field.Name;
-			this.Type = field.FieldType;
-			this.Converter = converter;
-
-			_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
-			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
-		}
-
-		public ModelMemberToken(PropertyInfo property, TypeConverter converter, ModelMemberEmitter.Populator<T> populate)
-		{
-			_member = property ?? throw new ArgumentNullException(nameof(property));
-
-			this.Name = property.Name;
-			this.Type = property.PropertyType;
-			this.Converter = converter;
-
-			_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
-			_populate = populate ?? throw new ArgumentNullException(nameof(populate));
-		}
-		#endregion
-
-		#region 公共属性
-		public bool IsEmpty => _member == null;
-		#endregion
-
-		#region 公共方法
-		public void Populate(ref T entity, IDataRecord record, int ordinal) => _populate.Invoke(ref entity, record, ordinal, this.Converter);
-		public void SetValue(ref T entity, object value) => _setter.Invoke(ref entity, value);
-		#endregion
-
-		#region 内部方法
-		internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
-		internal void EnsureConvertFrom(Type type)
-		{
-			var converter = this.Converter;
-			if(converter != null && !converter.CanConvertFrom(type))
-				throw new DataException($"The '{converter.GetType().Name}' converter for the '{_member.DeclaringType.Name}.{_member.Name}' field does not support conversion from {type.Name} type to '{this.Type.Name}' type.");
-		}
-		#endregion
-
-		#region 重写方法
-		public bool Equals(ModelMemberToken<T> other) => string.Equals(this.Name, other.Name);
-		public override bool Equals(object obj) => obj is ModelMemberToken<T> other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Name);
-		public override string ToString() => $"{this.Name}:{this.Type.Name}";
-
-		public static bool operator ==(ModelMemberToken<T> left, ModelMemberToken<T> right) => left.Equals(right);
-		public static bool operator !=(ModelMemberToken<T> left, ModelMemberToken<T> right) => !(left == right);
-		#endregion
+		_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
+		_populate = populate ?? throw new ArgumentNullException(nameof(populate));
 	}
+	#endregion
+
+	#region 公共属性
+	public readonly bool IsEmpty => _member == null;
+	#endregion
+
+	#region 公共方法
+	public void Populate(ref object entity, IDataRecord record, int ordinal) => _populate.Invoke(ref entity, record, ordinal, this.Converter);
+	public void SetValue(ref object entity, object value) => _setter.Invoke(ref entity, value);
+	#endregion
+
+	#region 内部方法
+	internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
+	internal void EnsureConvertFrom(Type type)
+	{
+		var converter = this.Converter;
+		if(converter != null && !converter.CanConvertFrom(type))
+			throw new DataException($"The '{converter.GetType().Name}' converter for the '{_member.DeclaringType.Name}.{_member.Name}' field does not support conversion from {type.Name} type to '{this.Type.Name}' type.");
+	}
+	#endregion
+
+	#region 重写方法
+	public bool Equals(ModelMemberToken other) => string.Equals(this.Name, other.Name);
+	public override bool Equals(object obj) => obj is ModelMemberToken other && this.Equals(other);
+	public override int GetHashCode() => HashCode.Combine(this.Name);
+	public override string ToString() => $"{this.Name}:{this.Type.Name}";
+
+	public static bool operator ==(ModelMemberToken left, ModelMemberToken right) => left.Equals(right);
+	public static bool operator !=(ModelMemberToken left, ModelMemberToken right) => !(left == right);
+	#endregion
+}
+
+public readonly struct ModelMemberToken<T> : IEquatable<ModelMemberToken<T>>
+{
+	#region 委托定义
+	private delegate void SetValueDelegate(ref T target, object value);
+	#endregion
+
+	#region 私有变量
+	private readonly MemberInfo _member;
+	private readonly SetValueDelegate _setter;
+	private readonly ModelMemberEmitter.Populator<T> _populate;
+	#endregion
+
+	#region 公共字段
+	public readonly string Name;
+	public readonly Type Type;
+	public readonly TypeConverter Converter;
+	#endregion
+
+	#region 构造函数
+	public ModelMemberToken(FieldInfo field, TypeConverter converter, ModelMemberEmitter.Populator<T> populate)
+	{
+		_member = field ?? throw new ArgumentNullException(nameof(field));
+
+		this.Name = field.Name;
+		this.Type = field.FieldType;
+		this.Converter = converter;
+
+		_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
+		_populate = populate ?? throw new ArgumentNullException(nameof(populate));
+	}
+
+	public ModelMemberToken(PropertyInfo property, TypeConverter converter, ModelMemberEmitter.Populator<T> populate)
+	{
+		_member = property ?? throw new ArgumentNullException(nameof(property));
+
+		this.Name = property.Name;
+		this.Type = property.PropertyType;
+		this.Converter = converter;
+
+		_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
+		_populate = populate ?? throw new ArgumentNullException(nameof(populate));
+	}
+	#endregion
+
+	#region 公共属性
+	public readonly bool IsEmpty => _member == null;
+	#endregion
+
+	#region 公共方法
+	public void Populate(ref T entity, IDataRecord record, int ordinal) => _populate.Invoke(ref entity, record, ordinal, this.Converter);
+	public void SetValue(ref T entity, object value) => _setter.Invoke(ref entity, value);
+	#endregion
+
+	#region 内部方法
+	internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
+	internal void EnsureConvertFrom(Type type)
+	{
+		var converter = this.Converter;
+		if(converter != null && !converter.CanConvertFrom(type))
+			throw new DataException($"The '{converter.GetType().Name}' converter for the '{_member.DeclaringType.Name}.{_member.Name}' field does not support conversion from {type.Name} type to '{this.Type.Name}' type.");
+	}
+	#endregion
+
+	#region 重写方法
+	public bool Equals(ModelMemberToken<T> other) => string.Equals(this.Name, other.Name);
+	public override bool Equals(object obj) => obj is ModelMemberToken<T> other && this.Equals(other);
+	public override int GetHashCode() => HashCode.Combine(this.Name);
+	public override string ToString() => $"{this.Name}:{this.Type.Name}";
+
+	public static bool operator ==(ModelMemberToken<T> left, ModelMemberToken<T> right) => left.Equals(right);
+	public static bool operator !=(ModelMemberToken<T> left, ModelMemberToken<T> right) => !(left == right);
+	#endregion
 }

@@ -30,22 +30,21 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
-{
-	public class SelectClause
-	{
-		#region 构造函数
-		public SelectClause() => this.Members = new List<IExpression>();
-		public SelectClause(bool isDistinct)
-		{
-			this.IsDistinct = isDistinct;
-			this.Members = new List<IExpression>();
-		}
-		#endregion
+namespace Zongsoft.Data.Common.Expressions;
 
-		#region 公共属性
-		public bool IsDistinct { get; set; }
-		public IList<IExpression> Members { get; }
-		#endregion
+public class SelectClause
+{
+	#region 构造函数
+	public SelectClause() => this.Members = new List<IExpression>();
+	public SelectClause(bool isDistinct)
+	{
+		this.IsDistinct = isDistinct;
+		this.Members = new List<IExpression>();
 	}
+	#endregion
+
+	#region 公共属性
+	public bool IsDistinct { get; set; }
+	public IList<IExpression> Members { get; }
+	#endregion
 }

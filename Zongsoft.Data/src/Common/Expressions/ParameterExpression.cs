@@ -30,127 +30,119 @@
 using System;
 using System.Data;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class ParameterExpression : Expression
 {
-	public class ParameterExpression : Expression
+	#region 常量定义
+	internal const string Anonymous = "?";
+	#endregion
+
+	#region 成员字段
+	private object _value;
+	private bool _hasValue;
+	#endregion
+
+	#region 构造函数
+	public ParameterExpression(string name, DbType type, ParameterDirection direction = ParameterDirection.Input)
 	{
-		#region 常量定义
-		internal const string Anonymous = "?";
-		#endregion
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-		#region 成员字段
-		private object _value;
-		private bool _hasValue;
-		#endregion
+		this.Name = name;
+		this.DbType = type;
+		this.Direction = direction;
+	}
 
-		#region 构造函数
-		public ParameterExpression(string name, DbType type, ParameterDirection direction = ParameterDirection.Input)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+	public ParameterExpression(string name, DbType type, object value)
+	{
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Name = name;
-			this.DbType = type;
-			this.Direction = direction;
-		}
+		this.Name = name;
+		this.Direction = ParameterDirection.Input;
 
-		public ParameterExpression(string name, DbType type, object value)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			this.Name = name;
-			this.Direction = ParameterDirection.Input;
-
-			if(value != null)
-				this.Value = value;
-
-			this.DbType = type;
-		}
-
-		public ParameterExpression(FieldIdentifier field, object value) : this(field, null, value) { }
-		public ParameterExpression(FieldIdentifier field, SchemaMember schema)
-		{
-			this.Name = Anonymous;
-			this.Schema = schema;
-			this.Field = field ?? throw new ArgumentNullException(nameof(field));
-			this.Direction = ParameterDirection.Input;
-
-			if(field.Token.Property.IsSimplex)
-				this.DbType = ((Metadata.IDataEntitySimplexProperty)field.Token.Property).Type;
-		}
-
-		public ParameterExpression(FieldIdentifier field, SchemaMember schema, object value)
-		{
-			this.Name = Anonymous;
-			this.Schema = schema;
-			this.Field = field ?? throw new ArgumentNullException(nameof(field));
-			this.Direction = ParameterDirection.Input;
-
-			/*
-			 * 注意：更新Value属性会导致 HasValue 属性值为真！
-			 * 而 HasValue 为真的参数可能会在写入操作的参数绑定中被忽略。
-			 */
+		if(value != null)
 			this.Value = value;
 
-			if(field.Token.Property.IsSimplex)
-				this.DbType = ((Metadata.IDataEntitySimplexProperty)field.Token.Property).Type;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取参数名称。</summary>
-		/// <remarks>
-		///		<para>如果参数名为空或问号(?)表示该参数名由集合定义，当该参数被加入到语句的参数集中，该名称将被更改为特定序号的名字。可参考<see cref="StatementBase.Parameters"/>属性的集合。</para>
-		/// </remarks>
-		public string Name { get; set; }
-
-		/// <summary>获取参数对应的字段标识，可能为空。</summary>
-		public FieldIdentifier Field { get; }
-
-		/// <summary>获取或设置参数对应的模式成员，可能为空。</summary>
-		public SchemaMember Schema { get; set; }
-
-		/// <summary>获取参数的方向。</summary>
-		public ParameterDirection Direction { get; }
-
-		/// <summary>获取或设置参数的数据类型。</summary>
-		public DbType DbType { get; set; }
-
-		/// <summary>获取或设置参数值。</summary>
-		/// <remarks>
-		///		<para>注意：设置该属性值会导致<see cref="IsChanged"/>属性为真。</para>
-		/// </remarks>
-		public object Value
-		{
-			get => _value;
-			set
-			{
-				_value = value;
-
-				if(value != null)
-				{
-					if(value.GetType().IsEnum)
-						_value = System.Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType()));
-
-					this.DbType = Utility.GetDbType(_value);
-				}
-
-				_hasValue = true;
-			}
-		}
-
-		/// <summary>获取一个值，指示<see cref="Value"/>属性是否被设置过。</summary>
-		public bool IsChanged => _hasValue;
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			return this.IsChanged ?
-				$"[{this.Direction}]{this.Name} {this.DbType} = {this.Value ?? "<NULL>"}" :
-				$"[{this.Direction}]{this.Name} {this.DbType} @ {this.Schema}";
-		}
-		#endregion
+		this.DbType = type;
 	}
+
+	public ParameterExpression(FieldIdentifier field, object value) : this(field, null, value) { }
+	public ParameterExpression(FieldIdentifier field, SchemaMember schema)
+	{
+		this.Name = Anonymous;
+		this.Schema = schema;
+		this.Field = field ?? throw new ArgumentNullException(nameof(field));
+		this.Direction = ParameterDirection.Input;
+
+		if(field.Token.Property.IsSimplex)
+			this.DbType = ((Metadata.IDataEntitySimplexProperty)field.Token.Property).Type;
+	}
+
+	public ParameterExpression(FieldIdentifier field, SchemaMember schema, object value)
+	{
+		this.Name = Anonymous;
+		this.Schema = schema;
+		this.Field = field ?? throw new ArgumentNullException(nameof(field));
+		this.Direction = ParameterDirection.Input;
+
+		/*
+		 * 注意：更新Value属性会导致 HasValue 属性值为真！
+		 * 而 HasValue 为真的参数可能会在写入操作的参数绑定中被忽略。
+		 */
+		this.Value = value;
+
+		if(field.Token.Property.IsSimplex)
+			this.DbType = ((Metadata.IDataEntitySimplexProperty)field.Token.Property).Type;
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取参数名称。</summary>
+	/// <remarks>如果参数名为空或问号(?)表示该参数名由集合定义，当该参数被加入到语句的参数集中，该名称将被更改为特定序号的名字。可参考<see cref="StatementBase.Parameters"/>属性的集合。</remarks>
+	public string Name { get; set; }
+
+	/// <summary>获取参数对应的字段标识，可能为空。</summary>
+	public FieldIdentifier Field { get; }
+
+	/// <summary>获取或设置参数对应的模式成员，可能为空。</summary>
+	public SchemaMember Schema { get; set; }
+
+	/// <summary>获取参数的方向。</summary>
+	public ParameterDirection Direction { get; }
+
+	/// <summary>获取或设置参数的数据类型。</summary>
+	public DbType DbType { get; set; }
+
+	/// <summary>获取或设置参数值。</summary>
+	/// <remarks>注意：设置该属性值会导致<see cref="IsChanged"/>属性为真。</remarks>
+	public object Value
+	{
+		get => _value;
+		set
+		{
+			_value = value;
+
+			if(value != null)
+			{
+				if(value.GetType().IsEnum)
+					_value = System.Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType()));
+
+				this.DbType = Utility.GetDbType(_value);
+			}
+
+			_hasValue = true;
+		}
+	}
+
+	/// <summary>获取一个值，指示 <see cref="Value"/> 属性是否被设置过。</summary>
+	public bool IsChanged => _hasValue;
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => this.IsChanged ?
+		$"[{this.Direction}]{this.Name} {this.DbType} = {this.Value ?? "<NULL>"}" :
+		$"[{this.Direction}]{this.Name} {this.DbType} @ {this.Schema}";
+	#endregion
 }

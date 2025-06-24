@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public interface IExpression
 {
-	public interface IExpression
-	{
-		string Accept(IExpressionVisitor visitor);
-	}
+	string Accept(IExpressionVisitor visitor);
 }

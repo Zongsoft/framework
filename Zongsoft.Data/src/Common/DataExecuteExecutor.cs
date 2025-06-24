@@ -37,136 +37,135 @@ using System.Collections.Generic;
 
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 {
-	public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
+	#region 同步执行
+	public bool Execute(IDataAccessContext context, ExecutionStatement statement)
 	{
-		#region 同步执行
-		public bool Execute(IDataAccessContext context, ExecutionStatement statement)
+		if(context is DataExecuteContext ctx)
+			return this.OnExecute(ctx, statement);
+
+		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+	}
+
+	protected virtual bool OnExecute(DataExecuteContext context, ExecutionStatement statement)
+	{
+		//根据生成的脚本创建对应的数据命令
+		var command = context.Session.Build(context, statement);
+
+		if(statement.IsProcedure)
+			command.CommandType = CommandType.StoredProcedure;
+
+		if(context.IsScalar)
 		{
-			if(context is DataExecuteContext ctx)
-				return this.OnExecute(ctx, statement);
-
-			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
-		}
-
-		protected virtual bool OnExecute(DataExecuteContext context, ExecutionStatement statement)
-		{
-			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(context, statement);
-
-			if(statement.IsProcedure)
-				command.CommandType = CommandType.StoredProcedure;
-
-			if(context.IsScalar)
-			{
-				context.Result = command.ExecuteScalar();
-				return false;
-			}
-
-			context.Result = System.Activator.CreateInstance(
-				typeof(ResultCollection<>).MakeGenericType(context.ResultType),
-				new object[] { context, command });
-
+			context.Result = command.ExecuteScalar();
 			return false;
 		}
+
+		context.Result = System.Activator.CreateInstance(
+			typeof(ResultCollection<>).MakeGenericType(context.ResultType),
+			new object[] { context, command });
+
+		return false;
+	}
+	#endregion
+
+	#region 异步执行
+	public ValueTask<bool> ExecuteAsync(IDataAccessContext context, ExecutionStatement statement, CancellationToken cancellation)
+	{
+		if(context is DataExecuteContext ctx)
+			return this.OnExecuteAsync(ctx, statement, cancellation);
+
+		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+	}
+
+	protected virtual async ValueTask<bool> OnExecuteAsync(DataExecuteContext context, ExecutionStatement statement, CancellationToken cancellation)
+	{
+		//根据生成的脚本创建对应的数据命令
+		var command = context.Session.Build(context, statement);
+
+		if(statement.IsProcedure)
+			command.CommandType = CommandType.StoredProcedure;
+
+		if(context.IsScalar)
+		{
+			context.Result = await command.ExecuteScalarAsync(cancellation);
+			return false;
+		}
+
+		context.Result = System.Activator.CreateInstance(
+			typeof(ResultCollection<>).MakeGenericType(context.ResultType),
+			new object[] { context, command });
+
+		return false;
+	}
+	#endregion
+
+	#region 嵌套子类
+	private class ResultCollection<T> : IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable
+	{
+		#region 成员字段
+		private readonly DbCommand _command;
 		#endregion
 
-		#region 异步执行
-		public ValueTask<bool> ExecuteAsync(IDataAccessContext context, ExecutionStatement statement, CancellationToken cancellation)
-		{
-			if(context is DataExecuteContext ctx)
-				return this.OnExecuteAsync(ctx, statement, cancellation);
+		#region 构造函数
+		public ResultCollection(DataExecuteContext context, DbCommand command) { _command = command; }
+		#endregion
 
-			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		#region 遍历迭代
+		public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
+		{
+			var iterator = new ResultIterator(await _command.ExecuteReaderAsync(cancellation));
+
+			while(await iterator.MoveNextAsync())
+				yield return iterator.Current;
 		}
 
-		protected virtual async ValueTask<bool> OnExecuteAsync(DataExecuteContext context, ExecutionStatement statement, CancellationToken cancellation)
-		{
-			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(context, statement);
-
-			if(statement.IsProcedure)
-				command.CommandType = CommandType.StoredProcedure;
-
-			if(context.IsScalar)
-			{
-				context.Result = await command.ExecuteScalarAsync(cancellation);
-				return false;
-			}
-
-			context.Result = System.Activator.CreateInstance(
-				typeof(ResultCollection<>).MakeGenericType(context.ResultType),
-				new object[] { context, command });
-
-			return false;
-		}
+		public IEnumerator<T> GetEnumerator() => new ResultIterator(_command.ExecuteReader());
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		#endregion
 
 		#region 嵌套子类
-		private class ResultCollection<T> : IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable
+		private class ResultIterator : IEnumerator<T>, IAsyncEnumerator<T>
 		{
-			#region 成员字段
-			private readonly DbCommand _command;
-			#endregion
+			private readonly DbDataReader _reader;
+			private readonly IDataPopulator _populator;
 
-			#region 构造函数
-			public ResultCollection(DataExecuteContext context, DbCommand command) { _command = command; }
-			#endregion
-
-			#region 遍历迭代
-			public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
+			public ResultIterator(DbDataReader reader)
 			{
-				var iterator = new ResultIterator(await _command.ExecuteReaderAsync(cancellation));
-
-				while(await iterator.MoveNextAsync())
-					yield return iterator.Current;
+				_reader = reader;
+				_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator(typeof(T), _reader);
 			}
 
-			public IEnumerator<T> GetEnumerator() => new ResultIterator(_command.ExecuteReader());
-			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-			#endregion
+			public T Current { get => _populator.Populate<T>(_reader); }
 
-			#region 嵌套子类
-			private class ResultIterator : IEnumerator<T>, IAsyncEnumerator<T>
+			public bool MoveNext()
 			{
-				private readonly DbDataReader _reader;
-				private readonly IDataPopulator _populator;
+				if(_reader.Read())
+					return true;
 
-				public ResultIterator(DbDataReader reader)
-				{
-					_reader = reader;
-					_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator(typeof(T), _reader);
-				}
-
-				public T Current { get => _populator.Populate<T>(_reader); }
-
-				public bool MoveNext()
-				{
-					if(_reader.Read())
-						return true;
-
-					this.Dispose();
-					return false;
-				}
-
-				public async ValueTask<bool> MoveNextAsync()
-				{
-					if(await _reader.ReadAsync())
-						return true;
-
-					await this.DisposeAsync();
-					return false;
-				}
-
-				public void Dispose() => _reader.Dispose();
-				public ValueTask DisposeAsync() => _reader.DisposeAsync();
-
-				object IEnumerator.Current { get => this.Current; }
-				void IEnumerator.Reset() { }
+				this.Dispose();
+				return false;
 			}
-			#endregion
+
+			public async ValueTask<bool> MoveNextAsync()
+			{
+				if(await _reader.ReadAsync())
+					return true;
+
+				await this.DisposeAsync();
+				return false;
+			}
+
+			public void Dispose() => _reader.Dispose();
+			public ValueTask DisposeAsync() => _reader.DisposeAsync();
+
+			object IEnumerator.Current { get => this.Current; }
+			void IEnumerator.Reset() { }
 		}
 		#endregion
 	}
+	#endregion
 }

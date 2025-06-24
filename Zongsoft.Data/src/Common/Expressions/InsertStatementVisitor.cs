@@ -30,83 +30,82 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 {
-	public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
+	#region 构造函数
+	protected InsertStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, InsertStatement statement)
 	{
-		#region 构造函数
-		protected InsertStatementVisitor() { }
-		#endregion
+		if(statement.Fields == null || statement.Fields.Count == 0)
+			throw new DataException("Missing required fields in the insert statment.");
 
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, InsertStatement statement)
-		{
-			if(statement.Fields == null || statement.Fields.Count == 0)
-				throw new DataException("Missing required fields in the insert statment.");
+		if(statement.Returning != null && statement.Returning.Table != null)
+			context.Visit(statement.Returning.Table);
 
-			if(statement.Returning != null && statement.Returning.Table != null)
-				context.Visit(statement.Returning.Table);
+		this.VisitInsert(context, statement);
+		context.Visit(statement.Table);
+		this.VisitFields(context, statement, statement.Fields);
+		this.VisitValues(context, statement, statement.Values, statement.Fields.Count);
 
-			this.VisitInsert(context, statement);
-			context.Visit(statement.Table);
-			this.VisitFields(context, statement, statement.Fields);
-			this.VisitValues(context, statement, statement.Values, statement.Fields.Count);
-
-			context.WriteLine(";");
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
-		{
-			context.Write("INSERT INTO ");
-		}
-
-		protected virtual void VisitFields(ExpressionVisitorContext context, InsertStatement statement, ICollection<FieldIdentifier> fields)
-		{
-			int index = 0;
-
-			context.Write(" (");
-
-			foreach(var field in fields)
-			{
-				if(index++ > 0)
-					context.Write(",");
-
-				context.Visit(field);
-			}
-
-			context.Write(")");
-		}
-
-		protected virtual void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
-		{
-			int index = 0;
-
-			context.WriteLine(" VALUES");
-
-			foreach(var value in values)
-			{
-				if(index > 0)
-					context.Write(",");
-
-				if(index % rounds == 0)
-					context.Write("(");
-
-				var parenthesisRequired = value is IStatementBase;
-
-				if(parenthesisRequired)
-					context.Write("(");
-
-				context.Visit(value);
-
-				if(parenthesisRequired)
-					context.Write(")");
-
-				if(++index % rounds == 0)
-					context.Write(")");
-			}
-		}
-		#endregion
+		context.WriteLine(";");
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
+	{
+		context.Write("INSERT INTO ");
+	}
+
+	protected virtual void VisitFields(ExpressionVisitorContext context, InsertStatement statement, ICollection<FieldIdentifier> fields)
+	{
+		int index = 0;
+
+		context.Write(" (");
+
+		foreach(var field in fields)
+		{
+			if(index++ > 0)
+				context.Write(",");
+
+			context.Visit(field);
+		}
+
+		context.Write(")");
+	}
+
+	protected virtual void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
+	{
+		int index = 0;
+
+		context.WriteLine(" VALUES");
+
+		foreach(var value in values)
+		{
+			if(index > 0)
+				context.Write(",");
+
+			if(index % rounds == 0)
+				context.Write("(");
+
+			var parenthesisRequired = value is IStatementBase;
+
+			if(parenthesisRequired)
+				context.Write("(");
+
+			context.Visit(value);
+
+			if(parenthesisRequired)
+				context.Write(")");
+
+			if(++index % rounds == 0)
+				context.Write(")");
+		}
+	}
+	#endregion
 }

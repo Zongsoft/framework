@@ -31,81 +31,80 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DataSourceSelector : IDataSourceSelector
 {
-	public class DataSourceSelector : IDataSourceSelector
+	#region 成员字段
+	private readonly string _defaultDriver;
+	private readonly Dictionary<string, DataSourceWeighter> _weighters;
+	#endregion
+
+	#region 私有构造
+	public DataSourceSelector(IEnumerable<IDataSource> sources)
 	{
-		#region 成员字段
-		private readonly string _defaultDriver;
-		private readonly Dictionary<string, DataSourceWeighter> _weighters;
-		#endregion
+		if(sources == null)
+			throw new ArgumentNullException(nameof(sources));
 
-		#region 私有构造
-		public DataSourceSelector(IEnumerable<IDataSource> sources)
+		foreach(var source in sources)
 		{
-			if(sources == null)
-				throw new ArgumentNullException(nameof(sources));
+			if(string.IsNullOrEmpty(_defaultDriver))
+				_defaultDriver = source.Driver.Name;
 
-			foreach(var source in sources)
+			if(!source.Name.Contains(DataSource.SEPARATOR))
 			{
-				if(string.IsNullOrEmpty(_defaultDriver))
-					_defaultDriver = source.Driver.Name;
-
-				if(!source.Name.Contains(DataSource.SEPARATOR))
-				{
-					_defaultDriver = source.Driver.Name;
-					break;
-				}
-			}
-
-			_weighters = new Dictionary<string, DataSourceWeighter>(StringComparer.OrdinalIgnoreCase);
-
-			foreach(var group in sources.GroupBy(source => source.Driver.Name, StringComparer.OrdinalIgnoreCase))
-				_weighters[group.Key] = new DataSourceWeighter(group);
-		}
-		#endregion
-
-		#region 公共方法
-		public IDataSource GetSource(IDataAccessContextBase context)
-		{
-			var driver = string.IsNullOrEmpty(context.Driver) ? _defaultDriver : context.Driver;
-
-			if(driver != null && _weighters.TryGetValue(driver, out var weighter))
-				return weighter.Get(context);
-
-			return null;
-		}
-		#endregion
-
-		#region 私有方法
-		private static int GetWeight(IDataSource source, int defaultValue = 100)
-		{
-			return source.Properties.TryGetValue("weight", out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var weight) ? Math.Max(weight, 0) : defaultValue;
-		}
-		#endregion
-
-		#region 加权计重
-		private class DataSourceWeighter
-		{
-			private readonly Components.Weighter<IDataSource> _readables;
-			private readonly Components.Weighter<IDataSource> _writables;
-
-			public DataSourceWeighter(IEnumerable<IDataSource> sources)
-			{
-				_readables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.ReadOnly) == DataAccessMode.ReadOnly), source => GetWeight(source));
-				_writables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.WriteOnly) == DataAccessMode.WriteOnly), source => GetWeight(source));
-			}
-
-			public IDataSource Get(IDataAccessContextBase context)
-			{
-				return context.Method switch
-				{
-					DataAccessMethod.Select or DataAccessMethod.Exists or DataAccessMethod.Aggregate => _readables.Get(),
-					DataAccessMethod.Execute => ((DataExecuteContextBase)context).Command.Mutability == Metadata.DataCommandMutability.None ? _readables.Get() : _writables.Get(),
-					_ => _writables.Get(),
-				};
+				_defaultDriver = source.Driver.Name;
+				break;
 			}
 		}
-		#endregion
+
+		_weighters = new Dictionary<string, DataSourceWeighter>(StringComparer.OrdinalIgnoreCase);
+
+		foreach(var group in sources.GroupBy(source => source.Driver.Name, StringComparer.OrdinalIgnoreCase))
+			_weighters[group.Key] = new DataSourceWeighter(group);
 	}
+	#endregion
+
+	#region 公共方法
+	public IDataSource GetSource(IDataAccessContextBase context)
+	{
+		var driver = string.IsNullOrEmpty(context.Driver) ? _defaultDriver : context.Driver;
+
+		if(driver != null && _weighters.TryGetValue(driver, out var weighter))
+			return weighter.Get(context);
+
+		return null;
+	}
+	#endregion
+
+	#region 私有方法
+	private static int GetWeight(IDataSource source, int defaultValue = 100)
+	{
+		return source.Properties.TryGetValue("weight", out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var weight) ? Math.Max(weight, 0) : defaultValue;
+	}
+	#endregion
+
+	#region 加权计重
+	private class DataSourceWeighter
+	{
+		private readonly Components.Weighter<IDataSource> _readables;
+		private readonly Components.Weighter<IDataSource> _writables;
+
+		public DataSourceWeighter(IEnumerable<IDataSource> sources)
+		{
+			_readables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.ReadOnly) == DataAccessMode.ReadOnly), source => GetWeight(source));
+			_writables = new Components.Weighter<IDataSource>(sources.Where(source => (source.Mode & DataAccessMode.WriteOnly) == DataAccessMode.WriteOnly), source => GetWeight(source));
+		}
+
+		public IDataSource Get(IDataAccessContextBase context)
+		{
+			return context.Method switch
+			{
+				DataAccessMethod.Select or DataAccessMethod.Exists or DataAccessMethod.Aggregate => _readables.Get(),
+				DataAccessMethod.Execute => ((DataExecuteContextBase)context).Command.Mutability == Metadata.DataCommandMutability.None ? _readables.Get() : _writables.Get(),
+				_ => _writables.Get(),
+			};
+		}
+	}
+	#endregion
 }

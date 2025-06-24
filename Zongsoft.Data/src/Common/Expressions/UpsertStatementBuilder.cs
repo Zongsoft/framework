@@ -32,181 +32,180 @@ using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 {
-	public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
+	#region 构建方法
+	public IEnumerable<IStatementBase> Build(DataUpsertContext context)
 	{
-		#region 构建方法
-		public IEnumerable<IStatementBase> Build(DataUpsertContext context)
+		//批量操作则不能指定容器数据(即data参数值为空)，因为语句构建阶段无法绑定到具体数据
+		return BuildUpserts(context, context.Entity, (context.IsMultiple ? null : context.Data), null, context.Schema.Members);
+	}
+	#endregion
+
+	#region 私有方法
+	internal static IEnumerable<UpsertStatement> BuildUpserts(IDataMutateContextBase context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+	{
+		var inherits = entity.GetInherits();
+		var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
+
+		//更新当前操作的容器数据
+		if(data != null && owner != null)
 		{
-			//批量操作则不能指定容器数据(即data参数值为空)，因为语句构建阶段无法绑定到具体数据
-			return BuildUpserts(context, context.Entity, (context.IsMultiple ? null : context.Data), null, context.Schema.Members);
+			/*
+			 * 如果从当前容器数据中获取指定成员值失败，则：
+			 * 1). 容器数据是集合类型，无法确定从集合中的哪个元素来获取指定成员的值，因此设置上下文数据为空；
+			 * 2). 容器数据不是集合类型，则说明指定的成员可能有误或发生了内部错误，因此抛出异常。
+			 */
+
+			if(owner.Token.TryGetValue(data, null, out var value))
+				data = value;
+			else if(Zongsoft.Common.TypeExtension.IsEnumerable(data.GetType()))
+				data = null;
+			else
+				throw new DataException($"Cannot get the specified '{owner.Name}' member from the '{data.GetType().FullName}' type.");
 		}
-		#endregion
 
-		#region 私有方法
-		internal static IEnumerable<UpsertStatement> BuildUpserts(IDataMutateContextBase context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+		foreach(var inherit in inherits)
 		{
-			var inherits = entity.GetInherits();
-			var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
+			var statement = new UpsertStatement(inherit, owner);
+			var sequences = new List<IDataEntitySimplexProperty>();
 
-			//更新当前操作的容器数据
-			if(data != null && owner != null)
+			if(context is DataUpsertContextBase ctx)
+				statement.Options.Apply(ctx.Options);
+
+			foreach(var schema in schemas)
 			{
-				/*
-				 * 如果从当前容器数据中获取指定成员值失败，则：
-				 * 1). 容器数据是集合类型，无法确定从集合中的哪个元素来获取指定成员的值，因此设置上下文数据为空；
-				 * 2). 容器数据不是集合类型，则说明指定的成员可能有误或发生了内部错误，因此抛出异常。
-				 */
+				if(!inherit.Properties.Contains(schema.Name))
+					continue;
 
-				if(owner.Token.TryGetValue(data, null, out var value))
-					data = value;
-				else if(Zongsoft.Common.TypeExtension.IsEnumerable(data.GetType()))
-					data = null;
-				else
-					throw new DataException($"Cannot get the specified '{owner.Name}' member from the '{data.GetType().FullName}' type.");
-			}
-
-			foreach(var inherit in inherits)
-			{
-				var statement = new UpsertStatement(inherit, owner);
-				var sequences = new List<IDataEntitySimplexProperty>();
-
-				if(context is DataUpsertContextBase ctx)
-					statement.Options.Apply(ctx.Options);
-
-				foreach(var schema in schemas)
+				if(schema.Token.Property.IsSimplex)
 				{
-					if(!inherit.Properties.Contains(schema.Name))
-						continue;
+					var simplex = (IDataEntitySimplexProperty)schema.Token.Property;
 
-					if(schema.Token.Property.IsSimplex)
+					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
 					{
-						var simplex = (IDataEntitySimplexProperty)schema.Token.Property;
-
-						if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
-						{
-							statement.Sequence = new SelectStatement(owner?.FullPath);
-							statement.Sequence.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
-						}
-						else
-						{
-							//确认当前成员是否有提供的写入值
-							var provided = context.Validate(DataAccessMethod.Insert, simplex, out var value);
-
-							var field = statement.Table.CreateField(schema.Token);
-							statement.Fields.Add(field);
-
-							var parameter = Utility.IsLinked(owner, simplex) ?
-											(
-												provided ?
-												Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
-												Expression.Parameter(schema.Token.Property.Name, simplex.Type)
-											) :
-											(
-												provided ?
-												Expression.Parameter(field, schema, value) :
-												Expression.Parameter(field, schema)
-											);
-
-							statement.Values.Add(parameter);
-							statement.Parameters.Add(parameter);
-
-							/* 开始处理修改子句部分 */
-
-							//注：可能因为非主键的唯一约束导致新增部分失败，
-							//因此必须对含有外部序列字段的UPSERT语句，增加一个重新获取这些外部序列字段的附属查询语句。
-							if(simplex.Sequence != null && !context.IsMultiple)
-								sequences.Add(simplex);
-
-							//忽略不可变字段和序列字段
-							if(simplex.Immutable || simplex.Sequence != null)
-								continue;
-
-							if(owner == null)
-							{
-								if(!Utility.IsGenerateRequired(ref data, schema.Name))
-									continue;
-							}
-							else
-							{
-								//只有一对一(零)的导航属性才需要验证对应的字段值是否变更过，如果没有变更则忽略当前字段
-								if(owner.Token.Property is IDataEntityComplexProperty complex &&
-								   complex.Multiplicity != DataAssociationMultiplicity.Many &&
-								   !Utility.IsGenerateRequired(ref data, schema.Name))
-									continue;
-							}
-
-							//确认当前成员是否有提供的写入值
-							if(context.Validate(DataAccessMethod.Update, simplex, out value))
-							{
-								parameter = Expression.Parameter(field, schema, value);
-								statement.Parameters.Add(parameter);
-							}
-
-							statement.Updation.Add(new FieldValue(field, parameter));
-						}
+						statement.Sequence = new SelectStatement(owner?.FullPath);
+						statement.Sequence.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
 					}
 					else
 					{
-						//不可变复合属性不支持任何写操作，即在修改操作中不能包含不可变复合属性
-						if(schema.Token.Property.Immutable)
-							throw new DataException($"The '{schema.FullPath}' is an immutable complex(navigation) property and does not support the upsert operation.");
+						//确认当前成员是否有提供的写入值
+						var provided = context.Validate(DataAccessMethod.Insert, simplex, out var value);
 
-						if(!schema.HasChildren)
-							throw new DataException($"Missing members that does not specify '{schema.FullPath}' complex property.");
+						var field = statement.Table.CreateField(schema.Token);
+						statement.Fields.Add(field);
 
-						var complex = (IDataEntityComplexProperty)schema.Token.Property;
-						var slaves = BuildUpserts(
-							context,
-							complex.Foreign,
-							data,
-							schema,
-							schema.Children);
+						var parameter = Utility.IsLinked(owner, simplex) ?
+										(
+											provided ?
+											Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
+											Expression.Parameter(schema.Token.Property.Name, simplex.Type)
+										) :
+										(
+											provided ?
+											Expression.Parameter(field, schema, value) :
+											Expression.Parameter(field, schema)
+										);
 
-						foreach(var slave in slaves)
+						statement.Values.Add(parameter);
+						statement.Parameters.Add(parameter);
+
+						/* 开始处理修改子句部分 */
+
+						//注：可能因为非主键的唯一约束导致新增部分失败，
+						//因此必须对含有外部序列字段的UPSERT语句，增加一个重新获取这些外部序列字段的附属查询语句。
+						if(simplex.Sequence != null && !context.IsMultiple)
+							sequences.Add(simplex);
+
+						//忽略不可变字段和序列字段
+						if(simplex.Immutable || simplex.Sequence != null)
+							continue;
+
+						if(owner == null)
 						{
-							slave.Schema = schema;
-							statement.Slaves.Add(slave);
+							if(!Utility.IsGenerateRequired(ref data, schema.Name))
+								continue;
 						}
+						else
+						{
+							//只有一对一(零)的导航属性才需要验证对应的字段值是否变更过，如果没有变更则忽略当前字段
+							if(owner.Token.Property is IDataEntityComplexProperty complex &&
+							   complex.Multiplicity != DataAssociationMultiplicity.Many &&
+							   !Utility.IsGenerateRequired(ref data, schema.Name))
+								continue;
+						}
+
+						//确认当前成员是否有提供的写入值
+						if(context.Validate(DataAccessMethod.Update, simplex, out value))
+						{
+							parameter = Expression.Parameter(field, schema, value);
+							statement.Parameters.Add(parameter);
+						}
+
+						statement.Updation.Add(new FieldValue(field, parameter));
 					}
 				}
-
-				//构建重新获取外部序列字段的附属查询语句
-				if(sequences != null && sequences.Count > 0)
+				else
 				{
-					var selection = new SelectStatement(inherit, owner?.FullPath);
+					//不可变复合属性不支持任何写操作，即在修改操作中不能包含不可变复合属性
+					if(schema.Token.Property.Immutable)
+						throw new DataException($"The '{schema.FullPath}' is an immutable complex(navigation) property and does not support the upsert operation.");
 
-					for(int i = 0; i < sequences.Count; i++)
-						selection.Select.Members.Add(selection.CreateField(sequences[i]));
+					if(!schema.HasChildren)
+						throw new DataException($"Missing members that does not specify '{schema.FullPath}' complex property.");
 
-					var conditions = ConditionExpression.And();
+					var complex = (IDataEntityComplexProperty)schema.Token.Property;
+					var slaves = BuildUpserts(
+						context,
+						complex.Foreign,
+						data,
+						schema,
+						schema.Children);
 
-					foreach(var fieldSetter in statement.Updation)
+					foreach(var slave in slaves)
 					{
-						conditions.Add(Expression.Equal(fieldSetter.Field, fieldSetter.Value));
-					}
-
-					if(conditions.Count > 0)
-					{
-						foreach(var parameter in statement.Parameters)
-							selection.Parameters.Add(parameter);
-
-						selection.Where = conditions;
-						statement.Slaves.Add(selection);
+						slave.Schema = schema;
+						statement.Slaves.Add(slave);
 					}
 				}
-
-				if(statement.Fields.Count > 0)
-					yield return statement;
 			}
+
+			//构建重新获取外部序列字段的附属查询语句
+			if(sequences != null && sequences.Count > 0)
+			{
+				var selection = new SelectStatement(inherit, owner?.FullPath);
+
+				for(int i = 0; i < sequences.Count; i++)
+					selection.Select.Members.Add(selection.CreateField(sequences[i]));
+
+				var conditions = ConditionExpression.And();
+
+				foreach(var fieldSetter in statement.Updation)
+				{
+					conditions.Add(Expression.Equal(fieldSetter.Field, fieldSetter.Value));
+				}
+
+				if(conditions.Count > 0)
+				{
+					foreach(var parameter in statement.Parameters)
+						selection.Parameters.Add(parameter);
+
+					selection.Where = conditions;
+					statement.Slaves.Add(selection);
+				}
+			}
+
+			if(statement.Fields.Count > 0)
+				yield return statement;
 		}
-
-		private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataUpsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
-		#endregion
-
-		#region 虚拟方法
-		protected virtual UpsertStatement CreateStatement(IDataEntity entity, SchemaMember schema) => new(entity, schema);
-		#endregion
 	}
+
+	private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataUpsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
+	#endregion
+
+	#region 虚拟方法
+	protected virtual UpsertStatement CreateStatement(IDataEntity entity, SchemaMember schema) => new(entity, schema);
+	#endregion
 }

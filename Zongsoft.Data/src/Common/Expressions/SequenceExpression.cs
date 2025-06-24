@@ -28,32 +28,30 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public enum SequenceMethod
 {
-	public enum SequenceMethod
+	Next,
+	Current,
+}
+
+public class SequenceExpression : MethodExpression
+{
+	#region 构造函数
+	private SequenceExpression(string name, SequenceMethod method) : base(name, MethodType.Function)
 	{
-		Next,
-		Current,
+		this.Method = method;
 	}
+	#endregion
 
-	public class SequenceExpression : MethodExpression
-	{
-		#region 构造函数
-		private SequenceExpression(string name, SequenceMethod method) : base(name, MethodType.Function)
-		{
-			this.Method = method;
-		}
-		#endregion
+	#region 公共属性
+	public SequenceMethod Method { get; }
+	#endregion
 
-		#region 公共属性
-		public SequenceMethod Method { get; }
-		#endregion
-
-		#region 静态方法
-		public static SequenceExpression Next(string name, string alias = null) => new SequenceExpression(name, SequenceMethod.Next) { Alias = alias };
-		public static SequenceExpression Current(string name, string alias = null) => new SequenceExpression(name, SequenceMethod.Current) { Alias = alias };
-		#endregion
-	}
+	#region 静态方法
+	public static SequenceExpression Next(string name, string alias = null) => new SequenceExpression(name, SequenceMethod.Next) { Alias = alias };
+	public static SequenceExpression Current(string name, string alias = null) => new SequenceExpression(name, SequenceMethod.Current) { Alias = alias };
+	#endregion
 }

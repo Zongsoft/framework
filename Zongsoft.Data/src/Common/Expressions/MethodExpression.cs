@@ -31,59 +31,58 @@ using System;
 using System.Data;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class MethodExpression : Expression
 {
-	public class MethodExpression : Expression
+	#region 构造函数
+	protected MethodExpression(string name, MethodType type, IList<IExpression> arguments = null)
 	{
-		#region 构造函数
-		protected MethodExpression(string name, MethodType type, IList<IExpression> arguments = null)
-		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Name = name.Trim();
-			this.MethodType = type;
-			this.Arguments = arguments;
-		}
-		#endregion
+		this.Name = name.Trim();
+		this.MethodType = type;
+		this.Arguments = arguments;
+	}
+	#endregion
 
-		#region 公共属性
-		public string Name { get; }
-		public string Alias { get; set; }
-		public MethodType MethodType { get; }
-		public IList<IExpression> Arguments { get; }
-		#endregion
+	#region 公共属性
+	public string Name { get; }
+	public string Alias { get; set; }
+	public MethodType MethodType { get; }
+	public IList<IExpression> Arguments { get; }
+	#endregion
 
-		#region 静态方法
-		public static MethodExpression Function(string name, params IExpression[] arguments) => new MethodExpression(name, MethodType.Function, arguments);
-		public static MethodExpression Procedure(string name, params IExpression[] arguments) => new MethodExpression(name, MethodType.Procedure, arguments);
-		#endregion
+	#region 静态方法
+	public static MethodExpression Function(string name, params IExpression[] arguments) => new MethodExpression(name, MethodType.Function, arguments);
+	public static MethodExpression Procedure(string name, params IExpression[] arguments) => new MethodExpression(name, MethodType.Procedure, arguments);
+	#endregion
+}
+
+public class CastFunctionExpression : MethodExpression
+{
+	public CastFunctionExpression(IExpression value, DbType type, int length = 0, string style = null) : base("CAST", MethodType.Function)
+	{
+		this.Value = value;
+		this.Type = type;
+		this.Length = length;
+		this.Style = style;
 	}
 
-	public class CastFunctionExpression : MethodExpression
+	public CastFunctionExpression(IExpression value, DbType type, byte precision, byte scale, string style = null) : base("CAST", MethodType.Function)
 	{
-		public CastFunctionExpression(IExpression value, DbType type, int length = 0, string style = null) : base("CAST", MethodType.Function)
-		{
-			this.Value = value;
-			this.Type = type;
-			this.Length = length;
-			this.Style = style;
-		}
-
-		public CastFunctionExpression(IExpression value, DbType type, byte precision, byte scale, string style = null) : base("CAST", MethodType.Function)
-		{
-			this.Value = value;
-			this.Type = type;
-			this.Precision = precision;
-			this.Scale = scale;
-			this.Style = style;
-		}
-
-		public IExpression Value { get; }
-		public DbType Type { get; }
-		public int Length { get; }
-		public byte Precision { get; }
-		public byte Scale { get; }
-		public string Style { get; }
+		this.Value = value;
+		this.Type = type;
+		this.Precision = precision;
+		this.Scale = scale;
+		this.Style = style;
 	}
+
+	public IExpression Value { get; }
+	public DbType Type { get; }
+	public int Length { get; }
+	public byte Precision { get; }
+	public byte Scale { get; }
+	public string Style { get; }
 }

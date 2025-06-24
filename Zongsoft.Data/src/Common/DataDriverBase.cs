@@ -31,73 +31,72 @@ using System;
 using System.Data;
 using System.Data.Common;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public abstract class DataDriverBase : IDataDriver
 {
-	public abstract class DataDriverBase : IDataDriver
+	#region 构造函数
+	protected DataDriverBase()
 	{
-		#region 构造函数
-		protected DataDriverBase()
-		{
-			//创建表达式访问器
-			this.Visitor = this.CreateVisitor();
-			//创建语句插槽管理器
-			this.Slotter = this.CreateSlotter();
+		//创建表达式访问器
+		this.Visitor = this.CreateVisitor();
+		//创建语句插槽管理器
+		this.Slotter = this.CreateSlotter();
 
-			//创建功能特性集合
-			this.Features = new FeatureCollection();
-		}
-		#endregion
-
-		#region 公共属性
-		public abstract string Name { get; }
-		public FeatureCollection Features { get; }
-		public Expressions.StatementSlotter Slotter { get; }
-		public Expressions.ExpressionVisitorBase Visitor { get; }
-		public abstract Expressions.IStatementBuilder Builder { get; }
-		#endregion
-
-		#region 公共方法
-		public virtual Exception OnError(IDataAccessContext context, Exception exception) => exception;
-		public abstract IDataImporter CreateImporter();
-		public abstract DbConnection CreateConnection(string connectionString = null);
-		public abstract DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null);
-		public virtual DbCommand CreateCommand() => this.CreateCommand(null, CommandType.Text);
-		public abstract DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text);
-		public virtual DbCommand CreateCommand(IDataAccessContextBase context, Expressions.IStatementBase statement)
-		{
-			if(statement == null)
-				throw new ArgumentNullException(nameof(statement));
-
-			//创建指定语句的数据命令
-			var command = this.CreateCommand(this.Visitor.Visit(statement), CommandType.Text);
-
-			//设置数据命令的参数集
-			foreach(var parameter in statement.Parameters)
-			{
-				//通过命令创建一个新的空参数
-				var dbParameter = command.CreateParameter();
-
-				//设置参数对象的各属性的初始值
-				//注意：不能设置参数的DbType属性，因为不同数据提供程序可能因为不支持特定类型而导致异常
-				dbParameter.ParameterName = parameter.Name;
-				dbParameter.Direction = parameter.Direction;
-				dbParameter.Value = parameter.Value ?? DBNull.Value;
-
-				//设置命令参数各属性
-				this.SetParameter(dbParameter, parameter);
-
-				//将参数加入到命令的参数集中
-				command.Parameters.Add(dbParameter);
-			}
-
-			return command;
-		}
-		#endregion
-
-		#region 保护方法
-		protected abstract Expressions.ExpressionVisitorBase CreateVisitor();
-		protected virtual Expressions.StatementSlotter CreateSlotter() => new();
-		protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression) => parameter.DbType = expression.DbType;
-		#endregion
+		//创建功能特性集合
+		this.Features = new FeatureCollection();
 	}
+	#endregion
+
+	#region 公共属性
+	public abstract string Name { get; }
+	public FeatureCollection Features { get; }
+	public Expressions.StatementSlotter Slotter { get; }
+	public Expressions.ExpressionVisitorBase Visitor { get; }
+	public abstract Expressions.IStatementBuilder Builder { get; }
+	#endregion
+
+	#region 公共方法
+	public virtual Exception OnError(IDataAccessContext context, Exception exception) => exception;
+	public abstract IDataImporter CreateImporter();
+	public abstract DbConnection CreateConnection(string connectionString = null);
+	public abstract DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null);
+	public virtual DbCommand CreateCommand() => this.CreateCommand(null, CommandType.Text);
+	public abstract DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text);
+	public virtual DbCommand CreateCommand(IDataAccessContextBase context, Expressions.IStatementBase statement)
+	{
+		if(statement == null)
+			throw new ArgumentNullException(nameof(statement));
+
+		//创建指定语句的数据命令
+		var command = this.CreateCommand(this.Visitor.Visit(statement), CommandType.Text);
+
+		//设置数据命令的参数集
+		foreach(var parameter in statement.Parameters)
+		{
+			//通过命令创建一个新的空参数
+			var dbParameter = command.CreateParameter();
+
+			//设置参数对象的各属性的初始值
+			//注意：不能设置参数的DbType属性，因为不同数据提供程序可能因为不支持特定类型而导致异常
+			dbParameter.ParameterName = parameter.Name;
+			dbParameter.Direction = parameter.Direction;
+			dbParameter.Value = parameter.Value ?? DBNull.Value;
+
+			//设置命令参数各属性
+			this.SetParameter(dbParameter, parameter);
+
+			//将参数加入到命令的参数集中
+			command.Parameters.Add(dbParameter);
+		}
+
+		return command;
+	}
+	#endregion
+
+	#region 保护方法
+	protected abstract Expressions.ExpressionVisitorBase CreateVisitor();
+	protected virtual Expressions.StatementSlotter CreateSlotter() => new();
+	protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression) => parameter.DbType = expression.DbType;
+	#endregion
 }

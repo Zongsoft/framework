@@ -30,49 +30,48 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class FieldDefinition : Expression
 {
-	public class FieldDefinition : Expression
+	#region 构造函数
+	public FieldDefinition(string name, System.Data.DbType type, bool nullable = true)
 	{
-		#region 构造函数
-		public FieldDefinition(string name, System.Data.DbType type, bool nullable = true)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Name = name;
-			this.DbType = type;
-			this.Nullable = nullable;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取字段的名称。</summary>
-		public string Name { get; }
-
-		/// <summary>获取或设置字段的数据类型。</summary>
-		public System.Data.DbType DbType { get; set; }
-
-		/// <summary>获取或设置字段是否允许为空。</summary>
-		public bool Nullable { get; set; }
-
-		/// <summary>获取或设置数值字段的最大长度。</summary>
-		public int Length { get; set; }
-
-		/// <summary>获取或设置数值字段的精度。</summary>
-		public byte Precision { get; set; }
-
-		/// <summary>获取或设置数值字段的小数点位数。</summary>
-		public byte Scale { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => $"{this.Name} {this.DbType} {(this.Nullable ? "NULL" : "NOT NULL")}";
-		#endregion
+		this.Name = name;
+		this.DbType = type;
+		this.Nullable = nullable;
 	}
+	#endregion
 
-	public class FieldDefinitionCollection() : KeyedCollection<string, FieldDefinition>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(FieldDefinition field) => field.Name;
-	}
+	#region 公共属性
+	/// <summary>获取字段的名称。</summary>
+	public string Name { get; }
+
+	/// <summary>获取或设置字段的数据类型。</summary>
+	public System.Data.DbType DbType { get; set; }
+
+	/// <summary>获取或设置字段是否允许为空。</summary>
+	public bool Nullable { get; set; }
+
+	/// <summary>获取或设置数值字段的最大长度。</summary>
+	public int Length { get; set; }
+
+	/// <summary>获取或设置数值字段的精度。</summary>
+	public byte Precision { get; set; }
+
+	/// <summary>获取或设置数值字段的小数点位数。</summary>
+	public byte Scale { get; set; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"{this.Name} {this.DbType} {(this.Nullable ? "NULL" : "NOT NULL")}";
+	#endregion
+}
+
+public class FieldDefinitionCollection() : KeyedCollection<string, FieldDefinition>(StringComparer.OrdinalIgnoreCase)
+{
+	protected override string GetKeyForItem(FieldDefinition field) => field.Name;
 }

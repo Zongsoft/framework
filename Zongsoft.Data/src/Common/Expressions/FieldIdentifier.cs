@@ -28,98 +28,89 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+/// <summary>
+/// 表示字段标识的表达式。
+/// </summary>
+public class FieldIdentifier : Expression, IIdentifier, IEquatable<FieldIdentifier>
 {
-	/// <summary>
-	/// 表示字段标识的表达式。
-	/// </summary>
-	public class FieldIdentifier : Expression, IIdentifier, IEquatable<FieldIdentifier>
+	#region 构造函数
+	public FieldIdentifier(ISource table, string name, string alias = null)
 	{
-		#region 构造函数
-		public FieldIdentifier(ISource table, string name, string alias = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Table = table ?? throw new ArgumentNullException(nameof(table));
-			this.Name = name.Trim();
-			this.Alias = alias;
-		}
-
-		public FieldIdentifier(string name, string alias = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-
-			this.Name = name.Trim();
-			this.Alias = alias;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取字段标识所属的源（表标识、关联子句）。</summary>
-		public ISource Table { get; }
-
-		/// <summary>获取字段名称。</summary>
-		public string Name { get; }
-
-		/// <summary>获取或设置字段标识的别名。</summary>
-		public string Alias { get; set; }
-
-		/// <summary>获取或设置字段标识对应的实体属性标记。</summary>
-		public Metadata.DataEntityPropertyToken Token { get; set; }
-		#endregion
-
-		#region 公共方法
-		public BinaryExpression Add(IExpression value) => Expression.Add(this, value);
-		public BinaryExpression Subtract(IExpression value) => Expression.Subtract(this, value);
-		public BinaryExpression Multiply(IExpression value) => Expression.Multiply(this, value);
-		public BinaryExpression Divide(IExpression value) => Expression.Divide(this, value);
-		public BinaryExpression Modulo(IExpression value) => Expression.Modulo(this, value);
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			if(string.IsNullOrEmpty(this.Table.Alias))
-			{
-				if(string.IsNullOrEmpty(this.Alias))
-					return this.Name;
-				else
-					return this.Name + " AS " + this.Alias;
-			}
-			else
-			{
-				if(string.IsNullOrEmpty(this.Alias))
-					return this.Table.Alias + "." + this.Name;
-				else
-					return this.Table.Alias + "." + this.Name + " AS " + this.Alias;
-			}
-		}
-
-		public override int GetHashCode()
-		{
-			var alias = this.Alias;
-
-			if(string.IsNullOrEmpty(alias))
-				return HashCode.Combine(this.Table, this.Name.ToUpperInvariant());
-			else
-				return HashCode.Combine(this.Table, this.Name.ToUpperInvariant(), alias.ToUpperInvariant());
-		}
-
-		public bool Equals(FieldIdentifier other)
-		{
-			if(other == null)
-				return false;
-
-			return this.Table == other.Table &&
-			       string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) &&
-			       string.Equals(this.Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
-		}
-
-		public override bool Equals(object obj) => obj is FieldIdentifier other && this.Equals(other);
-		#endregion
+		this.Table = table ?? throw new ArgumentNullException(nameof(table));
+		this.Name = name.Trim();
+		this.Alias = alias;
 	}
+
+	public FieldIdentifier(string name, string alias = null)
+	{
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		this.Name = name.Trim();
+		this.Alias = alias;
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取字段标识所属的源（表标识、关联子句）。</summary>
+	public ISource Table { get; }
+
+	/// <summary>获取字段名称。</summary>
+	public string Name { get; }
+
+	/// <summary>获取或设置字段标识的别名。</summary>
+	public string Alias { get; set; }
+
+	/// <summary>获取或设置字段标识对应的实体属性标记。</summary>
+	public Metadata.DataEntityPropertyToken Token { get; set; }
+	#endregion
+
+	#region 公共方法
+	public BinaryExpression Add(IExpression value) => Expression.Add(this, value);
+	public BinaryExpression Subtract(IExpression value) => Expression.Subtract(this, value);
+	public BinaryExpression Multiply(IExpression value) => Expression.Multiply(this, value);
+	public BinaryExpression Divide(IExpression value) => Expression.Divide(this, value);
+	public BinaryExpression Modulo(IExpression value) => Expression.Modulo(this, value);
+	#endregion
+
+	#region 重写方法
+	public override string ToString()
+	{
+		if(string.IsNullOrEmpty(this.Table.Alias))
+		{
+			if(string.IsNullOrEmpty(this.Alias))
+				return this.Name;
+			else
+				return this.Name + " AS " + this.Alias;
+		}
+		else
+		{
+			if(string.IsNullOrEmpty(this.Alias))
+				return this.Table.Alias + "." + this.Name;
+			else
+				return this.Table.Alias + "." + this.Name + " AS " + this.Alias;
+		}
+	}
+
+	public override int GetHashCode()
+	{
+		var alias = this.Alias;
+
+		if(string.IsNullOrEmpty(alias))
+			return HashCode.Combine(this.Table, this.Name.ToUpperInvariant());
+		else
+			return HashCode.Combine(this.Table, this.Name.ToUpperInvariant(), alias.ToUpperInvariant());
+	}
+
+	public override bool Equals(object obj) => this.Equals(obj as FieldIdentifier);
+	public bool Equals(FieldIdentifier other) => other is not null && this.Table == other.Table &&
+		string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) &&
+		string.Equals(this.Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
+	#endregion
 }

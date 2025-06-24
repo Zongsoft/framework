@@ -32,9 +32,8 @@ using System.Collections.Generic;
 
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DataUpdateExecutor : DataMutateExecutor<UpdateStatement>
 {
-	public class DataUpdateExecutor : DataMutateExecutor<UpdateStatement>
-	{
-	}
 }

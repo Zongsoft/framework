@@ -33,21 +33,19 @@ using System.Collections.Generic;
 using Zongsoft.Collections;
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.Common.Expressions
-{
-	public class DeleteStatement : MutateStatement
-	{
-		#region 构造函数
-		public DeleteStatement(IDataEntity entity) : base(entity)
-		{
-			this.Tables = new List<TableIdentifier>();
-			this.Tables.Add(this.Table);
-		}
-		#endregion
+namespace Zongsoft.Data.Common.Expressions;
 
-		#region 公共属性
-		/// <summary>获取一个表标识的集合，表示要删除的表。</summary>
-		public IList<TableIdentifier> Tables { get; }
-		#endregion
+public class DeleteStatement : MutateStatement
+{
+	#region 构造函数
+	public DeleteStatement(IDataEntity entity) : base(entity)
+	{
+		this.Tables = [this.Table];
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取一个表标识的集合，表示要删除的表。</summary>
+	public IList<TableIdentifier> Tables { get; }
+	#endregion
 }

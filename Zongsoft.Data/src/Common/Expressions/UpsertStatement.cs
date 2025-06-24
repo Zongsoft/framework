@@ -32,53 +32,52 @@ using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class UpsertStatement : MutateStatement
 {
-	public class UpsertStatement : MutateStatement
+	#region 构造函数
+	public UpsertStatement(IDataEntity entity, SchemaMember schema) : base(entity, schema, null)
 	{
-		#region 构造函数
-		public UpsertStatement(IDataEntity entity, SchemaMember schema) : base(entity, schema, null)
-		{
-			this.Fields = new List<FieldIdentifier>();
-			this.Values = new List<IExpression>();
-			this.Updation = new List<FieldValue>();
-			this.Options = new UpsertStatementOptions();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取插入语句对应的序号字段值（如果有的话）的查询语句。</summary>
-		public SelectStatement Sequence { get; set; }
-
-		/// <summary>获取新增或更新字段集合。</summary>
-		public IList<FieldIdentifier> Fields { get; }
-
-		/// <summary>获取新增或更新字段值集合。</summary>
-		public IList<IExpression> Values { get; }
-
-		/// <summary>获取更新字段/值的集合。</summary>
-		public ICollection<FieldValue> Updation { get; }
-
-		/// <summary>获取插入语句的选项。</summary>
-		public UpsertStatementOptions Options { get; }
-		#endregion
+		this.Fields = new List<FieldIdentifier>();
+		this.Values = new List<IExpression>();
+		this.Updation = new List<FieldValue>();
+		this.Options = new UpsertStatementOptions();
 	}
+	#endregion
 
-	public class UpsertStatementOptions
+	#region 公共属性
+	/// <summary>获取插入语句对应的序号字段值（如果有的话）的查询语句。</summary>
+	public SelectStatement Sequence { get; set; }
+
+	/// <summary>获取新增或更新字段集合。</summary>
+	public IList<FieldIdentifier> Fields { get; }
+
+	/// <summary>获取新增或更新字段值集合。</summary>
+	public IList<IExpression> Values { get; }
+
+	/// <summary>获取更新字段/值的集合。</summary>
+	public ICollection<FieldValue> Updation { get; }
+
+	/// <summary>获取插入语句的选项。</summary>
+	public UpsertStatementOptions Options { get; }
+	#endregion
+}
+
+public class UpsertStatementOptions
+{
+	#region 公共属性
+	/// <summary>获取或设置一个值，指示是否忽略插入数据导致的数据库约束（主键、唯一索引、外键约束等）冲突。</summary>
+	public bool ConstraintIgnored { get; set; }
+	#endregion
+
+	#region 公共方法
+	public void Apply(IDataUpsertOptions options)
 	{
-		#region 公共属性
-		/// <summary>获取或设置一个值，指示是否忽略插入数据导致的数据库约束（主键、唯一索引、外键约束等）冲突。</summary>
-		public bool ConstraintIgnored { get; set; }
-		#endregion
+		if(options == null)
+			return;
 
-		#region 公共方法
-		public void Apply(IDataUpsertOptions options)
-		{
-			if(options == null)
-				return;
-
-			this.ConstraintIgnored = options.ConstraintIgnored;
-		}
-		#endregion
+		this.ConstraintIgnored = options.ConstraintIgnored;
 	}
+	#endregion
 }

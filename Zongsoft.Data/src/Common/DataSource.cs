@@ -31,120 +31,119 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataSource>
 {
-	public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataSource>
+	#region 公共常量
+	public const char SEPARATOR = '#';
+	#endregion
+
+	#region 私有常量
+	private static readonly Regex MARS_FEATURE = new Regex(@"\bMultipleActiveResultSets\s*=\s*True\b", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+	#endregion
+
+	#region 成员字段
+	private string _name;
+	private string _connectionString;
+	private string _driverName;
+	private IDataDriver _driver;
+	private FeatureCollection _features;
+	#endregion
+
+	#region 构造函数
+	public DataSource(Configuration.IConnectionSettings connectionSettings)
 	{
-		#region 公共常量
-		public const char SEPARATOR = '#';
-		#endregion
+		if(connectionSettings == null)
+			throw new ArgumentNullException(nameof(connectionSettings));
 
-		#region 私有常量
-		private static readonly Regex MARS_FEATURE = new Regex(@"\bMultipleActiveResultSets\s*=\s*True\b", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
-		#endregion
+		if(connectionSettings.Driver == null || string.IsNullOrWhiteSpace(connectionSettings.Driver.Name))
+			throw new DataException($"The required driver is not specified in the database connection settings.");
 
-		#region 成员字段
-		private string _name;
-		private string _connectionString;
-		private string _driverName;
-		private IDataDriver _driver;
-		private FeatureCollection _features;
-		#endregion
+		_name = connectionSettings.Name;
+		_connectionString = connectionSettings.Value;
+		_driverName = connectionSettings.Driver.Name;
+		this.Mode = DataAccessMode.All;
+		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
-		#region 构造函数
-		public DataSource(Configuration.IConnectionSettings connectionSettings)
+		if(connectionSettings.HasProperties)
 		{
-			if(connectionSettings == null)
-				throw new ArgumentNullException(nameof(connectionSettings));
-
-			if(connectionSettings.Driver == null || string.IsNullOrWhiteSpace(connectionSettings.Driver.Name))
-				throw new DataException($"The required driver is not specified in the database connection settings.");
-
-			_name = connectionSettings.Name;
-			_connectionString = connectionSettings.Value;
-			_driverName = connectionSettings.Driver.Name;
-			this.Mode = DataAccessMode.All;
-			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
-			if(connectionSettings.HasProperties)
+			if(connectionSettings.Properties.TryGetValue("mode", out var mode) && mode != null && mode.Length > 0)
 			{
-				if(connectionSettings.Properties.TryGetValue("mode", out var mode) && mode != null && mode.Length > 0)
+				this.Mode = mode.Trim().ToLowerInvariant() switch
 				{
-					this.Mode = mode.Trim().ToLowerInvariant() switch
-					{
-						"r" or "read" or "readonly" => DataAccessMode.ReadOnly,
-						"w" or "write" or "writeonly" => DataAccessMode.WriteOnly,
-						"*" or "all" or "none" or "both" or "read+write" or "write+read" => DataAccessMode.All,
-						_ => throw new Configuration.ConfigurationException($"Invalid '{mode}' mode value of the ConnectionString configuration."),
-					};
-				}
+					"r" or "read" or "readonly" => DataAccessMode.ReadOnly,
+					"w" or "write" or "writeonly" => DataAccessMode.WriteOnly,
+					"*" or "all" or "none" or "both" or "read+write" or "write+read" => DataAccessMode.All,
+					_ => throw new Configuration.ConfigurationException($"Invalid '{mode}' mode value of the ConnectionString configuration."),
+				};
+			}
 
-				foreach(var property in connectionSettings.Properties)
-				{
-					if(!string.Equals(property.Key, nameof(this.Mode), StringComparison.OrdinalIgnoreCase))
-						this.Properties[property.Key] = property.Value;
-				}
+			foreach(var property in connectionSettings.Properties)
+			{
+				if(!string.Equals(property.Key, nameof(this.Mode), StringComparison.OrdinalIgnoreCase))
+					this.Properties[property.Key] = property.Value;
 			}
 		}
-
-		public DataSource(string name, string connectionString, string driverName = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
-			if(string.IsNullOrEmpty(connectionString))
-				throw new ArgumentNullException(nameof(connectionString));
-
-			_name = name;
-			_connectionString = connectionString;
-			_driverName = driverName;
-			this.Mode = DataAccessMode.All;
-			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name => _name;
-		public string ConnectionString => _connectionString;
-		public DataAccessMode Mode { get; set; }
-		public IDictionary<string, object> Properties { get; }
-
-		public IDataDriver Driver
-		{
-			get
-			{
-				if(_driver == null && !string.IsNullOrEmpty(_driverName))
-					_driver = DataEnvironment.Drivers.TryGetValue(_driverName, out var driver) ? driver : throw new DataException($"The '{_driverName}' data driver does not exist.");
-
-				return _driver;
-			}
-		}
-
-		public FeatureCollection Features
-		{
-			get
-			{
-				if(_features == null)
-				{
-					_features = new FeatureCollection(this.Driver?.Features);
-
-					if(!string.IsNullOrEmpty(_connectionString) && MARS_FEATURE.IsMatch(_connectionString))
-						_features.Add(Feature.MultipleActiveResultSets);
-				}
-
-				return _features;
-			}
-		}
-		#endregion
-
-		#region 重写方法
-		public bool Equals(IDataSource other) => other is not null && string.Equals(_name, other.Name, StringComparison.OrdinalIgnoreCase) && this.Mode == other.Mode;
-		public bool Equals(DataSource other) => other is not null && string.Equals(_name, other.Name, StringComparison.OrdinalIgnoreCase) && this.Mode == other.Mode;
-		public override bool Equals(object obj) => obj is IDataSource other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant(), this.Mode);
-
-		public override string ToString() => string.IsNullOrEmpty(_driverName) ?
-			$"{_name} <{_connectionString}>" :
-			$"[{_driverName}]{_name} <{_connectionString}>";
-		#endregion
 	}
+
+	public DataSource(string name, string connectionString, string driverName = null)
+	{
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(connectionString))
+			throw new ArgumentNullException(nameof(connectionString));
+
+		_name = name;
+		_connectionString = connectionString;
+		_driverName = driverName;
+		this.Mode = DataAccessMode.All;
+		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+	}
+	#endregion
+
+	#region 公共属性
+	public string Name => _name;
+	public string ConnectionString => _connectionString;
+	public DataAccessMode Mode { get; set; }
+	public IDictionary<string, object> Properties { get; }
+
+	public IDataDriver Driver
+	{
+		get
+		{
+			if(_driver == null && !string.IsNullOrEmpty(_driverName))
+				_driver = DataEnvironment.Drivers.TryGetValue(_driverName, out var driver) ? driver : throw new DataException($"The '{_driverName}' data driver does not exist.");
+
+			return _driver;
+		}
+	}
+
+	public FeatureCollection Features
+	{
+		get
+		{
+			if(_features == null)
+			{
+				_features = new FeatureCollection(this.Driver?.Features);
+
+				if(!string.IsNullOrEmpty(_connectionString) && MARS_FEATURE.IsMatch(_connectionString))
+					_features.Add(Feature.MultipleActiveResultSets);
+			}
+
+			return _features;
+		}
+	}
+	#endregion
+
+	#region 重写方法
+	public bool Equals(IDataSource other) => other is not null && string.Equals(_name, other.Name, StringComparison.OrdinalIgnoreCase) && this.Mode == other.Mode;
+	public bool Equals(DataSource other) => other is not null && string.Equals(_name, other.Name, StringComparison.OrdinalIgnoreCase) && this.Mode == other.Mode;
+	public override bool Equals(object obj) => obj is IDataSource other && this.Equals(other);
+	public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant(), this.Mode);
+
+	public override string ToString() => string.IsNullOrEmpty(_driverName) ?
+		$"{_name} <{_connectionString}>" :
+		$"[{_driverName}]{_name} <{_connectionString}>";
+	#endregion
 }

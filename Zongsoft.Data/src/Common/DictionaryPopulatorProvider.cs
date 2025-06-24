@@ -30,49 +30,48 @@
 using System;
 using System.Data;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DictionaryPopulatorProvider : IDataPopulatorProvider
 {
-	public class DictionaryPopulatorProvider : IDataPopulatorProvider
+	#region 单例模式
+	public static readonly DictionaryPopulatorProvider Instance = new();
+	#endregion
+
+	#region 构造函数
+	private DictionaryPopulatorProvider() { }
+	#endregion
+
+	#region 公共方法
+	public bool CanPopulate(Type type)
 	{
-		#region 单例模式
-		public static readonly DictionaryPopulatorProvider Instance = new DictionaryPopulatorProvider();
-		#endregion
-
-		#region 构造函数
-		private DictionaryPopulatorProvider() { }
-		#endregion
-
-		#region 公共方法
-		public bool CanPopulate(Type type)
-		{
-			return Zongsoft.Common.TypeExtension.IsDictionary(type);
-		}
-
-		public IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null)
-		{
-			var keys = new string[record.FieldCount];
-
-			for(int i = 0; i < record.FieldCount; i++)
-			{
-				//获取字段名对应的属性名（注意：由查询引擎确保返回的记录列名就是属性名）
-				keys[i] = record.GetName(i);
-			}
-
-			return new DictionaryPopulator(type, keys);
-		}
-
-		public IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null)
-		{
-			var keys = new string[record.FieldCount];
-
-			for(int i = 0; i < record.FieldCount; i++)
-			{
-				//获取字段名对应的属性名（注意：由查询引擎确保返回的记录列名就是属性名）
-				keys[i] = record.GetName(i);
-			}
-
-			return new DictionaryPopulator<T>(keys);
-		}
-		#endregion
+		return Zongsoft.Common.TypeExtension.IsDictionary(type);
 	}
+
+	public IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null)
+	{
+		var keys = new string[record.FieldCount];
+
+		for(int i = 0; i < record.FieldCount; i++)
+		{
+			//获取字段名对应的属性名（注意：由查询引擎确保返回的记录列名就是属性名）
+			keys[i] = record.GetName(i);
+		}
+
+		return new DictionaryPopulator(type, keys);
+	}
+
+	public IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null)
+	{
+		var keys = new string[record.FieldCount];
+
+		for(int i = 0; i < record.FieldCount; i++)
+		{
+			//获取字段名对应的属性名（注意：由查询引擎确保返回的记录列名就是属性名）
+			keys[i] = record.GetName(i);
+		}
+
+		return new DictionaryPopulator<T>(keys);
+	}
+	#endregion
 }

@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public interface IStatementSlotEvaluator
 {
-	public interface IStatementSlotEvaluator
-	{
-		string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot);
-	}
+	string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot);
 }

@@ -28,60 +28,58 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+/// <summary>
+/// 表示查询语句的基类。
+/// </summary>
+public abstract class SelectStatementBase : Statement, ISelectStatementBase, ISource
 {
-	/// <summary>
-	/// 表示查询语句的基类。
-	/// </summary>
-	public abstract class SelectStatementBase : Statement, ISelectStatementBase, ISource
+	#region 构造函数
+	protected SelectStatementBase(string alias = null, ParameterExpressionCollection parameters = null) : base(parameters)
 	{
-		#region 构造函数
-		protected SelectStatementBase(string alias = null, ParameterExpressionCollection parameters = null) : base(parameters)
-		{
-			this.Alias = alias ?? string.Empty;
-			this.Select = new SelectClause();
-		}
-
-		protected SelectStatementBase(ISource source, string alias = null, ParameterExpressionCollection parameters = null) : base(source, parameters)
-		{
-			if(source == null)
-				throw new ArgumentNullException(nameof(source));
-
-			this.Alias = alias ?? source.Alias;
-			this.Select = new SelectClause();
-		}
-
-		protected SelectStatementBase(IDataEntity entity, string alias = null, ParameterExpressionCollection parameters = null) : base(entity, "T", parameters)
-		{
-			this.Alias = alias ?? string.Empty;
-			this.Select = new SelectClause();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取查询语句的别名。</summary>
-		public string Alias { get; }
-
-		/// <summary>获取查询语句的选择子句。</summary>
-		public SelectClause Select { get; }
-		#endregion
-
-		#region 公共方法
-		public FieldIdentifier CreateField(string name, string alias = null) => new FieldIdentifier(this, name, alias);
-		public FieldIdentifier CreateField(IDataEntityProperty property)
-		{
-			if(property == null)
-				throw new ArgumentNullException(nameof(property));
-
-			return new FieldIdentifier(this, property.GetFieldName(out var alias), alias)
-			{
-				Token = new DataEntityPropertyToken(property)
-			};
-		}
-		#endregion
+		this.Alias = alias ?? string.Empty;
+		this.Select = new SelectClause();
 	}
+
+	protected SelectStatementBase(ISource source, string alias = null, ParameterExpressionCollection parameters = null) : base(source, parameters)
+	{
+		if(source == null)
+			throw new ArgumentNullException(nameof(source));
+
+		this.Alias = alias ?? source.Alias;
+		this.Select = new SelectClause();
+	}
+
+	protected SelectStatementBase(IDataEntity entity, string alias = null, ParameterExpressionCollection parameters = null) : base(entity, "T", parameters)
+	{
+		this.Alias = alias ?? string.Empty;
+		this.Select = new SelectClause();
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取查询语句的别名。</summary>
+	public string Alias { get; }
+
+	/// <summary>获取查询语句的选择子句。</summary>
+	public SelectClause Select { get; }
+	#endregion
+
+	#region 公共方法
+	public FieldIdentifier CreateField(string name, string alias = null) => new FieldIdentifier(this, name, alias);
+	public FieldIdentifier CreateField(IDataEntityProperty property)
+	{
+		if(property == null)
+			throw new ArgumentNullException(nameof(property));
+
+		return new FieldIdentifier(this, property.GetFieldName(out var alias), alias)
+		{
+			Token = new DataEntityPropertyToken(property)
+		};
+	}
+	#endregion
 }

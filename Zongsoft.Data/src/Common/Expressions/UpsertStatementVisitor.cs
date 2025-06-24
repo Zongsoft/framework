@@ -29,159 +29,158 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 {
-	public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
+	#region 构造函数
+	protected UpsertStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 	{
-		#region 构造函数
-		protected UpsertStatementVisitor() { }
-		#endregion
+		if(statement.Returning != null && statement.Returning.Table != null)
+			context.Visit(statement.Returning.Table);
 
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
+		const string SOURCE_ALIAS = "SRC";
+
+		if(statement.Fields == null || statement.Fields.Count == 0)
+			throw new DataException("Missing required fields in the upsert statment.");
+
+		context.Write("MERGE INTO ");
+		context.Visit(statement.Table);
+		context.WriteLine(" USING (SELECT ");
+
+		for(int i = 0; i < statement.Values.Count; i++)
 		{
-			if(statement.Returning != null && statement.Returning.Table != null)
-				context.Visit(statement.Returning.Table);
+			if(i > 0)
+				context.Write(",");
 
-			const string SOURCE_ALIAS = "SRC";
-
-			if(statement.Fields == null || statement.Fields.Count == 0)
-				throw new DataException("Missing required fields in the upsert statment.");
-
-			context.Write("MERGE INTO ");
-			context.Visit(statement.Table);
-			context.WriteLine(" USING (SELECT ");
-
-			for(int i = 0; i < statement.Values.Count; i++)
-			{
-				if(i > 0)
-					context.Write(",");
-
-				context.Visit(statement.Values[i]);
-			}
-
-			context.WriteLine(") AS " + SOURCE_ALIAS + " (");
-
-			for(int i = 0; i < statement.Fields.Count; i++)
-			{
-				if(i > 0)
-					context.Write(",");
-
-				context.Write(statement.Fields[i].Name);
-			}
-
-			context.WriteLine(") ON");
-
-			for(int i = 0; i < statement.Entity.Key.Length; i++)
-			{
-				var field = Metadata.DataEntityPropertyExtension.GetFieldName(statement.Entity.Key[i], out _);
-
-				if(i > 0)
-					context.Write(" AND ");
-
-				if(string.IsNullOrEmpty(statement.Table.Alias))
-					context.Write($"{field}={SOURCE_ALIAS}.{field}");
-				else
-					context.Write($"{statement.Table.Alias}.{field}={SOURCE_ALIAS}.{field}");
-			}
-
-			if(statement.Updation.Count > 0)
-			{
-				context.WriteLine();
-				context.Write("WHEN MATCHED");
-
-				if(statement.Where != null)
-				{
-					context.Write(" AND ");
-					context.Visit(statement.Where);
-				}
-
-				context.WriteLine(" THEN");
-				context.Write("\tUPDATE SET ");
-
-				int index = 0;
-
-				foreach(var item in statement.Updation)
-				{
-					if(index++ > 0)
-						context.Write(",");
-
-					context.Visit(item.Field);
-					context.Write("=");
-
-					var parenthesisRequired = item.Value is IStatementBase;
-
-					if(parenthesisRequired)
-						context.Write("(");
-
-					context.Visit(item.Value);
-
-					if(parenthesisRequired)
-						context.Write(")");
-				}
-			}
-
-			context.WriteLine();
-			context.WriteLine("WHEN NOT MATCHED THEN");
-			context.Write("\tINSERT (");
-
-			for(int i = 0; i < statement.Fields.Count; i++)
-			{
-				if(i > 0)
-					context.Write(",");
-
-				context.Write(context.Dialect.GetIdentifier(statement.Fields[i]));
-			}
-
-			context.Write(") VALUES (");
-
-			for(int i = 0; i < statement.Fields.Count; i++)
-			{
-				if(i > 0)
-					context.Write(",");
-
-				context.Write(SOURCE_ALIAS + "." + statement.Fields[i].Name);
-			}
-
-			context.Write(")");
-
-			//输出返回子句
-			this.VisitReturning(context, statement.Returning);
-
-			context.WriteLine(";");
+			context.Visit(statement.Values[i]);
 		}
-		#endregion
 
-		#region 私有方法
-		private void VisitReturning(ExpressionVisitorContext context, ReturningClause returning)
+		context.WriteLine(") AS " + SOURCE_ALIAS + " (");
+
+		for(int i = 0; i < statement.Fields.Count; i++)
 		{
-			if(returning == null)
-				return;
+			if(i > 0)
+				context.Write(",");
 
-			context.WriteLine();
-			context.Write("RETURNING ");
+			context.Write(statement.Fields[i].Name);
+		}
 
-			if(returning.Members == null || returning.Members.Count == 0)
-				context.Write("*");
+		context.WriteLine(") ON");
+
+		for(int i = 0; i < statement.Entity.Key.Length; i++)
+		{
+			var field = Metadata.DataEntityPropertyExtension.GetFieldName(statement.Entity.Key[i], out _);
+
+			if(i > 0)
+				context.Write(" AND ");
+
+			if(string.IsNullOrEmpty(statement.Table.Alias))
+				context.Write($"{field}={SOURCE_ALIAS}.{field}");
 			else
+				context.Write($"{statement.Table.Alias}.{field}={SOURCE_ALIAS}.{field}");
+		}
+
+		if(statement.Updation.Count > 0)
+		{
+			context.WriteLine();
+			context.Write("WHEN MATCHED");
+
+			if(statement.Where != null)
 			{
-				int index = 0;
-
-				foreach(var member in returning.Members)
-				{
-					if(index++ > 0)
-						context.Write(",");
-
-					context.Visit(member.Field);
-				}
+				context.Write(" AND ");
+				context.Visit(statement.Where);
 			}
 
-			if(returning.Table != null)
+			context.WriteLine(" THEN");
+			context.Write("\tUPDATE SET ");
+
+			int index = 0;
+
+			foreach(var item in statement.Updation)
 			{
-				context.Write(" INTO ");
-				context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
+				if(index++ > 0)
+					context.Write(",");
+
+				context.Visit(item.Field);
+				context.Write("=");
+
+				var parenthesisRequired = item.Value is IStatementBase;
+
+				if(parenthesisRequired)
+					context.Write("(");
+
+				context.Visit(item.Value);
+
+				if(parenthesisRequired)
+					context.Write(")");
 			}
 		}
-		#endregion
+
+		context.WriteLine();
+		context.WriteLine("WHEN NOT MATCHED THEN");
+		context.Write("\tINSERT (");
+
+		for(int i = 0; i < statement.Fields.Count; i++)
+		{
+			if(i > 0)
+				context.Write(",");
+
+			context.Write(context.Dialect.GetIdentifier(statement.Fields[i]));
+		}
+
+		context.Write(") VALUES (");
+
+		for(int i = 0; i < statement.Fields.Count; i++)
+		{
+			if(i > 0)
+				context.Write(",");
+
+			context.Write(SOURCE_ALIAS + "." + statement.Fields[i].Name);
+		}
+
+		context.Write(")");
+
+		//输出返回子句
+		VisitReturning(context, statement.Returning);
+
+		context.WriteLine(";");
 	}
+	#endregion
+
+	#region 私有方法
+	private static void VisitReturning(ExpressionVisitorContext context, ReturningClause returning)
+	{
+		if(returning == null)
+			return;
+
+		context.WriteLine();
+		context.Write("RETURNING ");
+
+		if(returning.Members == null || returning.Members.Count == 0)
+			context.Write("*");
+		else
+		{
+			int index = 0;
+
+			foreach(var member in returning.Members)
+			{
+				if(index++ > 0)
+					context.Write(",");
+
+				context.Visit(member.Field);
+			}
+		}
+
+		if(returning.Table != null)
+		{
+			context.Write(" INTO ");
+			context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
+		}
+	}
+	#endregion
 }

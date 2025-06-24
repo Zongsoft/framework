@@ -29,16 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
-{
-	public interface IExpressionVisitor
-	{
-		#region 属性定义
-		IExpressionDialect Dialect { get; }
-		#endregion
+namespace Zongsoft.Data.Common.Expressions;
 
-		#region 方法定义
-		string Visit(IExpression expression);
-		#endregion
-	}
+public interface IExpressionVisitor
+{
+	#region 属性定义
+	IExpressionDialect Dialect { get; }
+	#endregion
+
+	#region 方法定义
+	string Visit(IExpression expression);
+	#endregion
 }

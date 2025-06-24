@@ -31,11 +31,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public interface IDataExecutor<TStatement> where TStatement : Expressions.IStatementBase
 {
-	public interface IDataExecutor<TStatement> where TStatement : Expressions.IStatementBase
-	{
-		bool Execute(IDataAccessContext context, TStatement statement);
-		ValueTask<bool> ExecuteAsync(IDataAccessContext context, TStatement statement, CancellationToken cancellation = default);
-	}
+	bool Execute(IDataAccessContext context, TStatement statement);
+	ValueTask<bool> ExecuteAsync(IDataAccessContext context, TStatement statement, CancellationToken cancellation = default);
 }

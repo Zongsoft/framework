@@ -30,65 +30,62 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 {
-	public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
+	#region 构造函数
+	protected DeleteStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, DeleteStatement statement)
 	{
-		#region 构造函数
-		protected DeleteStatementVisitor()
-		{
-		}
-		#endregion
+		if(statement.Returning != null && statement.Returning.Table != null)
+			context.Visit(statement.Returning.Table);
 
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, DeleteStatement statement)
-		{
-			if(statement.Returning != null && statement.Returning.Table != null)
-				context.Visit(statement.Returning.Table);
+		this.VisitDelete(context, statement);
+		this.VisitTables(context, statement, statement.Tables);
+		this.VisitFrom(context, statement, statement.From);
+		this.VisitWhere(context, statement, statement.Where);
 
-			this.VisitDelete(context, statement);
-			this.VisitTables(context, statement, statement.Tables);
-			this.VisitFrom(context, statement, statement.From);
-			this.VisitWhere(context, statement, statement.Where);
-
-			context.WriteLine(";");
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void VisitDelete(ExpressionVisitorContext context, DeleteStatement statement)
-		{
-			context.Write("DELETE ");
-		}
-
-		protected virtual void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables)
-		{
-			for(int i = 0; i < tables.Count; i++)
-			{
-				if(i > 0)
-					context.Write(",");
-
-				if(string.IsNullOrEmpty(tables[i].Alias))
-					context.Write(tables[i].Name);
-				else
-					context.Write(tables[i].Alias);
-			}
-		}
-
-		protected virtual void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
-		{
-			context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, statement, join));
-		}
-
-		protected virtual void VisitJoin(ExpressionVisitorContext context, DeleteStatement statement, JoinClause joining)
-		{
-			context.VisitJoin(joining);
-		}
-
-		protected virtual void VisitWhere(ExpressionVisitorContext context, DeleteStatement statement, IExpression where)
-		{
-			context.VisitWhere(where);
-		}
-		#endregion
+		context.WriteLine(";");
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void VisitDelete(ExpressionVisitorContext context, DeleteStatement statement)
+	{
+		context.Write("DELETE ");
+	}
+
+	protected virtual void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables)
+	{
+		for(int i = 0; i < tables.Count; i++)
+		{
+			if(i > 0)
+				context.Write(",");
+
+			if(string.IsNullOrEmpty(tables[i].Alias))
+				context.Write(tables[i].Name);
+			else
+				context.Write(tables[i].Alias);
+		}
+	}
+
+	protected virtual void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
+	{
+		context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, statement, join));
+	}
+
+	protected virtual void VisitJoin(ExpressionVisitorContext context, DeleteStatement statement, JoinClause joining)
+	{
+		context.VisitJoin(joining);
+	}
+
+	protected virtual void VisitWhere(ExpressionVisitorContext context, DeleteStatement statement, IExpression where)
+	{
+		context.VisitWhere(where);
+	}
+	#endregion
 }

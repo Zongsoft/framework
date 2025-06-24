@@ -30,31 +30,30 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class ExistStatementBuilder : IStatementBuilder<DataExistContext>
 {
-	public class ExistStatementBuilder : IStatementBuilder<DataExistContext>
+	#region 公共方法
+	public IEnumerable<IStatementBase> Build(DataExistContext context)
 	{
-		#region 公共方法
-		public IEnumerable<IStatementBase> Build(DataExistContext context)
+		//创建存在语句
+		var statement = this.CreateStatement(context);
+
+		//生成条件子句
+		statement.Where = statement.Where(context.Validate(), context.Aliaser);
+
+		//生成选择成员为主键项
+		foreach(var key in statement.Table.Entity.Key)
 		{
-			//创建存在语句
-			var statement = this.CreateStatement(context);
-
-			//生成条件子句
-			statement.Where = statement.Where(context.Validate(), context.Aliaser);
-
-			//生成选择成员为主键项
-			foreach(var key in statement.Table.Entity.Key)
-			{
-				statement.Select.Members.Add(statement.Table.CreateField(key));
-			}
-
-			yield return statement;
+			statement.Select.Members.Add(statement.Table.CreateField(key));
 		}
-		#endregion
 
-		#region 虚拟方法
-		protected virtual ExistStatement CreateStatement(DataExistContext context) => new(context.Entity);
-		#endregion
+		yield return statement;
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual ExistStatement CreateStatement(DataExistContext context) => new(context.Entity);
+	#endregion
 }

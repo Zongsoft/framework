@@ -30,29 +30,28 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Common.Expressions
-{
-	public class SourceCollection : KeyedCollection<string, ISource>
-	{
-		#region 构造函数
-		public SourceCollection(params ISource[] items) : base(StringComparer.OrdinalIgnoreCase)
-		{
-			if(items != null && items.Length > 0)
-			{
-				foreach(var item in items)
-					this.Add(item);
-			}
-		}
-		#endregion
+namespace Zongsoft.Data.Common.Expressions;
 
-		#region 重写方法
-		protected override string GetKeyForItem(ISource item)
+public class SourceCollection : KeyedCollection<string, ISource>
+{
+	#region 构造函数
+	public SourceCollection(params ISource[] items) : base(StringComparer.OrdinalIgnoreCase)
+	{
+		if(items != null && items.Length > 0)
 		{
-			if(item is JoinClause join)
-				return join.Name;
-			else
-				return item.Alias ?? item.ToString();
+			foreach(var item in items)
+				this.Add(item);
 		}
-		#endregion
 	}
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(ISource item)
+	{
+		if(item is JoinClause join)
+			return join.Name;
+		else
+			return item.Alias ?? item.ToString();
+	}
+	#endregion
 }

@@ -30,72 +30,71 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class SelectStatementVisitorBase<TStatement> : StatementVisitorBase<TStatement> where TStatement : SelectStatementBase
 {
-	public class SelectStatementVisitorBase<TStatement> : StatementVisitorBase<TStatement> where TStatement : SelectStatementBase
+	#region 构造函数
+	protected SelectStatementVisitorBase() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, TStatement statement)
 	{
-		#region 构造函数
-		protected SelectStatementVisitorBase() { }
-		#endregion
-
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, TStatement statement)
+		if(statement.Select == null || statement.Select.Members.Count == 0)
 		{
-			if(statement.Select == null || statement.Select.Members.Count == 0)
-			{
-				if(string.IsNullOrEmpty(statement.Alias))
-					throw new DataException("Missing select-members clause in the select statement.");
-				else
-					throw new DataException($"Missing select-members clause in the '{statement.Alias}' select statement.");
-			}
-
-			this.VisitSelect(context, statement.Select);
-			this.VisitFrom(context, statement.From);
-			this.VisitWhere(context, statement.Where);
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void VisitSelect(ExpressionVisitorContext context, SelectClause clause)
-		{
-			if(context.Output.Length > 0)
-				context.WriteLine();
-
-			context.Write("SELECT ");
-
-			this.VisitSelectOption(context, clause);
-
-			int index = 0;
-
-			foreach(var member in clause.Members)
-			{
-				if(index++ > 0)
-					context.WriteLine(",");
-
-				context.Visit(member);
-			}
+			if(string.IsNullOrEmpty(statement.Alias))
+				throw new DataException("Missing select-members clause in the select statement.");
+			else
+				throw new DataException($"Missing select-members clause in the '{statement.Alias}' select statement.");
 		}
 
-		protected virtual void VisitSelectOption(ExpressionVisitorContext context, SelectClause clause)
-		{
-			if(clause.IsDistinct)
-				context.Write("DISTINCT ");
-		}
-
-		protected virtual void VisitFrom(ExpressionVisitorContext context, ICollection<ISource> sources)
-		{
-			context.VisitFrom(sources, this.VisitJoin);
-		}
-
-		protected virtual void VisitJoin(ExpressionVisitorContext context, JoinClause joining)
-		{
-			context.VisitJoin(joining);
-		}
-
-		protected virtual void VisitWhere(ExpressionVisitorContext context, IExpression where)
-		{
-			context.VisitWhere(where);
-		}
-		#endregion
+		this.VisitSelect(context, statement.Select);
+		this.VisitFrom(context, statement.From);
+		this.VisitWhere(context, statement.Where);
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void VisitSelect(ExpressionVisitorContext context, SelectClause clause)
+	{
+		if(context.Output.Length > 0)
+			context.WriteLine();
+
+		context.Write("SELECT ");
+
+		this.VisitSelectOption(context, clause);
+
+		int index = 0;
+
+		foreach(var member in clause.Members)
+		{
+			if(index++ > 0)
+				context.WriteLine(",");
+
+			context.Visit(member);
+		}
+	}
+
+	protected virtual void VisitSelectOption(ExpressionVisitorContext context, SelectClause clause)
+	{
+		if(clause.IsDistinct)
+			context.Write("DISTINCT ");
+	}
+
+	protected virtual void VisitFrom(ExpressionVisitorContext context, ICollection<ISource> sources)
+	{
+		context.VisitFrom(sources, this.VisitJoin);
+	}
+
+	protected virtual void VisitJoin(ExpressionVisitorContext context, JoinClause joining)
+	{
+		context.VisitJoin(joining);
+	}
+
+	protected virtual void VisitWhere(ExpressionVisitorContext context, IExpression where)
+	{
+		context.VisitWhere(where);
+	}
+	#endregion
 }

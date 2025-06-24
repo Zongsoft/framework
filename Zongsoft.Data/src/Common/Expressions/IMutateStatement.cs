@@ -28,19 +28,17 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+/// <summary>
+/// 表示写入语句（即新增、更新、删除等）的接口。
+/// </summary>
+public interface IMutateStatement : IStatementBase
 {
-	/// <summary>
-	/// 表示写入语句（即新增、更新、删除等）的接口。
-	/// </summary>
-	public interface IMutateStatement : IStatementBase
-	{
-		/// <summary>获取或设置写入语句对应的模式成员。</summary>
-		SchemaMember Schema { get; set; }
+	/// <summary>获取或设置写入语句对应的模式成员。</summary>
+	SchemaMember Schema { get; set; }
 
-		/// <summary>获取或设置写入语句的输出子句。</summary>
-		ReturningClause Returning { get; set; }
-	}
+	/// <summary>获取或设置写入语句的输出子句。</summary>
+	ReturningClause Returning { get; set; }
 }

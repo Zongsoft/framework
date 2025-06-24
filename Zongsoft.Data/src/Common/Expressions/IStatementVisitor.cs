@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public interface IStatementVisitor<TStatement> where TStatement : IStatementBase
 {
-	public interface IStatementVisitor<TStatement> where TStatement : IStatementBase
-	{
-		void Visit(ExpressionVisitorContext context, TStatement statement);
-	}
+	void Visit(ExpressionVisitorContext context, TStatement statement);
 }

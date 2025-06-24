@@ -30,23 +30,22 @@
 using System;
 using System.Text;
 
-namespace Zongsoft.Data.Common.Expressions
-{
-	public class ExpressionEventArgs : EventArgs
-	{
-		#region 构造函数
-		public ExpressionEventArgs(StringBuilder output, IExpression expression)
-		{
-			this.Output = output;
-			this.Expression = expression;
-			this.Result = expression;
-		}
-		#endregion
+namespace Zongsoft.Data.Common.Expressions;
 
-		#region 公共属性
-		public StringBuilder Output { get; }
-		public IExpression Expression { get; }
-		public IExpression Result { get; set; }
-		#endregion
+public class ExpressionEventArgs : EventArgs
+{
+	#region 构造函数
+	public ExpressionEventArgs(StringBuilder output, IExpression expression)
+	{
+		this.Output = output;
+		this.Expression = expression;
+		this.Result = expression;
 	}
+	#endregion
+
+	#region 公共属性
+	public StringBuilder Output { get; }
+	public IExpression Expression { get; }
+	public IExpression Result { get; set; }
+	#endregion
 }

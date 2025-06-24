@@ -31,55 +31,53 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+[System.ComponentModel.DefaultProperty(nameof(Providers))]
+public class DataPopulatorProviderFactory : IDataPopulatorProviderFactory
 {
-	[System.ComponentModel.DefaultProperty(nameof(Providers))]
-	public class DataPopulatorProviderFactory : IDataPopulatorProviderFactory
+	#region 单例模式
+	public static readonly DataPopulatorProviderFactory Instance = new();
+	#endregion
+
+	#region 成员字段
+	private readonly List<IDataPopulatorProvider> _providers;
+	#endregion
+
+	#region 构造函数
+	private DataPopulatorProviderFactory()
 	{
-		#region 单例模式
-		public static readonly DataPopulatorProviderFactory Instance = new();
-		#endregion
-
-		#region 成员字段
-		private readonly ICollection<IDataPopulatorProvider> _providers;
-		#endregion
-
-		#region 构造函数
-		private DataPopulatorProviderFactory()
-		{
-			_providers = new List<IDataPopulatorProvider>(new IDataPopulatorProvider[]
-			{
-				DictionaryPopulatorProvider.Instance,
-				ScalarPopulatorProvider.Instance,
-				ModelPopulatorProvider.Instance,
-			});
-		}
-		#endregion
-
-		#region 公共属性
-		public ICollection<IDataPopulatorProvider> Providers => _providers;
-		#endregion
-
-		#region 公共方法
-		public IDataPopulatorProvider GetProvider<T>() => this.GetProvider(typeof(T));
-		public IDataPopulatorProvider GetProvider(Type type)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			foreach(var provider in _providers)
-			{
-				if(provider.CanPopulate(type))
-					return provider;
-			}
-
-			throw new DataException($"No found data populator provider for the '{type.FullName}' type.");
-		}
-		#endregion
-
-		#region 枚举遍历
-		public IEnumerator<IDataPopulatorProvider> GetEnumerator() => _providers.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => _providers.GetEnumerator();
-		#endregion
+		_providers = [
+			DictionaryPopulatorProvider.Instance,
+			ScalarPopulatorProvider.Instance,
+			ModelPopulatorProvider.Instance,
+		];
 	}
+	#endregion
+
+	#region 公共属性
+	public ICollection<IDataPopulatorProvider> Providers => _providers;
+	#endregion
+
+	#region 公共方法
+	public IDataPopulatorProvider GetProvider<T>() => this.GetProvider(typeof(T));
+	public IDataPopulatorProvider GetProvider(Type type)
+	{
+		if(type == null)
+			throw new ArgumentNullException(nameof(type));
+
+		foreach(var provider in _providers)
+		{
+			if(provider.CanPopulate(type))
+				return provider;
+		}
+
+		throw new DataException($"No found data populator provider for the '{type.FullName}' type.");
+	}
+	#endregion
+
+	#region 枚举遍历
+	public IEnumerator<IDataPopulatorProvider> GetEnumerator() => _providers.GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => _providers.GetEnumerator();
+	#endregion
 }

@@ -30,35 +30,34 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class ExecutionStatementBuilder : IStatementBuilder<DataExecuteContext>
 {
-	public class ExecutionStatementBuilder : IStatementBuilder<DataExecuteContext>
+	#region 公共方法
+	public IEnumerable<IStatementBase> Build(DataExecuteContext context)
 	{
-		#region 公共方法
-		public IEnumerable<IStatementBase> Build(DataExecuteContext context)
+		var statement = this.CreateStatement(context);
+
+		foreach(var parameter in context.Command.Parameters)
 		{
-			var statement = this.CreateStatement(context);
-
-			foreach(var parameter in context.Command.Parameters)
-			{
-				statement.Parameters.Add(Expression.Parameter(parameter));
-			}
-
-			if(statement.Parameters.Count > 0 && context.InParameters != null && context.InParameters.Count > 0)
-			{
-				foreach(var entry in context.InParameters)
-				{
-					if(statement.Parameters.TryGetValue(entry.Key, out var parameter))
-						parameter.Value = entry.Value;
-				}
-			}
-
-			yield return statement;
+			statement.Parameters.Add(Expression.Parameter(parameter));
 		}
-		#endregion
 
-		#region 虚拟方法
-		protected virtual ExecutionStatement CreateStatement(DataExecuteContext context) => new(context.Command);
-		#endregion
+		if(statement.Parameters.Count > 0 && context.InParameters != null && context.InParameters.Count > 0)
+		{
+			foreach(var entry in context.InParameters)
+			{
+				if(statement.Parameters.TryGetValue(entry.Key, out var parameter))
+					parameter.Value = entry.Value;
+			}
+		}
+
+		yield return statement;
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual ExecutionStatement CreateStatement(DataExecuteContext context) => new(context.Command);
+	#endregion
 }

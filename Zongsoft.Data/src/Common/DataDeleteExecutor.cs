@@ -28,13 +28,11 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DataDeleteExecutor : DataMutateExecutor<DeleteStatement>
 {
-	public class DataDeleteExecutor : DataMutateExecutor<DeleteStatement>
-	{
-	}
 }

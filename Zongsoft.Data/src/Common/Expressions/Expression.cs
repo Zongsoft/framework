@@ -28,169 +28,167 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+/// <summary>
+/// 表达式的基类。
+/// </summary>
+public abstract class Expression : IExpression
 {
-	/// <summary>
-	/// 表达式的基类。
-	/// </summary>
-	public abstract class Expression : IExpression
+	#region 构造函数
+	protected Expression() { }
+	#endregion
+
+	#region 静态方法
+	/// <summary>判断指定的表达式是否为空(null)或空常量表达式（即值为空的常量表达式）。</summary>
+	/// <param name="expression">指定要判断的表达式。</param>
+	/// <returns>如果指定的表达式为空(null)或是一个空常量表达式则返回真(True)，否则返回假(False)。</returns>
+	public static bool IsNull(IExpression expression)
 	{
-		#region 构造函数
-		protected Expression() { }
-		#endregion
-
-		#region 静态方法
-		/// <summary>判断指定的表达式是否为空(null)或空常量表达式（即值为空的常量表达式）。</summary>
-		/// <param name="expression">指定要判断的表达式。</param>
-		/// <returns>如果指定的表达式为空(null)或是一个空常量表达式则返回真(True)，否则返回假(False)。</returns>
-		public static bool IsNull(IExpression expression)
-		{
-			return expression == null || (expression is ConstantExpression constant && constant.Value == null);
-		}
-
-		/// <summary>创建一个块级表达式。</summary>
-		/// <param name="delimiter">指定的块级表达式元素分割符。</param>
-		/// <returns>返回新建的块级表达式对象。</returns>
-		public static BlockExpression Block(BlockExpressionDelimiter delimiter = BlockExpressionDelimiter.None) => new BlockExpression(delimiter);
-
-		/// <summary>创建一个字面量表达式。</summary>
-		/// <param name="text">指定的字面量文本。</param>
-		/// <returns>返回新建的字面量表达式对象。</returns>
-		public static LiteralExpression Literal(string text) => new(text);
-
-		/// <summary>创建一个注释表达式。</summary>
-		/// <param name="text">指定的注释文本。</param>
-		/// <returns>返回新建的注释表达式对象。</returns>
-		public static CommentExpression Comment(string text) => new(text);
-
-		/// <summary>创建一个常量表达式。</summary>
-		/// <param name="value">指定的常量值。</param>
-		/// <returns>返回新建的常量表达式对象。</returns>
-		public static ConstantExpression Constant(object value) => value == null ? ConstantExpression.Null : new ConstantExpression(value);
-
-		/// <summary>创建一个变量标识表达式。</summary>
-		/// <param name="name">指定的变量名。</param>
-		/// <param name="isGlobal">指定一个值，指示该变量是否为全局变量。</param>
-		/// <returns>返回新建的变量标识表达式。</returns>
-		public static VariableIdentifier Variable(string name, bool isGlobal = false) => new(name, isGlobal);
-
-		/// <summary>创建一个参数表达式。</summary>
-		/// <param name="parameter">指定的参数映射。</param>
-		/// <returns>返回新建的参数表达式。</returns>
-		public static ParameterExpression Parameter(Metadata.IDataCommandParameter parameter) => new(parameter.Name, parameter.Type, parameter.Direction) { Value = parameter.Value };
-
-		/// <summary>创建一个参数表达式。</summary>
-		/// <param name="name">指定的参数名，如果为问号，则表示该参数将由所属参数集自动命名。</param>
-		/// <param name="type">指定的参数的数据类型。</param>
-		/// <param name="direction">指定的参数方向，默认为输入参数。</param>
-		/// <returns>返回新建的参数表达式。</returns>
-		public static ParameterExpression Parameter(string name, System.Data.DbType type, System.Data.ParameterDirection direction = System.Data.ParameterDirection.Input) => new(name, type, direction);
-
-		/// <summary>创建一个参数表达式。</summary>
-		/// <param name="name">指定的参数名，如果为问号，则表示该参数将由所属参数集自动命名。</param>
-		/// <param name="type">指定的参数的数据类型。</param>
-		/// <param name="value">指定的参数值。</param>
-		/// <returns>返回新建的参数表达式。</returns>
-		public static ParameterExpression Parameter(string name, System.Data.DbType type, object value) => new(name, type, value);
-
-		/// <summary>创建一个参数表达式。</summary>
-		/// <param name="type">指定的参数的数据类型。</param>
-		/// <param name="value">指定的参数值。</param>
-		/// <returns>返回新建的参数表达式。</returns>
-		public static ParameterExpression Parameter(System.Data.DbType type, object value) => new(ParameterExpression.Anonymous, type, value);
-
-		/// <summary>创建一个参数表达式。</summary>
-		/// <param name="value">指定的参数值。</param>
-		/// <returns>返回新建的参数表达式。</returns>
-		public static ParameterExpression Parameter(object value) => new(ParameterExpression.Anonymous, Utility.GetDbType(value), value);
-
-		/// <summary>创建一个参数表达式，参数名将由所属参数集合自动命名。</summary>
-		/// <param name="field">指定参数关联的字段标识。</param>
-		/// <param name="value">指定的参数值。</param>
-		/// <returns>返回新建的参数表达式。</returns>
-		public static ParameterExpression Parameter(FieldIdentifier field, object value) => new(field, value);
-
-		/// <summary>创建一个参数表达式，参数名将由所属参数集合自动命名。</summary>
-		/// <param name="field">指定参数关联的字段标识。</param>
-		/// <param name="schema">指定的参数对应的模式。</param>
-		/// <returns>返回新建的参数表达式。</returns>
-		public static ParameterExpression Parameter(FieldIdentifier field, SchemaMember schema) => new(field, schema);
-
-		/// <summary>创建一个参数表达式，参数名将由所属参数集合自动命名。</summary>
-		/// <param name="field">指定参数关联的字段标识。</param>
-		/// <param name="schema">指定的参数对应的模式。</param>
-		/// <param name="value">指定的参数值。</param>
-		/// <returns>返回新建的参数表达式。</returns>
-		public static ParameterExpression Parameter(FieldIdentifier field, SchemaMember schema, object value) => new(field, schema, value);
-
-		/// <summary>创建一个表示算术求反运算的单目表达式。</summary>
-		/// <param name="operand">指定的要求反运算的算术表达式。</param>
-		/// <returns>返回的求反后的算术表达式。</returns>
-		public static UnaryExpression Negate(IExpression operand) => new(Operator.Negate, operand);
-
-		/// <summary>创建一个表示逻辑求非运算的单目表达式。</summary>
-		/// <param name="operand">指定的要求非运算的逻辑表达式。</param>
-		/// <returns>返回的求非后的逻辑表达式。</returns>
-		public static UnaryExpression Not(IExpression operand) => new(Operator.Not, operand);
-
-		/// <summary>创建一个赋值的二元表达式。</summary>
-		/// <param name="left">指定的赋值表达式的左路部分，即赋值目标。</param>
-		/// <param name="right">指定的赋值表达式的右路部分，即取值来源。</param>
-		/// <returns>返回的赋值二元表达式。</returns>
-		public static BinaryExpression Assign(IExpression left, IExpression right) => new(Operator.Assign, left, right);
-
-		public static BinaryExpression Add(IExpression left, IExpression right) => new(Operator.Add, left, right);
-
-		public static BinaryExpression Subtract(IExpression left, IExpression right) => new(Operator.Subtract, left, right);
-
-		public static BinaryExpression Multiply(IExpression left, IExpression right) => new(Operator.Multiply, left, right);
-
-		public static BinaryExpression Divide(IExpression left, IExpression right) => new(Operator.Divide, left, right);
-
-		public static BinaryExpression Modulo(IExpression left, IExpression right) => new(Operator.Modulo, left, right);
-
-		public static BinaryExpression And(IExpression left, IExpression right) => new(Operator.And, left, right);
-
-		public static BinaryExpression AndAlso(IExpression left, IExpression right) => new(Operator.AndAlso, left, right);
-
-		public static BinaryExpression Or(IExpression left, IExpression right) => new(Operator.Or, left, right);
-
-		public static BinaryExpression OrElse(IExpression left, IExpression right) => new(Operator.OrElse, left, right);
-
-		public static BinaryExpression Xor(IExpression left, IExpression right) => new(Operator.Xor, left, right);
-
-		public static UnaryExpression Exists(IExpression operand) => new(Operator.Exists, operand);
-
-		public static UnaryExpression NotExists(IExpression operand) => new(Operator.NotExists, operand);
-
-		public static BinaryExpression In(IExpression left, IExpression right) => new(Operator.In, left, right);
-
-		public static BinaryExpression NotIn(IExpression left, IExpression right) => new(Operator.NotIn, left, right);
-
-		public static BinaryExpression Like(IExpression left, IExpression right) => new(Operator.Like, left, right ?? ConstantExpression.Null);
-
-		public static BinaryExpression Between(IExpression operand, RangeExpression range) => new(Operator.Between, operand, range);
-
-		public static BinaryExpression Between(IExpression operand, IExpression minimum, IExpression maximum) => new(Operator.Between, operand, new RangeExpression(minimum, maximum));
-
-		public static BinaryExpression Equal(IExpression left, IExpression right) => new(Operator.Equal, left, right ?? ConstantExpression.Null);
-
-		public static BinaryExpression NotEqual(IExpression left, IExpression right) => new(Operator.NotEqual, left, right ?? ConstantExpression.Null);
-
-		public static BinaryExpression LessThan(IExpression left, IExpression right) => new(Operator.LessThan, left, right);
-
-		public static BinaryExpression LessThanOrEqual(IExpression left, IExpression right) => new(Operator.LessThanOrEqual, left, right);
-
-		public static BinaryExpression GreaterThan(IExpression left, IExpression right) => new(Operator.GreaterThan, left, right);
-
-		public static BinaryExpression GreaterThanOrEqual(IExpression left, IExpression right) => new(Operator.GreaterThanOrEqual, left, right);
-		#endregion
-
-		#region 访问方法
-		string IExpression.Accept(IExpressionVisitor visitor) => this.Accept(visitor);
-		internal protected virtual string Accept(IExpressionVisitor visitor) => visitor.Visit(this);
-		#endregion
+		return expression == null || (expression is ConstantExpression constant && constant.Value == null);
 	}
+
+	/// <summary>创建一个块级表达式。</summary>
+	/// <param name="delimiter">指定的块级表达式元素分割符。</param>
+	/// <returns>返回新建的块级表达式对象。</returns>
+	public static BlockExpression Block(BlockExpressionDelimiter delimiter = BlockExpressionDelimiter.None) => new BlockExpression(delimiter);
+
+	/// <summary>创建一个字面量表达式。</summary>
+	/// <param name="text">指定的字面量文本。</param>
+	/// <returns>返回新建的字面量表达式对象。</returns>
+	public static LiteralExpression Literal(string text) => new(text);
+
+	/// <summary>创建一个注释表达式。</summary>
+	/// <param name="text">指定的注释文本。</param>
+	/// <returns>返回新建的注释表达式对象。</returns>
+	public static CommentExpression Comment(string text) => new(text);
+
+	/// <summary>创建一个常量表达式。</summary>
+	/// <param name="value">指定的常量值。</param>
+	/// <returns>返回新建的常量表达式对象。</returns>
+	public static ConstantExpression Constant(object value) => value == null ? ConstantExpression.Null : new ConstantExpression(value);
+
+	/// <summary>创建一个变量标识表达式。</summary>
+	/// <param name="name">指定的变量名。</param>
+	/// <param name="isGlobal">指定一个值，指示该变量是否为全局变量。</param>
+	/// <returns>返回新建的变量标识表达式。</returns>
+	public static VariableIdentifier Variable(string name, bool isGlobal = false) => new(name, isGlobal);
+
+	/// <summary>创建一个参数表达式。</summary>
+	/// <param name="parameter">指定的参数映射。</param>
+	/// <returns>返回新建的参数表达式。</returns>
+	public static ParameterExpression Parameter(Metadata.IDataCommandParameter parameter) => new(parameter.Name, parameter.Type, parameter.Direction) { Value = parameter.Value };
+
+	/// <summary>创建一个参数表达式。</summary>
+	/// <param name="name">指定的参数名，如果为问号，则表示该参数将由所属参数集自动命名。</param>
+	/// <param name="type">指定的参数的数据类型。</param>
+	/// <param name="direction">指定的参数方向，默认为输入参数。</param>
+	/// <returns>返回新建的参数表达式。</returns>
+	public static ParameterExpression Parameter(string name, System.Data.DbType type, System.Data.ParameterDirection direction = System.Data.ParameterDirection.Input) => new(name, type, direction);
+
+	/// <summary>创建一个参数表达式。</summary>
+	/// <param name="name">指定的参数名，如果为问号，则表示该参数将由所属参数集自动命名。</param>
+	/// <param name="type">指定的参数的数据类型。</param>
+	/// <param name="value">指定的参数值。</param>
+	/// <returns>返回新建的参数表达式。</returns>
+	public static ParameterExpression Parameter(string name, System.Data.DbType type, object value) => new(name, type, value);
+
+	/// <summary>创建一个参数表达式。</summary>
+	/// <param name="type">指定的参数的数据类型。</param>
+	/// <param name="value">指定的参数值。</param>
+	/// <returns>返回新建的参数表达式。</returns>
+	public static ParameterExpression Parameter(System.Data.DbType type, object value) => new(ParameterExpression.Anonymous, type, value);
+
+	/// <summary>创建一个参数表达式。</summary>
+	/// <param name="value">指定的参数值。</param>
+	/// <returns>返回新建的参数表达式。</returns>
+	public static ParameterExpression Parameter(object value) => new(ParameterExpression.Anonymous, Utility.GetDbType(value), value);
+
+	/// <summary>创建一个参数表达式，参数名将由所属参数集合自动命名。</summary>
+	/// <param name="field">指定参数关联的字段标识。</param>
+	/// <param name="value">指定的参数值。</param>
+	/// <returns>返回新建的参数表达式。</returns>
+	public static ParameterExpression Parameter(FieldIdentifier field, object value) => new(field, value);
+
+	/// <summary>创建一个参数表达式，参数名将由所属参数集合自动命名。</summary>
+	/// <param name="field">指定参数关联的字段标识。</param>
+	/// <param name="schema">指定的参数对应的模式。</param>
+	/// <returns>返回新建的参数表达式。</returns>
+	public static ParameterExpression Parameter(FieldIdentifier field, SchemaMember schema) => new(field, schema);
+
+	/// <summary>创建一个参数表达式，参数名将由所属参数集合自动命名。</summary>
+	/// <param name="field">指定参数关联的字段标识。</param>
+	/// <param name="schema">指定的参数对应的模式。</param>
+	/// <param name="value">指定的参数值。</param>
+	/// <returns>返回新建的参数表达式。</returns>
+	public static ParameterExpression Parameter(FieldIdentifier field, SchemaMember schema, object value) => new(field, schema, value);
+
+	/// <summary>创建一个表示算术求反运算的单目表达式。</summary>
+	/// <param name="operand">指定的要求反运算的算术表达式。</param>
+	/// <returns>返回的求反后的算术表达式。</returns>
+	public static UnaryExpression Negate(IExpression operand) => new(Operator.Negate, operand);
+
+	/// <summary>创建一个表示逻辑求非运算的单目表达式。</summary>
+	/// <param name="operand">指定的要求非运算的逻辑表达式。</param>
+	/// <returns>返回的求非后的逻辑表达式。</returns>
+	public static UnaryExpression Not(IExpression operand) => new(Operator.Not, operand);
+
+	/// <summary>创建一个赋值的二元表达式。</summary>
+	/// <param name="left">指定的赋值表达式的左路部分，即赋值目标。</param>
+	/// <param name="right">指定的赋值表达式的右路部分，即取值来源。</param>
+	/// <returns>返回的赋值二元表达式。</returns>
+	public static BinaryExpression Assign(IExpression left, IExpression right) => new(Operator.Assign, left, right);
+
+	public static BinaryExpression Add(IExpression left, IExpression right) => new(Operator.Add, left, right);
+
+	public static BinaryExpression Subtract(IExpression left, IExpression right) => new(Operator.Subtract, left, right);
+
+	public static BinaryExpression Multiply(IExpression left, IExpression right) => new(Operator.Multiply, left, right);
+
+	public static BinaryExpression Divide(IExpression left, IExpression right) => new(Operator.Divide, left, right);
+
+	public static BinaryExpression Modulo(IExpression left, IExpression right) => new(Operator.Modulo, left, right);
+
+	public static BinaryExpression And(IExpression left, IExpression right) => new(Operator.And, left, right);
+
+	public static BinaryExpression AndAlso(IExpression left, IExpression right) => new(Operator.AndAlso, left, right);
+
+	public static BinaryExpression Or(IExpression left, IExpression right) => new(Operator.Or, left, right);
+
+	public static BinaryExpression OrElse(IExpression left, IExpression right) => new(Operator.OrElse, left, right);
+
+	public static BinaryExpression Xor(IExpression left, IExpression right) => new(Operator.Xor, left, right);
+
+	public static UnaryExpression Exists(IExpression operand) => new(Operator.Exists, operand);
+
+	public static UnaryExpression NotExists(IExpression operand) => new(Operator.NotExists, operand);
+
+	public static BinaryExpression In(IExpression left, IExpression right) => new(Operator.In, left, right);
+
+	public static BinaryExpression NotIn(IExpression left, IExpression right) => new(Operator.NotIn, left, right);
+
+	public static BinaryExpression Like(IExpression left, IExpression right) => new(Operator.Like, left, right ?? ConstantExpression.Null);
+
+	public static BinaryExpression Between(IExpression operand, RangeExpression range) => new(Operator.Between, operand, range);
+
+	public static BinaryExpression Between(IExpression operand, IExpression minimum, IExpression maximum) => new(Operator.Between, operand, new RangeExpression(minimum, maximum));
+
+	public static BinaryExpression Equal(IExpression left, IExpression right) => new(Operator.Equal, left, right ?? ConstantExpression.Null);
+
+	public static BinaryExpression NotEqual(IExpression left, IExpression right) => new(Operator.NotEqual, left, right ?? ConstantExpression.Null);
+
+	public static BinaryExpression LessThan(IExpression left, IExpression right) => new(Operator.LessThan, left, right);
+
+	public static BinaryExpression LessThanOrEqual(IExpression left, IExpression right) => new(Operator.LessThanOrEqual, left, right);
+
+	public static BinaryExpression GreaterThan(IExpression left, IExpression right) => new(Operator.GreaterThan, left, right);
+
+	public static BinaryExpression GreaterThanOrEqual(IExpression left, IExpression right) => new(Operator.GreaterThanOrEqual, left, right);
+	#endregion
+
+	#region 访问方法
+	string IExpression.Accept(IExpressionVisitor visitor) => this.Accept(visitor);
+	internal protected virtual string Accept(IExpressionVisitor visitor) => visitor.Visit(this);
+	#endregion
 }

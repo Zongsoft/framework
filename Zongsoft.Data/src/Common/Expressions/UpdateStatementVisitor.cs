@@ -30,94 +30,93 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 {
-	public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
+	#region 构造函数
+	protected UpdateStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, UpdateStatement statement)
 	{
-		#region 构造函数
-		protected UpdateStatementVisitor() { }
-		#endregion
+		if(statement.Tables == null || statement.Tables.Count == 0)
+			throw new DataException("Missing required tables in the update statement.");
 
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, UpdateStatement statement)
-		{
-			if(statement.Tables == null || statement.Tables.Count == 0)
-				throw new DataException("Missing required tables in the update statement.");
+		if(statement.Fields == null || statement.Fields.Count == 0)
+			throw new DataException("Missing required fields in the update statment.");
 
-			if(statement.Fields == null || statement.Fields.Count == 0)
-				throw new DataException("Missing required fields in the update statment.");
+		if(statement.Returning != null && statement.Returning.Table != null)
+			context.Visit(statement.Returning.Table);
 
-			if(statement.Returning != null && statement.Returning.Table != null)
-				context.Visit(statement.Returning.Table);
+		this.VisitUpdate(context, statement);
+		this.VisitTables(context, statement, statement.Tables);
 
-			this.VisitUpdate(context, statement);
-			this.VisitTables(context, statement, statement.Tables);
+		context.WriteLine(" SET");
+		this.VisitFields(context, statement, statement.Fields);
 
-			context.WriteLine(" SET");
-			this.VisitFields(context, statement, statement.Fields);
+		this.VisitFrom(context, statement, statement.From);
+		this.VisitWhere(context, statement, statement.Where);
 
-			this.VisitFrom(context, statement, statement.From);
-			this.VisitWhere(context, statement, statement.Where);
-
-			context.WriteLine(";");
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void VisitUpdate(ExpressionVisitorContext context, UpdateStatement statement)
-		{
-			context.Write("UPDATE ");
-		}
-
-		protected virtual void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
-		{
-			for(int i = 0; i < tables.Count; i++)
-			{
-				if(i > 0)
-					context.Write(",");
-
-				context.Visit(tables[i]);
-			}
-		}
-
-		protected virtual void VisitFields(ExpressionVisitorContext context, UpdateStatement statement, ICollection<FieldValue> fields)
-		{
-			var index = 0;
-
-			foreach(var field in fields)
-			{
-				if(index++ > 0)
-					context.WriteLine(",");
-
-				context.Visit(field.Field);
-				context.Write("=");
-
-				var parenthesisRequired = field.Value is IStatementBase;
-
-				if(parenthesisRequired)
-					context.Write("(");
-
-				context.Visit(field.Value);
-
-				if(parenthesisRequired)
-					context.Write(")");
-			}
-		}
-
-		protected virtual void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
-		{
-			context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, statement, join));
-		}
-
-		protected virtual void VisitJoin(ExpressionVisitorContext context, UpdateStatement statement, JoinClause joining)
-		{
-			context.VisitJoin(joining);
-		}
-
-		protected virtual void VisitWhere(ExpressionVisitorContext context, UpdateStatement statement, IExpression where)
-		{
-			context.VisitWhere(where);
-		}
-		#endregion
+		context.WriteLine(";");
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void VisitUpdate(ExpressionVisitorContext context, UpdateStatement statement)
+	{
+		context.Write("UPDATE ");
+	}
+
+	protected virtual void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
+	{
+		for(int i = 0; i < tables.Count; i++)
+		{
+			if(i > 0)
+				context.Write(",");
+
+			context.Visit(tables[i]);
+		}
+	}
+
+	protected virtual void VisitFields(ExpressionVisitorContext context, UpdateStatement statement, ICollection<FieldValue> fields)
+	{
+		var index = 0;
+
+		foreach(var field in fields)
+		{
+			if(index++ > 0)
+				context.WriteLine(",");
+
+			context.Visit(field.Field);
+			context.Write("=");
+
+			var parenthesisRequired = field.Value is IStatementBase;
+
+			if(parenthesisRequired)
+				context.Write("(");
+
+			context.Visit(field.Value);
+
+			if(parenthesisRequired)
+				context.Write(")");
+		}
+	}
+
+	protected virtual void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
+	{
+		context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, statement, join));
+	}
+
+	protected virtual void VisitJoin(ExpressionVisitorContext context, UpdateStatement statement, JoinClause joining)
+	{
+		context.VisitJoin(joining);
+	}
+
+	protected virtual void VisitWhere(ExpressionVisitorContext context, UpdateStatement statement, IExpression where)
+	{
+		context.VisitWhere(where);
+	}
+	#endregion
 }

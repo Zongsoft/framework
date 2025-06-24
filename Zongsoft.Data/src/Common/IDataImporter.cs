@@ -31,11 +31,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public interface IDataImporter
 {
-	public interface IDataImporter
-	{
-		void Import(DataImportContext context);
-		ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default);
-	}
+	void Import(DataImportContext context);
+	ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default);
 }

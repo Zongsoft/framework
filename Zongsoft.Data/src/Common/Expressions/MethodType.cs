@@ -29,11 +29,10 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public enum MethodType
 {
-	public enum MethodType
-	{
-		Function,
-		Procedure,
-	}
+	Function,
+	Procedure,
 }

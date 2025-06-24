@@ -29,48 +29,47 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class ConstantExpression : Expression
 {
-	public class ConstantExpression : Expression
+	#region 单例字段
+	public static readonly ConstantExpression Null = new();
+	#endregion
+
+	#region 构造函数
+	private ConstantExpression() { }
+	public ConstantExpression(object value)
 	{
-		#region 单例字段
-		public static readonly ConstantExpression Null = new ConstantExpression();
-		#endregion
+		this.Value = value ?? throw new ArgumentNullException(nameof(value));
 
-		#region 构造函数
-		private ConstantExpression() { }
-		public ConstantExpression(object value)
+		var valueType = value.GetType();
+
+		if(valueType.IsEnum)
+			this.Value = System.Convert.ChangeType(value, Enum.GetUnderlyingType(valueType));
+		else if(valueType.IsArray)
 		{
-			this.Value = value ?? throw new ArgumentNullException(nameof(value));
-
-			var valueType = value.GetType();
+			valueType = valueType.GetElementType();
 
 			if(valueType.IsEnum)
-				this.Value = System.Convert.ChangeType(value, Enum.GetUnderlyingType(valueType));
-			else if(valueType.IsArray)
 			{
-				valueType = valueType.GetElementType();
+				var source = (Array)value;
+				var underlying = Enum.GetUnderlyingType(valueType);
+				var target = Array.CreateInstance(underlying, source.Length);
 
-				if(valueType.IsEnum)
+				for(var i = 0; i < source.Length; i++)
 				{
-					var source = (Array)value;
-					var underlying = Enum.GetUnderlyingType(valueType);
-					var target = Array.CreateInstance(underlying, source.Length);
-
-					for(var i = 0; i < source.Length; i++)
-					{
-						target.SetValue(System.Convert.ChangeType(source.GetValue(i), underlying), i);
-					}
-
-					this.Value = target;
+					target.SetValue(System.Convert.ChangeType(source.GetValue(i), underlying), i);
 				}
+
+				this.Value = target;
 			}
 		}
-		#endregion
-
-		#region 公共属性
-		public object Value { get; }
-		public Type ValueType => this.Value == null ? typeof(object) : this.Value.GetType();
-		#endregion
 	}
+	#endregion
+
+	#region 公共属性
+	public object Value { get; }
+	public Type ValueType => this.Value == null ? typeof(object) : this.Value.GetType();
+	#endregion
 }

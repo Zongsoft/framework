@@ -30,10 +30,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public interface IDataPopulatorProviderFactory : IEnumerable<IDataPopulatorProvider>
 {
-	public interface IDataPopulatorProviderFactory : IEnumerable<IDataPopulatorProvider>
-	{
-		IDataPopulatorProvider GetProvider(Type type);
-	}
+	IDataPopulatorProvider GetProvider(Type type);
 }

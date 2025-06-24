@@ -33,68 +33,67 @@ using System.Threading.Tasks;
 
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DataExistExecutor : IDataExecutor<ExistStatement>
 {
-	public class DataExistExecutor : IDataExecutor<ExistStatement>
+	#region 同步执行
+	public bool Execute(IDataAccessContext context, ExistStatement statement)
 	{
-		#region 同步执行
-		public bool Execute(IDataAccessContext context, ExistStatement statement)
-		{
-			if(context is DataExistContext ctx)
-				return this.OnExecute(ctx, statement);
+		if(context is DataExistContext ctx)
+			return this.OnExecute(ctx, statement);
 
-			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
-		}
-
-		protected virtual bool OnExecute(DataExistContext context, ExistStatement statement)
-		{
-			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(context, statement);
-
-			//处理语句的插槽替换运算
-			if(context.Source.Driver is DataDriverBase driver)
-				driver.Slotter?.Evaluate(context, statement, command);
-
-			//执行命令
-			var result = command.ExecuteScalar();
-
-			if(result == null || System.Convert.IsDBNull(result))
-				context.Result = false;
-			else
-				context.Result = Zongsoft.Common.Convert.ConvertValue<int>(result) > 0;
-
-			return true;
-		}
-		#endregion
-
-		#region 异步执行
-		public ValueTask<bool> ExecuteAsync(IDataAccessContext context, ExistStatement statement, CancellationToken cancellation)
-		{
-			if(context is DataExistContext ctx)
-				return this.OnExecuteAsync(ctx, statement, cancellation);
-
-			throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
-		}
-
-		protected virtual async ValueTask<bool> OnExecuteAsync(DataExistContext context, ExistStatement statement, CancellationToken cancellation)
-		{
-			//根据生成的脚本创建对应的数据命令
-			var command = context.Session.Build(context, statement);
-
-			//处理语句的插槽替换运算
-			if(context.Source.Driver is DataDriverBase driver)
-				driver.Slotter?.Evaluate(context, statement, command);
-
-			//执行命令
-			var result = await command.ExecuteScalarAsync(cancellation);
-
-			if(result == null || System.Convert.IsDBNull(result))
-				context.Result = false;
-			else
-				context.Result = Zongsoft.Common.Convert.ConvertValue<int>(result) > 0;
-
-			return true;
-		}
-		#endregion
+		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
 	}
+
+	protected virtual bool OnExecute(DataExistContext context, ExistStatement statement)
+	{
+		//根据生成的脚本创建对应的数据命令
+		var command = context.Session.Build(context, statement);
+
+		//处理语句的插槽替换运算
+		if(context.Source.Driver is DataDriverBase driver)
+			driver.Slotter?.Evaluate(context, statement, command);
+
+		//执行命令
+		var result = command.ExecuteScalar();
+
+		if(result == null || System.Convert.IsDBNull(result))
+			context.Result = false;
+		else
+			context.Result = Zongsoft.Common.Convert.ConvertValue<int>(result) > 0;
+
+		return true;
+	}
+	#endregion
+
+	#region 异步执行
+	public ValueTask<bool> ExecuteAsync(IDataAccessContext context, ExistStatement statement, CancellationToken cancellation)
+	{
+		if(context is DataExistContext ctx)
+			return this.OnExecuteAsync(ctx, statement, cancellation);
+
+		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+	}
+
+	protected virtual async ValueTask<bool> OnExecuteAsync(DataExistContext context, ExistStatement statement, CancellationToken cancellation)
+	{
+		//根据生成的脚本创建对应的数据命令
+		var command = context.Session.Build(context, statement);
+
+		//处理语句的插槽替换运算
+		if(context.Source.Driver is DataDriverBase driver)
+			driver.Slotter?.Evaluate(context, statement, command);
+
+		//执行命令
+		var result = await command.ExecuteScalarAsync(cancellation);
+
+		if(result == null || System.Convert.IsDBNull(result))
+			context.Result = false;
+		else
+			context.Result = Zongsoft.Common.Convert.ConvertValue<int>(result) > 0;
+
+		return true;
+	}
+	#endregion
 }

@@ -32,121 +32,113 @@ using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+/// <summary>
+/// 表示表标识的表达式。
+/// </summary>
+public class TableIdentifier : Expression, IIdentifier, ISource, IEquatable<TableIdentifier>
 {
-	/// <summary>
-	/// 表示表标识的表达式。
-	/// </summary>
-	public class TableIdentifier : Expression, IIdentifier, ISource, IEquatable<TableIdentifier>
+	#region 构造函数
+	public TableIdentifier(IDataEntity entity, string alias = null)
 	{
-		#region 构造函数
-		public TableIdentifier(IDataEntity entity, string alias = null)
+		this.Entity = entity ?? throw new ArgumentNullException(nameof(entity));
+		this.Alias = alias;
+		this.Name = DataEntityExtension.GetTableName(entity);
+	}
+
+	public TableIdentifier(TableDefinition table, string alias = null)
+	{
+		this.Table = table ?? throw new ArgumentNullException(nameof(table));
+		this.Alias = alias;
+		this.Name = table.Name;
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取对应的表元数据元素，与<see cref="Table"/>属性互斥。</summary>
+	public IDataEntity Entity { get; }
+
+	/// <summary>获取对应的表定义，与<see cref="Entity"/>属性互斥。</summary>
+	public TableDefinition Table { get; }
+
+	/// <summary>获取表的物理名称（即数据库中表的名称）。</summary>
+	public string Name { get; }
+
+	/// <summary>获取或设置表标识的别名。</summary>
+	public string Alias { get; set; }
+
+	/// <summary>获取一个值，指示当前表标识是否指向一个临时表。</summary>
+	public bool IsTemporary => this.Table != null && this.Table.IsTemporary;
+	#endregion
+
+	#region 公共方法
+	/// <summary>创建一个关联当前表的字段标识。</summary>
+	/// <param name="name">指定的字段名称。</param>
+	/// <param name="alias">指定的字段别名。</param>
+	/// <returns>返回创建成功的字段标识。</returns>
+	public FieldIdentifier CreateField(string name, string alias = null)
+	{
+		return new FieldIdentifier(this, name, alias);
+	}
+
+	public FieldIdentifier CreateField(IDataEntityProperty property)
+	{
+		return new FieldIdentifier(this, property.GetFieldName(out var alias), alias)
 		{
-			this.Entity = entity ?? throw new ArgumentNullException(nameof(entity));
-			this.Alias = alias;
-			this.Name = DataEntityExtension.GetTableName(entity);
-		}
+			Token = new DataEntityPropertyToken(property)
+		};
+	}
 
-		public TableIdentifier(TableDefinition table, string alias = null)
-		{
-			this.Table = table ?? throw new ArgumentNullException(nameof(table));
-			this.Alias = alias;
-			this.Name = table.Name;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取对应的表元数据元素，与<see cref="Table"/>属性互斥。</summary>
-		public IDataEntity Entity { get; }
-
-		/// <summary>获取对应的表定义，与<see cref="Entity"/>属性互斥。</summary>
-		public TableDefinition Table { get; }
-
-		/// <summary>获取表的物理名称（即数据库中表的名称）。</summary>
-		public string Name { get; }
-
-		/// <summary>获取或设置表标识的别名。</summary>
-		public string Alias { get; set; }
-
-		/// <summary>获取一个值，指示当前表标识是否指向一个临时表。</summary>
-		public bool IsTemporary => this.Table != null && this.Table.IsTemporary;
-		#endregion
-
-		#region 公共方法
-		/// <summary>创建一个关联当前表的字段标识。</summary>
-		/// <param name="name">指定的字段名称。</param>
-		/// <param name="alias">指定的字段别名。</param>
-		/// <returns>返回创建成功的字段标识。</returns>
-		public FieldIdentifier CreateField(string name, string alias = null)
-		{
-			return new FieldIdentifier(this, name, alias);
-		}
-
-		public FieldIdentifier CreateField(IDataEntityProperty property)
-		{
-			return new FieldIdentifier(this, property.GetFieldName(out var alias), alias)
+	public FieldIdentifier CreateField(IDataEntitySimplexProperty property, string alias = null)
+	{
+		if(string.IsNullOrEmpty(property.Alias))
+			return new FieldIdentifier(this, property.Name, alias)
 			{
 				Token = new DataEntityPropertyToken(property)
 			};
-		}
-
-		public FieldIdentifier CreateField(IDataEntitySimplexProperty property, string alias = null)
-		{
-			if(string.IsNullOrEmpty(property.Alias))
-				return new FieldIdentifier(this, property.Name, alias)
-				{
-					Token = new DataEntityPropertyToken(property)
-				};
-			else
-				return new FieldIdentifier(this, property.Alias, alias)
-				{
-					Token = new DataEntityPropertyToken(property)
-				};
-		}
-
-		public FieldIdentifier CreateField(DataEntityPropertyToken token, string alias = null)
-		{
-			var simplex = token.Property.IsSimplex ?
-				(IDataEntitySimplexProperty)token.Property :
-				throw new ArgumentException($"The specified '{token.Property.Name}' property is not a simplex property, so you cannot create a field identifier for it.");
-
-			if(string.IsNullOrEmpty(simplex.Alias))
-				return new FieldIdentifier(this, simplex.Name, alias) { Token = token };
-			else
-				return new FieldIdentifier(this, simplex.Alias, alias) { Token = token };
-		}
-		#endregion
-
-		#region 重写方法
-		public bool Equals(TableIdentifier other)
-		{
-			if(other == null)
-				return false;
-
-			return this.IsTemporary == other.IsTemporary &&
-			       string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) &&
-			       string.Equals(this.Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
-		}
-
-		public override bool Equals(object obj) => obj is TableIdentifier other && this.Equals(other);
-
-		public override int GetHashCode()
-		{
-			var alias = this.Alias;
-
-			if(string.IsNullOrEmpty(alias))
-				return this.Name.ToUpperInvariant().GetHashCode();
-			else
-				return this.Name.ToUpperInvariant().GetHashCode() ^ alias.ToUpperInvariant().GetHashCode();
-		}
-
-		public override string ToString()
-		{
-			if(string.IsNullOrEmpty(this.Alias))
-				return (this.IsTemporary ? "#" : string.Empty) + this.Name;
-			else
-				return (this.IsTemporary ? "#" : string.Empty) + this.Name + " AS " + this.Alias;
-		}
-		#endregion
+		else
+			return new FieldIdentifier(this, property.Alias, alias)
+			{
+				Token = new DataEntityPropertyToken(property)
+			};
 	}
+
+	public FieldIdentifier CreateField(DataEntityPropertyToken token, string alias = null)
+	{
+		var simplex = token.Property.IsSimplex ?
+			(IDataEntitySimplexProperty)token.Property :
+			throw new ArgumentException($"The specified '{token.Property.Name}' property is not a simplex property, so you cannot create a field identifier for it.");
+
+		if(string.IsNullOrEmpty(simplex.Alias))
+			return new FieldIdentifier(this, simplex.Name, alias) { Token = token };
+		else
+			return new FieldIdentifier(this, simplex.Alias, alias) { Token = token };
+	}
+	#endregion
+
+	#region 重写方法
+	public override bool Equals(object obj) => this.Equals(obj as TableIdentifier);
+	public bool Equals(TableIdentifier other) => other is not null && this.IsTemporary == other.IsTemporary &&
+		string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) &&
+		string.Equals(this.Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
+
+	public override int GetHashCode()
+	{
+		var alias = this.Alias;
+
+		if(string.IsNullOrEmpty(alias))
+			return this.Name.ToUpperInvariant().GetHashCode();
+		else
+			return this.Name.ToUpperInvariant().GetHashCode() ^ alias.ToUpperInvariant().GetHashCode();
+	}
+
+	public override string ToString()
+	{
+		if(string.IsNullOrEmpty(this.Alias))
+			return (this.IsTemporary ? "#" : string.Empty) + this.Name;
+		else
+			return (this.IsTemporary ? "#" : string.Empty) + this.Name + " AS " + this.Alias;
+	}
+	#endregion
 }

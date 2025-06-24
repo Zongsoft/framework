@@ -33,174 +33,173 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public static partial class ModelMemberTokenManager
 {
-	public static partial class ModelMemberTokenManager
+	#region 私有变量
+	private static readonly ConcurrentDictionary<Type, ModelMemberTokenCollection> _cache = new ConcurrentDictionary<Type, ModelMemberTokenCollection>();
+	#endregion
+
+	#region 公共方法
+	public static ModelMemberTokenCollection GetMembers(Type type)
 	{
-		#region 私有变量
-		private static readonly ConcurrentDictionary<Type, ModelMemberTokenCollection> _cache = new ConcurrentDictionary<Type, ModelMemberTokenCollection>();
-		#endregion
+		if(type == null)
+			throw new ArgumentNullException(nameof(type));
 
-		#region 公共方法
-		public static ModelMemberTokenCollection GetMembers(Type type)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			//如果指定的类型是单值类型则返回空
-			if(Zongsoft.Common.TypeExtension.IsScalarType(type))
-				return null;
-
-			return _cache.GetOrAdd(type, key => Create(key));
-		}
-		#endregion
-
-		#region 私有方法
-		private static ModelMemberTokenCollection Create(Type type)
-		{
-			//如果是字典则返回空
-			if(Zongsoft.Common.TypeExtension.IsDictionary(type))
-				return null;
-
-			if(Zongsoft.Common.TypeExtension.IsEnumerable(type))
-				type = Zongsoft.Common.TypeExtension.GetElementType(type);
-
-			var members = FindMembers(type);
-			var tokens = new ModelMemberTokenCollection();
-
-			foreach(var member in members)
-			{
-				var token = CreateMemberToken(member);
-
-				if(token != null)
-					tokens.Add(token.Value);
-			}
-
-			return tokens;
-		}
-
-		private static ModelMemberToken? CreateMemberToken(MemberInfo member)
-		{
-			switch(member.MemberType)
-			{
-				case MemberTypes.Field:
-					var field = (FieldInfo)member;
-
-					if(!field.IsInitOnly)
-					{
-						var converter = Utility.GetConverter(member);
-						return new ModelMemberToken(field, converter, ModelMemberEmitter.GenerateFieldSetter(field, converter));
-					}
-
-					break;
-				case MemberTypes.Property:
-					var property = (PropertyInfo)member;
-
-					if(property.CanRead && property.CanWrite)
-					{
-						var converter = Utility.GetConverter(member);
-						return new ModelMemberToken(property, converter, ModelMemberEmitter.GeneratePropertySetter(property, converter));
-					}
-
-					break;
-			}
-
+		//如果指定的类型是单值类型则返回空
+		if(Zongsoft.Common.TypeExtension.IsScalarType(type))
 			return null;
+
+		return _cache.GetOrAdd(type, key => Create(key));
+	}
+	#endregion
+
+	#region 私有方法
+	private static ModelMemberTokenCollection Create(Type type)
+	{
+		//如果是字典则返回空
+		if(Zongsoft.Common.TypeExtension.IsDictionary(type))
+			return null;
+
+		if(Zongsoft.Common.TypeExtension.IsEnumerable(type))
+			type = Zongsoft.Common.TypeExtension.GetElementType(type);
+
+		var members = FindMembers(type);
+		var tokens = new ModelMemberTokenCollection();
+
+		foreach(var member in members)
+		{
+			var token = CreateMemberToken(member);
+
+			if(token != null)
+				tokens.Add(token.Value);
 		}
 
-		private static IEnumerable<MemberInfo> FindMembers(Type type)
+		return tokens;
+	}
+
+	private static ModelMemberToken? CreateMemberToken(MemberInfo member)
+	{
+		switch(member.MemberType)
 		{
-			foreach(var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
-				yield return field;
+			case MemberTypes.Field:
+				var field = (FieldInfo)member;
 
-			foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-				yield return property;
-
-			if(type.IsInterface)
-			{
-				var contracts = type.GetInterfaces();
-
-				foreach(var contract in contracts)
+				if(!field.IsInitOnly)
 				{
-					foreach(var property in contract.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-						yield return property;
+					var converter = Utility.GetConverter(member);
+					return new ModelMemberToken(field, converter, ModelMemberEmitter.GenerateFieldSetter(field, converter));
 				}
-			}
+
+				break;
+			case MemberTypes.Property:
+				var property = (PropertyInfo)member;
+
+				if(property.CanRead && property.CanWrite)
+				{
+					var converter = Utility.GetConverter(member);
+					return new ModelMemberToken(property, converter, ModelMemberEmitter.GeneratePropertySetter(property, converter));
+				}
+
+				break;
 		}
-		#endregion
+
+		return null;
 	}
 
-	public static partial class ModelMemberTokenManager
+	private static IEnumerable<MemberInfo> FindMembers(Type type)
 	{
-		#region 私有变量
-		private static readonly ConcurrentDictionary<Type, IEnumerable> _generics = new ConcurrentDictionary<Type, IEnumerable>();
-		#endregion
+		foreach(var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
+			yield return field;
 
-		#region 公共方法
-		public static ModelMemberTokenCollection<T> GetMembers<T>()
+		foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+			yield return property;
+
+		if(type.IsInterface)
 		{
-			//如果指定的类型是单值类型则返回空
-			if(Zongsoft.Common.TypeExtension.IsScalarType(typeof(T)))
-				return null;
+			var contracts = type.GetInterfaces();
 
-			return (ModelMemberTokenCollection<T>)_generics.GetOrAdd(typeof(T), _ => Create<T>());
-		}
-		#endregion
-
-		#region 私有方法
-		private static ICollection<ModelMemberToken<T>> Create<T>()
-		{
-			var type = typeof(T);
-
-			//如果是字典则返回空
-			if(Zongsoft.Common.TypeExtension.IsDictionary(type))
-				return null;
-
-			if(Zongsoft.Common.TypeExtension.IsEnumerable(type))
-				type = Zongsoft.Common.TypeExtension.GetElementType(type);
-
-			var members = FindMembers(type);
-			var tokens = new ModelMemberTokenCollection<T>();
-
-			foreach(var member in members)
+			foreach(var contract in contracts)
 			{
-				var token = CreateMemberToken<T>(member);
-
-				if(token != null)
-					tokens.Add(token.Value);
+				foreach(var property in contract.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+					yield return property;
 			}
-
-			return tokens;
 		}
-
-		private static ModelMemberToken<T>? CreateMemberToken<T>(MemberInfo member)
-		{
-			switch(member.MemberType)
-			{
-				case MemberTypes.Field:
-					var field = (FieldInfo)member;
-
-					if(!field.IsInitOnly)
-					{
-						var converter = Utility.GetConverter(member);
-						return new ModelMemberToken<T>(field, converter, ModelMemberEmitter.GenerateFieldSetter<T>(field, converter));
-					}
-
-					break;
-				case MemberTypes.Property:
-					var property = (PropertyInfo)member;
-
-					if(property.CanRead && property.CanWrite)
-					{
-						var converter = Utility.GetConverter(member);
-						return new ModelMemberToken<T>(property, converter, ModelMemberEmitter.GeneratePropertySetter<T>(property, converter));
-					}
-
-					break;
-			}
-
-			return null;
-		}
-		#endregion
 	}
+	#endregion
+}
+
+public static partial class ModelMemberTokenManager
+{
+	#region 私有变量
+	private static readonly ConcurrentDictionary<Type, IEnumerable> _generics = new();
+	#endregion
+
+	#region 公共方法
+	public static ModelMemberTokenCollection<T> GetMembers<T>()
+	{
+		//如果指定的类型是单值类型则返回空
+		if(Zongsoft.Common.TypeExtension.IsScalarType(typeof(T)))
+			return null;
+
+		return (ModelMemberTokenCollection<T>)_generics.GetOrAdd(typeof(T), _ => Create<T>());
+	}
+	#endregion
+
+	#region 私有方法
+	private static ModelMemberTokenCollection<T> Create<T>()
+	{
+		var type = typeof(T);
+
+		//如果是字典则返回空
+		if(Zongsoft.Common.TypeExtension.IsDictionary(type))
+			return null;
+
+		if(Zongsoft.Common.TypeExtension.IsEnumerable(type))
+			type = Zongsoft.Common.TypeExtension.GetElementType(type);
+
+		var members = FindMembers(type);
+		var tokens = new ModelMemberTokenCollection<T>();
+
+		foreach(var member in members)
+		{
+			var token = CreateMemberToken<T>(member);
+
+			if(token != null)
+				tokens.Add(token.Value);
+		}
+
+		return tokens;
+	}
+
+	private static ModelMemberToken<T>? CreateMemberToken<T>(MemberInfo member)
+	{
+		switch(member.MemberType)
+		{
+			case MemberTypes.Field:
+				var field = (FieldInfo)member;
+
+				if(!field.IsInitOnly)
+				{
+					var converter = Utility.GetConverter(member);
+					return new ModelMemberToken<T>(field, converter, ModelMemberEmitter.GenerateFieldSetter<T>(field, converter));
+				}
+
+				break;
+			case MemberTypes.Property:
+				var property = (PropertyInfo)member;
+
+				if(property.CanRead && property.CanWrite)
+				{
+					var converter = Utility.GetConverter(member);
+					return new ModelMemberToken<T>(property, converter, ModelMemberEmitter.GeneratePropertySetter<T>(property, converter));
+				}
+
+				break;
+		}
+
+		return null;
+	}
+	#endregion
 }

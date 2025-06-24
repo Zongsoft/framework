@@ -31,60 +31,59 @@ using System;
 using System.Data;
 using System.Data.Common;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+/// <summary>
+/// 表示数据驱动器的接口。
+/// </summary>
+public interface IDataDriver
 {
-	/// <summary>
-	/// 表示数据驱动器的接口。
-	/// </summary>
-	public interface IDataDriver
-	{
-		#region 属性定义
-		/// <summary>获取数据驱动程序的名称。</summary>
-		string Name { get; }
+	#region 属性定义
+	/// <summary>获取数据驱动程序的名称。</summary>
+	string Name { get; }
 
-		/// <summary>获取支持的功能特性集。</summary>
-		FeatureCollection Features { get; }
+	/// <summary>获取支持的功能特性集。</summary>
+	FeatureCollection Features { get; }
 
-		/// <summary>获取数据语句构建器。</summary>
-		Expressions.IStatementBuilder Builder { get; }
-		#endregion
+	/// <summary>获取数据语句构建器。</summary>
+	Expressions.IStatementBuilder Builder { get; }
+	#endregion
 
-		#region 方法定义
-		/// <summary>当发生一个错误的通知方法。</summary>
-		/// <param name="context">发生异常的数据访问上下文。</param>
-		/// <param name="exception">发生的异常对象。</param>
-		/// <returns>返回的新异常，如果为空则忽略该异常。</returns>
-		Exception OnError(IDataAccessContext context, Exception exception);
+	#region 方法定义
+	/// <summary>当发生一个错误的通知方法。</summary>
+	/// <param name="context">发生异常的数据访问上下文。</param>
+	/// <param name="exception">发生的异常对象。</param>
+	/// <returns>返回的新异常，如果为空则忽略该异常。</returns>
+	Exception OnError(IDataAccessContext context, Exception exception);
 
-		/// <summary>创建一个数据命令对象。</summary>
-		/// <returns>返回创建的数据命令对象。</returns>
-		DbCommand CreateCommand();
+	/// <summary>创建一个数据命令对象。</summary>
+	/// <returns>返回创建的数据命令对象。</returns>
+	DbCommand CreateCommand();
 
-		/// <summary>创建一个数据命令对象。</summary>
-		/// <param name="text">指定的命令文本。</param>
-		/// <param name="commandType">指定的命令类型。</param>
-		/// <returns>返回创建的数据命令对象。</returns>
-		DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text);
+	/// <summary>创建一个数据命令对象。</summary>
+	/// <param name="text">指定的命令文本。</param>
+	/// <param name="commandType">指定的命令类型。</param>
+	/// <returns>返回创建的数据命令对象。</returns>
+	DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text);
 
-		/// <summary>创建一个数据命令对象。</summary>
-		/// <param name="context">指定的数据访问上下文。</param>
-		/// <param name="statement">指定的数据操作语句。</param>
-		/// <returns>返回创建的数据命令对象。</returns>
-		DbCommand CreateCommand(IDataAccessContextBase context, Expressions.IStatementBase statement);
+	/// <summary>创建一个数据命令对象。</summary>
+	/// <param name="context">指定的数据访问上下文。</param>
+	/// <param name="statement">指定的数据操作语句。</param>
+	/// <returns>返回创建的数据命令对象。</returns>
+	DbCommand CreateCommand(IDataAccessContextBase context, Expressions.IStatementBase statement);
 
-		/// <summary>创建一个数据连接对象。</summary>
-		/// <param name="connectionString">指定的连接字符串。</param>
-		/// <returns>返回创建的数据连接对象，该连接对象的连接字符串为<paramref name="connectionString"/>参数值。</returns>
-		DbConnection CreateConnection(string connectionString = null);
+	/// <summary>创建一个数据连接对象。</summary>
+	/// <param name="connectionString">指定的连接字符串。</param>
+	/// <returns>返回创建的数据连接对象，该连接对象的连接字符串为<paramref name="connectionString"/>参数值。</returns>
+	DbConnection CreateConnection(string connectionString = null);
 
-		/// <summary>创建一个数据连接构建器。</summary>
-		/// <param name="connectionString">指定的连接字符串。</param>
-		/// <returns>返回创建的数据连接构建器。</returns>
-		DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null);
+	/// <summary>创建一个数据连接构建器。</summary>
+	/// <param name="connectionString">指定的连接字符串。</param>
+	/// <returns>返回创建的数据连接构建器。</returns>
+	DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null);
 
-		/// <summary>创建一个数据导入器对象。</summary>
-		/// <returns>返回创建的数据导入器对象。</returns>
-		IDataImporter CreateImporter();
-		#endregion
-	}
+	/// <summary>创建一个数据导入器对象。</summary>
+	/// <returns>返回创建的数据导入器对象。</returns>
+	IDataImporter CreateImporter();
+	#endregion
 }

@@ -32,73 +32,72 @@ using System.Data;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common
+namespace Zongsoft.Data.Common;
+
+public class DictionaryPopulator : IDataPopulator
 {
-	public class DictionaryPopulator : IDataPopulator
+	#region 成员字段
+	private readonly Type _type;
+	private readonly string[] _keys;
+	private readonly Func<int, IDictionary> _creator;
+	#endregion
+
+	#region 构造函数
+	internal protected DictionaryPopulator(Type type, string[] keys)
 	{
-		#region 成员字段
-		private readonly Type _type;
-		private readonly string[] _keys;
-		private readonly Func<int, IDictionary> _creator;
-		#endregion
-
-		#region 构造函数
-		internal protected DictionaryPopulator(Type type, string[] keys)
-		{
-			_type = type ?? throw new ArgumentNullException(nameof(type));
-			_keys = keys ?? throw new ArgumentNullException(nameof(keys));
-			_creator = this.GetCreator(type);
-		}
-		#endregion
-
-		#region 公共方法
-		T IDataPopulator.Populate<T>(IDataRecord record) => (T)this.Populate(record);
-		public object Populate(IDataRecord record)
-		{
-			if(record.FieldCount != _keys.Length)
-				throw new DataException("The record of populate has failed.");
-
-			//创建一个对应的实体字典
-			var dictionary = _creator(record.FieldCount);
-
-			for(var i = 0; i < record.FieldCount; i++)
-			{
-				dictionary[_keys[i]] = record.GetValue(i);
-			}
-
-			return dictionary;
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual Func<int, IDictionary> GetCreator(Type type)
-		{
-			if(type == null)
-				throw new ArgumentNullException(nameof(type));
-
-			if(type.IsInterface)
-			{
-				if(Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IDictionary<,>), type))
-					return capacity => new Dictionary<string, object>(capacity, StringComparer.OrdinalIgnoreCase);
-				else
-					return capacity => new Hashtable(capacity, StringComparer.OrdinalIgnoreCase);
-			}
-
-			if(type.IsAbstract)
-				throw new InvalidOperationException($"The specified '{type.FullName}' type is an abstract class that the dictionary populator cannot to populate.");
-
-			if(!typeof(IDictionary).IsAssignableFrom(type))
-				throw new InvalidOperationException($"The specified '{type.FullName}' type does not implement the {nameof(IDictionary)} interface that the dictionary populator cannot to populate.");
-
-			return capacity => (IDictionary)System.Activator.CreateInstance(type);
-		}
-		#endregion
+		_type = type ?? throw new ArgumentNullException(nameof(type));
+		_keys = keys ?? throw new ArgumentNullException(nameof(keys));
+		_creator = this.GetCreator(type);
 	}
+	#endregion
 
-	public class DictionaryPopulator<T> : DictionaryPopulator, IDataPopulator<T>
+	#region 公共方法
+	T IDataPopulator.Populate<T>(IDataRecord record) => (T)this.Populate(record);
+	public object Populate(IDataRecord record)
 	{
-		internal protected DictionaryPopulator(string[] keys) : base(typeof(T), keys) { }
+		if(record.FieldCount != _keys.Length)
+			throw new DataException("The record of populate has failed.");
 
-		public new T Populate(IDataRecord record) => (T)base.Populate(record);
+		//创建一个对应的实体字典
+		var dictionary = _creator(record.FieldCount);
+
+		for(var i = 0; i < record.FieldCount; i++)
+		{
+			dictionary[_keys[i]] = record.GetValue(i);
+		}
+
+		return dictionary;
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual Func<int, IDictionary> GetCreator(Type type)
+	{
+		if(type == null)
+			throw new ArgumentNullException(nameof(type));
+
+		if(type.IsInterface)
+		{
+			if(Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IDictionary<,>), type))
+				return capacity => new Dictionary<string, object>(capacity, StringComparer.OrdinalIgnoreCase);
+			else
+				return capacity => new Hashtable(capacity, StringComparer.OrdinalIgnoreCase);
+		}
+
+		if(type.IsAbstract)
+			throw new InvalidOperationException($"The specified '{type.FullName}' type is an abstract class that the dictionary populator cannot to populate.");
+
+		if(!typeof(IDictionary).IsAssignableFrom(type))
+			throw new InvalidOperationException($"The specified '{type.FullName}' type does not implement the {nameof(IDictionary)} interface that the dictionary populator cannot to populate.");
+
+		return capacity => (IDictionary)System.Activator.CreateInstance(type);
+	}
+	#endregion
+}
+
+public class DictionaryPopulator<T> : DictionaryPopulator, IDataPopulator<T>
+{
+	internal protected DictionaryPopulator(string[] keys) : base(typeof(T), keys) { }
+
+	public new T Populate(IDataRecord record) => (T)base.Populate(record);
 }

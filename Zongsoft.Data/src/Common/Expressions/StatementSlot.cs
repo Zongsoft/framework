@@ -29,21 +29,20 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class StatementSlot
 {
-	public class StatementSlot
+	public StatementSlot(string name, string place, object value)
 	{
-		public StatementSlot(string name, string place, object value)
-		{
-			this.Name = name;
-			this.Place = place;
-			this.Value = value;
-		}
-
-		public string Name { get; }
-		public string Place { get; set; }
-		public object Value { get; set; }
-
-		public override string ToString() => string.IsNullOrEmpty(this.Place) ? this.Name : $"{this.Name}@{this.Place}";
+		this.Name = name;
+		this.Place = place;
+		this.Value = value;
 	}
+
+	public string Name { get; }
+	public string Place { get; set; }
+	public object Value { get; set; }
+
+	public override string ToString() => string.IsNullOrEmpty(this.Place) ? this.Name : $"{this.Name}@{this.Place}";
 }

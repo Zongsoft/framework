@@ -30,77 +30,23 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+internal static class StatementVisitorExtension
 {
-	internal static class StatementVisitorExtension
+	public static void VisitFrom(this ExpressionVisitorContext context, ICollection<ISource> sources, Action<ExpressionVisitorContext, JoinClause> join)
 	{
-		public static void VisitFrom(this ExpressionVisitorContext context, ICollection<ISource> sources, Action<ExpressionVisitorContext, JoinClause> join)
+		if(sources == null || sources.Count == 0)
+			return;
+
+		context.Write(" FROM ");
+
+		foreach(var source in sources)
 		{
-			if(sources == null || sources.Count == 0)
-				return;
-
-			context.Write(" FROM ");
-
-			foreach(var source in sources)
-			{
-				switch(source)
-				{
-					case TableIdentifier table:
-						context.Visit(table);
-
-						break;
-					case SelectStatement subquery:
-						context.Write("(");
-
-						//递归生成子查询语句
-						context.Visit(subquery);
-
-						if(string.IsNullOrEmpty(subquery.Alias))
-							context.Write(")");
-						else
-							context.Write(") AS " + subquery.Alias);
-
-						break;
-					case JoinClause joining:
-						if(join == null)
-							VisitJoin(context, joining);
-						else
-							join(context, joining);
-
-						break;
-				}
-			}
-		}
-
-		public static void VisitJoin(this ExpressionVisitorContext context, JoinClause joining)
-		{
-			context.WriteLine();
-
-			switch(joining.Type)
-			{
-				case JoinType.Inner:
-					context.Write("INNER JOIN ");
-					break;
-				case JoinType.Left:
-					context.Write("LEFT JOIN ");
-					break;
-				case JoinType.Right:
-					context.Write("RIGHT JOIN ");
-					break;
-				case JoinType.Full:
-					context.Write("FULL JOIN ");
-					break;
-			}
-
-			switch(joining.Target)
+			switch(source)
 			{
 				case TableIdentifier table:
 					context.Visit(table);
-
-					if(string.IsNullOrEmpty(joining.Name))
-						context.WriteLine(" ON");
-					else
-						context.WriteLine(" ON /* " + joining.Name + " */");
 
 					break;
 				case SelectStatement subquery:
@@ -110,26 +56,79 @@ namespace Zongsoft.Data.Common.Expressions
 					context.Visit(subquery);
 
 					if(string.IsNullOrEmpty(subquery.Alias))
-						context.WriteLine(") ON");
+						context.Write(")");
 					else
-						context.WriteLine(") AS " + subquery.Alias + " ON");
+						context.Write(") AS " + subquery.Alias);
+
+					break;
+				case JoinClause joining:
+					if(join == null)
+						VisitJoin(context, joining);
+					else
+						join(context, joining);
 
 					break;
 			}
-
-			context.Visit(joining.Conditions);
 		}
+	}
 
-		public static void VisitWhere(this ExpressionVisitorContext context, IExpression where)
+	public static void VisitJoin(this ExpressionVisitorContext context, JoinClause joining)
+	{
+		context.WriteLine();
+
+		switch(joining.Type)
 		{
-			if(where == null)
-				return;
-
-			if(context.Output.Length > 0)
-				context.WriteLine();
-
-			context.Write("WHERE ");
-			context.Visit(where);
+			case JoinType.Inner:
+				context.Write("INNER JOIN ");
+				break;
+			case JoinType.Left:
+				context.Write("LEFT JOIN ");
+				break;
+			case JoinType.Right:
+				context.Write("RIGHT JOIN ");
+				break;
+			case JoinType.Full:
+				context.Write("FULL JOIN ");
+				break;
 		}
+
+		switch(joining.Target)
+		{
+			case TableIdentifier table:
+				context.Visit(table);
+
+				if(string.IsNullOrEmpty(joining.Name))
+					context.WriteLine(" ON");
+				else
+					context.WriteLine(" ON /* " + joining.Name + " */");
+
+				break;
+			case SelectStatement subquery:
+				context.Write("(");
+
+				//递归生成子查询语句
+				context.Visit(subquery);
+
+				if(string.IsNullOrEmpty(subquery.Alias))
+					context.WriteLine(") ON");
+				else
+					context.WriteLine(") AS " + subquery.Alias + " ON");
+
+				break;
+		}
+
+		context.Visit(joining.Conditions);
+	}
+
+	public static void VisitWhere(this ExpressionVisitorContext context, IExpression where)
+	{
+		if(where == null)
+			return;
+
+		if(context.Output.Length > 0)
+			context.WriteLine();
+
+		context.Write("WHERE ");
+		context.Visit(where);
 	}
 }

@@ -32,107 +32,106 @@ using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 {
-	public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
+	#region 构建方法
+	public IEnumerable<IStatementBase> Build(DataInsertContext context)
 	{
-		#region 构建方法
-		public IEnumerable<IStatementBase> Build(DataInsertContext context)
-		{
-			return this.BuildInserts(context, context.Entity, null, context.Schema.Members);
-		}
-		#endregion
+		return this.BuildInserts(context, context.Entity, null, context.Schema.Members);
+	}
+	#endregion
 
-		#region 私有方法
-		private IEnumerable<InsertStatement> BuildInserts(IDataMutateContext context, IDataEntity entity, SchemaMember owner, IEnumerable<SchemaMember> schemas)
-		{
-			var inherits = entity.GetInherits();
-			var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
+	#region 私有方法
+	private IEnumerable<InsertStatement> BuildInserts(IDataMutateContext context, IDataEntity entity, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+	{
+		var inherits = entity.GetInherits();
+		var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
 
-			foreach(var inherit in inherits)
+		foreach(var inherit in inherits)
+		{
+			var statement = this.CreateStatement(inherit, owner);
+
+			if(context is DataInsertContextBase ctx)
+				statement.Options.Apply(ctx.Options);
+
+			foreach(var schema in schemas)
 			{
-				var statement = this.CreateStatement(inherit, owner);
+				if(!inherit.Properties.Contains(schema.Name))
+					continue;
 
-				if(context is DataInsertContextBase ctx)
-					statement.Options.Apply(ctx.Options);
-
-				foreach(var schema in schemas)
+				if(schema.Token.Property.IsSimplex)
 				{
-					if(!inherit.Properties.Contains(schema.Name))
-						continue;
+					var simplex = (IDataEntitySimplexProperty)schema.Token.Property;
 
-					if(schema.Token.Property.IsSimplex)
+					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
 					{
-						var simplex = (IDataEntitySimplexProperty)schema.Token.Property;
-
-						if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
-						{
-							statement.Sequence = new SelectStatement(owner?.FullPath);
-							statement.Sequence.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
-						}
-						else
-						{
-							//确认当前成员是否有提供的写入值
-							var provided = context.Validate(DataAccessMethod.Insert, simplex, out var value);
-
-							var field = statement.Table.CreateField(schema.Token);
-							statement.Fields.Add(field);
-
-							var parameter = Utility.IsLinked(owner, simplex) ?
-							                (
-												provided ?
-												Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
-												Expression.Parameter(schema.Token.Property.Name, simplex.Type)
-											) :
-											(
-												provided ?
-												Expression.Parameter(field, schema, value) :
-												Expression.Parameter(field, schema)
-											);
-
-							statement.Values.Add(parameter);
-							statement.Parameters.Add(parameter);
-						}
+						statement.Sequence = new SelectStatement(owner?.FullPath);
+						statement.Sequence.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
 					}
 					else
 					{
-						if(!schema.HasChildren)
-							throw new DataException($"Missing members that does not specify '{schema.FullPath}' complex property.");
+						//确认当前成员是否有提供的写入值
+						var provided = context.Validate(DataAccessMethod.Insert, simplex, out var value);
 
-						//不可变复合属性不支持任何写操作，即在新增操作中不能包含不可变复合属性
-						if(schema.Token.Property.Immutable)
-							throw new DataException($"The '{schema.FullPath}' is an immutable complex(navigation) property and does not support the insert operation.");
+						var field = statement.Table.CreateField(schema.Token);
+						statement.Fields.Add(field);
 
-						var complex = (IDataEntityComplexProperty)schema.Token.Property;
+						var parameter = Utility.IsLinked(owner, simplex) ?
+						                (
+											provided ?
+											Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
+											Expression.Parameter(schema.Token.Property.Name, simplex.Type)
+										) :
+										(
+											provided ?
+											Expression.Parameter(field, schema, value) :
+											Expression.Parameter(field, schema)
+										);
 
-						//注：在构建一对多的导航属性的UPSERT语句时不能指定容器数据(即data参数值为空)，因为批量操作语句不支持在构建阶段绑定到具体数据
-						var upserts = UpsertStatementBuilder.BuildUpserts(context, complex.Foreign, (context.IsMultiple ? null : context.Data), schema, schema.Children);
-
-						//将新建的语句加入到主语句的从属集中
-						foreach(var upsert in upserts)
-						{
-							statement.Slaves.Add(upsert);
-						}
-
-						//var slaves = BuildInserts(context, complex.Foreign, schema, schema.Children);
-						//foreach(var slave in slaves)
-						//{
-						//	slave.Schema = schema;
-						//	statement.Slaves.Add(slave);
-						//}
+						statement.Values.Add(parameter);
+						statement.Parameters.Add(parameter);
 					}
 				}
+				else
+				{
+					if(!schema.HasChildren)
+						throw new DataException($"Missing members that does not specify '{schema.FullPath}' complex property.");
 
-				if(statement.Fields.Count > 0)
-					yield return statement;
+					//不可变复合属性不支持任何写操作，即在新增操作中不能包含不可变复合属性
+					if(schema.Token.Property.Immutable)
+						throw new DataException($"The '{schema.FullPath}' is an immutable complex(navigation) property and does not support the insert operation.");
+
+					var complex = (IDataEntityComplexProperty)schema.Token.Property;
+
+					//注：在构建一对多的导航属性的UPSERT语句时不能指定容器数据(即data参数值为空)，因为批量操作语句不支持在构建阶段绑定到具体数据
+					var upserts = UpsertStatementBuilder.BuildUpserts(context, complex.Foreign, (context.IsMultiple ? null : context.Data), schema, schema.Children);
+
+					//将新建的语句加入到主语句的从属集中
+					foreach(var upsert in upserts)
+					{
+						statement.Slaves.Add(upsert);
+					}
+
+					//var slaves = BuildInserts(context, complex.Foreign, schema, schema.Children);
+					//foreach(var slave in slaves)
+					//{
+					//	slave.Schema = schema;
+					//	statement.Slaves.Add(slave);
+					//}
+				}
 			}
+
+			if(statement.Fields.Count > 0)
+				yield return statement;
 		}
-
-		private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataInsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
-		#endregion
-
-		#region 虚拟方法
-		protected virtual InsertStatement CreateStatement(IDataEntity entity, SchemaMember schema) => new(entity, schema);
-		#endregion
 	}
+
+	private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataInsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
+	#endregion
+
+	#region 虚拟方法
+	protected virtual InsertStatement CreateStatement(IDataEntity entity, SchemaMember schema) => new(entity, schema);
+	#endregion
 }

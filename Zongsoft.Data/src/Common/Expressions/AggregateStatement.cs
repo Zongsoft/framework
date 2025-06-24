@@ -32,14 +32,11 @@ using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class AggregateStatement : SelectStatementBase
 {
-	public class AggregateStatement : SelectStatementBase
-	{
-		#region 构造函数
-		public AggregateStatement(IDataEntity entity, string alias = null) : base(entity, alias)
-		{
-		}
-		#endregion
-	}
+	#region 构造函数
+	public AggregateStatement(IDataEntity entity, string alias = null) : base(entity, alias) { }
+	#endregion
 }

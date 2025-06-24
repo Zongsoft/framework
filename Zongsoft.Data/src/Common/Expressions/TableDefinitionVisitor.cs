@@ -29,30 +29,29 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class TableDefinitionVisitor : StatementVisitorBase<TableDefinition>
 {
-	public class TableDefinitionVisitor : StatementVisitorBase<TableDefinition>
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, TableDefinition statement)
 	{
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, TableDefinition statement)
+		if(statement.IsTemporary)
+			context.WriteLine($"CREATE TEMPORARY TABLE {statement.Name} (");
+		else
+			context.WriteLine($"CREATE TABLE {statement.Name} (");
+
+		int index = 0;
+
+		foreach(var field in statement.Fields)
 		{
-			if(statement.IsTemporary)
-				context.WriteLine($"CREATE TEMPORARY TABLE {statement.Name} (");
-			else
-				context.WriteLine($"CREATE TABLE {statement.Name} (");
+			if(index++ > 0)
+				context.WriteLine(",");
 
-			int index = 0;
-
-			foreach(var field in statement.Fields)
-			{
-				if(index++ > 0)
-					context.WriteLine(",");
-
-				context.Visit(field);
-			}
-
-			context.WriteLine(");");
+			context.Visit(field);
 		}
-		#endregion
+
+		context.WriteLine(");");
 	}
+	#endregion
 }

@@ -30,25 +30,23 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class UpdateStatement : MutateStatement
 {
-	public class UpdateStatement : MutateStatement
+	#region 构造函数
+	public UpdateStatement(Metadata.IDataEntity entity, SchemaMember schema = null) : base(entity, schema)
 	{
-		#region 构造函数
-		public UpdateStatement(Metadata.IDataEntity entity, SchemaMember schema = null) : base(entity, schema)
-		{
-			this.Fields = new List<FieldValue>();
-			this.Tables = new List<TableIdentifier>();
-			this.Tables.Add(this.Table);
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取一个表标识的集合，表示要修改的表。</summary>
-		public IList<TableIdentifier> Tables { get; }
-
-		/// <summary>获取更新字段/值的集合。</summary>
-		public ICollection<FieldValue> Fields { get; }
-		#endregion
+		this.Fields = new List<FieldValue>();
+		this.Tables = [this.Table];
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取一个表标识的集合，表示要修改的表。</summary>
+	public IList<TableIdentifier> Tables { get; }
+
+	/// <summary>获取更新字段/值的集合。</summary>
+	public ICollection<FieldValue> Fields { get; }
+	#endregion
 }

@@ -30,59 +30,58 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class ReturningClause
 {
-	public class ReturningClause
+	#region 构造函数
+	public ReturningClause(TableDefinition table, params ReturningMember[] members)
 	{
-		#region 构造函数
-		public ReturningClause(TableDefinition table, params ReturningMember[] members)
-		{
-			this.Table = table ?? throw new ArgumentNullException(nameof(table));
+		this.Table = table ?? throw new ArgumentNullException(nameof(table));
 
-			if(members == null || members.Length == 0)
-				this.Members = new List<ReturningMember>();
-			else
-				this.Members = new List<ReturningMember>(members);
-		}
-
-		public ReturningClause(params ReturningMember[] members)
-		{
-			if(members == null || members.Length == 0)
-				this.Members = new List<ReturningMember>();
-			else
-				this.Members = new List<ReturningMember>(members);
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取 Returning/Output 子句的输出(INTO)表定义，如果为空则表示无输出表。</summary>
-		public TableDefinition Table { get; }
-
-		/// <summary>获取 Returning/Output 子句的成员字段集，如果为空集则表示全部字段。</summary>
-		public ICollection<ReturningMember> Members { get; }
-		#endregion
-
-		#region 公共方法
-		public ReturningMember Append(FieldIdentifier field, ReturningMode mode)
-		{
-			var member = new ReturningMember(field, mode);
-			this.Members.Add(member);
-			return member;
-		}
-		#endregion
-
-		#region 嵌套结构
-		public enum ReturningMode
-		{
-			Deleted,
-			Inserted,
-		}
-
-		public struct ReturningMember(FieldIdentifier field, ReturningMode mode)
-		{
-			public FieldIdentifier Field = field;
-			public ReturningMode Mode = mode;
-		}
-		#endregion
+		if(members == null || members.Length == 0)
+			this.Members = new List<ReturningMember>();
+		else
+			this.Members = new List<ReturningMember>(members);
 	}
+
+	public ReturningClause(params ReturningMember[] members)
+	{
+		if(members == null || members.Length == 0)
+			this.Members = new List<ReturningMember>();
+		else
+			this.Members = new List<ReturningMember>(members);
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取 Returning/Output 子句的输出(INTO)表定义，如果为空则表示无输出表。</summary>
+	public TableDefinition Table { get; }
+
+	/// <summary>获取 Returning/Output 子句的成员字段集，如果为空集则表示全部字段。</summary>
+	public ICollection<ReturningMember> Members { get; }
+	#endregion
+
+	#region 公共方法
+	public ReturningMember Append(FieldIdentifier field, ReturningMode mode)
+	{
+		var member = new ReturningMember(field, mode);
+		this.Members.Add(member);
+		return member;
+	}
+	#endregion
+
+	#region 嵌套结构
+	public enum ReturningMode
+	{
+		Deleted,
+		Inserted,
+	}
+
+	public struct ReturningMember(FieldIdentifier field, ReturningMode mode)
+	{
+		public FieldIdentifier Field = field;
+		public ReturningMode Mode = mode;
+	}
+	#endregion
 }

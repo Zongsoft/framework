@@ -29,47 +29,46 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class AggregateExpression : MethodExpression
 {
-	public class AggregateExpression : MethodExpression
+	#region 构造函数
+	public AggregateExpression(DataAggregateFunction function, bool distinct, params IExpression[] arguments) : base(function.ToString(), MethodType.Function, arguments)
 	{
-		#region 构造函数
-		public AggregateExpression(DataAggregateFunction function, bool distinct, params IExpression[] arguments) : base(function.ToString(), MethodType.Function, arguments)
-		{
-			this.Function = function;
-			this.Distinct = distinct;
-		}
-
-		public AggregateExpression(DataAggregate aggregate, params IExpression[] arguments) : base(aggregate.Function.ToString(), MethodType.Function, arguments)
-		{
-			this.Function = aggregate.Function;
-			this.Distinct = aggregate.Distinct;
-
-			if(string.IsNullOrEmpty(aggregate.Alias))
-			{
-				if(string.IsNullOrEmpty(aggregate.Name) || aggregate.Name == "*")
-					this.Alias = aggregate.Function.ToString();
-				else
-					this.Alias = aggregate.Name + aggregate.Function.ToString();
-			}
-			else
-				this.Alias = aggregate.Alias;
-		}
-		#endregion
-
-		#region 公共属性
-		public bool Distinct { get; }
-		public new DataAggregateFunction Function { get; }
-		#endregion
-
-		#region 静态方法
-		public static AggregateExpression Aggregate(DataAggregate aggregate, IExpression argument)
-		{
-			if(argument is FieldIdentifier field)
-				field.Alias = null;
-
-			return new AggregateExpression(aggregate, argument == null ? Array.Empty<IExpression>() : new IExpression[] { argument });
-		}
-		#endregion
+		this.Function = function;
+		this.Distinct = distinct;
 	}
+
+	public AggregateExpression(DataAggregate aggregate, params IExpression[] arguments) : base(aggregate.Function.ToString(), MethodType.Function, arguments)
+	{
+		this.Function = aggregate.Function;
+		this.Distinct = aggregate.Distinct;
+
+		if(string.IsNullOrEmpty(aggregate.Alias))
+		{
+			if(string.IsNullOrEmpty(aggregate.Name) || aggregate.Name == "*")
+				this.Alias = aggregate.Function.ToString();
+			else
+				this.Alias = aggregate.Name + aggregate.Function.ToString();
+		}
+		else
+			this.Alias = aggregate.Alias;
+	}
+	#endregion
+
+	#region 公共属性
+	public bool Distinct { get; }
+	public new DataAggregateFunction Function { get; }
+	#endregion
+
+	#region 静态方法
+	public static AggregateExpression Aggregate(DataAggregate aggregate, IExpression argument)
+	{
+		if(argument is FieldIdentifier field)
+			field.Alias = null;
+
+		return new AggregateExpression(aggregate, argument == null ? Array.Empty<IExpression>() : new IExpression[] { argument });
+	}
+	#endregion
 }

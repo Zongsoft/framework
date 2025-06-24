@@ -32,146 +32,145 @@ using System.Data;
 using System.ComponentModel;
 using System.Collections.Concurrent;
 
-namespace Zongsoft.Data.Common
-{
-	public class ScalarPopulatorProvider : IDataPopulatorProvider
-	{
-		#region 单例模式
-		public static readonly ScalarPopulatorProvider Instance = new ScalarPopulatorProvider();
-		#endregion
+namespace Zongsoft.Data.Common;
 
+public class ScalarPopulatorProvider : IDataPopulatorProvider
+{
+	#region 单例模式
+	public static readonly ScalarPopulatorProvider Instance = new();
+	#endregion
+
+	#region 私有变量
+	private readonly ConcurrentDictionary<Type, IDataPopulator> _converters;
+	#endregion
+
+	#region 构造函数
+	private ScalarPopulatorProvider()
+	{
+		_converters = new ConcurrentDictionary<Type, IDataPopulator>();
+	}
+	#endregion
+
+	#region 公共方法
+	public bool CanPopulate(Type type) => Zongsoft.Common.TypeExtension.IsScalarType(type);
+	public IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null) => this.GetPopulator(typeof(T), record, entity) as IDataPopulator<T>;
+	public IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null) => Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
+		this.GetPopulator(underlyingType, true) :
+		this.GetPopulator(type, false);
+	#endregion
+
+	#region 私有方法
+	private IDataPopulator GetPopulator(Type type, bool nullable)
+	{
+		switch(Type.GetTypeCode(type))
+		{
+			case TypeCode.Char:
+				return nullable ? NullablePopulator.Char : ScalarPopulator.Char;
+			case TypeCode.String:
+				return ScalarPopulator.String;
+			case TypeCode.Boolean:
+				return nullable ? NullablePopulator.Boolean : ScalarPopulator.Boolean;
+			case TypeCode.DateTime:
+				return nullable ? NullablePopulator.DateTime : ScalarPopulator.DateTime;
+			case TypeCode.Byte:
+				return nullable ? NullablePopulator.Byte : ScalarPopulator.Byte;
+			case TypeCode.SByte:
+				return nullable ? NullablePopulator.SByte : ScalarPopulator.SByte;
+			case TypeCode.Int16:
+				return nullable ? NullablePopulator.Int16 : ScalarPopulator.Int16;
+			case TypeCode.Int32:
+				return nullable ? NullablePopulator.Int32 : ScalarPopulator.Int32;
+			case TypeCode.Int64:
+				return nullable ? NullablePopulator.Int64 : ScalarPopulator.Int64;
+			case TypeCode.UInt16:
+				return nullable ? NullablePopulator.UInt16 : ScalarPopulator.UInt16;
+			case TypeCode.UInt32:
+				return nullable ? NullablePopulator.UInt32 : ScalarPopulator.UInt32;
+			case TypeCode.UInt64:
+				return nullable ? NullablePopulator.UInt64 : ScalarPopulator.UInt64;
+			case TypeCode.Single:
+				return nullable ? NullablePopulator.Single : ScalarPopulator.Single;
+			case TypeCode.Double:
+				return nullable ? NullablePopulator.Double : ScalarPopulator.Double;
+			case TypeCode.Decimal:
+				return nullable ? NullablePopulator.Decimal : ScalarPopulator.Decimal;
+		}
+
+		if(type == typeof(Guid))
+			return nullable ? NullablePopulator.Guid : ScalarPopulator.Guid;
+
+		if(type == typeof(DateTimeOffset))
+			return nullable ? NullablePopulator.DateTimeOffset : ScalarPopulator.DateTimeOffset;
+
+		if(type == typeof(byte[]))
+			return nullable ? NullablePopulator.Bytes : ScalarPopulator.Bytes;
+
+		if(type == typeof(char[]))
+			return nullable ? NullablePopulator.Chars : ScalarPopulator.Chars;
+
+		return _converters.GetOrAdd(type, type => (IDataPopulator)Activator.CreateInstance(typeof(ConverterPopulater<>).MakeGenericType(type)));
+	}
+
+	public IDataPopulator<T> GetPopulator<T>(bool nullable)
+	{
+		return this.GetPopulator(typeof(T), nullable) as IDataPopulator<T>;
+	}
+	#endregion
+
+	#region 嵌套子类
+	private class ConverterPopulater<T> : IDataPopulator, IDataPopulator<T>
+	{
 		#region 私有变量
-		private readonly ConcurrentDictionary<Type, IDataPopulator> _converters;
+		private readonly TypeConverter _converter;
 		#endregion
 
 		#region 构造函数
-		private ScalarPopulatorProvider()
+		public ConverterPopulater()
 		{
-			_converters = new ConcurrentDictionary<Type, IDataPopulator>();
+			_converter = TypeDescriptor.GetConverter(typeof(T)) ?? throw new InvalidOperationException($"The specified '{typeof(T).FullName}' type has no type converter.");
 		}
 		#endregion
 
 		#region 公共方法
-		public bool CanPopulate(Type type) => Zongsoft.Common.TypeExtension.IsScalarType(type);
-		public IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null) => this.GetPopulator(typeof(T), record, entity) as IDataPopulator<T>;
-		public IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null) => Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
-			this.GetPopulator(underlyingType, true) :
-			this.GetPopulator(type, false);
-		#endregion
-
-		#region 私有方法
-		private IDataPopulator GetPopulator(Type type, bool nullable)
+		object IDataPopulator.Populate(IDataRecord record)
 		{
-			switch(Type.GetTypeCode(type))
-			{
-				case TypeCode.Char:
-					return nullable ? NullablePopulator.Char : ScalarPopulator.Char;
-				case TypeCode.String:
-					return ScalarPopulator.String;
-				case TypeCode.Boolean:
-					return nullable ? NullablePopulator.Boolean : ScalarPopulator.Boolean;
-				case TypeCode.DateTime:
-					return nullable ? NullablePopulator.DateTime : ScalarPopulator.DateTime;
-				case TypeCode.Byte:
-					return nullable ? NullablePopulator.Byte : ScalarPopulator.Byte;
-				case TypeCode.SByte:
-					return nullable ? NullablePopulator.SByte : ScalarPopulator.SByte;
-				case TypeCode.Int16:
-					return nullable ? NullablePopulator.Int16 : ScalarPopulator.Int16;
-				case TypeCode.Int32:
-					return nullable ? NullablePopulator.Int32 : ScalarPopulator.Int32;
-				case TypeCode.Int64:
-					return nullable ? NullablePopulator.Int64 : ScalarPopulator.Int64;
-				case TypeCode.UInt16:
-					return nullable ? NullablePopulator.UInt16 : ScalarPopulator.UInt16;
-				case TypeCode.UInt32:
-					return nullable ? NullablePopulator.UInt32 : ScalarPopulator.UInt32;
-				case TypeCode.UInt64:
-					return nullable ? NullablePopulator.UInt64 : ScalarPopulator.UInt64;
-				case TypeCode.Single:
-					return nullable ? NullablePopulator.Single : ScalarPopulator.Single;
-				case TypeCode.Double:
-					return nullable ? NullablePopulator.Double : ScalarPopulator.Double;
-				case TypeCode.Decimal:
-					return nullable ? NullablePopulator.Decimal : ScalarPopulator.Decimal;
-			}
+			object value = record.IsDBNull(0) ? null : record.GetValue(0);
 
-			if(type == typeof(Guid))
-				return nullable ? NullablePopulator.Guid : ScalarPopulator.Guid;
+			if(_converter.CanConvertFrom(record.GetFieldType(0)))
+				return _converter.ConvertFrom(value);
 
-			if(type == typeof(DateTimeOffset))
-				return nullable ? NullablePopulator.DateTimeOffset : ScalarPopulator.DateTimeOffset;
+			if(_converter.CanConvertTo(typeof(T)))
+				return _converter.ConvertTo(value, typeof(T));
 
-			if(type == typeof(byte[]))
-				return nullable ? NullablePopulator.Bytes : ScalarPopulator.Bytes;
-
-			if(type == typeof(char[]))
-				return nullable ? NullablePopulator.Chars : ScalarPopulator.Chars;
-
-			return _converters.GetOrAdd(type, type => (IDataPopulator)Activator.CreateInstance(typeof(ConverterPopulater<>).MakeGenericType(type)));
+			throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(T).FullName}' target type.");
 		}
 
-		public IDataPopulator<T> GetPopulator<T>(bool nullable)
+		TResult IDataPopulator.Populate<TResult>(IDataRecord record)
 		{
-			return this.GetPopulator(typeof(T), nullable) as IDataPopulator<T>;
+			object value = record.IsDBNull(0) ? null : record.GetValue(0);
+
+			if(_converter.CanConvertFrom(record.GetFieldType(0)))
+				return (TResult)_converter.ConvertFrom(value);
+
+			if(_converter.CanConvertTo(typeof(TResult)))
+				return (TResult)_converter.ConvertTo(value, typeof(TResult));
+
+			throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(TResult).FullName}' target type.");
 		}
-		#endregion
 
-		#region 嵌套子类
-		private class ConverterPopulater<T> : IDataPopulator, IDataPopulator<T>
+		public T Populate(IDataRecord record)
 		{
-			#region 私有变量
-			private readonly TypeConverter _converter;
-			#endregion
+			object value = record.IsDBNull(0) ? null : record.GetValue(0);
 
-			#region 构造函数
-			public ConverterPopulater()
-			{
-				_converter = TypeDescriptor.GetConverter(typeof(T)) ?? throw new InvalidOperationException($"The specified '{typeof(T).FullName}' type has no type converter.");
-			}
-			#endregion
+			if(_converter.CanConvertFrom(record.GetFieldType(0)))
+				return (T)_converter.ConvertFrom(value);
 
-			#region 公共方法
-			object IDataPopulator.Populate(IDataRecord record)
-			{
-				object value = record.IsDBNull(0) ? null : record.GetValue(0);
+			if(_converter.CanConvertTo(typeof(T)))
+				return (T)_converter.ConvertTo(value, typeof(T));
 
-				if(_converter.CanConvertFrom(record.GetFieldType(0)))
-					return _converter.ConvertFrom(value);
-
-				if(_converter.CanConvertTo(typeof(T)))
-					return _converter.ConvertTo(value, typeof(T));
-
-				throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(T).FullName}' target type.");
-			}
-
-			TResult IDataPopulator.Populate<TResult>(IDataRecord record)
-			{
-				object value = record.IsDBNull(0) ? null : record.GetValue(0);
-
-				if(_converter.CanConvertFrom(record.GetFieldType(0)))
-					return (TResult)_converter.ConvertFrom(value);
-
-				if(_converter.CanConvertTo(typeof(TResult)))
-					return (TResult)_converter.ConvertTo(value, typeof(TResult));
-
-				throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(TResult).FullName}' target type.");
-			}
-
-			public T Populate(IDataRecord record)
-			{
-				object value = record.IsDBNull(0) ? null : record.GetValue(0);
-
-				if(_converter.CanConvertFrom(record.GetFieldType(0)))
-					return (T)_converter.ConvertFrom(value);
-
-				if(_converter.CanConvertTo(typeof(T)))
-					return (T)_converter.ConvertTo(value, typeof(T));
-
-				throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(T).FullName}' target type.");
-			}
-			#endregion
+			throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(T).FullName}' target type.");
 		}
 		#endregion
 	}
+	#endregion
 }

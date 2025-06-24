@@ -29,18 +29,17 @@
 
 using System;
 
-namespace Zongsoft.Data.Common.Expressions
+namespace Zongsoft.Data.Common.Expressions;
+
+public class ExecutionStatementVisitor : StatementVisitorBase<ExecutionStatement>
 {
-	public class ExecutionStatementVisitor : StatementVisitorBase<ExecutionStatement>
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, ExecutionStatement statement)
 	{
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, ExecutionStatement statement)
-		{
-			if(statement.Command.Type == Metadata.DataCommandType.Procedure)
-				context.Output.AppendLine(string.IsNullOrEmpty(statement.Command.Alias) ? statement.Command.Name : statement.Command.Alias);
-			else
-				context.Output.AppendLine(statement.Command.Scriptor.GetScript(context.Dialect.Name));
-		}
-		#endregion
+		if(statement.Command.Type == Metadata.DataCommandType.Procedure)
+			context.Output.AppendLine(string.IsNullOrEmpty(statement.Command.Alias) ? statement.Command.Name : statement.Command.Alias);
+		else
+			context.Output.AppendLine(statement.Command.Scriptor.GetScript(context.Dialect.Name));
 	}
+	#endregion
 }
