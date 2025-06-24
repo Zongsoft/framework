@@ -36,6 +36,10 @@ namespace Zongsoft.Data.Metadata;
 /// </summary>
 public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<DataEntityBase>
 {
+	#region 成员字段
+	private string _alias;
+	#endregion
+
 	#region 构造函数
 	protected DataEntityBase(string @namespace, string name, string baseName, bool immutable = false)
 	{
@@ -43,8 +47,9 @@ public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<D
 			throw new ArgumentNullException(nameof(name));
 
 		this.Namespace = @namespace;
-		this.Name = name.Trim();
-		this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.Trim().ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.Trim().ToLowerInvariant()}";
+		this.Name = name;
+		this.Alias = null;
+		this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.ToLowerInvariant()}";
 		this.BaseName = baseName;
 		this.Immutable = immutable;
 		this.Properties = new(this);
@@ -62,7 +67,8 @@ public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<D
 	public string QualifiedName { get; }
 
 	/// <summary>获取或设置数据实体的别名。</summary>
-	public string Alias { get; set; }
+	/// <remarks>注意：如果 <see cref="Namespace"/> 属性不为空(<c>null</c>)或空字符串，则该属性默认为：<c>{Namespace}_{Name}</c>。</remarks>
+	public string Alias { get => _alias; set => _alias = value ?? (string.IsNullOrEmpty(this.Namespace) ? value : $"{this.Namespace}_{this.Name}"); }
 
 	/// <summary>获取或设置数据实体继承的父实体名。</summary>
 	public string BaseName { get; set; }

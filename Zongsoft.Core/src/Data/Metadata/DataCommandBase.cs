@@ -37,6 +37,10 @@ namespace Zongsoft.Data.Metadata;
 /// </summary>
 public class DataCommandBase : IDataCommand, IEquatable<IDataCommand>, IEquatable<DataCommandBase>
 {
+	#region 成员字段
+	private string _alias;
+	#endregion
+
 	#region 构造函数
 	protected DataCommandBase(string @namespace, string name, string alias = null)
 	{
@@ -44,9 +48,9 @@ public class DataCommandBase : IDataCommand, IEquatable<IDataCommand>, IEquatabl
 			throw new ArgumentNullException(nameof(name));
 
 		this.Namespace = @namespace;
-		this.Name = name.Trim();
+		this.Name = name;
 		this.Alias = alias;
-		this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.Trim().ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.Trim().ToLowerInvariant()}";
+		this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.ToLowerInvariant()}";
 		this.Parameters = new();
 	}
 	#endregion
@@ -65,7 +69,8 @@ public class DataCommandBase : IDataCommand, IEquatable<IDataCommand>, IEquatabl
 	public DataCommandType Type { get; set; }
 
 	/// <summary>获取或设置数据命令的别名（表名、存储过程名）。</summary>
-	public string Alias { get; set; }
+	/// <remarks>注意：如果 <see cref="Namespace"/> 属性不为空(<c>null</c>)或空字符串，则该属性默认为：<c>{Namespace}_{Name}</c>。</remarks>
+	public string Alias { get => _alias; set => _alias = value ?? (string.IsNullOrEmpty(this.Namespace) ? value : $"{this.Namespace}_{this.Name}"); }
 
 	/// <summary>获取或设置数据命令支持的驱动。</summary>
 	public string Driver { get; set; }
