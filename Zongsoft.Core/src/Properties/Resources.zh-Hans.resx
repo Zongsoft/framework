@@ -118,300 +118,300 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Disabled" xml:space="preserve">
-    <value>Disabled</value>
+    <value>禁用</value>
   </data>
   <data name="Error.FailedBinding" xml:space="preserve">
-    <value>The configuration value at "{0}" cannot be converted to type "{1}".</value>
+    <value>无法将“ {0}”处的配置值转换为“ {1}”类型。</value>
   </data>
   <data name="Error.FailedToActivate" xml:space="preserve">
-    <value>Unable to create an instance of type "{0}".</value>
+    <value>无法创建类型为“ {0}”的实例。</value>
   </data>
   <data name="Error.IllegalConfigurationAttributeName" xml:space="preserve">
-    <value>The configuration property name "{0}" is invalid. Located at: {1}</value>
+    <value>非法的配置属性名“{0}”。位于：{1}</value>
   </data>
   <data name="Error.IllegalConfigurationKeyValue" xml:space="preserve">
-    <value>The value "{0}" of the illegal configuration element cannot contain characters such as '/', '\', ':', '*', or '?'. Located at: {1}</value>
+    <value>非法的配置元素的键值“{0}”，键值中不能含有“/”、“\”、“:”、“*”、“?”等字符。位于：{1}</value>
   </data>
   <data name="Error.IllegalRootNodeName" xml:space="preserve">
-    <value>The root node name "{0}" is invalid. {1}</value>
+    <value>发现“{0}”是非法的根节点名称。{1}</value>
   </data>
   <data name="Error.InvalidOptionConfigurationFileFormat" xml:space="preserve">
-    <value>Invalid option configuration file format. The configuration elements must be located within the &lt;option&gt; element. Located at: {0}</value>
+    <value>无效的选项配置文件格式，配置元素必须位于&lt;option&gt;元素内。位于：{0}</value>
   </data>
   <data name="Error.InvalidUnrecognizedProperty" xml:space="preserve">
-    <value>The specified "{0}" is an invalid unrecognized property. The type of unrecognized properties must be a dictionary with string keys.</value>
+    <value>指定的“{0}”是一个无效的未识别属性，未识别属性类型必须是一个键为字符串类型的字典。</value>
   </data>
   <data name="Error.KeyIsDuplicated" xml:space="preserve">
-    <value>Duplicate "{0}" key found. Located at: {1}</value>
+    <value>发现重复的“{0}”键。位于：{1}</value>
   </data>
   <data name="Error.NamespaceIsNotSupported" xml:space="preserve">
-    <value>XML namespaces are not supported. Located at: {0}</value>
+    <value>不支持XML名称空间。位于：{0}</value>
   </data>
   <data name="Error.PropertyCannotRead" xml:space="preserve">
-    <value>The "{1}" property of type "{0}" is not readable.</value>
+    <value>位于“{0}”类型的“{1}”属性不可读。</value>
   </data>
   <data name="Error.PropertyNotExists" xml:space="preserve">
-    <value>There is no property named "{1}" in the "{0}" type.</value>
+    <value>在“{0}”类型中不存在名为“{1}”的属性。</value>
   </data>
   <data name="Error.RepeatedOperation" xml:space="preserve">
-    <value>This operation cannot be repeated.</value>
+    <value>不能重复操作。</value>
   </data>
   <data name="Error.UnsupportedMultidimensionalArray" xml:space="preserve">
-    <value>Unable to create an instance of type "{0}" because multidimensional arrays are not supported.</value>
+    <value>无法创建类型为“ {0}”的实例，因为不支持多维数组。</value>
   </data>
   <data name="Error.UnsupportedNodeType" xml:space="preserve">
-    <value>Unsupported node type "{0}" detected. {1}</value>
+    <value>发现不受支持的节点类型“{0}”。{1}</value>
   </data>
   <data name="OperationException.Argument.Message" xml:space="preserve">
-    <value>Argument exception, possibly an unsupported argument value was passed.</value>
+    <value>参数异常，可能传入了不支持的参数值。</value>
   </data>
   <data name="OperationException.Unfound.Message" xml:space="preserve">
-    <value>The target could not be found, resulting in operation failure.</value>
+    <value>未能找到目标，导致操作异常。</value>
   </data>
   <data name="OperationException.Unknown.Message" xml:space="preserve">
-    <value>An unknown operation error has occurred.</value>
+    <value>发生未知的操作异常。</value>
   </data>
   <data name="OperationException.Unprocessed.Message" xml:space="preserve">
-    <value>Unable to process the current operation.</value>
+    <value>无法处理当前操作。</value>
   </data>
   <data name="OperationException.Unsatisfied.Message" xml:space="preserve">
-    <value>Failure to meet the necessary prerequisites resulted in the operation failing.</value>
+    <value>未能满足必要的先决条件，导致操作失败。</value>
   </data>
   <data name="OperationException.Unsupported.Message" xml:space="preserve">
-    <value>The current operation is not supported.</value>
+    <value>不支持当前操作。</value>
   </data>
   <data name="AuthenticationException.Message" xml:space="preserve">
-    <value>Authentication failed.</value>
+    <value>身份验证失败。</value>
   </data>
   <data name="Security.AccountDisabled.Message" xml:space="preserve">
-    <value>The account has been disabled.</value>
+    <value>帐户已被禁用。</value>
   </data>
   <data name="Security.AccountSuspended.Message" xml:space="preserve">
-    <value>Your account has been suspended, possibly due to too many failed verification attempts.</value>
+    <value>帐户被暂停，可能是因为验证失败次数太多。</value>
   </data>
   <data name="Security.AccountUnapproved.Message" xml:space="preserve">
-    <value>The account has not yet been approved.</value>
+    <value>帐户尚未通过审核批准。</value>
   </data>
   <data name="Security.Forbidden.Message" xml:space="preserve">
-    <value>Access denied. Your account is not authorized to access the current resource.</value>
+    <value>禁止访问，您的账号没有被授权访问当前资源。</value>
   </data>
   <data name="Security.InvalidIdentity.Message" xml:space="preserve">
-    <value>Invalid identity identifier.</value>
+    <value>无效的身份标识。</value>
   </data>
   <data name="Security.InvalidPassword.Message" xml:space="preserve">
-    <value>Invalid password.</value>
+    <value>无效的密码。</value>
   </data>
   <data name="Security.Succeed.Message" xml:space="preserve">
-    <value>Verification successful.</value>
+    <value>验证成功。</value>
   </data>
   <data name="Security.Unknown.Message" xml:space="preserve">
-    <value>Other unknown security reasons.</value>
+    <value>其他未知的安全原因。</value>
   </data>
   <data name="AuthorizationException.Message" xml:space="preserve">
-    <value>Access denied: You do not have permission to access this resource.</value>
+    <value>禁止访问，您没有访问这项资源的授权。</value>
   </data>
   <data name="ClearCommand.Description" xml:space="preserve">
-    <value>Clear the display contents of the current terminal.</value>
+    <value>清除当前终端的显示内容。</value>
   </data>
   <data name="ClearCommand.Name" xml:space="preserve">
-    <value>Clear command</value>
+    <value>清除命令</value>
   </data>
   <data name="Command.ExecutionFailed.Message" xml:space="preserve">
-    <value>{0} Execution failed.</value>
+    <value>{0} 执行失败。</value>
   </data>
   <data name="Command.ExecutionSucceed.Message" xml:space="preserve">
-    <value>{0} Execution successful.</value>
+    <value>{0} 执行成功。</value>
   </data>
   <data name="Command.Options.Timeout" xml:space="preserve">
-    <value>Timeout</value>
+    <value>超时</value>
   </data>
   <data name="CommandError.Label" xml:space="preserve">
-    <value>Command error: </value>
+    <value>命令出错：</value>
   </data>
   <data name="CommandNotFound.Message" xml:space="preserve">
-    <value>The specified '{0}' command was not found.</value>
+    <value>指定的 '{0}' 命令没有找到。</value>
   </data>
   <data name="CredentialException.Message" xml:space="preserve">
-    <value>Credential error: The specified credential is invalid or has expired.</value>
+    <value>凭证错误：指定的凭证是无效的或已经过期。</value>
   </data>
   <data name="DataArgumentException.Message" xml:space="preserve">
-    <value>Invalid data parameters or values.</value>
+    <value>无效的数据参数或者内容值。</value>
   </data>
   <data name="DataConflictException.Message" xml:space="preserve">
-    <value>Data conflict: The value of {1} in data {0} is duplicated.</value>
+    <value>数据冲突：数据项中 {0} 的 {1} 值重复了。</value>
   </data>
   <data name="DataConstraintException.Message" xml:space="preserve">
-    <value>Data constraint failure.</value>
+    <value>数据约束失败。</value>
   </data>
   <data name="ExitCommand.Confirm" xml:space="preserve">
-    <value>Do you want to quit? (Enter yes to quit)</value>
+    <value>您确认是否要退出(输入Yes则退出)？</value>
   </data>
   <data name="ExitCommand.Description" xml:space="preserve">
-    <value>Exit the current application.</value>
+    <value>退出当前应用程序。</value>
   </data>
   <data name="ExitCommand.Name" xml:space="preserve">
-    <value>Exit command</value>
+    <value>退出命令</value>
   </data>
   <data name="ExitCommand.Options.Confirm" xml:space="preserve">
-    <value>Exit directly without prompting for confirmation.</value>
+    <value>直接退出，不提示确认信息。</value>
   </data>
   <data name="InvalidCommandOption" xml:space="preserve">
-    <value>The specified '{0}' is an invalid command option.</value>
+    <value>指定的 '{0}' 是一个无效的命令选项。</value>
   </data>
   <data name="InvalidCommandOptionValue" xml:space="preserve">
-    <value>The specified '{1}' is an invalid '{0}' command option value.</value>
+    <value>指定的 '{1}' 是一个无效的 '{0}' 命令选项值。</value>
   </data>
   <data name="LinePositionInfo" xml:space="preserve">
-    <value>Row {0}, column {1}.</value>
+    <value>第 {0} 行，第 {1} 列。</value>
   </data>
   <data name="MessageQueueListener.Description" xml:space="preserve">
-    <value>This is a background service program that listens to message queues. It continuously polls the message queue in a blocking manner (It repeatedly calls the dequeue method of the message queue in a blocking manner). Once a message becomes available in the queue, it immediately dequeues the message and passes it to the executor in the listener for execution.</value>
+    <value>这是一个侦听消息队列的后台服务程序，它以堵塞方式不断轮询消息队列(即循环以堵塞式调用消息队列的出队方法)，一旦队列中有消息可用则立即将消息出队，然后交给侦听器中的执行器去执行。</value>
   </data>
   <data name="MessageQueueListener.Title" xml:space="preserve">
-    <value>Message queue listener</value>
+    <value>消息队列侦听器</value>
   </data>
   <data name="MissingCommandOption" xml:space="preserve">
-    <value>The command option '{0}' is missing. A value must be provided for this option.</value>
+    <value>缺少 '{0}' 命令选项，必须为该选项提供值。</value>
   </data>
   <data name="SecretGenerateTooFrequently.Message" xml:space="preserve">
-    <value>The verification code generation operation is being called too frequently. Please wait a moment and try again later.</value>
+    <value>验证码生成操作调用太频繁，请等待一会后再来。</value>
   </data>
   <data name="ShellCommand.Description" xml:space="preserve">
-    <value>Execute external commands through the system shell.</value>
+    <value>通过系统 Shell 来执行外部命令。</value>
   </data>
   <data name="ShellCommand.Name" xml:space="preserve">
-    <value>Shell command</value>
+    <value>外部命令执行器</value>
   </data>
   <data name="ShellCommand.Options.Timeout" xml:space="preserve">
-    <value>Timeout for running commands, unit: milliseconds.</value>
+    <value>运行外部命令的超时，单位：毫秒。</value>
   </data>
   <data name="WorkerListenCommand.Prompt" xml:space="preserve">
-    <value>Tip: Press Ctrl+C to exit listening mode.</value>
+    <value>提示：按 Ctrl+C 组合键可以退出侦听模式。</value>
   </data>
   <data name="WorkerListenCommand.Welcome" xml:space="preserve">
-    <value>Welcome to {0} listening mode.</value>
+    <value>欢迎进入 {0} 的侦听模式。</value>
   </data>
   <data name="WorkerPauseCommand.Name" xml:space="preserve">
-    <value>Pause command</value>
+    <value>暂停</value>
   </data>
   <data name="WorkerResumeCommand.Name" xml:space="preserve">
-    <value>Resume command</value>
+    <value>恢复</value>
   </data>
   <data name="WorkerStartCommand.Name" xml:space="preserve">
-    <value>Start command</value>
+    <value>启动</value>
   </data>
   <data name="WorkerStartCommand.Options.Force" xml:space="preserve">
-    <value>Force startup, even if the command is disabled.</value>
+    <value>强制启动，即使命令被禁用也尝试启动。</value>
   </data>
   <data name="WorkerState.Paused" xml:space="preserve">
-    <value>Paused</value>
+    <value>已暂停</value>
   </data>
   <data name="WorkerState.Pausing" xml:space="preserve">
-    <value>Pausing</value>
+    <value>暂停中</value>
   </data>
   <data name="WorkerState.Resuming" xml:space="preserve">
-    <value>Resuming</value>
+    <value>恢复中</value>
   </data>
   <data name="WorkerState.Running" xml:space="preserve">
-    <value>Running</value>
+    <value>运行中</value>
   </data>
   <data name="WorkerState.Starting" xml:space="preserve">
-    <value>Starting</value>
+    <value>启动中</value>
   </data>
   <data name="WorkerState.Stopped" xml:space="preserve">
-    <value>Stopped</value>
+    <value>已停止</value>
   </data>
   <data name="WorkerState.Stopping" xml:space="preserve">
-    <value>Stopping</value>
+    <value>停止中</value>
   </data>
   <data name="WorkerStopCommand.Name" xml:space="preserve">
-    <value>Stop command</value>
+    <value>停止</value>
   </data>
   <data name="ConnectionSettings.Group" xml:space="preserve">
-    <value>Group identifier</value>
+    <value>组别标识</value>
   </data>
   <data name="ConnectionSettings.Group.Description" xml:space="preserve">
-    <value>Usually indicates the group to which a service or connection program belongs.</value>
+    <value>通常表示服务或连接程序所属组别。</value>
   </data>
   <data name="ConnectionSettings.Client" xml:space="preserve">
-    <value>Client name</value>
+    <value>客户端名</value>
   </data>
   <data name="ConnectionSettings.Client.Description" xml:space="preserve">
-    <value>Indicates the client name of the connection program.</value>
+    <value>表示连接程序的客户端名称。</value>
   </data>
   <data name="ConnectionSettings.Server" xml:space="preserve">
-    <value>Server address</value>
+    <value>服务器地址</value>
   </data>
   <data name="ConnectionSettings.Server.Description" xml:space="preserve">
-    <value>Indicates the server address to connect to. For multiple target server addresses, they are typically separated by semicolons (;).</value>
+    <value>表示连接的服务器地址。对于多个目标服务器地址，通常采用分号(;)分隔。</value>
   </data>
   <data name="ConnectionSettings.Port" xml:space="preserve">
-    <value>Port number</value>
+    <value>端口号</value>
   </data>
   <data name="ConnectionSettings.Port.Description" xml:space="preserve">
-    <value>Indicates the server port number for the connection.</value>
+    <value>表示连接的服务器端口号。</value>
   </data>
   <data name="ConnectionSettings.Timeout" xml:space="preserve">
-    <value>Timeout</value>
+    <value>超时</value>
   </data>
   <data name="ConnectionSettings.Timeout.Description" xml:space="preserve">
-    <value>Indicates a connection timeout or a timeout for a related operation.</value>
+    <value>表示连接超时或相关操作的超时。</value>
   </data>
   <data name="ConnectionSettings.Charset" xml:space="preserve">
-    <value>Character set</value>
+    <value>字符集</value>
   </data>
   <data name="ConnectionSettings.Charset.Description" xml:space="preserve">
-    <value>Indicates the name of the character set, such as UTF-8, GBK, etc.</value>
+    <value>表示字符集的名称，譬如：UTF-8、GBK 等。</value>
   </data>
   <data name="ConnectionSettings.Encoding" xml:space="preserve">
-    <value>Encoding scheme</value>
+    <value>编码方案</value>
   </data>
   <data name="ConnectionSettings.Encoding.Description" xml:space="preserve">
-    <value>Indicates the text encoding scheme.</value>
+    <value>表示文本编码方案。</value>
   </data>
   <data name="ConnectionSettings.Provider" xml:space="preserve">
-    <value>Provider</value>
+    <value>提供程序</value>
   </data>
   <data name="ConnectionSettings.Provider.Description" xml:space="preserve">
-    <value>Indicates the connection provider identifier.</value>
+    <value>表示连接提供程序标识。</value>
   </data>
   <data name="ConnectionSettings.Database" xml:space="preserve">
-    <value>Database</value>
+    <value>数据库</value>
   </data>
   <data name="ConnectionSettings.Database.Description" xml:space="preserve">
-    <value>Indicates the name or identifier of the database to connect to.</value>
+    <value>表示连接的数据库名或标识。</value>
   </data>
   <data name="ConnectionSettings.UserName" xml:space="preserve">
-    <value>User name</value>
+    <value>用户名</value>
   </data>
   <data name="ConnectionSettings.UserName.Description" xml:space="preserve">
-    <value>Indicates the user name of the connection.</value>
+    <value>表示连接的用户名称。</value>
   </data>
   <data name="ConnectionSettings.Password" xml:space="preserve">
-    <value>Password</value>
+    <value>密码</value>
   </data>
   <data name="ConnectionSettings.Password.Description" xml:space="preserve">
-    <value>Indicates the password of the connected user.</value>
+    <value>表示连接的用户密码。</value>
   </data>
   <data name="ConnectionSettings.Instance" xml:space="preserve">
-    <value>Instance name</value>
+    <value>实例名称</value>
   </data>
   <data name="ConnectionSettings.Instance.Description" xml:space="preserve">
-    <value>Indicates the connection instance identifier.</value>
+    <value>表示连接的实例标识。</value>
   </data>
   <data name="ConnectionSettings.Application" xml:space="preserve">
-    <value>Application name</value>
+    <value>应用名称</value>
   </data>
   <data name="ConnectionSettings.Application.Description" xml:space="preserve">
-    <value>Indicates the application identifier for the connection.</value>
+    <value>表示连接的应用标识。</value>
   </data>
   <data name="Zongsoft.Security.Privileges.MemberType.Role" xml:space="preserve">
-    <value>Role</value>
+    <value>角色</value>
   </data>
   <data name="Zongsoft.Security.Privileges.MemberType.User" xml:space="preserve">
-    <value>User</value>
+    <value>用户</value>
   </data>
   <data name="ErrorOccurred.Label" xml:space="preserve">
-    <value>Error occurred: </value>
+    <value>发生错误：</value>
   </data>
 </root>

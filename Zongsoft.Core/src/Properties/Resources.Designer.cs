@@ -61,7 +61,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 身份验证失败。 的本地化字符串。
+        ///   查找类似 Authentication failed. 的本地化字符串。
         /// </summary>
         internal static string AuthenticationException_Message {
             get {
@@ -70,7 +70,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 禁止访问，您没有访问这项资源的授权。 的本地化字符串。
+        ///   查找类似 Access denied: You do not have permission to access this resource. 的本地化字符串。
         /// </summary>
         internal static string AuthorizationException_Message {
             get {
@@ -79,7 +79,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 清除当前终端的显示内容。 的本地化字符串。
+        ///   查找类似 Clear the display contents of the current terminal. 的本地化字符串。
         /// </summary>
         internal static string ClearCommand_Description {
             get {
@@ -88,7 +88,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 清除命令 的本地化字符串。
+        ///   查找类似 Clear command 的本地化字符串。
         /// </summary>
         internal static string ClearCommand_Name {
             get {
@@ -97,7 +97,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 {0} 执行失败。 的本地化字符串。
+        ///   查找类似 {0} Execution failed. 的本地化字符串。
         /// </summary>
         internal static string Command_ExecutionFailed_Message {
             get {
@@ -106,7 +106,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 {0} 执行成功。 的本地化字符串。
+        ///   查找类似 {0} Execution successful. 的本地化字符串。
         /// </summary>
         internal static string Command_ExecutionSucceed_Message {
             get {
@@ -115,7 +115,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 超时 的本地化字符串。
+        ///   查找类似 Timeout 的本地化字符串。
         /// </summary>
         internal static string Command_Options_Timeout {
             get {
@@ -124,7 +124,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 命令出错： 的本地化字符串。
+        ///   查找类似 Command error:  的本地化字符串。
         /// </summary>
         internal static string CommandError_Label {
             get {
@@ -133,7 +133,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 指定的 &apos;{0}&apos; 命令没有找到。 的本地化字符串。
+        ///   查找类似 The specified &apos;{0}&apos; command was not found. 的本地化字符串。
         /// </summary>
         internal static string CommandNotFound_Message {
             get {
@@ -142,7 +142,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 应用名称 的本地化字符串。
+        ///   查找类似 Application name 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Application {
             get {
@@ -151,7 +151,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接的应用标识。 的本地化字符串。
+        ///   查找类似 Indicates the application identifier for the connection. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Application_Description {
             get {
@@ -160,7 +160,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 字符集 的本地化字符串。
+        ///   查找类似 Character set 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Charset {
             get {
@@ -169,7 +169,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示字符集的名称，譬如：UTF-8、GBK 等。 的本地化字符串。
+        ///   查找类似 Indicates the name of the character set, such as UTF-8, GBK, etc. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Charset_Description {
             get {
@@ -178,7 +178,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 客户端名 的本地化字符串。
+        ///   查找类似 Client name 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Client {
             get {
@@ -187,7 +187,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接程序的客户端名称。 的本地化字符串。
+        ///   查找类似 Indicates the client name of the connection program. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Client_Description {
             get {
@@ -196,7 +196,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 数据库 的本地化字符串。
+        ///   查找类似 Database 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Database {
             get {
@@ -205,7 +205,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接的数据名或标识。 的本地化字符串。
+        ///   查找类似 Indicates the name or identifier of the database to connect to. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Database_Description {
             get {
@@ -214,7 +214,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 编码方案 的本地化字符串。
+        ///   查找类似 Encoding scheme 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Encoding {
             get {
@@ -223,7 +223,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示文本编码方案。 的本地化字符串。
+        ///   查找类似 Indicates the text encoding scheme. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Encoding_Description {
             get {
@@ -232,7 +232,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 组别标识 的本地化字符串。
+        ///   查找类似 Group identifier 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Group {
             get {
@@ -241,7 +241,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 通常表示服务或连接程序所属组别。 的本地化字符串。
+        ///   查找类似 Usually indicates the group to which a service or connection program belongs. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Group_Description {
             get {
@@ -250,7 +250,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 实例名称 的本地化字符串。
+        ///   查找类似 Instance name 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Instance {
             get {
@@ -259,7 +259,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接的实例标识。 的本地化字符串。
+        ///   查找类似 Indicates the connection instance identifier. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Instance_Description {
             get {
@@ -268,7 +268,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 密码 的本地化字符串。
+        ///   查找类似 Password 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Password {
             get {
@@ -277,7 +277,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接的用户密码。 的本地化字符串。
+        ///   查找类似 Indicates the password of the connected user. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Password_Description {
             get {
@@ -286,7 +286,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 端口号 的本地化字符串。
+        ///   查找类似 Port number 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Port {
             get {
@@ -295,7 +295,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接的服务器端口号。 的本地化字符串。
+        ///   查找类似 Indicates the server port number for the connection. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Port_Description {
             get {
@@ -304,7 +304,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 提供程序 的本地化字符串。
+        ///   查找类似 Provider 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Provider {
             get {
@@ -313,7 +313,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接提供程序标识。 的本地化字符串。
+        ///   查找类似 Indicates the connection provider identifier. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Provider_Description {
             get {
@@ -322,7 +322,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 服务器地址 的本地化字符串。
+        ///   查找类似 Server address 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Server {
             get {
@@ -331,7 +331,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接的服务器地址。对于多个目标服务器地址，通常采用分号(;)分隔。 的本地化字符串。
+        ///   查找类似 Indicates the server address to connect to. For multiple target server addresses, they are typically separated by semicolons (;). 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Server_Description {
             get {
@@ -340,7 +340,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 超时 的本地化字符串。
+        ///   查找类似 Timeout 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Timeout {
             get {
@@ -349,7 +349,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接超时或相关操作的超时。 的本地化字符串。
+        ///   查找类似 Indicates a connection timeout or a timeout for a related operation. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Timeout_Description {
             get {
@@ -358,7 +358,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 用户名 的本地化字符串。
+        ///   查找类似 User name 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_UserName {
             get {
@@ -367,7 +367,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 表示连接的用户名称。 的本地化字符串。
+        ///   查找类似 Indicates the user name of the connection. 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_UserName_Description {
             get {
@@ -376,7 +376,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 凭证错误：指定的凭证是无效的或已经过期。 的本地化字符串。
+        ///   查找类似 Credential error: The specified credential is invalid or has expired. 的本地化字符串。
         /// </summary>
         internal static string CredentialException_Message {
             get {
@@ -385,7 +385,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 无效的数据参数或者内容值。 的本地化字符串。
+        ///   查找类似 Invalid data parameters or values. 的本地化字符串。
         /// </summary>
         internal static string DataArgumentException_Message {
             get {
@@ -394,7 +394,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 数据冲突：数据项中 {0} 的 {1} 值重复了。 的本地化字符串。
+        ///   查找类似 Data conflict: The value of {1} in data {0} is duplicated. 的本地化字符串。
         /// </summary>
         internal static string DataConflictException_Message {
             get {
@@ -403,7 +403,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 数据约束失败。 的本地化字符串。
+        ///   查找类似 Data constraint failure. 的本地化字符串。
         /// </summary>
         internal static string DataConstraintException_Message {
             get {
@@ -412,7 +412,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 禁用 的本地化字符串。
+        ///   查找类似 Disabled 的本地化字符串。
         /// </summary>
         internal static string Disabled {
             get {
@@ -421,7 +421,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 无法将“ {0}”处的配置值转换为“ {1}”类型。 的本地化字符串。
+        ///   查找类似 The configuration value at &quot;{0}&quot; cannot be converted to type &quot;{1}&quot;. 的本地化字符串。
         /// </summary>
         internal static string Error_FailedBinding {
             get {
@@ -430,7 +430,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 无法创建类型为“ {0}”的实例。 的本地化字符串。
+        ///   查找类似 Unable to create an instance of type &quot;{0}&quot;. 的本地化字符串。
         /// </summary>
         internal static string Error_FailedToActivate {
             get {
@@ -439,7 +439,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 非法的配置属性名“{0}”。位于：{1} 的本地化字符串。
+        ///   查找类似 The configuration property name &quot;{0}&quot; is invalid. Located at: {1} 的本地化字符串。
         /// </summary>
         internal static string Error_IllegalConfigurationAttributeName {
             get {
@@ -448,7 +448,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 非法的配置元素的键值“{0}”，键值中不能含有“/”、“\”、“:”、“*”、“?”等字符。位于：{1} 的本地化字符串。
+        ///   查找类似 The value &quot;{0}&quot; of the illegal configuration element cannot contain characters such as &apos;/&apos;, &apos;\&apos;, &apos;:&apos;, &apos;*&apos;, or &apos;?&apos;. Located at: {1} 的本地化字符串。
         /// </summary>
         internal static string Error_IllegalConfigurationKeyValue {
             get {
@@ -457,7 +457,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 发现“{0}”是非法的根节点名称。{1} 的本地化字符串。
+        ///   查找类似 The root node name &quot;{0}&quot; is invalid. {1} 的本地化字符串。
         /// </summary>
         internal static string Error_IllegalRootNodeName {
             get {
@@ -466,7 +466,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 无效的选项配置文件格式，配置元素必须位于&lt;option&gt;元素内。位于：{0} 的本地化字符串。
+        ///   查找类似 Invalid option configuration file format. The configuration elements must be located within the &lt;option&gt; element. Located at: {0} 的本地化字符串。
         /// </summary>
         internal static string Error_InvalidOptionConfigurationFileFormat {
             get {
@@ -475,7 +475,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 指定的“{0}”是一个无效的未识别属性，未识别属性类型必须是一个键为字符串类型的字典。 的本地化字符串。
+        ///   查找类似 The specified &quot;{0}&quot; is an invalid unrecognized property. The type of unrecognized properties must be a dictionary with string keys. 的本地化字符串。
         /// </summary>
         internal static string Error_InvalidUnrecognizedProperty {
             get {
@@ -484,7 +484,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 发现重复的“{0}”键。位于：{1} 的本地化字符串。
+        ///   查找类似 Duplicate &quot;{0}&quot; key found. Located at: {1} 的本地化字符串。
         /// </summary>
         internal static string Error_KeyIsDuplicated {
             get {
@@ -493,7 +493,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 不支持XML名称空间。位于：{0} 的本地化字符串。
+        ///   查找类似 XML namespaces are not supported. Located at: {0} 的本地化字符串。
         /// </summary>
         internal static string Error_NamespaceIsNotSupported {
             get {
@@ -502,7 +502,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 位于“{0}”类型的“{1}”属性不可读。 的本地化字符串。
+        ///   查找类似 The &quot;{1}&quot; property of type &quot;{0}&quot; is not readable. 的本地化字符串。
         /// </summary>
         internal static string Error_PropertyCannotRead {
             get {
@@ -511,7 +511,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 在“{0}”类型中不存在名为“{1}”的属性。 的本地化字符串。
+        ///   查找类似 There is no property named &quot;{1}&quot; in the &quot;{0}&quot; type. 的本地化字符串。
         /// </summary>
         internal static string Error_PropertyNotExists {
             get {
@@ -520,7 +520,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 不能重复操作。 的本地化字符串。
+        ///   查找类似 This operation cannot be repeated. 的本地化字符串。
         /// </summary>
         internal static string Error_RepeatedOperation {
             get {
@@ -529,7 +529,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 无法创建类型为“ {0}”的实例，因为不支持多维数组。 的本地化字符串。
+        ///   查找类似 Unable to create an instance of type &quot;{0}&quot; because multidimensional arrays are not supported. 的本地化字符串。
         /// </summary>
         internal static string Error_UnsupportedMultidimensionalArray {
             get {
@@ -538,7 +538,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 发现不受支持的节点类型“{0}”。{1} 的本地化字符串。
+        ///   查找类似 Unsupported node type &quot;{0}&quot; detected. {1} 的本地化字符串。
         /// </summary>
         internal static string Error_UnsupportedNodeType {
             get {
@@ -547,7 +547,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 发生错误： 的本地化字符串。
+        ///   查找类似 Error occurred:  的本地化字符串。
         /// </summary>
         internal static string ErrorOccurred_Label {
             get {
@@ -556,7 +556,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 您确认是否要退出(输入Yes则退出)？ 的本地化字符串。
+        ///   查找类似 Do you want to quit? (Enter yes to quit) 的本地化字符串。
         /// </summary>
         internal static string ExitCommand_Confirm {
             get {
@@ -565,7 +565,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 退出当前应用程序。 的本地化字符串。
+        ///   查找类似 Exit the current application. 的本地化字符串。
         /// </summary>
         internal static string ExitCommand_Description {
             get {
@@ -574,7 +574,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 退出命令 的本地化字符串。
+        ///   查找类似 Exit command 的本地化字符串。
         /// </summary>
         internal static string ExitCommand_Name {
             get {
@@ -583,7 +583,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 直接退出，不提示确认信息。 的本地化字符串。
+        ///   查找类似 Exit directly without prompting for confirmation. 的本地化字符串。
         /// </summary>
         internal static string ExitCommand_Options_Confirm {
             get {
@@ -592,7 +592,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 指定的 &apos;{0}&apos; 是一个无效的命令选项。 的本地化字符串。
+        ///   查找类似 The specified &apos;{0}&apos; is an invalid command option. 的本地化字符串。
         /// </summary>
         internal static string InvalidCommandOption {
             get {
@@ -601,7 +601,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 指定的 &apos;{1}&apos; 是一个无效的 &apos;{0}&apos; 命令选项值。 的本地化字符串。
+        ///   查找类似 The specified &apos;{1}&apos; is an invalid &apos;{0}&apos; command option value. 的本地化字符串。
         /// </summary>
         internal static string InvalidCommandOptionValue {
             get {
@@ -610,7 +610,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 第 {0} 行，第 {1} 列。 的本地化字符串。
+        ///   查找类似 Row {0}, column {1}. 的本地化字符串。
         /// </summary>
         internal static string LinePositionInfo {
             get {
@@ -619,7 +619,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 这是一个侦听消息队列的后台服务程序，它以堵塞方式不断轮询消息队列(即循环以堵塞式调用消息队列的出队方法)，一旦队列中有消息可用则立即将消息出队，然后交给侦听器中的执行器去执行。 的本地化字符串。
+        ///   查找类似 This is a background service program that listens to message queues. It continuously polls the message queue in a blocking manner (It repeatedly calls the dequeue method of the message queue in a blocking manner). Once a message becomes available in the queue, it immediately dequeues the message and passes it to the executor in the listener for execution. 的本地化字符串。
         /// </summary>
         internal static string MessageQueueListener_Description {
             get {
@@ -628,7 +628,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 消息队列侦听器 的本地化字符串。
+        ///   查找类似 Message queue listener 的本地化字符串。
         /// </summary>
         internal static string MessageQueueListener_Title {
             get {
@@ -637,7 +637,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 缺少 &apos;{0}&apos; 命令选项，必须为该选项提供值。 的本地化字符串。
+        ///   查找类似 The command option &apos;{0}&apos; is missing. A value must be provided for this option. 的本地化字符串。
         /// </summary>
         internal static string MissingCommandOption {
             get {
@@ -646,7 +646,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 参数异常，可能传入了不支持的参数值。 的本地化字符串。
+        ///   查找类似 Argument exception, possibly an unsupported argument value was passed. 的本地化字符串。
         /// </summary>
         internal static string OperationException_Argument_Message {
             get {
@@ -655,7 +655,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 未能找到目标，导致操作异常。 的本地化字符串。
+        ///   查找类似 The target could not be found, resulting in operation failure. 的本地化字符串。
         /// </summary>
         internal static string OperationException_Unfound_Message {
             get {
@@ -664,7 +664,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 发生未知的操作异常。 的本地化字符串。
+        ///   查找类似 An unknown operation error has occurred. 的本地化字符串。
         /// </summary>
         internal static string OperationException_Unknown_Message {
             get {
@@ -673,7 +673,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 无法处理当前操作。 的本地化字符串。
+        ///   查找类似 Unable to process the current operation. 的本地化字符串。
         /// </summary>
         internal static string OperationException_Unprocessed_Message {
             get {
@@ -682,7 +682,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 未能满足必要的先决条件，导致操作失败。 的本地化字符串。
+        ///   查找类似 Failure to meet the necessary prerequisites resulted in the operation failing. 的本地化字符串。
         /// </summary>
         internal static string OperationException_Unsatisfied_Message {
             get {
@@ -691,7 +691,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 不支持当前操作。 的本地化字符串。
+        ///   查找类似 The current operation is not supported. 的本地化字符串。
         /// </summary>
         internal static string OperationException_Unsupported_Message {
             get {
@@ -700,7 +700,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 验证码生成操作调用太频繁，请等待一会后再来。 的本地化字符串。
+        ///   查找类似 The verification code generation operation is being called too frequently. Please wait a moment and try again later. 的本地化字符串。
         /// </summary>
         internal static string SecretGenerateTooFrequently_Message {
             get {
@@ -709,7 +709,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 帐户已被禁用。 的本地化字符串。
+        ///   查找类似 The account has been disabled. 的本地化字符串。
         /// </summary>
         internal static string Security_AccountDisabled_Message {
             get {
@@ -718,7 +718,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 帐户被暂停，可能是因为验证失败次数太多。 的本地化字符串。
+        ///   查找类似 Your account has been suspended, possibly due to too many failed verification attempts. 的本地化字符串。
         /// </summary>
         internal static string Security_AccountSuspended_Message {
             get {
@@ -727,7 +727,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 帐户尚未通过审核批准。 的本地化字符串。
+        ///   查找类似 The account has not yet been approved. 的本地化字符串。
         /// </summary>
         internal static string Security_AccountUnapproved_Message {
             get {
@@ -736,7 +736,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 禁止访问，您的账号没有被授权访问当前资源。 的本地化字符串。
+        ///   查找类似 Access denied. Your account is not authorized to access the current resource. 的本地化字符串。
         /// </summary>
         internal static string Security_Forbidden_Message {
             get {
@@ -745,7 +745,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 无效的身份标识。 的本地化字符串。
+        ///   查找类似 Invalid identity identifier. 的本地化字符串。
         /// </summary>
         internal static string Security_InvalidIdentity_Message {
             get {
@@ -754,7 +754,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 无效的密码。 的本地化字符串。
+        ///   查找类似 Invalid password. 的本地化字符串。
         /// </summary>
         internal static string Security_InvalidPassword_Message {
             get {
@@ -763,7 +763,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 验证成功。 的本地化字符串。
+        ///   查找类似 Verification successful. 的本地化字符串。
         /// </summary>
         internal static string Security_Succeed_Message {
             get {
@@ -772,7 +772,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 其他未知的安全原因。 的本地化字符串。
+        ///   查找类似 Other unknown security reasons. 的本地化字符串。
         /// </summary>
         internal static string Security_Unknown_Message {
             get {
@@ -781,7 +781,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 通过系统Shell来执行外部命令。 的本地化字符串。
+        ///   查找类似 Execute external commands through the system shell. 的本地化字符串。
         /// </summary>
         internal static string ShellCommand_Description {
             get {
@@ -790,7 +790,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 外部命令执行器 的本地化字符串。
+        ///   查找类似 Shell command 的本地化字符串。
         /// </summary>
         internal static string ShellCommand_Name {
             get {
@@ -799,7 +799,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 运行外部命令的超时，单位：毫秒。 的本地化字符串。
+        ///   查找类似 Timeout for running commands, unit: milliseconds. 的本地化字符串。
         /// </summary>
         internal static string ShellCommand_Options_Timeout {
             get {
@@ -808,7 +808,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 提示：按 Ctrl+C 组合键可以退出侦听模式。 的本地化字符串。
+        ///   查找类似 Tip: Press Ctrl+C to exit listening mode. 的本地化字符串。
         /// </summary>
         internal static string WorkerListenCommand_Prompt {
             get {
@@ -817,7 +817,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 欢迎进入 {0} 的侦听模式。 的本地化字符串。
+        ///   查找类似 Welcome to {0} listening mode. 的本地化字符串。
         /// </summary>
         internal static string WorkerListenCommand_Welcome {
             get {
@@ -826,7 +826,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 暂停 的本地化字符串。
+        ///   查找类似 Pause command 的本地化字符串。
         /// </summary>
         internal static string WorkerPauseCommand_Name {
             get {
@@ -835,7 +835,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 恢复 的本地化字符串。
+        ///   查找类似 Resume command 的本地化字符串。
         /// </summary>
         internal static string WorkerResumeCommand_Name {
             get {
@@ -844,7 +844,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 启动 的本地化字符串。
+        ///   查找类似 Start command 的本地化字符串。
         /// </summary>
         internal static string WorkerStartCommand_Name {
             get {
@@ -853,7 +853,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 强制启动，即使命令被禁用也尝试启动。 的本地化字符串。
+        ///   查找类似 Force startup, even if the command is disabled. 的本地化字符串。
         /// </summary>
         internal static string WorkerStartCommand_Options_Force {
             get {
@@ -862,7 +862,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 已暂停 的本地化字符串。
+        ///   查找类似 Paused 的本地化字符串。
         /// </summary>
         internal static string WorkerState_Paused {
             get {
@@ -871,7 +871,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 暂停中 的本地化字符串。
+        ///   查找类似 Pausing 的本地化字符串。
         /// </summary>
         internal static string WorkerState_Pausing {
             get {
@@ -880,7 +880,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 恢复中 的本地化字符串。
+        ///   查找类似 Resuming 的本地化字符串。
         /// </summary>
         internal static string WorkerState_Resuming {
             get {
@@ -889,7 +889,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 运行中 的本地化字符串。
+        ///   查找类似 Running 的本地化字符串。
         /// </summary>
         internal static string WorkerState_Running {
             get {
@@ -898,7 +898,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 启动中 的本地化字符串。
+        ///   查找类似 Starting 的本地化字符串。
         /// </summary>
         internal static string WorkerState_Starting {
             get {
@@ -907,7 +907,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 已停止 的本地化字符串。
+        ///   查找类似 Stopped 的本地化字符串。
         /// </summary>
         internal static string WorkerState_Stopped {
             get {
@@ -916,7 +916,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 停止中 的本地化字符串。
+        ///   查找类似 Stopping 的本地化字符串。
         /// </summary>
         internal static string WorkerState_Stopping {
             get {
@@ -925,7 +925,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 停止 的本地化字符串。
+        ///   查找类似 Stop command 的本地化字符串。
         /// </summary>
         internal static string WorkerStopCommand_Name {
             get {
@@ -934,7 +934,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 角色 的本地化字符串。
+        ///   查找类似 Role 的本地化字符串。
         /// </summary>
         internal static string Zongsoft_Security_Privileges_MemberType_Role {
             get {
@@ -943,7 +943,7 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 用户 的本地化字符串。
+        ///   查找类似 User 的本地化字符串。
         /// </summary>
         internal static string Zongsoft_Security_Privileges_MemberType_User {
             get {
