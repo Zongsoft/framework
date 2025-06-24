@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Data;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common;
@@ -54,4 +55,10 @@ public interface IDataSource : IEquatable<IDataSource>
 
 	/// <summary>获取扩展属性集。</summary>
 	IDictionary<string, object> Properties { get; }
+
+	/// <summary>获取数据源的模式信息。</summary>
+	/// <param name="name">指定要获取的模式名。</param>
+	/// <param name="refresh">指定是否要刷新模式缓存。</param>
+	/// <returns>返回获取成功的模式信息，如果为空(<c>null</c>)则表示获取失败或指定的模式不存在。</returns>
+	DataTable GetSchema(string name, bool refresh = false);
 }

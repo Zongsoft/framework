@@ -185,13 +185,9 @@ namespace Zongsoft.Data.MySql
 			if(string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(indexName))
 				return default;
 
-			var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-
 			try
 			{
-				connection.Open();
-
-				var table = connection.GetSchema("Indexes");
+				var table = context.Source.GetSchema("Indexes");
 				var rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'");
 				if(rows == null || rows.Length == 0)
 					return default;
@@ -199,10 +195,8 @@ namespace Zongsoft.Data.MySql
 				var isUnique = rows[0].Field<bool>("UNIQUE");
 				var isPrimary = rows[0].Field<bool>("PRIMARY");
 
-				table = connection.GetSchema("IndexColumns");
+				table = context.Source.GetSchema("IndexColumns");
 				rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'", "ORDINAL_POSITION");
-
-				connection.Close();
 
 				var result = new string[rows.Length];
 				for(int i = 0; i < rows.Length; i++)
@@ -216,10 +210,6 @@ namespace Zongsoft.Data.MySql
 			{
 				return default;
 			}
-			finally
-			{
-				connection?.Dispose();
-			}
 		}
 
 		private static (string, string[], string, string[]) GetForeignKey(IDataAccessContext context, string tableName, string foreignKey)
@@ -230,18 +220,12 @@ namespace Zongsoft.Data.MySql
 			if(string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(foreignKey))
 				return default;
 
-			var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-
 			try
 			{
-				connection.Open();
-
-				var table = connection.GetSchema("KeyColumnUsage");
+				var table = context.Source.GetSchema("KeyColumnUsage");
 				var rows = table.Select($"TABLE_NAME='{tableName}' AND CONSTRAINT_NAME='{foreignKey}'", "ORDINAL_POSITION");
 				if(rows == null || rows.Length == 0)
 					return default;
-
-				connection.Close();
 
 				var principalFields = new string[rows.Length];
 				var foreignerFields = new string[rows.Length];
@@ -263,10 +247,6 @@ namespace Zongsoft.Data.MySql
 			catch
 			{
 				return default;
-			}
-			finally
-			{
-				connection?.Dispose();
 			}
 		}
 		#endregion

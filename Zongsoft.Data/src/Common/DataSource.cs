@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Data;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -49,6 +50,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 	private string _driverName;
 	private IDataDriver _driver;
 	private FeatureCollection _features;
+	private readonly Dictionary<string, DataTable> _schemas;
 	#endregion
 
 	#region 构造函数
@@ -64,6 +66,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 		_connectionString = connectionSettings.Value;
 		_driverName = connectionSettings.Driver.Name;
 		this.Mode = DataAccessMode.All;
+		_schemas = new Dictionary<string, DataTable>(StringComparer.OrdinalIgnoreCase);
 		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
 		if(connectionSettings.HasProperties)
@@ -98,6 +101,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 		_connectionString = connectionString;
 		_driverName = driverName;
 		this.Mode = DataAccessMode.All;
+		_schemas = new Dictionary<string, DataTable>(StringComparer.OrdinalIgnoreCase);
 		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 	}
 	#endregion
@@ -132,6 +136,55 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 			}
 
 			return _features;
+		}
+	}
+	#endregion
+
+	#region 公共方法
+	public DataTable GetSchema(string name, bool refresh = false)
+	{
+		DataTable schema;
+		name ??= string.Empty;
+
+		if(refresh)
+		{
+			schema = GetSchemaFromDatabase(name);
+			if(schema != null)
+				return _schemas[name] = schema;
+
+			return schema;
+		}
+
+		if(_schemas.TryGetValue(name, out schema))
+			return schema;
+
+		lock(_schemas)
+		{
+			if(_schemas.TryGetValue(name, out schema))
+				return schema;
+
+			schema = GetSchemaFromDatabase(name);
+			if(schema != null)
+				return _schemas[name] = schema;
+
+			return schema;
+		}
+
+		DataTable GetSchemaFromDatabase(string name)
+		{
+			var connection = this.Driver.CreateConnection(_connectionString);
+
+			try
+			{
+				if(connection.State == ConnectionState.Closed)
+					connection.Open();
+
+				return string.IsNullOrEmpty(name) ?
+					connection.GetSchema() :
+					connection.GetSchema(name);
+			}
+			catch { return null; }
+			finally { connection?.Dispose(); }
 		}
 	}
 	#endregion

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.2.0</Version>
+		<Version>7.3.0</Version>
 		<Product>Zongsoft Data Driver for MySQL</Product>
 		<Description>This is a data driver for MySQL of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.MySql</RootNamespace>
@@ -34,7 +34,7 @@
 		<Otherwise>
 			<ItemGroup>
 				<PackageReference Include="Zongsoft.Core" VersionOverride="7.13.0" />
-				<PackageReference Include="Zongsoft.Data" VersionOverride="7.5.0" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="7.6.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
