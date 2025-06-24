@@ -214,7 +214,7 @@ public class ExceptionFilter : IExceptionFilter
 		public readonly bool IsEmpty => string.IsNullOrEmpty(this.Name);
 
 		public string GetTitle() => string.IsNullOrWhiteSpace(this.Description) ? this.Name : this.Description;
-		public string GetFields(string separator = null) => string.Join(string.IsNullOrEmpty(separator) ? Properties.Resources.Separator : separator, this.Fields.Select(field => string.IsNullOrWhiteSpace(field.Label) ? field.Name : field.Label));
+		public string GetFields(string separator = null) => this.Fields == null ? null : string.Join(string.IsNullOrEmpty(separator) ? Properties.Resources.Separator : separator, this.Fields.Select(field => string.IsNullOrWhiteSpace(field.Label) ? field.Name : field.Label));
 		public override string ToString() => this.Name;
 
 		public readonly struct Field(string name, string label = null)
