@@ -31,41 +31,40 @@ using System;
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+[Obsolete($"Use the '{nameof(ServiceDependencyAttribute.ServiceName)}' property of '{nameof(ServiceDependencyAttribute)}' annotation class instead.")]
+public class ServiceAccessor<T> : IServiceAccessor<T> where T : class
 {
-	[Obsolete($"Use the '{nameof(ServiceDependencyAttribute.ServiceName)}' property of '{nameof(ServiceDependencyAttribute)}' annotation class instead.")]
-	public class ServiceAccessor<T> : IServiceAccessor<T> where T : class
+	#region 构造函数
+	public ServiceAccessor(T value) => this.Value = value;
+	public ServiceAccessor(IApplicationModule module, string name)
 	{
-		#region 构造函数
-		public ServiceAccessor(T value) => this.Value = value;
-		public ServiceAccessor(IApplicationModule module, string name)
+		static T GetValue(string name, IServiceProvider serviceProvider)
 		{
-			static T GetValue(string name, IServiceProvider serviceProvider)
-			{
-				if(serviceProvider == null)
-					return default;
+			if(serviceProvider == null)
+				return default;
 
-				var provider = serviceProvider.GetService<IServiceProvider<T>>();
+			var provider = serviceProvider.GetService<IServiceProvider<T>>();
 
-				if(provider == null)
-					return serviceProvider.GetService<T>();
+			if(provider == null)
+				return serviceProvider.GetService<T>();
 
-				if(string.IsNullOrEmpty(name))
-					return provider.GetService(string.Empty) ?? serviceProvider.GetService<T>();
-				else
-					return provider.GetService(name) ?? provider.GetService(string.Empty) ?? serviceProvider.GetService<T>();
-			}
-
-			//注意：以下代码的处理机制必须遵循服务注入注解类中ServiceName属性的规范！
-			if(module == null || module is IApplicationContext)
-				this.Value = GetValue(name ?? string.Empty, ApplicationContext.Current.Services);
+			if(string.IsNullOrEmpty(name))
+				return provider.GetService(string.Empty) ?? serviceProvider.GetService<T>();
 			else
-				this.Value = GetValue(name ?? module.Name, module.Services);
+				return provider.GetService(name) ?? provider.GetService(string.Empty) ?? serviceProvider.GetService<T>();
 		}
-		#endregion
 
-		#region 公共属性
-		public T Value { get; }
-		#endregion
+		//注意：以下代码的处理机制必须遵循服务注入注解类中ServiceName属性的规范！
+		if(module == null || module is IApplicationContext)
+			this.Value = GetValue(name ?? string.Empty, ApplicationContext.Current.Services);
+		else
+			this.Value = GetValue(name ?? module.Name, module.Services);
 	}
+	#endregion
+
+	#region 公共属性
+	public T Value { get; }
+	#endregion
 }
