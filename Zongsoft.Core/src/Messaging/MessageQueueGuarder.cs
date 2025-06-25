@@ -37,92 +37,91 @@ using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Messaging
+namespace Zongsoft.Messaging;
+
+public class MessageQueueGuarder : WorkerBase
 {
-	public class MessageQueueGuarder : WorkerBase
+	#region 私有变量
+	private IMessageConsumer[] _subscribers;
+	#endregion
+
+	#region 构造函数
+	public MessageQueueGuarder() { }
+	public MessageQueueGuarder(string name) : base(name) { }
+	#endregion
+
+	#region 公共属性
+	[TypeConverter(typeof(MessageQueueConverter))]
+	public IMessageQueue Queue { get; set; }
+	public IHandler<Message> Handler { get; set; }
+	public Options.QueueOptionsCollection Options { get; set; }
+	#endregion
+
+	#region 启停方法
+	protected async override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		#region 私有变量
-		private IMessageConsumer[] _subscribers;
-		#endregion
-
-		#region 构造函数
-		public MessageQueueGuarder() { }
-		public MessageQueueGuarder(string name) : base(name) { }
-		#endregion
-
-		#region 公共属性
-		[TypeConverter(typeof(MessageQueueConverter))]
-		public IMessageQueue Queue { get; set; }
-		public IHandler<Message> Handler { get; set; }
-		public Options.QueueOptionsCollection Options { get; set; }
-		#endregion
-
-		#region 启停方法
-		protected async override Task OnStartAsync(string[] args, CancellationToken cancellation)
+		var queue = this.Queue;
+		if(queue == null)
 		{
-			var queue = this.Queue;
-			if(queue == null)
+			Zongsoft.Diagnostics.Logger.GetLogger(this).Warn($"The message queue guarder named '{this.Name}' cannot be started because its '{nameof(this.Queue)}' property is null.");
+			return;
+		}
+
+		var options = this.GetSubscriptionOptions(out var filters);
+		var consumers = new List<IMessageConsumer>();
+
+		foreach(var filter in filters)
+		{
+			var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
+
+			if(consumer != null)
+				consumers.Add(consumer);
+		}
+
+		if(args != null && args.Length > 0)
+		{
+			for(int i = 0; i < args.Length; i++)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Warn($"The message queue guarder named '{this.Name}' cannot be started because its '{nameof(this.Queue)}' property is null.");
-				return;
-			}
+				var filter = Zongsoft.Messaging.Options.QueueSubscriptionFilter.Parse(args[i]);
 
-			var options = this.GetSubscriptionOptions(out var filters);
-			var consumers = new List<IMessageConsumer>();
-
-			foreach(var filter in filters)
-			{
-				var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
-
-				if(consumer != null)
-					consumers.Add(consumer);
-			}
-
-			if(args != null && args.Length > 0)
-			{
-				for(int i = 0; i < args.Length; i++)
+				if(!string.IsNullOrEmpty(filter.Topic))
 				{
-					var filter = Zongsoft.Messaging.Options.QueueSubscriptionFilter.Parse(args[i]);
+					var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
 
-					if(!string.IsNullOrEmpty(filter.Topic))
-					{
-						var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
-
-						if(consumer != null)
-							consumers.Add(consumer);
-					}
+					if(consumer != null)
+						consumers.Add(consumer);
 				}
 			}
-
-			_subscribers = consumers.ToArray();
 		}
 
-		protected async override Task OnStopAsync(string[] args, CancellationToken cancellation)
-		{
-			var subscribers = Interlocked.Exchange(ref _subscribers, null);
-
-			if(subscribers != null)
-			{
-				for(int i = 0; i < subscribers.Length; i++)
-					await subscribers[i].UnsubscribeAsync(cancellation);
-			}
-		}
-		#endregion
-
-		#region 私有方法
-		private MessageSubscribeOptions GetSubscriptionOptions(out IEnumerable<Options.QueueSubscriptionFilter> filters)
-		{
-			var options = this.Options ?? ApplicationContext.Current?.Configuration?.GetOption<Options.QueueOptionsCollection>("Messaging/Queues");
-
-			if(options != null && options.TryGetValue(this.Queue.Name, out var option) && option.Subscription != null)
-			{
-				filters = option.Subscription.Filters ?? Array.Empty<Options.QueueSubscriptionFilter>();
-				return new MessageSubscribeOptions(option.Subscription.Reliability, option.Subscription.Fallback);
-			}
-
-			filters = [];
-			return null;
-		}
-		#endregion
+		_subscribers = consumers.ToArray();
 	}
+
+	protected async override Task OnStopAsync(string[] args, CancellationToken cancellation)
+	{
+		var subscribers = Interlocked.Exchange(ref _subscribers, null);
+
+		if(subscribers != null)
+		{
+			for(int i = 0; i < subscribers.Length; i++)
+				await subscribers[i].UnsubscribeAsync(cancellation);
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private MessageSubscribeOptions GetSubscriptionOptions(out IEnumerable<Options.QueueSubscriptionFilter> filters)
+	{
+		var options = this.Options ?? ApplicationContext.Current?.Configuration?.GetOption<Options.QueueOptionsCollection>("Messaging/Queues");
+
+		if(options != null && options.TryGetValue(this.Queue.Name, out var option) && option.Subscription != null)
+		{
+			filters = option.Subscription.Filters ?? Array.Empty<Options.QueueSubscriptionFilter>();
+			return new MessageSubscribeOptions(option.Subscription.Reliability, option.Subscription.Fallback);
+		}
+
+		filters = [];
+		return null;
+	}
+	#endregion
 }

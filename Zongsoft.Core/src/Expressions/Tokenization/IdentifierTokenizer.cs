@@ -30,43 +30,42 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Expressions.Tokenization
+namespace Zongsoft.Expressions.Tokenization;
+
+public class IdentifierTokenizer : ITokenizer
 {
-	public class IdentifierTokenizer : ITokenizer
+	#region 公共方法
+	public TokenResult Tokenize(TextReader reader)
 	{
-		#region 公共方法
-		public TokenResult Tokenize(TextReader reader)
+		var valueRead = reader.Read();
+
+		if(valueRead < 0)
+			return TokenResult.Fail(0);
+
+		var chr = (char)valueRead;
+		var identifier = string.Empty;
+
+		if(!IsIdentifierBeginning(chr))
+			return TokenResult.Fail(-1);
+
+		identifier += chr;
+
+		while((valueRead = reader.Read()) > 0)
 		{
-			var valueRead = reader.Read();
+			chr = (char)valueRead;
 
-			if(valueRead < 0)
-				return TokenResult.Fail(0);
-
-			var chr = (char)valueRead;
-			var identifier = string.Empty;
-
-			if(!IsIdentifierBeginning(chr))
-				return TokenResult.Fail(-1);
-
-			identifier += chr;
-
-			while((valueRead = reader.Read()) > 0)
-			{
-				chr = (char)valueRead;
-
-				if(char.IsLetterOrDigit(chr) || chr == '_')
-					identifier += chr;
-				else
-					return new TokenResult(-1, new Token(TokenType.Identifier, identifier));
-			}
-
-			return new TokenResult(0, new Token(TokenType.Identifier, identifier));
+			if(char.IsLetterOrDigit(chr) || chr == '_')
+				identifier += chr;
+			else
+				return new TokenResult(-1, new Token(TokenType.Identifier, identifier));
 		}
-		#endregion
 
-		#region 私有方法
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static bool IsIdentifierBeginning(char chr) => char.IsLetter(chr) || chr == '_';
-		#endregion
+		return new TokenResult(0, new Token(TokenType.Identifier, identifier));
 	}
+	#endregion
+
+	#region 私有方法
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private static bool IsIdentifierBeginning(char chr) => char.IsLetter(chr) || chr == '_';
+	#endregion
 }

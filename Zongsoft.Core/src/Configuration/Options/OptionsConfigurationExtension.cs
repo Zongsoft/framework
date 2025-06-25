@@ -35,77 +35,76 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public static class OptionsConfigurationExtension
 {
-	public static class OptionsConfigurationExtension
+	public static IServiceCollection Configure<TOptions>(this IServiceCollection services, IConfiguration configuration) where TOptions : class
 	{
-		public static IServiceCollection Configure<TOptions>(this IServiceCollection services, IConfiguration configuration) where TOptions : class
+		return services.Configure<TOptions>(string.Empty, configuration);
+	}
+
+	public static IServiceCollection Configure<TOptions>(this IServiceCollection services, string name, IConfiguration configuration) where TOptions : class
+	{
+		return services.Configure<TOptions>(name, configuration, null);
+	}
+
+	public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
+		IConfiguration configuration,
+		Action<Zongsoft.Configuration.ConfigurationBinderOptions> configureBinder) where TOptions : class
+	{
+		return services.Configure<TOptions>(string.Empty, configuration, configureBinder);
+	}
+
+	public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
+		string name,
+		IConfiguration configuration,
+		Action<Zongsoft.Configuration.ConfigurationBinderOptions> configureBinder) where TOptions : class
+	{
+		if(services == null)
+			throw new ArgumentNullException(nameof(services));
+
+		if(configuration == null)
+			throw new ArgumentNullException(nameof(configuration));
+
+		//确保选项类型没有重复注册，以免导致选项的重复解析（重复解析对字典/集合可能是有害的）
+		if(services.Exists<TOptions>(name, configuration, configureBinder))
+			return services;
+
+		return services.AddOptions()
+			.Replace(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(Zongsoft.Configuration.Options.OptionsFactory<>)))
+			.AddSingleton<IOptionsChangeTokenSource<TOptions>>(new Zongsoft.Configuration.Options.OptionsConfigurationChangeTokenSource<TOptions>(name, configuration))
+			.AddSingleton<IConfigureOptions<TOptions>>(new Zongsoft.Configuration.Options.OptionsConfigurator<TOptions>(name, configuration, configureBinder));
+	}
+
+	private static bool Exists<TOptions>(this IServiceCollection services, string name, IConfiguration configuration, Action<Configuration.ConfigurationBinderOptions> binder) where TOptions : class
+	{
+		static bool CompareConfiguration(IConfiguration a, IConfiguration b)
 		{
-			return services.Configure<TOptions>(string.Empty, configuration);
+			if(a == null)
+				return b == null;
+
+			if(b == null)
+				return a == null;
+
+			if(a is IConfigurationSection x && b is IConfigurationSection y)
+				return string.Equals(x.Path, y.Path, StringComparison.OrdinalIgnoreCase);
+
+			return object.Equals(a, b);
 		}
 
-		public static IServiceCollection Configure<TOptions>(this IServiceCollection services, string name, IConfiguration configuration) where TOptions : class
+		return services.Any(descriptor =>
 		{
-			return services.Configure<TOptions>(name, configuration, null);
-		}
+			var instance = descriptor.ImplementationInstance;
 
-		public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
-			IConfiguration configuration,
-			Action<Zongsoft.Configuration.ConfigurationBinderOptions> configureBinder) where TOptions : class
-		{
-			return services.Configure<TOptions>(string.Empty, configuration, configureBinder);
-		}
-
-		public static IServiceCollection Configure<TOptions>(this IServiceCollection services,
-			string name,
-			IConfiguration configuration,
-			Action<Zongsoft.Configuration.ConfigurationBinderOptions> configureBinder) where TOptions : class
-		{
-			if(services == null)
-				throw new ArgumentNullException(nameof(services));
-
-			if(configuration == null)
-				throw new ArgumentNullException(nameof(configuration));
-
-			//确保选项类型没有重复注册，以免导致选项的重复解析（重复解析对字典/集合可能是有害的）
-			if(services.Exists<TOptions>(name, configuration, configureBinder))
-				return services;
-
-			return services.AddOptions()
-				.Replace(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(Zongsoft.Configuration.Options.OptionsFactory<>)))
-				.AddSingleton<IOptionsChangeTokenSource<TOptions>>(new Zongsoft.Configuration.Options.OptionsConfigurationChangeTokenSource<TOptions>(name, configuration))
-				.AddSingleton<IConfigureOptions<TOptions>>(new Zongsoft.Configuration.Options.OptionsConfigurator<TOptions>(name, configuration, configureBinder));
-		}
-
-		private static bool Exists<TOptions>(this IServiceCollection services, string name, IConfiguration configuration, Action<Configuration.ConfigurationBinderOptions> binder) where TOptions : class
-		{
-			static bool CompareConfiguration(IConfiguration a, IConfiguration b)
+			if(instance != null && instance is Configuration.Options.OptionsConfigurator<TOptions> configurator)
 			{
-				if(a == null)
-					return b == null;
-
-				if(b == null)
-					return a == null;
-
-				if(a is IConfigurationSection x && b is IConfigurationSection y)
-					return string.Equals(x.Path, y.Path, StringComparison.OrdinalIgnoreCase);
-
-				return object.Equals(a, b);
+				return CompareConfiguration(configuration, configurator.Configuration) &&
+						string.Equals(name, configurator.Name, StringComparison.OrdinalIgnoreCase) &&
+						object.Equals(binder, configurator.ConfigurationBinder);
 			}
 
-			return services.Any(descriptor =>
-			{
-				var instance = descriptor.ImplementationInstance;
-
-				if(instance != null && instance is Configuration.Options.OptionsConfigurator<TOptions> configurator)
-				{
-					return CompareConfiguration(configuration, configurator.Configuration) &&
-							string.Equals(name, configurator.Name, StringComparison.OrdinalIgnoreCase) &&
-							object.Equals(binder, configurator.ConfigurationBinder);
-				}
-
-				return false;
-			});
-		}
+			return false;
+		});
 	}
 }

@@ -31,18 +31,17 @@ using System;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration.Xml
-{
-	public class XmlConfigurationSource : FileConfigurationSource
-	{
-		public override IConfigurationProvider Build(IConfigurationBuilder builder)
-		{
-			if(builder == null)
-				this.ResolveFileProvider();
-			else
-				this.EnsureDefaults(builder);
+namespace Zongsoft.Configuration.Xml;
 
-			return new XmlConfigurationProvider(this);
-		}
+public class XmlConfigurationSource : FileConfigurationSource
+{
+	public override IConfigurationProvider Build(IConfigurationBuilder builder)
+	{
+		if(builder == null)
+			this.ResolveFileProvider();
+		else
+			this.EnsureDefaults(builder);
+
+		return new XmlConfigurationProvider(this);
 	}
 }

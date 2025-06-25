@@ -33,108 +33,107 @@ using System.Threading.Tasks;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.Messaging
+namespace Zongsoft.Messaging;
+
+/// <summary>
+/// 表示消息队列的接口。
+/// </summary>
+public interface IMessageQueue : IMessageProducer, IDisposable
 {
-	/// <summary>
-	/// 表示消息队列的接口。
-	/// </summary>
-	public interface IMessageQueue : IMessageProducer, IDisposable
-	{
-		#region 属性定义
-		/// <summary>获取消息队列的名称。</summary>
-		string Name { get; }
-		#endregion
+	#region 属性定义
+	/// <summary>获取消息队列的名称。</summary>
+	string Name { get; }
+	#endregion
 
-		#region 订阅方法
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="handler">指定的消息接收处理函数。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, CancellationToken cancellation = default);
+	#region 订阅方法
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="handler">指定的消息接收处理函数。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="handler">指定的消息接收处理函数。</param>
-		/// <param name="options">指定的订阅消费者的设置。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="handler">指定的消息接收处理函数。</param>
+	/// <param name="options">指定的订阅消费者的设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="handler">指定的消息接收处理器对象。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(IHandler<Message> handler, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="handler">指定的消息接收处理器对象。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(IHandler<Message> handler, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="handler">指定的消息接收处理器对象。</param>
-		/// <param name="options">指定的订阅消费者的设置。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="handler">指定的消息接收处理器对象。</param>
+	/// <param name="options">指定的订阅消费者的设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="topic">指定要订阅的消息主题。</param>
-		/// <param name="handler">指定的消息接收处理函数。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(string topic, Action<Message> handler, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="topic">指定要订阅的消息主题。</param>
+	/// <param name="handler">指定的消息接收处理函数。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(string topic, Action<Message> handler, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="topic">指定要订阅的消息主题。</param>
-		/// <param name="handler">指定的消息接收处理函数。</param>
-		/// <param name="options">指定的订阅消费者的设置。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(string topic, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="topic">指定要订阅的消息主题。</param>
+	/// <param name="handler">指定的消息接收处理函数。</param>
+	/// <param name="options">指定的订阅消费者的设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(string topic, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="topic">指定要订阅的消息主题。</param>
-		/// <param name="handler">指定的消息接收处理器对象。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(string topic, IHandler<Message> handler, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="topic">指定要订阅的消息主题。</param>
+	/// <param name="handler">指定的消息接收处理器对象。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(string topic, IHandler<Message> handler, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="topic">指定要订阅的消息主题。</param>
-		/// <param name="handler">指定的消息接收处理器对象。</param>
-		/// <param name="options">指定的订阅消费者的设置。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(string topic, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="topic">指定要订阅的消息主题。</param>
+	/// <param name="handler">指定的消息接收处理器对象。</param>
+	/// <param name="options">指定的订阅消费者的设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(string topic, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="topic">指定要订阅的消息主题。</param>
-		/// <param name="tags">指定要订阅的消息标签，多个标签之间以分号分隔。</param>
-		/// <param name="handler">指定的消息接收处理函数。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(string topic, string tags, Action<Message> handler, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="topic">指定要订阅的消息主题。</param>
+	/// <param name="tags">指定要订阅的消息标签，多个标签之间以分号分隔。</param>
+	/// <param name="handler">指定的消息接收处理函数。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(string topic, string tags, Action<Message> handler, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="topic">指定要订阅的消息主题。</param>
-		/// <param name="tags">指定要订阅的消息标签，多个标签之间以分号分隔。</param>
-		/// <param name="handler">指定的消息接收处理函数。</param>
-		/// <param name="options">指定的订阅消费者的设置。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(string topic, string tags, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="topic">指定要订阅的消息主题。</param>
+	/// <param name="tags">指定要订阅的消息标签，多个标签之间以分号分隔。</param>
+	/// <param name="handler">指定的消息接收处理函数。</param>
+	/// <param name="options">指定的订阅消费者的设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(string topic, string tags, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="topic">指定要订阅的消息主题。</param>
-		/// <param name="tags">指定要订阅的消息标签，多个标签之间以分号分隔。</param>
-		/// <param name="handler">指定的消息接收处理器对象。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(string topic, string tags, IHandler<Message> handler, CancellationToken cancellation = default);
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="topic">指定要订阅的消息主题。</param>
+	/// <param name="tags">指定要订阅的消息标签，多个标签之间以分号分隔。</param>
+	/// <param name="handler">指定的消息接收处理器对象。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(string topic, string tags, IHandler<Message> handler, CancellationToken cancellation = default);
 
-		/// <summary>订阅指定的消息主题。</summary>
-		/// <param name="topic">指定要订阅的消息主题。</param>
-		/// <param name="tags">指定要订阅的消息标签，多个标签之间以分号分隔。</param>
-		/// <param name="handler">指定的消息接收处理器对象。</param>
-		/// <param name="options">指定的订阅消费者的设置。</param>
-		/// <param name="cancellation">指定的异步操作取消标记。</param>
-		/// <returns>返回订阅成功的消息消费者任务。</returns>
-		ValueTask<IMessageConsumer> SubscribeAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
-		#endregion
-	}
+	/// <summary>订阅指定的消息主题。</summary>
+	/// <param name="topic">指定要订阅的消息主题。</param>
+	/// <param name="tags">指定要订阅的消息标签，多个标签之间以分号分隔。</param>
+	/// <param name="handler">指定的消息接收处理器对象。</param>
+	/// <param name="options">指定的订阅消费者的设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回订阅成功的消息消费者任务。</returns>
+	ValueTask<IMessageConsumer> SubscribeAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default);
+	#endregion
 }

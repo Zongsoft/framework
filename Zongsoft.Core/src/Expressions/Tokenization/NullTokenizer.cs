@@ -29,16 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Expressions.Tokenization
-{
-	public class NullTokenizer : LiteralTokenizerBase
-	{
-		#region 构造函数
-		public NullTokenizer() : base(true, "null") { }
-		#endregion
+namespace Zongsoft.Expressions.Tokenization;
 
-		#region 重写方法
-		protected override Token CreateToken(string literal) => Token.Null;
-		#endregion
-	}
+public class NullTokenizer : LiteralTokenizerBase
+{
+	#region 构造函数
+	public NullTokenizer() : base(true, "null") { }
+	#endregion
+
+	#region 重写方法
+	protected override Token CreateToken(string literal) => Token.Null;
+	#endregion
 }

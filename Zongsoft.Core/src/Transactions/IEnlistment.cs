@@ -28,12 +28,10 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Transactions
+namespace Zongsoft.Transactions;
+
+public interface IEnlistment
 {
-	public interface IEnlistment
-	{
-		void OnEnlist(EnlistmentContext context);
-	}
+	void OnEnlist(EnlistmentContext context);
 }

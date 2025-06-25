@@ -29,16 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Expressions.Tokenization
-{
-	public class BooleanTokenizer : LiteralTokenizerBase
-	{
-		#region 构造函数
-		public BooleanTokenizer() : base(true, "true", "false") { }
-		#endregion
+namespace Zongsoft.Expressions.Tokenization;
 
-		#region 重写方法
-		protected override Token CreateToken(string literal) => bool.Parse(literal) ? Token.True : Token.False;
-		#endregion
-	}
+public class BooleanTokenizer : LiteralTokenizerBase
+{
+	#region 构造函数
+	public BooleanTokenizer() : base(true, "true", "false") { }
+	#endregion
+
+	#region 重写方法
+	protected override Token CreateToken(string literal) => bool.Parse(literal) ? Token.True : Token.False;
+	#endregion
 }

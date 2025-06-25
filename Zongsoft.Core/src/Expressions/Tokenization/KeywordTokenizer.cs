@@ -29,16 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Expressions.Tokenization
-{
-	public class KeywordTokenizer : LiteralTokenizerBase
-	{
-		#region 构造函数
-		public KeywordTokenizer(bool ignoreCase, params string[] keywords) : base(ignoreCase, keywords) { }
-		#endregion
+namespace Zongsoft.Expressions.Tokenization;
 
-		#region 重写方法
-		protected override Token CreateToken(string literal) => new Token(TokenType.Keyword, literal);
-		#endregion
-	}
+public class KeywordTokenizer : LiteralTokenizerBase
+{
+	#region 构造函数
+	public KeywordTokenizer(bool ignoreCase, params string[] keywords) : base(ignoreCase, keywords) { }
+	#endregion
+
+	#region 重写方法
+	protected override Token CreateToken(string literal) => new Token(TokenType.Keyword, literal);
+	#endregion
 }

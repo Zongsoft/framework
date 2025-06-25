@@ -33,54 +33,53 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public static class XmlConfigurationExtension
 {
-	public static class XmlConfigurationExtension
+	public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, string path)
 	{
-		public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, string path)
+		return AddOptionFile(builder, provider: null, path: path, optional: false, reloadOnChange: false);
+	}
+
+	public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, string path, bool optional)
+	{
+		return AddOptionFile(builder, provider: null, path: path, optional: optional, reloadOnChange: false);
+	}
+
+	public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, string path, bool optional, bool reloadOnChange)
+	{
+		return AddOptionFile(builder, provider: null, path: path, optional: optional, reloadOnChange: reloadOnChange);
+	}
+
+	public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, IFileProvider provider, string path, bool optional, bool reloadOnChange)
+	{
+		if(builder == null)
+			throw new ArgumentNullException(nameof(builder));
+
+		if(string.IsNullOrEmpty(path))
+			throw new ArgumentNullException(nameof(path));
+
+		return builder.AddOptionFile(src =>
 		{
-			return AddOptionFile(builder, provider: null, path: path, optional: false, reloadOnChange: false);
-		}
+			src.FileProvider = provider;
+			src.Path = path;
+			src.Optional = optional;
+			src.ReloadOnChange = reloadOnChange;
+			src.ResolveFileProvider();
+		});
+	}
 
-		public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, string path, bool optional)
-		{
-			return AddOptionFile(builder, provider: null, path: path, optional: optional, reloadOnChange: false);
-		}
+	public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, Action<Xml.XmlConfigurationSource> configureSource)
+	{
+		return builder.Add(configureSource);
+	}
 
-		public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, string path, bool optional, bool reloadOnChange)
-		{
-			return AddOptionFile(builder, provider: null, path: path, optional: optional, reloadOnChange: reloadOnChange);
-		}
+	public static IConfigurationBuilder AddOptionStream(this IConfigurationBuilder builder, Stream stream)
+	{
+		if(builder == null)
+			throw new ArgumentNullException(nameof(builder));
 
-		public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, IFileProvider provider, string path, bool optional, bool reloadOnChange)
-		{
-			if(builder == null)
-				throw new ArgumentNullException(nameof(builder));
-
-			if(string.IsNullOrEmpty(path))
-				throw new ArgumentNullException(nameof(path));
-
-			return builder.AddOptionFile(src =>
-			{
-				src.FileProvider = provider;
-				src.Path = path;
-				src.Optional = optional;
-				src.ReloadOnChange = reloadOnChange;
-				src.ResolveFileProvider();
-			});
-		}
-
-		public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, Action<Xml.XmlConfigurationSource> configureSource)
-		{
-			return builder.Add(configureSource);
-		}
-
-		public static IConfigurationBuilder AddOptionStream(this IConfigurationBuilder builder, Stream stream)
-		{
-			if(builder == null)
-				throw new ArgumentNullException(nameof(builder));
-
-			return builder.Add<Xml.XmlStreamConfigurationSource>(s => s.Stream = stream);
-		}
+		return builder.Add<Xml.XmlStreamConfigurationSource>(s => s.Stream = stream);
 	}
 }

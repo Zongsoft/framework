@@ -28,18 +28,16 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Transactions
+namespace Zongsoft.Transactions;
+
+/// <summary>
+/// 表示事务的传播行为(范围)的枚举。
+/// </summary>
+public enum TransactionBehavior
 {
-	/// <summary>
-	/// 表示事务的传播行为(范围)的枚举。
-	/// </summary>
-	public enum TransactionBehavior
-	{
-		Followed,
-		Required,
-		RequiresNew,
-		Suppress,
-	}
+	Followed,
+	Required,
+	RequiresNew,
+	Suppress,
 }

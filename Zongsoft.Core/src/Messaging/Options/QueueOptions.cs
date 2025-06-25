@@ -28,13 +28,11 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Messaging.Options
+namespace Zongsoft.Messaging.Options;
+
+public class QueueOptions
 {
-	public class QueueOptions
-	{
-		public string Name { get; set; }
-		public QueueSubscriptionOptions Subscription { get; set; }
-	}
+	public string Name { get; set; }
+	public QueueSubscriptionOptions Subscription { get; set; }
 }

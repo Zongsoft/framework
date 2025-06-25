@@ -30,49 +30,48 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace Zongsoft.Transactions
+namespace Zongsoft.Transactions;
+
+public class TransactionInformation
 {
-	public class TransactionInformation
+	#region 成员字段
+	private ConcurrentDictionary<string, object> _parameters;
+	#endregion
+
+	#region 构造函数
+	public TransactionInformation(Transaction transaction)
 	{
-		#region 成员字段
-		private ConcurrentDictionary<string, object> _parameters;
-		#endregion
-
-		#region 构造函数
-		public TransactionInformation(Transaction transaction)
-		{
-			this.Transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
-			this.TransactionId = Guid.NewGuid();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取当前事务的唯一编号。</summary>
-		public Guid TransactionId { get; }
-
-		/// <summary>获取当前的事务对象。</summary>
-		public Transaction Transaction { get; }
-
-		/// <summary>获取当前事务对象的父事务，如果当前事务是根事务则返回空(<c>null</c>)。</summary>
-		public Transaction Parent => this.Transaction.Parent;
-
-		/// <summary>获取当前事务的行为特性。</summary>
-		public TransactionBehavior Behavior => this.Transaction.Behavior;
-
-		/// <summary>获取当前事务的状态。</summary>
-		public TransactionStatus Status => this.Transaction.Status;
-
-		/// <summary>获取当前事务的环境参数。</summary>
-		public ConcurrentDictionary<string, object> Parameters
-		{
-			get
-			{
-				if(_parameters == null)
-					System.Threading.Interlocked.CompareExchange(ref _parameters, new ConcurrentDictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
-
-				return _parameters;
-			}
-		}
-		#endregion
+		this.Transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
+		this.TransactionId = Guid.NewGuid();
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取当前事务的唯一编号。</summary>
+	public Guid TransactionId { get; }
+
+	/// <summary>获取当前的事务对象。</summary>
+	public Transaction Transaction { get; }
+
+	/// <summary>获取当前事务对象的父事务，如果当前事务是根事务则返回空(<c>null</c>)。</summary>
+	public Transaction Parent => this.Transaction.Parent;
+
+	/// <summary>获取当前事务的行为特性。</summary>
+	public TransactionBehavior Behavior => this.Transaction.Behavior;
+
+	/// <summary>获取当前事务的状态。</summary>
+	public TransactionStatus Status => this.Transaction.Status;
+
+	/// <summary>获取当前事务的环境参数。</summary>
+	public ConcurrentDictionary<string, object> Parameters
+	{
+		get
+		{
+			if(_parameters == null)
+				System.Threading.Interlocked.CompareExchange(ref _parameters, new ConcurrentDictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+
+			return _parameters;
+		}
+	}
+	#endregion
 }

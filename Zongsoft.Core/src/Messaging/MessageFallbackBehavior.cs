@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Messaging
-{
-	/// <summary>
-	/// 表示消息订阅回调失败重试策略的枚举。
-	/// </summary>
-	public enum MessageFallbackBehavior
-	{
-		/// <summary>退避重试</summary>
-		Backoff,
+namespace Zongsoft.Messaging;
 
-		/// <summary>指数衰减</summary>
-		ExponentialDecay,
-	}
+/// <summary>
+/// 表示消息订阅回调失败重试策略的枚举。
+/// </summary>
+public enum MessageFallbackBehavior
+{
+	/// <summary>退避重试</summary>
+	Backoff,
+
+	/// <summary>指数衰减</summary>
+	ExponentialDecay,
 }

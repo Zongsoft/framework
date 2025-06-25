@@ -29,20 +29,19 @@
 
 using System;
 
-namespace Zongsoft.Expressions.Tokenization
-{
-	public class SymbolTokenizer : LiteralTokenizerBase
-	{
-		#region 构造函数
-		public SymbolTokenizer(params string[] symbols) : base(symbols)
-		{
-			if(symbols == null || symbols.Length == 0)
-				base.Literals = SymbolToken.Symbols;
-		}
-		#endregion
+namespace Zongsoft.Expressions.Tokenization;
 
-		#region 重写方法
-		protected override Token CreateToken(string literal) => SymbolToken.GetToken(literal);
-		#endregion
+public class SymbolTokenizer : LiteralTokenizerBase
+{
+	#region 构造函数
+	public SymbolTokenizer(params string[] symbols) : base(symbols)
+	{
+		if(symbols == null || symbols.Length == 0)
+			base.Literals = SymbolToken.Symbols;
 	}
+	#endregion
+
+	#region 重写方法
+	protected override Token CreateToken(string literal) => SymbolToken.GetToken(literal);
+	#endregion
 }

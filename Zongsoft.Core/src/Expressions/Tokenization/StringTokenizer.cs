@@ -30,92 +30,91 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Expressions.Tokenization
+namespace Zongsoft.Expressions.Tokenization;
+
+public class StringTokenizer : ITokenizer
 {
-	public class StringTokenizer : ITokenizer
+	#region 公共方法
+	public TokenResult Tokenize(TextReader reader)
 	{
-		#region 公共方法
-		public TokenResult Tokenize(TextReader reader)
+		var valueRead = reader.Read();
+
+		if(valueRead < 0)
+			return TokenResult.Fail(0);
+
+		var chr = (char)valueRead;
+		var content = string.Empty;
+		var escaping = false;
+
+		if(chr != '\'' && chr != '"')
+			return TokenResult.Fail(-1);
+
+		var quote = chr;
+
+		while((valueRead = reader.Read()) > 0)
 		{
-			var valueRead = reader.Read();
+			chr = (char)valueRead;
 
-			if(valueRead < 0)
-				return TokenResult.Fail(0);
+			if(chr == '\n' || chr == '\r')
+				throw new SyntaxException("The string literal contains new-line symbol.");
 
-			var chr = (char)valueRead;
-			var content = string.Empty;
-			var escaping = false;
-
-			if(chr != '\'' && chr != '"')
-				return TokenResult.Fail(-1);
-
-			var quote = chr;
-
-			while((valueRead = reader.Read()) > 0)
+			if(escaping)
 			{
-				chr = (char)valueRead;
-
-				if(chr == '\n' || chr == '\r')
-					throw new SyntaxException("The string literal contains new-line symbol.");
-
-				if(escaping)
+				if(chr != quote)
 				{
-					if(chr != quote)
-					{
-						char escapedChar;
+					char escapedChar;
 
-						if(EscapeChar(chr, out escapedChar))
-							chr = escapedChar;
-						else
-							content += '\\';
-					}
+					if(EscapeChar(chr, out escapedChar))
+						chr = escapedChar;
+					else
+						content += '\\';
+				}
 
+				content += chr;
+			}
+			else
+			{
+				if(chr == quote)
+					return new TokenResult(0, new Token(TokenType.Constant, content));
+
+				if(chr != '\\')
 					content += chr;
-				}
-				else
-				{
-					if(chr == quote)
-						return new TokenResult(0, new Token(TokenType.Constant, content));
-
-					if(chr != '\\')
-						content += chr;
-				}
-
-				escaping = chr == '\\' && (!escaping);
 			}
 
-			throw new SyntaxException($"Missing a closing symbol({quote}) of string.");
+			escaping = chr == '\\' && (!escaping);
 		}
-		#endregion
 
-		#region 私有方法
-		private static bool EscapeChar(char chr, out char escapedChar)
-		{
-			escapedChar = '\0';
-
-			switch(chr)
-			{
-				case '"':
-				case '\'':
-				case '\\':
-					escapedChar = chr;
-					return true;
-				case 's':
-					escapedChar = ' ';
-					return true;
-				case 't':
-					escapedChar = '\t';
-					return true;
-				case 'n':
-					escapedChar = '\n';
-					return true;
-				case 'r':
-					escapedChar = '\r';
-					return true;
-			}
-
-			return false;
-		}
-		#endregion
+		throw new SyntaxException($"Missing a closing symbol({quote}) of string.");
 	}
+	#endregion
+
+	#region 私有方法
+	private static bool EscapeChar(char chr, out char escapedChar)
+	{
+		escapedChar = '\0';
+
+		switch(chr)
+		{
+			case '"':
+			case '\'':
+			case '\\':
+				escapedChar = chr;
+				return true;
+			case 's':
+				escapedChar = ' ';
+				return true;
+			case 't':
+				escapedChar = '\t';
+				return true;
+			case 'n':
+				escapedChar = '\n';
+				return true;
+			case 'r':
+				escapedChar = '\r';
+				return true;
+		}
+
+		return false;
+	}
+	#endregion
 }

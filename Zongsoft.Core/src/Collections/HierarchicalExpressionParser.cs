@@ -46,7 +46,7 @@ public static class HierarchicalExpressionParser
 		//创建解析上下文对象
 		var context = new StateContext(text);
 		Reflection.Expressions.IMemberExpression accessor = null;
-		IList<string> segments = null;
+		List<string> segments = null;
 
 		//状态迁移驱动
 		for(int i = 0; i < text.Length; i++)
@@ -108,7 +108,7 @@ public static class HierarchicalExpressionParser
 			if(segment != null && segment.Length > 0)
 			{
 				if(segments == null)
-					segments = new string[] { segment };
+					segments = [segment];
 				else
 					segments.Add(segment);
 			}

@@ -30,75 +30,74 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Expressions.Tokenization
+namespace Zongsoft.Expressions.Tokenization;
+
+public class NumberTokenizer : ITokenizer
 {
-	public class NumberTokenizer : ITokenizer
+	#region 公共方法
+	public TokenResult Tokenize(TextReader reader)
 	{
-		#region 公共方法
-		public TokenResult Tokenize(TextReader reader)
+		var valueRead = reader.Read();
+
+		if(valueRead < 0)
+			return TokenResult.Fail(0);
+
+		var chr = (char)valueRead;
+		var number = string.Empty;
+
+		if(!char.IsDigit(chr))
+			return TokenResult.Fail(-1);
+
+		number += chr;
+
+		while((valueRead = reader.Read()) > 0)
 		{
-			var valueRead = reader.Read();
+			chr = (char)valueRead;
 
-			if(valueRead < 0)
-				return TokenResult.Fail(0);
-
-			var chr = (char)valueRead;
-			var number = string.Empty;
-
-			if(!char.IsDigit(chr))
-				return TokenResult.Fail(-1);
-
-			number += chr;
-
-			while((valueRead = reader.Read()) > 0)
+			if(char.IsDigit(chr))
+				number += chr;
+			else if(chr == '.')
 			{
-				chr = (char)valueRead;
+				if(number.Contains('.'))
+					throw new SyntaxException("Illegal numeric literal, it contains multiple dot(.) symbol.");
 
-				if(char.IsDigit(chr))
-					number += chr;
-				else if(chr == '.')
-				{
-					if(number.Contains('.'))
-						throw new SyntaxException("Illegal numeric literal, it contains multiple dot(.) symbol.");
-
-					number += chr;
-				}
-				else if(chr == 'L')
-				{
-					if(number.Contains('.'))
-						throw new SyntaxException("Illegal long integer suffix symbol(L), because it's a float numeric literal.");
-
-					return new TokenResult(0, new Token(TokenType.Constant, long.Parse(number)));
-				}
-				else if(chr == 'm' || chr == 'M')
-				{
-					return new TokenResult(0, new Token(TokenType.Constant, decimal.Parse(number)));
-				}
-				else if(chr == 'f' || chr == 'F')
-				{
-					return new TokenResult(0, new Token(TokenType.Constant, float.Parse(number)));
-				}
-				else if(chr == 'd' || chr == 'D')
-				{
-					return new TokenResult(0, new Token(TokenType.Constant, double.Parse(number)));
-				}
-				else
-				{
-					if(number[number.Length - 1] == '.')
-						throw new SyntaxException("Illegal numeric literal, cann't end with a dot(.) symbol.");
-
-					return new TokenResult(-1, CreateToken(number));
-				}
+				number += chr;
 			}
+			else if(chr == 'L')
+			{
+				if(number.Contains('.'))
+					throw new SyntaxException("Illegal long integer suffix symbol(L), because it's a float numeric literal.");
 
-			return new TokenResult(0, CreateToken(number));
+				return new TokenResult(0, new Token(TokenType.Constant, long.Parse(number)));
+			}
+			else if(chr == 'm' || chr == 'M')
+			{
+				return new TokenResult(0, new Token(TokenType.Constant, decimal.Parse(number)));
+			}
+			else if(chr == 'f' || chr == 'F')
+			{
+				return new TokenResult(0, new Token(TokenType.Constant, float.Parse(number)));
+			}
+			else if(chr == 'd' || chr == 'D')
+			{
+				return new TokenResult(0, new Token(TokenType.Constant, double.Parse(number)));
+			}
+			else
+			{
+				if(number[number.Length - 1] == '.')
+					throw new SyntaxException("Illegal numeric literal, cann't end with a dot(.) symbol.");
+
+				return new TokenResult(-1, CreateToken(number));
+			}
 		}
-		#endregion
 
-		#region 私有方法
-		private static Token CreateToken(string value) => value.Contains('.') ?
-			new Token(TokenType.Constant, double.Parse(value)) :
-			new Token(TokenType.Constant, int.Parse(value));
-		#endregion
+		return new TokenResult(0, CreateToken(number));
 	}
+	#endregion
+
+	#region 私有方法
+	private static Token CreateToken(string value) => value.Contains('.') ?
+		new Token(TokenType.Constant, double.Parse(value)) :
+		new Token(TokenType.Constant, int.Parse(value));
+	#endregion
 }

@@ -29,20 +29,19 @@
 
 using System;
 
-namespace Zongsoft.Messaging
+namespace Zongsoft.Messaging;
+
+/// <summary>
+/// 表示消息队列轮询器的接口。
+/// </summary>
+public interface IMessagePoller : IDisposable
 {
-	/// <summary>
-	/// 表示消息队列轮询器的接口。
-	/// </summary>
-	public interface IMessagePoller : IDisposable
-	{
-		/// <summary>获取一个值，指示是否处于轮询中。</summary>
-		bool IsPolling { get; }
+	/// <summary>获取一个值，指示是否处于轮询中。</summary>
+	bool IsPolling { get; }
 
-		/// <summary>启动轮询。</summary>
-		void Start();
+	/// <summary>启动轮询。</summary>
+	void Start();
 
-		/// <summary>停止轮询。</summary>
-		void Stop();
-	}
+	/// <summary>停止轮询。</summary>
+	void Stop();
 }

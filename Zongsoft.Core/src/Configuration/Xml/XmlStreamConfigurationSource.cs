@@ -31,13 +31,12 @@ using System;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration.Xml
+namespace Zongsoft.Configuration.Xml;
+
+public class XmlStreamConfigurationSource : StreamConfigurationSource
 {
-	public class XmlStreamConfigurationSource : StreamConfigurationSource
+	public override IConfigurationProvider Build(IConfigurationBuilder builder)
 	{
-		public override IConfigurationProvider Build(IConfigurationBuilder builder)
-		{
-			return new XmlStreamConfigurationProvider(this);
-		}
+		return new XmlStreamConfigurationProvider(this);
 	}
 }

@@ -32,18 +32,17 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration
-{
-	public static class ModelConfigurationExtension
-	{
-		public static IConfigurationBuilder AddModels<TModel>(this IConfigurationBuilder builder, IEnumerable<TModel> models, Action<Models.ModelConfigurationSource<TModel>> configureSource = null)
-		{
-			if(builder == null)
-				throw new ArgumentNullException(nameof(builder));
+namespace Zongsoft.Configuration;
 
-			var source = new Models.ModelConfigurationSource<TModel>() { Models = models };
-			configureSource?.Invoke(source);
-			return builder.Add(source);
-		}
+public static class ModelConfigurationExtension
+{
+	public static IConfigurationBuilder AddModels<TModel>(this IConfigurationBuilder builder, IEnumerable<TModel> models, Action<Models.ModelConfigurationSource<TModel>> configureSource = null)
+	{
+		if(builder == null)
+			throw new ArgumentNullException(nameof(builder));
+
+		var source = new Models.ModelConfigurationSource<TModel>() { Models = models };
+		configureSource?.Invoke(source);
+		return builder.Add(source);
 	}
 }

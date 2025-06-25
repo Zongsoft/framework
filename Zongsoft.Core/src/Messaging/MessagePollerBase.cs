@@ -31,167 +31,166 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Messaging
+namespace Zongsoft.Messaging;
+
+/// <summary>
+/// 提供消息队列轮询功能的类。
+/// </summary>
+public abstract class MessagePollerBase : IMessagePoller
 {
-	/// <summary>
-	/// 提供消息队列轮询功能的类。
-	/// </summary>
-	public abstract class MessagePollerBase : IMessagePoller
+	#region 常量定义
+	private const int DISPOSED = -1;
+	private const int DISPOSING = 1;
+	#endregion
+
+	#region 私有变量
+	private CancellationTokenSource _cancellation;
+	#endregion
+
+	#region 成员字段
+	private volatile int _disposing;
+	#endregion
+
+	#region 构造函数
+	/// <summary>构建消息队列轮询器。</summary>
+	protected MessagePollerBase() { }
+	#endregion
+
+	#region 公共属性
+	public bool IsDisposed => _disposing == DISPOSED;
+	public bool IsPolling
 	{
-		#region 常量定义
-		private const int DISPOSED = -1;
-		private const int DISPOSING = 1;
-		#endregion
-
-		#region 私有变量
-		private CancellationTokenSource _cancellation;
-		#endregion
-
-		#region 成员字段
-		private volatile int _disposing;
-		#endregion
-
-		#region 构造函数
-		/// <summary>构建消息队列轮询器。</summary>
-		protected MessagePollerBase() { }
-		#endregion
-
-		#region 公共属性
-		public bool IsDisposed => _disposing == DISPOSED;
-		public bool IsPolling
-		{
-			get
-			{
-				var cancellation = _cancellation;
-				return cancellation != null && !cancellation.IsCancellationRequested;
-			}
-		}
-		#endregion
-
-		#region 公共方法
-		/// <summary>开始队列轮询。</summary>
-		public void Start() => this.Start(null, 1000);
-
-		/// <summary>开始队列轮询。</summary>
-		/// <param name="options">轮询的出队选项。</param>
-		/// <param name="interval">轮询失败的等待间隔（单位：毫秒）。</param>
-		public void Start(MessageDequeueOptions options, int interval = 1000)
-		{
-			if(this.IsPolling)
-				return;
-
-			_cancellation = new CancellationTokenSource();
-			Task.Factory.StartNew(this.Poll, new PollArgument(options, interval), _cancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-		}
-
-		/// <summary>停止队列轮询。</summary>
-		public void Stop()
-		{
-			var cancellation = Interlocked.Exchange(ref _cancellation, null);
-
-			if(cancellation != null && !cancellation.IsCancellationRequested)
-				cancellation.Cancel(false);
-		}
-		#endregion
-
-		#region 轮询方法
-		private void Poll(object argument)
+		get
 		{
 			var cancellation = _cancellation;
-			var settings = (PollArgument)argument;
+			return cancellation != null && !cancellation.IsCancellationRequested;
+		}
+	}
+	#endregion
 
-			while(!cancellation.IsCancellationRequested)
+	#region 公共方法
+	/// <summary>开始队列轮询。</summary>
+	public void Start() => this.Start(null, 1000);
+
+	/// <summary>开始队列轮询。</summary>
+	/// <param name="options">轮询的出队选项。</param>
+	/// <param name="interval">轮询失败的等待间隔（单位：毫秒）。</param>
+	public void Start(MessageDequeueOptions options, int interval = 1000)
+	{
+		if(this.IsPolling)
+			return;
+
+		_cancellation = new CancellationTokenSource();
+		Task.Factory.StartNew(this.Poll, new PollArgument(options, interval), _cancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+	}
+
+	/// <summary>停止队列轮询。</summary>
+	public void Stop()
+	{
+		var cancellation = Interlocked.Exchange(ref _cancellation, null);
+
+		if(cancellation != null && !cancellation.IsCancellationRequested)
+			cancellation.Cancel(false);
+	}
+	#endregion
+
+	#region 轮询方法
+	private void Poll(object argument)
+	{
+		var cancellation = _cancellation;
+		var settings = (PollArgument)argument;
+
+		while(!cancellation.IsCancellationRequested)
+		{
+			Message message;
+			Exception exception = null;
+
+			try
 			{
-				Message message;
-				Exception exception = null;
+				//以同步方式从消息队列中获取一条消息
+				message = this.Receive(settings.Options, cancellation.Token);
+			}
+			catch(Exception ex)
+			{
+				message = default;
+				exception = ex;
 
-				try
-				{
-					//以同步方式从消息队列中获取一条消息
-					message = this.Receive(settings.Options, cancellation.Token);
-				}
-				catch(Exception ex)
-				{
-					message = default;
-					exception = ex;
-
-					//错误日志
-					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
-				}
-
-				//如果消息获取失败则休息一小会
-				if(exception != null || message.IsEmpty)
-					Thread.Sleep(settings.Interval);
-				else
-					Handle(message, cancellation.Token);
+				//错误日志
+				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
 			}
 
-			void Handle(in Message message, CancellationToken cancellation)
-			{
-				if(cancellation.IsCancellationRequested)
-					return;
-
-				try
-				{
-					Task.Factory.StartNew(async argument =>
-					{
-						var message = (Message)argument;
-						await this.OnHandleAsync(message, cancellation);
-					}, message, cancellation);
-				}
-				catch(Exception ex)
-				{
-					Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex, message);
-				}
-			}
+			//如果消息获取失败则休息一小会
+			if(exception != null || message.IsEmpty)
+				Thread.Sleep(settings.Interval);
+			else
+				Handle(message, cancellation.Token);
 		}
 
-		protected abstract Message Receive(MessageDequeueOptions options, CancellationToken cancellation);
-		#endregion
-
-		#region 处理方法
-		protected abstract ValueTask OnHandleAsync(Message message, CancellationToken cancellation);
-		#endregion
-
-		#region 释放资源
-		public void Dispose()
+		void Handle(in Message message, CancellationToken cancellation)
 		{
-			var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
-			if(disposing != 0)
+			if(cancellation.IsCancellationRequested)
 				return;
 
 			try
 			{
-				this.Dispose(true);
-				GC.SuppressFinalize(this);
+				Task.Factory.StartNew(async argument =>
+				{
+					var message = (Message)argument;
+					await this.OnHandleAsync(message, cancellation);
+				}, message, cancellation);
 			}
-			finally
+			catch(Exception ex)
 			{
-				_disposing = DISPOSED;
+				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex, message);
 			}
 		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			var cancellation = Interlocked.Exchange(ref _cancellation, null);
-
-			if(cancellation != null && !cancellation.IsCancellationRequested)
-				cancellation.Cancel(false);
-		}
-		#endregion
-
-		#region 轮询参数
-		private class PollArgument
-		{
-			public PollArgument(MessageDequeueOptions options, int interval = 1000)
-			{
-				this.Options = options ?? MessageDequeueOptions.Default;
-				this.Interval = Math.Min(Math.Max(interval, 100), 60 * 1000);
-			}
-
-			public readonly MessageDequeueOptions Options;
-			public readonly int Interval;
-		}
-		#endregion
 	}
+
+	protected abstract Message Receive(MessageDequeueOptions options, CancellationToken cancellation);
+	#endregion
+
+	#region 处理方法
+	protected abstract ValueTask OnHandleAsync(Message message, CancellationToken cancellation);
+	#endregion
+
+	#region 释放资源
+	public void Dispose()
+	{
+		var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
+		if(disposing != 0)
+			return;
+
+		try
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+		finally
+		{
+			_disposing = DISPOSED;
+		}
+	}
+
+	protected virtual void Dispose(bool disposing)
+	{
+		var cancellation = Interlocked.Exchange(ref _cancellation, null);
+
+		if(cancellation != null && !cancellation.IsCancellationRequested)
+			cancellation.Cancel(false);
+	}
+	#endregion
+
+	#region 轮询参数
+	private class PollArgument
+	{
+		public PollArgument(MessageDequeueOptions options, int interval = 1000)
+		{
+			this.Options = options ?? MessageDequeueOptions.Default;
+			this.Interval = Math.Min(Math.Max(interval, 100), 60 * 1000);
+		}
+
+		public readonly MessageDequeueOptions Options;
+		public readonly int Interval;
+	}
+	#endregion
 }

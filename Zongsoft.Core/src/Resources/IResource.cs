@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Resources;
 
 namespace Zongsoft.Resources;
 

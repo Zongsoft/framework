@@ -52,9 +52,7 @@ public interface IDirectory
 	/// <param name="path">指定要创建的目录路径。</param>
 	/// <param name="properties">目录的扩展属性集，默认为空(<c>null</c>)。</param>
 	/// <returns>如果创建成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	/// <remarks>
-	///		<para>如果<paramref name="path"/>参数指定的路径不存在并且创建成功则返回真；如果指定的路径已存在则返回假。</para>
-	/// </remarks>
+	/// <remarks>如果<paramref name="path"/>参数指定的路径不存在并且创建成功则返回真；如果指定的路径已存在则返回假。</remarks>
 	bool Create(string path, IDictionary<string, object> properties = null);
 	ValueTask<bool> CreateAsync(string path, IDictionary<string, object> properties = null);
 

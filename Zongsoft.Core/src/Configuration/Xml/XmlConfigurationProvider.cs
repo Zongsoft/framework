@@ -32,19 +32,18 @@ using System.IO;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration.Xml
-{
-	public class XmlConfigurationProvider : FileConfigurationProvider
-	{
-		#region 构造函数
-		public XmlConfigurationProvider(XmlConfigurationSource source) : base(source) { }
-		#endregion
+namespace Zongsoft.Configuration.Xml;
 
-		#region 重写方法
-		public override void Load(Stream stream)
-		{
-			this.Data = XmlStreamConfigurationProvider.Read(stream);
-		}
-		#endregion
+public class XmlConfigurationProvider : FileConfigurationProvider
+{
+	#region 构造函数
+	public XmlConfigurationProvider(XmlConfigurationSource source) : base(source) { }
+	#endregion
+
+	#region 重写方法
+	public override void Load(Stream stream)
+	{
+		this.Data = XmlStreamConfigurationProvider.Read(stream);
 	}
+	#endregion
 }

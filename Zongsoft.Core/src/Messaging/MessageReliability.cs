@@ -28,22 +28,20 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Zongsoft.Messaging
+namespace Zongsoft.Messaging;
+
+/// <summary>
+/// 表示消息可靠性的枚举。
+/// </summary>
+public enum MessageReliability
 {
-	/// <summary>
-	/// 表示消息可靠性的枚举。
-	/// </summary>
-	public enum MessageReliability
-	{
-		/// <summary>最多一次</summary>
-		MostOnce = 0,
+	/// <summary>最多一次</summary>
+	MostOnce = 0,
 
-		/// <summary>至少一次</summary>
-		LeastOnce = 1,
+	/// <summary>至少一次</summary>
+	LeastOnce = 1,
 
-		/// <summary>精确一次</summary>
-		ExactlyOnce = 2
-	}
+	/// <summary>精确一次</summary>
+	ExactlyOnce = 2
 }

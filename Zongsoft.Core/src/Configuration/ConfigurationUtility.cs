@@ -30,7 +30,6 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.ComponentModel;
 
 using Microsoft.Extensions.Configuration;
 
@@ -45,11 +44,7 @@ public static class ConfigurationUtility
 		section.Key[0] == '[' &&
 		section.Key[^1] == ']';
 
-	public static string GetConfigurationPath(string key)
-	{
-		return string.IsNullOrEmpty(key) ? string.Empty : key.Trim('/').Replace('/', ':');
-	}
-
+	public static string GetConfigurationPath(string key) => string.IsNullOrEmpty(key) ? string.Empty : key.Trim('/').Replace('/', ':');
 	public static Type GetImplementedContract(Type actual, params Type[] expectedTypes)
 	{
 		if(actual.IsGenericType && expectedTypes.Contains(actual.GetGenericTypeDefinition()))

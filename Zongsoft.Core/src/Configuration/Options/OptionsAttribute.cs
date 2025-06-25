@@ -29,30 +29,29 @@
 
 using System;
 
-namespace Zongsoft.Configuration.Options
+namespace Zongsoft.Configuration.Options;
+
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+public class OptionsAttribute : Attribute
 {
-	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-	public class OptionsAttribute : Attribute
+	public OptionsAttribute(string path)
 	{
-		public OptionsAttribute(string path)
-		{
-			if(string.IsNullOrEmpty(path))
-				throw new ArgumentNullException(nameof(path));
+		if(string.IsNullOrEmpty(path))
+			throw new ArgumentNullException(nameof(path));
 
-			this.Name = string.Empty;
-			this.Path = path.Trim();
-		}
-
-		public OptionsAttribute(string name, string path)
-		{
-			if(string.IsNullOrEmpty(path))
-				throw new ArgumentNullException(nameof(path));
-
-			this.Name = name ?? string.Empty;
-			this.Path = path.Trim();
-		}
-
-		public string Name { get; }
-		public string Path { get; }
+		this.Name = string.Empty;
+		this.Path = path.Trim();
 	}
+
+	public OptionsAttribute(string name, string path)
+	{
+		if(string.IsNullOrEmpty(path))
+			throw new ArgumentNullException(nameof(path));
+
+		this.Name = name ?? string.Empty;
+		this.Path = path.Trim();
+	}
+
+	public string Name { get; }
+	public string Path { get; }
 }

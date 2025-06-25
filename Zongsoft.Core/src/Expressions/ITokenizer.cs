@@ -30,16 +30,15 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Expressions
+namespace Zongsoft.Expressions;
+
+/// <summary>
+/// 表示分词器的接口。
+/// </summary>
+public interface ITokenizer
 {
-	/// <summary>
-	/// 表示分词器的接口。
-	/// </summary>
-	public interface ITokenizer
-	{
-		/// <summary>分词操作，从指定的读取器中获取一个特定的词素结果。</summary>
-		/// <param name="reader">指定的文本读取器。</param>
-		/// <returns>返回的词素提取结果。</returns>
-		TokenResult Tokenize(TextReader reader);
-	}
+	/// <summary>分词操作，从指定的读取器中获取一个特定的词素结果。</summary>
+	/// <param name="reader">指定的文本读取器。</param>
+	/// <returns>返回的词素提取结果。</returns>
+	TokenResult Tokenize(TextReader reader);
 }

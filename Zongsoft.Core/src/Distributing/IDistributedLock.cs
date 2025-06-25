@@ -33,14 +33,12 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Distributing;
 
-/// <summary>
-/// 表示分布式锁的接口。
-/// </summary>
+/// <summary>表示分布式锁的接口。</summary>
 /// <example>
 /// <code>
 /// class MyService
 /// {
-/// 	[ServiceDependency("~")]
+/// 	[ServiceDependency]
 /// 	public IDistributedLockManager Locker { get; set; }
 /// 
 /// 	async Task FooAsync(MyModel model, CancellationToken cancellation)

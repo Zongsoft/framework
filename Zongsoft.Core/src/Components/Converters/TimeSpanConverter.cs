@@ -61,24 +61,21 @@ public class TimeSpanConverter : TypeConverter
 			_ => null,
 		};
 
-		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => Type.GetTypeCode(destinationType) switch
 		{
-			return Type.GetTypeCode(destinationType) switch
-			{
-				TypeCode.Byte => (byte)((TimeSpan)value).TotalDays,
-				TypeCode.SByte => (sbyte)((TimeSpan)value).TotalDays,
-				TypeCode.Int16 => (short)((TimeSpan)value).TotalDays,
-				TypeCode.Int32 => (int)((TimeSpan)value).TotalDays,
-				TypeCode.Int64 => (long)((TimeSpan)value).TotalDays,
-				TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalDays,
-				TypeCode.UInt32 => (uint)((TimeSpan)value).TotalDays,
-				TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalDays,
-				TypeCode.Single => (float)((TimeSpan)value).TotalDays,
-				TypeCode.Double => (double)((TimeSpan)value).TotalDays,
-				TypeCode.Decimal => (decimal)((TimeSpan)value).TotalDays,
-				_ => null,
-			};
-		}
+			TypeCode.Byte => (byte)((TimeSpan)value).TotalDays,
+			TypeCode.SByte => (sbyte)((TimeSpan)value).TotalDays,
+			TypeCode.Int16 => (short)((TimeSpan)value).TotalDays,
+			TypeCode.Int32 => (int)((TimeSpan)value).TotalDays,
+			TypeCode.Int64 => (long)((TimeSpan)value).TotalDays,
+			TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalDays,
+			TypeCode.UInt32 => (uint)((TimeSpan)value).TotalDays,
+			TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalDays,
+			TypeCode.Single => (float)((TimeSpan)value).TotalDays,
+			TypeCode.Double => (double)((TimeSpan)value).TotalDays,
+			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalDays,
+			_ => null,
+		};
 	}
 
 	public sealed class Hours : TypeConverter
@@ -102,24 +99,21 @@ public class TimeSpanConverter : TypeConverter
 			_ => null,
 		};
 
-		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => Type.GetTypeCode(destinationType) switch
 		{
-			return Type.GetTypeCode(destinationType) switch
-			{
-				TypeCode.Byte => (byte)((TimeSpan)value).TotalHours,
-				TypeCode.SByte => (sbyte)((TimeSpan)value).TotalHours,
-				TypeCode.Int16 => (short)((TimeSpan)value).TotalHours,
-				TypeCode.Int32 => (int)((TimeSpan)value).TotalHours,
-				TypeCode.Int64 => (long)((TimeSpan)value).TotalHours,
-				TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalHours,
-				TypeCode.UInt32 => (uint)((TimeSpan)value).TotalHours,
-				TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalHours,
-				TypeCode.Single => (float)((TimeSpan)value).TotalHours,
-				TypeCode.Double => (double)((TimeSpan)value).TotalHours,
-				TypeCode.Decimal => (decimal)((TimeSpan)value).TotalHours,
-				_ => null,
-			};
-		}
+			TypeCode.Byte => (byte)((TimeSpan)value).TotalHours,
+			TypeCode.SByte => (sbyte)((TimeSpan)value).TotalHours,
+			TypeCode.Int16 => (short)((TimeSpan)value).TotalHours,
+			TypeCode.Int32 => (int)((TimeSpan)value).TotalHours,
+			TypeCode.Int64 => (long)((TimeSpan)value).TotalHours,
+			TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalHours,
+			TypeCode.UInt32 => (uint)((TimeSpan)value).TotalHours,
+			TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalHours,
+			TypeCode.Single => (float)((TimeSpan)value).TotalHours,
+			TypeCode.Double => (double)((TimeSpan)value).TotalHours,
+			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalHours,
+			_ => null,
+		};
 	}
 
 	public sealed class Minutes : TypeConverter
@@ -143,24 +137,21 @@ public class TimeSpanConverter : TypeConverter
 			_ => null,
 		};
 
-		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => Type.GetTypeCode(destinationType) switch
 		{
-			return Type.GetTypeCode(destinationType) switch
-			{
-				TypeCode.Byte => (byte)((TimeSpan)value).TotalMinutes,
-				TypeCode.SByte => (sbyte)((TimeSpan)value).TotalMinutes,
-				TypeCode.Int16 => (short)((TimeSpan)value).TotalMinutes,
-				TypeCode.Int32 => (int)((TimeSpan)value).TotalMinutes,
-				TypeCode.Int64 => (long)((TimeSpan)value).TotalMinutes,
-				TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalMinutes,
-				TypeCode.UInt32 => (uint)((TimeSpan)value).TotalMinutes,
-				TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalMinutes,
-				TypeCode.Single => (float)((TimeSpan)value).TotalMinutes,
-				TypeCode.Double => (double)((TimeSpan)value).TotalMinutes,
-				TypeCode.Decimal => (decimal)((TimeSpan)value).TotalMinutes,
-				_ => null,
-			};
-		}
+			TypeCode.Byte => (byte)((TimeSpan)value).TotalMinutes,
+			TypeCode.SByte => (sbyte)((TimeSpan)value).TotalMinutes,
+			TypeCode.Int16 => (short)((TimeSpan)value).TotalMinutes,
+			TypeCode.Int32 => (int)((TimeSpan)value).TotalMinutes,
+			TypeCode.Int64 => (long)((TimeSpan)value).TotalMinutes,
+			TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalMinutes,
+			TypeCode.UInt32 => (uint)((TimeSpan)value).TotalMinutes,
+			TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalMinutes,
+			TypeCode.Single => (float)((TimeSpan)value).TotalMinutes,
+			TypeCode.Double => (double)((TimeSpan)value).TotalMinutes,
+			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalMinutes,
+			_ => null,
+		};
 	}
 
 	public sealed class Seconds : TypeConverter
@@ -184,24 +175,21 @@ public class TimeSpanConverter : TypeConverter
 			_ => null,
 		};
 
-		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => Type.GetTypeCode(destinationType) switch
 		{
-			return Type.GetTypeCode(destinationType) switch
-			{
-				TypeCode.Byte => (byte)((TimeSpan)value).TotalSeconds,
-				TypeCode.SByte => (sbyte)((TimeSpan)value).TotalSeconds,
-				TypeCode.Int16 => (short)((TimeSpan)value).TotalSeconds,
-				TypeCode.Int32 => (int)((TimeSpan)value).TotalSeconds,
-				TypeCode.Int64 => (long)((TimeSpan)value).TotalSeconds,
-				TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalSeconds,
-				TypeCode.UInt32 => (uint)((TimeSpan)value).TotalSeconds,
-				TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalSeconds,
-				TypeCode.Single => (float)((TimeSpan)value).TotalSeconds,
-				TypeCode.Double => (double)((TimeSpan)value).TotalSeconds,
-				TypeCode.Decimal => (decimal)((TimeSpan)value).TotalSeconds,
-				_ => null,
-			};
-		}
+			TypeCode.Byte => (byte)((TimeSpan)value).TotalSeconds,
+			TypeCode.SByte => (sbyte)((TimeSpan)value).TotalSeconds,
+			TypeCode.Int16 => (short)((TimeSpan)value).TotalSeconds,
+			TypeCode.Int32 => (int)((TimeSpan)value).TotalSeconds,
+			TypeCode.Int64 => (long)((TimeSpan)value).TotalSeconds,
+			TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalSeconds,
+			TypeCode.UInt32 => (uint)((TimeSpan)value).TotalSeconds,
+			TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalSeconds,
+			TypeCode.Single => (float)((TimeSpan)value).TotalSeconds,
+			TypeCode.Double => (double)((TimeSpan)value).TotalSeconds,
+			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalSeconds,
+			_ => null,
+		};
 	}
 
 	public sealed class Milliseconds : TypeConverter
@@ -225,23 +213,20 @@ public class TimeSpanConverter : TypeConverter
 			_ => null,
 		};
 
-		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => Type.GetTypeCode(destinationType) switch
 		{
-			return Type.GetTypeCode(destinationType) switch
-			{
-				TypeCode.Byte => (byte)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.SByte => (sbyte)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.Int16 => (short)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.Int32 => (int)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.Int64 => (long)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.UInt32 => (uint)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.Single => (float)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.Double => (double)((TimeSpan)value).TotalMilliseconds,
-				TypeCode.Decimal => (decimal)((TimeSpan)value).TotalMilliseconds,
-				_ => null,
-			};
-		}
+			TypeCode.Byte => (byte)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.SByte => (sbyte)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.Int16 => (short)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.Int32 => (int)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.Int64 => (long)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.UInt16 => (ushort)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.UInt32 => (uint)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.UInt64 => (ulong)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.Single => (float)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.Double => (double)((TimeSpan)value).TotalMilliseconds,
+			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalMilliseconds,
+			_ => null,
+		};
 	}
 }
