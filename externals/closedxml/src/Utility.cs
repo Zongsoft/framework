@@ -34,66 +34,66 @@ using ClosedXML.Excel;
 
 using Zongsoft.Data;
 
-namespace Zongsoft.Externals.ClosedXml
+namespace Zongsoft.Externals.ClosedXml;
+
+public static class Utility
 {
-	public static class Utility
+	public static object GetCellValue(this IXLCell cell, ModelPropertyDescriptor property)
 	{
-		public static object GetCellValue(this IXLCell cell, ModelPropertyDescriptor property)
+		if(cell == null || cell.IsEmpty() || cell.Value.IsBlank || cell.Value.IsError)
+			return null;
+
+		var value = GetCellValue(cell);
+
+		if(property == null || property.Type == null)
+			return value.ToString();
+
+		return Common.Convert.ConvertValue(value, property.Type);
+	}
+
+	public static object GetCellValue(this IXLCell cell)
+	{
+		if(cell.HasFormula)
+			return cell.GetFormattedString();
+
+		return cell.Value.Type switch
 		{
-			if(cell == null || cell.IsEmpty() || cell.Value.IsBlank || cell.Value.IsError)
-				return null;
+			XLDataType.Blank => null,
+			XLDataType.Text => cell.GetText(),
+			XLDataType.Number => cell.GetDouble(),
+			XLDataType.Boolean => cell.GetBoolean(),
+			XLDataType.DateTime => cell.GetDateTime(),
+			XLDataType.TimeSpan => cell.GetTimeSpan(),
+			XLDataType.Error => cell.GetError().ToString(),
+			_ => null,
+		};
+	}
 
-			var value = GetCellValue(cell);
-
-			if(property == null || property.Type == null)
-				return value.ToString();
-
-			return Common.Convert.ConvertValue(value, property.Type);
+	public static void SetCellValue(this IXLCell cell, object value)
+	{
+		if(value == null || Convert.IsDBNull(value))
+		{
+			cell.Value = Blank.Value;
+			return;
 		}
 
-		public static object GetCellValue(this IXLCell cell)
+		cell.Value = Type.GetTypeCode(value.GetType()) switch
 		{
-			if(cell.HasFormula)
-				return cell.GetFormattedString();
-
-			return cell.Value.Type switch
-			{
-				XLDataType.Blank => null,
-				XLDataType.Text => cell.GetText(),
-				XLDataType.Number => cell.GetDouble(),
-				XLDataType.Boolean => cell.GetBoolean(),
-				XLDataType.DateTime => cell.GetDateTime(),
-				XLDataType.TimeSpan => cell.GetTimeSpan(),
-				XLDataType.Error => cell.GetError().ToString(),
-				_ => null,
-			};
-		}
-		public static void SetCellValue(this IXLCell cell, object value)
-		{
-			if(value == null || Convert.IsDBNull(value))
-			{
-				cell.Value = Blank.Value;
-				return;
-			}
-
-			cell.Value = Type.GetTypeCode(value.GetType()) switch
-			{
-				TypeCode.String => (string)value,
-				TypeCode.Byte => (byte)value,
-				TypeCode.SByte => (sbyte)value,
-				TypeCode.Int16 => (short)value,
-				TypeCode.Int32 => (int)value,
-				TypeCode.Int64 => (long)value,
-				TypeCode.UInt16 => (ushort)value,
-				TypeCode.UInt32 => (uint)value,
-				TypeCode.UInt64 => (ulong)value,
-				TypeCode.Single => (float)value,
-				TypeCode.Double => (double)value,
-				TypeCode.Decimal => (decimal)value,
-				TypeCode.Boolean => (bool)value,
-				TypeCode.DateTime => (DateTime)value,
-				_ => value.ToString(),
-			};
-		}
+			TypeCode.String => (string)value,
+			TypeCode.Byte => (byte)value,
+			TypeCode.SByte => (sbyte)value,
+			TypeCode.Int16 => (short)value,
+			TypeCode.Int32 => (int)value,
+			TypeCode.Int64 => (long)value,
+			TypeCode.UInt16 => (ushort)value,
+			TypeCode.UInt32 => (uint)value,
+			TypeCode.UInt64 => (ulong)value,
+			TypeCode.Single => (float)value,
+			TypeCode.Double => (double)value,
+			TypeCode.Decimal => (decimal)value,
+			TypeCode.Boolean => (bool)value,
+			TypeCode.DateTime => (DateTime)value,
+			_ => value.ToString(),
+		};
 	}
 }

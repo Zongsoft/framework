@@ -31,79 +31,77 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections;
 using System.Collections.Generic;
 
 using ClosedXML;
 using ClosedXML.Report;
 
-using Zongsoft.Data.Templates;
+using Zongsoft.Data.Archiving;
 
-namespace Zongsoft.Externals.ClosedXml
+namespace Zongsoft.Externals.ClosedXml;
+
+[Zongsoft.Services.Service(typeof(IDataTemplateRenderer))]
+public class SpreadsheetRenderer : IDataTemplateRenderer, Services.IMatchable
 {
-	[Zongsoft.Services.Service(typeof(IDataTemplateRenderer))]
-	public class SpreadsheetRenderer : IDataTemplateRenderer, Services.IMatchable
+	#region 公共属性
+	public string Name => Spreadsheet.Format.Name;
+	public DataArchiveFormat Format => Spreadsheet.Format;
+	#endregion
+
+	#region 模板渲染
+	public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, null, null, cancellation);
+	public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, string format, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, null, format, cancellation);
+	public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, parameters, null, cancellation);
+	public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, string format, CancellationToken cancellation = default)
 	{
-		#region 公共属性
-		public string Name => Spreadsheet.Format.Name;
-		public DataArchiveFormat Format => Spreadsheet.Format;
-		#endregion
+		if(output == null)
+			throw new ArgumentNullException(nameof(output));
+		if(template == null)
+			throw new ArgumentNullException(nameof(template));
 
-		#region 模板渲染
-		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, null, null, cancellation);
-		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, string format, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, null, format, cancellation);
-		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default) => this.RenderAsync(output, template, data, parameters, null, cancellation);
-		public ValueTask RenderAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, string format, CancellationToken cancellation = default)
+		//确保模板类型是受支持的电子表格类型
+		if(!Spreadsheet.Format.Equals(template.Format))
+			throw new InvalidOperationException($"Unsupported template format: '{template.Format}'.");
+
+		//确保指定的渲染格式是受支持的电子表格类型
+		if(!string.IsNullOrEmpty(format) && Spreadsheet.Format.Equals(format))
+			throw new InvalidOperationException($"Unsupported rendering format: '{format}'.");
+
+		using var stream = template.Open();
+		using var report = new XLTemplate(stream);
+
+		//添加报表数据
+		if(data != null)
 		{
-			if(output == null)
-				throw new ArgumentNullException(nameof(output));
-			if(template == null)
-				throw new ArgumentNullException(nameof(template));
+			//处理 IAsynEnumerable 异步可枚举接口类型
+			var items = Collections.Enumerable.IsAsyncEnumerable(data, out var elementType) ?
+				Collections.Enumerable.Enumerate(data, elementType) : data;
 
-			//确保模板类型是受支持的电子表格类型
-			if(!Spreadsheet.Format.Equals(template.Format))
-				throw new InvalidOperationException($"Unsupported template format: '{template.Format}'.");
-
-			//确保指定的渲染格式是受支持的电子表格类型
-			if(!string.IsNullOrEmpty(format) && Spreadsheet.Format.Equals(format))
-				throw new InvalidOperationException($"Unsupported rendering format: '{format}'.");
-
-			using var stream = template.Open();
-			using var report = new XLTemplate(stream);
-
-			//添加报表数据
-			if(data != null)
-			{
-				//处理 IAsynEnumerable 异步可枚举接口类型
-				var items = Collections.Enumerable.IsAsyncEnumerable(data, out var elementType) ?
-					Collections.Enumerable.Enumerate(data, elementType) : data;
-
-				report.AddVariable(items);
-			}
-
-			//添加报表参数
-			if(parameters != null)
-			{
-				foreach(var parameter in parameters)
-					report.AddVariable(parameter.Key, parameter.Value);
-			}
-
-			//生成报表内容
-			report.Generate();
-			//输出报表内容
-			report.SaveAs(output);
-
-			return ValueTask.CompletedTask;
+			report.AddVariable(items);
 		}
-		#endregion
 
-		#region 服务匹配
-		bool Services.IMatchable.Match(object parameter) => parameter switch
+		//添加报表参数
+		if(parameters != null)
 		{
-			string format => Spreadsheet.Format.Equals(format),
-			IDataTemplate template => Spreadsheet.Format.Equals(template.Format),
-			_ => false,
-		};
-		#endregion
+			foreach(var parameter in parameters)
+				report.AddVariable(parameter.Key, parameter.Value);
+		}
+
+		//生成报表内容
+		report.Generate();
+		//输出报表内容
+		report.SaveAs(output);
+
+		return ValueTask.CompletedTask;
 	}
+	#endregion
+
+	#region 服务匹配
+	bool Services.IMatchable.Match(object parameter) => parameter switch
+	{
+		string format => Spreadsheet.Format.Equals(format),
+		IDataTemplate template => Spreadsheet.Format.Equals(template.Format),
+		_ => false,
+	};
+	#endregion
 }

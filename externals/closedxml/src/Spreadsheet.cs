@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.ClosedXml library.
  *
@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Externals.ClosedXml
+namespace Zongsoft.Externals.ClosedXml;
+
+public static class Spreadsheet
 {
-	public static class Spreadsheet
-	{
-		public static readonly Data.Templates.DataArchiveFormat Format = new("Spreadsheet", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
-	}
+	public static readonly Data.Archiving.DataArchiveFormat Format = new("Spreadsheet", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
 }

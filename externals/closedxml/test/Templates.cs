@@ -82,13 +82,13 @@ internal class Templates
 		public ApartmentUsageModel()
 		{
 			this.Park = Parks[0];
-			this.Usages = new[]
-			{
+			this.Usages =
+			[
 				new ApartmentUsage(Apartments[0], Assets[0], DateTime.Today.AddMonths(-1), 100d),
 				new ApartmentUsage(Apartments[0], Assets[1], DateTime.Today.AddMonths(-1), 200d),
 				new ApartmentUsage(Apartments[1], Assets[0], DateTime.Today.AddMonths(-2), 000d),
 				new ApartmentUsage(Apartments[1], Assets[1], DateTime.Today.AddMonths(-1), 400d),
-			};
+			];
 		}
 
 		public Park Park { get; }

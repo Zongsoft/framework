@@ -8,4 +8,4 @@ global using Xunit;
 global using Zongsoft.Common;
 global using Zongsoft.Collections;
 global using Zongsoft.Data;
-global using Zongsoft.Data.Templates;
+global using Zongsoft.Data.Archiving;
