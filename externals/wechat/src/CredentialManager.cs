@@ -40,7 +40,6 @@ using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Services;
 using Zongsoft.Diagnostics;
-using Zongsoft.Distributing;
 
 namespace Zongsoft.Externals.Wechat
 {
@@ -52,7 +51,7 @@ namespace Zongsoft.Externals.Wechat
 		private static readonly Logger _logger = Logger.GetLogger(typeof(CredentialManager));
 
 		private static IDistributedCache _cache;
-		private static IDistributedLockManager _locker;
+		private static Services.Distributing.IDistributedLockManager _locker;
 		#endregion
 
 		#region 静态函数
@@ -74,9 +73,9 @@ namespace Zongsoft.Externals.Wechat
 			set => _cache = value;
 		}
 
-		public static IDistributedLockManager Locker
+		public static Services.Distributing.IDistributedLockManager Locker
 		{
-			get => _locker ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<IDistributedLockManager>>()?.GetService(GetCacheName());
+			get => _locker ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<Services.Distributing.IDistributedLockManager>>()?.GetService(GetCacheName());
 			set => _locker = value;
 		}
 		#endregion
