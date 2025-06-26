@@ -29,30 +29,25 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates;
+using Zongsoft.Services;
 
-public class DataArchiveField
+namespace Zongsoft.Data.Archiving;
+
+internal static class DataTemplateUtility
 {
-	#region 构造函数
-	public DataArchiveField(string name, string label = null, string description = null)
+	public static IDataTemplate GetTemplate(this IServiceProvider serviceProvider, string name, string format = null)
 	{
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
+		if(serviceProvider == null)
+			throw new ArgumentNullException(nameof(serviceProvider));
 
-		this.Name = name;
-		this.Label = label;
-		this.Description = description;
+		foreach(var provider in serviceProvider.ResolveAll<IDataTemplateProvider>())
+		{
+			var template = provider.GetTemplate(name, format);
+
+			if(template != null)
+				return template;
+		}
+
+		return null;
 	}
-	#endregion
-
-	#region 公共属性
-	public string Name { get; }
-	public string Label { get; set; }
-	public string Description { get; set; }
-	#endregion
-
-	#region 重写方法
-	public override string ToString() => string.IsNullOrEmpty(this.Label) || string.Equals(this.Name, this.Label) ?
-		this.Name : $"{this.Name}({this.Label})";
-	#endregion
 }

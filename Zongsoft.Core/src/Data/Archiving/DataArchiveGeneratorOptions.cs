@@ -28,37 +28,32 @@
  */
 
 using System;
+using System.Linq;
 
-using Zongsoft.Services;
+namespace Zongsoft.Data.Archiving;
 
-namespace Zongsoft.Data.Templates;
-
-public abstract class DataTemplateModelProviderBase : IDataTemplateModelProvider, IMatchable
+public class DataArchiveGeneratorOptions : IDataArchiveGeneratorOptions
 {
 	#region 构造函数
-	protected DataTemplateModelProviderBase(string name, IServiceProvider services)
+	public DataArchiveGeneratorOptions(params string[] fields) : this(null, fields) { }
+	public DataArchiveGeneratorOptions(IDataArchiveFormatter formatter, params string[] fields)
 	{
-		this.Name = name ?? throw new ArgumentNullException(nameof(name));
-		this.Services = services ?? throw new ArgumentNullException(nameof(services));
+		this.Formatter = formatter;
+
+		if(fields != null && fields.Length > 0)
+			this.Fields = fields.Select(field => new DataArchiveField(field)).ToArray();
+	}
+
+	public DataArchiveGeneratorOptions(params DataArchiveField[] fields) : this(null, fields) { }
+	public DataArchiveGeneratorOptions(IDataArchiveFormatter formatter, params DataArchiveField[] fields)
+	{
+		this.Formatter = formatter;
+		this.Fields = fields;
 	}
 	#endregion
 
 	#region 公共属性
-	public string Name { get; }
-	public IServiceProvider Services { get; }
-	#endregion
-
-	#region 抽象方法
-	public abstract IDataTemplateModel GetModel(IDataTemplate template, object argument);
-	#endregion
-
-	#region 服务匹配
-	bool IMatchable.Match(object parameter) => this.OnMatch(parameter);
-	protected virtual bool OnMatch(object parameter) => parameter switch
-	{
-		string name => string.Equals(name, this.Name, StringComparison.OrdinalIgnoreCase),
-		IDataTemplate template => string.Equals(template?.Name, this.Name, StringComparison.OrdinalIgnoreCase),
-		_ => false,
-	};
+	public IDataArchiveFormatter Formatter { get; set; }
+	public DataArchiveField[] Fields { get; set; }
 	#endregion
 }

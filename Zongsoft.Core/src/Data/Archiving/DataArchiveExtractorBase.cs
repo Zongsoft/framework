@@ -33,7 +33,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
 public abstract class DataArchiveExtractorBase(string name, DataArchiveFormat format) : IDataArchiveExtractor, Services.IMatchable
 {

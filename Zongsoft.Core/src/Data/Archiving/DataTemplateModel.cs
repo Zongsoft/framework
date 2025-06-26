@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,26 +28,24 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
-/// <summary>
-/// 表示数据文件提取选项的接口。
-/// </summary>
-public interface IDataArchiveExtractorOptions
+public class DataTemplateModel : IDataTemplateModel
 {
-	/// <summary>获取模型元信息。</summary>
-	ModelDescriptor Model {  get; }
+	#region 构造函数
+	public DataTemplateModel(object data, IEnumerable<KeyValuePair<string, object>> parameters = null)
+	{
+		this.Data = data;
+		this.Parameters = parameters == null ?
+			new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) :
+			new Dictionary<string, object>(parameters, StringComparer.OrdinalIgnoreCase);
+	}
+	#endregion
 
-	/// <summary>获取或设置提取来源。</summary>
-	object Source { get; set; }
-
-	/// <summary>获取或设置提取的成员集。</summary>
-	string[] Members { get; set; }
-
-	/// <summary>获取上下文相关参数集合。</summary>
-	Collections.Parameters Parameters { get; }
-
-	/// <summary>获取或设置数据组装器。</summary>
-	IDataArchivePopulator Populator { get; set; }
+	#region 公共属性
+	public object Data { get; }
+	public IDictionary<string, object> Parameters { get; }
+	#endregion
 }

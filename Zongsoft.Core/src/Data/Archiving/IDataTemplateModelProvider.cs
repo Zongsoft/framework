@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,37 +29,16 @@
 
 using System;
 
-using Zongsoft.Collections;
+namespace Zongsoft.Data.Archiving;
 
-namespace Zongsoft.Data.Templates;
-
-public class DataArchiveExtractorOptions : IDataArchiveExtractorOptions
+/// <summary>
+/// 表示数据模板模型提供程序的接口。
+/// </summary>
+public interface IDataTemplateModelProvider
 {
-	#region 成员字段
-	private IDataArchivePopulator _populator;
-	#endregion
-
-	#region 构造函数
-	public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters = null) : this(model, parameters, null) { }
-	public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters, object source, params string[] members)
-	{
-		this.Model = model;
-		this.Source = source;
-		this.Members = members;
-		this.Parameters = parameters ?? new();
-		this.Populator = DataArchivePopulator.Default;
-	}
-	#endregion
-
-	#region 公共属性
-	public ModelDescriptor Model { get; }
-	public object Source { get; set; }
-	public string[] Members { get; set; }
-	public Parameters Parameters { get; }
-	public IDataArchivePopulator Populator
-	{
-		get => _populator;
-		set => _populator = value ?? throw new ArgumentNullException(nameof(value));
-	}
-	#endregion
+	/// <summary>获取数据模板模型。</summary>
+	/// <param name="template">指定数据模板。</param>
+	/// <param name="argument">指定的获取参数。</param>
+	/// <returns>如果获取成功则返回对应的数据模板模型对象，否则返回空(<c>null</c>)。</returns>
+	IDataTemplateModel GetModel(IDataTemplate template, object argument);
 }

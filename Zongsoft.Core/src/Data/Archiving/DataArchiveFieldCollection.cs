@@ -31,7 +31,7 @@ using System;
 using System.Linq;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
 public class DataArchiveFieldCollection : KeyedCollection<string, DataArchiveField>
 {

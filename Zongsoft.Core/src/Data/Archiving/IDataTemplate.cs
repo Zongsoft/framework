@@ -28,17 +28,25 @@
  */
 
 using System;
+using System.IO;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
 /// <summary>
-/// 表示数据模板模型提供程序的接口。
+/// 表示数据模板的接口。
 /// </summary>
-public interface IDataTemplateModelProvider
+public interface IDataTemplate
 {
-	/// <summary>获取数据模板模型。</summary>
-	/// <param name="template">指定数据模板。</param>
-	/// <param name="argument">指定的获取参数。</param>
-	/// <returns>如果获取成功则返回对应的数据模板模型对象，否则返回空(<c>null</c>)。</returns>
-	IDataTemplateModel GetModel(IDataTemplate template, object argument);
+	/// <summary>获取模板名称。</summary>
+	string Name { get; }
+	/// <summary>获取模板格式。</summary>
+	DataArchiveFormat Format { get; }
+	/// <summary>获取或设置模板标题。</summary>
+	string Title { get; set; }
+	/// <summary>获取或设置模板描述文本。</summary>
+	string Description { get; set; }
+
+	/// <summary>打开模板(获取模板内容)。</summary>
+	/// <returns>返回模板内容流。</returns>
+	Stream Open();
 }

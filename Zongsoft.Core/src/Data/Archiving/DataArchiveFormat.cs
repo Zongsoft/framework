@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
 /// <summary>
 /// 表示数据文件格式的类。

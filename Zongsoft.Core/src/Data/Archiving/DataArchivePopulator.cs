@@ -31,7 +31,7 @@ using System;
 
 using Zongsoft.Reflection;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
 public class DataArchivePopulator : IDataArchivePopulator
 {

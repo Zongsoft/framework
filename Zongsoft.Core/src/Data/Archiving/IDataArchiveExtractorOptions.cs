@@ -29,9 +29,25 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
-public interface IDataArchivePopulator
+/// <summary>
+/// 表示数据文件提取选项的接口。
+/// </summary>
+public interface IDataArchiveExtractorOptions
 {
-	T Populate<T>(IDataArchiveRecord record, ModelDescriptor descriptor);
+	/// <summary>获取模型元信息。</summary>
+	ModelDescriptor Model {  get; }
+
+	/// <summary>获取或设置提取来源。</summary>
+	object Source { get; set; }
+
+	/// <summary>获取或设置提取的成员集。</summary>
+	string[] Members { get; set; }
+
+	/// <summary>获取上下文相关参数集合。</summary>
+	Collections.Parameters Parameters { get; }
+
+	/// <summary>获取或设置数据组装器。</summary>
+	IDataArchivePopulator Populator { get; set; }
 }

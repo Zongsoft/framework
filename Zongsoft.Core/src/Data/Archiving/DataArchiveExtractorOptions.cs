@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,16 +29,37 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates;
+using Zongsoft.Collections;
 
-/// <summary>
-/// 表示数据模板提供程序的接口。
-/// </summary>
-public interface IDataTemplateProvider
+namespace Zongsoft.Data.Archiving;
+
+public class DataArchiveExtractorOptions : IDataArchiveExtractorOptions
 {
-	/// <summary>获取指定名称及类型的数据模板。</summary>
-	/// <param name="name">指定的模板名称。</param>
-	/// <param name="format">指定的模板格式。</param>
-	/// <returns>如果获取成功则返回对应的数据模板，否则返回空(<c>null</c>)。</returns>
-	IDataTemplate GetTemplate(string name, string format = null);
+	#region 成员字段
+	private IDataArchivePopulator _populator;
+	#endregion
+
+	#region 构造函数
+	public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters = null) : this(model, parameters, null) { }
+	public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters, object source, params string[] members)
+	{
+		this.Model = model;
+		this.Source = source;
+		this.Members = members;
+		this.Parameters = parameters ?? new();
+		this.Populator = DataArchivePopulator.Default;
+	}
+	#endregion
+
+	#region 公共属性
+	public ModelDescriptor Model { get; }
+	public object Source { get; set; }
+	public string[] Members { get; set; }
+	public Parameters Parameters { get; }
+	public IDataArchivePopulator Populator
+	{
+		get => _populator;
+		set => _populator = value ?? throw new ArgumentNullException(nameof(value));
+	}
+	#endregion
 }

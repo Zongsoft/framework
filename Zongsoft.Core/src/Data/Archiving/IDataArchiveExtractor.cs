@@ -29,24 +29,28 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
 /// <summary>
-/// 表示数据模板的接口。
+/// 提供数据文件提取功能的接口。
 /// </summary>
-public interface IDataTemplate
+public interface IDataArchiveExtractor
 {
-	/// <summary>获取模板名称。</summary>
+	/// <summary>获取提取器名称。</summary>
 	string Name { get; }
-	/// <summary>获取模板格式。</summary>
-	DataArchiveFormat Format { get; }
-	/// <summary>获取或设置模板标题。</summary>
-	string Title { get; set; }
-	/// <summary>获取或设置模板描述文本。</summary>
-	string Description { get; set; }
 
-	/// <summary>打开模板(获取模板内容)。</summary>
-	/// <returns>返回模板内容流。</returns>
-	Stream Open();
+	/// <summary>获取提取器格式。</summary>
+	DataArchiveFormat Format { get; }
+
+	/// <summary>从数据流中提取数据。</summary>
+	/// <typeparam name="T">指定要提取的数据模型的类型。</typeparam>
+	/// <param name="input">待提取的数据流。</param>
+	/// <param name="options">提取操作选项设置。</param>
+	/// <param name="cancellation">异步操作的取消标记。</param>
+	/// <returns>返回提取到的数据集。</returns>
+	IAsyncEnumerable<T> ExtractAsync<T>(Stream input, IDataArchiveExtractorOptions options, CancellationToken cancellation = default);
 }

@@ -32,7 +32,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
 /// <summary>
 /// 提供数据文件生成功能的接口。

@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
 public interface IDataArchiveReader : IDataArchiveRecord, IDisposable
 {

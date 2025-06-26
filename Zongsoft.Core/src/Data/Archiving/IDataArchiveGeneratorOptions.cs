@@ -28,16 +28,17 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
-/// <summary>表示数据模板模型的接口。</summary>
-public interface IDataTemplateModel
+/// <summary>
+/// 表示数据文件生成选项的接口。
+/// </summary>
+public interface IDataArchiveGeneratorOptions
 {
-	/// <summary>获取模型数据。</summary>
-	object Data { get; }
+	/// <summary>获取或设置生成格式化器。</summary>
+	IDataArchiveFormatter Formatter { get; set; }
 
-	/// <summary>获取模型参数集。</summary>
-	IDictionary<string, object> Parameters { get; }
+	/// <summary>获取或设置生成的字段数组。</summary>
+	DataArchiveField[] Fields { get; set; }
 }

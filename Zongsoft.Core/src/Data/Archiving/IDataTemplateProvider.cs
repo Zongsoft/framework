@@ -28,32 +28,17 @@
  */
 
 using System;
-using System.Linq;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
-public class DataArchiveGeneratorOptions : IDataArchiveGeneratorOptions
+/// <summary>
+/// 表示数据模板提供程序的接口。
+/// </summary>
+public interface IDataTemplateProvider
 {
-	#region 构造函数
-	public DataArchiveGeneratorOptions(params string[] fields) : this(null, fields) { }
-	public DataArchiveGeneratorOptions(IDataArchiveFormatter formatter, params string[] fields)
-	{
-		this.Formatter = formatter;
-
-		if(fields != null && fields.Length > 0)
-			this.Fields = fields.Select(field => new DataArchiveField(field)).ToArray();
-	}
-
-	public DataArchiveGeneratorOptions(params DataArchiveField[] fields) : this(null, fields) { }
-	public DataArchiveGeneratorOptions(IDataArchiveFormatter formatter, params DataArchiveField[] fields)
-	{
-		this.Formatter = formatter;
-		this.Fields = fields;
-	}
-	#endregion
-
-	#region 公共属性
-	public IDataArchiveFormatter Formatter { get; set; }
-	public DataArchiveField[] Fields { get; set; }
-	#endregion
+	/// <summary>获取指定名称及类型的数据模板。</summary>
+	/// <param name="name">指定的模板名称。</param>
+	/// <param name="format">指定的模板格式。</param>
+	/// <returns>如果获取成功则返回对应的数据模板，否则返回空(<c>null</c>)。</returns>
+	IDataTemplate GetTemplate(string name, string format = null);
 }

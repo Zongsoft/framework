@@ -29,10 +29,10 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
 /// <summary>表示数据文件格式化器的接口。</summary>
-/// <remarks>数据文件生成器会对每条数据生成目标记录时候会调用该接口的<see cref="Format(object, ModelPropertyDescriptor)"/>格式化方法，并将其格式化的结果作为最终结果写入到目标记录的相应单元内。</remarks>
+/// <remarks>数据文件生成器会对每条数据生成目标记录时候会调用该接口的 <see cref="Format(object, ModelPropertyDescriptor)"/> 格式化方法，并将其格式化的结果作为最终结果写入到目标记录的相应单元内。</remarks>
 public interface IDataArchiveFormatter
 {
 	/// <summary>格式化指定的数据属性值。</summary>

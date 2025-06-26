@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,16 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates;
+namespace Zongsoft.Data.Archiving;
 
-/// <summary>
-/// 表示数据文件生成选项的接口。
-/// </summary>
-public interface IDataArchiveGeneratorOptions
+public interface IDataArchivePopulator
 {
-	/// <summary>获取或设置生成格式化器。</summary>
-	IDataArchiveFormatter Formatter { get; set; }
-
-	/// <summary>获取或设置生成的字段数组。</summary>
-	DataArchiveField[] Fields { get; set; }
+	T Populate<T>(IDataArchiveRecord record, ModelDescriptor descriptor);
 }
