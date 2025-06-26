@@ -34,7 +34,7 @@ using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Components;
-using Zongsoft.Distributing;
+using Zongsoft.Services.Distributing;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
@@ -62,7 +62,7 @@ public class RedisLockAcquireCommand : CommandBase<CommandContext>
 
 		if(context.Expression.Options.TryGetValue<string>(COMMAND_EXPIRY_OPTION, out var value))
 		{
-			if(!Zongsoft.Common.TimeSpanUtility.TryParse(value, out expiry))
+			if(!Common.TimeSpanUtility.TryParse(value, out expiry))
 				expiry = TimeSpan.FromMinutes(1);
 		}
 

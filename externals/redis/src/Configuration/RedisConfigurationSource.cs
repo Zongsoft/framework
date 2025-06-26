@@ -31,34 +31,33 @@ using System;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Externals.Redis.Configuration
+namespace Zongsoft.Externals.Redis.Configuration;
+
+public class RedisConfigurationSource : IConfigurationSource
 {
-	public class RedisConfigurationSource : IConfigurationSource
+	#region 常量定义
+	private const string DEFAULT_NAMESPACE = "Zongsoft.Configuration";
+	#endregion
+
+	#region 成员字段
+	private string _namespace = DEFAULT_NAMESPACE;
+	#endregion
+
+	#region 构造函数
+	public RedisConfigurationSource() { }
+	public RedisConfigurationSource(string name) => this.Name = name;
+	#endregion
+
+	#region 公共属性
+	public string Name { get; set; }
+	public string Namespace
 	{
-		#region 常量定义
-		private const string DEFAULT_NAMESPACE = "Zongsoft.Configuration";
-		#endregion
-
-		#region 成员字段
-		private string _namespace = DEFAULT_NAMESPACE;
-		#endregion
-
-		#region 构造函数
-		public RedisConfigurationSource() { }
-		public RedisConfigurationSource(string name) => this.Name = name;
-		#endregion
-
-		#region 公共属性
-		public string Name { get; set; }
-		public string Namespace
-		{
-			get => _namespace;
-			set => _namespace = string.IsNullOrWhiteSpace(value) ? throw new ArgumentNullException() : value.Trim();
-		}
-		#endregion
-
-		#region 公共方法
-		public IConfigurationProvider Build(IConfigurationBuilder builder) => new RedisConfigurationProvider(this);
-		#endregion
+		get => _namespace;
+		set => _namespace = string.IsNullOrWhiteSpace(value) ? throw new ArgumentNullException() : value.Trim();
 	}
+	#endregion
+
+	#region 公共方法
+	public IConfigurationProvider Build(IConfigurationBuilder builder) => new RedisConfigurationProvider(this);
+	#endregion
 }

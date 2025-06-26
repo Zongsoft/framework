@@ -34,7 +34,6 @@ using System.ComponentModel;
 using System.Collections.Generic;
 
 using Zongsoft.Components;
-using Zongsoft.Distributing;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
@@ -52,11 +51,11 @@ public class RedisLockReleaseCommand : CommandBase<CommandContext>
 	{
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 
-		if(context.Value is IDistributedLock locker)
+		if(context.Value is IDisposable disposable)
 		{
-			locker.Dispose();
+			disposable.Dispose();
 		}
-		else if(context.Value is IEnumerable<IDistributedLock> lockers)
+		else if(context.Value is IEnumerable<Services.Distributing.IDistributedLock> lockers)
 		{
 			foreach(var entry in lockers)
 				await entry.DisposeAsync();

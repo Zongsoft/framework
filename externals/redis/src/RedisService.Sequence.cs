@@ -35,147 +35,146 @@ using Zongsoft.Common;
 
 using StackExchange.Redis;
 
-namespace Zongsoft.Externals.Redis
+namespace Zongsoft.Externals.Redis;
+
+public partial class RedisService : ISequence
 {
-	public partial class RedisService : ISequence
+	#region 常量定义
+	private const string DECREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('decrby', KEYS[1], ARGV[1])";
+	private const string INCREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('incrby', KEYS[1], ARGV[1])";
+	private const string INCREMENT_FLOAT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('incrbyfloat', KEYS[1], ARGV[1])";
+
+	private const string DECREMENT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('setex', KEYS[1], ARGV[3], ARGV[2]) end return redis.call('decrby', KEYS[1], ARGV[1])";
+	private const string INCREMENT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('setex', KEYS[1], ARGV[3], ARGV[2]) end return redis.call('incrby', KEYS[1], ARGV[1])";
+	private const string INCREMENT_FLOAT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('setex', KEYS[1], ARGV[3], ARGV[2]) end return redis.call('incrbyfloat', KEYS[1], ARGV[1])";
+	#endregion
+
+	#region 公共方法
+	public long Decrease(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null) => this.Increase(key, -interval, seed, expiry);
+	public double Decrease(string key, double interval, double seed = 0, TimeSpan? expiry = null) => this.Increase(key, -interval, seed, expiry);
+	public ValueTask<long> DecreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
+	public ValueTask<double> DecreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
+
+	public long Increase(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null)
 	{
-		#region 常量定义
-		private const string DECREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('decrby', KEYS[1], ARGV[1])";
-		private const string INCREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('incrby', KEYS[1], ARGV[1])";
-		private const string INCREMENT_FLOAT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('incrbyfloat', KEYS[1], ARGV[1])";
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
 
-		private const string DECREMENT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('setex', KEYS[1], ARGV[3], ARGV[2]) end return redis.call('decrby', KEYS[1], ARGV[1])";
-		private const string INCREMENT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('setex', KEYS[1], ARGV[3], ARGV[2]) end return redis.call('incrby', KEYS[1], ARGV[1])";
-		private const string INCREMENT_FLOAT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('setex', KEYS[1], ARGV[3], ARGV[2]) end return redis.call('incrbyfloat', KEYS[1], ARGV[1])";
-		#endregion
+		//确保连接成功
+		this.Connect();
 
-		#region 公共方法
-		public long Decrease(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null) => this.Increase(key, -interval, seed, expiry);
-		public double Decrease(string key, double interval, double seed = 0, TimeSpan? expiry = null) => this.Increase(key, -interval, seed, expiry);
-		public ValueTask<long> DecreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
-		public ValueTask<double> DecreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
+		if(interval == 0)
+			return (long)_database.StringGet(GetKey(key));
 
-		public long Increase(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
+		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
+			return (long)_database.ScriptEvaluate(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
 
-			//确保连接成功
-			this.Connect();
+		if(seed == 0)
+			return _database.StringIncrement(GetKey(key), interval);
 
-			if(interval == 0)
-				return (long)_database.StringGet(GetKey(key));
-
-			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-				return (long)_database.ScriptEvaluate(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
-
-			if(seed == 0)
-				return _database.StringIncrement(GetKey(key), interval);
-
-			return (long)_database.ScriptEvaluate(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
-		}
-
-		public double Increase(string key, double interval, double seed = 0, TimeSpan? expiry = null)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			//确保连接成功
-			this.Connect();
-
-			if(interval == 0)
-				return (double)_database.StringGet(GetKey(key));
-
-			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-				return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
-
-			if(seed == 0)
-				return _database.StringIncrement(GetKey(key), interval);
-
-			return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
-		}
-
-		public async ValueTask<long> IncreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			cancellation.ThrowIfCancellationRequested();
-			await this.ConnectAsync(cancellation);
-
-			if(interval == 0)
-				return (long)_database.StringGet(GetKey(key));
-
-			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-				return (long)await _database.ScriptEvaluateAsync(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
-
-			if(seed == 0)
-				return await _database.StringIncrementAsync(GetKey(key), interval);
-
-			return (long)await _database.ScriptEvaluateAsync(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
-		}
-
-		public async ValueTask<double> IncreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			cancellation.ThrowIfCancellationRequested();
-			await this.ConnectAsync(cancellation);
-
-			if(interval == 0)
-				return (double)_database.StringGet(GetKey(key));
-
-			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-				return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
-
-			if(seed == 0)
-				return await _database.StringIncrementAsync(GetKey(key), interval);
-
-			return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
-		}
-
-		void ISequence.Reset(string key, int value, TimeSpan? expiry)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			//确保连接成功
-			this.Connect();
-
-			_database.StringSet(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
-		}
-
-		void ISequence.Reset(string key, double value, TimeSpan? expiry)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			//确保连接成功
-			this.Connect();
-
-			_database.StringSet(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
-		}
-
-		async ValueTask ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			cancellation.ThrowIfCancellationRequested();
-			await this.ConnectAsync(cancellation);
-			await _database.StringSetAsync(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
-		}
-
-		async ValueTask ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
-		{
-			if(string.IsNullOrEmpty(key))
-				throw new ArgumentNullException(nameof(key));
-
-			cancellation.ThrowIfCancellationRequested();
-			await this.ConnectAsync(cancellation);
-			await _database.StringSetAsync(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
-		}
-		#endregion
+		return (long)_database.ScriptEvaluate(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
 	}
+
+	public double Increase(string key, double interval, double seed = 0, TimeSpan? expiry = null)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+
+		//确保连接成功
+		this.Connect();
+
+		if(interval == 0)
+			return (double)_database.StringGet(GetKey(key));
+
+		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
+			return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
+
+		if(seed == 0)
+			return _database.StringIncrement(GetKey(key), interval);
+
+		return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
+	}
+
+	public async ValueTask<long> IncreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+
+		cancellation.ThrowIfCancellationRequested();
+		await this.ConnectAsync(cancellation);
+
+		if(interval == 0)
+			return (long)_database.StringGet(GetKey(key));
+
+		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
+			return (long)await _database.ScriptEvaluateAsync(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
+
+		if(seed == 0)
+			return await _database.StringIncrementAsync(GetKey(key), interval);
+
+		return (long)await _database.ScriptEvaluateAsync(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
+	}
+
+	public async ValueTask<double> IncreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+
+		cancellation.ThrowIfCancellationRequested();
+		await this.ConnectAsync(cancellation);
+
+		if(interval == 0)
+			return (double)_database.StringGet(GetKey(key));
+
+		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
+			return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
+
+		if(seed == 0)
+			return await _database.StringIncrementAsync(GetKey(key), interval);
+
+		return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
+	}
+
+	void ISequence.Reset(string key, int value, TimeSpan? expiry)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+
+		//确保连接成功
+		this.Connect();
+
+		_database.StringSet(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
+	}
+
+	void ISequence.Reset(string key, double value, TimeSpan? expiry)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+
+		//确保连接成功
+		this.Connect();
+
+		_database.StringSet(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
+	}
+
+	async ValueTask ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+
+		cancellation.ThrowIfCancellationRequested();
+		await this.ConnectAsync(cancellation);
+		await _database.StringSetAsync(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
+	}
+
+	async ValueTask ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+
+		cancellation.ThrowIfCancellationRequested();
+		await this.ConnectAsync(cancellation);
+		await _database.StringSetAsync(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
+	}
+	#endregion
 }

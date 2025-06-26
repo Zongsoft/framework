@@ -32,49 +32,29 @@ using System.Net;
 
 using StackExchange.Redis;
 
-namespace Zongsoft.Externals.Redis
+namespace Zongsoft.Externals.Redis;
+
+public class RedisServerDescriptor
 {
-	public class RedisServerDescriptor
+	#region 构造函数
+	public RedisServerDescriptor(IServer server)
 	{
-		#region 构造函数
-		public RedisServerDescriptor(IServer server)
-		{
-			if(server == null)
-				throw new ArgumentNullException(nameof(server));
+		if(server == null)
+			throw new ArgumentNullException(nameof(server));
 
-			this.ServerType = server.ServerType;
-			this.IsSlave = server.IsReplica;
-			this.IsConnected = server.IsConnected;
-			this.EndPoint = server.EndPoint;
-			this.Version = server.Version;
-		}
-		#endregion
-
-		#region 公共属性
-		public ServerType ServerType
-		{
-			get;
-		}
-
-		public bool IsSlave
-		{
-			get;
-		}
-
-		public bool IsConnected
-		{
-			get;
-		}
-
-		public EndPoint EndPoint
-		{
-			get;
-		}
-
-		public Version Version
-		{
-			get;
-		}
-		#endregion
+		this.ServerType = server.ServerType;
+		this.IsSlave = server.IsReplica;
+		this.IsConnected = server.IsConnected;
+		this.EndPoint = server.EndPoint;
+		this.Version = server.Version;
 	}
+	#endregion
+
+	#region 公共属性
+	public ServerType ServerType { get; }
+	public bool IsSlave { get; }
+	public bool IsConnected { get; }
+	public EndPoint EndPoint { get; }
+	public Version Version { get; }
+	#endregion
 }

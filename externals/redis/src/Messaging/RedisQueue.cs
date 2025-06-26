@@ -36,52 +36,51 @@ using Zongsoft.Components;
 
 using StackExchange.Redis;
 
-namespace Zongsoft.Externals.Redis.Messaging
+namespace Zongsoft.Externals.Redis.Messaging;
+
+public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisConnectionSettings>
 {
-	public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisConnectionSettings>
+	#region 成员字段
+	private IDatabase _database;
+	#endregion
+
+	#region 构造函数
+	public RedisQueue(string name, IDatabase database, Configuration.RedisConnectionSettings settings = null) : base(name, settings)
 	{
-		#region 成员字段
-		private IDatabase _database;
-		#endregion
-
-		#region 构造函数
-		public RedisQueue(string name, IDatabase database, Configuration.RedisConnectionSettings settings = null) : base(name, settings)
-		{
-			_database = database ?? throw new ArgumentNullException(nameof(database));
-		}
-		#endregion
-
-		#region 内部属性
-		internal IDatabase Database => _database ?? throw new ObjectDisposedException(nameof(RedisQueue));
-		#endregion
-
-		#region 生成方法
-		protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
-		{
-			if(string.IsNullOrEmpty(topic))
-				throw new ArgumentNullException(nameof(topic));
-
-			return await _database.StreamAddAsync(RedisQueueUtility.GetQueueName(this.Name, topic), RedisQueueUtility.GetMessagePayload(data, tags));
-		}
-		#endregion
-
-		#region 订阅方法
-		protected override ValueTask<bool> OnSubscribeAsync(RedisSubscriber subscriber, CancellationToken cancellation = default)
-		{
-			return subscriber.SubscribeAsync(cancellation);
-		}
-
-		protected override ValueTask<RedisSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
-		{
-			return ValueTask.FromResult(new RedisSubscriber(this, topic, handler, options));
-		}
-		#endregion
-
-		#region 资源释放
-		protected override void Dispose(bool disposing)
-		{
-			Interlocked.Exchange(ref _database, null);
-		}
-		#endregion
+		_database = database ?? throw new ArgumentNullException(nameof(database));
 	}
+	#endregion
+
+	#region 内部属性
+	internal IDatabase Database => _database ?? throw new ObjectDisposedException(nameof(RedisQueue));
+	#endregion
+
+	#region 生成方法
+	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
+	{
+		if(string.IsNullOrEmpty(topic))
+			throw new ArgumentNullException(nameof(topic));
+
+		return await _database.StreamAddAsync(RedisQueueUtility.GetQueueName(this.Name, topic), RedisQueueUtility.GetMessagePayload(data, tags));
+	}
+	#endregion
+
+	#region 订阅方法
+	protected override ValueTask<bool> OnSubscribeAsync(RedisSubscriber subscriber, CancellationToken cancellation = default)
+	{
+		return subscriber.SubscribeAsync(cancellation);
+	}
+
+	protected override ValueTask<RedisSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
+	{
+		return ValueTask.FromResult(new RedisSubscriber(this, topic, handler, options));
+	}
+	#endregion
+
+	#region 资源释放
+	protected override void Dispose(bool disposing)
+	{
+		Interlocked.Exchange(ref _database, null);
+	}
+	#endregion
 }

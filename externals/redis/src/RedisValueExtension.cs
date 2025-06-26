@@ -30,44 +30,43 @@
 using System;
 using StackExchange.Redis;
 
-namespace Zongsoft.Externals.Redis
+namespace Zongsoft.Externals.Redis;
+
+internal static class RedisValueExtension
 {
-	internal static class RedisValueExtension
+	public static T GetValue<T>(this RedisValue value)
 	{
-		public static T GetValue<T>(this RedisValue value)
+		if(value.IsNull)
+			return default;
+
+		if(typeof(T) == typeof(string) || typeof(T) == typeof(object))
+			return (T)(object)value.ToString();
+		if(typeof(T) == typeof(byte[]))
+			return (T)value.Box();
+
+		switch(Type.GetTypeCode(typeof(T)))
 		{
-			if(value.IsNull)
-				return default;
-
-			if(typeof(T) == typeof(string) || typeof(T) == typeof(object))
-				return (T)(object)value.ToString();
-			if(typeof(T) == typeof(byte[]))
-				return (T)value.Box();
-
-			switch(Type.GetTypeCode(typeof(T)))
-			{
-				case TypeCode.Byte:
-				case TypeCode.SByte:
-				case TypeCode.Int16:
-				case TypeCode.Int32:
-				case TypeCode.UInt16:
-					if(value.TryParse(out int integer))
-						return (T)(object)integer;
-					break;
-				case TypeCode.Int64:
-				case TypeCode.UInt32:
-				case TypeCode.UInt64:
-					if(value.TryParse(out long biginteger))
-						return (T)(object)biginteger;
-					break;
-				case TypeCode.Single:
-				case TypeCode.Double:
-					if(value.TryParse(out double number))
-						return (T)(object)number;
-					break;
-			}
-
-			return Common.Convert.ConvertValue<T>(value.ToString());
+			case TypeCode.Byte:
+			case TypeCode.SByte:
+			case TypeCode.Int16:
+			case TypeCode.Int32:
+			case TypeCode.UInt16:
+				if(value.TryParse(out int integer))
+					return (T)(object)integer;
+				break;
+			case TypeCode.Int64:
+			case TypeCode.UInt32:
+			case TypeCode.UInt64:
+				if(value.TryParse(out long biginteger))
+					return (T)(object)biginteger;
+				break;
+			case TypeCode.Single:
+			case TypeCode.Double:
+				if(value.TryParse(out double number))
+					return (T)(object)number;
+				break;
 		}
+
+		return Common.Convert.ConvertValue<T>(value.ToString());
 	}
 }

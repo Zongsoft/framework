@@ -37,20 +37,19 @@ using Zongsoft.Configuration;
 
 using StackExchange.Redis;
 
-namespace Zongsoft.Externals.Redis.Messaging
+namespace Zongsoft.Externals.Redis.Messaging;
+
+[Service(typeof(IMessageQueueProvider))]
+public class RedisQueueProvider() : MessageQueueProviderBase<RedisQueue, Configuration.RedisConnectionSettings>(Configuration.RedisConnectionSettingsDriver.NAME)
 {
-	[Service(typeof(IMessageQueueProvider))]
-	public class RedisQueueProvider() : MessageQueueProviderBase<RedisQueue, Configuration.RedisConnectionSettings>(Configuration.RedisConnectionSettingsDriver.NAME)
+	#region 重写方法
+	protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
 	{
-		#region 重写方法
-		protected override IMessageQueue OnCreate(string name, IEnumerable<KeyValuePair<string, string>> settings)
-		{
-			var connectionSettings = this.GetSettings<Configuration.RedisConnectionSettings>(name, settings);
-			var options = connectionSettings.GetOptions<ConfigurationOptions>();
-			var connection = ConnectionMultiplexer.Connect(options);
-			var database = connection.GetDatabase();
-			return new RedisQueue(name, database, connectionSettings);
-		}
-		#endregion
+		var connectionSettings = this.GetSettings<Configuration.RedisConnectionSettings>(name, settings);
+		var options = connectionSettings.GetOptions<ConfigurationOptions>();
+		var connection = ConnectionMultiplexer.Connect(options);
+		var database = connection.GetDatabase();
+		return new RedisQueue(name, database, connectionSettings);
 	}
+	#endregion
 }

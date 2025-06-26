@@ -34,50 +34,54 @@ using System.Collections.Concurrent;
 using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Services;
-using Zongsoft.Distributing;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Externals.Redis
+namespace Zongsoft.Externals.Redis;
+
+[Service(
+	typeof(IServiceProvider<ISequence>),
+	typeof(IServiceProvider<IDistributedCache>),
+	typeof(IServiceProvider<Services.Distributing.IDistributedLockManager>))]
+public class RedisServiceProvider :
+	IServiceProvider<ISequence>,
+	IServiceProvider<IDistributedCache>,
+	IServiceProvider<Services.Distributing.IDistributedLockManager>
 {
-	[Service(typeof(IServiceProvider<IDistributedCache>), typeof(IServiceProvider<ISequence>), typeof(IServiceProvider<IDistributedLockManager>))]
-	public class RedisServiceProvider : IServiceProvider<IDistributedCache>, IServiceProvider<ISequence>, IServiceProvider<IDistributedLockManager>
+	#region 静态字段
+	private static readonly ConcurrentDictionary<string, RedisService> _services = new ConcurrentDictionary<string, RedisService>(StringComparer.OrdinalIgnoreCase);
+	#endregion
+
+	#region 公共方法
+	public static RedisService GetRedis(string name)
 	{
-		#region 静态字段
-		private static readonly ConcurrentDictionary<string, RedisService> _services = new ConcurrentDictionary<string, RedisService>(StringComparer.OrdinalIgnoreCase);
-		#endregion
+		if(ApplicationContext.Current?.Configuration == null)
+			return null;
 
-		#region 公共方法
-		public static RedisService GetRedis(string name)
+		return _services.GetOrAdd(name ?? string.Empty, key => new RedisService(key, GetConnectionSettings(key)));
+
+		static IConnectionSettings GetConnectionSettings(string name)
 		{
-			if(ApplicationContext.Current?.Configuration == null)
-				return null;
+			var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Externals/Redis/ConnectionSettings");
+			if(settings == null || settings.Count == 0)
+				throw new ConfigurationException($"Missing redis connection settings.");
 
-			return _services.GetOrAdd(name ?? string.Empty, key => new RedisService(key, GetConnectionSettings(key)));
-
-			static IConnectionSettings GetConnectionSettings(string name)
-			{
-				var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Externals/Redis/ConnectionSettings");
-				if(settings == null || settings.Count == 0)
-					throw new ConfigurationException($"Missing redis connection settings.");
-
-				if(!string.IsNullOrEmpty(name) && settings.TryGetValue(name, Configuration.RedisConnectionSettingsDriver.NAME, out var setting))
-					return setting;
-
-				setting = settings.GetDefault();
-				if(setting == null)
-					throw new ConfigurationException(string.IsNullOrEmpty(name) ?
-						$"Missing the default redis connection setting." :
-						$"The specified '{name}' redis connection setting does not exist and the default redis connection setting is not defined.");
-
+			if(!string.IsNullOrEmpty(name) && settings.TryGetValue(name, Configuration.RedisConnectionSettingsDriver.NAME, out var setting))
 				return setting;
-			}
-		}
-		#endregion
 
-		#region 显式实现
-		ISequence IServiceProvider<ISequence>.GetService(string name) => GetRedis(name);
-		IDistributedCache IServiceProvider<IDistributedCache>.GetService(string name) => GetRedis(name);
-		IDistributedLockManager IServiceProvider<IDistributedLockManager>.GetService(string name) => GetRedis(name);
-		#endregion
+			setting = settings.GetDefault();
+			if(setting == null)
+				throw new ConfigurationException(string.IsNullOrEmpty(name) ?
+					$"Missing the default redis connection setting." :
+					$"The specified '{name}' redis connection setting does not exist and the default redis connection setting is not defined.");
+
+			return setting;
+		}
 	}
+	#endregion
+
+	#region 显式实现
+	ISequence IServiceProvider<ISequence>.GetService(string name) => GetRedis(name);
+	IDistributedCache IServiceProvider<IDistributedCache>.GetService(string name) => GetRedis(name);
+	Services.Distributing.IDistributedLockManager IServiceProvider<Services.Distributing.IDistributedLockManager>.GetService(string name) => GetRedis(name);
+	#endregion
 }

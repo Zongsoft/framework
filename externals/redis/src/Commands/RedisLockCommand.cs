@@ -32,7 +32,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
-using Zongsoft.Distributing;
 
 namespace Zongsoft.Externals.Redis.Commands;
 

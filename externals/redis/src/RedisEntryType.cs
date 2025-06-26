@@ -29,16 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Externals.Redis
+namespace Zongsoft.Externals.Redis;
+
+public enum RedisEntryType
 {
-	public enum RedisEntryType
-	{
-		None = 0,
-		String = 1,
-		List = 2,
-		Set = 3,
-		SortedSet = 4,
-		Dictionary = 5,
-		Stream = 6,
-	}
+	None = 0,
+	String = 1,
+	List = 2,
+	Set = 3,
+	SortedSet = 4,
+	Dictionary = 5,
+	Stream = 6,
 }

@@ -29,26 +29,25 @@
 
 using System;
 
-namespace Zongsoft.Externals.Redis
-{
-	public class RedisServiceInfo
-	{
-		#region 构造函数
-		public RedisServiceInfo(string name, string @namespace, int databaseId, Zongsoft.Configuration.IConnectionSettings settings)
-		{
-			this.Name = name;
-			this.Namespace = @namespace;
-			this.DatabaseId = databaseId;
-			this.Settings = settings;
-		}
-		#endregion
+namespace Zongsoft.Externals.Redis;
 
-		#region 公共属性
-		public string Name { get; }
-		public string Namespace { get; }
-		public int DatabaseId { get; }
-		public Zongsoft.Configuration.IConnectionSettings Settings { get; }
-		public RedisServerDescriptor[] Servers { get; internal set; }
-		#endregion
+public class RedisServiceInfo
+{
+	#region 构造函数
+	public RedisServiceInfo(string name, string @namespace, int databaseId, Zongsoft.Configuration.IConnectionSettings settings)
+	{
+		this.Name = name;
+		this.Namespace = @namespace;
+		this.DatabaseId = databaseId;
+		this.Settings = settings;
 	}
+	#endregion
+
+	#region 公共属性
+	public string Name { get; }
+	public string Namespace { get; }
+	public int DatabaseId { get; }
+	public Zongsoft.Configuration.IConnectionSettings Settings { get; }
+	public RedisServerDescriptor[] Servers { get; internal set; }
+	#endregion
 }
