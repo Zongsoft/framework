@@ -40,6 +40,14 @@ namespace Zongsoft.Externals.Opc;
 
 internal static class Utility
 {
+	public static MessageSecurityMode GetSecurityMode(this OpcSecurityMode mode) => mode switch
+	{
+		OpcSecurityMode.None => MessageSecurityMode.None,
+		OpcSecurityMode.Sign => MessageSecurityMode.Sign,
+		OpcSecurityMode.SignAndEncrypt => MessageSecurityMode.SignAndEncrypt,
+		_ => MessageSecurityMode.Invalid,
+	};
+
 	public static NodeId GetDataType(this Type type, out int rank)
 	{
 		if(type == null)

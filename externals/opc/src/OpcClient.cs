@@ -136,19 +136,21 @@ public partial class OpcClient : IDisposable
 
 	public async ValueTask ConnectAsync(Configuration.OpcConnectionSettings settings, CancellationToken cancellation = default)
 	{
-		if(settings == null || string.IsNullOrEmpty(settings.Url))
+		if(settings == null || string.IsNullOrEmpty(settings.Server))
 			throw new ArgumentNullException(nameof(settings));
 
-		var endpointDescription = CoreClientUtils.SelectEndpoint(_configuration, settings.Url, false, 1000 * 10);
 		var endpointConfiguration = EndpointConfiguration.Create(_configuration);
+		var endpointDescription = CoreClientUtils.SelectEndpoint(_configuration, settings.Server, false, 1000 * 10);
+
+		endpointDescription.SecurityMode = Utility.GetSecurityMode(settings.SecurityMode);
+		if(endpointDescription.SecurityMode == MessageSecurityMode.Sign || endpointDescription.SecurityMode == MessageSecurityMode.SignAndEncrypt)
+			endpointDescription.SecurityPolicyUri = $"http://opcfoundation.org/UA/SecurityPolicy#{(string.IsNullOrEmpty(settings.SecurityPolicy) ? "Basic256Sha256" : settings.SecurityPolicy)}";
+
 		var endpoint = new ConfiguredEndpoint(null, endpointDescription, endpointConfiguration);
 
-		string name;
-
-		if(string.IsNullOrEmpty(settings.Client))
-			name = string.IsNullOrEmpty(settings.Instance) ? $"{this.Name}#{Common.Randomizer.GenerateString()}" : $"{this.Name}.{settings.Instance}";
-		else
-			name = string.IsNullOrEmpty(settings.Instance) ? settings.Client : $"{settings.Client}:{settings.Instance}";
+		var name = string.IsNullOrEmpty(settings.Client) ?
+			string.IsNullOrEmpty(settings.Instance) ? $"{this.Name}#{Common.Randomizer.GenerateString()}" : $"{this.Name}.{settings.Instance}" :
+			string.IsNullOrEmpty(settings.Instance) ? settings.Client : $"{settings.Client}:{settings.Instance}";
 
 		var locales = string.IsNullOrEmpty(settings.Locales) ? ["en"] : settings.Locales.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 		var identity = settings.GetIdentity();

@@ -43,9 +43,9 @@ public class OpcConnectionSettings : ConnectionSettingsBase<OpcConnectionSetting
 	#endregion
 
 	#region 公共属性
-	[Alias("Server")]
+	[Alias("Url")]
 	[ConnectionSetting(true)]
-	public string Url
+	public string Server
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);
@@ -99,6 +99,20 @@ public class OpcConnectionSettings : ConnectionSettingsBase<OpcConnectionSetting
 
 	[Category("Security")]
 	public string CertificateSecret
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[Category("Security")]
+	public OpcSecurityMode SecurityMode
+	{
+		get => this.GetValue<OpcSecurityMode>();
+		set => this.SetValue(value);
+	}
+
+	[Category("Security")]
+	public string SecurityPolicy
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);

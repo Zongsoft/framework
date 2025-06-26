@@ -12,7 +12,7 @@ namespace Zongsoft.Externals.Opc.Samples;
 
 internal class Program
 {
-	private const string CONNECTION_SETTINGS = "Server=opc.tcp://localhost:4840;UserName=Program;Password=;Certificate=zfs.local:./certificates/certificate.pfx;CertificateSecret=;";
+	private const string CONNECTION_SETTINGS = "Server=opc.tcp://localhost:4840;SecurityMode=None;SecurityPolicy=Basic256Sha256;UserName=Program;Password=;Certificate=zfs.local:./certificates/certificate.pfx;CertificateSecret=;";
 
 	static async Task Main(string[] args)
 	{
