@@ -31,7 +31,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Distributing;
+namespace Zongsoft.Services.Distributing;
 
 public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposable, IAsyncDisposable where TManager : class, IDistributedLockManager
 {

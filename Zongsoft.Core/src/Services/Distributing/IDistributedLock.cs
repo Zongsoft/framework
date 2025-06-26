@@ -31,7 +31,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Distributing;
+namespace Zongsoft.Services.Distributing;
 
 /// <summary>表示分布式锁的接口。</summary>
 /// <example>

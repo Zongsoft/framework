@@ -31,7 +31,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Distributing;
+namespace Zongsoft.Services.Distributing;
 
 /// <summary>
 /// 提供分布式锁管理功能的接口。
