@@ -1829,7 +1829,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	#endregion
 
 	#region 校验方法
-	/// <summary>条件验证方法，适用于<c>Select</c>，<c>Update</c>，<c>Upsert</c>，<c>Delete</c>等方法。</summary>
+	/// <summary>条件验证方法，适用于 <c>Select</c>、<c>Update</c>、<c>Upsert</c>、<c>Delete</c> 等方法。</summary>
 	/// <param name="method">方法的类型。</param>
 	/// <param name="criteria">查询条件。</param>
 	/// <param name="options">执行方法的可选项。</param>
@@ -1839,7 +1839,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 		return this.Validator?.Validate(this, method, criteria, options) ?? criteria;
 	}
 
-	/// <summary>数据验证方法，适用于<c>Insert</c>，<c>Update</c>，<c>Upsert</c>等方法。</summary>
+	/// <summary>数据验证方法，适用于 <c>Insert</c>、<c>Update</c>、<c>Upsert</c> 等方法。</summary>
 	/// <param name="method">方法的类型。</param>
 	/// <param name="schema">数据模式。</param>
 	/// <param name="data">待验证的数据。</param>
@@ -2307,7 +2307,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 		isReadOnly ? AnonymousAuthorizer.ReadOnly : AnonymousAuthorizer.Default;
 
 	/// <summary>创建一个匿名用户的数据服务授权验证器。</summary>
-	/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(True)表示验证通过。</param>
+	/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(<c>True</c>)表示验证通过。</param>
 	/// <returns>返回创建的数据服务授权验证器。</returns>
 	public static IDataServiceAuthorizer<TModel> Anonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) =>
 		authorize == null ? AnonymousAuthorizer.Default : new AnonymousAuthorizer(authorize);
@@ -2319,7 +2319,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 		isReadOnly ? NonanonymousAuthorizer.ReadOnly : NonanonymousAuthorizer.Default;
 
 	/// <summary>创建一个非匿名用户的数据服务授权验证器。</summary>
-	/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(True)表示验证通过。</param>
+	/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(<c>True</c>)表示验证通过。</param>
 	/// <returns>返回创建的数据服务授权验证器。</returns>
 	public static IDataServiceAuthorizer<TModel> Nonanonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) =>
 		authorize == null ? NonanonymousAuthorizer.Default : new NonanonymousAuthorizer(authorize);

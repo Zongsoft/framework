@@ -28,8 +28,8 @@
  */
 
 using System;
-using System.ComponentModel;
 using System.Globalization;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
 
 namespace Zongsoft.Data;
@@ -54,7 +54,7 @@ namespace Zongsoft.Data;
 /// </remarks>
 public class PagingConverter : TypeConverter
 {
-	private static readonly Regex _regex_ = new Regex(@"^(?<index>\d+)(([|@](?<size>\d+))|(/(?<count>\d+)(\((?<total>\d+)\))?))?$", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000));
+	private static readonly Regex _regex_ = new(@"^(?<index>\d+)(([|@](?<size>\d+))|(/(?<count>\d+)(\((?<total>\d+)\))?))?$", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000));
 
 	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{

@@ -30,31 +30,30 @@
 using System;
 using System.Linq;
 
-namespace Zongsoft.Data.Templates
+namespace Zongsoft.Data.Templates;
+
+public class DataArchiveGeneratorOptions : IDataArchiveGeneratorOptions
 {
-	public class DataArchiveGeneratorOptions : IDataArchiveGeneratorOptions
+	#region 构造函数
+	public DataArchiveGeneratorOptions(params string[] fields) : this(null, fields) { }
+	public DataArchiveGeneratorOptions(IDataArchiveFormatter formatter, params string[] fields)
 	{
-		#region 构造函数
-		public DataArchiveGeneratorOptions(params string[] fields) : this(null, fields) { }
-		public DataArchiveGeneratorOptions(IDataArchiveFormatter formatter, params string[] fields)
-		{
-			this.Formatter = formatter;
+		this.Formatter = formatter;
 
-			if(fields != null && fields.Length > 0)
-				this.Fields = fields.Select(field => new DataArchiveField(field)).ToArray();
-		}
-
-		public DataArchiveGeneratorOptions(params DataArchiveField[] fields) : this(null, fields) { }
-		public DataArchiveGeneratorOptions(IDataArchiveFormatter formatter, params DataArchiveField[] fields)
-		{
-			this.Formatter = formatter;
-			this.Fields = fields;
-		}
-		#endregion
-
-		#region 公共属性
-		public IDataArchiveFormatter Formatter { get; set; }
-		public DataArchiveField[] Fields { get; set; }
-		#endregion
+		if(fields != null && fields.Length > 0)
+			this.Fields = fields.Select(field => new DataArchiveField(field)).ToArray();
 	}
+
+	public DataArchiveGeneratorOptions(params DataArchiveField[] fields) : this(null, fields) { }
+	public DataArchiveGeneratorOptions(IDataArchiveFormatter formatter, params DataArchiveField[] fields)
+	{
+		this.Formatter = formatter;
+		this.Fields = fields;
+	}
+	#endregion
+
+	#region 公共属性
+	public IDataArchiveFormatter Formatter { get; set; }
+	public DataArchiveField[] Fields { get; set; }
+	#endregion
 }

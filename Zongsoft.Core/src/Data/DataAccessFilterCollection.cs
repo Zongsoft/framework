@@ -470,8 +470,7 @@ public class DataAccessFilterCollection : ICollection<object>
 			{
 				lock(this)
 				{
-					if(filters == null)
-						filters = new List<IDataAccessFilter<TContext>>();
+					filters ??= new List<IDataAccessFilter<TContext>>();
 				}
 			}
 

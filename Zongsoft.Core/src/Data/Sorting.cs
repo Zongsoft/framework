@@ -66,18 +66,18 @@ public readonly struct Sorting : IEquatable<Sorting>
 	/// <summary>创建一个正序的排序设置项。</summary>
 	/// <param name="name">指定的排序项名称。</param>
 	/// <returns>返回创建成果的排序设置项实例。</returns>
-	public static Sorting Ascending(string name) => new Sorting(name, SortingMode.Ascending);
+	public static Sorting Ascending(string name) => new(name, SortingMode.Ascending);
 
 	/// <summary>创建一个倒序的排序设置项。</summary>
 	/// <param name="name">指定的排序项名称。</param>
 	/// <returns>返回创建成果的排序设置项实例。</returns>
-	public static Sorting Descending(string name) => new Sorting(name, SortingMode.Descending);
+	public static Sorting Descending(string name) => new(name, SortingMode.Descending);
 
 	/// <summary>将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。</summary>
 	/// <param name="text">待解析的排序设置规则文本。</param>
 	/// <returns>返回解析成功的<see cref="Sorting"/>排序设置。</returns>
 	/// <exception cref="ArgumentException">当指定的<paramref name="text"/>参数值不符合排序设置格式。</exception>
-	/// <exception cref="ArgumentNullException">当指定的<paramref name="text"/>参数值为空(null)或空字符串("")。</exception>
+	/// <exception cref="ArgumentNullException">当指定的<paramref name="text"/>参数值为空(<c>null</c>)或空字符串。</exception>
 	public static Sorting Parse(string text)
 	{
 		if(string.IsNullOrEmpty(text))
@@ -92,7 +92,7 @@ public readonly struct Sorting : IEquatable<Sorting>
 	/// <summary>尝试将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。</summary>
 	/// <param name="text">待解析的排序设置规则文本。</param>
 	/// <param name="value">输出参数，表示解析成功的<see cref="Sorting"/>排序设置。</param>
-	/// <returns>如果解析成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果解析成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	public static bool TryParse(string text, out Sorting value)
 	{
 		const int NONE_STATE = 0;       //未开始
@@ -162,7 +162,7 @@ public readonly struct Sorting : IEquatable<Sorting>
 	public static Sorting[] operator +(Sorting[] sortings, Sorting value)
 	{
 		if(sortings == null || sortings.Length == 0)
-			return new Sorting[] { value };
+			return [value];
 
 		foreach(var sorting in sortings)
 		{
@@ -172,7 +172,7 @@ public readonly struct Sorting : IEquatable<Sorting>
 
 		var result = new Sorting[sortings.Length + 1];
 		Array.Copy(sortings, 0, result, 0, sortings.Length);
-		result[result.Length - 1] = value;
+		result[^1] = value;
 
 		return result;
 	}
@@ -180,9 +180,9 @@ public readonly struct Sorting : IEquatable<Sorting>
 	public static Sorting[] operator +(Sorting a, Sorting b)
 	{
 		if(string.Equals(a._name, b._name, StringComparison.OrdinalIgnoreCase))
-			return new Sorting[] { b };
+			return [b];
 		else
-			return new Sorting[] { a, b };
+			return [a, b];
 	}
 	#endregion
 }

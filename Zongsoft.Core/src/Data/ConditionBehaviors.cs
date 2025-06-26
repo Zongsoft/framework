@@ -37,7 +37,7 @@ public enum ConditionBehaviors
 	/// <summary>无特性</summary>
 	None = 0,
 
-	/// <summary>忽略值为空(null)的查询项</summary>
+	/// <summary>忽略值为空(<c>null</c>)的查询项</summary>
 	IgnoreNull = 1,
 
 	/// <summary>忽略值为空字符串或全空白字符串的查询项</summary>

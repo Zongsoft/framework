@@ -43,7 +43,7 @@ public class Paging
 	#endregion
 
 	#region 静态字段
-	public static readonly Paging Disabled = new Paging(1, 0);
+	public static readonly Paging Disabled = new(1, 0);
 	#endregion
 
 	#region 成员字段
@@ -53,15 +53,15 @@ public class Paging
 	#endregion
 
 	#region 构造函数
-	/// <summary>创建默认的分页设置。<see cref="PageIndex"/>默认值为1（即首页），<see cref="PageSize"/>默认值为20。</summary>
+	/// <summary>创建默认的分页设置。<see cref="PageIndex"/>默认值为<c>1</c>（即首页），<see cref="PageSize"/>默认值为<c>20</c>。</summary>
 	public Paging() : this(1, PAGE_SIZE) { }
 
-	/// <summary>创建指定页号的分页设置。<see cref="PageSize"/>默认值为20。</summary>
-	/// <param name="pageIndex">指定的页号（从1开始）。</param>
+	/// <summary>创建指定页号的分页设置。<see cref="PageSize"/>默认值为<c>20</c>。</summary>
+	/// <param name="pageIndex">指定的页号（从<c>1</c>开始）。</param>
 	public Paging(int pageIndex) : this(pageIndex, PAGE_SIZE) { }
 
 	/// <summary>创建指定页号和页大小的分页设置。</summary>
-	/// <param name="pageIndex">指定的页号（从1开始）。</param>
+	/// <param name="pageIndex">指定的页号（从<c>1</c>开始）。</param>
 	/// <param name="pageSize">指定的页大小，如果为零则表示不分页。</param>
 	public Paging(int pageIndex, int pageSize)
 	{
@@ -76,7 +76,7 @@ public class Paging
 	public bool Enabled => _pageSize > 0 && _pageIndex > 0;
 
 	/// <summary>获取一个值，指示分页结果是否为空集。</summary>
-	/// <remarks>注意：只有当<see cref="TotalCount"/>等于零，本属性才会返回真(<c>True</c>)。</remarks>
+	/// <remarks>注意：只有当 <see cref="TotalCount"/> 等于零，本属性才会返回真(<c>True</c>)。</remarks>
 	public bool IsEmpty => _totalCount == 0;
 
 	/// <summary>获取或设置页大小，如果该属性值为零则表示不分页。</summary>
@@ -86,7 +86,7 @@ public class Paging
 		set => _pageSize = Math.Max(value, 0);
 	}
 
-	/// <summary>获取或设置当前查询的页号（从1开始），如果页号为0则表示不分页。</summary>
+	/// <summary>获取或设置当前查询的页号（从<c>1</c>开始），如果页号为零则表示不分页。</summary>
 	/// <remarks>注意：零表示不分页，仅获取 <see cref="PageSize"/> 属性所指定的记录数。</remarks>
 	public int PageIndex
 	{
@@ -135,18 +135,18 @@ public class Paging
 	/// <summary>创建指定记录数的限定设置。</summary>
 	/// <param name="count">限定返回的记录数，不能小于<c>1</c>。</param>
 	/// <returns>返回新创建的分页设置对象。</returns>
-	public static Paging Limit(int count = 1) => new Paging(0, Math.Max(count, 1));
+	public static Paging Limit(int count = 1) => new(0, Math.Max(count, 1));
 
 	/// <summary>创建指定页大小的首页设置。</summary>
 	/// <param name="size">指定的页大小，不能小于<c>1</c>。</param>
 	/// <returns></returns>
-	public static Paging First(int size = PAGE_SIZE) => new Paging(1, Math.Max(size, 1));
+	public static Paging First(int size = PAGE_SIZE) => new(1, Math.Max(size, 1));
 
 	/// <summary>以指定的页号及大小创建一个分页设置对象。</summary>
-	/// <param name="index">指定的页号，默认为1。</param>
-	/// <param name="size">每页的大小，默认为20。</param>
+	/// <param name="index">指定的页号，默认为<c>1</c>。</param>
+	/// <param name="size">每页的大小，默认为<c>20</c>。</param>
 	/// <returns>返回新创建的分页设置对象。</returns>
-	public static Paging Page(int index = 1, int size = PAGE_SIZE) => new Paging(index, size);
+	public static Paging Page(int index = 1, int size = PAGE_SIZE) => new(index, size);
 
 	/// <summary>获取指定的设置项是否禁用了分页。</summary>
 	/// <param name="paging">待判断的分页设置。</param>

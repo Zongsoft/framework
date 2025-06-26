@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates
+namespace Zongsoft.Data.Templates;
+
+/// <summary>
+/// 表示数据模板模型提供程序的接口。
+/// </summary>
+public interface IDataTemplateModelProvider
 {
-	/// <summary>
-	/// 表示数据模板模型提供程序的接口。
-	/// </summary>
-	public interface IDataTemplateModelProvider
-	{
-		/// <summary>获取数据模板模型。</summary>
-		/// <param name="template">指定数据模板。</param>
-		/// <param name="argument">指定的获取参数。</param>
-		/// <returns>如果获取成功则返回对应的数据模板模型对象，否则返回空(<c>null</c>)。</returns>
-		IDataTemplateModel GetModel(IDataTemplate template, object argument);
-	}
+	/// <summary>获取数据模板模型。</summary>
+	/// <param name="template">指定数据模板。</param>
+	/// <param name="argument">指定的获取参数。</param>
+	/// <returns>如果获取成功则返回对应的数据模板模型对象，否则返回空(<c>null</c>)。</returns>
+	IDataTemplateModel GetModel(IDataTemplate template, object argument);
 }

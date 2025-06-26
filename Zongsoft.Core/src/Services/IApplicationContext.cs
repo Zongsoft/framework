@@ -56,7 +56,7 @@ public interface IApplicationContext : IApplicationModule
 	IApplicationEnvironment Environment { get; }
 
 	/// <summary>获取当前应用程序的安全主体。</summary>
-	/// <remarks>该属性始终不会返回空(null)。</remarks>
+	/// <remarks>该属性始终不会返回空(<c>null</c>)。</remarks>
 	ClaimsPrincipal Principal { get; }
 
 	/// <summary>获取当前应用程序的会话数据集。</summary>

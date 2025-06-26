@@ -66,7 +66,7 @@ public class ObjectPool<T> : IDisposable where T : class
 
 	/// <summary>创建一个新的对象管理池。</summary>
 	/// <param name="creator">对象的创建方法。</param>
-	/// <param name="remover">对象移除时的回调，该参数值可以为空(null)。</param>
+	/// <param name="remover">对象移除时的回调，该参数值可以为空(<c>null</c>)。</param>
 	/// <param name="limit">对象池的最大容量，如果为零则表示不控制池的大小。</param>
 	public ObjectPool(Func<T> creator, Action<T> remover, int limit = 0)
 	{

@@ -424,11 +424,7 @@ public class Condition : ICondition, IEquatable<Condition>
 			object.Equals(this.Value, other.Value);
 	}
 
-	public override bool Equals(object obj)
-	{
-		return obj is Condition other && this.Equals(other);
-	}
-
+	public override bool Equals(object obj) => this.Equals(obj as Condition);
 	public override int GetHashCode()
 	{
 		var value = this.Value;
@@ -551,7 +547,7 @@ public class Condition : ICondition, IEquatable<Condition>
 		protected Builder() { }
 		#endregion
 
-		#region 文本版本
+		#region 成员名版本
 		public static Condition Equal(string name, object value) => Condition.Equal(name, value);
 		public static Condition Equal(string name, Operand value) => Condition.Equal(name, value);
 		public static Condition Equal(Operand field, Operand value) => Condition.Equal(field, value);

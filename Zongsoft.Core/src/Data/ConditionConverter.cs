@@ -62,10 +62,7 @@ public class ConditionConverter : IConditionConverter
 	#endregion
 
 	#region 构造函数
-	public ConditionConverter()
-	{
-		_wildcard = '%';
-	}
+	public ConditionConverter() => _wildcard = '%';
 	#endregion
 
 	#region 公共属性
@@ -195,7 +192,7 @@ public class ConditionConverter : IConditionConverter
 		#endregion
 
 		#region 构造函数
-		public StringSplitter() => this.Separators = new[] { ',', ';', '|' };
+		public StringSplitter() => this.Separators = [',', ';', '|'];
 		public StringSplitter(params char[] separators) => this.Separators = separators;
 		#endregion
 

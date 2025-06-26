@@ -159,7 +159,7 @@ internal abstract class ModelEmitterBase
 		var method = builder.DefineMethod(typeof(Zongsoft.Data.IModel).FullName + "." + nameof(IModel.Reset),
 			MethodAttributes.Private | MethodAttributes.HideBySig | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.NewSlot,
 			typeof(bool),
-			new Type[] { typeof(string), typeof(object).MakeByRefType() });
+			[typeof(string), typeof(object).MakeByRefType()]);
 
 		//添加方法的实现标记
 		builder.DefineMethodOverride(method, typeof(Zongsoft.Data.IModel).GetMethod(nameof(IModel.Reset), new[] { typeof(string), typeof(object).MakeByRefType() }));
@@ -2377,7 +2377,7 @@ internal abstract class ModelEmitterBase
 	#endregion
 }
 
-internal class ModelContractEmitter(ModuleBuilder module) : ModelEmitterBase(module)
+internal sealed class ModelContractEmitter(ModuleBuilder module) : ModelEmitterBase(module)
 {
 	#region 重写方法
 	protected override TypeBuilder Build(Type type, string name)
@@ -2443,7 +2443,7 @@ internal class ModelContractEmitter(ModuleBuilder module) : ModelEmitterBase(mod
 			var setter = builder.DefineMethod(property.GetSetterName(),
 				(property.IsExplicitImplementation ? MethodAttributes.Private : MethodAttributes.Public) | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.NewSlot,
 				null,
-				new Type[] { property.PropertyType });
+				[property.PropertyType]);
 
 			//定义设置器参数名
 			setter.DefineParameter(1, ParameterAttributes.None, "value");
@@ -2653,7 +2653,7 @@ internal class ModelContractEmitter(ModuleBuilder module) : ModelEmitterBase(mod
 	#endregion
 }
 
-internal class ModelAbstractEmitter(ModuleBuilder module) : ModelEmitterBase(module)
+internal sealed class ModelAbstractEmitter(ModuleBuilder module) : ModelEmitterBase(module)
 {
 	#region 重写方法
 	protected override TypeBuilder Build(Type type, string name)
@@ -2756,7 +2756,7 @@ internal class ModelAbstractEmitter(ModuleBuilder module) : ModelEmitterBase(mod
 			var setter = builder.DefineMethod(property.GetSetterName(),
 				GetMethodModifier(property.SetMethod.Attributes) | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.Virtual,
 				null,
-				new Type[] { property.PropertyType });
+				[property.PropertyType]);
 
 			//定义设置器参数名
 			setter.DefineParameter(1, ParameterAttributes.None, "value");

@@ -30,15 +30,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.Templates
-{
-	/// <summary>表示数据模板模型的接口。</summary>
-	public interface IDataTemplateModel
-	{
-		/// <summary>获取模型数据。</summary>
-		object Data { get; }
+namespace Zongsoft.Data.Templates;
 
-		/// <summary>获取模型参数集。</summary>
-		IDictionary<string, object> Parameters { get; }
-	}
+/// <summary>表示数据模板模型的接口。</summary>
+public interface IDataTemplateModel
+{
+	/// <summary>获取模型数据。</summary>
+	object Data { get; }
+
+	/// <summary>获取模型参数集。</summary>
+	IDictionary<string, object> Parameters { get; }
 }

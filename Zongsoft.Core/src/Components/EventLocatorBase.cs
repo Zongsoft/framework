@@ -52,7 +52,7 @@ public abstract class EventLocatorBase<TContext> : IHandlerLocator<TContext> whe
 	#region 抽象方法
 	/// <summary>根据上下文对象获取对应的事件名。</summary>
 	/// <param name="context">指定的上下文对象。</param>
-	/// <returns>如果成功则返回对应的事件名，否则返回空(null)。</returns>
+	/// <returns>如果成功则返回对应的事件名，否则返回空(<c>null</c>)。</returns>
 	protected abstract string GetName(TContext context);
 	#endregion
 

@@ -51,6 +51,6 @@ public interface IExecutorContext
 
 	/// <summary>获取一个值，指示本次执行中是否发生了异常。</summary>
 	/// <param name="exception">输出参数，不为空则表示发生的异常。</param>
-	/// <returns>返回真(True)表示执行过程有错误，否则返回假(False)。</returns>
+	/// <returns>返回真(<c>True</c>)表示执行过程有错误，否则返回假(<c>False</c>)。</returns>
 	bool HasError(out Exception exception);
 }

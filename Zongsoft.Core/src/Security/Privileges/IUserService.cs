@@ -141,7 +141,7 @@ public partial interface IUserService
 	/// <param name="oldPassword">指定的用户的当前密码。</param>
 	/// <param name="newPassword">指定的用户的新密码。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果修改成功返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果修改成功返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	ValueTask<bool> ChangePasswordAsync(Identifier identifier, string oldPassword, string newPassword, CancellationToken cancellation = default);
 
 	/// <summary>准备重置指定用户的密码。</summary>
@@ -157,7 +157,7 @@ public partial interface IUserService
 	/// <param name="secret">重置密码的验证码。</param>
 	/// <param name="password">重置后的新密码。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果密码重置成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果密码重置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	/// <remarks>
 	/// 	<para>本重置方法通常由Web请求的方式进行，请求的URL大致如下：
 	/// 	<c>https://api.zongsoft.com/security/users/password/reset/[token]?secret=xxxxxx</c>
@@ -171,7 +171,7 @@ public partial interface IUserService
 	/// <param name="passwordAnswers">指定用户的密码问答的答案集。</param>
 	/// <param name="newPassword">重置后的新密码。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果密码重置成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果密码重置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	/// <exception cref="SecurityException">如果指定的用户没有设置密码问答或者密码问答验证失败。</exception>
 	ValueTask<bool> ResetPasswordAsync(string identity, string @namespace, string[] passwordAnswers, string newPassword = null, CancellationToken cancellation = default);
 
@@ -194,7 +194,7 @@ public partial interface IUserService
 	/// <param name="passwordQuestions">当前用户的密码问答的题面集。</param>
 	/// <param name="passwordAnswers">当前用户的密码问答的答案集。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果设置成则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果设置成则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	ValueTask<bool> SetPasswordQuestionsAndAnswersAsync(Identifier identifier, string password, string[] passwordQuestions, string[] passwordAnswers, CancellationToken cancellation = default);
 	#endregion
 

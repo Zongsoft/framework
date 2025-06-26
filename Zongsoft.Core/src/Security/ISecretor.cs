@@ -70,7 +70,7 @@ public interface ISecretor
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回生成成功的验证码，关于验证码的生成规则由<paramref name="pattern"/>参数定义。</returns>
 	/// <remarks>
-	/// 	<para>参数<paramref name="pattern"/>用来定义生成验证码的模式，如果为空(null)或空字符串则由特定实现版本自行定义（建议生成6位数字的验证码）；也可以表示生成验证码的规则，基本模式定义如下：</para>
+	/// 	<para>参数<paramref name="pattern"/>用来定义生成验证码的模式，如果为空(<c>null</c>)或空字符串则由特定实现版本自行定义（建议生成6位数字的验证码）；也可以表示生成验证码的规则，基本模式定义如下：</para>
 	/// 	<list type="bullet">
 	/// 		<item>guid|uuid，表示生成一个GUID值</item>
 	/// 		<item>#{number}，表示生成{number}个的数字字符，譬如：#4</item>

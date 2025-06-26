@@ -29,31 +29,30 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates
+namespace Zongsoft.Data.Templates;
+
+public class DataArchiveField
 {
-	public class DataArchiveField
+	#region 构造函数
+	public DataArchiveField(string name, string label = null, string description = null)
 	{
-		#region 构造函数
-		public DataArchiveField(string name, string label = null, string description = null)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Name = name;
-			this.Label = label;
-			this.Description = description;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name { get; }
-		public string Label { get; set; }
-		public string Description { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => string.IsNullOrEmpty(this.Label) || string.Equals(this.Name, this.Label) ?
-			this.Name : $"{this.Name}({this.Label})";
-		#endregion
+		this.Name = name;
+		this.Label = label;
+		this.Description = description;
 	}
+	#endregion
+
+	#region 公共属性
+	public string Name { get; }
+	public string Label { get; set; }
+	public string Description { get; set; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => string.IsNullOrEmpty(this.Label) || string.Equals(this.Name, this.Label) ?
+		this.Name : $"{this.Name}({this.Label})";
+	#endregion
 }

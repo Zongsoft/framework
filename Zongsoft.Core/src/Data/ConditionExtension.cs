@@ -42,7 +42,7 @@ public static class ConditionExtension
 	/// <param name="criteria">待判断的条件。</param>
 	/// <param name="name">指定的条件项名称。</param>
 	/// <param name="maxDepth">最大的搜索深度，如果为零或负数则表示不限深度。</param>
-	/// <returns>如果存在则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果存在则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	public static bool Contains(this ICondition criteria, string name, int maxDepth = 0)
 	{
 		return Matches(criteria, name, 1, 0, maxDepth, 0, null) > 0;
@@ -52,7 +52,7 @@ public static class ConditionExtension
 	/// <param name="criteria">待查找的条件。</param>
 	/// <param name="name">指定要查找的条件项名称。</param>
 	/// <param name="maxDepth">最大的查找深度，如果为零或负数则表示不限深度。</param>
-	/// <returns>如果查找成功则返回找到的条件项，否则返回空(null)。</returns>
+	/// <returns>如果查找成功则返回找到的条件项，否则返回空(<c>null</c>)。</returns>
 	public static Condition Find(this ICondition criteria, string name, int maxDepth = 0)
 	{
 		Condition found = null;
@@ -64,7 +64,7 @@ public static class ConditionExtension
 	/// <param name="criteria">待查找的条件。</param>
 	/// <param name="name">指定要查找的条件项名称。</param>
 	/// <param name="maxDepth">最大的查找深度，如果为零或负数则表示不限深度。</param>
-	/// <returns>返回匹配成功的所有条件项数组，否则返回空(null)或空数组。</returns>
+	/// <returns>返回匹配成功的所有条件项数组，否则返回空(<c>null</c>)或空数组。</returns>
 	public static ICollection<Condition> FindAll(this ICondition criteria, string name, int maxDepth = 0)
 	{
 		var conditions = new List<Condition>();

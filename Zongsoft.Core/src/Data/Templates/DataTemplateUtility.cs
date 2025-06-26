@@ -31,24 +31,23 @@ using System;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Data.Templates
+namespace Zongsoft.Data.Templates;
+
+internal static class DataTemplateUtility
 {
-	internal static class DataTemplateUtility
+	public static IDataTemplate GetTemplate(this IServiceProvider serviceProvider, string name, string format = null)
 	{
-		public static IDataTemplate GetTemplate(this IServiceProvider serviceProvider, string name, string format = null)
+		if(serviceProvider == null)
+			throw new ArgumentNullException(nameof(serviceProvider));
+
+		foreach(var provider in serviceProvider.ResolveAll<IDataTemplateProvider>())
 		{
-			if(serviceProvider == null)
-				throw new ArgumentNullException(nameof(serviceProvider));
+			var template = provider.GetTemplate(name, format);
 
-			foreach(var provider in serviceProvider.ResolveAll<IDataTemplateProvider>())
-			{
-				var template = provider.GetTemplate(name, format);
-
-				if(template != null)
-					return template;
-			}
-
-			return null;
+			if(template != null)
+				return template;
 		}
+
+		return null;
 	}
 }

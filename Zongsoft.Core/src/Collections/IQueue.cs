@@ -67,12 +67,12 @@ public interface IQueue : ICollection
 
 	#region 入队方法
 	/// <summary>将对象添加到队列的结尾处。</summary>
-	/// <param name="item">要入队的对象，该值可以为空(null)。</param>
+	/// <param name="item">要入队的对象，该值可以为空(<c>null</c>)。</param>
 	/// <param name="settings">指定入队的一些选项参数，具体内容请参考特定实现者的规范。</param>
 	void Enqueue(object item, object settings = null);
 
 	/// <summary>将对象添加到队列的结尾处。</summary>
-	/// <param name="item">要入队的对象，该值可以为空(null)。</param>
+	/// <param name="item">要入队的对象，该值可以为空(<c>null</c>)。</param>
 	/// <param name="settings">指定入队的一些选项参数，具体内容请参考特定实现者的规范。</param>
 	/// <param name="cancellation">监视取消请求的令牌。</param>
 	/// <returns>返回表示异步操作的任务对象。</returns>

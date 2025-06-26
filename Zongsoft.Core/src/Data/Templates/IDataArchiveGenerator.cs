@@ -32,34 +32,33 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Data.Templates
+namespace Zongsoft.Data.Templates;
+
+/// <summary>
+/// 提供数据文件生成功能的接口。
+/// </summary>
+public interface IDataArchiveGenerator
 {
-	/// <summary>
-	/// 提供数据文件生成功能的接口。
-	/// </summary>
-	public interface IDataArchiveGenerator
-	{
-		/// <summary>获取生成器名称。</summary>
-		string Name { get; }
+	/// <summary>获取生成器名称。</summary>
+	string Name { get; }
 
-		/// <summary>获取生成器格式。</summary>
-		DataArchiveFormat Format { get; }
+	/// <summary>获取生成器格式。</summary>
+	DataArchiveFormat Format { get; }
 
-		/// <summary>将指定的数据写入到输出流中。</summary>
-		/// <param name="output">待写入的数据流。</param>
-		/// <param name="model">对应的模型描述器。</param>
-		/// <param name="data">待写入的数据。</param>
-		/// <param name="cancellation">异步操作的取消标记。</param>
-		/// <returns>返回的生成任务。</returns>
-		ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, CancellationToken cancellation = default);
+	/// <summary>将指定的数据写入到输出流中。</summary>
+	/// <param name="output">待写入的数据流。</param>
+	/// <param name="model">对应的模型描述器。</param>
+	/// <param name="data">待写入的数据。</param>
+	/// <param name="cancellation">异步操作的取消标记。</param>
+	/// <returns>返回的生成任务。</returns>
+	ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, CancellationToken cancellation = default);
 
-		/// <summary>将指定的数据写入到输出流中。</summary>
-		/// <param name="output">待写入的数据流。</param>
-		/// <param name="model">对应的模型描述器。</param>
-		/// <param name="data">待写入的数据。</param>
-		/// <param name="options">生成操作选项设置。</param>
-		/// <param name="cancellation">异步操作的取消标记。</param>
-		/// <returns>返回的生成任务。</returns>
-		ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, IDataArchiveGeneratorOptions options, CancellationToken cancellation = default);
-	}
+	/// <summary>将指定的数据写入到输出流中。</summary>
+	/// <param name="output">待写入的数据流。</param>
+	/// <param name="model">对应的模型描述器。</param>
+	/// <param name="data">待写入的数据。</param>
+	/// <param name="options">生成操作选项设置。</param>
+	/// <param name="cancellation">异步操作的取消标记。</param>
+	/// <returns>返回的生成任务。</returns>
+	ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, IDataArchiveGeneratorOptions options, CancellationToken cancellation = default);
 }

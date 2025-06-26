@@ -45,7 +45,7 @@ public interface IDataEntityPropertySequence
 	/// <summary>获取或设置序号器的种子数。</summary>
 	int Seed { get; set; }
 
-	/// <summary>获取或设置序号器的递增量，默认为1。</summary>
+	/// <summary>获取或设置序号器的递增量，默认为 <c>1</c>。</summary>
 	int Interval { get; set; }
 
 	/// <summary>获取一个值，指示是否采用数据库内置序号方案。</summary>

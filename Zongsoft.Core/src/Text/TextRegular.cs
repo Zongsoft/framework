@@ -52,7 +52,7 @@ public class TextRegular : ITextRegular
 	#region 公共方法
 	public bool Match(string text)
 	{
-		if(text == null || text.Length == 0)
+		if(string.IsNullOrEmpty(text))
 			return false;
 
 		try
@@ -69,7 +69,7 @@ public class TextRegular : ITextRegular
 	{
 		result = null;
 
-		if(text == null || text.Length == 0)
+		if(string.IsNullOrEmpty(text))
 			return false;
 
 		Match match;
@@ -112,7 +112,7 @@ public class TextRegular : ITextRegular
 	public static class Web
 	{
 		/// <summary>获取电子邮箱(Email)地址的文本验证器。</summary>
-		public static readonly TextRegular Email = new TextRegular(@"^\s*(?<value>[A-Za-z0-9]([-_\.]?[A-Za-z0-9]+)*@([A-Za-z0-9]+([-_]?[A-Za-z0-9]+)*)(\.[A-Za-z0-9]+([-_]?[A-Za-z0-9]+)*)*\.[A-Za-z]+)\s*$");
+		public static readonly TextRegular Email = new(@"^\s*(?<value>[A-Za-z0-9]([-_\.]?[A-Za-z0-9]+)*@([A-Za-z0-9]+([-_]?[A-Za-z0-9]+)*)(\.[A-Za-z0-9]+([-_]?[A-Za-z0-9]+)*)*\.[A-Za-z]+)\s*$");
 	}
 
 	public static class Uri
@@ -152,18 +152,18 @@ public class TextRegular : ITextRegular
 		#endregion
 
 		#region 静态变量
-		private static readonly ConcurrentDictionary<string, TextRegular> _instances = new ConcurrentDictionary<string, TextRegular>(StringComparer.OrdinalIgnoreCase);
+		private static readonly ConcurrentDictionary<string, TextRegular> _instances = new(StringComparer.OrdinalIgnoreCase);
 		#endregion
 
 		#region 单例字段
 		/// <summary>获取任意协议的URL文本验证器。</summary>
-		public static readonly TextRegular Url = new TextRegular(URI_PATTERN.Replace("${scheme}", "[A-Za-z]+"));
-
-		/// <summary>获取Http协议的URL文本验证器。</summary>
-		public static readonly TextRegular Http = new TextRegular(URI_PATTERN.Replace("${scheme}", "http[s]?"));
+		public static readonly TextRegular Url = new(URI_PATTERN.Replace("${scheme}", "[A-Za-z]+"));
 
 		/// <summary>获取Ftp协议的URL文本验证器。</summary>
-		public static readonly TextRegular Ftp = new TextRegular(URI_PATTERN.Replace("${scheme}", "ftp[s]?"));
+		public static readonly TextRegular Ftp = new(URI_PATTERN.Replace("${scheme}", "ftp[s]?"));
+
+		/// <summary>获取Http协议的URL文本验证器。</summary>
+		public static readonly TextRegular Http = new(URI_PATTERN.Replace("${scheme}", "http[s]?"));
 		#endregion
 
 		#region 静态方法
@@ -180,16 +180,16 @@ public class TextRegular : ITextRegular
 	public static class Chinese
 	{
 		/// <summary>获取中国手机号码的文本验证器。</summary>
-		public static readonly TextRegular Cellphone = new TextRegular(@"^\s*((\+|00)86\s*[-\.]?)?\s*(?<value>1\d{2})(?<separator>(\s*)|(-?))(?<value>\d{4})(?<separator>(\s*)|(-?))(?<value>\d{4})\s*$");
+		public static readonly TextRegular Cellphone = new(@"^\s*((\+|00)86\s*[-\.]?)?\s*(?<value>1\d{2})(?<separator>(\s*)|(-?))(?<value>\d{4})(?<separator>(\s*)|(-?))(?<value>\d{4})\s*$");
 
 		/// <summary>获取中国固定电话号码的文本验证器。</summary>
-		public static readonly TextRegular Telephone = new TextRegular(@"^\s*(?<value>0\d{2,4})?(?<separator>(\s*)|(-?))(?<value>\d{4})(?<separator>(\s*)|(-?))(?<value>\d{3,4})\s*$");
+		public static readonly TextRegular Telephone = new(@"^\s*(?<value>0\d{2,4})?(?<separator>(\s*)|(-?))(?<value>\d{4})(?<separator>(\s*)|(-?))(?<value>\d{3,4})\s*$");
 
 		/// <summary>获取中国身份证号码的文本验证器。</summary>
-		public static readonly TextRegular IdentityNo = new TextRegular(@"^\s*(?<value>\d{6})?(?<separator>(\s*)|(-?))(?<value>\d{8})(?<separator>(\s*)|(-?))(?<value>(\d{4})|(\d{3}[A-Za-z]))\s*$");
+		public static readonly TextRegular IdentityNo = new(@"^\s*(?<value>\d{6})?(?<separator>(\s*)|(-?))(?<value>\d{8})(?<separator>(\s*)|(-?))(?<value>(\d{4})|(\d{3}[A-Za-z]))\s*$");
 
 		/// <summary>获取中国邮政编码的文本验证器。</summary>
-		public static readonly TextRegular PostalCode = new TextRegular(@"^\s*(?<value>\d{6})\s*$");
+		public static readonly TextRegular PostalCode = new(@"^\s*(?<value>\d{6})\s*$");
 	}
 	#endregion
 }

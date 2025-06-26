@@ -38,7 +38,7 @@ public interface IDataCommandScriptor
 {
 	/// <summary>获取指定驱动的命令脚本内容。</summary>
 	/// <param name="driver">指定要获取的脚本对应的驱动标识名。</param>
-	/// <returns>返回脚本内容文本，如果指定的驱动没有对应的脚本则返回空(null)。</returns>
+	/// <returns>返回脚本内容文本，如果指定的驱动没有对应的脚本则返回空(<c>null</c>)。</returns>
 	string GetScript(string driver);
 
 	/// <summary>设置指定驱动的命令脚本内容。</summary>

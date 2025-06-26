@@ -46,7 +46,7 @@ public interface IPacketizer<TPackage>
 	/// <summary>拆包，将字节流反序列化成通讯包对象。</summary>
 	/// <param name="data">待拆包的字节流。</param>
 	/// <param name="package">拆包成功的通讯包。</param>
-	/// <returns>如果拆包完成则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果拆包完成则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool Unpack(ref ReadOnlySequence<byte> data, out TPackage package);
 }
 
@@ -65,6 +65,6 @@ public interface IPacketizer<in TRequest, TResponse>
 	/// <summary>拆包，将字节流反序列化成响应包对象。</summary>
 	/// <param name="data">待拆包的字节流。</param>
 	/// <param name="response">拆包成功的响应包。</param>
-	/// <returns>如果拆包完成则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果拆包完成则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool Unpack(ref ReadOnlySequence<byte> data, out TResponse response);
 }

@@ -29,27 +29,26 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>
+/// 表示分页事件的参数类。
+/// </summary>
+public class PagingEventArgs : EventArgs
 {
-	/// <summary>
-	/// 表示分页事件的参数类。
-	/// </summary>
-	public class PagingEventArgs : EventArgs
+	#region 构造函数
+	public PagingEventArgs(string name, Paging paging)
 	{
-		#region 构造函数
-		public PagingEventArgs(string name, Paging paging)
-		{
-			this.Name = name;
-			this.Paging = paging ?? throw new ArgumentNullException(nameof(paging));
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>表示分页源的名称。</summary>
-		public string Name { get; }
-
-		/// <summary>表示分页的信息。</summary>
-		public Paging Paging { get; }
-		#endregion
+		this.Name = name;
+		this.Paging = paging ?? throw new ArgumentNullException(nameof(paging));
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>表示分页源的名称。</summary>
+	public string Name { get; }
+
+	/// <summary>表示分页的信息。</summary>
+	public Paging Paging { get; }
+	#endregion
 }

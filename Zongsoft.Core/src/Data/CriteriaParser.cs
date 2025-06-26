@@ -233,7 +233,7 @@ public static class CriteriaParser
 	#endregion
 
 	#region 嵌套结构
-	private ref struct CriteriaParserResult
+	private readonly ref struct CriteriaParserResult
 	{
 		#region 私有字段
 		private readonly string _message;
@@ -325,7 +325,7 @@ public static class CriteriaParser
 			_errorMessage = message;
 		}
 
-		public ReadOnlySpan<char> GetBuffer()
+		public readonly ReadOnlySpan<char> GetBuffer()
 		{
 			return _bufferIndex == 0 ? ReadOnlySpan<char>.Empty : _buffer.Slice(0, _bufferIndex);
 		}
@@ -341,11 +341,7 @@ public static class CriteriaParser
 			_state = state;
 		}
 
-		public void Accept()
-		{
-			this.Accept(this.Character);
-		}
-
+		public void Accept() => this.Accept(this.Character);
 		public void Accept(char character = '\0')
 		{
 			if(character == '\0')
@@ -382,7 +378,7 @@ public static class CriteriaParser
 			_buffer[_bufferIndex++] = character;
 		}
 
-		public bool HasFlags(Flags flags) => (_flags & flags) == flags;
+		public readonly bool HasFlags(Flags flags) => (_flags & flags) == flags;
 		public void Mask(Flags flags) => _flags |= flags;
 		public void Unmask(Flags flags) => _flags &= ~flags;
 		#endregion

@@ -284,12 +284,12 @@ public class Queue : Zongsoft.Collections.IQueue
 
 	#region 入队操作
 	/// <summary>将字符串文本添加到<seealso cref="Queue"/>的结尾处。</summary>
-	/// <param name="text">要入队的字符串文本，该值可以为空(null)。</param>
+	/// <param name="text">要入队的字符串文本，该值可以为空(<c>null</c>)。</param>
 	/// <param name="settings">不支持入队的选项参数设置，始终忽略该参数。</param>
 	public void Enqueue(string text, object settings = null) => this.Enqueue((object)text, settings);
 
 	/// <summary>将对象添加到<seealso cref="Queue"/>的结尾处。</summary>
-	/// <param name="item">要入队的对象，该值可以为空(null)。</param>
+	/// <param name="item">要入队的对象，该值可以为空(<c>null</c>)。</param>
 	/// <param name="settings">不支持入队的选项参数设置，始终忽略该参数。</param>
 	/// <remarks>
 	///		<para>容量<seealso cref="Capacity"/>是指队列可以保存的元素数。随着入队操作（即向队列中添加元素），容量通过重新分配按需自动增加。但是增加到最大限制值(<seealso cref="MaximumLimit"/>)就不再扩容，而是首先导致出队以腾出空间再入队。</para>

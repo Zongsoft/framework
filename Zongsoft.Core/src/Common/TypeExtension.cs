@@ -65,7 +65,7 @@ public static class TypeExtension
 	/// <param name="type">指定的接口或基类的类型。</param>
 	/// <param name="instanceType">指定的实例类型。</param>
 	/// <param name="genericMatch">当<paramref name="type"/>参数为泛型原型，则该委托表示找到的实现者的泛化类型，返回空表示继续后续匹配，否则结束匹配并将该委托的返回作为方法的结果。</param>
-	/// <returns>如果当满足如下条件之一则返回真(true)：
+	/// <returns>如果当满足如下条件之一则返回真(<c>True</c>)：
 	/// <list type="bullet">
 	///		<item>
 	///			<term>如果 <paramref name="type"/> 为泛型定义类型，则 <paramref name="instanceType"/> 实现的接口或基类中有从 <paramref name="type"/> 指定的泛型定义中泛化的版本。</term>

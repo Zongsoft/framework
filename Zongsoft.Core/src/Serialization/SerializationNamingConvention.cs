@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Serialization;
 

@@ -58,7 +58,7 @@ public interface ICaptcha
 	/// <param name="argument">指定的签发请求。</param>
 	/// <param name="parameters">指定的附加参数集。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回的签发结果，如果为空(null)则表示发起失败。</returns>
+	/// <returns>返回的签发结果，如果为空(<c>null</c>)则表示发起失败。</returns>
 	ValueTask<object> IssueAsync(object argument, Zongsoft.Collections.Parameters parameters, CancellationToken cancellation = default);
 
 	/// <summary>验证人机识别。</summary>

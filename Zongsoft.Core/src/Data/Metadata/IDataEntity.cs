@@ -55,7 +55,7 @@ public interface IDataEntity : IEquatable<IDataEntity>
 	/// <summary>获取或设置数据实体支持的驱动。</summary>
 	string Driver { get; set; }
 
-	/// <summary>获取或设置一个值，指示是否为不可变实体，默认为否(False)。</summary>
+	/// <summary>获取或设置一个值，指示是否为不可变实体，默认为否(<c>False</c>)。</summary>
 	/// <remarks>不可变实体只支持新增和删除操作。</remarks>
 	bool Immutable { get; set; }
 

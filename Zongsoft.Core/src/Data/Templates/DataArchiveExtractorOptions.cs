@@ -31,36 +31,35 @@ using System;
 
 using Zongsoft.Collections;
 
-namespace Zongsoft.Data.Templates
+namespace Zongsoft.Data.Templates;
+
+public class DataArchiveExtractorOptions : IDataArchiveExtractorOptions
 {
-	public class DataArchiveExtractorOptions : IDataArchiveExtractorOptions
+	#region 成员字段
+	private IDataArchivePopulator _populator;
+	#endregion
+
+	#region 构造函数
+	public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters = null) : this(model, parameters, null) { }
+	public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters, object source, params string[] members)
 	{
-		#region 成员字段
-		private IDataArchivePopulator _populator;
-		#endregion
-
-		#region 构造函数
-		public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters = null) : this(model, parameters, null) { }
-		public DataArchiveExtractorOptions(ModelDescriptor model, Parameters parameters, object source, params string[] members)
-		{
-			this.Model = model;
-			this.Source = source;
-			this.Members = members;
-			this.Parameters = parameters ?? new();
-			this.Populator = DataArchivePopulator.Default;
-		}
-		#endregion
-
-		#region 公共属性
-		public ModelDescriptor Model { get; }
-		public object Source { get; set; }
-		public string[] Members { get; set; }
-		public Parameters Parameters { get; }
-		public IDataArchivePopulator Populator
-		{
-			get => _populator;
-			set => _populator = value ?? throw new ArgumentNullException(nameof(value));
-		}
-		#endregion
+		this.Model = model;
+		this.Source = source;
+		this.Members = members;
+		this.Parameters = parameters ?? new();
+		this.Populator = DataArchivePopulator.Default;
 	}
+	#endregion
+
+	#region 公共属性
+	public ModelDescriptor Model { get; }
+	public object Source { get; set; }
+	public string[] Members { get; set; }
+	public Parameters Parameters { get; }
+	public IDataArchivePopulator Populator
+	{
+		get => _populator;
+		set => _populator = value ?? throw new ArgumentNullException(nameof(value));
+	}
+	#endregion
 }

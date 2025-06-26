@@ -61,7 +61,7 @@ public interface IDistributedCache
 
 	/// <summary>检测指定键的缓存项是否存在。</summary>
 	/// <param name="key">指定要检测的键。</param>
-	/// <returns>如果存在则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果存在则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool Exists(string key);
 
 	/// <summary>检测指定键的缓存项是否存在。</summary>
@@ -97,7 +97,7 @@ public interface IDistributedCache
 	/// <summary>设置指定键的缓存项的生存时长。</summary>
 	/// <param name="key">指定要设置的键。</param>
 	/// <param name="expiry">指定要设置的生存时长，如果为零则将该缓存项设置成永不过期。</param>
-	/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool SetExpiry(string key, TimeSpan expiry);
 
 	/// <summary>设置指定键的缓存项的生存时长。</summary>
@@ -119,13 +119,13 @@ public interface IDistributedCache
 
 	/// <summary>从缓存中删除指定键的缓存项。</summary>
 	/// <param name="key">指定要删除的键。</param>
-	/// <returns>如果指定的键存在则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果指定的键存在则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool Remove(string key);
 
 	/// <summary>从缓存中删除并获取指定键的缓存项。</summary>
 	/// <param name="key">指定要删除的键。</param>
 	/// <param name="value">如果删除成功则返回该删除项的值。</param>
-	/// <returns>如果指定的键存在则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果指定的键存在则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool Remove(string key, out object value);
 
 	/// <summary>从缓存中删除多个缓存项。</summary>
@@ -148,7 +148,7 @@ public interface IDistributedCache
 	/// <summary>修改指定键的缓存项的键名。</summary>
 	/// <param name="oldKey">指定要更名的键，即待更名的现有键。</param>
 	/// <param name="newKey">更改后的新键。</param>
-	/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool Rename(string oldKey, string newKey);
 
 	/// <summary>修改指定键的缓存项的键名。</summary>
@@ -162,7 +162,7 @@ public interface IDistributedCache
 	#region 读取方法
 	/// <summary>从缓存中获取指定键的缓存值。</summary>
 	/// <param name="key">指定要获取的键名。</param>
-	/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回空(null)。</returns>
+	/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回空(<c>null</c>)。</returns>
 	object GetValue(string key);
 
 	/// <summary>从缓存中获取指定键的缓存值。</summary>
@@ -174,14 +174,14 @@ public interface IDistributedCache
 	/// <summary>从缓存中获取指定键的缓存值。</summary>
 	/// <param name="key">指定要获取的键名。</param>
 	/// <param name="expiry">输出参数，表示指定缓存项的剩余有效期。</param>
-	/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回空(null)。</returns>
+	/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回空(<c>null</c>)。</returns>
 	object GetValue(string key, out TimeSpan? expiry);
 
 	/// <summary>从缓存中获取指定键的缓存值。</summary>
 	/// <typeparam name="T">指定的缓存项类型。</typeparam>
 	/// <param name="key">指定要获取的键名。</param>
 	/// <param name="expiry">输出参数，表示指定缓存项的剩余有效期。</param>
-	/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回空(null)。</returns>
+	/// <returns>返回指定键名对应的缓存项值，如果指定的键名不存在则返回空(<c>null</c>)。</returns>
 	T GetValue<T>(string key, out TimeSpan? expiry);
 
 	/// <summary>从缓存中获取指定键的缓存值。</summary>
@@ -214,7 +214,7 @@ public interface IDistributedCache
 	/// <typeparam name="T">指定的缓存项类型。</typeparam>
 	/// <param name="key">指定要获取的键名。</param>
 	/// <param name="value">输出参数，表示获取到的缓存项内容。</param>
-	/// <returns>如果获取成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果获取成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool TryGetValue<T>(string key, out T value);
 
 	/// <summary>尝试从缓存中获取指定键的缓存值。</summary>
@@ -222,7 +222,7 @@ public interface IDistributedCache
 	/// <param name="key">指定要获取的键名。</param>
 	/// <param name="value">输出参数，表示获取到的缓存项内容。</param>
 	/// <param name="expiry">输出参数，表示获取到的缓存项有效期。</param>
-	/// <returns>如果获取成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果获取成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool TryGetValue<T>(string key, out T value, out TimeSpan? expiry);
 
 	/// <summary>尝试从缓存中获取指定键的缓存值。</summary>
@@ -244,7 +244,7 @@ public interface IDistributedCache
 	/// <param name="key">指定要保存的键。</param>
 	/// <param name="value">指定要保存的值。</param>
 	/// <param name="requisite">指定设置的必须条件，默认为<see cref="CacheRequisite.Always"/>。</param>
-	/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool SetValue(string key, object value, CacheRequisite requisite = CacheRequisite.Always);
 
 	/// <summary>设置指定的值保存到缓存中。</summary>
@@ -260,7 +260,7 @@ public interface IDistributedCache
 	/// <param name="value">指定要保存的值。</param>
 	/// <param name="expiry">指定缓存项的生存时长，如果为零则表示永不过期。</param>
 	/// <param name="requisite">指定设置的必须条件，默认为<see cref="CacheRequisite.Always"/>。</param>
-	/// <returns>如果设置成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果设置成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool SetValue(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always);
 
 	/// <summary>设置指定的值保存到缓存中。</summary>

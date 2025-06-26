@@ -40,7 +40,7 @@ public readonly struct TokenResult
 	/// <summary>获取当前词素提取结果后需要移动读取器指针的偏移量。</summary>
 	public readonly int Offset;
 
-	/// <summary>获取当前词素提取结果对应的词素对象，如果为空(null)则表示当前位置对应的字面量不是对应提取器支持的词素。</summary>
+	/// <summary>获取当前词素提取结果对应的词素对象，如果为空(<c>null</c>)则表示当前位置对应的字面量不是对应提取器支持的词素。</summary>
 	public readonly Token Token;
 	#endregion
 

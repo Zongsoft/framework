@@ -69,7 +69,7 @@ public abstract class CommandLoaderBase : ICommandLoader
 	#region 抽象方法
 	/// <summary>执行加载命令的实际操作。</summary>
 	/// <param name="node">待加载的命令树节点。</param>
-	/// <returns>如果加载成功则返回真(true)，否则返回假(false)。</returns>
+	/// <returns>如果加载成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	protected abstract bool OnLoad(CommandNode node);
 	#endregion
 }

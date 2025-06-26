@@ -42,7 +42,7 @@ public interface IMessageQueueProvider : IEnumerable<IMessageQueue>
 
 	/// <summary>判断指定名称的消息队列是否存在。</summary>
 	/// <param name="name">指定的消息队列名称。</param>
-	/// <returns>如果指定名称的消息队列存在则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果指定名称的消息队列存在则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool Exists(string name);
 
 	/// <summary>获取或构建的默认消息队列。</summary>

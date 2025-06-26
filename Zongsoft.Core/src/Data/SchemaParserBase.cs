@@ -549,9 +549,9 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		}
 
 		public void Push() => _stack.Push(_current ?? SchemaMemberBase.Ignores);
-		public bool IsWhitespace() => char.IsWhiteSpace(Character);
-		public bool IsLetterOrUnderscore() => (Character >= 'a' && Character <= 'z') || (Character >= 'A' && Character <= 'Z') || Character == '_';
-		public bool IsLetterOrDigitOrUnderscore() => (Character >= 'a' && Character <= 'z') || (Character >= 'A' && Character <= 'Z') || (Character >= '0' && Character <= '9') || Character == '_';
+		public readonly bool IsWhitespace() => char.IsWhiteSpace(Character);
+		public readonly bool IsLetterOrUnderscore() => (Character >= 'a' && Character <= 'z') || (Character >= 'A' && Character <= 'Z') || Character == '_';
+		public readonly bool IsLetterOrDigitOrUnderscore() => (Character >= 'a' && Character <= 'z') || (Character >= 'A' && Character <= 'Z') || (Character >= '0' && Character <= '9') || Character == '_';
 
 		public void Exclude(string name = null)
 		{
@@ -646,7 +646,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			return true;
 		}
 
-		public bool HasBuffer() => _bufferIndex > 0;
+		public readonly bool HasBuffer() => _bufferIndex > 0;
 		public string GetBuffer()
 		{
 			if(_bufferIndex == 0)

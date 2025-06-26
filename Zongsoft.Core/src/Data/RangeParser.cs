@@ -227,7 +227,7 @@ internal static class RangeParser
 	#endregion
 
 	#region 嵌套结构
-	public ref struct RangeParserResult
+	public readonly ref struct RangeParserResult
 	{
 		#region 私有字段
 		private readonly string _message;
@@ -255,7 +255,7 @@ internal static class RangeParser
 		#endregion
 
 		#region 公共方法
-		public bool IsFailed(out string message)
+		public readonly bool IsFailed(out string message)
 		{
 			message = _message;
 			return message != null && message.Length > 0;
@@ -365,10 +365,7 @@ internal static class RangeParser
 				_flags |= flags;
 		}
 
-		public bool HasFlags(Flags flags)
-		{
-			return (_flags & flags) == flags;
-		}
+		public readonly bool HasFlags(Flags flags) => (_flags & flags) == flags;
 		#endregion
 	}
 	#endregion

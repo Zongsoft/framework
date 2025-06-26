@@ -243,7 +243,7 @@ public partial class CommandNode : Zongsoft.Collections.HierarchicalNode<Command
 
 	#region 私有方法
 	/// <summary>确认子节点集合是否被加载，如果未曾被加载则加载子节点集合。</summary>
-	/// <returns>如果子节点集合未曾被加载则加载当前子节点集合并返回真(true)，否则返回假(false)。</returns>
+	/// <returns>如果子节点集合未曾被加载则加载当前子节点集合并返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	/// <remarks>在<seealso cref="LoadChildren"/>方法中会调用该方法以确保子节点被加载。</remarks>
 	protected bool EnsureChildren()
 	{

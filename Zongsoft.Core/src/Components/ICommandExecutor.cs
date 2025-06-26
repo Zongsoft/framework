@@ -75,7 +75,7 @@ public interface ICommandExecutor
 
 	/// <summary>查找指定命令路径对应的命令节点。</summary>
 	/// <param name="path">指定的命令路径。</param>
-	/// <returns>返回指定命令路径对应的命令节点，如果指定的路径不存在则返回空(null)。</returns>
+	/// <returns>返回指定命令路径对应的命令节点，如果指定的路径不存在则返回空(<c>null</c>)。</returns>
 	CommandNode Find(string path);
 	#endregion
 }

@@ -45,7 +45,6 @@ public class PathInfo : IEquatable<PathInfo>
 
 	#region 构造函数
 	protected PathInfo() { }
-
 	public PathInfo(string path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
 	{
 		if(string.IsNullOrWhiteSpace(path))
@@ -82,7 +81,7 @@ public class PathInfo : IEquatable<PathInfo>
 	/// <summary>获取路径信息的名称。</summary>
 	/// <remarks>
 	///		<para>该属性不同于<see cref="Path"/>属性指向的<seealso cref="Zongsoft.IO.Path"/>路径对象中的<seealso cref="Zongsoft.IO.Path.FileName"/>属性值。</para>
-	///		<para>如果<see cref="IsFile"/>属性为真(True)，则返回<see cref="Path"/>属性指向的<seealso cref="Zongsoft.IO.Path.FileName"/>属性值；否则返回目录的完整路径。</para>
+	///		<para>如果<see cref="IsFile"/>属性为真(<c>True</c>)，则返回<see cref="Path"/>属性指向的<seealso cref="Zongsoft.IO.Path.FileName"/>属性值；否则返回目录的完整路径。</para>
 	/// </remarks>
 	public string Name
 	{
@@ -126,10 +125,7 @@ public class PathInfo : IEquatable<PathInfo>
 
 			return _path.Url;
 		}
-		set
-		{
-			_url = value;
-		}
+		set => _url = value;
 	}
 
 	public virtual bool IsFile => _path.IsFile;
@@ -148,7 +144,7 @@ public class PathInfo : IEquatable<PathInfo>
 	}
 
 	[System.Text.Json.Serialization.JsonIgnore]
-	[Zongsoft.Serialization.SerializationMember(Ignored = true)]
+	[Serialization.SerializationMember(Ignored = true)]
 	public bool HasProperties => _properties != null && _properties.Count > 0;
 
 	public IDictionary<string, object> Properties

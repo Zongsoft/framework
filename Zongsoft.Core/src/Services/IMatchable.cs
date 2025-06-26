@@ -38,7 +38,7 @@ public interface IMatchable
 {
 	/// <summary>指示当前对象是否匹配指定参数的条件约束。</summary>
 	/// <param name="argument">指定是否匹配逻辑的参数。</param>
-	/// <returns>如果当前对象符合<paramref name="argument"/>参数的匹配规则，则为真(true)；否则为假(false)。</returns>
+	/// <returns>如果当前对象符合<paramref name="argument"/>参数的匹配规则，则为真(<c>True</c>)；否则为假(<c>False</c>)。</returns>
 	bool Match(object argument);
 }
 
@@ -49,6 +49,6 @@ public interface IMatchable<in T>
 {
 	/// <summary>指示当前对象是否匹配指定参数的条件约束。</summary>
 	/// <param name="argument">指定是否匹配逻辑的参数。</param>
-	/// <returns>如果当前对象符合<paramref name="argument"/>参数的匹配规则，则为真(true)；否则为假(false)。</returns>
+	/// <returns>如果当前对象符合<paramref name="argument"/>参数的匹配规则，则为真(<c>True</c>)；否则为假(<c>False</c>)。</returns>
 	bool Match(T argument);
 }

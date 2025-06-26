@@ -79,9 +79,7 @@ public class ConditionCollection : System.Collections.ObjectModel.Collection<ICo
 	#endregion
 
 	#region 公共属性
-	/// <summary>
-	/// 获取或设置查询条件的组合方式。
-	/// </summary>
+	/// <summary>获取或设置查询条件的组合方式。</summary>
 	public ConditionCombination Combination
 	{
 		get => _combination;

@@ -251,7 +251,7 @@ public class LocalFileSystem : IFileSystem
 		/// <summary>获取指定路径中与搜索模式匹配的所有文件名称和目录信息的可枚举集合，还可以搜索子目录。</summary>
 		/// <param name="path">要搜索的目录。</param>
 		/// <param name="pattern">用于搜索匹配的所有文件或子目录的字符串。
-		///		<para>默认模式为空(null)，如果为空(null)或空字符串(“”)或“*”，即表示返回指定范围内的所有文件和目录。</para>
+		///		<para>默认模式为空(<c>null</c>)，如果为空(<c>null</c>)或空字符串(“”)或“*”，即表示返回指定范围内的所有文件和目录。</para>
 		///		<para>如果<paramref name="pattern"/>参数以反斜杠(“\”)或正斜杠(“/”)或竖线符(“|”)字符起始和结尾，则表示搜索模式为正则表达式，即进行正则匹配搜索；否则即为本地文件系统的匹配模式。</para>
 		/// </param>
 		/// <param name="recursive">指定搜索操作的范围是应仅包含当前目录还是应包含所有子目录，默认是仅包含当前目录。</param>
@@ -278,7 +278,7 @@ public class LocalFileSystem : IFileSystem
 		/// <summary>返回指定路径中与搜索模式匹配的目录信息的可枚举集合，还可以搜索子目录。</summary>
 		/// <param name="path">要搜索的目录。</param>
 		/// <param name="pattern">用于搜索匹配的所有子目录的字符串。
-		///		<para>默认模式为空(null)，如果为空(null)或空字符串(“”)或“*”，即表示返回指定范围内的所有目录。</para>
+		///		<para>默认模式为空(<c>null</c>)，如果为空(<c>null</c>)或空字符串(“”)或“*”，即表示返回指定范围内的所有目录。</para>
 		///		<para>如果<paramref name="pattern"/>参数以反斜杠(“\”)或正斜杠(“/”)或竖线符(“|”)字符起始和结尾，则表示搜索模式为正则表达式，即进行正则匹配搜索；否则即为本地文件系统的匹配模式。</para>
 		/// </param>
 		/// <param name="recursive">指定搜索操作的范围是应仅包含当前目录还是应包含所有子目录，默认是仅包含当前目录。</param>
@@ -306,7 +306,7 @@ public class LocalFileSystem : IFileSystem
 		/// <summary>返回指定路径中与搜索模式匹配的文件信息的可枚举集合，还可以搜索子目录。</summary>
 		/// <param name="path">要搜索的目录。</param>
 		/// <param name="pattern">用于搜索匹配的所有文件的字符串。
-		///		<para>默认模式为空(null)，如果为空(null)或空字符串(“”)或“*”，即表示返回指定范围内的所有文件。</para>
+		///		<para>默认模式为空(<c>null</c>)，如果为空(<c>null</c>)或空字符串(“”)或“*”，即表示返回指定范围内的所有文件。</para>
 		///		<para>如果<paramref name="pattern"/>参数以反斜杠(“\”)或正斜杠(“/”)或竖线符(“|”)字符起始和结尾，则表示搜索模式为正则表达式，即进行正则匹配搜索；否则即为本地文件系统的匹配模式。</para>
 		/// </param>
 		/// <param name="recursive">指定搜索操作的范围是应仅包含当前目录还是应包含所有子目录，默认是仅包含当前目录。</param>

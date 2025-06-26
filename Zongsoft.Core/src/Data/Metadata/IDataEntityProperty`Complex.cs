@@ -42,16 +42,14 @@ public interface IDataEntityComplexProperty : IDataEntityProperty
 	/// <summary>获取关联的外部实体。</summary>
 	IDataEntity Foreign { get; }
 
-	/// <summary>获取关联的外部层级属性，只有多级关联该属性才不为空(null)。</summary>
+	/// <summary>获取关联的外部层级属性，只有多级关联该属性才不为空(<c>null</c>)。</summary>
 	IDataEntityProperty ForeignProperty { get; }
 
 	/// <summary>获取一个值，指示关联的重复性关系。</summary>
 	DataAssociationMultiplicity Multiplicity { get; }
 
 	/// <summary>获取关联目标，通常它是目标实体名，也支持跳跃关联(即关联到一个复合属性)。</summary>
-	/// <remarks>
-	///		<para>跳跃关联是指关联目标为实体的导航属性，实体与导航属性之间以冒号(:)区隔。</para>
-	/// </remarks>
+	/// <remarks>跳跃关联是指关联目标为实体的导航属性，实体与导航属性之间以冒号(<c>:</c>)区隔。</remarks>
 	string Port { get; }
 
 	/// <summary>获取关联的连接数组。</summary>

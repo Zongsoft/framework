@@ -39,7 +39,7 @@ public interface IClaimsIdentityTransformer
 {
 	/// <summary>确认是否支持对指定的身份标识进行转换。</summary>
 	/// <param name="identity">指定要转换的 <see cref="ClaimsIdentity"/> 身份标识对象。</param>
-	/// <returns>如果能转换则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果能转换则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool CanTransform(ClaimsIdentity identity);
 
 	/// <summary>转换安全身份对象。</summary>

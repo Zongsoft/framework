@@ -40,7 +40,7 @@ public class CommandAttribute : Attribute
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取或设置是否忽略验证传入的命令选项是否合法，默认值为假(False)。</summary>
+	/// <summary>获取或设置是否忽略验证传入的命令选项是否合法，默认值为假(<c>False</c>)。</summary>
 	public bool IgnoreOptions { get; set; }
 	#endregion
 }

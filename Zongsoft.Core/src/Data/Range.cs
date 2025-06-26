@@ -204,8 +204,8 @@ public static class Range
 	#region 时间范围
 	public static class Timing
 	{
-		public static Range<DateTime> Day(DateTime date) => new Range<DateTime>(date.Date, new DateTime(date.Year, date.Month, date.Day, 23, 59, 59, 999));
-		public static Range<DateTime> Day(int year, int month, int day) => new Range<DateTime>(new DateTime(year, month, day), new DateTime(year, month, day, 23, 59, 59, 999));
+		public static Range<DateTime> Day(DateTime date) => new(date.Date, new DateTime(date.Year, date.Month, date.Day, 23, 59, 59, 999));
+		public static Range<DateTime> Day(int year, int month, int day) => new(new DateTime(year, month, day), new DateTime(year, month, day, 23, 59, 59, 999));
 		public static Range<DateTime> Today() => Day(DateTime.Today);
 		public static Range<DateTime> Tomorrow() => Day(DateTime.Today.AddDays(1));
 		public static Range<DateTime> Yesterday() => Day(DateTime.Today.AddDays(-1));
@@ -215,7 +215,7 @@ public static class Range
 			var today = DateTime.Today;
 			var days = (int)today.DayOfWeek;
 			var firstday = today.AddDays(-(days == 0 ? 6 : days - 1));
-			return new Range<DateTime>(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
+			return new(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
 		}
 
 		public static Range<DateTime> LastWeek()
@@ -223,7 +223,7 @@ public static class Range
 			var today = DateTime.Today;
 			var days = (int)today.DayOfWeek;
 			var firstday = today.AddDays(-(days == 0 ? 6 : days - 1) - 7);
-			return new Range<DateTime>(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
+			return new(firstday, firstday.AddSeconds((60 * 60 * 24 * 7) - 1));
 		}
 
 		public static Range<DateTime> ThisMonth()
@@ -241,24 +241,24 @@ public static class Range
 		public static Range<DateTime> ThisYear() => Year(DateTime.Today.Year);
 		public static Range<DateTime> LastYear() => Year(DateTime.Today.Year - 1);
 
-		public static Range<DateTime> Year(int year) => new Range<DateTime>(new DateTime(year, 1, 1), new DateTime(year, 12, 31, 23, 59, 59, 999));
-		public static Range<DateTime> Month(int year, int month) => new Range<DateTime>(new DateTime(year, month, 1), new DateTime(year, month, DateTime.DaysInMonth(year, month), 23, 59, 59, 999));
+		public static Range<DateTime> Year(int year) => new(new DateTime(year, 1, 1), new DateTime(year, 12, 31, 23, 59, 59, 999));
+		public static Range<DateTime> Month(int year, int month) => new(new DateTime(year, month, 1), new DateTime(year, month, DateTime.DaysInMonth(year, month), 23, 59, 59, 999));
 
 		public static Range<DateTime> Ago(int number, char unit)
 		{
 			var now = DateTime.Now;
 
 			if(number == 0)
-				return new Range<DateTime>(null, now);
+				return new(null, now);
 
 			return unit switch
 			{
-				'Y' or 'y' => new Range<DateTime>(null, now.AddYears(-number)),
-				'M' => new Range<DateTime>(null, now.AddMonths(-number)),
-				'D' or 'd' => new Range<DateTime>(null, now.AddDays(-number)),
-				'H' or 'h' => new Range<DateTime>(null, now.AddHours(-number)),
-				'm' => new Range<DateTime>(null, now.AddMinutes(-number)),
-				'S' or 's' => new Range<DateTime>(null, now.AddSeconds(-number)),
+				'Y' or 'y' => new(null, now.AddYears(-number)),
+				'M' => new(null, now.AddMonths(-number)),
+				'D' or 'd' => new(null, now.AddDays(-number)),
+				'H' or 'h' => new(null, now.AddHours(-number)),
+				'm' => new(null, now.AddMinutes(-number)),
+				'S' or 's' => new(null, now.AddSeconds(-number)),
 				_ => throw new ArgumentException(unit == '\0' ?
 					$"Missing the parameter unit of the ago datetime range function." :
 					$"Invalid parameter unit({unit}) of the ago datetime range function."),
@@ -272,21 +272,21 @@ public static class Range
 			return unit switch
 			{
 				'Y' or 'y' => number == 0 ?
-					new Range<DateTime>(new DateTime(now.Year, 1, 1), now) :
-					new Range<DateTime>(now.AddYears(-number), now),
+					new(new DateTime(now.Year, 1, 1), now) :
+					new(now.AddYears(-number), now),
 				'M' => number == 0 ?
-					new Range<DateTime>(new DateTime(now.Year, now.Month, 1), now) :
-					new Range<DateTime>(now.AddMonths(-number), now),
+					new(new DateTime(now.Year, now.Month, 1), now) :
+					new(now.AddMonths(-number), now),
 				'D' or 'd' => number == 0 ?
-					new Range<DateTime>(now.Date, now) :
-					new Range<DateTime>(now.AddDays(-number), now),
+					new(now.Date, now) :
+					new(now.AddDays(-number), now),
 				'H' or 'h' => number == 0 ?
-					new Range<DateTime>(new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0), now) :
-					new Range<DateTime>(now.AddHours(-number), now),
+					new(new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0), now) :
+					new(now.AddHours(-number), now),
 				'm' => number == 0 ?
-					new Range<DateTime>(new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0), now) :
-					new Range<DateTime>(now.AddMinutes(-number), now),
-				'S' or 's' => new Range<DateTime>(now.AddSeconds(-number), now),
+					new(new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0), now) :
+					new(now.AddMinutes(-number), now),
+				'S' or 's' => new(now.AddSeconds(-number), now),
 				_ => throw new ArgumentException(unit == '\0' ?
 					$"Missing the parameter unit of the ago datetime range function." :
 					$"Invalid parameter unit({unit}) of the ago datetime range function."),
@@ -301,14 +301,14 @@ public static class Range
 		internal static readonly Range<T> Value = new();
 	}
 
-	private struct HasValueProxy(object target, Range.RangeToken token)
+	private readonly struct HasValueProxy(object target, RangeToken token)
 	{
 		private readonly object _target = target;
 		private readonly RangeToken _token = token;
 		public Condition Call(string name) => _token.GetCondition(_target, name);
 	}
 
-	private class RangeToken
+	private sealed class RangeToken
 	{
 		#region 委托定义
 		public delegate void GetRangeDelegate(object target, out object minimum, out object maximum);
@@ -341,8 +341,7 @@ public static class Range
 			{
 				lock(this)
 				{
-					if(_isEmpty == null)
-						_isEmpty = CompileIsEmpty(_underlyingType);
+					_isEmpty ??= CompileIsEmpty(_underlyingType);
 				}
 			}
 
@@ -355,8 +354,7 @@ public static class Range
 			{
 				lock(this)
 				{
-					if(_getCondition == null)
-						_getCondition = CompileGetCondition(_underlyingType);
+					_getCondition ??= CompileGetCondition(_underlyingType);
 				}
 			}
 
@@ -369,8 +367,7 @@ public static class Range
 			{
 				lock(this)
 				{
-					if(_getRange == null)
-						_getRange = CompileGetRange(_underlyingType);
+					_getRange ??= CompileGetRange(_underlyingType);
 				}
 			}
 

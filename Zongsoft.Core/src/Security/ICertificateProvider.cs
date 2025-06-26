@@ -43,6 +43,6 @@ public interface ICertificateProvider<out TCertificate> where TCertificate : ICe
 	/// <summary>获取一个符合参数的数字证书。</summary>
 	/// <param name="subject">指定要获取的主体标识。</param>
 	/// <param name="format">指定要获取的证书格式。</param>
-	/// <returns>返回指定条件的证书对象，如果没有找到则返回空(null)。</returns>
+	/// <returns>返回指定条件的证书对象，如果没有找到则返回空(<c>null</c>)。</returns>
 	TCertificate GetCertificate(string subject, string format = null);
 }

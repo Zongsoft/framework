@@ -49,6 +49,6 @@ public interface ISignaturer
 	/// <param name="signature">待验证的签名。</param>
 	/// <param name="data">待验证的数据内容。</param>
 	/// <param name="algorithm">签名的算法名。</param>
-	/// <returns>如果校验成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果校验成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool Verify(ReadOnlySpan<byte> signature, ReadOnlySpan<byte> data, string algorithm = null);
 }

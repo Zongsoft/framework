@@ -43,7 +43,7 @@ public class SerializationMemberAttribute : Attribute
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取或设置序列化后的成员名称，如果为空(null)或空字符串("")则取对应的成员本身的名称。</summary>
+	/// <summary>获取或设置序列化后的成员名称，如果为空(<c>null</c>)或空字符串则取对应的成员本身的名称。</summary>
 	public string Name { get; set; }
 
 	/// <summary>获取或设置成员序列化方向。</summary>

@@ -44,7 +44,7 @@ namespace Zongsoft.Data;
 public static class Criteria
 {
 	#region 静态变量
-	private static readonly ConcurrentDictionary<Type, CriteriaDescriptor> _cache = new ConcurrentDictionary<Type, CriteriaDescriptor>();
+	private static readonly ConcurrentDictionary<Type, CriteriaDescriptor> _cache = new();
 	#endregion
 
 	#region 公共方法
@@ -165,7 +165,7 @@ public static class Criteria
 
 		//获取当前属性对应的条件名数组
 		var names = property.Attribute == null || property.Attribute.Names == null || property.Attribute.Names.Length == 0 ?
-			new[] { property.Name } :
+			[property.Name] :
 			property.Attribute.Names;
 
 		//创建转换器上下文
@@ -247,7 +247,7 @@ public static class Criteria
 		}
 
 		public ConditionOperator? Operator => this.Attribute != null ? this.Attribute.Operator : null;
-		public object GetValue(object target) => Zongsoft.Reflection.Reflector.GetValue(this.PropertyInfo, ref target);
+		public object GetValue(object target) => Reflector.GetValue(this.PropertyInfo, ref target);
 	}
 	#endregion
 }

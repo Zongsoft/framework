@@ -38,7 +38,7 @@ namespace Zongsoft.IO;
 /// </summary>
 /// <remarks>
 ///		<para>路径格式分为<seealso cref="Path.Scheme"/>和<seealso cref="Path.FullPath"/>这两个部分，中间使用冒号(:)分隔，路径各层级间使用正斜杠(/)进行分隔。如果是目录路径则以正斜杠(/)结尾。</para>
-///		<para>其中<seealso cref="Path.Scheme"/>可以省略，如果为目录路径，则<see cref="Path.FileName"/>属性为空或空字符串("")。常用路径示例如下：</para>
+///		<para>其中<seealso cref="Path.Scheme"/>可以省略，如果为目录路径，则<see cref="Path.FileName"/>属性为空或空字符串。常用路径示例如下：</para>
 ///		<list type="bullet">
 ///			<item>
 ///				<term>某个文件的<see cref="Url"/>：zfs:/data/attachments/2014/07/file-name.ext</term>
@@ -82,18 +82,14 @@ public readonly struct Path : IEquatable<Path>
 	public PathAnchor Anchor => _anchor;
 
 	/// <summary>获取路径中的文件名，有关路径中文件名的定义请参考备注说明。</summary>
-	/// <remarks>
-	///		<para>路径如果以斜杠(/)结尾，则表示该路径为「目录路径」，即<see cref="FileName"/>属性为空(null)或空字符串("")；否则文件名则为<see cref="Segments"/>路径节数组中的最后一个节的内容。</para>
-	/// </remarks>
+	/// <remarks>路径如果以斜杠(<c>/</c>)结尾，则表示该路径为「目录路径」，即<see cref="FileName"/>属性为空(<c>null</c>)或空字符串；否则文件名则为<see cref="Segments"/>路径节数组中的最后一个节的内容。</remarks>
 	public string FileName => _segments != null && _segments.Length > 0 ? _segments[^1] : null;
 
 	/// <summary>获取路径的完整路径（注：不含<see cref="Scheme"/>部分）。</summary>
 	public string FullPath => GetAnchorString(_anchor, true) + (_segments == null || _segments.Length == 0 ? null : string.Join('/', _segments));
 
 	/// <summary>获取路径的完整URL，该属性值包含<see cref="Scheme"/>和<see cref="FullPath"/>。</summary>
-	/// <remarks>
-	///		<para>如果<see cref="Scheme"/>为空(null)或空字符串("")，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</para>
-	/// </remarks>
+	/// <remarks>如果<see cref="Scheme"/>为空(<c>null</c>)或空字符串，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</remarks>
 	public string Url => string.IsNullOrEmpty(_scheme) ? this.FullPath : _scheme + ':' + this.FullPath;
 
 	/// <summary>获取一个值，指示是否含有<see cref="Segments"/>路径节。</summary>
@@ -103,31 +99,27 @@ public readonly struct Path : IEquatable<Path>
 
 	/// <summary>获取路径中各节点数组，更多内容请参考备注说明。</summary>
 	/// <remarks>
-	///		<para>如果当前路径是一个「文件路径」，即<see cref="IsFile"/>属性为真(True)，则该数组的最后一个元素内容就是<see cref="FileName"/>的值，亦文件路径的<see cref="Segments"/>不可能为空数组，因为它至少包含一个为文件名的元素。</para>
-	///		<para>如果当前路径是一个「目录路径」，即<see cref="IsDirectory"/>属性为真(True)，并且不是空目录，则该数组的最后一个元素值为空(null)或空字符串("")。所谓“空目录”的示例如下：</para>
+	///		<para>如果当前路径是一个「文件路径」，即<see cref="IsFile"/>属性为真(<c>True</c>)，则该数组的最后一个元素内容就是<see cref="FileName"/>的值，亦文件路径的<see cref="Segments"/>不可能为空数组，因为它至少包含一个为文件名的元素。</para>
+	///		<para>如果当前路径是一个「目录路径」，即<see cref="IsDirectory"/>属性为真(<c>True</c>)，并且不是空目录，则该数组的最后一个元素值为空(<c>null</c>)或空字符串。所谓“空目录”的示例如下：</para>
 	/// </remarks>
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Zongsoft.Serialization.SerializationMember(Ignored = true)]
 	public string[] Segments => _segments;
 
-	/// <summary>获取一个值，指示当前路径是否为文件路径。如果返回真(True)，即表示<see cref="FileName"/>有值。</summary>
+	/// <summary>获取一个值，指示当前路径是否为文件路径。如果返回真(<c>True</c>)，即表示<see cref="FileName"/>有值。</summary>
 	/// <remarks>
 	///		<para>路径如果不是以斜杠(/)结尾，则表示该路径为「文件路径」，文件路径中的<see cref="FileName"/>即为<see cref="Segments"/>数组中最后一个元素的值。</para>
 	/// </remarks>
 	public bool IsFile => _segments != null && _segments.Length > 0 && !string.IsNullOrEmpty(_segments[^1]);
 
 	/// <summary>获取一个值，指示当前路径是否为目录路径。有关「目录路径」定义请参考备注说明。</summary>
-	/// <remarks>
-	///		<para>路径如果以斜杠(/)结尾，则表示该路径为「目录路径」，即<see cref="FileName"/>属性为空(null)或空字符串("")；否则文件名则为<see cref="Segments"/>路径节数组中的最后一个节的内容。</para>
-	/// </remarks>
+	/// <remarks>路径如果以斜杠(<c>/</c>)结尾，则表示该路径为「目录路径」，即<see cref="FileName"/>属性为空(<c>null</c>)或空字符串；否则文件名则为<see cref="Segments"/>路径节数组中的最后一个节的内容。</remarks>
 	public bool IsDirectory => _segments == null || _segments.Length == 0 || string.IsNullOrEmpty(_segments[^1]);
 	#endregion
 
 	#region 公共方法
 	/// <summary>获取路径的完整URL，包含 <see cref="Scheme"/> 部分。</summary>
-	/// <remarks>
-	///		<para>如果<see cref="Scheme"/>为空(null)或空字符串("")，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</para>
-	/// </remarks>
+	/// <remarks>如果<see cref="Scheme"/>为空(<c>null</c>)或空字符串，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</remarks>
 	public string GetUrl() => string.IsNullOrEmpty(_scheme) ? this.FullPath : _scheme + ':' + this.FullPath;
 
 	/// <summary>获取路径的完整路径（注：不含<see cref="Scheme"/>部分）。</summary>
@@ -190,7 +182,7 @@ public readonly struct Path : IEquatable<Path>
 	/// <summary>尝试解析路径。</summary>
 	/// <param name="text">要解析的路径文本。</param>
 	/// <param name="path">解析成功的<see cref="Path"/>路径对象。</param>
-	/// <returns>如果解析成功则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果解析成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	public static bool TryParse(string text, out Path path)
 	{
 		if(!string.IsNullOrEmpty(text))
@@ -636,18 +628,14 @@ public readonly struct Path : IEquatable<Path>
 			return false;
 		}
 
-		public void Error(string message)
-		{
-			_errorMessage = message;
-		}
-
-		public bool HasError(out string message)
+		public void Error(string message) => _errorMessage = message;
+		public readonly bool HasError(out string message)
 		{
 			message = _errorMessage;
 			return message != null;
 		}
 
-		public bool HasTail(out ReadOnlySpan<char> value)
+		public readonly bool HasTail(out ReadOnlySpan<char> value)
 		{
 			if(_state == PathState.Slash)
 			{
@@ -665,7 +653,7 @@ public readonly struct Path : IEquatable<Path>
 			return false;
 		}
 
-		public bool TryGet(out ReadOnlySpan<char> value)
+		public readonly bool TryGet(out ReadOnlySpan<char> value)
 		{
 			if(_count > 0)
 			{
@@ -693,11 +681,7 @@ public readonly struct Path : IEquatable<Path>
 			_state = state;
 		}
 
-		public void Accept(PathState? state = null)
-		{
-			this.Accept(state, out _);
-		}
-
+		public void Accept(PathState? state = null) => this.Accept(state, out _);
 		public void Accept(PathState? state, out int count)
 		{
 			if(char.IsWhiteSpace(_character))

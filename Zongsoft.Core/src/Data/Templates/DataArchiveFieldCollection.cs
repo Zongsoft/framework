@@ -29,17 +29,15 @@
 
 using System;
 using System.Linq;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Data.Templates
-{
-	public class DataArchiveFieldCollection : KeyedCollection<string, DataArchiveField>
-	{
-		public DataArchiveFieldCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		protected override string GetKeyForItem(DataArchiveField field) => field.Name;
+namespace Zongsoft.Data.Templates;
 
-		public static explicit operator string[](DataArchiveFieldCollection collection) =>
-			collection == null ? Array.Empty<string>() : collection.Select(field => field.Name).ToArray();
-	}
+public class DataArchiveFieldCollection : KeyedCollection<string, DataArchiveField>
+{
+	public DataArchiveFieldCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+	protected override string GetKeyForItem(DataArchiveField field) => field.Name;
+
+	public static explicit operator string[](DataArchiveFieldCollection collection) =>
+		collection == null ? [] : [.. collection.Select(field => field.Name)];
 }

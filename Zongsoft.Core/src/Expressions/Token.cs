@@ -37,13 +37,13 @@ namespace Zongsoft.Expressions;
 public class Token : IEquatable<Token>
 {
 	#region 静态字段
-	/// <summary>表示空(null)的词素。</summary>
+	/// <summary>表示空(<c>null</c>)的词素。</summary>
 	public static readonly Token Null = new(TokenType.Constant, null);
 
-	/// <summary>表示逻辑真(true)的词素。</summary>
+	/// <summary>表示逻辑真(<c>true</c>)的词素。</summary>
 	public static readonly Token True = new(TokenType.Constant, true);
 
-	/// <summary>表示逻辑假(false)的词素。</summary>
+	/// <summary>表示逻辑假(<c>false</c>)的词素。</summary>
 	public static readonly Token False = new(TokenType.Constant, false);
 	#endregion
 

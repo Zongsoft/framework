@@ -41,23 +41,23 @@ public interface ISchema<TMember> : ISchema where TMember : SchemaMemberBase
 	SchemaMemberCollection<TMember> Members { get; }
 
 	/// <summary>查找指定路径的模式元素。</summary>
-	/// <param name="path">指定要查找的元素路径，路径是以句点或斜杠为分隔符而连接的成员名字符串。</param>
-	/// <returns>返回找到的模式元素，如果查找失败则返回空(null)。</returns>
+	/// <param name="path">指定要查找的元素路径，路径是以句点(<c>.</c>)或斜杠(<c>/</c>)为分隔符而连接的成员名字符串。</param>
+	/// <returns>返回找到的模式元素，如果查找失败则返回空(<c>null</c>)。</returns>
 	new TMember Find(string path);
 
 	/// <summary>添加一个元素到位于指定路径处的元素集中。</summary>
-	/// <param name="path">指定要添加的元素路径，路径是以句点或斜杠为分隔符而连接的成员名字符串。</param>
+	/// <param name="path">指定要添加的元素路径，路径是以句点(<c>.</c>)或斜杠(<c>/</c>)为分隔符而连接的成员名字符串。</param>
 	/// <returns>返回当前数据模式。</returns>
 	new ISchema<TMember> Include(string path);
 
 	/// <summary>从元素集中移除指定位置的元素。</summary>
-	/// <param name="path">指定要移除的元素路径，路径是以句点或斜杠为分隔符而连接的成员名字符串。</param>
+	/// <param name="path">指定要移除的元素路径，路径是以句点(<c>.</c>)或斜杠(<c>/</c>)为分隔符而连接的成员名字符串。</param>
 	/// <returns>返回当前数据模式。</returns>
 	new ISchema<TMember> Exclude(string path);
 
 	/// <summary>从元素集中移除指定位置的元素。</summary>
-	/// <param name="path">指定要移除的元素路径，路径是以句点或斜杠为分隔符而连接的成员名字符串。</param>
+	/// <param name="path">指定要移除的元素路径，路径是以句点(<c>.</c>)或斜杠(<c>/</c>)为分隔符而连接的成员名字符串。</param>
 	/// <param name="member">输出参数，如果排除成功则返回被排除的模式成员。</param>
-	/// <returns>返回一个值指示是否排除成功，如果为真(True)则表示成功，否则为失败。</returns>
+	/// <returns>返回一个值指示是否排除成功，如果为真(<c>True</c>)则表示成功，否则为失败。</returns>
 	bool Exclude(string path, out TMember member);
 }

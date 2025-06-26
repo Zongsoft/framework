@@ -40,5 +40,5 @@ public enum MessageFallbackBehavior
 	Backoff,
 
 	/// <summary>指数衰减</summary>
-	ExponentialDecay,
+	Exponential,
 }

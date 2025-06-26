@@ -127,10 +127,10 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 	/// <summary>判断命令是否可被执行。</summary>
 	/// <param name="argument">判断命令是否可被执行的参数对象。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>如果返回真(true)则表示命令可被执行，否则表示不可执行。</returns>
+	/// <returns>如果返回真(<c>True</c>)则表示命令可被执行，否则表示不可执行。</returns>
 	/// <remarks>
 	///		<para>本方法为虚拟方法，可由子类更改基类的默认实现方式。</para>
-	///		<para>如果<seealso cref="Predication"/>属性为空(null)，则返回<see cref="Enabled"/>属性值；否则返回由<see cref="Predication"/>属性指定的断言对象的断言方法的值。</para>
+	///		<para>如果<seealso cref="Predication"/>属性为空(<c>null</c>)，则返回<see cref="Enabled"/>属性值；否则返回由<see cref="Predication"/>属性指定的断言对象的断言方法的值。</para>
 	/// </remarks>
 	protected virtual ValueTask<bool> CanExecuteAsync(object argument, CancellationToken cancellation)
 	{
@@ -145,8 +145,8 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 	}
 
 	/// <summary>判断命令是否为指定要匹配的名称。</summary>
-	/// <param name="argument">要匹配的参数，如果参数为空(null)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(false)。</param>
-	/// <returns>如果匹配成功则返回真(true)，否则返回假(false)。</returns>
+	/// <param name="argument">要匹配的参数，如果参数为空(<c>null</c>)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(<c>False</c>)。</param>
+	/// <returns>如果匹配成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	protected virtual bool IsMatch(object argument) => argument != null && string.Equals(_name, argument.ToString(), StringComparison.OrdinalIgnoreCase);
 
 	/// <summary>执行命令。</summary>
@@ -252,8 +252,8 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 	ValueTask<object> ICommand.ExecuteAsync(object argument, CancellationToken cancellation) => this.ExecuteAsync(argument, cancellation);
 
 	/// <summary>判断命令是否为指定要匹配的名称。</summary>
-	/// <param name="argument">要匹配的参数，如果参数为空(null)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(false)。</param>
-	/// <returns>如果匹配成功则返回真(true)，否则返回假(false)。</returns>
+	/// <param name="argument">要匹配的参数，如果参数为空(<c>null</c>)则返回真；如果参数为字符串则返回其当前命令名进行不区分大小写匹对值；否则返回假(<c>False</c>)。</param>
+	/// <returns>如果匹配成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	/// <remarks>该显式实现为调用<see cref="IsMatch"/>虚拟方法。</remarks>
 	bool Services.IMatchable.Match(object argument) => this.IsMatch(argument);
 	#endregion

@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Data.Templates
-{
-	/// <summary>
-	/// 表示数据文件生成选项的接口。
-	/// </summary>
-	public interface IDataArchiveGeneratorOptions
-	{
-		/// <summary>获取或设置生成格式化器。</summary>
-		IDataArchiveFormatter Formatter { get; set; }
+namespace Zongsoft.Data.Templates;
 
-		/// <summary>获取或设置生成的字段数组。</summary>
-		DataArchiveField[] Fields { get; set; }
-	}
+/// <summary>
+/// 表示数据文件生成选项的接口。
+/// </summary>
+public interface IDataArchiveGeneratorOptions
+{
+	/// <summary>获取或设置生成格式化器。</summary>
+	IDataArchiveFormatter Formatter { get; set; }
+
+	/// <summary>获取或设置生成的字段数组。</summary>
+	DataArchiveField[] Fields { get; set; }
 }
