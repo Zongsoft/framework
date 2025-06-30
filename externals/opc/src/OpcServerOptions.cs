@@ -148,7 +148,7 @@ public class OpcServerOptions
 				RejectedCertificateStore = new CertificateTrustList
 				{
 					StoreType = @"Directory",
-					StorePath = @"certificates/rejected"
+					StorePath = @"certificates/blocked"
 				},
 			},
 			TransportQuotas = new TransportQuotas(),
