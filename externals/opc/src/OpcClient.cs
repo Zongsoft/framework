@@ -32,7 +32,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -67,6 +66,7 @@ public partial class OpcClient : IDisposable
 			ApplicationName = this.Name,
 			ApplicationType = ApplicationType.Client,
 			ProductUri = ApplicationContext.Current?.Name,
+
 			SecurityConfiguration = new SecurityConfiguration
 			{
 				AutoAcceptUntrustedCertificates = false,
@@ -85,15 +85,20 @@ public partial class OpcClient : IDisposable
 					StoreType = @"Directory",
 					StorePath = @"certificates",
 				},
+				TrustedPeerCertificates = new CertificateTrustList()
+				{
+					StoreType = @"Directory",
+					StorePath = @"certificates",
+				},
 				TrustedUserCertificates = new CertificateTrustList()
 				{
 					StoreType = @"Directory",
 					StorePath = @"certificates",
 				},
-				TrustedPeerCertificates = new CertificateTrustList()
+				RejectedCertificateStore = new CertificateTrustList
 				{
 					StoreType = @"Directory",
-					StorePath = @"certificates",
+					StorePath = @"certificates/blocked"
 				},
 			},
 			ClientConfiguration = new ClientConfiguration()
@@ -138,6 +143,14 @@ public partial class OpcClient : IDisposable
 	{
 		if(settings == null || string.IsNullOrEmpty(settings.Server))
 			throw new ArgumentNullException(nameof(settings));
+
+		var instance = new ApplicationInstance(_configuration)
+		{
+			ApplicationName = _configuration.ApplicationName,
+			ApplicationType = _configuration.ApplicationType,
+		};
+		//自动生成客户端证书文件
+		await instance.CheckApplicationInstanceCertificates(false, CertificateFactory.DefaultLifeTime, cancellation);
 
 		var endpointConfiguration = EndpointConfiguration.Create(_configuration);
 		var endpointDescription = CoreClientUtils.SelectEndpoint(_configuration, settings.Server, false, 1000 * 10);
