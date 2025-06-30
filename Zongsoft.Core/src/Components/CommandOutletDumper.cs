@@ -217,16 +217,16 @@ public static class CommandOutletDumper
 			switch(members[i])
 			{
 				case FieldInfo field:
-					var fieldValue = Reflector.GetValue(field, ref value);
-					DumpMember(content, options, fieldValue, field.Name, field.FieldType, indent + 1);
+					if(Reflector.TryGetValue(field, ref value, out var fieldValue))
+						DumpMember(content, options, fieldValue, field.Name, field.FieldType, indent + 1);
 
 					break;
 				case PropertyInfo property:
 					if(property.IsIndexer())
 						break;
 
-					var propertyValue = Reflector.GetValue(property, ref value);
-					DumpMember(content, options, propertyValue, property.Name, property.PropertyType, indent + 1);
+					if(Reflector.TryGetValue(property, ref value, out var propertyValue))
+						DumpMember(content, options, propertyValue, property.Name, property.PropertyType, indent + 1);
 
 					break;
 				default:

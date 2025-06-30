@@ -552,8 +552,16 @@ public static class PropertyInfoExtension
 	{
 		if(property != null && property.CanRead && property.GetMethod.GetParameters().Length == (parameters == null ? 0 : parameters.Length))
 		{
-			value = property.GetGetter().Invoke(ref target, parameters);
-			return true;
+			try
+			{
+				value = property.GetGetter().Invoke(ref target, parameters);
+				return true;
+			}
+			catch
+			{
+				value = default;
+				return false;
+			}
 		}
 
 		value = default;
@@ -564,8 +572,16 @@ public static class PropertyInfoExtension
 	{
 		if(property != null && property.CanRead && property.GetMethod.GetParameters().Length == (parameters == null ? 0 : parameters.Length))
 		{
-			value = property.GetGetter<T>().Invoke(ref target, parameters);
-			return true;
+			try
+			{
+				value = property.GetGetter<T>().Invoke(ref target, parameters);
+				return true;
+			}
+			catch
+			{
+				value = default;
+				return false;
+			}
 		}
 
 		value = default;
@@ -576,8 +592,15 @@ public static class PropertyInfoExtension
 	{
 		if(property != null && property.CanWrite && property.SetMethod.GetParameters().Length == (parameters == null ? 0 : parameters.Length) + 1)
 		{
-			property.GetSetter().Invoke(ref target, value, parameters);
-			return true;
+			try
+			{
+				property.GetSetter().Invoke(ref target, value, parameters);
+				return true;
+			}
+			catch
+			{
+				return false;
+			}
 		}
 
 		return false;
@@ -587,8 +610,15 @@ public static class PropertyInfoExtension
 	{
 		if(property != null && property.CanWrite && property.SetMethod.GetParameters().Length == (parameters == null ? 0 : parameters.Length) + 1)
 		{
-			property.GetSetter<T>().Invoke(ref target, value, parameters);
-			return true;
+			try
+			{
+				property.GetSetter<T>().Invoke(ref target, value, parameters);
+				return true;
+			}
+			catch
+			{
+				return false;
+			}
 		}
 
 		return false;
