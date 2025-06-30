@@ -133,12 +133,17 @@ public class OpcServerOptions
 				TrustedIssuerCertificates = new CertificateTrustList
 				{
 					StoreType = @"Directory",
-					StorePath = @"certificates/authorities"
+					StorePath = @"certificates/trusted"
 				},
 				TrustedPeerCertificates = new CertificateTrustList
 				{
 					StoreType = @"Directory",
-					StorePath = @"certificates/applications"
+					StorePath = @"certificates/trusted"
+				},
+				TrustedUserCertificates = new CertificateTrustList
+				{
+					StoreType = @"Directory",
+					StorePath = @"certificates/trusted"
 				},
 				RejectedCertificateStore = new CertificateTrustList
 				{

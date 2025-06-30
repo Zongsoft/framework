@@ -78,7 +78,7 @@ public partial class OpcClient : IDisposable
 				{
 					StoreType = @"Directory",
 					StorePath = @"certificates",
-					SubjectName = $"CN={name}, DC={System.Net.Dns.GetHostName()}",
+					SubjectName = $"CN={this.Name}, DC={Environment.MachineName}",
 				},
 				TrustedIssuerCertificates = new CertificateTrustList()
 				{
