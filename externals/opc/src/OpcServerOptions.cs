@@ -99,6 +99,11 @@ public class OpcServerOptions
 					new ServerSecurityPolicy()
 					{
 						SecurityMode = MessageSecurityMode.Sign,
+						SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256",
+					},
+					new ServerSecurityPolicy()
+					{
+						SecurityMode = MessageSecurityMode.Sign,
 						SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256",
 					},
 					new ServerSecurityPolicy()
@@ -152,8 +157,6 @@ public class OpcServerOptions
 				},
 			},
 			TransportQuotas = new TransportQuotas(),
-			//TransportConfigurations = [],
-			//TraceConfiguration = new TraceConfiguration(),
 		};
 
 		if(this.Anonymous) //如果启用匿名登录则添加匿名策略
