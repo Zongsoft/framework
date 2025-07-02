@@ -107,7 +107,7 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 			}
 		}
 
-		return base.GetTitle();
+		return base.GetDescription();
 	}
 
 	public bool Equals(ControllerServiceDescriptor other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
