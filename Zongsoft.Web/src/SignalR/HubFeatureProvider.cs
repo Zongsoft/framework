@@ -35,37 +35,36 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 
-namespace Zongsoft.Web.SignalR
+namespace Zongsoft.Web.SignalR;
+
+public class HubFeatureProvider : IApplicationFeatureProvider<HubFeature>
 {
-	public class HubFeatureProvider : IApplicationFeatureProvider<HubFeature>
+	public void PopulateFeature(IEnumerable<ApplicationPart> parts, HubFeature feature)
 	{
-		public void PopulateFeature(IEnumerable<ApplicationPart> parts, HubFeature feature)
+		foreach(var part in parts.OfType<IApplicationPartTypeProvider>())
 		{
-			foreach(var part in parts.OfType<IApplicationPartTypeProvider>())
+			foreach(var type in part.Types)
 			{
-				foreach(var type in part.Types)
-				{
-					if(this.IsHub(type) && !feature.Contains(type))
-						feature.Hubs.Add(new(type));
-				}
+				if(this.IsHub(type) && !feature.Contains(type))
+					feature.Hubs.Add(new(type));
 			}
 		}
+	}
 
-		protected virtual bool IsHub(TypeInfo type)
-		{
-			if(!type.IsClass)
-				return false;
+	protected virtual bool IsHub(TypeInfo type)
+	{
+		if(!type.IsClass)
+			return false;
 
-			if(type.IsAbstract)
-				return false;
+		if(type.IsAbstract)
+			return false;
 
-			if(!type.IsPublic)
-				return false;
+		if(!type.IsPublic)
+			return false;
 
-			if(type.ContainsGenericParameters)
-				return false;
+		if(type.ContainsGenericParameters)
+			return false;
 
-			return type.IsAssignableTo(typeof(Hub));
-		}
+		return type.IsAssignableTo(typeof(Hub));
 	}
 }

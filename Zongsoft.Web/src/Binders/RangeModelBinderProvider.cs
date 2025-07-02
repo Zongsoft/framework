@@ -31,19 +31,18 @@ using System;
 
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Zongsoft.Web.Binders
+namespace Zongsoft.Web.Binders;
+
+[Zongsoft.Services.Service]
+public class RangeModelBinderProvider : IModelBinderProvider
 {
-	[Zongsoft.Services.Service]
-	public class RangeModelBinderProvider : IModelBinderProvider
+	public IModelBinder GetBinder(ModelBinderProviderContext context)
 	{
-		public IModelBinder GetBinder(ModelBinderProviderContext context)
-		{
-			var modelType = context.Metadata.UnderlyingOrModelType;
+		var modelType = context.Metadata.UnderlyingOrModelType;
 
-			if(modelType.IsGenericType && modelType.GenericTypeArguments.Length == 1 && modelType.GetGenericTypeDefinition() == typeof(Zongsoft.Data.Range<>))
-				return (IModelBinder)Activator.CreateInstance(typeof(RangeModelBinder<>).MakeGenericType(modelType.GenericTypeArguments[0]));
+		if(modelType.IsGenericType && modelType.GenericTypeArguments.Length == 1 && modelType.GetGenericTypeDefinition() == typeof(Zongsoft.Data.Range<>))
+			return (IModelBinder)Activator.CreateInstance(typeof(RangeModelBinder<>).MakeGenericType(modelType.GenericTypeArguments[0]));
 
-			return null;
-		}
+		return null;
 	}
 }

@@ -37,27 +37,26 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Zongsoft.Data;
 using Zongsoft.Common;
 
-namespace Zongsoft.Web.Binders
+namespace Zongsoft.Web.Binders;
+
+public class SortingBinder : IModelBinder
 {
-	public class SortingBinder : IModelBinder
+	public Task BindModelAsync(ModelBindingContext bindingContext)
 	{
-		public Task BindModelAsync(ModelBindingContext bindingContext)
-		{
-			var modelName = bindingContext.ModelName;
-			var valueProviderResult = bindingContext.ValueProvider.GetValue(modelName);
+		var modelName = bindingContext.ModelName;
+		var valueProviderResult = bindingContext.ValueProvider.GetValue(modelName);
 
-			if(valueProviderResult == ValueProviderResult.None)
-				return Task.CompletedTask;
-
-			bindingContext.ModelState.SetModelValue(modelName, valueProviderResult);
-			var value = valueProviderResult.FirstValue;
-
-			if(string.IsNullOrEmpty(value))
-				return Task.CompletedTask;
-
-			var sortings = value.Slice<Sorting>(',', Sorting.TryParse).ToArray();
-			bindingContext.Result = ModelBindingResult.Success(sortings);
+		if(valueProviderResult == ValueProviderResult.None)
 			return Task.CompletedTask;
-		}
+
+		bindingContext.ModelState.SetModelValue(modelName, valueProviderResult);
+		var value = valueProviderResult.FirstValue;
+
+		if(string.IsNullOrEmpty(value))
+			return Task.CompletedTask;
+
+		var sortings = value.Slice<Sorting>(',', Sorting.TryParse).ToArray();
+		bindingContext.Result = ModelBindingResult.Success(sortings);
+		return Task.CompletedTask;
 	}
 }

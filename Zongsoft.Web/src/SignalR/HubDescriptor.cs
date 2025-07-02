@@ -32,49 +32,48 @@ using System.Reflection;
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace Zongsoft.Web.SignalR
+namespace Zongsoft.Web.SignalR;
+
+public sealed class HubDescriptor : IEquatable<HubDescriptor>, IEquatable<TypeInfo>
 {
-	public sealed class HubDescriptor : IEquatable<HubDescriptor>, IEquatable<TypeInfo>
+	#region 常量定义
+	private const string HubSuffix = @"Hub";
+	#endregion
+
+	#region 构造函数
+	public HubDescriptor(TypeInfo type, string pattern = null)
 	{
-		#region 常量定义
-		private const string HubSuffix = @"Hub";
-		#endregion
+		this.Type = type ?? throw new ArgumentNullException(nameof(type));
 
-		#region 构造函数
-		public HubDescriptor(TypeInfo type, string pattern = null)
+		if(string.IsNullOrEmpty(pattern))
 		{
-			this.Type = type ?? throw new ArgumentNullException(nameof(type));
+			var attribute = type.GetCustomAttribute<RouteAttribute>(true);
 
-			if(string.IsNullOrEmpty(pattern))
+			if(attribute != null)
+				pattern = attribute.Template;
+			else
 			{
-				var attribute = type.GetCustomAttribute<RouteAttribute>(true);
-
-				if(attribute != null)
-					pattern = attribute.Template;
+				if(type.Name.Length > HubSuffix.Length && type.Name.EndsWith(HubSuffix))
+					pattern = type.Name[..^HubSuffix.Length];
 				else
-				{
-					if(type.Name.Length > HubSuffix.Length && type.Name.EndsWith(HubSuffix))
-						pattern = type.Name[..^HubSuffix.Length];
-					else
-						pattern = type.Name;
-				}
+					pattern = type.Name;
 			}
-
-			this.Pattern = pattern;
 		}
-		#endregion
 
-		#region 公共属性
-		public TypeInfo Type { get; }
-		public string Pattern { get; }
-		#endregion
-
-		#region 重写方法
-		public bool Equals(TypeInfo type) => type is not null && type == this.Type;
-		public bool Equals(HubDescriptor other) => other is not null && other.Type == this.Type;
-		public override bool Equals(object obj) => obj is HubDescriptor other && this.Equals(other);
-		public override int GetHashCode() => this.Type.GetHashCode();
-		public override string ToString() => string.IsNullOrEmpty(this.Pattern) ? this.Type.FullName : $"[{this.Pattern}]{this.Type.FullName}";
-		#endregion
+		this.Pattern = pattern;
 	}
+	#endregion
+
+	#region 公共属性
+	public TypeInfo Type { get; }
+	public string Pattern { get; }
+	#endregion
+
+	#region 重写方法
+	public bool Equals(TypeInfo type) => type is not null && type == this.Type;
+	public bool Equals(HubDescriptor other) => other is not null && other.Type == this.Type;
+	public override bool Equals(object obj) => obj is HubDescriptor other && this.Equals(other);
+	public override int GetHashCode() => this.Type.GetHashCode();
+	public override string ToString() => string.IsNullOrEmpty(this.Pattern) ? this.Type.FullName : $"[{this.Pattern}]{this.Type.FullName}";
+	#endregion
 }

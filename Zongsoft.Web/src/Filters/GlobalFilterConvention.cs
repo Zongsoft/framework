@@ -34,20 +34,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-namespace Zongsoft.Web.Filters
-{
-	public class GlobalFilterConvention : IApplicationModelConvention
-	{
-		public void Apply(ApplicationModel application)
-		{
-			var provider = Zongsoft.Services.ApplicationContext.Current?.Services;
-			var filters = (IEnumerable<IFilterMetadata>)provider.GetService(typeof(IEnumerable<IFilterMetadata>));
+namespace Zongsoft.Web.Filters;
 
-			if(filters != null)
-			{
-				foreach(var filter in filters)
-					application.Filters.Add(filter);
-			}
+public class GlobalFilterConvention : IApplicationModelConvention
+{
+	public void Apply(ApplicationModel application)
+	{
+		var provider = Zongsoft.Services.ApplicationContext.Current?.Services;
+		var filters = (IEnumerable<IFilterMetadata>)provider.GetService(typeof(IEnumerable<IFilterMetadata>));
+
+		if(filters != null)
+		{
+			foreach(var filter in filters)
+				application.Filters.Add(filter);
 		}
 	}
 }

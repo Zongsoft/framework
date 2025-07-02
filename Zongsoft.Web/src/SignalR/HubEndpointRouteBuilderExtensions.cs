@@ -36,69 +36,68 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 
-namespace Zongsoft.Web.SignalR
+namespace Zongsoft.Web.SignalR;
+
+public static class HubEndpointRouteBuilderExtensions
 {
-	public static class HubEndpointRouteBuilderExtensions
+	#region 静态字段
+	private static readonly MethodInfo MapMethod = typeof(Microsoft.AspNetCore.Builder.HubEndpointRouteBuilderExtensions).GetMethod
+	(
+		nameof(Microsoft.AspNetCore.Builder.HubEndpointRouteBuilderExtensions.MapHub),
+		BindingFlags.Public | BindingFlags.Static,
+		[typeof(IEndpointRouteBuilder), typeof(string), typeof(Action<HttpConnectionDispatcherOptions>)]
+	);
+	#endregion
+
+	#region 公共方法
+	public static void MapHubs(this IEndpointRouteBuilder endpoints)
 	{
-		#region 静态字段
-		private static readonly MethodInfo MapMethod = typeof(Microsoft.AspNetCore.Builder.HubEndpointRouteBuilderExtensions).GetMethod
-		(
-			nameof(Microsoft.AspNetCore.Builder.HubEndpointRouteBuilderExtensions.MapHub),
-			BindingFlags.Public | BindingFlags.Static,
-			[typeof(IEndpointRouteBuilder), typeof(string), typeof(Action<HttpConnectionDispatcherOptions>)]
-		);
-		#endregion
+		var manager = (ApplicationPartManager)endpoints.ServiceProvider.GetService(typeof(ApplicationPartManager));
+		HubFeature feature = new HubFeature();
+		manager.PopulateFeature(feature);
 
-		#region 公共方法
-		public static void MapHubs(this IEndpointRouteBuilder endpoints)
+		foreach(var hub in feature.Hubs)
 		{
-			var manager = (ApplicationPartManager)endpoints.ServiceProvider.GetService(typeof(ApplicationPartManager));
-			HubFeature feature = new HubFeature();
-			manager.PopulateFeature(feature);
-
-			foreach(var hub in feature.Hubs)
-			{
-				MapHub(endpoints, hub.Type, hub.Pattern);
-			}
+			MapHub(endpoints, hub.Type, hub.Pattern);
 		}
+	}
 
-		public static HubEndpointConventionBuilder MapHub(this IEndpointRouteBuilder endpoints, TypeInfo type, string pattern)
+	public static HubEndpointConventionBuilder MapHub(this IEndpointRouteBuilder endpoints, TypeInfo type, string pattern)
+	{
+		var map = MapMethod.MakeGenericMethod(type);
+
+		return (HubEndpointConventionBuilder)map.Invoke(null, [endpoints, pattern, (HttpConnectionDispatcherOptions options) =>
 		{
-			var map = MapMethod.MakeGenericMethod(type);
+			//尝试查找 Hub 类中名为 Options 的静态属性
+			var property = type.GetProperty("Options", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
 
-			return (HubEndpointConventionBuilder)map.Invoke(null, [endpoints, pattern, (HttpConnectionDispatcherOptions options) =>
-			{
-				//尝试查找 Hub 类中名为 Options 的静态属性
-				var property = type.GetProperty("Options", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+			if(property != null && property.CanRead && property.PropertyType == typeof(HttpConnectionDispatcherOptions))
+				Configure(options, (HttpConnectionDispatcherOptions)property.GetValue(null));
+		}]);
 
-				if(property != null && property.CanRead && property.PropertyType == typeof(HttpConnectionDispatcherOptions))
-					Configure(options, (HttpConnectionDispatcherOptions)property.GetValue(null));
-			}]);
+		static void Configure(HttpConnectionDispatcherOptions options, HttpConnectionDispatcherOptions value)
+		{
+			if(options == null || value == null)
+				return;
 
-			static void Configure(HttpConnectionDispatcherOptions options, HttpConnectionDispatcherOptions value)
-			{
-				if(options == null || value == null)
-					return;
-
-				options.MinimumProtocolVersion = value.MinimumProtocolVersion;
-				options.ApplicationMaxBufferSize = value.ApplicationMaxBufferSize;
-				options.TransportMaxBufferSize = value.TransportMaxBufferSize;
-				options.TransportSendTimeout = value.TransportSendTimeout;
-				options.TransportSendTimeout = value.TransportSendTimeout;
-				options.Transports = value.Transports;
-				options.CloseOnAuthenticationExpiration = value.CloseOnAuthenticationExpiration;
-				options.LongPolling.PollTimeout = value.LongPolling.PollTimeout;
-				options.WebSockets.CloseTimeout = value.WebSockets.CloseTimeout;
-				options.WebSockets.SubProtocolSelector = value.WebSockets.SubProtocolSelector;
+			options.MinimumProtocolVersion = value.MinimumProtocolVersion;
+			options.ApplicationMaxBufferSize = value.ApplicationMaxBufferSize;
+			options.TransportMaxBufferSize = value.TransportMaxBufferSize;
+			options.TransportSendTimeout = value.TransportSendTimeout;
+			options.TransportSendTimeout = value.TransportSendTimeout;
+			options.Transports = value.Transports;
+			options.CloseOnAuthenticationExpiration = value.CloseOnAuthenticationExpiration;
+			options.LongPolling.PollTimeout = value.LongPolling.PollTimeout;
+			options.WebSockets.CloseTimeout = value.WebSockets.CloseTimeout;
+			options.WebSockets.SubProtocolSelector = value.WebSockets.SubProtocolSelector;
 
 #if NET8_0_OR_GREATER
-					options.AllowStatefulReconnects = value.AllowStatefulReconnects;
+				options.AllowStatefulReconnects = value.AllowStatefulReconnects;
 #endif
 
-				foreach(var data in value.AuthorizationData)
-					options.AuthorizationData.Add(data);
-			}
+			foreach(var data in value.AuthorizationData)
+				options.AuthorizationData.Add(data);
 		}
-		#endregion
 	}
+	#endregion
 }

@@ -31,20 +31,19 @@ using System;
 
 using Microsoft.AspNetCore.Authentication;
 
-namespace Zongsoft.Web.Security
-{
-	public static class CredentialAuthenticationExtension
-	{
-		#region 常量定义
-		private const string SCHEME = "Credential";
-		#endregion
+namespace Zongsoft.Web.Security;
 
-		#region 公共方法
-		public static AuthenticationBuilder AddCredentials(this AuthenticationBuilder builder, Action<CredentialAuthenticationOptions> configure = null)
-		{
-			builder.AddScheme<CredentialAuthenticationOptions, CredentialAuthenticationHandler>(SCHEME, "Zongsoft.Credentials", options => configure?.Invoke(options));
-			return builder;
-		}
-		#endregion
+public static class CredentialAuthenticationExtension
+{
+	#region 常量定义
+	private const string SCHEME = "Credential";
+	#endregion
+
+	#region 公共方法
+	public static AuthenticationBuilder AddCredentials(this AuthenticationBuilder builder, Action<CredentialAuthenticationOptions> configure = null)
+	{
+		builder.AddScheme<CredentialAuthenticationOptions, CredentialAuthenticationHandler>(SCHEME, "Zongsoft.Credentials", options => configure?.Invoke(options));
+		return builder;
 	}
+	#endregion
 }

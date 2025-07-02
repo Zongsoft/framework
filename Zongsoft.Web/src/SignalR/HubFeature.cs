@@ -32,20 +32,19 @@ using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace Zongsoft.Web.SignalR
+namespace Zongsoft.Web.SignalR;
+
+public class HubFeature
 {
-	public class HubFeature
-	{
-		#region 成员字段
-		private readonly HashSet<HubDescriptor> _descriptors = new();
-		#endregion
+	#region 成员字段
+	private readonly HashSet<HubDescriptor> _descriptors = new();
+	#endregion
 
-		#region 公共属性
-		public ICollection<HubDescriptor> Hubs => _descriptors;
-		#endregion
+	#region 公共属性
+	public ICollection<HubDescriptor> Hubs => _descriptors;
+	#endregion
 
-		#region 公共方法
-		public bool Contains(TypeInfo type) => type != null && _descriptors.Any(descriptor => descriptor.Type == type);
-		#endregion
-	}
+	#region 公共方法
+	public bool Contains(TypeInfo type) => type != null && _descriptors.Any(descriptor => descriptor.Type == type);
+	#endregion
 }

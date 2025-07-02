@@ -28,16 +28,14 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Authentication;
 
-namespace Zongsoft.Web.Security
+namespace Zongsoft.Web.Security;
+
+public class CredentialAuthenticationOptions : AuthenticationSchemeOptions
 {
-	public class CredentialAuthenticationOptions : AuthenticationSchemeOptions
-	{
-		#region 公共属性
-		public Zongsoft.Security.ICredentialProvider Authority => Zongsoft.Security.Privileges.Authentication.Authority;
-		#endregion
-	}
+	#region 公共属性
+	public Zongsoft.Security.ICredentialProvider Authority => Zongsoft.Security.Privileges.Authentication.Authority;
+	#endregion
 }
