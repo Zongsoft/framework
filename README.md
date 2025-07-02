@@ -7,7 +7,7 @@
 -----
 
 This is a collection of open source projects for the _**Z**ongsoft_ development framework, supporting _**.NET**_ `6`, `7`, `8`, `9`, and other versions.
-The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, welcomes [contributions](CONTRIBUTING.md) of many forms.
+The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, help us [build it](CONTRIBUTING.md)!
 
 ## Projects
 
