@@ -2,9 +2,12 @@
 
 [English](README.md) | [简体中文](README-zh.md)
 
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+
 -----
 
 This is a collection of open source projects for the _**Z**ongsoft_ development framework, supporting _**.NET**_ `6`, `7`, `8`, `9`, and other versions.
+The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, welcomes [contributions](CONTRIBUTING.md) of many forms.
 
 ## Projects
 

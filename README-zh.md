@@ -2,9 +2,12 @@
 
 [English](README.md) | [简体中文](README-zh.md)
 
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT-zh.md)
+
 -----
 
 这是 _**Z**ongsoft_ 开发框架的开源项目集，支持 _**.NET**_ `6`,`7`,`8`,`9` 等版本。
+可插拔应用程序生态系统是 _**Z**ongsoft_ 的特点，欢迎多种形式的[贡献](CONTRIBUTING-zh.md)。
 
 ## 项目列表
 
