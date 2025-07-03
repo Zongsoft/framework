@@ -41,6 +41,8 @@ public interface ILog
 	string Url { get; set; }
 	/// <summary>获取或设置服务方法。</summary>
 	string Method { get; set; }
+	/// <summary>获取或设置跟踪信息。</summary>
+	string Tracer { get; set; }
 	/// <summary>获取或设置模块名称。</summary>
 	string Module { get; set; }
 	/// <summary>获取或设置服务标识。</summary>
@@ -56,7 +58,7 @@ public interface ILog
 	/// <summary>获取或设置描述说明。</summary>
 	string Description { get; set; }
 	/// <summary>获取或设置用户主体。</summary>
-	System.Security.Principal.IPrincipal User { get; set; }
+	System.Security.Claims.ClaimsPrincipal User { get; set; }
 	/// <summary>获取扩展属性集。</summary>
 	IDictionary<string, object> Properties { get; }
 }

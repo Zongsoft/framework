@@ -36,8 +36,7 @@ using System.Collections.Concurrent;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Http.Extensions;
 
 using Zongsoft.Services;
 using Zongsoft.Services.Logging;
@@ -51,11 +50,11 @@ public abstract class LogFilterBase<TLog> : IAsyncActionFilter, IOrderedFilter w
 	#endregion
 
 	#region 公共属性
+	public virtual int Order => 0xFFFF;
 	public ILogPersistor<TLog> Persistor { get; protected set; }
 	#endregion
 
 	#region 公共方法
-	public virtual int Order => 0xFFFF;
 	public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 	{
 		//如果处于调试器模式，则不用日志处理
@@ -78,9 +77,25 @@ public abstract class LogFilterBase<TLog> : IAsyncActionFilter, IOrderedFilter w
 	{
 		var log = this.OnCreate(context);
 
-		if(log != null)
-			await this.OnPopulateAsync(context, log);
+		if(log == null)
+			return log;
 
+		log.Tracer = context.HttpContext.TraceIdentifier;
+		log.Method = context.HttpContext.Request.Method;
+		log.Url = context.HttpContext.Request.GetEncodedUrl();
+		log.User = context.HttpContext.User;
+		log.Scenario = context.HttpContext.User is Zongsoft.Security.CredentialPrincipal principal ? principal.Scenario : null;
+		log.Timestamp = DateTime.UtcNow;
+
+		var descriptor = GetDescriptor(context);
+		if(descriptor != null)
+		{
+			log.Module = descriptor.Module;
+			log.Target = descriptor.QualifiedName;
+			log.Action = context.RouteData.Values.TryGetValue("action", out var value) ? value?.ToString() : context.ActionDescriptor.DisplayName;
+		}
+
+		await this.OnPopulateAsync(context, log);
 		return log;
 	}
 	#endregion
@@ -99,4 +114,9 @@ public abstract class LogFilterBase<TLog> : IAsyncActionFilter, IOrderedFilter w
 			await populator.PopulateAsync(context, log);
 	}
 	#endregion
+
+	private static ControllerServiceDescriptor GetDescriptor(ActionExecutingContext context)
+	{
+		return null;
+	}
 }
