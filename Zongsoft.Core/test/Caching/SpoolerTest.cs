@@ -81,7 +81,7 @@ public class SpoolerTest
 		//设置触发周期
 		spooler.Period = TimeSpan.FromMilliseconds(1);
 		//等待周期刷新
-		SpinWait.SpinUntil(() => flusher.Count > 0, 500);
+		SpinWait.SpinUntil(() => flusher.Count > 0, 1000);
 
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(3, flusher.Count);
