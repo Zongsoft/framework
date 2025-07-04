@@ -471,7 +471,7 @@ internal abstract class ModelEmitterBase
 			var getMethod = nested.DefineMethod("Get" + properties[i].Name,
 				MethodAttributes.Assembly | MethodAttributes.Static, CallingConventions.Standard,
 				typeof(object),
-				new Type[] { property.DeclaringType });
+				[property.DeclaringType]);
 
 			getMethod.DefineParameter(1, ParameterAttributes.None, "target");
 
