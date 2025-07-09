@@ -42,8 +42,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	#endregion
 
 	#region 静态字段
-	[ThreadStatic]
-	private static Transaction _current;
+	private static AsyncLocal<Transaction> _current;
 	#endregion
 
 	#region 私有变量
@@ -76,14 +75,14 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 			case TransactionBehavior.Required:
 				//如果当前环境事务为空，则将当前事务置为环境事务
 				if(_current == null)
-					_current = this;
+					_current = new() { Value = this };
 				else
-					_parent = _current;
+					_parent = _current.Value;
 
 				break;
 			case TransactionBehavior.RequiresNew:
 				//始终将当前事务置为环境事务
-				_current = this;
+				_current = new() { Value = this };
 
 				break;
 			case TransactionBehavior.Suppress:
@@ -100,7 +99,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 
 	#region 静态属性
 	/// <summary>获取当前环境事务。</summary>
-	public static Transaction Current => _current;
+	public static Transaction Current => _current.Value;
 	#endregion
 
 	#region 公共属性
@@ -127,10 +126,10 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	#endregion
 
 	#region 静态方法
-	public static Transaction ReadUncommitted(TransactionBehavior behavior = TransactionBehavior.Followed) => new Transaction(behavior, IsolationLevel.ReadUncommitted);
-	public static Transaction ReadCommitted(TransactionBehavior behavior = TransactionBehavior.Followed) => new Transaction(behavior, IsolationLevel.ReadCommitted);
-	public static Transaction RepeatableRead(TransactionBehavior behavior = TransactionBehavior.Followed) => new Transaction(behavior, IsolationLevel.RepeatableRead);
-	public static Transaction Serializable(TransactionBehavior behavior = TransactionBehavior.Followed) => new Transaction(behavior, IsolationLevel.Serializable);
+	public static Transaction ReadUncommitted(TransactionBehavior behavior = TransactionBehavior.Followed) => new(behavior, IsolationLevel.ReadUncommitted);
+	public static Transaction ReadCommitted(TransactionBehavior behavior = TransactionBehavior.Followed) => new(behavior, IsolationLevel.ReadCommitted);
+	public static Transaction RepeatableRead(TransactionBehavior behavior = TransactionBehavior.Followed) => new(behavior, IsolationLevel.RepeatableRead);
+	public static Transaction Serializable(TransactionBehavior behavior = TransactionBehavior.Followed) => new(behavior, IsolationLevel.Serializable);
 	#endregion
 
 	#region 公共方法
@@ -247,7 +246,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 
 	#region 重写方法
 	bool IEquatable<Transaction>.Equals(Transaction other) => other is not null && object.ReferenceEquals(this, other);
-	public override bool Equals(object obj) => obj is Transaction other && this.Equals(other);
+	public override bool Equals(object obj) => this.Equals(obj as Transaction);
 	public override int GetHashCode() => _information.TransactionId.GetHashCode();
 	#endregion
 }

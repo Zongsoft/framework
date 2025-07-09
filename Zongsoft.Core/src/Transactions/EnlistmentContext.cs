@@ -42,7 +42,7 @@ public class EnlistmentContext
 	internal EnlistmentContext(Transaction transaction, EnlistmentPhase phase)
 	{
 		if(transaction == null)
-			throw new ArgumentNullException("transaction");
+			throw new ArgumentNullException(nameof(transaction));
 
 		_transaction = transaction;
 		_phase = phase;
