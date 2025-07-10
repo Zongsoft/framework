@@ -53,7 +53,7 @@ public static class CommandOutletDumper
 	public static CommandOutletContent Dump(this ICommandOutlet output, object target, CommandOutletDumperOptions options, int indent = 0)
 	{
 		var content = Dump(target, options, indent);
-		output.Write(content);
+		output?.Write(content);
 		return content;
 	}
 
