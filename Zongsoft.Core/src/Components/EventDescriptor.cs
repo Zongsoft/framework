@@ -31,7 +31,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Components;
 
@@ -56,7 +58,7 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 		this.Name = name;
 		this.Title = title;
 		this.Description = description;
-		this.Handlers = new List<IHandler>();
+		this.Handlers = new HandlerCollection();
 	}
 	#endregion
 
@@ -124,6 +126,24 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 
 	private string GetDescription() => _registry == null ? null :
 		Resources.ResourceUtility.GetResourceString(_registry.GetType(), $"{this.Name}.{nameof(EventDescriptor.Description)}");
+	#endregion
+
+	#region 嵌套子类
+	private sealed class HandlerCollection : ICollection<IHandler>
+	{
+		private readonly ConcurrentDictionary<IHandler, object> _handlers = new();
+
+		public int Count => _handlers.Count;
+		bool ICollection<IHandler>.IsReadOnly => false;
+
+		public void Add(IHandler handler) => _handlers.TryAdd(handler ?? throw new ArgumentNullException(nameof(handler)), null);
+		public void Clear() => _handlers.Clear();
+		public bool Contains(IHandler handler) => handler != null && _handlers.ContainsKey(handler);
+		public bool Remove(IHandler handler) => handler != null && _handlers.TryRemove(handler, out _);
+		void ICollection<IHandler>.CopyTo(IHandler[] array, int arrayIndex) => _handlers.Keys.CopyTo(array, arrayIndex);
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<IHandler> GetEnumerator() => _handlers.Keys.GetEnumerator();
+	}
 	#endregion
 }
 
