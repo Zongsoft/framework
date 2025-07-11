@@ -184,7 +184,7 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 			}
 		}
 
-		builder.AddMeter(hashset.ToArray());
+		builder.AddMeter([.. hashset]);
 	}
 
 	private static void FillTracers(TracerProviderBuilder builder, ICollection<string> tracers)
@@ -216,7 +216,7 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 			}
 		}
 
-		builder.AddSource(hashset.ToArray());
+		builder.AddSource([.. hashset]);
 	}
 	#endregion
 }
