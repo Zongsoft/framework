@@ -32,27 +32,51 @@ using System;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Exporter;
 
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
-namespace Zongsoft.Diagnostics;
+namespace Zongsoft.Diagnostics.Telemetry;
 
-[Service<Telemetry.IExporterLauncher<MeterProviderBuilder>>(Members = nameof(Meters))]
-[Service<Telemetry.IExporterLauncher<TracerProviderBuilder>>(Members = nameof(Tracers))]
+[Service<IExporterLauncher<MeterProviderBuilder>>(Members = nameof(Meters))]
+[Service<IExporterLauncher<TracerProviderBuilder>>(Members = nameof(Tracers))]
 public class DefaultExporterLauncher
 {
-	public static readonly Telemetry.IExporterLauncher<MeterProviderBuilder> Meters = new MeterExporterLauncher();
-	public static readonly Telemetry.IExporterLauncher<TracerProviderBuilder> Tracers = new TracerExporterLauncher();
+	public static readonly IExporterLauncher<MeterProviderBuilder> Meters = new MeterExporterLauncher();
+	public static readonly IExporterLauncher<TracerProviderBuilder> Tracers = new TracerExporterLauncher();
 
-	private sealed class MeterExporterLauncher() : Telemetry.ExporterLauncherBase<MeterProviderBuilder>("OpenTelemetry")
+	private sealed class MeterExporterLauncher() : ExporterLauncherBase<MeterProviderBuilder>("OpenTelemetry")
 	{
-		public override void Launch(MeterProviderBuilder builder, string settings) => builder.AddOtlpExporter();
+		public override void Launch(MeterProviderBuilder builder, string settings) => builder.AddOtlpExporter((options, reader) => Configure(settings, options, reader));
 		protected override bool OnMatch(string name) => string.IsNullOrEmpty(name) || string.Equals(name, "telemetry", StringComparison.OrdinalIgnoreCase) || base.OnMatch(name);
 	}
 
-	private sealed class TracerExporterLauncher() : Telemetry.ExporterLauncherBase<TracerProviderBuilder>("OpenTelemetry")
+	private sealed class TracerExporterLauncher() : ExporterLauncherBase<TracerProviderBuilder>("OpenTelemetry")
 	{
-		public override void Launch(TracerProviderBuilder builder, string settings) => builder.AddOtlpExporter();
+		public override void Launch(TracerProviderBuilder builder, string settings) => builder.AddOtlpExporter(options => Configure(settings, options));
 		protected override bool OnMatch(string name) => string.IsNullOrEmpty(name) || string.Equals(name, "telemetry", StringComparison.OrdinalIgnoreCase) || base.OnMatch(name);
+	}
+
+	private static void Configure(string settings, OtlpExporterOptions options, MetricReaderOptions reader = null)
+	{
+		if(string.IsNullOrEmpty(settings))
+			return;
+
+		var connectionSettings = new ConnectionSettings(settings);
+		var timeout = (int)connectionSettings.GetValue("timeout", TimeSpan.FromSeconds(30)).TotalMilliseconds;
+		var interval = (int)connectionSettings.GetValue("Interval", TimeSpan.FromSeconds(10)).TotalMilliseconds;
+
+		options.Protocol = connectionSettings.GetValue("protocol", OtlpExportProtocol.Grpc);
+		options.ExportProcessorType = connectionSettings.GetValue("processorType", ExportProcessorType.Batch);
+		options.TimeoutMilliseconds = timeout;
+
+		options.BatchExportProcessorOptions.MaxExportBatchSize = connectionSettings.GetValue("maxBatchSize", 512);
+		options.BatchExportProcessorOptions.MaxQueueSize = connectionSettings.GetValue("maxQueueSize", 2048);
+		options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds = timeout;
+		options.BatchExportProcessorOptions.ScheduledDelayMilliseconds = interval;
+
+		if(reader != null)
+			reader.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = interval;
 	}
 }

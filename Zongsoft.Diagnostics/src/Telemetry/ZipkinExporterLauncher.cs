@@ -33,11 +33,33 @@ using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
-namespace Zongsoft.Diagnostics;
+namespace Zongsoft.Diagnostics.Telemetry;
 
-[Service<Telemetry.IExporterLauncher<TracerProviderBuilder>>]
-public class ZipkinExporterLauncher() : Telemetry.ExporterLauncherBase<TracerProviderBuilder>("Zipkin")
+[Service<IExporterLauncher<TracerProviderBuilder>>]
+public class ZipkinExporterLauncher() : ExporterLauncherBase<TracerProviderBuilder>("Zipkin")
 {
-	public override void Launch(TracerProviderBuilder builder, string settings) => builder.AddZipkinExporter();
+	public override void Launch(TracerProviderBuilder builder, string settings) => builder.AddZipkinExporter(options =>
+	{
+		if(string.IsNullOrEmpty(settings))
+			return;
+
+		var connectionSettings = new ConnectionSettings(this.Name, settings);
+
+		if(!string.IsNullOrEmpty(connectionSettings.Server))
+			options.Endpoint = new Uri(connectionSettings.Server);
+
+		var timeout = (int)connectionSettings.GetValue("timeout", TimeSpan.FromSeconds(30)).TotalMilliseconds;
+		var interval = (int)connectionSettings.GetValue("Interval", TimeSpan.FromSeconds(10)).TotalMilliseconds;
+
+		options.ExportProcessorType = connectionSettings.GetValue("processorType", ExportProcessorType.Batch);
+		options.MaxPayloadSizeInBytes = connectionSettings.GetValue("maxPayloadSize", 4096);
+		options.UseShortTraceIds = connectionSettings.GetValue("useShortTraceIds", true);
+
+		options.BatchExportProcessorOptions.MaxExportBatchSize = connectionSettings.GetValue("maxBatchSize", 512);
+		options.BatchExportProcessorOptions.MaxQueueSize = connectionSettings.GetValue("maxQueueSize", 2048);
+		options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds = timeout;
+		options.BatchExportProcessorOptions.ScheduledDelayMilliseconds = interval;
+	});
 }

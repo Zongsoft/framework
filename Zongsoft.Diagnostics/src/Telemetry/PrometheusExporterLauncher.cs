@@ -48,8 +48,11 @@ public class PrometheusExporterLauncher() : ExporterLauncherBase<MeterProviderBu
 		{
 			var connectionSettings = new ConnectionSettings(this.Name, settings);
 			var urls = connectionSettings.GetValue("urls", "http://127.0.0.1:9464,http://localhost:9464");
+
 			builder.AddPrometheusHttpListener(options =>
 			{
+				options.ScrapeEndpointPath = connectionSettings.GetValue("path", "/metrics");
+				options.DisableTotalNameSuffixForCounters = connectionSettings.GetValue("totalSuffix", false);
 				options.UriPrefixes = urls.Split([',', ';', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 			});
 		}
