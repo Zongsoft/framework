@@ -1,0 +1,3 @@
+[submodule "Zongsoft.Diagnostics/proto"]
+	path = Zongsoft.Diagnostics/proto
+	url = https://github.com/open-telemetry/opentelemetry-proto.git

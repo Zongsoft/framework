@@ -12,6 +12,7 @@
 
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<Protobuf_NoWarnMissingExpected>true</Protobuf_NoWarnMissingExpected>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -31,6 +32,22 @@
 		<PackageReference Include="OpenTelemetry.Exporter.Zipkin" VersionOverride="1.9.0" />
 		<PackageReference Include="OpenTelemetry.PersistentStorage.Abstractions" VersionOverride="1.0.0" />
 		<PackageReference Include="OpenTelemetry.PersistentStorage.FileSystem" VersionOverride="1.0.0" />
+
+		<PackageReference Include="Google.Protobuf" VersionOverride="3.31.1" />
+		<PackageReference Include="Grpc.Core.Api" VersionOverride="2.71.0" />
+		<PackageReference Include="Grpc.Net.Common" VersionOverride="2.71.0" />
+		<PackageReference Include="Grpc.Net.Client" VersionOverride="2.71.0" />
+		<PackageReference Include="Grpc.Tools" VersionOverride="2.72.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Protobuf Include="..\proto\opentelemetry\proto\**\*.proto"
+		          ProtoRoot="..\proto"
+		          OutputDir="%(RelativePath)Properties\generated"
+		          CompileOutputs="false" />
 	</ItemGroup>
 
 	<Choose>
@@ -52,5 +69,20 @@
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
 	</ItemGroup>
 </Project>
