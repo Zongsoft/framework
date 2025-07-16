@@ -47,6 +47,7 @@
 		<Protobuf Include="..\proto\opentelemetry\proto\**\*.proto"
 		          ProtoRoot="..\proto"
 		          OutputDir="%(RelativePath)Properties\generated"
+		          GrpcServices="Server"
 		          CompileOutputs="false" />
 	</ItemGroup>
 
