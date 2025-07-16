@@ -92,6 +92,9 @@ public static class ServiceProviderExtension
 	public static object ResolveRequired(this IServiceProvider serviceProvider, Type serviceType, object parameter) =>
 		parameter == null ? serviceProvider.GetRequiredService(serviceType) : serviceProvider.MatchService(serviceType, parameter) ?? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.");
 
+	public static IEnumerable<object> ResolveAll(this IServiceProvider serviceProvider, string tag) =>
+		throw new NotImplementedException();
+
 	public static IEnumerable<T> ResolveAll<T>(this IServiceProvider serviceProvider, object parameter = null) =>
 		parameter == null ? serviceProvider.GetServices<T>() : serviceProvider.MatchServices<T>(parameter);
 
