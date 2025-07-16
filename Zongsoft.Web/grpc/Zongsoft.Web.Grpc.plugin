@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Web.Grpc"
+        title="Zongsoft gRPC for Web Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2020-2025. All rights reserved."
+        description="Created Date: 2025-07-15 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Web.Grpc" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workbench/Grpc">
+		<object name="Services" value="{static:Zongsoft.Web.Grpc.GrpcInitializer.Services, Zongsoft.Web.Grpc}" />
+	</extension>
+</plugin>

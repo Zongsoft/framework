@@ -1,0 +1,7 @@
+artifacts/Zongsoft.Web.Grpc.plugin
+lib/$(Framework)/Zongsoft.Web.Grpc.*
+lib/$(Framework)/*/Zongsoft.Web.Grpc.resources.*
+
+nuget:Google.Protobuf@3.31.1
+nuget:Grpc.AspNetCore.Server@2.71.0
+nuget:Grpc.AspNetCore.Server.Reflection@2.71.0
