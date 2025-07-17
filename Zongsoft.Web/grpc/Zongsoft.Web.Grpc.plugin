@@ -11,8 +11,4 @@
 			<assembly name="Zongsoft.Web.Grpc" />
 		</assemblies>
 	</manifest>
-
-	<extension path="/Workbench/Grpc">
-		<object name="Services" value="{static:Zongsoft.Web.Grpc.GrpcInitializer.Services, Zongsoft.Web.Grpc}" />
-	</extension>
 </plugin>

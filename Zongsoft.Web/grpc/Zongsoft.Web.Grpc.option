@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="kestrel">
+		<endpointDefaults protocols="Http2" />
+		<endpoints>
+			<OTelGrpcEndpoint url="http://*:4317" />
+		</endpoints>
+	</option>
+</options>

@@ -53,24 +53,14 @@ public class GrpcInitializer : IApplicationInitializer<IApplicationBuilder>
 	);
 	#endregion
 
-	#region 公共属性
-	public static ICollection<object> Services { get; } = [];
-	#endregion
-
 	#region 初始方法
 	public void Initialize(IApplicationBuilder builder)
 	{
 		if(builder is IEndpointRouteBuilder app)
 		{
-			foreach(var service in Services)
+			foreach(var service in app.ServiceProvider.GetTags("gRPC"))
 			{
-				if(service == null)
-					continue;
-
-				if(service is Type type)
-					MapGrpcService(app, type);
-				else
-					MapGrpcService(app, service.GetType());
+				MapGrpcService(app, service);
 			}
 
 			app.MapGrpcReflectionService();
