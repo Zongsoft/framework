@@ -50,11 +50,25 @@ public class ServiceAttribute : Attribute
 	/// <summary>获取服务的契约类型数组，如果为空(<c>null</c>)或空集则表示服务的类型即为该注解所标示的类。</summary>
 	public Type[] Contracts { get; }
 
-	/// <summary>获取或设置服务的分别标签，多个标签之间使用逗号(<c>,</c>)或分号(<c>;</c>)分隔。</summary>
+	/// <summary>获取或设置服务的标签，多个标签之间使用逗号(<c>,</c>)或分号(<c>;</c>)分隔。</summary>
 	public string Tags { get; set; }
 
 	/// <summary>获取或设置该注解所标示的静态类的成员名(属性或字段)，多个成员名之间使用逗号(<c>,</c>)分隔。</summary>
 	public string Members { get; set; }
+	#endregion
+
+	#region 公共方法
+	public bool TryGetTags(out string[] tags)
+	{
+		if(string.IsNullOrEmpty(this.Tags))
+		{
+			tags = null;
+			return false;
+		}
+
+		tags = this.Tags.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		return tags.Length > 0;
+	}
 	#endregion
 }
 
