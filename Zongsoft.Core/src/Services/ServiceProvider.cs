@@ -70,6 +70,7 @@ internal class ServiceProvider : IServiceProvider, IDisposable
 		services.AddSingleton<IServiceProvider>(this);
 
 		_provider = services.BuildServiceProvider(options);
+		ServiceAssistant.Make(services, this);
 	}
 
 	internal ServiceProvider(string name, IServiceProvider provider)

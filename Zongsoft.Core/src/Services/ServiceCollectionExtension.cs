@@ -178,6 +178,15 @@ public static class ServiceCollectionExtension
 		if(!string.IsNullOrEmpty(attribute.Name))
 			ServiceProviderExtension.Register(attribute.Name, type);
 
+		if(attribute.TryGetTags(out var tags))
+		{
+			for(int i = 0; i < tags.Length; i++)
+			{
+				var taggedDescriptor = ServiceAssistant.GetTagged(services, tags[i]);
+				taggedDescriptor.SetService(type, attribute.Contracts);
+			}
+		}
+
 		if(attribute.Contracts != null)
 		{
 			var contracts = attribute.Contracts;

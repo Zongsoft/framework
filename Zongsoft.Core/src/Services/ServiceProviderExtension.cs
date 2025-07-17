@@ -58,6 +58,18 @@ public static class ServiceProviderExtension
 	#endregion
 
 	#region 解析方法
+	public static IEnumerable<Type> GetTags(this IServiceProvider serviceProvider, string tag)
+	{
+		if(string.IsNullOrEmpty(tag))
+			return [];
+
+		var tagged = ServiceAssistant.GetTagged(serviceProvider, tag);
+		if(tagged == null)
+			return [];
+
+		return tagged.Services.Keys;
+	}
+
 	public static object Resolve(this IServiceProvider serviceProvider, string name)
 	{
 		if(string.IsNullOrEmpty(name))
@@ -92,8 +104,41 @@ public static class ServiceProviderExtension
 	public static object ResolveRequired(this IServiceProvider serviceProvider, Type serviceType, object parameter) =>
 		parameter == null ? serviceProvider.GetRequiredService(serviceType) : serviceProvider.MatchService(serviceType, parameter) ?? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.");
 
-	public static IEnumerable<object> ResolveAll(this IServiceProvider serviceProvider, string tag) =>
-		throw new NotImplementedException();
+	public static IEnumerable<object> ResolveTags(this IServiceProvider serviceProvider, string tag)
+	{
+		var tagged = ServiceAssistant.GetTagged(serviceProvider, tag);
+		if(tagged == null)
+			yield break;
+
+		foreach(var service in tagged.Services)
+			yield return serviceProvider.GetService(service.Key);
+	}
+
+	public static IEnumerable<TService> ResolveTags<TService>(this IServiceProvider serviceProvider, string tag)
+	{
+		var tagged = ServiceAssistant.GetTagged(serviceProvider, tag);
+		if(tagged == null)
+			yield break;
+
+		foreach(var service in tagged.Services)
+		{
+			if(service.Key == typeof(TService) || service.Value.Contains(typeof(TService)))
+				yield return serviceProvider.GetService<TService>();
+		}
+	}
+
+	public static IEnumerable<object> ResolveTags(this IServiceProvider serviceProvider, Type serviceType, string tag)
+	{
+		var tagged = ServiceAssistant.GetTagged(serviceProvider, tag);
+		if(tagged == null)
+			yield break;
+
+		foreach(var service in tagged.Services)
+		{
+			if(service.Key == serviceType || service.Value.Contains(serviceType))
+				yield return serviceProvider.GetService(service.Key);
+		}
+	}
 
 	public static IEnumerable<T> ResolveAll<T>(this IServiceProvider serviceProvider, object parameter = null) =>
 		parameter == null ? serviceProvider.GetServices<T>() : serviceProvider.MatchServices<T>(parameter);
