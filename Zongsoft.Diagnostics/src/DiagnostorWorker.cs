@@ -58,7 +58,7 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 
 		var meters = diagnostor.Meters;
 
-		if(meters != null)
+		if(meters != null && Validate(meters))
 		{
 			var builder = Sdk.CreateMeterProviderBuilder();
 
@@ -80,7 +80,7 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 
 		var traces = diagnostor.Traces;
 
-		if(traces != null)
+		if(traces != null && Validate(traces))
 		{
 			var builder = Sdk.CreateTracerProviderBuilder();
 
@@ -218,5 +218,9 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 
 		builder.AddSource([.. hashset]);
 	}
+
+	private static bool Validate(Diagnostor.Filtering filtering) => filtering != null &&
+		filtering.Filters != null && filtering.Filters.Count > 0 &&
+		filtering.Exporters != null && filtering.Exporters.Count > 0;
 	#endregion
 }

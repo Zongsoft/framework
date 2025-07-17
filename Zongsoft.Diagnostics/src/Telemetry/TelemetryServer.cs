@@ -49,58 +49,62 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Diagnostics.Telemetry;
 
-public static partial class ExporterServer
+public static partial class TelemetryServer
 {
 	private static Task HandleAsync(ICollection<IHandler> handlers, object argument, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(handlers == null || handlers.Count == 0)
 			return Task.CompletedTask;
 
-		return Task.Run(() =>
+		return Parallel.ForEachAsync(handlers, cancellation, async (handler, cancellation) =>
 		{
-			foreach(var handler in handlers)
+			if(handler == null)
+				return;
+
+			try
 			{
-				try
-				{
-					handler?.HandleAsync(argument, parameters, cancellation).AsTask();
-				}
-				catch(Exception ex)
-				{
-					Logger.GetLogger(handler).Error(ex);
-				}
+				await handler.HandleAsync(argument, parameters, cancellation);
 			}
-		}, cancellation);
+			catch(Exception ex)
+			{
+				Logger.GetLogger(handler).Error(ex);
+			}
+		});
 	}
 
+	[Service(Tags = "gRPC")]
 	[System.Reflection.DefaultMember(nameof(Handlers))]
 	public class Metrics : MetricsService.MetricsServiceBase
 	{
+		public Metrics() => this.Handlers = new List<IHandler>();
 		public ICollection<IHandler> Handlers { get; }
 		public override async Task<ExportMetricsServiceResponse> Export(ExportMetricsServiceRequest request, ServerCallContext context)
 		{
-			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context));
+			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
 			return new ExportMetricsServiceResponse();
 		}
 	}
 
+	[Service(Tags = "gRPC")]
 	[System.Reflection.DefaultMember(nameof(Handlers))]
 	public class Traces : TraceService.TraceServiceBase
 	{
 		public ICollection<IHandler> Handlers { get; }
 		public override async Task<ExportTraceServiceResponse> Export(ExportTraceServiceRequest request, ServerCallContext context)
 		{
-			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context));
+			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
 			return new ExportTraceServiceResponse();
 		}
 	}
 
+	[Service(Tags = "gRPC")]
 	[System.Reflection.DefaultMember(nameof(Handlers))]
 	public class Logs : LogsService.LogsServiceBase
 	{
 		public ICollection<IHandler> Handlers { get; }
 		public override async Task<ExportLogsServiceResponse> Export(ExportLogsServiceRequest request, ServerCallContext context)
 		{
-			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context));
+			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
 			return new ExportLogsServiceResponse();
 		}
 	}
