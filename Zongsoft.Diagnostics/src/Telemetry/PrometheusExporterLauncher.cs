@@ -42,19 +42,15 @@ public class PrometheusExporterLauncher() : ExporterLauncherBase<MeterProviderBu
 {
 	public override void Launch(MeterProviderBuilder builder, string settings)
 	{
-		builder.AddPrometheusExporter();
-
-		if(settings != null)
+		builder.AddPrometheusExporter(options =>
 		{
-			var connectionSettings = new ConnectionSettings(this.Name, settings);
-			var urls = connectionSettings.GetValue("urls", "http://127.0.0.1:9464,http://localhost:9464");
+			if(string.IsNullOrEmpty(settings))
+				return;
 
-			builder.AddPrometheusHttpListener(options =>
-			{
-				options.ScrapeEndpointPath = connectionSettings.GetValue("path", "/metrics");
-				options.DisableTotalNameSuffixForCounters = connectionSettings.GetValue("totalSuffix", false);
-				options.UriPrefixes = urls.Split([',', ';', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-			});
-		}
+			var connectionSettings = new ConnectionSettings(this.Name, settings);
+			options.ScrapeEndpointPath = connectionSettings.GetValue("path", "/metrics");
+			options.DisableTotalNameSuffixForCounters = !connectionSettings.GetValue("totalSuffix", true);
+			options.ScrapeResponseCacheDurationMilliseconds = Math.Max(0, (int)connectionSettings.GetValue("cacheDuration", TimeSpan.FromMilliseconds(300)).TotalMilliseconds);
+		});
 	}
 }

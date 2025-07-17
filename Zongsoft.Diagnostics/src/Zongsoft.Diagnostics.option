@@ -7,9 +7,8 @@
 				<filter>*</filter>
 
 				<exporters>
-					<exporter exporter.name="console" settings="target=console;timeout=30s;interval=15s;" />
 					<exporter exporter.name="telemetry" settings="protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
-					<exporter exporter.name="prometheus" settings="urls=http://127.0.0.1:9464,http://localhost:9464;path=/metrics;totalSuffix=false" />
+					<exporter exporter.name="prometheus" settings="path=/metrics;totalSuffix=true;cacheDuration=300ms" />
 				</exporters>
 			</meters>
 
@@ -17,7 +16,6 @@
 				<filter>*</filter>
 
 				<exporters>
-					<exporter exporter.name="console" settings="target=console;" />
 					<exporter exporter.name="telemetry" settings="protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
 					<exporter exporter.name="zipkin" settings="server=http://localhost:9411/api/v2/spans;maxPayloadSize=4096;useShortTraceIds=true;processorType=batch;timeout=30s;interval=15s;" />
 				</exporters>
