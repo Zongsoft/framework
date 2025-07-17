@@ -46,6 +46,11 @@ public class ConvertTest
 		Assert.Equal(500d, duration.TotalMilliseconds);
 		Assert.Equal(duration, Zongsoft.Common.Convert.ConvertValue<TimeSpan>("0.5s"));
 
+		Assert.True(TimeSpanUtility.TryParse("100ms", out duration));
+		Assert.Equal(0.1, duration.TotalSeconds);
+		Assert.Equal(100d, duration.TotalMilliseconds);
+		Assert.Equal(duration, Zongsoft.Common.Convert.ConvertValue<TimeSpan>("100ms"));
+
 		Assert.Equal(Gender.Male, Zongsoft.Common.Convert.ConvertValue("male", typeof(Gender)));
 		Assert.Equal(Gender.Male, Zongsoft.Common.Convert.ConvertValue("Male", typeof(Gender)));
 		Assert.Equal(Gender.Female, Zongsoft.Common.Convert.ConvertValue("female", typeof(Gender)));

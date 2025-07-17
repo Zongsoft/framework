@@ -38,7 +38,7 @@ public static class TimeSpanUtility
 	{
 		if(text.IsEmpty || text.Length < 2)
 		{
-			value = TimeSpan.Zero;
+			value = default;
 			return false;
 		}
 
@@ -54,7 +54,8 @@ public static class TimeSpanUtility
 					return true;
 				}
 
-				break;
+				value = default;
+				return false;
 			case 'h':
 			case 'H':
 				if(double.TryParse(text[0..^1], out number))
@@ -63,7 +64,8 @@ public static class TimeSpanUtility
 					return true;
 				}
 
-				break;
+				value = default;
+				return false;
 			case 'm':
 			case 'M':
 				if(double.TryParse(text[0..^1], out number))
@@ -72,16 +74,30 @@ public static class TimeSpanUtility
 					return true;
 				}
 
-				break;
+				value = default;
+				return false;
 			case 's':
 			case 'S':
+				if(text[^2] == 'm' || text[^2] == 'M')
+				{
+					if(double.TryParse(text[0..^2], out number))
+					{
+						value = TimeSpan.FromMilliseconds(number);
+						return true;
+					}
+
+					value = default;
+					return false;
+				}
+
 				if(double.TryParse(text[0..^1], out number))
 				{
 					value = TimeSpan.FromSeconds(number);
 					return true;
 				}
 
-				break;
+				value = default;
+				return false;
 		}
 
 		return TimeSpan.TryParse(text, out value);
