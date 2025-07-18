@@ -28,35 +28,35 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Grpc.Core;
+
+using OpenTelemetry.Proto.Collector.Trace.V1;
+
+using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Diagnostics.Telemetry;
 
-public static partial class Listener
+[Service(Tags = "gRPC", Members = nameof(Traces))]
+partial class Listener
 {
-	private static Task HandleAsync(ICollection<IHandler> handlers, object argument, Parameters parameters, CancellationToken cancellation = default)
+	public static readonly TracesProcessor Traces = new();
+
+	[System.Reflection.DefaultMember(nameof(Handlers))]
+	public class TracesProcessor : TraceService.TraceServiceBase
 	{
-		if(handlers == null || handlers.Count == 0)
-			return Task.CompletedTask;
-
-		return Parallel.ForEachAsync(handlers, cancellation, async (handler, cancellation) =>
+		internal TracesProcessor() { }
+		public ICollection<IHandler> Handlers { get; } = new List<IHandler>();
+		public override async Task<ExportTraceServiceResponse> Export(ExportTraceServiceRequest request, ServerCallContext context)
 		{
-			if(handler == null)
-				return;
-
-			try
-			{
-				await handler.HandleAsync(argument, parameters, cancellation);
-			}
-			catch(Exception ex)
-			{
-				Logger.GetLogger(handler).Error(ex);
-			}
-		});
+			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
+			return new ExportTraceServiceResponse();
+		}
 	}
 }
