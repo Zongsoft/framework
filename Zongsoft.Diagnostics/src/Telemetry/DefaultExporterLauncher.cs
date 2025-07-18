@@ -68,6 +68,9 @@ public class DefaultExporterLauncher
 		var interval = (int)connectionSettings.GetValue("Interval", TimeSpan.FromSeconds(10)).TotalMilliseconds;
 
 		options.Protocol = connectionSettings.GetValue("protocol", OtlpExportProtocol.Grpc);
+		options.Endpoint = new Uri(connectionSettings.GetValue("server",
+			options.Protocol == OtlpExportProtocol.Grpc ? "http://localhost:4317" : "http://localhost:4318"));
+
 		options.ExportProcessorType = connectionSettings.GetValue("processorType", ExportProcessorType.Batch);
 		options.TimeoutMilliseconds = timeout;
 
