@@ -49,8 +49,15 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Diagnostics.Telemetry;
 
-public static partial class TelemetryServer
+[Service(Tags = "gRPC", Members = nameof(Metrics))]
+[Service(Tags = "gRPC", Members = nameof(Traces))]
+[Service(Tags = "gRPC", Members = nameof(Logs))]
+public static partial class Listener
 {
+	public static readonly MetricsProcessor Metrics = new();
+	public static readonly TracesProcessor Traces = new();
+	public static readonly LogsProcessor Logs = new();
+
 	private static Task HandleAsync(ICollection<IHandler> handlers, object argument, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(handlers == null || handlers.Count == 0)
@@ -72,12 +79,11 @@ public static partial class TelemetryServer
 		});
 	}
 
-	[Service(Tags = "gRPC")]
 	[System.Reflection.DefaultMember(nameof(Handlers))]
-	public class Metrics : MetricsService.MetricsServiceBase
+	public class MetricsProcessor : MetricsService.MetricsServiceBase
 	{
-		public Metrics() => this.Handlers = new List<IHandler>();
-		public ICollection<IHandler> Handlers { get; }
+		internal MetricsProcessor() { }
+		public ICollection<IHandler> Handlers { get; } = new List<IHandler>();
 		public override async Task<ExportMetricsServiceResponse> Export(ExportMetricsServiceRequest request, ServerCallContext context)
 		{
 			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
@@ -85,11 +91,11 @@ public static partial class TelemetryServer
 		}
 	}
 
-	[Service(Tags = "gRPC")]
 	[System.Reflection.DefaultMember(nameof(Handlers))]
-	public class Traces : TraceService.TraceServiceBase
+	public class TracesProcessor : TraceService.TraceServiceBase
 	{
-		public ICollection<IHandler> Handlers { get; }
+		internal TracesProcessor() { }
+		public ICollection<IHandler> Handlers { get; } = new List<IHandler>();
 		public override async Task<ExportTraceServiceResponse> Export(ExportTraceServiceRequest request, ServerCallContext context)
 		{
 			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
@@ -97,11 +103,11 @@ public static partial class TelemetryServer
 		}
 	}
 
-	[Service(Tags = "gRPC")]
 	[System.Reflection.DefaultMember(nameof(Handlers))]
-	public class Logs : LogsService.LogsServiceBase
+	public class LogsProcessor : LogsService.LogsServiceBase
 	{
-		public ICollection<IHandler> Handlers { get; }
+		internal LogsProcessor() { }
+		public ICollection<IHandler> Handlers { get; } = new List<IHandler>();
 		public override async Task<ExportLogsServiceResponse> Export(ExportLogsServiceRequest request, ServerCallContext context)
 		{
 			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);

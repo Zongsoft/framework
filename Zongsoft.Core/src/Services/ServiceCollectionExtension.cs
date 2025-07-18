@@ -165,7 +165,7 @@ public static class ServiceCollectionExtension
 		//如果是成员注册
 		if(!string.IsNullOrEmpty(attribute.Members))
 		{
-			RegisterStaticMember(services, type, attribute.Members, attribute.Contracts);
+			RegisterStaticMember(services, type, attribute.Members, attribute.Contracts, attribute.GetTags());
 			return;
 		}
 
@@ -175,17 +175,12 @@ public static class ServiceCollectionExtension
 
 		services.AddSingleton((Type)type);
 
+		//根据服务注解中的标签进行注册
+		if(attribute.TryGetTags(out var tags))
+			RegisterTags(services, type, attribute.Contracts, tags);
+
 		if(!string.IsNullOrEmpty(attribute.Name))
 			ServiceProviderExtension.Register(attribute.Name, type);
-
-		if(attribute.TryGetTags(out var tags))
-		{
-			for(int i = 0; i < tags.Length; i++)
-			{
-				var taggedDescriptor = ServiceAssistant.GetTagged(services, tags[i]);
-				taggedDescriptor.SetService(type, attribute.Contracts);
-			}
-		}
 
 		if(attribute.Contracts != null)
 		{
@@ -209,11 +204,20 @@ public static class ServiceCollectionExtension
 		}
 	}
 
-	private static void RegisterStaticMember(IServiceCollection services, TypeInfo type, string members, Type[] contracts)
+	private static void RegisterTags(IServiceCollection services, Type type, IEnumerable<Type> contracts, string[] tags)
 	{
-		if(string.IsNullOrEmpty(members))
+		if(tags == null || tags.Length == 0)
 			return;
 
+		for(int i = 0; i < tags.Length; i++)
+		{
+			var taggedDescriptor = ServiceAssistant.GetTagged(services, tags[i]);
+			taggedDescriptor.SetService(type, contracts);
+		}
+	}
+
+	private static void RegisterStaticMember(IServiceCollection services, TypeInfo type, string members, Type[] contracts, string[] tags)
+	{
 		var moduleName = ApplicationModuleAttribute.Find(type)?.Name;
 
 		foreach(var member in Zongsoft.Common.StringExtension.Slice(members, ','))
@@ -226,12 +230,19 @@ public static class ServiceCollectionExtension
 
 				if(!string.IsNullOrEmpty(moduleName))
 				{
+					var modularServiceTypes = new HashSet<Type>((contracts?.Length ?? 0) + 1);
+
 					foreach(var contract in GetContracts(property.PropertyType, contracts))
 					{
 						var modular = ModularServiceUtility.GetModularService(moduleName, contract, value);
 						services.AddSingleton(modular.GetType(), modular);
+						modularServiceTypes.Add(modular.GetType());
 					}
+
+					RegisterTags(services, property.PropertyType, modularServiceTypes, tags);
 				}
+
+				RegisterTags(services, property.PropertyType, contracts, tags);
 
 				foreach(var contract in GetContracts(property.PropertyType, contracts))
 					services.AddSingleton(contract, value);
@@ -247,12 +258,19 @@ public static class ServiceCollectionExtension
 
 				if(!string.IsNullOrEmpty(moduleName))
 				{
+					var modularServiceTypes = new HashSet<Type>((contracts?.Length ?? 0) + 1);
+
 					foreach(var contract in GetContracts(field.FieldType, contracts))
 					{
 						var modular = ModularServiceUtility.GetModularService(moduleName, contract, value);
 						services.AddSingleton(modular.GetType(), modular);
+						modularServiceTypes.Add(modular.GetType());
 					}
+
+					RegisterTags(services, field.FieldType, modularServiceTypes, tags);
 				}
+
+				RegisterTags(services, field.FieldType, contracts, tags);
 
 				foreach(var contract in GetContracts(field.FieldType, contracts))
 					services.AddSingleton(contract, value);

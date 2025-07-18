@@ -17,6 +17,12 @@
 		<object name="Exporters" value="{static:Zongsoft.Diagnostics.Telemetry.ExporterProvider.Default, Zongsoft.Core}" />
 	</extension>
 
+	<extension path="/Workbench/Diagnostics/Listener">
+		<object name="Metrics" value="{static:Zongsoft.Diagnostics.Telemetry.Listener.Metrics, Zongsoft.Diagnostics}" />
+		<object name="Traces" value="{static:Zongsoft.Diagnostics.Telemetry.Listener.Traces, Zongsoft.Diagnostics}" />
+		<object name="Logs" value="{static:Zongsoft.Diagnostics.Telemetry.Listener.Logs, Zongsoft.Diagnostics}" />
+	</extension>
+
 	<extension path="/Workbench/Startup">
 		<object name="Diagnostor" type="Zongsoft.Diagnostics.DiagnostorWorker, Zongsoft.Diagnostics">
 			<object.constructor>

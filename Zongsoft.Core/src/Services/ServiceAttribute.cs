@@ -58,6 +58,10 @@ public class ServiceAttribute : Attribute
 	#endregion
 
 	#region 公共方法
+	public string[] GetTags() =>
+		string.IsNullOrEmpty(this.Tags) ? null :
+		this.Tags.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 	public bool TryGetTags(out string[] tags)
 	{
 		if(string.IsNullOrEmpty(this.Tags))

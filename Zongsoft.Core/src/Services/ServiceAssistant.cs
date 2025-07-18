@@ -101,7 +101,7 @@ internal static class ServiceAssistant
 		public readonly string Tag = tag;
 		public readonly Dictionary<Type, HashSet<Type>> Services = new();
 
-		public void SetService(Type serviceType, params Type[] contracts)
+		public void SetService(Type serviceType, params IEnumerable<Type> contracts)
 		{
 			if(serviceType == null)
 				throw new ArgumentNullException(nameof(serviceType));
@@ -109,7 +109,7 @@ internal static class ServiceAssistant
 			if(this.Services.TryGetValue(serviceType, out var hashset))
 				hashset.UnionWith(contracts);
 
-			this.Services[serviceType] = new HashSet<Type>([..contracts, serviceType]);
+			this.Services[serviceType] = new HashSet<Type>([serviceType, ..contracts]);
 		}
 	}
 }
