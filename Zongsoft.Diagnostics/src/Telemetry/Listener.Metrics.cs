@@ -89,6 +89,8 @@ partial class Listener
 							if(entry != null)
 								meter.Metrics.Add(GetMetric(metric));
 						}
+
+						meters.Add(meter);
 					}
 				}
 
