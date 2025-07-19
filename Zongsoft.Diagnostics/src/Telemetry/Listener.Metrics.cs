@@ -92,7 +92,8 @@ partial class Listener
 					}
 				}
 
-				await HandleAsync(this.Handlers, meters, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
+				if(meters != null && meters.Count > 0)
+					await HandleAsync(this.Handlers, meters, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
 			}
 
 			return new ExportMetricsServiceResponse();
