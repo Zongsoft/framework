@@ -49,7 +49,9 @@ namespace Zongsoft.Diagnostics.Telemetry;
 [Service(Tags = "gRPC", Members = nameof(Metrics))]
 partial class Listener
 {
+	#region 单例字段
 	public static readonly MetricsProcessor Metrics = new();
+	#endregion
 
 	[System.Reflection.DefaultMember(nameof(Handlers))]
 	public class MetricsProcessor : MetricsService.MetricsServiceBase
@@ -65,30 +67,34 @@ partial class Listener
 		#region 重写方法
 		public override async Task<ExportMetricsServiceResponse> Export(ExportMetricsServiceRequest request, ServerCallContext context)
 		{
-			List<Metrics.Meter> meters = null;
-
-			foreach(var resource in request.ResourceMetrics)
+			if(this.Handlers.Count > 0)
 			{
-				meters = new(resource.ScopeMetrics.Count);
+				List<Metrics.Meter> meters = null;
 
-				foreach(var bundle in resource.ScopeMetrics)
+				foreach(var resource in request.ResourceMetrics)
 				{
-					var meter = new Metrics.Meter(bundle.Scope.Name, bundle.Scope.Version)
-					{
-						Tags = GetTags(bundle.Scope.Attributes)
-					};
+					meters = new(resource.ScopeMetrics.Count);
 
-					foreach(var metric in bundle.Metrics)
+					foreach(var bundle in resource.ScopeMetrics)
 					{
-						var entry = GetMetric(metric);
+						var meter = new Metrics.Meter(bundle.Scope.Name, bundle.Scope.Version)
+						{
+							Tags = GetTags(bundle.Scope.Attributes)
+						};
 
-						if(entry != null)
-							meter.Metrics.Add(GetMetric(metric));
+						foreach(var metric in bundle.Metrics)
+						{
+							var entry = GetMetric(metric);
+
+							if(entry != null)
+								meter.Metrics.Add(GetMetric(metric));
+						}
 					}
 				}
+
+				await HandleAsync(this.Handlers, meters, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
 			}
 
-			await HandleAsync(this.Handlers, meters, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
 			return new ExportMetricsServiceResponse();
 		}
 		#endregion
@@ -96,17 +102,15 @@ partial class Listener
 		#region 私有方法
 		static Metrics.Metric GetMetric(OpenTelemetry.Proto.Metrics.V1.Metric metric)
 		{
-			List<Metrics.Metric.Counter.Point> points;
-
 			switch(metric.DataCase)
 			{
 				case OpenTelemetry.Proto.Metrics.V1.Metric.DataOneofCase.Sum:
 					var counter = new Metrics.Metric.Counter(metric.Name, metric.Unit, metric.Sum.IsMonotonic, metric.Description)
 					{
-						Tags = GetTags(metric.Metadata)
+						Tags = GetTags(metric.Metadata),
 					};
 
-					points = new List<Metrics.Metric.Counter.Point>(metric.Sum.DataPoints.Count);
+					var counterPoints = new List<Metrics.Metric.Counter.Point>(metric.Sum.DataPoints.Count);
 
 					foreach(var entry in metric.Sum.DataPoints)
 					{
@@ -117,21 +121,22 @@ partial class Listener
 						else if(entry.HasAsInt)
 							value = entry.AsInt;
 
-						var creation = DateTimeOffset.FromUnixTimeMilliseconds((long)(entry.StartTimeUnixNano / 1000000));
-						var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)(entry.TimeUnixNano / 1000000));
-
-						points.Add(new Metrics.Metric.Counter.Point(value, creation, timestamp, GetTags(entry.Attributes)));
+						counterPoints.Add(new Metrics.Metric.Counter.Point(
+							value,
+							GetTimestamp(entry.StartTimeUnixNano),
+							GetTimestamp(entry.TimeUnixNano),
+							GetTags(entry.Attributes)));
 					}
 
-					counter.Points = [.. points];
+					counter.Points = [.. counterPoints];
 					return counter;
 				case OpenTelemetry.Proto.Metrics.V1.Metric.DataOneofCase.Gauge:
 					var gauge = new Metrics.Metric.Counter(metric.Name, metric.Unit, true, metric.Description)
 					{
-						Tags = GetTags(metric.Metadata)
+						Tags = GetTags(metric.Metadata),
 					};
 
-					points = new List<Metrics.Metric.Counter.Point>(metric.Gauge.DataPoints.Count);
+					var gaugePoints = new List<Metrics.Metric.Counter.Point>(metric.Gauge.DataPoints.Count);
 
 					foreach(var entry in metric.Gauge.DataPoints)
 					{
@@ -142,49 +147,81 @@ partial class Listener
 						else if(entry.HasAsInt)
 							value = entry.AsInt;
 
-						var creation = DateTimeOffset.FromUnixTimeMilliseconds((long)(entry.StartTimeUnixNano / 1000000));
-						var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)(entry.TimeUnixNano / 1000000));
-
-						points.Add(new Metrics.Metric.Counter.Point(value, creation, timestamp, GetTags(entry.Attributes)));
+						gaugePoints.Add(new Metrics.Metric.Counter.Point(
+							value,
+							GetTimestamp(entry.StartTimeUnixNano),
+							GetTimestamp(entry.TimeUnixNano),
+							GetTags(entry.Attributes)));
 					}
 
-					gauge.Points = [.. points];
+					gauge.Points = [.. gaugePoints];
 					return gauge;
 				case OpenTelemetry.Proto.Metrics.V1.Metric.DataOneofCase.Summary:
-					foreach(var point in metric.Summary.DataPoints)
+					var summary = new Metrics.Metric.Summary(metric.Name, metric.Unit, metric.Description)
 					{
-						Console.Write($"Sum={point.Sum}, Count={point.Count}");
-						Console.Write($"@({DateTimeOffset.FromUnixTimeMilliseconds((long)(point.StartTimeUnixNano / 1000000)).ToLocalTime()}~{DateTimeOffset.FromUnixTimeMilliseconds((long)(point.TimeUnixNano / 1000000)).ToLocalTime()})");
+						Tags = GetTags(metric.Metadata),
+					};
+
+					var summaryPoints = new List<Metrics.Metric.Summary.Point>(metric.Summary.DataPoints.Count);
+
+					foreach(var entry in metric.Summary.DataPoints)
+					{
+						summaryPoints.Add(new Metrics.Metric.Summary.Point(
+							entry.Sum,
+							entry.Count,
+							entry.Flags,
+							GetTimestamp(entry.StartTimeUnixNano),
+							GetTimestamp(entry.TimeUnixNano),
+							[.. entry.QuantileValues.Select(q => new Metrics.Metric.Summary.Point.QuantileValue(q.Value, q.Quantile))],
+							GetTags(entry.Attributes)));
 					}
-					break;
+
+					summary.Points = [.. summaryPoints];
+					return summary;
 				case OpenTelemetry.Proto.Metrics.V1.Metric.DataOneofCase.Histogram:
-					foreach(var point in metric.Histogram.DataPoints)
+					var histogram = new Metrics.Metric.Histogram(metric.Name, metric.Unit, metric.Description)
 					{
-						if(point.HasMin)
-							Console.Write($"Min={point.Min}");
-						else if(point.HasMax)
-							Console.Write($"Max={point.Max}");
-						else if(point.HasSum)
-							Console.Write($"Sum={point.Sum}");
+						Tags = GetTags(metric.Metadata),
+					};
 
-						Console.Write($" | Count={point.Count}, BucketCounts={point.BucketCounts.Count}/{point.BucketCounts.Capacity}, ExplicitBounds={point.ExplicitBounds.Count}/{point.ExplicitBounds.Capacity}");
-						Console.Write($"@({DateTimeOffset.FromUnixTimeMilliseconds((long)(point.StartTimeUnixNano / 1000000)).ToLocalTime()}~{DateTimeOffset.FromUnixTimeMilliseconds((long)(point.TimeUnixNano / 1000000)).ToLocalTime()})");
+					var histogramPoints = new List<Metrics.Metric.Histogram.Point>(metric.Histogram.DataPoints.Count);
+
+					foreach(var entry in metric.Histogram.DataPoints)
+					{
+						histogramPoints.Add(new Telemetry.Metrics.Metric.Histogram.Point(
+							entry.Count,
+							entry.Sum,
+							entry.Min,
+							entry.Max,
+							GetTimestamp(entry.StartTimeUnixNano),
+							GetTimestamp(entry.TimeUnixNano),
+							GetTags(entry.Attributes)));
 					}
-					break;
+
+					histogram.Points = [.. histogramPoints];
+					return histogram;
 				case OpenTelemetry.Proto.Metrics.V1.Metric.DataOneofCase.ExponentialHistogram:
-					foreach(var point in metric.ExponentialHistogram.DataPoints)
+					var exponentialHistogram = new Metrics.Metric.Histogram(metric.Name, metric.Unit, metric.Description)
 					{
-						if(point.HasMin)
-							Console.Write($"Min={point.Min}");
-						else if(point.HasMax)
-							Console.Write($"Max={point.Max}");
-						else if(point.HasSum)
-							Console.Write($"Sum={point.Sum}");
+						Tags = GetTags(metric.Metadata),
+					};
 
-						Console.Write($"| Count={point.Count} ,ZeroCount={point.ZeroCount}");
-						Console.Write($"@({DateTimeOffset.FromUnixTimeMilliseconds((long)(point.StartTimeUnixNano / 1000000)).ToLocalTime()}~{DateTimeOffset.FromUnixTimeMilliseconds((long)(point.TimeUnixNano / 1000000)).ToLocalTime()})");
+					var exponentialHistogramPoints = new List<Metrics.Metric.Histogram.Point>(metric.ExponentialHistogram.DataPoints.Count);
+
+					foreach(var entry in metric.ExponentialHistogram.DataPoints)
+					{
+						exponentialHistogramPoints.Add(new Telemetry.Metrics.Metric.Histogram.Point(
+							entry.Count,
+							entry.Sum,
+							entry.Min,
+							entry.Max,
+							GetTimestamp(entry.StartTimeUnixNano),
+							GetTimestamp(entry.TimeUnixNano),
+							GetTags(entry.Attributes)));
 					}
-					break;
+
+					exponentialHistogram.Points = [.. exponentialHistogramPoints];
+					return exponentialHistogram;
 			}
 
 			return null;

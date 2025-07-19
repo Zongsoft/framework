@@ -59,4 +59,6 @@ public static partial class Listener
 			}
 		});
 	}
+
+	private static DateTimeOffset GetTimestamp(ulong timeUnixNano) => DateTimeOffset.FromUnixTimeMilliseconds((long)(timeUnixNano / 1_000_000));
 }

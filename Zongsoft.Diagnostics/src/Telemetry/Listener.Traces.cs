@@ -46,7 +46,9 @@ namespace Zongsoft.Diagnostics.Telemetry;
 [Service(Tags = "gRPC", Members = nameof(Traces))]
 partial class Listener
 {
+	#region 单例字段
 	public static readonly TracesProcessor Traces = new();
+	#endregion
 
 	[System.Reflection.DefaultMember(nameof(Handlers))]
 	public class TracesProcessor : TraceService.TraceServiceBase
@@ -55,7 +57,9 @@ partial class Listener
 		public ICollection<IHandler> Handlers { get; } = new List<IHandler>();
 		public override async Task<ExportTraceServiceResponse> Export(ExportTraceServiceRequest request, ServerCallContext context)
 		{
-			await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
+			if(this.Handlers.Count > 0)
+				await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
+
 			return new ExportTraceServiceResponse();
 		}
 	}
