@@ -130,29 +130,9 @@ partial class Terminal
 				System.Console.ResetColor();
 		}
 
-		public void Write(char character)
-		{
-			lock(_syncRoot)
-			{
-				System.Console.Write(character);
-			}
-		}
-
-		public void Write(string text)
-		{
-			lock(_syncRoot)
-			{
-				System.Console.Write(text);
-			}
-		}
-
-		public void Write(object value)
-		{
-			lock(_syncRoot)
-			{
-				System.Console.Write(value);
-			}
-		}
+		public void Write(char character) => System.Console.Write(character);
+		public void Write(string text) => System.Console.Write(text);
+		public void Write(object value) => System.Console.Write(value);
 
 		public void Write(CommandOutletColor foregroundColor, char character)
 		{
@@ -193,47 +173,13 @@ partial class Terminal
 			}
 		}
 
-		public void Write(CommandOutletContent content)
-		{
-			this.WriteContent(content, false, null);
-		}
+		public void Write(CommandOutletContent content) => this.WriteContent(content, false, null);
+		public void Write(CommandOutletColor foregroundColor, CommandOutletContent content) => this.WriteContent(content, false, foregroundColor);
 
-		public void Write(CommandOutletColor foregroundColor, CommandOutletContent content)
-		{
-			this.WriteContent(content, false, foregroundColor);
-		}
-
-		public void WriteLine()
-		{
-			lock(_syncRoot)
-			{
-				System.Console.WriteLine();
-			}
-		}
-
-		public void WriteLine(char character)
-		{
-			lock(_syncRoot)
-			{
-				System.Console.WriteLine(character);
-			}
-		}
-
-		public void WriteLine(string text)
-		{
-			lock(_syncRoot)
-			{
-				System.Console.WriteLine(text);
-			}
-		}
-
-		public void WriteLine(object value)
-		{
-			lock(_syncRoot)
-			{
-				System.Console.WriteLine(value);
-			}
-		}
+		public void WriteLine() => System.Console.WriteLine();
+		public void WriteLine(char character) => System.Console.WriteLine(character);
+		public void WriteLine(string text) => System.Console.WriteLine(text);
+		public void WriteLine(object value) => System.Console.WriteLine(value);
 
 		public void WriteLine(CommandOutletColor foregroundColor, char character)
 		{
@@ -274,25 +220,17 @@ partial class Terminal
 			}
 		}
 
-		public void WriteLine(CommandOutletContent content)
-		{
-			this.WriteContent(content, true, null);
-		}
-
-		public void WriteLine(CommandOutletColor foregroundColor, CommandOutletContent content)
-		{
-			this.WriteContent(content, true, foregroundColor);
-		}
+		public void WriteLine(CommandOutletContent content) => this.WriteContent(content, true, null);
+		public void WriteLine(CommandOutletColor foregroundColor, CommandOutletContent content) => this.WriteContent(content, true, foregroundColor);
 		#endregion
 
 		#region 显式实现
+		TextWriter ICommandOutlet.Writer => System.Console.Out;
 		Encoding ICommandOutlet.Encoding
 		{
 			get => System.Console.OutputEncoding;
 			set => System.Console.OutputEncoding = value;
 		}
-
-		TextWriter ICommandOutlet.Writer => System.Console.Out;
 		#endregion
 
 		#region 激发事件
@@ -310,15 +248,8 @@ partial class Terminal
 			return false;
 		}
 
-		protected virtual void OnResetted()
-		{
-			this.Resetted?.Invoke(this, EventArgs.Empty);
-		}
-
-		protected virtual void OnResetting()
-		{
-			this.Resetting?.Invoke(this, EventArgs.Empty);
-		}
+		protected virtual void OnResetted() => this.Resetted?.Invoke(this, EventArgs.Empty);
+		protected virtual void OnResetting() => this.Resetting?.Invoke(this, EventArgs.Empty);
 		#endregion
 
 		#region 中断事件
@@ -329,21 +260,11 @@ partial class Terminal
 		#endregion
 
 		#region 私有方法
-		private static CommandOutletColor ConvertColor(ConsoleColor color, CommandOutletColor defaultColor)
-		{
-			if(Enum.TryParse<CommandOutletColor>(color.ToString(), out var result))
-				return result;
-			else
-				return defaultColor;
-		}
+		private static CommandOutletColor ConvertColor(ConsoleColor color, CommandOutletColor defaultColor) =>
+			Enum.TryParse<CommandOutletColor>(color.ToString(), out var result) ? result : defaultColor;
 
-		private static ConsoleColor ConvertColor(CommandOutletColor color, ConsoleColor defaultColor)
-		{
-			if(Enum.TryParse<ConsoleColor>(color.ToString(), out var result))
-				return result;
-			else
-				return defaultColor;
-		}
+		private static ConsoleColor ConvertColor(CommandOutletColor color, ConsoleColor defaultColor) =>
+			Enum.TryParse<ConsoleColor>(color.ToString(), out var result) ? result : defaultColor;
 
 		private void WriteContent(CommandOutletContent content, bool appendLine, CommandOutletColor? foregroundColor)
 		{
