@@ -32,36 +32,40 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Diagnostics.Telemetry.Metrics;
 
-partial class Metric 
+partial class Metric
 {
-	public sealed class Counter : Metric
+	public sealed class Histogram : Metric
 	{
 		#region 构造函数
-		public Counter(string name, string unit, bool isMonotonic, params Point[] points) : this(name, unit, isMonotonic, null, points) { }
-		public Counter(string name, string unit, bool isMonotonic, string description, params Point[] points) : base(name, unit, description)
+		public Histogram(string name, string unit, params Point[] points) : this(name, unit, null, points) { }
+		public Histogram(string name, string unit, string description, params Point[] points) : base(name, unit, description)
 		{
-			this.IsMonotonic = isMonotonic;
 			this.Points = points;
 		}
 		#endregion
 
 		#region 公共属性
-		public bool IsMonotonic { get; }
 		public Point[] Points { get; set; }
 		#endregion
 
 		#region 嵌套结构
 		public readonly struct Point
 		{
-			public Point(object value, DateTimeOffset startup, DateTimeOffset timestamp, params IEnumerable<KeyValuePair<string, object>> tags)
+			public Point(ulong count, double value, double minimum, double maximum, DateTimeOffset startup, DateTimeOffset timestamp, params IEnumerable<KeyValuePair<string, object>> tags)
 			{
+				this.Count = count;
 				this.Value = value;
+				this.Minimum = minimum;
+				this.Maximum = maximum;
 				this.Startup = startup;
 				this.Timestamp = timestamp;
 				this.Tags = tags;
 			}
 
-			public readonly object Value;
+			public readonly ulong Count;
+			public readonly double Value;
+			public readonly double Minimum;
+			public readonly double Maximum;
 			public readonly DateTimeOffset Startup;
 			public readonly DateTimeOffset Timestamp;
 			public readonly IEnumerable<KeyValuePair<string, object>> Tags;
