@@ -57,7 +57,7 @@ partial class Listener
 		public ICollection<IHandler> Handlers { get; } = new List<IHandler>();
 		public override async Task<ExportLogsServiceResponse> Export(ExportLogsServiceRequest request, ServerCallContext context)
 		{
-			if(this.Handlers.Count > 0)
+			if(this.Handlers.Count > 0 && !context.CancellationToken.IsCancellationRequested)
 				await HandleAsync(this.Handlers, null, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
 
 			return new ExportLogsServiceResponse();

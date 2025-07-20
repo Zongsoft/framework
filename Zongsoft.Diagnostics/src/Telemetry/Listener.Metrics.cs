@@ -67,7 +67,7 @@ partial class Listener
 		#region 重写方法
 		public override async Task<ExportMetricsServiceResponse> Export(ExportMetricsServiceRequest request, ServerCallContext context)
 		{
-			if(this.Handlers.Count > 0)
+			if(this.Handlers.Count > 0 && !context.CancellationToken.IsCancellationRequested)
 			{
 				List<Metrics.Meter> meters = null;
 
@@ -94,7 +94,7 @@ partial class Listener
 					}
 				}
 
-				if(meters != null && meters.Count > 0)
+				if(meters != null && meters.Count > 0 && !context.CancellationToken.IsCancellationRequested)
 					await HandleAsync(this.Handlers, meters, Parameters.Parameter(request).Parameter(context), context.CancellationToken);
 			}
 
