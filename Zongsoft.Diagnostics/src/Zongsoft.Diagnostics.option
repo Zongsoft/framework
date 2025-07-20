@@ -7,8 +7,11 @@
 				<filter>*</filter>
 
 				<exporters>
-					<exporter exporter.name="telemetry" settings="server=http://localhost:4317;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
-					<exporter exporter.name="prometheus" settings="urls=http://127.0.0.1:9464,http://localhost:9464;path=/metrics;totalSuffix=true;cacheDuration=300ms;" />
+					<exporter driver="telemetry"
+					          settings="server=http://localhost:4317;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
+
+					<exporter driver="prometheus"
+					          settings="urls=http://127.0.0.1:9464,http://localhost:9464;path=/metrics;totalSuffix=true;cacheDuration=300ms;" />
 				</exporters>
 			</meters>
 
@@ -16,8 +19,11 @@
 				<filter>*</filter>
 
 				<exporters>
-					<exporter exporter.name="telemetry" settings="server=http://localhost:4317;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
-					<exporter exporter.name="zipkin" settings="server=http://localhost:9411/api/v2/spans;maxPayloadSize=4096;useShortTraceIds=true;processorType=batch;timeout=30s;interval=15s;" />
+					<exporter driver="telemetry"
+					          settings="server=http://localhost:4317;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
+
+					<exporter driver="zipkin"
+					          settings="server=http://localhost:9411/api/v2/spans;maxPayloadSize=4096;useShortTraceIds=true;processorType=batch;timeout=30s;interval=15s;" />
 				</exporters>
 			</traces>
 		</diagnostor>

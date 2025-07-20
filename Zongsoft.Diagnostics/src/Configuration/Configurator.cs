@@ -54,10 +54,10 @@ public sealed class Configurator(string path) : Diagnostor.Configurator()
 			return;
 
 		if(options.Meters != null)
-			diagnostor.Meters = new Diagnostor.Filtering(options.Meters.Filters, options.Meters.Exporters?.Select(exporter => new KeyValuePair<string, string>(exporter.Name, exporter.Settings)));
+			diagnostor.Meters = new Diagnostor.Filtering(options.Meters.Filters, options.Meters.Exporters?.Select(exporter => new KeyValuePair<string, string>(exporter.Driver, exporter.Settings)));
 
 		if(options.Traces != null)
-			diagnostor.Traces = new Diagnostor.Filtering(options.Traces.Filters, options.Traces.Exporters?.Select(exporter => new KeyValuePair<string, string>(exporter.Name, exporter.Settings)));
+			diagnostor.Traces = new Diagnostor.Filtering(options.Traces.Filters, options.Traces.Exporters?.Select(exporter => new KeyValuePair<string, string>(exporter.Driver, exporter.Settings)));
 	}
 	#endregion
 

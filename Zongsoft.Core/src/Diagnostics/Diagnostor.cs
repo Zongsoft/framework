@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Globalization;
 using System.ComponentModel;
@@ -125,11 +126,25 @@ public partial class Diagnostor
 		public Filtering(IEnumerable<string> filters, IEnumerable<KeyValuePair<string, string>> exporters = null)
 		{
 			this.Filters = new HashSet<string>(filters ?? []);
-			this.Exporters = new Dictionary<string, string>(exporters ?? [], StringComparer.OrdinalIgnoreCase);
+			this.Exporters = [.. exporters.Select(exporter => new Exporter(exporter.Key, exporter.Value))];
+		}
+
+		public Filtering(IEnumerable<string> filters, IEnumerable<Exporter> exporters = null)
+		{
+			this.Filters = new HashSet<string>(filters ?? []);
+			this.Exporters = [.. exporters];
 		}
 
 		public ICollection<string> Filters { get; }
-		public IDictionary<string, string> Exporters { get; }
+		public ICollection<Exporter> Exporters { get; }
+
+		public readonly struct Exporter(string driver, string settings)
+		{
+			public readonly string Driver = driver;
+			public readonly string Settings = settings;
+
+			public override string ToString() => $"[{this.Driver}] {this.Settings}";
+		}
 	}
 
 	[TypeConverter(typeof(ConfiguratorConverter))]
