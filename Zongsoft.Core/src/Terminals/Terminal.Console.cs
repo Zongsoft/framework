@@ -134,44 +134,9 @@ partial class Terminal
 		public void Write(string text) => System.Console.Write(text);
 		public void Write(object value) => System.Console.Write(value);
 
-		public void Write(CommandOutletColor foregroundColor, char character)
-		{
-			lock(_syncRoot)
-			{
-				var originalColor = this.ForegroundColor;
-				this.ForegroundColor = foregroundColor;
-
-				System.Console.Write(character);
-
-				this.ForegroundColor = originalColor;
-			}
-		}
-
-		public void Write(CommandOutletColor foregroundColor, string text)
-		{
-			lock(_syncRoot)
-			{
-				var originalColor = this.ForegroundColor;
-				this.ForegroundColor = foregroundColor;
-
-				System.Console.Write(text);
-
-				this.ForegroundColor = originalColor;
-			}
-		}
-
-		public void Write(CommandOutletColor foregroundColor, object value)
-		{
-			lock(_syncRoot)
-			{
-				var originalColor = this.ForegroundColor;
-				this.ForegroundColor = foregroundColor;
-
-				System.Console.Write(value);
-
-				this.ForegroundColor = originalColor;
-			}
-		}
+		public void Write(CommandOutletColor foregroundColor, char character) => Write(character, foregroundColor);
+		public void Write(CommandOutletColor foregroundColor, string text) => Write(text, foregroundColor);
+		public void Write(CommandOutletColor foregroundColor, object value) => Write(value, foregroundColor);
 
 		public void Write(CommandOutletContent content) => this.WriteContent(content, false, null);
 		public void Write(CommandOutletColor foregroundColor, CommandOutletContent content) => this.WriteContent(content, false, foregroundColor);
@@ -181,44 +146,9 @@ partial class Terminal
 		public void WriteLine(string text) => System.Console.WriteLine(text);
 		public void WriteLine(object value) => System.Console.WriteLine(value);
 
-		public void WriteLine(CommandOutletColor foregroundColor, char character)
-		{
-			lock(_syncRoot)
-			{
-				var originalColor = this.ForegroundColor;
-				this.ForegroundColor = foregroundColor;
-
-				System.Console.WriteLine(character);
-
-				this.ForegroundColor = originalColor;
-			}
-		}
-
-		public void WriteLine(CommandOutletColor foregroundColor, string text)
-		{
-			lock(_syncRoot)
-			{
-				var originalColor = this.ForegroundColor;
-				this.ForegroundColor = foregroundColor;
-
-				System.Console.WriteLine(text);
-
-				this.ForegroundColor = originalColor;
-			}
-		}
-
-		public void WriteLine(CommandOutletColor foregroundColor, object value)
-		{
-			lock(_syncRoot)
-			{
-				var originalColor = this.ForegroundColor;
-				this.ForegroundColor = foregroundColor;
-
-				System.Console.WriteLine(value);
-
-				this.ForegroundColor = originalColor;
-			}
-		}
+		public void WriteLine(CommandOutletColor foregroundColor, char character) => WriteLine(character, foregroundColor);
+		public void WriteLine(CommandOutletColor foregroundColor, string text) => WriteLine(text, foregroundColor);
+		public void WriteLine(CommandOutletColor foregroundColor, object value) => WriteLine(value, foregroundColor);
 
 		public void WriteLine(CommandOutletContent content) => this.WriteContent(content, true, null);
 		public void WriteLine(CommandOutletColor foregroundColor, CommandOutletContent content) => this.WriteContent(content, true, foregroundColor);
@@ -236,12 +166,12 @@ partial class Terminal
 		#region 激发事件
 		protected virtual bool OnAborting()
 		{
-			var e = this.Aborting;
+			var aborting = this.Aborting;
 
-			if(e != null)
+			if(aborting != null)
 			{
 				var args = new CancelEventArgs();
-				e(this, args);
+				aborting(this, args);
 				return args.Cancel;
 			}
 
@@ -266,32 +196,101 @@ partial class Terminal
 		private static ConsoleColor ConvertColor(CommandOutletColor color, ConsoleColor defaultColor) =>
 			Enum.TryParse<ConsoleColor>(color.ToString(), out var result) ? result : defaultColor;
 
+		private static string GetStyle(CommandOutletStyles style)
+		{
+			if(style == 0)
+				return null;
+
+			var code = string.Empty;
+
+			if((style & CommandOutletStyles.Bold) == CommandOutletStyles.Bold)
+				code += "1;";
+			if((style & CommandOutletStyles.Italic) == CommandOutletStyles.Italic)
+				code += "3;";
+			if((style & CommandOutletStyles.Underline) == CommandOutletStyles.Underline)
+				code += "4;";
+			if((style & CommandOutletStyles.Strikeout) == CommandOutletStyles.Strikeout)
+				code += "9;";
+			if((style & CommandOutletStyles.Blinking) == CommandOutletStyles.Blinking)
+				code += "5;";
+			if((style & CommandOutletStyles.Highlight) == CommandOutletStyles.Highlight)
+				code += "7;";
+
+			return code;
+		}
+
+		private static int GetForegroundColor(CommandOutletColor? color) => color switch
+		{
+			CommandOutletColor.Black => 30,
+			CommandOutletColor.White => 97,
+			CommandOutletColor.DarkRed => 31,
+			CommandOutletColor.DarkGreen => 32,
+			CommandOutletColor.DarkYellow => 33,
+			CommandOutletColor.DarkBlue => 34,
+			CommandOutletColor.DarkMagenta => 35,
+			CommandOutletColor.DarkCyan => 36,
+			CommandOutletColor.Red => 91,
+			CommandOutletColor.Green => 92,
+			CommandOutletColor.Yellow => 93,
+			CommandOutletColor.Blue => 94,
+			CommandOutletColor.Magenta => 95,
+			CommandOutletColor.Cyan => 96,
+			_ => 39,
+		};
+
+		private static int GetBackgroundColor(CommandOutletColor? color) => color switch
+		{
+			CommandOutletColor.Black => 40,
+			CommandOutletColor.White => 47,
+			CommandOutletColor.DarkRed => 41,
+			CommandOutletColor.DarkGreen => 42,
+			CommandOutletColor.DarkYellow => 43,
+			CommandOutletColor.DarkBlue => 44,
+			CommandOutletColor.DarkMagenta => 45,
+			CommandOutletColor.DarkCyan => 46,
+			CommandOutletColor.Red => 101,
+			CommandOutletColor.Green => 102,
+			CommandOutletColor.Yellow => 103,
+			CommandOutletColor.Blue => 104,
+			CommandOutletColor.Magenta => 105,
+			CommandOutletColor.Cyan => 106,
+			_ => 49,
+		};
+
+		private static void Write<T>(T value, CommandOutletColor? foregroundColor, CommandOutletColor? backgroundColor = null) => Write<T>(value, CommandOutletStyles.None, foregroundColor, backgroundColor);
+		private static void Write<T>(T value, CommandOutletStyles style, CommandOutletColor? foregroundColor, CommandOutletColor? backgroundColor = null)
+		{
+			if(backgroundColor == null)
+				System.Console.Write($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)}m{value}\u001b[0m");
+			else
+				System.Console.Write($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)};{GetBackgroundColor(backgroundColor.Value)}m{value}\u001b[0m");
+		}
+
+		private static void WriteLine<T>(T value, CommandOutletColor? foregroundColor, CommandOutletColor? backgroundColor = null) => WriteLine<T>(value, CommandOutletStyles.None, foregroundColor, backgroundColor);
+		private static void WriteLine<T>(T value, CommandOutletStyles style, CommandOutletColor? foregroundColor, CommandOutletColor? backgroundColor = null)
+		{
+			if(backgroundColor == null)
+				System.Console.WriteLine($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)}m{value}\u001b[0m");
+			else
+				System.Console.WriteLine($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)};{GetBackgroundColor(backgroundColor.Value)}m{value}\u001b[0m");
+		}
+
 		private void WriteContent(CommandOutletContent content, bool appendLine, CommandOutletColor? foregroundColor)
 		{
 			if(content == null)
 				return;
 
+			//设置输出的开始节点
+			var cursor = content.Cursor == null ?
+				content.First :
+				content.Cursor.Next ?? content.First;
+
 			lock(_syncRoot)
 			{
-				//获取当前的前景色
-				var originalColor = this.ForegroundColor;
-
-				//如果未指定前景色则使用当前前景色
-				if(foregroundColor == null)
-					foregroundColor = originalColor;
-
-				//设置输出的开始节点
-				var cursor = content.Cursor == null ?
-					content.First :
-					content.Cursor.Next ?? content.First;
-
 				while(cursor != null)
 				{
-					//设置当前颜色值
-					this.ForegroundColor = cursor.Color ?? foregroundColor.Value;
-
 					//输出内容段文本
-					System.Console.Write(cursor.Text);
+					Write(cursor.Text, cursor.Style, cursor.Color);
 
 					//更新内容段游标
 					content.Cursor = cursor;
@@ -299,9 +298,6 @@ partial class Terminal
 					//移动当前游标
 					cursor = cursor.Next;
 				}
-
-				//还原原来的前景色
-				this.ForegroundColor = originalColor;
 
 				//输出最后的换行
 				if(appendLine)

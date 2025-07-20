@@ -47,23 +47,28 @@ public class CommandOutletContent
 
 	#region 成员字段
 	private string _text;
+	private CommandOutletStyles _style;
 	private CommandOutletColor? _color;
 	private CommandOutletContent _next;
 	private CommandOutletContent _previous;
 	#endregion
 
 	#region 私有构造
-	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletColor? color = null)
+	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletColor? color = null) : this(previous, text, CommandOutletStyles.None, color) { }
+	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletStyles style, CommandOutletColor? color = null)
 	{
 		_text = text;
+		_style = style;
 		_color = color;
 		_previous = previous;
 		_next = null;
 	}
 
-	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletContent next, CommandOutletColor? color = null)
+	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletContent next, CommandOutletColor? color = null) : this(previous, text, next, CommandOutletStyles.None, color) { }
+	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletContent next, CommandOutletStyles style, CommandOutletColor? color = null)
 	{
 		_text = text;
+		_style = style;
 		_color = color;
 		_previous = previous;
 		_next = next;
@@ -72,18 +77,13 @@ public class CommandOutletContent
 
 	#region 公共属性
 	/// <summary>获取或设置内容段文本。</summary>
-	public string Text
-	{
-		get => _text;
-		set => _text = value;
-	}
+	public string Text { get => _text; set => _text = value; }
+
+	/// <summary>获取或设置内容段的样式。</summary>
+	public CommandOutletStyles Style { get => _style; set => _style = value; }
 
 	/// <summary>获取或设置内容段的文本颜色。</summary>
-	public CommandOutletColor? Color
-	{
-		get => _color;
-		set => _color = value;
-	}
+	public CommandOutletColor? Color { get => _color; set => _color = value; }
 
 	/// <summary>获取一个值，指示内容链是否为空（即内容链的所有节点文本都为空）。</summary>
 	public bool IsEmpty
