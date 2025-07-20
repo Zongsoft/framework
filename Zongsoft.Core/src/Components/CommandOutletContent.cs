@@ -48,28 +48,31 @@ public class CommandOutletContent
 	#region 成员字段
 	private string _text;
 	private CommandOutletStyles _style;
-	private CommandOutletColor? _color;
+	private CommandOutletColor? _foregroundColor;
+	private CommandOutletColor? _backgroundColor;
 	private CommandOutletContent _next;
 	private CommandOutletContent _previous;
 	#endregion
 
 	#region 私有构造
-	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletColor? color = null) : this(previous, text, CommandOutletStyles.None, color) { }
-	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletStyles style, CommandOutletColor? color = null)
+	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null) : this(previous, text, CommandOutletStyles.None, foregroundColor, backgroundColor) { }
+	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletStyles style, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null)
 	{
 		_text = text;
 		_style = style;
-		_color = color;
+		_foregroundColor = foregroundColor;
+		_backgroundColor = backgroundColor;
 		_previous = previous;
 		_next = null;
 	}
 
-	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletContent next, CommandOutletColor? color = null) : this(previous, text, next, CommandOutletStyles.None, color) { }
-	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletContent next, CommandOutletStyles style, CommandOutletColor? color = null)
+	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletContent next, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null) : this(previous, text, next, CommandOutletStyles.None, foregroundColor, backgroundColor) { }
+	private CommandOutletContent(CommandOutletContent previous, string text, CommandOutletContent next, CommandOutletStyles style, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null)
 	{
 		_text = text;
 		_style = style;
-		_color = color;
+		_foregroundColor = foregroundColor;
+		_backgroundColor = backgroundColor;
 		_previous = previous;
 		_next = next;
 	}
@@ -82,8 +85,11 @@ public class CommandOutletContent
 	/// <summary>获取或设置内容段的样式。</summary>
 	public CommandOutletStyles Style { get => _style; set => _style = value; }
 
-	/// <summary>获取或设置内容段的文本颜色。</summary>
-	public CommandOutletColor? Color { get => _color; set => _color = value; }
+	/// <summary>获取或设置内容段的文本前景颜色，如果为空(<c>null</c>)则使用默认前景色。</summary>
+	public CommandOutletColor? ForegroundColor { get => _foregroundColor; set => _foregroundColor = value; }
+
+	/// <summary>获取或设置内容段的文本背景颜色，如果为空(<c>null</c>)则使用默认背景色。</summary>
+	public CommandOutletColor? BackgroundColor { get => _backgroundColor; set => _backgroundColor = value; }
 
 	/// <summary>获取一个值，指示内容链是否为空（即内容链的所有节点文本都为空）。</summary>
 	public bool IsEmpty
@@ -186,6 +192,50 @@ public class CommandOutletContent
 		}
 	}
 
+	/// <summary>追加一个指定值的内容段。</summary>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append<T>(T value) => this.AfterCore($"{value}");
+
+	/// <summary>追加一个指定颜色和值的内容段。</summary>
+	/// <param name="foregroundColor">指定的内容文本颜色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append<T>(CommandOutletColor foregroundColor, T value) => this.AfterCore($"{value}", foregroundColor);
+
+	/// <summary>追加一个指定颜色和值的内容段。</summary>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => this.AfterCore($"{value}", foregroundColor, backgroundColor);
+
+	/// <summary>追加一个指定样式和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append<T>(CommandOutletStyles style, T value) => this.AfterCore($"{value}", style);
+
+	/// <summary>追加一个指定样式、颜色和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) => this.AfterCore($"{value}", style, foregroundColor);
+
+	/// <summary>追加一个指定样式、颜色和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回追加后的内容段。</returns>
+	public CommandOutletContent Append<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => this.AfterCore($"{value}", style, foregroundColor, backgroundColor);
+
+	/// <summary>追加一个指定的内容段。</summary>
+	/// <param name="content">指定的内容段。</param>
+	/// <returns>返回当前内容段。</returns>
+	public CommandOutletContent Append(CommandOutletContent content) => this.AfterCore(content);
+
 	/// <summary>追加一个空行段。</summary>
 	/// <returns>返回当前内容段。</returns>
 	public CommandOutletContent AppendLine()
@@ -197,62 +247,100 @@ public class CommandOutletContent
 		return this;
 	}
 
-	/// <summary>追加一个指定文本的内容段。</summary>
-	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回追加后的内容段。</returns>
-	public CommandOutletContent AppendLine(string text) => string.IsNullOrEmpty(text) ?
-		this.AppendLine() :
-		this.Append(text + Environment.NewLine);
-
 	/// <summary>追加一个指定值的内容段。</summary>
-	/// <param name="value">指定的内容对象。</param>
+	/// <param name="value">指定的内容值。</param>
 	/// <returns>返回追加后的内容段。</returns>
-	public CommandOutletContent AppendLine(object value) => value == null ?
+	public CommandOutletContent AppendLine<T>(T value) => value is null ?
 		this.AppendLine() :
 		this.Append($"{value}{Environment.NewLine}");
 
-	/// <summary>追加一个指定颜色和文本的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="text">指定的内容文本。</param>
+	/// <summary>追加一个指定颜色和值的内容段。</summary>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="value">指定的内容值。</param>
 	/// <returns>返回追加后的内容段。</returns>
-	public CommandOutletContent AppendLine(CommandOutletColor color, string text) => string.IsNullOrEmpty(text) ?
+	public CommandOutletContent AppendLine<T>(CommandOutletColor foregroundColor, T value) => value == null ?
 		this.AppendLine() :
-		this.Append(color, text + Environment.NewLine);
+		this.Append(foregroundColor, $"{value}{Environment.NewLine}");
 
 	/// <summary>追加一个指定颜色和值的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="value">指定的内容对象。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="value">指定的内容值。</param>
 	/// <returns>返回追加后的内容段。</returns>
-	public CommandOutletContent AppendLine(CommandOutletColor color, object value) => value == null ?
+	public CommandOutletContent AppendLine<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => value == null ?
 		this.AppendLine() :
-		this.Append(color, $"{value}{Environment.NewLine}");
+		this.Append(foregroundColor, backgroundColor, $"{value}{Environment.NewLine}");
 
-	/// <summary>追加一个指定文本的内容段。</summary>
-	/// <param name="text">指定的内容文本。</param>
+	/// <summary>追加一个指定样式和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="value">指定的内容值。</param>
 	/// <returns>返回追加后的内容段。</returns>
-	public CommandOutletContent Append(string text) => this.AfterCore(null, text);
+	public CommandOutletContent AppendLine<T>(CommandOutletStyles style, T value) => value == null ?
+		this.AppendLine() :
+		this.Append(style, $"{value}{Environment.NewLine}");
 
-	/// <summary>追加一个指定值的内容段。</summary>
-	/// <param name="value">指定的内容对象。</param>
+	/// <summary>追加一个指定样式、颜色和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="value">指定的内容值。</param>
 	/// <returns>返回追加后的内容段。</returns>
-	public CommandOutletContent Append(object value) => this.AfterCore(null, value?.ToString());
+	public CommandOutletContent AppendLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) => value == null ?
+		this.AppendLine() :
+		this.Append(style, foregroundColor, $"{value}{Environment.NewLine}");
 
-	/// <summary>追加一个指定颜色和文本的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="text">指定的内容文本。</param>
+	/// <summary>追加一个指定样式、颜色和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="value">指定的内容值。</param>
 	/// <returns>返回追加后的内容段。</returns>
-	public CommandOutletContent Append(CommandOutletColor color, string text) => this.AfterCore(color, text);
+	public CommandOutletContent AppendLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => value == null ?
+		this.AppendLine() :
+		this.Append(style, foregroundColor, backgroundColor, $"{value}{Environment.NewLine}");
 
-	/// <summary>追加一个指定颜色和值的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="value">指定的内容对象。</param>
-	/// <returns>返回追加后的内容段。</returns>
-	public CommandOutletContent Append(CommandOutletColor color, object value) => this.AfterCore(color, value?.ToString());
+	/// <summary>新增一个指定值的内容段。</summary>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回新增的首部内容段。</returns>
+	public CommandOutletContent Prepend<T>(T value) => this.BeforeCore($"{value}");
 
-	/// <summary>追加一个指定的内容段。</summary>
+	/// <summary>新增一个指定颜色和值的内容段。</summary>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回新增的首部内容段。</returns>
+	public CommandOutletContent Prepend<T>(CommandOutletColor foregroundColor, T value) => this.BeforeCore($"{value}", foregroundColor);
+
+	/// <summary>新增一个指定颜色和值的内容段。</summary>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回新增的首部内容段。</returns>
+	public CommandOutletContent Prepend<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => this.BeforeCore($"{value}", foregroundColor, backgroundColor);
+
+	/// <summary>新增一个指定样式和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回新增的首部内容段。</returns>
+	public CommandOutletContent Prepend<T>(CommandOutletStyles style, T value) => this.BeforeCore($"{value}", style);
+
+	/// <summary>新增一个指定样式、颜色和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回新增的首部内容段。</returns>
+	public CommandOutletContent Prepend<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) => this.BeforeCore($"{value}", style, foregroundColor);
+
+	/// <summary>新增一个指定样式、颜色和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回新增的首部内容段。</returns>
+	public CommandOutletContent Prepend<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => this.BeforeCore($"{value}", style, foregroundColor, backgroundColor);
+
+	/// <summary>将指定内容段置为当前内容链的首部。</summary>
 	/// <param name="content">指定的内容段。</param>
-	/// <returns>返回当前内容段。</returns>
-	public CommandOutletContent Append(CommandOutletContent content) => this.AfterCore(content);
+	/// <returns>返回当前内容链的新首部。</returns>
+	public CommandOutletContent Prepend(CommandOutletContent content) => this.BeforeCore(content);
 
 	/// <summary>前插一个空行段。</summary>
 	/// <returns>返回当前内容段。</returns>
@@ -265,66 +353,60 @@ public class CommandOutletContent
 		return this;
 	}
 
-	/// <summary>前插一个指定文本的内容段。</summary>
-	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回前插后的内容段。</returns>
-	public CommandOutletContent PrependLine(string text) => string.IsNullOrEmpty(text) ?
-		this.PrependLine() :
-		this.Prepend(text + Environment.NewLine);
-
 	/// <summary>前插一个指定值的内容段。</summary>
-	/// <param name="value">指定的内容对象。</param>
+	/// <param name="value">指定的内容值。</param>
 	/// <returns>返回前插后的内容段。</returns>
-	public CommandOutletContent PrependLine(object value) => value == null ?
+	public CommandOutletContent PrependLine<T>(T value) => value == null ?
 		this.PrependLine() :
 		this.Prepend($"{value}{Environment.NewLine}");
 
-	/// <summary>前插一个指定颜色和文本的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="text">指定的内容文本。</param>
+	/// <summary>前插一个指定颜色和值的内容段。</summary>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="value">指定的内容值。</param>
 	/// <returns>返回前插后的内容段。</returns>
-	public CommandOutletContent PrependLine(CommandOutletColor color, string text) => string.IsNullOrEmpty(text) ?
+	public CommandOutletContent PrependLine<T>(CommandOutletColor foregroundColor, T value) => value == null ?
 		this.PrependLine() :
-		this.Prepend(color, text + Environment.NewLine);
+		this.Prepend(foregroundColor, $"{value}{Environment.NewLine}");
 
 	/// <summary>前插一个指定颜色和值的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="value">指定的内容对象。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="value">指定的内容值。</param>
 	/// <returns>返回前插后的内容段。</returns>
-	public CommandOutletContent PrependLine(CommandOutletColor color, object value) => value == null ?
+	public CommandOutletContent PrependLine<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => value == null ?
 		this.PrependLine() :
-		this.Prepend(color, $"{value}{Environment.NewLine}");
+		this.Prepend(foregroundColor, backgroundColor, $"{value}{Environment.NewLine}");
 
-	/// <summary>新增一个指定文本的内容段。</summary>
-	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回新增的首部内容段。</returns>
-	public CommandOutletContent Prepend(string text) => this.BeforeCore(null, text);
+	/// <summary>前插一个指定样式和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回前插后的内容段。</returns>
+	public CommandOutletContent PrependLine<T>(CommandOutletStyles style, T value) => value == null ?
+		this.PrependLine() :
+		this.Prepend(style, $"{value}{Environment.NewLine}");
 
-	/// <summary>新增一个指定值的内容段。</summary>
-	/// <param name="value">指定的内容对象。</param>
-	/// <returns>返回新增的首部内容段。</returns>
-	public CommandOutletContent Prepend(object value) => this.BeforeCore(null, value?.ToString());
+	/// <summary>前插一个指定样式、颜色和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回前插后的内容段。</returns>
+	public CommandOutletContent PrependLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) => value == null ?
+		this.PrependLine() :
+		this.Prepend(style, foregroundColor, $"{value}{Environment.NewLine}");
 
-	/// <summary>新增一个指定颜色和文本的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="text">指定的内容文本。</param>
-	/// <returns>返回新增的首部内容段。</returns>
-	public CommandOutletContent Prepend(CommandOutletColor color, string text) => this.BeforeCore(color, text);
-
-	/// <summary>新增一个指定颜色和值的内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
-	/// <param name="value">指定的内容对象。</param>
-	/// <returns>返回新增的首部内容段。</returns>
-	public CommandOutletContent Prepend(CommandOutletColor color, object value) => this.BeforeCore(color, value?.ToString());
-
-	/// <summary>将指定内容段置为当前内容链的首部。</summary>
-	/// <param name="content">指定的内容段。</param>
-	/// <returns>返回当前内容链的新首部。</returns>
-	public CommandOutletContent Prepend(CommandOutletContent content) => this.BeforeCore(content);
+	/// <summary>前插一个指定样式、颜色和值的内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="value">指定的内容值。</param>
+	/// <returns>返回前插后的内容段。</returns>
+	public CommandOutletContent PrependLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => value == null ?
+		this.PrependLine() :
+		this.Prepend(style, foregroundColor, backgroundColor, $"{value}{Environment.NewLine}");
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => _color.HasValue ? $"[{_color}] {_text}" : _text ?? string.Empty;
+	public override string ToString() => _text ?? string.Empty;
 	#endregion
 
 	#region 私有方法
@@ -342,20 +424,20 @@ public class CommandOutletContent
 		{
 			content._previous = this;
 			content._next = _next;
-
 			return _next = _next._previous = content;
 		}
 	}
 
-	private CommandOutletContent AfterCore(CommandOutletColor? color, string text)
+	private CommandOutletContent AfterCore(string text, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null) => this.AfterCore(text, CommandOutletStyles.None, foregroundColor, backgroundColor);
+	private CommandOutletContent AfterCore(string text, CommandOutletStyles style, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null)
 	{
 		if(string.IsNullOrEmpty(text))
 			return this;
 
 		if(_next == null)
-			return _next = new CommandOutletContent(this, text, color);
+			return _next = new CommandOutletContent(this, text, style, foregroundColor, backgroundColor);
 		else
-			return _next = _next._previous = new CommandOutletContent(this, text, _next, color);
+			return _next = _next._previous = new CommandOutletContent(this, text, _next, style, foregroundColor, backgroundColor);
 	}
 
 	private CommandOutletContent BeforeCore(CommandOutletContent content)
@@ -372,20 +454,20 @@ public class CommandOutletContent
 		{
 			content._next = this;
 			content._previous = _previous;
-
 			return _previous._next = content;
 		}
 	}
 
-	private CommandOutletContent BeforeCore(CommandOutletColor? color, string text)
+	private CommandOutletContent BeforeCore(string text, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null) => this.BeforeCore(text, CommandOutletStyles.None, foregroundColor, backgroundColor);
+	private CommandOutletContent BeforeCore(string text, CommandOutletStyles style, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null)
 	{
 		if(string.IsNullOrEmpty(text))
 			return this;
 
 		if(_previous == null)
-			return _previous = new CommandOutletContent(null, text, this, color);
+			return _previous = new CommandOutletContent(null, text, this, style, foregroundColor, backgroundColor);
 		else
-			return _previous._next = new CommandOutletContent(_previous, text, this, color);
+			return _previous._next = new CommandOutletContent(_previous, text, this, style, foregroundColor, backgroundColor);
 	}
 	#endregion
 
@@ -396,10 +478,38 @@ public class CommandOutletContent
 	public static CommandOutletContent Create(string text = null) => new(null, text);
 
 	/// <summary>创建一个指定颜色和文本的新内容段。</summary>
-	/// <param name="color">指定的内容文本颜色。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
 	/// <param name="text">指定的内容文本。</param>
 	/// <returns>返回新创建的内容段。</returns>
-	public static CommandOutletContent Create(CommandOutletColor color, string text) => new(null, text, color);
+	public static CommandOutletContent Create(CommandOutletColor foregroundColor, string text) => new(null, text, foregroundColor);
+
+	/// <summary>创建一个指定颜色和文本的新内容段。</summary>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="text">指定的内容文本。</param>
+	/// <returns>返回新创建的内容段。</returns>
+	public static CommandOutletContent Create(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, string text) => new(null, text, foregroundColor, backgroundColor);
+
+	/// <summary>创建一个指定样式和文本的新内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="text">指定的内容文本。</param>
+	/// <returns>返回新创建的内容段。</returns>
+	public static CommandOutletContent Create(CommandOutletStyles style, string text) => new(null, text, style);
+
+	/// <summary>创建一个指定样式、颜色和文本的新内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="text">指定的内容文本。</param>
+	/// <returns>返回新创建的内容段。</returns>
+	public static CommandOutletContent Create(CommandOutletStyles style, CommandOutletColor foregroundColor, string text) => new(null, text, style, foregroundColor);
+
+	/// <summary>创建一个指定样式、颜色和文本的新内容段。</summary>
+	/// <param name="style">指定的内容样式。</param>
+	/// <param name="foregroundColor">指定的内容前景色。</param>
+	/// <param name="backgroundColor">指定的内容背景色。</param>
+	/// <param name="text">指定的内容文本。</param>
+	/// <returns>返回新创建的内容段。</returns>
+	public static CommandOutletContent Create(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, string text) => new(null, text, style, foregroundColor, backgroundColor);
 
 	/// <summary>获取指定输出内容的全文。</summary>
 	/// <param name="content">指定的输出内容。</param>

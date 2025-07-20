@@ -38,22 +38,20 @@ public interface ICommandOutlet
 	Encoding Encoding { get; set; }
 	TextWriter Writer { get; }
 
-	void Write(char character);
-	void Write(string text);
-	void Write(object value);
 	void Write(CommandOutletContent content);
-	void Write(CommandOutletColor color, CommandOutletContent content);
-	void Write(CommandOutletColor color, char character);
-	void Write(CommandOutletColor color, string text);
-	void Write(CommandOutletColor color, object value);
+	void Write<T>(T value);
+	void Write<T>(CommandOutletColor foregroundColor, T value);
+	void Write<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value);
+	void Write<T>(CommandOutletStyles style, T value);
+	void Write<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value);
+	void Write<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value);
 
 	void WriteLine();
-	void WriteLine(char character);
-	void WriteLine(string text);
-	void WriteLine(object value);
 	void WriteLine(CommandOutletContent content);
-	void WriteLine(CommandOutletColor color, CommandOutletContent content);
-	void WriteLine(CommandOutletColor color, char character);
-	void WriteLine(CommandOutletColor color, string text);
-	void WriteLine(CommandOutletColor color, object value);
+	void WriteLine<T>(T value);
+	void WriteLine<T>(CommandOutletColor foregroundColor, T value);
+	void WriteLine<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value);
+	void WriteLine<T>(CommandOutletStyles style, T value);
+	void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value);
+	void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value);
 }

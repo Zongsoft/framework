@@ -321,27 +321,22 @@ public partial class CommandExecutor : ICommandExecutor
 		#endregion
 
 		#region 公共方法
-		public void Write(object value) { }
-		public void Write(string text) { }
-		public void Write(char character) { }
-		public void Write(CommandOutletColor color, object value) { }
-		public void Write(CommandOutletColor color, string text) { }
-		public void Write(CommandOutletColor color, char character) { }
-		public void Write(string format, params object[] args) { }
 		public void Write(CommandOutletContent content) { }
-		public void Write(CommandOutletColor color, CommandOutletContent content) { }
-		public void Write(CommandOutletColor color, string format, params object[] args) { }
+		public void Write<T>(T value) { }
+		public void Write<T>(CommandOutletColor foregroundColor, T value) { }
+		public void Write<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) { }
+		public void Write<T>(CommandOutletStyles style, T value) { }
+		public void Write<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) { }
+		public void Write<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) { }
+
 		public void WriteLine() { }
-		public void WriteLine(object value) { }
-		public void WriteLine(string text) { }
-		public void WriteLine(char character) { }
-		public void WriteLine(CommandOutletColor color, object value) { }
-		public void WriteLine(CommandOutletColor color, string text) { }
-		public void WriteLine(CommandOutletColor color, char character) { }
-		public void WriteLine(string format, params object[] args) { }
 		public void WriteLine(CommandOutletContent content) { }
-		public void WriteLine(CommandOutletColor color, CommandOutletContent content) { }
-		public void WriteLine(CommandOutletColor color, string format, params object[] args) { }
+		public void WriteLine<T>(T value) { }
+		public void WriteLine<T>(CommandOutletColor foregroundColor, T value) { }
+		public void WriteLine<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) { }
+		public void WriteLine<T>(CommandOutletStyles style, T value) { }
+		public void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) { }
+		public void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) { }
 		#endregion
 	}
 

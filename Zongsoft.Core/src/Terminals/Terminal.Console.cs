@@ -130,28 +130,24 @@ partial class Terminal
 				System.Console.ResetColor();
 		}
 
-		public void Write(char character) => System.Console.Write(character);
 		public void Write(string text) => System.Console.Write(text);
-		public void Write(object value) => System.Console.Write(value);
-
-		public void Write(CommandOutletColor foregroundColor, char character) => Write(character, foregroundColor);
-		public void Write(CommandOutletColor foregroundColor, string text) => Write(text, foregroundColor);
-		public void Write(CommandOutletColor foregroundColor, object value) => Write(value, foregroundColor);
-
-		public void Write(CommandOutletContent content) => this.WriteContent(content, false, null);
-		public void Write(CommandOutletColor foregroundColor, CommandOutletContent content) => this.WriteContent(content, false, foregroundColor);
+		public void Write<T>(T value) => System.Console.Write($"{value}");
+		public void Write(CommandOutletContent content) => this.WriteContent(content, false);
+		public void Write<T>(CommandOutletColor foregroundColor, T value) => Write(value, foregroundColor);
+		public void Write<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => Write(value, foregroundColor, backgroundColor);
+		public void Write<T>(CommandOutletStyles style, T value) => Write(value, style);
+		public void Write<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) => Write(value, style, foregroundColor);
+		public void Write<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => Write(value, style, foregroundColor, backgroundColor);
 
 		public void WriteLine() => System.Console.WriteLine();
-		public void WriteLine(char character) => System.Console.WriteLine(character);
 		public void WriteLine(string text) => System.Console.WriteLine(text);
-		public void WriteLine(object value) => System.Console.WriteLine(value);
-
-		public void WriteLine(CommandOutletColor foregroundColor, char character) => WriteLine(character, foregroundColor);
-		public void WriteLine(CommandOutletColor foregroundColor, string text) => WriteLine(text, foregroundColor);
-		public void WriteLine(CommandOutletColor foregroundColor, object value) => WriteLine(value, foregroundColor);
-
-		public void WriteLine(CommandOutletContent content) => this.WriteContent(content, true, null);
-		public void WriteLine(CommandOutletColor foregroundColor, CommandOutletContent content) => this.WriteContent(content, true, foregroundColor);
+		public void WriteLine<T>(T value) => System.Console.WriteLine($"{value}");
+		public void WriteLine(CommandOutletContent content) => this.WriteContent(content, true);
+		public void WriteLine<T>(CommandOutletColor foregroundColor, T value) => WriteLine(value, foregroundColor);
+		public void WriteLine<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => WriteLine(value, foregroundColor, backgroundColor);
+		public void WriteLine<T>(CommandOutletStyles style, T value) => WriteLine(value, style);
+		public void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) => WriteLine(value, style, foregroundColor);
+		public void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => WriteLine(value, style, foregroundColor, backgroundColor);
 		#endregion
 
 		#region 显式实现
@@ -257,8 +253,8 @@ partial class Terminal
 			_ => 49,
 		};
 
-		private static void Write<T>(T value, CommandOutletColor? foregroundColor, CommandOutletColor? backgroundColor = null) => Write<T>(value, CommandOutletStyles.None, foregroundColor, backgroundColor);
-		private static void Write<T>(T value, CommandOutletStyles style, CommandOutletColor? foregroundColor, CommandOutletColor? backgroundColor = null)
+		private static void Write<T>(T value, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null) => Write<T>(value, CommandOutletStyles.None, foregroundColor, backgroundColor);
+		private static void Write<T>(T value, CommandOutletStyles style, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null)
 		{
 			if(backgroundColor == null)
 				System.Console.Write($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)}m{value}\u001b[0m");
@@ -266,8 +262,8 @@ partial class Terminal
 				System.Console.Write($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)};{GetBackgroundColor(backgroundColor.Value)}m{value}\u001b[0m");
 		}
 
-		private static void WriteLine<T>(T value, CommandOutletColor? foregroundColor, CommandOutletColor? backgroundColor = null) => WriteLine<T>(value, CommandOutletStyles.None, foregroundColor, backgroundColor);
-		private static void WriteLine<T>(T value, CommandOutletStyles style, CommandOutletColor? foregroundColor, CommandOutletColor? backgroundColor = null)
+		private static void WriteLine<T>(T value, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null) => WriteLine<T>(value, CommandOutletStyles.None, foregroundColor, backgroundColor);
+		private static void WriteLine<T>(T value, CommandOutletStyles style, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null)
 		{
 			if(backgroundColor == null)
 				System.Console.WriteLine($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)}m{value}\u001b[0m");
@@ -275,7 +271,7 @@ partial class Terminal
 				System.Console.WriteLine($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)};{GetBackgroundColor(backgroundColor.Value)}m{value}\u001b[0m");
 		}
 
-		private void WriteContent(CommandOutletContent content, bool appendLine, CommandOutletColor? foregroundColor)
+		private void WriteContent(CommandOutletContent content, bool appendLine)
 		{
 			if(content == null)
 				return;
@@ -290,7 +286,7 @@ partial class Terminal
 				while(cursor != null)
 				{
 					//输出内容段文本
-					Write(cursor.Text, cursor.Style, cursor.Color);
+					Write(cursor.Text, cursor.Style, cursor.ForegroundColor, cursor.BackgroundColor);
 
 					//更新内容段游标
 					content.Cursor = cursor;

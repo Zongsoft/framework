@@ -60,7 +60,9 @@ public class CommandOutletContentTest
 		var second = first.Append("A");
 		Assert.NotEmpty(second.Text);
 		Assert.Equal("A", second.Text);
-		Assert.Null(second.Color);
+		Assert.Equal(CommandOutletStyles.None, second.Style);
+		Assert.Null(second.ForegroundColor);
+		Assert.Null(second.BackgroundColor);
 		Assert.Null(second.Next);
 		Assert.NotNull(second.Last);
 		Assert.NotNull(second.First);
@@ -71,7 +73,7 @@ public class CommandOutletContentTest
 		var third = second.Append(CommandOutletColor.Red, "B");
 		Assert.NotEmpty(third.Text);
 		Assert.Equal("B", third.Text);
-		Assert.Equal(CommandOutletColor.Red, third.Color);
+		Assert.Equal(CommandOutletColor.Red, third.ForegroundColor);
 		Assert.Null(third.Next);
 		Assert.NotNull(third.Last);
 		Assert.NotNull(third.First);
@@ -83,7 +85,7 @@ public class CommandOutletContentTest
 		var fourth = third.Append(CommandOutletColor.Blue, "C");
 		Assert.NotEmpty(fourth.Text);
 		Assert.Equal("C", fourth.Text);
-		Assert.Equal(CommandOutletColor.Blue, fourth.Color);
+		Assert.Equal(CommandOutletColor.Blue, fourth.ForegroundColor);
 		Assert.Null(fourth.Next);
 		Assert.NotNull(fourth.Last);
 		Assert.NotNull(fourth.First);

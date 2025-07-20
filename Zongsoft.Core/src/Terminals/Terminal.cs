@@ -64,23 +64,21 @@ public static partial class Terminal
 	public static void Reset() => Default.Reset();
 	public static void ResetStyles(TerminalStyles styles) => Default.ResetStyles(styles);
 
-	public static void Write(char character) => Default.Write(character);
-	public static void Write(string text) => Default.Write(text);
-	public static void Write(object value) => Default.Write(value);
-	public static void Write(CommandOutletColor foregroundColor, char character) => Default.Write(foregroundColor, character);
-	public static void Write(CommandOutletColor foregroundColor, string text) => Default.Write(foregroundColor, text);
-	public static void Write(CommandOutletColor foregroundColor, object value) => Default.Write(foregroundColor, value);
 	public static void Write(CommandOutletContent content) => Default.Write(content);
-	public static void Write(CommandOutletColor foregroundColor, CommandOutletContent content) => Default.Write(foregroundColor, content);
+	public static void Write<T>(T value) => Default.Write(value);
+	public static void Write<T>(CommandOutletColor foregroundColor, T value) => Default.Write(foregroundColor, value);
+	public static void Write<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => Default.Write(foregroundColor, backgroundColor, value);
+	public static void Write<T>(CommandOutletStyles style, T value) => Default.Write(style, value);
+	public static void Write<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) => Default.Write(style, foregroundColor, value);
+	public static void Write<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => Default.Write(style, foregroundColor, backgroundColor, value);
 
 	public static void WriteLine() => Default.WriteLine();
-	public static void WriteLine(char character) => Default.WriteLine(character);
-	public static void WriteLine(string text) => Default.WriteLine(text);
-	public static void WriteLine(object value) => Default.WriteLine(value);
-	public static void WriteLine(CommandOutletColor foregroundColor, char character) => Default.WriteLine(foregroundColor, character);
-	public static void WriteLine(CommandOutletColor foregroundColor, string text) => Default.WriteLine(foregroundColor, text);
-	public static void WriteLine(CommandOutletColor foregroundColor, object value) => Default.WriteLine(foregroundColor, value);
 	public static void WriteLine(CommandOutletContent content) => Default.WriteLine(content);
-	public static void WriteLine(CommandOutletColor foregroundColor, CommandOutletContent content) => Default.WriteLine(foregroundColor, content);
+	public static void WriteLine<T>(T value) => Default.WriteLine(value);
+	public static void WriteLine<T>(CommandOutletColor foregroundColor, T value) => Default.WriteLine(foregroundColor, value);
+	public static void WriteLine<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => Default.WriteLine(foregroundColor, backgroundColor, value);
+	public static void WriteLine<T>(CommandOutletStyles style, T value) => Default.WriteLine(style, value);
+	public static void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value) => Default.WriteLine(style, foregroundColor, value);
+	public static void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => Default.WriteLine(style, foregroundColor, backgroundColor, value);
 	#endregion
 }
