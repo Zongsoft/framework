@@ -33,7 +33,6 @@
 		<PackageReference Include="OpenTelemetry.PersistentStorage.Abstractions" VersionOverride="1.0.0" />
 		<PackageReference Include="OpenTelemetry.PersistentStorage.FileSystem" VersionOverride="1.0.0" />
 
-		<PackageReference Include="Google.Protobuf" VersionOverride="3.31.1" />
 		<PackageReference Include="Grpc.Core.Api" VersionOverride="2.71.0" />
 		<PackageReference Include="Grpc.Net.Common" VersionOverride="2.71.0" />
 		<PackageReference Include="Grpc.Net.Client" VersionOverride="2.71.0" />

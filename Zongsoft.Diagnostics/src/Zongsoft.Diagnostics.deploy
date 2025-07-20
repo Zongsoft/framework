@@ -23,4 +23,3 @@ nuget:OpenTelemetry.PersistentStorage.FileSystem@1.0.0
 nuget:Grpc.Core.Api@2.71.0
 nuget:Grpc.Net.Common@2.71.0
 nuget:Grpc.Net.Client@2.71.0
-nuget:Google.Protobuf@3.31.1
