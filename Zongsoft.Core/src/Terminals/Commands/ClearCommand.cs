@@ -48,7 +48,6 @@ public class ClearCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		//清空当前终端的显示缓存
 		context.GetTerminal()?.Clear();
 		return ValueTask.FromResult<object>(null);
 	}
