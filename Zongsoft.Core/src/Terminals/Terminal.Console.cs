@@ -38,6 +38,13 @@ namespace Zongsoft.Terminals;
 
 partial class Terminal
 {
+	/// <summary>表示控制台终端。</summary>
+	/// <remarks>
+	/// 	<list type="bullet">
+	/// 		<item>https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797</item>
+	/// 		<item>https://en.wikipedia.org/wiki/ANSI_escape_code</item>
+	/// 	</list>
+	/// </remarks>
 	private class ConsoleTerminal : ITerminal, ICommandOutlet
 	{
 		#region 单例字段
@@ -132,7 +139,7 @@ partial class Terminal
 
 		public void Write(string text) => System.Console.Write(text);
 		public void Write<T>(T value) => System.Console.Write($"{value}");
-		public void Write(CommandOutletContent content) => this.WriteContent(content, false);
+		public void Write(CommandOutletContent content) => this.Write(content, false);
 		public void Write<T>(CommandOutletColor foregroundColor, T value) => Write(value, foregroundColor);
 		public void Write<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => Write(value, foregroundColor, backgroundColor);
 		public void Write<T>(CommandOutletStyles style, T value) => Write(value, style);
@@ -142,7 +149,7 @@ partial class Terminal
 		public void WriteLine() => System.Console.WriteLine();
 		public void WriteLine(string text) => System.Console.WriteLine(text);
 		public void WriteLine<T>(T value) => System.Console.WriteLine($"{value}");
-		public void WriteLine(CommandOutletContent content) => this.WriteContent(content, true);
+		public void WriteLine(CommandOutletContent content) => this.Write(content, true);
 		public void WriteLine<T>(CommandOutletColor foregroundColor, T value) => WriteLine(value, foregroundColor);
 		public void WriteLine<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => WriteLine(value, foregroundColor, backgroundColor);
 		public void WriteLine<T>(CommandOutletStyles style, T value) => WriteLine(value, style);
@@ -271,7 +278,7 @@ partial class Terminal
 				System.Console.WriteLine($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)};{GetBackgroundColor(backgroundColor.Value)}m{value}\u001b[0m");
 		}
 
-		private void WriteContent(CommandOutletContent content, bool appendLine)
+		private void Write(CommandOutletContent content, bool appendLine)
 		{
 			if(content == null)
 				return;
