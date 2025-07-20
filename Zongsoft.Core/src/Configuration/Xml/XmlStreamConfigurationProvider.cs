@@ -214,7 +214,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 					this.Indent(this.Reader.LocalName);
 				}
 
-				var key = this.GetPath();;
+				var key = this.GetPath();
 				if(this.Data.ContainsKey(key))
 					throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated, key, GetLineInfo(this.Reader)));
 
