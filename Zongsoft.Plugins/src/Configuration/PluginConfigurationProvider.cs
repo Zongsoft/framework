@@ -197,7 +197,7 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 		}
 
 		//获取当前目录下的当前环境的从属配置文件
-		var slaves = GetOptionSlaveFiles(directory, fileName, environment);
+		var slaves = GetSlaveFiles(directory, fileName, environment);
 
 		if(slaves != null && slaves.Length > 0)
 		{
@@ -215,6 +215,26 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 			}
 		}
 
+		//获取当前目录下的特定配置文件（host & site）
+		var specifics = GetSpecificFiles(directory, fileName, environment, _source.Options.Configuration).ToArray();
+
+		if(specifics.Length > 0)
+		{
+			if(providers == null)
+				providers = new List<IConfigurationProvider>(specifics.Length);
+
+			for(int i = 0; i < specifics.Length; i++)
+			{
+				providers.Add(new Xml.XmlConfigurationSource()
+				{
+					Path = specifics[i],
+					Optional = true,
+					ReloadOnChange = true,
+				}.Build(null));
+			}
+		}
+
+		//如果没有任何配置文件则返回失败
 		if(providers == null || providers.Count == 0)
 			return false;
 
@@ -226,7 +246,37 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 		return _providers.TryAdd(plugin, composite);
 	}
 
-	private static string[] GetOptionSlaveFiles(string directory, string fileName, string environment) =>
-		Directory.GetFiles(directory, $"{fileName}.{environment}-*.option");
+	private static string[] GetSlaveFiles(string directory, string fileName, string environment) =>
+		string.IsNullOrEmpty(environment) ? [] : Directory.GetFiles(directory, $"{fileName}.{environment}-*.option");
+
+	private static IEnumerable<string> GetSpecificFiles(string directory, string fileName, string environment, IConfiguration configuration)
+	{
+		if(configuration == null)
+			yield break;
+
+		var host = configuration.GetSection("host")?.Value;
+		if(!string.IsNullOrWhiteSpace(host))
+		{
+			var path = Path.Combine(directory, $"{fileName}.{host}.option");
+			if(File.Exists(path))
+				yield return path;
+
+			var slaves = GetSlaveFiles(directory, $"{fileName}.{host}", environment);
+			for(int i = 0; i < slaves.Length; i++)
+				yield return slaves[i];
+		}
+
+		var site = configuration.GetSection("site")?.Value;
+		if(!string.IsNullOrWhiteSpace(site) && !string.Equals(site, host, StringComparison.OrdinalIgnoreCase))
+		{
+			var path = Path.Combine(directory, $"{fileName}.{site}.option");
+			if(File.Exists(path))
+				yield return path;
+
+			var slaves = GetSlaveFiles(directory, $"{fileName}.{site}", environment);
+			for(int i = 0; i < slaves.Length; i++)
+				yield return slaves[i];
+		}
+	}
 	#endregion
 }
