@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.0.0</Version>
+		<Version>1.1.0</Version>
 		<Product>Zongsoft gRPC for Web Library</Product>
 		<Description>This is a class library that provides gRPC service infrastructure.</Description>
 		<RootNamespace>Zongsoft.Web.Grpc</RootNamespace>
@@ -35,7 +35,5 @@
 	<ItemGroup>
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
-		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
-
 </Project>
