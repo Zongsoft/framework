@@ -1,3 +1,4 @@
+artifacts/Zongsoft.Web.Grpc.option
 artifacts/Zongsoft.Web.Grpc.plugin
 lib/$(Framework)/Zongsoft.Web.Grpc.*
 lib/$(Framework)/*/Zongsoft.Web.Grpc.resources.*
