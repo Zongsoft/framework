@@ -36,198 +36,197 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public class PluginConfigurationProvider : ICompositeConfigurationProvider, IConfigurationProvider, IDisposable
 {
-	public class PluginConfigurationProvider : ICompositeConfigurationProvider, IConfigurationProvider, IDisposable
+	#region 成员字段
+	private readonly PluginConfigurationSource _source;
+	private readonly Zongsoft.Plugins.PluginTree _pluginTree;
+	private readonly ConfigurationReloadToken _reloadToken;
+	private readonly ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider> _providers;
+	#endregion
+
+	#region 构造函数
+	public PluginConfigurationProvider(PluginConfigurationSource source)
 	{
-		#region 成员字段
-		private readonly PluginConfigurationSource _source;
-		private readonly Zongsoft.Plugins.PluginTree _pluginTree;
-		private readonly ConfigurationReloadToken _reloadToken;
-		private readonly ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider> _providers;
-		#endregion
+		_source = source ?? throw new ArgumentNullException(nameof(source));
+		_reloadToken = new ConfigurationReloadToken();
+		_providers = new ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider>();
 
-		#region 构造函数
-		public PluginConfigurationProvider(PluginConfigurationSource source)
+		_pluginTree = Zongsoft.Plugins.PluginTree.Get(source.Options);
+		_pluginTree.Loader.PluginLoaded += PluginLoader_PluginLoaded;
+		_pluginTree.Loader.PluginUnloaded += PluginLoader_PluginUnloaded;
+	}
+	#endregion
+
+	#region 公共属性
+	public IEnumerable<IConfigurationProvider> Providers { get => _providers.Values; }
+	#endregion
+
+	#region 公共方法
+	public bool TryGet(string key, out string value)
+	{
+		foreach(var provider in _providers.Values)
 		{
-			_source = source ?? throw new ArgumentNullException(nameof(source));
-			_reloadToken = new ConfigurationReloadToken();
-			_providers = new ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider>();
-
-			_pluginTree = Zongsoft.Plugins.PluginTree.Get(source.Options);
-			_pluginTree.Loader.PluginLoaded += PluginLoader_PluginLoaded;
-			_pluginTree.Loader.PluginUnloaded += PluginLoader_PluginUnloaded;
-		}
-		#endregion
-
-		#region 公共属性
-		public IEnumerable<IConfigurationProvider> Providers { get => _providers.Values; }
-		#endregion
-
-		#region 公共方法
-		public bool TryGet(string key, out string value)
-		{
-			foreach(var provider in _providers.Values)
-			{
-				if(provider.TryGet(key, out value))
-					return true;
-			}
-
-			value = null;
-			return false;
+			if(provider.TryGet(key, out value))
+				return true;
 		}
 
-		public void Set(string key, string value)
+		value = null;
+		return false;
+	}
+
+	public void Set(string key, string value)
+	{
+		foreach(var provider in _providers.Values)
 		{
-			foreach(var provider in _providers.Values)
-			{
-				if(provider.TryGet(key, out _))
-					provider.Set(key, value);
-			}
+			if(provider.TryGet(key, out _))
+				provider.Set(key, value);
+		}
+	}
+
+	public void Load()
+	{
+		foreach(var plugin in _providers.Keys)
+		{
+			if(_providers.TryRemove(plugin, out var provider))
+				provider.Dispose();
 		}
 
-		public void Load()
+		foreach(var plugin in _pluginTree.Plugins)
 		{
+			this.LoadOptionFile(plugin);
+		}
+	}
+
+	public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
+	{
+		return _providers.Values
+			.SelectMany(p => p.GetChildKeys(Enumerable.Empty<string>(), parentPath))
+			.Concat(earlierKeys)
+			.OrderBy(k => k, ConfigurationKeyComparer.Instance);
+	}
+
+	public IChangeToken GetReloadToken()
+	{
+		return _reloadToken;
+	}
+	#endregion
+
+	#region 重写方法
+	public override string ToString()
+	{
+		return string.Join(Environment.NewLine, _providers.Select(provider => provider.ToString()));
+	}
+	#endregion
+
+	#region 事件处理
+	private void PluginLoader_PluginLoaded(object sender, Zongsoft.Plugins.PluginLoadedEventArgs e)
+	{
+		this.LoadOptionFile(e.Plugin);
+	}
+
+	private void PluginLoader_PluginUnloaded(object sender, Zongsoft.Plugins.PluginUnloadedEventArgs e)
+	{
+		if(_providers.TryRemove(e.Plugin, out var provider))
+			provider.Dispose();
+	}
+	#endregion
+
+	#region 释放处置
+	public void Dispose()
+	{
+		this.Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	protected virtual void Dispose(bool disposing)
+	{
+		if(disposing)
+		{
+			_pluginTree.Loader.PluginLoaded -= PluginLoader_PluginLoaded;
+			_pluginTree.Loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
+
 			foreach(var plugin in _providers.Keys)
 			{
 				if(_providers.TryRemove(plugin, out var provider))
 					provider.Dispose();
 			}
-
-			foreach(var plugin in _pluginTree.Plugins)
-			{
-				this.LoadOptionFile(plugin);
-			}
 		}
-
-		public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
-		{
-			return _providers.Values
-				.SelectMany(p => p.GetChildKeys(Enumerable.Empty<string>(), parentPath))
-				.Concat(earlierKeys)
-				.OrderBy(k => k, ConfigurationKeyComparer.Instance);
-		}
-
-		public IChangeToken GetReloadToken()
-		{
-			return _reloadToken;
-		}
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			return string.Join(Environment.NewLine, _providers.Select(provider => provider.ToString()));
-		}
-		#endregion
-
-		#region 事件处理
-		private void PluginLoader_PluginLoaded(object sender, Zongsoft.Plugins.PluginLoadedEventArgs e)
-		{
-			this.LoadOptionFile(e.Plugin);
-		}
-
-		private void PluginLoader_PluginUnloaded(object sender, Zongsoft.Plugins.PluginUnloadedEventArgs e)
-		{
-			if(_providers.TryRemove(e.Plugin, out var provider))
-				provider.Dispose();
-		}
-		#endregion
-
-		#region 释放处置
-		public void Dispose()
-		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			if(disposing)
-			{
-				_pluginTree.Loader.PluginLoaded -= PluginLoader_PluginLoaded;
-				_pluginTree.Loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
-
-				foreach(var plugin in _providers.Keys)
-				{
-					if(_providers.TryRemove(plugin, out var provider))
-						provider.Dispose();
-				}
-			}
-		}
-		#endregion
-
-		#region 私有方法
-		private bool LoadOptionFile(Zongsoft.Plugins.Plugin plugin)
-		{
-			if(_providers.ContainsKey(plugin))
-				return false;
-
-			var directory = Path.GetDirectoryName(plugin.FilePath);
-			var fileName = Path.GetFileNameWithoutExtension(plugin.FilePath);
-			var environment = _source.Options.EnvironmentName.ToLowerInvariant();
-			List<IConfigurationProvider> providers = null;
-
-			var optionFile = Path.Combine(directory, $"{fileName}.option");
-			if(File.Exists(optionFile))
-			{
-				if(providers == null)
-					providers = new List<IConfigurationProvider>(4);
-
-				providers.Add(new Xml.XmlConfigurationSource()
-				{
-					Path = optionFile,
-					Optional = true,
-					ReloadOnChange = true,
-				}.Build(null));
-			}
-
-			optionFile = Path.Combine(directory, $"{fileName}.{environment}.option");
-			if(File.Exists(optionFile))
-			{
-				if(providers == null)
-					providers = new List<IConfigurationProvider>(4);
-
-				providers.Add(new Xml.XmlConfigurationSource()
-				{
-					Path = optionFile,
-					Optional = true,
-					ReloadOnChange = true,
-				}.Build(null));
-			}
-
-			//获取当前目录下的当前环境的从属配置文件
-			var slaves = GetOptionSlaveFiles(directory, fileName, _source.Options.EnvironmentName);
-
-			if(slaves != null && slaves.Length > 0)
-			{
-				if(providers == null)
-					providers = new List<IConfigurationProvider>(slaves.Length);
-
-				for(int i = 0; i < slaves.Length; i++)
-				{
-					providers.Add(new Xml.XmlConfigurationSource()
-					{
-						Path = slaves[i],
-						Optional = true,
-						ReloadOnChange = true,
-					}.Build(null));
-				}
-			}
-
-			if(providers == null || providers.Count == 0)
-				return false;
-
-			var composite = new CompositeConfigurationProvider(providers);
-
-			//加载配置文件
-			composite.Load();
-
-			return _providers.TryAdd(plugin, composite);
-		}
-
-		private static string[] GetOptionSlaveFiles(string directory, string fileName, string environment) =>
-			Directory.GetFiles(directory, $"{fileName}.{environment}-*.option");
-		#endregion
 	}
+	#endregion
+
+	#region 私有方法
+	private bool LoadOptionFile(Zongsoft.Plugins.Plugin plugin)
+	{
+		if(_providers.ContainsKey(plugin))
+			return false;
+
+		var directory = Path.GetDirectoryName(plugin.FilePath);
+		var fileName = Path.GetFileNameWithoutExtension(plugin.FilePath);
+		var environment = _source.Options.EnvironmentName.ToLowerInvariant();
+		List<IConfigurationProvider> providers = null;
+
+		var optionFile = Path.Combine(directory, $"{fileName}.option");
+		if(File.Exists(optionFile))
+		{
+			if(providers == null)
+				providers = new List<IConfigurationProvider>(4);
+
+			providers.Add(new Xml.XmlConfigurationSource()
+			{
+				Path = optionFile,
+				Optional = true,
+				ReloadOnChange = true,
+			}.Build(null));
+		}
+
+		optionFile = Path.Combine(directory, $"{fileName}.{environment}.option");
+		if(File.Exists(optionFile))
+		{
+			if(providers == null)
+				providers = new List<IConfigurationProvider>(4);
+
+			providers.Add(new Xml.XmlConfigurationSource()
+			{
+				Path = optionFile,
+				Optional = true,
+				ReloadOnChange = true,
+			}.Build(null));
+		}
+
+		//获取当前目录下的当前环境的从属配置文件
+		var slaves = GetOptionSlaveFiles(directory, fileName, environment);
+
+		if(slaves != null && slaves.Length > 0)
+		{
+			if(providers == null)
+				providers = new List<IConfigurationProvider>(slaves.Length);
+
+			for(int i = 0; i < slaves.Length; i++)
+			{
+				providers.Add(new Xml.XmlConfigurationSource()
+				{
+					Path = slaves[i],
+					Optional = true,
+					ReloadOnChange = true,
+				}.Build(null));
+			}
+		}
+
+		if(providers == null || providers.Count == 0)
+			return false;
+
+		var composite = new CompositeConfigurationProvider(providers);
+
+		//加载配置文件
+		composite.Load();
+
+		return _providers.TryAdd(plugin, composite);
+	}
+
+	private static string[] GetOptionSlaveFiles(string directory, string fileName, string environment) =>
+		Directory.GetFiles(directory, $"{fileName}.{environment}-*.option");
+	#endregion
 }

@@ -31,37 +31,36 @@ using System;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Configuration
+namespace Zongsoft.Configuration;
+
+public class PluginConfigurationSource : IConfigurationSource
 {
-	public class PluginConfigurationSource : IConfigurationSource
+	#region 私有变量
+	private readonly object _locker = new();
+	private PluginConfigurationProvider _provider;
+	#endregion
+
+	#region 构造函数
+	public PluginConfigurationSource(Zongsoft.Plugins.PluginOptions options)
 	{
-		#region 私有变量
-		private readonly object _locker = new();
-		private PluginConfigurationProvider _provider;
-		#endregion
-
-		#region 构造函数
-		public PluginConfigurationSource(Zongsoft.Plugins.PluginOptions options)
-		{
-			this.Options = options ?? throw new ArgumentNullException(nameof(options));
-		}
-		#endregion
-
-		#region 公共属性
-		public Zongsoft.Plugins.PluginOptions Options { get; }
-		#endregion
-
-		#region 公共方法
-		public IConfigurationProvider Build(IConfigurationBuilder builder)
-		{
-			if(_provider == null)
-			{
-				lock(_locker)
-					_provider ??= new PluginConfigurationProvider(this);
-			}
-
-			return _provider;
-		}
-		#endregion
+		this.Options = options ?? throw new ArgumentNullException(nameof(options));
 	}
+	#endregion
+
+	#region 公共属性
+	public Zongsoft.Plugins.PluginOptions Options { get; }
+	#endregion
+
+	#region 公共方法
+	public IConfigurationProvider Build(IConfigurationBuilder builder)
+	{
+		if(_provider == null)
+		{
+			lock(_locker)
+				_provider ??= new PluginConfigurationProvider(this);
+		}
+
+		return _provider;
+	}
+	#endregion
 }
