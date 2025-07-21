@@ -32,7 +32,6 @@ using System;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.ResponseCompression;
 
 using Zongsoft.Services;
 using Zongsoft.Configuration;
