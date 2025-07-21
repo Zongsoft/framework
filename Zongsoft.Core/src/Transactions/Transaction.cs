@@ -99,7 +99,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 
 	#region 静态属性
 	/// <summary>获取当前环境事务。</summary>
-	public static Transaction Current => _current.Value;
+	public static Transaction Current => _current?.Value;
 	#endregion
 
 	#region 公共属性
@@ -233,7 +233,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 		this.Rollback();
 
 		//如果结束的是环境事务则置空环境事务的指针
-		if(object.ReferenceEquals(_current, this))
+		if(object.ReferenceEquals(_current?.Value, this))
 			_current = null;
 	}
 
