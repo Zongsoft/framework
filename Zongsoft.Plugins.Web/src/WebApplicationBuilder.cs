@@ -91,12 +91,13 @@ public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplicati
 	public override IServiceCollection Services => _builder.Services;
 	public override ConfigurationManager Configuration => _builder.Configuration;
 	public override IHostEnvironment Environment => _builder.Environment;
+
 	public override WebApplication Build()
 	{
 		_configure?.Invoke(_builder);
 
 		//创建默认的插件环境配置
-		var options = this.CreateOptions();
+		var options = this.CreateOptions(_builder.Configuration);
 
 		//添加插件配置文件源到配置管理器中
 		((IConfigurationBuilder)_builder.Configuration).Add(new Zongsoft.Configuration.PluginConfigurationSource(options));
@@ -109,7 +110,7 @@ public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplicati
 
 	protected override void RegisterServices(IServiceCollection services, PluginOptions options)
 	{
-		services.AddSingleton<WebApplicationContext>();
+		services.AddSingleton(provider => new WebApplicationContext(provider, options));
 		services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
 		services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
 
@@ -124,7 +125,7 @@ public partial class WebApplicationBuilder : Zongsoft.Plugins.Hosting.Applicatio
 	public WebApplicationBuilder(string name, IHostBuilder builder, Action<IHostBuilder> configure = null) : base(name, builder, configure) { }
 	protected override void RegisterServices(IServiceCollection services, PluginOptions options)
 	{
-		services.AddSingleton<WebApplicationContext>();
+		services.AddSingleton(provider => new WebApplicationContext(provider, options));
 		services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
 		services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<WebApplicationContext>());
 

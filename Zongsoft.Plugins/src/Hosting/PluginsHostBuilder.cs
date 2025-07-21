@@ -161,7 +161,7 @@ namespace Zongsoft.Plugins.Hosting
 				if(context.Properties.TryGetValue(typeof(PluginOptions), out var optionsValue))
 					options = (PluginOptions)optionsValue;
 				else
-					context.Properties[typeof(PluginOptions)] = options = new PluginOptions(context.HostingEnvironment);
+					context.Properties[typeof(PluginOptions)] = options = new PluginOptions(context.Configuration, context.HostingEnvironment);
 
 				var pluginsHostBuilderContext = new PluginsHostBuilderContext(options, context.Properties)
 				{

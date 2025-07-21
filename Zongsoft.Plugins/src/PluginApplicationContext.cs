@@ -47,10 +47,10 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 构造函数
-		protected PluginApplicationContext(IServiceProvider services) : base(services)
+		protected PluginApplicationContext(IServiceProvider services, PluginOptions options) : base(services)
 		{
 			_syncRoot = new object();
-			this.Options = services.GetService<PluginOptions>() ?? new PluginOptions(services.GetRequiredService<IHostEnvironment>());
+			this.Options = options ?? services.GetService<PluginOptions>();
 			this.PluginTree = PluginTree.Get(this.Options);
 		}
 		#endregion

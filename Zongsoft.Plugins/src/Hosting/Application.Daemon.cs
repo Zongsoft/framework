@@ -54,7 +54,7 @@ namespace Zongsoft.Plugins.Hosting
 #endif
 			protected override void RegisterServices(IServiceCollection services, PluginOptions options)
 			{
-				services.AddSingleton<DaemonApplicationContext>();
+				services.AddSingleton(provider => new DaemonApplicationContext(provider, options));
 				services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<DaemonApplicationContext>());
 				services.AddSingleton<Services.IApplicationContext>(provider => provider.GetRequiredService<DaemonApplicationContext>());
 
@@ -73,7 +73,7 @@ namespace Zongsoft.Plugins.Hosting
 			#endregion
 		}
 
-		private sealed class DaemonApplicationContext(IServiceProvider serviceProvider) : PluginApplicationContext(serviceProvider)
+		private sealed class DaemonApplicationContext(IServiceProvider serviceProvider, PluginOptions options) : PluginApplicationContext(serviceProvider, options)
 		{
 			public override string ApplicationType => "Daemon";
 			protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? new DaemonWorkbench(this);

@@ -46,7 +46,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Web;
 
-public class WebApplicationContext(IServiceProvider services) : Zongsoft.Plugins.PluginApplicationContext(services)
+public class WebApplicationContext(IServiceProvider services, PluginOptions options) : Zongsoft.Plugins.PluginApplicationContext(services, options)
 {
 	#region 成员字段
 	private IHttpContextAccessor _http;

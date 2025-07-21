@@ -52,7 +52,7 @@ namespace Zongsoft.Plugins.Hosting
 		#endregion
 
 		#region 虚拟方法
-		protected virtual PluginOptions CreateOptions() => new PluginOptions(this.Environment);
+		protected virtual PluginOptions CreateOptions(IConfiguration configuration) => new(configuration, this.Environment);
 		protected virtual void RegisterServices(IServiceCollection services, PluginOptions options)
 		{
 			//获取插件树并加载它
@@ -210,7 +210,7 @@ namespace Zongsoft.Plugins.Hosting
 			_configure?.Invoke(_builder);
 
 			//创建默认的插件环境配置
-			var options = this.CreateOptions();
+			var options = this.CreateOptions(_builder.Configuration);
 
 			//添加插件配置文件源到配置管理器中
 			((IConfigurationBuilder)_builder.Configuration).Add(new Zongsoft.Configuration.PluginConfigurationSource(options));
@@ -269,7 +269,7 @@ namespace Zongsoft.Plugins.Hosting
 				configurator.AddConfiguration(this.Configuration);
 
 				//将插件配置文件源添加到应用配置器中
-				configurator.Add(new Zongsoft.Configuration.PluginConfigurationSource(this.CreateOptions()));
+				configurator.Add(new Zongsoft.Configuration.PluginConfigurationSource(this.CreateOptions(ctx.Configuration)));
 
 				//再将应用配置器中的配置源全部加入到干净的当前配置管理中
 				foreach(var source in configurator.Sources)
@@ -285,7 +285,7 @@ namespace Zongsoft.Plugins.Hosting
 			});
 
 			//注册插件服务
-			_builder.ConfigureServices(services => this.RegisterServices(services, this.CreateOptions()));
+			_builder.ConfigureServices(services => this.RegisterServices(services, this.CreateOptions(this.Configuration)));
 
 			var services = this.Services;
 			if(services != null)

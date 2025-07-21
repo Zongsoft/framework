@@ -31,6 +31,8 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
+using Microsoft.Extensions.Configuration;
+
 namespace Zongsoft.Plugins
 {
 	/// <summary>
@@ -39,11 +41,12 @@ namespace Zongsoft.Plugins
 	public class PluginOptions : IEquatable<PluginOptions>
 	{
 		#region 构造函数
-		internal PluginOptions(Microsoft.Extensions.Hosting.IHostEnvironment environment, string pluginsDirectoryName = null)
+		internal PluginOptions(IConfiguration configuration, Microsoft.Extensions.Hosting.IHostEnvironment environment, string pluginsDirectoryName = null)
 		{
 			if(environment == null)
 				throw new ArgumentNullException(nameof(environment));
 
+			this.Configuration = configuration;
 			this.EnvironmentName = environment.EnvironmentName;
 			this.ApplicationDirectory = environment.ContentRootPath;
 			this.PluginsPath = Path.Combine(this.ApplicationDirectory, string.IsNullOrWhiteSpace(pluginsDirectoryName) ? "plugins" : pluginsDirectoryName);
@@ -51,16 +54,18 @@ namespace Zongsoft.Plugins
 		}
 
 		/// <summary>构造插件设置对象。</summary>
+		/// <param name="configuration">指定的应用配置。</param>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
 		/// <param name="environmentName">指定的环境名。</param>
-		public PluginOptions(string applicationDirectory, string environmentName) : this(applicationDirectory, environmentName, null) { }
+		public PluginOptions(IConfiguration configuration, string applicationDirectory, string environmentName) : this(configuration, applicationDirectory, environmentName, null) { }
 
 		/// <summary>构造插件设置对象。</summary>
+		/// <param name="configuration">指定的应用配置。</param>
 		/// <param name="applicationDirectory">应用程序目录完整限定路径。</param>
 		/// <param name="pluginsDirectoryName">插件目录名，非完整路径。默认为“plugins”。</param>
 		/// <param name="environmentName">指定的环境名。</param>
 		/// <exception cref="System.ArgumentException">当<paramref name="applicationDirectory"/>参数值不为路径完全限定格式。</exception>
-		public PluginOptions(string applicationDirectory, string environmentName, string pluginsDirectoryName)
+		public PluginOptions(IConfiguration configuration, string applicationDirectory, string environmentName, string pluginsDirectoryName)
 		{
 			if(string.IsNullOrWhiteSpace(applicationDirectory))
 			{
@@ -77,6 +82,7 @@ namespace Zongsoft.Plugins
 			if(!Directory.Exists(this.ApplicationDirectory))
 				throw new DirectoryNotFoundException(this.ApplicationDirectory);
 
+			this.Configuration = configuration;
 			this.EnvironmentName = environmentName;
 			this.PluginsPath = Path.Combine(this.ApplicationDirectory, string.IsNullOrWhiteSpace(pluginsDirectoryName) ? "plugins" : pluginsDirectoryName);
 			this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
@@ -84,7 +90,11 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取应用环境名称。</summary>
 		public string EnvironmentName { get; }
+
+		/// <summary>获取配置管理器。</summary>
+		public IConfiguration Configuration { get; }
 
 		/// <summary>获取应用程序目录的完全限定路径，该属性值由构造函数注入。</summary>
 		public string ApplicationDirectory { get; }

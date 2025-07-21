@@ -35,7 +35,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Services;
 using Zongsoft.Terminals;
-using Zongsoft.Components;
 
 namespace Zongsoft.Plugins.Hosting
 {
@@ -58,7 +57,7 @@ namespace Zongsoft.Plugins.Hosting
 #endif
 			protected override void RegisterServices(IServiceCollection services, PluginOptions options)
 			{
-				services.AddSingleton<TerminalApplicationContext>();
+				services.AddSingleton(provider => new TerminalApplicationContext(provider, options));
 				services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
 				services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
 
@@ -77,7 +76,7 @@ namespace Zongsoft.Plugins.Hosting
 			#endregion
 		}
 
-		private sealed class TerminalApplicationContext(IServiceProvider services) : PluginApplicationContext(services)
+		private sealed class TerminalApplicationContext(IServiceProvider services, PluginOptions options) : PluginApplicationContext(services, options)
 		{
 			public override string ApplicationType => "Terminal";
 			protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? new TerminalWorkbench(this);
