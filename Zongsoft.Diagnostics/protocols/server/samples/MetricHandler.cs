@@ -7,7 +7,7 @@ using Zongsoft.Terminals;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
-namespace Zongsoft.Diagnostics.Samples;
+namespace Zongsoft.Diagnostics.Protocols.Server.Samples;
 
 public class MetricHandler : HandlerBase<IEnumerable<Zongsoft.Diagnostics.Telemetry.Metrics.Meter>>
 {

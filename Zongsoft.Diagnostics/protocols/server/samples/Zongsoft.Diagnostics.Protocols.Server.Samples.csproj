@@ -1,19 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Version>1.0.0</Version>
-		<Product>Zongsoft Diagnostics Samples</Product>
-		<Description>This is a sample for the Diagnostics.</Description>
+		<Product>Zongsoft Diagnostics Protocols Server Samples</Product>
+		<Description>This is a sample for the gRPC server protocol of OpenTelemetry.</Description>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Diagnostics/samples</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Diagnostics/protocols/server/samples</RepositoryUrl>
 	</PropertyGroup>
 
 	<Choose>
 		<When Condition="$(Configuration)=='Debug'">
 			<ItemGroup>
 				<Reference Include="Zongsoft.Core">
-					<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+					<HintPath>..\..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 				</Reference>
 			</ItemGroup>
 		</When>

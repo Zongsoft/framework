@@ -1,0 +1,8 @@
+artifacts/Zongsoft.Diagnostics.Protocols.Client.plugin
+lib/$(Framework)/Zongsoft.Diagnostics.Protocols.Client.*
+lib/$(Framework)/*/Zongsoft.Diagnostics.Protocols.Client.resources.*
+
+nuget:Grpc.Core.Api@2.71.0
+nuget:Grpc.Net.Common@2.71.0
+nuget:Grpc.Net.Client@2.71.0
+nuget:Google.Protobuf@3.31.1

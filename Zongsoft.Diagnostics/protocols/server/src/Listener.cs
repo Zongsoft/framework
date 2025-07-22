@@ -11,20 +11,20 @@
  *
  * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
- * This file is part of Zongsoft.Diagnostics library.
+ * This file is part of Zongsoft.Diagnostics.Protocols.Server library.
  *
- * The Zongsoft.Diagnostics is free software: you can redistribute it and/or modify
+ * The Zongsoft.Diagnostics.Protocols.Server is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Diagnostics is distributed in the hope that it will be useful,
+ * The Zongsoft.Diagnostics.Protocols.Server is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Diagnostics library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Diagnostics.Protocols.Server library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
@@ -35,7 +35,7 @@ using System.Collections.Generic;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
-namespace Zongsoft.Diagnostics.Telemetry;
+namespace Zongsoft.Diagnostics.Protocols.Server;
 
 public static partial class Listener
 {

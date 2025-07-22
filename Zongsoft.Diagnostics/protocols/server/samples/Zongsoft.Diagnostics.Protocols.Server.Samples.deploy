@@ -1,0 +1,3 @@
+artifacts/Zongsoft.Diagnostics.Protocols.Server.Samples.plugin
+lib/$(Framework)/Zongsoft.Diagnostics.Protocols.Server.Samples.*
+lib/$(Framework)/*/Zongsoft.Diagnostics.Protocols.Server.Samples.resources.*
