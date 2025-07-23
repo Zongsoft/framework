@@ -32,6 +32,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
@@ -165,6 +166,7 @@ partial class Authentication
 				Stream stream => await Serializer.Json.DeserializeAsync<Requirement>(stream, cancellation),
 				Memory<byte> memory => await Serializer.Json.DeserializeAsync<Requirement>(memory.Span, cancellation),
 				ReadOnlyMemory<byte> memory => await Serializer.Json.DeserializeAsync<Requirement>(memory.Span, cancellation),
+				IReadOnlyDictionary<string, object> dictionary => Requirement.GetRequirement(dictionary),
 				_ => throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported."),
 			};
 		}
@@ -183,6 +185,17 @@ partial class Authentication
 			public string Namespace { get; set; }
 			public string Identity { get; set; }
 			public string Password { get; set; }
+
+			public static Requirement GetRequirement(IReadOnlyDictionary<string, object> dictionary)
+			{
+				if(dictionary == null || dictionary.Count == 0)
+					return default;
+
+				return new(
+					dictionary.TryGetValue(nameof(Namespace), out var @namespace) ? @namespace?.ToString() : null,
+					dictionary.TryGetValue(nameof(Identity), out var identity) ? identity?.ToString() : null,
+					dictionary.TryGetValue(nameof(Password), out var password) ? password?.ToString() : null);
+			}
 		}
 
 		public struct Ticket

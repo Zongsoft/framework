@@ -158,21 +158,25 @@ partial class Authentication
 		#region 私有方法
 		private static async ValueTask<string> GetTicketAsync(object data, CancellationToken cancellation = default)
 		{
-			if(data is string text)
-				return text;
-
-			if(data is byte[] bytes)
-				return Encoding.UTF8.GetString(bytes);
-
-			if(data is Stream stream)
+			switch(data)
 			{
-				using var reader = new StreamReader(stream, Encoding.UTF8);
-
-#if NET7_0_OR_GREATER
-			return await reader.ReadToEndAsync(cancellation);
-#else
-				return await reader.ReadToEndAsync();
-#endif
+				case string text:
+					return text;
+				case byte[] bytes:
+					return Encoding.UTF8.GetString(bytes);
+				case Memory<byte> buffer:
+					return Encoding.UTF8.GetString(buffer.Span);
+				case ReadOnlyMemory<byte> buffer:
+					return Encoding.UTF8.GetString(buffer.Span);
+				case Stream stream:
+					using(var reader = new StreamReader(stream, Encoding.UTF8))
+					{
+						#if NET7_0_OR_GREATER
+						return await reader.ReadToEndAsync(cancellation);
+						#else
+						return await reader.ReadToEndAsync();
+						#endif
+					}
 			}
 
 			throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported.");
