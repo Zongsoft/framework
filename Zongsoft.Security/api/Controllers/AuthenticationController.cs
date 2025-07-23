@@ -64,17 +64,17 @@ public class AuthenticationController : ControllerBase
 		if(this.Request.ContentLength == null || this.Request.ContentLength == 0)
 			return this.BadRequest();
 
-		var feature = this.HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpBodyControlFeature>();
-		if(feature != null)
-			feature.AllowSynchronousIO = true;
-
 		try
 		{
-			var principal = await Authentication.AuthenticateAsync(scheme, key, this.Request.Body, scenario, new(this.Request.GetParameters()), cancellation);
+			object data = this.Request.HasFormContentType ?
+				this.Request.Form.ToDictionary() :
+				await this.Request.ReadAsStringAsync(cancellation) ?? (object)this.Request.Body;
+
+			var principal = await Authentication.AuthenticateAsync(scheme, key, data, scenario, new(this.Request.GetParameters()), cancellation);
 
 			return principal != null ?
 				this.Ok(Transform(principal)) :
-				this.StatusCode(403, new { Reason = SecurityReasons.Unknown });
+				this.StatusCode(StatusCodes.Status403Forbidden, new { Reason = SecurityReasons.Unknown });
 		}
 		catch(AuthenticationException ex)
 		{
