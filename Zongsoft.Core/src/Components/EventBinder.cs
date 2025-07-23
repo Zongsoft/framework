@@ -64,6 +64,71 @@ public static class EventBinder
 		}
 	}
 
+	public static void Bind(this EventDescriptor descriptor, object target, EventInfo @event)
+	{
+		if(descriptor == null)
+			throw new ArgumentNullException(nameof(descriptor));
+
+		if(@event == null)
+			throw new ArgumentNullException(nameof(@event));
+
+		(_, var trigger) = GetAdapter(descriptor, @event.EventHandlerType);
+		@event.AddEventHandler(target is Type ? null : target, trigger);
+
+		if(_binding.TryGetValue(descriptor, out var binding))
+			@event.RemoveEventHandler(target is Type ? null : target, binding);
+
+		_binding[descriptor] = trigger;
+	}
+
+	public static void Bind(this EventDescriptor descriptor, object target, FieldInfo field)
+	{
+		if(descriptor == null)
+			throw new ArgumentNullException(nameof(descriptor));
+
+		if(field == null)
+			throw new ArgumentNullException(nameof(field));
+
+		if(!field.FieldType.IsSubclassOf(typeof(Delegate)))
+			throw new InvalidOperationException($"The '{field.Name}' field of type '{field.FieldType}' cannot be event-bound because its type is not a delegate type.");
+
+		(_, var trigger) = GetAdapter(descriptor, field.FieldType);
+		field.SetValue(target, trigger);
+		_binding[descriptor] = trigger;
+	}
+
+	public static void Bind(this EventDescriptor descriptor, object target, PropertyInfo property)
+	{
+		if(descriptor == null)
+			throw new ArgumentNullException(nameof(descriptor));
+
+		if(property == null)
+			throw new ArgumentNullException(nameof(property));
+
+		if(!property.PropertyType.IsSubclassOf(typeof(Delegate)))
+			throw new InvalidOperationException($"The '{property.Name}' property of type '{property.PropertyType}' cannot be event-bound because its type is not a delegate type.");
+
+		(_, var trigger) = GetAdapter(descriptor, property.PropertyType);
+		property.SetValue(target, trigger);
+		_binding[descriptor] = trigger;
+	}
+
+	public static Delegate Bind(this EventDescriptor descriptor, Delegate @delegate)
+	{
+		if(descriptor == null)
+			throw new ArgumentNullException(nameof(descriptor));
+
+		if(@delegate == null)
+			throw new ArgumentNullException(nameof(@delegate));
+
+		(_, var trigger) = GetAdapter(descriptor, @delegate.GetType());
+
+		if(_binding.TryGetValue(descriptor, out var binding))
+			Delegate.Remove(@delegate, binding);
+
+		return _binding[descriptor] = Delegate.Combine(@delegate, trigger);
+	}
+
 	public static void Unbind(this EventDescriptor descriptor, object target, string name)
 	{
 		if(descriptor == null)
@@ -86,23 +151,6 @@ public static class EventBinder
 		}
 	}
 
-	public static void Bind(this EventDescriptor descriptor, object target, EventInfo @event)
-	{
-		if(descriptor == null)
-			throw new ArgumentNullException(nameof(descriptor));
-
-		if(@event == null)
-			throw new ArgumentNullException(nameof(@event));
-
-		(_, var trigger) = GetAdapter(descriptor, @event.EventHandlerType);
-		@event.AddEventHandler(target is Type ? null : target, trigger);
-
-		if(_binding.TryGetValue(descriptor, out var binding))
-			@event.RemoveEventHandler(target is Type ? null : target, binding);
-
-		_binding[descriptor] = trigger;
-	}
-
 	public static void Unbind(this EventDescriptor descriptor, object target, EventInfo @event)
 	{
 		if(descriptor == null)
@@ -113,22 +161,6 @@ public static class EventBinder
 
 		if(_binding.TryGetValue(descriptor, out var binding))
 			@event.RemoveEventHandler(target is Type ? null : target, binding);
-	}
-
-	public static void Bind(this EventDescriptor descriptor, object target, FieldInfo field)
-	{
-		if(descriptor == null)
-			throw new ArgumentNullException(nameof(descriptor));
-
-		if(field == null)
-			throw new ArgumentNullException(nameof(field));
-
-		if(!field.FieldType.IsSubclassOf(typeof(Delegate)))
-			throw new InvalidOperationException($"The '{field.Name}' field of type '{field.FieldType}' cannot be event-bound because its type is not a delegate type.");
-
-		(_, var trigger) = GetAdapter(descriptor, field.FieldType);
-		field.SetValue(target, trigger);
-		_binding[descriptor] = trigger;
 	}
 
 	public static void Unbind(this EventDescriptor descriptor, object target, FieldInfo field)
@@ -146,22 +178,6 @@ public static class EventBinder
 		_binding.Remove(descriptor);
 	}
 
-	public static void Bind(this EventDescriptor descriptor, object target, PropertyInfo property)
-	{
-		if(descriptor == null)
-			throw new ArgumentNullException(nameof(descriptor));
-
-		if(property == null)
-			throw new ArgumentNullException(nameof(property));
-
-		if(!property.PropertyType.IsSubclassOf(typeof(Delegate)))
-			throw new InvalidOperationException($"The '{property.Name}' property of type '{property.PropertyType}' cannot be event-bound because its type is not a delegate type.");
-
-		(_, var trigger) = GetAdapter(descriptor, property.PropertyType);
-		property.SetValue(target, trigger);
-		_binding[descriptor] = trigger;
-	}
-
 	public static void Unbind(this EventDescriptor descriptor, object target, PropertyInfo property)
 	{
 		if(descriptor == null)
@@ -175,22 +191,6 @@ public static class EventBinder
 
 		property.SetValue(target, null);
 		_binding.Remove(descriptor);
-	}
-
-	public static Delegate Bind(this EventDescriptor descriptor, Delegate @delegate)
-	{
-		if(descriptor == null)
-			throw new ArgumentNullException(nameof(descriptor));
-
-		if(@delegate == null)
-			throw new ArgumentNullException(nameof(@delegate));
-
-		(_, var trigger) = GetAdapter(descriptor, @delegate.GetType());
-
-		if(_binding.TryGetValue(descriptor, out var binding))
-			Delegate.Remove(@delegate, binding);
-
-		return _binding[descriptor] = Delegate.Combine(@delegate, trigger);
 	}
 
 	public static Delegate Unbind(this EventDescriptor descriptor, Delegate @delegate)
@@ -315,7 +315,7 @@ public static class EventBinder
 		};
 	}
 
-	private static void Complete(this ValueTask task)
+	private static async void Complete(this ValueTask task)
 	{
 		if(task.IsCompletedSuccessfully)
 			return;
@@ -332,7 +332,7 @@ public static class EventBinder
 				throw exception;
 		}
 
-		task.GetAwaiter().GetResult();
+		await task;
 	}
 
 	private static Type GetArgumentType(this EventDescriptor descriptor)
