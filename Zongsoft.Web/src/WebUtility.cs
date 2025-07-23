@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web library.
  *
@@ -32,6 +32,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -93,26 +94,57 @@ public static class WebUtility
 		}
 	}
 
-	public static async Task<string> ReadAsStringAsync(this HttpRequest request)
+	public static bool HasTextContentType(this HttpRequest request) => request != null && Microsoft.Net.Http.Headers.MediaTypeHeaderValue.TryParse(request.ContentType, out var contentType) && contentType.IsSubsetOf(TEXT);
+	public static async Task<string> ReadAsStringAsync(this HttpRequest request, CancellationToken cancellation = default)
 	{
 		if(request == null)
 			throw new ArgumentNullException(nameof(request));
 
-		var headers = request.GetTypedHeaders();
-		var encoding = headers.ContentType?.Encoding ?? Encoding.UTF8;
+		if(Microsoft.Net.Http.Headers.MediaTypeHeaderValue.TryParse(request.ContentType, out var contentType) && contentType.IsSubsetOf(TEXT))
+		{
+			var encoding = contentType.Encoding ?? Encoding.UTF8;
 
-		if(headers.ContentType == null || !headers.ContentType.IsSubsetOf(TEXT))
+			using(var reader = new StreamReader(
+				request.Body,
+				encoding,
+				detectEncodingFromByteOrderMarks: true,
+				bufferSize: 1024,
+				leaveOpen: true))
+			{
+				#if NET7_0_OR_GREATER
+				return await reader.ReadToEndAsync(cancellation);
+				#else
+				return await reader.ReadToEndAsync();
+				#endif
+			}
+		}
+
+		return null;
+	}
+
+	public static IReadOnlyDictionary<string, object> ToDictionary(this IFormCollection form)
+	{
+		if(form == null)
 			return null;
 
-		using(var reader = new StreamReader(
-			request.Body,
-			encoding,
-			detectEncodingFromByteOrderMarks: true,
-			bufferSize: 1024,
-			leaveOpen: true))
+		var dictionary = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+		foreach(var field in form)
 		{
-			return await reader.ReadToEndAsync();
+			if(field.Value.Count == 1)
+				dictionary[field.Key] = field.Value[0];
+			else if(field.Value.Count > 1)
+				dictionary[field.Key] = field.Value.ToArray();
+			else
+				dictionary[field.Key] = field.Value.ToString();
 		}
+
+		foreach(var file in form.Files)
+		{
+			dictionary[file.Name ?? file.FileName] = file.OpenReadStream();
+		}
+
+		return dictionary;
 	}
 	#endregion
 }

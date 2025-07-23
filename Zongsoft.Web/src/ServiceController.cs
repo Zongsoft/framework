@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web library.
  *
@@ -99,7 +99,7 @@ public class ServiceController<TModel, TService> : ServiceControllerBase<TModel,
 
 		if(string.IsNullOrWhiteSpace(key))
 		{
-			var content = await this.Request.ReadAsStringAsync();
+			var content = await this.Request.ReadAsStringAsync(cancellation);
 
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
@@ -283,7 +283,7 @@ public class SubserviceController<TModel, TService> : ServiceControllerBase<TMod
 
 		if(string.IsNullOrWhiteSpace(key))
 		{
-			var content = await this.Request.ReadAsStringAsync();
+			var content = await this.Request.ReadAsStringAsync(cancellation);
 
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
