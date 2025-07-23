@@ -27,7 +27,12 @@
  * along with the Zongsoft.Security library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
 using Zongsoft.Data;
+using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Components;
 
@@ -77,8 +82,8 @@ public sealed class Module : ApplicationModule<Module.EventRegistry>
 		public class AuthenticationEvent
 		{
 			#region 静态字段
-			public static readonly EventDescriptor<Privileges.AuthenticatedEventArgs> Authenticated = new($"{nameof(Privileges.Authentication)}.{nameof(Privileges.Authentication.Authenticated)}");
-			public static readonly EventDescriptor<Privileges.AuthenticatingEventArgs> Authenticating = new($"{nameof(Privileges.Authentication)}.{nameof(Privileges.Authentication.Authenticating)}");
+			public static readonly EventDescriptor<Privileges.AuthenticatedEventArgs> Authenticated = new(Predication.Predicate<Privileges.AuthenticatedEventArgs>(OnAuthenticated), $"{nameof(Privileges.Authentication)}.{nameof(Privileges.Authentication.Authenticated)}");
+			public static readonly EventDescriptor<Privileges.AuthenticatingEventArgs> Authenticating = new(Predication.Predicate<Privileges.AuthenticatingEventArgs>(OnAuthenticating), $"{nameof(Privileges.Authentication)}.{nameof(Privileges.Authentication.Authenticating)}");
 			#endregion
 
 			#region 成员字段
@@ -86,8 +91,30 @@ public sealed class Module : ApplicationModule<Module.EventRegistry>
 			#endregion
 
 			#region 构造函数
-			internal AuthenticationEvent(EventRegistry registry) => _registry = registry;
+			internal AuthenticationEvent(EventRegistry registry)
+			{
+				_registry = registry;
+
+				//注册事件处理器
+				Authenticated.Bind(
+					typeof(Privileges.Authentication),
+					nameof(Privileges.Authentication.Authenticated));
+
+				Authenticating.Bind(
+					typeof(Privileges.Authentication),
+					nameof(Privileges.Authentication.Authenticating));
+			}
 			#endregion
+
+			private static bool OnAuthenticated(Privileges.AuthenticatedEventArgs args)
+			{
+				return true;
+			}
+
+			private static bool OnAuthenticating(Privileges.AuthenticatingEventArgs args)
+			{
+				return true;
+			}
 		}
 	}
 	#endregion
