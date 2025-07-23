@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -42,17 +42,20 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 {
 	#region 成员字段
 	private EventRegistryBase _registry;
+	private Common.IPredication _predication;
 	private string _qualifiedName;
 	private string _title;
 	private string _description;
 	#endregion
 
 	#region 构造函数
-	public EventDescriptor(string name, string title = null, string description = null)
+	public EventDescriptor(string name, string title = null, string description = null) : this(null, name, title, description) { }
+	public EventDescriptor(Common.IPredication predication, string name, string title = null, string description = null)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
+		_predication = predication;
 		_qualifiedName = name;
 
 		this.Name = name;
@@ -100,16 +103,26 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 	public ValueTask HandleAsync(CancellationToken cancellation = default) => this.HandleAsync(null, null, cancellation);
 	public ValueTask HandleAsync(Collections.Parameters parameters, CancellationToken cancellation = default) => this.HandleAsync(null, parameters, cancellation);
 	public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-	public ValueTask HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default)
+	public async ValueTask HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
-		var tasks = new List<Task>(this.Handlers.Count);
-
-		foreach(var handler in this.Handlers)
+		if(await this.OnPredicateAsync(argument, parameters, cancellation))
 		{
-			tasks.Add(handler.HandleAsync(argument, parameters, cancellation).AsTask());
-		}
+			var tasks = new List<Task>(this.Handlers.Count);
 
-		return new ValueTask(Task.WhenAll(tasks));
+			foreach(var handler in this.Handlers)
+			{
+				tasks.Add(handler.HandleAsync(argument, parameters, cancellation).AsTask());
+			}
+
+			await Task.WhenAll(tasks);
+		}
+	}
+	#endregion
+
+	#region 断言方法
+	protected virtual ValueTask<bool> OnPredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation)
+	{
+		return _predication?.PredicateAsync(argument, parameters, cancellation) ?? ValueTask.FromResult(true);
 	}
 	#endregion
 
@@ -151,23 +164,27 @@ public class EventDescriptor<TArgument> : EventDescriptor
 {
 	#region 构造函数
 	public EventDescriptor(string name, string title = null, string description = null) : base(name, title, description) { }
+	public EventDescriptor(Common.IPredication<TArgument> predication, string name, string title = null, string description = null) : base(predication, name, title, description) { }
 	#endregion
 
 	#region 处理方法
 	public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-	public ValueTask HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
+	public async ValueTask HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
-		var tasks = new List<Task>(this.Handlers.Count);
-
-		foreach(var handler in this.Handlers)
+		if(await this.OnPredicateAsync(argument, parameters, cancellation))
 		{
-			if(handler is IHandler<TArgument> generic)
-				tasks.Add(generic.HandleAsync(argument, parameters, cancellation).AsTask());
-			else
-				tasks.Add(handler.HandleAsync(argument, parameters, cancellation).AsTask());
-		}
+			var tasks = new List<Task>(this.Handlers.Count);
 
-		return new ValueTask(Task.WhenAll(tasks));
+			foreach(var handler in this.Handlers)
+			{
+				if(handler is IHandler<TArgument> generic)
+					tasks.Add(generic.HandleAsync(argument, parameters, cancellation).AsTask());
+				else
+					tasks.Add(handler.HandleAsync(argument, parameters, cancellation).AsTask());
+			}
+
+			await Task.WhenAll(tasks);
+		}
 	}
 	#endregion
 }
