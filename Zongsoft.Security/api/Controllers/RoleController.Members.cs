@@ -93,8 +93,7 @@ partial class RoleController
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
 
-			var content = await this.Request.ReadAsStringAsync();
-
+			var content = await this.Request.ReadAsStringAsync(cancellation);
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
@@ -174,7 +173,7 @@ partial class RoleController
 				return GetMembers(data);
 			}
 
-			var content = await this.Request.ReadAsStringAsync();
+			var content = await this.Request.ReadAsStringAsync(cancellation);
 			if(string.IsNullOrEmpty(content))
 				return null;
 

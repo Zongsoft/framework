@@ -91,13 +91,11 @@ public partial class RoleController : ControllerBase
 	[HttpDelete]
 	public async Task<IActionResult> Delete(CancellationToken cancellation = default)
 	{
-		var content = await this.Request.ReadAsStringAsync();
-
+		var content = await this.Request.ReadAsStringAsync(cancellation);
 		if(string.IsNullOrWhiteSpace(content))
 			return this.BadRequest();
 
 		var ids = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).ToArray();
-
 		if(ids == null || ids.Length == 0)
 			return this.BadRequest();
 
@@ -126,8 +124,7 @@ public partial class RoleController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		var content = await this.Request.ReadAsStringAsync();
-
+		var content = await this.Request.ReadAsStringAsync(cancellation);
 		if(string.IsNullOrWhiteSpace(content))
 			return this.BadRequest();
 

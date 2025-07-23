@@ -91,8 +91,7 @@ partial class UserController
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
 
-			var content = await this.Request.ReadAsStringAsync();
-
+			var content = await this.Request.ReadAsStringAsync(cancellation);
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 

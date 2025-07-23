@@ -58,7 +58,7 @@ namespace Zongsoft.Security.Controllers
 
 			object argument = this.Request.HasFormContentType ?
 				await this.Request.ReadFormAsync(cancellation) :
-				await this.Request.ReadAsStringAsync();
+				await this.Request.ReadAsStringAsync(cancellation);
 
 			var data = await captch.IssueAsync(argument, new Parameters(this.Request.GetParameters()), cancellation);
 			var formatter = this.HttpContext.RequestServices.Resolve<ICaptchaFormatter<HttpContext>>(scheme);
@@ -84,7 +84,7 @@ namespace Zongsoft.Security.Controllers
 
 			object argument = this.Request.HasFormContentType ?
 				await this.Request.ReadFormAsync(cancellation) :
-				await this.Request.ReadAsStringAsync();
+				await this.Request.ReadAsStringAsync(cancellation);
 
 			var result = await captch.VerifyAsync(argument, new Parameters(this.Request.GetParameters()), cancellation);
 			return string.IsNullOrEmpty(result) ? this.NoContent() : this.Content(result);

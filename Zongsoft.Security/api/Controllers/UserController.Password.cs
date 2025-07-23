@@ -96,7 +96,7 @@ partial class UserController
 			if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
 				return this.BadRequest();
 
-			var password = await this.Request.ReadAsStringAsync();
+			var password = await this.Request.ReadAsStringAsync(cancellation);
 			return await this.Service.ResetPasswordAsync(token, secret, password, cancellation) ? this.NoContent() : this.NotFound();
 		}
 

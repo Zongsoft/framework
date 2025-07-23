@@ -91,13 +91,11 @@ public partial class UserController : ControllerBase
 	[HttpDelete]
 	public async Task<IActionResult> Delete(CancellationToken cancellation = default)
 	{
-		var content = await this.Request.ReadAsStringAsync();
-
+		var content = await this.Request.ReadAsStringAsync(cancellation);
 		if(string.IsNullOrWhiteSpace(content))
 			return this.BadRequest();
 
 		var ids = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).ToArray();
-
 		if(ids == null || ids.Length == 0)
 			return this.BadRequest();
 
@@ -124,8 +122,7 @@ public partial class UserController : ControllerBase
 	[HttpPatch("{id}/Rename")]
 	public async Task<IActionResult> Rename(string id, CancellationToken cancellation = default)
 	{
-		var content = await this.Request.ReadAsStringAsync();
-
+		var content = await this.Request.ReadAsStringAsync(cancellation);
 		if(string.IsNullOrWhiteSpace(content))
 			return this.BadRequest();
 
@@ -136,8 +133,7 @@ public partial class UserController : ControllerBase
 	[HttpPatch("{id}/[action]")]
 	public async Task<IActionResult> SetEmail(string id, CancellationToken cancellation = default)
 	{
-		var email = await this.Request.ReadAsStringAsync();
-
+		var email = await this.Request.ReadAsStringAsync(cancellation);
 		if(string.IsNullOrWhiteSpace(email))
 			return this.BadRequest();
 
@@ -148,8 +144,7 @@ public partial class UserController : ControllerBase
 	[HttpPost("{id}/[action]/Verify")]
 	public async Task<IActionResult> SetEmailVerify(string id, CancellationToken cancellation = default)
 	{
-		var email = await this.Request.ReadAsStringAsync();
-
+		var email = await this.Request.ReadAsStringAsync(cancellation);
 		if(string.IsNullOrWhiteSpace(email))
 			return this.BadRequest();
 
@@ -176,8 +171,7 @@ public partial class UserController : ControllerBase
 	[HttpPatch("{id}/[action]")]
 	public async Task<IActionResult> SetPhone(string id, CancellationToken cancellation = default)
 	{
-		var phone = await this.Request.ReadAsStringAsync();
-
+		var phone = await this.Request.ReadAsStringAsync(cancellation);
 		if(string.IsNullOrWhiteSpace(phone))
 			return this.BadRequest();
 
@@ -188,8 +182,7 @@ public partial class UserController : ControllerBase
 	[HttpPost("{id}/[action]/Verify")]
 	public async Task<IActionResult> SetPhoneVerify(string id, CancellationToken cancellation = default)
 	{
-		var phone = await this.Request.ReadAsStringAsync();
-
+		var phone = await this.Request.ReadAsStringAsync(cancellation);
 		if(string.IsNullOrWhiteSpace(phone))
 			return this.BadRequest();
 
