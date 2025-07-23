@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -57,8 +57,11 @@ public class PredicationCollection<T> : Collection<IPredication<T>>, IPredicatio
 	#region 断言方法
 	ValueTask<bool> IPredication.PredicateAsync(object argument, CancellationToken cancellation) =>
 		this.OnConvert(argument, out var stronglyArgument) ? ValueTask.FromResult(false) : this.PredicateAsync(stronglyArgument, cancellation);
+	ValueTask<bool> IPredication.PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation) =>
+		this.OnConvert(argument, out var stronglyArgument) ? ValueTask.FromResult(false) : this.PredicateAsync(stronglyArgument, parameters, cancellation);
 
-	public async ValueTask<bool> PredicateAsync(T argument, CancellationToken cancellation = default)
+	public ValueTask<bool> PredicateAsync(T argument, CancellationToken cancellation = default) => this.PredicateAsync(argument, null, cancellation);
+	public async ValueTask<bool> PredicateAsync(T argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
 		var predications = base.Items;
 
@@ -70,7 +73,7 @@ public class PredicationCollection<T> : Collection<IPredication<T>>, IPredicatio
 			if(predication == null)
 				continue;
 
-			if(await predication.PredicateAsync(argument))
+			if(await predication.PredicateAsync(argument, parameters, cancellation))
 			{
 				if(_combination == PredicationCombination.Or)
 					return true;

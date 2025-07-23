@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -54,8 +54,10 @@ public abstract class PredicationBase<T> : IPredication<T>, Services.IMatchable
 	#endregion
 
 	#region 断言方法
-	public abstract ValueTask<bool> PredicateAsync(T argument, CancellationToken cancellation = default);
+	public virtual ValueTask<bool> PredicateAsync(T argument, CancellationToken cancellation = default) => this.PredicateAsync(argument, null, cancellation);
+	public abstract ValueTask<bool> PredicateAsync(T argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 	ValueTask<bool> IPredication.PredicateAsync(object argument, CancellationToken cancellation) => this.PredicateAsync(this.OnConvert(argument), cancellation);
+	ValueTask<bool> IPredication.PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation) => this.PredicateAsync(this.OnConvert(argument), parameters, cancellation);
 	#endregion
 
 	#region 虚拟方法

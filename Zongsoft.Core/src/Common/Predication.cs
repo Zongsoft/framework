@@ -40,21 +40,48 @@ public static class Predication
 	public static IPredication Predicate(Func<object, CancellationToken, ValueTask<bool>> predicate) => new PredicationProxy<object>(predicate);
 	public static IPredication<T> Predicate<T>(Func<T, CancellationToken, ValueTask<bool>> predicate) => new PredicationProxy<T>(predicate);
 
+	public static IPredication Predicate(Func<object, Collections.Parameters, bool> predicate) => new PredicationProxy<object>(predicate);
+	public static IPredication<T> Predicate<T>(Func<T, Collections.Parameters, bool> predicate) => new PredicationProxy<T>(predicate);
+	public static IPredication Predicate(Func<object, Collections.Parameters, CancellationToken, ValueTask<bool>> predicate) => new PredicationProxy<object>(predicate);
+	public static IPredication<T> Predicate<T>(Func<T, Collections.Parameters, CancellationToken, ValueTask<bool>> predicate) => new PredicationProxy<T>(predicate);
+
 	private sealed class PredicationProxy<TArgument> : IPredication<TArgument>
 	{
-		private readonly Func<TArgument, CancellationToken, ValueTask<bool>> _predicator;
+		private readonly Func<TArgument, Collections.Parameters, CancellationToken, ValueTask<bool>> _predicator;
 
-		public PredicationProxy(Func<TArgument, CancellationToken, ValueTask<bool>> predicator) => _predicator = predicator ?? throw new ArgumentNullException(nameof(predicator));
+		public PredicationProxy(Func<TArgument, CancellationToken, ValueTask<bool>> predicator)
+		{
+			if(predicator == null)
+				throw new ArgumentNullException(nameof(predicator));
+
+			_predicator = (argument, _, cancellation) => predicator(argument, cancellation);
+		}
 		public PredicationProxy(Func<TArgument, bool> predicator)
 		{
 			if(predicator == null)
 				throw new ArgumentNullException(nameof(predicator));
 
-			_predicator = (argument, cancellation) => ValueTask.FromResult(predicator(argument));
+			_predicator = (argument, _, cancellation) => cancellation.IsCancellationRequested ?
+				ValueTask.FromCanceled<bool>(cancellation) :
+				ValueTask.FromResult(predicator(argument));
 		}
 
-		public ValueTask<bool> PredicateAsync(TArgument argument, CancellationToken cancellation = default) => _predicator(argument, cancellation);
+		public PredicationProxy(Func<TArgument, Collections.Parameters, CancellationToken, ValueTask<bool>> predicator) => _predicator = predicator ?? throw new ArgumentNullException(nameof(predicator));
+		public PredicationProxy(Func<TArgument, Collections.Parameters, bool> predicator)
+		{
+			if(predicator == null)
+				throw new ArgumentNullException(nameof(predicator));
+
+			_predicator = (argument, parameters, cancellation) => cancellation.IsCancellationRequested ?
+				ValueTask.FromCanceled<bool>(cancellation) :
+				ValueTask.FromResult(predicator(argument, parameters));
+		}
+
+		public ValueTask<bool> PredicateAsync(TArgument argument, CancellationToken cancellation = default) => _predicator(argument, null, cancellation);
+		public ValueTask<bool> PredicateAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default) => _predicator(argument, parameters, cancellation);
 		public ValueTask<bool> PredicateAsync(object argument, CancellationToken cancellation = default) =>
 			argument is TArgument target ? this.PredicateAsync(target, cancellation) : throw new InvalidOperationException($"Unable to convert '{argument}' argument value to '{typeof(TArgument)}' type.");
+		public ValueTask<bool> PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default) =>
+			argument is TArgument target ? this.PredicateAsync(target, parameters, cancellation) : throw new InvalidOperationException($"Unable to convert '{argument}' argument value to '{typeof(TArgument)}' type.");
 	}
 }

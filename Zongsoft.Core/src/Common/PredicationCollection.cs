@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -58,7 +58,17 @@ public class PredicationCollection : Collection<IPredication>, IPredication
 	/// <remarks>
 	///		<para>在调用过程中如果是“或”组合则会发生“真”短路；如果是“与”组合则会发生“假”短路。</para>
 	/// </remarks>
-	public async ValueTask<bool> PredicateAsync(object argument, CancellationToken cancellation = default)
+	public ValueTask<bool> PredicateAsync(object argument, CancellationToken cancellation = default) => this.PredicateAsync(argument, null, cancellation);
+
+	/// <summary>对断言集合内的所有断言进行遍历断言调用，并根据<see cref="Combination"/>属性值进行组合判断。</summary>
+	/// <param name="argument">对断言集合内所有断言调用时的传入参数。</param>
+	/// <param name="parameters">指定的附加参数集。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>集合内所有断言的组合结果，如果集合为空则始终返回真(<c>True</c>)。</returns>
+	/// <remarks>
+	///		<para>在调用过程中如果是“或”组合则会发生“真”短路；如果是“与”组合则会发生“假”短路。</para>
+	/// </remarks>
+	public async ValueTask<bool> PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
 		var predications = base.Items;
 
@@ -70,7 +80,7 @@ public class PredicationCollection : Collection<IPredication>, IPredication
 			if(predication == null)
 				continue;
 
-			if(await predication.PredicateAsync(argument, cancellation))
+			if(await predication.PredicateAsync(argument, parameters, cancellation))
 			{
 				if(_combination == PredicationCombination.Or)
 					return true;

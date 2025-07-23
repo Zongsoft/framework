@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -43,4 +43,11 @@ public interface IPredication<in T> : IPredication
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>如果符合某种条件则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	ValueTask<bool> PredicateAsync(T argument, CancellationToken cancellation = default);
+
+	/// <summary>确定指定对象是否符合某种条件。</summary>
+	/// <param name="argument">指定的条件参数对象。</param>
+	/// <param name="parameters">指定的附加参数集。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>如果符合某种条件则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	ValueTask<bool> PredicateAsync(T argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 }

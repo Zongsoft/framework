@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -45,7 +45,10 @@ public class LoggerHandlerPredication : Common.IPredication<LogEntry>
 
 	#region 断言方法
 	ValueTask<bool> Common.IPredication.PredicateAsync(object argument, CancellationToken cancellation) => this.PredicateAsync(argument as LogEntry, cancellation);
-	public ValueTask<bool> PredicateAsync(LogEntry entry, CancellationToken cancellation = default)
+	ValueTask<bool> Common.IPredication.PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation) => this.PredicateAsync(argument as LogEntry, parameters, cancellation);
+
+	public ValueTask<bool> PredicateAsync(LogEntry entry, CancellationToken cancellation = default) => this.PredicateAsync(entry, null, cancellation);
+	public ValueTask<bool> PredicateAsync(LogEntry entry, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(entry == null)
 			return ValueTask.FromResult(false);
@@ -55,7 +58,7 @@ public class LoggerHandlerPredication : Common.IPredication<LogEntry>
 			var matched = true;
 			var source = this.Source.Trim();
 
-			if(source[0] == '*' || source[source.Length - 1] == '*')
+			if(source[0] == '*' || source[^1] == '*')
 			{
 				if(source[0] == '*')
 				{
