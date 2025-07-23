@@ -95,23 +95,40 @@ public static partial class Authentication
 	#region 公共方法
 	public static async ValueTask<CredentialPrincipal> AuthenticateAsync(string scheme, string key, object data, string scenario, Parameters parameters, CancellationToken cancellation = default)
 	{
+		CredentialPrincipal principal = null;
+		var authority = Authority ?? throw new InvalidOperationException($"Missing the required credential provider.");
+
 		//激发“Authenticating”事件
-		OnAuthenticating(new AuthenticatingEventArgs(data, scenario, parameters));
+		OnAuthenticating(new AuthenticatingEventArgs(scheme, data, scenario, parameters));
 
-		//进行身份验证
-		var identity = await OnAuthenticateAsync(scheme, key, data, scenario, parameters, cancellation);
-
-		//生成安全主体
-		var principal = CreatePrincipal(identity, scenario);
-
-		//遍历安全质询器集合并依次质询
-		foreach(var challenger in _challengers)
+		try
 		{
-			await challenger.ChallengeAsync(principal, scenario, cancellation);
+			//进行身份验证
+			var identity = await OnAuthenticateAsync(scheme, key, data, scenario, parameters, cancellation);
+
+			//生成安全主体
+			principal = CreatePrincipal(identity, scenario);
+
+			//遍历安全质询器并依次质询
+			foreach(var challenger in _challengers)
+			{
+				await challenger.ChallengeAsync(principal, scenario, cancellation);
+			}
+
+			//注册凭证
+			await authority.RegisterAsync(principal, cancellation);
+		}
+		catch(Exception ex)
+		{
+			//确保激发“Authenticated”事件
+			OnAuthenticated(new AuthenticatedEventArgs(ex, scheme, principal, scenario, parameters));
+
+			//重抛异常
+			throw;
 		}
 
-		//通知验证完成
-		await OnAuthenticatedAsync(principal, scenario, parameters, cancellation);
+		//激发“Authenticated”事件
+		OnAuthenticated(new AuthenticatedEventArgs(scheme, principal, scenario, parameters));
 
 		//返回成功
 		return principal;
@@ -119,10 +136,12 @@ public static partial class Authentication
 	#endregion
 
 	#region 虚拟方法
+	private static CredentialPrincipal CreatePrincipal(ClaimsIdentity identity, string scenario) => new(identity, scenario);
+	private static IAuthenticator GetAuthenticator(string scheme) => _authenticators.TryGetValue(scheme ?? string.Empty, out var authenticator) ? authenticator : null;
 	private static async ValueTask<ClaimsIdentity> OnAuthenticateAsync(string scheme, string key, object data, string scenario, Parameters parameters, CancellationToken cancellation)
 	{
 		//获取身份验证器
-		var authenticator = GetAuthenticator(scheme, key, data, scenario) ??
+		var authenticator = GetAuthenticator(scheme) ??
 			throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Invalid authenticator scheme.");
 
 		//校验身份
@@ -134,22 +153,6 @@ public static partial class Authentication
 
 		return identity;
 	}
-
-	private static async Task OnAuthenticatedAsync(CredentialPrincipal principal, string scenario, Parameters parameters, CancellationToken cancellation)
-	{
-		var authority = Authority ?? throw new AuthenticationException("NoAuthority", $"Missing the required credential provider.");
-
-		//注册凭证
-		await authority.RegisterAsync(principal, cancellation);
-
-		//激发“Authenticated”事件
-		OnAuthenticated(new AuthenticatedEventArgs(principal, scenario, parameters));
-	}
-
-	private static IAuthenticator GetAuthenticator(string scheme, string key, object data, string scenario) =>
-		_authenticators.TryGetValue(scheme ?? string.Empty, out var authenticator) ? authenticator : null;
-
-	private static CredentialPrincipal CreatePrincipal(ClaimsIdentity identity, string scenario) => new CredentialPrincipal(identity, scenario);
 	#endregion
 
 	#region 激发事件
