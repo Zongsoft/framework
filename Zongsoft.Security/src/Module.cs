@@ -27,20 +27,14 @@
  * along with the Zongsoft.Security library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 using Zongsoft.Data;
-using Zongsoft.Common;
 using Zongsoft.Services;
-using Zongsoft.Components;
 
 [assembly: ApplicationModule(Zongsoft.Security.Module.NAME)]
 
 namespace Zongsoft.Security;
 
-public sealed class Module : ApplicationModule<Module.EventRegistry>
+public partial class Module : ApplicationModule<Module.EventRegistry>
 {
 	#region 常量定义
 	/// <summary>表示安全模块的名称常量值。</summary>
@@ -59,63 +53,5 @@ public sealed class Module : ApplicationModule<Module.EventRegistry>
 	#region 公共属性
 	private IDataAccess _accessor;
 	public IDataAccess Accessor => _accessor ??= this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
-	#endregion
-
-	#region 嵌套子类
-	[System.Reflection.DefaultMember(nameof(Events))]
-	public sealed class EventRegistry : EventRegistryBase
-	{
-		#region 构造函数
-		public EventRegistry() : base(NAME)
-		{
-			this.Event(AuthenticationEvent.Authenticated);
-			this.Event(AuthenticationEvent.Authenticating);
-
-			this.Authentication = new(this);
-		}
-		#endregion
-
-		#region 公共属性
-		public AuthenticationEvent Authentication { get; }
-		#endregion
-
-		public class AuthenticationEvent
-		{
-			#region 静态字段
-			public static readonly EventDescriptor<Privileges.AuthenticatedEventArgs> Authenticated = new(Predication.Predicate<Privileges.AuthenticatedEventArgs>(OnAuthenticated), $"{nameof(Privileges.Authentication)}.{nameof(Privileges.Authentication.Authenticated)}");
-			public static readonly EventDescriptor<Privileges.AuthenticatingEventArgs> Authenticating = new(Predication.Predicate<Privileges.AuthenticatingEventArgs>(OnAuthenticating), $"{nameof(Privileges.Authentication)}.{nameof(Privileges.Authentication.Authenticating)}");
-			#endregion
-
-			#region 成员字段
-			private readonly EventRegistry _registry;
-			#endregion
-
-			#region 构造函数
-			internal AuthenticationEvent(EventRegistry registry)
-			{
-				_registry = registry;
-
-				//注册事件处理器
-				Authenticated.Bind(
-					typeof(Privileges.Authentication),
-					nameof(Privileges.Authentication.Authenticated));
-
-				Authenticating.Bind(
-					typeof(Privileges.Authentication),
-					nameof(Privileges.Authentication.Authenticating));
-			}
-			#endregion
-
-			private static bool OnAuthenticated(Privileges.AuthenticatedEventArgs args)
-			{
-				return true;
-			}
-
-			private static bool OnAuthenticating(Privileges.AuthenticatingEventArgs args)
-			{
-				return true;
-			}
-		}
-	}
 	#endregion
 }
