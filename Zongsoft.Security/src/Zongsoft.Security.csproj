@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.5.2</Version>
+		<Version>7.5.3</Version>
 		<Product>Zongsoft Security Library</Product>
 		<Description>This is a class library about security development.</Description>
 		<RootNamespace>Zongsoft.Security</RootNamespace>
@@ -30,7 +30,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.8.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.16.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
