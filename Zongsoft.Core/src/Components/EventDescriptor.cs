@@ -35,6 +35,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
+using Zongsoft.Common;
+using Zongsoft.Collections;
+
 namespace Zongsoft.Components;
 
 [DefaultMember(nameof(Handlers))]
@@ -42,7 +45,7 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 {
 	#region 成员字段
 	private EventRegistryBase _registry;
-	private Common.IPredication _predication;
+	private IPredication _predication;
 	private string _qualifiedName;
 	private string _title;
 	private string _description;
@@ -50,7 +53,7 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 
 	#region 构造函数
 	public EventDescriptor(string name, string title = null, string description = null) : this(null, name, title, description) { }
-	public EventDescriptor(Common.IPredication predication, string name, string title = null, string description = null)
+	public EventDescriptor(IPredication predication, string name, string title = null, string description = null)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -71,18 +74,27 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 	/// <summary>获取事件的限定名称。</summary>
 	public string QualifiedName => _qualifiedName;
 
-	/// <summary>获取事件的显示名。</summary>
+	/// <summary>获取或设置事件的显示名。</summary>
 	public string Title
 	{
 		get => _title ?? this.GetTitle();
 		set => _title = value;
 	}
 
-	/// <summary>获取事件的描述信息。</summary>
+	/// <summary>获取或设置事件的描述信息。</summary>
 	public string Description
 	{
 		get => _description ?? this.GetDescription();
 		set => _description = value;
+	}
+
+	/// <summary>获取或设置处理断言。</summary>
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	public IPredication Predication
+	{
+		get => _predication;
+		set => _predication = value;
 	}
 
 	/// <summary>获取事件处理程序集。</summary>
@@ -101,9 +113,9 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 
 	#region 处理方法
 	public ValueTask HandleAsync(CancellationToken cancellation = default) => this.HandleAsync(null, null, cancellation);
-	public ValueTask HandleAsync(Collections.Parameters parameters, CancellationToken cancellation = default) => this.HandleAsync(null, parameters, cancellation);
+	public ValueTask HandleAsync(Parameters parameters, CancellationToken cancellation = default) => this.HandleAsync(null, parameters, cancellation);
 	public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-	public async ValueTask HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default)
+	public async ValueTask HandleAsync(object argument, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(await this.OnPredicateAsync(argument, parameters, cancellation))
 		{
@@ -120,7 +132,7 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 	#endregion
 
 	#region 断言方法
-	protected virtual ValueTask<bool> OnPredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation)
+	protected virtual ValueTask<bool> OnPredicateAsync(object argument, Parameters parameters, CancellationToken cancellation)
 	{
 		return _predication?.PredicateAsync(argument, parameters, cancellation) ?? ValueTask.FromResult(true);
 	}
@@ -164,12 +176,12 @@ public class EventDescriptor<TArgument> : EventDescriptor
 {
 	#region 构造函数
 	public EventDescriptor(string name, string title = null, string description = null) : base(name, title, description) { }
-	public EventDescriptor(Common.IPredication<TArgument> predication, string name, string title = null, string description = null) : base(predication, name, title, description) { }
+	public EventDescriptor(IPredication<TArgument> predication, string name, string title = null, string description = null) : base(predication, name, title, description) { }
 	#endregion
 
 	#region 处理方法
 	public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-	public async ValueTask HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
+	public async ValueTask HandleAsync(TArgument argument, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(await this.OnPredicateAsync(argument, parameters, cancellation))
 		{
