@@ -28,7 +28,7 @@
 	</extension>
 
 	<!-- 事件声明 -->
-	<extension path="/Workbench/Modules/Things/Events">
+	<extension path="/Workbench/Modules/Security/Events">
 		<expose name="Authentication" value="{path:../@Authentication}">
 			<expose name="Authenticated" value="{path:../@Authenticated}" />
 			<expose name="Authenticating" value="{path:../@Authenticating}" />
