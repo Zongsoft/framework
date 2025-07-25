@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,7 +9,7 @@ namespace Zongsoft.Components.Tests
 {
 	public class EventDescriptorTest
 	{
-		private MyEventTrigger _trigger = new MyEventTrigger();
+		private MyEventTrigger _trigger = new();
 
 		[Fact]
 		public void TestEventHandler1()

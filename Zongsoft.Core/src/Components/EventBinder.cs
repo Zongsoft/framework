@@ -315,12 +315,12 @@ public static class EventBinder
 		};
 	}
 
-	private static async void Complete(this ValueTask task)
+	private static void Complete(this ValueTask task)
 	{
 		if(task.IsCompletedSuccessfully)
 			return;
 
-		if(task.IsCompleted)
+		if(task.IsFaulted)
 		{
 			var exception = task.AsTask().Exception;
 			if(exception == null || exception.InnerException is OperationCanceledException)
@@ -332,7 +332,7 @@ public static class EventBinder
 				throw exception;
 		}
 
-		await task;
+		task.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 	}
 
 	private static Type GetArgumentType(this EventDescriptor descriptor)
