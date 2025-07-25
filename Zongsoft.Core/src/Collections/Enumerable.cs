@@ -194,9 +194,29 @@ public static class Enumerable
 		else
 			return (IEnumerable)System.Activator.CreateInstance(typeof(TypedEnumerable<>).MakeGenericType(elementType), [source]);
 	}
+
+	public static IEnumerator<T> GetEnumerator<T>(T[] array)
+	{
+		if(array == null)
+			throw new ArgumentNullException(nameof(array));
+
+		return new ArrayEnumerator<T>(array);
+	}
 	#endregion
 
 	#region 嵌套子类
+	private class ArrayEnumerator<T>(T[] array) : IEnumerator<T>
+	{
+		private int _index = -1;
+		private T[] _array = array ?? throw new ArgumentNullException(nameof(array));
+
+		public T Current => _index >= 0 && _index < _array.Length ? _array[_index] : default;
+		object IEnumerator.Current => this.Current;
+		public bool MoveNext() => ++_index < _array.Length;
+		public void Reset() => _index = -1;
+		public void Dispose() => _array = null;
+	}
+
 	private class EmptyEnumerable<T> : IEnumerable<T>
 	{
 		public IEnumerator<T> GetEnumerator() { yield break; }

@@ -135,6 +135,14 @@ public static class DictionaryExtension
 		return false;
 	}
 
+	public static SynchronizedDictionary<TKey, TValue> Synchronize<TKey, TValue>(this IDictionary<TKey, TValue> dictionary)
+	{
+		if(dictionary == null)
+			return null;
+
+		return dictionary as SynchronizedDictionary<TKey, TValue> ?? new(dictionary);
+	}
+
 	public static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary dictionary, Func<object, TKey> keyConvert = null, Func<object, TValue> valueConvert = null) => ToDictionary(dictionary, null, keyConvert, valueConvert);
 	public static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary dictionary, IEqualityComparer<TKey> comparer, Func<object, TKey> keyConvert = null, Func<object, TValue> valueConvert = null)
 	{
