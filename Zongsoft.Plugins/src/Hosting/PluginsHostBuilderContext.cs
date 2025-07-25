@@ -33,20 +33,19 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Plugins.Hosting
-{
-	[Obsolete("Use Application and ApplicationBuilder instead.")]
-	public class PluginsHostBuilderContext : HostBuilderContext
-	{
-		#region 构造函数
-		public PluginsHostBuilderContext(PluginOptions options, IDictionary<object, object> properties) : base(properties)
-		{
-			this.Options = options ?? throw new ArgumentNullException(nameof(options));
-		}
-		#endregion
+namespace Zongsoft.Plugins.Hosting;
 
-		#region 公共属性
-		public PluginOptions Options { get; }
-		#endregion
+[Obsolete("Use Application and ApplicationBuilder instead.")]
+public class PluginsHostBuilderContext : HostBuilderContext
+{
+	#region 构造函数
+	public PluginsHostBuilderContext(PluginOptions options, IDictionary<object, object> properties) : base(properties)
+	{
+		this.Options = options ?? throw new ArgumentNullException(nameof(options));
 	}
+	#endregion
+
+	#region 公共属性
+	public PluginOptions Options { get; }
+	#endregion
 }

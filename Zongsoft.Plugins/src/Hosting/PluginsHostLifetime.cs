@@ -35,120 +35,119 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Zongsoft.Plugins.Hosting
+namespace Zongsoft.Plugins.Hosting;
+
+public class PluginsHostLifetime : IHostLifetime, IDisposable
 {
-	public class PluginsHostLifetime : IHostLifetime, IDisposable
+	#region 私有变量
+	private CancellationTokenRegistration _applicationStartedRegistration;
+	private readonly PluginApplicationContext _applicationContext;
+	private readonly IHostApplicationLifetime _applicationLifetime;
+	private readonly HostOptions _hostOptions;
+	private readonly ILogger _logger;
+
+	private readonly ManualResetEvent _shutdownBlock = new ManualResetEvent(false);
+	#endregion
+
+	#region 构造函数
+	public PluginsHostLifetime(PluginApplicationContext applicationContext, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions)
+		: this(applicationContext, applicationLifetime, hostOptions, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance) { }
+
+	public PluginsHostLifetime(PluginApplicationContext applicationContext, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions, ILoggerFactory loggerFactory)
 	{
-		#region 私有变量
-		private CancellationTokenRegistration _applicationStartedRegistration;
-		private readonly PluginApplicationContext _applicationContext;
-		private readonly IHostApplicationLifetime _applicationLifetime;
-		private readonly HostOptions _hostOptions;
-		private readonly ILogger _logger;
+		_applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
+		_applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
+		_hostOptions = hostOptions?.Value ?? throw new ArgumentNullException(nameof(hostOptions));
+		_logger = loggerFactory.CreateLogger("Zongsoft.Hosting.Lifetime");
+	}
+	#endregion
 
-		private readonly ManualResetEvent _shutdownBlock = new ManualResetEvent(false);
-		#endregion
+	#region 公共方法
+	public Task StopAsync(CancellationToken cancellationToken)
+	{
+		if(!cancellationToken.IsCancellationRequested)
+			_applicationContext.Dispose();
 
-		#region 构造函数
-		public PluginsHostLifetime(PluginApplicationContext applicationContext, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions)
-			: this(applicationContext, applicationLifetime, hostOptions, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance) { }
+		return Task.CompletedTask;
+	}
 
-		public PluginsHostLifetime(PluginApplicationContext applicationContext, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions, ILoggerFactory loggerFactory)
+	public Task WaitForStartAsync(CancellationToken cancellationToken)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
+
+		_applicationStartedRegistration = _applicationLifetime.ApplicationStarted.Register(state =>
 		{
-			_applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
-			_applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
-			_hostOptions = hostOptions?.Value ?? throw new ArgumentNullException(nameof(hostOptions));
-			_logger = loggerFactory.CreateLogger("Zongsoft.Hosting.Lifetime");
-		}
-		#endregion
+			((PluginsHostLifetime)state).OnApplicationStarted();
+		}, this);
 
-		#region 公共方法
-		public Task StopAsync(CancellationToken cancellationToken)
+		AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+
+#if !DEBUG
+		try
+#endif
 		{
-			if(!cancellationToken.IsCancellationRequested)
-				_applicationContext.Dispose();
+			_applicationContext.Initialize();
+			_applicationContext.Workbench.Open();
 
 			return Task.CompletedTask;
 		}
-
-		public Task WaitForStartAsync(CancellationToken cancellationToken)
+#if !DEBUG
+		catch(Exception ex)
 		{
-			cancellationToken.ThrowIfCancellationRequested();
-
-			_applicationStartedRegistration = _applicationLifetime.ApplicationStarted.Register(state =>
-			{
-				((PluginsHostLifetime)state).OnApplicationStarted();
-			}, this);
-
-			AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
-
-#if !DEBUG
-			try
-#endif
-			{
-				_applicationContext.Initialize();
-				_applicationContext.Workbench.Open();
-
-				return Task.CompletedTask;
-			}
-#if !DEBUG
-			catch(Exception ex)
-			{
-				_logger.LogError(ex, $"The {_applicationContext.Name} application failed to initialize.");
-				throw;
-			}
-#endif
+			_logger.LogError(ex, $"The {_applicationContext.Name} application failed to initialize.");
+			throw;
 		}
-		#endregion
+#endif
+	}
+	#endregion
 
-		#region 事件响应
-		private void OnApplicationStarted()
-		{
+	#region 事件响应
+	private void OnApplicationStarted()
+	{
 #if DEBUG
+		_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
+		//_applicationContext.Workbench.Open();
+#else
+		try
+		{
 			_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
 			//_applicationContext.Workbench.Open();
-#else
-			try
-			{
-				_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
-				//_applicationContext.Workbench.Open();
-			}
-			catch(Exception ex)
-			{
-				_logger.LogError(ex, $"The {_applicationContext.Name} application failed to start.");
-				throw;
-			}
-#endif
 		}
-
-		private void OnProcessExit(object sender, EventArgs e)
+		catch(Exception ex)
 		{
-			_applicationLifetime.StopApplication();
-
-			if(!_shutdownBlock.WaitOne(_hostOptions.ShutdownTimeout))
-				_logger.LogInformation("Waiting for the host to be disposed. Ensure all 'IHost' instances are wrapped in 'using' blocks.");
-
-			_shutdownBlock.WaitOne();
-			Environment.ExitCode = 0;
+			_logger.LogError(ex, $"The {_applicationContext.Name} application failed to start.");
+			throw;
 		}
+#endif
+	}
+
+	private void OnProcessExit(object sender, EventArgs e)
+	{
+		_applicationLifetime.StopApplication();
+
+		if(!_shutdownBlock.WaitOne(_hostOptions.ShutdownTimeout))
+			_logger.LogInformation("Waiting for the host to be disposed. Ensure all 'IHost' instances are wrapped in 'using' blocks.");
+
+		_shutdownBlock.WaitOne();
+		Environment.ExitCode = 0;
+	}
 #endregion
 
-		#region 处置方法
-		public void Dispose()
-		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			if(disposing)
-			{
-				_shutdownBlock.Set();
-				AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
-				_applicationStartedRegistration.Dispose();
-			}
-		}
-		#endregion
+	#region 处置方法
+	public void Dispose()
+	{
+		this.Dispose(true);
+		GC.SuppressFinalize(this);
 	}
+
+	protected virtual void Dispose(bool disposing)
+	{
+		if(disposing)
+		{
+			_shutdownBlock.Set();
+			AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
+			_applicationStartedRegistration.Dispose();
+		}
+	}
+	#endregion
 }

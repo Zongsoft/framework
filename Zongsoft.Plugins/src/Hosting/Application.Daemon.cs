@@ -33,54 +33,53 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Plugins.Hosting
+namespace Zongsoft.Plugins.Hosting;
+
+partial class Application
 {
-	partial class Application
+	private sealed class DaemonApplicationBuilder : ApplicationBuilder
 	{
-		private sealed class DaemonApplicationBuilder : ApplicationBuilder
-		{
 #if NET7_0_OR_GREATER
-			public DaemonApplicationBuilder(string name, string[] args, Action<HostApplicationBuilder> configure = null) : base(name, args, configure)
-			{
-				_logger = Zongsoft.Diagnostics.Logger.GetLogger(this.Environment.ApplicationName);
-				AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-			}
+		public DaemonApplicationBuilder(string name, string[] args, Action<HostApplicationBuilder> configure = null) : base(name, args, configure)
+		{
+			_logger = Zongsoft.Diagnostics.Logger.GetLogger(this.Environment.ApplicationName);
+			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+		}
 #else
-			public DaemonApplicationBuilder(string name, string[] args, Action<IHostBuilder> configure = null) : base(name, args, configure)
-			{
-				_logger = Zongsoft.Diagnostics.Logger.GetLogger(this.Environment.ApplicationName);
-				AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-			}
+		public DaemonApplicationBuilder(string name, string[] args, Action<IHostBuilder> configure = null) : base(name, args, configure)
+		{
+			_logger = Zongsoft.Diagnostics.Logger.GetLogger(this.Environment.ApplicationName);
+			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+		}
 #endif
-			protected override void RegisterServices(IServiceCollection services, PluginOptions options)
-			{
-				services.AddSingleton(provider => new DaemonApplicationContext(provider, options));
-				services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<DaemonApplicationContext>());
-				services.AddSingleton<Services.IApplicationContext>(provider => provider.GetRequiredService<DaemonApplicationContext>());
-
-				base.RegisterServices(services, options);
-			}
-
-			#region 全局异常
-			private static Zongsoft.Diagnostics.Logger _logger;
-			private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-			{
-				if(e.ExceptionObject is Exception ex)
-					_logger.Fatal(ex);
-				else
-					_logger.Fatal(e.ExceptionObject?.ToString());
-			}
-			#endregion
-		}
-
-		private sealed class DaemonApplicationContext(IServiceProvider serviceProvider, PluginOptions options) : PluginApplicationContext(serviceProvider, options)
+		protected override void RegisterServices(IServiceCollection services, PluginOptions options)
 		{
-			public override string ApplicationType => "Daemon";
-			protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? new DaemonWorkbench(this);
+			services.AddSingleton(provider => new DaemonApplicationContext(provider, options));
+			services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<DaemonApplicationContext>());
+			services.AddSingleton<Services.IApplicationContext>(provider => provider.GetRequiredService<DaemonApplicationContext>());
+
+			base.RegisterServices(services, options);
 		}
 
-		private sealed class DaemonWorkbench(Application.DaemonApplicationContext applicationContext) : WorkbenchBase(applicationContext)
+		#region 全局异常
+		private static Zongsoft.Diagnostics.Logger _logger;
+		private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 		{
+			if(e.ExceptionObject is Exception ex)
+				_logger.Fatal(ex);
+			else
+				_logger.Fatal(e.ExceptionObject?.ToString());
 		}
+		#endregion
+	}
+
+	private sealed class DaemonApplicationContext(IServiceProvider serviceProvider, PluginOptions options) : PluginApplicationContext(serviceProvider, options)
+	{
+		public override string ApplicationType => "Daemon";
+		protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? new DaemonWorkbench(this);
+	}
+
+	private sealed class DaemonWorkbench(Application.DaemonApplicationContext applicationContext) : WorkbenchBase(applicationContext)
+	{
 	}
 }

@@ -33,14 +33,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Plugins.Hosting
+namespace Zongsoft.Plugins.Hosting;
+
+[Obsolete("Use Application and ApplicationBuilder instead.")]
+public interface IPluginsHostBuilder
 {
-	[Obsolete("Use Application and ApplicationBuilder instead.")]
-	public interface IPluginsHostBuilder
-	{
-		IPluginsHostBuilder UseOptions(Func<HostBuilderContext, PluginOptions> initialize);
-		IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilderContext, IConfigurationBuilder> configure);
-		IPluginsHostBuilder ConfigureServices(Action<IServiceCollection> configure);
-		IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilderContext, IServiceCollection> configure);
-	}
+	IPluginsHostBuilder UseOptions(Func<HostBuilderContext, PluginOptions> initialize);
+	IPluginsHostBuilder ConfigureConfiguration(Action<PluginsHostBuilderContext, IConfigurationBuilder> configure);
+	IPluginsHostBuilder ConfigureServices(Action<IServiceCollection> configure);
+	IPluginsHostBuilder ConfigureServices(Action<PluginsHostBuilderContext, IServiceCollection> configure);
 }
