@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 
@@ -36,6 +37,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.DependencyInjection;
+
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Plugins.Hosting;
 
@@ -45,6 +48,45 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 	public abstract IServiceCollection Services { get; }
 	public abstract IHostEnvironment Environment { get; }
 	public abstract ConfigurationManager Configuration { get; }
+	#endregion
+
+	#region 公共方法
+	public void LoadConfiguration(string applicationName = null)
+	{
+		if(string.IsNullOrEmpty(applicationName))
+			applicationName = this.Environment.ApplicationName;
+
+		//添加宿主配置文件
+		this.Configuration.AddOptionFile($"{applicationName}.option", true);
+
+		//获取宿主附属配置文件
+		var slaves = GetSlaves(
+			applicationName,
+			this.Environment.EnvironmentName,
+			this.Configuration.GetSection("host")?.Value,
+			this.Configuration.GetSection("site")?.Value);
+
+		//依次添加附属配置文件
+		foreach(var slave in slaves)
+			this.Configuration.AddOptionFile(slave, true);
+
+		static IEnumerable<string> GetSlaves(string application, string environment, params string[] slaves)
+		{
+			if(!string.IsNullOrEmpty(environment))
+				yield return $"{application}.{environment.ToLowerInvariant()}.option";
+
+			foreach(var slave in slaves.Distinct(StringComparer.OrdinalIgnoreCase))
+			{
+				if(string.IsNullOrEmpty(slave))
+					continue;
+
+				yield return $"{application}.{slave.ToLowerInvariant()}.option";
+
+				if(!string.IsNullOrEmpty(environment))
+					yield return $"{application}.{slave.ToLowerInvariant()}.{environment.ToLowerInvariant()}.option";
+			}
+		}
+	}
 	#endregion
 
 	#region 抽象方法

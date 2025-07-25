@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -31,8 +31,6 @@ using System;
 
 using Microsoft.Extensions.Hosting;
 
-using Zongsoft.Configuration;
-
 namespace Zongsoft.Plugins.Hosting;
 
 public static partial class Application
@@ -45,8 +43,8 @@ public static partial class Application
 	{
 		var builder = new DaemonApplicationBuilder(name, args, configure);
 
-		//添加宿主配置文件
-		builder.Configuration.AddOptionFile($"{builder.Environment.ApplicationName}.option", true);
+		//加载宿主配置文件
+		builder.LoadConfiguration();
 
 		return builder.Build();
 	}
@@ -58,8 +56,8 @@ public static partial class Application
 	{
 		var builder = new TerminalApplicationBuilder(name, args, configure);
 
-		//添加宿主配置文件
-		builder.Configuration.AddOptionFile($"{builder.Environment.ApplicationName}.option", true);
+		//加载宿主配置文件
+		builder.LoadConfiguration();
 
 		return builder.Build();
 	}
@@ -71,8 +69,8 @@ public static partial class Application
 	{
 		var builder = new DaemonApplicationBuilder(name, args, configure);
 
-		//添加宿主配置文件
-		builder.Configuration.AddOptionFile(System.IO.Path.Combine(builder.Environment.ContentRootPath, $"{builder.Environment.ApplicationName}.option"), true);
+		//加载宿主配置文件
+		builder.LoadConfiguration();
 
 		return builder.Build();
 	}
@@ -84,8 +82,8 @@ public static partial class Application
 	{
 		var builder = new TerminalApplicationBuilder(name, args, configure);
 
-		//添加宿主配置文件
-		builder.Configuration.AddOptionFile(System.IO.Path.Combine(builder.Environment.ContentRootPath, $"{builder.Environment.ApplicationName}.option"), true);
+		//加载宿主配置文件
+		builder.LoadConfiguration();
 
 		return builder.Build();
 	}

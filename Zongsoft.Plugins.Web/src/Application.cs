@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins.Web library.
  *
@@ -34,7 +34,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Builder;
 
 using Zongsoft.Services;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Web;
 
@@ -49,7 +48,7 @@ public static class Application
 		var builder = new WebApplicationBuilder(name, args, configure);
 
 		//添加 web.option 宿主配置文件
-		builder.Configuration.AddOptionFile("web.option", true);
+		builder.LoadConfiguration("web");
 
 		var app = builder.Build();
 
@@ -99,7 +98,7 @@ public static class Application
 		});
 
 		//添加 web.option 宿主配置文件
-		builder.Configuration.AddOptionFile(System.IO.Path.Combine(builder.Environment.ContentRootPath, "web.option"), true);
+		builder.LoadConfiguration("web");
 
 		return builder.Build();
 
