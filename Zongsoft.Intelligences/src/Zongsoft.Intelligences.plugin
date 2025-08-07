@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Intelligences"
+        title="Zongsoft Intelligences Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2025-2025. All rights reserved."
+        description="Created Date: 2012-08-08 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Intelligences" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workbench/Executor/Commands">
+		<object name="Ollama">
+			<rsa.command>
+				<object name="Ollama" type="Zongsoft.Intelligences.Ollama.OllamaCommand, Zongsoft.Intelligences" />
+			</rsa.command>
+
+			<object name="List" type="Zongsoft.Intelligences.Ollama.OllamaListCommand, Zongsoft.Intelligences" />
+		</object>
+	</extension>
+</plugin>

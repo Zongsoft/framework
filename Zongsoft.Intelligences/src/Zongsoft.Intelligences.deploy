@@ -1,0 +1,7 @@
+artifacts/Zongsoft.Intelligences.plugin
+lib/$(Framework)/Zongsoft.Intelligences.*
+lib/$(Framework)/*/Zongsoft.Intelligences.resources.*
+
+nuget:Microsoft.Extensions.AI@9.7.1
+nuget:Microsoft.SemanticKernel@1.61.0
+nuget:OllamaSharp@5.3.4
