@@ -39,6 +39,12 @@ partial class Terminal
 {
 	public static ITerminal GetTerminal(this ICommandExecutor executor) => (executor as ITerminalExecutor)?.Terminal;
 	public static ITerminal GetTerminal(this CommandContextBase context) => (context?.Executor as ITerminalExecutor)?.Terminal;
+	public static bool TryGetTerminal(this CommandContextBase context, out ITerminal terminal) => TryGetTerminal(context?.Executor, out terminal);
+	public static bool TryGetTerminal(this ICommandExecutor executor, out ITerminal terminal)
+	{
+		terminal = (executor as ITerminalExecutor)?.Terminal;
+		return terminal != null;
+	}
 
 	/// <summary>执行响应命令。</summary>
 	/// <param name="context">指定的命令上下文对象。</param>

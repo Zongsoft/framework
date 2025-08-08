@@ -32,6 +32,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Terminals;
 using Zongsoft.Components;
 
 namespace Zongsoft.Intelligences.Ollama;
@@ -40,29 +41,31 @@ public class OllamaListCommand() : CommandBase<CommandContext>("List")
 {
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var client = context.Find<OllamaCommand>(true)?.Client;
-		if(client == null)
+		var client = (context.Find<OllamaCommand>(true)?.Client) ??
 			throw new CommandException("The Ollama API client is not found.");
 
 		if(context.Expression.Options.Contains("running"))
 		{
 			var models = await client.ListRunningModelsAsync(cancellation);
-			Dump(context.Output, models);
+			Dump(context.GetTerminal(), models);
 			return models;
 		}
 		else
 		{
 			var models = await client.ListLocalModelsAsync(cancellation);
-			Dump(context.Output, models);
+			Dump(context.GetTerminal(), models);
 			return models;
 		}
 	}
 
-	private static void Dump(ICommandOutlet outlet, IEnumerable<OllamaSharp.Models.Model> models)
+	private static void Dump(ITerminal terminal, IEnumerable<OllamaSharp.Models.Model> models)
 	{
+		if(terminal == null)
+			return;
+
 		foreach(var model in models)
 		{
-			outlet.Dump(model);
+			terminal.Dump(model);
 		}
 	}
 }
