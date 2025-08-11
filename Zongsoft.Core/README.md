@@ -1,8 +1,12 @@
 # Zongsoft 开发框架核心类库
 
-![license](https://img.shields.io/github/license/Zongsoft/Framework/Zongsoft.Core) ![download](https://img.shields.io/nuget/dt/Zongsoft.Core) ![version](https://img.shields.io/github/v/release/Zongsoft/Framework/Zongsoft.Core?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Framework/Zongsoft.Core?style=social)
+![License](https://img.shields.io/github/license/Zongsoft/framework)
+![NuGet version](https://img.shields.io/nuget/v/Zongsoft.Core)
+![NuGet downloads](https://img.shields.io/nuget/dt/Zongsoft.Core)
+![GitHub stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
-README: [English](https://github.com/Zongsoft/Framework/Zongsoft.Core/blob/master/README.md) | [简体中文](https://github.com/Zongsoft/Framework/Zongsoft.Core/blob/master/README-zh_CN.md)
+[English](https://github.com/Zongsoft/Framework/Zongsoft.Core/blob/master/README.md) |
+[简体中文](https://github.com/Zongsoft/Framework/Zongsoft.Core/blob/master/README-zh_CN.md)
 
 -----
 
