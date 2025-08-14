@@ -554,8 +554,37 @@ public partial class OpcClient : IDisposable
 		args.Accept = args.AcceptAll = true;
 	}
 
-	private void Session_KeepAlive(ISession session, KeepAliveEventArgs args) =>
-		this.Heartbeat?.Invoke(this, StatusCode.IsGood(args.Status.StatusCode) ? new(args.CurrentState.ToString()) : new(Failure.GetFailure(args.Status.StatusCode), args.CurrentState.ToString()));
+	private void Session_KeepAlive(ISession session, KeepAliveEventArgs args)
+	{
+		this.Heartbeat?.Invoke(this,
+			IsGood(args, out var failure) ?
+			new(args.CurrentState.ToString()) :
+			new(failure, args.CurrentState.ToString()));
+
+		static bool IsGood(KeepAliveEventArgs args, out Failure failure)
+		{
+			if(args.Status == null)
+			{
+				if(args.CurrentState == ServerState.Running)
+				{
+					failure = default;
+					return true;
+				}
+
+				failure = new(-1, args.CurrentState.ToString());
+				return false;
+			}
+
+			if(StatusCode.IsGood(args.Status.StatusCode))
+			{
+				failure = default;
+				return true;
+			}
+
+			failure = Failure.GetFailure(args.Status.StatusCode);
+			return false;
+		}
+	}
 	#endregion
 
 	#region 私有方法
