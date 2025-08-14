@@ -19,3 +19,7 @@ nuget:OpenTelemetry.Exporter.Prometheus.HttpListener@1.9.0-beta.2
 nuget:OpenTelemetry.Exporter.Zipkin@1.9.0
 nuget:OpenTelemetry.PersistentStorage.Abstractions@1.0.0
 nuget:OpenTelemetry.PersistentStorage.FileSystem@1.0.0
+
+nuget:Grpc.Core.Api@2.71.0
+nuget:Grpc.Net.Common@2.71.0
+nuget:Grpc.Net.Client@2.71.0
