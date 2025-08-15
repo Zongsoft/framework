@@ -49,6 +49,10 @@ public class Timer : IDisposable
 	}
 	#endregion
 
+	#if NET8_0_OR_GREATER
+	public TimeSpan Period { get => _timer.Period; set => _timer.Period = value; }
+	#endif
+
 	#region 公共方法
 	public void Stop() => _cancellation?.Cancel();
 	public void Start(CancellationToken cancellation = default) => this.Start(null, cancellation);
