@@ -179,20 +179,9 @@ public partial class CommandNode : Zongsoft.Collections.HierarchicalNode<Command
 		return FindDown(this, node => node.Command == command);
 	}
 
-	public TCommand Find<TCommand>(bool rooting = false) where TCommand : class, ICommand
+	public TCommand Find<TCommand>(bool rooting = false) where TCommand : class
 	{
-		static bool Predicate(CommandNode node)
-		{
-			var command = node.Command;
-
-			if(command == null)
-				return false;
-
-			if(typeof(TCommand).IsInterface || typeof(TCommand).IsAbstract)
-				return typeof(TCommand).IsAssignableFrom(command.GetType());
-			else
-				return typeof(TCommand) == command.GetType();
-		}
+		static bool Predicate(CommandNode node) => node.Command is TCommand;
 
 		//向上查找（往根节点方向）
 		if(rooting)
