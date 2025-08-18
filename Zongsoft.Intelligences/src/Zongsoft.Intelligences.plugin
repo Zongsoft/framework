@@ -4,7 +4,7 @@
         title="Zongsoft Intelligences Plugin"
         author="Zongsoft Studio(zongsoft@qq.com)"
         copyright="Copyright(C) Zongsoft Studio. 2025-2025. All rights reserved."
-        description="Created Date: 2012-08-08 by Popeye Zhong">
+        description="Created Date: 2025-08-08 by Popeye Zhong">
 
 	<manifest>
 		<assemblies>
@@ -14,11 +14,20 @@
 
 	<extension path="/Workbench/Executor/Commands">
 		<object name="Ollama">
-			<rsa.command>
-				<object name="Ollama" type="Zongsoft.Intelligences.Ollama.OllamaCommand, Zongsoft.Intelligences" />
-			</rsa.command>
+			<ollama.command>
+				<object name="Ollama" type="Zongsoft.Intelligences.Commands.OllamaCommand, Zongsoft.Intelligences" />
+			</ollama.command>
 
-			<object name="List" type="Zongsoft.Intelligences.Ollama.OllamaListCommand, Zongsoft.Intelligences" />
+			<object name="Chat" type="Zongsoft.Intelligences.Commands.ChatCommand, Zongsoft.Intelligences" />
+			<object name="List" type="Zongsoft.Intelligences.Commands.OllamaListCommand, Zongsoft.Intelligences" />
+
+			<object name="History">
+				<history.command>
+					<object name="History" type="Zongsoft.Intelligences.Commands.HistoryCommand, Zongsoft.Intelligences" />
+				</history.command>
+
+				<object name="Clear" type="Zongsoft.Intelligences.Commands.HistoryClearCommand, Zongsoft.Intelligences" />
+			</object>
 		</object>
 	</extension>
 </plugin>

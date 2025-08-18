@@ -1,0 +1,169 @@
+﻿/*
+ *   _____                                ______
+ *  /_   /  ____  ____  ____  _________  / __/ /_
+ *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
+ *   / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
+ *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
+ *                   /____/
+ *
+ * Authors:
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
+ *
+ * Copyright (C) 2025-2025 Zongsoft Studio <http://www.zongsoft.com>
+ *
+ * This file is part of Zongsoft.Intelligences library.
+ *
+ * The Zongsoft.Intelligences is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3.0 of the License,
+ * or (at your option) any later version.
+ *
+ * The Zongsoft.Intelligences is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the Zongsoft.Intelligences library. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+
+using Microsoft.Extensions.AI;
+
+using Zongsoft.Services;
+using Zongsoft.Terminals;
+using Zongsoft.Components;
+
+namespace Zongsoft.Intelligences.Commands;
+
+[CommandOption(INTERACTIVE_OPTION, Type = typeof(bool), DefaultValue = false)]
+public class ChatCommand() : CommandBase<CommandContext>("Chat")
+{
+	#region 常量定义
+	private const string INTERACTIVE_OPTION = "interactive";
+	#endregion
+
+	#region 成员变量
+	private readonly List<ChatMessage> _history = new();
+	#endregion
+
+	#region 重写方法
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		var session = (context.Find<IServiceAccessor<IChatSession>>(true)?.Value) ??
+			throw new CommandException("The chat client is not found.");
+
+		if(context.Expression.Options.TryGetValue<bool>(INTERACTIVE_OPTION, out var interactive) && interactive)
+		{
+			await Chat(context, session.Client, session.History);
+			return _history;
+		}
+
+		if(context.Expression.Arguments.IsEmpty)
+			return null;
+
+		return await Dialogue(context, session.Client, session.History);
+	}
+	#endregion
+
+	#region 私有方法
+	private static async ValueTask Chat(CommandContext context, IChatClient client, IList<ChatMessage> history)
+	{
+		var terminal = context.GetTerminal() ??
+			throw new CommandException("The interactive chat can only run in a terminal environment.");
+
+		var splash = CommandOutletContent.Create()
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50))
+			.AppendLine(CommandOutletColor.Cyan, Common.StringExtension.Justify("Welcome to the interactive chat room.", 50))
+			.AppendLine(CommandOutletStyles.Blinking, CommandOutletColor.DarkGreen, Common.StringExtension.Justify("Type “exit” to leave the chat room.", 50))
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
+
+		terminal.Write(splash);
+
+		while(true)
+		{
+			terminal.Write(CommandOutletStyles.Bold, CommandOutletColor.Cyan, "You:> ");
+
+			var text = terminal.Input.ReadLine();
+			if(string.IsNullOrWhiteSpace(text))
+				continue;
+
+			if(string.Equals("exit", text, StringComparison.OrdinalIgnoreCase) ||
+			   string.Equals("quit", text, StringComparison.OrdinalIgnoreCase))
+				break;
+
+			history.Add(new ChatMessage(ChatRole.User, text));
+
+			var message = await Dialogue(terminal, client, history);
+			if(message != null && message.Contents.Count > 0)
+			{
+				history.Add(message);
+				terminal.WriteLine();
+			}
+		}
+	}
+
+	private static async ValueTask<ChatMessage> Dialogue(CommandContext context, IChatClient client, IList<ChatMessage> history)
+	{
+		//将用户输入的内容添加到对话历史中
+		history.Add(new ChatMessage(ChatRole.User, [.. context.Expression.Arguments.Select(argument => new TextContent(argument))]));
+
+		var message = await Dialogue(context.GetTerminal(), client, history);
+		if(message != null && message.Contents.Count > 0)
+			history.Add(message);
+
+		return message;
+	}
+
+	private static async ValueTask<ChatMessage> Dialogue(ITerminal terminal, IChatClient client, IList<ChatMessage> history)
+	{
+		if(history == null || history.Count == 0)
+			return default;
+
+		var response = client.GetStreamingResponseAsync(history);
+		ChatMessage result = null;
+
+		await foreach(var entry in response)
+		{
+			if(entry == null || string.IsNullOrEmpty(entry.Text))
+				break;
+
+			result ??= new ChatMessage
+			{
+				Role = entry.Role ?? ChatRole.Assistant,
+				AuthorName = entry.AuthorName,
+				MessageId = entry.MessageId,
+				RawRepresentation = entry.RawRepresentation,
+				AdditionalProperties = entry.AdditionalProperties,
+			};
+
+			if(entry.Contents != null && entry.Contents.Count > 0)
+			{
+				foreach(var content in entry.Contents)
+					result.Contents.Add(content);
+			}
+
+			if(entry.AdditionalProperties != null && entry.AdditionalProperties.Count > 0)
+			{
+				result.AdditionalProperties ??= new();
+
+				foreach(var property in entry.AdditionalProperties)
+					result.AdditionalProperties.Add(property.Key, property.Value);
+			}
+
+			terminal?.Write(entry.Text);
+
+			if(entry.FinishReason.HasValue)
+				terminal?.WriteLine(CommandOutletStyles.Bold | CommandOutletStyles.Blinking, CommandOutletColor.Magenta, $" ({entry.FinishReason.Value})");
+		}
+
+		terminal?.WriteLine();
+		return result;
+	}
+	#endregion
+}

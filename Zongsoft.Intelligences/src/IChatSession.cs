@@ -28,44 +28,14 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Zongsoft.Terminals;
-using Zongsoft.Components;
+using Microsoft.Extensions.AI;
 
-namespace Zongsoft.Intelligences.Ollama;
+namespace Zongsoft.Intelligences;
 
-public class OllamaListCommand() : CommandBase<CommandContext>("List")
+public interface IChatSession
 {
-	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
-	{
-		var client = (context.Find<OllamaCommand>(true)?.Client) ??
-			throw new CommandException("The Ollama API client is not found.");
-
-		if(context.Expression.Options.Contains("running"))
-		{
-			var models = await client.ListRunningModelsAsync(cancellation);
-			Dump(context.GetTerminal(), models);
-			return models;
-		}
-		else
-		{
-			var models = await client.ListLocalModelsAsync(cancellation);
-			Dump(context.GetTerminal(), models);
-			return models;
-		}
-	}
-
-	private static void Dump(ITerminal terminal, IEnumerable<OllamaSharp.Models.Model> models)
-	{
-		if(terminal == null)
-			return;
-
-		foreach(var model in models)
-		{
-			terminal.Dump(model);
-		}
-	}
+	IChatClient Client { get; }
+	IList<ChatMessage> History { get; }
 }

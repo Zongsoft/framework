@@ -31,30 +31,43 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using OllamaSharp;
+using Microsoft.Extensions.AI;
 
+using Zongsoft.Services;
+using Zongsoft.Terminals;
 using Zongsoft.Components;
 
-namespace Zongsoft.Intelligences.Ollama;
+namespace Zongsoft.Intelligences.Commands;
 
-public class OllamaCommand : CommandBase<CommandContext>
+public class HistoryCommand() : CommandBase<CommandContext>("History")
 {
-	#region 构造函数
-	public OllamaCommand() : base("Ollama") { }
-	public OllamaCommand(string name) : base(name) { }
-	#endregion
-
-	#region 公共属性
-	public IOllamaApiClient Client { get; set; }
-	#endregion
-
-	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Value is IOllamaApiClient client)
-			this.Client = client;
+		var session = (context.Find<IServiceAccessor<IChatSession>>(true)?.Value) ??
+			throw new CommandException("The chat client is not found.");
 
-		return ValueTask.FromResult<object>(this.Client);
+		var terminal = context.GetTerminal();
+
+		if(session.History.Count == 0)
+		{
+			terminal?.WriteLine("The history is empty.");
+			return ValueTask.FromResult<object>(null);
+		}
+
+		if(terminal != null)
+		{
+			foreach(var message in session.History)
+			{
+				var content = CommandOutletContent.Create(CommandOutletColor.Cyan, message.Role.ToString())
+					.Append(CommandOutletColor.DarkGray, ": ")
+					.AppendLine(GetMessageColor(message.Role), message.Text);
+
+				terminal.Write(content);
+			}
+		}
+
+		return ValueTask.FromResult<object>(session.History);
 	}
-	#endregion
+
+	private static CommandOutletColor GetMessageColor(ChatRole role) => role == ChatRole.User ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkYellow;
 }
