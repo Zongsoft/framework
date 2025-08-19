@@ -31,8 +31,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Microsoft.Extensions.AI;
-
 using Zongsoft.Services;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
@@ -60,6 +58,4 @@ public class HistoryClearCommand() : CommandBase<CommandContext>("Clear")
 
 		return ValueTask.FromResult<object>(count);
 	}
-
-	private static CommandOutletColor GetMessageColor(ChatRole role) => role == ChatRole.User ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkYellow;
 }
