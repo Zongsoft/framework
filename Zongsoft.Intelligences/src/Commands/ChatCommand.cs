@@ -41,10 +41,14 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Intelligences.Commands;
 
+[CommandOption(FORMAT_OPTION, Type = typeof(ChatResponseFormat))]
+[CommandOption(STREAMING_OPTION, Type = typeof(bool), DefaultValue = false)]
 [CommandOption(INTERACTIVE_OPTION, Type = typeof(bool), DefaultValue = false)]
 public class ChatCommand() : CommandBase<CommandContext>("Chat")
 {
 	#region 常量定义
+	private const string FORMAT_OPTION      = "format";
+	private const string STREAMING_OPTION   = "streaming";
 	private const string INTERACTIVE_OPTION = "interactive";
 	#endregion
 
@@ -58,16 +62,46 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 		var session = (context.Find<IServiceAccessor<IChatSession>>(true)?.Value) ??
 			throw new CommandException("The chat client is not found.");
 
+		var format = context.Expression.Options.GetValue(FORMAT_OPTION, ChatResponseFormat.Object);
+
 		if(context.Expression.Options.TryGetValue<bool>(INTERACTIVE_OPTION, out var interactive) && interactive)
 		{
+			if(context.Expression.Options.Contains(STREAMING_OPTION))
+				throw new CommandOptionException("The interactive chat mode does not support streaming responses.");
+
 			await Chat(context, session.Client, session.History);
 			return _history;
+		}
+
+		if(context.Expression.Options.GetValue<bool>(STREAMING_OPTION))
+		{
+			if(context.Expression.Arguments.IsEmpty)
+				return Collections.Enumerable.EnumerateAsync<ChatResponseUpdate>(null, cancellation);
+
+			//将用户输入的内容添加到对话历史中
+			session.History.Add(new ChatMessage(ChatRole.User, [.. context.Expression.Arguments.Select(argument => new TextContent(argument))]));
+
+			return format switch
+			{
+				ChatResponseFormat.Object => new ChatStreamingResponse(session.History, session.Client.GetStreamingResponseAsync(session.History, null, cancellation)),
+				ChatResponseFormat.Text => new ChatStreamingResponse<string>(session.History, session.Client.GetStreamingResponseAsync(session.History, null, cancellation), entry => entry.Text),
+				_ => throw new CommandOptionException($"The response format '{format}' is not supported."),
+			};
 		}
 
 		if(context.Expression.Arguments.IsEmpty)
 			return null;
 
-		return await Dialogue(context, session.Client, session.History);
+		var message = await Dialogue(context, session.Client, session.History);
+		if(message == null || message.Contents.Count == 0)
+			return null;
+
+		return format switch
+		{
+			ChatResponseFormat.Object => message,
+			ChatResponseFormat.Text => message.Text,
+			_ => throw new CommandOptionException($"The response format '{format}' is not supported."),
+		};
 	}
 	#endregion
 
@@ -125,36 +159,15 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 		if(history == null || history.Count == 0)
 			return default;
 
-		var response = client.GetStreamingResponseAsync(history);
 		ChatMessage result = null;
+		var response = client.GetStreamingResponseAsync(history);
 
 		await foreach(var entry in response)
 		{
-			if(entry == null || string.IsNullOrEmpty(entry.Text))
+			if(entry == null || entry.Contents.Count == 0)
 				break;
 
-			result ??= new ChatMessage
-			{
-				Role = entry.Role ?? ChatRole.Assistant,
-				AuthorName = entry.AuthorName,
-				MessageId = entry.MessageId,
-				RawRepresentation = entry.RawRepresentation,
-				AdditionalProperties = entry.AdditionalProperties,
-			};
-
-			if(entry.Contents != null && entry.Contents.Count > 0)
-			{
-				foreach(var content in entry.Contents)
-					result.Contents.Add(content);
-			}
-
-			if(entry.AdditionalProperties != null && entry.AdditionalProperties.Count > 0)
-			{
-				result.AdditionalProperties ??= new();
-
-				foreach(var property in entry.AdditionalProperties)
-					result.AdditionalProperties.Add(property.Key, property.Value);
-			}
+			Populate(ref result, entry);
 
 			terminal?.Write(entry.Text);
 
@@ -164,6 +177,131 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 
 		terminal?.WriteLine();
 		return result;
+	}
+
+	private static bool Populate(ref ChatMessage message, ChatResponseUpdate entry)
+	{
+		if(entry == null || entry.Contents.Count == 0)
+			return false;
+
+		message ??= new ChatMessage
+		{
+			Role = entry.Role ?? ChatRole.Assistant,
+			AuthorName = entry.AuthorName,
+			MessageId = entry.MessageId,
+			RawRepresentation = entry.RawRepresentation,
+			AdditionalProperties = entry.AdditionalProperties,
+		};
+
+		if(entry.Contents != null && entry.Contents.Count > 0)
+		{
+			foreach(var content in entry.Contents)
+				message.Contents.Add(content);
+		}
+
+		if(entry.AdditionalProperties != null && entry.AdditionalProperties.Count > 0)
+		{
+			message.AdditionalProperties ??= new();
+
+			foreach(var property in entry.AdditionalProperties)
+				message.AdditionalProperties.Add(property.Key, property.Value);
+		}
+
+		return true;
+	}
+	#endregion
+
+	#region 嵌套子类
+	public enum ChatResponseFormat
+	{
+		Object,
+		Text,
+	}
+
+	private sealed class ChatStreamingResponse(IList<ChatMessage> history, IAsyncEnumerable<ChatResponseUpdate> response) : IAsyncEnumerable<ChatResponseUpdate>
+	{
+		private readonly IList<ChatMessage> _history = history;
+		private readonly IAsyncEnumerable<ChatResponseUpdate> _response = response;
+		public IAsyncEnumerator<ChatResponseUpdate> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_history, _response.GetAsyncEnumerator(cancellation));
+
+		private sealed class AsyncEnumerator(IList<ChatMessage> history, IAsyncEnumerator<ChatResponseUpdate> response) : IAsyncEnumerator<ChatResponseUpdate>
+		{
+			private IList<ChatMessage> _history = history;
+			private List<ChatResponseUpdate> _entries = new();
+			private IAsyncEnumerator<ChatResponseUpdate> _response = response;
+
+			public ChatResponseUpdate Current => _response.Current;
+			public async ValueTask<bool> MoveNextAsync()
+			{
+				if(await _response.MoveNextAsync())
+				{
+					_entries.Add(_response.Current);
+					return true;
+				}
+
+				return false;
+			}
+
+			public async ValueTask DisposeAsync()
+			{
+				await _response.DisposeAsync();
+
+				if(_entries != null && _entries.Count > 0)
+				{
+					ChatMessage message = null;
+
+					for(int i = 0; i < _entries.Count; i++)
+						Populate(ref message, _entries[i]);
+
+					if(message != null && message.Contents.Count > 0)
+						_history.Add(message);
+				}
+			}
+		}
+	}
+
+	private sealed class ChatStreamingResponse<T>(IList<ChatMessage> history, IAsyncEnumerable<ChatResponseUpdate> response, Func<ChatResponseUpdate, T> converter) : IAsyncEnumerable<T>
+	{
+		private readonly IList<ChatMessage> _history = history;
+		private readonly Func<ChatResponseUpdate, T> _converter = converter;
+		private readonly IAsyncEnumerable<ChatResponseUpdate> _response = response;
+		public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_history, _response.GetAsyncEnumerator(cancellation), _converter);
+
+		private sealed class AsyncEnumerator(IList<ChatMessage> history, IAsyncEnumerator<ChatResponseUpdate> response, Func<ChatResponseUpdate, T> converter) : IAsyncEnumerator<T>
+		{
+			private IList<ChatMessage> _history = history;
+			private Func<ChatResponseUpdate, T> _converter = converter;
+			private List<ChatResponseUpdate> _entries = new();
+			private IAsyncEnumerator<ChatResponseUpdate> _response = response;
+
+			public T Current => _converter(_response.Current);
+			public async ValueTask<bool> MoveNextAsync()
+			{
+				if(await _response.MoveNextAsync())
+				{
+					_entries.Add(_response.Current);
+					return true;
+				}
+
+				return false;
+			}
+
+			public async ValueTask DisposeAsync()
+			{
+				await _response.DisposeAsync();
+
+				if(_entries != null && _entries.Count > 0)
+				{
+					ChatMessage message = null;
+
+					for(int i = 0; i < _entries.Count; i++)
+						Populate(ref message, _entries[i]);
+
+					if(message != null && message.Contents.Count > 0)
+						_history.Add(message);
+				}
+			}
+		}
 	}
 	#endregion
 }
