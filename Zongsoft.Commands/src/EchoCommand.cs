@@ -44,7 +44,10 @@ public class EchoCommand : CommandBase<CommandContext>
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Expression.Arguments.IsEmpty)
+		{
+			context.Output.Write(context.Value);
 			return ValueTask.FromResult(context.Value);
+		}
 
 		if(context.Expression.Arguments.Count == 1)
 		{
