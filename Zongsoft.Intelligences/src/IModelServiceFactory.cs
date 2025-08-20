@@ -29,19 +29,9 @@
 
 using System;
 
-using Microsoft.Extensions.AI;
-
 namespace Zongsoft.Intelligences;
 
-/// <summary>
-/// 表示聊天会话的接口。
-/// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+public interface IModelServiceFactory
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	IModelService Create(Configuration.IConnectionSettings settings);
 }

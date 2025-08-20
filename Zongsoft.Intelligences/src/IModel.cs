@@ -29,19 +29,23 @@
 
 using System;
 
-using Microsoft.Extensions.AI;
-
 namespace Zongsoft.Intelligences;
 
 /// <summary>
-/// 表示聊天会话的接口。
+/// 表示模型信息的接口。
 /// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+public interface IModel
 {
-	/// <summary>获取会话标识。</summary>
+	/// <summary>获取模型的唯一标识。</summary>
 	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	/// <summary>获取模型的名称。</summary>
+	string Name { get; }
+	/// <summary>获取模型的大小，单位：字节。</summary>
+	long Size { get; }
+	/// <summary>获取模型的版本。</summary>
+	string Version { get; }
+	/// <summary>获取模型的创建时间。</summary>
+	DateTimeOffset Creation { get; }
+	/// <summary>获取模型的描述信息。</summary>
+	string Description { get; }
 }

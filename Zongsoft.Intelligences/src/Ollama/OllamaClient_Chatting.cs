@@ -28,20 +28,20 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.AI;
 
-namespace Zongsoft.Intelligences;
+namespace Zongsoft.Intelligences.Ollama;
 
-/// <summary>
-/// 表示聊天会话的接口。
-/// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+[Services.Service<IChatClient>(Tags = "Ollama")]
+partial class OllamaClient : IChatClient
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	public object GetService(Type serviceType, object serviceKey = null) => ((IChatClient)_client).GetService(serviceType, serviceKey);
+	public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options = null, CancellationToken cancellation = default) =>
+		((IChatClient)_client).GetResponseAsync(messages, options, cancellation);
+	public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options = null, CancellationToken cancellation = default) =>
+		((IChatClient)_client).GetStreamingResponseAsync(messages, options, cancellation);
 }

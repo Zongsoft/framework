@@ -33,15 +33,26 @@ using Microsoft.Extensions.AI;
 
 namespace Zongsoft.Intelligences;
 
-/// <summary>
-/// 表示聊天会话的接口。
-/// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+public class ChatSessionManager
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	public IChatClientLocator Locator { get; set; }
+
+	public IChatSession Create(ChatSessionOptions options)
+	{
+		var client = this.Locate(options);
+		return null;
+	}
+
+	private IChatClient Locate(ChatSessionOptions options)
+	{
+		var locator = this.Locator;
+		if(locator != null)
+		{
+			var client = locator.Locate(options);
+			if(client != null)
+				return client;
+		}
+
+		return null;
+	}
 }

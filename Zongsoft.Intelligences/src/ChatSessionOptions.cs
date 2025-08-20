@@ -29,19 +29,16 @@
 
 using System;
 
-using Microsoft.Extensions.AI;
-
 namespace Zongsoft.Intelligences;
 
-/// <summary>
-/// 表示聊天会话的接口。
-/// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+public class ChatSessionOptions
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	/// <summary>获取或设置会话提供程序名称。</summary>
+	public string Name { get; set; }
+
+	/// <summary>获取或设置会话有效期。</summary>
+	public TimeSpan Expiration { get; set; }
+
+	/// <summary>获取或设置会话参数集。</summary>
+	public Collections.Parameters Parameters { get; set; }
 }

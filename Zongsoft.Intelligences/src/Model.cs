@@ -29,19 +29,34 @@
 
 using System;
 
-using Microsoft.Extensions.AI;
-
 namespace Zongsoft.Intelligences;
 
-/// <summary>
-/// 表示聊天会话的接口。
-/// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+public class Model : IModel
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	#region 构造函数
+	public Model() { }
+	public Model(string identifier, string name, long size, DateTimeOffset creation, string description = null) : this(identifier, name, size, null, creation, description) { }
+	public Model(string identifier, string name, long size, string version, DateTimeOffset creation, string description = null)
+	{
+		this.Identifier = identifier;
+		this.Name = name;
+		this.Size = size;
+		this.Version = version;
+		this.Creation = creation;
+		this.Description = description;
+	}
+	#endregion
+
+	#region 公共属性
+	public string Identifier { get; set; }
+	public string Name { get; set; }
+	public long Size { get; set; }
+	public string Version { get; set; }
+	public DateTimeOffset Creation { get; set; }
+	public string Description { get; set; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"{this.Name}@{this.Creation}";
+	#endregion
 }

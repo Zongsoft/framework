@@ -79,7 +79,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 				return Collections.Enumerable.EnumerateAsync<ChatResponseUpdate>(null, cancellation);
 
 			//将用户输入的内容添加到对话历史中
-			session.History.Add(new ChatMessage(ChatRole.User, [.. context.Expression.Arguments.Select(argument => new TextContent(argument))]));
+			session.History.Append(new ChatMessage(ChatRole.User, [.. context.Expression.Arguments.Select(argument => new TextContent(argument))]));
 
 			return format switch
 			{
@@ -106,7 +106,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 	#endregion
 
 	#region 私有方法
-	private static async ValueTask Chat(CommandContext context, IChatClient client, IList<ChatMessage> history)
+	private static async ValueTask Chat(CommandContext context, IChatClient client, IChatHistory history)
 	{
 		var terminal = context.GetTerminal() ??
 			throw new CommandException("The interactive chat can only run in a terminal environment.");
@@ -131,30 +131,30 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 			   string.Equals("quit", text, StringComparison.OrdinalIgnoreCase))
 				break;
 
-			history.Add(new ChatMessage(ChatRole.User, text));
+			history.Append(new ChatMessage(ChatRole.User, text));
 
 			var message = await Dialogue(terminal, client, history);
 			if(message != null && message.Contents.Count > 0)
 			{
-				history.Add(message);
+				history.Append(message);
 				terminal.WriteLine();
 			}
 		}
 	}
 
-	private static async ValueTask<ChatMessage> Dialogue(CommandContext context, IChatClient client, IList<ChatMessage> history)
+	private static async ValueTask<ChatMessage> Dialogue(CommandContext context, IChatClient client, IChatHistory history)
 	{
 		//将用户输入的内容添加到对话历史中
-		history.Add(new ChatMessage(ChatRole.User, [.. context.Expression.Arguments.Select(argument => new TextContent(argument))]));
+		history.Append(new ChatMessage(ChatRole.User, [.. context.Expression.Arguments.Select(argument => new TextContent(argument))]));
 
 		var message = await Dialogue(context.GetTerminal(), client, history);
 		if(message != null && message.Contents.Count > 0)
-			history.Add(message);
+			history.Append(message);
 
 		return message;
 	}
 
-	private static async ValueTask<ChatMessage> Dialogue(ITerminal terminal, IChatClient client, IList<ChatMessage> history)
+	private static async ValueTask<ChatMessage> Dialogue(ITerminal terminal, IChatClient client, IChatHistory history)
 	{
 		if(history == null || history.Count == 0)
 			return default;
@@ -218,15 +218,15 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 		Text,
 	}
 
-	private sealed class ChatStreamingResponse(IList<ChatMessage> history, IAsyncEnumerable<ChatResponseUpdate> response) : IAsyncEnumerable<ChatResponseUpdate>
+	private sealed class ChatStreamingResponse(IChatHistory history, IAsyncEnumerable<ChatResponseUpdate> response) : IAsyncEnumerable<ChatResponseUpdate>
 	{
-		private readonly IList<ChatMessage> _history = history;
+		private readonly IChatHistory _history = history;
 		private readonly IAsyncEnumerable<ChatResponseUpdate> _response = response;
 		public IAsyncEnumerator<ChatResponseUpdate> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_history, _response.GetAsyncEnumerator(cancellation));
 
-		private sealed class AsyncEnumerator(IList<ChatMessage> history, IAsyncEnumerator<ChatResponseUpdate> response) : IAsyncEnumerator<ChatResponseUpdate>
+		private sealed class AsyncEnumerator(IChatHistory history, IAsyncEnumerator<ChatResponseUpdate> response) : IAsyncEnumerator<ChatResponseUpdate>
 		{
-			private IList<ChatMessage> _history = history;
+			private IChatHistory _history = history;
 			private List<ChatResponseUpdate> _entries = new();
 			private IAsyncEnumerator<ChatResponseUpdate> _response = response;
 
@@ -254,22 +254,22 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 						Populate(ref message, _entries[i]);
 
 					if(message != null && message.Contents.Count > 0)
-						_history.Add(message);
+						_history.Append(message);
 				}
 			}
 		}
 	}
 
-	private sealed class ChatStreamingResponse<T>(IList<ChatMessage> history, IAsyncEnumerable<ChatResponseUpdate> response, Func<ChatResponseUpdate, T> converter) : IAsyncEnumerable<T>
+	private sealed class ChatStreamingResponse<T>(IChatHistory history, IAsyncEnumerable<ChatResponseUpdate> response, Func<ChatResponseUpdate, T> converter) : IAsyncEnumerable<T>
 	{
-		private readonly IList<ChatMessage> _history = history;
+		private readonly IChatHistory _history = history;
 		private readonly Func<ChatResponseUpdate, T> _converter = converter;
 		private readonly IAsyncEnumerable<ChatResponseUpdate> _response = response;
 		public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_history, _response.GetAsyncEnumerator(cancellation), _converter);
 
-		private sealed class AsyncEnumerator(IList<ChatMessage> history, IAsyncEnumerator<ChatResponseUpdate> response, Func<ChatResponseUpdate, T> converter) : IAsyncEnumerator<T>
+		private sealed class AsyncEnumerator(IChatHistory history, IAsyncEnumerator<ChatResponseUpdate> response, Func<ChatResponseUpdate, T> converter) : IAsyncEnumerator<T>
 		{
-			private IList<ChatMessage> _history = history;
+			private IChatHistory _history = history;
 			private Func<ChatResponseUpdate, T> _converter = converter;
 			private List<ChatResponseUpdate> _entries = new();
 			private IAsyncEnumerator<ChatResponseUpdate> _response = response;
@@ -298,7 +298,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 						Populate(ref message, _entries[i]);
 
 					if(message != null && message.Contents.Count > 0)
-						_history.Add(message);
+						_history.Append(message);
 				}
 			}
 		}

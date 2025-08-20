@@ -1,3 +1,4 @@
+artifacts/Zongsoft.Intelligences.option
 artifacts/Zongsoft.Intelligences.plugin
 lib/$(Framework)/Zongsoft.Intelligences.*
 lib/$(Framework)/*/Zongsoft.Intelligences.resources.*

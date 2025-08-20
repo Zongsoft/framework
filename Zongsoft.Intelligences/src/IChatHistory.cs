@@ -28,20 +28,29 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.AI;
 
 namespace Zongsoft.Intelligences;
 
 /// <summary>
-/// 表示聊天会话的接口。
+/// 表示聊天历史记录的接口。
 /// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+public interface IChatHistory : IEnumerable<ChatMessage>
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	/// <summary>获取记录数量。</summary>
+	int Count { get; }
+
+	/// <summary>获取指定序号的记录。</summary>
+	/// <param name="index">指定的记录序号。</param>
+	/// <returns>返回对应的记录。</returns>
+	ChatMessage this[int index] { get; }
+
+	/// <summary>清空历史记录。</summary>
+	void Clear();
+
+	/// <summary>追加聊天消息到历史记录。</summary>
+	/// <param name="message">指定的历史聊天记录。</param>
+	void Append(ChatMessage message);
 }

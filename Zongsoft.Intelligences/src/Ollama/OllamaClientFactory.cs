@@ -31,17 +31,16 @@ using System;
 
 using Microsoft.Extensions.AI;
 
-namespace Zongsoft.Intelligences;
+using Zongsoft.Services;
+using Zongsoft.Configuration;
 
-/// <summary>
-/// 表示聊天会话的接口。
-/// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+namespace Zongsoft.Intelligences.Ollama;
+
+[Service<IChatClientFactory>(Tags = "Ollama")]
+[Service<IModelServiceFactory>(Tags = "Ollama")]
+public class OllamaClientFactory : IChatClientFactory, IModelServiceFactory
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	public static OllamaClient Create(IConnectionSettings settings) => new(settings);
+	IChatClient IChatClientFactory.Create(IConnectionSettings settings) => Create(settings);
+	IModelService IModelServiceFactory.Create(IConnectionSettings settings) => Create(settings);
 }

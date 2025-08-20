@@ -28,20 +28,38 @@
  */
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.AI;
 
 namespace Zongsoft.Intelligences;
 
-/// <summary>
-/// 表示聊天会话的接口。
-/// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+public class ChatHistory
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	#region 单例字段
+	public static readonly IChatHistory Memory = new MemoryChatHistory();
+	#endregion
+
+	private sealed class MemoryChatHistory : IChatHistory, IEnumerable<ChatMessage>
+	{
+		#region 成员字段
+		private readonly List<ChatMessage> _messages;
+		#endregion
+
+		#region 公共属性
+		public int Count => _messages.Count;
+		public ChatMessage this[int index] => _messages[index];
+		#endregion
+
+		#region 公共方法
+		public void Clear() => _messages.Clear();
+		public void Append(ChatMessage message) => _messages.Add(message ?? throw new ArgumentNullException(nameof(message)));
+		#endregion
+
+		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<ChatMessage> GetEnumerator() => _messages.GetEnumerator();
+		#endregion
+	}
 }

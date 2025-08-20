@@ -28,20 +28,19 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
-using Microsoft.Extensions.AI;
+namespace Zongsoft.Intelligences.Ollama;
 
-namespace Zongsoft.Intelligences;
-
-/// <summary>
-/// 表示聊天会话的接口。
-/// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+internal static class OllamaUtility
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	public static IModel ToModel(this OllamaSharp.Models.Model model)
+	{
+		if(model == null)
+			return null;
+
+		return new Model(model.Name, model.Name, model.Size, model.ModifiedAt, model.ToString());
+	}
 }

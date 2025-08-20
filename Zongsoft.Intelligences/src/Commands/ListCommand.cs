@@ -28,20 +28,45 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
-using Microsoft.Extensions.AI;
+using Zongsoft.Terminals;
+using Zongsoft.Components;
 
-namespace Zongsoft.Intelligences;
+namespace Zongsoft.Intelligences.Commands;
 
-/// <summary>
-/// 表示聊天会话的接口。
-/// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+[CommandOption("running")]
+public class ListCommand() : CommandBase<CommandContext>("List")
 {
-	/// <summary>获取会话标识。</summary>
-	string Identifier { get; }
-	/// <summary>获取聊天客户端。</summary>
-	IChatClient Client { get; }
-	/// <summary>获取聊天历史记录。</summary>
-	IChatHistory History { get; }
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		var service = context.Find<IModelService>(true) ??
+			throw new CommandException("The model service required by this command was not found.");
+
+		if(context.Expression.Options.Contains("running"))
+		{
+			var models = service.GetModelsAsync("running", cancellation);
+			await Dump(context.GetTerminal(), models);
+			return models;
+		}
+		else
+		{
+			var models = service.GetModelsAsync(null, cancellation);
+			await Dump(context.GetTerminal(), models);
+			return models;
+		}
+	}
+
+	private static async ValueTask Dump(ITerminal terminal, IAsyncEnumerable<IModel> models)
+	{
+		if(terminal == null)
+			return;
+
+		await foreach(var model in models)
+		{
+			terminal.Dump(model);
+		}
+	}
 }

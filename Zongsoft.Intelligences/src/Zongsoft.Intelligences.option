@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="ai">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="ollama"
+							   driver="ollama"
+							   value="server=http://127.0.0.1:11434;model=qwen3:0.6b" />
+		</connectionSettings>
+	</option>
+</options>
