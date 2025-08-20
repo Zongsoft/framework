@@ -31,7 +31,6 @@ using System;
 
 namespace Zongsoft.Services;
 
-[Obsolete($"Use the '{nameof(ServiceDependencyAttribute.ServiceName)}' property of '{nameof(ServiceDependencyAttribute)}' annotation class instead.")]
 public interface IServiceAccessor<out T>
 {
 	T Value { get; }
