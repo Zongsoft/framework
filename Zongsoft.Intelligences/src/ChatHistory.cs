@@ -37,11 +37,7 @@ namespace Zongsoft.Intelligences;
 
 public class ChatHistory
 {
-	#region 单例字段
-	public static readonly IChatHistory Memory = new MemoryChatHistory();
-	#endregion
-
-	private sealed class MemoryChatHistory : IChatHistory, IEnumerable<ChatMessage>
+	public sealed class Memory : IChatHistory, IEnumerable<ChatMessage>
 	{
 		#region 成员字段
 		private readonly List<ChatMessage> _messages;
@@ -49,6 +45,7 @@ public class ChatHistory
 
 		#region 公共属性
 		public int Count => _messages.Count;
+		public bool IsEmpty => _messages.Count == 0;
 		public ChatMessage this[int index] => _messages[index];
 		#endregion
 

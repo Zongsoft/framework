@@ -29,18 +29,22 @@
 
 using System;
 
-using Microsoft.Extensions.AI;
-
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Intelligences.Ollama;
 
-[Service<IChatClientFactory>(Tags = "Ollama")]
-[Service<IModelServiceFactory>(Tags = "Ollama")]
-public class OllamaClientFactory : IChatClientFactory, IModelServiceFactory
+[Service<IChatServiceFactory>(Tags = "Ollama", Members = nameof(Instance))]
+[Service<IModelServiceFactory>(Tags = "Ollama", Members = nameof(Instance))]
+public class OllamaClientFactory : IChatServiceFactory, IModelServiceFactory
 {
+	#region 单例字段
+	public static readonly OllamaClientFactory Instance = new();
+	#endregion
+
+	#region 创建方法
 	public static OllamaClient Create(IConnectionSettings settings) => new(settings);
-	IChatClient IChatClientFactory.Create(IConnectionSettings settings) => Create(settings);
+	IChatService IChatServiceFactory.Create(IConnectionSettings settings) => Create(settings);
 	IModelService IModelServiceFactory.Create(IConnectionSettings settings) => Create(settings);
+	#endregion
 }

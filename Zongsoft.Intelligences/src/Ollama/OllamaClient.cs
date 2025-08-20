@@ -33,26 +33,28 @@ using OllamaSharp;
 
 namespace Zongsoft.Intelligences.Ollama;
 
-public partial class OllamaClient : IModelService, IDisposable
+public partial class OllamaClient : IDisposable
 {
 	#region 成员字段
 	private readonly IOllamaApiClient _client;
 	#endregion
 
 	#region 构造函数
-	public OllamaClient(IOllamaApiClient client)
+	internal OllamaClient(IOllamaApiClient client)
 	{
 		_client = client ?? throw new ArgumentNullException(nameof(client));
 		this.Settings = new Configuration.ConnectionSettings("ollama", $"server={client.Uri};model={client.SelectedModel}");
+		this.Sessions = new ChatSessionManager(this);
 	}
 
-	public OllamaClient(string url, string model = null)
+	internal OllamaClient(string url, string model = null)
 	{
 		_client = new OllamaApiClient(url, model);
 		this.Settings = new Configuration.ConnectionSettings("ollama", $"server={url};model={model}");
+		this.Sessions = new ChatSessionManager(this);
 	}
 
-	public OllamaClient(Configuration.IConnectionSettings settings)
+	internal OllamaClient(Configuration.IConnectionSettings settings)
 	{
 		if(settings == null)
 			throw new ArgumentNullException(nameof(settings));
@@ -62,6 +64,7 @@ public partial class OllamaClient : IModelService, IDisposable
 
 		_client = new OllamaApiClient(settings["server"], settings["model"]);
 		this.Settings = settings;
+		this.Sessions = new ChatSessionManager(this);
 	}
 	#endregion
 

@@ -33,12 +33,25 @@ namespace Zongsoft.Intelligences;
 
 public class ChatSessionOptions
 {
-	/// <summary>获取或设置会话提供程序名称。</summary>
-	public string Name { get; set; }
+	#region 构造函数
+	public ChatSessionOptions(string name, TimeSpan expiration)
+	{
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
+
+		this.Name = name;
+		this.Expiration = expiration;
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取聊天提供程序名称。</summary>
+	public string Name { get; }
 
 	/// <summary>获取或设置会话有效期。</summary>
 	public TimeSpan Expiration { get; set; }
 
 	/// <summary>获取或设置会话参数集。</summary>
 	public Collections.Parameters Parameters { get; set; }
+	#endregion
 }

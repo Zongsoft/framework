@@ -30,43 +30,37 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
+using Zongsoft.Services;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
 
-namespace Zongsoft.Intelligences.Commands;
+namespace Zongsoft.Intelligences.Commands.Chatting;
 
-[CommandOption("running")]
-public class ListCommand() : CommandBase<CommandContext>("List")
+[CommandOption(SESSION_OPTION, typeof(string))]
+public class CloseCommand() : CommandBase<CommandContext>("Close")
 {
-	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	private const string SESSION_OPTION = "session";
+
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var service = context.Find<IModelService>(true) ??
-			throw new CommandException("The model service required by this command was not found.");
+		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
+			throw new CommandException("The chat service is not found.");
 
-		if(context.Expression.Options.Contains("running"))
-		{
-			var models = service.GetModelsAsync("running", cancellation);
-			await Dump(context.GetTerminal(), models);
-			return models;
-		}
-		else
-		{
-			var models = service.GetModelsAsync(null, cancellation);
-			await Dump(context.GetTerminal(), models);
-			return models;
-		}
-	}
+		var identifier = context.Expression.Options.GetValue<string>(SESSION_OPTION) ?? context.Expression.Arguments[0];
+		if(string.IsNullOrEmpty(identifier))
+			throw new CommandOptionMissingException(SESSION_OPTION);
 
-	private static async ValueTask Dump(ITerminal terminal, IAsyncEnumerable<IModel> models)
-	{
-		if(terminal == null)
-			return;
+		var session = service.Sessions.Abandon(identifier);
 
-		await foreach(var model in models)
+		if(context.TryGetTerminal(out var terminal))
 		{
-			terminal.Dump(model);
+			if(session == null)
+				terminal.WriteLine(CommandOutletColor.DarkRed, $"The session(chatroom) identified as '{session.Identifier}' was not found.");
+			else
+				terminal.WriteLine(CommandOutletColor.DarkGreen, $"The session(chatroom) identified as '{session.Identifier}' has been abandoned.");
 		}
+
+		return ValueTask.FromResult<object>(session);
 	}
 }

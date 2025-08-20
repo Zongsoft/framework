@@ -28,12 +28,17 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
-using Microsoft.Extensions.AI;
+using Zongsoft.Services;
+using Zongsoft.Terminals;
+using Zongsoft.Components;
 
-namespace Zongsoft.Intelligences;
+namespace Zongsoft.Intelligences.Commands.Modeling;
 
-public interface IChatClientLocator
+public class UninstallCommand() : CommandBase<CommandContext>("Uninstall")
 {
-	IChatClient Locate(object argument);
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation) => throw new NotImplementedException();
 }

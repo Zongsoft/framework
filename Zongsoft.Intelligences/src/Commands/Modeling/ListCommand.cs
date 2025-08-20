@@ -30,44 +30,44 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-
-using Microsoft.Extensions.AI;
+using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
 
-namespace Zongsoft.Intelligences.Commands;
+namespace Zongsoft.Intelligences.Commands.Modeling;
 
-public class HistoryCommand() : CommandBase<CommandContext>("History")
+[CommandOption("running")]
+public class ListCommand() : CommandBase<CommandContext>("List")
 {
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var session = (context.Find<IServiceAccessor<IChatSession>>(true)?.Value) ??
-			throw new CommandException("The chat client is not found.");
+		var service = context.Find<IServiceAccessor<IModelService>>(true)?.Value ??
+			throw new CommandException("The model service required by this command was not found.");
 
-		var terminal = context.GetTerminal();
-
-		if(session.History.Count == 0)
+		if(context.Expression.Options.Contains("running"))
 		{
-			terminal?.WriteLine("The history is empty.");
-			return ValueTask.FromResult<object>(null);
+			var models = service.GetModelsAsync("running", cancellation);
+			await Dump(context.GetTerminal(), models);
+			return models;
 		}
-
-		if(terminal != null)
+		else
 		{
-			foreach(var message in session.History)
-			{
-				var content = CommandOutletContent.Create(CommandOutletColor.Cyan, message.Role.ToString())
-					.Append(CommandOutletColor.DarkGray, ": ")
-					.AppendLine(GetMessageColor(message.Role), message.Text);
-
-				terminal.Write(content);
-			}
+			var models = service.GetModelsAsync(null, cancellation);
+			await Dump(context.GetTerminal(), models);
+			return models;
 		}
-
-		return ValueTask.FromResult<object>(session.History);
 	}
 
-	private static CommandOutletColor GetMessageColor(ChatRole role) => role == ChatRole.User ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkYellow;
+	private static async ValueTask Dump(ITerminal terminal, IAsyncEnumerable<IModel> models)
+	{
+		if(terminal == null)
+			return;
+
+		await foreach(var model in models)
+		{
+			terminal.Dump(model);
+		}
+	}
 }

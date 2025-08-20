@@ -28,32 +28,39 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Microsoft.Extensions.AI;
+using Zongsoft.Services;
+using Zongsoft.Terminals;
+using Zongsoft.Components;
 
-namespace Zongsoft.Intelligences;
+namespace Zongsoft.Intelligences.Commands.Chatting;
 
-/// <summary>
-/// 表示聊天历史记录的接口。
-/// </summary>
-public interface IChatHistory : IEnumerable<ChatMessage>
+public class ClearCommand() : CommandBase<CommandContext>("Clear")
 {
-	/// <summary>获取记录数量。</summary>
-	int Count { get; }
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
+			throw new CommandException("The chat service is not found.");
 
-	/// <summary>获取一个值，指示历史记录是否为空。</summary>
-	bool IsEmpty { get; }
+		var history = service.Sessions.Current?.History;
 
-	/// <summary>获取指定序号的记录。</summary>
-	/// <param name="index">指定的记录序号。</param>
-	/// <returns>返回对应的记录。</returns>
-	ChatMessage this[int index] { get; }
+		if(history == null)
+			return ValueTask.FromResult<object>(0);
 
-	/// <summary>清空历史记录。</summary>
-	void Clear();
+		var count = history.Count;
+		if(count > 0)
+			history.Clear();
 
-	/// <summary>追加聊天消息到历史记录。</summary>
-	/// <param name="message">指定的历史聊天记录。</param>
-	void Append(ChatMessage message);
+		if(context.TryGetTerminal(out var terminal))
+		{
+			if(count == 0)
+				terminal.WriteLine(CommandOutletColor.DarkGray, "The history is already empty.");
+			else
+				terminal.WriteLine(CommandOutletColor.DarkYellow, $"The history has been cleared, {count} messages were removed.");
+		}
+
+		return ValueTask.FromResult<object>(count);
+	}
 }

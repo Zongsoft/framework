@@ -37,8 +37,10 @@ using Microsoft.Extensions.AI;
 namespace Zongsoft.Intelligences.Ollama;
 
 [Services.Service<IChatClient>(Tags = "Ollama")]
-partial class OllamaClient : IChatClient
+[Services.Service<IChatService>(Tags = "Ollama")]
+partial class OllamaClient : IChatService, IChatClient
 {
+	public IChatSessionManager Sessions { get; }
 	public object GetService(Type serviceType, object serviceKey = null) => ((IChatClient)_client).GetService(serviceType, serviceKey);
 	public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options = null, CancellationToken cancellation = default) =>
 		((IChatClient)_client).GetResponseAsync(messages, options, cancellation);

@@ -35,7 +35,7 @@ using System.Collections.Generic;
 namespace Zongsoft.Intelligences.Ollama;
 
 [Services.Service<IModelService>(Tags = "Ollama")]
-partial class OllamaClient : IModelService, IDisposable
+partial class OllamaClient : IModelService
 {
 	#region 公共方法
 	public void Active(string model) => _client.SelectedModel = model;

@@ -31,18 +31,16 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Microsoft.Extensions.AI;
-
 using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Intelligences.Commands;
 
-public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatClient>, IServiceAccessor<IModelService>
+public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatService>, IServiceAccessor<IModelService>
 {
 	#region 成员字段
-	private IChatClient _chatting;
+	private IChatService _chatting;
 	private IModelService _modeling;
 	private IConnectionSettings _settings;
 	#endregion
@@ -53,7 +51,7 @@ public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatCli
 	#endregion
 
 	#region 公共属性
-	public object Client { get; set; }
+	public object Servicer { get; set; }
 	public IConnectionSettings Settings
 	{
 		get => _settings;
@@ -78,16 +76,16 @@ public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatCli
 		}
 	}
 
-	IChatClient IServiceAccessor<IChatClient>.Value
+	IChatService IServiceAccessor<IChatService>.Value
 	{
 		get
 		{
-			if(this.Client is IChatClient service)
+			if(this.Servicer is IChatService service)
 				return service;
 
 			if(_chatting == null && _settings != null)
 			{
-				var factory = ApplicationContext.Current.Services.Resolve<IChatClientFactory>(_settings.Driver.Name);
+				var factory = ApplicationContext.Current.Services.Resolve<IChatServiceFactory>(_settings.Driver.Name);
 
 				if(factory != null)
 					return _chatting ??= factory.Create(_settings);
@@ -101,7 +99,7 @@ public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatCli
 	{
 		get
 		{
-			if(this.Client is IModelService service)
+			if(this.Servicer is IModelService service)
 				return service;
 
 			if(_modeling == null && _settings != null)
@@ -130,14 +128,14 @@ public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatCli
 				break;
 			default:
 				if(context.Value != null)
-					this.Client = context.Value;
+					this.Servicer = context.Value;
 				break;
 		}
 
 		if(context.Expression.Arguments.Count > 0)
 			this.Settings = GetSettings(context.Expression.Arguments[0]);
 
-		return ValueTask.FromResult(this.Client ?? this.Settings);
+		return ValueTask.FromResult(this.Servicer ?? this.Settings);
 	}
 	#endregion
 

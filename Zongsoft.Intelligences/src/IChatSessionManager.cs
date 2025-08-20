@@ -28,12 +28,16 @@
  */
 
 using System;
-
-using Microsoft.Extensions.AI;
+using System.Collections.Generic;
 
 namespace Zongsoft.Intelligences;
 
-public interface IChatClientFactory
+public interface IChatSessionManager : IEnumerable<IChatSession>
 {
-	IChatClient Create(Configuration.IConnectionSettings settings);
+	IChatSession Current { get; }
+
+	IChatSession Get(string identifier);
+	IChatSession Abandon(string identifer);
+	IChatSession Activate(string identifier);
+	IChatSession Create(ChatSessionOptions options = null);
 }

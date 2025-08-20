@@ -13,20 +13,27 @@
 	</manifest>
 
 	<extension path="/Workbench/Executor/Commands">
-		<object name="Ollama">
+		<object name="Llm">
 			<ollama.command>
-				<object name="Ollama" type="Zongsoft.Intelligences.Commands.OllamaCommand, Zongsoft.Intelligences" />
+				<object name="Llm" type="Zongsoft.Intelligences.Commands.LlmCommand, Zongsoft.Intelligences" />
 			</ollama.command>
 
-			<object name="Chat" type="Zongsoft.Intelligences.Commands.ChatCommand, Zongsoft.Intelligences" />
-			<object name="List" type="Zongsoft.Intelligences.Commands.OllamaListCommand, Zongsoft.Intelligences" />
+			<object name="Chat">
+				<chat.command>
+					<object name="Chat" type="Zongsoft.Intelligences.Commands.ChatCommand, Zongsoft.Intelligences" />
+				</chat.command>
 
-			<object name="History">
-				<history.command>
-					<object name="History" type="Zongsoft.Intelligences.Commands.HistoryCommand, Zongsoft.Intelligences" />
-				</history.command>
+				<object name="Open" type="Zongsoft.Intelligences.Commands.Chatting.OpenCommand, Zongsoft.Intelligences" />
+				<object name="Close" type="Zongsoft.Intelligences.Commands.Chatting.CloseCommand, Zongsoft.Intelligences" />
+				<object name="Clear" type="Zongsoft.Intelligences.Commands.Chatting.ClearCommand, Zongsoft.Intelligences" />
+				<object name="History" type="Zongsoft.Intelligences.Commands.Chatting.HistoryCommand, Zongsoft.Intelligences" />
+			</object>
 
-				<object name="Clear" type="Zongsoft.Intelligences.Commands.HistoryClearCommand, Zongsoft.Intelligences" />
+			<object name="Models">
+				<object name="List" type="Zongsoft.Intelligences.Commands.Modeling.ListCommand, Zongsoft.Intelligences" />
+				<object name="Info" type="Zongsoft.Intelligences.Commands.Modeling.InfoCommand, Zongsoft.Intelligences" />
+				<object name="Install" type="Zongsoft.Intelligences.Commands.Modeling.InstallCommand, Zongsoft.Intelligences" />
+				<object name="Uninstall" type="Zongsoft.Intelligences.Commands.Modeling.UninstallCommand, Zongsoft.Intelligences" />
 			</object>
 		</object>
 	</extension>

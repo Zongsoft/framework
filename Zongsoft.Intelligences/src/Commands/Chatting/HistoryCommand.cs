@@ -31,31 +31,53 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.AI;
+
 using Zongsoft.Services;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
 
-namespace Zongsoft.Intelligences.Commands;
+namespace Zongsoft.Intelligences.Commands.Chatting;
 
-public class HistoryClearCommand() : CommandBase<CommandContext>("Clear")
+public class HistoryCommand() : CommandBase<CommandContext>("History")
 {
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var session = (context.Find<IServiceAccessor<IChatSession>>(true)?.Value) ??
-			throw new CommandException("The chat client is not found.");
+		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
+			throw new CommandException("The chat service is not found.");
 
-		var count = session.History.Count;
-		if(count > 0)
-			session.History.Clear();
+		var terminal = context.GetTerminal();
+		var session = service.Sessions.Current;
 
-		if(context.TryGetTerminal(out var terminal))
+		if(session == null)
 		{
-			if(count == 0)
-				terminal.WriteLine(CommandOutletColor.DarkGray, "The history is already empty.");
-			else
-				terminal.WriteLine(CommandOutletColor.DarkYellow, $"The history has been cleared, {count} messages were removed.");
+			terminal?.WriteLine("No actived chatting session.");
+			return ValueTask.FromResult<object>(null);
 		}
 
-		return ValueTask.FromResult<object>(count);
+		if(session.History.IsEmpty)
+		{
+			terminal?.WriteLine($"The history of the '{session.Identifier}' session is empty.");
+			return ValueTask.FromResult<object>(null);
+		}
+
+		if(terminal != null)
+		{
+			terminal.WriteLine(CommandOutletColor.DarkYellow, session);
+			terminal.WriteLine(CommandOutletColor.DarkGray, new string('-', session.ToString().Length));
+
+			foreach(var message in session.History)
+			{
+				var content = CommandOutletContent.Create(CommandOutletColor.Cyan, message.Role.ToString())
+					.Append(CommandOutletColor.DarkGray, ": ")
+					.AppendLine(GetMessageColor(message.Role), message.Text);
+
+				terminal.Write(content);
+			}
+		}
+
+		return ValueTask.FromResult<object>(session.History);
 	}
+
+	private static CommandOutletColor GetMessageColor(ChatRole role) => role == ChatRole.User ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkYellow;
 }
