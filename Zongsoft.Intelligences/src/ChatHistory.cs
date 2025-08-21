@@ -35,8 +35,18 @@ using Microsoft.Extensions.AI;
 
 namespace Zongsoft.Intelligences;
 
-public class ChatHistory
+public static class ChatHistory
 {
+	public static ChatMessage Append(this IChatHistory history, string content)
+	{
+		if(string.IsNullOrWhiteSpace(content))
+			return null;
+
+		var message = new ChatMessage(ChatRole.User, content);
+		history.Append(message);
+		return message;
+	}
+
 	public sealed class Memory : IChatHistory, IEnumerable<ChatMessage>
 	{
 		#region 成员字段

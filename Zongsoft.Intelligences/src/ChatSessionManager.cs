@@ -28,15 +28,10 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
-using Zongsoft.Common;
 using Zongsoft.Caching;
-using Zongsoft.Services;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Intelligences;
 
@@ -101,89 +96,6 @@ public class ChatSessionManager(IChatService service) : IChatSessionManager
 		#else
 		throw new NotSupportedException();
 		#endif
-	}
-	#endregion
-
-	#region 嵌套子类
-	private class ChatSession : IChatSession, IEquatable<ChatSession>
-	{
-		#region 成员字段
-		private IChatService _service;
-		#endregion
-
-		#region 构造函数
-		public ChatSession(IChatService service, ChatSessionOptions options = null)
-		{
-			_service = service ?? throw new ArgumentNullException(nameof(service));
-			this.Identifier = Randomizer.GenerateString(10);
-			this.Creation = DateTimeOffset.UtcNow;
-			this.Options = options ?? new ChatSessionOptions(
-				service.Settings.Driver.Name,
-				service.Settings.GetValue(nameof(ChatSessionOptions.Expiration), TimeSpan.FromHours(12)));
-
-			if(this.Options.Parameters != null && this.Options.Parameters.TryGetValue("history", out var value))
-				this.History = GetHistory(value);
-
-			this.History ??= GetHistory(service.Settings["history"]) ?? new ChatHistory.Memory();
-
-			static IChatHistory GetHistory(object target)
-			{
-				if(target is IChatHistory history)
-					return history;
-				if(target is string text && !string.IsNullOrEmpty(text))
-					return ApplicationContext.Current?.Services.Resolve<IChatHistory>(text);
-
-				return null;
-			}
-		}
-		#endregion
-
-		#region 公共属性
-		public string Identifier { get; }
-		public DateTimeOffset Creation { get; }
-		public IChatHistory History { get; }
-		public ChatSessionOptions Options { get; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => $"#{this.Identifier}({this.Creation.ToLocalTime():yyyy-MM-dd HH:mm:ss})";
-		public bool Equals(ChatSession other) => other is not null && string.Equals(this.Identifier, other.Identifier);
-		public override bool Equals(object obj) => base.Equals(obj);
-		public override int GetHashCode() => this.Identifier.GetHashCode();
-		#endregion
-
-		#region 释放处置
-		public void Dispose()
-		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			var service = Interlocked.Exchange(ref _service, null);
-			if(service != null)
-				_service.Dispose();
-
-			this.History?.Clear();
-		}
-
-		public async ValueTask DisposeAsync()
-		{
-			await this.DisposeAsync(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual ValueTask DisposeAsync(bool disposing)
-		{
-			var service = Interlocked.Exchange(ref _service, null);
-			if(service != null)
-				_service.Dispose();
-
-			this.History?.Clear();
-			return ValueTask.CompletedTask;
-		}
-		#endregion
 	}
 	#endregion
 }

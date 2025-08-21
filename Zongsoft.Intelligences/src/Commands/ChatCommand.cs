@@ -84,7 +84,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 
 			var history = service.Sessions.Current?.History;
 
-			if(history != null)
+			if(history == null)
 			{
 				return format switch
 				{
@@ -100,8 +100,8 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 
 				return format switch
 				{
-					ChatResponseFormat.Object => new ChatStreamingResponse(history, service.GetStreamingResponseAsync(history, null, cancellation)),
-					ChatResponseFormat.Text => new ChatStreamingResponse<string>(history, service.GetStreamingResponseAsync(history, null, cancellation), entry => entry.Text),
+					ChatResponseFormat.Object => new ChatSession.Response(history, service.GetStreamingResponseAsync(history, null, cancellation)),
+					ChatResponseFormat.Text => new ChatSession.Response<string>(history, service.GetStreamingResponseAsync(history, null, cancellation), entry => entry.Text),
 					_ => throw new CommandOptionException($"The response format '{format}' is not supported."),
 				};
 			}
@@ -243,92 +243,6 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 	{
 		Object,
 		Text,
-	}
-
-	private sealed class ChatStreamingResponse(IChatHistory history, IAsyncEnumerable<ChatResponseUpdate> response) : IAsyncEnumerable<ChatResponseUpdate>
-	{
-		private readonly IChatHistory _history = history;
-		private readonly IAsyncEnumerable<ChatResponseUpdate> _response = response;
-		public IAsyncEnumerator<ChatResponseUpdate> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_history, _response.GetAsyncEnumerator(cancellation));
-
-		private sealed class AsyncEnumerator(IChatHistory history, IAsyncEnumerator<ChatResponseUpdate> response) : IAsyncEnumerator<ChatResponseUpdate>
-		{
-			private IChatHistory _history = history;
-			private List<ChatResponseUpdate> _entries = new();
-			private IAsyncEnumerator<ChatResponseUpdate> _response = response;
-
-			public ChatResponseUpdate Current => _response.Current;
-			public async ValueTask<bool> MoveNextAsync()
-			{
-				if(await _response.MoveNextAsync())
-				{
-					_entries.Add(_response.Current);
-					return true;
-				}
-
-				return false;
-			}
-
-			public async ValueTask DisposeAsync()
-			{
-				await _response.DisposeAsync();
-
-				if(_entries != null && _entries.Count > 0)
-				{
-					ChatMessage message = null;
-
-					for(int i = 0; i < _entries.Count; i++)
-						Populate(ref message, _entries[i]);
-
-					if(message != null && message.Contents.Count > 0)
-						_history.Append(message);
-				}
-			}
-		}
-	}
-
-	private sealed class ChatStreamingResponse<T>(IChatHistory history, IAsyncEnumerable<ChatResponseUpdate> response, Func<ChatResponseUpdate, T> converter) : IAsyncEnumerable<T>
-	{
-		private readonly IChatHistory _history = history;
-		private readonly Func<ChatResponseUpdate, T> _converter = converter;
-		private readonly IAsyncEnumerable<ChatResponseUpdate> _response = response;
-		public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_history, _response.GetAsyncEnumerator(cancellation), _converter);
-
-		private sealed class AsyncEnumerator(IChatHistory history, IAsyncEnumerator<ChatResponseUpdate> response, Func<ChatResponseUpdate, T> converter) : IAsyncEnumerator<T>
-		{
-			private IChatHistory _history = history;
-			private Func<ChatResponseUpdate, T> _converter = converter;
-			private List<ChatResponseUpdate> _entries = new();
-			private IAsyncEnumerator<ChatResponseUpdate> _response = response;
-
-			public T Current => _converter(_response.Current);
-			public async ValueTask<bool> MoveNextAsync()
-			{
-				if(await _response.MoveNextAsync())
-				{
-					_entries.Add(_response.Current);
-					return true;
-				}
-
-				return false;
-			}
-
-			public async ValueTask DisposeAsync()
-			{
-				await _response.DisposeAsync();
-
-				if(_entries != null && _entries.Count > 0)
-				{
-					ChatMessage message = null;
-
-					for(int i = 0; i < _entries.Count; i++)
-						Populate(ref message, _entries[i]);
-
-					if(message != null && message.Contents.Count > 0)
-						_history.Append(message);
-				}
-			}
-		}
 	}
 	#endregion
 }

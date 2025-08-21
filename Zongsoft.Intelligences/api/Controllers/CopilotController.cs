@@ -30,7 +30,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -41,26 +40,22 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Intelligences.Web.Controllers;
 
-partial class CopilotController
+[Area("AI")]
+[ControllerName("Copilots")]
+public partial class CopilotController : ControllerBase
 {
-	[ControllerName("Chats")]
-	public class ChatController : ControllerBase
+	[HttpGet("{name}")]
+	public IActionResult Get(string name)
 	{
-		#region 公共方法
-		[HttpPost("/[area]/{name}/[controller]/{id}/[action]")]
-		public async ValueTask<ActionResult<IAsyncEnumerable<string>>> ChatAsync(string name, string id, CancellationToken cancellation = default)
+		var copilot = CopilotManager.GetCopilot(name);
+		if(copilot == null)
+			return this.NotFound();
+
+		return this.Ok(new
 		{
-			if(string.IsNullOrEmpty(name))
-				return this.BadRequest();
-
-			var content = await this.Request.ReadAsStringAsync(cancellation);
-			if(string.IsNullOrWhiteSpace(content))
-				return this.BadRequest();
-
-			var copilot = CopilotManager.GetCopilot(name);
-			var session = copilot.Chatting.Sessions.Get(id);
-			return this.Ok(session.ChatAsync(content, cancellation));
-		}
-		#endregion
+			copilot.Name,
+			copilot.Driver,
+			copilot.Description,
+		});
 	}
 }

@@ -21,10 +21,6 @@
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Controllers\" />
-	</ItemGroup>
-
 	<Choose>
 		<When Condition="$(Configuration)=='Debug'">
 			<ItemGroup>
