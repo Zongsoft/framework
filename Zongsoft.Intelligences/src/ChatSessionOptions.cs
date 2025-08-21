@@ -34,6 +34,7 @@ namespace Zongsoft.Intelligences;
 public class ChatSessionOptions
 {
 	#region 构造函数
+	public ChatSessionOptions(string name) : this(name, TimeSpan.FromHours(12)) { }
 	public ChatSessionOptions(string name, TimeSpan expiration)
 	{
 		if(string.IsNullOrWhiteSpace(name))

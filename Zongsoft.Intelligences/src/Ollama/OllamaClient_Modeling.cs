@@ -37,6 +37,10 @@ namespace Zongsoft.Intelligences.Ollama;
 [Services.Service<IModelService>(Tags = "Ollama")]
 partial class OllamaClient : IModelService
 {
+	#region 显式属性
+	Configuration.IConnectionSettings IModelService.Settings => this.Settings;
+	#endregion
+
 	#region 公共方法
 	public void Active(string model) => _client.SelectedModel = model;
 	public async ValueTask<IModel> GetModelAsync(string identifier, CancellationToken cancellation = default)

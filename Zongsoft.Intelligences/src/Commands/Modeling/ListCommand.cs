@@ -49,25 +49,14 @@ public class ListCommand() : CommandBase<CommandContext>("List")
 		if(context.Expression.Options.Contains("running"))
 		{
 			var models = service.GetModelsAsync("running", cancellation);
-			await Dump(context.GetTerminal(), models);
+			await context.Dump(models);
 			return models;
 		}
 		else
 		{
 			var models = service.GetModelsAsync(null, cancellation);
-			await Dump(context.GetTerminal(), models);
+			await context.Dump(models);
 			return models;
-		}
-	}
-
-	private static async ValueTask Dump(ITerminal terminal, IAsyncEnumerable<IModel> models)
-	{
-		if(terminal == null)
-			return;
-
-		await foreach(var model in models)
-		{
-			terminal.Dump(model);
 		}
 	}
 }

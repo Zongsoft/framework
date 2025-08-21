@@ -36,6 +36,7 @@ using System.Collections.Generic;
 using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Intelligences;
 
@@ -116,9 +117,11 @@ public class ChatSessionManager(IChatService service) : IChatSessionManager
 			_service = service ?? throw new ArgumentNullException(nameof(service));
 			this.Identifier = Randomizer.GenerateString(10);
 			this.Creation = DateTimeOffset.UtcNow;
-			this.Options = options ?? new ChatSessionOptions(service.Settings.Driver.Name, TimeSpan.FromHours(24));
+			this.Options = options ?? new ChatSessionOptions(
+				service.Settings.Driver.Name,
+				service.Settings.GetValue(nameof(ChatSessionOptions.Expiration), TimeSpan.FromHours(12)));
 
-			if(this.Options.Parameters.TryGetValue("history", out var value))
+			if(this.Options.Parameters != null && this.Options.Parameters.TryGetValue("history", out var value))
 				this.History = GetHistory(value);
 
 			this.History ??= GetHistory(service.Settings["history"]) ?? new ChatHistory.Memory();
@@ -127,7 +130,7 @@ public class ChatSessionManager(IChatService service) : IChatSessionManager
 			{
 				if(target is IChatHistory history)
 					return history;
-				if(target is string text)
+				if(target is string text && !string.IsNullOrEmpty(text))
 					return ApplicationContext.Current?.Services.Resolve<IChatHistory>(text);
 
 				return null;

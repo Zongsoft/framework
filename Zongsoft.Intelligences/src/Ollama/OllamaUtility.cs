@@ -41,6 +41,7 @@ internal static class OllamaUtility
 		if(model == null)
 			return null;
 
-		return new Model(model.Name, model.Name, model.Size, model.ModifiedAt, model.ToString());
+		var creation = model.ModifiedAt.Year > 2000 ? model.ModifiedAt : DateTimeOffset.MinValue;
+		return new Model(model.Name, model.Name, model.Size, creation, model.ToString());
 	}
 }

@@ -30,37 +30,33 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
-using Zongsoft.Services;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
 
-namespace Zongsoft.Intelligences.Commands.Chatting;
+namespace Zongsoft.Intelligences.Commands.Modeling;
 
-public class ClearCommand() : CommandBase<CommandContext>("Clear")
+internal static class Utility
 {
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	public static ValueTask Dump(this CommandContext context, IAsyncEnumerable<IModel> models) => Dump(context.GetTerminal(), models);
+	public static async ValueTask Dump(this ITerminal terminal, IAsyncEnumerable<IModel> models)
 	{
-		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
-			throw new CommandException("The chat service required by this command was not found.");
+		if(terminal == null)
+			return;
 
-		var history = service.Sessions.Current?.History;
-
-		if(history == null)
-			return ValueTask.FromResult<object>(0);
-
-		var count = history.Count;
-		if(count > 0)
-			history.Clear();
-
-		if(context.TryGetTerminal(out var terminal))
+		await foreach(var model in models)
 		{
-			if(count == 0)
-				terminal.WriteLine(CommandOutletColor.DarkGray, "The history is already empty.");
-			else
-				terminal.WriteLine(CommandOutletColor.DarkYellow, $"The history has been cleared, {count} messages were removed.");
+			Dump(terminal, model);
 		}
+	}
 
-		return ValueTask.FromResult<object>(count);
+	public static void Dump(this CommandContext context, IModel model) => Dump(context.GetTerminal(), model);
+	public static void Dump(this ITerminal terminal, IModel model)
+	{
+		if(terminal == null)
+			return;
+
+		terminal.Dump((object)model);
 	}
 }

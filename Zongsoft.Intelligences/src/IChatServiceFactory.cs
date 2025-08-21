@@ -29,8 +29,6 @@
 
 using System;
 
-using Microsoft.Extensions.AI;
-
 namespace Zongsoft.Intelligences;
 
 public interface IChatServiceFactory

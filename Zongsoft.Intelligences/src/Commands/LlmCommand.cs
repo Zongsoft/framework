@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -85,7 +86,7 @@ public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatSer
 
 			if(_chatting == null && _settings != null)
 			{
-				var factory = ApplicationContext.Current.Services.Resolve<IChatServiceFactory>(_settings.Driver.Name);
+				var factory = ApplicationContext.Current.Services.ResolveTags<IChatServiceFactory>(GetDriverName(_settings)).FirstOrDefault();
 
 				if(factory != null)
 					return _chatting ??= factory.Create(_settings);
@@ -104,7 +105,7 @@ public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatSer
 
 			if(_modeling == null && _settings != null)
 			{
-				var factory = ApplicationContext.Current.Services.Resolve<IModelServiceFactory>(_settings.Driver.Name);
+				var factory = ApplicationContext.Current.Services.ResolveTags<IModelServiceFactory>(GetDriverName(_settings)).FirstOrDefault();
 
 				if(factory != null)
 					return _modeling ??= factory.Create(_settings);
@@ -123,7 +124,7 @@ public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatSer
 			case string text:
 				this.Settings = GetSettings(text);
 				break;
-			case IConnectionSettings settings:
+			case Configuration.ConnectionSettings settings:
 				this.Settings = settings;
 				break;
 			default:
@@ -140,14 +141,17 @@ public class LlmCommand : CommandBase<CommandContext>, IServiceAccessor<IChatSer
 	#endregion
 
 	#region 私有方法
-	private static IConnectionSettings GetSettings(string text)
+	private static string GetDriverName(IConnectionSettings settings)
 	{
-		if(string.IsNullOrEmpty(text))
-			return ApplicationContext.Current.Configuration.GetConnectionSettings("AI/ConnectionSettings", null);
+		if(settings == null)
+			return null;
 
-		return text.Contains('=') ?
-			new ConnectionSettings(text) :
-			ApplicationContext.Current.Configuration.GetConnectionSettings("AI/ConnectionSettings", text);
+		return string.IsNullOrEmpty(settings.Driver?.Name) && settings.HasProperties ?
+		settings.Properties["driver"] : settings.Driver?.Name;
 	}
+
+	private static IConnectionSettings GetSettings(string text) => text != null && text.Contains('=') ?
+		new ConnectionSettings(text) :
+		ApplicationContext.Current.Configuration.GetConnectionSettings("AI/ConnectionSettings", text);
 	#endregion
 }

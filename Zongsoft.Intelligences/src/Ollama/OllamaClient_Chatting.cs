@@ -40,10 +40,19 @@ namespace Zongsoft.Intelligences.Ollama;
 [Services.Service<IChatService>(Tags = "Ollama")]
 partial class OllamaClient : IChatService, IChatClient
 {
+	#region 公共属性
 	public IChatSessionManager Sessions { get; }
+	#endregion
+
+	#region 显式属性
+	Configuration.IConnectionSettings IChatService.Settings => this.Settings;
+	#endregion
+
+	#region 公共方法
 	public object GetService(Type serviceType, object serviceKey = null) => ((IChatClient)_client).GetService(serviceType, serviceKey);
 	public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options = null, CancellationToken cancellation = default) =>
 		((IChatClient)_client).GetResponseAsync(messages, options, cancellation);
 	public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options = null, CancellationToken cancellation = default) =>
 		((IChatClient)_client).GetStreamingResponseAsync(messages, options, cancellation);
+	#endregion
 }

@@ -43,33 +43,33 @@ public partial class OllamaClient : IDisposable
 	internal OllamaClient(IOllamaApiClient client)
 	{
 		_client = client ?? throw new ArgumentNullException(nameof(client));
-		this.Settings = new Configuration.ConnectionSettings("ollama", $"server={client.Uri};model={client.SelectedModel}");
+		this.Settings = OllamaConnectionSettingsDriver.Instance.GetSettings($"server={client.Uri};model={client.SelectedModel}");
 		this.Sessions = new ChatSessionManager(this);
 	}
 
 	internal OllamaClient(string url, string model = null)
 	{
 		_client = new OllamaApiClient(url, model);
-		this.Settings = new Configuration.ConnectionSettings("ollama", $"server={url};model={model}");
+		this.Settings = OllamaConnectionSettingsDriver.Instance.GetSettings($"server={url};model={model}");
 		this.Sessions = new ChatSessionManager(this);
 	}
 
-	internal OllamaClient(Configuration.IConnectionSettings settings)
+	internal OllamaClient(OllamaConnectionSettings settings)
 	{
 		if(settings == null)
 			throw new ArgumentNullException(nameof(settings));
 
-		if(string.IsNullOrEmpty(settings["server"]))
+		if(string.IsNullOrEmpty(settings.Server))
 			throw new ArgumentException($"The specified connection settings are missing the required server option.");
 
-		_client = new OllamaApiClient(settings["server"], settings["model"]);
+		_client = new OllamaApiClient(settings.Server, settings.Model);
 		this.Settings = settings;
 		this.Sessions = new ChatSessionManager(this);
 	}
 	#endregion
 
 	#region 公共属性
-	public Configuration.IConnectionSettings Settings { get; }
+	public OllamaConnectionSettings Settings { get; }
 	#endregion
 
 	#region 处置方法

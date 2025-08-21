@@ -45,7 +45,7 @@ public class OpenCommand() : CommandBase<CommandContext>("Open")
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
-			throw new CommandException("The chat service is not found.");
+			throw new CommandException("The chat service required by this command was not found.");
 
 		var identifier = context.Expression.Options.GetValue<string>(SESSION_OPTION) ?? context.Expression.Arguments[0];
 

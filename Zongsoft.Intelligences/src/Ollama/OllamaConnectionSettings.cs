@@ -28,39 +28,48 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.ComponentModel;
 
-using Zongsoft.Services;
-using Zongsoft.Terminals;
 using Zongsoft.Components;
+using Zongsoft.Configuration;
 
-namespace Zongsoft.Intelligences.Commands.Chatting;
+namespace Zongsoft.Intelligences.Ollama;
 
-public class ClearCommand() : CommandBase<CommandContext>("Clear")
+public class OllamaConnectionSettings : ConnectionSettingsBase<OllamaConnectionSettingsDriver>
 {
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	#region 构造函数
+	public OllamaConnectionSettings(OllamaConnectionSettingsDriver driver, string settings) : base(driver, settings) { }
+	public OllamaConnectionSettings(OllamaConnectionSettingsDriver driver, string name, string settings) : base(driver, name, settings) { }
+	#endregion
+
+	#region 公共属性
+	[ConnectionSetting(true, Ignored = true)]
+	public string Server
 	{
-		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
-			throw new CommandException("The chat service required by this command was not found.");
-
-		var history = service.Sessions.Current?.History;
-
-		if(history == null)
-			return ValueTask.FromResult<object>(0);
-
-		var count = history.Count;
-		if(count > 0)
-			history.Clear();
-
-		if(context.TryGetTerminal(out var terminal))
-		{
-			if(count == 0)
-				terminal.WriteLine(CommandOutletColor.DarkGray, "The history is already empty.");
-			else
-				terminal.WriteLine(CommandOutletColor.DarkYellow, $"The history has been cleared, {count} messages were removed.");
-		}
-
-		return ValueTask.FromResult<object>(count);
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
 	}
+
+	[ConnectionSetting(true, Ignored = true)]
+	public string Model
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[ConnectionSetting(false, Ignored = true)]
+	public string History
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[ConnectionSetting(false, Ignored = true)]
+	[DefaultValue("12h")]
+	public TimeSpan Expiration
+	{
+		get => this.GetValue<TimeSpan>();
+		set => this.SetValue(value);
+	}
+	#endregion
 }

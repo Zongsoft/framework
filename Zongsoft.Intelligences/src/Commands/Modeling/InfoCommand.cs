@@ -30,15 +30,21 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Services;
-using Zongsoft.Terminals;
 using Zongsoft.Components;
 
 namespace Zongsoft.Intelligences.Commands.Modeling;
 
 public class InfoCommand() : CommandBase<CommandContext>("Info")
 {
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation) => throw new NotImplementedException();
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		var service = context.Find<IServiceAccessor<IModelService>>(true)?.Value ??
+			throw new CommandException("The model service required by this command was not found.");
+
+		var model = await service.GetModelAsync(null, cancellation);
+		context.Dump(model);
+		return model;
+	}
 }

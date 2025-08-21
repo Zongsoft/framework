@@ -34,8 +34,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Intelligences.Ollama;
 
-[Service<IChatServiceFactory>(Tags = "Ollama", Members = nameof(Instance))]
-[Service<IModelServiceFactory>(Tags = "Ollama", Members = nameof(Instance))]
+[Service<IChatServiceFactory, IModelServiceFactory>(Tags = "Ollama", Members = nameof(Instance))]
 public class OllamaClientFactory : IChatServiceFactory, IModelServiceFactory
 {
 	#region 单例字段
@@ -43,7 +42,7 @@ public class OllamaClientFactory : IChatServiceFactory, IModelServiceFactory
 	#endregion
 
 	#region 创建方法
-	public static OllamaClient Create(IConnectionSettings settings) => new(settings);
+	public static OllamaClient Create(IConnectionSettings settings) => new(settings as OllamaConnectionSettings ?? throw new ArgumentException($""));
 	IChatService IChatServiceFactory.Create(IConnectionSettings settings) => Create(settings);
 	IModelService IModelServiceFactory.Create(IConnectionSettings settings) => Create(settings);
 	#endregion

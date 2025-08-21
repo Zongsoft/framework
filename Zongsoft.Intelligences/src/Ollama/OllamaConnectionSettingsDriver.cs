@@ -28,39 +28,22 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
-using Zongsoft.Services;
-using Zongsoft.Terminals;
-using Zongsoft.Components;
+using Zongsoft.Configuration;
 
-namespace Zongsoft.Intelligences.Commands.Chatting;
+namespace Zongsoft.Intelligences.Ollama;
 
-public class ClearCommand() : CommandBase<CommandContext>("Clear")
+public class OllamaConnectionSettingsDriver : ConnectionSettingsDriver<OllamaConnectionSettings>
 {
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
-	{
-		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
-			throw new CommandException("The chat service required by this command was not found.");
+	#region 常量定义
+	internal const string NAME = "Ollama";
+	#endregion
 
-		var history = service.Sessions.Current?.History;
+	#region 单例字段
+	public static readonly OllamaConnectionSettingsDriver Instance = new();
+	#endregion
 
-		if(history == null)
-			return ValueTask.FromResult<object>(0);
-
-		var count = history.Count;
-		if(count > 0)
-			history.Clear();
-
-		if(context.TryGetTerminal(out var terminal))
-		{
-			if(count == 0)
-				terminal.WriteLine(CommandOutletColor.DarkGray, "The history is already empty.");
-			else
-				terminal.WriteLine(CommandOutletColor.DarkYellow, $"The history has been cleared, {count} messages were removed.");
-		}
-
-		return ValueTask.FromResult<object>(count);
-	}
+	#region 私有构造
+	private OllamaConnectionSettingsDriver() : base(NAME) { }
+	#endregion
 }

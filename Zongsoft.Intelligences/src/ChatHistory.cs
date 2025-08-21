@@ -40,7 +40,7 @@ public class ChatHistory
 	public sealed class Memory : IChatHistory, IEnumerable<ChatMessage>
 	{
 		#region 成员字段
-		private readonly List<ChatMessage> _messages;
+		private readonly List<ChatMessage> _messages = new();
 		#endregion
 
 		#region 公共属性

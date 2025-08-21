@@ -44,7 +44,7 @@ public class HistoryCommand() : CommandBase<CommandContext>("History")
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
-			throw new CommandException("The chat service is not found.");
+			throw new CommandException("The chat service required by this command was not found.");
 
 		var terminal = context.GetTerminal();
 		var session = service.Sessions.Current;

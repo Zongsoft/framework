@@ -14,9 +14,9 @@
 
 	<extension path="/Workbench/Executor/Commands">
 		<object name="Llm">
-			<ollama.command>
+			<llm.command>
 				<object name="Llm" type="Zongsoft.Intelligences.Commands.LlmCommand, Zongsoft.Intelligences" />
-			</ollama.command>
+			</llm.command>
 
 			<object name="Chat">
 				<chat.command>
