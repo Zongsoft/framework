@@ -33,10 +33,42 @@ namespace Zongsoft.Common;
 
 public static class TimeSpanUtility
 {
+	public static TimeSpan Clamp(this TimeSpan value, TimeSpan minimum, TimeSpan maximum)
+	{
+		if(minimum > maximum)
+			throw new ArgumentException($"The minimum value '{minimum}' cannot be granter than maximum value '{maximum}'.");
+
+		if(value < minimum) return minimum;
+		if(value > maximum) return maximum;
+
+		return value;
+	}
+
+	public static TimeSpan Clamp(this TimeSpan value, ReadOnlySpan<char> minimum, ReadOnlySpan<char> maximum)
+	{
+		if(minimum.IsEmpty)
+			throw new ArgumentNullException(nameof(minimum));
+		if(maximum.IsEmpty)
+			throw new ArgumentNullException(nameof(maximum));
+
+		if(!TryParse(minimum, out var min))
+			throw new ArgumentException($"Unable to convert '{minimum}' to TimeSpan type.");
+		if(!TryParse(maximum, out var max))
+			throw new ArgumentException($"Unable to convert '{maximum}' to TimeSpan type.");
+
+		return Clamp(value, min, max);
+	}
+
 	public static bool TryParse(string text, out TimeSpan value) => TryParse(string.IsNullOrEmpty(text) ? default : text.AsSpan(), out value);
 	public static bool TryParse(ReadOnlySpan<char> text, out TimeSpan value)
 	{
-		if(text.IsEmpty || text.Length < 2)
+		if(text.IsEmpty || text == "0")
+		{
+			value = TimeSpan.Zero;
+			return true;
+		}
+
+		if(text.Length < 2)
 		{
 			value = default;
 			return false;
