@@ -28,21 +28,16 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+
+using Zongsoft.Services;
 
 namespace Zongsoft.Intelligences;
 
-public interface IModelService
+public interface ICopilot : IServiceAccessor<IChatService>, IServiceAccessor<IModelService>
 {
-	/// <summary>获取或设置当前模型标识。</summary>
-	string Model { get; set; }
-	/// <summary>获取模型服务的设置信息。</summary>
-	Configuration.IConnectionSettings Settings { get; }
-
-	IAsyncEnumerable<IModel> GetModelsAsync(string pattern, CancellationToken cancellation = default);
-	ValueTask<IModel> GetModelAsync(string identifier, CancellationToken cancellation = default);
-	ValueTask<bool> RunAsync(string identifier, CancellationToken cancellation = default);
-	ValueTask<bool> StopAsync(string identifier, CancellationToken cancellation = default);
+	string Name { get; }
+	string Driver { get; }
+	IChatService Chatting { get; }
+	IModelService Modeling { get; }
+	string Description { get; set; }
 }

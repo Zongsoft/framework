@@ -35,6 +35,8 @@ namespace Zongsoft.Intelligences;
 
 public interface IChatService : IChatClient
 {
-	Configuration.IConnectionSettings Settings { get; }
+	/// <summary>获取聊天会话管理器。</summary>
 	IChatSessionManager Sessions { get; }
+	/// <summary>获取聊天服务的设置信息。</summary>
+	Configuration.IConnectionSettings Settings { get; }
 }

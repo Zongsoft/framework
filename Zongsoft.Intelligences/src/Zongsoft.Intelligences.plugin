@@ -12,11 +12,19 @@
 		</assemblies>
 	</manifest>
 
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="Ollama" value="{static:Zongsoft.Intelligences.Ollama.OllamaConnectionSettingsDriver.Instance, Zongsoft.Intelligences}" />
+	</extension>
+
 	<extension path="/Workbench/Executor/Commands">
-		<object name="Llm">
-			<llm.command>
-				<object name="Llm" type="Zongsoft.Intelligences.Commands.LlmCommand, Zongsoft.Intelligences" />
-			</llm.command>
+		<object name="AI" />
+	</extension>
+
+	<extension path="/Workbench/Executor/Commands/AI">
+		<object name="Copilot">
+			<copilot.command>
+				<object name="Copilot" type="Zongsoft.Intelligences.Commands.CopilotCommand, Zongsoft.Intelligences" />
+			</copilot.command>
 
 			<object name="Chat">
 				<chat.command>
@@ -29,7 +37,7 @@
 				<object name="History" type="Zongsoft.Intelligences.Commands.Chatting.HistoryCommand, Zongsoft.Intelligences" />
 			</object>
 
-			<object name="Models">
+			<object name="Model">
 				<object name="List" type="Zongsoft.Intelligences.Commands.Modeling.ListCommand, Zongsoft.Intelligences" />
 				<object name="Info" type="Zongsoft.Intelligences.Commands.Modeling.InfoCommand, Zongsoft.Intelligences" />
 				<object name="Install" type="Zongsoft.Intelligences.Commands.Modeling.InstallCommand, Zongsoft.Intelligences" />

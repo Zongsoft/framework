@@ -28,21 +28,41 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+
+using Zongsoft.Services;
+using Zongsoft.Resources;
 
 namespace Zongsoft.Intelligences;
 
-public interface IModelService
+public class Copilot : ICopilot
 {
-	/// <summary>获取或设置当前模型标识。</summary>
-	string Model { get; set; }
-	/// <summary>获取模型服务的设置信息。</summary>
-	Configuration.IConnectionSettings Settings { get; }
+	#region 成员字段
+	private string _description;
+	#endregion
 
-	IAsyncEnumerable<IModel> GetModelsAsync(string pattern, CancellationToken cancellation = default);
-	ValueTask<IModel> GetModelAsync(string identifier, CancellationToken cancellation = default);
-	ValueTask<bool> RunAsync(string identifier, CancellationToken cancellation = default);
-	ValueTask<bool> StopAsync(string identifier, CancellationToken cancellation = default);
+	#region 构造函数
+	public Copilot(string name, string driver, string description = null)
+	{
+		this.Name = name ?? throw new ArgumentNullException(nameof(name));
+		this.Driver = driver ?? throw new ArgumentNullException(nameof(driver));
+		this.Description = description;
+	}
+	#endregion
+
+	#region 公共属性
+	public string Name { get; }
+	public string Driver { get; }
+	public IChatService Chatting { get; init; }
+	public IModelService Modeling { get; init; }
+	public string Description
+	{
+		get => _description ?? ResourceUtility.GetResourceString(this.Chatting?.GetType() ?? this.Modeling?.GetType() ?? this.GetType(), $"{this.Driver}.{nameof(this.Description)}");
+		set => _description = value;
+	}
+	#endregion
+
+	#region 显式属性
+	IChatService IServiceAccessor<IChatService>.Value => this.Chatting;
+	IModelService IServiceAccessor<IModelService>.Value => this.Modeling;
+	#endregion
 }
