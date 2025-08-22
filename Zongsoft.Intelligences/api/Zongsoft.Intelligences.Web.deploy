@@ -1,3 +1,5 @@
 artifacts/Zongsoft.Intelligences.Web.plugin
 lib/$(Framework)/Zongsoft.Intelligences.Web.*
 lib/$(Framework)/*/Zongsoft.Intelligences.Web.resources.*
+
+nuget:System.Net.ServerSentEvents

@@ -43,7 +43,7 @@ namespace Zongsoft.Intelligences.Web.Controllers;
 
 partial class CopilotController
 {
-	[ControllerName("Chats")]
+	[ControllerName("Chats", false)]
 	public class ChatController : ControllerBase
 	{
 		[HttpGet("/[area]/{name}/[controller]/[action]/{count?}")]
@@ -62,7 +62,7 @@ partial class CopilotController
 		#region 公共方法
 		[HttpPost("/[area]/{name}/[controller]/[action]")]
 		[HttpPost("/[area]/{name}/[controller]/{id}/[action]")]
-		public async IAsyncEnumerable<string> ChatAsync(string name, string id, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
+		public async Task ChatAsync(string name, string id, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new BadHttpRequestException($"Unspecified the AI assistant.");
@@ -73,15 +73,11 @@ partial class CopilotController
 
 			var copilot = CopilotManager.GetCopilot(name) ?? throw new BadHttpRequestException($"The specified '{name}' AI assistant was not found.");
 			var session = string.IsNullOrEmpty(id) ? null : copilot.Chatting.Sessions.Get(id);
-			var response = session != null ?
+			var results = session != null ?
 				session.ChatAsync(content, cancellation) :         //有对话历史
 				copilot.Chatting.ChatAsync(content, cancellation); //无对话历史
 
-			await foreach(var entry in response)
-			{
-				await Task.Delay(1, cancellation);
-				yield return entry;
-			}
+			await this.Response.EnumerableAsync(results, cancellation);
 		}
 		#endregion
 	}

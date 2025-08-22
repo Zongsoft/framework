@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Chatting</title>
+	<script>
+	async function chat(text) {
+		if(!text) {
+			text = document.getElementById('input').value;
+			document.getElementById('input').value = '';
+		}
+
+		if(!text || text.trim() === '') {
+			alert('Please enter some text to chat.');
+			return;
+		}
+
+		try {
+			const response = await fetch('http://localhost:8069/Copilots/ollama/Chats/Chat', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'text/plain'
+				},
+				body: text
+			});
+
+			if(!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+
+			while(true) {
+				const { value, done } = await reader.read();
+
+				if(done)
+					break;
+
+				const chunk = decoder.decode(value, { stream: true });
+
+				var textarea = document.getElementById('output');
+				textarea.value += chunk;
+				textarea.scrollTo({
+					top: textarea.scrollHeight,
+					behavior: 'smooth'
+				});
+			}
+		}
+		catch (error) {
+			console.error('Error:', error);
+		}
+	}
+	</script>
+</head>
+
+<body>
+	<input id="input" name="input" value="What day of the week is it today? (Please answer in Chinese)" placeholder="Input your prompt here." />
+	<button id="send" onclick="chat()">Send</button>
+	<hr />
+
+	<textarea id="output" name="output" rows="50" cols="150" readonly style="background-color: lightgray;"></textarea>
+	<button id="clear">Clear</button>
+
+	<script>
+	document.getElementById('input').addEventListener('keypress', event => {
+		if(event.key === 'Enter') {
+			event.preventDefault();
+			chat();
+		}
+	});
+
+	document.getElementById('clear').addEventListener('click', () => {
+		document.getElementById('output').value = '';
+	});
+	</script>
+</body>
+</html>
