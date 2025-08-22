@@ -54,5 +54,13 @@ partial class OllamaClient : IChatService, IChatClient
 		((IChatClient)_client).GetResponseAsync(messages, options, cancellation);
 	public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options = null, CancellationToken cancellation = default) =>
 		((IChatClient)_client).GetStreamingResponseAsync(messages, options, cancellation);
+
+	public async IAsyncEnumerable<string> ChatAsync(string content, ChatOptions options, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
+	{
+		var response = this.GetStreamingResponseAsync(content, options, cancellation);
+
+		await foreach(var message in response)
+			yield return message.Text;
+	}
 	#endregion
 }

@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.AI;
 
@@ -39,4 +41,17 @@ public interface IChatService : IChatClient
 	IChatSessionManager Sessions { get; }
 	/// <summary>获取聊天服务的设置信息。</summary>
 	Configuration.IConnectionSettings Settings { get; }
+
+	/// <summary>异步聊天。</summary>
+	/// <param name="content">指定的聊天内容。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回响应文本的异步流。</returns>
+	IAsyncEnumerable<string> ChatAsync(string content, CancellationToken cancellation = default) => this.ChatAsync(content, null, cancellation);
+
+	/// <summary>异步聊天。</summary>
+	/// <param name="content">指定的聊天内容。</param>
+	/// <param name="options">指定的选项设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回响应文本的异步流。</returns>
+	IAsyncEnumerable<string> ChatAsync(string content, ChatOptions options, CancellationToken cancellation = default);
 }
