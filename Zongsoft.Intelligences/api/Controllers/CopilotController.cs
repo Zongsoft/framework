@@ -44,7 +44,7 @@ namespace Zongsoft.Intelligences.Web.Controllers;
 [ControllerName("Copilots")]
 public partial class CopilotController : ControllerBase
 {
-	[HttpGet("{name}")]
+	[HttpGet("{name?}")]
 	public IActionResult Get(string name)
 	{
 		var copilot = CopilotManager.GetCopilot(name);

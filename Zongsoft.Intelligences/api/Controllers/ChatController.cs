@@ -46,20 +46,42 @@ partial class CopilotController
 	[ControllerName("Chats")]
 	public class ChatController : ControllerBase
 	{
-		#region 公共方法
-		[HttpPost("/[area]/{name}/[controller]/{id}/[action]")]
-		public async ValueTask<ActionResult<IAsyncEnumerable<string>>> ChatAsync(string name, string id, CancellationToken cancellation = default)
+		[HttpGet("/[area]/{name}/[controller]/[action]/{count?}")]
+		public async IAsyncEnumerable<string> Fake(string name, int count = 10, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
-				return this.BadRequest();
+				throw new BadHttpRequestException($"Unspecified the AI assistant.");
+
+			for(int i = 0; i < count; i++)
+			{
+				await Task.Delay(1000, cancellation);
+				yield return $"[{DateTime.Now:HH:mm:ss}] {name} - Fake response {i + 1}";
+			}
+		}
+
+		#region 公共方法
+		[HttpPost("/[area]/{name}/[controller]/[action]")]
+		[HttpPost("/[area]/{name}/[controller]/{id}/[action]")]
+		public async IAsyncEnumerable<string> ChatAsync(string name, string id, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new BadHttpRequestException($"Unspecified the AI assistant.");
 
 			var content = await this.Request.ReadAsStringAsync(cancellation);
 			if(string.IsNullOrWhiteSpace(content))
-				return this.BadRequest();
+				throw new BadHttpRequestException($"Missing the chat content.");
 
-			var copilot = CopilotManager.GetCopilot(name);
-			var session = copilot.Chatting.Sessions.Get(id);
-			return this.Ok(session.ChatAsync(content, cancellation));
+			var copilot = CopilotManager.GetCopilot(name) ?? throw new BadHttpRequestException($"The specified '{name}' AI assistant was not found.");
+			var session = string.IsNullOrEmpty(id) ? null : copilot.Chatting.Sessions.Get(id);
+			var response = session != null ?
+				session.ChatAsync(content, cancellation) :         //有对话历史
+				copilot.Chatting.ChatAsync(content, cancellation); //无对话历史
+
+			await foreach(var entry in response)
+			{
+				await Task.Delay(1, cancellation);
+				yield return entry;
+			}
 		}
 		#endregion
 	}
