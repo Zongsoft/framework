@@ -156,4 +156,6 @@ podman exec -it ollama ollama pull qwen3:0.6b
 - 聊天对话（有会话历史）
 	> `POST /ai/copilots/{key}/chats/{id}/chat`
 
+> 提示：[api](./api/) 项目中的 [_`chat.html`_](./api/chat.html) 文件为调用聊天 _**API**_ 的范例，它采用 [_**SSE**_](https://developer.mozilla.org/docs/Web/API/Server-sent_events/Using_server-sent_events) 技术实现。
+
 > 完整信息请参考 [api](./api/) 项目中的 [_`Zongsoft.Intelligences.Web.http`_](./api/Zongsoft.Intelligences.Web.http) 文档。

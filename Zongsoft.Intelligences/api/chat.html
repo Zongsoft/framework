@@ -16,7 +16,7 @@
 		}
 
 		try {
-			const response = await fetch('http://localhost:8069/Copilots/ollama/Chats/Chat', {
+			const response = await fetch('http://localhost:8069/AI/Copilots/ollama/Chats/Chat', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'text/plain'
@@ -55,12 +55,17 @@
 </head>
 
 <body>
-	<input id="input" name="input" value="What day of the week is it today? (Please answer in Chinese)" placeholder="Input your prompt here." />
+	<input id="input" name="input"
+	       value="What day of the week is it today? (Please answer in Chinese)"
+	       placeholder="Input your prompt here."
+	       style="width:50rem" />
 	<button id="send" onclick="chat()">Send</button>
+
 	<hr />
 
-	<textarea id="output" name="output" rows="50" cols="150" readonly style="background-color: lightgray;"></textarea>
-	<button id="clear">Clear</button>
+	<textarea id="output" name="output" rows="50" cols="120" readonly style="background-color: lightgray;"></textarea>
+	<br />
+	<button id="clear" style="width:54rem;">Clear</button>
 
 	<script>
 	document.getElementById('input').addEventListener('keypress', event => {

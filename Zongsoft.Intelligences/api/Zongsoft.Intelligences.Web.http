@@ -1,0 +1,65 @@
+### 助手列表
+GET /AI/Copilots HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 助手详情
+# @prompt name 助手标识
+GET /AI/Copilots/{{name}} HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 模型列表
+# @prompt name 助手标识
+GET /AI/Copilots/{{name}}/models HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 模型详情
+# @prompt name 助手标识
+# @prompt id   模型标识
+GET /AI/Copilots/{{name}}/models/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 获取会话列表
+# @prompt name 助手标识
+GET /AI/Copilots/{{name}}/chats HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 创建一个新的会话
+# @prompt name 助手标识
+POST /AI/Copilots/{{name}}/chats HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 关闭当前会话
+# @prompt name 助手标识
+DELETE /AI/Copilots/{{name}}/chats HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 获取对话历史记录
+# @prompt name 助手标识
+# @prompt id   模型标识
+GET /AI/Copilots/{{name}}/chats/{{id}}/history HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 清空对话历史记录
+# @prompt name 助手标识
+# @prompt id   模型标识
+DELETE /AI/Copilots/{{name}}/chats/{{id}}/history HTTP/1.1
+Host: {{host}}:{{port}}
+
+### 聊天对话（无会话历史）
+# @prompt name    助手标识
+# @prompt content 对话内容
+POST /AI/Copilots/{{name}}/chats/chat HTTP/1.1
+Host: {{host}}:{{port}}
+Content-Type: text/plain
+
+{{content}}
+
+### 聊天对话（有会话历史）
+# @prompt name    助手标识
+# @prompt id      模型标识
+# @prompt content 对话内容
+POST /AI/Copilots/{{name}}/chats/{{id}}/chat HTTP/1.1
+Host: {{host}}:{{port}}
+Content-Type: text/plain
+
+{{content}}
