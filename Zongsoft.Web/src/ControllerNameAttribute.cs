@@ -32,6 +32,7 @@ using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Zongsoft.Web;
@@ -60,20 +61,26 @@ public class ControllerNameAttribute : Attribute, IControllerModelConvention
 	#region 公共方法
 	public void Apply(ControllerModel controller)
 	{
+		controller.RouteValues.TryGetValue("area", out var area);
+
 		if(controller.ControllerType.IsNested)
 		{
+			//命名空间表示嵌套类的祖先控制器名称以斜杆符组合而成
 			var @namespace = controller.RouteValues["namespace"] = GetNamespace(controller.ControllerType, '/');
 			var module = Zongsoft.Services.ApplicationModuleAttribute.Find(controller.ControllerType)?.Name;
+
+			//嵌套类的区域名称为最顶层控制器的区域名称加上嵌套类自生定义的区域名
+			area = Combine(GetTopmost(controller.ControllerType), area);
 
 			if(string.IsNullOrEmpty(module))
 			{
 				controller.RouteValues["module"] = string.Empty;
-				controller.RouteValues["area"] = @namespace;
+				controller.RouteValues["area"] = Combine(area, @namespace);
 			}
 			else
 			{
 				controller.RouteValues["module"] = module;
-				controller.RouteValues["area"] = $"{module}/{@namespace}";
+				controller.RouteValues["area"] = Combine(area, $"{module}/{@namespace}");
 			}
 		}
 		else if(this.IsModular)
@@ -82,13 +89,12 @@ public class ControllerNameAttribute : Attribute, IControllerModelConvention
 
 			if(string.IsNullOrEmpty(module))
 			{
-				controller.RouteValues["area"] = string.Empty;
 				controller.RouteValues["module"] = string.Empty;
 			}
 			else
 			{
-				controller.RouteValues["area"] = module;
 				controller.RouteValues["module"] = module;
+				controller.RouteValues["area"] = Combine(area, module);
 			}
 		}
 
@@ -107,6 +113,26 @@ public class ControllerNameAttribute : Attribute, IControllerModelConvention
 	#endregion
 
 	#region 私有方法
+	private static string GetTopmost(TypeInfo type)
+	{
+		if(type.IsNested)
+			return GetTopmost(type.DeclaringType.GetTypeInfo());
+
+		var attribute = type.GetCustomAttribute<AreaAttribute>(true);
+		return attribute?.RouteValue;
+	}
+
+	private static string Combine(string prefix, string name)
+	{
+		if(string.IsNullOrEmpty(prefix))
+			return name ?? string.Empty;
+
+		if(string.IsNullOrEmpty(name))
+			return prefix ?? string.Empty;
+
+		return $"{prefix.Trim('/')}/{name.Trim('/')}";
+	}
+
 	private static string GetNamespace(Type controllerType, char separator)
 	{
 		if(controllerType == null || !controllerType.IsNested)
