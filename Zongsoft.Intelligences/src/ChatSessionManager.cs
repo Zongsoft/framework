@@ -44,6 +44,7 @@ public class ChatSessionManager(IChatService service) : IChatSessionManager
 
 	#region 公共属性
 	public IChatSession Current { get; set; }
+	public IChatSession this[string identifier] => this.Get(identifier) ?? throw new KeyNotFoundException();
 	#endregion
 
 	#region 公共方法
@@ -68,7 +69,13 @@ public class ChatSessionManager(IChatService service) : IChatSessionManager
 		if(string.IsNullOrEmpty(identifier))
 			return null;
 
-		return _cache.Remove(identifier, out var value) ? value as IChatSession : null;
+		if(_cache.Remove(identifier, out var value) && value is IChatSession session)
+		{
+			session.Dispose();
+			return session;
+		}
+
+		return null;
 	}
 
 	public IChatSession Activate(string identifier)
