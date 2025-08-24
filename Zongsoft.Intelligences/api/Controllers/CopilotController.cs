@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,8 +36,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
 using Zongsoft.Web;
-using Zongsoft.Web.Http;
-using Zongsoft.Services;
 
 namespace Zongsoft.Intelligences.Web.Controllers;
 
@@ -45,17 +44,29 @@ namespace Zongsoft.Intelligences.Web.Controllers;
 public partial class CopilotController : ControllerBase
 {
 	[HttpGet("{name?}")]
-	public IActionResult Get(string name)
+	public IActionResult Get(string name = null)
 	{
-		var copilot = CopilotManager.GetCopilot(name);
-		if(copilot == null)
-			return this.NotFound();
+		if(string.IsNullOrEmpty(name))
+		{
+			var results = CopilotManager.GetCopilots();
 
-		return this.Ok(new
+			if(results != null || results.Any())
+				return this.Ok(results.Select(Map));
+
+			return this.NoContent();
+		}
+
+		var copilot = CopilotManager.GetCopilot(name);
+
+		return copilot == null ?
+			this.NotFound() :
+			this.Ok(Map(copilot));
+
+		static object Map(ICopilot copilot) => new
 		{
 			copilot.Name,
 			copilot.Driver,
 			copilot.Description,
-		});
+		};
 	}
 }

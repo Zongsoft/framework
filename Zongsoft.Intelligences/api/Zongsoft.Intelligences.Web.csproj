@@ -4,7 +4,6 @@
 		<Version>0.0.1</Version>
 		<Product>Zongsoft Intelligences Web Library</Product>
 		<Description>This is a web class library about artificial intelligence development.</Description>
-		<RootNamespace>Zongsoft.Intelligences</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -42,6 +41,7 @@
 	<ItemGroup>
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).http" Pack="true" PackagePath="\artifacts" />
 		<None Include="chat.html" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 </Project>

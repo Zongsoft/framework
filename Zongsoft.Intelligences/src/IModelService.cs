@@ -36,11 +36,12 @@ namespace Zongsoft.Intelligences;
 
 public interface IModelService
 {
-	/// <summary>获取或设置当前模型标识。</summary>
-	string Model { get; set; }
+	/// <summary>获取当前模型标识。</summary>
+	string Model { get; }
 	/// <summary>获取模型服务的设置信息。</summary>
 	Configuration.IConnectionSettings Settings { get; }
 
+	ValueTask<bool> ActivateAsync(string identifier, CancellationToken cancellation = default);
 	IAsyncEnumerable<IModel> GetModelsAsync(string pattern, CancellationToken cancellation = default);
 	ValueTask<IModel> GetModelAsync(string identifier, CancellationToken cancellation = default);
 	ValueTask<bool> RunAsync(string identifier, CancellationToken cancellation = default);

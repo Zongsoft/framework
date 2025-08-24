@@ -50,7 +50,15 @@ partial class OllamaClient : IModelService
 	#endregion
 
 	#region 公共方法
-	public void Activate(string model) => _client.SelectedModel = model;
+	public ValueTask<bool> ActivateAsync(string identifier, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(identifier))
+			return ValueTask.FromResult(false);
+
+		_client.SelectedModel = identifier;
+		return ValueTask.FromResult(true);
+	}
+
 	public async ValueTask<IModel> GetModelAsync(string identifier, CancellationToken cancellation = default)
 	{
 		var response = await _client.ShowModelAsync(new OllamaSharp.Models.ShowModelRequest() { Model = identifier }, cancellation);

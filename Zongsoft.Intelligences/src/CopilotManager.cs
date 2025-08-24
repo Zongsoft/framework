@@ -58,6 +58,17 @@ public static class CopilotManager
 
 		return null;
 	}
+
+	public static IEnumerable<ICopilot> GetCopilots()
+	{
+		var providers = ApplicationContext.Current.Services.ResolveAll<ICopilotProvider>();
+
+		foreach(var provider in providers)
+		{
+			foreach(var copilot in provider.GetCopilots())
+				yield return copilot;
+		}
+	}
 	#endregion
 
 	private sealed class DefaultCopilotProvider : ICopilotProvider, IServiceProvider<ICopilot>
