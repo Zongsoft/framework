@@ -63,98 +63,98 @@ podman exec -it ollama ollama pull qwen3:0.6b
 
 - 查看AI助手列表
 	> ```bash
-	> ai.copilot
+	> ai.assistant
 	> ```
 
 - 激活指定的AI助手
 	> 注意：后续命令皆基于该命令设置的AI助手。
 	> ```bash
 	> # 设置AI助手配置（注：该命令参数即为配置文件中的连接名）
-	> ai.copilot ollama
+	> ai.assistant ollama
 	> ```
 
 - 模型命令
 	> ```bash
 	> # 查看本地模型库列表
-	> ai.copilot.model.list
+	> ai.assistant.model.list
 	> 
 	> # 查看正在运行的模型列表
-	> ai.copilot.model.list -running
+	> ai.assistant.model.list -running
 	> 
 	> # 查看指定的模型信息
-	> ai.copilot.model.info "qwen3:0.6b"
+	> ai.assistant.model.info "qwen3:0.6b"
 	> 
 	> # 下载并安装指定的大语言模型
-	> ai.copilot.model.install "qwen3:0.6b"
+	> ai.assistant.model.install "qwen3:0.6b"
 	> # 删除并卸载指定的大语言模型
-	> ai.copilot.model.uninstall "qwen3:0.6b"
+	> ai.assistant.model.uninstall "qwen3:0.6b"
 	> ```
 
 - 会话命令
 	> ```bash
 	> # 创建一个新的会话
-	> ai.copilot.chat.open
+	> ai.assistant.chat.open
 	> # 进入指定的会话
-	> ai.copilot.chat.open 'session|chatroom'
+	> ai.assistant.chat.open 'session|chatroom'
 	> 
 	> # 关闭当前会话
-	> ai.copilot.chat.close
+	> ai.assistant.chat.close
 	> # 关闭指定会话
-	> ai.copilot.chat.close 'session|chatroom'
+	> ai.assistant.chat.close 'session|chatroom'
 	> 
 	> # 清空当前会话的历史记录
-	> ai.copilot.chat.clear
+	> ai.assistant.chat.clear
 	> # 清空指定会话的历史记录
-	> ai.copilot.chat.clear 'session|chatroom'
+	> ai.assistant.chat.clear 'session|chatroom'
 	> 
 	> # 查看当前会话的历史纪录
-	> ai.copilot.chat.history
+	> ai.assistant.chat.history
 	> # 查看指定会话的历史记录
-	> ai.copilot.chat.history 'session|chatroom'
+	> ai.assistant.chat.history 'session|chatroom'
 	> ```
 
 - 聊天命令
 	> ```bash
 	> # 对话
-	> ai.copilot.chat "内容"
+	> ai.assistant.chat "内容"
 	> # 对话：结果为纯文本
-	> ai.copilot.chat -format:text "内容"
+	> ai.assistant.chat -format:text "内容"
 	> 
 	> # 对话：结果为异步流
-	> ai.copilot.chat -streaming "内容"
+	> ai.assistant.chat -streaming "内容"
 	> # 对话：结果为纯文本的异步流
-	> ai.copilot.chat -streaming -format:text "内容"
+	> ai.assistant.chat -streaming -format:text "内容"
 	> 
 	> # 进入交互对话模式
-	> ai.copilot.chat -interactive
+	> ai.assistant.chat -interactive
 	> ```
 
 ### RESTful API 接口
 
 - 获取AI助手列表
-	> `GET /ai/copilots`
+	> `GET /ai/assistants`
 - 获取指定AI助手信息
-	> `GET /ai/copilots/{key}`
+	> `GET /ai/assistants/{name}`
 
 - 获取模型列表
-	> `GET /ai/copilots/{key}/models`
+	> `GET /ai/assistants/{name}/models`
 - 获取指定的模型信息
-	> `GET /ai/copilots/{key}/models/{id}`
+	> `GET /ai/assistants/{name}/models/{id}`
 
 - 创建新的会话
-	> `POST /ai/copilots/{key}/chats`
+	> `POST /ai/assistants/{name}/chats`
 - 关闭一个会话
-	> `DELETE /ai/copilots/{key}/chats`
+	> `DELETE /ai/assistants/{name}/chats`
 
 - 获取指定会话的聊天历史记录
-	> `GET /ai/copilots/{key}/chats/{id}/history`
+	> `GET /ai/assistants/{name}/chats/{id}/history`
 - 清空指定会话的聊天历史记录
-	> `DELETE /ai/copilots/{key}/chats/{id}/history`
+	> `DELETE /ai/assistants/{name}/chats/{id}/history`
 
 - 聊天对话（无会话历史）
-	> `POST /ai/copilots/{key}/chats/chat`
+	> `POST /ai/assistants/{name}/chats/chat`
 - 聊天对话（有会话历史）
-	> `POST /ai/copilots/{key}/chats/{id}/chat`
+	> `POST /ai/assistants/{name}/chats/{id}/chat`
 
 > 提示：[api](./api/) 项目中的 [_`chat.html`_](./api/chat.html) 文件为调用聊天 _**API**_ 的范例，它采用 [_**SSE**_](https://developer.mozilla.org/docs/Web/API/Server-sent_events/Using_server-sent_events) 技术实现。
 

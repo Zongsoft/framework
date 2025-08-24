@@ -40,15 +40,15 @@ using Zongsoft.Web;
 namespace Zongsoft.Intelligences.Web.Controllers;
 
 [Area("AI")]
-[ControllerName("Copilots")]
-public partial class CopilotController : ControllerBase
+[ControllerName("Assistants")]
+public partial class AssistantController : ControllerBase
 {
 	[HttpGet("{name?}")]
 	public IActionResult Get(string name = null)
 	{
 		if(string.IsNullOrEmpty(name))
 		{
-			var results = CopilotManager.GetCopilots();
+			var results = AssistantManager.GetAssistants();
 
 			if(results != null || results.Any())
 				return this.Ok(results.Select(Map));
@@ -56,17 +56,17 @@ public partial class CopilotController : ControllerBase
 			return this.NoContent();
 		}
 
-		var copilot = CopilotManager.GetCopilot(name);
+		var assistant = AssistantManager.GetAssistant(name);
 
-		return copilot == null ?
+		return assistant == null ?
 			this.NotFound() :
-			this.Ok(Map(copilot));
+			this.Ok(Map(assistant));
 
-		static object Map(ICopilot copilot) => new
+		static object Map(IAssistant assistant) => new
 		{
-			copilot.Name,
-			copilot.Driver,
-			copilot.Description,
+			assistant.Name,
+			assistant.Driver,
+			assistant.Description,
 		};
 	}
 }

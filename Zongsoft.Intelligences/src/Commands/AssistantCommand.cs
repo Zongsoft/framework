@@ -38,7 +38,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Intelligences.Commands;
 
-public class CopilotCommand : CommandBase<CommandContext>, IServiceAccessor<IChatService>, IServiceAccessor<IModelService>
+public class AssistantCommand : CommandBase<CommandContext>, IServiceAccessor<IChatService>, IServiceAccessor<IModelService>
 {
 	#region 成员字段
 	private IChatService _chatting;
@@ -47,8 +47,8 @@ public class CopilotCommand : CommandBase<CommandContext>, IServiceAccessor<ICha
 	#endregion
 
 	#region 构造函数
-	public CopilotCommand() : base("Copilot") { }
-	public CopilotCommand(string name) : base(name) { }
+	public AssistantCommand() : base("Assistant") { }
+	public AssistantCommand(string name) : base(name) { }
 	#endregion
 
 	#region 公共属性

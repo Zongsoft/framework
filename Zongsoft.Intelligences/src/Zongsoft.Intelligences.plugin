@@ -21,10 +21,10 @@
 	</extension>
 
 	<extension path="/Workbench/Executor/Commands/AI">
-		<object name="Copilot">
-			<copilot.command>
-				<object name="Copilot" type="Zongsoft.Intelligences.Commands.CopilotCommand, Zongsoft.Intelligences" />
-			</copilot.command>
+		<object name="Assistant">
+			<assistant.command>
+				<object name="Assistant" type="Zongsoft.Intelligences.Commands.AssistantCommand, Zongsoft.Intelligences" />
+			</assistant.command>
 
 			<object name="Chat">
 				<chat.command>

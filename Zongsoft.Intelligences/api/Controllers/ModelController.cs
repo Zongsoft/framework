@@ -40,7 +40,7 @@ using Zongsoft.Web.Http;
 
 namespace Zongsoft.Intelligences.Web.Controllers;
 
-partial class CopilotController
+partial class AssistantController
 {
 	[ControllerName("Models")]
 	public class ModelController : ControllerBase
@@ -51,14 +51,14 @@ partial class CopilotController
 			if(string.IsNullOrEmpty(name))
 				return this.BadRequest($"Unspecified the AI assistant.");
 
-			var copilot = CopilotManager.GetCopilot(name);
-			if(copilot == null)
+			var assistant = AssistantManager.GetAssistant(name);
+			if(assistant == null)
 				return this.NotFound($"The specified '{name}' AI assistant was not found.");
 
 			if(string.IsNullOrEmpty(id))
-				return this.Ok(copilot.Modeling.GetModelsAsync(null, cancellation));
+				return this.Ok(assistant.Modeling.GetModelsAsync(null, cancellation));
 
-			var model = await copilot.Modeling.GetModelAsync(id, cancellation);
+			var model = await assistant.Modeling.GetModelAsync(id, cancellation);
 			return model == null ? this.NotFound() : this.Ok(model);
 		}
 
@@ -70,11 +70,11 @@ partial class CopilotController
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest($"Unspecified the model identifier.");
 
-			var copilot = CopilotManager.GetCopilot(name);
-			if(copilot == null)
+			var assistant = AssistantManager.GetAssistant(name);
+			if(assistant == null)
 				return this.NotFound($"The specified '{name}' AI assistant was not found.");
 
-			return (await copilot.Modeling.ActivateAsync(id, cancellation)) ?
+			return (await assistant.Modeling.ActivateAsync(id, cancellation)) ?
 				this.NoContent() :
 				this.NotFound();
 		}

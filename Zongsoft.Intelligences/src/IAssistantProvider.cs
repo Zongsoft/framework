@@ -34,8 +34,8 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Intelligences;
 
-public interface ICopilotProvider : IServiceProvider<ICopilot>
+public interface IAssistantProvider : IServiceProvider<IAssistant>
 {
-	ICopilot GetCopilot(string name = null);
-	IEnumerable<ICopilot> GetCopilots();
+	IAssistant GetAssistant(string name = null);
+	IEnumerable<IAssistant> GetAssistants();
 }

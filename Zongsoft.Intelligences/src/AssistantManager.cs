@@ -36,45 +36,45 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Intelligences;
 
-[Service<ICopilotProvider>(Members = nameof(Default))]
-public static class CopilotManager
+[Service<IAssistantProvider>(Members = nameof(Default))]
+public static class AssistantManager
 {
 	#region 单例字段
-	public static readonly ICopilotProvider Default = new DefaultCopilotProvider();
+	public static readonly IAssistantProvider Default = new DefaultAssistantProvider();
 	#endregion
 
 	#region 静态方法
-	public static ICopilot GetCopilot(string name = null)
+	public static IAssistant GetAssistant(string name = null)
 	{
-		var providers = ApplicationContext.Current.Services.ResolveAll<ICopilotProvider>();
+		var providers = ApplicationContext.Current.Services.ResolveAll<IAssistantProvider>();
 
 		foreach(var provider in providers)
 		{
-			var copilot = provider.GetCopilot(name);
+			var assistant = provider.GetAssistant(name);
 
-			if(copilot != null)
-				return copilot;
+			if(assistant != null)
+				return assistant;
 		}
 
 		return null;
 	}
 
-	public static IEnumerable<ICopilot> GetCopilots()
+	public static IEnumerable<IAssistant> GetAssistants()
 	{
-		var providers = ApplicationContext.Current.Services.ResolveAll<ICopilotProvider>();
+		var providers = ApplicationContext.Current.Services.ResolveAll<IAssistantProvider>();
 
 		foreach(var provider in providers)
 		{
-			foreach(var copilot in provider.GetCopilots())
-				yield return copilot;
+			foreach(var assistant in provider.GetAssistants())
+				yield return assistant;
 		}
 	}
 	#endregion
 
-	private sealed class DefaultCopilotProvider : ICopilotProvider, IServiceProvider<ICopilot>
+	private sealed class DefaultAssistantProvider : IAssistantProvider, IServiceProvider<IAssistant>
 	{
 		#region 公共方法
-		public ICopilot GetCopilot(string name = null)
+		public IAssistant GetAssistant(string name = null)
 		{
 			var settings = ApplicationContext.Current.Configuration.GetConnectionSettings("AI/ConnectionSettings", name);
 			if(settings == null)
@@ -84,14 +84,14 @@ public static class CopilotManager
 			var chattingFactory = ApplicationContext.Current.Services.ResolveTags<IChatServiceFactory>(driver).FirstOrDefault();
 			var modelingFactory = ApplicationContext.Current.Services.ResolveTags<IModelServiceFactory>(driver).FirstOrDefault();
 
-			return new Copilot(settings.Name, driver)
+			return new Assistant(settings.Name, driver)
 			{
 				Chatting = chattingFactory?.Create(settings),
 				Modeling = modelingFactory?.Create(settings)
 			};
 		}
 
-		public IEnumerable<ICopilot> GetCopilots()
+		public IEnumerable<IAssistant> GetAssistants()
 		{
 			var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("AI/ConnectionSettings");
 			if(settings == null)
@@ -103,7 +103,7 @@ public static class CopilotManager
 				var chattingFactory = ApplicationContext.Current.Services.ResolveTags<IChatServiceFactory>(driver).FirstOrDefault();
 				var modelingFactory = ApplicationContext.Current.Services.ResolveTags<IModelServiceFactory>(driver).FirstOrDefault();
 
-				yield return new Copilot(setting.Name, driver)
+				yield return new Assistant(setting.Name, driver)
 				{
 					Chatting = chattingFactory?.Create(setting),
 					Modeling = modelingFactory?.Create(setting)
@@ -124,7 +124,7 @@ public static class CopilotManager
 		#endregion
 
 		#region 显式实现
-		ICopilot IServiceProvider<ICopilot>.GetService(string name) => this.GetCopilot(name);
+		IAssistant IServiceProvider<IAssistant>.GetService(string name) => this.GetAssistant(name);
 		#endregion
 	}
 }

@@ -41,7 +41,7 @@ using Zongsoft.Web.Http;
 
 namespace Zongsoft.Intelligences.Web.Controllers;
 
-partial class CopilotController
+partial class AssistantController
 {
 	[ControllerName("Chats")]
 	public class ChatController : ControllerBase
@@ -66,13 +66,13 @@ partial class CopilotController
 			if(string.IsNullOrEmpty(name))
 				return this.BadRequest($"Unspecified the AI assistant.");
 
-			var copilot = CopilotManager.GetCopilot(name);
-			if(copilot == null)
+			var assistant = AssistantManager.GetAssistant(name);
+			if(assistant == null)
 				return this.NotFound($"The specified '{name}' AI assistant was not found.");
 
 			var session = string.IsNullOrEmpty(id) ?
-				copilot.Chatting.Sessions.Create() :
-				copilot.Chatting.Sessions.Get(id);
+				assistant.Chatting.Sessions.Create() :
+				assistant.Chatting.Sessions.Get(id);
 
 			return session == null ?
 				this.NotFound($"The specified '{id}' chat session does not exist.") : this.Content(session.Identifier);
@@ -86,11 +86,11 @@ partial class CopilotController
 			if(string.IsNullOrEmpty(id))
 				throw new BadHttpRequestException($"Unspecified the chat session identifier.");
 
-			var copilot = CopilotManager.GetCopilot(name);
-			if(copilot == null)
+			var assistant = AssistantManager.GetAssistant(name);
+			if(assistant == null)
 				return this.NotFound($"The specified '{name}' AI assistant was not found.");
 
-			var session = copilot.Chatting.Sessions.Abandon(id);
+			var session = assistant.Chatting.Sessions.Abandon(id);
 			return session == null ?
 				this.NotFound($"The specified '{id}' chat session does not exist.") : this.NoContent();
 		}
@@ -106,11 +106,11 @@ partial class CopilotController
 			if(string.IsNullOrWhiteSpace(content))
 				throw new BadHttpRequestException($"Missing the chat content.");
 
-			var copilot = CopilotManager.GetCopilot(name) ?? throw new BadHttpRequestException($"The specified '{name}' AI assistant was not found.");
-			var session = string.IsNullOrEmpty(id) ? null : copilot.Chatting.Sessions.Get(id);
+			var assistant = AssistantManager.GetAssistant(name) ?? throw new BadHttpRequestException($"The specified '{name}' AI assistant was not found.");
+			var session = string.IsNullOrEmpty(id) ? null : assistant.Chatting.Sessions.Get(id);
 			var results = session != null ?
 				session.ChatAsync(content, cancellation) :         //有对话历史
-				copilot.Chatting.ChatAsync(content, cancellation); //无对话历史
+				assistant.Chatting.ChatAsync(content, cancellation); //无对话历史
 
 			await this.Response.EnumerableAsync(results, cancellation);
 		}
@@ -127,11 +127,11 @@ partial class CopilotController
 				if(string.IsNullOrEmpty(id))
 					return this.BadRequest($"Unspecified the chat session identifier.");
 
-				var copilot = CopilotManager.GetCopilot(name);
-				if(copilot == null)
+				var assistant = AssistantManager.GetAssistant(name);
+				if(assistant == null)
 					return this.NotFound($"The specified '{name}' AI assistant was not found.");
 
-				var session = copilot.Chatting.Sessions.Get(id);
+				var session = assistant.Chatting.Sessions.Get(id);
 				if(session == null)
 					return this.NotFound($"The specified '{id}' chat session does not exist.");
 
@@ -146,11 +146,11 @@ partial class CopilotController
 				if(string.IsNullOrEmpty(id))
 					return this.BadRequest($"Unspecified the chat session identifier.");
 
-				var copilot = CopilotManager.GetCopilot(name);
-				if(copilot == null)
+				var assistant = AssistantManager.GetAssistant(name);
+				if(assistant == null)
 					return this.NotFound($"The specified '{name}' AI assistant was not found.");
 
-				var session = copilot.Chatting.Sessions.Get(id);
+				var session = assistant.Chatting.Sessions.Get(id);
 				if(session == null)
 					return this.NotFound($"The specified '{id}' chat session does not exist.");
 
