@@ -23,6 +23,12 @@ Host: {{host}}:{{port}}
 GET /AI/Assistants/{{name}}/Chats HTTP/1.1
 Host: {{host}}:{{port}}
 
+### 获取会话详情
+# @prompt name 助手标识
+# @prompt id   会话标识
+GET /AI/Assistants/{{name}}/Chats/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+
 ### 创建一个新的会话
 # @prompt name 助手标识
 POST /AI/Assistants/{{name}}/Chats HTTP/1.1
@@ -35,13 +41,13 @@ Host: {{host}}:{{port}}
 
 ### 获取对话历史记录
 # @prompt name 助手标识
-# @prompt id   模型标识
+# @prompt id   会话标识
 GET /AI/Assistants/{{name}}/Chats/{{id}}/History HTTP/1.1
 Host: {{host}}:{{port}}
 
 ### 清空对话历史记录
 # @prompt name 助手标识
-# @prompt id   模型标识
+# @prompt id   会话标识
 DELETE /AI/Assistants/{{name}}/Chats/{{id}}/History HTTP/1.1
 Host: {{host}}:{{port}}
 
@@ -56,7 +62,7 @@ Content-Type: text/plain
 
 ### 聊天对话（有会话历史）
 # @prompt name    助手标识
-# @prompt id      模型标识
+# @prompt id      会话标识
 # @prompt content 对话内容
 POST /AI/Assistants/{{name}}/Chats/{{id}}/Chat HTTP/1.1
 Host: {{host}}:{{port}}

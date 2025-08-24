@@ -138,13 +138,17 @@ podman exec -it ollama ollama pull qwen3:0.6b
 
 - 获取模型列表
 	> `GET /ai/assistants/{name}/models`
-- 获取指定的模型信息
+- 获取模型详情
 	> `GET /ai/assistants/{name}/models/{id}`
 
+- 获取会话列表
+	> `GET /ai/assistants/{name}/chats`
+- 获取会话详情
+	> `GET /ai/assistants/{name}/chats/{id}`
 - 创建新的会话
 	> `POST /ai/assistants/{name}/chats`
 - 关闭一个会话
-	> `DELETE /ai/assistants/{name}/chats`
+	> `DELETE /ai/assistants/{name}/chats/{id}`
 
 - 获取指定会话的聊天历史记录
 	> `GET /ai/assistants/{name}/chats/{id}/history`

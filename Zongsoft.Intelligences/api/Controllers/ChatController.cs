@@ -60,6 +60,32 @@ partial class AssistantController
 		}
 
 		#region 公共方法
+		[HttpGet("/[area]/{name}/{id?}")]
+		public IActionResult Get(string name, string id)
+		{
+			if(string.IsNullOrEmpty(name))
+				return this.BadRequest($"Unspecified the AI assistant.");
+
+			var assistant = AssistantManager.GetAssistant(name);
+			if(assistant == null)
+				return this.NotFound($"The specified '{name}' AI assistant was not found.");
+
+			if(string.IsNullOrEmpty(id))
+				return this.Ok(assistant.Chatting.Sessions.Select(Map));
+
+			var session = assistant.Chatting.Sessions.Get(id);
+			return session == null ?
+				this.NotFound($"The specified '{id}' chat session does not exist.") : this.Ok(Map(session));
+
+			static object Map(IChatSession session) => new
+			{
+				session.Identifier,
+				session.Creation,
+				session.Options.Expiration,
+				session.History.Count,
+			};
+		}
+
 		[HttpPost("/[area]/{name}/[controller]/{id?}")]
 		public IActionResult Open(string name, string id)
 		{
