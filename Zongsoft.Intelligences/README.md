@@ -30,7 +30,7 @@ podman run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 
 在 _**O**llama_ 官方模型库 _(https://ollama.com/search)_ 中查找需要的大语言模型。
 
-> 💡 如果只是本地开发测试，推荐使用 _阿里千问 (`qwen3:0.6b`)_ 模型，它只有 `523MB` 大小，而且在没有显卡的低配电脑上运行流畅、响应快速。
+> 💡 如果只是本地开发测试，推荐使用 _阿里千问 (`qwen3:0.6b`)_ 模型，它只有 `523MB` 大小，可在无显卡的低配电脑上流畅运行。
 
 ```bash
 podman exec -it ollama ollama pull qwen3:0.6b
@@ -155,9 +155,9 @@ podman exec -it ollama ollama pull qwen3:0.6b
 - 清空指定会话的聊天历史记录
 	> `DELETE /ai/assistants/{name}/chats/{id}/history`
 
-- 聊天对话（无会话历史）
+- 聊天对话 _（无会话历史）_
 	> `POST /ai/assistants/{name}/chats/chat`
-- 聊天对话（有会话历史）
+- 聊天对话 _（有会话历史）_
 	> `POST /ai/assistants/{name}/chats/{id}/chat`
 
 > 提示：[api](./api/) 项目中的 [_`chat.html`_](./api/chat.html) 文件为调用聊天 _**API**_ 的范例，它采用 [_**SSE**_](https://developer.mozilla.org/docs/Web/API/Server-sent_events/Using_server-sent_events) 技术实现。
