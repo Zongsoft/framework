@@ -61,11 +61,18 @@ partial class OllamaClient : IModelService
 
 	public async ValueTask<IModel> GetModelAsync(string identifier, CancellationToken cancellation = default)
 	{
-		var response = await _client.ShowModelAsync(new OllamaSharp.Models.ShowModelRequest() { Model = identifier }, cancellation);
-		if(response == null || response.Info == null)
-			return null;
+		try
+		{
+			var response = await _client.ShowModelAsync(new OllamaSharp.Models.ShowModelRequest() { Model = identifier }, cancellation);
+			if(response == null || response.Info == null)
+				return null;
 
-		return new Model();
+			return response.ToModel();
+		}
+		catch(System.Net.Http.HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+		{
+			return null;
+		}
 	}
 
 	public async IAsyncEnumerable<IModel> GetModelsAsync(string pattern, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)

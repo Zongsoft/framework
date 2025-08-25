@@ -60,7 +60,7 @@ partial class AssistantController
 		}
 
 		#region 公共方法
-		[HttpGet("/[area]/{name}/{id?}")]
+		[HttpGet("/[area]/{name}/[controller]/{id?}")]
 		public IActionResult Get(string name, string id)
 		{
 			if(string.IsNullOrEmpty(name))

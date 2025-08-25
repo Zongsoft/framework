@@ -4,19 +4,58 @@
     <meta charset="utf-8" />
     <title>Chatting</title>
 	<script>
+	async function connect() {
+		try {
+			var server = document.getElementById('server').value;
+			const response = await fetch(`http://${server}/AI/Assistants`, {
+				method: 'GET',
+				headers: {
+					'Accept': 'application/json',
+					'X-Json-Behaviors': 'casing:camel;ignores:null,empty'
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const assistants = await response.json();
+			const select = document.getElementById('assistants');
+
+			select.innerHTML = '';
+
+			assistants.forEach(assistant => {
+				const option = document.createElement('option');
+				option.value = assistant.name || assistant;
+				option.textContent = assistant.name || assistant;
+				select.appendChild(option);
+			});
+
+			if (select.options.length > 0) {
+				select.selectedIndex = 0;
+			}
+		}
+		catch (error) {
+			console.error('Error:', error);
+			alert('Failed to connect to the server. Please check the server address and try again.');
+		}
+	}
+
 	async function chat(text) {
-		if(!text) {
+		if (!text) {
 			text = document.getElementById('input').value;
 			document.getElementById('input').value = '';
 		}
 
-		if(!text || text.trim() === '') {
+		if (!text || text.trim() === '') {
 			alert('Please enter some text to chat.');
 			return;
 		}
 
 		try {
-			const response = await fetch('http://localhost:8069/AI/Assistants/ollama/Chats/Chat', {
+			var server = document.getElementById('server').value;
+			var assistant = document.getElementById('assistants').value;
+			const response = await fetch(`http://${server}/AI/Assistants/${assistant}/Chats/Chat`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'text/plain'
@@ -24,17 +63,17 @@
 				body: text
 			});
 
-			if(!response.ok) {
+			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
 
-			while(true) {
+			while (true) {
 				const { value, done } = await reader.read();
 
-				if(done)
+				if (done)
 					break;
 
 				const chunk = decoder.decode(value, { stream: true });
@@ -55,6 +94,21 @@
 </head>
 
 <body>
+	<p>
+		<label for="server">Server:</label>
+		<input id="server" name="server"
+		   value="localhost:8069"
+		   placeholder="Input the API server address here."
+		   style="width:25rem" />
+
+		<select id="assistants" name="assistants" style="width:10rem">
+			<option value="ollama" selected>ollama</option>
+		</select>
+
+		<button id="connect" onclick="connect()">Connect</button>
+	</p>
+
+	<label for="input">Content:</label>
 	<input id="input" name="input"
 	       value="What day of the week is it today? (Please answer in Chinese)"
 	       placeholder="Input your prompt here."
@@ -63,7 +117,7 @@
 
 	<hr />
 
-	<textarea id="output" name="output" rows="50" cols="120" readonly style="background-color: lightgray;"></textarea>
+	<textarea id="output" name="output" rows="40" cols="120" readonly style="background-color: lightgray;"></textarea>
 	<br />
 	<button id="clear" style="width:54rem;">Clear</button>
 
