@@ -90,6 +90,9 @@ public class ControllerNameAttribute : Attribute, IControllerModelConvention
 			if(string.IsNullOrEmpty(module))
 			{
 				controller.RouteValues["module"] = string.Empty;
+
+				if(!controller.RouteValues.ContainsKey("area"))
+					controller.RouteValues["area"] = string.Empty;
 			}
 			else
 			{
