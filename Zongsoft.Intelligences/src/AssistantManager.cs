@@ -31,6 +31,8 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
+using Microsoft.Extensions.Primitives;
+
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
@@ -71,44 +73,22 @@ public static class AssistantManager
 	}
 	#endregion
 
-	private sealed class DefaultAssistantProvider : IAssistantProvider, IServiceProvider<IAssistant>
+	private sealed class DefaultAssistantProvider : AssistantProviderBase<IConnectionSettings>
 	{
-		#region 公共方法
-		public IAssistant GetAssistant(string name = null)
+		#region 重写方法
+		protected override IEnumerable<IConnectionSettings> GetSettings() => ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("AI/ConnectionSettings");
+		protected override IConnectionSettings GetSetting(string name) => ApplicationContext.Current.Configuration.GetConnectionSettings("AI/ConnectionSettings", name);
+		protected override (IAssistant, IChangeToken, TimeSpan) Create(IConnectionSettings setting)
 		{
-			var settings = ApplicationContext.Current.Configuration.GetConnectionSettings("AI/ConnectionSettings", name);
-			if(settings == null)
-				return null;
-
-			var driver = GetDriverName(settings);
+			var driver = GetDriverName(setting);
 			var chattingFactory = ApplicationContext.Current.Services.ResolveTags<IChatServiceFactory>(driver).FirstOrDefault();
 			var modelingFactory = ApplicationContext.Current.Services.ResolveTags<IModelServiceFactory>(driver).FirstOrDefault();
 
-			return new Assistant(settings.Name, driver)
+			return (new Assistant(setting.Name, driver)
 			{
-				Chatting = chattingFactory?.Create(settings),
-				Modeling = modelingFactory?.Create(settings)
-			};
-		}
-
-		public IEnumerable<IAssistant> GetAssistants()
-		{
-			var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("AI/ConnectionSettings");
-			if(settings == null)
-				yield break;
-
-			foreach(var setting in settings)
-			{
-				var driver = GetDriverName(setting);
-				var chattingFactory = ApplicationContext.Current.Services.ResolveTags<IChatServiceFactory>(driver).FirstOrDefault();
-				var modelingFactory = ApplicationContext.Current.Services.ResolveTags<IModelServiceFactory>(driver).FirstOrDefault();
-
-				yield return new Assistant(setting.Name, driver)
-				{
-					Chatting = chattingFactory?.Create(setting),
-					Modeling = modelingFactory?.Create(setting)
-				};
-			}
+				Chatting = chattingFactory?.Create(setting),
+				Modeling = modelingFactory?.Create(setting)
+			}, null, setting.GetValue("expiration", TimeSpan.FromHours(12)));
 		}
 		#endregion
 
@@ -121,10 +101,6 @@ public static class AssistantManager
 			return string.IsNullOrEmpty(settings.Driver?.Name) && settings.HasProperties ?
 			settings.Properties["driver"] : settings.Driver?.Name;
 		}
-		#endregion
-
-		#region 显式实现
-		IAssistant IServiceProvider<IAssistant>.GetService(string name) => this.GetAssistant(name);
 		#endregion
 	}
 }
