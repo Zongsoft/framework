@@ -73,12 +73,13 @@ public static class AssistantManager
 	}
 	#endregion
 
+	#region 嵌套子类
 	private sealed class DefaultAssistantProvider : AssistantProviderBase<IConnectionSettings>
 	{
 		#region 重写方法
 		protected override IEnumerable<IConnectionSettings> GetSettings() => ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("AI/ConnectionSettings");
 		protected override IConnectionSettings GetSetting(string name) => ApplicationContext.Current.Configuration.GetConnectionSettings("AI/ConnectionSettings", name);
-		protected override (IAssistant, IChangeToken, TimeSpan) Create(IConnectionSettings setting)
+		protected override (IAssistant, IChangeToken) Create(IConnectionSettings setting)
 		{
 			var driver = GetDriverName(setting);
 			var chattingFactory = ApplicationContext.Current.Services.ResolveTags<IChatServiceFactory>(driver).FirstOrDefault();
@@ -88,7 +89,7 @@ public static class AssistantManager
 			{
 				Chatting = chattingFactory?.Create(setting),
 				Modeling = modelingFactory?.Create(setting)
-			}, null, setting.GetValue("expiration", TimeSpan.FromHours(12)));
+			}, null);
 		}
 		#endregion
 
@@ -103,4 +104,5 @@ public static class AssistantManager
 		}
 		#endregion
 	}
+	#endregion
 }

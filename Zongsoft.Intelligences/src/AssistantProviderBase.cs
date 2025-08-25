@@ -41,15 +41,18 @@ namespace Zongsoft.Intelligences;
 
 public abstract class AssistantProviderBase<TSetting> : IAssistantProvider, IServiceProvider<IAssistant> where TSetting : IConnectionSettings
 {
+	#region 成员字段
 	private readonly MemoryCache _cache = new();
+	#endregion
 
+	#region 公共方法
 	public IAssistant GetAssistant(string name = null)
 	{
 		return _cache.GetOrCreate(name ?? string.Empty, key =>
 		{
 			var setting = this.GetSetting((string)key);
 			if(setting is null)
-				return (null, Notification.Notified, TimeSpan.Zero);
+				return (null, Notification.Notified);
 
 			return this.Create(setting);
 		});
@@ -73,12 +76,15 @@ public abstract class AssistantProviderBase<TSetting> : IAssistantProvider, ISer
 				yield return result;
 		}
 	}
+	#endregion
 
+	#region 显式实现
 	IAssistant IServiceProvider<IAssistant>.GetService(string name) => this.GetAssistant(name);
+	#endregion
 
 	#region 抽象方法
 	protected abstract TSetting GetSetting(string name);
 	protected abstract IEnumerable<TSetting> GetSettings();
-	protected abstract (IAssistant, IChangeToken, TimeSpan) Create(TSetting setting);
+	protected abstract (IAssistant, IChangeToken) Create(TSetting setting);
 	#endregion
 }
