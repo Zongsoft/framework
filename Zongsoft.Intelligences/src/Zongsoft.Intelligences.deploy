@@ -3,6 +3,17 @@ artifacts/Zongsoft.Intelligences.plugin
 lib/$(Framework)/Zongsoft.Intelligences.*
 lib/$(Framework)/*/Zongsoft.Intelligences.resources.*
 
-nuget:Microsoft.Extensions.AI@9.7.1
-nuget:Microsoft.SemanticKernel@1.61.0
-nuget:OllamaSharp@5.3.4
+nuget:Microsoft.Extensions.AI@9.8.0
+nuget:Microsoft.Extensions.AI.Abstractions@9.8.0
+nuget:Microsoft.Extensions.VectorData.Abstractions@9.7.0
+nuget:Microsoft.SemanticKernel@1.63.0
+nuget:Microsoft.SemanticKernel.Core@1.63.0
+nuget:Microsoft.SemanticKernel.Abstractions@1.63.0
+nuget:Microsoft.SemanticKernel.Connectors.Redis
+nuget:Microsoft.SemanticKernel.Connectors.Qdrant
+nuget:Microsoft.SemanticKernel.Connectors.InMemory
+nuget:Microsoft.SemanticKernel.Connectors.PgVector
+nuget:Microsoft.SemanticKernel.Connectors.Weaviate
+nuget:Microsoft.SemanticKernel.Connectors.SqliteVec
+
+nuget:OllamaSharp@5.3.6
