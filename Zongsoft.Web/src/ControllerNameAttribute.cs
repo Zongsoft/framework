@@ -125,15 +125,18 @@ public class ControllerNameAttribute : Attribute, IControllerModelConvention
 		return attribute?.RouteValue;
 	}
 
-	private static string Combine(string prefix, string name)
+	private static string Combine(string part1, string part2)
 	{
-		if(string.IsNullOrEmpty(prefix))
-			return name ?? string.Empty;
+		if(string.IsNullOrEmpty(part1))
+			return part2 ?? string.Empty;
 
-		if(string.IsNullOrEmpty(name))
-			return prefix ?? string.Empty;
+		if(string.IsNullOrEmpty(part2))
+			return part1 ?? string.Empty;
 
-		return $"{prefix.Trim('/')}/{name.Trim('/')}";
+		var span1 = part1.AsSpan().Trim('/');
+		var span2 = part2.AsSpan().Trim('/');
+
+		return span2.StartsWith(span1, StringComparison.OrdinalIgnoreCase) ? span2.ToString() : $"{span1}/{span2}";
 	}
 
 	private static string GetNamespace(Type controllerType, char separator)
