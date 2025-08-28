@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Etcd"
+        title="Zongsoft.Externals.Etcd Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2020-2025. All rights reserved."
+        description="Created Date: 2025-08-25 by Popeye Zhong" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Etcd" />
+		</assemblies>
+	</manifest>
+
+	<!-- 挂载服务提供程序 -->
+	<extension path="/Workspace/Externals/Etcd">
+		<object name="EtcdProvider" type="Zongsoft.Externals.Etcd.EtcdServiceProvider, Zongsoft.Externals.Etcd" />
+	</extension>
+
+	<!-- 挂载连接设置驱动器 -->
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="Etcd" value="{static:Zongsoft.Externals.Etcd.Configuration.EtcdConnectionSettingsDriver.Instance, Zongsoft.Externals.Etcd}" />
+	</extension>
+
+	<!-- 定义 Etcd 命令的根节点 -->
+	<extension path="/Workbench/Executor/Commands">
+		<object name="Etcd">
+			<etcd.command>
+				<object type="Zongsoft.Externals.Etcd.Commands.EtcdCommand, Zongsoft.Externals.Etcd" />
+			</etcd.command>
+		</object>
+	</extension>
+
+	<!-- 定义常用的 Etcd 命令集 -->
+	<extension path="/Workbench/Executor/Commands/Etcd">
+		<object name="Get" type="Zongsoft.Externals.Etcd.Commands.EtcdGetCommand, Zongsoft.Externals.Etcd" />
+		<object name="Set" type="Zongsoft.Externals.Etcd.Commands.EtcdSetCommand, Zongsoft.Externals.Etcd" />
+		<object name="Info" type="Zongsoft.Externals.Etcd.Commands.EtcdInfoCommand, Zongsoft.Externals.Etcd" />
+		<object name="Find" type="Zongsoft.Externals.Etcd.Commands.EtcdFindCommand, Zongsoft.Externals.Etcd" />
+		<object name="Count" type="Zongsoft.Externals.Etcd.Commands.EtcdCountCommand, Zongsoft.Externals.Etcd" />
+		<object name="Remove" type="Zongsoft.Externals.Etcd.Commands.EtcdRemoveCommand, Zongsoft.Externals.Etcd" />
+
+		<object name="Lock">
+			<lock.command>
+				<object type="Zongsoft.Externals.Etcd.Commands.EtcdLockCommand, Zongsoft.Externals.Etcd" />
+			</lock.command>
+
+			<object name="Acquire" type="Zongsoft.Externals.Etcd.Commands.EtcdLockAcquireCommand, Zongsoft.Externals.Etcd" />
+			<object name="Release" type="Zongsoft.Externals.Etcd.Commands.EtcdLockReleaseCommand, Zongsoft.Externals.Etcd" />
+		</object>
+	</extension>
+</plugin>

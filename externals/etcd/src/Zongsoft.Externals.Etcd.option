@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Externals/Etcd">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="local" driver="etcd"
+			                   value="server=127.0.0.1;port=2379" />
+		</connectionSettings>
+	</option>
+</options>

@@ -1,0 +1,6 @@
+artifacts/Zongsoft.Externals.Etcd.option
+artifacts/Zongsoft.Externals.Etcd.plugin
+lib/$(Framework)/Zongsoft.Externals.Etcd.*
+lib/$(Framework)/*/Zongsoft.Externals.Etcd.resources.*
+
+nuget:dotnet-etcd@8.0.1
