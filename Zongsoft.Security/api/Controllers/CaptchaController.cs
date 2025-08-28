@@ -52,7 +52,7 @@ namespace Zongsoft.Security.Controllers
 			if(string.IsNullOrEmpty(scheme))
 				return this.BadRequest();
 
-			var captch = this.HttpContext.RequestServices.Resolve<ICaptcha>(scheme);
+			var captch = this.HttpContext.RequestServices.Find<ICaptcha>(scheme);
 			if(captch == null)
 				return this.BadRequest($"The specified '{scheme}' captcha does not exist.");
 
@@ -61,7 +61,7 @@ namespace Zongsoft.Security.Controllers
 				await this.Request.ReadAsStringAsync(cancellation);
 
 			var data = await captch.IssueAsync(argument, new Parameters(this.Request.GetParameters()), cancellation);
-			var formatter = this.HttpContext.RequestServices.Resolve<ICaptchaFormatter<HttpContext>>(scheme);
+			var formatter = this.HttpContext.RequestServices.Find<ICaptchaFormatter<HttpContext>>(scheme);
 
 			if(formatter != null)
 				data = await formatter.FormatAsync(this.HttpContext, data, cancellation);
@@ -78,7 +78,7 @@ namespace Zongsoft.Security.Controllers
 			if(string.IsNullOrEmpty(scheme))
 				return this.BadRequest();
 
-			var captch = this.HttpContext.RequestServices.Resolve<ICaptcha>(scheme);
+			var captch = this.HttpContext.RequestServices.Find<ICaptcha>(scheme);
 			if(captch == null)
 				return this.BadRequest($"The specified '{scheme}' captcha does not exist.");
 

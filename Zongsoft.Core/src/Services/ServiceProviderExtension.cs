@@ -58,18 +58,8 @@ public static class ServiceProviderExtension
 	#endregion
 
 	#region 解析方法
-	public static IEnumerable<Type> GetTags(this IServiceProvider serviceProvider, string tag)
-	{
-		if(string.IsNullOrEmpty(tag))
-			return [];
 
-		var tagged = ServiceAssistant.GetTagged(serviceProvider, tag);
-		if(tagged == null)
-			return [];
-
-		return tagged.Services.Keys;
-	}
-
+	#region 名称解析
 	public static object Resolve(this IServiceProvider serviceProvider, string name)
 	{
 		if(string.IsNullOrEmpty(name))
@@ -91,20 +81,40 @@ public static class ServiceProviderExtension
 
 		throw new InvalidOperationException($"The service named '{name}' does not exist.");
 	}
+	#endregion
 
-	public static T Resolve<T>(this IServiceProvider serviceProvider, object parameter = null) =>
-		parameter == null ? serviceProvider.GetService<T>() : serviceProvider.MatchService<T>(parameter);
+	#region 类型解析
+	public static TService Resolve<TService>(this IServiceProvider serviceProvider) => serviceProvider.GetService<TService>();
+	public static TService ResolveRequired<TService>(this IServiceProvider serviceProvider) => serviceProvider.GetRequiredService<TService>();
+	public static object Resolve(this IServiceProvider serviceProvider, Type serviceType) => serviceProvider.GetService(serviceType);
+	public static object ResolveRequired(this IServiceProvider serviceProvider, Type serviceType) => serviceProvider.GetRequiredService(serviceType);
+	public static IEnumerable<TService> ResolveAll<TService>(this IServiceProvider serviceProvider) => serviceProvider.GetServices<TService>();
+	public static IEnumerable<object> ResolveAll(this IServiceProvider serviceProvider, Type serviceType) => serviceProvider.GetServices(serviceType);
+	#endregion
 
-	public static T ResolveRequired<T>(this IServiceProvider serviceProvider, object parameter = null) =>
-		parameter == null ? serviceProvider.GetRequiredService<T>() : serviceProvider.MatchService<T>(parameter) ?? throw new InvalidOperationException($"No service for type '{typeof(T)}' has been registered.");
+	#region 服务查找
+	public static TService Find<TService>(this IServiceProvider serviceProvider, object argument) => serviceProvider.MatchService<TService>(argument, false);
+	public static TService FindRequired<TService>(this IServiceProvider serviceProvider, object argument) => serviceProvider.MatchService<TService>(argument, true);
+	public static object Find(this IServiceProvider serviceProvider, Type serviceType, object argument) => serviceProvider.MatchService(serviceType, argument, false);
+	public static object FindRequired(this IServiceProvider serviceProvider, Type serviceType, object argument) => serviceProvider.MatchService(serviceType, argument, true);
+	public static IEnumerable<TService> FindAll<TService>(this IServiceProvider serviceProvider, object argument) => serviceProvider.MatchServices<TService>(argument);
+	public static IEnumerable<object> FindAll(this IServiceProvider serviceProvider, Type serviceType, object argument) => serviceProvider.MatchServices(serviceType, argument);
+	#endregion
 
-	public static object Resolve(this IServiceProvider serviceProvider, Type serviceType, object parameter = null) =>
-		parameter == null ? serviceProvider.GetService(serviceType) : serviceProvider.MatchService(serviceType, parameter);
+	#region 标签解析
+	public static IEnumerable<Type> GetTags(this IServiceProvider serviceProvider, string tag)
+	{
+		if(string.IsNullOrEmpty(tag))
+			return [];
 
-	public static object ResolveRequired(this IServiceProvider serviceProvider, Type serviceType, object parameter) =>
-		parameter == null ? serviceProvider.GetRequiredService(serviceType) : serviceProvider.MatchService(serviceType, parameter) ?? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.");
+		var tagged = ServiceAssistant.GetTagged(serviceProvider, tag);
+		if(tagged == null)
+			return [];
 
-	public static IEnumerable<object> ResolveTags(this IServiceProvider serviceProvider, string tag)
+		return tagged.Services.Keys;
+	}
+
+	public static IEnumerable<object> Resolves(this IServiceProvider serviceProvider, string tag)
 	{
 		var tagged = ServiceAssistant.GetTagged(serviceProvider, tag);
 		if(tagged == null)
@@ -114,7 +124,7 @@ public static class ServiceProviderExtension
 			yield return serviceProvider.GetService(service.Key);
 	}
 
-	public static IEnumerable<TService> ResolveTags<TService>(this IServiceProvider serviceProvider, string tag)
+	public static IEnumerable<TService> Resolves<TService>(this IServiceProvider serviceProvider, string tag)
 	{
 		var tagged = ServiceAssistant.GetTagged(serviceProvider, tag);
 		if(tagged == null)
@@ -127,7 +137,7 @@ public static class ServiceProviderExtension
 		}
 	}
 
-	public static IEnumerable<object> ResolveTags(this IServiceProvider serviceProvider, Type serviceType, string tag)
+	public static IEnumerable<object> Resolves(this IServiceProvider serviceProvider, Type serviceType, string tag)
 	{
 		var tagged = ServiceAssistant.GetTagged(serviceProvider, tag);
 		if(tagged == null)
@@ -139,88 +149,84 @@ public static class ServiceProviderExtension
 				yield return serviceProvider.GetService(service.Key);
 		}
 	}
+	#endregion
 
-	public static IEnumerable<T> ResolveAll<T>(this IServiceProvider serviceProvider, object parameter = null) =>
-		parameter == null ? serviceProvider.GetServices<T>() : serviceProvider.MatchServices<T>(parameter);
-
-	public static IEnumerable<object> ResolveAll(this IServiceProvider serviceProvider, Type serviceType, object parameter = null) =>
-		parameter == null ? serviceProvider.GetServices(serviceType) : serviceProvider.MatchServices(serviceType, parameter);
 	#endregion
 
 	#region 服务匹配
-	private static T MatchService<T>(this IServiceProvider serviceProvider, object parameter)
+	private static TService MatchService<TService>(this IServiceProvider serviceProvider, object argument, bool required)
 	{
-		var services = serviceProvider.GetServices<T>();
+		var services = serviceProvider.GetServices<TService>();
 
 		foreach(var service in services)
 		{
 			if(service is IMatcher<Type> matcher)
 			{
-				if(matcher.Match(typeof(T), parameter))
+				if(matcher.Match(typeof(TService), argument))
 					return service;
 			}
 			else if(typeof(IMatchable).IsAssignableFrom(service.GetType()))
 			{
-				if(((IMatchable)service).Match(parameter))
+				if(((IMatchable)service).Match(argument))
 					return service;
 			}
 			else
 			{
-				if(_matches.TryGetValue(typeof(T), out var match))
+				if(_matches.TryGetValue(typeof(TService), out var match))
 				{
-					if(match.GenericMethod != null && ((Func<T, object, bool>)match.GenericMethod).Invoke(service, parameter))
+					if(match.GenericMethod != null && ((Func<TService, object, bool>)match.GenericMethod).Invoke(service, argument))
 						return service;
 				}
 				else
 				{
 					//动态编译名称匹配方法
-					match = _matches.GetOrAdd(typeof(T), type => Compile(type));
+					match = _matches.GetOrAdd(typeof(TService), Compile);
 
-					if(match.GenericMethod != null && ((Func<T, object, bool>)match.GenericMethod).Invoke(service, parameter))
+					if(match.GenericMethod != null && ((Func<TService, object, bool>)match.GenericMethod).Invoke(service, argument))
 						return service;
 				}
 			}
 		}
 
-		return default;
+		return required ? throw new InvalidOperationException($"No service for type '{typeof(TService)}' has been registered.") : default;
 	}
 
-	private static IEnumerable<T> MatchServices<T>(this IServiceProvider serviceProvider, object parameter)
+	private static IEnumerable<TService> MatchServices<TService>(this IServiceProvider serviceProvider, object argument)
 	{
-		var services = serviceProvider.GetServices<T>();
+		var services = serviceProvider.GetServices<TService>();
 
 		foreach(var service in services)
 		{
 			if(service is IMatcher<Type> matcher)
 			{
-				if(matcher.Match(typeof(T), parameter))
+				if(matcher.Match(typeof(TService), argument))
 					yield return service;
 			}
 			else if(typeof(IMatchable).IsAssignableFrom(service.GetType()))
 			{
-				if(((IMatchable)service).Match(parameter))
+				if(((IMatchable)service).Match(argument))
 					yield return service;
 			}
 			else
 			{
-				if(_matches.TryGetValue(typeof(T), out var match))
+				if(_matches.TryGetValue(typeof(TService), out var match))
 				{
-					if(match.GenericMethod != null && ((Func<T, object, bool>)match.GenericMethod).Invoke(service, parameter))
+					if(match.GenericMethod != null && ((Func<TService, object, bool>)match.GenericMethod).Invoke(service, argument))
 						yield return service;
 				}
 				else
 				{
 					//动态编译名称匹配方法
-					match = _matches.GetOrAdd(typeof(T), type => Compile(type));
+					match = _matches.GetOrAdd(typeof(TService), Compile);
 
-					if(match.GenericMethod != null && ((Func<T, object, bool>)match.GenericMethod).Invoke(service, parameter))
+					if(match.GenericMethod != null && ((Func<TService, object, bool>)match.GenericMethod).Invoke(service, argument))
 						yield return service;
 				}
 			}
 		}
 	}
 
-	private static object MatchService(this IServiceProvider serviceProvider, Type serviceType, object parameter)
+	private static object MatchService(this IServiceProvider serviceProvider, Type serviceType, object argument, bool required)
 	{
 		var services = serviceProvider.GetServices(serviceType);
 
@@ -228,36 +234,36 @@ public static class ServiceProviderExtension
 		{
 			if(service is IMatcher<Type> matcher)
 			{
-				if(matcher.Match(serviceType, parameter))
+				if(matcher.Match(serviceType, argument))
 					return service;
 			}
 			else if(typeof(IMatchable).IsAssignableFrom(service.GetType()))
 			{
-				if(((IMatchable)service).Match(parameter))
+				if(((IMatchable)service).Match(argument))
 					return service;
 			}
 			else
 			{
 				if(_matches.TryGetValue(serviceType, out var match))
 				{
-					if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, parameter))
+					if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, argument))
 						return service;
 				}
 				else
 				{
 					//动态编译名称匹配方法
-					match = _matches.GetOrAdd(serviceType, type => Compile(type));
+					match = _matches.GetOrAdd(serviceType, Compile);
 
-					if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, parameter))
+					if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, argument))
 						return service;
 				}
 			}
 		}
 
-		return default;
+		return required ? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.") : default;
 	}
 
-	private static IEnumerable<object> MatchServices(this IServiceProvider serviceProvider, Type serviceType, object parameter)
+	private static IEnumerable<object> MatchServices(this IServiceProvider serviceProvider, Type serviceType, object argument)
 	{
 		var services = serviceProvider.GetServices(serviceType);
 
@@ -265,27 +271,27 @@ public static class ServiceProviderExtension
 		{
 			if(service is IMatcher<Type> matcher)
 			{
-				if(matcher.Match(serviceType, parameter))
+				if(matcher.Match(serviceType, argument))
 					yield return service;
 			}
 			else if(typeof(IMatchable).IsAssignableFrom(service.GetType()))
 			{
-				if(((IMatchable)service).Match(parameter))
+				if(((IMatchable)service).Match(argument))
 					yield return service;
 			}
 			else
 			{
 				if(_matches.TryGetValue(serviceType, out var match))
 				{
-					if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, parameter))
+					if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, argument))
 						yield return service;
 				}
 				else
 				{
 					//动态编译名称匹配方法
-					match = _matches.GetOrAdd(serviceType, type => Compile(type));
+					match = _matches.GetOrAdd(serviceType, Compile);
 
-					if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, parameter))
+					if(match.ClassicMethod != null && ((Func<object, object, bool>)match.ClassicMethod).Invoke(service, argument))
 						yield return service;
 				}
 			}

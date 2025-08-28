@@ -47,9 +47,9 @@ namespace Zongsoft.Externals.Hangfire.Commands
 		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Expression.Arguments.Count > 0)
-				this.Scheduler = ApplicationContext.Current.Services.Resolve<IScheduler>(context.Expression.Arguments[0]);
+				this.Scheduler = ApplicationContext.Current.Services.Find<IScheduler>(context.Expression.Arguments[0]);
 			else if(context.Value is string name)
-				this.Scheduler = ApplicationContext.Current.Services.Resolve<IScheduler>(name);
+				this.Scheduler = ApplicationContext.Current.Services.Find<IScheduler>(name);
 			else if(context.Value is IScheduler scheduler)
 				this.Scheduler = scheduler;
 

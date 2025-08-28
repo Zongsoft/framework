@@ -67,7 +67,7 @@ internal class ChatSession : IChatSession, IEquatable<ChatSession>
 			if(target is IChatHistory history)
 				return history;
 			if(target is string text && !string.IsNullOrEmpty(text))
-				return ApplicationContext.Current?.Services.Resolve<IChatHistory>(text);
+				return ApplicationContext.Current?.Services.Find<IChatHistory>(text);
 
 			return null;
 		}

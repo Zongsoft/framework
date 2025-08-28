@@ -284,7 +284,7 @@ partial class UserServiceBase<TUser>
 	#region 虚拟方法
 	protected virtual void OnValidatePassword(string password)
 	{
-		var validator = this.Services?.Resolve<IValidator<string>>("password");
+		var validator = this.Services?.Find<IValidator<string>>("password");
 		validator?.Validate(password, message => throw new SecurityException("password.illegality", message));
 	}
 

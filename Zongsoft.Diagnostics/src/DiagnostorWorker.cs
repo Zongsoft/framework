@@ -69,7 +69,7 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 			{
 				foreach(var exporter in meters.Exporters)
 				{
-					var launcher = ApplicationContext.Current?.Services.Resolve<Telemetry.IExporterLauncher<MeterProviderBuilder>>(exporter.Driver);
+					var launcher = ApplicationContext.Current?.Services.Find<Telemetry.IExporterLauncher<MeterProviderBuilder>>(exporter.Driver);
 					if(launcher != null)
 						launcher.Launch(builder, exporter.Settings);
 				}
@@ -91,7 +91,7 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 			{
 				foreach(var exporter in traces.Exporters)
 				{
-					var launcher = ApplicationContext.Current?.Services.Resolve<Telemetry.IExporterLauncher<TracerProviderBuilder>>(exporter.Driver);
+					var launcher = ApplicationContext.Current?.Services.Find<Telemetry.IExporterLauncher<TracerProviderBuilder>>(exporter.Driver);
 					if(launcher != null)
 						launcher.Launch(builder, exporter.Settings);
 				}

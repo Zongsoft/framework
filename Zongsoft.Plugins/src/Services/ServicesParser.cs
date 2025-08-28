@@ -136,7 +136,7 @@ namespace Zongsoft.Services
 				{
 					if(context.MemberType != null)
 					{
-						result = provider.Resolve(context.MemberType, (string)mode);
+						result = provider.Find(context.MemberType, (string)mode);
 						if(result != null)
 							return result;
 					}

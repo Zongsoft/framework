@@ -263,7 +263,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		   string.Equals(name, IRole.Security, StringComparison.OrdinalIgnoreCase))
 			throw new SecurityException("rolename.illegality", "The role name specified to be update cannot be a built-in name.");
 
-		var validator = this.Services.Resolve<IValidator<string>>("role.name");
+		var validator = this.Services.Find<IValidator<string>>("role.name");
 		validator?.Validate(name, message => throw new SecurityException("rolename.illegality", message));
 	}
 

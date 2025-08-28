@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>0.0.2</Version>
+		<Version>0.0.3</Version>
 		<Product>Zongsoft Intelligences Web Library</Product>
 		<Description>This is a web class library about artificial intelligence development.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -32,8 +32,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.16.2" />
-				<PackageReference Include="Zongsoft.Web" VersionOverride="7.7.7" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.17.0" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="7.7.9" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

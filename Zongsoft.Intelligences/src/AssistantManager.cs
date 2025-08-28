@@ -82,8 +82,8 @@ public static class AssistantManager
 		protected override (IAssistant, IChangeToken) Create(IConnectionSettings setting)
 		{
 			var driver = GetDriverName(setting);
-			var chattingFactory = ApplicationContext.Current.Services.ResolveTags<IChatServiceFactory>(driver).FirstOrDefault();
-			var modelingFactory = ApplicationContext.Current.Services.ResolveTags<IModelServiceFactory>(driver).FirstOrDefault();
+			var chattingFactory = ApplicationContext.Current.Services.Resolves<IChatServiceFactory>(driver).FirstOrDefault();
+			var modelingFactory = ApplicationContext.Current.Services.Resolves<IModelServiceFactory>(driver).FirstOrDefault();
 
 			return (new Assistant(setting.Name, driver)
 			{

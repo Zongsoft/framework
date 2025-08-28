@@ -53,7 +53,7 @@ public class MessageQueueConverter : TypeConverter
 
 		if(index > 0 && index < text.Length - 1)
 		{
-			var provider = services.Resolve<IMessageQueueProvider>(text[(index + 1)..]);
+			var provider = services.Find<IMessageQueueProvider>(text[(index + 1)..]);
 			if(provider == null)
 				return null;
 

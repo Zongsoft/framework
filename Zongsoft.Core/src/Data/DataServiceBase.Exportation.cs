@@ -75,7 +75,7 @@ partial class DataServiceBase<TModel> : IDataExportable
 
 	protected virtual DataArchiveFormat OnExport(Stream output, object data, string[] members, string format, DataExportOptions options)
 	{
-		var generator = this.ServiceProvider.Resolve<IDataArchiveGenerator>(format) ?? throw OperationException.Unfound();
+		var generator = this.ServiceProvider.Find<IDataArchiveGenerator>(format) ?? throw OperationException.Unfound();
 		var task = generator.GenerateAsync(output, this.GetDescriptor(), data, (members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members)));
 
 		if(!task.IsCompletedSuccessfully)
@@ -86,7 +86,7 @@ partial class DataServiceBase<TModel> : IDataExportable
 
 	protected virtual async ValueTask<DataArchiveFormat> OnExportAsync(Stream output, object data, string[] members, string format, DataExportOptions options, CancellationToken cancellation)
 	{
-		var generator = this.ServiceProvider.Resolve<IDataArchiveGenerator>(format) ?? throw OperationException.Unfound();
+		var generator = this.ServiceProvider.Find<IDataArchiveGenerator>(format) ?? throw OperationException.Unfound();
 		await generator.GenerateAsync(output, this.GetDescriptor(), data, (members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members)), cancellation);
 		return generator.Format;
 	}
@@ -146,7 +146,7 @@ partial class DataServiceBase<TModel> : IDataExportable
 
 	protected virtual IDataTemplateModel GetExportModel(IDataTemplate template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options)
 	{
-		var provider = this.ServiceProvider.Resolve<IDataTemplateModelProvider>(template) ??
+		var provider = this.ServiceProvider.Find<IDataTemplateModelProvider>(template) ??
 			throw OperationException.Unfound($"No data template model provider found for '{template.Name}' template.");
 
 		//获取指定模板和参数对应数据模型
@@ -169,7 +169,7 @@ partial class DataServiceBase<TModel> : IDataExportable
 
 	protected virtual DataArchiveFormat OnExport(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options)
 	{
-		var renderer = this.ServiceProvider.Resolve<IDataTemplateRenderer>(template);
+		var renderer = this.ServiceProvider.Find<IDataTemplateRenderer>(template);
 		var task = renderer.RenderAsync(output, template, data, parameters);
 
 		if(!task.IsCompletedSuccessfully)
@@ -180,7 +180,7 @@ partial class DataServiceBase<TModel> : IDataExportable
 
 	protected virtual async ValueTask<DataArchiveFormat> OnExportAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options, CancellationToken cancellation)
 	{
-		var renderer = this.ServiceProvider.Resolve<IDataTemplateRenderer>(template) ?? throw OperationException.Unfound($"No renderer found for '{template.Name}' template.");
+		var renderer = this.ServiceProvider.Find<IDataTemplateRenderer>(template) ?? throw OperationException.Unfound($"No renderer found for '{template.Name}' template.");
 		await renderer.RenderAsync(output, template, data, parameters, cancellation);
 		return renderer.Format;
 	}

@@ -59,13 +59,13 @@ namespace Zongsoft.Plugins.Parsers
 			IPredication predication;
 
 			if(parts.Length == 1)
-				predication = ApplicationContext.Current.Services.Resolve<IPredication>(parts[0]);
+				predication = ApplicationContext.Current.Services.Find<IPredication>(parts[0]);
 			else
 			{
 				if(!ApplicationContext.Current.Modules.TryGetValue(parts[0], out var module))
 					throw new PluginException(string.Format("The '{0}' ServiceProvider is not exists on the predication parsing.", parts[0]));
 
-				predication = module.Services.Resolve<IPredication>(parts[1]);
+				predication = module.Services.Find<IPredication>(parts[1]);
 			}
 
 			if(predication != null)

@@ -365,7 +365,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
 			throw new SecurityException("username.illegality", "The user name specified to be update cannot be a built-in name.");
 
-		var validator = this.Services?.Resolve<IValidator<string>>("user.name");
+		var validator = this.Services?.Find<IValidator<string>>("user.name");
 		validator?.Validate(name, message => throw new SecurityException("username.illegality", message));
 	}
 

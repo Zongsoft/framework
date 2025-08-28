@@ -52,7 +52,7 @@ public class TransmitterHandler(IServiceProvider serviceProvider) : HandlerBase<
 			return ValueTask.CompletedTask;
 
 		//获取指定名称的发送器
-		var transmitter = _serviceProvider.ResolveRequired<ITransmitter>(argument.Name);
+		var transmitter = _serviceProvider.FindRequired<ITransmitter>(argument.Name);
 
 		//获取指定的发送通道
 		if(!transmitter.Descriptor.Channels.TryGetValue(argument.Channel ?? string.Empty, out var channel))
@@ -62,7 +62,7 @@ public class TransmitterHandler(IServiceProvider serviceProvider) : HandlerBase<
 		if(argument.Parameter == null)
 		{
 			//获取指定的发送器参数转换器
-			var argumenter = _serviceProvider.Resolve<ITransmitterArgumenter>(argument);
+			var argumenter = _serviceProvider.Find<ITransmitterArgumenter>(argument);
 
 			if(argumenter != null)
 				argument.Parameter = argumenter.GetArgument(transmitter, channel?.Name ?? argument.Channel, argument.Template, argument.Parameter, parameters);

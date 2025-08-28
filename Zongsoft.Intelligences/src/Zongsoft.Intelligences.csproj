@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.0.2</Version>
+		<Version>0.0.3</Version>
 		<Product>Zongsoft Intelligences Library</Product>
 		<Description>This is a library that integrates AI and semantic kernel functions.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -35,7 +35,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.16.2" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.17.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

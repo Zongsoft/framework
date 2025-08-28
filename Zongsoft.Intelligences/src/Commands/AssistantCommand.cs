@@ -86,7 +86,7 @@ public class AssistantCommand : CommandBase<CommandContext>, IServiceAccessor<IC
 
 			if(_chatting == null && _settings != null)
 			{
-				var factory = ApplicationContext.Current.Services.ResolveTags<IChatServiceFactory>(GetDriverName(_settings)).FirstOrDefault();
+				var factory = ApplicationContext.Current.Services.Resolves<IChatServiceFactory>(GetDriverName(_settings)).FirstOrDefault();
 
 				if(factory != null)
 					return _chatting ??= factory.Create(_settings);
@@ -105,7 +105,7 @@ public class AssistantCommand : CommandBase<CommandContext>, IServiceAccessor<IC
 
 			if(_modeling == null && _settings != null)
 			{
-				var factory = ApplicationContext.Current.Services.ResolveTags<IModelServiceFactory>(GetDriverName(_settings)).FirstOrDefault();
+				var factory = ApplicationContext.Current.Services.Resolves<IModelServiceFactory>(GetDriverName(_settings)).FirstOrDefault();
 
 				if(factory != null)
 					return _modeling ??= factory.Create(_settings);
