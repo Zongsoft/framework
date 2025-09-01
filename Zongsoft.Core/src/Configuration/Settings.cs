@@ -51,6 +51,12 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 		this.Name = name == null ? string.Empty : name.Trim();
 		this.Value = value ?? string.Empty;
 	}
+
+	internal Settings(params IEnumerable<KeyValuePair<string, string>> entries)
+	{
+		this.Name = string.Empty;
+		_settings = new(entries, StringComparer.OrdinalIgnoreCase);
+	}
 	#endregion
 
 	#region 公共属性

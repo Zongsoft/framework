@@ -37,7 +37,7 @@ namespace Zongsoft.Configuration;
 internal static class SettingsParser
 {
 	#region 解析方法
-	public static Setting Parse(ReadOnlySpan<char> text, Action<string> onError)
+	public static Settings Parse(ReadOnlySpan<char> text, Action<string> onError)
 	{
 		if(text.IsEmpty)
 			return null;
@@ -57,6 +57,12 @@ internal static class SettingsParser
 				case State.Value:
 					DoValue(ref context);
 					break;
+				case State.Assigner:
+					DoAssigner(ref context);
+					break;
+				case State.Delimiter:
+					DoDelimiter(ref context);
+					break;
 				case State.Error:
 					onError(context.ErrorMessage);
 					return null;
@@ -74,28 +80,60 @@ internal static class SettingsParser
 			return;
 
 		if(context.IsLetterOrDigitOrUnderscore)
-			context.Accept(State.Key);
+			context.Reset(State.Key);
 		else
-			context.Error($"An illegal character '{context.Character}' was found at position {context.Offset + context.Index}.");
+			context.Error();
 	}
 
 	private static void DoKey(ref Context context)
 	{
-		if(context.IsLetterOrDigitOrUnderscore)
-			return;
+		if(context.Character == '=')
+		{
+			var key = context.GetValue();
+			if(key.IsEmpty)
+				context.Error();
 
-		if(context.IsWhitespace)
-			context.Accept(State.Key);
-		else if(context.Character == '=')
-			context.Accept(State.Value);
+			context.Reset(State.Assigner);
+			return;
+		}
+
+		context.Accept();
 	}
 
 	private static void DoValue(ref Context context)
 	{
+		if(context.IsWhitespace)
+		{
+			if(!context.HasFlags())
+				return;
+
+			context.AcceptAll();
+			return;
+		}
+
+
 	}
 
-	private static void DoAssign(ref Context context)
+	private static void DoAssigner(ref Context context)
 	{
+		if(context.IsWhitespace)
+			return;
+
+		switch(context.Character)
+		{
+			case '"':
+				context.Reset(State.Value, Flags.DoubleQuotation);
+				break;
+			case '\'':
+				context.Reset(State.Value, Flags.SingleQuotation);
+				break;
+			case '=':
+				context.Error();
+				break;
+			default:
+				context.Reset(State.Value);
+				break;
+		}
 	}
 
 	private static void DoDelimiter(ref Context context)
@@ -116,6 +154,7 @@ internal static class SettingsParser
 		private int _count;
 		private int _whitespaces;
 		private string _errorMessage;
+		private Span<char> _value;
 		#endregion
 
 		#region 构造函数
@@ -143,7 +182,6 @@ internal static class SettingsParser
 		public readonly bool IsLetterOrUnderscore =>
 			(this.Character >= 'a' && this.Character <= 'z') ||
 			(this.Character >= 'A' && this.Character <= 'Z') || this.Character == '_';
-
 		public readonly bool IsLetterOrDigitOrUnderscore =>
 			(this.Character >= 'a' && this.Character <= 'z') ||
 			(this.Character >= 'A' && this.Character <= 'Z') ||
@@ -176,20 +214,27 @@ internal static class SettingsParser
 			return false;
 		}
 
-		public void Error(string message)
+		public void Error(string message = null)
 		{
 			_state = State.Error;
-			_errorMessage = message;
+			_errorMessage = message ?? $"An illegal character '{this.Character}' was found at position {this.Offset + this.Index}.";
 		}
+
+		public bool HasWhitespaces(out int whitespaces)
+		{
+			whitespaces = _whitespaces;
+			return whitespaces > 0;
+		}
+
+		public ReadOnlySpan<char> GetValue() => _value;
 
 		public void Reset(State state, Flags flags = Flags.None)
 		{
+			_state = state;
 			_count = 0;
 			_whitespaces = 0;
-			_state = state;
-
-			if(flags != 0)
-				_flags |= flags;
+			_flags = flags;
+			_value = default;
 		}
 
 		public void Reset(out ReadOnlySpan<char> value)
@@ -209,7 +254,7 @@ internal static class SettingsParser
 			_state = state;
 		}
 
-		public void Accept(State state, Flags flags = Flags.None)
+		public void Accept(Flags? flags = null)
 		{
 			if(char.IsWhiteSpace(_character))
 			{
@@ -222,12 +267,24 @@ internal static class SettingsParser
 				_whitespaces = 0;
 			}
 
-			_state = state;
-
-			if(flags != 0)
-				_flags |= flags;
+			if(flags.HasValue)
+				_flags = flags.Value;
 		}
 
+		public void AcceptAll(Flags? flags = null)
+		{
+			_count++;
+
+			if((_flags & Flags.Escape) == Flags.Escape)
+			{
+
+			}
+
+			if(flags.HasValue)
+				_flags = flags.Value;
+		}
+
+		public readonly bool HasFlags() => _flags != Flags.None;
 		public readonly bool HasFlags(Flags flags) => (_flags & flags) == flags;
 		#endregion
 	}
@@ -239,7 +296,7 @@ internal static class SettingsParser
 		None,
 		Key,
 		Value,
-		Assign,
+		Assigner,
 		Delimiter,
 		Error = 99,
 	}
@@ -248,6 +305,7 @@ internal static class SettingsParser
 	private enum Flags
 	{
 		None = 0,
+		Escape = 4,
 		SingleQuotation = 1, //单引号
 		DoubleQuotation = 2, //双引号
 	}
