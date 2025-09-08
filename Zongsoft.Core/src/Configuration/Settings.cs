@@ -34,20 +34,30 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
+/// <summary>
+/// 表示键值对的选项设置类，可以通过一个以分号为分隔符的字符串来表示该设置类。
+/// </summary>
+/// <example>
+/// key1=value1;key2=;key3='contains whitespaces or other escape characters(e.g.: =;"\t\n\').'
+/// </example>
 public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnumerable<KeyValuePair<string, string>>
 {
 	#region 成员字段
 	private string _value;
-	private readonly Dictionary<string, string> _settings;
+	private readonly Dictionary<string, string> _entries;
 	#endregion
 
 	#region 构造函数
+	/// <summary>构建一个设置。</summary>
+	/// <param name="value">指定的设置内容。</param>
+	public Settings(string value = null) : this(null, value) { }
+
 	/// <summary>构建一个设置。</summary>
 	/// <param name="name">指定的设置名称。</param>
 	/// <param name="value">指定的设置内容。</param>
 	public Settings(string name, string value = null)
 	{
-		_settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		_entries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		this.Name = name ?? string.Empty;
 		this.Value = value ?? string.Empty;
 	}
@@ -55,7 +65,7 @@ public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnum
 	internal Settings(string name, string value, params IEnumerable<KeyValuePair<string, string>> entries)
 	{
 		this.Name = name ?? string.Empty;
-		_settings = new(entries, StringComparer.OrdinalIgnoreCase);
+		_entries = new(entries, StringComparer.OrdinalIgnoreCase);
 		_value = value ?? string.Empty;
 	}
 	#endregion
@@ -68,6 +78,7 @@ public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnum
 		set
 		{
 			value ??= string.Empty;
+
 			if(!string.Equals(_value, value))
 			{
 				_value = value;
@@ -76,25 +87,29 @@ public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnum
 		}
 	}
 
-	int IReadOnlyCollection<KeyValuePair<string, string>>.Count => _settings.Count;
-	public bool IsEmpty => _settings.Count == 0;
+	int IReadOnlyCollection<KeyValuePair<string, string>>.Count => _entries.Count;
+	public bool IsEmpty => _entries.Count == 0;
 	public string this[string name]
 	{
-		get => name != null && _settings.TryGetValue(name, out var value) ? value : null;
+		get => name != null && _entries.TryGetValue(name, out var value) ? value : null;
 		set
 		{
 			if(string.IsNullOrEmpty(name))
 				return;
 
 			if(string.IsNullOrEmpty(value))
-				_settings.Remove(name);
+				_entries.Remove(name);
 			else
-				_settings[name] = value.Trim();
+				_entries[name] = value.Trim();
 
 			//更新设置表达式值
-			_value = string.Join(';', _settings.Select(entry => $"{entry.Key}={entry.Value}"));
+			_value = string.Join(';', _entries.Select(entry => $"{entry.Key}={entry.Value}"));
 		}
 	}
+	#endregion
+
+	#region 保护属性
+	protected IDictionary<string, string> Entries => _entries;
 	#endregion
 
 	#region 静态方法
@@ -141,10 +156,10 @@ public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnum
 	#region 虚拟方法
 	protected virtual void OnValueChanged(string value)
 	{
-		_settings.Clear();
+		_entries.Clear();
 
 		foreach(var entry in SettingsParser.Parse(value, message => throw new ArgumentException(message)))
-			_settings[entry.Key] = entry.Value;
+			_entries[entry.Key] = entry.Value;
 	}
 	#endregion
 
@@ -156,7 +171,7 @@ public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnum
 	#endregion
 
 	#region 枚举遍历
-	IEnumerator IEnumerable.GetEnumerator() => _settings.GetEnumerator();
-	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _settings.GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => _entries.GetEnumerator();
+	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _entries.GetEnumerator();
 	#endregion
 }

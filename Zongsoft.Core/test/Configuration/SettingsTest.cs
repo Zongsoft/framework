@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Collections.Generic;
 
 using Xunit;
 
@@ -62,7 +61,7 @@ public class SettingsTest
 	[Fact]
 	public void TestParse()
 	{
-		var TEXT = @" key1=value1; key2 = value2; key3 = ; key 4 = value 4 ; key 5 = ' value\t;\nEnd'; ";
+		var TEXT = @" key1=value1; key2 = value2; key3 = ; key 4 = value 4 ; key5; key 6 = ' value\t;\nEnd'; ";
 
 		Assert.True(Settings.TryParse(TEXT, out var settings));
 		Assert.NotNull(settings);
@@ -90,7 +89,11 @@ public class SettingsTest
 					Assert.Equal("value 4", entry.Value);
 					break;
 				case 4:
-					Assert.Equal("key 5", entry.Key);
+					Assert.Equal("key5", entry.Key);
+					Assert.True(string.IsNullOrEmpty(entry.Value));
+					break;
+				case 5:
+					Assert.Equal("key 6", entry.Key);
 					Assert.Equal(" value\t;\nEnd", entry.Value);
 					break;
 			}

@@ -53,7 +53,8 @@ internal static class SettingsParser
 					DoNone(ref context);
 					break;
 				case State.Key:
-					DoKey(ref context, out key);
+					if(DoKey(ref context, out key) && context.State == State.Delimiter)
+						result.Add(new KeyValuePair<string, string>(key, null));
 					break;
 				case State.Value:
 					if(DoValue(ref context, out var value))
