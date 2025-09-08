@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -37,12 +36,14 @@ namespace Zongsoft.Configuration;
 internal static class SettingsParser
 {
 	#region 解析方法
-	public static Settings Parse(ReadOnlySpan<char> text, Action<string> onError)
+	public static IEnumerable<KeyValuePair<string, string>> Parse(ReadOnlySpan<char> text, Action<string> onError)
 	{
 		if(text.IsEmpty)
-			return null;
+			return [];
 
+		var key = string.Empty;
 		var context = new Context(text);
+		var result = new List<KeyValuePair<string, string>>();
 
 		while(context.Move())
 		{
@@ -52,93 +53,142 @@ internal static class SettingsParser
 					DoNone(ref context);
 					break;
 				case State.Key:
-					DoKey(ref context);
+					DoKey(ref context, out key);
 					break;
 				case State.Value:
-					DoValue(ref context);
+					if(DoValue(ref context, out var value))
+						result.Add(new KeyValuePair<string, string>(key, value));
 					break;
 				case State.Assigner:
-					DoAssigner(ref context);
+					if(DoAssigner(ref context) && context.State == State.Delimiter)
+						result.Add(new KeyValuePair<string, string>(key, null));
+					break;
+				case State.Gapping:
+					DoGapping(ref context);
 					break;
 				case State.Delimiter:
 					DoDelimiter(ref context);
 					break;
 				case State.Error:
-					onError(context.ErrorMessage);
+					onError?.Invoke(context.ErrorMessage);
 					return null;
 			}
 		}
 
-		return null;
+		if(context.State == State.Key)
+			result.Add(new KeyValuePair<string, string>(context.GetValue().ToString(), null));
+		else if(context.State == State.Value)
+			result.Add(new KeyValuePair<string, string>(key, context.GetValue().ToString()));
+
+		return result;
 	}
 	#endregion
 
 	#region 状态处理
-	private static void DoNone(ref Context context)
+	private static bool DoNone(ref Context context)
 	{
-		if(context.IsWhitespace)
-			return;
+		if(context.IsWhitespace || context.Character == ';')
+			return false;
 
 		if(context.IsLetterOrDigitOrUnderscore)
-			context.Reset(State.Key);
-		else
-			context.Error();
-	}
-
-	private static void DoKey(ref Context context)
-	{
-		if(context.Character == '=')
 		{
-			var key = context.GetValue();
-			if(key.IsEmpty)
-				context.Error();
-
-			context.Reset(State.Assigner);
-			return;
+			context.Accept(State.Key);
+			return true;
 		}
 
-		context.Accept();
+		context.Error();
+		return false;
 	}
 
-	private static void DoValue(ref Context context)
+	private static bool DoKey(ref Context context, out string key)
 	{
-		if(context.IsWhitespace)
+		switch(context.Character)
 		{
-			if(!context.HasFlags())
-				return;
+			case '=':
+				key = context.GetValue().ToString();
+				if(string.IsNullOrEmpty(key))
+					context.Error();
 
-			context.AcceptAll();
-			return;
+				context.Reset(State.Assigner);
+				return true;
+			case ';':
+				key = context.GetValue().ToString();
+				if(string.IsNullOrEmpty(key))
+					context.Error();
+
+				context.Reset(State.Delimiter);
+				return true;
+			default:
+				key = null;
+				context.Accept();
+				return false;
+		}
+	}
+
+	private static bool DoValue(ref Context context, out string value)
+	{
+		if(!context.HasFlags())
+		{
+			if(context.Character == ';')
+			{
+				value = context.GetValue().ToString();
+				context.Reset(State.Delimiter);
+				return true;
+			}
 		}
 
+		if(context.Accept())
+		{
+			value = context.GetValue().ToString();
+			context.Reset(State.Gapping);
+			return true;
+		}
 
+		value = null;
+		return false;
 	}
 
-	private static void DoAssigner(ref Context context)
+	private static bool DoAssigner(ref Context context)
 	{
 		if(context.IsWhitespace)
-			return;
+			return false;
 
 		switch(context.Character)
 		{
 			case '"':
 				context.Reset(State.Value, Flags.DoubleQuotation);
-				break;
+				return true;
 			case '\'':
 				context.Reset(State.Value, Flags.SingleQuotation);
-				break;
+				return true;
 			case '=':
 				context.Error();
-				break;
+				return false;
+			case ';':
+				context.Reset(State.Delimiter);
+				return true;
 			default:
-				context.Reset(State.Value);
-				break;
+				context.Accept(State.Value);
+				return true;
 		}
 	}
 
-	private static void DoDelimiter(ref Context context)
+	private static bool DoGapping(ref Context context)
 	{
+		if(context.IsWhitespace)
+			return false;
+
+		if(context.Character == ';')
+		{
+			context.Reset(State.Delimiter);
+			return true;
+		}
+
+		context.Error();
+		return false;
 	}
+
+	private static bool DoDelimiter(ref Context context) => DoNone(ref context);
 	#endregion
 
 	#region 嵌套结构
@@ -151,10 +201,10 @@ internal static class SettingsParser
 		private char _character;
 		private int _index;
 		private Flags _flags;
-		private int _count;
-		private int _whitespaces;
 		private string _errorMessage;
-		private Span<char> _value;
+		private int _whitespaces;
+		private char[] _buffer;
+		private int _bufferCount;
 		#endregion
 
 		#region 构造函数
@@ -166,9 +216,10 @@ internal static class SettingsParser
 			_index = 0;
 			_character = '\0';
 			_flags = Flags.None;
-			_count = 0;
+			_bufferCount = 0;
 			_whitespaces = 0;
 			_errorMessage = null;
+			_buffer = new char[text.Length];
 		}
 		#endregion
 
@@ -191,25 +242,12 @@ internal static class SettingsParser
 		#region 公共方法
 		public bool Move()
 		{
-			if(_index < _text.Length)
+			if(_index < _text.Length - 1)
 			{
-				_index++;
+				_character = _text[_index++];
 				return true;
 			}
 
-			return false;
-		}
-
-		public bool Move(int index)
-		{
-			if(index >= 0 && index < _text.Length)
-			{
-				_index = index;
-				_character = _text[index];
-				return true;
-			}
-
-			_index = _text.Length;
 			_character = '\0';
 			return false;
 		}
@@ -220,72 +258,91 @@ internal static class SettingsParser
 			_errorMessage = message ?? $"An illegal character '{this.Character}' was found at position {this.Offset + this.Index}.";
 		}
 
-		public bool HasWhitespaces(out int whitespaces)
-		{
-			whitespaces = _whitespaces;
-			return whitespaces > 0;
-		}
-
-		public ReadOnlySpan<char> GetValue() => _value;
+		public readonly ReadOnlySpan<char> GetValue() => _bufferCount > 0 ? _buffer.AsSpan(0, _bufferCount) : default;
 
 		public void Reset(State state, Flags flags = Flags.None)
 		{
 			_state = state;
-			_count = 0;
+			_bufferCount = 0;
 			_whitespaces = 0;
 			_flags = flags;
-			_value = default;
 		}
 
-		public void Reset(out ReadOnlySpan<char> value)
+		public bool Accept(Flags? flags = null) => this.Accept(_state, flags);
+		public bool Accept(State state, Flags? flags = null)
 		{
-			value = _count > 0 ? _text.Slice(_index - _count - _whitespaces, _count) : ReadOnlySpan<char>.Empty;
+			if(_state != state)
+				_state = state;
 
-			_count = 0;
-			_whitespaces = 0;
-		}
+			if(flags.HasValue)
+				_flags = flags.Value;
 
-		public void Reset(State state, out ReadOnlySpan<char> value)
-		{
-			value = _count > 0 ? _text.Slice(_index - _count - _whitespaces, _count) : ReadOnlySpan<char>.Empty;
-
-			_count = 0;
-			_whitespaces = 0;
-			_state = state;
-		}
-
-		public void Accept(Flags? flags = null)
-		{
-			if(char.IsWhiteSpace(_character))
+			//如果当前位置处于“单引号”或“双引号”内部
+			if(this.HasFlags(Flags.SingleQuotation) || this.HasFlags(Flags.DoubleQuotation))
 			{
-				if(_count > 0)
-					_whitespaces++;
+				if(this.HasFlags(Flags.Escaping))
+				{
+					_flags &= ~Flags.Escaping;
+					_buffer[_bufferCount++] = Escape(_character);
+				}
+				else
+				{
+					switch(_character)
+					{
+						case '\\':
+							_flags |= Flags.Escaping;
+							return false;
+						case '"':
+							if(this.HasFlags(Flags.DoubleQuotation))
+							{
+								_flags &= ~Flags.DoubleQuotation;
+								return true;
+							}
+							break;
+						case '\'':
+							if(this.HasFlags(Flags.SingleQuotation))
+							{
+								_flags &= ~Flags.SingleQuotation;
+								return true;
+							}
+							break;
+					}
+
+					_buffer[_bufferCount++] = _character;
+				}
 			}
 			else
 			{
-				_count += _whitespaces + 1;
-				_whitespaces = 0;
+				if(char.IsWhiteSpace(_character))
+				{
+					if(_bufferCount > 0)
+						_whitespaces++;
+				}
+				else
+				{
+					for(int i = 0; i < _whitespaces; i++)
+						_buffer[_bufferCount++] = ' ';
+
+					_whitespaces = 0;
+					_buffer[_bufferCount++] = _character;
+				}
 			}
 
-			if(flags.HasValue)
-				_flags = flags.Value;
-		}
-
-		public void AcceptAll(Flags? flags = null)
-		{
-			_count++;
-
-			if((_flags & Flags.Escape) == Flags.Escape)
-			{
-
-			}
-
-			if(flags.HasValue)
-				_flags = flags.Value;
+			return false;
 		}
 
 		public readonly bool HasFlags() => _flags != Flags.None;
 		public readonly bool HasFlags(Flags flags) => (_flags & flags) == flags;
+		#endregion
+
+		#region 私有方法
+		private static char Escape(char chr) => chr switch
+		{
+			't' => '\t',
+			'n' => '\n',
+			'r' => '\r',
+			_ => chr,
+		};
 		#endregion
 	}
 	#endregion
@@ -297,6 +354,7 @@ internal static class SettingsParser
 		Key,
 		Value,
 		Assigner,
+		Gapping,
 		Delimiter,
 		Error = 99,
 	}
@@ -305,7 +363,7 @@ internal static class SettingsParser
 	private enum Flags
 	{
 		None = 0,
-		Escape = 4,
+		Escaping = 4,        //转义符：反斜杠
 		SingleQuotation = 1, //单引号
 		DoubleQuotation = 2, //双引号
 	}

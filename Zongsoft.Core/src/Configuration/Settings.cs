@@ -34,7 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-public class Settings : IEnumerable<KeyValuePair<string, string>>
+public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnumerable<KeyValuePair<string, string>>
 {
 	#region 成员字段
 	private string _value;
@@ -48,14 +48,15 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 	public Settings(string name, string value = null)
 	{
 		_settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-		this.Name = name == null ? string.Empty : name.Trim();
+		this.Name = name ?? string.Empty;
 		this.Value = value ?? string.Empty;
 	}
 
-	internal Settings(params IEnumerable<KeyValuePair<string, string>> entries)
+	internal Settings(string name, string value, params IEnumerable<KeyValuePair<string, string>> entries)
 	{
-		this.Name = string.Empty;
+		this.Name = name ?? string.Empty;
 		_settings = new(entries, StringComparer.OrdinalIgnoreCase);
+		_value = value ?? string.Empty;
 	}
 	#endregion
 
@@ -75,6 +76,7 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 		}
 	}
 
+	int IReadOnlyCollection<KeyValuePair<string, string>>.Count => _settings.Count;
 	public bool IsEmpty => _settings.Count == 0;
 	public string this[string name]
 	{
@@ -96,6 +98,21 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 	#endregion
 
 	#region 静态方法
+	public static Settings Parse(ReadOnlySpan<char> text) => Parse(null, text);
+	public static Settings Parse(string name, ReadOnlySpan<char> text)
+	{
+		var entries = SettingsParser.Parse(text, message => throw new ArgumentException(message));
+		return entries == null ? null : new Settings(name, text.ToString(), entries);
+	}
+
+	public static bool TryParse(ReadOnlySpan<char> text, out Settings result) => TryParse(null, text, out result);
+	public static bool TryParse(string name, ReadOnlySpan<char> text, out Settings result)
+	{
+		var entries = SettingsParser.Parse(text, null);
+		result = entries == null ? null : new Settings(name, text.ToString(), entries);
+		return result != null;
+	}
+
 	public static IEnumerable<KeyValuePair<string, string>> Parse(string text)
 	{
 		if(string.IsNullOrEmpty(text))
@@ -126,7 +143,7 @@ public class Settings : IEnumerable<KeyValuePair<string, string>>
 	{
 		_settings.Clear();
 
-		foreach(var entry in Parse(value))
+		foreach(var entry in SettingsParser.Parse(value, message => throw new ArgumentException(message)))
 			_settings[entry.Key] = entry.Value;
 	}
 	#endregion
