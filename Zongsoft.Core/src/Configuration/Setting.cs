@@ -86,8 +86,8 @@ public class Setting : ISetting, IEquatable<Setting>, IEquatable<ISetting>
 	#endregion
 
 	#region 重写方法
-	public bool Equals(ISetting setting) => setting != null && string.Equals(_name, setting.Name, StringComparison.OrdinalIgnoreCase);
-	public bool Equals(Setting setting) => setting != null && string.Equals(_name, setting._name, StringComparison.OrdinalIgnoreCase);
+	public bool Equals(ISetting setting) => setting is not null && string.Equals(_name, setting.Name, StringComparison.OrdinalIgnoreCase);
+	public bool Equals(Setting setting) => setting is not null && string.Equals(_name, setting._name, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj is ISetting setting && this.Equals(setting);
 	public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant());
 	public override string ToString() => $"{this.Name}={this.Value}";

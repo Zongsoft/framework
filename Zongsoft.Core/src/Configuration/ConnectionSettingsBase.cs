@@ -184,8 +184,8 @@ public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IEq
 	#endregion
 
 	#region 重写方法
-	public bool Equals(IConnectionSettings settings) => settings != null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
-	public bool Equals(ConnectionSettingsBase settings) => settings != null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.GetDriver());
+	public bool Equals(IConnectionSettings settings) => settings is not null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
+	public bool Equals(ConnectionSettingsBase settings) => settings is not null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.GetDriver());
 	public override bool Equals(object obj) => obj is IConnectionSettings settings && this.Equals(settings);
 	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.GetDriver().Name.ToLowerInvariant());
 	public override string ToString() => $"[{this.Name}@{this.GetDriver()}]{this.Value}";
