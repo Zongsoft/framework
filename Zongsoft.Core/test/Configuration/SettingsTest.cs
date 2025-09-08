@@ -17,11 +17,13 @@ public class SettingsTest
 		Assert.Empty(settings);
 		Assert.Empty(settings.Value);
 		Assert.True(settings.IsEmpty);
+		Assert.False(settings.HasValue);
 
 		settings.Value = SETTINGS;
 		Assert.NotEmpty(settings);
 		Assert.NotEmpty(settings.Value);
 		Assert.False(settings.IsEmpty);
+		Assert.True(settings.HasValue);
 		Assert.Equal(4, settings.Count());
 
 		Assert.Equal("1", settings["A"]);
@@ -52,19 +54,37 @@ public class SettingsTest
 		Assert.Equal(4, settings.Count());
 		Assert.Equal("a=1;b=2;c=0;z=26", settings.Value);
 
+		settings["Z"] = $"' {'\n'};";
+		Assert.Equal("1", settings["A"]);
+		Assert.Equal("2", settings["B"]);
+		Assert.Equal("0", settings["C"]);
+		Assert.Equal($"' {'\n'};", settings["Z"]);
+		Assert.Equal(4, settings.Count());
+		Assert.Equal(@"a=1;b=2;c=0;z='\' \n;'", settings.Value);
+
+		var newer = Settings.Parse(settings.Value);
+		Assert.Equal("1", newer["A"]);
+		Assert.Equal("2", newer["B"]);
+		Assert.Equal("0", newer["C"]);
+		Assert.Equal($"' {'\n'};", newer["Z"]);
+		Assert.Equal(4, newer.Count());
+		Assert.Equal(settings.Value, newer.Value);
+
 		settings.Value = null;
 		Assert.Empty(settings);
 		Assert.Empty(settings.Value);
 		Assert.True(settings.IsEmpty);
+		Assert.False(settings.HasValue);
 	}
 
 	[Fact]
 	public void TestParse()
 	{
-		var TEXT = @" key1=value1; key2 = value2; key3 = ; key 4 = value 4 ; key5; key 6 = ' value\t;\nEnd'; ";
+		var TEXT = @" key1=value1; key2 = value2; key3 = ; key 4 = value 4 ; key5; key 6 = ' value\t;\nEnd\\'; ";
 
 		Assert.True(Settings.TryParse(TEXT, out var settings));
 		Assert.NotNull(settings);
+		Assert.True(settings.HasValue);
 		Assert.False(settings.IsEmpty);
 
 		int index = 0;
@@ -94,7 +114,7 @@ public class SettingsTest
 					break;
 				case 5:
 					Assert.Equal("key 6", entry.Key);
-					Assert.Equal(" value\t;\nEnd", entry.Value);
+					Assert.Equal(" value\t;\nEnd\\", entry.Value);
 					break;
 			}
 		}

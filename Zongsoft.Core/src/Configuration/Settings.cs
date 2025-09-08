@@ -38,12 +38,13 @@ namespace Zongsoft.Configuration;
 /// 表示键值对的选项设置类，可以通过一个以分号为分隔符的字符串来表示该设置类。
 /// </summary>
 /// <example>
-/// key1=value1;key2=;key3='contains whitespaces or other escape characters(e.g.: =;"\t\n\').'
+/// key1=value1;key2=;key3='contains whitespaces or other escape characters(e.g. :=;"\t\r\n\').'
 /// </example>
-public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnumerable<KeyValuePair<string, string>>
+public class Settings : ISettings, IEquatable<Settings>
 {
 	#region 成员字段
 	private string _value;
+	private bool _changed;
 	private readonly Dictionary<string, string> _entries;
 	#endregion
 
@@ -74,7 +75,13 @@ public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnum
 	public string Name { get; }
 	public string Value
 	{
-		get => _value;
+		get
+		{
+			if(_changed)
+				_value = string.Join(';', _entries.Select(entry => $"{entry.Key}={Unescape(entry.Value)}"));
+
+			return _value;
+		}
 		set
 		{
 			value ??= string.Empty;
@@ -89,21 +96,22 @@ public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnum
 
 	int IReadOnlyCollection<KeyValuePair<string, string>>.Count => _entries.Count;
 	public bool IsEmpty => _entries.Count == 0;
-	public string this[string name]
+	public bool HasValue => _entries.Count > 0;
+
+	public virtual string this[string key]
 	{
-		get => name != null && _entries.TryGetValue(name, out var value) ? value : null;
+		get => key != null && _entries.TryGetValue(key, out var value) ? value : null;
 		set
 		{
-			if(string.IsNullOrEmpty(name))
+			if(string.IsNullOrEmpty(key))
 				return;
 
 			if(string.IsNullOrEmpty(value))
-				_entries.Remove(name);
+				_entries.Remove(key);
 			else
-				_entries[name] = value.Trim();
+				_entries[key] = value.Trim();
 
-			//更新设置表达式值
-			_value = string.Join(';', _entries.Select(entry => $"{entry.Key}={entry.Value}"));
+			_changed = true;
 		}
 	}
 	#endregion
@@ -127,30 +135,6 @@ public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnum
 		result = entries == null ? null : new Settings(name, text.ToString(), entries);
 		return result != null;
 	}
-
-	public static IEnumerable<KeyValuePair<string, string>> Parse(string text)
-	{
-		if(string.IsNullOrEmpty(text))
-			yield break;
-
-		var parts = text.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-		for(int i = 0; i < parts.Length; i++)
-		{
-			var part = parts[i];
-			var index = part.IndexOf('=');
-
-			if(index < 0)
-				yield return new KeyValuePair<string, string>(part, null);
-			else if(index == part.Length - 1)
-				yield return new KeyValuePair<string, string>(part[0..^1].Trim(), null);
-			else if(index > 0 && index < part.Length - 1)
-				yield return new KeyValuePair<string, string>(
-					part[..index].Trim(),
-					string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim()
-				);
-		}
-	}
 	#endregion
 
 	#region 虚拟方法
@@ -164,10 +148,67 @@ public class Settings : IReadOnlyCollection<KeyValuePair<string, string>>, IEnum
 	#endregion
 
 	#region 重写方法
-	public bool Equals(Settings settings) => settings is not null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase);
-	public override bool Equals(object obj) => obj is Settings settings && this.Equals(settings);
-	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant());
+	public bool Equals(Settings other)
+	{
+		var result = other is not null &&
+			_entries.Count == other._entries.Count &&
+			string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+
+		if(!result)
+			return false;
+
+		foreach(var entry in _entries)
+		{
+			if(!other._entries.TryGetValue(entry.Key, out var value))
+				return false;
+
+			if(!string.Equals(entry.Value, value))
+				return false;
+		}
+
+		return true;
+	}
+
+	public bool Equals(ISettings settings) => settings is Settings other && this.Equals(other);
+	public override bool Equals(object obj) => obj is Settings other && this.Equals(other);
+	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), string.Join(';', _entries.Select(entry => $"{entry.Key}={entry.Value}")));
 	public override string ToString() => string.IsNullOrEmpty(this.Name) ? this.Value : $"[{this.Name}]{this.Value}";
+	#endregion
+
+	#region 私有方法
+	private static string Unescape(string value)
+	{
+		if(string.IsNullOrEmpty(value))
+			return null;
+
+		var unescaped = value.Contains('=');
+
+		if(value.Contains('\\'))
+		{
+			unescaped = true;
+			value = value.Replace(@"\", @"\\");
+		}
+
+		if(value.Contains('\n'))
+		{
+			unescaped = true;
+			value = value.Replace("\n", @"\n");
+		}
+
+		if(value.Contains('\r'))
+		{
+			unescaped = true;
+			value = value.Replace("\r", @"\n");
+		}
+
+		if(value.Contains('\''))
+		{
+			unescaped = true;
+			value = value.Replace("\'", @"\'");
+		}
+
+		return unescaped ? $"'{value}'" : value;
+	}
 	#endregion
 
 	#region 枚举遍历
