@@ -64,7 +64,7 @@ public sealed class DataArchiveFormat : IEquatable<DataArchiveFormat>, IEquatabl
 
 	#region 重写方法
 	public bool Equals(string name) => string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase);
-	public bool Equals(DataArchiveFormat other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+	public bool Equals(DataArchiveFormat other) => other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj is DataArchiveFormat other && this.Equals(other);
 	public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant());
 	public override string ToString() => $"{this.Name}({this.Type})";
