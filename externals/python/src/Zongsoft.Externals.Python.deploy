@@ -3,4 +3,5 @@ lib/$(Framework)/Zongsoft.Externals.Python.*
 lib/$(Framework)/*/Zongsoft.Externals.Python.resources.*
 
 nuget:System.CodeDom
-nuget:IronPython@3.4.1
+nuget:IronPython@3.4.2
+nuget:IronPython.StdLib@3.4.2/content/lib/*  std/
