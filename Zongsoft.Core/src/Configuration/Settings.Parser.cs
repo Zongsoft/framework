@@ -33,10 +33,25 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-internal static class SettingsParser
+partial class Settings
 {
 	#region 解析方法
-	public static IEnumerable<KeyValuePair<string, string>> Parse(ReadOnlySpan<char> text, Action<string> onError)
+	public static Settings Parse(ReadOnlySpan<char> text) => Parse(null, text);
+	public static Settings Parse(string name, ReadOnlySpan<char> text)
+	{
+		var entries = Parse(text, message => throw new ArgumentException(message));
+		return entries == null ? null : new Settings(name, text.ToString(), entries);
+	}
+
+	public static bool TryParse(ReadOnlySpan<char> text, out Settings result) => TryParse(null, text, out result);
+	public static bool TryParse(string name, ReadOnlySpan<char> text, out Settings result)
+	{
+		var entries = Parse(text, null);
+		result = entries == null ? null : new Settings(name, text.ToString(), entries);
+		return result != null;
+	}
+
+	private static IEnumerable<KeyValuePair<string, string>> Parse(ReadOnlySpan<char> text, Action<string> onError)
 	{
 		if(text.IsEmpty)
 			return [];

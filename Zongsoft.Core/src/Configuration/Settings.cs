@@ -40,7 +40,7 @@ namespace Zongsoft.Configuration;
 /// <example>
 /// key1=value1;key2=;key3='contains whitespaces or other escape characters(e.g. :=;"\t\r\n\').'
 /// </example>
-public class Settings : ISettings, IEquatable<Settings>
+public partial class Settings : ISettings, IEquatable<Settings>
 {
 	#region 成员字段
 	private string _value;
@@ -120,29 +120,12 @@ public class Settings : ISettings, IEquatable<Settings>
 	protected IDictionary<string, string> Entries => _entries;
 	#endregion
 
-	#region 静态方法
-	public static Settings Parse(ReadOnlySpan<char> text) => Parse(null, text);
-	public static Settings Parse(string name, ReadOnlySpan<char> text)
-	{
-		var entries = SettingsParser.Parse(text, message => throw new ArgumentException(message));
-		return entries == null ? null : new Settings(name, text.ToString(), entries);
-	}
-
-	public static bool TryParse(ReadOnlySpan<char> text, out Settings result) => TryParse(null, text, out result);
-	public static bool TryParse(string name, ReadOnlySpan<char> text, out Settings result)
-	{
-		var entries = SettingsParser.Parse(text, null);
-		result = entries == null ? null : new Settings(name, text.ToString(), entries);
-		return result != null;
-	}
-	#endregion
-
 	#region 虚拟方法
 	protected virtual void OnValueChanged(string value)
 	{
 		_entries.Clear();
 
-		foreach(var entry in SettingsParser.Parse(value, message => throw new ArgumentException(message)))
+		foreach(var entry in Parse(value, message => throw new ArgumentException(message)))
 			_entries[entry.Key] = entry.Value;
 	}
 	#endregion
