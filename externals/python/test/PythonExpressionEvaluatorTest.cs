@@ -61,22 +61,19 @@ public class PythonExpressionEvaluatorTest
 	[Fact]
 	public void TestEvaluateOutput()
 	{
-		const string PRINT_MESSAGE = "Hello, World!";
-		const string ERROR_MESSAGE = "This is an error message.";
+		const string PRINT_MESSAGE = "Hello, World! 🌍";
+		const string ERROR_MESSAGE = "This is an error message. 💥";
 
 		using var evaluator = new PythonExpressionEvaluator();
 
 		using var error = new MemoryStream();
 		using var output = new MemoryStream();
 		var options = ExpressionEvaluatorOptions
-			.Out(new StreamWriter(output, System.Text.Encoding.UTF8))
-			.Error(new StreamWriter(error, System.Text.Encoding.UTF8));
+			.Out(new StreamWriter(output))
+			.Error(new StreamWriter(error));
 
 		var script = $$"""
-		# print()
 		print("{{PRINT_MESSAGE}}")
-
-		# error()
 		error("{{ERROR_MESSAGE}}")
 		""";
 
@@ -90,11 +87,11 @@ public class PythonExpressionEvaluatorTest
 
 		var text = options.Error.Encoding.GetString(error.ToArray());
 		Assert.NotEmpty(text);
-		Assert.Equal(ERROR_MESSAGE, text.Trim());
+		Assert.Equal(ERROR_MESSAGE, text);
 
 		text = options.Output.Encoding.GetString(output.ToArray());
 		Assert.NotEmpty(text);
-		Assert.Equal(PRINT_MESSAGE, text.Trim());
+		Assert.Equal(PRINT_MESSAGE, text);
 	}
 
 	[Fact]

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -54,7 +54,7 @@ internal class TextStream : Stream
 	public TextStream(TextWriter writer, Encoding encoding, bool buffered = true)
 	{
 		_writer = writer ?? throw new ArgumentNullException(nameof(writer));
-		_encoding = encoding ?? _writer.Encoding;
+		_encoding = encoding ?? Encoding.UTF8;
 		_buffered = buffered;
 	}
 	#endregion
@@ -90,6 +90,9 @@ internal class TextStream : Stream
 
 	public sealed override void Write(byte[] buffer, int offset, int count)
 	{
+		if(!this.CanWrite)
+			throw new InvalidOperationException();
+
 		var data = _encoding.GetChars(buffer, offset, count);
 		_writer.Write(data, 0, data.Length);
 

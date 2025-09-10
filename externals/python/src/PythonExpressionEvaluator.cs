@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -56,7 +56,10 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 	public PythonExpressionEvaluator() : base(NAME)
 	{
 		this.Global = new Variables(_engine.Value.Runtime.Globals);
+
+		_engine.Value.Runtime.Globals.SetVariable(nameof(Json), new Json());
 		_engine.Value.Runtime.Globals.SetVariable("error", (Delegate)Error);
+		_engine.Value.Runtime.Globals.SetVariable("print", (Delegate)Print);
 	}
 	#endregion
 
@@ -68,12 +71,9 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 
 		var engine = _engine.Value;
 
+		SetEnginePath(engine);
 		SetOptions(engine, this.Options);
 		SetOptions(engine, options);
-
-		var paths = engine.GetSearchPaths();
-		paths.Add(@"C:\Users\95558\.nuget\packages\ironpython.stdlib\3.4.2\content\lib");
-		engine.SetSearchPaths(paths);
 
 		if(variables == null)
 			return engine.Execute(expression, engine.Runtime.Globals) ?? engine.GetResult();
@@ -102,6 +102,32 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 	#endregion
 
 	#region 私有方法
+	private static void SetEnginePath(ScriptEngine engine)
+	{
+		var paths = engine.GetSearchPaths();
+
+		if(!string.IsNullOrEmpty(ApplicationContext.Current?.ApplicationPath))
+			paths.Add(ApplicationContext.Current.ApplicationPath);
+
+		paths.Add(System.IO.Path.GetDirectoryName(typeof(PythonExpressionEvaluator).Assembly.Location));
+		engine.SetSearchPaths(paths);
+	}
+
+	private static void Print(params object[] args)
+	{
+		if(args == null || args.Length == 0)
+			return;
+
+		var output = _engine.Value.Runtime.IO.OutputWriter;
+		if(output == null)
+			return;
+
+		for(int i = 0; i < args.Length; i++)
+			output.Write(args[i]);
+
+		output.Flush();
+	}
+
 	private static void Error(params object[] args)
 	{
 		if(args == null || args.Length == 0)
@@ -119,15 +145,9 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Variables : IDictionary<string, object>
+	private sealed class Variables(ScriptScope scope) : IDictionary<string, object>
 	{
-		private readonly ScriptScope _scope;
-
-		public Variables(ScriptScope scope)
-		{
-			_scope = scope;
-			_scope.SetVariable(nameof(Json), new Json());
-		}
+		private readonly ScriptScope _scope = scope;
 
 		public object this[string name]
 		{
@@ -167,11 +187,7 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 
 	public sealed class Json
 	{
-		public string Serialize(object obj, bool typed = false)
-		{
-			return Serializer.Json.Serialize(obj, typed ? Serializer.Json.Options.Typified() : null);
-		}
-
+		public string Serialize(object target, bool typed = false) => Serializer.Json.Serialize(target, typed ? Serializer.Json.Options.Typified() : null);
 		public object Deserialize(string json, bool typed = false) => Serializer.Json.Deserialize<Dictionary<string, object>>(json, typed ? Serializer.Json.Options.Typified() : null);
 	}
 	#endregion

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -28,9 +28,6 @@
  */
 
 using System;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
