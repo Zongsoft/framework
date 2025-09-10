@@ -45,6 +45,7 @@ internal class ChatSession : IChatSession, IEquatable<ChatSession>
 {
 	#region 成员字段
 	private IChatService _service;
+	private string _summary;
 	#endregion
 
 	#region 构造函数
@@ -79,6 +80,11 @@ internal class ChatSession : IChatSession, IEquatable<ChatSession>
 	public DateTimeOffset Creation { get; }
 	public IChatHistory History { get; }
 	public ChatSessionOptions Options { get; }
+	public string Summary
+	{
+		get => this.GetSummary();
+		set => _summary = value;
+	}
 	#endregion
 
 	#region 公共方法
@@ -133,6 +139,19 @@ internal class ChatSession : IChatSession, IEquatable<ChatSession>
 	#endregion
 
 	#region 私有方法
+	private string GetSummary()
+	{
+		if(string.IsNullOrEmpty(_summary))
+		{
+			var history = this.History;
+
+			if(history != null && !history.IsEmpty)
+				_summary = history[0]?.Text;
+		}
+
+		return _summary ?? string.Empty;
+	}
+
 	private static bool Populate(ref ChatMessage message, ChatResponseUpdate entry)
 	{
 		if(entry == null || entry.Contents.Count == 0)

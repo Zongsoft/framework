@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Intelligences.Web library.
  *
@@ -46,19 +46,6 @@ partial class AssistantController
 	[ControllerName("Chats")]
 	public class ChatController : ControllerBase
 	{
-		[HttpGet("/[area]/{name}/[controller]/[action]/{count?}")]
-		public async IAsyncEnumerable<string> Fake(string name, int count = 10, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new BadHttpRequestException($"Unspecified the AI assistant.");
-
-			for(int i = 0; i < count; i++)
-			{
-				await Task.Delay(1000, cancellation);
-				yield return $"[{DateTime.Now:HH:mm:ss}] {name} - Fake response {i + 1}";
-			}
-		}
-
 		#region 公共方法
 		[HttpGet("/[area]/{name}/[controller]/{id?}")]
 		public IActionResult Get(string name, string id)
@@ -83,6 +70,7 @@ partial class AssistantController
 				session.Creation,
 				session.Options.Expiration,
 				session.History.Count,
+				session.Summary,
 			};
 		}
 
@@ -142,6 +130,7 @@ partial class AssistantController
 		}
 		#endregion
 
+		#region 嵌套子类
 		[ControllerName("History")]
 		public class HistoryController : ControllerBase
 		{
@@ -184,5 +173,6 @@ partial class AssistantController
 				return this.NoContent();
 			}
 		}
+		#endregion
 	}
 }

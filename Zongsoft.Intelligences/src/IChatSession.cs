@@ -48,6 +48,8 @@ public interface IChatSession : IDisposable, IAsyncDisposable
 	IChatHistory History { get; }
 	/// <summary>获取聊天会话的选项。</summary>
 	ChatSessionOptions Options { get; }
+	/// <summary>获取或设置会话的概述。</summary>
+	string Summary { get; set; }
 
 	/// <summary>异步聊天。</summary>
 	/// <param name="content">指定的聊天内容。</param>
