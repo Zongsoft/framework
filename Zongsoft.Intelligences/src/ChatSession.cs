@@ -113,9 +113,7 @@ internal class ChatSession : IChatSession, IEquatable<ChatSession>
 	protected virtual void Dispose(bool disposing)
 	{
 		var service = Interlocked.Exchange(ref _service, null);
-		if(service != null)
-			_service.Dispose();
-
+		service?.Dispose();
 		this.History?.Clear();
 	}
 
@@ -128,9 +126,7 @@ internal class ChatSession : IChatSession, IEquatable<ChatSession>
 	protected virtual ValueTask DisposeAsync(bool disposing)
 	{
 		var service = Interlocked.Exchange(ref _service, null);
-		if(service != null)
-			_service.Dispose();
-
+		service?.Dispose();
 		this.History?.Clear();
 		return ValueTask.CompletedTask;
 	}
