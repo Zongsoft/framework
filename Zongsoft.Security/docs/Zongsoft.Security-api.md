@@ -72,8 +72,8 @@
                 "Users"
             ],
             "Authorizations": [
-                "ASSET:CREATE,GET,UPDATE",
-                "TASK:CREATE,GET,UPDATE"
+                "Asset:Create,Get,Update",
+                "Issue:Create,Get,Update"
             ]
         }
     },
@@ -252,11 +252,11 @@
 `roleId` 必须项，要获取的角色编号。
 
 ### 请求头
-```json
-x-data-schema: *, MemberUser{*}, MemberRole{*}
+```plaintext
+X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ```
 
-> 可以通过指定 HTTP 的 x-data-schema 头来定义返回的角色成员包含的导航属性内容，更多内容请参考数据引擎的 schema 定义。
+> 可以通过指定 _HTTP_ 请求的 `X-Data-Schema` 头来定义返回的角色成员包含的导航属性内容，更多内容请参考数据引擎的 _**S**chema_ 定义。
 
 ### 响应消息
 ```json
