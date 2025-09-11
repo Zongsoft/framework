@@ -46,8 +46,8 @@
 
 - `Identity` 字段：必选项，表示登录账号名称（用户名）或手机号、邮箱地址这三种用户标识。
 - `Password` 字段：必选项，表示用户的登录密码，该字段与 `Secret` 字段相斥。
-- `Secret` 字段：可选项，表示用户的登录验证码，该字段与 `Password` 字段相斥，需要先调用“验证码API”获得该字段值。
-- `Namespace` 字段：可选项，表示用户所属命名空间，不同业务系统对该字段的定义可能存在差异，通常在 SaaS 系统中，该字段表示租户的唯一代码。
+- `Secret` 字段：可选项，表示用户的登录验证码，该字段与 `Password` 字段相斥，需要先调用 _“验证码API”_ 获得该字段值。
+- `Namespace` 字段：可选项，表示用户所属命名空间，不同业务系统对该字段的定义可能存在差异，通常在 _SaaS_ 系统中，该字段表示租户的唯一代码。
 - `Parameters` 字段：可选项，表示业务系统中需要传入的额外附加参数，该JSON实体将以键值对的方式保存在凭证中。
 
 ### 响应消息
@@ -61,9 +61,9 @@
         "UserId": 100,
         "Name": "Popeye",
         "FullName": "钟少",
-        "Namespace": "zongsoft",
-        "Description": "钟峰",
-        "Status": "active",
+        "Namespace": "Zongsoft",
+        "Description": "This is a good man.",
+        "Status": "Active",
         "Creation": "2020-05-12T23:33:51",
         "Properties": {
             "Roles": [
@@ -102,7 +102,7 @@
 ```
 
 ### 响应消息
-如果续约成功则返回预约的新凭证对象，可参考“登录(Signin)”操作的响应消息内容。
+如果续约成功则返回预约的新凭证对象，可参考“登录 _(**S**ignin)_”操作的响应消息内容。
 
 -----
 
@@ -111,7 +111,7 @@
 [POST] /Security/Authentication/Verify
 ```
 
-> 适用于特定安全操作之前进行身份确认，譬如修改用户手机号码(`phone`)、邮箱地址(`email`)前，再次确认当前用户的身份。
+> 适用于特定安全操作之前进行身份确认，譬如修改用户手机号码 _(`phone`)_、邮箱地址 _(`email`)_ 之前，再次确认当前用户的身份。
 
 ### 参数说明
 - 必须带有 `Authorization` 身份授权头。
@@ -139,7 +139,7 @@
 - `name` 表示角色名称，在带 `namespace` 参数时，星号`*`则可以查询指定命名空间中的所有角色。
 
 ### 响应消息
-根据参数类型，返回单个角色实体或多个角色实体，具体角色实体定义请参考“表结构设计”相关文档。
+根据参数类型，返回单个角色实体或多个角色实体，具体角色实体定义请参考 _“表结构设计”_ 相关文档。
 
 -----
 
@@ -182,7 +182,7 @@
 除了 `Name` 字段（属性）以外都是可选字段。
 
 ### 响应消息
-返回新增成功的角色实体，具体角色实体定义请参考“表结构设计”相关文档。
+返回新增成功的角色实体，具体角色实体定义请参考 _“表结构设计”_ 相关文档。
 
 -----
 
@@ -236,7 +236,7 @@
 `roleId` 必须项，要获取的角色编号。
 
 ### 响应消息
-返回多个角色实体，具体角色实体定义请参考“表结构设计”相关文档。
+返回多个角色实体，具体角色实体定义请参考 _“表结构设计”_ 相关文档。
 
 -----
 
@@ -345,7 +345,7 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ### 响应消息
 ```json
 [
-	"Schema:Action,Action,...",
+	"Target:Action,Action,...",
 	"Asset:Get,Create,Delete,Update"
 ]
 ```
@@ -358,17 +358,17 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 
 ```url
 [GET] /Security/Roles/{roleId}/Permissions
-[GET] /Security/Roles/{roleId}/Permissions/{schema}
+[GET] /Security/Roles/{roleId}/Permissions/{target}
 ```
 
 ### 参数说明
 `roleId` 必须项，要获取的角色编号。
-`schema` 可选项，要获取的目标标识，如果未指定则获取所有目标授权对象。
+`target` 可选项，要获取的目标标识，如果未指定则获取所有目标授权对象。
 
 ### 响应消息
 ```json
 [
-	"Schema":["Action:true", "Action:false"],
+	"Target":["Action:true", "Action:false"],
 	"Asset":["Get:true", "Delete:false", "Create:true", "Update:true"]
 ]
 ```
@@ -381,24 +381,24 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 
 ```url
 [PUT] /Security/Roles/{roleId}/Permissions
-[PUT] /Security/Roles/{roleId}/Permissions/{schema}
+[PUT] /Security/Roles/{roleId}/Permissions/{target}
 ```
 
 ### 参数说明
 `roleId` 必须项，要设置的角色编号。
-`schema` 可选项，要设置的目标标识，如果不为空则请求实体中的 `SchemaId` 将会被强制更新为该参数值。
+`target` 可选项，要设置的目标标识，如果不为空则请求实体中的 `Target` 将会被强制更新为该参数值。
 
 ### 请求消息
 ```json
 [
 	{
-		"SchemaId":"",
-		"ActionId":"",
+		"Target":"",
+		"Action":"",
 		"Granted":true
 	},
 	{
-		"SchemaId":"",
-		"ActionId":"",
+		"Target":"",
+		"Action":"",
 		"Granted":false
 	}
 ]
@@ -409,13 +409,13 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ## 删除单条角色权限
 
 ```url
-[DELETE] /Security/Roles/{roleId}/Permission/{schemaId}:{actionId}
+[DELETE] /Security/Roles/{roleId}/Permission/{target}:{action}
 ```
 
 ### 参数说明
 `roleId` 必须项，要设置的角色编号。
-`schemaId` 必须项，要设置的目标标识。
-`actionId` 必须项，要设置的操作标识。
+`target` 必须项，要设置的目标标识。
+`action` 必须项，要设置的操作标识。
 
 ## 删除多条角色权限
 
@@ -443,10 +443,10 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ### 参数说明
 - `userId` 指定的用户编号。
 - `namespace` 表示用户所属的命名空间，如果未指定则表示当前用户命名空间。
-- `identity` 表示用户标识，可以是用户名、绑定的手机号、Email邮箱地址。在带 `namespace` 参数时，星号`*`则可以查询指定命名空间中的所有用户。
+- `identity` 表示用户标识，可以是用户名、绑定的手机号、电子邮箱地址。在带 `namespace` 参数时，星号`*`则可以查询指定命名空间中的所有用户。
 
 ### 响应消息
-根据参数类型，返回单个用户实体或多个用户实体，具体用户实体定义请参考“表结构设计”相关文档。
+根据参数类型，返回单个用户实体或多个用户实体，具体用户实体定义请参考 _“表结构设计”_ 相关文档。
 
 -----
 
@@ -476,7 +476,7 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ```
 
 ### 参数说明
-可以通过名为 `x-password` 的 HTTP 头来定义新增用户的密码，如果未指定该扩展头，则由系统生成特定密码或空密码。
+可以通过名为 `X-Password` 的 _HTTP_ 请求头来定义新增用户的密码，如果未指定该扩展头，则由系统生成特定密码或空密码。
 
 ### 请求消息
 ```json
@@ -494,7 +494,7 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 除了 `Name` 字段（属性）以外都是可选字段。
 
 ### 响应消息
-返回新增成功的用户实体，具体用户实体定义请参考“表结构设计”相关文档。
+返回新增成功的用户实体，具体用户实体定义请参考 _“表结构设计”_ 相关文档。
 
 -----
 
@@ -529,7 +529,7 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ### 参数说明
 - `userId` 指定的用户编号，通过用户编号进行查询必须带有 `Authorization` 身份授权头。
 - `namespace` 表示用户所属的命名空间，如果未指定则表示当前用户命名空间。
-- `identity` 表示用户标识，可以是用户名、绑定的手机号、Email邮箱地址。
+- `identity` 表示用户标识，可以是用户名、绑定的手机号、电子邮箱地址。
 
 ### 响应消息
 - `204` No Content
@@ -571,7 +571,7 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ### 参数说明
 - `userId` 指定的用户编号，通过用户编号进行查询必须带有 `Authorization` 身份授权头。
 - `namespace` 表示用户所属的命名空间，如果未指定则表示当前用户命名空间。
-- `identity` 表示用户标识，可以是用户名、绑定的手机号、Email邮箱地址。
+- `identity` 表示用户标识，可以是用户名、绑定的手机号、电子邮箱地址。
 
 -----
 
@@ -664,7 +664,7 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ```
 
 #### 字段说明
-- `passwordAnswers` 用户信息中密码问答中的三个答案值（必须按设置中的顺序）。
+- `passwordAnswers` 用户信息中密码问答中的三个答案值（注意：必须按设置中的顺序）。
 - `password` 要重置的新密码。
 
 
@@ -681,7 +681,7 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ### 参数说明
 - `userId` 指定的用户编号，通过用户编号进行查询必须带有 `Authorization` 身份授权头。
 - `namespace` 表示用户所属的命名空间，如果未指定则表示当前用户命名空间。
-- `identity` 表示用户标识，可以是用户名、绑定的手机号、Email邮箱地址。
+- `identity` 表示用户标识，可以是用户名、绑定的手机号、电子邮箱地址。
 
 ### 返回消息
 ```json
@@ -727,7 +727,7 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 `userId` 必须项，要获取的用户编号。
 
 ### 响应消息
-返回多个角色实体，具体角色实体定义请参考“表结构设计”相关文档。
+返回多个角色实体，具体角色实体定义请参考 _“表结构设计”_ 相关文档。
 
 -----
 
@@ -755,12 +755,12 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 判断指定的用户是否对于具有操作指定目标的授权。
 
 ```url
-[GET] /Security/Users/{userId}/Authorize/{schema}:{action}
+[GET] /Security/Users/{userId}/Authorize/{target}:{action}
 ```
 
 ### 参数说明
 `userId` 必须项，要判断的用户编号。
-`schema` 必须项，要判断的目标标识。
+`target` 必须项，要判断的目标标识。
 `action` 必须项，要判断的操作标识。
 
 ### 响应消息
@@ -799,17 +799,17 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 
 ```url
 [GET] /Security/Users/{userId}/Permissions
-[GET] /Security/Users/{userId}/Permissions/{schema}
+[GET] /Security/Users/{userId}/Permissions/{target}
 ```
 
 ### 参数说明
 `userId` 必须项，要获取的用户编号。
-`schema` 可选项，要获取的目标标识，如果未指定则获取所有目标授权对象。
+`target` 可选项，要获取的目标标识，如果未指定则获取所有目标授权对象。
 
 ### 响应消息
 ```json
 [
-	"Schema":["Action:true", "Action:false"],
+	"Target":["Action:true", "Action:false"],
 	"Asset":["Get:true", "Delete:false", "Create:true", "Update:true"]
 ]
 ```
@@ -822,24 +822,24 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 
 ```url
 [PUT] /Security/Users/{userId}/Permissions/
-[PUT] /Security/Users/{userId}/Permissions/{schema}
+[PUT] /Security/Users/{userId}/Permissions/{target}
 ```
 
 ### 参数说明
 `userId` 必须项，要设置的用户编号。
-`schema` 可选项，要设置的目标标识，如果不为空则请求实体中的 `SchemaId` 将会被强制更新为该参数值。
+`target` 可选项，要设置的目标标识，如果不为空则请求实体中的 `Target` 将会被强制更新为该参数值。
 
 ### 请求消息
 ```json
 [
 	{
-		"SchemaId":"",
-		"ActionId":"",
+		"Target":"",
+		"Action":"",
 		"Granted":true
 	},
 	{
-		"SchemaId":"",
-		"ActionId":"",
+		"Target":"",
+		"Action":"",
 		"Granted":false
 	}
 ]
@@ -849,13 +849,13 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 ## 删除单条用户权限
 
 ```url
-[DELETE] /Security/Users/{userId}/Permission/{schemaId}:{actionId}
+[DELETE] /Security/Users/{userId}/Permission/{target}:{action}
 ```
 
 ### 参数说明
 `userId` 必须项，要设置的用户编号。
-`schemaId` 必须项，要设置的目标标识。
-`actionId` 必须项，要设置的操作标识。
+`target` 必须项，要设置的目标标识。
+`action` 必须项，要设置的操作标识。
 
 ## 删除多条用户权限
 
@@ -870,4 +870,3 @@ X-Data-Schema: *, MemberUser{*}, MemberRole{*}
 内容类型为纯文本(`text/plain`)，内容格式为以逗号分隔的编号。
 
 -----
-
