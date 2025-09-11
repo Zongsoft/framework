@@ -85,7 +85,7 @@ PrivilegeFilter | varchar | 500 | ✗ | 权限过滤表达式
 
 ### 权限计算
 
-权限计算准则：**拒绝优先、就近优先**。以下为相关表中的范例数据：
+权限计算准则：**就近优先、拒绝优先**。以下为相关表中的范例数据：
 
 #### 用户记录 `User`
 
@@ -114,16 +114,16 @@ RoleId | MemberId | MemberType
 
 #### 权限记录 `Privilege`
 
-MemberId | MemberType |   PrivilegeName   | PrivilegeMode
-:-------:|:----------:|:-----------------:|:-------------:
-101      | `1`(_Role_) | Product:Select   | ✓ (_Granted_)
-101      | `1`(_Role_) | Feedback:Select  | ✓ (_Granted_)
-101      | `1`(_Role_) | SaleOrder:Select | ✓ (_Granted_)
-201      | `1`(_Role_) | Feedback:Select  | ✗ (_Revoked_)
-201      | `1`(_Role_) | SaleOrder:Update | ✓ (_Granted_)
-202      | `1`(_Role_) | Feedback:Update  | ✓ (_Granted_)
-202      | `1`(_Role_) | SaleOrder:Select | ✗ (_Revoked_)
-1001     | `0`(_User_) | Feedback:Select  | ✓ (_Granted_)
+MemberId | MemberType |    PrivilegeName    | PrivilegeMode
+:-------:|:----------:|:-------------------:|:-------------:
+101      | `1`(_Role_) | `Product:Select`   | ✓ _(**G**ranted)_
+101      | `1`(_Role_) | `Feedback:Select`  | ✓ _(**G**ranted)_
+101      | `1`(_Role_) | `SaleOrder:Select` | ✓ _(**G**ranted)_
+201      | `1`(_Role_) | `Feedback:Select`  | ✗ _(**R**evoked)_
+201      | `1`(_Role_) | `SaleOrder:Update` | ✓ _(**G**ranted)_
+202      | `1`(_Role_) | `Feedback:Update`  | ✓ _(**G**ranted)_
+202      | `1`(_Role_) | `SaleOrder:Select` | ✗ _(**R**evoked)_
+1001     | `0`(_User_) | `Feedback:Select`  | ✓ _(**G**ranted)_
 
 -----
 
@@ -143,8 +143,7 @@ MemberId | MemberType |   PrivilegeName   | PrivilegeMode
 [
 	"Product:Select",
 	"Feedback:Select",
-	"SaleOrder:Select",
-	"SaleOrder:Update",
+	"SaleOrder:Select,Update",
 ]
 ```
 
