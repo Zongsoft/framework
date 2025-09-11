@@ -34,11 +34,11 @@
 
 ```json
 {
-	Identity:"<name|phone|email>",
-	Password:"******",
-	Secret:"******",
-	Namespace:"",
-	Parameters:{}
+	"Identity":"<name|phone|email>",
+	"Password":"******",
+	"Secret":"******",
+	"Namespace":"",
+	"Parameters":{}
 }
 ```
 
@@ -171,10 +171,10 @@
 ### 请求消息
 ```json
 {
-	Name:"",
-	FullName:"",
-	Namespace:"",
-	Description:""
+	"Name":"",
+	"FullName":"",
+	"Namespace":"",
+	"Description":""
 }
 ```
 
@@ -345,7 +345,7 @@ x-data-schema: *, MemberUser{*}, MemberRole{*}
 ### 响应消息
 ```json
 [
-	"schemaId:actionId,actionId,...",
+	"Schema:Action,Action,...",
 	"Asset:Get,Create,Delete,Update"
 ]
 ```
@@ -368,7 +368,7 @@ x-data-schema: *, MemberUser{*}, MemberRole{*}
 ### 响应消息
 ```json
 [
-	"schemaId":["actionId:true", "actionId:false"],
+	"Schema":["Action:true", "Action:false"],
 	"Asset":["Get:true", "Delete:false", "Create:true", "Update:true"]
 ]
 ```
@@ -786,8 +786,8 @@ x-data-schema: *, MemberUser{*}, MemberRole{*}
 ### 响应消息
 ```json
 [
-    "ASSET:CREATE,GET,UPDATE",
-    "TASK:CREATE,GET,UPDATE"
+    "Asset:Create,Get,Update",
+    "Issue:Create,Get,Update"
 ]
 ```
 
@@ -809,7 +809,7 @@ x-data-schema: *, MemberUser{*}, MemberRole{*}
 ### 响应消息
 ```json
 [
-	"schemaId":["actionId:true", "actionId:false"],
+	"Schema":["Action:true", "Action:false"],
 	"Asset":["Get:true", "Delete:false", "Create:true", "Update:true"]
 ]
 ```
