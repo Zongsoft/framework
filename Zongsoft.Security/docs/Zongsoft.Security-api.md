@@ -56,15 +56,22 @@
     "CredentialId": "1643429050478TWZBK",
     "RenewalToken": "17447225E75367F8SN315",
     "Scenario": "web",
-    "Expiration": "04:00:00",
+    "Validity": "1.00:00:00",
     "Identity": {
         "UserId": 100,
         "Name": "Popeye",
-        "FullName": "钟少",
+        "Nickname": "钟少",
+        "Phone": "13812345678",
+        "Email": "zongsoft@gmail.com",
         "Namespace": "Zongsoft",
+        "Gender": true,
+        "Avatar": "$smile$",
+        "Creation": "2020-05-15T23:59:59+08:00",
         "Description": "This is a good man.",
-        "Status": "Active",
-        "Creation": "2020-05-12T23:33:51",
+        "Country": 86,
+        "TenantId": 1,
+        "BranchId": 0,
+        "Branches": [0, 16777216],
         "Properties": {
             "Roles": [
                 "Administrators",
@@ -73,7 +80,7 @@
             ],
             "Authorizations": [
                 "Asset:Create,Get,Update",
-                "Issue:Create,Get,Update"
+                "Issue:Create,Get,Update,Delete"
             ]
         }
     },
