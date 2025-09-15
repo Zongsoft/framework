@@ -67,6 +67,10 @@ public static class ClaimsIdentityModel
 			//获取指定方案的安全身份
 			var identity = principal.GetIdentity(scheme);
 
+			//如果指定方案的身份获取失败则返回空（并阻止缓存）
+			if(identity == null)
+				return new(null, Zongsoft.Common.Notification.Notified);
+
 			//将指定方案的安全身份转换为身份模型
 			var model = transform == null ? identity.AsModel<TIdentityModel>() : transform(identity);
 
