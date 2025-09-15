@@ -90,7 +90,7 @@ public class ClaimsPrincipalTransformer : IClaimsPrincipalTransformer
 				result.Add(nameof(ClaimsPrincipal.Identity), transform((principal.Identity as ClaimsIdentity) ?? new ClaimsIdentity(principal.Identity)));
 		}
 
-		if(principal.Identities != null)
+		if(principal.Identities != null && principal.Identities.Any())
 		{
 			var identities = principal.Identities
 				.Where(identity => identity != principal.Identity)
@@ -100,7 +100,8 @@ public class ClaimsPrincipalTransformer : IClaimsPrincipalTransformer
 					Identity = transform == null ? this.OnTransform(identity) : transform(identity)
 				});
 
-			result.Add(nameof(ClaimsPrincipal.Identities), identities);
+			if(identities.Any())
+				result.Add(nameof(ClaimsPrincipal.Identities), identities);
 		}
 
 		return result;
