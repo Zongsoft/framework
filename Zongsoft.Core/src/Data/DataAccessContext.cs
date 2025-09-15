@@ -326,16 +326,8 @@ public abstract class DataDeleteContextBase : DataAccessContextBase<IDataDeleteO
 	#endregion
 
 	#region 显式实现
-	object IDataMutateContextBase.Data
-	{
-		get => null;
-		set { }
-	}
-
-	bool IDataMutateContextBase.IsMultiple
-	{
-		get => false;
-	}
+	bool IDataMutateContextBase.IsMultiple => false;
+	object IDataMutateContextBase.Data { get => null; set { } }
 	#endregion
 }
 
