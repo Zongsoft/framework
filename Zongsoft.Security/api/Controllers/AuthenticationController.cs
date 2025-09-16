@@ -61,15 +61,10 @@ public class AuthenticationController : ControllerBase
 	{
 		if(string.IsNullOrWhiteSpace(scenario))
 			return this.BadRequest();
-		if(this.Request.ContentLength == null || this.Request.ContentLength == 0)
-			return this.BadRequest();
 
 		try
 		{
-			object data = this.Request.HasFormContentType ?
-				this.Request.Form.ToDictionary() :
-				await this.Request.ReadAsStringAsync(cancellation) ?? (object)this.Request.Body;
-
+			object data = await GetDataAsync(this.Request, cancellation);
 			var principal = await Authentication.AuthenticateAsync(scheme, key, data, scenario, new(this.Request.GetParameters()), cancellation);
 
 			return principal != null ?
@@ -79,6 +74,17 @@ public class AuthenticationController : ControllerBase
 		catch(AuthenticationException ex)
 		{
 			return this.StatusCode(StatusCodes.Status403Forbidden, new { ex.Reason, ex.Message });
+		}
+
+		static async ValueTask<object> GetDataAsync(HttpRequest request, CancellationToken cancellation)
+		{
+			if(request.ContentLength == null || request.ContentLength == 0)
+				return null;
+
+			if(request.HasFormContentType)
+				return request.Form.ToDictionary();
+
+			return await request.ReadAsStringAsync(cancellation) ?? (object)request.Body;
 		}
 	}
 
