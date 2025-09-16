@@ -122,7 +122,7 @@ public readonly partial struct Password : IEquatable<Password>
 	#endregion
 
 	#region 静态方法
-	public static bool TryParse(string text, out Password result) => TryParse(text.AsSpan(), out result);
+	public static bool TryParse(string text, out Password result) => TryParse(text == null ? [] : text.AsSpan(), out result);
 	public static bool TryParse(ReadOnlySpan<char> text, out Password result)
 	{
 		if(text.IsEmpty)
@@ -198,7 +198,7 @@ public readonly partial struct Password : IEquatable<Password>
 		return true;
 	}
 
-	public static bool TryParse(byte[] data, out Password result) => TryParse(data.AsSpan(), out result);
+	public static bool TryParse(byte[] data, out Password result) => TryParse(data == null ? [] : data.AsSpan(), out result);
 	public static bool TryParse(ReadOnlySpan<byte> data, out Password result)
 	{
 		if(data.IsEmpty)
