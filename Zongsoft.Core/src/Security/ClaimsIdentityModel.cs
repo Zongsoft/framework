@@ -32,6 +32,7 @@ using System.Security.Claims;
 
 namespace Zongsoft.Security;
 
+[Obsolete($"This class has been deprecated, Please use the {nameof(ClaimsIdentityModeling)} class instead.")]
 public static class ClaimsIdentityModel
 {
 	#region 私有变量
