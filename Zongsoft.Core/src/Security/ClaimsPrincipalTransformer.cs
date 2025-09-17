@@ -41,7 +41,7 @@ namespace Zongsoft.Security;
 public class ClaimsPrincipalTransformer : IClaimsPrincipalTransformer
 {
 	#region 单例字段
-	public static readonly ClaimsPrincipalTransformer Default = new ClaimsPrincipalTransformer();
+	public static readonly ClaimsPrincipalTransformer Default = new();
 	#endregion
 
 	#region 构造函数
@@ -111,13 +111,17 @@ public class ClaimsPrincipalTransformer : IClaimsPrincipalTransformer
 	#region 虚拟方法
 	protected virtual object OnTransform(ClaimsIdentity identity)
 	{
+		if(identity == null)
+			return null;
+
 		foreach(var transformer in this.Transformers)
 		{
 			if(transformer.CanTransform(identity))
 				return transformer.Transform(identity);
 		}
 
-		return identity.AsModel<Privileges.IUser>();
+		return identity.Claims
+			.Select(claim => new KeyValuePair<string, string>(claim.Type, claim.Value));
 	}
 	#endregion
 }
