@@ -28,7 +28,9 @@
  */
 
 using System;
+using System.Threading;
 using System.Security.Claims;
+using System.Collections.Concurrent;
 
 using Zongsoft.Services;
 
@@ -43,11 +45,19 @@ public static class ClaimsIdentityModeling
 	#region 公共方法
 	public static T GetModel<T>(string scheme = null) => (T)GetModel(scheme);
 	public static object GetModel(string scheme = null) =>
-		GetModelCore((Services.ApplicationContext.Current?.Principal ?? ClaimsPrincipal.Current) as CredentialPrincipal, scheme);
+		GetModelCore((ApplicationContext.Current?.Principal ?? ClaimsPrincipal.Current) as CredentialPrincipal, scheme);
+	public static T GetModel<T>(Func<object, T> wrapper) =>
+		GetModelCore((ApplicationContext.Current?.Principal ?? ClaimsPrincipal.Current) as CredentialPrincipal, null, wrapper);
+	public static T GetModel<T>(string scheme, Func<object, T> wrapper) =>
+		GetModelCore((ApplicationContext.Current?.Principal ?? ClaimsPrincipal.Current) as CredentialPrincipal, scheme, wrapper);
 
 	public static T GetModel<T>(this ClaimsPrincipal principal, string scheme = null) => (T)GetModel(principal, scheme);
 	public static object GetModel(this ClaimsPrincipal principal, string scheme = null) =>
 		GetModelCore(principal as CredentialPrincipal, scheme);
+	public static T GetModel<T>(this ClaimsPrincipal principal, Func<object, T> wrapper) =>
+		GetModelCore(principal as CredentialPrincipal, null, wrapper);
+	public static T GetModel<T>(this ClaimsPrincipal principal, string scheme, Func<object, T> wrapper) =>
+		GetModelCore(principal as CredentialPrincipal, scheme, wrapper);
 
 	public static object Transform(this ClaimsIdentity identity)
 	{
@@ -73,13 +83,15 @@ public static class ClaimsIdentityModeling
 
 		return null;
 	}
+	#endregion
 
-	private static object GetModelCore(this CredentialPrincipal principal, string scheme = null)
+	#region 私有方法
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	static string GetCacheKey(string credentialId, string scheme) => string.IsNullOrEmpty(scheme) ? credentialId : $"{credentialId}:{scheme}";
+
+	private static Entry GetModelEntry(this CredentialPrincipal principal, string scheme = null)
 	{
-		if(principal == null || principal.CredentialId == null)
-			return null;
-
-		return _cache.GetOrCreate<object>(GetCacheKey(principal.CredentialId, scheme), key =>
+		return _cache.GetOrCreate<Entry>(GetCacheKey(principal.CredentialId, scheme), key =>
 		{
 			//获取指定方案的安全身份
 			var identity = principal.GetIdentity(scheme);
@@ -93,14 +105,46 @@ public static class ClaimsIdentityModeling
 
 			//缓存身份模型及其失效的变更令牌
 			return model != null ?
-				new(model, principal.Disposed) :
+				new(new Entry(model), principal.Disposed) :
 				new(null, Zongsoft.Common.Notification.Notified);
 		});
 	}
+
+	private static object GetModelCore(this CredentialPrincipal principal, string scheme = null)
+	{
+		if(principal == null || principal.CredentialId == null)
+			return null;
+
+		var result = GetModelEntry(principal, scheme);
+		return result?.Identity;
+	}
+
+	private static T GetModelCore<T>(this CredentialPrincipal principal, string scheme, Func<object, T> wrapper)
+	{
+		if(wrapper == null)
+			throw new ArgumentNullException(nameof(wrapper));
+
+		if(principal == null || principal.CredentialId == null)
+			return default;
+
+		var result = GetModelEntry(principal, scheme);
+		return result == null ? default : result.Get(wrapper);
+	}
 	#endregion
 
-	#region 私有方法
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	static string GetCacheKey(string credentialId, string scheme) => string.IsNullOrEmpty(scheme) ? credentialId : $"{credentialId}:{scheme}";
+	#region 嵌套子类
+	private sealed class Entry(object identity)
+	{
+		public readonly object Identity = identity;
+		private volatile ConcurrentDictionary<Type, object> _bag;
+
+		public T Get<T>(Func<object, T> creator)
+		{
+			if(_bag == null)
+				Interlocked.CompareExchange(ref _bag, new(), null);
+
+			return (T)_bag.GetOrAdd(typeof(T), key => creator(this.Identity));
+		}
+	}
 	#endregion
 }
