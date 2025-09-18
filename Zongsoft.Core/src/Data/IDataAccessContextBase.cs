@@ -47,6 +47,9 @@ public interface IDataAccessContextBase
 
 	/// <summary>获取当前上下文关联的数据访问器。</summary>
 	IDataAccess DataAccess { get; }
+
+	/// <summary>获取当前安全主体。</summary>
+	System.Security.Claims.ClaimsPrincipal Principal { get; }
 }
 
 /// <summary>
