@@ -36,6 +36,7 @@ namespace Zongsoft.Security;
 /// <summary>
 /// 提供密码操作的工具类。
 /// </summary>
+[Obsolete($"This class has been deprecated, Please use the {nameof(Password)} struct instead.")]
 public static class PasswordUtility
 {
 	#region 私有变量
