@@ -39,7 +39,8 @@ namespace Zongsoft.Common;
 public static class Randomizer
 {
 	#region 常量定义
-	private const string Digits = "0123456789ABCDEFGHJKMNPRSTUVWXYZ";
+	private const string SECRET = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz!#$%&";
+	private const string CHARACTERS = "0123456789ABCDEFGHJKMNPRSTUVWXYZ";
 	#endregion
 
 	#region 静态字段
@@ -153,35 +154,51 @@ public static class Randomizer
 		}
 	}
 
+	public static string GenerateSecret(int length = 16)
+	{
+		if(length < 1 || length > 1024)
+			throw new ArgumentOutOfRangeException(nameof(length));
+
+		#if NET8_0_OR_GREATER
+		return System.Security.Cryptography.RandomNumberGenerator.GetString(SECRET, length);
+		#else
+		Span<char> buffer = stackalloc char[length];
+		var data = System.Security.Cryptography.RandomNumberGenerator.GetBytes(length);
+
+		for(int i = 0; i < length; i++)
+			buffer[i] = SECRET[data[i] % SECRET.Length];
+
+		return new string(buffer);
+		#endif
+	}
+
 	public static string GenerateString() => GenerateString(8);
 	public static string GenerateString(int length, bool digitOnly = false)
 	{
 		if(length < 1 || length > 1024)
 			throw new ArgumentOutOfRangeException(nameof(length));
 
-#if NET8_0_OR_GREATER
+		#if NET8_0_OR_GREATER
 		if(digitOnly)
 		{
-			var characters = Random.Shared.GetItems(Digits.AsSpan(..10), length);
+			var characters = Random.Shared.GetItems(CHARACTERS.AsSpan(..10), length);
 			return new string(characters);
 		}
 
-		return System.Security.Cryptography.RandomNumberGenerator.GetString(Digits, length);
-#else
-		var result = new char[length];
+		return System.Security.Cryptography.RandomNumberGenerator.GetString(CHARACTERS, length);
+		#else
+		Span<char> buffer = stackalloc char[length];
 		var data = System.Security.Cryptography.RandomNumberGenerator.GetBytes(length);
 
 		//确保首位字符始终为数字字符
-		result[0] = Digits[data[0] % 10];
-		var divisor = digitOnly ? 10 : 32;
+		buffer[0] = CHARACTERS[data[0] % 10];
+		var size = digitOnly ? 10 : CHARACTERS.Length;
 
 		for(int i = 1; i < length; i++)
-		{
-			result[i] = Digits[data[i] % divisor];
-		}
+			buffer[i] = CHARACTERS[data[i] % size];
 
-		return new string(result);
-#endif
+		return new string(buffer);
+		#endif
 	}
 
 	[Obsolete]
@@ -212,7 +229,7 @@ public static class Randomizer
 			else
 				value = data[index] & (((255 >> (takeCount - 5)) - (255 >> takeCount)) >> bitCount);
 
-			result[i] = Digits[value % 32];
+			result[i] = CHARACTERS[value % 32];
 		}
 
 		return new string(result);

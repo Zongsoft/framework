@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 using Xunit;
 
@@ -6,10 +7,28 @@ namespace Zongsoft.Common.Tests;
 
 public class RandomizerTest
 {
+	const int COUNT = 100;
+
+	[Fact]
+	public void TestGenerateSecret()
+	{
+		var hashset = new HashSet<string>();
+
+		for(int length = 1; length <= COUNT; length++)
+		{
+			var secret = Randomizer.GenerateSecret(length);
+			Assert.NotEmpty(secret);
+			Assert.Equal(length, secret.Length);
+			Assert.True(hashset.Add(secret));
+		}
+	}
+
 	[Fact]
 	public void TestGenerateString()
 	{
-		for(int length = 1; length <= 100; length++)
+		var hashset = new HashSet<string>(COUNT);
+
+		for(int length = 1; length <= COUNT; length++)
 		{
 			var digits = Randomizer.GenerateString(length, true);
 
@@ -20,6 +39,9 @@ public class RandomizerTest
 			var letters = Randomizer.GenerateString(length, false);
 			Assert.NotEmpty(letters);
 			Assert.Equal(length, letters.Length);
+
+			Assert.True(hashset.Add(digits));
+			Assert.True(hashset.Add(letters));
 		}
 	}
 }
