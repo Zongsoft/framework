@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS `Security_Role` (
   `RoleId`      int unsigned NOT NULL COMMENT '主键，角色编号',
   `Namespace`   varchar(50)  NULL     COMMENT '命名空间，表示应用或组织机构的标识' COLLATE 'ascii_general_ci',
   `Name`        varchar(50)  NOT NULL COMMENT '角色名称，所属命名空间内具有唯一性' COLLATE 'utf8mb4_0900_ai_ci',
-  `Avatar`      varchar(100  NULL     COMMENT '角色头像' COLLATE 'utf8mb4_0900_ai_ci',
+  `Avatar`      varchar(100) NULL     COMMENT '角色头像' COLLATE 'utf8mb4_0900_ai_ci',
   `Enabled`     tinyint(1)   NOT NULL COMMENT '是否启用' DEFAULT 1,
   `Nickname`    varchar(50)  NULL     COMMENT '角色昵称' COLLATE 'utf8mb4_0900_ai_ci',
   `Description` varchar(500) NULL     COMMENT '描述信息' COLLATE 'utf8mb4_0900_ai_ci',
@@ -65,9 +65,11 @@ CREATE TABLE IF NOT EXISTS `Security_PrivilegeFiltering` (
 
 
 /* 添加系统内置角色 */
-INSERT INTO Security_Role (RoleId, Name, Nickname, Description) VALUES (1, 'Administrators', '系统管理', '系统管理角色(系统内置角色)');
-INSERT INTO Security_Role (RoleId, Name, Nickname, Description) VALUES (2, 'Security', '安全管理', '安全管理角色(系统内置角色)');
+INSERT INTO Security_Role (`RoleId`, `Name`, `Nickname`, `Description`) VALUES
+  (1, 'Administrators', '系统管理', '系统管理角色(系统内置角色)'),
+  (2, 'Security', '安全管理', '安全管理角色(系统内置角色)');
 
 /* 添加系统内置用户 */
-INSERT INTO Security_User (UserId, Name, Nickname, Description, Status) VALUES (1, 'Administrator', '系统管理员', '系统管理员(系统内置帐号)', 0);
-INSERT INTO Security_User (UserId, Name, Nickname, Description, Status) VALUES (2, 'Guest', '来宾', '来宾', 1);
+INSERT INTO Security_User (`UserId`, `Name`, `Nickname`, `Description`) VALUES
+  (1, 'Administrator', '系统管理员', '系统管理员(系统内置帐号)'),
+  (2, 'Guest', '来宾', '来宾');

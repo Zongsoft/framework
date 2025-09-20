@@ -126,9 +126,11 @@ GO
 
 
 /* 添加系统内置角色 */
-INSERT INTO Security_Role (RoleId, Name, Nickname, Description) VALUES (1, 'Administrators', N'系统管理', N'系统管理角色(系统内置角色)');
-INSERT INTO Security_Role (RoleId, Name, Nickname, Description) VALUES (2, 'Security', N'安全管理', N'安全管理角色(系统内置角色)');
+INSERT INTO Security_Role (RoleId, Name, Nickname, Description) VALUES
+  (1, 'Administrators', N'系统管理', N'系统管理角色(系统内置角色)')
+  (2, 'Security', N'安全管理', N'安全管理角色(系统内置角色)');
 
 /* 添加系统内置用户 */
-INSERT INTO Security_User (UserId, Name, Nickname, Description, Status) VALUES (1, 'Administrator', N'系统管理员', N'系统管理员(系统内置帐号)', 0);
-INSERT INTO Security_User (UserId, Name, Nickname, Description, Status) VALUES (2, 'Guest', N'来宾', N'来宾', 1);
+INSERT INTO Security_User (UserId, Name, Nickname, Description) VALUES
+  (1, 'Administrator', N'系统管理员', N'系统管理员(系统内置帐号)'),
+  (2, 'Guest', N'来宾', N'来宾');
