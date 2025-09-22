@@ -39,63 +39,48 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using Zongsoft.Services;
+using Zongsoft.Configuration;
+
 namespace Zongsoft.Web.OpenApi.Transformers;
 
 public class DocumentTransformer : IOpenApiDocumentTransformer
 {
 	public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellation)
 	{
-		var server = new OpenApiServer()
+		var servers = GetServers(context.ApplicationServices.Resolve<IConfiguration>() ?? ApplicationContext.Current.Configuration);
+
+		foreach(var server in servers)
 		{
-			Url = "http://{host}:{port}",
-			Description = "for development."
-		};
+			var openApiServer = new OpenApiServer()
+			{
+				Url = server.Url,
+				Description = server.Name
+			};
 
-		server.Variables.Add("host", new OpenApiServerVariable()
-		{
-			Default = "localhost",
-			Enum = ["localhost", "127.0.0.1"],
-			Description = "",
-		});
+			foreach(var variable in server.Variables)
+			{
+				openApiServer.Variables.Add(variable.Name, new OpenApiServerVariable()
+				{
+					Default = variable.Default,
+					Enum = [.. variable.Values],
+				});
+			}
 
-		server.Variables.Add("port", new OpenApiServerVariable()
-		{
-			Default = "8069",
-			Enum = ["8069", "80", "81", "82", "83", "84", "85"],
-			Description = "",
-		});
-
-		document.Servers.Add(server);
-
-		server = new OpenApiServer()
-		{
-			Url = "http://{site}.{host}:{port}",
-			Description = "for stage or production."
-		};
-
-		server.Variables.Add("site", new OpenApiServerVariable()
-		{
-			Default = "b",
-			Enum = ["a", "b", "c", "gateway", "iot"],
-			Description = "",
-		});
-
-		server.Variables.Add("host", new OpenApiServerVariable()
-		{
-			Default = "localhost",
-			Enum = ["localhost", "127.0.0.1"],
-			Description = "",
-		});
-
-		server.Variables.Add("port", new OpenApiServerVariable()
-		{
-			Default = "80",
-			Enum = ["80", "88", "8080", "8088"],
-			Description = "",
-		});
-
-		document.Servers.Add(server);
+			document.Servers.Add(openApiServer);
+		}
 
 		return Task.CompletedTask;
+	}
+
+	static IEnumerable<Configuration.ServerOption> GetServers(IConfiguration configuration)
+	{
+		if(configuration == null)
+			throw new ArgumentNullException(nameof(configuration));
+
+		var servers = configuration.GetOption<Configuration.ServerOptionCollection>("/Web/OpenAPI");
+
+		foreach(var server in servers)
+			yield return server;
 	}
 }
