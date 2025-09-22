@@ -34,8 +34,47 @@ using Zongsoft.Data;
 
 namespace Zongsoft.Security.Privileges;
 
-internal static class UserUtility
+public static class UserUtility
 {
+	#region 公共方法
+	public static ClaimsIdentity Identity(this IUser user, string scheme, string issuer, TimeSpan? expiration = null)
+	{
+		if(user == null)
+			return new ClaimsIdentity();
+
+		var identity = new CredentialIdentity(user.Name, scheme, issuer)
+		{
+			Label = string.IsNullOrEmpty(user.Nickname) ? user.Name : user.Nickname
+		};
+
+		identity.SetClaim(identity.NameClaimType, user.Name, ClaimValueTypes.String, issuer);
+
+		if(user.Identifier.HasValue)
+			identity.SetClaim(ClaimTypes.NameIdentifier, user.Identifier.Value);
+
+		if(!string.IsNullOrEmpty(user.Email))
+			identity.SetClaim(ClaimTypes.Email, user.Email, ClaimValueTypes.Email, issuer);
+		if(!string.IsNullOrEmpty(user.Phone))
+			identity.SetClaim(ClaimTypes.MobilePhone, user.Phone, ClaimValueTypes.String, issuer);
+
+		if(user.Gender.HasValue)
+			identity.SetClaim(ClaimTypes.Gender, user.Gender, ClaimValueTypes.Boolean, issuer);
+		if(!string.IsNullOrEmpty(user.Avatar))
+			identity.SetClaim(nameof(user.Avatar), user.Avatar, ClaimValueTypes.String, issuer);
+
+		if(!string.IsNullOrEmpty(user.Namespace))
+			identity.SetClaim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String, issuer);
+		if(!string.IsNullOrEmpty(user.Description))
+			identity.SetClaim(ClaimNames.Description, user.Description, ClaimValueTypes.String, issuer);
+
+		if(expiration.HasValue && expiration.Value > TimeSpan.Zero)
+			identity.SetClaim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration, issuer);
+
+		return identity;
+	}
+	#endregion
+
+	#region 内部方法
 	internal static ICondition GetCriteria(string identity, string @namespace = null) => GetCriteria(identity, @namespace, out _);
 	internal static ICondition GetCriteria(string identity, out string identityType) => GetCriteria(identity, null, out identityType);
 	internal static ICondition GetCriteria(string identity, string @namespace, out string identityType)
@@ -96,50 +135,5 @@ internal static class UserUtility
 			return true;
 		}
 	}
-
-	public static ClaimsIdentity Identity(this IUser user, string scheme, string issuer, TimeSpan? expiration = null)
-	{
-		if(user == null)
-			return new ClaimsIdentity();
-
-		var identity = new CredentialIdentity(user.Name, scheme, issuer)
-		{
-			Label = user.Nickname
-		};
-
-		SetClaims(identity, user, expiration);
-		return identity;
-	}
-
-	private static bool SetClaims(this ClaimsIdentity identity, IUser user, TimeSpan? expiration = null)
-	{
-		if(identity == null || user == null)
-			return false;
-
-		if(!string.IsNullOrWhiteSpace(user.Nickname))
-			identity.Label = user.Nickname;
-
-		identity.SetClaim(identity.NameClaimType, user.Name, ClaimValueTypes.String);
-		identity.SetClaim(ClaimTypes.NameIdentifier, user.Identifier.Value);
-
-		if(!string.IsNullOrEmpty(user.Email))
-			identity.SetClaim(ClaimTypes.Email, user.Email, ClaimValueTypes.Email);
-		if(!string.IsNullOrEmpty(user.Phone))
-			identity.SetClaim(ClaimTypes.MobilePhone, user.Phone, ClaimValueTypes.String);
-
-		if(user.Gender.HasValue)
-			identity.SetClaim(ClaimTypes.Gender, user.Gender, ClaimValueTypes.Boolean);
-		if(!string.IsNullOrEmpty(user.Avatar))
-			identity.SetClaim(nameof(user.Avatar), user.Avatar, ClaimValueTypes.String);
-
-		if(!string.IsNullOrEmpty(user.Namespace))
-			identity.SetClaim(ClaimNames.Namespace, user.Namespace, ClaimValueTypes.String);
-		if(!string.IsNullOrEmpty(user.Description))
-			identity.SetClaim(ClaimNames.Description, user.Description, ClaimValueTypes.String);
-
-		if(expiration.HasValue && expiration.Value > TimeSpan.Zero)
-			identity.SetClaim(ClaimTypes.Expiration, expiration.ToString(), expiration.Value.TotalHours > 24 ? ClaimValueTypes.YearMonthDuration : ClaimValueTypes.DaytimeDuration);
-
-		return true;
-	}
+	#endregion
 }
