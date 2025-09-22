@@ -14,9 +14,9 @@
 	</PropertyGroup>
 
 	<ItemGroup Condition="$(TargetFramework) == 'net9.0'">
-		<PackageReference Include="Microsoft.OpenApi" VersionOverride="1.6.24" />
-		<PackageReference Include="Microsoft.AspNetCore.OpenApi" VersionOverride="9.0.2" />
-		<PackageReference Include="Scalar.AspNetCore" VersionOverride="2.1.5" />
+		<PackageReference Include="Microsoft.OpenApi" VersionOverride="1.6.25" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" VersionOverride="9.0.9" />
+		<PackageReference Include="Scalar.AspNetCore" VersionOverride="2.8.5" />
 	</ItemGroup>
 
 	<Choose>
