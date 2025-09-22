@@ -102,6 +102,7 @@ public class LuaExpressionEvaluatorTest
 		result = evaluator.Evaluate(@"
 		local dict = dictionary();
 		dict[""Integer""] = 100;
+		dict[""Double""] = 60.33;
 		dict[""String""] = ""ABC"";
 		return dict;");
 
@@ -110,8 +111,9 @@ public class LuaExpressionEvaluatorTest
 		var dict = (Dictionary<string, object>)result;
 		Assert.NotNull(dict);
 		Assert.NotEmpty(dict);
-		Assert.Equal(2, dict.Count);
+		Assert.Equal(3, dict.Count);
 		Assert.Equal(100L, dict["Integer"]);
+		Assert.Equal(60.33, dict["Double"]);
 		Assert.Equal("ABC", dict["String"]);
 	}
 
