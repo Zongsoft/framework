@@ -33,9 +33,9 @@ public static class ClaimNames
 {
 	private const string URI = "http://schemas.zongsoft.com/security/claims";
 
-	public const string Namespace = URI + "/namespace";
-	public const string Description = URI + "/description";
-	public const string Creation = URI + "/creation";
-	public const string Modification = URI + "/modification";
-	public const string Authorization = URI + "/authorization";
+	public const string Namespace     = $"{URI}/namespace";
+	public const string Description   = $"{URI}/description";
+	public const string Creation      = $"{URI}/creation";
+	public const string Modification  = $"{URI}/modification";
+	public const string Authorization = $"{URI}/authorization";
 }

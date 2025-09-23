@@ -115,4 +115,39 @@ public static class ClaimUtility
 			_ => Common.TypeAlias.GetAlias(type),
 		};
 	}
+
+	public static string GetClaimTypeAlias(this Claim claim)
+	{
+		if(claim == null)
+			throw new ArgumentNullException(nameof(claim));
+
+		return GetClaimTypeAlias(claim.Type);
+	}
+
+	public static string GetClaimTypeAlias(string claimType)
+	{
+		if(string.IsNullOrEmpty(claimType))
+			return null;
+
+		if(claimType.Contains('/') || claimType.Contains('\\'))
+		{
+			return claimType switch
+			{
+				ClaimTypes.NameIdentifier => "Identifier",
+				_ => GetName(claimType),
+			};
+		}
+
+		return claimType;
+
+		static string GetName(string url)
+		{
+			var index = url.LastIndexOfAny(['/', '\\'], url.Length - 1);
+
+			if(index > 0 && index < url.Length - 1)
+				return url[(index + 1)..];
+
+			return url;
+		}
+	}
 }

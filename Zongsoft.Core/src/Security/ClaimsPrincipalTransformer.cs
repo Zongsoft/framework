@@ -120,8 +120,21 @@ public class ClaimsPrincipalTransformer : IClaimsPrincipalTransformer
 				return transformer.Transform(identity);
 		}
 
-		return identity.Claims
-			.Select(claim => new KeyValuePair<string, string>(claim.Type, claim.Value));
+		var expando = new System.Dynamic.ExpandoObject();
+
+		foreach(var claim in identity.Claims)
+		{
+			var name = claim.GetClaimTypeAlias();
+			if(string.IsNullOrEmpty(name))
+				continue;
+
+			if(char.IsLower(name[0]))
+				name = char.ToUpper(name[0]) + name[1..];
+
+			((IDictionary<string, object>)expando)[name] = claim.Value;
+		}
+
+		return expando;
 	}
 	#endregion
 }
