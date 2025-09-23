@@ -16,6 +16,10 @@
 		</dependencies>
 	</manifest>
 
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="ClickHouse" value="{static:Zongsoft.Data.ClickHouse.Configuration.ClickHouseConnectionSettingsDriver.Instance, Zongsoft.Data.ClickHouse}" />
+	</extension>
+
 	<extension path="/Workbench/Data/Drivers">
 		<object name="ClickHouse" value="{static:Zongsoft.Data.ClickHouse.ClickHouseDriver.Instance, Zongsoft.Data.ClickHouse}" />
 	</extension>

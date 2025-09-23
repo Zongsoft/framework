@@ -16,6 +16,10 @@
 		</dependencies>
 	</manifest>
 
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="MsSql" value="{static:Zongsoft.Data.MsSql.Configuration.MsSqlConnectionSettingsDriver.Instance, Zongsoft.Data.MsSql}" />
+	</extension>
+
 	<extension path="/Workbench/Data/Drivers">
 		<object name="MsSql" value="{static:Zongsoft.Data.MsSql.MsSqlDriver.Instance, Zongsoft.Data.MsSql}" />
 	</extension>

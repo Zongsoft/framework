@@ -16,6 +16,10 @@
 		</dependencies>
 	</manifest>
 
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="SQLite" value="{static:Zongsoft.Data.SQLite.Configuration.SQLiteConnectionSettingsDriver.Instance, Zongsoft.Data.SQLite}" />
+	</extension>
+
 	<extension path="/Workbench/Data/Drivers">
 		<object name="SQLite" value="{static:Zongsoft.Data.SQLite.SQLiteDriver.Instance, Zongsoft.Data.SQLite}" />
 	</extension>

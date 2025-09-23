@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>2.1.0</Version>
+		<Version>2.2.0</Version>
 		<Product>Zongsoft Data Driver for ClickHouse</Product>
 		<Description>This is a data driver for ClickHouse of the Zongsoft data engine.</Description>
 		<Copyright>Copyright(C) Zongsoft Studio 2010-2024. All rights reserved.</Copyright>
@@ -18,7 +18,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ClickHouse.Client" VersionOverride="7.11.0" />
+		<PackageReference Include="ClickHouse.Client" VersionOverride="7.14.0" />
 	</ItemGroup>
 
 	<ItemGroup>
