@@ -142,10 +142,11 @@ public static class ClaimUtility
 
 		static string GetName(string url)
 		{
-			var index = url.LastIndexOfAny(['/', '\\'], url.Length - 1);
+			var lastly = url[^1] == '/' || url[^1] == '\\' ? 1 : 0;
+			var index = url.LastIndexOfAny(['/', '\\'], url.Length - lastly - 1);
 
-			if(index > 0 && index < url.Length - 1)
-				return url[(index + 1)..];
+			if(index >= 0)
+				return url[(index + 1)..^lastly];
 
 			return url;
 		}
