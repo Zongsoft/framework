@@ -2093,14 +2093,14 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	protected abstract class DataSequencerBase(DataAccessBase accessor) : IDataSequencer
 	{
 		#region 成员字段
-		private ISequence _sequence;
+		private ISequenceBase _sequence;
 		private readonly DataAccessBase _accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
 		#endregion
 
 		#region 公共属性
 		public string Name => _accessor.Name;
 		public DataAccessBase Accessor => _accessor;
-		public ISequence Sequence => _sequence ??= this.GetSequence();
+		public ISequenceBase Sequence => _sequence ??= Common.Sequence.Variate(this.GetSequence());
 		#endregion
 
 		#region 公共方法
@@ -2115,9 +2115,9 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		#endregion
 
 		#region 虚拟方法
-		protected virtual ISequence GetSequence()
+		protected virtual ISequenceBase GetSequence()
 		{
-			var provider = ApplicationContext.Current.Services.ResolveRequired<IServiceProvider<ISequence>>();
+			var provider = ApplicationContext.Current.Services.ResolveRequired<IServiceProvider<ISequenceBase>>();
 
 			var sequence = provider.GetService(this.Name);
 			if(sequence == null && !string.IsNullOrEmpty(this.Name))

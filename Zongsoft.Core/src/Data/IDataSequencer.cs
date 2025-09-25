@@ -35,7 +35,7 @@ namespace Zongsoft.Data;
 
 public interface IDataSequencer
 {
-	Common.ISequence Sequence { get; }
+	Common.ISequenceBase Sequence { get; }
 
 	long Increase(string name, string field, int interval = 1);
 	long Increase(Metadata.IDataEntitySimplexProperty property, int interval = 1);
