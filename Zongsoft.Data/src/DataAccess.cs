@@ -205,7 +205,7 @@ public class DataAccess : DataAccessBase
 	#endregion
 
 	#region 嵌套子类
-	private sealed class DataSequencer(DataAccess accessor) : DataSequencerBase(accessor), ISequence
+	private sealed class DataSequencer(DataAccess accessor) : DataSequencerBase(accessor), ISequenceBase
 	{
 		#region 常量定义
 		private const string SEQUENCE_KEY = "Zongsoft.Sequence:";
@@ -221,9 +221,8 @@ public class DataAccess : DataAccessBase
 			if(sequence.IsBuiltin)
 				return 0L;
 
-			var key = GetSequenceKey(null, sequence, null);
-
-			return this.Sequence.Increase(key,
+			return this.Sequence.Increase(
+				GetSequenceKey(null, sequence, null),
 				interval == 1 ? sequence.Interval : interval,
 				sequence.Seed);
 		}
@@ -237,11 +236,10 @@ public class DataAccess : DataAccessBase
 			if(sequence.IsBuiltin)
 				return ValueTask.FromResult(0L);
 
-			var key = GetSequenceKey(null, sequence, null);
-
-			return this.Sequence.IncreaseAsync(key,
+			return this.Sequence.IncreaseAsync(
+				GetSequenceKey(null, sequence, null),
 				interval == 1 ? sequence.Interval : interval,
-				sequence.Seed, null, cancellation);
+				sequence.Seed, cancellation);
 		}
 
 		public long Increase(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
@@ -249,7 +247,10 @@ public class DataAccess : DataAccessBase
 			if(sequence == null)
 				throw new ArgumentNullException(nameof(sequence));
 
-			return this.Sequence.Increase(GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed);
+			return this.Sequence.Increase(
+				GetSequenceKey(context, sequence, data),
+				sequence.Interval,
+				sequence.Seed);
 		}
 
 		public ValueTask<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
@@ -257,117 +258,63 @@ public class DataAccess : DataAccessBase
 			if(sequence == null)
 				throw new ArgumentNullException(nameof(sequence));
 
-			return this.Sequence.IncreaseAsync(GetSequenceKey(context, sequence, data), sequence.Interval, sequence.Seed, null, cancellation);
+			return this.Sequence.IncreaseAsync(
+				GetSequenceKey(context, sequence, data),
+				sequence.Interval,
+				sequence.Seed,
+				cancellation);
 		}
 		#endregion
 
 		#region 显式实现
-		long ISequence.Increase(string key, int interval, int seed, TimeSpan? expiry)
+		long ISequenceBase.Increase(string key, int interval, int seed)
 		{
 			key = GetSequenceKey(key, out var sequence);
 
 			return this.Sequence.Increase(key,
 				interval == 1 ? sequence.Interval : interval,
-				seed == 0 ? sequence.Seed : seed,
-				expiry);
+				seed == 0 ? sequence.Seed : seed);
 		}
 
-		double ISequence.Increase(string key, double interval, double seed, TimeSpan? expiry)
-		{
-			key = GetSequenceKey(key, out var sequence);
-
-			return this.Sequence.Increase(key,
-				interval == 1 ? sequence.Interval : interval,
-				seed == 0 ? sequence.Seed : seed,
-				expiry);
-		}
-
-		long ISequence.Decrease(string key, int interval, int seed, TimeSpan? expiry)
+		long ISequenceBase.Decrease(string key, int interval, int seed)
 		{
 			key = GetSequenceKey(key, out var sequence);
 
 			return this.Sequence.Decrease(key,
 				interval == 1 ? sequence.Interval : interval,
-				seed == 0 ? sequence.Seed : seed,
-				expiry);
+				seed == 0 ? sequence.Seed : seed);
 		}
 
-		double ISequence.Decrease(string key, double interval, double seed, TimeSpan? expiry)
-		{
-			key = GetSequenceKey(key, out var sequence);
-
-			return this.Sequence.Decrease(key,
-				interval == 1 ? sequence.Interval : interval,
-				seed == 0 ? sequence.Seed : seed,
-				expiry);
-		}
-
-		ValueTask<long> ISequence.IncreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
+		ValueTask<long> ISequenceBase.IncreaseAsync(string key, int interval, int seed, CancellationToken cancellation)
 		{
 			key = GetSequenceKey(key, out var sequence);
 
 			return this.Sequence.IncreaseAsync(key,
 				interval == 1 ? sequence.Interval : interval,
 				seed == 0 ? sequence.Seed : seed,
-				expiry,
 				cancellation);
 		}
 
-		ValueTask<double> ISequence.IncreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
-		{
-			key = GetSequenceKey(key, out var sequence);
-
-			return this.Sequence.IncreaseAsync(key,
-				interval == 1 ? sequence.Interval : interval,
-				seed == 0 ? sequence.Seed : seed,
-				expiry,
-				cancellation);
-		}
-
-		ValueTask<long> ISequence.DecreaseAsync(string key, int interval, int seed, TimeSpan? expiry, CancellationToken cancellation)
+		ValueTask<long> ISequenceBase.DecreaseAsync(string key, int interval, int seed, CancellationToken cancellation)
 		{
 			key = GetSequenceKey(key, out var sequence);
 
 			return this.Sequence.DecreaseAsync(key,
 				interval == 1 ? sequence.Interval : interval,
 				seed == 0 ? sequence.Seed : seed,
-				expiry,
 				cancellation);
 		}
 
-		ValueTask<double> ISequence.DecreaseAsync(string key, double interval, double seed, TimeSpan? expiry, CancellationToken cancellation)
+		void ISequenceBase.Reset(string key, int value)
 		{
 			key = GetSequenceKey(key, out var sequence);
-
-			return this.Sequence.DecreaseAsync(key,
-				interval == 1 ? sequence.Interval : interval,
-				seed == 0 ? sequence.Seed : seed,
-				expiry,
-				cancellation);
+			this.Sequence.Reset(key, value == 0 ? sequence.Seed : value);
 		}
 
-		void ISequence.Reset(string key, int value, TimeSpan? expiry)
+		ValueTask ISequenceBase.ResetAsync(string key, int value, CancellationToken cancellation)
 		{
 			key = GetSequenceKey(key, out var sequence);
-			this.Sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
-		}
-
-		void ISequence.Reset(string key, double value, TimeSpan? expiry)
-		{
-			key = GetSequenceKey(key, out var sequence);
-			this.Sequence.Reset(key, value == 0 ? sequence.Seed : value, expiry);
-		}
-
-		ValueTask ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
-		{
-			key = GetSequenceKey(key, out var sequence);
-			return this.Sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
-		}
-
-		ValueTask ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
-		{
-			key = GetSequenceKey(key, out var sequence);
-			return this.Sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, expiry, cancellation);
+			return this.Sequence.ResetAsync(key, value == 0 ? sequence.Seed : value, cancellation);
 		}
 		#endregion
 

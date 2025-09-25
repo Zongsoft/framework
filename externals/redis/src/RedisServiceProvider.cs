@@ -40,10 +40,12 @@ namespace Zongsoft.Externals.Redis;
 
 [Service(
 	typeof(IServiceProvider<ISequence>),
+	typeof(IServiceProvider<ISequenceBase>),
 	typeof(IServiceProvider<IDistributedCache>),
 	typeof(IServiceProvider<Services.Distributing.IDistributedLockManager>))]
 public class RedisServiceProvider :
 	IServiceProvider<ISequence>,
+	IServiceProvider<ISequenceBase>,
 	IServiceProvider<IDistributedCache>,
 	IServiceProvider<Services.Distributing.IDistributedLockManager>
 {
@@ -81,6 +83,7 @@ public class RedisServiceProvider :
 
 	#region 显式实现
 	ISequence IServiceProvider<ISequence>.GetService(string name) => GetRedis(name);
+	ISequenceBase IServiceProvider<ISequenceBase>.GetService(string name) => GetRedis(name);
 	IDistributedCache IServiceProvider<IDistributedCache>.GetService(string name) => GetRedis(name);
 	Services.Distributing.IDistributedLockManager IServiceProvider<Services.Distributing.IDistributedLockManager>.GetService(string name) => GetRedis(name);
 	#endregion
