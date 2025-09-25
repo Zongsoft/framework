@@ -72,7 +72,7 @@ public partial class Settings : ISettings, IEquatable<Settings>
 	#endregion
 
 	#region 公共属性
-	public string Name { get; }
+	public string Name { get; internal set; }
 	public string Value
 	{
 		get
