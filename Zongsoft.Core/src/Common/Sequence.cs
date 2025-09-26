@@ -37,12 +37,12 @@ namespace Zongsoft.Common;
 public static class Sequence
 {
 	/// <summary>为指定的序列号提供程序包装一个自适应可变速率的序列号器。</summary>
-	/// <param name="sequence">指定的真实序列号</param>
+	/// <param name="sequence">指定的待包装的序列号器。</param>
 	/// <returns>返回自适应可变速率的序列号器。</returns>
 	/// <exception cref="ArgumentNullException">指定的<paramref name="sequence"/>参数为空(<c>null</c>)。</exception>
 	/// <remarks>
-	///		<para>序列号器的实现一般依赖于 Redis、Etcd、数据库等进行持久化，每次调用都会导致网络通讯，这在高频调用场景下会出现性能瓶颈问题，譬如在批量写数据时需要频繁获取序列号。</para>
-	/// 	<para>该方法会返回一个包装指定序列号提供程序的自适应可变速率的序号器，它会根据调用频率远程递增(减)更大的步长(<c>interval</c>)，然后在本地内存进行递增(减)，待本地计数器溢满后再根据频率来调用远程的序列号器。</para>
+	/// 	<para>序列号器的实现一般依赖于 Redis、Etcd、数据库等进行持久化，每次调用都会导致网络通讯，这在高频调用场景下会出现性能瓶颈问题，譬如在批量写数据时需要频繁获取序列号。</para>
+	/// 	<para>该方法会返回一个包装指定序列号提供程序的自适应可变速率的序号器，它会根据调用频率来加大递增(减)的步长(<c>interval</c>)，然后在本地进行递增(减)，待本地计数器溢满后再根据频率来调用远程的序列号器。</para>
 	/// </remarks>
 	public static ISequenceBase Variate(ISequenceBase sequence)
 	{
@@ -90,6 +90,12 @@ public static class Sequence
 
 	private sealed class Variator(string name, ISequenceBase sequence)
 	{
+		#region 常量定义
+		const float ACQUIRE_RATIO = 2.0f;
+		const float ACQUIRE_INTERVAL = 2000;
+		#endregion
+
+		#region 成员变量
 		private long _hits;
 		private long _value;
 		private int _interval;
@@ -98,7 +104,9 @@ public static class Sequence
 		private readonly string _name = name;
 		private readonly ISequenceBase _sequence = sequence;
 		private readonly SemaphoreSlim _mutex = new(1, 1);
+		#endregion
 
+		#region 公共方法
 		public void Reset(int value)
 		{
 			try
@@ -106,10 +114,11 @@ public static class Sequence
 				_mutex.Wait();
 				_sequence.Reset(_name, value);
 
+				_hits = 0;
 				_value = 0;
+				_interval = 0;
 				_threshold = 0;
 				_timestamp = 0;
-				_interval = 0;
 			}
 			finally
 			{
@@ -124,10 +133,11 @@ public static class Sequence
 				await _mutex.WaitAsync(cancellation);
 				await _sequence.ResetAsync(_name, value, cancellation);
 
+				_hits = 0;
 				_value = 0;
+				_interval = 0;
 				_threshold = 0;
 				_timestamp = 0;
-				_interval = 0;
 			}
 			finally
 			{
@@ -160,24 +170,23 @@ public static class Sequence
 			else
 				return ValueTask.FromResult(value);
 		}
+		#endregion
 
+		#region 私有方法
 		private long Acquire(int interval, int seed)
 		{
-			const float RATIO = 2.0f;
-			const float MAXIMUM = 2000;
-
 			try
 			{
 				_mutex.Wait();
 
 				if(_value >= _threshold)
 				{
-					var duration = _timestamp > 0 ? Environment.TickCount64 - _timestamp : MAXIMUM;
+					var duration = _timestamp > 0 ? Environment.TickCount64 - _timestamp : ACQUIRE_INTERVAL;
 					var length = duration switch
 					{
 						<= 0 => Math.Max(1, _interval) * 2,
-						>= MAXIMUM => interval,
-						_ => (int)Math.Max(1, MAXIMUM / duration * RATIO) * interval,
+						>= ACQUIRE_INTERVAL => interval,
+						_ => (int)Math.Max(1, ACQUIRE_INTERVAL / duration * ACQUIRE_RATIO) * interval,
 					};
 
 					Interlocked.Increment(ref _hits);
@@ -197,21 +206,18 @@ public static class Sequence
 
 		private async ValueTask<long> AcquireAsync(int interval, int seed, CancellationToken cancellation)
 		{
-			const float RATIO = 2.5f;
-			const float MAXIMUM = 2000;
-
 			try
 			{
 				await _mutex.WaitAsync(cancellation);
 
 				if(_value >= _threshold)
 				{
-					var duration = _timestamp > 0 ? Environment.TickCount64 - _timestamp : MAXIMUM;
+					var duration = _timestamp > 0 ? Environment.TickCount64 - _timestamp : ACQUIRE_INTERVAL;
 					var length = duration switch
 					{
 						<= 0 => Math.Max(1, _interval) * 2,
-						>= MAXIMUM => interval,
-						_ => (int)Math.Max(1, MAXIMUM / duration * RATIO) * interval,
+						>= ACQUIRE_INTERVAL => interval,
+						_ => (int)Math.Max(1, ACQUIRE_INTERVAL / duration * ACQUIRE_RATIO) * interval,
 					};
 
 					Interlocked.Increment(ref _hits);
@@ -228,6 +234,11 @@ public static class Sequence
 
 			return await this.IncreaseAsync(interval, seed, cancellation);
 		}
+		#endregion
+
+		#region 重写方法
+		public override string ToString() => $"{_value}/{_threshold}({_hits}|{_interval})@{TimeSpan.FromMilliseconds(_timestamp)}";
+		#endregion
 	}
 	#endregion
 }

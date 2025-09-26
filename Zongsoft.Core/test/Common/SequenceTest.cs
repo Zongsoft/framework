@@ -22,6 +22,11 @@ public class SequenceTest
 
 		Parallel.For(1, 10000, _ => sequence.Increase("Var"));
 		Assert.Equal(10001, sequence.Increase("Var"));
+
+		sequence.Reset("Var");
+		Assert.Equal(1, sequence.Increase("Var"));
+		Assert.Equal(2, sequence.Increase("Var"));
+		Assert.Equal(3, sequence.Increase("Var"));
 	}
 
 	[Fact]
@@ -39,6 +44,11 @@ public class SequenceTest
 		await Parallel.ForAsync(1, 10000, async (_, cancellation) => await sequence.IncreaseAsync("Var", cancellation: cancellation));
 		Assert.Equal(10001, await sequence.IncreaseAsync("Var"));
 		#endif
+
+		sequence.Reset("Var");
+		Assert.Equal(1, sequence.Increase("Var"));
+		Assert.Equal(2, sequence.Increase("Var"));
+		Assert.Equal(3, sequence.Increase("Var"));
 	}
 
 	#region 嵌套子类
