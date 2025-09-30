@@ -81,6 +81,9 @@ public class CommandOptionAttribute : Attribute
 	/// <summary>获取命令选项的名称。</summary>
 	public string Name => _name;
 
+	/// <summary>获取命令选项的缩写字符。</summary>
+	public char Symbol { get; }
+
 	/// <summary>获取或设置命令选项是否必需的，默认值为假(<c>False</c>)。</summary>
 	public bool Required
 	{
