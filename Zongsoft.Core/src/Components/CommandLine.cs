@@ -34,6 +34,13 @@ namespace Zongsoft.Components;
 
 public class CommandLine
 {
+	public static bool TryParse(ReadOnlySpan<char> text, out IEnumerable<CommandNode> result)
+	{
+		result = Parse(text, null);
+		return result != null;
+	}
+
+	public static IEnumerable<CommandNode> Parse(ReadOnlySpan<char> text) => Parse(text, message => throw new ArgumentException(message));
 	private static IEnumerable<CommandNode> Parse(ReadOnlySpan<char> text, Action<string> onError)
 	{
 		if(text.IsEmpty)
@@ -41,6 +48,7 @@ public class CommandLine
 
 		var context = new Context(text);
 		var result = new List<CommandNode>();
+		CommandNode node = null;
 
 		while(context.Move())
 		{
@@ -51,32 +59,36 @@ public class CommandLine
 					break;
 				case State.Command:
 					if(DoCommand(ref context, out var name))
-						;
+						node = new CommandNode(name);
 					break;
 				case State.Argument:
 					if(DoArgument(ref context, out var argument))
-						;
+						node.Arguments.Add(argument);
 					break;
 				case State.OptionSign:
 					DoOptionSign(ref context);
 					break;
 				case State.OptionName:
-					if(DoOptionName(ref context, out var key) && context.State == State.Connector)
-						;
+					if(DoOptionName(ref context, out var optionName, out var kind))
+						node.Options.Add(new(kind, optionName));
 					break;
 				case State.OptionValue:
-					if(DoOptionValue(ref context, out var value))
-						;
+					if(DoOptionValue(ref context, out var optionValue))
+						node.Options[^1].Value = optionValue;
 					break;
 				case State.Assigner:
-					if(DoAssigner(ref context) && context.State == State.Connector)
-						;
+					DoAssigner(ref context);
 					break;
 				case State.Gapping:
 					DoGapping(ref context);
 					break;
 				case State.Connector:
 					DoConnector(ref context);
+
+					if(node != null)
+						result.Add(node);
+					node = null;
+
 					break;
 				case State.Error:
 					onError?.Invoke(context.ErrorMessage);
@@ -84,10 +96,24 @@ public class CommandLine
 			}
 		}
 
-		if(context.State == State.OptionName)
-			;
-		else if(context.State == State.OptionValue)
-			;
+		switch(context.State)
+		{
+			case State.Command:
+				node = new CommandNode(context.GetValue().ToString());
+				break;
+			case State.OptionName:
+				node.Options.Add(new(context.HasFlags(Flags.OptionFully) ? CommandOptionKind.Fully : CommandOptionKind.Short, context.GetValue().ToString()));
+				break;
+			case State.OptionValue:
+				node.Options[^1].Value = context.GetValue().ToString();
+				break;
+			case State.Argument:
+				node.Arguments.Add(context.GetValue().ToString());
+				break;
+		}
+
+		if(node != null)
+			result.Add(node);
 
 		return result;
 	}
@@ -132,7 +158,7 @@ public class CommandLine
 		if(context.IsLetterOrUnderscore)
 		{
 			name = null;
-			context.Accept();
+			context.Accept(Flags.None);
 			return false;
 		}
 
@@ -141,7 +167,7 @@ public class CommandLine
 			if(!context.HasFlags(Flags.Slash))
 			{
 				name = null;
-				context.Accept();
+				context.Accept(Flags.Slash);
 				return false;
 			}
 		}
@@ -180,7 +206,7 @@ public class CommandLine
 			if(context.IsWhitespace)
 			{
 				value = context.GetValue().ToString();
-				context.Reset(State.Connector);
+				context.Reset(State.Gapping);
 				return true;
 			}
 		}
@@ -206,7 +232,7 @@ public class CommandLine
 				return false;
 			}
 
-			context.Accept(Flags.OptionFully);
+			context.Reset(State.OptionSign, Flags.OptionFully);
 			return false;
 		}
 
@@ -220,33 +246,37 @@ public class CommandLine
 		return false;
 	}
 
-	private static bool DoOptionName(ref Context context, out string key)
+	private static bool DoOptionName(ref Context context, out string key, out CommandOptionKind kind)
 	{
 		if(context.IsWhitespace)
 		{
 			key = context.GetValue().ToString();
-			context.Reset(State.Gapping);
+			kind = context.HasFlags(Flags.OptionFully) ? CommandOptionKind.Fully : CommandOptionKind.Short;
+			context.Reset(State.Gapping, Flags.None);
 			return true;
 		}
 
 		if(context.Character == ':' || context.Character == '=')
 		{
 			key = context.GetValue().ToString();
+			kind = context.HasFlags(Flags.OptionFully) ? CommandOptionKind.Fully : CommandOptionKind.Short;
 			if(string.IsNullOrEmpty(key))
-				context.Error();
+				context.Error($"Option name is missing at the '{context.Offset + context.Index}' character position.");
 
-			context.Reset(State.Assigner);
+			context.Reset(State.Assigner, Flags.None);
 			return true;
 		}
 
 		if(context.IsLetterOrDigitOrUnderscore)
 		{
 			key = null;
+			kind = 0;
 			context.Accept();
 			return false;
 		}
 
 		key = null;
+		kind = 0;
 		context.Error();
 		return false;
 	}
@@ -258,7 +288,7 @@ public class CommandLine
 			if(context.IsWhitespace)
 			{
 				value = context.GetValue().ToString();
-				context.Reset(State.Connector);
+				context.Reset(State.Gapping);
 				return true;
 			}
 		}
@@ -287,12 +317,10 @@ public class CommandLine
 			case '\'':
 				context.Reset(State.OptionValue, Flags.SingleQuotation);
 				return true;
+			case ':':
 			case '=':
 				context.Error();
 				return false;
-			case ';':
-				context.Reset(State.Connector);
-				return true;
 			default:
 				context.Accept(State.OptionValue);
 				return true;
@@ -319,7 +347,7 @@ public class CommandLine
 				context.Reset(State.Argument, Flags.SingleQuotation);
 				return true;
 			default:
-				context.Reset(State.Argument);
+				context.Accept(State.Argument, Flags.None);
 				return true;
 		}
 	}
@@ -514,10 +542,19 @@ public class CommandLine
 
 	public class CommandNode
 	{
+		public CommandNode(string name)
+		{
+			this.Name = name;
+			this.Options = new List<CommandOption>();
+			this.Arguments = new List<string>();
+		}
+
 		public string Name { get; set; }
-		public ICollection<CommandOption> Options { get; }
-		public ICollection<string> Arguments { get; }
+		public IList<CommandOption> Options { get; }
+		public IList<string> Arguments { get; }
 		public CommandNode Next { get; set; }
+
+		public override string ToString() => $"{this.Name}({this.Options.Count},{this.Arguments.Count})";
 	}
 
 	public class CommandOption
@@ -532,6 +569,13 @@ public class CommandLine
 		public CommandOptionKind Kind { get; }
 		public string Name { get; set; }
 		public string Value { get; set; }
+
+		public override string ToString() => this.Kind switch
+		{
+			CommandOptionKind.Fully => string.IsNullOrEmpty(this.Value) ? $"--{this.Name}" : $"--{this.Name}:{this.Value}",
+			CommandOptionKind.Short => string.IsNullOrEmpty(this.Value) ? $"-{this.Name}" : $"-{this.Name}:{this.Value}",
+			_ => string.IsNullOrEmpty(this.Value) ? this.Name : $"{this.Name}:{this.Value}",
+		};
 	}
 
 	public enum CommandOptionKind
