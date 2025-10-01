@@ -232,6 +232,7 @@ public class CommandLine
 				return false;
 			}
 
+			//注意：对于双横线必须忽略其横线，因此下面必须使用 Reset 而不能使用 Accept 方法
 			context.Reset(State.OptionSign, Flags.OptionFully);
 			return false;
 		}
