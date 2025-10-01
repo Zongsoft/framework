@@ -32,23 +32,24 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public class CommandLine
+public static class CommandLine
 {
-	public static bool TryParse(ReadOnlySpan<char> text, out IEnumerable<CommandNode> result)
+	#region 解析方法
+	public static bool TryParse(ReadOnlySpan<char> text, out IReadOnlyList<Cmdlet> result)
 	{
 		result = Parse(text, null);
 		return result != null;
 	}
 
-	public static IEnumerable<CommandNode> Parse(ReadOnlySpan<char> text) => Parse(text, message => throw new ArgumentException(message));
-	private static IEnumerable<CommandNode> Parse(ReadOnlySpan<char> text, Action<string> onError)
+	public static IReadOnlyList<Cmdlet> Parse(ReadOnlySpan<char> text) => Parse(text, message => throw new ArgumentException(message));
+	private static List<Cmdlet> Parse(ReadOnlySpan<char> text, Action<string> onError)
 	{
 		if(text.IsEmpty)
 			return [];
 
 		var context = new Context(text);
-		var result = new List<CommandNode>();
-		CommandNode node = null;
+		var result = new List<Cmdlet>();
+		Cmdlet cmdlet = null;
 
 		while(context.Move())
 		{
@@ -59,22 +60,22 @@ public class CommandLine
 					break;
 				case State.Command:
 					if(DoCommand(ref context, out var name))
-						node = new CommandNode(name);
+						cmdlet = new Cmdlet(name);
 					break;
 				case State.Argument:
 					if(DoArgument(ref context, out var argument))
-						node.Arguments.Add(argument);
+						cmdlet.Arguments.Add(argument);
 					break;
 				case State.OptionSign:
 					DoOptionSign(ref context);
 					break;
 				case State.OptionName:
 					if(DoOptionName(ref context, out var optionName, out var kind))
-						node.Options.Add(new(kind, optionName));
+						cmdlet.Options.Add(new(kind, optionName));
 					break;
 				case State.OptionValue:
 					if(DoOptionValue(ref context, out var optionValue))
-						node.Options[^1].Value = optionValue;
+						cmdlet.Options[^1].Value = optionValue;
 					break;
 				case State.Assigner:
 					DoAssigner(ref context);
@@ -85,9 +86,9 @@ public class CommandLine
 				case State.Connector:
 					DoConnector(ref context);
 
-					if(node != null)
-						result.Add(node);
-					node = null;
+					if(cmdlet != null)
+						result.Add(cmdlet);
+					cmdlet = null;
 
 					break;
 				case State.Error:
@@ -99,24 +100,25 @@ public class CommandLine
 		switch(context.State)
 		{
 			case State.Command:
-				node = new CommandNode(context.GetValue().ToString());
+				cmdlet = new Cmdlet(context.GetValue().ToString());
 				break;
 			case State.OptionName:
-				node.Options.Add(new(context.HasFlags(Flags.OptionFully) ? CommandOptionKind.Fully : CommandOptionKind.Short, context.GetValue().ToString()));
+				cmdlet.Options.Add(new(context.HasFlags(Flags.OptionFully) ? CmdletOptionKind.Fully : CmdletOptionKind.Short, context.GetValue().ToString()));
 				break;
 			case State.OptionValue:
-				node.Options[^1].Value = context.GetValue().ToString();
+				cmdlet.Options[^1].Value = context.GetValue().ToString();
 				break;
 			case State.Argument:
-				node.Arguments.Add(context.GetValue().ToString());
+				cmdlet.Arguments.Add(context.GetValue().ToString());
 				break;
 		}
 
-		if(node != null)
-			result.Add(node);
+		if(cmdlet != null)
+			result.Add(cmdlet);
 
 		return result;
 	}
+	#endregion
 
 	#region 状态处理
 	private static bool DoNone(ref Context context)
@@ -247,12 +249,12 @@ public class CommandLine
 		return false;
 	}
 
-	private static bool DoOptionName(ref Context context, out string key, out CommandOptionKind kind)
+	private static bool DoOptionName(ref Context context, out string key, out CmdletOptionKind kind)
 	{
 		if(context.IsWhitespace)
 		{
 			key = context.GetValue().ToString();
-			kind = context.HasFlags(Flags.OptionFully) ? CommandOptionKind.Fully : CommandOptionKind.Short;
+			kind = context.HasFlags(Flags.OptionFully) ? CmdletOptionKind.Fully : CmdletOptionKind.Short;
 			context.Reset(State.Gapping, Flags.None);
 			return true;
 		}
@@ -260,7 +262,7 @@ public class CommandLine
 		if(context.Character == ':' || context.Character == '=')
 		{
 			key = context.GetValue().ToString();
-			kind = context.HasFlags(Flags.OptionFully) ? CommandOptionKind.Fully : CommandOptionKind.Short;
+			kind = context.HasFlags(Flags.OptionFully) ? CmdletOptionKind.Fully : CmdletOptionKind.Short;
 			if(string.IsNullOrEmpty(key))
 				context.Error($"Option name is missing at the '{context.Offset + context.Index}' character position.");
 
@@ -541,47 +543,48 @@ public class CommandLine
 	}
 	#endregion
 
-	public class CommandNode
+	#region 嵌套子类
+	public class Cmdlet
 	{
-		public CommandNode(string name)
+		public Cmdlet(string name)
 		{
 			this.Name = name;
-			this.Options = new List<CommandOption>();
+			this.Options = new List<CmdletOption>();
 			this.Arguments = new List<string>();
 		}
 
-		public string Name { get; set; }
-		public IList<CommandOption> Options { get; }
+		public string Name { get; }
+		public IList<CmdletOption> Options { get; }
 		public IList<string> Arguments { get; }
-		public CommandNode Next { get; set; }
 
 		public override string ToString() => $"{this.Name}({this.Options.Count},{this.Arguments.Count})";
 	}
 
-	public class CommandOption
+	public class CmdletOption
 	{
-		public CommandOption(CommandOptionKind kind, string name, string value = null)
+		public CmdletOption(CmdletOptionKind kind, string name, string value = null)
 		{
 			this.Kind = kind;
 			this.Name = name;
 			this.Value = value;
 		}
 
-		public CommandOptionKind Kind { get; }
+		public CmdletOptionKind Kind { get; }
 		public string Name { get; set; }
 		public string Value { get; set; }
 
 		public override string ToString() => this.Kind switch
 		{
-			CommandOptionKind.Fully => string.IsNullOrEmpty(this.Value) ? $"--{this.Name}" : $"--{this.Name}:{this.Value}",
-			CommandOptionKind.Short => string.IsNullOrEmpty(this.Value) ? $"-{this.Name}" : $"-{this.Name}:{this.Value}",
+			CmdletOptionKind.Fully => string.IsNullOrEmpty(this.Value) ? $"--{this.Name}" : $"--{this.Name}:{this.Value}",
+			CmdletOptionKind.Short => string.IsNullOrEmpty(this.Value) ? $"-{this.Name}" : $"-{this.Name}:{this.Value}",
 			_ => string.IsNullOrEmpty(this.Value) ? this.Name : $"{this.Name}:{this.Value}",
 		};
 	}
 
-	public enum CommandOptionKind
+	public enum CmdletOptionKind
 	{
 		Fully,
 		Short,
 	}
+	#endregion
 }
