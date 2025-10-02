@@ -51,7 +51,7 @@ partial class Settings
 		return result != null;
 	}
 
-	private static IEnumerable<KeyValuePair<string, string>> Parse(ReadOnlySpan<char> text, Action<string> onError)
+	private static List<KeyValuePair<string, string>> Parse(ReadOnlySpan<char> text, Action<string> onError)
 	{
 		if(text.IsEmpty)
 			return [];
@@ -258,7 +258,7 @@ partial class Settings
 		#region 公共方法
 		public bool Move()
 		{
-			if(_index < _text.Length - 1)
+			if(_index < _text.Length)
 			{
 				_character = _text[_index++];
 				return true;

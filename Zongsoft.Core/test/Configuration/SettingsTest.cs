@@ -78,6 +78,36 @@ public class SettingsTest
 	}
 
 	[Fact]
+	public void TestParseSimple()
+	{
+		Assert.Empty(Settings.Parse(""));
+		Assert.Empty(Settings.Parse(" "));
+
+		var settings = Settings.Parse("key1=value1");
+		Assert.NotNull(settings);
+		Assert.NotEmpty(settings);
+		Assert.Single(settings);
+		Assert.Equal("key1", settings.First().Key);
+		Assert.Equal("value1", settings.First().Value);
+
+		settings = Settings.Parse("key1=value1;");
+		Assert.NotNull(settings);
+		Assert.NotEmpty(settings);
+		Assert.Single(settings);
+		Assert.Equal("key1", settings.First().Key);
+		Assert.Equal("value1", settings.First().Value);
+
+		settings = Settings.Parse("key1=value1;key2=value2");
+		Assert.NotNull(settings);
+		Assert.NotEmpty(settings);
+		Assert.Equal(2, settings.Count());
+		Assert.Equal("key1", settings.First().Key);
+		Assert.Equal("value1", settings.First().Value);
+		Assert.Equal("key2", settings.Last().Key);
+		Assert.Equal("value2", settings.Last().Value);
+	}
+
+	[Fact]
 	public void TestParse()
 	{
 		var TEXT = @" key1=value1; key2 = value2; key3 = ; key 4 = value 4 ; key5; key 6 = ' value\t;\nEnd\\'; ";
