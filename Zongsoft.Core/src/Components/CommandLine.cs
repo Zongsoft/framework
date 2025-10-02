@@ -157,7 +157,7 @@ public static class CommandLine
 			return true;
 		}
 
-		if(context.IsLetterOrUnderscore)
+		if(context.IsLetterOrDigitOrUnderscore)
 		{
 			name = null;
 			context.Accept(Flags.None);
@@ -409,7 +409,7 @@ public static class CommandLine
 		#region 公共方法
 		public bool Move()
 		{
-			if(_index < _text.Length - 1)
+			if(_index < _text.Length)
 			{
 				_character = _text[_index++];
 				return true;
