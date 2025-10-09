@@ -159,6 +159,13 @@ public static class CommandLine
 
 		if(context.IsLetterOrDigitOrUnderscore)
 		{
+			if(context.HasFlags(Flags.SingleDotted) || context.HasFlags(Flags.DoubleDotted))
+			{
+				name = null;
+				context.Error();
+				return false;
+			}
+
 			name = null;
 			context.Accept(Flags.None);
 			return false;

@@ -19,6 +19,48 @@ public class CommandLineTest
 		Assert.Empty(cmdlets[0].Options);
 		Assert.Empty(cmdlets[0].Arguments);
 
+		cmdlets = CommandLine.Parse("/");
+		Assert.NotEmpty(cmdlets);
+		Assert.Single(cmdlets);
+		Assert.Equal("/", cmdlets[0].Name);
+		Assert.Empty(cmdlets[0].Options);
+		Assert.Empty(cmdlets[0].Arguments);
+
+		cmdlets = CommandLine.Parse(".");
+		Assert.NotEmpty(cmdlets);
+		Assert.Single(cmdlets);
+		Assert.Equal(".", cmdlets[0].Name);
+		Assert.Empty(cmdlets[0].Options);
+		Assert.Empty(cmdlets[0].Arguments);
+
+		cmdlets = CommandLine.Parse("..");
+		Assert.NotEmpty(cmdlets);
+		Assert.Single(cmdlets);
+		Assert.Equal("..", cmdlets[0].Name);
+		Assert.Empty(cmdlets[0].Options);
+		Assert.Empty(cmdlets[0].Arguments);
+
+		cmdlets = CommandLine.Parse("/cmdlet");
+		Assert.NotEmpty(cmdlets);
+		Assert.Single(cmdlets);
+		Assert.Equal("/cmdlet", cmdlets[0].Name);
+		Assert.Empty(cmdlets[0].Options);
+		Assert.Empty(cmdlets[0].Arguments);
+
+		cmdlets = CommandLine.Parse("./cmdlet");
+		Assert.NotEmpty(cmdlets);
+		Assert.Single(cmdlets);
+		Assert.Equal("./cmdlet", cmdlets[0].Name);
+		Assert.Empty(cmdlets[0].Options);
+		Assert.Empty(cmdlets[0].Arguments);
+
+		cmdlets = CommandLine.Parse("../cmdlet");
+		Assert.NotEmpty(cmdlets);
+		Assert.Single(cmdlets);
+		Assert.Equal("../cmdlet", cmdlets[0].Name);
+		Assert.Empty(cmdlets[0].Options);
+		Assert.Empty(cmdlets[0].Arguments);
+
 		cmdlets = CommandLine.Parse("cmdlet arg");
 		Assert.NotEmpty(cmdlets);
 		Assert.Single(cmdlets);
