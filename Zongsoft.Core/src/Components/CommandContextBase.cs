@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
@@ -73,6 +74,12 @@ public abstract class CommandContextBase
 	/// <summary>获取当前命令执行器的命令表达式。</summary>
 	public CommandExpression Expression => _expression;
 
+	/// <summary>获取当前命令描述信息。</summary>
+	public CommandDescriptor Descriptor { get; }
+
+	/// <summary>获取当前命令的参数数组。</summary>
+	public string[] Arguments { get; }
+
 	/// <summary>获取从命令执行器传入的值。</summary>
 	public object Value => _value ?? _context?.Value;
 
@@ -91,5 +98,17 @@ public abstract class CommandContextBase
 
 	/// <summary>获取当前命令会话的共享参数集。</summary>
 	public Collections.Parameters Parameters => _parameters;
+	#endregion
+
+	#region 公共方法
+	public CommandLine.CmdletOptionCollection GetOptions(IEnumerable<CommandLine.CmdletOption> options)
+	{
+		return CommandLine.GetOptions(this.Descriptor, options);
+	}
+
+	public TOptions GetOptions<TOptions>(IEnumerable<CommandLine.CmdletOption> options)
+	{
+		return CommandLine.GetOptions<TOptions>(this.Descriptor, options);
+	}
 	#endregion
 }
