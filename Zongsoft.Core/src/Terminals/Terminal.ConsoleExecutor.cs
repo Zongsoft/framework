@@ -51,7 +51,7 @@ partial class Terminal
 		#endregion
 
 		#region 构造函数
-		public ConsoleExecutor(ITerminal terminal, ICommandExpressionParser parser = null) : base(parser)
+		public ConsoleExecutor(ITerminal terminal)
 		{
 			_terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
 			_terminal.Resetted += this.Terminal_Resetted;
@@ -183,27 +183,6 @@ partial class Terminal
 		#endregion
 
 		#region 重写方法
-		protected override void OnExecuted(CommandExecutorExecutedEventArgs args)
-		{
-			var last = args.Context.Expression;
-
-			//从执行器的命令表达式中找出最后一个命令表达式
-			while(last != null && last.Next != null)
-			{
-				last = last.Next;
-			}
-
-			//查找表达式中最后一个命令节点
-			var node = this.Find(last.FullPath);
-
-			//更新当前命令节点，只有命令树节点不是叶子节点并且为空命令节点
-			if(node != null && node.Children.Count > 0 && node.Command == null)
-				this.Current = node;
-
-			//调用基类同名方法
-			base.OnExecuted(args);
-		}
-
 		protected override void OnFailed(CommandExecutorFailureEventArgs args)
 		{
 			//调用基类同名方法

@@ -50,19 +50,16 @@ public partial class CommandExecutor : ICommandExecutor
 
 	#region 成员字段
 	private readonly CommandNode _root;
-	private ICommandExpressionParser _parser;
 	private ICommandInvoker _invoker;
 	private ICommandOutlet _output;
 	private TextWriter _error;
 	#endregion
 
 	#region 构造函数
-	public CommandExecutor(ICommandExpressionParser parser = null) : this(null, parser) { }
-	public CommandExecutor(ICommandInvoker invoker, ICommandExpressionParser parser = null)
+	public CommandExecutor(ICommandInvoker invoker = null)
 	{
 		_root = new CommandNode();
 		_invoker = invoker ?? CommandInvoker.Default;
-		_parser = parser ?? CommandExpressionParser.Instance;
 		_output = NullCommandOutlet.Instance;
 		_error = CommandErrorWriter.Instance;
 		this.States = new();
@@ -97,12 +94,6 @@ public partial class CommandExecutor : ICommandExecutor
 	{
 		get => _invoker;
 		set => _invoker = value ?? CommandInvoker.Default;
-	}
-
-	public ICommandExpressionParser Parser
-	{
-		get => _parser;
-		set => _parser = value ?? throw new ArgumentNullException();
 	}
 
 	public virtual ICommandOutlet Output
@@ -181,27 +172,19 @@ public partial class CommandExecutor : ICommandExecutor
 	#region 执行实现
 	protected virtual async ValueTask<(object result, IEnumerable<CommandCompletionContext> completes)> OnExecuteAsync(CommandExecutorContext session, CancellationToken cancellation)
 	{
-		var queue = new Queue<Tuple<CommandExpression, CommandNode>>();
-		var expression = session.Expression;
+		var queue = new Queue<Tuple<CommandLine.Cmdlet, CommandNode>>();
 
-		while(expression != null)
+		foreach(var cmdlet in session.Cmdlets)
 		{
 			//查找指定路径的命令节点
-			var node = this.Find(expression.FullPath);
+			var node = this.Find(cmdlet.Name);
 
 			//如果指定的路径在命令树中是不存在的则抛出异常
 			if(node == null)
-				throw new CommandNotFoundException(expression.FullPath);
-
-			//将命令表达式的选项集绑定到当前命令上
-			if(node.Command != null)
-				expression.Options.Bind(node.Command);
+				throw new CommandNotFoundException(cmdlet.Name);
 
 			//将找到的命令表达式和对应的节点加入队列中
-			queue.Enqueue(new Tuple<CommandExpression, CommandNode>(expression, node));
-
-			//设置下一个待搜索的命令表达式
-			expression = expression.Next;
+			queue.Enqueue(new Tuple<CommandLine.Cmdlet, CommandNode>(cmdlet, node));
 		}
 
 		//如果队列为空则返回空
@@ -214,10 +197,8 @@ public partial class CommandExecutor : ICommandExecutor
 		//初始化第一个输入参数
 		var value = session.Value;
 
-		while(queue.Count > 0)
+		while(queue.TryDequeue(out var entry))
 		{
-			var entry = queue.Dequeue();
-
 			//创建命令执行上下文
 			var context = this.CreateContext(session, entry.Item1, entry.Item2, value);
 
@@ -230,7 +211,7 @@ public partial class CommandExecutor : ICommandExecutor
 
 			//判断命令是否需要完成通知，如果是则加入到清理列表中
 			if(context.Command is ICommandCompletion completion)
-				((ICollection<CommandCompletionContext>)completes).Add(new CommandCompletionContext(context, value));
+				((ICollection<CommandCompletionContext>)completes).Add(new CommandCompletionContext(session, completion, value));
 		}
 
 		//返回最后一个命令的执行结果
@@ -241,17 +222,11 @@ public partial class CommandExecutor : ICommandExecutor
 	#endregion
 
 	#region 虚拟方法
-	protected virtual CommandExecutorContext CreateContext(string commandText, object value)
-	{
-		//解析当前命令文本
-		var expression = this.OnParse(commandText) ?? throw new InvalidOperationException($"Invalid command expression text: {commandText}.");
-		return new CommandExecutorContext(this, expression, value);
-	}
+	protected virtual CommandExecutorContext CreateContext(string commandText, object value) =>
+		new(this, CommandLine.Parse(commandText), value);
 
-	protected virtual CommandContext CreateContext(CommandExecutorContext context, CommandExpression expression, CommandNode node, object value) =>
-		node == null || node.Command == null ? null : new CommandContext(context, expression, node, value);
-
-	protected virtual CommandExpression OnParse(string text) => _parser.Parse(text);
+	protected virtual CommandContext CreateContext(CommandExecutorContext context, CommandLine.Cmdlet cmdlet, CommandNode node, object value) =>
+		node == null || node.Command == null ? null : new CommandContext(context, cmdlet, node, value);
 	#endregion
 
 	#region 激发事件
@@ -286,7 +261,7 @@ public partial class CommandExecutor : ICommandExecutor
 			context.Exception = exception;
 
 			//回调命令执行器会话完成通知
-			((ICommandCompletion)context.Command).OnCompleted(context);
+			context.Command.OnCompleted(context);
 		}
 	}
 	#endregion

@@ -23,7 +23,7 @@ internal class Program
 
 		executor.Command("reset", context =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 			{
 				foreach(var subscriber in client.Subscribers)
 					subscriber.Statistics.Reset();
@@ -31,7 +31,7 @@ internal class Program
 				return;
 			}
 
-			foreach(var key in context.Expression.Arguments)
+			foreach(var key in context.Arguments)
 			{
 				if(!uint.TryParse(key, out var id))
 				{
@@ -51,7 +51,7 @@ internal class Program
 
 		executor.Command("connect", (context, cancellation) =>
 		{
-			var settings = context.Expression.Arguments.IsEmpty ? CONNECTION_SETTINGS : context.Expression.Arguments[0];
+			var settings = context.Arguments.IsEmpty ? CONNECTION_SETTINGS : context.Arguments[0];
 			return client.ConnectAsync(settings.Contains('=') ? settings : $"Server={settings}", cancellation);
 		});
 
@@ -61,7 +61,7 @@ internal class Program
 		{
 			Subscriber subscriber = null;
 
-			if(context.Expression.Options.TryGetValue<uint>("subscriber", out var id))
+			if(context.GetOptions().TryGetValue<uint>("subscriber", out var id))
 			{
 				if(!client.Subscribers.TryGetValue(id, out subscriber))
 				{
@@ -69,24 +69,24 @@ internal class Program
 					return null;
 				}
 
-				if(context.Expression.Arguments.IsEmpty)
+				if(context.Arguments.IsEmpty)
 					throw new CommandException($"Missing required arguments of the subscribe command.");
 
-				foreach(var identifier in context.Expression.Arguments)
+				foreach(var identifier in context.Arguments)
 					subscriber.Entries.Add(identifier);
 
 				return subscriber;
 			}
-			else if(context.Expression.Options.TryGetValue<string>("directory", out var directory))
+			else if(context.GetOptions().TryGetValue<string>("directory", out var directory))
 			{
 				if(string.IsNullOrEmpty(directory))
 					directory = Path.Combine(AppContext.BaseDirectory, "subscription");
 				else
 					directory = Path.Combine(AppContext.BaseDirectory, directory);
 
-				var paths = context.Expression.Arguments.IsEmpty ?
+				var paths = context.Arguments.IsEmpty ?
 					Directory.GetFiles(directory, "*.txt", SearchOption.TopDirectoryOnly) :
-					context.Expression.Arguments.Select(argument => Path.Combine(directory, argument));
+					context.Arguments.Select(argument => Path.Combine(directory, argument));
 
 				var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -117,10 +117,10 @@ internal class Program
 			}
 			else
 			{
-				if(context.Expression.Arguments.IsEmpty)
+				if(context.Arguments.IsEmpty)
 					throw new CommandException($"Missing required arguments of the subscribe command.");
 
-				subscriber = await client.SubscribeAsync(context.Expression.Arguments, cancellation);
+				subscriber = await client.SubscribeAsync(context.Arguments, cancellation);
 
 				if(subscriber == null)
 					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The subscription failed, possibly because the specified entries is already subscribed.");
@@ -133,13 +133,13 @@ internal class Program
 
 		executor.Command("unsubscribe", async (context, cancellation) =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 			{
 				await client.Subscribers.UnsubscribeAsync(cancellation);
 				return;
 			}
 
-			foreach(var key in context.Expression.Arguments)
+			foreach(var key in context.Arguments)
 			{
 				if(!uint.TryParse(key, out var id))
 				{
@@ -160,14 +160,14 @@ internal class Program
 
 		executor.Command("exist", async (context, cancellation) =>
 		{
-			for(int i = 0; i < context.Expression.Arguments.Count; i++)
+			for(int i = 0; i < context.Arguments.Count; i++)
 			{
-				var existed = await client.ExistsAsync(context.Expression.Arguments[i], cancellation);
+				var existed = await client.ExistsAsync(context.Arguments[i], cancellation);
 
 				if(existed)
-					context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The '{context.Expression.Arguments[i]}' node exists.");
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The '{context.Arguments[i]}' node exists.");
 				else
-					context.Output.WriteLine(CommandOutletColor.DarkRed, $"The '{context.Expression.Arguments[i]}' node was not found.");
+					context.Output.WriteLine(CommandOutletColor.DarkRed, $"The '{context.Arguments[i]}' node was not found.");
 			}
 
 			return true;
@@ -175,31 +175,31 @@ internal class Program
 
 		executor.Command("type", async (context, cancellation) =>
 		{
-			for(int i = 0; i < context.Expression.Arguments.Count; i++)
+			for(int i = 0; i < context.Arguments.Count; i++)
 			{
-				var type = await client.GetDataTypeAsync(context.Expression.Arguments[i], cancellation);
+				var type = await client.GetDataTypeAsync(context.Arguments[i], cancellation);
 
 				if(type != null)
 					context.Output.WriteLine(CommandOutletColor.DarkGreen, TypeAlias.GetAlias(type));
 				else
-					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The '{context.Expression.Arguments[i]}' node not found.");
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The '{context.Arguments[i]}' node not found.");
 			}
 		});
 
 		executor.Command("get", async (context, cancellation) =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 				return;
 
-			if(context.Expression.Arguments.Count == 1)
+			if(context.Arguments.Count == 1)
 			{
-				var value = await client.GetValueAsync(context.Expression.Arguments[0], cancellation);
+				var value = await client.GetValueAsync(context.Arguments[0], cancellation);
 				var content = CommandOutletContent.Create(string.Empty).AppendValue(value);
 				context.Output.Write(content);
 			}
 			else
 			{
-				var result = client.GetValuesAsync(context.Expression.Arguments, cancellation);
+				var result = client.GetValuesAsync(context.Arguments, cancellation);
 
 				await foreach(var entry in result)
 				{
@@ -215,34 +215,34 @@ internal class Program
 
 		executor.Command("set", async (context, cancellation) =>
 		{
-			if(context.Expression.Arguments.Count < 2)
+			if(context.Arguments.Count < 2)
 				throw new CommandException($"Missing required argument of the command.");
 
 			//获取指定键对应的数据类型
-			var type = await client.GetDataTypeAsync(context.Expression.Arguments[0], cancellation) ??
-				throw new CommandException($"The specified '{context.Expression.Arguments[0]}' does not exist, or its data type is not available.");
+			var type = await client.GetDataTypeAsync(context.Arguments[0], cancellation) ??
+				throw new CommandException($"The specified '{context.Arguments[0]}' does not exist, or its data type is not available.");
 
 			object value = null;
 
 			if(type.IsArray)
 			{
 				type = type.GetElementType();
-				value = Array.CreateInstance(type, context.Expression.Arguments.Count - 1);
+				value = Array.CreateInstance(type, context.Arguments.Count - 1);
 
-				for(int i = 1; i < context.Expression.Arguments.Count; i++)
+				for(int i = 1; i < context.Arguments.Count; i++)
 				{
-					((Array)value).SetValue(Common.Convert.ConvertValue(context.Expression.Arguments[i], type), i - 1);
+					((Array)value).SetValue(Common.Convert.ConvertValue(context.Arguments[i], type), i - 1);
 				}
 			}
 			else
 			{
-				if(context.Expression.Arguments.Count > 2)
+				if(context.Arguments.Count > 2)
 					throw new CommandException($"Too many command arguments.");
 
-				value = Common.Convert.ConvertValue(context.Expression.Arguments[1], type);
+				value = Common.Convert.ConvertValue(context.Arguments[1], type);
 			}
 
-			var succeed = await client.SetValueAsync(context.Expression.Arguments[0], value, cancellation);
+			var succeed = await client.SetValueAsync(context.Arguments[0], value, cancellation);
 
 			if(succeed)
 				context.Output.WriteLine(CommandOutletColor.DarkGreen, "The set operation was successful.");
@@ -252,10 +252,10 @@ internal class Program
 
 		executor.Command("folder", async (context, cancellation) =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 				return;
 
-			var created = await client.CreateFolderAsync(context.Expression.Arguments[0], context.Expression.Arguments.Count > 1 ? context.Expression.Arguments[1] : null, cancellation);
+			var created = await client.CreateFolderAsync(context.Arguments[0], context.Arguments.Count > 1 ? context.Arguments[1] : null, cancellation);
 
 			if(created)
 				context.Output.WriteLine(CommandOutletColor.DarkGreen, "The folder was created successfully.");
@@ -265,14 +265,14 @@ internal class Program
 
 		executor.Command("variable", async (context, cancellation) =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 				return;
 
-			var name = context.Expression.Arguments[0];
-			var type = TypeAlias.Parse(context.Expression.Options.GetValue<string>("type"));
-			var label = context.Expression.Options.GetValue("label", name);
+			var name = context.Arguments[0];
+			var type = TypeAlias.Parse(context.GetOptions().GetValue<string>("type"));
+			var label = context.GetOptions().GetValue("label", name);
 
-			var created = await client.CreateVariableAsync(name, type, label, context.Expression.Arguments.Count > 1 ? context.Expression.Arguments[1] : null, cancellation);
+			var created = await client.CreateVariableAsync(name, type, label, context.Arguments.Count > 1 ? context.Arguments[1] : null, cancellation);
 
 			if(created)
 				context.Output.WriteLine(CommandOutletColor.DarkGreen, "The variable was created successfully.");

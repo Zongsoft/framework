@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -36,42 +36,56 @@ namespace Zongsoft.Components;
 /// </summary>
 public class CommandContext : CommandContextBase
 {
+	#region 成员字段
+	private readonly CommandDescriptor _descriptor;
+	#endregion
+
 	#region 构造函数
-	public CommandContext(ICommandExecutor executor, CommandExpression expression, ICommand command, object value) : base(executor, expression, value)
+	public CommandContext(ICommandExecutor executor, CommandLine.Cmdlet cmdlet, ICommand command, object value) : base(executor, cmdlet, value)
 	{
 		this.Command = command ?? throw new ArgumentNullException(nameof(command));
+
+		if(this.Command != null)
+			_descriptor = CommandDescriptor.Describe(this.Command.GetType());
 	}
 
-	public CommandContext(ICommandExecutor executor, CommandExpression expression, CommandNode commandNode, object value) : base(executor, expression, value)
+	public CommandContext(ICommandExecutor executor, CommandLine.Cmdlet cmdlet, CommandNode node, object value) : base(executor, cmdlet, value)
 	{
-		if(commandNode == null)
-			throw new ArgumentNullException(nameof(commandNode));
+		if(node == null)
+			throw new ArgumentNullException(nameof(node));
 
-		if(commandNode.Command == null)
-			throw new ArgumentException($"The Command property of '{commandNode.FullPath}' command-node is null.");
+		if(node.Command == null)
+			throw new ArgumentException($"The Command property of '{node.FullPath}' command-node is null.");
 
-		this.CommandNode = commandNode;
-		this.Command = commandNode.Command;
+		this.CommandNode = node;
+		this.Command = node.Command;
+
+		if(this.Command != null)
+			_descriptor = CommandDescriptor.Describe(this.Command.GetType());
 	}
 
-	internal protected CommandContext(CommandContext context) : base(context) { }
-
-	internal protected CommandContext(CommandContextBase context, CommandExpression expression, ICommand command, object value) : base(context, expression, value)
+	internal protected CommandContext(ICommandContext context, CommandLine.Cmdlet cmdlet, ICommand command, object value) : base(context, cmdlet, value)
 	{
 		this.Command = command;
 		this.CommandNode = null;
+
+		if(this.Command != null)
+			_descriptor = CommandDescriptor.Describe(this.Command.GetType());
 	}
 
-	internal protected CommandContext(CommandContextBase context, CommandExpression expression, CommandNode commandNode, object value) : base(context, expression, value)
+	internal protected CommandContext(ICommandContext context, CommandLine.Cmdlet cmdlet, CommandNode node, object value) : base(context, cmdlet, value)
 	{
-		if(commandNode == null)
-			throw new ArgumentNullException(nameof(commandNode));
+		if(node == null)
+			throw new ArgumentNullException(nameof(node));
 
-		if(commandNode.Command == null)
-			throw new ArgumentException($"The Command property of '{commandNode.FullPath}' command-node is null.");
+		if(node.Command == null)
+			throw new ArgumentException($"The Command property of '{node.FullPath}' command-node is null.");
 
-		this.CommandNode = commandNode;
-		this.Command = commandNode.Command;
+		this.CommandNode = node;
+		this.Command = node.Command;
+
+		if(this.Command != null)
+			_descriptor = CommandDescriptor.Describe(this.Command.GetType());
 	}
 	#endregion
 
@@ -81,5 +95,8 @@ public class CommandContext : CommandContextBase
 
 	/// <summary>获取执行的命令所在节点。</summary>
 	public CommandNode CommandNode { get; }
+
+	/// <inheritdoc />
+	public override CommandDescriptor Descriptor => _descriptor;
 	#endregion
 }

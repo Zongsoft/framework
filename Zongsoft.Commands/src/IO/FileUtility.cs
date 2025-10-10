@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -43,7 +43,7 @@ internal static class FileUtility
 	{
 		List<string> paths;
 
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 		{
 			var terminal = context.GetTerminal() ?? throw new CommandException($"No arguments are provided, and the '{context.Command.Name}' command is not running in a terminal environment, so the required arguments cannot be obtained through user interaction.");
 
@@ -62,9 +62,9 @@ internal static class FileUtility
 		}
 		else
 		{
-			paths = new List<string>(context.Expression.Arguments.Count);
+			paths = new List<string>(context.Arguments.Count);
 
-			foreach(var argument in context.Expression.Arguments)
+			foreach(var argument in context.Arguments)
 			{
 				if(!string.IsNullOrWhiteSpace(argument))
 					paths.Add(argument.Trim());

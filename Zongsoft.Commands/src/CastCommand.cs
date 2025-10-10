@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -41,8 +41,8 @@ namespace Zongsoft.Commands;
 
 [DisplayName("Text.CastCommand.Name")]
 [Description("Text.CastCommand.Description")]
-[CommandOption(KEY_TYPE_OPTION, typeof(CastType), CastType.Raw, "Text.CastCommand.Options.Type")]
-[CommandOption(KEY_ENCODING_OPTION, typeof(Encoding), null, "Text.CastCommand.Options.Encoding")]
+[CommandOption(KEY_TYPE_OPTION, 't', typeof(CastType), CastType.Raw, "Text.CastCommand.Options.Type")]
+[CommandOption(KEY_ENCODING_OPTION, 'e', typeof(Encoding), null, "Text.CastCommand.Options.Encoding")]
 [CommandOption(KEY_COUNT_OPTION, typeof(int), 0, "Text.CastCommand.Options.Count")]
 [CommandOption(KEY_OFFSET_OPTION, typeof(int), 0, "Text.CastCommand.Options.Offset")]
 public class CastCommand : CommandBase<CommandContext>
@@ -72,10 +72,10 @@ public class CastCommand : CommandBase<CommandContext>
 		if(context.Value == null)
 			return ValueTask.FromResult<object>(null);
 
-		var type = context.Expression.Options.GetValue<CastType>(KEY_TYPE_OPTION);
-		var encoding = context.Expression.Options.GetValue<Encoding>(KEY_ENCODING_OPTION) ?? Encoding.UTF8;
-		var count = context.Expression.Options.GetValue<int>(KEY_COUNT_OPTION);
-		var offset = context.Expression.Options.GetValue<int>(KEY_OFFSET_OPTION);
+		var type = context.GetOptions().GetValue<CastType>(KEY_TYPE_OPTION);
+		var encoding = context.GetOptions().GetValue<Encoding>(KEY_ENCODING_OPTION) ?? Encoding.UTF8;
+		var count = context.GetOptions().GetValue<int>(KEY_COUNT_OPTION);
+		var offset = context.GetOptions().GetValue<int>(KEY_OFFSET_OPTION);
 
 		if(offset < 0)
 			throw new CommandOptionValueException(KEY_OFFSET_OPTION, offset);
@@ -85,9 +85,9 @@ public class CastCommand : CommandBase<CommandContext>
 
 		object result = type switch
 		{
-			CastType.Raw => ConvertToRawString(reader, offset, count, encoding, context.Expression.Arguments),
-			CastType.Hex => ConvertToHexString(reader, offset, count, context.Expression.Arguments),
-			CastType.Base64 => ConvertToBase64(reader, offset, count, context.Expression.Arguments),
+			CastType.Raw => ConvertToRawString(reader, offset, count, encoding, context.Arguments),
+			CastType.Hex => ConvertToHexString(reader, offset, count, context.Arguments),
+			CastType.Base64 => ConvertToBase64(reader, offset, count, context.Arguments),
 			_ => null,
 		};
 

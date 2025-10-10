@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -43,22 +43,22 @@ public class EchoCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 		{
 			context.Output.Write(context.Value);
 			return ValueTask.FromResult(context.Value);
 		}
 
-		if(context.Expression.Arguments.Count == 1)
+		if(context.Arguments.Count == 1)
 		{
-			context.Output.Write(context.Expression.Arguments[0]);
-			return ValueTask.FromResult<object>(context.Expression.Arguments[0]);
+			context.Output.Write(context.Arguments[0]);
+			return ValueTask.FromResult<object>(context.Arguments[0]);
 		}
 
-		foreach(var argument in context.Expression.Arguments)
+		foreach(var argument in context.Arguments)
 			context.Output.WriteLine(argument);
 
-		return ValueTask.FromResult<object>(context.Expression.Arguments);
+		return ValueTask.FromResult<object>(context.Arguments);
 	}
 	#endregion
 }

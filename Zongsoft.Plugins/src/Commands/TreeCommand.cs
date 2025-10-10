@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -38,8 +38,8 @@ namespace Zongsoft.Plugins.Commands;
 
 [DisplayName("Text.TreeCommand.Name")]
 [Description("Text.TreeCommand.Description")]
-[CommandOption("depth", Type = typeof(int), DefaultValue = 3, Description = "Text.TreeCommand.Options.Depth")]
-[CommandOption("path", Description = "Text.TreeCommand.Options.Path")]
+[CommandOption("depth", 'd', typeof(int), DefaultValue = 3, Description = "Text.TreeCommand.Options.Depth")]
+[CommandOption("path", 'p', typeof(string), Description = "Text.TreeCommand.Options.Path")]
 public class TreeCommand : CommandBase<CommandContext>
 {
 	#region 成员字段
@@ -62,22 +62,22 @@ public class TreeCommand : CommandBase<CommandContext>
 			if(context.Value != null)
 				throw new CommandException(string.Format(Properties.Resources.Text_Message_InvalidCommandParameter, context.CommandNode.FullPath));
 
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 				throw new CommandException(Properties.Resources.Text_Message_MissingCommandArguments);
 
-			if(context.Expression.Arguments.Count > 1)
+			if(context.Arguments.Count > 1)
 				throw new CommandException(Properties.Resources.Text_Message_CommandArgumentsTooMany);
 
-			node = _pluginTree.Find(context.Expression.Arguments[0]);
+			node = _pluginTree.Find(context.Arguments[0]);
 
 			if(node == null)
 			{
-				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_Message_PluginNodeNotFound, context.Expression.Arguments[0]));
+				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_Message_PluginNodeNotFound, context.Arguments[0]));
 				return ValueTask.FromResult<object>(node);
 			}
 		}
 
-		WritePluginTree(context.Output, node, context.Expression.Options.GetValue<int>("depth"), 0, 0, context.Expression.Options.Contains("qualified"));
+		WritePluginTree(context.Output, node, context.GetOptions().GetValue<int>("depth"), 0, 0, context.GetOptions().Contains("qualified"));
 		return ValueTask.FromResult<object>(node);
 	}
 	#endregion

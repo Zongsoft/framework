@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -53,18 +53,18 @@ public class RedisFindCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			throw new CommandException("Missing arguments.");
 
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 
 		//查找指定模式的键名集
-		var result = redis.FindAsync(context.Expression.Arguments[0], cancellation);
+		var result = redis.FindAsync(context.Arguments[0], cancellation);
 
 		//定义遍历序号
 		var index = 1;
 
-		var count = context.Expression.Options.GetValue<int>(COUNT_OPTION);
+		var count = context.GetOptions().GetValue<int>(COUNT_OPTION);
 		var list = new List<string>(count > 0 ? count : 16);
 
 		await foreach(var key in result)

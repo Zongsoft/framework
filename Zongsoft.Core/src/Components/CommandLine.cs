@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public static class CommandLine
+public static partial class CommandLine
 {
 	#region 解析方法
 	public static bool TryParse(ReadOnlySpan<char> text, out IReadOnlyList<Cmdlet> result)
@@ -551,7 +551,7 @@ public static class CommandLine
 	#endregion
 
 	#region 嵌套子类
-	public class Cmdlet
+	public sealed class Cmdlet
 	{
 		public Cmdlet(string name)
 		{
@@ -567,7 +567,7 @@ public static class CommandLine
 		public override string ToString() => $"{this.Name}({this.Options.Count},{this.Arguments.Count})";
 	}
 
-	public class CmdletOption
+	public sealed class CmdletOption
 	{
 		public CmdletOption(CmdletOptionKind kind, string name, string value = null)
 		{

@@ -133,8 +133,8 @@ public class AssistantCommand : CommandBase<CommandContext>, IServiceAccessor<IC
 				break;
 		}
 
-		if(context.Expression.Arguments.Count > 0)
-			this.Settings = GetSettings(context.Expression.Arguments[0]);
+		if(context.Arguments.Count > 0)
+			this.Settings = GetSettings(context.Arguments[0]);
 
 		return ValueTask.FromResult(this.Servicer ?? this.Settings);
 	}

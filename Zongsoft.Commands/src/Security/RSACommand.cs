@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -59,11 +59,11 @@ public class RSACommand : CommandBase<CommandContext>
 
 		if(rsa == null)
 		{
-			rsa = this.RSA = context.Expression.Options.TryGetValue<int>(SIZE_OPTION, out var size) && size > 0 ? RSA.Create(size) : RSA.Create();
+			rsa = this.RSA = context.GetOptions().TryGetValue<int>(SIZE_OPTION, out var size) && size > 0 ? RSA.Create(size) : RSA.Create();
 		}
 		else
 		{
-			if(context.Expression.Options.TryGetValue<int>(SIZE_OPTION, out var size) && size > 0)
+			if(context.GetOptions().TryGetValue<int>(SIZE_OPTION, out var size) && size > 0)
 				rsa = this.RSA = RSA.Create(size);
 		}
 

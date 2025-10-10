@@ -48,11 +48,11 @@ internal class Program
 
 		Terminal.Console.Executor.Command("retry", context =>
 		{
-			var delay = context.Expression.Options.GetValue("delay", TimeSpan.Zero);
-			var limit = context.Expression.Options.GetValue("limit", TimeSpan.Zero);
-			var attempts = context.Expression.Options.GetValue("attempts", 3);
-			var backoff = context.Expression.Options.GetValue("backoff", RetryBackoff.None);
-			var jitterable = context.Expression.Options.GetValue("jitterable", false);
+			var delay = context.GetOptions().GetValue("delay", TimeSpan.Zero);
+			var limit = context.GetOptions().GetValue("limit", TimeSpan.Zero);
+			var attempts = context.GetOptions().GetValue("attempts", 3);
+			var backoff = context.GetOptions().GetValue("backoff", RetryBackoff.None);
+			var jitterable = context.GetOptions().GetValue("jitterable", false);
 
 			if(delay <= TimeSpan.Zero)
 				delay = TimeSpan.FromSeconds(1);
@@ -68,10 +68,10 @@ internal class Program
 
 		Terminal.Console.Executor.Command("breaker", context =>
 		{
-			var threshold = context.Expression.Options.GetValue("threshold", 10);
-			var duration = context.Expression.Options.GetValue("duration", TimeSpan.Zero);
-			var period = context.Expression.Options.GetValue("period", TimeSpan.Zero);
-			var ratio = context.Expression.Options.GetValue("ratio", 0.5);
+			var threshold = context.GetOptions().GetValue("threshold", 10);
+			var duration = context.GetOptions().GetValue("duration", TimeSpan.Zero);
+			var period = context.GetOptions().GetValue("period", TimeSpan.Zero);
+			var ratio = context.GetOptions().GetValue("ratio", 0.5);
 
 			_features = _features.Breaker(
 				duration, ratio, period, threshold
@@ -80,26 +80,26 @@ internal class Program
 
 		Terminal.Console.Executor.Command("timeout", context =>
 		{
-			_features = _features.Timeout(context.Expression.Arguments.GetValue(0, TimeSpan.FromSeconds(1)));
+			_features = _features.Timeout(context.Arguments.GetValue(0, TimeSpan.FromSeconds(1)));
 		});
 
 		Terminal.Console.Executor.Command("throttle", context =>
 		{
-			var permit = context.Expression.Options.GetValue("permit", 100);
-			var queue = context.Expression.Options.GetValue("queue", 0);
-			var limit = context.Expression.Options.GetValue("limit", string.Empty);
-			var window = context.Expression.Options.GetValue("window", TimeSpan.FromSeconds(1));
+			var permit = context.GetOptions().GetValue("permit", 100);
+			var queue = context.GetOptions().GetValue("queue", 0);
+			var limit = context.GetOptions().GetValue("limit", string.Empty);
+			var window = context.GetOptions().GetValue("window", TimeSpan.FromSeconds(1));
 
 			switch(limit)
 			{
 				case "token":
-					_features = _features.Throttle(permit, queue, ThrottleLimiter.Token(context.Expression.Options.GetValue("threshold", 0)));
+					_features = _features.Throttle(permit, queue, ThrottleLimiter.Token(context.GetOptions().GetValue("threshold", 0)));
 					break;
 				case "fixed":
 					_features = _features.Throttle(permit, queue, ThrottleLimiter.Fixed(window));
 					break;
 				case "sliding":
-					_features = _features.Throttle(permit, queue, ThrottleLimiter.Sliding(window, context.Expression.Options.GetValue("windowSize", 0)));
+					_features = _features.Throttle(permit, queue, ThrottleLimiter.Sliding(window, context.GetOptions().GetValue("windowSize", 0)));
 					break;
 				default:
 					_features = _features.Throttle(permit, queue);
@@ -122,14 +122,14 @@ internal class Program
 
 			var executor = _features.Build<object, object>(OnExecute);
 			var parameters = Parameters
-				.Parameter("delay", context.Expression.Options.GetValue("delay", TimeSpan.Zero))
-				.Parameter("throw", context.Expression.Options.Contains("throw"))
-				.Parameter("result", context.Expression.Options.GetValue<object>("result", null));
+				.Parameter("delay", context.GetOptions().GetValue("delay", TimeSpan.Zero))
+				.Parameter("throw", context.GetOptions().Contains("throw"))
+				.Parameter("result", context.GetOptions().GetValue<object>("result", null));
 
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-			var round = context.Expression.Options.GetValue("round", 1);
+			var round = context.GetOptions().GetValue("round", 1);
 
-			if(context.Expression.Options.Contains("concurrency"))
+			if(context.GetOptions().Contains("concurrency"))
 			{
 				Parallel.For(0, round, async i => await ExecuteAsync(executor, parameters, round, i, stopwatch, cancellation));
 			}

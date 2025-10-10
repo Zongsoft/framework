@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Commands;
 
-[CommandOption(KEY_TIMEOUT_OPTION, typeof(TimeSpan), DefaultValue = "5s", Description = "${Command.Options.Timeout}")]
+[CommandOption(KEY_TIMEOUT_OPTION, 't', typeof(TimeSpan), DefaultValue = "5s", Description = "Command.Options.Timeout")]
 public class WorkerPauseCommand : CommandBase<CommandContext>
 {
 	#region 单例字段
@@ -63,7 +63,7 @@ public class WorkerPauseCommand : CommandBase<CommandContext>
 		worker.Pause();
 
 		//调用暂停完成方法
-		this.OnPaused(context, worker, context.Expression.Options.GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
+		this.OnPaused(context, worker, context.GetOptions().GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
 
 		//返回执行成功的工作者
 		return ValueTask.FromResult<object>(worker);

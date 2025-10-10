@@ -36,10 +36,10 @@ using Zongsoft.Serialization;
 
 namespace Zongsoft.Externals.Aliyun.Telecom
 {
-	[CommandOption(KEY_TEMPLATE_OPTION, typeof(string), null, true, "Text.PhoneCallCommand.Options.Template")]
-	[CommandOption(KEY_PARAMETERS_OPTION, typeof(string), null, false, "Text.PhoneCallCommand.Options.Parameters")]
-	[CommandOption(KEY_EXTRA_OPTION, typeof(string), null, false, "Text.PhoneCallCommand.Options.Extra")]
-	[CommandOption(KEY_INTERACTIVE_OPTION, Description = "Text.PhoneCallCommand.Options.Interactive")]
+	[CommandOption(KEY_TEMPLATE_OPTION, 't', typeof(string), null, true, "Text.PhoneCallCommand.Options.Template")]
+	[CommandOption(KEY_PARAMETERS_OPTION, 'p', typeof(string), null, false, "Text.PhoneCallCommand.Options.Parameters")]
+	[CommandOption(KEY_EXTRA_OPTION, 'e', typeof(string), null, false, "Text.PhoneCallCommand.Options.Extra")]
+	[CommandOption(KEY_INTERACTIVE_OPTION, 'i', Description = "Text.PhoneCallCommand.Options.Interactive")]
 	public class PhoneCallCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义
@@ -63,15 +63,15 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#region 执行方法
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(context.Expression.Arguments == null || context.Expression.Arguments.IsEmpty)
+			if(context.Arguments == null || context.Arguments.IsEmpty)
 				throw new CommandException("Missing arguments.");
 
 			var result = await this.CallAsync(
-				context.Expression.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
-				context.Expression.Arguments,
-				context.Value ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
-				context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION),
-				context.Expression.Options.Contains(KEY_INTERACTIVE_OPTION),
+				context.GetOptions().GetValue<string>(KEY_TEMPLATE_OPTION),
+				context.Arguments,
+				context.Value ?? Utility.GetDictionary(context.GetOptions().GetValue<string>(KEY_PARAMETERS_OPTION)),
+				context.GetOptions().GetValue<string>(KEY_EXTRA_OPTION),
+				context.GetOptions().Contains(KEY_INTERACTIVE_OPTION),
 				cancellation);
 
 			return result;

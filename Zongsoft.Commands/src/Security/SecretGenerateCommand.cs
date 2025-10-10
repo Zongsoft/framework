@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -73,23 +73,23 @@ public class SecretGenerateCommand : CommandBase<CommandContext>
 	{
 		//从环境中查找秘密提供程序
 		var secretor = context.Find<SecretCommand>(true)?.Secretor ?? throw new CommandException("Missing required secretor for the command.");
-		var name = context.Expression.Options.GetValue<string>(KEY_NAME_OPTION);
-		var pattern = context.Expression.Options.GetValue<string>(KEY_PATTERN_OPTION);
+		var name = context.GetOptions().GetValue<string>(KEY_NAME_OPTION);
+		var pattern = context.GetOptions().GetValue<string>(KEY_PATTERN_OPTION);
 
-		switch(context.Expression.Arguments.Count)
+		switch(context.Arguments.Count)
 		{
 			case 0:
 				return await secretor.GenerateAsync(name, pattern, null, cancellation);
 			case 1:
-				return await secretor.GenerateAsync(name, pattern, context.Expression.Arguments[0], cancellation);
+				return await secretor.GenerateAsync(name, pattern, context.Arguments[0], cancellation);
 		}
 
 		//定义返回验证码的数组
-		var results = new string[context.Expression.Arguments.Count];
+		var results = new string[context.Arguments.Count];
 
-		for(int i = 0; i < context.Expression.Arguments.Count; i++)
+		for(int i = 0; i < context.Arguments.Count; i++)
 		{
-			results[i] = await secretor.GenerateAsync(name, pattern, context.Expression.Arguments[i], cancellation);
+			results[i] = await secretor.GenerateAsync(name, pattern, context.Arguments[i], cancellation);
 		}
 
 		return results;

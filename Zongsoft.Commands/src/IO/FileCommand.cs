@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -59,20 +59,20 @@ public class FileCommand : CommandBase<CommandContext>, ICommandCompletion
 	#region 执行方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		bool isSaving = context.Expression.Index > 0 && context.Expression.Next == null;
+		bool isSaving = context.Value != null;
 
-		if(!context.Expression.Options.TryGetValue<FileMode>(KEY_MODE_OPTION, out var mode))
+		if(!context.GetOptions().TryGetValue<FileMode>(KEY_MODE_OPTION, out var mode))
 			mode = isSaving ? FileMode.Create : FileMode.Open;
 
-		if(!context.Expression.Options.TryGetValue<FileAccess>(KEY_ACCESS_OPTION, out var access))
+		if(!context.GetOptions().TryGetValue<FileAccess>(KEY_ACCESS_OPTION, out var access))
 			access = isSaving ? FileAccess.ReadWrite : FileAccess.Read;
 
 		//打开一个或多个文件流
-		var result = FileUtility.OpenFile(context, mode, access, context.Expression.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
+		var result = FileUtility.OpenFile(context, mode, access, context.GetOptions().GetValue<FileShare>(KEY_SHARE_OPTION));
 
 		//如果是写入操作则执行保存方法
 		if(isSaving && result != null)
-			FileUtility.Save(result, context.Value, context.Expression.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
+			FileUtility.Save(result, context.Value, context.GetOptions().GetValue<Encoding>(KEY_ENCODING_OPTION));
 
 		return ValueTask.FromResult(result);
 	}

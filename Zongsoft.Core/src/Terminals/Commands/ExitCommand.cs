@@ -38,7 +38,7 @@ namespace Zongsoft.Terminals.Commands;
 
 [DisplayName("ExitCommand.Name")]
 [Description("ExitCommand.Description")]
-[CommandOption("yes", Type = null, Description = "ExitCommand.Options.Confirm")]
+[CommandOption("yes", 'y', Description = "ExitCommand.Options.Confirm")]
 public class ExitCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
@@ -52,7 +52,7 @@ public class ExitCommand : CommandBase<CommandContext>
 		var terminal = context.GetTerminal() ??
 			throw new NotSupportedException($"The `{this.Name}` command is only supported running in a terminal executor.");
 
-		if(context.Expression.Options.Contains("yes") || context.Expression.Arguments.Contains("yes"))
+		if(context.GetOptions().Contains("yes") || context.Arguments.Contains("yes"))
 			throw new Terminal.ExitException();
 
 		terminal.Write(Properties.Resources.ExitCommand_Confirm);

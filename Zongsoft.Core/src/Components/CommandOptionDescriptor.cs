@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.ComponentModel;
 
 namespace Zongsoft.Components;
 
@@ -69,5 +70,9 @@ public class CommandOptionDescriptor
 
 	/// <summary>获取或设置命令选项的文本描述。</summary>
 	public string Description { get; set; }
+	#endregion
+
+	#region 公共方法
+	public TypeConverter GetConverter() => this.ConverterType == null ? null : TypeDescriptor.GetConverter(this.ConverterType);
 	#endregion
 }

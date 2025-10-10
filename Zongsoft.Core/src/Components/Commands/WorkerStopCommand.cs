@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Commands;
 
-[CommandOption(KEY_TIMEOUT_OPTION, typeof(TimeSpan), DefaultValue = "5s", Description = "${Command.Options.Timeout}")]
+[CommandOption(KEY_TIMEOUT_OPTION, 't', typeof(TimeSpan), DefaultValue = "5s", Description = "Command.Options.Timeout")]
 public class WorkerStopCommand : CommandBase<CommandContext>
 {
 	#region 单例字段
@@ -56,10 +56,10 @@ public class WorkerStopCommand : CommandBase<CommandContext>
 		var worker = context.Find<WorkerCommandBase>(true)?.Worker ?? throw new CommandException("Missing required worker of depends on.");
 
 		//停止工作者
-		worker.Stop(context.Expression.Arguments);
+		worker.Stop(context.Arguments);
 
 		//调用停止完成方法
-		this.OnStopped(context, worker, context.Expression.Options.GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
+		this.OnStopped(context, worker, context.GetOptions().GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
 
 		//返回执行成功的工作者
 		return ValueTask.FromResult<object>(worker);

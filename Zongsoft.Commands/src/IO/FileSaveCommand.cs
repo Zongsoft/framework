@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -61,12 +61,12 @@ public class FileSaveCommand : CommandBase<CommandContext>, ICommandCompletion
 	{
 		//打开一个或多个文件流
 		var result = FileUtility.OpenFile(context,
-			context.Expression.Options.GetValue<FileMode>(KEY_MODE_OPTION),
-			context.Expression.Options.GetValue<FileAccess>(KEY_ACCESS_OPTION),
-			context.Expression.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
+			context.GetOptions().GetValue<FileMode>(KEY_MODE_OPTION),
+			context.GetOptions().GetValue<FileAccess>(KEY_ACCESS_OPTION),
+			context.GetOptions().GetValue<FileShare>(KEY_SHARE_OPTION));
 
 		if(result != null)
-			FileUtility.Save(result, context.Value, context.Expression.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
+			FileUtility.Save(result, context.Value, context.GetOptions().GetValue<Encoding>(KEY_ENCODING_OPTION));
 
 		return ValueTask.FromResult(result);
 	}

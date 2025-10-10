@@ -38,7 +38,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Intelligences.Commands.Modeling;
 
-[CommandOption("running")]
+[CommandOption("running", 'r')]
 public class ListCommand() : CommandBase<CommandContext>("List")
 {
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
@@ -46,7 +46,7 @@ public class ListCommand() : CommandBase<CommandContext>("List")
 		var service = context.Find<IServiceAccessor<IModelService>>(true)?.Value ??
 			throw new CommandException("The model service required by this command was not found.");
 
-		if(context.Expression.Options.Contains("running"))
+		if(context.GetOptions().Contains("running"))
 		{
 			var models = service.GetModelsAsync("running", cancellation);
 			await context.Dump(models);

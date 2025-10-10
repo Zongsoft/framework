@@ -52,9 +52,6 @@ public interface ICommandExecutor
 	/// <summary>获取命令别名映射器。</summary>
 	ICommandAliaser Aliaser { get; }
 
-	/// <summary>获取或设置命令表达式解析器。</summary>
-	ICommandExpressionParser Parser { get; set; }
-
 	/// <summary>获取或设置命令执行器的标准输出器。</summary>
 	ICommandOutlet Output { get; set; }
 

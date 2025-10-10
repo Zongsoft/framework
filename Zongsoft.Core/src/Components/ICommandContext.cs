@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,14 +28,30 @@
  */
 
 using System;
+using System.IO;
 
 namespace Zongsoft.Components;
 
-public class CommandExpressionException : ApplicationException
+/// <summary>
+/// 表示命令执行的上下文的接口。
+/// </summary>
+public interface ICommandContext
 {
-	#region 构造函数
-	public CommandExpressionException() { }
-	public CommandExpressionException(string message) : base(message) { }
-	public CommandExpressionException(string message, Exception innerException) : base(message, innerException) { }
-	#endregion
+	/// <summary>获取当前命令执行器对象。</summary>
+	ICommandExecutor Executor { get; }
+
+	/// <summary>获取或设置传入的值。</summary>
+	object Value { get; set; }
+
+	/// <summary>获取或设置执行结果。</summary>
+	object Result { get; set; }
+
+	/// <summary>获取当前命令执行器的标准输出器。</summary>
+	ICommandOutlet Output { get; }
+
+	/// <summary>获取当前命令执行器的错误输出器。</summary>
+	TextWriter Error { get; }
+
+	/// <summary>获取当前命令会话的共享参数集。</summary>
+	Collections.Parameters Parameters { get; }
 }

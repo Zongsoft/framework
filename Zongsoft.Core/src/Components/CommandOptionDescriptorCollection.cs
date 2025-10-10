@@ -52,6 +52,19 @@ public class CommandOptionDescriptorCollection : Collection<CommandOptionDescrip
 	}
 	#endregion
 
+	#region 公共方法
+	public bool TryGetValue(string name, out CommandOptionDescriptor value)
+	{
+		if(string.IsNullOrEmpty(name))
+		{
+			value = null;
+			return false;
+		}
+
+		return _dictionary.TryGetValue(name, out value);
+	}
+	#endregion
+
 	#region 重写方法
 	protected override void ClearItems()
 	{

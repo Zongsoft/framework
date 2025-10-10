@@ -22,12 +22,12 @@ internal partial class Commands
 			.AppendLine(CommandOutletColor.DarkGray, ")")
 			.AppendLine(CommandOutletColor.DarkYellow, client.Settings?.ToString());
 
-		if(context.Expression.Arguments.Count > 0)
+		if(context.Arguments.Count > 0)
 		{
-			for(int i = 0; i < context.Expression.Arguments.Count; i++)
+			for(int i = 0; i < context.Arguments.Count; i++)
 			{
-				if(context.Expression.Arguments.TryGetValue<uint>(i, out var id) && client.Subscribers.TryGetValue(id, out var subscriber))
-					DumpSubscriber(content.Last, subscriber, -1, context.Expression.Options.GetValue("detailed", false));
+				if(context.Arguments.TryGetValue<uint>(i, out var id) && client.Subscribers.TryGetValue(id, out var subscriber))
+					DumpSubscriber(content.Last, subscriber, -1, context.GetOptions().GetValue("detailed", false));
 			}
 		}
 		else if(client.Subscribers.Count > 0)
@@ -39,7 +39,7 @@ internal partial class Commands
 				if(index > 0)
 					content.Last.AppendLine();
 
-				DumpSubscriber(content.Last, subscriber, ++index, context.Expression.Options.GetValue("detailed", false));
+				DumpSubscriber(content.Last, subscriber, ++index, context.GetOptions().GetValue("detailed", false));
 			}
 		}
 

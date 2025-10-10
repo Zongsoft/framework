@@ -33,8 +33,8 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Commands;
 
-[CommandOption(KEY_FORCE_OPTION, Description = "${WorkerStartCommand.Options.Force}")]
-[CommandOption(KEY_TIMEOUT_OPTION, typeof(TimeSpan), DefaultValue = "5s", Description = "${Command.Options.Timeout}")]
+[CommandOption(KEY_FORCE_OPTION, 'f')]
+[CommandOption(KEY_TIMEOUT_OPTION, 't', typeof(TimeSpan), DefaultValue = "5s", Description = "Command.Options.Timeout")]
 public class WorkerStartCommand : CommandBase<CommandContext>
 {
 	#region 单例字段
@@ -58,17 +58,17 @@ public class WorkerStartCommand : CommandBase<CommandContext>
 		var worker = context.Find<WorkerCommandBase>(true)?.Worker ?? throw new CommandException("Missing required worker of depends on.");
 
 		//获取是否开启了强制启动选项
-		var force = context.Expression.Options.GetValue<bool>(KEY_FORCE_OPTION);
+		var force = context.GetOptions().GetValue<bool>(KEY_FORCE_OPTION);
 
 		//如果没有开启强制启动选项并且当前工作器不可用，则抛出异常
 		if(!force && !worker.Enabled)
 			throw new CommandException($"The '{worker.Name}' worker are disabled.");
 
 		//启动工作者
-		worker.Start(context.Expression.Arguments);
+		worker.Start(context.Arguments);
 
 		//调用启动完成方法
-		this.OnStarted(context, worker, context.Expression.Options.GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
+		this.OnStarted(context, worker, context.GetOptions().GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
 
 		//返回执行成功的工作者
 		return ValueTask.FromResult<object>(worker);
