@@ -41,8 +41,8 @@ namespace Zongsoft.Commands;
 
 [DisplayName("Text.CastCommand.Name")]
 [Description("Text.CastCommand.Description")]
-[CommandOption(KEY_TYPE_OPTION, typeof(CastType), CastType.Raw, "Text.CastCommand.Options.Type")]
-[CommandOption(KEY_ENCODING_OPTION, typeof(Encoding), null, "Text.CastCommand.Options.Encoding")]
+[CommandOption(KEY_TYPE_OPTION, 't', typeof(CastType), CastType.Raw, "Text.CastCommand.Options.Type")]
+[CommandOption(KEY_ENCODING_OPTION, 'e', typeof(Encoding), null, "Text.CastCommand.Options.Encoding")]
 [CommandOption(KEY_COUNT_OPTION, typeof(int), 0, "Text.CastCommand.Options.Count")]
 [CommandOption(KEY_OFFSET_OPTION, typeof(int), 0, "Text.CastCommand.Options.Offset")]
 public class CastCommand : CommandBase<CommandContext>

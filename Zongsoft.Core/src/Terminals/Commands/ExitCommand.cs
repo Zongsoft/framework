@@ -38,7 +38,7 @@ namespace Zongsoft.Terminals.Commands;
 
 [DisplayName("ExitCommand.Name")]
 [Description("ExitCommand.Description")]
-[CommandOption("yes", 'y')]
+[CommandOption("yes", 'y', Description = "ExitCommand.Options.Confirm")]
 public class ExitCommand : CommandBase<CommandContext>
 {
 	#region 构造函数

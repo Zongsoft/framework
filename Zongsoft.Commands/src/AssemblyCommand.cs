@@ -41,7 +41,7 @@ namespace Zongsoft.Commands;
 
 [DisplayName("Text.AssemblyCommand.Name")]
 [Description("Text.AssemblyCommand.Description")]
-[CommandOption("sort", 's', typeof(SortMode), DefaultValue=SortMode.None)]
+[CommandOption("sort", 's', typeof(SortMode), SortMode.None)]
 public class AssemblyCommand : CommandBase<CommandContext>
 {
 	#region 成员变量

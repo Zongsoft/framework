@@ -47,7 +47,7 @@ namespace Zongsoft.Configuration.Commands;
 /// </remarks>
 [DisplayName("Text.ConfigurationGetCommand.Name")]
 [Description("Text.ConfigurationGetCommand.Description")]
-[CommandOption(KEY_SIMPLIFY_OPTION, 's', DefaultValue = false, Description = "Text.ConfigurationCommand.Options.Simplify")]
+[CommandOption(KEY_SIMPLIFY_OPTION, 's', typeof(bool), false, Description = "Text.ConfigurationCommand.Options.Simplify")]
 public class ConfigurationGetCommand : CommandBase<CommandContext>
 {
 	#region 常量定义

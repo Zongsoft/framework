@@ -34,7 +34,7 @@ using System.Threading.Tasks;
 namespace Zongsoft.Components.Commands;
 
 [CommandOption(KEY_FORCE_OPTION, 'f')]
-[CommandOption(KEY_TIMEOUT_OPTION, 't', typeof(TimeSpan), DefaultValue = "5s")]
+[CommandOption(KEY_TIMEOUT_OPTION, 't', typeof(TimeSpan), DefaultValue = "5s", Description = "Command.Options.Timeout")]
 public class WorkerStartCommand : CommandBase<CommandContext>
 {
 	#region 单例字段
