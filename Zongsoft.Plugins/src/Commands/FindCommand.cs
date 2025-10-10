@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -39,8 +39,8 @@ namespace Zongsoft.Plugins.Commands;
 
 [DisplayName("Text.FindCommand.Name")]
 [Description("Text.FindCommand.Description")]
-[CommandOption("obtain", Type = typeof(ObtainMode), DefaultValue = ObtainMode.Never, Description = "Text.FindCommand.Options.ObtainMode")]
-[CommandOption("depth", Type = typeof(int), DefaultValue = 3, Description = "Text.FindCommand.Options.Depth")]
+[CommandOption("obtain", 'b', typeof(ObtainMode), DefaultValue = ObtainMode.Never, Description = "Text.FindCommand.Options.ObtainMode")]
+[CommandOption("depth", 'd', typeof(int), DefaultValue = 3, Description = "Text.FindCommand.Options.Depth")]
 public class FindCommand : CommandBase<CommandContext>
 {
 	#region 成员字段
@@ -58,26 +58,26 @@ public class FindCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Message_MissingCommandArguments);
 
-		var result = new List<object>(context.Expression.Arguments.Count);
+		var result = new List<object>(context.Arguments.Count);
 
-		for(int i = 0; i < context.Expression.Arguments.Count; i++)
+		for(int i = 0; i < context.Arguments.Count; i++)
 		{
-			var node = _pluginTree.Find(context.Expression.Arguments[i]);
+			var node = _pluginTree.Find(context.Arguments[i]);
 
 			if(node == null)
-				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_Message_PluginNodeNotFound, context.Expression.Arguments[i]));
+				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_Message_PluginNodeNotFound, context.Arguments[i]));
 			else
 			{
-				var mode = context.Expression.Options.GetValue<ObtainMode>("obtain");
+				var mode = context.GetOptions().GetValue<ObtainMode>("obtain");
 				var value = node.UnwrapValue(mode);
 
 				if(value != null)
 					result.Add(value);
 
-				context.Output.Write(Utility.GetPluginNodeContent(node, mode, context.Expression.Options.GetValue<int>("depth")));
+				context.Output.Write(Utility.GetPluginNodeContent(node, mode, context.GetOptions().GetValue<int>("depth")));
 			}
 		}
 
