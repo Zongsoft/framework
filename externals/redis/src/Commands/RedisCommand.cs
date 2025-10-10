@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -38,7 +38,7 @@ namespace Zongsoft.Externals.Redis.Commands;
 
 [DisplayName("Text.RedisCommand.Name")]
 [Description("Text.RedisCommand.Description")]
-[CommandOption("name")]
+[CommandOption("name", 'n')]
 public class RedisCommand : CommandBase<CommandContext>
 {
 	#region 成员字段
@@ -60,7 +60,7 @@ public class RedisCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var name = context.Expression.Options.GetValue<string>("name");
+		var name = context.GetOptions().GetValue<string>("name");
 
 		if(!string.IsNullOrEmpty(name))
 			_redis = RedisServiceProvider.GetRedis(name) ?? throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));

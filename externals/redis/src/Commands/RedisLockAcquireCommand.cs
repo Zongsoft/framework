@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -55,23 +55,23 @@ public class RedisLockAcquireCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			throw new CommandException();
 
 		var expiry = TimeSpan.FromMinutes(1);
 
-		if(context.Expression.Options.TryGetValue<string>(COMMAND_EXPIRY_OPTION, out var value))
+		if(context.GetOptions().TryGetValue<string>(COMMAND_EXPIRY_OPTION, out var value))
 		{
 			if(!Common.TimeSpanUtility.TryParse(value, out expiry))
 				expiry = TimeSpan.FromMinutes(1);
 		}
 
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
-		var lockers = new List<IDistributedLock>(context.Expression.Arguments.Count);
+		var lockers = new List<IDistributedLock>(context.Arguments.Count);
 
-		for(int i = 0; i < context.Expression.Arguments.Count; i++)
+		for(int i = 0; i < context.Arguments.Count; i++)
 		{
-			var key = context.Expression.Arguments[i];
+			var key = context.Arguments[i];
 			var locker = await redis.AcquireAsync(key, expiry, cancellation);
 			Print(context.Output, i + 1, key, locker, redis.Tokenizer);
 

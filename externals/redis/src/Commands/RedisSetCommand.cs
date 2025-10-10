@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -38,8 +38,8 @@ namespace Zongsoft.Externals.Redis.Commands;
 
 [DisplayName("Text.RedisSetCommand.Name")]
 [Description("Text.RedisSetCommand.Description")]
-[CommandOption(REQUISITE_OPTION, Type = typeof(Caching.CacheRequisite), DefaultValue = Caching.CacheRequisite.Always, Description = "Text.RedisSetCommand.Options.Requisite")]
-[CommandOption(EXPIRY_OPTION, Type = typeof(TimeSpan?), DefaultValue = null, Description = "Text.RedisSetCommand.Options.Expiry")]
+[CommandOption(REQUISITE_OPTION, typeof(Caching.CacheRequisite), DefaultValue = Caching.CacheRequisite.Always, Description = "Text.RedisSetCommand.Options.Requisite")]
+[CommandOption(EXPIRY_OPTION, 'x', typeof(TimeSpan?), DefaultValue = null, Description = "Text.RedisSetCommand.Options.Expiry")]
 public class RedisSetCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
@@ -54,23 +54,23 @@ public class RedisSetCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			throw new CommandException("Missing arguments.");
 
-		var expiry = context.Expression.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
-		var requisite = context.Expression.Options.GetValue<Caching.CacheRequisite>(REQUISITE_OPTION);
+		var expiry = context.GetOptions().GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
+		var requisite = context.GetOptions().GetValue<Caching.CacheRequisite>(REQUISITE_OPTION);
 
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 
-		if(context.Expression.Arguments.Count == 1)
+		if(context.Arguments.Count == 1)
 		{
 			if(context.Value != null)
-				return await redis.SetValueAsync(context.Expression.Arguments[0], context.Value, expiry, requisite, cancellation);
+				return await redis.SetValueAsync(context.Arguments[0], context.Value, expiry, requisite, cancellation);
 
 			throw new CommandException("Missing arguments.");
 		}
 
-		return await redis.SetValueAsync(context.Expression.Arguments[0], context.Expression.Arguments[1], expiry, requisite, cancellation);
+		return await redis.SetValueAsync(context.Arguments[0], context.Arguments[1], expiry, requisite, cancellation);
 	}
 	#endregion
 }

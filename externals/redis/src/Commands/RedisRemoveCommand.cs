@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -47,18 +47,18 @@ public class RedisRemoveCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			throw new CommandException("Invalid arguments of command.");
 
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 
-		if(context.Expression.Arguments.Count == 1)
+		if(context.Arguments.Count == 1)
 		{
-			var removed = await redis.RemoveAsync(context.Expression.Arguments[0], cancellation);
+			var removed = await redis.RemoveAsync(context.Arguments[0], cancellation);
 			return removed;
 		}
 
-		var count = await redis.RemoveAsync(context.Expression.Arguments, cancellation);
+		var count = await redis.RemoveAsync(context.Arguments, cancellation);
 		return count;
 	}
 	#endregion
