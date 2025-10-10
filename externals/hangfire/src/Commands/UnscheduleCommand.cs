@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Hangfire library.
  *
@@ -42,17 +42,17 @@ namespace Zongsoft.Externals.Hangfire.Commands
 
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(context.Expression.Arguments == null || context.Expression.Arguments.IsEmpty)
+			if(context.Arguments == null || context.Arguments.IsEmpty)
 				throw new CommandException($"Missing the required arguments.");
 
 			var scheduler = context.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException($"Missing the required scheduler.");
 
-			for(int i = 0; i < context.Expression.Arguments.Count; i++)
+			for(int i = 0; i < context.Arguments.Count; i++)
 			{
-				var unscheduled = await scheduler.UnscheduleAsync(context.Expression.Arguments[i], cancellation);
+				var unscheduled = await scheduler.UnscheduleAsync(context.Arguments[i], cancellation);
 
 				context.Output.Write($"[{i + 1}] ");
-				context.Output.Write(CommandOutletColor.DarkYellow, context.Expression.Arguments[i]);
+				context.Output.Write(CommandOutletColor.DarkYellow, context.Arguments[i]);
 				context.Output.Write(":");
 
 				if(unscheduled)

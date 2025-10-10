@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Hangfire library.
  *
@@ -46,23 +46,23 @@ namespace Zongsoft.Externals.Hangfire.Commands
 
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(context.Expression.Arguments == null || context.Expression.Arguments.IsEmpty)
+			if(context.Arguments == null || context.Arguments.IsEmpty)
 				throw new CommandException($"Missing the required argments.");
 
 			var scheduler = context.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException($"Missing the required scheduler.");
 
-			var options = string.IsNullOrEmpty(context.Expression.Options.GetValue<string>("id")) ?
+			var options = string.IsNullOrEmpty(context.GetOptions().GetValue<string>("id")) ?
 				Trigger.Options.Identifier(Timestamp.Millennium.Now.ToString()) :
-				Trigger.Options.Identifier(context.Expression.Options.GetValue<string>("id"));
+				Trigger.Options.Identifier(context.GetOptions().GetValue<string>("id"));
 
 			string[] identifiers;
 
-			if(context.Expression.Options.TryGetValue<string>("cron", out var cron) && !string.IsNullOrEmpty(cron))
-				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Value, options.Cron(cron), cancellation);
-			else if(context.Expression.Options.TryGetValue<TimeSpan>("delay", out var duration) && duration > TimeSpan.Zero)
-				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Value, options.Delay(duration), cancellation);
+			if(context.GetOptions().TryGetValue<string>("cron", out var cron) && !string.IsNullOrEmpty(cron))
+				identifiers = await ScheduleAsync(scheduler, context.Arguments, context.Value, options.Cron(cron), cancellation);
+			else if(context.GetOptions().TryGetValue<TimeSpan>("delay", out var duration) && duration > TimeSpan.Zero)
+				identifiers = await ScheduleAsync(scheduler, context.Arguments, context.Value, options.Delay(duration), cancellation);
 			else
-				identifiers = await ScheduleAsync(scheduler, context.Expression.Arguments, context.Value, options, cancellation);
+				identifiers = await ScheduleAsync(scheduler, context.Arguments, context.Value, options, cancellation);
 
 			context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]");
 

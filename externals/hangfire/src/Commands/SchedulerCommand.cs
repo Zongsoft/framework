@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Hangfire library.
  *
@@ -46,8 +46,8 @@ namespace Zongsoft.Externals.Hangfire.Commands
 		#region 重写方法
 		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(context.Expression.Arguments.Count > 0)
-				this.Scheduler = ApplicationContext.Current.Services.Find<IScheduler>(context.Expression.Arguments[0]);
+			if(context.Arguments.Count > 0)
+				this.Scheduler = ApplicationContext.Current.Services.Find<IScheduler>(context.Arguments[0]);
 			else if(context.Value is string name)
 				this.Scheduler = ApplicationContext.Current.Services.Find<IScheduler>(name);
 			else if(context.Value is IScheduler scheduler)
