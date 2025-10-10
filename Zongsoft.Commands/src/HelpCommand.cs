@@ -143,17 +143,25 @@ public class HelpCommand : CommandBase<CommandContext>
 			foreach(var optionAttribute in optionAttributes)
 			{
 				if(optionAttribute.Required)
-				{
-					output.Write("<-");
-					output.Write(CommandOutletColor.DarkYellow, optionAttribute.Name);
-					output.Write("> ");
-				}
+					output.Write("<");
 				else
+					output.Write("[");
+
+				if(optionAttribute.Symbol != '\0')
 				{
-					output.Write("[-");
-					output.Write(CommandOutletColor.DarkYellow, optionAttribute.Name);
-					output.Write("] ");
+					output.Write('-');
+					output.Write(CommandOutletColor.DarkYellow, optionAttribute.Symbol);
+					output.Write(", ");
 				}
+
+				output.Write("--");
+				output.Write(CommandOutletColor.DarkYellow, optionAttribute.Name);
+
+				if(optionAttribute.Required)
+					output.Write(">");
+				else
+					output.Write("]");
+
 			}
 
 			output.WriteLine();
@@ -164,14 +172,27 @@ public class HelpCommand : CommandBase<CommandContext>
 			{
 				int optionPadding = maxOptionLength - optionAttribute.Name.Length;
 
-				output.Write("\t-");
+				output.Write('\t');
+
+				if(optionAttribute.Symbol != '\0')
+				{
+					output.Write('-');
+					output.Write(CommandOutletColor.DarkYellow, optionAttribute.Symbol);
+					output.Write(", ");
+				}
+				else
+				{
+					optionPadding += 4;
+				}
+
+				output.Write("--");
 				output.Write(CommandOutletColor.DarkYellow, optionAttribute.Name);
 
 				if(optionAttribute.Type != null)
 				{
 					output.Write(":");
-					output.Write(CommandOutletColor.Magenta, GetSimpleTypeName(optionAttribute.Type));
-					optionPadding -= (GetSimpleTypeName(optionAttribute.Type).Length + 1);
+					output.Write(CommandOutletColor.Magenta, GetTypeName(optionAttribute.Type));
+					optionPadding -= (GetTypeName(optionAttribute.Type).Length + 1);
 				}
 
 				output.Write(" (".PadLeft(optionPadding));
@@ -188,7 +209,7 @@ public class HelpCommand : CommandBase<CommandContext>
 
 				if(optionAttribute.Type != null && optionAttribute.Type.IsEnum)
 				{
-					var entries = Zongsoft.Common.EnumUtility.GetEnumEntries(optionAttribute.Type, false);
+					var entries = EnumUtility.GetEnumEntries(optionAttribute.Type, false);
 					var maxEnumLength = entries.Max(entry => entry.HasAliases ? entry.Name.Length + entry.Aliases.Sum(alias => alias.Length) + entry.Aliases.Length + 1 : entry.Name.Length);
 
 					foreach(var entry in entries)
@@ -239,12 +260,12 @@ public class HelpCommand : CommandBase<CommandContext>
 		var fulName = node.FullPath.Trim('/').Replace('/', '.');
 
 		if(node.Command == null)
-			output.WriteLine($"{indent}[{fulName}]");
+			output.WriteLine($"{indent}[{node.Name}]");
 		else
 		{
-			var displayName = (DisplayNameAttribute)Attribute.GetCustomAttribute(node.Command.GetType(), typeof(DisplayNameAttribute), true);
+			output.Write($"{indent}{node.Name}");
 
-			output.Write($"{indent}{fulName}");
+			var displayName = (DisplayNameAttribute)Attribute.GetCustomAttribute(node.Command.GetType(), typeof(DisplayNameAttribute), true);
 
 			if(displayName == null)
 				output.WriteLine();
@@ -271,48 +292,58 @@ public class HelpCommand : CommandBase<CommandContext>
 			if(attribute.Type == null)
 				result = Math.Max(attribute.Name.Length, result);
 			else
-				result = Math.Max(attribute.Name.Length + GetSimpleTypeName(attribute.Type).Length + 1, result);
+				result = Math.Max(attribute.Name.Length + GetTypeName(attribute.Type).Length + 1, result);
 		}
 
 		return result > 0 ? result + 1 : result;
 	}
 
-	private static string GetSimpleTypeName(Type type)
+	private static string GetTypeName(Type type)
 	{
-		if(type.IsEnum)
-			return "enum";
-
-		return Type.GetTypeCode(type) switch
+		switch(Type.GetTypeCode(type))
 		{
-			TypeCode.Boolean => "boolean",
-			TypeCode.Byte => "byte",
-			TypeCode.Char => "char",
-			TypeCode.DateTime => "datetime",
-			TypeCode.Decimal or TypeCode.Double => "numeric",
-			TypeCode.Int16 or TypeCode.UInt16 => "short",
-			TypeCode.Int32 or TypeCode.UInt32 => "int",
-			TypeCode.Int64 or TypeCode.UInt64 => "long",
-			TypeCode.String => "string",
-			_ => TypeAlias.GetAlias(type),
-		};
+			case TypeCode.Boolean:
+				return "boolean";
+			case TypeCode.Byte:
+				return "byte";
+			case TypeCode.Char:
+				return "char";
+			case TypeCode.String:
+				return "string";
+			case TypeCode.DateTime:
+				return "datetime";
+			case TypeCode.Decimal:
+				return "decimal";
+			case TypeCode.Double:
+				return "double";
+			case TypeCode.Single:
+				return "float";
+			case TypeCode.Int16:
+				return "short";
+			case TypeCode.Int32:
+				return "int";
+			case TypeCode.Int64:
+				return "long";
+			case TypeCode.UInt16:
+				return "ushort";
+			case TypeCode.UInt32:
+				return "uint";
+			case TypeCode.UInt64:
+				return "ulong";
+		}
+
+		if(type.IsEnum)
+			return "Enum";
+
+		if(typeof(System.Text.Encoding).IsAssignableFrom(type))
+			return "Encoding";
+
+		return TypeAlias.GetAlias(type);
 	}
 
 	private static string GetResourceString(string name, Assembly assembly)
 	{
-		var names = assembly.GetManifestResourceNames();
-
-		for(int i = 0; i < names.Length; i++)
-		{
-			using var stream = assembly.GetManifestResourceStream(names[i]);
-			using var resource = new System.Resources.ResourceSet(stream);
-
-			var value = resource.GetString(name);
-
-			if(value != null)
-				return value;
-		}
-
-		return name;
+		return Zongsoft.Resources.ResourceUtility.GetResourceString(assembly, name);
 	}
 	#endregion
 }
