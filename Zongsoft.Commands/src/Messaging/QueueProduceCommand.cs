@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -42,12 +42,12 @@ namespace Zongsoft.Messaging.Commands;
 
 [DisplayName("Text.QueueInCommand.Name")]
 [Description("Text.QueueInCommand.Description")]
-[CommandOption("type", Type = typeof(ContentType), DefaultValue = ContentType.String)]
-[CommandOption("encoding", Type = typeof(Encoding), DefaultValue = "utf-8")]
-[CommandOption("round", Type = typeof(int), DefaultValue = 1, Description = "Text.QueueCommand.Options.Round")]
-[CommandOption("topic", Type = typeof(string))]
-[CommandOption("tags", Type = typeof(string))]
-[CommandOption("qos", Type = typeof(MessageReliability))]
+[CommandOption("type", 't', typeof(ContentType), DefaultValue = ContentType.String)]
+[CommandOption("encoding", 'e', typeof(Encoding), DefaultValue = "utf-8")]
+[CommandOption("round", typeof(int), DefaultValue = 1, Description = "Text.QueueCommand.Options.Round")]
+[CommandOption("topic", typeof(string))]
+[CommandOption("tags", typeof(string))]
+[CommandOption("qos", typeof(MessageReliability))]
 public class QueueProduceCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
@@ -66,7 +66,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 		if(queue == null)
 			return null;
 
-		if(context.Expression.Options.TryGetValue<string>("topic", out var value))
+		if(context.GetOptions().TryGetValue<string>("topic", out var value))
 			this.Topic = value == "*" ? null : value;
 
 		if(string.IsNullOrEmpty(this.Topic))
@@ -78,8 +78,8 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				.Append(":")
 				.Append(CommandOutletColor.DarkYellow, this.Topic));
 
-		var options = context.Expression.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
-		var tags = context.Expression.Options.TryGetValue<string>("tags", out value) ? value : null;
+		var options = context.GetOptions().TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
+		var tags = context.GetOptions().TryGetValue<string>("tags", out value) ? value : null;
 
 		var result = await ExecuteCoreAsync(context, data => queue.ProduceAsync(this.Topic, tags, data, options), cancellation);
 		return result;
@@ -87,7 +87,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 
 	private static async ValueTask<IList<string>> ExecuteCoreAsync(CommandContext context, Func<byte[], ValueTask<string>> invoke, CancellationToken cancellation)
 	{
-		var round = context.Expression.Options.GetValue<int>("round");
+		var round = context.GetOptions().GetValue<int>("round");
 		var list = new List<string>();
 		var messageId = string.Empty;
 
@@ -124,10 +124,10 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 		string messageId;
 		byte[] data;
 
-		switch(context.Expression.Options.GetValue<ContentType>("type"))
+		switch(context.GetOptions().GetValue<ContentType>("type"))
 		{
 			case ContentType.File:
-				foreach(var arg in context.Expression.Arguments)
+				foreach(var arg in context.Arguments)
 				{
 					if(!File.Exists(arg))
 					{
@@ -142,9 +142,9 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				break;
 			case ContentType.String:
-				var encoding = context.Expression.Options.GetValue<Encoding>("encoding") ?? Encoding.UTF8;
+				var encoding = context.GetOptions().GetValue<Encoding>("encoding") ?? Encoding.UTF8;
 
-				foreach(var arg in context.Expression.Arguments)
+				foreach(var arg in context.Arguments)
 				{
 					var text = arg == "#" || arg == "*" ? (cardinal + 1).ToString() : arg;
 					data = encoding.GetBytes(text);
@@ -154,7 +154,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				break;
 			case ContentType.Byte:
-				foreach(var arg in context.Expression.Arguments)
+				foreach(var arg in context.Arguments)
 				{
 					data = [Zongsoft.Common.Convert.ConvertValue<byte>(arg)];
 					messageId = await fallback(data);
@@ -163,7 +163,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				break;
 			case ContentType.Short:
-				foreach(var arg in context.Expression.Arguments)
+				foreach(var arg in context.Arguments)
 				{
 					data = BitConverter.GetBytes(Zongsoft.Common.Convert.ConvertValue<short>(arg));
 					messageId = await fallback(data);
@@ -172,7 +172,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				break;
 			case ContentType.Integer:
-				foreach(var arg in context.Expression.Arguments)
+				foreach(var arg in context.Arguments)
 				{
 					var number = arg == "#" || arg == "*" ? cardinal + 1 : Zongsoft.Common.Convert.ConvertValue<int>(arg);
 					data = BitConverter.GetBytes(number);
@@ -182,7 +182,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				break;
 			case ContentType.Long:
-				foreach(var arg in context.Expression.Arguments)
+				foreach(var arg in context.Arguments)
 				{
 					data = BitConverter.GetBytes(Zongsoft.Common.Convert.ConvertValue<long>(arg));
 					messageId = await fallback(data);
@@ -192,7 +192,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				break;
 			case ContentType.Date:
 			case ContentType.DateTime:
-				if(context.Expression.Arguments.IsEmpty)
+				if(context.Arguments.IsEmpty)
 				{
 					var now = DateTime.Now;
 					data = Encoding.ASCII.GetBytes(now.ToString());
@@ -202,7 +202,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				else
 				{
-					foreach(var arg in context.Expression.Arguments)
+					foreach(var arg in context.Arguments)
 					{
 						data = Encoding.ASCII.GetBytes(Zongsoft.Common.Convert.ConvertValue<DateTime>(arg).ToString());
 						messageId = await fallback(data);
@@ -212,7 +212,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				break;
 			case ContentType.Guid:
-				if(context.Expression.Arguments.IsEmpty)
+				if(context.Arguments.IsEmpty)
 				{
 					var guid = Guid.NewGuid();
 					data = guid.ToByteArray();
@@ -222,7 +222,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				else
 				{
-					foreach(var arg in context.Expression.Arguments)
+					foreach(var arg in context.Arguments)
 					{
 						if(Guid.TryParse(arg, out var guid))
 						{

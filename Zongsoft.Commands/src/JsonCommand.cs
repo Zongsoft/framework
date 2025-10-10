@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -77,10 +77,10 @@ public class JsonCommand : CommandBase<CommandContext>
 
 		var options = new TextSerializationOptions()
 		{
-			MaximumDepth = context.Expression.Options.GetValue<int>(KEY_DEPTH_OPTION),
-			Typified = context.Expression.Options.GetValue<bool>(KEY_TYPED_OPTION),
-			Indented = context.Expression.Options.GetValue<bool>(KEY_INDENTED_OPTION),
-			NamingConvention = context.Expression.Options.GetValue<SerializationNamingConvention>(KEY_CASING_OPTION),
+			MaximumDepth = context.GetOptions().GetValue<int>(KEY_DEPTH_OPTION),
+			Typified = context.GetOptions().GetValue<bool>(KEY_TYPED_OPTION),
+			Indented = context.GetOptions().GetValue<bool>(KEY_INDENTED_OPTION),
+			NamingConvention = context.GetOptions().GetValue<SerializationNamingConvention>(KEY_CASING_OPTION),
 			IncludeFields = true,
 		};
 

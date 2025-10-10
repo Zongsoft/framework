@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -59,12 +59,12 @@ public class SecretVerifyCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
 		//从环境中查找秘密提供程序
 		var secretor = context.Find<SecretCommand>(true)?.Secretor ?? throw new CommandException("Missing required secretor for the command.");
-		(var succeed, var extra) = await secretor.VerifyAsync(context.Expression.Options.GetValue<string>(KEY_NAME_OPTION), context.Expression.Arguments[0], cancellation);
+		(var succeed, var extra) = await secretor.VerifyAsync(context.GetOptions().GetValue<string>(KEY_NAME_OPTION), context.Arguments[0], cancellation);
 
 		if(succeed)
 		{

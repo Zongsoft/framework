@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -46,10 +46,10 @@ public class FileMoveCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.Count != 2)
+		if(context.Arguments.Count != 2)
 			throw new CommandException(string.Format(Properties.Resources.Text_Command_RequiresCountOfArguments, "2"));
 
-		await FileSystem.File.MoveAsync(context.Expression.Arguments[0], context.Expression.Arguments[1]);
+		await FileSystem.File.MoveAsync(context.Arguments[0], context.Arguments[1]);
 		return null;
 	}
 	#endregion

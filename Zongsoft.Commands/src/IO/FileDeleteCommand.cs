@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -45,12 +45,12 @@ public class FileDeleteCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
-		for(int i=0; i< context.Expression.Arguments.Count; i++)
+		for(int i=0; i< context.Arguments.Count; i++)
 		{
-			var filePath = context.Expression.Arguments[i];
+			var filePath = context.Arguments[i];
 			var succeed = await FileSystem.File.DeleteAsync(filePath);
 			var message = succeed ?
 				Properties.Resources.Text_FileDeleteSucceed_Message :

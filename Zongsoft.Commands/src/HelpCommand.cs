@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -53,7 +53,7 @@ public class HelpCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 		{
 			PrintApplication(context.Output);
 
@@ -63,7 +63,7 @@ public class HelpCommand : CommandBase<CommandContext>
 			return ValueTask.FromResult<object>(null);
 		}
 
-		foreach(var argument in context.Expression.Arguments)
+		foreach(var argument in context.Arguments)
 		{
 			if(argument == "?" || argument == ".")
 			{

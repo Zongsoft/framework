@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -39,8 +39,8 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Messaging.Commands;
 
-[CommandOption("acknowledgeable", typeof(bool), true, "Text.QueueSubscribeCommand.Acknowledgeable")]
-[CommandOption("format", typeof(QueueMessageFormat), QueueMessageFormat.Raw, "Text.QueueSubscribeCommand.Format")]
+[CommandOption("acknowledgeable", 'a', typeof(bool), true, "Text.QueueSubscribeCommand.Acknowledgeable")]
+[CommandOption("format", 'f', typeof(QueueMessageFormat), QueueMessageFormat.Raw, "Text.QueueSubscribeCommand.Format")]
 public class QueueSubscribeCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
@@ -60,9 +60,9 @@ public class QueueSubscribeCommand : CommandBase<CommandContext>
 		context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.QueueSubscribeCommand_Prompt + Environment.NewLine);
 
 		var handler = new QueueHandler(context);
-		var consumers = new List<IMessageConsumer>(context.Expression.Arguments.Count);
+		var consumers = new List<IMessageConsumer>(context.Arguments.Count);
 
-		foreach(var argument in context.Expression.Arguments)
+		foreach(var argument in context.Arguments)
 		{
 			var index = argument.IndexOfAny([':', '?']);
 			var consumer = index > 0 && index < argument.Length ?
@@ -97,8 +97,8 @@ public class QueueSubscribeCommand : CommandBase<CommandContext>
 		public QueueHandler(CommandContext context)
 		{
 			_context = context;
-			_format = context.Expression.Options.GetValue<QueueMessageFormat>("format");
-			_acknowledgeable = context.Expression.Options.GetValue<bool>("acknowledgeable");
+			_format = context.GetOptions().GetValue<QueueMessageFormat>("format");
+			_acknowledgeable = context.GetOptions().GetValue<bool>("acknowledgeable");
 		}
 
 		protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -41,7 +41,7 @@ namespace Zongsoft.Commands;
 
 [DisplayName("Text.AssemblyCommand.Name")]
 [Description("Text.AssemblyCommand.Description")]
-[CommandOption("sort", Type = typeof(SortMode), DefaultValue=SortMode.None, Description = "Text.SortMode")]
+[CommandOption("sort", 's', typeof(SortMode), DefaultValue=SortMode.None)]
 public class AssemblyCommand : CommandBase<CommandContext>
 {
 	#region 成员变量
@@ -72,7 +72,7 @@ public class AssemblyCommand : CommandBase<CommandContext>
 		//设置遍历的程序集列表
 		Assembly[] assemblies = this.Assemblies;
 
-		switch(context.Expression.Options.GetValue<SortMode>("sort"))
+		switch(context.GetOptions().GetValue<SortMode>("sort"))
 		{
 			case SortMode.Asc:
 				assemblies = this.Assemblies.OrderBy(p => p.FullName).ToArray();

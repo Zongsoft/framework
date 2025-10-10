@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -46,7 +46,7 @@ public class FileExistsCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
 		async ValueTask<bool> DeleteFileAsync(string path)
@@ -61,10 +61,10 @@ public class FileExistsCommand : CommandBase<CommandContext>
 			return existed;
 		}
 
-		if(context.Expression.Arguments.Count == 1)
-			return await DeleteFileAsync(context.Expression.Arguments[0]);
+		if(context.Arguments.Count == 1)
+			return await DeleteFileAsync(context.Arguments[0]);
 		else
-			return context.Expression.Arguments.Select(async path => await DeleteFileAsync(path)).ToArray();
+			return context.Arguments.Select(async path => await DeleteFileAsync(path)).ToArray();
 	}
 	#endregion
 }

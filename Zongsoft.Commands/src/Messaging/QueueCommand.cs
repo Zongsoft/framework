@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -82,7 +82,7 @@ public class QueueCommand : CommandBase<CommandContext>
 		if(context.Value is IMessageQueue queue)
 			this.Queue = queue;
 
-		if(context.Expression.Options.TryGetValue<string>("name", out var name))
+		if(context.GetOptions().TryGetValue<string>("name", out var name))
 		{
 			if(string.IsNullOrEmpty(name))
 				return ValueTask.FromResult<object>(this.Queue);

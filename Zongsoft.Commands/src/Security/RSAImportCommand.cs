@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -55,7 +55,7 @@ public class RSAImportCommand : CommandBase<CommandContext>
 	{
 		var rsa = (context.Find<RSACommand>(true)?.RSA) ?? throw new CommandException("Missing the required RSA.");
 
-		switch(context.Expression.Options.GetValue<RSAKeyType>(TYPE_OPTION))
+		switch(context.GetOptions().GetValue<RSAKeyType>(TYPE_OPTION))
 		{
 			case RSAKeyType.All:
 				if(TryGetInputXml(context.Value, out var xml))
@@ -72,7 +72,7 @@ public class RSAImportCommand : CommandBase<CommandContext>
 			case RSAKeyType.Private:
 				if(TryGetInput(context.Value, out var privateKey))
 				{
-					if(context.Expression.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8)
+					if(context.GetOptions().GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8)
 						rsa.ImportPkcs8PrivateKey(privateKey, out _);
 					else
 						rsa.ImportRSAPrivateKey(privateKey, out _);

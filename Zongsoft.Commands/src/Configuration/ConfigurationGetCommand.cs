@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -47,7 +47,7 @@ namespace Zongsoft.Configuration.Commands;
 /// </remarks>
 [DisplayName("Text.ConfigurationGetCommand.Name")]
 [Description("Text.ConfigurationGetCommand.Description")]
-[CommandOption(KEY_SIMPLIFY_OPTION, DefaultValue = false, Description = "Text.ConfigurationCommand.Options.Simplify")]
+[CommandOption(KEY_SIMPLIFY_OPTION, 's', DefaultValue = false, Description = "Text.ConfigurationCommand.Options.Simplify")]
 public class ConfigurationGetCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
@@ -67,22 +67,22 @@ public class ConfigurationGetCommand : CommandBase<CommandContext>
 		if(configuration == null)
 			throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Configuration"));
 
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
 
-		if(context.Expression.Arguments.Count == 1)
+		if(context.Arguments.Count == 1)
 		{
-			var section = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[0]));
-			ConfigurationCommand.Print(section, context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);
+			var section = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Arguments[0]));
+			ConfigurationCommand.Print(section, context.Output, context.GetOptions().Contains(KEY_SIMPLIFY_OPTION), 0);
 			return ValueTask.FromResult<object>(section);
 		}
 
-		var sections = new Microsoft.Extensions.Configuration.IConfigurationSection[context.Expression.Arguments.Count];
+		var sections = new Microsoft.Extensions.Configuration.IConfigurationSection[context.Arguments.Count];
 
-		for(int i = 0; i < context.Expression.Arguments.Count; i++)
+		for(int i = 0; i < context.Arguments.Count; i++)
 		{
-			sections[i] = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Expression.Arguments[i]));
-			ConfigurationCommand.Print(sections[i], context.Output, context.Expression.Options.Contains(KEY_SIMPLIFY_OPTION), 0);
+			sections[i] = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Arguments[i]));
+			ConfigurationCommand.Print(sections[i], context.Output, context.GetOptions().Contains(KEY_SIMPLIFY_OPTION), 0);
 		}
 
 		return ValueTask.FromResult<object>(sections);

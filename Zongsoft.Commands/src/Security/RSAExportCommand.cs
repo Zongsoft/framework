@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Commands library.
  *
@@ -54,11 +54,11 @@ public class RSAExportCommand : CommandBase<CommandContext>
 	{
 		var rsa = (context.Find<RSACommand>(true)?.RSA) ?? throw new CommandException("Missing the required RSA.");
 
-		object result = context.Expression.Options.GetValue<RSAKeyType>(TYPE_OPTION) switch
+		object result = context.GetOptions().GetValue<RSAKeyType>(TYPE_OPTION) switch
 		{
 			RSAKeyType.All => rsa.ToXmlString(true),
 			RSAKeyType.Public => rsa.ExportRSAPublicKey(),
-			RSAKeyType.Private => context.Expression.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8 ?
+			RSAKeyType.Private => context.GetOptions().GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8 ?
 				rsa.ExportPkcs8PrivateKey() :
 				rsa.ExportRSAPrivateKey(),
 			RSAKeyType.Subject => rsa.ExportSubjectPublicKeyInfo(),
