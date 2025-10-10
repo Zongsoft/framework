@@ -42,10 +42,10 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Intelligences.Commands;
 
-[CommandOption(FORMAT_OPTION, Type = typeof(ChatResponseFormat))]
-[CommandOption(SESSION_OPTION, Type = typeof(string))]
-[CommandOption(STREAMING_OPTION, Type = typeof(bool), DefaultValue = false)]
-[CommandOption(INTERACTIVE_OPTION, Type = typeof(bool), DefaultValue = false)]
+[CommandOption(FORMAT_OPTION, 'f', typeof(ChatResponseFormat))]
+[CommandOption(SESSION_OPTION, 'e', typeof(string))]
+[CommandOption(STREAMING_OPTION, 's', typeof(bool), DefaultValue = false)]
+[CommandOption(INTERACTIVE_OPTION, 'i', typeof(bool), DefaultValue = false)]
 public class ChatCommand() : CommandBase<CommandContext>("Chat")
 {
 	#region 常量定义
@@ -65,21 +65,21 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
 			throw new CommandException("The chat service required by this command was not found.");
 
-		var format = context.Expression.Options.GetValue(FORMAT_OPTION, ChatResponseFormat.Object);
-		var session = service.Sessions.Get(context.Expression.Options.GetValue<string>(SESSION_OPTION));
+		var format = context.GetOptions().GetValue(FORMAT_OPTION, ChatResponseFormat.Object);
+		var session = service.Sessions.Get(context.GetOptions().GetValue<string>(SESSION_OPTION));
 
-		if(context.Expression.Options.TryGetValue<bool>(INTERACTIVE_OPTION, out var interactive) && interactive)
+		if(context.GetOptions().TryGetValue<bool>(INTERACTIVE_OPTION, out var interactive) && interactive)
 		{
-			if(context.Expression.Options.Contains(STREAMING_OPTION))
+			if(context.GetOptions().Contains(STREAMING_OPTION))
 				throw new CommandOptionException("The interactive chat mode does not support streaming responses.");
 
 			await Chat(context, service);
 			return _history;
 		}
 
-		if(context.Expression.Options.GetValue<bool>(STREAMING_OPTION))
+		if(context.GetOptions().GetValue<bool>(STREAMING_OPTION))
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 				return Collections.Enumerable.EnumerateAsync<ChatResponseUpdate>(null, cancellation);
 
 			var history = service.Sessions.Current?.History;
@@ -96,7 +96,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 			else
 			{
 				//将用户输入的内容添加到对话历史中
-				history.Append(new ChatMessage(ChatRole.User, [.. context.Expression.Arguments.Select(argument => new TextContent(argument))]));
+				history.Append(new ChatMessage(ChatRole.User, [.. context.Arguments.Select(argument => new TextContent(argument))]));
 
 				return format switch
 				{
@@ -107,7 +107,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 			}
 		}
 
-		if(context.Expression.Arguments.IsEmpty)
+		if(context.Arguments.IsEmpty)
 			return null;
 
 		var message = await Dialogue(context, service);
@@ -205,7 +205,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 		return result;
 	}
 
-	private static ChatMessage GetMessage(CommandContext context) => new(ChatRole.User, [.. context.Expression.Arguments.Select(argument => new TextContent(argument))]);
+	private static ChatMessage GetMessage(CommandContext context) => new(ChatRole.User, [.. context.Arguments.Select(argument => new TextContent(argument))]);
 	private static bool Populate(ref ChatMessage message, ChatResponseUpdate entry)
 	{
 		if(entry == null || entry.Contents.Count == 0)
