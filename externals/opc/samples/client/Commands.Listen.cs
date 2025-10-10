@@ -36,17 +36,17 @@ partial class Commands
 
 			var subscribers = new List<Subscriber>();
 
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 			{
 				subscribers.AddRange(_client.Subscribers);
 			}
 			else
 			{
-				for(int i = 0; i < context.Expression.Arguments.Count; i++)
+				for(int i = 0; i < context.Arguments.Count; i++)
 				{
-					if(!context.Expression.Arguments.TryGetValue<uint>(i, out var id))
+					if(!context.Arguments.TryGetValue<uint>(i, out var id))
 					{
-						context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{context.Expression.Arguments[i]}' subscriber identifier is an illegal integer.");
+						context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{context.Arguments[i]}' subscriber identifier is an illegal integer.");
 						continue;
 					}
 
@@ -63,12 +63,12 @@ partial class Commands
 			if(subscribers.Count == 0)
 				throw new CommandException($"No subscriptions.");
 
-			if(context.Expression.Options.Contains("spooling"))
+			if(context.GetOptions().Contains("spooling"))
 				_spooler = new(
 					this.OnFlush,
-					context.Expression.Options.Contains("distinct"),
-					TimeSpan.FromMilliseconds(context.Expression.Options.GetValue<int>("period")),
-					context.Expression.Options.GetValue<int>("limit"));
+					context.GetOptions().Contains("distinct"),
+					TimeSpan.FromMilliseconds(context.GetOptions().GetValue<int>("period")),
+					context.GetOptions().GetValue<int>("limit"));
 
 			//挂载消费者的通知回调函数
 			foreach(var subscriber in subscribers)

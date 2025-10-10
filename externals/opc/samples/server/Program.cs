@@ -72,24 +72,24 @@ internal static class Program
 
 		executor.Command("get", context =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 				return;
 
-			if(context.Expression.Arguments.Count == 1)
+			if(context.Arguments.Count == 1)
 			{
-				var succeed = server.TryGetValue(context.Expression.Arguments[0], out var value);
+				var succeed = server.TryGetValue(context.Arguments[0], out var value);
 				var content = CommandOutletContent.Create(string.Empty);
 
 				if(succeed)
 					content.AppendValue(value);
 				else
-					content.AppendLine(CommandOutletColor.DarkRed, $"The value of '{context.Expression.Arguments[0]}' was not found.");
+					content.AppendLine(CommandOutletColor.DarkRed, $"The value of '{context.Arguments[0]}' was not found.");
 
 				context.Output.Write(content);
 			}
 			else
 			{
-				var result = server.GetValues(context.Expression.Arguments);
+				var result = server.GetValues(context.Arguments);
 
 				foreach(var entry in result)
 				{
@@ -105,40 +105,40 @@ internal static class Program
 
 		executor.Command("set", context =>
 		{
-			if(context.Expression.Arguments.Count < 2)
+			if(context.Arguments.Count < 2)
 				throw new CommandException($"Missing required argument of the command.");
 
 			//获取指定键对应的数据类型
-			var type = server.GetDataType(context.Expression.Arguments[0]) ??
-				throw new CommandException($"The specified '{context.Expression.Arguments[0]}' does not exist, or its data type is not available.");
+			var type = server.GetDataType(context.Arguments[0]) ??
+				throw new CommandException($"The specified '{context.Arguments[0]}' does not exist, or its data type is not available.");
 
 			object value = null;
 
 			if(type.IsArray)
 			{
 				type = type.GetElementType();
-				value = Array.CreateInstance(type, context.Expression.Arguments.Count - 1);
+				value = Array.CreateInstance(type, context.Arguments.Count - 1);
 
-				for(int i = 1; i < context.Expression.Arguments.Count; i++)
+				for(int i = 1; i < context.Arguments.Count; i++)
 				{
-					((Array)value).SetValue(Common.Convert.ConvertValue(context.Expression.Arguments[i], type), i - 1);
+					((Array)value).SetValue(Common.Convert.ConvertValue(context.Arguments[i], type), i - 1);
 				}
 			}
 			else
 			{
-				if(context.Expression.Arguments.Count > 2)
+				if(context.Arguments.Count > 2)
 					throw new CommandException($"Too many command arguments.");
 
-				value = Common.Convert.ConvertValue(context.Expression.Arguments[1], type);
+				value = Common.Convert.ConvertValue(context.Arguments[1], type);
 			}
 
-			var round = context.Expression.Options.GetValue("round", 0);
+			var round = context.GetOptions().GetValue("round", 0);
 
 			if(round > 0)
 			{
 				for(int i = 0; i < round; i++)
 				{
-					var succeed = server.SetValue(context.Expression.Arguments[0], Add(value, i));
+					var succeed = server.SetValue(context.Arguments[0], Add(value, i));
 
 					Thread.Sleep(100);
 
@@ -157,7 +157,7 @@ internal static class Program
 			}
 			else
 			{
-				var succeed = server.SetValue(context.Expression.Arguments[0], value);
+				var succeed = server.SetValue(context.Arguments[0], value);
 
 				if(succeed)
 					context.Output.WriteLine(CommandOutletColor.DarkGreen, "The set operation was successful.");
