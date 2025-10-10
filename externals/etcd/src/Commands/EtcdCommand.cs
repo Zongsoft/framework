@@ -36,7 +36,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Etcd.Commands;
 
-[CommandOption("name")]
+[CommandOption("name", 'n')]
 public class EtcdCommand : CommandBase<CommandContext>, IServiceAccessor<EtcdService>
 {
 	#region 成员字段
@@ -60,7 +60,7 @@ public class EtcdCommand : CommandBase<CommandContext>, IServiceAccessor<EtcdSer
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var name = context.Expression.Options.GetValue<string>("name");
+		var name = context.GetOptions().GetValue<string>("name");
 
 		if(!string.IsNullOrEmpty(name))
 			_etcd = EtcdServiceProvider.GetEtcd(name) ?? throw new CommandException();
