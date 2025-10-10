@@ -36,10 +36,10 @@ using Zongsoft.Serialization;
 
 namespace Zongsoft.Externals.Aliyun.Telecom
 {
-	[CommandOption(KEY_TEMPLATE_OPTION, typeof(string), null, true, "Text.PhoneSendCommand.Options.Template")]
-	[CommandOption(KEY_PARAMETERS_OPTION, typeof(string), null, false, "Text.PhoneSendCommand.Options.Parameters")]
-	[CommandOption(KEY_SCHEME_OPTION, typeof(string), null, false, "Text.PhoneSendCommand.Options.Scheme")]
-	[CommandOption(KEY_EXTRA_OPTION, typeof(string), null, false, "Text.PhoneSendCommand.Options.Extra")]
+	[CommandOption(KEY_TEMPLATE_OPTION, 't', typeof(string), null, true, "Text.PhoneSendCommand.Options.Template")]
+	[CommandOption(KEY_PARAMETERS_OPTION, 'p', typeof(string), null, false, "Text.PhoneSendCommand.Options.Parameters")]
+	[CommandOption(KEY_SCHEME_OPTION, 's', typeof(string), null, false, "Text.PhoneSendCommand.Options.Scheme")]
+	[CommandOption(KEY_EXTRA_OPTION, 'e', typeof(string), null, false, "Text.PhoneSendCommand.Options.Extra")]
 	public class PhoneSendCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义
@@ -63,15 +63,15 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 		#region 执行方法
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(context.Expression.Arguments == null || context.Expression.Arguments.IsEmpty)
+			if(context.Arguments == null || context.Arguments.IsEmpty)
 				throw new CommandException("Missing arguments.");
 
 			var result = await _phone.SendAsync(
-				context.Expression.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
-				context.Expression.Arguments,
-				context.Value ?? Utility.GetDictionary(context.Expression.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
-				context.Expression.Options.GetValue<string>(KEY_SCHEME_OPTION),
-				context.Expression.Options.GetValue<string>(KEY_EXTRA_OPTION), cancellation);
+				context.GetOptions().GetValue<string>(KEY_TEMPLATE_OPTION),
+				context.Arguments,
+				context.Value ?? Utility.GetDictionary(context.GetOptions().GetValue<string>(KEY_PARAMETERS_OPTION)),
+				context.GetOptions().GetValue<string>(KEY_SCHEME_OPTION),
+				context.GetOptions().GetValue<string>(KEY_EXTRA_OPTION), cancellation);
 
 			return result;
 		}

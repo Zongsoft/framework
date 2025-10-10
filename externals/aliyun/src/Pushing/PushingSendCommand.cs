@@ -67,18 +67,18 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 		#region 执行方法
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			if(context.Value == null && context.Expression.Arguments.IsEmpty)
+			if(context.Value == null && context.Arguments.IsEmpty)
 				throw new CommandException(Properties.Resources.Text_MissingCommandArguments);
 
-			var destination = context.Expression.Options.GetValue<string>("target");
+			var destination = context.GetOptions().GetValue<string>("target");
 
 			if(string.IsNullOrWhiteSpace(destination))
 				throw new CommandOptionMissingException("target");
 
-			var settings = new PushingSenderSettings(context.Expression.Options.GetValue<PushingType>("type"),
-														  context.Expression.Options.GetValue<PushingDeviceType>("deviceType"),
-														  context.Expression.Options.GetValue<PushingTargetType>("targetType"),
-														  context.Expression.Options.GetValue<int>("expiry"));
+			var settings = new PushingSenderSettings(context.GetOptions().GetValue<PushingType>("type"),
+														  context.GetOptions().GetValue<PushingDeviceType>("deviceType"),
+														  context.GetOptions().GetValue<PushingTargetType>("targetType"),
+														  context.GetOptions().GetValue<int>("expiry"));
 
 			var results = new List<PushingResult>();
 
@@ -87,8 +87,8 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 				var content = await GetContentAsync(context.Value, cancellation);
 
 				var result = await this.SendAsync(
-					context.Expression.Options.GetValue<string>("name"),
-					context.Expression.Options.GetValue<string>("title"),
+					context.GetOptions().GetValue<string>("name"),
+					context.GetOptions().GetValue<string>("title"),
 					content, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild),
 					cancellation);
 
@@ -96,11 +96,11 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 					results.Add(result);
 			}
 
-			foreach(var argument in context.Expression.Arguments)
+			foreach(var argument in context.Arguments)
 			{
 				var result = await this.SendAsync(
-					context.Expression.Options.GetValue<string>("name"),
-					context.Expression.Options.GetValue<string>("title"),
+					context.GetOptions().GetValue<string>("name"),
+					context.GetOptions().GetValue<string>("title"),
 					argument, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild),
 					cancellation);
 
