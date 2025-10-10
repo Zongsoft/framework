@@ -63,7 +63,7 @@ public class WorkerResumeCommand : CommandBase<CommandContext>
 		worker.Resume();
 
 		//调用恢复完成方法
-		this.OnPaused(context, worker, context.Expression.Options.GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
+		this.OnPaused(context, worker, context.GetOptions().GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
 
 		//返回执行成功的工作者
 		return ValueTask.FromResult<object>(worker);

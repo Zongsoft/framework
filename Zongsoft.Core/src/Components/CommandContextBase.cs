@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,41 +29,42 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
 /// <summary>
 /// 表示命令执行器的上下文（命令执行会话）类。
 /// </summary>
-public abstract class CommandContextBase
+public abstract class CommandContextBase : ICommandContext
 {
 	#region 成员字段
-	private readonly CommandContextBase _context;
+	private readonly ICommandContext _context;
 	private readonly ICommandExecutor _executor;
-	private readonly CommandExpression _expression;
 	private readonly Collections.Parameters _parameters;
+	private readonly CommandLine.Cmdlet _cmdlet;
+	private CommandLine.CmdletOptionCollection _options;
 	private object _value;
 	private object _result;
 	#endregion
 
 	#region 构造函数
-	protected CommandContextBase(ICommandExecutor executor, CommandExpression expression, object value = null)
+	protected CommandContextBase(ICommandExecutor executor, CommandLine.Cmdlet cmdlet, object value)
 	{
 		_executor = executor ?? throw new ArgumentNullException(nameof(executor));
-		_expression = expression ?? throw new ArgumentNullException(nameof(expression));
 		_value = value;
 		_parameters = new();
+		_cmdlet = cmdlet ?? throw new ArgumentNullException(nameof(cmdlet));
+		this.Arguments = new(cmdlet.Arguments);
 	}
 
-	protected CommandContextBase(CommandContextBase context, object value = null) : this(context, null, value) { }
-	protected CommandContextBase(CommandContextBase context, CommandExpression expression, object value = null)
+	protected CommandContextBase(ICommandContext context, CommandLine.Cmdlet cmdlet, object value)
 	{
 		_context = context ?? throw new ArgumentNullException(nameof(context));
 		_parameters = context.Parameters;
 		_executor = context.Executor;
-		_expression = expression ?? context.Expression;
 		_value = value ?? context.Value;
+		_cmdlet = cmdlet ?? throw new ArgumentNullException(nameof(cmdlet));
+		this.Arguments = new(cmdlet.Arguments);
 	}
 	#endregion
 
@@ -71,19 +72,16 @@ public abstract class CommandContextBase
 	/// <summary>获取当前命令执行器对象。</summary>
 	public ICommandExecutor Executor => _executor;
 
-	/// <summary>获取当前命令执行器的命令表达式。</summary>
-	public CommandExpression Expression => _expression;
-
 	/// <summary>获取当前命令描述信息。</summary>
-	public CommandDescriptor Descriptor { get; }
+	public virtual CommandDescriptor Descriptor { get; }
 
 	/// <summary>获取当前命令的参数数组。</summary>
-	public string[] Arguments { get; }
+	public CommandArgumentCollection Arguments { get; }
 
-	/// <summary>获取从命令执行器传入的值。</summary>
-	public object Value => _value ?? _context?.Value;
+	/// <summary>获取或设置传入的值。</summary>
+	public object Value { get => _value ?? _context?.Value; set => _value = value; }
 
-	/// <summary>获取或设置命令执行器的最终结果。</summary>
+	/// <summary>获取或设置执行结果。</summary>
 	public object Result
 	{
 		get => _result ?? _context?.Result;
@@ -101,14 +99,7 @@ public abstract class CommandContextBase
 	#endregion
 
 	#region 公共方法
-	public CommandLine.CmdletOptionCollection GetOptions(IEnumerable<CommandLine.CmdletOption> options)
-	{
-		return CommandLine.GetOptions(this.Descriptor, options);
-	}
-
-	public TOptions GetOptions<TOptions>(IEnumerable<CommandLine.CmdletOption> options)
-	{
-		return CommandLine.GetOptions<TOptions>(this.Descriptor, options);
-	}
+	public TOptions GetOptions<TOptions>() => CommandLine.GetOptions<TOptions>(this.Descriptor, _cmdlet.Options);
+	public CommandLine.CmdletOptionCollection GetOptions() => _options ??= CommandLine.GetOptions(this.Descriptor, _cmdlet.Options);
 	#endregion
 }

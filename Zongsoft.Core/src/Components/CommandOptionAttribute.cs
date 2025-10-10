@@ -37,6 +37,7 @@ public class CommandOptionAttribute : Attribute
 {
 	#region 成员变量
 	private string _name;
+	private char _symbol;
 	private object _defaultValue;
 	private Type _type;
 	private Type _converterType;
@@ -46,21 +47,14 @@ public class CommandOptionAttribute : Attribute
 	#endregion
 
 	#region 构造函数
-	public CommandOptionAttribute(string name) : this(name, null) { }
-	public CommandOptionAttribute(string name, Type type)
-	{
-		if(string.IsNullOrWhiteSpace(name))
-			throw new ArgumentNullException(nameof(name));
+	public CommandOptionAttribute(string name, Type type = null, string description = null) : this(name, '\0', type, null, false, description) { }
+	public CommandOptionAttribute(string name, char symbol = '\0', Type type = null, string description = null) : this(name, symbol, type, null, false, description) { }
 
-		_name = name.Trim();
-		_type = type;
-		_defaultValue = Zongsoft.Common.TypeExtension.GetDefaultValue(type);
-		_required = false;
-		_description = string.Empty;
-	}
+	public CommandOptionAttribute(string name, Type type, object defaultValue, string description = null) : this(name, '\0', type, defaultValue, false, description) { }
+	public CommandOptionAttribute(string name, Type type, object defaultValue, bool required, string description = null) : this(name, '\0', type, defaultValue, required, description) { }
 
-	public CommandOptionAttribute(string name, Type type, object defaultValue, string description) : this(name, type, defaultValue, false, description) { }
-	public CommandOptionAttribute(string name, Type type, object defaultValue, bool required, string description)
+	public CommandOptionAttribute(string name, char symbol, Type type, object defaultValue, string description = null) : this(name, symbol, type, defaultValue, false, description) { }
+	public CommandOptionAttribute(string name, char symbol, Type type, object defaultValue, bool required, string description = null)
 	{
 		if(string.IsNullOrWhiteSpace(name))
 			throw new ArgumentNullException(nameof(name));
@@ -72,6 +66,7 @@ public class CommandOptionAttribute : Attribute
 
 		_name = name;
 		_type = type;
+		_symbol = symbol;
 		_required = required;
 		_description = description ?? string.Empty;
 	}
@@ -82,7 +77,7 @@ public class CommandOptionAttribute : Attribute
 	public string Name => _name;
 
 	/// <summary>获取命令选项的缩写字符。</summary>
-	public char Symbol { get; }
+	public char Symbol => _symbol;
 
 	/// <summary>获取或设置命令选项是否必需的，默认值为假(<c>False</c>)。</summary>
 	public bool Required

@@ -39,7 +39,7 @@ namespace Zongsoft.Terminals.Commands;
 
 [DisplayName("ShellCommand.Name")]
 [Description("ShellCommand.Description")]
-[CommandOption("timeout", Type = typeof(int), DefaultValue = 1000, Description = "ShellCommand.Options.Timeout")]
+[CommandOption("timeout", 't', typeof(int), DefaultValue = 1000)]
 public class ShellCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
@@ -57,10 +57,10 @@ public class ShellCommand : CommandBase<CommandContext>
 		var terminal = context.GetTerminal() ??
 			throw new NotSupportedException($"The `{this.Name}` command is only supported running in a terminal executor.");
 
-		if(context.Expression.Arguments.Count < 1)
+		if(context.Arguments.Count < 1)
 			return ValueTask.FromResult<object>(0);
 
-		ProcessStartInfo info = new ProcessStartInfo(@"cmd.exe", " /C " + context.Expression.Arguments[0])
+		ProcessStartInfo info = new ProcessStartInfo(@"cmd.exe", " /C " + context.Arguments[0])
 		{
 			CreateNoWindow = true,
 			UseShellExecute = false,
@@ -89,7 +89,7 @@ public class ShellCommand : CommandBase<CommandContext>
 
 			if(!process.HasExited)
 			{
-				var timeout = context.Expression.Options.GetValue<int>("timeout");
+				var timeout = context.GetOptions().GetValue<int>("timeout");
 
 				if(!process.WaitForExit(timeout > 0 ? timeout : int.MaxValue))
 				{

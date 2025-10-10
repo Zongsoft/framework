@@ -56,14 +56,14 @@ partial class CommandLine
 			if(option.Kind == CmdletOptionKind.Fully)
 			{
 				if(descriptor.Options.TryGetValue(option.Name, out var optionDescriptor))
-					Reflection.Reflector.SetValue(ref result, optionDescriptor.Name, type => Common.Convert.ConvertValue(option.Value, type, () => optionDescriptor.ConverterType == null ? null : TypeDescriptor.GetConverter(optionDescriptor.ConverterType), optionDescriptor.DefaultValue));
+					Reflection.Reflector.SetValue(ref result, optionDescriptor.Name, type => Common.Convert.ConvertValue(option.Value, type, () => optionDescriptor.GetConverter(), optionDescriptor.DefaultValue));
 			}
 			else
 			{
 				foreach(var character in option.Name)
 				{
 					if(descriptor.Options.TryGetValue(character.ToString(), out var optionDescriptor))
-						Reflection.Reflector.SetValue(ref result, optionDescriptor.Name, type => Common.Convert.ConvertValue(option.Value, type, () => optionDescriptor.ConverterType == null ? null : TypeDescriptor.GetConverter(optionDescriptor.ConverterType), optionDescriptor.DefaultValue));
+						Reflection.Reflector.SetValue(ref result, optionDescriptor.Name, type => Common.Convert.ConvertValue(option.Value, type, () => optionDescriptor.GetConverter(), optionDescriptor.DefaultValue));
 				}
 			}
 		}
@@ -109,7 +109,7 @@ partial class CommandLine
 					_options[optionDescriptor.Name] = Common.Convert.ConvertValue(
 						optionValue,
 						optionDescriptor.Type,
-						() => optionDescriptor.ConverterType == null ? null : TypeDescriptor.GetConverter(optionDescriptor.ConverterType),
+						optionDescriptor.GetConverter,
 						optionDescriptor.DefaultValue);
 
 					if(optionDescriptor.Symbol != '\0')
@@ -123,9 +123,42 @@ partial class CommandLine
 
 		#region 公共属性
 		public int Count => _count;
+		public ICollection<string> Keys => _options.Keys;
+		public ICollection<object> Values => _options.Values;
+		public object this[string name] => this.GetValue(name);
 		#endregion
 
 		#region 公共方法
+		public bool Contains(string name) => name != null && _options.ContainsKey(name);
+
+		public object GetValue(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(_options.TryGetValue(name, out var value))
+				return value;
+
+			if(_descriptor.Options.TryGetValue(name, out var descriptor))
+				return descriptor.DefaultValue;
+
+			throw new ArgumentException($"The command option named '{name}' was not found.");
+		}
+
+		public T GetValue<T>(string name, T defaultValue = default)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(_options.TryGetValue(name, out var value))
+				return Common.Convert.ConvertValue<T>(value, defaultValue);
+
+			if(_descriptor.Options.TryGetValue(name, out var descriptor))
+				return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, descriptor.GetConverter);
+
+			throw new ArgumentException($"The command option named '{name}' was not found.");
+		}
+
 		public bool TryGetValue(string name, out object value)
 		{
 			if(string.IsNullOrEmpty(name))
@@ -144,6 +177,24 @@ partial class CommandLine
 			}
 
 			value = null;
+			return false;
+		}
+
+		public bool TryGetValue<T>(string name, out T value)
+		{
+			if(string.IsNullOrEmpty(name))
+			{
+				value = default;
+				return false;
+			}
+
+			if(_options.TryGetValue(name, out var obj))
+				return Common.Convert.TryConvertValue<T>(obj, out value);
+
+			if(_descriptor.Options.TryGetValue(name, out var descriptor))
+				return Common.Convert.TryConvertValue<T>(descriptor.DefaultValue, descriptor.GetConverter, out value);
+
+			value = default;
 			return false;
 		}
 		#endregion
