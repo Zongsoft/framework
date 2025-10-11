@@ -11,9 +11,9 @@
 
 ## 项目列表
 
-- [Zongsoft.Core](Zongsoft.Core) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Core)](https://nuget.org/packages/Zongsoft.Core)
+- [_**Z**ongsoft.**C**ore_](Zongsoft.Core) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Core)](https://nuget.org/packages/Zongsoft.Core)
 	> 包含公共接口、基类、枚举等，为 _**Z**ongsoft_ 开发框架提供了必要的核心功能集。
-- [Zongsoft.Data](Zongsoft.Data) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data)](https://nuget.org/packages/Zongsoft.Data)
+- [_**Z**ongsoft.**D**ata_](Zongsoft.Data) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data)](https://nuget.org/packages/Zongsoft.Data)
 	> 提供类 **G**raph**QL** 功能的 _**ORM**_ 数据引擎，其下 [_drivers_](Zongsoft.Data/drivers/) 包括：
 	> - [mssql](Zongsoft.Data/drivers/mssql/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.MsSql)](https://nuget.org/packages/Zongsoft.Data.MsSql)
 	> _**M**icrosoft **SQL** **S**erver_ 驱动
@@ -29,23 +29,23 @@
 	> _**TD**engine_ 驱动
 	> - [clickhouse](Zongsoft.Data/drivers/clickhouse/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.ClickHouse)](https://nuget.org/packages/Zongsoft.Data.ClickHouse)
 	> _**C**lick**H**ouse_ 驱动
-- [Zongsoft.Commands](Zongsoft.Commands) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Commands)](https://nuget.org/packages/Zongsoft.Commands)
+- [_**Z**ongsoft.**C**ommands_](Zongsoft.Commands) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Commands)](https://nuget.org/packages/Zongsoft.Commands)
 	> 提供了一些常用的命令，为应用层提供以命令行方式执行特定功能的能力。
-- [Zongsoft.Diagnostics](Zongsoft.Diagnostics) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Diagnostics)](https://nuget.org/packages/Zongsoft.Diagnostics)
+- [_**Z**ongsoft.**D**iagnostics_](Zongsoft.Diagnostics) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Diagnostics)](https://nuget.org/packages/Zongsoft.Diagnostics)
 	> 提供了 _**O**pen**T**elemetry_ 协议相关的诊断能力，包括 _**O**pen**T**elemetry_ 协议的接收处理，以及 _**C**onsole_、_**P**rometheus_、_**Z**ipkin_ 等输出器插件等。
-- [Zongsoft.Intelligences](Zongsoft.Intelligences) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Intelligences)](https://nuget.org/packages/Zongsoft.Intelligences)
+- [_**Z**ongsoft.**I**ntelligences_](Zongsoft.Intelligences) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Intelligences)](https://nuget.org/packages/Zongsoft.Intelligences)
 	> 提供了大语言模型、智能体、_**R**etrieval **A**ugmented **G**eneration_ 等 _**AI**_ 功能集，基于 [**M**icrosoft.**E**xtensions.**AI**](https://www.nuget.org/packages/Microsoft.Extensions.AI) 及 [**M**icrosoft.**A**gents.**AI**](https://www.nuget.org/packages/Microsoft.Agents.AI) 等相关库的插件化。
-- [Zongsoft.Net](Zongsoft.Net) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Net)](https://nuget.org/packages/Zongsoft.Net)
+- [_**Z**ongsoft.**N**et_](Zongsoft.Net) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Net)](https://nuget.org/packages/Zongsoft.Net)
 	> 提供了高性能网络通讯相关的支持，基于 [_**P**ipelines_](https://learn.microsoft.com/zh-cn/dotnet/standard/io/pipelines)、[_**B**uffers_](https://learn.microsoft.com/zh-cn/dotnet/standard/io/buffers) 等新式技术。
-- [Zongsoft.Plugins](Zongsoft.Plugins) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Plugins)](https://nuget.org/packages/Zongsoft.Plugins)
+- [_**Z**ongsoft.**P**lugins_](Zongsoft.Plugins) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Plugins)](https://nuget.org/packages/Zongsoft.Plugins)
 	> 提供了插件化应用开发的核心功能。
-- [Zongsoft.Plugins.Web](Zongsoft.Plugins.Web) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Plugins.Web)](https://nuget.org/packages/Zongsoft.Plugins.Web)
+- [_**Z**ongsoft.**P**lugins.**W**eb_](Zongsoft.Plugins.Web) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Plugins.Web)](https://nuget.org/packages/Zongsoft.Plugins.Web)
 	> 提供了 **W**eb 应用的插件化支持。
-- [Zongsoft.Reporting](Zongsoft.Reporting) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Reporting)](https://nuget.org/packages/Zongsoft.Reporting)
+- [_**Z**ongsoft.**R**eporting_](Zongsoft.Reporting) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Reporting)](https://nuget.org/packages/Zongsoft.Reporting)
 	> 提供了报表相关的核心功能定义。
-- [Zongsoft.Security](Zongsoft.Security) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Security)](https://nuget.org/packages/Zongsoft.Security)
+- [_**Z**ongsoft.**S**ecurity_](Zongsoft.Security) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Security)](https://nuget.org/packages/Zongsoft.Security)
 	> 提供了安全(身份验证、授权控制)相关的核心功能。
-- [Zongsoft.Web](Zongsoft.Web) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web)](https://nuget.org/packages/Zongsoft.Web)
+- [_**Z**ongsoft.**W**eb_](Zongsoft.Web) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web)](https://nuget.org/packages/Zongsoft.Web)
 	> 提供了 **W**eb 应用开发的通用能力。
 	- [api](Zongsoft.Web/api/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web.OpenApi)](https://nuget.org/packages/Zongsoft.Web.OpenApi)
 		> 提供了 _**O**pen-**API**_ 规范的插件化扩展。
