@@ -96,7 +96,7 @@ public class TreeCommand : CommandBase<CommandContext>
 		}
 
 		output.Write(qualified ? node.FullPath : node.Name);
-		output.Write(CommandOutletColor.DarkGray, $" [{node.NodeType}]");
+		output.Write(CommandOutletColor.DarkCyan, $"({node.NodeType})");
 
 		if(node.Plugin == null)
 			output.WriteLine();
@@ -108,7 +108,7 @@ public class TreeCommand : CommandBase<CommandContext>
 
 		var target = node.UnwrapValue(ObtainMode.Never);
 		if(target != null)
-			output.WriteLine(CommandOutletColor.DarkYellow, $"{indent}{target.GetType().FullName}");
+			output.WriteLine(CommandOutletColor.DarkYellow, $"{indent}{Common.TypeAlias.GetAlias(target.GetType())}");
 
 		if(maxDepth > 0 && depth >= maxDepth)
 			return;
