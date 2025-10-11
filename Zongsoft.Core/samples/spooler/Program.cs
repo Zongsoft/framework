@@ -28,16 +28,16 @@ internal class Program
 		{
 			const int PADDING = 10;
 
-			if(context.Expression.Options.TryGetValue<int>("period", out var period))
+			if(context.GetOptions().TryGetValue<int>("period", out var period))
 				_PERIOD_ = period;
 
-			if(context.Expression.Options.TryGetValue<int>("limit", out var limit))
+			if(context.GetOptions().TryGetValue<int>("limit", out var limit))
 				_LIMIT_ = limit;
 
-			if(context.Expression.Options.TryGetValue<int>("count", out var count))
+			if(context.GetOptions().TryGetValue<int>("count", out var count))
 				_COUNT_ = count;
 
-			if(context.Expression.Options.TryGetValue<int>("collision", out var collision))
+			if(context.GetOptions().TryGetValue<int>("collision", out var collision))
 				_COLLISION_ = collision;
 
 			var content = CommandOutletContent.Create()
@@ -94,11 +94,11 @@ internal class Program
 
 	private static (int count, int collision) GetCommandOptions(CommandContext context)
 	{
-		if(!context.Expression.Options.TryGetValue<int>("count", out var count))
-			count = context.Expression.Arguments.GetValue(0, _COUNT_);
+		if(!context.GetOptions().TryGetValue<int>("count", out var count))
+			count = context.Arguments.GetValue(0, _COUNT_);
 
-		if(!context.Expression.Options.TryGetValue<int>("collision", out var collision))
-			collision = context.Expression.Arguments.GetValue(1, _COLLISION_);
+		if(!context.GetOptions().TryGetValue<int>("collision", out var collision))
+			collision = context.Arguments.GetValue(1, _COLLISION_);
 
 		return (Math.Max(count, 100), collision);
 	}

@@ -56,61 +56,61 @@ internal class Program
 
 		Terminal.Console.Executor.Command("open", context =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 			{
 				Terminal.WriteLine(CommandOutletColor.Red, $"The open command is missing required arguments.");
 				return;
 			}
 
-			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+			foreach(var supervisable in Get(superviser, context.Arguments))
 				supervisable.Open();
 		});
 
 		Terminal.Console.Executor.Command("close", context =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 			{
 				Terminal.WriteLine(CommandOutletColor.Red, $"The open command is missing required arguments.");
 				return;
 			}
 
-			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+			foreach(var supervisable in Get(superviser, context.Arguments))
 				supervisable.Close();
 		});
 
 		Terminal.Console.Executor.Command("pause", context =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 			{
 				Terminal.WriteLine(CommandOutletColor.Red, $"The pause command is missing required arguments.");
 				return;
 			}
 
-			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+			foreach(var supervisable in Get(superviser, context.Arguments))
 				supervisable.Pause();
 		});
 
 		Terminal.Console.Executor.Command("resume", context =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 			{
 				Terminal.WriteLine(CommandOutletColor.Red, $"The resume command is missing required arguments.");
 				return;
 			}
 
-			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+			foreach(var supervisable in Get(superviser, context.Arguments))
 				supervisable.Resume();
 		});
 
 		Terminal.Console.Executor.Command("error", context =>
 		{
-			if(context.Expression.Arguments.IsEmpty)
+			if(context.Arguments.IsEmpty)
 			{
 				Terminal.WriteLine(CommandOutletColor.Red, $"The resume command is missing required arguments.");
 				return;
 			}
 
-			foreach(var supervisable in Get(superviser, context.Expression.Arguments))
+			foreach(var supervisable in Get(superviser, context.Arguments))
 				supervisable.Error();
 		});
 
