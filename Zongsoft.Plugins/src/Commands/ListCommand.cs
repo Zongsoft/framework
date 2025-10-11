@@ -59,47 +59,51 @@ namespace Zongsoft.Plugins.Commands
 			int index = 0;
 
 			foreach(var plugin in _pluginTree.Plugins)
-				WritePlugin(context.Output, plugin, 0, index++);
+				DumpPlugin(context.Output, plugin, 0, index++);
 
 			return ValueTask.FromResult<object>(_pluginTree.Plugins);
 		}
 		#endregion
 
 		#region 私有方法
-		private static void WritePlugin(ICommandOutlet output, Plugin plugin, int depth, int index)
+		private static void DumpPlugin(ICommandOutlet output, Plugin plugin, int depth, int index)
 		{
 			if(plugin == null)
 				return;
 
 			var indent = depth > 0 ? new string('\t', depth) : string.Empty;
-			var content = CommandOutletContent.Create(CommandOutletColor.DarkMagenta, $"{indent}[{(index + 1)}] ").Append(plugin.Name);
+			var content = CommandOutletContent
+				.Create(CommandOutletColor.DarkMagenta, $"{indent}[{(index + 1)}] ")
+				.Append(plugin.Name);
 
 			if(plugin.Manifest.Version.Major > 0 || plugin.Manifest.Version.Minor > 0 || plugin.Manifest.Version.Build > 0 || plugin.Manifest.Version.Revision > 0)
 			{
-				content.Append(CommandOutletColor.DarkGray, "@")
-				       .Append(CommandOutletColor.Blue, plugin.Manifest.Version.ToString());
+				content.Last
+					.Append(CommandOutletColor.DarkGray, "@")
+					.Append(CommandOutletColor.Blue, plugin.Manifest.Version.ToString());
 			}
 
 			if(plugin.IsMaster)
-				content.AppendLine(CommandOutletColor.DarkCyan, " (master)");
+				content.Last.AppendLine(CommandOutletColor.DarkCyan, " (master)");
 			else
-				content.AppendLine();
+				content.Last.AppendLine();
 
-			content.Append(indent);
+			content.Last.Append(indent);
 			var directoryName = GetCurrentDirectoryName(plugin.FilePath);
 
 			if(!string.IsNullOrEmpty(directoryName))
 			{
-				content.Append(CommandOutletColor.DarkGreen, directoryName);
-				content.Append("/");
+				content.Last
+					.Append(CommandOutletColor.DarkGreen, directoryName)
+					.Append('/');
 			}
 
-			content.Append(CommandOutletColor.DarkYellow, Path.GetFileName(plugin.FilePath));
+			content.Last.Append(CommandOutletColor.DarkYellow, Path.GetFileName(plugin.FilePath));
 
 			if(File.Exists(plugin.FilePath))
 			{
 				var fileInfo = new FileInfo(plugin.FilePath);
-				content.Append(CommandOutletColor.DarkGray, $" [{fileInfo.LastWriteTime}]");
+				content.Last.Append(CommandOutletColor.DarkGray, $" [{fileInfo.LastWriteTime}]");
 			}
 
 			output.WriteLine(content);
@@ -109,7 +113,7 @@ namespace Zongsoft.Plugins.Commands
 				var childIndex = 0;
 
 				foreach(var child in plugin.Children)
-					WritePlugin(output, child, depth + 1, childIndex++);
+					DumpPlugin(output, child, depth + 1, childIndex++);
 			}
 		}
 
@@ -122,7 +126,7 @@ namespace Zongsoft.Plugins.Commands
 			var index = directoryPath.LastIndexOf(Path.DirectorySeparatorChar);
 
 			if(index > 0 && index < directoryPath.Length - 1)
-				return directoryPath.Substring(index + 1);
+				return directoryPath[(index + 1)..];
 
 			return string.Empty;
 		}
