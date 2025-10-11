@@ -33,6 +33,8 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 	> Provides some commonly used commands, enabling the application layer to execute specific functions via the command line.
 - [_**Z**ongsoft.**D**iagnostics_](Zongsoft.Diagnostics) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Diagnostics)](https://nuget.org/packages/Zongsoft.Diagnostics)
 	> Provides diagnostic capabilities related to the _**O**pen**T**elemetry_ protocol, including reception and processing of the _**O**pen**T**elemetry_ protocol, as well as exporter plugins such as _**C**onsole_, _**P**rometheus_, _**Z**ipkin_, and more.
+- [Zongsoft.Intelligences](Zongsoft.Intelligences) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Intelligences)](https://nuget.org/packages/Zongsoft.Intelligences)
+	> Provides a suite of AI functionalities including **L**arge **L**anguage **M**odels, **A**gents, and **R**etrieval **A**ugmented **G**eneration，implemented as plugins based on libraries such as [**M**icrosoft.**E**xtensions.**AI**](https://www.nuget.org/packages/Microsoft.Extensions.AI) and [**M**icrosoft.**A**gents.**AI**](https://www.nuget.org/packages/Microsoft.Agents.AI).
 - [_**Z**ongsoft.**N**et_](Zongsoft.Net) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Net)](https://nuget.org/packages/Zongsoft.Net)
 	> Provides support for high-performance network communication based on new technologies such as [_**P**ipelines_](https://learn.microsoft.com/zh-cn/dotnet/standard/io/pipelines) and [_**B**uffers_](https://learn.microsoft.com/zh-cn/dotnet/standard/io/buffers).
 - [_**Z**ongsoft.**P**lugins_](Zongsoft.Plugins) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Plugins)](https://nuget.org/packages/Zongsoft.Plugins)
