@@ -79,7 +79,7 @@ podman exec -it ollama ollama pull qwen3:0.6b
 	> ai.assistant.model.list
 	> 
 	> # 查看正在运行的模型列表
-	> ai.assistant.model.list -running
+	> ai.assistant.model.list --running
 	> 
 	> # 查看指定的模型信息
 	> ai.assistant.model.info "qwen3:0.6b"
@@ -118,15 +118,15 @@ podman exec -it ollama ollama pull qwen3:0.6b
 	> # 对话
 	> ai.assistant.chat "内容"
 	> # 对话：结果为纯文本
-	> ai.assistant.chat -format:text "内容"
+	> ai.assistant.chat --format:text "内容"
 	> 
 	> # 对话：结果为异步流
-	> ai.assistant.chat -streaming "内容"
+	> ai.assistant.chat --streaming "内容"
 	> # 对话：结果为纯文本的异步流
-	> ai.assistant.chat -streaming -format:text "内容"
+	> ai.assistant.chat --streaming --format:text "内容"
 	> 
 	> # 进入交互对话模式
-	> ai.assistant.chat -interactive
+	> ai.assistant.chat --interactive
 	> ```
 
 ### RESTful API 接口
@@ -160,6 +160,6 @@ podman exec -it ollama ollama pull qwen3:0.6b
 - 聊天对话 _（有会话历史）_
 	> `POST /ai/assistants/{name}/chats/{id}/chat`
 
-> 提示：[api](./api/) 项目中的 [_`chat.html`_](./api/chat.html) 文件为调用聊天 _**API**_ 的范例，它采用 [_**SSE**_](https://developer.mozilla.org/docs/Web/API/Server-sent_events/Using_server-sent_events) 技术实现。
+> 提示：[api](./api/) 项目中的 [_`chat.html`_](./api/chat.html) 文件为调用聊天 _**API**_ 的范例，它采用 [_**S**erver-**S**ent **E**vents_](https://developer.mozilla.org/docs/Web/API/Server-sent_events/Using_server-sent_events) 技术实现。
 
 > 完整信息请参考 [api](./api/) 项目中的 [_`Zongsoft.Intelligences.Web.http`_](./api/Zongsoft.Intelligences.Web.http) 文档。
