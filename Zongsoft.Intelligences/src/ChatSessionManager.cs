@@ -37,6 +37,12 @@ namespace Zongsoft.Intelligences;
 
 public class ChatSessionManager(IChatService service) : IChatSessionManager
 {
+	#region 事件声明
+	public event EventHandler<ChatSessionEventArgs> Created;
+	public event EventHandler<ChatSessionEventArgs> Activated;
+	public event EventHandler<ChatSessionEventArgs> Abandoned;
+	#endregion
+
 	#region 成员字段
 	private readonly MemoryCache _cache = new();
 	private readonly IChatService _service = service;
@@ -51,8 +57,20 @@ public class ChatSessionManager(IChatService service) : IChatSessionManager
 	public IChatSession Create(ChatSessionOptions options = null)
 	{
 		var session = new ChatSession(_service, options);
+
+		//设置会话的开场白（即聊天会话的系统提示）
+		if(!string.IsNullOrWhiteSpace(session.Options.Prelude))
+			session.History.Append(new Microsoft.Extensions.AI.ChatMessage(Microsoft.Extensions.AI.ChatRole.System, session.Options.Prelude));
+
+		//将新建会话保存到缓存中
 		_cache.SetValue(session.Identifier, session, session.Options.Expiration);
-		this.Current ??= session;
+
+		//更新当前会话
+		this.Current = session;
+
+		//激发“Created”事件
+		this.OnCreated(new(_service, session));
+
 		return session;
 	}
 
@@ -71,7 +89,12 @@ public class ChatSessionManager(IChatService service) : IChatSessionManager
 
 		if(_cache.Remove(identifier, out var value) && value is IChatSession session)
 		{
+			//处置移除的会话
 			session.Dispose();
+
+			//激发“Abandoned”事件
+			this.OnAbandoned(new(_service, session));
+
 			return session;
 		}
 
@@ -83,11 +106,25 @@ public class ChatSessionManager(IChatService service) : IChatSessionManager
 		if(string.IsNullOrEmpty(identifier))
 			return this.Current;
 
-		if(_cache.TryGetValue(identifier, out var value))
-			return this.Current = value as IChatSession;
+		if(_cache.TryGetValue(identifier, out var value) && !object.Equals(this.Current, value))
+		{
+			//设置当前会话
+			var current = this.Current = value as IChatSession;
+
+			//激发“Activated”事件
+			this.OnActivated(new(_service, current));
+
+			return current;
+		}
 
 		return null;
 	}
+	#endregion
+
+	#region 事件激发
+	protected virtual void OnCreated(ChatSessionEventArgs args) => this.Created?.Invoke(this, args);
+	protected virtual void OnActivated(ChatSessionEventArgs args) => this.Activated?.Invoke(this, args);
+	protected virtual void OnAbandoned(ChatSessionEventArgs args) => this.Abandoned?.Invoke(this, args);
 	#endregion
 
 	#region 枚举遍历

@@ -34,6 +34,10 @@ namespace Zongsoft.Intelligences;
 
 public interface IChatSessionManager : IEnumerable<IChatSession>
 {
+	event EventHandler<ChatSessionEventArgs> Created;
+	event EventHandler<ChatSessionEventArgs> Activated;
+	event EventHandler<ChatSessionEventArgs> Abandoned;
+
 	IChatSession Current { get; }
 
 	IChatSession Get(string identifier);

@@ -38,7 +38,7 @@ namespace Zongsoft.Intelligences;
 /// <summary>
 /// 表示聊天会话的接口。
 /// </summary>
-public interface IChatSession : IDisposable, IAsyncDisposable
+public interface IChatSession : IEquatable<IChatSession>, IDisposable, IAsyncDisposable
 {
 	/// <summary>获取会话标识。</summary>
 	string Identifier { get; }

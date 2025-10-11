@@ -41,11 +41,12 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Intelligences;
 
-internal class ChatSession : IChatSession, IEquatable<ChatSession>
+internal class ChatSession : IChatSession, IEquatable<IChatSession>, IEquatable<ChatSession>
 {
 	#region 成员字段
 	private IChatService _service;
 	private string _summary;
+	private ChatOptions _options;
 	#endregion
 
 	#region 构造函数
@@ -61,7 +62,11 @@ internal class ChatSession : IChatSession, IEquatable<ChatSession>
 		if(this.Options.Parameters != null && this.Options.Parameters.TryGetValue("history", out var value))
 			this.History = GetHistory(value);
 
+		//确保聊天历史记录器不为空
 		this.History ??= GetHistory(service.Settings["history"]) ?? new ChatHistory.Memory();
+
+		//创建默认的聊天选项对象
+		_options = new ChatOptions() { ConversationId = this.Identifier };
 
 		static IChatHistory GetHistory(object target)
 		{
@@ -97,15 +102,20 @@ internal class ChatSession : IChatSession, IEquatable<ChatSession>
 		//将对话内容加入到历史记录中
 		this.History.Append(content);
 
+		//确保聊天选项的关联会话
+		if(options != null)
+			options.ConversationId = this.Identifier;
+
 		//返回文本包装器的异步流
-		return new Response<string>(this.History, _service.GetStreamingResponseAsync(this.History, options, cancellation), message => message.Text);
+		return new Response<string>(this.History, _service.GetStreamingResponseAsync(this.History, options ?? _options, cancellation), message => message.Text);
 	}
 	#endregion
 
 	#region 重写方法
 	public override string ToString() => $"#{this.Identifier}({this.Creation.ToLocalTime():yyyy-MM-dd HH:mm:ss})";
+	public bool Equals(IChatSession other) => this.Equals(other as ChatSession);
 	public bool Equals(ChatSession other) => other is not null && string.Equals(this.Identifier, other.Identifier);
-	public override bool Equals(object obj) => base.Equals(obj);
+	public override bool Equals(object obj) => this.Equals(obj as ChatSession);
 	public override int GetHashCode() => this.Identifier.GetHashCode();
 	#endregion
 
