@@ -202,10 +202,6 @@ public partial class CommandExecutor : ICommandExecutor
 			//创建命令执行上下文
 			var context = this.CreateContext(session, entry.Item1, entry.Item2, value);
 
-			//如果命令上下文为空或命令空则直接返回
-			if(context == null || context.Command == null)
-				return default;
-
 			//执行当前命令
 			value = await this.OnExecuteAsync(context, cancellation);
 
@@ -218,7 +214,14 @@ public partial class CommandExecutor : ICommandExecutor
 		return (value, completes);
 	}
 
-	protected virtual ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation) => this.Invoker.InvokeAsync(context, cancellation);
+	protected virtual ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		//如果命令上下文为空或命令空则直接返回
+		if(context == null || context.Command == null)
+			return default;
+
+		return this.Invoker.InvokeAsync(context, cancellation);
+	}
 	#endregion
 
 	#region 虚拟方法
@@ -226,7 +229,7 @@ public partial class CommandExecutor : ICommandExecutor
 		new(this, CommandLine.Parse(commandText), value);
 
 	protected virtual CommandContext CreateContext(CommandExecutorContext context, CommandLine.Cmdlet cmdlet, CommandNode node, object value) =>
-		node == null || node.Command == null ? null : new CommandContext(context, cmdlet, node, value);
+		node == null ? null : new CommandContext(context, cmdlet, node, value);
 	#endregion
 
 	#region 激发事件

@@ -98,6 +98,15 @@ public partial class CommandNode : Zongsoft.Collections.HierarchicalNode<Command
 	public ISet<string> Aliases => _aliases;
 	public ICommandLoader Loader { get; set; }
 
+	public bool HasChildren
+	{
+		get
+		{
+			this.EnsureChildren();
+			return _children.Count > 0;
+		}
+	}
+
 	public CommandNodeCollection Children
 	{
 		get

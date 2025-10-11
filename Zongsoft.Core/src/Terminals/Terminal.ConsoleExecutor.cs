@@ -183,6 +183,17 @@ partial class Terminal
 		#endregion
 
 		#region 重写方法
+		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+		{
+			if(context == null)
+				return default;
+
+			if(context.CommandNode != null && context.CommandNode.HasChildren)
+				this.Current = context.CommandNode;
+
+			return base.OnExecuteAsync(context, cancellation);
+		}
+
 		protected override void OnFailed(CommandExecutorFailureEventArgs args)
 		{
 			//调用基类同名方法

@@ -54,9 +54,6 @@ public class CommandContext : CommandContextBase
 		if(node == null)
 			throw new ArgumentNullException(nameof(node));
 
-		if(node.Command == null)
-			throw new ArgumentException($"The Command property of '{node.FullPath}' command-node is null.");
-
 		this.CommandNode = node;
 		this.Command = node.Command;
 
@@ -77,9 +74,6 @@ public class CommandContext : CommandContextBase
 	{
 		if(node == null)
 			throw new ArgumentNullException(nameof(node));
-
-		if(node.Command == null)
-			throw new ArgumentException($"The Command property of '{node.FullPath}' command-node is null.");
 
 		this.CommandNode = node;
 		this.Command = node.Command;
