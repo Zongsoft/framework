@@ -19,6 +19,13 @@ public class CommandLineTest
 		Assert.Empty(cmdlets[0].Options);
 		Assert.Empty(cmdlets[0].Arguments);
 
+		cmdlets = CommandLine.Parse("cmdlet.subcmd");
+		Assert.NotEmpty(cmdlets);
+		Assert.Single(cmdlets);
+		Assert.Equal("cmdlet.subcmd", cmdlets[0].Name);
+		Assert.Empty(cmdlets[0].Options);
+		Assert.Empty(cmdlets[0].Arguments);
+
 		cmdlets = CommandLine.Parse("/");
 		Assert.NotEmpty(cmdlets);
 		Assert.Single(cmdlets);
@@ -69,6 +76,14 @@ public class CommandLineTest
 		Assert.Single(cmdlets[0].Arguments);
 		Assert.Equal("arg", cmdlets[0].Arguments[0]);
 
+		cmdlets = CommandLine.Parse("cmdlet.subcmd arg");
+		Assert.NotEmpty(cmdlets);
+		Assert.Single(cmdlets);
+		Assert.Equal("cmdlet.subcmd", cmdlets[0].Name);
+		Assert.Empty(cmdlets[0].Options);
+		Assert.Single(cmdlets[0].Arguments);
+		Assert.Equal("arg", cmdlets[0].Arguments[0]);
+
 		cmdlets = CommandLine.Parse("cmdlet -opt --option1 --option2:value2 arg1 arg2");
 		Assert.NotEmpty(cmdlets);
 		Assert.Single(cmdlets);
@@ -96,7 +111,6 @@ public class CommandLineTest
 	public void TestParse2()
 	{
 		var cmdlets = CommandLine.Parse("cmdlet1 | cmdlet2");
-
 		Assert.NotEmpty(cmdlets);
 		Assert.Equal(2, cmdlets.Count);
 		Assert.Equal("cmdlet1", cmdlets[0].Name);
@@ -106,8 +120,17 @@ public class CommandLineTest
 		Assert.Empty(cmdlets[1].Options);
 		Assert.Empty(cmdlets[1].Arguments);
 
-		cmdlets = CommandLine.Parse("cmdlet1 -opt | cmdlet2 --opt arg1");
+		cmdlets = CommandLine.Parse("cmdlet1.subcmd | cmdlet2.subcmd");
+		Assert.NotEmpty(cmdlets);
+		Assert.Equal(2, cmdlets.Count);
+		Assert.Equal("cmdlet1.subcmd", cmdlets[0].Name);
+		Assert.Empty(cmdlets[0].Options);
+		Assert.Empty(cmdlets[0].Arguments);
+		Assert.Equal("cmdlet2.subcmd", cmdlets[1].Name);
+		Assert.Empty(cmdlets[1].Options);
+		Assert.Empty(cmdlets[1].Arguments);
 
+		cmdlets = CommandLine.Parse("cmdlet1 -opt | cmdlet2 --opt arg1");
 		Assert.NotEmpty(cmdlets);
 		Assert.Equal(2, cmdlets.Count);
 		Assert.Equal("cmdlet1", cmdlets[0].Name);

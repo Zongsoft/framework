@@ -159,7 +159,7 @@ public static partial class CommandLine
 
 		if(context.IsLetterOrDigitOrUnderscore)
 		{
-			if(context.HasFlags(Flags.SingleDotted) || context.HasFlags(Flags.DoubleDotted))
+			if(context.HasFlags(Flags.DoubleDotted))
 			{
 				name = null;
 				context.Error();
