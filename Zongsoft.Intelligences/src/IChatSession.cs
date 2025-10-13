@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Threading;
-using System.Collections.Generic;
 
 using Microsoft.Extensions.AI;
 
@@ -38,7 +36,7 @@ namespace Zongsoft.Intelligences;
 /// <summary>
 /// 表示聊天会话的接口。
 /// </summary>
-public interface IChatSession : IEquatable<IChatSession>, IDisposable, IAsyncDisposable
+public interface IChatSession : IChatClient, IEquatable<IChatSession>, IDisposable, IAsyncDisposable
 {
 	/// <summary>获取会话标识。</summary>
 	string Identifier { get; }
@@ -50,17 +48,4 @@ public interface IChatSession : IEquatable<IChatSession>, IDisposable, IAsyncDis
 	ChatSessionOptions Options { get; }
 	/// <summary>获取或设置会话的概述。</summary>
 	string Summary { get; set; }
-
-	/// <summary>异步聊天。</summary>
-	/// <param name="content">指定的聊天内容。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回响应文本的异步流。</returns>
-	IAsyncEnumerable<string> ChatAsync(string content, CancellationToken cancellation = default);
-
-	/// <summary>异步聊天。</summary>
-	/// <param name="content">指定的聊天内容。</param>
-	/// <param name="options">指定的选项设置。</param>
-	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回响应文本的异步流。</returns>
-	IAsyncEnumerable<string> ChatAsync(string content, ChatOptions options, CancellationToken cancellation = default);
 }

@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
@@ -41,12 +42,12 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Intelligences;
 
-internal class ChatSession : IChatSession, IEquatable<IChatSession>, IEquatable<ChatSession>
+internal class ChatSession : IChatSession, IChatClient, IEquatable<IChatSession>, IEquatable<ChatSession>
 {
 	#region 成员字段
 	private IChatService _service;
 	private string _summary;
-	private ChatOptions _options;
+	private string _conversationId;
 	#endregion
 
 	#region 构造函数
@@ -65,9 +66,6 @@ internal class ChatSession : IChatSession, IEquatable<IChatSession>, IEquatable<
 		//确保聊天历史记录器不为空
 		this.History ??= GetHistory(service.Settings["history"]) ?? new ChatHistory.Memory();
 
-		//创建默认的聊天选项对象
-		_options = new ChatOptions() { ConversationId = this.Identifier };
-
 		static IChatHistory GetHistory(object target)
 		{
 			if(target is IChatHistory history)
@@ -82,6 +80,7 @@ internal class ChatSession : IChatSession, IEquatable<IChatSession>, IEquatable<
 
 	#region 公共属性
 	public string Identifier { get; }
+	public string ConversationId => _conversationId;
 	public DateTimeOffset Creation { get; }
 	public IChatHistory History { get; }
 	public ChatSessionOptions Options { get; }
@@ -93,22 +92,87 @@ internal class ChatSession : IChatSession, IEquatable<IChatSession>, IEquatable<
 	#endregion
 
 	#region 公共方法
-	public IAsyncEnumerable<string> ChatAsync(string content, CancellationToken cancellation = default) => this.ChatAsync(content, null, cancellation);
-	public IAsyncEnumerable<string> ChatAsync(string content, ChatOptions options, CancellationToken cancellation = default)
+	public async Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options, CancellationToken cancellation)
 	{
-		if(string.IsNullOrWhiteSpace(content))
-			return Zongsoft.Collections.Enumerable.EnumerateAsync<string>(null);
-
 		//将对话内容加入到历史记录中
-		this.History.Append(content);
+		foreach(var message in messages)
+			this.History.Append(message);
 
-		//确保聊天选项的关联会话
-		if(options != null)
-			options.ConversationId = this.Identifier;
+		ChatResponse response;
 
-		//返回文本包装器的异步流
-		return new Response<string>(this.History, _service.GetStreamingResponseAsync(this.History, options ?? _options, cancellation), message => message.Text);
+		if(string.IsNullOrEmpty(_conversationId))
+		{
+			response = await _service.GetResponseAsync(this.History, options, cancellation);
+		}
+		else
+		{
+			//确保聊天选项的关联会话
+			if(!string.IsNullOrEmpty(_conversationId))
+			{
+				if(options == null)
+					options = new ChatOptions() { ConversationId = _conversationId };
+				else
+					options.ConversationId = _conversationId;
+			}
+
+			response = await _service.GetResponseAsync(messages, options, cancellation);
+		}
+
+		//更新聊天对话编号
+		if(response != null && response.ConversationId != null)
+			_conversationId = response.ConversationId;
+
+		//将返回的消息依次加入到历史记录
+		for(int i = 0; i < response.Messages.Count; i++)
+			this.History.Append(response.Messages[i]);
+
+		return response;
 	}
+
+	public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation)
+	{
+		//将对话内容加入到历史记录中
+		foreach(var message in messages)
+			this.History.Append(message);
+
+		IAsyncEnumerable<ChatResponseUpdate> entries;
+
+		if(string.IsNullOrEmpty(_conversationId))
+		{
+			entries = _service.GetStreamingResponseAsync(this.History, options, cancellation);
+		}
+		else
+		{
+			//确保聊天选项的关联会话
+			if(options == null)
+				options = new ChatOptions() { ConversationId = _conversationId };
+			else
+				options.ConversationId = _conversationId;
+
+			entries = _service.GetStreamingResponseAsync(messages, options, cancellation);
+		}
+
+		var text = new StringBuilder();
+
+		await foreach(var entry in entries)
+		{
+			//更新聊天对话编号
+			if(_conversationId == null && entry.ConversationId != null)
+				_conversationId = entry.ConversationId;
+
+			//将返回的单词加入到文本缓存中
+			text.Append(entry.Text);
+
+			yield return entry;
+		}
+
+		//将返回的文本加入到历史记录
+		this.History.Append(new ChatMessage(ChatRole.Assistant, text.ToString()));
+	}
+	#endregion
+
+	#region 显式实现
+	object IChatClient.GetService(Type serviceType, object serviceKey) => _service.GetService(serviceType, serviceKey);
 	#endregion
 
 	#region 重写方法

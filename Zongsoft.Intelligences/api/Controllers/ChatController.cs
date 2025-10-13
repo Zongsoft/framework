@@ -123,7 +123,7 @@ partial class AssistantController
 			var assistant = AssistantManager.GetAssistant(name) ?? throw new BadHttpRequestException($"The specified '{name}' AI assistant was not found.");
 			var session = string.IsNullOrEmpty(id) ? null : assistant.Chatting.Sessions.Get(id);
 			var results = session != null ?
-				session.ChatAsync(content, cancellation) :         //有对话历史
+				session.ChatAsync(content, cancellation) :           //有对话历史
 				assistant.Chatting.ChatAsync(content, cancellation); //无对话历史
 
 			await this.Response.EnumerableAsync(results, cancellation);

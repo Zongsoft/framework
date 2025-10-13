@@ -42,15 +42,15 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Intelligences.Commands;
 
+[CommandOption(ROLE_OPTION, 'r', typeof(string))]
 [CommandOption(FORMAT_OPTION, 'f', typeof(ChatResponseFormat))]
-[CommandOption(SESSION_OPTION, 'e', typeof(string))]
 [CommandOption(STREAMING_OPTION, 's', typeof(bool), DefaultValue = false)]
 [CommandOption(INTERACTIVE_OPTION, 'i', typeof(bool), DefaultValue = false)]
 public class ChatCommand() : CommandBase<CommandContext>("Chat")
 {
 	#region 常量定义
+	private const string ROLE_OPTION        = "role";
 	private const string FORMAT_OPTION      = "format";
-	private const string SESSION_OPTION     = "session";
 	private const string STREAMING_OPTION   = "streaming";
 	private const string INTERACTIVE_OPTION = "interactive";
 	#endregion
@@ -65,15 +65,16 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
 			throw new CommandException("The chat service required by this command was not found.");
 
+		var client = (IChatClient)service.Sessions.Current ?? service;
 		var format = context.GetOptions().GetValue(FORMAT_OPTION, ChatResponseFormat.Object);
-		var session = service.Sessions.Get(context.GetOptions().GetValue<string>(SESSION_OPTION));
+		var role = context.GetOptions().GetValue(ROLE_OPTION, string.Empty);
 
 		if(context.GetOptions().TryGetValue<bool>(INTERACTIVE_OPTION, out var interactive) && interactive)
 		{
 			if(context.GetOptions().Contains(STREAMING_OPTION))
 				throw new CommandOptionException("The interactive chat mode does not support streaming responses.");
 
-			await Chat(context, service);
+			await Chat(context, client);
 			return _history;
 		}
 
@@ -82,37 +83,18 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 			if(context.Arguments.IsEmpty)
 				return Collections.Enumerable.EnumerateAsync<ChatResponseUpdate>(null, cancellation);
 
-			var history = service.Sessions.Current?.History;
-
-			if(history == null)
+			return format switch
 			{
-				return format switch
-				{
-					ChatResponseFormat.Object => service.GetStreamingResponseAsync(GetMessage(context), null, cancellation),
-					ChatResponseFormat.Text => service.GetStreamingResponseAsync(GetMessage(context), null, cancellation).Map(entry => entry.Text),
-					_ => throw new CommandOptionException($"The response format '{format}' is not supported."),
-				};
-			}
-			else
-			{
-				//将用户输入的内容添加到对话历史中
-				history.Append(new ChatMessage(ChatRole.User, [.. context.Arguments.Select(argument => new TextContent(argument))]));
-
-				return format switch
-				{
-					ChatResponseFormat.Object => new ChatSession.Response(history, service.GetStreamingResponseAsync(history, null, cancellation)),
-					ChatResponseFormat.Text => new ChatSession.Response<string>(history, service.GetStreamingResponseAsync(history, null, cancellation), entry => entry.Text),
-					_ => throw new CommandOptionException($"The response format '{format}' is not supported."),
-				};
-			}
+				ChatResponseFormat.Object => client.GetStreamingResponseAsync(GetMessage(role, context), null, cancellation),
+				ChatResponseFormat.Text => client.GetStreamingResponseAsync(GetMessage(role, context), null, cancellation).Map(entry => entry.Text),
+				_ => throw new CommandOptionException($"The response format '{format}' is not supported."),
+			};
 		}
 
 		if(context.Arguments.IsEmpty)
 			return null;
 
-		var message = await Dialogue(context, service);
-		if(message == null || message.Contents.Count == 0)
-			return null;
+		var message = await Dialogue(context.GetTerminal(), client, GetMessage(role, context));
 
 		return format switch
 		{
@@ -124,7 +106,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 	#endregion
 
 	#region 私有方法
-	private static async ValueTask Chat(CommandContext context, IChatService service)
+	private static async ValueTask Chat(CommandContext context, IChatClient service)
 	{
 		var terminal = context.GetTerminal() ??
 			throw new CommandException("The interactive chat can only run in a terminal environment.");
@@ -136,8 +118,6 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
 
 		terminal.Write(splash);
-
-		var history = service.Sessions.Current?.History;
 
 		while(true)
 		{
@@ -151,33 +131,11 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 			   string.Equals("quit", text, StringComparison.OrdinalIgnoreCase))
 				break;
 
-			history?.Append(new ChatMessage(ChatRole.User, text));
-
-			var message = history == null ?
-				await Dialogue(terminal, service, GetMessage(context)) :
-				await Dialogue(terminal, service, history);
+			var message = await Dialogue(terminal, service, GetMessage(null, context));
 
 			if(message != null && message.Contents.Count > 0)
-			{
-				history?.Append(message);
 				terminal.WriteLine();
-			}
 		}
-	}
-
-	private static async ValueTask<ChatMessage> Dialogue(CommandContext context, IChatService service)
-	{
-		var history = service.Sessions.Current?.History;
-		history?.Append(GetMessage(context));
-
-		var message = history == null ?
-			await Dialogue(context.GetTerminal(), service, GetMessage(context)) :
-			await Dialogue(context.GetTerminal(), service, history);
-
-		if(message != null && message.Contents.Count > 0)
-			history?.Append(message);
-
-		return message;
 	}
 
 	private static async ValueTask<ChatMessage> Dialogue(ITerminal terminal, IChatClient client, params IEnumerable<ChatMessage> messages)
@@ -205,7 +163,11 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 		return result;
 	}
 
-	private static ChatMessage GetMessage(CommandContext context) => new(ChatRole.User, [.. context.Arguments.Select(argument => new TextContent(argument))]);
+	private static ChatMessage GetMessage(string role, CommandContext context) => new(string.IsNullOrEmpty(role) ? ChatRole.User : new ChatRole(role), [.. context.Arguments.Select(argument => new TextContent(argument))])
+	{
+		MessageId = Guid.NewGuid().ToString("N")
+	};
+
 	private static bool Populate(ref ChatMessage message, ChatResponseUpdate entry)
 	{
 		if(entry == null || entry.Contents.Count == 0)
