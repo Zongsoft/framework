@@ -41,7 +41,7 @@ namespace Zongsoft.Intelligences.Ollama;
 partial class OllamaClient : IChatService, IChatClient
 {
 	#region 公共属性
-	public IChatSessionManager Sessions { get; }
+	public ChatSessionManager Sessions { get; }
 	#endregion
 
 	#region 显式属性

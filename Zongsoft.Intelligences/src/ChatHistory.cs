@@ -37,12 +37,13 @@ namespace Zongsoft.Intelligences;
 
 public static class ChatHistory
 {
-	public static ChatMessage Append(this IChatHistory history, string content)
+	public static ChatMessage Append(this IChatHistory history, string content) => Append(history, null, content);
+	public static ChatMessage Append(this IChatHistory history, string role, string content)
 	{
 		if(string.IsNullOrWhiteSpace(content))
 			return null;
 
-		var message = new ChatMessage(ChatRole.User, content);
+		var message = new ChatMessage(ChatClientUtility.GetRole(role), content);
 		history.Append(message);
 		return message;
 	}

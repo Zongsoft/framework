@@ -35,7 +35,7 @@ using Zongsoft.Caching;
 
 namespace Zongsoft.Intelligences;
 
-public class ChatSessionManager(IChatService service) : IChatSessionManager
+public class ChatSessionManager(IChatService service) : IEnumerable<IChatSession>
 {
 	#region 事件声明
 	public event EventHandler<ChatSessionEventArgs> Created;

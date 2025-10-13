@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Intelligences;
 
@@ -35,13 +36,14 @@ public class ChatSessionOptions
 {
 	#region 构造函数
 	public ChatSessionOptions(string name) : this(name, TimeSpan.FromHours(12)) { }
-	public ChatSessionOptions(string name, TimeSpan expiration)
+	public ChatSessionOptions(string name, TimeSpan expiration, params IEnumerable<KeyValuePair<object, object>> parameters)
 	{
 		if(string.IsNullOrWhiteSpace(name))
 			throw new ArgumentNullException(nameof(name));
 
 		this.Name = name;
 		this.Expiration = expiration;
+		this.Parameters = new Collections.Parameters(parameters);
 	}
 	#endregion
 
