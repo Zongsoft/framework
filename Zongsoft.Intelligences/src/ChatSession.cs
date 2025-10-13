@@ -28,10 +28,10 @@
  */
 
 using System;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.AI;
@@ -98,25 +98,16 @@ internal class ChatSession : IChatSession, IChatClient, IEquatable<IChatSession>
 		foreach(var message in messages)
 			this.History.Append(message);
 
-		ChatResponse response;
-
-		if(string.IsNullOrEmpty(_conversationId))
+		//确保聊天选项的关联会话
+		if(!string.IsNullOrEmpty(_conversationId))
 		{
-			response = await _service.GetResponseAsync(this.History, options, cancellation);
+			if(options == null)
+				options = new ChatOptions() { ConversationId = _conversationId };
+			else
+				options.ConversationId = _conversationId;
 		}
-		else
-		{
-			//确保聊天选项的关联会话
-			if(!string.IsNullOrEmpty(_conversationId))
-			{
-				if(options == null)
-					options = new ChatOptions() { ConversationId = _conversationId };
-				else
-					options.ConversationId = _conversationId;
-			}
 
-			response = await _service.GetResponseAsync(messages, options, cancellation);
-		}
+		var response = await _service.GetResponseAsync(this.GetRequest(messages), options, cancellation);
 
 		//更新聊天对话编号
 		if(response != null && response.ConversationId != null)
@@ -135,23 +126,13 @@ internal class ChatSession : IChatSession, IChatClient, IEquatable<IChatSession>
 		foreach(var message in messages)
 			this.History.Append(message);
 
-		IAsyncEnumerable<ChatResponseUpdate> entries;
-
-		if(string.IsNullOrEmpty(_conversationId))
-		{
-			entries = _service.GetStreamingResponseAsync(this.History, options, cancellation);
-		}
+		//确保聊天选项的关联会话
+		if(options == null)
+			options = new ChatOptions() { ConversationId = _conversationId };
 		else
-		{
-			//确保聊天选项的关联会话
-			if(options == null)
-				options = new ChatOptions() { ConversationId = _conversationId };
-			else
-				options.ConversationId = _conversationId;
+			options.ConversationId = _conversationId;
 
-			entries = _service.GetStreamingResponseAsync(messages, options, cancellation);
-		}
-
+		var entries = _service.GetStreamingResponseAsync(this.GetRequest(messages), options, cancellation);
 		var text = new StringBuilder();
 
 		await foreach(var entry in entries)
@@ -224,6 +205,16 @@ internal class ChatSession : IChatSession, IChatClient, IEquatable<IChatSession>
 		}
 
 		return _summary ?? string.Empty;
+	}
+
+	private IEnumerable<ChatMessage> GetRequest(IEnumerable<ChatMessage> messages)
+	{
+		var preludes = this.Options.Preludes == null ? [] : this.Options.Preludes.Select(p => new ChatMessage(ChatRole.System, p));
+
+		if(string.IsNullOrEmpty(_conversationId))
+			return Enumerable.Concat(preludes, this.History);
+		else
+			return Enumerable.Concat(preludes, messages);
 	}
 
 	private static bool Populate(ref ChatMessage message, ChatResponseUpdate entry)

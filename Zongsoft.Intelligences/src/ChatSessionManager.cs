@@ -32,6 +32,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Zongsoft.Caching;
+using Zongsoft.Services;
 
 namespace Zongsoft.Intelligences;
 
@@ -58,10 +59,6 @@ public class ChatSessionManager(IChatService service) : IEnumerable<IChatSession
 	{
 		var session = new ChatSession(_service, options);
 
-		//设置会话的开场白（即聊天会话的系统提示）
-		if(!string.IsNullOrWhiteSpace(session.Options.Prelude))
-			session.History.Append(new Microsoft.Extensions.AI.ChatMessage(Microsoft.Extensions.AI.ChatRole.System, session.Options.Prelude));
-
 		//将新建会话保存到缓存中
 		_cache.SetValue(session.Identifier, session, session.Options.Expiration);
 
@@ -69,7 +66,7 @@ public class ChatSessionManager(IChatService service) : IEnumerable<IChatSession
 		this.Current = session;
 
 		//激发“Created”事件
-		this.OnCreated(new(_service, session));
+		this.OnCreated(session);
 
 		return session;
 	}
@@ -93,7 +90,7 @@ public class ChatSessionManager(IChatService service) : IEnumerable<IChatSession
 			session.Dispose();
 
 			//激发“Abandoned”事件
-			this.OnAbandoned(new(_service, session));
+			this.OnAbandoned(session);
 
 			return session;
 		}
@@ -112,7 +109,7 @@ public class ChatSessionManager(IChatService service) : IEnumerable<IChatSession
 			var current = this.Current = value as IChatSession;
 
 			//激发“Activated”事件
-			this.OnActivated(new(_service, current));
+			this.OnActivated(current);
 
 			return current;
 		}
@@ -122,6 +119,33 @@ public class ChatSessionManager(IChatService service) : IEnumerable<IChatSession
 	#endregion
 
 	#region 事件激发
+	private void OnCreated(IChatSession session)
+	{
+		this.OnCreated(new ChatSessionEventArgs(_service, session));
+
+		var lifetimes = ApplicationContext.Current?.Services.ResolveAll<IChatSessionLifetime>() ?? [];
+		foreach(var lifetime in lifetimes)
+			lifetime.OnCreated(_service, session);
+	}
+
+	private void OnActivated(IChatSession session)
+	{
+		this.OnActivated(new ChatSessionEventArgs(_service, session));
+
+		var lifetimes = ApplicationContext.Current?.Services.ResolveAll<IChatSessionLifetime>() ?? [];
+		foreach(var lifetime in lifetimes)
+			lifetime.OnActivated(_service, session);
+	}
+
+	private void OnAbandoned(IChatSession session)
+	{
+		this.OnAbandoned(new ChatSessionEventArgs(_service, session));
+
+		var lifetimes = ApplicationContext.Current?.Services.ResolveAll<IChatSessionLifetime>() ?? [];
+		foreach(var lifetime in lifetimes)
+			lifetime.OnAbandoned(_service, session);
+	}
+
 	protected virtual void OnCreated(ChatSessionEventArgs args) => this.Created?.Invoke(this, args);
 	protected virtual void OnActivated(ChatSessionEventArgs args) => this.Activated?.Invoke(this, args);
 	protected virtual void OnAbandoned(ChatSessionEventArgs args) => this.Abandoned?.Invoke(this, args);

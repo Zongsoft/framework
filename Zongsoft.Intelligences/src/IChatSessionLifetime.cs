@@ -28,36 +28,12 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Intelligences;
 
-public class ChatSessionOptions
+public interface IChatSessionLifetime
 {
-	#region 构造函数
-	public ChatSessionOptions(string name) : this(name, TimeSpan.FromHours(12)) { }
-	public ChatSessionOptions(string name, TimeSpan expiration, params IEnumerable<KeyValuePair<object, object>> parameters)
-	{
-		if(string.IsNullOrWhiteSpace(name))
-			throw new ArgumentNullException(nameof(name));
-
-		this.Name = name;
-		this.Expiration = expiration;
-		this.Parameters = new Collections.Parameters(parameters);
-	}
-	#endregion
-
-	#region 公共属性
-	/// <summary>获取聊天提供程序名称。</summary>
-	public string Name { get; }
-
-	/// <summary>获取或设置会话开场白。</summary>
-	public string[] Preludes { get; set; }
-
-	/// <summary>获取或设置会话有效期。</summary>
-	public TimeSpan Expiration { get; set; }
-
-	/// <summary>获取或设置会话参数集。</summary>
-	public Collections.Parameters Parameters { get; set; }
-	#endregion
+	void OnCreated(IChatService service, IChatSession session);
+	void OnActivated(IChatService service, IChatSession session);
+	void OnAbandoned(IChatService service, IChatSession session);
 }
