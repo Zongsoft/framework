@@ -38,12 +38,14 @@ namespace Zongsoft.Intelligences;
 
 public static class ChatClientUtility
 {
+	internal static ChatRole GetRole(string role) => string.IsNullOrWhiteSpace(role) ? ChatRole.User : new ChatRole(role);
+
 	/// <summary>异步聊天。</summary>
 	/// <param name="client">指定的聊天客户端。</param>
 	/// <param name="content">指定的聊天内容。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回响应文本的异步流。</returns>
-	public static IAsyncEnumerable<string> ChatAsync(this IChatClient client, string content, CancellationToken cancellation = default) => ChatAsync(client, content, null, cancellation);
+	public static IAsyncEnumerable<string> ChatAsync(this IChatClient client, string content, CancellationToken cancellation = default) => ChatAsync(client, ChatRole.User, content, null, cancellation);
 
 	/// <summary>异步聊天。</summary>
 	/// <param name="client">指定的聊天客户端。</param>
@@ -51,7 +53,41 @@ public static class ChatClientUtility
 	/// <param name="options">指定的选项设置。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回响应文本的异步流。</returns>
-	public static async IAsyncEnumerable<string> ChatAsync(this IChatClient client, string content, ChatOptions options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)
+	public static IAsyncEnumerable<string> ChatAsync(this IChatClient client, string content, ChatOptions options, CancellationToken cancellation = default) => ChatAsync(client, ChatRole.User, content, options, cancellation);
+
+	/// <summary>异步聊天。</summary>
+	/// <param name="client">指定的聊天客户端。</param>
+	/// <param name="role">指定的聊天角色。</param>
+	/// <param name="content">指定的聊天内容。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回响应文本的异步流。</returns>
+	public static IAsyncEnumerable<string> ChatAsync(this IChatClient client, string role, string content, CancellationToken cancellation = default) => ChatAsync(client, GetRole(role), content, null, cancellation);
+
+	/// <summary>异步聊天。</summary>
+	/// <param name="client">指定的聊天客户端。</param>
+	/// <param name="role">指定的聊天角色。</param>
+	/// <param name="content">指定的聊天内容。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回响应文本的异步流。</returns>
+	public static IAsyncEnumerable<string> ChatAsync(this IChatClient client, ChatRole role, string content, CancellationToken cancellation = default) => ChatAsync(client, role, content, null, cancellation);
+
+	/// <summary>异步聊天。</summary>
+	/// <param name="client">指定的聊天客户端。</param>
+	/// <param name="role">指定的聊天角色。</param>
+	/// <param name="content">指定的聊天内容。</param>
+	/// <param name="options">指定的选项设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回响应文本的异步流。</returns>
+	public static IAsyncEnumerable<string> ChatAsync(this IChatClient client, string role, string content, ChatOptions options, CancellationToken cancellation = default) => ChatAsync(client, GetRole(role), content, options, cancellation);
+
+	/// <summary>异步聊天。</summary>
+	/// <param name="client">指定的聊天客户端。</param>
+	/// <param name="role">指定的聊天角色。</param>
+	/// <param name="content">指定的聊天内容。</param>
+	/// <param name="options">指定的选项设置。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回响应文本的异步流。</returns>
+	public static async IAsyncEnumerable<string> ChatAsync(this IChatClient client, ChatRole role, string content, ChatOptions options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		if(client == null)
 			throw new ArgumentNullException(nameof(client));
@@ -59,7 +95,7 @@ public static class ChatClientUtility
 		if(string.IsNullOrWhiteSpace(content))
 			yield break;
 
-		var response = client.GetStreamingResponseAsync(content, options, cancellation);
+		var response = client.GetStreamingResponseAsync(new ChatMessage(role, content), options, cancellation);
 
 		await foreach(var message in response)
 			yield return message.Text;

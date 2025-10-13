@@ -37,7 +37,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
 using Zongsoft.Web;
-using Zongsoft.Web.Http;
 
 namespace Zongsoft.Intelligences.Web.Controllers;
 
@@ -111,7 +110,7 @@ partial class AssistantController
 
 		[HttpPost("/[area]/{name}/[controller]/[action]")]
 		[HttpPost("/[area]/{name}/[controller]/{id}/[action]")]
-		public async Task ChatAsync(string name, string id, CancellationToken cancellation = default)
+		public async Task ChatAsync(string name, string id, [FromQuery]string role, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new BadHttpRequestException($"Unspecified the AI assistant.");
@@ -123,8 +122,8 @@ partial class AssistantController
 			var assistant = AssistantManager.GetAssistant(name) ?? throw new BadHttpRequestException($"The specified '{name}' AI assistant was not found.");
 			var session = string.IsNullOrEmpty(id) ? null : assistant.Chatting.Sessions.Get(id);
 			var results = session != null ?
-				session.ChatAsync(content, cancellation) :           //有对话历史
-				assistant.Chatting.ChatAsync(content, cancellation); //无对话历史
+				session.ChatAsync(role, content, cancellation) :           //有对话历史
+				assistant.Chatting.ChatAsync(role, content, cancellation); //无对话历史
 
 			await this.Response.EnumerableAsync(results, cancellation);
 		}
