@@ -51,7 +51,9 @@ podman exec -it ollama ollama pull qwen3:0.6b
 
 ## 运行调试
 
-本扩展库提供了 _命令行_ 和 **REST**ful _**API**_ 接口两种方式。
+如果宿主程序中本库(`Zongsoft.Intelligences.dll`)所在目录中包含一个名为 _`preludes`_ 的子目录，则当开启一个新的聊天会话时默认会在该目录中查找该助手名字打头的文本文件作为新会话的开场白。具体请参考 [ChatSessionPreludeLoader.cs](src/ChatSessionPreludeLoader.cs) 类的源码。
+
+本扩展库提供了 _命令行_ 和 _**REST**ful **API**_ 接口两种方式。
 
 ### 命令行
 
@@ -162,4 +164,6 @@ podman exec -it ollama ollama pull qwen3:0.6b
 
 > 提示：[api](./api/) 项目中的 [_`chat.html`_](./api/chat.html) 文件为调用聊天 _**API**_ 的范例，它采用 [_**S**erver-**S**ent **E**vents_](https://developer.mozilla.org/docs/Web/API/Server-sent_events/Using_server-sent_events) 技术实现。
 
-> 完整信息请参考 [api](./api/) 项目中的 [_`Zongsoft.Intelligences.Web.http`_](./api/Zongsoft.Intelligences.Web.http) 文档。
+> 完整 _**API**_ 请参考 [api](./api/) 项目中的 [_`Zongsoft.Intelligences.Web.http`_](./api/Zongsoft.Intelligences.Web.http) 文档。
+> - `{name}` 表示助手名字，譬如：`ollama`；
+> - `{id}`   表示会话编号。
