@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
@@ -48,16 +49,20 @@ public sealed class ChatSessionPreludeLoader : IChatSessionLifetime
 
 		if(Directory.Exists(directory))
 		{
-			var files = Directory.GetFiles(directory, $"{service.Settings.Name}-*.txt");
-			var preludes = new List<string>(files.Length);
+			var files = Enumerable.Concat(
+				Directory.EnumerateFiles(directory, $"{service.Settings.Name}.txt"),
+				Directory.EnumerateFiles(directory, $"{service.Settings.Name}-*.txt")
+			).OrderBy(p => p).ToArray();
 
-			//确保文件名数组有序
-			Array.Sort(files);
+			var preludes = new List<string>(files.Length);
 
 			foreach(var file in files)
 			{
 				using var reader = File.OpenText(file);
-				preludes.Add(reader.ReadToEnd());
+				var prelude = reader.ReadToEnd();
+
+				if(!string.IsNullOrWhiteSpace(prelude))
+					preludes.Add(prelude);
 			}
 
 			session.Options.Preludes = [..preludes];
