@@ -110,7 +110,7 @@ partial class AssistantController
 
 		[HttpPost("/[area]/{name}/[controller]/[action]")]
 		[HttpPost("/[area]/{name}/[controller]/{id}/[action]")]
-		public async Task ChatAsync(string name, string id, [FromQuery]string role, CancellationToken cancellation = default)
+		public async Task ChatAsync(string name, string id, [FromQuery]string role = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new BadHttpRequestException($"Unspecified the AI assistant.");

@@ -44,12 +44,15 @@ public sealed class ChatSessionPreludeLoader : IChatSessionLifetime
 			return;
 
 		//定义开场白目录位置
-		var directory = Path.Combine($"{typeof(ChatSessionPreludeLoader).Assembly.Location}", "preludes");
+		var directory = Path.Combine(Path.GetDirectoryName($"{typeof(ChatSessionPreludeLoader).Assembly.Location}"), "preludes");
 
 		if(Directory.Exists(directory))
 		{
 			var files = Directory.GetFiles(directory, $"{service.Settings.Name}-*.txt");
 			var preludes = new List<string>(files.Length);
+
+			//确保文件名数组有序
+			Array.Sort(files);
 
 			foreach(var file in files)
 			{
