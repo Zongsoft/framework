@@ -55,6 +55,7 @@ public class SpoolerTest
 		spooler.Put("B");
 		spooler.Put("C");
 		Assert.Equal(3, spooler.Count);
+		Assert.Equal(0, flusher.Count);
 
 		//设置数量限制
 		spooler.Limit = 4;
@@ -77,6 +78,7 @@ public class SpoolerTest
 		spooler.Put("B");
 		spooler.Put("C");
 		Assert.Equal(3, spooler.Count);
+		Assert.Equal(0, flusher.Count);
 
 		//设置触发周期
 		spooler.Period = TimeSpan.FromMilliseconds(1);
