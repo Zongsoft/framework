@@ -25,10 +25,15 @@ public class TimerTest
 	[Fact]
 	public void Test()
 	{
+		Assert.False(_timer.IsRunning);
 		_timer.Start();
+		Assert.True(_timer.IsRunning);
+
 		SpinWait.SpinUntil(() => _count >= LIMIT, 1000 * 2);
 		Assert.Equal(LIMIT, _count);
+
 		_timer.Stop();
+		Assert.False(_timer.IsRunning);
 	}
 	#endregion
 

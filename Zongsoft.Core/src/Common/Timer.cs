@@ -49,16 +49,33 @@ public class Timer : IDisposable
 	}
 	#endregion
 
+	#region 公共属性
+	/// <summary>获取一个值，指示当前计时器是否正在运行中。</summary>
+	public bool IsRunning
+	{
+		get
+		{
+			var cancellation = _cancellation;
+			return cancellation != null && !cancellation.IsCancellationRequested;
+		}
+	}
+
 	#if NET8_0_OR_GREATER
-	public TimeSpan Period { get => _timer.Period; set => _timer.Period = value; }
+	/// <summary>获取或设置当前计时器的定时周期。</summary>
+	public TimeSpan Period
+	{
+		get => _timer.Period;
+		set => _timer.Period = value;
+	}
 	#endif
+	#endregion
 
 	#region 公共方法
 	public void Stop() => _cancellation?.Cancel();
 	public void Start(CancellationToken cancellation = default) => this.Start(null, cancellation);
 	public async void Start(object state, CancellationToken cancellation = default)
 	{
-		if(cancellation.IsCancellationRequested)
+		if(cancellation.IsCancellationRequested || this.IsRunning)
 			return;
 
 		_cancellation = new();
