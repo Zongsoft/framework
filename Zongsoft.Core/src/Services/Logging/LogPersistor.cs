@@ -93,10 +93,14 @@ public class LogPersistor<TLog> : ILogPersistor<TLog> where TLog : ILog
 	#endregion
 
 	#region 私有方法
-	private async ValueTask OnFlushAsync(IEnumerable<TLog> logs)
+	private ValueTask OnFlushAsync(IEnumerable<TLog> logs)
 	{
+		var tasks = new List<Task>(this.Persistors.Count);
+
 		foreach(var persistor in this.Persistors)
-			await PersistAsync(persistor, logs);
+			tasks.Add(PersistAsync(persistor, logs).AsTask());
+
+		return new ValueTask(Task.WhenAll(tasks));
 
 		static async ValueTask PersistAsync(ILogPersistor<TLog> persistor, IEnumerable<TLog> logs)
 		{
