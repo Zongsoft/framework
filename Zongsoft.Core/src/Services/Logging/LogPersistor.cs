@@ -52,7 +52,7 @@ public class LogPersistor<TLog> : ILogPersistor<TLog> where TLog : ILog
 	public LogPersistor() : this(TimeSpan.FromSeconds(PERIOD)) { }
 	public LogPersistor(TimeSpan period, int limit = LIMIT)
 	{
-		_spooler = new(this.OnFlush, period, limit);
+		_spooler = new(this.OnFlushAsync, period, limit);
 		this.Persistors = new LogPersistorCollection();
 	}
 	#endregion
@@ -62,20 +62,20 @@ public class LogPersistor<TLog> : ILogPersistor<TLog> where TLog : ILog
 	#endregion
 
 	#region 公共方法
-	public void Flush() => _spooler.Flush();
+	public ValueTask FlushAsync() => _spooler.FlushAsync();
 
 	public ValueTask PersistAsync(TLog log, CancellationToken cancellation = default)
 	{
 		if(log is not null)
-			_spooler.Put(log);
+			return _spooler.PutAsync(log, cancellation);
 
 		return ValueTask.CompletedTask;
 	}
 
-	public ValueTask<int> PersistAsync(IEnumerable<TLog> logs, CancellationToken cancellation = default)
+	public async ValueTask<int> PersistAsync(IEnumerable<TLog> logs, CancellationToken cancellation = default)
 	{
 		if(logs == null)
-			return ValueTask.FromResult(0);
+			return 0;
 
 		int count = 0;
 
@@ -84,26 +84,26 @@ public class LogPersistor<TLog> : ILogPersistor<TLog> where TLog : ILog
 			if(log is null)
 				continue;
 
-			_spooler.Put(log);
+			await _spooler.PutAsync(log, cancellation);
 			count++;
 		}
 
-		return ValueTask.FromResult(count);
+		return count;
 	}
 	#endregion
 
 	#region 私有方法
-	private void OnFlush(IEnumerable<TLog> logs)
+	private async ValueTask OnFlushAsync(IAsyncEnumerable<TLog> logs)
 	{
 		foreach(var persistor in this.Persistors)
-			Persist(persistor, logs);
+			await PersistAsync(persistor, logs);
 
-		static async void Persist(ILogPersistor<TLog> persistor, IEnumerable<TLog> logs)
+		static async ValueTask PersistAsync(ILogPersistor<TLog> persistor, IAsyncEnumerable<TLog> logs)
 		{
 			if(persistor == null || logs == null)
 				return;
 
-			await persistor.PersistAsync(logs);
+			await persistor.PersistAsync(Zongsoft.Collections.Enumerable.Synchronize(logs));
 		}
 	}
 	#endregion

@@ -30,9 +30,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Channels;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Caching;
 
@@ -41,45 +41,43 @@ namespace Zongsoft.Caching;
 public class Spooler<T> : IEnumerable<T>, IDisposable
 {
 	#region 成员字段
-	private int _limit;
 	private TimeSpan _period;
+	private readonly int _limit;
 	#endregion
 
 	#region 私有变量
-	private Timer _timer;
-	private ICache _cache;
-	private Action<IEnumerable<T>> _flusher;
+	private Common.Timer _timer;
+	private Channel<T> _channel;
+	private Func<IAsyncEnumerable<T>, ValueTask> _flusher;
 	#endregion
 
 	#region 构造函数
-	public Spooler(Action<IEnumerable<T>> flusher, TimeSpan period, int limit = 0) : this(false, period, limit) =>
+	public Spooler(Func<IAsyncEnumerable<T>, ValueTask> flusher, TimeSpan period, int limit = 0) : this(false, period, limit) =>
 		_flusher = flusher ?? throw new ArgumentNullException(nameof(flusher));
-	public Spooler(Action<IEnumerable<T>> flusher, bool distinct, TimeSpan period, int limit = 0) : this(distinct, period, limit) =>
+	public Spooler(Func<IAsyncEnumerable<T>, ValueTask> flusher, bool distinct, TimeSpan period, int limit = 0) : this(distinct, period, limit) =>
 		_flusher = flusher ?? throw new ArgumentNullException(nameof(flusher));
 
 	protected Spooler(bool distinct, TimeSpan period, int limit = 0)
 	{
 		this.Period = period;
-		this.Limit = limit;
+		_limit = Math.Max(limit, 0);
 
-		_cache = distinct ? new DistinctedCache() : new Cache();
-		_timer = new Timer(this.OnTick, null, _period, _period);
+		_channel = _limit > 0 ?
+			Channel.CreateBounded<T>(new BoundedChannelOptions(_limit) { FullMode = BoundedChannelFullMode.DropOldest }, this.OnOverflow) :
+			Channel.CreateUnbounded<T>();
+		_timer = new Common.Timer(_period, this.OnTickAsync);
 	}
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取当前缓冲区的数量。</summary>
-	public int Count => _cache.Count;
+	public int Count => _channel.Reader.Count;
 
 	/// <summary>获取一个值，指示当前缓冲区是否空了。</summary>
-	public bool IsEmpty => _cache.IsEmpty;
+	public bool IsEmpty => _channel.Reader.CanCount && _channel.Reader.Count == 0;
 
-	/// <summary>获取或设置缓冲数量限制，如果缓冲数量超过该属性值则立即触发刷新回调。如果为零则表示忽略该限制。</summary>
-	public int Limit
-	{
-		get => _limit;
-		set => _limit = value > 0 ? value : 0;
-	}
+	/// <summary>获取缓冲数量限制，如果缓冲数量超过该属性值则立即触发刷新回调；如果为零则表示忽略该限制。</summary>
+	public int Limit => _limit;
 
 	/// <summary>获取或设置缓冲的刷新周期，不能低于<c>1</c>毫秒(Millisecond)。</summary>
 	public TimeSpan Period
@@ -87,76 +85,55 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 		get => _period;
 		set
 		{
+			#if NET8_0_OR_GREATER
+			var timer = _timer ?? throw new ObjectDisposedException(nameof(Spooler<T>));
 			var period = value.Ticks > TimeSpan.TicksPerMillisecond ? value : TimeSpan.FromMilliseconds(1);
 
 			if(_period == period)
 				return;
 
-			_period = period;
-			_timer?.Change(period, period);
+			timer.Period = _period = period;
+			#else
+			throw new NotSupportedException();
+			#endif
 		}
 	}
 	#endregion
 
 	#region 公共方法
-	public void Clear() => _cache?.Clear();
+	public async void Clear() => await _channel.Reader.ReadAllAsync().GetAsyncEnumerator().DisposeAsync();
 
-	public void Put(T value)
+	public bool TryPut(T value) => _channel.Writer.TryWrite(value);
+	public async ValueTask PutAsync(T value, CancellationToken cancellation = default)
 	{
-		//如果设置失败，则触发刷新后重写
-		if(!_cache.Add(value))
-		{
-			//刷新缓冲区
-			this.Flush();
-
-			//将设置失败的值写入新缓冲区
-			this.Put(value);
-		}
-
-		if(_limit > 0 && _cache.Count >= _limit)
-			this.Flush();
+		await _channel.Writer.WaitToWriteAsync(cancellation);
+		await _channel.Writer.WriteAsync(value, cancellation);
 	}
 
-	public void Flush()
+	public async ValueTask FlushAsync(CancellationToken cancellation = default)
 	{
-		var cache = _cache;
-
-		//如果当前缓存为空，表示本实例已被处置
-		if(cache == null)
-			return;
-
-		//如果当前缓存无内容，则无需后续操作
-		if(cache.IsEmpty)
-			return;
-
-		var items = cache.Flush();
-
-		//执行刷新回调
-		if(items != null)
-			this.OnFlush(items);
+		await _channel.Reader.WaitToReadAsync(cancellation);
+		await this.OnFlushAsync(_channel.Reader.ReadAllAsync(cancellation));
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void OnFlush(IEnumerable<T> items) => _flusher?.Invoke(items);
+	protected virtual ValueTask OnFlushAsync(IAsyncEnumerable<T> items)
+	{
+		var flusher = _flusher;
+		return flusher != null ? flusher.Invoke(items) : ValueTask.CompletedTask;
+	}
 	#endregion
 
-	#region 时钟方法
-	private void OnTick(object state)
+	private void OnOverflow(T value)
 	{
-		//暂停计时器
-		_timer?.Change(Timeout.Infinite, Timeout.Infinite);
+		System.Diagnostics.Debugger.Break();
+	}
 
-		try
-		{
-			//刷新缓冲区
-			this.Flush();
-		}
-		finally
-		{
-			//恢复计时器
-			_timer?.Change(_period, _period);
-		}
+	#region 时钟方法
+	private ValueTask OnTickAsync(object state, CancellationToken cancellation)
+	{
+		return this.FlushAsync(cancellation);
 	}
 	#endregion
 
@@ -169,166 +146,33 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 
 	protected virtual void Dispose(bool disposing)
 	{
-		var cache = Interlocked.Exchange(ref _cache, null);
-
-		if(cache == null)
-			return;
+		_flusher = null;
+		var timer = Interlocked.Exchange(ref _timer, null);
+		var channel = Interlocked.Exchange(ref _channel, null);
 
 		if(disposing)
 		{
-			cache.Clear();
 			_timer.Dispose();
+			channel.Writer.TryComplete();
 		}
-
-		_timer = null;
-		_flusher = null;
 	}
 	#endregion
 
 	#region 枚举遍历
-	public IEnumerator<T> GetEnumerator() => _cache?.GetEnumerator();
+	public IEnumerator<T> GetEnumerator() => new Iterator(_channel?.Reader);
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 	#endregion
 
-	#region 嵌套子类
-	private interface ICache : IEnumerable<T>
+	private class Iterator(ChannelReader<T> reader) : IEnumerator<T>
 	{
-		int Count { get; }
-		bool IsEmpty { get; }
-		void Clear();
-		bool Add(T value);
-		IEnumerable<T> Flush();
+		private T _value;
+		private ChannelReader<T> _reader = reader;
+
+		public T Current => _value;
+		object IEnumerator.Current => _value;
+
+		public void Dispose() => _reader = null;
+		public bool MoveNext() => _reader != null && _reader.TryRead(out _value);
+		public void Reset() { }
 	}
-
-	private class Cache : ICache
-	{
-#if NET9_0_OR_GREATER
-		protected readonly Lock _lock;
-#else
-		protected readonly object _lock;
-#endif
-
-		private volatile ConcurrentBag<T> _current;
-		private readonly ConcurrentBag<T> _cacheA;
-		private readonly ConcurrentBag<T> _cacheB;
-
-		public Cache()
-		{
-			_lock = new();
-			_cacheA = new();
-			_cacheB = new();
-			_current = _cacheA;
-		}
-
-		public int Count => _current.Count;
-		public bool IsEmpty => _current.IsEmpty;
-		public void Clear() => _current.Clear();
-		public bool TryTake(out T value) => _current.TryTake(out value);
-		public bool TryPeek(out T value) => _current.TryPeek(out value);
-
-		public bool Add(T value)
-		{
-			if(value is null)
-				return true;
-
-			lock(_lock)
-			{
-				_current.Add(value);
-				return true;
-			}
-		}
-
-		public IEnumerable<T> Flush()
-		{
-			if(_current.IsEmpty)
-				return null;
-
-			lock(_lock)
-			{
-				var current = _current;
-
-				if(current.IsEmpty)
-					return null;
-
-				//_current = new();
-
-				if(object.ReferenceEquals(_current, _cacheA))
-					_current = _cacheB;
-				else
-					_current = _cacheA;
-
-				var result = current.ToArray();
-				current.Clear();
-				return result.Length > 0 ? result : null;
-			}
-		}
-
-		public IEnumerator<T> GetEnumerator() => _current.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	}
-
-	private class DistinctedCache : ICache
-	{
-#if NET9_0_OR_GREATER
-		protected readonly Lock _lock;
-#else
-		protected readonly object _lock;
-#endif
-
-		private volatile ConcurrentDictionary<T, object> _current;
-		private readonly ConcurrentDictionary<T, object> _cacheA;
-		private readonly ConcurrentDictionary<T, object> _cacheB;
-
-		public DistinctedCache()
-		{
-			_lock = new();
-			_cacheA = new();
-			_cacheB = new();
-			_current = _cacheA;
-		}
-
-		public int Count => _current.Count;
-		public bool IsEmpty => _current.IsEmpty;
-		public void Clear() => _current.Clear();
-
-		public bool Add(T value)
-		{
-			if(value is null)
-				return true;
-
-			lock(_lock)
-			{
-				return _current.TryAdd(value, null);
-			}
-		}
-
-		public IEnumerable<T> Flush()
-		{
-			if(_current.IsEmpty)
-				return null;
-
-			lock(_lock)
-			{
-				var current = _current;
-
-				if(current.IsEmpty)
-					return null;
-
-				_current = new();
-
-				//if(object.ReferenceEquals(_current, _cacheA))
-				//	_current = _cacheB;
-				//else
-				//	_current = _cacheA;
-
-				var result = current.Keys;
-				current.Clear();
-				return result.Count > 0 ? result : null;
-			}
-		}
-
-		public IEnumerator<T> GetEnumerator() => _current.Keys.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	}
-	#endregion
 }

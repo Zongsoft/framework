@@ -1,24 +1,24 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Xunit;
-using System.Linq;
 
 namespace Zongsoft.Caching.Tests;
 
 public class SpoolerTest
 {
 	[Fact]
-	public void TestClear()
+	public async Task TestClearAsync()
 	{
-		using var spooler = new Spooler<string>(_ => { }, TimeSpan.FromSeconds(1), 0);
+		using var spooler = new Spooler<string>(_ => ValueTask.CompletedTask, TimeSpan.FromSeconds(1), 0);
 		Assert.True(spooler.IsEmpty);
 
-		spooler.Put("A");
-		spooler.Put("B");
-		spooler.Put("C");
+		await spooler.PutAsync("A");
+		await spooler.PutAsync("B");
+		await spooler.PutAsync("C");
 		Assert.Equal(3, spooler.Count);
 
 		spooler.Clear();
@@ -26,60 +26,61 @@ public class SpoolerTest
 	}
 
 	[Fact]
-	public void TestFlush()
+	public async Task TestFlushAsync()
 	{
 		const int COUNT = 1000;
 
 		var flusher = new Flusher<string>();
-		using var spooler = new Spooler<string>(flusher.OnFlush, TimeSpan.FromSeconds(10), 0);
+		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), 0);
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
-		Parallel.For(0, COUNT, index => spooler.Put($"Value#{index}"));
+		#if NET8_0_OR_GREATER
+		await Parallel.ForAsync(0, COUNT, async (index, cancellation) => await spooler.PutAsync($"Value#{index}", cancellation));
 		Assert.Equal(COUNT, spooler.Count);
+		#endif
 
-		spooler.Flush();
+		await spooler.FlushAsync();
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(COUNT, flusher.Count);
 	}
 
 	[Fact]
-	public void TestLimit()
+	public async Task TestLimitAsync()
 	{
 		var flusher = new Flusher<string>();
-		using var spooler = new Spooler<string>(flusher.OnFlush, TimeSpan.FromSeconds(10), 0);
+		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), 4);
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
-		spooler.Put("A");
-		spooler.Put("B");
-		spooler.Put("C");
+		await spooler.PutAsync("A");
+		await spooler.PutAsync("B");
+		await spooler.PutAsync("C");
 		Assert.Equal(3, spooler.Count);
 		Assert.Equal(0, flusher.Count);
 
-		//设置数量限制
-		spooler.Limit = 4;
 		//触发数量限制
-		spooler.Put("D");
+		await spooler.PutAsync("D");
 
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(4, flusher.Count);
 	}
 
 	[Fact]
-	public void TestPeriod()
+	public async Task TestPeriodAsync()
 	{
 		var flusher = new Flusher<string>();
-		using var spooler = new Spooler<string>(flusher.OnFlush, TimeSpan.FromSeconds(10), 0);
+		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), 0);
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
-		spooler.Put("A");
-		spooler.Put("B");
-		spooler.Put("C");
+		await spooler.PutAsync("A");
+		await spooler.PutAsync("B");
+		await spooler.PutAsync("C");
 		Assert.Equal(3, spooler.Count);
 		Assert.Equal(0, flusher.Count);
 
+		#if NET8_0_OR_GREATER
 		//设置触发周期
 		spooler.Period = TimeSpan.FromMilliseconds(1);
 		//等待周期刷新
@@ -87,12 +88,17 @@ public class SpoolerTest
 
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(3, flusher.Count);
+		#endif
 	}
 
 	private class Flusher<T>
 	{
 		private int _count;
 		public int Count => _count;
-		public void OnFlush(IEnumerable<T> values) => Interlocked.Add(ref _count, values.Count());
+		public ValueTask OnFlushAsync(IAsyncEnumerable<T> values)
+		{
+			Interlocked.Add(ref _count, Zongsoft.Collections.Enumerable.Synchronize(values).Count());
+			return ValueTask.CompletedTask;
+		}
 	}
 }
