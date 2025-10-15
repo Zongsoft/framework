@@ -93,17 +93,17 @@ public class LogPersistor<TLog> : ILogPersistor<TLog> where TLog : ILog
 	#endregion
 
 	#region 私有方法
-	private async ValueTask OnFlushAsync(IAsyncEnumerable<TLog> logs)
+	private async ValueTask OnFlushAsync(IEnumerable<TLog> logs)
 	{
 		foreach(var persistor in this.Persistors)
 			await PersistAsync(persistor, logs);
 
-		static async ValueTask PersistAsync(ILogPersistor<TLog> persistor, IAsyncEnumerable<TLog> logs)
+		static async ValueTask PersistAsync(ILogPersistor<TLog> persistor, IEnumerable<TLog> logs)
 		{
 			if(persistor == null || logs == null)
 				return;
 
-			await persistor.PersistAsync(Zongsoft.Collections.Enumerable.Synchronize(logs));
+			await persistor.PersistAsync(logs);
 		}
 	}
 	#endregion
