@@ -13,7 +13,7 @@ public class SpoolerTest
 	[Fact]
 	public async Task TestClearAsync()
 	{
-		using var spooler = new Spooler<string>(_ => ValueTask.CompletedTask, TimeSpan.FromSeconds(1), 0);
+		using var spooler = new Spooler<string>(_ => ValueTask.CompletedTask, TimeSpan.FromSeconds(10));
 		Assert.True(spooler.IsEmpty);
 
 		await spooler.PutAsync("A");
@@ -31,7 +31,7 @@ public class SpoolerTest
 		const int COUNT = 1000;
 
 		var flusher = new Flusher<string>();
-		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), 0);
+		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10));
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
@@ -49,7 +49,7 @@ public class SpoolerTest
 	public async Task TestLimitAsync()
 	{
 		var flusher = new Flusher<string>();
-		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), 4);
+		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), 3);
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
@@ -62,15 +62,16 @@ public class SpoolerTest
 		//触发数量限制
 		await spooler.PutAsync("D");
 
-		Assert.True(spooler.IsEmpty);
-		Assert.Equal(4, flusher.Count);
+		Assert.False(spooler.IsEmpty);
+		Assert.Equal(1, spooler.Count);
+		Assert.Equal(3, flusher.Count);
 	}
 
 	[Fact]
 	public async Task TestPeriodAsync()
 	{
 		var flusher = new Flusher<string>();
-		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), 0);
+		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10));
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
@@ -95,9 +96,9 @@ public class SpoolerTest
 	{
 		private int _count;
 		public int Count => _count;
-		public ValueTask OnFlushAsync(IAsyncEnumerable<T> values)
+		public ValueTask OnFlushAsync(IEnumerable<T> values)
 		{
-			Interlocked.Add(ref _count, Zongsoft.Collections.Enumerable.Synchronize(values).Count());
+			Interlocked.Add(ref _count, values.Count());
 			return ValueTask.CompletedTask;
 		}
 	}
