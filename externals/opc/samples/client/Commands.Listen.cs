@@ -12,10 +12,10 @@ namespace Zongsoft.Externals.Opc.Samples;
 
 partial class Commands
 {
-	[CommandOption("spooling", typeof(bool), DefaultValue = false)]
-	[CommandOption("distinct", typeof(bool), DefaultValue = false)]
-	[CommandOption("limit", typeof(int), DefaultValue = 1000)]
-	[CommandOption("period", typeof(int), DefaultValue = 1000, Description = "Milliseconds")]
+	[CommandOption("spooling", 's', typeof(bool), false)]
+	[CommandOption("distinct", 'd', typeof(bool), false)]
+	[CommandOption("limit", 'l', typeof(int), 1000)]
+	[CommandOption("period", 'p', typeof(int), 1000, Description = "Milliseconds")]
 	public sealed class ListenCommand(OpcClient client) : CommandBase<CommandContext>("Listen")
 	{
 		#region 成员字段
