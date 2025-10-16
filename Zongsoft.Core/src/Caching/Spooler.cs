@@ -64,10 +64,10 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 
 	#region 公共属性
 	/// <summary>获取当前缓冲区的数量。</summary>
-	public int Count => _channel.Reader.CanCount ? _channel.Reader.Count : -1;
+	public int Count => this.GetChannel(out var channel) && channel.Reader.CanCount ? channel.Reader.Count : -1;
 
 	/// <summary>获取一个值，指示当前缓冲区是否空了。</summary>
-	public bool IsEmpty => _channel.Reader.CanCount && _channel.Reader.Count == 0;
+	public bool IsEmpty => this.GetChannel(out var channel) && channel.Reader.CanCount && channel.Reader.Count == 0;
 
 	/// <summary>获取缓冲数量限制，如果缓冲数量超过该属性值则立即触发刷新回调；如果为零则表示忽略该限制。</summary>
 	public int Limit => _limit;
@@ -76,7 +76,7 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 	/// <summary>获取或设置缓冲的刷新周期，不能低于<c>1</c>毫秒(Millisecond)。</summary>
 	public TimeSpan Period
 	{
-		get => _timer.Period;
+		get => _timer != null ? _timer.Period : throw new ObjectDisposedException(nameof(Spooler<T>));
 		set
 		{
 			var timer = _timer ?? throw new ObjectDisposedException(nameof(Spooler<T>));
@@ -93,17 +93,17 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 	#region 公共方法
 	public void Clear()
 	{
-		while(_channel.Reader.TryRead(out _));
+		while(this.GetChannel(out var channel) && channel.Reader.TryRead(out _));
 	}
 
 	public async ValueTask PutAsync(T value, CancellationToken cancellation = default)
 	{
-		if(_channel.Writer.TryWrite(value))
+		if(this.GetChannel(out var channel) && channel.Writer.TryWrite(value))
 			return;
 
-		await this.OnFlushAsync(new Enumerable(_channel.Reader));
-		await _channel.Writer.WaitToWriteAsync(cancellation);
-		await _channel.Writer.WriteAsync(value, cancellation);
+		await this.OnFlushAsync(new Enumerable(channel.Reader));
+		await channel.Writer.WaitToWriteAsync(cancellation);
+		await channel.Writer.WriteAsync(value, cancellation);
 	}
 
 	public async ValueTask FlushAsync(CancellationToken cancellation = default)
@@ -111,8 +111,9 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 		if(this.IsEmpty)
 			return;
 
-		await _channel.Reader.WaitToReadAsync(cancellation);
-		await this.OnFlushAsync(new Enumerable(_channel.Reader));
+		var channel = this.GetChannel();
+		await channel.Reader.WaitToReadAsync(cancellation);
+		await this.OnFlushAsync(new Enumerable(channel.Reader));
 	}
 	#endregion
 
@@ -126,6 +127,13 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 
 	#region 时钟方法
 	private ValueTask OnTickAsync(object state, CancellationToken cancellation) => this.FlushAsync(cancellation);
+	#endregion
+
+	#region 私有方法
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private Channel<T> GetChannel() => _channel ?? throw new ObjectDisposedException(nameof(Spooler<T>));
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private bool GetChannel(out Channel<T> channel) => (channel = _channel ?? throw new ObjectDisposedException(nameof(Spooler<T>))) != null;
 	#endregion
 
 	#region 处置方法
