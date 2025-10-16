@@ -93,21 +93,21 @@ public class LogPersistor<TLog> : ILogPersistor<TLog> where TLog : ILog
 	#endregion
 
 	#region 私有方法
-	private ValueTask OnFlushAsync(IEnumerable<TLog> logs)
+	private ValueTask OnFlushAsync(IEnumerable<TLog> logs, CancellationToken cancellation)
 	{
 		var tasks = new List<Task>(this.Persistors.Count);
 
 		foreach(var persistor in this.Persistors)
-			tasks.Add(PersistAsync(persistor, logs).AsTask());
+			tasks.Add(PersistAsync(persistor, logs, cancellation).AsTask());
 
 		return new ValueTask(Task.WhenAll(tasks));
 
-		static async ValueTask PersistAsync(ILogPersistor<TLog> persistor, IEnumerable<TLog> logs)
+		static async ValueTask PersistAsync(ILogPersistor<TLog> persistor, IEnumerable<TLog> logs, CancellationToken cancellation)
 		{
 			if(persistor == null || logs == null)
 				return;
 
-			await persistor.PersistAsync(logs);
+			await persistor.PersistAsync(logs, cancellation);
 		}
 	}
 	#endregion

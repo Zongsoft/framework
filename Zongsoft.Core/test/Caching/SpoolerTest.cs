@@ -13,7 +13,7 @@ public class SpoolerTest
 	[Fact]
 	public async Task TestClearAsync()
 	{
-		using var spooler = new Spooler<string>(_ => ValueTask.CompletedTask, TimeSpan.FromSeconds(10));
+		using var spooler = new Spooler<string>((_, __) => ValueTask.CompletedTask, TimeSpan.FromSeconds(10));
 		Assert.True(spooler.IsEmpty);
 
 		await spooler.PutAsync("A");
@@ -104,7 +104,7 @@ public class SpoolerTest
 	{
 		private int _count;
 		public int Count => _count;
-		public ValueTask OnFlushAsync(IEnumerable<T> values)
+		public ValueTask OnFlushAsync(IEnumerable<T> values, CancellationToken cancellation)
 		{
 			Interlocked.Add(ref _count, values.Count());
 			return ValueTask.CompletedTask;

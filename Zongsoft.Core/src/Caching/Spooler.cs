@@ -50,11 +50,11 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 	#region 私有变量
 	private Common.Timer _timer;
 	private Channel<T> _channel;
-	private Func<IEnumerable<T>, ValueTask> _flusher;
+	private Func<IEnumerable<T>, CancellationToken, ValueTask> _flusher;
 	#endregion
 
 	#region 构造函数
-	public Spooler(Func<IEnumerable<T>, ValueTask> flusher, TimeSpan period, int limit = 0) : this(period, limit) =>
+	public Spooler(Func<IEnumerable<T>, CancellationToken, ValueTask> flusher, TimeSpan period, int limit = 0) : this(period, limit) =>
 		_flusher = flusher ?? throw new ArgumentNullException(nameof(flusher));
 	protected Spooler(TimeSpan period, int limit = 0)
 	{
@@ -104,7 +104,7 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 		if(this.GetChannel(out var channel) && channel.Writer.TryWrite(value))
 			return;
 
-		await this.OnFlushAsync(new Enumerable(channel.Reader));
+		await this.OnFlushAsync(new Enumerable(channel.Reader), cancellation);
 		await channel.Writer.WaitToWriteAsync(cancellation);
 		await channel.Writer.WriteAsync(value, cancellation);
 	}
@@ -116,15 +116,15 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 
 		var channel = this.GetChannel();
 		await channel.Reader.WaitToReadAsync(cancellation);
-		await this.OnFlushAsync(new Enumerable(channel.Reader));
+		await this.OnFlushAsync(new Enumerable(channel.Reader), cancellation);
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual ValueTask OnFlushAsync(IEnumerable<T> items)
+	protected virtual ValueTask OnFlushAsync(IEnumerable<T> items, CancellationToken cancellation)
 	{
 		var flusher = _flusher;
-		return flusher != null ? flusher.Invoke(items) : ValueTask.CompletedTask;
+		return flusher != null ? flusher.Invoke(items, cancellation) : ValueTask.CompletedTask;
 	}
 	#endregion
 
