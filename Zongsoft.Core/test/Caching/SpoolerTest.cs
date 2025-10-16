@@ -35,10 +35,18 @@ public class SpoolerTest
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
+		await spooler.FlushAsync();
+		Assert.True(spooler.IsEmpty);
+		Assert.Equal(0, flusher.Count);
+
 		#if NET8_0_OR_GREATER
 		await Parallel.ForAsync(0, COUNT, async (index, cancellation) => await spooler.PutAsync($"Value#{index}", cancellation));
-		Assert.Equal(COUNT, spooler.Count);
+		#else
+		for(int i = 0; i < COUNT; i++)
+			await spooler.PutAsync($"Value#${i}");
 		#endif
+
+		Assert.Equal(COUNT, spooler.Count);
 
 		await spooler.FlushAsync();
 		Assert.True(spooler.IsEmpty);

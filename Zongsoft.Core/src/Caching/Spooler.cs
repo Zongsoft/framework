@@ -108,6 +108,9 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 
 	public async ValueTask FlushAsync(CancellationToken cancellation = default)
 	{
+		if(this.IsEmpty)
+			return;
+
 		await _channel.Reader.WaitToReadAsync(cancellation);
 		await this.OnFlushAsync(new Enumerable(_channel.Reader));
 	}
