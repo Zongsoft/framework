@@ -9,6 +9,8 @@
 这是 _**Z**ongsoft_ 开发框架的开源项目集，支持 _**.NET**_ `6`,`7`,`8`,`9` 等版本。
 可插拔应用程序生态系统是 _**Z**ongsoft_ 的特点，欢迎与我们[携手共建](CONTRIBUTING-zh.md)。
 
+> 💡 在 `clone` 本项目源码后，需要使用 `git submodule update` 命令来更新 [子模块](.gitmodules)。
+
 ## 项目列表
 
 - [_**Z**ongsoft.**C**ore_](Zongsoft.Core) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Core)](https://nuget.org/packages/Zongsoft.Core)
