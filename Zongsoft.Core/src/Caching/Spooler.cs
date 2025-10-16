@@ -38,6 +38,9 @@ namespace Zongsoft.Caching;
 
 /// <summary>提供数据缓冲功能的类。</summary>
 /// <typeparam name="T">指定的缓冲数据类型。</typeparam>
+/// <remarks>
+/// 	<para>在高频写数据的场景中（譬如日志记录、物联网的数据采集等），可使用本缓冲器来降低写入频率。该类底层采用 <seealso cref="System.Threading.Channels"/> 技术进行异步生成与消费高频数据，具有优秀的高并发性能。</para>
+/// </remarks>
 public class Spooler<T> : IEnumerable<T>, IDisposable
 {
 	#region 成员字段
