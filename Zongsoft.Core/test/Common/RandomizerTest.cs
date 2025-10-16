@@ -40,8 +40,8 @@ public class RandomizerTest
 			Assert.NotEmpty(letters);
 			Assert.Equal(length, letters.Length);
 
-			Assert.True(hashset.Add(digits), $"length={length}, digits={digits}");
-			Assert.True(hashset.Add(letters), $"length={length}, letters={letters}");
+			Assert.True(hashset.Add($"DIGITS:{digits}"));
+			Assert.True(hashset.Add($"LETTER:{letters}"));
 		}
 	}
 }
