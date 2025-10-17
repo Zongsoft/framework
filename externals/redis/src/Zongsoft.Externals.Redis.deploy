@@ -3,5 +3,5 @@ artifacts/Zongsoft.Externals.Redis.option
 lib/$(Framework)/Zongsoft.Externals.Redis.*
 lib/$(Framework)/*/Zongsoft.Externals.Redis.resources.*
 
-nuget:StackExchange.Redis@2.8.47
-nuget:System.IO.Pipelines@9.0.7
+nuget:StackExchange.Redis@2.9.32
+nuget:System.IO.Pipelines@9.0.10

@@ -17,6 +17,7 @@
 		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="5.0.0" />
@@ -42,6 +43,7 @@
 		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="6.0.3" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="6.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="6.0.0" />
@@ -67,6 +69,7 @@
 		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="7.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="7.0.0" />
@@ -92,6 +95,7 @@
 		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.1" />
@@ -121,6 +125,7 @@
 		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.2" />
+		<PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.2" />
