@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Data.PostgreSql"
+        title="Zongsoft.Data.PostgreSql Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
+        description="Created Date: 2025-10-20 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Data.PostgreSql" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Data" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="PostgreSQL" value="{static:Zongsoft.Data.PostgreSql.Configuration.PostgreSqlConnectionSettingsDriver.Instance, Zongsoft.Data.PostgreSql}" />
+	</extension>
+
+	<extension path="/Workbench/Data/Drivers">
+		<object name="PostgreSQL" value="{static:Zongsoft.Data.PostgreSql.PostgreSqlDriver.Instance, Zongsoft.Data.PostgreSql}" />
+	</extension>
+</plugin>

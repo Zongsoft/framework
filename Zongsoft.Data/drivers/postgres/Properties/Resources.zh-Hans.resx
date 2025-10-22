@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PostgreSql.Settings.Server" xml:space="preserve">
+    <value>服务地址</value>
+  </data>
+  <data name="PostgreSql.Settings.Port" xml:space="preserve">
+    <value>端口号</value>
+  </data>
+  <data name="PostgreSql.Settings.Client" xml:space="preserve">
+    <value>客户端名</value>
+  </data>
+  <data name="PostgreSql.Settings.Database" xml:space="preserve">
+    <value>数据库名</value>
+  </data>
+  <data name="PostgreSql.Settings.UserName" xml:space="preserve">
+    <value>用户名称</value>
+  </data>
+  <data name="PostgreSql.Settings.Password" xml:space="preserve">
+    <value>用户密码</value>
+  </data>
+  <data name="PostgreSql.Settings.Encoding" xml:space="preserve">
+    <value>字符编码</value>
+  </data>
+  <data name="PostgreSql.Settings.Timeout" xml:space="preserve">
+    <value>超时时长</value>
+  </data>
+  <data name="PostgreSql.Settings.KeepAlive" xml:space="preserve">
+    <value>在活时长</value>
+  </data>
+  <data name="PostgreSql.Settings.Pooling" xml:space="preserve">
+    <value>启用连接池</value>
+  </data>
+  <data name="PostgreSql.Settings.MaximumPoolSize" xml:space="preserve">
+    <value>最大池量</value>
+  </data>
+  <data name="PostgreSql.Settings.MinimumPoolSize" xml:space="preserve">
+    <value>最小池量</value>
+  </data>
+  <data name="PostgreSql.Settings.SslMode" xml:space="preserve">
+    <value>SSL 模式</value>
+  </data>
+  <data name="PostgreSql.Settings.SslCertificate" xml:space="preserve">
+    <value>SSL 证书</value>
+  </data>
+  <data name="PostgreSql.Settings.CertificateSecret" xml:space="preserve">
+    <value>证书密钥</value>
+  </data>
+  <data name="PostgreSql.Settings.Passfile" xml:space="preserve">
+    <value>密码文件</value>
+  </data>
+  <data name="PostgreSql.Settings.LoadBalanceEnabled" xml:space="preserve">
+    <value>启用负载均衡</value>
+  </data>
+  <data name="PostgreSql.Settings.LoadBalanceLifetime" xml:space="preserve">
+    <value>负载均衡时长</value>
+  </data>
+  <data name="PostgreSql.Settings.LoadBalanceLifetime.Description" xml:space="preserve">
+    <value>控制数据库服务器缓存状态的有效时长。</value>
+  </data>
+  <data name="PostgreSql.Settings.LoadBalanceEnabled.Description" xml:space="preserve">
+    <value>是否通过轮询方式实现多个数据库服务器之间的负载均衡。</value>
+  </data>
+  <data name="PostgreSql.Settings.MaxAutoPrepare" xml:space="preserve">
+    <value>最大自动预编译数</value>
+  </data>
+  <data name="PostgreSql.Settings.MaxAutoPrepare.Description" xml:space="preserve">
+    <value>在任意给定时刻可自动预编译的SQL语句最大数量。超过此数量时，将回收使用频率最低的语句。设置为零（默认值）将禁用自动预编译功能。</value>
+  </data>
+  <data name="PostgreSql.Settings.AutoPrepareMinUsages" xml:space="preserve">
+    <value>自动预编译最小量</value>
+  </data>
+  <data name="PostgreSql.Settings.AutoPrepareMinUsages.Description" xml:space="preserve">
+    <value>SQL语句在自动预编译前被使用的最小次数，默认值为5。</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionIdleLifetime" xml:space="preserve">
+    <value>连接空闲时长</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionIdleLifetime.Description" xml:space="preserve">
+    <value>当所有连接的总数超过 MinimumPoolSize 时，在关闭连接池中未使用的连接之前需要等待的时间。</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionPruningInterval" xml:space="preserve">
+    <value>连接修剪间隔</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionPruningInterval.Description" xml:space="preserve">
+    <value>连接池在尝试修剪超过空闲时限的空闲连接前等待的时长，可参考 ConnectionIdleLifetime 选项。</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionLifetime" xml:space="preserve">
+    <value>连接生命期限</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionLifetime.Description" xml:space="preserve">
+    <value>连接的最大生存周期（以秒为单位），默认值为3600秒（1小时）。
+超过此值的连接将被销毁，而非从连接池中返回。
+此设置在集群环境中尤为有用，可强制实现运行中服务器与新上线服务器间的负载均衡。同时有助于防止PostgreSQL服务器端连接导致的内存失控增长，因为某些情况下，超长期连接会随时间推移持续消耗更多内存。</value>
+  </data>
+  <data name="PostgreSql.Settings.Timezone" xml:space="preserve">
+    <value>时区</value>
+  </data>
+  <data name="PostgreSql.Settings.Timezone.Description" xml:space="preserve">
+    <value>表示 PostgreSQL 会话时区，采用 Olson/IANA 数据库格式。</value>
+  </data>
+  <data name="PostgreSql.Settings.KeepAlive.Description" xml:space="preserve">
+    <value>在发送保持活动查询前，连接处于非活动状态的秒数。默认值为0表示禁用。</value>
+  </data>
+  <data name="PostgreSql.Settings.SslMode.Description" xml:space="preserve">
+    <value>控制是否强制使用SSL、禁用SSL或优先使用SSL，具体取决于服务器支持情况。</value>
+  </data>
+  <data name="PostgreSql.Settings.SslKey" xml:space="preserve">
+    <value>SSL 键名</value>
+  </data>
+  <data name="PostgreSql.Settings.SslKey.Description" xml:space="preserve">
+    <value>发送给服务器的客户端证书密钥的位置。</value>
+  </data>
+  <data name="PostgreSql.Settings.SslCertificate.Description" xml:space="preserve">
+    <value>发送给服务器的客户端证书位置。</value>
+  </data>
+  <data name="PostgreSql.Settings.RootCertificate" xml:space="preserve">
+    <value>根证书</value>
+  </data>
+  <data name="PostgreSql.Settings.RootCertificate.Description" xml:space="preserve">
+    <value>用于验证服务器证书的CA证书位置。</value>
+  </data>
+  <data name="PostgreSql.Settings.CertificateSecret.Description" xml:space="preserve">
+    <value>客户端证书密钥的密码。</value>
+  </data>
+  <data name="PostgreSql.Settings.CheckCertificateRevocation" xml:space="preserve">
+    <value>证书撤销检查</value>
+  </data>
+  <data name="PostgreSql.Settings.CheckCertificateRevocation.Description" xml:space="preserve">
+    <value>在身份验证过程中是否检查证书撤销列表，默认为否。</value>
+  </data>
+  <data name="PostgreSql.Settings.ErrorDetailed" xml:space="preserve">
+    <value>包含错误详情</value>
+  </data>
+  <data name="PostgreSql.Settings.ErrorDetailed.Description" xml:space="preserve">
+    <value>是否启用 PostgreSQL 错误和通知的详细信息，如果启用则在 PostgresException.Detail 和 PostgresNotice.Detail 中将会包含详细信息，而这些信息中可能含有敏感数据。</value>
+  </data>
+  <data name="PostgreSql.Settings.Passfile.Description" xml:space="preserve">
+    <value>指定 PostgreSQL 密码文件(PGPASSFILE)的路径，密码将从该文件中获取。</value>
+  </data>
+  <data name="PostgreSql.Settings.Multiplexing" xml:space="preserve">
+    <value>多路复用</value>
+  </data>
+  <data name="PostgreSql.Settings.Multiplexing.Description" xml:space="preserve">
+    <value>启用多路复用功能，从而更高效地利用连接资源。</value>
+  </data>
+</root>

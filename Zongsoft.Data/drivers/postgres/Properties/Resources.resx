@@ -1,0 +1,243 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+		Microsoft ResX Schema
+
+		Version 1.3
+
+		The primary goals of this format is to allow a simple XML format 
+		that is mostly human readable. The generation and parsing of the 
+		various data types are done through the TypeConverter classes 
+		associated with the data types.
+
+		Example:
+
+		... ado.net/XML headers & schema ...
+		<resheader name="resmimetype">text/microsoft-resx</resheader>
+		<resheader name="version">1.3</resheader>
+		<resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+		<resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+		<data name="Name1">this is my long string</data>
+		<data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+		<data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+			[base64 mime encoded serialized .NET Framework object]
+		</data>
+		<data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+			[base64 mime encoded string representing a byte array form of the .NET Framework object]
+		</data>
+
+		There are any number of "resheader" rows that contain simple 
+		name/value pairs.
+
+		Each data row contains a name, and value. The row also contains a 
+		type or mimetype. Type corresponds to a .NET class that support 
+		text/value conversion through the TypeConverter architecture. 
+		Classes that don't support this are serialized and stored with the 
+		mimetype set.
+
+		The mimetype is used for serialized objects, and tells the 
+		ResXResourceReader how to depersist the object. This is currently not 
+		extensible. For a given mimetype the value must be set accordingly:
+
+		Note - application/x-microsoft.net.object.binary.base64 is the format 
+		that the ResXResourceWriter will generate, however the reader can 
+		read any of the formats listed below.
+
+		mimetype: application/x-microsoft.net.object.binary.base64
+		value   : The object must be serialized with 
+			: System.Serialization.Formatters.Binary.BinaryFormatter
+			: and then encoded with base64 encoding.
+
+		mimetype: application/x-microsoft.net.object.soap.base64
+		value   : The object must be serialized with 
+			: System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+			: and then encoded with base64 encoding.
+
+		mimetype: application/x-microsoft.net.object.bytearray.base64
+		value   : The object must be serialized into a byte array 
+			: using a System.ComponentModel.TypeConverter
+			: and then encoded with base64 encoding.
+	-->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PostgreSql.Settings.Server" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="PostgreSql.Settings.Port" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="PostgreSql.Settings.Client" xml:space="preserve">
+    <value>Client</value>
+  </data>
+  <data name="PostgreSql.Settings.Database" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="PostgreSql.Settings.UserName" xml:space="preserve">
+    <value>User Name</value>
+  </data>
+  <data name="PostgreSql.Settings.Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="PostgreSql.Settings.Encoding" xml:space="preserve">
+    <value>Encoding</value>
+  </data>
+  <data name="PostgreSql.Settings.Timeout" xml:space="preserve">
+    <value>Timeout</value>
+  </data>
+  <data name="PostgreSql.Settings.KeepAlive" xml:space="preserve">
+    <value>KeepAlive</value>
+  </data>
+  <data name="PostgreSql.Settings.Pooling" xml:space="preserve">
+    <value>Pooling</value>
+  </data>
+  <data name="PostgreSql.Settings.MaximumPoolSize" xml:space="preserve">
+    <value>Maximum Pool Size</value>
+  </data>
+  <data name="PostgreSql.Settings.MinimumPoolSize" xml:space="preserve">
+    <value>Minimum Pool Size</value>
+  </data>
+  <data name="PostgreSql.Settings.SslMode" xml:space="preserve">
+    <value>SSL Mode</value>
+  </data>
+  <data name="PostgreSql.Settings.SslCertificate" xml:space="preserve">
+    <value>SSL Certificate</value>
+  </data>
+  <data name="PostgreSql.Settings.CertificateSecret" xml:space="preserve">
+    <value>Certificate Secret</value>
+  </data>
+  <data name="PostgreSql.Settings.Passfile" xml:space="preserve">
+    <value>Passfile</value>
+  </data>
+  <data name="PostgreSql.Settings.LoadBalanceEnabled" xml:space="preserve">
+    <value>LoadBalance Enabled</value>
+  </data>
+  <data name="PostgreSql.Settings.LoadBalanceLifetime" xml:space="preserve">
+    <value>LoadBalance Lifetime</value>
+  </data>
+  <data name="PostgreSql.Settings.LoadBalanceLifetime.Description" xml:space="preserve">
+    <value>Controls for how long the host's cached state will be considered as valid.</value>
+  </data>
+  <data name="PostgreSql.Settings.LoadBalanceEnabled.Description" xml:space="preserve">
+    <value>Enables balancing between multiple hosts by round-robin.</value>
+  </data>
+  <data name="PostgreSql.Settings.MaxAutoPrepare" xml:space="preserve">
+    <value>Maximum Auto-Prepare</value>
+  </data>
+  <data name="PostgreSql.Settings.MaxAutoPrepare.Description" xml:space="preserve">
+    <value>The maximum number SQL statements that can be automatically prepared at any given point. Beyond this number the least-recently-used statement will be recycled. Zero (the default) disables automatic preparation.</value>
+  </data>
+  <data name="PostgreSql.Settings.AutoPrepareMinUsages" xml:space="preserve">
+    <value>Auto-Prepare Minimum Usages</value>
+  </data>
+  <data name="PostgreSql.Settings.AutoPrepareMinUsages.Description" xml:space="preserve">
+    <value>The minimum number of usages an SQL statement is used before it's automatically prepared. Defaults to 5.</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionIdleLifetime" xml:space="preserve">
+    <value>Connection Idle Lifetime</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionIdleLifetime.Description" xml:space="preserve">
+    <value>The time to wait before closing unused connections in the pool if the count of all connections exceeds MinimumPoolSize.</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionPruningInterval" xml:space="preserve">
+    <value>Connection Pruning Interval</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionPruningInterval.Description" xml:space="preserve">
+    <value>How many seconds the pool waits before attempting to prune idle connections that are beyond idle lifetime.</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionLifetime" xml:space="preserve">
+    <value>Connection Lifetime</value>
+  </data>
+  <data name="PostgreSql.Settings.ConnectionLifetime.Description" xml:space="preserve">
+    <value>The total maximum lifetime of connections (in seconds), Defaults to 3600 seconds(1 hour).
+Connections which have exceeded this value will be destroyed instead of returned from the pool.
+This is useful in clustered configurations to force load balancing between a running server and a server just brought online. It can also be useful to prevent runaway memory growth of connections at the PostgreSQL server side, because in some cases very long lived connections slowly consume more and more memory over time.</value>
+  </data>
+  <data name="PostgreSql.Settings.Timezone" xml:space="preserve">
+    <value>Timezone</value>
+  </data>
+  <data name="PostgreSql.Settings.Timezone.Description" xml:space="preserve">
+    <value>The PostgreSQL session timezone, in Olson/IANA database format.</value>
+  </data>
+  <data name="PostgreSql.Settings.KeepAlive.Description" xml:space="preserve">
+    <value>The number of seconds of connection inactivity before client sends a keepalive query. Defaults is 0 to disable.</value>
+  </data>
+  <data name="PostgreSql.Settings.SslMode.Description" xml:space="preserve">
+    <value>Controls whether SSL is required, disabled or preferred, depending on server support.</value>
+  </data>
+  <data name="PostgreSql.Settings.SslKey" xml:space="preserve">
+    <value>SSL Key</value>
+  </data>
+  <data name="PostgreSql.Settings.SslKey.Description" xml:space="preserve">
+    <value>Location of a client key for a client certificate to be sent to the server.</value>
+  </data>
+  <data name="PostgreSql.Settings.SslCertificate.Description" xml:space="preserve">
+    <value>Location of a client certificate to be sent to the server.</value>
+  </data>
+  <data name="PostgreSql.Settings.RootCertificate" xml:space="preserve">
+    <value>Root Certificate</value>
+  </data>
+  <data name="PostgreSql.Settings.RootCertificate.Description" xml:space="preserve">
+    <value>Location of a CA certificate used to validate the server certificate.</value>
+  </data>
+  <data name="PostgreSql.Settings.CertificateSecret.Description" xml:space="preserve">
+    <value>Password for a key for a client certificate.</value>
+  </data>
+  <data name="PostgreSql.Settings.CheckCertificateRevocation" xml:space="preserve">
+    <value>Check Certificate Revocation</value>
+  </data>
+  <data name="PostgreSql.Settings.CheckCertificateRevocation.Description" xml:space="preserve">
+    <value>Whether to check the certificate revocation list during authentication. Defaults to false.</value>
+  </data>
+  <data name="PostgreSql.Settings.ErrorDetailed" xml:space="preserve">
+    <value>Error Detailed</value>
+  </data>
+  <data name="PostgreSql.Settings.ErrorDetailed.Description" xml:space="preserve">
+    <value>When enabled, PostgreSQL error and notice details are included on PostgresException.Detail and PostgresNotice.Detail. These can contain sensitive data.</value>
+  </data>
+  <data name="PostgreSql.Settings.Passfile.Description" xml:space="preserve">
+    <value>Path to a PostgreSQL password file (PGPASSFILE), from which the password would be taken.</value>
+  </data>
+  <data name="PostgreSql.Settings.Multiplexing" xml:space="preserve">
+    <value>Multiplexing</value>
+  </data>
+  <data name="PostgreSql.Settings.Multiplexing.Description" xml:space="preserve">
+    <value>Enables multiplexing, which allows more efficient use of connections.</value>
+  </data>
+</root>
