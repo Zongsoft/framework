@@ -259,7 +259,7 @@ namespace Zongsoft.Data.MySql
 			private static string GetSequenceName(SequenceExpression sequence)
 			{
 				if(sequence.Method != SequenceMethod.Current)
-					throw new DataException($"The MySQL driver does not support the '{sequence.Method.ToString()}' sequence function.");
+					throw new DataException($"The {MySqlDriver.NAME} driver does not support the '{sequence.Method}' sequence function.");
 
 				return "LAST_INSERT_ID";
 			}
