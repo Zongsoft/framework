@@ -449,6 +449,10 @@
 	</xs:simpleType>
 
 	<xs:simpleType name="FieldType">
+		<xs:union memberTypes="DbType xs:string"/>
+	</xs:simpleType>
+
+	<xs:simpleType name="DbType">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="string">
 				<xs:annotation>
