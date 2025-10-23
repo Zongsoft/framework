@@ -44,6 +44,10 @@ public readonly partial struct DataType : IEquatable<DataType>
 	#endif
 	#endregion
 
+	#region 单例字段
+	public static readonly DataType Unknown = new(System.Data.DbType.Object);
+	#endregion
+
 	#region 成员字段
 	private readonly int _hashCode;
 	#endregion

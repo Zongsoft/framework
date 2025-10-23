@@ -34,6 +34,8 @@ namespace Zongsoft.Data;
 
 public static class DataUtility
 {
+	public static DataType AsDataType(this DbType dbType, string name = null) => new(dbType, name);
+
 	public static Type AsType(this DbType dbType) => dbType switch
 	{
 		DbType.String or DbType.StringFixedLength or DbType.AnsiString or DbType.AnsiStringFixedLength or DbType.Xml => typeof(string),
