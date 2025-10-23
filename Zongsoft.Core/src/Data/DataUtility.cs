@@ -34,8 +34,6 @@ namespace Zongsoft.Data;
 
 public static class DataUtility
 {
-	public static DataType AsDataType(this DbType dbType, string name = null) => new(dbType, name);
-
 	public static Type AsType(this DbType dbType) => dbType switch
 	{
 		DbType.String or DbType.StringFixedLength or DbType.AnsiString or DbType.AnsiStringFixedLength or DbType.Xml => typeof(string),
@@ -56,7 +54,7 @@ public static class DataUtility
 		DbType.DateTimeOffset => typeof(DateTimeOffset),
 		DbType.Guid => typeof(Guid),
 		DbType.Object => typeof(object),
-		_ => throw new NotSupportedException("Invalid DbType."),
+		_ => throw new NotSupportedException($"Invalid DbType value:'{dbType}'."),
 	};
 
 	public static bool IsNumeric(this DbType dbType) => IsInteger(dbType) || IsFloating(dbType);
