@@ -60,12 +60,15 @@ public class PostgreSqlImporter : DataImporterBase
 
 			for(int i = 0; i < members.Count; i++)
 			{
-				var value = members[i].GetValue(ref target);
+				if(members[i].Property.IsSimplex(out var simplex))
+				{
+					var value = members[i].GetValue(ref target);
 
-				if(value is null)
-					bulker.WriteNull();
-				else
-					bulker.Write(value, NpgsqlTypes.NpgsqlDbType.Bigint);
+					if(value is null)
+						bulker.WriteNull();
+					else
+						bulker.Write(value, Utility.GetDataType(simplex.Type));
+				}
 			}
 		}
 
@@ -90,12 +93,15 @@ public class PostgreSqlImporter : DataImporterBase
 
 			for(int i = 0; i < members.Count; i++)
 			{
-				var value = members[i].GetValue(ref target);
+				if(members[i].Property.IsSimplex(out var simplex))
+				{
+					var value = members[i].GetValue(ref target);
 
-				if(value is null)
-					await bulker.WriteNullAsync(cancellation);
-				else
-					await bulker.WriteAsync(value, "", cancellation);
+					if(value is null)
+						await bulker.WriteNullAsync(cancellation);
+					else
+						await bulker.WriteAsync(value, Utility.GetDataType(simplex.Type), cancellation);
+				}
 			}
 		}
 
