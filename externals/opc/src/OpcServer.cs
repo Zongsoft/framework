@@ -82,25 +82,31 @@ public partial class OpcServer : WorkerBase
 	#endregion
 
 	#region 重写方法
-	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
+	protected override async Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
 		//确认服务配置对象
 		_options ??= new OpcServerOptions(this.Name);
+
+		//获取应用配置
+		var configuration = _options.GetConfiguration();
+
+		//验证应用配置
+		await configuration.ValidateAsync(ApplicationType.Server, cancellation);
 
 		//创建应用实例（服务启动器）
 		_launcher = new ApplicationInstance()
 		{
 			ApplicationName = this.Name,
 			ApplicationType = ApplicationType.Server,
-			ApplicationConfiguration = _options.GetConfiguration(),
+			ApplicationConfiguration = configuration,
 			DisableCertificateAutoCreation = false,
 		};
 
 		//必须：检查应用启动器的安全证书
-		_launcher.CheckApplicationInstanceCertificates(false);
+		await _launcher.CheckApplicationInstanceCertificatesAsync(false, null, cancellation);
 
 		//启动服务器实例
-		return _launcher.Start(new Server(this));
+		await _launcher.StartAsync(new Server(this));
 	}
 
 	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)

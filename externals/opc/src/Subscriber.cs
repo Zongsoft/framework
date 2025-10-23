@@ -98,7 +98,7 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 		try
 		{
 			//清空订阅的监视条目
-			this.Entries.Clear();
+			await this.Entries.ClearAsync(cancellation);
 		}
 		catch { }
 

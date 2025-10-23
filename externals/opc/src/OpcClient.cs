@@ -115,9 +115,6 @@ public partial class OpcClient : IDisposable
 		//挂载证书验证事件
 		_configuration.CertificateValidator.CertificateValidation += this.OnCertificateValidation;
 
-		//验证客户端配置
-		_configuration.Validate(ApplicationType.Client);
-
 		_subscribers = new SubscriberCollection();
 	}
 	#endregion
@@ -144,8 +141,11 @@ public partial class OpcClient : IDisposable
 		if(settings == null || string.IsNullOrEmpty(settings.Server))
 			throw new ArgumentNullException(nameof(settings));
 
+		//验证客户端配置
+		await _configuration.ValidateAsync(ApplicationType.Client, cancellation);
+
 		var endpointConfiguration = EndpointConfiguration.Create(_configuration);
-		var endpointDescription = CoreClientUtils.SelectEndpoint(_configuration, settings.Server, false, 1000 * 10);
+		var endpointDescription = await CoreClientUtils.SelectEndpointAsync(_configuration, settings.Server, false, 1000 * 10, cancellation);
 
 		endpointDescription.SecurityMode = Utility.GetSecurityMode(settings.SecurityMode);
 		if(endpointDescription.SecurityMode == MessageSecurityMode.Sign || endpointDescription.SecurityMode == MessageSecurityMode.SignAndEncrypt)
@@ -159,7 +159,7 @@ public partial class OpcClient : IDisposable
 			};
 
 			//自动生成客户端证书文件
-			await instance.CheckApplicationInstanceCertificates(false, CertificateFactory.DefaultLifeTime, cancellation);
+			await instance.CheckApplicationInstanceCertificatesAsync(false, CertificateFactory.DefaultLifeTime, cancellation);
 		}
 
 		var endpoint = new ConfiguredEndpoint(null, endpointDescription, endpointConfiguration);
@@ -175,9 +175,11 @@ public partial class OpcClient : IDisposable
 		await this.DisconnectAsync(cancellation);
 
 		//创建新的会话
-		var session = await Session.Create(
+		var session = await Session.CreateAsync(
 			_configuration,
+			null,
 			endpoint,
+			false,
 			false,
 			name,
 			(uint)settings.Timeout.TotalMilliseconds,
@@ -228,7 +230,7 @@ public partial class OpcClient : IDisposable
 			throw new ArgumentNullException(nameof(identifier));
 
 		var session = this.GetSession();
-		return ValueTask.FromResult(session.NodeCache.Exists(NodeId.Parse(identifier)));
+		return session.NodeCache.ExistsAsync(NodeId.Parse(identifier), cancellation);
 	}
 
 	public async ValueTask<Type> GetDataTypeAsync(string identifier, CancellationToken cancellation = default)
@@ -528,7 +530,7 @@ public partial class OpcClient : IDisposable
 		var subscriber = new Subscriber(options, consumer);
 
 		for(int i = 0; i < entries.Length; i++)
-			subscriber.Entries.Add(entries[i]);
+			await subscriber.Entries.AddAsync(entries[i], cancellation);
 
 		if(session.AddSubscription((Subscription)subscriber.Subscription) && await _subscribers.RegisterAsync(subscriber, cancellation))
 			return subscriber;

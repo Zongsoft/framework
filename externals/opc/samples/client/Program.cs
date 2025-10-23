@@ -73,7 +73,7 @@ internal class Program
 					throw new CommandException($"Missing required arguments of the subscribe command.");
 
 				foreach(var identifier in context.Arguments)
-					subscriber.Entries.Add(identifier);
+					await subscriber.Entries.AddAsync(identifier, cancellation);
 
 				return subscriber;
 			}

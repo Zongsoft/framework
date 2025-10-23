@@ -30,6 +30,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -105,17 +107,11 @@ partial class Subscriber
 		#endregion
 
 		#region 构造函数
-		public EntryCollection(Subscriber subscriber, params IEnumerable<Entry> entries)
+		public EntryCollection(Subscriber subscriber)
 		{
 			_subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
 			_subscription = (Subscription)subscriber.Subscription;
 			_dictionary = new Dictionary<NodeId, Entry>();
-
-			if(entries != null)
-			{
-				foreach(var entry in entries)
-					this.Add(entry);
-			}
 		}
 		#endregion
 
@@ -129,8 +125,12 @@ partial class Subscriber
 		public bool Contains(string name) => name != null && _dictionary.ContainsKey(NodeId.Parse(name));
 		internal bool Contains(NodeId identifier) => identifier != null && _dictionary.ContainsKey(identifier);
 
-		public bool Add(string name, object tag = null) => !string.IsNullOrEmpty(name) && this.Add(new Entry(name, tag));
-		public bool Add(Entry entry)
+		public ValueTask<bool> AddAsync(string name, object tag = null, CancellationToken cancellation = default) =>
+			string.IsNullOrEmpty(name) ?
+			ValueTask.FromResult(false) :
+			this.AddAsync(new Entry(name, tag), cancellation);
+
+		public async ValueTask<bool> AddAsync(Entry entry, CancellationToken cancellation = default)
 		{
 			if(entry == null)
 				return false;
@@ -153,7 +153,7 @@ partial class Subscriber
 
 				//从服务器中执行订阅变更操作
 				if(_subscription.Created)
-					_subscription.ApplyChanges();
+					await _subscription.ApplyChangesAsync(cancellation);
 
 				return true;
 			}
@@ -161,7 +161,7 @@ partial class Subscriber
 			return false;
 		}
 
-		public void Clear()
+		public async ValueTask ClearAsync(CancellationToken cancellation = default)
 		{
 			foreach(var entry in _dictionary.Values)
 			{
@@ -177,7 +177,7 @@ partial class Subscriber
 
 			//从服务器中删除已取消的订阅项目
 			if(_subscription.Created)
-				_subscription.DeleteItems();
+				await _subscription.DeleteItemsAsync(cancellation);
 		}
 
 		public bool TryGetValue(string name, out Entry value)
@@ -198,33 +198,31 @@ partial class Subscriber
 			return false;
 		}
 
-		public bool TryRemove(string name, out Entry result)
+		public async ValueTask<Entry> RemoveAsync(string name, CancellationToken cancellation = default)
 		{
-			if(!string.IsNullOrEmpty(name) && _dictionary.Remove(NodeId.Parse(name), out result))
+			if(!string.IsNullOrEmpty(name) && _dictionary.Remove(NodeId.Parse(name), out var result))
 			{
-				this.OnRemoved(result);
-				return true;
+				await this.OnRemovedAsync(result, cancellation);
+				return result;
 			}
 
-			result = null;
-			return false;
+			return default;
 		}
 
-		internal bool TryRemove(NodeId identifier, out Entry result)
+		internal async ValueTask<Entry> RemoveAsync(NodeId identifier, CancellationToken cancellation = default)
 		{
-			if(identifier != null && _dictionary.Remove(identifier, out result))
+			if(identifier != null && _dictionary.Remove(identifier, out var result))
 			{
-				this.OnRemoved(result);
-				return true;
+				await this.OnRemovedAsync(result, cancellation);
+				return result;
 			}
 
-			result = null;
-			return false;
+			return default;
 		}
 		#endregion
 
 		#region 私有方法
-		private void OnRemoved(Entry entry)
+		private async ValueTask OnRemovedAsync(Entry entry, CancellationToken cancellation)
 		{
 			if(entry != null && entry.Monitor != null)
 			{
@@ -234,7 +232,7 @@ partial class Subscriber
 
 			//从服务器中删除已取消的订阅项目
 			if(_subscription.Created)
-				_subscription.DeleteItems();
+				await _subscription.DeleteItemsAsync(cancellation);
 		}
 		#endregion
 

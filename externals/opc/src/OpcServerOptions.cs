@@ -167,9 +167,6 @@ public class OpcServerOptions
 			});
 		}
 
-		//验证服务配置
-		configuration.Validate(ApplicationType.Server);
-
 		return configuration;
 	}
 	#endregion
