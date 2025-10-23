@@ -179,7 +179,7 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 
 	protected virtual void VisitField(ExpressionVisitorContext context, FieldDefinition field)
 	{
-		context.Write($"{field.Name} {this.Dialect.GetDbType(field.DbType, field.Length, field.Precision, field.Scale)}");
+		context.Write($"{field.Name} {this.Dialect.GetDbType(field.Type, field.Length, field.Precision, field.Scale)}");
 
 		if(field.Nullable)
 			context.Write(" NULL");
@@ -520,7 +520,7 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 		#endregion
 
 		#region 公共方法
-		public string GetDbType(DbType dbType, int length, byte precision, byte scale) => dbType switch
+		public string GetDbType(DataType type, int length, byte precision, byte scale) => type.DbType switch
 		{
 			DbType.AnsiString => length > 0 ? "varchar(" + length.ToString() + ")" : "text",
 			DbType.AnsiStringFixedLength => length > 0 ? "char(" + length.ToString() + ")" : "char(MAX)",
@@ -549,7 +549,7 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 			DbType.Single => "float(" + precision.ToString() + "," + scale.ToString() + ")",
 			DbType.VarNumeric => "numeric(" + precision.ToString() + "," + scale.ToString() + ")",
 			DbType.Xml => "xml",
-			_ => dbType.ToString(),
+			_ => type.ToString(),
 		};
 
 		public string GetSymbol(Operator @operator) => @operator switch

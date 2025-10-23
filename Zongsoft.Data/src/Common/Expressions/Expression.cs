@@ -85,25 +85,25 @@ public abstract class Expression : IExpression
 	/// <param name="type">指定的参数的数据类型。</param>
 	/// <param name="direction">指定的参数方向，默认为输入参数。</param>
 	/// <returns>返回新建的参数表达式。</returns>
-	public static ParameterExpression Parameter(string name, System.Data.DbType type, System.Data.ParameterDirection direction = System.Data.ParameterDirection.Input) => new(name, type, direction);
+	public static ParameterExpression Parameter(string name, DataType type, System.Data.ParameterDirection direction = System.Data.ParameterDirection.Input) => new(name, type, direction);
 
 	/// <summary>创建一个参数表达式。</summary>
 	/// <param name="name">指定的参数名，如果为问号，则表示该参数将由所属参数集自动命名。</param>
 	/// <param name="type">指定的参数的数据类型。</param>
 	/// <param name="value">指定的参数值。</param>
 	/// <returns>返回新建的参数表达式。</returns>
-	public static ParameterExpression Parameter(string name, System.Data.DbType type, object value) => new(name, type, value);
+	public static ParameterExpression Parameter(string name, DataType type, object value) => new(name, type, value);
 
 	/// <summary>创建一个参数表达式。</summary>
 	/// <param name="type">指定的参数的数据类型。</param>
 	/// <param name="value">指定的参数值。</param>
 	/// <returns>返回新建的参数表达式。</returns>
-	public static ParameterExpression Parameter(System.Data.DbType type, object value) => new(ParameterExpression.Anonymous, type, value);
+	public static ParameterExpression Parameter(DataType type, object value) => new(ParameterExpression.Anonymous, type, value);
 
 	/// <summary>创建一个参数表达式。</summary>
 	/// <param name="value">指定的参数值。</param>
 	/// <returns>返回新建的参数表达式。</returns>
-	public static ParameterExpression Parameter(object value) => new(ParameterExpression.Anonymous, Utility.GetDbType(value), value);
+	public static ParameterExpression Parameter(object value) => new(ParameterExpression.Anonymous, Utility.GetDbType(value).AsDataType(), value);
 
 	/// <summary>创建一个参数表达式，参数名将由所属参数集合自动命名。</summary>
 	/// <param name="field">指定参数关联的字段标识。</param>

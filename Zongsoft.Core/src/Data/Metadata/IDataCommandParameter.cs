@@ -47,7 +47,7 @@ public interface IDataCommandParameter
 	string Alias { get; }
 
 	/// <summary>获取命令参数的类型。</summary>
-	DbType Type { get; }
+	DataType Type { get; }
 
 	/// <summary>获取命令参数的最大长度。</summary>
 	int Length { get; }

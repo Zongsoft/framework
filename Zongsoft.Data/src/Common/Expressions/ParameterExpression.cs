@@ -44,17 +44,17 @@ public class ParameterExpression : Expression
 	#endregion
 
 	#region 构造函数
-	public ParameterExpression(string name, DbType type, ParameterDirection direction = ParameterDirection.Input)
+	public ParameterExpression(string name, DataType type, ParameterDirection direction = ParameterDirection.Input)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
 		this.Name = name;
-		this.DbType = type;
+		this.Type = type;
 		this.Direction = direction;
 	}
 
-	public ParameterExpression(string name, DbType type, object value)
+	public ParameterExpression(string name, DataType type, object value)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -65,7 +65,7 @@ public class ParameterExpression : Expression
 		if(value != null)
 			this.Value = value;
 
-		this.DbType = type;
+		this.Type = type;
 	}
 
 	public ParameterExpression(FieldIdentifier field, object value) : this(field, null, value) { }
@@ -77,7 +77,7 @@ public class ParameterExpression : Expression
 		this.Direction = ParameterDirection.Input;
 
 		if(field.Token.Property.IsSimplex)
-			this.DbType = ((Metadata.IDataEntitySimplexProperty)field.Token.Property).Type;
+			this.Type = ((Metadata.IDataEntitySimplexProperty)field.Token.Property).Type;
 	}
 
 	public ParameterExpression(FieldIdentifier field, SchemaMember schema, object value)
@@ -94,7 +94,7 @@ public class ParameterExpression : Expression
 		this.Value = value;
 
 		if(field.Token.Property.IsSimplex)
-			this.DbType = ((Metadata.IDataEntitySimplexProperty)field.Token.Property).Type;
+			this.Type = ((Metadata.IDataEntitySimplexProperty)field.Token.Property).Type;
 	}
 	#endregion
 
@@ -113,7 +113,7 @@ public class ParameterExpression : Expression
 	public ParameterDirection Direction { get; }
 
 	/// <summary>获取或设置参数的数据类型。</summary>
-	public DbType DbType { get; set; }
+	public DataType Type { get; set; }
 
 	/// <summary>获取或设置参数值。</summary>
 	/// <remarks>注意：设置该属性值会导致<see cref="IsChanged"/>属性为真。</remarks>
@@ -129,7 +129,7 @@ public class ParameterExpression : Expression
 				if(value.GetType().IsEnum)
 					_value = System.Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType()));
 
-				this.DbType = Utility.GetDbType(_value);
+				this.Type = Utility.GetDbType(_value).AsDataType();
 			}
 
 			_hasValue = true;
@@ -142,7 +142,7 @@ public class ParameterExpression : Expression
 
 	#region 重写方法
 	public override string ToString() => this.IsChanged ?
-		$"[{this.Direction}]{this.Name} {this.DbType} = {this.Value ?? "<NULL>"}" :
-		$"[{this.Direction}]{this.Name} {this.DbType} @ {this.Schema}";
+		$"[{this.Direction}]{this.Name} {this.Type} = {this.Value ?? "<NULL>"}" :
+		$"[{this.Direction}]{this.Name} {this.Type} @ {this.Schema}";
 	#endregion
 }

@@ -114,12 +114,12 @@ public abstract class Operand
 	#endregion
 
 	#region 函数运元
-	public static FunctionOperand Cast(string field, System.Data.DbType type, string style = null) => Cast(Field(field), type, style);
-	public static FunctionOperand Cast(string field, System.Data.DbType type, int length, string style = null) => Cast(Field(field), type, length, style);
-	public static FunctionOperand Cast(string field, System.Data.DbType type, byte precision, byte scale, string style = null) => Cast(Field(field), type, precision, scale, style);
-	public static FunctionOperand Cast(Operand operand, System.Data.DbType type, string style = null) => new FunctionOperand.CastFunction(operand, type, 0, style);
-	public static FunctionOperand Cast(Operand operand, System.Data.DbType type, int length, string style = null) => new FunctionOperand.CastFunction(operand, type, length, style);
-	public static FunctionOperand Cast(Operand operand, System.Data.DbType type, byte precision, byte scale, string style = null) => new FunctionOperand.CastFunction(operand, type, precision, scale, style);
+	public static FunctionOperand Cast(string field, DataType type, string style = null) => Cast(Field(field), type, style);
+	public static FunctionOperand Cast(string field, DataType type, int length, string style = null) => Cast(Field(field), type, length, style);
+	public static FunctionOperand Cast(string field, DataType type, byte precision, byte scale, string style = null) => Cast(Field(field), type, precision, scale, style);
+	public static FunctionOperand Cast(Operand operand, DataType type, string style = null) => new FunctionOperand.CastFunction(operand, type, 0, style);
+	public static FunctionOperand Cast(Operand operand, DataType type, int length, string style = null) => new FunctionOperand.CastFunction(operand, type, length, style);
+	public static FunctionOperand Cast(Operand operand, DataType type, byte precision, byte scale, string style = null) => new FunctionOperand.CastFunction(operand, type, precision, scale, style);
 
 	public static FunctionOperand IsNull(string field, Operand replacement = null) => IsNull(Field(field), replacement);
 	public static FunctionOperand IsNull(Operand operand, Operand replacement = null) => replacement == null ?
@@ -127,21 +127,21 @@ public abstract class Operand
 		new FunctionOperand(Functions.IsNull, operand, replacement);
 
 	public static FunctionOperand IsDate(string field) => IsDate(Field(field));
-	public static FunctionOperand IsDate(Operand operand) => new FunctionOperand(Functions.IsDate, operand);
+	public static FunctionOperand IsDate(Operand operand) => new(Functions.IsDate, operand);
 
 	public static FunctionOperand IsNumeric(string field) => IsNumeric(Field(field));
-	public static FunctionOperand IsNumeric(Operand operand) => new FunctionOperand(Functions.IsNumeric, operand);
+	public static FunctionOperand IsNumeric(Operand operand) => new(Functions.IsNumeric, operand);
 
 	public static FunctionOperand Choose(int index, params Operand[] values) => Choose((Operand)Constant(index), values);
 	public static FunctionOperand Choose(string field, params Operand[] values) => Choose(Field(field), values);
 	public static FunctionOperand Choose(Operand operand, params Operand[] values) => values == null || values.Length == 0 ?
 		new FunctionOperand(Functions.Choose, operand) :
-		new FunctionOperand(Functions.Choose, values.Prepend(operand).ToArray());
+		new FunctionOperand(Functions.Choose, [.. values.Prepend(operand)]);
 
 	public static FunctionOperand Coalesce(string field, params Operand[] values) => Coalesce(Field(field), values);
 	public static FunctionOperand Coalesce(Operand operand, params Operand[] values) => values == null || values.Length == 0 ?
 		new FunctionOperand(Functions.Coalesce, operand) :
-		new FunctionOperand(Functions.Coalesce, values.Prepend(operand).ToArray());
+		new FunctionOperand(Functions.Coalesce, [.. values.Prepend(operand)]);
 
 	public static FunctionOperand Greatest(params Operand[] arguments) => arguments == null || arguments.Length == 0 ? throw new ArgumentNullException(nameof(arguments)) : new FunctionOperand(Functions.Greatest, arguments);
 	public static FunctionOperand Least(params Operand[] arguments) => arguments == null || arguments.Length == 0 ? throw new ArgumentNullException(nameof(arguments)) : new FunctionOperand(Functions.Least, arguments);
@@ -334,7 +334,7 @@ public abstract class Operand
 		#region 嵌套子类
 		public sealed class CastFunction : FunctionOperand
 		{
-			internal CastFunction(Operand value, System.Data.DbType conversionType, int length = 0, string style = null) : base(Functions.Cast)
+			internal CastFunction(Operand value, DataType conversionType, int length = 0, string style = null) : base(Functions.Cast)
 			{
 				this.Value = value;
 				this.ConversionType = conversionType;
@@ -342,7 +342,7 @@ public abstract class Operand
 				this.Style = style;
 			}
 
-			internal CastFunction(Operand value, System.Data.DbType conversionType, byte precision, byte scale, string style = null) : base(Functions.Cast)
+			internal CastFunction(Operand value, DataType conversionType, byte precision, byte scale, string style = null) : base(Functions.Cast)
 			{
 				this.Value = value;
 				this.ConversionType = conversionType;
@@ -352,7 +352,7 @@ public abstract class Operand
 			}
 
 			public Operand Value { get; }
-			public System.Data.DbType ConversionType { get; }
+			public DataType ConversionType { get; }
 			public int Length { get; }
 			public byte Precision { get; }
 			public byte Scale { get; }

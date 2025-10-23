@@ -236,7 +236,7 @@ public class MetadataFileResolver
 				case XML_PROPERTY_ELEMENT:
 					var property = new DataEntitySimplexProperty(entity,
 					                   reader.GetAttribute(XML_NAME_ATTRIBUTE),
-									   GetDbType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
+									   new DataType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
 									   GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
 					{
 						Hint = GetAttributeValue<string>(reader, XML_HINT_ATTRIBUTE),
@@ -394,7 +394,7 @@ public class MetadataFileResolver
 			switch(reader.LocalName)
 			{
 				case XML_PARAMETER_ELEMENT:
-					var parameter = new DataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), GetDbType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
+					var parameter = new DataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), new DataType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
 					{
 						Direction = GetAttributeValue(reader, XML_DIRECTION_ATTRIBUTE, value => GetDirection(value)),
 						Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
@@ -465,43 +465,6 @@ public class MetadataFileResolver
 	#endregion
 
 	#region 私有方法
-	private static System.Data.DbType GetDbType(string type)
-	{
-		if(string.IsNullOrWhiteSpace(type))
-			return System.Data.DbType.String;
-
-		return type.ToLowerInvariant() switch
-		{
-			"string" or "nvarchar" => System.Data.DbType.String,
-			"nchar" or "stringfixed" or "stringfixedlength" => System.Data.DbType.StringFixedLength,
-			"varchar" or "ansistring" => System.Data.DbType.AnsiString,
-			"char" or "ansistringfixed" or "ansistringfixedlength" => System.Data.DbType.AnsiStringFixedLength,
-			"short" or "int16" or "smallint" => System.Data.DbType.Int16,
-			"int" or "int32" or "integer" => System.Data.DbType.Int32,
-			"long" or "int64" or "bigint" => System.Data.DbType.Int64,
-			"ushort" or "uint16" => System.Data.DbType.UInt16,
-			"uint" or "uint32" => System.Data.DbType.UInt32,
-			"ulong" or "uint64" => System.Data.DbType.UInt64,
-			"byte" or "tiny" or "tinyint" => System.Data.DbType.Byte,
-			"sbyte" => System.Data.DbType.SByte,
-			"binary" or "byte[]" or "varbinary" => System.Data.DbType.Binary,
-			"bool" or "boolean" => System.Data.DbType.Boolean,
-			"money" or "currency" => System.Data.DbType.Currency,
-			"decimal" => System.Data.DbType.Decimal,
-			"double" => System.Data.DbType.Double,
-			"float" or "single" => System.Data.DbType.Single,
-			"date" => System.Data.DbType.Date,
-			"time" => System.Data.DbType.Time,
-			"datetime" or "timestamp" => System.Data.DbType.DateTime,
-			"datetimeoffset" => System.Data.DbType.DateTimeOffset,
-			"guid" or "uuid" => System.Data.DbType.Guid,
-			"xml" => System.Data.DbType.Xml,
-			"varnumeric" => System.Data.DbType.VarNumeric,
-			"object" => System.Data.DbType.Object,
-			_ => throw new DataException($"Invalid '{type}' type of the property or parameter."),
-		};
-	}
-
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static string GetFullName(string name, string @namespace)
 	{

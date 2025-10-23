@@ -346,7 +346,7 @@ public static class StatementExtension
 		}
 	}
 
-	private static IExpression GetConditionValue(IStatement statement, Aliaser aliaser, ConditionOperator @operator, object value, DbType dbType, bool fieldExpending)
+	private static IExpression GetConditionValue(IStatement statement, Aliaser aliaser, ConditionOperator @operator, object value, DataType type, bool fieldExpending)
 	{
 		if(value == null)
 			return null;
@@ -362,17 +362,17 @@ public static class StatementExtension
 			var collection = new ExpressionCollection();
 
 			foreach(var item in (IEnumerable)value)
-				collection.Add(statement.Parameters.AddParameter(item, dbType));
+				collection.Add(statement.Parameters.AddParameter(item, type));
 
 			return collection;
 		}
 
-		return statement.Parameters.AddParameter(value, dbType);
+		return statement.Parameters.AddParameter(value, type);
 	}
 
-	private static IExpression GetOperandExpression(this IStatement statement, Aliaser aliaser, Operand operand, bool fieldExpending, out DbType dbType)
+	private static IExpression GetOperandExpression(this IStatement statement, Aliaser aliaser, Operand operand, bool fieldExpending, out DataType type)
 	{
-		dbType = DbType.Object;
+		type = DataType.Unknown;
 
 		if(operand == null)
 			return null;
@@ -381,7 +381,7 @@ public static class StatementExtension
 		{
 			case OperandType.Field:
 				return fieldExpending ?
-					GetField(statement, ((Operand.FieldOperand)operand).Name, aliaser, out dbType) :
+					GetField(statement, ((Operand.FieldOperand)operand).Name, aliaser, out type) :
 					new FieldIdentifier(((Operand.FieldOperand)operand).Name);
 			case OperandType.Constant:
 				var value = Reflection.Reflector.GetValue(ref operand, nameof(Operand.ConstantOperand<object>.Value));
@@ -401,46 +401,46 @@ public static class StatementExtension
 
 				return statement.Parameters.AddParameter(value);
 			case OperandType.Not:
-				return Expression.Not(GetOperandExpression(statement, aliaser, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out dbType));
+				return Expression.Not(GetOperandExpression(statement, aliaser, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out type));
 			case OperandType.Negate:
-				return Expression.Negate(GetOperandExpression(statement, aliaser, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out dbType));
+				return Expression.Negate(GetOperandExpression(statement, aliaser, ((Operand.UnaryOperand)operand).Operand, fieldExpending, out type));
 			case OperandType.Add:
-				return GetBinaryExpression(statement, aliaser, operand, Expression.Add, fieldExpending, out dbType);
+				return GetBinaryExpression(statement, aliaser, operand, Expression.Add, fieldExpending, out type);
 			case OperandType.Subtract:
-				return GetBinaryExpression(statement, aliaser, operand, Expression.Subtract, fieldExpending, out dbType);
+				return GetBinaryExpression(statement, aliaser, operand, Expression.Subtract, fieldExpending, out type);
 			case OperandType.Multiply:
-				return GetBinaryExpression(statement, aliaser, operand, Expression.Multiply, fieldExpending, out dbType);
+				return GetBinaryExpression(statement, aliaser, operand, Expression.Multiply, fieldExpending, out type);
 			case OperandType.Modulo:
-				return GetBinaryExpression(statement, aliaser, operand, Expression.Modulo, fieldExpending, out dbType);
+				return GetBinaryExpression(statement, aliaser, operand, Expression.Modulo, fieldExpending, out type);
 			case OperandType.Divide:
-				return GetBinaryExpression(statement, aliaser, operand, Expression.Divide, fieldExpending, out dbType);
+				return GetBinaryExpression(statement, aliaser, operand, Expression.Divide, fieldExpending, out type);
 			case OperandType.And:
-				return GetBinaryExpression(statement, aliaser, operand, Expression.And, fieldExpending, out dbType);
+				return GetBinaryExpression(statement, aliaser, operand, Expression.And, fieldExpending, out type);
 			case OperandType.Or:
-				return GetBinaryExpression(statement, aliaser, operand, Expression.Or, fieldExpending, out dbType);
+				return GetBinaryExpression(statement, aliaser, operand, Expression.Or, fieldExpending, out type);
 			case OperandType.Xor:
-				return GetBinaryExpression(statement, aliaser, operand, Expression.Xor, fieldExpending, out dbType);
+				return GetBinaryExpression(statement, aliaser, operand, Expression.Xor, fieldExpending, out type);
 			default:
 				throw new DataException($"Unsupported '{operand.Type}' operand type.");
 		}
 
-		static IExpression GetBinaryExpression(IStatement host, Aliaser aliaser, Operand opd, Func<IExpression, IExpression, IExpression> generator, bool fieldExpending, out DbType dbType)
+		static IExpression GetBinaryExpression(IStatement host, Aliaser aliaser, Operand opd, Func<IExpression, IExpression, IExpression> generator, bool fieldExpending, out DataType type)
 		{
 			var binary = (Operand.BinaryOperand)opd;
 
 			return generator(
-				host.GetOperandExpression(aliaser, binary.Left, fieldExpending, out dbType),
-				host.GetOperandExpression(aliaser, binary.Right, fieldExpending, out dbType));
+				host.GetOperandExpression(aliaser, binary.Left, fieldExpending, out type),
+				host.GetOperandExpression(aliaser, binary.Right, fieldExpending, out type));
 		}
 	}
 
-	private static FieldIdentifier GetField(IStatement host, string name, Aliaser aliaser, out DbType dbType)
+	private static FieldIdentifier GetField(IStatement host, string name, Aliaser aliaser, out DataType type)
 	{
 		var source = From(host, name, aliaser, (src, complex) => CreateSubquery(host, aliaser, src, complex, null), out var property);
 
 		if(property.IsSimplex)
 		{
-			dbType = ((IDataEntitySimplexProperty)property).Type;
+			type = ((IDataEntitySimplexProperty)property).Type;
 			return source.CreateField(property);
 		}
 
@@ -500,9 +500,9 @@ public static class StatementExtension
 		return subquery;
 	}
 
-	private static ParameterExpression AddParameter(this ParameterExpressionCollection parameters, object value, DbType? dbType = null)
+	private static ParameterExpression AddParameter(this ParameterExpressionCollection parameters, object value, DataType? type = null)
 	{
-		var parameter = dbType.HasValue ? Expression.Parameter(dbType.Value, value) : Expression.Parameter(value);
+		var parameter = type.HasValue ? Expression.Parameter(type.Value, value) : Expression.Parameter(value);
 		parameters.Add(parameter);
 		return parameter;
 	}

@@ -39,7 +39,7 @@ public class ParameterExpressionCollection() : KeyedCollection<string, Parameter
 	#endregion
 
 	#region 公共方法
-	public ParameterExpression Add(string name, System.Data.DbType type, System.Data.ParameterDirection direction = System.Data.ParameterDirection.Input)
+	public ParameterExpression Add(string name, DataType type, System.Data.ParameterDirection direction = System.Data.ParameterDirection.Input)
 	{
 		var parameter = Expression.Parameter(name, type, direction);
 		this.Add(parameter);

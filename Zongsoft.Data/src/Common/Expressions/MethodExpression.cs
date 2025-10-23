@@ -62,7 +62,7 @@ public class MethodExpression : Expression
 
 public class CastFunctionExpression : MethodExpression
 {
-	public CastFunctionExpression(IExpression value, DbType type, int length = 0, string style = null) : base("CAST", MethodType.Function)
+	public CastFunctionExpression(IExpression value, DataType type, int length = 0, string style = null) : base("CAST", MethodType.Function)
 	{
 		this.Value = value;
 		this.Type = type;
@@ -70,7 +70,7 @@ public class CastFunctionExpression : MethodExpression
 		this.Style = style;
 	}
 
-	public CastFunctionExpression(IExpression value, DbType type, byte precision, byte scale, string style = null) : base("CAST", MethodType.Function)
+	public CastFunctionExpression(IExpression value, DataType type, byte precision, byte scale, string style = null) : base("CAST", MethodType.Function)
 	{
 		this.Value = value;
 		this.Type = type;
@@ -80,7 +80,7 @@ public class CastFunctionExpression : MethodExpression
 	}
 
 	public IExpression Value { get; }
-	public DbType Type { get; }
+	public DataType Type { get; }
 	public int Length { get; }
 	public byte Precision { get; }
 	public byte Scale { get; }

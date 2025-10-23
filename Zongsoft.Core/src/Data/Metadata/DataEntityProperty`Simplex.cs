@@ -46,20 +46,20 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	#endregion
 
 	#region 构造函数
-	public DataEntitySimplexProperty(IDataEntity entity, string name, DbType type, bool nullable, bool immutable = false) : base(entity, name, immutable)
+	public DataEntitySimplexProperty(IDataEntity entity, string name, DataType type, bool nullable, bool immutable = false) : base(entity, name, immutable)
 	{
 		this.Type = type;
 		this.Nullable = nullable;
 	}
 
-	public DataEntitySimplexProperty(IDataEntity entity, string name, DbType type, int length, bool nullable, bool immutable = false) : base(entity, name, immutable)
+	public DataEntitySimplexProperty(IDataEntity entity, string name, DataType type, int length, bool nullable, bool immutable = false) : base(entity, name, immutable)
 	{
 		this.Type = type;
 		this.Length = length;
 		this.Nullable = nullable;
 	}
 
-	public DataEntitySimplexProperty(IDataEntity entity, string name, DbType type, byte precision, byte scale, bool nullable, bool immutable = false) : base(entity, name, immutable)
+	public DataEntitySimplexProperty(IDataEntity entity, string name, DataType type, byte precision, byte scale, bool nullable, bool immutable = false) : base(entity, name, immutable)
 	{
 		this.Type = type;
 		this.Precision = precision;
@@ -70,7 +70,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 
 	#region 公共属性
 	/// <summary>获取数据实体属性的字段类型。</summary>
-	public DbType Type { get; }
+	public DataType Type { get; }
 
 	/// <summary>获取或设置文本或数组属性的最大长度，单位：字节。</summary>
 	public int Length
@@ -81,7 +81,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 
 			if(length == 0)
 			{
-				switch(this.Type)
+				switch(this.Type.DbType)
 				{
 					case DbType.Binary:
 						return 100;
@@ -124,7 +124,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 				}
 			}
 
-			var type = this.Type.AsType();
+			var type = this.Type.DbType.AsType();
 
 			if(type.IsValueType && this.Nullable)
 				type = typeof(Nullable<>).MakeGenericType(type);
@@ -201,7 +201,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	{
 		var nullable = this.Nullable ? "NULL" : "NOT NULL";
 
-		return this.Type switch
+		return this.Type.DbType switch
 		{
 			//处理小数类型
 			DbType.Currency or
@@ -231,7 +231,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 		public static readonly Function Now = new(nameof(Now), _ => DateTime.Now);
 		public static readonly Function Today = new(nameof(Today), _ => DateTime.Today);
 		public static readonly Function Guid = new(nameof(Guid), _ => System.Guid.NewGuid());
-		public static readonly Function Random = new(nameof(Random), property => property.Type switch
+		public static readonly Function Random = new(nameof(Random), property => property.Type.DbType switch
 		{
 			DbType.Byte => Zongsoft.Common.Randomizer.Generate(1)[0],
 			DbType.SByte => (sbyte)Zongsoft.Common.Randomizer.Generate(1)[0],

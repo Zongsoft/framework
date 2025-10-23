@@ -40,7 +40,7 @@ public interface IDataEntitySimplexProperty : IDataEntityProperty
 	string Alias { get; }
 
 	/// <summary>获取数据实体属性的数据类型。</summary>
-	System.Data.DbType Type { get; }
+	DataType Type { get; }
 
 	/// <summary>获取一个值，指示当前属性是否为主键。</summary>
 	bool IsPrimaryKey { get; }

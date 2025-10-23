@@ -45,21 +45,21 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 	#endregion
 
 	#region 公共方法
-	public DataEntitySimplexProperty Simplex(string name, DbType type, bool nullable, bool immutable = false)
+	public DataEntitySimplexProperty Simplex(string name, DataType type, bool nullable, bool immutable = false)
 	{
 		var property = new DataEntitySimplexProperty(this.Entity, name, type, nullable, immutable);
 		this.Add(property);
 		return property;
 	}
 
-	public DataEntitySimplexProperty Simplex(string name, DbType type, int length, bool nullable, bool immutable = false)
+	public DataEntitySimplexProperty Simplex(string name, DataType type, int length, bool nullable, bool immutable = false)
 	{
 		var property = new DataEntitySimplexProperty(this.Entity, name, type, length, nullable, immutable);
 		this.Add(property);
 		return property;
 	}
 
-	public DataEntitySimplexProperty Simplex(string name, DbType type, byte precision, byte scale, bool nullable, bool immutable = false)
+	public DataEntitySimplexProperty Simplex(string name, DataType type, byte precision, byte scale, bool nullable, bool immutable = false)
 	{
 		var property = new DataEntitySimplexProperty(this.Entity, name, type, precision, scale, nullable, immutable);
 		this.Add(property);

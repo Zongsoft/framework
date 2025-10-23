@@ -104,6 +104,6 @@ public static class DataEntityPropertyExtension
 			throw new DataException($"The specified '{constraint.Name}' constraint association property is not a simplex property.");
 
 		//返回约束项值转换成关联属性数据类型的常量表达式
-		return Expression.Constant(Zongsoft.Common.Convert.ConvertValue(constraint.Value, ((IDataEntitySimplexProperty)constraintProperty).Type.AsType()));
+		return Expression.Constant(Zongsoft.Common.Convert.ConvertValue(constraint.Value, ((IDataEntitySimplexProperty)constraintProperty).Type.DbType.AsType()));
 	}
 }

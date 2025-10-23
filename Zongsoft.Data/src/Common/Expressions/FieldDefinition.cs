@@ -35,13 +35,13 @@ namespace Zongsoft.Data.Common.Expressions;
 public class FieldDefinition : Expression
 {
 	#region 构造函数
-	public FieldDefinition(string name, System.Data.DbType type, bool nullable = true)
+	public FieldDefinition(string name, DataType type, bool nullable = true)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
 		this.Name = name;
-		this.DbType = type;
+		this.Type = type;
 		this.Nullable = nullable;
 	}
 	#endregion
@@ -51,7 +51,7 @@ public class FieldDefinition : Expression
 	public string Name { get; }
 
 	/// <summary>获取或设置字段的数据类型。</summary>
-	public System.Data.DbType DbType { get; set; }
+	public DataType Type { get; set; }
 
 	/// <summary>获取或设置字段是否允许为空。</summary>
 	public bool Nullable { get; set; }
@@ -67,7 +67,7 @@ public class FieldDefinition : Expression
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => $"{this.Name} {this.DbType} {(this.Nullable ? "NULL" : "NOT NULL")}";
+	public override string ToString() => $"{this.Name} {this.Type} {(this.Nullable ? "NULL" : "NOT NULL")}";
 	#endregion
 }
 

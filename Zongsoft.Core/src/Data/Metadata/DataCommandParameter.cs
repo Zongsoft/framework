@@ -35,7 +35,7 @@ namespace Zongsoft.Data.Metadata;
 public class DataCommandParameter : IDataCommandParameter
 {
 	#region 构造函数
-	public DataCommandParameter(IDataCommand command, string name, DbType type, ParameterDirection direction = ParameterDirection.Input)
+	public DataCommandParameter(IDataCommand command, string name, DataType type, ParameterDirection direction = ParameterDirection.Input)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -58,7 +58,7 @@ public class DataCommandParameter : IDataCommandParameter
 	public string Alias { get; set; }
 
 	/// <summary>获取命令参数的类型。</summary>
-	public DbType Type { get; set; }
+	public DataType Type { get; set; }
 
 	/// <summary>获取或设置命令参数的最大长度。</summary>
 	public int Length { get; set; }
@@ -69,5 +69,4 @@ public class DataCommandParameter : IDataCommandParameter
 	/// <summary>获取或设置命令参数的传递方向。</summary>
 	public ParameterDirection Direction { get; set; }
 	#endregion
-
 }

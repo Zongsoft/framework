@@ -97,6 +97,6 @@ public abstract class DataDriverBase : IDataDriver
 	#region 保护方法
 	protected abstract Expressions.ExpressionVisitorBase CreateVisitor();
 	protected virtual Expressions.StatementSlotter CreateSlotter() => new();
-	protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression) => parameter.DbType = expression.DbType;
+	protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression) => parameter.DbType = expression.Type;
 	#endregion
 }

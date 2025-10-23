@@ -348,7 +348,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 		protected override IExpression GetValue(DataUpdateContext context, IStatementBase statement, object value)
 		{
-			var parameter = Expression.Parameter(Utility.GetDbType(value), value);
+			var parameter = Expression.Parameter(Utility.GetDbType(value).AsDataType(), value);
 			statement.Parameters.Add(parameter);
 			return parameter;
 		}
@@ -358,7 +358,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			var property = context.Entity.Find(name);
 
 			if(property.IsSimplex)
-				return ((IDataEntitySimplexProperty)property).Type.AsType();
+				return ((IDataEntitySimplexProperty)property).Type.DbType.AsType();
 
 			throw new DataException($"The specified '{name}' property is not a simplex property, so its data type cannot be confirmed.");
 		}
