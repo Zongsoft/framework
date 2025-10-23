@@ -10,6 +10,7 @@ var providerFiles = drivers == "*" ? new List<string>(
 	@"drivers/sqlite/Zongsoft.Data.SQLite.sln",
 	@"drivers/influx/Zongsoft.Data.Influx.sln",
 	@"drivers/tdengine/Zongsoft.Data.TDengine.sln",
+	@"drivers/postgres/Zongsoft.Data.PostgreSql.sln",
 	@"drivers/clickhouse/Zongsoft.Data.ClickHouse.sln",
 ]) : [];
 
@@ -35,6 +36,9 @@ if(providerFiles.Count == 0 && !string.IsNullOrEmpty(drivers) && drivers != "non
 				break;
 			case "tdengine":
 				providerFiles.Add(@"drivers/tdengine/Zongsoft.Data.TDengine.sln");
+				break;
+			case "postgres":
+				providerFiles.Add(@"drivers/postgres/Zongsoft.Data.PostgreSql.sln");
 				break;
 			case "clickhouse":
 				providerFiles.Add(@"drivers/clickhouse/Zongsoft.Data.ClickHouse.sln");
