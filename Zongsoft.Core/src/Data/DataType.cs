@@ -28,34 +28,74 @@
  */
 
 using System;
+using System.Text.RegularExpressions;
 
 namespace Zongsoft.Data;
 
-public readonly struct DataType : IEquatable<DataType>
+public readonly partial struct DataType : IEquatable<DataType>
 {
+	#region 静态变量
+	#if NET7_0_OR_GREATER
+	[GeneratedRegex(@"(?<name>\w+)\s*(?<array>\[\s*\])?", RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace)]
+	private static partial Regex GetRegex();
+	private static readonly Regex _regex = GetRegex();
+	#else
+	private static readonly Regex _regex = new(@"(?<name>\w+)\s*(?<array>\[\s*\])?", RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace);
+	#endif
+	#endregion
+
 	#region 成员字段
 	private readonly int _hashCode;
 	#endregion
 
 	#region 构造函数
-	public DataType(string name)
+	public DataType(string name, System.Data.DbType? type = null)
 	{
-		this.Name = string.IsNullOrWhiteSpace(name) ? nameof(System.Data.DbType.String) : name.Trim();
-		this.DbType = GetDbType(name);
-		_hashCode = this.Name.ToLowerInvariant().GetHashCode();
+		if(string.IsNullOrWhiteSpace(name))
+		{
+			this.Name = nameof(System.Data.DbType.String);
+			this.IsArray = false;
+		}
+		else
+		{
+			this.IsArray = IsArrayType(name.Trim(), out name);
+			this.Name = name;
+		}
+
+		this.DbType = type ?? GetDbType(this.Name);
+		_hashCode = HashCode.Combine(this.Name.ToLowerInvariant(), this.IsArray);
+	}
+
+	public DataType(System.Data.DbType type, string name = null)
+	{
+		this.DbType = type;
+
+		if(string.IsNullOrWhiteSpace(name))
+		{
+			this.Name = type.ToString();
+			this.IsArray = false;
+		}
+		else
+		{
+			this.IsArray = IsArrayType(name.Trim(), out name);
+			this.Name = name;
+		}
+
+		_hashCode = HashCode.Combine(this.Name.ToLowerInvariant(), this.IsArray);
 	}
 	#endregion
 
 	#region 公共属性
 	public string Name { get; }
 	public System.Data.DbType DbType { get; }
+	public bool IsArray { get; }
 	#endregion
 
 	#region 重写方法
 	public bool Equals(DataType other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
-	public override bool Equals(object obj) => base.Equals(obj);
+	public override bool Equals(object obj) => obj is DataType type && this.Equals(type);
 	public override int GetHashCode() => _hashCode;
-	public override string ToString() => this.Name;
+	public override string ToString() => this.IsArray ? $"{this.Name}[]" : this.Name;
 	#endregion
 
 	#region 符号重载
@@ -65,6 +105,19 @@ public readonly struct DataType : IEquatable<DataType>
 	#endregion
 
 	#region 私有方法
+	private static bool IsArrayType(string text, out string name)
+	{
+		if(string.IsNullOrEmpty(text))
+		{
+			name = null;
+			return false;
+		}
+
+		var match = _regex.Match(text);
+		name = match.Groups["name"].Value;
+		return match.Success && match.Groups["array"].Success;
+	}
+
 	private static System.Data.DbType GetDbType(string type) => type.ToLowerInvariant() switch
 	{
 		"string" or "nvarchar" => System.Data.DbType.String,
@@ -77,7 +130,7 @@ public readonly struct DataType : IEquatable<DataType>
 		"ushort" or "uint16" => System.Data.DbType.UInt16,
 		"uint" or "uint32" => System.Data.DbType.UInt32,
 		"ulong" or "uint64" => System.Data.DbType.UInt64,
-		"byte" or "tiny" or "tinyint" => System.Data.DbType.Byte,
+		"byte" or "tinyint" => System.Data.DbType.Byte,
 		"sbyte" => System.Data.DbType.SByte,
 		"binary" or "byte[]" or "varbinary" => System.Data.DbType.Binary,
 		"bool" or "boolean" => System.Data.DbType.Boolean,
