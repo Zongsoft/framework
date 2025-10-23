@@ -348,7 +348,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 		protected override IExpression GetValue(DataUpdateContext context, IStatementBase statement, object value)
 		{
-			var parameter = Expression.Parameter(Utility.GetDbType(value).AsDataType(), value);
+			var parameter = Expression.Parameter(Utility.GetDbType(value), value);
 			statement.Parameters.Add(parameter);
 			return parameter;
 		}

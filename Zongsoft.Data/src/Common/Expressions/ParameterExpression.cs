@@ -129,7 +129,7 @@ public class ParameterExpression : Expression
 				if(value.GetType().IsEnum)
 					_value = System.Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType()));
 
-				this.Type = Utility.GetDbType(_value).AsDataType();
+				this.Type = Utility.GetDbType(_value);
 			}
 
 			_hasValue = true;

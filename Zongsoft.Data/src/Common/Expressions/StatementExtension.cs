@@ -372,7 +372,7 @@ public static class StatementExtension
 
 	private static IExpression GetOperandExpression(this IStatement statement, Aliaser aliaser, Operand operand, bool fieldExpending, out DataType type)
 	{
-		type = DataType.Unknown;
+		type = DataType.Object;
 
 		if(operand == null)
 			return null;
@@ -500,9 +500,9 @@ public static class StatementExtension
 		return subquery;
 	}
 
-	private static ParameterExpression AddParameter(this ParameterExpressionCollection parameters, object value, DataType? type = null)
+	private static ParameterExpression AddParameter(this ParameterExpressionCollection parameters, object value, DataType type = null)
 	{
-		var parameter = type.HasValue ? Expression.Parameter(type.Value, value) : Expression.Parameter(value);
+		var parameter = type != null ? Expression.Parameter(type, value) : Expression.Parameter(value);
 		parameters.Add(parameter);
 		return parameter;
 	}

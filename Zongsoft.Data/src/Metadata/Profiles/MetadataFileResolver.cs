@@ -236,7 +236,7 @@ public class MetadataFileResolver
 				case XML_PROPERTY_ELEMENT:
 					var property = new DataEntitySimplexProperty(entity,
 					                   reader.GetAttribute(XML_NAME_ATTRIBUTE),
-									   new DataType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
+									   DataType.Get(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)),
 									   GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false))
 					{
 						Hint = GetAttributeValue<string>(reader, XML_HINT_ATTRIBUTE),
@@ -394,7 +394,7 @@ public class MetadataFileResolver
 			switch(reader.LocalName)
 			{
 				case XML_PARAMETER_ELEMENT:
-					var parameter = new DataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), new DataType(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
+					var parameter = new DataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), DataType.Get(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
 					{
 						Direction = GetAttributeValue(reader, XML_DIRECTION_ATTRIBUTE, value => GetDirection(value)),
 						Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
