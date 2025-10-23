@@ -42,14 +42,14 @@ partial class OpcServer
 	public sealed class Channel
 	{
 		#region 成员字段
-		private readonly Session _session;
+		private readonly ISession _session;
 		private readonly string _identifier;
 		private readonly DateTime _creation;
 		private readonly ChannelStatistics _statistics;
 		#endregion
 
 		#region 构造函数
-		internal Channel(Session session)
+		internal Channel(ISession session)
 		{
 			_session = session;
 			_creation = DateTime.UtcNow;
@@ -136,7 +136,7 @@ partial class OpcServer
 		#region 内部方法
 		internal bool Remove(string id) => id != null && _channels.Remove(id, out _);
 		internal void Clear() => _channels.Clear();
-		internal bool Add(Session session) => _channels.TryAdd(session.Id.ToString(), new Channel(session));
+		internal bool Add(ISession session) => _channels.TryAdd(session.Id.ToString(), new Channel(session));
 		internal bool Add(Channel channel) => channel != null && _channels.TryAdd(channel.Identifier, channel);
 		#endregion
 

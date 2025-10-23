@@ -309,17 +309,17 @@ partial class OpcServer
 		#endregion
 
 		#region 事件处理
-		private void SessionManager_SessionCreated(Session session, SessionEventReason reason)
+		private void SessionManager_SessionCreated(ISession session, SessionEventReason reason)
 		{
 			_server.Channels.Add(session);
 		}
 
-		private void SessionManager_SessionClosing(Session session, SessionEventReason reason)
+		private void SessionManager_SessionClosing(ISession session, SessionEventReason reason)
 		{
 			_server.Channels.Remove(session?.Id.ToString());
 		}
 
-		private void SessionManager_ImpersonateUser(Session session, ImpersonateEventArgs args)
+		private void SessionManager_ImpersonateUser(ISession session, ImpersonateEventArgs args)
 		{
 			if(!this.CanAuthenticate(args.NewIdentity))
 			{

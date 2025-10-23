@@ -65,8 +65,7 @@ partial class Commands
 
 			if(context.GetOptions().Contains("spooling"))
 				_spooler = new(
-					this.OnFlush,
-					context.GetOptions().Contains("distinct"),
+					this.OnFlushAsync,
 					TimeSpan.FromMilliseconds(context.GetOptions().GetValue<int>("period")),
 					context.GetOptions().GetValue<int>("limit"));
 
@@ -76,7 +75,7 @@ partial class Commands
 				if(_spooler == null)
 					subscriber.Consume((subscriber, entry, value) => Dump(context.Output, subscriber, entry, value));
 				else
-					subscriber.Consume((subscriber, entry, value) => _spooler.Put(new(entry.Name, value)));
+					subscriber.Consume((subscriber, entry, value) => _spooler.PutAsync(new(entry.Name, value), cancellation).AsTask().GetAwaiter().GetResult());
 			}
 
 			//显示欢迎信息
@@ -113,7 +112,7 @@ partial class Commands
 		private ulong _total;
 		private DateTime _timestamp;
 
-		private void OnFlush(IEnumerable<Metric> entries)
+		private ValueTask OnFlushAsync(IEnumerable<Metric> entries, CancellationToken cancellation)
 		{
 			if(_total > 0 && (DateTime.Now - _timestamp).TotalMilliseconds > 500)
 				Terminal.WriteLine();
@@ -135,6 +134,8 @@ partial class Commands
 
 			//更新时间戳
 			_timestamp = DateTime.Now;
+
+			return ValueTask.CompletedTask;
 		}
 		#endregion
 
