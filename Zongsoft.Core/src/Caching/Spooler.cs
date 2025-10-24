@@ -104,7 +104,7 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 		if(this.GetChannel(out var channel) && channel.Writer.TryWrite(value))
 			return;
 
-		await this.OnFlushAsync(new Enumerable(channel.Reader), cancellation);
+		await this.OnFlushAsync(new Iterable(channel.Reader, _limit), cancellation);
 		await channel.Writer.WaitToWriteAsync(cancellation);
 		await channel.Writer.WriteAsync(value, cancellation);
 	}
@@ -116,7 +116,7 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 
 		var channel = this.GetChannel();
 		await channel.Reader.WaitToReadAsync(cancellation);
-		await this.OnFlushAsync(new Enumerable(channel.Reader), cancellation);
+		await this.OnFlushAsync(new Iterable(channel.Reader, _limit), cancellation);
 	}
 	#endregion
 
@@ -162,25 +162,27 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 
 	#region 枚举遍历
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<T> GetEnumerator() => new Enumerable.Iterator(_channel?.Reader);
+	public IEnumerator<T> GetEnumerator() => new Iterable.Iterator(_channel?.Reader, _limit);
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Enumerable(ChannelReader<T> reader) : IEnumerable<T>
+	private sealed class Iterable(ChannelReader<T> reader, int limit) : IEnumerable<T>
 	{
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<T> GetEnumerator() => new Iterator(reader);
+		public IEnumerator<T> GetEnumerator() => new Iterator(reader, limit);
 
-		internal sealed class Iterator(ChannelReader<T> reader) : IEnumerator<T>
+		internal sealed class Iterator(ChannelReader<T> reader, int limit) : IEnumerator<T>
 		{
 			private T _value;
+			private int _count = 0;
+			private readonly int _limit = limit;
 			private ChannelReader<T> _reader = reader;
 
 			public T Current => _value;
 			object IEnumerator.Current => _value;
 
 			public void Dispose() => _reader = null;
-			public bool MoveNext() => _reader != null && _reader.TryRead(out _value);
+			public bool MoveNext() => _reader != null && (_limit <= 0 || _count++ < _limit) && _reader.TryRead(out _value);
 			public void Reset() { }
 		}
 	}
