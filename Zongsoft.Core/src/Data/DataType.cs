@@ -33,6 +33,9 @@ using System.Text.RegularExpressions;
 
 namespace Zongsoft.Data;
 
+/// <summary>
+/// 表示数据类型（包括字段类型、命令或函数的参数类型）的类。
+/// </summary>
 public sealed partial class DataType : IEquatable<DataType>
 {
 	#region 单例字段
@@ -164,12 +167,18 @@ public sealed partial class DataType : IEquatable<DataType>
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取类型名称。</summary>
 	public string Name { get; }
+	/// <summary>获取类型的 <seealso cref="System.Data.DbType"/> 类型。</summary>
 	public System.Data.DbType DbType { get; }
+	/// <summary>获取一个值，指示该类型是否为数组。</summary>
 	public bool IsArray { get; }
 	#endregion
 
 	#region 静态方法
+	/// <summary>获取指定名称的数据类型，该方法确保同名(不区分大小写)数据类型为相同实例。</summary>
+	/// <param name="name">指定的数据类型名称，如果是数组类型则以“<c>[]</c>”结尾。</param>
+	/// <returns>返回的数据类型。</returns>
 	public static DataType Get(string name)
 	{
 		if(string.IsNullOrWhiteSpace(name))
