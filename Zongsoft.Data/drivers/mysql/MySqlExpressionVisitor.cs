@@ -114,7 +114,7 @@ namespace Zongsoft.Data.MySql
 				context.Write("CONVERT(");
 				this.OnVisit(context, casting.Value);
 				context.Write(",");
-				context.Write(this.Dialect.GetDbType(casting.Type, casting.Length, casting.Precision, casting.Scale));
+				context.Write(this.Dialect.GetDataType(casting.Type, casting.Length, casting.Precision, casting.Scale));
 				context.Write(")");
 
 				return;
@@ -133,7 +133,7 @@ namespace Zongsoft.Data.MySql
 			 *   参数值包含 Unicode 字符，且
 			 *   参数位于条件内，则需要为参数添加 COLLATE 字符集说明，以免 MySQL 执行错误！
 			 */
-			if(IsAnsiString(parameter.DbType) && IsNonAnsiString(parameter.Value) && context.Find<ConditionExpression>() != null)
+			if(IsAnsiString(parameter.Type) && IsNonAnsiString(parameter.Value) && context.Find<ConditionExpression>() != null)
 				context.Write($" COLLATE utf8mb4_0900_ai_ci");
 
 			static bool IsAnsiString(DbType type) => type == DbType.AnsiString || type == DbType.AnsiStringFixedLength;
@@ -179,7 +179,7 @@ namespace Zongsoft.Data.MySql
 			public string GetIdentifier(string name) => $"`{name}`";
 			public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
 
-			public string GetDbType(DbType dbType, int length, byte precision, byte scale) => dbType switch
+			public string GetDataType(DataType type, int length, byte precision, byte scale) => type.DbType switch
 			{
 				DbType.AnsiString => length > 0 ? $"varchar({length})" : "text",
 				DbType.AnsiStringFixedLength => length > 0 ? $"char({length})" : "text",
@@ -197,7 +197,6 @@ namespace Zongsoft.Data.MySql
 				DbType.Int16 => "smallint",
 				DbType.Int32 => "int",
 				DbType.Int64 => "bigint",
-				DbType.Object => "json",
 				DbType.Time => "time",
 				DbType.UInt16 => "unsigned smallint",
 				DbType.UInt32 => "unsigned int",
@@ -208,7 +207,8 @@ namespace Zongsoft.Data.MySql
 				DbType.Single => $"float({precision},{scale})",
 				DbType.VarNumeric => $"numeric({precision},{scale})",
 				DbType.Xml => "text",
-				_ => throw new DataException($"Unsupported '{dbType}' data type."),
+				DbType.Object => type.ToString(),
+				_ => throw new DataException($"Unsupported '{type}' data type."),
 			};
 
 			public string GetMethodName(MethodExpression method)

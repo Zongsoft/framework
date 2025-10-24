@@ -29,6 +29,8 @@
 
 using System;
 using System.Data;
+using System.Collections;
+using System.Collections.Generic;
 
 using Npgsql;
 using NpgsqlTypes;
@@ -76,5 +78,147 @@ internal static class Utility
 
 		var dbType = type.DbType.GetDataType();
 		return type.IsArray ? NpgsqlDbType.Array | dbType : dbType;
+	}
+
+	public static bool IsArrayType(this NpgsqlDbType dbType, out NpgsqlDbType elementType)
+	{
+		if((dbType & NpgsqlDbType.Array) == NpgsqlDbType.Array)
+		{
+			elementType = dbType & ~NpgsqlDbType.Array;
+			return true;
+		}
+
+		elementType = dbType;
+		return false;
+	}
+
+	public static bool IsRangeType(this NpgsqlDbType dbType, out NpgsqlDbType elementType)
+	{
+		if((dbType & NpgsqlDbType.Range) == NpgsqlDbType.Range)
+		{
+			elementType = dbType & ~NpgsqlDbType.Range;
+			return true;
+		}
+
+		elementType = dbType;
+		return false;
+	}
+
+	public static bool IsMultirangeType(this NpgsqlDbType dbType, out NpgsqlDbType elementType)
+	{
+		if((dbType & NpgsqlDbType.Multirange) == NpgsqlDbType.Multirange)
+		{
+			elementType = dbType & ~NpgsqlDbType.Multirange;
+			return true;
+		}
+
+		elementType = dbType;
+		return false;
+	}
+
+	public static Type AsType(NpgsqlDbType dbType)
+	{
+		if(IsArrayType(dbType, out var elementType))
+		{
+			var elementClrType = AsType(elementType);
+			return elementClrType.MakeArrayType();
+		}
+
+		if(IsRangeType(dbType, out elementType))
+		{
+			var elementClrType = AsType(elementType);
+			return typeof(NpgsqlRange<>).MakeGenericType(elementClrType);
+		}
+
+		if(IsMultirangeType(dbType, out elementType))
+		{
+			var elementClrType = AsType(elementType);
+			return typeof(NpgsqlRange<>).MakeGenericType(elementClrType).MakeArrayType();
+		}
+
+		var type = GetTypeFormDbType(dbType);
+
+		if(type != null)
+			return type;
+
+		if(dbType == NpgsqlDbType.Cidr)
+		{
+			#if NET8_0_OR_GREATER
+			return typeof(NpgsqlCidr);
+			#else
+			return typeof(ValueTuple<System.Net.IPAddress, int>);
+			#endif
+		}
+
+		/*
+		 * Refcursor, Int2Vector, Regtype, PgLsn
+		 * Geometry, Geography
+		 * LTree, LQuery, LTxtQuery
+		 */
+		return typeof(object);
+
+		static Type GetTypeFormDbType(NpgsqlDbType dbType) => dbType switch
+		{
+			NpgsqlDbType.Bigint => typeof(long),
+			NpgsqlDbType.Double => typeof(double),
+			NpgsqlDbType.Integer => typeof(int),
+			NpgsqlDbType.Numeric => typeof(decimal),
+			NpgsqlDbType.Real => typeof(float),
+			NpgsqlDbType.Smallint => typeof(short),
+			NpgsqlDbType.Money => typeof(decimal),
+			NpgsqlDbType.Boolean => typeof(bool),
+			NpgsqlDbType.Bytea => typeof(byte[]),
+
+			NpgsqlDbType.Bit => typeof(BitArray),
+			NpgsqlDbType.Varbit => typeof(BitArray),
+
+			NpgsqlDbType.Box => typeof(NpgsqlBox),
+			NpgsqlDbType.Circle => typeof(NpgsqlCircle),
+			NpgsqlDbType.Line => typeof(NpgsqlLine),
+			NpgsqlDbType.LSeg => typeof(NpgsqlLSeg),
+			NpgsqlDbType.Path => typeof(NpgsqlPath),
+			NpgsqlDbType.Point => typeof(NpgsqlPoint),
+			NpgsqlDbType.Polygon => typeof(NpgsqlPolygon),
+
+			NpgsqlDbType.Char => typeof(string),
+			NpgsqlDbType.Text => typeof(string),
+			NpgsqlDbType.Varchar => typeof(string),
+			NpgsqlDbType.Name => typeof(string),
+			NpgsqlDbType.Citext => typeof(string),   // Extension type
+			NpgsqlDbType.InternalChar => typeof(byte),
+
+			NpgsqlDbType.Date => typeof(DateTime),
+			NpgsqlDbType.Time => typeof(TimeOnly),
+			NpgsqlDbType.Timestamp => typeof(DateTime),
+			NpgsqlDbType.TimestampTz => typeof(DateTimeOffset),
+			NpgsqlDbType.Interval => typeof(TimeSpan),
+			NpgsqlDbType.TimeTz => typeof(DateTimeOffset),
+
+			NpgsqlDbType.Uuid => typeof(Guid),
+			NpgsqlDbType.Xml => typeof(string),
+
+			NpgsqlDbType.Json => typeof(string),
+			NpgsqlDbType.Jsonb => typeof(string),
+			NpgsqlDbType.JsonPath => typeof(string),
+
+			NpgsqlDbType.Inet => typeof(System.Net.IPAddress),
+			NpgsqlDbType.MacAddr => typeof(System.Net.NetworkInformation.PhysicalAddress),
+			NpgsqlDbType.MacAddr8 => typeof(System.Net.NetworkInformation.PhysicalAddress),
+
+			NpgsqlDbType.TsVector => typeof(NpgsqlTsVector),
+			NpgsqlDbType.TsQuery => typeof(NpgsqlTsQuery),
+			NpgsqlDbType.Regconfig => typeof(object),
+
+			NpgsqlDbType.Oid => typeof(uint),
+			NpgsqlDbType.Xid => typeof(uint),
+			NpgsqlDbType.Xid8 => typeof(ulong),
+			NpgsqlDbType.Cid => typeof(uint),
+			NpgsqlDbType.Tid => typeof(NpgsqlTid),
+			NpgsqlDbType.Oidvector => typeof(uint[]),
+
+			NpgsqlDbType.Hstore => typeof(Dictionary<string, string>), // Extension type
+			NpgsqlDbType.Unknown => typeof(object),
+			_ => null,
+		};
 	}
 }

@@ -179,7 +179,7 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 
 	protected virtual void VisitField(ExpressionVisitorContext context, FieldDefinition field)
 	{
-		context.Write($"{field.Name} {this.Dialect.GetDbType(field.Type, field.Length, field.Precision, field.Scale)}");
+		context.Write($"{field.Name} {this.Dialect.GetDataType(field.Type, field.Length, field.Precision, field.Scale)}");
 
 		if(field.Nullable)
 			context.Write(" NULL");
@@ -520,13 +520,13 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 		#endregion
 
 		#region 公共方法
-		public string GetDbType(DataType type, int length, byte precision, byte scale) => type.DbType switch
+		public string GetDataType(DataType type, int length, byte precision, byte scale) => type.DbType switch
 		{
-			DbType.AnsiString => length > 0 ? "varchar(" + length.ToString() + ")" : "text",
-			DbType.AnsiStringFixedLength => length > 0 ? "char(" + length.ToString() + ")" : "char(MAX)",
-			DbType.String => length > 0 ? "nvarchar(" + length.ToString() + ")" : "text",
-			DbType.StringFixedLength => length > 0 ? "nchar(" + length.ToString() + ")" : "nchar(MAX)",
-			DbType.Binary => length > 0 ? "varbinary(" + length.ToString() + ")" : "blob",
+			DbType.AnsiString => length > 0 ? $"varchar({length})" : "text",
+			DbType.AnsiStringFixedLength => length > 0 ? $"char({length})" : "char(MAX)",
+			DbType.String => length > 0 ? $"nvarchar({length})" : "text",
+			DbType.StringFixedLength => length > 0 ? $"nchar({length})" : "nchar(MAX)",
+			DbType.Binary => length > 0 ? $"varbinary({length})" : "blob",
 			DbType.Boolean => "bool",
 			DbType.Byte => "unsigned tinyint",
 			DbType.SByte => "tinyint",
@@ -538,18 +538,18 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 			DbType.Int16 => "smallint",
 			DbType.Int32 => "int",
 			DbType.Int64 => "bigint",
-			DbType.Object => "object",
 			DbType.Time => "time",
 			DbType.UInt16 => "unsigned smallint",
 			DbType.UInt32 => "unsigned int",
 			DbType.UInt64 => "unsigned bigint",
 			DbType.Currency => "currency",
-			DbType.Decimal => "decimal(" + precision.ToString() + "," + scale.ToString() + ")",
-			DbType.Double => "double(" + precision.ToString() + "," + scale.ToString() + ")",
-			DbType.Single => "float(" + precision.ToString() + "," + scale.ToString() + ")",
-			DbType.VarNumeric => "numeric(" + precision.ToString() + "," + scale.ToString() + ")",
+			DbType.Decimal => $"decimal({precision},{scale})",
+			DbType.Double => $"double({precision},{scale})",
+			DbType.Single => $"float({precision},{scale})",
+			DbType.VarNumeric => $"numeric({precision},{scale})",
 			DbType.Xml => "xml",
-			_ => type.ToString(),
+			DbType.Object => type.ToString(),
+			_ => throw new DataException($"Unsupported '{type}' data type."),
 		};
 
 		public string GetSymbol(Operator @operator) => @operator switch

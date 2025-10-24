@@ -98,13 +98,13 @@ namespace Zongsoft.Data.MsSql
 		protected override ExpressionVisitorBase CreateVisitor() => new MsSqlExpressionVisitor();
 		protected override void SetParameter(DbParameter parameter, ParameterExpression expression)
 		{
-			parameter.DbType = expression.DbType switch
+			parameter.DbType = expression.Type.DbType switch
 			{
 				DbType.SByte => DbType.Byte,
 				DbType.UInt16 => DbType.Int16,
 				DbType.UInt32 => DbType.Int32,
 				DbType.UInt64 => DbType.Int64,
-				_ => expression.DbType,
+				_ => expression.Type,
 			};
 
 			if(expression.Schema != null && expression.Schema.Token.Property.IsSimplex)

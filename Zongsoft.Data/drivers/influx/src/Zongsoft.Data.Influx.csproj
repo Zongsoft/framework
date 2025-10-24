@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.2.0</Version>
+		<Version>0.3.0</Version>
 		<Product>Zongsoft Data Driver for InfluxDB</Product>
 		<Description>This is a data driver for InfluxDB of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.Influx</RootNamespace>

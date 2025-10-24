@@ -87,7 +87,7 @@ namespace Zongsoft.Data.MsSql
 			foreach(var member in members)
 			{
 				if(member.IsSimplex(out var property))
-					table.Columns.Add(member.Property.GetFieldName(out _), property.Type.AsType());
+					table.Columns.Add(member.Property.GetFieldName(out _), property.Type.DbType.AsType());
 			}
 
 			foreach(var item in data)

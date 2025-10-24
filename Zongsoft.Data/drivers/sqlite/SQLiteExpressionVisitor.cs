@@ -89,7 +89,7 @@ namespace Zongsoft.Data.SQLite
 				context.Write("CONVERT(");
 				this.OnVisit(context, casting.Value);
 				context.Write(",");
-				context.Write(this.Dialect.GetDbType(casting.Type, casting.Length, casting.Precision, casting.Scale));
+				context.Write(this.Dialect.GetDataType(casting.Type, casting.Length, casting.Precision, casting.Scale));
 				context.Write(")");
 
 				return;
@@ -120,7 +120,7 @@ namespace Zongsoft.Data.SQLite
 			public string GetIdentifier(string name) => $"`{name}`";
 			public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
 
-			public string GetDbType(DbType dbType, int length, byte precision, byte scale) => dbType switch
+			public string GetDataType(DataType type, int length, byte precision, byte scale) => type.DbType switch
 			{
 				DbType.AnsiString => length > 0 ? $"varchar({length})" : "text",
 				DbType.AnsiStringFixedLength => length > 0 ? $"char({length})" : "text",
@@ -138,7 +138,6 @@ namespace Zongsoft.Data.SQLite
 				DbType.Int16 => "smallint",
 				DbType.Int32 => "int",
 				DbType.Int64 => "bigint",
-				DbType.Object => "json",
 				DbType.Time => "time",
 				DbType.UInt16 => "unsigned smallint",
 				DbType.UInt32 => "unsigned int",
@@ -149,7 +148,8 @@ namespace Zongsoft.Data.SQLite
 				DbType.Single => $"float({precision},{scale})",
 				DbType.VarNumeric => $"numeric({precision},{scale})",
 				DbType.Xml => "text",
-				_ => throw new DataException($"Unsupported '{dbType}' data type."),
+				DbType.Object => type.ToString(),
+				_ => throw new DataException($"Unsupported '{type}' data type."),
 			};
 
 			public string GetMethodName(MethodExpression method)
