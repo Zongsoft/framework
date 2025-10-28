@@ -95,6 +95,11 @@ public partial class OpcClient : IDisposable
 					StoreType = @"Directory",
 					StorePath = @"certificates",
 				},
+				UserIssuerCertificates = new CertificateTrustList()
+				{
+					StoreType = @"Directory",
+					StorePath = @"certificates",
+				},
 				RejectedCertificateStore = new CertificateTrustList
 				{
 					StoreType = @"Directory",
