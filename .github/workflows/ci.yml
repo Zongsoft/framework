@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -34,4 +34,4 @@ jobs:
       run: chmod +x ./cake.sh
 
     - name: Build & Test
-      run: ./cake.ps1
+      run: ./cake.sh
