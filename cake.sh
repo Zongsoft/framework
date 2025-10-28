@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -x
 
 CAKE_ARGS="--verbosity=normal"
 
