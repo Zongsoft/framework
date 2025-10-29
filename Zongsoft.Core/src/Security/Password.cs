@@ -35,12 +35,12 @@ namespace Zongsoft.Security;
 
 /// <summary>表示密码信息的结构。</summary>
 /// <remarks>
-///		<para>文本格式：<c>algorithm#exponent:nonce|value</c>，如果 <c>exponent</c> 为零，则该部分可省略。譬如：<c>SHA1:1A2B3C4D5E6F7890|xxxxxx</c> 或 <c>SHA1#10:1A2B3C4D5E6F7890|xxxxxx</c>。</para>
-///		<para>字节格式：</para>
-///		<list type="bullet">
-///			<item><c>identifier|algorithm|exponent|nonce-length|nonce|value</c></item>
-///			<item><c>2 bytes   |1 byte   |1 byte  |1 byte      |  n  |⩾16 </c></item>
-///		</list>
+/// 	<para>文本格式：<c>algorithm#exponent:nonce|value</c>，如果 <c>exponent</c> 为零，则该部分可省略。譬如：<c>SHA1:1A2B3C4D5E6F7890|Base64String</c> 或 <c>SHA1#10:1A2B3C4D5E6F7890|Base64String</c>。</para>
+/// 	<para>字节格式：</para>
+/// 	<list type="bullet">
+/// 		<item><c>identifier|algorithm|exponent|nonce-length|nonce|value</c></item>
+/// 		<item><c>2 bytes   |1 byte   |1 byte  |1 byte      |  n  |⩾16 </c></item>
+/// 	</list>
 /// </remarks>
 public readonly partial struct Password : IEquatable<Password>
 {
