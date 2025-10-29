@@ -28,7 +28,10 @@ public class PasswordTest
 	{
 		const string PASSWORD = "123456";
 
-		var result = Password.Generate(PASSWORD, 0, "sha1");
+		var nonce = new byte[16];
+		Random.Shared.NextBytes(nonce);
+
+		var result = Password.Generate(PASSWORD, nonce, 0, "sha1");
 		Assert.True(result.HasValue);
 		Assert.False(result.IsEmpty);
 		Assert.Equal("SHA1", result.Algorithm);
@@ -36,6 +39,7 @@ public class PasswordTest
 		Assert.False(result.Nonce.IsEmpty);
 		Assert.False(result.Value.IsEmpty);
 		Assert.Equal(20, result.Value.Length);
+		Assert.Equal(nonce, result.Nonce);
 
 		Assert.True(result.Verify(PASSWORD));
 		Assert.False(result.Verify(null));
@@ -68,7 +72,10 @@ public class PasswordTest
 	{
 		const string PASSWORD = "123456";
 
-		var result = Password.Generate(PASSWORD, 12, "sha384");
+		var nonce = new byte[30];
+		Random.Shared.NextBytes(nonce);
+
+		var result = Password.Generate(PASSWORD, nonce, 12, "sha384");
 		Assert.True(result.HasValue);
 		Assert.False(result.IsEmpty);
 		Assert.Equal("SHA384", result.Algorithm);
@@ -76,6 +83,7 @@ public class PasswordTest
 		Assert.False(result.Nonce.IsEmpty);
 		Assert.False(result.Value.IsEmpty);
 		Assert.Equal(48, result.Value.Length);
+		Assert.Equal(nonce, result.Nonce);
 
 		Assert.True(result.Verify(PASSWORD));
 		Assert.False(result.Verify(null));

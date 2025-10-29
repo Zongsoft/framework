@@ -174,7 +174,7 @@ partial class UserServiceBase<TUser>
 		//获取密码问答的答案设置
 		var answers = await this.GetSecretAnswerAsync(user.Identifier, cancellation);
 
-		//如果指定的用户没有设置密码问答，则抛出安全异常
+		//如果指定的用户没有设置密码问答，返回密码重置失败
 		if(answers == null || answers.Count == 0)
 			return false;
 
@@ -185,7 +185,10 @@ partial class UserServiceBase<TUser>
 		//如果密码问答的答案验证失败，则抛出安全异常
 		for(int i = 0; i < passwordAnswers.Length; i++)
 		{
-			if(!PasswordUtility.VerifyPassword(passwordAnswers[i], answers[i], GetPasswordAnswerSalt(user.Identifier, i + 1)))
+			if(!Password.TryParse(answers[i], out var password))
+				throw new InvalidOperationException($"Illegal format for stored password-answer.");
+
+			if(!password.Verify(passwordAnswers[i]))
 				throw new SecurityException("Verification:PasswordAnswers", "The password answers verify failed.");
 		}
 
@@ -374,31 +377,19 @@ partial class UserServiceBase<TUser>
 		if(questions.Length > 5)
 			throw new ArgumentOutOfRangeException(nameof(questions));
 
-		var buffer = new List<byte>(61)
+		var buffer = new List<byte>(33 * answers.Length + 1)
 		{
 			(byte)answers.Length
 		};
 
 		for(int i = 0; i < answers.Length; i++)
-			buffer.AddRange(HashPasswordAnswer(answers[i], identifier, i + 1));
+			buffer.AddRange((byte[])Password.Generate(answers[i], BitConverter.GetBytes(Random.Shared.NextInt64())));
 
 		return await this.Accessor.UpdateAsync(this.Name, new
 		{
 			SecretQuestion = string.Join('\n', questions),
 			SecretAnswer = buffer.ToArray()
 		}, this.GetCriteria(identifier), cancellation) > 0;
-	}
-	#endregion
-
-	#region 私有方法
-	private static byte[] GetPasswordAnswerSalt(Identifier identifier, int index) => System.Text.Encoding.ASCII.GetBytes($"Zongsoft.Security.User:{identifier.Value}:Password.Answer[{index}]");
-	private static byte[] HashPasswordAnswer(string answer, Identifier identifier, int index)
-	{
-		if(string.IsNullOrEmpty(answer))
-			return null;
-
-		var salt = GetPasswordAnswerSalt(identifier, index);
-		return PasswordUtility.HashPassword(answer, salt);
 	}
 	#endregion
 

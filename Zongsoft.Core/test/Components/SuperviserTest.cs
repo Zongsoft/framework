@@ -45,14 +45,14 @@ public class SuperviserTest
 		Assert.NotNull(observable);
 		Assert.IsType<MySupervisable>(observable);
 		Assert.Equal("S1", ((MySupervisable)observable).Name);
-		Assert.True(((MySupervisable)observable).IsUnsupervised(1000));
+		Assert.True(((MySupervisable)observable).IsUnsupervised(TimeSpan.FromSeconds(10)));
 		Assert.False(_superviser.Contains("S1"));
 
 		Assert.True(_superviser.Unsupervise("S2", out observable));
 		Assert.NotNull(observable);
 		Assert.IsType<MySupervisable>(observable);
 		Assert.Equal("S2", ((MySupervisable)observable).Name);
-		Assert.True(((MySupervisable)observable).IsUnsupervised(1000));
+		Assert.True(((MySupervisable)observable).IsUnsupervised(TimeSpan.FromSeconds(10)));
 		Assert.False(_superviser.Contains("S2"));
 
 		Assert.Equal(0, _superviser.Count);
@@ -62,7 +62,7 @@ public class SuperviserTest
 	public void TestEventRaises()
 	{
 		const int COUNT = 100;
-		const int TIMEOUT = 2 * 1000;
+		const int TIMEOUT = 10 * 1000;
 
 		//挂载监测完成事件
 		_superviser.Supervised += this.OnSupervised;

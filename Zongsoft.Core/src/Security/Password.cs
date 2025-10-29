@@ -242,11 +242,19 @@ public readonly partial struct Password : IEquatable<Password>
 		return true;
 	}
 
-	public static Password Generate(string password, string algorithm = "SHA1") => Generate(password, 10, algorithm);
-	public static Password Generate(string password, int exponent, string algorithm = "SHA1")
+	public static Password Generate(string password, string algorithm = "SHA1") => Generate(password, [], 10, algorithm);
+	public static Password Generate(string password, int exponent, string algorithm = "SHA1") => Generate(password, [], exponent, algorithm);
+	public static Password Generate(string password, ReadOnlySpan<byte> nonce, string algorithm = "SHA1") => Generate(password, nonce, 10, algorithm);
+	public static Password Generate(string password, ReadOnlySpan<byte> nonce, int exponent, string algorithm = "SHA1")
 	{
 		if(string.IsNullOrEmpty(password))
 			return default;
+
+		if(nonce.Length > byte.MaxValue)
+			throw new ArgumentOutOfRangeException("The length of nonce is too long.", nameof(nonce));
+
+		if(nonce.Length > 0 && nonce.Length < 4)
+			throw new ArgumentOutOfRangeException("The length of nonce is too short(must be greater than or equal to 4).", nameof(nonce));
 
 		//获取哈希算法名及对应的算法代号和哈希值长度
 		var name = GetAlgorithm(algorithm, out var code, out var length);
@@ -254,8 +262,8 @@ public readonly partial struct Password : IEquatable<Password>
 		if(name == default || length < 1)
 			throw new ArgumentException(null, nameof(algorithm));
 
-		//获取随机数长度，介于8至16个字节之间
-		var size = (byte)Random.Shared.Next(8, 16);
+		//获取随机数长度
+		var size = nonce.IsEmpty ? (byte)Random.Shared.Next(8, 16) : (byte)nonce.Length;
 		var data = new byte[length + size + 5];
 		var span = data.AsSpan();
 
@@ -270,7 +278,10 @@ public readonly partial struct Password : IEquatable<Password>
 		span[4] = size;
 
 		//设置随机数内容
-		RandomNumberGenerator.Fill(span.Slice(5, size));
+		if(nonce.IsEmpty)
+			RandomNumberGenerator.Fill(span.Slice(5, size));
+		else
+			nonce.CopyTo(span.Slice(5, size));
 
 		//混淆哈希密码值
 		Rfc2898DeriveBytes.Pbkdf2(
