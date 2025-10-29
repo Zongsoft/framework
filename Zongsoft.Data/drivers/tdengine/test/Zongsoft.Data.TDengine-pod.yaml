@@ -26,9 +26,13 @@ spec:
           value: "zongsoft"
       volumeMounts:
         - name: init-script
-          mountPath: /docker-entrypoint-initdb.d/tables.sql
+          mountPath: /docker-entrypoint-initdb.d/init.sql
+      lifecycle:
+        postStart:
+          exec:
+            command: ["sh", "-c", "taos -f 'source /docker-entrypoint-initdb.d/tables.sql'"]
   volumes:
     - name: init-script
       hostPath:
-        path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/tdengine/test/script/tables.sql
+        path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/tdengine/test/script/init.sql
         type: File
