@@ -13,7 +13,7 @@ public static class Global
 	#endregion
 
 	#region 连接常量
-	internal const string CONNECTION_STRING = @"Server=192.168.2.200;UserName=program;Password=xxxxxx;Database=automao;AutoReconnect=true;EnableCompression=true;";
+	internal const string CONNECTION_STRING = @"Server=127.0.0.1;UserName=root;Password=taosdata;Database=zongsoft;AutoReconnect=true;EnableCompression=true;";
 	#endregion
 
 	#region 连接设置
