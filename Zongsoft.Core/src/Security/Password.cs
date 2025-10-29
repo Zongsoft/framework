@@ -288,7 +288,7 @@ public readonly partial struct Password : IEquatable<Password>
 			password.AsSpan(),
 			span.Slice(5, size),
 			span.Slice(5 + size, length),
-			GetIteration(exponent),
+			GetIteration(span[EXPONENT]),
 			name);
 
 		//返回密码信息结构
@@ -398,8 +398,8 @@ public readonly partial struct Password : IEquatable<Password>
 		return default;
 	}
 
-	private static byte GetExponent(int exponent) => (byte)Math.Clamp(exponent, 0, 31);
-	private static int GetIteration(int exponent) => (int)Math.Pow(2, Math.Clamp(exponent, 0, 31));
+	private static byte GetExponent(int exponent) => (byte)Math.Clamp(exponent, 0, 24);
+	private static int GetIteration(int exponent) => (int)Math.Pow(2, GetExponent(exponent));
 
 	private static int IndexOf<T>(ReadOnlySpan<T> data, T value, int offset) where T : IEquatable<T>
 	{
