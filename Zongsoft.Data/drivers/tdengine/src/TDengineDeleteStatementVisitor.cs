@@ -45,9 +45,7 @@ public class TDengineDeleteStatementVisitor : DeleteStatementVisitor
 	private TDengineDeleteStatementVisitor() { }
 	#endregion
 
+	#region 重写方法
 	protected override void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables) { }
-	protected override void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
-	{
-		base.VisitFrom(context, statement, sources);
-	}
+	#endregion
 }

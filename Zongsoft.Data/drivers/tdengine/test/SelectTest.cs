@@ -30,7 +30,7 @@ public class SelectTest
 
 		var models = accessor.Select<Models.GatewayHistory>();
 		Assert.NotNull(models);
-		Assert.Empty(models);
+		Assert.NotEmpty(models);
 
 		var model = models.FirstOrDefault();
 		Assert.True(model.GatewayId > 0);
