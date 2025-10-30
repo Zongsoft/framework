@@ -30,7 +30,7 @@ spec:
       lifecycle:
         postStart:
           exec:
-            command: ["sh", "-c", "taos -f 'source /docker-entrypoint-initdb.d/tables.sql'"]
+            command: ["sh", "-c", "taos -f '/docker-entrypoint-initdb.d/tables.sql'"]
   volumes:
     - name: init-script
       hostPath:
