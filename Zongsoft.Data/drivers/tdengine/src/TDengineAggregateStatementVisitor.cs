@@ -32,16 +32,15 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.TDengine
-{
-	public class TDengineAggregateStatementVisitor : AggregateStatementVisitor
-	{
-		#region 单例字段
-		public static readonly TDengineAggregateStatementVisitor Instance = new TDengineAggregateStatementVisitor();
-		#endregion
+namespace Zongsoft.Data.TDengine;
 
-		#region 构造函数
-		private TDengineAggregateStatementVisitor() { }
-		#endregion
-	}
+public class TDengineAggregateStatementVisitor : AggregateStatementVisitor
+{
+	#region 单例字段
+	public static readonly TDengineAggregateStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private TDengineAggregateStatementVisitor() { }
+	#endregion
 }

@@ -28,13 +28,19 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.TDengine
+namespace Zongsoft.Data.TDengine;
+
+public class TDengineDeleteStatementBuilder : DeleteStatementBuilder
 {
-	public class TDengineDeleteStatementBuilder : DeleteStatementBuilder
+	protected override IEnumerable<IStatementBase> BuildComplexity(DataDeleteContext context)
 	{
+		//清空数据模式以免生成 Returnning 子句
+		context.Schema.Clear();
+		return base.BuildComplexity(context);
 	}
 }

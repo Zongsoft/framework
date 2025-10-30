@@ -32,9 +32,8 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.TDengine
+namespace Zongsoft.Data.TDengine;
+
+public class TDengineSelectStatementBuilder : SelectStatementBuilder
 {
-	public class TDengineSelectStatementBuilder : SelectStatementBuilder
-	{
-	}
 }

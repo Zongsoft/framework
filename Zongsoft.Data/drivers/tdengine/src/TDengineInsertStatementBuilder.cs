@@ -32,9 +32,8 @@ using System;
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.TDengine
+namespace Zongsoft.Data.TDengine;
+
+public class TDengineInsertStatementBuilder : InsertStatementBuilder
 {
-	public class TDengineInsertStatementBuilder : InsertStatementBuilder
-	{
-	}
 }

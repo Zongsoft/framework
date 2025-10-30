@@ -37,64 +37,63 @@ using TDengine.Data.Client;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.TDengine
+namespace Zongsoft.Data.TDengine;
+
+public class TDengineDriver : DataDriverBase
 {
-	public class TDengineDriver : DataDriverBase
+	#region 公共常量
+	/// <summary>驱动程序的标识：TDengine。</summary>
+	public const string NAME = "TDengine";
+	#endregion
+
+	#region 单例字段
+	public static readonly TDengineDriver Instance = new();
+	#endregion
+
+	#region 私有构造
+	private TDengineDriver() => this.Features.Add(Feature.TransactionSuppressed);
+	#endregion
+
+	#region 公共属性
+	public override string Name => NAME;
+	public override IStatementBuilder Builder => TDengineStatementBuilder.Default;
+	#endregion
+
+	#region 公共方法
+	public override Exception OnError(IDataAccessContext context, Exception exception)
 	{
-		#region 公共常量
-		/// <summary>驱动程序的标识：TDengine。</summary>
-		public const string NAME = "TDengine";
-		#endregion
-
-		#region 单例字段
-		public static readonly TDengineDriver Instance = new();
-		#endregion
-
-		#region 私有构造
-		private TDengineDriver() => this.Features.Add(Feature.TransactionSuppressed);
-		#endregion
-
-		#region 公共属性
-		public override string Name => NAME;
-		public override IStatementBuilder Builder => TDengineStatementBuilder.Default;
-		#endregion
-
-		#region 公共方法
-		public override Exception OnError(IDataAccessContext context, Exception exception)
+		if(exception is TDengineError error)
 		{
-			if(exception is TDengineError error)
+			switch(error.Code)
 			{
-				switch(error.Code)
-				{
-					case 0:
-						break;
-				}
+				case 0:
+					break;
 			}
-
-			return exception;
 		}
 
-		public override DbCommand CreateCommand() => new TDengineCommand();
-		public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new TDengineCommand()
-		{
-			CommandText = text,
-			CommandType = commandType,
-		};
-
-		public override DbConnection CreateConnection(string connectionString = null) => new TDengineConnection(connectionString ?? string.Empty)
-		{
-			ConnectionStringBuilder = Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions()
-		};
-
-		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
-			Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
-
-		public override IDataImporter CreateImporter() => new TDengineImporter();
-		#endregion
-
-		#region 保护方法
-		protected override ExpressionVisitorBase CreateVisitor() => new TDengineExpressionVisitor();
-		protected override StatementSlotter CreateSlotter() => new() { Evaluator = TDengineStatementSlotEvaluator.Instance };
-		#endregion
+		return exception;
 	}
+
+	public override DbCommand CreateCommand() => new TDengineCommand();
+	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new TDengineCommand()
+	{
+		CommandText = text,
+		CommandType = commandType,
+	};
+
+	public override DbConnection CreateConnection(string connectionString = null) => new TDengineConnection(connectionString ?? string.Empty)
+	{
+		ConnectionStringBuilder = Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions()
+	};
+
+	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
+		Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
+
+	public override IDataImporter CreateImporter() => new TDengineImporter();
+	#endregion
+
+	#region 保护方法
+	protected override ExpressionVisitorBase CreateVisitor() => new TDengineExpressionVisitor();
+	protected override StatementSlotter CreateSlotter() => new() { Evaluator = TDengineStatementSlotEvaluator.Instance };
+	#endregion
 }
