@@ -5,12 +5,15 @@ using Xunit;
 
 namespace Zongsoft.Data.Influx.Tests;
 
-public class ConnectionSettingsTest
+[Collection("Database")]
+public class ConnectionSettingsTest(DatabaseFixture database)
 {
+	private readonly DatabaseFixture _database = database;
+
 	[Fact]
 	public void TestGetSettings()
 	{
-		var connectionSettings = Global.ConnectionSettings;
+		var connectionSettings = _database.ConnectionSettings;
 
 		Assert.NotNull(connectionSettings);
 		Assert.NotEmpty(connectionSettings);

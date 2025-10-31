@@ -1,20 +1,21 @@
 ﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 using Xunit;
 
 namespace Zongsoft.Data.Influx.Tests;
 
-public class SelectTest
+[Collection("Database")]
+public class SelectTest(DatabaseFixture database)
 {
+	private readonly DatabaseFixture _database = database;
+
 	[Fact]
 	public void TestSelect()
 	{
-		if(!System.Diagnostics.Debugger.IsAttached)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		using var accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
+		var accessor = _database.Accessor;
 
 		Assert.NotNull(accessor);
 		Assert.NotNull(Mapping.Entities);
@@ -29,10 +30,10 @@ public class SelectTest
 	[Fact]
 	public void TestSelectAsync()
 	{
-		if(!System.Diagnostics.Debugger.IsAttached)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		using var accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
+		var accessor = _database.Accessor;
 
 		Assert.NotNull(accessor);
 		Assert.NotNull(Mapping.Entities);
