@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.3.0</Version>
-		<Product>Zongsoft Data Driver for MySQL</Product>
-		<Description>This is a data driver for MySQL of the Zongsoft data engine.</Description>
-		<RootNamespace>Zongsoft.Data.MySql</RootNamespace>
+		<Version>0.0.1</Version>
+		<Product>Zongsoft Data Driver for PostgreSQL</Product>
+		<Description>This is a data driver for PostgreSQL of the Zongsoft data engine.</Description>
+		<RootNamespace>Zongsoft.Data.PostgreSql</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -11,8 +11,20 @@
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/mysql</RepositoryUrl>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="MySqlConnector" VersionOverride="2.4.0" />
+	<ItemGroup Condition="$(TargetFramework) == 'net6.0'">
+		<PackageReference Include="Npgsql" VersionOverride="6.0.13" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(TargetFramework) == 'net7.0'">
+		<PackageReference Include="Npgsql" VersionOverride="7.0.10" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(TargetFramework) == 'net8.0'">
+		<PackageReference Include="Npgsql" VersionOverride="8.0.8" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(TargetFramework) == 'net9.0'">
+		<PackageReference Include="Npgsql" VersionOverride="9.0.4" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -24,10 +36,10 @@
 		<When Condition="$(Configuration)=='Debug'">
 			<ItemGroup>
 				<Reference Include="Zongsoft.Core">
-					<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+					<HintPath>..\..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 				</Reference>
 				<Reference Include="Zongsoft.Data">
-					<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
+					<HintPath>..\..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
 				</Reference>
 			</ItemGroup>
 		</When>
