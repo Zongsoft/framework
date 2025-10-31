@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zongsoft.data
+  labels:
+    app: zongsoft.data
+spec:
+  containers:
+    - name: postgres
+      image: postgres:18.0
+      ports:
+        - containerPort: 5432
+          protocol: TCP
+          hostPort: 5432
+      env:
+        - name: POSTGRES_USER
+          value: program
+        - name: POSTGRES_PASSWORD
+          value: "xxxxxx"
+        - name: POSTGRES_DB
+          value: zongsoft
+      volumeMounts:
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d/init.sql
+
+  volumes:
+    - name: init-script
+      hostPath:
+        path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/postgres/test/script/init.sql
+        type: File
