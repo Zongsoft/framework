@@ -7,17 +7,20 @@ using Xunit;
 
 namespace Zongsoft.Data.Influx.Tests;
 
-public class ImporterTest
+[Collection("Database")]
+public class ImporterTest(DatabaseFixture database)
 {
+	private readonly DatabaseFixture _database = database;
+
 	[Fact]
 	public void TestImport()
 	{
 		const int COUNT = 100;
 
-		if(!System.Diagnostics.Debugger.IsAttached)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
+		IDataAccess accessor = _database.Accessor;
 
 		Assert.NotNull(accessor);
 		Assert.NotNull(Mapping.Entities);
@@ -33,10 +36,10 @@ public class ImporterTest
 	{
 		const int COUNT = 100;
 
-		if(!System.Diagnostics.Debugger.IsAttached)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
+		IDataAccess accessor = _database.Accessor;
 
 		Assert.NotNull(accessor);
 		Assert.NotNull(Mapping.Entities);
