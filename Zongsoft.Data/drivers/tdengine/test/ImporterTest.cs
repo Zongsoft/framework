@@ -7,17 +7,20 @@ using Xunit;
 
 namespace Zongsoft.Data.TDengine.Tests;
 
-public class ImporterTest
+[Collection("Database")]
+public class ImporterTest(DatabaseFixture database)
 {
+	private readonly DatabaseFixture _database = database;
+
 	[Fact]
 	public void TestImport()
 	{
 		const int COUNT = 100;
 
-		if(!System.Diagnostics.Debugger.IsAttached)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
+		IDataAccess accessor = _database.Accessor;
 
 		Assert.NotNull(accessor);
 		Assert.NotNull(Mapping.Entities);
@@ -33,10 +36,10 @@ public class ImporterTest
 	{
 		const int COUNT = 100;
 
-		if(!System.Diagnostics.Debugger.IsAttached)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
+		IDataAccess accessor = _database.Accessor;
 
 		Assert.NotNull(accessor);
 		Assert.NotNull(Mapping.Entities);
@@ -50,6 +53,8 @@ public class ImporterTest
 	#region 私有方法
 	private static IEnumerable<Models.GatewayHistory> Generate(int count = 100)
 	{
+		var timestamp = DateTime.Now;
+
 		for(int i = 0; i < count; i++)
 		{
 			var failureCode = i > 0 && i % 50 == 0 ? Random.Shared.Next(1, 10) : 0;
@@ -57,6 +62,7 @@ public class ImporterTest
 
 			yield return new Models.GatewayHistory()
 			{
+				Timestamp = timestamp.AddMilliseconds(1),
 				GatewayId = (uint)(i + 1),
 				MetricId = (ulong)Random.Shared.NextInt64(),
 				Value = Random.Shared.NextDouble(),
