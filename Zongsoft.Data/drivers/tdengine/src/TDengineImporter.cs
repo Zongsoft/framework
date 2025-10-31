@@ -39,121 +39,120 @@ using TDengine.Driver.Client;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.TDengine
+namespace Zongsoft.Data.TDengine;
+
+public class TDengineImporter : DataImporterBase
 {
-	public class TDengineImporter : DataImporterBase
+	#region 重写方法
+	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		#region 重写方法
-		protected override void OnImport(DataImportContext context, MemberCollection members)
+		var count = 0L;
+		var tags = members.Where(member => member.Property.IsTagField()).ToArray();
+		var fields = members.Where(member => !member.Property.IsTagField()).ToArray();
+		var tables = new Dictionary<string, Table>();
+
+		foreach(var item in context.Data)
 		{
+			var target = item;
+			if(target == null)
+				continue;
+
+			var tagValues = tags.Select(member => member.GetValue(ref target)).ToArray();
+			var tableName = TDengineUtility.GetTableName(tagValues);
+
+			if(!tables.TryGetValue(tableName, out var table))
+				tables.Add(tableName, table = new Table(tagValues));
+
+			table.Rows.Add(fields.Select(member => member.GetValue(ref target)).ToArray());
+		}
+
+		if(tables.Count == 0)
+			return;
+
+		var script = $"INSERT INTO ? USING `{context.Entity.GetTableName()}`\n" +
+			$"({string.Join(',', tags.Select(member => '`' + member.Property.GetFieldName() + '`'))}) TAGS({string.Join(',', Enumerable.Repeat('?', tags.Length))})\n" +
+			$"({string.Join(',', fields.Select(member => '`' + member.Property.GetFieldName() + '`'))}) VALUES ({string.Join(',', Enumerable.Repeat('?', fields.Length))})";
+
+		using var client = GetClient(context.Source.ConnectionString);
+		using var statement = client.StmtInit();
+		statement.Prepare(script);
+
+		foreach(var table in tables.Values)
+		{
+			count += table.Execute(statement);
+		}
+
+		context.Count = (int)Math.Min(count, int.MaxValue);
+	}
+
+	protected override ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
+	{
+		this.OnImport(context, members);
+		return ValueTask.CompletedTask;
+	}
+	#endregion
+
+	#region 私有方法
+	private static ITDengineClient GetClient(string connectionString) => DbDriver.Open((ConnectionStringBuilder)TDengineDriver.Instance.CreateConnectionBuilder(connectionString));
+	#endregion
+
+	#region 嵌套子类
+	private sealed class Table(object[] tags) : IEquatable<Table>
+	{
+		#region 常量定义
+		private const int CHUNK_SIZE = 1000;
+		#endregion
+
+		#region 成员字段
+		private string _name;
+		private readonly object[] _tags = tags;
+		private readonly List<object[]> _rows = new(128);
+		#endregion
+
+		#region 公共属性
+		public string Name => _name ??= TDengineUtility.GetTableName(_tags);
+		public List<object[]> Rows => _rows;
+		#endregion
+
+		#region 公共方法
+		public long Execute(IStmt statement)
+		{
+			var chunk = 1;
 			var count = 0L;
-			var tags = members.Where(member => member.Property.IsTagField()).ToArray();
-			var fields = members.Where(member => !member.Property.IsTagField()).ToArray();
-			var tables = new Dictionary<string, Table>();
 
-			foreach(var item in context.Data)
+			statement.SetTableName(this.Name);
+			statement.SetTags(_tags);
+
+			for(int i = 0; i < _rows.Count; i++)
 			{
-				var target = item;
-				if(target == null)
-					continue;
+				statement.BindRow(_rows[i]);
 
-				var tagValues = tags.Select(member => member.GetValue(ref target)).ToArray();
-				var tableName = TDengineUtility.GetTableName(tagValues);
-
-				if(!tables.TryGetValue(tableName, out var table))
-					tables.Add(tableName, table = new Table(tagValues));
-
-				table.Rows.Add(fields.Select(member => member.GetValue(ref target)).ToArray());
-			}
-
-			if(tables.Count == 0)
-				return;
-
-			var script = $"INSERT INTO ? USING `{context.Entity.GetTableName()}`\n" +
-				$"({string.Join(',', tags.Select(member => '`' + member.Property.GetFieldName() + '`'))}) TAGS({string.Join(',', Enumerable.Repeat('?', tags.Length))})\n" +
-				$"({string.Join(',', fields.Select(member => '`' + member.Property.GetFieldName() + '`'))}) VALUES ({string.Join(',', Enumerable.Repeat('?', fields.Length))})";
-
-			using var client = GetClient(context.Source.ConnectionString);
-			using var statement = client.StmtInit();
-			statement.Prepare(script);
-
-			foreach(var table in tables.Values)
-			{
-				count += table.Execute(statement);
-			}
-
-			context.Count = (int)Math.Min(count, int.MaxValue);
-		}
-
-		protected override ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
-		{
-			this.OnImport(context, members);
-			return ValueTask.CompletedTask;
-		}
-		#endregion
-
-		#region 私有方法
-		private static ITDengineClient GetClient(string connectionString) => DbDriver.Open((ConnectionStringBuilder)TDengineDriver.Instance.CreateConnectionBuilder(connectionString));
-		#endregion
-
-		#region 嵌套子类
-		private sealed class Table(object[] tags) : IEquatable<Table>
-		{
-			#region 常量定义
-			private const int CHUNK_SIZE = 1000;
-			#endregion
-
-			#region 成员字段
-			private string _name;
-			private readonly object[] _tags = tags;
-			private readonly List<object[]> _rows = new(128);
-			#endregion
-
-			#region 公共属性
-			public string Name => _name ??= TDengineUtility.GetTableName(_tags);
-			public List<object[]> Rows => _rows;
-			#endregion
-
-			#region 公共方法
-			public long Execute(IStmt statement)
-			{
-				var chunk = 1;
-				var count = 0L;
-
-				statement.SetTableName(this.Name);
-				statement.SetTags(_tags);
-
-				for(int i = 0; i < _rows.Count; i++)
+				if(i == (chunk * CHUNK_SIZE) - 1)
 				{
-					statement.BindRow(_rows[i]);
-
-					if(i == (chunk * CHUNK_SIZE) - 1)
-					{
-						chunk++;
-						statement.AddBatch();
-						statement.Exec();
-						count += statement.Affected();
-					}
-				}
-
-				if(_rows.Count % CHUNK_SIZE > 0)
-				{
+					chunk++;
 					statement.AddBatch();
 					statement.Exec();
 					count += statement.Affected();
 				}
-
-				return count;
 			}
-			#endregion
 
-			#region 重写方法
-			public bool Equals(Table other) => string.Equals(this.Name, other.Name);
-			public override bool Equals(object obj) => obj is Table other && this.Equals(other);
-			public override int GetHashCode() => this.Name.GetHashCode();
-			public override string ToString() => this.Name;
-			#endregion
+			if(_rows.Count % CHUNK_SIZE > 0)
+			{
+				statement.AddBatch();
+				statement.Exec();
+				count += statement.Affected();
+			}
+
+			return count;
 		}
 		#endregion
+
+		#region 重写方法
+		public bool Equals(Table other) => string.Equals(this.Name, other.Name);
+		public override bool Equals(object obj) => obj is Table other && this.Equals(other);
+		public override int GetHashCode() => this.Name.GetHashCode();
+		public override string ToString() => this.Name;
+		#endregion
 	}
+	#endregion
 }

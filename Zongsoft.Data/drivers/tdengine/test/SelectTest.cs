@@ -7,20 +7,29 @@ using Xunit;
 
 namespace Zongsoft.Data.TDengine.Tests;
 
-public class SelectTest
+[Collection("Database")]
+public class SelectTest(DatabaseFixture database)
 {
+	private readonly DatabaseFixture _database = database;
+
 	[Fact]
 	public void TestSelect()
 	{
-		if(!System.Diagnostics.Debugger.IsAttached)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		using var accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
+		var accessor = _database.Accessor;
 
 		Assert.NotNull(accessor);
 		Assert.NotNull(Mapping.Entities);
 		Assert.NotEmpty(Mapping.Entities);
 		Assert.True(Mapping.Entities.Contains("GatewayHistory"));
+
+		accessor.Delete("GatewayHistory", null);
+		Assert.Equal(0, accessor.Count("GatewayHistory"));
+
+		var count = accessor.Insert("GatewayHistory", new Models.GatewayHistory(100, 10001, 123.56, null, DateTime.Now));
+		Assert.Equal(1, count);
 
 		var models = accessor.Select<Models.GatewayHistory>();
 		Assert.NotNull(models);
@@ -34,15 +43,21 @@ public class SelectTest
 	[Fact]
 	public async Task TestSelectAsync()
 	{
-		if(!System.Diagnostics.Debugger.IsAttached)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		using var accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([Global.ConnectionSettings]));
+		var accessor = _database.Accessor;
 
 		Assert.NotNull(accessor);
 		Assert.NotNull(Mapping.Entities);
 		Assert.NotEmpty(Mapping.Entities);
 		Assert.True(Mapping.Entities.Contains("GatewayHistory"));
+
+		await accessor.DeleteAsync("GatewayHistory", null);
+		Assert.Equal(0, accessor.Count("GatewayHistory"));
+
+		var count = await accessor.InsertAsync("GatewayHistory", new Models.GatewayHistory(100, 10001, 123.56, null, DateTime.Now));
+		Assert.Equal(1, count);
 
 		var models = accessor.SelectAsync<Models.GatewayHistory>();
 		Assert.NotNull(models);

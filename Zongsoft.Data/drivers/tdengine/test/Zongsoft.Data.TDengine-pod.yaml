@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zongsoft.data
+  labels:
+    app: zongsoft.data
+spec:
+  containers:
+    - name: tdengine
+      image: tdengine/tsdb:latest
+      ports:
+        - containerPort: 6030
+          hostPort: 6030
+          protocol: TCP
+        - containerPort: 6041
+          hostPort: 6041
+          protocol: TCP
+        - containerPort: 6043
+          hostPort: 6043
+          protocol: TCP
+        - containerPort: 6060
+          hostPort: 6060
+          protocol: TCP
+      env:
+        - name: TAOS_DATABASE
+          value: "zongsoft"
+      volumeMounts:
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d/init.sql
+      lifecycle:
+        postStart:
+          exec:
+            command: ["sh", "-c", "taos -f '/docker-entrypoint-initdb.d/tables.sql'"]
+  volumes:
+    - name: init-script
+      hostPath:
+        path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/tdengine/test/script/init.sql
+        type: File

@@ -28,20 +28,24 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.TDengine
-{
-	public class TDengineDeleteStatementVisitor : DeleteStatementVisitor
-	{
-		#region 单例字段
-		public static readonly TDengineDeleteStatementVisitor Instance = new TDengineDeleteStatementVisitor();
-		#endregion
+namespace Zongsoft.Data.TDengine;
 
-		#region 构造函数
-		private TDengineDeleteStatementVisitor() { }
-		#endregion
-	}
+public class TDengineDeleteStatementVisitor : DeleteStatementVisitor
+{
+	#region 单例字段
+	public static readonly TDengineDeleteStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private TDengineDeleteStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables) { }
+	#endregion
 }

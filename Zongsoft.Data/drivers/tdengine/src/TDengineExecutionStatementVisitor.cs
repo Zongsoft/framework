@@ -32,16 +32,15 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.TDengine
-{
-	public class TDengineExecutionStatementVisitor : ExecutionStatementVisitor
-	{
-		#region 单例字段
-		public static readonly TDengineExecutionStatementVisitor Instance = new TDengineExecutionStatementVisitor();
-		#endregion
+namespace Zongsoft.Data.TDengine;
 
-		#region 构造函数
-		private TDengineExecutionStatementVisitor() { }
-		#endregion
-	}
+public class TDengineExecutionStatementVisitor : ExecutionStatementVisitor
+{
+	#region 单例字段
+	public static readonly TDengineExecutionStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private TDengineExecutionStatementVisitor() { }
+	#endregion
 }
