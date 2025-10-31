@@ -24,10 +24,10 @@
 		<When Condition="$(Configuration)=='Debug'">
 			<ItemGroup>
 				<Reference Include="Zongsoft.Core">
-					<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+					<HintPath>..\..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 				</Reference>
 				<Reference Include="Zongsoft.Data">
-					<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
+					<HintPath>..\..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
 				</Reference>
 			</ItemGroup>
 		</When>
