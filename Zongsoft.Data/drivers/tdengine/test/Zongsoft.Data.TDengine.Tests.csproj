@@ -35,7 +35,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="Test.mapping">
+		<None Update="Zongsoft.Data.TDengine.Tests.mapping">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

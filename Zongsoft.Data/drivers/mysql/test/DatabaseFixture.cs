@@ -21,7 +21,7 @@ public class DatabaseFixture : IDisposable
 		DataEnvironment.Drivers.Add(MySqlDriver.Instance);
 
 		this.ConnectionSettings = Configuration.MySqlConnectionSettingsDriver.Instance.GetSettings(CONNECTION_STRING);
-		this.Accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([this.ConnectionSettings]));
+		this.Accessor = DataAccessProvider.Instance.GetAccessor("Zongsoft.Data.MySql.Tests", new DataAccessOptions([this.ConnectionSettings]));
 	}
 	#endregion
 

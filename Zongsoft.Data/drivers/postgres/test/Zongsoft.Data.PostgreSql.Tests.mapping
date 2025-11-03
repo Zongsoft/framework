@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<schema xmlns="http://schemas.zongsoft.com/data">
+	<container name="Security">
+		<entity name="Role" table="Security_Role">
+			<key>
+				<member name="RoleId" />
+			</key>
+
+			<property name="RoleId" type="uint" nullable="false" sequence="#" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Avatar" type="string" length="100" nullable="false" />
+			<property name="Enabled" type="bool" nullable="false" default="true" />
+			<property name="Nickname" type="string" length="50" nullable="true" />
+			<property name="Namespace" type="string" length="50" nullable="false" />
+			<property name="Description" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Children" port="Member" multiplicity="*" immutable="false">
+				<link port="RoleId" />
+			</complexProperty>
+
+			<complexProperty name="Parents" port="Member" multiplicity="*">
+				<link port="MemberId" anchor="RoleId" />
+
+				<constraints>
+					<constraint name="MemberType" value="1" />
+				</constraints>
+			</complexProperty>
+
+			<complexProperty name="Roles" port="Member:Role" multiplicity="*">
+				<link port="MemberId" anchor="RoleId" />
+
+				<constraints>
+					<constraint name="MemberType" value="1" />
+				</constraints>
+			</complexProperty>
+		</entity>
+
+		<entity name="User" table="Security_User">
+			<key>
+				<member name="UserId" />
+			</key>
+
+			<property name="UserId" type="uint" nullable="false" sequence="#" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Avatar" type="string" length="100" nullable="false" />
+			<property name="Nickname" type="string" length="50" nullable="true" />
+			<property name="Namespace" type="string" length="50" nullable="true" />
+			<property name="Password" type="binary" length="64" nullable="true" />
+			<property name="Email" type="string" length="100" nullable="true" />
+			<property name="Phone" type="string" length="50" nullable="true" />
+			<property name="Gender" type="bool" nullable="true" />
+			<property name="Enabled" type="bool" nullable="false" default="true" />
+			<property name="PasswordQuestion" type="string" length="200" nullable="true" />
+			<property name="PasswordAnswer" type="binary" length="200" nullable="true" />
+			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Modification" type="datetime" nullable="true" />
+			<property name="Description" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Parents" port="Member" multiplicity="*">
+				<link port="MemberId" anchor="UserId" />
+
+				<constraints>
+					<constraint name="MemberType" value="0" />
+				</constraints>
+			</complexProperty>
+
+			<complexProperty name="Roles" port="Member:Role" multiplicity="*">
+				<link port="MemberId" anchor="UserId" />
+
+				<constraints>
+					<constraint name="MemberType" value="0" />
+				</constraints>
+			</complexProperty>
+		</entity>
+
+		<entity name="Member" table="Security_Member">
+			<key>
+				<member name="RoleId" />
+				<member name="MemberId" />
+				<member name="MemberType" />
+			</key>
+
+			<property name="RoleId" type="uint" nullable="false" />
+			<property name="MemberId" type="uint" nullable="false" />
+			<property name="MemberType" type="byte" nullable="false" />
+
+			<complexProperty name="Role" port="Role" multiplicity="1">
+				<link port="RoleId" />
+			</complexProperty>
+
+			<complexProperty name="MemberRole" port="Role" multiplicity="?">
+				<link port="RoleId" anchor="MemberId" />
+
+				<constraints>
+					<constraint name="MemberType" actor="Principal" value="1" />
+				</constraints>
+			</complexProperty>
+
+			<complexProperty name="MemberUser" port="User" multiplicity="?">
+				<link port="UserId" anchor="MemberId" />
+
+				<constraints>
+					<constraint name="MemberType" actor="Principal" value="0" />
+				</constraints>
+			</complexProperty>
+		</entity>
+	</container>
+</schema>
