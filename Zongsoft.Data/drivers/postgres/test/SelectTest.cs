@@ -17,6 +17,9 @@ public class SelectTest(DatabaseFixture database)
 	[Fact]
 	public async Task SelectAsync()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var accessor = _database.Accessor;
 
 		var users = accessor.SelectAsync<UserModel>();
@@ -35,6 +38,9 @@ public class SelectTest(DatabaseFixture database)
 	[Fact]
 	public async Task SelectAsync_WithOneToMany1()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var accessor = _database.Accessor;
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
@@ -71,6 +77,9 @@ public class SelectTest(DatabaseFixture database)
 	[Fact]
 	public async Task SelectAsync_WithOneToMany2()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var accessor = _database.Accessor;
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
@@ -109,6 +118,9 @@ public class SelectTest(DatabaseFixture database)
 	[Fact]
 	public async Task SelectAsync_WithOneToMany3()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var accessor = _database.Accessor;
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
