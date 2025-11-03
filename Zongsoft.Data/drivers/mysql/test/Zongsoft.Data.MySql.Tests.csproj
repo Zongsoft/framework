@@ -33,4 +33,10 @@
 		<PackageReference Include="xunit.runner.msbuild" />
 		<PackageReference Include="xunit.runner.visualstudio" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Zongsoft.Data.MySql.Tests.mapping">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>

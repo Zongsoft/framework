@@ -21,7 +21,7 @@ public class DatabaseFixture : IDisposable
 		DataEnvironment.Drivers.Add(PostgreSqlDriver.Instance);
 
 		this.ConnectionSettings = Configuration.PostgreSqlConnectionSettingsDriver.Instance.GetSettings(CONNECTION_STRING);
-		this.Accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([this.ConnectionSettings]));
+		this.Accessor = DataAccessProvider.Instance.GetAccessor("Zongsoft.Data.PostgreSql.Tests", new DataAccessOptions([this.ConnectionSettings]));
 	}
 	#endregion
 
