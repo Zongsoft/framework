@@ -48,9 +48,9 @@ public class DataPopulatorProviderFactory : IDataPopulatorProviderFactory
 	private DataPopulatorProviderFactory()
 	{
 		_providers = [
-			DictionaryPopulatorProvider.Instance,
-			ScalarPopulatorProvider.Instance,
 			ModelPopulatorProvider.Instance,
+			ScalarPopulatorProvider.Instance,
+			DictionaryPopulatorProvider.Instance,
 		];
 	}
 	#endregion
@@ -66,8 +66,9 @@ public class DataPopulatorProviderFactory : IDataPopulatorProviderFactory
 		if(type == null)
 			throw new ArgumentNullException(nameof(type));
 
-		foreach(var provider in _providers)
+		for(int i = 0; i < _providers.Count; i++)
 		{
+			var provider = _providers[i];
 			if(provider.CanPopulate(type))
 				return provider;
 		}

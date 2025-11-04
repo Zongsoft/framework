@@ -29,8 +29,8 @@
 
 using System;
 using System.Data;
-using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common;
 
@@ -190,11 +190,11 @@ public class ModelPopulator<T> : IDataPopulator, IDataPopulator<T>
 	#endregion
 
 	#region 私有方法
-	private static T Populate(IDataRecord record, IEnumerable<MemberMapping> members)
+	private static T Populate(IDataRecord record, ICollection<MemberMapping> members)
 	{
 		T model = default;
 
-		if(members == null || !members.Any())
+		if(members == null || members.Count == 0)
 		{
 			if(record.FieldCount > 0)
 				model = record.GetValue(0) is T value ? value : default;

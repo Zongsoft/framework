@@ -38,7 +38,7 @@ namespace Zongsoft.Data.Common;
 public static partial class ModelMemberTokenManager
 {
 	#region 私有变量
-	private static readonly ConcurrentDictionary<Type, ModelMemberTokenCollection> _cache = new ConcurrentDictionary<Type, ModelMemberTokenCollection>();
+	private static readonly ConcurrentDictionary<Type, ModelMemberTokenCollection> _cache = new();
 	#endregion
 
 	#region 公共方法
@@ -130,7 +130,7 @@ public static partial class ModelMemberTokenManager
 	#endregion
 }
 
-public static partial class ModelMemberTokenManager
+partial class ModelMemberTokenManager
 {
 	#region 私有变量
 	private static readonly ConcurrentDictionary<Type, IEnumerable> _generics = new();

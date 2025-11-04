@@ -88,7 +88,7 @@ public readonly struct ModelMemberToken : IEquatable<ModelMemberToken>
 	#endregion
 
 	#region 内部方法
-	internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
+	internal void EnsureConvertFrom(DbType dbType) => this.EnsureConvertFrom(dbType.AsType());
 	internal void EnsureConvertFrom(Type type)
 	{
 		var converter = this.Converter;
@@ -162,7 +162,7 @@ public readonly struct ModelMemberToken<T> : IEquatable<ModelMemberToken<T>>
 	#endregion
 
 	#region 内部方法
-	internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
+	internal void EnsureConvertFrom(DbType dbType) => this.EnsureConvertFrom(dbType.AsType());
 	internal void EnsureConvertFrom(Type type)
 	{
 		var converter = this.Converter;
