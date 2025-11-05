@@ -45,20 +45,7 @@ public class DataRecordGetterCollection : IDataRecordGetterProvider, ICollection
 	#endregion
 
 	#region 公共方法
-	public void Add(object item)
-	{
-		if(item == null)
-			throw new ArgumentNullException(nameof(item));
-
-		var type = GetGetterType(item) ??
-			throw new ArgumentException($"The specified ‘{item.GetType().FullName}’ type does not implement the ‘{typeof(IDataRecordGetter<>)}’ interface.");
-
-		if(_getters.TryAdd(type, item))
-			return;
-
-		throw new ArgumentException($"The data record getter for the '{type.FullName}' type has already existed.");
-	}
-
+	public bool Add<T>(IDataRecordGetter<T> getter) => getter != null && _getters.TryAdd(typeof(T), getter);
 	public IDataRecordGetter<T> Get<T>() => _getters.TryGetValue(typeof(T), out var value) ? (IDataRecordGetter<T>)value : null;
 	public bool TryGet<T>(out IDataRecordGetter<T> result)
 	{
@@ -80,6 +67,20 @@ public class DataRecordGetterCollection : IDataRecordGetterProvider, ICollection
 	#endregion
 
 	#region 显式实现
+	void ICollection<object>.Add(object item)
+	{
+		if(item == null)
+			throw new ArgumentNullException(nameof(item));
+
+		var type = GetGetterType(item) ??
+			throw new ArgumentException($"The specified ‘{item.GetType().FullName}’ type does not implement the ‘{typeof(IDataRecordGetter<>)}’ interface.");
+
+		if(_getters.TryAdd(type, item))
+			return;
+
+		throw new ArgumentException($"The data record getter for the '{type.FullName}' type has already existed.");
+	}
+
 	bool ICollection<object>.Remove(object item)
 	{
 		var type = GetGetterType(item);
