@@ -45,8 +45,8 @@ public interface IDataDriver
 	/// <summary>获取支持的功能特性集。</summary>
 	FeatureCollection Features { get; }
 
-	/// <summary>获取数据记录读取器提供程序。</summary>
-	IDataRecordGetterProvider Getters { get; }
+	/// <summary>获取数据记录读取器。</summary>
+	IDataRecordGetter Getter { get; }
 
 	/// <summary>获取数据语句构建器。</summary>
 	Expressions.IStatementBuilder Builder { get; }

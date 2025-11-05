@@ -32,7 +32,7 @@ using System.Data;
 
 namespace Zongsoft.Data.Common;
 
-public interface IDataRecordGetter<out T>
+public interface IDataRecordGetter
 {
-	T GetValue(IDataRecord record, int ordinal);
+	T GetValue<T>(IDataRecord record, int ordinal);
 }

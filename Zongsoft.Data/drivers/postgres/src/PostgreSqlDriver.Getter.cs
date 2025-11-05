@@ -36,25 +36,30 @@ namespace Zongsoft.Data.PostgreSql;
 
 partial class PostgreSqlDriver
 {
-	private sealed class ByteGetter : IDataRecordGetter<byte>
+	private sealed class PostgreSqlGetter : IDataRecordGetter
 	{
-		public byte GetValue(IDataRecord record, int ordinal) => (byte)record.GetInt16(ordinal);
-	}
-	private sealed class SByteGetter : IDataRecordGetter<sbyte>
-	{
-		public sbyte GetValue(IDataRecord record, int ordinal) => (sbyte)record.GetInt16(ordinal);
-	}
-
-	private sealed class UInt16Getter : IDataRecordGetter<ushort>
-	{
-		public ushort GetValue(IDataRecord record, int ordinal) => (ushort)record.GetInt16(ordinal);
-	}
-	private sealed class UInt32Getter : IDataRecordGetter<uint>
-	{
-		public uint GetValue(IDataRecord record, int ordinal) => (uint)record.GetInt32(ordinal);
-	}
-	private sealed class UInt64Getter : IDataRecordGetter<ulong>
-	{
-		public ulong GetValue(IDataRecord record, int ordinal) => (ulong)record.GetInt64(ordinal);
+		public T GetValue<T>(IDataRecord record, int ordinal)
+		{
+			switch(Type.GetTypeCode(typeof(T)))
+			{
+				case TypeCode.Byte:
+					var valueByte = (byte)record.GetInt16(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<byte, T>(ref valueByte);
+				case TypeCode.SByte:
+					var valueSByte = (sbyte)record.GetInt16(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<sbyte, T>(ref valueSByte);
+				case TypeCode.UInt16:
+					var valueUInt16 = (ushort)record.GetInt16(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<ushort, T>(ref valueUInt16);
+				case TypeCode.UInt32:
+					var valueUInt32 = (uint)record.GetInt32(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<uint, T>(ref valueUInt32);
+				case TypeCode.UInt64:
+					var valueUInt64 = (ulong)record.GetInt64(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<ulong, T>(ref valueUInt64);
+				default:
+					return record.GetValue<T>(ordinal);
+			}
+		}
 	}
 }

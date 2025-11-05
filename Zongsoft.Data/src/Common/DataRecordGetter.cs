@@ -32,7 +32,17 @@ using System.Data;
 
 namespace Zongsoft.Data.Common;
 
-public class DataRecordGetter<T> : IDataRecordGetter<T>
+public class DataRecordGetter : IDataRecordGetter
 {
-	public T GetValue(IDataRecord record, int ordinal) => record.GetValue<T>(ordinal);
+	#region 单例字段
+	public static readonly DataRecordGetter Default = new();
+	#endregion
+
+	#region 私有构造
+	private DataRecordGetter() { }
+	#endregion
+
+	#region 公共方法
+	public T GetValue<T>(IDataRecord record, int ordinal) => record.GetValue<T>(ordinal);
+	#endregion
 }
