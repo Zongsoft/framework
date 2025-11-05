@@ -44,7 +44,7 @@ public partial class ModelPopulatorProvider : IDataPopulatorProvider
 	public static readonly ModelPopulatorProvider Instance = new();
 	#endregion
 
-	#region 构造函数
+	#region 私有构造
 	private ModelPopulatorProvider() { }
 	#endregion
 
@@ -56,80 +56,6 @@ public partial class ModelPopulatorProvider : IDataPopulatorProvider
 		         Zongsoft.Common.TypeExtension.IsEnumerable(type));
 	}
 	#endregion
-
-	#region 私有方法
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static bool IsLetterOrUnderscore(char chr)
-	{
-		return (chr >= 'A' && chr <= 'Z') ||
-		       (chr >= 'a' && chr <= 'z') || chr == '_';
-	}
-
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static void FillTokens(IDataEntity entity, ModelMemberTokenCollection members, ICollection<ModelPopulator.MemberMapping> tokens, string name, int ordinal)
-	{
-		int index, last = 0;
-		ModelPopulator.MemberMapping? token = null;
-
-		while((index = name.IndexOf('.', last + 1)) > 0)
-		{
-			token = FillToken(entity, members, tokens, name.Substring(GetLast(last), index - GetLast(last)));
-			last = index;
-
-			if(token == null)
-				return;
-
-			entity = token.Value.Entity;
-			members = ModelMemberTokenManager.GetMembers(token.Value.Member.Type);
-			tokens = token.Value.Children;
-		}
-
-		if(members.TryGetValue(name.Substring(GetLast(last)), out var member))
-		{
-			if(token.HasValue && entity.Properties[member.Name].IsPrimaryKey())
-			{
-				for(int i = 0; i < entity.Key.Length; i++)
-				{
-					if(string.Equals(entity.Key[i].Name, member.Name))
-					{
-						token.Value.Keys[i] = ordinal;
-						break;
-					}
-				}
-			}
-
-			if(entity.Properties.TryGetValue(member.Name, out var property) && property is IDataEntitySimplexProperty simplex)
-				member.EnsureConvertFrom(simplex.Type);
-
-			tokens.Add(new ModelPopulator.MemberMapping(entity, member, ordinal));
-		}
-	}
-
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static ModelPopulator.MemberMapping? FillToken(IDataEntity entity, ModelMemberTokenCollection members, ICollection<ModelPopulator.MemberMapping> tokens, string name)
-	{
-		foreach(var token in tokens)
-		{
-			if(string.Equals(token.Member.Name, name))
-				return token;
-		}
-
-		if(members.TryGetValue(name, out var member))
-		{
-			if(entity.Properties[name].IsSimplex)
-				throw new InvalidOperationException($"The '{name}' property of '{entity}' entity is not a complex(navigation) property.");
-
-			var token = new ModelPopulator.MemberMapping(((IDataEntityComplexProperty)entity.Properties[name]).Foreign, (ModelMemberToken)member);
-			tokens.Add(token);
-			return token;
-		}
-
-		return null;
-	}
-
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static int GetLast(int last) => last > 0 ? last + 1 : last;
-	#endregion
 }
 
 partial class ModelPopulatorProvider
@@ -140,7 +66,7 @@ partial class ModelPopulatorProvider
 	#endregion
 
 	#region 公共方法
-	public IDataPopulator GetPopulator(Type type, IDataRecord record, IDataEntity entity = null)
+	public IDataPopulator GetPopulator(IDataDriver driver, Type type, IDataRecord record, IDataEntity entity = null)
 	{
 		var key = new PopulatorKey(type, record, entity);
 
@@ -158,7 +84,7 @@ partial class ModelPopulatorProvider
 		}, record);
 	}
 
-	public IDataPopulator<T> GetPopulator<T>(IDataRecord record, IDataEntity entity = null)
+	public IDataPopulator<T> GetPopulator<T>(IDataDriver driver, IDataRecord record, IDataEntity entity = null)
 	{
 		var populator = new ModelPopulator<T>(entity);
 
@@ -180,6 +106,11 @@ partial class ModelPopulatorProvider
 	#endregion
 
 	#region 私有方法
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private static bool IsLetterOrUnderscore(char chr) =>
+		(chr >= 'A' && chr <= 'Z') ||
+		(chr >= 'a' && chr <= 'z') || chr == '_';
+
 	private static void Initialize<T>(ModelPopulator<T> populator, string name, int ordinal)
 	{
 		var index = name.IndexOf('.');

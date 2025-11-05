@@ -48,7 +48,7 @@ public class DictionaryPopulatorProvider : IDataPopulatorProvider
 		return Zongsoft.Common.TypeExtension.IsDictionary(type);
 	}
 
-	public IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null)
+	public IDataPopulator GetPopulator(IDataDriver driver, Type type, IDataRecord record, Metadata.IDataEntity entity = null)
 	{
 		var keys = new string[record.FieldCount];
 
@@ -61,7 +61,7 @@ public class DictionaryPopulatorProvider : IDataPopulatorProvider
 		return new DictionaryPopulator(type, keys);
 	}
 
-	public IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null)
+	public IDataPopulator<T> GetPopulator<T>(IDataDriver driver, IDataRecord record, Metadata.IDataEntity entity = null)
 	{
 		var keys = new string[record.FieldCount];
 

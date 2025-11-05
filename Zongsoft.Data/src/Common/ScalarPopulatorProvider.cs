@@ -53,8 +53,8 @@ public class ScalarPopulatorProvider : IDataPopulatorProvider
 
 	#region 公共方法
 	public bool CanPopulate(Type type) => Zongsoft.Common.TypeExtension.IsScalarType(type);
-	public IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null) => this.GetPopulator(typeof(T), record, entity) as IDataPopulator<T>;
-	public IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null) => Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
+	public IDataPopulator<T> GetPopulator<T>(IDataDriver driver, IDataRecord record, Metadata.IDataEntity entity = null) => this.GetPopulator(driver, typeof(T), record, entity) as IDataPopulator<T>;
+	public IDataPopulator GetPopulator(IDataDriver driver, Type type, IDataRecord record, Metadata.IDataEntity entity = null) => Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType) ?
 		this.GetPopulator(underlyingType, true) :
 		this.GetPopulator(type, false);
 	#endregion

@@ -38,7 +38,7 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.PostgreSql;
 
-public class PostgreSqlDriver : DataDriverBase
+public partial class PostgreSqlDriver : DataDriverBase
 {
 	#region 公共常量
 	/// <summary>驱动程序的标识：PostgreSql。</summary>
@@ -50,7 +50,14 @@ public class PostgreSqlDriver : DataDriverBase
 	#endregion
 
 	#region 私有构造
-	private PostgreSqlDriver() { }
+	private PostgreSqlDriver()
+	{
+		this.Getters.Add(new ByteGetter());
+		this.Getters.Add(new SByteGetter());
+		this.Getters.Add(new UInt16Getter());
+		this.Getters.Add(new UInt32Getter());
+		this.Getters.Add(new UInt64Getter());
+	}
 	#endregion
 
 	#region 公共属性

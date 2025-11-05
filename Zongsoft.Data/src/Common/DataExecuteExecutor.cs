@@ -107,23 +107,28 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 	private class ResultCollection<T> : IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable
 	{
 		#region 成员字段
+		private readonly IDataDriver _driver;
 		private readonly DbCommand _command;
 		#endregion
 
 		#region 构造函数
-		public ResultCollection(DataExecuteContext context, DbCommand command) { _command = command; }
+		public ResultCollection(DataExecuteContext context, DbCommand command)
+		{
+			_command = command;
+			_driver = context.Source.Driver;
+		}
 		#endregion
 
 		#region 遍历迭代
 		public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
 		{
-			var iterator = new ResultIterator(await _command.ExecuteReaderAsync(cancellation));
+			var iterator = new ResultIterator(_driver, await _command.ExecuteReaderAsync(cancellation));
 
 			while(await iterator.MoveNextAsync())
 				yield return iterator.Current;
 		}
 
-		public IEnumerator<T> GetEnumerator() => new ResultIterator(_command.ExecuteReader());
+		public IEnumerator<T> GetEnumerator() => new ResultIterator(_driver, _command.ExecuteReader());
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		#endregion
 
@@ -133,10 +138,10 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 			private readonly DbDataReader _reader;
 			private readonly IDataPopulator _populator;
 
-			public ResultIterator(DbDataReader reader)
+			public ResultIterator(IDataDriver driver, DbDataReader reader)
 			{
 				_reader = reader;
-				_populator = DataEnvironment.Populators.GetPopulator(typeof(T), _reader);
+				_populator = DataEnvironment.Populators.GetPopulator(driver, typeof(T), _reader);
 			}
 
 			public T Current { get => _populator.Populate<T>(_reader); }

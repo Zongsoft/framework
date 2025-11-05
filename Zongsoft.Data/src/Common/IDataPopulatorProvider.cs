@@ -43,15 +43,17 @@ public interface IDataPopulatorProvider
 	bool CanPopulate(Type type);
 
 	/// <summary>获取或创建一个数据实体装配器。</summary>
+	/// <param name="driver">指定的数据驱动器。</param>
 	/// <param name="record">指定要获取或构建的数据记录。</param>
 	/// <param name="entity">指定组装的实体元素。</param>
 	/// <returns>返回的数据实体装配器对象。</returns>
-	IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null);
+	IDataPopulator<T> GetPopulator<T>(IDataDriver driver, IDataRecord record, Metadata.IDataEntity entity = null);
 
 	/// <summary>获取或创建一个数据实体装配器。</summary>
+	/// <param name="driver">指定的数据驱动器。</param>
 	/// <param name="type">指定要获取或创建的装配元素类型。</param>
 	/// <param name="record">指定要获取或构建的数据记录。</param>
 	/// <param name="entity">指定组装的实体元素。</param>
 	/// <returns>返回的数据实体装配器对象。</returns>
-	IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null);
+	IDataPopulator GetPopulator(IDataDriver driver, Type type, IDataRecord record, Metadata.IDataEntity entity = null);
 }
