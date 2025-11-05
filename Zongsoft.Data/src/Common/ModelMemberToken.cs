@@ -41,6 +41,7 @@ public readonly struct ModelMemberToken : IEquatable<ModelMemberToken>
 	#endregion
 
 	#region 私有变量
+	private readonly IDataDriver _driver;
 	private readonly MemberInfo _member;
 	private readonly SetValueDelegate _setter;
 	private readonly ModelMemberEmitter.Populator _populate;
@@ -53,28 +54,30 @@ public readonly struct ModelMemberToken : IEquatable<ModelMemberToken>
 	#endregion
 
 	#region 构造函数
-	public ModelMemberToken(FieldInfo field, TypeConverter converter, ModelMemberEmitter.Populator populate)
+	public ModelMemberToken(IDataDriver driver, FieldInfo field)
 	{
+		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
 		_member = field ?? throw new ArgumentNullException(nameof(field));
 
 		this.Name = field.Name;
 		this.Type = field.FieldType;
-		this.Converter = converter;
+		this.Converter = Utility.GetConverter(field);
 
 		_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
-		_populate = populate ?? throw new ArgumentNullException(nameof(populate));
+		_populate = ModelMemberEmitter.GenerateFieldSetter(_driver, field, this.Converter);
 	}
 
-	public ModelMemberToken(PropertyInfo property, TypeConverter converter, ModelMemberEmitter.Populator populate)
+	public ModelMemberToken(IDataDriver driver, PropertyInfo property)
 	{
+		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
 		_member = property ?? throw new ArgumentNullException(nameof(property));
 
 		this.Name = property.Name;
 		this.Type = property.PropertyType;
-		this.Converter = converter;
+		this.Converter = Utility.GetConverter(property);
 
 		_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
-		_populate = populate ?? throw new ArgumentNullException(nameof(populate));
+		_populate = ModelMemberEmitter.GeneratePropertySetter(_driver, property, this.Converter);
 	}
 	#endregion
 
@@ -115,6 +118,7 @@ public readonly struct ModelMemberToken<T> : IEquatable<ModelMemberToken<T>>
 	#endregion
 
 	#region 私有变量
+	private readonly IDataDriver _driver;
 	private readonly MemberInfo _member;
 	private readonly SetValueDelegate _setter;
 	private readonly ModelMemberEmitter.Populator<T> _populate;
@@ -127,28 +131,30 @@ public readonly struct ModelMemberToken<T> : IEquatable<ModelMemberToken<T>>
 	#endregion
 
 	#region 构造函数
-	public ModelMemberToken(FieldInfo field, TypeConverter converter, ModelMemberEmitter.Populator<T> populate)
+	public ModelMemberToken(IDataDriver driver, FieldInfo field)
 	{
+		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
 		_member = field ?? throw new ArgumentNullException(nameof(field));
 
 		this.Name = field.Name;
 		this.Type = field.FieldType;
-		this.Converter = converter;
+		this.Converter = Utility.GetConverter(field);
 
 		_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
-		_populate = populate ?? throw new ArgumentNullException(nameof(populate));
+		_populate = ModelMemberEmitter.GenerateFieldSetter<T>(_driver, field, this.Converter);
 	}
 
-	public ModelMemberToken(PropertyInfo property, TypeConverter converter, ModelMemberEmitter.Populator<T> populate)
+	public ModelMemberToken(IDataDriver driver, PropertyInfo property)
 	{
+		_driver = driver ?? throw new ArgumentNullException(nameof(driver));
 		_member = property ?? throw new ArgumentNullException(nameof(property));
 
 		this.Name = property.Name;
 		this.Type = property.PropertyType;
-		this.Converter = converter;
+		this.Converter = Utility.GetConverter(property);
 
 		_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
-		_populate = populate ?? throw new ArgumentNullException(nameof(populate));
+		_populate = ModelMemberEmitter.GeneratePropertySetter<T>(_driver, property, this.Converter);
 	}
 	#endregion
 

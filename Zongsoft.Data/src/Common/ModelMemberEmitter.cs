@@ -50,9 +50,9 @@ public static class ModelMemberEmitter
 	#endregion
 
 	#region 公共方法
-	public static Populator GenerateFieldSetter(FieldInfo field, TypeConverter converter)
+	public static Populator GenerateFieldSetter(IDataDriver driver, FieldInfo field, TypeConverter converter)
 	{
-		var method = new DynamicMethod(field.DeclaringType.FullName + "$Set" + field.Name, null,
+		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
 			[typeof(object).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
 			typeof(ModelMemberEmitter), true);
 
@@ -137,9 +137,9 @@ public static class ModelMemberEmitter
 		return (Populator)method.CreateDelegate(typeof(Populator));
 	}
 
-	public static Populator<TModel> GenerateFieldSetter<TModel>(FieldInfo field, TypeConverter converter)
+	public static Populator<TModel> GenerateFieldSetter<TModel>(IDataDriver driver, FieldInfo field, TypeConverter converter)
 	{
-		var method = new DynamicMethod(field.DeclaringType.FullName + "$Set" + field.Name, null,
+		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
 			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
 			typeof(ModelMemberEmitter), true);
 
@@ -203,9 +203,9 @@ public static class ModelMemberEmitter
 		return (Populator<TModel>)method.CreateDelegate(typeof(Populator<TModel>));
 	}
 
-	public static Populator GeneratePropertySetter(PropertyInfo property, TypeConverter converter)
+	public static Populator GeneratePropertySetter(IDataDriver driver, PropertyInfo property, TypeConverter converter)
 	{
-		var method = new DynamicMethod(property.DeclaringType.FullName + "$Set" + property.Name, null,
+		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", null,
 			[typeof(object).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
 			typeof(ModelMemberEmitter), true);
 
@@ -290,9 +290,9 @@ public static class ModelMemberEmitter
 		return (Populator)method.CreateDelegate(typeof(Populator));
 	}
 
-	public static Populator<TModel> GeneratePropertySetter<TModel>(PropertyInfo property, TypeConverter converter)
+	public static Populator<TModel> GeneratePropertySetter<TModel>(IDataDriver driver, PropertyInfo property, TypeConverter converter)
 	{
-		var method = new DynamicMethod(property.DeclaringType.FullName + "$Set" + property.Name, null,
+		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", null,
 			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
 			typeof(ModelMemberEmitter), true);
 

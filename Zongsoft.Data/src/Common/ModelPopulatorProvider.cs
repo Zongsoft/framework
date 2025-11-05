@@ -68,19 +68,20 @@ partial class ModelPopulatorProvider
 	#region 公共方法
 	public IDataPopulator GetPopulator(IDataDriver driver, Type type, IDataRecord record, IDataEntity entity = null)
 	{
-		var key = new PopulatorKey(type, record, entity);
+		var key = new PopulatorKey(driver, type, record, entity);
 
 		return _populators.GetOrAdd(key, (key, record) =>
 		{
 			var method = PopulatorTemplate.MakeGenericMethod(key.ModelType);
 			var invoker = method.CreateDelegate(typeof(Func<,,>)
 				.MakeGenericType(
+					typeof(IDataDriver),
 					typeof(IDataRecord),
 					typeof(IDataEntity),
 					typeof(IDataPopulator<>).MakeGenericType(key.ModelType)
 				), this);
 
-			return (IDataPopulator)invoker.DynamicInvoke(record, key.Entity);
+			return (IDataPopulator)invoker.DynamicInvoke(key.Driver, record, key.Entity);
 		}, record);
 	}
 
@@ -98,7 +99,7 @@ partial class ModelPopulatorProvider
 				continue;
 
 			//初始化模型组装器
-			Initialize(populator, name, ordinal);
+			Initialize(driver, populator, name, ordinal);
 		}
 
 		return populator;
@@ -111,16 +112,16 @@ partial class ModelPopulatorProvider
 		(chr >= 'A' && chr <= 'Z') ||
 		(chr >= 'a' && chr <= 'z') || chr == '_';
 
-	private static void Initialize<T>(ModelPopulator<T> populator, string name, int ordinal)
+	private static void Initialize<T>(IDataDriver driver, ModelPopulator<T> populator, string name, int ordinal)
 	{
 		var index = name.IndexOf('.');
-		var members = ModelMemberTokenManager.GetMembers<T>();
+		var members = ModelMemberTokenManager.GetMembers<T>(driver);
 
 		if(index > 0 && index < name.Length - 1)
 		{
 			if(members.TryGetValue(name.AsSpan()[..index].ToString(), out var member))
 			{
-				var subsidiary = GetAssociativePopulator(populator, member, name.AsSpan()[(index + 1)..], ordinal);
+				var subsidiary = GetAssociativePopulator(driver, populator, member, name.AsSpan()[(index + 1)..], ordinal);
 
 				if(subsidiary != null && !populator.Members.Contains(member.Name))
 					populator.Members.Add(new ModelPopulator<T>.MemberMapping(member, subsidiary));
@@ -135,7 +136,7 @@ partial class ModelPopulatorProvider
 		}
 	}
 
-	private static IDataPopulator GetAssociativePopulator<T>(ModelPopulator<T> populator, ModelMemberToken<T> member, ReadOnlySpan<char> children, int ordinal)
+	private static IDataPopulator GetAssociativePopulator<T>(IDataDriver driver, ModelPopulator<T> populator, ModelMemberToken<T> member, ReadOnlySpan<char> children, int ordinal)
 	{
 		IDataPopulator result;
 
@@ -155,29 +156,31 @@ partial class ModelPopulatorProvider
 		}
 
 		if(!children.IsEmpty)
-			DoInitialize(result, children.ToString(), ordinal);
+			DoInitialize(driver, result, children.ToString(), ordinal);
 
 		return result;
 	}
 
-	private static void DoInitialize(object populator, string name, int ordinal)
+	private static void DoInitialize(IDataDriver driver, object populator, string name, int ordinal)
 	{
 		var type = populator.GetType().GetGenericArguments()[0];
 		var method = typeof(ModelPopulatorProvider).GetMethod(nameof(Initialize), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(type);
-		method.Invoke(null, [populator, name, ordinal]);
+		method.Invoke(null, [driver, populator, name, ordinal]);
 	}
 	#endregion
 
 	#region 嵌套结构
 	private readonly struct PopulatorKey : IEquatable<PopulatorKey>
 	{
+		public readonly IDataDriver Driver;
 		public readonly Type ModelType;
 		public readonly IDataEntity Entity;
 		public readonly int Record;
 		public readonly string[] Fields;
 
-		public PopulatorKey(Type modelType, IDataRecord record, IDataEntity entity)
+		public PopulatorKey(IDataDriver driver, Type modelType, IDataRecord record, IDataEntity entity)
 		{
+			this.Driver = driver;
 			this.ModelType = modelType;
 			this.Entity = entity;
 			this.Fields = new string[record.FieldCount];
@@ -193,13 +196,14 @@ partial class ModelPopulatorProvider
 		}
 
 		public bool Equals(PopulatorKey other) =>
+			this.Driver == other.Driver &&
 			this.ModelType == other.ModelType &&
 			object.Equals(this.Entity, other.Entity) &&
 			this.Record == other.Record &&
 			System.Linq.Enumerable.SequenceEqual(this.Fields, other.Fields);
 
 		public override bool Equals(object obj) => obj is PopulatorKey other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.ModelType, this.Entity, this.Record);
+		public override int GetHashCode() => HashCode.Combine(this.Driver, this.ModelType, this.Entity, this.Record);
 	}
 	#endregion
 }

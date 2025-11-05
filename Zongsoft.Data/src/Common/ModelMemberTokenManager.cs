@@ -42,7 +42,7 @@ public static partial class ModelMemberTokenManager
 	#endregion
 
 	#region 公共方法
-	public static ModelMemberTokenCollection GetMembers(Type type)
+	public static ModelMemberTokenCollection GetMembers(IDataDriver driver, Type type)
 	{
 		if(type == null)
 			throw new ArgumentNullException(nameof(type));
@@ -51,12 +51,12 @@ public static partial class ModelMemberTokenManager
 		if(Zongsoft.Common.TypeExtension.IsScalarType(type))
 			return null;
 
-		return _cache.GetOrAdd(type, key => Create(key));
+		return _cache.GetOrAdd(type, (key, driver) => Create(driver, key), driver);
 	}
 	#endregion
 
 	#region 私有方法
-	private static ModelMemberTokenCollection Create(Type type)
+	private static ModelMemberTokenCollection Create(IDataDriver driver, Type type)
 	{
 		//如果是字典则返回空
 		if(Zongsoft.Common.TypeExtension.IsDictionary(type))
@@ -70,7 +70,7 @@ public static partial class ModelMemberTokenManager
 
 		foreach(var member in members)
 		{
-			var token = CreateMemberToken(member);
+			var token = CreateMemberToken(driver, member);
 
 			if(token != null)
 				tokens.Add(token.Value);
@@ -79,7 +79,7 @@ public static partial class ModelMemberTokenManager
 		return tokens;
 	}
 
-	private static ModelMemberToken? CreateMemberToken(MemberInfo member)
+	private static ModelMemberToken? CreateMemberToken(IDataDriver driver, MemberInfo member)
 	{
 		switch(member.MemberType)
 		{
@@ -87,20 +87,14 @@ public static partial class ModelMemberTokenManager
 				var field = (FieldInfo)member;
 
 				if(!field.IsInitOnly)
-				{
-					var converter = Utility.GetConverter(member);
-					return new ModelMemberToken(field, converter, ModelMemberEmitter.GenerateFieldSetter(field, converter));
-				}
+					return new ModelMemberToken(driver, field);
 
 				break;
 			case MemberTypes.Property:
 				var property = (PropertyInfo)member;
 
 				if(property.CanRead && property.CanWrite)
-				{
-					var converter = Utility.GetConverter(member);
-					return new ModelMemberToken(property, converter, ModelMemberEmitter.GeneratePropertySetter(property, converter));
-				}
+					return new ModelMemberToken(driver, property);
 
 				break;
 		}
@@ -137,18 +131,18 @@ partial class ModelMemberTokenManager
 	#endregion
 
 	#region 公共方法
-	public static ModelMemberTokenCollection<T> GetMembers<T>()
+	public static ModelMemberTokenCollection<T> GetMembers<T>(IDataDriver driver)
 	{
 		//如果指定的类型是单值类型则返回空
 		if(Zongsoft.Common.TypeExtension.IsScalarType(typeof(T)))
 			return null;
 
-		return (ModelMemberTokenCollection<T>)_generics.GetOrAdd(typeof(T), _ => Create<T>());
+		return (ModelMemberTokenCollection<T>)_generics.GetOrAdd(typeof(T), _ => Create<T>(driver));
 	}
 	#endregion
 
 	#region 私有方法
-	private static ModelMemberTokenCollection<T> Create<T>()
+	private static ModelMemberTokenCollection<T> Create<T>(IDataDriver driver)
 	{
 		var type = typeof(T);
 
@@ -164,7 +158,7 @@ partial class ModelMemberTokenManager
 
 		foreach(var member in members)
 		{
-			var token = CreateMemberToken<T>(member);
+			var token = CreateMemberToken<T>(driver, member);
 
 			if(token != null)
 				tokens.Add(token.Value);
@@ -173,7 +167,7 @@ partial class ModelMemberTokenManager
 		return tokens;
 	}
 
-	private static ModelMemberToken<T>? CreateMemberToken<T>(MemberInfo member)
+	private static ModelMemberToken<T>? CreateMemberToken<T>(IDataDriver driver, MemberInfo member)
 	{
 		switch(member.MemberType)
 		{
@@ -181,20 +175,14 @@ partial class ModelMemberTokenManager
 				var field = (FieldInfo)member;
 
 				if(!field.IsInitOnly)
-				{
-					var converter = Utility.GetConverter(member);
-					return new ModelMemberToken<T>(field, converter, ModelMemberEmitter.GenerateFieldSetter<T>(field, converter));
-				}
+					return new ModelMemberToken<T>(driver, field);
 
 				break;
 			case MemberTypes.Property:
 				var property = (PropertyInfo)member;
 
 				if(property.CanRead && property.CanWrite)
-				{
-					var converter = Utility.GetConverter(member);
-					return new ModelMemberToken<T>(property, converter, ModelMemberEmitter.GeneratePropertySetter<T>(property, converter));
-				}
+					return new ModelMemberToken<T>(driver, property);
 
 				break;
 		}
