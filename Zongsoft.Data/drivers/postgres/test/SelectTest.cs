@@ -45,7 +45,7 @@ public class SelectTest(DatabaseFixture database)
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
-			model.Name = "Admin";
+			model.Name = "Popeye";
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
@@ -65,7 +65,7 @@ public class SelectTest(DatabaseFixture database)
 		var user = enumerator.Current;
 
 		Assert.NotNull(user);
-		Assert.Equal("Admin", user.Name);
+		Assert.Equal("Popeye", user.Name);
 		Assert.NotNull(user.Parents);
 
 		var parent = user.Parents.FirstOrDefault();
@@ -84,7 +84,7 @@ public class SelectTest(DatabaseFixture database)
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
-			model.Name = "Admin";
+			model.Name = "Popeye";
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
@@ -104,7 +104,7 @@ public class SelectTest(DatabaseFixture database)
 		var user = enumerator.Current;
 
 		Assert.NotNull(user);
-		Assert.Equal("Admin", user.Name);
+		Assert.Equal("Popeye", user.Name);
 		Assert.NotNull(user.Parents);
 
 		var parent = user.Parents.FirstOrDefault();
@@ -125,7 +125,7 @@ public class SelectTest(DatabaseFixture database)
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
-			model.Name = "Admin";
+			model.Name = "Popeye";
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
@@ -145,7 +145,7 @@ public class SelectTest(DatabaseFixture database)
 		var user = enumerator.Current;
 
 		Assert.NotNull(user);
-		Assert.Equal("Admin", user.Name);
+		Assert.Equal("Popeye", user.Name);
 		Assert.NotNull(user.Roles);
 
 		var role = user.Roles.FirstOrDefault();
