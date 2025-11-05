@@ -28,24 +28,21 @@
  */
 
 using System;
+using System.Data;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common;
 
 [System.ComponentModel.DefaultProperty(nameof(Providers))]
-public class DataPopulatorProviderFactory : IDataPopulatorProviderFactory
+public sealed class DataPopulatorProviderManager : IEnumerable<IDataPopulatorProvider>
 {
-	#region 单例模式
-	public static readonly DataPopulatorProviderFactory Instance = new();
-	#endregion
-
 	#region 成员字段
 	private readonly List<IDataPopulatorProvider> _providers;
 	#endregion
 
-	#region 构造函数
-	private DataPopulatorProviderFactory()
+	#region 内部构造
+	internal DataPopulatorProviderManager()
 	{
 		_providers = [
 			ModelPopulatorProvider.Instance,
@@ -74,6 +71,18 @@ public class DataPopulatorProviderFactory : IDataPopulatorProviderFactory
 		}
 
 		throw new DataException($"No found data populator provider for the '{type.FullName}' type.");
+	}
+
+	public IDataPopulator<T> GetPopulator<T>(IDataRecord record, Metadata.IDataEntity entity = null)
+	{
+		var provider = this.GetProvider<T>();
+		return provider.GetPopulator<T>(record, entity);
+	}
+
+	public IDataPopulator GetPopulator(Type type, IDataRecord record, Metadata.IDataEntity entity = null)
+	{
+		var provider = this.GetProvider(type);
+		return provider.GetPopulator(type, record, entity);
 	}
 	#endregion
 

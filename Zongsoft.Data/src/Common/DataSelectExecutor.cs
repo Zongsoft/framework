@@ -359,9 +359,9 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 				_slaves = GetSlaves(_context, _statement, _reader);
 
 				if(Zongsoft.Common.TypeExtension.IsNullable(typeof(T), out var underlyingType))
-					_populator = DataEnvironment.Populators.GetProvider(underlyingType).GetPopulator(underlyingType, _reader, entity);
+					_populator = DataEnvironment.Populators.GetPopulator(underlyingType, _reader, entity);
 				else
-					_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator(typeof(T), _reader, entity);
+					_populator = DataEnvironment.Populators.GetPopulator(typeof(T), _reader, entity);
 			}
 			#endregion
 

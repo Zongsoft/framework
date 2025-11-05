@@ -136,7 +136,7 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 			public ResultIterator(DbDataReader reader)
 			{
 				_reader = reader;
-				_populator = DataEnvironment.Populators.GetProvider(typeof(T)).GetPopulator(typeof(T), _reader);
+				_populator = DataEnvironment.Populators.GetPopulator(typeof(T), _reader);
 			}
 
 			public T Current { get => _populator.Populate<T>(_reader); }
