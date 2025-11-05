@@ -45,12 +45,16 @@ public abstract class DataDriverBase : IDataDriver
 
 		//创建功能特性集合
 		this.Features = new FeatureCollection();
+		//创建数据记录读取器集合
+		this.Getters = new DataRecordGetterCollection();
 	}
 	#endregion
 
 	#region 公共属性
 	public abstract string Name { get; }
 	public FeatureCollection Features { get; }
+	public DataRecordGetterCollection Getters { get; }
+	IDataRecordGetterProvider IDataDriver.Getters { get; }
 	public Expressions.StatementSlotter Slotter { get; }
 	public Expressions.ExpressionVisitorBase Visitor { get; }
 	public abstract Expressions.IStatementBuilder Builder { get; }
