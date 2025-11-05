@@ -208,8 +208,14 @@ public sealed partial class DataType : IEquatable<DataType>
 	#endregion
 
 	#region 符号重载
-	public static bool operator ==(DataType left, DataType right) => left.Equals(right);
 	public static bool operator !=(DataType left, DataType right) => !(left == right);
+	public static bool operator ==(DataType left, DataType right)
+	{
+		if(left is null)
+			return right is null;
+
+		return left.Equals(right);
+	}
 
 	public static implicit operator System.Data.DbType(DataType type) => type.DbType;
 	public static implicit operator DataType(System.Data.DbType type) => type switch
