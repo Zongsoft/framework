@@ -5,6 +5,11 @@ metadata:
   labels:
     app: zongsoft.data
 spec:
+  volumes:
+    - name: init-script
+      hostPath:
+        path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/postgres/test/script/init.sql
+        type: File
   containers:
     - name: postgres
       image: postgres:18.0
@@ -22,9 +27,3 @@ spec:
       volumeMounts:
         - name: init-script
           mountPath: /docker-entrypoint-initdb.d/init.sql
-
-  volumes:
-    - name: init-script
-      hostPath:
-        path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/postgres/test/script/init.sql
-        type: File

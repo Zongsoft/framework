@@ -7,7 +7,7 @@ namespace Zongsoft.Data.PostgreSql.Tests;
 public class DatabaseFixture : IDisposable
 {
 	#region 常量定义
-	private const string CONNECTION_STRING = @"server=127.0.0.1;database=zongsoft;username=postgres;password=postgres;";
+	private const string CONNECTION_STRING = @"server=127.0.0.1;database=zongsoft;username=program;password=xxxxxx;";
 	#endregion
 
 	#region 私有变量

@@ -60,6 +60,7 @@ public class ScalarPopulatorProvider : IDataPopulatorProvider
 	#endregion
 
 	#region 私有方法
+	public IDataPopulator<T> GetPopulator<T>(bool nullable) => this.GetPopulator(typeof(T), nullable) as IDataPopulator<T>;
 	private IDataPopulator GetPopulator(Type type, bool nullable)
 	{
 		switch(Type.GetTypeCode(type))
@@ -102,6 +103,15 @@ public class ScalarPopulatorProvider : IDataPopulatorProvider
 		if(type == typeof(DateTimeOffset))
 			return nullable ? NullablePopulator.DateTimeOffset : ScalarPopulator.DateTimeOffset;
 
+		if(type == typeof(DateOnly))
+			return nullable ? NullablePopulator.Date : ScalarPopulator.Date;
+
+		if(type == typeof(TimeOnly))
+			return nullable ? NullablePopulator.Time : ScalarPopulator.Time;
+
+		if(type == typeof(TimeSpan))
+			return nullable ? NullablePopulator.TimeSpan : ScalarPopulator.TimeSpan;
+
 		if(type == typeof(byte[]))
 			return nullable ? NullablePopulator.Bytes : ScalarPopulator.Bytes;
 
@@ -109,11 +119,6 @@ public class ScalarPopulatorProvider : IDataPopulatorProvider
 			return nullable ? NullablePopulator.Chars : ScalarPopulator.Chars;
 
 		return _converters.GetOrAdd(type, type => (IDataPopulator)Activator.CreateInstance(typeof(ConverterPopulater<>).MakeGenericType(type)));
-	}
-
-	public IDataPopulator<T> GetPopulator<T>(bool nullable)
-	{
-		return this.GetPopulator(typeof(T), nullable) as IDataPopulator<T>;
 	}
 	#endregion
 

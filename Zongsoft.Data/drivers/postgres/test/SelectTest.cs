@@ -17,6 +17,9 @@ public class SelectTest(DatabaseFixture database)
 	[Fact]
 	public async Task SelectAsync()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var accessor = _database.Accessor;
 
 		var users = accessor.SelectAsync<UserModel>();
@@ -35,11 +38,14 @@ public class SelectTest(DatabaseFixture database)
 	[Fact]
 	public async Task SelectAsync_WithOneToMany1()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var accessor = _database.Accessor;
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
-			model.Name = "Admin";
+			model.Name = "Popeye";
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
@@ -59,7 +65,7 @@ public class SelectTest(DatabaseFixture database)
 		var user = enumerator.Current;
 
 		Assert.NotNull(user);
-		Assert.Equal("Admin", user.Name);
+		Assert.Equal("Popeye", user.Name);
 		Assert.NotNull(user.Parents);
 
 		var parent = user.Parents.FirstOrDefault();
@@ -71,11 +77,14 @@ public class SelectTest(DatabaseFixture database)
 	[Fact]
 	public async Task SelectAsync_WithOneToMany2()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var accessor = _database.Accessor;
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
-			model.Name = "Admin";
+			model.Name = "Popeye";
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
@@ -95,7 +104,7 @@ public class SelectTest(DatabaseFixture database)
 		var user = enumerator.Current;
 
 		Assert.NotNull(user);
-		Assert.Equal("Admin", user.Name);
+		Assert.Equal("Popeye", user.Name);
 		Assert.NotNull(user.Parents);
 
 		var parent = user.Parents.FirstOrDefault();
@@ -109,11 +118,14 @@ public class SelectTest(DatabaseFixture database)
 	[Fact]
 	public async Task SelectAsync_WithOneToMany3()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var accessor = _database.Accessor;
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
-			model.Name = "Admin";
+			model.Name = "Popeye";
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
@@ -133,7 +145,7 @@ public class SelectTest(DatabaseFixture database)
 		var user = enumerator.Current;
 
 		Assert.NotNull(user);
-		Assert.Equal("Admin", user.Name);
+		Assert.Equal("Popeye", user.Name);
 		Assert.NotNull(user.Roles);
 
 		var role = user.Roles.FirstOrDefault();

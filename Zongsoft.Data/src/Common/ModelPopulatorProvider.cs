@@ -55,31 +55,6 @@ public partial class ModelPopulatorProvider : IDataPopulatorProvider
 		         Zongsoft.Common.TypeExtension.IsScalarType(type) ||
 		         Zongsoft.Common.TypeExtension.IsEnumerable(type));
 	}
-
-	[Obsolete]
-	public IDataPopulator GetPopulatorObsolete(Type type, IDataRecord reader, IDataEntity entity = null)
-	{
-		var members = Zongsoft.Common.TypeExtension.IsNullable(type, out var underlying) ?
-			ModelMemberTokenManager.GetMembers(underlying) :
-			ModelMemberTokenManager.GetMembers(type);
-
-		var tokens = new List<ModelPopulator.MemberMapping>(reader.FieldCount);
-
-		for(int ordinal = 0; ordinal < reader.FieldCount; ordinal++)
-		{
-			//获取当前列对应的属性名（注意：由查询引擎确保返回的列名就是属性名）
-			var name = reader.GetName(ordinal);
-
-			//如果属性名的首字符不是字母或下划线则忽略当前列
-			if(!IsLetterOrUnderscore(name[0]))
-				continue;
-
-			//构建当前属性的层级结构
-			FillTokens(entity, members, tokens, name, ordinal);
-		}
-
-		return new ModelPopulator(underlying ?? type, tokens);
-	}
 	#endregion
 
 	#region 私有方法
@@ -157,10 +132,10 @@ public partial class ModelPopulatorProvider : IDataPopulatorProvider
 	#endregion
 }
 
-public partial class ModelPopulatorProvider
+partial class ModelPopulatorProvider
 {
 	#region 静态变量
-	private static readonly MethodInfo PopulatorTemplate = typeof(ModelPopulatorProvider).GetMethod(nameof(ModelPopulatorProvider.GetPopulator), 1, BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(IDataRecord), typeof(IDataEntity) }, null);
+	private static readonly MethodInfo PopulatorTemplate = typeof(ModelPopulatorProvider).GetMethod(nameof(ModelPopulatorProvider.GetPopulator), 1, BindingFlags.Public | BindingFlags.Instance, null, [typeof(IDataRecord), typeof(IDataEntity)], null);
 	private static readonly ConcurrentDictionary<PopulatorKey, IDataPopulator> _populators = new ();
 	#endregion
 
@@ -172,7 +147,13 @@ public partial class ModelPopulatorProvider
 		return _populators.GetOrAdd(key, (key, record) =>
 		{
 			var method = PopulatorTemplate.MakeGenericMethod(key.ModelType);
-			var invoker = method.CreateDelegate(typeof(Func<,,>).MakeGenericType(typeof(IDataRecord), typeof(IDataEntity), typeof(IDataPopulator<>).MakeGenericType(key.ModelType)), this);
+			var invoker = method.CreateDelegate(typeof(Func<,,>)
+				.MakeGenericType(
+					typeof(IDataRecord),
+					typeof(IDataEntity),
+					typeof(IDataPopulator<>).MakeGenericType(key.ModelType)
+				), this);
+
 			return (IDataPopulator)invoker.DynamicInvoke(record, key.Entity);
 		}, record);
 	}
@@ -206,9 +187,9 @@ public partial class ModelPopulatorProvider
 
 		if(index > 0 && index < name.Length - 1)
 		{
-			if(members.TryGetValue(name.AsSpan().Slice(0, index).ToString(), out var member))
+			if(members.TryGetValue(name.AsSpan()[..index].ToString(), out var member))
 			{
-				var subsidiary = GetAssociativePopulator(populator, member, name.AsSpan().Slice(index + 1), ordinal);
+				var subsidiary = GetAssociativePopulator(populator, member, name.AsSpan()[(index + 1)..], ordinal);
 
 				if(subsidiary != null && !populator.Members.Contains(member.Name))
 					populator.Members.Add(new ModelPopulator<T>.MemberMapping(member, subsidiary));
@@ -230,7 +211,7 @@ public partial class ModelPopulatorProvider
 		if(populator.Members.TryGetValue(member.Name, out var m))
 			result = m.Populator;
 		else if(populator.Entity is null)
-			result = (IDataPopulator)Activator.CreateInstance(typeof(ModelPopulator<>).MakeGenericType(member.Type), new object[] { null });
+			result = (IDataPopulator)Activator.CreateInstance(typeof(ModelPopulator<>).MakeGenericType(member.Type), [null]);
 		else
 		{
 			if(!populator.Entity.Properties.TryGetValue(member.Name, out var property))
@@ -239,7 +220,7 @@ public partial class ModelPopulatorProvider
 			if(property.IsSimplex)
 				throw new DataException($"The '{member.Name}' property of '{populator.Entity}' entity is not a complex(navigation) property.");
 
-			result = (IDataPopulator)Activator.CreateInstance(typeof(ModelPopulator<>).MakeGenericType(member.Type), new object[] { ((IDataEntityComplexProperty)property).Foreign });
+			result = (IDataPopulator)Activator.CreateInstance(typeof(ModelPopulator<>).MakeGenericType(member.Type), [((IDataEntityComplexProperty)property).Foreign]);
 		}
 
 		if(!children.IsEmpty)
@@ -252,7 +233,7 @@ public partial class ModelPopulatorProvider
 	{
 		var type = populator.GetType().GetGenericArguments()[0];
 		var method = typeof(ModelPopulatorProvider).GetMethod(nameof(Initialize), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(type);
-		method.Invoke(null, new object[] { populator, name, ordinal });
+		method.Invoke(null, [populator, name, ordinal]);
 	}
 	#endregion
 

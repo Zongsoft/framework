@@ -40,6 +40,9 @@ public static class ScalarPopulator
 	public static readonly IDataPopulator String = new ValuePopulator<string>();
 	public static readonly IDataPopulator Boolean = new ValuePopulator<bool>();
 	public static readonly IDataPopulator DateTime = new ValuePopulator<DateTime>();
+	public static readonly IDataPopulator Date = new ValuePopulator<DateOnly>();
+	public static readonly IDataPopulator Time = new ValuePopulator<TimeOnly>();
+	public static readonly IDataPopulator TimeSpan = new ValuePopulator<TimeSpan>();
 	public static readonly IDataPopulator DateTimeOffset = new ValuePopulator<DateTimeOffset>();
 
 	public static readonly IDataPopulator Byte = new ValuePopulator<byte>();
@@ -78,6 +81,9 @@ public static class NullablePopulator
 	public static readonly IDataPopulator String = new ValuePopulator<string>();
 	public static readonly IDataPopulator Boolean = new ValuePopulator<bool>();
 	public static readonly IDataPopulator DateTime = new ValuePopulator<DateTime>();
+	public static readonly IDataPopulator Date = new ValuePopulator<DateOnly>();
+	public static readonly IDataPopulator Time = new ValuePopulator<TimeOnly>();
+	public static readonly IDataPopulator TimeSpan = new ValuePopulator<TimeSpan>();
 	public static readonly IDataPopulator DateTimeOffset = new ValuePopulator<DateTimeOffset>();
 
 	public static readonly IDataPopulator Byte = new ValuePopulator<byte>();

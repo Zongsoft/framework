@@ -217,9 +217,16 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 				{
 					foreach(var constraint in complex.Constraints)
 					{
+						var actor = constraint.Actor switch
+						{
+							DataAssociationConstraintActor.Principal => statement.Table,
+							DataAssociationConstraintActor.Foreign => slave.Table,
+							_ => throw new DataException($"The constraint actor '{constraint.Actor}' is an invalid value.")
+						};
+
 						slave.Where = Expression.AndAlso(slave.Where,
 							Expression.Equal(
-								table.CreateField(constraint.Name),
+								actor.CreateField(constraint.Name),
 								complex.GetConstraintValue(constraint)));
 					}
 				}

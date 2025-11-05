@@ -114,7 +114,7 @@
 			<property name="MemberId" type="uint" nullable="false" />
 			<property name="MemberType" type="byte" nullable="false" />
 
-			<complexProperty name="Role" port="Role" multiplicity="1">
+			<complexProperty name="Role" port="Role" multiplicity="!">
 				<link port="RoleId" />
 			</complexProperty>
 

@@ -83,12 +83,12 @@ public readonly struct ModelMemberToken : IEquatable<ModelMemberToken>
 	#endregion
 
 	#region 公共方法
-	public void Populate(ref object entity, IDataRecord record, int ordinal) => _populate.Invoke(ref entity, record, ordinal, this.Converter);
-	public void SetValue(ref object entity, object value) => _setter.Invoke(ref entity, value);
+	public void Populate(ref object target, IDataRecord record, int ordinal) => _populate.Invoke(ref target, record, ordinal, this.Converter);
+	public void SetValue(ref object target, object value) => _setter.Invoke(ref target, value);
 	#endregion
 
 	#region 内部方法
-	internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
+	internal void EnsureConvertFrom(DbType dbType) => this.EnsureConvertFrom(dbType.AsType());
 	internal void EnsureConvertFrom(Type type)
 	{
 		var converter = this.Converter;
@@ -157,12 +157,12 @@ public readonly struct ModelMemberToken<T> : IEquatable<ModelMemberToken<T>>
 	#endregion
 
 	#region 公共方法
-	public void Populate(ref T entity, IDataRecord record, int ordinal) => _populate.Invoke(ref entity, record, ordinal, this.Converter);
-	public void SetValue(ref T entity, object value) => _setter.Invoke(ref entity, value);
+	public void Populate(ref T target, IDataRecord record, int ordinal) => _populate.Invoke(ref target, record, ordinal, this.Converter);
+	public void SetValue(ref T target, object value) => _setter.Invoke(ref target, value);
 	#endregion
 
 	#region 内部方法
-	internal void EnsureConvertFrom(DbType dbType) => EnsureConvertFrom(dbType.AsType());
+	internal void EnsureConvertFrom(DbType dbType) => this.EnsureConvertFrom(dbType.AsType());
 	internal void EnsureConvertFrom(Type type)
 	{
 		var converter = this.Converter;

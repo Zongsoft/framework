@@ -43,10 +43,10 @@ public static class ModelMemberEmitter
 	#endregion
 
 	#region 私有变量
-	private static readonly MethodInfo __IsDBNull__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.IsDBNull), new Type[] { typeof(int) });
-	private static readonly MethodInfo __GetValueRecord__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetValue), new Type[] { typeof(int) });
-	private static readonly MethodInfo __GetValueExtension__ = typeof(DataRecordExtension).GetMethod(nameof(DataRecordExtension.GetValue), new Type[] { typeof(IDataRecord), typeof(int) });
-	private static readonly MethodInfo __ConvertFrom__ = typeof(TypeConverter).GetMethod(nameof(TypeConverter.ConvertFrom), new Type[] { typeof(object) });
+	private static readonly MethodInfo __IsDBNull__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.IsDBNull), [typeof(int)]);
+	private static readonly MethodInfo __GetValueRecord__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetValue), [typeof(int)]);
+	private static readonly MethodInfo __GetValueExtension__ = typeof(DataRecordExtension).GetMethod(nameof(DataRecordExtension.GetValue), [typeof(IDataRecord), typeof(int)]);
+	private static readonly MethodInfo __ConvertFrom__ = typeof(TypeConverter).GetMethod(nameof(TypeConverter.ConvertFrom), [typeof(object)]);
 	#endregion
 
 	#region 公共方法

@@ -5,6 +5,14 @@ metadata:
   labels:
     app: zongsoft.data
 spec:
+  volumes:
+    - name: mysql-config-volume
+      configMap:
+        name: mysql-config
+    - name: init-script
+      hostPath:
+        path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/mysql/test/script/init.sql
+        type: File
   containers:
     - name: mysql
       image: mysql:8.4.6
@@ -19,10 +27,10 @@ spec:
           value: program
         - name: MYSQL_PASSWORD
           value: "xxxxxx"
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "yes"
         - name: MYSQL_DATABASE
           value: zongsoft
-        - name: MYSQL_RANDOM_ROOT_PASSWORD
-          value: "yes"
         - name: MYSQL_CHARSET
           value: utf8mb4
         - name: MYSQL_COLLATION
@@ -30,9 +38,21 @@ spec:
       volumeMounts:
         - name: init-script
           mountPath: /docker-entrypoint-initdb.d/init.sql
+        - name: mysql-config-volume
+          mountPath: /etc/mysql/conf.d/local_infile.cnf
+          subPath: local_infile.cnf
 
-  volumes:
-    - name: init-script
-      hostPath:
-        path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/mysql/test/script/init.sql
-        type: File
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+data:
+  local_infile.cnf: |
+    [mysqld]
+    local_infile = 1
+    [mysql]
+    local_infile = 1
+    [client]
+    local_infile = 1
