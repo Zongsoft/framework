@@ -34,6 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common;
 
+[System.Reflection.DefaultMember(nameof(Providers))]
 [System.ComponentModel.DefaultProperty(nameof(Providers))]
 public sealed class DataPopulatorProviderManager : IEnumerable<IDataPopulatorProvider>
 {

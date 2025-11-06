@@ -1,14 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29728.190
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36623.8 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Data", "src\Zongsoft.Data.csproj", "{93AFE009-B820-4428-BB94-D4E78D4CF371}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "schema", "schema", "{BB9C3FBA-87A7-4395-8880-CC90C4ECFFC1}"
 	ProjectSection(SolutionItems) = preProject
 		Zongsoft.Data.xsd = Zongsoft.Data.xsd
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zongsoft.Data", "src\Zongsoft.Data.csproj", "{93AFE009-B820-4428-BB94-D4E78D4CF371}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Data.Tests", "test\Zongsoft.Data.Tests.csproj", "{76353282-3D90-4740-A35B-ECE3258AFDEA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +22,10 @@ Global
 		{93AFE009-B820-4428-BB94-D4E78D4CF371}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93AFE009-B820-4428-BB94-D4E78D4CF371}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{93AFE009-B820-4428-BB94-D4E78D4CF371}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76353282-3D90-4740-A35B-ECE3258AFDEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76353282-3D90-4740-A35B-ECE3258AFDEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76353282-3D90-4740-A35B-ECE3258AFDEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76353282-3D90-4740-A35B-ECE3258AFDEA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
