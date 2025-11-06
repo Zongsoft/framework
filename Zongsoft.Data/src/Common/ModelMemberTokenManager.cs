@@ -73,13 +73,13 @@ public static partial class ModelMemberTokenManager
 			var token = CreateMemberToken(driver, member);
 
 			if(token != null)
-				tokens.Add(token.Value);
+				tokens.Add(token);
 		}
 
 		return tokens;
 	}
 
-	private static ModelMemberToken? CreateMemberToken(IDataDriver driver, MemberInfo member)
+	private static ModelMemberToken CreateMemberToken(IDataDriver driver, MemberInfo member)
 	{
 		switch(member.MemberType)
 		{
@@ -161,13 +161,13 @@ partial class ModelMemberTokenManager
 			var token = CreateMemberToken<T>(driver, member);
 
 			if(token != null)
-				tokens.Add(token.Value);
+				tokens.Add(token);
 		}
 
 		return tokens;
 	}
 
-	private static ModelMemberToken<T>? CreateMemberToken<T>(IDataDriver driver, MemberInfo member)
+	private static ModelMemberToken<T> CreateMemberToken<T>(IDataDriver driver, MemberInfo member)
 	{
 		switch(member.MemberType)
 		{

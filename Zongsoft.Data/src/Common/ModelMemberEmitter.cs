@@ -38,19 +38,27 @@ namespace Zongsoft.Data.Common;
 public static class ModelMemberEmitter
 {
 	#region 委托定义
-	public delegate void Populator(ref object target, IDataRecord record, int ordinal, TypeConverter converter);
-	public delegate void Populator<T>(ref T target, IDataRecord record, int ordinal, TypeConverter converter);
+	public delegate void PopulatorWithGetter(ref object target, IDataRecord record, int ordinal, IDataRecordGetter getter);
+	public delegate void PopulatorWithGetter<T>(ref T target, IDataRecord record, int ordinal, IDataRecordGetter getter);
+
+	public delegate void PopulatorWithConverter(ref object target, IDataRecord record, int ordinal, Func<object, Type, object> converter);
+	public delegate void PopulatorWithConverter<T>(ref T target, IDataRecord record, int ordinal, Func<object, Type, object> converter);
 	#endregion
 
 	#region 私有变量
 	private static readonly MethodInfo __IsDBNull__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.IsDBNull), [typeof(int)]);
-	private static readonly MethodInfo __GetValueRecord__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetValue), [typeof(int)]);
+	private static readonly MethodInfo __GetValueOfRecord__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetValue), [typeof(int)]);
+	private static readonly MethodInfo __GetValueOfGetterInstance__ = typeof(DataRecordGetter).GetMethod(nameof(DataRecordGetter.GetValue), [typeof(IDataRecord), typeof(int)]);
+	private static readonly MethodInfo __GetValueOfGetterInterface__ = typeof(IDataRecordGetter).GetMethod(nameof(IDataRecordGetter.GetValue), [typeof(IDataRecord), typeof(int)]);
 	private static readonly MethodInfo __GetValueExtension__ = typeof(DataRecordExtension).GetMethod(nameof(DataRecordExtension.GetValue), [typeof(IDataRecord), typeof(int)]);
 	private static readonly MethodInfo __ConvertFrom__ = typeof(TypeConverter).GetMethod(nameof(TypeConverter.ConvertFrom), [typeof(object)]);
+	private static readonly MethodInfo __GetTypeFromHandler__ = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof(RuntimeTypeHandle)]);
+	private static readonly MethodInfo __Invoke__ = typeof(Func<object, Type, object>).GetMethod(nameof(Func<object, Type, object>.Invoke), [typeof(object), typeof(Type)]);
+	private static readonly FieldInfo __GetterDefaultField__ = typeof(DataRecordGetter).GetField(nameof(DataRecordGetter.Default), BindingFlags.Public | BindingFlags.Static);
 	#endregion
 
 	#region 公共方法
-	public static Populator GenerateFieldSetter(IDataDriver driver, FieldInfo field, TypeConverter converter)
+	public static PopulatorWithConverter GenerateFieldSetter(FieldInfo field, IDataRecordGetter getter, Func<object, Type, object> converter)
 	{
 		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
 			[typeof(object).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
@@ -109,7 +117,7 @@ public static class ModelMemberEmitter
 			//record.GetValue(ordinal)
 			generator.Emit(OpCodes.Ldarg_1);
 			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Callvirt, __GetValueRecord__);
+			generator.Emit(OpCodes.Callvirt, __GetValueOfRecord__);
 
 			//local_0.FieldX = (TField)converter(...)
 			generator.Emit(OpCodes.Callvirt, __ConvertFrom__);
@@ -134,76 +142,10 @@ public static class ModelMemberEmitter
 		generator.MarkLabel(ending);
 		generator.Emit(OpCodes.Ret);
 
-		return (Populator)method.CreateDelegate(typeof(Populator));
+		return (PopulatorWithConverter)method.CreateDelegate(typeof(PopulatorWithConverter));
 	}
 
-	public static Populator<TModel> GenerateFieldSetter<TModel>(IDataDriver driver, FieldInfo field, TypeConverter converter)
-	{
-		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
-			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
-			typeof(ModelMemberEmitter), true);
-
-		var generator = method.GetILGenerator();
-		var fieldType = field.FieldType;
-
-		if(Zongsoft.Common.TypeExtension.IsNullable(fieldType, out var underlyingType))
-			fieldType = underlyingType;
-
-		if(fieldType.IsEnum)
-			fieldType = Enum.GetUnderlyingType(fieldType);
-
-		var ending = generator.DefineLabel();
-
-		//if(record.IsDBNull(ordinal))
-		generator.Emit(OpCodes.Ldarg_1);
-		generator.Emit(OpCodes.Ldarg_2);
-		generator.Emit(OpCodes.Callvirt, __IsDBNull__);
-		generator.Emit(OpCodes.Brtrue, ending);
-
-		//target.~~~
-		generator.Emit(OpCodes.Ldarg_0);
-		if(!field.DeclaringType.IsValueType)
-			generator.Emit(OpCodes.Ldind_Ref);
-
-		if(converter == null)
-		{
-			//target.FieldX = DataRecordExtension.GetValue<T>(record, ordinal)
-			generator.Emit(OpCodes.Ldarg_1);
-			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Call, __GetValueExtension__.MakeGenericMethod(fieldType));
-
-			if(underlyingType != null)
-				generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor(new[] { underlyingType }));
-
-			generator.Emit(OpCodes.Stfld, field);
-		}
-		else
-		{
-			generator.Emit(OpCodes.Ldarg_3);
-
-			//record.GetValue(ordinal)
-			generator.Emit(OpCodes.Ldarg_1);
-			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Callvirt, __GetValueRecord__);
-
-			//target.FieldX = (TField)converter(...)
-			generator.Emit(OpCodes.Callvirt, __ConvertFrom__);
-
-			if(field.FieldType.IsValueType)
-				generator.Emit(OpCodes.Unbox_Any, field.FieldType);
-			else
-				generator.Emit(OpCodes.Castclass, field.FieldType);
-
-			generator.Emit(OpCodes.Stfld, field);
-		}
-
-		generator.MarkLabel(ending);
-		generator.Emit(OpCodes.Ret);
-
-		return (Populator<TModel>)method.CreateDelegate(typeof(Populator<TModel>));
-	}
-
-	public static Populator GeneratePropertySetter(IDataDriver driver, PropertyInfo property, TypeConverter converter)
+	public static PopulatorWithConverter GeneratePropertySetter(PropertyInfo property, IDataRecordGetter getter, Func<object, Type, object> converter)
 	{
 		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", null,
 			[typeof(object).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
@@ -262,7 +204,7 @@ public static class ModelMemberEmitter
 			//record.GetValue(ordinal)
 			generator.Emit(OpCodes.Ldarg_1);
 			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Callvirt, __GetValueRecord__);
+			generator.Emit(OpCodes.Callvirt, __GetValueOfRecord__);
 
 			//local_0.PropertyX = (TProperty)converter(...)
 			generator.Emit(OpCodes.Callvirt, __ConvertFrom__);
@@ -287,13 +229,175 @@ public static class ModelMemberEmitter
 		generator.MarkLabel(ending);
 		generator.Emit(OpCodes.Ret);
 
-		return (Populator)method.CreateDelegate(typeof(Populator));
+		return (PopulatorWithConverter)method.CreateDelegate(typeof(PopulatorWithConverter));
 	}
 
-	public static Populator<TModel> GeneratePropertySetter<TModel>(IDataDriver driver, PropertyInfo property, TypeConverter converter)
+	/*
+	 * 动态生成的字段设置方法的代码大致如下：
+	 * static void SetFieldX(
+	 *      ref TModel target,
+	 *      IDataRecord record,
+	 *      int ordinal,
+	 *      IDataRecordGetter getter)
+	 * {
+	 *     if(record.IsDBNull(ordinal))
+	 *         return;
+	 * 
+	 *     target.FieldX = getter != null ?
+	 *         getter.GetValue<TField>(record, ordinal) :
+	 *         DataRecordGetter.Default.GetValue<TField>(record, ordinal);
+	 * }
+	 */
+	public static PopulatorWithGetter<TModel> GenerateFieldSetter<TModel>(FieldInfo field, IDataRecordGetter getter)
+	{
+		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
+			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(IDataRecordGetter)],
+			typeof(ModelMemberEmitter), true);
+
+		var generator = method.GetILGenerator();
+		var fieldType = field.FieldType;
+
+		if(Zongsoft.Common.TypeExtension.IsNullable(fieldType, out var underlyingType))
+			fieldType = underlyingType;
+
+		if(fieldType.IsEnum)
+			fieldType = Enum.GetUnderlyingType(fieldType);
+
+		var endingLabel = generator.DefineLabel();
+		var getterLabel = generator.DefineLabel();
+		var setterLabel = generator.DefineLabel();
+
+		//if(record.IsDBNull(ordinal))
+		generator.Emit(OpCodes.Ldarg_1);
+		generator.Emit(OpCodes.Ldarg_2);
+		generator.Emit(OpCodes.Callvirt, __IsDBNull__);
+		generator.Emit(OpCodes.Brtrue, endingLabel);
+
+		//target.~~~
+		generator.Emit(OpCodes.Ldarg_0);
+		if(!field.DeclaringType.IsValueType)
+			generator.Emit(OpCodes.Ldind_Ref);
+
+		//getter??
+		generator.Emit(OpCodes.Ldarg_3); //getter
+		generator.Emit(OpCodes.Brfalse_S, getterLabel); //getter is null then goto ...
+
+		//getter.GetValue<T>(record, ordinal)
+		generator.Emit(OpCodes.Ldarg_3);    //getter
+		generator.Emit(OpCodes.Ldarg_1);    //record
+		generator.Emit(OpCodes.Ldarg_2);    //ordinal
+		generator.Emit(OpCodes.Callvirt, __GetValueOfGetterInterface__.MakeGenericMethod(fieldType));
+		generator.Emit(OpCodes.Br_S, setterLabel);
+
+		generator.MarkLabel(getterLabel);
+
+		//DataRecordGetter.Default.GetValue<T>(record, ordinal)
+		generator.Emit(OpCodes.Ldsfld, __GetterDefaultField__);
+		generator.Emit(OpCodes.Ldarg_1);    //record
+		generator.Emit(OpCodes.Ldarg_2);    //ordinal
+		generator.Emit(OpCodes.Callvirt, __GetValueOfGetterInstance__.MakeGenericMethod(fieldType));
+
+		generator.MarkLabel(setterLabel);
+		generator.Emit(OpCodes.Stfld, field);
+
+		generator.MarkLabel(endingLabel);
+		generator.Emit(OpCodes.Ret);
+
+		return (PopulatorWithGetter<TModel>)method.CreateDelegate(typeof(PopulatorWithGetter<TModel>));
+	}
+
+	/*
+	 * 动态生成的字段设置方法的代码大致如下：
+	 * static void SetFieldX(
+	 *      ref TModel target,
+	 *      IDataRecord record,
+	 *      int ordinal,
+	 *      Func<object, Type, object> converter)
+	 * {
+	 *     if(record.IsDBNull(ordinal))
+	 *         return;
+	 * 
+	 *     return target.FieldX = (TField)converter(record.GetValue(ordinal), typeof(TField));
+	 * }
+	 */
+	public static PopulatorWithConverter<TModel> GenerateFieldSetter<TModel>(FieldInfo field, Func<object, Type, object> converter)
+	{
+		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
+			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(Func<object, Type, object>)],
+			typeof(ModelMemberEmitter), true);
+
+		var generator = method.GetILGenerator();
+		var fieldType = field.FieldType;
+
+		if(Zongsoft.Common.TypeExtension.IsNullable(fieldType, out var underlyingType))
+			fieldType = underlyingType;
+
+		if(fieldType.IsEnum)
+			fieldType = Enum.GetUnderlyingType(fieldType);
+
+		var endingLabel = generator.DefineLabel();
+
+		//if(record.IsDBNull(ordinal))
+		generator.Emit(OpCodes.Ldarg_1);
+		generator.Emit(OpCodes.Ldarg_2);
+		generator.Emit(OpCodes.Callvirt, __IsDBNull__);
+		generator.Emit(OpCodes.Brtrue, endingLabel);
+
+		//target.~~~
+		generator.Emit(OpCodes.Ldarg_0);
+		if(!field.DeclaringType.IsValueType)
+			generator.Emit(OpCodes.Ldind_Ref);
+
+		//converter
+		generator.Emit(OpCodes.Ldarg_3);
+
+		//record.GetValue(ordinal)
+		generator.Emit(OpCodes.Ldarg_1);
+		generator.Emit(OpCodes.Ldarg_2);
+		generator.Emit(OpCodes.Callvirt, __GetValueOfRecord__);
+
+		//typeof(TField)
+		generator.Emit(OpCodes.Ldtoken, field.FieldType);
+		generator.Emit(OpCodes.Call, __GetTypeFromHandler__);
+
+		//converter.Invoke(...)
+		generator.Emit(OpCodes.Callvirt, __Invoke__);
+
+		//(TField)...
+		if(field.FieldType.IsValueType)
+			generator.Emit(OpCodes.Unbox_Any, field.FieldType);
+		else
+			generator.Emit(OpCodes.Castclass, field.FieldType);
+
+		//target.FieldX = ...
+		generator.Emit(OpCodes.Stfld, field);
+
+		generator.MarkLabel(endingLabel);
+		generator.Emit(OpCodes.Ret);
+
+		return (PopulatorWithConverter<TModel>)method.CreateDelegate(typeof(PopulatorWithConverter<TModel>));
+	}
+
+	/*
+	 * 动态生成的属性设置方法的代码大致如下：
+	 * static void SetPropertyX(
+	 *      ref TModel target,
+	 *      IDataRecord record,
+	 *      int ordinal,
+	 *      IDataRecordGetter getter)
+	 * {
+	 *     if(record.IsDBNull(ordinal))
+	 *         return;
+	 * 
+	 *     target.PropertyX = getter != null ?
+	 *         getter.GetValue<TProperty>(record, ordinal) :
+	 *         DataRecordGetter.Default.GetValue<TProperty>(record, ordinal);
+	 * }
+	 */
+	public static PopulatorWithGetter<TModel> GeneratePropertySetter<TModel>(PropertyInfo property, IDataRecordGetter getter)
 	{
 		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", null,
-			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
+			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(IDataRecordGetter)],
 			typeof(ModelMemberEmitter), true);
 
 		var generator = method.GetILGenerator();
@@ -305,55 +409,119 @@ public static class ModelMemberEmitter
 		if(propertyType.IsEnum)
 			propertyType = Enum.GetUnderlyingType(propertyType);
 
-		var ending = generator.DefineLabel();
+		var endingLabel = generator.DefineLabel();
+		var getterLabel = generator.DefineLabel();
+		var setterLabel = generator.DefineLabel();
 
 		//if(record.IsDBNull(ordinal))
 		generator.Emit(OpCodes.Ldarg_1);
 		generator.Emit(OpCodes.Ldarg_2);
 		generator.Emit(OpCodes.Callvirt, __IsDBNull__);
-		generator.Emit(OpCodes.Brtrue, ending);
+		generator.Emit(OpCodes.Brtrue, endingLabel);
 
 		//target.~~~
 		generator.Emit(OpCodes.Ldarg_0);
 		if(!property.DeclaringType.IsValueType)
 			generator.Emit(OpCodes.Ldind_Ref);
 
-		if(converter == null)
-		{
-			//target.PropertyX = DataRecordExtension.GetValue<T>(record, ordinal)
-			generator.Emit(OpCodes.Ldarg_1);
-			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Call, __GetValueExtension__.MakeGenericMethod(propertyType));
+		//getter??
+		generator.Emit(OpCodes.Ldarg_3); //getter
+		generator.Emit(OpCodes.Brfalse_S, getterLabel); //getter is null then goto ...
 
-			if(underlyingType != null)
-				generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor(new[] { underlyingType }));
+		//getter.GetValue<T>(record, ordinal)
+		generator.Emit(OpCodes.Ldarg_3);    //getter
+		generator.Emit(OpCodes.Ldarg_1);    //record
+		generator.Emit(OpCodes.Ldarg_2);    //ordinal
+		generator.Emit(OpCodes.Callvirt, __GetValueOfGetterInterface__.MakeGenericMethod(propertyType));
+		generator.Emit(OpCodes.Br_S, setterLabel);
 
-			generator.Emit(OpCodes.Callvirt, property.SetMethod);
-		}
-		else
-		{
-			generator.Emit(OpCodes.Ldarg_3);
+		generator.MarkLabel(getterLabel);
 
-			//record.GetValue(ordinal)
-			generator.Emit(OpCodes.Ldarg_1);
-			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Callvirt, __GetValueRecord__);
+		//DataRecordGetter.Default.GetValue<T>(record, ordinal)
+		generator.Emit(OpCodes.Ldsfld, __GetterDefaultField__);
+		generator.Emit(OpCodes.Ldarg_1);    //record
+		generator.Emit(OpCodes.Ldarg_2);    //ordinal
+		generator.Emit(OpCodes.Callvirt, __GetValueOfGetterInstance__.MakeGenericMethod(propertyType));
 
-			//target.PropertyX = (TProperty)converter(...)
-			generator.Emit(OpCodes.Callvirt, __ConvertFrom__);
+		generator.MarkLabel(setterLabel);
+		generator.Emit(OpCodes.Callvirt, property.SetMethod);
 
-			if(property.PropertyType.IsValueType)
-				generator.Emit(OpCodes.Unbox_Any, property.PropertyType);
-			else
-				generator.Emit(OpCodes.Castclass, property.PropertyType);
-
-			generator.Emit(OpCodes.Callvirt, property.SetMethod);
-		}
-
-		generator.MarkLabel(ending);
+		generator.MarkLabel(endingLabel);
 		generator.Emit(OpCodes.Ret);
 
-		return (Populator<TModel>)method.CreateDelegate(typeof(Populator<TModel>));
+		return (PopulatorWithGetter<TModel>)method.CreateDelegate(typeof(PopulatorWithGetter<TModel>));
+	}
+
+	/*
+	 * 动态生成的属性设置方法的代码大致如下：
+	 * static void SetPropertyX(
+	 *      ref TModel target,
+	 *      IDataRecord record,
+	 *      int ordinal,
+	 *      Func<object, Type, object> converter)
+	 * {
+	 *     if(record.IsDBNull(ordinal))
+	 *         return;
+	 * 
+	 *     return target.PropertyX = (TProperty)converter(record.GetValue(ordinal), typeof(TProperty));
+	 * }
+	 */
+	public static PopulatorWithConverter<TModel> GeneratePropertySetter<TModel>(PropertyInfo property, Func<object, Type, object> converter)
+	{
+		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", null,
+			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(Func<object, Type, object>)],
+			typeof(ModelMemberEmitter), true);
+
+		var generator = method.GetILGenerator();
+		var propertyType = property.PropertyType;
+
+		if(Zongsoft.Common.TypeExtension.IsNullable(propertyType, out var underlyingType))
+			propertyType = underlyingType;
+
+		if(propertyType.IsEnum)
+			propertyType = Enum.GetUnderlyingType(propertyType);
+
+		var endingLabel = generator.DefineLabel();
+
+		//if(record.IsDBNull(ordinal))
+		generator.Emit(OpCodes.Ldarg_1);
+		generator.Emit(OpCodes.Ldarg_2);
+		generator.Emit(OpCodes.Callvirt, __IsDBNull__);
+		generator.Emit(OpCodes.Brtrue, endingLabel);
+
+		//target.~~~
+		generator.Emit(OpCodes.Ldarg_0);
+		if(!property.DeclaringType.IsValueType)
+			generator.Emit(OpCodes.Ldind_Ref);
+
+		//converter
+		generator.Emit(OpCodes.Ldarg_3);
+
+		//record.GetValue(ordinal)
+		generator.Emit(OpCodes.Ldarg_1);
+		generator.Emit(OpCodes.Ldarg_2);
+		generator.Emit(OpCodes.Callvirt, __GetValueOfRecord__);
+
+		//typeof(TProperty)
+		generator.Emit(OpCodes.Ldtoken, property.PropertyType);
+		generator.Emit(OpCodes.Call, __GetTypeFromHandler__);
+
+		//converter.Invoke(...)
+		generator.Emit(OpCodes.Callvirt, __Invoke__);
+
+		//(TProperty)...
+		if(property.PropertyType.IsValueType)
+			generator.Emit(OpCodes.Unbox_Any, property.PropertyType);
+		else
+			generator.Emit(OpCodes.Castclass, property.PropertyType);
+
+		//target.PropertyX = ...
+		generator.Emit(OpCodes.Callvirt, property.SetMethod);
+
+		generator.MarkLabel(endingLabel);
+		generator.Emit(OpCodes.Ret);
+
+		return (PopulatorWithConverter<TModel>)method.CreateDelegate(typeof(PopulatorWithConverter<TModel>));
 	}
 	#endregion
 }

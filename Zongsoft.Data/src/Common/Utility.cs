@@ -100,6 +100,23 @@ internal static class Utility
 		return DbType.Object;
 	}
 
+	public static Func<object, Type, object> GetConverterThunk(this MemberInfo member)
+	{
+		var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
+		if(attribute == null)
+			return null;
+
+		var type = Type.GetType(attribute.ConverterTypeName);
+
+		if(!typeof(TypeConverter).IsAssignableFrom(type))
+			throw new InvalidOperationException($"The '{type.FullName}' type of the specified '{member.DeclaringType.Name}.{member.Name}' member is not a type converter.");
+
+		var converter = _converters.GetOrAdd(member, (TypeConverter)Activator.CreateInstance(type));
+
+		return new Func<object, Type, object>(
+			(value, type) => Zongsoft.Common.Convert.ConvertValue(value, type, () => converter));
+	}
+
 	public static TypeConverter GetConverter(this MemberInfo member)
 	{
 		if(member == null)
