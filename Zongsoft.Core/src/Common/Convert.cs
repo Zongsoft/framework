@@ -52,9 +52,9 @@ public static class Convert
 	#region 扩展方法
 	/// <summary>获取指定成员的类型转换器。</summary>
 	/// <param name="member">指定要获取的成员。</param>
-	/// <returns>返回指定成员声明的类型转换器，如果为空则表示获取失败。</returns>
-	/// <remarks>注意：因为 <see cref="TypeDescriptor.GetConverter(object)"/> 方法对于 <see cref="MemberInfo"/> 类型并不支持，因此才有了本方法。</remarks>
-	public static TypeConverter GetTypeConverter(this MemberInfo member)
+	/// <param name="explicitly">如果为真(<c>True</c>)则只返回显式声明的类型转换器，否则为假(<c>False</c>)。</param>
+	/// <returns>返回指定成员声明的类型转换器，如果为空(<c>null</c>)则表示获取失败。</returns>
+	public static TypeConverter GetTypeConverter(this MemberInfo member, bool explicitly = false)
 	{
 		if(member == null)
 			return null;
@@ -95,8 +95,8 @@ public static class Convert
 		//优先使用自定义的集合类型转换器
 		if(TypeExtension.IsCollection(memberType))
 			return Components.Converters.CollectionConverter.Default;
-		else
-			return TypeDescriptor.GetConverter(memberType);
+
+		return explicitly ? null : TypeDescriptor.GetConverter(memberType);
 	}
 	#endregion
 
