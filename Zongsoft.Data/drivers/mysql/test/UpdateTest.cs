@@ -10,7 +10,7 @@ using Zongsoft.Data.MySql.Tests.Models;
 namespace Zongsoft.Data.MySql.Tests;
 
 [Collection("Database")]
-public class UpdateTest(DatabaseFixture database)
+public class UpdateTest(DatabaseFixture database) : IDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -45,5 +45,14 @@ public class UpdateTest(DatabaseFixture database)
 		await enumerator.DisposeAsync();
 
 		Assert.Equal("Popeye Zhong", name);
+	}
+
+	public void Dispose()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 	}
 }

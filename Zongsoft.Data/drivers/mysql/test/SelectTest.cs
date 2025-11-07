@@ -71,6 +71,8 @@ public class SelectTest(DatabaseFixture database)
 		var parent = user.Parents.FirstOrDefault();
 		Assert.NotNull(parent);
 		Assert.Equal(1U, parent.RoleId);
+		Assert.Equal(100U, parent.MemberId);
+		Assert.Equal(MemberType.User, parent.MemberType);
 		await enumerator.DisposeAsync();
 	}
 
@@ -110,6 +112,8 @@ public class SelectTest(DatabaseFixture database)
 		var parent = user.Parents.FirstOrDefault();
 		Assert.NotNull(parent);
 		Assert.Equal(1U, parent.RoleId);
+		Assert.Equal(100U, parent.MemberId);
+		Assert.Equal(MemberType.User, parent.MemberType);
 		Assert.NotNull(parent.Role);
 		Assert.Equal("Administrators", parent.Role.Name);
 		await enumerator.DisposeAsync();
