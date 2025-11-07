@@ -73,6 +73,18 @@ public class DataExistContext : DataExistContextBase, IDataAccessContext, Common
 	public IDataProvider Provider { get; }
 	public DataSession Session { get; }
 	#endregion
+
+	#region 重写方法
+	public override TFeature GetFeature<TFeature>()
+	{
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataRecordGetter)))
+			return (TFeature)this.Source.Driver.Getter;
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataParameterSetter)))
+			return (TFeature)this.Source.Driver.Setter;
+
+		return default;
+	}
+	#endregion
 }
 
 public class DataExecuteContext : DataExecuteContextBase, IDataAccessContext, Common.Expressions.IAliasable
@@ -91,6 +103,18 @@ public class DataExecuteContext : DataExecuteContextBase, IDataAccessContext, Co
 	public IDataSource Source => this.Session.Source;
 	public IDataProvider Provider { get; }
 	public DataSession Session { get; }
+	#endregion
+
+	#region 重写方法
+	public override TFeature GetFeature<TFeature>()
+	{
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataRecordGetter)))
+			return (TFeature)this.Source.Driver.Getter;
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataParameterSetter)))
+			return (TFeature)this.Source.Driver.Setter;
+
+		return default;
+	}
 	#endregion
 }
 
@@ -112,6 +136,18 @@ public class DataAggregateContext : DataAggregateContextBase, IDataAccessContext
 	public IDataProvider Provider { get; }
 	public DataSession Session { get; }
 	#endregion
+
+	#region 重写方法
+	public override TFeature GetFeature<TFeature>()
+	{
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataRecordGetter)))
+			return (TFeature)this.Source.Driver.Getter;
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataParameterSetter)))
+			return (TFeature)this.Source.Driver.Setter;
+
+		return default;
+	}
+	#endregion
 }
 
 public class DataImportContext : DataImportContextBase, IDataAccessContext
@@ -128,6 +164,18 @@ public class DataImportContext : DataImportContextBase, IDataAccessContext
 	public IDataSource Source => this.Session.Source;
 	public IDataProvider Provider { get; }
 	public DataSession Session { get; }
+	#endregion
+
+	#region 重写方法
+	public override TFeature GetFeature<TFeature>()
+	{
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataRecordGetter)))
+			return (TFeature)this.Source.Driver.Getter;
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataParameterSetter)))
+			return (TFeature)this.Source.Driver.Setter;
+
+		return default;
+	}
 	#endregion
 }
 
@@ -150,6 +198,18 @@ public class DataDeleteContext : DataDeleteContextBase, IDataMutateContext, Comm
 	public new Schema Schema => (Schema)base.Schema;
 	public DataSession Session { get; }
 	#endregion
+
+	#region 重写方法
+	public override TFeature GetFeature<TFeature>()
+	{
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataRecordGetter)))
+			return (TFeature)this.Source.Driver.Getter;
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataParameterSetter)))
+			return (TFeature)this.Source.Driver.Setter;
+
+		return default;
+	}
+	#endregion
 }
 
 public class DataInsertContext : DataInsertContextBase, IDataMutateContext, Common.Expressions.IAliasable
@@ -170,6 +230,18 @@ public class DataInsertContext : DataInsertContextBase, IDataMutateContext, Comm
 	public IDataProvider Provider { get; }
 	public new Schema Schema => (Schema)base.Schema;
 	public DataSession Session { get; }
+	#endregion
+
+	#region 重写方法
+	public override TFeature GetFeature<TFeature>()
+	{
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataRecordGetter)))
+			return (TFeature)this.Source.Driver.Getter;
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataParameterSetter)))
+			return (TFeature)this.Source.Driver.Setter;
+
+		return default;
+	}
 	#endregion
 }
 
@@ -192,6 +264,18 @@ public class DataUpdateContext : DataUpdateContextBase, IDataMutateContext, Comm
 	public new Schema Schema => (Schema)base.Schema;
 	public DataSession Session { get; }
 	#endregion
+
+	#region 重写方法
+	public override TFeature GetFeature<TFeature>()
+	{
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataRecordGetter)))
+			return (TFeature)this.Source.Driver.Getter;
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataParameterSetter)))
+			return (TFeature)this.Source.Driver.Setter;
+
+		return default;
+	}
+	#endregion
 }
 
 public class DataUpsertContext : DataUpsertContextBase, IDataMutateContext, Common.Expressions.IAliasable
@@ -213,6 +297,18 @@ public class DataUpsertContext : DataUpsertContextBase, IDataMutateContext, Comm
 	public new Schema Schema => (Schema)base.Schema;
 	public DataSession Session { get; }
 	#endregion
+
+	#region 重写方法
+	public override TFeature GetFeature<TFeature>()
+	{
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataRecordGetter)))
+			return (TFeature)this.Source.Driver.Getter;
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataParameterSetter)))
+			return (TFeature)this.Source.Driver.Setter;
+
+		return default;
+	}
+	#endregion
 }
 
 public class DataSelectContext : DataSelectContextBase, IDataAccessContext, Common.Expressions.IAliasable
@@ -233,6 +329,18 @@ public class DataSelectContext : DataSelectContextBase, IDataAccessContext, Comm
 	public IDataProvider Provider { get; }
 	public new Schema Schema => (Schema)base.Schema;
 	public DataSession Session { get; }
+	#endregion
+
+	#region 重写方法
+	public override TFeature GetFeature<TFeature>()
+	{
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataRecordGetter)))
+			return (TFeature)this.Source.Driver.Getter;
+		if(typeof(TFeature).IsAssignableTo(typeof(IDataParameterSetter)))
+			return (TFeature)this.Source.Driver.Setter;
+
+		return default;
+	}
 	#endregion
 }
 

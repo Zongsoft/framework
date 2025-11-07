@@ -54,6 +54,7 @@ public abstract class DataDriverBase : IDataDriver
 	public abstract string Name { get; }
 	public FeatureCollection Features { get; }
 	public IDataRecordGetter Getter { get; protected set; }
+	public IDataParameterSetter Setter { get; protected set; }
 	public Expressions.StatementSlotter Slotter { get; }
 	public Expressions.ExpressionVisitorBase Visitor { get; }
 	public abstract Expressions.IStatementBuilder Builder { get; }
@@ -84,7 +85,6 @@ public abstract class DataDriverBase : IDataDriver
 			//注意：不能设置参数的DbType属性，因为不同数据提供程序可能因为不支持特定类型而导致异常
 			dbParameter.ParameterName = parameter.Name;
 			dbParameter.Direction = parameter.Direction;
-			dbParameter.Value = parameter.Value ?? DBNull.Value;
 
 			//设置命令参数各属性
 			this.SetParameter(dbParameter, parameter);
@@ -100,6 +100,17 @@ public abstract class DataDriverBase : IDataDriver
 	#region 保护方法
 	protected abstract Expressions.ExpressionVisitorBase CreateVisitor();
 	protected virtual Expressions.StatementSlotter CreateSlotter() => new();
-	protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression) => parameter.DbType = expression.Type;
+	protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression)
+	{
+		if(this.Setter != null)
+		{
+			this.Setter.SetValue(parameter, expression.Value, expression.Type);
+		}
+		else
+		{
+			parameter.DbType = expression.Type;
+			parameter.Value = expression.Value ?? DBNull.Value;
+		}
+	}
 	#endregion
 }

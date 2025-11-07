@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -47,6 +47,9 @@ public interface IDataDriver
 
 	/// <summary>获取数据记录读取器。</summary>
 	IDataRecordGetter Getter { get; }
+
+	/// <summary>获取数据参数设置器。</summary>
+	IDataParameterSetter Setter { get; }
 
 	/// <summary>获取数据语句构建器。</summary>
 	Expressions.IStatementBuilder Builder { get; }

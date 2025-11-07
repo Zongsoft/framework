@@ -54,9 +54,9 @@ public static class StatementExtension
 				if(parameter.Schema == null || parameter.IsChanged)
 				{
 					if(parameter.Value is IDataValueBinder binder)
-						dbParameter.Value = binder.Bind(context, data, TryGetParameterValue(data, parameter.Schema, null, out var value) ? value : null);
+						context.SetParameterValue(dbParameter, binder.Bind(context, data, TryGetParameterValue(data, parameter.Schema, null, out var value) ? value : null));
 					else
-						dbParameter.Value = parameter.Value;
+						context.SetParameterValue(dbParameter, parameter.Value);
 
 					/*
 					 * 对于Schema不为空（即表示该参数对应有数据成员），同时还设置了参数值的情况，
@@ -75,13 +75,25 @@ public static class StatementExtension
 				}
 				else if(data != null)
 				{
-					dbParameter.Value = GetParameterValue(data, parameter.Schema, dbParameter.DbType);
+					context.SetParameterValue(
+						dbParameter,
+						GetParameterValue(data, parameter.Schema, dbParameter.DbType));
 				}
 			}
 
 			if(dbParameter.Value == null)
 				dbParameter.Value = DBNull.Value;
 		}
+	}
+
+	private static void SetParameterValue(this IDataMutateContextBase context, DbParameter parameter, object value)
+	{
+		var setter = context.GetFeature<IDataParameterSetter>();
+
+		if(setter == null)
+			parameter.Value = value == null ? DBNull.Value : value;
+		else
+			setter.SetValue(parameter, value);
 	}
 
 	private static bool TryGetParameterValue(object data, SchemaMember member, DbType? dbType, out object value)
