@@ -28,30 +28,40 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 
 using Zongsoft.Data.Common;
-using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.PostgreSql;
 
-public class PostgreSqlInsertStatementVisitor : InsertStatementVisitor
+partial class PostgreSqlDriver
 {
-	#region 单例字段
-	public static readonly PostgreSqlInsertStatementVisitor Instance = new PostgreSqlInsertStatementVisitor();
-	#endregion
-
-	#region 构造函数
-	private PostgreSqlInsertStatementVisitor() { }
-	#endregion
-
-	#region 重写方法
-	protected override void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
+	private sealed class PostgreSqlSetter : IDataParameterSetter
 	{
-		base.VisitValues(context, statement, values, rounds);
+		public void SetValue(DbParameter parameter, object value, DataType type = null)
+		{
+			var dbType = type == null ? parameter.DbType : type.DbType;
 
-		if(statement.Options.ConstraintIgnored)
-			context.WriteLine(" ON CONFLICT DO NOTHING");
+			switch(dbType)
+			{
+				case DbType.UInt16:
+					parameter.DbType = DbType.Int16;
+					parameter.Value = Zongsoft.Common.Convert.ConvertValue(value, typeof(short));
+					break;
+				case DbType.UInt32:
+					parameter.DbType = DbType.Int32;
+					parameter.Value = Zongsoft.Common.Convert.ConvertValue(value, typeof(int));
+					break;
+				case DbType.UInt64:
+					parameter.DbType = DbType.Int64;
+					parameter.Value = Zongsoft.Common.Convert.ConvertValue(value, typeof(long));
+					break;
+				default:
+					parameter.DbType = dbType;
+					parameter.Value = Zongsoft.Common.Convert.ConvertValue(value, DataUtility.AsType(dbType));
+					break;
+			}
+		}
 	}
-	#endregion
 }

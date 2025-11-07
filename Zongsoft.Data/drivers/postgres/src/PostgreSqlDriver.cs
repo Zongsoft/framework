@@ -50,7 +50,11 @@ public partial class PostgreSqlDriver : DataDriverBase
 	#endregion
 
 	#region 私有构造
-	private PostgreSqlDriver() => this.Getter = new PostgreSqlGetter();
+	private PostgreSqlDriver()
+	{
+		this.Getter = new PostgreSqlGetter();
+		this.Setter = new PostgreSqlSetter();
+	}
 	#endregion
 
 	#region 公共属性

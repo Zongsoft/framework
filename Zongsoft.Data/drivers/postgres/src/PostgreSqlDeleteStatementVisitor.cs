@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -42,5 +43,9 @@ public class PostgreSqlDeleteStatementVisitor : DeleteStatementVisitor
 
 	#region 构造函数
 	private PostgreSqlDeleteStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables) { }
 	#endregion
 }
