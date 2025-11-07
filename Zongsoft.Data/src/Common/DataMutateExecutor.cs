@@ -358,7 +358,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		bool continued;
 
 		//调用写入操作开始方法
-		this.OnMutating(context, statement);
+		await this.OnMutatingAsync(context, statement, cancellation);
 
 		//处理语句的插槽替换运算
 		if(context.Source.Driver is DataDriverBase driver)
@@ -384,7 +384,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 			context.Count += count;
 
 			//调用写入操作完成方法
-			continued = this.OnMutated(context, statement, count);
+			continued = await this.OnMutatedAsync(context, statement, count, cancellation);
 		}
 
 		//如果需要继续并且有从属语句则尝试绑定从属写操作数据

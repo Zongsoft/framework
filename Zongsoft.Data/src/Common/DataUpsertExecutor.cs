@@ -110,7 +110,8 @@ public class DataUpsertExecutor : DataMutateExecutor<UpsertStatement>
 		if(count > 0 && statement.Sequence != null)
 			await context.Provider.Executor.ExecuteAsync(context, statement.Sequence, cancellation);
 
-		return count > 0;
+		//调用基类同名方法
+		return await base.OnMutatedAsync(context, statement, count, cancellation);
 	}
 	#endregion
 }

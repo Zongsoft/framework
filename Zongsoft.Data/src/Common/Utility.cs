@@ -40,7 +40,7 @@ namespace Zongsoft.Data.Common;
 internal static class Utility
 {
 	#region 静态字段
-	private static readonly ConcurrentDictionary<MemberInfo, TypeConverter> _converters = new ConcurrentDictionary<MemberInfo, TypeConverter>();
+	private static readonly ConcurrentDictionary<MemberInfo, TypeConverter> _converters = new();
 	#endregion
 
 	public static DbType GetDbType(object value)
@@ -105,10 +105,7 @@ internal static class Utility
 		if(member == null)
 			return null;
 
-		if(_converters.TryGetValue(member, out var converter))
-			return converter;
-
-		return _converters.GetOrAdd(member, Zongsoft.Common.Convert.GetTypeConverter(member));
+		return _converters.GetOrAdd(member, Zongsoft.Common.Convert.GetTypeConverter(member, true));
 	}
 
 	internal static object GetMemberValue(ref object target, string name)
