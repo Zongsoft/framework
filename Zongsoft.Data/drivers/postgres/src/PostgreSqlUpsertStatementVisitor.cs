@@ -93,22 +93,21 @@ public class PostgreSqlUpsertStatementVisitor : UpsertStatementVisitor
 
 		if(statement.Options.ConstraintIgnored || !statement.Table.Entity.HasKey)
 		{
-			context.WriteLine("DO NOTHING");
+			context.WriteLine("DO NOTHING;");
+			return;
 		}
-		else
+
+		context.Write("(");
+
+		for(int i = 0; i < statement.Table.Entity.Key.Length; i++)
 		{
-			context.Write("(");
+			if(i > 0)
+				context.Write(',');
 
-			for(int i = 0; i < statement.Table.Entity.Key.Length; i++)
-			{
-				if(i > 0)
-					context.Write(',');
-
-				context.Write(context.Dialect.GetIdentifier(statement.Table.Entity.Key[i].GetFieldName()));
-			}
-
-			context.WriteLine(") DO UPDATE SET");
+			context.Write(context.Dialect.GetIdentifier(statement.Table.Entity.Key[i].GetFieldName()));
 		}
+
+		context.WriteLine(") DO UPDATE SET");
 
 		index = 0;
 		if(statement.Updation.Count > 0)
