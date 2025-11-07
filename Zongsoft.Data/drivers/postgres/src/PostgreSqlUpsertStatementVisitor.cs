@@ -29,7 +29,7 @@
 
 using System;
 
-using Zongsoft.Data.Common;
+using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.PostgreSql;
@@ -52,11 +52,7 @@ public class PostgreSqlUpsertStatementVisitor : UpsertStatementVisitor
 
 		var index = 0;
 
-		if(statement.Options.ConstraintIgnored)
-			context.Write("INSERT IGNORE INTO ");
-		else
-			context.Write("INSERT INTO ");
-
+		context.Write("INSERT INTO ");
 		context.Write(context.Dialect.GetIdentifier(statement.Table));
 		context.Write(" (");
 
@@ -93,9 +89,28 @@ public class PostgreSqlUpsertStatementVisitor : UpsertStatementVisitor
 				context.Write(")");
 		}
 
-		index = 0;
-		context.WriteLine(" ON DUPLICATE KEY UPDATE ");
+		context.Write(" ON CONFLICT ");
 
+		if(statement.Options.ConstraintIgnored || !statement.Table.Entity.HasKey)
+		{
+			context.WriteLine("DO NOTHING");
+		}
+		else
+		{
+			context.Write("(");
+
+			for(int i = 0; i < statement.Table.Entity.Key.Length; i++)
+			{
+				if(i > 0)
+					context.Write(',');
+
+				context.Write(context.Dialect.GetIdentifier(statement.Table.Entity.Key[i].GetFieldName()));
+			}
+
+			context.WriteLine(") DO UPDATE SET");
+		}
+
+		index = 0;
 		if(statement.Updation.Count > 0)
 		{
 			foreach(var item in statement.Updation)
