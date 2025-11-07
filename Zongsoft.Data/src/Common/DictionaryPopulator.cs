@@ -52,8 +52,7 @@ public class DictionaryPopulator : IDataPopulator
 	#endregion
 
 	#region 公共方法
-	T IDataPopulator.Populate<T>(IDataRecord record) => (T)this.Populate(record);
-	public object Populate(IDataRecord record)
+	public T Populate<T>(IDataRecord record)
 	{
 		if(record.FieldCount != _keys.Length)
 			throw new DataException("The record of populate has failed.");
@@ -66,7 +65,7 @@ public class DictionaryPopulator : IDataPopulator
 			dictionary[_keys[i]] = record.GetValue(i);
 		}
 
-		return dictionary;
+		return (T)dictionary;
 	}
 	#endregion
 
@@ -93,11 +92,4 @@ public class DictionaryPopulator : IDataPopulator
 		return capacity => (IDictionary)System.Activator.CreateInstance(type);
 	}
 	#endregion
-}
-
-public class DictionaryPopulator<T> : DictionaryPopulator, IDataPopulator<T>
-{
-	internal protected DictionaryPopulator(string[] keys) : base(typeof(T), keys) { }
-
-	public new T Populate(IDataRecord record) => (T)base.Populate(record);
 }

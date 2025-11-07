@@ -35,73 +35,24 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Common;
 
-public static partial class ModelMemberTokenManager
+public static class ModelMemberTokenManager
 {
 	#region 私有变量
-	private static readonly ConcurrentDictionary<Type, ModelMemberTokenCollection> _cache = new();
+	private static readonly ConcurrentDictionary<Type, IEnumerable> _generics = new();
 	#endregion
 
 	#region 公共方法
-	public static ModelMemberTokenCollection GetMembers(IDataDriver driver, Type type)
+	public static ModelMemberTokenCollection<T> GetMembers<T>(IDataDriver driver)
 	{
-		if(type == null)
-			throw new ArgumentNullException(nameof(type));
-
 		//如果指定的类型是单值类型则返回空
-		if(Zongsoft.Common.TypeExtension.IsScalarType(type))
+		if(Zongsoft.Common.TypeExtension.IsScalarType(typeof(T)))
 			return null;
 
-		return _cache.GetOrAdd(type, (key, driver) => Create(driver, key), driver);
+		return (ModelMemberTokenCollection<T>)_generics.GetOrAdd(typeof(T), _ => Create<T>(driver));
 	}
 	#endregion
 
 	#region 私有方法
-	private static ModelMemberTokenCollection Create(IDataDriver driver, Type type)
-	{
-		//如果是字典则返回空
-		if(Zongsoft.Common.TypeExtension.IsDictionary(type))
-			return null;
-
-		if(Zongsoft.Common.TypeExtension.IsEnumerable(type))
-			type = Zongsoft.Common.TypeExtension.GetElementType(type);
-
-		var members = FindMembers(type);
-		var tokens = new ModelMemberTokenCollection();
-
-		foreach(var member in members)
-		{
-			var token = CreateMemberToken(driver, member);
-
-			if(token != null)
-				tokens.Add(token);
-		}
-
-		return tokens;
-	}
-
-	private static ModelMemberToken CreateMemberToken(IDataDriver driver, MemberInfo member)
-	{
-		switch(member.MemberType)
-		{
-			case MemberTypes.Field:
-				var field = (FieldInfo)member;
-
-				if(!field.IsInitOnly)
-					return new ModelMemberToken(driver, field);
-
-				break;
-			case MemberTypes.Property:
-				var property = (PropertyInfo)member;
-
-				if(property.CanRead && property.CanWrite)
-					return new ModelMemberToken(driver, property);
-
-				break;
-		}
-
-		return null;
-	}
-
 	private static IEnumerable<MemberInfo> FindMembers(Type type)
 	{
 		foreach(var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
@@ -121,27 +72,7 @@ public static partial class ModelMemberTokenManager
 			}
 		}
 	}
-	#endregion
-}
 
-partial class ModelMemberTokenManager
-{
-	#region 私有变量
-	private static readonly ConcurrentDictionary<Type, IEnumerable> _generics = new();
-	#endregion
-
-	#region 公共方法
-	public static ModelMemberTokenCollection<T> GetMembers<T>(IDataDriver driver)
-	{
-		//如果指定的类型是单值类型则返回空
-		if(Zongsoft.Common.TypeExtension.IsScalarType(typeof(T)))
-			return null;
-
-		return (ModelMemberTokenCollection<T>)_generics.GetOrAdd(typeof(T), _ => Create<T>(driver));
-	}
-	#endregion
-
-	#region 私有方法
 	private static ModelMemberTokenCollection<T> Create<T>(IDataDriver driver)
 	{
 		var type = typeof(T);

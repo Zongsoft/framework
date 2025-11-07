@@ -33,15 +33,25 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
-using Zongsoft.Common;
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common;
 
-public partial class ModelPopulatorProvider : IDataPopulatorProvider
+public class ModelPopulatorProvider : IDataPopulatorProvider
 {
 	#region 单例模式
 	public static readonly ModelPopulatorProvider Instance = new();
+	#endregion
+
+	#region 静态变量
+	private static readonly ConcurrentDictionary<PopulatorKey, IDataPopulator> _populators = new();
+	private static readonly MethodInfo CreatePopulatorMethod = typeof(ModelPopulatorProvider).GetMethod(
+		nameof(CreatePopulator),
+		1,
+		BindingFlags.NonPublic | BindingFlags.Static,
+		null,
+		[typeof(IDataDriver), typeof(IDataRecord), typeof(IDataEntity)],
+		null);
 	#endregion
 
 	#region 私有构造
@@ -56,36 +66,28 @@ public partial class ModelPopulatorProvider : IDataPopulatorProvider
 		         Zongsoft.Common.TypeExtension.IsEnumerable(type));
 	}
 	#endregion
-}
 
-partial class ModelPopulatorProvider
-{
-	#region 静态变量
-	private static readonly MethodInfo PopulatorTemplate = typeof(ModelPopulatorProvider).GetMethod(nameof(ModelPopulatorProvider.GetPopulator), 1, BindingFlags.Public | BindingFlags.Instance, null, [typeof(IDataRecord), typeof(IDataEntity)], null);
-	private static readonly ConcurrentDictionary<PopulatorKey, IDataPopulator> _populators = new ();
-	#endregion
-
-	#region 公共方法
+	#region 组装方法
 	public IDataPopulator GetPopulator(IDataDriver driver, Type type, IDataRecord record, IDataEntity entity = null)
 	{
 		var key = new PopulatorKey(driver, type, record, entity);
 
 		return _populators.GetOrAdd(key, (key, record) =>
 		{
-			var method = PopulatorTemplate.MakeGenericMethod(key.ModelType);
-			var invoker = method.CreateDelegate(typeof(Func<,,>)
+			var method = CreatePopulatorMethod.MakeGenericMethod(key.ModelType);
+			var invoker = method.CreateDelegate(typeof(Func<,,,>)
 				.MakeGenericType(
 					typeof(IDataDriver),
 					typeof(IDataRecord),
 					typeof(IDataEntity),
-					typeof(IDataPopulator<>).MakeGenericType(key.ModelType)
-				), this);
+					typeof(ModelPopulator<>).MakeGenericType(key.ModelType)
+				), null);
 
 			return (IDataPopulator)invoker.DynamicInvoke(key.Driver, record, key.Entity);
 		}, record);
 	}
 
-	public IDataPopulator<T> GetPopulator<T>(IDataDriver driver, IDataRecord record, IDataEntity entity = null)
+	private static ModelPopulator<T> CreatePopulator<T>(IDataDriver driver, IDataRecord record, IDataEntity entity = null)
 	{
 		var populator = new ModelPopulator<T>(entity);
 

@@ -31,7 +31,6 @@ using System;
 using System.Data;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.ComponentModel;
 
 namespace Zongsoft.Data.Common;
 
@@ -40,7 +39,6 @@ public static class ModelMemberEmitter
 	#region 委托定义
 	public delegate void PopulatorWithGetter(ref object target, IDataRecord record, int ordinal, IDataRecordGetter getter);
 	public delegate void PopulatorWithGetter<T>(ref T target, IDataRecord record, int ordinal, IDataRecordGetter getter);
-
 	public delegate void PopulatorWithConverter(ref object target, IDataRecord record, int ordinal, Func<object, Type, object> converter);
 	public delegate void PopulatorWithConverter<T>(ref T target, IDataRecord record, int ordinal, Func<object, Type, object> converter);
 	#endregion
@@ -50,188 +48,11 @@ public static class ModelMemberEmitter
 	private static readonly MethodInfo __GetValueOfRecord__ = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetValue), [typeof(int)]);
 	private static readonly MethodInfo __GetValueOfGetterInstance__ = typeof(DataRecordGetter).GetMethod(nameof(DataRecordGetter.GetValue), [typeof(IDataRecord), typeof(int)]);
 	private static readonly MethodInfo __GetValueOfGetterInterface__ = typeof(IDataRecordGetter).GetMethod(nameof(IDataRecordGetter.GetValue), [typeof(IDataRecord), typeof(int)]);
-	private static readonly MethodInfo __GetValueExtension__ = typeof(DataRecordExtension).GetMethod(nameof(DataRecordExtension.GetValue), [typeof(IDataRecord), typeof(int)]);
-	private static readonly MethodInfo __ConvertFrom__ = typeof(TypeConverter).GetMethod(nameof(TypeConverter.ConvertFrom), [typeof(object)]);
 	private static readonly MethodInfo __GetTypeFromHandler__ = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof(RuntimeTypeHandle)]);
-	private static readonly MethodInfo __Invoke__ = typeof(Func<object, Type, object>).GetMethod(nameof(Func<object, Type, object>.Invoke), [typeof(object), typeof(Type)]);
 	private static readonly FieldInfo __GetterDefaultField__ = typeof(DataRecordGetter).GetField(nameof(DataRecordGetter.Default), BindingFlags.Public | BindingFlags.Static);
 	#endregion
 
 	#region 公共方法
-	public static PopulatorWithConverter GenerateFieldSetter(FieldInfo field, IDataRecordGetter getter, Func<object, Type, object> converter)
-	{
-		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
-			[typeof(object).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
-			typeof(ModelMemberEmitter), true);
-
-		var generator = method.GetILGenerator();
-		var fieldType = field.FieldType;
-
-		if(Zongsoft.Common.TypeExtension.IsNullable(fieldType, out var underlyingType))
-			fieldType = underlyingType;
-
-		if(fieldType.IsEnum)
-			fieldType = Enum.GetUnderlyingType(fieldType);
-
-		var ending = generator.DefineLabel();
-
-		generator.DeclareLocal(field.DeclaringType);
-
-		//if(record.IsDBNull(ordinal))
-		generator.Emit(OpCodes.Ldarg_1);
-		generator.Emit(OpCodes.Ldarg_2);
-		generator.Emit(OpCodes.Callvirt, __IsDBNull__);
-		generator.Emit(OpCodes.Brtrue, ending);
-
-		//local_0 = (T)target;
-		generator.Emit(OpCodes.Ldarg_0);
-		generator.Emit(OpCodes.Ldind_Ref);
-		if(field.DeclaringType.IsValueType)
-			generator.Emit(OpCodes.Unbox_Any, field.DeclaringType);
-		else
-			generator.Emit(OpCodes.Castclass, field.DeclaringType);
-		generator.Emit(OpCodes.Stloc_0);
-
-		//local_0 = ...
-		if(field.DeclaringType.IsValueType)
-			generator.Emit(OpCodes.Ldloca_S, 0);
-		else
-			generator.Emit(OpCodes.Ldloc_0);
-
-		if(converter == null)
-		{
-			//local_0.FieldX = DataRecordExtension.GetValue<T>(record, ordinal)
-			generator.Emit(OpCodes.Ldarg_1);
-			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Call, __GetValueExtension__.MakeGenericMethod(fieldType));
-
-			if(underlyingType != null)
-				generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor(new[] { underlyingType }));
-
-			generator.Emit(OpCodes.Stfld, field);
-		}
-		else
-		{
-			generator.Emit(OpCodes.Ldarg_3);
-
-			//record.GetValue(ordinal)
-			generator.Emit(OpCodes.Ldarg_1);
-			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Callvirt, __GetValueOfRecord__);
-
-			//local_0.FieldX = (TField)converter(...)
-			generator.Emit(OpCodes.Callvirt, __ConvertFrom__);
-
-			if(field.FieldType.IsValueType)
-				generator.Emit(OpCodes.Unbox_Any, field.FieldType);
-			else
-				generator.Emit(OpCodes.Castclass, field.FieldType);
-
-			generator.Emit(OpCodes.Stfld, field);
-		}
-
-		//target = local_0
-		if(field.DeclaringType.IsValueType)
-		{
-			generator.Emit(OpCodes.Ldarg_0);
-			generator.Emit(OpCodes.Ldloc_0);
-			generator.Emit(OpCodes.Box, field.DeclaringType);
-			generator.Emit(OpCodes.Stind_Ref);
-		}
-
-		generator.MarkLabel(ending);
-		generator.Emit(OpCodes.Ret);
-
-		return (PopulatorWithConverter)method.CreateDelegate(typeof(PopulatorWithConverter));
-	}
-
-	public static PopulatorWithConverter GeneratePropertySetter(PropertyInfo property, IDataRecordGetter getter, Func<object, Type, object> converter)
-	{
-		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", null,
-			[typeof(object).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(TypeConverter)],
-			typeof(ModelMemberEmitter), true);
-
-		var generator = method.GetILGenerator();
-		var propertyType = property.PropertyType;
-
-		if(Zongsoft.Common.TypeExtension.IsNullable(propertyType, out var underlyingType))
-			propertyType = underlyingType;
-
-		if(propertyType.IsEnum)
-			propertyType = Enum.GetUnderlyingType(propertyType);
-
-		var ending = generator.DefineLabel();
-
-		generator.DeclareLocal(property.DeclaringType);
-
-		//if(record.IsDBNull(ordinal))
-		generator.Emit(OpCodes.Ldarg_1);
-		generator.Emit(OpCodes.Ldarg_2);
-		generator.Emit(OpCodes.Callvirt, __IsDBNull__);
-		generator.Emit(OpCodes.Brtrue, ending);
-
-		//local_0 = (T)target;
-		generator.Emit(OpCodes.Ldarg_0);
-		generator.Emit(OpCodes.Ldind_Ref);
-		if(property.DeclaringType.IsValueType)
-			generator.Emit(OpCodes.Unbox_Any, property.DeclaringType);
-		else
-			generator.Emit(OpCodes.Castclass, property.DeclaringType);
-		generator.Emit(OpCodes.Stloc_0);
-
-		//local_0 = ...
-		if(property.DeclaringType.IsValueType)
-			generator.Emit(OpCodes.Ldloca_S, 0);
-		else
-			generator.Emit(OpCodes.Ldloc_0);
-
-		if(converter == null)
-		{
-			//local_0.PropertyX = DataRecordExtension.GetValue<T>(record, ordinal)
-			generator.Emit(OpCodes.Ldarg_1);
-			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Call, __GetValueExtension__.MakeGenericMethod(propertyType));
-
-			if(underlyingType != null)
-				generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor(new[] { underlyingType }));
-
-			generator.Emit(OpCodes.Callvirt, property.SetMethod);
-		}
-		else
-		{
-			generator.Emit(OpCodes.Ldarg_3);
-
-			//record.GetValue(ordinal)
-			generator.Emit(OpCodes.Ldarg_1);
-			generator.Emit(OpCodes.Ldarg_2);
-			generator.Emit(OpCodes.Callvirt, __GetValueOfRecord__);
-
-			//local_0.PropertyX = (TProperty)converter(...)
-			generator.Emit(OpCodes.Callvirt, __ConvertFrom__);
-
-			if(property.PropertyType.IsValueType)
-				generator.Emit(OpCodes.Unbox_Any, property.PropertyType);
-			else
-				generator.Emit(OpCodes.Castclass, property.PropertyType);
-
-			generator.Emit(OpCodes.Callvirt, property.SetMethod);
-		}
-
-		//target = local_0
-		if(property.DeclaringType.IsValueType)
-		{
-			generator.Emit(OpCodes.Ldarg_0);
-			generator.Emit(OpCodes.Ldloc_0);
-			generator.Emit(OpCodes.Box, property.DeclaringType);
-			generator.Emit(OpCodes.Stind_Ref);
-		}
-
-		generator.MarkLabel(ending);
-		generator.Emit(OpCodes.Ret);
-
-		return (PopulatorWithConverter)method.CreateDelegate(typeof(PopulatorWithConverter));
-	}
-
 	/*
 	 * 动态生成的字段设置方法的代码大致如下：
 	 * static void SetFieldX(
@@ -248,7 +69,7 @@ public static class ModelMemberEmitter
 	 *         DataRecordGetter.Default.GetValue<TField>(record, ordinal);
 	 * }
 	 */
-	public static PopulatorWithGetter<TModel> GenerateFieldSetter<TModel>(FieldInfo field, IDataRecordGetter getter)
+	public static PopulatorWithGetter<TModel> GenerateFieldSetter<TModel>(FieldInfo field)
 	{
 		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
 			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(IDataRecordGetter)],
@@ -283,9 +104,9 @@ public static class ModelMemberEmitter
 		generator.Emit(OpCodes.Brfalse_S, getterLabel); //getter is null then goto ...
 
 		//getter.GetValue<T>(record, ordinal)
-		generator.Emit(OpCodes.Ldarg_3);    //getter
-		generator.Emit(OpCodes.Ldarg_1);    //record
-		generator.Emit(OpCodes.Ldarg_2);    //ordinal
+		generator.Emit(OpCodes.Ldarg_3); //getter
+		generator.Emit(OpCodes.Ldarg_1); //record
+		generator.Emit(OpCodes.Ldarg_2); //ordinal
 		generator.Emit(OpCodes.Callvirt, __GetValueOfGetterInterface__.MakeGenericMethod(fieldType));
 		generator.Emit(OpCodes.Br_S, setterLabel);
 
@@ -293,11 +114,15 @@ public static class ModelMemberEmitter
 
 		//DataRecordGetter.Default.GetValue<T>(record, ordinal)
 		generator.Emit(OpCodes.Ldsfld, __GetterDefaultField__);
-		generator.Emit(OpCodes.Ldarg_1);    //record
-		generator.Emit(OpCodes.Ldarg_2);    //ordinal
+		generator.Emit(OpCodes.Ldarg_1); //record
+		generator.Emit(OpCodes.Ldarg_2); //ordinal
 		generator.Emit(OpCodes.Callvirt, __GetValueOfGetterInstance__.MakeGenericMethod(fieldType));
 
 		generator.MarkLabel(setterLabel);
+
+		if(underlyingType != null)
+			generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor([underlyingType]));
+
 		generator.Emit(OpCodes.Stfld, field);
 
 		generator.MarkLabel(endingLabel);
@@ -361,7 +186,7 @@ public static class ModelMemberEmitter
 		generator.Emit(OpCodes.Call, __GetTypeFromHandler__);
 
 		//converter.Invoke(...)
-		generator.Emit(OpCodes.Callvirt, __Invoke__);
+		generator.Emit(OpCodes.Callvirt, converter.Method);
 
 		//(TField)...
 		if(field.FieldType.IsValueType)
@@ -394,7 +219,7 @@ public static class ModelMemberEmitter
 	 *         DataRecordGetter.Default.GetValue<TProperty>(record, ordinal);
 	 * }
 	 */
-	public static PopulatorWithGetter<TModel> GeneratePropertySetter<TModel>(PropertyInfo property, IDataRecordGetter getter)
+	public static PopulatorWithGetter<TModel> GeneratePropertySetter<TModel>(PropertyInfo property)
 	{
 		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", null,
 			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(IDataRecordGetter)],
@@ -429,9 +254,9 @@ public static class ModelMemberEmitter
 		generator.Emit(OpCodes.Brfalse_S, getterLabel); //getter is null then goto ...
 
 		//getter.GetValue<T>(record, ordinal)
-		generator.Emit(OpCodes.Ldarg_3);    //getter
-		generator.Emit(OpCodes.Ldarg_1);    //record
-		generator.Emit(OpCodes.Ldarg_2);    //ordinal
+		generator.Emit(OpCodes.Ldarg_3); //getter
+		generator.Emit(OpCodes.Ldarg_1); //record
+		generator.Emit(OpCodes.Ldarg_2); //ordinal
 		generator.Emit(OpCodes.Callvirt, __GetValueOfGetterInterface__.MakeGenericMethod(propertyType));
 		generator.Emit(OpCodes.Br_S, setterLabel);
 
@@ -439,11 +264,15 @@ public static class ModelMemberEmitter
 
 		//DataRecordGetter.Default.GetValue<T>(record, ordinal)
 		generator.Emit(OpCodes.Ldsfld, __GetterDefaultField__);
-		generator.Emit(OpCodes.Ldarg_1);    //record
-		generator.Emit(OpCodes.Ldarg_2);    //ordinal
+		generator.Emit(OpCodes.Ldarg_1); //record
+		generator.Emit(OpCodes.Ldarg_2); //ordinal
 		generator.Emit(OpCodes.Callvirt, __GetValueOfGetterInstance__.MakeGenericMethod(propertyType));
 
 		generator.MarkLabel(setterLabel);
+
+		if(underlyingType != null)
+			generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor([underlyingType]));
+
 		generator.Emit(OpCodes.Callvirt, property.SetMethod);
 
 		generator.MarkLabel(endingLabel);
@@ -507,7 +336,7 @@ public static class ModelMemberEmitter
 		generator.Emit(OpCodes.Call, __GetTypeFromHandler__);
 
 		//converter.Invoke(...)
-		generator.Emit(OpCodes.Callvirt, __Invoke__);
+		generator.Emit(OpCodes.Callvirt, converter.Method);
 
 		//(TProperty)...
 		if(property.PropertyType.IsValueType)

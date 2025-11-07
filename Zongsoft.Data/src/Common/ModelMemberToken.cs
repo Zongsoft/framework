@@ -33,19 +33,19 @@ using System.Reflection;
 
 namespace Zongsoft.Data.Common;
 
-public sealed class ModelMemberToken : IEquatable<ModelMemberToken>
+public sealed class ModelMemberToken<TModel> : IEquatable<ModelMemberToken<TModel>>
 {
 	#region 委托定义
-	private delegate void SetValueDelegate(ref object target, object value);
+	private delegate void SetValueDelegate(ref TModel target, object value);
 	#endregion
 
 	#region 私有变量
 	private readonly MemberInfo _member;
 	private readonly SetValueDelegate _setter;
 	private readonly IDataRecordGetter _getter;
-	private readonly ModelMemberEmitter.PopulatorWithGetter _populateWithGetter;
+	private readonly ModelMemberEmitter.PopulatorWithGetter<TModel> _populateWithGetter;
 	private readonly Func<object, Type, object> _converter;
-	private readonly ModelMemberEmitter.PopulatorWithConverter _populateWithConverter;
+	private readonly ModelMemberEmitter.PopulatorWithConverter<TModel> _populateWithConverter;
 	#endregion
 
 	#region 公共字段
@@ -62,13 +62,13 @@ public sealed class ModelMemberToken : IEquatable<ModelMemberToken>
 		this.Type = field.FieldType;
 
 		_getter = driver.Getter;
-		_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
-		_converter = Utility.GetConverterThunk(field);
+		_setter = (ref TModel entity, object value) => Reflection.Reflector.SetValue(field, ref entity, value);
+		_converter = ToThunk(Utility.GetConverter(field));
 
 		if(_converter == null)
-			_populateWithGetter = null;
+			_populateWithGetter = ModelMemberEmitter.GenerateFieldSetter<TModel>(field);
 		else
-			_populateWithConverter = ModelMemberEmitter.GenerateFieldSetter(field, driver.Getter, _converter);
+			_populateWithConverter = ModelMemberEmitter.GenerateFieldSetter<TModel>(field, _converter);
 	}
 
 	public ModelMemberToken(IDataDriver driver, PropertyInfo property)
@@ -79,13 +79,13 @@ public sealed class ModelMemberToken : IEquatable<ModelMemberToken>
 		this.Type = property.PropertyType;
 
 		_getter = driver.Getter;
-		_setter = (ref object entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
-		_converter = Utility.GetConverterThunk(property);
+		_setter = (ref TModel entity, object value) => Reflection.Reflector.SetValue(property, ref entity, value);
+		_converter = ToThunk(Utility.GetConverter(property));
 
 		if(_converter == null)
-			_populateWithGetter = null;
+			_populateWithGetter = ModelMemberEmitter.GeneratePropertySetter<TModel>(property);
 		else
-			_populateWithConverter = ModelMemberEmitter.GeneratePropertySetter(property, driver.Getter, _converter);
+			_populateWithConverter = ModelMemberEmitter.GeneratePropertySetter<TModel>(property, _converter);
 	}
 	#endregion
 
@@ -94,7 +94,7 @@ public sealed class ModelMemberToken : IEquatable<ModelMemberToken>
 	#endregion
 
 	#region 公共方法
-	public void Populate(ref object target, IDataRecord record, int ordinal)
+	public void Populate(ref TModel target, IDataRecord record, int ordinal)
 	{
 		if(_converter == null)
 			_populateWithGetter.Invoke(ref target, record, ordinal, _getter);
@@ -102,99 +102,29 @@ public sealed class ModelMemberToken : IEquatable<ModelMemberToken>
 			_populateWithConverter.Invoke(ref target, record, ordinal, _converter);
 	}
 
-	public void SetValue(ref object target, object value) => _setter.Invoke(ref target, value);
+	public void SetValue(ref TModel target, object value) => _setter.Invoke(ref target, value);
 	#endregion
 
 	#region 重写方法
-	public bool Equals(ModelMemberToken other) => other is not null && string.Equals(this.Name, other.Name);
-	public override bool Equals(object obj) => this.Equals(obj as ModelMemberToken);
+	public bool Equals(ModelMemberToken<TModel> other) => other is not null && string.Equals(this.Name, other.Name);
+	public override bool Equals(object obj) => this.Equals(obj as ModelMemberToken<TModel>);
 	public override int GetHashCode() => HashCode.Combine(this.Name);
 	public override string ToString() => $"{this.Name}:{this.Type.Name}";
-
-	public static bool operator !=(ModelMemberToken left, ModelMemberToken right) => !(left == right);
-	public static bool operator ==(ModelMemberToken left, ModelMemberToken right) => left is null ? right is null : left.Equals(right);
-	#endregion
-}
-
-public sealed class ModelMemberToken<T> : IEquatable<ModelMemberToken<T>>
-{
-	#region 委托定义
-	private delegate void SetValueDelegate(ref T target, object value);
 	#endregion
 
-	#region 私有变量
-	private readonly MemberInfo _member;
-	private readonly SetValueDelegate _setter;
-	private readonly IDataRecordGetter _getter;
-	private readonly ModelMemberEmitter.PopulatorWithGetter<T> _populateWithGetter;
-	private readonly Func<object, Type, object> _converter;
-	private readonly ModelMemberEmitter.PopulatorWithConverter<T> _populateWithConverter;
+	#region 符号重写
+	public static bool operator !=(ModelMemberToken<TModel> left, ModelMemberToken<TModel> right) => !(left == right);
+	public static bool operator ==(ModelMemberToken<TModel> left, ModelMemberToken<TModel> right) => left is null ? right is null : left.Equals(right);
 	#endregion
 
-	#region 公共字段
-	public readonly string Name;
-	public readonly Type Type;
-	#endregion
-
-	#region 构造函数
-	public ModelMemberToken(IDataDriver driver, FieldInfo field)
+	#region 私有方法
+	private static Func<object, Type, object> ToThunk(System.ComponentModel.TypeConverter converter)
 	{
-		_member = field ?? throw new ArgumentNullException(nameof(field));
+		if(converter == null)
+			return null;
 
-		this.Name = field.Name;
-		this.Type = field.FieldType;
-
-		_getter = driver.Getter;
-		_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(field, ref entity, value);
-		_converter = Utility.GetConverterThunk(field);
-
-		if(_converter == null)
-			_populateWithGetter = ModelMemberEmitter.GenerateFieldSetter<T>(field, _getter);
-		else
-			_populateWithConverter = ModelMemberEmitter.GenerateFieldSetter<T>(field, _converter);
+		return new Func<object, Type, object>(
+			(value, type) => Zongsoft.Common.Convert.ConvertValue(value, type, () => converter));
 	}
-
-	public ModelMemberToken(IDataDriver driver, PropertyInfo property)
-	{
-		_member = property ?? throw new ArgumentNullException(nameof(property));
-
-		this.Name = property.Name;
-		this.Type = property.PropertyType;
-
-		_getter = driver.Getter;
-		_setter = (ref T entity, object value) => Zongsoft.Reflection.Reflector.SetValue(property, ref entity, value);
-		_converter = Utility.GetConverterThunk(property);
-
-		if(_converter == null)
-			_populateWithGetter = ModelMemberEmitter.GeneratePropertySetter<T>(property, _getter);
-		else
-			_populateWithConverter = ModelMemberEmitter.GeneratePropertySetter<T>(property, _converter);
-	}
-	#endregion
-
-	#region 公共属性
-	public bool IsEmpty => _member == null;
-	#endregion
-
-	#region 公共方法
-	public void Populate(ref T target, IDataRecord record, int ordinal)
-	{
-		if(_converter == null)
-			_populateWithGetter.Invoke(ref target, record, ordinal, _getter);
-		else
-			_populateWithConverter.Invoke(ref target, record, ordinal, _converter);
-	}
-
-	public void SetValue(ref T target, object value) => _setter.Invoke(ref target, value);
-	#endregion
-
-	#region 重写方法
-	public bool Equals(ModelMemberToken<T> other) => other is not null && string.Equals(this.Name, other.Name);
-	public override bool Equals(object obj) => this.Equals(obj as ModelMemberToken<T>);
-	public override int GetHashCode() => HashCode.Combine(this.Name);
-	public override string ToString() => $"{this.Name}:{this.Type.Name}";
-
-	public static bool operator !=(ModelMemberToken<T> left, ModelMemberToken<T> right) => !(left == right);
-	public static bool operator ==(ModelMemberToken<T> left, ModelMemberToken<T> right) => left is null ? right is null : left.Equals(right);
 	#endregion
 }

@@ -60,18 +60,5 @@ public class DictionaryPopulatorProvider : IDataPopulatorProvider
 
 		return new DictionaryPopulator(type, keys);
 	}
-
-	public IDataPopulator<T> GetPopulator<T>(IDataDriver driver, IDataRecord record, Metadata.IDataEntity entity = null)
-	{
-		var keys = new string[record.FieldCount];
-
-		for(int i = 0; i < record.FieldCount; i++)
-		{
-			//获取字段名对应的属性名（注意：由查询引擎确保返回的记录列名就是属性名）
-			keys[i] = record.GetName(i);
-		}
-
-		return new DictionaryPopulator<T>(keys);
-	}
 	#endregion
 }

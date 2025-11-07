@@ -34,135 +34,12 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common;
 
-public class ModelPopulator : IDataPopulator
-{
-	#region 成员字段
-	private readonly Type _type;
-	private readonly IEnumerable<MemberMapping> _tokens;
-	#endregion
-
-	#region 构造函数
-	internal ModelPopulator(Type type, IEnumerable<MemberMapping> tokens)
-	{
-		_type = type ?? throw new ArgumentNullException(nameof(type));
-		_tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
-	}
-	#endregion
-
-	#region 公共方法
-	TResult IDataPopulator.Populate<TResult>(IDataRecord record) => (TResult)this.Populate(record, this.GetCreator(_type), _tokens);
-	public object Populate(IDataRecord record) => this.Populate(record, this.GetCreator(_type), _tokens);
-	#endregion
-
-	#region 私有方法
-	private static bool CanPopulate(IDataRecord record, MemberMapping token)
-	{
-		for(int i = 0; i < token.Keys.Length; i++)
-		{
-			if(token.Keys[i] < 0 || record.IsDBNull(token.Keys[i]))
-				return false;
-		}
-
-		return true;
-	}
-
-	private object Populate(IDataRecord record, Func<IDataRecord, object> creator, IEnumerable<MemberMapping> tokens)
-	{
-		object model = null;
-
-		if(tokens == null || !tokens.Any())
-		{
-			if(record.FieldCount > 0)
-				model = record.GetValue(0);
-
-			return model;
-		}
-
-		foreach(var token in tokens)
-		{
-			if(token.Ordinal >= 0)
-			{
-				if(model == null)
-					model = creator(record);
-
-				token.Member.Populate(ref model, record, token.Ordinal);
-			}
-			else if(CanPopulate(record, token))
-			{
-				if(model == null)
-					model = creator(record);
-
-				token.Member.SetValue(ref model, this.Populate(record, this.GetCreator(token.Member.Type), token.Children));
-			}
-		}
-
-		return model;
-	}
-	#endregion
-
-	#region 虚拟方法
-	protected virtual Func<IDataRecord, object> GetCreator(Type type)
-	{
-		if(type == null)
-			throw new ArgumentNullException(nameof(type));
-
-		return type.IsAbstract ?
-			record => Model.Build(type) :
-			record => System.Activator.CreateInstance(type);
-	}
-	#endregion
-
-	#region 嵌套子类
-	internal readonly struct MemberMapping
-	{
-		#region 公共字段
-		public readonly int Ordinal;
-		public readonly ModelMemberToken Member;
-		public readonly Metadata.IDataEntity Entity;
-		public readonly ICollection<MemberMapping> Children;
-		public readonly int[] Keys;
-		#endregion
-
-		#region 构造函数
-		public MemberMapping(Metadata.IDataEntity entity, ModelMemberToken member, int ordinal)
-		{
-			this.Ordinal = ordinal;
-			this.Entity = entity;
-			this.Member = member;
-			this.Children = null;
-			this.Keys = null;
-		}
-
-		public MemberMapping(Metadata.IDataEntity entity, ModelMemberToken member)
-		{
-			this.Ordinal = -1;
-			this.Entity = entity;
-			this.Member = member;
-			this.Children = new List<MemberMapping>();
-			this.Keys = new int[entity.Key.Length];
-
-			for(int i = 0; i < this.Keys.Length; i++)
-			{
-				this.Keys[i] = -1;
-			}
-		}
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => this.Children == null ?
-			$"[{this.Ordinal}]{this.Member}" :
-			$"[{this.Ordinal}]{this.Member}({this.Children.Count})";
-		#endregion
-	}
-	#endregion
-}
-
-public class ModelPopulator<T> : IDataPopulator, IDataPopulator<T>
+public class ModelPopulator<TModel> : IDataPopulator, IDataPopulator<TModel>
 {
 	#region 私有变量
-	private static readonly Func<IDataRecord, T> Creator = typeof(T).IsAbstract ?
-		record => Model.Build<T>() :
-		record => System.Activator.CreateInstance<T>();
+	private static readonly Func<IDataRecord, TModel> Creator = typeof(TModel).IsAbstract ?
+		record => Model.Build<TModel>() :
+		record => System.Activator.CreateInstance<TModel>();
 	#endregion
 
 	#region 成员字段
@@ -184,20 +61,19 @@ public class ModelPopulator<T> : IDataPopulator, IDataPopulator<T>
 	#endregion
 
 	#region 公共方法
-	public T Populate(IDataRecord record) => Populate(record, _members);
+	public TModel Populate(IDataRecord record) => Populate(record, _members);
 	TResult IDataPopulator.Populate<TResult>(IDataRecord record) => (TResult)(object)Populate(record, _members);
-	object IDataPopulator.Populate(IDataRecord record) => this.Populate(record);
 	#endregion
 
 	#region 私有方法
-	private static T Populate(IDataRecord record, ICollection<MemberMapping> members)
+	private static TModel Populate(IDataRecord record, ICollection<MemberMapping> members)
 	{
-		T model = default;
+		TModel model = default;
 
 		if(members == null || members.Count == 0)
 		{
 			if(record.FieldCount > 0)
-				model = record.GetValue(0) is T value ? value : default;
+				model = record.GetValue(0) is TModel value ? value : default;
 
 			return model;
 		}
@@ -206,17 +82,13 @@ public class ModelPopulator<T> : IDataPopulator, IDataPopulator<T>
 		{
 			if(member.Ordinal >= 0)
 			{
-				if(model == null)
-					model = Creator.Invoke(record);
-
+				model ??= Creator.Invoke(record);
 				member.Token.Populate(ref model, record, member.Ordinal);
 			}
 			else if(member.Populator != null)
 			{
-				if(model == null)
-					model = Creator.Invoke(record);
-
-				member.Token.SetValue(ref model, member.Populator.Populate(record));
+				model ??= Creator.Invoke(record);
+				member.Token.SetValue(ref model, member.Populate(record));
 			}
 		}
 
@@ -229,23 +101,33 @@ public class ModelPopulator<T> : IDataPopulator, IDataPopulator<T>
 	{
 		#region 公共字段
 		public readonly int Ordinal;
-		public readonly ModelMemberToken<T> Token;
+		public readonly ModelMemberToken<TModel> Token;
 		public readonly IDataPopulator Populator;
 		#endregion
 
 		#region 构造函数
-		public MemberMapping(ModelMemberToken<T> token, int ordinal)
+		public MemberMapping(ModelMemberToken<TModel> token, int ordinal)
 		{
 			this.Token = token;
 			this.Ordinal = ordinal;
 			this.Populator = null;
 		}
 
-		public MemberMapping(ModelMemberToken<T> token, IDataPopulator populator)
+		public MemberMapping(ModelMemberToken<TModel> token, IDataPopulator populator)
 		{
 			this.Token = token;
 			this.Populator = populator;
 			this.Ordinal = -1;
+		}
+		#endregion
+
+		#region 内部方法
+		internal object Populate(IDataRecord record)
+		{
+			if(this.Populator != null)
+				return this.Populator.Populate<object>(record);
+
+			return default;
 		}
 		#endregion
 

@@ -38,11 +38,6 @@ namespace Zongsoft.Data.Common;
 public interface IDataPopulator
 {
 	/// <summary>数据实体装配方法。</summary>
-	/// <param name="record">指定要装配的数据记录。</param>
-	/// <returns>返回装配完成的数据对象。</returns>
-	object Populate(IDataRecord record);
-
-	/// <summary>数据实体装配方法。</summary>
 	/// <typeparam name="T">指定要装配的实体类型。</typeparam>
 	/// <param name="record">指定要装配的数据记录。</param>
 	/// <returns>返回装配完成的数据对象。</returns>
@@ -53,7 +48,7 @@ public interface IDataPopulator
 /// 提供数据实体装配的泛型接口。
 /// </summary>
 /// <typeparam name="T">装配的实体类型。</typeparam>
-public interface IDataPopulator<out T>
+public interface IDataPopulator<out T> : IDataPopulator
 {
 	/// <summary>数据实体装配方法。</summary>
 	/// <param name="record">指定要装配的数据记录。</param>

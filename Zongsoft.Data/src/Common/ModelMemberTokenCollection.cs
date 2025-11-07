@@ -32,12 +32,6 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Common;
 
-public class ModelMemberTokenCollection : KeyedCollection<string, ModelMemberToken>
-{
-	public ModelMemberTokenCollection() : base(StringComparer.Ordinal) { }
-	protected override string GetKeyForItem(ModelMemberToken token) => token.Name;
-}
-
 public class ModelMemberTokenCollection<T> : KeyedCollection<string, ModelMemberToken<T>>
 {
 	public ModelMemberTokenCollection() : base(StringComparer.Ordinal) { }

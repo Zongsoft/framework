@@ -100,23 +100,6 @@ internal static class Utility
 		return DbType.Object;
 	}
 
-	public static Func<object, Type, object> GetConverterThunk(this MemberInfo member)
-	{
-		var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
-		if(attribute == null)
-			return null;
-
-		var type = Type.GetType(attribute.ConverterTypeName);
-
-		if(!typeof(TypeConverter).IsAssignableFrom(type))
-			throw new InvalidOperationException($"The '{type.FullName}' type of the specified '{member.DeclaringType.Name}.{member.Name}' member is not a type converter.");
-
-		var converter = _converters.GetOrAdd(member, (TypeConverter)Activator.CreateInstance(type));
-
-		return new Func<object, Type, object>(
-			(value, type) => Zongsoft.Common.Convert.ConvertValue(value, type, () => converter));
-	}
-
 	public static TypeConverter GetConverter(this MemberInfo member)
 	{
 		if(member == null)
@@ -125,32 +108,7 @@ internal static class Utility
 		if(_converters.TryGetValue(member, out var converter))
 			return converter;
 
-		var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
-
-		if(attribute == null)
-		{
-			switch(member)
-			{
-				case FieldInfo field:
-					attribute = field.FieldType.GetCustomAttribute<TypeConverterAttribute>();
-					break;
-				case PropertyInfo property:
-					attribute = property.PropertyType.GetCustomAttribute<TypeConverterAttribute>();
-					break;
-				default:
-					return null;
-			}
-
-			if(attribute == null)
-				return null;
-		}
-
-		var type = Type.GetType(attribute.ConverterTypeName);
-
-		if(!typeof(TypeConverter).IsAssignableFrom(type))
-			throw new InvalidOperationException($"The '{type.FullName}' type of the specified '{member.DeclaringType.Name}.{member.Name}' member is not a type converter.");
-
-		return _converters.GetOrAdd(member, (TypeConverter)Activator.CreateInstance(type));
+		return _converters.GetOrAdd(member, Zongsoft.Common.Convert.GetTypeConverter(member));
 	}
 
 	internal static object GetMemberValue(ref object target, string name)

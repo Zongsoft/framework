@@ -58,7 +58,6 @@ public sealed class DataPopulatorProviderManager : IEnumerable<IDataPopulatorPro
 	#endregion
 
 	#region 公共方法
-	public IDataPopulatorProvider GetProvider<T>() => this.GetProvider(typeof(T));
 	public IDataPopulatorProvider GetProvider(Type type)
 	{
 		if(type == null)
@@ -72,12 +71,6 @@ public sealed class DataPopulatorProviderManager : IEnumerable<IDataPopulatorPro
 		}
 
 		throw new DataException($"No found data populator provider for the '{type.FullName}' type.");
-	}
-
-	public IDataPopulator<T> GetPopulator<T>(IDataDriver driver, IDataRecord record, Metadata.IDataEntity entity = null)
-	{
-		var provider = this.GetProvider<T>();
-		return provider.GetPopulator<T>(driver, record, entity);
 	}
 
 	public IDataPopulator GetPopulator(IDataDriver driver, Type type, IDataRecord record, Metadata.IDataEntity entity = null)
