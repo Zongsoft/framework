@@ -69,6 +69,10 @@ public abstract class DataAccessContextBase<TOptions> : IDataAccessContextBase<T
 	public TOptions Options { get; }
 	#endregion
 
+	#region 公共方法
+	public abstract TFeature GetFeature<TFeature>();
+	#endregion
+
 	#region 处置方法
 	public void Dispose()
 	{

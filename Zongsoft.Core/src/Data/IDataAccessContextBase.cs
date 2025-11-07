@@ -50,6 +50,11 @@ public interface IDataAccessContextBase
 
 	/// <summary>获取当前安全主体。</summary>
 	System.Security.Claims.ClaimsPrincipal Principal { get; }
+
+	/// <summary>获取指定类型的特性。</summary>
+	/// <typeparam name="TFeature">指定的特性类型。</typeparam>
+	/// <returns>返回的指定类型的特性，如果没有找到则返回空(<c>null</c>)。</returns>
+	TFeature GetFeature<TFeature>();
 }
 
 /// <summary>
