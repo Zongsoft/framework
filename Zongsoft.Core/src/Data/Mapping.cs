@@ -172,9 +172,11 @@ public static class Mapping
 
 		protected override void RemoveItem(int index)
 		{
+			var isLoaded = base[index].IsLoaded;
+
 			base.RemoveItem(index);
 
-			if(_loads > 0 && index >= 0 && base[index].IsLoaded)
+			if(_loads > 0 && index >= 0 && isLoaded)
 				Interlocked.Decrement(ref _loads);
 		}
 		#endregion
