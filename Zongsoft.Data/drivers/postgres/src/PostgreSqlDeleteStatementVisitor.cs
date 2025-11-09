@@ -46,6 +46,29 @@ public class PostgreSqlDeleteStatementVisitor : DeleteStatementVisitor
 	#endregion
 
 	#region 重写方法
+	protected override void OnVisiting(ExpressionVisitorContext context, DeleteStatement statement) { }
+	protected override void OnVisited(ExpressionVisitorContext context, DeleteStatement statement)
+	{
+		if(statement.Returning == null || statement.Returning.Table == null)
+		{
+			base.OnVisited(context, statement);
+			return;
+		}
+
+		int index = 0;
+		context.Write(" RETURNING ");
+
+		foreach(var member in statement.Returning.Members)
+		{
+			if(index++ > 0)
+				context.Write(',');
+
+			context.Visit(member.Field);
+		}
+
+		context.WriteLine(";");
+	}
+
 	protected override void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables) { }
 	#endregion
 }
