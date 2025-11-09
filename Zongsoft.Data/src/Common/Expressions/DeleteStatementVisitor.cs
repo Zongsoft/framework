@@ -41,14 +41,20 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 	#region 重写方法
 	protected override void OnVisit(ExpressionVisitorContext context, DeleteStatement statement)
 	{
-		if(statement.Returning != null && statement.Returning.Table != null)
-			context.Visit(statement.Returning.Table);
-
 		this.VisitDelete(context, statement);
 		this.VisitTables(context, statement, statement.Tables);
 		this.VisitFrom(context, statement, statement.From);
 		this.VisitWhere(context, statement, statement.Where);
+	}
 
+	protected override void OnVisiting(ExpressionVisitorContext context, DeleteStatement statement)
+	{
+		if(statement.Returning != null && statement.Returning.Table != null)
+			context.Visit(statement.Returning.Table);
+	}
+
+	protected override void OnVisited(ExpressionVisitorContext context, DeleteStatement statement)
+	{
 		context.WriteLine(";");
 	}
 	#endregion
