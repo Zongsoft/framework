@@ -41,6 +41,7 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 	#region 重写方法
 	protected override void OnVisit(ExpressionVisitorContext context, DeleteStatement statement)
 	{
+		this.VisitWith(context, statement.With);
 		this.VisitDelete(context, statement);
 		this.VisitTables(context, statement, statement.Tables);
 		this.VisitFrom(context, statement, statement.From);
@@ -63,7 +64,7 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void VisitWith(ExpressionVisitorContext context, DeleteStatement statement, CommonTableExpressionCollection expressions)
+	protected virtual void VisitWith(ExpressionVisitorContext context, CommonTableExpressionCollection expressions)
 	{
 		context.Write("WITH ");
 		context.Visit(expressions);

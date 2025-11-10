@@ -47,6 +47,7 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 		if(statement.Fields == null || statement.Fields.Count == 0)
 			throw new DataException("Missing required fields in the update statment.");
 
+		this.VisitWith(context, statement.With);
 		this.VisitUpdate(context, statement);
 		this.VisitTables(context, statement, statement.Tables);
 
@@ -73,6 +74,12 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 	#endregion
 
 	#region 虚拟方法
+	protected virtual void VisitWith(ExpressionVisitorContext context, CommonTableExpressionCollection expressions)
+	{
+		context.Write("WITH ");
+		context.Visit(expressions);
+	}
+
 	protected virtual void VisitUpdate(ExpressionVisitorContext context, UpdateStatement statement)
 	{
 		context.Write("UPDATE ");

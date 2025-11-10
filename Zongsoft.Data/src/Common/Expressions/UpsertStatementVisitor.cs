@@ -45,6 +45,8 @@ public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 		if(statement.Fields == null || statement.Fields.Count == 0)
 			throw new DataException("Missing required fields in the upsert statment.");
 
+		this.VisitWith(context, statement.With);
+
 		context.Write("MERGE INTO ");
 		context.Visit(statement.Table);
 		context.WriteLine(" USING (SELECT ");
@@ -159,6 +161,12 @@ public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 	#endregion
 
 	#region 虚拟方法
+	protected virtual void VisitWith(ExpressionVisitorContext context, CommonTableExpressionCollection expressions)
+	{
+		context.Write("WITH ");
+		context.Visit(expressions);
+	}
+
 	protected virtual void VisitReturning(ExpressionVisitorContext context, ReturningClause clause)
 	{
 		context.Write(" RETURNING ");
