@@ -45,7 +45,8 @@ public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 		if(statement.Fields == null || statement.Fields.Count == 0)
 			throw new DataException("Missing required fields in the upsert statment.");
 
-		this.VisitWith(context, statement.With);
+		if(statement.With != null && statement.With.Count > 0)
+			this.VisitWith(context, statement.With);
 
 		context.Write("MERGE INTO ");
 		context.Visit(statement.Table);

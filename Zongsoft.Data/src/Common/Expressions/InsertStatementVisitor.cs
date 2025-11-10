@@ -44,7 +44,9 @@ public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 		if(statement.Fields == null || statement.Fields.Count == 0)
 			throw new DataException("Missing required fields in the insert statment.");
 
-		this.VisitWith(context, statement.With);
+		if(statement.With != null && statement.With.Count > 0)
+			this.VisitWith(context, statement.With);
+
 		this.VisitInsert(context, statement);
 		context.Visit(statement.Table);
 		this.VisitFields(context, statement, statement.Fields);

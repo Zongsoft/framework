@@ -49,7 +49,9 @@ public class SelectStatementVisitorBase<TStatement> : StatementVisitorBase<TStat
 				throw new DataException($"Missing select-members clause in the '{statement.Alias}' select statement.");
 		}
 
-		this.VisitWith(context, statement.With);
+		if(statement.With != null && statement.With.Count > 0)
+			this.VisitWith(context, statement.With);
+
 		this.VisitSelect(context, statement.Select);
 		this.VisitFrom(context, statement.From);
 		this.VisitWhere(context, statement.Where);

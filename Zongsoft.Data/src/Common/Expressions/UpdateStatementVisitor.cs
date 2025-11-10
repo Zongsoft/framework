@@ -47,7 +47,9 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 		if(statement.Fields == null || statement.Fields.Count == 0)
 			throw new DataException("Missing required fields in the update statment.");
 
-		this.VisitWith(context, statement.With);
+		if(statement.With != null && statement.With.Count > 0)
+			this.VisitWith(context, statement.With);
+
 		this.VisitUpdate(context, statement);
 		this.VisitTables(context, statement, statement.Tables);
 
