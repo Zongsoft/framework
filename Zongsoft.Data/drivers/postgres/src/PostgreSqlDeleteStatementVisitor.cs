@@ -51,26 +51,45 @@ public class PostgreSqlDeleteStatementVisitor : DeleteStatementVisitor
 	protected override void VisitJoin(ExpressionVisitorContext context, DeleteStatement statement, JoinClause joining, int index)
 	{
 		if(index == 0)
-			context.Write("USING ");
+			context.Write(" USING ");
 
 		if(index > 0)
 			context.Write(',');
 
-		context.Write(joining.Target.Alias);
+		switch(joining.Target)
+		{
+			case TableIdentifier table:
+				context.Visit(table);
+				break;
+			case SelectStatement subquery:
+				context.Write('(');
+
+				//递归生成子查询语句
+				context.Visit(subquery);
+
+				if(string.IsNullOrEmpty(subquery.Alias))
+					context.WriteLine(")");
+				else
+					context.WriteLine($") AS {subquery.Alias}");
+
+				break;
+		}
 	}
 
 	protected override void VisitWhere(ExpressionVisitorContext context, DeleteStatement statement, IExpression where)
 	{
-		base.VisitWhere(context, statement, where);
+		var conditions = ConditionExpression.And(where);
 
 		if(statement.From.Count > 1)
 		{
 			for(int i = 1; i < statement.From.Count; i++)
 			{
 				if(statement.From[i] is JoinClause joining)
-					context.Visit(joining.Conditions);
+					conditions.Add(joining.Conditions);
 			}
 		}
+
+		base.VisitWhere(context, statement, conditions);
 	}
 	#endregion
 }

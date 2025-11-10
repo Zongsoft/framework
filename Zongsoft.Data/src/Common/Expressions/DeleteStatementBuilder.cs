@@ -102,10 +102,10 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 				if(complex.Behaviors == DataEntityComplexPropertyBehaviors.Principal)
 				{
 					masters ??= [];
-					masters.Add(this.BuildSlave(context.Aliaser, statement, member));
+					masters.Add(BuildSlave(context.Aliaser, statement, member));
 				}
 				else
-					yield return this.BuildSlave(context.Aliaser, statement, member);
+					yield return BuildSlave(context.Aliaser, statement, member);
 			}
 		}
 
@@ -117,9 +117,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 				yield return masters[i];
 		}
 	}
-	#endregion
 
-	#region 虚拟方法
 	protected virtual DeleteStatement CreateStatement(DataDeleteContext context) => new(context.Entity);
 	protected virtual DeleteStatement CreateStatement(IDataEntity entity) => new(entity);
 	#endregion
@@ -177,11 +175,11 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 				}
 			}
 
-			this.BuildSlave(aliaser, statement, schema);
+			BuildSlave(aliaser, statement, schema);
 		}
 	}
 
-	private DeleteStatement BuildSlave(Aliaser aliaser, DeleteStatement master, SchemaMember schema)
+	private static DeleteStatement BuildSlave(Aliaser aliaser, DeleteStatement master, SchemaMember schema)
 	{
 		var complex = (IDataEntityComplexProperty)schema.Token.Property;
 		var statement = new DeleteStatement(complex.Foreign, aliaser.Generate());
@@ -199,9 +197,6 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 				for(int i = 1; i < master.Tables.Count; i++)
 					select.From.Add(master.Tables[i]);
 			}
-
-			foreach(var parameter in master.Parameters)
-				statement.Parameters.Add(parameter);
 
 			select.Select.Members.Add(reference.CreateField(complex.Links[0].GetAnchors().Last()));
 			statement.Where = Expression.In(statement.Table.CreateField(complex.Links[0].Foreign), select);
@@ -230,6 +225,9 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 
 			statement.Where = master.Where;
 		}
+
+		foreach(var parameter in master.Parameters)
+			statement.Parameters.Add(parameter);
 
 		return statement;
 	}

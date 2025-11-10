@@ -60,7 +60,7 @@ public static class StatementVisitorExtension
 					if(string.IsNullOrEmpty(subquery.Alias))
 						context.Write(")");
 					else
-						context.Write(") AS " + subquery.Alias);
+						context.Write($") AS {subquery.Alias}");
 
 					break;
 				case JoinClause joining:

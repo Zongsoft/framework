@@ -74,7 +74,7 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 
 	protected virtual void VisitDelete(ExpressionVisitorContext context, DeleteStatement statement)
 	{
-		context.Write("DELETE ");
+		context.Write("DELETE");
 	}
 
 	protected virtual void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables)
