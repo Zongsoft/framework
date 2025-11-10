@@ -93,10 +93,10 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 
 	protected virtual void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
 	{
-		context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, statement, join));
+		context.VisitFrom(sources, (ctx, join, index) => this.VisitJoin(ctx, statement, join, index));
 	}
 
-	protected virtual void VisitJoin(ExpressionVisitorContext context, DeleteStatement statement, JoinClause joining)
+	protected virtual void VisitJoin(ExpressionVisitorContext context, DeleteStatement statement, JoinClause joining, int index)
 	{
 		context.VisitJoin(joining);
 	}

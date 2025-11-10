@@ -96,7 +96,7 @@ public class SelectStatementVisitorBase<TStatement> : StatementVisitorBase<TStat
 		context.VisitFrom(sources, this.VisitJoin);
 	}
 
-	protected virtual void VisitJoin(ExpressionVisitorContext context, JoinClause joining)
+	protected virtual void VisitJoin(ExpressionVisitorContext context, JoinClause joining, int index)
 	{
 		context.VisitJoin(joining);
 	}

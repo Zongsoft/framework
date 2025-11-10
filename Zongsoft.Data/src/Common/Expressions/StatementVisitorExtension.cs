@@ -34,7 +34,7 @@ namespace Zongsoft.Data.Common.Expressions;
 
 public static class StatementVisitorExtension
 {
-	public static void VisitFrom(this ExpressionVisitorContext context, ICollection<ISource> sources, Action<ExpressionVisitorContext, JoinClause> join)
+	public static void VisitFrom(this ExpressionVisitorContext context, ICollection<ISource> sources, Action<ExpressionVisitorContext, JoinClause, int> join)
 	{
 		if(sources == null || sources.Count == 0)
 			return;
@@ -43,6 +43,8 @@ public static class StatementVisitorExtension
 
 		foreach(var source in sources)
 		{
+			int index = 0;
+
 			switch(source)
 			{
 				case TableIdentifier table:
@@ -65,7 +67,7 @@ public static class StatementVisitorExtension
 					if(join == null)
 						VisitJoin(context, joining);
 					else
-						join(context, joining);
+						join(context, joining, index++);
 
 					break;
 			}

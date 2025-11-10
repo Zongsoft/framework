@@ -124,10 +124,10 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 
 	protected virtual void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
 	{
-		context.VisitFrom(sources, (ctx, join) => this.VisitJoin(ctx, statement, join));
+		context.VisitFrom(sources, (ctx, join, index) => this.VisitJoin(ctx, statement, join, index));
 	}
 
-	protected virtual void VisitJoin(ExpressionVisitorContext context, UpdateStatement statement, JoinClause joining)
+	protected virtual void VisitJoin(ExpressionVisitorContext context, UpdateStatement statement, JoinClause joining, int index)
 	{
 		context.VisitJoin(joining);
 	}
