@@ -103,7 +103,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	#region 私有方法
 	private void BuildReturning(Aliaser aliaser, DeleteStatement statement, IEnumerable<SchemaMember> schemas)
 	{
-		statement.Returning = new ReturningClause(TableDefinition.Temporary());
+		statement.Returning = new ReturningClause();
 
 		foreach(var key in statement.Entity.Key)
 		{
@@ -161,7 +161,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	{
 		var complex = (IDataEntityComplexProperty)schema.Token.Property;
 		var statement = new DeleteStatement(complex.Foreign);
-		var reference = master.Returning.Table.Identifier();
+		var reference = master.Table;
 
 		if(complex.Links.Length == 1)
 		{

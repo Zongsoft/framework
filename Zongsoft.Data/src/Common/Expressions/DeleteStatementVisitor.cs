@@ -55,6 +55,9 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 
 	protected override void OnVisited(ExpressionVisitorContext context, DeleteStatement statement)
 	{
+		if(statement.Returning != null)
+			this.VisitReturning(context, statement.Returning);
+
 		context.WriteLine(";");
 	}
 	#endregion
@@ -92,6 +95,20 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 	protected virtual void VisitWhere(ExpressionVisitorContext context, DeleteStatement statement, IExpression where)
 	{
 		context.VisitWhere(where);
+	}
+
+	protected virtual void VisitReturning(ExpressionVisitorContext context, ReturningClause clause)
+	{
+		int index = 0;
+		context.Write(" RETURNING ");
+
+		foreach(var member in clause.Members)
+		{
+			if(index++ > 0)
+				context.Write(',');
+
+			context.Visit(member.Field);
+		}
 	}
 	#endregion
 }

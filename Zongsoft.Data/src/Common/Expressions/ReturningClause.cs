@@ -42,7 +42,7 @@ public class ReturningClause
 		if(members == null || members.Length == 0)
 			this.Members = new List<ReturningMember>();
 		else
-			this.Members = new List<ReturningMember>(members);
+			this.Members = [.. members];
 	}
 
 	public ReturningClause(params ReturningMember[] members)
@@ -50,7 +50,7 @@ public class ReturningClause
 		if(members == null || members.Length == 0)
 			this.Members = new List<ReturningMember>();
 		else
-			this.Members = new List<ReturningMember>(members);
+			this.Members = [.. members];
 	}
 	#endregion
 
