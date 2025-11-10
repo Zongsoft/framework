@@ -88,16 +88,34 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		//生成条件子句
 		statement.Where = statement.Where(context.Validate(), context.Aliaser);
 
-		if(!context.Schema.IsEmpty)
-			this.BuildReturning(context.Aliaser, statement, context.Schema.Members);
+		List<Statement> masters = null;
 
-		if(statement.HasSlaves)
+		if(!context.Schema.IsEmpty)
 		{
-			foreach(var slave in statement.Slaves)
-				yield return slave;
+			foreach(var member in context.Schema.Members)
+			{
+				if(member.Token.Property.IsSimplex)
+					continue;
+
+				var complex = (IDataEntityComplexProperty)member.Token.Property;
+
+				if(complex.Behaviors == DataEntityComplexPropertyBehaviors.Principal)
+				{
+					masters ??= [];
+					masters.Add(this.BuildSlave(context.Aliaser, statement, member));
+				}
+				else
+					yield return this.BuildSlave(context.Aliaser, statement, member);
+			}
 		}
-		else
-			yield return statement;
+
+		yield return statement;
+
+		if(masters != null)
+		{
+			for(int i = 0; i < masters.Count; i++)
+				yield return masters[i];
+		}
 	}
 	#endregion
 
@@ -166,12 +184,25 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	private DeleteStatement BuildSlave(Aliaser aliaser, DeleteStatement master, SchemaMember schema)
 	{
 		var complex = (IDataEntityComplexProperty)schema.Token.Property;
-		var statement = new DeleteStatement(complex.Foreign);
+		var statement = new DeleteStatement(complex.Foreign, aliaser.Generate());
 		var reference = master.Table;
 
 		if(complex.Links.Length == 1)
 		{
-			var select = new SelectStatement(reference);
+			var select = new SelectStatement(reference)
+			{
+				Where = master.Where
+			};
+
+			if(master.Tables.Count > 1)
+			{
+				for(int i = 1; i < master.Tables.Count; i++)
+					select.From.Add(master.Tables[i]);
+			}
+
+			foreach(var parameter in master.Parameters)
+				statement.Parameters.Add(parameter);
+
 			select.Select.Members.Add(reference.CreateField(complex.Links[0].GetAnchors().Last()));
 			statement.Where = Expression.In(statement.Table.CreateField(complex.Links[0].Foreign), select);
 		}
@@ -190,17 +221,14 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 			}
 
 			statement.From.Add(join);
-		}
 
-		var super = statement.Entity.GetBaseEntity();
+			if(master.From.Count > 1)
+			{
+				for(int i = 1; i < master.From.Count; i++)
+					statement.From.Add(master.From[i]);
+			}
 
-		if(super != null || schema.HasChildren)
-		{
-			this.BuildReturning(aliaser, statement, schema.Children);
-		}
-		else
-		{
-			master.Slaves.Add(statement);
+			statement.Where = master.Where;
 		}
 
 		return statement;
