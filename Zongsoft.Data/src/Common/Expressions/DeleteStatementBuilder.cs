@@ -91,7 +91,13 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		if(!context.Schema.IsEmpty)
 			this.BuildReturning(context.Aliaser, statement, context.Schema.Members);
 
-		yield return statement;
+		if(statement.HasSlaves)
+		{
+			foreach(var slave in statement.Slaves)
+				yield return slave;
+		}
+		else
+			yield return statement;
 	}
 	#endregion
 

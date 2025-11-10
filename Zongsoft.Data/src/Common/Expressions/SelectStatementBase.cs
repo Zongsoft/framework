@@ -67,6 +67,9 @@ public abstract class SelectStatementBase : Statement, ISelectStatementBase, ISo
 
 	/// <summary>获取查询语句的选择子句。</summary>
 	public SelectClause Select { get; }
+
+	/// <summary>获取或设置 With 子句。</summary>
+	public CommonTableExpressionCollection With { get; set; }
 	#endregion
 
 	#region 公共方法

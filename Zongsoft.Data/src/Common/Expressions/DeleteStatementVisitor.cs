@@ -63,6 +63,12 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 	#endregion
 
 	#region 虚拟方法
+	protected virtual void VisitWith(ExpressionVisitorContext context, DeleteStatement statement, CommonTableExpressionCollection expressions)
+	{
+		context.Write("WITH ");
+		context.Visit(expressions);
+	}
+
 	protected virtual void VisitDelete(ExpressionVisitorContext context, DeleteStatement statement)
 	{
 		context.Write("DELETE ");
@@ -99,15 +105,27 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 
 	protected virtual void VisitReturning(ExpressionVisitorContext context, ReturningClause clause)
 	{
-		int index = 0;
 		context.Write(" RETURNING ");
 
-		foreach(var member in clause.Members)
+		if(clause.Members == null || clause.Members.Count == 0)
+			context.Write("*");
+		else
 		{
-			if(index++ > 0)
-				context.Write(',');
+			int index = 0;
 
-			context.Visit(member.Field);
+			foreach(var member in clause.Members)
+			{
+				if(index++ > 0)
+					context.Write(",");
+
+				context.Visit(member.Field);
+			}
+		}
+
+		if(clause.Table != null)
+		{
+			context.Write(" INTO ");
+			context.Write(context.Dialect.GetIdentifier(clause.Table.Identifier()));
 		}
 	}
 	#endregion

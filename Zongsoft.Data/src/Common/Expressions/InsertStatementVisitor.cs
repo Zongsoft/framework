@@ -44,19 +44,35 @@ public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 		if(statement.Fields == null || statement.Fields.Count == 0)
 			throw new DataException("Missing required fields in the insert statment.");
 
-		if(statement.Returning != null && statement.Returning.Table != null)
-			context.Visit(statement.Returning.Table);
-
+		this.VisitWith(context, statement, statement.With);
 		this.VisitInsert(context, statement);
 		context.Visit(statement.Table);
 		this.VisitFields(context, statement, statement.Fields);
 		this.VisitValues(context, statement, statement.Values, statement.Fields.Count);
+	}
+
+	protected override void OnVisiting(ExpressionVisitorContext context, InsertStatement statement)
+	{
+		if(statement.Returning != null && statement.Returning.Table != null)
+			context.Visit(statement.Returning.Table);
+	}
+
+	protected override void OnVisited(ExpressionVisitorContext context, InsertStatement statement)
+	{
+		if(statement.Returning != null)
+			this.VisitReturning(context, statement.Returning);
 
 		context.WriteLine(";");
 	}
 	#endregion
 
 	#region 虚拟方法
+	protected virtual void VisitWith(ExpressionVisitorContext context, InsertStatement statement, CommonTableExpressionCollection expressions)
+	{
+		context.Write("WITH ");
+		context.Visit(expressions);
+	}
+
 	protected virtual void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
 	{
 		context.Write("INSERT INTO ");
@@ -105,6 +121,32 @@ public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 
 			if(++index % rounds == 0)
 				context.Write(")");
+		}
+	}
+
+	protected virtual void VisitReturning(ExpressionVisitorContext context, ReturningClause clause)
+	{
+		context.Write(" RETURNING ");
+
+		if(clause.Members == null || clause.Members.Count == 0)
+			context.Write("*");
+		else
+		{
+			int index = 0;
+
+			foreach(var member in clause.Members)
+			{
+				if(index++ > 0)
+					context.Write(",");
+
+				context.Visit(member.Field);
+			}
+		}
+
+		if(clause.Table != null)
+		{
+			context.Write(" INTO ");
+			context.Write(context.Dialect.GetIdentifier(clause.Table.Identifier()));
 		}
 	}
 	#endregion

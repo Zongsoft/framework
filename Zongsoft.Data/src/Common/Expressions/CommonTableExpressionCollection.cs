@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -28,31 +28,12 @@
  */
 
 using System;
-
-using Zongsoft.Data.Metadata;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示写入语句（包括更新、删除等语句）的基类。
-/// </summary>
-public class MutateStatement : Statement, IMutateStatement
+public sealed class CommonTableExpressionCollection : ExpressionCollection<CommonTableExpression>
 {
-	#region 构造函数
-	protected MutateStatement(IDataEntity entity, SchemaMember schema = null, string alias = "T", ParameterExpressionCollection parameters = null) : base(entity, alias, parameters)
-	{
-		this.Schema = schema;
-	}
-	#endregion
-
-	#region 公共属性
-	/// <summary>获取写入语句对应的模式成员。</summary>
-	public SchemaMember Schema { get; set; }
-
-	/// <summary>获取或设置 With 子句。</summary>
-	public CommonTableExpressionCollection With { get; set; }
-
-	/// <summary>获取或设置写入语句的输出子句。</summary>
-	public ReturningClause Returning { get; set; }
-	#endregion
+	public CommonTableExpressionCollection() { }
+	public CommonTableExpressionCollection(IEnumerable<CommonTableExpression> items) : base(items) { }
 }

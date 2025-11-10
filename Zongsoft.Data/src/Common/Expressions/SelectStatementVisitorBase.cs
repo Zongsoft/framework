@@ -49,6 +49,7 @@ public class SelectStatementVisitorBase<TStatement> : StatementVisitorBase<TStat
 				throw new DataException($"Missing select-members clause in the '{statement.Alias}' select statement.");
 		}
 
+		this.VisitWith(context, statement.With);
 		this.VisitSelect(context, statement.Select);
 		this.VisitFrom(context, statement.From);
 		this.VisitWhere(context, statement.Where);
@@ -56,6 +57,12 @@ public class SelectStatementVisitorBase<TStatement> : StatementVisitorBase<TStat
 	#endregion
 
 	#region 虚拟方法
+	protected virtual void VisitWith(ExpressionVisitorContext context, CommonTableExpressionCollection expressions)
+	{
+		context.Write("WITH ");
+		context.Visit(expressions);
+	}
+
 	protected virtual void VisitSelect(ExpressionVisitorContext context, SelectClause clause)
 	{
 		if(context.Output.Length > 0)

@@ -48,6 +48,7 @@ public class SelectStatementVisitor : SelectStatementVisitorBase<SelectStatement
 				throw new DataException($"Missing select-members clause in the '{statement.Alias}' select statement.");
 		}
 
+		this.VisitWith(context, statement.With);
 		this.VisitSelect(context, statement.Select);
 		this.VisitInto(context, statement.Into);
 		this.VisitFrom(context, statement.From);

@@ -40,9 +40,6 @@ public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 	#region 重写方法
 	protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 	{
-		if(statement.Returning != null && statement.Returning.Table != null)
-			context.Visit(statement.Returning.Table);
-
 		const string SOURCE_ALIAS = "SRC";
 
 		if(statement.Fields == null || statement.Fields.Count == 0)
@@ -144,30 +141,35 @@ public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 		}
 
 		context.Write(")");
+	}
 
-		//输出返回子句
-		VisitReturning(context, statement.Returning);
+	protected override void OnVisiting(ExpressionVisitorContext context, UpsertStatement statement)
+	{
+		if(statement.Returning != null && statement.Returning.Table != null)
+			context.Visit(statement.Returning.Table);
+	}
+
+	protected override void OnVisited(ExpressionVisitorContext context, UpsertStatement statement)
+	{
+		if(statement.Returning != null)
+			this.VisitReturning(context, statement.Returning);
 
 		context.WriteLine(";");
 	}
 	#endregion
 
-	#region 私有方法
-	private static void VisitReturning(ExpressionVisitorContext context, ReturningClause returning)
+	#region 虚拟方法
+	protected virtual void VisitReturning(ExpressionVisitorContext context, ReturningClause clause)
 	{
-		if(returning == null)
-			return;
+		context.Write(" RETURNING ");
 
-		context.WriteLine();
-		context.Write("RETURNING ");
-
-		if(returning.Members == null || returning.Members.Count == 0)
+		if(clause.Members == null || clause.Members.Count == 0)
 			context.Write("*");
 		else
 		{
 			int index = 0;
 
-			foreach(var member in returning.Members)
+			foreach(var member in clause.Members)
 			{
 				if(index++ > 0)
 					context.Write(",");
@@ -176,10 +178,10 @@ public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 			}
 		}
 
-		if(returning.Table != null)
+		if(clause.Table != null)
 		{
 			context.Write(" INTO ");
-			context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
+			context.Write(context.Dialect.GetIdentifier(clause.Table.Identifier()));
 		}
 	}
 	#endregion

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -28,31 +28,23 @@
  */
 
 using System;
-
-using Zongsoft.Data.Metadata;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示写入语句（包括更新、删除等语句）的基类。
-/// </summary>
-public class MutateStatement : Statement, IMutateStatement
+public class CommonTableExpression : Expression
 {
-	#region 构造函数
-	protected MutateStatement(IDataEntity entity, SchemaMember schema = null, string alias = "T", ParameterExpressionCollection parameters = null) : base(entity, alias, parameters)
+	public CommonTableExpression(string name, Statement statement, params IEnumerable<string> columns) : this(name, false, statement, columns) { }
+	public CommonTableExpression(string name, bool recursive, Statement statement, params IEnumerable<string> columns)
 	{
-		this.Schema = schema;
+		this.Name = name;
+		this.Recursive = recursive;
+		this.Statement = statement;
+		this.Columns = [.. columns];
 	}
-	#endregion
 
-	#region 公共属性
-	/// <summary>获取写入语句对应的模式成员。</summary>
-	public SchemaMember Schema { get; set; }
-
-	/// <summary>获取或设置 With 子句。</summary>
-	public CommonTableExpressionCollection With { get; set; }
-
-	/// <summary>获取或设置写入语句的输出子句。</summary>
-	public ReturningClause Returning { get; set; }
-	#endregion
+	public string Name { get; }
+	public bool Recursive { get; }
+	public ICollection<string> Columns { get; }
+	public Statement Statement { get; set; }
 }

@@ -29,6 +29,7 @@
 
 using System;
 using System.Data;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
 
@@ -64,7 +65,7 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 	#endregion
 
 	#region 虚拟方法
-	protected virtual ExpressionVisitorContext CreateContext() => new ExpressionVisitorContext(this);
+	protected virtual ExpressionVisitorContext CreateContext() => new(this);
 
 	internal protected virtual void OnVisit(ExpressionVisitorContext context, IExpression expression)
 	{
@@ -119,8 +120,11 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 				case ConditionExpression condition:
 					this.VisitCondition(context, condition);
 					break;
-				case ExpressionCollection collection:
-					this.VisitCollection(context, collection);
+				case CommonTableExpression cte:
+					this.VisitCommonTableExpression(context, cte);
+					break;
+				case IEnumerable<IExpression> expressions:
+					this.VisitExpressions(context, expressions);
 					break;
 				case IStatementBase statement:
 					this.VisitStatement(context, statement);
@@ -425,20 +429,45 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 			context.Write(")");
 	}
 
-	protected virtual void VisitCollection(ExpressionVisitorContext context, ExpressionCollection collection)
+	protected virtual void VisitExpressions(ExpressionVisitorContext context, IEnumerable<IExpression> expressions)
 	{
-		if(collection.Count == 0)
-			return;
-
 		int index = 0;
 
-		foreach(var item in collection)
+		foreach(var expression in expressions)
 		{
 			if(index++ > 0)
 				context.Write(",");
 
-			this.OnVisit(context, item);
+			this.OnVisit(context, expression);
 		}
+	}
+
+	protected virtual void VisitCommonTableExpression(ExpressionVisitorContext context, CommonTableExpression expression)
+	{
+		context.Write(expression.Name);
+
+		if(expression.Recursive)
+			context.Write(" RECURSIVE");
+
+		if(expression.Columns.Count > 0)
+		{
+			context.Write(" (");
+
+			int index = 0;
+			foreach(var column in expression.Columns)
+			{
+				if(index++ > 0)
+					context.Write(',');
+
+				context.Write(column);
+			}
+
+			context.Write(')');
+		}
+
+		context.WriteLine(" AS (");
+		this.OnVisit(context, expression.Statement);
+		context.WriteLine(")");
 	}
 
 	protected abstract void VisitStatement(ExpressionVisitorContext context, IStatementBase statement);

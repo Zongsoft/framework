@@ -47,9 +47,6 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 		if(statement.Fields == null || statement.Fields.Count == 0)
 			throw new DataException("Missing required fields in the update statment.");
 
-		if(statement.Returning != null && statement.Returning.Table != null)
-			context.Visit(statement.Returning.Table);
-
 		this.VisitUpdate(context, statement);
 		this.VisitTables(context, statement, statement.Tables);
 
@@ -58,6 +55,18 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 
 		this.VisitFrom(context, statement, statement.From);
 		this.VisitWhere(context, statement, statement.Where);
+	}
+
+	protected override void OnVisiting(ExpressionVisitorContext context, UpdateStatement statement)
+	{
+		if(statement.Returning != null && statement.Returning.Table != null)
+			context.Visit(statement.Returning.Table);
+	}
+
+	protected override void OnVisited(ExpressionVisitorContext context, UpdateStatement statement)
+	{
+		if(statement.Returning != null)
+			this.VisitReturning(context, statement.Returning);
 
 		context.WriteLine(";");
 	}
@@ -117,6 +126,32 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 	protected virtual void VisitWhere(ExpressionVisitorContext context, UpdateStatement statement, IExpression where)
 	{
 		context.VisitWhere(where);
+	}
+
+	protected virtual void VisitReturning(ExpressionVisitorContext context, ReturningClause clause)
+	{
+		context.Write(" RETURNING ");
+
+		if(clause.Members == null || clause.Members.Count == 0)
+			context.Write("*");
+		else
+		{
+			int index = 0;
+
+			foreach(var member in clause.Members)
+			{
+				if(index++ > 0)
+					context.Write(",");
+
+				context.Visit(member.Field);
+			}
+		}
+
+		if(clause.Table != null)
+		{
+			context.Write(" INTO ");
+			context.Write(context.Dialect.GetIdentifier(clause.Table.Identifier()));
+		}
 	}
 	#endregion
 }

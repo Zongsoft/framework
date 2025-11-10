@@ -33,53 +33,49 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-public class ExpressionCollection : Expression, ICollection<IExpression>
+public sealed class ExpressionCollection : ExpressionCollection<IExpression>
+{
+	public ExpressionCollection() { }
+	public ExpressionCollection(IEnumerable<IExpression> items) : base(items) { }
+}
+
+public class ExpressionCollection<TExpression> : Expression, ICollection<TExpression> where TExpression : IExpression
 {
 	#region 成员字段
-	private readonly List<IExpression> _items;
+	private readonly List<TExpression> _items;
 	#endregion
 
 	#region 构造函数
-	public ExpressionCollection()
-	{
-		_items = new List<IExpression>();
-	}
-
-	public ExpressionCollection(IEnumerable<IExpression> items)
-	{
-		if(items == null)
-			_items = new List<IExpression>();
-		else
-			_items = new List<IExpression>(items);
-	}
+	public ExpressionCollection() => _items = [];
+	public ExpressionCollection(IEnumerable<TExpression> items) => _items = [.. items];
 	#endregion
 
 	#region 公共属性
 	public int Count => _items.Count;
-	bool ICollection<IExpression>.IsReadOnly => false;
+	bool ICollection<TExpression>.IsReadOnly => false;
 	public IExpression this[int index] => _items[index];
 	#endregion
 
 	#region 公共方法
-	public void Add(IExpression item)
+	public void Add(TExpression item)
 	{
 		if(item != null)
 			_items.Add(item);
 	}
 
-	public void Insert(int index, IExpression item) => _items.Insert(index, item);
+	public void Insert(int index, TExpression item) => _items.Insert(index, item);
 	public void Clear() => _items.Clear();
-	public bool Remove(IExpression item) => _items.Remove(item);
+	public bool Remove(TExpression item) => _items.Remove(item);
 	public void RemoveAt(int index) => _items.RemoveAt(index);
 	#endregion
 
 	#region 显式实现
-	bool ICollection<IExpression>.Contains(IExpression item) => _items.Contains(item);
-	void ICollection<IExpression>.CopyTo(IExpression[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
+	bool ICollection<TExpression>.Contains(TExpression item) => _items.Contains(item);
+	void ICollection<TExpression>.CopyTo(TExpression[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
 	#endregion
 
 	#region 枚举遍历
-	public IEnumerator<IExpression> GetEnumerator() => _items.GetEnumerator();
+	public IEnumerator<TExpression> GetEnumerator() => _items.GetEnumerator();
 	IEnumerator IEnumerable.GetEnumerator() => _items.GetEnumerator();
 	#endregion
 }

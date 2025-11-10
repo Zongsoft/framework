@@ -53,10 +53,13 @@ public class InsertStatement : StatementBase, IMutateStatement
 	/// <summary>获取或设置插入语句对应的模式成员。</summary>
 	public SchemaMember Schema { get; set; }
 
-	/// <summary>获取新增或更新字段集合。</summary>
+	/// <summary>获取或设置 With 子句。</summary>
+	public CommonTableExpressionCollection With { get; set; }
+
+	/// <summary>获取新增字段集合。</summary>
 	public IList<FieldIdentifier> Fields { get; }
 
-	/// <summary>获取新增或更新字段值集合。</summary>
+	/// <summary>获取新增字段值集合。</summary>
 	public IList<IExpression> Values { get; }
 
 	/// <summary>获取或设置输出子句。</summary>
