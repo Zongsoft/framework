@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-internal static class StatementVisitorExtension
+public static class StatementVisitorExtension
 {
 	public static void VisitFrom(this ExpressionVisitorContext context, ICollection<ISource> sources, Action<ExpressionVisitorContext, JoinClause> join)
 	{
