@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2015-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.MySql library.
  *
@@ -32,27 +32,26 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MySql
+namespace Zongsoft.Data.MySql;
+
+public class MySqlStatementBuilder : StatementBuilderBase
 {
-	public class MySqlStatementBuilder : StatementBuilderBase
-	{
-		#region 单例字段
-		public static readonly MySqlStatementBuilder Default = new MySqlStatementBuilder();
-		#endregion
+	#region 单例字段
+	public static readonly MySqlStatementBuilder Default = new MySqlStatementBuilder();
+	#endregion
 
-		#region 构造函数
-		private MySqlStatementBuilder() { }
-		#endregion
+	#region 构造函数
+	private MySqlStatementBuilder() { }
+	#endregion
 
-		#region 重写方法
-		protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new MySqlSelectStatementBuilder();
-		protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new MySqlDeleteStatementBuilder();
-		protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new MySqlInsertStatementBuilder();
-		protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new MySqlUpdateStatementBuilder();
-		protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new MySqlUpsertStatementBuilder();
-		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new MySqlAggregateStatementBuilder();
-		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new MySqlExistStatementBuilder();
-		protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new MySqlExecutionStatementBuilder();
-		#endregion
-	}
+	#region 重写方法
+	protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new MySqlSelectStatementBuilder();
+	protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new MySqlDeleteStatementBuilder();
+	protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new MySqlInsertStatementBuilder();
+	protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new MySqlUpdateStatementBuilder();
+	protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new MySqlUpsertStatementBuilder();
+	protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new MySqlAggregateStatementBuilder();
+	protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new MySqlExistStatementBuilder();
+	protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new MySqlExecutionStatementBuilder();
+	#endregion
 }

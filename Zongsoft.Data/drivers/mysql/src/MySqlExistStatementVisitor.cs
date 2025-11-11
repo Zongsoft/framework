@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2015-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.MySql library.
  *
@@ -32,27 +32,26 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MySql
+namespace Zongsoft.Data.MySql;
+
+public class MySqlExistStatementVisitor : ExistStatementVisitor
 {
-	public class MySqlExistStatementVisitor : ExistStatementVisitor
+	#region 单例字段
+	public static readonly MySqlExistStatementVisitor Instance = new MySqlExistStatementVisitor();
+	#endregion
+
+	#region 构造函数
+	private MySqlExistStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, ExistStatement statement)
 	{
-		#region 单例字段
-		public static readonly MySqlExistStatementVisitor Instance = new MySqlExistStatementVisitor();
-		#endregion
+		//调用基类同名方法
+		base.OnVisit(context, statement);
 
-		#region 构造函数
-		private MySqlExistStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, ExistStatement statement)
-		{
-			//调用基类同名方法
-			base.OnVisit(context, statement);
-
-			//限制最多只返回一条记录
-			context.Write(" LIMIT 1");
-		}
-		#endregion
+		//限制最多只返回一条记录
+		context.Write(" LIMIT 1");
 	}
+	#endregion
 }

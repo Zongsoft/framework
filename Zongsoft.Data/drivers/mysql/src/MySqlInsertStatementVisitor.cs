@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2015-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.MySql library.
  *
@@ -33,26 +33,25 @@ using System.Collections.Generic;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MySql
+namespace Zongsoft.Data.MySql;
+
+public class MySqlInsertStatementVisitor : InsertStatementVisitor
 {
-	public class MySqlInsertStatementVisitor : InsertStatementVisitor
+	#region 单例字段
+	public static readonly MySqlInsertStatementVisitor Instance = new MySqlInsertStatementVisitor();
+	#endregion
+
+	#region 构造函数
+	private MySqlInsertStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
 	{
-		#region 单例字段
-		public static readonly MySqlInsertStatementVisitor Instance = new MySqlInsertStatementVisitor();
-		#endregion
-
-		#region 构造函数
-		private MySqlInsertStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-		protected override void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
-		{
-			if(statement.Options.ConstraintIgnored)
-				context.Write("INSERT IGNORE INTO ");
-			else
-				context.Write("INSERT INTO ");
-		}
-		#endregion
+		if(statement.Options.ConstraintIgnored)
+			context.Write("INSERT IGNORE INTO ");
+		else
+			context.Write("INSERT INTO ");
 	}
+	#endregion
 }

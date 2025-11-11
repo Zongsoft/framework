@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2015-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.MySql library.
  *
@@ -32,12 +32,11 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MySql
+namespace Zongsoft.Data.MySql;
+
+public class MySqlInsertStatementBuilder : InsertStatementBuilder
 {
-	public class MySqlInsertStatementBuilder : InsertStatementBuilder
-	{
-		#region 构造函数
-		public MySqlInsertStatementBuilder() { }
-		#endregion
-	}
+	#region 构造函数
+	public MySqlInsertStatementBuilder() { }
+	#endregion
 }

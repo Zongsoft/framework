@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2015-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.MySql library.
  *
@@ -32,111 +32,110 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MySql
+namespace Zongsoft.Data.MySql;
+
+public class MySqlUpsertStatementVisitor : UpsertStatementVisitor
 {
-	public class MySqlUpsertStatementVisitor : UpsertStatementVisitor
+	#region 单例字段
+	public static readonly MySqlUpsertStatementVisitor Instance = new MySqlUpsertStatementVisitor();
+	#endregion
+
+	#region 构造函数
+	private MySqlUpsertStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 	{
-		#region 单例字段
-		public static readonly MySqlUpsertStatementVisitor Instance = new MySqlUpsertStatementVisitor();
-		#endregion
+		if(statement.Fields == null || statement.Fields.Count == 0)
+			throw new DataException("Missing required fields in the upsert statment.");
 
-		#region 构造函数
-		private MySqlUpsertStatementVisitor() { }
-		#endregion
+		var index = 0;
 
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
+		if(statement.Options.ConstraintIgnored)
+			context.Write("INSERT IGNORE INTO ");
+		else
+			context.Write("INSERT INTO ");
+
+		context.Write(context.Dialect.GetIdentifier(statement.Table));
+		context.Write(" (");
+
+		foreach(var field in statement.Fields)
 		{
-			if(statement.Fields == null || statement.Fields.Count == 0)
-				throw new DataException("Missing required fields in the upsert statment.");
+			if(index++ > 0)
+				context.Write(",");
 
-			var index = 0;
+			context.Write(context.Dialect.GetIdentifier(field.Name));
+		}
 
-			if(statement.Options.ConstraintIgnored)
-				context.Write("INSERT IGNORE INTO ");
-			else
-				context.Write("INSERT INTO ");
+		index = 0;
+		context.WriteLine(") VALUES ");
 
-			context.Write(context.Dialect.GetIdentifier(statement.Table));
-			context.Write(" (");
+		foreach(var value in statement.Values)
+		{
+			if(index++ > 0)
+				context.Write(",");
 
+			if(index % statement.Fields.Count == 1)
+				context.Write("(");
+
+			var parenthesisRequired = value is IStatementBase;
+
+			if(parenthesisRequired)
+				context.Write("(");
+
+			context.Visit(value);
+
+			if(parenthesisRequired)
+				context.Write(")");
+
+			if(index % statement.Fields.Count == 0)
+				context.Write(")");
+		}
+
+		index = 0;
+		context.WriteLine(" ON DUPLICATE KEY UPDATE ");
+
+		if(statement.Updation.Count > 0)
+		{
+			foreach(var item in statement.Updation)
+			{
+				if(index++ > 0)
+					context.Write(",");
+
+				context.Write(context.Dialect.GetIdentifier(item.Field));
+				context.Write("=");
+
+				var parenthesisRequired = item.Value is IStatementBase;
+
+				if(parenthesisRequired)
+					context.Write("(");
+
+				context.Visit(item.Value);
+
+				if(parenthesisRequired)
+					context.Write(")");
+			}
+		}
+		else
+		{
 			foreach(var field in statement.Fields)
 			{
+				//忽略修改序列字段
+				if(field.Token.Property is Metadata.IDataEntitySimplexProperty simplex && simplex.Sequence != null)
+					continue;
+
 				if(index++ > 0)
 					context.Write(",");
 
 				context.Write(context.Dialect.GetIdentifier(field.Name));
+				context.Write("=VALUES(");
+				context.Write(context.Dialect.GetIdentifier(field.Name));
+				context.Write(")");
 			}
-
-			index = 0;
-			context.WriteLine(") VALUES ");
-
-			foreach(var value in statement.Values)
-			{
-				if(index++ > 0)
-					context.Write(",");
-
-				if(index % statement.Fields.Count == 1)
-					context.Write("(");
-
-				var parenthesisRequired = value is IStatementBase;
-
-				if(parenthesisRequired)
-					context.Write("(");
-
-				context.Visit(value);
-
-				if(parenthesisRequired)
-					context.Write(")");
-
-				if(index % statement.Fields.Count == 0)
-					context.Write(")");
-			}
-
-			index = 0;
-			context.WriteLine(" ON DUPLICATE KEY UPDATE ");
-
-			if(statement.Updation.Count > 0)
-			{
-				foreach(var item in statement.Updation)
-				{
-					if(index++ > 0)
-						context.Write(",");
-
-					context.Write(context.Dialect.GetIdentifier(item.Field));
-					context.Write("=");
-
-					var parenthesisRequired = item.Value is IStatementBase;
-
-					if(parenthesisRequired)
-						context.Write("(");
-
-					context.Visit(item.Value);
-
-					if(parenthesisRequired)
-						context.Write(")");
-				}
-			}
-			else
-			{
-				foreach(var field in statement.Fields)
-				{
-					//忽略修改序列字段
-					if(field.Token.Property is Metadata.IDataEntitySimplexProperty simplex && simplex.Sequence != null)
-						continue;
-
-					if(index++ > 0)
-						context.Write(",");
-
-					context.Write(context.Dialect.GetIdentifier(field.Name));
-					context.Write("=VALUES(");
-					context.Write(context.Dialect.GetIdentifier(field.Name));
-					context.Write(")");
-				}
-			}
-
-			context.WriteLine(";");
 		}
-		#endregion
+
+		context.WriteLine(";");
 	}
+	#endregion
 }
