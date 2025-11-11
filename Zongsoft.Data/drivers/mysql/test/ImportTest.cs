@@ -29,7 +29,7 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 		var users = Model.Build<UserModel>(COUNT, (model, index) =>
 		{
 			model.UserId = (uint)(1000 + index);
-			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}";
+			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
 		});
 
 		var count = await accessor.ImportAsync(users);

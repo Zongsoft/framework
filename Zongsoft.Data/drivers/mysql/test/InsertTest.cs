@@ -44,7 +44,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 
 		var count = await accessor.InsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) => {
 			model.UserId = (uint)(200 + index);
-			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}";
+			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
 		}), DataInsertOptions.SuppressSequence());
 		Assert.Equal(COUNT, count);
 
