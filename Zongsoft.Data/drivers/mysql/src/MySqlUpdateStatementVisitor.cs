@@ -48,8 +48,13 @@ namespace Zongsoft.Data.MySql
 		#region 重写方法
 		protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 		{
-			//调用基类同名方法
-			base.VisitTables(context, statement, tables);
+			for(int i = 0; i < tables.Count; i++)
+			{
+				if(i > 0)
+					context.Write(",");
+
+				context.Visit(tables[i]);
+			}
 
 			/*
 			 * 注意：由于 MySQL 的 UPDATE 语句不支持 FROM 子句，因此必须将其改写为多表修改的语法。
