@@ -9,7 +9,7 @@ public abstract class UserModel : IEquatable<UserModel>
 	#region 公共属性
 	public abstract uint UserId { get; set; }
 	public abstract string Name { get; set; }
-	public abstract string Email { get; set; }
+	public abstract Email? Email { get; set; }
 	public abstract string Phone { get; set; }
 	public abstract bool? Gender { get; set; }
 	public abstract bool Enabled { get; set; }

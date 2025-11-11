@@ -46,6 +46,7 @@ public class SelectTest(DatabaseFixture database)
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
+			model.Email = new Email("Popeye", "zongsoft.com");
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
@@ -66,6 +67,7 @@ public class SelectTest(DatabaseFixture database)
 
 		Assert.NotNull(user);
 		Assert.Equal("Popeye", user.Name);
+		Assert.Equal("popeye@zongsoft.com", user.Email);
 		Assert.NotNull(user.Parents);
 
 		var parent = user.Parents.FirstOrDefault();
@@ -87,6 +89,7 @@ public class SelectTest(DatabaseFixture database)
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
+			model.Email = new Email("Popeye", "zongsoft.com");
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
@@ -107,6 +110,7 @@ public class SelectTest(DatabaseFixture database)
 
 		Assert.NotNull(user);
 		Assert.Equal("Popeye", user.Name);
+		Assert.Equal("popeye@zongsoft.com", user.Email);
 		Assert.NotNull(user.Parents);
 
 		var parent = user.Parents.FirstOrDefault();
@@ -130,6 +134,7 @@ public class SelectTest(DatabaseFixture database)
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
+			model.Email = new Email("Popeye", "zongsoft.com");
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
@@ -150,6 +155,7 @@ public class SelectTest(DatabaseFixture database)
 
 		Assert.NotNull(user);
 		Assert.Equal("Popeye", user.Name);
+		Assert.Equal("popeye@zongsoft.com", user.Email);
 		Assert.NotNull(user.Roles);
 
 		var role = user.Roles.FirstOrDefault();
