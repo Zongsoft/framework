@@ -49,6 +49,7 @@ public static class ModelMemberEmitter
 	private static readonly MethodInfo __GetValueOfGetterInstance__ = typeof(DataRecordGetter).GetMethod(nameof(DataRecordGetter.GetValue), [typeof(IDataRecord), typeof(int)]);
 	private static readonly MethodInfo __GetValueOfGetterInterface__ = typeof(IDataRecordGetter).GetMethod(nameof(IDataRecordGetter.GetValue), [typeof(IDataRecord), typeof(int)]);
 	private static readonly MethodInfo __GetTypeFromHandler__ = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof(RuntimeTypeHandle)]);
+	private static readonly MethodInfo __Invoke__ = typeof(Func<object, Type, object>).GetMethod(nameof(Func<object, Type, object>.Invoke), [typeof(object), typeof(Type)]);
 	private static readonly FieldInfo __GetterDefaultField__ = typeof(DataRecordGetter).GetField(nameof(DataRecordGetter.Default), BindingFlags.Public | BindingFlags.Static);
 	#endregion
 
@@ -186,13 +187,16 @@ public static class ModelMemberEmitter
 		generator.Emit(OpCodes.Call, __GetTypeFromHandler__);
 
 		//converter.Invoke(...)
-		generator.Emit(OpCodes.Callvirt, converter.Method);
+		generator.Emit(OpCodes.Callvirt, __Invoke__);
 
 		//(TField)...
 		if(field.FieldType.IsValueType)
 			generator.Emit(OpCodes.Unbox_Any, field.FieldType);
 		else
 			generator.Emit(OpCodes.Castclass, field.FieldType);
+
+		//if(underlyingType != null)
+		//	generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor([underlyingType]));
 
 		//target.FieldX = ...
 		generator.Emit(OpCodes.Stfld, field);
@@ -336,13 +340,16 @@ public static class ModelMemberEmitter
 		generator.Emit(OpCodes.Call, __GetTypeFromHandler__);
 
 		//converter.Invoke(...)
-		generator.Emit(OpCodes.Callvirt, converter.Method);
+		generator.Emit(OpCodes.Callvirt, __Invoke__);
 
 		//(TProperty)...
 		if(property.PropertyType.IsValueType)
 			generator.Emit(OpCodes.Unbox_Any, property.PropertyType);
 		else
 			generator.Emit(OpCodes.Castclass, property.PropertyType);
+
+		//if(underlyingType != null)
+		//	generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor([underlyingType]));
 
 		//target.PropertyX = ...
 		generator.Emit(OpCodes.Callvirt, property.SetMethod);
