@@ -10,7 +10,7 @@ using Zongsoft.Data.MySql.Tests.Models;
 namespace Zongsoft.Data.MySql.Tests;
 
 [Collection("Database")]
-public class ImportTest(DatabaseFixture database)
+public class ImportTest(DatabaseFixture database) : IDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -37,5 +37,14 @@ public class ImportTest(DatabaseFixture database)
 
 		count = await accessor.DeleteAsync<UserModel>(Condition.Between(nameof(UserModel.UserId), 1000, 1000 + COUNT));
 		Assert.Equal(COUNT, count);
+	}
+
+	public void Dispose()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
 	}
 }
