@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -37,25 +36,4 @@ namespace Zongsoft.Data.TDengine;
 
 public class TDengineDeleteStatementBuilder : DeleteStatementBuilder
 {
-	protected override IEnumerable<IStatementBase> BuildComplexity(DataDeleteContext context)
-	{
-		//清空数据模式以免生成 Returnning 子句
-		context.Schema.Clear();
-
-		var statements = base.BuildComplexity(context);
-
-		foreach(var statement in statements)
-		{
-			if(statement is DeleteStatement deletion)
-			{
-				if(deletion.Tables.Count > 1)
-					throw new DataException($"The {TDengineDriver.NAME} driver does not support multi-table deletes.");
-
-				//因为 TDengine 删除语句不支持别名，所以移除表别名以免造成语法错误
-				deletion.Table.Alias = null;
-			}
-
-			yield return statement;
-		}
-	}
 }

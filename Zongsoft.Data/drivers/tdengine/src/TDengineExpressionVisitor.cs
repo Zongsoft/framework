@@ -102,7 +102,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 			context.Write("CONVERT(");
 			this.OnVisit(context, casting.Value);
 			context.Write(",");
-			context.Write(this.Dialect.GetDbType(casting.Type, casting.Length, casting.Precision, casting.Scale));
+			context.Write(this.Dialect.GetDataType(casting.Type, casting.Length, casting.Precision, casting.Scale));
 			context.Write(")");
 
 			return;
@@ -133,7 +133,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 		public string GetIdentifier(string name) => $"`{name}`";
 		public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
 
-		public string GetDbType(DbType dbType, int length, byte precision, byte scale) => dbType switch
+		public string GetDataType(DataType type, int length, byte precision, byte scale) => type.DbType switch
 		{
 			DbType.AnsiString => length > 0 ? $"varchar({length})" : "varchar(16382)",
 			DbType.AnsiStringFixedLength => length > 0 ? $"varchar({length})" : "varchar(16382)",
@@ -162,7 +162,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 			DbType.Single => "float",
 			DbType.VarNumeric => "double",
 			DbType.Xml => "nchar(4096)",
-			_ => throw new DataException($"Unsupported '{dbType}' data type."),
+			_ => throw new DataException($"Unsupported '{type}' data type."),
 		};
 
 		public string GetMethodName(MethodExpression method)

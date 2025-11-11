@@ -30,7 +30,6 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.TDengine;
@@ -47,5 +46,25 @@ public class TDengineDeleteStatementVisitor : DeleteStatementVisitor
 
 	#region 重写方法
 	protected override void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables) { }
+	protected override void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
+	{
+		if(sources == null || sources.Count == 0)
+			return;
+
+		context.Write(" FROM ");
+
+		var index = 0;
+
+		foreach(var source in sources)
+		{
+			if(index++ > 0)
+				context.Write(',');
+
+			if(source is TableIdentifier table)
+				context.Write(context.Dialect.GetIdentifier(table.Name));
+			else
+				throw new DataAccessException(TDengineDriver.NAME, -1, $"The ‘{source.GetType().FullName}’ type expression is not supported within the FROM clause.");
+		}
+	}
 	#endregion
 }
