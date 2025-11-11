@@ -277,7 +277,10 @@ public static class ModelMemberEmitter
 		if(underlyingType != null)
 			generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor([underlyingType]));
 
-		generator.Emit(OpCodes.Callvirt, property.SetMethod);
+		if(property.DeclaringType.IsValueType)
+			generator.Emit(OpCodes.Call, property.SetMethod);
+		else
+			generator.Emit(OpCodes.Callvirt, property.SetMethod);
 
 		generator.MarkLabel(endingLabel);
 		generator.Emit(OpCodes.Ret);
@@ -352,7 +355,10 @@ public static class ModelMemberEmitter
 		//	generator.Emit(OpCodes.Newobj, typeof(Nullable<>).MakeGenericType(underlyingType).GetConstructor([underlyingType]));
 
 		//target.PropertyX = ...
-		generator.Emit(OpCodes.Callvirt, property.SetMethod);
+		if(property.DeclaringType.IsValueType)
+			generator.Emit(OpCodes.Call, property.SetMethod);
+		else
+			generator.Emit(OpCodes.Callvirt, property.SetMethod);
 
 		generator.MarkLabel(endingLabel);
 		generator.Emit(OpCodes.Ret);
