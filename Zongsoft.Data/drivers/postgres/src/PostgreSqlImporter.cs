@@ -70,7 +70,7 @@ public class PostgreSqlImporter : DataImporterBase
 						bulker.WriteNull();
 					else
 					{
-						var pgType = Utility.GetDataType(simplex.Type);
+						var pgType = PostgreSqlUtility.GetDataType(simplex.Type);
 						bulker.Write(Zongsoft.Common.Convert.ConvertValue(value, pgType.AsType()), pgType);
 					}
 				}
@@ -108,7 +108,7 @@ public class PostgreSqlImporter : DataImporterBase
 						await bulker.WriteNullAsync(cancellation);
 					else
 					{
-						var pgType = Utility.GetDataType(simplex.Type);
+						var pgType = PostgreSqlUtility.GetDataType(simplex.Type);
 						await bulker.WriteAsync(Zongsoft.Common.Convert.ConvertValue(value, pgType.AsType()), pgType, cancellation);
 					}
 				}

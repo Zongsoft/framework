@@ -37,7 +37,7 @@ using NpgsqlTypes;
 
 namespace Zongsoft.Data.PostgreSql;
 
-internal static class Utility
+internal static class PostgreSqlUtility
 {
 	public static NpgsqlDbType GetDataType(this DbType dbType) => dbType switch
 	{
