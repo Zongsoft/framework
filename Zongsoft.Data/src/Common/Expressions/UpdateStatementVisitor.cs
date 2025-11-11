@@ -94,7 +94,8 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 			if(i > 0)
 				context.Write(",");
 
-			context.Visit(tables[i]);
+			//只写入表别名（表名由FROM子句指定）
+			context.Write(tables[i].Alias);
 		}
 	}
 

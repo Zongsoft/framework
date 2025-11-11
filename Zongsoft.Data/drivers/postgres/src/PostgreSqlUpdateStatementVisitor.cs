@@ -48,82 +48,73 @@ public class PostgreSqlUpdateStatementVisitor : UpdateStatementVisitor
 	#region 重写方法
 	protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 	{
-		//调用基类同名方法
-		base.VisitTables(context, statement, tables);
-
-		/*
-		 * 注意：由于 MySQL 的 UPDATE 语句不支持 FROM 子句，因此必须将其改写为多表修改的语法。
-		 */
-
-		if(statement.HasFrom)
+		for(int i = 0; i < tables.Count; i++)
 		{
-			foreach(var source in statement.From)
-			{
-				switch(source)
-				{
-					case TableIdentifier table:
-						if(!tables.Contains(table))
-						{
-							context.Write(",");
-							context.Visit(table);
-						}
+			if(i > 0)
+				context.Write(",");
 
-						break;
-					case JoinClause join:
-						if(join.Target is TableIdentifier target)
-						{
-							if(!tables.Contains(target))
-							{
-								context.Write(",");
-								context.Visit(target);
-							}
-						}
-						else
-						{
-							throw new DataException($"The {PostgreSqlDriver.NAME} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{join.Target.GetType().Name}'.");
-						}
-
-						break;
-					default:
-						throw new NotSupportedException($"The {PostgreSqlDriver.NAME} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{source.GetType().Name}'.");
-				}
-			}
+			context.Visit(tables[i]);
 		}
-	}
-
-	protected override void VisitWhere(ExpressionVisitorContext context, UpdateStatement statement, IExpression where)
-	{
-		/*
-		 * 注意：由于 MySQL 的 UPDATE 语句不支持 FROM 子句，因此必须将其改写为多表修改的语法。
-		 * 由于 FROM 子句中可能包含 JOIN 类型语句，所以必须将 JOIN 子句中的条件式添加到 UPDATE 语句的 WHERE 子句中。
-		 */
-
-		if(statement.HasFrom)
-		{
-			var conditions = ConditionExpression.And();
-
-			foreach(var source in statement.From)
-			{
-				if(source is JoinClause join)
-					conditions.Add(join.Conditions);
-			}
-
-			if(conditions.Count > 0)
-			{
-				conditions.Add(where);
-				where = conditions;
-			}
-		}
-
-		//调用基类同名方法
-		base.VisitWhere(context, statement, where);
 	}
 
 	protected override void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
 	{
-		/*
-		 * 由于 MySQL 的 UPDATE 语句不支持 FROM 子句，故不输出任何内容，且不调用基类同名方法以避免生成错误的语句。
-		 */
+		if(sources.Count <= 1)
+			return;
+
+		context.Write(" FROM ");
+
+		foreach(var source in sources)
+		{
+			switch(source)
+			{
+				case TableIdentifier table:
+					//跳过当前更新表
+					if(table != statement.Table)
+						context.Visit(table);
+
+					break;
+				case SelectStatement subquery:
+					context.Write("(");
+
+					//递归生成子查询语句
+					context.Visit(subquery);
+
+					if(string.IsNullOrEmpty(subquery.Alias))
+						context.Write(")");
+					else
+						context.Write($") AS {subquery.Alias}");
+
+					break;
+				case JoinClause joining:
+					context.VisitJoin(joining);
+					break;
+			}
+		}
+	}
+
+	protected override void VisitFields(ExpressionVisitorContext context, UpdateStatement statement, ICollection<FieldValue> fields)
+	{
+		var index = 0;
+
+		foreach(var field in fields)
+		{
+			if(index++ > 0)
+				context.WriteLine(",");
+
+			//注意：PostgreSQL 不支持 SET 子句中的字段名前附带有表名或表别名
+			context.Write($"{context.Dialect.GetIdentifier(field.Field.Name)}=");
+
+			var parenthesisRequired = field.Value is IStatementBase;
+
+			if(parenthesisRequired)
+				context.Write("(");
+
+			context.Visit(field.Value);
+
+			if(parenthesisRequired)
+				context.Write(")");
+		}
 	}
 	#endregion
 }
