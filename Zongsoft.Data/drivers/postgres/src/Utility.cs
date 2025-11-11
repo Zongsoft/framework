@@ -116,7 +116,7 @@ internal static class Utility
 		return false;
 	}
 
-	public static Type AsType(NpgsqlDbType dbType)
+	public static Type AsType(this NpgsqlDbType dbType)
 	{
 		if(IsArrayType(dbType, out var elementType))
 		{

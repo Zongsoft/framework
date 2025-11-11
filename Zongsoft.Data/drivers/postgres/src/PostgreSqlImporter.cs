@@ -44,10 +44,12 @@ public class PostgreSqlImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
+		using var connection = (NpgsqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+
 		using var bulker = GetBulker(
 			context.Entity.GetTableName(),
 			members,
-			(NpgsqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString),
+			connection,
 			context.Options);
 
 		foreach(var item in context.Data)
@@ -64,23 +66,28 @@ public class PostgreSqlImporter : DataImporterBase
 				{
 					var value = members[i].GetValue(ref target);
 
-					if(value is null)
+					if(value is null || Convert.IsDBNull(value))
 						bulker.WriteNull();
 					else
-						bulker.Write(value, Utility.GetDataType(simplex.Type));
+					{
+						var pgType = Utility.GetDataType(simplex.Type);
+						bulker.Write(Zongsoft.Common.Convert.ConvertValue(value, pgType.AsType()), pgType);
+					}
 				}
 			}
 		}
 
-		bulker.Complete();
+		context.Count = (int)bulker.Complete();
 	}
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
+		using var connection = (NpgsqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+
 		using var bulker = await GetBulkerAsync(
 			context.Entity.GetTableName(),
 			members,
-			(NpgsqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString),
+			connection,
 			context.Options, cancellation);
 
 		foreach(var item in context.Data)
@@ -97,15 +104,18 @@ public class PostgreSqlImporter : DataImporterBase
 				{
 					var value = members[i].GetValue(ref target);
 
-					if(value is null)
+					if(value is null || Convert.IsDBNull(value))
 						await bulker.WriteNullAsync(cancellation);
 					else
-						await bulker.WriteAsync(value, Utility.GetDataType(simplex.Type), cancellation);
+					{
+						var pgType = Utility.GetDataType(simplex.Type);
+						await bulker.WriteAsync(Zongsoft.Common.Convert.ConvertValue(value, pgType.AsType()), pgType, cancellation);
+					}
 				}
 			}
 		}
 
-		await bulker.CompleteAsync(cancellation);
+		context.Count = (int)await bulker.CompleteAsync(cancellation);
 	}
 	#endregion
 
@@ -113,13 +123,21 @@ public class PostgreSqlImporter : DataImporterBase
 	private static NpgsqlBinaryImporter GetBulker(string name, MemberCollection members, NpgsqlConnection connection, IDataImportOptions options)
 	{
 		var fields = string.Join(',', members.Select(member => $"\"{member.Name}\""));
+
+		if(connection.State == System.Data.ConnectionState.Closed)
+			connection.Open();
+
 		return connection.BeginBinaryImport($"COPY \"{name}\" ({fields}) FROM STDIN (FORMAT Binary)");
 	}
 
-	private static Task<NpgsqlBinaryImporter> GetBulkerAsync(string name, MemberCollection members, NpgsqlConnection connection, IDataImportOptions options, CancellationToken cancellation)
+	private static async Task<NpgsqlBinaryImporter> GetBulkerAsync(string name, MemberCollection members, NpgsqlConnection connection, IDataImportOptions options, CancellationToken cancellation)
 	{
 		var fields = string.Join(',', members.Select(member => $"\"{member.Name}\""));
-		return connection.BeginBinaryImportAsync($"COPY \"{name}\" ({fields}) FROM STDIN (FORMAT Binary)", cancellation);
+
+		if(connection.State == System.Data.ConnectionState.Closed)
+			await connection.OpenAsync(cancellation);
+
+		return await connection.BeginBinaryImportAsync($"COPY \"{name}\" ({fields}) FROM STDIN (FORMAT Binary)", cancellation);
 	}
 	#endregion
 }
