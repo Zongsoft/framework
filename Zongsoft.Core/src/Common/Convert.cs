@@ -92,9 +92,15 @@ public static class Convert
 		if(memberType == null)
 			return null;
 
-		//优先使用自定义的集合类型转换器
-		if(TypeExtension.IsCollection(memberType))
+		if(TypeExtension.IsNullable(memberType, out var underlyingType))
+			memberType = underlyingType;
+		else if(TypeExtension.IsCollection(memberType)) //优先使用自定义的集合类型转换器
 			return Components.Converters.CollectionConverter.Default;
+
+		//再从成员的类型上去查找类型转换器
+		var result = GetTypeConverter(memberType, explicitly);
+		if(result != null)
+			return result;
 
 		return explicitly ? null : TypeDescriptor.GetConverter(memberType);
 	}
