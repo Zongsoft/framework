@@ -23,7 +23,7 @@
 	> _**M**y**SQL**_/_**M**aria**DB**_ 驱动
 	> - [sqlite](Zongsoft.Data/drivers/sqlite/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.SQLite)](https://nuget.org/packages/Zongsoft.Data.SQLite)
 	> _**SQL**ite_ 驱动
-	> - [postgres](Zongsoft.Data/drivers/postgres/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.Postgres)](https://nuget.org/packages/Zongsoft.Data.Postgres)
+	> - [postgres](Zongsoft.Data/drivers/postgres/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.PostgreSql)](https://nuget.org/packages/Zongsoft.Data.PostgreSql)
 	> _**P**ostgre**SQL**_ 驱动
 	> - [influxdb](Zongsoft.Data/drivers/influx/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.Influx)](https://nuget.org/packages/Zongsoft.Data.Influx)
 	> _**I**nflux**DB**_ 驱动

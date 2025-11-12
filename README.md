@@ -23,7 +23,7 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 	> _**M**y**SQL**_/_**M**aria**DB**_ Driver
 	> - [_sqlite_](Zongsoft.Data/drivers/sqlite/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.SQLite)](https://nuget.org/packages/Zongsoft.Data.SQLite)
 	> _**SQL**ite_ Driver
-	> - [_postgres_](Zongsoft.Data/drivers/postgres/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.Postgres)](https://nuget.org/packages/Zongsoft.Data.Postgres)
+	> - [_postgres_](Zongsoft.Data/drivers/postgres/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.PostgreSql)](https://nuget.org/packages/Zongsoft.Data.PostgreSql)
 	> _**P**ostgre**SQL**_ Driver
 	> - [_influxdb_](Zongsoft.Data/drivers/influx/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data.Influx)](https://nuget.org/packages/Zongsoft.Data.Influx)
 	> _**I**nflux**DB**_ Driver
