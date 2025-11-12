@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
-		<TargetFrameworks>net9.0;</TargetFrameworks>
+		<TargetFrameworks>net10.0;</TargetFrameworks>
 		<OutputType>Library</OutputType>
-		<Version>1.0.0</Version>
+		<Version>2.0.0</Version>
 		<Product>Zongsoft Web Open-API Library</Product>
 		<Description>This is a plug-in library that provides Open-API specification for Web programs.</Description>
 		<RootNamespace>Zongsoft.Web.OpenApi</RootNamespace>
@@ -13,10 +13,10 @@
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Web/api</RepositoryUrl>
 	</PropertyGroup>
 
-	<ItemGroup Condition="$(TargetFramework) == 'net9.0'">
-		<PackageReference Include="Microsoft.OpenApi" VersionOverride="1.6.25" />
-		<PackageReference Include="Microsoft.AspNetCore.OpenApi" VersionOverride="9.0.9" />
-		<PackageReference Include="Scalar.AspNetCore" VersionOverride="2.8.5" />
+	<ItemGroup Condition="$(TargetFramework) == 'net10.0'">
+		<PackageReference Include="Microsoft.OpenApi" VersionOverride="2.3.9" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" VersionOverride="10.0.0" />
+		<PackageReference Include="Scalar.AspNetCore" VersionOverride="2.10.3" />
 	</ItemGroup>
 
 	<Choose>

@@ -32,7 +32,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Builder;

@@ -4,5 +4,6 @@ lib/$(Framework)/*/Zongsoft.Data.PostgreSql.resources.*
 
 nuget:Npgsql@6.0.13 <framework:net6.0>
 nuget:Npgsql@7.0.10 <framework:net7.0>
-nuget:Npgsql@8.0.8 <framework:net8.0>
-nuget:Npgsql@9.0.4 <framework:net9.0>
+nuget:Npgsql@8.0.8  <framework:net8.0>
+nuget:Npgsql@9.0.4  <framework:net9.0>
+nuget:Npgsql@10.0.0-rc.1 <framework:net10.0>
