@@ -6,7 +6,7 @@
 
 -----
 
-This is a collection of open source projects for the _**Z**ongsoft_ development framework, supporting _**.NET**_ `6`, `7`, `8`, `9`, and other versions.
+This is a collection of open source projects for the _**Z**ongsoft_ development framework, supporting _**.NET**_ `8`,`9`,`10` and other versions.
 The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, help us [build it](CONTRIBUTING.md)!
 
 > 💡 After cloning this project's source code, you need to use the `git submodule update` command to update the [submodules](.gitmodules).
