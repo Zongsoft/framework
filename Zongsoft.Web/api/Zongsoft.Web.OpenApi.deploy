@@ -4,5 +4,5 @@ lib/$(Framework)/Zongsoft.Web.OpenApi.*
 lib/$(Framework)/*/Zongsoft.Web.OpenApi.resources.*
 
 nuget:Scalar.AspNetCore@2.10.3
-nuget:Microsoft.OpenApi@2.3.9
+nuget:Microsoft.OpenApi@2.3.10
 nuget:Microsoft.AspNetCore.OpenApi@10.0.0
