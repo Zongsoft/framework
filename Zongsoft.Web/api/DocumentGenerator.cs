@@ -28,20 +28,31 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.OpenApi;
-using Microsoft.AspNetCore.OpenApi;
 
-namespace Zongsoft.Web.OpenApi.Transformers;
+using Zongsoft.Services;
 
-public class DocumentTransformer : IOpenApiDocumentTransformer
+namespace Zongsoft.Web.OpenApi;
+
+public static partial class DocumentGenerator
 {
-	public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellation)
+	public static OpenApiDocument Generate() => Generate(ApplicationContext.Current?.Properties.GetValue<ControllerServiceDescriptorCollection>());
+	public static OpenApiDocument Generate(ControllerServiceDescriptorCollection descriptors)
 	{
+		if(descriptors == null)
+			return null;
+
+		var document = new OpenApiDocument();
+
+		//生成服务器列表
 		document.GenerateServers();
-		return Task.CompletedTask;
+
+		//生成API路径列表
+		document.GeneratePaths(descriptors);
+
+		return document;
 	}
+
 }

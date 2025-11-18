@@ -28,20 +28,52 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.OpenApi;
-using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.Configuration;
 
-namespace Zongsoft.Web.OpenApi.Transformers;
+using Zongsoft.Services;
+using Zongsoft.Configuration;
 
-public class DocumentTransformer : IOpenApiDocumentTransformer
+namespace Zongsoft.Web.OpenApi;
+
+partial class DocumentGenerator
 {
-	public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellation)
+	internal static void GenerateServers(this OpenApiDocument document)
 	{
-		document.GenerateServers();
-		return Task.CompletedTask;
+		var servers = GetServers(ApplicationContext.Current.Services.Resolve<IConfiguration>() ?? ApplicationContext.Current.Configuration);
+
+		foreach(var server in servers)
+		{
+			var openApiServer = new OpenApiServer()
+			{
+				Url = server.Url,
+				Description = server.Name
+			};
+
+			foreach(var variable in server.Variables)
+			{
+				openApiServer.Variables ??= new Dictionary<string, OpenApiServerVariable>();
+				openApiServer.Variables.Add(variable.Name, new OpenApiServerVariable()
+				{
+					Default = variable.Default,
+					Enum = [.. variable.Values ?? []],
+				});
+			}
+
+			document.Servers.Add(openApiServer);
+		}
+
+		static IEnumerable<Configuration.ServerOption> GetServers(IConfiguration configuration)
+		{
+			if(configuration == null)
+				throw new ArgumentNullException(nameof(configuration));
+
+			var servers = configuration.GetOption<Configuration.ServerOptionCollection>("/Web/OpenAPI");
+
+			foreach(var server in servers)
+				yield return server;
+		}
 	}
 }

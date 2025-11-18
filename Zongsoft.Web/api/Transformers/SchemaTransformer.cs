@@ -35,8 +35,6 @@ using System.Collections.Generic;
 using Microsoft.OpenApi;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.OpenApi;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 
 namespace Zongsoft.Web.OpenApi.Transformers;
 

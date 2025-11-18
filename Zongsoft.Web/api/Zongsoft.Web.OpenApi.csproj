@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<TargetFrameworks>net10.0;</TargetFrameworks>
 		<OutputType>Library</OutputType>
-		<Version>2.0.0</Version>
+		<Version>0.1.0</Version>
 		<Product>Zongsoft Web Open-API Library</Product>
 		<Description>This is a plug-in library that provides Open-API specification for Web programs.</Description>
 		<RootNamespace>Zongsoft.Web.OpenApi</RootNamespace>

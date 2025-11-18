@@ -30,12 +30,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Schema;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -48,7 +45,6 @@ using Scalar.AspNetCore;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
-using Zongsoft.Components;
 
 namespace Zongsoft.Web.OpenApi;
 
@@ -60,8 +56,12 @@ public class WebInitializer : IApplicationInitializer<IApplicationBuilder>
 	{
 		if(builder is IEndpointRouteBuilder app)
 		{
-			app.MapOpenApi();
-			app.MapScalarApiReference(options => { });
+			app.UseOpenApi();
+			app.MapScalarApiReference(options =>
+			{
+				options.WithDefaultHttpClient(ScalarTarget.Http, ScalarClient.Http);
+				options.Authentication = new() { PreferredSecuritySchemes = ["Credential"] };
+			});
 		}
 	}
 	#endregion
@@ -71,21 +71,21 @@ public class WebInitializer : IApplicationInitializer<IApplicationBuilder>
 	{
 		public void Register(IServiceCollection services, IConfiguration configuration)
 		{
-			services.Configure<JsonOptions>(options =>
-			{
-				options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, new JsonTypeResolver());
-				options.JsonSerializerOptions.MaxDepth = 10;
-				options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-			});
+			//services.Configure<JsonOptions>(options =>
+			//{
+			//	options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, new JsonTypeResolver());
+			//	options.JsonSerializerOptions.MaxDepth = 10;
+			//	options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+			//});
 
-			services.AddOpenApi(options =>
-			{
-				options.ShouldInclude = OnShouldInclude;
-				options.CreateSchemaReferenceId = CreateReference;
-				options.AddSchemaTransformer(new Transformers.SchemaTransformer());
-				options.AddDocumentTransformer(new Transformers.DocumentTransformer());
-				options.AddOperationTransformer(new Transformers.OperationTransformer());
-			});
+			//services.AddOpenApi(options =>
+			//{
+			//	options.ShouldInclude = OnShouldInclude;
+			//	options.CreateSchemaReferenceId = CreateReference;
+			//	options.AddSchemaTransformer(new Transformers.SchemaTransformer());
+			//	options.AddDocumentTransformer(new Transformers.DocumentTransformer());
+			//	options.AddOperationTransformer(new Transformers.OperationTransformer());
+			//});
 		}
 
 		private static string CreateReference(JsonTypeInfo info)

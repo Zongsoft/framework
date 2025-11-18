@@ -37,9 +37,6 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Web.OpenApi.Transformers;
 
