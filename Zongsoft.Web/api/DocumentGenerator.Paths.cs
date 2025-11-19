@@ -58,7 +58,7 @@ partial class DocumentGenerator
 			document.Tags.Add(Extensions.Tag(descriptor.QualifiedName, descriptor.Module, descriptor.Namespace));
 
 			foreach(var controller in descriptor.Controllers)
-				document.Paths.Add(controller.ToString(), GetPath(descriptor, controller));
+				document.Paths.Add(controller.GetUrl(), GetPath(descriptor, controller));
 		}
 	}
 
@@ -90,21 +90,21 @@ partial class DocumentGenerator
 			Description = descriptor.Description,
 		};
 
-		if(!string.IsNullOrEmpty(service.Module))
-		{
-			if(operation.Tags == null)
-				operation.Tags = new HashSet<OpenApiTagReference>() { new(service.Module) };
-			else
-				operation.Tags.Add(new(service.Module));
-		}
+		//if(!string.IsNullOrEmpty(service.Module))
+		//{
+		//	if(operation.Tags == null)
+		//		operation.Tags = new HashSet<OpenApiTagReference>() { new(service.Module) };
+		//	else
+		//		operation.Tags.Add(new(service.Module));
+		//}
 
-		if(!string.IsNullOrEmpty(service.Namespace))
-		{
-			if(operation.Tags == null)
-				operation.Tags = new HashSet<OpenApiTagReference>() { new(service.Namespace) };
-			else
-				operation.Tags.Add(new OpenApiTagReference(service.Namespace));
-		}
+		//if(!string.IsNullOrEmpty(service.Namespace))
+		//{
+		//	if(operation.Tags == null)
+		//		operation.Tags = new HashSet<OpenApiTagReference>() { new(service.Namespace) };
+		//	else
+		//		operation.Tags.Add(new OpenApiTagReference(service.Namespace));
+		//}
 
 		if(operation.Tags == null)
 			operation.Tags = new HashSet<OpenApiTagReference>() { new(service.QualifiedName) };
