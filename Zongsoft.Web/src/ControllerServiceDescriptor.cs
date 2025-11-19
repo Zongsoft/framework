@@ -34,6 +34,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 using Zongsoft.Data;
@@ -236,30 +237,105 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 	#endregion
 
 	#region 嵌套子类
-	public sealed class ControllerDescriptor : ControllerModel, IEquatable<ControllerDescriptor>
+	public sealed class ControllerDescriptor : ICommonModel, IFilterModel, IApiExplorerModel, IEquatable<ControllerDescriptor>
 	{
 		#region 构造函数
-		public ControllerDescriptor(ControllerModel controller) : base(controller)
+		public ControllerDescriptor(ControllerModel controller)
 		{
+			this.Controller = controller ?? throw new ArgumentNullException(nameof(controller));
 			(var modelType, var serviceType) = GetServiceInfo(controller.ControllerType);
 			this.Model = modelType == null ? null : Zongsoft.Data.Model.GetDescriptor(modelType);
 			this.ServiceType = serviceType;
+
+			//确保路由值包含控制器名称
+			controller.RouteValues.TryAdd("controller", controller.ControllerName);
 		}
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取控制器模型。</summary>
+		public ControllerModel Controller { get; }
+
 		/// <summary>获取服务模型。</summary>
 		public ModelDescriptor Model { get; }
 
 		/// <summary>获取服务类型。</summary>
 		public Type ServiceType { get; }
+
+		public IList<ActionModel> Actions => this.Controller.Actions;
+		public ApplicationModel Application => this.Controller.Application;
+		public IReadOnlyList<object> Attributes => this.Controller.Attributes;
+		public string DisplayName => this.Controller.DisplayName;
+		public string ControllerName => this.Controller.ControllerName;
+		public TypeInfo ControllerType => this.Controller.ControllerType;
+		public IList<PropertyModel> ControllerProperties => this.Controller.ControllerProperties;
+		public IList<IFilterMetadata> Filters => this.Controller.Filters;
+		public IDictionary<string, string> RouteValues => this.Controller.RouteValues;
+		public IDictionary<object, object> Properties => this.Controller.Properties;
+		public IList<SelectorModel> Selectors => this.Controller.Selectors;
+		string ICommonModel.Name => this.Controller.ControllerName;
+		MemberInfo ICommonModel.MemberInfo => this.Controller.ControllerType;
+		ApiExplorerModel IApiExplorerModel.ApiExplorer
+		{
+			get => this.Controller.ApiExplorer;
+			set => this.Controller.ApiExplorer = value;
+		}
+		#endregion
+
+		#region 公共方法
+		public string GetUrl(params IEnumerable<KeyValuePair<string, string>> parameters)
+		{
+			var template = GetRouteTemplate(this.Controller);
+
+			if(string.IsNullOrEmpty(template))
+				return null;
+
+			if(this.RouteValues != null)
+			{
+				foreach(var entry in this.RouteValues)
+				{
+					template = template.Replace($"[{entry.Key}]", entry.Value);
+					template = template.Replace($"{{{entry.Key}}}", entry.Value);
+				}
+			}
+
+			if(parameters != null)
+			{
+				foreach(var entry in parameters)
+				{
+					template = template.Replace($"[{entry.Key}]", entry.Value);
+					template = template.Replace($"{{{entry.Key}}}", entry.Value);
+				}
+			}
+
+			return template;
+
+			static string GetRouteTemplate(ControllerModel controller)
+			{
+				for(int i = 0; i < controller.Selectors.Count; i++)
+				{
+					var selector = controller.Selectors[i];
+
+					if(selector.AttributeRouteModel != null)
+						return selector.AttributeRouteModel.Template;
+				}
+
+				for(int i = 0; i < controller.Attributes.Count; i++)
+				{
+					if(controller.Attributes[i] is RouteAttribute attribute)
+						return attribute.Template;
+				}
+
+				return null;
+			}
+		}
 		#endregion
 
 		#region 重写方法
 		public bool Equals(ControllerDescriptor other) => other is not null && this.ControllerType == other.ControllerType;
 		public override bool Equals(object obj) => obj is ControllerDescriptor other && this.Equals(other);
 		public override int GetHashCode() => this.ControllerType.GetHashCode();
-		public override string ToString() => base.DisplayName;
+		public override string ToString() => this.DisplayName;
 		#endregion
 	}
 
