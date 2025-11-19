@@ -7,6 +7,10 @@ using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Web.OpenApi;
 
+/*
+ * Original source file referenced:
+ * https://github.com/dotnet/aspnetcore/blob/main/src/SignalR/common/Shared/Utf8BufferTextWriter.cs
+ */
 internal sealed class Utf8BufferTextWriter : TextWriter
 {
 	private const int MaximumBytesPerUtf8Char = 4;

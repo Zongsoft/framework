@@ -46,7 +46,7 @@ partial class DocumentGenerator
 
 		foreach(var server in servers)
 		{
-			var openApiServer = new OpenApiServer()
+			var apiServer = new OpenApiServer()
 			{
 				Url = server.Url,
 				Description = server.Name
@@ -54,26 +54,23 @@ partial class DocumentGenerator
 
 			foreach(var variable in server.Variables)
 			{
-				openApiServer.Variables ??= new Dictionary<string, OpenApiServerVariable>();
-				openApiServer.Variables.Add(variable.Name, new OpenApiServerVariable()
+				apiServer.Variables ??= new Dictionary<string, OpenApiServerVariable>();
+				apiServer.Variables.Add(variable.Name, new OpenApiServerVariable()
 				{
 					Default = variable.Default,
 					Enum = [.. variable.Values ?? []],
 				});
 			}
 
-			document.Servers.Add(openApiServer);
+			document.Servers.Add(apiServer);
 		}
 
-		static IEnumerable<Configuration.ServerOption> GetServers(IConfiguration configuration)
+		static IReadOnlyCollection<Configuration.ServerOption> GetServers(IConfiguration configuration)
 		{
 			if(configuration == null)
 				throw new ArgumentNullException(nameof(configuration));
 
-			var servers = configuration.GetOption<Configuration.ServerOptionCollection>("/Web/OpenAPI");
-
-			foreach(var server in servers)
-				yield return server;
+			return configuration.GetOption<Configuration.ServerOptionCollection>("/Web/OpenAPI") ?? [];
 		}
 	}
 }
