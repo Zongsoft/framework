@@ -29,6 +29,7 @@
 
 using System;
 using System.Net.Http;
+using System.Threading;
 using System.Collections.Generic;
 
 using Microsoft.OpenApi;
@@ -47,52 +48,101 @@ partial class DocumentGenerator
 	internal static void GeneratePaths(this OpenApiDocument document, ControllerServiceDescriptorCollection descriptors)
 	{
 		foreach(var descriptor in descriptors)
-			GeneratePath(document, descriptor);
-	}
-
-	private static void GeneratePath(OpenApiDocument document, ControllerServiceDescriptor descriptor)
-	{
-		var path = new OpenApiPathItem()
 		{
-			Description = descriptor.Description,
-			Summary = string.IsNullOrEmpty(descriptor.Title) ? descriptor.Name : descriptor.Title,
-		};
+			if(!string.IsNullOrEmpty(descriptor.Module))
+				document.Tags.Add(new() { Name = descriptor.Module });
 
-		document.Paths.Add(descriptor.QualifiedName, path);
+			if(!string.IsNullOrEmpty(descriptor.Namespace))
+				document.Tags.Add(Extensions.Tag(descriptor.Namespace, descriptor.Module));
 
-		foreach(var operation in descriptor.Operations)
-		{
-			var methods = GetHttpMethods(operation);
+			document.Tags.Add(Extensions.Tag(descriptor.QualifiedName, descriptor.Module, descriptor.Namespace));
 
-			foreach(var method in methods)
-				path.AddOperation(method, GetOperation(operation));
+			foreach(var controller in descriptor.Controllers)
+				document.Paths.Add(controller.ToString(), GetPath(descriptor, controller));
 		}
 	}
 
-	private static OpenApiOperation GetOperation(ControllerServiceDescriptor.ControllerOperationDescriptor descriptor)
+	private static OpenApiPathItem GetPath(ControllerServiceDescriptor descriptor, ControllerServiceDescriptor.ControllerDescriptor controller)
+	{
+		var path = new OpenApiPathItem()
+		{
+			Summary = descriptor.Title,
+			Description = descriptor.Description,
+		};
+
+		foreach(var operation in descriptor.Operations)
+		{
+			var methods = Utility.GetHttpMethods(operation);
+
+			foreach(var method in methods)
+				path.AddOperation(method, GetOperation(descriptor, controller, operation));
+		}
+
+		return path;
+	}
+
+	private static OpenApiOperation GetOperation(ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerDescriptor controller, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor)
 	{
 		var operation = new OpenApiOperation()
 		{
+			OperationId = $"{service.QualifiedName}.{descriptor.Name}",
+			Summary = descriptor.Title,
 			Description = descriptor.Description,
-			Summary = string.IsNullOrEmpty(descriptor.Title) ? descriptor.Name : descriptor.Title,
 		};
 
+		if(!string.IsNullOrEmpty(service.Module))
+		{
+			if(operation.Tags == null)
+				operation.Tags = new HashSet<OpenApiTagReference>() { new(service.Module) };
+			else
+				operation.Tags.Add(new(service.Module));
+		}
+
+		if(!string.IsNullOrEmpty(service.Namespace))
+		{
+			if(operation.Tags == null)
+				operation.Tags = new HashSet<OpenApiTagReference>() { new(service.Namespace) };
+			else
+				operation.Tags.Add(new OpenApiTagReference(service.Namespace));
+		}
+
+		if(operation.Tags == null)
+			operation.Tags = new HashSet<OpenApiTagReference>() { new(service.QualifiedName) };
+		else
+			operation.Tags.Add(new(service.QualifiedName));
+
 		if(descriptor.Action.Parameters.Count > 0)
+		{
 			operation.Parameters = new List<IOpenApiParameter>(descriptor.Action.Parameters.Count);
 
-		foreach(var parameter in descriptor.Action.Parameters)
-			operation.Parameters.Add(GetParameter(parameter));
+			foreach(var parameterModel in descriptor.Action.Parameters)
+			{
+				var parameter = GetParameter(parameterModel);
+
+				if(parameter != null)
+					operation.Parameters.Add(parameter);
+			}
+		}
 
 		return operation;
 	}
 
-	private static IOpenApiParameter GetParameter(ParameterModel model)
+	private static OpenApiParameter GetParameter(ParameterModel model)
 	{
+		if(model.ParameterType == typeof(CancellationToken))
+			return null;
+
+		var required = !model.ParameterInfo.HasDefaultValue;
+		var nullable = Zongsoft.Common.TypeExtension.IsNullable(model.ParameterType);
+
 		return new OpenApiParameter()
 		{
 			Name = model.Name,
+			Required = required,
+			AllowEmptyValue = nullable,
 			Description = model.DisplayName,
 			In = GetLocation(model.BindingInfo),
+			Schema = Utility.GetSchema(model.ParameterType),
 		};
 
 		static ParameterLocation? GetLocation(BindingInfo info)
@@ -108,39 +158,6 @@ partial class DocumentGenerator
 				return ParameterLocation.Header;
 
 			return null;
-		}
-	}
-
-	private static IReadOnlyCollection<HttpMethod> GetHttpMethods(ControllerServiceDescriptor.ControllerOperationDescriptor descriptor)
-	{
-		var result = new HashSet<HttpMethod>();
-
-		for(int i = 0; i < descriptor.Action.Selectors.Count; i++)
-		{
-			foreach(var method in Find(descriptor.Action.Selectors[i].EndpointMetadata))
-				result.Add(method);
-		}
-
-		foreach(var method in Find(descriptor.Action.Attributes))
-			result.Add(method);
-
-		return result;
-
-		static IEnumerable<HttpMethod> Find(IEnumerable<object> metadatas)
-		{
-			foreach(var metadata in metadatas)
-			{
-				if(metadata is HttpMethod method)
-					yield return method;
-
-				if(metadata is HttpMethodAttribute attribute)
-					foreach(var text in attribute.HttpMethods)
-						yield return HttpMethod.Parse(text);
-
-				if(metadata is Microsoft.AspNetCore.Routing.HttpMethodMetadata methodMetadata)
-					foreach(var text in methodMetadata.HttpMethods)
-						yield return HttpMethod.Parse(text);
-			}
 		}
 	}
 }

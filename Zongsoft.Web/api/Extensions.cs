@@ -32,39 +32,45 @@ using System.Collections.Generic;
 
 using Microsoft.OpenApi;
 
-using Zongsoft.Services;
-
 namespace Zongsoft.Web.OpenApi;
 
-public static partial class DocumentGenerator
+public static class Extensions
 {
-	public static OpenApiDocument Generate() => Generate(ApplicationContext.Current?.Properties.GetValue<ControllerServiceDescriptorCollection>());
-	public static OpenApiDocument Generate(ControllerServiceDescriptorCollection descriptors)
+	public static OpenApiTag Tag(string name, params string[] ancestors)
 	{
-		if(descriptors == null)
-			return null;
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-		var document = new OpenApiDocument()
+		var tag = new OpenApiTag() { Name = name };
+
+		for(int i = ancestors.Length - 1; i >= 0; i--)
 		{
-			Info = new()
+			if(!string.IsNullOrEmpty(ancestors[i]))
 			{
-				Title = ApplicationContext.Current.Title,
-				Description = ApplicationContext.Current.Description,
-				Version = ApplicationContext.Current.Version.ToString(),
-			},
-			Tags = new HashSet<OpenApiTag>(),
-		};
+				tag.Extensions ??= new Dictionary<string, IOpenApiExtension>(StringComparer.OrdinalIgnoreCase);
+				tag.Extensions["x-parent"] = Text(ancestors[i]);
+				break;
+			}
+		}
 
-		//添加环境名到扩展集
-		document.AddExtension($"x-environment", Extensions.Text(ApplicationContext.Current.Environment.Name));
-
-		//生成服务器列表
-		document.GenerateServers();
-
-		//生成API路径列表
-		document.GeneratePaths(descriptors);
-
-		return document;
+		return tag;
 	}
 
+	public static OpenApiTag Parent(this OpenApiTag tag, string parent)
+	{
+		if(tag != null && !string.IsNullOrEmpty(parent))
+		{
+			tag.Extensions ??= new Dictionary<string, IOpenApiExtension>(StringComparer.OrdinalIgnoreCase);
+			tag.Extensions["x-parent"] = Text(parent);
+		}
+
+		return tag;
+	}
+
+	public static IOpenApiExtension Text(string value) => new StringExtension(value);
+
+	private sealed class StringExtension(string value) : IOpenApiExtension
+	{
+		public void Write(IOpenApiWriter writer, OpenApiSpecVersion version) => writer.WriteValue(value);
+	}
 }
