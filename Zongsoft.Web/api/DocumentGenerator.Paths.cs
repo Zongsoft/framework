@@ -104,7 +104,7 @@ partial class DocumentGenerator
 							Operations = new Dictionary<HttpMethod, OpenApiOperation>(),
 						});
 
-					path.Operations.Add(method, GetOperation(descriptor, operation, method));
+					path.Operations.TryAdd(method, GetOperation(descriptor, operation, method));
 				}
 			}
 		}
