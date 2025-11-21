@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -134,5 +135,41 @@ public static class ControllerUtility
 			Kind = parameter.BindingInfo?.BindingSource?.Id,
 			Optional = parameter.ParameterInfo?.IsOptional ?? false,
 		};
+	}
+
+	public static IReadOnlyCollection<HttpMethod> GetHttpMethods(this ActionModel action)
+	{
+		if(action == null)
+			return null;
+
+		var result = new HashSet<HttpMethod>();
+
+		for(int i = 0; i < action.Selectors.Count; i++)
+		{
+			foreach(var method in Find(action.Selectors[i].EndpointMetadata))
+				result.Add(method);
+		}
+
+		foreach(var method in Find(action.Attributes))
+			result.Add(method);
+
+		return result;
+
+		static IEnumerable<HttpMethod> Find(IEnumerable<object> metadatas)
+		{
+			foreach(var metadata in metadatas)
+			{
+				if(metadata is HttpMethod method)
+					yield return method;
+
+				if(metadata is HttpMethodAttribute attribute)
+					foreach(var text in attribute.HttpMethods)
+						yield return HttpMethod.Parse(text);
+
+				if(metadata is Microsoft.AspNetCore.Routing.HttpMethodMetadata methodMetadata)
+					foreach(var text in methodMetadata.HttpMethods)
+						yield return HttpMethod.Parse(text);
+			}
+		}
 	}
 }
