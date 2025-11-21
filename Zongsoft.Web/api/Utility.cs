@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Net.Http;
 using System.Collections.Generic;
 
 using Microsoft.OpenApi;
@@ -37,37 +36,20 @@ namespace Zongsoft.Web.OpenApi;
 
 internal static class Utility
 {
-	public static IReadOnlyCollection<HttpMethod> GetHttpMethods(this ControllerServiceDescriptor.ControllerOperationDescriptor descriptor)
+	public static string GetUrl(this Routing.RoutePattern pattern)
 	{
-		var result = new HashSet<HttpMethod>();
+		if(pattern == null)
+			return null;
 
-		for(int i = 0; i < descriptor.Action.Selectors.Count; i++)
+		foreach(var entry in pattern)
 		{
-			foreach(var method in Find(descriptor.Action.Selectors[i].EndpointMetadata))
-				result.Add(method);
+			if(entry.Optional || entry.Captured || entry.HasValue)
+				pattern.Map(entry.Name, null);
+			else
+				pattern.Map(entry.Name, entry.Name);
 		}
 
-		foreach(var method in Find(descriptor.Action.Attributes))
-			result.Add(method);
-
-		return result;
-
-		static IEnumerable<HttpMethod> Find(IEnumerable<object> metadatas)
-		{
-			foreach(var metadata in metadatas)
-			{
-				if(metadata is HttpMethod method)
-					yield return method;
-
-				if(metadata is Microsoft.AspNetCore.Mvc.Routing.HttpMethodAttribute attribute)
-					foreach(var text in attribute.HttpMethods)
-						yield return HttpMethod.Parse(text);
-
-				if(metadata is Microsoft.AspNetCore.Routing.HttpMethodMetadata methodMetadata)
-					foreach(var text in methodMetadata.HttpMethods)
-						yield return HttpMethod.Parse(text);
-			}
-		}
+		return pattern.Value.TrimEnd('/');
 	}
 
 	public static OpenApiSchema GetSchema(Type type) => GetSchema(type, new());

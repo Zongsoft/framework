@@ -33,13 +33,12 @@ using System.Threading;
 using System.Collections.Generic;
 
 using Microsoft.OpenApi;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 using Zongsoft.Services;
 using Zongsoft.Components;
+using Zongsoft.Web.Routing;
 
 namespace Zongsoft.Web.OpenApi;
 
@@ -50,61 +49,64 @@ partial class DocumentGenerator
 		foreach(var descriptor in descriptors)
 		{
 			if(!string.IsNullOrEmpty(descriptor.Module))
-				document.Tags.Add(new() { Name = descriptor.Module });
+				document.Tags.Add(Extensions.Tag(descriptor.Module));
 
 			if(!string.IsNullOrEmpty(descriptor.Namespace))
 				document.Tags.Add(Extensions.Tag(descriptor.Namespace, descriptor.Module));
 
-			document.Tags.Add(Extensions.Tag(descriptor.QualifiedName, descriptor.Module, descriptor.Namespace));
+			document.Tags.Add(Extensions
+				.Tag(descriptor.QualifiedName, descriptor.Module, descriptor.Namespace)
+				.Caption(descriptor.Title)
+				.Description(descriptor.Description));
 
-			foreach(var controller in descriptor.Controllers)
-				document.Paths.Add(controller.GetUrl(), GetPath(descriptor, controller));
+			SetPaths(descriptor, document.Paths);
 		}
 	}
 
-	private static OpenApiPathItem GetPath(ControllerServiceDescriptor descriptor, ControllerServiceDescriptor.ControllerDescriptor controller)
+	private static void SetPaths(ControllerServiceDescriptor descriptor, IDictionary<string, IOpenApiPathItem> paths)
 	{
-		var path = new OpenApiPathItem()
+		foreach(var controller in descriptor.Controllers)
 		{
-			Summary = descriptor.Title,
-			Description = descriptor.Description,
-		};
+			foreach(var pattern in controller.GetRoutePatterns())
+			{
+				var url = pattern.GetUrl();
+
+				if(!paths.ContainsKey(url))
+				{
+					paths.TryAdd(url, new OpenApiPathItem()
+					{
+						Summary = descriptor.Title,
+						Description = descriptor.Description,
+					});
+				}
+			}
+		}
 
 		foreach(var operation in descriptor.Operations)
 		{
-			var methods = Utility.GetHttpMethods(operation);
+			foreach(var pattern in operation.GetRoutePatterns())
+			{
+				var url = pattern.GetUrl();
 
-			foreach(var method in methods)
-				path.AddOperation(method, GetOperation(descriptor, controller, operation));
+				if(!paths.TryGetValue(url, out var path))
+					paths.Add(url, path = new OpenApiPathItem() { });
+
+				foreach(var method in operation.Action.GetHttpMethods())
+				{
+					path.Operations.Add(method, GetOperation(descriptor, operation, method));
+				}
+			}
 		}
-
-		return path;
 	}
 
-	private static OpenApiOperation GetOperation(ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerDescriptor controller, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor)
+	private static OpenApiOperation GetOperation(ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor, HttpMethod method)
 	{
 		var operation = new OpenApiOperation()
 		{
 			OperationId = $"{service.QualifiedName}.{descriptor.Name}",
-			Summary = descriptor.Title,
+			Summary = $"{service.QualifiedName}.{descriptor.Name}",
 			Description = descriptor.Description,
 		};
-
-		//if(!string.IsNullOrEmpty(service.Module))
-		//{
-		//	if(operation.Tags == null)
-		//		operation.Tags = new HashSet<OpenApiTagReference>() { new(service.Module) };
-		//	else
-		//		operation.Tags.Add(new(service.Module));
-		//}
-
-		//if(!string.IsNullOrEmpty(service.Namespace))
-		//{
-		//	if(operation.Tags == null)
-		//		operation.Tags = new HashSet<OpenApiTagReference>() { new(service.Namespace) };
-		//	else
-		//		operation.Tags.Add(new OpenApiTagReference(service.Namespace));
-		//}
 
 		if(operation.Tags == null)
 			operation.Tags = new HashSet<OpenApiTagReference>() { new(service.QualifiedName) };

@@ -56,14 +56,32 @@ public static class Extensions
 		return tag;
 	}
 
-	public static OpenApiTag Parent(this OpenApiTag tag, string parent)
+	public static OpenApiTag Caption(this OpenApiTag tag, string caption)
 	{
-		if(tag != null && !string.IsNullOrEmpty(parent))
+		const string EXTENSION_KEY = "x-displayName";
+
+		if(tag == null)
+			return tag;
+
+		if(string.IsNullOrEmpty(caption))
+			tag.Extensions?.Remove(EXTENSION_KEY);
+		else
 		{
-			tag.Extensions ??= new Dictionary<string, IOpenApiExtension>(StringComparer.OrdinalIgnoreCase);
-			tag.Extensions["x-parent"] = Text(parent);
+			if(tag.Extensions == null)
+				tag.Extensions = new Dictionary<string, IOpenApiExtension>()
+				{
+					{ EXTENSION_KEY, Text(caption) },
+				};
+			else
+				tag.Extensions.Add(EXTENSION_KEY, Text(caption));
 		}
 
+		return tag;
+	}
+
+	public static OpenApiTag Description(this OpenApiTag tag, string description)
+	{
+		tag?.Description = string.IsNullOrEmpty(description) ? null : description;
 		return tag;
 	}
 
