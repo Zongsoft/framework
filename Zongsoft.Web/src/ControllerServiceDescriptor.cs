@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
@@ -351,6 +352,7 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 		}
 
 		public ActionModel Action { get; }
+		public HttpMethod[] HttpMethods => field ??= [.. this.Action.GetHttpMethods()];
 	}
 
 	public sealed class ControllerOperationDescriptorCollection(ControllerServiceDescriptor service) : IReadOnlyCollection<ControllerOperationDescriptor>
