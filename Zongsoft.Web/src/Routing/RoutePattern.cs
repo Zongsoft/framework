@@ -45,7 +45,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 	const string REGEX_ARGUMENTS = "arguments";
 	const string REGEX_CONSTRAINT = "constraint";
 
-	const string PATTERN = $$"""
+	const string REGEX_PATTERN = $$"""
 	[\[\{]
 	(?<{{REGEX_CAPTURES}}>\*{0,2})?
 	(?<{{REGEX_NAME}}>\w+)
@@ -64,7 +64,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 	#endregion
 
 	#region 静态变量
-	private static readonly Regex _regex = new(PATTERN, RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline);
+	private static readonly Regex _regex = new(REGEX_PATTERN, RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline);
 	#endregion
 
 	#region 成员字段
