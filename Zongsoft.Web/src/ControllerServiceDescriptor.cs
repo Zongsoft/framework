@@ -283,55 +283,6 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 		}
 		#endregion
 
-		#region 公共方法
-		public string GetUrl(params IEnumerable<KeyValuePair<string, string>> parameters)
-		{
-			var template = GetRouteTemplate(this.Controller);
-
-			if(string.IsNullOrEmpty(template))
-				return null;
-
-			if(this.RouteValues != null)
-			{
-				foreach(var entry in this.RouteValues)
-				{
-					template = template.Replace($"[{entry.Key}]", entry.Value);
-					template = template.Replace($"{{{entry.Key}}}", entry.Value);
-				}
-			}
-
-			if(parameters != null)
-			{
-				foreach(var entry in parameters)
-				{
-					template = template.Replace($"[{entry.Key}]", entry.Value);
-					template = template.Replace($"{{{entry.Key}}}", entry.Value);
-				}
-			}
-
-			return template;
-
-			static string GetRouteTemplate(ControllerModel controller)
-			{
-				for(int i = 0; i < controller.Selectors.Count; i++)
-				{
-					var selector = controller.Selectors[i];
-
-					if(selector.AttributeRouteModel != null)
-						return selector.AttributeRouteModel.Template;
-				}
-
-				for(int i = 0; i < controller.Attributes.Count; i++)
-				{
-					if(controller.Attributes[i] is RouteAttribute attribute)
-						return attribute.Template;
-				}
-
-				return null;
-			}
-		}
-		#endregion
-
 		#region 重写方法
 		public bool Equals(ControllerDescriptor other) => other is not null && this.ControllerType == other.ControllerType;
 		public override bool Equals(object obj) => obj is ControllerDescriptor other && this.Equals(other);
