@@ -247,7 +247,7 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 			this.Model = modelType == null ? null : Zongsoft.Data.Model.GetDescriptor(modelType);
 			this.ServiceType = serviceType;
 
-			//确保路由值包含控制器名称
+			//确保路由数据中包含控制器名称
 			controller.RouteValues.TryAdd("controller", controller.ControllerName);
 		}
 		#endregion
@@ -345,6 +345,9 @@ public class ControllerServiceDescriptor : ServiceDescriptor<ControllerServiceDe
 		{
 			this.Action = action;
 			this.Name = action.ActionName;
+
+			//确保路由数据中包含行为名称
+			action.RouteValues.TryAdd("action", action.ActionName);
 		}
 
 		public ActionModel Action { get; }
