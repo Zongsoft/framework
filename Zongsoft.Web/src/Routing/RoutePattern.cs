@@ -107,14 +107,20 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 			var interval = (string.IsNullOrEmpty(value) ? 0 : value.Length) - entry.Length;
 
 			if(string.IsNullOrEmpty(value) && prefix.Length > 0 && suffix.Length > 0 && prefix[^1] == suffix[0])
+			{
+				--interval;
 				this.Value = $"{prefix}{suffix[1..]}";
+			}
 			else
 				this.Value = $"{prefix}{value}{suffix}";
 
-			foreach(var part in _entries.Values)
+			if(interval != 0 && _entries.Count > 0)
 			{
-				if(part.Position > 0)
-					part.Position += interval;
+				foreach(var part in _entries.Values)
+				{
+					if(part.Position > entry.Position)
+						part.Position += interval;
+				}
 			}
 
 			return true;
