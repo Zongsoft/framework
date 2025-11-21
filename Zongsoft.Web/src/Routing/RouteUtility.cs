@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Zongsoft.Web.Routing;
@@ -92,38 +93,66 @@ public static class RouteUtility
 
 		var prefixes = GetRouteTemplates(action.Controller.Selectors);
 		var templates = GetRouteTemplates(action.Selectors);
+		var variables = new Dictionary<string, string>(action.Controller.RouteValues, StringComparer.OrdinalIgnoreCase);
 
-		foreach(var prefix in prefixes)
+		foreach(var entry in action.RouteValues)
+			variables[entry.Key] = entry.Value;
+
+		foreach(var entry in parameters)
+			variables[entry.Key] = entry.Value;
+
+		if(prefixes.Count == 0)
 		{
 			foreach(var template in templates)
+				yield return GetRouteTemplate(template, null, variables);
+		}
+		else
+		{
+			foreach(var prefix in prefixes)
 			{
-				var url = template ?? string.Empty;
-				if(!url.StartsWith('/') && !url.StartsWith("~/"))
-					url = $"{prefix}{(prefix.EndsWith('/') ? null : '/')}{url}";
-
-				var pattern = RoutePattern.Resolve(url);
-
-				if(parameters == null)
-					pattern.Map(action.RouteValues);
-				else
-					pattern.Map(parameters.Concat(action.RouteValues));
-
-				yield return pattern;
+				foreach(var template in templates)
+					yield return GetRouteTemplate(template, prefix, variables);
 			}
 		}
-	}
 
-	private static IEnumerable<string> GetRouteTemplates(IList<SelectorModel> selectors)
+		static RoutePattern GetRouteTemplate(string template, string prefix, IEnumerable<KeyValuePair<string, string>> parameters)
+        {
+            string url;
+
+			if(string.IsNullOrEmpty(template))
+				url = prefix;
+			else if(template.StartsWith('/') || template.StartsWith("~/"))
+				url = template;
+			else
+				url = string.IsNullOrEmpty(prefix) ? template : $"{prefix}{(prefix.EndsWith('/') ? null : '/')}{template}";
+
+			var pattern = RoutePattern.Resolve(url);
+			pattern.Map(parameters);
+            return pattern;
+        }
+    }
+
+	private static IReadOnlyCollection<string> GetRouteTemplates(IList<SelectorModel> selectors)
 	{
-		if(selectors == null)
-			yield break;
+		if(selectors == null || selectors.Count == 0)
+			return [];
+
+		var result = new HashSet<string>(selectors.Count, StringComparer.OrdinalIgnoreCase);
 
 		for(int i = 0; i < selectors.Count; i++)
 		{
 			var selector = selectors[i];
 
 			if(selector.AttributeRouteModel != null)
-				yield return selector.AttributeRouteModel.Template;
+				result.Add(selector.AttributeRouteModel.Template);
+
+			foreach(var metadata in selector.EndpointMetadata)
+			{
+				if(metadata is IRouteTemplateProvider route)
+					result.Add(route.Template ?? string.Empty);
+			}
 		}
+
+		return result;
 	}
 }

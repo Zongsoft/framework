@@ -77,22 +77,33 @@ partial class DocumentGenerator
 					{
 						Summary = descriptor.Title,
 						Description = descriptor.Description,
-					});
+                        Operations = new Dictionary<HttpMethod, OpenApiOperation>(),
+                    });
 				}
 			}
 		}
 
 		foreach(var operation in descriptor.Operations)
 		{
-			foreach(var pattern in operation.GetRoutePatterns())
+			var methods = operation.Action.GetHttpMethods();
+
+			if(methods == null || methods.Count == 0)
+				continue;
+
+			foreach(var method in methods)
 			{
-				var url = pattern.GetUrl();
-
-				if(!paths.TryGetValue(url, out var path))
-					paths.Add(url, path = new OpenApiPathItem() { });
-
-				foreach(var method in operation.Action.GetHttpMethods())
+				foreach(var pattern in operation.GetRoutePatterns())
 				{
+					var url = pattern.GetUrl();
+
+					if(!paths.TryGetValue(url, out var path))
+						paths.Add(url, path = new OpenApiPathItem()
+						{
+							Summary = operation.Title,
+							Description = operation.Description,
+							Operations = new Dictionary<HttpMethod, OpenApiOperation>(),
+						});
+
 					path.Operations.Add(method, GetOperation(descriptor, operation, method));
 				}
 			}

@@ -47,7 +47,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 
 	const string REGEX_PATTERN = $$"""
 	[\[\{]
-	(?<{{REGEX_CAPTURES}}>\*{0,2})?
+	(?<{{REGEX_CAPTURES}}>\*{1,2})?
 	(?<{{REGEX_NAME}}>\w+)
 	(?<{{REGEX_OPTIONAL}}>\?)?
 	(
