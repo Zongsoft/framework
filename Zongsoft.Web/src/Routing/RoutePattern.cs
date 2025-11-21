@@ -30,7 +30,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 
 namespace Zongsoft.Web.Routing;
@@ -42,7 +41,6 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 	const string REGEX_VALUE = "value";
 	const string REGEX_OPTIONAL = "optional";
 	const string REGEX_CAPTURES = "captures";
-	const string REGEX_ARGUMENTS = "arguments";
 	const string REGEX_CONSTRAINT = "constraint";
 
 	const string REGEX_PATTERN = $$"""
@@ -56,7 +54,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 	)?
 	(:
 		(?<{{REGEX_CONSTRAINT}}>\w+
-			(?<{{REGEX_ARGUMENTS}}>\([^\{\}\(\)]*\))?
+			(\([^\{\}\(\)]*\))?
 		)
 	)*
 	[\}\]]
@@ -64,7 +62,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 	#endregion
 
 	#region 静态变量
-	private static readonly Regex _regex = new(REGEX_PATTERN, RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline);
+	private static readonly Regex _regex = new(REGEX_PATTERN, RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 	#endregion
 
 	#region 成员字段
@@ -136,12 +134,24 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		if(match == null || !match.Success)
 			return false;
 
-		var name = match.Groups[REGEX_NAME].Value;
-		var value = match.Groups[REGEX_VALUE].Value;
-		var optional = match.Groups[REGEX_OPTIONAL].Success;
-		var captured = match.Groups[REGEX_CAPTURES].Success;
+		var entry = new Entry(match.Index, match.Length,
+			match.Groups[REGEX_NAME].Value,
+			match.Groups[REGEX_VALUE].Value,
+			match.Groups[REGEX_OPTIONAL].Success,
+			match.Groups[REGEX_CAPTURES].Success);
 
-		return _entries.TryAdd(name, new Entry(match.Index, match.Length, name, value, optional, captured));
+		if(match.Groups[REGEX_CONSTRAINT].Success)
+		{
+			entry.Constraints = new();
+
+			foreach(Capture capture in match.Groups[REGEX_CONSTRAINT].Captures)
+			{
+				if(Constraint.TryParse(capture.Value, out var constraint))
+					entry.Constraints.Add(constraint);
+			}
+		}
+
+		return _entries.TryAdd(entry.Name, entry);
 	}
 	#endregion
 
@@ -184,7 +194,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 			this.Value = value;
 			this.Optional = optional;
 			this.Captured = captured;
-			this.Constraints = [];
+			this.Constraints = ConstraintCollection.Empty;
 		}
 
 		public string Name { get; }
@@ -214,11 +224,62 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		public string[] Arguments { get; } = arguments;
 		public bool HasArguments => this.Arguments != null && this.Arguments.Length > 0;
 		public override string ToString() => this.HasArguments ? $"{this.Name}({string.Join(',', this.Arguments)})" : this.Name;
+
+		public static bool TryParse(string text, out Constraint result)
+		{
+			if(string.IsNullOrWhiteSpace(text))
+			{
+				result = null;
+				return false;
+			}
+
+			var left = text.IndexOf('(');
+			var right = text.LastIndexOf(')');
+
+			if(left < 0 && right < 0)
+			{
+				result = new Constraint(text.Trim());
+				return true;
+			}
+
+			if(left > 0 && left < right)
+			{
+				result = new(text[..left].Trim(), text.Substring(left + 1, right - left - 1).Split(',', StringSplitOptions.TrimEntries));
+				return true;
+			}
+
+			result = null;
+			return false;
+		}
 	}
 
-	public sealed class ConstraintCollection : KeyedCollection<string, Constraint>
+	public sealed class ConstraintCollection : IReadOnlyCollection<Constraint>
 	{
-		protected override string GetKeyForItem(Constraint constraint) => constraint.Name;
+		#region 单例字段
+		public static readonly ConstraintCollection Empty = new();
+		#endregion
+
+		#region 成员字段
+		private readonly Dictionary<string, Constraint> _constraints;
+		#endregion
+
+		#region 内部构造
+		internal ConstraintCollection() => _constraints = new(StringComparer.OrdinalIgnoreCase);
+		#endregion
+
+		#region 公共属性
+		public int Count => _constraints.Count;
+		public Constraint this[string name] => name != null && _constraints.TryGetValue(name, out var value) ? value : null;
+		#endregion
+
+		#region 内部方法
+		internal bool Add(Constraint constraint) => constraint != null && _constraints.TryAdd(constraint.Name, constraint);
+		#endregion
+
+		#region 枚举遍历
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<Constraint> GetEnumerator() => _constraints.Values.GetEnumerator();
+		#endregion
 	}
 	#endregion
 }
