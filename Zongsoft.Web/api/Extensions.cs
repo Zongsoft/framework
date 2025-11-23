@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.OpenApi;
@@ -86,9 +88,75 @@ public static class Extensions
 	}
 
 	public static IOpenApiExtension Text(string value) => new StringExtension(value);
+	public static IOpenApiExtension Object(object value) => new ObjectExtension(value);
+	public static IOpenApiExtension Array(IEnumerable values) => new ArrayExtension(values);
 
 	private sealed class StringExtension(string value) : IOpenApiExtension
 	{
 		public void Write(IOpenApiWriter writer, OpenApiSpecVersion version) => writer.WriteValue(value);
+	}
+
+	private sealed class ArrayExtension(IEnumerable values) : IOpenApiExtension
+	{
+		public void Write(IOpenApiWriter writer, OpenApiSpecVersion specVersion)
+		{
+			if(values == null)
+			{
+				writer.WriteNull();
+				return;
+			}
+
+			writer.WriteStartArray();
+
+			foreach(var value in values)
+				writer.WriteValue(value);
+
+			writer.WriteEndArray();
+		}
+	}
+
+	private sealed class ObjectExtension(object value) : IOpenApiExtension
+	{
+		public void Write(IOpenApiWriter writer, OpenApiSpecVersion version)
+		{
+			if(value == null)
+			{
+				writer.WriteNull();
+				return;
+			}
+
+			writer.WriteStartObject();
+
+			var fields = value.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public);
+			for(int i = 0; i < fields.Length; i++)
+			{
+				var field = fields[i];
+				var fieldValue = field.GetValue(value);
+				writer.WritePropertyName(field.Name);
+				if(fieldValue == null)
+					writer.WriteNull();
+				else
+					writer.WriteValue(fieldValue);
+			}
+
+			var properties = value.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+			for(int i = 0; i < properties.Length; i++)
+			{
+				var property = properties[i];
+
+				if(property.CanRead && property.GetIndexParameters().Length == 0)
+				{
+					var propertyValue = property.GetValue(value);
+					writer.WritePropertyName(property.Name);
+
+					if(propertyValue == null)
+						writer.WriteNull();
+					else
+						writer.WriteValue(propertyValue);
+				}
+			}
+
+			writer.WriteEndObject();
+		}
 	}
 }

@@ -56,7 +56,8 @@ public static partial class DocumentGenerator
 		};
 
 		//添加环境名到扩展集
-		document.AddExtension($"x-environment", Extensions.Text(ApplicationContext.Current.Environment.Name));
+		document.AddExtension("x-environment", Extensions.Text(ApplicationContext.Current.Environment.Name));
+		document.AddExtension("x-scalar-active-environment", Extensions.Text(ApplicationContext.Current.Environment.Name));
 
 		//生成服务器列表
 		document.GenerateServers();
@@ -66,5 +67,4 @@ public static partial class DocumentGenerator
 
 		return document;
 	}
-
 }

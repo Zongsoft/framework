@@ -77,8 +77,8 @@ partial class DocumentGenerator
 					{
 						Summary = descriptor.Title,
 						Description = descriptor.Description,
-                        Operations = new Dictionary<HttpMethod, OpenApiOperation>(),
-                    });
+						Operations = new Dictionary<HttpMethod, OpenApiOperation>(),
+					});
 				}
 			}
 		}
