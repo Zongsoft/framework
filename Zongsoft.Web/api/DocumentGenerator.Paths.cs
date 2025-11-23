@@ -115,7 +115,7 @@ partial class DocumentGenerator
 		var operation = new OpenApiOperation()
 		{
 			OperationId = $"{service.QualifiedName}.{descriptor.Name}",
-			Summary = $"{service.QualifiedName}.{descriptor.Name}",
+			Summary = descriptor.Name,
 			Description = descriptor.Description,
 		};
 
