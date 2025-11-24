@@ -80,6 +80,8 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 	#endregion
 
 	#region 公共方法
+	public bool Contains(string name) => name != null && _entries.ContainsKey(name);
+
 	public int Map(params IEnumerable<KeyValuePair<string, string>> parameters)
 	{
 		if(parameters == null)

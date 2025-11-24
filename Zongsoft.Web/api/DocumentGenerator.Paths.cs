@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Collections.Generic;
@@ -115,7 +116,7 @@ partial class DocumentGenerator
 		var operation = new OpenApiOperation()
 		{
 			OperationId = $"{service.QualifiedName}.{descriptor.Name}",
-			Summary = descriptor.Name,
+			Summary = GetSummary(descriptor),
 			Description = descriptor.Description,
 		};
 
@@ -138,6 +139,17 @@ partial class DocumentGenerator
 		}
 
 		return operation;
+
+		static string GetSummary(ControllerServiceDescriptor.ControllerOperationDescriptor descriptor)
+		{
+			var signature = string.Join(',',
+				descriptor.Action.Parameters
+					.Where(parameter => parameter.BindingInfo?.BindingSource == BindingSource.Path)
+					.Select(parameter => parameter.Name)
+			);
+
+			return string.IsNullOrEmpty(signature) ? descriptor.Name : $"{descriptor.Name}({signature})";
+		}
 	}
 
 	private static OpenApiParameter GetParameter(ParameterModel model)
@@ -154,20 +166,30 @@ partial class DocumentGenerator
 			Required = required,
 			AllowEmptyValue = nullable,
 			Description = model.DisplayName,
-			In = GetLocation(model.BindingInfo),
+			In = GetLocation(model),
 			Schema = Utility.GetSchema(model.ParameterType),
 		};
 
-		static ParameterLocation? GetLocation(BindingInfo info)
+		static ParameterLocation? GetLocation(ParameterModel parameter)
 		{
-			if(info == null || info.BindingSource == null)
-				return null;
+			if(parameter.BindingInfo == null || parameter.BindingInfo.BindingSource == null)
+			{
+				var patterns = parameter.Action.GetRoutePatterns();
 
-			if(info.BindingSource == BindingSource.Path)
+				foreach(var pattern in patterns)
+				{
+					if(pattern.Contains(parameter.Name))
+						return ParameterLocation.Path;
+				}
+
+				return null;
+			}
+
+			if(parameter.BindingInfo.BindingSource == BindingSource.Path)
 				return ParameterLocation.Path;
-			if(info.BindingSource == BindingSource.Query)
+			if(parameter.BindingInfo.BindingSource == BindingSource.Query)
 				return ParameterLocation.Query;
-			if(info.BindingSource == BindingSource.Header)
+			if(parameter.BindingInfo.BindingSource == BindingSource.Header)
 				return ParameterLocation.Header;
 
 			return null;

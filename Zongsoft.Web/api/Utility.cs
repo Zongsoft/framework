@@ -43,10 +43,11 @@ internal static class Utility
 
 		foreach(var entry in pattern)
 		{
-			if(entry.Optional || entry.Captured || entry.HasValue)
-				pattern.Map(entry.Name, null);
-			else
-				pattern.Map(entry.Name, entry.Name);
+			pattern.Map(entry.Name, $"{{{entry.Name}}}");
+			//if(entry.Optional || entry.Captured || entry.HasValue)
+			//	pattern.Map(entry.Name, null);
+			//else
+			//	pattern.Map(entry.Name, entry.Name);
 		}
 
 		return pattern.Value.TrimEnd('/');
@@ -66,6 +67,7 @@ internal static class Utility
 		var schema = new OpenApiSchema()
 		{
 			Type = GetJsonType(type, out var isArray, out var nullable),
+			Format = GetFormat(type),
 		};
 
 		if(schema.Type == JsonSchemaType.Object)
@@ -96,6 +98,55 @@ internal static class Utility
 		}
 
 		return schema;
+	}
+
+	/*
+	 * https://spec.openapis.org/registry/format
+	 */
+	private static string GetFormat(Type type)
+	{
+		switch(Type.GetTypeCode(type))
+		{
+			case TypeCode.DateTime:
+				return "date-time";
+			case TypeCode.Byte:
+				return "byte";
+			case TypeCode.Int16:
+				return "int16";
+			case TypeCode.Int32:
+				return "int32";
+			case TypeCode.Int64:
+				return "int64";
+			case TypeCode.UInt16:
+				return "uint16";
+			case TypeCode.UInt32:
+				return "uint32";
+			case TypeCode.UInt64:
+				return "uint64";
+			case TypeCode.Single:
+				return "float";
+			case TypeCode.Double:
+				return "double";
+			case TypeCode.Decimal:
+				return "decimal";
+		}
+
+		if(type == typeof(byte[]))
+			return "byte";
+		if(type == typeof(Uri))
+			return "uri";
+		if(type == typeof(Guid))
+			return "uuid";
+		if(type == typeof(DateTimeOffset))
+			return "date-time";
+		if(type == typeof(DateOnly))
+			return "date";
+		if(type == typeof(TimeOnly))
+			return "time";
+		if(type == typeof(TimeSpan))
+			return "duration";
+
+		return null;
 	}
 
 	public static JsonSchemaType GetJsonType(Type type, out bool isArray, out bool nullable)
