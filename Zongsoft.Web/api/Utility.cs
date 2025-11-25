@@ -30,6 +30,12 @@
 using System;
 using System.Collections.Generic;
 
+using Microsoft.OpenApi;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+
+using Zongsoft.Web.Routing;
+
 namespace Zongsoft.Web.OpenApi;
 
 internal static class Utility
@@ -43,6 +49,26 @@ internal static class Utility
 			pattern.Map(entry.Name, $"{{{entry.Name}}}");
 
 		return pattern.Value.TrimEnd('/');
+	}
+
+	public static bool IsBody(this ParameterModel parameter)
+	{
+		var source = parameter.GetParameterSource();
+		return source == BindingSource.Body || source == BindingSource.Form || source == BindingSource.FormFile;
+	}
+
+	public static ParameterLocation? GetLocation(ParameterModel parameter)
+	{
+		var source = parameter.GetParameterSource();
+
+		if(source == BindingSource.Path)
+			return ParameterLocation.Path;
+		if(source == BindingSource.Query)
+			return ParameterLocation.Query;
+		if(source == BindingSource.Header)
+			return ParameterLocation.Header;
+
+		return null;
 	}
 
 	public static bool IsDictionaryEntry(this Type type) =>

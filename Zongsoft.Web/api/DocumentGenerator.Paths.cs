@@ -131,10 +131,29 @@ partial class DocumentGenerator
 
 			foreach(var parameterModel in descriptor.Action.Parameters)
 			{
-				var parameter = GetParameter(document, parameterModel);
+				if(parameterModel.IsBody())
+				{
+					operation.RequestBody = new OpenApiRequestBody()
+					{
+						Description = parameterModel.DisplayName,
+						Required = !parameterModel.ParameterInfo.HasDefaultValue,
 
-				if(parameter != null)
-					operation.Parameters.Add(parameter);
+						Content = new Dictionary<string, OpenApiMediaType>()
+						{
+							["application/json"] = new OpenApiMediaType()
+							{
+								Schema = GenerateSchema(document, parameterModel.ParameterType),
+							}
+						}
+					};
+				}
+				else
+				{
+					var parameter = GetParameter(document, parameterModel);
+
+					if(parameter != null)
+						operation.Parameters.Add(parameter);
+				}
 			}
 		}
 
@@ -166,33 +185,8 @@ partial class DocumentGenerator
 			Required = required,
 			AllowEmptyValue = nullable,
 			Description = model.DisplayName,
-			In = GetLocation(model),
+			In = Utility.GetLocation(model),
 			Schema = GenerateSchema(document, model.ParameterType),
 		};
-
-		static ParameterLocation? GetLocation(ParameterModel parameter)
-		{
-			if(parameter.BindingInfo == null || parameter.BindingInfo.BindingSource == null)
-			{
-				var patterns = parameter.Action.GetRoutePatterns();
-
-				foreach(var pattern in patterns)
-				{
-					if(pattern.Contains(parameter.Name))
-						return ParameterLocation.Path;
-				}
-
-				return null;
-			}
-
-			if(parameter.BindingInfo.BindingSource == BindingSource.Path)
-				return ParameterLocation.Path;
-			if(parameter.BindingInfo.BindingSource == BindingSource.Query)
-				return ParameterLocation.Query;
-			if(parameter.BindingInfo.BindingSource == BindingSource.Header)
-				return ParameterLocation.Header;
-
-			return null;
-		}
 	}
 }
