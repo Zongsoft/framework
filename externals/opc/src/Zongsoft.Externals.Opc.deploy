@@ -2,4 +2,4 @@ artifacts/Zongsoft.Externals.Opc.plugin
 lib/$(Framework)/Zongsoft.Externals.Opc.*
 lib/$(Framework)/*/Zongsoft.Externals.Opc.resources.*
 
-nuget:OPCFoundation.NetStandard.Opc.Ua@1.5.377.21
+nuget:OPCFoundation.NetStandard.Opc.Ua@1.5.377.22
