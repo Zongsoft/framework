@@ -60,11 +60,11 @@ partial class DocumentGenerator
 				.Caption(descriptor.Title)
 				.Description(descriptor.Description));
 
-			SetPaths(descriptor, document.Paths);
+			SetPaths(document, descriptor, document.Paths);
 		}
 	}
 
-	private static void SetPaths(ControllerServiceDescriptor descriptor, IDictionary<string, IOpenApiPathItem> paths)
+	private static void SetPaths(OpenApiDocument document, ControllerServiceDescriptor descriptor, IDictionary<string, IOpenApiPathItem> paths)
 	{
 		foreach(var controller in descriptor.Controllers)
 		{
@@ -105,13 +105,13 @@ partial class DocumentGenerator
 							Operations = new Dictionary<HttpMethod, OpenApiOperation>(),
 						});
 
-					path.Operations.TryAdd(method, GetOperation(descriptor, operation, method));
+					path.Operations.TryAdd(method, GetOperation(document, descriptor, operation, method));
 				}
 			}
 		}
 	}
 
-	private static OpenApiOperation GetOperation(ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor, HttpMethod method)
+	private static OpenApiOperation GetOperation(OpenApiDocument document, ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor, HttpMethod method)
 	{
 		var operation = new OpenApiOperation()
 		{
@@ -131,7 +131,7 @@ partial class DocumentGenerator
 
 			foreach(var parameterModel in descriptor.Action.Parameters)
 			{
-				var parameter = GetParameter(parameterModel);
+				var parameter = GetParameter(document, parameterModel);
 
 				if(parameter != null)
 					operation.Parameters.Add(parameter);
@@ -152,7 +152,7 @@ partial class DocumentGenerator
 		}
 	}
 
-	private static OpenApiParameter GetParameter(ParameterModel model)
+	private static OpenApiParameter GetParameter(OpenApiDocument document, ParameterModel model)
 	{
 		if(model.ParameterType == typeof(CancellationToken))
 			return null;
@@ -167,7 +167,7 @@ partial class DocumentGenerator
 			AllowEmptyValue = nullable,
 			Description = model.DisplayName,
 			In = GetLocation(model),
-			Schema = Utility.GetSchema(model.ParameterType),
+			Schema = GenerateSchema(document, model.ParameterType),
 		};
 
 		static ParameterLocation? GetLocation(ParameterModel parameter)

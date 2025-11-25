@@ -53,6 +53,12 @@ public static partial class DocumentGenerator
 				Version = ApplicationContext.Current.Version.ToString(),
 			},
 			Tags = new HashSet<OpenApiTag>(),
+			Components = new()
+			{
+				Schemas = new Dictionary<string, IOpenApiSchema>(),
+				Responses = new Dictionary<string, IOpenApiResponse>(),
+				RequestBodies = new Dictionary<string, IOpenApiRequestBody>(),
+			},
 		};
 
 		//添加环境名到扩展集
