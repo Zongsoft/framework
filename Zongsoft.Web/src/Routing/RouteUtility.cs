@@ -32,12 +32,34 @@ using System.Linq;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Zongsoft.Web.Routing;
 
 public static class RouteUtility
 {
+	public static BindingSource GetParameterSource(this ParameterModel parameter)
+	{
+		if(parameter == null)
+			return null;
+
+		if(parameter.BindingInfo == null || parameter.BindingInfo.BindingSource == null)
+		{
+			var patterns = parameter.Action.GetRoutePatterns();
+
+			foreach(var pattern in patterns)
+			{
+				if(pattern.Contains(parameter.Name))
+					return BindingSource.Path;
+			}
+
+			return null;
+		}
+
+		return parameter.BindingInfo.BindingSource;
+	}
+
 	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerServiceDescriptor descriptor, params IEnumerable<KeyValuePair<string, string>> parameters)
 	{
 		if(descriptor == null)
