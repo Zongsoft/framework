@@ -37,8 +37,8 @@ internal sealed class Utf8BufferTextWriter : TextWriter
 	{
 		var writer = _cachedInstance ?? new Utf8BufferTextWriter();
 
-        // Taken off the thread static
-        _cachedInstance = null;
+		// Taken off the thread static
+		_cachedInstance = null;
 
 		#if DEBUG
 		if(writer._inUse)
@@ -70,7 +70,7 @@ internal sealed class Utf8BufferTextWriter : TextWriter
 	public override void Write(char[] buffer)
 	{
 		if(buffer is not null)
-            this.WriteInternal(buffer);
+			this.WriteInternal(buffer);
 	}
 
 	public override void Write(char value)
@@ -94,10 +94,10 @@ internal sealed class Utf8BufferTextWriter : TextWriter
 	{
 		var destination = this.GetBuffer();
 
-        // Json.NET only writes ASCII characters by themselves, e.g. {}[], etc
-        // this should be an exceptional case
-        _encoder.Convert(new Span<char>(&value, 1), destination, false, out var charsUsed, out var bytesUsed, out _);
-        Debug.Assert(charsUsed == 1);
+		// Json.NET only writes ASCII characters by themselves, e.g. {}[], etc
+		// this should be an exceptional case
+		_encoder.Convert(new Span<char>(&value, 1), destination, false, out var charsUsed, out var bytesUsed, out _);
+		Debug.Assert(charsUsed == 1);
 		_memoryUsed += bytesUsed;
 	}
 
@@ -138,8 +138,8 @@ internal sealed class Utf8BufferTextWriter : TextWriter
 		{
 			// The destination byte array might not be large enough so multiple writes are sometimes required
 			var destination = this.GetBuffer();
-            _encoder.Convert(buffer, destination, false, out var charsUsed, out var bytesUsed, out _);
-            buffer = buffer[charsUsed..];
+			_encoder.Convert(buffer, destination, false, out var charsUsed, out var bytesUsed, out _);
+			buffer = buffer[charsUsed..];
 			_memoryUsed += bytesUsed;
 		}
 	}
