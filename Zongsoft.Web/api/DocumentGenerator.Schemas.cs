@@ -30,6 +30,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 using System.Text.Json.Nodes;
 using System.Collections.Generic;
 
@@ -109,7 +110,7 @@ partial class DocumentGenerator
 		if(type.IsDictionary() || type.IsDictionaryEntry())
 			return;
 
-		var properties = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+		var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 		if(properties.Length > 0)
 		{
 			schema.Properties ??= new Dictionary<string, IOpenApiSchema>(properties.Length);
@@ -117,11 +118,13 @@ partial class DocumentGenerator
 			for(int i = 0; i < properties.Length; i++)
 			{
 				var property = properties[i];
-				schema.Properties[property.Name] = GenerateSchema(document, property.PropertyType);
+
+				if(property.CanRead && property.CanWrite && !IsIgnored(property))
+					schema.Properties[property.Name] = GenerateSchema(document, property.PropertyType);
 			}
 		}
 
-		var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+		var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
 		if(fields.Length > 0)
 		{
 			schema.Properties ??= new Dictionary<string, IOpenApiSchema>(fields.Length);
@@ -129,7 +132,9 @@ partial class DocumentGenerator
 			for(int i = 0; i < fields.Length; i++)
 			{
 				var field = fields[i];
-				schema.Properties[field.Name] = GenerateSchema(document, field.FieldType);
+
+				if(!field.IsInitOnly && !IsIgnored(field))
+					schema.Properties[field.Name] = GenerateSchema(document, field.FieldType);
 			}
 		}
 	}
@@ -154,15 +159,24 @@ partial class DocumentGenerator
 
 		return (JsonNode)method.Invoke(null, [value, null]);
 
-		static System.Reflection.MethodInfo GetCreateMethod()
+		static MethodInfo GetCreateMethod()
 		{
 			return typeof(JsonValue)
-				.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+				.GetMethods(BindingFlags.Public | BindingFlags.Static)
 				.First(method => method.IsGenericMethodDefinition && method.Name == nameof(JsonValue.Create) && method.GetParameters().Length == 2);
 		}
 	}
 
 	private static string GetSchemaKey(Type type) => type.FullName;
+
+	private static bool IsIgnored(MemberInfo member)
+	{
+		if(member.GetCustomAttribute<System.Text.Json.Serialization.JsonIgnoreAttribute>(true) != null)
+			return true;
+
+		var attribute = member.GetCustomAttribute<Zongsoft.Serialization.SerializationMemberAttribute>(true);
+		return attribute != null && attribute.Ignored;
+	}
 
 	/*
 	 * https://spec.openapis.org/registry/format
