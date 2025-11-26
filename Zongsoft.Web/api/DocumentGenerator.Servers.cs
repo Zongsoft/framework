@@ -70,7 +70,7 @@ partial class DocumentGenerator
 			if(configuration == null)
 				throw new ArgumentNullException(nameof(configuration));
 
-			return configuration.GetOption<Configuration.ServerOptionCollection>("/Web/OpenAPI") ?? [];
+			return configuration.GetOption<Configuration.ServerOptionCollection>("/Web/OpenAPI/Servers") ?? [];
 		}
 	}
 }

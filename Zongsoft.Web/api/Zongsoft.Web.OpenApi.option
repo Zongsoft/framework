@@ -2,30 +2,31 @@
 
 <options>
 	<option path="/web/openapi">
-		<server server.name="ports" url="http://{host}:{port}">
-			<variables>
-				<variable variable.name="host" default="localhost">
-					<values>localhost</values>
-					<values>127.0.0.1</values>
-				</variable>
-				<variable variable.name="port" default="8069">
-					<values>8069</values>
-				</variable>
-			</variables>
-		</server>
+		<servers>
+			<server server.name="ports" url="http://{host}:{port}">
+				<variables>
+					<variable variable.name="host" default="localhost">
+						<value>localhost</value>
+						<value>127.0.0.1</value>
+					</variable>
+					<variable variable.name="port" default="8069">
+						<value>8069</value>
+					</variable>
+				</variables>
+			</server>
 
-		<server server.name="sites" url="http://{site}.{host}:{port}">
-			<variables>
-				<variable variable.name="site" default="b">
-					<values>a</values>
-					<values>b</values>
-					<values>c</values>
-					<values>iot</values>
-					<values>gateway</values>
-				</variable>
-				<variable variable.name="host" default="zongsoft.com" />
-				<variable variable.name="port" default="80" />
-			</variables>
-		</server>
+			<server server.name="sites" url="http://{site}.{host}:{port}">
+				<variables>
+					<variable variable.name="site" default="b">
+						<value>a</value>
+						<value>b</value>
+						<value>c</value>
+						<value>iot</value>
+					</variable>
+					<variable variable.name="host" default="zongsoft.com" />
+					<variable variable.name="port" default="80" />
+				</variables>
+			</server>
+		</servers>
 	</option>
 </options>
