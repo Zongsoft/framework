@@ -66,8 +66,8 @@ partial class UserController
 			return await this.Service.HasPasswordAsync(new Identifier(typeof(IUser), id), cancellation) ? this.Content("Yes!") : this.NoContent();
 		}
 
-		[HttpPut("/[area]/[controller]/[action]")]
-		[HttpPut("/[area]/{id}/[controller]/[action]")]
+		[HttpPost("/[area]/[controller]/[action]")]
+		[HttpPost("/[area]/{id:required}/[controller]/[action]")]
 		public async Task<IActionResult> ChangeAsync(string id, [FromBody]PasswordChangeModel password, CancellationToken cancellation = default)
 		{
 			return await this.Service.ChangePasswordAsync(new Identifier(typeof(IUser), id), password.OldPassword, password.NewPassword, cancellation) ?
