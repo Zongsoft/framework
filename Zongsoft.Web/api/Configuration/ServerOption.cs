@@ -45,6 +45,8 @@ public class ServerOption
 
 	public string Name { get; set; }
 	public string Url { get; set; }
+
+	[Zongsoft.Configuration.ConfigurationProperty()]
 	public VariableOptionCollection Variables { get; }
 }
 

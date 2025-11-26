@@ -31,49 +31,28 @@ using System;
 using System.Collections.Generic;
 
 using Microsoft.OpenApi;
+using Microsoft.Extensions.Configuration;
 
 using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Web.OpenApi;
 
-public static partial class DocumentGenerator
+partial class DocumentGenerator
 {
-	public static OpenApiDocument Generate() => Generate(ApplicationContext.Current?.Properties.GetValue<ControllerServiceDescriptorCollection>());
-	public static OpenApiDocument Generate(ControllerServiceDescriptorCollection descriptors)
+	internal static void GenerateEnvironments(this OpenApiDocument document)
 	{
-		if(descriptors == null)
-			return null;
+		var environments = GetEnvironments(ApplicationContext.Current.Services.Resolve<IConfiguration>() ?? ApplicationContext.Current.Configuration);
 
-		var document = new OpenApiDocument()
+		if(environments != null && environments.Count > 0)
+			document.AddExtension("x-scalar-environments", Extensions.Helper.Object(environments));
+
+		static IReadOnlyCollection<Configuration.EnvironmentOption> GetEnvironments(IConfiguration configuration)
 		{
-			Info = new()
-			{
-				Title = ApplicationContext.Current.Title,
-				Description = ApplicationContext.Current.Description,
-				Version = ApplicationContext.Current.Version.ToString(),
-			},
-			Tags = new HashSet<OpenApiTag>(),
-			Components = new()
-			{
-				Schemas = new Dictionary<string, IOpenApiSchema>(),
-				Responses = new Dictionary<string, IOpenApiResponse>(),
-				RequestBodies = new Dictionary<string, IOpenApiRequestBody>(),
-			},
-		};
+			if(configuration == null)
+				throw new ArgumentNullException(nameof(configuration));
 
-		//添加环境名到扩展集
-		document.AddExtension("x-environment", Extensions.Helper.String(ApplicationContext.Current.Environment.Name));
-		document.AddExtension("x-scalar-active-environment", Extensions.Helper.String(ApplicationContext.Current.Environment.Name));
-
-		//生成环境列表
-		document.GenerateEnvironments();
-
-		//生成服务器列表
-		document.GenerateServers();
-
-		//生成API路径列表
-		document.GeneratePaths(descriptors);
-
-		return document;
+			return configuration.GetOption<Configuration.EnvironmentOptionCollection>("/Web/OpenAPI/Environments") ?? [];
+		}
 	}
 }

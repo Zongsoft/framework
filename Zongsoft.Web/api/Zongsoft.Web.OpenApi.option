@@ -4,29 +4,40 @@
 	<option path="/web/openapi">
 		<servers>
 			<server server.name="ports" url="http://{host}:{port}">
-				<variables>
-					<variable variable.name="host" default="localhost">
-						<value>localhost</value>
-						<value>127.0.0.1</value>
-					</variable>
-					<variable variable.name="port" default="8069">
-						<value>8069</value>
-					</variable>
-				</variables>
+				<variable variable.name="host" default="localhost">
+					<value>localhost</value>
+					<value>127.0.0.1</value>
+				</variable>
+				<variable variable.name="port" default="8069">
+					<value>8069</value>
+				</variable>
 			</server>
 
 			<server server.name="sites" url="http://{site}.{host}:{port}">
-				<variables>
-					<variable variable.name="site" default="b">
-						<value>a</value>
-						<value>b</value>
-						<value>c</value>
-						<value>iot</value>
-					</variable>
-					<variable variable.name="host" default="zongsoft.com" />
-					<variable variable.name="port" default="80" />
-				</variables>
+				<variable variable.name="site" default="b">
+					<value>a</value>
+					<value>b</value>
+					<value>c</value>
+					<value>iot</value>
+				</variable>
+				<variable variable.name="host" default="zongsoft.com" />
+				<variable variable.name="port" default="80" />
 			</server>
 		</servers>
+
+		<environments>
+			<environment environment.name="development">
+				<variable variable.name="host" default="192.168.0.101" />
+			</environment>
+			<environment environment.name="production">
+				<variable variable.name="host" default="192.168.0.102" />
+			</environment>
+			<environment environment.name="staging">
+				<variable variable.name="host" default="192.168.0.103" />
+			</environment>
+			<environment environment.name="testing">
+				<variable variable.name="host" default="192.168.0.104" />
+			</environment>
+		</environments>
 	</option>
 </options>

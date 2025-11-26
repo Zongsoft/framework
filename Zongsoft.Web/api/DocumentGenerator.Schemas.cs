@@ -41,7 +41,7 @@ namespace Zongsoft.Web.OpenApi;
 
 partial class DocumentGenerator
 {
-	public static IOpenApiSchema GenerateSchema(OpenApiDocument document, Type type)
+	internal static IOpenApiSchema GenerateSchema(OpenApiDocument document, Type type)
 	{
 		var schema = new OpenApiSchema()
 		{
@@ -215,7 +215,7 @@ partial class DocumentGenerator
 		return null;
 	}
 
-	public static JsonSchemaType GetJsonType(Type type, out bool nullable, out Type underlyingType)
+	private static JsonSchemaType GetJsonType(Type type, out bool nullable, out Type underlyingType)
 	{
 		if(type == typeof(string) || type == typeof(StringBuilder) ||
 		   type == typeof(ReadOnlySpan<char>) || type == typeof(Span<char>) ||

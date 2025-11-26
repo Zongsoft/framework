@@ -29,6 +29,7 @@
 
 using System;
 using System.Reflection;
+using System.Collections;
 
 using Microsoft.OpenApi;
 
@@ -49,37 +50,69 @@ public class ObjectExtension(object value) : IOpenApiExtension
 			return;
 		}
 
-		writer.WriteStartObject();
-
-		var fields = value.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public);
-		for(int i = 0; i < fields.Length; i++)
+		if(Common.TypeExtension.IsScalarType(value.GetType()))
 		{
-			var field = fields[i];
-			var fieldValue = field.GetValue(value);
-			writer.WritePropertyName(field.Name);
-			if(fieldValue == null)
-				writer.WriteNull();
-			else
-				writer.WriteValue(fieldValue);
+			writer.WriteValue(value);
+			return;
 		}
 
-		var properties = value.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
-		for(int i = 0; i < properties.Length; i++)
+		writer.WriteStartObject();
+
+		if(value is IEnumerable enumerable)
 		{
-			var property = properties[i];
-
-			if(property.CanRead && property.GetIndexParameters().Length == 0)
+			foreach(var item in enumerable)
 			{
-				var propertyValue = property.GetValue(value);
-				writer.WritePropertyName(property.Name);
-
-				if(propertyValue == null)
+				this.OnWrite(writer, version, item);
+			}
+		}
+		else
+		{
+			var fields = value.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public);
+			for(int i = 0; i < fields.Length; i++)
+			{
+				var field = fields[i];
+				var fieldValue = field.GetValue(value);
+				writer.WritePropertyName(field.Name);
+				if(fieldValue == null)
 					writer.WriteNull();
 				else
-					writer.WriteValue(propertyValue);
+					writer.WriteValue(fieldValue);
+			}
+
+			var properties = value.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+			for(int i = 0; i < properties.Length; i++)
+			{
+				var property = properties[i];
+
+				if(property.CanRead && property.GetIndexParameters().Length == 0)
+				{
+					var propertyValue = property.GetValue(value);
+					writer.WritePropertyName(property.Name);
+
+					if(propertyValue == null)
+						writer.WriteNull();
+					else
+						writer.WriteValue(propertyValue);
+				}
 			}
 		}
 
 		writer.WriteEndObject();
+	}
+
+	protected virtual void OnWrite(IOpenApiWriter writer, OpenApiSpecVersion version, object value)
+	{
+		switch(value)
+		{
+			case Configuration.EnvironmentOption environment:
+				Helper.Environment(environment).Write(writer, version);
+				break;
+			case Configuration.VariableOption variable:
+				Helper.Variable(variable).Write(writer, version);
+				break;
+			default:
+				writer.WriteValue(value);
+				break;
+		}
 	}
 }

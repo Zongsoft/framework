@@ -37,8 +37,6 @@ using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-using Zongsoft.Services;
-using Zongsoft.Components;
 using Zongsoft.Web.Routing;
 
 namespace Zongsoft.Web.OpenApi;

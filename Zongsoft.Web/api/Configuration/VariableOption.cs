@@ -37,6 +37,7 @@ public class VariableOption
 {
 	public string Name { get; set; }
 	public string Default { get; set; }
+	public string Description { get; set; }
 
 	[Zongsoft.Configuration.ConfigurationProperty("Value")]
 	public IList<string> Values { get; set; }

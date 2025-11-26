@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections;
 
 using Microsoft.OpenApi;
 
@@ -36,29 +35,26 @@ namespace Zongsoft.Web.OpenApi.Extensions;
 
 static partial class Helper
 {
-	public static IOpenApiExtension Array(IEnumerable values) => new ArrayExtension(values);
+	public static IOpenApiExtension Environment(Configuration.EnvironmentOption environment) => new EnvironmentExtension(environment);
 }
 
-public class ArrayExtension(IEnumerable values) : IOpenApiExtension
+public class EnvironmentExtension(Configuration.EnvironmentOption environment) : IOpenApiExtension
 {
 	public void Write(IOpenApiWriter writer, OpenApiSpecVersion version)
 	{
-		if(values == null)
-		{
-			writer.WriteNull();
-			return;
-		}
+		writer.WritePropertyName(environment.Name);
+		writer.WriteStartObject();
 
-		writer.WriteStartArray();
+		if(!string.IsNullOrEmpty(environment.Description))
+			writer.WriteProperty("description", environment.Description);
 
-		foreach(var value in values)
-			this.OnWrite(writer, version, value);
+		writer.WritePropertyName("variables");
+		writer.WriteStartObject();
 
-		writer.WriteEndArray();
-	}
+		for(int i = 0; i < environment.Variables.Count; i++)
+			Helper.Variable(environment.Variables[i]).Write(writer, version);
 
-	protected virtual void OnWrite(IOpenApiWriter writer, OpenApiSpecVersion version, object value)
-	{
-		Helper.Object(value).Write(writer, version);
+		writer.WriteEndObject();
+		writer.WriteEndObject();
 	}
 }

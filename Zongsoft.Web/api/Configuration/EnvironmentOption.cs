@@ -28,37 +28,28 @@
  */
 
 using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
-using Microsoft.OpenApi;
+namespace Zongsoft.Web.OpenApi.Configuration;
 
-namespace Zongsoft.Web.OpenApi.Extensions;
-
-static partial class Helper
+public class EnvironmentOption
 {
-	public static IOpenApiExtension Array(IEnumerable values) => new ArrayExtension(values);
+	public EnvironmentOption() => this.Variables = [];
+	public EnvironmentOption(string name, params IEnumerable<VariableOption> variables)
+	{
+		this.Name = name;
+		this.Variables = new VariableOptionCollection(variables);
+	}
+
+	public string Name { get; set; }
+	public string Description { get; set; }
+
+	[Zongsoft.Configuration.ConfigurationProperty()]
+	public VariableOptionCollection Variables { get; }
 }
 
-public class ArrayExtension(IEnumerable values) : IOpenApiExtension
+public class EnvironmentOptionCollection() : KeyedCollection<string, EnvironmentOption>(StringComparer.OrdinalIgnoreCase)
 {
-	public void Write(IOpenApiWriter writer, OpenApiSpecVersion version)
-	{
-		if(values == null)
-		{
-			writer.WriteNull();
-			return;
-		}
-
-		writer.WriteStartArray();
-
-		foreach(var value in values)
-			this.OnWrite(writer, version, value);
-
-		writer.WriteEndArray();
-	}
-
-	protected virtual void OnWrite(IOpenApiWriter writer, OpenApiSpecVersion version, object value)
-	{
-		Helper.Object(value).Write(writer, version);
-	}
+	protected override string GetKeyForItem(EnvironmentOption server) => server.Name;
 }
