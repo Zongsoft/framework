@@ -56,8 +56,8 @@ partial class UserController
 
 		#region 公共方法
 		[AllowAnonymous]
-		[HttpGet("[area]/{id:required}/[controller]")]
-		[HttpGet("[area]/{id:required}/[controller]/[action]")]
+		[HttpGet("/[area]/{id:required}/[controller]")]
+		[HttpGet("/[area]/{id:required}/[controller]/[action]")]
 		public async Task<IActionResult> HasAsync(string id, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
@@ -66,8 +66,8 @@ partial class UserController
 			return await this.Service.HasPasswordAsync(new Identifier(typeof(IUser), id), cancellation) ? this.Content("Yes!") : this.NoContent();
 		}
 
-		[HttpPut("[area]/[controller]/[action]")]
-		[HttpPut("[area]/{id}/[controller]/[action]")]
+		[HttpPut("/[area]/[controller]/[action]")]
+		[HttpPut("/[area]/{id}/[controller]/[action]")]
 		public async Task<IActionResult> ChangeAsync(string id, [FromBody]PasswordChangeModel password, CancellationToken cancellation = default)
 		{
 			return await this.Service.ChangePasswordAsync(new Identifier(typeof(IUser), id), password.OldPassword, password.NewPassword, cancellation) ?
@@ -75,7 +75,7 @@ partial class UserController
 		}
 
 		[AllowAnonymous]
-		[HttpPost("[area]/{identifier:required}/[controller]/[action]")]
+		[HttpPost("/[area]/{identifier:required}/[controller]/[action]")]
 		public async Task<IActionResult> ForgetAsync(string identifier, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(identifier))
@@ -90,7 +90,7 @@ partial class UserController
 		}
 
 		[AllowAnonymous]
-		[HttpPost("[area]/[controller]/[action]/{token:required}")]
+		[HttpPost("/[area]/[controller]/[action]/{token:required}")]
 		public async Task<IActionResult> ResetAsync(string token, [FromQuery]string secret, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
@@ -101,7 +101,7 @@ partial class UserController
 		}
 
 		[AllowAnonymous]
-		[HttpPost("[area]/{identifier:required}/[controller]/[action]")]
+		[HttpPost("/[area]/{identifier:required}/[controller]/[action]")]
 		public async Task<IActionResult> ResetAsync(string identifier, [FromBody]PasswordResetModel content, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(identifier))
@@ -118,7 +118,8 @@ partial class UserController
 		}
 
 		[AllowAnonymous]
-		[HttpGet("[area]/{identifier:required}/[controller]/[action]")]
+		[ActionName("Questions")]
+		[HttpGet("/[area]/{identifier:required}/[controller]/[action]")]
 		public async Task<IActionResult> GetQuestionsAsync(string identifier, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(identifier))
@@ -138,8 +139,8 @@ partial class UserController
 		}
 
 		[ActionName("Answers")]
-		[HttpPut("[area]/{id}/[controller]/[action]")]
-		[HttpPut("[area]/{id}/[controller]/Questions+Answers")]
+		[HttpPut("/[area]/{id}/[controller]/[action]")]
+		[HttpPut("/[area]/{id}/[controller]/Questions+Answers")]
 		public async Task<IActionResult> SetQuestionsAndAnswers(string id, [FromBody]QuestionsAndAnswersModel content, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
