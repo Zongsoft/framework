@@ -37,7 +37,7 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Zongsoft.Web.OpenApi;
 
-public static class WebExtension
+public static partial class WebExtension
 {
 	private static OpenApiDocument _document;
 

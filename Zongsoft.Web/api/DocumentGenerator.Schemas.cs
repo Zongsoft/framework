@@ -143,8 +143,8 @@ partial class DocumentGenerator
 		var entries = EnumUtility.GetEnumEntries(type, true);
 
 		schema.Enum = [.. entries.Select(entry => CreateNode(entry.Value))];
-		schema.AddExtension("x-enum-varnames", Extensions.Array(entries.Select(entry => entry.Name)));
-		schema.AddExtension("x-enum-descriptions", Extensions.Array(entries.Select(entry => string.IsNullOrEmpty(entry.Description) ? entry.Name : entry.Description)));
+		schema.AddExtension("x-enum-varnames", Extensions.Helper.Array(entries.Select(entry => entry.Name)));
+		schema.AddExtension("x-enum-descriptions", Extensions.Helper.Array(entries.Select(entry => string.IsNullOrEmpty(entry.Description) ? entry.Name : entry.Description)));
 	}
 
 	private static JsonNode CreateNode(object value)

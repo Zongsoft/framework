@@ -50,12 +50,12 @@ partial class DocumentGenerator
 		foreach(var descriptor in descriptors)
 		{
 			if(!string.IsNullOrEmpty(descriptor.Module))
-				document.Tags.Add(Extensions.Tag(descriptor.Module));
+				document.Tags.Add(Tags.Tag(descriptor.Module));
 
 			if(!string.IsNullOrEmpty(descriptor.Namespace))
-				document.Tags.Add(Extensions.Tag(descriptor.Namespace, descriptor.Module));
+				document.Tags.Add(Tags.Tag(descriptor.Namespace, descriptor.Module));
 
-			document.Tags.Add(Extensions
+			document.Tags.Add(Tags
 				.Tag(descriptor.QualifiedName, descriptor.Module, descriptor.Namespace)
 				.Caption(descriptor.Title)
 				.Description(descriptor.Description));
