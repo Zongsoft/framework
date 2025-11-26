@@ -41,7 +41,7 @@ public static class WebExtension
 {
 	private static OpenApiDocument _document;
 
-	public static IEndpointConventionBuilder UseOpenApi(this IEndpointRouteBuilder endpoints, string pattern = null) => endpoints.MapGet(pattern ?? "/openapi/{documentName}.json", async (HttpContext context, string documentName = "v1") =>
+	public static IEndpointConventionBuilder UseOpenApi(this IEndpointRouteBuilder endpoints, string pattern = null) => endpoints.MapGet(pattern ?? "/openapi/{documentName}.{extension}", async (HttpContext context, string documentName = "v1", string extension = "json") =>
 	{
 		_document ??= DocumentGenerator.Generate();
 
@@ -53,19 +53,27 @@ public static class WebExtension
 			return;
 		}
 
+		if(!Format.TryParse(extension, out var format))
+		{
+			context.Response.StatusCode = StatusCodes.Status400BadRequest;
+			context.Response.ContentType = "text/plain;charset=utf-8";
+			await context.Response.WriteAsync("The requested OpenAPI document format is not supported. Supported formats are ('.json', '.yaml' and '.yml').");
+			return;
+		}
+
 		using var textWriter = new Utf8BufferTextWriter(System.Globalization.CultureInfo.InvariantCulture);
 		textWriter.SetWriter(context.Response.BodyWriter);
 
 		OpenApiWriterBase openApiWriter;
 
-		if(IsYamlFormat(context.Request.Path))
+		if(format == Format.Yaml)
 		{
-			context.Response.ContentType = "text/plain+yaml;charset=utf-8";
+			context.Response.ContentType = format.Type;
 			openApiWriter = new OpenApiYamlWriter(textWriter);
 		}
 		else
 		{
-			context.Response.ContentType = "application/json;charset=utf-8";
+			context.Response.ContentType = format.Type;
 			openApiWriter = new OpenApiJsonWriter(textWriter);
 		}
 
@@ -73,8 +81,4 @@ public static class WebExtension
 		await _document.SerializeAsync(openApiWriter, OpenApiSpecVersion.OpenApi3_1, context.RequestAborted);
 		await context.Response.BodyWriter.FlushAsync(context.RequestAborted);
 	}).ExcludeFromDescription();
-
-	private static bool IsYamlFormat(string pattern) =>
-		pattern.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase) ||
-		pattern.EndsWith(".yml", StringComparison.OrdinalIgnoreCase);
 }
