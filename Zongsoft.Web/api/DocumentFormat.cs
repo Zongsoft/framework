@@ -31,15 +31,15 @@ using System;
 
 namespace Zongsoft.Web.OpenApi;
 
-public sealed class Format : IEquatable<Format>
+public sealed class DocumentFormat : IEquatable<DocumentFormat>
 {
 	#region 静态字段
-	public static readonly Format Json = new(nameof(Json), "application/json;charset=utf-8");
-	public static readonly Format Yaml = new(nameof(Yaml), "text/plain+yaml;charset=utf-8");
+	public static readonly DocumentFormat Json = new(nameof(Json), "application/json;charset=utf-8");
+	public static readonly DocumentFormat Yaml = new(nameof(Yaml), "text/plain+yaml;charset=utf-8");
 	#endregion
 
 	#region 私有构造
-	private Format(string name, string type)
+	private DocumentFormat(string name, string type)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -57,7 +57,7 @@ public sealed class Format : IEquatable<Format>
 	#endregion
 
 	#region 静态方法
-	public static bool TryParse(ReadOnlySpan<char> text, out Format format)
+	public static bool TryParse(ReadOnlySpan<char> text, out DocumentFormat format)
 	{
 		if(text.Equals(Json.Name, StringComparison.OrdinalIgnoreCase))
 		{
@@ -78,13 +78,13 @@ public sealed class Format : IEquatable<Format>
 	#endregion
 
 	#region 符号重写
-	public static bool operator ==(Format left, Format right) => left is null ? right is null : left.Equals(right);
-	public static bool operator !=(Format left, Format right) => !(left == right);
+	public static bool operator ==(DocumentFormat left, DocumentFormat right) => left is null ? right is null : left.Equals(right);
+	public static bool operator !=(DocumentFormat left, DocumentFormat right) => !(left == right);
 	#endregion
 
 	#region 重写方法
-	public bool Equals(Format other) => other is not null && string.Equals(this.Name, other.Name);
-	public override bool Equals(object obj) => this.Equals(obj as Format);
+	public bool Equals(DocumentFormat other) => other is not null && string.Equals(this.Name, other.Name);
+	public override bool Equals(object obj) => this.Equals(obj as DocumentFormat);
 	public override int GetHashCode() => this.Name.GetHashCode();
 	public override string ToString() => this.Name;
 	#endregion

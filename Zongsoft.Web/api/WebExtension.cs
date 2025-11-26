@@ -53,7 +53,7 @@ public static partial class WebExtension
 			return;
 		}
 
-		if(!Format.TryParse(extension, out var format))
+		if(!DocumentFormat.TryParse(extension, out var format))
 		{
 			context.Response.StatusCode = StatusCodes.Status400BadRequest;
 			context.Response.ContentType = "text/plain;charset=utf-8";
@@ -66,7 +66,7 @@ public static partial class WebExtension
 
 		OpenApiWriterBase openApiWriter;
 
-		if(format == Format.Yaml)
+		if(format == DocumentFormat.Yaml)
 		{
 			context.Response.ContentType = format.Type;
 			openApiWriter = new OpenApiYamlWriter(textWriter);
