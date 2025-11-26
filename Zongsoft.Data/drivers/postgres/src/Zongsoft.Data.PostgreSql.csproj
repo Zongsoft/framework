@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.1.0</Version>
+		<Version>0.2.0</Version>
 		<Product>Zongsoft Data Driver for PostgreSQL</Product>
 		<Description>This is a data driver for PostgreSQL of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.PostgreSql</RootNamespace>
@@ -28,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="$(TargetFramework) == 'net10.0'">
-		<PackageReference Include="Npgsql" VersionOverride="10.0.0-rc.1" />
+		<PackageReference Include="Npgsql" VersionOverride="10.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
