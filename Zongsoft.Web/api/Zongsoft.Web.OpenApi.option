@@ -2,6 +2,10 @@
 
 <options>
 	<option path="/web/openapi">
+		<headers>
+			<header header.name="X-Json-Behaviors" method="GET,POST" value="ignores:null,empty;casing:camel" />
+		</headers>
+
 		<servers>
 			<server server.name="ports" url="http://{host}:{port}">
 				<variable variable.name="host" default="localhost">
