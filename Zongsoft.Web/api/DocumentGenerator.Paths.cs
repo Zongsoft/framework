@@ -107,6 +107,19 @@ partial class DocumentGenerator
 				}
 			}
 		}
+
+		foreach(var path in paths)
+		{
+			if(IsEmpty(path.Value))
+				paths.Remove(path.Key);
+		}
+
+		static bool IsEmpty(IOpenApiPathItem path)
+		{
+			return (path.Operations == null || path.Operations.Count == 0) &&
+			       (path.Extensions == null || path.Extensions.Count == 0) &&
+			       (path.Parameters == null || path.Parameters.Count == 0);
+		}
 	}
 
 	private static OpenApiOperation GetOperation(OpenApiDocument document, ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor, HttpMethod method)
