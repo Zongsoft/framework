@@ -43,22 +43,25 @@ public static partial class WebExtension
 
 	public static IEndpointConventionBuilder UseOpenApi(this IEndpointRouteBuilder endpoints, string pattern = null) => endpoints.MapGet(pattern ?? "/openapi/{documentName}.{extension}", async (HttpContext context, string documentName = "v1", string extension = "json") =>
 	{
-		_document ??= DocumentGenerator.Generate();
-
-		if(_document == null)
-		{
-			context.Response.StatusCode = StatusCodes.Status404NotFound;
-			context.Response.ContentType = "text/plain;charset=utf-8";
-			await context.Response.WriteAsync($"No OpenAPI document with the name '{documentName}' was found.");
-			return;
-		}
-
 		if(!DocumentFormat.TryParse(extension, out var format))
 		{
 			context.Response.StatusCode = StatusCodes.Status400BadRequest;
 			context.Response.ContentType = "text/plain;charset=utf-8";
 			await context.Response.WriteAsync("The requested OpenAPI document format is not supported. Supported formats are ('.json', '.yaml' and '.yml').");
 			return;
+		}
+
+		if(_document == null)
+		{
+			_document = DocumentGenerator.Generate(new DocumentContext(format));
+
+			if(_document == null)
+			{
+				context.Response.StatusCode = StatusCodes.Status404NotFound;
+				context.Response.ContentType = "text/plain;charset=utf-8";
+				await context.Response.WriteAsync($"No OpenAPI document with the name '{documentName}' was found.");
+				return;
+			}
 		}
 
 		using var textWriter = new Utf8BufferTextWriter(System.Globalization.CultureInfo.InvariantCulture);

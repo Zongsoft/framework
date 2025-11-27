@@ -38,13 +38,31 @@ namespace Zongsoft.Web.OpenApi;
 
 public static partial class DocumentGenerator
 {
-	public static OpenApiDocument Generate() => Generate(ApplicationContext.Current?.Properties.GetValue<ControllerServiceDescriptorCollection>());
-	public static OpenApiDocument Generate(ControllerServiceDescriptorCollection descriptors)
+	public static OpenApiDocument Generate(DocumentContext context) => Generate(context, ApplicationContext.Current?.Properties.GetValue<ControllerServiceDescriptorCollection>());
+	public static OpenApiDocument Generate(DocumentContext context, ControllerServiceDescriptorCollection descriptors)
 	{
 		if(descriptors == null)
 			return null;
 
-		var document = new OpenApiDocument()
+		//确保文档对象已创建
+		context.Document ??= CreateDocument();
+
+		//添加环境名到扩展集
+		context.Document.AddExtension("x-environment", Extensions.Helper.String(ApplicationContext.Current.Environment.Name));
+		context.Document.AddExtension("x-scalar-active-environment", Extensions.Helper.String(ApplicationContext.Current.Environment.Name));
+
+		//生成环境列表
+		context.GenerateEnvironments();
+
+		//生成服务器列表
+		context.GenerateServers();
+
+		//生成API路径列表
+		context.GeneratePaths(descriptors);
+
+		return context.Document;
+
+		static OpenApiDocument CreateDocument() => new()
 		{
 			Info = new()
 			{
@@ -60,20 +78,5 @@ public static partial class DocumentGenerator
 				RequestBodies = new Dictionary<string, IOpenApiRequestBody>(),
 			},
 		};
-
-		//添加环境名到扩展集
-		document.AddExtension("x-environment", Extensions.Helper.String(ApplicationContext.Current.Environment.Name));
-		document.AddExtension("x-scalar-active-environment", Extensions.Helper.String(ApplicationContext.Current.Environment.Name));
-
-		//生成环境列表
-		document.GenerateEnvironments();
-
-		//生成服务器列表
-		document.GenerateServers();
-
-		//生成API路径列表
-		document.GeneratePaths(descriptors);
-
-		return document;
 	}
 }

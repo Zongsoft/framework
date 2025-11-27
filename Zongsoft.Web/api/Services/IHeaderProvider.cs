@@ -28,37 +28,12 @@
  */
 
 using System;
+using System.Net.Http;
 using System.Collections.Generic;
 
-using Microsoft.OpenApi;
+namespace Zongsoft.Web.OpenApi.Services;
 
-namespace Zongsoft.Web.OpenApi;
-
-partial class DocumentGenerator
+public interface IHeaderProvider
 {
-	internal static void GenerateServers(this DocumentContext context)
-	{
-		var servers = context.Configuration.GetServers();
-
-		foreach(var server in servers)
-		{
-			var apiServer = new OpenApiServer()
-			{
-				Url = server.Url,
-				Description = server.Name
-			};
-
-			foreach(var variable in server.Variables)
-			{
-				apiServer.Variables ??= new Dictionary<string, OpenApiServerVariable>();
-				apiServer.Variables.Add(variable.Name, new OpenApiServerVariable()
-				{
-					Default = variable.Default,
-					Enum = [.. variable.Values ?? []],
-				});
-			}
-
-			context.Document.Servers.Add(apiServer);
-		}
-	}
+	IEnumerable<KeyValuePair<string, string>> GetHeaders(DocumentContext context, ControllerServiceDescriptor.ControllerOperationDescriptor operation, HttpMethod method);
 }

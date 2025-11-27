@@ -37,32 +37,33 @@ using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
+using Zongsoft.Services;
 using Zongsoft.Web.Routing;
 
 namespace Zongsoft.Web.OpenApi;
 
 partial class DocumentGenerator
 {
-	internal static void GeneratePaths(this OpenApiDocument document, ControllerServiceDescriptorCollection descriptors)
+	internal static void GeneratePaths(this DocumentContext context, ControllerServiceDescriptorCollection descriptors)
 	{
 		foreach(var descriptor in descriptors)
 		{
 			if(!string.IsNullOrEmpty(descriptor.Module))
-				document.Tags.Add(Tags.Tag(descriptor.Module));
+				context.Document.Tags.Add(Tags.Tag(descriptor.Module));
 
 			if(!string.IsNullOrEmpty(descriptor.Namespace))
-				document.Tags.Add(Tags.Tag(descriptor.Namespace, descriptor.Module));
+				context.Document.Tags.Add(Tags.Tag(descriptor.Namespace, descriptor.Module));
 
-			document.Tags.Add(Tags
+			context.Document.Tags.Add(Tags
 				.Tag(descriptor.QualifiedName, descriptor.Module, descriptor.Namespace)
 				.Caption(descriptor.Title)
 				.Description(descriptor.Description));
 
-			SetPaths(document, descriptor, document.Paths);
+			SetPaths(context, descriptor, context.Document.Paths);
 		}
 	}
 
-	private static void SetPaths(OpenApiDocument document, ControllerServiceDescriptor descriptor, IDictionary<string, IOpenApiPathItem> paths)
+	private static void SetPaths(DocumentContext context, ControllerServiceDescriptor descriptor, IDictionary<string, IOpenApiPathItem> paths)
 	{
 		foreach(var controller in descriptor.Controllers)
 		{
@@ -103,7 +104,7 @@ partial class DocumentGenerator
 							Operations = new Dictionary<HttpMethod, OpenApiOperation>(),
 						});
 
-					path.Operations.TryAdd(method, GetOperation(document, descriptor, operation, method));
+					path.Operations.TryAdd(method, GetOperation(context, descriptor, operation, method));
 				}
 			}
 		}
@@ -122,7 +123,7 @@ partial class DocumentGenerator
 		}
 	}
 
-	private static OpenApiOperation GetOperation(OpenApiDocument document, ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor, HttpMethod method)
+	private static OpenApiOperation GetOperation(DocumentContext context, ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor, HttpMethod method)
 	{
 		var operation = new OpenApiOperation()
 		{
@@ -138,7 +139,7 @@ partial class DocumentGenerator
 
 		if(descriptor.Action.Parameters.Count > 0)
 		{
-			operation.Parameters = new List<IOpenApiParameter>(descriptor.Action.Parameters.Count);
+			operation.Parameters ??= new List<IOpenApiParameter>(descriptor.Action.Parameters.Count);
 
 			foreach(var parameterModel in descriptor.Action.Parameters)
 			{
@@ -153,18 +154,33 @@ partial class DocumentGenerator
 						{
 							["application/json"] = new OpenApiMediaType()
 							{
-								Schema = GenerateSchema(document, parameterModel.ParameterType),
+								Schema = GenerateSchema(context, parameterModel.ParameterType),
 							}
 						}
 					};
 				}
 				else
 				{
-					var parameter = GetParameter(document, parameterModel);
+					var parameter = GetParameter(context, parameterModel);
 
 					if(parameter != null)
 						operation.Parameters.Add(parameter);
 				}
+			}
+		}
+
+		foreach(var provider in context.Services.ResolveAll<Services.IHeaderProvider>())
+		{
+			foreach(var header in provider.GetHeaders(context, descriptor, method))
+			{
+				operation.Parameters ??= [];
+				operation.Parameters.Add(new OpenApiParameter()
+				{
+					Name = header.Key,
+					In = ParameterLocation.Header,
+					Schema = new OpenApiSchema() { Type = JsonSchemaType.String },
+					Example = System.Text.Json.Nodes.JsonValue.Create(header.Value),
+				});
 			}
 		}
 
@@ -182,7 +198,7 @@ partial class DocumentGenerator
 		}
 	}
 
-	private static OpenApiParameter GetParameter(OpenApiDocument document, ParameterModel model)
+	private static OpenApiParameter GetParameter(DocumentContext context, ParameterModel model)
 	{
 		if(model.ParameterType == typeof(CancellationToken))
 			return null;
@@ -197,7 +213,7 @@ partial class DocumentGenerator
 			AllowEmptyValue = nullable,
 			Description = model.DisplayName,
 			In = Utility.GetLocation(model),
-			Schema = GenerateSchema(document, model.ParameterType),
+			Schema = GenerateSchema(context, model.ParameterType),
 		};
 	}
 }

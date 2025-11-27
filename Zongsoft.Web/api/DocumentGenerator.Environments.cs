@@ -28,31 +28,18 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Microsoft.OpenApi;
-using Microsoft.Extensions.Configuration;
-
-using Zongsoft.Services;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Web.OpenApi;
 
 partial class DocumentGenerator
 {
-	internal static void GenerateEnvironments(this OpenApiDocument document)
+	internal static void GenerateEnvironments(this DocumentContext context)
 	{
-		var environments = GetEnvironments(ApplicationContext.Current.Services.Resolve<IConfiguration>() ?? ApplicationContext.Current.Configuration);
+		var environments = context.Configuration.GetEnvironments();
 
 		if(environments != null && environments.Count > 0)
-			document.AddExtension("x-scalar-environments", Extensions.Helper.Object(environments));
-
-		static IReadOnlyCollection<Configuration.EnvironmentOption> GetEnvironments(IConfiguration configuration)
-		{
-			if(configuration == null)
-				throw new ArgumentNullException(nameof(configuration));
-
-			return configuration.GetOption<Configuration.EnvironmentOptionCollection>("/Web/OpenAPI/Environments") ?? [];
-		}
+			context.Document.AddExtension("x-scalar-environments", Extensions.Helper.Object(environments));
 	}
 }

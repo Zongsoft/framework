@@ -29,36 +29,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
-using Microsoft.OpenApi;
+namespace Zongsoft.Web.OpenApi.Configuration;
 
-namespace Zongsoft.Web.OpenApi;
-
-partial class DocumentGenerator
+public class HeaderOption
 {
-	internal static void GenerateServers(this DocumentContext context)
-	{
-		var servers = context.Configuration.GetServers();
+	public string Name { get; set; }
+	public string Value { get; set; }
+	public string Method { get; set; }
+}
 
-		foreach(var server in servers)
-		{
-			var apiServer = new OpenApiServer()
-			{
-				Url = server.Url,
-				Description = server.Name
-			};
-
-			foreach(var variable in server.Variables)
-			{
-				apiServer.Variables ??= new Dictionary<string, OpenApiServerVariable>();
-				apiServer.Variables.Add(variable.Name, new OpenApiServerVariable()
-				{
-					Default = variable.Default,
-					Enum = [.. variable.Values ?? []],
-				});
-			}
-
-			context.Document.Servers.Add(apiServer);
-		}
-	}
+public class HeaderOptionCollection() : KeyedCollection<string, HeaderOption>(StringComparer.OrdinalIgnoreCase)
+{
+	protected override string GetKeyForItem(HeaderOption header) => header.Name;
 }

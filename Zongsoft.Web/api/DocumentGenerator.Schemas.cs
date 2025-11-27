@@ -42,7 +42,7 @@ namespace Zongsoft.Web.OpenApi;
 
 partial class DocumentGenerator
 {
-	internal static IOpenApiSchema GenerateSchema(OpenApiDocument document, Type type)
+	internal static IOpenApiSchema GenerateSchema(DocumentContext context, Type type)
 	{
 		var schema = new OpenApiSchema()
 		{
@@ -52,7 +52,7 @@ partial class DocumentGenerator
 
 		if((underlyingType != null && underlyingType.IsEnum) || type.IsEnum)
 		{
-			if(TryAdd(document, schema, underlyingType ?? type, out var reference))
+			if(TryAdd(context.Document, schema, underlyingType ?? type, out var reference))
 				SetSchemaEnumeration(schema, underlyingType ?? type);
 
 			return reference;
@@ -70,13 +70,13 @@ partial class DocumentGenerator
 			if(elementType.IsDictionaryEntry())
 				schema.Type = JsonSchemaType.Object;
 			else
-				schema.Items = GenerateSchema(document, elementType);
+				schema.Items = GenerateSchema(context, elementType);
 
 			return schema;
 		}
 
-		if(TryAdd(document, schema, underlyingType ?? type, out var result))
-			SetSchemaObject(document, schema, underlyingType ?? type);
+		if(TryAdd(context.Document, schema, underlyingType ?? type, out var result))
+			SetSchemaObject(context, schema, underlyingType ?? type);
 
 		return result;
 
@@ -102,7 +102,7 @@ partial class DocumentGenerator
 		}
 	}
 
-	private static void SetSchemaObject(OpenApiDocument document, OpenApiSchema schema, Type type)
+	private static void SetSchemaObject(DocumentContext context, OpenApiSchema schema, Type type)
 	{
 		if(schema.Type != JsonSchemaType.Object)
 			return;
@@ -120,7 +120,7 @@ partial class DocumentGenerator
 				var property = properties[i];
 
 				if(property.CanRead && property.CanWrite && !IsIgnored(property))
-					schema.Properties[property.Name] = GenerateSchema(document, property.PropertyType);
+					schema.Properties[property.Name] = GenerateSchema(context, property.PropertyType);
 			}
 		}
 
@@ -134,7 +134,7 @@ partial class DocumentGenerator
 				var field = fields[i];
 
 				if(!field.IsInitOnly && !IsIgnored(field))
-					schema.Properties[field.Name] = GenerateSchema(document, field.FieldType);
+					schema.Properties[field.Name] = GenerateSchema(context, field.FieldType);
 			}
 		}
 	}
