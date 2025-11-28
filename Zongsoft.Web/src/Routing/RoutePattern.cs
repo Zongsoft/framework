@@ -94,7 +94,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		foreach(var entry in _entries.Values.OrderBy(p => p.Offset))
 		{
 			var value = map != null ? map(entry) : GetValue(entry);
-			if(string.IsNullOrWhiteSpace(value) && !entry.Optional && !entry.HasDefault)
+			if(string.IsNullOrWhiteSpace(value))
 				value = $"{{{entry.Name}}}";
 
 			result.Append(this.Value.AsSpan(position, entry.Offset - position));

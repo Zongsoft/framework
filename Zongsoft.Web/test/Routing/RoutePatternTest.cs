@@ -132,10 +132,10 @@ public class RoutePatternTest
 	public void GetUrl()
 	{
 		var pattern = RoutePattern.Resolve("[controller]/{action}/{id?}");
-		Assert.Equal("{controller}/{action}", pattern.GetUrl());
+		Assert.Equal("{controller}/{action}/{id}", pattern.GetUrl());
 
 		pattern = RoutePattern.Resolve("[controller]/{action}/{id=404}");
-		Assert.Equal("{controller}/{action}", pattern.GetUrl());
+		Assert.Equal("{controller}/{action}/{id}", pattern.GetUrl());
 
 		pattern = RoutePattern.Resolve("[controller]/{action}/{id}");
 		Assert.Equal("{controller}/{action}/{id}", pattern.GetUrl());
@@ -145,11 +145,11 @@ public class RoutePatternTest
 
 		pattern = RoutePattern.Resolve("[controller]/{action}/{id?}");
 		pattern["controller"].Value = "home";
-		Assert.Equal("home/{action}", pattern.GetUrl());
+		Assert.Equal("home/{action}/{id}", pattern.GetUrl());
 
 		pattern = RoutePattern.Resolve("[controller]/{action}/{id=404}");
 		pattern["controller"].Value = "home";
-		Assert.Equal("home/{action}", pattern.GetUrl());
+		Assert.Equal("home/{action}/{id}", pattern.GetUrl());
 
 		pattern = RoutePattern.Resolve("[controller]/{action}/{id}");
 		pattern["controller"].Value = "home";
@@ -160,16 +160,16 @@ public class RoutePatternTest
 		Assert.Equal("home/{action}/{id}", pattern.GetUrl());
 
 		pattern = RoutePattern.Resolve("[controller]/{action}/{id?}");
-		Assert.Equal("home/{action}", pattern.GetUrl(entry => entry.Name == "controller" ? "home" : null));
+		Assert.Equal("home/{action}/{id}", pattern.GetUrl(entry => entry.Name == "controller" ? "home" : null));
 		pattern["action"].Value = "index";
-		Assert.Equal("{controller}/index", pattern.GetUrl());
-		Assert.Equal("{controller}/{action}", pattern.GetUrl(entry => null));
+		Assert.Equal("{controller}/index/{id}", pattern.GetUrl());
+		Assert.Equal("{controller}/{action}/{id}", pattern.GetUrl(entry => null));
 
 		pattern = RoutePattern.Resolve("[controller]/{action}/{id=404}");
-		Assert.Equal("home/{action}", pattern.GetUrl(entry => entry.Name == "controller" ? "home" : null));
+		Assert.Equal("home/{action}/{id}", pattern.GetUrl(entry => entry.Name == "controller" ? "home" : null));
 		pattern["action"].Value = "index";
-		Assert.Equal("{controller}/index", pattern.GetUrl());
-		Assert.Equal("{controller}/{action}", pattern.GetUrl(entry => null));
+		Assert.Equal("{controller}/index/{id}", pattern.GetUrl());
+		Assert.Equal("{controller}/{action}/{id}", pattern.GetUrl(entry => null));
 
 		pattern = RoutePattern.Resolve("[controller]/{action}/{id}");
 		Assert.Equal("home/{action}/{id}", pattern.GetUrl(entry => entry.Name == "controller" ? "home" : null));
