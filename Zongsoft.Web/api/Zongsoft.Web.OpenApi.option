@@ -2,6 +2,15 @@
 
 <options>
 	<option path="/web/openapi">
+		<authentication persisted="true">
+			<authenticator authenticator.name="credential" kind="http" scheme="Credential" />
+			<authenticator authenticator.name="bearer" kind="http" scheme="Bearer" />
+			<authenticator authenticator.name="basic" kind="http" scheme="Basic">
+				<username>{{username}}</username>
+				<password>{{password}}</password>
+			</authenticator>
+		</authentication>
+
 		<headers>
 			<header header.name="X-Json-Behaviors" method="GET,POST" value="ignores:null,empty;casing:camel" />
 		</headers>
@@ -32,15 +41,27 @@
 		<environments>
 			<environment environment.name="development">
 				<variable variable.name="host" default="192.168.0.101" />
+				<variable variable.name="port" default="80" />
+				<variable variable.name="username" default="administrator" />
+				<variable variable.name="password" default="" />
 			</environment>
 			<environment environment.name="production">
 				<variable variable.name="host" default="192.168.0.102" />
+				<variable variable.name="port" default="80" />
+				<variable variable.name="username" default="administrator" />
+				<variable variable.name="password" default="" />
 			</environment>
 			<environment environment.name="staging">
 				<variable variable.name="host" default="192.168.0.103" />
+				<variable variable.name="port" default="80" />
+				<variable variable.name="username" default="administrator" />
+				<variable variable.name="password" default="" />
 			</environment>
 			<environment environment.name="testing">
 				<variable variable.name="host" default="192.168.0.104" />
+				<variable variable.name="port" default="80" />
+				<variable variable.name="username" default="administrator" />
+				<variable variable.name="password" default="" />
 			</environment>
 		</environments>
 	</option>

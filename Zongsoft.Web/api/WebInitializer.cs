@@ -48,8 +48,13 @@ public class WebInitializer : IApplicationInitializer<IApplicationBuilder>
 			app.UseOpenApi();
 			app.MapScalarApiReference(options =>
 			{
-				options.WithDefaultHttpClient(ScalarTarget.Http, ScalarClient.Http);
-				options.Authentication = new() { PreferredSecuritySchemes = ["Credential"] };
+				options.PersistentAuthentication = true;
+				options.WithDefaultHttpClient(ScalarTarget.Http, ScalarClient.Http11);
+				options.Authentication = new() { PreferredSecuritySchemes = ["credential"] };
+				options.AddApiKeyAuthentication("credential", scheme =>
+				{
+					scheme.WithValue($"Credential {Common.Randomizer.GenerateString(18)}");
+				});
 			});
 		}
 	}

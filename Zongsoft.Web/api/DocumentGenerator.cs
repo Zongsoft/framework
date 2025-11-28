@@ -57,6 +57,9 @@ public static partial class DocumentGenerator
 		//生成服务器列表
 		context.GenerateServers();
 
+		//生成安全方案列表
+		context.GenerateSecuritySchemes();
+
 		//生成API路径列表
 		context.GeneratePaths(descriptors);
 
