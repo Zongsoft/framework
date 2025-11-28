@@ -218,9 +218,16 @@ partial class DocumentGenerator
 			In = location,
 			AllowEmptyValue = nullable,
 			Description = model.DisplayName,
+			Example = GetValue(model, pattern),
 			Required = IsRequired(model, pattern, nullable),
 			Schema = GenerateSchema(context, model.ParameterType),
 		};
+
+		static string GetValue(ParameterModel parameter, RoutePattern pattern)
+		{
+			var entry = pattern[parameter.Name];
+			return entry == null ? null : (string.IsNullOrEmpty(entry.Value) ? entry.Default : entry.Value);
+		}
 
 		static bool IsRequired(ParameterModel parameter, RoutePattern pattern, bool nullable)
 		{
