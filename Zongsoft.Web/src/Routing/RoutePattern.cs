@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Linq;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -128,6 +130,45 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 
 		return false;
 	}
+
+	public string GetUrl(Func<Entry, string> map = null)
+	{
+		if(_entries == null || _entries.Count == 0)
+			return this.Value;
+
+		var position = 0;
+		var result = new StringBuilder();
+
+		foreach(var entry in _entries.Values.OrderBy(p => p.Position))
+		{
+			var value = map != null ? map(entry) : GetValue(entry);
+			if(!entry.Optional && string.IsNullOrWhiteSpace(value))
+				value = $"{{{entry.Name}}}";
+
+			result.Append(this.Value.AsSpan(position, entry.Position - position));
+
+			if(!string.IsNullOrWhiteSpace(value))
+				result.Append(value);
+
+			position += entry.Position + entry.Length;
+		}
+
+		if(position < this.Value.Length)
+			result.Append(this.Value.AsSpan(position));
+
+		//移除尾部的斜杠字符
+		for(int i = result.Length; i > 0; i--)
+		{
+			if(result[i - 1] == '/')
+				result.Length -= 1;
+			else
+				break;
+		}
+
+		return result.ToString();
+
+		static string GetValue(Entry entry) => string.IsNullOrWhiteSpace(entry.Value) ? entry.Default : entry.Value;
+	}
 	#endregion
 
 	#region 私有方法
@@ -188,22 +229,23 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		internal int Position;
 		internal readonly int Length;
 
-		internal Entry(int position, int length, string name, string value, bool optional = false, bool captured = false)
+		internal Entry(int position, int length, string name, string defaultValue, bool optional = false, bool captured = false)
 		{
 			this.Position = position;
 			this.Length = length;
 			this.Name = name;
-			this.Value = value;
+			this.Default = string.IsNullOrWhiteSpace(defaultValue) ? null : defaultValue;
 			this.Optional = optional;
 			this.Captured = captured;
 			this.Constraints = ConstraintCollection.Empty;
 		}
 
 		public string Name { get; }
-		public string Value { get; }
+		public string Default { get; }
 		public bool Optional { get; }
 		public bool Captured { get; }
-		public bool HasValue => !string.IsNullOrWhiteSpace(this.Value);
+		public string Value { get; set; }
+		public bool HasDefault => !string.IsNullOrWhiteSpace(this.Default);
 		public ConstraintCollection Constraints { get; internal set; }
 
 		public bool Equals(Entry other) => other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
@@ -212,11 +254,11 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		public override string ToString()
 		{
 			if(this.Optional)
-				return string.IsNullOrEmpty(this.Value) ? $"{this.Name}?" : $"{this.Name}?={this.Value}";
+				return string.IsNullOrEmpty(this.Default) ? $"{this.Name}?" : $"{this.Name}?={this.Default}";
 			if(this.Captured)
-				return string.IsNullOrEmpty(this.Value) ? $"*{this.Name}" : $"*{this.Name}={this.Value}";
+				return string.IsNullOrEmpty(this.Default) ? $"*{this.Name}" : $"*{this.Name}={this.Default}";
 
-			return string.IsNullOrEmpty(this.Value) ? this.Name : $"{this.Name}={this.Value}";
+			return string.IsNullOrEmpty(this.Default) ? this.Name : $"{this.Name}={this.Default}";
 		}
 	}
 
