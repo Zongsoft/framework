@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.13.35825.156
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web", "src\Zongsoft.Web.csproj", "{1DC48500-0D08-4468-A5F6-1631FBC2F5B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web.OpenApi", "api\Zongsoft.Web.OpenApi.csproj", "{32CAAB69-1AAF-6415-51B8-E463EA863E8D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web.Tests", "test\Zongsoft.Web.Tests.csproj", "{D3463E8B-7C9F-4312-A2F4-DD196304F1B2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web.Grpc", "grpc\Zongsoft.Web.Grpc.csproj", "{7A32FA00-73CF-42B2-A108-145EF467E741}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web.OpenApi", "api\Zongsoft.Web.OpenApi.csproj", "{32CAAB69-1AAF-6415-51B8-E463EA863E8D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{7A32FA00-73CF-42B2-A108-145EF467E741}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A32FA00-73CF-42B2-A108-145EF467E741}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A32FA00-73CF-42B2-A108-145EF467E741}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3463E8B-7C9F-4312-A2F4-DD196304F1B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3463E8B-7C9F-4312-A2F4-DD196304F1B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3463E8B-7C9F-4312-A2F4-DD196304F1B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3463E8B-7C9F-4312-A2F4-DD196304F1B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

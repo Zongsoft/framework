@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+		<RootNamespace>Zongsoft.Web</RootNamespace>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\src\Zongsoft.Web.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="xunit" />
+		<PackageReference Include="xunit.core" />
+		<PackageReference Include="xunit.assert" />
+		<PackageReference Include="xunit.analyzers" />
+		<PackageReference Include="xunit.runner.msbuild" />
+		<PackageReference Include="xunit.runner.visualstudio" />
+	</ItemGroup>
+</Project>
