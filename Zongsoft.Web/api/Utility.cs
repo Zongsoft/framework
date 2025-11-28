@@ -40,17 +40,6 @@ namespace Zongsoft.Web.OpenApi;
 
 internal static class Utility
 {
-	public static string GetUrl(this Routing.RoutePattern pattern)
-	{
-		if(pattern == null)
-			return null;
-
-		foreach(var entry in pattern)
-			pattern.Map(entry.Name, $"{{{entry.Name}}}");
-
-		return pattern.Value.TrimEnd('/');
-	}
-
 	public static bool IsBody(this ParameterModel parameter)
 	{
 		var source = parameter.GetParameterSource();

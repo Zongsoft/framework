@@ -83,54 +83,6 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 
 	#region 公共方法
 	public bool Contains(string name) => name != null && _entries.ContainsKey(name);
-
-	public int Map(params IEnumerable<KeyValuePair<string, string>> parameters)
-	{
-		if(parameters == null)
-			return 0;
-
-		int count = 0;
-
-		foreach(var parameter in parameters)
-			count += this.Map(parameter.Key, parameter.Value) ? 1 : 0;
-
-		return count;
-	}
-
-	public bool Map(string name, string value)
-	{
-		if(string.IsNullOrEmpty(name))
-			return false;
-
-		if(_entries.Remove(name, out var entry))
-		{
-			var prefix = this.Value.AsSpan()[..entry.Position];
-			var suffix = this.Value.AsSpan()[(entry.Position + entry.Length)..];
-			var interval = (string.IsNullOrEmpty(value) ? 0 : value.Length) - entry.Length;
-
-			if(string.IsNullOrEmpty(value) && prefix.Length > 0 && suffix.Length > 0 && prefix[^1] == suffix[0])
-			{
-				--interval;
-				this.Value = $"{prefix}{suffix[1..]}";
-			}
-			else
-				this.Value = $"{prefix}{value}{suffix}";
-
-			if(interval != 0 && _entries.Count > 0)
-			{
-				foreach(var part in _entries.Values)
-				{
-					if(part.Position > entry.Position)
-						part.Position += interval;
-				}
-			}
-
-			return true;
-		}
-
-		return false;
-	}
-
 	public string GetUrl(Func<Entry, string> map = null)
 	{
 		if(_entries == null || _entries.Count == 0)
@@ -139,18 +91,18 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		var position = 0;
 		var result = new StringBuilder();
 
-		foreach(var entry in _entries.Values.OrderBy(p => p.Position))
+		foreach(var entry in _entries.Values.OrderBy(p => p.Offset))
 		{
 			var value = map != null ? map(entry) : GetValue(entry);
 			if(string.IsNullOrWhiteSpace(value) && !entry.Optional && !entry.HasDefault)
 				value = $"{{{entry.Name}}}";
 
-			result.Append(this.Value.AsSpan(position, entry.Position - position));
+			result.Append(this.Value.AsSpan(position, entry.Offset - position));
 
 			if(!string.IsNullOrWhiteSpace(value))
 				result.Append(value);
 
-			position = entry.Position + entry.Length;
+			position = entry.Offset + entry.Length;
 		}
 
 		if(position < this.Value.Length)
@@ -225,12 +177,12 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 	#region 嵌套子类
 	public sealed class Entry : IEquatable<Entry>
 	{
-		internal int Position;
+		internal readonly int Offset;
 		internal readonly int Length;
 
-		internal Entry(int position, int length, string name, string defaultValue, bool optional = false, bool captured = false)
+		internal Entry(int offset, int length, string name, string defaultValue, bool optional = false, bool captured = false)
 		{
-			this.Position = position;
+			this.Offset = offset;
 			this.Length = length;
 			this.Name = name;
 			this.Default = string.IsNullOrWhiteSpace(defaultValue) ? null : defaultValue;

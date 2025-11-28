@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -60,86 +59,65 @@ public static class RouteUtility
 		return parameter.BindingInfo.BindingSource;
 	}
 
-	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerServiceDescriptor descriptor, params IEnumerable<KeyValuePair<string, string>> parameters)
+	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerServiceDescriptor descriptor)
 	{
 		if(descriptor == null)
 			yield break;
 
 		foreach(var controller in descriptor.Controllers)
 		{
-			foreach(var pattern in GetRoutePatterns(controller.Controller, parameters))
+			foreach(var pattern in GetRoutePatterns(controller.Controller))
 				yield return pattern;
 		}
 	}
 
-	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerServiceDescriptor.ControllerDescriptor descriptor, params IEnumerable<KeyValuePair<string, string>> parameters)
+	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerServiceDescriptor.ControllerDescriptor descriptor)
 	{
-		if(descriptor == null)
-			return [];
-
-		return GetRoutePatterns(descriptor.Controller);
+		return descriptor == null ? [] : GetRoutePatterns(descriptor.Controller);
 	}
 
-	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerModel controller, params IEnumerable<KeyValuePair<string, string>> parameters)
+	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerModel controller)
 	{
-		if(controller == null)
-			yield break;
-
-		var templates = GetRouteTemplates(controller.Selectors);
+		var templates = GetRouteTemplates(controller?.Selectors);
 
 		foreach(var template in templates)
-		{
-			var pattern = RoutePattern.Resolve(template);
-
-			if(parameters == null)
-				pattern.Map(controller.RouteValues);
-			else
-				pattern.Map(parameters.Concat(controller.RouteValues));
-
-			yield return pattern;
-		}
+			yield return RoutePattern.Resolve(template).Map(controller.RouteValues);
 	}
 
-	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerServiceDescriptor.ControllerOperationDescriptor descriptor, params IEnumerable<KeyValuePair<string, string>> parameters)
+	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerServiceDescriptor.ControllerOperationDescriptor descriptor)
 	{
-		if(descriptor == null)
-			return [];
-
-		return descriptor.Action.GetRoutePatterns(parameters);
+		return descriptor == null ? [] : descriptor.Action.GetRoutePatterns();
 	}
 
-	public static IEnumerable<RoutePattern> GetRoutePatterns(this ActionModel action, params IEnumerable<KeyValuePair<string, string>> parameters)
+	public static IEnumerable<RoutePattern> GetRoutePatterns(this ActionModel action)
 	{
 		if(action == null)
 			yield break;
 
 		var prefixes = GetRouteTemplates(action.Controller.Selectors);
 		var templates = GetRouteTemplates(action.Selectors);
-		var variables = new Dictionary<string, string>(action.Controller.RouteValues, StringComparer.OrdinalIgnoreCase);
-
-		foreach(var entry in action.RouteValues)
-			variables[entry.Key] = entry.Value;
-
-		foreach(var entry in parameters)
-			variables[entry.Key] = entry.Value;
 
 		if(prefixes.Count == 0)
 		{
 			foreach(var template in templates)
-				yield return GetRouteTemplate(template, null, variables);
+				yield return GetRouteTemplate(template, null)
+					.Map(action.Controller.RouteValues)
+					.Map(action.RouteValues);
 		}
 		else
 		{
 			foreach(var prefix in prefixes)
 			{
 				foreach(var template in templates)
-					yield return GetRouteTemplate(template, prefix, variables);
+					yield return GetRouteTemplate(template, prefix)
+						.Map(action.Controller.RouteValues)
+						.Map(action.RouteValues);
 			}
 		}
 
-		static RoutePattern GetRouteTemplate(string template, string prefix, IEnumerable<KeyValuePair<string, string>> parameters)
-        {
-            string url;
+		static RoutePattern GetRouteTemplate(string template, string prefix)
+		{
+			string url;
 
 			if(string.IsNullOrEmpty(template))
 				url = prefix;
@@ -148,11 +126,20 @@ public static class RouteUtility
 			else
 				url = string.IsNullOrEmpty(prefix) ? template : $"{prefix}{(prefix.EndsWith('/') ? null : '/')}{template}";
 
-			var pattern = RoutePattern.Resolve(url);
-			pattern.Map(parameters);
-            return pattern;
-        }
-    }
+			return RoutePattern.Resolve(url);
+		}
+	}
+
+	private static RoutePattern Map(this RoutePattern pattern, IEnumerable<KeyValuePair<string, string>> parameters)
+	{
+		if(pattern == null || parameters == null)
+			return pattern;
+
+		foreach(var parameter in parameters)
+			pattern[parameter.Key]?.Value = parameter.Value;
+
+		return pattern;
+	}
 
 	private static IReadOnlyCollection<string> GetRouteTemplates(IList<SelectorModel> selectors)
 	{
