@@ -142,7 +142,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		foreach(var entry in _entries.Values.OrderBy(p => p.Position))
 		{
 			var value = map != null ? map(entry) : GetValue(entry);
-			if(!entry.Optional && string.IsNullOrWhiteSpace(value))
+			if(string.IsNullOrWhiteSpace(value) && !entry.Optional && !entry.HasDefault)
 				value = $"{{{entry.Name}}}";
 
 			result.Append(this.Value.AsSpan(position, entry.Position - position));
@@ -150,7 +150,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 			if(!string.IsNullOrWhiteSpace(value))
 				result.Append(value);
 
-			position += entry.Position + entry.Length;
+			position = entry.Position + entry.Length;
 		}
 
 		if(position < this.Value.Length)
@@ -166,8 +166,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		}
 
 		return result.ToString();
-
-		static string GetValue(Entry entry) => string.IsNullOrWhiteSpace(entry.Value) ? entry.Default : entry.Value;
+		static string GetValue(Entry entry) => string.IsNullOrWhiteSpace(entry.Value) ? null : entry.Value;
 	}
 	#endregion
 
