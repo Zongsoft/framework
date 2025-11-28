@@ -56,7 +56,8 @@ public class AuthenticationController : ControllerBase
 	#endregion
 
 	#region 公共方法
-	[HttpPost("[action]/{scheme?}/{key?}")]
+	[HttpPost("[action]")]
+	[HttpPost("[action]/{scheme:required}/{key?}")]
 	public async ValueTask<IActionResult> Signin(string scheme, string key, [FromQuery]string scenario, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrWhiteSpace(scenario))
@@ -111,7 +112,7 @@ public class AuthenticationController : ControllerBase
 		return this.Unauthorized();
 	}
 
-	[HttpPost("[action]/{scheme}:{destination}")]
+	[HttpPost("[action]/{scheme:required}:{destination:required}")]
 	public async ValueTask<IActionResult> SecretAsync(string scheme, string destination, [FromQuery]string scenario, [FromQuery]string channel = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(scheme) || string.IsNullOrEmpty(destination))
@@ -125,7 +126,7 @@ public class AuthenticationController : ControllerBase
 		return this.Content(result);
 	}
 
-	[HttpPost("[action]/{token}")]
+	[HttpPost("[action]/{token:required}")]
 	public async ValueTask<IActionResult> VerifyAsync(string token, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(token))

@@ -57,21 +57,21 @@ partial class RoleController
 		#endregion
 
 		#region 公共方法
-		[HttpGet("/[area]/{id}/[controller]")]
+		[HttpGet("/[area]/{id:required}/[controller]")]
 		public IAsyncEnumerable<IPrivilege> Get(string id, CancellationToken cancellation = default)
 		{
 			return this.Service.GetPrivilegesAsync(new Identifier(typeof(IRole), id), new Parameters(this.Request.GetParameters()), cancellation);
 		}
 
 		[ActionName("Filtering")]
-		[HttpGet("/[area]/{id}/[controller]/[action]")]
+		[HttpGet("/[area]/{id:required}/[controller]/[action]")]
 		public IAsyncEnumerable<IPrivilege> GetFiltering(string id, CancellationToken cancellation = default)
 		{
 			var filtering = this.Service.Filtering ?? throw new BadHttpRequestException(null, StatusCodes.Status501NotImplemented);
 			return filtering.GetPrivilegesAsync(new Identifier(typeof(IRole), id), new Parameters(this.Request.GetParameters()), cancellation);
 		}
 
-		[HttpPut("/[area]/{id}/[controller]")]
+		[HttpPut("/[area]/{id:required}/[controller]")]
 		public async Task<IActionResult> Set(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
@@ -88,7 +88,7 @@ partial class RoleController
 		}
 
 		[ActionName("Filtering")]
-		[HttpPut("/[area]/{id}/[controller]/[action]")]
+		[HttpPut("/[area]/{id:required}/[controller]/[action]")]
 		public async Task<IActionResult> SetFiltering(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))

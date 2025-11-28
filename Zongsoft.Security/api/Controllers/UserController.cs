@@ -79,7 +79,7 @@ public partial class UserController : ControllerBase
 		return this.Conflict();
 	}
 
-	[HttpDelete("{id}")]
+	[HttpDelete("{id:required}")]
 	public async Task<IActionResult> Delete(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(id))
@@ -118,8 +118,7 @@ public partial class UserController : ControllerBase
 		return await this.Service.UpdateAsync((IUser)model, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
-	[HttpPatch("{id}/Name")]
-	[HttpPatch("{id}/Rename")]
+	[HttpPatch("{id:required}/Name")]
 	public async Task<IActionResult> Rename(string id, CancellationToken cancellation = default)
 	{
 		var content = await this.Request.ReadAsStringAsync(cancellation);
@@ -158,7 +157,7 @@ public partial class UserController : ControllerBase
 	}
 
 	[ActionName("Email")]
-	[HttpPost("[action]/{token}")]
+	[HttpPost("[action]/{token:required}")]
 	public async Task<IActionResult> SetEmail(string token, [FromQuery]string secret, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
@@ -196,7 +195,7 @@ public partial class UserController : ControllerBase
 	}
 
 	[ActionName("Phone")]
-	[HttpPost("[action]/{token}")]
+	[HttpPost("[action]/{token:required}")]
 	public async Task<IActionResult> SetPhone(string token, [FromQuery]string secret, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(token) || string.IsNullOrEmpty(secret))
@@ -205,8 +204,7 @@ public partial class UserController : ControllerBase
 		return await this.Service.SetPhoneAsync(token, secret, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
-	[HttpPost("{id}/[action]")]
-	[HttpPatch("{id}/[action]")]
+	[HttpPost("{id:required}/[action]")]
 	public async Task<IActionResult> EnableAsync(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(id))
@@ -215,8 +213,7 @@ public partial class UserController : ControllerBase
 		return await this.Service.EnableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
-	[HttpPost("{id}/[action]")]
-	[HttpPatch("{id}/[action]")]
+	[HttpPost("{id:required}/[action]")]
 	public async Task<IActionResult> DisableAsync(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(id))
@@ -226,8 +223,8 @@ public partial class UserController : ControllerBase
 	}
 
 	[HttpHead("{id:required}")]
-	[HttpGet("{id}/[action]")]
-	[HttpGet("[action]/{id}")]
+	[HttpGet("{id:required}/[action]")]
+	[HttpGet("[action]/{id:required}")]
 	public async Task<IActionResult> Exists(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(id))

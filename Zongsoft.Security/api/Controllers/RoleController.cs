@@ -66,7 +66,6 @@ public partial class RoleController : ControllerBase
 	}
 
 	[HttpPost]
-	[HttpPost("Role")]
 	public async Task<IActionResult> Create(CancellationToken cancellation = default)
 	{
 		var model = await this.GetModelAsync(cancellation);
@@ -79,7 +78,7 @@ public partial class RoleController : ControllerBase
 		return this.Conflict();
 	}
 
-	[HttpDelete("{id}")]
+	[HttpDelete("{id:required}")]
 	public async Task<IActionResult> Delete(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(id))
@@ -118,7 +117,7 @@ public partial class RoleController : ControllerBase
 		return await this.Service.UpdateAsync((IRole)model, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
-	[HttpPatch("{id}/Name")]
+	[HttpPatch("{id:required}/Name")]
 	public async Task<IActionResult> Rename(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(id))
@@ -131,8 +130,7 @@ public partial class RoleController : ControllerBase
 		return await this.Service.RenameAsync(new Identifier(typeof(IRole), id), content, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
-	[HttpPost("{id}/[action]")]
-	[HttpPatch("{id}/[action]")]
+	[HttpPost("{id:required}/[action]")]
 	public async Task<IActionResult> EnableAsync(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(id))
@@ -141,8 +139,7 @@ public partial class RoleController : ControllerBase
 		return await this.Service.EnableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
-	[HttpPost("{id}/[action]")]
-	[HttpPatch("{id}/[action]")]
+	[HttpPost("{id:required}/[action]")]
 	public async Task<IActionResult> DisableAsync(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(id))
@@ -152,8 +149,8 @@ public partial class RoleController : ControllerBase
 	}
 
 	[HttpHead("{id:required}")]
-	[HttpGet("{id}/[action]")]
-	[HttpGet("[action]/{id}")]
+	[HttpGet("{id:required}/[action]")]
+	[HttpGet("[action]/{id:required}")]
 	public async Task<IActionResult> Exists(string id, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(id))

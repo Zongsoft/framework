@@ -46,7 +46,7 @@ namespace Zongsoft.Security.Controllers
 	[Route("[area]/[controller]")]
 	public class CaptchaController : ControllerBase
 	{
-		[HttpPost("{scheme}")]
+		[HttpPost("{scheme:required}")]
 		public async Task<IActionResult> IssueAsync(string scheme, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(scheme))
@@ -72,7 +72,7 @@ namespace Zongsoft.Security.Controllers
 			return data is IActionResult result ? result : this.Ok(data);
 		}
 
-		[HttpPost("{scheme}/[action]")]
+		[HttpPost("{scheme:required}/[action]")]
 		public async Task<IActionResult> VerifyAsync(string scheme, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(scheme))

@@ -55,26 +55,26 @@ partial class UserController
 
 		#region 上级角色
 		[ActionName("Ancestors")]
-		[HttpGet("/[area]/{id}/[action]")]
-		public IActionResult GetAncestors(string id, CancellationToken cancellation = default)
+		[HttpGet("/[area]/{id:required}/[action]")]
+		public IActionResult GetAncestors(string id, [FromQuery]int? depth = null, CancellationToken cancellation = default)
 		{
-			if(this.Request.Query.TryGetValue("depth", out var text) && int.TryParse(text, out var depth))
-				return this.Ok(this.Service.GetAncestorsAsync(Member.User(id), depth, cancellation));
+			if(depth.HasValue)
+				return this.Ok(this.Service.GetAncestorsAsync(Member.User(id), depth.Value, cancellation));
 			else
 				return this.Ok(this.Service.GetAncestorsAsync(Member.User(id), cancellation));
 		}
 
 		[ActionName("Parents")]
-		[HttpGet("/[area]/{id}/Roles")]
-		[HttpGet("/[area]/{id}/[action]")]
+		[HttpGet("/[area]/{id:required}/Roles")]
+		[HttpGet("/[area]/{id:required}/[action]")]
 		public IAsyncEnumerable<IRole> GetParents(string id, CancellationToken cancellation = default)
 		{
 			return this.Service.GetParentsAsync(Member.User(id), cancellation);
 		}
 
 		[ActionName("Parent")]
-		[HttpPut("/[area]/{id}/Role")]
-		[HttpPut("/[area]/{id}/[action]")]
+		[HttpPut("/[area]/{id:required}/Role")]
+		[HttpPut("/[area]/{id:required}/[action]")]
 		public async ValueTask<IActionResult> SetParent(string id, string roleId, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(roleId))
@@ -84,8 +84,8 @@ partial class UserController
 		}
 
 		[ActionName("Parents")]
-		[HttpPut("/[area]/{id}/Roles")]
-		[HttpPut("/[area]/{id}/[action]")]
+		[HttpPut("/[area]/{id:required}/Roles")]
+		[HttpPut("/[area]/{id:required}/[action]")]
 		public async ValueTask<IActionResult> SetParents(string id, CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(id))

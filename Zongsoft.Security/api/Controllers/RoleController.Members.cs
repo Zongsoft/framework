@@ -57,26 +57,26 @@ partial class RoleController
 
 		#region 上级角色
 		[ActionName("Ancestors")]
-		[HttpGet("/[area]/{id}/[action]")]
-		public IActionResult GetAncestors(string id, CancellationToken cancellation = default)
+		[HttpGet("/[area]/{id:required}/[action]")]
+		public IActionResult GetAncestors(string id, [FromQuery]int? depth = null, CancellationToken cancellation = default)
 		{
-			if(this.Request.Query.TryGetValue("depth", out var text) && int.TryParse(text, out var depth))
-				return this.Ok(this.Service.GetAncestorsAsync(Member.Role(id), depth, cancellation));
+			if(depth.HasValue)
+				return this.Ok(this.Service.GetAncestorsAsync(Member.Role(id), depth.Value, cancellation));
 			else
 				return this.Ok(this.Service.GetAncestorsAsync(Member.Role(id), cancellation));
 		}
 
 		[ActionName("Parents")]
-		[HttpGet("/[area]/{id}/Roles")]
-		[HttpGet("/[area]/{id}/[action]")]
+		[HttpGet("/[area]/{id:required}/Roles")]
+		[HttpGet("/[area]/{id:required}/[action]")]
 		public IAsyncEnumerable<IRole> GetParents(string id, CancellationToken cancellation = default)
 		{
 			return this.Service.GetParentsAsync(Member.Role(id), cancellation);
 		}
 
 		[ActionName("Parent")]
-		[HttpPut("/[area]/{id}/Role")]
-		[HttpPut("/[area]/{id}/[action]")]
+		[HttpPut("/[area]/{id:required}/Role")]
+		[HttpPut("/[area]/{id:required}/[action]")]
 		public async ValueTask<IActionResult> SetParent(string id, string roleId, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(roleId))
@@ -86,8 +86,8 @@ partial class RoleController
 		}
 
 		[ActionName("Parents")]
-		[HttpPut("/[area]/{id}/Roles")]
-		[HttpPut("/[area]/{id}/[action]")]
+		[HttpPut("/[area]/{id:required}/Roles")]
+		[HttpPut("/[area]/{id:required}/[action]")]
 		public async ValueTask<IActionResult> SetParents(string id, CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(id))
@@ -104,13 +104,13 @@ partial class RoleController
 		#endregion
 
 		#region 下级成员
-		[HttpGet("/[area]/{id}/[controller]")]
+		[HttpGet("/[area]/{id:required}/[controller]")]
 		public IAsyncEnumerable<IMember> Get(string id, CancellationToken cancellation = default)
 		{
 			return this.Service.GetAsync(new Identifier(typeof(IRole), id), this.Request.Headers.GetDataSchema(), cancellation);
 		}
 
-		[HttpPut("/[area]/{id}/Member/{argument}")]
+		[HttpPut("/[area]/{id:required}/Member/{argument:required}")]
 		public async Task<IActionResult> Set(string id, string argument, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(argument))
@@ -123,7 +123,7 @@ partial class RoleController
 				this.CreatedAtAction(nameof(Get), new { id }, null) : this.NoContent();
 		}
 
-		[HttpPut("/[area]/{id}/[controller]")]
+		[HttpPut("/[area]/{id:required}/[controller]")]
 		public async Task<IActionResult> Set(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
@@ -138,7 +138,7 @@ partial class RoleController
 				this.NoContent();
 		}
 
-		[HttpDelete("/[area]/{id}/Member/{argument}")]
+		[HttpDelete("/[area]/{id:required}/Member/{argument:required}")]
 		public async Task<IActionResult> Remove(string id, string argument, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(argument))
@@ -151,7 +151,7 @@ partial class RoleController
 				this.NoContent() : this.NotFound();
 		}
 
-		[HttpDelete("/[area]/{id}/[controller]")]
+		[HttpDelete("/[area]/{id:required}/[controller]")]
 		public async Task<IActionResult> Remove(string id, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
