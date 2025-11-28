@@ -104,7 +104,7 @@ partial class DocumentGenerator
 							Operations = new Dictionary<HttpMethod, OpenApiOperation>(),
 						});
 
-					path.Operations.TryAdd(method, GetOperation(context, descriptor, operation, method));
+					path.Operations.TryAdd(method, GetOperation(context, descriptor, operation, method, pattern));
 				}
 			}
 		}
@@ -123,7 +123,7 @@ partial class DocumentGenerator
 		}
 	}
 
-	private static OpenApiOperation GetOperation(DocumentContext context, ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor, HttpMethod method)
+	private static OpenApiOperation GetOperation(DocumentContext context, ControllerServiceDescriptor service, ControllerServiceDescriptor.ControllerOperationDescriptor descriptor, HttpMethod method, RoutePattern pattern)
 	{
 		var operation = new OpenApiOperation()
 		{
@@ -161,7 +161,7 @@ partial class DocumentGenerator
 				}
 				else
 				{
-					var parameter = GetParameter(context, parameterModel);
+					var parameter = GetParameter(context, parameterModel, pattern);
 
 					if(parameter != null)
 						operation.Parameters.Add(parameter);
@@ -198,22 +198,43 @@ partial class DocumentGenerator
 		}
 	}
 
-	private static OpenApiParameter GetParameter(DocumentContext context, ParameterModel model)
+	private static OpenApiParameter GetParameter(DocumentContext context, ParameterModel model, RoutePattern pattern)
 	{
 		if(model.ParameterType == typeof(CancellationToken))
 			return null;
 
-		var required = !model.ParameterInfo.HasDefaultValue;
-		var nullable = Zongsoft.Common.TypeExtension.IsNullable(model.ParameterType);
+		//获取参数位置
+		var location = Utility.GetLocation(model);
+
+		//如果是路径参数但路由模板中不包含该参数名称则忽略它
+		if(location == ParameterLocation.Path && !pattern.Contains(model.Name))
+			return null;
+
+		var nullable = Common.TypeExtension.IsNullable(model.ParameterType);
 
 		return new OpenApiParameter()
 		{
 			Name = model.Name,
-			Required = required,
+			In = location,
 			AllowEmptyValue = nullable,
 			Description = model.DisplayName,
-			In = Utility.GetLocation(model),
+			Required = IsRequired(model, pattern, nullable),
 			Schema = GenerateSchema(context, model.ParameterType),
 		};
+
+		static bool IsRequired(ParameterModel parameter, RoutePattern pattern, bool nullable)
+		{
+			if(parameter.ParameterInfo.HasDefaultValue)
+				return false;
+
+			var entry = pattern[parameter.Name];
+			if(entry != null && entry.Constraints.Contains("required"))
+				return true;
+
+			if(parameter.ParameterType.IsValueType && !nullable)
+				return true;
+
+			return false;
+		}
 	}
 }

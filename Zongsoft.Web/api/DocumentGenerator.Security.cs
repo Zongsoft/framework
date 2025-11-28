@@ -50,11 +50,9 @@ partial class DocumentGenerator
 	internal static void GenerateSecuritySchemes(this DocumentContext context)
 	{
 		var authentication = context.Configuration.GetOption<Configuration.AuthenticationOption>("/Web/OpenAPI/Authentication");
-
 		if(authentication == null || authentication.Authenticators.Count == 0)
 			return;
 
-		context.Document.Security = [new OpenApiSecurityRequirement()];
 		context.Document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>(StringComparer.OrdinalIgnoreCase);
 
 		foreach(var authenticator in authentication.Authenticators)

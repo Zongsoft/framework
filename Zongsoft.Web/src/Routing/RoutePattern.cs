@@ -274,6 +274,10 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		public Constraint this[string name] => name != null && _constraints.TryGetValue(name, out var value) ? value : null;
 		#endregion
 
+		#region 公共方法
+		public bool Contains(string name) => name != null && _constraints.ContainsKey(name);
+		#endregion
+
 		#region 内部方法
 		internal bool Add(Constraint constraint) => constraint != null && _constraints.TryAdd(constraint.Name, constraint);
 		#endregion
