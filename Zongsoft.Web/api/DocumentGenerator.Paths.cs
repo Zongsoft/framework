@@ -225,6 +225,9 @@ partial class DocumentGenerator
 
 		static string GetValue(ParameterModel parameter, RoutePattern pattern)
 		{
+			if(parameter.ParameterInfo.HasDefaultValue)
+				return Common.Convert.ConvertValue<string>(parameter.ParameterInfo.DefaultValue);
+
 			var entry = pattern[parameter.Name];
 			return entry == null ? null : (string.IsNullOrEmpty(entry.Value) ? entry.Default : entry.Value);
 		}
