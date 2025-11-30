@@ -36,7 +36,7 @@ using System.Text.RegularExpressions;
 
 namespace Zongsoft.Web.Routing;
 
-public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
+public partial class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 {
 	#region 常量定义
 	const string REGEX_NAME = "name";
@@ -64,7 +64,11 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 	#endregion
 
 	#region 静态变量
+	#if NET8_0_OR_GREATER
+	private static readonly Regex _regex = PatternRegex();
+	#else
 	private static readonly Regex _regex = new(REGEX_PATTERN, RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+	#endif
 	#endregion
 
 	#region 成员字段
@@ -77,7 +81,7 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 
 	#region 公共属性
 	public int Count => _entries.Count;
-	public string Value { get; private set; }
+	public string Value { get; }
 	public Entry this[string name] => name != null && _entries.TryGetValue(name, out var value) ? value : null;
 	#endregion
 
@@ -280,5 +284,10 @@ public class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		public IEnumerator<Constraint> GetEnumerator() => _constraints.Values.GetEnumerator();
 		#endregion
 	}
+
+	#if NET8_0_OR_GREATER
+	[GeneratedRegex(REGEX_PATTERN, RegexOptions.ExplicitCapture | RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace)]
+	private static partial Regex PatternRegex();
+	#endif
 	#endregion
 }
