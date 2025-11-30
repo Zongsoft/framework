@@ -147,24 +147,9 @@ partial class DocumentGenerator
 
 		var entries = EnumUtility.GetEnumEntries(type, true);
 
-		schema.Enum = [.. entries.Select(entry => CreateNode(entry.Value))];
+		schema.Enum = [.. entries.Select(entry => (JsonNode)Common.Convert.ConvertValue<int>(entry.Value))];
 		schema.AddExtension("x-enum-varnames", Extensions.Helper.Array(entries.Select(entry => entry.Name)));
 		schema.AddExtension("x-enum-descriptions", Extensions.Helper.Array(entries.Select(entry => string.IsNullOrEmpty(entry.Description) ? entry.Name : entry.Description)));
-	}
-
-	private static JsonNode CreateNode(object value)
-	{
-		var method = GetCreateMethod()
-			.MakeGenericMethod(value.GetType());
-
-		return (JsonNode)method.Invoke(null, [value, null]);
-
-		static MethodInfo GetCreateMethod()
-		{
-			return typeof(JsonValue)
-				.GetMethods(BindingFlags.Public | BindingFlags.Static)
-				.First(method => method.IsGenericMethodDefinition && method.Name == nameof(JsonValue.Create) && method.GetParameters().Length == 2);
-		}
 	}
 
 	private static string GetSchemaKey(Type type) => type.FullName;
