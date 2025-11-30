@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web.Tests", "test\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web.Grpc", "grpc\Zongsoft.Web.Grpc.csproj", "{7A32FA00-73CF-42B2-A108-145EF467E741}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web.OpenApi", "api\Zongsoft.Web.OpenApi.csproj", "{32CAAB69-1AAF-6415-51B8-E463EA863E8D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zongsoft.Web.OpenApi", "openapi\Zongsoft.Web.OpenApi.csproj", "{32CAAB69-1AAF-6415-51B8-E463EA863E8D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
