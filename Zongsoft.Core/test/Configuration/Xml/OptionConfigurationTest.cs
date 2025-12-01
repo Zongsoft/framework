@@ -93,14 +93,14 @@ public class XmlConfigurationTest
 		var tags = configuration.GetSection("messaging:queues:avm:subscription:heartbeat:tag").GetChildren().ToArray();
 		Assert.Empty(tags);
 
-		tags = configuration.GetSection("messaging:queues:avm:subscription:uplink:tag").GetChildren().ToArray();
+		tags = [.. configuration.GetSection("messaging:queues:avm:subscription:uplink:tag").GetChildren()];
 		Assert.NotEmpty(tags);
 		Assert.Equal(3, tags.Length);
 		Assert.Contains(tags, tag => string.IsNullOrEmpty(tag.Value));
 		Assert.Contains(tags, tag => tag.Value == "ping");
 		Assert.Contains(tags, tag => tag.Value == "synchronize");
 
-		tags = configuration.GetSection("messaging:queues:avm:subscription:downlink:tag").GetChildren().ToArray();
+		tags = [.. configuration.GetSection("messaging:queues:avm:subscription:downlink:tag").GetChildren()];
 		Assert.NotEmpty(tags);
 		Assert.Equal(3, tags.Length);
 		Assert.Contains(tags, tag => string.IsNullOrEmpty(tag.Value));
@@ -112,13 +112,18 @@ public class XmlConfigurationTest
 	public void TestResolve()
 	{
 		var configuration = GetConfiguration2();
-		var options = configuration.GetOption<QueueOptions>("/Messaging/Queues/avm");
+		var queue = configuration.GetOption<QueueOptions>("/Messaging/Queues/avm");
 
-		Assert.NotNull(options);
-		Assert.NotNull(options.Subscription);
-		Assert.Equal(Messaging.MessageReliability.MostOnce, options.Subscription.Reliability);
+		Assert.NotNull(queue);
+		Assert.NotNull(queue.Subscription);
+		Assert.NotNull(queue.Properties);
+		Assert.NotEmpty(queue.Properties);
+		Assert.Single(queue.Properties);
+		Assert.True(queue.Properties.ContainsKey("timeout"));
+		Assert.Equal("30s", queue.Properties["timeout"]);
+		Assert.Equal(Messaging.MessageReliability.MostOnce, queue.Subscription.Reliability);
 
-		var topics = options.Subscription.Topics;
+		var topics = queue.Subscription.Topics;
 		Assert.NotEmpty(topics);
 		Assert.Equal(3, topics.Count);
 
@@ -138,6 +143,26 @@ public class XmlConfigurationTest
 		Assert.Contains(topic.Tags, string.IsNullOrEmpty);
 		Assert.Contains(topic.Tags, tag => tag == "control");
 		Assert.Contains(topic.Tags, tag => tag == "synchronize");
+
+		var authenticators = configuration.GetOption<AuthenticatorOptionCollection>("/Web/OpenAPI/Authentication");
+		Assert.NotNull(authenticators);
+		Assert.NotEmpty(authenticators);
+		Assert.Equal(2, authenticators.Count);
+		Assert.True(authenticators.TryGetValue("Bearer", out var bearer));
+		Assert.True(authenticators.TryGetValue("basic", out var basic));
+
+		Assert.Equal(AuthenticatorKind.Http, bearer.Kind);
+		Assert.Equal("Bearer", bearer.Scheme, true);
+		Assert.Empty(bearer.Properties);
+
+		Assert.Equal(AuthenticatorKind.Http, basic.Kind);
+		Assert.Equal("Basic", basic.Scheme, true);
+		Assert.NotEmpty(basic.Properties);
+		Assert.Equal(2, basic.Properties.Count);
+		Assert.True(basic.Properties.ContainsKey("UserName"));
+		Assert.True(basic.Properties.ContainsKey("Password"));
+		Assert.Equal("Administrator", basic.Properties["username"], true);
+		Assert.Equal("xxxxxx", basic.Properties["password"], true);
 	}
 
 	[Fact]
@@ -158,10 +183,12 @@ public class XmlConfigurationTest
 	}
 }
 
+[Configuration(nameof(Properties))]
 public class QueueOptions
 {
 	public string Name { get; set; }
 	public SubscriptionOptions Subscription { get; set; }
+	public IDictionary<string, string> Properties { get; set; }
 
 	public class SubscriptionOptions
 	{
@@ -185,4 +212,37 @@ public class QueueOptions
 	{
 		protected override string GetKeyForItem(TopicOptions topic) => topic.Name;
 	}
+}
+
+public enum AuthenticatorKind
+{
+	Http,
+	Custom,
+	OAuth2,
+	OpenID,
+}
+
+public enum AuthenticatorLocation
+{
+	Header,
+	Cookie,
+	Query,
+	Path,
+}
+
+[Configuration(nameof(Properties))]
+public class AuthenticatorOption
+{
+	public AuthenticatorOption() => this.Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+	public string Name { get; set; }
+	public string Scheme { get; set; }
+	public AuthenticatorKind Kind { get; set; }
+	public AuthenticatorLocation Location { get; set; }
+	public IDictionary<string, string> Properties { get; }
+}
+
+public sealed class AuthenticatorOptionCollection : KeyedCollection<string, AuthenticatorOption>
+{
+	public AuthenticatorOptionCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+	protected override string GetKeyForItem(AuthenticatorOption option) => option.Name;
 }

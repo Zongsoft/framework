@@ -256,7 +256,7 @@ public class ConfigurationResolver : IConfigurationResolver
 				var dictionaryType = typeof(Dictionary<,>).MakeGenericType(contract.GenericTypeArguments[0], contract.GenericTypeArguments[1]);
 				return dictionaryType.GenericTypeArguments[0] != typeof(string) ?
 					Activator.CreateInstance(dictionaryType) :
-					Activator.CreateInstance(dictionaryType, new object[] { StringComparer.OrdinalIgnoreCase });
+					Activator.CreateInstance(dictionaryType, [StringComparer.OrdinalIgnoreCase]);
 			}
 
 			contract = ConfigurationUtility.GetImplementedContract(type, typeof(ISet<>));

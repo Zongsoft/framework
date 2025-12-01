@@ -46,8 +46,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 	private const string XML_KEY_ATTRIBUTE = "key";
 	private const string XML_NAME_ATTRIBUTE = "name";
 
-	private static readonly char[] ILLEGAL_CHARACTERS = [':', ';', '/', '\\', '*', '?', '[', ']', '{', '}'];
-
+	private static readonly System.Buffers.SearchValues<char> ILLEGAL_CHARACTERS = System.Buffers.SearchValues.Create([':', ';', '/', '\\', '*', '?', '[', ']', '{', '}']);
 	#endregion
 
 	#region 重写方法

@@ -7,8 +7,16 @@
 		</connectionSettings>
 	</option>
 
+	<option path="/Web/OpenAPI/Authentication">
+		<authenticator authenticator.name="bearer" kind="http" scheme="Bearer" />
+		<authenticator authenticator.name="basic" kind="http" scheme="Basic">
+			<username>administrator</username>
+			<password>xxxxxx</password>
+		</authenticator>
+	</option>
+
 	<option path="/Messaging/Queues">
-		<queue queue.name="avm">
+		<queue queue.name="avm" timeout="30s">
 			<subscription reliability="MostOnce">
 				<topic topic.name="heartbeat" />
 

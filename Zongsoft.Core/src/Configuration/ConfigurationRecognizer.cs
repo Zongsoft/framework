@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -82,25 +82,23 @@ public class ConfigurationRecognizer : IConfigurationRecognizer
 			Reflection.Reflector.SetValue(unrecognizedProperty, ref target, dictionary);
 		}
 
-		this.SetDictionaryValue(dictionary, configuration);
+		this.SetDictionaryValue(dictionary, configuration, null);
 
 		return true;
 	}
 	#endregion
 
 	#region 私有方法
-	private void SetDictionaryValue(object dictionary, IConfigurationSection configuration)
+	private void SetDictionaryValue(object dictionary, IConfigurationSection configuration, string key)
 	{
 		if(configuration.Value == null)
 		{
+			//注意：子节点如果是集合元素则使用当前节点的键作为字典键，因为子节点键名等于其值(即其键名无意义)
 			foreach(var child in configuration.GetChildren())
-			{
-				this.SetDictionaryValue(dictionary, child);
-			}
+				this.SetDictionaryValue(dictionary, child, child.IsCollection() ? configuration.Key : null);
 		}
-
-		if(dictionary != null && Common.Convert.TryConvertValue(configuration.Value, _dictionaryType.GenericTypeArguments[1], () => Common.Convert.GetTypeConverter(_unrecognizedProperty), out var convertedValue))
-			Reflection.Reflector.SetValue(ref dictionary, "Item", convertedValue, new object[] { configuration.Key });
+		else if(dictionary != null && Common.Convert.TryConvertValue(configuration.Value, _dictionaryType.GenericTypeArguments[1], () => Common.Convert.GetTypeConverter(_unrecognizedProperty), out var convertedValue))
+			Reflection.Reflector.SetValue(ref dictionary, "Item", convertedValue, [key ?? configuration.Key]);
 	}
 	#endregion
 }
