@@ -49,6 +49,261 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal("Popeye Zhong", name);
 	}
 
+	[Fact]
+	public async Task UpsertWithChildrenAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+
+		var count = await accessor.UpsertAsync(Model.Build<RoleModel>(model => {
+			model.RoleId = 10;
+			model.Name = "Managers";
+			model.Children =
+			[
+				Model.Build<MemberModel>(member => {
+					member.MemberId = 100;
+					member.MemberType = MemberType.User;
+				}),
+				Model.Build<MemberModel>(member => {
+					member.MemberId = 404;
+					member.MemberType = MemberType.Role;
+				}),
+			];
+		}), $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+
+		Assert.Equal(3, count);
+
+		var roles = accessor.SelectAsync<RoleModel>(
+			Condition.Equal(nameof(RoleModel.RoleId), 10),
+			$"*,{nameof(RoleModel.Children)}{{*}}");
+
+		await using var enumerator = roles.GetAsyncEnumerator(CancellationToken.None);
+		Assert.True(await enumerator.MoveNextAsync());
+
+		var role = enumerator.Current;
+		Assert.NotNull(role);
+		Assert.Equal(10U, role.RoleId);
+		Assert.Equal("Managers", role.Name);
+		Assert.NotNull(role.Children);
+
+		var members = role.Children.OrderBy(member => member.MemberId).ToArray();
+		Assert.NotEmpty(members);
+		Assert.Equal(2, members.Length);
+		Assert.Equal(10U, members[0].RoleId);
+		Assert.Equal(100U, members[0].MemberId);
+		Assert.Equal(MemberType.User, members[0].MemberType);
+		Assert.Equal(10U, members[1].RoleId);
+		Assert.Equal(404U, members[1].MemberId);
+		Assert.Equal(MemberType.Role, members[1].MemberType);
+
+		count = await accessor.UpsertAsync(Model.Build<RoleModel>(model => {
+			model.RoleId = 10;
+			model.Name = "Masters";
+			model.Children =
+			[
+				Model.Build<MemberModel>(member => {
+					member.MemberId = 100;
+					member.MemberType = MemberType.User;
+				}),
+				Model.Build<MemberModel>(member => {
+					member.MemberId = 444;
+					member.MemberType = MemberType.Role;
+				}),
+			];
+		}), $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+
+		Assert.True(count > 0);
+
+		roles = accessor.SelectAsync<RoleModel>(
+			Condition.Equal(nameof(RoleModel.RoleId), 10),
+			$"*,{nameof(RoleModel.Children)}{{*}}");
+
+		await using var enumerator1 = roles.GetAsyncEnumerator(CancellationToken.None);
+		Assert.True(await enumerator1.MoveNextAsync());
+
+		role = enumerator1.Current;
+		Assert.NotNull(role);
+		Assert.Equal(10U, role.RoleId);
+		Assert.Equal("Masters", role.Name);
+		Assert.NotNull(role.Children);
+
+		members = role.Children.OrderBy(member => member.MemberId).ToArray();
+		Assert.NotEmpty(members);
+		Assert.Equal(3, members.Length);
+		Assert.Equal(10U, members[0].RoleId);
+		Assert.Equal(100U, members[0].MemberId);
+		Assert.Equal(MemberType.User, members[0].MemberType);
+		Assert.Equal(10U, members[1].RoleId);
+		Assert.Equal(404U, members[1].MemberId);
+		Assert.Equal(MemberType.Role, members[1].MemberType);
+		Assert.Equal(10U, members[2].RoleId);
+		Assert.Equal(444U, members[2].MemberId);
+		Assert.Equal(MemberType.Role, members[2].MemberType);
+	}
+
+	[Fact]
+	public async Task UpsertManyAsync()
+	{
+		const int COUNT = 100;
+		const int OFFSET = 10;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var index = 0;
+		var accessor = _database.Accessor;
+
+		await accessor.DeleteAsync<UserModel>(Condition.Between(nameof(UserModel.UserId), OFFSET, OFFSET + COUNT));
+
+		var count = await accessor.UpsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) => {
+			model.UserId = (uint)(OFFSET + index);
+			model.Name = $"#Unnamed@{OFFSET + index}";
+		}), DataUpsertOptions.SuppressSequence());
+		Assert.Equal(COUNT, count);
+
+		var result = accessor.SelectAsync<string>(
+			Model.Naming.Get<UserModel>(),
+			Condition.Between(nameof(UserModel.UserId), OFFSET, OFFSET + COUNT),
+			nameof(UserModel.Name));
+
+		index = 0;
+		await foreach(var name in result)
+		{
+			Assert.Equal($"#Unnamed@{OFFSET + index}", name);
+			++index;
+		}
+
+		count = await accessor.UpsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) =>
+		{
+			model.UserId = (uint)(OFFSET + index);
+			model.Name = $"#User@{OFFSET + index}";
+		}), DataUpsertOptions.SuppressSequence());
+		Assert.True(count > 0);
+
+		result = accessor.SelectAsync<string>(
+			Model.Naming.Get<UserModel>(),
+			Condition.Between(nameof(UserModel.UserId), OFFSET, OFFSET + COUNT),
+			nameof(UserModel.Name));
+
+		index = 0;
+		await foreach(var name in result)
+		{
+			Assert.Equal($"#User@{OFFSET + index}", name);
+			++index;
+		}
+	}
+
+	[Fact]
+	public async Task UpsertManyWithChildrenAsync()
+	{
+		const int COUNT = 10;
+		const int OFFSET = 1000;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		int index = 0;
+		var accessor = _database.Accessor;
+
+		var count = await accessor.UpsertManyAsync(Model.Build<RoleModel>(COUNT, (model, index) => {
+			model.RoleId = (uint)(OFFSET + index);
+			model.Name = $"$Role#{(OFFSET + index)}";
+			model.Children =
+			[
+				Model.Build<MemberModel>(member => {
+					member.MemberId = (uint)(501 + index);
+					member.MemberType = MemberType.User;
+				}),
+				Model.Build<MemberModel>(member => {
+					member.MemberId = (uint)(601 + index);
+					member.MemberType = MemberType.Role;
+				}),
+			];
+		}), $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+
+		Assert.Equal(3 * COUNT, count);
+
+		var roles = accessor.SelectAsync<RoleModel>(
+			Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT),
+			$"*,{nameof(RoleModel.Children)}{{*}}");
+
+		index = 0;
+		await foreach(var role in roles)
+		{
+			var id = (uint)(OFFSET + index);
+
+			Assert.NotNull(role);
+			Assert.Equal(id, role.RoleId);
+			Assert.Equal($"$Role#{id}", role.Name);
+			Assert.NotNull(role.Children);
+
+			var members = role.Children.OrderBy(member => member.MemberId).ToArray();
+			Assert.NotEmpty(members);
+			Assert.Equal(2, members.Length);
+			Assert.Equal(id, members[0].RoleId);
+			Assert.Equal((uint)(501 + index), members[0].MemberId);
+			Assert.Equal(MemberType.User, members[0].MemberType);
+			Assert.Equal(id, members[1].RoleId);
+			Assert.Equal((uint)(601 + index), members[1].MemberId);
+			Assert.Equal(MemberType.Role, members[1].MemberType);
+
+			++index;
+		}
+
+		count = await accessor.UpsertManyAsync(Model.Build<RoleModel>(COUNT, (model, index) => {
+			model.RoleId = (uint)(OFFSET + index);
+			model.Name = $"$New Role#{(OFFSET + index)}";
+			model.Children =
+			[
+				Model.Build<MemberModel>(member => {
+					member.MemberId = (uint)(501 + index);
+					member.MemberType = MemberType.User;
+				}),
+				Model.Build<MemberModel>(member => {
+					member.MemberId = (uint)(701 + index);
+					member.MemberType = MemberType.Role;
+				}),
+			];
+		}), $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+
+		Assert.True(count > 0);
+
+		roles = accessor.SelectAsync<RoleModel>(
+			Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT),
+			$"*,{nameof(RoleModel.Children)}{{*}}");
+
+		index = 0;
+		await foreach(var role in roles)
+		{
+			var id = (uint)(OFFSET + index);
+
+			Assert.NotNull(role);
+			Assert.Equal(id, role.RoleId);
+			Assert.Equal($"$New Role#{id}", role.Name);
+			Assert.NotNull(role.Children);
+
+			var members = role.Children.OrderBy(member => member.MemberId).ToArray();
+			Assert.NotEmpty(members);
+			Assert.Equal(3, members.Length);
+			Assert.Equal(id, members[0].RoleId);
+			Assert.Equal((uint)(501 + index), members[0].MemberId);
+			Assert.Equal(MemberType.User, members[0].MemberType);
+			Assert.Equal(id, members[1].RoleId);
+			Assert.Equal((uint)(601 + index), members[1].MemberId);
+			Assert.Equal(MemberType.Role, members[1].MemberType);
+			Assert.Equal(id, members[2].RoleId);
+			Assert.Equal((uint)(701 + index), members[2].MemberId);
+			Assert.Equal(MemberType.Role, members[2].MemberType);
+
+			++index;
+		}
+
+		await accessor.DeleteAsync<RoleModel>(Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT));
+		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), OFFSET, OFFSET + COUNT));
+	}
+
 	public void Dispose()
 	{
 		if(!Global.IsTestingEnabled)
@@ -56,5 +311,8 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 
 		var accessor = _database.Accessor;
 		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "#%"));
+		accessor.Delete<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 10));
+		accessor.Delete<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
 	}
 }
