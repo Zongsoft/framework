@@ -28,8 +28,13 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			model.UserId = 100;
 			model.Name = "Popeye";
 		}), DataInsertOptions.SuppressSequence());
-
 		Assert.Equal(1, count);
+
+		count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
+			model.UserId = 100;
+			model.Name = "Popeye Zhong";
+		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		Assert.Equal(0, count);
 	}
 
 	[Fact]
