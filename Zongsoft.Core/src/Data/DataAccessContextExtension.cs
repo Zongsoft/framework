@@ -34,6 +34,16 @@ namespace Zongsoft.Data;
 
 public static class DataAccessContextExtension
 {
+	public static bool IsMultiple(this IDataMutateContextBase context)
+	{
+		if(context is DataInsertContextBase insertion)
+			return insertion.IsMultiple;
+		if(context is DataUpsertContextBase upsertion)
+			return upsertion.IsMultiple;
+
+		return false;
+	}
+
 	public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataInsertContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
 	public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataUpsertContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
 	public static IEnumerable<IDataDictionary<T>> GetDataDictionaries<T>(this DataUpdateContextBase context) => GetDataDictionaries<T>((IDataMutateContextBase)context);
@@ -44,12 +54,12 @@ public static class DataAccessContextExtension
 			throw new ArgumentNullException(nameof(context));
 
 		if(context.Count < 1)
-			return Array.Empty<IDataDictionary<T>>();
+			return [];
 
-		if(context.IsMultiple)
+		if(context.IsMultiple())
 			return DataDictionary.GetDictionaries<T>((System.Collections.IEnumerable)context.Data);
 
-		return new IDataDictionary<T>[] { DataDictionary.GetDictionary<T>(context.Data) };
+		return [DataDictionary.GetDictionary<T>(context.Data)];
 	}
 
 	public static bool Validate(this IDataMutateContextBase context, DataAccessMethod method, Metadata.IDataEntityProperty property, out object value)

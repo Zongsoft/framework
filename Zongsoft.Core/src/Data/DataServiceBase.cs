@@ -1081,75 +1081,6 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 
 		return this.DataAccess.Update(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx));
 	}
-
-	public int UpdateMany(IEnumerable items, DataUpdateOptions options = null) => this.UpdateMany(items, string.Empty, options);
-	public int UpdateMany(IEnumerable items, string schema, DataUpdateOptions options = null)
-	{
-		//确认是否可以执行该操作
-		this.EnsureUpdate(options);
-
-		if(items == null)
-			return 0;
-
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataUpdateOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.UpdateMany(), options);
-
-		//解析数据模式表达式
-		var schematic = this.GetSchema(schema, TypeExtension.GetElementType(items.GetType()));
-
-		//将当前更新数据集合对象转换成数据字典集合
-		var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
-		{
-			//验证待更新的数据
-			this.OnValidate(DataServiceMethod.UpdateMany(), schematic, dictionary, options);
-		});
-
-		return this.OnUpdateMany(dictionaries, schematic, options);
-	}
-
-	public int UpdateMany(string key, IEnumerable items, DataUpdateOptions options = null) => this.UpdateMany(key, items, null, options);
-	public int UpdateMany(string key, IEnumerable items, string schema, DataUpdateOptions options = null)
-	{
-		//确认是否可以执行该操作
-		this.EnsureUpdate(options);
-
-		if(items == null)
-			return 0;
-
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataUpdateOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.UpdateMany(), options);
-
-		//解析数据模式表达式
-		var schematic = this.GetSchema(schema, TypeExtension.GetElementType(items.GetType()));
-
-		//将当前更新数据集合对象转换成数据字典集合
-		var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
-		{
-			//处理数据模型
-			this.OnModel(key, dictionary, options);
-
-			//验证待更新的数据
-			this.OnValidate(DataServiceMethod.UpdateMany(), schematic, dictionary, options);
-		});
-
-		return this.OnUpdateMany(dictionaries, schematic, options);
-	}
-
-	protected virtual int OnUpdateMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpdateOptions options)
-	{
-		if(items == null)
-			return 0;
-
-		return this.DataAccess.UpdateMany(this.Name, items, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx));
-	}
 	#endregion
 
 	#region 查询方法
@@ -2017,7 +1948,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	protected virtual void OnUpdated(DataUpdateContextBase context)
 	{
 		this.Updated?.Invoke(this, new DataUpdatedEventArgs(context));
-		this.OnFiltered(context.IsMultiple ? DataServiceMethod.UpdateMany() : DataServiceMethod.Update(), context);
+		this.OnFiltered(DataServiceMethod.Update(), context);
 	}
 
 	protected virtual bool OnUpdating(DataUpdateContextBase context)
@@ -2033,7 +1964,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 				return true;
 		}
 
-		return this.OnFiltering(context.IsMultiple ? DataServiceMethod.UpdateMany() : DataServiceMethod.Update(), context);
+		return this.OnFiltering(DataServiceMethod.Update(), context);
 	}
 
 	protected virtual void OnSelected(DataSelectContextBase context)

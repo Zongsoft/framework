@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data;
@@ -115,5 +116,106 @@ public static class DataAccessExtension
 	public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -1, options, cancellation);
 	public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -interval, null, cancellation);
 	public static ValueTask<long> DecreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(dataAccess, name, member, criteria, -interval, options, cancellation);
+	#endregion
+
+	#region 批量更新
+	public static int UpdateMany<T>(this IDataAccess dataAccess, IEnumerable<T> items) => UpdateMany(dataAccess, Model.Naming.Get<T>(), items, string.Empty, null, null, null);
+	public static int UpdateMany<T>(this IDataAccess dataAccess, IEnumerable<T> items, DataUpdateOptions options) => UpdateMany(dataAccess, Model.Naming.Get<T>(), items, string.Empty, options, null, null);
+	public static int UpdateMany<T>(this IDataAccess dataAccess, IEnumerable<T> items, string schema) => UpdateMany(dataAccess, Model.Naming.Get<T>(), items, schema, null, null, null);
+	public static int UpdateMany<T>(this IDataAccess dataAccess, IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => UpdateMany(dataAccess, Model.Naming.Get<T>(), items, schema, options, updating, updated);
+	public static int UpdateMany<T>(this IDataAccess dataAccess, IEnumerable items) => UpdateMany(dataAccess, Model.Naming.Get<T>(), items, string.Empty, null, null, null);
+	public static int UpdateMany<T>(this IDataAccess dataAccess, IEnumerable items, DataUpdateOptions options) => UpdateMany(dataAccess, Model.Naming.Get<T>(), items, string.Empty, options, null, null);
+	public static int UpdateMany<T>(this IDataAccess dataAccess, IEnumerable items, string schema) => UpdateMany(dataAccess, Model.Naming.Get<T>(), items, schema, null, null, null);
+	public static int UpdateMany<T>(this IDataAccess dataAccess, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => UpdateMany(dataAccess, Model.Naming.Get<T>(), items, schema, options, updating, updated);
+
+	public static int UpdateMany(this IDataAccess dataAccess, string name, IEnumerable items) => UpdateMany(dataAccess, name, items, string.Empty, null, null, null);
+	public static int UpdateMany(this IDataAccess dataAccess, string name, IEnumerable items, DataUpdateOptions options) => UpdateMany(dataAccess, name, items, string.Empty, options, null, null);
+	public static int UpdateMany(this IDataAccess dataAccess, string name, IEnumerable items, string schema) => UpdateMany(dataAccess, name, items, schema, null, null, null);
+	public static int UpdateMany(this IDataAccess dataAccess, string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
+	{
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		if(items == null)
+			return 0;
+
+		var transaction = new Zongsoft.Transactions.Transaction();
+
+		try
+		{
+			int count = 0;
+
+			foreach(var item in items)
+				count += dataAccess.Update(name, item, (ICondition)null, schema, options, updating, updated);
+
+			//提交事务
+			transaction.Commit();
+
+			//返回受影响的记录数
+			return count;
+		}
+		catch
+		{
+			//回滚事务
+			transaction.Rollback();
+
+			throw;
+		}
+	}
+
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess dataAccess, IEnumerable<T> items, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, Model.Naming.Get<T>(), items, string.Empty, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess dataAccess, IEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, Model.Naming.Get<T>(), items, string.Empty, options, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess dataAccess, IEnumerable<T> items, string schema, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, Model.Naming.Get<T>(), items, schema, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess dataAccess, IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, Model.Naming.Get<T>(), items, schema, options, updating, updated, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess dataAccess, IEnumerable items, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, Model.Naming.Get<T>(), items, string.Empty, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess dataAccess, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, Model.Naming.Get<T>(), items, string.Empty, options, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess dataAccess, IEnumerable items, string schema, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, Model.Naming.Get<T>(), items, schema, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess dataAccess, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, Model.Naming.Get<T>(), items, schema, options, updating, updated, cancellation);
+
+	public static ValueTask<int> UpdateManyAsync(this IDataAccess dataAccess, string name, IEnumerable items, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, name, items, string.Empty, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync(this IDataAccess dataAccess, string name, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, name, items, string.Empty, options, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync(this IDataAccess dataAccess, string name, IEnumerable items, string schema, CancellationToken cancellation = default) =>
+		UpdateManyAsync(dataAccess, name, items, schema, null, null, null, cancellation);
+	public static async ValueTask<int> UpdateManyAsync(this IDataAccess dataAccess, string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		if(items == null)
+			return 0;
+
+		var transaction = new Zongsoft.Transactions.Transaction();
+
+		try
+		{
+			int count = 0;
+
+			foreach(var item in items)
+				count += await dataAccess.UpdateAsync(name, item, (ICondition)null, schema, options, updating, updated, cancellation);
+
+			//提交事务
+			transaction.Commit();
+
+			//返回受影响的记录数
+			return count;
+		}
+		catch
+		{
+			//回滚事务
+			transaction.Rollback();
+
+			throw;
+		}
+	}
 	#endregion
 }

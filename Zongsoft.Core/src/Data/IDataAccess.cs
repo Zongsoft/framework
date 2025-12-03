@@ -349,38 +349,6 @@ public interface IDataAccess : IDisposable
 	ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, string schema, CancellationToken cancellation = default);
 	ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
 	ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
-
-	int UpdateMany<T>(IEnumerable<T> items);
-	int UpdateMany<T>(IEnumerable<T> items, DataUpdateOptions options);
-	int UpdateMany<T>(IEnumerable<T> items, string schema);
-	int UpdateMany<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
-
-	int UpdateMany<T>(IEnumerable items);
-	int UpdateMany<T>(IEnumerable items, DataUpdateOptions options);
-	int UpdateMany<T>(IEnumerable items, string schema);
-	int UpdateMany<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
-
-	int UpdateMany(string name, IEnumerable items);
-	int UpdateMany(string name, IEnumerable items, DataUpdateOptions options);
-	int UpdateMany(string name, IEnumerable items, string schema);
-	int UpdateMany(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
-	int UpdateMany(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null);
-
-	ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
-
-	ValueTask<int> UpdateManyAsync<T>(IEnumerable items, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync<T>(IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
-
-	ValueTask<int> UpdateManyAsync(string name, IEnumerable items, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync(string name, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default);
 	#endregion
 
 	#region 查询方法

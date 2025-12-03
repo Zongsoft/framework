@@ -130,12 +130,6 @@ public partial interface IDataService
 	ValueTask<int> UpdateAsync(object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
 	ValueTask<int> UpdateAsync(object data, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default);
 	ValueTask<int> UpdateAsync(object data, ICondition criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
-
-	ValueTask<int> UpdateManyAsync(IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync(IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
-
-	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default);
-	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
 	#endregion
 
 	#region 查询方法

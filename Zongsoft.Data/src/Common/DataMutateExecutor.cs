@@ -60,7 +60,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		var command = context.Session.Build(context, statement);
 
 		//获取当前操作是否为多数据
-		var isMultiple = context.IsMultiple;
+		var isMultiple = context.IsMultiple();
 
 		//保存当前上下文的数据
 		var data = context.Data;
@@ -142,7 +142,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		var command = context.Session.Build(context, statement);
 
 		//获取当前操作是否为多数据
-		var isMultiple = context.IsMultiple;
+		var isMultiple = context.IsMultiple();
 
 		//保存当前上下文的数据
 		var data = context.Data;

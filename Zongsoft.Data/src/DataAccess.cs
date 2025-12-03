@@ -161,8 +161,8 @@ public class DataAccess : DataAccessBase
 	protected override DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options) =>
 		new DataUpsertContext(this, name, isMultiple, data, schema, options);
 
-	protected override DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options) =>
-		new DataUpdateContext(this, name, isMultiple, data, criteria.Flatten(), schema, options);
+	protected override DataUpdateContextBase CreateUpdateContext(string name, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options) =>
+		new DataUpdateContext(this, name, data, criteria.Flatten(), schema, options);
 
 	protected override DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options) =>
 		new DataSelectContext(this, name, entityType, grouping, criteria.Flatten(), schema, paging, sortings, options);

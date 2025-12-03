@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data;
@@ -165,5 +166,139 @@ public static class DataServiceExtension
 	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -1, options, cancellation);
 	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -interval, null, cancellation);
 	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -interval, options, cancellation);
+	#endregion
+
+	#region 批量更新
+	public static int UpdateMany(this IDataService service, IEnumerable items, DataUpdateOptions options = null) => UpdateMany(service, items, string.Empty, options);
+	public static int UpdateMany(this IDataService service, IEnumerable items, string schema, DataUpdateOptions options = null)
+	{
+		if(service == null)
+			throw new ArgumentNullException(nameof(service));
+
+		if(items == null)
+			return 0;
+
+		var transaction = new Zongsoft.Transactions.Transaction();
+
+		try
+		{
+			int count = 0;
+
+			foreach(var item in items)
+				count += service.Update(item, schema, options);
+
+			//提交事务
+			transaction.Commit();
+
+			//返回更新记录数
+			return count;
+		}
+		catch
+		{
+			//回滚事务
+			transaction.Rollback();
+
+			throw;
+		}
+	}
+
+	public static int UpdateMany(this IDataService service, string key, IEnumerable items, DataUpdateOptions options = null) => UpdateMany(service, key, items, null, options);
+	public static int UpdateMany(this IDataService service, string key, IEnumerable items, string schema, DataUpdateOptions options = null)
+	{
+		if(service == null)
+			throw new ArgumentNullException(nameof(service));
+
+		if(items == null)
+			return 0;
+
+		var transaction = new Zongsoft.Transactions.Transaction();
+
+		try
+		{
+			int count = 0;
+
+			foreach(var item in items)
+				count += service.Update(key, item, schema, options);
+
+			//提交事务
+			transaction.Commit();
+
+			//返回更新记录数
+			return count;
+		}
+		catch
+		{
+			//回滚事务
+			transaction.Rollback();
+
+			throw;
+		}
+	}
+
+	public static ValueTask<int> UpdateManyAsync(this IDataService service, IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default) => UpdateManyAsync(service, items, string.Empty, options, cancellation);
+	public static async ValueTask<int> UpdateManyAsync(this IDataService service, IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
+	{
+		if(service == null)
+			throw new ArgumentNullException(nameof(service));
+
+		if(items == null)
+			return 0;
+
+		var transaction = new Zongsoft.Transactions.Transaction();
+
+		try
+		{
+			int count = 0;
+
+			foreach(var item in items)
+				count += await service.UpdateAsync(item, schema, options, cancellation);
+
+			//提交事务
+			transaction.Commit();
+
+			//返回更新记录数
+			return count;
+		}
+		catch
+		{
+			//回滚事务
+			transaction.Rollback();
+
+			throw;
+		}
+	}
+
+	public static ValueTask<int> UpdateManyAsync(this IDataService service, string key, IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default) => UpdateManyAsync(service, key, items, null, options, cancellation);
+	public static async ValueTask<int> UpdateManyAsync(this IDataService service, string key, IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
+	{
+		if(service == null)
+			throw new ArgumentNullException(nameof(service));
+
+		if(items == null)
+			return 0;
+
+		var transaction = new Zongsoft.Transactions.Transaction();
+
+		try
+		{
+			int count = 0;
+
+			foreach(var item in items)
+				count += await service.UpdateAsync(key, item, schema, options, cancellation);
+
+			//提交事务
+			transaction.Commit();
+
+			//返回更新记录数
+			return count;
+		}
+		catch
+		{
+			//回滚事务
+			transaction.Rollback();
+
+			throw;
+		}
+	}
 	#endregion
 }

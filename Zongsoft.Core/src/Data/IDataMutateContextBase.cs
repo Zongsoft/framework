@@ -45,9 +45,6 @@ public interface IDataMutateContextBase : IDataAccessContextBase
 	/// <summary>获取或设置写入操作的数据。</summary>
 	object Data { get; set; }
 
-	/// <summary>获取一个值，指示是否为批量写入操作。</summary>
-	bool IsMultiple { get; }
-
 	/// <summary>获取写入操作的选项。</summary>
 	IDataMutateOptions Options { get; }
 

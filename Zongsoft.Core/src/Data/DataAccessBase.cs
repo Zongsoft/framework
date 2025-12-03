@@ -1302,7 +1302,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 			return 0;
 
 		//创建数据访问上下文对象
-		var context = this.CreateUpdateContext(name, false, data, criteria, schema, options);
+		var context = this.CreateUpdateContext(name, data, criteria, schema, options);
 
 		//处理数据访问操作前的回调
 		if(updating != null && updating(context))
@@ -1398,139 +1398,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 			return 0;
 
 		//创建数据访问上下文对象
-		var context = this.CreateUpdateContext(name, false, data, criteria, schema, options);
-
-		//处理数据访问操作前的回调
-		if(updating != null && updating(context))
-			return context.Count;
-
-		//激发“Updating”事件，如果被中断则返回
-		if(this.OnUpdating(context))
-			return context.Count;
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行数据更新操作
-		await this.OnUpdateAsync(context, cancellation);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Updated”事件
-		this.OnUpdated(context);
-
-		//处理数据访问操作后的回调
-		if(updated != null)
-			updated(context);
-
-		var result = context.Count;
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return result;
-	}
-
-	public int UpdateMany<T>(IEnumerable<T> items) => this.UpdateMany(this.GetName<T>(), items, string.Empty, null, null, null);
-	public int UpdateMany<T>(IEnumerable<T> items, DataUpdateOptions options) => this.UpdateMany(this.GetName<T>(), items, string.Empty, options, null, null);
-	public int UpdateMany<T>(IEnumerable<T> items, string schema) => this.UpdateMany(this.GetName<T>(), items, schema, null, null, null);
-	public int UpdateMany<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => this.UpdateMany(this.GetName<T>(), items, schema, options, updating, updated);
-	public int UpdateMany<T>(IEnumerable items) => this.UpdateMany(this.GetName<T>(), items, string.Empty, null, null, null);
-	public int UpdateMany<T>(IEnumerable items, DataUpdateOptions options) => this.UpdateMany(this.GetName<T>(), items, string.Empty, options, null, null);
-	public int UpdateMany<T>(IEnumerable items, string schema) => this.UpdateMany(this.GetName<T>(), items, schema, null, null, null);
-	public int UpdateMany<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => this.UpdateMany(this.GetName<T>(), items, schema, options, updating, updated);
-
-	public int UpdateMany(string name, IEnumerable items) => this.UpdateMany(name, items, string.Empty, null, null, null);
-	public int UpdateMany(string name, IEnumerable items, DataUpdateOptions options) => this.UpdateMany(name, items, string.Empty, options, null, null);
-	public int UpdateMany(string name, IEnumerable items, string schema) => this.UpdateMany(name, items, schema, null, null, null);
-	public int UpdateMany(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => this.UpdateMany(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, updating, updated);
-	public int UpdateMany(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		if(items == null)
-			return 0;
-
-		//创建数据访问上下文对象
-		var context = this.CreateUpdateContext(name, true, items, null, schema, options);
-
-		//处理数据访问操作前的回调
-		if(updating != null && updating(context))
-			return context.Count;
-
-		//激发“Updating”事件，如果被中断则返回
-		if(this.OnUpdating(context))
-			return context.Count;
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行数据更新操作
-		this.OnUpdate(context);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Updated”事件
-		this.OnUpdated(context);
-
-		//处理数据访问操作后的回调
-		if(updated != null)
-			updated(context);
-
-		var result = context.Count;
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return result;
-	}
-
-	public ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
-	public ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
-	public ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-	public ValueTask<int> UpdateManyAsync<T>(IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(this.GetName<T>(), items, schema, options, updating, updated, cancellation);
-	public ValueTask<int> UpdateManyAsync<T>(IEnumerable items, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
-	public ValueTask<int> UpdateManyAsync<T>(IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
-	public ValueTask<int> UpdateManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-	public ValueTask<int> UpdateManyAsync<T>(IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(this.GetName<T>(), items, schema, options, updating, updated, cancellation);
-
-	public ValueTask<int> UpdateManyAsync(string name, IEnumerable items, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(name, items, string.Empty, null, null, null, cancellation);
-	public ValueTask<int> UpdateManyAsync(string name, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(name, items, string.Empty, options, null, null, cancellation);
-	public ValueTask<int> UpdateManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(name, items, schema, null, null, null, cancellation);
-	public ValueTask<int> UpdateManyAsync(string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
-		this.UpdateManyAsync(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, updating, updated, cancellation);
-	public async ValueTask<int> UpdateManyAsync(string name, IEnumerable items, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		if(items == null)
-			return 0;
-
-		//创建数据访问上下文对象
-		var context = this.CreateUpdateContext(name, true, items, null, schema, options);
+		var context = this.CreateUpdateContext(name, data, criteria, schema, options);
 
 		//处理数据访问操作前的回调
 		if(updating != null && updating(context))
@@ -1931,7 +1799,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	protected abstract DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options);
 	protected abstract DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options);
 	protected abstract DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options);
-	protected abstract DataUpdateContextBase CreateUpdateContext(string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options);
+	protected abstract DataUpdateContextBase CreateUpdateContext(string name, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options);
 	protected abstract DataSelectContextBase CreateSelectContext(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options);
 	#endregion
 

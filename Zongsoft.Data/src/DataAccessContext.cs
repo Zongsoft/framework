@@ -248,7 +248,7 @@ public class DataInsertContext : DataInsertContextBase, IDataMutateContext, Comm
 public class DataUpdateContext : DataUpdateContextBase, IDataMutateContext, Common.Expressions.IAliasable
 {
 	#region 构造函数
-	public DataUpdateContext(DataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, isMultiple, data, criteria, schema, options)
+	public DataUpdateContext(DataAccess dataAccess, string name, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, data, criteria, schema, options)
 	{
 		this.Aliaser = new Common.Expressions.Aliaser();
 		this.Provider = dataAccess.Provider;

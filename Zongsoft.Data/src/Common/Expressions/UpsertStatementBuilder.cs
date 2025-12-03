@@ -116,7 +116,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 						//注：可能因为非主键的唯一约束导致新增部分失败，
 						//因此必须对含有外部序列字段的UPSERT语句，增加一个重新获取这些外部序列字段的附属查询语句。
-						if(simplex.Sequence != null && !context.IsMultiple)
+						if(simplex.Sequence != null && !context.IsMultiple())
 							sequences.Add(simplex);
 
 						//忽略不可变字段和序列字段

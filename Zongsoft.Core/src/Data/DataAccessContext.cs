@@ -326,7 +326,6 @@ public abstract class DataDeleteContextBase : DataAccessContextBase<IDataDeleteO
 	#endregion
 
 	#region 显式实现
-	bool IDataMutateContextBase.IsMultiple => false;
 	object IDataMutateContextBase.Data { get => null; set { } }
 	#endregion
 }
@@ -390,12 +389,11 @@ public abstract class DataInsertContextBase : DataAccessContextBase<IDataInsertO
 public abstract class DataUpdateContextBase : DataAccessContextBase<IDataUpdateOptions>, IDataMutateContextBase
 {
 	#region 构造函数
-	protected DataUpdateContextBase(IDataAccess dataAccess, string name, bool isMultiple, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, DataAccessMethod.Update, options ?? new DataUpdateOptions())
+	protected DataUpdateContextBase(IDataAccess dataAccess, string name, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options = null) : base(dataAccess, name, DataAccessMethod.Update, options ?? new DataUpdateOptions())
 	{
 		this.Data = data ?? throw new ArgumentNullException(nameof(data));
 		this.Criteria = criteria;
 		this.Schema = schema;
-		this.IsMultiple = isMultiple;
 		this.Entity = dataAccess.GetEntity(name);
 	}
 	#endregion
@@ -406,9 +404,6 @@ public abstract class DataUpdateContextBase : DataAccessContextBase<IDataUpdateO
 
 	/// <summary>获取数据访问实体支持的驱动。</summary>
 	public override string Driver => this.Entity.Driver;
-
-	/// <summary>获取一个值，指示是否为批量更新操作。</summary>
-	public bool IsMultiple { get; }
 
 	/// <summary>获取或设置更新操作的受影响记录数。</summary>
 	public int Count { get; set; }
@@ -426,21 +421,7 @@ public abstract class DataUpdateContextBase : DataAccessContextBase<IDataUpdateO
 	IDataMutateOptions IDataMutateContextBase.Options => this.Options;
 
 	/// <summary>获取更新数据的元素类型。</summary>
-	public virtual Type ModelType
-	{
-		get
-		{
-			var data = this.Data;
-
-			if(data == null)
-				return null;
-
-			if(this.IsMultiple && data is IEnumerable)
-				return Common.TypeExtension.GetElementType(data.GetType());
-
-			return data.GetType();
-		}
-	}
+	public virtual Type ModelType => this.Data?.GetType();
 
 	/// <summary>获取或设置当前更新操作的验证器。</summary>
 	public IDataValidator Validator { get; init; }
@@ -477,7 +458,7 @@ public abstract class DataUpsertContextBase : DataAccessContextBase<IDataUpsertO
 	/// <summary>获取数据访问实体支持的驱动。</summary>
 	public override string Driver => this.Entity.Driver;
 
-	/// <summary>获取一个值，指示是否为批量操作。</summary>
+	/// <summary>获取一个值，指示是否为批量写操作。</summary>
 	public bool IsMultiple { get; }
 
 	/// <summary>获取或设置操作的受影响记录数。</summary>

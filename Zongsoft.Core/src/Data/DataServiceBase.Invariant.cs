@@ -208,36 +208,6 @@ partial class DataServiceBase<TModel>
 		//执行更新操作
 		return this.OnUpdate(dictionary, criteria, schema, options);
 	}
-
-	protected int UpdateMany(IEnumerable items, ISchema schema, DataUpdateOptions options = null)
-	{
-		//确认是否可以执行该操作
-		this.EnsureUpdate(options);
-
-		if(items == null)
-			return 0;
-
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataUpdateOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.UpdateMany(), options);
-
-		//将当前更新数据集合对象转换成数据字典集合
-		var dictionares = DataDictionary.GetDictionaries<TModel>(items);
-
-		//修正数据模式对象
-		schema = this.Schematic(schema, Common.TypeExtension.GetElementType(items.GetType()));
-
-		foreach(var dictionary in dictionares)
-		{
-			//验证待更新的数据
-			this.OnValidate(DataServiceMethod.UpdateMany(), schema, dictionary, options);
-		}
-
-		return this.OnUpdateMany(dictionares, schema, options);
-	}
 	#endregion
 
 	#region 私有方法

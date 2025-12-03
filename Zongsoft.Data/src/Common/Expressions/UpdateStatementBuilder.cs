@@ -55,13 +55,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 	#region 构建方法
 	public IEnumerable<IStatementBase> Build(DataUpdateContext context)
 	{
-		if(context.IsMultiple)
-		{
-			foreach(var item in (IEnumerable)context.Data)
-				yield return this.Build(context, item);
-		}
-		else
-			yield return this.Build(context, context.Data);
+		return [this.Build(context, context.Data)];
 	}
 
 	private UpdateStatement Build(DataUpdateContext context, object data)
@@ -149,7 +143,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 		var provided = context.Validate(member.Token.Property, out var value);
 
 		//如果不是批量更新，并且指定成员不是必须要生成的且也没有必须写入的值，则返回
-		if(!context.IsMultiple && !Utility.IsGenerateRequired(ref data, member.Name) && !provided)
+		if(!context.IsMultiple() && !Utility.IsGenerateRequired(ref data, member.Name) && !provided)
 			return;
 
 		if(member.Token.Property.IsSimplex)
@@ -304,7 +298,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 	private static IExpression Where(DataUpdateContext context, UpdateStatement statement)
 	{
-		if(context.IsMultiple || context.Criteria == null)
+		if(context.IsMultiple() || context.Criteria == null)
 		{
 			var criteria = new ConditionExpression(ConditionCombination.And);
 

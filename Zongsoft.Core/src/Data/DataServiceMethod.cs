@@ -61,21 +61,20 @@ public readonly struct DataServiceMethod : IEquatable<DataServiceMethod>
 	#endregion
 
 	#region 静态方法
-	public static DataServiceMethod Get() => new DataServiceMethod(nameof(Get), DataAccessMethod.Select, false);
-	public static DataServiceMethod Count() => new DataServiceMethod(nameof(Count), DataAccessMethod.Aggregate, false);
-	public static DataServiceMethod Aggregate(DataAggregateFunction aggregate) => new DataServiceMethod(aggregate.ToString(), DataAccessMethod.Aggregate, false);
-	public static DataServiceMethod Exists() => new DataServiceMethod(DataAccessMethod.Exists);
-	public static DataServiceMethod Execute() => new DataServiceMethod(DataAccessMethod.Execute);
-	public static DataServiceMethod Import() => new DataServiceMethod(nameof(Import), DataAccessMethod.Import, true);
-	public static DataServiceMethod Export() => new DataServiceMethod(nameof(Export), DataAccessMethod.Select, true);
-	public static DataServiceMethod Select(string name = null) => new DataServiceMethod(name, DataAccessMethod.Select, false);
-	public static DataServiceMethod Delete(string name = null) => new DataServiceMethod(name, DataAccessMethod.Delete, false);
-	public static DataServiceMethod Insert(string name = null) => new DataServiceMethod(name, DataAccessMethod.Insert, false);
-	public static DataServiceMethod InsertMany() => new DataServiceMethod(nameof(InsertMany), DataAccessMethod.Insert, true);
-	public static DataServiceMethod Update(string name = null) => new DataServiceMethod(name, DataAccessMethod.Update, false);
-	public static DataServiceMethod UpdateMany() => new DataServiceMethod(nameof(UpdateMany), DataAccessMethod.Update, true);
-	public static DataServiceMethod Upsert(string name = null) => new DataServiceMethod(name, DataAccessMethod.Upsert, false);
-	public static DataServiceMethod UpsertMany() => new DataServiceMethod(nameof(UpsertMany), DataAccessMethod.Upsert, true);
+	public static DataServiceMethod Get() => new(nameof(Get), DataAccessMethod.Select, false);
+	public static DataServiceMethod Count() => new(nameof(Count), DataAccessMethod.Aggregate, false);
+	public static DataServiceMethod Aggregate(DataAggregateFunction aggregate) => new(aggregate.ToString(), DataAccessMethod.Aggregate, false);
+	public static DataServiceMethod Exists() => new(DataAccessMethod.Exists);
+	public static DataServiceMethod Execute() => new(DataAccessMethod.Execute);
+	public static DataServiceMethod Import() => new(nameof(Import), DataAccessMethod.Import, true);
+	public static DataServiceMethod Export() => new(nameof(Export), DataAccessMethod.Select, true);
+	public static DataServiceMethod Select(string name = null) => new(name, DataAccessMethod.Select, false);
+	public static DataServiceMethod Delete(string name = null) => new(name, DataAccessMethod.Delete, false);
+	public static DataServiceMethod Update(string name = null) => new(name, DataAccessMethod.Update, false);
+	public static DataServiceMethod Insert(string name = null) => new(name, DataAccessMethod.Insert, false);
+	public static DataServiceMethod InsertMany() => new(nameof(InsertMany), DataAccessMethod.Insert, true);
+	public static DataServiceMethod Upsert(string name = null) => new(name, DataAccessMethod.Upsert, false);
+	public static DataServiceMethod UpsertMany() => new(nameof(UpsertMany), DataAccessMethod.Upsert, true);
 	#endregion
 
 	#region 公共方法
