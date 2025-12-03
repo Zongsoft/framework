@@ -56,8 +56,8 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-
-		var count = await accessor.UpsertAsync(Model.Build<RoleModel>(model => {
+		var model = Model.Build<RoleModel>(model =>
+		{
 			model.RoleId = 10;
 			model.Name = "Managers";
 			model.Children =
@@ -71,9 +71,14 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 					member.MemberType = MemberType.Role;
 				}),
 			];
-		}), $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		});
 
+		var count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
 		Assert.Equal(3, count);
+		Assert.NotNull(model.Children);
+		Assert.NotEmpty(model.Children);
+		foreach(var child in model.Children)
+			Assert.Equal(10U, child.RoleId);
 
 		var roles = accessor.SelectAsync<RoleModel>(
 			Condition.Equal(nameof(RoleModel.RoleId), 10),
@@ -206,8 +211,8 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 
 		int index = 0;
 		var accessor = _database.Accessor;
-
-		var count = await accessor.UpsertManyAsync(Model.Build<RoleModel>(COUNT, (model, index) => {
+		var models = Model.Build<RoleModel>(COUNT, (model, index) =>
+		{
 			model.RoleId = (uint)(OFFSET + index);
 			model.Name = $"$Role#{(OFFSET + index)}";
 			model.Children =
@@ -221,9 +226,20 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 					member.MemberType = MemberType.Role;
 				}),
 			];
-		}), $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		}).ToArray();
 
+		var count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
 		Assert.Equal(3 * COUNT, count);
+
+		for(int i = 0; i < models.Length; i++)
+		{
+			var model = models[i];
+			Assert.NotNull(model.Children);
+			Assert.NotEmpty(model.Children);
+
+			foreach(var child in model.Children)
+				Assert.Equal((uint)(OFFSET + i), child.RoleId);
+		}
 
 		var roles = accessor.SelectAsync<RoleModel>(
 			Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT),
