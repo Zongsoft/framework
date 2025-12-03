@@ -40,7 +40,7 @@ public class ParameterExpression : Expression
 
 	#region 成员字段
 	private object _value;
-	private bool _hasValue;
+	private bool _isChanged;
 	#endregion
 
 	#region 构造函数
@@ -132,12 +132,12 @@ public class ParameterExpression : Expression
 				this.Type = Utility.GetDbType(_value);
 			}
 
-			_hasValue = true;
+			_isChanged = true;
 		}
 	}
 
 	/// <summary>获取一个值，指示 <see cref="Value"/> 属性是否被设置过。</summary>
-	public bool IsChanged => _hasValue;
+	public bool IsChanged => _isChanged;
 	#endregion
 
 	#region 重写方法

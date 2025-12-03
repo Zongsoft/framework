@@ -65,11 +65,11 @@ public static class StatementExtension
 					if(parameter.Schema != null)
 					{
 						if(parameter.Schema.Parent == null || !parameter.Schema.Parent.Token.IsMultiple)
-							parameter.Schema.Token.SetValue(data, parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
+							parameter.Schema.Token.SetValue(data, parameter.IsChanged && parameter.Value is not IDataValueBinder ? parameter.Value : dbParameter.Value);
 						else
 						{
-							//parameter.Schema.Token.SetValue(parameter.Schema.Parent.Token.GetValue(data), parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
-							parameter.Schema.Token.SetValue(data, parameter.IsChanged && !(parameter.Value is IDataValueBinder) ? parameter.Value : dbParameter.Value);
+							//parameter.Schema.Token.SetValue(parameter.Schema.Parent.Token.GetValue(data), parameter.IsChanged && parameter.Value is not IDataValueBinder ? parameter.Value : dbParameter.Value);
+							parameter.Schema.Token.SetValue(data, parameter.IsChanged && parameter.Value is not IDataValueBinder ? parameter.Value : dbParameter.Value);
 						}
 					}
 				}
@@ -91,7 +91,7 @@ public static class StatementExtension
 		var setter = context.GetFeature<IDataParameterSetter>();
 
 		if(setter == null)
-			parameter.Value = value == null ? DBNull.Value : value;
+			parameter.Value = value ?? DBNull.Value;
 		else
 			setter.SetValue(parameter, value);
 	}
