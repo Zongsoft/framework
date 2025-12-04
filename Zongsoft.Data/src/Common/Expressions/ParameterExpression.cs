@@ -44,6 +44,18 @@ public class ParameterExpression : Expression
 	#endregion
 
 	#region 构造函数
+	private ParameterExpression(string name, DataType type, ParameterDirection direction, object value, FieldIdentifier field, SchemaMember schema, bool isChanged)
+	{
+		_value = value;
+		_isChanged = isChanged;
+
+		this.Name = name;
+		this.Type = type;
+		this.Field = field;
+		this.Schema = schema;
+		this.Direction = direction;
+	}
+
 	public ParameterExpression(string name, DataType type, ParameterDirection direction = ParameterDirection.Input)
 	{
 		if(string.IsNullOrEmpty(name))
@@ -116,7 +128,7 @@ public class ParameterExpression : Expression
 	public DataType Type { get; set; }
 
 	/// <summary>获取或设置参数值。</summary>
-	/// <remarks>注意：设置该属性值会导致<see cref="IsChanged"/>属性为真。</remarks>
+	/// <remarks>注意：设置该属性值会导致 <see cref="IsChanged"/> 属性为真。</remarks>
 	public object Value
 	{
 		get => _value;
@@ -138,6 +150,10 @@ public class ParameterExpression : Expression
 
 	/// <summary>获取一个值，指示 <see cref="Value"/> 属性是否被设置过。</summary>
 	public bool IsChanged => _isChanged;
+	#endregion
+
+	#region 公共方法
+	public ParameterExpression Clone(string name = null) => new(name ?? this.Name, this.Type, this.Direction, this.Value, this.Field, this.Schema, _isChanged);
 	#endregion
 
 	#region 重写方法

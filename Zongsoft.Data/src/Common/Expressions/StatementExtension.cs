@@ -31,6 +31,8 @@ using System;
 using System.Linq;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -40,12 +42,86 @@ namespace Zongsoft.Data.Common.Expressions;
 
 public static class StatementExtension
 {
-	public static void Bind(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, object data)
+	public static void Bind(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, bool isMultiple)
 	{
-		if(data == null || statement.Parameters.Count == 0)
+		if(statement.Parameters.Count == 0)
 			return;
 
-		foreach(var parameter in statement.Parameters)
+		if(isMultiple)
+		{
+			var lines = statement switch
+			{
+				InsertStatement insertion => insertion.Values.Chunk(insertion.Fields.Count).ToArray(),
+				UpsertStatement upsertion => upsertion.Values.Chunk(upsertion.Fields.Count).ToArray(),
+				_ => [],
+			};
+
+			if(lines != null && lines.Length > 0)
+			{
+				var index = 0;
+				var hasSequences = context.Entity.HasSequences();
+
+				foreach(var item in (IEnumerable)context.Data)
+				{
+					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
+
+					if(hasSequences)
+						SetSequenceValue(context, statement, item);
+				}
+			}
+		}
+		else
+		{
+			Bind(context, command, context.Data, statement.Parameters);
+
+			if(context.Entity.HasSequences())
+				SetSequenceValue(context, statement, context.Data);
+		}
+	}
+
+	public static async ValueTask BindAsync(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, bool isMultiple, CancellationToken cancellation)
+	{
+		if(statement.Parameters.Count == 0)
+			return;
+
+		if(isMultiple)
+		{
+			var lines = statement switch
+			{
+				InsertStatement insertion => insertion.Values.Chunk(insertion.Fields.Count).ToArray(),
+				UpsertStatement upsertion => upsertion.Values.Chunk(upsertion.Fields.Count).ToArray(),
+				_ => null,
+			};
+
+			if(lines != null && lines.Length > 0)
+			{
+				var index = 0;
+				var hasSequences = context.Entity.HasSequences();
+
+				foreach(var item in (IEnumerable)context.Data)
+				{
+					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
+
+					if(hasSequences)
+						await SetSequenceValueAsync(context, statement, item, cancellation);
+				}
+			}
+		}
+		else
+		{
+			Bind(context, command, context.Data, statement.Parameters);
+
+			if(context.Entity.HasSequences())
+				await SetSequenceValueAsync(context, statement, context.Data, cancellation);
+		}
+	}
+
+	private static void Bind(IDataMutateContextBase context, DbCommand command, object data, IEnumerable<ParameterExpression> parameters)
+	{
+		if(data == null || parameters == null)
+			return;
+
+		foreach(var parameter in parameters)
 		{
 			var dbParameter = command.Parameters[parameter.Name];
 
@@ -164,6 +240,73 @@ public static class StatementExtension
 	{
 		return TryGetParameterValue(data, member, dbType, out var value) ? value : ((IDataEntitySimplexProperty)member.Token.Property).DefaultValue;
 	}
+
+	private static void SetSequenceValue(IDataMutateContextBase context, IStatementBase statement, object data)
+	{
+		if(data == null)
+			return;
+
+		IEnumerable<FieldIdentifier> fields = statement switch
+		{
+			InsertStatement insertion => insertion.Fields,
+			UpsertStatement upsertion => upsertion.Fields,
+			_ => [],
+		};
+
+		foreach(var field in fields)
+		{
+			if(field.Token.Property.IsSimplex(out var simplex))
+			{
+				var sequence = simplex.Sequence;
+
+				if(sequence != null && sequence.IsExternal)
+				{
+					var value = field.Token.GetValue(data);
+
+					if(value == null || Convert.IsDBNull(value) || object.Equals(value, Zongsoft.Common.TypeExtension.GetDefaultValue(field.Token.MemberType)) || (context.Options is IDataInsertOptions options && !options.SequenceSuppressed))
+					{
+						var id = ((DataAccess)context.DataAccess).Increase(context, sequence, data);
+						field.Token.SetValue(data, Convert.ChangeType(id, field.Token.MemberType));
+					}
+				}
+			}
+		}
+	}
+
+	private static async ValueTask SetSequenceValueAsync(IDataMutateContextBase context, IStatementBase statement, object data, CancellationToken cancellation)
+	{
+		if(data == null)
+			return;
+
+		IEnumerable<FieldIdentifier> fields = statement switch
+		{
+			InsertStatement insertion => insertion.Fields,
+			UpsertStatement upsertion => upsertion.Fields,
+			_ => [],
+		};
+
+		foreach(var field in fields)
+		{
+			if(field.Token.Property.IsSimplex(out var simplex))
+			{
+				var sequence = simplex.Sequence;
+
+				if(sequence != null && sequence.IsExternal)
+				{
+					var value = field.Token.GetValue(data);
+
+					if(value == null || Convert.IsDBNull(value) || object.Equals(value, Zongsoft.Common.TypeExtension.GetDefaultValue(field.Token.MemberType)) || (context.Options is IDataInsertOptions options && !options.SequenceSuppressed))
+					{
+						var id = await ((DataAccess)context.DataAccess).IncreaseAsync(context, sequence, data, cancellation);
+						field.Token.SetValue(data, Convert.ChangeType(id, field.Token.MemberType));
+					}
+				}
+			}
+		}
+	}
+
+	public static bool IsMultiple(this IMutateStatement statement, IDataMutateContextBase context) =>
+		statement.Schema != null ? statement.Schema.Token.IsMultiple : context.IsMultiple();
 
 	public static ISource From(this IStatement statement, string memberPath, Aliaser aliaser, Func<ISource, IDataEntityComplexProperty, ISource> subqueryFactory, out IDataEntityProperty property)
 	{
@@ -356,6 +499,20 @@ public static class StatementExtension
 			default:
 				throw new NotSupportedException($"Unsupported '{condition.Operator}' condition operation.");
 		}
+
+		static int GetCollectionCount(object value)
+		{
+			if(value == null)
+				return 0;
+
+			if(value is ICollection<IExpression> genericCollection)
+				return genericCollection.Count;
+
+			if(value is ICollection classicCollection)
+				return classicCollection.Count;
+
+			return 1;
+		}
 	}
 
 	private static IExpression GetConditionValue(IStatement statement, Aliaser aliaser, ConditionOperator @operator, object value, DataType type, bool fieldExpending)
@@ -517,19 +674,5 @@ public static class StatementExtension
 		var parameter = type != null ? Expression.Parameter(type, value) : Expression.Parameter(value);
 		parameters.Add(parameter);
 		return parameter;
-	}
-
-	private static int GetCollectionCount(object value)
-	{
-		if(value == null)
-			return 0;
-
-		if(value is ICollection<IExpression> genericCollection)
-			return genericCollection.Count;
-
-		if(value is ICollection classicCollection)
-			return classicCollection.Count;
-
-		return 1;
 	}
 }

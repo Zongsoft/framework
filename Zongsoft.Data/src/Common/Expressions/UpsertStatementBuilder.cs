@@ -98,16 +98,16 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 						statement.Fields.Add(field);
 
 						var parameter = Utility.IsLinked(owner, simplex) ?
-										(
-											provided ?
-											Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
-											Expression.Parameter(schema.Token.Property.Name, simplex.Type)
-										) :
-										(
-											provided ?
-											Expression.Parameter(field, schema, value) :
-											Expression.Parameter(field, schema)
-										);
+						(
+							provided ?
+							Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
+							Expression.Parameter(schema.Token.Property.Name, simplex.Type)
+						) :
+						(
+							provided ?
+							Expression.Parameter(field, schema, value) :
+							Expression.Parameter(field, schema)
+						);
 
 						statement.Values.Add(parameter);
 						statement.Parameters.Add(parameter);
@@ -198,8 +198,56 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 			}
 
 			if(statement.Fields.Count > 0)
+			{
+				var count = GetRecordCount(data ?? context.Data, out var list);
+
+				for(int i = 1; i < count; i++)
+				{
+					for(int j = 0; j < statement.Fields.Count; j++)
+					{
+						if(statement.Values[j] is ParameterExpression pe && pe.Schema != null)
+						{
+							var parameter = pe.Clone(ParameterExpression.Anonymous);
+							statement.Values.Add(parameter);
+							statement.Parameters.Add(parameter);
+						}
+						else
+							statement.Values.Add(statement.Values[j]);
+					}
+				}
+
 				yield return statement;
+			}
 		}
+	}
+
+	private static int GetRecordCount(object data, out List<object> list)
+	{
+		if(data == null)
+		{
+			list = null;
+			return 0;
+		}
+
+		if(data is System.Collections.ICollection collection)
+		{
+			list = null;
+			return collection.Count;
+		}
+
+		if(data is System.Collections.IEnumerable enumerable)
+		{
+			list = new List<object>();
+
+			var enumerator = enumerable.GetEnumerator();
+			while(enumerator.MoveNext())
+				list.Add(enumerator.Current);
+
+			return list.Count;
+		}
+
+		list = null;
+		return 0;
 	}
 
 	private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataUpsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;

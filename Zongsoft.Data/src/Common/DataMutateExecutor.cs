@@ -56,18 +56,11 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		if(context.Method != DataAccessMethod.Insert && context.Entity.Immutable)
 			throw new DataException($"The '{context.Entity.Name}' is an immutable entity and does not support {context.Method} operation.");
 
-		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
-
-		//获取当前操作是否为多数据
-		var isMultiple = context.IsMultiple();
-
-		//保存当前上下文的数据
 		var data = context.Data;
 
 		if(statement.Schema != null)
 		{
-			isMultiple = statement.Schema.Token.IsMultiple;
+			//获取当前语句的附属对象
 			context.Data = statement.Schema.Token.GetValue(context.Data);
 
 			if(context.Data == null)
@@ -75,50 +68,30 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				context.Data = data;
 				return false;
 			}
-		}
 
-		try
-		{
-			if(isMultiple)
+			if(statement.Schema.Token.IsMultiple)
 			{
 				//获取当前一对多导航属性的链接成员标记
 				var tokens = GetLinkTokens(data, statement.Schema);
 
-				foreach(var item in (IEnumerable)context.Data)
+				for(int i = 0; i < tokens.Length; i++)
 				{
-					//更新当前操作数据
-					context.Data = item;
-
-					if(tokens != null && tokens.Length > 0)
+					//依次同步当前集合元素中的导航属性值
+					foreach(var item in (IEnumerable)context.Data)
 					{
 						var current = item;
-
-						//依次同步当前集合元素中的导航属性值
-						for(int i = 0; i < tokens.Length; i++)
-							tokens[i].SetForeignValue(ref current);
-
-						context.Data = current;
-					}
-
-					var continued = this.Mutate(context, statement, command);
-
-					if(continued && statement.HasSlaves)
-					{
-						foreach(var slave in statement.Slaves)
-							context.Provider.Executor.Execute(context, slave);
+						tokens[i].SetForeignValue(ref current);
 					}
 				}
+			}
+		}
 
-				return false;
-			}
-			else
-			{
-				return this.Mutate(context, statement, command);
-			}
+		try
+		{
+			return this.Mutate(context, statement);
 		}
 		finally
 		{
-			//还原当前上下文的数据
 			context.Data = data;
 		}
 	}
@@ -138,18 +111,11 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		if(context.Method != DataAccessMethod.Insert && context.Entity.Immutable)
 			throw new DataException($"The '{context.Entity.Name}' is an immutable entity and does not support {context.Method} operation.");
 
-		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
-
-		//获取当前操作是否为多数据
-		var isMultiple = context.IsMultiple();
-
-		//保存当前上下文的数据
 		var data = context.Data;
 
 		if(statement.Schema != null)
 		{
-			isMultiple = statement.Schema.Token.IsMultiple;
+			//获取当前语句的附属对象
 			context.Data = statement.Schema.Token.GetValue(context.Data);
 
 			if(context.Data == null)
@@ -157,50 +123,30 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				context.Data = data;
 				return false;
 			}
-		}
 
-		try
-		{
-			if(isMultiple)
+			if(statement.Schema.Token.IsMultiple)
 			{
 				//获取当前一对多导航属性的链接成员标记
 				var tokens = GetLinkTokens(data, statement.Schema);
 
-				foreach(var item in (IEnumerable)context.Data)
+				for(int i = 0; i < tokens.Length; i++)
 				{
-					//更新当前操作数据
-					context.Data = item;
-
-					if(tokens != null && tokens.Length > 0)
+					//依次同步当前集合元素中的导航属性值
+					foreach(var item in (IEnumerable)context.Data)
 					{
 						var current = item;
-
-						//依次同步当前集合元素中的导航属性值
-						for(int i = 0; i < tokens.Length; i++)
-							tokens[i].SetForeignValue(ref current);
-
-						context.Data = current;
-					}
-
-					var continued = await this.MutateAsync(context, statement, command, cancellation);
-
-					if(continued && statement.HasSlaves)
-					{
-						foreach(var slave in statement.Slaves)
-							await context.Provider.Executor.ExecuteAsync(context, slave, cancellation);
+						tokens[i].SetForeignValue(ref current);
 					}
 				}
+			}
+		}
 
-				return false;
-			}
-			else
-			{
-				return await this.MutateAsync(context, statement, command, cancellation);
-			}
+		try
+		{
+			return await this.MutateAsync(context, statement, cancellation);
 		}
 		finally
 		{
-			//还原当前上下文的数据
 			context.Data = data;
 		}
 	}
@@ -312,19 +258,22 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	#endregion
 
 	#region 私有方法
-	private bool Mutate(IDataMutateContext context, TStatement statement, DbCommand command)
+	private bool Mutate(IDataMutateContext context, TStatement statement)
 	{
 		bool continued;
 
 		//调用写入操作开始方法
 		this.OnMutating(context, statement);
 
+		//根据生成的脚本创建对应的数据命令
+		var command = context.Session.Build(context, statement);
+
 		//处理语句的插槽替换运算
 		if(context.Source.Driver is DataDriverBase driver)
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		statement.Bind(context, command, context.Data);
+		statement.Bind(context, command, statement.IsMultiple(context));
 
 		if(statement.Returning != null && statement.Returning.Table == null)
 		{
@@ -353,19 +302,22 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		return continued;
 	}
 
-	private async ValueTask<bool> MutateAsync(IDataMutateContext context, TStatement statement, DbCommand command, CancellationToken cancellation)
+	private async ValueTask<bool> MutateAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
 	{
 		bool continued;
 
 		//调用写入操作开始方法
 		await this.OnMutatingAsync(context, statement, cancellation);
 
+		//根据生成的脚本创建对应的数据命令
+		var command = context.Session.Build(context, statement);
+
 		//处理语句的插槽替换运算
 		if(context.Source.Driver is DataDriverBase driver)
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		statement.Bind(context, command, context.Data);
+		await statement.BindAsync(context, command, statement.IsMultiple(context), cancellation);
 
 		if(statement.Returning != null && statement.Returning.Table == null)
 		{
