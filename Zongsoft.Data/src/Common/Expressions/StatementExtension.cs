@@ -141,11 +141,11 @@ public static class StatementExtension
 					if(parameter.Schema != null)
 					{
 						if(parameter.Schema.Parent == null || !parameter.Schema.Parent.Token.IsMultiple)
-							parameter.Schema.Token.SetValue(data, parameter.IsChanged && parameter.Value is not IDataValueBinder ? parameter.Value : dbParameter.Value);
+							parameter.Schema.Token.SetValue(ref data, parameter.IsChanged && parameter.Value is not IDataValueBinder ? parameter.Value : dbParameter.Value);
 						else
 						{
 							//parameter.Schema.Token.SetValue(parameter.Schema.Parent.Token.GetValue(data), parameter.IsChanged && parameter.Value is not IDataValueBinder ? parameter.Value : dbParameter.Value);
-							parameter.Schema.Token.SetValue(data, parameter.IsChanged && parameter.Value is not IDataValueBinder ? parameter.Value : dbParameter.Value);
+							parameter.Schema.Token.SetValue(ref data, parameter.IsChanged && parameter.Value is not IDataValueBinder ? parameter.Value : dbParameter.Value);
 						}
 					}
 				}
@@ -266,7 +266,7 @@ public static class StatementExtension
 					if(value == null || Convert.IsDBNull(value) || object.Equals(value, Zongsoft.Common.TypeExtension.GetDefaultValue(field.Token.MemberType)) || (context.Options is IDataInsertOptions options && !options.SequenceSuppressed))
 					{
 						var id = ((DataAccess)context.DataAccess).Increase(context, sequence, data);
-						field.Token.SetValue(data, Convert.ChangeType(id, field.Token.MemberType));
+						field.Token.SetValue(ref data, Convert.ChangeType(id, field.Token.MemberType));
 					}
 				}
 			}
@@ -298,7 +298,7 @@ public static class StatementExtension
 					if(value == null || Convert.IsDBNull(value) || object.Equals(value, Zongsoft.Common.TypeExtension.GetDefaultValue(field.Token.MemberType)) || (context.Options is IDataInsertOptions options && !options.SequenceSuppressed))
 					{
 						var id = await ((DataAccess)context.DataAccess).IncreaseAsync(context, sequence, data, cancellation);
-						field.Token.SetValue(data, Convert.ChangeType(id, field.Token.MemberType));
+						field.Token.SetValue(ref data, Convert.ChangeType(id, field.Token.MemberType));
 					}
 				}
 			}

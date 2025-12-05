@@ -96,7 +96,9 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 						if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
 							schema = child;
 
-						schema.Token.SetValue(context.Data, reader.GetValue(i));
+						var data = context.Data;
+						schema.Token.SetValue(ref data, reader.GetValue(i));
+						context.Data = data;
 					}
 				}
 			}
@@ -130,7 +132,9 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 						if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
 							schema = child;
 
-						schema.Token.SetValue(context.Data, reader.GetValue(i));
+						var data = context.Data;
+						schema.Token.SetValue(ref data, reader.GetValue(i));
+						context.Data = data;
 					}
 				}
 			}
@@ -194,7 +198,9 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 						if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
 							schema = child;
 
-						schema.Token.SetValue(context.Data, reader.GetValue(i));
+						var data = context.Data;
+						schema.Token.SetValue(ref data, reader.GetValue(i));
+						context.Data = data;
 					}
 				}
 			}
@@ -228,7 +234,9 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 						if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
 							schema = child;
 
-						schema.Token.SetValue(context.Data, reader.GetValue(i));
+						var data = context.Data;
+						schema.Token.SetValue(ref data, reader.GetValue(i));
+						context.Data = data;
 					}
 				}
 			}
@@ -478,7 +486,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 								results = (IEnumerable)list;
 						}
 
-						token.Schema.Token.SetValue(container, results);
+						token.Schema.Token.SetValue(ref container, results);
 					}
 				}
 			}

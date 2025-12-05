@@ -59,32 +59,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		var data = context.Data;
 
 		if(statement.Schema != null)
-		{
-			//获取当前语句的附属对象
-			context.Data = statement.Schema.Token.GetValue(context.Data);
-
-			if(context.Data == null)
-			{
-				context.Data = data;
-				return false;
-			}
-
-			if(statement.Schema.Token.IsMultiple)
-			{
-				//获取当前一对多导航属性的链接成员标记
-				var tokens = GetLinkTokens(data, statement.Schema);
-
-				for(int i = 0; i < tokens.Length; i++)
-				{
-					//依次同步当前集合元素中的导航属性值
-					foreach(var item in (IEnumerable)context.Data)
-					{
-						var current = item;
-						tokens[i].SetForeignValue(ref current);
-					}
-				}
-			}
-		}
+			context.Data = GetContextData(data, statement.Schema);
 
 		try
 		{
@@ -114,32 +89,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		var data = context.Data;
 
 		if(statement.Schema != null)
-		{
-			//获取当前语句的附属对象
-			context.Data = statement.Schema.Token.GetValue(context.Data);
-
-			if(context.Data == null)
-			{
-				context.Data = data;
-				return false;
-			}
-
-			if(statement.Schema.Token.IsMultiple)
-			{
-				//获取当前一对多导航属性的链接成员标记
-				var tokens = GetLinkTokens(data, statement.Schema);
-
-				for(int i = 0; i < tokens.Length; i++)
-				{
-					//依次同步当前集合元素中的导航属性值
-					foreach(var item in (IEnumerable)context.Data)
-					{
-						var current = item;
-						tokens[i].SetForeignValue(ref current);
-					}
-				}
-			}
-		}
+			context.Data = GetContextData(data, statement.Schema);
 
 		try
 		{
@@ -355,8 +305,13 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		{
 			if(statement is IMutateStatement mutation && mutation.Schema != null)
 			{
-				//设置子新增语句中的关联参数值
-				SetLinkedParameters(mutation, data);
+				if(data is IEnumerable enumerable)
+				{
+					foreach(var item in enumerable)
+						SetLinkedParameters(mutation, item);
+				}
+				else
+					SetLinkedParameters(mutation, data);
 			}
 		}
 	}
@@ -449,6 +404,71 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		}
 
 		return tokens;
+	}
+
+	private static object GetContextData(object data, SchemaMember schema)
+	{
+		if(data is IEnumerable enumerable)
+		{
+			IList list = null;
+
+			foreach(var item in enumerable)
+			{
+				var result = SetLinkValue(item, schema);
+
+				if(result is IEnumerable items)
+				{
+					list ??= Utility.CreateList(items);
+
+					foreach(var entry in items)
+						list.Add(entry);
+				}
+				else if(result != null)
+				{
+					list ??= Utility.CreateList(result.GetType());
+					list.Add(result);
+				}
+			}
+
+			return list;
+		}
+
+		return SetLinkValue(data, schema);
+	}
+
+	private static object SetLinkValue(object container, SchemaMember schema)
+	{
+		//获取当前语句的附属对象
+		var data = schema.Token.GetValue(container);
+
+		if(data == null)
+			return data;
+
+		if(schema.Token.IsMultiple)
+		{
+			//获取当前导航属性的链接成员标记
+			var tokens = GetLinkTokens(container, schema);
+
+			for(int i = 0; i < tokens.Length; i++)
+			{
+				//依次同步当前集合元素中的导航属性值
+				foreach(var item in (IEnumerable)data)
+				{
+					var current = item;
+					tokens[i].SetForeignValue(ref current);
+				}
+			}
+		}
+		else
+		{
+			//获取当前导航属性的链接成员标记
+			var tokens = GetLinkTokens(container, schema);
+
+			for(int i = 0; i < tokens.Length; i++)
+				tokens[i].SetForeignValue(ref data);
+		}
+
+		return data;
 	}
 	#endregion
 

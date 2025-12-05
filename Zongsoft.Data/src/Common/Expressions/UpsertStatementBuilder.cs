@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
@@ -39,7 +40,6 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 	#region 构建方法
 	public IEnumerable<IStatementBase> Build(DataUpsertContext context)
 	{
-		//批量操作则不能指定容器数据(即data参数值为空)，因为语句构建阶段无法绑定到具体数据
 		return BuildUpserts(context, context.Entity, (context.IsMultiple ? null : context.Data), null, context.Schema.Members);
 	}
 	#endregion
@@ -49,8 +49,8 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 	{
 		var inherits = entity.GetInherits();
 		var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
+		object container = null;
 
-		//更新当前操作的容器数据
 		if(data != null && owner != null)
 		{
 			/*
@@ -60,7 +60,10 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 			 */
 
 			if(owner.Token.TryGetValue(data, null, out var value))
+			{
+				container = data;
 				data = value;
+			}
 			else if(Zongsoft.Common.TypeExtension.IsEnumerable(data.GetType()))
 				data = null;
 			else
@@ -149,7 +152,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 				}
 				else
 				{
-					//不可变复合属性不支持任何写操作，即在修改操作中不能包含不可变复合属性
+					//不可变复合属性不支持任何写操作，即在增改操作中不能包含不可变复合属性
 					if(schema.Token.Property.Immutable)
 						throw new DataException($"The '{schema.FullPath}' is an immutable complex(navigation) property and does not support the upsert operation.");
 
@@ -201,6 +204,14 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 			{
 				var count = GetRecordCount(data ?? context.Data, out var list);
 
+				if(list != null)
+				{
+					if(container != null)
+						owner.Token.SetValue(ref container, list);
+					else
+						context.Data = list;
+				}
+
 				for(int i = 1; i < count; i++)
 				{
 					for(int j = 0; j < statement.Fields.Count; j++)
@@ -221,32 +232,33 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 		}
 	}
 
-	private static int GetRecordCount(object data, out List<object> list)
+	private static int GetRecordCount(object data, out ICollection result)
 	{
 		if(data == null)
 		{
-			list = null;
+			result = null;
 			return 0;
 		}
 
-		if(data is System.Collections.ICollection collection)
+		if(data is ICollection collection)
 		{
-			list = null;
+			result = null;
 			return collection.Count;
 		}
 
-		if(data is System.Collections.IEnumerable enumerable)
+		if(data is IEnumerable enumerable)
 		{
-			list = new List<object>();
+			var list = Utility.CreateList(data);
 
 			var enumerator = enumerable.GetEnumerator();
 			while(enumerator.MoveNext())
 				list.Add(enumerator.Current);
 
+			result = list;
 			return list.Count;
 		}
 
-		list = null;
+		result = null;
 		return 0;
 	}
 

@@ -43,6 +43,24 @@ internal static class Utility
 	private static readonly ConcurrentDictionary<MemberInfo, TypeConverter> _converters = new();
 	#endregion
 
+	public static IList CreateList(Type elementType)
+	{
+		if(elementType == null)
+			throw new ArgumentNullException(nameof(elementType));
+
+		return (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+	}
+
+	public static IList CreateList(object source)
+	{
+		if(source == null)
+			throw new ArgumentNullException(nameof(source));
+
+		var elementType = Zongsoft.Common.TypeExtension.GetElementType(source.GetType());
+		return elementType == null ? new List<object>() :
+			(IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+	}
+
 	public static DbType GetDbType(object value)
 	{
 		if(value == null)

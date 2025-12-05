@@ -138,7 +138,7 @@ public readonly struct DataEntityPropertyToken
 		throw new InvalidOperationException($"Obtaining the value of the '{this.Property.Name}' property from the specified '{target.GetType().FullName}' target type is not supported.");
 	}
 
-	public void SetValue(object target, object value)
+	public void SetValue(ref object target, object value)
 	{
 		if(target == null)
 			throw new ArgumentNullException(nameof(target));
