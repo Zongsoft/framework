@@ -111,7 +111,14 @@ public class MySqlUpsertStatementVisitor : UpsertStatementVisitor
 				if(parenthesisRequired)
 					context.Write("(");
 
-				context.Visit(item.Value);
+				if(item.Value != null)
+					context.Visit(item.Value);
+				else
+				{
+					context.Write("VALUES(");
+					context.Write(context.Dialect.GetIdentifier(item.Field.Name));
+					context.Write(")");
+				}
 
 				if(parenthesisRequired)
 					context.Write(")");
