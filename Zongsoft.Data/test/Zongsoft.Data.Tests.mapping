@@ -1,0 +1,494 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<schema xmlns="http://schemas.zongsoft.com/data">
+	<container name="">
+		<entity name="Log" immutable="true">
+			<key>
+				<member name="LogId" />
+			</key>
+
+			<property name="LogId" type="ulong" nullable="false" sequence="*" />
+			<property name="UserId" type="uint" nullable="false" immutable="true" />
+			<property name="TenantId" type="uint" nullable="false" immutable="true" sortable="true" />
+			<property name="BranchId" type="uint" nullable="false" immutable="true" sortable="true" />
+			<property name="Domain" type="varchar" length="50" nullable="false" immutable="true" default="_" />
+			<property name="Target" type="varchar" length="100" nullable="true" immutable="true" />
+			<property name="Action" type="varchar" length="100" nullable="true" immutable="true" />
+			<property name="Caption" type="nvarchar" length="200" nullable="true" />
+			<property name="Content" type="text" nullable="true" />
+			<property name="Severity" type="byte" nullable="false" />
+			<property name="Timestamp" type="datetime" nullable="false" immutable="true" sortable="true" default="now()" />
+			<property name="Description" type="nvarchar" length="500" nullable="true" />
+
+			<complexProperty name="User" port="User">
+				<link port="UserId" />
+			</complexProperty>
+
+			<complexProperty name="Tenant" port="Tenant">
+				<link port="TenantId" />
+			</complexProperty>
+
+			<complexProperty name="Branch" port="Branch">
+				<link port="TenantId" />
+				<link port="BranchId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="Tenant">
+			<key>
+				<member name="TenantId" />
+			</key>
+
+			<property name="TenantId" type="uint" nullable="false" sequence="#" />
+			<property name="TenantNo" type="varchar" length="50" nullable="false" />
+			<property name="Name" type="nvarchar" length="100" nullable="false" />
+			<property name="Abbr" type="nvarchar" length="50" nullable="true" />
+			<property name="Acronym" type="varchar" length="50" nullable="true" />
+			<property name="LogoPath" type="varchar" length="200" nullable="true" />
+			<property name="Language" type="char" length="2" nullable="false" default="zh" />
+			<property name="Country" type="ushort" nullable="false" />
+			<property name="AddressId" type="uint" nullable="false" />
+			<property name="AddressDetail" type="nvarchar" length="100" nullable="true" />
+			<property name="Longitude" type="double" precision="12" scale="8" nullable="true" />
+			<property name="Latitude" type="double" precision="12" scale="8" nullable="true" />
+			<property name="TenantTypeId" type="uint" nullable="true" />
+			<property name="TenantSubtypeId" type="byte" nullable="true" />
+			<property name="BusinessLicenseNo" type="varchar" length="50" nullable="true" />
+			<property name="BusinessLicenseKind" type="byte" nullable="false" />
+			<property name="BusinessLicenseAuthority" type="nvarchar" length="50" nullable="true" />
+			<property name="BusinessLicensePhotoPath" type="varchar" length="200" nullable="true" />
+			<property name="BusinessLicenseIssueDate" type="date" nullable="true" />
+			<property name="BusinessLicenseExpiryDate" type="date" nullable="true" />
+			<property name="BusinessLicenseDescription" type="nvarchar" length="500" nullable="true" />
+			<property name="RegisteredCapital" type="ushort" nullable="true" />
+			<property name="RegisteredAddress" type="nvarchar" length="100" nullable="true" />
+			<property name="StaffScale" type="byte" nullable="false" />
+			<property name="LegalRepresentativeName" type="nvarchar" length="50" nullable="true" />
+			<property name="LegalRepresentativeGender" type="bool" nullable="true" />
+			<property name="LegalRepresentativeEmail" type="varchar" length="50" nullable="true" />
+			<property name="LegalRepresentativeIdentityId" type="varchar" length="50" nullable="true" />
+			<property name="LegalRepresentativeIdentityKind" type="byte" nullable="false" />
+			<property name="LegalRepresentativeIdentityIssued" type="date" nullable="true" />
+			<property name="LegalRepresentativeIdentityExpiry" type="date" nullable="true" />
+			<property name="LegalRepresentativeMobilePhone" type="varchar" length="50" nullable="true" />
+			<property name="LegalRepresentativeIdentityPath1" type="varchar" length="200" nullable="true" />
+			<property name="LegalRepresentativeIdentityPath2" type="varchar" length="200" nullable="true" />
+			<property name="BankCode" type="varchar" length="50" nullable="true" />
+			<property name="BankName" type="nvarchar" length="50" nullable="true" />
+			<property name="BankAccountCode" type="varchar" length="50" nullable="true" />
+			<property name="BankAccountSetting" type="varchar" length="500" nullable="true" />
+			<property name="PhoneNumber" type="varchar" length="50" nullable="true" />
+			<property name="WebUrl" type="varchar" length="100" nullable="true" />
+			<property name="ContactName" type="nvarchar" length="50" nullable="true" />
+			<property name="ContactGender" type="bool" nullable="true" />
+			<property name="ContactEmail" type="varchar" length="50" nullable="true" />
+			<property name="ContactMobilePhone" type="varchar" length="50" nullable="true" />
+			<property name="ContactOfficePhone" type="varchar" length="50" nullable="true" />
+			<property name="ContactIdentityId" type="varchar" length="50" nullable="true" />
+			<property name="ContactIdentityKind" type="byte" nullable="false" />
+			<property name="ContactIdentityIssued" type="date" nullable="true" />
+			<property name="ContactIdentityExpiry" type="date" nullable="true" />
+			<property name="ContactIdentityPath1" type="varchar" length="200" nullable="true" />
+			<property name="ContactIdentityPath2" type="varchar" length="200" nullable="true" />
+			<property name="Flags" type="byte" nullable="false" />
+			<property name="Grade" type="byte" nullable="false" />
+			<property name="Status" type="byte" nullable="false" />
+			<property name="StatusTimestamp" type="datetime" nullable="true" />
+			<property name="StatusDescription" type="nvarchar" length="100" nullable="true" />
+			<property name="CreatorId" type="uint" nullable="false" immutable="true" />
+			<property name="CreatedTime" type="datetime" nullable="false" immutable="true" sortable="true" default="now()" />
+			<property name="ModifierId" type="uint" nullable="true" />
+			<property name="ModifiedTime" type="datetime" nullable="true" />
+			<property name="Remark" type="nvarchar" length="500" nullable="true" />
+
+			<complexProperty name="TenantType" port="TenantType">
+				<link port="TenantTypeId" />
+			</complexProperty>
+
+			<complexProperty name="TenantSubtype" port="TenantSubtype">
+				<link port="TenantTypeId" />
+				<link port="TenantSubtypeId" />
+			</complexProperty>
+
+			<complexProperty name="Creator" port="User">
+				<link port="UserId" anchor="CreatorId" />
+			</complexProperty>
+
+			<complexProperty name="Modifier" port="User">
+				<link port="UserId" anchor="ModifierId" />
+			</complexProperty>
+
+			<complexProperty name="Branches" port="Branch" multiplicity="*">
+				<link port="TenantId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="Branch">
+			<key>
+				<member name="TenantId" />
+				<member name="BranchId" />
+			</key>
+
+			<property name="TenantId" type="uint" nullable="false" immutable="true" />
+			<property name="BranchId" type="uint" nullable="false" immutable="true" />
+			<property name="BranchNo" type="varchar" length="50" nullable="false" />
+			<property name="Name" type="nvarchar" length="50" nullable="false" />
+			<property name="Abbr" type="nvarchar" length="50" nullable="true" />
+			<property name="Acronym" type="varchar" length="50" nullable="true" />
+			<property name="LogoPath" type="varchar" length="200" nullable="true" />
+			<property name="Ordinal" type="short" nullable="false" sortable="true" />
+			<property name="Language" type="char" length="2" nullable="false" default="zh" />
+			<property name="Country" type="ushort" nullable="false" />
+			<property name="AddressId" type="uint" nullable="false" />
+			<property name="AddressDetail" type="nvarchar" length="100" nullable="true" />
+			<property name="Longitude" type="double" precision="12" scale="8" nullable="true" />
+			<property name="Latitude" type="double" precision="12" scale="8" nullable="true" />
+			<property name="BusinessLicenseNo" type="varchar" length="50" nullable="true" />
+			<property name="BusinessLicenseKind" type="byte" nullable="false" />
+			<property name="BusinessLicenseAuthority" type="nvarchar" length="50" nullable="true" />
+			<property name="BusinessLicensePhotoPath" type="varchar" length="200" nullable="true" />
+			<property name="BusinessLicenseIssueDate" type="date" nullable="true" />
+			<property name="BusinessLicenseExpiryDate" type="date" nullable="true" />
+			<property name="BusinessLicenseDescription" type="nvarchar" length="500" nullable="true" />
+			<property name="RegisteredCapital" type="ushort" nullable="true" />
+			<property name="RegisteredAddress" type="nvarchar" length="100" nullable="true" />
+			<property name="StaffScale" type="byte" nullable="false" />
+			<property name="LegalRepresentativeName" type="nvarchar" length="50" nullable="true" />
+			<property name="LegalRepresentativeGender" type="bool" nullable="true" />
+			<property name="LegalRepresentativeEmail" type="varchar" length="50" nullable="true" />
+			<property name="LegalRepresentativeIdentityId" type="varchar" length="50" nullable="true" />
+			<property name="LegalRepresentativeIdentityKind" type="byte" nullable="false" />
+			<property name="LegalRepresentativeIdentityIssued" type="date" nullable="true" />
+			<property name="LegalRepresentativeIdentityExpiry" type="date" nullable="true" />
+			<property name="LegalRepresentativeMobilePhone" type="varchar" length="50" nullable="true" />
+			<property name="LegalRepresentativeIdentityPath1" type="varchar" length="200" nullable="true" />
+			<property name="LegalRepresentativeIdentityPath2" type="varchar" length="200" nullable="true" />
+			<property name="BankCode" type="varchar" length="50" nullable="true" />
+			<property name="BankName" type="nvarchar" length="50" nullable="true" />
+			<property name="BankAccountCode" type="varchar" length="50" nullable="true" />
+			<property name="BankAccountSetting" type="varchar" length="500" nullable="true" />
+			<property name="PhoneNumber" type="varchar" length="50" nullable="true" />
+			<property name="PrincipalId" type="uint" nullable="true" />
+			<property name="ContactName" type="nvarchar" length="50" nullable="true" />
+			<property name="ContactGender" type="bool" nullable="true" />
+			<property name="ContactEmail" type="varchar" length="50" nullable="true" />
+			<property name="ContactMobilePhone" type="varchar" length="50" nullable="true" />
+			<property name="ContactOfficePhone" type="varchar" length="50" nullable="true" />
+			<property name="ContactIdentityId" type="varchar" length="50" nullable="true" />
+			<property name="ContactIdentityKind" type="byte" nullable="false" />
+			<property name="ContactIdentityIssued" type="date" nullable="true" />
+			<property name="ContactIdentityExpiry" type="date" nullable="true" />
+			<property name="ContactIdentityPath1" type="varchar" length="200" nullable="true" />
+			<property name="ContactIdentityPath2" type="varchar" length="200" nullable="true" />
+			<property name="Status" type="byte" nullable="false" />
+			<property name="StatusTimestamp" type="datetime" nullable="true" />
+			<property name="StatusDescription" type="nvarchar" length="100" nullable="true" />
+			<property name="CreatorId" type="uint" nullable="false" immutable="true" />
+			<property name="CreatedTime" type="datetime" nullable="false" immutable="true" sortable="true" default="now()" />
+			<property name="ModifierId" type="uint" nullable="true" />
+			<property name="ModifiedTime" type="datetime" nullable="true" />
+			<property name="Remark" type="nvarchar" length="500" nullable="true" />
+
+			<complexProperty name="Tenant" port="Tenant">
+				<link port="TenantId" />
+			</complexProperty>
+
+			<complexProperty name="Principal" port="User">
+				<link port="UserId" anchor="PrincipalId" />
+			</complexProperty>
+
+			<complexProperty name="Creator" port="User">
+				<link port="UserId" anchor="CreatorId" />
+			</complexProperty>
+
+			<complexProperty name="Modifier" port="User">
+				<link port="UserId" anchor="ModifierId" />
+			</complexProperty>
+
+			<complexProperty name="Members" port="BranchMember:Employee" multiplicity="*">
+				<link port="TenantId" />
+				<link port="BranchId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="BranchMember">
+			<key>
+				<member name="TenantId" />
+				<member name="BranchId" />
+				<member name="UserId" />
+			</key>
+
+			<property name="TenantId" type="uint" nullable="false" immutable="true" />
+			<property name="BranchId" type="uint" nullable="false" immutable="true" />
+			<property name="UserId" type="uint" nullable="false" />
+
+			<complexProperty name="Tenant" port="Tenant">
+				<link port="TenantId" />
+			</complexProperty>
+
+			<complexProperty name="Branch" port="Branch">
+				<link port="TenantId" />
+				<link port="BranchId" />
+			</complexProperty>
+
+			<complexProperty name="Employee" port="Employee">
+				<link port="TenantId" />
+				<link port="UserId" />
+			</complexProperty>
+
+			<complexProperty name="User" port="User">
+				<link port="UserId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="Department">
+			<key>
+				<member name="TenantId" />
+				<member name="BranchId" />
+				<member name="DepartmentId" />
+			</key>
+
+			<property name="TenantId" type="uint" nullable="false" immutable="true" />
+			<property name="BranchId" type="uint" nullable="false" immutable="true" />
+			<property name="DepartmentId" type="ushort" nullable="false" sequence="#TenantId,BranchId" />
+			<property name="ParentId" type="ushort" nullable="false" />
+			<property name="DepartmentNo" type="varchar" length="50" nullable="false" />
+			<property name="Name" type="nvarchar" length="50" nullable="false" />
+			<property name="Acronym" type="varchar" length="50" nullable="true" />
+			<property name="Icon" type="varchar" length="100" nullable="true" />
+			<property name="PrincipalId" type="uint" nullable="true" />
+			<property name="PhoneNumber" type="varchar" length="50" nullable="true" />
+			<property name="Address" type="nvarchar" length="255" nullable="true" />
+			<property name="Ordinal" type="short" nullable="false" sortable="true" />
+			<property name="Remark" type="nvarchar" length="500" nullable="true" />
+
+			<complexProperty name="Tenant" port="Tenant">
+				<link port="TenantId" />
+			</complexProperty>
+
+			<complexProperty name="Branch" port="Branch">
+				<link port="TenantId" />
+				<link port="BranchId" />
+			</complexProperty>
+
+			<complexProperty name="Principal" port="User">
+				<link port="UserId" anchor="PrincipalId" />
+			</complexProperty>
+
+			<complexProperty name="Children" port="Department" multiplicity="*">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="ParentId" anchor="DepartmentId" />
+			</complexProperty>
+
+			<complexProperty name="Teams" port="Team" multiplicity="*">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="DepartmentId" />
+			</complexProperty>
+
+			<complexProperty name="Members" port="DepartmentMember" multiplicity="*" immutable="false">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="DepartmentId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="DepartmentMember">
+			<key>
+				<member name="TenantId" />
+				<member name="BranchId" />
+				<member name="DepartmentId" />
+				<member name="UserId" />
+			</key>
+
+			<property name="TenantId" type="uint" nullable="false" immutable="true" />
+			<property name="BranchId" type="uint" nullable="false" immutable="true" />
+			<property name="DepartmentId" type="ushort" nullable="false" />
+			<property name="UserId" type="uint" nullable="false" />
+
+			<complexProperty name="Department" port="Department" behaviors="principal">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="DepartmentId" />
+			</complexProperty>
+
+			<complexProperty name="Employee" port="Employee">
+				<link port="TenantId" />
+				<link port="UserId" />
+			</complexProperty>
+
+			<complexProperty name="User" port="User">
+				<link port="UserId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="Team">
+			<key>
+				<member name="TenantId" />
+				<member name="BranchId" />
+				<member name="TeamId" />
+			</key>
+
+			<property name="TenantId" type="uint" nullable="false" immutable="true" />
+			<property name="BranchId" type="uint" nullable="false" immutable="true" />
+			<property name="TeamId" type="ushort" nullable="false" sequence="#TenantId,BranchId" />
+			<property name="TeamNo" type="varchar" length="50" nullable="false" />
+			<property name="Name" type="nvarchar" length="50" nullable="false" />
+			<property name="Acronym" type="varchar" length="50" nullable="true" />
+			<property name="Icon" type="varchar" length="100" nullable="true" />
+			<property name="LeaderId" type="uint" nullable="false" />
+			<property name="DepartmentId" type="ushort" nullable="false" />
+			<property name="Visible" type="bool" nullable="false" default="true" />
+			<property name="Ordinal" type="short" nullable="false" sortable="true" />
+			<property name="Remark" type="nvarchar" length="500" nullable="true" />
+
+			<complexProperty name="Tenant" port="Tenant">
+				<link port="TenantId" />
+			</complexProperty>
+
+			<complexProperty name="Branch" port="Branch">
+				<link port="TenantId" />
+				<link port="BranchId" />
+			</complexProperty>
+
+			<complexProperty name="Department" port="Department">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="DepartmentId" />
+			</complexProperty>
+
+			<complexProperty name="Leader" port="User">
+				<link port="UserId" anchor="LeaderId" />
+			</complexProperty>
+
+			<complexProperty name="Members" port="TeamMember" multiplicity="*" immutable="false">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="TeamId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="TeamMember">
+			<key>
+				<member name="TenantId" />
+				<member name="BranchId" />
+				<member name="TeamId" />
+				<member name="UserId" />
+			</key>
+
+			<property name="TenantId" type="uint" nullable="false" immutable="true" />
+			<property name="BranchId" type="uint" nullable="false" immutable="true" />
+			<property name="TeamId" type="ushort" nullable="false" />
+			<property name="UserId" type="uint" nullable="false" />
+
+			<complexProperty name="Team" port="Team" behaviors="principal">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="TeamId" />
+			</complexProperty>
+
+			<complexProperty name="Employee" port="Employee">
+				<link port="TenantId" />
+				<link port="UserId" />
+			</complexProperty>
+
+			<complexProperty name="User" port="User">
+				<link port="UserId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="Employee">
+			<key>
+				<member name="TenantId" />
+				<member name="UserId" />
+			</key>
+
+			<property name="TenantId" type="uint" nullable="false" immutable="true" />
+			<property name="UserId" type="uint" nullable="false" immutable="true" />
+			<property name="BranchId" type="uint" nullable="false" sortable="true" />
+			<property name="EmployeeNo" type="varchar" length="50" nullable="true" />
+			<property name="EmployeeCode" type="varchar" length="50" nullable="true" />
+			<property name="EmployeeKind" type="byte" nullable="false" />
+			<property name="FullName" type="nvarchar" length="50" nullable="true" />
+			<property name="Acronym" type="varchar" length="50" nullable="true" />
+			<property name="JobTitle" type="nvarchar" length="50" nullable="true" />
+			<property name="JobStatus" type="byte" nullable="false" />
+			<property name="Hiredate" type="date" nullable="true" />
+			<property name="Leavedate" type="date" nullable="true" />
+			<property name="BankName" type="nvarchar" length="50" nullable="true" />
+			<property name="BankCode" type="varchar" length="50" nullable="true" />
+			<property name="Birthdate" type="date" nullable="true" sortable="true" />
+			<property name="PhotoPath" type="varchar" length="200" nullable="true" />
+			<property name="IdentityId" type="varchar" length="50" nullable="true" sortable="true" />
+			<property name="IdentityKind" type="byte" nullable="false" />
+			<property name="IdentityIssued" type="date" nullable="true" />
+			<property name="IdentityExpiry" type="date" nullable="true" />
+			<property name="IdentityPath1" type="varchar" length="200" nullable="true" />
+			<property name="IdentityPath2" type="varchar" length="200" nullable="true" />
+			<property name="MaritalStatus" type="byte" nullable="false" />
+			<property name="EducationDegree" type="byte" nullable="false" />
+			<property name="NativePlace" type="nvarchar" length="50" nullable="true" />
+			<property name="MobilePhone" type="varchar" length="50" nullable="true" />
+			<property name="HomePhone" type="varchar" length="50" nullable="true" />
+			<property name="HomeCountry" type="ushort" nullable="false" />
+			<property name="HomeAddressId" type="uint" nullable="false" />
+			<property name="HomeAddressDetail" type="nvarchar" length="100" nullable="true" />
+			<property name="OfficeTitle" type="nvarchar" length="100" nullable="true" />
+			<property name="OfficePhone" type="varchar" length="50" nullable="true" />
+			<property name="OfficeCountry" type="ushort" nullable="false" />
+			<property name="OfficeAddressId" type="uint" nullable="false" />
+			<property name="OfficeAddressDetail" type="nvarchar" length="100" nullable="true" />
+			<property name="CreatorId" type="uint" nullable="false" immutable="true" />
+			<property name="CreatedTime" type="datetime" nullable="false" immutable="true" sortable="true" default="now()" />
+			<property name="ModifierId" type="uint" nullable="true" />
+			<property name="ModifiedTime" type="datetime" nullable="true" />
+			<property name="Remark" type="nvarchar" length="500" nullable="true" />
+
+			<complexProperty name="User" port="User">
+				<link port="UserId" />
+			</complexProperty>
+
+			<complexProperty name="Tenant" port="Tenant">
+				<link port="TenantId" />
+			</complexProperty>
+
+			<complexProperty name="Branch" port="Branch">
+				<link port="TenantId" />
+				<link port="BranchId" />
+			</complexProperty>
+
+			<complexProperty name="Creator" port="User">
+				<link port="UserId" anchor="CreatorId" />
+			</complexProperty>
+
+			<complexProperty name="Modifier" port="User">
+				<link port="UserId" anchor="ModifierId" />
+			</complexProperty>
+
+			<complexProperty name="Departments" port="DepartmentMember:Department" multiplicity="*">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="UserId" />
+			</complexProperty>
+
+			<complexProperty name="DepartmentMembers" port="DepartmentMember" multiplicity="*" immutable="false">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="UserId" />
+			</complexProperty>
+
+			<complexProperty name="Teams" port="TeamMember:Team" multiplicity="*">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="UserId" />
+			</complexProperty>
+
+			<complexProperty name="TeamMembers" port="TeamMember" multiplicity="*" immutable="false">
+				<link port="TenantId" />
+				<link port="BranchId" />
+				<link port="UserId" />
+			</complexProperty>
+		</entity>
+	</container>
+</schema>

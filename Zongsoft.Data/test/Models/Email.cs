@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.ComponentModel;
 
-namespace Zongsoft.Data.PostgreSql.Tests.Models;
+namespace Zongsoft.Data.Tests.Models;
 
 [TypeConverter(typeof(EmailConverter))]
 public readonly struct Email(string name, string domain) : IEquatable<Email>

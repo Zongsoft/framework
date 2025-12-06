@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Zongsoft.Data.MySql.Tests.Models;
+namespace Zongsoft.Data.Tests.Models;
 
 public enum MemberType : byte
 {
