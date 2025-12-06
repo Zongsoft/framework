@@ -135,14 +135,10 @@ public class MySqlUpsertStatementVisitor : UpsertStatementVisitor
 				if(index++ > 0)
 					context.Write(",");
 
-				context.Write(context.Dialect.GetIdentifier(field.Name));
-				context.Write("=VALUES(");
-				context.Write(context.Dialect.GetIdentifier(field.Name));
-				context.Write(")");
+				var fieldName = context.Dialect.GetIdentifier(field.Name);
+				context.Write($"{fieldName}=VALUES({fieldName})");
 			}
 		}
-
-		context.WriteLine(";");
 	}
 	#endregion
 }
