@@ -125,7 +125,13 @@ public class PostgreSqlUpsertStatementVisitor : UpsertStatementVisitor
 				if(parenthesisRequired)
 					context.Write("(");
 
-				context.Visit(item.Value);
+				if(item.Value != null)
+					context.Visit(item.Value);
+				else
+				{
+					context.Write("EXCLUDED.");
+					context.Write(context.Dialect.GetIdentifier(item.Field.Name));
+				}
 
 				if(parenthesisRequired)
 					context.Write(")");
@@ -142,14 +148,10 @@ public class PostgreSqlUpsertStatementVisitor : UpsertStatementVisitor
 				if(index++ > 0)
 					context.Write(",");
 
-				context.Write(context.Dialect.GetIdentifier(field.Name));
-				context.Write("=VALUES(");
-				context.Write(context.Dialect.GetIdentifier(field.Name));
-				context.Write(")");
+				var fieldName = context.Dialect.GetIdentifier(field.Name);
+				context.Write($"{fieldName}=EXCLUDED.{fieldName}");
 			}
 		}
-
-		context.WriteLine(";");
 	}
 	#endregion
 }
