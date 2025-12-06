@@ -184,7 +184,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			if(complex.Multiplicity == DataAssociationMultiplicity.Many)
 			{
 				//注：在构建一对多的导航属性的UPSERT语句时不能指定容器数据(即data参数值为空)，因为批量操作语句不支持在构建阶段绑定到具体数据
-				var upserts = UpsertStatementBuilder.BuildUpserts(context, complex.Foreign, null, member, member.Children);
+				var upserts = UpsertStatementBuilder.BuildUpserts(context, complex.Foreign, data, member, member.Children);
 
 				//将新建的语句加入到主语句的从属集中
 				foreach(var upsert in upserts)

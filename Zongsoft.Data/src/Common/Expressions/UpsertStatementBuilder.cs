@@ -40,7 +40,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 	#region 构建方法
 	public IEnumerable<IStatementBase> Build(DataUpsertContext context)
 	{
-		return BuildUpserts(context, context.Entity, (context.IsMultiple ? null : context.Data), null, context.Schema.Members);
+		return BuildUpserts(context, context.Entity, context.Data, null, context.Schema.Members);
 	}
 	#endregion
 
@@ -49,25 +49,37 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 	{
 		var inherits = entity.GetInherits();
 		var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
-		object container = null;
+		var recordCount = 0;
 
-		if(data != null && owner != null)
+		if(owner == null)
 		{
-			/*
-			 * 如果从当前容器数据中获取指定成员值失败，则：
-			 * 1). 容器数据是集合类型，无法确定从集合中的哪个元素来获取指定成员的值，因此设置上下文数据为空；
-			 * 2). 容器数据不是集合类型，则说明指定的成员可能有误或发生了内部错误，因此抛出异常。
-			 */
-
-			if(owner.Token.TryGetValue(data, null, out var value))
+			recordCount = GetRecordCount(data, out var list);
+			if(list != null)
+				context.Data = list;
+		}
+		else
+		{
+			if(data is IEnumerable enumerable)
 			{
-				container = data;
-				data = value;
+				foreach(var item in enumerable)
+				{
+					var value = owner.Token.GetValue(item);
+					recordCount += GetRecordCount(value, out var list);
+
+					if(list != null)
+					{
+						var current = item;
+						owner.Token.SetValue(ref current, list);
+					}
+				}
 			}
-			else if(Zongsoft.Common.TypeExtension.IsEnumerable(data.GetType()))
-				data = null;
 			else
-				throw new DataException($"Cannot get the specified '{owner.Name}' member from the '{data.GetType().FullName}' type.");
+			{
+				var value = owner.Token.GetValue(data);
+				recordCount = GetRecordCount(value, out var list);
+				if(list != null)
+					owner.Token.SetValue(ref data, list);
+			}
 		}
 
 		foreach(var inherit in inherits)
@@ -100,17 +112,21 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 						var field = statement.Table.CreateField(schema.Token);
 						statement.Fields.Add(field);
 
-						var parameter = Utility.IsLinked(owner, simplex) ?
-						(
-							provided ?
-							Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
-							Expression.Parameter(schema.Token.Property.Name, simplex.Type)
-						) :
-						(
-							provided ?
+						//var parameter = Utility.IsLinked(owner, simplex) ?
+						//(
+						//	provided ?
+						//	Expression.Parameter(schema.Token.Property.Name, simplex.Type, value) :
+						//	Expression.Parameter(schema.Token.Property.Name, simplex.Type)
+						//) :
+						//(
+						//	provided ?
+						//	Expression.Parameter(field, schema, value) :
+						//	Expression.Parameter(field, schema)
+						//);
+
+						var parameter = provided ?
 							Expression.Parameter(field, schema, value) :
-							Expression.Parameter(field, schema)
-						);
+							Expression.Parameter(field, schema);
 
 						statement.Values.Add(parameter);
 						statement.Parameters.Add(parameter);
@@ -141,13 +157,14 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 						}
 
 						//确认当前成员是否有提供的写入值
-						if(context.Validate(DataAccessMethod.Update, simplex, out value))
+						if(context.IsMultiple() && context.Validate(DataAccessMethod.Update, simplex, out value))
 						{
 							parameter = Expression.Parameter(field, schema, value);
 							statement.Parameters.Add(parameter);
+							statement.Updation.Add(new FieldValue(field, parameter));
 						}
-
-						statement.Updation.Add(new FieldValue(field, parameter));
+						else
+							statement.Updation.Add(new FieldValue(field, null));
 					}
 				}
 				else
@@ -202,17 +219,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 			if(statement.Fields.Count > 0)
 			{
-				var count = GetRecordCount(data ?? context.Data, out var list);
-
-				if(list != null)
-				{
-					if(container != null)
-						owner.Token.SetValue(ref container, list);
-					else
-						context.Data = list;
-				}
-
-				for(int i = 1; i < count; i++)
+				for(int i = 1; i < recordCount; i++)
 				{
 					for(int j = 0; j < statement.Fields.Count; j++)
 					{
