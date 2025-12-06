@@ -35,7 +35,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="Zongsoft.Data.PostgreSql.Tests.mapping">
+		<Compile Include="..\..\..\test\Models\Email.cs" Link="Models\Email.cs" />
+		<Compile Include="..\..\..\test\Models\MemberModel.cs" Link="Models\MemberModel.cs" />
+		<Compile Include="..\..\..\test\Models\MemberType.cs" Link="Models\MemberType.cs" />
+		<Compile Include="..\..\..\test\Models\RoleModel.cs" Link="Models\RoleModel.cs" />
+		<Compile Include="..\..\..\test\Models\UserModel.cs" Link="Models\UserModel.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\..\test\Zongsoft.Data.Tests.mapping" Link="Zongsoft.Data.Tests.mapping">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="..\..\..\test\Zongsoft.Data.Tests-security.mapping" Link="Zongsoft.Data.Tests-security.mapping">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

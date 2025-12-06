@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Zongsoft.Data.PostgreSql.Tests.Models;
+namespace Zongsoft.Data.Tests.Models;
 
 [Model("Security.Member")]
 public abstract class MemberModel : IEquatable<MemberModel>

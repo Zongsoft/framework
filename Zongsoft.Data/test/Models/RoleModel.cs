@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Data.PostgreSql.Tests.Models;
+namespace Zongsoft.Data.Tests.Models;
 
 [Model("Security.Role")]
 public abstract class RoleModel : IEquatable<RoleModel>

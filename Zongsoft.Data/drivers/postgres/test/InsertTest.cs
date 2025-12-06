@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 using Xunit;
 
-using Zongsoft.Data.PostgreSql.Tests.Models;
+using Zongsoft.Data.Tests.Models;
 
 namespace Zongsoft.Data.PostgreSql.Tests;
 
