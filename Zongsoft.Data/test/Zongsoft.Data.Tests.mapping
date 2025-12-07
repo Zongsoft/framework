@@ -20,7 +20,7 @@
 			<property name="Timestamp" type="datetime" nullable="false" immutable="true" sortable="true" default="now()" />
 			<property name="Description" type="nvarchar" length="500" nullable="true" />
 
-			<complexProperty name="User" port="User">
+			<complexProperty name="User" port="Security.User">
 				<link port="UserId" />
 			</complexProperty>
 
@@ -110,11 +110,11 @@
 				<link port="TenantSubtypeId" />
 			</complexProperty>
 
-			<complexProperty name="Creator" port="User">
+			<complexProperty name="Creator" port="Security.User">
 				<link port="UserId" anchor="CreatorId" />
 			</complexProperty>
 
-			<complexProperty name="Modifier" port="User">
+			<complexProperty name="Modifier" port="Security.User">
 				<link port="UserId" anchor="ModifierId" />
 			</complexProperty>
 
@@ -193,15 +193,15 @@
 				<link port="TenantId" />
 			</complexProperty>
 
-			<complexProperty name="Principal" port="User">
+			<complexProperty name="Principal" port="Security.User">
 				<link port="UserId" anchor="PrincipalId" />
 			</complexProperty>
 
-			<complexProperty name="Creator" port="User">
+			<complexProperty name="Creator" port="Security.User">
 				<link port="UserId" anchor="CreatorId" />
 			</complexProperty>
 
-			<complexProperty name="Modifier" port="User">
+			<complexProperty name="Modifier" port="Security.User">
 				<link port="UserId" anchor="ModifierId" />
 			</complexProperty>
 
@@ -236,7 +236,7 @@
 				<link port="UserId" />
 			</complexProperty>
 
-			<complexProperty name="User" port="User">
+			<complexProperty name="User" port="Security.User">
 				<link port="UserId" />
 			</complexProperty>
 		</entity>
@@ -271,7 +271,7 @@
 				<link port="BranchId" />
 			</complexProperty>
 
-			<complexProperty name="Principal" port="User">
+			<complexProperty name="Principal" port="Security.User">
 				<link port="UserId" anchor="PrincipalId" />
 			</complexProperty>
 
@@ -318,7 +318,7 @@
 				<link port="UserId" />
 			</complexProperty>
 
-			<complexProperty name="User" port="User">
+			<complexProperty name="User" port="Security.User">
 				<link port="UserId" />
 			</complexProperty>
 		</entity>
@@ -358,7 +358,7 @@
 				<link port="DepartmentId" />
 			</complexProperty>
 
-			<complexProperty name="Leader" port="User">
+			<complexProperty name="Leader" port="Security.User">
 				<link port="UserId" anchor="LeaderId" />
 			</complexProperty>
 
@@ -393,7 +393,7 @@
 				<link port="UserId" />
 			</complexProperty>
 
-			<complexProperty name="User" port="User">
+			<complexProperty name="User" port="Security.User">
 				<link port="UserId" />
 			</complexProperty>
 		</entity>
@@ -445,7 +445,7 @@
 			<property name="ModifiedTime" type="datetime" nullable="true" />
 			<property name="Remark" type="nvarchar" length="500" nullable="true" />
 
-			<complexProperty name="User" port="User">
+			<complexProperty name="User" port="Security.User">
 				<link port="UserId" />
 			</complexProperty>
 
@@ -458,11 +458,11 @@
 				<link port="BranchId" />
 			</complexProperty>
 
-			<complexProperty name="Creator" port="User">
+			<complexProperty name="Creator" port="Security.User">
 				<link port="UserId" anchor="CreatorId" />
 			</complexProperty>
 
-			<complexProperty name="Modifier" port="User">
+			<complexProperty name="Modifier" port="Security.User">
 				<link port="UserId" anchor="ModifierId" />
 			</complexProperty>
 
