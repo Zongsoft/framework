@@ -445,7 +445,7 @@
 			<property name="ModifiedTime" type="datetime" nullable="true" />
 			<property name="Remark" type="nvarchar" length="500" nullable="true" />
 
-			<complexProperty name="User" port="Security.User">
+			<complexProperty name="User" port="Security.User" behaviors="principal">
 				<link port="UserId" />
 			</complexProperty>
 

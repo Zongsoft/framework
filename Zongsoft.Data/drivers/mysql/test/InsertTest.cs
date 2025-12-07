@@ -15,6 +15,53 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 	private readonly DatabaseFixture _database = database;
 
 	[Fact]
+	public async Task InsertLogAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var log = Model.Build<Log>(log =>
+		{
+			log.UserId = 1;
+			log.Target = "MyTarget";
+			log.Action = "MyAction";
+			log.TenantId = 1;
+			log.BranchId = 0;
+			log.Timestamp = DateTime.Now;
+		});
+
+		var count = await accessor.InsertAsync(log);
+		Assert.Equal(1, count);
+		Assert.True(log.LogId > 0);
+	}
+
+	[Fact]
+	public async Task InsertLogsAsync()
+	{
+		const int COUNT = 10;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var logs = Model.Build<Log>(COUNT, (log, index) =>
+		{
+			log.UserId = 1;
+			log.Target = $"MyTarget#{index}";
+			log.Action = $"MyAction#{index}";
+			log.TenantId = 1;
+			log.BranchId = 0;
+		}).ToArray();
+
+		var count = await accessor.InsertManyAsync(logs);
+		Assert.Equal(COUNT, count);
+
+		for(int i = 0; i < COUNT; i++)
+			Assert.True(logs[i].LogId > 0);
+	}
+
+	[Fact]
 	public async Task InsertAsync()
 	{
 		if(!Global.IsTestingEnabled)
