@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -130,7 +130,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		foreach(var key in statement.Entity.Key)
 		{
 			statement.Returning.Table.Field(key);
-			statement.Returning.Append(statement.Table.CreateField(key), ReturningClause.ReturningMode.Deleted);
+			statement.Returning.Append(statement.Table.CreateField(key), ReturningKind.Older);
 		}
 
 		var super = statement.Entity.GetBaseEntity();
@@ -170,7 +170,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 					{
 						//某些导航属性可能与主键相同，表定义的字段定义方法（TableDefinition.Field(...)）可避免同名字段的重复定义
 						if(statement.Returning.Table.Field((IDataEntitySimplexProperty)anchor) != null)
-							statement.Returning.Append(src.CreateField(anchor.Name), ReturningClause.ReturningMode.Deleted);
+							statement.Returning.Append(src.CreateField(anchor.Name), ReturningKind.Older);
 					}
 				}
 			}

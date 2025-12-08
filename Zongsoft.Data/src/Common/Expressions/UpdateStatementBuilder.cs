@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -78,53 +79,39 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 		if(statement.Fields.Count == 0)
 			throw new DataException($"The update statement is missing a required set clause.");
 
-		if(context.Options.Returning != null && context.Options.Returning.HasValue)
+		if(context.Options.HasReturning(out var returning))
 		{
 			if(context.Source.Features.Support(Feature.Returning))
 			{
-				if(context.Options.Returning.HasNewer)
+				foreach(var column in returning.Columns)
 				{
-					foreach(var newer in context.Options.Returning.Newer.Keys)
-					{
-						var field = statement.Table.CreateField(newer);
-						statement.Returning.Append(field, ReturningClause.ReturningMode.Inserted);
-					}
-				}
-
-				if(context.Options.Returning.HasOlder)
-				{
-					foreach(var older in context.Options.Returning.Older.Keys)
-					{
-						var field = statement.Table.CreateField(older);
-						statement.Returning.Append(field, ReturningClause.ReturningMode.Deleted);
-					}
+					var field = statement.Table.CreateField(column.Name);
+					statement.Returning.Append(field, column.Kind);
 				}
 			}
-			else if(context.Options.Returning.HasNewer)
+			else
 			{
-				if(context.Options.Returning.HasOlder)
-					throw new DataOperationException($"The {context.Source.Name} data source does not support returning the old values in the update operation.");
+				var newers = returning.Columns.Where(column => column.Kind == ReturningKind.Newer);
 
-				var slave = new SelectStatement();
-
-				foreach(var from in statement.From)
-					slave.From.Add(from);
-
-				slave.Where = statement.Where;
-
-				//注：由于从属语句的WHERE子句只是简单的指向父语句的WHERE子句，
-				//因此必须手动将父语句的参数依次添加到从属语句中。
-				foreach(var parameter in statement.Parameters)
+				if(newers.Any())
 				{
-					slave.Parameters.Add(parameter);
-				}
+					var slave = new SelectStatement();
 
-				foreach(var newer in context.Options.Returning.Newer.Keys)
-				{
-					slave.Select.Members.Add(statement.Table.CreateField(newer));
-				}
+					foreach(var from in statement.From)
+						slave.From.Add(from);
 
-				statement.Slaves.Add(slave);
+					slave.Where = statement.Where;
+
+					//注：由于从属语句的WHERE子句只是简单的指向父语句的WHERE子句，
+					//因此必须手动将父语句的参数依次添加到从属语句中。
+					foreach(var parameter in statement.Parameters)
+						slave.Parameters.Add(parameter);
+
+					foreach(var newer in newers)
+						slave.Select.Members.Add(statement.Table.CreateField(newer.Name));
+
+					statement.Slaves.Add(slave);
+				}
 			}
 		}
 
@@ -246,7 +233,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 				else
 				{
 					if(statement.Returning.Table.Field((IDataEntitySimplexProperty)anchor) != null)
-						statement.Returning.Append(source.CreateField(anchor.Name), ReturningClause.ReturningMode.Deleted);
+						statement.Returning.Append(source.CreateField(anchor.Name), ReturningKind.Older);
 
 					var field = selection.Table.CreateField(anchor);
 					selection.Select.Members.Add(field);
@@ -275,8 +262,8 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 		//获取关联的源
 		ISource source = schema.Parent == null ?
-		                 statement.Table :
-		                 statement.From[schema.Path];
+						 statement.Table :
+						 statement.From[schema.Path];
 
 		//第一步：处理模式成员所在的继承实体的关联
 		if(schema.Ancestors != null)

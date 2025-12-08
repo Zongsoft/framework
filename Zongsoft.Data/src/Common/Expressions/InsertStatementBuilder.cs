@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -108,9 +108,9 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 							var field = statement.Table.CreateField(schema.Token);
 
 							if(statement.Returning == null)
-								statement.Returning = new ReturningClause(new ReturningClause.ReturningMember(field, ReturningClause.ReturningMode.Inserted));
+								statement.Returning = new ReturningClause(new ReturningClause.ReturningMember(field, ReturningKind.Newer));
 							else
-								statement.Returning.Append(field, ReturningClause.ReturningMode.Inserted);
+								statement.Returning.Append(field, ReturningKind.Newer);
 						}
 						else
 						{

@@ -29,6 +29,7 @@
 
 using System;
 using System.Linq;
+using System.Data;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -44,6 +45,7 @@ public class Returning
 	{
 		this.Columns = new(kind, columns
 			.Where(column => !string.IsNullOrEmpty(column))
+			.Distinct(StringComparer.OrdinalIgnoreCase)
 			.Select(name => new Column(name, kind)));
 		this.Rows = new(this.Columns);
 	}
@@ -52,6 +54,7 @@ public class Returning
 	{
 		this.Columns = new(kind, columns
 			.Where(column => !string.IsNullOrEmpty(column))
+			.Distinct(StringComparer.OrdinalIgnoreCase)
 			.Select(name => new Column(name, kind)));
 		this.Rows = new(this.Columns);
 	}
@@ -217,12 +220,26 @@ public class Returning
 		}
 	}
 
-	public sealed class RowCollection(ColumnCollection columns) : IEnumerable<Row>
+	public sealed class RowCollection(ColumnCollection columns) : IReadOnlyList<Row>
 	{
+		private readonly List<Row> _rows = [];
 		private readonly ColumnCollection _columns = columns;
 
+		public int Count => _rows.Count;
+		public Row this[int index] => _rows[index];
+
+		public void Populate(IDataRecord record)
+		{
+			if(record == null)
+				throw new ArgumentNullException(nameof(record));
+
+			var values = new object[_columns.Count];
+			var row = new Row(_columns, record.GetValues(values));
+			_rows.Add(row);
+		}
+
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<Row> GetEnumerator() => throw new NotImplementedException();
+		public IEnumerator<Row> GetEnumerator() => _rows.GetEnumerator();
 	}
 	#endregion
 }

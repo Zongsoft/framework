@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -106,49 +106,96 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	#region 虚拟方法
 	protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, DbDataReader reader)
 	{
+		Returning returning;
+		SequenceToken[] sequences;
+		context.Count = reader.RecordsAffected;
+
 		switch(context)
 		{
-			case DataDeleteContext deletion when deletion.Options.HasReturning(out var returning):
-				if(reader.Read())
+			case DataDeleteContext deletion:
+				if(deletion.Options.HasReturning(out returning))
 				{
-					foreach(var name in returning.Keys)
-						returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					while(reader.Read())
+						returning.Rows.Populate(reader);
 				}
 				break;
 			case DataInsertContext insertion:
-				var sequences = GetSequences(insertion.Schema).Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)));
-				context.Count = OnReturning(context.Data, reader, sequences);
+				sequences = GetSequences(insertion.Schema)
+					.Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)))
+					.ToArray();
 
-				if(insertion.Options.HasReturning(out var returning1) && reader.Read())
+				if(insertion.Options.HasReturning(out returning))
 				{
-					foreach(var name in returning1.Keys)
-						returning1[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+
+					while(reader.Read())
+					{
+						returning.Rows.Populate(reader);
+
+						if(sequences.Length > 0)
+						{
+							var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
+
+							foreach(var sequence in sequences)
+								sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+						}
+					}
+				}
+				else if(sequences.Length > 0)
+				{
+					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+
+					while(reader.Read())
+					{
+						returning.Rows.Populate(reader);
+						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
+
+						foreach(var sequence in sequences)
+							sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+					}
 				}
 				break;
-			case DataUpdateContext updation when updation.Options.HasReturning(out var returning):
-				if(reader.Read())
+			case DataUpsertContext upsertion:
+				sequences = GetSequences(upsertion.Schema)
+					.Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)))
+					.ToArray();
+
+				if(upsertion.Options.HasReturning(out returning))
 				{
-					for(int i = 0; i < reader.FieldCount; i++)
+					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+
+					while(reader.Read())
 					{
-						var fieldName = reader.GetName(i);
-						var index = fieldName.IndexOf(':');
+						returning.Rows.Populate(reader);
 
-						if(index < 0)
+						if(sequences.Length > 0)
 						{
-							if(returning.Newer.ContainsKey(fieldName))
-								returning.Newer[fieldName] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+							var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
 
-							continue;
+							foreach(var sequence in sequences)
+								sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
 						}
-
-						var prefix = fieldName[..index];
-						var key = fieldName[(index + 1)..];
-
-						if(string.Equals(prefix, "Newer", StringComparison.OrdinalIgnoreCase) && returning.Newer.ContainsKey(key))
-							returning.Newer[key] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-						else if(string.Equals(prefix, "Older", StringComparison.OrdinalIgnoreCase) && returning.Older.ContainsKey(key))
-							returning.Older[key] = reader.IsDBNull(i) ? null : reader.GetValue(i);
 					}
+				}
+				else if(sequences.Length > 0)
+				{
+					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+
+					while(reader.Read())
+					{
+						returning.Rows.Populate(reader);
+						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
+
+						foreach(var sequence in sequences)
+							sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+					}
+				}
+				break;
+			case DataUpdateContext updation:
+				if(updation.Options.HasReturning(out returning))
+				{
+					while(reader.Read())
+						returning.Rows.Populate(reader);
 				}
 				break;
 		}
@@ -157,49 +204,96 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	}
 	protected virtual async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
 	{
+		Returning returning;
+		SequenceToken[] sequences;
+		context.Count = reader.RecordsAffected;
+
 		switch(context)
 		{
-			case DataDeleteContext deletion when deletion.Options.HasReturning(out var returning):
-				if(await reader.ReadAsync(cancellation))
+			case DataDeleteContext deletion:
+				if(deletion.Options.HasReturning(out returning))
 				{
-					foreach(var name in returning.Keys)
-						returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					while(await reader.ReadAsync(cancellation))
+						returning.Rows.Populate(reader);
 				}
 				break;
 			case DataInsertContext insertion:
-				var sequences = GetSequences(insertion.Schema).Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)));
-				context.Count = await OnReturningAsync(context.Data, reader, sequences, cancellation);
+				sequences = GetSequences(insertion.Schema)
+					.Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)))
+					.ToArray();
 
-				if(insertion.Options.HasReturning(out var returning1) && await reader.ReadAsync(cancellation))
+				if(insertion.Options.HasReturning(out returning))
 				{
-					foreach(var name in returning1.Keys)
-						returning1[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+
+					while(await reader.ReadAsync(cancellation))
+					{
+						returning.Rows.Populate(reader);
+
+						if(sequences.Length > 0)
+						{
+							var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
+
+							foreach(var sequence in sequences)
+								sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+						}
+					}
+				}
+				else if(sequences.Length > 0)
+				{
+					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+
+					while(await reader.ReadAsync(cancellation))
+					{
+						returning.Rows.Populate(reader);
+						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
+
+						foreach(var sequence in sequences)
+							sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+					}
 				}
 				break;
-			case DataUpdateContext updation when updation.Options.HasReturning(out var returning):
-				if(await reader.ReadAsync(cancellation))
+			case DataUpsertContext upsertion:
+				sequences = GetSequences(upsertion.Schema)
+					.Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)))
+					.ToArray();
+
+				if(upsertion.Options.HasReturning(out returning))
 				{
-					for(int i = 0; i < reader.FieldCount; i++)
+					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+
+					while(await reader.ReadAsync(cancellation))
 					{
-						var fieldName = reader.GetName(i);
-						var index = fieldName.IndexOf(':');
+						returning.Rows.Populate(reader);
 
-						if(index < 0)
+						if(sequences.Length > 0)
 						{
-							if(returning.Newer.ContainsKey(fieldName))
-								returning.Newer[fieldName] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+							var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
 
-							continue;
+							foreach(var sequence in sequences)
+								sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
 						}
-
-						var prefix = fieldName[..index];
-						var key = fieldName[(index + 1)..];
-
-						if(string.Equals(prefix, "Newer", StringComparison.OrdinalIgnoreCase) && returning.Newer.ContainsKey(key))
-							returning.Newer[key] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-						else if(string.Equals(prefix, "Older", StringComparison.OrdinalIgnoreCase) && returning.Older.ContainsKey(key))
-							returning.Older[key] = reader.IsDBNull(i) ? null : reader.GetValue(i);
 					}
+				}
+				else if(sequences.Length > 0)
+				{
+					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+
+					while(await reader.ReadAsync(cancellation))
+					{
+						returning.Rows.Populate(reader);
+						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
+
+						foreach(var sequence in sequences)
+							sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+					}
+				}
+				break;
+			case DataUpdateContext updation:
+				if(updation.Options.HasReturning(out returning))
+				{
+					while(await reader.ReadAsync(cancellation))
+						returning.Rows.Populate(reader);
 				}
 				break;
 		}
@@ -476,74 +570,6 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		}
 
 		return data;
-	}
-
-	private static int OnReturning(object data, DbDataReader reader, IEnumerable<SequenceToken> sequences)
-	{
-		var count = 0;
-
-		foreach(var sequence in sequences)
-		{
-			if(data is IEnumerable enumerable)
-			{
-				foreach(var item in enumerable)
-				{
-					var current = item;
-
-					if(reader.Read())
-					{
-						++count;
-						sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
-					}
-				}
-			}
-			else
-			{
-				var current = data;
-
-				if(reader.Read())
-				{
-					++count;
-					sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
-				}
-			}
-		}
-
-		return count;
-	}
-
-	private static async ValueTask<int> OnReturningAsync(object data, DbDataReader reader, IEnumerable<SequenceToken> sequences, CancellationToken cancellation)
-	{
-		var count = 0;
-
-		foreach(var sequence in sequences)
-		{
-			if(data is IEnumerable enumerable)
-			{
-				foreach(var item in enumerable)
-				{
-					var current = item;
-
-					if(await reader.ReadAsync(cancellation))
-					{
-						++count;
-						sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
-					}
-				}
-			}
-			else
-			{
-				var current = data;
-
-				if(await reader.ReadAsync(cancellation))
-				{
-					++count;
-					sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
-				}
-			}
-		}
-
-		return count;
 	}
 
 	private static IEnumerable<SchemaMember> GetSequences(Schema schema)

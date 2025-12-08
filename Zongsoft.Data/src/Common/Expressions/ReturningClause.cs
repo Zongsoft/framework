@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -67,29 +67,23 @@ public class ReturningClause
 	#endregion
 
 	#region 公共方法
-	public ReturningMember? Append(FieldIdentifier field, ReturningMode mode)
+	public ReturningMember? Append(FieldIdentifier field, ReturningKind kind)
 	{
-		var member = new ReturningMember(field, mode);
+		var member = new ReturningMember(field, kind);
 		return _members.Add(member) ? member : null;
 	}
 	#endregion
 
 	#region 嵌套结构
-	public enum ReturningMode
-	{
-		Deleted,
-		Inserted,
-	}
-
-	public readonly struct ReturningMember(FieldIdentifier field, ReturningMode mode) : IEquatable<ReturningMember>
+	public readonly struct ReturningMember(FieldIdentifier field, ReturningKind kind) : IEquatable<ReturningMember>
 	{
 		public readonly FieldIdentifier Field = field;
-		public readonly ReturningMode Mode = mode;
+		public readonly ReturningKind Kind = kind;
 
-		public bool Equals(ReturningMember other) => this.Field == other.Field && this.Mode == other.Mode;
+		public bool Equals(ReturningMember other) => this.Field == other.Field && this.Kind == other.Kind;
 		public override bool Equals(object obj) => obj is ReturningMember other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Field, this.Mode);
-		public override string ToString() => $"{this.Field}({this.Mode})";
+		public override int GetHashCode() => HashCode.Combine(this.Field, this.Kind);
+		public override string ToString() => $"{this.Field}({this.Kind})";
 
 		public static bool operator ==(ReturningMember left, ReturningMember right) => left.Equals(right);
 		public static bool operator !=(ReturningMember left, ReturningMember right) => !(left == right);
