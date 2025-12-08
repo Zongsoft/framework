@@ -47,8 +47,8 @@ public class InsertStatement : StatementBase, IMutateStatement
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取插入语句对应的序号字段值（如果有的话）的查询语句。</summary>
-	public SelectStatement Sequence { get; set; }
+	/// <summary>获取或设置插入语句对应的序号字段值的查询语句。</summary>
+	public SelectStatement SequenceRetriever { get; set; }
 
 	/// <summary>获取或设置插入语句对应的模式成员。</summary>
 	public SchemaMember Schema { get; set; }

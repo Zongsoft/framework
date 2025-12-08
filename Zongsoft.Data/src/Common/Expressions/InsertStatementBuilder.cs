@@ -103,8 +103,8 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 
 					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
 					{
-						statement.Sequence = new SelectStatement(owner?.FullPath);
-						statement.Sequence.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
+						statement.SequenceRetriever = new SelectStatement(owner?.FullPath);
+						statement.SequenceRetriever.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
 					}
 					else
 					{

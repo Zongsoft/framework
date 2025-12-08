@@ -42,8 +42,8 @@ public class DataUpsertExecutor : DataMutateExecutor<UpsertStatement>
 	protected override bool OnMutated(IDataMutateContext context, UpsertStatement statement, int count)
 	{
 		//执行获取新增后的自增型字段值
-		if(count > 0 && statement.Sequence != null)
-			context.Provider.Executor.Execute(context, statement.Sequence);
+		if(count > 0 && statement.SequenceRetriever != null)
+			context.Provider.Executor.Execute(context, statement.SequenceRetriever);
 
 		//调用基类同名方法
 		return base.OnMutated(context, statement, count);
@@ -52,8 +52,8 @@ public class DataUpsertExecutor : DataMutateExecutor<UpsertStatement>
 	protected override async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, UpsertStatement statement, int count, CancellationToken cancellation)
 	{
 		//执行获取新增后的自增型字段值
-		if(count > 0 && statement.Sequence != null)
-			await context.Provider.Executor.ExecuteAsync(context, statement.Sequence, cancellation);
+		if(count > 0 && statement.SequenceRetriever != null)
+			await context.Provider.Executor.ExecuteAsync(context, statement.SequenceRetriever, cancellation);
 
 		//调用基类同名方法
 		return await base.OnMutatedAsync(context, statement, count, cancellation);

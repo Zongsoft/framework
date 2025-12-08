@@ -47,8 +47,8 @@ public class UpsertStatement : MutateStatement
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取插入语句对应的序号字段值（如果有的话）的查询语句。</summary>
-	public SelectStatement Sequence { get; set; }
+	/// <summary>获取或设置增改语句对应的序号字段值的查询语句。</summary>
+	public SelectStatement SequenceRetriever { get; set; }
 
 	/// <summary>获取新增或更新字段集合。</summary>
 	public IList<FieldIdentifier> Fields { get; }
