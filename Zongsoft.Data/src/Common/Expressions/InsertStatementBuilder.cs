@@ -103,8 +103,20 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 
 					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
 					{
-						statement.SequenceRetriever = new SelectStatement(owner?.FullPath);
-						statement.SequenceRetriever.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
+						if(context.Source.Driver.Features.Support(Feature.Returning))
+						{
+							var field = statement.Table.CreateField(schema.Token);
+
+							if(statement.Returning == null)
+								statement.Returning = new ReturningClause(new ReturningClause.ReturningMember(field, ReturningClause.ReturningMode.Inserted));
+							else
+								statement.Returning.Append(field, ReturningClause.ReturningMode.Inserted);
+						}
+						else
+						{
+							statement.SequenceRetriever = new SelectStatement(owner?.FullPath);
+							statement.SequenceRetriever.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
+						}
 					}
 					else
 					{

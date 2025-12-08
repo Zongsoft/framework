@@ -45,7 +45,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 	#endregion
 
 	#region 私有方法
-	internal static IEnumerable<UpsertStatement> BuildUpserts(IDataMutateContextBase context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+	internal static IEnumerable<UpsertStatement> BuildUpserts(IDataMutateContext context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
 	{
 		var inherits = entity.GetInherits();
 		var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
@@ -101,8 +101,20 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
 					{
-						statement.SequenceRetriever = new SelectStatement(owner?.FullPath);
-						statement.SequenceRetriever.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
+						if(context.Source.Driver.Features.Support(Feature.Returning))
+						{
+							var field = statement.Table.CreateField(schema.Token);
+
+							if(statement.Returning == null)
+								statement.Returning = new ReturningClause(new ReturningClause.ReturningMember(field, ReturningClause.ReturningMode.Inserted));
+							else
+								statement.Returning.Append(field, ReturningClause.ReturningMode.Inserted);
+						}
+						else
+						{
+							statement.SequenceRetriever = new SelectStatement(owner?.FullPath);
+							statement.SequenceRetriever.Select.Members.Add(SequenceExpression.Current(simplex.Sequence.Name, simplex.Name));
+						}
 					}
 					else
 					{
