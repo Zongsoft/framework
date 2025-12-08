@@ -28,30 +28,51 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data;
 
+/// <summary>
+/// 表示写操作的返回数据的类。
+/// </summary>
 public class Returning
 {
 	#region 构造函数
-	public Returning(ReturningKind? kind, params Column[] columns)
+	internal Returning(ReturningKind kind, params string[] columns)
 	{
-		this.Columns = new(kind, columns);
+		this.Columns = new(kind, columns
+			.Where(column => !string.IsNullOrEmpty(column))
+			.Select(name => new Column(name, kind)));
 		this.Rows = new(this.Columns);
 	}
 
-	public Returning(ReturningKind? kind, params IEnumerable<Column> columns)
+	internal Returning(ReturningKind kind, params IEnumerable<string> columns)
 	{
-		this.Columns = new(kind, columns);
+		this.Columns = new(kind, columns
+			.Where(column => !string.IsNullOrEmpty(column))
+			.Select(name => new Column(name, kind)));
+		this.Rows = new(this.Columns);
+	}
+
+	internal Returning(params Column[] columns)
+	{
+		this.Columns = new(null, columns);
+		this.Rows = new(this.Columns);
+	}
+
+	internal Returning(params IEnumerable<Column> columns)
+	{
+		this.Columns = new(null, columns);
 		this.Rows= new(this.Columns);
 	}
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取返回数据的列信息。</summary>
 	public ColumnCollection Columns { get; }
+	/// <summary>获取返回数据的内容行。</summary>
 	public RowCollection Rows { get; }
 	#endregion
 
@@ -78,7 +99,7 @@ public class Returning
 		public ColumnCollection(ReturningKind? kind, params Column[] columns)
 		{
 			_kind = kind;
-			_columns = columns;
+			_columns = columns ?? [];
 		}
 		public ColumnCollection(ReturningKind? kind, params IEnumerable<Column> columns)
 		{
@@ -87,7 +108,8 @@ public class Returning
 		}
 
 		public int Count => _columns.Length;
-		public bool IsReadOnly => false;
+		public bool IsEmpty => _columns == null || _columns.Length == 0;
+		bool ICollection<Column>.IsReadOnly => false;
 
 		public int GetOrdinal(Column column) => this.GetOrdinal(column.Name, column.Kind);
 		public int GetOrdinal(string name, ReturningKind? kind = default)
@@ -168,21 +190,50 @@ public class Returning
 		}
 	}
 
-	public readonly struct Row(params object[] values)
-	{
-		public readonly object[] Values = values;
-		public object this[int index] => Values[index];
-	}
-
-	public sealed class RowCollection(ColumnCollection columns) : Collection<Row>
+	public readonly struct Row(ColumnCollection columns, params object[] values)
 	{
 		private readonly ColumnCollection _columns = columns;
+		public readonly object[] Values = values;
+		public object this[int index] => Values[index];
+
+		public bool TryGetValue(string name, out object value) => this.TryGetValue(name, null, out value);
+		public bool TryGetValue(string name, ReturningKind? kind, out object value)
+		{
+			if(string.IsNullOrEmpty(name))
+			{
+				value = null;
+				return false;
+			}
+
+			var ordinal = _columns.GetOrdinal(name, kind);
+			if(ordinal >= 0 && ordinal < this.Values.Length)
+			{
+				value = this.Values[ordinal];
+				return true;
+			}
+
+			value = null;
+			return false;
+		}
+	}
+
+	public sealed class RowCollection(ColumnCollection columns) : IEnumerable<Row>
+	{
+		private readonly ColumnCollection _columns = columns;
+
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<Row> GetEnumerator() => throw new NotImplementedException();
 	}
 	#endregion
 }
 
+/// <summary>
+/// 表示写操作的返回数据列种类的枚举。
+/// </summary>
 public enum ReturningKind
 {
+	/// <summary>新值</summary>
 	Newer,
+	/// <summary>旧值</summary>
 	Older,
 }

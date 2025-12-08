@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
@@ -68,14 +69,14 @@ public static class DataAccessExtension
 	public static long Increase(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options = null)
 	{
 		if(options == null)
-			options = DataUpdateOptions.Return([member]);
+			options = DataUpdateOptions.Return(ReturningKind.Newer, member);
 		else
-			options.Returning.Newer.TryAdd(member, null);
+			options.Returning.Columns.Append(member, ReturningKind.Newer);
 
 		var field = (interval > 0 ? Operand.Field(member) + interval : Operand.Field(member) - (-interval));
 
 		if(dataAccess.Update(name, new Dictionary<string, object>([new KeyValuePair<string, object>(member, field)]), criteria, options) > 0)
-			return options.Returning.Newer.TryGetValue(member, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
+			return options.Returning.Rows.First().TryGetValue(member, ReturningKind.Newer, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
 
 		return 0L;
 	}
@@ -90,14 +91,14 @@ public static class DataAccessExtension
 	public static async ValueTask<long> IncreaseAsync(this IDataAccess dataAccess, string name, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default)
 	{
 		if(options == null)
-			options = DataUpdateOptions.Return([member]);
+			options = DataUpdateOptions.Return(ReturningKind.Newer, member);
 		else
-			options.Returning.Newer.TryAdd(member, null);
+			options.Returning.Columns.Append(member, ReturningKind.Newer);
 
 		var field = (interval > 0 ? Operand.Field(member) + interval : Operand.Field(member) - (-interval));
 
 		if(await dataAccess.UpdateAsync(name, new Dictionary<string, object>([new KeyValuePair<string, object>(member, field)]), criteria, options, cancellation) > 0)
-			return options.Returning.Newer.TryGetValue(member, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
+			return options.Returning.Rows.First().TryGetValue(member, ReturningKind.Newer, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
 
 		return 0L;
 	}

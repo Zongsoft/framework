@@ -38,12 +38,12 @@ namespace Zongsoft.Data;
 public interface IDataDeleteOptions : IDataMutateOptions
 {
 	/// <summary>获取或设置删除操作的返回设置。</summary>
-	DataDeleteReturning Returning { get; set; }
+	Returning Returning { get; set; }
 
 	/// <summary>获取当前删除操作是否指定了返回设置。</summary>
 	/// <param name="returning">输出参数，返回指定的返回设置。</param>
 	/// <returns>如果返回真(<c>True</c>)则表示指定了返回设置，否则返回假(<c>False</c>)。</returns>
-	bool HasReturning(out DataDeleteReturning returning);
+	bool HasReturning(out Returning returning);
 }
 
 /// <summary>
@@ -59,28 +59,28 @@ public class DataDeleteOptions : DataMutateOptions, IDataDeleteOptions
 
 	#region 公共属性
 	/// <inheritdoc />
-	public DataDeleteReturning Returning { get; set; }
+	public Returning Returning { get; set; }
 	#endregion
 
 	#region 公共方法
-	public bool HasReturning(out DataDeleteReturning returning)
+	public bool HasReturning(out Returning returning)
 	{
 		returning = this.Returning;
-		return returning != null && returning.HasValue;
+		return returning != null && !returning.Columns.IsEmpty;
 	}
 	#endregion
 
 	#region 静态方法
 	/// <summary>创建一个带返回设置的数据操作选项构建器。</summary>
-	/// <param name="names">指定的删除前的返回成员名数组。</param>
+	/// <param name="names">指定的删除前的返回成员名集。</param>
 	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-	public static Builder Return(params string[] names) => new(null) { Returning = new DataDeleteReturning(names) };
+	public static Builder Return(params IEnumerable<string> names) => new(null) { Returning = new(ReturningKind.Older, names) };
 
 	/// <summary>创建一个带参数的数据操作选项构建器。</summary>
 	/// <param name="name">指定的参数名称。</param>
 	/// <param name="value">指定的参数值。</param>
 	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-	public static Builder Parameter(string name, object value = null) => new(new[] { new KeyValuePair<string, object>(name, value) });
+	public static Builder Parameter(string name, object value = null) => new([new KeyValuePair<string, object>(name, value)]);
 
 	/// <summary>创建一个带参数的数据操作选项构建器。</summary>
 	/// <param name="parameters">指定的多个附加参数。</param>
@@ -107,35 +107,20 @@ public class DataDeleteOptions : DataMutateOptions, IDataDeleteOptions
 
 		#region 公共属性
 		/// <summary>获取或设置删除操作的返回设置。</summary>
-		public DataDeleteReturning Returning { get; set; }
+		public Returning Returning { get; set; }
 		#endregion
 
 		#region 设置方法
-		public Builder Return(params string[] names)
-		{
-			if(names == null || names.Length == 0)
-				this.Returning = null;
-			else if(this.Returning == null)
-				this.Returning = new(names);
-			else
-			{
-				for(int i = 0; i < names.Length; i++)
-					this.Returning.Add(names[i]);
-			}
-
-			return this;
-		}
-
-		public Builder Return(IEnumerable<string> names)
+		public Builder Return(params IEnumerable<string> names)
 		{
 			if(names == null)
 				this.Returning = null;
 			else if(this.Returning == null)
-				this.Returning = new(names);
+				this.Returning = new(ReturningKind.Older, names);
 			else
 			{
 				foreach(var name in names)
-					this.Returning.Add(name);
+					this.Returning.Columns.Append(name);
 			}
 
 			return this;

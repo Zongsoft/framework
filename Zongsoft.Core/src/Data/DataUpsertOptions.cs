@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data;
@@ -45,6 +46,14 @@ public interface IDataUpsertOptions : IDataMutateOptions
 
 	/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
 	bool SequenceRetrieverSuppressed { get; set; }
+
+	/// <summary>获取或设置增改操作的返回设置。</summary>
+	Returning Returning { get; set; }
+
+	/// <summary>获取当前增改操作是否指定了返回设置。</summary>
+	/// <param name="returning">输出参数，返回指定的返回设置。</param>
+	/// <returns>如果返回真(<c>True</c>)则表示指定了返回设置，否则返回假(<c>False</c>)。</returns>
+	bool HasReturning(out Returning returning);
 }
 
 /// <summary>
@@ -65,9 +74,25 @@ public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 	public bool SequenceSuppressed { get; set; }
 	/// <inheritdoc />
 	public bool SequenceRetrieverSuppressed { get; set; }
+	/// <inheritdoc />
+	public Returning Returning { get; set; }
+	#endregion
+
+	#region 公共方法
+	public bool HasReturning(out Returning returning)
+	{
+		returning = this.Returning;
+		return returning != null && !returning.Columns.IsEmpty;
+	}
 	#endregion
 
 	#region 静态方法
+	/// <summary>创建一个带返回设置的数据操作选项构建器。</summary>
+	/// <param name="kind">指定的增改后的成员返回种类。</param>
+	/// <param name="names">指定的增改后的成员名集合。</param>
+	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+	public static Builder Return(ReturningKind kind, params IEnumerable<string> names) => new(null) { Returning = new(names.Select(name => new Returning.Column(name, kind))) };
+
 	/// <summary>创建一个带参数的数据操作选项构建器。</summary>
 	/// <param name="name">指定的参数名称。</param>
 	/// <param name="value">指定的参数值。</param>
@@ -117,9 +142,27 @@ public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 
 		/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
 		public bool SequenceRetrieverSuppressed { get; set; }
+
+		/// <summary>获取或设置增改操作的返回设置。</summary>
+		public Returning Returning { get; set; }
 		#endregion
 
 		#region 设置方法
+		public Builder Return(ReturningKind kind, params IEnumerable<string> names)
+		{
+			if(names == null)
+				this.Returning = null;
+			else if(this.Returning == null)
+				this.Returning = new(names.Select(name => new Returning.Column(name, kind)));
+			else
+			{
+				foreach(var name in names)
+					this.Returning.Columns.Append(name, kind);
+			}
+
+			return this;
+		}
+
 		public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 		public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
 		public Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) { this.Parameters.SetValue(parameters); return this; }
