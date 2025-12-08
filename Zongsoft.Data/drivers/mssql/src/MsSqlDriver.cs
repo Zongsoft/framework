@@ -53,8 +53,7 @@ namespace Zongsoft.Data.MsSql
 		private MsSqlDriver()
 		{
 			//添加 MsSql(SQL Server) 支持的功能特性集
-			this.Features.Add(Feature.Deletion.Outputting);
-			this.Features.Add(Feature.Updation.Outputting);
+			this.Features.Add(Feature.Returning);
 		}
 		#endregion
 

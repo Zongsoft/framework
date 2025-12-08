@@ -54,6 +54,7 @@ public partial class PostgreSqlDriver : DataDriverBase
 	{
 		this.Getter = new PostgreSqlGetter();
 		this.Setter = new PostgreSqlSetter();
+		this.Features.Add(Feature.Returning);
 	}
 	#endregion
 

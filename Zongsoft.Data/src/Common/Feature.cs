@@ -38,6 +38,9 @@ public class Feature : IEquatable<Feature>, IComparable<Feature>
 	/// <remarks>更多信息请参考微软文档：<see ref="https://docs.microsoft.com/zh-cn/dotnet/framework/data/adonet/sql/multiple-active-result-sets-mars" />。</remarks>
 	public static readonly Feature MultipleActiveResultSets = new(nameof(MultipleActiveResultSets));
 
+	/// <summary>表示“Returning”子句的特性，主流数据库中只有 MySQL 不支持（注：在 Microsoft SQL Server 中被称作 Output 子句）。</summary>
+	public static readonly Feature Returning = new(nameof(Returning));
+
 	/// <summary>表示不支持数据事务功能。</summary>
 	public static readonly Feature TransactionSuppressed = new(nameof(TransactionSuppressed));
 	#endregion
@@ -110,9 +113,6 @@ public class Feature : IEquatable<Feature>, IComparable<Feature>
 		#region 公共字段
 		/// <summary>表示删除语句中“多表删除”的功能特性。</summary>
 		public static readonly Feature Multitable = new(FEATURE_DELETE_PREFIX + nameof(Multitable));
-
-		/// <summary>表示删除语句中“输出子句”的功能特性。</summary>
-		public static readonly Feature Outputting = new(FEATURE_DELETE_PREFIX + nameof(Outputting));
 		#endregion
 	}
 
@@ -128,9 +128,6 @@ public class Feature : IEquatable<Feature>, IComparable<Feature>
 		#region 公共字段
 		/// <summary>表示更新语句中“多表更新”的功能特性。</summary>
 		public static readonly Feature Multitable = new(FEATURE_UPDATE_PREFIX + nameof(Multitable));
-
-		/// <summary>表示更新语句中“输出子句”的功能特性。</summary>
-		public static readonly Feature Outputting = new(FEATURE_UPDATE_PREFIX + nameof(Outputting));
 		#endregion
 	}
 	#endregion

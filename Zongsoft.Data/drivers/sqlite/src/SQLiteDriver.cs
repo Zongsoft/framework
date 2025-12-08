@@ -50,7 +50,10 @@ namespace Zongsoft.Data.SQLite
 		#endregion
 
 		#region 私有构造
-		private SQLiteDriver() { }
+		private SQLiteDriver()
+		{
+			this.Features.Add(Feature.Returning);
+		}
 		#endregion
 
 		#region 公共属性

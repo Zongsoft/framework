@@ -80,7 +80,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 		if(context.Options.Returning != null && context.Options.Returning.HasValue)
 		{
-			if(context.Source.Features.Support(Feature.Updation.Outputting))
+			if(context.Source.Features.Support(Feature.Returning))
 			{
 				if(context.Options.Returning.HasNewer)
 				{
