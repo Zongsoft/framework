@@ -28,7 +28,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			log.Action = "MyAction";
 			log.TenantId = 1;
 			log.BranchId = 0;
-			log.Timestamp = DateTime.Now;
+			log.Timestamp = DateTime.UtcNow;
 		});
 
 		var count = await accessor.InsertAsync(log);
@@ -52,6 +52,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			log.Action = $"MyAction#{index}";
 			log.TenantId = 1;
 			log.BranchId = 0;
+			log.Timestamp = DateTime.UtcNow;
 		}).ToArray();
 
 		var count = await accessor.InsertManyAsync(logs);
