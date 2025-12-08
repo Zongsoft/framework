@@ -109,15 +109,27 @@ public class PostgreSqlExpressionVisitor : ExpressionVisitorBase
 
 	protected override void VisitFunction(ExpressionVisitorContext context, MethodExpression expression)
 	{
-		if(expression is CastFunctionExpression casting)
+		switch(expression)
 		{
-			context.Write("CONVERT(");
-			this.OnVisit(context, casting.Value);
-			context.Write(",");
-			context.Write(this.Dialect.GetDataType(casting.Type, casting.Length, casting.Precision, casting.Scale));
-			context.Write(")");
+			case CastFunctionExpression casting:
+				context.Write("CONVERT(");
+				this.OnVisit(context, casting.Value);
+				context.Write(",");
+				context.Write(this.Dialect.GetDataType(casting.Type, casting.Length, casting.Precision, casting.Scale));
+				context.Write(")");
+				return;
+			case SequenceExpression sequence:
+				var serial = sequence.Arguments != null && sequence.Arguments.Count > 0 ? sequence.Arguments[0]?.ToString() : null;
 
-			return;
+				var text = sequence.Method switch
+				{
+					SequenceMethod.Current => string.IsNullOrEmpty(serial) ? "lastval()" : $"currval('{serial}')",
+					SequenceMethod.Next => $"nextval('{serial ?? sequence.Name}')",
+					_ => throw new NotSupportedException($"Invalid '{sequence.Method}' sequence method."),
+				};
+
+				context.Write(text);
+				return;
 		}
 
 		base.VisitFunction(context, expression);
@@ -233,7 +245,6 @@ public class PostgreSqlExpressionVisitor : ExpressionVisitorBase
 			return method switch
 			{
 				AggregateExpression aggregate => GetAggregateName(aggregate.Function),
-				SequenceExpression sequence => GetSequenceName(sequence),
 				_ => method.Name,
 			};
 		}
@@ -254,19 +265,6 @@ public class PostgreSqlExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.VariancePopulation => "VAR_POP",
 			_ => throw new NotSupportedException($"Invalid '{function}' aggregate method."),
 		};
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetSequenceName(SequenceExpression sequence)
-		{
-			var serial = sequence.Arguments != null && sequence.Arguments.Count > 0 ? sequence.Arguments[0]?.ToString() : null;
-
-			return sequence.Method switch
-			{
-				SequenceMethod.Current => string.IsNullOrEmpty(serial) ? "lastval()" : $"currval('{serial}')",
-				SequenceMethod.Next => $"nextval('{serial ?? sequence.Name}')",
-				_ => throw new NotSupportedException($"Invalid '{sequence.Method}' sequence method."),
-			};
-		}
 		#endregion
 	}
 

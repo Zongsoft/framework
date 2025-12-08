@@ -84,19 +84,38 @@ namespace Zongsoft.Data.MsSql
 
 		protected override void VisitFunction(ExpressionVisitorContext context, MethodExpression expression)
 		{
-			if(expression is CastFunctionExpression casting)
+			switch(expression)
 			{
-				context.Write("CONVERT(");
-				context.Write(this.Dialect.GetDataType(casting.Type, casting.Length, casting.Precision, casting.Scale));
-				context.Write(",");
-				this.OnVisit(context, casting.Value);
+				case CastFunctionExpression casting:
+					context.Write("CONVERT(");
+					context.Write(this.Dialect.GetDataType(casting.Type, casting.Length, casting.Precision, casting.Scale));
+					context.Write(",");
+					this.OnVisit(context, casting.Value);
 
-				if(!string.IsNullOrWhiteSpace(casting.Style))
-					context.Write("," + casting.Style);
+					if(!string.IsNullOrWhiteSpace(casting.Style))
+						context.Write("," + casting.Style);
 
-				context.Write(")");
+					context.Write(")");
+					return;
+				case SequenceExpression sequence:
+					if(string.IsNullOrEmpty(sequence.Name))
+					{
+						if(sequence.Method == SequenceMethod.Current)
+							context.Write("SCOPE_IDENTITY()");
+						else
+							throw new DataException($"The SQL Server driver does not support the '{sequence.Method}' sequence function without a name argument.");
 
-				return;
+						return;
+					}
+
+					var text = sequence.Method switch
+					{
+						SequenceMethod.Next => "NEXT VALUE FOR " + sequence.Name,
+						_ => throw new DataException($"The SQL Server driver does not support the '{sequence.Method}' sequence function with a name argument."),
+					};
+
+					context.Write(text);
+					return;
 			}
 
 			base.VisitFunction(context, expression);
@@ -180,7 +199,6 @@ namespace Zongsoft.Data.MsSql
 				return method switch
 				{
 					AggregateExpression aggregate => GetAggregateName(aggregate.Function),
-					SequenceExpression sequence => GetSequenceName(sequence),
 					_ => method.Name,
 				};
 			}
@@ -201,24 +219,6 @@ namespace Zongsoft.Data.MsSql
 				DataAggregateFunction.VariancePopulation => "VARP",
 				_ => throw new NotSupportedException($"Invalid '{function}' aggregate method."),
 			};
-
-			[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-			private static string GetSequenceName(SequenceExpression sequence)
-			{
-				if(string.IsNullOrEmpty(sequence.Name))
-				{
-					if(sequence.Method == SequenceMethod.Current)
-						return "SCOPE_IDENTITY()";
-
-					throw new DataException($"The SQL Server driver does not support the '{sequence.Method}' sequence function without a name argument.");
-				}
-
-				return sequence.Method switch
-				{
-					SequenceMethod.Next => "NEXT VALUE FOR " + sequence.Name,
-					_ => throw new DataException($"The SQL Server driver does not support the '{sequence.Method}' sequence function with a name argument."),
-				};
-			}
 			#endregion
 		}
 
