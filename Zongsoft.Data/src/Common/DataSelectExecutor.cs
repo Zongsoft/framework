@@ -97,7 +97,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 							schema = child;
 
 						var data = context.Data;
-						schema.Token.SetValue(ref data, reader.GetValue(i));
+						SetSequenceValue(data, schema, reader.GetValue(i));
 						context.Data = data;
 					}
 				}
@@ -133,7 +133,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 							schema = child;
 
 						var data = context.Data;
-						schema.Token.SetValue(ref data, reader.GetValue(i));
+						SetSequenceValue(data, schema, reader.GetValue(i));
 						context.Data = data;
 					}
 				}
@@ -199,7 +199,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 							schema = child;
 
 						var data = context.Data;
-						schema.Token.SetValue(ref data, reader.GetValue(i));
+						SetSequenceValue(data, schema, reader.GetValue(i));
 						context.Data = data;
 					}
 				}
@@ -235,7 +235,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 							schema = child;
 
 						var data = context.Data;
-						schema.Token.SetValue(ref data, reader.GetValue(i));
+						SetSequenceValue(data, schema, reader.GetValue(i));
 						context.Data = data;
 					}
 				}
@@ -247,6 +247,36 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 	#endregion
 
 	#region 私有方法
+	private static void SetSequenceValue(object data, SchemaMember member, object value)
+	{
+		if(data == null || value == null || Convert.IsDBNull(value))
+			return;
+
+		if(data is IEnumerable enumerable)
+		{
+			if(member.Token.Property.IsSimplex(out var simplex) && simplex.Sequence.IsBuiltin)
+			{
+				var id = Zongsoft.Common.Convert.ConvertValue<long>(value);
+
+				foreach(var item in enumerable)
+				{
+					var current = item;
+					member.Token.SetValue(ref current, id++);
+				}
+			}
+			else
+			{
+				foreach(var item in enumerable)
+				{
+					var current = item;
+					member.Token.SetValue(ref current, value);
+				}
+			}
+		}
+		else
+			member.Token.SetValue(ref data, value);
+	}
+
 	private static IEnumerable CreateResults(Type elementType, DataSelectContext context, SelectStatement statement, DbCommand command, int skip, Paging paging = null)
 	{
 		return (IEnumerable)System.Activator.CreateInstance(
