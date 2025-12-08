@@ -129,6 +129,10 @@ public class PostgreSqlExpressionVisitor : ExpressionVisitorBase
 				};
 
 				context.Write(text);
+
+				if(!string.IsNullOrEmpty(expression.Alias))
+					context.Write(" AS " + this.Dialect.GetAlias(expression.Alias));
+
 				return;
 		}
 
