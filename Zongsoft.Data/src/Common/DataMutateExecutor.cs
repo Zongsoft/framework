@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
@@ -114,11 +115,14 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 						returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
 				}
 				break;
-			case DataInsertContext insertion when insertion.Options.HasReturning(out var returning):
-				if(reader.Read())
+			case DataInsertContext insertion:
+				var sequences = GetSequences(insertion.Schema).Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)));
+				context.Count = OnReturning(context.Data, reader, sequences);
+
+				if(insertion.Options.HasReturning(out var returning1) && reader.Read())
 				{
-					foreach(var name in returning.Keys)
-						returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					foreach(var name in returning1.Keys)
+						returning1[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
 				}
 				break;
 			case DataUpdateContext updation when updation.Options.HasReturning(out var returning):
@@ -162,11 +166,14 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 						returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
 				}
 				break;
-			case DataInsertContext insertion when insertion.Options.HasReturning(out var returning):
-				if(await reader.ReadAsync(cancellation))
+			case DataInsertContext insertion:
+				var sequences = GetSequences(insertion.Schema).Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)));
+				context.Count = await OnReturningAsync(context.Data, reader, sequences, cancellation);
+
+				if(insertion.Options.HasReturning(out var returning1) && await reader.ReadAsync(cancellation))
 				{
-					foreach(var name in returning.Keys)
-						returning[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
+					foreach(var name in returning1.Keys)
+						returning1[name] = reader.IsDBNull(name) ? null : reader.GetValue(name);
 				}
 				break;
 			case DataUpdateContext updation when updation.Options.HasReturning(out var returning):
@@ -470,9 +477,92 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 		return data;
 	}
+
+	private static int OnReturning(object data, DbDataReader reader, IEnumerable<SequenceToken> sequences)
+	{
+		var count = 0;
+
+		foreach(var sequence in sequences)
+		{
+			if(data is IEnumerable enumerable)
+			{
+				foreach(var item in enumerable)
+				{
+					var current = item;
+
+					if(reader.Read())
+					{
+						++count;
+						sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+					}
+				}
+			}
+			else
+			{
+				var current = data;
+
+				if(reader.Read())
+				{
+					++count;
+					sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+				}
+			}
+		}
+
+		return count;
+	}
+
+	private static async ValueTask<int> OnReturningAsync(object data, DbDataReader reader, IEnumerable<SequenceToken> sequences, CancellationToken cancellation)
+	{
+		var count = 0;
+
+		foreach(var sequence in sequences)
+		{
+			if(data is IEnumerable enumerable)
+			{
+				foreach(var item in enumerable)
+				{
+					var current = item;
+
+					if(await reader.ReadAsync(cancellation))
+					{
+						++count;
+						sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+					}
+				}
+			}
+			else
+			{
+				var current = data;
+
+				if(await reader.ReadAsync(cancellation))
+				{
+					++count;
+					sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
+				}
+			}
+		}
+
+		return count;
+	}
+
+	private static IEnumerable<SchemaMember> GetSequences(Schema schema)
+	{
+		foreach(var member in schema.Members)
+		{
+			if(member.Token.Property.IsSimplex(out var simplex) && simplex.Sequence != null && simplex.Sequence.IsBuiltin)
+				yield return member;
+		}
+	}
 	#endregion
 
 	#region 私有结构
+	private readonly struct SequenceToken(SchemaMember member, int ordinal)
+	{
+		public readonly SchemaMember Member = member;
+		public readonly int Ordinal = ordinal;
+	}
+
 	private readonly struct LinkToken
 	{
 		public LinkToken(IDataEntitySimplexProperty foreign, object value)
