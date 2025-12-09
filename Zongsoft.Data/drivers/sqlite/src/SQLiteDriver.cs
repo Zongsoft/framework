@@ -36,60 +36,59 @@ using Microsoft.Data.Sqlite;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.SQLite
+namespace Zongsoft.Data.SQLite;
+
+public class SQLiteDriver : DataDriverBase
 {
-	public class SQLiteDriver : DataDriverBase
+	#region 公共常量
+	/// <summary>驱动程序的标识：SQLite。</summary>
+	public const string NAME = "SQLite";
+	#endregion
+
+	#region 单例字段
+	public static readonly SQLiteDriver Instance = new();
+	#endregion
+
+	#region 私有构造
+	private SQLiteDriver()
 	{
-		#region 公共常量
-		/// <summary>驱动程序的标识：SQLite。</summary>
-		public const string NAME = "SQLite";
-		#endregion
-
-		#region 单例字段
-		public static readonly SQLiteDriver Instance = new();
-		#endregion
-
-		#region 私有构造
-		private SQLiteDriver()
-		{
-			this.Features.Add(Feature.Returning);
-		}
-		#endregion
-
-		#region 公共属性
-		public override string Name => NAME;
-		public override IStatementBuilder Builder => SQLiteStatementBuilder.Default;
-		#endregion
-
-		#region 公共方法
-		public override Exception OnError(IDataAccessContext context, Exception exception)
-		{
-			if(exception is SqliteException error)
-			{
-				switch(error.SqliteErrorCode)
-				{
-					case -1:
-						break;
-				}
-			}
-
-			return exception;
-		}
-
-		public override DbCommand CreateCommand() => new SqliteCommand();
-		public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new SqliteCommand(text)
-		{
-			CommandType = commandType,
-		};
-
-		public override DbConnection CreateConnection(string connectionString = null) => new SqliteConnection(connectionString);
-		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqliteConnectionStringBuilder(connectionString);
-
-		public override IDataImporter CreateImporter() => new SQLiteImporter();
-		#endregion
-
-		#region 保护方法
-		protected override ExpressionVisitorBase CreateVisitor() => new SQLiteExpressionVisitor();
-		#endregion
+		this.Features.Add(Feature.Returning);
 	}
+	#endregion
+
+	#region 公共属性
+	public override string Name => NAME;
+	public override IStatementBuilder Builder => SQLiteStatementBuilder.Default;
+	#endregion
+
+	#region 公共方法
+	public override Exception OnError(IDataAccessContext context, Exception exception)
+	{
+		if(exception is SqliteException error)
+		{
+			switch(error.SqliteErrorCode)
+			{
+				case -1:
+					break;
+			}
+		}
+
+		return exception;
+	}
+
+	public override DbCommand CreateCommand() => new SqliteCommand();
+	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new SqliteCommand(text)
+	{
+		CommandType = commandType,
+	};
+
+	public override DbConnection CreateConnection(string connectionString = null) => new SqliteConnection(connectionString);
+	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqliteConnectionStringBuilder(connectionString);
+
+	public override IDataImporter CreateImporter() => new SQLiteImporter();
+	#endregion
+
+	#region 保护方法
+	protected override ExpressionVisitorBase CreateVisitor() => new SQLiteExpressionVisitor();
+	#endregion
 }

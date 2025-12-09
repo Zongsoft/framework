@@ -37,7 +37,7 @@ namespace Zongsoft.Data.PostgreSql;
 public class PostgreSqlUpsertStatementVisitor : UpsertStatementVisitor
 {
 	#region 单例字段
-	public static readonly PostgreSqlUpsertStatementVisitor Instance = new PostgreSqlUpsertStatementVisitor();
+	public static readonly PostgreSqlUpsertStatementVisitor Instance = new();
 	#endregion
 
 	#region 构造函数

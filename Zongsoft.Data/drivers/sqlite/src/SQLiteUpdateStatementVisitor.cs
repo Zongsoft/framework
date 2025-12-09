@@ -33,29 +33,28 @@ using System.Collections.Generic;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.SQLite
+namespace Zongsoft.Data.SQLite;
+
+public class SQLiteUpdateStatementVisitor : UpdateStatementVisitor
 {
-	public class SQLiteUpdateStatementVisitor : UpdateStatementVisitor
+	#region 单例字段
+	public static readonly SQLiteUpdateStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private SQLiteUpdateStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 	{
-		#region 单例字段
-		public static readonly SQLiteUpdateStatementVisitor Instance = new SQLiteUpdateStatementVisitor();
-		#endregion
+		if(tables.Count > 1)
+			throw new DataException("The generated Update statement is incorrect, The data engine does not support multi-table updates.");
 
-		#region 构造函数
-		private SQLiteUpdateStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-		protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
-		{
-			if(tables.Count > 1)
-				throw new DataException("The generated Update statement is incorrect, The data engine does not support multi-table updates.");
-
-			if(string.IsNullOrEmpty(tables[0].Alias))
-				context.Visit(tables[0]);
-			else
-				context.Write(tables[0].Alias);
-		}
-		#endregion
+		if(string.IsNullOrEmpty(tables[0].Alias))
+			context.Visit(tables[0]);
+		else
+			context.Write(tables[0].Alias);
 	}
+	#endregion
 }

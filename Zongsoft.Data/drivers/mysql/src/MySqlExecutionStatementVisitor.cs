@@ -37,7 +37,7 @@ namespace Zongsoft.Data.MySql;
 public class MySqlExecutionStatementVisitor : ExecutionStatementVisitor
 {
 	#region 单例字段
-	public static readonly MySqlExecutionStatementVisitor Instance = new MySqlExecutionStatementVisitor();
+	public static readonly MySqlExecutionStatementVisitor Instance = new();
 	#endregion
 
 	#region 构造函数

@@ -32,12 +32,11 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlAggregateStatementBuilder : AggregateStatementBuilder
 {
-	public class MsSqlAggregateStatementBuilder : AggregateStatementBuilder
-	{
-		#region 构造函数
-		public MsSqlAggregateStatementBuilder() { }
-		#endregion
-	}
+	#region 构造函数
+	public MsSqlAggregateStatementBuilder() { }
+	#endregion
 }

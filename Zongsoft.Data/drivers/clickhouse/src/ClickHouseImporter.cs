@@ -41,76 +41,75 @@ using Zongsoft.Reflection;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.ClickHouse
+namespace Zongsoft.Data.ClickHouse;
+
+public class ClickHouseImporter : DataImporterBase
 {
-	public class ClickHouseImporter : DataImporterBase
+	#region 公共方法
+	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		#region 公共方法
-		protected override void OnImport(DataImportContext context, MemberCollection members)
+		var bulker = GetBulker(context);
+		if(bulker == null)
+			return;
+
+		var records = GetRecords(context, members);
+		if(records == null)
+			return;
+
+		bulker.WriteToServerAsync(records).ConfigureAwait(false).GetAwaiter().GetResult();
+	}
+
+	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
+	{
+		var bulker = GetBulker(context);
+		if(bulker == null)
+			return;
+
+		var records = GetRecords(context, members);
+		if(records == null)
+			return;
+
+		await bulker.WriteToServerAsync(records, cancellation);
+	}
+	#endregion
+
+	#region 私有方法
+	private static ClickHouseConnection GetConnection(DataImportContext context) => (ClickHouseConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+
+	private static ClickHouseBulkCopy GetBulker(DataImportContext context)
+	{
+		var connection = GetConnection(context);
+		var bulker = new ClickHouseBulkCopy(connection)
 		{
-			var bulker = GetBulker(context);
-			if(bulker == null)
-				return;
+			DestinationTableName = context.Entity.GetTableName(),
+			ColumnNames = context.Members,
+		};
 
-			var records = GetRecords(context, members);
-			if(records == null)
-				return;
+		return bulker;
+	}
 
-			bulker.WriteToServerAsync(records).ConfigureAwait(false).GetAwaiter().GetResult();
-		}
+	private static List<object[]> GetRecords(DataImportContext context, MemberCollection members)
+	{
+		if(members == null || members.Count == 0)
+			return null;
 
-		protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
+		//构建导入的数据记录集
+		var records = new List<object[]>();
+
+		foreach(var item in context.Data)
 		{
-			var bulker = GetBulker(context);
-			if(bulker == null)
-				return;
+			var target = item;
+			var record = new object[members.Count];
 
-			var records = GetRecords(context, members);
-			if(records == null)
-				return;
-
-			await bulker.WriteToServerAsync(records, cancellation);
-		}
-		#endregion
-
-		#region 私有方法
-		private static ClickHouseConnection GetConnection(DataImportContext context) => (ClickHouseConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-
-		private static ClickHouseBulkCopy GetBulker(DataImportContext context)
-		{
-			var connection = GetConnection(context);
-			var bulker = new ClickHouseBulkCopy(connection)
+			for(int i = 0; i < members.Count; i++)
 			{
-				DestinationTableName = context.Entity.GetTableName(),
-				ColumnNames = context.Members,
-			};
-
-			return bulker;
-		}
-
-		private static List<object[]> GetRecords(DataImportContext context, MemberCollection members)
-		{
-			if(members == null || members.Count == 0)
-				return null;
-
-			//构建导入的数据记录集
-			var records = new List<object[]>();
-
-			foreach(var item in context.Data)
-			{
-				var target = item;
-				var record = new object[members.Count];
-
-				for(int i = 0; i < members.Count; i++)
-				{
-					record[i] = members[i].GetValue(ref target);
-				}
-
-				records.Add(record);
+				record[i] = members[i].GetValue(ref target);
 			}
 
-			return records;
+			records.Add(record);
 		}
-		#endregion
+
+		return records;
 	}
+	#endregion
 }

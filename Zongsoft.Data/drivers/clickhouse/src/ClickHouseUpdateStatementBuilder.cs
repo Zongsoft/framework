@@ -32,12 +32,11 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.ClickHouse
+namespace Zongsoft.Data.ClickHouse;
+
+public class ClickHouseUpdateStatementBuilder : UpdateStatementBuilder
 {
-	public class ClickHouseUpdateStatementBuilder : UpdateStatementBuilder
-	{
-		#region 构造函数
-		public ClickHouseUpdateStatementBuilder() { }
-		#endregion
-	}
+	#region 构造函数
+	public ClickHouseUpdateStatementBuilder() { }
+	#endregion
 }

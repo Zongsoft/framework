@@ -162,7 +162,7 @@ public class MySqlExpressionVisitor : ExpressionVisitorBase
 	private class MySqlExpressionDialect : IExpressionDialect
 	{
 		#region 单例字段
-		public static readonly MySqlExpressionDialect Instance = new MySqlExpressionDialect();
+		public static readonly MySqlExpressionDialect Instance = new();
 		#endregion
 
 		#region 私有构造
@@ -270,7 +270,7 @@ public class MySqlExpressionVisitor : ExpressionVisitorBase
 	private class MySqlTableDefinitionVisitor : TableDefinitionVisitor
 	{
 		#region 单例字段
-		public static readonly MySqlTableDefinitionVisitor Instance = new MySqlTableDefinitionVisitor();
+		public static readonly MySqlTableDefinitionVisitor Instance = new();
 		#endregion
 
 		#region 私有构造

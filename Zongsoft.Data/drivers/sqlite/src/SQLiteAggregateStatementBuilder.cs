@@ -32,12 +32,11 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.SQLite
+namespace Zongsoft.Data.SQLite;
+
+public class SQLiteAggregateStatementBuilder : AggregateStatementBuilder
 {
-	public class SQLiteAggregateStatementBuilder : AggregateStatementBuilder
-	{
-		#region 构造函数
-		public SQLiteAggregateStatementBuilder() { }
-		#endregion
-	}
+	#region 构造函数
+	public SQLiteAggregateStatementBuilder() { }
+	#endregion
 }

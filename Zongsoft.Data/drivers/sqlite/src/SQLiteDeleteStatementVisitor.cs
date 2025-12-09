@@ -32,16 +32,15 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.SQLite
-{
-	public class SQLiteDeleteStatementVisitor : DeleteStatementVisitor
-	{
-		#region 单例字段
-		public static readonly SQLiteDeleteStatementVisitor Instance = new SQLiteDeleteStatementVisitor();
-		#endregion
+namespace Zongsoft.Data.SQLite;
 
-		#region 构造函数
-		private SQLiteDeleteStatementVisitor() { }
-		#endregion
-	}
+public class SQLiteDeleteStatementVisitor : DeleteStatementVisitor
+{
+	#region 单例字段
+	public static readonly SQLiteDeleteStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private SQLiteDeleteStatementVisitor() { }
+	#endregion
 }

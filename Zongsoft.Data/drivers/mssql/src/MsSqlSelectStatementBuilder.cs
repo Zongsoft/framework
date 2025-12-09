@@ -32,12 +32,11 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlSelectStatementBuilder : SelectStatementBuilder
 {
-	public class MsSqlSelectStatementBuilder : SelectStatementBuilder
-	{
-		#region 构造函数
-		public MsSqlSelectStatementBuilder() { }
-		#endregion
-	}
+	#region 构造函数
+	public MsSqlSelectStatementBuilder() { }
+	#endregion
 }

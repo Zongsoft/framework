@@ -32,27 +32,26 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Influx
+namespace Zongsoft.Data.Influx;
+
+public class InfluxStatementBuilder : StatementBuilderBase
 {
-	public class InfluxStatementBuilder : StatementBuilderBase
-	{
-		#region 单例字段
-		public static readonly InfluxStatementBuilder Default = new();
-		#endregion
+	#region 单例字段
+	public static readonly InfluxStatementBuilder Default = new();
+	#endregion
 
-		#region 私有构造
-		private InfluxStatementBuilder() { }
-		#endregion
+	#region 私有构造
+	private InfluxStatementBuilder() { }
+	#endregion
 
-		#region 重写方法
-		protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new InfluxSelectStatementBuilder();
-		protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new InfluxDeleteStatementBuilder();
-		protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new InfluxInsertStatementBuilder();
-		protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => throw new NotSupportedException();
-		protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => throw new NotSupportedException();
-		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new InfluxAggregateStatementBuilder();
-		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new InfluxExistStatementBuilder();
-		protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new InfluxExecutionStatementBuilder();
-		#endregion
-	}
+	#region 重写方法
+	protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new InfluxSelectStatementBuilder();
+	protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new InfluxDeleteStatementBuilder();
+	protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new InfluxInsertStatementBuilder();
+	protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => throw new NotSupportedException();
+	protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => throw new NotSupportedException();
+	protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new InfluxAggregateStatementBuilder();
+	protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new InfluxExistStatementBuilder();
+	protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new InfluxExecutionStatementBuilder();
+	#endregion
 }

@@ -32,49 +32,48 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlSelectStatementVisitor : SelectStatementVisitor
 {
-	public class MsSqlSelectStatementVisitor : SelectStatementVisitor
+	#region 单例字段
+	public static readonly MsSqlSelectStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private MsSqlSelectStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 	{
-		#region 单例字段
-		public static readonly MsSqlSelectStatementVisitor Instance = new MsSqlSelectStatementVisitor();
-		#endregion
-
-		#region 构造函数
-		private MsSqlSelectStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
+		//由于分页子句必须依赖于排序(OrderBy)子句，所以在没有指定排序子句的情况下默认以主键进行排序
+		if(statement.Paging != null && statement.Paging.PageSize > 0 && statement.OrderBy == null && statement.Table != null)
 		{
-			//由于分页子句必须依赖于排序(OrderBy)子句，所以在没有指定排序子句的情况下默认以主键进行排序
-			if(statement.Paging != null && statement.Paging.PageSize > 0 && statement.OrderBy == null && statement.Table != null)
-			{
-				statement.OrderBy = new OrderByClause();
+			statement.OrderBy = new OrderByClause();
 
-				foreach(var key in statement.Table.Entity.Key)
-					statement.OrderBy.Add(statement.Table.CreateField(key));
-			}
-
-			//调用基类同名方法
-			base.OnVisit(context, statement);
-
-			if(statement.Paging != null && statement.Paging.PageSize > 0 && statement.OrderBy != null)
-				this.VisitPaging(context, statement.Paging);
+			foreach(var key in statement.Table.Entity.Key)
+				statement.OrderBy.Add(statement.Table.CreateField(key));
 		}
-		#endregion
 
-		#region 虚拟方法
-		protected virtual void VisitPaging(ExpressionVisitorContext context, Paging paging)
-		{
-			if(context.Output.Length > 0)
-				context.WriteLine();
+		//调用基类同名方法
+		base.OnVisit(context, statement);
 
-			if(paging.PageIndex > 0)
-				context.Write($"OFFSET {(paging.PageIndex - 1) * paging.PageSize} ROWS FETCH NEXT {paging.PageSize} ROWS ONLY");
-			else
-				context.Write($"OFFSET 0 ROWS FETCH NEXT {paging.PageSize} ROWS ONLY");
-		}
-		#endregion
+		if(statement.Paging != null && statement.Paging.PageSize > 0 && statement.OrderBy != null)
+			this.VisitPaging(context, statement.Paging);
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void VisitPaging(ExpressionVisitorContext context, Paging paging)
+	{
+		if(context.Output.Length > 0)
+			context.WriteLine();
+
+		if(paging.PageIndex > 0)
+			context.Write($"OFFSET {(paging.PageIndex - 1) * paging.PageSize} ROWS FETCH NEXT {paging.PageSize} ROWS ONLY");
+		else
+			context.Write($"OFFSET 0 ROWS FETCH NEXT {paging.PageSize} ROWS ONLY");
+	}
+	#endregion
 }

@@ -37,7 +37,7 @@ namespace Zongsoft.Data.PostgreSql;
 public class PostgreSqlStatementBuilder : StatementBuilderBase
 {
 	#region 单例字段
-	public static readonly PostgreSqlStatementBuilder Default = new PostgreSqlStatementBuilder();
+	public static readonly PostgreSqlStatementBuilder Default = new();
 	#endregion
 
 	#region 构造函数

@@ -39,93 +39,92 @@ using InfluxDB3.Client.Write;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.Influx
+namespace Zongsoft.Data.Influx;
+
+public class InfluxImporter : DataImporterBase
 {
-	public class InfluxImporter : DataImporterBase
+	#region 重写方法
+	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		#region 重写方法
-		protected override void OnImport(DataImportContext context, MemberCollection members)
-		{
-			var connection = (Common.InfluxConnection)context.Session.Source.Driver.CreateConnection(context.Session.Source.ConnectionString);
-			connection.Open();
-			WritePoints(connection, GetPoints(context, members, connection.Configuration.WriteOptions.Precision));
+		var connection = (Common.InfluxConnection)context.Session.Source.Driver.CreateConnection(context.Session.Source.ConnectionString);
+		connection.Open();
+		WritePoints(connection, GetPoints(context, members, connection.Configuration.WriteOptions.Precision));
 
-			static async void WritePoints(Common.InfluxConnection connection, IEnumerable<PointData> points)
+		static async void WritePoints(Common.InfluxConnection connection, IEnumerable<PointData> points)
+		{
+			try
 			{
-				try
-				{
-					await connection.Client.WritePointsAsync(points);
-					connection.Dispose();
-				}
-				catch { throw; }
+				await connection.Client.WritePointsAsync(points);
+				connection.Dispose();
 			}
+			catch { throw; }
 		}
+	}
 
-		protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
+	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
+	{
+		using var connection = (Common.InfluxConnection)context.Session.Source.Driver.CreateConnection(context.Session.Source.ConnectionString);
+		await connection.OpenAsync(cancellation);
+		await connection.Client.WritePointsAsync(GetPoints(context, members, connection.Configuration.WriteOptions.Precision), null, null, null, cancellation);
+	}
+	#endregion
+
+	#region 私有方法
+	private static IEnumerable<PointData> GetPoints(DataImportContext context, MemberCollection members, WritePrecision? precision)
+	{
+		if(context == null || context.Data == null)
+			yield break;
+
+		foreach(var item in context.Data)
 		{
-			using var connection = (Common.InfluxConnection)context.Session.Source.Driver.CreateConnection(context.Session.Source.ConnectionString);
-			await connection.OpenAsync(cancellation);
-			await connection.Client.WritePointsAsync(GetPoints(context, members, connection.Configuration.WriteOptions.Precision), null, null, null, cancellation);
-		}
-		#endregion
+			var record = PointDataValues.Measurement(context.Entity.GetTableName());
 
-		#region 私有方法
-		private static IEnumerable<PointData> GetPoints(DataImportContext context, MemberCollection members, WritePrecision? precision)
-		{
-			if(context == null || context.Data == null)
-				yield break;
-
-			foreach(var item in context.Data)
+			foreach(var member in members)
 			{
-				var record = PointDataValues.Measurement(context.Entity.GetTableName());
-
-				foreach(var member in members)
+				if(member.Property.IsTimestamp())
 				{
-					if(member.Property.IsTimestamp())
-					{
-						var timestamp = GetTimestamp(item, member, precision);
+					var timestamp = GetTimestamp(item, member, precision);
 
-						if(timestamp > 0)
-							record.SetTimestamp(timestamp, precision);
-					}
+					if(timestamp > 0)
+						record.SetTimestamp(timestamp, precision);
+				}
+				else
+				{
+					var data = item;
+
+					if(member.Property.IsTagField())
+						record.SetTag(member.Name, member.GetValue(ref data).ToString());
 					else
-					{
-						var data = item;
-
-						if(member.Property.IsTagField())
-							record.SetTag(member.Name, member.GetValue(ref data).ToString());
-						else
-							record.SetField(member.Name, member.GetValue(ref data));
-					}
+						record.SetField(member.Name, member.GetValue(ref data));
 				}
-
-				context.Count++;
-				yield return record.AsPoint();
 			}
+
+			context.Count++;
+			yield return record.AsPoint();
 		}
+	}
 
-		private static long GetTimestamp(object data, Member member, WritePrecision? precision)
+	private static long GetTimestamp(object data, Member member, WritePrecision? precision)
+	{
+		var unit = precision.HasValue && precision.Value == WritePrecision.S ? Zongsoft.Common.TimestampUnit.Second : Zongsoft.Common.TimestampUnit.Millisecond;
+
+		var value = member.GetValue(ref data) switch
 		{
-			var unit = precision.HasValue && precision.Value == WritePrecision.S ? Zongsoft.Common.TimestampUnit.Second : Zongsoft.Common.TimestampUnit.Millisecond;
+			DateTimeOffset timestamp => unit == Zongsoft.Common.TimestampUnit.Second ? timestamp.ToUnixTimeSeconds() : timestamp.ToUnixTimeMilliseconds(),
+			DateTime datetime => Zongsoft.Common.Timestamp.Unix.ToTimestamp(datetime, unit),
+			DateOnly dateonly => Zongsoft.Common.Timestamp.Unix.ToTimestamp(dateonly.ToDateTime(TimeOnly.MinValue), unit),
+			_ => 0,
+		};
 
-			var value = member.GetValue(ref data) switch
+		if(value > 0 && precision.HasValue)
+			value = precision.Value switch
 			{
-				DateTimeOffset timestamp => unit == Zongsoft.Common.TimestampUnit.Second ? timestamp.ToUnixTimeSeconds() : timestamp.ToUnixTimeMilliseconds(),
-				DateTime datetime => Zongsoft.Common.Timestamp.Unix.ToTimestamp(datetime, unit),
-				DateOnly dateonly => Zongsoft.Common.Timestamp.Unix.ToTimestamp(dateonly.ToDateTime(TimeOnly.MinValue), unit),
-				_ => 0,
+				WritePrecision.Us => value * 1000,
+				WritePrecision.Ns => value * 1000 * 1000,
+				_ => value,
 			};
 
-			if(value > 0 && precision.HasValue)
-				value = precision.Value switch
-				{
-					WritePrecision.Us => value * 1000,
-					WritePrecision.Ns => value * 1000 * 1000,
-					_ => value,
-				};
-
-			return value;
-		}
-		#endregion
+		return value;
 	}
+	#endregion
 }

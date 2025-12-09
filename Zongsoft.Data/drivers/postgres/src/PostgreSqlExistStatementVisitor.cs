@@ -37,7 +37,7 @@ namespace Zongsoft.Data.PostgreSql;
 public class PostgreSqlExistStatementVisitor : ExistStatementVisitor
 {
 	#region 单例字段
-	public static readonly PostgreSqlExistStatementVisitor Instance = new PostgreSqlExistStatementVisitor();
+	public static readonly PostgreSqlExistStatementVisitor Instance = new();
 	#endregion
 
 	#region 构造函数

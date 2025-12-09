@@ -178,7 +178,7 @@ public class PostgreSqlExpressionVisitor : ExpressionVisitorBase
 	private class PostgreSqlExpressionDialect : IExpressionDialect
 	{
 		#region 单例字段
-		public static readonly PostgreSqlExpressionDialect Instance = new PostgreSqlExpressionDialect();
+		public static readonly PostgreSqlExpressionDialect Instance = new();
 		#endregion
 
 		#region 私有构造
@@ -281,7 +281,7 @@ public class PostgreSqlExpressionVisitor : ExpressionVisitorBase
 	private class PostgreSqlTableDefinitionVisitor : TableDefinitionVisitor
 	{
 		#region 单例字段
-		public static readonly PostgreSqlTableDefinitionVisitor Instance = new PostgreSqlTableDefinitionVisitor();
+		public static readonly PostgreSqlTableDefinitionVisitor Instance = new();
 		#endregion
 
 		#region 私有构造

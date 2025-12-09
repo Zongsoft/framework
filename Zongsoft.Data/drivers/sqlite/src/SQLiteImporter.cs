@@ -39,124 +39,123 @@ using Microsoft.Data.Sqlite;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.SQLite
+namespace Zongsoft.Data.SQLite;
+
+public class SQLiteImporter : DataImporterBase
 {
-	public class SQLiteImporter : DataImporterBase
+	#region 公共方法
+	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		#region 公共方法
-		protected override void OnImport(DataImportContext context, MemberCollection members)
+		var command = GetCommand(context, members);
+
+		if(command == null || command.Connection == null)
+			return;
+
+		try
 		{
-			var command = GetCommand(context, members);
+			command.Connection.Open();
 
-			if(command == null || command.Connection == null)
-				return;
-
-			try
+			foreach(var item in context.Data)
 			{
-				command.Connection.Open();
+				var target = item;
 
-				foreach(var item in context.Data)
+				for(int i = 0; i < members.Count; i++)
 				{
-					var target = item;
-
-					for(int i = 0; i < members.Count; i++)
-					{
-						command.Parameters[i].Value = members[i].GetValue(ref target);
-					}
-
-					command.ExecuteNonQuery();
+					command.Parameters[i].Value = members[i].GetValue(ref target);
 				}
 
-				command.Transaction.Commit();
+				command.ExecuteNonQuery();
 			}
-			catch
-			{
-				if(command.Transaction != null)
-					command.Transaction.Rollback();
-			}
-			finally
-			{
-				command.Connection.Dispose();
-			}
-		}
 
-		protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
+			command.Transaction.Commit();
+		}
+		catch
 		{
-			var command = GetCommand(context, members);
-
-			if(command == null || command.Connection == null)
-				return;
-
-			try
-			{
-				await command.Connection.OpenAsync(cancellation);
-
-				foreach(var item in context.Data)
-				{
-					var target = item;
-
-					for(int i = 0; i < members.Count; i++)
-					{
-						command.Parameters[i].Value = members[i].GetValue(ref target);
-					}
-
-					await command.ExecuteNonQueryAsync(cancellation);
-				}
-
-				await command.Transaction.CommitAsync(cancellation);
-			}
-			catch
-			{
-				if(command.Transaction != null)
-					await command.Transaction.RollbackAsync(cancellation);
-			}
-			finally
-			{
-				await command.Connection.DisposeAsync();
-			}
+			if(command.Transaction != null)
+				command.Transaction.Rollback();
 		}
-		#endregion
-
-		#region 私有方法
-		private static DbCommand GetCommand(DataImportContext context, MemberCollection members)
+		finally
 		{
-			var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-			var command = connection.CreateCommand();
-
-			var fields = new StringBuilder();
-			var values = new StringBuilder();
-			var parameters = new List<DbParameter>();
-
-			foreach(var member in members)
-			{
-				if(!member.IsSimplex(out var property))
-					continue;
-
-				if(fields.Length > 0)
-					fields.Append(',');
-
-				fields.Append(member.Property.GetFieldName(out var alias));
-
-				if(!string.IsNullOrEmpty(alias))
-					fields.Append($" AS '{alias}'");
-
-				if(values.Length > 0)
-					values.Append(',');
-
-				values.Append($"@p_{member.Name}");
-
-				var parameter = command.CreateParameter();
-				parameter.ParameterName = $"@p_{member.Name}";
-				parameter.DbType = property.Type;
-				parameters.Add(parameter);
-			}
-
-			command.Transaction = connection.BeginTransaction();
-			command.CommandType = System.Data.CommandType.Text;
-			command.CommandText = $"INSERT INTO `{context.Entity.GetTableName()}` ({fields}) VALUES ({values});";
-
-			return command;
+			command.Connection.Dispose();
 		}
-		#endregion
 	}
+
+	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
+	{
+		var command = GetCommand(context, members);
+
+		if(command == null || command.Connection == null)
+			return;
+
+		try
+		{
+			await command.Connection.OpenAsync(cancellation);
+
+			foreach(var item in context.Data)
+			{
+				var target = item;
+
+				for(int i = 0; i < members.Count; i++)
+				{
+					command.Parameters[i].Value = members[i].GetValue(ref target);
+				}
+
+				await command.ExecuteNonQueryAsync(cancellation);
+			}
+
+			await command.Transaction.CommitAsync(cancellation);
+		}
+		catch
+		{
+			if(command.Transaction != null)
+				await command.Transaction.RollbackAsync(cancellation);
+		}
+		finally
+		{
+			await command.Connection.DisposeAsync();
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private static DbCommand GetCommand(DataImportContext context, MemberCollection members)
+	{
+		var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		var command = connection.CreateCommand();
+
+		var fields = new StringBuilder();
+		var values = new StringBuilder();
+		var parameters = new List<DbParameter>();
+
+		foreach(var member in members)
+		{
+			if(!member.IsSimplex(out var property))
+				continue;
+
+			if(fields.Length > 0)
+				fields.Append(',');
+
+			fields.Append(member.Property.GetFieldName(out var alias));
+
+			if(!string.IsNullOrEmpty(alias))
+				fields.Append($" AS '{alias}'");
+
+			if(values.Length > 0)
+				values.Append(',');
+
+			values.Append($"@p_{member.Name}");
+
+			var parameter = command.CreateParameter();
+			parameter.ParameterName = $"@p_{member.Name}";
+			parameter.DbType = property.Type;
+			parameters.Add(parameter);
+		}
+
+		command.Transaction = connection.BeginTransaction();
+		command.CommandType = System.Data.CommandType.Text;
+		command.CommandText = $"INSERT INTO `{context.Entity.GetTableName()}` ({fields}) VALUES ({values});";
+
+		return command;
+	}
+	#endregion
 }

@@ -32,27 +32,26 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlStatementBuilder : StatementBuilderBase
 {
-	public class MsSqlStatementBuilder : StatementBuilderBase
-	{
-		#region 单例字段
-		public static readonly MsSqlStatementBuilder Default = new MsSqlStatementBuilder();
-		#endregion
+	#region 单例字段
+	public static readonly MsSqlStatementBuilder Default = new();
+	#endregion
 
-		#region 构造函数
-		private MsSqlStatementBuilder() { }
-		#endregion
+	#region 构造函数
+	private MsSqlStatementBuilder() { }
+	#endregion
 
-		#region 重写方法
-		protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new MsSqlSelectStatementBuilder();
-		protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new MsSqlDeleteStatementBuilder();
-		protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new MsSqlInsertStatementBuilder();
-		protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new MsSqlUpdateStatementBuilder();
-		protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new MsSqlUpsertStatementBuilder();
-		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new MsSqlAggregateStatementBuilder();
-		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new MsSqlExistStatementBuilder();
-		protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new MsSqlExecutionStatementBuilder();
-		#endregion
-	}
+	#region 重写方法
+	protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new MsSqlSelectStatementBuilder();
+	protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new MsSqlDeleteStatementBuilder();
+	protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new MsSqlInsertStatementBuilder();
+	protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new MsSqlUpdateStatementBuilder();
+	protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new MsSqlUpsertStatementBuilder();
+	protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new MsSqlAggregateStatementBuilder();
+	protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new MsSqlExistStatementBuilder();
+	protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new MsSqlExecutionStatementBuilder();
+	#endregion
 }

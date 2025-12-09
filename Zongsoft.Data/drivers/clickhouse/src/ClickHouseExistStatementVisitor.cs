@@ -32,27 +32,26 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.ClickHouse
+namespace Zongsoft.Data.ClickHouse;
+
+public class ClickHouseExistStatementVisitor : ExistStatementVisitor
 {
-	public class ClickHouseExistStatementVisitor : ExistStatementVisitor
+	#region 单例字段
+	public static readonly ClickHouseExistStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private ClickHouseExistStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, ExistStatement statement)
 	{
-		#region 单例字段
-		public static readonly ClickHouseExistStatementVisitor Instance = new ClickHouseExistStatementVisitor();
-		#endregion
+		//调用基类同名方法
+		base.OnVisit(context, statement);
 
-		#region 构造函数
-		private ClickHouseExistStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, ExistStatement statement)
-		{
-			//调用基类同名方法
-			base.OnVisit(context, statement);
-
-			//限制最多只返回一条记录
-			context.Write(" LIMIT 1");
-		}
-		#endregion
+		//限制最多只返回一条记录
+		context.Write(" LIMIT 1");
 	}
+	#endregion
 }

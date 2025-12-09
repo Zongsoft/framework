@@ -37,7 +37,7 @@ namespace Zongsoft.Data.MySql;
 public class MySqlDeleteStatementVisitor : DeleteStatementVisitor
 {
 	#region 单例字段
-	public static readonly MySqlDeleteStatementVisitor Instance = new MySqlDeleteStatementVisitor();
+	public static readonly MySqlDeleteStatementVisitor Instance = new();
 	#endregion
 
 	#region 构造函数

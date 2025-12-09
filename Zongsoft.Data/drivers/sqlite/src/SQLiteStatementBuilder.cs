@@ -32,27 +32,26 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.SQLite
+namespace Zongsoft.Data.SQLite;
+
+public class SQLiteStatementBuilder : StatementBuilderBase
 {
-	public class SQLiteStatementBuilder : StatementBuilderBase
-	{
-		#region 单例字段
-		public static readonly SQLiteStatementBuilder Default = new SQLiteStatementBuilder();
-		#endregion
+	#region 单例字段
+	public static readonly SQLiteStatementBuilder Default = new();
+	#endregion
 
-		#region 构造函数
-		private SQLiteStatementBuilder() { }
-		#endregion
+	#region 构造函数
+	private SQLiteStatementBuilder() { }
+	#endregion
 
-		#region 重写方法
-		protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new SQLiteSelectStatementBuilder();
-		protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new SQLiteDeleteStatementBuilder();
-		protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new SQLiteInsertStatementBuilder();
-		protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new SQLiteUpdateStatementBuilder();
-		protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new SQLiteUpsertStatementBuilder();
-		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new SQLiteAggregateStatementBuilder();
-		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new SQLiteExistStatementBuilder();
-		protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new SQLiteExecutionStatementBuilder();
-		#endregion
-	}
+	#region 重写方法
+	protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new SQLiteSelectStatementBuilder();
+	protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new SQLiteDeleteStatementBuilder();
+	protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new SQLiteInsertStatementBuilder();
+	protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new SQLiteUpdateStatementBuilder();
+	protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new SQLiteUpsertStatementBuilder();
+	protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new SQLiteAggregateStatementBuilder();
+	protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new SQLiteExistStatementBuilder();
+	protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new SQLiteExecutionStatementBuilder();
+	#endregion
 }

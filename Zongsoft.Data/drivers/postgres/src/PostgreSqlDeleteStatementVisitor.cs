@@ -38,7 +38,7 @@ namespace Zongsoft.Data.PostgreSql;
 public class PostgreSqlDeleteStatementVisitor : DeleteStatementVisitor
 {
 	#region 单例字段
-	public static readonly PostgreSqlDeleteStatementVisitor Instance = new PostgreSqlDeleteStatementVisitor();
+	public static readonly PostgreSqlDeleteStatementVisitor Instance = new();
 	#endregion
 
 	#region 构造函数

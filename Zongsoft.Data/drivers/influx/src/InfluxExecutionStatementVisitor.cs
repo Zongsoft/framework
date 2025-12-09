@@ -32,16 +32,15 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Influx
-{
-	public class InfluxExecutionStatementVisitor : ExecutionStatementVisitor
-	{
-		#region 单例字段
-		public static readonly InfluxExecutionStatementVisitor Instance = new();
-		#endregion
+namespace Zongsoft.Data.Influx;
 
-		#region 私有构造
-		private InfluxExecutionStatementVisitor() { }
-		#endregion
-	}
+public class InfluxExecutionStatementVisitor : ExecutionStatementVisitor
+{
+	#region 单例字段
+	public static readonly InfluxExecutionStatementVisitor Instance = new();
+	#endregion
+
+	#region 私有构造
+	private InfluxExecutionStatementVisitor() { }
+	#endregion
 }

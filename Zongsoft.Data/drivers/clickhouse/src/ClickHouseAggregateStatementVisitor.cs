@@ -32,16 +32,15 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.ClickHouse
-{
-	public class ClickHouseAggregateStatementVisitor : AggregateStatementVisitor
-	{
-		#region 单例字段
-		public static readonly ClickHouseAggregateStatementVisitor Instance = new ClickHouseAggregateStatementVisitor();
-		#endregion
+namespace Zongsoft.Data.ClickHouse;
 
-		#region 构造函数
-		private ClickHouseAggregateStatementVisitor() { }
-		#endregion
-	}
+public class ClickHouseAggregateStatementVisitor : AggregateStatementVisitor
+{
+	#region 单例字段
+	public static readonly ClickHouseAggregateStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private ClickHouseAggregateStatementVisitor() { }
+	#endregion
 }

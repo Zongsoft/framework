@@ -33,26 +33,25 @@ using System.Collections.Generic;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.SQLite
+namespace Zongsoft.Data.SQLite;
+
+public class SQLiteInsertStatementVisitor : InsertStatementVisitor
 {
-	public class SQLiteInsertStatementVisitor : InsertStatementVisitor
+	#region 单例字段
+	public static readonly SQLiteInsertStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private SQLiteInsertStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
 	{
-		#region 单例字段
-		public static readonly SQLiteInsertStatementVisitor Instance = new SQLiteInsertStatementVisitor();
-		#endregion
-
-		#region 构造函数
-		private SQLiteInsertStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-		protected override void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
-		{
-			if(statement.Options.ConstraintIgnored)
-				context.Write("INSERT IGNORE INTO ");
-			else
-				context.Write("INSERT INTO ");
-		}
-		#endregion
+		if(statement.Options.ConstraintIgnored)
+			context.Write("INSERT IGNORE INTO ");
+		else
+			context.Write("INSERT INTO ");
 	}
+	#endregion
 }

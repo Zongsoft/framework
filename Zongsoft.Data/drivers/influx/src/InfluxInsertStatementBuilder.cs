@@ -32,9 +32,8 @@ using System;
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Influx
+namespace Zongsoft.Data.Influx;
+
+public class InfluxInsertStatementBuilder : InsertStatementBuilder
 {
-	public class InfluxInsertStatementBuilder : InsertStatementBuilder
-	{
-	}
 }

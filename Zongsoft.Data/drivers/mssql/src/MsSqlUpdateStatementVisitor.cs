@@ -33,41 +33,40 @@ using System.Collections.Generic;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlUpdateStatementVisitor : UpdateStatementVisitor
 {
-	public class MsSqlUpdateStatementVisitor : UpdateStatementVisitor
+	#region 单例字段
+	public static readonly MsSqlUpdateStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private MsSqlUpdateStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 	{
-		#region 单例字段
-		public static readonly MsSqlUpdateStatementVisitor Instance = new MsSqlUpdateStatementVisitor();
-		#endregion
+		if(tables.Count > 1)
+			throw new DataException("The generated Update statement is incorrect, The data engine does not support multi-table updates.");
 
-		#region 构造函数
-		private MsSqlUpdateStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-		protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
-		{
-			if(tables.Count > 1)
-				throw new DataException("The generated Update statement is incorrect, The data engine does not support multi-table updates.");
-
-			if(string.IsNullOrEmpty(tables[0].Alias))
-				context.Visit(tables[0]);
-			else
-				context.Write(tables[0].Alias);
-		}
-
-		protected override void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
-		{
-			//生成OUTPUT(RETURNING)子句
-			this.VisitReturning(context, statement.Returning);
-
-			//调用基类同名方法
-			base.VisitFrom(context, statement, sources);
-		}
-
-		protected override void OnVisited(ExpressionVisitorContext context, UpdateStatement statement) => context.WriteLine(";");
-		protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.WriteLine(" OUTPUT");
-		#endregion
+		if(string.IsNullOrEmpty(tables[0].Alias))
+			context.Visit(tables[0]);
+		else
+			context.Write(tables[0].Alias);
 	}
+
+	protected override void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
+	{
+		//生成OUTPUT(RETURNING)子句
+		this.VisitReturning(context, statement.Returning);
+
+		//调用基类同名方法
+		base.VisitFrom(context, statement, sources);
+	}
+
+	protected override void OnVisited(ExpressionVisitorContext context, UpdateStatement statement) => context.WriteLine(";");
+	protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.WriteLine(" OUTPUT");
+	#endregion
 }

@@ -33,11 +33,10 @@ using System.Collections.Generic;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Influx
+namespace Zongsoft.Data.Influx;
+
+public class InfluxDeleteStatementBuilder : DeleteStatementBuilder
 {
-	public class InfluxDeleteStatementBuilder : DeleteStatementBuilder
-	{
-		protected override IEnumerable<IStatementBase> BuildComplexity(DataDeleteContext context) => throw new NotSupportedException();
-		protected override IEnumerable<IStatementBase> BuildSimplicity(DataDeleteContext context) => throw new NotSupportedException();
-	}
+	protected override IEnumerable<IStatementBase> BuildComplexity(DataDeleteContext context) => throw new NotSupportedException();
+	protected override IEnumerable<IStatementBase> BuildSimplicity(DataDeleteContext context) => throw new NotSupportedException();
 }

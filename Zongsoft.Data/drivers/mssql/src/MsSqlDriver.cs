@@ -36,110 +36,108 @@ using Microsoft.Data.SqlClient;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlDriver : DataDriverBase
 {
-	public class MsSqlDriver : DataDriverBase
+	#region 公共常量
+	/// <summary>驱动程序的标识：MsSql。</summary>
+	public const string NAME = "MsSql";
+	#endregion
+
+	#region 单例字段
+	public static readonly MsSqlDriver Instance = new();
+	#endregion
+
+	#region 私有构造
+	private MsSqlDriver()
 	{
-		#region 公共常量
-		/// <summary>驱动程序的标识：MsSql。</summary>
-		public const string NAME = "MsSql";
-		#endregion
+		this.Features.Add(Feature.Returning);
+	}
+	#endregion
 
-		#region 单例字段
-		public static readonly MsSqlDriver Instance = new();
-		#endregion
+	#region 公共属性
+	public override string Name => NAME;
+	public override IStatementBuilder Builder => MsSqlStatementBuilder.Default;
+	#endregion
 
-		#region 私有构造
-		private MsSqlDriver()
+	#region 公共方法
+	public override Exception OnError(IDataAccessContext context, Exception exception)
+	{
+		if(exception is SqlException error)
 		{
-			//添加 MsSql(SQL Server) 支持的功能特性集
-			this.Features.Add(Feature.Returning);
-		}
-		#endregion
-
-		#region 公共属性
-		public override string Name => NAME;
-		public override IStatementBuilder Builder => MsSqlStatementBuilder.Default;
-		#endregion
-
-		#region 公共方法
-		public override Exception OnError(IDataAccessContext context, Exception exception)
-		{
-			if(exception is SqlException error)
+			switch(error.Number)
 			{
-				switch(error.Number)
-				{
-					case 2601:
-					case 2627:
-						if(TryGetConflict(error.Message, out var key, out var value))
-							return new DataConflictException(this.Name, error.Number, key, value);
-						else
-							return new DataConflictException(this.Name, error.Number, null, null, error);
-				}
+				case 2601:
+				case 2627:
+					if(TryGetConflict(error.Message, out var key, out var value))
+						return new DataConflictException(this.Name, error.Number, key, value);
+					else
+						return new DataConflictException(this.Name, error.Number, null, null, error);
 			}
-
-			return exception;
 		}
 
-		public override DbCommand CreateCommand() => new SqlCommand();
-		public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new SqlCommand(text)
+		return exception;
+	}
+
+	public override DbCommand CreateCommand() => new SqlCommand();
+	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new SqlCommand(text)
+	{
+		CommandType = commandType,
+	};
+
+	public override DbConnection CreateConnection(string connectionString = null) => new SqlConnection(connectionString);
+	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqlConnectionStringBuilder(connectionString);
+
+	public override IDataImporter CreateImporter() => new MsSqlImporter();
+	#endregion
+
+	#region 保护方法
+	protected override ExpressionVisitorBase CreateVisitor() => new MsSqlExpressionVisitor();
+	protected override void SetParameter(DbParameter parameter, ParameterExpression expression)
+	{
+		parameter.DbType = expression.Type.DbType switch
 		{
-			CommandType = commandType,
+			DbType.SByte => DbType.Byte,
+			DbType.UInt16 => DbType.Int16,
+			DbType.UInt32 => DbType.Int32,
+			DbType.UInt64 => DbType.Int64,
+			_ => expression.Type,
 		};
 
-		public override DbConnection CreateConnection(string connectionString = null) => new SqlConnection(connectionString);
-		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqlConnectionStringBuilder(connectionString);
-
-		public override IDataImporter CreateImporter() => new MsSqlImporter();
-		#endregion
-
-		#region 保护方法
-		protected override ExpressionVisitorBase CreateVisitor() => new MsSqlExpressionVisitor();
-		protected override void SetParameter(DbParameter parameter, ParameterExpression expression)
-		{
-			parameter.DbType = expression.Type.DbType switch
-			{
-				DbType.SByte => DbType.Byte,
-				DbType.UInt16 => DbType.Int16,
-				DbType.UInt32 => DbType.Int32,
-				DbType.UInt64 => DbType.Int64,
-				_ => expression.Type,
-			};
-
-			if(expression.Schema != null && expression.Schema.Token.Property.IsSimplex)
-				((SqlParameter)parameter).IsNullable = ((Metadata.IDataEntitySimplexProperty)expression.Schema.Token.Property).Nullable;
-			else
-				((SqlParameter)parameter).IsNullable = false;
-		}
-		#endregion
-
-		#region 私有方法
-		private static bool TryGetConflict(string message, out string key, out string value)
-		{
-			key = null;
-			value = null;
-
-			if(string.IsNullOrEmpty(message))
-				return false;
-
-			var end = message.LastIndexOf('\'');
-			var start = end > 0 ? message.LastIndexOf('\'', end - 1) : -1;
-
-			if(start > 0 && end > 0)
-			{
-				key = message.Substring(start + 1, end - start - 1);
-
-				end = message.LastIndexOf('\'', start - 1);
-				start = message.IndexOf('\'');
-
-				if(end > 0 && start > 0 && start < end)
-					value = message.Substring(start + 1, end - start - 1);
-
-				return true;
-			}
-
-			return false;
-		}
-		#endregion
+		if(expression.Schema != null && expression.Schema.Token.Property.IsSimplex)
+			((SqlParameter)parameter).IsNullable = ((Metadata.IDataEntitySimplexProperty)expression.Schema.Token.Property).Nullable;
+		else
+			((SqlParameter)parameter).IsNullable = false;
 	}
+	#endregion
+
+	#region 私有方法
+	private static bool TryGetConflict(string message, out string key, out string value)
+	{
+		key = null;
+		value = null;
+
+		if(string.IsNullOrEmpty(message))
+			return false;
+
+		var end = message.LastIndexOf('\'');
+		var start = end > 0 ? message.LastIndexOf('\'', end - 1) : -1;
+
+		if(start > 0 && end > 0)
+		{
+			key = message.Substring(start + 1, end - start - 1);
+
+			end = message.LastIndexOf('\'', start - 1);
+			start = message.IndexOf('\'');
+
+			if(end > 0 && start > 0 && start < end)
+				value = message.Substring(start + 1, end - start - 1);
+
+			return true;
+		}
+
+		return false;
+	}
+	#endregion
 }

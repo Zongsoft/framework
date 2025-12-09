@@ -32,40 +32,39 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Influx
+namespace Zongsoft.Data.Influx;
+
+public class InfluxSelectStatementVisitor : SelectStatementVisitor
 {
-	public class InfluxSelectStatementVisitor : SelectStatementVisitor
+	#region 单例字段
+	public static readonly InfluxSelectStatementVisitor Instance = new();
+	#endregion
+
+	#region 私有构造
+	private InfluxSelectStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 	{
-		#region 单例字段
-		public static readonly InfluxSelectStatementVisitor Instance = new();
-		#endregion
+		//调用基类同名方法
+		base.OnVisit(context, statement);
 
-		#region 私有构造
-		private InfluxSelectStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
-		{
-			//调用基类同名方法
-			base.OnVisit(context, statement);
-
-			if(statement.Paging != null && statement.Paging.PageSize > 0)
-				this.VisitPaging(context, statement.Paging);
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void VisitPaging(ExpressionVisitorContext context, Paging paging)
-		{
-			if(context.Output.Length > 0)
-				context.WriteLine();
-
-			context.Write("LIMIT " + paging.PageSize.ToString());
-
-			if(paging.PageIndex > 1)
-				context.Write(" OFFSET " + ((paging.PageIndex - 1) * paging.PageSize).ToString());
-		}
-		#endregion
+		if(statement.Paging != null && statement.Paging.PageSize > 0)
+			this.VisitPaging(context, statement.Paging);
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void VisitPaging(ExpressionVisitorContext context, Paging paging)
+	{
+		if(context.Output.Length > 0)
+			context.WriteLine();
+
+		context.Write("LIMIT " + paging.PageSize.ToString());
+
+		if(paging.PageIndex > 1)
+			context.Write(" OFFSET " + ((paging.PageIndex - 1) * paging.PageSize).ToString());
+	}
+	#endregion
 }

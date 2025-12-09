@@ -32,16 +32,15 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.SQLite
-{
-	public class SQLiteAggregateStatementVisitor : AggregateStatementVisitor
-	{
-		#region 单例字段
-		public static readonly SQLiteAggregateStatementVisitor Instance = new SQLiteAggregateStatementVisitor();
-		#endregion
+namespace Zongsoft.Data.SQLite;
 
-		#region 构造函数
-		private SQLiteAggregateStatementVisitor() { }
-		#endregion
-	}
+public class SQLiteAggregateStatementVisitor : AggregateStatementVisitor
+{
+	#region 单例字段
+	public static readonly SQLiteAggregateStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private SQLiteAggregateStatementVisitor() { }
+	#endregion
 }

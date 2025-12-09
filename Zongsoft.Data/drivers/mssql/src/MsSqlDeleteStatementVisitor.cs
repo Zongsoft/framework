@@ -33,31 +33,29 @@ using System.Collections.Generic;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlDeleteStatementVisitor : DeleteStatementVisitor
 {
-	public class MsSqlDeleteStatementVisitor : DeleteStatementVisitor
+	#region 单例字段
+	public static readonly MsSqlDeleteStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private MsSqlDeleteStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
 	{
-		#region 单例字段
-		public static readonly MsSqlDeleteStatementVisitor Instance = new MsSqlDeleteStatementVisitor();
-		#endregion
+		//生成OUTPUT(RETURNING)子句
+		this.VisitReturning(context, statement.Returning);
 
-		#region 构造函数
-		private MsSqlDeleteStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-
-		protected override void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
-		{
-			//生成OUTPUT(RETURNING)子句
-			this.VisitReturning(context, statement.Returning);
-
-			//调用基类同名方法
-			base.VisitFrom(context, statement, sources);
-		}
-
-		protected override void OnVisited(ExpressionVisitorContext context, DeleteStatement statement) => context.WriteLine(";");
-		protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.WriteLine(" OUTPUT");
-		#endregion
+		//调用基类同名方法
+		base.VisitFrom(context, statement, sources);
 	}
+
+	protected override void OnVisited(ExpressionVisitorContext context, DeleteStatement statement) => context.WriteLine(";");
+	protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.WriteLine(" OUTPUT");
+	#endregion
 }

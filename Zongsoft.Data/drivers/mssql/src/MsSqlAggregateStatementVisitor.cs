@@ -32,16 +32,15 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
-{
-	public class MsSqlAggregateStatementVisitor : AggregateStatementVisitor
-	{
-		#region 单例字段
-		public static readonly MsSqlAggregateStatementVisitor Instance = new MsSqlAggregateStatementVisitor();
-		#endregion
+namespace Zongsoft.Data.MsSql;
 
-		#region 构造函数
-		private MsSqlAggregateStatementVisitor() { }
-		#endregion
-	}
+public class MsSqlAggregateStatementVisitor : AggregateStatementVisitor
+{
+	#region 单例字段
+	public static readonly MsSqlAggregateStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private MsSqlAggregateStatementVisitor() { }
+	#endregion
 }

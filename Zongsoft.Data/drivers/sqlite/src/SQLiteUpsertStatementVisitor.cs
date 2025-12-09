@@ -32,111 +32,110 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.SQLite
+namespace Zongsoft.Data.SQLite;
+
+public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
 {
-	public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
+	#region 单例字段
+	public static readonly SQLiteUpsertStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private SQLiteUpsertStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 	{
-		#region 单例字段
-		public static readonly SQLiteUpsertStatementVisitor Instance = new SQLiteUpsertStatementVisitor();
-		#endregion
+		if(statement.Fields == null || statement.Fields.Count == 0)
+			throw new DataException("Missing required fields in the upsert statment.");
 
-		#region 构造函数
-		private SQLiteUpsertStatementVisitor() { }
-		#endregion
+		var index = 0;
 
-		#region 重写方法
-		protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
+		if(statement.Options.ConstraintIgnored)
+			context.Write("INSERT IGNORE INTO ");
+		else
+			context.Write("INSERT INTO ");
+
+		context.Write(context.Dialect.GetIdentifier(statement.Table));
+		context.Write(" (");
+
+		foreach(var field in statement.Fields)
 		{
-			if(statement.Fields == null || statement.Fields.Count == 0)
-				throw new DataException("Missing required fields in the upsert statment.");
+			if(index++ > 0)
+				context.Write(",");
 
-			var index = 0;
+			context.Write(context.Dialect.GetIdentifier(field.Name));
+		}
 
-			if(statement.Options.ConstraintIgnored)
-				context.Write("INSERT IGNORE INTO ");
-			else
-				context.Write("INSERT INTO ");
+		index = 0;
+		context.WriteLine(") VALUES ");
 
-			context.Write(context.Dialect.GetIdentifier(statement.Table));
-			context.Write(" (");
+		foreach(var value in statement.Values)
+		{
+			if(index++ > 0)
+				context.Write(",");
 
+			if(index % statement.Fields.Count == 1)
+				context.Write("(");
+
+			var parenthesisRequired = value is IStatementBase;
+
+			if(parenthesisRequired)
+				context.Write("(");
+
+			context.Visit(value);
+
+			if(parenthesisRequired)
+				context.Write(")");
+
+			if(index % statement.Fields.Count == 0)
+				context.Write(")");
+		}
+
+		index = 0;
+		context.WriteLine(" ON DUPLICATE KEY UPDATE ");
+
+		if(statement.Updation.Count > 0)
+		{
+			foreach(var item in statement.Updation)
+			{
+				if(index++ > 0)
+					context.Write(",");
+
+				context.Write(context.Dialect.GetIdentifier(item.Field));
+				context.Write("=");
+
+				var parenthesisRequired = item.Value is IStatementBase;
+
+				if(parenthesisRequired)
+					context.Write("(");
+
+				context.Visit(item.Value);
+
+				if(parenthesisRequired)
+					context.Write(")");
+			}
+		}
+		else
+		{
 			foreach(var field in statement.Fields)
 			{
+				//忽略修改序列字段
+				if(field.Token.Property is Metadata.IDataEntitySimplexProperty simplex && simplex.Sequence != null)
+					continue;
+
 				if(index++ > 0)
 					context.Write(",");
 
 				context.Write(context.Dialect.GetIdentifier(field.Name));
+				context.Write("=VALUES(");
+				context.Write(context.Dialect.GetIdentifier(field.Name));
+				context.Write(")");
 			}
-
-			index = 0;
-			context.WriteLine(") VALUES ");
-
-			foreach(var value in statement.Values)
-			{
-				if(index++ > 0)
-					context.Write(",");
-
-				if(index % statement.Fields.Count == 1)
-					context.Write("(");
-
-				var parenthesisRequired = value is IStatementBase;
-
-				if(parenthesisRequired)
-					context.Write("(");
-
-				context.Visit(value);
-
-				if(parenthesisRequired)
-					context.Write(")");
-
-				if(index % statement.Fields.Count == 0)
-					context.Write(")");
-			}
-
-			index = 0;
-			context.WriteLine(" ON DUPLICATE KEY UPDATE ");
-
-			if(statement.Updation.Count > 0)
-			{
-				foreach(var item in statement.Updation)
-				{
-					if(index++ > 0)
-						context.Write(",");
-
-					context.Write(context.Dialect.GetIdentifier(item.Field));
-					context.Write("=");
-
-					var parenthesisRequired = item.Value is IStatementBase;
-
-					if(parenthesisRequired)
-						context.Write("(");
-
-					context.Visit(item.Value);
-
-					if(parenthesisRequired)
-						context.Write(")");
-				}
-			}
-			else
-			{
-				foreach(var field in statement.Fields)
-				{
-					//忽略修改序列字段
-					if(field.Token.Property is Metadata.IDataEntitySimplexProperty simplex && simplex.Sequence != null)
-						continue;
-
-					if(index++ > 0)
-						context.Write(",");
-
-					context.Write(context.Dialect.GetIdentifier(field.Name));
-					context.Write("=VALUES(");
-					context.Write(context.Dialect.GetIdentifier(field.Name));
-					context.Write(")");
-				}
-			}
-
-			context.WriteLine(";");
 		}
-		#endregion
+
+		context.WriteLine(";");
 	}
+	#endregion
 }

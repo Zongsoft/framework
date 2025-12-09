@@ -38,74 +38,73 @@ using Microsoft.Data.SqlClient;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlImporter : DataImporterBase
 {
-	public class MsSqlImporter : DataImporterBase
+	#region 公共方法
+	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		#region 公共方法
-		protected override void OnImport(DataImportContext context, MemberCollection members)
-		{
-			//将数据填充到数据表中
-			var table = GetTable(context.Entity.GetTableName(), context.Data, members);
+		//将数据填充到数据表中
+		var table = GetTable(context.Entity.GetTableName(), context.Data, members);
 
-			var bulker = GetBulker(table.TableName, (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString));
-			bulker.WriteToServer(table);
+		var bulker = GetBulker(table.TableName, (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString));
+		bulker.WriteToServer(table);
 
-			//设置返回值
-			context.Count = table.Rows.Count;
-			//清空数据表中的数据
-			table.Rows.Clear();
-		}
-
-		protected override ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
-		{
-			//将数据填充到数据表中
-			var table = GetTable(context.Entity.GetTableName(), context.Data, members);
-
-			var bulker = GetBulker(table.TableName, (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString));
-			var task = bulker.WriteToServerAsync(table, cancellation);
-
-			//设置返回值
-			context.Count = table.Rows.Count;
-			//清空数据表中的数据
-			table.Rows.Clear();
-
-			return new ValueTask(task);
-		}
-		#endregion
-
-		#region 私有方法
-		private static SqlBulkCopy GetBulker(string name, SqlConnection connection) => new SqlBulkCopy(connection)
-		{
-			DestinationTableName = name,
-		};
-
-		private static DataTable GetTable(string name, IEnumerable data, MemberCollection members)
-		{
-			var table = new DataTable(name);
-
-			foreach(var member in members)
-			{
-				if(member.IsSimplex(out var property))
-					table.Columns.Add(member.Property.GetFieldName(out _), property.Type.DbType.AsType());
-			}
-
-			foreach(var item in data)
-			{
-				var row = table.NewRow();
-
-				for(int i = 0; i < members.Count; i++)
-				{
-					var target = item;
-					row[members[i].Name] = members[i].GetValue(ref target);
-				}
-
-				table.Rows.Add(row);
-				table.AcceptChanges();
-			}
-
-			return table;
-		}
-		#endregion
+		//设置返回值
+		context.Count = table.Rows.Count;
+		//清空数据表中的数据
+		table.Rows.Clear();
 	}
+
+	protected override ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
+	{
+		//将数据填充到数据表中
+		var table = GetTable(context.Entity.GetTableName(), context.Data, members);
+
+		var bulker = GetBulker(table.TableName, (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString));
+		var task = bulker.WriteToServerAsync(table, cancellation);
+
+		//设置返回值
+		context.Count = table.Rows.Count;
+		//清空数据表中的数据
+		table.Rows.Clear();
+
+		return new ValueTask(task);
+	}
+	#endregion
+
+	#region 私有方法
+	private static SqlBulkCopy GetBulker(string name, SqlConnection connection) => new SqlBulkCopy(connection)
+	{
+		DestinationTableName = name,
+	};
+
+	private static DataTable GetTable(string name, IEnumerable data, MemberCollection members)
+	{
+		var table = new DataTable(name);
+
+		foreach(var member in members)
+		{
+			if(member.IsSimplex(out var property))
+				table.Columns.Add(member.Property.GetFieldName(out _), property.Type.DbType.AsType());
+		}
+
+		foreach(var item in data)
+		{
+			var row = table.NewRow();
+
+			for(int i = 0; i < members.Count; i++)
+			{
+				var target = item;
+				row[members[i].Name] = members[i].GetValue(ref target);
+			}
+
+			table.Rows.Add(row);
+			table.AcceptChanges();
+		}
+
+		return table;
+	}
+	#endregion
 }

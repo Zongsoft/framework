@@ -52,7 +52,6 @@ public class MySqlDriver : DataDriverBase
 	#region 私有构造
 	private MySqlDriver()
 	{
-		//添加 MySQL 支持的功能特性集
 		this.Features.Add(Feature.Deletion.Multitable);
 		this.Features.Add(Feature.Updation.Multitable);
 	}

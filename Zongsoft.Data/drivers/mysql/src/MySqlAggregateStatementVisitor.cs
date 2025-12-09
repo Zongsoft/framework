@@ -37,7 +37,7 @@ namespace Zongsoft.Data.MySql;
 public class MySqlAggregateStatementVisitor : AggregateStatementVisitor
 {
 	#region 单例字段
-	public static readonly MySqlAggregateStatementVisitor Instance = new MySqlAggregateStatementVisitor();
+	public static readonly MySqlAggregateStatementVisitor Instance = new();
 	#endregion
 
 	#region 构造函数

@@ -37,7 +37,7 @@ namespace Zongsoft.Data.PostgreSql;
 public class PostgreSqlExecutionStatementVisitor : ExecutionStatementVisitor
 {
 	#region 单例字段
-	public static readonly PostgreSqlExecutionStatementVisitor Instance = new PostgreSqlExecutionStatementVisitor();
+	public static readonly PostgreSqlExecutionStatementVisitor Instance = new();
 	#endregion
 
 	#region 构造函数

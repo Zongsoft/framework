@@ -32,12 +32,11 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlInsertStatementBuilder : InsertStatementBuilder
 {
-	public class MsSqlInsertStatementBuilder : InsertStatementBuilder
-	{
-		#region 构造函数
-		public MsSqlInsertStatementBuilder() { }
-		#endregion
-	}
+	#region 构造函数
+	public MsSqlInsertStatementBuilder() { }
+	#endregion
 }

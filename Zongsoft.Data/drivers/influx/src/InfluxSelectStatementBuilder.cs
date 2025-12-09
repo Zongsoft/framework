@@ -32,9 +32,8 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.Influx
+namespace Zongsoft.Data.Influx;
+
+public class InfluxSelectStatementBuilder : SelectStatementBuilder
 {
-	public class InfluxSelectStatementBuilder : SelectStatementBuilder
-	{
-	}
 }

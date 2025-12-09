@@ -37,7 +37,7 @@ namespace Zongsoft.Data.MySql;
 public class MySqlExistStatementVisitor : ExistStatementVisitor
 {
 	#region 单例字段
-	public static readonly MySqlExistStatementVisitor Instance = new MySqlExistStatementVisitor();
+	public static readonly MySqlExistStatementVisitor Instance = new();
 	#endregion
 
 	#region 构造函数

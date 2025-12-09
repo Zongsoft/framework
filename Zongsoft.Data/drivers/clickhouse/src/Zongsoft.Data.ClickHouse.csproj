@@ -12,11 +12,6 @@
 		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/clickhouse</RepositoryUrl>
 	</PropertyGroup>
 
-	<PropertyGroup>
-		<!-- 待升级到更高版本的 ClickHouse.Client 以支持 .NET 9.0 版本后，即可移除 MSB3277 编译告警 -->
-		<NoWarn>$(NoWarn);MSB3277;</NoWarn>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<PackageReference Include="ClickHouse.Client" VersionOverride="7.14.0" />
 	</ItemGroup>

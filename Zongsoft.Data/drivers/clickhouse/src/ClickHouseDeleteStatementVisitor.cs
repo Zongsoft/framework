@@ -32,16 +32,15 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.ClickHouse
-{
-	public class ClickHouseDeleteStatementVisitor : DeleteStatementVisitor
-	{
-		#region 单例字段
-		public static readonly ClickHouseDeleteStatementVisitor Instance = new ClickHouseDeleteStatementVisitor();
-		#endregion
+namespace Zongsoft.Data.ClickHouse;
 
-		#region 构造函数
-		private ClickHouseDeleteStatementVisitor() { }
-		#endregion
-	}
+public class ClickHouseDeleteStatementVisitor : DeleteStatementVisitor
+{
+	#region 单例字段
+	public static readonly ClickHouseDeleteStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private ClickHouseDeleteStatementVisitor() { }
+	#endregion
 }

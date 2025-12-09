@@ -37,7 +37,7 @@ namespace Zongsoft.Data.MySql;
 public class MySqlStatementBuilder : StatementBuilderBase
 {
 	#region 单例字段
-	public static readonly MySqlStatementBuilder Default = new MySqlStatementBuilder();
+	public static readonly MySqlStatementBuilder Default = new();
 	#endregion
 
 	#region 构造函数

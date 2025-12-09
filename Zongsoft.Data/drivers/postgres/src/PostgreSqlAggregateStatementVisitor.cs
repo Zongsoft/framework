@@ -37,7 +37,7 @@ namespace Zongsoft.Data.PostgreSql;
 public class PostgreSqlAggregateStatementVisitor : AggregateStatementVisitor
 {
 	#region 单例字段
-	public static readonly PostgreSqlAggregateStatementVisitor Instance = new PostgreSqlAggregateStatementVisitor();
+	public static readonly PostgreSqlAggregateStatementVisitor Instance = new();
 	#endregion
 
 	#region 构造函数

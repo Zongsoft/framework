@@ -32,27 +32,26 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.ClickHouse
+namespace Zongsoft.Data.ClickHouse;
+
+public class ClickHouseStatementBuilder : StatementBuilderBase
 {
-	public class ClickHouseStatementBuilder : StatementBuilderBase
-	{
-		#region 单例字段
-		public static readonly ClickHouseStatementBuilder Default = new ClickHouseStatementBuilder();
-		#endregion
+	#region 单例字段
+	public static readonly ClickHouseStatementBuilder Default = new();
+	#endregion
 
-		#region 构造函数
-		private ClickHouseStatementBuilder() { }
-		#endregion
+	#region 构造函数
+	private ClickHouseStatementBuilder() { }
+	#endregion
 
-		#region 重写方法
-		protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new ClickHouseSelectStatementBuilder();
-		protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new ClickHouseDeleteStatementBuilder();
-		protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new ClickHouseInsertStatementBuilder();
-		protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new ClickHouseUpdateStatementBuilder();
-		protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new ClickHouseUpsertStatementBuilder();
-		protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new ClickHouseAggregateStatementBuilder();
-		protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new ClickHouseExistStatementBuilder();
-		protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new ClickHouseExecutionStatementBuilder();
-		#endregion
-	}
+	#region 重写方法
+	protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new ClickHouseSelectStatementBuilder();
+	protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new ClickHouseDeleteStatementBuilder();
+	protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new ClickHouseInsertStatementBuilder();
+	protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => new ClickHouseUpdateStatementBuilder();
+	protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new ClickHouseUpsertStatementBuilder();
+	protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new ClickHouseAggregateStatementBuilder();
+	protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new ClickHouseExistStatementBuilder();
+	protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new ClickHouseExecutionStatementBuilder();
+	#endregion
 }

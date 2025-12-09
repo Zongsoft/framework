@@ -32,27 +32,26 @@ using System;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MsSql
+namespace Zongsoft.Data.MsSql;
+
+public class MsSqlExistStatementVisitor : ExistStatementVisitor
 {
-	public class MsSqlExistStatementVisitor : ExistStatementVisitor
+	#region 单例字段
+	public static readonly MsSqlExistStatementVisitor Instance = new();
+	#endregion
+
+	#region 构造函数
+	private MsSqlExistStatementVisitor() { }
+	#endregion
+
+	#region 重写方法
+	protected override void VisitSelectOption(ExpressionVisitorContext context, SelectClause clause)
 	{
-		#region 单例字段
-		public static readonly MsSqlExistStatementVisitor Instance = new MsSqlExistStatementVisitor();
-		#endregion
+		//调用基类同名方法
+		base.VisitSelectOption(context, clause);
 
-		#region 构造函数
-		private MsSqlExistStatementVisitor() { }
-		#endregion
-
-		#region 重写方法
-		protected override void VisitSelectOption(ExpressionVisitorContext context, SelectClause clause)
-		{
-			//调用基类同名方法
-			base.VisitSelectOption(context, clause);
-
-			//限制只返回一条记录
-			context.Write("TOP(1) ");
-		}
-		#endregion
+		//限制只返回一条记录
+		context.Write("TOP(1) ");
 	}
+	#endregion
 }
