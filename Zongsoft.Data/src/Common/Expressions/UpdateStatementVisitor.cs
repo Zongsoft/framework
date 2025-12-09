@@ -144,27 +144,7 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 			return;
 
 		this.OnVisiteReturning(context, clause);
-
-		int index = 0;
-		foreach(var member in clause.Members)
-		{
-			if(index++ > 0)
-				context.Write(",");
-
-			var qualified = context.Dialect.GetIdentifier(member.Kind);
-			if(!string.IsNullOrEmpty(qualified))
-				context.Write($"{qualified}.");
-
-			context.Write(context.Dialect.GetIdentifier(member.Field.Name));
-			if(!string.IsNullOrEmpty(member.Field.Alias))
-				context.Write($" AS {context.Dialect.GetIdentifier(member.Field.Alias)}");
-		}
-
-		if(clause.Table != null)
-		{
-			context.Write(" INTO ");
-			context.Write(context.Dialect.GetIdentifier(clause.Table.Identifier()));
-		}
+		context.VisitReturning(clause);
 	}
 
 	protected virtual void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.Write("\nRETURNING ");

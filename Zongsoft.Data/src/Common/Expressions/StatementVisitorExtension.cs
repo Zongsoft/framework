@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -132,5 +132,30 @@ public static class StatementVisitorExtension
 
 		context.Write("WHERE ");
 		context.Visit(where);
+	}
+
+	public static void VisitReturning(this ExpressionVisitorContext context, ReturningClause clause)
+	{
+		int index = 0;
+
+		foreach(var member in clause.Members)
+		{
+			if(index++ > 0)
+				context.Write(",");
+
+			var qualified = context.Dialect.GetIdentifier(member.Kind);
+			if(!string.IsNullOrEmpty(qualified))
+				context.Write($"{qualified}.");
+
+			context.Write(context.Dialect.GetIdentifier(member.Field.Name));
+			if(!string.IsNullOrEmpty(member.Field.Alias))
+				context.Write($" AS {context.Dialect.GetIdentifier(member.Field.Alias)}");
+		}
+
+		if(clause.Table != null)
+		{
+			context.Write(" INTO ");
+			context.Write(context.Dialect.GetIdentifier(clause.Table.Identifier()));
+		}
 	}
 }
