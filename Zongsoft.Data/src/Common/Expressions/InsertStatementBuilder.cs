@@ -171,7 +171,7 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 				}
 			}
 
-			if(context.Options.HasReturning(out var returning) && context.Source.Features.Support(Feature.Returning))
+			if(owner == null && context.Options.HasReturning(out var returning) && context.Source.Features.Support(Feature.Returning))
 			{
 				statement.Returning ??= new();
 
