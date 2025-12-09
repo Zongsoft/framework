@@ -49,43 +49,14 @@ namespace Zongsoft.Data.MsSql
 		protected override void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
 		{
 			//生成OUTPUT(RETURNING)子句
-			this.VisitOutput(context, statement.Returning);
+			this.VisitReturning(context, statement.Returning);
 
 			//调用基类同名方法
 			base.VisitValues(context, statement, values, rounds);
 		}
-		#endregion
 
-		#region 私有方法
-		private void VisitOutput(ExpressionVisitorContext context, ReturningClause returning)
-		{
-			if(returning == null)
-				return;
-
-			context.WriteLine();
-			context.Write("OUTPUT ");
-
-			if(returning.Members == null || returning.Members.Count == 0)
-				context.Write("INSERTED.*");
-			else
-			{
-				int index = 0;
-
-				foreach(var member in returning.Members)
-				{
-					if(index++ > 0)
-						context.Write(",");
-
-					context.Write((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
-				}
-			}
-
-			if(returning.Table != null)
-			{
-				context.Write(" INTO ");
-				context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
-			}
-		}
+		protected override void OnVisited(ExpressionVisitorContext context, InsertStatement statement) => context.WriteLine(";");
+		protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.WriteLine(" OUTPUT");
 		#endregion
 	}
 }

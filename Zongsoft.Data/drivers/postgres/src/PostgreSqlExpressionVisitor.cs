@@ -194,6 +194,12 @@ public class PostgreSqlExpressionVisitor : ExpressionVisitorBase
 		public string GetSymbol(Operator @operator) => null;
 		public string GetIdentifier(string name) => $"\"{name}\"";
 		public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
+		public string GetIdentifier(ReturningKind kind) => kind switch
+		{
+			ReturningKind.Newer => "new",
+			ReturningKind.Older => "old",
+			_ => null,
+		};
 
 		public string GetDataType(DataType type, int length, byte precision, byte scale) => type.DbType switch
 		{

@@ -119,6 +119,7 @@ namespace Zongsoft.Data.SQLite
 			public string GetSymbol(Operator @operator) => null;
 			public string GetIdentifier(string name) => $"`{name}`";
 			public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
+			public string GetIdentifier(ReturningKind kind) => null;
 
 			public string GetDataType(DataType type, int length, byte precision, byte scale) => type.DbType switch
 			{

@@ -178,6 +178,7 @@ public class MySqlExpressionVisitor : ExpressionVisitorBase
 		public string GetSymbol(Operator @operator) => null;
 		public string GetIdentifier(string name) => $"`{name}`";
 		public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
+		public string GetIdentifier(ReturningKind kind) => throw new NotSupportedException();
 
 		public string GetDataType(DataType type, int length, byte precision, byte scale) => type.DbType switch
 		{

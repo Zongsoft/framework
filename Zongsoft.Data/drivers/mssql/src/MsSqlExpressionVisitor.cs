@@ -156,6 +156,12 @@ namespace Zongsoft.Data.MsSql
 
 				return this.GetIdentifier(identifier.Name);
 			}
+			public string GetIdentifier(ReturningKind kind) => kind switch
+			{
+				ReturningKind.Newer => "INSERTED",
+				ReturningKind.Older => "DELETED",
+				_ => null,
+			};
 
 			public string GetDataType(DataType type, int length, byte precision, byte scale) => type.DbType switch
 			{

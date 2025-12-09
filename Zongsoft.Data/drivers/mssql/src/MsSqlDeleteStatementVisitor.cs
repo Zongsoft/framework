@@ -46,46 +46,18 @@ namespace Zongsoft.Data.MsSql
 		#endregion
 
 		#region 重写方法
+
 		protected override void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
 		{
 			//生成OUTPUT(RETURNING)子句
-			this.VisitOutput(context, statement.Returning);
+			this.VisitReturning(context, statement.Returning);
 
 			//调用基类同名方法
 			base.VisitFrom(context, statement, sources);
 		}
-		#endregion
 
-		#region 私有方法
-		private void VisitOutput(ExpressionVisitorContext context, ReturningClause returning)
-		{
-			if(returning == null)
-				return;
-
-			context.WriteLine();
-			context.Write("OUTPUT ");
-
-			if(returning.Members == null || returning.Members.Count == 0)
-				context.Write("DELETED.*");
-			else
-			{
-				int index = 0;
-
-				foreach(var member in returning.Members)
-				{
-					if(index++ > 0)
-						context.Write(",");
-
-					context.Write((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
-				}
-			}
-
-			if(returning.Table != null)
-			{
-				context.Write(" INTO ");
-				context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
-			}
-		}
+		protected override void OnVisited(ExpressionVisitorContext context, DeleteStatement statement) => context.WriteLine(";");
+		protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.WriteLine(" OUTPUT");
 		#endregion
 	}
 }

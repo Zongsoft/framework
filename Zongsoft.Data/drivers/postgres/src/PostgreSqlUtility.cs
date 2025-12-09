@@ -144,7 +144,7 @@ internal static class PostgreSqlUtility
 		if(dbType == NpgsqlDbType.Cidr)
 		{
 			#if NET8_0_OR_GREATER
-			return typeof(NpgsqlCidr);
+			return typeof(System.Net.IPAddress);
 			#else
 			return typeof(ValueTuple<System.Net.IPAddress, int>);
 			#endif

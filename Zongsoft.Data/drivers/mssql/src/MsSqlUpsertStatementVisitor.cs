@@ -150,43 +150,14 @@ namespace Zongsoft.Data.MsSql
 
 			context.Write(")");
 
-			//输出返回子句
-			VisitOutput(context, statement.Returning);
+			//生成OUTPUT(RETURNING)子句
+			this.VisitReturning(context, statement.Returning);
 
 			context.WriteLine(";");
 		}
-		#endregion
 
-		#region 私有方法
-		private static void VisitOutput(ExpressionVisitorContext context, ReturningClause returning)
-		{
-			if(returning == null)
-				return;
-
-			context.WriteLine();
-			context.Write("OUTPUT ");
-
-			if(returning.Members == null || returning.Members.Count == 0)
-				context.Write("INSERTED.*");
-			else
-			{
-				int index = 0;
-
-				foreach(var member in returning.Members)
-				{
-					if(index++ > 0)
-						context.Write(",");
-
-					context.Write((member.Mode == ReturningClause.ReturningMode.Deleted ? "DELETED." : "INSERTED.") + member.Field.Name);
-				}
-			}
-
-			if(returning.Table != null)
-			{
-				context.Write(" INTO ");
-				context.Write(context.Dialect.GetIdentifier(returning.Table.Identifier()));
-			}
-		}
+		protected override void OnVisited(ExpressionVisitorContext context, UpsertStatement statement) => context.WriteLine(";");
+		protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.WriteLine(" OUTPUT");
 		#endregion
 	}
 }
