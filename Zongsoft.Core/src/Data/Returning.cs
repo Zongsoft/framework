@@ -80,15 +80,28 @@ public class Returning
 	#endregion
 
 	#region 嵌套结构
-	public readonly struct Column(string name, ReturningKind kind) : IEquatable<Column>
+	public readonly struct Column : IEquatable<Column>
 	{
-		public readonly string Name = name;
-		public readonly ReturningKind Kind = kind;
+		public readonly string Name;
+		public readonly ReturningKind Kind;
+		private readonly int _hashcode;
+
+		public Column(string name, ReturningKind kind)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			this.Name = name;
+			this.Kind = kind;
+			_hashcode = HashCode.Combine(this.Name.ToUpperInvariant(), this.Kind);
+		}
+
+		public string Alias => $"{this.Name}@{this.Kind}";
 
 		public bool Equals(Column other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && this.Kind == other.Kind;
 		public override bool Equals(object obj) => obj is Column other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Kind);
-		public override string ToString() => $"{this.Name}({this.Kind})";
+		public override int GetHashCode() => _hashcode;
+		public override string ToString() => this.Alias;
 
 		public static bool operator ==(Column left, Column right) => left.Equals(right);
 		public static bool operator !=(Column left, Column right) => !(left == right);
@@ -113,9 +126,11 @@ public class Returning
 		public int Count => _columns.Length;
 		public bool IsEmpty => _columns == null || _columns.Length == 0;
 		bool ICollection<Column>.IsReadOnly => false;
+		public Column this[int index] => _columns[index];
+		internal int[] Ordinals { get; set; }
 
-		public int GetOrdinal(Column column) => this.GetOrdinal(column.Name, column.Kind);
-		public int GetOrdinal(string name, ReturningKind? kind = default)
+		internal int IndexOf(Column column) => this.IndexOf(column.Name, column.Kind);
+		internal int IndexOf(string name, ReturningKind? kind = default)
 		{
 			if(string.IsNullOrEmpty(name))
 				return -1;
@@ -208,10 +223,10 @@ public class Returning
 				return false;
 			}
 
-			var ordinal = _columns.GetOrdinal(name, kind);
-			if(ordinal >= 0 && ordinal < this.Values.Length)
+			var index = _columns.IndexOf(name, kind);
+			if(index >= 0 && index < this.Values.Length)
 			{
-				value = this.Values[ordinal];
+				value = this.Values[index];
 				return true;
 			}
 
@@ -234,9 +249,39 @@ public class Returning
 			if(record == null)
 				throw new ArgumentNullException(nameof(record));
 
+			var ordinals = this.Initialize(record);
 			var values = new object[_columns.Count];
-			var row = new Row(_columns, record.GetValues(values));
+
+			for(int i = 0; i < _columns.Count; i++)
+			{
+				if(ordinals[i] >= 0)
+					values[i] = record.GetValue(ordinals[i]);
+			}
+
+			var row = new Row(_columns, values);
 			_rows.Add(row);
+		}
+
+		private int[] Initialize(IDataRecord record)
+		{
+			var ordinals = _columns.Ordinals;
+
+			if(ordinals == null || ordinals.Length == 0 || ordinals.Length != _columns.Count)
+			{
+				ordinals = new int[_columns.Count];
+
+				for(int i = 0; i < ordinals.Length; i++)
+				{
+					if(record.TryGetOrdinal(_columns[i].Alias, out var ordinal))
+						ordinals[i] = ordinal;
+					else if(record.TryGetOrdinal(_columns[i].Name, out ordinal))
+						ordinals[i] = ordinal;
+					else
+						ordinals[i] = -1;
+				}
+			}
+
+			return _columns.Ordinals = ordinals;
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();

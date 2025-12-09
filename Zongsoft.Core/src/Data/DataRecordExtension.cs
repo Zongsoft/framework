@@ -94,6 +94,25 @@ public static class DataRecordExtension
 	{
 		return RecordGetterTemplate<T>.Get(record, ordinal);
 	}
+
+	public static bool TryGetOrdinal(this IDataRecord record, string name, out int ordinal) => TryGetOrdinal(record, name, StringComparison.InvariantCultureIgnoreCase, out ordinal);
+	public static bool TryGetOrdinal(this IDataRecord record, string name, StringComparison comparison, out int ordinal)
+	{
+		if(record == null)
+			throw new ArgumentNullException(nameof(record));
+
+		for(int i = 0; i < record.FieldCount; i++)
+		{
+			if(string.Equals(name, record.GetName(i), comparison))
+			{
+				ordinal = i;
+				return true;
+			}
+		}
+
+		ordinal = -1;
+		return false;
+	}
 	#endregion
 
 	#region 私有子类
