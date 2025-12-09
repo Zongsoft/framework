@@ -143,7 +143,9 @@ public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 			if(!string.IsNullOrEmpty(qualified))
 				context.Write($"{qualified}.");
 
-			context.Visit(member.Field);
+			context.Write(context.Dialect.GetIdentifier(member.Field.Name));
+			if(!string.IsNullOrEmpty(member.Field.Alias))
+				context.Write($" AS {context.Dialect.GetIdentifier(member.Field.Alias)}");
 		}
 
 		if(clause.Table != null)
@@ -153,6 +155,6 @@ public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 		}
 	}
 
-	protected virtual void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.Write(" RETURNING ");
+	protected virtual void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.Write("\nRETURNING ");
 	#endregion
 }
