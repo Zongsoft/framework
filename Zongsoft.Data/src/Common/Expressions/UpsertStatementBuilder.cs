@@ -101,7 +101,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
 					{
-						if(context.Source.Driver.Features.Support(Feature.Returning))
+						if(context.Source.Features.Support(Feature.Returning))
 						{
 							var field = statement.Table.CreateField(schema.Token);
 
@@ -226,6 +226,17 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 					selection.Where = conditions;
 					statement.Slaves.Add(selection);
+				}
+			}
+
+			if(context.Options.HasReturning(out var returning) && context.Source.Features.Support(Feature.Returning))
+			{
+				statement.Returning ??= new();
+
+				foreach(var column in returning.Columns)
+				{
+					var field = statement.Table.CreateField(column.Name, column.Alias);
+					statement.Returning.Append(field, column.Kind);
 				}
 			}
 

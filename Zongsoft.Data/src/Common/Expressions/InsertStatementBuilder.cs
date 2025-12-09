@@ -103,7 +103,7 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 
 					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
 					{
-						if(context.Source.Driver.Features.Support(Feature.Returning))
+						if(context.Source.Features.Support(Feature.Returning))
 						{
 							var field = statement.Table.CreateField(schema.Token);
 
@@ -168,6 +168,17 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 						slave.Schema = schema;
 						statement.Slaves.Add(slave);
 					}
+				}
+			}
+
+			if(context.Options.HasReturning(out var returning) && context.Source.Features.Support(Feature.Returning))
+			{
+				statement.Returning ??= new();
+
+				foreach(var column in returning.Columns)
+				{
+					var field = statement.Table.CreateField(column.Name, column.Alias);
+					statement.Returning.Append(field, ReturningKind.Newer);
 				}
 			}
 

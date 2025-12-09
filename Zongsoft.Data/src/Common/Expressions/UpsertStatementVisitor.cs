@@ -170,21 +170,22 @@ public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 
 	protected virtual void VisitReturning(ExpressionVisitorContext context, ReturningClause clause)
 	{
-		context.Write(" RETURNING ");
-
 		if(clause.Members == null || clause.Members.Count == 0)
-			context.Write("*");
-		else
+			return;
+
+		this.OnVisiteReturning(context, clause);
+
+		int index = 0;
+		foreach(var member in clause.Members)
 		{
-			int index = 0;
+			if(index++ > 0)
+				context.Write(",");
 
-			foreach(var member in clause.Members)
-			{
-				if(index++ > 0)
-					context.Write(",");
+			var qualified = context.Dialect.GetIdentifier(member.Kind);
+			if(!string.IsNullOrEmpty(qualified))
+				context.Write($"{qualified}.");
 
-				context.Visit(member.Field);
-			}
+			context.Visit(member.Field);
 		}
 
 		if(clause.Table != null)
@@ -193,5 +194,7 @@ public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 			context.Write(context.Dialect.GetIdentifier(clause.Table.Identifier()));
 		}
 	}
+
+	protected virtual void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.Write(" RETURNING ");
 	#endregion
 }

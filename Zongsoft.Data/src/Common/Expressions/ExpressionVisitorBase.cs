@@ -619,6 +619,12 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 		public string GetAlias(string alias) => $"'{alias}'";
 		public string GetIdentifier(string name) => name;
 		public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
+		public string GetIdentifier(ReturningKind kind) => kind switch
+		{
+			ReturningKind.Newer => "new",
+			ReturningKind.Older => "old",
+			_ => null,
+		};
 
 		public string GetMethodName(MethodExpression method) => method switch
 		{

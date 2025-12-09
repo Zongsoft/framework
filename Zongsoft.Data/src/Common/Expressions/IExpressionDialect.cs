@@ -37,6 +37,7 @@ public interface IExpressionDialect
 	string GetDataType(DataType type, int length, byte precision, byte scale);
 	string GetSymbol(Operator @operator);
 	string GetIdentifier(string name);
+	string GetIdentifier(ReturningKind kind);
 	string GetIdentifier(IIdentifier identifier);
 	string GetAlias(string alias);
 	string GetMethodName(MethodExpression method);

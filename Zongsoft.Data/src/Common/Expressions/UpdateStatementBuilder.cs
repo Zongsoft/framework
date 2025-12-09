@@ -83,9 +83,11 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 		{
 			if(context.Source.Features.Support(Feature.Returning))
 			{
+				statement.Returning ??= new();
+
 				foreach(var column in returning.Columns)
 				{
-					var field = statement.Table.CreateField(column.Name);
+					var field = statement.Table.CreateField(column.Name, column.Alias);
 					statement.Returning.Append(field, column.Kind);
 				}
 			}
