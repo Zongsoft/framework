@@ -127,7 +127,6 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 
 		var count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
@@ -206,7 +205,6 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-
 		var count = await accessor.InsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) => {
 			model.UserId = (uint)(200 + index);
 			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
