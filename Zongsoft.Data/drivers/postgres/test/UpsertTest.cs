@@ -33,7 +33,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			UserId = 100,
 			Name = "Popeye Zhong"
 		});
-		Assert.True(count > 0);
+		Assert.Equal(1, count);
 
 		var result = accessor.SelectAsync<string>(
 			Model.Naming.Get<UserModel>(),
@@ -119,7 +119,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		});
 
 		count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
-		Assert.True(count > 0);
+		Assert.Equal(3, count);
 		Assert.NotNull(model.Children);
 		Assert.NotEmpty(model.Children);
 		foreach(var child in model.Children)
@@ -188,7 +188,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			model.UserId = (uint)(OFFSET + index);
 			model.Name = $"#User@{OFFSET + index}";
 		}), DataUpsertOptions.SuppressSequence());
-		Assert.True(count > 0);
+		Assert.Equal(COUNT, count);
 
 		result = accessor.SelectAsync<string>(
 			Model.Naming.Get<UserModel>(),
@@ -289,7 +289,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		}).ToArray();
 
 		count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
-		Assert.True(count > 0);
+		Assert.Equal(3 * COUNT, count);
 
 		for(int i = 0; i < models.Length; i++)
 		{
