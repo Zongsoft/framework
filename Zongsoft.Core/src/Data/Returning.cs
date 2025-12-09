@@ -255,7 +255,7 @@ public class Returning
 			for(int i = 0; i < _columns.Count; i++)
 			{
 				if(ordinals[i] >= 0)
-					values[i] = record.GetValue(ordinals[i]);
+					values[i] = record.IsDBNull(ordinals[i]) ? null : record.GetValue(ordinals[i]);
 			}
 
 			var row = new Row(_columns, values);
