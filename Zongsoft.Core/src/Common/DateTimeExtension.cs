@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,8 +31,29 @@ using System;
 
 namespace Zongsoft.Common;
 
+public enum DateTimePrecision
+{
+	Day,
+	Hour,
+	Minute,
+	Second,
+	Millisecond,
+	Microsecond,
+}
+
 public static class DateTimeExtension
 {
+	public static DateTime Resolute(this DateTime datetime, DateTimePrecision precision = DateTimePrecision.Millisecond) => precision switch
+	{
+		DateTimePrecision.Day => new DateTime(datetime.Year, datetime.Month, datetime.Day, 0, 0, 0, datetime.Kind),
+		DateTimePrecision.Hour => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, 0, 0, datetime.Kind),
+		DateTimePrecision.Minute => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, 0, datetime.Kind),
+		DateTimePrecision.Second => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Kind),
+		DateTimePrecision.Millisecond => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond, datetime.Kind),
+		DateTimePrecision.Microsecond => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond, datetime.Microsecond, datetime.Kind),
+		_ => datetime,
+	};
+
 	public static TimeSpan GetElapsed(this DateTime start) => start.Kind == DateTimeKind.Utc ? DateTime.UtcNow - start : DateTime.Now - start;
 	public static TimeSpan GetElapsed(this DateTimeOffset start) => DateTimeOffset.UtcNow - start;
 	public static long GetElapsedMilliseconds(this DateTime start) => (long)GetElapsed(start).TotalMilliseconds;
