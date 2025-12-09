@@ -109,6 +109,17 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 			}
 		}
 
+		if(context.Options.HasReturning(out var returning) && context.Source.Features.Support(Feature.Returning))
+		{
+			statement.Returning ??= new();
+
+			foreach(var column in returning.Columns)
+			{
+				var field = statement.Table.CreateField(column.Name, column.Alias);
+				statement.Returning.Append(field, column.Kind);
+			}
+		}
+
 		yield return statement;
 
 		if(masters != null)

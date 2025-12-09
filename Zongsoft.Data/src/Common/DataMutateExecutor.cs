@@ -108,7 +108,6 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	{
 		Returning returning;
 		SequenceToken[] sequences;
-		context.Count = reader.RecordsAffected;
 
 		switch(context)
 		{
@@ -198,13 +197,15 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				break;
 		}
 
-		return (context.Count = reader.RecordsAffected) > 0;
+		if(reader.RecordsAffected > 0)
+			context.Count += reader.RecordsAffected;
+
+		return context.Count > 0;
 	}
 	protected virtual async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
 	{
 		Returning returning;
 		SequenceToken[] sequences;
-		context.Count = reader.RecordsAffected;
 
 		switch(context)
 		{
@@ -294,7 +295,10 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				break;
 		}
 
-		return (context.Count = reader.RecordsAffected) > 0;
+		if(reader.RecordsAffected > 0)
+			context.Count += reader.RecordsAffected;
+
+		return context.Count > 0;
 	}
 
 	protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, int count) => count > 0;

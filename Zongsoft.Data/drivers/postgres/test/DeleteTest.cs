@@ -35,7 +35,7 @@ public class DeleteTest(DatabaseFixture database)
 		var options = DataDeleteOptions.Return(nameof(UserModel.UserId), nameof(UserModel.Name)).Build();
 		Assert.True(options.HasReturning(out var returning));
 
-		count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100), options);
 		Assert.Equal(0, count);
 		Assert.Equal(2, returning.Columns.Count);
 		Assert.Empty(returning.Rows);
@@ -50,7 +50,7 @@ public class DeleteTest(DatabaseFixture database)
 		Assert.Equal(2, returning.Columns.Count);
 		Assert.Single(returning.Rows);
 		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.UserId), out var value));
-		Assert.Equal(100, Convert.ChangeType(value, typeof(uint)));
+		Assert.Equal(100, Convert.ChangeType(value, typeof(int)));
 		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.Name), out value));
 		Assert.Equal("Popeye", value);
 	}
@@ -78,10 +78,14 @@ public class DeleteTest(DatabaseFixture database)
 		var count = await accessor.DeleteAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 100), nameof(RoleModel.Children));
 		Assert.Equal(2, count);
 
-		var options = DataDeleteOptions.Return(nameof(UserModel.UserId), nameof(UserModel.Name)).Build();
+		var options = DataDeleteOptions.Return(nameof(RoleModel.RoleId), nameof(RoleModel.Name)).Build();
 		Assert.True(options.HasReturning(out var returning));
 
-		count = await accessor.DeleteAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 100), nameof(RoleModel.Children));
+		count = await accessor.DeleteAsync<RoleModel>(
+			Condition.Equal(nameof(RoleModel.RoleId), 100),
+			nameof(RoleModel.Children),
+			options);
+
 		Assert.Equal(0, count);
 		Assert.Equal(2, returning.Columns.Count);
 		Assert.Empty(returning.Rows);
@@ -98,12 +102,16 @@ public class DeleteTest(DatabaseFixture database)
 			model.MemberType = MemberType.User;
 		}), DataInsertOptions.IgnoreConstraint());
 
-		count = await accessor.DeleteAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 100), nameof(RoleModel.Children));
+		count = await accessor.DeleteAsync<RoleModel>(
+			Condition.Equal(nameof(RoleModel.RoleId), 100),
+			nameof(RoleModel.Children),
+			options);
+
 		Assert.Equal(2, count);
 		Assert.Equal(2, returning.Columns.Count);
 		Assert.Single(returning.Rows);
 		Assert.True(returning.Rows[0].TryGetValue(nameof(RoleModel.RoleId), out var value));
-		Assert.Equal(100, Convert.ChangeType(value, typeof(uint)));
+		Assert.Equal(100, Convert.ChangeType(value, typeof(int)));
 		Assert.True(returning.Rows[0].TryGetValue(nameof(RoleModel.Name), out value));
 		Assert.Equal("Guests", value);
 	}
