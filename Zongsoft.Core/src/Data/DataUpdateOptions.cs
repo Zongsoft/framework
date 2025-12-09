@@ -150,7 +150,7 @@ public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 		#endregion
 
 		#region 构建方法
-		public override DataUpdateOptions Build() => new DataUpdateOptions(_behaviors, this.Parameters)
+		public override DataUpdateOptions Build() => new(_behaviors, this.Parameters)
 		{
 			Returning = this.Returning,
 			ValidatorSuppressed = this.ValidatorSuppressed,

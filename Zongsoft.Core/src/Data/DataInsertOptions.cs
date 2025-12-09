@@ -154,7 +154,7 @@ public class DataInsertOptions : DataMutateOptions, IDataInsertOptions
 		#endregion
 
 		#region 构建方法
-		public override DataInsertOptions Build() => new DataInsertOptions(this.Parameters)
+		public override DataInsertOptions Build() => new(this.Parameters)
 		{
 			Returning = this.Returning,
 			ConstraintIgnored = this.ConstraintIgnored,

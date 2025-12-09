@@ -109,7 +109,7 @@ public class DataDeleteOptions : DataMutateOptions, IDataDeleteOptions
 		#endregion
 
 		#region 构建方法
-		public override DataDeleteOptions Build() => new DataDeleteOptions(this.Parameters)
+		public override DataDeleteOptions Build() => new(this.Parameters)
 		{
 			Returning = this.Returning,
 			ValidatorSuppressed = this.ValidatorSuppressed,

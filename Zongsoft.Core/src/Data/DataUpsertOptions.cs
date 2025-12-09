@@ -156,8 +156,9 @@ public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 		#endregion
 
 		#region 构建方法
-		public override DataUpsertOptions Build() => new DataUpsertOptions(this.Parameters)
+		public override DataUpsertOptions Build() => new(this.Parameters)
 		{
+			Returning = this.Returning,
 			ConstraintIgnored = this.ConstraintIgnored,
 			SequenceSuppressed = this.SequenceSuppressed,
 			SequenceRetrieverSuppressed = this.SequenceRetrieverSuppressed,
