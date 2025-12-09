@@ -147,7 +147,6 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 					while(reader.Read())
 					{
-						returning.Rows.Populate(reader);
 						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
 
 						foreach(var sequence in sequences)
@@ -183,7 +182,6 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 					while(reader.Read())
 					{
-						returning.Rows.Populate(reader);
 						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
 
 						foreach(var sequence in sequences)
@@ -200,7 +198,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				break;
 		}
 
-		return true;
+		return (context.Count = reader.RecordsAffected) > 0;
 	}
 	protected virtual async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
 	{
@@ -245,7 +243,6 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 					while(await reader.ReadAsync(cancellation))
 					{
-						returning.Rows.Populate(reader);
 						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
 
 						foreach(var sequence in sequences)
@@ -281,7 +278,6 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 					while(await reader.ReadAsync(cancellation))
 					{
-						returning.Rows.Populate(reader);
 						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
 
 						foreach(var sequence in sequences)
@@ -298,7 +294,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				break;
 		}
 
-		return true;
+		return (context.Count = reader.RecordsAffected) > 0;
 	}
 
 	protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, int count) => count > 0;
