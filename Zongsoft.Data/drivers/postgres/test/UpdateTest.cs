@@ -31,7 +31,6 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 		{
 			Name = "Popeye Zhong",
 		}, Condition.Equal(nameof(UserModel.UserId), 100));
-
 		Assert.Equal(1, count);
 
 		var result = accessor.SelectAsync<string>(
@@ -43,8 +42,30 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 		Assert.True(await enumerator.MoveNextAsync());
 		var name = enumerator.Current;
 		await enumerator.DisposeAsync();
-
 		Assert.Equal("Popeye Zhong", name);
+
+		var options = DataUpdateOptions
+			.Return(ReturningKind.Newer, nameof(UserModel.Name), nameof(UserModel.Enabled))
+			.Return(ReturningKind.Older, nameof(UserModel.Name), nameof(UserModel.Enabled))
+			.Build();
+
+		count = await accessor.UpdateAsync<UserModel>(new
+		{
+			Name = "Popeye",
+			Enabled = true,
+		}, Condition.Equal(nameof(UserModel.UserId), 100), options);
+
+		Assert.Equal(1, count);
+		Assert.True(options.HasReturning(out var returning));
+		Assert.Single(returning.Rows);
+		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.Name), ReturningKind.Newer, out var value));
+		Assert.Equal("Popeye", value);
+		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.Name), ReturningKind.Older, out value));
+		Assert.Equal("Popeye Zhong", value);
+		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.Enabled), ReturningKind.Newer, out value));
+		Assert.Equal(true, value);
+		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.Enabled), ReturningKind.Older, out value));
+		Assert.Equal(true, value);
 	}
 
 	public void Dispose()
