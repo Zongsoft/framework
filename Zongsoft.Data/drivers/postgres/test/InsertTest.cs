@@ -42,7 +42,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			log.Action = "Action";
 			log.TenantId = 1;
 			log.BranchId = 0;
-			log.Timestamp = Zongsoft.Common.DateTimeExtension.Resolute(DateTime.UtcNow);
+			log.Timestamp = Zongsoft.Common.DateTimeExtension.Reset(DateTime.UtcNow, Zongsoft.Common.DateTimePart.Millisecond);
 		});
 
 		var options = DataInsertOptions.Return(nameof(Log.LogId), nameof(Log.Timestamp)).Build();
@@ -96,7 +96,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			log.Action = $"Action#{index}";
 			log.TenantId = 1;
 			log.BranchId = 0;
-			log.Timestamp = Zongsoft.Common.DateTimeExtension.Resolute(DateTime.UtcNow);
+			log.Timestamp = Zongsoft.Common.DateTimeExtension.Reset(DateTime.UtcNow, Zongsoft.Common.DateTimePart.Millisecond);
 		}).ToArray();
 
 		var options = DataInsertOptions.Return(nameof(Log.LogId), nameof(Log.Timestamp)).Build();
