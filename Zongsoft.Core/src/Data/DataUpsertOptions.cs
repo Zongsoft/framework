@@ -46,14 +46,6 @@ public interface IDataUpsertOptions : IDataMutateOptions
 
 	/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
 	bool SequenceRetrieverSuppressed { get; set; }
-
-	/// <summary>获取或设置增改操作的返回设置。</summary>
-	Returning Returning { get; set; }
-
-	/// <summary>获取当前增改操作是否指定了返回设置。</summary>
-	/// <param name="returning">输出参数，返回指定的返回设置。</param>
-	/// <returns>如果返回真(<c>True</c>)则表示指定了返回设置，否则返回假(<c>False</c>)。</returns>
-	bool HasReturning(out Returning returning);
 }
 
 /// <summary>
@@ -74,16 +66,6 @@ public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 	public bool SequenceSuppressed { get; set; }
 	/// <inheritdoc />
 	public bool SequenceRetrieverSuppressed { get; set; }
-	/// <inheritdoc />
-	public Returning Returning { get; set; }
-	#endregion
-
-	#region 公共方法
-	public bool HasReturning(out Returning returning)
-	{
-		returning = this.Returning;
-		return returning != null && !returning.Columns.IsEmpty;
-	}
 	#endregion
 
 	#region 静态方法
@@ -142,9 +124,6 @@ public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 
 		/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
 		public bool SequenceRetrieverSuppressed { get; set; }
-
-		/// <summary>获取或设置增改操作的返回设置。</summary>
-		public Returning Returning { get; set; }
 		#endregion
 
 		#region 设置方法

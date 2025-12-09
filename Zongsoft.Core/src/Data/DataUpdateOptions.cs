@@ -53,14 +53,6 @@ public interface IDataUpdateOptions : IDataMutateOptions
 {
 	/// <summary>获取或设置更新行为。</summary>
 	UpdateBehaviors Behaviors { get; set; }
-
-	/// <summary>获取或设置更新操作的返回设置。</summary>
-	Returning Returning { get; set; }
-
-	/// <summary>获取当前更新操作是否指定了返回设置。</summary>
-	/// <param name="returning">输出参数，返回指定的返回设置。</param>
-	/// <returns>如果返回真(<c>True</c>)则表示指定了返回设置，否则返回假(<c>False</c>)。</returns>
-	bool HasReturning(out Returning returning);
 }
 
 /// <summary>
@@ -80,16 +72,6 @@ public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 	#region 公共属性
 	/// <inheritdoc />
 	public UpdateBehaviors Behaviors { get; set; }
-	/// <inheritdoc />
-	public Returning Returning { get; set; }
-	#endregion
-
-	#region 公共方法
-	public bool HasReturning(out Returning returning)
-	{
-		returning = this.Returning;
-		return returning != null && !returning.Columns.IsEmpty;
-	}
 	#endregion
 
 	#region 静态方法
@@ -141,11 +123,6 @@ public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 			_behaviors = behaviors;
 			this.Parameter(parameters);
 		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置更新操作的返回设置。</summary>
-		public Returning Returning { get; set; }
 		#endregion
 
 		#region 设置方法
