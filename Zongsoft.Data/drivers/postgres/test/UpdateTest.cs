@@ -68,7 +68,7 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(true, value);
 	}
 
-	public void Dispose()
+	void IDisposable.Dispose()
 	{
 		if(!Global.IsTestingEnabled)
 			return;

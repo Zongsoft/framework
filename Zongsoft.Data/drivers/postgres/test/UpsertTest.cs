@@ -32,7 +32,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		count = await accessor.UpsertAsync<UserModel>(new {
 			UserId = 100,
 			Name = "Popeye Zhong"
-		});
+		}, DataUpsertOptions.SuppressSequence());
 		Assert.Equal(1, count);
 
 		var result = accessor.SelectAsync<string>(
@@ -335,7 +335,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), OFFSET, OFFSET + COUNT));
 	}
 
-	public void Dispose()
+	void IDisposable.Dispose()
 	{
 		if(!Global.IsTestingEnabled)
 			return;

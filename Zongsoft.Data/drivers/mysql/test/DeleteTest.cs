@@ -40,7 +40,6 @@ public class DeleteTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.InsertAsync(Model.Build<RoleModel>(model => {
 			model.RoleId = 100;
 			model.Name = "Guests";

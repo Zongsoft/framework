@@ -204,7 +204,7 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), OFFSET, OFFSET + COUNT));
 	}
 
-	public void Dispose()
+	void IDisposable.Dispose()
 	{
 		if(!Global.IsTestingEnabled)
 			return;

@@ -23,7 +23,6 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 			return;
 
 		IDataAccess accessor = _database.Accessor;
-
 		await accessor.DeleteAsync<UserModel>(Condition.GreaterThanEqual(nameof(UserModel.UserId), 1000));
 
 		var users = Model.Build<UserModel>(COUNT, (model, index) =>
@@ -39,7 +38,7 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(COUNT, count);
 	}
 
-	public void Dispose()
+	void IDisposable.Dispose()
 	{
 		if(!Global.IsTestingEnabled)
 			return;

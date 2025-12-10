@@ -21,7 +21,6 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 
 		var count = await accessor.UpsertAsync(Model.Build<UserModel>(model => {
@@ -33,7 +32,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		count = await accessor.UpsertAsync<UserModel>(new {
 			UserId = 100,
 			Name = "Popeye Zhong"
-		});
+		}, DataUpsertOptions.SuppressSequence());
 		Assert.True(count > 0);
 
 		var result = accessor.SelectAsync<string>(
@@ -45,7 +44,6 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		Assert.True(await enumerator.MoveNextAsync());
 		var name = enumerator.Current;
 		await enumerator.DisposeAsync();
-
 		Assert.Equal("Popeye Zhong", name);
 	}
 
@@ -165,7 +163,6 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 
 		var index = 0;
 		var accessor = _database.Accessor;
-
 		await accessor.DeleteAsync<UserModel>(Condition.Between(nameof(UserModel.UserId), OFFSET, OFFSET + COUNT));
 
 		var count = await accessor.UpsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) => {
@@ -338,7 +335,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), OFFSET, OFFSET + COUNT));
 	}
 
-	public void Dispose()
+	void IDisposable.Dispose()
 	{
 		if(!Global.IsTestingEnabled)
 			return;

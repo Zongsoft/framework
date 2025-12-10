@@ -21,7 +21,6 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-
 		var users = accessor.SelectAsync<UserModel>();
 		Assert.NotEmpty(users);
 
@@ -42,7 +41,6 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
@@ -85,7 +83,6 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
@@ -130,7 +127,6 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";

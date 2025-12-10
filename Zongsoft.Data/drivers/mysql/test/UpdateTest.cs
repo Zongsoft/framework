@@ -21,7 +21,6 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
@@ -43,11 +42,10 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 		Assert.True(await enumerator.MoveNextAsync());
 		var name = enumerator.Current;
 		await enumerator.DisposeAsync();
-
 		Assert.Equal("Popeye Zhong", name);
 	}
 
-	public void Dispose()
+	void IDisposable.Dispose()
 	{
 		if(!Global.IsTestingEnabled)
 			return;

@@ -39,7 +39,7 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(COUNT, count);
 	}
 
-	public void Dispose()
+	void IDisposable.Dispose()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
