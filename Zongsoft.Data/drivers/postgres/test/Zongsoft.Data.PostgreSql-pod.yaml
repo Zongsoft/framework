@@ -11,6 +11,18 @@ spec:
         path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/postgres/test/script/init.sql
         type: File
   containers:
+    - name: redis
+      image: redis:latest
+      ports:
+        - containerPort: 6379
+          protocol: TCP
+          hostPort: 6379
+      env:
+        - name: REDIS_PASSWORD
+          value: "xxxxxx"
+      command: ["redis-server"]
+      args: ["--requirepass", "$(REDIS_PASSWORD)"]
+
     - name: postgres
       image: postgres:18.0
       ports:
