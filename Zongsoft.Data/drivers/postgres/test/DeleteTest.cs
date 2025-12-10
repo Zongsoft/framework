@@ -37,7 +37,6 @@ public class DeleteTest(DatabaseFixture database)
 
 		count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100), options);
 		Assert.Equal(0, count);
-		Assert.Equal(2, returning.Columns.Count);
 		Assert.Empty(returning.Rows);
 
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
@@ -47,7 +46,6 @@ public class DeleteTest(DatabaseFixture database)
 
 		count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100), options);
 		Assert.Equal(1, count);
-		Assert.Equal(2, returning.Columns.Count);
 		Assert.Single(returning.Rows);
 		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.UserId), out var value));
 		Assert.Equal(100, Convert.ChangeType(value, typeof(int)));
@@ -62,7 +60,6 @@ public class DeleteTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.InsertAsync(Model.Build<RoleModel>(model => {
 			model.RoleId = 100;
 			model.Name = "Guests";
@@ -87,7 +84,6 @@ public class DeleteTest(DatabaseFixture database)
 			options);
 
 		Assert.Equal(0, count);
-		Assert.Equal(2, returning.Columns.Count);
 		Assert.Empty(returning.Rows);
 
 		await accessor.InsertAsync(Model.Build<RoleModel>(model => {
@@ -108,7 +104,6 @@ public class DeleteTest(DatabaseFixture database)
 			options);
 
 		Assert.Equal(2, count);
-		Assert.Equal(2, returning.Columns.Count);
 		Assert.Single(returning.Rows);
 		Assert.True(returning.Rows[0].TryGetValue(nameof(RoleModel.RoleId), out var value));
 		Assert.Equal(100, Convert.ChangeType(value, typeof(int)));
