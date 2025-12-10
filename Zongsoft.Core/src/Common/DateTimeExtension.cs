@@ -50,11 +50,11 @@ public static class DateTimeExtension
 		DateTimePart.Year => new DateTime(Math.Clamp(value, 1, 9999), datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond, datetime.Microsecond, datetime.Kind),
 		DateTimePart.Month => new DateTime(datetime.Year, Math.Clamp(value, 1, 12), datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond, datetime.Microsecond, datetime.Kind),
 		DateTimePart.Day => new DateTime(datetime.Year, datetime.Month, Math.Clamp(value, 1, DateTime.DaysInMonth(datetime.Year, datetime.Month)), datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond, datetime.Microsecond, datetime.Kind),
-		DateTimePart.Hour => new DateTime(datetime.Year, datetime.Month, datetime.Day, value, datetime.Minute, datetime.Second, datetime.Millisecond, datetime.Microsecond, datetime.Kind),
-		DateTimePart.Minute => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, value, datetime.Second, datetime.Millisecond, datetime.Microsecond, datetime.Kind),
-		DateTimePart.Second => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, value, datetime.Millisecond, datetime.Microsecond, datetime.Kind),
-		DateTimePart.Millisecond => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, value, datetime.Microsecond, datetime.Kind),
-		DateTimePart.Microsecond => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond, value, datetime.Kind),
+		DateTimePart.Hour => new DateTime(datetime.Year, datetime.Month, datetime.Day, Math.Clamp(value, 0, 23), datetime.Minute, datetime.Second, datetime.Millisecond, datetime.Microsecond, datetime.Kind),
+		DateTimePart.Minute => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, Math.Clamp(value, 0, 59), datetime.Second, datetime.Millisecond, datetime.Microsecond, datetime.Kind),
+		DateTimePart.Second => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, Math.Clamp(value, 0, 59), datetime.Millisecond, datetime.Microsecond, datetime.Kind),
+		DateTimePart.Millisecond => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, Math.Clamp(value, 0, 999), datetime.Microsecond, datetime.Kind),
+		DateTimePart.Microsecond => new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond, Math.Clamp(value, 0, 999), datetime.Kind),
 		_ => datetime,
 	};
 
