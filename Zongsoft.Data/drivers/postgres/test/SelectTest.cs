@@ -21,7 +21,6 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-
 		var users = accessor.SelectAsync<UserModel>();
 		Assert.NotEmpty(users);
 
@@ -36,13 +35,67 @@ public class SelectTest(DatabaseFixture database)
 	}
 
 	[Fact]
+	public async Task SelectAsync_WithOneToOne()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var model = Model.Build<RoleModel>(model =>
+		{
+			model.RoleId = 10;
+			model.Name = "Managers";
+			model.Children =
+			[
+				Model.Build<MemberModel>(member => {
+					member.MemberId = 100;
+					member.MemberType = MemberType.User;
+				}),
+				Model.Build<MemberModel>(member => {
+					member.MemberId = 404;
+					member.MemberType = MemberType.Role;
+				}),
+			];
+		});
+
+		var count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		Assert.Equal(3, count);
+
+		var members = accessor.SelectAsync<MemberModel>(
+			Condition.Equal($"{nameof(MemberModel.Role)}.{nameof(RoleModel.Name)}", model.Name),
+			$"*, {nameof(MemberModel.Role)}{{*}}",
+			[
+				Sorting.Ascending(nameof(MemberModel.RoleId)),
+				Sorting.Ascending(nameof(MemberModel.MemberId))
+			]).ToBlockingEnumerable().ToArray();
+
+		Assert.Equal(2, members.Length);
+
+		Assert.Equal(model.RoleId, members[0].RoleId);
+		Assert.Equal(100U, members[0].MemberId);
+		Assert.Equal(MemberType.User, members[0].MemberType);
+		Assert.NotNull(members[0].Role);
+		Assert.Equal(model.RoleId, members[0].Role.RoleId);
+		Assert.Equal(model.Name, members[0].Role.Name);
+
+		Assert.Equal(model.RoleId, members[1].RoleId);
+		Assert.Equal(404U, members[1].MemberId);
+		Assert.Equal(MemberType.Role, members[1].MemberType);
+		Assert.NotNull(members[1].Role);
+		Assert.Equal(model.RoleId, members[1].Role.RoleId);
+		Assert.Equal(model.Name, members[1].Role.Name);
+
+		count = await accessor.DeleteAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 10), nameof(RoleModel.Children));
+		Assert.Equal(3, count);
+	}
+
+	[Fact]
 	public async Task SelectAsync_WithOneToMany1()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
@@ -85,7 +138,6 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
@@ -130,7 +182,6 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
