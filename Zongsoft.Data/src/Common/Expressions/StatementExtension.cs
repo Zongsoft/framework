@@ -63,19 +63,19 @@ public static class StatementExtension
 
 				foreach(var item in (IEnumerable)context.Data)
 				{
-					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
-
 					if(hasSequences)
 						SetSequenceValue(context, statement, item);
+
+					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
 				}
 			}
 		}
 		else
 		{
-			Bind(context, command, context.Data, statement.Parameters);
-
 			if(context.Entity.HasSequences())
 				SetSequenceValue(context, statement, context.Data);
+
+			Bind(context, command, context.Data, statement.Parameters);
 		}
 	}
 
@@ -100,19 +100,19 @@ public static class StatementExtension
 
 				foreach(var item in (IEnumerable)context.Data)
 				{
-					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
-
 					if(hasSequences)
 						await SetSequenceValueAsync(context, statement, item, cancellation);
+
+					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
 				}
 			}
 		}
 		else
 		{
-			Bind(context, command, context.Data, statement.Parameters);
-
 			if(context.Entity.HasSequences())
 				await SetSequenceValueAsync(context, statement, context.Data, cancellation);
+
+			Bind(context, command, context.Data, statement.Parameters);
 		}
 	}
 
