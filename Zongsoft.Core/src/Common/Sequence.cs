@@ -49,7 +49,7 @@ public static class Sequence
 		if(sequence == null)
 			throw new ArgumentNullException(nameof(sequence));
 
-		return new VariableSequence(sequence);
+		return sequence is VariableSequence variable ? variable : new VariableSequence(sequence);
 	}
 
 	#region 嵌套子类

@@ -1974,7 +1974,11 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		#region 公共属性
 		public string Name => _accessor.Name;
 		public DataAccessBase Accessor => _accessor;
-		public ISequenceBase Sequence => _sequence ??= Common.Sequence.Variate(this.GetSequence());
+		public ISequenceBase Sequence
+		{
+			get => _sequence ??= Common.Sequence.Variate(this.GetSequence());
+			set => _sequence = value ?? throw new ArgumentNullException(nameof(value));
+		}
 		#endregion
 
 		#region 公共方法
