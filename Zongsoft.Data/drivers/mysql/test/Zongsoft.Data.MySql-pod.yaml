@@ -14,18 +14,6 @@ spec:
         path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/mysql/test/script/init.sql
         type: File
   containers:
-    - name: redis
-      image: redis:latest
-      ports:
-        - containerPort: 6379
-          protocol: TCP
-          hostPort: 6379
-      env:
-        - name: REDIS_PASSWORD
-          value: "xxxxxx"
-      command: ["redis-server"]
-      args: ["--requirepass", "$(REDIS_PASSWORD)"]
-
     - name: mysql
       image: mysql:8.4.6
       ports:

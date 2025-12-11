@@ -129,6 +129,9 @@ public class SelectTest(DatabaseFixture database)
 		Assert.Equal(100U, parent.MemberId);
 		Assert.Equal(MemberType.User, parent.MemberType);
 		await enumerator.DisposeAsync();
+
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		await accessor.DeleteAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 1));
 	}
 
 	[Fact]
@@ -173,6 +176,9 @@ public class SelectTest(DatabaseFixture database)
 		Assert.NotNull(parent.Role);
 		Assert.Equal("Administrators", parent.Role.Name);
 		await enumerator.DisposeAsync();
+
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		await accessor.DeleteAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 1));
 	}
 
 	[Fact]
@@ -213,5 +219,8 @@ public class SelectTest(DatabaseFixture database)
 		Assert.NotNull(role);
 		Assert.Equal("Administrators", role.Name);
 		await enumerator.DisposeAsync();
+
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		await accessor.DeleteAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 1));
 	}
 }

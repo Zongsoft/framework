@@ -26,6 +26,7 @@ public class DatabaseFixture : IDisposable
 
 		this.ConnectionSettings = Configuration.PostgreSqlConnectionSettingsDriver.Instance.GetSettings(CONNECTION_STRING);
 		this.Accessor = DataAccessProvider.Instance.GetAccessor("Zongsoft.Data.PostgreSql.Tests", new DataAccessOptions([this.ConnectionSettings]));
+		this.Accessor.Sequencer.Sequence = new Zongsoft.Data.Tests.Sequence() { Latency = TimeSpan.FromMilliseconds(50) };
 	}
 	#endregion
 
