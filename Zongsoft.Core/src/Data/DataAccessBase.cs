@@ -573,8 +573,6 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	#endregion
 
 	#region 聚合方法
-	public int Count<T>(ICondition criteria = null, string member = null, DataAggregateOptions options = null) => this.Aggregate<int>(this.GetName<T>(), new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0;
-	public int Count(string name, ICondition criteria = null, string member = null, DataAggregateOptions options = null) => this.Aggregate<int>(name, new DataAggregate(DataAggregateFunction.Count, member), criteria, null, null, null) ?? 0;
 	public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null);
 	public TValue? Aggregate<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), aggregate, criteria, options, aggregating, aggregated);
 	public TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(name, new DataAggregate(function, member), criteria, options, null, null);
