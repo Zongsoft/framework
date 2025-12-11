@@ -85,8 +85,7 @@ public class DataAggregateCollection : IEnumerable<DataAggregate>
 		if(string.IsNullOrEmpty(name) && function != DataAggregateFunction.Count)
 			throw new ArgumentNullException(nameof(name));
 
-		_members.Add(new DataAggregate(function, name, alias, distinct));
-
+		_members.Add(new DataAggregate(function, name, distinct, alias));
 		return this;
 	}
 	#endregion

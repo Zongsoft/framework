@@ -132,13 +132,27 @@ public interface IDataAccess : IDisposable
 
 	#region 聚合方法
 	TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, string alias, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, bool distinct, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
 	TValue? Aggregate<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>;
+
 	TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, string alias, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, bool distinct, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
 	TValue? Aggregate<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>;
 
 	ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, string alias, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, bool distinct, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
 	ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+
 	ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, string alias, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, bool distinct, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
 	ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
 	#endregion
 
