@@ -41,6 +41,9 @@ namespace Zongsoft.Data;
 partial class DataServiceBase<TModel>
 {
 	#region 执行方法
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, inParameters, null, cancellation);
 	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, CancellationToken cancellation = default)
 	{
 		//构建数据操作的选项对象
@@ -53,6 +56,9 @@ partial class DataServiceBase<TModel>
 		return this.OnExecuteAsync<T>(name, inParameters, options, cancellation);
 	}
 
+	public ValueTask<object> ExecuteScalarAsync(string name, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, inParameters, null, cancellation);
 	public ValueTask<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, CancellationToken cancellation = default)
 	{
 		//构建数据操作的选项对象

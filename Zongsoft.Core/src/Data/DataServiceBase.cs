@@ -480,6 +480,8 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	#endregion
 
 	#region 执行方法
+	public IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null) => this.Execute<T>(name, null, out _, options);
+	public IEnumerable<T> Execute<T>(string name, out IDictionary<string, object> outParameters, DataExecuteOptions options = null) => this.Execute<T>(name, null, out outParameters, options);
 	public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null) => this.Execute<T>(name, inParameters, out _, options);
 	public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null)
 	{
@@ -498,6 +500,8 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 		return this.DataAccess.Execute<T>(name, inParameters, out outParameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
 	}
 
+	public object ExecuteScalar(string name, DataExecuteOptions options = null) => this.ExecuteScalar(name, null, out _, options);
+	public object ExecuteScalar(string name, out IDictionary<string, object> outParameters, DataExecuteOptions options = null) => this.ExecuteScalar(name, null, out outParameters, options);
 	public object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null) => this.ExecuteScalar(name, inParameters, out _, options);
 	public object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null)
 	{

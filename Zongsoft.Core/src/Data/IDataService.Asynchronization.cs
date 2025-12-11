@@ -38,8 +38,15 @@ namespace Zongsoft.Data;
 public partial interface IDataService
 {
 	#region 执行方法
-	IAsyncEnumerable<T> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, CancellationToken cancellation = default);
-	ValueTask<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> ExecuteAsync<T>(string name, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options, CancellationToken cancellation = default);
+
+	ValueTask<object> ExecuteScalarAsync(string name, CancellationToken cancellation = default);
+	ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, CancellationToken cancellation = default);
+	ValueTask<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, CancellationToken cancellation = default);
+	ValueTask<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, DataExecuteOptions options, CancellationToken cancellation = default);
 	#endregion
 
 	#region 存在方法
