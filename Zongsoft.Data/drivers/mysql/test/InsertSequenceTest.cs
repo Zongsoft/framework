@@ -104,7 +104,7 @@ public class InsertSequenceTest(DatabaseFixture database) : IDisposable
 		foreach(var model in models)
 			Assert.True(model.UserId > 0);
 
-		count = accessor.Count<UserModel>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId)));
+		count = await accessor.CountAsync<UserModel, int>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId))) ?? 0;
 		Assert.Equal(COUNT, count);
 	}
 
