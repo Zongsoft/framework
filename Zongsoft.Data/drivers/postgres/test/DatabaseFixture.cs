@@ -17,6 +17,10 @@ public class DatabaseFixture : IDisposable
 	#region 构造函数
 	public DatabaseFixture()
 	{
+		var command = new Zongsoft.Data.Metadata.Profiles.MetadataCommand(null, "TruncateLog");
+		command.Scriptor.SetScript(PostgreSqlDriver.NAME, "TRUNCATE TABLE \"Log\"");
+		Mapping.Commands.Add(command);
+
 		Mapping.Loaders.Add(_loader = new Metadata.Profiles.MetadataFileLoader(AppContext.BaseDirectory));
 		DataEnvironment.Drivers.Add(PostgreSqlDriver.Instance);
 

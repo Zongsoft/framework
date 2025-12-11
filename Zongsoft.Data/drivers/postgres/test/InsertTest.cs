@@ -62,6 +62,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(log.LogId, Convert.ChangeType(value, typeof(ulong)));
 		Assert.True(returning.Rows[0].TryGetValue(nameof(Log.Timestamp), out value));
 		Assert.Equal(log.Timestamp, value);
+
+		await accessor.ExecuteScalarAsync("TruncateLog");
 	}
 
 	[Fact]
@@ -118,6 +120,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			Assert.True(returning.Rows[i].TryGetValue(nameof(Log.Timestamp), out value));
 			Assert.Equal(log.Timestamp, value);
 		}
+
+		await accessor.ExecuteScalarAsync("TruncateLog");
 	}
 
 	[Fact]
