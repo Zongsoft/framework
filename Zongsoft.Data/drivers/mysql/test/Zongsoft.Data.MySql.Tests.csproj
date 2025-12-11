@@ -35,7 +35,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Include="..\..\..\test\Sequence.cs" Link="Sequence.cs" />
+		<Compile Include="..\..\..\test\SequenceMocker.cs" Link="SequenceMocker.cs" />
 		<Compile Include="..\..\..\test\Models\AddressConditionConverter.cs" Link="Models\AddressConditionConverter.cs" />
 		<Compile Include="..\..\..\test\Models\Branch.cs" Link="Models\Branch.cs" />
 		<Compile Include="..\..\..\test\Models\BranchMember.cs" Link="Models\BranchMember.cs" />

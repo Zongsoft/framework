@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Tests;
 
-public sealed class Sequence : Zongsoft.Common.ISequenceBase
+public sealed class SequenceMocker : Zongsoft.Common.ISequenceBase
 {
 	private readonly Dictionary<string, long> _dictionary = new();
 
@@ -13,6 +13,7 @@ public sealed class Sequence : Zongsoft.Common.ISequenceBase
 
 	public long Decrease(string key, int interval = 1, int seed = 0) => this.Increase(key, -interval, seed);
 	public ValueTask<long> DecreaseAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, cancellation);
+	public ValueTask<long> IncreaseAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default) => ValueTask.FromResult(this.Increase(key, interval, seed));
 
 	public long Increase(string key, int interval = 1, int seed = 0)
 	{
@@ -27,8 +28,6 @@ public sealed class Sequence : Zongsoft.Common.ISequenceBase
 			return _dictionary[key] += interval;
 		}
 	}
-
-	public ValueTask<long> IncreaseAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default) => ValueTask.FromResult(this.Increase(key, interval, seed));
 
 	public void Reset(string key, int value = 0)
 	{
