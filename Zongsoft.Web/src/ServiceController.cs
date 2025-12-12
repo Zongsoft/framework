@@ -47,13 +47,13 @@ public class ServiceController<TModel, TService> : ServiceControllerBase<TModel,
 	#region 公共方法
 	[HttpGet("{key:required}/[action]")]
 	[HttpGet("[action]/{key?}")]
-	public virtual async ValueTask<IActionResult> CountAsync(string key, [FromQuery]bool distinct = false, CancellationToken cancellation = default)
+	public virtual async ValueTask<IActionResult> CountAsync(string key, [FromQuery][ModelBinder(typeof(Binders.BooleanBinder))]bool distinct = false, CancellationToken cancellation = default)
 	{
 		return this.Content((await this.DataService.CountAsync(null, distinct, key, this.OptionsBuilder.Count(), cancellation)).ToString());
 	}
 
 	[HttpPost("[action]")]
-	public virtual async ValueTask<IActionResult> CountAsync([FromQuery]bool distinct = false, CancellationToken cancellation = default)
+	public virtual async ValueTask<IActionResult> CountAsync([FromQuery][ModelBinder(typeof(Binders.BooleanBinder))]bool distinct = false, CancellationToken cancellation = default)
 	{
 		if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
@@ -222,7 +222,7 @@ public class SubserviceController<TModel, TService> : ServiceControllerBase<TMod
 {
 	#region 公共方法
 	[HttpGet("{key:required}/[action]")]
-	public virtual async ValueTask<IActionResult> CountAsync(string key, [FromQuery]bool distinct = false, CancellationToken cancellation = default)
+	public virtual async ValueTask<IActionResult> CountAsync(string key, [FromQuery][ModelBinder(typeof(Binders.BooleanBinder))]bool distinct = false, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrWhiteSpace(key))
 			return this.BadRequest();
@@ -231,7 +231,7 @@ public class SubserviceController<TModel, TService> : ServiceControllerBase<TMod
 	}
 
 	[HttpPost("[action]")]
-	public virtual async ValueTask<IActionResult> CountAsync([FromQuery]bool distinct = false, CancellationToken cancellation = default)
+	public virtual async ValueTask<IActionResult> CountAsync([FromQuery][ModelBinder(typeof(Binders.BooleanBinder))]bool distinct = false, CancellationToken cancellation = default)
 	{
 		if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
