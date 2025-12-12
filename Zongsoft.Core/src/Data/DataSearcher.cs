@@ -65,13 +65,7 @@ public class DataSearcher<TModel> : IDataSearcher<TModel>, IDataSearcher
 
 	#region 计数方法
 	public int Count(string keyword, IDataOptions options = null) => this.OnCount(this.Resolve(nameof(Count), keyword, options), options);
-	protected virtual int OnCount(ICondition criteria, IDataOptions options = null)
-	{
-		return this.DataService.Count(
-			criteria,
-			string.Empty,
-			options as DataAggregateOptions);
-	}
+	protected virtual int OnCount(ICondition criteria, IDataOptions options = null) => this.DataService.Count(criteria, options as DataAggregateOptions);
 	#endregion
 
 	#region 存在方法

@@ -47,19 +47,19 @@ public class ServiceController<TModel, TService> : ServiceControllerBase<TModel,
 	#region 公共方法
 	[HttpGet("{key:required}/[action]")]
 	[HttpGet("[action]/{key?}")]
-	public virtual async ValueTask<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
+	public virtual async ValueTask<IActionResult> CountAsync(string key, [FromQuery]bool distinct = false, CancellationToken cancellation = default)
 	{
-		return this.Content((await this.DataService.CountAsync(key, null, this.OptionsBuilder.Count(), cancellation)).ToString());
+		return this.Content((await this.DataService.CountAsync(null, distinct, key, this.OptionsBuilder.Count(), cancellation)).ToString());
 	}
 
 	[HttpPost("[action]")]
-	public virtual async ValueTask<IActionResult> CountAsync(CancellationToken cancellation = default)
+	public virtual async ValueTask<IActionResult> CountAsync([FromQuery]bool distinct = false, CancellationToken cancellation = default)
 	{
 		if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 		var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellation: cancellation);
-		var count = await this.DataService.CountAsync(Criteria.Transform(criteria as IModel), null, this.OptionsBuilder.Count(), cancellation);
+		var count = await this.DataService.CountAsync(distinct, Criteria.Transform(criteria as IModel), this.OptionsBuilder.Count(), cancellation);
 
 		return this.Content(count.ToString());
 	}
@@ -222,22 +222,22 @@ public class SubserviceController<TModel, TService> : ServiceControllerBase<TMod
 {
 	#region 公共方法
 	[HttpGet("{key:required}/[action]")]
-	public virtual async ValueTask<IActionResult> CountAsync(string key, CancellationToken cancellation = default)
+	public virtual async ValueTask<IActionResult> CountAsync(string key, [FromQuery]bool distinct = false, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrWhiteSpace(key))
 			return this.BadRequest();
 
-		return this.Content((await this.DataService.CountAsync(key, null, this.OptionsBuilder.Count(), cancellation)).ToString());
+		return this.Content((await this.DataService.CountAsync(null, distinct, key, this.OptionsBuilder.Count(), cancellation)).ToString());
 	}
 
 	[HttpPost("[action]")]
-	public virtual async ValueTask<IActionResult> CountAsync(CancellationToken cancellation = default)
+	public virtual async ValueTask<IActionResult> CountAsync([FromQuery]bool distinct = false, CancellationToken cancellation = default)
 	{
 		if(this.DataService.Attribute == null || this.DataService.Attribute.Criteria == null)
 			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 		var criteria = await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, this.DataService.Attribute.Criteria, cancellation: cancellation);
-		var count = await this.DataService.CountAsync(Criteria.Transform(criteria as IModel), null, this.OptionsBuilder.Count(), cancellation);
+		var count = await this.DataService.CountAsync(distinct, Criteria.Transform(criteria as IModel), this.OptionsBuilder.Count(), cancellation);
 		return this.Content(count.ToString());
 	}
 

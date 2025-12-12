@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -133,21 +133,14 @@ public partial interface IDataService
 	#endregion
 
 	#region 聚合方法
-	int Count(string key, string member = null, DataAggregateOptions options = null);
-	int Count<TKey1>(TKey1 key1, string member = null, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1>;
-	int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
-	int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
-	int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
-	int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
-	int Count(ICondition criteria = null, string member = null, DataAggregateOptions options = null);
-
-	TValue? Aggregate<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
-	TValue? Aggregate<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TValue : struct, IEquatable<TValue>;
-	TValue? Aggregate<TKey1, TKey2, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TValue : struct, IEquatable<TValue>;
-	TValue? Aggregate<TKey1, TKey2, TKey3, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TValue : struct, IEquatable<TValue>;
-	TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TValue : struct, IEquatable<TValue>;
-	TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> where TValue : struct, IEquatable<TValue>;
-	TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TValue>(DataAggregate aggregate, string key, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TKey1, TValue>(DataAggregate aggregate, TKey1 key1, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TKey1, TKey2, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TKey1, TKey2, TKey3, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TValue>(DataAggregate aggregate, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
+	TValue? Aggregate<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>;
 	#endregion
 
 	#region 删除方法
@@ -301,11 +294,8 @@ public partial interface IDataService
 	bool Exists(Condition criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
 	bool Exists(ConditionCollection criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
 
-	int Count(Condition criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
-	int Count(ConditionCollection criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
-
-	TValue? Aggregate<TValue>(DataAggregateFunction function, string member, Condition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, (ICondition)criteria, options);
-	TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ConditionCollection criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, (ICondition)criteria, options);
+	TValue? Aggregate<TValue>(DataAggregate aggregate, Condition criteria, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, (ICondition)criteria, options);
+	TValue? Aggregate<TValue>(DataAggregate aggregate, ConditionCollection criteria, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, (ICondition)criteria, options);
 
 	int Delete(Condition criteria, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, options);
 	int Delete(Condition criteria, string schema, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, schema, options);

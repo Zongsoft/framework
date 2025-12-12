@@ -176,7 +176,7 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 		for(int i = 0; i < COUNT; i++)
 			Assert.True(models[i].UserId > 0);
 
-		count = await accessor.CountAsync<UserModel, int>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId))) ?? 0;
+		count = await accessor.CountAsync<UserModel>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId)));
 		Assert.Equal(COUNT, count);
 
 		count = await accessor.UpsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) =>
@@ -186,7 +186,7 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 		}), DataUpsertOptions.SuppressSequence());
 		Assert.Equal(COUNT, count);
 
-		count = await accessor.CountAsync<UserModel, int>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId))) ?? 0;
+		count = await accessor.CountAsync<UserModel>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId)));
 		Assert.Equal(COUNT, count);
 
 		var users = accessor.SelectAsync<UserModel>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId)));

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -128,92 +128,42 @@ partial class DataServiceBase<TModel>
 	#endregion
 
 	#region 聚合方法
-	public ValueTask<int> CountAsync(string key, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default) => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key, options, out _), member, options, cancellation);
-	public ValueTask<int> CountAsync<TKey1>(TKey1 key1, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, options, out _), member, options, cancellation);
-	public ValueTask<int> CountAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, options, out _), member, options, cancellation);
-	public ValueTask<int> CountAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, options, out _), member, options, cancellation);
-	public ValueTask<int> CountAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, options, out _), member, options, cancellation);
-	public ValueTask<int> CountAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4>
-		where TKey5 : IEquatable<TKey5> => this.CountAsync(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, options, out _), member, options, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, string key, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key, null, out _), null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, string key, DataAggregateOptions options, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key, options, out _), options, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TValue>(DataAggregate aggregate, TKey1 key1, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, null, out _), null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TValue>(DataAggregate aggregate, TKey1 key1, DataAggregateOptions options, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, options, out _), options, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, null, out _), null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, DataAggregateOptions options, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, options, out _), options, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, key3, null, out _), null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, key3, options, out _), options, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, key3, key4, null, out _), null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, key3, key4, options, out _), options, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, key3, key4, key5, null, out _), null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, key3, key4, key5, options, out _), options, cancellation);
 
-	public async ValueTask<int> CountAsync(ICondition criteria = null, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)null, null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, DataAggregateOptions options, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)null, options, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ICondition criteria, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, criteria, null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>
 	{
 		//构建数据操作的选项对象
 		if(options == null)
 			options = new DataAggregateOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Count(), options);
+		this.Authorize(DataServiceMethod.Aggregate(aggregate.Function), options);
 
 		//修整查询条件
-		criteria = this.OnValidate(DataServiceMethod.Count(), criteria, options);
+		criteria = this.OnValidate(DataServiceMethod.Aggregate(aggregate.Function), criteria, options);
 
 		//执行聚合操作
-		return await this.OnAggregateAsync<int>(new DataAggregate(DataAggregateFunction.Count, member), criteria, options, cancellation) ?? 0;
+		return this.OnAggregateAsync<TValue>(aggregate, criteria, options, cancellation);
 	}
 
-	public ValueTask<int> CountAsync(Data.Condition criteria = null, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default) => this.CountAsync((ICondition)criteria, member, options, cancellation);
-	public ValueTask<int> CountAsync(ConditionCollection criteria = null, string member = null, DataAggregateOptions options = null, CancellationToken cancellation = default) => this.CountAsync((ICondition)criteria, member, options, cancellation);
-
-	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, options, out _), options, cancellation);
-	public ValueTask<TValue?> AggregateAsync<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1>
-		where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, options, out _), options, cancellation);
-	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, options, out _), options, cancellation);
-	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, options, out _), options, cancellation);
-
-	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4>
-		where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, options, out _), options, cancellation);
-	public ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4>
-		where TKey5 : IEquatable<TKey5>
-		where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, options, out _), options, cancellation);
-
-	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default)
-		where TValue : struct, IEquatable<TValue>
-	{
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataAggregateOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Aggregate(function), options);
-
-		//修整查询条件
-		criteria = this.OnValidate(DataServiceMethod.Aggregate(function), criteria, options);
-
-		//执行聚合操作
-		return this.OnAggregateAsync<TValue>(new DataAggregate(function, member), criteria, options, cancellation);
-	}
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, Data.Condition criteria, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, Data.Condition criteria, DataAggregateOptions options, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, options, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ConditionCollection criteria, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, null, cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ConditionCollection criteria, DataAggregateOptions options, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, options, cancellation);
 
 	protected virtual ValueTask<TValue?> OnAggregateAsync<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options, CancellationToken cancellation) where TValue : struct, IEquatable<TValue>
 	{

@@ -62,129 +62,129 @@ public class Grouping
 	#endregion
 
 	#region 公共方法
-	public Grouping Count(bool distinct = false)
+	public Grouping Count(bool distinct = false, string alias = null)
 	{
-		_aggregates.Count(null, distinct);
+		_aggregates.Count(distinct, alias);
 		return this;
 	}
 
-	public Grouping Count(string member, bool distinct = false)
+	public Grouping Count(string member, string alias = null)
 	{
-		_aggregates.Count(member, distinct);
+		_aggregates.Count(member, alias);
 		return this;
 	}
 
-	public Grouping Count(string member, string alias, bool distinct = false)
+	public Grouping Count(string member, bool distinct, string alias = null)
 	{
-		_aggregates.Count(member, alias, distinct);
+		_aggregates.Count(member, distinct, alias);
 		return this;
 	}
 
-	public Grouping Sum(string member, bool distinct = false)
+	public Grouping Sum(string member, string alias = null)
 	{
-		_aggregates.Sum(member, distinct);
+		_aggregates.Sum(member, alias);
 		return this;
 	}
 
-	public Grouping Sum(string member, string alias, bool distinct = false)
+	public Grouping Sum(string member, bool distinct, string alias = null)
 	{
-		_aggregates.Sum(member, alias, distinct);
+		_aggregates.Sum(member, distinct, alias);
 		return this;
 	}
 
-	public Grouping Average(string member, bool distinct = false)
+	public Grouping Average(string member, string alias = null)
 	{
-		_aggregates.Average(member, distinct);
+		_aggregates.Average(member, alias);
 		return this;
 	}
 
-	public Grouping Average(string member, string alias, bool distinct = false)
+	public Grouping Average(string member, bool distinct, string alias = null)
 	{
-		_aggregates.Average(member, alias, distinct);
+		_aggregates.Average(member, distinct, alias);
 		return this;
 	}
 
-	public Grouping Median(string member, bool distinct = false)
+	public Grouping Median(string member, string alias = null)
 	{
-		_aggregates.Median(member, distinct);
+		_aggregates.Median(member, alias);
 		return this;
 	}
 
-	public Grouping Median(string member, string alias, bool distinct = false)
+	public Grouping Median(string member, bool distinct, string alias = null)
 	{
-		_aggregates.Median(member, alias, distinct);
+		_aggregates.Median(member, distinct, alias);
 		return this;
 	}
 
-	public Grouping Maximum(string member, bool distinct = false)
+	public Grouping Maximum(string member, string alias = null)
 	{
-		_aggregates.Maximum(member, distinct);
+		_aggregates.Maximum(member, alias);
 		return this;
 	}
 
-	public Grouping Maximum(string member, string alias, bool distinct = false)
+	public Grouping Maximum(string member, bool distinct, string alias = null)
 	{
-		_aggregates.Maximum(member, alias, distinct);
+		_aggregates.Maximum(member, distinct, alias);
 		return this;
 	}
 
-	public Grouping Minimum(string member, bool distinct = false)
+	public Grouping Minimum(string member, string alias = null)
 	{
-		_aggregates.Minimum(member, distinct);
+		_aggregates.Minimum(member, alias);
 		return this;
 	}
 
-	public Grouping Minimum(string member, string alias, bool distinct = false)
+	public Grouping Minimum(string member, bool distinct, string alias = null)
 	{
-		_aggregates.Minimum(member, alias, distinct);
+		_aggregates.Minimum(member, distinct, alias);
 		return this;
 	}
 
-	public Grouping Deviation(string member, bool distinct = false)
+	public Grouping Deviation(string member, string alias = null)
 	{
-		_aggregates.Deviation(member, distinct);
+		_aggregates.Deviation(member, alias);
 		return this;
 	}
 
-	public Grouping Deviation(string member, string alias, bool distinct = false)
+	public Grouping Deviation(string member, bool distinct, string alias = null)
 	{
-		_aggregates.Deviation(member, alias, distinct);
+		_aggregates.Deviation(member, distinct, alias);
 		return this;
 	}
 
-	public Grouping DeviationPopulation(string member, bool distinct = false)
+	public Grouping DeviationPopulation(string member, string alias = null)
 	{
-		_aggregates.DeviationPopulation(member, distinct);
+		_aggregates.DeviationPopulation(member, alias);
 		return this;
 	}
 
-	public Grouping DeviationPopulation(string member, string alias, bool distinct = false)
+	public Grouping DeviationPopulation(string member, bool distinct, string alias = null)
 	{
-		_aggregates.DeviationPopulation(member, alias, distinct);
+		_aggregates.DeviationPopulation(member, distinct, alias);
 		return this;
 	}
 
-	public Grouping Variance(string member, bool distinct = false)
+	public Grouping Variance(string member, string alias = null)
 	{
-		_aggregates.Variance(member, distinct);
+		_aggregates.Variance(member, alias);
 		return this;
 	}
 
-	public Grouping Variance(string member, string alias, bool distinct = false)
+	public Grouping Variance(string member, bool distinct, string alias = null)
 	{
-		_aggregates.Variance(member, alias, distinct);
+		_aggregates.Variance(member, distinct, alias);
 		return this;
 	}
 
-	public Grouping VariancePopulation(string member, bool distinct = false)
+	public Grouping VariancePopulation(string member, string alias = null)
 	{
-		_aggregates.VariancePopulation(member, distinct);
+		_aggregates.VariancePopulation(member, alias);
 		return this;
 	}
 
-	public Grouping VariancePopulation(string member, string alias, bool distinct = false)
+	public Grouping VariancePopulation(string member, bool distinct, string alias = null)
 	{
-		_aggregates.VariancePopulation(member, alias, distinct);
+		_aggregates.VariancePopulation(member, distinct, alias);
 		return this;
 	}
 	#endregion
@@ -193,10 +193,7 @@ public class Grouping
 	/// <summary>创建一个分组设置。</summary>
 	/// <param name="keys">分组键成员数组，分组键元素使用冒号分隔成员的名称和别名。</param>
 	/// <returns>返回创建的分组设置。</returns>
-	public static Grouping Group(params string[] keys)
-	{
-		return Group(null, keys);
-	}
+	public static Grouping Group(params string[] keys) => Group(null, keys);
 
 	/// <summary>创建一个分组设置。</summary>
 	/// <param name="filter">分组的过滤条件。</param>
@@ -231,43 +228,32 @@ public class Grouping
 	{
 		var text = new System.Text.StringBuilder();
 
-		if(Keys != null && Keys.Length > 0)
+		if(this.Keys != null && this.Keys.Length > 0)
 		{
-			text.Append("Keys: ");
+			var index = 0;
+			text.Append('[');
 
-			foreach(var key in Keys)
+			foreach(var key in this.Keys)
 			{
-				text.Append(key.Name);
+				if(index++ > 0)
+					text.Append(", ");
 
-				if(key.Alias != null && key.Alias.Length > 0)
-					text.Append(" '" + key.Alias + "'");
+				text.Append(key);
 			}
 
-			text.AppendLine();
+			text.AppendLine("]");
 		}
 
-		if(_aggregates != null)
+		if(_aggregates != null && !_aggregates.IsEmpty)
 		{
 			foreach(var aggregate in _aggregates)
-			{
-				text.Append(aggregate.Function.ToString() + ": " + aggregate.Name);
-
-				if(aggregate.Alias != null && aggregate.Alias.Length > 0)
-					text.Append(" '" + aggregate.Alias + "'");
-
-				text.AppendLine();
-			}
+				text.AppendLine(aggregate.ToString());
 		}
 
-		if(Filter != null)
-		{
-			text.AppendLine("Filter: " + Filter.ToString());
-		}
+		if(this.Filter != null)
+			text.AppendLine($"Filter: {this.Filter}");
 
-		if(text == null)
-			return string.Empty;
-		else
-			return text.ToString();
+		return text.ToString();
 	}
 	#endregion
 
@@ -296,7 +282,7 @@ public class Grouping
 		public bool Equals(GroupKey other) => string.Equals(this.Name, other.Name) && string.Equals(this.Alias, other.Alias);
 		public override bool Equals(object obj) => obj is GroupKey other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Name, this.Alias);
-		public override string ToString() => string.IsNullOrEmpty(this.Alias) ? this.Name : $"{this.Name}:{this.Alias}";
+		public override string ToString() => string.IsNullOrEmpty(this.Alias) ? this.Name : $"{this.Name}@{this.Alias}";
 		#endregion
 
 		#region 重写符号

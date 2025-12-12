@@ -381,7 +381,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 		public DataExistsOptions Exists(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Exists()).Concat(parameters ?? []));
 		public DataExportOptions Export(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Export()).Concat(parameters ?? []));
 		public DataImportOptions Import(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Import()).Concat(parameters ?? []));
-		public DataAggregateOptions Count(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Count()).Concat(parameters ?? []));
+		public DataAggregateOptions Count(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(_controller.GetParameters(DataServiceMethod.Aggregate(DataAggregateFunction.Count)).Concat(parameters ?? []));
 	}
 	#endregion
 }

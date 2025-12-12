@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -62,7 +62,7 @@ public readonly struct DataServiceMethod : IEquatable<DataServiceMethod>
 
 	#region 静态方法
 	public static DataServiceMethod Get() => new(nameof(Get), DataAccessMethod.Select, false);
-	public static DataServiceMethod Count() => new(nameof(Count), DataAccessMethod.Aggregate, false);
+	public static DataServiceMethod Aggregate(DataAggregate aggregate) => new(aggregate.Function.ToString(), DataAccessMethod.Aggregate, false);
 	public static DataServiceMethod Aggregate(DataAggregateFunction aggregate) => new(aggregate.ToString(), DataAccessMethod.Aggregate, false);
 	public static DataServiceMethod Exists() => new(DataAccessMethod.Exists);
 	public static DataServiceMethod Execute() => new(DataAccessMethod.Execute);

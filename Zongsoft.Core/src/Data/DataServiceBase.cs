@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -570,93 +570,53 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	#endregion
 
 	#region 聚合方法
-	public int Count(string key, string member = null, DataAggregateOptions options = null) => this.Count(this.ConvertKey(DataServiceMethod.Count(), key, options, out _), member, options);
-	public int Count<TKey1>(TKey1 key1, string member = null, DataAggregateOptions options = null)
-		where TKey1 : IEquatable<TKey1> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, options, out _), member, options);
-	public int Count<TKey1, TKey2>(TKey1 key1, TKey2 key2, string member = null, DataAggregateOptions options = null)
+	public TValue? Aggregate<TValue>(DataAggregate aggregate, string key, DataAggregateOptions options = null)
+		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key, options, out _), options);
+	public TValue? Aggregate<TKey1, TValue>(DataAggregate aggregate, TKey1 key1, DataAggregateOptions options = null)
 		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, options, out _), member, options);
-	public int Count<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string member = null, DataAggregateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, options, out _), member, options);
-	public int Count<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string member = null, DataAggregateOptions options = null)
+		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, options, out _), options);
+	public TValue? Aggregate<TKey1, TKey2, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, DataAggregateOptions options = null)
 		where TKey1 : IEquatable<TKey1>
 		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, options, out _), member, options);
-	public int Count<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string member = null, DataAggregateOptions options = null)
+		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, options, out _), options);
+	public TValue? Aggregate<TKey1, TKey2, TKey3, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null)
 		where TKey1 : IEquatable<TKey1>
 		where TKey2 : IEquatable<TKey2>
 		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4>
-		where TKey5 : IEquatable<TKey5> => this.Count(this.ConvertKey(DataServiceMethod.Count(), key1, key2, key3, key4, key5, options, out _), member, options);
-
-	public int Count(ICondition criteria = null, string member = null, DataAggregateOptions options = null)
-	{
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataAggregateOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Count(), options);
-
-		//修整查询条件
-		criteria = this.OnValidate(DataServiceMethod.Count(), criteria, options);
-
-		//执行聚合操作
-		return this.OnAggregate<int>(new DataAggregate(DataAggregateFunction.Count, member), criteria, options) ?? 0;
-	}
-
-	public int Count(Data.Condition criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
-	public int Count(ConditionCollection criteria = null, string member = null, DataAggregateOptions options = null) => this.Count((ICondition)criteria, member, options);
-
-	public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, string key, DataAggregateOptions options = null)
-		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key, options, out _), options);
-	public TValue? Aggregate<TKey1, TValue>(DataAggregateFunction function, string member, TKey1 key1, DataAggregateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, options, out _), options);
-	public TValue? Aggregate<TKey1, TKey2, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, DataAggregateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, options, out _), options);
-	public TValue? Aggregate<TKey1, TKey2, TKey3, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, options, out _), options);
-	public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null)
+		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, key3, options, out _), options);
+	public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null)
 		where TKey1 : IEquatable<TKey1>
 		where TKey2 : IEquatable<TKey2>
 		where TKey3 : IEquatable<TKey3>
 		where TKey4 : IEquatable<TKey4>
-		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, options, out _), options);
-	public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregateFunction function, string member, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null)
+		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, key3, key4, options, out _), options);
+	public TValue? Aggregate<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null)
 		where TKey1 : IEquatable<TKey1>
 		where TKey2 : IEquatable<TKey2>
 		where TKey3 : IEquatable<TKey3>
 		where TKey4 : IEquatable<TKey4>
 		where TKey5 : IEquatable<TKey5>
-		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, this.ConvertKey(DataServiceMethod.Aggregate(function), key1, key2, key3, key4, key5, options, out _), options);
+		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, key2, key3, key4, key5, options, out _), options);
 
-	public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
+	public TValue? Aggregate<TValue>(DataAggregate aggregate, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, (ICondition)null, options);
+	public TValue? Aggregate<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue>
 	{
 		//构建数据操作的选项对象
 		if(options == null)
 			options = new DataAggregateOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Aggregate(function), options);
+		this.Authorize(DataServiceMethod.Aggregate(aggregate.Function), options);
 
 		//修整查询条件
-		criteria = this.OnValidate(DataServiceMethod.Aggregate(function), criteria, options);
+		criteria = this.OnValidate(DataServiceMethod.Aggregate(aggregate.Function), criteria, options);
 
 		//执行聚合操作
-		return this.OnAggregate<TValue>(new DataAggregate(function, member), criteria, options);
+		return this.OnAggregate<TValue>(aggregate, criteria, options);
 	}
 
-	public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, Data.Condition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, (ICondition)criteria, options);
-	public TValue? Aggregate<TValue>(DataAggregateFunction function, string member, ConditionCollection criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(function, member, (ICondition)criteria, options);
+	public TValue? Aggregate<TValue>(DataAggregate aggregate, Data.Condition criteria, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, (ICondition)criteria, options);
+	public TValue? Aggregate<TValue>(DataAggregate aggregate, ConditionCollection criteria, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, (ICondition)criteria, options);
 
 	protected virtual TValue? OnAggregate<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options) where TValue : struct, IEquatable<TValue>
 	{
@@ -2091,25 +2051,25 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	}
 
 	private ICondition ConvertKey<TKey1>(DataServiceMethod method, TKey1 key1, IDataOptions options, out bool singular)
-		where TKey1 : IEquatable<TKey1> => this.OnCondition(method, new object[] { key1 }, options, out singular);
+		where TKey1 : IEquatable<TKey1> => this.OnCondition(method, [key1], options, out singular);
 	private ICondition ConvertKey<TKey1, TKey2>(DataServiceMethod method, TKey1 key1, TKey2 key2, IDataOptions options, out bool singular)
 		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2> => this.OnCondition(method, new object[] { key1, key2 }, options, out singular);
+		where TKey2 : IEquatable<TKey2> => this.OnCondition(method, [key1, key2], options, out singular);
 	private ICondition ConvertKey<TKey1, TKey2, TKey3>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, IDataOptions options, out bool singular)
 		where TKey1 : IEquatable<TKey1>
 		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3> => this.OnCondition(method, new object[] { key1, key2, key3 }, options, out singular);
+		where TKey3 : IEquatable<TKey3> => this.OnCondition(method, [key1, key2, key3], options, out singular);
 	private ICondition ConvertKey<TKey1, TKey2, TKey3, TKey4>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, IDataOptions options, out bool singular)
 		where TKey1 : IEquatable<TKey1>
 		where TKey2 : IEquatable<TKey2>
 		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4> => this.OnCondition(method, new object[] { key1, key2, key3, key4 }, options, out singular);
+		where TKey4 : IEquatable<TKey4> => this.OnCondition(method, [key1, key2, key3, key4], options, out singular);
 	private ICondition ConvertKey<TKey1, TKey2, TKey3, TKey4, TKey5>(DataServiceMethod method, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, IDataOptions options, out bool singular)
 		where TKey1 : IEquatable<TKey1>
 		where TKey2 : IEquatable<TKey2>
 		where TKey3 : IEquatable<TKey3>
 		where TKey4 : IEquatable<TKey4>
-		where TKey5 : IEquatable<TKey5> => this.OnCondition(method, new object[] { key1, key2, key3, key4, key5 }, options, out singular);
+		where TKey5 : IEquatable<TKey5> => this.OnCondition(method, [key1, key2, key3, key4, key5], options, out singular);
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private ISchema GetSchema(string expression, Type type = null, bool immutable = false)
