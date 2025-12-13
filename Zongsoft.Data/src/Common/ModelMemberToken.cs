@@ -94,12 +94,12 @@ public sealed class ModelMemberToken<TModel> : IEquatable<ModelMemberToken<TMode
 	#endregion
 
 	#region 公共方法
-	public void Populate(ref TModel target, IDataRecord record, int ordinal)
+	public bool Populate(ref TModel target, IDataRecord record, int ordinal)
 	{
 		if(_converter == null)
-			_populateWithGetter.Invoke(ref target, record, ordinal, _getter);
+			return _populateWithGetter.Invoke(ref target, record, ordinal, _getter);
 		else
-			_populateWithConverter.Invoke(ref target, record, ordinal, _converter);
+			return _populateWithConverter.Invoke(ref target, record, ordinal, _converter);
 	}
 
 	public void SetValue(ref TModel target, object value) => _setter.Invoke(ref target, value);

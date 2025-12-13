@@ -29,7 +29,6 @@
 
 using System;
 using System.Data;
-using System.Linq;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common;
@@ -78,21 +77,25 @@ public class ModelPopulator<TModel> : IDataPopulator, IDataPopulator<TModel>
 			return model;
 		}
 
+		int count = 0;
+
 		foreach(var member in members)
 		{
 			if(member.Ordinal >= 0)
 			{
 				model ??= Creator.Invoke(record);
-				member.Token.Populate(ref model, record, member.Ordinal);
+				count += member.Token.Populate(ref model, record, member.Ordinal) ? 1 : 0;
 			}
 			else if(member.Populator != null)
 			{
 				model ??= Creator.Invoke(record);
-				member.Token.SetValue(ref model, member.Populate(record));
+				var value = member.Populate(record);
+				count += value is null ? 0 : 1;
+				member.Token.SetValue(ref model, value);
 			}
 		}
 
-		return model;
+		return count > 0 ? model : default;
 	}
 	#endregion
 

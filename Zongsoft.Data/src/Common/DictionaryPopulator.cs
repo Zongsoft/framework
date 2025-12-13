@@ -62,10 +62,11 @@ public class DictionaryPopulator : IDataPopulator
 
 		for(var i = 0; i < record.FieldCount; i++)
 		{
-			dictionary[_keys[i]] = record.GetValue(i);
+			if(!record.IsDBNull(i))
+				dictionary[_keys[i]] = record.GetValue(i);
 		}
 
-		return (T)dictionary;
+		return dictionary.Count > 0 ? (T)dictionary : default;
 	}
 	#endregion
 

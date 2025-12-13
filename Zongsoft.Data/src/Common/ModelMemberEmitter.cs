@@ -37,10 +37,10 @@ namespace Zongsoft.Data.Common;
 public static class ModelMemberEmitter
 {
 	#region 委托定义
-	public delegate void PopulatorWithGetter(ref object target, IDataRecord record, int ordinal, IDataRecordGetter getter);
-	public delegate void PopulatorWithGetter<T>(ref T target, IDataRecord record, int ordinal, IDataRecordGetter getter);
-	public delegate void PopulatorWithConverter(ref object target, IDataRecord record, int ordinal, Func<object, Type, object> converter);
-	public delegate void PopulatorWithConverter<T>(ref T target, IDataRecord record, int ordinal, Func<object, Type, object> converter);
+	public delegate bool PopulatorWithGetter(ref object target, IDataRecord record, int ordinal, IDataRecordGetter getter);
+	public delegate bool PopulatorWithGetter<T>(ref T target, IDataRecord record, int ordinal, IDataRecordGetter getter);
+	public delegate bool PopulatorWithConverter(ref object target, IDataRecord record, int ordinal, Func<object, Type, object> converter);
+	public delegate bool PopulatorWithConverter<T>(ref T target, IDataRecord record, int ordinal, Func<object, Type, object> converter);
 	#endregion
 
 	#region 私有变量
@@ -56,23 +56,25 @@ public static class ModelMemberEmitter
 	#region 公共方法
 	/*
 	 * 动态生成的字段设置方法的代码大致如下：
-	 * static void SetFieldX(
+	 * static bool SetFieldX(
 	 *      ref TModel target,
 	 *      IDataRecord record,
 	 *      int ordinal,
 	 *      IDataRecordGetter getter)
 	 * {
 	 *     if(record.IsDBNull(ordinal))
-	 *         return;
-	 * 
+	 *         return false;
+	 *
 	 *     target.FieldX = getter != null ?
 	 *         getter.GetValue<TField>(record, ordinal) :
 	 *         DataRecordGetter.Default.GetValue<TField>(record, ordinal);
+	 *
+	 *     return true;
 	 * }
 	 */
 	public static PopulatorWithGetter<TModel> GenerateFieldSetter<TModel>(FieldInfo field)
 	{
-		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
+		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", typeof(bool),
 			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(IDataRecordGetter)],
 			typeof(ModelMemberEmitter), true);
 
@@ -126,7 +128,13 @@ public static class ModelMemberEmitter
 
 		generator.Emit(OpCodes.Stfld, field);
 
+		//return true;
+		generator.Emit(OpCodes.Ldc_I4_1);
+		generator.Emit(OpCodes.Ret);
+
+		//return false;
 		generator.MarkLabel(endingLabel);
+		generator.Emit(OpCodes.Ldc_I4_0);
 		generator.Emit(OpCodes.Ret);
 
 		return (PopulatorWithGetter<TModel>)method.CreateDelegate(typeof(PopulatorWithGetter<TModel>));
@@ -134,21 +142,22 @@ public static class ModelMemberEmitter
 
 	/*
 	 * 动态生成的字段设置方法的代码大致如下：
-	 * static void SetFieldX(
+	 * static bool SetFieldX(
 	 *      ref TModel target,
 	 *      IDataRecord record,
 	 *      int ordinal,
 	 *      Func<object, Type, object> converter)
 	 * {
 	 *     if(record.IsDBNull(ordinal))
-	 *         return;
-	 * 
-	 *     return target.FieldX = (TField)converter(record.GetValue(ordinal), typeof(TField));
+	 *         return false;
+	 *
+	 *     target.FieldX = (TField)converter(record.GetValue(ordinal), typeof(TField));
+	 *     return true;
 	 * }
 	 */
 	public static PopulatorWithConverter<TModel> GenerateFieldSetter<TModel>(FieldInfo field, Func<object, Type, object> converter)
 	{
-		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", null,
+		var method = new DynamicMethod($"{field.DeclaringType.FullName}$Set{field.Name}", typeof(bool),
 			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(Func<object, Type, object>)],
 			typeof(ModelMemberEmitter), true);
 
@@ -201,7 +210,13 @@ public static class ModelMemberEmitter
 		//target.FieldX = ...
 		generator.Emit(OpCodes.Stfld, field);
 
+		//return true;
+		generator.Emit(OpCodes.Ldc_I4_1);
+		generator.Emit(OpCodes.Ret);
+
+		//return false;
 		generator.MarkLabel(endingLabel);
+		generator.Emit(OpCodes.Ldc_I4_0);
 		generator.Emit(OpCodes.Ret);
 
 		return (PopulatorWithConverter<TModel>)method.CreateDelegate(typeof(PopulatorWithConverter<TModel>));
@@ -209,23 +224,25 @@ public static class ModelMemberEmitter
 
 	/*
 	 * 动态生成的属性设置方法的代码大致如下：
-	 * static void SetPropertyX(
+	 * static bool SetPropertyX(
 	 *      ref TModel target,
 	 *      IDataRecord record,
 	 *      int ordinal,
 	 *      IDataRecordGetter getter)
 	 * {
 	 *     if(record.IsDBNull(ordinal))
-	 *         return;
-	 * 
+	 *         return false;
+	 *
 	 *     target.PropertyX = getter != null ?
 	 *         getter.GetValue<TProperty>(record, ordinal) :
 	 *         DataRecordGetter.Default.GetValue<TProperty>(record, ordinal);
+	 *
+	 *     return true;
 	 * }
 	 */
 	public static PopulatorWithGetter<TModel> GeneratePropertySetter<TModel>(PropertyInfo property)
 	{
-		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", null,
+		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", typeof(bool),
 			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(IDataRecordGetter)],
 			typeof(ModelMemberEmitter), true);
 
@@ -282,7 +299,13 @@ public static class ModelMemberEmitter
 		else
 			generator.Emit(OpCodes.Callvirt, property.SetMethod);
 
+		//return true;
+		generator.Emit(OpCodes.Ldc_I4_1);
+		generator.Emit(OpCodes.Ret);
+
+		//return false;
 		generator.MarkLabel(endingLabel);
+		generator.Emit(OpCodes.Ldc_I4_0);
 		generator.Emit(OpCodes.Ret);
 
 		return (PopulatorWithGetter<TModel>)method.CreateDelegate(typeof(PopulatorWithGetter<TModel>));
@@ -290,21 +313,22 @@ public static class ModelMemberEmitter
 
 	/*
 	 * 动态生成的属性设置方法的代码大致如下：
-	 * static void SetPropertyX(
+	 * static bool SetPropertyX(
 	 *      ref TModel target,
 	 *      IDataRecord record,
 	 *      int ordinal,
 	 *      Func<object, Type, object> converter)
 	 * {
 	 *     if(record.IsDBNull(ordinal))
-	 *         return;
-	 * 
-	 *     return target.PropertyX = (TProperty)converter(record.GetValue(ordinal), typeof(TProperty));
+	 *         return false;
+	 *
+	 *     target.PropertyX = (TProperty)converter(record.GetValue(ordinal), typeof(TProperty));
+	 *     return true;
 	 * }
 	 */
 	public static PopulatorWithConverter<TModel> GeneratePropertySetter<TModel>(PropertyInfo property, Func<object, Type, object> converter)
 	{
-		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", null,
+		var method = new DynamicMethod($"{property.DeclaringType.FullName}$Set{property.Name}", typeof(bool),
 			[typeof(TModel).MakeByRefType(), typeof(IDataRecord), typeof(int), typeof(Func<object, Type, object>)],
 			typeof(ModelMemberEmitter), true);
 
@@ -360,7 +384,13 @@ public static class ModelMemberEmitter
 		else
 			generator.Emit(OpCodes.Callvirt, property.SetMethod);
 
+		//return true;
+		generator.Emit(OpCodes.Ldc_I4_1);
+		generator.Emit(OpCodes.Ret);
+
+		//return false;
 		generator.MarkLabel(endingLabel);
+		generator.Emit(OpCodes.Ldc_I4_0);
 		generator.Emit(OpCodes.Ret);
 
 		return (PopulatorWithConverter<TModel>)method.CreateDelegate(typeof(PopulatorWithConverter<TModel>));
