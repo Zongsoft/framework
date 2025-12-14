@@ -223,4 +223,81 @@ public class SelectTest(DatabaseFixture database)
 		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 		await accessor.DeleteAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 1));
 	}
+
+	[Fact]
+	public async Task SelectAsync_WithOneToMany4()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var user = Model.Build<UserModel>(model =>
+		{
+			model.UserId = 100;
+			model.Name = "Popeye";
+			model.Email = new("popeye", "zongsoft.com");
+		});
+
+		var role = Model.Build<RoleModel>(model =>
+		{
+			model.RoleId = 10;
+			model.Name = "Managers";
+			model.Children =
+			[
+				Model.Build<MemberModel>(member => {
+					member.MemberId = 100;
+					member.MemberType = MemberType.User;
+				}),
+				Model.Build<MemberModel>(member => {
+					member.MemberId = 404;
+					member.MemberType = MemberType.Role;
+				}),
+			];
+		});
+
+		var count = await accessor.InsertAsync(user, DataInsertOptions.SuppressSequence());
+		Assert.Equal(1, count);
+
+		count = await accessor.InsertAsync(role, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		Assert.Equal(3, count);
+
+		var result = accessor.SelectAsync<RoleModel>(
+			Condition.Equal(nameof(RoleModel.RoleId), role.RoleId),
+			$"*,{nameof(RoleModel.Children)}{{*," +
+				$"{nameof(MemberModel.MemberRole)}{{*}}," +
+				$"{nameof(MemberModel.MemberUser)}{{*}}," +
+			$"}}").ToBlockingEnumerable().FirstOrDefault();
+
+		Assert.NotNull(result);
+		Assert.Equal(role.RoleId, result.RoleId);
+		Assert.Equal(role.Name, result.Name);
+		Assert.NotNull(result.Children);
+
+		var members = result.Children.OrderBy(child => child.MemberId).ToArray();
+		Assert.NotEmpty(members);
+		Assert.Equal(2, members.Length);
+
+		Assert.NotNull(members[0]);
+		Assert.Equal(role.RoleId, members[0].RoleId);
+		Assert.Equal(user.UserId, members[0].MemberId);
+		Assert.Equal(MemberType.User, members[0].MemberType);
+		Assert.Null(members[0].MemberRole);
+		Assert.NotNull(members[0].Member);
+		Assert.NotNull(members[0].MemberUser);
+		Assert.Same(members[0].Member, members[0].MemberUser);
+		Assert.Equal(user.UserId, members[0].MemberUser.UserId);
+		Assert.Equal(user.Name, members[0].MemberUser.Name);
+		Assert.Equal(user.Email, members[0].MemberUser.Email);
+
+		Assert.NotNull(members[1]);
+		Assert.Equal(role.RoleId, members[1].RoleId);
+		Assert.Equal(404U, members[1].MemberId);
+		Assert.Equal(MemberType.Role, members[1].MemberType);
+		Assert.Null(members[1].Member);
+		Assert.Null(members[1].MemberUser);
+		Assert.Null(members[1].MemberRole);
+
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), user.UserId));
+		await accessor.DeleteAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), role.RoleId), nameof(RoleModel.Children));
+	}
 }
