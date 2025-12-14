@@ -204,6 +204,10 @@ public abstract class Branch
 	#region 集合属性
 	/// <summary>获取或设置成员集。</summary>
 	public abstract IEnumerable<Employee> Members { get; set; }
+	/// <summary>获取或设置班组集。</summary>
+	public abstract ICollection<Team> Teams { get; set; }
+	/// <summary>获取或设置部门集。</summary>
+	public abstract ICollection<Department> Departments { get; set; }
 	#endregion
 }
 
@@ -326,5 +330,7 @@ public class HierarchicalBranch : Branch
 	public override string Remark { get => _branch.Remark; set => _branch.Remark = value; }
 
 	public override IEnumerable<Employee> Members { get => _branch.Members; set => _branch.Members = value; }
+	public override ICollection<Team> Teams { get => _branch.Teams; set => _branch.Teams = value; }
+	public override ICollection<Department> Departments { get => _branch.Departments; set => _branch.Departments = value; }
 	#endregion
 }

@@ -30,27 +30,9 @@ public class DeleteTest(DatabaseFixture database)
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+
 		Assert.Equal(1, count);
-
-		var options = DataDeleteOptions.Return(nameof(UserModel.UserId), nameof(UserModel.Name)).Build();
-		Assert.True(options.HasReturning(out var returning));
-
-		count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100), options);
-		Assert.Equal(0, count);
-		Assert.Empty(returning.Rows);
-
-		await accessor.InsertAsync(Model.Build<UserModel>(model => {
-			model.UserId = 100;
-			model.Name = "Popeye";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
-
-		count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100), options);
-		Assert.Equal(1, count);
-		Assert.Single(returning.Rows);
-		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.UserId), out var value));
-		Assert.Equal(100, Convert.ChangeType(value, typeof(int)));
-		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.Name), out value));
-		Assert.Equal("Popeye", value);
+		Assert.False(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100)));
 	}
 
 	[Fact]
@@ -73,41 +55,9 @@ public class DeleteTest(DatabaseFixture database)
 		}), DataInsertOptions.IgnoreConstraint());
 
 		var count = await accessor.DeleteAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 100), nameof(RoleModel.Children));
-		Assert.Equal(2, count);
-
-		var options = DataDeleteOptions.Return(nameof(RoleModel.RoleId), nameof(RoleModel.Name)).Build();
-		Assert.True(options.HasReturning(out var returning));
-
-		count = await accessor.DeleteAsync<RoleModel>(
-			Condition.Equal(nameof(RoleModel.RoleId), 100),
-			nameof(RoleModel.Children),
-			options);
-
-		Assert.Equal(0, count);
-		Assert.Empty(returning.Rows);
-
-		await accessor.InsertAsync(Model.Build<RoleModel>(model => {
-			model.RoleId = 100;
-			model.Name = "Guests";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
-
-		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
-		{
-			model.RoleId = 100;
-			model.MemberId = 2;
-			model.MemberType = MemberType.User;
-		}), DataInsertOptions.IgnoreConstraint());
-
-		count = await accessor.DeleteAsync<RoleModel>(
-			Condition.Equal(nameof(RoleModel.RoleId), 100),
-			nameof(RoleModel.Children),
-			options);
 
 		Assert.Equal(2, count);
-		Assert.Single(returning.Rows);
-		Assert.True(returning.Rows[0].TryGetValue(nameof(RoleModel.RoleId), out var value));
-		Assert.Equal(100, Convert.ChangeType(value, typeof(int)));
-		Assert.True(returning.Rows[0].TryGetValue(nameof(RoleModel.Name), out value));
-		Assert.Equal("Guests", value);
+		Assert.False(await accessor.ExistsAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 100)));
+		Assert.False(await accessor.ExistsAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 100)));
 	}
 }

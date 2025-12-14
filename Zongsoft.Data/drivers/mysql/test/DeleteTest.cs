@@ -30,7 +30,9 @@ public class DeleteTest(DatabaseFixture database)
 		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
 
 		count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+
 		Assert.Equal(1, count);
+		Assert.False(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100)));
 	}
 
 	[Fact]
@@ -53,6 +55,9 @@ public class DeleteTest(DatabaseFixture database)
 		}), DataInsertOptions.IgnoreConstraint());
 
 		var count = await accessor.DeleteAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 100), nameof(RoleModel.Children));
+
 		Assert.Equal(2, count);
+		Assert.False(await accessor.ExistsAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 100)));
+		Assert.False(await accessor.ExistsAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 100)));
 	}
 }

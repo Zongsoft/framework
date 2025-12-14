@@ -209,6 +209,16 @@
 				<link port="TenantId" />
 				<link port="BranchId" />
 			</complexProperty>
+
+			<complexProperty name="Departments" port="Department" multiplicity="*">
+				<link port="TenantId" />
+				<link port="BranchId" />
+			</complexProperty>
+
+			<complexProperty name="Teams" port="Team" multiplicity="*">
+				<link port="TenantId" />
+				<link port="BranchId" />
+			</complexProperty>
 		</entity>
 
 		<entity name="BranchMember">
