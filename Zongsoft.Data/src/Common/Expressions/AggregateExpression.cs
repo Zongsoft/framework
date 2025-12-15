@@ -50,7 +50,7 @@ public class AggregateExpression : MethodExpression
 			if(string.IsNullOrEmpty(aggregate.Name) || aggregate.Name == "*")
 				this.Alias = aggregate.Function.ToString();
 			else
-				this.Alias = aggregate.Name + aggregate.Function.ToString();
+				this.Alias = $"{aggregate.Name}{aggregate.Function}";
 		}
 		else
 			this.Alias = aggregate.Alias;
@@ -68,7 +68,7 @@ public class AggregateExpression : MethodExpression
 		if(argument is FieldIdentifier field)
 			field.Alias = null;
 
-		return new AggregateExpression(aggregate, argument == null ? Array.Empty<IExpression>() : new IExpression[] { argument });
+		return new AggregateExpression(aggregate, argument == null ? [] : [argument]);
 	}
 	#endregion
 }

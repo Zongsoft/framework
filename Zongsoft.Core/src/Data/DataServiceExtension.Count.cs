@@ -37,27 +37,20 @@ partial class DataServiceExtension
 {
 	#region 同步无成员
 	public static int Count(this IDataService service, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(null), (ICondition)null, options) ?? 0;
-	public static int Count(this IDataService service, bool distinct, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(null, distinct), (ICondition)null, options) ?? 0;
-	public static int Count(this IDataService service, bool distinct, ICondition criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(null, distinct), criteria, options) ?? 0;
 	public static int Count(this IDataService service, ICondition criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(null), criteria, options) ?? 0;
-	public static int Count(this IDataService service, ICondition criteria, bool distinct, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(null, distinct), criteria, options) ?? 0;
-
 	public static int Count(this IDataService service, Condition criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(null), criteria, options) ?? 0;
-	public static int Count(this IDataService service, Condition criteria, bool distinct, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(null, distinct), criteria, options) ?? 0;
 	public static int Count(this IDataService service, ConditionCollection criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(null), criteria, options) ?? 0;
-	public static int Count(this IDataService service, ConditionCollection criteria, bool distinct, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(null, distinct), criteria, options) ?? 0;
 	#endregion
 
 	#region 同步带成员
 	public static int Count(this IDataService service, string member, bool distinct, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member, distinct), (ICondition)null, options) ?? 0;
 	public static int Count(this IDataService service, string member, bool distinct, ICondition criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member, distinct), criteria, options) ?? 0;
 	public static int Count(this IDataService service, string member, ICondition criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member), criteria, options) ?? 0;
-	public static int Count(this IDataService service, string member, ICondition criteria, bool distinct, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member, distinct), criteria, options) ?? 0;
 
 	public static int Count(this IDataService service, string member, Condition criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member), criteria, options) ?? 0;
-	public static int Count(this IDataService service, string member, Condition criteria, bool distinct, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member, distinct), criteria, options) ?? 0;
+	public static int Count(this IDataService service, string member, bool distinct, Condition criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member, distinct), criteria, options) ?? 0;
 	public static int Count(this IDataService service, string member, ConditionCollection criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member), criteria, options) ?? 0;
-	public static int Count(this IDataService service, string member, ConditionCollection criteria, bool distinct, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member, distinct), criteria, options) ?? 0;
+	public static int Count(this IDataService service, string member, bool distinct, ConditionCollection criteria, DataAggregateOptions options = null) => service.Aggregate<int>(DataAggregate.Count(member, distinct), criteria, options) ?? 0;
 	#endregion
 
 	#region 同步无成员键值

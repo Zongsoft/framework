@@ -52,6 +52,7 @@ public class MethodExpression : Expression
 	public string Alias { get; set; }
 	public MethodType MethodType { get; }
 	public IList<IExpression> Arguments { get; }
+	public bool HasArguments => this.Arguments != null && this.Arguments.Count > 0;
 	#endregion
 
 	#region 静态方法

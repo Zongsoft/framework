@@ -346,18 +346,17 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 		context.Write(functionName);
 		context.Write("(");
 
-		if(expression is AggregateExpression aggregate && aggregate.Distinct)
+		if(expression is AggregateExpression aggregate && aggregate.Distinct && aggregate.HasArguments)
 			context.Write("DISTINCT ");
 
 		if(expression.Arguments != null)
 		{
-			var index = 0;
-
-			foreach(var argument in expression.Arguments)
+			for(int i = 0; i < expression.Arguments.Count; i++)
 			{
-				if(index++ > 0)
+				if(i > 0)
 					context.Write(",");
 
+				var argument = expression.Arguments[i];
 				var parenthesized = argument != null && typeof(IStatementBase).IsAssignableFrom(argument.GetType());
 
 				if(parenthesized)

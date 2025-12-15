@@ -41,9 +41,9 @@ public readonly struct DataAggregate
 	public DataAggregate(DataAggregateFunction function, string name, bool distinct, string alias = null)
 	{
 		this.Function = function;
-		this.Name = name;
+		this.Name = name?.Trim();
 		this.Alias = alias;
-		this.Distinct = distinct;
+		this.Distinct = distinct && !string.IsNullOrEmpty(this.Name) && this.Name != "*";
 	}
 	#endregion
 
