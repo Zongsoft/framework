@@ -39,12 +39,11 @@ public static class StatementVisitorExtension
 		if(sources == null || sources.Count == 0)
 			return;
 
+		int index = 0;
 		context.Write(" FROM ");
 
 		foreach(var source in sources)
 		{
-			int index = 0;
-
 			switch(source)
 			{
 				case TableIdentifier table:
