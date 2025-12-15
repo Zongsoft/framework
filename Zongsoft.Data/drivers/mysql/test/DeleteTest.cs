@@ -156,8 +156,8 @@ public class DeleteTest(DatabaseFixture database)
 		var count = await accessor.DeleteAsync<Branch>(
 			Condition.Equal(nameof(Branch.TenantId), TenantId) &
 			Condition.Equal(nameof(Branch.BranchId), BranchId),
-			$"{nameof(Branch.Departments)}{{*,{nameof(Department.Members)}}}," +
-			$"{nameof(Branch.Teams)}{{*,{nameof(Team.Members)}}}");
+			$"{nameof(Branch.Departments)}{{{nameof(Department.Members)}}}," +
+			$"{nameof(Branch.Teams)}{{{nameof(Team.Members)}}}");
 
 		Assert.Equal(7, count);
 		Assert.False(await accessor.ExistsAsync<Branch>(Condition.Equal(nameof(Branch.TenantId), TenantId) & Condition.Equal(nameof(Branch.BranchId), BranchId)));
