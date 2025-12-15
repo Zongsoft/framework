@@ -57,6 +57,14 @@ partial class PostgreSqlDriver
 					parameter.DbType = DbType.Int64;
 					parameter.Value = Zongsoft.Common.Convert.ConvertValue(value, typeof(long));
 					break;
+				case DbType.DateTime:
+				case DbType.DateTime2:
+					parameter.DbType = DbType.DateTime;
+					if(value is DateTime datetime && datetime.Kind != DateTimeKind.Utc)
+						parameter.Value = datetime.ToUniversalTime();
+					else
+						parameter.Value = value;
+					break;
 				default:
 					parameter.DbType = dbType;
 					parameter.Value = Zongsoft.Common.Convert.ConvertValue(value, DataUtility.AsType(dbType));
