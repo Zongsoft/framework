@@ -137,62 +137,6 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	#endregion
 
 	#region 私有方法
-	private void BuildReturning(Aliaser aliaser, DeleteStatement statement, IEnumerable<SchemaMember> schemas)
-	{
-		statement.Returning = new ReturningClause();
-
-		foreach(var key in statement.Entity.Key)
-		{
-			statement.Returning.Table.Field(key);
-			statement.Returning.Append(statement.Table.CreateField(key), ReturningKind.Older);
-		}
-
-		var super = statement.Entity.GetBaseEntity();
-
-		while(super != null)
-		{
-			BuildInheritance(aliaser, statement, super);
-			super = super.GetBaseEntity();
-		}
-
-		foreach(var schema in schemas)
-		{
-			if(schema.Token.Property.IsSimplex)
-				continue;
-
-			var complex = (IDataEntityComplexProperty)schema.Token.Property;
-			ISource src =  complex.Entity == statement.Entity ?
-				statement.Table :
-				statement.Join(aliaser, statement.Table, complex.Entity);
-
-			foreach(var link in complex.Links)
-			{
-				var anchors = link.GetAnchors();
-
-				if(anchors.Length > 1)
-					continue;
-
-				ISource source = statement.Table;
-
-				foreach(var anchor in link.GetAnchors())
-				{
-					if(anchor.IsComplex)
-					{
-						source = statement.Join(aliaser, source, (IDataEntityComplexProperty)anchor);
-					}
-					else
-					{
-						//某些导航属性可能与主键相同，表定义的字段定义方法（TableDefinition.Field(...)）可避免同名字段的重复定义
-						if(statement.Returning.Table.Field((IDataEntitySimplexProperty)anchor) != null)
-							statement.Returning.Append(src.CreateField(anchor.Name), ReturningKind.Older);
-					}
-				}
-			}
-
-			BuildSlave(aliaser, statement, schema);
-		}
-	}
-
 	private static IEnumerable<DeleteStatement> BuildSlave(Aliaser aliaser, DeleteStatement master, SchemaMember schema)
 	{
 		var complex = (IDataEntityComplexProperty)schema.Token.Property;
@@ -256,37 +200,6 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		}
 
 		yield return statement;
-	}
-
-	private static DeleteStatement BuildInheritance(Aliaser aliaser, DeleteStatement master, IDataEntity entity)
-	{
-		var statement = new DeleteStatement(entity);
-		var reference = master.Returning.Table.Identifier();
-
-		if(entity.Key.Length == 1)
-		{
-			var select = new SelectStatement(reference);
-			select.Select.Members.Add(reference.CreateField(master.Returning.Table.Fields.First().Name));
-			statement.Where = Expression.In(statement.Table.CreateField(entity.Key[0]), select);
-		}
-		else
-		{
-			var join = new JoinClause(TEMPORARY_ALIAS, reference, JoinType.Inner);
-
-			foreach(var key in entity.Key)
-			{
-				join.Conditions.Add(
-					Expression.Equal(
-						statement.Table.CreateField(key),
-						reference.CreateField(key)));
-			}
-
-			statement.From.Add(join);
-		}
-
-		master.Slaves.Add(statement);
-
-		return statement;
 	}
 
 	private static IEnumerable<JoinClause> Join(Aliaser aliaser, DeleteStatement statement, TableIdentifier table, string fullPath = null)
