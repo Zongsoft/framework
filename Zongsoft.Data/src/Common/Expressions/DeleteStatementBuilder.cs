@@ -102,10 +102,13 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 				if(complex.Behaviors == DataEntityComplexPropertyBehaviors.Principal)
 				{
 					masters ??= [];
-					masters.Add(BuildSlave(context.Aliaser, statement, member));
+					masters.AddRange(BuildSlave(context.Aliaser, statement, member));
 				}
 				else
-					yield return BuildSlave(context.Aliaser, statement, member);
+				{
+					foreach(var slave in BuildSlave(context.Aliaser, statement, member))
+						yield return slave;
+				}
 			}
 		}
 
@@ -190,7 +193,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		}
 	}
 
-	private static DeleteStatement BuildSlave(Aliaser aliaser, DeleteStatement master, SchemaMember schema)
+	private static IEnumerable<DeleteStatement> BuildSlave(Aliaser aliaser, DeleteStatement master, SchemaMember schema)
 	{
 		var complex = (IDataEntityComplexProperty)schema.Token.Property;
 		var statement = new DeleteStatement(complex.Foreign, aliaser.Generate());
@@ -214,7 +217,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		}
 		else
 		{
-			var join = new JoinClause(TEMPORARY_ALIAS, reference, JoinType.Inner);
+			var join = new JoinClause(aliaser.Generate(TEMPORARY_ALIAS), reference, JoinType.Inner);
 
 			foreach(var link in complex.Links)
 			{
@@ -240,7 +243,19 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		foreach(var parameter in master.Parameters)
 			statement.Parameters.Add(parameter);
 
-		return statement;
+		if(schema.HasChildren)
+		{
+			foreach(var child in schema.Children)
+			{
+				if(child.Token.Property.IsSimplex)
+					continue;
+
+				foreach(var slave in BuildSlave(aliaser, statement, child))
+					yield return slave;
+			}
+		}
+
+		yield return statement;
 	}
 
 	private static DeleteStatement BuildInheritance(Aliaser aliaser, DeleteStatement master, IDataEntity entity)
