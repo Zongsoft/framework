@@ -40,16 +40,19 @@ public class BooleanBinder : IModelBinder
 	public Task BindModelAsync(ModelBindingContext context)
 	{
 		var modelName = context.ModelName;
-		var valueProviderResult = context.ValueProvider.GetValue(modelName);
+		var providerResult = context.ValueProvider.GetValue(modelName);
 
-		if(valueProviderResult == ValueProviderResult.None)
+		if(providerResult == ValueProviderResult.None)
 			return Task.CompletedTask;
 
-		context.ModelState.SetModelValue(modelName, valueProviderResult);
-		var value = valueProviderResult.FirstValue;
+		context.ModelState.SetModelValue(modelName, providerResult);
+		var value = providerResult.FirstValue;
 
 		if(string.IsNullOrEmpty(value))
+		{
+			context.Result = ModelBindingResult.Success(true);
 			return Task.CompletedTask;
+		}
 
 		if(TryParse(value, out var result))
 			context.Result = ModelBindingResult.Success(result);
