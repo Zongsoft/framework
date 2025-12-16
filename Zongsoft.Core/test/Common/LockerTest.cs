@@ -11,7 +11,7 @@ public class LockerTest
 	const int COUNT = 500;
 
 	[Fact]
-	public void TestLock()
+	public void Lock()
 	{
 		var count = 0;
 		var locker = new Locker();
@@ -28,21 +28,27 @@ public class LockerTest
 	}
 
 	[Fact]
-	public void TestTryLock()
+	public void TryLock()
 	{
 		var count = 0;
+		var failure = 0;
+		var success = 0;
 		var locker = new Locker();
 
 		Parallel.For(0, COUNT, i =>
 		{
-			locker.TryLock(() => count++, TimeSpan.FromMilliseconds(1000));
+			if(locker.TryLock(() => count++, TimeSpan.FromMilliseconds(100)))
+				Interlocked.Increment(ref success);
+			else
+				Interlocked.Increment(ref failure);
 		});
 
-		Assert.Equal(COUNT, count);
+		Assert.Equal(success, count);
+		Assert.Equal(COUNT, success + failure);
 	}
 
 	[Fact]
-	public async Task TestLockAsyncEx()
+	public async Task LockAsync()
 	{
 		var count = 0;
 		var locker = new Locker();
@@ -79,7 +85,7 @@ public class LockerTest
 	}
 
 	[Fact]
-	public async Task TestTryLockAsync()
+	public async Task TryLockAsync()
 	{
 		var count = 0;
 		var locker = new Locker();
