@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Externals/Amazon">
+		<general server="http://127.0.0.1:9000" region="cn-north-1">
+			<credentials default="main">
+				<credential credential.name="main" code="Your Access Key Id" secret="Your Access Key Secret" />
+			</credentials>
+		</general>
+
+		<storages default="">
+			<storage region="cn-north-1" credential="" />
+		</storages>
+	</option>
+</options>

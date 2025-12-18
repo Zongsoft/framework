@@ -1,0 +1,4 @@
+artifacts/Zongsoft.Externals.Amazon.plugin
+artifacts/Zongsoft.Externals.Amazon.option
+lib/$(Framework)/Zongsoft.Externals.Amazon.*
+lib/$(Framework)/*/Zongsoft.Externals.Amazon.resources.*
