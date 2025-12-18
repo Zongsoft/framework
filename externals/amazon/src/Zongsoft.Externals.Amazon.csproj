@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Version>0.0.1</Version>
+		<Product>Zongsoft Amazon(AWS) Library</Product>
+		<Description>This is a library about Amazon Web Services SDK.</Description>
+		<RootNamespace>Zongsoft.Externals.Amazon</RootNamespace>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/master/externals/amazon</RepositoryUrl>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AWSSDK.Core" VersionOverride="4.0.3.6" />
+		<PackageReference Include="AWSSDK.S3" VersionOverride="4.0.15.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+	</ItemGroup>
+
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.20.0" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+</Project>
