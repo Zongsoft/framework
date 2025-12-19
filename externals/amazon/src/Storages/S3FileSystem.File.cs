@@ -127,7 +127,7 @@ partial class S3FileSystem
 			var response = await client.GetObjectMetadataAsync(new global::Amazon.S3.Model.GetObjectMetadataRequest()
 			{
 				BucketName = bucket,
-				Key = path,
+				Key = path.Trim('/'),
 			});
 
 			var response1 = await client.GetObjectAttributesAsync(new global::Amazon.S3.Model.GetObjectAttributesRequest()

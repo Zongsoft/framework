@@ -88,12 +88,12 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 			return null;
 		}
 
-		(region, bucket) = S3Utility.Parse(text[start..index]);
+		(region, bucket) = S3Utility.Parse(text.Slice(start, index));
 
 		if(string.IsNullOrEmpty(bucket))
 			throw new ArgumentException($"The specified ‘{text}’ scheme value does not contain the bucket name.", nameof(bucket));
 
-		return text[(index + 1)..].ToString();
+		return text[(index + 1)..].TrimStart('/').ToString();
 	}
 	#endregion
 }

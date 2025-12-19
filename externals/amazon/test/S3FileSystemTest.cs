@@ -26,7 +26,10 @@ public class S3FileSystemTest
 	[Fact]
 	public async Task GetInfoAsync()
 	{
-		var info = await FileSystem.File.GetInfoAsync(@"zfs.s3:/zongsoft-fs/美女.jpg");
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var info = await FileSystem.File.GetInfoAsync(@"zfs.s3:/zongsoft-fs/Wukong.png");
 		Assert.NotNull(info);
 	}
 }
