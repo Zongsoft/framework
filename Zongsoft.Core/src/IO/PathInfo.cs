@@ -45,13 +45,18 @@ public class PathInfo : IEquatable<PathInfo>
 
 	#region 构造函数
 	protected PathInfo() { }
-	public PathInfo(string path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
+
+	public PathInfo(string path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, createdTime, modifiedTime, null, url) { }
+	public PathInfo(string path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null)
 	{
 		if(string.IsNullOrWhiteSpace(path))
 			throw new ArgumentNullException(nameof(path));
 
 		_path = Path.Parse(path);
 		_url = url;
+
+		if(properties != null)
+			_properties = new Dictionary<string, object>(properties);
 
 		if(createdTime.HasValue)
 			_createdTime = createdTime.Value;
@@ -62,10 +67,14 @@ public class PathInfo : IEquatable<PathInfo>
 			_modifiedTime = _createdTime;
 	}
 
-	public PathInfo(Path path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
+	public PathInfo(Path path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, createdTime, modifiedTime, null, url) { }
+	public PathInfo(Path path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null)
 	{
 		_path = path;
 		_url = url;
+
+		if(properties != null)
+			_properties = new Dictionary<string, object>(properties);
 
 		if(createdTime.HasValue)
 			_createdTime = createdTime.Value;

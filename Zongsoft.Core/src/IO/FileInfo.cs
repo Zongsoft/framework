@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.IO;
 
@@ -46,14 +47,14 @@ public class FileInfo : PathInfo, IEquatable<FileInfo>
 		_type = string.Empty;
 	}
 
-	public FileInfo(string path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
-		: base(path, createdTime, modifiedTime, url)
+	public FileInfo(string path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, size, createdTime, modifiedTime, null, url) { }
+	public FileInfo(string path, long size, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url)
 	{
 		_size = size;
 	}
 
-	public FileInfo(Path path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null)
-		: base(path, createdTime, modifiedTime, url)
+	public FileInfo(Path path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, size, createdTime, modifiedTime, null, url) { }
+	public FileInfo(Path path, long size, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url)
 	{
 		_size = size;
 	}
