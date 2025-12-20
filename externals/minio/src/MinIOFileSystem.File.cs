@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -37,8 +38,6 @@ using System.Collections.Generic;
 using Minio;
 using Minio.Exceptions;
 using Minio.DataModel.Args;
-using Zongsoft.Data;
-using System.Buffers;
 
 namespace Zongsoft.Externals.MinIO;
 
@@ -317,7 +316,7 @@ partial class MinIOFileSystem
 		public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 		public override void Write(byte[] buffer, int offset, int count)
 		{
-			if(_stream != null)
+			if(_stream != null && _position <= 0)
 			{
 				var bytesRead = _stream.Read(_buffer, 0, _buffer.Length);
 
