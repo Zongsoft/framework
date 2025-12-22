@@ -302,6 +302,9 @@ partial class MinIOFileSystem
 			_request = new PutObjectArgs()
 				.WithBucket(bucket)
 				.WithObject(path);
+
+			if(Zongsoft.IO.Mime.TryGetMimeType(path, out var type))
+				_request.WithContentType(type);
 		}
 
 		public override bool CanRead => true;
@@ -333,12 +336,9 @@ partial class MinIOFileSystem
 			_length += count;
 			_position += count;
 
-			//_request.WithRequestBody(buffer.AsMemory(offset, count));
 			_request.WithStreamData(new MemoryStream(buffer, offset, count));
 			var response = _client.PutObjectAsync(_request).ConfigureAwait(false).GetAwaiter().GetResult();
 		}
-
-		public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => base.WriteAsync(buffer, offset, count, cancellationToken);
 
 		protected override void Dispose(bool disposing)
 		{
