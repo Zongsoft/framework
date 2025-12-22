@@ -16,7 +16,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="AWSSDK.Core" VersionOverride="4.0.3.6" />
-		<PackageReference Include="AWSSDK.S3" VersionOverride="4.0.15.1" />
+		<PackageReference Include="AWSSDK.S3" VersionOverride="4.0.15.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
 	</ItemGroup>

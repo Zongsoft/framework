@@ -4,4 +4,4 @@ lib/$(Framework)/Zongsoft.Externals.Amazon.*
 lib/$(Framework)/*/Zongsoft.Externals.Amazon.resources.*
 
 nuget:AWSSDK.Core@4.0.3.6
-nuget:AWSSDK.S3@4.0.15.1
+nuget:AWSSDK.S3@4.0.15.2
