@@ -359,11 +359,11 @@ partial class S3FileSystem
 				_uploadId = (await _client.InitiateMultipartUploadAsync(argument, cancellation)).UploadId;
 			}
 
-			if(_stream != null && _position <= 0)
+			if(_stream != null)
 			{
-				var bytesRead = _stream.Read(_buffer, 0, _buffer.Length);
+				int bytesRead;
 
-				while(bytesRead > 0)
+				while((bytesRead = _stream.Read(_buffer, 0, _buffer.Length)) > 0)
 					await this.UploadAsync(_buffer, 0, bytesRead, cancellation);
 
 				_stream.Dispose();
