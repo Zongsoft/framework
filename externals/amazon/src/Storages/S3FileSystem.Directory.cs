@@ -236,11 +236,7 @@ partial class S3FileSystem
 				}
 
 				foreach(var item in response.S3Objects)
-					yield return new IO.FileInfo(
-						_fileSystem.GetPath(region, bucket, item.Key),
-						item.Size ?? 0,
-						null,
-						item.LastModified);
+					yield return _fileSystem.GetFileInfo(region, bucket, item.Key, item.Size, null, item.LastModified);
 			} while(continuation != null);
 		}
 
