@@ -193,7 +193,7 @@ partial class S3FileSystem
 					tags = tagging.Tagging?.Select(tag => new KeyValuePair<string, object>(tag.Key, tag.Value));
 				}
 
-				return new(_fileSystem.GetUrl(region, bucket, path), response.ContentLength, null, response.LastModified, tags);
+				return new(_fileSystem.GetPath(region, bucket, path), response.ContentLength, null, response.LastModified, tags);
 			}
 			catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
 			{

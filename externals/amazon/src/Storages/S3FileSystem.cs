@@ -30,6 +30,7 @@
 using System;
 
 using Amazon.S3;
+using Amazon.S3.Model;
 
 namespace Zongsoft.Externals.Amazon.Storages;
 
@@ -59,21 +60,26 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 		if(!path.HasSegments)
 			return null;
 
-		var bucketName = path.Segments[0];
+		(var region, var bucket) = S3Utility.Resolve(path.Segments[0]);
+		var client = this.GetClient(region);
 
-		return null;
+		return client.GetPreSignedURL(new GetPreSignedUrlRequest
+		{
+			Verb = HttpVerb.GET,
+			BucketName = bucket,
+			Expires = DateTime.UtcNow.AddDays(10),
+			Key = System.IO.Path.Combine(path.Segments.AsSpan()[1..].ToArray()),
+		});
 	}
 	#endregion
 
-	private string GetUrl(string region, string bucket, string path)
-	{
-		return string.IsNullOrEmpty(region) ?
-			$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}" :
-			$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}";
-	}
-
 	#region 私有方法
 	private AmazonS3Client GetClient(string region) => S3ClientFactory.GetClient(this.Configuration, region);
+
+	private string GetPath(string region, string bucket, string path) => string.IsNullOrEmpty(region) ?
+		$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}":
+		$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}";
+
 	private static string Resolve(ReadOnlySpan<char> text, out string region, out string bucket)
 	{
 		if(text.IsEmpty)
@@ -95,10 +101,10 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 			return null;
 		}
 
-		(region, bucket) = S3Utility.Parse(text.Slice(start, index));
+		(region, bucket) = S3Utility.Resolve(text.Slice(start, index));
 
 		if(string.IsNullOrEmpty(bucket))
-			throw new ArgumentException($"The specified ‘{text}’ scheme value does not contain the bucket name.", nameof(bucket));
+			throw new ArgumentException($"The specified '{text}' scheme value does not contain the bucket name.", nameof(bucket));
 
 		return text[(index + 1)..].TrimStart('/').ToString();
 	}

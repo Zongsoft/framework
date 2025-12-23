@@ -33,7 +33,7 @@ namespace Zongsoft.Externals.Amazon.Storages;
 
 internal static class S3Utility
 {
-	public static (string region, string bucket) Parse(ReadOnlySpan<char> text)
+	public static (string region, string bucket) Resolve(ReadOnlySpan<char> text)
 	{
 		if(text.IsEmpty)
 			return default;

@@ -28,13 +28,13 @@
  */
 
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Zongsoft.IO;
+using Amazon.S3;
+using Amazon.S3.Model;
 
 namespace Zongsoft.Externals.Amazon.Storages;
 
@@ -44,43 +44,50 @@ partial class S3FileSystem
 	{
 		private readonly S3FileSystem _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 
-		public bool Create(string path, IDictionary<string, object> properties = null) => this.CreateAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<bool> CreateAsync(string path, IDictionary<string, object> properties = null)
-		{
-			path = Resolve(path, out var region, out var bucket);
-			var client = _fileSystem.GetClient(region);
-			var request = new global::Amazon.S3.Model.PutObjectRequest()
-			{
-				BucketName = bucket,
-				Key = path,
-			};
-
-			var response = await client.PutObjectAsync(request);
-			return response.HttpStatusCode.IsSucceed();
-		}
+		public bool Create(string path, IDictionary<string, object> properties = null) => true;
+		public ValueTask<bool> CreateAsync(string path, IDictionary<string, object> properties = null) => ValueTask.FromResult(true);
 
 		public bool Delete(string path, bool recursive = false) => this.DeleteAsync(path, recursive).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		public async ValueTask<bool> DeleteAsync(string path, bool recursive = false)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
-			var request = new global::Amazon.S3.Model.ListObjectsV2Request()
-			{
-				BucketName = bucket,
-				Prefix = path,
-			};
 
-			var response = await client.ListObjectsV2Async(request);
-			if(!response.HttpStatusCode.IsSucceed() || response.S3Objects.Count == 0)
+			try
+			{
+				var count = 0;
+				string continuation = null;
+
+				do
+				{
+					var response = await client.ListObjectsV2Async(new ListObjectsV2Request()
+					{
+						BucketName = bucket,
+						Prefix = path,
+						ContinuationToken = continuation,
+					});
+
+					if(response.HttpStatusCode.IsSucceed() && response.S3Objects != null && response.S3Objects.Count > 0)
+					{
+						var deleted = await client.DeleteObjectsAsync(new DeleteObjectsRequest()
+						{
+							BucketName = bucket,
+							Objects = [.. response.S3Objects.Select(obj => new KeyVersion() { Key = obj.Key })],
+						});
+
+						if(deleted.DeletedObjects != null)
+							count += deleted.DeletedObjects.Count;
+					}
+
+					continuation = response.NextContinuationToken;
+				} while(continuation != null);
+
+				return count > 0;
+			}
+			catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+			{
 				return false;
-
-			var res = await client.DeleteObjectsAsync(new global::Amazon.S3.Model.DeleteObjectsRequest()
-			{
-				BucketName = bucket,
-				Objects = response.S3Objects.Select(item => new global::Amazon.S3.Model.KeyVersion() { Key = item.Key }).ToList()
-			});
-
-			return res.HttpStatusCode.IsSucceed();
+			}
 		}
 
 		public bool Exists(string path) => this.ExistsAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
@@ -88,84 +95,153 @@ partial class S3FileSystem
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
-			var request = new global::Amazon.S3.Model.GetObjectMetadataRequest()
-			{
-				BucketName = bucket,
-				Key = path,
-			};
 
-			var response = await client.GetObjectMetadataAsync(request);
-			return response.HttpStatusCode.IsSucceed();
+			try
+			{
+				var response = await client.ListObjectsV2Async(new ListObjectsV2Request()
+				{
+					BucketName = bucket,
+					Prefix = path,
+					MaxKeys = 1,
+				});
+
+				return response.HttpStatusCode.IsSucceed() && response.KeyCount > 0;
+			}
+			catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+			{
+				return false;
+			}
 		}
 
 		public void Move(string source, string destination) => this.MoveAsync(source, destination).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public ValueTask MoveAsync(string source, string destination) => throw new NotImplementedException();
+		public async ValueTask MoveAsync(string source, string destination)
+		{
+			var srcPath = Resolve(source, out var srcRegion, out var srcBucket);
+			var destPath = Resolve(destination, out var destRegion, out var destBucket);
+
+			if(string.Equals(srcRegion, destRegion, StringComparison.OrdinalIgnoreCase) && destPath.StartsWith(srcPath))
+				return;
+
+			try
+			{
+				var count = 0;
+				string continuation = null;
+				var srcClient = _fileSystem.GetClient(srcRegion);
+
+				do
+				{
+					var response = await srcClient.ListObjectsV2Async(new ListObjectsV2Request()
+					{
+						BucketName = srcBucket,
+						Prefix = srcPath,
+						ContinuationToken = continuation,
+					});
+
+					if(!response.HttpStatusCode.IsSucceed() || response.S3Objects == null || response.S3Objects.Count == 0)
+						return;
+
+					if(string.Equals(srcRegion, destRegion, StringComparison.OrdinalIgnoreCase))
+					{
+						foreach(var obj in response.S3Objects)
+						{
+							var result = await srcClient.CopyObjectAsync(new CopyObjectRequest()
+							{
+								SourceBucket = srcBucket,
+								SourceKey = obj.Key,
+								DestinationBucket = destBucket,
+								DestinationKey = System.IO.Path.Combine(destPath, System.IO.Path.GetFileName(obj.Key)),
+							});
+
+							count += result.HttpStatusCode.IsSucceed() ? 1 : 0;
+						}
+					}
+					else
+					{
+						var destClient = _fileSystem.GetClient(destRegion);
+
+						foreach(var obj in response.S3Objects)
+						{
+							var getResponse = await srcClient.GetObjectAsync(new GetObjectRequest()
+							{
+								BucketName = srcBucket,
+								Key = obj.Key,
+							});
+
+							if(getResponse.HttpStatusCode.IsSucceed() && getResponse.ResponseStream != null)
+							{
+								var putResponse = await destClient.PutObjectAsync(new PutObjectRequest()
+								{
+									BucketName = destBucket,
+									Key = System.IO.Path.Combine(destPath, System.IO.Path.GetFileName(obj.Key)),
+									InputStream = getResponse.ResponseStream,
+								});
+
+								count += putResponse.HttpStatusCode.IsSucceed() ? 1 : 0;
+								getResponse.ResponseStream.Dispose();
+
+								await srcClient.DeleteObjectAsync(new DeleteObjectRequest()
+								{
+									BucketName = srcBucket,
+									Key = obj.Key,
+								});
+							}
+						}
+					}
+
+					continuation = response.NextContinuationToken;
+				} while(continuation != null);
+			}
+			catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+			{
+				return;
+			}
+		}
 
 		public IO.DirectoryInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<IO.DirectoryInfo> GetInfoAsync(string path)
-		{
-			path = Resolve(path, out var region, out var bucket);
-			var client = _fileSystem.GetClient(region);
-
-			var response = await client.GetObjectMetadataAsync(new global::Amazon.S3.Model.GetObjectMetadataRequest()
-			{
-				BucketName = bucket,
-				Key = path,
-			});
-
-			var response1 = await client.GetObjectAttributesAsync(new global::Amazon.S3.Model.GetObjectAttributesRequest()
-			{
-				BucketName = bucket,
-				Key = path,
-			});
-
-			return new($"{_fileSystem.Scheme}:/{bucket}@{region}/{path}", null, null);
-		}
+		public ValueTask<IO.DirectoryInfo> GetInfoAsync(string path) => ValueTask.FromResult<IO.DirectoryInfo>(null);
 
 		public bool SetInfo(string path, IDictionary<string, object> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties)
-		{
-			if(properties == null)
-				return false;
+		public ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => ValueTask.FromResult(false);
 
-			path = Resolve(path, out var region, out var bucket);
-			var client = _fileSystem.GetClient(region);
-			var request = new global::Amazon.S3.Model.PutObjectRequest()
-			{
-				BucketName = bucket,
-				Key = path,
-			};
-
-			foreach(var property in properties)
-				request.Metadata.Add(property.Key, Zongsoft.Common.Convert.ConvertValue<string>(property.Value));
-
-			var response = await client.PutObjectAsync(request);
-			return response.HttpStatusCode.IsSucceed();
-		}
-
-		public IEnumerable<PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
-		public IEnumerable<PathInfo> GetChildren(string path, string pattern, bool recursive = false) => this.GetChildrenAsync(path, pattern, recursive).ToBlockingEnumerable();
-		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
-		public async IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, string pattern, bool recursive = false)
+		public IEnumerable<IO.PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
+		public IEnumerable<IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false) => this.GetChildrenAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public IAsyncEnumerable<IO.PathInfo> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
+		public async IAsyncEnumerable<IO.PathInfo> GetChildrenAsync(string path, string pattern, bool recursive = false)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
-			var request = new global::Amazon.S3.Model.ListObjectsV2Request()
+
+			string continuation = null;
+			ListObjectsV2Response response;
+
+			do
 			{
-				BucketName = bucket,
-				Prefix = path,
-			};
+				try
+				{
+					response = await client.ListObjectsV2Async(new()
+					{
+						BucketName = bucket,
+						Prefix = path,
+						ContinuationToken = continuation,
+					});
 
-			var response = await client.ListObjectsV2Async(request);
-			if(!response.HttpStatusCode.IsSucceed() || response.S3Objects.Count == 0)
-				yield break;
+					if(!response.HttpStatusCode.IsSucceed() || response.KeyCount == 0 || response.S3Objects == null || response.S3Objects.Count == 0)
+						yield break;
 
-			foreach(var item in response.S3Objects)
-				yield return new IO.FileInfo(
-					item.Key,
-					item.Size ?? 0,
-					null,
-					item.LastModified);
+					continuation = response.NextContinuationToken;
+				}
+				catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+				{
+					yield break;
+				}
+
+				foreach(var item in response.S3Objects)
+					yield return new IO.FileInfo(
+						_fileSystem.GetPath(region, bucket, item.Key),
+						item.Size ?? 0,
+						null,
+						item.LastModified);
+			} while(continuation != null);
 		}
 
 		public IEnumerable<IO.DirectoryInfo> GetDirectories(string path) => this.GetDirectories(path, null, false);
@@ -173,27 +249,12 @@ partial class S3FileSystem
 		public IAsyncEnumerable<IO.DirectoryInfo> GetDirectoriesAsync(string path) => this.GetDirectoriesAsync(path, null, false);
 		public async IAsyncEnumerable<IO.DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive = false)
 		{
-			path = Resolve(path, out var region, out var bucket);
-			var client = _fileSystem.GetClient(region);
-			var request = new global::Amazon.S3.Model.ListObjectsV2Request()
+			var children = this.GetChildrenAsync(path, pattern, recursive);
+
+			await foreach(var child in children)
 			{
-				BucketName = bucket,
-				Prefix = path,
-			};
-
-			var response = await client.ListObjectsV2Async(request);
-			if(!response.HttpStatusCode.IsSucceed() || response.S3Objects.Count == 0)
-				yield break;
-
-			foreach(var item in response.S3Objects)
-			{
-				if(item.Size.HasValue && item.Size.Value > 0)
-					continue;
-
-				yield return new IO.DirectoryInfo(
-					item.Key,
-					null,
-					item.LastModified);
+				if(child.IsDirectory)
+					yield return (IO.DirectoryInfo)child;
 			}
 		}
 
@@ -202,28 +263,12 @@ partial class S3FileSystem
 		public IAsyncEnumerable<IO.FileInfo> GetFilesAsync(string path) => this.GetFilesAsync(path, null, false);
 		public async IAsyncEnumerable<IO.FileInfo> GetFilesAsync(string path, string pattern, bool recursive = false)
 		{
-			path = Resolve(path, out var region, out var bucket);
-			var client = _fileSystem.GetClient(region);
-			var request = new global::Amazon.S3.Model.ListObjectsV2Request()
+			var children = this.GetChildrenAsync(path, pattern, recursive);
+
+			await foreach(var child in children)
 			{
-				BucketName = bucket,
-				Prefix = path,
-			};
-
-			var response = await client.ListObjectsV2Async(request);
-			if(!response.HttpStatusCode.IsSucceed() || response.S3Objects.Count == 0)
-				yield break;
-
-			foreach(var item in response.S3Objects)
-			{
-				if(item.Size == null || item.Size == 0)
-					continue;
-
-				yield return new IO.FileInfo(
-					item.Key,
-					item.Size ?? 0,
-					null,
-					item.LastModified);
+				if(child.IsFile)
+					yield return (IO.FileInfo)child;
 			}
 		}
 	}

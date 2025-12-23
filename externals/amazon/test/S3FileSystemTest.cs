@@ -27,6 +27,17 @@ public class S3FileSystemTest
 	}
 
 	[Fact]
+	public void GetUrl()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var url = FileSystem.GetUrl("zfs.s3:/zongsoft-fs/Wukong.png");
+		Assert.NotNull(url);
+		Assert.NotEmpty(url);
+	}
+
+	[Fact]
 	public async Task ExistsAsync()
 	{
 		if(!Global.IsTestingEnabled)
@@ -42,8 +53,11 @@ public class S3FileSystemTest
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var existed = await FileSystem.File.DeleteAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext");
-		Assert.False(existed);
+		var result = await FileSystem.File.DeleteAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext");
+		Assert.False(result);
+
+		result = await FileSystem.Directory.DeleteAsync($"zfs.s3:/zongsoft-fs/videos/");
+		Assert.False(result);
 	}
 
 	[Fact]
@@ -69,6 +83,43 @@ public class S3FileSystemTest
 
 		var result = await FileSystem.File.SetInfoAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext", tags);
 		Assert.False(result);
+	}
+
+	[Fact]
+	public async Task GetChildrenAsync()
+	{
+		const int COUNT = 10;
+		const string DIRECTORY = "zfs.s3:/zongsoft-fs/Directory";
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var buffer = new byte[1024];
+		var children = FileSystem.Directory.GetChildrenAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}/").ToBlockingEnumerable().ToArray();
+		Assert.Empty(children);
+
+		for(int i = 0; i < COUNT; i++)
+		{
+			using(var stream = FileSystem.File.Open($"{DIRECTORY}/File-{i:00000}.ext"))
+			{
+				Random.Shared.NextBytes(buffer);
+				stream.Write(buffer);
+			}
+		}
+
+		Assert.True(FileSystem.Directory.Exists(DIRECTORY));
+		children = FileSystem.Directory.GetChildrenAsync(DIRECTORY)
+			.ToBlockingEnumerable()
+			.OrderBy(info => info.Name)
+			.ToArray();
+
+		Assert.NotEmpty(children);
+		Assert.Equal(COUNT, children.Length);
+
+		for(int i = 0; i < COUNT; i++)
+		{
+			Assert.Equal($"File-{i:00000}.ext", children[i].Name);
+		}
 	}
 
 	[Fact]
@@ -180,7 +231,6 @@ public class S3FileSystemTest
 		Assert.True(Enumerable.SequenceEqual(GetHash(buffer), GetHash(filePath)));
 		Assert.True(FileSystem.File.Delete(filePath));
 	}
-
 
 	private static byte[] GetHash(byte[] bytes, HashAlgorithm algorithm = null)
 	{
