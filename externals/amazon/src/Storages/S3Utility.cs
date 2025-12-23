@@ -28,6 +28,9 @@
  */
 
 using System;
+using System.Collections.Generic;
+
+using Zongsoft.IO;
 
 namespace Zongsoft.Externals.Amazon.Storages;
 
@@ -44,4 +47,14 @@ internal static class S3Utility
 
 		return (text[(index + 1)..].ToString(), text[..index].ToString());
 	}
+
+	public static FileInfo GetFileInfo(this S3FileSystem fileSystem, string region, string bucket, string path, long? size, DateTime? creation, DateTime? modification, IEnumerable<KeyValuePair<string, object>> properties = null) =>
+		GetFileInfo(fileSystem, fileSystem.GetPath(region, bucket, path), size, creation, modification, properties);
+	public static FileInfo GetFileInfo(this S3FileSystem fileSystem, string path, long? size, DateTime? creation, DateTime? modification, IEnumerable<KeyValuePair<string, object>> properties = null) =>
+		new(path, size ?? 0, creation, modification, properties, fileSystem.GetUrl(path));
+
+	public static FileInfo GetFileInfo(this S3FileSystem fileSystem, string region, string bucket, string path, long? size, string type, DateTime? creation, DateTime? modification, IEnumerable<KeyValuePair<string, object>> properties = null) =>
+		GetFileInfo(fileSystem, fileSystem.GetPath(region, bucket, path), size, type, creation, modification, properties);
+	public static FileInfo GetFileInfo(this S3FileSystem fileSystem, string path, long? size, string type, DateTime? creation, DateTime? modification, IEnumerable<KeyValuePair<string, object>> properties = null) =>
+		new(path, size ?? 0, creation, modification, properties, fileSystem.GetUrl(path)) { Type = type };
 }

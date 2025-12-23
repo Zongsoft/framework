@@ -76,9 +76,9 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 	#region 私有方法
 	private AmazonS3Client GetClient(string region) => S3ClientFactory.GetClient(this.Configuration, region);
 
-	private string GetPath(string region, string bucket, string path) => string.IsNullOrEmpty(region) ?
+	internal string GetPath(string region, string bucket, string path) => string.IsNullOrEmpty(region) ?
 		$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}":
-		$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}";
+		$"{this.Scheme}:/{bucket}@{region}/{path?.TrimStart('/')}";
 
 	private static string Resolve(ReadOnlySpan<char> text, out string region, out string bucket)
 	{
