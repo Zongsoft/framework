@@ -127,13 +127,7 @@ public class PathInfo : IEquatable<PathInfo>
 	/// <remarks>有关外部访问的URL请参考：<seealso cref="Path.Url"/>属性。</remarks>
 	public virtual string Url
 	{
-		get
-		{
-			if(_url != null)
-				return _url;
-
-			return _path.Url;
-		}
+		get => string.IsNullOrEmpty(_url) ? _path.Url : _url;
 		set => _url = value;
 	}
 
