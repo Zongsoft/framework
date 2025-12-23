@@ -11,33 +11,30 @@
  *
  * Copyright (C) 2020-2025 Zongsoft Studio <http://zongsoft.com>
  *
- * This file is part of Zongsoft.Externals.Amazon library.
+ * This file is part of Zongsoft.Externals.MinIO library.
  *
- * The Zongsoft.Externals.Amazon is free software: you can redistribute it and/or modify
+ * The Zongsoft.Externals.MinIO is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Externals.Amazon is distributed in the hope that it will be useful,
+ * The Zongsoft.Externals.MinIO is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Externals.Amazon library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Externals.MinIO library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
 
-using Amazon.S3;
-using Amazon.S3.Model;
+namespace Zongsoft.Externals.MinIO;
 
-namespace Zongsoft.Externals.Amazon.Storages;
-
-public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
+public sealed partial class MinIOFileSystem : Zongsoft.IO.IFileSystem
 {
 	#region 构造函数
-	public S3FileSystem(Microsoft.Extensions.Configuration.IConfiguration configuration = null)
+	public MinIOFileSystem(Microsoft.Extensions.Configuration.IConfiguration configuration = null)
 	{
 		this.Configuration = configuration;
 		this.File = new FileProvider(this);
@@ -46,8 +43,8 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取文件目录系统的方案，始终返回“zfs.s3”。</summary>
-	public string Scheme => "zfs.s3";
+	/// <summary>获取文件目录系统的方案，始终返回“zfs.minio”。</summary>
+	public string Scheme => "zfs.minio";
 	public Zongsoft.IO.IFile File { get; }
 	public Zongsoft.IO.IDirectory Directory { get; }
 	public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; set; }
@@ -60,26 +57,21 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 		if(!path.HasSegments)
 			return null;
 
-		(var region, var bucket) = S3Utility.Resolve(path.Segments[0]);
-		var client = this.GetClient(region);
+		var bucketName = path.Segments[0];
 
-		return client.GetPreSignedURL(new GetPreSignedUrlRequest
-		{
-			Verb = HttpVerb.GET,
-			BucketName = bucket,
-			Expires = DateTime.UtcNow.AddDays(10),
-			Key = System.IO.Path.Combine(path.Segments.AsSpan()[1..].ToArray()),
-		});
+		return null;
 	}
 	#endregion
 
+	private string GetUrl(string region, string bucket, string path)
+	{
+		return string.IsNullOrEmpty(region) ?
+			$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}":
+			$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}";
+	}
+
 	#region 私有方法
-	private AmazonS3Client GetClient(string region) => S3ClientFactory.GetClient(this.Configuration, region);
-
-	private string GetPath(string region, string bucket, string path) => string.IsNullOrEmpty(region) ?
-		$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}":
-		$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}";
-
+	private Minio.IMinioClient GetClient(string region) => ClientFactory.GetClient(this.Configuration, region);
 	private static string Resolve(ReadOnlySpan<char> text, out string region, out string bucket)
 	{
 		if(text.IsEmpty)
@@ -101,10 +93,10 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 			return null;
 		}
 
-		(region, bucket) = S3Utility.Resolve(text.Slice(start, index));
+		(region, bucket) = Utility.Parse(text.Slice(start, index));
 
 		if(string.IsNullOrEmpty(bucket))
-			throw new ArgumentException($"The specified '{text}' scheme value does not contain the bucket name.", nameof(bucket));
+			throw new ArgumentException($"The specified ‘{text}’ scheme value does not contain the bucket name.", nameof(bucket));
 
 		return text[(index + 1)..].TrimStart('/').ToString();
 	}

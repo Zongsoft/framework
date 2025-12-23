@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Externals/MinIO">
+		<connectionSettings default="local">
+			<connectionSetting connectionSetting.name="local" driver="minio"
+			                   value="server=127.0.0.1:9000;region=cn-north-1;username=rustfsadmin;password=rustfsadmin" />
+		</connectionSettings>
+	</option>
+</options>

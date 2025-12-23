@@ -11,37 +11,40 @@
  *
  * Copyright (C) 2020-2025 Zongsoft Studio <http://zongsoft.com>
  *
- * This file is part of Zongsoft.Externals.Amazon library.
+ * This file is part of Zongsoft.Externals.MinIO library.
  *
- * The Zongsoft.Externals.Amazon is free software: you can redistribute it and/or modify
+ * The Zongsoft.Externals.MinIO is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3.0 of the License,
  * or (at your option) any later version.
  *
- * The Zongsoft.Externals.Amazon is distributed in the hope that it will be useful,
+ * The Zongsoft.Externals.MinIO is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Externals.Amazon library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the Zongsoft.Externals.MinIO library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
 
-namespace Zongsoft.Externals.Amazon.Storages;
+using Zongsoft.Components;
+using Zongsoft.Configuration;
 
-internal static class S3Utility
+namespace Zongsoft.Externals.MinIO.Configuration;
+
+public class MinIOConnectionSettingsDriver : ConnectionSettingsDriver<MinIOConnectionSettings>
 {
-	public static (string region, string bucket) Resolve(ReadOnlySpan<char> text)
-	{
-		if(text.IsEmpty)
-			return default;
+	#region 常量定义
+	internal const string NAME = "MinIO";
+	#endregion
 
-		var index = text.IndexOf('@');
-		if(index < 0)
-			return (null, text.ToString());
+	#region 单例字段
+	public static readonly MinIOConnectionSettingsDriver Instance = new();
+	#endregion
 
-		return (text[(index + 1)..].ToString(), text[..index].ToString());
-	}
+	#region 私有构造
+	private MinIOConnectionSettingsDriver() : base(NAME) { }
+	#endregion
 }

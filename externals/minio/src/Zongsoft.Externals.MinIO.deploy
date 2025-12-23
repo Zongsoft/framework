@@ -1,0 +1,6 @@
+artifacts/Zongsoft.Externals.MinIO.plugin
+artifacts/Zongsoft.Externals.MinIO.option
+lib/$(Framework)/Zongsoft.Externals.MinIO.*
+lib/$(Framework)/*/Zongsoft.Externals.MinIO.resources.*
+
+nuget:Minio@7.0.0
