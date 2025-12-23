@@ -362,10 +362,12 @@ partial class S3FileSystem
 			if(_stream != null)
 			{
 				int bytesRead;
+				var bytes = ArrayPool<byte>.Shared.Rent(5 * MB);
 
-				while((bytesRead = _stream.Read(_buffer, 0, _buffer.Length)) > 0)
-					await this.UploadAsync(_buffer, 0, bytesRead, cancellation);
+				while((bytesRead = _stream.Read(bytes, 0, bytes.Length)) > 0)
+					await this.UploadAsync(bytes, 0, bytesRead, cancellation);
 
+				ArrayPool<byte>.Shared.Return(bytes);
 				_stream.Dispose();
 				_stream = null;
 			}

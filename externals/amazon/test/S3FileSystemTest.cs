@@ -146,6 +146,9 @@ public class S3FileSystemTest
 
 		Assert.True(Enumerable.SequenceEqual(GetHash(first), GetHash(filePath)));
 
+		properties["Author"] = "Popeye";
+		properties["Creation"] = DateTime.Now.ToString();
+
 		using var last = new MemoryStream();
 		using(var target = FileSystem.File.Open(filePath, FileMode.Append, FileAccess.ReadWrite, properties))
 		{
@@ -175,8 +178,7 @@ public class S3FileSystemTest
 		Array.Copy(first.ToArray(), 0, buffer, 0, first.Length);
 		Array.Copy(last.ToArray(), 0, buffer, first.Length, last.Length);
 		Assert.True(Enumerable.SequenceEqual(GetHash(buffer), GetHash(filePath)));
-
-		//Assert.True(FileSystem.File.Delete(filePath));
+		Assert.True(FileSystem.File.Delete(filePath));
 	}
 
 
