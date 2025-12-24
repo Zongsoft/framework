@@ -29,73 +29,9 @@
 
 using System;
 
-using Microsoft.Extensions.Configuration;
-
-using Zongsoft.Services;
-using Zongsoft.Configuration;
-
 namespace Zongsoft.Externals.Amazon;
 
 internal static class Utility
 {
 	public static bool IsSucceed(this System.Net.HttpStatusCode status) => status >= System.Net.HttpStatusCode.OK && status < (System.Net.HttpStatusCode)300;
-
-	public static global::Amazon.RegionEndpoint GetRegion(this IConfiguration configuration)
-	{
-		configuration ??= ApplicationContext.Current?.Configuration;
-		if(configuration == null)
-			return null;
-
-		var general = configuration.GetOption<Configuration.GeneralOptions>("/Externals/Amazon/General");
-		if(general == null)
-			return null;
-
-		return string.IsNullOrEmpty(general.Region) ? null : global::Amazon.RegionEndpoint.GetBySystemName(general.Region);
-	}
-
-	public static global::Amazon.Runtime.AWSCredentials GetCredentials(global::Amazon.RegionEndpoint region = null) => GetCredentials(null, region);
-	public static global::Amazon.Runtime.AWSCredentials GetCredentials(this IConfiguration configuration, global::Amazon.RegionEndpoint region = null)
-	{
-		configuration ??= ApplicationContext.Current?.Configuration;
-		if(configuration == null)
-			return null;
-
-		var storages = configuration.GetOption<Storages.Options.StorageOptionsCollection>("/Externals/Amazon/Storages");
-		if(storages == null || storages.Count == 0)
-			return configuration.GetCredentials(string.Empty);
-
-		if(region == null)
-			return configuration.GetCredentials(storages.GetDefault()?.Credential);
-
-		if(storages.TryGetValue(region.SystemName, out var storage))
-			return configuration.GetCredentials(storage.Credential);
-
-		return null;
-	}
-
-	public static global::Amazon.Runtime.AWSCredentials GetCredentials(string name = null) => GetCredentials(null, name);
-	public static global::Amazon.Runtime.AWSCredentials GetCredentials(this IConfiguration configuration, string name = null)
-	{
-		configuration ??= ApplicationContext.Current?.Configuration;
-		if(configuration == null)
-			return null;
-
-		var general = configuration.GetOption<Configuration.GeneralOptions>("/Externals/Amazon/General");
-		if(general == null || general.Credentials == null)
-			return null;
-
-		if(string.IsNullOrEmpty(name))
-			return general.Credentials.TryGetDefault(out var options) && !string.IsNullOrEmpty(options.Code) ? new ConfiguredCredentials(options) : null;
-
-		if(general.Credentials.TryGetValue(name, out var result) && !string.IsNullOrEmpty(result.Code))
-			return new ConfiguredCredentials(result);
-
-		return null;
-	}
-
-	private sealed class ConfiguredCredentials(Configuration.CredentialOptions options) : global::Amazon.Runtime.AWSCredentials
-	{
-		private readonly Configuration.CredentialOptions _options = options ?? throw new ArgumentNullException(nameof(options));
-		public override global::Amazon.Runtime.ImmutableCredentials GetCredentials() => new(_options.Code, _options.Secret, _options.Token);
-	}
 }

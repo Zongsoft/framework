@@ -38,9 +38,9 @@ public class DirectoryInfo : PathInfo
 	#region 构造函数
 	protected DirectoryInfo() { }
 	public DirectoryInfo(string path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : base(path, createdTime, modifiedTime, url) { }
-	public DirectoryInfo(string path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url) { }
+	public DirectoryInfo(string path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, string>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url) { }
 	public DirectoryInfo(Path path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : base(path, createdTime, modifiedTime, url) { }
-	public DirectoryInfo(Path path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url) { }
+	public DirectoryInfo(Path path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, string>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url) { }
 	#endregion
 
 	#region 重写属性

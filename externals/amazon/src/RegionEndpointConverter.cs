@@ -28,17 +28,25 @@
  */
 
 using System;
+using System.ComponentModel;
 
-namespace Zongsoft.Externals.Amazon.Configuration;
+using Amazon;
 
-public class GeneralOptions
+namespace Zongsoft.Externals.Amazon;
+
+internal sealed class RegionEndpointConverter : TypeConverter
 {
-	public GeneralOptions()
+	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+	public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
 	{
-		this.Credentials = new CredentialOptionsCollection();
-	}
+		if(value is string text)
+		{
+			if(string.IsNullOrEmpty(text))
+				return null;
 
-	public string Server { get; set; }
-	public string Region { get; set; }
-	public CredentialOptionsCollection Credentials { get; }
+			return RegionEndpoint.GetBySystemName(text) ?? throw new FormatException($"The specified region '{text}' is not valid.");
+		}
+
+		return base.ConvertFrom(context, culture, value);
+	}
 }

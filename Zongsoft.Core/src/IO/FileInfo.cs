@@ -47,16 +47,32 @@ public class FileInfo : PathInfo, IEquatable<FileInfo>
 		_type = string.Empty;
 	}
 
-	public FileInfo(string path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, size, createdTime, modifiedTime, null, url) { }
-	public FileInfo(string path, long size, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url)
+	public FileInfo(string path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, size, null, createdTime, modifiedTime, null, url) { }
+	public FileInfo(string path, long size, string type, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, size, type, createdTime, modifiedTime, null, url) { }
+
+	public FileInfo(string path, long size, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, string>> properties, string url = null) : this(path, size, null, createdTime, modifiedTime, properties, url) { }
+	public FileInfo(string path, long size, string type, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, string>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url)
 	{
 		_size = size;
+
+		if(string.IsNullOrEmpty(type) && Mime.TryGetMimeType(path, out type))
+			_type = type;
+		else
+			_type = type?.Trim();
 	}
 
-	public FileInfo(Path path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, size, createdTime, modifiedTime, null, url) { }
-	public FileInfo(Path path, long size, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url)
+	public FileInfo(Path path, long size, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, size, null, createdTime, modifiedTime, null, url) { }
+	public FileInfo(Path path, long size, string type, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, size, type, createdTime, modifiedTime, null, url) { }
+
+	public FileInfo(Path path, long size, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, string>> properties, string url = null) : this(path, size, null, createdTime, modifiedTime, properties, url) { }
+	public FileInfo(Path path, long size, string type, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, string>> properties, string url = null) : base(path, createdTime, modifiedTime, properties, url)
 	{
 		_size = size;
+
+		if(string.IsNullOrEmpty(type) && Mime.TryGetMimeType(path.FileName, out type))
+			_type = type;
+		else
+			_type = type?.Trim();
 	}
 	#endregion
 
@@ -70,7 +86,7 @@ public class FileInfo : PathInfo, IEquatable<FileInfo>
 	public string Type
 	{
 		get => _type;
-		set => _type = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+		set => _type = value?.Trim();
 	}
 
 	public override bool IsFile => true;

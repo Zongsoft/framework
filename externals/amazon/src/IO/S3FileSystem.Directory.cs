@@ -36,7 +36,7 @@ using System.Collections.Generic;
 using Amazon.S3;
 using Amazon.S3.Model;
 
-namespace Zongsoft.Externals.Amazon.Storages;
+namespace Zongsoft.Externals.Amazon.IO;
 
 partial class S3FileSystem
 {
@@ -44,11 +44,11 @@ partial class S3FileSystem
 	{
 		private readonly S3FileSystem _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 
-		public bool Create(string path, IDictionary<string, object> properties = null) => true;
-		public ValueTask<bool> CreateAsync(string path, IDictionary<string, object> properties = null) => ValueTask.FromResult(true);
+		public bool Create(string path, IEnumerable<KeyValuePair<string, string>> properties = null) => true;
+		public ValueTask<bool> CreateAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => ValueTask.FromResult(true);
 
-		public bool Delete(string path, bool recursive = false) => this.DeleteAsync(path, recursive).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<bool> DeleteAsync(string path, bool recursive = false)
+		public bool Delete(string path) => this.DeleteAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public async ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
@@ -65,7 +65,7 @@ partial class S3FileSystem
 						BucketName = bucket,
 						Prefix = path,
 						ContinuationToken = continuation,
-					});
+					}, cancellation);
 
 					if(response.HttpStatusCode.IsSucceed() && response.S3Objects != null && response.S3Objects.Count > 0)
 					{
@@ -73,14 +73,14 @@ partial class S3FileSystem
 						{
 							BucketName = bucket,
 							Objects = [.. response.S3Objects.Select(obj => new KeyVersion() { Key = obj.Key })],
-						});
+						}, cancellation);
 
 						if(deleted.DeletedObjects != null)
 							count += deleted.DeletedObjects.Count;
 					}
 
 					continuation = response.NextContinuationToken;
-				} while(continuation != null);
+				} while(continuation != null && !cancellation.IsCancellationRequested);
 
 				return count > 0;
 			}
@@ -91,7 +91,7 @@ partial class S3FileSystem
 		}
 
 		public bool Exists(string path) => this.ExistsAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<bool> ExistsAsync(string path)
+		public async ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
@@ -103,7 +103,7 @@ partial class S3FileSystem
 					BucketName = bucket,
 					Prefix = path,
 					MaxKeys = 1,
-				});
+				}, cancellation);
 
 				return response.HttpStatusCode.IsSucceed() && response.KeyCount > 0;
 			}
@@ -114,7 +114,7 @@ partial class S3FileSystem
 		}
 
 		public void Move(string source, string destination) => this.MoveAsync(source, destination).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask MoveAsync(string source, string destination)
+		public async ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default)
 		{
 			var srcPath = Resolve(source, out var srcRegion, out var srcBucket);
 			var destPath = Resolve(destination, out var destRegion, out var destBucket);
@@ -135,7 +135,7 @@ partial class S3FileSystem
 						BucketName = srcBucket,
 						Prefix = srcPath,
 						ContinuationToken = continuation,
-					});
+					}, cancellation);
 
 					if(!response.HttpStatusCode.IsSucceed() || response.S3Objects == null || response.S3Objects.Count == 0)
 						return;
@@ -150,7 +150,7 @@ partial class S3FileSystem
 								SourceKey = obj.Key,
 								DestinationBucket = destBucket,
 								DestinationKey = System.IO.Path.Combine(destPath, System.IO.Path.GetFileName(obj.Key)),
-							});
+							}, cancellation);
 
 							count += result.HttpStatusCode.IsSucceed() ? 1 : 0;
 						}
@@ -165,7 +165,7 @@ partial class S3FileSystem
 							{
 								BucketName = srcBucket,
 								Key = obj.Key,
-							});
+							}, cancellation);
 
 							if(getResponse.HttpStatusCode.IsSucceed() && getResponse.ResponseStream != null)
 							{
@@ -174,7 +174,7 @@ partial class S3FileSystem
 									BucketName = destBucket,
 									Key = System.IO.Path.Combine(destPath, System.IO.Path.GetFileName(obj.Key)),
 									InputStream = getResponse.ResponseStream,
-								});
+								}, cancellation);
 
 								count += putResponse.HttpStatusCode.IsSucceed() ? 1 : 0;
 								getResponse.ResponseStream.Dispose();
@@ -183,13 +183,13 @@ partial class S3FileSystem
 								{
 									BucketName = srcBucket,
 									Key = obj.Key,
-								});
+								}, cancellation);
 							}
 						}
 					}
 
 					continuation = response.NextContinuationToken;
-				} while(continuation != null);
+				} while(continuation != null && !cancellation.IsCancellationRequested);
 			}
 			catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
 			{
@@ -197,16 +197,14 @@ partial class S3FileSystem
 			}
 		}
 
-		public IO.DirectoryInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public ValueTask<IO.DirectoryInfo> GetInfoAsync(string path) => ValueTask.FromResult<IO.DirectoryInfo>(null);
+		public Zongsoft.IO.DirectoryInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public ValueTask<Zongsoft.IO.DirectoryInfo> GetInfoAsync(string path, CancellationToken cancellation = default) => ValueTask.FromResult<Zongsoft.IO.DirectoryInfo>(null);
 
-		public bool SetInfo(string path, IDictionary<string, object> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => ValueTask.FromResult(false);
+		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => ValueTask.FromResult(false);
 
-		public IEnumerable<IO.PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
-		public IEnumerable<IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false) => this.GetChildrenAsync(path, pattern, recursive).ToBlockingEnumerable();
-		public IAsyncEnumerable<IO.PathInfo> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
-		public async IAsyncEnumerable<IO.PathInfo> GetChildrenAsync(string path, string pattern, bool recursive = false)
+		public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false) => this.GetChildrenAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public async IAsyncEnumerable<Zongsoft.IO.PathInfo> GetChildrenAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
@@ -223,7 +221,7 @@ partial class S3FileSystem
 						BucketName = bucket,
 						Prefix = path,
 						ContinuationToken = continuation,
-					});
+					}, cancellation);
 
 					if(!response.HttpStatusCode.IsSucceed() || response.KeyCount == 0 || response.S3Objects == null || response.S3Objects.Count == 0)
 						yield break;
@@ -237,34 +235,30 @@ partial class S3FileSystem
 
 				foreach(var item in response.S3Objects)
 					yield return _fileSystem.GetFileInfo(region, bucket, item.Key, item.Size, null, item.LastModified);
-			} while(continuation != null);
+			} while(continuation != null && !cancellation.IsCancellationRequested);
 		}
 
-		public IEnumerable<IO.DirectoryInfo> GetDirectories(string path) => this.GetDirectories(path, null, false);
-		public IEnumerable<IO.DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false) => this.GetDirectoriesAsync(path, pattern, recursive).ToBlockingEnumerable();
-		public IAsyncEnumerable<IO.DirectoryInfo> GetDirectoriesAsync(string path) => this.GetDirectoriesAsync(path, null, false);
-		public async IAsyncEnumerable<IO.DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive = false)
+		public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false) => this.GetDirectoriesAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public async IAsyncEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			var children = this.GetChildrenAsync(path, pattern, recursive);
+			var children = this.GetChildrenAsync(path, pattern, recursive, cancellation);
 
 			await foreach(var child in children)
 			{
 				if(child.IsDirectory)
-					yield return (IO.DirectoryInfo)child;
+					yield return (Zongsoft.IO.DirectoryInfo)child;
 			}
 		}
 
-		public IEnumerable<IO.FileInfo> GetFiles(string path) => this.GetFiles(path, null, false);
-		public IEnumerable<IO.FileInfo> GetFiles(string path, string pattern, bool recursive = false) => this.GetFilesAsync(path, pattern, recursive).ToBlockingEnumerable();
-		public IAsyncEnumerable<IO.FileInfo> GetFilesAsync(string path) => this.GetFilesAsync(path, null, false);
-		public async IAsyncEnumerable<IO.FileInfo> GetFilesAsync(string path, string pattern, bool recursive = false)
+		public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path, string pattern, bool recursive = false) => this.GetFilesAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public async IAsyncEnumerable<Zongsoft.IO.FileInfo> GetFilesAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			var children = this.GetChildrenAsync(path, pattern, recursive);
+			var children = this.GetChildrenAsync(path, pattern, recursive, cancellation);
 
 			await foreach(var child in children)
 			{
 				if(child.IsFile)
-					yield return (IO.FileInfo)child;
+					yield return (Zongsoft.IO.FileInfo)child;
 			}
 		}
 	}

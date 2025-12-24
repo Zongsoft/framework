@@ -43,33 +43,30 @@ public interface IDirectory
 	/// <param name="path">指定的目录路径。</param>
 	/// <returns>如果指定的路径是存在的则返回对应的<see cref="DirectoryInfo"/>，否则返回空(<c>null</c>)。</returns>
 	DirectoryInfo GetInfo(string path);
-	ValueTask<DirectoryInfo> GetInfoAsync(string path);
+	ValueTask<DirectoryInfo> GetInfoAsync(string path, CancellationToken cancellation = default);
 
-	bool SetInfo(string path, IDictionary<string, object> properties);
-	ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties);
+	bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties);
+	ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default);
 
 	/// <summary>创建一个指定路径的目录。</summary>
 	/// <param name="path">指定要创建的目录路径。</param>
 	/// <param name="properties">目录的扩展属性集，默认为空(<c>null</c>)。</param>
 	/// <returns>如果创建成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	/// <remarks>如果<paramref name="path"/>参数指定的路径不存在并且创建成功则返回真；如果指定的路径已存在则返回假。</remarks>
-	bool Create(string path, IDictionary<string, object> properties = null);
-	ValueTask<bool> CreateAsync(string path, IDictionary<string, object> properties = null);
+	bool Create(string path, IEnumerable<KeyValuePair<string, string>> properties = null);
+	ValueTask<bool> CreateAsync(string path, CancellationToken cancellation = default) => this.CreateAsync(path, null, cancellation);
+	ValueTask<bool> CreateAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default);
 
-	bool Delete(string path, bool recursive = false);
-	ValueTask<bool> DeleteAsync(string path, bool recursive = false);
+	bool Delete(string path);
+	ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default);
 
 	void Move(string source, string destination);
-	ValueTask MoveAsync(string source, string destination);
+	ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default);
 
 	bool Exists(string path);
-	ValueTask<bool> ExistsAsync(string path);
+	ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default);
 
-	/// <summary>获取指定路径中的所有文件和目录信息的可枚举集合。</summary>
-	/// <param name="path">要搜索的目录。</param>
-	/// <returns>指定路径中的所有文件和目录的<seealso cref="PathInfo"/>集合。</returns>
-	/// <remarks>更多功能搜索功能请参考<see cref="GetChildren(string, string, bool)"/>方法。</remarks>
-	IEnumerable<PathInfo> GetChildren(string path);
+	IEnumerable<PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
 
 	/// <summary>获取指定路径中与搜索模式匹配的所有文件和目录信息的可枚举集合，还可以搜索子目录。</summary>
 	/// <param name="path">要搜索的目录。</param>
@@ -94,14 +91,11 @@ public interface IDirectory
 	/// </remarks>
 	IEnumerable<PathInfo> GetChildren(string path, string pattern, bool recursive = false);
 
-	IAsyncEnumerable<PathInfo> GetChildrenAsync(string path);
-	IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, string pattern, bool recursive = false);
+	IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, CancellationToken cancellation = default) => this.GetChildrenAsync(path, null, false, cancellation);
+	IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, string pattern, CancellationToken cancellation = default) => this.GetChildrenAsync(path, pattern, false, cancellation);
+	IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, string pattern, bool recursive, CancellationToken cancellation = default);
 
-	/// <summary>获取指定路径中的所有目录信息的可枚举集合。</summary>
-	/// <param name="path">要搜索的目录。</param>
-	/// <returns>指定路径中的所有目录的<seealso cref="DirectoryInfo"/>集合。</returns>
-	/// <remarks>更多功能搜索功能请参考<see cref="GetDirectories(string, string, bool)"/>方法。</remarks>
-	IEnumerable<DirectoryInfo> GetDirectories(string path);
+	IEnumerable<DirectoryInfo> GetDirectories(string path) => this.GetDirectories(path, null, false);
 
 	/// <summary>获取指定路径中与搜索模式匹配的所有目录信息的可枚举集合，还可以搜索子目录。</summary>
 	/// <param name="path">要搜索的目录。</param>
@@ -110,14 +104,11 @@ public interface IDirectory
 	/// <returns>匹配指定搜索条件的<seealso cref="DirectoryInfo"/>集合。</returns>
 	IEnumerable<DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false);
 
-	IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path);
-	IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive = false);
+	IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path, CancellationToken cancellation = default) => this.GetDirectoriesAsync(path, null, false, cancellation);
+	IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path, string pattern, CancellationToken cancellation = default) => this.GetDirectoriesAsync(path, pattern, false, cancellation);
+	IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive, CancellationToken cancellation = default);
 
-	/// <summary>获取指定路径中的所有文件信息的可枚举集合。</summary>
-	/// <param name="path">要搜索的目录。</param>
-	/// <returns>指定路径中的所有目录的<seealso cref="FileInfo"/>集合。</returns>
-	/// <remarks>更多功能搜索功能请参考<see cref="GetFiles(string, string, bool)"/>方法。</remarks>
-	IEnumerable<FileInfo> GetFiles(string path);
+	IEnumerable<FileInfo> GetFiles(string path) => this.GetFiles(path, null, false);
 
 	/// <summary>获取指定路径中与搜索模式匹配的所有文件信息的可枚举集合，还可以搜索子目录。</summary>
 	/// <param name="path">要搜索的目录。</param>
@@ -126,6 +117,7 @@ public interface IDirectory
 	/// <returns>匹配指定搜索条件的<seealso cref="FileInfo"/>集合。</returns>
 	IEnumerable<FileInfo> GetFiles(string path, string pattern, bool recursive = false);
 
-	IAsyncEnumerable<FileInfo> GetFilesAsync(string path);
-	IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, bool recursive = false);
+	IAsyncEnumerable<FileInfo> GetFilesAsync(string path, CancellationToken cancellation = default) => this.GetFilesAsync(path, null, false, cancellation);
+	IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, CancellationToken cancellation = default) => this.GetFilesAsync(path, pattern, false, cancellation);
+	IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, bool recursive, CancellationToken cancellation = default);
 }

@@ -44,28 +44,32 @@ public interface IFile
 	/// <param name="path">指定的文件路径。</param>
 	/// <returns>如果指定的路径是存在的则返回对应的<see cref="FileInfo"/>，否则返回空(<c>null</c>)。</returns>
 	FileInfo GetInfo(string path);
-	ValueTask<FileInfo> GetInfoAsync(string path);
+	ValueTask<FileInfo> GetInfoAsync(string path, CancellationToken cancellation = default);
 
-	bool SetInfo(string path, IDictionary<string, object> properties);
-	ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties);
+	bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties);
+	ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default);
 
 	bool Delete(string path);
-	ValueTask<bool> DeleteAsync(string path);
+	ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default);
 
 	bool Exists(string path);
-	ValueTask<bool> ExistsAsync(string path);
+	ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default);
 
-	void Copy(string source, string destination);
-	void Copy(string source, string destination, bool overwrite);
-
-	ValueTask CopyAsync(string source, string destination);
-	ValueTask CopyAsync(string source, string destination, bool overwrite);
+	void Copy(string source, string destination, bool overwrite = true);
+	ValueTask CopyAsync(string source, string destination, CancellationToken cancellation = default) => this.CopyAsync(source, destination, true, cancellation);
+	ValueTask CopyAsync(string source, string destination, bool overwrite, CancellationToken cancellation = default);
 
 	void Move(string source, string destination);
-	ValueTask MoveAsync(string source, string destination);
+	ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default);
 
-	Stream Open(string path, IDictionary<string, object> properties = null);
-	Stream Open(string path, FileMode mode, IDictionary<string, object> properties = null);
-	Stream Open(string path, FileMode mode, FileAccess access, IDictionary<string, object> properties = null);
-	Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IDictionary<string, object> properties = null);
+	Stream Open(string path, FileMode mode, IEnumerable<KeyValuePair<string, string>> properties = null) => this.Open(path, mode, (mode == FileMode.Append ? FileAccess.Write : FileAccess.ReadWrite), FileShare.None, properties);
+	Stream Open(string path, FileMode mode, FileAccess access, IEnumerable<KeyValuePair<string, string>> properties = null) => this.Open(path, mode, access, FileShare.None, properties);
+	Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null);
+
+	ValueTask<Stream> OpenAsync(string path, FileMode mode, CancellationToken cancellation = default) => this.OpenAsync(path, mode, (mode == FileMode.Append ? FileAccess.Write : FileAccess.ReadWrite), FileShare.None, null, cancellation);
+	ValueTask<Stream> OpenAsync(string path, FileMode mode, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => this.OpenAsync(path, mode, (mode == FileMode.Append ? FileAccess.Write : FileAccess.ReadWrite), FileShare.None, properties, cancellation);
+	ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, CancellationToken cancellation = default) => this.OpenAsync(path, mode, access, FileShare.None, null, cancellation);
+	ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => this.OpenAsync(path, mode, access, FileShare.None, properties, cancellation);
+	ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, CancellationToken cancellation = default) => this.OpenAsync(path, mode, access, share, null, cancellation);
+	ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default);
 }

@@ -69,12 +69,12 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		private int _bufferedCount;
 		private readonly StorageClient _client;
 		private List<StorageMultipart> _multiparts;
-		private readonly IDictionary<string, object> _extendedProperties;
+		private readonly IDictionary<string, string> _extendedProperties;
 		#endregion
 
 		#region 构造函数
 		public StorageUploader(StorageClient client, string path, int bufferSize = DEFAULT_MULTIPART_SIZE) : this(client, path, null, bufferSize) { }
-		public StorageUploader(StorageClient client, string path, IDictionary<string, object> extendedProperties, int bufferSize = DEFAULT_MULTIPART_SIZE)
+		public StorageUploader(StorageClient client, string path, IEnumerable<KeyValuePair<string, string>> extendedProperties, int bufferSize = DEFAULT_MULTIPART_SIZE)
 		{
 			if(string.IsNullOrWhiteSpace(path))
 				throw new ArgumentNullException(nameof(path));
@@ -84,7 +84,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			_bufferSize = bufferSize > 0 ? Math.Max(bufferSize, MINIMUM_MULTIPART_SIZE) : DEFAULT_MULTIPART_SIZE;
 			_client = client ?? throw new ArgumentNullException(nameof(client));
 			_path = path.TrimEnd('/', '\\');
-			_extendedProperties = extendedProperties;
+			_extendedProperties = new Dictionary<string, string>(extendedProperties ?? []);
 		}
 		#endregion
 
@@ -214,7 +214,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		private async ValueTask<string> InitiateAsync(CancellationToken cancellation)
 		{
 			//创建初始化请求包
-			var request = _client.CreateHttpRequest(HttpMethod.Post, _path + "?uploads", _client.EnsureCreation(_extendedProperties));
+			var request = _client.CreateHttpRequest(HttpMethod.Post, _path + "?uploads", StorageClient.EnsureCreation(_extendedProperties));
 
 			//保持长连接
 			request.Headers.Connection.Add("keep-alive");

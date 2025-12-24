@@ -28,39 +28,23 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
 
-namespace Zongsoft.Externals.Amazon.Configuration;
+using Zongsoft.Components;
+using Zongsoft.Configuration;
 
-public class CredentialOptions
+namespace Zongsoft.Externals.Amazon.IO.Configuration;
+
+public class S3ConnectionSettingsDriver : ConnectionSettingsDriver<S3ConnectionSettings>
 {
-	public string Name { get; set; }
-	public string Code { get; set; }
-	public string Token { get; set; }
-	public string Secret { get; set; }
-}
+	#region 常量定义
+	internal const string NAME = "amazon.s3";
+	#endregion
 
-public class CredentialOptionsCollection() : KeyedCollection<string, CredentialOptions>(StringComparer.OrdinalIgnoreCase)
-{
-	public string Default { get; set; }
-	public bool TryGetDefault(out CredentialOptions result)
-	{
-		if(string.IsNullOrEmpty(this.Default))
-		{
-			result = null;
-			return false; 
-		}
+	#region 单例字段
+	public static readonly S3ConnectionSettingsDriver Instance = new();
+	#endregion
 
-		return this.TryGetValue(this.Default, out result);
-	}
-
-	public CredentialOptions GetDefault()
-	{
-		if(string.IsNullOrEmpty(this.Default))
-			return this[0];
-
-		return this.TryGetValue(this.Default, out var result) ? result : this[0];
-	}
-
-	protected override string GetKeyForItem(CredentialOptions credential) => credential.Name;
+	#region 私有构造
+	private S3ConnectionSettingsDriver() : base(NAME) { }
+	#endregion
 }

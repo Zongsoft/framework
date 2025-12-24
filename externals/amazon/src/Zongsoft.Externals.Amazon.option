@@ -2,14 +2,9 @@
 
 <options>
 	<option path="/Externals/Amazon">
-		<general server="http://127.0.0.1:9000" region="cn-north-1">
-			<credentials default="main">
-				<credential credential.name="main" code="rustfsadmin" secret="rustfsadmin" />
-			</credentials>
-		</general>
-
-		<storages default="">
-			<storage region="cn-north-1" credential="" />
-		</storages>
+		<connectionSettings default="local">
+			<connectionSetting connectionSetting.name="local" driver="amazon.s3"
+			                   value="server=http://127.0.0.1:9000;region=cn-north-1;accessKey=rustfsadmin;secretKey=rustfsadmin" />
+		</connectionSettings>
 	</option>
 </options>

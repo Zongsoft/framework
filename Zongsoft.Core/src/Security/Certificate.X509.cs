@@ -114,7 +114,7 @@ public partial class Certificate
 				#endif
 			}
 
-			public ICertificate Resolve(string filePath, string secret = null, CertificateDescriptor descriptor = default) => this.Resolve(Zongsoft.IO.FileSystem.File.Open(filePath), secret, descriptor);
+			public ICertificate Resolve(string filePath, string secret = null, CertificateDescriptor descriptor = default) => this.Resolve(Zongsoft.IO.FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read), secret, descriptor);
 			public ICertificate Resolve(Stream stream, string secret = null, CertificateDescriptor descriptor = default)
 			{
 				if(stream == null)

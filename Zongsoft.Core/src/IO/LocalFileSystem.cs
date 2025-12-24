@@ -144,7 +144,8 @@ public class LocalFileSystem : IFileSystem
 		#endregion
 
 		#region 公共方法
-		public bool Create(string path, IDictionary<string, object> properties = null)
+		public ValueTask<bool> CreateAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => cancellation.IsCancellationRequested ? ValueTask.FromCanceled<bool>(cancellation) : ValueTask.FromResult(this.Create(path, properties));
+		public bool Create(string path, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
 			var fullPath = GetLocalPath(path);
 
@@ -154,25 +155,14 @@ public class LocalFileSystem : IFileSystem
 			return System.IO.Directory.CreateDirectory(fullPath) != null;
 		}
 
-		public async ValueTask<bool> CreateAsync(string path, IDictionary<string, object> properties = null)
-		{
-			var fullPath = GetLocalPath(path);
-
-			if(await Task.Run(() => System.IO.Directory.Exists(fullPath)))
-				return false;
-
-			var result = await Task.Run(() => System.IO.Directory.CreateDirectory(fullPath));
-
-			return result != null;
-		}
-
-		public bool Delete(string path, bool recursive = false)
+		public ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default) => cancellation.IsCancellationRequested ? ValueTask.FromCanceled<bool>(cancellation) : ValueTask.FromResult(this.Delete(path));
+		public bool Delete(string path)
 		{
 			var fullPath = GetLocalPath(path);
 
 			try
 			{
-				System.IO.Directory.Delete(fullPath, recursive);
+				System.IO.Directory.Delete(fullPath, true);
 				return true;
 			}
 			catch(DirectoryNotFoundException)
@@ -181,19 +171,13 @@ public class LocalFileSystem : IFileSystem
 			}
 		}
 
-		public async ValueTask<bool> DeleteAsync(string path, bool recursive = false)
+		public ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default)
 		{
-			var fullPath = GetLocalPath(path);
+			if(cancellation.IsCancellationRequested)
+				return ValueTask.FromCanceled(cancellation);
 
-			try
-			{
-				await Task.Run(() => System.IO.Directory.Delete(fullPath, recursive));
-				return true;
-			}
-			catch(DirectoryNotFoundException)
-			{
-				return false;
-			}
+			this.Move(source, destination);
+			return ValueTask.CompletedTask;
 		}
 
 		public void Move(string source, string destination)
@@ -203,25 +187,14 @@ public class LocalFileSystem : IFileSystem
 			System.IO.Directory.Move(sourcePath, destinationPath);
 		}
 
-		public async ValueTask MoveAsync(string source, string destination)
-		{
-			var sourcePath = GetLocalPath(source);
-			var destinationPath = GetLocalPath(destination);
-			await Task.Run(() => System.IO.Directory.Move(sourcePath, destinationPath));
-		}
-
+		public ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default) => cancellation.IsCancellationRequested ? ValueTask.FromCanceled<bool>(cancellation) : ValueTask.FromResult(this.Exists(path));
 		public bool Exists(string path)
 		{
 			var fullPath = GetLocalPath(path);
 			return System.IO.Directory.Exists(fullPath);
 		}
 
-		public async ValueTask<bool> ExistsAsync(string path)
-		{
-			var fullPath = GetLocalPath(path);
-			return await Task.Run(() => System.IO.Directory.Exists(fullPath));
-		}
-
+		public ValueTask<DirectoryInfo> GetInfoAsync(string path, CancellationToken cancellation = default) => cancellation.IsCancellationRequested ? ValueTask.FromCanceled<DirectoryInfo>(cancellation) : ValueTask.FromResult(this.GetInfo(path));
 		public DirectoryInfo GetInfo(string path)
 		{
 			var fullPath = GetLocalPath(path);
@@ -233,29 +206,10 @@ public class LocalFileSystem : IFileSystem
 			return new DirectoryInfo(info.FullName, info.CreationTime, info.LastWriteTime, LocalFileSystem.Instance.GetUrl(path));
 		}
 
-		public async ValueTask<DirectoryInfo> GetInfoAsync(string path)
-		{
-			var fullPath = GetLocalPath(path);
-			var info = await Task.Run(() => new System.IO.DirectoryInfo(fullPath));
+		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => throw new NotSupportedException();
+		public ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => throw new NotSupportedException();
 
-			if(info == null || !info.Exists)
-				return null;
-
-			return new DirectoryInfo(info.FullName, info.CreationTime, info.LastWriteTime, LocalFileSystem.Instance.GetUrl(path));
-		}
-
-		public bool SetInfo(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
-		public ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
 		public IEnumerable<PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
-
-		/// <summary>获取指定路径中与搜索模式匹配的所有文件名称和目录信息的可枚举集合，还可以搜索子目录。</summary>
-		/// <param name="path">要搜索的目录。</param>
-		/// <param name="pattern">用于搜索匹配的所有文件或子目录的字符串。
-		///		<para>默认模式为空(<c>null</c>)，如果为空(<c>null</c>)或空字符串(“”)或“*”，即表示返回指定范围内的所有文件和目录。</para>
-		///		<para>如果<paramref name="pattern"/>参数以反斜杠(“\”)或正斜杠(“/”)或竖线符(“|”)字符起始和结尾，则表示搜索模式为正则表达式，即进行正则匹配搜索；否则即为本地文件系统的匹配模式。</para>
-		/// </param>
-		/// <param name="recursive">指定搜索操作的范围是应仅包含当前目录还是应包含所有子目录，默认是仅包含当前目录。</param>
-		/// <returns>指定搜索条件匹配的<seealso cref="PathInfo"/>集合。</returns>
 		public IEnumerable<PathInfo> GetChildren(string path, string pattern, bool recursive = false)
 		{
 			var fullPath = GetLocalPath(path);
@@ -263,9 +217,13 @@ public class LocalFileSystem : IFileSystem
 			return new InfoEnumerator<PathInfo>(entries);
 		}
 
-		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
-		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, string pattern, bool recursive = false)
+		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, CancellationToken cancellation = default) => this.GetChildrenAsync(path, null, false, cancellation);
+		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, string pattern, CancellationToken cancellation = default) => this.GetChildrenAsync(path, pattern, false, cancellation);
+		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string path, string pattern, bool recursive, CancellationToken cancellation = default)
 		{
+			if(cancellation.IsCancellationRequested)
+				return Zongsoft.Collections.Enumerable.Asynchronize<PathInfo>([]);
+
 			var fullPath = GetLocalPath(path);
 			var paths = Search(pattern, p => System.IO.Directory.EnumerateFileSystemEntries(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
 			return Zongsoft.Collections.Enumerable.Asynchronize(
@@ -274,15 +232,6 @@ public class LocalFileSystem : IFileSystem
 		}
 
 		public IEnumerable<DirectoryInfo> GetDirectories(string path) => this.GetDirectories(path, null, false);
-
-		/// <summary>返回指定路径中与搜索模式匹配的目录信息的可枚举集合，还可以搜索子目录。</summary>
-		/// <param name="path">要搜索的目录。</param>
-		/// <param name="pattern">用于搜索匹配的所有子目录的字符串。
-		///		<para>默认模式为空(<c>null</c>)，如果为空(<c>null</c>)或空字符串(“”)或“*”，即表示返回指定范围内的所有目录。</para>
-		///		<para>如果<paramref name="pattern"/>参数以反斜杠(“\”)或正斜杠(“/”)或竖线符(“|”)字符起始和结尾，则表示搜索模式为正则表达式，即进行正则匹配搜索；否则即为本地文件系统的匹配模式。</para>
-		/// </param>
-		/// <param name="recursive">指定搜索操作的范围是应仅包含当前目录还是应包含所有子目录，默认是仅包含当前目录。</param>
-		/// <returns>指定搜索条件匹配的<seealso cref="DirectoryInfo"/>集合。</returns>
 		public IEnumerable<DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false)
 		{
 			var fullPath = GetLocalPath(path);
@@ -290,9 +239,13 @@ public class LocalFileSystem : IFileSystem
 			return new InfoEnumerator<DirectoryInfo>(entries);
 		}
 
-		public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path) => this.GetDirectoriesAsync(path, null, false);
-		public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive = false)
+		public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path, CancellationToken cancellation = default) => this.GetDirectoriesAsync(path, null, false, cancellation);
+		public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path, string pattern, CancellationToken cancellation = default) => this.GetDirectoriesAsync(path, pattern, false, cancellation);
+		public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive, CancellationToken cancellation = default)
 		{
+			if(cancellation.IsCancellationRequested)
+				return Zongsoft.Collections.Enumerable.Asynchronize<DirectoryInfo>([]);
+
 			var fullPath = GetLocalPath(path);
 			var paths = Search(pattern, p => System.IO.Directory.EnumerateDirectories(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
 			return Zongsoft.Collections.Enumerable.Asynchronize(
@@ -302,15 +255,6 @@ public class LocalFileSystem : IFileSystem
 		}
 
 		public IEnumerable<FileInfo> GetFiles(string path) => this.GetFiles(path, null, false);
-
-		/// <summary>返回指定路径中与搜索模式匹配的文件信息的可枚举集合，还可以搜索子目录。</summary>
-		/// <param name="path">要搜索的目录。</param>
-		/// <param name="pattern">用于搜索匹配的所有文件的字符串。
-		///		<para>默认模式为空(<c>null</c>)，如果为空(<c>null</c>)或空字符串(“”)或“*”，即表示返回指定范围内的所有文件。</para>
-		///		<para>如果<paramref name="pattern"/>参数以反斜杠(“\”)或正斜杠(“/”)或竖线符(“|”)字符起始和结尾，则表示搜索模式为正则表达式，即进行正则匹配搜索；否则即为本地文件系统的匹配模式。</para>
-		/// </param>
-		/// <param name="recursive">指定搜索操作的范围是应仅包含当前目录还是应包含所有子目录，默认是仅包含当前目录。</param>
-		/// <returns>指定搜索条件匹配的<seealso cref="FileInfo"/>集合。</returns>
 		public IEnumerable<FileInfo> GetFiles(string path, string pattern, bool recursive = false)
 		{
 			var fullPath = GetLocalPath(path);
@@ -318,9 +262,13 @@ public class LocalFileSystem : IFileSystem
 			return new InfoEnumerator<FileInfo>(entries);
 		}
 
-		public IAsyncEnumerable<FileInfo> GetFilesAsync(string path) => this.GetFilesAsync(path, null, false);
-		public IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, bool recursive = false)
+		public IAsyncEnumerable<FileInfo> GetFilesAsync(string path, CancellationToken cancellation = default) => this.GetFilesAsync(path, null, false, cancellation);
+		public IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, CancellationToken cancellation = default) => this.GetFilesAsync(path, pattern, false, cancellation);
+		public IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, bool recursive, CancellationToken cancellation = default)
 		{
+			if(cancellation.IsCancellationRequested)
+				return Zongsoft.Collections.Enumerable.Asynchronize<FileInfo>([]);
+
 			var fullPath = GetLocalPath(path);
 			var paths = Search(pattern, p => System.IO.Directory.EnumerateFiles(fullPath, p, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
 			return Zongsoft.Collections.Enumerable.Asynchronize(
@@ -481,6 +429,7 @@ public class LocalFileSystem : IFileSystem
 		#endregion
 
 		#region 公共方法
+		public ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default) => cancellation.IsCancellationRequested ? ValueTask.FromCanceled<bool>(cancellation) : ValueTask.FromResult(this.Delete(path));
 		public bool Delete(string path)
 		{
 			var fullPath = GetLocalPath(path);
@@ -496,47 +445,27 @@ public class LocalFileSystem : IFileSystem
 			}
 		}
 
-		public async ValueTask<bool> DeleteAsync(string path)
-		{
-			var fullPath = GetLocalPath(path);
-
-			try
-			{
-				await Task.Run(() => System.IO.File.Delete(fullPath));
-				return true;
-			}
-			catch(FileNotFoundException)
-			{
-				return false;
-			}
-		}
-
+		public ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default) => cancellation.IsCancellationRequested ? ValueTask.FromCanceled<bool>(cancellation) : ValueTask.FromResult(this.Exists(path));
 		public bool Exists(string path)
 		{
 			var fullPath = GetLocalPath(path);
 			return System.IO.File.Exists(fullPath);
 		}
 
-		public async ValueTask<bool> ExistsAsync(string path)
-		{
-			var fullPath = GetLocalPath(path);
-			return await Task.Run(() => System.IO.File.Exists(fullPath));
-		}
-
-		public void Copy(string source, string destination) => this.Copy(source, destination, true);
-		public void Copy(string source, string destination, bool overwrite)
+		public void Copy(string source, string destination, bool overwrite = true)
 		{
 			var sourcePath = GetLocalPath(source);
 			var destinationPath = GetLocalPath(destination);
 			System.IO.File.Copy(sourcePath, destinationPath, overwrite);
 		}
 
-		public ValueTask CopyAsync(string source, string destination) => this.CopyAsync(source, destination, true);
-		public async ValueTask CopyAsync(string source, string destination, bool overwrite)
+		public ValueTask CopyAsync(string source, string destination, bool overwrite, CancellationToken cancellation = default)
 		{
-			var sourcePath = GetLocalPath(source);
-			var destinationPath = GetLocalPath(destination);
-			await Task.Run(() => System.IO.File.Copy(sourcePath, destinationPath, overwrite));
+			if(cancellation.IsCancellationRequested)
+				return ValueTask.FromCanceled(cancellation);
+
+			this.Copy(source, destination, overwrite);
+			return ValueTask.CompletedTask;
 		}
 
 		public void Move(string source, string destination)
@@ -546,13 +475,16 @@ public class LocalFileSystem : IFileSystem
 			System.IO.File.Move(sourcePath, destinationPath);
 		}
 
-		public async ValueTask MoveAsync(string source, string destination)
+		public ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default)
 		{
-			var sourcePath = GetLocalPath(source);
-			var destinationPath = GetLocalPath(destination);
-			await Task.Run(() => System.IO.File.Move(sourcePath, destinationPath));
+			if(cancellation.IsCancellationRequested)
+				return ValueTask.FromCanceled(cancellation);
+
+			this.Move(source, destination);
+			return ValueTask.CompletedTask;
 		}
 
+		public ValueTask<FileInfo> GetInfoAsync(string path, CancellationToken cancellation = default) => cancellation.IsCancellationRequested ? ValueTask.FromCanceled<FileInfo>(cancellation) : ValueTask.FromResult(this.GetInfo(path));
 		public FileInfo GetInfo(string path)
 		{
 			var fullPath = GetLocalPath(path);
@@ -564,42 +496,22 @@ public class LocalFileSystem : IFileSystem
 			return new FileInfo(info.FullName, info.Length, info.CreationTime, info.LastWriteTime, LocalFileSystem.Instance.GetUrl(path));
 		}
 
-		public async ValueTask<FileInfo> GetInfoAsync(string path)
-		{
-			var fullPath = GetLocalPath(path);
-			var info = await Task.Run(() => new System.IO.FileInfo(fullPath));
+		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => throw new NotSupportedException();
+		public ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => throw new NotSupportedException();
 
-			if(info == null || !info.Exists)
-				return null;
-
-			return new FileInfo(info.FullName, info.Length, info.CreationTime, info.LastWriteTime, LocalFileSystem.Instance.GetUrl(path));
-		}
-
-		public bool SetInfo(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
-		public ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => throw new NotSupportedException();
-
-		public Stream Open(string path, IDictionary<string, object> properties = null)
-		{
-			var fullPath = GetLocalPath(path);
-			return System.IO.File.Open(fullPath, FileMode.Open);
-		}
-
-		public Stream Open(string path, FileMode mode, IDictionary<string, object> properties = null)
-		{
-			var fullPath = GetLocalPath(path);
-			return System.IO.File.Open(fullPath, mode);
-		}
-
-		public Stream Open(string path, FileMode mode, FileAccess access, IDictionary<string, object> properties = null)
-		{
-			var fullPath = GetLocalPath(path);
-			return System.IO.File.Open(fullPath, mode, access);
-		}
-
-		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IDictionary<string, object> properties = null)
+		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
 			var fullPath = GetLocalPath(path);
 			return System.IO.File.Open(fullPath, mode, access, share);
+		}
+
+		public ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
+		{
+			if(cancellation.IsCancellationRequested)
+				return ValueTask.FromCanceled<Stream>(cancellation);
+
+			var stream = this.Open(path, mode, access, share, properties);
+			return ValueTask.FromResult(stream);
 		}
 		#endregion
 	}

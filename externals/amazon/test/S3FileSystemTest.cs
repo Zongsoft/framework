@@ -4,27 +4,16 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-
-using Microsoft.Extensions.Configuration;
 
 using Xunit;
 
 using Zongsoft.IO;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Amazon.Tests;
 
-public class S3FileSystemTest
+public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3FileSystemFixture>
 {
-	private readonly IConfigurationManager _configuration;
-
-	public S3FileSystemTest()
-	{
-		_configuration = new ConfigurationManager();
-		_configuration.AddOptionFile(@"Zongsoft.Externals.Amazon.option");
-		FileSystem.Providers.Add(new Storages.S3FileSystem(_configuration));
-	}
+	private readonly S3FileSystemFixture _fixture = fixture;
 
 	[Fact]
 	public void GetUrl()
@@ -76,7 +65,7 @@ public class S3FileSystemTest
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var tags = new Dictionary<string, object>
+		var tags = new Dictionary<string, string>
 		{
 			{ "Author", "Popeye Zhong" },
 		};
@@ -100,7 +89,7 @@ public class S3FileSystemTest
 
 		for(int i = 0; i < COUNT; i++)
 		{
-			using(var stream = FileSystem.File.Open($"{DIRECTORY}/File-{i:00000}.ext"))
+			using(var stream = await FileSystem.File.OpenAsync($"{DIRECTORY}/File-{i:00000}.ext", FileMode.OpenOrCreate))
 			{
 				Random.Shared.NextBytes(buffer);
 				stream.Write(buffer);
@@ -128,7 +117,7 @@ public class S3FileSystemTest
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var properties = new Dictionary<string, object>()
+		var properties = new Dictionary<string, string>()
 		{
 			{ "Author", "Popeye Zhong" },
 		};
@@ -137,7 +126,7 @@ public class S3FileSystemTest
 		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
 
 		using var source = new MemoryStream();
-		using(var target = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, properties))
+		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
@@ -161,7 +150,7 @@ public class S3FileSystemTest
 			Assert.Equal(property.Value, info.Properties[property.Key]);
 		}
 
-		Assert.True(Enumerable.SequenceEqual(GetHash(source), GetHash(filePath)));
+		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(source), Utility.ComputeHash(filePath)));
 		Assert.True(FileSystem.File.Delete(filePath));
 	}
 
@@ -174,7 +163,7 @@ public class S3FileSystemTest
 		const int FIRST_LENGTH = 512;
 		const int LAST_LENGTH = 1024;
 
-		var properties = new Dictionary<string, object>()
+		var properties = new Dictionary<string, string>()
 		{
 			{ "Author", "Popeye Zhong" },
 		};
@@ -183,7 +172,7 @@ public class S3FileSystemTest
 		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
 
 		using var first = new MemoryStream();
-		using(var target = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, properties))
+		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
@@ -195,13 +184,13 @@ public class S3FileSystemTest
 			}
 		}
 
-		Assert.True(Enumerable.SequenceEqual(GetHash(first), GetHash(filePath)));
+		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(first), Utility.ComputeHash(filePath)));
 
 		properties["Author"] = "Popeye";
 		properties["Creation"] = DateTime.Now.ToString();
 
 		using var last = new MemoryStream();
-		using(var target = FileSystem.File.Open(filePath, FileMode.Append, FileAccess.ReadWrite, properties))
+		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.Append, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
@@ -228,27 +217,7 @@ public class S3FileSystemTest
 		buffer = new byte[first.Length + last.Length];
 		Array.Copy(first.ToArray(), 0, buffer, 0, first.Length);
 		Array.Copy(last.ToArray(), 0, buffer, first.Length, last.Length);
-		Assert.True(Enumerable.SequenceEqual(GetHash(buffer), GetHash(filePath)));
+		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(buffer), Utility.ComputeHash(filePath)));
 		Assert.True(FileSystem.File.Delete(filePath));
-	}
-
-	private static byte[] GetHash(byte[] bytes, HashAlgorithm algorithm = null)
-	{
-		algorithm ??= SHA1.Create();
-		return algorithm.ComputeHash(bytes);
-	}
-
-	private static byte[] GetHash(Stream stream, HashAlgorithm algorithm = null)
-	{
-		stream.Seek(0, SeekOrigin.Begin);
-		algorithm ??= SHA1.Create();
-		return algorithm.ComputeHash(stream);
-	}
-
-	private static byte[] GetHash(string filePath, HashAlgorithm algorithm = null)
-	{
-		algorithm ??= SHA1.Create();
-		using var stream = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
-		return algorithm.ComputeHash(stream);
 	}
 }
