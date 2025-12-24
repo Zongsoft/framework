@@ -4,27 +4,16 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-
-using Microsoft.Extensions.Configuration;
 
 using Xunit;
 
 using Zongsoft.IO;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Amazon.Tests;
 
-public class S3FileSystemTest
+public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3FileSystemFixture>
 {
-	private readonly IConfigurationManager _configuration;
-
-	public S3FileSystemTest()
-	{
-		_configuration = new ConfigurationManager();
-		_configuration.AddOptionFile(@"Zongsoft.Externals.Amazon.option");
-		FileSystem.Providers.Add(new Storages.S3FileSystem(_configuration));
-	}
+	private readonly S3FileSystemFixture _fixture = fixture;
 
 	[Fact]
 	public void GetUrl()
@@ -161,7 +150,7 @@ public class S3FileSystemTest
 			Assert.Equal(property.Value, info.Properties[property.Key]);
 		}
 
-		Assert.True(Enumerable.SequenceEqual(GetHash(source), GetHash(filePath)));
+		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(source), Utility.ComputeHash(filePath)));
 		Assert.True(FileSystem.File.Delete(filePath));
 	}
 
@@ -195,7 +184,7 @@ public class S3FileSystemTest
 			}
 		}
 
-		Assert.True(Enumerable.SequenceEqual(GetHash(first), GetHash(filePath)));
+		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(first), Utility.ComputeHash(filePath)));
 
 		properties["Author"] = "Popeye";
 		properties["Creation"] = DateTime.Now.ToString();
@@ -228,27 +217,7 @@ public class S3FileSystemTest
 		buffer = new byte[first.Length + last.Length];
 		Array.Copy(first.ToArray(), 0, buffer, 0, first.Length);
 		Array.Copy(last.ToArray(), 0, buffer, first.Length, last.Length);
-		Assert.True(Enumerable.SequenceEqual(GetHash(buffer), GetHash(filePath)));
+		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(buffer), Utility.ComputeHash(filePath)));
 		Assert.True(FileSystem.File.Delete(filePath));
-	}
-
-	private static byte[] GetHash(byte[] bytes, HashAlgorithm algorithm = null)
-	{
-		algorithm ??= SHA1.Create();
-		return algorithm.ComputeHash(bytes);
-	}
-
-	private static byte[] GetHash(Stream stream, HashAlgorithm algorithm = null)
-	{
-		stream.Seek(0, SeekOrigin.Begin);
-		algorithm ??= SHA1.Create();
-		return algorithm.ComputeHash(stream);
-	}
-
-	private static byte[] GetHash(string filePath, HashAlgorithm algorithm = null)
-	{
-		algorithm ??= SHA1.Create();
-		using var stream = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
-		return algorithm.ComputeHash(stream);
 	}
 }

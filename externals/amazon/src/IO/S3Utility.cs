@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 using Zongsoft.IO;
 
-namespace Zongsoft.Externals.Amazon.Storages;
+namespace Zongsoft.Externals.Amazon.IO;
 
 internal static class S3Utility
 {

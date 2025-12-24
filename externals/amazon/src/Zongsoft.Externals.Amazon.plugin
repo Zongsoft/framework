@@ -13,6 +13,6 @@
 	</manifest>
 
 	<extension path="/Workbench/FileSystem">
-		<object name="AmazonS3" type="Zongsoft.Externals.Amazon.Storages.S3FileSystem, Zongsoft.Externals.Amazon" />
+		<object name="AmazonS3" type="Zongsoft.Externals.Amazon.IO.S3FileSystem, Zongsoft.Externals.Amazon" />
 	</extension>
 </plugin>

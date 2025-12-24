@@ -32,7 +32,7 @@ using System;
 using Amazon.S3;
 using Amazon.S3.Model;
 
-namespace Zongsoft.Externals.Amazon.Storages;
+namespace Zongsoft.Externals.Amazon.IO;
 
 public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 {
@@ -55,7 +55,7 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 
 	#region 公共方法
 	public string GetUrl(string path) => string.IsNullOrEmpty(path) ? null : this.GetUrl(Zongsoft.IO.Path.Parse(path));
-	public string GetUrl(IO.Path path)
+	public string GetUrl(Zongsoft.IO.Path path)
 	{
 		if(!path.HasSegments)
 			return null;
@@ -64,7 +64,7 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 		var client = this.GetClient(region);
 
 		return client.GetPreSignedURL(new GetPreSignedUrlRequest
-		{
+        {
 			Verb = HttpVerb.GET,
 			BucketName = bucket,
 			Expires = DateTime.UtcNow.AddDays(10),

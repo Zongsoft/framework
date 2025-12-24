@@ -38,7 +38,7 @@ using System.Collections.Generic;
 using Amazon.S3;
 using Amazon.S3.Model;
 
-namespace Zongsoft.Externals.Amazon.Storages;
+namespace Zongsoft.Externals.Amazon.IO;
 
 partial class S3FileSystem
 {
@@ -171,8 +171,8 @@ partial class S3FileSystem
 			}
 		}
 
-		public IO.FileInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<IO.FileInfo> GetInfoAsync(string path)
+		public Zongsoft.IO.FileInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public async ValueTask<Zongsoft.IO.FileInfo> GetInfoAsync(string path)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);

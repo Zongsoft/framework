@@ -38,7 +38,7 @@ using Zongsoft.Caching;
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Externals.Amazon.Storages;
+namespace Zongsoft.Externals.Amazon.IO;
 
 internal static class S3ClientFactory
 {
@@ -48,22 +48,36 @@ internal static class S3ClientFactory
 	public static AmazonS3Client GetClient(this IConfiguration configuration, string region)
 	{
 		configuration ??= ApplicationContext.Current?.Configuration ?? throw new InvalidOperationException($"Missing required configuration.");
-		var location = string.IsNullOrEmpty(region) ? configuration.GetRegion() : RegionEndpoint.GetBySystemName(region);
-		return _cache.GetOrCreate(location, key => (CreateClient(configuration, (RegionEndpoint)key), configuration.GetReloadToken()));
+		return _cache.GetOrCreate(region ?? string.Empty, key => (CreateClient(configuration, (string)key), configuration.GetReloadToken()));
 	}
 
-	private static AmazonS3Client CreateClient(IConfiguration configuration, RegionEndpoint region)
+	private static AmazonS3Client CreateClient(IConfiguration configuration, string region)
 	{
-		ArgumentNullException.ThrowIfNull(region);
+		var settings = GetSettings(configuration, region) ??
+			throw (string.IsNullOrEmpty(region) ?
+				new InvalidOperationException("No default region configuration is provided.") :
+				new InvalidOperationException($"The specified '{region}' region is not configured."));
 
-		var server = configuration.GetOptionValue<string>("Externals/Amazon/General/Server");
-		var credentials = configuration.GetCredentials(region) ?? throw new InvalidOperationException($"The credentials for the specified ‘{region}’ region are not configured.");
+		return new AmazonS3Client(settings.GetOptions());
+	}
 
-		return new AmazonS3Client(credentials, new AmazonS3Config()
+	private static Configuration.S3ConnectionSettings GetSettings(IConfiguration configuration, string region)
+	{
+		var collection = configuration.GetOption<ConnectionSettingsCollection>("/Externals/Amazon/ConnectionSettings");
+		if(collection == null || collection.Count == 0)
+			return null;
+
+		if(string.IsNullOrEmpty(region))
+			return collection.GetDefault() as Configuration.S3ConnectionSettings;
+
+		foreach(var entry in collection)
 		{
-			ForcePathStyle = !string.IsNullOrEmpty(server),
-			RegionEndpoint = region,
-			ServiceURL = server,
-		});
+			if(entry.IsDriver(Configuration.S3ConnectionSettingsDriver.NAME) &&
+			   entry is Configuration.S3ConnectionSettings setting &&
+			   string.Equals(setting.Region.SystemName, region, StringComparison.OrdinalIgnoreCase))
+				return setting;
+		}
+
+		return null;
 	}
 }

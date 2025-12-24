@@ -36,7 +36,7 @@ using System.Collections.Generic;
 using Amazon.S3;
 using Amazon.S3.Model;
 
-namespace Zongsoft.Externals.Amazon.Storages;
+namespace Zongsoft.Externals.Amazon.IO;
 
 partial class S3FileSystem
 {
@@ -197,16 +197,16 @@ partial class S3FileSystem
 			}
 		}
 
-		public IO.DirectoryInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public ValueTask<IO.DirectoryInfo> GetInfoAsync(string path) => ValueTask.FromResult<IO.DirectoryInfo>(null);
+		public Zongsoft.IO.DirectoryInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public ValueTask<Zongsoft.IO.DirectoryInfo> GetInfoAsync(string path) => ValueTask.FromResult<Zongsoft.IO.DirectoryInfo>(null);
 
 		public bool SetInfo(string path, IDictionary<string, object> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		public ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties) => ValueTask.FromResult(false);
 
-		public IEnumerable<IO.PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
-		public IEnumerable<IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false) => this.GetChildrenAsync(path, pattern, recursive).ToBlockingEnumerable();
-		public IAsyncEnumerable<IO.PathInfo> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
-		public async IAsyncEnumerable<IO.PathInfo> GetChildrenAsync(string path, string pattern, bool recursive = false)
+		public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path) => this.GetChildren(path, null, false);
+		public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false) => this.GetChildrenAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public IAsyncEnumerable<Zongsoft.IO.PathInfo> GetChildrenAsync(string path) => this.GetChildrenAsync(path, null, false);
+		public async IAsyncEnumerable<Zongsoft.IO.PathInfo> GetChildrenAsync(string path, string pattern, bool recursive = false)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
@@ -240,31 +240,31 @@ partial class S3FileSystem
 			} while(continuation != null);
 		}
 
-		public IEnumerable<IO.DirectoryInfo> GetDirectories(string path) => this.GetDirectories(path, null, false);
-		public IEnumerable<IO.DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false) => this.GetDirectoriesAsync(path, pattern, recursive).ToBlockingEnumerable();
-		public IAsyncEnumerable<IO.DirectoryInfo> GetDirectoriesAsync(string path) => this.GetDirectoriesAsync(path, null, false);
-		public async IAsyncEnumerable<IO.DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive = false)
+		public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path) => this.GetDirectories(path, null, false);
+		public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false) => this.GetDirectoriesAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public IAsyncEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectoriesAsync(string path) => this.GetDirectoriesAsync(path, null, false);
+		public async IAsyncEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive = false)
 		{
 			var children = this.GetChildrenAsync(path, pattern, recursive);
 
 			await foreach(var child in children)
 			{
 				if(child.IsDirectory)
-					yield return (IO.DirectoryInfo)child;
+					yield return (Zongsoft.IO.DirectoryInfo)child;
 			}
 		}
 
-		public IEnumerable<IO.FileInfo> GetFiles(string path) => this.GetFiles(path, null, false);
-		public IEnumerable<IO.FileInfo> GetFiles(string path, string pattern, bool recursive = false) => this.GetFilesAsync(path, pattern, recursive).ToBlockingEnumerable();
-		public IAsyncEnumerable<IO.FileInfo> GetFilesAsync(string path) => this.GetFilesAsync(path, null, false);
-		public async IAsyncEnumerable<IO.FileInfo> GetFilesAsync(string path, string pattern, bool recursive = false)
+		public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path) => this.GetFiles(path, null, false);
+		public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path, string pattern, bool recursive = false) => this.GetFilesAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public IAsyncEnumerable<Zongsoft.IO.FileInfo> GetFilesAsync(string path) => this.GetFilesAsync(path, null, false);
+		public async IAsyncEnumerable<Zongsoft.IO.FileInfo> GetFilesAsync(string path, string pattern, bool recursive = false)
 		{
 			var children = this.GetChildrenAsync(path, pattern, recursive);
 
 			await foreach(var child in children)
 			{
 				if(child.IsFile)
-					yield return (IO.FileInfo)child;
+					yield return (Zongsoft.IO.FileInfo)child;
 			}
 		}
 	}
