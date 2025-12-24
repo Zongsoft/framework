@@ -88,7 +88,7 @@ public class WebFileAccessor
 		if(string.IsNullOrWhiteSpace(path))
 			throw new ArgumentNullException(nameof(path));
 
-		var properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+		var properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		var stream = FileSystem.File.Open(this.GetFilePath(path), FileMode.Open, FileAccess.Read, properties);
 
 		if(stream == null)
@@ -157,7 +157,7 @@ public class WebFileAccessor
 		if(string.IsNullOrWhiteSpace(path))
 			throw new ArgumentNullException(nameof(path));
 
-		var properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+		var properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
 		foreach(var header in request.Headers)
 		{

@@ -164,34 +164,34 @@ public static class FileSystem
 	#region 嵌套子类
 	private class DirectoryProvider : IDirectory
 	{
-		public bool Create(string virtualPath, IDictionary<string, object> properties = null)
+		public bool Create(string virtualPath, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 			return service.Create(path.FullPath, properties);
 		}
 
-		public ValueTask<bool> CreateAsync(string virtualPath, IDictionary<string, object> properties = null)
+		public ValueTask<bool> CreateAsync(string virtualPath, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
-			return service.CreateAsync(path.FullPath, properties);
+			return service.CreateAsync(path.FullPath, properties, cancellation);
 		}
 
-		public bool Delete(string virtualPath, bool recursive = false)
+		public bool Delete(string virtualPath)
 		{
 			if(string.IsNullOrWhiteSpace(virtualPath))
 				return false;
 
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
-			return service.Delete(path.FullPath, recursive);
+			return service.Delete(path.FullPath);
 		}
 
-		public ValueTask<bool> DeleteAsync(string virtualPath, bool recursive)
+		public ValueTask<bool> DeleteAsync(string virtualPath, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(virtualPath))
 				return ValueTask.FromResult(false);
 
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
-			return service.DeleteAsync(path.FullPath, recursive);
+			return service.DeleteAsync(path.FullPath, cancellation);
 		}
 
 		public void Move(string source, string destination)
@@ -204,14 +204,14 @@ public static class FileSystem
 			services[0].Move(paths[0].FullPath, paths[1].FullPath);
 		}
 
-		public ValueTask MoveAsync(string source, string destination)
+		public ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default)
 		{
 			var services = FileSystem.GetDirectoryProviders([source, destination], out var paths);
 
 			if(!string.Equals(paths[0].Scheme, paths[1].Scheme, StringComparison.OrdinalIgnoreCase))
 				throw new InvalidOperationException();
 
-			return services[0].MoveAsync(paths[0].FullPath, paths[1].FullPath);
+			return services[0].MoveAsync(paths[0].FullPath, paths[1].FullPath, cancellation);
 		}
 
 		public bool Exists(string virtualPath)
@@ -223,13 +223,13 @@ public static class FileSystem
 			return service.Exists(path.FullPath);
 		}
 
-		public ValueTask<bool> ExistsAsync(string virtualPath)
+		public ValueTask<bool> ExistsAsync(string virtualPath, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(virtualPath))
 				return ValueTask.FromResult(false);
 
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
-			return service.ExistsAsync(path.FullPath);
+			return service.ExistsAsync(path.FullPath, cancellation);
 		}
 
 		public DirectoryInfo GetInfo(string virtualPath)
@@ -238,22 +238,22 @@ public static class FileSystem
 			return service.GetInfo(path.FullPath);
 		}
 
-		public ValueTask<DirectoryInfo> GetInfoAsync(string virtualPath)
+		public ValueTask<DirectoryInfo> GetInfoAsync(string virtualPath, CancellationToken cancellation = default)
 		{
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
-			return service.GetInfoAsync(path.FullPath);
+			return service.GetInfoAsync(path.FullPath, cancellation);
 		}
 
-		public bool SetInfo(string virtualPath, IDictionary<string, object> properties)
+		public bool SetInfo(string virtualPath, IEnumerable<KeyValuePair<string, string>> properties)
 		{
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
 			return service.SetInfo(path.FullPath, properties);
 		}
 
-		public ValueTask<bool> SetInfoAsync(string virtualPath, IDictionary<string, object> properties)
+		public ValueTask<bool> SetInfoAsync(string virtualPath, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
-			return service.SetInfoAsync(path.FullPath, properties);
+			return service.SetInfoAsync(path.FullPath, properties, cancellation);
 		}
 
 		public IEnumerable<PathInfo> GetChildren(string virtualPath) => this.GetChildren(virtualPath, null, false);
@@ -263,11 +263,11 @@ public static class FileSystem
 			return service.GetChildren(path.FullPath, pattern, recursive);
 		}
 
-		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string virtualPath) => this.GetChildrenAsync(virtualPath, null, false);
-		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string virtualPath, string pattern, bool recursive = false)
+		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string virtualPath, CancellationToken cancellation = default) => this.GetChildrenAsync(virtualPath, null, false, cancellation);
+		public IAsyncEnumerable<PathInfo> GetChildrenAsync(string virtualPath, string pattern, bool recursive, CancellationToken cancellation = default)
 		{
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
-			return service.GetChildrenAsync(path.FullPath, pattern, recursive);
+			return service.GetChildrenAsync(path.FullPath, pattern, recursive, cancellation);
 		}
 
 		public IEnumerable<DirectoryInfo> GetDirectories(string virtualPath) => this.GetDirectories(virtualPath, null, false);
@@ -277,11 +277,11 @@ public static class FileSystem
 			return service.GetDirectories(path.FullPath, pattern, recursive);
 		}
 
-		public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string virtualPath) => this.GetDirectoriesAsync(virtualPath, null, false);
-		public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string virtualPath, string pattern, bool recursive = false)
+		public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string virtualPath, CancellationToken cancellation = default) => this.GetDirectoriesAsync(virtualPath, null, false, cancellation);
+		public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string virtualPath, string pattern, bool recursive, CancellationToken cancellation = default)
 		{
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
-			return service.GetDirectoriesAsync(path.FullPath, pattern, recursive);
+			return service.GetDirectoriesAsync(path.FullPath, pattern, recursive, cancellation);
 		}
 
 		public IEnumerable<FileInfo> GetFiles(string virtualPath) => this.GetFiles(virtualPath, null, false);
@@ -291,11 +291,11 @@ public static class FileSystem
 			return service.GetFiles(path.FullPath, pattern, recursive);
 		}
 
-		public IAsyncEnumerable<FileInfo> GetFilesAsync(string virtualPath) => this.GetFilesAsync(virtualPath, null, false);
-		public IAsyncEnumerable<FileInfo> GetFilesAsync(string virtualPath, string pattern, bool recursive = false)
+		public IAsyncEnumerable<FileInfo> GetFilesAsync(string virtualPath, CancellationToken cancellation = default) => this.GetFilesAsync(virtualPath, null, false, cancellation);
+		public IAsyncEnumerable<FileInfo> GetFilesAsync(string virtualPath, string pattern, bool recursive, CancellationToken cancellation = default)
 		{
 			var service = FileSystem.GetDirectoryProvider(virtualPath, out var path);
-			return service.GetFilesAsync(path.FullPath, pattern, recursive);
+			return service.GetFilesAsync(path.FullPath, pattern, recursive, cancellation);
 		}
 	}
 
@@ -312,13 +312,13 @@ public static class FileSystem
 			return service.Delete(path.FullPath);
 		}
 
-		public ValueTask<bool> DeleteAsync(string virtualPath)
+		public ValueTask<bool> DeleteAsync(string virtualPath, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(virtualPath))
 				return ValueTask.FromResult(false);
 
 			var service = FileSystem.GetFileProvider(virtualPath, out var path);
-			return service.DeleteAsync(path.FullPath);
+			return service.DeleteAsync(path.FullPath, cancellation);
 		}
 
 		public bool Exists(string virtualPath)
@@ -330,17 +330,16 @@ public static class FileSystem
 			return service.Exists(path.FullPath);
 		}
 
-		public ValueTask<bool> ExistsAsync(string virtualPath)
+		public ValueTask<bool> ExistsAsync(string virtualPath, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(virtualPath))
 				return ValueTask.FromResult(false);
 
 			var service = FileSystem.GetFileProvider(virtualPath, out var path);
-			return service.ExistsAsync(path.FullPath);
+			return service.ExistsAsync(path.FullPath, cancellation);
 		}
 
-		public void Copy(string source, string destination) => this.Copy(source, destination, true);
-		public void Copy(string source, string destination, bool overwrite)
+		public void Copy(string source, string destination, bool overwrite = true)
 		{
 			var services = FileSystem.GetFileProviders([source, destination], out var paths);
 
@@ -350,15 +349,14 @@ public static class FileSystem
 				CopyFile(services[0], paths[0].FullPath, services[1], paths[1].FullPath, overwrite);
 		}
 
-		public ValueTask CopyAsync(string source, string destination) => this.CopyAsync(source, destination, true);
-		public ValueTask CopyAsync(string source, string destination, bool overwrite)
+		public ValueTask CopyAsync(string source, string destination, bool overwrite, CancellationToken cancellation = default)
 		{
 			var services = FileSystem.GetFileProviders([source, destination], out var paths);
 
 			if(string.Equals(paths[0].Scheme, paths[1].Scheme, StringComparison.OrdinalIgnoreCase))
-				return services[0].CopyAsync(paths[0].FullPath, paths[1].FullPath, overwrite);
+				return services[0].CopyAsync(paths[0].FullPath, paths[1].FullPath, overwrite, cancellation);
 			else
-				return CopyFileAsync(services[0], paths[0].FullPath, services[1], paths[1].FullPath, overwrite);
+				return CopyFileAsync(services[0], paths[0].FullPath, services[1], paths[1].FullPath, overwrite, cancellation);
 		}
 
 		public void Move(string source, string destination)
@@ -374,15 +372,15 @@ public static class FileSystem
 			}
 		}
 
-		public async ValueTask MoveAsync(string source, string destination)
+		public async ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default)
 		{
 			var services = FileSystem.GetFileProviders([source, destination], out var paths);
 
 			if(string.Equals(paths[0].Scheme, paths[1].Scheme, StringComparison.OrdinalIgnoreCase))
-				await services[0].MoveAsync(paths[0].FullPath, paths[1].FullPath);
+				await services[0].MoveAsync(paths[0].FullPath, paths[1].FullPath, cancellation);
 			else
 			{
-				await CopyFileAsync(services[0], paths[0].FullPath, services[1], paths[1].FullPath, false);
+				await CopyFileAsync(services[0], paths[0].FullPath, services[1], paths[1].FullPath, false, cancellation);
 				services[0].Delete(paths[0].FullPath);
 			}
 		}
@@ -393,46 +391,34 @@ public static class FileSystem
 			return service.GetInfo(path.FullPath);
 		}
 
-		public ValueTask<FileInfo> GetInfoAsync(string virtualPath)
+		public ValueTask<FileInfo> GetInfoAsync(string virtualPath, CancellationToken cancellation = default)
 		{
 			var service = FileSystem.GetFileProvider(virtualPath, out var path);
-			return service.GetInfoAsync(path.FullPath);
+			return service.GetInfoAsync(path.FullPath, cancellation);
 		}
 
-		public bool SetInfo(string virtualPath, IDictionary<string, object> properties)
+		public bool SetInfo(string virtualPath, IEnumerable<KeyValuePair<string, string>> properties)
 		{
 			var service = FileSystem.GetFileProvider(virtualPath, out var path);
 			return service.SetInfo(path.FullPath, properties);
 		}
 
-		public ValueTask<bool> SetInfoAsync(string virtualPath, IDictionary<string, object> properties)
+		public ValueTask<bool> SetInfoAsync(string virtualPath, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
 			var service = FileSystem.GetFileProvider(virtualPath, out var path);
-			return service.SetInfoAsync(path.FullPath, properties);
+			return service.SetInfoAsync(path.FullPath, properties, cancellation);
 		}
 
-		public Stream Open(string virtualPath, IDictionary<string, object> properties = null)
-		{
-			var service = FileSystem.GetFileProvider(virtualPath, out var path);
-			return service.Open(path.FullPath, properties);
-		}
-
-		public Stream Open(string virtualPath, FileMode mode, IDictionary<string, object> properties = null)
-		{
-			var service = FileSystem.GetFileProvider(virtualPath, out var path);
-			return service.Open(path.FullPath, mode, properties);
-		}
-
-		public Stream Open(string virtualPath, FileMode mode, FileAccess access, IDictionary<string, object> properties = null)
-		{
-			var service = FileSystem.GetFileProvider(virtualPath, out var path);
-			return service.Open(path.FullPath, mode, access, properties);
-		}
-
-		public Stream Open(string virtualPath, FileMode mode, FileAccess access, System.IO.FileShare share, IDictionary<string, object> properties = null)
+		public Stream Open(string virtualPath, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
 			var service = FileSystem.GetFileProvider(virtualPath, out var path);
 			return service.Open(path.FullPath, mode, access, share, properties);
+		}
+
+		public ValueTask<Stream> OpenAsync(string virtualPath, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
+		{
+			var service = FileSystem.GetFileProvider(virtualPath, out var path);
+			return service.OpenAsync(path.FullPath, mode, access, share, properties, cancellation);
 		}
 
 		private static void CopyFile(IFile source, string sourcePath, IFile destination, string destinationPath, bool overwrite)
@@ -449,17 +435,17 @@ public static class FileSystem
 			}
 		}
 
-		private static async ValueTask CopyFileAsync(IFile source, string sourcePath, IFile destination, string destinationPath, bool overwrite)
+		private static async ValueTask CopyFileAsync(IFile source, string sourcePath, IFile destination, string destinationPath, bool overwrite, CancellationToken cancellation)
 		{
-			using var sourceStream = source.Open(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-			using var destinationStream = destination.Open(destinationPath, overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write);
+			using var sourceStream = await source.OpenAsync(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read, cancellation);
+			using var destinationStream = await destination.OpenAsync(destinationPath, overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, cancellation);
 
 			var buffer = new byte[BUFFERSIZE];
 			int bytesRead;
 
-			while((bytesRead = await sourceStream.ReadAsync(buffer)) > 0)
+			while((bytesRead = await sourceStream.ReadAsync(buffer, cancellation)) > 0)
 			{
-				await destinationStream.WriteAsync(buffer.AsMemory(0, bytesRead));
+				await destinationStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellation);
 			}
 		}
 	}

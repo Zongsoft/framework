@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.1.0</Version>
+		<Version>7.2.0</Version>
 		<Product>Zongsoft Net Library</Product>
 		<Description>This is a high-performance network development library.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -32,7 +32,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.17.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.24.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

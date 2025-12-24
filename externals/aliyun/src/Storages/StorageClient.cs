@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2015-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Aliyun library.
  *
@@ -30,8 +30,10 @@
 using System;
 using System.IO;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Zongsoft.Externals.Aliyun.Storages
 {
@@ -62,84 +64,78 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 公共方法
-		public async ValueTask<bool> CopyAsync(string source, string destination)
+		public async ValueTask<bool> CopyAsync(string source, string destination, CancellationToken cancellation)
 		{
 			var request = new HttpRequestMessage(HttpMethod.Put, _serviceCenter.GetRequestUrl(destination));
-
 			request.Headers.Add(StorageHeaders.OSS_COPY_SOURCE, source);
-
-			var result = await _http.SendAsync(request);
+			var result = await _http.SendAsync(request, cancellation);
 			return result.IsSuccessStatusCode;
 		}
 
-		public async ValueTask<bool> DeleteAsync(string path) => (await _http.DeleteAsync(_serviceCenter.GetRequestUrl(path))).IsSuccessStatusCode;
+		public async ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation) => (await _http.DeleteAsync(_serviceCenter.GetRequestUrl(path), cancellation)).IsSuccessStatusCode;
 
-		public async ValueTask<Stream> DownloadAsync(string path, IDictionary<string, object> properties = null)
+		public async ValueTask<Stream> DownloadAsync(string path, IDictionary<string, string> properties, CancellationToken cancellation)
 		{
-			var response = await _http.GetAsync(_serviceCenter.GetRequestUrl(path));
+			var response = await _http.GetAsync(_serviceCenter.GetRequestUrl(path), cancellation);
 
 			//确认返回是否是成功
 			response.EnsureSuccessStatusCode();
 
 			if(properties != null)
-				this.FillProperties(response, properties);
+				FillProperties(response, properties);
 
-			return await response.Content.ReadAsStreamAsync();
+			return await response.Content.ReadAsStreamAsync(cancellation);
 		}
 
-		public ValueTask<bool> CreateAsync(string path, IDictionary<string, object> extendedProperties = null) => this.CreateAsync(path, null, extendedProperties);
-		public async ValueTask<bool> CreateAsync(string path, Stream stream, IDictionary<string, object> extendedProperties = null)
+		public ValueTask<bool> CreateAsync(string path, IEnumerable<KeyValuePair<string, string>> extendedProperties, CancellationToken cancellation) => this.CreateAsync(path, null, extendedProperties, cancellation);
+		public async ValueTask<bool> CreateAsync(string path, Stream stream, IEnumerable<KeyValuePair<string, string>> extendedProperties, CancellationToken cancellation)
 		{
-			var request = this.CreateHttpRequest(HttpMethod.Put, path, this.EnsureCreation(extendedProperties));
+			extendedProperties = extendedProperties == null ?
+				[GetCreation()] : extendedProperties.Concat([GetCreation()]);
+
+			var request = this.CreateHttpRequest(HttpMethod.Put, path, extendedProperties);
 
 			if(stream != null)
 				request.Content = new StreamContent(stream);
 
-			return (await _http.SendAsync(request)).IsSuccessStatusCode;
+			return (await _http.SendAsync(request, cancellation)).IsSuccessStatusCode;
 		}
 
-		public async ValueTask<bool> ExistsAsync(string path)
+		public async ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation)
 		{
 			var request = new HttpRequestMessage(HttpMethod.Head, _serviceCenter.GetRequestUrl(path));
-
-			var result = await _http.SendAsync(request);
+			var result = await _http.SendAsync(request, cancellation);
 			return result.IsSuccessStatusCode;
 		}
 
-		public async ValueTask<IDictionary<string, object>> GetExtendedPropertiesAsync(string path)
+		public async ValueTask<IDictionary<string, string>> GetExtendedPropertiesAsync(string path, CancellationToken cancellation)
 		{
 			var request = new HttpRequestMessage(HttpMethod.Head, _serviceCenter.GetRequestUrl(path));
-			var response = await _http.SendAsync(request);
+			var response = await _http.SendAsync(request, cancellation);
 
 			//确认返回是否是成功
 			response.EnsureSuccessStatusCode();
 
-			var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
-			this.FillProperties(response, result);
-
+			var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			FillProperties(response, result);
 			return result;
 		}
 
-		public async ValueTask<bool> SetExtendedPropertiesAsync(string path, IDictionary<string, object> extendedProperties)
+		public async ValueTask<bool> SetExtendedPropertiesAsync(string path, IEnumerable<KeyValuePair<string, string>> extendedProperties, CancellationToken cancellation)
 		{
-			if(extendedProperties == null || extendedProperties.Count < 1)
+			if(extendedProperties == null)
 				return false;
 
-			var properties = await this.GetExtendedPropertiesAsync(path);
-
+			var properties = await this.GetExtendedPropertiesAsync(path, cancellation);
 			foreach(var property in extendedProperties)
-			{
 				properties[property.Key] = property.Value;
-			}
 
 			var request = this.CreateHttpRequest(HttpMethod.Put, path, properties);
 			request.Headers.Add(StorageHeaders.OSS_COPY_SOURCE, path);
-
-			return (await _http.SendAsync(request)).IsSuccessStatusCode;
+			return (await _http.SendAsync(request, cancellation)).IsSuccessStatusCode;
 		}
 
-		public async ValueTask<StorageSearchResult> SearchAsync(string path, Func<string, string> getUrl)
+		public async ValueTask<StorageSearchResult> SearchAsync(string path, Func<string, string> getUrl, CancellationToken cancellation)
 		{
 			if(!string.IsNullOrWhiteSpace(path))
 			{
@@ -156,7 +152,7 @@ namespace Zongsoft.Externals.Aliyun.Storages
 
 			string baseName, resourcePath;
 			var url = _serviceCenter.GetBaseUrl(path, out baseName, out resourcePath) + "?list-type=2&prefix=" + Uri.EscapeDataString(resourcePath) + "&delimiter=/&max-keys=100";
-			var response = await _http.GetAsync(url);
+			var response = await _http.GetAsync(url, cancellation);
 
 			//确保返回的内容是成功
 			response.EnsureSuccessStatusCode();
@@ -167,14 +163,14 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 内部方法
-		internal StorageUploader GetUploader(string path, int bufferSize = 0) => new StorageUploader(this, path, bufferSize);
-		internal StorageUploader GetUploader(string path, IDictionary<string, object> extendedProperties, int bufferSize = 0) => new StorageUploader(this, path, extendedProperties, bufferSize);
+		internal StorageUploader GetUploader(string path, int bufferSize = 0) => new(this, path, bufferSize);
+		internal StorageUploader GetUploader(string path, IEnumerable<KeyValuePair<string, string>> extendedProperties, int bufferSize = 0) => new(this, path, extendedProperties, bufferSize);
 
-		internal HttpRequestMessage CreateHttpRequest(HttpMethod method, string path, IDictionary<string, object> extendedProperties = null)
+		internal HttpRequestMessage CreateHttpRequest(HttpMethod method, string path, IEnumerable<KeyValuePair<string, string>> extendedProperties = null)
 		{
 			var request = new HttpRequestMessage(method, _serviceCenter.GetRequestUrl(path));
 
-			if(extendedProperties != null && extendedProperties.Count > 0)
+			if(extendedProperties != null)
 			{
 				foreach(var entry in extendedProperties)
 				{
@@ -188,11 +184,11 @@ namespace Zongsoft.Externals.Aliyun.Storages
 			return request;
 		}
 
-		internal IDictionary<string, object> EnsureCreation(IDictionary<string, object> properties)
+		internal static IDictionary<string, string> EnsureCreation(IDictionary<string, string> properties)
 		{
 			if(properties == null)
 			{
-				properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+				properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 				{
 					[StorageHeaders.ZFS_CREATION_PROPERTY] = Utility.GetGmtTime()
 				};
@@ -208,7 +204,8 @@ namespace Zongsoft.Externals.Aliyun.Storages
 		#endregion
 
 		#region 私有方法
-		private void FillProperties(HttpResponseMessage response, IDictionary<string, object> properties)
+		private static KeyValuePair<string, string> GetCreation() => new KeyValuePair<string, string>(StorageHeaders.ZFS_CREATION_PROPERTY, Utility.GetGmtTime());
+		private static void FillProperties(HttpResponseMessage response, IDictionary<string, string> properties)
 		{
 			if(response == null || !response.IsSuccessStatusCode || properties == null)
 				return;

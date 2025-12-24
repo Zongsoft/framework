@@ -46,11 +46,8 @@ partial class S3FileSystem
 	{
 		private readonly S3FileSystem _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 
-		public void Copy(string source, string destination) => this.Copy(source, destination, true);
-		public void Copy(string source, string destination, bool overwrite) => this.CopyAsync(source, destination, overwrite).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-
-		public ValueTask CopyAsync(string source, string destination) => this.CopyAsync(source, destination, false);
-		public ValueTask CopyAsync(string source, string destination, bool overwrite)
+		public void Copy(string source, string destination, bool overwrite = true) => this.CopyAsync(source, destination, overwrite).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public ValueTask CopyAsync(string source, string destination, bool overwrite, CancellationToken cancellation = default)
 		{
 			var srcPath = Resolve(source, out var srcRegion, out var srcBucket);
 			var destPath = Resolve(destination, out var destRegion, out var destBucket);
@@ -58,27 +55,25 @@ partial class S3FileSystem
 			if(string.Equals(srcRegion, destRegion))
 			{
 				var client = _fileSystem.GetClient(srcRegion);
-				var request = new CopyObjectRequest()
+				return new ValueTask(client.CopyObjectAsync(new CopyObjectRequest()
 				{
 					SourceBucket = srcBucket,
 					SourceKey = srcPath,
 					DestinationBucket = destBucket,
 					DestinationKey = destPath,
-				};
-
-				return new ValueTask(client.CopyObjectAsync(request));
+				}, cancellation));
 			}
 
-			return CopyToAsync(_fileSystem, srcRegion, srcBucket, srcPath, destRegion, destBucket, destPath);
+			return CopyToAsync(_fileSystem, srcRegion, srcBucket, srcPath, destRegion, destBucket, destPath, cancellation);
 
-			static async ValueTask CopyToAsync(S3FileSystem fileSystem, string srcRegion, string srcBucket, string destRegion, string srcPath, string destBucket, string destPath)
+			static async ValueTask CopyToAsync(S3FileSystem fileSystem, string srcRegion, string srcBucket, string destRegion, string srcPath, string destBucket, string destPath, CancellationToken cancellation)
 			{
 				var srcClient = fileSystem.GetClient(srcRegion);
 				var response = await srcClient.GetObjectAsync(new GetObjectRequest()
 				{
 					BucketName = srcBucket,
 					Key = srcPath,
-				});
+				}, cancellation);
 
 				var destClient = fileSystem.GetClient(destRegion);
 				await destClient.PutObjectAsync(new PutObjectRequest()
@@ -86,12 +81,12 @@ partial class S3FileSystem
 					BucketName = destBucket,
 					Key = destPath,
 					InputStream = response.ResponseStream
-				});
+				}, cancellation);
 			}
 		}
 
 		public void Move(string source, string destination) => this.MoveAsync(source, destination).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public ValueTask MoveAsync(string source, string destination)
+		public ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default)
 		{
 			var srcPath = Resolve(source, out var srcRegion, out var srcBucket);
 			var destPath = Resolve(destination, out var destRegion, out var destBucket);
@@ -107,23 +102,23 @@ partial class S3FileSystem
 					DestinationKey = destPath,
 				};
 
-				return new ValueTask(client.CopyObjectAsync(request)
+				return new ValueTask(client.CopyObjectAsync(request, cancellation)
 					.ContinueWith(async task =>
 					{
-						await client.DeleteObjectAsync(srcBucket, srcPath);
+						await client.DeleteObjectAsync(srcBucket, srcPath, cancellation);
 					}));
 			}
 
-			return MoveToAsync(_fileSystem, srcRegion, srcBucket, srcPath, destRegion, destBucket, destPath);
+			return MoveToAsync(_fileSystem, srcRegion, srcBucket, srcPath, destRegion, destBucket, destPath, cancellation);
 
-			static async ValueTask MoveToAsync(S3FileSystem fileSystem, string srcRegion, string srcBucket, string destRegion, string srcPath, string destBucket, string destPath)
+			static async ValueTask MoveToAsync(S3FileSystem fileSystem, string srcRegion, string srcBucket, string destRegion, string srcPath, string destBucket, string destPath, CancellationToken cancellation)
 			{
 				var srcClient = fileSystem.GetClient(srcRegion);
 				var response = await srcClient.GetObjectAsync(new GetObjectRequest()
 				{
 					BucketName = srcBucket,
 					Key = srcPath,
-				});
+				}, cancellation);
 
 				var destClient = fileSystem.GetClient(destRegion);
 				await destClient.PutObjectAsync(new PutObjectRequest()
@@ -131,21 +126,21 @@ partial class S3FileSystem
 					BucketName = destBucket,
 					Key = destPath,
 					InputStream = response.ResponseStream
-				});
+				}, cancellation);
 
-				await srcClient.DeleteObjectAsync(srcBucket, srcPath);
+				await srcClient.DeleteObjectAsync(srcBucket, srcPath, cancellation);
 			}
 		}
 
 		public bool Delete(string path) => this.DeleteAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<bool> DeleteAsync(string path)
+		public async ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
 
 			try
 			{
-				var response = await client.DeleteObjectAsync(bucket, path);
+				var response = await client.DeleteObjectAsync(bucket, path, cancellation);
 				return response.HttpStatusCode.IsSucceed() && response.DeleteMarker != null;
 			}
 			catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -155,14 +150,14 @@ partial class S3FileSystem
 		}
 
 		public bool Exists(string path) => this.ExistsAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<bool> ExistsAsync(string path)
+		public async ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
 
 			try
 			{
-				var response = await client.GetObjectMetadataAsync(bucket, path);
+				var response = await client.GetObjectMetadataAsync(bucket, path, cancellation);
 				return response.HttpStatusCode.IsSucceed();
 			}
 			catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -172,15 +167,15 @@ partial class S3FileSystem
 		}
 
 		public Zongsoft.IO.FileInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<Zongsoft.IO.FileInfo> GetInfoAsync(string path)
+		public async ValueTask<Zongsoft.IO.FileInfo> GetInfoAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
 
 			try
 			{
-				IEnumerable<KeyValuePair<string, object>> tags = null;
-				var response = await client.GetObjectAsync(bucket, path);
+				IEnumerable<KeyValuePair<string, string>> tags = null;
+				var response = await client.GetObjectAsync(bucket, path, cancellation);
 
 				if(response.TagCount > 0 || response.Metadata.Keys.Contains("x-amz-meta-x-amz-tagging"))
 				{
@@ -188,9 +183,9 @@ partial class S3FileSystem
 					{
 						BucketName = bucket,
 						Key = path,
-					});
+					}, cancellation);
 
-					tags = tagging.Tagging?.Select(tag => new KeyValuePair<string, object>(tag.Key, tag.Value));
+					tags = tagging.Tagging?.Select(tag => new KeyValuePair<string, string>(tag.Key, tag.Value));
 				}
 
 				string contentType = null;
@@ -208,8 +203,8 @@ partial class S3FileSystem
 			}
 		}
 
-		public bool SetInfo(string path, IDictionary<string, object> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		public async ValueTask<bool> SetInfoAsync(string path, IDictionary<string, object> properties)
+		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public async ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
 			if(properties == null)
 				return false;
@@ -233,7 +228,7 @@ partial class S3FileSystem
 					BucketName = bucket,
 					Key = path,
 					Tagging = new Tagging() { TagSet = tags }
-				});
+				}, cancellation);
 
 				return response.HttpStatusCode.IsSucceed();
 			}
@@ -243,10 +238,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public Stream Open(string path, IDictionary<string, object> properties = null) => this.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, properties);
-		public Stream Open(string path, FileMode mode, IDictionary<string, object> properties = null) => this.Open(path, mode, FileAccess.ReadWrite, FileShare.None, properties);
-		public Stream Open(string path, FileMode mode, FileAccess access, IDictionary<string, object> properties = null) => this.Open(path, mode, access, FileShare.None, properties);
-		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IDictionary<string, object> properties = null)
+		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
@@ -278,6 +270,39 @@ partial class S3FileSystem
 				}
 			}
 		}
+
+		public async ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
+		{
+			path = Resolve(path, out var region, out var bucket);
+			var client = _fileSystem.GetClient(region);
+
+			if((access & FileAccess.Write) == FileAccess.Write)
+			{
+				return mode == FileMode.Append ?
+					new S3Stream(client, await OpenStreamAsync(client, bucket, path, cancellation), bucket, path, properties) :
+					new S3Stream(client, null, bucket, path, properties);
+			}
+
+			return await OpenStreamAsync(client, bucket, path, cancellation);
+
+			static async ValueTask<Stream> OpenStreamAsync(AmazonS3Client client, string bucket, string path, CancellationToken cancellation)
+			{
+				try
+				{
+					var response = await client.GetObjectAsync(new GetObjectRequest()
+					{
+						BucketName = bucket,
+						Key = path,
+					}, cancellation);
+
+					return response.ResponseStream;
+				}
+				catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+				{
+					return null;
+				}
+			}
+		}
 	}
 
 	internal sealed class S3Stream : Stream
@@ -288,7 +313,7 @@ partial class S3FileSystem
 		private Stream _stream;
 		private readonly string _bucket;
 		private readonly string _path;
-		private readonly IEnumerable<KeyValuePair<string, object>> _properties;
+		private readonly IEnumerable<KeyValuePair<string, string>> _properties;
 		private byte[] _buffer;
 		private int _bufferSize;
 		private long _length;
@@ -297,7 +322,7 @@ partial class S3FileSystem
 		private int _partNumber;
 		private List<PartETag> _parts;
 
-		public S3Stream(AmazonS3Client client, Stream stream, string bucket, string path, IEnumerable<KeyValuePair<string, object>> properties)
+		public S3Stream(AmazonS3Client client, Stream stream, string bucket, string path, IEnumerable<KeyValuePair<string, string>> properties)
 		{
 			_client = client;
 			_stream = stream;
@@ -305,6 +330,8 @@ partial class S3FileSystem
 			_path = path;
 			_properties = properties;
 			_parts = new();
+
+			//注意：AWS.S3 对于分块上传的块大小不能小于 5MB
 			_buffer = ArrayPool<byte>.Shared.Rent(5 * MB);
 		}
 
@@ -360,7 +387,7 @@ partial class S3FileSystem
 					argument.TagSet = [.. _properties.Select(property => new Tag()
 					{
 						Key = property.Key,
-						Value = Common.Convert.ConvertValue<string>(property.Value)
+						Value = property.Value,
 					})];
 
 				_uploadId = (await _client.InitiateMultipartUploadAsync(argument, cancellation)).UploadId;

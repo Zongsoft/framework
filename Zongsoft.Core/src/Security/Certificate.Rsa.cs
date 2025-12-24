@@ -31,7 +31,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Security.Cryptography;
 
 namespace Zongsoft.Security;
@@ -121,7 +121,7 @@ public partial class Certificate
 				return new RsaCertificate(rsa, descriptor);
 			}
 
-			public ICertificate Resolve(string filePath, string secret = null, CertificateDescriptor descriptor = default) => this.Resolve(Zongsoft.IO.FileSystem.File.Open(filePath), secret, descriptor);
+			public ICertificate Resolve(string filePath, string secret = null, CertificateDescriptor descriptor = default) => this.Resolve(Zongsoft.IO.FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read), secret, descriptor);
 
 			public ICertificate Resolve(Stream stream, string secret = null, CertificateDescriptor descriptor = default)
 			{

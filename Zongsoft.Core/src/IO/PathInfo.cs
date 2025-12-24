@@ -40,14 +40,14 @@ public class PathInfo : IEquatable<PathInfo>
 	private string _url;
 	private DateTime _createdTime;
 	private DateTime _modifiedTime;
-	private Dictionary<string, object> _properties;
+	private Dictionary<string, string> _properties;
 	#endregion
 
 	#region 构造函数
 	protected PathInfo() { }
 
 	public PathInfo(string path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, createdTime, modifiedTime, null, url) { }
-	public PathInfo(string path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null)
+	public PathInfo(string path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, string>> properties, string url = null)
 	{
 		if(string.IsNullOrWhiteSpace(path))
 			throw new ArgumentNullException(nameof(path));
@@ -56,7 +56,7 @@ public class PathInfo : IEquatable<PathInfo>
 		_url = url;
 
 		if(properties != null)
-			_properties = new Dictionary<string, object>(properties);
+			_properties = new Dictionary<string, string>(properties);
 
 		if(createdTime.HasValue)
 			_createdTime = createdTime.Value;
@@ -68,13 +68,13 @@ public class PathInfo : IEquatable<PathInfo>
 	}
 
 	public PathInfo(Path path, DateTime? createdTime = null, DateTime? modifiedTime = null, string url = null) : this(path, createdTime, modifiedTime, null, url) { }
-	public PathInfo(Path path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, object>> properties, string url = null)
+	public PathInfo(Path path, DateTime? createdTime, DateTime? modifiedTime, IEnumerable<KeyValuePair<string, string>> properties, string url = null)
 	{
 		_path = path;
 		_url = url;
 
 		if(properties != null)
-			_properties = new Dictionary<string, object>(properties);
+			_properties = new Dictionary<string, string>(properties);
 
 		if(createdTime.HasValue)
 			_createdTime = createdTime.Value;
@@ -150,12 +150,12 @@ public class PathInfo : IEquatable<PathInfo>
 	[Serialization.SerializationMember(Ignored = true)]
 	public bool HasProperties => _properties != null && _properties.Count > 0;
 
-	public IDictionary<string, object> Properties
+	public IDictionary<string, string> Properties
 	{
 		get
 		{
 			if(_properties == null)
-				System.Threading.Interlocked.CompareExchange(ref _properties, new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+				System.Threading.Interlocked.CompareExchange(ref _properties, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), null);
 
 			return _properties;
 		}

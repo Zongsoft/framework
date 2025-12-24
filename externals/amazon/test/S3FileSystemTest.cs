@@ -65,7 +65,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var tags = new Dictionary<string, object>
+		var tags = new Dictionary<string, string>
 		{
 			{ "Author", "Popeye Zhong" },
 		};
@@ -89,7 +89,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 
 		for(int i = 0; i < COUNT; i++)
 		{
-			using(var stream = FileSystem.File.Open($"{DIRECTORY}/File-{i:00000}.ext"))
+			using(var stream = await FileSystem.File.OpenAsync($"{DIRECTORY}/File-{i:00000}.ext", FileMode.OpenOrCreate))
 			{
 				Random.Shared.NextBytes(buffer);
 				stream.Write(buffer);
@@ -117,7 +117,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var properties = new Dictionary<string, object>()
+		var properties = new Dictionary<string, string>()
 		{
 			{ "Author", "Popeye Zhong" },
 		};
@@ -126,7 +126,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
 
 		using var source = new MemoryStream();
-		using(var target = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, properties))
+		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.Open, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
@@ -163,7 +163,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		const int FIRST_LENGTH = 512;
 		const int LAST_LENGTH = 1024;
 
-		var properties = new Dictionary<string, object>()
+		var properties = new Dictionary<string, string>()
 		{
 			{ "Author", "Popeye Zhong" },
 		};
@@ -172,7 +172,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
 
 		using var first = new MemoryStream();
-		using(var target = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, properties))
+		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.Open, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
@@ -190,7 +190,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		properties["Creation"] = DateTime.Now.ToString();
 
 		using var last = new MemoryStream();
-		using(var target = FileSystem.File.Open(filePath, FileMode.Append, FileAccess.ReadWrite, properties))
+		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.Append, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
