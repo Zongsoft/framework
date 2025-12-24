@@ -243,6 +243,22 @@ partial class S3FileSystem
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
 
+			switch(mode)
+			{
+				case FileMode.Open:
+					if(!Exists(client, bucket, path))
+						throw new FileNotFoundException("The specified file does not exist.", _fileSystem.GetPath(region, bucket, path));
+					break;
+				case FileMode.CreateNew:
+					if(Exists(client, bucket, path))
+						throw new IOException($"The specified '{_fileSystem.GetPath(region, bucket, path)}' file already exists.");
+					break;
+				case FileMode.Append:
+				case FileMode.Truncate:
+					access |= FileAccess.Write;
+					break;
+			}
+
 			if((access & FileAccess.Write) == FileAccess.Write)
 			{
 				return mode == FileMode.Append ?
@@ -276,6 +292,22 @@ partial class S3FileSystem
 			path = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
 
+			switch(mode)
+			{
+				case FileMode.Open:
+					if(!await ExistsAsync(client, bucket, path, cancellation))
+						throw new FileNotFoundException("The specified file does not exist.", _fileSystem.GetPath(region, bucket, path));
+					break;
+				case FileMode.CreateNew:
+					if(await ExistsAsync(client, bucket, path, cancellation))
+						throw new IOException($"The specified '{_fileSystem.GetPath(region, bucket, path)}' file already exists.");
+					break;
+				case FileMode.Append:
+				case FileMode.Truncate:
+					access |= FileAccess.Write;
+					break;
+			}
+
 			if((access & FileAccess.Write) == FileAccess.Write)
 			{
 				return mode == FileMode.Append ?
@@ -301,6 +333,20 @@ partial class S3FileSystem
 				{
 					return null;
 				}
+			}
+		}
+
+		private static bool Exists(AmazonS3Client client, string bucket, string path) => ExistsAsync(client, bucket, path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		private static async ValueTask<bool> ExistsAsync(AmazonS3Client client, string bucket, string path, CancellationToken cancellation = default)
+		{
+			try
+			{
+				var response = await client.GetObjectMetadataAsync(bucket, path, cancellation);
+				return response.HttpStatusCode.IsSucceed();
+			}
+			catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+			{
+				return false;
 			}
 		}
 	}

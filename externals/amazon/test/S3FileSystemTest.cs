@@ -126,7 +126,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
 
 		using var source = new MemoryStream();
-		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.Open, FileAccess.ReadWrite, properties))
+		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
@@ -172,7 +172,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
 
 		using var first = new MemoryStream();
-		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.Open, FileAccess.ReadWrite, properties))
+		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
