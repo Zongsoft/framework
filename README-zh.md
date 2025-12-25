@@ -49,7 +49,7 @@
 	> 提供了安全(身份验证、授权控制)相关的核心功能。
 - [_**Z**ongsoft.**W**eb_](Zongsoft.Web) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web)](https://nuget.org/packages/Zongsoft.Web)
 	> 提供了 **W**eb 应用开发的通用能力。
-	- [api](Zongsoft.Web/api/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web.OpenApi)](https://nuget.org/packages/Zongsoft.Web.OpenApi)
+	- [open-api](Zongsoft.Web/openapi/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web.OpenApi)](https://nuget.org/packages/Zongsoft.Web.OpenApi)
 		> 提供了 _**O**pen-**API**_ 规范的插件化扩展。
 	- [grpc](Zongsoft.Web/grpc/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web.Grpc)](https://nuget.org/packages/Zongsoft.Web.Grpc)
 		> 提供了 _gRPC_ 基于 _ASP.NET_ 服务端的插件化扩展。
@@ -67,6 +67,8 @@
 - [_externals_](externals/)
 	- [aliyun](externals/aliyun/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Aliyun)](https://nuget.org/packages/Zongsoft.Externals.Aliyun)
 		> 提供了 _阿里云_ 相关服务的插件化支持，基于阿里云 _**REST**ful API_ 接口实现。
+	- [amazon](externals/amazon/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Amazon)](https://nuget.org/packages/Zongsoft.Externals.Amazon)
+		> 提供了 _亚马逊(AWS)_ 相关服务的插件化支持，基于 [AWS-SDK](https://github.com/aws/aws-sdk-net) 开源项目的插件化。
 	- [closedxml](externals/closedxml/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.ClosedXml)](https://nuget.org/packages/Zongsoft.Externals.ClosedXml)
 		> 提供了电子表格 _(**E**xcel)_ 生成、导入、导出、模板渲染等功能，基于 [**C**losed**X**ml](https://github.com/ClosedXML) 开源项目的插件化。
 	- [hangfire](externals/hangfire/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Hangfire)](https://nuget.org/packages/Zongsoft.Externals.Hangfire)
