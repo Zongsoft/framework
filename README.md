@@ -49,7 +49,7 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 	> Provides security-related capabilities, including _authentication_, _authorization_, _password_, _certificates_, etc.
 - [_**Z**ongsoft.**W**eb_](Zongsoft.Web) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web)](https://nuget.org/packages/Zongsoft.Web)
 	> Provides general capabilities for the **W**eb application development.
-	- [api](Zongsoft.Web/api/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web.OpenApi)](https://nuget.org/packages/Zongsoft.Web.OpenApi)
+	- [open-api](Zongsoft.Web/openapi/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web.OpenApi)](https://nuget.org/packages/Zongsoft.Web.OpenApi)
 		> Provides a pluggable extension for the _**O**pen-**API**_ specification.
 	- [grpc](Zongsoft.Web/grpc/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web.Grpc)](https://nuget.org/packages/Zongsoft.Web.Grpc)
 		> Provides a pluggable extension for _gRPC_ on the _ASP.NET_ server side.
@@ -67,6 +67,8 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 - [_externals_](externals/)
 	- [_aliyun_](externals/aliyun/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Aliyun)](https://nuget.org/packages/Zongsoft.Externals.Aliyun)
 		> Provides plugin support for _**A**libaba Cloud_-related services, implemented based on _**A**libaba Cloud_ _**REST**ful API_ interfaces.
+	- [_amazon_](externals/amazon/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Amazon)](https://nuget.org/packages/Zongsoft.Externals.Amazon)
+		> Provides plugin support for _**A**mazon **W**eb **S**ervices_ related services, based on the plugin framework of the open-source [AWS-SDK](https://github.com/aws/aws-sdk-net) project.
 	- [_closedxml_](externals/closedxml/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.ClosedXml)](https://nuget.org/packages/Zongsoft.Externals.ClosedXml)
 		> Provides functions such as spreadsheet _(**E**xcel)_ generation, extract, import, export, and template rendering, based on the [**C**losed**X**ml](https://github.com/ClosedXML) open source project's plugin architecture.
 	- [_hangfire_](externals/hangfire/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Hangfire)](https://nuget.org/packages/Zongsoft.Externals.Hangfire)
