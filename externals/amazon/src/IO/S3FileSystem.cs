@@ -64,10 +64,11 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 		var client = this.GetClient(region);
 
 		return client.GetPreSignedURL(new GetPreSignedUrlRequest
-        {
-			Verb = HttpVerb.GET,
+		{
 			BucketName = bucket,
-			Expires = DateTime.UtcNow.AddDays(10),
+			Verb = HttpVerb.GET,
+			Protocol = Protocol.HTTP,
+			Expires = DateTime.UtcNow.AddMonths(1),
 			Key = System.IO.Path.Combine(path.Segments.AsSpan()[1..].ToArray()),
 		});
 	}
