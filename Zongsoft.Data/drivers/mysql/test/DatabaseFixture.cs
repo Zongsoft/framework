@@ -26,7 +26,7 @@ public class DatabaseFixture : IDisposable
 
 		this.ConnectionSettings = Configuration.MySqlConnectionSettingsDriver.Instance.GetSettings(CONNECTION_STRING);
 		this.Accessor = DataAccessProvider.Instance.GetAccessor("Zongsoft.Data.MySql.Tests", new DataAccessOptions([this.ConnectionSettings]));
-		this.Accessor.Sequencer.Sequence = new Zongsoft.Data.Tests.SequenceMocker() { Latency = TimeSpan.FromMilliseconds(50) };
+		this.Accessor.Sequencer.Sequence = new Zongsoft.Data.Tests.SequenceMocker(TimeSpan.FromMilliseconds(50));
 	}
 	#endregion
 
