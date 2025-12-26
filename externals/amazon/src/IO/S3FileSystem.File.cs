@@ -55,12 +55,13 @@ partial class S3FileSystem
 			if(string.Equals(srcRegion, destRegion))
 			{
 				var client = _fileSystem.GetClient(srcRegion);
-				return new ValueTask(client.CopyObjectAsync(new CopyObjectRequest()
+				return new ValueTask(client.CopyObjectAsync(new()
 				{
 					SourceBucket = srcBucket,
 					SourceKey = srcPath,
 					DestinationBucket = destBucket,
 					DestinationKey = destPath,
+					TaggingDirective = TaggingDirective.REPLACE,
 				}, cancellation));
 			}
 
@@ -69,17 +70,24 @@ partial class S3FileSystem
 			static async ValueTask CopyToAsync(S3FileSystem fileSystem, string srcRegion, string srcBucket, string destRegion, string srcPath, string destBucket, string destPath, CancellationToken cancellation)
 			{
 				var srcClient = fileSystem.GetClient(srcRegion);
-				var response = await srcClient.GetObjectAsync(new GetObjectRequest()
+				var response = await srcClient.GetObjectAsync(new()
+				{
+					BucketName = srcBucket,
+					Key = srcPath,
+				}, cancellation);
+
+				var tags = await srcClient.GetObjectTaggingAsync(new()
 				{
 					BucketName = srcBucket,
 					Key = srcPath,
 				}, cancellation);
 
 				var destClient = fileSystem.GetClient(destRegion);
-				await destClient.PutObjectAsync(new PutObjectRequest()
+				await destClient.PutObjectAsync(new()
 				{
 					BucketName = destBucket,
 					Key = destPath,
+					TagSet = tags.Tagging,
 					InputStream = response.ResponseStream
 				}, cancellation);
 			}
@@ -100,6 +108,7 @@ partial class S3FileSystem
 					SourceKey = srcPath,
 					DestinationBucket = destBucket,
 					DestinationKey = destPath,
+					TaggingDirective = TaggingDirective.REPLACE,
 				};
 
 				return new ValueTask(client.CopyObjectAsync(request, cancellation)
@@ -114,17 +123,24 @@ partial class S3FileSystem
 			static async ValueTask MoveToAsync(S3FileSystem fileSystem, string srcRegion, string srcBucket, string destRegion, string srcPath, string destBucket, string destPath, CancellationToken cancellation)
 			{
 				var srcClient = fileSystem.GetClient(srcRegion);
-				var response = await srcClient.GetObjectAsync(new GetObjectRequest()
+				var response = await srcClient.GetObjectAsync(new()
+				{
+					BucketName = srcBucket,
+					Key = srcPath,
+				}, cancellation);
+
+				var tags = await srcClient.GetObjectTaggingAsync(new()
 				{
 					BucketName = srcBucket,
 					Key = srcPath,
 				}, cancellation);
 
 				var destClient = fileSystem.GetClient(destRegion);
-				await destClient.PutObjectAsync(new PutObjectRequest()
+				await destClient.PutObjectAsync(new()
 				{
 					BucketName = destBucket,
 					Key = destPath,
+					TagSet = tags.Tagging,
 					InputStream = response.ResponseStream
 				}, cancellation);
 
@@ -179,7 +195,7 @@ partial class S3FileSystem
 
 				if(response.TagCount > 0 || response.Metadata.Keys.Contains("x-amz-meta-x-amz-tagging"))
 				{
-					var tagging = await client.GetObjectTaggingAsync(new GetObjectTaggingRequest()
+					var tagging = await client.GetObjectTaggingAsync(new()
 					{
 						BucketName = bucket,
 						Key = path,
@@ -195,7 +211,16 @@ partial class S3FileSystem
 				if(string.IsNullOrEmpty(contentType))
 					contentType = response.Headers.ContentType;
 
-				return _fileSystem.GetFileInfo(region, bucket, path, response.ContentLength, contentType, null, response.LastModified, tags);
+				DateTime? creation = null;
+
+				if(tags != null)
+				{
+					var tag = tags.FirstOrDefault(tag => string.Equals(tag.Key, nameof(Zongsoft.IO.FileInfo.CreatedTime))).Value;
+					if(tag != null && DateTime.TryParse(tag, out var datetime))
+						creation = datetime;
+				}
+
+				return _fileSystem.GetFileInfo(region, bucket, path, response.ContentLength, contentType, creation, response.LastModified, tags);
 			}
 			catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
 			{
@@ -223,7 +248,7 @@ partial class S3FileSystem
 
 			try
 			{
-				var response = await client.PutObjectTaggingAsync(new PutObjectTaggingRequest()
+				var response = await client.PutObjectTaggingAsync(new()
 				{
 					BucketName = bucket,
 					Key = path,
@@ -272,7 +297,7 @@ partial class S3FileSystem
 			{
 				try
 				{
-					var response = client.GetObjectAsync(new GetObjectRequest()
+					var response = client.GetObjectAsync(new()
 					{
 						BucketName = bucket,
 						Key = path,
@@ -321,7 +346,7 @@ partial class S3FileSystem
 			{
 				try
 				{
-					var response = await client.GetObjectAsync(new GetObjectRequest()
+					var response = await client.GetObjectAsync(new()
 					{
 						BucketName = bucket,
 						Key = path,
@@ -424,6 +449,7 @@ partial class S3FileSystem
 				{
 					BucketName = _bucket,
 					Key = _path,
+					TagSet = [new Tag() { Key = nameof(Zongsoft.IO.FileInfo.CreatedTime), Value = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz") }]
 				};
 
 				if(Zongsoft.IO.Mime.TryGetMimeType(_path, out var type))
