@@ -44,19 +44,40 @@ public static class Sequence
 	/// 	<para>序列号器的实现一般依赖于 Redis、Etcd、数据库等进行持久化，每次调用都会导致网络通讯，这在高频调用场景下会出现性能瓶颈问题，譬如在批量写数据时需要频繁获取序列号。</para>
 	/// 	<para>该方法会返回一个包装指定序列号提供程序的自适应可变速率的序号器，它会根据调用频率来加大递增(减)的步长(<c>interval</c>)，然后在本地进行递增(减)，待本地计数器溢满后再根据频率来调用远程的序列号器。</para>
 	/// </remarks>
-	public static ISequenceBase Variate(ISequenceBase sequence)
+	public static IVariator Variate(this ISequenceBase sequence)
 	{
 		if(sequence == null)
 			throw new ArgumentNullException(nameof(sequence));
 
-		return sequence is VariableSequence variable ? variable : new VariableSequence(sequence);
+		return sequence is SequenceVariator variator ? variator : new SequenceVariator(sequence);
+	}
+
+	public interface IVariator : ISequenceBase
+	{
+		IVariatorStatistics GetStatistics(string key);
+	}
+
+	public interface IVariatorStatistics
+	{
+		/// <summary>获取被递增请求的次数。</summary>
+		long Count { get; }
+		/// <summary>获取本地的计数器数值。</summary>
+		long Value { get; }
+		/// <summary>获取递增请求的步长值。</summary>
+		int Interval { get; }
+		/// <summary>获取本地计数器的阈值。</summary>
+		long Threshold { get; }
+		/// <summary>获取最近递增请求的时间。</summary>
+		DateTime Timestamp { get; }
 	}
 
 	#region 嵌套子类
-	private sealed class VariableSequence(ISequenceBase sequence) : ISequenceBase
+	private sealed class SequenceVariator(ISequenceBase sequence) : IVariator, ISequenceBase
 	{
 		private readonly ISequenceBase _sequence = sequence;
 		private readonly ConcurrentDictionary<string, Variator> _variators = new();
+
+		public IVariatorStatistics GetStatistics(string key) => _variators.TryGetValue(key, out var variator) ? variator : null;
 
 		public long Decrease(string key, int interval = 1, int seed = 0) => this.Increase(key, -interval, seed);
 		public ValueTask<long> DecreaseAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, cancellation);
@@ -88,7 +109,7 @@ public static class Sequence
 		}
 	}
 
-	private sealed class Variator(string name, ISequenceBase sequence)
+	private sealed class Variator(string name, ISequenceBase sequence) : IVariatorStatistics
 	{
 		#region 常量定义
 		const float ACQUIRE_RATIO = 2.0f;
@@ -96,7 +117,7 @@ public static class Sequence
 		#endregion
 
 		#region 成员变量
-		private long _hits;
+		private long _count;
 		private long _value;
 		private int _interval;
 		private long _threshold;
@@ -104,6 +125,14 @@ public static class Sequence
 		private readonly string _name = name;
 		private readonly ISequenceBase _sequence = sequence;
 		private readonly SemaphoreSlim _mutex = new(1, 1);
+		#endregion
+
+		#region 公共属性
+		public long Count => _count;
+		public long Value => _value;
+		public int Interval => _interval;
+		public long Threshold => _threshold;
+		public DateTime Timestamp => _timestamp > 0 ? DateTime.Now.AddMilliseconds(_timestamp - Environment.TickCount64) : DateTime.MinValue;
 		#endregion
 
 		#region 公共方法
@@ -114,7 +143,7 @@ public static class Sequence
 				_mutex.Wait();
 				_sequence.Reset(_name, value);
 
-				_hits = 0;
+				_count = 0;
 				_value = 0;
 				_interval = 0;
 				_threshold = 0;
@@ -133,7 +162,7 @@ public static class Sequence
 				await _mutex.WaitAsync(cancellation);
 				await _sequence.ResetAsync(_name, value, cancellation);
 
-				_hits = 0;
+				_count = 0;
 				_value = 0;
 				_interval = 0;
 				_threshold = 0;
@@ -189,7 +218,7 @@ public static class Sequence
 						_ => (int)Math.Max(1, ACQUIRE_INTERVAL / duration * ACQUIRE_RATIO) * interval,
 					};
 
-					Interlocked.Increment(ref _hits);
+					Interlocked.Increment(ref _count);
 					_threshold = _sequence.Increase(_name, length, seed);
 					_value = _threshold == seed ? seed : _threshold - length;
 					_timestamp = Environment.TickCount64;
@@ -220,7 +249,7 @@ public static class Sequence
 						_ => (int)Math.Max(1, ACQUIRE_INTERVAL / duration * ACQUIRE_RATIO) * interval,
 					};
 
-					Interlocked.Increment(ref _hits);
+					Interlocked.Increment(ref _count);
 					_threshold = await _sequence.IncreaseAsync(_name, length, seed, cancellation);
 					_value = _threshold == seed ? seed : _threshold - length;
 					_timestamp = Environment.TickCount64;
@@ -237,7 +266,7 @@ public static class Sequence
 		#endregion
 
 		#region 重写方法
-		public override string ToString() => $"{_value}/{_threshold}({_hits}|{_interval})@{TimeSpan.FromMilliseconds(_timestamp)}";
+		public override string ToString() => $"{_value}/{_threshold}({_count}|{_interval})@{this.Timestamp}";
 		#endregion
 	}
 	#endregion
