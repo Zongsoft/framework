@@ -449,7 +449,7 @@ partial class S3FileSystem
 				{
 					BucketName = _bucket,
 					Key = _path,
-					TagSet = [new Tag() { Key = nameof(Zongsoft.IO.FileInfo.CreatedTime), Value = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz") }]
+					TagSet = [new Tag() { Key = nameof(Zongsoft.IO.FileInfo.CreatedTime), Value = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }]
 				};
 
 				if(Zongsoft.IO.Mime.TryGetMimeType(_path, out var type))
