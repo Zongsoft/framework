@@ -60,7 +60,7 @@ partial class S3FileSystem
 
 				do
 				{
-					var response = await client.ListObjectsV2Async(new ListObjectsV2Request()
+					var response = await client.ListObjectsV2Async(new()
 					{
 						BucketName = bucket,
 						Prefix = path,
@@ -69,7 +69,7 @@ partial class S3FileSystem
 
 					if(response.HttpStatusCode.IsSucceed() && response.S3Objects != null && response.S3Objects.Count > 0)
 					{
-						var deleted = await client.DeleteObjectsAsync(new DeleteObjectsRequest()
+						var deleted = await client.DeleteObjectsAsync(new()
 						{
 							BucketName = bucket,
 							Objects = [.. response.S3Objects.Select(obj => new KeyVersion() { Key = obj.Key })],
@@ -98,7 +98,7 @@ partial class S3FileSystem
 
 			try
 			{
-				var response = await client.ListObjectsV2Async(new ListObjectsV2Request()
+				var response = await client.ListObjectsV2Async(new()
 				{
 					BucketName = bucket,
 					Prefix = path,
@@ -130,7 +130,7 @@ partial class S3FileSystem
 
 				do
 				{
-					var response = await srcClient.ListObjectsV2Async(new ListObjectsV2Request()
+					var response = await srcClient.ListObjectsV2Async(new()
 					{
 						BucketName = srcBucket,
 						Prefix = srcPath,
@@ -144,7 +144,7 @@ partial class S3FileSystem
 					{
 						foreach(var obj in response.S3Objects)
 						{
-							var result = await srcClient.CopyObjectAsync(new CopyObjectRequest()
+							var result = await srcClient.CopyObjectAsync(new()
 							{
 								SourceBucket = srcBucket,
 								SourceKey = obj.Key,
@@ -161,7 +161,7 @@ partial class S3FileSystem
 
 						foreach(var obj in response.S3Objects)
 						{
-							var getResponse = await srcClient.GetObjectAsync(new GetObjectRequest()
+							var getResponse = await srcClient.GetObjectAsync(new()
 							{
 								BucketName = srcBucket,
 								Key = obj.Key,
@@ -169,7 +169,7 @@ partial class S3FileSystem
 
 							if(getResponse.HttpStatusCode.IsSucceed() && getResponse.ResponseStream != null)
 							{
-								var putResponse = await destClient.PutObjectAsync(new PutObjectRequest()
+								var putResponse = await destClient.PutObjectAsync(new()
 								{
 									BucketName = destBucket,
 									Key = System.IO.Path.Combine(destPath, System.IO.Path.GetFileName(obj.Key)),
@@ -179,7 +179,7 @@ partial class S3FileSystem
 								count += putResponse.HttpStatusCode.IsSucceed() ? 1 : 0;
 								getResponse.ResponseStream.Dispose();
 
-								await srcClient.DeleteObjectAsync(new DeleteObjectRequest()
+								await srcClient.DeleteObjectAsync(new()
 								{
 									BucketName = srcBucket,
 									Key = obj.Key,
