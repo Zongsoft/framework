@@ -59,10 +59,8 @@ public class CommandOptionAttribute : Attribute
 		if(string.IsNullOrWhiteSpace(name))
 			throw new ArgumentNullException(nameof(name));
 
-		if(type == null)
+		if(type == null || Zongsoft.Common.Convert.TryConvertValue(defaultValue, type, out defaultValue))
 			_defaultValue = defaultValue;
-		else
-			_defaultValue = Zongsoft.Common.Convert.ConvertValue(defaultValue, type);
 
 		_name = name;
 		_type = type;
