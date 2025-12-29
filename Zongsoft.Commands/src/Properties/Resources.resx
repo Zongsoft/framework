@@ -231,6 +231,9 @@
   <data name="Text.JsonCommand.Options.Indented" xml:space="preserve">
     <value>是否启用Json序列化缩进格式。</value>
   </data>
+  <data name="Text.JsonCommand.Options.Quiet" xml:space="preserve">
+    <value>安静模式，如果开启则不输出 Json 内容。</value>
+  </data>
   <data name="Text.JsonCommand.Options.Typed" xml:space="preserve">
     <value>是否启用Json序列化元素类型信息。</value>
   </data>

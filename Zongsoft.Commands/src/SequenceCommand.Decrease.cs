@@ -41,10 +41,10 @@ namespace Zongsoft.Commands;
 
 partial class SequenceCommand
 {
-	[CommandOption(ROUND_OPTION, typeof(int), DefaultValue = 1)]
-	[CommandOption(JITTER_OPTION, typeof(TimeSpan), DefaultValue = "0")]
-	[CommandOption(SEED_OPTION, typeof(int), DefaultValue = 0)]
-	[CommandOption(INTERVAL_OPTION, typeof(int), DefaultValue = 1)]
+	[CommandOption(ROUND_OPTION, 'r', typeof(int), DefaultValue = 1)]
+	[CommandOption(JITTER_OPTION, 'j', typeof(TimeSpan), DefaultValue = "0")]
+	[CommandOption(SEED_OPTION, 's', typeof(int), DefaultValue = 0)]
+	[CommandOption(INTERVAL_OPTION, 'v', typeof(int), DefaultValue = 1)]
 	public class DecreaseCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义

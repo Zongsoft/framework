@@ -37,7 +37,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Commands;
 
-[CommandOption(VARIATE_OPTION, typeof(bool))]
+[CommandOption(VARIATE_OPTION, 'v', typeof(bool))]
 public partial class SequenceCommand : CommandBase<CommandContext>
 {
 	#region 常量定义

@@ -38,7 +38,7 @@ namespace Zongsoft.Commands;
 
 partial class SequenceCommand
 {
-	[CommandOption(VALUE_OPTION, typeof(int), DefaultValue = 0)]
+	[CommandOption(VALUE_OPTION, 'v', typeof(int), DefaultValue = 0)]
 	public class ResetCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义

@@ -41,13 +41,15 @@ namespace Zongsoft.Commands;
 
 [DisplayName("Text.JsonCommand.Name")]
 [Description("Text.JsonCommand.Description")]
-[CommandOption(KEY_DEPTH_OPTION, typeof(int), 3, "Text.JsonCommand.Options.Depth")]
-[CommandOption(KEY_TYPED_OPTION, typeof(bool), false, "Text.JsonCommand.Options.Typed")]
-[CommandOption(KEY_INDENTED_OPTION, typeof(bool), true, "Text.JsonCommand.Options.Indented")]
-[CommandOption(KEY_CASING_OPTION, typeof(SerializationNamingConvention), SerializationNamingConvention.None, "Text.JsonCommand.Options.Casing")]
+[CommandOption(KEY_QUIET_OPTION, 'q', typeof(bool), false, "Text.JsonCommand.Options.Quiet")]
+[CommandOption(KEY_DEPTH_OPTION, 'd', typeof(int), 3, "Text.JsonCommand.Options.Depth")]
+[CommandOption(KEY_TYPED_OPTION, 't', typeof(bool), false, "Text.JsonCommand.Options.Typed")]
+[CommandOption(KEY_INDENTED_OPTION, 'i', typeof(bool), true, "Text.JsonCommand.Options.Indented")]
+[CommandOption(KEY_CASING_OPTION, 'c', typeof(SerializationNamingConvention), SerializationNamingConvention.None, "Text.JsonCommand.Options.Casing")]
 public class JsonCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
+	private const string KEY_QUIET_OPTION = "quiet";
 	private const string KEY_DEPTH_OPTION = "depth";
 	private const string KEY_TYPED_OPTION = "typed";
 	private const string KEY_CASING_OPTION = "casing";
@@ -86,7 +88,7 @@ public class JsonCommand : CommandBase<CommandContext>
 
 		var json = await Serializer.Json.SerializeAsync(graph, options, cancellation);
 
-		if(json != null)
+		if(json != null && !context.GetOptions().GetValue(KEY_QUIET_OPTION, true))
 			context.Output.WriteLine(json);
 
 		return json;
