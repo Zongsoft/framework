@@ -231,8 +231,14 @@ public static class Convert
 		//处理待转换值为空的情况
 		if(value == null || System.Convert.IsDBNull(value))
 		{
+			if(conversionType.IsClass || conversionType.IsInterface || conversionType.IsNullable())
+			{
+				result = null;
+				return true;
+			}
+
 			result = conversionType.GetDefaultValue();
-			return true;
+			return false;
 		}
 
 		//处理可空类型的情况（即处理可空类型的基元类型）
