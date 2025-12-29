@@ -106,7 +106,7 @@ partial class CommandLine
 			{
 				if(_descriptor.Options.TryGetValue(optionName, out var optionDescriptor))
 				{
-					_options[optionDescriptor.Name] = Common.Convert.ConvertValue(
+					_options[optionDescriptor.Name] = optionValue == null ? null : Common.Convert.ConvertValue(
 						optionValue,
 						optionDescriptor.Type,
 						optionDescriptor.GetConverter,
