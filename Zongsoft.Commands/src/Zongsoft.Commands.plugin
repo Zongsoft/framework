@@ -19,6 +19,17 @@
 		<object name="Json" type="Zongsoft.Commands.JsonCommand, Zongsoft.Commands" />
 		<object name="Assembly" type="Zongsoft.Commands.AssemblyCommand, Zongsoft.Commands" />
 
+		<object name="Sequence">
+			<sequence.command>
+				<object name="Sequence" type="Zongsoft.Commands.SequenceCommand, Zongsoft.Commands" />
+			</sequence.command>
+
+			<object name="Info" type="Zongsoft.Commands.SequenceCommand+InfoCommand, Zongsoft.Commands" />
+			<object name="Reset" type="Zongsoft.Commands.SequenceCommand+ResetCommand, Zongsoft.Commands" />
+			<object name="Decrease" type="Zongsoft.Commands.SequenceCommand+DecreaseCommand, Zongsoft.Commands" />
+			<object name="Increase" type="Zongsoft.Commands.SequenceCommand+IncreaseCommand, Zongsoft.Commands" />
+		</object>
+
 		<object name="RSA">
 			<rsa.command>
 				<object name="RSA" type="Zongsoft.Security.Commands.RSACommand, Zongsoft.Commands" />
