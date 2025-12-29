@@ -103,6 +103,7 @@ partial class TypeAlias
 		switch(context.Character)
 		{
 			case '.':
+			case '+': //nested type
 				context.Accept();
 
 				if(context.Move())
