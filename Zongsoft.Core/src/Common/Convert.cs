@@ -237,7 +237,7 @@ public static class Convert
 				return true;
 			}
 
-			result = conversionType.GetDefaultValue();
+			result = null;
 			return false;
 		}
 
