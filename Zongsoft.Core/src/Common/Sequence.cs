@@ -63,8 +63,10 @@ public static class Sequence
 		long Count { get; }
 		/// <summary>获取本地的计数器数值。</summary>
 		long Value { get; }
-		/// <summary>获取递增请求的步长值。</summary>
+		/// <summary>获取最近递增请求的步长。</summary>
 		int Interval { get; }
+		/// <summary>获取最长的递增请求步长。</summary>
+		int Longest { get; }
 		/// <summary>获取本地计数器的阈值。</summary>
 		long Threshold { get; }
 		/// <summary>获取最近递增请求的时间。</summary>
@@ -112,13 +114,14 @@ public static class Sequence
 	private sealed class Variator(string name, ISequenceBase sequence) : IVariatorStatistics
 	{
 		#region 常量定义
-		const float ACQUIRE_RATIO = 2.0f;
-		const float ACQUIRE_INTERVAL = 2000;
+		const float ACQUIRE_LIMIT = 1000; //间隔最大时长（单位：毫秒）
+		const int ACQUIRE_GROWTH  = 100;  //极速请求频率的最小递增步长
 		#endregion
 
 		#region 成员变量
 		private long _count;
 		private long _value;
+		private int _longest;
 		private int _interval;
 		private long _threshold;
 		private long _timestamp;
@@ -130,6 +133,7 @@ public static class Sequence
 		#region 公共属性
 		public long Count => _count;
 		public long Value => _value;
+		public int Longest => _longest;
 		public int Interval => _interval;
 		public long Threshold => _threshold;
 		public DateTime Timestamp => _timestamp > 0 ? DateTime.Now.AddMilliseconds(_timestamp - Environment.TickCount64) : DateTime.MinValue;
@@ -176,6 +180,9 @@ public static class Sequence
 
 		public long Increase(int interval, int seed)
 		{
+			if(interval == 0)
+				return _value;
+
 			if(_value >= _threshold)
 				return this.Acquire(interval, seed);
 
@@ -189,6 +196,9 @@ public static class Sequence
 
 		public ValueTask<long> IncreaseAsync(int interval, int seed, CancellationToken cancellation)
 		{
+			if(interval == 0)
+				return ValueTask.FromResult(_value);
+
 			if(_value >= _threshold)
 				return this.AcquireAsync(interval, seed, cancellation);
 
@@ -210,19 +220,16 @@ public static class Sequence
 
 				if(_value >= _threshold)
 				{
-					var duration = _timestamp > 0 ? Environment.TickCount64 - _timestamp : ACQUIRE_INTERVAL;
-					var length = duration switch
-					{
-						<= 0 => Math.Max(1, _interval) * 2,
-						>= ACQUIRE_INTERVAL => interval,
-						_ => (int)Math.Max(1, ACQUIRE_INTERVAL / duration * ACQUIRE_RATIO) * interval,
-					};
-
 					Interlocked.Increment(ref _count);
+					var length = this.GetAcquireInterval(interval);
+
 					_threshold = _sequence.Increase(_name, length, seed);
 					_value = _threshold == seed ? seed : _threshold - length;
 					_timestamp = Environment.TickCount64;
 					_interval = length;
+					_longest = _interval > 0 ?
+						Math.Max(_interval, _longest):
+						Math.Min(_interval, _longest);
 				}
 			}
 			finally
@@ -241,19 +248,16 @@ public static class Sequence
 
 				if(_value >= _threshold)
 				{
-					var duration = _timestamp > 0 ? Environment.TickCount64 - _timestamp : ACQUIRE_INTERVAL;
-					var length = duration switch
-					{
-						<= 0 => Math.Max(1, _interval) * 2,
-						>= ACQUIRE_INTERVAL => interval,
-						_ => (int)Math.Max(1, ACQUIRE_INTERVAL / duration * ACQUIRE_RATIO) * interval,
-					};
-
 					Interlocked.Increment(ref _count);
+					var length = this.GetAcquireInterval(interval);
+
 					_threshold = await _sequence.IncreaseAsync(_name, length, seed, cancellation);
 					_value = _threshold == seed ? seed : _threshold - length;
 					_timestamp = Environment.TickCount64;
 					_interval = length;
+					_longest = _interval > 0 ?
+						Math.Max(_interval, _longest):
+						Math.Min(_interval, _longest);
 				}
 			}
 			finally
@@ -262,6 +266,29 @@ public static class Sequence
 			}
 
 			return await this.IncreaseAsync(interval, seed, cancellation);
+		}
+
+		private int GetAcquireInterval(int interval)
+		{
+			var duration = _timestamp > 0 ? Environment.TickCount64 - _timestamp : ACQUIRE_LIMIT;
+
+			//请求的间隔超过最大时长或者 Tick 计时器被重置则返回指定的步长
+			if(duration >= ACQUIRE_LIMIT || duration < 0)
+				return interval;
+
+			//请求的间隔等于零（即请求频率低于1毫秒）
+			if(duration == 0)
+				return _interval > 0 ?
+					Math.Max(ACQUIRE_GROWTH, _interval * 2) :
+					Math.Min(-ACQUIRE_GROWTH, _interval * 2);
+
+			//剩下的分支：请求的间隔介于1毫秒至最大时长之间
+			var growthRate = Math.Max(2.0f, ACQUIRE_LIMIT / duration);
+			var declineRate = 1.0f - (duration / ACQUIRE_LIMIT);
+
+			return interval > 0 ?
+				(int)Math.Max(interval * growthRate, _interval * declineRate):
+				(int)Math.Min(interval * growthRate, _interval * declineRate);
 		}
 		#endregion
 
