@@ -59,10 +59,13 @@ public static class TimeSpanUtility
 		return Clamp(value, min, max);
 	}
 
+	public static TimeSpan Parse(string text) => TryParse(text, out var result) ? result : throw new FormatException($"String '{text}' was not recognized as a valid TimeSpan.");
+	public static TimeSpan Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new FormatException($"String '{text}' was not recognized as a valid TimeSpan.");
+
 	public static bool TryParse(string text, out TimeSpan value) => TryParse(string.IsNullOrEmpty(text) ? default : text.AsSpan(), out value);
 	public static bool TryParse(ReadOnlySpan<char> text, out TimeSpan value)
 	{
-		if(text.IsEmpty || text == "0")
+		if(text.IsEmpty || (int.TryParse(text, out var integer) && integer == 0))
 		{
 			value = TimeSpan.Zero;
 			return true;

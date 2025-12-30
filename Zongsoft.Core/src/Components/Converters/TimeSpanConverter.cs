@@ -38,7 +38,7 @@ namespace Zongsoft.Components.Converters;
 public class TimeSpanConverter : TypeConverter
 {
 	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
-	public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string text && TimeSpanUtility.TryParse(text, out var result) ? result : null;
+	public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string text ? TimeSpanUtility.Parse(text) : null;
 
 	public sealed class Days : TypeConverter
 	{
