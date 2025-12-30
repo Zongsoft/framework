@@ -50,6 +50,7 @@ partial class SequenceCommand
 		public ResetCommand(string name) : base(name) { }
 		#endregion
 
+		#region 重写方法
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			var sequence = context.Find<SequenceCommand>(true)?.Sequence ?? throw new CommandException("The sequence instance is not specified.");
@@ -66,5 +67,6 @@ partial class SequenceCommand
 
 			return null;
 		}
+		#endregion
 	}
 }

@@ -28,9 +28,11 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Components;
 
@@ -38,26 +40,93 @@ namespace Zongsoft.Commands;
 
 partial class SequenceCommand
 {
+	[CommandOption(KEY_QUIET_OPTION, 'q', typeof(bool), false)]
 	public class InfoCommand : CommandBase<CommandContext>
 	{
+		#region 常量定义
+		private const string KEY_QUIET_OPTION = "quiet";
+		#endregion
+
 		#region 构造函数
 		public InfoCommand() : base("Info") { }
 		public InfoCommand(string name) : base(name) { }
 		#endregion
 
+		#region 重写方法
 		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
+			if(context.Arguments.IsEmpty)
+				throw new CommandException("The key(s) required to retrieve the sequence information is missing.");
+
+			var quiet = context.GetOptions().GetValue(KEY_QUIET_OPTION, true);
 			var sequence = context.Find<SequenceCommand>(true)?.Sequence ?? throw new CommandException("The sequence instance is not specified.");
 
-			if(sequence is Zongsoft.Common.Sequence.IVariator variator && !context.Arguments.IsEmpty)
-			{
-				if(context.Arguments.Count > 1)
-					throw new CommandException("Only one argument is allowed for retrieving the sequence statistics.");
+			if(sequence != null && !quiet)
+				context.Output.WriteLine(CommandOutletColor.Blue, sequence);
 
-				return ValueTask.FromResult<object>(variator.GetStatistics(context.Arguments[0]));
+			if(sequence is Sequence.IVariator variator)
+			{
+				if(context.Arguments.Count == 1)
+				{
+					if(!quiet)
+						DumpStatistics(context, null, variator.GetStatistics(context.Arguments[0]));
+
+					return ValueTask.FromResult<object>(variator.GetStatistics(context.Arguments[0]));
+				}
+				else
+				{
+					if(!quiet)
+					{
+						for(int i = 0; i < context.Arguments.Count; i++)
+						{
+							var dumped = DumpStatistics(context, context.Arguments[i], variator.GetStatistics(context.Arguments[i]));
+
+							if(i < context.Arguments.Count - 1 && dumped)
+								context.Output.WriteLine();
+						}
+					}
+
+					return ValueTask.FromResult<object>(context.Arguments.Select(variator.GetStatistics));
+				}
 			}
 
 			return ValueTask.FromResult<object>(null);
 		}
+		#endregion
+
+		#region 私有方法
+		private static bool DumpStatistics(CommandContext context, string key, Sequence.IVariatorStatistics statistics)
+		{
+			if(statistics == null)
+			{
+				if(string.IsNullOrEmpty(key))
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, "The specified sequence information does not exist.");
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{key}' sequence information does not exist.");
+
+				return false;
+			}
+
+			var content = (string.IsNullOrEmpty(key) ? CommandOutletContent.Create() : CommandOutletContent.Create(CommandOutletColor.DarkCyan, key + Environment.NewLine))
+				.Append(CommandOutletColor.DarkGreen, nameof(statistics.Count))
+				.Append(CommandOutletColor.DarkGray, " : ")
+				.AppendLine(CommandOutletColor.DarkYellow, statistics.Count)
+				.Append(CommandOutletColor.DarkGreen, nameof(statistics.Value))
+				.Append(CommandOutletColor.DarkGray, " : ")
+				.AppendLine(CommandOutletColor.DarkYellow, statistics.Value)
+				.Append(CommandOutletColor.DarkGreen, nameof(statistics.Interval))
+				.Append(CommandOutletColor.DarkGray, " : ")
+				.AppendLine(CommandOutletColor.DarkYellow, statistics.Interval)
+				.Append(CommandOutletColor.DarkGreen, nameof(statistics.Threshold))
+				.Append(CommandOutletColor.DarkGray, " : ")
+				.AppendLine(CommandOutletColor.DarkYellow, statistics.Threshold)
+				.Append(CommandOutletColor.DarkGreen, nameof(statistics.Timestamp))
+				.Append(CommandOutletColor.DarkGray, " : ")
+				.AppendLine(CommandOutletColor.DarkYellow, statistics.Timestamp);
+
+			context.Output.Write(content);
+			return true;
+		}
+		#endregion
 	}
 }

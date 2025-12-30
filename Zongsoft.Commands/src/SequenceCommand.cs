@@ -53,6 +53,7 @@ public partial class SequenceCommand : CommandBase<CommandContext>
 	public ISequenceBase Sequence { get; set; }
 	#endregion
 
+	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.Count > 1)
@@ -81,4 +82,5 @@ public partial class SequenceCommand : CommandBase<CommandContext>
 
 		return ValueTask.FromResult<object>(this.Sequence);
 	}
+	#endregion
 }
