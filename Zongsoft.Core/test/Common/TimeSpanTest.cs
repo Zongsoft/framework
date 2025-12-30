@@ -37,9 +37,9 @@ public class TimeSpanTest
 		Assert.Equal(TimeSpan.Zero, result);
 		Assert.True(TimeSpanUtility.TryParse("0", out result));
 		Assert.Equal(TimeSpan.Zero, result);
-		Assert.True(TimeSpanUtility.TryParse("00", out result));
-		Assert.Equal(TimeSpan.Zero, result);
 
+		Assert.True(TimeSpanUtility.TryParse("0d", out result));
+		Assert.Equal(TimeSpan.Zero, result);
 		Assert.True(TimeSpanUtility.TryParse("1d", out result));
 		Assert.Equal(new TimeSpan(1, 0, 0, 0), result);
 		Assert.True(TimeSpanUtility.TryParse("1D", out result));
@@ -49,6 +49,8 @@ public class TimeSpanTest
 		Assert.True(TimeSpanUtility.TryParse("0.5D", out result));
 		Assert.Equal(new TimeSpan(0, 12, 0, 0), result);
 
+		Assert.True(TimeSpanUtility.TryParse("0h", out result));
+		Assert.Equal(TimeSpan.Zero, result);
 		Assert.True(TimeSpanUtility.TryParse("1h", out result));
 		Assert.Equal(new TimeSpan(0, 1, 0, 0), result);
 		Assert.True(TimeSpanUtility.TryParse("1H", out result));
@@ -58,6 +60,8 @@ public class TimeSpanTest
 		Assert.True(TimeSpanUtility.TryParse(".1H", out result));
 		Assert.Equal(new TimeSpan(0, 0, 6, 0), result);
 
+		Assert.True(TimeSpanUtility.TryParse("0m", out result));
+		Assert.Equal(TimeSpan.Zero, result);
 		Assert.True(TimeSpanUtility.TryParse("1m", out result));
 		Assert.Equal(new TimeSpan(0, 0, 1, 0), result);
 		Assert.True(TimeSpanUtility.TryParse("1M", out result));
@@ -67,6 +71,8 @@ public class TimeSpanTest
 		Assert.True(TimeSpanUtility.TryParse(".5M", out result));
 		Assert.Equal(new TimeSpan(0, 0, 0, 30), result);
 
+		Assert.True(TimeSpanUtility.TryParse("0s", out result));
+		Assert.Equal(TimeSpan.Zero, result);
 		Assert.True(TimeSpanUtility.TryParse("1s", out result));
 		Assert.Equal(new TimeSpan(0, 0, 0, 1), result);
 		Assert.True(TimeSpanUtility.TryParse("1S", out result));
@@ -76,11 +82,15 @@ public class TimeSpanTest
 		Assert.True(TimeSpanUtility.TryParse("0.5S", out result));
 		Assert.Equal(new TimeSpan(0, 0, 0, 0, 500), result);
 
+		Assert.True(TimeSpanUtility.TryParse("0ms", out result));
+		Assert.Equal(TimeSpan.Zero, result);
 		Assert.True(TimeSpanUtility.TryParse("1ms", out result));
 		Assert.Equal(new TimeSpan(0, 0, 0, 0, 1), result);
 		Assert.True(TimeSpanUtility.TryParse("1MS", out result));
 		Assert.Equal(new TimeSpan(0, 0, 0, 0, 1), result);
 
+		Assert.True(TimeSpanUtility.TryParse("0:0:0", out result));
+		Assert.Equal(TimeSpan.Zero, result);
 		Assert.True(TimeSpanUtility.TryParse("1.02:03:04", out result));
 		Assert.Equal(new TimeSpan(1, 2, 3, 4), result);
 		Assert.True(TimeSpanUtility.TryParse("2:03:04", out result));
