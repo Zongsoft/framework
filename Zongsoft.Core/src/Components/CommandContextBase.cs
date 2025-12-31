@@ -75,6 +75,9 @@ public abstract class CommandContextBase : ICommandContext
 	/// <summary>获取当前命令描述信息。</summary>
 	public virtual CommandDescriptor Descriptor { get; }
 
+	/// <summary>获取当前命令的选项集。</summary>
+	public CommandLine.CmdletOptionCollection Options => _options ??= new CommandLine.CmdletOptionCollection(this.Descriptor, _cmdlet.Options);
+
 	/// <summary>获取当前命令的参数数组。</summary>
 	public CommandArgumentCollection Arguments { get; }
 
@@ -100,6 +103,5 @@ public abstract class CommandContextBase : ICommandContext
 
 	#region 公共方法
 	public TOptions GetOptions<TOptions>() => CommandLine.GetOptions<TOptions>(this.Descriptor, _cmdlet.Options);
-	public CommandLine.CmdletOptionCollection GetOptions() => _options ??= CommandLine.GetOptions(this.Descriptor, _cmdlet.Options);
 	#endregion
 }

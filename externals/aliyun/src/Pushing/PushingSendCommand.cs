@@ -70,15 +70,15 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 			if(context.Value == null && context.Arguments.IsEmpty)
 				throw new CommandException(Properties.Resources.Text_MissingCommandArguments);
 
-			var destination = context.GetOptions().GetValue<string>("target");
+			var destination = context.Options.GetValue<string>("target");
 
 			if(string.IsNullOrWhiteSpace(destination))
 				throw new CommandOptionMissingException("target");
 
-			var settings = new PushingSenderSettings(context.GetOptions().GetValue<PushingType>("type"),
-														  context.GetOptions().GetValue<PushingDeviceType>("deviceType"),
-														  context.GetOptions().GetValue<PushingTargetType>("targetType"),
-														  context.GetOptions().GetValue<int>("expiry"));
+			var settings = new PushingSenderSettings(context.Options.GetValue<PushingType>("type"),
+														  context.Options.GetValue<PushingDeviceType>("deviceType"),
+														  context.Options.GetValue<PushingTargetType>("targetType"),
+														  context.Options.GetValue<int>("expiry"));
 
 			var results = new List<PushingResult>();
 
@@ -87,8 +87,8 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 				var content = await GetContentAsync(context.Value, cancellation);
 
 				var result = await this.SendAsync(
-					context.GetOptions().GetValue<string>("name"),
-					context.GetOptions().GetValue<string>("title"),
+					context.Options.GetValue<string>("name"),
+					context.Options.GetValue<string>("title"),
 					content, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild),
 					cancellation);
 
@@ -99,8 +99,8 @@ namespace Zongsoft.Externals.Aliyun.Pushing
 			foreach(var argument in context.Arguments)
 			{
 				var result = await this.SendAsync(
-					context.GetOptions().GetValue<string>("name"),
-					context.GetOptions().GetValue<string>("title"),
+					context.Options.GetValue<string>("name"),
+					context.Options.GetValue<string>("title"),
 					argument, destination, settings, _ => context.Error.WriteLine(Properties.Resources.Text_NotificationSendCommand_Faild),
 					cancellation);
 

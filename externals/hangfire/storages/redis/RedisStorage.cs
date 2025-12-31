@@ -94,9 +94,10 @@ namespace Zongsoft.Externals.Hangfire.Storages
 
 		#region 重写方法
 		public override bool LinearizableReads => this.Storage.LinearizableReads;
-#pragma warning disable CS0618 // 类型或成员已过时
+		#pragma warning disable CS0618 // 类型或成员已过时
+		[Obsolete("This method will be removed in a future version.")]
 		public override IEnumerable<IServerComponent> GetComponents() => this.Storage.GetComponents();
-#pragma warning restore CS0618 // 类型或成员已过时
+		#pragma warning restore CS0618 // 类型或成员已过时
 		public override IMonitoringApi GetMonitoringApi() => this.Storage.GetMonitoringApi();
 		public override IStorageConnection GetConnection() => this.Storage.GetConnection();
 		public override IStorageConnection GetReadOnlyConnection() => this.Storage.GetReadOnlyConnection();

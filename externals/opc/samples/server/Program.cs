@@ -132,7 +132,7 @@ internal static class Program
 				value = Common.Convert.ConvertValue(context.Arguments[1], type);
 			}
 
-			var round = context.GetOptions().GetValue("round", 0);
+			var round = context.Options.GetValue("round", 0);
 
 			if(round > 0)
 			{

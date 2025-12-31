@@ -39,9 +39,13 @@ namespace Zongsoft.Terminals.Commands;
 
 [DisplayName("ShellCommand.Name")]
 [Description("ShellCommand.Description")]
-[CommandOption("timeout", 't', typeof(int), DefaultValue = 1000)]
+[CommandOption(TIMEOUT_OPTION, 't', typeof(TimeSpan), "1s")]
 public class ShellCommand : CommandBase<CommandContext>
 {
+	#region 常量定义
+	private const string TIMEOUT_OPTION = "timeout";
+	#endregion
+
 	#region 构造函数
 	public ShellCommand() : base("Shell") { }
 	public ShellCommand(string name) : base(name) { }
@@ -89,9 +93,9 @@ public class ShellCommand : CommandBase<CommandContext>
 
 			if(!process.HasExited)
 			{
-				var timeout = context.GetOptions().GetValue<int>("timeout");
+				var timeout = context.Options.GetValue<TimeSpan>(TIMEOUT_OPTION);
 
-				if(!process.WaitForExit(timeout > 0 ? timeout : int.MaxValue))
+				if(!process.WaitForExit(timeout > TimeSpan.Zero ? timeout : TimeSpan.FromSeconds(30)))
 				{
 					process.Close();
 					return ValueTask.FromResult<object>(-1);

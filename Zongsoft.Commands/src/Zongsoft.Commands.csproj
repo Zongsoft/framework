@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.8.0</Version>
+		<Version>7.9.0</Version>
 		<Product>Zongsoft Commands Library</Product>
 		<Description>This is a library about commands program development.</Description>
 		<RootNamespace>Zongsoft</RootNamespace>
@@ -29,7 +29,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.24.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.25.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

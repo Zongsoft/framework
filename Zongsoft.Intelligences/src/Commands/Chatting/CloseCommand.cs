@@ -47,7 +47,7 @@ public class CloseCommand() : CommandBase<CommandContext>("Close")
 		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
 			throw new CommandException("The chat service required by this command was not found.");
 
-		var identifier = context.GetOptions().GetValue<string>(SESSION_OPTION) ?? context.Arguments[0];
+		var identifier = context.Options.GetValue<string>(SESSION_OPTION) ?? context.Arguments[0];
 		if(string.IsNullOrEmpty(identifier))
 			throw new CommandOptionMissingException(SESSION_OPTION);
 

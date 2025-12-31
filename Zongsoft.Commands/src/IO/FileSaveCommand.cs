@@ -61,12 +61,12 @@ public class FileSaveCommand : CommandBase<CommandContext>, ICommandCompletion
 	{
 		//打开一个或多个文件流
 		var result = FileUtility.OpenFile(context,
-			context.GetOptions().GetValue<FileMode>(KEY_MODE_OPTION),
-			context.GetOptions().GetValue<FileAccess>(KEY_ACCESS_OPTION),
-			context.GetOptions().GetValue<FileShare>(KEY_SHARE_OPTION));
+			context.Options.GetValue<FileMode>(KEY_MODE_OPTION),
+			context.Options.GetValue<FileAccess>(KEY_ACCESS_OPTION),
+			context.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
 
 		if(result != null)
-			FileUtility.Save(result, context.Value, context.GetOptions().GetValue<Encoding>(KEY_ENCODING_OPTION));
+			FileUtility.Save(result, context.Value, context.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
 
 		return ValueTask.FromResult(result);
 	}

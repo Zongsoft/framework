@@ -61,7 +61,7 @@ internal class Program
 		{
 			Subscriber subscriber = null;
 
-			if(context.GetOptions().TryGetValue<uint>("subscriber", out var id))
+			if(context.Options.TryGetValue<uint>("subscriber", out var id))
 			{
 				if(!client.Subscribers.TryGetValue(id, out subscriber))
 				{
@@ -77,7 +77,7 @@ internal class Program
 
 				return subscriber;
 			}
-			else if(context.GetOptions().TryGetValue<string>("directory", out var directory))
+			else if(context.Options.TryGetValue<string>("directory", out var directory))
 			{
 				if(string.IsNullOrEmpty(directory))
 					directory = Path.Combine(AppContext.BaseDirectory, "subscription");
@@ -269,8 +269,8 @@ internal class Program
 				return;
 
 			var name = context.Arguments[0];
-			var type = TypeAlias.Parse(context.GetOptions().GetValue<string>("type"));
-			var label = context.GetOptions().GetValue("label", name);
+			var type = TypeAlias.Parse(context.Options.GetValue<string>("type"));
+			var label = context.Options.GetValue("label", name);
 
 			var created = await client.CreateVariableAsync(name, type, label, context.Arguments.Count > 1 ? context.Arguments[1] : null, cancellation);
 

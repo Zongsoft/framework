@@ -191,8 +191,8 @@ public partial class CommandExecutor : ICommandExecutor
 		if(queue.Count < 1)
 			return default;
 
-		//创建输出参数的列表对象
-		var completes = new List<CommandCompletionContext>();
+		//创建完成通知的上下文集
+		var completes = new Stack<CommandCompletionContext>();
 
 		//初始化第一个输入参数
 		var value = session.Value;
@@ -205,9 +205,9 @@ public partial class CommandExecutor : ICommandExecutor
 			//执行当前命令
 			value = await this.OnExecuteAsync(context, cancellation);
 
-			//判断命令是否需要完成通知，如果是则加入到清理列表中
+			//判断命令是否需要完成通知，如果是则加入到清理栈中
 			if(context.Command is ICommandCompletion completion)
-				((ICollection<CommandCompletionContext>)completes).Add(new CommandCompletionContext(session, completion, value));
+				completes.Push(new CommandCompletionContext(session, completion, value));
 		}
 
 		//返回最后一个命令的执行结果

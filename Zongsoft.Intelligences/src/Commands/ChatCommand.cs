@@ -66,19 +66,19 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 			throw new CommandException("The chat service required by this command was not found.");
 
 		var client = (IChatClient)service.Sessions.Current ?? service;
-		var format = context.GetOptions().GetValue(FORMAT_OPTION, ChatResponseFormat.Object);
-		var role = context.GetOptions().GetValue(ROLE_OPTION, string.Empty);
+		var format = context.Options.GetValue(FORMAT_OPTION, ChatResponseFormat.Object);
+		var role = context.Options.GetValue(ROLE_OPTION, string.Empty);
 
-		if(context.GetOptions().TryGetValue<bool>(INTERACTIVE_OPTION, out var interactive) && interactive)
+		if(context.Options.TryGetValue<bool>(INTERACTIVE_OPTION, out var interactive) && interactive)
 		{
-			if(context.GetOptions().Contains(STREAMING_OPTION))
+			if(context.Options.Contains(STREAMING_OPTION))
 				throw new CommandOptionException("The interactive chat mode does not support streaming responses.");
 
 			await Chat(context, client);
 			return _history;
 		}
 
-		if(context.GetOptions().GetValue<bool>(STREAMING_OPTION))
+		if(context.Options.GetValue<bool>(STREAMING_OPTION))
 		{
 			if(context.Arguments.IsEmpty)
 				return Collections.Enumerable.EnumerateAsync<ChatResponseUpdate>(null, cancellation);

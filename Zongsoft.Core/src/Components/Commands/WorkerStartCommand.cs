@@ -58,7 +58,7 @@ public class WorkerStartCommand : CommandBase<CommandContext>
 		var worker = context.Find<WorkerCommandBase>(true)?.Worker ?? throw new CommandException("Missing required worker of depends on.");
 
 		//获取是否开启了强制启动选项
-		var force = context.GetOptions().GetValue<bool>(KEY_FORCE_OPTION);
+		var force = context.Options.GetValue<bool>(KEY_FORCE_OPTION);
 
 		//如果没有开启强制启动选项并且当前工作器不可用，则抛出异常
 		if(!force && !worker.Enabled)
@@ -68,7 +68,7 @@ public class WorkerStartCommand : CommandBase<CommandContext>
 		worker.Start(context.Arguments);
 
 		//调用启动完成方法
-		this.OnStarted(context, worker, context.GetOptions().GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
+		this.OnStarted(context, worker, context.Options.GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
 
 		//返回执行成功的工作者
 		return ValueTask.FromResult<object>(worker);

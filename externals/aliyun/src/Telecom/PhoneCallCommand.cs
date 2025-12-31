@@ -32,7 +32,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
-using Zongsoft.Serialization;
 
 namespace Zongsoft.Externals.Aliyun.Telecom
 {
@@ -67,11 +66,11 @@ namespace Zongsoft.Externals.Aliyun.Telecom
 				throw new CommandException("Missing arguments.");
 
 			var result = await this.CallAsync(
-				context.GetOptions().GetValue<string>(KEY_TEMPLATE_OPTION),
+				context.Options.GetValue<string>(KEY_TEMPLATE_OPTION),
 				context.Arguments,
-				context.Value ?? Utility.GetDictionary(context.GetOptions().GetValue<string>(KEY_PARAMETERS_OPTION)),
-				context.GetOptions().GetValue<string>(KEY_EXTRA_OPTION),
-				context.GetOptions().Contains(KEY_INTERACTIVE_OPTION),
+				context.Value ?? Utility.GetDictionary(context.Options.GetValue<string>(KEY_PARAMETERS_OPTION)),
+				context.Options.GetValue<string>(KEY_EXTRA_OPTION),
+				context.Options.Contains(KEY_INTERACTIVE_OPTION),
 				cancellation);
 
 			return result;

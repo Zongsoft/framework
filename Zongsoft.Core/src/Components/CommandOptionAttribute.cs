@@ -48,7 +48,7 @@ public class CommandOptionAttribute : Attribute
 
 	#region 构造函数
 	public CommandOptionAttribute(string name, Type type = null) : this(name, '\0', type, null, false, null) { }
-	public CommandOptionAttribute(string name, char symbol = '\0', Type type = null) : this(name, symbol, type, null, false, null) { }
+	public CommandOptionAttribute(string name, char symbol, Type type = null) : this(name, symbol, type, null, false, null) { }
 
 	public CommandOptionAttribute(string name, Type type, object defaultValue, string description = null) : this(name, '\0', type, defaultValue, false, description) { }
 	public CommandOptionAttribute(string name, Type type, object defaultValue, bool required, string description = null) : this(name, '\0', type, defaultValue, required, description) { }

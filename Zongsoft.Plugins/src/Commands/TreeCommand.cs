@@ -77,7 +77,7 @@ public class TreeCommand : CommandBase<CommandContext>
 			}
 		}
 
-		WritePluginTree(context.Output, node, context.GetOptions().GetValue<int>("depth"), 0, 0, context.GetOptions().Contains("qualified"));
+		WritePluginTree(context.Output, node, context.Options.GetValue<int>("depth"), 0, 0, context.Options.Contains("qualified"));
 		return ValueTask.FromResult<object>(node);
 	}
 	#endregion

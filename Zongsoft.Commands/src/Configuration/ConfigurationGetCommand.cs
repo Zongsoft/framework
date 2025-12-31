@@ -47,11 +47,11 @@ namespace Zongsoft.Configuration.Commands;
 /// </remarks>
 [DisplayName("Text.ConfigurationGetCommand.Name")]
 [Description("Text.ConfigurationGetCommand.Description")]
-[CommandOption(KEY_SIMPLIFY_OPTION, 's', typeof(bool), false, Description = "Text.ConfigurationCommand.Options.Simplify")]
+[CommandOption(SIMPLIFY_OPTION, 's', Description = "Text.ConfigurationCommand.Options.Simplify")]
 public class ConfigurationGetCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
-	private const string KEY_SIMPLIFY_OPTION = "simplify";
+	private const string SIMPLIFY_OPTION = "simplify";
 	#endregion
 
 	#region 构造函数
@@ -73,7 +73,7 @@ public class ConfigurationGetCommand : CommandBase<CommandContext>
 		if(context.Arguments.Count == 1)
 		{
 			var section = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Arguments[0]));
-			ConfigurationCommand.Print(section, context.Output, context.GetOptions().Contains(KEY_SIMPLIFY_OPTION), 0);
+			ConfigurationCommand.Print(section, context.Output, context.Options.Switch(SIMPLIFY_OPTION), 0);
 			return ValueTask.FromResult<object>(section);
 		}
 
@@ -82,7 +82,7 @@ public class ConfigurationGetCommand : CommandBase<CommandContext>
 		for(int i = 0; i < context.Arguments.Count; i++)
 		{
 			sections[i] = configuration.GetSection(ConfigurationUtility.GetConfigurationPath(context.Arguments[i]));
-			ConfigurationCommand.Print(sections[i], context.Output, context.GetOptions().Contains(KEY_SIMPLIFY_OPTION), 0);
+			ConfigurationCommand.Print(sections[i], context.Output, context.Options.Switch(SIMPLIFY_OPTION), 0);
 		}
 
 		return ValueTask.FromResult<object>(sections);

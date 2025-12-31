@@ -27,7 +27,7 @@ internal partial class Commands
 			for(int i = 0; i < context.Arguments.Count; i++)
 			{
 				if(context.Arguments.TryGetValue<uint>(i, out var id) && client.Subscribers.TryGetValue(id, out var subscriber))
-					DumpSubscriber(content.Last, subscriber, -1, context.GetOptions().GetValue("detailed", false));
+					DumpSubscriber(content.Last, subscriber, -1, context.Options.GetValue("detailed", false));
 			}
 		}
 		else if(client.Subscribers.Count > 0)
@@ -39,7 +39,7 @@ internal partial class Commands
 				if(index > 0)
 					content.Last.AppendLine();
 
-				DumpSubscriber(content.Last, subscriber, ++index, context.GetOptions().GetValue("detailed", false));
+				DumpSubscriber(content.Last, subscriber, ++index, context.Options.GetValue("detailed", false));
 			}
 		}
 

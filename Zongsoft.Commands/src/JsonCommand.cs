@@ -41,19 +41,17 @@ namespace Zongsoft.Commands;
 
 [DisplayName("Text.JsonCommand.Name")]
 [Description("Text.JsonCommand.Description")]
-[CommandOption(KEY_QUIET_OPTION, 'q', typeof(bool), false, "Text.JsonCommand.Options.Quiet")]
-[CommandOption(KEY_DEPTH_OPTION, 'd', typeof(int), 3, "Text.JsonCommand.Options.Depth")]
-[CommandOption(KEY_TYPED_OPTION, 't', typeof(bool), false, "Text.JsonCommand.Options.Typed")]
-[CommandOption(KEY_INDENTED_OPTION, 'i', typeof(bool), true, "Text.JsonCommand.Options.Indented")]
-[CommandOption(KEY_CASING_OPTION, 'c', typeof(SerializationNamingConvention), SerializationNamingConvention.None, "Text.JsonCommand.Options.Casing")]
+[CommandOption(DEPTH_OPTION, typeof(int), 3, "Text.JsonCommand.Options.Depth")]
+[CommandOption(TYPED_OPTION, 't', Description = "Text.JsonCommand.Options.Typed")]
+[CommandOption(INDENTED_OPTION, 'i', Description = "Text.JsonCommand.Options.Indented")]
+[CommandOption(CASING_OPTION, typeof(SerializationNamingConvention), SerializationNamingConvention.None, "Text.JsonCommand.Options.Casing")]
 public class JsonCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
-	private const string KEY_QUIET_OPTION = "quiet";
-	private const string KEY_DEPTH_OPTION = "depth";
-	private const string KEY_TYPED_OPTION = "typed";
-	private const string KEY_CASING_OPTION = "casing";
-	private const string KEY_INDENTED_OPTION = "indented";
+	private const string DEPTH_OPTION = "depth";
+	private const string TYPED_OPTION = "typed";
+	private const string CASING_OPTION = "casing";
+	private const string INDENTED_OPTION = "indented";
 	#endregion
 
 	#region 构造函数
@@ -79,10 +77,10 @@ public class JsonCommand : CommandBase<CommandContext>
 
 		var options = new TextSerializationOptions()
 		{
-			MaximumDepth = context.GetOptions().GetValue<int>(KEY_DEPTH_OPTION),
-			Typified = context.GetOptions().GetValue<bool>(KEY_TYPED_OPTION),
-			Indented = context.GetOptions().GetValue<bool>(KEY_INDENTED_OPTION),
-			NamingConvention = context.GetOptions().GetValue<SerializationNamingConvention>(KEY_CASING_OPTION),
+			MaximumDepth = context.Options.GetValue<int>(DEPTH_OPTION),
+			Typified = context.Options.Switch(TYPED_OPTION),
+			Indented = context.Options.Switch(INDENTED_OPTION),
+			NamingConvention = context.Options.GetValue<SerializationNamingConvention>(CASING_OPTION),
 			IncludeFields = true,
 		};
 

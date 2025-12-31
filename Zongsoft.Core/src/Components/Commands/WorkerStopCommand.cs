@@ -59,7 +59,7 @@ public class WorkerStopCommand : CommandBase<CommandContext>
 		worker.Stop(context.Arguments);
 
 		//调用停止完成方法
-		this.OnStopped(context, worker, context.GetOptions().GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
+		this.OnStopped(context, worker, context.Options.GetValue<TimeSpan>(KEY_TIMEOUT_OPTION));
 
 		//返回执行成功的工作者
 		return ValueTask.FromResult<object>(worker);

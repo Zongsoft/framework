@@ -53,9 +53,9 @@ public class RedisIncrementCommand : CommandBase<CommandContext>
 		if(context.Arguments.IsEmpty)
 			throw new CommandException("Missing arguments.");
 
-		int seed = context.GetOptions().GetValue<int>("seed");
-		int interval = context.GetOptions().GetValue<int>("interval");
-		var expiry = context.GetOptions().GetValue<TimeSpan>("expiry");
+		int seed = context.Options.GetValue<int>("seed");
+		int interval = context.Options.GetValue<int>("interval");
+		var expiry = context.Options.GetValue<TimeSpan>("expiry");
 		var result = new long[context.Arguments.Count];
 
 		for(int i = 0; i < context.Arguments.Count; i++)

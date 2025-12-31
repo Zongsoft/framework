@@ -16,6 +16,7 @@
 [string]$project_messaging_zeromq = 'messaging/zero/build.cake'
 
 [string]$project_aliyun           = 'externals/aliyun/build.cake'
+[string]$project_amazon           = 'externals/amazon/build.cake'
 [string]$project_redis            = 'externals/redis/build.cake'
 [string]$project_polly            = 'externals/polly/build.cake'
 [string]$project_wechat           = 'externals/wechat/build.cake'
@@ -75,6 +76,9 @@ dotnet cake $project_messaging_zeromq $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_aliyun $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_aliyun $CAKE_ARGS $ARGS
+
+Write-Host "dotnet cake $project_amazon $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+dotnet cake $project_amazon $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_redis $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_redis $CAKE_ARGS $ARGS

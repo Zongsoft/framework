@@ -72,7 +72,7 @@ public class AssemblyCommand : CommandBase<CommandContext>
 		//设置遍历的程序集列表
 		Assembly[] assemblies = this.Assemblies;
 
-		switch(context.GetOptions().GetValue<SortMode>("sort"))
+		switch(context.Options.GetValue<SortMode>("sort"))
 		{
 			case SortMode.Asc:
 				assemblies = this.Assemblies.OrderBy(p => p.FullName).ToArray();

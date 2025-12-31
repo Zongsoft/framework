@@ -51,15 +51,15 @@ namespace Zongsoft.Externals.Hangfire.Commands
 
 			var scheduler = context.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException($"Missing the required scheduler.");
 
-			var options = string.IsNullOrEmpty(context.GetOptions().GetValue<string>("id")) ?
+			var options = string.IsNullOrEmpty(context.Options.GetValue<string>("id")) ?
 				Trigger.Options.Identifier(Timestamp.Millennium.Now.ToString()) :
-				Trigger.Options.Identifier(context.GetOptions().GetValue<string>("id"));
+				Trigger.Options.Identifier(context.Options.GetValue<string>("id"));
 
 			string[] identifiers;
 
-			if(context.GetOptions().TryGetValue<string>("cron", out var cron) && !string.IsNullOrEmpty(cron))
+			if(context.Options.TryGetValue<string>("cron", out var cron) && !string.IsNullOrEmpty(cron))
 				identifiers = await ScheduleAsync(scheduler, context.Arguments, context.Value, options.Cron(cron), cancellation);
-			else if(context.GetOptions().TryGetValue<TimeSpan>("delay", out var duration) && duration > TimeSpan.Zero)
+			else if(context.Options.TryGetValue<TimeSpan>("delay", out var duration) && duration > TimeSpan.Zero)
 				identifiers = await ScheduleAsync(scheduler, context.Arguments, context.Value, options.Delay(duration), cancellation);
 			else
 				identifiers = await ScheduleAsync(scheduler, context.Arguments, context.Value, options, cancellation);
