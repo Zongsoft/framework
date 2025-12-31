@@ -59,7 +59,7 @@ public partial class SequenceCommand : CommandBase<CommandContext>
 		if(context.Arguments.Count > 1)
 			throw new CommandException("Only one argument is allowed for specifying the sequence instance.");
 
-		var provider = ApplicationContext.Current.Services.Resolve<IServiceProvider<ISequenceBase>>();
+		var provider = ApplicationContext.Current?.Services.Resolve<IServiceProvider<ISequenceBase>>();
 
 		if(provider == null)
 		{
@@ -78,7 +78,7 @@ public partial class SequenceCommand : CommandBase<CommandContext>
 		if(this.Sequence == null)
 			context.Output.WriteLine(CommandOutletColor.DarkMagenta, context.Arguments.IsEmpty ? "The Sequence provider cannot obtain the default Sequence." : $"The sequence with the name '{context.Arguments[0]}' specified by the provider cannot be found.");
 		else
-			context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The '{this.Sequence}' sequence has been successfully retrieved.");
+			context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The '{this.Sequence}' sequence has been set successfully.");
 
 		return ValueTask.FromResult<object>(this.Sequence);
 	}

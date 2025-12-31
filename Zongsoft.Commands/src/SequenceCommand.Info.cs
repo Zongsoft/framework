@@ -40,11 +40,11 @@ namespace Zongsoft.Commands;
 
 partial class SequenceCommand
 {
-	[CommandOption(KEY_QUIET_OPTION, 'q', typeof(bool), false)]
+	[CommandOption(QUIET_OPTION, 'q', typeof(bool), false)]
 	public class InfoCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义
-		private const string KEY_QUIET_OPTION = "quiet";
+		private const string QUIET_OPTION = "quiet";
 		#endregion
 
 		#region 构造函数
@@ -58,10 +58,10 @@ partial class SequenceCommand
 			if(context.Arguments.IsEmpty)
 				throw new CommandException("The key(s) required to retrieve the sequence information is missing.");
 
-			var quiet = context.GetOptions().GetValue(KEY_QUIET_OPTION, true);
 			var sequence = context.Find<SequenceCommand>(true)?.Sequence ?? throw new CommandException("The sequence instance is not specified.");
+			var quiet = context.GetOptions().GetValue(QUIET_OPTION, true);
 
-			if(sequence != null && !quiet)
+			if(!quiet)
 				context.Output.WriteLine(CommandOutletColor.Blue, sequence);
 
 			if(sequence is Sequence.IVariator variator)

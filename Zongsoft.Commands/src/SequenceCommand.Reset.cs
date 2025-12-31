@@ -53,16 +53,22 @@ partial class SequenceCommand
 		#region 重写方法
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
+			if(context.Arguments.IsEmpty)
+				throw new CommandException("The key(s) to be reset is missing.");
+
 			var sequence = context.Find<SequenceCommand>(true)?.Sequence ?? throw new CommandException("The sequence instance is not specified.");
+			var value = context.GetOptions().GetValue(VALUE_OPTION, 0);
 
-			if(context.Arguments.Count > 0)
+			for(int i = 0; i < context.Arguments.Count; i++)
 			{
-				var value = context.GetOptions().GetValue(VALUE_OPTION, 0);
+				await sequence.ResetAsync(context.Arguments[i], value, cancellation);
 
-				for(int i = 0; i < context.Arguments.Count; i++)
-				{
-					await sequence.ResetAsync(context.Arguments[i], value, cancellation);
-				}
+				context.Output.WriteLine(
+					CommandOutletContent.Create()
+					.Append(CommandOutletColor.DarkCyan, "[")
+					.Append(CommandOutletColor.Magenta, $"{i + 1}")
+					.Append(CommandOutletColor.DarkCyan, "] ")
+					.Append(CommandOutletColor.DarkGreen, $"The specified '{context.Arguments[i]}' sequence has been reset successfully."));
 			}
 
 			return null;

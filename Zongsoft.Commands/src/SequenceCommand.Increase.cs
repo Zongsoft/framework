@@ -41,13 +41,15 @@ namespace Zongsoft.Commands;
 
 partial class SequenceCommand
 {
-	[CommandOption(ROUND_OPTION, 'r', typeof(int), DefaultValue = 1)]
-	[CommandOption(JITTER_OPTION, 'j', typeof(TimeSpan), DefaultValue = "0")]
-	[CommandOption(SEED_OPTION, 's', typeof(int), DefaultValue = 0)]
-	[CommandOption(INTERVAL_OPTION, 'v', typeof(int), DefaultValue = 1)]
+	[CommandOption(QUIET_OPTION, 'q', typeof(bool), false)]
+	[CommandOption(ROUND_OPTION, 'r', typeof(int), 1)]
+	[CommandOption(JITTER_OPTION, 'j', typeof(TimeSpan), "0")]
+	[CommandOption(SEED_OPTION, 's', typeof(int), 0)]
+	[CommandOption(INTERVAL_OPTION, 'v', typeof(int), 1)]
 	public class IncreaseCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义
+		const string QUIET_OPTION = "quiet";
 		const string ROUND_OPTION = "round";
 		const string JITTER_OPTION = "jitter";
 		const string SEED_OPTION = "seed";
@@ -69,6 +71,7 @@ partial class SequenceCommand
 			var round = context.GetOptions().GetValue(ROUND_OPTION, 1);
 			var seed = context.GetOptions().GetValue(SEED_OPTION, 0);
 			var interval = context.GetOptions().GetValue(INTERVAL_OPTION, 1);
+			var quiet = context.GetOptions().GetValue(QUIET_OPTION, true);
 
 			if(round > 1)
 			{
@@ -85,6 +88,7 @@ partial class SequenceCommand
 						seed,
 						round,
 						jitter,
+						quiet,
 						cancellation);
 
 					System.Diagnostics.Debug.Assert(history.Count == round);
@@ -126,7 +130,7 @@ partial class SequenceCommand
 			return value;
 		}
 
-		static async ValueTask<ConcurrentBag<long>> IncreaseAsync(ICommandOutlet output, ISequenceBase sequence, string key, int interval, int seed, int round, TimeSpan jitter, CancellationToken cancellation)
+		static async ValueTask<ConcurrentBag<long>> IncreaseAsync(ICommandOutlet output, ISequenceBase sequence, string key, int interval, int seed, int round, TimeSpan jitter, bool quiet, CancellationToken cancellation)
 		{
 			var result = new ConcurrentBag<long>();
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -139,13 +143,14 @@ partial class SequenceCommand
 				var value = await sequence.IncreaseAsync(key, interval, seed, cancellation);
 				result.Add(value);
 
-				output.WriteLine(CommandOutletContent.Create()
-					.Append(CommandOutletColor.DarkGray, "[")
-					.Append(CommandOutletColor.Cyan, $"{index + 1}")
-					.Append(CommandOutletColor.DarkGray, "] ")
-					.Append(CommandOutletColor.DarkGreen, key)
-					.Append(CommandOutletColor.DarkBlue, "=")
-					.Append(CommandOutletColor.DarkYellow, value));
+				if(!quiet)
+					output.WriteLine(CommandOutletContent.Create()
+						.Append(CommandOutletColor.DarkGray, "[")
+						.Append(CommandOutletColor.Cyan, $"{index + 1}")
+						.Append(CommandOutletColor.DarkGray, "] ")
+						.Append(CommandOutletColor.DarkGreen, key)
+						.Append(CommandOutletColor.DarkBlue, "=")
+						.Append(CommandOutletColor.DarkYellow, value));
 			});
 
 			stopwatch.Stop();
