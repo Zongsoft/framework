@@ -65,9 +65,7 @@ partial class SequenceCommand
 
 				context.Output.WriteLine(
 					CommandOutletContent.Create()
-					.Append(CommandOutletColor.DarkCyan, "[")
-					.Append(CommandOutletColor.Magenta, $"{i + 1}")
-					.Append(CommandOutletColor.DarkCyan, "] ")
+					.Append(CommandOutletColor.DarkCyan, $"[{i + 1}] ")
 					.Append(CommandOutletColor.DarkGreen, $"The specified '{context.Arguments[i]}' sequence has been reset successfully."));
 			}
 

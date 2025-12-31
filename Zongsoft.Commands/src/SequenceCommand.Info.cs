@@ -66,6 +66,22 @@ partial class SequenceCommand
 
 			if(sequence is Sequence.IVariator variator)
 			{
+				if(!quiet && variator.Options != null)
+				{
+					context.Output.WriteLine(CommandOutletContent.Create("{")
+						.AppendLine()
+						.Append(CommandOutletColor.DarkGreen, $"  {nameof(Common.Sequence.VariatorOptions.Initiate)}")
+						.Append(CommandOutletColor.DarkGray, ':')
+						.AppendLine(CommandOutletColor.DarkYellow, variator.Options.Initiate)
+						.Append(CommandOutletColor.DarkGreen, $"  {nameof(Common.Sequence.VariatorOptions.GrowthLower)}")
+						.Append(CommandOutletColor.DarkGray, ':')
+						.AppendLine(CommandOutletColor.DarkYellow, variator.Options.GrowthLower)
+						.Append(CommandOutletColor.DarkGreen, $"  {nameof(Common.Sequence.VariatorOptions.GrowthUpper)}")
+						.Append(CommandOutletColor.DarkGray, ':')
+						.AppendLine(CommandOutletColor.DarkYellow, variator.Options.GrowthUpper)
+						.AppendLine("}"));
+				}
+
 				if(context.Arguments.Count == 1)
 				{
 					if(!quiet)

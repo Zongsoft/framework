@@ -38,10 +38,16 @@ using Zongsoft.Components;
 namespace Zongsoft.Commands;
 
 [CommandOption(VARIATE_OPTION, 'v', typeof(bool))]
+[CommandOption(INITIATE_OPTION, 'i', typeof(int), 0)]
+[CommandOption(GROWTH_LOWER_OPTION, 'l', typeof(int), 100)]
+[CommandOption(GROWTH_UPPER_OPTION, 'u', typeof(int), 1000)]
 public partial class SequenceCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
 	const string VARIATE_OPTION = "variate";
+	const string INITIATE_OPTION = "initiate";
+	const string GROWTH_LOWER_OPTION = "lower";
+	const string GROWTH_UPPER_OPTION = "upper";
 	#endregion
 
 	#region 构造函数
@@ -73,7 +79,12 @@ public partial class SequenceCommand : CommandBase<CommandContext>
 			this.Sequence = provider.GetService(context.Arguments[0]);
 
 		if(context.GetOptions().Contains(VARIATE_OPTION))
-			this.Sequence = this.Sequence.Variate();
+		{
+			var initiate = context.GetOptions().GetValue<int>(INITIATE_OPTION);
+			var growthLower = context.GetOptions().GetValue(GROWTH_LOWER_OPTION, 100);
+			var growthUpper = context.GetOptions().GetValue(GROWTH_UPPER_OPTION, 1000);
+			this.Sequence = this.Sequence.Variate(new Sequence.VariatorOptions(initiate, growthLower, growthUpper));
+		}
 
 		if(this.Sequence == null)
 			context.Output.WriteLine(CommandOutletColor.DarkMagenta, context.Arguments.IsEmpty ? "The Sequence provider cannot obtain the default Sequence." : $"The sequence with the name '{context.Arguments[0]}' specified by the provider cannot be found.");
