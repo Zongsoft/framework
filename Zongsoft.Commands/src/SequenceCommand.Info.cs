@@ -107,7 +107,7 @@ partial class SequenceCommand
 				return false;
 			}
 
-			var content = (string.IsNullOrEmpty(key) ? CommandOutletContent.Create() : CommandOutletContent.Create(CommandOutletColor.DarkCyan, key + Environment.NewLine))
+			var content = (string.IsNullOrEmpty(key) ? CommandOutletContent.Create() : CommandOutletContent.Create(CommandOutletColor.DarkMagenta, $"[{key}]{Environment.NewLine}"))
 				.Append(CommandOutletColor.DarkGreen, nameof(statistics.Count))
 				.Append(CommandOutletColor.DarkGray, " : ")
 				.AppendLine(CommandOutletColor.DarkYellow, statistics.Count)
