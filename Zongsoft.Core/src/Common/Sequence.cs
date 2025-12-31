@@ -45,7 +45,7 @@ public static class Sequence
 	/// 	<para>序列号器的实现一般依赖于 Redis、Etcd、数据库等进行持久化，这在高频调用场景下会出现性能瓶颈问题，譬如在批量写数据时需要频繁获取序列号。</para>
 	/// 	<para>该方法会返回一个包装指定序列号提供程序的自适应可变速率的序号器，它会根据调用频率来加大递增(减)的步长(<c>interval</c>)，然后在本地进行递增(减)，待本地计数器溢满后再根据频率来调用远程的序列号器。</para>
 	/// </remarks>
-	public static IVariator Variate(this ISequenceBase sequence, int initiate = 10)
+	public static IVariator Variate(this ISequenceBase sequence, int initiate = 0)
 	{
 		if(sequence == null)
 			throw new ArgumentNullException(nameof(sequence));
@@ -53,6 +53,7 @@ public static class Sequence
 		return sequence is SequenceVariator variator ? variator : new SequenceVariator(sequence, initiate);
 	}
 
+	#region 公共嵌套
 	public interface IVariator : ISequenceBase
 	{
 		IVariatorStatistics GetStatistics(string key);
@@ -73,8 +74,9 @@ public static class Sequence
 		/// <summary>获取最近递增请求的时间。</summary>
 		DateTime Timestamp { get; }
 	}
+	#endregion
 
-	#region 嵌套子类
+	#region 私有嵌套
 	private sealed class SequenceVariator(ISequenceBase sequence, int initiate) : IVariator, ISequenceBase
 	{
 		private readonly int _initiate = initiate;
@@ -116,8 +118,9 @@ public static class Sequence
 	private sealed class Variator(string name, ISequenceBase sequence, int initiate) : IVariatorStatistics
 	{
 		#region 常量定义
-		const float ACQUIRE_LIMIT = 1000; //间隔最大时长（单位：毫秒）
-		const int ACQUIRE_GROWTH  = 100;  //极速请求频率的最小递增步长
+		const int ACQUIRE_LIMIT = 1000;         //间隔最大时长（单位：毫秒）
+		const int ACQUIRE_GROWTH_LOWER = 100;   //极速请求频率的最小递增步长
+		const int ACQUIRE_GROWTH_UPPER = 5000;  //极速请求频率的最大递增步长
 		#endregion
 
 		#region 成员变量
@@ -228,9 +231,8 @@ public static class Sequence
 					Interlocked.Increment(ref _count);
 					var length = this.GetAcquireInterval(interval);
 
-					length = interval > 0 ?
-						Math.Max(_initiate, length) :
-						Math.Min(-_initiate, length);
+					//确保请求递增的步长在限定范围内
+					length = ClampInterval(length, _initiate, ACQUIRE_GROWTH_UPPER);
 
 					_threshold = _sequence.Increase(_name, length, seed);
 					_value = _threshold == seed ? seed : _threshold - length;
@@ -260,9 +262,8 @@ public static class Sequence
 					Interlocked.Increment(ref _count);
 					var length = this.GetAcquireInterval(interval);
 
-					length = interval > 0 ?
-						Math.Max(_initiate, length) :
-						Math.Min(-_initiate, length);
+					//确保请求递增的步长在限定范围内
+					length = ClampInterval(length, _initiate, ACQUIRE_GROWTH_UPPER);
 
 					_threshold = await _sequence.IncreaseAsync(_name, length, seed, cancellation);
 					_value = _threshold == seed ? seed : _threshold - length;
@@ -292,17 +293,24 @@ public static class Sequence
 			//请求的间隔等于零（即请求频率低于1毫秒）
 			if(duration == 0)
 				return _interval > 0 ?
-					Math.Max(ACQUIRE_GROWTH, _interval * 2) :
-					Math.Min(-ACQUIRE_GROWTH, _interval * 2);
+					Math.Max(ACQUIRE_GROWTH_LOWER, _interval * 2) :
+					Math.Min(-ACQUIRE_GROWTH_LOWER, _interval * 2);
 
-			//剩下的分支：请求的间隔介于1毫秒至最大时长之间
-			var growthRate = Math.Max(2.0f, ACQUIRE_LIMIT / duration);
-			var declineRate = 1.0f - (duration / ACQUIRE_LIMIT);
+			/*
+			 * 剩下的分支：请求的间隔介于1毫秒至最大时长之间
+			 */
+
+			var growthRate = Math.Max(2.0f, (float)ACQUIRE_LIMIT / duration);
+			var declineRate = 1.0f - (duration / (float)ACQUIRE_LIMIT);
 
 			return interval > 0 ?
 				(int)Math.Max(interval * growthRate, _interval * declineRate):
 				(int)Math.Min(interval * growthRate, _interval * declineRate);
 		}
+
+		private static int ClampInterval(int interval, int minimum, int maximum) => interval > 0 ?
+			Math.Clamp(interval, minimum, maximum) :
+			Math.Clamp(interval, -maximum, -minimum);
 		#endregion
 
 		#region 重写方法
