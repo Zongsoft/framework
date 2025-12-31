@@ -34,6 +34,10 @@ namespace Zongsoft.Components;
 
 public class CommandOptionDescriptor
 {
+	#region 成员字段
+	private object _defaultValue;
+	#endregion
+
 	#region 构造函数
 	public CommandOptionDescriptor(string name, bool required, Type type = null, Type converterType = null, object defaultValue = null, string description = null) :
 		this(name, '\0', required, type, converterType, defaultValue, description) { }
@@ -66,7 +70,11 @@ public class CommandOptionDescriptor
 	public Type ConverterType { get; set; }
 
 	/// <summary>获取或设置命令选项的默认值。</summary>
-	public object DefaultValue { get; set; }
+	public object DefaultValue
+	{
+		get => _defaultValue ?? Common.TypeExtension.GetDefaultValue(this.Type);
+		set => _defaultValue = value;
+	}
 
 	/// <summary>获取或设置命令选项的文本描述。</summary>
 	public string Description { get; set; }
