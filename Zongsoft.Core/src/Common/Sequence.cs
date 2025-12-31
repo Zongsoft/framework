@@ -38,24 +38,64 @@ public static class Sequence
 {
 	/// <summary>为指定的序列号提供程序包装一个自适应可变速率的序列号器。</summary>
 	/// <param name="sequence">指定的待包装的序列号器。</param>
-	/// <param name="initiate">指定的批次递增的起增量。</param>
+	/// <param name="options">指定的自适应可变速率序号选项。</param>
 	/// <returns>返回自适应可变速率的序列号器。</returns>
 	/// <exception cref="ArgumentNullException">指定的<paramref name="sequence"/>参数为空(<c>null</c>)。</exception>
 	/// <remarks>
 	/// 	<para>序列号器的实现一般依赖于 Redis、Etcd、数据库等进行持久化，这在高频调用场景下会出现性能瓶颈问题，譬如在批量写数据时需要频繁获取序列号。</para>
 	/// 	<para>该方法会返回一个包装指定序列号提供程序的自适应可变速率的序号器，它会根据调用频率来加大递增(减)的步长(<c>interval</c>)，然后在本地进行递增(减)，待本地计数器溢满后再根据频率来调用远程的序列号器。</para>
 	/// </remarks>
-	public static IVariator Variate(this ISequenceBase sequence, int initiate = 0)
+	public static IVariator Variate(this ISequenceBase sequence, VariatorOptions options = null)
 	{
 		if(sequence == null)
 			throw new ArgumentNullException(nameof(sequence));
 
-		return sequence is SequenceVariator variator ? variator : new SequenceVariator(sequence, initiate);
+		return sequence is SequenceVariator variator ? variator : new SequenceVariator(sequence, options);
 	}
 
 	#region 公共嵌套
+	public sealed class VariatorOptions
+	{
+		#region 常量定义
+		const int GROWTH_LOWER = 100;
+		const int GROWTH_UPPER = 1000;
+		#endregion
+
+		#region 单例字段
+		public static readonly VariatorOptions Default = new(0, GROWTH_LOWER, GROWTH_UPPER);
+		#endregion
+
+		#region 构造函数
+		public VariatorOptions(int growthLower, int growthUpper) : this(0, growthLower, growthUpper) { }
+		public VariatorOptions(int initiate, int growthLower, int growthUpper)
+		{
+			ArgumentOutOfRangeException.ThrowIfNegative(initiate);
+			ArgumentOutOfRangeException.ThrowIfNegative(growthLower);
+			ArgumentOutOfRangeException.ThrowIfNegative(growthUpper);
+
+			this.GrowthLower = Math.Min(growthLower, growthUpper);
+			this.GrowthUpper = Math.Max(growthLower, growthUpper);
+			this.Initiate = Math.Min(initiate, this.GrowthUpper);
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>获取批次递增(减)的起增量。</summary>
+		public int Initiate { get; }
+		/// <summary>获取高频递增(减)的最小步长。</summary>
+		public int GrowthLower { get; }
+		/// <summary>获取高频递增(减)的最大步长。</summary>
+		public int GrowthUpper { get; }
+		#endregion
+
+		#region 重写方法
+		public override string ToString() => $"{this.Initiate}({this.GrowthLower}~{this.GrowthUpper})";
+		#endregion
+	}
+
 	public interface IVariator : ISequenceBase
 	{
+		VariatorOptions Options { get; }
 		IVariatorStatistics GetStatistics(string key);
 	}
 
@@ -77,12 +117,13 @@ public static class Sequence
 	#endregion
 
 	#region 私有嵌套
-	private sealed class SequenceVariator(ISequenceBase sequence, int initiate) : IVariator, ISequenceBase
+	private sealed class SequenceVariator(ISequenceBase sequence, VariatorOptions options = null) : IVariator, ISequenceBase
 	{
-		private readonly int _initiate = initiate;
 		private readonly ISequenceBase _sequence = sequence;
+		private readonly VariatorOptions _options = options ?? VariatorOptions.Default;
 		private readonly ConcurrentDictionary<string, Variator> _variators = new();
 
+		public VariatorOptions Options => options;
 		public IVariatorStatistics GetStatistics(string key) => _variators.TryGetValue(key, out var variator) ? variator : null;
 
 		public long Decrease(string key, int interval = 1, int seed = 0) => this.Increase(key, -interval, seed);
@@ -90,12 +131,12 @@ public static class Sequence
 
 		public long Increase(string key, int interval = 1, int seed = 0)
 		{
-			return _variators.GetOrAdd(key, key => new Variator(key, _sequence, _initiate)).Increase(interval, seed);
+			return _variators.GetOrAdd(key, key => new Variator(key, _sequence, _options)).Increase(interval, seed);
 		}
 
 		public ValueTask<long> IncreaseAsync(string key, int interval = 1, int seed = 0, CancellationToken cancellation = default)
 		{
-			return _variators.GetOrAdd(key, key => new Variator(key, _sequence, _initiate)).IncreaseAsync(interval, seed, cancellation);
+			return _variators.GetOrAdd(key, key => new Variator(key, _sequence, _options)).IncreaseAsync(interval, seed, cancellation);
 		}
 
 		public void Reset(string key, int value = 0)
@@ -115,12 +156,10 @@ public static class Sequence
 		}
 	}
 
-	private sealed class Variator(string name, ISequenceBase sequence, int initiate) : IVariatorStatistics
+	private sealed class Variator(string name, ISequenceBase sequence, VariatorOptions options) : IVariatorStatistics
 	{
 		#region 常量定义
-		const int ACQUIRE_LIMIT = 1000;         //间隔最大时长（单位：毫秒）
-		const int ACQUIRE_GROWTH_LOWER = 100;   //极速请求频率的最小递增步长
-		const int ACQUIRE_GROWTH_UPPER = 5000;  //极速请求频率的最大递增步长
+		const int ACQUIRE_LIMIT = 1000; //间隔最大时长（单位：毫秒）
 		#endregion
 
 		#region 成员变量
@@ -131,8 +170,8 @@ public static class Sequence
 		private long _threshold;
 		private long _timestamp;
 		private readonly string _name = name;
-		private readonly int _initiate = Math.Abs(initiate);
 		private readonly ISequenceBase _sequence = sequence;
+		private readonly VariatorOptions _options = options;
 		private readonly SemaphoreSlim _mutex = new(1, 1);
 		#endregion
 
@@ -232,7 +271,7 @@ public static class Sequence
 					var length = this.GetAcquireInterval(interval);
 
 					//确保请求递增的步长在限定范围内
-					length = ClampInterval(length, _initiate, ACQUIRE_GROWTH_UPPER);
+					length = ClampInterval(length, _options.Initiate, _options.GrowthUpper);
 
 					_threshold = _sequence.Increase(_name, length, seed);
 					_value = _threshold == seed ? seed : _threshold - length;
@@ -263,7 +302,7 @@ public static class Sequence
 					var length = this.GetAcquireInterval(interval);
 
 					//确保请求递增的步长在限定范围内
-					length = ClampInterval(length, _initiate, ACQUIRE_GROWTH_UPPER);
+					length = ClampInterval(length, _options.Initiate, _options.GrowthUpper);
 
 					_threshold = await _sequence.IncreaseAsync(_name, length, seed, cancellation);
 					_value = _threshold == seed ? seed : _threshold - length;
@@ -293,8 +332,8 @@ public static class Sequence
 			//请求的间隔等于零（即请求频率低于1毫秒）
 			if(duration == 0)
 				return _interval > 0 ?
-					Math.Max(ACQUIRE_GROWTH_LOWER, _interval * 2) :
-					Math.Min(-ACQUIRE_GROWTH_LOWER, _interval * 2);
+					Math.Max(_options.GrowthLower, _interval * 2) :
+					Math.Min(-_options.GrowthLower, _interval * 2);
 
 			/*
 			 * 剩下的分支：请求的间隔介于1毫秒至最大时长之间
