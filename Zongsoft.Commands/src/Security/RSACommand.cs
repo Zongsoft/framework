@@ -59,11 +59,11 @@ public class RSACommand : CommandBase<CommandContext>
 
 		if(rsa == null)
 		{
-			rsa = this.RSA = context.GetOptions().TryGetValue<int>(SIZE_OPTION, out var size) && size > 0 ? RSA.Create(size) : RSA.Create();
+			rsa = this.RSA = context.Options.TryGetValue<int>(SIZE_OPTION, out var size) && size > 0 ? RSA.Create(size) : RSA.Create();
 		}
 		else
 		{
-			if(context.GetOptions().TryGetValue<int>(SIZE_OPTION, out var size) && size > 0)
+			if(context.Options.TryGetValue<int>(SIZE_OPTION, out var size) && size > 0)
 				rsa = this.RSA = RSA.Create(size);
 		}
 

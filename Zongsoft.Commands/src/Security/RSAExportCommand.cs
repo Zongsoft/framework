@@ -54,11 +54,11 @@ public class RSAExportCommand : CommandBase<CommandContext>
 	{
 		var rsa = (context.Find<RSACommand>(true)?.RSA) ?? throw new CommandException("Missing the required RSA.");
 
-		object result = context.GetOptions().GetValue<RSAKeyType>(TYPE_OPTION) switch
+		object result = context.Options.GetValue<RSAKeyType>(TYPE_OPTION) switch
 		{
 			RSAKeyType.All => rsa.ToXmlString(true),
 			RSAKeyType.Public => rsa.ExportRSAPublicKey(),
-			RSAKeyType.Private => context.GetOptions().GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8 ?
+			RSAKeyType.Private => context.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8 ?
 				rsa.ExportPkcs8PrivateKey() :
 				rsa.ExportRSAPrivateKey(),
 			RSAKeyType.Subject => rsa.ExportSubjectPublicKeyInfo(),

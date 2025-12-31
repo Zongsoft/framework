@@ -82,7 +82,7 @@ public class QueueCommand : CommandBase<CommandContext>
 		if(context.Value is IMessageQueue queue)
 			this.Queue = queue;
 
-		if(context.GetOptions().TryGetValue<string>("name", out var name))
+		if(context.Options.TryGetValue<string>("name", out var name))
 		{
 			if(string.IsNullOrEmpty(name))
 				return ValueTask.FromResult<object>(this.Queue);

@@ -71,13 +71,13 @@ public class FindCommand : CommandBase<CommandContext>
 				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_Message_PluginNodeNotFound, context.Arguments[i]));
 			else
 			{
-				var mode = context.GetOptions().GetValue<ObtainMode>("obtain");
+				var mode = context.Options.GetValue<ObtainMode>("obtain");
 				var value = node.UnwrapValue(mode);
 
 				if(value != null)
 					result.Add(value);
 
-				context.Output.Write(Utility.GetPluginNodeContent(node, mode, context.GetOptions().GetValue<int>("depth")));
+				context.Output.Write(Utility.GetPluginNodeContent(node, mode, context.Options.GetValue<int>("depth")));
 			}
 		}
 

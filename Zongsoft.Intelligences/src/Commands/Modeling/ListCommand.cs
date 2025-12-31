@@ -46,7 +46,7 @@ public class ListCommand() : CommandBase<CommandContext>("List")
 		var service = context.Find<IServiceAccessor<IModelService>>(true)?.Value ??
 			throw new CommandException("The model service required by this command was not found.");
 
-		if(context.GetOptions().Contains("running"))
+		if(context.Options.Contains("running"))
 		{
 			var models = service.GetModelsAsync("running", cancellation);
 			await context.Dump(models);

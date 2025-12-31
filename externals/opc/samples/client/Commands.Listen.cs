@@ -63,11 +63,11 @@ partial class Commands
 			if(subscribers.Count == 0)
 				throw new CommandException($"No subscriptions.");
 
-			if(context.GetOptions().Contains("spooling"))
+			if(context.Options.Contains("spooling"))
 				_spooler = new(
 					this.OnFlushAsync,
-					TimeSpan.FromMilliseconds(context.GetOptions().GetValue<int>("period")),
-					context.GetOptions().GetValue<int>("limit"));
+					TimeSpan.FromMilliseconds(context.Options.GetValue<int>("period")),
+					context.Options.GetValue<int>("limit"));
 
 			//挂载消费者的通知回调函数
 			foreach(var subscriber in subscribers)

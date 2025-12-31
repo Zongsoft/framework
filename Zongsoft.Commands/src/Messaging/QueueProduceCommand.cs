@@ -66,7 +66,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 		if(queue == null)
 			return null;
 
-		if(context.GetOptions().TryGetValue<string>("topic", out var value))
+		if(context.Options.TryGetValue<string>("topic", out var value))
 			this.Topic = value == "*" ? null : value;
 
 		if(string.IsNullOrEmpty(this.Topic))
@@ -78,8 +78,8 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				.Append(":")
 				.Append(CommandOutletColor.DarkYellow, this.Topic));
 
-		var options = context.GetOptions().TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
-		var tags = context.GetOptions().TryGetValue<string>("tags", out value) ? value : null;
+		var options = context.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
+		var tags = context.Options.TryGetValue<string>("tags", out value) ? value : null;
 
 		var result = await ExecuteCoreAsync(context, data => queue.ProduceAsync(this.Topic, tags, data, options), cancellation);
 		return result;
@@ -87,7 +87,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 
 	private static async ValueTask<IList<string>> ExecuteCoreAsync(CommandContext context, Func<byte[], ValueTask<string>> invoke, CancellationToken cancellation)
 	{
-		var round = context.GetOptions().GetValue<int>("round");
+		var round = context.Options.GetValue<int>("round");
 		var list = new List<string>();
 		var messageId = string.Empty;
 
@@ -124,7 +124,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 		string messageId;
 		byte[] data;
 
-		switch(context.GetOptions().GetValue<ContentType>("type"))
+		switch(context.Options.GetValue<ContentType>("type"))
 		{
 			case ContentType.File:
 				foreach(var arg in context.Arguments)
@@ -142,7 +142,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 				}
 				break;
 			case ContentType.String:
-				var encoding = context.GetOptions().GetValue<Encoding>("encoding") ?? Encoding.UTF8;
+				var encoding = context.Options.GetValue<Encoding>("encoding") ?? Encoding.UTF8;
 
 				foreach(var arg in context.Arguments)
 				{

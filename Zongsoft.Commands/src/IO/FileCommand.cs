@@ -61,18 +61,18 @@ public class FileCommand : CommandBase<CommandContext>, ICommandCompletion
 	{
 		bool isSaving = context.Value != null;
 
-		if(!context.GetOptions().TryGetValue<FileMode>(KEY_MODE_OPTION, out var mode))
+		if(!context.Options.TryGetValue<FileMode>(KEY_MODE_OPTION, out var mode))
 			mode = isSaving ? FileMode.Create : FileMode.Open;
 
-		if(!context.GetOptions().TryGetValue<FileAccess>(KEY_ACCESS_OPTION, out var access))
+		if(!context.Options.TryGetValue<FileAccess>(KEY_ACCESS_OPTION, out var access))
 			access = isSaving ? FileAccess.ReadWrite : FileAccess.Read;
 
 		//打开一个或多个文件流
-		var result = FileUtility.OpenFile(context, mode, access, context.GetOptions().GetValue<FileShare>(KEY_SHARE_OPTION));
+		var result = FileUtility.OpenFile(context, mode, access, context.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
 
 		//如果是写入操作则执行保存方法
 		if(isSaving && result != null)
-			FileUtility.Save(result, context.Value, context.GetOptions().GetValue<Encoding>(KEY_ENCODING_OPTION));
+			FileUtility.Save(result, context.Value, context.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
 
 		return ValueTask.FromResult(result);
 	}

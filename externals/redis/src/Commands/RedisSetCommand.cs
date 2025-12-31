@@ -57,10 +57,9 @@ public class RedisSetCommand : CommandBase<CommandContext>
 		if(context.Arguments.IsEmpty)
 			throw new CommandException("Missing arguments.");
 
-		var expiry = context.GetOptions().GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
-		var requisite = context.GetOptions().GetValue<Caching.CacheRequisite>(REQUISITE_OPTION);
-
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var expiry = context.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
+		var requisite = context.Options.GetValue<Caching.CacheRequisite>(REQUISITE_OPTION);
 
 		if(context.Arguments.Count == 1)
 		{

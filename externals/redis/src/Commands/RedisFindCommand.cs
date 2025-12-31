@@ -64,7 +64,7 @@ public class RedisFindCommand : CommandBase<CommandContext>
 		//定义遍历序号
 		var index = 1;
 
-		var count = context.GetOptions().GetValue<int>(COUNT_OPTION);
+		var count = context.Options.GetValue<int>(COUNT_OPTION);
 		var list = new List<string>(count > 0 ? count : 16);
 
 		await foreach(var key in result)

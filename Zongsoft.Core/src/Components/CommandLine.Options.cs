@@ -36,11 +36,6 @@ namespace Zongsoft.Components;
 
 partial class CommandLine
 {
-	public static CmdletOptionCollection GetOptions(CommandDescriptor descriptor, IEnumerable<CmdletOption> options)
-	{
-		return new CmdletOptionCollection(descriptor, options);
-	}
-
 	public static T GetOptions<T>(CommandDescriptor descriptor, IEnumerable<CmdletOption> options)
 	{
 		if(descriptor == null)
@@ -130,6 +125,28 @@ partial class CommandLine
 
 		#region 公共方法
 		public bool Contains(string name) => name != null && _options.ContainsKey(name);
+		public bool Switch(string name)
+		{
+			if(name != null && _options.TryGetValue(name, out var value))
+			{
+				if(value == null)
+					return true;
+
+				if(Common.Convert.TryConvertValue<bool>(value, out var result))
+					return result;
+
+				return value is string text &&
+				(
+					string.Equals(text, "1", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(text, "on", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(text, "yes", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(text, "enable", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(text, "enabled", StringComparison.OrdinalIgnoreCase)
+				);
+			}
+
+			return false;
+		}
 
 		public object GetValue(string name)
 		{
@@ -151,7 +168,7 @@ partial class CommandLine
 				throw new ArgumentNullException(nameof(name));
 
 			if(_options.TryGetValue(name, out var value))
-				return Common.Convert.ConvertValue<T>(value, defaultValue);
+				return value == null ? defaultValue : Common.Convert.ConvertValue<T>(value, defaultValue);
 
 			if(_descriptor.Options.TryGetValue(name, out var descriptor))
 				return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, descriptor.GetConverter);

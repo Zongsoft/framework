@@ -60,7 +60,7 @@ public class RedisCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var name = context.GetOptions().GetValue<string>("name");
+		var name = context.Options.GetValue<string>("name");
 
 		if(!string.IsNullOrEmpty(name))
 			_redis = RedisServiceProvider.GetRedis(name) ?? throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));

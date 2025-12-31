@@ -55,7 +55,7 @@ public class RSAImportCommand : CommandBase<CommandContext>
 	{
 		var rsa = (context.Find<RSACommand>(true)?.RSA) ?? throw new CommandException("Missing the required RSA.");
 
-		switch(context.GetOptions().GetValue<RSAKeyType>(TYPE_OPTION))
+		switch(context.Options.GetValue<RSAKeyType>(TYPE_OPTION))
 		{
 			case RSAKeyType.All:
 				if(TryGetInputXml(context.Value, out var xml))
@@ -72,7 +72,7 @@ public class RSAImportCommand : CommandBase<CommandContext>
 			case RSAKeyType.Private:
 				if(TryGetInput(context.Value, out var privateKey))
 				{
-					if(context.GetOptions().GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8)
+					if(context.Options.GetValue<RSAKeyFormat>(FORMAT_OPTION) == RSAKeyFormat.Pkcs8)
 						rsa.ImportPkcs8PrivateKey(privateKey, out _);
 					else
 						rsa.ImportRSAPrivateKey(privateKey, out _);

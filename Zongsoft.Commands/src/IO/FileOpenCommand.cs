@@ -57,9 +57,9 @@ public class FileOpenCommand : CommandBase<CommandContext>, ICommandCompletion
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var result = FileUtility.OpenFile(context,
-			context.GetOptions().GetValue<FileMode>(KEY_MODE_OPTION),
-			context.GetOptions().GetValue<FileAccess>(KEY_ACCESS_OPTION),
-			context.GetOptions().GetValue<FileShare>(KEY_SHARE_OPTION));
+			context.Options.GetValue<FileMode>(KEY_MODE_OPTION),
+			context.Options.GetValue<FileAccess>(KEY_ACCESS_OPTION),
+			context.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
 
 		return ValueTask.FromResult(result);
 	}

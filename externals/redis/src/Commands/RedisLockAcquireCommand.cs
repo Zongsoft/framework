@@ -40,11 +40,11 @@ namespace Zongsoft.Externals.Redis.Commands;
 
 [DisplayName("Text.RedisLockAcquireCommand.Name")]
 [Description("Text.RedisLockAcquireCommand.Description")]
-[CommandOption(COMMAND_EXPIRY_OPTION, typeof(string), "60s", false, "")]
+[CommandOption(EXPIRY_OPTION, 'x', typeof(TimeSpan), "60s")]
 public class RedisLockAcquireCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
-	private const string COMMAND_EXPIRY_OPTION = "expiry";
+	private const string EXPIRY_OPTION = "expiry";
 	#endregion
 
 	#region 构造函数
@@ -58,14 +58,7 @@ public class RedisLockAcquireCommand : CommandBase<CommandContext>
 		if(context.Arguments.IsEmpty)
 			throw new CommandException();
 
-		var expiry = TimeSpan.FromMinutes(1);
-
-		if(context.GetOptions().TryGetValue<string>(COMMAND_EXPIRY_OPTION, out var value))
-		{
-			if(!Common.TimeSpanUtility.TryParse(value, out expiry))
-				expiry = TimeSpan.FromMinutes(1);
-		}
-
+		var expiry = context.Options.GetValue(EXPIRY_OPTION, TimeSpan.FromSeconds(60));
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
 		var lockers = new List<IDistributedLock>(context.Arguments.Count);
 

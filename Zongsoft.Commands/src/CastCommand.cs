@@ -72,10 +72,10 @@ public class CastCommand : CommandBase<CommandContext>
 		if(context.Value == null)
 			return ValueTask.FromResult<object>(null);
 
-		var type = context.GetOptions().GetValue<CastType>(KEY_TYPE_OPTION);
-		var encoding = context.GetOptions().GetValue<Encoding>(KEY_ENCODING_OPTION) ?? Encoding.UTF8;
-		var count = context.GetOptions().GetValue<int>(KEY_COUNT_OPTION);
-		var offset = context.GetOptions().GetValue<int>(KEY_OFFSET_OPTION);
+		var type = context.Options.GetValue<CastType>(KEY_TYPE_OPTION);
+		var encoding = context.Options.GetValue<Encoding>(KEY_ENCODING_OPTION) ?? Encoding.UTF8;
+		var count = context.Options.GetValue<int>(KEY_COUNT_OPTION);
+		var offset = context.Options.GetValue<int>(KEY_OFFSET_OPTION);
 
 		if(offset < 0)
 			throw new CommandOptionValueException(KEY_OFFSET_OPTION, offset);

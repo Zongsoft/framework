@@ -97,8 +97,8 @@ public class QueueSubscribeCommand : CommandBase<CommandContext>
 		public QueueHandler(CommandContext context)
 		{
 			_context = context;
-			_format = context.GetOptions().GetValue<QueueMessageFormat>("format");
-			_acknowledgeable = context.GetOptions().GetValue<bool>("acknowledgeable");
+			_format = context.Options.GetValue<QueueMessageFormat>("format");
+			_acknowledgeable = context.Options.GetValue<bool>("acknowledgeable");
 		}
 
 		protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
