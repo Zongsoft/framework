@@ -41,6 +41,7 @@ namespace Zongsoft.Commands;
 
 [DisplayName("Text.JsonCommand.Name")]
 [Description("Text.JsonCommand.Description")]
+[CommandOption(QUIET_OPTION, 'q')]
 [CommandOption(DEPTH_OPTION, typeof(int), 3, "Text.JsonCommand.Options.Depth")]
 [CommandOption(TYPED_OPTION, 't', Description = "Text.JsonCommand.Options.Typed")]
 [CommandOption(INDENTED_OPTION, 'i', Description = "Text.JsonCommand.Options.Indented")]
@@ -48,6 +49,7 @@ namespace Zongsoft.Commands;
 public class JsonCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
+	private const string QUIET_OPTION = "quiet";
 	private const string DEPTH_OPTION = "depth";
 	private const string TYPED_OPTION = "typed";
 	private const string CASING_OPTION = "casing";
@@ -86,7 +88,7 @@ public class JsonCommand : CommandBase<CommandContext>
 
 		var json = await Serializer.Json.SerializeAsync(graph, options, cancellation);
 
-		if(json != null && !context.GetOptions().GetValue(KEY_QUIET_OPTION, true))
+		if(json != null && !context.Options.Switch(QUIET_OPTION))
 			context.Output.WriteLine(json);
 
 		return json;
