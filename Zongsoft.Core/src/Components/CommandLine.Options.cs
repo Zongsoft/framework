@@ -30,7 +30,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 
 namespace Zongsoft.Components;
 
@@ -162,7 +161,21 @@ partial class CommandLine
 			throw new ArgumentException($"The command option named '{name}' was not found.");
 		}
 
-		public T GetValue<T>(string name, T defaultValue = default)
+		public T GetValue<T>(string name)
+		{
+			if(string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name));
+
+			if(_options.TryGetValue(name, out var value) && value != null)
+				return Common.Convert.ConvertValue<T>(value);
+
+			if(_descriptor.Options.TryGetValue(name, out var descriptor))
+				return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, descriptor.GetConverter);
+
+			throw new ArgumentException($"The command option named '{name}' was not found.");
+		}
+
+		public T GetValue<T>(string name, T defaultValue)
 		{
 			if(string.IsNullOrEmpty(name))
 				throw new ArgumentNullException(nameof(name));
