@@ -40,7 +40,7 @@ namespace Zongsoft.Commands;
 
 partial class SequenceCommand
 {
-	[CommandOption(QUIET_OPTION, 'q', typeof(bool), false)]
+	[CommandOption(QUIET_OPTION, 'q')]
 	public class InfoCommand : CommandBase<CommandContext>
 	{
 		#region 常量定义
@@ -59,7 +59,7 @@ partial class SequenceCommand
 				throw new CommandException("The key(s) required to retrieve the sequence information is missing.");
 
 			var sequence = context.Find<SequenceCommand>(true)?.Sequence ?? throw new CommandException("The sequence instance is not specified.");
-			var quiet = context.GetOptions().GetValue(QUIET_OPTION, true);
+			var quiet = context.Options.Switch(QUIET_OPTION);
 
 			if(!quiet)
 				context.Output.WriteLine(CommandOutletColor.Blue, sequence);

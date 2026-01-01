@@ -78,11 +78,11 @@ public partial class SequenceCommand : CommandBase<CommandContext>
 		else
 			this.Sequence = provider.GetService(context.Arguments[0]);
 
-		if(context.GetOptions().Contains(VARIATE_OPTION))
+		if(context.Options.Switch(VARIATE_OPTION))
 		{
-			var initiate = context.GetOptions().GetValue<int>(INITIATE_OPTION);
-			var growthLower = context.GetOptions().GetValue(GROWTH_LOWER_OPTION, 100);
-			var growthUpper = context.GetOptions().GetValue(GROWTH_UPPER_OPTION, 1000);
+			var initiate = context.Options.GetValue<int>(INITIATE_OPTION);
+			var growthLower = context.Options.GetValue(GROWTH_LOWER_OPTION, 100);
+			var growthUpper = context.Options.GetValue(GROWTH_UPPER_OPTION, 1000);
 			this.Sequence = this.Sequence.Variate(new Sequence.VariatorOptions(initiate, growthLower, growthUpper));
 		}
 

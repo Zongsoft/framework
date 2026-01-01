@@ -41,7 +41,7 @@ namespace Zongsoft.Commands;
 
 partial class SequenceCommand
 {
-	[CommandOption(QUIET_OPTION, 'q', typeof(bool), false)]
+	[CommandOption(QUIET_OPTION, 'q')]
 	[CommandOption(ROUND_OPTION, 'r', typeof(int), 1)]
 	[CommandOption(JITTER_OPTION, 'j', typeof(TimeSpan), "0")]
 	[CommandOption(SEED_OPTION, 's', typeof(int), 0)]
@@ -68,14 +68,14 @@ partial class SequenceCommand
 				throw new InvalidOperationException("Missing the required arguments.");
 
 			var sequence = context.Find<SequenceCommand>(true)?.Sequence ?? throw new CommandException("The sequence instance is not specified.");
-			var round = context.GetOptions().GetValue(ROUND_OPTION, 1);
-			var seed = context.GetOptions().GetValue(SEED_OPTION, 0);
-			var interval = context.GetOptions().GetValue(INTERVAL_OPTION, 1);
-			var quiet = context.GetOptions().GetValue(QUIET_OPTION, true);
+			var round = context.Options.GetValue(ROUND_OPTION, 1);
+			var seed = context.Options.GetValue(SEED_OPTION, 0);
+			var interval = context.Options.GetValue(INTERVAL_OPTION, 1);
+			var quiet = context.Options.Switch(QUIET_OPTION);
 
 			if(round > 1)
 			{
-				var jitter = context.GetOptions().GetValue(JITTER_OPTION, TimeSpan.Zero);
+				var jitter = context.Options.GetValue(JITTER_OPTION, TimeSpan.Zero);
 				var result = new Dictionary<string, ConcurrentBag<long>>(context.Arguments.Count);
 
 				for(int i = 0; i < context.Arguments.Count; i++)

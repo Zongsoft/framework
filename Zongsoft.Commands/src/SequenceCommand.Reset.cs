@@ -57,7 +57,7 @@ partial class SequenceCommand
 				throw new CommandException("The key(s) to be reset is missing.");
 
 			var sequence = context.Find<SequenceCommand>(true)?.Sequence ?? throw new CommandException("The sequence instance is not specified.");
-			var value = context.GetOptions().GetValue(VALUE_OPTION, 0);
+			var value = context.Options.GetValue(VALUE_OPTION, 0);
 
 			for(int i = 0; i < context.Arguments.Count; i++)
 			{
