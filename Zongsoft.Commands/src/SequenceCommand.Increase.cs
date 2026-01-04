@@ -154,9 +154,10 @@ partial class SequenceCommand
 			});
 
 			stopwatch.Stop();
+			var elapsed = stopwatch.Elapsed;
 			output.WriteLine(CommandOutletContent.Create()
 				.Append(CommandOutletColor.Magenta, ">> ")
-				.Append(CommandOutletColor.DarkCyan, $"Completed {round:#,###} rounds for '{key}' in {stopwatch.Elapsed.TotalMilliseconds:#,###} ms."));
+				.Append(CommandOutletColor.DarkCyan, $"Completed {round:#,###} rounds for '{key}' in {elapsed.TotalMilliseconds:#,###.######} ms."));
 
 			return result;
 		}
