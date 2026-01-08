@@ -228,10 +228,8 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	#endregion
 
 	#region 执行方法
-	public IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute<T>(name, null, out _, options, executing, executed);
-	public IEnumerable<T> Execute<T>(string name, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute<T>(name, null, out outParameters, options, executing, executed);
-	public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute<T>(name, inParameters, out _, options, executing, executed);
-	public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
+	public IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute<T>(name, null, options, executing, executed);
+	public IEnumerable<T> Execute<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -240,14 +238,11 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 			throw new ArgumentNullException(nameof(name));
 
 		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, false, typeof(T), inParameters, options);
+		var context = this.CreateExecuteContext(name, false, typeof(T), parameters, options);
 
 		//处理数据访问操作前的回调
 		if(executing != null && executing(context))
 		{
-			//设置默认的返回参数值
-			outParameters = context.OutParameters;
-
 			//返回委托回调的结果
 			return context.Result as IEnumerable<T>;
 		}
@@ -255,9 +250,6 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		//激发“Executing”事件，如果被中断则返回
 		if(this.OnExecuting(context))
 		{
-			//设置默认的返回参数值
-			outParameters = context.OutParameters;
-
 			//返回事件执行后的结果
 			return context.Result as IEnumerable<T>;
 		}
@@ -275,11 +267,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		this.OnExecuted(context);
 
 		//处理数据访问操作后的回调
-		if(executed != null)
-			executed(context);
-
-		//再次更新返回参数值
-		outParameters = context.OutParameters;
+		executed?.Invoke(context);
 
 		var result = ToEnumerable<T>(context.Result);
 
@@ -290,8 +278,12 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		return result;
 	}
 
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, executing, executed, cancellation);
-	public async IAsyncEnumerable<T> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, null, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, executing, executed, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, parameters, null, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, parameters, options, null, null, cancellation);
+	public async IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -300,7 +292,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 			throw new ArgumentNullException(nameof(name));
 
 		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, false, typeof(T), inParameters, options);
+		var context = this.CreateExecuteContext(name, false, typeof(T), parameters, options);
 
 		//处理数据访问操作前的回调
 		if(executing != null && executing(context))
@@ -366,10 +358,8 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 			yield return enumerator.Current;
 	}
 
-	public object ExecuteScalar(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.ExecuteScalar(name, null, out _, options, executing, executed);
-	public object ExecuteScalar(string name, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.ExecuteScalar(name, null, out outParameters, options, executing, executed);
-	public object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.ExecuteScalar(name, inParameters, out _, options, executing, executed);
-	public object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
+	public object ExecuteScalar(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.ExecuteScalar(name, null, options, executing, executed);
+	public object ExecuteScalar(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -378,14 +368,11 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 			throw new ArgumentNullException(nameof(name));
 
 		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, true, typeof(object), inParameters, options);
+		var context = this.CreateExecuteContext(name, true, typeof(object), parameters, options);
 
 		//处理数据访问操作前的回调
 		if(executing != null && executing(context))
 		{
-			//设置默认的返回参数值
-			outParameters = context.OutParameters;
-
 			//返回委托回调的结果
 			return context.Result;
 		}
@@ -393,9 +380,6 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		//激发“Executing”事件，如果被中断则返回
 		if(this.OnExecuting(context))
 		{
-			//设置默认的返回参数值
-			outParameters = context.OutParameters;
-
 			//返回事件执行后的结果
 			return context.Result;
 		}
@@ -413,11 +397,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		this.OnExecuted(context);
 
 		//处理数据访问操作后的回调
-		if(executed != null)
-			executed(context);
-
-		//再次更新返回参数值
-		outParameters = context.OutParameters;
+		executed?.Invoke(context);
 
 		var result = context.Result;
 
@@ -428,8 +408,12 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		return result;
 	}
 
-	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, executing, executed, cancellation);
-	public async ValueTask<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null, CancellationToken cancellation = default)
+	public ValueTask<object> ExecuteScalarAsync(string name, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, null, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, executing, executed, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, parameters, null, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, parameters, options, null, null, cancellation);
+	public async ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -438,7 +422,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 			throw new ArgumentNullException(nameof(name));
 
 		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, true, typeof(object), inParameters, options);
+		var context = this.CreateExecuteContext(name, true, typeof(object), parameters, options);
 
 		//处理数据访问操作前的回调
 		if(executing != null && executing(context))
@@ -461,8 +445,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 		this.OnExecuted(context);
 
 		//处理数据访问操作后的回调
-		if(executed != null)
-			executed(context);
+		executed?.Invoke(context);
 
 		var result = context.Result;
 
@@ -1810,7 +1793,7 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	#region 抽象方法
 	protected abstract ISchemaParser CreateSchema();
 	protected abstract IDataSequencer CreateSequencer();
-	protected abstract DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDataExecuteOptions options);
+	protected abstract DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IEnumerable<Parameter> parameters, IDataExecuteOptions options);
 	protected abstract DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options);
 	protected abstract DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options);
 	protected abstract DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options);

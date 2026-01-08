@@ -480,10 +480,8 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	#endregion
 
 	#region 执行方法
-	public IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null) => this.Execute<T>(name, null, out _, options);
-	public IEnumerable<T> Execute<T>(string name, out IDictionary<string, object> outParameters, DataExecuteOptions options = null) => this.Execute<T>(name, null, out outParameters, options);
-	public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null) => this.Execute<T>(name, inParameters, out _, options);
-	public IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null)
+	public IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null) => this.Execute<T>(name, null, options);
+	public IEnumerable<T> Execute<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null)
 	{
 		//构建数据操作的选项对象
 		if(options == null)
@@ -492,18 +490,16 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 		//进行授权验证
 		this.Authorize(DataServiceMethod.Execute(), options);
 
-		return this.OnExecute<T>(name, inParameters, out outParameters, options);
+		return this.OnExecute<T>(name, parameters, options);
 	}
 
-	protected virtual IEnumerable<T> OnExecute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options)
+	protected virtual IEnumerable<T> OnExecute<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options)
 	{
-		return this.DataAccess.Execute<T>(name, inParameters, out outParameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
+		return this.DataAccess.Execute<T>(name, parameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
 	}
 
-	public object ExecuteScalar(string name, DataExecuteOptions options = null) => this.ExecuteScalar(name, null, out _, options);
-	public object ExecuteScalar(string name, out IDictionary<string, object> outParameters, DataExecuteOptions options = null) => this.ExecuteScalar(name, null, out outParameters, options);
-	public object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null) => this.ExecuteScalar(name, inParameters, out _, options);
-	public object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null)
+	public object ExecuteScalar(string name, DataExecuteOptions options = null) => this.ExecuteScalar(name, null, options);
+	public object ExecuteScalar(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null)
 	{
 		//构建数据操作的选项对象
 		if(options == null)
@@ -512,12 +508,12 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 		//进行授权验证
 		this.Authorize(DataServiceMethod.Execute(), options);
 
-		return this.OnExecuteScalar(name, inParameters, out outParameters, options);
+		return this.OnExecuteScalar(name, parameters, options);
 	}
 
-	protected virtual object OnExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options)
+	protected virtual object OnExecuteScalar(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options)
 	{
-		return this.DataAccess.ExecuteScalar(name, inParameters, out outParameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
+		return this.DataAccess.ExecuteScalar(name, parameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
 	}
 	#endregion
 

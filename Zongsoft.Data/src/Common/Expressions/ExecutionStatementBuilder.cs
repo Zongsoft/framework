@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Data;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
@@ -44,16 +45,22 @@ public class ExecutionStatementBuilder : IStatementBuilder<DataExecuteContext>
 			statement.Parameters.Add(Expression.Parameter(parameter));
 		}
 
-		if(statement.Parameters.Count > 0 && context.InParameters != null && context.InParameters.Count > 0)
+		if(statement.Parameters.Count > 0 && context.Parameters != null)
 		{
-			foreach(var entry in context.InParameters)
+			foreach(var entry in context.Parameters)
 			{
-				if(statement.Parameters.TryGetValue(entry.Key, out var parameter))
+				if(IsInputParameter(entry) && statement.Parameters.TryGetValue(entry.Name, out var parameter))
 					parameter.Value = entry.Value;
 			}
 		}
 
 		yield return statement;
+
+		static bool IsInputParameter(Parameter parameter) => parameter != null &&
+		(
+			parameter.Direction == ParameterDirection.Input ||
+			parameter.Direction == ParameterDirection.InputOutput
+		);
 	}
 	#endregion
 

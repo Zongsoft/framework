@@ -80,12 +80,11 @@ public abstract class DataExecuteContextBase : DataAccessContextBase<IDataExecut
 	#endregion
 
 	#region 构造函数
-	protected DataExecuteContextBase(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, DataAccessMethod.Execute, options ?? new DataExecuteOptions())
+	protected DataExecuteContextBase(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IEnumerable<Parameter> parameters, IDataExecuteOptions options = null) : base(dataAccess, name, DataAccessMethod.Execute, options ?? new DataExecuteOptions())
 	{
 		_resultType = resultType ?? throw new ArgumentNullException(nameof(resultType));
 		this.IsScalar = isScalar;
-		this.InParameters = inParameters;
-		this.OutParameters = outParameters;
+		this.Parameters = parameters;
 		this.Command = dataAccess.GetCommand(name);
 	}
 	#endregion
@@ -110,11 +109,8 @@ public abstract class DataExecuteContextBase : DataAccessContextBase<IDataExecut
 	/// <summary>获取或设置执行操作的结果。</summary>
 	public object Result { get; set; }
 
-	/// <summary>获取执行操作的输入参数。</summary>
-	public IDictionary<string, object> InParameters { get; }
-
-	/// <summary>获取或设置执行操作的输出参数。</summary>
-	public IDictionary<string, object> OutParameters { get; set; }
+	/// <summary>获取执行操作的参数集。</summary>
+	public IEnumerable<Parameter> Parameters { get; }
 	#endregion
 }
 

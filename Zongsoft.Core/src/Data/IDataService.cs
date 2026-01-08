@@ -111,14 +111,10 @@ public partial interface IDataService
 
 	#region 执行方法
 	IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null);
-	IEnumerable<T> Execute<T>(string name, out IDictionary<string, object> outParameters, DataExecuteOptions options = null);
-	IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null);
-	IEnumerable<T> Execute<T>(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null);
+	IEnumerable<T> Execute<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null);
 
 	object ExecuteScalar(string name, DataExecuteOptions options = null);
-	object ExecuteScalar(string name, out IDictionary<string, object> outParameters, DataExecuteOptions options = null);
-	object ExecuteScalar(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null);
-	object ExecuteScalar(string name, IDictionary<string, object> inParameters, out IDictionary<string, object> outParameters, DataExecuteOptions options = null);
+	object ExecuteScalar(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null);
 	#endregion
 
 	#region 存在方法

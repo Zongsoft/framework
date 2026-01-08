@@ -43,8 +43,8 @@ partial class DataServiceBase<TModel>
 	#region 执行方法
 	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, null, cancellation);
 	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, inParameters, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, CancellationToken cancellation = default)
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, parameters, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, CancellationToken cancellation = default)
 	{
 		//构建数据操作的选项对象
 		if(options == null)
@@ -53,13 +53,13 @@ partial class DataServiceBase<TModel>
 		//进行授权验证
 		this.Authorize(DataServiceMethod.Execute(), options);
 
-		return this.OnExecuteAsync<T>(name, inParameters, options, cancellation);
+		return this.OnExecuteAsync<T>(name, parameters, options, cancellation);
 	}
 
 	public ValueTask<object> ExecuteScalarAsync(string name, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, null, cancellation);
 	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, inParameters, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, IDictionary<string, object> inParameters, DataExecuteOptions options = null, CancellationToken cancellation = default)
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, parameters, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, CancellationToken cancellation = default)
 	{
 		//构建数据操作的选项对象
 		if(options == null)
@@ -68,17 +68,17 @@ partial class DataServiceBase<TModel>
 		//进行授权验证
 		this.Authorize(DataServiceMethod.Execute(), options);
 
-		return this.OnExecuteScalarAsync(name, inParameters, options, cancellation);
+		return this.OnExecuteScalarAsync(name, parameters, options, cancellation);
 	}
 
-	protected virtual IAsyncEnumerable<T> OnExecuteAsync<T>(string name, IDictionary<string, object> inParameters, DataExecuteOptions options, CancellationToken cancellation)
+	protected virtual IAsyncEnumerable<T> OnExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation)
 	{
-		return this.DataAccess.ExecuteAsync<T>(name, inParameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx), cancellation);
+		return this.DataAccess.ExecuteAsync<T>(name, parameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx), cancellation);
 	}
 
-	protected virtual ValueTask<object> OnExecuteScalarAsync(string name, IDictionary<string, object> inParameters, DataExecuteOptions options, CancellationToken cancellation)
+	protected virtual ValueTask<object> OnExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation)
 	{
-		return this.DataAccess.ExecuteScalarAsync(name, inParameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx), cancellation);
+		return this.DataAccess.ExecuteScalarAsync(name, parameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx), cancellation);
 	}
 	#endregion
 

@@ -53,7 +53,7 @@ public class DataExecuteOptions : DataOptionsBase, IDataExecuteOptions
 	/// <param name="name">指定的参数名称。</param>
 	/// <param name="value">指定的参数值。</param>
 	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-	public static Builder Parameter(string name, object value = null) => new(new[] { new KeyValuePair<string, object>(name, value) });
+	public static Builder Parameter(string name, object value = null) => new([new KeyValuePair<string, object>(name, value)]);
 
 	/// <summary>创建一个带参数的数据操作选项构建器。</summary>
 	/// <param name="parameters">指定的多个附加参数。</param>
@@ -80,7 +80,7 @@ public class DataExecuteOptions : DataOptionsBase, IDataExecuteOptions
 		#endregion
 
 		#region 构建方法
-		public override DataExecuteOptions Build() => new DataExecuteOptions(this.Parameters);
+		public override DataExecuteOptions Build() => new(this.Parameters);
 		#endregion
 
 		#region 类型转换

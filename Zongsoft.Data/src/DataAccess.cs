@@ -143,8 +143,8 @@ public class DataAccess : DataAccessBase
 	protected override DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options) =>
 		new DataExistContext(this, name, criteria.Flatten(), options);
 
-	protected override DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDataExecuteOptions options) =>
-		new DataExecuteContext(this, name, isScalar, resultType, inParameters, null, options);
+	protected override DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IEnumerable<Parameter> parameters, IDataExecuteOptions options) =>
+		new DataExecuteContext(this, name, isScalar, resultType, parameters, options);
 
 	protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options) =>
 		new DataAggregateContext(this, name, aggregate, criteria.Flatten(), options);

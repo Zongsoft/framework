@@ -90,7 +90,7 @@ public class DataExistContext : DataExistContextBase, IDataAccessContext, Common
 public class DataExecuteContext : DataExecuteContextBase, IDataAccessContext, Common.Expressions.IAliasable
 {
 	#region 构造函数
-	public DataExecuteContext(DataAccess dataAccess, string name, bool isScalar, Type resultType, IDictionary<string, object> inParameters, IDictionary<string, object> outParameters, IDataExecuteOptions options = null) : base(dataAccess, name, isScalar, resultType, inParameters, outParameters, options)
+	public DataExecuteContext(DataAccess dataAccess, string name, bool isScalar, Type resultType, IEnumerable<Parameter> parameters, IDataExecuteOptions options = null) : base(dataAccess, name, isScalar, resultType, parameters, options)
 	{
 		this.Aliaser = new Common.Expressions.Aliaser();
 		this.Provider = dataAccess.Provider;
