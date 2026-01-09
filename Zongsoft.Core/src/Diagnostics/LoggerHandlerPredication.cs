@@ -34,7 +34,12 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Diagnostics;
 
-public class LoggerHandlerPredication : Common.IPredication<LogEntry>
+public sealed class LoggerHandlerPredication : LoggerHandlerPredication<LogEntry>
+{
+	public static readonly LoggerHandlerPredication Default = new();
+}
+
+public class LoggerHandlerPredication<TLog> : Common.IPredication<TLog> where TLog : ILog
 {
 	#region 公共属性
 	public string Source { get; set; }
@@ -44,13 +49,13 @@ public class LoggerHandlerPredication : Common.IPredication<LogEntry>
 	#endregion
 
 	#region 断言方法
-	ValueTask<bool> Common.IPredication.PredicateAsync(object argument, CancellationToken cancellation) => this.PredicateAsync(argument as LogEntry, cancellation);
-	ValueTask<bool> Common.IPredication.PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation) => this.PredicateAsync(argument as LogEntry, parameters, cancellation);
+	ValueTask<bool> Common.IPredication.PredicateAsync(object argument, CancellationToken cancellation) => this.PredicateAsync(argument is TLog log ? log : default, cancellation);
+	ValueTask<bool> Common.IPredication.PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation) => this.PredicateAsync(argument is TLog log ? log : default, parameters, cancellation);
 
-	public ValueTask<bool> PredicateAsync(LogEntry entry, CancellationToken cancellation = default) => this.PredicateAsync(entry, null, cancellation);
-	public ValueTask<bool> PredicateAsync(LogEntry entry, Collections.Parameters parameters, CancellationToken cancellation = default)
+	public ValueTask<bool> PredicateAsync(TLog log, CancellationToken cancellation = default) => this.PredicateAsync(log, null, cancellation);
+	public ValueTask<bool> PredicateAsync(TLog log, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
-		if(entry == null)
+		if(log == null)
 			return ValueTask.FromResult(false);
 
 		if(!string.IsNullOrWhiteSpace(this.Source))
@@ -63,18 +68,18 @@ public class LoggerHandlerPredication : Common.IPredication<LogEntry>
 				if(source[0] == '*')
 				{
 					if(source[^1] == '*')
-						matched = entry.Source.Contains(source.Trim('*'));
+						matched = log.Source.Contains(source.Trim('*'));
 					else
-						matched = entry.Source.EndsWith(source.Trim('*'));
+						matched = log.Source.EndsWith(source.Trim('*'));
 				}
 				else
 				{
-					matched = entry.Source.StartsWith(source.Trim('*'));
+					matched = log.Source.StartsWith(source.Trim('*'));
 				}
 			}
 			else
 			{
-				matched &= string.Equals(entry.Source, source, StringComparison.OrdinalIgnoreCase);
+				matched &= string.Equals(log.Source, source, StringComparison.OrdinalIgnoreCase);
 			}
 
 			if(!matched)
@@ -83,24 +88,24 @@ public class LoggerHandlerPredication : Common.IPredication<LogEntry>
 
 		if(this.MinLevel.HasValue)
 		{
-			if(entry.Level < this.MinLevel.Value)
+			if(log.Level < this.MinLevel.Value)
 				return ValueTask.FromResult(false);
 		}
 
 		if(this.MaxLevel.HasValue)
 		{
-			if(entry.Level > this.MaxLevel.Value)
+			if(log.Level > this.MaxLevel.Value)
 				return ValueTask.FromResult(false);
 		}
 
 		if(this.ExceptionType != null)
 		{
-			if(entry.Exception == null)
+			if(log.Exception == null)
 				return ValueTask.FromResult(false);
 
-			var result = entry.Exception.GetType() == typeof(AggregateException) ?
-				((AggregateException)entry.Exception).InnerExceptions.Any(ex => this.ExceptionType.IsAssignableFrom(ex.GetType())) :
-				this.ExceptionType.IsAssignableFrom(entry.Exception.GetType());
+			var result = log.Exception.GetType() == typeof(AggregateException) ?
+				((AggregateException)log.Exception).InnerExceptions.Any(ex => this.ExceptionType.IsAssignableFrom(ex.GetType())) :
+				this.ExceptionType.IsAssignableFrom(log.Exception.GetType());
 
 			if(!result)
 				return ValueTask.FromResult(false);

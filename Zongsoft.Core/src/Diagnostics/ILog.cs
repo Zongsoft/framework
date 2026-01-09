@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,13 +28,22 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Zongsoft.Diagnostics;
 
-public interface ILogger<in TLog> where TLog : ILog
+/// <summary>
+/// 表示日志记录的实体类。
+/// </summary>
+public interface ILog
 {
-	Common.IPredication<TLog> Predication { get; }
-	ValueTask LogAsync(TLog log, CancellationToken cancellation = default);
+	/// <summary>获取日志级别。</summary>
+	LogLevel Level { get; }
+	/// <summary>获取日志来源。</summary>
+	string Source { get; }
+	/// <summary>获取日志消息。</summary>
+	string Message { get; }
+	/// <summary>获取日志时间。</summary>
+	DateTime Timestamp { get; }
+	/// <summary>获取异常对象。</summary>
+	Exception Exception { get; }
 }

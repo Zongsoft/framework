@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,20 +28,32 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Diagnostics;
 
-public class ConsoleLogger : LoggerBase<string>
+public sealed class ConsoleLogger : ConsoleLogger<LogEntry>
 {
-	#region 公共方法
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
-	protected override void OnLog(LogEntry entry)
+	#region 单例字段
+	public static readonly ConsoleLogger Instance = new();
+	#endregion
+
+	#region 重写方法
+	protected override string Format(LogEntry log) => (this.Formatter ?? XmlLogFormatter.Default).Format(log);
+	#endregion
+}
+
+public abstract class ConsoleLogger<TLog> : LoggerBase<TLog, string> where TLog : ILog
+{
+	#region 重写方法
+	protected override ValueTask OnLogAsync(TLog log, CancellationToken cancellation)
 	{
-		if(entry == null)
-			return;
+		if(log == null)
+			return ValueTask.CompletedTask;
 
 		//根据日志级别来调整控制台的前景色
-		switch(entry.Level)
+		switch(log.Level)
 		{
 			case LogLevel.Trace:
 				Console.ForegroundColor = ConsoleColor.Gray;
@@ -61,17 +73,19 @@ public class ConsoleLogger : LoggerBase<string>
 		try
 		{
 			//打印日志信息
-			Console.WriteLine(this.Format(entry));
+			Console.WriteLine(this.Format(log));
 		}
 		finally
 		{
 			//恢复默认颜色
 			Console.ResetColor();
 		}
+
+		return ValueTask.CompletedTask;
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual string Format(LogEntry entry) => (this.Formatter ?? XmlLogFormatter.Instance).Format(entry);
+	protected abstract string Format(TLog log);
 	#endregion
 }

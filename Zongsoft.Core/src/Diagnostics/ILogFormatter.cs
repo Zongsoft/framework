@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Diagnostics;
 
-public interface ILogFormatter<out T>
+public interface ILogFormatter<in TLog, out TModel> where TLog : ILog
 {
-	T Format(LogEntry entry);
+	TModel Format(TLog log);
 }

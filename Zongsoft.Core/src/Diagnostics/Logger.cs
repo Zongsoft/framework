@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,6 +29,8 @@
 
 using System;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
@@ -38,7 +40,7 @@ public sealed class Logger
 {
 	#region 静态字段
 	private static readonly ConcurrentDictionary<string, Logger> _factory = new(StringComparer.Ordinal);
-	private static readonly List<ILogger> _loggers = new();
+	private static readonly List<ILogger<LogEntry>> _loggers = new();
 	#endregion
 
 	#region 私有构造
@@ -46,7 +48,7 @@ public sealed class Logger
 	#endregion
 
 	#region 静态属性
-	public static ICollection<ILogger> Loggers => _loggers;
+	public static ICollection<ILogger<LogEntry>> Loggers => _loggers;
 	#endregion
 
 	#region 实例属性
@@ -116,9 +118,20 @@ public sealed class Logger
 			return;
 
 		if(_loggers.Count == 0)
-			TextFileLogger.Default.Log(entry);
+			TextFileLogger.Default.LogAsync(entry).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		else
-			System.Threading.Tasks.Parallel.ForEach(_loggers, logger => logger?.Log(entry));
+			Parallel.ForEach(_loggers, logger => logger.LogAsync(entry).AsTask().ConfigureAwait(false).GetAwaiter().GetResult());
+	}
+
+	private static ValueTask LogAsync(LogEntry log, CancellationToken cancellation = default)
+	{
+		if(log == null)
+			return ValueTask.CompletedTask;
+
+		if(_loggers.Count == 0)
+			return TextFileLogger.Default.LogAsync(log, cancellation);
+		else
+			return new ValueTask(Parallel.ForEachAsync(_loggers, (logger, cancellation) => logger.LogAsync(log, cancellation)));
 	}
 	#endregion
 }

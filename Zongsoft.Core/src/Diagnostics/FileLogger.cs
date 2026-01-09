@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,31 +29,31 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
+
+using Zongsoft.Caching;
 
 namespace Zongsoft.Diagnostics;
 
-public abstract class FileLogger<T> : LoggerBase<T>
+public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where TLog : ILog
 {
 	#region 常量定义
-	private const int DEFAULT_LIMIT = 1024 * 1024;
-	#endregion
-
-	#region 成员字段
-	private readonly object _lock;
-	private readonly ConcurrentQueue<LogEntry> _queue;
+	internal const int FILE_LIMIT     = 1024 * 1024;
+	internal const int LOGGING_LIMIT  = 100;
+	internal const int LOGGING_PERIOD = 10; //Unit: Seconds
 	#endregion
 
 	#region 构造函数
-	protected FileLogger() : this(null) { }
-	protected FileLogger(string filePath, int limit = DEFAULT_LIMIT)
+	protected FileLogger(string filePath, int fileLimit = FILE_LIMIT) : this(TimeSpan.FromSeconds(LOGGING_PERIOD), LOGGING_LIMIT, filePath, fileLimit) { }
+	protected FileLogger(TimeSpan period, int capacity = LOGGING_LIMIT) : this(period, capacity, null, FILE_LIMIT) { }
+	protected FileLogger(TimeSpan period, int capacity, string filePath, int fileLimit = FILE_LIMIT)
 	{
-		_lock = new();
-		_queue = new();
 		this.FilePath = filePath?.Trim();
-		this.Limit = Math.Max(limit, 0);
+		this.FileLimit = Math.Max(fileLimit, 0);
+		this.Logging = period > TimeSpan.Zero || capacity > 1 ? new(this.OnLogAsync, period, capacity) : null;
 	}
 	#endregion
 
@@ -62,86 +62,50 @@ public abstract class FileLogger<T> : LoggerBase<T>
 	public string FilePath { get; set; }
 
 	/// <summary>获取或设置日志文件的大小限制，单位为字节(Byte)，默认为<c>1</c>MB。</summary>
-	public int Limit { get; set; }
+	public int FileLimit { get; set; }
+	#endregion
+
+	#region 保护属性
+	/// <summary>获取日志缓冲器。</summary>
+	protected Spooler<TLog> Logging { get; }
 	#endregion
 
 	#region 日志方法
-	protected override void OnLog(LogEntry entry)
+	protected override ValueTask OnLogAsync(TLog log, CancellationToken cancellation)
 	{
-		if(entry == null)
-			return;
+		if(log.Level >= LogLevel.Error)
+			return this.OnLogAsync([log], cancellation);
 
-		var filePath = this.ResolveSequence(entry);
-		if(string.IsNullOrWhiteSpace(filePath))
-			return;
+		var logging = this.Logging;
 
-		if(entry.Level >= LogLevel.Error)
-		{
-			this.LogFile(filePath, entry);
-		}
+		if(logging == null)
+			return this.OnLogAsync([log], cancellation);
 		else
-		{
-			//将日志实体加入内存队列中
-			_queue.Enqueue(entry);
-
-			//从线程池拉出一个后台线程进行具体的日志记录操作
-			ThreadPool.QueueUserWorkItem(this.LogFile, filePath);
-		}
+			return logging.PutAsync(log, cancellation);
 	}
 
-	private void LogFile(string filePath, LogEntry entry)
+	protected virtual async ValueTask OnLogAsync(IEnumerable<TLog> logs, CancellationToken cancellation)
 	{
-		lock(_lock)
+		foreach(var group in logs.GroupBy(log => this.ResolveSequence(log)))
 		{
-			//以写模式打开日志文件
-			using var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
-
-			//将当前日志信息写入日志文件流
-			this.WriteLog(entry, stream);
-		}
-	}
-
-	private void LogFile(object filePath)
-	{
-		Stream stream = null;
-
-		try
-		{
-			//当前线程获取日志写入锁
-			Monitor.Enter(_lock);
+			if(string.IsNullOrEmpty(group.Key))
+				continue;
 
 			//以写模式打开日志文件
-			stream = new FileStream((string)filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+			using var stream = new FileStream(group.Key, FileMode.Append, FileAccess.Write, FileShare.Read);
 
-			//从日志队列中取出一条日志信息
-			while(_queue.TryDequeue(out var entry))
-			{
-				//将当前日志信息写入日志文件流
-				this.WriteLog(entry, stream);
-			}
-		}
-		finally
-		{
-			//如果当前线程是日志写入线程
-			if(Monitor.IsEntered(_lock))
-			{
-				//关闭日志文件流
-				if(stream != null)
-					stream.Dispose();
-
-				//释放日志写入锁
-				Monitor.Exit(_lock);
-			}
+			//批量写入日志文件
+			await this.WriteLogsAsync(stream, group, cancellation);
 		}
 	}
 	#endregion
 
 	#region 抽象方法
-	protected abstract void WriteLog(LogEntry entry, Stream output);
+	protected abstract ValueTask WriteLogsAsync(Stream output, IEnumerable<TLog> logs, CancellationToken cancellation);
 	#endregion
 
 	#region 虚拟方法
-	protected virtual string GetFilePath(LogEntry entry)
+	protected virtual string GetFilePath(ILog entry)
 	{
 		var filePath = this.FilePath;
 
@@ -165,12 +129,6 @@ public abstract class FileLogger<T> : LoggerBase<T>
 			EnsureApplicationDirectory(Path.GetDirectoryName(filePath));
 
 		return Path.Combine(directoryPath, Path.GetFileName(filePath));
-	}
-
-	protected virtual T Format(LogEntry entry)
-	{
-		var formatter = this.Formatter ?? throw new InvalidOperationException("Missing required formatter of the file logger.");
-		return formatter.Format(entry);
 	}
 	#endregion
 
@@ -204,7 +162,7 @@ public abstract class FileLogger<T> : LoggerBase<T>
 		return path;
 	}
 
-	private string ResolveSequence(LogEntry entry)
+	private string ResolveSequence(ILog entry)
 	{
 		const string PATTERN = @"(?<no>\d+)";
 		const string SEQUENCE = "{sequence}";
@@ -216,7 +174,7 @@ public abstract class FileLogger<T> : LoggerBase<T>
 		if(string.IsNullOrEmpty(filePath) || (!filePath.Contains(SEQUENCE)))
 			return filePath;
 
-		if(this.Limit < 1)
+		if(this.FileLimit < 1)
 			return filePath.Replace(SEQUENCE, string.Empty);
 
 		var fileName = System.IO.Path.GetFileName(filePath);
@@ -227,7 +185,7 @@ public abstract class FileLogger<T> : LoggerBase<T>
 		while((index = fileName.IndexOf(SEQUENCE, index)) >= 0)
 		{
 			if(index > 0)
-				pattern += Zongsoft.IO.LocalFileSystem.LocalDirectoryProvider.EscapePattern(fileName.Substring(position, index - position));
+				pattern += Zongsoft.IO.LocalFileSystem.LocalDirectoryProvider.EscapePattern(fileName[position..index]);
 
 			pattern += PATTERN;
 			index += SEQUENCE.Length;
@@ -235,7 +193,7 @@ public abstract class FileLogger<T> : LoggerBase<T>
 		}
 
 		if(position < fileName.Length)
-			pattern += Zongsoft.IO.LocalFileSystem.LocalDirectoryProvider.EscapePattern(fileName.Substring(position));
+			pattern += Zongsoft.IO.LocalFileSystem.LocalDirectoryProvider.EscapePattern(fileName[position..]);
 
 		//设置正则匹配模式为完整匹配
 		if(pattern != null && pattern.Length > 0)
@@ -253,7 +211,7 @@ public abstract class FileLogger<T> : LoggerBase<T>
 				{
 					maximum = number;
 
-					if(info.Size < this.Limit)
+					if(info.Size < this.FileLimit)
 						result = info.Url;
 				}
 			}

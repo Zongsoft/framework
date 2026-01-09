@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Diagnostics;
 
-public interface ILogger<out T> : ILogger
+public interface ILogger<in TLog, out TModel> : ILogger<TLog> where TLog : ILog
 {
-	ILogFormatter<T> Formatter { get; }
+	ILogFormatter<TLog, TModel> Formatter { get; }
 }

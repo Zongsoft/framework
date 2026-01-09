@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,7 +31,7 @@ using System;
 
 namespace Zongsoft.Diagnostics;
 
-public class LogEntry
+public class LogEntry : ILog
 {
 	#region 构造函数
 	public LogEntry(LogLevel level, string source, string message, object data = null) : this(level, source, message, null, data) { }
@@ -60,11 +60,11 @@ public class LogEntry
 	#region 公共属性
 	public LogLevel Level { get; }
 	public string Source { get; }
-	public Exception Exception { get; }
 	public string Message { get; }
 	public string StackTrace { get; internal set; }
 	public object Data { get; }
 	public DateTime Timestamp { get; }
+	public Exception Exception { get; }
 	#endregion
 
 	#region 重写方法

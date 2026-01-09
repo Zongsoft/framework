@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,14 +32,53 @@ using System.Text;
 
 namespace Zongsoft.Diagnostics;
 
-public class XmlLogFormatter : ILogFormatter<string>
+public sealed class XmlLogFormatter : XmlLogFormatter<LogEntry>
 {
 	#region 单例字段
-	public static readonly XmlLogFormatter Instance = new();
+	public static readonly XmlLogFormatter Default = new();
 	#endregion
 
 	#region 私有构造
 	private XmlLogFormatter() { }
+	#endregion
+
+	#region 重写方法
+	protected override void OnFormatContent(StringBuilder builder, LogEntry log)
+	{
+		base.OnFormatContent(builder, log);
+
+		if(log.Data != null)
+		{
+			builder.AppendLine();
+			builder.AppendLine($"\t<data type=\"{Common.TypeAlias.GetAlias(log.Data.GetType())}\">");
+			builder.AppendLine("\t<![CDATA[");
+
+			if(log.Data is byte[] bytes)
+				builder.AppendLine(Convert.ToBase64String(bytes));
+			else
+				builder.AppendLine(System.Text.Json.JsonSerializer.Serialize(log.Data));
+
+			builder.AppendLine("\t]]>");
+			builder.AppendLine("\t</data>");
+		}
+
+		if(!string.IsNullOrEmpty(log.StackTrace))
+		{
+			builder.AppendLine();
+			builder.AppendLine("\t<stackTrace>");
+			builder.AppendLine("\t<![CDATA[");
+			builder.AppendLine(log.StackTrace);
+			builder.AppendLine("\t]]>");
+			builder.AppendLine("\t</stackTrace>");
+		}
+	}
+	#endregion
+}
+
+public class XmlLogFormatter<TLog> : ILogFormatter<TLog, string> where TLog : ILog
+{
+	#region 构造函数
+	protected XmlLogFormatter() { }
 	#endregion
 
 	#region 公共属性
@@ -47,18 +86,37 @@ public class XmlLogFormatter : ILogFormatter<string>
 	#endregion
 
 	#region 公共方法
-	public string Format(LogEntry entry)
+	public string Format(TLog log)
 	{
-		if(entry == null)
+		if(log == null)
 			return null;
 
 		var builder = new StringBuilder(512);
 
-		builder.Append($"<log level=\"{entry.Level}\" source=\"{entry.Source}\" timestamp=\"{entry.Timestamp:yyyy-MM-dd HH:mm:ss}\">");
-		builder.AppendLine();
-		builder.AppendLine($"\t<message><![CDATA[{entry.Message}]]></message>");
+		this.OnFormatting(builder, log);
+		this.OnFormatContent(builder, log);
+		this.OnFormatted(builder, log);
 
-		if(entry.Exception is AggregateException aggregateException)
+		return builder.ToString();
+	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void OnFormatting(StringBuilder builder, TLog log)
+	{
+		builder.AppendLine($"<log level=\"{log.Level}\" source=\"{log.Source}\" timestamp=\"{log.Timestamp:yyyy-MM-dd HH:mm:ss}\">");
+	}
+
+	protected virtual void OnFormatted(StringBuilder builder, TLog log)
+	{
+		builder.AppendLine("</log>");
+	}
+
+	protected virtual void OnFormatContent(StringBuilder builder, TLog log)
+	{
+		builder.AppendLine($"\t<message><![CDATA[{log.Message}]]></message>");
+
+		if(log.Exception is AggregateException aggregateException)
 		{
 			if(aggregateException.InnerExceptions != null && aggregateException.InnerExceptions.Count > 0)
 			{
@@ -67,48 +125,20 @@ public class XmlLogFormatter : ILogFormatter<string>
 			}
 			else
 			{
-				WriteException(builder, entry.Exception);
+				WriteException(builder, log.Exception);
 			}
 		}
 		else
 		{
-			WriteException(builder, entry.Exception);
+			WriteException(builder, log.Exception);
 		}
-
-		if(entry.Data != null)
-		{
-			builder.AppendLine();
-			builder.AppendLine($"\t<data type=\"{Common.TypeAlias.GetAlias(entry.Data.GetType())}\">");
-			builder.AppendLine("\t<![CDATA[");
-
-			if(entry.Data is byte[] bytes)
-				builder.AppendLine(Convert.ToBase64String(bytes));
-			else
-				builder.AppendLine(System.Text.Json.JsonSerializer.Serialize(entry.Data));
-
-			builder.AppendLine("\t]]>");
-			builder.AppendLine("\t</data>");
-		}
-
-		if(!string.IsNullOrEmpty(entry.StackTrace))
-		{
-			builder.AppendLine();
-			builder.AppendLine("\t<stackTrace>");
-			builder.AppendLine("\t<![CDATA[");
-			builder.AppendLine(entry.StackTrace);
-			builder.AppendLine("\t]]>");
-			builder.AppendLine("\t</stackTrace>");
-		}
-
-		builder.AppendLine("</log>");
-		return builder.ToString();
 	}
 	#endregion
 
 	#region 私有方法
 	private static void WriteException(StringBuilder builder, Exception exception)
 	{
-		if(builder == null || exception == null)
+		if(exception == null)
 			return;
 
 		builder.AppendLine();

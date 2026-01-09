@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,30 +29,50 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Diagnostics;
 
-public class TextFileLogger : FileLogger<string>
+public sealed class TextFileLogger : TextFileLogger<LogEntry>
 {
 	#region 单例字段
-	public static readonly TextFileLogger Default = new();
+	public static readonly TextFileLogger Default = new(null);
 	#endregion
 
 	#region 构造函数
-	public TextFileLogger()
+	public TextFileLogger(string filePath, int fileLimit = FILE_LIMIT) : this(TimeSpan.FromSeconds(LOGGING_PERIOD), LOGGING_LIMIT, filePath, fileLimit) { }
+	public TextFileLogger(TimeSpan period, int capacity = LOGGING_LIMIT) : this(period, capacity, null, FILE_LIMIT) { }
+	public TextFileLogger(TimeSpan period, int capacity, string filePath, int fileLimit = FILE_LIMIT) : base(period, capacity, filePath, fileLimit)
 	{
-		this.Formatter = XmlLogFormatter.Instance;
+		this.Formatter = XmlLogFormatter.Default;
 	}
+	#endregion
+}
+
+public abstract class TextFileLogger<TLog> : FileLogger<TLog, string> where TLog : ILog
+{
+	#region 构造函数
+	protected TextFileLogger(int fileLimit = FILE_LIMIT) : this(TimeSpan.FromSeconds(LOGGING_PERIOD), LOGGING_LIMIT, null, fileLimit) { }
+	protected TextFileLogger(string filePath, int fileLimit = FILE_LIMIT) : this(TimeSpan.FromSeconds(LOGGING_PERIOD), LOGGING_LIMIT, filePath, fileLimit) { }
+	protected TextFileLogger(TimeSpan period, int capacity = LOGGING_LIMIT) : this(period, capacity, null, FILE_LIMIT) { }
+	protected TextFileLogger(TimeSpan period, int capacity, string filePath, int fileLimit = FILE_LIMIT) : base(period, capacity, filePath, fileLimit) { }
 	#endregion
 
 	#region 重写方法
-	protected override void WriteLog(LogEntry entry, Stream stream)
+	protected override async ValueTask WriteLogsAsync(Stream output, IEnumerable<TLog> logs, CancellationToken cancellation)
 	{
 		//注意：此处不能关闭stream参数传入的流，该流由基类确保安全释放！
-		using(var writer = new StreamWriter(stream, System.Text.Encoding.UTF8, 1024 * 16, true))
+		using(var writer = new StreamWriter(output, System.Text.Encoding.UTF8, 1024 * 16, true))
 		{
-			writer.WriteLine(this.Format(entry));
+			foreach(var log in logs)
+				await writer.WriteLineAsync(this.Format(log));
 		}
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual string Format(TLog log) => this.Formatter.Format(log);
 	#endregion
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,43 +28,48 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Diagnostics;
 
-public abstract class LoggerBase<T> : ILogger<T>
+public abstract class LoggerBase<TLog, TModel> : ILogger<TLog, TModel> where TLog : ILog
 {
+	#region 构造函数
+	protected LoggerBase() { }
+	#endregion
+
 	#region 公共属性
 	/// <summary>获取或设置日志格式化器。</summary>
-	public ILogFormatter<T> Formatter { get; protected set; }
+	public ILogFormatter<TLog, TModel> Formatter { get; protected set; }
 
 	/// <summary>获取或设置日志断言。</summary>
-	public Common.IPredication<LogEntry> Predication { get; protected set; }
+	public Common.IPredication<TLog> Predication { get; protected set; }
 	#endregion
 
 	#region 公共方法
-	public void Log(LogEntry entry)
+	public async ValueTask LogAsync(TLog log, CancellationToken cancellation = default)
 	{
-		if(this.CanLog(entry))
-			this.OnLog(entry);
+		if(log == null)
+			return;
+
+		if(await this.CanLogAsync(log, cancellation))
+			await this.OnLogAsync(log, cancellation);
 	}
 	#endregion
 
-	#region 保护方法
-	protected bool CanLog(LogEntry entry)
+	#region 判断方法
+	protected virtual ValueTask<bool> CanLogAsync(TLog log, CancellationToken cancellation)
 	{
 		var predication = this.Predication;
 		if(predication == null)
-			return true;
+			return ValueTask.FromResult(true);
 
-		var task = predication.PredicateAsync(entry);
-		if(task.IsCompletedSuccessfully)
-			return task.Result;
-
-		return task.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		return predication.PredicateAsync(log, cancellation);
 	}
 	#endregion
 
-	#region 抽象方法
-	protected abstract void OnLog(LogEntry entry);
+	#region 日志方法
+	protected abstract ValueTask OnLogAsync(TLog log, CancellationToken cancellation);
 	#endregion
 }
