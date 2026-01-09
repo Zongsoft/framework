@@ -39,8 +39,6 @@ namespace Zongsoft.Data;
 public partial interface IDataService
 {
 	#region 事件定义
-	event EventHandler<DataExecutedEventArgs> Executed;
-	event EventHandler<DataExecutingEventArgs> Executing;
 	event EventHandler<DataExistedEventArgs> Existed;
 	event EventHandler<DataExistingEventArgs> Existing;
 	event EventHandler<DataAggregatedEventArgs> Aggregated;
@@ -107,14 +105,6 @@ public partial interface IDataService
 	/// <param name="type">指定要获取的嵌套子服务类型。</param>
 	/// <returns>如果查找成功则返回指定类型的子服务，否则返回空(<c>null</c>)。</returns>
 	IDataService GetSubservice(Type type);
-	#endregion
-
-	#region 执行方法
-	IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null);
-	IEnumerable<T> Execute<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null);
-
-	object ExecuteScalar(string name, DataExecuteOptions options = null);
-	object ExecuteScalar(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null);
 	#endregion
 
 	#region 存在方法

@@ -121,7 +121,7 @@ public readonly struct DataServiceMutability : IEquatable<DataServiceMutability>
 		}
 
 		byte value = 0;
-		var parts = text.Split(new[] { ',', '|' }, StringSplitOptions.TrimEntries);
+		var parts = text.Split([',', '|'], StringSplitOptions.TrimEntries);
 
 		for(int i = 0; i < parts.Length; i++)
 		{

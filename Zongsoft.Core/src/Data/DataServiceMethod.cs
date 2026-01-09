@@ -65,7 +65,6 @@ public readonly struct DataServiceMethod : IEquatable<DataServiceMethod>
 	public static DataServiceMethod Aggregate(DataAggregate aggregate) => new(aggregate.Function.ToString(), DataAccessMethod.Aggregate, false);
 	public static DataServiceMethod Aggregate(DataAggregateFunction aggregate) => new(aggregate.ToString(), DataAccessMethod.Aggregate, false);
 	public static DataServiceMethod Exists() => new(DataAccessMethod.Exists);
-	public static DataServiceMethod Execute() => new(DataAccessMethod.Execute);
 	public static DataServiceMethod Import() => new(nameof(Import), DataAccessMethod.Import, true);
 	public static DataServiceMethod Export() => new(nameof(Export), DataAccessMethod.Select, true);
 	public static DataServiceMethod Select(string name = null) => new(name, DataAccessMethod.Select, false);
@@ -95,13 +94,13 @@ public readonly struct DataServiceMethod : IEquatable<DataServiceMethod>
 	/// <summary>获取一个值，指示当前是否为获取方法，即 <see cref="Kind"/> 属性值是否等于 <see cref="DataAccessMethod.Select"/> 并且 <see cref="Name"/> 等于 <c>Get</c>。</summary>
 	public bool IsGet => this.Kind == DataAccessMethod.Select && this.Name == nameof(Get);
 
-	/// <summary>获取一个值，指示当前方法是否为读取方法(<c>Get</c>,<c>Select</c>,<c>Exists</c>,<c>Count</c>,<c>Aggregate</c>)。</summary>
+	/// <summary>获取一个值，指示当前方法是否为读取方法(<c>Get</c>,<c>Select</c>,<c>Export</c>,<c>Exists</c>,<c>Count</c>,<c>Aggregate</c>)。</summary>
 	public bool IsReading =>
 		this.Kind == DataAccessMethod.Select ||
 		this.Kind == DataAccessMethod.Exists ||
 		this.Kind == DataAccessMethod.Aggregate;
 
-	/// <summary>获取一个值，指示当前方法是否为修改方法(<c>Delete</c>,<c>Insert</c>,<c>Update</c>,<c>Upsert</c>,<c>Import</c>,<c>Increment</c>,<c>Decrement</c>)。</summary>
+	/// <summary>获取一个值，指示当前方法是否为修改方法(<c>Delete</c>,<c>Insert</c>,<c>Update</c>,<c>Upsert</c>,<c>Import</c>,<c>Increase</c>,<c>Decrease</c>)。</summary>
 	public bool IsWriting =>
 		this.Kind == DataAccessMethod.Delete ||
 		this.Kind == DataAccessMethod.Insert ||

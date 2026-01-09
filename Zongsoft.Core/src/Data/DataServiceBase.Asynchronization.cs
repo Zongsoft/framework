@@ -40,48 +40,6 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
-	#region 执行方法
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, parameters, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, CancellationToken cancellation = default)
-	{
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataExecuteOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Execute(), options);
-
-		return this.OnExecuteAsync<T>(name, parameters, options, cancellation);
-	}
-
-	public ValueTask<object> ExecuteScalarAsync(string name, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, parameters, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, CancellationToken cancellation = default)
-	{
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataExecuteOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Execute(), options);
-
-		return this.OnExecuteScalarAsync(name, parameters, options, cancellation);
-	}
-
-	protected virtual IAsyncEnumerable<T> OnExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation)
-	{
-		return this.DataAccess.ExecuteAsync<T>(name, parameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx), cancellation);
-	}
-
-	protected virtual ValueTask<object> OnExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation)
-	{
-		return this.DataAccess.ExecuteScalarAsync(name, parameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx), cancellation);
-	}
-	#endregion
-
 	#region 存在方法
 	public ValueTask<bool> ExistsAsync(string key, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key, options, out _), options, cancellation);
 	public ValueTask<bool> ExistsAsync<TKey1>(TKey1 key1, DataExistsOptions options = null, CancellationToken cancellation = default)

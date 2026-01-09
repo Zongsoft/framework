@@ -46,8 +46,6 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	#region 事件定义
 	public event EventHandler<DataGettedEventArgs<TModel>> Getted;
 	public event EventHandler<DataGettingEventArgs<TModel>> Getting;
-	public event EventHandler<DataExecutedEventArgs> Executed;
-	public event EventHandler<DataExecutingEventArgs> Executing;
 	public event EventHandler<DataExistedEventArgs> Existed;
 	public event EventHandler<DataExistingEventArgs> Existing;
 	public event EventHandler<DataAggregatedEventArgs> Aggregated;
@@ -476,44 +474,6 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 			if(Security.ClaimsPrincipalExtension.IsAnonymous(this.Principal))
 				throw new Security.Privileges.AuthorizationException();
 		}
-	}
-	#endregion
-
-	#region 执行方法
-	public IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null) => this.Execute<T>(name, null, options);
-	public IEnumerable<T> Execute<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null)
-	{
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataExecuteOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Execute(), options);
-
-		return this.OnExecute<T>(name, parameters, options);
-	}
-
-	protected virtual IEnumerable<T> OnExecute<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options)
-	{
-		return this.DataAccess.Execute<T>(name, parameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
-	}
-
-	public object ExecuteScalar(string name, DataExecuteOptions options = null) => this.ExecuteScalar(name, null, options);
-	public object ExecuteScalar(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null)
-	{
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataExecuteOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Execute(), options);
-
-		return this.OnExecuteScalar(name, parameters, options);
-	}
-
-	protected virtual object OnExecuteScalar(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options)
-	{
-		return this.DataAccess.ExecuteScalar(name, parameters, options, ctx => this.OnExecuting(ctx), ctx => this.OnExecuted(ctx));
 	}
 	#endregion
 
@@ -1771,28 +1731,6 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 		}
 
 		return this.OnFiltering(DataServiceMethod.Get(), context);
-	}
-
-	protected virtual void OnExecuted(DataExecuteContextBase context)
-	{
-		this.Executed?.Invoke(this, new DataExecutedEventArgs(context));
-		this.OnFiltered(DataServiceMethod.Execute(), context);
-	}
-
-	protected virtual bool OnExecuting(DataExecuteContextBase context)
-	{
-		var e = this.Executing;
-
-		if(e != null)
-		{
-			var args = new DataExecutingEventArgs(context);
-			e.Invoke(this, args);
-
-			if(args.Cancel)
-				return true;
-		}
-
-		return this.OnFiltering(DataServiceMethod.Execute(), context);
 	}
 
 	protected virtual void OnExisted(DataExistContextBase context)
