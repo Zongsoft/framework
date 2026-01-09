@@ -61,13 +61,15 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 		if(context.IsScalar)
 		{
 			context.Result = command.ExecuteScalar();
+			SetOutputs(context, command);
 			return false;
 		}
 
-		context.Result = System.Activator.CreateInstance(
+		context.Result = Activator.CreateInstance(
 			typeof(ResultCollection<>).MakeGenericType(context.ResultType),
-			new object[] { context, command });
+			[context, command]);
 
+		SetOutputs(context, command);
 		return false;
 	}
 	#endregion
@@ -92,14 +94,54 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 		if(context.IsScalar)
 		{
 			context.Result = await command.ExecuteScalarAsync(cancellation);
+			SetOutputs(context, command);
 			return false;
 		}
 
-		context.Result = System.Activator.CreateInstance(
+		context.Result = Activator.CreateInstance(
 			typeof(ResultCollection<>).MakeGenericType(context.ResultType),
-			new object[] { context, command });
+			[context, command]);
 
+		SetOutputs(context, command);
 		return false;
+	}
+	#endregion
+
+	#region 私有方法
+	private static void SetOutputs(DataExecuteContext context, DbCommand command)
+	{
+		if(command == null || context.Parameters == null)
+			return;
+
+		foreach(var parameter in context.Parameters)
+		{
+			if(IsOutputParameter(parameter) && TryGetParameter(context, command, parameter.Name, out var dbParameter))
+				parameter.Value = Convert.IsDBNull(dbParameter.Value) ? null : dbParameter.Value;
+		}
+
+		static bool IsOutputParameter(Parameter parameter) => parameter != null &&
+		(
+			parameter.Direction == ParameterDirection.Output ||
+			parameter.Direction == ParameterDirection.InputOutput ||
+			parameter.Direction == ParameterDirection.ReturnValue
+		);
+
+		static bool TryGetParameter(DataExecuteContext context, DbCommand command, string name, out DbParameter parameter)
+		{
+			name = GetParameterName(name, context.Command.Parameters);
+
+			if(command.Parameters.Contains(name))
+			{
+				parameter = command.Parameters[name];
+				return true;
+			}
+
+			parameter = null;
+			return false;
+
+			static string GetParameterName(string name, Metadata.DataCommandParameterCollection parameters) =>
+				parameters != null && parameters.TryGetValue(name, out var parameter) ? (string.IsNullOrEmpty(parameter.Alias) ? parameter.Name : parameter.Alias) : name;
+		}
 	}
 	#endregion
 
