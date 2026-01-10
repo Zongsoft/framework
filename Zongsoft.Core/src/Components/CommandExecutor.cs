@@ -325,7 +325,7 @@ public partial class CommandExecutor : ICommandExecutor
 		#endregion
 
 		#region 实例字段
-		private readonly Zongsoft.Diagnostics.Logger _logger = Zongsoft.Diagnostics.Logger.GetLogger<CommandExecutor>();
+		private readonly Zongsoft.Diagnostics.Logging _logging = Zongsoft.Diagnostics.Logging.GetLogging<CommandExecutor>();
 		#endregion
 
 		#region 公共属性
@@ -341,20 +341,20 @@ public partial class CommandExecutor : ICommandExecutor
 			switch(value)
 			{
 				case string text:
-					_logger.Error(text);
+					_logging.Error(text);
 					break;
 				case StringBuilder buffer:
-					_logger.Error(buffer.ToString());
+					_logging.Error(buffer.ToString());
 					break;
 				default:
-					_logger.Error("An error occurred.", value);
+					_logging.Error("An error occurred.", value);
 					break;
 			}
 		}
 
-		public override void Write(string value) => _logger.Error(value);
-		public override void Write(string format, params object[] args) => _logger.Error(string.Format(format, args));
-		public override Task WriteAsync(string value) => Task.Run(() => _logger.Error(value));
+		public override void Write(string value) => _logging.Error(value);
+		public override void Write(string format, params object[] args) => _logging.Error(string.Format(format, args));
+		public override Task WriteAsync(string value) => Task.Run(() => _logging.Error(value));
 		public override void WriteLine(object value)
 		{
 			if(value == null)
@@ -363,20 +363,20 @@ public partial class CommandExecutor : ICommandExecutor
 			switch(value)
 			{
 				case string text:
-					_logger.Error(text + Environment.NewLine);
+					_logging.Error(text + Environment.NewLine);
 					break;
 				case StringBuilder buffer:
-					_logger.Error(buffer.ToString() + Environment.NewLine);
+					_logging.Error(buffer.ToString() + Environment.NewLine);
 					break;
 				default:
-					_logger.Error("An error occurred.", value);
+					_logging.Error("An error occurred.", value);
 					break;
 			}
 		}
 
-		public override void WriteLine(string value) => _logger.Error(value + this.NewLine);
-		public override void WriteLine(string format, params object[] args) => _logger.Error(string.Format(format, args) + this.NewLine);
-		public override Task WriteLineAsync(string value) => Task.Run(() => _logger.Error(value + this.NewLine));
+		public override void WriteLine(string value) => _logging.Error(value + this.NewLine);
+		public override void WriteLine(string format, params object[] args) => _logging.Error(string.Format(format, args) + this.NewLine);
+		public override Task WriteLineAsync(string value) => Task.Run(() => _logging.Error(value + this.NewLine));
 		#endregion
 	}
 	#endregion

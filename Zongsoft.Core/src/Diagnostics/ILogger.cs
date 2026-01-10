@@ -33,8 +33,18 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Diagnostics;
 
-public interface ILogger<in TLog> where TLog : ILog
+public interface ILogger
+{
+	ValueTask LogAsync<TLog>(TLog log, CancellationToken cancellation = default) where TLog : ILog;
+}
+
+public interface ILogger<in TLog> : ILogger where TLog : ILog
 {
 	Common.IPredication<TLog> Predication { get; }
 	ValueTask LogAsync(TLog log, CancellationToken cancellation = default);
+}
+
+public interface ILogger<in TLog, out TModel> : ILogger<TLog> where TLog : ILog
+{
+	ILogFormatter<TLog, TModel> Formatter { get; }
 }

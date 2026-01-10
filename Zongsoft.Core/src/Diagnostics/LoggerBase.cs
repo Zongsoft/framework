@@ -33,21 +33,26 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Diagnostics;
 
-public abstract class LoggerBase<TLog, TModel> : ILogger<TLog, TModel> where TLog : ILog
+public abstract class LoggerBase<TLog> : ILogger<TLog> where TLog : ILog
 {
 	#region 构造函数
 	protected LoggerBase() { }
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取或设置日志格式化器。</summary>
-	public ILogFormatter<TLog, TModel> Formatter { get; protected set; }
-
 	/// <summary>获取或设置日志断言。</summary>
 	public Common.IPredication<TLog> Predication { get; protected set; }
 	#endregion
 
 	#region 公共方法
+	ValueTask ILogger.LogAsync<T>(T log, CancellationToken cancellation)
+	{
+		if(log is TLog entry)
+			return this.LogAsync(entry, cancellation);
+
+		return ValueTask.CompletedTask;
+	}
+
 	public async ValueTask LogAsync(TLog log, CancellationToken cancellation = default)
 	{
 		if(log == null)
@@ -71,5 +76,17 @@ public abstract class LoggerBase<TLog, TModel> : ILogger<TLog, TModel> where TLo
 
 	#region 日志方法
 	protected abstract ValueTask OnLogAsync(TLog log, CancellationToken cancellation);
+	#endregion
+}
+
+public abstract class LoggerBase<TLog, TModel> : LoggerBase<TLog>, ILogger<TLog, TModel> where TLog : ILog
+{
+	#region 构造函数
+	protected LoggerBase() { }
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置日志格式化器。</summary>
+	public ILogFormatter<TLog, TModel> Formatter { get; protected set; }
 	#endregion
 }

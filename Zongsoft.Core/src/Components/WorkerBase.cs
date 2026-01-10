@@ -156,7 +156,7 @@ public abstract class WorkerBase : IWorker, IDisposable
 			if(System.Diagnostics.Debugger.IsAttached)
 				throw;
 			else
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
 		}
 		finally
 		{
@@ -204,7 +204,7 @@ public abstract class WorkerBase : IWorker, IDisposable
 			if(System.Diagnostics.Debugger.IsAttached)
 				throw;
 			else
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
 		}
 		finally
 		{
@@ -263,7 +263,7 @@ public abstract class WorkerBase : IWorker, IDisposable
 			if(System.Diagnostics.Debugger.IsAttached)
 				throw;
 			else
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
 		}
 		finally
 		{
@@ -321,7 +321,7 @@ public abstract class WorkerBase : IWorker, IDisposable
 			if(System.Diagnostics.Debugger.IsAttached)
 				throw;
 			else
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
 		}
 		finally
 		{

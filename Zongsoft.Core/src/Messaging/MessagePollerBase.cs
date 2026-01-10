@@ -116,7 +116,7 @@ public abstract class MessagePollerBase : IMessagePoller
 				exception = ex;
 
 				//错误日志
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
 			}
 
 			//如果消息获取失败则休息一小会
@@ -141,7 +141,7 @@ public abstract class MessagePollerBase : IMessagePoller
 			}
 			catch(Exception ex)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex, message);
+				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex, message);
 			}
 		}
 	}

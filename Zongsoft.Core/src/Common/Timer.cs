@@ -90,7 +90,7 @@ public class Timer : IDisposable
 				}
 			}
 			catch(OperationCanceledException) { }
-			catch(Exception ex) { Zongsoft.Diagnostics.Logger.GetLogger<Timer>().Error(ex); }
+			catch(Exception ex) { Zongsoft.Diagnostics.Logging.GetLogging<Timer>().Error(ex); }
 		}, state, cancellation, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 	}
 	#endregion
