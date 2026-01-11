@@ -34,12 +34,12 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Diagnostics;
 
-public sealed class LoggerHandlerPredication : LoggerHandlerPredication<LogEntry>
+public sealed class LoggerPredication : LoggerPredication<LogEntry>
 {
-	public static readonly LoggerHandlerPredication Default = new();
+	public static readonly LoggerPredication Default = new();
 }
 
-public class LoggerHandlerPredication<TLog> : Common.IPredication<TLog> where TLog : ILog
+public class LoggerPredication<TLog> : Common.IPredication<TLog> where TLog : ILog
 {
 	#region 公共属性
 	public string Source { get; set; }

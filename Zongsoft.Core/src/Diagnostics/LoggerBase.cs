@@ -36,10 +36,23 @@ namespace Zongsoft.Diagnostics;
 public abstract class LoggerBase<TLog> : ILogger<TLog> where TLog : ILog
 {
 	#region 构造函数
-	protected LoggerBase() { }
+	protected LoggerBase(string name = null)
+	{
+		if(string.IsNullOrEmpty(name))
+		{
+			name = this.GetType().Name;
+
+			if(name.Length > 6 && name.EndsWith("Logger"))
+				name = name[..^6];
+		}
+
+		this.Name = name ?? this.GetType().Name;
+	}
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取日志记录器名称。</summary>
+	public string Name { get; }
 	/// <summary>获取或设置日志断言。</summary>
 	public Common.IPredication<TLog> Predication { get; protected set; }
 	#endregion
@@ -79,12 +92,8 @@ public abstract class LoggerBase<TLog> : ILogger<TLog> where TLog : ILog
 	#endregion
 }
 
-public abstract class LoggerBase<TLog, TModel> : LoggerBase<TLog>, ILogger<TLog, TModel> where TLog : ILog
+public abstract class LoggerBase<TLog, TModel>(string name = null) : LoggerBase<TLog>(name), ILogger<TLog, TModel> where TLog : ILog
 {
-	#region 构造函数
-	protected LoggerBase() { }
-	#endregion
-
 	#region 公共属性
 	/// <summary>获取或设置日志格式化器。</summary>
 	public ILogFormatter<TLog, TModel> Formatter { get; protected set; }

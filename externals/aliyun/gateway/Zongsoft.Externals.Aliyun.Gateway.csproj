@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
-		<Version>7.3.0</Version>
+		<Version>7.4.0</Version>
 		<OutputType>Library</OutputType>
 		<Product>Zongsoft Aliyun Gateway Library</Product>
 		<Description>This is a library about Aliyun Gateway.</Description>
@@ -27,8 +27,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.25.0" />
-				<PackageReference Include="Zongsoft.Web" VersionOverride="7.8.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.28.0" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="7.9.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

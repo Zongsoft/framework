@@ -160,7 +160,7 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 
 		if(!response.IsSuccessStatusCode)
 		{
-			Zongsoft.Diagnostics.Logger.GetLogger(this).Warn("[" + response.StatusCode + "] The message enqueue failed." + Environment.NewLine + await response.Content.ReadAsStringAsync());
+			Zongsoft.Diagnostics.Logging.GetLogging(this).Warn("[" + response.StatusCode + "] The message enqueue failed." + Environment.NewLine + await response.Content.ReadAsStringAsync());
 			return null;
 		}
 

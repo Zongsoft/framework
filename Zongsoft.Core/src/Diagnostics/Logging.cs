@@ -39,8 +39,9 @@ namespace Zongsoft.Diagnostics;
 public sealed class Logging
 {
 	#region 静态字段
-	private static readonly ConcurrentDictionary<string, Logging> _factory = new(StringComparer.Ordinal);
 	private static readonly List<ILogger> _loggers = new();
+	private static readonly ConcurrentDictionary<string, Logging> _factory = new(StringComparer.Ordinal);
+	private static readonly Lazy<Logging> _default = new(() => new(Assembly.GetEntryAssembly().GetName().Name), true);
 	#endregion
 
 	#region 私有构造
@@ -48,6 +49,7 @@ public sealed class Logging
 	#endregion
 
 	#region 静态属性
+	public static Logging Default => _default.Value;
 	public static ICollection<ILogger> Loggers => _loggers;
 	#endregion
 
@@ -81,8 +83,8 @@ public sealed class Logging
 	}
 	#endregion
 
-    #region 实例日志
-    public void Trace(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Name, exception, data));
+	#region 实例日志
+	public void Trace(Exception exception, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Name, exception, data));
 	public void Trace(string message, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Name, message, data));
 	public void Trace(string message, Exception exception, object data = null) => Log(new LogEntry(LogLevel.Trace, this.Name, message, exception, data));
 

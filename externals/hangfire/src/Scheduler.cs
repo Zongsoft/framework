@@ -79,7 +79,7 @@ namespace Zongsoft.Externals.Hangfire
 				}
 
 				if(count < 1)
-					Zongsoft.Diagnostics.Logger.GetLogger(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
+					Zongsoft.Diagnostics.Logging.GetLogging(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
 			}
 
 			public static async Task HandleAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation)
@@ -100,7 +100,7 @@ namespace Zongsoft.Externals.Hangfire
 				}
 
 				if(count < 1)
-					Zongsoft.Diagnostics.Logger.GetLogger(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
+					Zongsoft.Diagnostics.Logging.GetLogging(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
 			}
 		}
 		#endregion

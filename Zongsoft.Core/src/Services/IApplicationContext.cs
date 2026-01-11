@@ -46,6 +46,9 @@ public interface IApplicationContext : IApplicationModule
 	#endregion
 
 	#region 属性定义
+	/// <summary>获取当前应用程序的类型。</summary>
+	string ApplicationType { get; }
+
 	/// <summary>获取当前应用程序根目录的完整路径。</summary>
 	string ApplicationPath { get; }
 

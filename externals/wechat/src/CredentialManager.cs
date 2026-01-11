@@ -48,7 +48,7 @@ namespace Zongsoft.Externals.Wechat
 		#region 成员字段
 		private static readonly HttpClient _http;
 		private static readonly ConcurrentDictionary<string, Token> _localCache;
-		private static readonly Logger _logger = Logger.GetLogger(typeof(CredentialManager));
+		private static readonly Logging _logging = Logging.GetLogging(typeof(CredentialManager));
 
 		private static IDistributedCache _cache;
 		private static Services.Distributing.IDistributedLockManager _locker;
@@ -100,7 +100,7 @@ namespace Zongsoft.Externals.Wechat
 
 			if(cache == null)
 			{
-				_logger.Error("Missing the required distributed cache in the credential manager.");
+				_logging.Error("Missing the required distributed cache in the credential manager.");
 				return null;
 			}
 
@@ -135,7 +135,7 @@ namespace Zongsoft.Externals.Wechat
 				}
 				catch(Exception ex)
 				{
-					_logger.Error(ex);
+					_logging.Error(ex);
 				}
 			}
 			else
@@ -153,7 +153,7 @@ namespace Zongsoft.Externals.Wechat
 					}
 				}
 
-				_logger.Error("Attempts to acquires credential of the Wechat failed.");
+				_logging.Error("Attempts to acquires credential of the Wechat failed.");
 			}
 
 			return null;
@@ -174,7 +174,7 @@ namespace Zongsoft.Externals.Wechat
 
 			if(cache == null)
 			{
-				_logger.Error("Missing the required distributed cache in the credential manager.");
+				_logging.Error("Missing the required distributed cache in the credential manager.");
 				return default;
 			}
 
@@ -214,7 +214,7 @@ namespace Zongsoft.Externals.Wechat
 				}
 				catch(Exception ex)
 				{
-					_logger.Error(ex);
+					_logging.Error(ex);
 				}
 			}
 			else
@@ -232,7 +232,7 @@ namespace Zongsoft.Externals.Wechat
 					}
 				}
 
-				_logger.Error("Attempts to acquires ticket of the Wechat failed.");
+				_logging.Error("Attempts to acquires ticket of the Wechat failed.");
 			}
 
 			return (null, TimeSpan.Zero);

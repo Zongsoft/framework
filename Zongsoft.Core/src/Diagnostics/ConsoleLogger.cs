@@ -47,6 +47,11 @@ public sealed class ConsoleLogger : ConsoleLogger<LogEntry>
 public abstract class ConsoleLogger<TLog> : LoggerBase<TLog, string> where TLog : ILog
 {
 	#region 重写方法
+	protected override async ValueTask<bool> CanLogAsync(TLog log, CancellationToken cancellation)
+	{
+		return IsTerminalApplication() && await base.CanLogAsync(log, cancellation);
+	}
+
 	protected override ValueTask OnLogAsync(TLog log, CancellationToken cancellation)
 	{
 		if(log == null)
@@ -87,5 +92,11 @@ public abstract class ConsoleLogger<TLog> : LoggerBase<TLog, string> where TLog 
 
 	#region 虚拟方法
 	protected abstract string Format(TLog log);
+	#endregion
+
+	#region 私有方法
+	private static bool IsTerminalApplication() =>
+		string.Equals(Zongsoft.Services.ApplicationContext.Current.ApplicationType, "Console", StringComparison.OrdinalIgnoreCase) ||
+		string.Equals(Zongsoft.Services.ApplicationContext.Current.ApplicationType, "Terminal", StringComparison.OrdinalIgnoreCase);
 	#endregion
 }

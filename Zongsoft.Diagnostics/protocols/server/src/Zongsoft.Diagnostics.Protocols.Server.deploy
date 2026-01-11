@@ -3,7 +3,7 @@ artifacts/Zongsoft.Diagnostics.Protocols.Server.plugin
 lib/$(Framework)/Zongsoft.Diagnostics.Protocols.Server.*
 lib/$(Framework)/*/Zongsoft.Diagnostics.Protocols.Server.resources.*
 
-nuget:Grpc.Core.Api@2.71.0
-nuget:Grpc.Net.Common@2.71.0
-nuget:Grpc.Net.Client@2.71.0
-nuget:Google.Protobuf@3.31.1
+nuget:Grpc.Core.Api@2.76.0
+nuget:Grpc.Net.Common@2.76.0
+nuget:Grpc.Net.Client@2.76.0
+nuget:Google.Protobuf@3.33.3

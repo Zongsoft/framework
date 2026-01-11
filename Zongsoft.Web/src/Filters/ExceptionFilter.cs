@@ -124,7 +124,7 @@ public class ExceptionFilter : IExceptionFilter
 				break;
 			default:
 				context.Result = new ObjectResult(GetProblem(context, StatusCodes.Status500InternalServerError));
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(context.Exception);
+				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(context.Exception);
 				break;
 		}
 	}

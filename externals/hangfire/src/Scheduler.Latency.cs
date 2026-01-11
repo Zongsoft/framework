@@ -109,7 +109,7 @@ partial class Scheduler
 			}
 			catch(Exception ex)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger(typeof(Scheduler)).Error(ex);
+				Zongsoft.Diagnostics.Logging.GetLogging(typeof(Scheduler)).Error(ex);
 				return ValueTask.FromResult(false);
 			}
 		}

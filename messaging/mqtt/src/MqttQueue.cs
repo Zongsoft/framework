@@ -92,7 +92,7 @@ namespace Zongsoft.Messaging.Mqtt
 			}
 			catch(Exception ex)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Error(ex);
+				Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>().Error(ex);
 				return false;
 			}
 		}
@@ -147,7 +147,7 @@ namespace Zongsoft.Messaging.Mqtt
 			}
 			catch(Exception ex)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Error(ex);
+				Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>().Error(ex);
 				return null;
 			}
 		}
@@ -185,14 +185,14 @@ namespace Zongsoft.Messaging.Mqtt
 				}
 				catch(Exception ex)
 				{
-					Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>().Error(ex);
+					Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>().Error(ex);
 				}
 			}
 		}
 
 		private async Task OnDisconnectedAsync(MqttClientDisconnectedEventArgs args)
 		{
-			var logger = Zongsoft.Diagnostics.Logger.GetLogger<MqttQueue>();
+			var logger = Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>();
 
 			logger.Error($"MQTT is Disconnected. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetDisconnectedInfo(args));
 

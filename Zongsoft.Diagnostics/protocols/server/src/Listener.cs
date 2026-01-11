@@ -55,7 +55,7 @@ public static partial class Listener
 			}
 			catch(Exception ex)
 			{
-				Logger.GetLogger(handler).Error(ex);
+				Logging.GetLogging(handler).Error(ex);
 			}
 		});
 	}

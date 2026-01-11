@@ -178,7 +178,7 @@ namespace Zongsoft.Plugins
 			}
 			catch(Exception ex)
 			{
-				Zongsoft.Diagnostics.Logger.GetLogger(this).Error(ex);
+				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
 				throw;
 			}
 		}

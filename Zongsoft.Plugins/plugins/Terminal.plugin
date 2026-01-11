@@ -18,4 +18,9 @@
 			<object.property name="Default" target="{type:Zongsoft.Components.CommandExecutor, Zongsoft.Core}" value="{path:.}" />
 		</object>
 	</extension>
+
+	<!-- 挂载终端记录器到诊断日志器集合 -->
+	<extension path="/Workbench/Diagnostics/Loggers">
+		<object name="Console" value="{static:Zongsoft.Diagnostics.ConsoleLogger.Instance, Zongsoft.Core}" />
+	</extension>
 </plugin>

@@ -70,6 +70,16 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 	protected Spooler<TLog> Logging { get; }
 	#endregion
 
+	#region 重写方法
+	protected override ValueTask<bool> CanLogAsync(TLog log, CancellationToken cancellation)
+	{
+		if(this.Predication == null && log.Level <= LogLevel.Debug)
+			return ValueTask.FromResult(false);
+
+		return base.CanLogAsync(log, cancellation);
+	}
+	#endregion
+
 	#region 日志方法
 	protected override ValueTask OnLogAsync(TLog log, CancellationToken cancellation)
 	{
@@ -110,7 +120,7 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 		var filePath = this.FilePath;
 
 		if(string.IsNullOrEmpty(filePath))
-			filePath = $"~/logs/{entry.Timestamp:yyyyMM}/{(string.IsNullOrEmpty(entry.Source) ? "default" : entry.Source)}-{{sequence}}.log";
+			filePath = $"~/logs/{entry.Timestamp:yyyyMM}/{(string.IsNullOrEmpty(entry.Source) ? Zongsoft.Diagnostics.Logging.Default.Name : entry.Source)}-{{sequence}}.log";
 
 		filePath = filePath.Replace((Path.DirectorySeparatorChar == '/' ? '\\' : '/'), Path.DirectorySeparatorChar).Trim();
 

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.0.0</Version>
+		<Version>1.1.0</Version>
 		<Product>Zongsoft OpenTelemetry gRPC Client Protocols</Product>
 		<Description>This is a gRPC client protocol library of OpenTelemetry.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -16,11 +16,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Google.Protobuf" VersionOverride="3.31.1" />
-		<PackageReference Include="Grpc.Core.Api" VersionOverride="2.71.0" />
-		<PackageReference Include="Grpc.Net.Common" VersionOverride="2.71.0" />
-		<PackageReference Include="Grpc.Net.Client" VersionOverride="2.71.0" />
-		<PackageReference Include="Grpc.Tools" VersionOverride="2.72.0">
+		<PackageReference Include="Google.Protobuf" VersionOverride="3.33.3" />
+		<PackageReference Include="Grpc.Core.Api" VersionOverride="2.76.0" />
+		<PackageReference Include="Grpc.Net.Common" VersionOverride="2.76.0" />
+		<PackageReference Include="Grpc.Net.Client" VersionOverride="2.76.0" />
+		<PackageReference Include="Grpc.Tools" VersionOverride="2.76.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -44,7 +44,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.15.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.28.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

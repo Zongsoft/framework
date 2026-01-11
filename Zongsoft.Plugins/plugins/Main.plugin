@@ -65,6 +65,13 @@
 		<object name="Drivers" value="{static:Zongsoft.Configuration.ConnectionSettings.Drivers, Zongsoft.Core}" />
 	</extension>
 
+	<!-- 挂载诊断日志记录器集合 -->
+	<extension path="/Workbench/Diagnostics">
+		<object name="Loggers" value="{static:Zongsoft.Diagnostics.Logging.Loggers, Zongsoft.Core}">
+			<object name="File" value="{static:Zongsoft.Diagnostics.TextFileLogger.Default, Zongsoft.Core}" />
+		</object>
+	</extension>
+
 	<!-- 挂载后台工作者程序 -->
 	<extension path="/Workbench/Startup">
 		<object name="EventExchanger" value="{path:/Workbench/Events/Exchanger}" />

@@ -206,7 +206,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 				}
 				catch(Exception ex)
 				{
-					Zongsoft.Diagnostics.Logger.GetLogger(typeof(FallbackHandlerUtility)).Error(ex, $"微信回调解密出错：\nAuthority.name:{authority.Name}\nAuthority.Secret:{authority.Secret}\nResource.Nonce:{resource.Nonce}\nResource.AssociatedData:{resource.AssociatedData}\nResource.Ciphertext:{resource.Ciphertext}");
+					Zongsoft.Diagnostics.Logging.GetLogging(typeof(FallbackHandlerUtility)).Error(ex, $"微信回调解密出错：\nAuthority.name:{authority.Name}\nAuthority.Secret:{authority.Secret}\nResource.Nonce:{resource.Nonce}\nResource.AssociatedData:{resource.AssociatedData}\nResource.Ciphertext:{resource.Ciphertext}");
 					throw;
 				}
 

@@ -39,19 +39,20 @@ partial class Application
 {
 	private sealed class DaemonApplicationBuilder : ApplicationBuilder
 	{
-#if NET7_0_OR_GREATER
+		#if NET7_0_OR_GREATER
 		public DaemonApplicationBuilder(string name, string[] args, Action<HostApplicationBuilder> configure = null) : base(name, args, configure)
 		{
-			_logger = Zongsoft.Diagnostics.Logger.GetLogger(this.Environment.ApplicationName);
+			_logging = Zongsoft.Diagnostics.Logging.GetLogging(this.Environment.ApplicationName);
 			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 		}
-#else
+		#else
 		public DaemonApplicationBuilder(string name, string[] args, Action<IHostBuilder> configure = null) : base(name, args, configure)
 		{
-			_logger = Zongsoft.Diagnostics.Logger.GetLogger(this.Environment.ApplicationName);
+			_logging = Zongsoft.Diagnostics.Logging.GetLogging(this.Environment.ApplicationName);
 			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 		}
-#endif
+		#endif
+
 		protected override void RegisterServices(IServiceCollection services, PluginOptions options)
 		{
 			services.AddSingleton(provider => new DaemonApplicationContext(provider, options));
@@ -62,13 +63,13 @@ partial class Application
 		}
 
 		#region 全局异常
-		private static Zongsoft.Diagnostics.Logger _logger;
+		private static Zongsoft.Diagnostics.Logging _logging;
 		private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 		{
 			if(e.ExceptionObject is Exception ex)
-				_logger.Fatal(ex);
+				_logging.Fatal(ex);
 			else
-				_logger.Fatal(e.ExceptionObject?.ToString());
+				_logging.Fatal(e.ExceptionObject?.ToString());
 		}
 		#endregion
 	}
