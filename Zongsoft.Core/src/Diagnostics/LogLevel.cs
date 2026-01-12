@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,30 +28,29 @@
  */
 
 using System;
-using System.ComponentModel;
 
 namespace Zongsoft.Diagnostics;
 
 /// <summary>
 /// 表示日志的级别。
 /// </summary>
-public enum LogLevel
+public enum LogLevel : byte
 {
-	/// <summary>跟踪(1)</summary>
-	Trace = 1,
+	/// <summary>跟踪(0)</summary>
+	Trace,
 
-	/// <summary>调试(2)</summary>
+	/// <summary>调试(1)</summary>
 	Debug,
 
-	/// <summary>信息(3)</summary>
+	/// <summary>信息(2)</summary>
 	Info,
 
-	/// <summary>警告(4)</summary>
+	/// <summary>警告(3)</summary>
 	Warn,
 
-	/// <summary>错误(5)</summary>
+	/// <summary>错误(4)</summary>
 	Error,
 
-	/// <summary>崩溃(6)</summary>
+	/// <summary>崩溃(5)</summary>
 	Fatal,
 }
