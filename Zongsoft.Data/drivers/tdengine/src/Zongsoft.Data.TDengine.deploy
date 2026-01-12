@@ -2,4 +2,4 @@ artifacts/Zongsoft.Data.TDengine.plugin
 lib/$(Framework)/Zongsoft.Data.TDengine.*
 lib/$(Framework)/*/Zongsoft.Data.TDengine.resources.*
 
-nuget:TDengine.Connector@3.1.6
+nuget:TDengine.Connector@3.1.9
