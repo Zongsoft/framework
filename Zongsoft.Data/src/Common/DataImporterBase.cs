@@ -139,7 +139,7 @@ public abstract class DataImporterBase : IDataImporter
 					Reflection.Reflector.TrySetValue(this.Info, ref target, type => Zongsoft.Common.Convert.ConvertValue(id, type));
 
 					//返回最新的序号值
-					return id;
+					return Convert.ChangeType(id, property.Type.DbType.AsType());
 				}
 			}
 
