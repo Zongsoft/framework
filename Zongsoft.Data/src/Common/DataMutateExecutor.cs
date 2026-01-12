@@ -125,7 +125,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 				if(insertion.Options.HasReturning(out returning))
 				{
-					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
 
 					while(reader.Read())
 					{
@@ -142,7 +142,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				}
 				else if(sequences.Length > 0)
 				{
-					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
 
 					while(reader.Read())
 					{
@@ -160,7 +160,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 				if(upsertion.Options.HasReturning(out returning))
 				{
-					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
 
 					while(reader.Read())
 					{
@@ -177,7 +177,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				}
 				else if(sequences.Length > 0)
 				{
-					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
 
 					while(reader.Read())
 					{
@@ -223,7 +223,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 				if(insertion.Options.HasReturning(out returning))
 				{
-					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
 
 					while(await reader.ReadAsync(cancellation))
 					{
@@ -240,7 +240,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				}
 				else if(sequences.Length > 0)
 				{
-					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
 
 					while(await reader.ReadAsync(cancellation))
 					{
@@ -258,7 +258,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 				if(upsertion.Options.HasReturning(out returning))
 				{
-					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
 
 					while(await reader.ReadAsync(cancellation))
 					{
@@ -275,7 +275,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				}
 				else if(sequences.Length > 0)
 				{
-					var enumerator = context.Data is IEnumerable enumerable ? enumerable.GetEnumerator() : null;
+					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
 
 					while(await reader.ReadAsync(cancellation))
 					{
@@ -406,7 +406,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		{
 			if(statement is IMutateStatement mutation && mutation.Schema != null)
 			{
-				if(data is IEnumerable enumerable)
+				if(data is IEnumerable enumerable && data is not IDataDictionary)
 				{
 					foreach(var item in enumerable)
 						SetLinkedParameters(mutation, item);
@@ -509,7 +509,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 	private static object GetContextData(object data, SchemaMember schema)
 	{
-		if(data is IEnumerable enumerable)
+		if(data is IEnumerable enumerable && data is not IDataDictionary)
 		{
 			IList list = null;
 

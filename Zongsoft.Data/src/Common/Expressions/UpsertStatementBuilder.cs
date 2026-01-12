@@ -59,7 +59,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 		}
 		else
 		{
-			if(data is IEnumerable enumerable)
+			if(data is IEnumerable enumerable && data is not IDataDictionary)
 			{
 				foreach(var item in enumerable)
 				{
@@ -264,7 +264,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 	private static int GetRecordCount(object data, out ICollection result)
 	{
-		if(data == null)
+		if(data == null || data is IDataDictionary)
 		{
 			result = null;
 			return 0;
