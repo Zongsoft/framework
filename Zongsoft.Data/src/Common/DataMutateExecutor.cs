@@ -550,6 +550,9 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 			//获取当前导航属性的链接成员标记
 			var tokens = GetLinkTokens(container, schema);
 
+			var elementType = Zongsoft.Common.TypeExtension.GetElementType(data.GetType());
+			IList result = elementType != null && elementType.IsValueType ? (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType)) : null;
+
 			for(int i = 0; i < tokens.Length; i++)
 			{
 				//依次同步当前集合元素中的导航属性值
@@ -557,8 +560,14 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				{
 					var current = item;
 					tokens[i].SetForeignValue(ref current);
+
+					if(result != null)
+						result.Add(current);
 				}
 			}
+
+			if(result != null)
+				schema.Token.SetValue(ref container, data = result);
 		}
 		else
 		{
