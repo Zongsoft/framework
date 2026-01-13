@@ -45,7 +45,7 @@ public abstract class LogFilterBase<TLog> : IAsyncActionFilter, IOrderedFilter w
 	#endregion
 
 	#region 公共方法
-	public Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+	public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 	{
 		//如果处于调试器模式，则不用日志处理
 		if(!System.Diagnostics.Debugger.IsAttached)
@@ -55,10 +55,10 @@ public abstract class LogFilterBase<TLog> : IAsyncActionFilter, IOrderedFilter w
 
 			//进行日志写入
 			if(log is not null)
-				return Logging.LogAsync(log).AsTask().ContinueWith(task => next());
+				await Logging.LogAsync(log);
 		}
 
-		return next();
+		await next();
 	}
 	#endregion
 
