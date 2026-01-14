@@ -553,17 +553,16 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 			var elementType = Zongsoft.Common.TypeExtension.GetElementType(data.GetType());
 			IList result = elementType != null && elementType.IsValueType ? (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType)) : null;
 
-			for(int i = 0; i < tokens.Length; i++)
+			//依次同步当前集合元素中的导航属性值
+			foreach(var item in (IEnumerable)data)
 			{
-				//依次同步当前集合元素中的导航属性值
-				foreach(var item in (IEnumerable)data)
-				{
-					var current = item;
+				var current = item;
+
+				for(int i = 0; i < tokens.Length; i++)
 					tokens[i].SetForeignValue(ref current);
 
-					if(result != null)
-						result.Add(current);
-				}
+				if(result != null)
+					result.Add(current);
 			}
 
 			if(result != null)
