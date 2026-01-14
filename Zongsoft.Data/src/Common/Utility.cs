@@ -232,6 +232,8 @@ internal static class Utility
 		};
 	}
 
+	internal static bool IsMultiple(object data, out IEnumerable enumerable) => (enumerable = data as IEnumerable) != null && data is not IDataDictionary;
+
 	internal static bool IsLinked(SchemaMember owner, Metadata.IDataEntitySimplexProperty property)
 	{
 		if(owner == null || owner.Token.Property.IsSimplex)

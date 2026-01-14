@@ -125,7 +125,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 				if(insertion.Options.HasReturning(out returning))
 				{
-					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
+					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
 					while(reader.Read())
 					{
@@ -142,7 +142,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				}
 				else if(sequences.Length > 0)
 				{
-					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
+					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
 					while(reader.Read())
 					{
@@ -160,7 +160,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 				if(upsertion.Options.HasReturning(out returning))
 				{
-					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
+					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
 					while(reader.Read())
 					{
@@ -177,7 +177,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				}
 				else if(sequences.Length > 0)
 				{
-					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
+					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
 					while(reader.Read())
 					{
@@ -223,7 +223,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 				if(insertion.Options.HasReturning(out returning))
 				{
-					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
+					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
 					while(await reader.ReadAsync(cancellation))
 					{
@@ -240,7 +240,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				}
 				else if(sequences.Length > 0)
 				{
-					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
+					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
 					while(await reader.ReadAsync(cancellation))
 					{
@@ -258,7 +258,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 				if(upsertion.Options.HasReturning(out returning))
 				{
-					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
+					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
 					while(await reader.ReadAsync(cancellation))
 					{
@@ -275,7 +275,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				}
 				else if(sequences.Length > 0)
 				{
-					var enumerator = context.Data is IEnumerable enumerable && context.Data is not IDataDictionary ? enumerable.GetEnumerator() : null;
+					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
 					while(await reader.ReadAsync(cancellation))
 					{
@@ -324,7 +324,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		statement.Bind(context, command, statement.IsMultiple(context));
+		statement.Bind(context, command);
 
 		if(statement.Returning != null && statement.Returning.Table == null)
 		{
@@ -368,7 +368,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		await statement.BindAsync(context, command, statement.IsMultiple(context), cancellation);
+		await statement.BindAsync(context, command, cancellation);
 
 		if(statement.Returning != null && statement.Returning.Table == null)
 		{
@@ -509,19 +509,19 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 	private static object GetContextData(object data, SchemaMember schema)
 	{
-		if(data is IEnumerable enumerable && data is not IDataDictionary)
+		if(Utility.IsMultiple(data, out var items))
 		{
 			IList list = null;
 
-			foreach(var item in enumerable)
+			foreach(var item in items)
 			{
 				var result = SetLinkValue(item, schema);
 
-				if(result is IEnumerable items)
+				if(result is IEnumerable enumerable)
 				{
-					list ??= Utility.CreateList(items);
+					list ??= Utility.CreateList(enumerable);
 
-					foreach(var entry in items)
+					foreach(var entry in enumerable)
 						list.Add(entry);
 				}
 				else if(result != null)

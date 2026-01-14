@@ -42,12 +42,12 @@ namespace Zongsoft.Data.Common.Expressions;
 
 public static class StatementExtension
 {
-	public static void Bind(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, bool isMultiple)
+	public static void Bind(this IStatementBase statement, IDataMutateContextBase context, DbCommand command)
 	{
 		if(statement.Parameters.Count == 0)
 			return;
 
-		if(isMultiple)
+		if(Utility.IsMultiple(context.Data, out var items))
 		{
 			var lines = statement switch
 			{
@@ -61,7 +61,7 @@ public static class StatementExtension
 				var index = 0;
 				var hasSequences = context.Entity.HasSequences();
 
-				foreach(var item in (IEnumerable)context.Data)
+				foreach(var item in items)
 				{
 					if(hasSequences)
 						SetSequenceValue(context, statement, item);
@@ -79,12 +79,12 @@ public static class StatementExtension
 		}
 	}
 
-	public static async ValueTask BindAsync(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, bool isMultiple, CancellationToken cancellation)
+	public static async ValueTask BindAsync(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, CancellationToken cancellation)
 	{
 		if(statement.Parameters.Count == 0)
 			return;
 
-		if(isMultiple)
+		if(Utility.IsMultiple(context.Data, out var items))
 		{
 			var lines = statement switch
 			{
@@ -98,7 +98,7 @@ public static class StatementExtension
 				var index = 0;
 				var hasSequences = context.Entity.HasSequences();
 
-				foreach(var item in (IEnumerable)context.Data)
+				foreach(var item in items)
 				{
 					if(hasSequences)
 						await SetSequenceValueAsync(context, statement, item, cancellation);
@@ -304,9 +304,6 @@ public static class StatementExtension
 			}
 		}
 	}
-
-	public static bool IsMultiple(this IMutateStatement statement, IDataMutateContextBase context) =>
-		statement.Schema != null ? statement.Schema.Token.IsMultiple : context.IsMultiple();
 
 	public static ISource From(this IStatement statement, string memberPath, Aliaser aliaser, Func<ISource, IDataEntityComplexProperty, ISource> subqueryFactory, out IDataEntityProperty property)
 	{

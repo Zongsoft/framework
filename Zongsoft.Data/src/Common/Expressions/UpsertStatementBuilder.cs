@@ -59,9 +59,9 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 		}
 		else
 		{
-			if(data is IEnumerable enumerable && data is not IDataDictionary)
+			if(Utility.IsMultiple(data, out var items))
 			{
-				foreach(var item in enumerable)
+				foreach(var item in items)
 				{
 					var value = owner.Token.GetValue(item);
 					recordCount += GetRecordCount(value, out var list);

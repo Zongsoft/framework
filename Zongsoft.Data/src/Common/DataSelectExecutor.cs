@@ -81,7 +81,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		statement.Bind(context, command, context.IsMultiple());
+		statement.Bind(context, command);
 
 		using(var reader = command.ExecuteReader())
 		{
@@ -117,7 +117,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		statement.Bind(context, command, context.IsMultiple());
+		statement.Bind(context, command);
 
 		using(var reader = command.ExecuteReader())
 		{
@@ -183,7 +183,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		await statement.BindAsync(context, command, context.IsMultiple(), cancellation);
+		await statement.BindAsync(context, command, cancellation);
 
 		using(var reader = await command.ExecuteReaderAsync(cancellation))
 		{
@@ -219,7 +219,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		await statement.BindAsync(context, command, context.IsMultiple(), cancellation);
+		await statement.BindAsync(context, command, cancellation);
 
 		using(var reader = await command.ExecuteReaderAsync(cancellation))
 		{
