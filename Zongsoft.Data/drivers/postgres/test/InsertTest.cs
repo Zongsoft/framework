@@ -217,7 +217,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
-	public async Task InsertManyWithChildrenAsync()
+	public async Task InsertManyWithChildrenAsync1()
 	{
 		const int COUNT = 10;
 		const int OFFSET = 1000;
@@ -285,6 +285,130 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 
 		await accessor.DeleteAsync<RoleModel>(Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT));
 		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), OFFSET, OFFSET + COUNT));
+	}
+
+	[Fact]
+	public async Task InsertManyWithChildrenAsync2()
+	{
+		const int ROLE_OFFSET = 1000;
+		const int MEMBER_OFFSET = 100;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var models = new RoleModel[]
+		{
+			Model.Build<RoleModel>(model =>
+			{
+				model.RoleId = ROLE_OFFSET;
+				model.Name = $"$Role#{model.RoleId}";
+			}),
+			Model.Build<RoleModel>(model =>
+			{
+				model.RoleId = ROLE_OFFSET + 1;
+				model.Name = $"$Role#{model.RoleId}";
+				model.Children =
+				[
+					Model.Build<MemberModel>(member =>
+					{
+						member.MemberId = MEMBER_OFFSET + 1;
+						member.MemberType = MemberType.Role;
+					}),
+				];
+			}),
+			Model.Build<RoleModel>(model =>
+			{
+				model.RoleId = ROLE_OFFSET + 2;
+				model.Name = $"$Role#{model.RoleId}";
+				model.Children =
+				[
+					Model.Build<MemberModel>(member =>
+					{
+						member.MemberId = MEMBER_OFFSET * 2 + 1;
+						member.MemberType = MemberType.Role;
+					}),
+					Model.Build<MemberModel>(member =>
+					{
+						member.MemberId = MEMBER_OFFSET * 2 + 2;
+						member.MemberType = MemberType.User;
+					}),
+				];
+			}),
+			Model.Build<RoleModel>(model =>
+			{
+				model.RoleId = ROLE_OFFSET + 3;
+				model.Name = $"$Role#{model.RoleId}";
+				model.Children =
+				[
+					Model.Build<MemberModel>(member =>
+					{
+						member.MemberId = MEMBER_OFFSET * 3 + 1;
+						member.MemberType = MemberType.Role;
+					}),
+					Model.Build<MemberModel>(member =>
+					{
+						member.MemberId = MEMBER_OFFSET * 3 + 2;
+						member.MemberType = MemberType.User;
+					}),
+					Model.Build<MemberModel>(member =>
+					{
+						member.MemberId = MEMBER_OFFSET * 3 + 3;
+						member.MemberType = MemberType.User;
+					}),
+				];
+			}),
+		};
+
+		var count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		Assert.Equal(10, count);
+
+		for(int i = 1; i < models.Length; i++)
+		{
+			var model = models[i];
+			Assert.NotNull(model.Children);
+			Assert.NotEmpty(model.Children);
+
+			foreach(var child in model.Children)
+				Assert.Equal((uint)(ROLE_OFFSET + i), child.RoleId);
+		}
+
+		#if NET10_0_OR_GREATER
+		var roles = await accessor.SelectAsync<RoleModel>(
+			Condition.Between(nameof(RoleModel.RoleId), ROLE_OFFSET, ROLE_OFFSET + models.Length - 1),
+			$"*,{nameof(RoleModel.Children)}{{*}}",
+			[Sorting.Ascending(nameof(RoleModel.RoleId))]).ToArrayAsync();
+		#else
+		var roles = accessor.SelectAsync<RoleModel>(
+			Condition.Between(nameof(RoleModel.RoleId), ROLE_OFFSET, ROLE_OFFSET + models.Length - 1),
+			$"*,{nameof(RoleModel.Children)}{{*}}",
+			[Sorting.Ascending(nameof(RoleModel.RoleId))]).ToBlockingEnumerable().ToArray();
+		#endif
+
+		for(int i = 0; i < roles.Length; i++)
+		{
+			Assert.NotNull(roles[i]);
+			Assert.Equal((uint)(ROLE_OFFSET + i), roles[i].RoleId);
+			Assert.Equal($"$Role#{ROLE_OFFSET + i}", roles[i].Name);
+
+			if(i == 0)
+				Assert.Empty(roles[i].Children);
+			else
+			{
+				Assert.NotNull(roles[i].Children);
+
+				int index = 1;
+				foreach(var child in roles[i].Children)
+				{
+					var memberId = MEMBER_OFFSET * i + index++;
+					Assert.Equal(roles[i].RoleId, child.RoleId);
+					Assert.Equal((uint)memberId, child.MemberId);
+				}
+			}
+		}
+
+		await accessor.DeleteAsync<RoleModel>(Condition.Between(nameof(RoleModel.RoleId), ROLE_OFFSET, ROLE_OFFSET + models.Length - 1));
+		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), ROLE_OFFSET, ROLE_OFFSET + models.Length - 1));
 	}
 
 	void IDisposable.Dispose()
