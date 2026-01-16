@@ -74,7 +74,10 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 		}
 
 		//生成条件子句
-		statement.Where = Where(context, statement);
+		if(statement.Where == null)
+			statement.Where = Where(context, statement);
+		else
+			statement.Where = ConditionExpression.And(statement.Where, Where(context, statement));
 
 		if(statement.Fields.Count == 0)
 			throw new DataException($"The update statement is missing a required set clause.");
@@ -198,6 +201,32 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 		var table = Join(context.Aliaser, statement, member);
 		var container = member.Token.GetValue(data);
+
+		if(member.Token.Property.IsComplex(out var complex))
+		{
+			IExpression where = complex.Links.Length > 1 ? ConditionExpression.And() : null;
+
+			for(int i = 0; i < complex.Links.Length; i++)
+			{
+				var link = complex.Links[i];
+
+				if(member.Children.TryGetValue(link.ForeignKey.Name, out var child))
+				{
+					var field = table.CreateField(link.ForeignKey);
+					var parameter = Expression.Parameter(field, child);
+					var condition = Expression.Equal(field, parameter);
+
+					statement.Parameters.Add(parameter);
+
+					if(where is ConditionExpression conditions)
+						conditions.Add(condition);
+					else
+						where = condition;
+				}
+			}
+
+			statement.Where = where;
+		}
 
 		foreach(var child in member.Children)
 		{

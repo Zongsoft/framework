@@ -43,11 +43,13 @@ public class ConditionExpression : Expression, ICollection<IExpression>
 	public ConditionExpression(ConditionCombination combination, IEnumerable<IExpression> items = null)
 	{
 		this.Combination = combination;
+		_items = new List<IExpression>();
 
-		if(items == null)
-			_items = new List<IExpression>();
-		else
-			_items = new List<IExpression>(items);
+		if(items != null)
+		{
+			foreach(var item in items)
+				this.Add(item);
+		}
 	}
 	#endregion
 
@@ -60,8 +62,28 @@ public class ConditionExpression : Expression, ICollection<IExpression>
 	#region 公共方法
 	public void Add(IExpression item)
 	{
-		if(item != null)
+		if(item == null)
+			return;
+
+		if(item is ConditionExpression conditions && conditions.Combination == this.Combination)
+		{
+			foreach(var condition in conditions)
+				_items.Add(condition);
+		}
+		else if(item is BinaryExpression binary && Same(this.Combination, binary.Operator))
+		{
+			_items.Add(binary.Left);
+			_items.Add(binary.Right);
+		}
+		else
 			_items.Add(item);
+
+		static bool Same(ConditionCombination combination, Operator @operator) => combination switch
+		{
+			ConditionCombination.And => @operator == Operator.AndAlso,
+			ConditionCombination.Or => @operator == Operator.OrElse,
+			_ => false,
+		};
 	}
 
 	public void Clear() => _items.Clear();
@@ -73,9 +95,9 @@ public class ConditionExpression : Expression, ICollection<IExpression>
 	#endregion
 
 	#region 静态方法
-	public static ConditionExpression And(IEnumerable<IExpression> items) => new ConditionExpression(ConditionCombination.And, items);
-	public static ConditionExpression And(params IExpression[] items) => new ConditionExpression(ConditionCombination.And, items);
-	public static ConditionExpression Or(IEnumerable<IExpression> items) => new ConditionExpression(ConditionCombination.Or, items);
-	public static ConditionExpression Or(params IExpression[] items) => new ConditionExpression(ConditionCombination.Or, items);
+	public static ConditionExpression And(IEnumerable<IExpression> items) => new(ConditionCombination.And, items);
+	public static ConditionExpression And(params IExpression[] items) => new(ConditionCombination.And, items);
+	public static ConditionExpression Or(IEnumerable<IExpression> items) => new(ConditionCombination.Or, items);
+	public static ConditionExpression Or(params IExpression[] items) => new(ConditionCombination.Or, items);
 	#endregion
 }

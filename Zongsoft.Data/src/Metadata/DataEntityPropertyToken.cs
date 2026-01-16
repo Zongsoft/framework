@@ -61,7 +61,7 @@ public readonly struct DataEntityPropertyToken
 	#endregion
 
 	#region 公共属性
-	public bool IsMultiple => this.Property.IsComplex && ((IDataEntityComplexProperty)this.Property).Multiplicity == DataAssociationMultiplicity.Many;
+	public bool IsMultiple => this.Property != null && this.Property.IsComplex && ((IDataEntityComplexProperty)this.Property).Multiplicity == DataAssociationMultiplicity.Many;
 	public Type MemberType
 	{
 		get
