@@ -48,7 +48,6 @@ public class LogEntry : ILog
 		}
 
 		this.Level = level;
-		this.StackTrace = string.Empty;
 		this.Source = string.IsNullOrEmpty(source) ? (exception == null ? string.Empty : exception.Source) : source.Trim();
 		this.Exception = exception;
 		this.Message = message ?? (exception == null ? string.Empty : exception.Message);
@@ -61,7 +60,6 @@ public class LogEntry : ILog
 	public LogLevel Level { get; }
 	public string Source { get; }
 	public string Message { get; }
-	public string StackTrace { get; internal set; }
 	public object Data { get; }
 	public DateTime Timestamp { get; }
 	public Exception Exception { get; }

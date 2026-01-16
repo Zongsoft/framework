@@ -36,7 +36,6 @@ namespace Zongsoft.Diagnostics;
 
 public sealed class LoggerPredication : LoggerPredication<LogEntry>
 {
-	public static readonly LoggerPredication Default = new();
 }
 
 public class LoggerPredication<TLog> : Common.IPredication<TLog> where TLog : ILog

@@ -53,23 +53,27 @@ public sealed class XmlLogFormatter : XmlLogFormatter<LogEntry>
 			builder.AppendLine($"\t<data type=\"{Common.TypeAlias.GetAlias(log.Data.GetType())}\">");
 			builder.AppendLine("\t<![CDATA[");
 
-			if(log.Data is byte[] bytes)
-				builder.AppendLine(Convert.ToBase64String(bytes));
-			else
-				builder.AppendLine(System.Text.Json.JsonSerializer.Serialize(log.Data));
+			var content = log.Data switch
+			{
+				byte[] data => Convert.ToBase64String(data),
+				string text => text,
+				_ => GetJson(log.Data),
+			};
+
+			if(!string.IsNullOrEmpty(content))
+				builder.AppendLine(content);
 
 			builder.AppendLine("\t]]>");
 			builder.AppendLine("\t</data>");
 		}
 
-		if(!string.IsNullOrEmpty(log.StackTrace))
+		static string GetJson(object data)
 		{
-			builder.AppendLine();
-			builder.AppendLine("\t<stackTrace>");
-			builder.AppendLine("\t<![CDATA[");
-			builder.AppendLine(log.StackTrace);
-			builder.AppendLine("\t]]>");
-			builder.AppendLine("\t</stackTrace>");
+			try
+			{
+				return Zongsoft.Serialization.Serializer.Json.Serialize(data);
+			}
+			catch { return null; }
 		}
 	}
 	#endregion
