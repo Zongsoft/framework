@@ -131,8 +131,8 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 		//确认指定成员是否有必须的写入值
 		var provided = context.Validate(member.Token.Property, out var value);
 
-		//如果不是批量更新，并且指定成员不是必须要生成的且也没有必须写入的值，则返回
-		if(!context.IsMultiple() && !Utility.IsGenerateRequired(ref data, member.Name) && !provided)
+		//指定成员不是必须要生成的且也没有必须写入的值，则返回
+		if(!Utility.IsGenerateRequired(ref data, member.Name) && !provided)
 			return;
 
 		if(member.Token.Property.IsSimplex)
@@ -204,7 +204,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			if(container is IModel model && !model.HasChanges(child.Name))
 				continue;
 
-			BuildSchema(context, statement, table, container, child);
+			this.BuildSchema(context, statement, table, container, child);
 		}
 	}
 
@@ -287,7 +287,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 	private static IExpression Where(DataUpdateContext context, UpdateStatement statement)
 	{
-		if(context.IsMultiple() || context.Criteria == null)
+		if(context.Criteria == null)
 		{
 			var criteria = new ConditionExpression(ConditionCombination.And);
 
@@ -304,7 +304,6 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			}
 
 			criteria.Add(statement.Where(context.Validate(), context.Aliaser));
-
 			return criteria.Count > 0 ? criteria : null;
 		}
 
