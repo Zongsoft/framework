@@ -38,7 +38,7 @@ using Zongsoft.Diagnostics;
 
 namespace Zongsoft.Web.Filters;
 
-public abstract class LogFilterBase<TLog> : IAsyncActionFilter, IOrderedFilter where TLog : ILog
+public abstract class LoggingFilterBase<TLog> : IAsyncActionFilter, IOrderedFilter where TLog : ILog
 {
 	#region 公共属性
 	public virtual int Order => 0xFFFF;
