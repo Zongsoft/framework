@@ -31,6 +31,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Terminals;
+using Zongsoft.Components;
+
 namespace Zongsoft.Diagnostics;
 
 public sealed class ConsoleLogger : ConsoleLogger<LogEntry>
@@ -39,12 +42,19 @@ public sealed class ConsoleLogger : ConsoleLogger<LogEntry>
 	public static readonly ConsoleLogger Instance = new();
 	#endregion
 
+	#region 构造函数
+	public ConsoleLogger()
+	{
+		this.Predication = new LoggerPredication(this.Name);
+	}
+	#endregion
+
 	#region 重写方法
-	protected override string Format(LogEntry log) => (this.Formatter ?? XmlLogFormatter.Default).Format(log);
+	protected override CommandOutletContent Format(LogEntry log) => (this.Formatter ?? ConsoleFormatter.Default).Format(log);
 	#endregion
 }
 
-public abstract class ConsoleLogger<TLog> : LoggerBase<TLog, string> where TLog : ILog
+public abstract class ConsoleLogger<TLog> : LoggerBase<TLog, CommandOutletContent> where TLog : ILog
 {
 	#region 重写方法
 	protected override async ValueTask<bool> CanLogAsync(TLog log, CancellationToken cancellation)
@@ -54,44 +64,18 @@ public abstract class ConsoleLogger<TLog> : LoggerBase<TLog, string> where TLog 
 
 	protected override ValueTask OnLogAsync(TLog log, CancellationToken cancellation)
 	{
-		if(log == null)
-			return ValueTask.CompletedTask;
-
-		//根据日志级别来调整控制台的前景色
-		switch(log.Level)
-		{
-			case LogLevel.Trace:
-				Console.ForegroundColor = ConsoleColor.Gray;
-				break;
-			case LogLevel.Debug:
-				Console.ForegroundColor = ConsoleColor.DarkGray;
-				break;
-			case LogLevel.Warn:
-				Console.ForegroundColor = ConsoleColor.Yellow;
-				break;
-			case LogLevel.Error:
-			case LogLevel.Fatal:
-				Console.ForegroundColor = ConsoleColor.Red;
-				break;
-		}
-
 		try
 		{
-			//打印日志信息
-			Console.WriteLine(this.Format(log));
+			Terminal.WriteLine(this.Format(log));
 		}
-		finally
-		{
-			//恢复默认颜色
-			Console.ResetColor();
-		}
+		catch { }
 
 		return ValueTask.CompletedTask;
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected abstract string Format(TLog log);
+	protected abstract CommandOutletContent Format(TLog log);
 	#endregion
 
 	#region 私有方法

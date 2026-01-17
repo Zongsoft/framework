@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,33 +29,31 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Diagnostics.Configuration;
 
-public class LoggerOptions
+public class LoggerPredicationOptions
 {
-	public LoggerHandlerSettingCollection Handlers { get; set; }
+	public LogLevel? MinLevel { get; set; }
+	public LogLevel? MaxLevel { get; set; }
+	public IList<SourceOptions> Sources { get; set; }
+	public IList<ExceptionOptions> Exceptions { get; set; }
 
-	[Zongsoft.Configuration.Configuration(nameof(Properties))]
-	public class LoggerHandlerSetting
+	public class SourceOptions
 	{
-		public string Name { get; set; }
+		public string Pattern { get; set; }
+	}
+
+	public class ExceptionOptions
+	{
 		public string Type { get; set; }
-		public LoggerHandlerPredicationSetting Predication { get; set; }
-		public bool HasProperties => this.Properties?.Count > 0;
-		public IDictionary<string, string> Properties { get; set; }
-	}
 
-	public class LoggerHandlerSettingCollection() : KeyedCollection<string, LoggerHandlerSetting>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(LoggerHandlerSetting item) => item.Name;
-	}
+		public Type GetExceptionType()
+		{
+			if(string.IsNullOrEmpty(this.Type))
+				return null;
 
-	public class LoggerHandlerPredicationSetting
-	{
-		public string Source { get; set; }
-		public LogLevel? MinLevel { get; set; }
-		public LogLevel? MaxLevel { get; set; }
+			return Zongsoft.Common.TypeAlias.TryParse(this.Type, out var type) ? type : null;
+		}
 	}
 }

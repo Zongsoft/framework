@@ -39,13 +39,13 @@ public interface ILogger
 	ValueTask LogAsync<TLog>(TLog log, CancellationToken cancellation = default) where TLog : ILog;
 }
 
-public interface ILogger<in TLog> : ILogger where TLog : ILog
+public interface ILogger<TLog> : ILogger where TLog : ILog
 {
-	Common.IPredication<TLog> Predication { get; }
+	Common.IPredication<TLog> Predication { get; set; }
 	ValueTask LogAsync(TLog log, CancellationToken cancellation = default);
 }
 
-public interface ILogger<in TLog, out TModel> : ILogger<TLog> where TLog : ILog
+public interface ILogger<TLog, out TModel> : ILogger<TLog> where TLog : ILog
 {
 	ILogFormatter<TLog, TModel> Formatter { get; }
 }

@@ -86,7 +86,7 @@ public class XmlLogFormatter<TLog> : ILogFormatter<TLog, string> where TLog : IL
 	#endregion
 
 	#region 公共属性
-	public string Name => "xml";
+	public string Name => "Xml";
 	#endregion
 
 	#region 公共方法
@@ -108,7 +108,7 @@ public class XmlLogFormatter<TLog> : ILogFormatter<TLog, string> where TLog : IL
 	#region 虚拟方法
 	protected virtual void OnFormatting(StringBuilder builder, TLog log)
 	{
-		builder.AppendLine($"<log level=\"{log.Level}\" source=\"{log.Source}\" timestamp=\"{log.Timestamp:yyyy-MM-dd HH:mm:ss}\">");
+		builder.AppendLine($"<log level=\"{log.Level}\" source=\"{log.Source}\" timestamp=\"{log.Timestamp:yyyy-MM-dd HH:mm:ss.fffK}\">");
 	}
 
 	protected virtual void OnFormatted(StringBuilder builder, TLog log)

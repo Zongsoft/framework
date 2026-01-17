@@ -31,20 +31,68 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+
+using Zongsoft.Services;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Diagnostics;
 
-public sealed class LoggerPredication : LoggerPredication<LogEntry>
+public sealed class LoggerPredication(string name = null) : LoggerPredication<LogEntry>(name)
 {
 }
 
 public class LoggerPredication<TLog> : Common.IPredication<TLog> where TLog : ILog
 {
+	#region 构造函数
+	public LoggerPredication(string name = null)
+	{
+		this.Name = name;
+		this.Sources = [];
+		this.Exceptions = [];
+	}
+	#endregion
+
 	#region 公共属性
-	public string Source { get; set; }
-	public Type ExceptionType { get; set; }
+	public string Name { get; }
+	public ICollection<string> Sources { get; set; }
+	public ICollection<Type> Exceptions { get; set; }
 	public LogLevel? MinLevel { get; set; }
 	public LogLevel? MaxLevel { get; set; }
+	#endregion
+
+	#region 初始化器
+	private bool _initialized;
+	protected virtual void Initialize()
+	{
+		if(_initialized)
+			return;
+
+		lock(this)
+		{
+			if(_initialized)
+				return;
+
+			var path = string.IsNullOrEmpty(this.Name) ? "/Diagnostics/Loggers/Predication" : $"/Diagnostics/Loggers/{this.Name}/Predication";
+			var options = ApplicationContext.Current?.Configuration?.GetOption<Configuration.LoggerPredicationOptions>(path);
+
+			if(options != null)
+			{
+				if(options.MinLevel.HasValue)
+					this.MinLevel = options.MinLevel;
+				if(options.MaxLevel.HasValue)
+					this.MaxLevel = options.MaxLevel;
+
+				if(options.Sources != null && options.Sources.Count > 0)
+					this.Sources = [.. options.Sources.Select(source => source.Pattern)];
+				if(options.Exceptions != null && options.Exceptions.Count > 0)
+					this.Exceptions = [.. options.Exceptions.Select(exception => exception.GetExceptionType())];
+			}
+
+			//设置初始化完成
+			_initialized = true;
+		}
+	}
 	#endregion
 
 	#region 断言方法
@@ -57,10 +105,27 @@ public class LoggerPredication<TLog> : Common.IPredication<TLog> where TLog : IL
 		if(log == null)
 			return ValueTask.FromResult(false);
 
-		if(!string.IsNullOrWhiteSpace(this.Source))
+		//初始化日志断言器
+		this.Initialize();
+
+		if(this.MinLevel.HasValue)
 		{
+			if(log.Level < this.MinLevel.Value)
+				return ValueTask.FromResult(false);
+		}
+
+		if(this.MaxLevel.HasValue)
+		{
+			if(log.Level > this.MaxLevel.Value)
+				return ValueTask.FromResult(false);
+		}
+
+		foreach(var source in this.Sources ?? [])
+		{
+			if(string.IsNullOrEmpty(source))
+				continue;
+
 			var matched = true;
-			var source = this.Source.Trim();
 
 			if(source[0] == '*' || source[^1] == '*')
 			{
@@ -81,33 +146,21 @@ public class LoggerPredication<TLog> : Common.IPredication<TLog> where TLog : IL
 				matched &= string.Equals(log.Source, source, StringComparison.OrdinalIgnoreCase);
 			}
 
-			if(!matched)
-				return ValueTask.FromResult(false);
+			if(matched)
+				break;
 		}
 
-		if(this.MinLevel.HasValue)
+		foreach(var exception in this.Exceptions ?? [])
 		{
-			if(log.Level < this.MinLevel.Value)
-				return ValueTask.FromResult(false);
-		}
+			if(exception == null)
+				continue;
 
-		if(this.MaxLevel.HasValue)
-		{
-			if(log.Level > this.MaxLevel.Value)
-				return ValueTask.FromResult(false);
-		}
+			var matched = log.Exception.GetType() == typeof(AggregateException) ?
+				((AggregateException)log.Exception).InnerExceptions.Any(ex => exception.IsAssignableFrom(ex.GetType())) :
+				exception.IsAssignableFrom(log.Exception.GetType());
 
-		if(this.ExceptionType != null)
-		{
-			if(log.Exception == null)
-				return ValueTask.FromResult(false);
-
-			var result = log.Exception.GetType() == typeof(AggregateException) ?
-				((AggregateException)log.Exception).InnerExceptions.Any(ex => this.ExceptionType.IsAssignableFrom(ex.GetType())) :
-				this.ExceptionType.IsAssignableFrom(log.Exception.GetType());
-
-			if(!result)
-				return ValueTask.FromResult(false);
+			if(matched)
+				break;
 		}
 
 		return ValueTask.FromResult(true);

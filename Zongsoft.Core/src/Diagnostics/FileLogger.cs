@@ -81,17 +81,19 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 	#endregion
 
 	#region 日志方法
-	protected override ValueTask OnLogAsync(TLog log, CancellationToken cancellation)
+	protected override async ValueTask OnLogAsync(TLog log, CancellationToken cancellation)
 	{
-		if(log.Level >= LogLevel.Error)
-			return this.OnLogAsync([log], cancellation);
-
 		var logging = this.Logging;
 
 		if(logging == null)
-			return this.OnLogAsync([log], cancellation);
+			await this.OnLogAsync([log], cancellation);
 		else
-			return logging.PutAsync(log, cancellation);
+		{
+			await logging.PutAsync(log, cancellation);
+
+			if(log.Level >= LogLevel.Error)
+				await logging.FlushAsync(cancellation);
+		}
 	}
 
 	protected virtual async ValueTask OnLogAsync(IEnumerable<TLog> logs, CancellationToken cancellation)

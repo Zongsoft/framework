@@ -46,7 +46,7 @@ public abstract class LoggerBase<TLog> : ILogger<TLog> where TLog : ILog
 				name = name[..^6];
 		}
 
-		this.Name = name ?? this.GetType().Name;
+		this.Name = name;
 	}
 	#endregion
 
@@ -54,7 +54,7 @@ public abstract class LoggerBase<TLog> : ILogger<TLog> where TLog : ILog
 	/// <summary>获取日志记录器名称。</summary>
 	public string Name { get; }
 	/// <summary>获取或设置日志断言。</summary>
-	public Common.IPredication<TLog> Predication { get; protected set; }
+	public Common.IPredication<TLog> Predication { get; set; }
 	#endregion
 
 	#region 公共方法

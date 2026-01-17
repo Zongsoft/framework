@@ -47,6 +47,7 @@ public sealed class TextFileLogger : TextFileLogger<LogEntry>
 	public TextFileLogger(TimeSpan period, int capacity, string filePath, int fileLimit = FILE_LIMIT) : base(period, capacity, filePath, fileLimit)
 	{
 		this.Formatter = XmlLogFormatter.Default;
+		this.Predication = new LoggerPredication(this.Name) { MinLevel = LogLevel.Info };
 	}
 	#endregion
 }
