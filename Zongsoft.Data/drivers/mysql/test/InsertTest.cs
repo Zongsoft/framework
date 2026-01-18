@@ -198,6 +198,50 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task InsertManyWithOneAsync()
+	{
+		const int COUNT = 100;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var count = await accessor.InsertManyAsync(Model.Build<Employee>(COUNT, (model, index) => {
+			model.TenantId = 1;
+			model.BranchId = 0;
+			model.UserId = (uint)(200 + index);
+			model.FullName = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
+			model.EmployeeNo = $"A{model.UserId}";
+			model.EmployeeCode = $"X{model.UserId}";
+			model.User = Model.Build<UserModel>(user =>
+			{
+				user.UserId = model.UserId;
+				user.Name = model.FullName;
+			});
+		}), $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.SuppressSequence());
+		Assert.Equal(COUNT * 2, count);
+
+		var employees = accessor.SelectAsync<Employee>(
+			Condition.Equal(nameof(Employee.TenantId), 1) &
+			Condition.In(nameof(Employee.UserId), Enumerable.Range(200, COUNT)), $"*,{nameof(Employee.User)}{{*}}");
+
+		count = 0;
+
+		await foreach(var employee in employees)
+		{
+			Assert.NotNull(employee);
+			Assert.NotNull(employee.User);
+			++count;
+		}
+
+		Assert.Equal(COUNT, count);
+
+		await accessor.DeleteAsync<Employee>(
+			Condition.Equal(nameof(Employee.TenantId), 1) &
+			Condition.In(nameof(Employee.UserId), Enumerable.Range(200, COUNT)), nameof(Employee.User));
+	}
+
+	[Fact]
 	public async Task InsertManyWithChildrenAsync1()
 	{
 		const int COUNT = 10;
