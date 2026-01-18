@@ -45,12 +45,70 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 		Assert.Equal("Popeye Zhong", name);
 	}
 
+	[Fact]
+	public async Task UpdateEmployeeWithUserAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
+			model.UserId = 100;
+			model.Name = "Popeye";
+			model.Nickname = "Popeye Zhong";
+		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		Assert.Equal(1, count);
+
+		count = await accessor.InsertAsync(Model.Build<Employee>(model => {
+			model.TenantId = 1;
+			model.BranchId = 0;
+			model.UserId = 100;
+			model.FullName = "Popeye Zhong";
+			model.EmployeeNo = "A101";
+			model.EmployeeCode = "X101";
+		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		Assert.Equal(1, count);
+
+		count = await accessor.UpdateAsync<Employee>(new
+		{
+			FullName = "Popeye.Zhong",
+			User = new
+			{
+				Name = "Popeye.New",
+			},
+		}, Condition.Equal(nameof(Employee.TenantId), 1) & Condition.Equal(nameof(Employee.UserId), 100), $"*,{nameof(Employee.User)}{{*}}");
+		Assert.Equal(2, count);
+
+		#if NET10_0_OR_GREATER
+		var employee = await accessor.SelectAsync<Employee>(
+			Condition.Equal(nameof(Employee.TenantId), 1) &
+			Condition.Equal(nameof(Employee.UserId), 100), $"*,{nameof(Employee.User)}{{*}}").FirstOrDefaultAsync();
+		#else
+		var employee = accessor.SelectAsync<Employee>(
+			Condition.Equal(nameof(Employee.TenantId), 1) &
+			Condition.Equal(nameof(Employee.UserId), 100), $"*,{nameof(Employee.User)}{{*}}").ToBlockingEnumerable().FirstOrDefault();
+		#endif
+
+		Assert.NotNull(employee);
+		Assert.Equal(1U, employee.TenantId);
+		Assert.Equal(0U, employee.BranchId);
+		Assert.Equal(100U, employee.UserId);
+		Assert.Equal("A101", employee.EmployeeNo);
+		Assert.Equal("X101", employee.EmployeeCode);
+		Assert.Equal("Popeye.Zhong", employee.FullName);
+		Assert.NotNull(employee.User);
+		Assert.Equal(100U, employee.User.UserId);
+		Assert.Equal("Popeye.New", employee.User.Name);
+		Assert.Equal("Popeye Zhong", employee.User.Nickname);
+	}
+
 	void IDisposable.Dispose()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
+		accessor.Delete<Employee>(Condition.Equal(nameof(UserModel.UserId), 100));
 		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 	}
 }
