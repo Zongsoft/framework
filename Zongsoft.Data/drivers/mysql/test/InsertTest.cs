@@ -88,6 +88,46 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task InsertWithOneAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var model = Model.Build<Employee>(model => {
+			model.TenantId = 1;
+			model.BranchId = 0;
+			model.UserId = 100;
+			model.FullName = "Boss Zhong";
+			model.User = Model.Build<UserModel>(user => {
+				user.UserId = 100;
+				user.Name = "Popeye";
+				user.Nickname = "Popeye Zhong";
+			});
+		});
+
+		var count = await accessor.InsertAsync(model, $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.SuppressSequence());
+		Assert.Equal(2, count);
+
+		var employees = accessor.SelectAsync<Employee>(
+			Condition.Equal(nameof(Employee.TenantId), 1) &
+			Condition.Equal(nameof(Employee.UserId), 100),
+			$"*,{nameof(Employee.User)}{{*}}");
+
+		await using var enumerator = employees.GetAsyncEnumerator(CancellationToken.None);
+		Assert.True(await enumerator.MoveNextAsync());
+
+		var employee = enumerator.Current;
+		Assert.NotNull(employee);
+		Assert.Equal(100U, employee.UserId);
+		Assert.Equal("Boss Zhong", employee.FullName);
+		Assert.NotNull(employee.User);
+		Assert.Equal(100U, employee.User.UserId);
+		Assert.Equal("Popeye", employee.User.Name);
+		Assert.Equal("Popeye Zhong", employee.User.Nickname);
+	}
+
+	[Fact]
 	public async Task InsertWithChildrenAsync()
 	{
 		if(!Global.IsTestingEnabled)
@@ -358,6 +398,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
+		accessor.Delete<Employee>(Condition.Equal(nameof(Employee.UserId), 100));
 		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
 		accessor.Delete<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 10));
