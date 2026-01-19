@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
@@ -39,16 +38,16 @@ namespace Zongsoft.Data.TDengine;
 internal static class TDengineUtility
 {
 	public static string GetTableName(string text) => string.IsNullOrEmpty(text) ? null : $"T{text.ToLowerInvariant()}";
-	public static string GetTableName(ICollection<object> values)
+	public static string GetTableName(string name, ICollection<object> values)
 	{
 		if(values == null || values.Count == 0)
 			return null;
 
-		var text = string.Join('_', values.Select(value => value?.ToString()))?.ToLowerInvariant();
-		if(values.Count > 3 || text.Length > 50)
-			return $"T#{text.GetHashCode():X}";
+		var hashcode = new HashCode();
+		foreach(var value in values)
+			hashcode.Add(value);
 
-		return $"T{text}";
+		return $"{name}:#{hashcode.ToHashCode():X}";
 	}
 
 	public static bool IsTagField(this FieldIdentifier field) => field != null && IsTagField(field.Token.Property);

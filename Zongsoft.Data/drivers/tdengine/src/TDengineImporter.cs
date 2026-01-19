@@ -47,6 +47,7 @@ public class TDengineImporter : DataImporterBase
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
 		var count = 0L;
+		var super = context.Entity.GetTableName();
 		var tags = members.Where(member => member.Property.IsTagField()).ToArray();
 		var fields = members.Where(member => !member.Property.IsTagField()).ToArray();
 		var tables = new Dictionary<string, Table>();
@@ -58,10 +59,13 @@ public class TDengineImporter : DataImporterBase
 				continue;
 
 			var tagValues = tags.Select(member => member.GetValue(ref target)).ToArray();
-			var tableName = TDengineUtility.GetTableName(tagValues);
+			var tableName = TDengineUtility.GetTableName(super, tagValues);
+
+			if(string.IsNullOrEmpty(tableName))
+				continue;
 
 			if(!tables.TryGetValue(tableName, out var table))
-				tables.Add(tableName, table = new Table(tagValues));
+				tables.Add(tableName, table = new Table(super, tagValues));
 
 			table.Rows.Add([.. fields.Select(member => member.GetValue(ref target))]);
 		}
@@ -69,7 +73,7 @@ public class TDengineImporter : DataImporterBase
 		if(tables.Count == 0)
 			return;
 
-		var script = $"INSERT INTO ? USING `{context.Entity.GetTableName()}`\n" +
+		var script = $"INSERT INTO ? USING `{super}`\n" +
 			$"({string.Join(',', tags.Select(member => '`' + member.Property.GetFieldName() + '`'))}) TAGS({string.Join(',', Enumerable.Repeat('?', tags.Length))})\n" +
 			$"({string.Join(',', fields.Select(member => '`' + member.Property.GetFieldName() + '`'))}) VALUES ({string.Join(',', Enumerable.Repeat('?', fields.Length))})";
 
@@ -78,9 +82,7 @@ public class TDengineImporter : DataImporterBase
 		statement.Prepare(script);
 
 		foreach(var table in tables.Values)
-		{
 			count += table.Execute(statement);
-		}
 
 		context.Count = (int)Math.Min(count, int.MaxValue);
 	}
@@ -97,7 +99,7 @@ public class TDengineImporter : DataImporterBase
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Table(object[] tags) : IEquatable<Table>
+	private sealed class Table(string super, object[] tags) : IEquatable<Table>
 	{
 		#region 常量定义
 		private const int CHUNK_SIZE = 1000;
@@ -105,12 +107,13 @@ public class TDengineImporter : DataImporterBase
 
 		#region 成员字段
 		private string _name;
+		private readonly string _super = super;
 		private readonly object[] _tags = tags;
 		private readonly List<object[]> _rows = new(128);
 		#endregion
 
 		#region 公共属性
-		public string Name => _name ??= TDengineUtility.GetTableName(_tags);
+		public string Name => _name ??= TDengineUtility.GetTableName(_super, _tags);
 		public List<object[]> Rows => _rows;
 		#endregion
 
