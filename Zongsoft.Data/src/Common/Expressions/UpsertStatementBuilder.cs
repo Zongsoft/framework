@@ -53,7 +53,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 		if(owner == null)
 		{
-			recordCount = GetRecordCount(data, out var list);
+			recordCount = Utility.GetRecordCount(data, out var list);
 			if(list != null)
 				context.Data = list;
 		}
@@ -64,7 +64,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 				foreach(var item in items)
 				{
 					var value = owner.Token.GetValue(item);
-					recordCount += GetRecordCount(value, out var list);
+					recordCount += Utility.GetRecordCount(value, out var list);
 
 					if(list != null)
 					{
@@ -76,7 +76,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 			else
 			{
 				var value = owner.Token.GetValue(data);
-				recordCount = GetRecordCount(value, out var list);
+				recordCount = Utility.GetRecordCount(value, out var list);
 				if(list != null)
 					owner.Token.SetValue(ref data, list);
 			}
@@ -260,36 +260,6 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 				yield return statement;
 			}
 		}
-	}
-
-	private static int GetRecordCount(object data, out ICollection result)
-	{
-		if(data == null || data is IDataDictionary)
-		{
-			result = null;
-			return 0;
-		}
-
-		if(data is ICollection collection)
-		{
-			result = null;
-			return collection.Count;
-		}
-
-		if(data is IEnumerable enumerable)
-		{
-			var list = Utility.CreateList(data);
-
-			var enumerator = enumerable.GetEnumerator();
-			while(enumerator.MoveNext())
-				list.Add(enumerator.Current);
-
-			result = list;
-			return list.Count;
-		}
-
-		result = null;
-		return 0;
 	}
 
 	private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataUpsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;

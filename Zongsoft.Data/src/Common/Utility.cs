@@ -234,6 +234,42 @@ internal static class Utility
 
 	internal static bool IsMultiple(object data, out IEnumerable enumerable) => (enumerable = data as IEnumerable) != null && data is not IDataDictionary;
 
+	internal static int GetRecordCount(object data, out ICollection result)
+	{
+		if(data == null)
+		{
+			result = null;
+			return 0;
+		}
+
+		if(data is IDataDictionary)
+		{
+			result = null;
+			return 1;
+		}
+
+		if(data is ICollection collection)
+		{
+			result = null;
+			return collection.Count;
+		}
+
+		if(data is IEnumerable enumerable)
+		{
+			var list = Utility.CreateList(data);
+
+			var enumerator = enumerable.GetEnumerator();
+			while(enumerator.MoveNext())
+				list.Add(enumerator.Current);
+
+			result = list;
+			return list.Count;
+		}
+
+		result = null;
+		return 1;
+	}
+
 	internal static bool IsLinked(SchemaMember owner, Metadata.IDataEntitySimplexProperty property)
 	{
 		if(owner == null || owner.Token.Property.IsSimplex)
