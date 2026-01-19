@@ -41,7 +41,7 @@ public static class CollectionUtility
 	public static bool TryAdd(object target, object value)
 	{
 		var added = false;
-		var adders = GetMethods(target, nameof(ICollection<object>.Add));
+		var adders = GetMethods(target, nameof(ICollection<>.Add));
 
 		foreach(var adder in adders)
 		{
@@ -61,7 +61,7 @@ public static class CollectionUtility
 	public static bool TryRemove(object target, object value)
 	{
 		var removed = false;
-		var removers = GetMethods(target, nameof(ICollection<object>.Remove));
+		var removers = GetMethods(target, nameof(ICollection<>.Remove));
 
 		foreach(var remover in removers)
 		{
