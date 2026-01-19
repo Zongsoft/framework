@@ -432,6 +432,103 @@ COMMENT ON COLUMN "TeamMember"."UserId"   IS '主键，用户编号';
 CREATE INDEX IF NOT EXISTS "IX_TeamMember_UserId" ON "TeamMember" ("TenantId", "BranchId", "UserId");
 
 
+CREATE TABLE IF NOT EXISTS "Employee"
+(
+	"TenantId"            INTEGER      NOT NULL,
+	"UserId"              INTEGER      NOT NULL,
+	"BranchId"            INTEGER      NOT NULL,
+	"EmployeeNo"          VARCHAR(50)  NULL     COLLATE "C",
+	"EmployeeCode"        VARCHAR(50)  NULL     COLLATE "C",
+	"EmployeeKind"        SMALLINT     NOT NULL DEFAULT 0,
+	"FullName"            VARCHAR(50)  NULL     COLLATE "C.utf8",
+	"Acronym"             VARCHAR(50)  NULL     COLLATE "C",
+	"Summary"             VARCHAR(500) NULL     COLLATE "C.utf8",
+	"JobTitle"            VARCHAR(50)  NULL     COLLATE "C.utf8",
+	"JobStatus"           SMALLINT     NOT NULL DEFAULT 0,
+	"Hiredate"            DATE         NULL,
+	"Leavedate"           DATE         NULL,
+	"BankName"            VARCHAR(50)  NULL     COLLATE "C.utf8",
+	"BankCode"            VARCHAR(50)  NULL     COLLATE "C",
+	"Birthdate"           DATE         NULL,
+	"PhotoPath"           VARCHAR(200) NULL     COLLATE "C",
+	"IdentityId"          VARCHAR(50)  NULL     COLLATE "C",
+	"IdentityKind"        SMALLINT     NOT NULL DEFAULT 0,
+	"IdentityIssued"      DATE         NULL,
+	"IdentityExpiry"      DATE         NULL,
+	"IdentityPath1"       VARCHAR(200) NULL     COLLATE "C",
+	"IdentityPath2"       VARCHAR(200) NULL     COLLATE "C",
+	"MaritalStatus"       SMALLINT     NOT NULL DEFAULT 0,
+	"EducationDegree"     SMALLINT     NOT NULL DEFAULT 0,
+	"NativePlace"         VARCHAR(50)  NULL     COLLATE "C.utf8",
+	"MobilePhone"         VARCHAR(50)  NULL     COLLATE "C",
+	"HomePhone"           VARCHAR(50)  NULL     COLLATE "C",
+	"HomeCountry"         SMALLINT     NOT NULL DEFAULT 0,
+	"HomeAddressId"       INTEGER      NOT NULL DEFAULT 0,
+	"HomeAddressDetail"   VARCHAR(100) NULL     COLLATE "C.utf8",
+	"OfficePhone"         VARCHAR(50)  NULL     COLLATE "C",
+	"OfficeTitle"         VARCHAR(100) NULL     COLLATE "C.utf8",
+	"OfficeCountry"       SMALLINT     NOT NULL DEFAULT 0,
+	"OfficeAddressId"     INTEGER      NOT NULL DEFAULT 0,
+	"OfficeAddressDetail" VARCHAR(100) NULL     COLLATE "C.utf8",
+	"CreatorId"           INTEGER      NOT NULL,
+	"CreatedTime"         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"ModifierId"          INTEGER      NULL,
+	"ModifiedTime"        TIMESTAMP    NULL,
+	"Remark"              VARCHAR(500) NULL     COLLATE "C.utf8",
+	PRIMARY KEY ("TenantId", "UserId")
+);
+
+CREATE UNIQUE INDEX "UX_Employee_EmployeeNo" ON "Employee" ("TenantId", "EmployeeNo");
+CREATE UNIQUE INDEX "UX_Employee_IdentityId" ON "Employee" ("TenantId", "IdentityId");
+CREATE INDEX "IX_Employee_Birthdate" ON "Employee" ("TenantId", "Birthdate");
+CREATE INDEX "IX_Employee_EmployeeCode" ON "Employee" ("TenantId", "EmployeeCode");
+CREATE INDEX "IX_Employee_BranchId" ON "Employee" ("UserId", "TenantId", "BranchId");
+CREATE INDEX "IX_Employee_FullName" ON "Employee" ("TenantId", "FullName");
+
+COMMENT ON TABLE "Employee" IS '员工表';
+COMMENT ON COLUMN "Employee"."TenantId"            IS '主键，租户编号';
+COMMENT ON COLUMN "Employee"."UserId"              IS '主键，用户编号';
+COMMENT ON COLUMN "Employee"."BranchId"            IS '分支机构编号';
+COMMENT ON COLUMN "Employee"."EmployeeNo"          IS '员工代号';
+COMMENT ON COLUMN "Employee"."EmployeeCode"        IS '内部代号';
+COMMENT ON COLUMN "Employee"."EmployeeKind"        IS '员工种类';
+COMMENT ON COLUMN "Employee"."FullName"            IS '员工全称';
+COMMENT ON COLUMN "Employee"."Acronym"             IS '名称缩写';
+COMMENT ON COLUMN "Employee"."Summary"             IS '个人简介';
+COMMENT ON COLUMN "Employee"."JobTitle"            IS '员工职称';
+COMMENT ON COLUMN "Employee"."JobStatus"           IS '就职状态';
+COMMENT ON COLUMN "Employee"."Hiredate"            IS '入职日期';
+COMMENT ON COLUMN "Employee"."Leavedate"           IS '离职日期';
+COMMENT ON COLUMN "Employee"."BankName"            IS '开户银行';
+COMMENT ON COLUMN "Employee"."BankCode"            IS '银行账号';
+COMMENT ON COLUMN "Employee"."Birthdate"           IS '出生日期';
+COMMENT ON COLUMN "Employee"."PhotoPath"           IS '相片路径';
+COMMENT ON COLUMN "Employee"."IdentityId"          IS '身份证号';
+COMMENT ON COLUMN "Employee"."IdentityKind"        IS '身份证种类';
+COMMENT ON COLUMN "Employee"."IdentityIssued"      IS '身份证签发日期';
+COMMENT ON COLUMN "Employee"."IdentityExpiry"      IS '身份证过期日期';
+COMMENT ON COLUMN "Employee"."IdentityPath1"       IS '证件照片路径1';
+COMMENT ON COLUMN "Employee"."IdentityPath2"       IS '证件照片路径2';
+COMMENT ON COLUMN "Employee"."MaritalStatus"       IS '婚姻状况';
+COMMENT ON COLUMN "Employee"."EducationDegree"     IS '教育程度';
+COMMENT ON COLUMN "Employee"."NativePlace"         IS '籍贯';
+COMMENT ON COLUMN "Employee"."MobilePhone"         IS '移动电话';
+COMMENT ON COLUMN "Employee"."HomePhone"           IS '家庭电话';
+COMMENT ON COLUMN "Employee"."HomeCountry"         IS '家庭国别地区';
+COMMENT ON COLUMN "Employee"."HomeAddressId"       IS '家庭地址编号';
+COMMENT ON COLUMN "Employee"."HomeAddressDetail"   IS '家庭住址';
+COMMENT ON COLUMN "Employee"."OfficePhone"         IS '办公电话';
+COMMENT ON COLUMN "Employee"."OfficeTitle"         IS '办公单位';
+COMMENT ON COLUMN "Employee"."OfficeCountry"       IS '办公国别地区';
+COMMENT ON COLUMN "Employee"."OfficeAddressId"     IS '办公地址编号';
+COMMENT ON COLUMN "Employee"."OfficeAddressDetail" IS '办公详细地址';
+COMMENT ON COLUMN "Employee"."CreatorId"           IS '创建人编号';
+COMMENT ON COLUMN "Employee"."CreatedTime"         IS '创建时间';
+COMMENT ON COLUMN "Employee"."ModifierId"          IS '修改人编号';
+COMMENT ON COLUMN "Employee"."ModifiedTime"        IS '修改时间';
+COMMENT ON COLUMN "Employee"."Remark"              IS '备注说明';
+
+
 CREATE TABLE IF NOT EXISTS "Security_Role" (
     "RoleId"      int          NOT NULL,
     "Namespace"   varchar(50)  NULL     COLLATE "C",
