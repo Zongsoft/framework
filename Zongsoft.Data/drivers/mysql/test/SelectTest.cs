@@ -35,6 +35,41 @@ public class SelectTest(DatabaseFixture database)
 	}
 
 	[Fact]
+	public async Task SelectWithPageableAsync()
+	{
+		const int COUNT = 100;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var models = Model.Build<RoleModel>(COUNT, (model, index) =>
+		{
+			model.RoleId = (uint)(100 + index);
+			model.Name = $"$Role_{model.RoleId}";
+		});
+
+		var count = await accessor.InsertManyAsync(models, DataInsertOptions.SuppressSequence());
+		Assert.Equal(COUNT, count);
+
+		var page = Paging.Page(1, 20);
+		var roles = accessor.SelectAsync<RoleModel>(
+			Condition.GreaterThanEqual(nameof(RoleModel.RoleId), 100),
+			page);
+
+		await foreach(var role in roles)
+		{
+			Assert.NotNull(role);
+		}
+
+		Assert.Equal(COUNT, page.TotalCount);
+		Assert.Equal(1, page.PageIndex);
+		Assert.Equal(5, page.PageCount);
+
+		await accessor.DeleteAsync<RoleModel>(Condition.GreaterThanEqual(nameof(RoleModel.RoleId), 100));
+	}
+
+	[Fact]
 	public async Task SelectAsync_WithOneToOne()
 	{
 		if(!Global.IsTestingEnabled)
