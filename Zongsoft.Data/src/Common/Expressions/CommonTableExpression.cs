@@ -30,9 +30,11 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Data.Metadata;
+
 namespace Zongsoft.Data.Common.Expressions;
 
-public class CommonTableExpression : Expression
+public class CommonTableExpression : Expression, ISource
 {
 	public CommonTableExpression(string name, Statement statement, params IEnumerable<string> columns) : this(name, false, statement, columns) { }
 	public CommonTableExpression(string name, bool recursive, Statement statement, params IEnumerable<string> columns)
@@ -44,7 +46,16 @@ public class CommonTableExpression : Expression
 	}
 
 	public string Name { get; }
+	string ISource.Alias => null;
 	public bool Recursive { get; }
 	public ICollection<string> Columns { get; }
 	public Statement Statement { get; set; }
+
+	public FieldIdentifier CreateField(string name, string alias = null) => new(this, name, alias);
+	public FieldIdentifier CreateField(IDataEntityProperty property) => new(this, property.GetFieldName(out var alias), alias)
+	{
+		Token = new DataEntityPropertyToken(property)
+	};
+
+	public override string ToString() => $"{this.Name}";
 }
