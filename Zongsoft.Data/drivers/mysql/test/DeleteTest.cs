@@ -36,6 +36,38 @@ public class DeleteTest(DatabaseFixture database)
 	}
 
 	[Fact]
+	public async Task DeleteAsync_OneToOneCascading1()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var model = Model.Build<Employee>(model => {
+			model.TenantId = 1;
+			model.BranchId = 0;
+			model.UserId = 404;
+			model.FullName = "Boss Zhong";
+			model.User = Model.Build<UserModel>(user => {
+				user.UserId = 404;
+				user.Name = "Popeye";
+				user.Nickname = "Popeye Zhong";
+			});
+		});
+
+		var count = await accessor.InsertAsync(model, $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.SuppressSequence());
+		Assert.Equal(2, count);
+		Assert.True(await accessor.ExistsAsync<Employee>(Condition.Equal(nameof(Employee.TenantId), 1) & Condition.Equal(nameof(Employee.UserId), 404)));
+		Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 404)));
+
+		count = await accessor.DeleteAsync<Employee>(
+			Condition.Equal(nameof(Employee.TenantId), 1) &
+			Condition.Equal(nameof(Employee.UserId), 404), nameof(Employee.User));
+		Assert.Equal(2, count);
+		Assert.False(await accessor.ExistsAsync<Employee>(Condition.Equal(nameof(Employee.TenantId), 1) & Condition.Equal(nameof(Employee.UserId), 404)));
+		Assert.False(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 404)));
+	}
+
+	[Fact]
 	public async Task DeleteAsync_Cascading1()
 	{
 		if(!Global.IsTestingEnabled)

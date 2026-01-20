@@ -123,13 +123,13 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 			}
 		}
 
-		yield return statement;
-
 		if(masters != null)
 		{
 			for(int i = 0; i < masters.Count; i++)
 				yield return masters[i];
 		}
+
+		yield return statement;
 	}
 
 	protected virtual DeleteStatement CreateStatement(DataDeleteContext context) => new(context.Entity);
