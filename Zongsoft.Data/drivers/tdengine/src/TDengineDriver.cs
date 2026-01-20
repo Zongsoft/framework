@@ -39,7 +39,7 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.TDengine;
 
-public class TDengineDriver : DataDriverBase
+public partial class TDengineDriver : DataDriverBase
 {
 	#region 公共常量
 	/// <summary>驱动程序的标识：TDengine。</summary>
@@ -51,7 +51,11 @@ public class TDengineDriver : DataDriverBase
 	#endregion
 
 	#region 私有构造
-	private TDengineDriver() => this.Features.Add(Feature.TransactionSuppressed);
+	private TDengineDriver()
+	{
+		this.Setter = new TDengineSetter();
+		this.Features.Add(Feature.TransactionSuppressed);
+	}
 	#endregion
 
 	#region 公共属性

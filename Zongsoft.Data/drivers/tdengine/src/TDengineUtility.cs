@@ -47,7 +47,7 @@ internal static class TDengineUtility
 		foreach(var value in values)
 			hashcode.Add(value);
 
-		return $"{name}:#{hashcode.ToHashCode():X}";
+		return $"`{name}:#{hashcode.ToHashCode():X}`";
 	}
 
 	public static bool IsTagField(this FieldIdentifier field) => field != null && IsTagField(field.Token.Property);
@@ -57,4 +57,12 @@ internal static class TDengineUtility
 		string.Equals(property.Hint, "Tag", StringComparison.OrdinalIgnoreCase) ||
 		string.Equals(property.Hint, "Tagged", StringComparison.OrdinalIgnoreCase)
 	);
+
+	public static object Convert(object value)
+	{
+		if(value is DateTime datetime && datetime.Kind == DateTimeKind.Unspecified)
+			return new DateTime(datetime.Ticks, DateTimeKind.Local);
+
+		return value;
+	}
 }

@@ -67,7 +67,7 @@ public class TDengineImporter : DataImporterBase
 			if(!tables.TryGetValue(tableName, out var table))
 				tables.Add(tableName, table = new Table(super, tagValues));
 
-			table.Rows.Add([.. fields.Select(member => member.GetValue(ref target))]);
+			table.Rows.Add([.. fields.Select(member => TDengineUtility.Convert(member.GetValue(ref target)))]);
 		}
 
 		if(tables.Count == 0)
