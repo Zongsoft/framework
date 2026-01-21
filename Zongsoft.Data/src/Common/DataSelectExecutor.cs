@@ -252,7 +252,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		if(data == null || value == null || Convert.IsDBNull(value))
 			return;
 
-		if(data is IEnumerable enumerable)
+		if(Utility.IsMultiple(data, out var enumerable))
 		{
 			if(member.Token.Property.IsSimplex(out var simplex) && simplex.Sequence.IsBuiltin)
 			{
