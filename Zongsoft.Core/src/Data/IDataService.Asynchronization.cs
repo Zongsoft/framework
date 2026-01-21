@@ -110,6 +110,10 @@ public partial interface IDataService
 	#region 更新方法
 	ValueTask<int> UpdateAsync(string key, object data, DataUpdateOptions options = null, CancellationToken cancellation = default);
 	ValueTask<int> UpdateAsync(string key, object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
+	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, CancellationToken cancellation = default) => this.UpdateManyAsync(key, items, null, null, cancellation);
+	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, string schema, CancellationToken cancellation = default) => this.UpdateManyAsync(key, items, schema, null, cancellation);
+	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default);
+	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, string schema, DataUpdateOptions options, CancellationToken cancellation = default);
 
 	ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
 	ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;

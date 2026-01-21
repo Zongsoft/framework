@@ -173,6 +173,8 @@ public partial interface IDataService
 	#region 更新方法
 	int Update(string key, object data, DataUpdateOptions options = null);
 	int Update(string key, object data, string schema, DataUpdateOptions options = null);
+	int UpdateMany(string key, IEnumerable items, DataUpdateOptions options = null);
+	int UpdateMany(string key, IEnumerable items, string schema, DataUpdateOptions options = null);
 
 	int Update<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null) where TKey1 : IEquatable<TKey1>;
 	int Update<TKey1>(TKey1 key1, string schema, object data, DataUpdateOptions options = null) where TKey1 : IEquatable<TKey1>;

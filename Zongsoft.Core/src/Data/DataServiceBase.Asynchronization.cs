@@ -434,6 +434,51 @@ partial class DataServiceBase<TModel>
 	public ValueTask<int> UpdateAsync(string key, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(key, data, null, options, cancellation);
 	public ValueTask<int> UpdateAsync(string key, object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key, options, out _), schema, options, cancellation);
 
+	public ValueTask<int> UpdateManyAsync(string key, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) => this.UpdateManyAsync(key, items, null, options, cancellation);
+	public async ValueTask<int> UpdateManyAsync(string key, IEnumerable items, string schema, DataUpdateOptions options, CancellationToken cancellation = default)
+	{
+		if(items == null)
+			return 0;
+
+		//确认是否可以执行该操作
+		this.EnsureUpdate(options);
+
+		//创建事务
+		var transaction = new Zongsoft.Transactions.Transaction();
+
+		try
+		{
+			var count = 0;
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				var dictionary = DataDictionary.GetDictionary<TModel>(item);
+
+				//处理数据模型
+				this.OnModel(key, dictionary, options);
+
+				//执行数据更新
+				count += await this.UpdateAsync(dictionary, schema, options, cancellation);
+			}
+
+			//提交事务
+			transaction.Commit();
+
+			//返回更新数
+			return count;
+		}
+		catch
+		{
+			//回滚事务
+			transaction.Rollback();
+			//重抛异常
+			throw;
+		}
+	}
+
 	public ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)
 		where TKey1 : IEquatable<TKey1> => this.UpdateAsync(key1, null, data, options, cancellation);
 	public ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default)

@@ -885,6 +885,51 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	public int Update(string key, object data, DataUpdateOptions options = null) => this.Update(key, data, null, options);
 	public int Update(string key, object data, string schema, DataUpdateOptions options = null) => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key, options, out _), schema, options);
 
+	public int UpdateMany(string key, IEnumerable items, DataUpdateOptions options = null) => this.UpdateMany(key, items, null, options);
+	public int UpdateMany(string key, IEnumerable items, string schema, DataUpdateOptions options = null)
+	{
+		if(items == null)
+			return 0;
+
+		//确认是否可以执行该操作
+		this.EnsureUpdate(options);
+
+		//创建事务
+		var transaction = new Zongsoft.Transactions.Transaction();
+
+		try
+		{
+			var count = 0;
+
+			foreach(var item in items)
+			{
+				if(item == null)
+					continue;
+
+				var dictionary = DataDictionary.GetDictionary<TModel>(item);
+
+				//处理数据模型
+				this.OnModel(key, dictionary, options);
+
+				//执行数据更新
+				count += this.Update(dictionary, schema, options);
+			}
+
+			//提交事务
+			transaction.Commit();
+
+			//返回更新数
+			return count;
+		}
+		catch
+		{
+			//回滚事务
+			transaction.Rollback();
+			//重抛异常
+			throw;
+		}
+	}
+
 	public int Update<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null)
 		where TKey1 : IEquatable<TKey1> => this.Update(key1, null, data, options);
 	public int Update<TKey1>(TKey1 key1, string schema, object data, DataUpdateOptions options = null)
