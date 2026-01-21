@@ -85,6 +85,9 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 			}
 		}
 
+		if(recordCount < 1)
+			yield break;
+
 		foreach(var inherit in inherits)
 		{
 			var statement = this.CreateStatement(inherit, owner);

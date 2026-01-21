@@ -21,6 +21,10 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
+		Assert.Equal(0, await accessor.UpdateAsync<UserModel>(null));
+		Assert.Equal(0, await accessor.UpdateAsync<RoleModel>(null, $"*, {nameof(RoleModel.Children)}{{*}}"));
+		Assert.Equal(0, await accessor.UpdateAsync<Employee>(null, $"*, {nameof(Employee.User)}{{*}}"));
+
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";

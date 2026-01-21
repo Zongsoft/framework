@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Xunit;
 
@@ -21,6 +22,10 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
+		Assert.Equal(0, await accessor.UpsertAsync<UserModel>(null));
+		Assert.Equal(0, await accessor.UpsertAsync<RoleModel>(null, $"*, {nameof(RoleModel.Children)}{{*}}"));
+		Assert.Equal(0, await accessor.UpsertAsync<Employee>(null, $"*, {nameof(Employee.User)}{{*}}"));
+
 		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 
 		var count = await accessor.UpsertAsync(Model.Build<UserModel>(model => {
@@ -45,6 +50,35 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		var name = enumerator.Current;
 		await enumerator.DisposeAsync();
 		Assert.Equal("Popeye Zhong", name);
+	}
+
+	[Fact]
+	public async Task UpsertWithEmptyAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var model = Model.Build<RoleModel>(model =>
+		{
+			model.RoleId = 11;
+			model.Name = $"Role#{model.RoleId}";
+		});
+
+		var count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		Assert.Equal(1, count);
+		Assert.True(await accessor.ExistsAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), model.RoleId)));
+
+		model = Model.Build<RoleModel>(model =>
+		{
+			model.RoleId = 12;
+			model.Name = $"Role#{model.RoleId}";
+			model.Children = [];
+		});
+
+		count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		Assert.Equal(1, count);
+		Assert.True(await accessor.ExistsAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), model.RoleId)));
 	}
 
 	[Fact]
@@ -163,6 +197,13 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 
 		var index = 0;
 		var accessor = _database.Accessor;
+		Assert.Equal(0, await accessor.UpsertManyAsync<UserModel>(null));
+		Assert.Equal(0, await accessor.UpsertManyAsync(Array.Empty<UserModel>()));
+		Assert.Equal(0, await accessor.UpsertManyAsync<RoleModel>(null, $"*, {nameof(RoleModel.Children)}{{*}}"));
+		Assert.Equal(0, await accessor.UpsertManyAsync(Array.Empty<RoleModel>(), $"*, {nameof(RoleModel.Children)}{{*}}"));
+		Assert.Equal(0, await accessor.UpsertManyAsync<Employee>(null, $"*, {nameof(Employee.User)}{{*}}"));
+		Assert.Equal(0, await accessor.UpsertManyAsync(Array.Empty<Employee>(), $"*, {nameof(Employee.User)}{{*}}"));
+
 		await accessor.DeleteAsync<UserModel>(Condition.Between(nameof(UserModel.UserId), OFFSET, OFFSET + COUNT));
 
 		var count = await accessor.UpsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) => {
@@ -200,6 +241,57 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		{
 			Assert.Equal($"#User@{OFFSET + index}", name);
 			++index;
+		}
+	}
+
+	[Fact]
+	public async Task UpsertManyWithEmptyAsync()
+	{
+		const int COUNT = 10;
+		const int OFFSET = 1000;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+
+		await TestAsync(accessor, Model.Build<RoleModel>(COUNT, (model, index) =>
+		{
+			model.RoleId = (uint)(OFFSET + index);
+			model.Name = $"$Role#{(OFFSET + index)}";
+		}).ToArray());
+
+		await TestAsync(accessor, Model.Build<RoleModel>(COUNT, (model, index) =>
+		{
+			model.RoleId = (uint)(OFFSET + index);
+			model.Name = $"$Role#{(OFFSET + index)}";
+			model.Children = [];
+		}).ToArray());
+
+		static async ValueTask TestAsync(IDataAccess accessor, ICollection<RoleModel> models)
+		{
+			var count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+			Assert.Equal(models.Count, count);
+
+			var roles = accessor.SelectAsync<RoleModel>(
+				Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT),
+				$"*,{nameof(RoleModel.Children)}{{*}}");
+
+			var index = 0;
+			await foreach(var role in roles)
+			{
+				var id = (uint)(OFFSET + index);
+
+				Assert.NotNull(role);
+				Assert.Equal(id, role.RoleId);
+				Assert.Equal($"$Role#{id}", role.Name);
+				Assert.Empty(role.Children);
+
+				++index;
+			}
+
+			Assert.Equal(models.Count, index);
+			await accessor.DeleteAsync<RoleModel>(Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT));
 		}
 	}
 
@@ -343,7 +435,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		var accessor = _database.Accessor;
 		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "#%"));
-		accessor.Delete<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 10));
+		accessor.Delete<RoleModel>(Condition.In(nameof(RoleModel.RoleId), [10, 11, 12]));
 		accessor.Delete<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
 	}
 }

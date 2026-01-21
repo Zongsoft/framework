@@ -82,6 +82,9 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 			}
 		}
 
+		if(recordCount < 1)
+			yield break;
+
 		foreach(var inherit in inherits)
 		{
 			var statement = new UpsertStatement(inherit, owner);
