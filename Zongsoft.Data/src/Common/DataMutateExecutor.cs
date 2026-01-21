@@ -311,6 +311,9 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	#region 私有方法
 	private bool Mutate(IDataMutateContext context, TStatement statement)
 	{
+		if(context.Data == null)
+			return false;
+
 		bool continued;
 
 		//调用写入操作开始方法
@@ -324,7 +327,8 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		statement.Bind(context, command);
+		if(statement.Bind(context, command) < 1)
+			return false;
 
 		if(statement.Returning != null && statement.Returning.Table == null)
 		{
@@ -355,6 +359,9 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 	private async ValueTask<bool> MutateAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
 	{
+		if(context.Data == null)
+			return false;
+
 		bool continued;
 
 		//调用写入操作开始方法
@@ -368,7 +375,8 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 			driver.Slotter?.Evaluate(context, statement, command);
 
 		//绑定命令参数
-		await statement.BindAsync(context, command, cancellation);
+		if(await statement.BindAsync(context, command, cancellation) < 1)
+			return false;
 
 		if(statement.Returning != null && statement.Returning.Table == null)
 		{

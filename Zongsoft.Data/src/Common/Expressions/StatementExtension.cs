@@ -42,10 +42,12 @@ namespace Zongsoft.Data.Common.Expressions;
 
 public static class StatementExtension
 {
-	public static void Bind(this IStatementBase statement, IDataMutateContextBase context, DbCommand command)
+	public static int Bind(this IStatementBase statement, IDataMutateContextBase context, DbCommand command)
 	{
+		var count = 0;
+
 		if(statement.Parameters.Count == 0)
-			return;
+			return 0;
 
 		if(Utility.IsMultiple(context.Data, out var items))
 		{
@@ -66,7 +68,7 @@ public static class StatementExtension
 					if(hasSequences)
 						SetSequenceValue(context, statement, item);
 
-					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
+					count += Bind(context, command, item, lines[index++].OfType<ParameterExpression>()) ? 1 : 0;
 				}
 			}
 		}
@@ -75,14 +77,18 @@ public static class StatementExtension
 			if(context.Entity.HasSequences())
 				SetSequenceValue(context, statement, context.Data);
 
-			Bind(context, command, context.Data, statement.Parameters);
+			count += Bind(context, command, context.Data, statement.Parameters) ? 1 : 0;
 		}
+
+		return count;
 	}
 
-	public static async ValueTask BindAsync(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, CancellationToken cancellation)
+	public static async ValueTask<int> BindAsync(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, CancellationToken cancellation)
 	{
+		var count = 0;
+
 		if(statement.Parameters.Count == 0)
-			return;
+			return 0;
 
 		if(Utility.IsMultiple(context.Data, out var items))
 		{
@@ -103,7 +109,7 @@ public static class StatementExtension
 					if(hasSequences)
 						await SetSequenceValueAsync(context, statement, item, cancellation);
 
-					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
+					count += Bind(context, command, item, lines[index++].OfType<ParameterExpression>()) ? 1 : 0;
 				}
 			}
 		}
@@ -112,14 +118,16 @@ public static class StatementExtension
 			if(context.Entity.HasSequences())
 				await SetSequenceValueAsync(context, statement, context.Data, cancellation);
 
-			Bind(context, command, context.Data, statement.Parameters);
+			count += Bind(context, command, context.Data, statement.Parameters) ? 1 : 0;
 		}
+
+		return count;
 	}
 
-	private static void Bind(IDataMutateContextBase context, DbCommand command, object data, IEnumerable<ParameterExpression> parameters)
+	private static bool Bind(IDataMutateContextBase context, DbCommand command, object data, IEnumerable<ParameterExpression> parameters)
 	{
 		if(data == null || parameters == null)
-			return;
+			return false;
 
 		foreach(var parameter in parameters)
 		{
@@ -160,6 +168,8 @@ public static class StatementExtension
 			if(dbParameter.Value == null)
 				dbParameter.Value = DBNull.Value;
 		}
+
+		return true;
 	}
 
 	private static void SetParameterValue(this IDataMutateContextBase context, DbParameter parameter, object value)
