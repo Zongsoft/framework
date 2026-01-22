@@ -89,9 +89,11 @@ public class MySqlImporter : DataImporterBase
 				else
 				{
 					if(value is DateTime timestamp)
-						writer.Write(timestamp.ToString("yyyy-MM-dd HH:mm:ss"));
+						writer.Write(timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffK"));
 					else if(value is bool boolean)
 						writer.Write(boolean ? "1" : "0");
+					else if(value is string text)
+						writer.Write(text.ReplaceLineEndings(string.Empty));
 					else
 						writer.Write(value);
 				}
@@ -165,9 +167,11 @@ public class MySqlImporter : DataImporterBase
 				else
 				{
 					if(value is DateTime timestamp)
-						await writer.WriteAsync(timestamp.ToString("yyyy-MM-dd HH:mm:ss"));
+						await writer.WriteAsync(timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffK"));
 					else if(value is bool boolean)
 						await writer.WriteAsync(boolean ? "1" : "0");
+					else if(value is string text)
+						writer.Write(text.ReplaceLineEndings(string.Empty));
 					else
 						await writer.WriteAsync(value.ToString());
 				}
@@ -180,7 +184,7 @@ public class MySqlImporter : DataImporterBase
 			await writer.WriteAsync(bulker.LineTerminator);
 		}
 
-		await writer.FlushAsync();
+		await writer.FlushAsync(cancellation);
 		writer.Close();
 		file.Dispose();
 
