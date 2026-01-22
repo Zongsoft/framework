@@ -42,6 +42,8 @@ public abstract class DataDriverBase : IDataDriver
 		this.Visitor = this.CreateVisitor();
 		//创建语句插槽管理器
 		this.Slotter = this.CreateSlotter();
+		//创建数据导入器
+		this.Importer = this.CreateImporter();
 
 		//设置数据记录读取器
 		this.Getter = DataRecordGetter.Default;
@@ -55,6 +57,7 @@ public abstract class DataDriverBase : IDataDriver
 	public FeatureCollection Features { get; }
 	public IDataRecordGetter Getter { get; protected set; }
 	public IDataParameterSetter Setter { get; protected set; }
+	public IDataImporter Importer { get; }
 	public Expressions.StatementSlotter Slotter { get; }
 	public Expressions.ExpressionVisitorBase Visitor { get; }
 	public abstract Expressions.IStatementBuilder Builder { get; }

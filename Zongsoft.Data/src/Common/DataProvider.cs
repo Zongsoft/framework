@@ -47,7 +47,6 @@ public class DataProvider : IDataProvider
 	#endregion
 
 	#region 成员字段
-	private IDataImporter _importer;
 	private IDataExecutor _executor;
 	private IDataMultiplexer _multiplexer;
 	#endregion
@@ -182,18 +181,12 @@ public class DataProvider : IDataProvider
 	#region 导入方法
 	public void Import(DataImportContext context)
 	{
-		if(_importer == null)
-			Interlocked.CompareExchange(ref _importer, context.Source.Driver.CreateImporter(), null);
-
-		_importer.Import(context);
+		context.Source.Driver.Importer.Import(context);
 	}
 
 	public ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation)
 	{
-		if(_importer == null)
-			Interlocked.CompareExchange(ref _importer, context.Source.Driver.CreateImporter(), null);
-
-		return _importer.ImportAsync(context, cancellation);
+		return context.Source.Driver.Importer.ImportAsync(context, cancellation);
 	}
 	#endregion
 

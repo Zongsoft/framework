@@ -51,6 +51,9 @@ public interface IDataDriver
 	/// <summary>获取数据参数设置器。</summary>
 	IDataParameterSetter Setter { get; }
 
+	/// <summary>获取数据导入器。</summary>
+	IDataImporter Importer { get; }
+
 	/// <summary>获取数据语句构建器。</summary>
 	Expressions.IStatementBuilder Builder { get; }
 	#endregion

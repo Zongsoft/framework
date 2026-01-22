@@ -54,10 +54,10 @@ public abstract class DataImporterBase : IDataImporter
 			(MemberInfo)type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance) ??
 			(MemberInfo)type.GetField(name, BindingFlags.Public | BindingFlags.Instance);
 
+		var members = new MemberCollection();
+
 		if(context.Members == null || context.Members.Length == 0)
 		{
-			var members = new MemberCollection();
-
 			foreach(var property in context.Entity.Properties)
 			{
 				if(property.IsComplex)
@@ -67,13 +67,9 @@ public abstract class DataImporterBase : IDataImporter
 				if(info != null)
 					members.Add(new Member(context, info, (Metadata.IDataEntitySimplexProperty)property));
 			}
-
-			return members;
 		}
 		else
 		{
-			var members = new MemberCollection();
-
 			for(int i = 0; i < context.Members.Length; i++)
 			{
 				if(context.Entity.Properties.TryGetValue(context.Members[i], out var property))
@@ -86,9 +82,9 @@ public abstract class DataImporterBase : IDataImporter
 						members.Add(new Member(context, info, (Metadata.IDataEntitySimplexProperty)property));
 				}
 			}
-
-			return members;
 		}
+
+		return members;
 	}
 	#endregion
 
