@@ -79,11 +79,10 @@ public class ClickHouseDriver : DataDriverBase
 
 	public override DbConnection CreateConnection(string connectionString = null) => new ClickHouseConnection(connectionString);
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new ClickHouseConnectionStringBuilder(connectionString);
-
-	public override IDataImporter CreateImporter() => new ClickHouseImporter();
 	#endregion
 
 	#region 保护方法
+	protected override IDataImporter CreateImporter() => new ClickHouseImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new ClickHouseExpressionVisitor();
 	#endregion
 }

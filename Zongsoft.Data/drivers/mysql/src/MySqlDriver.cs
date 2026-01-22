@@ -123,11 +123,10 @@ public class MySqlDriver : DataDriverBase
 
 	public override DbConnection CreateConnection(string connectionString = null) => new MySqlConnection(connectionString);
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new MySqlConnectionStringBuilder(connectionString);
-
-	public override IDataImporter CreateImporter() => new MySqlImporter();
 	#endregion
 
 	#region 保护方法
+	protected override IDataImporter CreateImporter() => new MySqlImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new MySqlExpressionVisitor();
 	#endregion
 

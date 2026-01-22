@@ -88,11 +88,10 @@ public class MsSqlDriver : DataDriverBase
 
 	public override DbConnection CreateConnection(string connectionString = null) => new SqlConnection(connectionString);
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqlConnectionStringBuilder(connectionString);
-
-	public override IDataImporter CreateImporter() => new MsSqlImporter();
 	#endregion
 
 	#region 保护方法
+	protected override IDataImporter CreateImporter() => new MsSqlImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new MsSqlExpressionVisitor();
 	protected override void SetParameter(DbParameter parameter, ParameterExpression expression)
 	{

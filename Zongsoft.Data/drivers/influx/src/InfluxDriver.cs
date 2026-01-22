@@ -75,11 +75,10 @@ public class InfluxDriver : DataDriverBase
 	public override DbConnection CreateConnection(string connectionString = null) => new Common.InfluxConnection(connectionString ?? string.Empty);
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
 		Configuration.InfluxConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
-
-	public override IDataImporter CreateImporter() => new InfluxImporter();
 	#endregion
 
 	#region 保护方法
+	protected override IDataImporter CreateImporter() => new InfluxImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new InfluxExpressionVisitor();
 	protected override StatementSlotter CreateSlotter() => new() { Evaluator = InfluxStatementSlotEvaluator.Instance };
 	#endregion

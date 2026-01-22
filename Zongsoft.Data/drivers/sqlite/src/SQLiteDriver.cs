@@ -84,11 +84,10 @@ public class SQLiteDriver : DataDriverBase
 
 	public override DbConnection CreateConnection(string connectionString = null) => new SqliteConnection(connectionString);
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqliteConnectionStringBuilder(connectionString);
-
-	public override IDataImporter CreateImporter() => new SQLiteImporter();
 	#endregion
 
 	#region 保护方法
+	protected override IDataImporter CreateImporter() => new SQLiteImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new SQLiteExpressionVisitor();
 	#endregion
 }

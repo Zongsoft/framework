@@ -65,7 +65,6 @@ public abstract class DataDriverBase : IDataDriver
 
 	#region 公共方法
 	public virtual Exception OnError(IDataAccessContext context, Exception exception) => exception;
-	public abstract IDataImporter CreateImporter();
 	public abstract DbConnection CreateConnection(string connectionString = null);
 	public abstract DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null);
 	public virtual DbCommand CreateCommand() => this.CreateCommand(null, CommandType.Text);
@@ -101,6 +100,7 @@ public abstract class DataDriverBase : IDataDriver
 	#endregion
 
 	#region 保护方法
+	protected abstract IDataImporter CreateImporter();
 	protected abstract Expressions.ExpressionVisitorBase CreateVisitor();
 	protected virtual Expressions.StatementSlotter CreateSlotter() => new();
 	protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression)

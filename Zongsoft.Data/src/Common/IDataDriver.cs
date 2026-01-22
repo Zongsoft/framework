@@ -90,9 +90,5 @@ public interface IDataDriver
 	/// <param name="connectionString">指定的连接字符串。</param>
 	/// <returns>返回创建的数据连接构建器。</returns>
 	DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null);
-
-	/// <summary>创建一个数据导入器对象。</summary>
-	/// <returns>返回创建的数据导入器对象。</returns>
-	IDataImporter CreateImporter();
 	#endregion
 }

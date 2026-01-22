@@ -92,11 +92,10 @@ public partial class TDengineDriver : DataDriverBase
 
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
 		Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
-
-	public override IDataImporter CreateImporter() => new TDengineImporter();
 	#endregion
 
 	#region 保护方法
+	protected override IDataImporter CreateImporter() => new TDengineImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new TDengineExpressionVisitor();
 	protected override StatementSlotter CreateSlotter() => new() { Evaluator = TDengineStatementSlotEvaluator.Instance };
 	#endregion

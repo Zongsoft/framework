@@ -124,11 +124,10 @@ public partial class PostgreSqlDriver : DataDriverBase
 
 	public override DbConnection CreateConnection(string connectionString = null) => new NpgsqlConnection(connectionString);
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new NpgsqlConnectionStringBuilder(connectionString);
-
-	public override IDataImporter CreateImporter() => new PostgreSqlImporter();
 	#endregion
 
 	#region 保护方法
+	protected override IDataImporter CreateImporter() => new PostgreSqlImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new PostgreSqlExpressionVisitor();
 	#endregion
 
