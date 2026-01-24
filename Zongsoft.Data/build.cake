@@ -102,7 +102,7 @@ Task("test")
 
 	foreach(var project in projects)
 	{
-		if(IsIncluded(project.GetDirectory()))
+		if(IsIncluded(project))
 			DotNetTest(project.FullPath, settings);
 	}
 });
@@ -116,7 +116,7 @@ Task("pack")
 
 	foreach(var package in packages)
 	{
-		if(!IsIncluded(package.GetDirectory()))
+		if(!IsIncluded(package))
 			continue;
 
 		DotNetNuGetPush(package.FullPath, new DotNetNuGetPushSettings
@@ -134,13 +134,32 @@ Task("default")
 
 RunTarget(target);
 
-bool IsIncluded(DirectoryPath directory)
+bool IsIncluded(FilePath filePath)
 {
-	foreach(var filePath in providerFiles)
+	(var fileName, _) = GetPackageInfo(filePath);
+
+	if(fileName.EndsWith(".Tests"))
+		fileName = fileName[..^".Tests".Length];
+
+	if(string.Equals(fileName, System.IO.Path.GetFileNameWithoutExtension(solutionFile)))
+		return true;
+
+	foreach(var providerFile in providerFiles)
 	{
-		if(directory.FullPath.Contains(System.IO.Path.GetDirectoryName(filePath).Replace('\\', '/'), StringComparison.OrdinalIgnoreCase))
+		var providerFileName = System.IO.Path.GetFileNameWithoutExtension(providerFile);
+
+		if(fileName.Equals(providerFileName))
 			return true;
 	}
 
 	return false;
+
+	static (string name, string version) GetPackageInfo(FilePath filePath)
+	{
+		var match = System.Text.RegularExpressions.Regex.Match(
+			filePath.GetFilenameWithoutExtension().ToString(),
+			@"(?<name>([a-zA-z_]+\w*)+(\.([a-zA-z_]+\w*)+)*)(\.(?<version>\d+(\.\d+){1,3}))?");
+
+		return match.Success ? (match.Groups["name"].Value, match.Groups["version"].Value) : default;
+	}
 }
