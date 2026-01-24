@@ -62,7 +62,7 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 	{
 		this.FilePath = filePath?.Trim();
 		this.FileLimit = Math.Max(fileLimit, 0);
-		this.Logging = period > TimeSpan.Zero || capacity > 1 ? new(this.OnLogAsync, period, capacity) : null;
+		this.Logging = period > TimeSpan.Zero || capacity > 1 ? new(this.OnFlushAsync, period, capacity) : null;
 	}
 	#endregion
 
@@ -95,7 +95,7 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 		var logging = this.Logging;
 
 		if(logging == null)
-			await this.OnLogAsync([log], cancellation);
+			await this.OnFlushAsync([log], cancellation);
 		else
 		{
 			await logging.PutAsync(log, cancellation);
@@ -105,7 +105,7 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 		}
 	}
 
-	protected virtual async ValueTask OnLogAsync(IEnumerable<TLog> logs, CancellationToken cancellation)
+	private async ValueTask OnFlushAsync(IEnumerable<TLog> logs, CancellationToken cancellation)
 	{
 		foreach(var group in logs.GroupBy(log => new LogFileToken(log.Source, this.ResolveSequence(log))))
 		{
