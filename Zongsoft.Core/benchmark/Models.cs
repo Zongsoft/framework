@@ -2,7 +2,7 @@
 
 namespace Zongsoft.Benchmarks;
 
-public enum Gender
+public enum Gender : byte
 {
 	Female,
 	Male,

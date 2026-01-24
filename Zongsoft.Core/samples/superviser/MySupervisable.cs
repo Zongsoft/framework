@@ -60,7 +60,7 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	protected override Subscriber OnSubscribe(IObserver<string> observer)
 	{
 		Terminal.WriteLine(
-			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss}] ")
+			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss.fff}] ")
 			                    .Append(CommandOutletColor.DarkGreen, $"{this.Name} Subscribed."));
 
 		return base.OnSubscribe(observer);
@@ -69,8 +69,8 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	protected override void OnUnsupervised(ISuperviser<string> superviser, SupervisableReason reason)
 	{
 		Terminal.WriteLine(
-			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss}] ")
-			                    .Append(CommandOutletColor.DarkMagenta, $"{this.Name} Unsupervised<{reason}>."));
+			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss.fff}] ")
+			                    .Append(CommandOutletColor.DarkCyan, $"{this.Name} Unsupervised<{reason}>."));
 
 		this.Dispose();
 	}

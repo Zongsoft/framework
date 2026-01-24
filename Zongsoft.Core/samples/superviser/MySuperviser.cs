@@ -21,8 +21,8 @@ public class MySuperviser(SupervisableOptions options = null) : Superviser<strin
 	{
 		Terminal.WriteLine(
 			CommandOutletContent
-				.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss}] ")
-				.Append(CommandOutletColor.DarkMagenta, $"Superviser.Unsupervised: {observable}"));
+				.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss.fff}] ")
+				.Append(CommandOutletColor.DarkYellow, $"Superviser.Unsupervised: {observable}"));
 
 		base.OnUnsupervised(key, observable, reason);
 	}

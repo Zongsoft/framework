@@ -28,16 +28,16 @@ internal class Program
 		{
 			const int PADDING = 10;
 
-			if(context.GetOptions().TryGetValue<int>("period", out var period))
+			if(context.Options.TryGetValue<int>("period", out var period))
 				_PERIOD_ = period;
 
-			if(context.GetOptions().TryGetValue<int>("limit", out var limit))
+			if(context.Options.TryGetValue<int>("limit", out var limit))
 				_LIMIT_ = limit;
 
-			if(context.GetOptions().TryGetValue<int>("count", out var count))
+			if(context.Options.TryGetValue<int>("count", out var count))
 				_COUNT_ = count;
 
-			if(context.GetOptions().TryGetValue<int>("collision", out var collision))
+			if(context.Options.TryGetValue<int>("collision", out var collision))
 				_COLLISION_ = collision;
 
 			var content = CommandOutletContent.Create()
@@ -57,11 +57,11 @@ internal class Program
 			Terminal.Write(content);
 		});
 
-		executor.Command("spool", context =>
+		executor.Command("spool", async (context, cancellation) =>
 		{
 			(var count, var collision) = GetCommandOptions(context);
 			stopwater.Restart();
-			TestSpooler(count, collision);
+			await TestSpoolerAsync(count, collision, cancellation);
 			stopwater.Stop();
 
 			Terminal.Console.Write(CommandOutletColor.DarkMagenta, $"Elapsed: ");
@@ -76,28 +76,28 @@ internal class Program
 		executor.Run(splash);
 	}
 
-	static void TestSpooler(int count, int collision = 0)
+	static async ValueTask TestSpoolerAsync(int count, int collision, CancellationToken cancellation)
 	{
-		using var spooler = new Spooler<int>(Handler.Handle, collision > 0, TimeSpan.FromMilliseconds(_PERIOD_), _LIMIT_);
+		using var spooler = new Spooler<int>(Handler.HandleAsync, TimeSpan.FromMilliseconds(_PERIOD_), _LIMIT_);
 
-		var result = Parallel.For(0, count, index =>
+		await Parallel.ForAsync(0, count, cancellation, async (index, cancellation) =>
 		{
 			var value = collision > 0 ?
 				Random.Shared.Next(0, collision) :
 				Random.Shared.Next();
 
-			spooler.Put(value);
+			await spooler.PutAsync(value, cancellation);
 		});
 
-		Handler.Reset(result, count);
+		Handler.Reset(count);
 	}
 
 	private static (int count, int collision) GetCommandOptions(CommandContext context)
 	{
-		if(!context.GetOptions().TryGetValue<int>("count", out var count))
+		if(!context.Options.TryGetValue<int>("count", out var count))
 			count = context.Arguments.GetValue(0, _COUNT_);
 
-		if(!context.GetOptions().TryGetValue<int>("collision", out var collision))
+		if(!context.Options.TryGetValue<int>("collision", out var collision))
 			collision = context.Arguments.GetValue(1, _COLLISION_);
 
 		return (Math.Max(count, 100), collision);
@@ -108,51 +108,48 @@ internal class Program
 		private static volatile int _count;
 		private static volatile int _times;
 
-		internal static void Reset(ParallelLoopResult result, int count)
+		internal static void Reset(int count)
 		{
 			var content = CommandOutletContent.Create(Environment.NewLine);
 
-			if(result.IsCompleted)
+			if(_count != count)
 			{
-				if(_count != count)
-				{
-					content
-						.Append(CommandOutletColor.DarkGray, "[")
-						.Append(CommandOutletColor.DarkYellow, $"Completed")
-						.Append(CommandOutletColor.DarkGray, "] ")
-						.AppendLine(CommandOutletColor.DarkGray, "Waiting...");
-
-					Terminal.Write(content);
-
-					//等待最后一波的缓冲过期（注意：等待的时长必须是计时器的倍数）
-					SpinWait.SpinUntil(() => _count >= count, _PERIOD_ * 3);
-
-					content.Last
-						.Append(CommandOutletColor.DarkGray, "[")
-						.Append(CommandOutletColor.DarkYellow, $"Completed")
-						.Append(CommandOutletColor.DarkGray, "] ")
-						.AppendLine(CommandOutletColor.Green, "Waiting was finished.");
-
-					Terminal.WriteLine(content);
-				}
-
-				content.Last.AppendLine()
-					.AppendLine(CommandOutletColor.Yellow, new string('-', 30))
+				content
 					.Append(CommandOutletColor.DarkGray, "[")
-					.Append(CommandOutletColor.DarkMagenta, $"{_times}")
+					.Append(CommandOutletColor.DarkYellow, $"Completed")
 					.Append(CommandOutletColor.DarkGray, "] ")
-					.Append(CommandOutletColor.DarkYellow, $"{count:0,0000}")
-					.Append(CommandOutletColor.DarkGray, " : ")
-					.Append(count == _count ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkRed, $"{_count:0,0000}");
+					.AppendLine(CommandOutletColor.DarkGray, "Waiting...");
 
-				Terminal.Console.WriteLine(content);
+				Terminal.Write(content);
+
+				//等待最后一波的缓冲过期（注意：等待的时长必须是计时器的倍数）
+				SpinWait.SpinUntil(() => _count >= count, _PERIOD_ * 3);
+
+				content.Last
+					.Append(CommandOutletColor.DarkGray, "[")
+					.Append(CommandOutletColor.DarkYellow, $"Completed")
+					.Append(CommandOutletColor.DarkGray, "] ")
+					.AppendLine(CommandOutletColor.Green, "Waiting was finished.");
+
+				Terminal.WriteLine(content);
 			}
+
+			content.Last.AppendLine()
+				.AppendLine(CommandOutletColor.Yellow, new string('-', 30))
+				.Append(CommandOutletColor.DarkGray, "[")
+				.Append(CommandOutletColor.DarkMagenta, $"{_times}")
+				.Append(CommandOutletColor.DarkGray, "] ")
+				.Append(CommandOutletColor.DarkYellow, $"{count:0,0000}")
+				.Append(CommandOutletColor.DarkGray, " : ")
+				.Append(count == _count ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkRed, $"{_count:0,0000}");
+
+			Terminal.Console.WriteLine(content);
 
 			_count = 0;
 			_times = 0;
 		}
 
-		internal static void Handle(IEnumerable<int> items)
+		internal static ValueTask HandleAsync(IEnumerable<int> items, CancellationToken cancellation)
 		{
 			var times = Interlocked.Increment(ref _times);
 			var count = items.Count();
@@ -179,6 +176,8 @@ internal class Program
 			{
 				Terminal.Console.WriteLine(CommandOutletColor.Gray, "\t... ...");
 			}
+
+			return ValueTask.CompletedTask;
 		}
 	}
 }
