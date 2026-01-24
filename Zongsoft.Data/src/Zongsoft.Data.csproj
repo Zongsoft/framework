@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.12.0</Version>
+		<Version>7.12.1</Version>
 		<Product>Zongsoft Data Library</Product>
 		<Description>This is an Object/Relational Mapping(ORM) data engine.</Description>
 		<RootNamespace>Zongsoft.Data</RootNamespace>

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -146,23 +146,34 @@ public abstract class DataImporterBase : IDataImporter
 				Reflection.Reflector.TrySetValue(this.Info, ref target, value);
 
 				//返回验证后的值
-				return GetUnderlyingType(value, property.Type, property.Nullable);
+				return ConvertValue(value, property.Type, property.Length, property.Nullable);
 			}
 
 			if(Reflection.Reflector.TryGetValue(this.Info, ref target, out value))
-				return GetUnderlyingType(value == null || value is string text && string.IsNullOrEmpty(text) ? property.DefaultValue : value, property.Type, property.Nullable);
+				return ConvertValue(value == null || value is string text && string.IsNullOrEmpty(text) ? property.DefaultValue : value, property.Type, property.Length, property.Nullable);
 			else
-				return GetUnderlyingType(property.DefaultValue, property.Type, property.Nullable);
+				return ConvertValue(property.DefaultValue, property.Type, property.Length, property.Nullable);
 
-			//处理枚举类型的值，将枚举类型转换为其基元类型
-			static object GetUnderlyingType(object value, DbType type, bool nullable)
+			static object ConvertValue(object value, DbType type, int length, bool nullable)
 			{
+				//处理枚举类型的值，将枚举类型转换为其基元类型
 				if(value is not null && value.GetType().IsEnum)
 					return Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType()));
+
+				//如果待转换的值为字符串且字段类型为字符串类型且指定了长度限制，则进行截取处理
+				if(value is string text && length > 0 && IsString(type))
+					return text.Length > length ? text[..length] : text;
 
 				//如果待转换的值不为空且当前字段不允许空，则尝试获取其类型的默认值
 				return value == null && !nullable ? Zongsoft.Common.TypeExtension.GetDefaultValue(DataUtility.AsType(type)) : value;
 			}
+
+			static bool IsString(DbType dbType) =>
+				dbType == DbType.AnsiString ||
+				dbType == DbType.AnsiStringFixedLength ||
+				dbType == DbType.String ||
+				dbType == DbType.StringFixedLength ||
+				dbType == DbType.Xml;
 		}
 		#endregion
 
