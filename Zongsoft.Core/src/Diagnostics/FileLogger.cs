@@ -33,6 +33,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Zongsoft.Caching;
 
@@ -43,7 +44,15 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 	#region 常量定义
 	internal const int FILE_LIMIT     = 1024 * 1024;
 	internal const int LOGGING_LIMIT  = 100;
-	internal const int LOGGING_PERIOD = 10; //Unit: Seconds
+	internal const int LOGGING_PERIOD = 1; //Unit: Seconds
+	#endregion
+
+	#region 私有变量
+	#if NET9_0_OR_GREATER
+	private readonly ConcurrentDictionary<string, Lock> _lockers = new();
+	#else
+	private readonly ConcurrentDictionary<string, object> _lockers = new();
+	#endif
 	#endregion
 
 	#region 构造函数
@@ -98,16 +107,36 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 
 	protected virtual async ValueTask OnLogAsync(IEnumerable<TLog> logs, CancellationToken cancellation)
 	{
-		foreach(var group in logs.GroupBy(log => this.ResolveSequence(log)))
+		foreach(var group in logs.GroupBy(log => new LogFileToken(log.Source, this.ResolveSequence(log))))
 		{
-			if(string.IsNullOrEmpty(group.Key))
+			if(group.Key.IsEmpty)
 				continue;
 
-			//以写模式打开日志文件
-			using var stream = new FileStream(group.Key, FileMode.Append, FileAccess.Write, FileShare.Read);
+			var locker = _lockers.GetOrAdd(group.Key.Source, key => new());
 
-			//批量写入日志文件
-			await this.WriteLogsAsync(stream, group, cancellation);
+			#if NET9_0_OR_GREATER
+			try
+			{
+				//进入临界区
+				locker.Enter();
+				//以写模式打开日志文件
+				using var stream = new FileStream(group.Key.FilePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+				//批量写入日志文件
+				await this.WriteLogsAsync(stream, group, cancellation);
+			}
+			finally { locker.Exit(); }
+			#else
+			try
+			{
+				//进入临界区
+				Monitor.Enter(locker);
+				//以写模式打开日志文件
+				using var stream = new FileStream(group.Key.FilePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+				//批量写入日志文件
+				await this.WriteLogsAsync(stream, group, cancellation);
+			}
+			finally { Monitor.Exit(locker); }
+			#endif
 		}
 	}
 	#endregion
@@ -117,12 +146,12 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 	#endregion
 
 	#region 虚拟方法
-	protected virtual string GetFilePath(ILog entry)
+	protected virtual string GetFilePath(ILog log)
 	{
 		var filePath = this.FilePath;
 
 		if(string.IsNullOrEmpty(filePath))
-			filePath = $"~/logs/{entry.Timestamp:yyyyMM}/{(string.IsNullOrEmpty(entry.Source) ? Zongsoft.Diagnostics.Logging.Default.Name : entry.Source)}-{{sequence}}.log";
+			filePath = $"~/logs/{log.Timestamp:yyyyMM}/{(string.IsNullOrEmpty(log.Source) ? Zongsoft.Diagnostics.Logging.Default.Name : log.Source)}-{{sequence}}.log";
 
 		filePath = filePath.Replace((Path.DirectorySeparatorChar == '/' ? '\\' : '/'), Path.DirectorySeparatorChar).Trim();
 
@@ -174,14 +203,14 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 		return path;
 	}
 
-	private string ResolveSequence(ILog entry)
+	private string ResolveSequence(ILog log)
 	{
 		const string PATTERN = @"(?<no>\d+)";
 		const string SEQUENCE = "{sequence}";
 
 		var maximum = 0;
 		var result = string.Empty;
-		var filePath = this.GetFilePath(entry);
+		var filePath = this.GetFilePath(log);
 
 		if(string.IsNullOrEmpty(filePath) || (!filePath.Contains(SEQUENCE)))
 			return filePath;
@@ -233,6 +262,20 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 			return filePath.Replace(SEQUENCE, (maximum + 1).ToString());
 
 		return result;
+	}
+	#endregion
+
+	#region 嵌套结构
+	private readonly struct LogFileToken(string source, string filePath) : IEquatable<LogFileToken>
+	{
+		public readonly string Source = source;
+		public readonly string FilePath = filePath;
+		public bool IsEmpty => string.IsNullOrEmpty(this.FilePath);
+
+		public bool Equals(LogFileToken other) => string.Equals(this.FilePath, other.FilePath);
+		public override bool Equals(object obj) => obj is LogFileToken other && base.Equals(other);
+		public override int GetHashCode() => this.FilePath.GetHashCode();
+		public override string ToString() => this.FilePath;
 	}
 	#endregion
 }
