@@ -27,6 +27,7 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 
 	#region 公共属性
 	public string Name => _name;
+	public DateTime Timestamp { get; private set; }
 	#endregion
 
 	#region 公共方法
@@ -52,6 +53,7 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	#region 私有方法
 	private void OnTick(object state)
 	{
+		this.Timestamp = DateTime.Now;
 		this.Observer?.OnNext(Random.Shared.NextInt64().ToString("X"));
 	}
 	#endregion
@@ -61,7 +63,7 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	{
 		Terminal.WriteLine(
 			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss.fff}] ")
-			                    .Append(CommandOutletColor.DarkGreen, $"{this.Name} Subscribed."));
+								.Append(CommandOutletColor.DarkGreen, $"{this.Name} Subscribed."));
 
 		return base.OnSubscribe(observer);
 	}
@@ -70,7 +72,7 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	{
 		Terminal.WriteLine(
 			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss.fff}] ")
-			                    .Append(CommandOutletColor.DarkCyan, $"{this.Name} Unsupervised<{reason}>."));
+								.Append(CommandOutletColor.DarkCyan, $"{this.Name} Unsupervised<{reason}>."));
 
 		this.Dispose();
 	}
@@ -85,7 +87,9 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	};
 
 	public override int GetHashCode() => this.Name.ToUpperInvariant().GetHashCode();
-	public override string ToString() => this.Options == null ? this.Name : $"{this.Name}({this.Options})";
+	public override string ToString() => this.Options == null ?
+		$"{this.Name}@{this.Timestamp:HH:mm:ss.fff}" :
+		$"{this.Name}@{this.Timestamp:HH:mm:ss.fff}({this.Options})";
 	#endregion
 
 	#region 处置方法

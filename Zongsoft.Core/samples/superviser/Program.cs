@@ -58,7 +58,9 @@ internal class Program
 		{
 			if(context.Arguments.IsEmpty)
 			{
-				Terminal.WriteLine(CommandOutletColor.Red, $"The open command is missing required arguments.");
+				foreach(var supervisable in superviser)
+					((MySupervisable)supervisable).Open();
+
 				return;
 			}
 
@@ -70,7 +72,9 @@ internal class Program
 		{
 			if(context.Arguments.IsEmpty)
 			{
-				Terminal.WriteLine(CommandOutletColor.Red, $"The open command is missing required arguments.");
+				foreach(var supervisable in superviser)
+					((MySupervisable)supervisable).Close();
+
 				return;
 			}
 
@@ -82,7 +86,9 @@ internal class Program
 		{
 			if(context.Arguments.IsEmpty)
 			{
-				Terminal.WriteLine(CommandOutletColor.Red, $"The pause command is missing required arguments.");
+				foreach(var supervisable in superviser)
+					((MySupervisable)supervisable).Pause();
+
 				return;
 			}
 
@@ -94,7 +100,9 @@ internal class Program
 		{
 			if(context.Arguments.IsEmpty)
 			{
-				Terminal.WriteLine(CommandOutletColor.Red, $"The resume command is missing required arguments.");
+				foreach(var supervisable in superviser)
+					((MySupervisable)supervisable).Resume();
+
 				return;
 			}
 
@@ -106,7 +114,9 @@ internal class Program
 		{
 			if(context.Arguments.IsEmpty)
 			{
-				Terminal.WriteLine(CommandOutletColor.Red, $"The resume command is missing required arguments.");
+				foreach(var supervisable in superviser)
+					((MySupervisable)supervisable).Error();
+
 				return;
 			}
 
@@ -133,7 +143,7 @@ internal class Program
 
 			if(observable == null)
 			{
-				Terminal.WriteLine($"The specified “{names[i]}” supervisable object does not exist.");
+				Terminal.WriteLine($"The specified '{names[i]}' supervisable object does not exist.");
 				continue;
 			}
 
