@@ -170,7 +170,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		this.OnUnsupervised(args.State, (IObservable<T>)args.Key, args.Reason switch
 		{
 			CacheEvictedReason.Expired => SupervisableReason.Inactived,
-			CacheEvictedReason.Depended => SupervisableReason.Inactived,
+			CacheEvictedReason.Depended => SupervisableReason.Failed,
 			_ => SupervisableReason.Manual,
 		});
 	}
@@ -242,8 +242,8 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	{
 		if(disposing)
 		{
-			_cache?.Clear();
 			_scanner?.Stop();
+			_cache?.Clear();
 
 			//确保所有被监测对象的注销事件都已经成功触发
 			SpinWait.SpinUntil(() => _raises > 0, 1000);
@@ -252,18 +252,24 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		this.Supervised = null;
 		this.Unsupervised = null;
 
+		_scanner?.Dispose();
+		_scanner = null;
+
 		_cache?.Evicted -= this.OnEvicted;
 		_cache?.Dispose();
-		_scanner?.Dispose();
-
 		_cache = null;
-		_scanner = null;
 	}
 	#endregion
 
 	#region 私有方法
-	private void Touch(IObservable<T> observable) => _cache.Contains(observable);
 	private SupervisableOptions GetOptions(object observable) => observable is ISupervisable<T> supervisable && supervisable.Options != null ? supervisable.Options : _options;
+	private void Touch(IObservable<T> observable)
+	{
+		if(this.IsDisposing || this.IsDisposed)
+			return;
+
+		_cache?.Contains(observable);
+	}
 	#endregion
 
 	#region 嵌套子类
@@ -402,10 +408,10 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 }
 
 #if NET9_0_OR_GREATER
-partial class Superviser<T> : System.Collections.Generic.IEnumerable<IObservable<T>>
+partial class Superviser<T> : IEnumerable<IObservable<T>>
 {
 	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public System.Collections.Generic.IEnumerator<IObservable<T>> GetEnumerator()
+	public IEnumerator<IObservable<T>> GetEnumerator()
 	{
 		var cache = _cache ?? throw new ObjectDisposedException(this.GetType().FullName);
 
