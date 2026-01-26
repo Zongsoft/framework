@@ -5,12 +5,7 @@ namespace Zongsoft.Components;
 public class SuperviserEventArgs<T> : EventArgs
 {
 	#region 构造函数
-	public SuperviserEventArgs(IObservable<T> observable)
-	{
-		this.Key = null;
-		this.Observable = observable;
-	}
-
+	public SuperviserEventArgs(IObservable<T> observable) : this(null, observable) { }
 	public SuperviserEventArgs(object key, IObservable<T> observable)
 	{
 		this.Key = key;
