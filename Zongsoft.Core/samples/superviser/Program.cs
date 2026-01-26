@@ -29,6 +29,7 @@ internal class Program
 			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `error` to enables error reporting for the supervisable objects with the specified name.");
 			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `pause` to pause reporting of supervisable objects with the specified name.");
 			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `resume` to resume reporting of supervisable objects with the specified name.");
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, "Input `create` to create one or more supervisable objects in the superviser.");
 		});
 
 		Terminal.Console.Executor.Command("info", context =>
@@ -82,6 +83,20 @@ internal class Program
 				supervisable.Close();
 		});
 
+		Terminal.Console.Executor.Command("error", context =>
+		{
+			if(context.Arguments.IsEmpty)
+			{
+				foreach(var supervisable in superviser)
+					((MySupervisable)supervisable).Error();
+
+				return;
+			}
+
+			foreach(var supervisable in Get(superviser, context.Arguments))
+				supervisable.Error();
+		});
+
 		Terminal.Console.Executor.Command("pause", context =>
 		{
 			if(context.Arguments.IsEmpty)
@@ -110,19 +125,20 @@ internal class Program
 				supervisable.Resume();
 		});
 
-		Terminal.Console.Executor.Command("error", context =>
+		Terminal.Console.Executor.Command("create", context =>
 		{
 			if(context.Arguments.IsEmpty)
-			{
-				foreach(var supervisable in superviser)
-					((MySupervisable)supervisable).Error();
-
 				return;
-			}
 
-			foreach(var supervisable in Get(superviser, context.Arguments))
-				supervisable.Error();
+			var options = new SupervisableOptions(
+				context.Options.GetValue("lifecycle", TimeSpan.FromSeconds(60)),
+				context.Options.GetValue("errors", 3));
+
+			foreach(var argument in context.Arguments)
+				superviser.Supervise(argument, new MySupervisable(argument, options));
 		});
+
+		Terminal.Console.Executor.Find("Exit").Command.Executed += (_, _) => superviser.Dispose();
 
 		var splash = CommandOutletContent.Create()
 			.AppendLine(CommandOutletColor.Gray, new string('·', 60))
