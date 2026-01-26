@@ -12,28 +12,15 @@
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="NetMQ" VersionOverride="4.0.1.14" />
 	</ItemGroup>
 
-	<Choose>
-		<When Condition="$(Configuration)=='Debug'">
-			<ItemGroup>
-				<Reference Include="Zongsoft.Core">
-					<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
-				</Reference>
-				<Reference Include="Zongsoft.Messaging.ZeroMQ">
-					<HintPath>..\..\..\messaging\zero\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Messaging.ZeroMQ.dll</HintPath>
-				</Reference>
-			</ItemGroup>
-		</When>
-		<Otherwise>
-			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.29.2" />
-				<PackageReference Include="Zongsoft.Messaging.ZeroMQ" VersionOverride="1.4.0" />
-			</ItemGroup>
-		</Otherwise>
-	</Choose>
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Messaging.ZeroMQ">
+			<HintPath>..\..\..\messaging\zero\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Messaging.ZeroMQ.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 </Project>

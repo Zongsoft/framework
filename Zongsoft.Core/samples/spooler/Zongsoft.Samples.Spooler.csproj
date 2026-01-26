@@ -9,18 +9,9 @@
 		<PackageReference Include="Microsoft.Extensions.ObjectPool" />
 	</ItemGroup>
 
-	<Choose>
-		<When Condition="$(Configuration)=='Debug'">
-			<ItemGroup>
-				<Reference Include="Zongsoft.Core">
-					<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
-				</Reference>
-			</ItemGroup>
-		</When>
-		<Otherwise>
-			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.29.2" />
-			</ItemGroup>
-		</Otherwise>
-	</Choose>
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 </Project>
