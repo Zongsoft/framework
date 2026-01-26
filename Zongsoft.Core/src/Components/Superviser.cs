@@ -62,15 +62,14 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	#endregion
 
 	#region 构造函数
-	public Superviser(SupervisableOptions options = null)
+	public Superviser(SupervisableOptions options = null) : this(TimeSpan.Zero, options) { }
+	public Superviser(TimeSpan frequency, SupervisableOptions options = null)
 	{
 		_options = options ?? new();
 		_keys = new(KeyEqualityComparer.Instance);
 
 		//确保内存缓存的扫描频率不能过高，因为扫描频率过高可能会导致监测精度不够
-		var frequency = _options.Lifecycle > TimeSpan.Zero ? _options.Lifecycle : TimeSpan.FromSeconds(60);
-		if(frequency > TimeSpan.FromSeconds(60))
-			frequency = TimeSpan.FromSeconds(60);
+		frequency = TimeSpanUtility.Clamp(frequency, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60));
 
 		_cache = new MemoryCache(frequency);
 		_scanner = new MemoryCacheScanner(_cache);
@@ -250,12 +249,12 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 			SpinWait.SpinUntil(() => _raises > 0, 1000);
 		}
 
-		var cache = _cache;
-		if(cache != null)
-			cache.Evicted -= this.OnEvicted;
-
 		this.Supervised = null;
 		this.Unsupervised = null;
+
+		_cache?.Evicted -= this.OnEvicted;
+		_cache?.Dispose();
+		_scanner?.Dispose();
 
 		_cache = null;
 		_scanner = null;

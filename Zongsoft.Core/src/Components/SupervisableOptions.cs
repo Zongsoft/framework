@@ -47,7 +47,7 @@ public class SupervisableOptions
 	public SupervisableOptions(TimeSpan lifecycle, int errorLimit = ERROR_LIMIT)
 	{
 		this.ErrorLimit = errorLimit;
-		this.Lifecycle = lifecycle;
+		this.Lifecycle = lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.FromSeconds(60);
 	}
 	#endregion
 
