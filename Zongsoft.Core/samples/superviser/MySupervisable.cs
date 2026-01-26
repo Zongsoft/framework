@@ -15,6 +15,7 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	#region 成员字段
 	private string _name;
 	private Timer _timer;
+	private int _running;
 	#endregion
 
 	#region 构造函数
@@ -27,17 +28,34 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 
 	#region 公共属性
 	public string Name => _name;
+	public bool IsRunning => _running != 0;
 	public DateTime Timestamp { get; private set; }
 	#endregion
 
 	#region 公共方法
-	public void Open() => _timer.Change(0, INTERVAL);
-	public void Pause() => _timer.Change(Timeout.Infinite, Timeout.Infinite);
-	public void Resume() => _timer.Change(0, INTERVAL);
+	public void Open()
+	{
+		if(Interlocked.CompareExchange(ref _running, 1, 0) == 0)
+			_timer?.Change(0, INTERVAL);
+	}
+
+	public void Pause()
+	{
+		if(Interlocked.CompareExchange(ref _running, 0, 1) == 1)
+			_timer?.Change(Timeout.Infinite, Timeout.Infinite);
+	}
+
+	public void Resume()
+	{
+		if(Interlocked.CompareExchange(ref _running, 1, 0) == 0)
+			_timer?.Change(0, INTERVAL);
+	}
 
 	public void Close()
 	{
-		_timer.Change(Timeout.Infinite, Timeout.Infinite);
+		if(Interlocked.CompareExchange(ref _running, 0, 1) == 1)
+			_timer.Change(Timeout.Infinite, Timeout.Infinite);
+
 		this.Observer?.OnCompleted();
 	}
 
@@ -88,11 +106,26 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 
 	public override int GetHashCode() => this.Name.ToUpperInvariant().GetHashCode();
 	public override string ToString() => this.Options == null ?
-		$"{this.Name}@{this.Timestamp:HH:mm:ss.fff}" :
-		$"{this.Name}@{this.Timestamp:HH:mm:ss.fff}({this.Options})";
+		$"[{(this.IsRunning ? "Running" : "Stopped")}] {this.Name}@{this.Timestamp:HH:mm:ss.fff}" :
+		$"[{(this.IsRunning ? "Running" : "Stopped")}] {this.Name}@{this.Timestamp:HH:mm:ss.fff}({this.Options})";
 	#endregion
 
 	#region 处置方法
-	public void Dispose() => Terminal.WriteLine(CommandOutletColor.Magenta, $"The {this.Name} supervisable object was disposed.");
+	public void Dispose()
+	{
+		this.Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	protected virtual void Dispose(bool disposing)
+	{
+		if(disposing)
+			this.Close();
+
+		_timer.Dispose();
+		_timer = null;
+
+		Terminal.WriteLine(CommandOutletColor.Magenta, $"The {this.Name} supervisable object was disposed.");
+	}
 	#endregion
 }
