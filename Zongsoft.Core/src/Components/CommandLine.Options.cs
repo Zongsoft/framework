@@ -186,7 +186,7 @@ partial class CommandLine
 			if(_descriptor.Options.TryGetValue(name, out var descriptor))
 				return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, descriptor.GetConverter);
 
-			throw new ArgumentException($"The command option named '{name}' was not found.");
+			return defaultValue;
 		}
 
 		public bool TryGetValue(string name, out object value)
