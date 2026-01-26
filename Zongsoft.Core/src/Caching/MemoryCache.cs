@@ -66,11 +66,11 @@ public class MemoryCache : IDisposable
 	#endregion
 
 	#region 公共属性
-	public int Count => _cache.Count;
+	public int Count => _cache?.Count ?? 0;
 	public MemoryCacheOptions Options => _options;
 
 	#if NET9_0_OR_GREATER
-	public IEnumerable<object> Keys => _cache.Keys;
+	public IEnumerable<object> Keys => _cache?.Keys ?? [];
 	#endif
 	#endregion
 
@@ -1369,15 +1369,23 @@ public class MemoryCache : IDisposable
 
 		if(cache != null)
 		{
-			//移除“Limited”事件的所有处理函数
-			var handlers = this.Limited.GetInvocationList();
-			for(int i = 0; i < handlers.Length; i++)
-				this.Limited -= (EventHandler<CacheLimitedEventArgs>)handlers[i];
+			var limited = this.Limited;
+			if(limited != null)
+			{
+				//移除“Limited”事件的所有处理函数
+				var handlers = limited.GetInvocationList();
+				for(int i = 0; i < handlers.Length; i++)
+					limited -= (EventHandler<CacheLimitedEventArgs>)handlers[i];
+			}
 
-			//移除“Evicted”事件的所有处理函数
-			handlers = this.Evicted.GetInvocationList();
-			for(int i = 0; i < handlers.Length; i++)
-				this.Evicted -= (EventHandler<CacheEvictedEventArgs>)handlers[i];
+			var evicted = this.Evicted;
+			if(evicted != null)
+			{
+				//移除“Evicted”事件的所有处理函数
+				var handlers = evicted.GetInvocationList() ?? [];
+				for(int i = 0; i < handlers.Length; i++)
+					evicted -= (EventHandler<CacheEvictedEventArgs>)handlers[i];
+			}
 
 			cache.Dispose();
 		}
