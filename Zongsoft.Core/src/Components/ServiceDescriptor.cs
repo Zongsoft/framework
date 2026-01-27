@@ -43,6 +43,7 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 	#endregion
 
 	#region 构造函数
+	protected ServiceDescriptor() { }
 	public ServiceDescriptor(Type type, string name, string qualifiedName = null)
 	{
 		this.Type = type;
@@ -53,10 +54,10 @@ public partial class ServiceDescriptor : IEquatable<ServiceDescriptor>
 
 	#region 公共属性
 	/// <summary>获取服务名称。</summary>
-	public string Name { get; }
+	public string Name { get; protected init; }
 
 	/// <summary>获取服务类型。</summary>
-	public Type Type { get; }
+	public Type Type { get; protected init; }
 
 	/// <summary>获取服务的限定名称，即服务所在模块名与服务名的完整组合(<c>ModuleName:ServiceName.Nested..Nested</c>。</summary>
 	public string QualifiedName => _qualifiedName ??= GetQualifiedName(this.Type);

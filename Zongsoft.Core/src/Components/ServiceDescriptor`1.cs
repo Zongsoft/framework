@@ -32,8 +32,15 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public class ServiceDescriptor<TOperations>(Type type, string name = null, string qualifiedName = null) : ServiceDescriptor(type, name, qualifiedName) where TOperations : IReadOnlyCollection<ServiceDescriptor.Operation>
+public class ServiceDescriptor<TOperations> : ServiceDescriptor where TOperations : IReadOnlyCollection<ServiceDescriptor.Operation>
 {
+	#region 构造函数
+	protected ServiceDescriptor() { }
+	public ServiceDescriptor(Type type, string name = null, string qualifiedName = null) : base(type, name, qualifiedName) { }
+	#endregion
+
+	#region 公共属性
 	/// <summary>获取服务的操作集合。</summary>
 	public TOperations Operations { get; protected init; }
+	#endregion
 }

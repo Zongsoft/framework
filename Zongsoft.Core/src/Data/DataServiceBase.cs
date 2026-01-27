@@ -67,6 +67,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	private IDataAccess _dataAccess;
 	private IDataSearcher<TModel> _searcher;
 	private IServiceProvider _serviceProvider;
+	private DataServiceDescriptor<TModel> _descriptor;
 	private Dictionary<Type, IDataService> _subservices;
 	private readonly DataServiceAttribute _attribute;
 	private readonly DataServiceMutability? _mutability;
@@ -348,6 +349,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	}
 
 	public IDataService Service { get; }
+	public DataServiceDescriptor<TModel> Descriptor => _descriptor ??= this.GetDescriptor();
 	public virtual System.Security.Claims.ClaimsPrincipal Principal => ApplicationContext.Current?.Principal;
 	public IDataServiceAuthorizer<TModel> Authorizer { get; protected set; }
 	public IDataServiceValidator<TModel> Validator { get; protected set; }
@@ -1931,6 +1933,10 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 
 		return this.OnFiltering(DataServiceMethod.Select(), context);
 	}
+	#endregion
+
+	#region 服务描述
+	protected virtual DataServiceDescriptor<TModel> GetDescriptor() => new(this);
 	#endregion
 
 	#region 模型转换

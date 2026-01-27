@@ -72,7 +72,7 @@ partial class DataServiceBase<TModel> : IDataImportable
 
 	protected virtual IDataArchiveExtractor GetExtractor(string format, DataImportOptions options, out IDataArchiveExtractorOptions extracting)
 	{
-		extracting = new DataArchiveExtractorOptions(this.GetDescriptor(), options?.Parameters);
+		extracting = new DataArchiveExtractorOptions(this.Descriptor.Model, options?.Parameters);
 		return this.ServiceProvider.Find<IDataArchiveExtractor>(format) ?? throw OperationException.Unsupported($"The '{format}' format data archive import is not supported.");
 	}
 
