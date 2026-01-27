@@ -189,6 +189,18 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 			CacheEvictedReason.Depended => SupervisableReason.Failed,
 			_ => SupervisableReason.Manual,
 		});
+
+		if(_disposing != 0)
+		{
+			var cache = _cache;
+
+			if(cache != null && cache.Count == 0)
+			{
+				cache.Evicted -= this.OnEvicted;
+				cache.Dispose();
+				_cache = null;
+			}
+		}
 	}
 
 	protected virtual void OnUnsupervised(object key, IObservable<T> observable, SupervisableReason reason)
@@ -212,24 +224,8 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	#endregion
 
 	#region 事件触发
-	private volatile int _raises;
-	protected virtual void OnSupervised(SuperviserEventArgs<T> args)
-	{
-		//递增被监测成功的计数器
-		Interlocked.Increment(ref _raises);
-
-		//触发“Supervised”事件
-		this.Supervised?.Invoke(this, args);
-	}
-
-	protected virtual void OnUnsupervised(SuperviserEventArgs<T> args)
-	{
-		//递减被注销成功的计数器
-		Interlocked.Decrement(ref _raises);
-
-		//触发“Unsupervised”事件
-		this.Unsupervised?.Invoke(this, args);
-	}
+	protected virtual void OnSupervised(SuperviserEventArgs<T> args) => this.Supervised?.Invoke(this, args);
+	protected virtual void OnUnsupervised(SuperviserEventArgs<T> args) => this.Unsupervised?.Invoke(this, args);
 	#endregion
 
 	#region 重写方法
@@ -260,9 +256,6 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		{
 			_scanner?.Stop();
 			_cache?.Clear();
-
-			//确保所有被监测对象的注销事件都已经成功触发
-			SpinWait.SpinUntil(() => _raises > 0, 1000);
 		}
 
 		this.Supervised = null;
@@ -270,10 +263,6 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 		_scanner?.Dispose();
 		_scanner = null;
-
-		_cache?.Evicted -= this.OnEvicted;
-		_cache?.Dispose();
-		_cache = null;
 	}
 	#endregion
 
