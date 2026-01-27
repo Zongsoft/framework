@@ -76,7 +76,11 @@ partial class DataServiceBase<TModel> : IDataExportable
 	protected virtual DataArchiveFormat OnExport(Stream output, object data, string[] members, string format, DataExportOptions options)
 	{
 		var generator = this.ServiceProvider.Find<IDataArchiveGenerator>(format) ?? throw OperationException.Unfound();
-		var task = generator.GenerateAsync(output, this.Descriptor.Model, data, (members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members)));
+		var task = generator.GenerateAsync(
+			output,
+			this.Descriptor.Model,
+			data,
+			members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members));
 
 		if(!task.IsCompletedSuccessfully)
 			task.AsTask().GetAwaiter().GetResult();
@@ -87,7 +91,13 @@ partial class DataServiceBase<TModel> : IDataExportable
 	protected virtual async ValueTask<DataArchiveFormat> OnExportAsync(Stream output, object data, string[] members, string format, DataExportOptions options, CancellationToken cancellation)
 	{
 		var generator = this.ServiceProvider.Find<IDataArchiveGenerator>(format) ?? throw OperationException.Unfound();
-		await generator.GenerateAsync(output, this.Descriptor.Model, data, (members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members)), cancellation);
+		await generator.GenerateAsync(
+			output,
+			this.Descriptor.Model,
+			data,
+			members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members),
+			cancellation);
+
 		return generator.Format;
 	}
 	#endregion
