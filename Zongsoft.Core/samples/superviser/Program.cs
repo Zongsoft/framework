@@ -85,16 +85,24 @@ internal class Program
 
 		Terminal.Console.Executor.Command("error", context =>
 		{
+			var round = context.Options.GetValue("round", 1);
+
 			if(context.Arguments.IsEmpty)
 			{
 				foreach(var supervisable in superviser)
-					((MySupervisable)supervisable).Error();
+				{
+					for(int i = 0; i < round; i++)
+						((MySupervisable)supervisable).Error();
+				}
 
 				return;
 			}
 
 			foreach(var supervisable in Get(superviser, context.Arguments))
-				supervisable.Error();
+			{
+				for(int i = 0; i < round; i++)
+					supervisable.Error();
+			}
 		});
 
 		Terminal.Console.Executor.Command("pause", context =>

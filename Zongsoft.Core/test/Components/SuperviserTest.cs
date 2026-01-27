@@ -82,7 +82,7 @@ public class SuperviserTest
 		//并发执行取消监测方法，以触发监测取消事件
 		Parallel.For(0, COUNT, index =>
 		{
-			_superviser.Unsupervise($"S{index + 1}", out _);
+			_superviser.Unsupervise($"S{index + 1}");
 		});
 
 		//由于取消监测事件回调有延迟，因此需要等待取消事件回调完成
@@ -94,8 +94,8 @@ public class SuperviserTest
 
 	#region 事件处理
 	private volatile int _raises = 0;
-	private void OnSupervised(object sender, SuperviserEventArgs<string> e) => Interlocked.Increment(ref _raises);
-	private void OnUnsupervised(object sender, SuperviserEventArgs<string> e) => Interlocked.Decrement(ref _raises);
+	private void OnSupervised(object sender, Superviser<string>.SupervisedEventArgs args) => Interlocked.Increment(ref _raises);
+	private void OnUnsupervised(object sender, Superviser<string>.UnsupervisedEventArgs args) => Interlocked.Decrement(ref _raises);
 	#endregion
 
 	private sealed class MySupervisable(string name) : Supervisable<string>, IEquatable<string>, IEquatable<MySupervisable>

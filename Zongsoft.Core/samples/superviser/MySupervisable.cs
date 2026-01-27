@@ -22,13 +22,14 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	public MySupervisable(string name, SupervisableOptions options = null) : base(options)
 	{
 		_name = name ?? throw new ArgumentNullException(nameof(name));
-		_timer = new(this.OnTick, null, Timeout.Infinite, 2000);
+		_timer = new(this.OnTick, null, Timeout.Infinite, INTERVAL);
 	}
 	#endregion
 
 	#region 公共属性
 	public string Name => _name;
 	public bool IsRunning => _running != 0;
+	public bool IsObserved => this.Observer != null;
 	public DateTime Timestamp { get; private set; }
 	#endregion
 
@@ -77,13 +78,11 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 	#endregion
 
 	#region 重写方法
-	protected override Subscriber OnSubscribe(IObserver<string> observer)
+	protected override void OnSubscribed(IObserver<string> observer)
 	{
 		Terminal.WriteLine(
 			CommandOutletContent.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss.fff}] ")
 								.Append(CommandOutletColor.DarkGreen, $"{this.Name} Subscribed."));
-
-		return base.OnSubscribe(observer);
 	}
 
 	protected override void OnUnsupervised(ISuperviser<string> superviser, SupervisableReason reason)
@@ -106,8 +105,8 @@ public class MySupervisable : Supervisable<string>, IEquatable<MySupervisable>, 
 
 	public override int GetHashCode() => this.Name.ToUpperInvariant().GetHashCode();
 	public override string ToString() => this.Options == null ?
-		$"[{(this.IsRunning ? "Running" : "Stopped")}] {this.Name}@{this.Timestamp:HH:mm:ss.fff}" :
-		$"[{(this.IsRunning ? "Running" : "Stopped")}] {this.Name}@{this.Timestamp:HH:mm:ss.fff}({this.Options})";
+		$"[{(this.IsRunning ? "Running" : "Stopped")} | {(this.IsObserved ? "Observed" : "Unobserved")}] {this.Name}@{this.Timestamp:HH:mm:ss.fff}" :
+		$"[{(this.IsRunning ? "Running" : "Stopped")} | {(this.IsObserved ? "Observed" : "Unobserved")}] {this.Name}@{this.Timestamp:HH:mm:ss.fff}({this.Options})";
 	#endregion
 
 	#region 处置方法

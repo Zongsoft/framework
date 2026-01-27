@@ -31,28 +31,41 @@ using System;
 
 namespace Zongsoft.Components;
 
-public interface ISuperviser<T> : IDisposable
+partial class Superviser<T>
 {
-	#region 事件定义
-	event EventHandler<Superviser<T>.SupervisedEventArgs> Supervised;
-	event EventHandler<Superviser<T>.UnsupervisedEventArgs> Unsupervised;
-	#endregion
+	public class SupervisedEventArgs : EventArgs
+	{
+		#region 构造函数
+		public SupervisedEventArgs(IObservable<T> observable) : this(null, observable) { }
+		public SupervisedEventArgs(object key, IObservable<T> observable)
+		{
+			this.Key = key;
+			this.Observable = observable;
+		}
+		#endregion
 
-	#region 属性定义
-	int Count { get; }
-	IObservable<T> this[object key] { get; }
-	bool IsDisposed { get; }
-	bool IsDisposing { get; }
-	#endregion
+		#region 公共属性
+		public object Key { get; }
+		public IObservable<T> Observable { get; }
+		#endregion
+	}
 
-	#region 方法定义
-	void Clear();
-	bool Contains(object key);
+	public class UnsupervisedEventArgs : EventArgs
+	{
+		#region 构造函数
+		public UnsupervisedEventArgs(IObservable<T> observable, SupervisableReason reason) : this(null, observable, reason) { }
+		public UnsupervisedEventArgs(object key, IObservable<T> observable, SupervisableReason reason)
+		{
+			this.Key = key;
+			this.Reason = reason;
+			this.Observable = observable;
+		}
+		#endregion
 
-	IDisposable Supervise(IObservable<T> observable);
-	IDisposable Supervise(object key, IObservable<T> observable);
-
-	bool Unsupervise(object key);
-	bool Unsupervise(object key, out IObservable<T> observable);
-	#endregion
+		#region 公共属性
+		public object Key { get; }
+		public IObservable<T> Observable { get; }
+		public SupervisableReason Reason { get; }
+		#endregion
+	}
 }

@@ -7,14 +7,14 @@ namespace Zongsoft.Samples;
 
 public class MySuperviser(SupervisableOptions options = null) : Superviser<string>(options)
 {
-	protected override bool OnError(IObservable<string> observable, Exception exception, uint count)
+	protected override bool OnError(object key, IObservable<string> observable, Exception exception, uint count)
 	{
 		Terminal.WriteLine(
 			CommandOutletColor.DarkRed,
 			$"Superviser.OnError: {observable}({count})" + Environment.NewLine + $"\t[{exception.GetType().Name}] {exception.Message}"
 		);
 
-		return base.OnError(observable, exception, count);
+		return base.OnError(key, observable, exception, count);
 	}
 
 	protected override void OnUnsupervised(object key, IObservable<string> observable, SupervisableReason reason)
@@ -22,7 +22,7 @@ public class MySuperviser(SupervisableOptions options = null) : Superviser<strin
 		Terminal.WriteLine(
 			CommandOutletContent
 				.Create(CommandOutletColor.DarkGray, $"[{DateTime.Now:HH:mm:ss.fff}] ")
-				.Append(CommandOutletColor.DarkYellow, $"Superviser.Unsupervised: {observable}"));
+				.Append(CommandOutletColor.DarkYellow, $"Superviser.OnUnsupervised({reason}): {observable}"));
 
 		base.OnUnsupervised(key, observable, reason);
 	}

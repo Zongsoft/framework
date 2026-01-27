@@ -40,8 +40,8 @@ namespace Zongsoft.Components;
 public partial class Superviser<T> : ISuperviser<T>, IDisposable
 {
 	#region 事件声明
-	public event EventHandler<SuperviserEventArgs<T>> Supervised;
-	public event EventHandler<SuperviserEventArgs<T>> Unsupervised;
+	public event EventHandler<SupervisedEventArgs> Supervised;
+	public event EventHandler<UnsupervisedEventArgs> Unsupervised;
 	#endregion
 
 	#region 常量定义
@@ -55,7 +55,6 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 	#region 成员字段
 	private MemoryCache _cache;
-	private ConcurrentDictionary<object, IObservable<T>> _keys;
 	private MemoryCacheScanner _scanner;
 	private SupervisableOptions _options;
 	#endregion
@@ -64,8 +63,8 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	public Superviser(SupervisableOptions options = null) : this(TimeSpan.Zero, options) { }
 	public Superviser(TimeSpan frequency, SupervisableOptions options = null)
 	{
+		//确保选项不为空
 		_options = options ?? new();
-		_keys = new(KeyEqualityComparer.Instance);
 
 		//确保内存缓存的扫描频率不能过高，因为扫描频率过高可能会导致监测精度不够
 		frequency = TimeSpanUtility.Clamp(frequency, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60));
@@ -79,8 +78,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 	#region 公共属性
 	public int Count => _cache?.Count ?? 0;
-	public ICollection<object> Keys => _keys.Keys;
-	public IObservable<T> this[object key] => key != null && _keys.TryGetValue(key, out var observable) ? observable : null;
+	public IObservable<T> this[object key] => key != null && _cache.TryGetValue(key, out var value) && value is Observer observer ? observer.Observable : null;
 	public bool IsDisposed => _disposing == DISPOSED;
 	public bool IsDisposing => _disposing == DISPOSING;
 
@@ -94,8 +92,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 	#region 公共方法
 	public void Clear() => _cache?.Clear();
-	public bool Contains(object key) => key is IObservable<T> ? _cache.Contains(key) : key != null && _keys.ContainsKey(key);
-	public bool Contains(IObservable<T> observable) => observable != null && _cache.Contains(observable);
+	public bool Contains(object key) => key != null && _cache.Contains(key);
 
 	public IDisposable Supervise(IObservable<T> observable) => this.Supervise(null, observable);
 	public IDisposable Supervise(object key, IObservable<T> observable)
@@ -103,24 +100,8 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		if(observable == null)
 			throw new ArgumentNullException(nameof(observable));
 
-		if(key != null)
-		{
-			var existing = _keys.GetOrAdd(key, observable);
-
-			//如果键已存在但对应的被观察对象不同
-			if(existing != observable)
-			{
-				//尝试从缓存中获取已存在的观察者对象
-				if(_cache.TryGetValue<Observer>(existing, out var result))
-					return result;
-
-				//更新键对应的被观察对象
-				_keys[key] = observable;
-			}
-		}
-
 		//获取或创建一个监视被观察对象的观察者
-		var observer = _cache.GetOrCreate(observable, observable =>
+		var observer = _cache.GetOrCreate(key ?? observable, key =>
 		{
 			//获取当前被观察对象的生命周期，如果其未设置则应用监测器的默认值
 			var lifecycle = this.GetOptions(observable).Lifecycle;
@@ -132,47 +113,33 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 			return (
 				observer,
 				Notification.GetToken(observer.Failure),
-				lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.MaxValue,
-				key);
+				lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.MaxValue);
 		});
 
 		//如果初始化成功则表示是第一次监视该被观察对象
-		if(observer.Initialize(this, observable))
+		if(observer.Initialize(this, observable, key))
 		{
 			//订阅被观察对象的行为
 			observer.Subscribe();
 
 			//触发“Supervised”事件
-			this.OnSupervised(new SuperviserEventArgs<T>(key, observable));
+			this.OnSupervised(key, observable);
 		}
 
 		//返回观察者订阅凭证
-		return observer;
-	}
-
-	public bool Unsupervise(IObservable<T> observable)
-	{
-		//获取被观察对象并执行取消对被观察对象的监测(取消订阅)
-		if(observable != null && _cache.Remove(observable, out var value))
-		{
-			if(value is Observer observer)
-				observer.OnUnsubscribed();
-			else if(value is IDisposable disposable)
-				disposable.Dispose();
-
-			return true;
-		}
-
-		return false;
+		return observer.Subscribe();
 	}
 
 	public bool Unsupervise(object key) => this.Unsupervise(key, out _);
 	public bool Unsupervise(object key, out IObservable<T> observable)
 	{
-		//获取被观察对象并执行取消对被观察对象的监测(取消订阅)
-		if(_keys.TryRemove(key, out observable))
-			return this.Unsupervise(observable);
+		if(key != null && _cache.Remove(key, out var value) && value is Observer observer)
+		{
+			observable = observer.Observable;
+			return true;
+		}
 
+		observable = null;
 		return false;
 	}
 	#endregion
@@ -180,16 +147,33 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	#region 驱逐事件
 	private void OnEvicted(object sender, CacheEvictedEventArgs args)
 	{
-		if(args.State != null)
-			_keys.TryRemove(args.State, out _);
-
-		this.OnUnsupervised(args.State, (IObservable<T>)args.Key, args.Reason switch
+		if(args.Value is Observer observer)
 		{
-			CacheEvictedReason.Expired => SupervisableReason.Inactived,
-			CacheEvictedReason.Depended => SupervisableReason.Failed,
-			_ => SupervisableReason.Manual,
-		});
+			var reason = args.Reason switch
+			{
+				CacheEvictedReason.Expired => SupervisableReason.Inactived,
+				CacheEvictedReason.Depended => SupervisableReason.Failed,
+				_ => SupervisableReason.Manual,
+			};
 
+			switch(observer.Observable)
+			{
+				case ISupervisable<T> supervisable:
+					supervisable.OnUnsupervised(this, reason);
+					break;
+				default:
+					observer.Observable?.Subscribe(null);
+					break;
+			}
+
+			//触发“Unsupervised”事件
+			this.OnUnsupervised(observer.CachedKey, observer.Observable, reason);
+
+			//释放观察者资源
+			observer.Dispose();
+		}
+
+		//如果当前监测器已被处置
 		if(_disposing != 0)
 		{
 			var cache = _cache;
@@ -202,30 +186,15 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 			}
 		}
 	}
-
-	protected virtual void OnUnsupervised(object key, IObservable<T> observable, SupervisableReason reason)
-	{
-		switch(observable)
-		{
-			case ISupervisable<T> supervisable:
-				supervisable.OnUnsupervised(this, reason);
-				break;
-			case IDisposable disposable:
-				disposable.Dispose();
-				break;
-		}
-
-		this.OnUnsupervised(new SuperviserEventArgs<T>(key, observable));
-	}
 	#endregion
 
 	#region 错误回调
-	protected virtual bool OnError(IObservable<T> observable, Exception exception, uint count) => this.GetOptions(observable).HasErrorLimit(out var limit) && count > limit;
+	protected virtual bool OnError(object key, IObservable<T> observable, Exception exception, uint count) => this.GetOptions(observable).HasErrorLimit(out var limit) && count > limit;
 	#endregion
 
 	#region 事件触发
-	protected virtual void OnSupervised(SuperviserEventArgs<T> args) => this.Supervised?.Invoke(this, args);
-	protected virtual void OnUnsupervised(SuperviserEventArgs<T> args) => this.Unsupervised?.Invoke(this, args);
+	protected virtual void OnSupervised(object key, IObservable<T> observable) => this.Supervised?.Invoke(this, new(key, observable));
+	protected virtual void OnUnsupervised(object key, IObservable<T> observable, SupervisableReason reason) => this.Unsupervised?.Invoke(this, new(key, observable, reason));
 	#endregion
 
 	#region 重写方法
@@ -268,39 +237,19 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 	#region 私有方法
 	private SupervisableOptions GetOptions(object observable) => observable is ISupervisable<T> supervisable && supervisable.Options != null ? supervisable.Options : _options;
-	private void Touch(IObservable<T> observable)
+	private void Touch(object key)
 	{
-		if(this.IsDisposing || this.IsDisposed)
-			return;
-
-		_cache?.Contains(observable);
+		if(key != null && _disposing == 0)
+			_cache?.Contains(key);
 	}
 	#endregion
 
 	#region 嵌套子类
-	private sealed class KeyEqualityComparer : EqualityComparer<object>
-	{
-		public static readonly KeyEqualityComparer Instance = new();
-		public override int GetHashCode(object obj) => obj is string text ? text.ToUpperInvariant().GetHashCode() : Default.GetHashCode(obj);
-		public override bool Equals(object x, object y)
-		{
-			if(x == null)
-				return y == null;
-
-			if(y == null)
-				return false;
-
-			if(x is string a && y is string b)
-				return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
-
-			return Default.Equals(x, y);
-		}
-	}
-
-	private sealed class Observer : IObserver<T>, IDisposable, IEquatable<Observer>, IEquatable<IObservable<T>>
+	private sealed class Observer : IObserver<T>, IDisposable, IEquatable<Observer>
 	{
 		#region 私有变量
 		private uint _errors;
+		private object _cachedKey;
 		private Superviser<T> _superviser;
 		private IObservable<T> _observable;
 		private IDisposable _subscriber;
@@ -315,10 +264,11 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 		#region 初始方法
 		private volatile int _initialized;
-		internal bool Initialize(Superviser<T> superviser, IObservable<T> observable)
+		internal bool Initialize(Superviser<T> superviser, IObservable<T> observable, object cachedKey)
 		{
 			if(Interlocked.CompareExchange(ref _initialized, 1, 0) == 0)
 			{
+				_cachedKey = cachedKey;
 				_superviser = superviser;
 				_observable = observable;
 				return true;
@@ -332,7 +282,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		public void OnCompleted()
 		{
 			//被观察对象已终止，则将其从监测器中移除
-			_superviser?.Unsupervise(_observable);
+			_superviser?.Unsupervise(_cachedKey ?? _observable);
 		}
 
 		public void OnNext(T value)
@@ -341,7 +291,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 			_errors = 0;
 
 			//更新被观察对象的最后访问时间以顺延过期
-			_superviser?.Touch(_observable);
+			_superviser?.Touch(_cachedKey ?? _observable);
 		}
 
 		public void OnError(Exception exception)
@@ -353,15 +303,16 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 				return;
 
 			//通知监测器进行错误处理，如果返回真则取消观察，否则更新被观察对象的最后访问时间以顺延过期
-			if(superviser.OnError(observable, exception, Interlocked.Increment(ref _errors)))
+			if(superviser.OnError(_cachedKey, observable, exception, Interlocked.Increment(ref _errors)))
 				_failure.Cancel();
 			else
-				superviser.Touch(observable);
+				superviser.Touch(_cachedKey ?? _observable);
 		}
 		#endregion
 
 		#region 公共属性
-		public bool IsSubscribed => _subscriber != null;
+		internal object CachedKey => _cachedKey;
+		internal IObservable<T> Observable => _observable;
 		internal CancellationTokenSource Failure => _failure;
 		#endregion
 
@@ -388,36 +339,12 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 				return _subscriber = observable.Subscribe(this);
 			}
 		}
-
-		internal void OnUnsubscribed()
-		{
-			if(_superviser == null || _observable == null)
-				return;
-
-			lock(_lock)
-			{
-				_failure?.Dispose();
-				_subscriber?.Dispose();
-
-				_subscriber = null;
-				_superviser = null;
-				_observable = null;
-			}
-		}
 		#endregion
 
 		#region 处置方法
 		public void Dispose()
 		{
-			if(_superviser == null || _observable == null)
-				return;
-
-			//将被观察对象从监测器中移除
-			_superviser?.Unsupervise(_observable);
-
-			_failure?.Dispose();
-			_subscriber?.Dispose();
-
+			_cachedKey = null;
 			_subscriber = null;
 			_superviser = null;
 			_observable = null;
@@ -425,14 +352,8 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		#endregion
 
 		#region 重写方法
-		public bool Equals(IObservable<T> other) => other is not null && _observable == other;
 		public bool Equals(Observer other) => other is not null && _superviser == other._superviser && _observable == other._observable;
-		public override bool Equals(object obj) => obj switch
-		{
-			Observer observer => this.Equals(observer),
-			IObservable<T> observable => this.Equals(observable),
-			_ => false,
-		};
+		public override bool Equals(object obj) => this.Equals(obj as Observer);
 		public override int GetHashCode() => HashCode.Combine(_superviser, _observable);
 		public override string ToString() => _observable?.ToString() ?? base.ToString();
 		#endregion
@@ -452,6 +373,8 @@ partial class Superviser<T> : IEnumerable<IObservable<T>>
 		{
 			if(key is IObservable<T> observable)
 				yield return observable;
+			else if(cache.TryGetValue(key, out var value) && value is Observer observer)
+				yield return observer.Observable;
 		}
 	}
 }
