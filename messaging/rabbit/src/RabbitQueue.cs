@@ -177,7 +177,7 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 			channel?.Dispose();
 
 			var connection = Interlocked.Exchange(ref _connection, null);
-			connection.Dispose();
+			connection?.Dispose();
 		}
 
 		_channel = null;
