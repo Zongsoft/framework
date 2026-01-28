@@ -87,6 +87,21 @@ public class MemoryCacheTest
 		Assert.Equal(0, cache.Count);
 	}
 
+	[Fact]
+	public void TestOptions()
+	{
+		Assert.NotNull(MemoryCache.Shared.Options);
+		Assert.Throws<InvalidOperationException>(() => MemoryCache.Shared.Options.CountLimit = 100);
+		Assert.Throws<InvalidOperationException>(() => MemoryCache.Shared.Options.ScanFrequency = TimeSpan.Zero);
+
+		var cache = new MemoryCache();
+		Assert.NotNull(cache.Options);
+		cache.Options.CountLimit = 100;
+		Assert.Equal(100, cache.Options.CountLimit);
+		cache.Options.ScanFrequency = TimeSpan.FromSeconds(10);
+		Assert.Equal(TimeSpan.FromSeconds(10), cache.Options.ScanFrequency);
+	}
+
 	private CacheEvictedReason? _reason;
 	private void Cache_Evicted(object sender, CacheEvictedEventArgs args) => _reason = args.Reason;
 }

@@ -40,7 +40,7 @@ namespace Zongsoft.Caching;
 public class MemoryCache : IDisposable
 {
 	#region 单例字段
-	public static readonly MemoryCache Shared = new();
+	public static readonly MemoryCache Shared = new(MemoryCacheOptions.Immutable());
 	#endregion
 
 	#region 事件声明
@@ -54,10 +54,11 @@ public class MemoryCache : IDisposable
 	#endregion
 
 	#region 构造函数
-	public MemoryCache() : this(TimeSpan.FromSeconds(60)) { }
-	public MemoryCache(TimeSpan frequency, int limit = 0)
+	public MemoryCache() : this(new()) { }
+	public MemoryCache(TimeSpan frequency, int limit = 0) : this(new(frequency, limit)) { }
+	public MemoryCache(MemoryCacheOptions options)
 	{
-		_options = new MemoryCacheOptions(frequency, limit);
+		_options = options ?? new MemoryCacheOptions();
 		_cache = new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()
 		{
 			ExpirationScanFrequency = _options.ScanFrequency,

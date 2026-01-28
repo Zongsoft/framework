@@ -28,22 +28,32 @@
  */
 
 using System;
+using System.ComponentModel;
 
 namespace Zongsoft.Caching;
 
-public class MemoryCacheOptions
+public class MemoryCacheOptions : INotifyPropertyChanged, INotifyPropertyChanging
 {
+	#region 常量定义
+	private const int FREQUENCY_SECONDS = 60;
+	#endregion
+
+	#region 事件定义
+	public event PropertyChangedEventHandler PropertyChanged;
+	public event PropertyChangingEventHandler PropertyChanging;
+	#endregion
+
 	#region 成员字段
 	private int _limit;
 	private TimeSpan _frequency;
 	#endregion
 
 	#region 构造函数
-	public MemoryCacheOptions() => _frequency = TimeSpan.FromSeconds(60);
+	public MemoryCacheOptions() => _frequency = TimeSpan.FromSeconds(FREQUENCY_SECONDS);
 	public MemoryCacheOptions(TimeSpan frequency, int limit = 0)
 	{
-		this.ScanFrequency = frequency;
-		this.CountLimit = limit;
+		_frequency = EnsureScanFrequency(frequency);
+		_limit = EnsureCountLimit(limit);
 	}
 	#endregion
 
@@ -51,21 +61,64 @@ public class MemoryCacheOptions
 	public int CountLimit
 	{
 		get => _limit;
-		set => _limit = value > 0 ? value : 0;
+		set
+		{
+			this.OnPropertyChanging(nameof(this.CountLimit));
+			_limit = EnsureCountLimit(value);
+			this.OnPropertyChanged(nameof(this.CountLimit));
+		}
 	}
 
 	public TimeSpan ScanFrequency
 	{
 		get => _frequency;
-		set => _frequency = value.Ticks > TimeSpan.TicksPerSecond ? value : TimeSpan.FromSeconds(1);
+		set
+		{
+			this.OnPropertyChanging(nameof(this.ScanFrequency));
+			_frequency = EnsureScanFrequency(value);
+			this.OnPropertyChanged(nameof(this.ScanFrequency));
+		}
 	}
 	#endregion
 
+	#region 虚拟方法
+	protected virtual void OnPropertyChanged(string name) => this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+	protected virtual void OnPropertyChanging(string name) => this.PropertyChanging?.Invoke(this, new PropertyChangingEventArgs(name));
+	#endregion
+
 	#region 公共方法
-	public bool IsLimit(out int limit)
+	public static MemoryCacheOptions Immutable() => new ImmutableOptions(TimeSpan.FromSeconds(FREQUENCY_SECONDS));
+	public static MemoryCacheOptions Immutable(TimeSpan frequency, int limit = 0) => new ImmutableOptions(frequency, limit);
+	#endregion
+
+	#region 内部方法
+	internal bool IsLimit(out int limit)
 	{
 		limit = _limit;
 		return limit > 0;
+	}
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"{nameof(this.CountLimit)}:{this.CountLimit}; {nameof(this.ScanFrequency)}:{this.ScanFrequency}";
+	#endregion
+
+	#region 私有方法
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private static int EnsureCountLimit(int limit) => limit > 0 ? limit : 0;
+
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private static TimeSpan EnsureScanFrequency(TimeSpan frequency) => frequency.Ticks > TimeSpan.TicksPerSecond ? frequency : TimeSpan.FromSeconds(1);
+	#endregion
+
+	#region 嵌套子类
+	private sealed class ImmutableOptions(TimeSpan frequency, int limit = 0) : MemoryCacheOptions(frequency, limit)
+	{
+		const string ERROR_MESSAGE = "The current memory cache options is immutable.";
+
+		public override string ToString() => $"[Immutability] {base.ToString()}";
+		protected override void OnPropertyChanged(string name) => throw new InvalidOperationException(ERROR_MESSAGE);
+		protected override void OnPropertyChanging(string name) => throw new InvalidOperationException(ERROR_MESSAGE);
 	}
 	#endregion
 }
