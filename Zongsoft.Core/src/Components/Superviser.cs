@@ -78,9 +78,9 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 	#region 公共属性
 	public int Count => _cache?.Count ?? 0;
-	public IObservable<T> this[object key] => key != null && _cache.TryGetValue(key, out var value) && value is Observer observer ? observer.Observable : null;
 	public bool IsDisposed => _disposing == DISPOSED;
 	public bool IsDisposing => _disposing == DISPOSING;
+	public IObservable<T> this[object key] => key != null && _cache.TryGetValue(key, out var value) && value is Observer observer ? observer.Observable : null;
 
 	/// <summary>获取或设置默认的监测选项设置。</summary>
 	public SupervisableOptions Options

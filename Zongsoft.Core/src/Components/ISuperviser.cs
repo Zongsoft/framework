@@ -40,9 +40,13 @@ public interface ISuperviser<T> : IDisposable
 
 	#region 属性定义
 	int Count { get; }
-	IObservable<T> this[object key] { get; }
 	bool IsDisposed { get; }
 	bool IsDisposing { get; }
+
+	/// <summary>获取指定键对应的被观察对象。</summary>
+	/// <param name="key">指定要获取的被观察对象的键。</param>
+	/// <returns>返回指定键所对应的被观察对象，如果为空(<c>null</c>)则表示指定的键不存在。</returns>
+	IObservable<T> this[object key] { get; }
 	#endregion
 
 	#region 方法定义
