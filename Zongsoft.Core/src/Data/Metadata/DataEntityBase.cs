@@ -90,7 +90,7 @@ public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<D
 	#endregion
 
 	#region 内部方法
-	protected void SetKey(params ReadOnlySpan<string> keys)
+	internal protected void SetKey(params ReadOnlySpan<string> keys)
 	{
 		if(keys.IsEmpty)
 			return;
@@ -117,14 +117,6 @@ public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<D
 	public bool Equals(DataEntityBase other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
 	public override bool Equals(object obj) => obj is DataEntityBase other && this.Equals(other);
 	public override int GetHashCode() => HashCode.Combine(this.QualifiedName);
-	public override string ToString()
-	{
-		var qualifiedName = this.QualifiedName;
-
-		if(this.Immutable)
-			qualifiedName += "(Immutable)";
-
-		return qualifiedName;
-	}
+	public override string ToString() => this.Immutable ? $"{this.QualifiedName}(immutability)" : this.QualifiedName;
 	#endregion
 }

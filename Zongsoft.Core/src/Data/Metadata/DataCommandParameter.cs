@@ -35,7 +35,8 @@ namespace Zongsoft.Data.Metadata;
 public class DataCommandParameter : IDataCommandParameter
 {
 	#region 构造函数
-	public DataCommandParameter(IDataCommand command, string name, DataType type, ParameterDirection direction = ParameterDirection.Input)
+	public DataCommandParameter(IDataCommand command, string name, DataType type, ParameterDirection direction = ParameterDirection.Input) : this(command, name, type, 0, direction) { }
+	public DataCommandParameter(IDataCommand command, string name, DataType type, int length, ParameterDirection direction = ParameterDirection.Input)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -43,6 +44,7 @@ public class DataCommandParameter : IDataCommandParameter
 		this.Command = command;
 		this.Name = name.Trim();
 		this.Type = type;
+		this.Length = length;
 		this.Direction = direction;
 	}
 	#endregion
