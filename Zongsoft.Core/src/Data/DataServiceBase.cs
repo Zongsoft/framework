@@ -914,7 +914,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 				this.OnModel(key, dictionary, options);
 
 				//执行数据更新
-				count += this.Update(dictionary, schema, options);
+				count += this.Update(dictionary.Data, schema, options);
 			}
 
 			//提交事务

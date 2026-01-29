@@ -461,7 +461,7 @@ partial class DataServiceBase<TModel>
 				this.OnModel(key, dictionary, options);
 
 				//执行数据更新
-				count += await this.UpdateAsync(dictionary, schema, options, cancellation);
+				count += await this.UpdateAsync(dictionary.Data, schema, options, cancellation);
 			}
 
 			//提交事务
