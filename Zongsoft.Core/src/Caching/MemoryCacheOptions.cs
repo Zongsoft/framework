@@ -49,7 +49,7 @@ public class MemoryCacheOptions : INotifyPropertyChanged, INotifyPropertyChangin
 	#endregion
 
 	#region 构造函数
-	public MemoryCacheOptions() => _frequency = TimeSpan.FromSeconds(FREQUENCY_SECONDS);
+	public MemoryCacheOptions(int limit = 0) : this(TimeSpan.FromSeconds(FREQUENCY_SECONDS), limit) { }
 	public MemoryCacheOptions(TimeSpan frequency, int limit = 0)
 	{
 		_frequency = EnsureScanFrequency(frequency);
@@ -87,7 +87,7 @@ public class MemoryCacheOptions : INotifyPropertyChanged, INotifyPropertyChangin
 	#endregion
 
 	#region 公共方法
-	public static MemoryCacheOptions Immutable() => new ImmutableOptions(TimeSpan.FromSeconds(FREQUENCY_SECONDS));
+	public static MemoryCacheOptions Immutable(int limit = 0) => new ImmutableOptions(TimeSpan.FromSeconds(FREQUENCY_SECONDS), limit);
 	public static MemoryCacheOptions Immutable(TimeSpan frequency, int limit = 0) => new ImmutableOptions(frequency, limit);
 	#endregion
 
