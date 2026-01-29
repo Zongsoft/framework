@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2021 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.Mqtt library.
  *
@@ -35,7 +35,6 @@ using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Components;
-using Zongsoft.Configuration;
 
 using MQTTnet;
 using MQTTnet.Client;
@@ -61,18 +60,23 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 	#region 构造函数
 	public MqttQueue(string name, Configuration.MqttConnectionSettings settings) : base(name, settings)
 	{
-		_client = Factory.CreateMqttClient();
+		ArgumentNullException.ThrowIfNull(settings);
+
 		_options = settings.GetOptions();
+		_client = Factory.CreateMqttClient(GetLogger(settings.Logable));
 		_semaphore = new AutoResetEvent(true);
 
-		//挂载消息接收事件
-		_client.ApplicationMessageReceivedAsync += this.OnReceivedAsync;
 		_client.DisconnectedAsync += this.OnDisconnectedAsync;
+		_client.ApplicationMessageReceivedAsync += this.OnReceivedAsync;
 
-		_managedClient = new ManagedMqttClient(_client, MQTTnet.Diagnostics.MqttNetNullLogger.Instance);
+		_managedClient = new ManagedMqttClient(_client, GetLogger(settings.Logable));
 		var builder = new ManagedMqttClientOptionsBuilder();
 		builder.WithClientOptions(_options);
 		_managedClient.StartAsync(builder.Build());
+
+		static MQTTnet.Diagnostics.IMqttNetLogger GetLogger(bool logable) => logable ?
+			MqttLogger.Instance :
+			MQTTnet.Diagnostics.MqttNetNullLogger.Instance;
 	}
 	#endregion
 
@@ -92,7 +96,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		}
 		catch(Exception ex)
 		{
-			Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>().Error(ex);
+			await Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>().ErrorAsync(ex, cancellation);
 			return false;
 		}
 	}
@@ -147,7 +151,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		}
 		catch(Exception ex)
 		{
-			Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>().Error(ex);
+			await Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>().ErrorAsync(ex, cancellation);
 			return null;
 		}
 	}
@@ -185,16 +189,16 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 			}
 			catch(Exception ex)
 			{
-				Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>().Error(ex);
+				await Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>().ErrorAsync(ex);
 			}
 		}
 	}
 
 	private async Task OnDisconnectedAsync(MqttClientDisconnectedEventArgs args)
 	{
-		var logger = Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>();
+		var logging = Zongsoft.Diagnostics.Logging.GetLogging<MqttQueue>();
 
-		logger.Error($"MQTT is Disconnected. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetDisconnectedInfo(args));
+		await logging.TraceAsync($"MQTT is Disconnected. (ThreadId:{Environment.CurrentManagedThreadId})\n{GetDisconnectedInfo(args)}");
 
 		try
 		{
@@ -202,7 +206,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 
 			if(_client.IsConnected)
 			{
-				logger.Error($"MQTT does not need to reconnect again because other threads have already reconnected successfully. (ThreadId:{Environment.CurrentManagedThreadId})");
+				await logging.TraceAsync($"MQTT does not need to reconnect again because other threads have already reconnected successfully. (ThreadId:{Environment.CurrentManagedThreadId})");
 				return;
 			}
 
@@ -212,17 +216,17 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 
 			if(connection.ResultCode != MqttClientConnectResultCode.Success)
 			{
-				logger.Error($"MQTT Reconnected Failed. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetConnectResultInfo(connection, false));
+				await logging.TraceAsync($"MQTT Reconnected Failed. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetConnectResultInfo(connection, false));
 				return;
 			}
 
-			logger.Error($"MQTT Reconnected Succeed. (ThreadId:{Environment.CurrentManagedThreadId})");
+			await logging.TraceAsync($"MQTT Reconnected Succeed. (ThreadId:{Environment.CurrentManagedThreadId})");
 
 			foreach(var subscriber in this.Subscribers)
 			{
-				logger.Error($"MQTT is ready to start resubscription:“{subscriber.Topic}”. (ThreadId:{Environment.CurrentManagedThreadId})");
+				await logging.TraceAsync($"MQTT is ready to start resubscription:“{subscriber.Topic}”. (ThreadId:{Environment.CurrentManagedThreadId})");
 				var subscription = await _client.SubscribeAsync(subscriber.Subscription);
-				logger.Error($"MQTT resubscription complete. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetSubscribeResultInfo(subscription));
+				await logging.TraceAsync($"MQTT resubscription complete. (ThreadId:{Environment.CurrentManagedThreadId})" + Environment.NewLine + GetSubscribeResultInfo(subscription));
 			}
 		}
 		finally
@@ -344,7 +348,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 				managedClient.Dispose();
 			}
 		}
-		finally { }
+		catch { }
 	}
 	#endregion
 }

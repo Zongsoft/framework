@@ -29,13 +29,40 @@
 
 using System;
 
-using Zongsoft.Services;
+using Zongsoft.Diagnostics;
+
+using MQTTnet.Client;
+using MQTTnet.Diagnostics;
 
 namespace Zongsoft.Messaging.Mqtt;
 
-[Service<IMessageQueueFactory>]
-public sealed class MqttQueueFactory() : MessageQueueFactoryBase(Configuration.MqttConnectionSettingsDriver.NAME)
+internal sealed class MqttLogger : IMqttNetLogger
 {
-	public override IMessageQueue Create(IMessageQueueSettings settings) => new MqttQueue(settings.Name, settings as Configuration.MqttConnectionSettings);
-	public override IMessageQueue Create(string name, string connectionString) => new MqttQueue(name ?? string.Empty, Configuration.MqttConnectionSettingsDriver.Instance.GetSettings(connectionString));
+	#region 单例字段
+	public static readonly MqttLogger Instance = new();
+	#endregion
+
+	#region 私有变量
+	private readonly Logging _logging = Logging.GetLogging<IMqttClient>();
+	#endregion
+
+	#region 接口实现
+	public bool IsEnabled => true;
+	public void Publish(MqttNetLogLevel level, string source, string message, object[] parameters, Exception exception)
+	{
+		var data = parameters == null ? null : (parameters.Length == 1 ? parameters[0] : parameters);
+
+		if(!string.IsNullOrEmpty(source))
+			message = $"[{source}] {message}";
+
+		_logging.Log(level switch
+		{
+			MqttNetLogLevel.Verbose => LogLevel.Trace,
+			MqttNetLogLevel.Info => LogLevel.Info,
+			MqttNetLogLevel.Warning => LogLevel.Warn,
+			MqttNetLogLevel.Error => LogLevel.Error,
+			_ => LogLevel.Debug,
+		}, message, exception, data);
+	}
+	#endregion
 }

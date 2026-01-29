@@ -125,6 +125,13 @@ public sealed class MqttConnectionSettings : ConnectionSettingsBase<MqttConnecti
 		get => this.GetValue<MqttProtocolVersion>();
 		set => this.SetValue(value);
 	}
+
+	[ConnectionSetting(Ignored = true)]
+	public bool Logable
+	{
+		get => this.GetValue<bool>();
+		set => this.SetValue(value);
+	}
 	#endregion
 
 	#region 重写方法
