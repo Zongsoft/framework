@@ -67,8 +67,8 @@ public class SupervisableOptions
 	}
 	#endregion
 
-	#region 公共方法
-	public bool HasErrorLimit(out int limit)
+	#region 内部方法
+	internal bool HasErrorLimit(out int limit)
 	{
 		limit = _errorLimit;
 		return limit > -1;
