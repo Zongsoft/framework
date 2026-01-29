@@ -92,7 +92,7 @@ public class MemoryCacheOptions : INotifyPropertyChanged, INotifyPropertyChangin
 	#endregion
 
 	#region 内部方法
-	internal bool IsLimit(out int limit)
+	internal bool HasLimit(out int limit)
 	{
 		limit = _limit;
 		return limit > 0;

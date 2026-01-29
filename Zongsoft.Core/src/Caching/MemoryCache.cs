@@ -126,7 +126,7 @@ public class MemoryCache : IDisposable
 	{
 		var result = _cache.GetOrCreate(key, entry => factory == null ? default : factory.Invoke());
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -166,7 +166,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -211,7 +211,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -255,7 +255,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -304,7 +304,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -342,7 +342,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -385,7 +385,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -427,7 +427,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -474,7 +474,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -520,7 +520,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -571,7 +571,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -621,7 +621,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -676,7 +676,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -692,7 +692,7 @@ public class MemoryCache : IDisposable
 	{
 		var result = await _cache.GetOrCreateAsync(key, entry => factory == null ? default : factory.Invoke());
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -732,7 +732,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -777,7 +777,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -821,7 +821,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -870,7 +870,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -908,7 +908,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -951,7 +951,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -993,7 +993,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -1040,7 +1040,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -1086,7 +1086,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -1137,7 +1137,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -1187,7 +1187,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -1242,7 +1242,7 @@ public class MemoryCache : IDisposable
 			return value;
 		});
 
-		if(_options.IsLimit(out var limit) && _cache.Count > limit)
+		if(_options.HasLimit(out var limit) && _cache.Count > limit)
 			this.OnLimited(_cache.Count - limit);
 
 		return result;
@@ -1260,7 +1260,7 @@ public class MemoryCache : IDisposable
 		if(state != null)
 			entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 
-		if(_options.IsLimit(out var limit) && _cache.Count >= limit)
+		if(_options.HasLimit(out var limit) && _cache.Count >= limit)
 			this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
 	}
 
@@ -1279,7 +1279,7 @@ public class MemoryCache : IDisposable
 		if(expiration.HasValue)
 			entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 
-		if(_options.IsLimit(out var limit) && _cache.Count >= limit)
+		if(_options.HasLimit(out var limit) && _cache.Count >= limit)
 			this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
 	}
 
@@ -1296,7 +1296,7 @@ public class MemoryCache : IDisposable
 			entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 		}
 
-		if(_options.IsLimit(out var limit) && _cache.Count >= limit)
+		if(_options.HasLimit(out var limit) && _cache.Count >= limit)
 			this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
 	}
 
@@ -1317,7 +1317,7 @@ public class MemoryCache : IDisposable
 		if(dependency != null || expiration.HasValue)
 			entry.RegisterPostEvictionCallback(this.OnEvicted, state);
 
-		if(_options.IsLimit(out var limit) && _cache.Count >= limit)
+		if(_options.HasLimit(out var limit) && _cache.Count >= limit)
 			this.OnLimited(_cache.Count - limit + 1, _cache.Count + 1);
 	}
 	#endregion
