@@ -34,6 +34,22 @@ namespace Zongsoft.Data;
 
 public static class DataAccessContextExtension
 {
+	extension(IDataAccessContextBase context)
+	{
+		public string Driver => context switch
+		{
+			DataExistContextBase exists => exists.Driver,
+			DataSelectContextBase select => select.Driver,
+			DataDeleteContextBase delete => delete.Driver,
+			DataInsertContextBase insert => insert.Driver,
+			DataUpdateContextBase update => update.Driver,
+			DataUpsertContextBase upsert => upsert.Driver,
+			DataImportContextBase import => import.Driver,
+			DataAggregateContextBase aggregate => aggregate.Driver,
+			_ => null
+		};
+	}
+
 	public static bool IsMultiple(this IDataMutateContextBase context)
 	{
 		if(context is DataInsertContextBase insertion)

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
@@ -44,7 +43,7 @@ public class TableIdentifier : Expression, IIdentifier, ISource, IEquatable<Tabl
 	{
 		this.Entity = entity ?? throw new ArgumentNullException(nameof(entity));
 		this.Alias = alias;
-		this.Name = DataEntityExtension.GetTableName(entity);
+		this.Name = entity.GetTableName();
 	}
 
 	public TableIdentifier(TableDefinition table, string alias = null)

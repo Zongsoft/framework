@@ -49,7 +49,7 @@ public abstract class DataExistContextBase : DataAccessContextBase<IDataExistsOp
 	public Metadata.IDataEntity Entity { get; }
 
 	/// <summary>获取数据访问实体支持的驱动。</summary>
-	public override string Driver => this.Entity.Driver;
+	public string Driver => this.Entity.Driver;
 
 	/// <summary>获取或设置判断操作的条件。</summary>
 	public ICondition Criteria { get; set; }
@@ -93,9 +93,6 @@ public abstract class DataExecuteContextBase : DataAccessContextBase<IDataExecut
 	/// <summary>获取数据访问对应的命令元数据。</summary>
 	public Metadata.IDataCommand Command { get; }
 
-	/// <summary>获取数据访问命令支持的驱动。</summary>
-	public override string Driver => this.Command.Driver;
-
 	/// <summary>获取一个值，指示是否为返回单值。</summary>
 	public bool IsScalar { get; }
 
@@ -130,7 +127,7 @@ public abstract class DataAggregateContextBase : DataAccessContextBase<IDataAggr
 	public Metadata.IDataEntity Entity { get; }
 
 	/// <summary>获取数据访问实体支持的驱动。</summary>
-	public override string Driver => this.Entity.Driver;
+	public string Driver => this.Entity.Driver;
 
 	/// <summary>获取或设置聚合操作的结果。</summary>
 	public object Result { get; set; }
@@ -178,7 +175,7 @@ public abstract class DataImportContextBase : DataAccessContextBase<IDataImportO
 	public Metadata.IDataEntity Entity { get; }
 
 	/// <summary>获取数据访问实体支持的驱动。</summary>
-	public override string Driver => this.Entity.Driver;
+	public string Driver => this.Entity.Driver;
 
 	/// <summary>获取或设置导入的记录数。</summary>
 	public int Count { get; set; }
@@ -233,7 +230,7 @@ public abstract class DataSelectContextBase : DataAccessContextBase<IDataSelectO
 	public Metadata.IDataEntity Entity { get; }
 
 	/// <summary>获取数据访问实体支持的驱动。</summary>
-	public override string Driver => this.Entity.Driver;
+	public string Driver => this.Entity.Driver;
 
 	/// <summary>获取查询要返回的结果集元素类型。</summary>
 	public Type ModelType { get; }
@@ -292,7 +289,7 @@ public abstract class DataDeleteContextBase : DataAccessContextBase<IDataDeleteO
 	public Metadata.IDataEntity Entity { get; }
 
 	/// <summary>获取数据访问实体支持的驱动。</summary>
-	public override string Driver => this.Entity.Driver;
+	public string Driver => this.Entity.Driver;
 
 	/// <summary>获取或设置删除操作的受影响记录数。</summary>
 	public int Count { get; set; }
@@ -343,7 +340,7 @@ public abstract class DataInsertContextBase : DataAccessContextBase<IDataInsertO
 	public Metadata.IDataEntity Entity { get; }
 
 	/// <summary>获取数据访问实体支持的驱动。</summary>
-	public override string Driver => this.Entity.Driver;
+	public string Driver => this.Entity.Driver;
 
 	/// <summary>获取一个值，指示是否为批量新增操作。</summary>
 	public bool IsMultiple { get; }
@@ -399,7 +396,7 @@ public abstract class DataUpdateContextBase : DataAccessContextBase<IDataUpdateO
 	public Metadata.IDataEntity Entity { get; }
 
 	/// <summary>获取数据访问实体支持的驱动。</summary>
-	public override string Driver => this.Entity.Driver;
+	public string Driver => this.Entity.Driver;
 
 	/// <summary>获取或设置更新操作的受影响记录数。</summary>
 	public int Count { get; set; }
@@ -452,7 +449,7 @@ public abstract class DataUpsertContextBase : DataAccessContextBase<IDataUpsertO
 	public Metadata.IDataEntity Entity { get; }
 
 	/// <summary>获取数据访问实体支持的驱动。</summary>
-	public override string Driver => this.Entity.Driver;
+	public string Driver => this.Entity.Driver;
 
 	/// <summary>获取一个值，指示是否为批量写操作。</summary>
 	public bool IsMultiple { get; }

@@ -80,4 +80,13 @@ public static class DataUtility
 		DbType.UInt64 => true,
 		_ => false,
 	};
+
+	internal static (string name, string @namespace) ParseQualifiedName(string qualifiedName)
+	{
+		ArgumentNullException.ThrowIfNullOrEmpty(qualifiedName);
+		var index = qualifiedName.LastIndexOf('.');
+		return index > 0 ?
+			(qualifiedName[(index + 1)..], qualifiedName[..index]) :
+			(qualifiedName, null);
+	}
 }

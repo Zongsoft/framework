@@ -36,19 +36,10 @@ public static class DataEntityExtension
 	public static DataEntity Add(this DataEntityCollection entities, string qualifiedName, bool immutable = false)
 	{
 		ArgumentNullException.ThrowIfNull(entities);
-		(var name, var @namespace) = ParseQualifiedName(qualifiedName);
+		(var name, var @namespace) = DataUtility.ParseQualifiedName(qualifiedName);
 		var entity = new DataEntity(@namespace, name, immutable);
 		entities.Add(entity);
 		return entity;
-
-		static (string name, string @namespace) ParseQualifiedName(string qualifiedName)
-		{
-			ArgumentNullException.ThrowIfNullOrEmpty(qualifiedName);
-			var index = qualifiedName.LastIndexOf('.');
-			return index > 0 ?
-				(qualifiedName[(index + 1)..], qualifiedName[..index]) :
-				(qualifiedName, null);
-		}
 	}
 
 	public static IDataEntity Key(this IDataEntity entity, params string[] keys)

@@ -39,8 +39,7 @@ public static class DataCommandExtension
 	public static DataCommand Add(this DataCommandCollection commands, string qualifiedName, DataCommandMutability mutability, DataCommandType type = DataCommandType.Text)
 	{
 		ArgumentNullException.ThrowIfNull(commands);
-
-		(var name, var @namespace) = ParseQualifiedName(qualifiedName);
+		(var name, var @namespace) = DataUtility.ParseQualifiedName(qualifiedName);
 		var command = new DataCommand(@namespace, name)
 		{
 			Type = type,
@@ -48,15 +47,20 @@ public static class DataCommandExtension
 		};
 		commands.Add(command);
 		return command;
+	}
 
-		static (string name, string @namespace) ParseQualifiedName(string qualifiedName)
+	public static DataCommand Add(this DataCommandCollection commands, string qualifiedName, string alias, DataCommandType type = DataCommandType.Procedure) => Add(commands, qualifiedName, alias, DataCommandMutability.None, type);
+	public static DataCommand Add(this DataCommandCollection commands, string qualifiedName, string alias, DataCommandMutability mutability, DataCommandType type = DataCommandType.Procedure)
+	{
+		ArgumentNullException.ThrowIfNull(commands);
+		(var name, var @namespace) = DataUtility.ParseQualifiedName(qualifiedName);
+		var command = new DataCommand(@namespace, name, alias)
 		{
-			ArgumentNullException.ThrowIfNullOrEmpty(qualifiedName);
-			var index = qualifiedName.LastIndexOf('.');
-			return index > 0 ?
-				(qualifiedName[(index + 1)..], qualifiedName[..index]) :
-				(qualifiedName, null);
-		}
+			Type = type,
+			Mutability = mutability,
+		};
+		commands.Add(command);
+		return command;
 	}
 
 	public static IDataCommand Script(this IDataCommand command, string driver, string script, params IEnumerable<IDataCommandParameter> parameters)

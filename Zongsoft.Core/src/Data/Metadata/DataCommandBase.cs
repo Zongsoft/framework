@@ -71,9 +71,6 @@ public class DataCommandBase : IDataCommand, IEquatable<IDataCommand>, IEquatabl
 	/// <remarks>注意：如果 <see cref="Namespace"/> 属性不为空(<c>null</c>)或空字符串，则该属性默认为：<c>{Namespace}_{Name}</c>。</remarks>
 	public string Alias { get => _alias; set => _alias = value ?? (string.IsNullOrEmpty(this.Namespace) ? value : $"{this.Namespace}_{this.Name}"); }
 
-	/// <summary>获取或设置数据命令支持的驱动。</summary>
-	public string Driver { get; set; }
-
 	/// <summary>获取或设置数据命令的变化性。</summary>
 	public DataCommandMutability Mutability { get; set; }
 

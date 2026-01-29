@@ -39,9 +39,6 @@ public interface IDataAccessContextBase
 	/// <summary>获取数据访问的名称。</summary>
 	string Name { get; }
 
-	/// <summary>获取数据驱动的名称。</summary>
-	string Driver { get; }
-
 	/// <summary>获取数据访问的方法。</summary>
 	DataAccessMethod Method { get; }
 

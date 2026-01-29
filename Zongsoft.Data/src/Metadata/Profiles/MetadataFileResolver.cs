@@ -377,7 +377,6 @@ public class MetadataFileResolver
 		{
 			Type = GetAttributeValue(reader, XML_TYPE_ATTRIBUTE, DataCommandType.Text),
 			Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),
-			Driver = GetAttributeValue<string>(reader, XML_DRIVER_ATTRIBUTE),
 			Mutability = GetAttributeValue(reader, XML_MUTABILITY_ATTRIBUTE, DataCommandMutability.Delete | DataCommandMutability.Insert | DataCommandMutability.Update),
 		};
 
