@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2021 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.Mqtt library.
  *
@@ -36,30 +36,29 @@ using MQTTnet.Client;
 
 using Zongsoft.Components;
 
-namespace Zongsoft.Messaging.Mqtt
+namespace Zongsoft.Messaging.Mqtt;
+
+public class MqttSubscriber : MessageConsumerBase<MqttQueue>, IEquatable<MqttSubscriber>
 {
-	public class MqttSubscriber : MessageConsumerBase<MqttQueue>, IEquatable<MqttSubscriber>
+	#region 构造函数
+	public MqttSubscriber(MqttQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
 	{
-		#region 构造函数
-		public MqttSubscriber(MqttQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
-		{
-			this.Subscription = new();
-		}
-		#endregion
-
-		#region 内部属性
-		internal MqttClientSubscribeOptions Subscription { get; }
-		#endregion
-
-		#region 取消订阅
-		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => this.Queue.UnsubscribeAsync(this);
-		#endregion
-
-		#region 重写方法
-		public bool Equals(MqttSubscriber other) => string.Equals(this.Topic, other.Topic);
-		public override bool Equals(object obj) => obj is MqttSubscriber subscriber && this.Equals(subscriber);
-		public override int GetHashCode() => HashCode.Combine(this.Queue, this.Topic);
-		public override string ToString() => this.Tags != null && this.Tags.Length > 0 ? $"{this.Topic}:{string.Join(',', this.Tags)}" : this.Topic;
-		#endregion
+		this.Subscription = new();
 	}
+	#endregion
+
+	#region 内部属性
+	internal MqttClientSubscribeOptions Subscription { get; }
+	#endregion
+
+	#region 取消订阅
+	protected override ValueTask OnCloseAsync(CancellationToken cancellation) => this.Queue.UnsubscribeAsync(this);
+	#endregion
+
+	#region 重写方法
+	public bool Equals(MqttSubscriber other) => string.Equals(this.Topic, other.Topic);
+	public override bool Equals(object obj) => obj is MqttSubscriber subscriber && this.Equals(subscriber);
+	public override int GetHashCode() => HashCode.Combine(this.Queue, this.Topic);
+	public override string ToString() => this.Tags != null && this.Tags.Length > 0 ? $"{this.Topic}:{string.Join(',', this.Tags)}" : this.Topic;
+	#endregion
 }

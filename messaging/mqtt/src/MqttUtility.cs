@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2021 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.Mqtt library.
  *
@@ -33,16 +33,15 @@ using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Protocol;
 
-namespace Zongsoft.Messaging.Mqtt
+namespace Zongsoft.Messaging.Mqtt;
+
+internal static class MqttUtility
 {
-	internal static class MqttUtility
+	public static MqttQualityOfServiceLevel ToQoS(this MessageReliability reliability) => reliability switch
 	{
-		public static MqttQualityOfServiceLevel ToQoS(this MessageReliability reliability) => reliability switch
-		{
-			MessageReliability.MostOnce => MqttQualityOfServiceLevel.AtMostOnce,
-			MessageReliability.LeastOnce => MqttQualityOfServiceLevel.AtLeastOnce,
-			MessageReliability.ExactlyOnce => MqttQualityOfServiceLevel.ExactlyOnce,
-			_ => MqttQualityOfServiceLevel.AtMostOnce,
-		};
-	}
+		MessageReliability.MostOnce => MqttQualityOfServiceLevel.AtMostOnce,
+		MessageReliability.LeastOnce => MqttQualityOfServiceLevel.AtLeastOnce,
+		MessageReliability.ExactlyOnce => MqttQualityOfServiceLevel.ExactlyOnce,
+		_ => MqttQualityOfServiceLevel.AtMostOnce,
+	};
 }

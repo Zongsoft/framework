@@ -36,56 +36,55 @@ using Confluent.Kafka;
 using Zongsoft.Components;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Messaging.Kafka
+namespace Zongsoft.Messaging.Kafka;
+
+public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaConnectionSettings>
 {
-	public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaConnectionSettings>
+	#region 成员字段
+	private IProducer<Null, byte[]> _producer;
+	private ConsumerBuilder<string, byte[]> _builder;
+	#endregion
+
+	#region 构造函数
+	public KafkaQueue(string name, Configuration.KafkaConnectionSettings settings) : base(name, settings)
 	{
-		#region 成员字段
-		private IProducer<Null, byte[]> _producer;
-		private ConsumerBuilder<string, byte[]> _builder;
-		#endregion
-
-		#region 构造函数
-		public KafkaQueue(string name, Configuration.KafkaConnectionSettings settings) : base(name, settings)
-		{
-			_producer = new ProducerBuilder<Null, byte[]>(settings.GetProducerOptions()).Build();
-			_builder = new ConsumerBuilder<string, byte[]>(settings.GetConsumerOptions());
-		}
-		#endregion
-
-		#region 生成方法
-		protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
-		{
-			if(string.IsNullOrEmpty(topic))
-				throw new ArgumentNullException(nameof(topic));
-
-			var result = await _producer.ProduceAsync(topic, new Message<Null, byte[]> { Value = data.ToArray() }, cancellation);
-			return result.TopicPartition.ToString();
-		}
-		#endregion
-
-		#region 订阅方法
-		protected override ValueTask<bool> OnSubscribeAsync(KafkaSubscriber subscriber, CancellationToken cancellation = default)
-		{
-			subscriber.Subscribe(_builder.Build());
-			return ValueTask.FromResult(true);
-		}
-
-		protected override ValueTask<KafkaSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
-		{
-			return ValueTask.FromResult(new KafkaSubscriber(this, topic, handler, options));
-		}
-		#endregion
-
-		#region 资源释放
-		protected override void Dispose(bool disposing)
-		{
-			var producer = Interlocked.Exchange(ref _producer, null);
-			if(producer != null)
-				producer.Dispose();
-
-			_builder = null;
-		}
-		#endregion
+		_producer = new ProducerBuilder<Null, byte[]>(settings.GetProducerOptions()).Build();
+		_builder = new ConsumerBuilder<string, byte[]>(settings.GetConsumerOptions());
 	}
+	#endregion
+
+	#region 生成方法
+	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
+	{
+		if(string.IsNullOrEmpty(topic))
+			throw new ArgumentNullException(nameof(topic));
+
+		var result = await _producer.ProduceAsync(topic, new Message<Null, byte[]> { Value = data.ToArray() }, cancellation);
+		return result.TopicPartition.ToString();
+	}
+	#endregion
+
+	#region 订阅方法
+	protected override ValueTask<bool> OnSubscribeAsync(KafkaSubscriber subscriber, CancellationToken cancellation = default)
+	{
+		subscriber.Subscribe(_builder.Build());
+		return ValueTask.FromResult(true);
+	}
+
+	protected override ValueTask<KafkaSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
+	{
+		return ValueTask.FromResult(new KafkaSubscriber(this, topic, handler, options));
+	}
+	#endregion
+
+	#region 资源释放
+	protected override void Dispose(bool disposing)
+	{
+		var producer = Interlocked.Exchange(ref _producer, null);
+		if(producer != null)
+			producer.Dispose();
+
+		_builder = null;
+	}
+	#endregion
 }

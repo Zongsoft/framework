@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.Kafka library.
  *
@@ -31,10 +31,9 @@ using System;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Messaging.Kafka
+namespace Zongsoft.Messaging.Kafka;
+
+[Service(typeof(IMessageQueueProvider))]
+public class KafkaQueueProvider() : MessageQueueProviderBase<KafkaQueue, Configuration.KafkaConnectionSettings>(Configuration.KafkaConnectionSettingsDriver.NAME)
 {
-	[Service(typeof(IMessageQueueProvider))]
-	public class KafkaQueueProvider() : MessageQueueProviderBase<KafkaQueue, Configuration.KafkaConnectionSettings>(Configuration.KafkaConnectionSettingsDriver.NAME)
-	{
-	}
 }

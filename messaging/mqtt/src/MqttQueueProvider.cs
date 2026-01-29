@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2021 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.Mqtt library.
  *
@@ -32,10 +32,9 @@ using System;
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Messaging.Mqtt
+namespace Zongsoft.Messaging.Mqtt;
+
+[Service(typeof(IMessageQueueProvider))]
+public class MqttQueueProvider() : MessageQueueProviderBase<MqttQueue, Configuration.MqttConnectionSettings>(Configuration.MqttConnectionSettingsDriver.NAME)
 {
-	[Service(typeof(IMessageQueueProvider))]
-	public class MqttQueueProvider() : MessageQueueProviderBase<MqttQueue, Configuration.MqttConnectionSettings>(Configuration.MqttConnectionSettingsDriver.NAME)
-	{
-	}
 }
