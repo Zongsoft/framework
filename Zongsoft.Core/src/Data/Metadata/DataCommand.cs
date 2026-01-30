@@ -33,7 +33,8 @@ namespace Zongsoft.Data.Metadata;
 
 public class DataCommand : DataCommandBase<DataCommandScriptor>
 {
-	public DataCommand(string @namespace, string name, string alias = null) : base(@namespace, name, alias)
+	public DataCommand(string @namespace, string name, string alias = null) : this(@namespace, name, DataCommandMutability.None, alias) { }
+	public DataCommand(string @namespace, string name, DataCommandMutability mutability, string alias = null) : base(@namespace, name, mutability, alias)
 	{
 		this.Scriptor = new DataCommandScriptor(this);
 	}

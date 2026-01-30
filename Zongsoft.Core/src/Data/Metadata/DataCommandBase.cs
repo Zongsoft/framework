@@ -41,7 +41,8 @@ public class DataCommandBase<TScriptor> : IDataCommand, IEquatable<IDataCommand>
 	#endregion
 
 	#region 构造函数
-	protected DataCommandBase(string @namespace, string name, string alias = null)
+	protected DataCommandBase(string @namespace, string name, string alias = null) : this(@namespace, name, DataCommandMutability.None, alias) { }
+	protected DataCommandBase(string @namespace, string name, DataCommandMutability mutability, string alias = null)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -49,6 +50,7 @@ public class DataCommandBase<TScriptor> : IDataCommand, IEquatable<IDataCommand>
 		this.Namespace = @namespace;
 		this.Name = name;
 		this.Alias = alias;
+		this.Mutability = mutability;
 		this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.ToLowerInvariant()}";
 		this.Parameters = new();
 	}

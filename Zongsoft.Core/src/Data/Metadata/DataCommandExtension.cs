@@ -40,10 +40,9 @@ public static class DataCommandExtension
 	{
 		ArgumentNullException.ThrowIfNull(commands);
 		(var name, var @namespace) = DataUtility.ParseQualifiedName(qualifiedName);
-		var command = new DataCommand(@namespace, name)
+		var command = new DataCommand(@namespace, name, mutability)
 		{
 			Type = type,
-			Mutability = mutability,
 		};
 		commands.Add(command);
 		return command;
@@ -54,10 +53,9 @@ public static class DataCommandExtension
 	{
 		ArgumentNullException.ThrowIfNull(commands);
 		(var name, var @namespace) = DataUtility.ParseQualifiedName(qualifiedName);
-		var command = new DataCommand(@namespace, name, alias)
+		var command = new DataCommand(@namespace, name, mutability, alias)
 		{
 			Type = type,
-			Mutability = mutability,
 		};
 		commands.Add(command);
 		return command;
