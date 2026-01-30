@@ -75,15 +75,11 @@ public abstract class DataExistContextBase : DataAccessContextBase<IDataExistsOp
 
 public abstract class DataExecuteContextBase : DataAccessContextBase<IDataExecuteOptions>
 {
-	#region 成员字段
-	private Type _resultType;
-	#endregion
-
 	#region 构造函数
 	protected DataExecuteContextBase(IDataAccess dataAccess, string name, bool isScalar, Type resultType, IEnumerable<Parameter> parameters, IDataExecuteOptions options = null) : base(dataAccess, name, DataAccessMethod.Execute, options ?? new DataExecuteOptions())
 	{
-		_resultType = resultType ?? throw new ArgumentNullException(nameof(resultType));
 		this.IsScalar = isScalar;
+		this.ResultType = resultType;
 		this.Parameters = parameters;
 		this.Command = dataAccess.GetCommand(name);
 	}
@@ -97,11 +93,7 @@ public abstract class DataExecuteContextBase : DataAccessContextBase<IDataExecut
 	public bool IsScalar { get; }
 
 	/// <summary>获取或设置执行结果的类型。</summary>
-	public Type ResultType
-	{
-		get => _resultType;
-		set => _resultType = value ?? throw new ArgumentNullException();
-	}
+	public Type ResultType { get; set; }
 
 	/// <summary>获取或设置执行操作的结果。</summary>
 	public object Result { get; set; }

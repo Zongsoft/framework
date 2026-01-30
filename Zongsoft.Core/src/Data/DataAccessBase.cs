@@ -228,6 +228,104 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	#endregion
 
 	#region 执行方法
+	public int Execute(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute(name, null, options, executing, executed);
+	public int Execute(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
+	{
+		//确实是否已处置
+		this.EnsureDisposed();
+
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		//创建数据访问上下文对象
+		var context = this.CreateExecuteContext(name, false, null, parameters, options);
+
+		//处理数据访问操作前的回调
+		if(executing != null && executing(context))
+		{
+			//返回委托回调的结果
+			return GetRecordsAffected(context.Result);
+		}
+
+		//激发“Executing”事件，如果被中断则返回
+		if(this.OnExecuting(context))
+		{
+			//返回事件执行后的结果
+			return GetRecordsAffected(context.Result);
+		}
+
+		//调用数据访问过滤器前事件
+		this.OnFiltering(context);
+
+		//执行数据操作方法
+		this.OnExecute(context);
+
+		//调用数据访问过滤器后事件
+		this.OnFiltered(context);
+
+		//激发“Executed”事件
+		this.OnExecuted(context);
+
+		//处理数据访问操作后的回调
+		executed?.Invoke(context);
+
+		var result = GetRecordsAffected(context.Result);
+
+		//处置上下文资源
+		context.Dispose();
+
+		//返回最终的结果
+		return result;
+	}
+
+	public ValueTask<int> ExecuteAsync(string name, CancellationToken cancellation = default) => this.ExecuteAsync(name, null, null, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync(name, null, options, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default) => this.ExecuteAsync(name, null, options, executing, executed, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteAsync(name, parameters, null, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync(name, parameters, options, null, null, cancellation);
+	public async ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default)
+	{
+		//确实是否已处置
+		this.EnsureDisposed();
+
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		//创建数据访问上下文对象
+		var context = this.CreateExecuteContext(name, false, null, parameters, options);
+
+		//处理数据访问操作前的回调
+		if(executing != null && executing(context))
+			return GetRecordsAffected(context.Result);
+
+		//激发“Executing”事件，如果被中断则返回
+		if(this.OnExecuting(context))
+			return GetRecordsAffected(context.Result);
+
+		//调用数据访问过滤器前事件
+		this.OnFiltering(context);
+
+		//执行数据操作方法
+		await this.OnExecuteAsync(context, cancellation);
+
+		//调用数据访问过滤器后事件
+		this.OnFiltered(context);
+
+		//激发“Executed”事件
+		this.OnExecuted(context);
+
+		//处理数据访问操作后的回调
+		executed?.Invoke(context);
+
+		var result = GetRecordsAffected(context.Result);
+
+		//处置上下文资源
+		context.Dispose();
+
+		//返回最终的结果
+		return result;
+	}
+
 	public IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute<T>(name, null, options, executing, executed);
 	public IEnumerable<T> Execute<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
 	{
@@ -1946,6 +2044,8 @@ public abstract class DataAccessBase : IDataAccess, IDisposable
 	#endregion
 
 	#region 私有方法
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	static int GetRecordsAffected(object value) => value == null || System.Convert.IsDBNull(value) ? 0 : (int)System.Convert.ChangeType(value, typeof(int));
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static IEnumerable<T> ToEnumerable<T>(object result) => Collections.Enumerable.Enumerate<T>(result);
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

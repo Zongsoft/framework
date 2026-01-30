@@ -35,7 +35,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(1, count);
 		Assert.True(log.LogId > 0);
 
-		await accessor.ExecuteScalarAsync("TruncateLog");
+		await accessor.ExecuteAsync("TruncateLog");
 	}
 
 	[Fact]
@@ -62,7 +62,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		for(int i = 0; i < COUNT; i++)
 			Assert.True(logs[i].LogId > 0);
 
-		await accessor.ExecuteScalarAsync("TruncateLog");
+		await accessor.ExecuteAsync("TruncateLog");
 	}
 
 	[Fact]

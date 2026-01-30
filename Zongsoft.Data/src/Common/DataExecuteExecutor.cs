@@ -59,15 +59,13 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 			command.CommandType = CommandType.StoredProcedure;
 
 		if(context.IsScalar)
-		{
 			context.Result = command.ExecuteScalar();
-			SetOutputs(context, command);
-			return false;
-		}
-
-		context.Result = Activator.CreateInstance(
-			typeof(ResultCollection<>).MakeGenericType(context.ResultType),
-			[context, command]);
+		else if(context.ResultType == null || context.ResultType == typeof(object))
+			context.Result = command.ExecuteNonQuery();
+		else
+			context.Result = Activator.CreateInstance(
+				typeof(ResultCollection<>).MakeGenericType(context.ResultType),
+				[context, command]);
 
 		SetOutputs(context, command);
 		return false;
@@ -92,15 +90,13 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 			command.CommandType = CommandType.StoredProcedure;
 
 		if(context.IsScalar)
-		{
 			context.Result = await command.ExecuteScalarAsync(cancellation);
-			SetOutputs(context, command);
-			return false;
-		}
-
-		context.Result = Activator.CreateInstance(
-			typeof(ResultCollection<>).MakeGenericType(context.ResultType),
-			[context, command]);
+		else if(context.ResultType == null || context.ResultType == typeof(object))
+			context.Result = await command.ExecuteNonQueryAsync(cancellation);
+		else
+			context.Result = Activator.CreateInstance(
+				typeof(ResultCollection<>).MakeGenericType(context.ResultType),
+				[context, command]);
 
 		SetOutputs(context, command);
 		return false;
