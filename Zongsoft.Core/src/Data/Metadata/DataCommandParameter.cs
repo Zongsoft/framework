@@ -65,7 +65,7 @@ public class DataCommandParameter : IDataCommandParameter
 	/// <summary>获取或设置命令参数的最大长度。</summary>
 	public int Length { get; set; }
 
-	/// <summary>获取或设置命令参数的值。</summary>
+	/// <summary>获取或设置命令参数的默认值。</summary>
 	public object Value { get; set; }
 
 	/// <summary>获取或设置命令参数的传递方向。</summary>

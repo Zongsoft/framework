@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.Data;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data.Metadata;

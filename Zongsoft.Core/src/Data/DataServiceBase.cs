@@ -906,53 +906,27 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 		if(value == null)
 			return null;
 
-		switch(dbType)
+		return dbType switch
 		{
-			case DbType.Byte:
-				return Common.Convert.ConvertValue<byte>(value);
-			case DbType.SByte:
-				return Common.Convert.ConvertValue<sbyte>(value);
-			case DbType.Boolean:
-				return Common.Convert.ConvertValue<bool>(value);
-			case DbType.Int16:
-				return Common.Convert.ConvertValue<short>(value);
-			case DbType.Int32:
-				return Common.Convert.ConvertValue<int>(value);
-			case DbType.Int64:
-				return Common.Convert.ConvertValue<long>(value);
-			case DbType.UInt16:
-				return Common.Convert.ConvertValue<ushort>(value);
-			case DbType.UInt32:
-				return Common.Convert.ConvertValue<uint>(value);
-			case DbType.UInt64:
-				return Common.Convert.ConvertValue<ulong>(value);
-			case DbType.Single:
-				return Common.Convert.ConvertValue<float>(value);
-			case DbType.Double:
-				return Common.Convert.ConvertValue<double>(value);
-			case DbType.Decimal:
-			case DbType.Currency:
-				return Common.Convert.ConvertValue<decimal>(value);
-			case DbType.Date:
-			case DbType.Time:
-			case DbType.DateTime:
-			case DbType.DateTime2:
-				return Common.Convert.ConvertValue<DateTime>(value);
-			case DbType.DateTimeOffset:
-				return Common.Convert.ConvertValue<DateTimeOffset>(value);
-			case DbType.Xml:
-			case DbType.AnsiString:
-			case DbType.AnsiStringFixedLength:
-			case DbType.String:
-			case DbType.StringFixedLength:
-				return Common.Convert.ConvertValue<string>(value);
-			case DbType.Guid:
-				return Common.Convert.ConvertValue<Guid>(value);
-			case DbType.Binary:
-				return Common.Convert.ConvertValue<byte[]>(value);
-			default:
-				return value;
-		}
+			DbType.Byte => Common.Convert.ConvertValue<byte>(value),
+			DbType.SByte => Common.Convert.ConvertValue<sbyte>(value),
+			DbType.Boolean => Common.Convert.ConvertValue<bool>(value),
+			DbType.Int16 => Common.Convert.ConvertValue<short>(value),
+			DbType.Int32 => Common.Convert.ConvertValue<int>(value),
+			DbType.Int64 => Common.Convert.ConvertValue<long>(value),
+			DbType.UInt16 => Common.Convert.ConvertValue<ushort>(value),
+			DbType.UInt32 => Common.Convert.ConvertValue<uint>(value),
+			DbType.UInt64 => Common.Convert.ConvertValue<ulong>(value),
+			DbType.Single => Common.Convert.ConvertValue<float>(value),
+			DbType.Double => Common.Convert.ConvertValue<double>(value),
+			DbType.Decimal or DbType.Currency => Common.Convert.ConvertValue<decimal>(value),
+			DbType.Date or DbType.Time or DbType.DateTime or DbType.DateTime2 => Common.Convert.ConvertValue<DateTime>(value),
+			DbType.DateTimeOffset => Common.Convert.ConvertValue<DateTimeOffset>(value),
+			DbType.Xml or DbType.AnsiString or DbType.AnsiStringFixedLength or DbType.String or DbType.StringFixedLength => Common.Convert.ConvertValue<string>(value),
+			DbType.Guid => Common.Convert.ConvertValue<Guid>(value),
+			DbType.Binary => Common.Convert.ConvertValue<byte[]>(value),
+			_ => value,
+		};
 	}
 	#endregion
 
