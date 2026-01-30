@@ -75,11 +75,13 @@ public static class DataCommandExtension
 		return command;
 	}
 
-	public static IDataCommand Parameter(this IDataCommand command, string name, DataType type, ParameterDirection direction = ParameterDirection.Input) => Parameter(command, name, type, 0, direction);
-	public static IDataCommand Parameter(this IDataCommand command, string name, DataType type, int length, ParameterDirection direction = ParameterDirection.Input)
+	public static IDataCommand Parameter(this IDataCommand command, string name, DataType type, ParameterDirection direction = ParameterDirection.Input) => Parameter(command, name, type, 0, null, direction);
+	public static IDataCommand Parameter(this IDataCommand command, string name, DataType type, object value, ParameterDirection direction = ParameterDirection.Input) => Parameter(command, name, type, 0, value, direction);
+	public static IDataCommand Parameter(this IDataCommand command, string name, DataType type, int length, ParameterDirection direction = ParameterDirection.Input) => Parameter(command, name, type, length, null, direction);
+	public static IDataCommand Parameter(this IDataCommand command, string name, DataType type, int length, object value, ParameterDirection direction = ParameterDirection.Input)
 	{
 		ArgumentNullException.ThrowIfNull(command);
-		command.Parameters.Add(new DataCommandParameter(command, name, type, length, direction));
+		command.Parameters.Add(new DataCommandParameter(name, type, length, value, direction));
 		return command;
 	}
 }

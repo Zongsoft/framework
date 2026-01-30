@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -393,7 +393,7 @@ public class MetadataFileResolver
 			switch(reader.LocalName)
 			{
 				case XML_PARAMETER_ELEMENT:
-					var parameter = new DataCommandParameter(command, reader.GetAttribute(XML_NAME_ATTRIBUTE), DataType.Get(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
+					var parameter = new DataCommandParameter(reader.GetAttribute(XML_NAME_ATTRIBUTE), DataType.Get(GetAttributeValue<string>(reader, XML_TYPE_ATTRIBUTE)))
 					{
 						Direction = GetAttributeValue(reader, XML_DIRECTION_ATTRIBUTE, value => GetDirection(value)),
 						Alias = GetAttributeValue<string>(reader, XML_ALIAS_ATTRIBUTE),

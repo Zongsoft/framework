@@ -37,9 +37,6 @@ namespace Zongsoft.Data.Metadata;
 /// </summary>
 public interface IDataCommandParameter
 {
-	/// <summary>获取参数所属的命令对象。</summary>
-	IDataCommand Command { get; }
-
 	/// <summary>获取命令参数的名称。</summary>
 	string Name { get; }
 

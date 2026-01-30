@@ -35,24 +35,23 @@ namespace Zongsoft.Data.Metadata;
 public class DataCommandParameter : IDataCommandParameter
 {
 	#region 构造函数
-	public DataCommandParameter(IDataCommand command, string name, DataType type, ParameterDirection direction = ParameterDirection.Input) : this(command, name, type, 0, direction) { }
-	public DataCommandParameter(IDataCommand command, string name, DataType type, int length, ParameterDirection direction = ParameterDirection.Input)
+	public DataCommandParameter(string name, DataType type, ParameterDirection direction = ParameterDirection.Input) : this(name, type, 0, null, direction) { }
+	public DataCommandParameter(string name, DataType type, object value, ParameterDirection direction = ParameterDirection.Input) : this(name, type, 0, value, direction) { }
+	public DataCommandParameter(string name, DataType type, int length, ParameterDirection direction = ParameterDirection.Input) : this(name, type, length, null, direction) { }
+	public DataCommandParameter(string name, DataType type, int length, object value, ParameterDirection direction = ParameterDirection.Input)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
-		this.Command = command;
 		this.Name = name.Trim();
 		this.Type = type;
+		this.Value = value;
 		this.Length = length;
 		this.Direction = direction;
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取参数所属的命令对象。</summary>
-	public IDataCommand Command { get; }
-
 	/// <summary>获取命令参数的名称。</summary>
 	public string Name { get; }
 
@@ -70,5 +69,11 @@ public class DataCommandParameter : IDataCommandParameter
 
 	/// <summary>获取或设置命令参数的传递方向。</summary>
 	public ParameterDirection Direction { get; set; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => string.IsNullOrEmpty(this.Alias) || string.Equals(this.Name, this.Alias) ?
+		$"[{this.Direction}] {this.Name}:{this.Type}({this.Length})":
+		$"[{this.Direction}] {this.Name}|{this.Alias}:{this.Type}({this.Length})";
 	#endregion
 }
