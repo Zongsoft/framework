@@ -37,6 +37,7 @@ internal class Program
 		Terminal.WriteLine();
 
 		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `exit`  to quit the program.");
+		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `count` to print the cache count.");
 		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `start` to start the cache scanner.");
 		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `stop`  to stop the cache scanner.");
 		Terminal.Write(CommandOutletColor.Red, "Tips: ");
@@ -54,6 +55,9 @@ internal class Program
 			{
 				case "exit":
 					return;
+				case "count":
+					Terminal.WriteLine(CommandOutletColor.DarkCyan, $"Count: {cache.Count}");
+					break;
 				case "start":
 				case "restart":
 					scanner.Start();
