@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata;
 
@@ -36,6 +37,8 @@ namespace Zongsoft.Data.Metadata;
 /// </summary>
 public interface IDataCommandScriptor
 {
+	IReadOnlySet<string> Drivers { get; }
+
 	/// <summary>获取指定驱动的命令脚本内容。</summary>
 	/// <param name="driver">指定要获取的脚本对应的驱动标识名。</param>
 	/// <returns>返回脚本内容文本，如果指定的驱动没有对应的脚本则返回空(<c>null</c>)。</returns>
@@ -44,5 +47,5 @@ public interface IDataCommandScriptor
 	/// <summary>设置指定驱动的命令脚本内容。</summary>
 	/// <param name="driver">指定要设置的脚本对应的驱动标识名。</param>
 	/// <param name="text">要设置的脚本内容文本。</param>
-	void SetScript(string driver, string text);
+	bool SetScript(string driver, string text);
 }

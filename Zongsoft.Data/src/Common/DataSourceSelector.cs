@@ -68,7 +68,7 @@ public class DataSourceSelector : IDataSourceSelector
 	#region 公共方法
 	public IDataSource GetSource(IDataAccessContextBase context)
 	{
-		var driver = string.IsNullOrEmpty(context.Driver) ? _defaultDriver : context.Driver;
+		var driver = this.GetDriver(context);
 
 		if(driver != null && _weighters.TryGetValue(driver, out var weighter))
 			return weighter.Get(context);
@@ -78,9 +78,18 @@ public class DataSourceSelector : IDataSourceSelector
 	#endregion
 
 	#region 私有方法
-	private static int GetWeight(IDataSource source, int defaultValue = 100)
+	private string GetDriver(IDataAccessContextBase context)
 	{
-		return source.Properties.TryGetValue("weight", out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var weight) ? Math.Max(weight, 0) : defaultValue;
+		if(context is DataExecuteContextBase exectution && exectution.Command != null)
+		{
+			foreach(var driver in exectution.Command.Scriptor.Drivers)
+			{
+				if(_weighters.ContainsKey(driver))
+					return driver;
+			}
+		}
+
+		return string.IsNullOrEmpty(context.Driver) ? _defaultDriver : context.Driver;
 	}
 	#endregion
 
@@ -105,6 +114,9 @@ public class DataSourceSelector : IDataSourceSelector
 				_ => _writables.Get(),
 			};
 		}
+
+		private static int GetWeight(IDataSource source, int defaultValue = 100) =>
+			source.Properties.TryGetValue("weight", out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var weight) ? Math.Max(weight, 0) : defaultValue;
 	}
 	#endregion
 }

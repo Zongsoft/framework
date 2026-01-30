@@ -139,12 +139,6 @@
 			</xs:annotation>
 		</xs:attribute>
 
-		<xs:attribute name="driver" type="xs:string" use="optional">
-			<xs:annotation>
-				<xs:documentation xml:lang="zh">支持的驱动，譬如：MySQL、MSSQL、PostgreSQL、ClickHouse、InfluxDB、TDengine 等。</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
-
 		<xs:attribute name="mutability" type="CommandMutability" use="optional" default="none">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">指示该命令对数据的变化性。</xs:documentation>

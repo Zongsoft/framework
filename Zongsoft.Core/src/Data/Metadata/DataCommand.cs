@@ -28,22 +28,13 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata;
 
-public class DataCommand : DataCommandBase
+public class DataCommand : DataCommandBase<DataCommandScriptor>
 {
 	public DataCommand(string @namespace, string name, string alias = null) : base(@namespace, name, alias)
 	{
-		this.Scriptor = new DataCommandScriptor();
-	}
-
-	private class DataCommandScriptor : IDataCommandScriptor
-	{
-		private readonly Dictionary<string, string> _scripts = new(StringComparer.OrdinalIgnoreCase);
-
-		public string GetScript(string driver) => _scripts.TryGetValue(driver, out var script) ? script : null;
-		public void SetScript(string driver, string text) => _scripts[driver ?? string.Empty] = text;
+		this.Scriptor = new DataCommandScriptor(this);
 	}
 }

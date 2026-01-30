@@ -28,18 +28,41 @@
  */
 
 using System;
+using System.IO;
 
 namespace Zongsoft.Data.Metadata.Profiles;
 
-/// <summary>
-/// 表示数据命令的元数据类。
-/// </summary>
-public partial class MetadataCommand : DataCommandBase<MetadataCommand.MetadataCommandScriptor>
+partial class MetadataCommand
 {
-	#region 构造函数
-	public MetadataCommand(string @namespace, string name, string alias = null) : base(@namespace, name, alias)
+	public class MetadataCommandScriptor(IDataCommand command) : DataCommandScriptor(command)
 	{
-		this.Scriptor = new MetadataCommandScriptor(this);
+		internal void Load(string directory)
+		{
+			if(string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+				return;
+
+			var files = Directory.GetFiles(directory, $"{this.Command.Name}-*.sql", SearchOption.AllDirectories);
+			for(int i = 0; i < files.Length; i++)
+				LoadFile(files[i]);
+
+			bool LoadFile(string filePath)
+			{
+				var driver = string.Empty;
+				var fileName = Path.GetFileNameWithoutExtension(filePath);
+				var index = fileName.LastIndexOf('-');
+
+				if(index > 0)
+					driver = fileName[(index + 1)..];
+				else
+				{
+					var directory = Path.GetDirectoryName(filePath);
+					index = directory.LastIndexOf('-');
+					if(index > 0)
+						driver = directory[(index + 1)..];
+				}
+
+				return !string.IsNullOrEmpty(driver) && this.SetScript(driver, File.ReadAllText(filePath));
+			}
+		}
 	}
-	#endregion
 }

@@ -381,7 +381,7 @@ public class MetadataFileResolver
 		};
 
 		//注意：首先尝试从外部脚本文件中加载命令文本
-		command.Scriptor.Load(Path.GetDirectoryName(provider.FilePath), Path.GetFileNameWithoutExtension(provider.FilePath));
+		command.Scriptor.Load(Path.GetDirectoryName(provider.FilePath));
 
 		int depth = reader.Depth;
 
