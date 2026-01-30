@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -69,6 +70,50 @@ public class DataCommandCollection() : KeyedCollection<string, IDataCommand>(Str
 			return null;
 
 		return _aliases.TryGetValue(alias, out var commands) ? commands : base.TryGetValue(alias, out var command) ? [command] : null;
+	}
+
+	/// <summary>定义一个匿名的数据命令并加入到当前命令集中。</summary>
+	/// <param name="driver">指定的数据驱动名。</param>
+	/// <param name="script">指定的数据命令脚本。</param>
+	/// <param name="parameters">指定的数据命令参数集。</param>
+	/// <returns>返回定义的数据命令。</returns>
+	public IDataCommand Script(string driver, string script, params IEnumerable<DataCommandParameter> parameters) => this.Script(driver, DataCommandMutability.None, script, parameters);
+
+	/// <summary>定义一个匿名的数据命令并加入到当前命令集中。</summary>
+	/// <param name="driver">指定的数据驱动名。</param>
+	/// <param name="mutable">指定的命令可变性，如果为真(<c>True</c>)则表示命令为写操作。</param>
+	/// <param name="script">指定的数据命令脚本。</param>
+	/// <param name="parameters">指定的数据命令参数集。</param>
+	/// <returns>返回定义的数据命令。</returns>
+	public IDataCommand Script(string driver, bool mutable, string script, params IEnumerable<DataCommandParameter> parameters) => this.Script(driver, mutable ? DataCommandMutability.Delete | DataCommandMutability.Insert | DataCommandMutability.Update : DataCommandMutability.None, script, parameters);
+
+	/// <summary>定义一个匿名的数据命令并加入到当前命令集中。</summary>
+	/// <param name="driver">指定的数据驱动名。</param>
+	/// <param name="mutability">指定的命令可变性。</param>
+	/// <param name="script">指定的数据命令脚本。</param>
+	/// <param name="parameters">指定的数据命令参数集。</param>
+	/// <returns>返回定义的数据命令。</returns>
+	public IDataCommand Script(string driver, DataCommandMutability mutability, string script, params IEnumerable<DataCommandParameter> parameters)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(driver);
+		ArgumentException.ThrowIfNullOrEmpty(script);
+
+		var key = $"#{Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(Encoding.UTF8.GetBytes($"{driver.ToUpperInvariant()}:{script}")))}";
+
+		if(this.TryGetValue(key, out var command))
+			return command;
+
+		command = new DataCommand(null, key, mutability).Script(driver, script);
+		if(parameters != null)
+		{
+			foreach(var parameter in parameters)
+				command.Parameters.Add(parameter);
+		}
+
+		base.Remove(key);
+		base.Add(command);
+
+		return command;
 	}
 	#endregion
 
