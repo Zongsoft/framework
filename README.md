@@ -87,3 +87,32 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 		> Provides [**S**criban](https://github.com/lunet-io/scriban) expression parsing and _calculation_, text template _rendering_, and other functions based on the [**S**criban](https://github.com/scriban/scriban) open source project's plugin architecture.
 	- [_wechat_](externals/wechat/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Wechat)](https://nuget.org/packages/Zongsoft.Externals.Wechat)
 		> Provides [_WeChat_](https://weixin.qq.com) authentication, [_WeChat **P**ay_](https://pay.weixin.qq.com), [_WeChat **M**edia **P**latform_](https://mp.weixin.qq.com), and other related functions, implemented based on the _WeChat **REST**ful API_ interface.
+
+<a name="contribution"></a>
+## Contributing
+
+Please do not submit a **Q**uestion and **D**iscussion in the **I**ssues of the project. **I**ssues are used to report bugs and features. If you wish to participate in the contribution, you are welcome to submit a code merge request([PullRequest](https://github.com/Zongsoft/framework/pulls)) or an [issue](https://github.com/Zongsoft/framework/issues).
+
+For new features, be sure to create a functional feedback([Issue](https://github.com/Zongsoft/framework/issues)) to describe your recommendations in detail so that we can fully discuss them, which will also allow us to better coordinate our work to prevent duplication of development and help you adjust recommendations or requirements to make it successfully accepted into the project.
+
+You are welcome to write articles for our open source projects to promote, if you need to forward your **A**rticles, **B**logs, **V**ideos, etc. on the official website([http://zongsoft.com/blog](http://zongsoft.com/blog)), you can contact us by [**email**](mailto:zongsoft@qq.com).
+
+> If you're new to posting issues, we ask that you read ["How To Ask Questions The Smart Way"](http://www.catb.org/~esr/faqs/smart-questions.html), ["How to Ask a Question in Open Source Community"](https://github.com/seajs/seajs/issues/545) and ["How to Report Bugs Effectively"](http://www.chiark.greenend.org.uk/~sgtatham/bugs.html) prior to posting. Well written bug reports help us help you!
+
+<a name="sponsor"></a>
+## Sponsorship
+
+We look forward to your support and sponsorship. You can provide us with the necessary financial support in the following ways:
+
+1. Follow the **Zongsoft** WeChat public account and reward our articles;
+2. Join the [**Zongsoft Knowledge Planet**](https://t.zsxq.com/2nyjqrr) to get online Q&A and technical support;
+3. If your organization requires on-site technical support and coaching, or if you need some new features, instant bug fixes, etc., please contact us by [email](mailto:zongsoft@qq.com).
+
+[![Zongsoft's WeChat](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
+
+[![Zongsoft's Knowledge Planet](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
+
+<a name="license"></a>
+## License
+
+Licensed under the [LGPL](https://opensource.org/licenses/LGPL-2.1) license.
