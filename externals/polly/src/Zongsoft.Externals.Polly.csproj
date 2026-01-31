@@ -15,9 +15,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Polly.Core" VersionOverride="8.5.2" />
-		<PackageReference Include="Polly.Extensions" VersionOverride="8.5.2" />
-		<PackageReference Include="Polly.RateLimiting" VersionOverride="8.5.2" />
+		<PackageReference Include="Polly.Core" VersionOverride="8.6.5" />
+		<PackageReference Include="Polly.Extensions" VersionOverride="8.6.5" />
+		<PackageReference Include="Polly.RateLimiting" VersionOverride="8.6.5" />
 	</ItemGroup>
 
 	<Choose>

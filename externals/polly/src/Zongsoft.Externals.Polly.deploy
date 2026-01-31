@@ -2,8 +2,10 @@ artifacts/Zongsoft.Externals.Polly.plugin
 lib/$(Framework)/Zongsoft.Externals.Polly.*
 lib/$(Framework)/*/Zongsoft.Externals.Polly.resources.*
 
-nuget:Polly.Core@8.5.2
-nuget:Polly.Extensions@8.5.2
-nuget:Polly.RateLimiting@8.5.2
+nuget:Polly.Core@8.6.5
+nuget:Polly.Extensions@8.6.5
+nuget:Polly.RateLimiting@8.6.5
 
-nuget:System.Threading.RateLimiting@9.0.5
+nuget:System.Threading.RateLimiting@8.0.0  <framework:net8.0>
+nuget:System.Threading.RateLimiting@9.0.0  <framework:net9.0>
+nuget:System.Threading.RateLimiting@10.0.0 <framework:net10.0>
