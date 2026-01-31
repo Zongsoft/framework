@@ -13,14 +13,14 @@ Password          | varbinary | 64  | ✓ | 登录密码
 PasswordSalt      | bigint    | 8   | ✓ | 密码盐(_随机数_)
 Email             | varchar   | 50  | ✓ | 绑定的电子邮箱(_在所属命名空间内具有唯一性_)
 Phone             | varchar   | 50  | ✓ | 绑定的手机号码(_在所属命名空间内具有唯一性_)
-Gender            | bool      | -   | ✓ | 用户性别(_1:男; 0:女_)
+Gender            | bool      | -   | ✓ | 用户性别 _(`1`:男; `0`:女)_
 Enabled           | bool      | -   | ✗ | 是否可用
 PasswordQuestion1 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[1]
-PasswordAnswer1   | varbinary | 64  | ✓ | 用户的密码问答的答案[1] (_哈希值_)
+PasswordAnswer1   | varbinary | 64  | ✓ | 用户的密码问答的答案[1]
 PasswordQuestion2 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[2]
-PasswordAnswer2   | varbinary | 64  | ✓ | 用户的密码问答的答案[2] (_哈希值_)
+PasswordAnswer2   | varbinary | 64  | ✓ | 用户的密码问答的答案[2]
 PasswordQuestion3 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[3]
-PasswordAnswer3   | varbinary | 64  | ✓ | 用户的密码问答的答案[3] (_哈希值_)
+PasswordAnswer3   | varbinary | 64  | ✓ | 用户的密码问答的答案[3]
 Creation          | datetime  | -   | ✗ | 创建时间
 Modification      | datetime  | -   | ✓ | 最后修改时间
 Description       | nvarchar  | 500 | ✓ | 描述信息
@@ -45,7 +45,7 @@ Description | nvarchar | 500 | ✓ | 描述信息
 ------- |:-------:|:---:|:---:| ----
 RoleId     | int  | 4 | ✗ | 主键，角色编号
 MemberId   | int  | 4 | ✗ | 主键，用户或角色的编号
-MemberType | byte | 1 | ✗ | 主键，成员类型(_0:用户; 1:角色_)
+MemberType | byte | 1 | ✗ | 主键，成员类型 _(`0`:用户; `1`:角色)_
 
 
 ## 授权表 `Privilege`
@@ -53,7 +53,7 @@ MemberType | byte | 1 | ✗ | 主键，成员类型(_0:用户; 1:角色_)
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
 MemberId      | int     | 4   | ✗ | 主键，用户或角色编号
-MemberType    | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
+MemberType    | byte    | 1   | ✗ | 主键，成员类型 _(`0`:用户; `1`:角色)_
 PrivilegeName | varchar | 100 | ✗ | 主键，权限标识
 PrivilegeMode | byte    | 1   | ✗ | 授权方式
 
@@ -75,7 +75,7 @@ PrivilegeMode | byte    | 1   | ✗ | 授权方式
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
 MemberId        | int     | 4   | ✗ | 主键，用户或角色编号
-MemberType      | byte    | 1   | ✗ | 主键，成员类型(_0:用户; 1:角色_)
+MemberType      | byte    | 1   | ✗ | 主键，成员类型 _(`0`:用户; `1`:角色)_
 PrivilegeName   | varchar | 100 | ✗ | 主键，权限标识
 PrivilegeFilter | varchar | 500 | ✗ | 权限过滤表达式
 
