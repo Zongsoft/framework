@@ -108,9 +108,9 @@ We look forward to your support and sponsorship. You can provide us with the nec
 2. Join the [**Zongsoft Knowledge Planet**](https://t.zsxq.com/2nyjqrr) to get online Q&A and technical support;
 3. If your organization requires on-site technical support and coaching, or if you need some new features, instant bug fixes, etc., please contact us by [email](mailto:zongsoft@qq.com).
 
-[![Zongsoft's WeChat](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
+[![Zongsoft's WeChat](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
 
-[![Zongsoft's Knowledge Planet](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
+[![Zongsoft's Knowledge Planet](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
 
 <a name="license"></a>
 ## License

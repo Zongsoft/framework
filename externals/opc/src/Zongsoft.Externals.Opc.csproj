@@ -7,7 +7,7 @@
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/master/externals/opc</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/externals/opc</RepositoryUrl>
 	</PropertyGroup>
 
 	<PropertyGroup>

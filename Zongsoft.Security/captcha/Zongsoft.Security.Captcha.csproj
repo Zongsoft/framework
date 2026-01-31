@@ -9,7 +9,7 @@
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/master/Zongsoft.Security/captcha</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Security/captcha</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>

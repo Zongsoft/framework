@@ -2,11 +2,11 @@
 
 ![license](https://img.shields.io/github/license/Zongsoft/Framework/Zongsoft.Data) ![download](https://img.shields.io/nuget/dt/Zongsoft.Data) ![version](https://img.shields.io/github/v/release/Zongsoft/Framework/Zongsoft.Data?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Framework/Zongsoft.Data?style=social)
 
-README: [English](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/README.md) | [简体中文](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/README-zh_CN.md)
+README: [English](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/README.md) | [简体中文](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/README-zh_CN.md)
 
 -----
 
-The [Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data) is a [GraphQL](https://graphql.com)-style **ORM**(**O**bject/**R**elational **M**apping) data access framework.
+The [Zongsoft.Data](https://github.com/Zongsoft/framework/Zongsoft.Data) is a [GraphQL](https://graphql.com)-style **ORM**(**O**bject/**R**elational **M**apping) data access framework.
 
 Its design philosophy is to represent the data structure relationship in a declarative way and de-scripting _(i.e. data access and navigation without writing any SQL or SQL-like syntax structure)_, making access to data easier, application code cleaner, and providing the best comprehensive price/performance ratio.
 
@@ -27,12 +27,12 @@ Its design philosophy is to represent the data structure relationship in a decla
 
 | **Deriver** | **Project Path** | **State** |
 | --- | --- | :---: |
-MySQL | [/drivers/mysql](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/mysql) | _**A**vailable_ |
-SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/mssql) | _**A**vailable_ |
-PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
-SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
-InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/influx) | _Planning_ |
-TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
+MySQL | [/drivers/mysql](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/mysql) | _**A**vailable_ |
+SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/mssql) | _**A**vailable_ |
+PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
+SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
+InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _Planning_ |
+TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
 > Tip: If you need unimplemented drivers or commercial technical support, please contact us.([zongsoft@qq.com](mailto:zongsoft@qq.com))。
 
@@ -48,14 +48,14 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/master
 
 ### Source code compilation
 
-It is recommended to create a **_Zongsoft_** directory in the non-system partition of the hard disk and clone the items such as [Guidelines](https://github.com/Zongsoft/Guidelines), [Zongsoft.Core](https://github.com/Zongsoft/Framework/Zongsoft.Core) and [Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data), etc. into this directory.
+It is recommended to create a **_Zongsoft_** directory in the non-system partition of the hard disk and clone the items such as [Guidelines](https://github.com/Zongsoft/guidelines), [Zongsoft.Core](https://github.com/Zongsoft/framework/Zongsoft.Core) and [Zongsoft.Data](https://github.com/Zongsoft/framework/Zongsoft.Data), etc. into this directory.
 
 <a name="schema"></a>
 ## The data schema
 
 The data **schema** is a DSL(**D**omain **S**pecific **L**anguage) that describes the shape of the data to be query or write _(**D**elete/**I**nsert/**U**pdate/**U**psert)_, The representation is somewhat like [GraphQL](https://graphql.com) but does not require to predefined. It is used to define the data fields to be fetched and written, scopes for cascading deletes, etc.
 
-The `schema` argumment in the data access method is the data schema, and the [ISchema](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/ISchema.cs) interface is the parsed schema expression.
+The `schema` argumment in the data access method is the data schema, and the [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) interface is the parsed schema expression.
 
 <a name="schema-syntax"></a>
 ### Schema Syntax
@@ -140,14 +140,14 @@ sorting ::=
 
 A data map file is an XML file with a `.mapping` extension that is metadata that defines the relationship of the entity structure. **Do not** write metadata in a large application in a mapping file. A mapping file should be defined separately for each business module to ensure the isolation of the module.
 
-We provide the [Zongsoft.Data.xsd](https://github.com/Zongsoft/Zongsoft.Data/blob/master/Zongsoft.Data.xsd) XML Schema file, It makes it easy for you to handwrite mapping files and eliminate the chance of errors.
+We provide the [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) XML Schema file, It makes it easy for you to handwrite mapping files and eliminate the chance of errors.
 
 
 > **Enable XML IntelliSense for mapping files:**
 > 
-> **Method 1：** Add new an XML file called "`{module}.mapping`" to the business module project(for example: [`Zongsoft.Security.mapping`](https://github.com/Zongsoft/Zongsoft.Security/blob/master/src/Zongsoft.Security.mapping) or [`Zongsoft.Community.mapping`](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Zongsoft.Community.mapping)), open the mapping file and click "XML" -> "Architecture" menu item in the **V**isual **S**tudio, in the pop-up dialog box, click the "Add" button in the upper right corner to find the [Zongsoft.Data.xsd](https://github.com/Zongsoft/Zongsoft.Data/blob/master/Zongsoft.Data.xsd) file.
+> **Method 1：** Add new an XML file called "`{module}.mapping`" to the business module project(for example: [`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) or [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)), open the mapping file and click "XML" -> "Architecture" menu item in the **V**isual **S**tudio, in the pop-up dialog box, click the "Add" button in the upper right corner to find the [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) file.
 > 
-> **Method 2：** Copy [Zongsoft.Data.xsd](https://github.com/Zongsoft/Zongsoft.Data/blob/master/Zongsoft.Data.xsd) to the XML Shemas template directory in Visual Studio, for example:
+> **Method 2：** Copy [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) to the XML Shemas template directory in Visual Studio, for example:
 > - **V**isual **S**tudio 2019 _(Enterprise Edition)_ <br />
 > 	`C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Xml\Schemas`
 
@@ -200,7 +200,7 @@ The name of the data connection configuration item matches the name of `DataAcce
 <a name="usage"></a>
 ## Usages
 
-All data operations are performed through the data access interface (located on the [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) interface in the [Zongsoft.Core](https://github.com/Zongsoft/Framework/Zongsoft.Core)) and support the following data access operations:
+All data operations are performed through the data access interface (located on the [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) interface in the [Zongsoft.Core](https://github.com/Zongsoft/framework/Zongsoft.Core)) and support the following data access operations:
 
 - `int Count(...)`
 - `bool Exists(...)`
@@ -212,7 +212,7 @@ All data operations are performed through the data access interface (located on 
 - `IEnumerable<T> Select<T>(...)`
 
 **Remind:**
-> The following examples are based on the [Zongsoft.Community](https://github.com/Zongsoft/Zongsoft.Community) open source project, which is a complete community forum .NET backend project. It is recommended that you read [the database table structure design document](https://github.com/Zongsoft/Zongsoft.Community/blob/master/database/Zongsoft.Community-Tables.md) of the project to understand the relevant data structure relationship before reading following samples.
+> The following examples are based on the [Zongsoft.Discussions](https://github.com/Zongsoft/discussions) open source project, which is a complete community forum .NET backend project. It is recommended that you read [the database table structure design document](https://github.com/Zongsoft/discussions/blob/main/database/Zongsoft.Discussions-Tables.md) of the project to understand the relevant data structure relationship before reading following samples.
 
 
 <a name="operand"></a>
@@ -495,7 +495,7 @@ foreach(dynamic item in items)
 <a name="usage-query-4"></a>
 #### Paging query
 
-Specify the `paging` argument in the [`Select`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) method for paging queries. For details, see the [`Paging`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/Paging.cs) settings class.
+Specify the `paging` argument in the [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) method for paging queries. For details, see the [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs) settings class.
 
 ```csharp
 // Define the paging settings for the query(page 2, 25 per page)
@@ -517,7 +517,7 @@ var threads = this.DataAccess.Select<Thread>(
 <a name="usage-query-5"></a>
 #### Sorting query
 
-Specify the `sortings` argument in the [`Select`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) method to sort the query. For details, please refer to the [Sorting](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/Sorting.cs) settings class.
+Specify the `sortings` argument in the [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) method to sort the query. For details, please refer to the [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs) settings class.
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
@@ -578,7 +578,7 @@ Especially in a one-to-many relationship, it is often necessary to conditionally
 
 > There is a one-to-many relationship between the forum(`Forum`) and the forum members(`ForumUser`). The moderators(`Moderator`) is a subset of the forum members(`ForumUser`), then the structural relationship is Expressed by `complexProperty/constraints` in the data mapping file.
 > 
-> As shown in the following code, the `Users` navigation property of the [Forum](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/Forum.cs) entity represents the full set of forum members, and the `Moderators` navigation property is a subset of the forum members, which are all associated with the `ForumUser` entity.
+> As shown in the following code, the `Users` navigation property of the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) entity represents the full set of forum members, and the `Moderators` navigation property is a subset of the forum members, which are all associated with the `ForumUser` entity.
 
 ```xml
 <entity name="Forum" table="Community_Forum">
@@ -636,9 +636,9 @@ Point to another navigation property in the associated entity, which usually nee
 
 2. Define the `constraint` constraint for this navigation(complex) property.
 
-> Note: Since the moderator is not restricted by the forum member's `Permission` field, the definition of the moderator's entity type is [`UserProfile`](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/UserProfile.cs) will be more concise and easy to use(avoid the jump navigation through `ForumUser.User`), so set `role` attribute of the `Moderators` navigation property is _`"ForumUser:User"`_ to express this requirement.
+> Note: Since the moderator is not restricted by the forum member's `Permission` field, the definition of the moderator's entity type is [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) will be more concise and easy to use(avoid the jump navigation through `ForumUser.User`), so set `role` attribute of the `Moderators` navigation property is _`"ForumUser:User"`_ to express this requirement.
 > 
-> Take the above data mapping fragment as an example, and feel the difference between the `Users` and `Moderators` property types of the [Forum](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/Forum.cs) class.
+> Take the above data mapping fragment as an example, and feel the difference between the `Users` and `Moderators` property types of the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) class.
 
 ```csharp
 public abstract class Forum
@@ -842,7 +842,7 @@ WHERE
 
 When the database field type does not match the corresponding entity property type _(cannot be converted directly)_, you need to introduce a type converter for custom conversion logic.
 
-For example, the `Tags` field type of the `Thread` table is `nvarchar`, but the type of the `Tags` property of the [Thread](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/Thread.cs) model class is a **string array**, so data read and write operations require custom conversion of these two types. For specific implementations, please refer to the [TagsConverter](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/TagsConverter.cs) class, and the `Tags` property definition of the [Thread](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/Thread.cs) model class.
+For example, the `Tags` field type of the `Thread` table is `nvarchar`, but the type of the `Tags` property of the [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) model class is a **string array**, so data read and write operations require custom conversion of these two types. For specific implementations, please refer to the [TagsConverter](https://github.com/Zongsoft/discussions/blob/main/src/Models/TagsConverter.cs) class, and the `Tags` property definition of the [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) model class.
 
 
 <a name="usage-delete"></a>
@@ -1121,14 +1121,14 @@ We want to provide the best **overall price/performance ratio** and not compromi
 
 Thanks to the semantic design concept of “declaratively expressing data structure relationships”, compared with the imperative programming design, the program intention is more focused, and it is natural easier to convert the semantics into a syntax tree to represent SQL scripts of different data providers, and the optimization space of each step is more relaxed and free.
 
-The implementation layer uses **emitting** dynamic compilation technology to pre-heat the model/entity populated, data parameter binding, etc., which can be understood by the [DataPopulator](https://github.com/Zongsoft/Zongsoft.Data/blob/master/src/Common/DataPopulatorProviderFactory.cs) class and related classes.
+The implementation layer uses **emitting** dynamic compilation technology to pre-heat the model/entity populated, data parameter binding, etc., which can be understood by the [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) class and related classes.
 
 <a name="contribution"></a>
 ## Contributing
 
-Please do not submit a **Q**uestion and **D**iscussion in the **I**ssues of the project. **I**ssues are used to report bugs and features. If you wish to participate in the contribution, you are welcome to submit a code merge request([PullRequest](https://github.com/Zongsoft/Zongsoft.Data/pulls)) or an [issue](https://github.com/Zongsoft/Zongsoft.Data/issues).
+Please do not submit a **Q**uestion and **D**iscussion in the **I**ssues of the project. **I**ssues are used to report bugs and features. If you wish to participate in the contribution, you are welcome to submit a code merge request([PullRequest](https://github.com/Zongsoft/framework/pulls)) or an [issue](https://github.com/Zongsoft/framework/issues).
 
-For new features, be sure to create a functional feedback([Issue](https://github.com/Zongsoft/Zongsoft.Data/issues)) to describe your recommendations in detail so that we can fully discuss them, which will also allow us to better coordinate our work to prevent duplication of development and help you adjust recommendations or requirements to make it successfully accepted into the project.
+For new features, be sure to create a functional feedback([Issue](https://github.com/Zongsoft/framework/issues)) to describe your recommendations in detail so that we can fully discuss them, which will also allow us to better coordinate our work to prevent duplication of development and help you adjust recommendations or requirements to make it successfully accepted into the project.
 
 You are welcome to write articles for our open source projects to promote, if you need to forward your **A**rticles, **B**logs, **V**ideos, etc. on the official website([http://zongsoft.com/blog](http://zongsoft.com/blog)), you can contact us by [**email**](mailto:zongsoft@qq.com).
 
@@ -1144,9 +1144,9 @@ We look forward to your support and sponsorship. You can provide us with the nec
 2. Join the [**Zongsoft Knowledge Planet**](https://t.zsxq.com/2nyjqrr) to get online Q&A and technical support;
 3. If your organization requires on-site technical support and coaching, or if you need some new features, instant bug fixes, etc., please contact us by [email](mailto:zongsoft@qq.com).
 
-[![Zongsoft's WeChat](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
+[![Zongsoft's WeChat](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
 
-[![Zongsoft's Knowledge Planet](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
+[![Zongsoft's Knowledge Planet](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
 
 
 <a name="license"></a>

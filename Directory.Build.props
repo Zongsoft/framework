@@ -5,11 +5,11 @@
 		<Authors>Zongsoft Studio(zongsoft@qq.com)</Authors>
 		<Company>Zongsoft Studio</Company>
 		<Copyright>Copyright(C) Zongsoft Studio 2010-2025. All rights reserved.</Copyright>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework</RepositoryUrl>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<PackageIcon>zongsoft-logo.png</PackageIcon>
-		<PackageIconUrl>https://github.com/Zongsoft/Guidelines/raw/master/zongsoft-logo(48x48).png</PackageIconUrl>
+		<PackageIconUrl>https://github.com/Zongsoft/guidelines/raw/main/zongsoft-logo(48x48).png</PackageIconUrl>
 		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>

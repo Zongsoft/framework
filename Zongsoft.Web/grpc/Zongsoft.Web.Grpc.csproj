@@ -8,8 +8,8 @@
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageTags>gRPC;ASP.NET;Web;Plugin</PackageTags>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Web</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Web</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>

@@ -7,8 +7,8 @@
 		<RootNamespace>Zongsoft.Externals.Grapecity</RootNamespace>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/grapecity/api</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/externals/grapecity/api</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>

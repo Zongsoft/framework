@@ -6,8 +6,8 @@
 		<RootNamespace>Zongsoft.Externals.Wechat</RootNamespace>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/wechat</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/externals/wechat</RepositoryUrl>
 	</PropertyGroup>
 
 	<PropertyGroup>

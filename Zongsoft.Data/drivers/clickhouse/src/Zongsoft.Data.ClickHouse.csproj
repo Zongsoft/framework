@@ -8,8 +8,8 @@
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/clickhouse</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/clickhouse</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>

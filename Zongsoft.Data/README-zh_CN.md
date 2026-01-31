@@ -2,11 +2,11 @@
 
 ![license](https://img.shields.io/github/license/Zongsoft/Zongsoft.Data) ![download](https://img.shields.io/nuget/dt/Zongsoft.Data) ![version](https://img.shields.io/github/v/release/Zongsoft/Zongsoft.Data?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Zongsoft.Data?style=social)
 
-README: [English](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/README.md) | [简体中文](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/README-zh_CN.md)
+README: [English](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/README.md) | [简体中文](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/README-zh_CN.md)
 
 -----
 
-[Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data) 是一个类 [GraphQL](https://graphql.cn) 风格的 **ORM**(**O**bject/**R**elational **M**apping) 数据访问框架。
+[Zongsoft.Data](https://github.com/Zongsoft/framework/Zongsoft.Data) 是一个类 [GraphQL](https://graphql.cn) 风格的 **ORM**(**O**bject/**R**elational **M**apping) 数据访问框架。
 
 它的设计理念是以声明方式来表达数据结构关系以及去SQL脚本化 _（即不需要手写任何SQL或类SQL语法结构即可完成数据访问和导航）_，使得访问数据变得更加容易、应用代码更简洁，并提供最佳的综合性价比。
 
@@ -27,12 +27,12 @@ README: [English](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Dat
 
 | **驱动程序** | **项目路径** | **状态** |
 | --- | --- | :---: |
-MySQL | [/drivers/mysql](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/mysql) | _**A**vailable_ |
-SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/mssql) | _**A**vailable_ |
-PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
-SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
-InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/influx) | _Planning_ |
-TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/master/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
+MySQL | [/drivers/mysql](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/mysql) | _**A**vailable_ |
+SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/mssql) | _**A**vailable_ |
+PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
+SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
+InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _Planning_ |
+TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
 > 提示：如果需要未实现的驱动或商业技术支持，请联系我们([zongsoft@qq.com](mailto:zongsoft@qq.com))。
 
@@ -48,14 +48,14 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/master
 
 - **源码编译方式**
 
-建议在硬盘的非系统分区中建立一个 **_Zongsoft_** 目录，分别将 [Guidelines](https://github.com/Zongsoft/Guidelines)、[Zongsoft.Core](https://github.com/Zongsoft/Framework/Zongsoft.Core) 以及 [Zongsoft.Data](https://github.com/Zongsoft/Framework/Zongsoft.Data) 等项目克隆到该目录中。
+建议在硬盘的非系统分区中建立一个 **_Zongsoft_** 目录，分别将 [Guidelines](https://github.com/Zongsoft/guidelines)、[Zongsoft.Core](https://github.com/Zongsoft/framework/Zongsoft.Core) 以及 [Zongsoft.Data](https://github.com/Zongsoft/framework/Zongsoft.Data) 等项目克隆到该目录中。
 
 <a name="schema"></a>
 ## 数据模式
 
 数据模式(**S**chema)是一种 DSL(**D**omain **S**pecific **L**anguage)，用以描述要查询或写入 _(**D**elete/**I**nsert/**U**pdate/**U**psert)_ 的数据形状，表现形式有点类似于 [GraphQL](https://graphql.cn) 但不需要预先定义，通过它来定义要获取和写入的数据字段、级联删除的范围等。
 
-在数据访问方法中的 `schema` 参数即为数据模式，[ISchema](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/ISchema.cs) 接口为解析后的模式表达式。
+在数据访问方法中的 `schema` 参数即为数据模式，[ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) 接口为解析后的模式表达式。
 
 <a name="schema-syntax"></a>
 ### 语法定义
@@ -140,14 +140,14 @@ sorting ::=
 
 数据映射文件是扩展名为 `.mapping` 的XML文件，它是定义实体结构关系的元数据。**不要**将一个大应用内的元数据都写在一个映射文件内，应为每个业务模块单独定义映射文件，以确保模块的隔离性。
 
-我们提供 [Zongsoft.Data.xsd](https://github.com/Zongsoft/Zongsoft.Data/blob/master/Zongsoft.Data.xsd) 这个 XML Schema 文件，大大方便了手写映射文件并消除了手写出错的机会。
+我们提供 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 这个 XML Schema 文件，大大方便了手写映射文件并消除了手写出错的机会。
 
 
 > **启用映射文件的XML智能提示：**
 > 
-> **方法一：** 在**业务模块**项目中添加一个名为“`{业务模块}.mapping`”的XML文件（譬如：[`Zongsoft.Security.mapping`](https://github.com/Zongsoft/Zongsoft.Security/blob/master/src/Zongsoft.Security.mapping) 或 [`Zongsoft.Community.mapping`](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Zongsoft.Community.mapping)），打开该映射文件后点击 **V**isual **S**tudio 的“XML”-“架构”菜单项，在弹出的对话框中点击右上角的“添加”按钮，找到 [Zongsoft.Data.xsd](https://github.com/Zongsoft/Zongsoft.Data/blob/master/Zongsoft.Data.xsd) 文件即可。
+> **方法一：** 在**业务模块**项目中添加一个名为“`{业务模块}.mapping`”的XML文件（譬如：[`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) 或 [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)），打开该映射文件后点击 **V**isual **S**tudio 的“XML”-“架构”菜单项，在弹出的对话框中点击右上角的“添加”按钮，找到 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 文件即可。
 > 
-> **方法二：** 将 [Zongsoft.Data.xsd](https://github.com/Zongsoft/Zongsoft.Data/blob/master/Zongsoft.Data.xsd) 拷贝到 **V**isual **S**tudio 的 XML Shemas 模板目录中，譬如：
+> **方法二：** 将 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 拷贝到 **V**isual **S**tudio 的 XML Shemas 模板目录中，譬如：
 > - **V**isual **S**tudio 2019 _(Enterprise Edition)_ <br />
 > 	`C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Xml\Schemas`
 
@@ -199,7 +199,7 @@ sorting ::=
 <a name="usage"></a>
 ## 使用
 
-所有数据操作均通过[数据访问接口](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs)(位于[核心库](https://github.com/Zongsoft/Framework/Zongsoft.Core)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) 接口)进行，支持下列数据访问操作：
+所有数据操作均通过[数据访问接口](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs)(位于[核心库](https://github.com/Zongsoft/framework/Zongsoft.Core)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 接口)进行，支持下列数据访问操作：
 
 - 计数操作： `int Count(...)` 
 - 存在操作： `bool Exists(...)` 
@@ -211,7 +211,7 @@ sorting ::=
 - 查询操作： `IEnumerable<T> Select<T>(...)` 
 
 **提醒：**
-> 下面的范例均基于 [Zongsoft.Community](https://github.com/Zongsoft/Zongsoft.Community) 开源项目，该项目是一个完整的论坛社区的后台程序。建议你在阅读范例之前，务必先查阅该项目的[数据库表结构](https://github.com/Zongsoft/Zongsoft.Community/blob/master/database/Zongsoft.Community.md)设计文档以了解相关数据结构关系。
+> 下面的范例均基于 [Zongsoft.Discussions](https://github.com/Zongsoft/discussions) 开源项目，该项目是一个完整的论坛社区的后台程序。建议你在阅读范例之前，务必先查阅该项目的[数据库表结构](https://github.com/Zongsoft/discussions/blob/main/database/Zongsoft.Discussions.md)设计文档以了解相关数据结构关系。
 
 <a name="operand"></a>
 ### 操作元
@@ -494,7 +494,7 @@ foreach(dynamic item in items)
 <a name="usage-query-4"></a>
 #### 分页查询
 
-通过指定 [`Select`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) 方法中的 `paging` 参数来进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/Paging.cs) 分页设置类。
+通过指定 [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法中的 `paging` 参数来进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs) 分页设置类。
 
 ```csharp
 // 定义查询的分页设置（譬如：第2页，每页25条）
@@ -516,7 +516,7 @@ var threads = this.DataAccess.Select<Thread>(
 <a name="usage-query-5"></a>
 #### 排序查询
 
-通过指定 [`Select`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/IDataAccess.cs) 方法中的 `sortings` 参数来进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Core/src/Data/Sorting.cs) 排序设置类。
+通过指定 [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法中的 `sortings` 参数来进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs) 排序设置类。
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
@@ -575,7 +575,7 @@ var groups = this.DataAccess.Select<ForumGroup>(
 
 > 论坛(`Forum`)与论坛成员(`ForumUser`)之间是一对多的结构关系，版主(`Moderator`)是论坛成员(`ForumUser`)的一个子集，那么这样的结构关系就是通过数据映射文件中的 `complexProperty/constraints` 来表达的。
 > 
-> 如下面代码所示， [Forum](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/Forum.cs) 实体的 `Users` 导航属性表示论坛成员的全集，而 `Moderators` 导航属性为论坛成员的一个子集，它们均关联到 `ForumUser` 实体。
+> 如下面代码所示， [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 实体的 `Users` 导航属性表示论坛成员的全集，而 `Moderators` 导航属性为论坛成员的一个子集，它们均关联到 `ForumUser` 实体。
 
 ```xml
 <entity name="Forum" table="Community_Forum">
@@ -632,9 +632,9 @@ var groups = this.DataAccess.Select<ForumGroup>(
 1. 指定该复合属性的 `role` 特性的冒号语法：冒号左边为关联的实体名，冒号右边为对应的目标导航属性。
 2. 定义该复合属性的 `constraint` 约束条件。
 
-> 说明：由于版主不受论坛成员的 `Permission` 限制，所以定义版主的实体类型为 [`UserProfile`](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/UserProfile.cs) 会更加简洁易用（避免了再通过 `ForumUser.User` 进行跳转导航），故而设置 `Moderators` 导航属性的 `role` 为 _`"ForumUser:User"`_ 即可表达这种需求。
+> 说明：由于版主不受论坛成员的 `Permission` 限制，所以定义版主的实体类型为 [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) 会更加简洁易用（避免了再通过 `ForumUser.User` 进行跳转导航），故而设置 `Moderators` 导航属性的 `role` 为 _`"ForumUser:User"`_ 即可表达这种需求。
 > 
-> 以上面的数据映射片段为例，感受下 [Forum](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/Forum.cs) 类的 `Users` 和 `Moderators` 属性类型的不同。
+> 以上面的数据映射片段为例，感受下 [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 类的 `Users` 和 `Moderators` 属性类型的不同。
 
 ```csharp
 public abstract class Forum
@@ -837,7 +837,7 @@ WHERE
 
 当数据库字段类型与之对应的实体属性类型不匹配 _（无法直接转换）_，而需要引入自定义转换逻辑的类型转换器。
 
-譬如 Thread 表的 Tags 字段类型是 `nvarchar`，但是 [Thread](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/Thread.cs) 实体类的 Tags 属性的类型是字符串数组，所以数据读写操作需要对这两种类型进行自定义转换。具体实现请参考 [TagsConverter](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/TagsConverter.cs) 类及 [Thread](https://github.com/Zongsoft/Zongsoft.Community/blob/master/src/Models/Thread.cs) 实体类的 Tags 属性定义。
+譬如 Thread 表的 Tags 字段类型是 `nvarchar`，但是 [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) 实体类的 Tags 属性的类型是字符串数组，所以数据读写操作需要对这两种类型进行自定义转换。具体实现请参考 [TagsConverter](https://github.com/Zongsoft/discussions/blob/main/src/Models/TagsConverter.cs) 类及 [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) 实体类的 Tags 属性定义。
 
 <a name="usage-delete"></a>
 ### 删除操作
@@ -1116,18 +1116,18 @@ WHEN NOT MATCHED THEN
 
 得益于 __“以声明方式来表达数据结构关系”__ 的语义化设计理念，相对于命令式设计而言，它将程序意图更加聚焦，天然地更容易将语义转换为语法树进而表示成不同数据提供程序的SQL脚本，并且各个步骤的优化空间也更宽松和自由。
 
-实现层面采用 **E**mitting 动态编译技术对实体组装(**P**opulate)、数据参数绑定等进行预热处理，可通过 [DataPopulator](https://github.com/Zongsoft/Zongsoft.Data/blob/master/src/Common/DataPopulatorProviderFactory.cs) 等相关类了解。
+实现层面采用 **E**mitting 动态编译技术对实体组装(**P**opulate)、数据参数绑定等进行预热处理，可通过 [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) 等相关类了解。
 
 <a name="contribution"></a>
 ## 贡献
 
-请不要在项目的 **I**ssues 中提交询问(**Q**uestion)以及咨询讨论，**I**ssue 是用来报告问题(**B**ug)和功能特性(**F**eature)。如果你希望参与贡献，欢迎提交 代码合并请求(_[**P**ull**R**equest](https://github.com/Zongsoft/Zongsoft.Data/pulls)_) 或问题反馈(_[**I**ssue](https://github.com/Zongsoft/Zongsoft.Data/issues)_)。
+请不要在项目的 **I**ssues 中提交询问(**Q**uestion)以及咨询讨论，**I**ssue 是用来报告问题(**B**ug)和功能特性(**F**eature)。如果你希望参与贡献，欢迎提交 代码合并请求(_[**P**ull**R**equest](https://github.com/Zongsoft/framework/pulls)_) 或问题反馈(_[**I**ssue](https://github.com/Zongsoft/framework/issues)_)。
 
-对于新功能，请务必创建一个功能反馈(_[**I**ssue](https://github.com/Zongsoft/Zongsoft.Data/issues)_)来详细描述你的建议，以便我们进行充分讨论，这也将使我们更好的协调工作防止重复开发，并帮助你调整建议或需求，使之成功地被接受到项目中。
+对于新功能，请务必创建一个功能反馈(_[**I**ssue](https://github.com/Zongsoft/framework/issues)_)来详细描述你的建议，以便我们进行充分讨论，这也将使我们更好的协调工作防止重复开发，并帮助你调整建议或需求，使之成功地被接受到项目中。
 
 欢迎你为我们的开源项目撰写文章进行推广，如果需要我们在官网(_[http://zongsoft.com/blog](http://zongsoft.com/blog)_) 中转发你的文章、博客、视频等可通过 [**电子邮件**](mailto:zongsoft@qq.com) 联系我们。
 
-> 强烈推荐阅读 [《提问的智慧》](https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/master/README-zh_CN.md)、[《如何向开源社区提问题》](https://github.com/seajs/seajs/issues/545) 和 [《如何有效地报告 Bug》](http://www.chiark.greenend.org.uk/~sgtatham/bugs-cn.html)、[《如何向开源项目提交无法解答的问题》](https://zhuanlan.zhihu.com/p/25795393)，更好的问题更容易获得帮助。
+> 强烈推荐阅读 [《提问的智慧》](https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md)、[《如何向开源社区提问题》](https://github.com/seajs/seajs/issues/545) 和 [《如何有效地报告 Bug》](http://www.chiark.greenend.org.uk/~sgtatham/bugs-cn.html)、[《如何向开源项目提交无法解答的问题》](https://zhuanlan.zhihu.com/p/25795393)，更好的问题更容易获得帮助。
 
 
 <a name="sponsor"></a>
@@ -1139,9 +1139,9 @@ WHEN NOT MATCHED THEN
 2. 加入 [**Zongsoft 知识星球号**](https://t.zsxq.com/2nyjqrr)，可以获得在线问答和技术支持；
 3. 如果您的企业需要现场技术支持与辅导，又或者需要特定新功能、即刻的错误修复等请[发邮件](mailto:zongsoft@qq.com)给我。
 
-[![微信公号](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
+[![微信公号](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
 
-[![知识星球](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
+[![知识星球](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
 
 
 <a name="license"></a>

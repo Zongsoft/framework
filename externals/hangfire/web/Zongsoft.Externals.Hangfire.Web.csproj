@@ -7,8 +7,8 @@
 		<RootNamespace>Zongsoft.Externals.Hangfire.Web</RootNamespace>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/hangfire/web</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/externals/hangfire/web</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>

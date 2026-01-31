@@ -5,8 +5,8 @@
 		<Description>This is a sample for the gRPC server protocol of OpenTelemetry.</Description>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Diagnostics/protocols/server/samples</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Diagnostics/protocols/server/samples</RepositoryUrl>
 	</PropertyGroup>
 
 	<Choose>

@@ -6,8 +6,8 @@
 		<RootNamespace>Zongsoft.Externals.ClosedXml</RootNamespace>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/closedxml</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/externals/closedxml</RepositoryUrl>
 	</PropertyGroup>
 
 	<PropertyGroup>

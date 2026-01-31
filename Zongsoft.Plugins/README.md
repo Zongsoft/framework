@@ -2,7 +2,7 @@
 
 ![license](https://img.shields.io/github/license/Zongsoft/Zongsoft.Plugins) ![download](https://img.shields.io/nuget/dt/Zongsoft.Plugins) ![version](https://img.shields.io/github/v/release/Zongsoft/Zongsoft.Plugins?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Zongsoft.Plugins?style=social)
 
-README: [English](https://github.com/Zongsoft/Zongsoft.Plugins/blob/master/README.md) | [简体中文](https://github.com/Zongsoft/Zongsoft.Plugins/blob/master/README-zh_CN.md)
+README: [English](https://github.com/Zongsoft/Zongsoft.Plugins/blob/main/README.md) | [简体中文](https://github.com/Zongsoft/Zongsoft.Plugins/blob/main/README-zh_CN.md)
 
 -----
 
@@ -26,7 +26,7 @@ README: [English](https://github.com/Zongsoft/Zongsoft.Plugins/blob/master/READM
 
 欢迎你为我们的开源项目撰写文章进行推广，如果需要我们在官网(_[http://zongsoft.com/blog](http://zongsoft.com/blog)_) 中转发你的文章、博客、视频等可通过 [**电子邮件**](mailto:zongsoft@qq.com) 联系我们。
 
-> 强烈推荐阅读 [《提问的智慧》](https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/master/README-zh_CN.md)、[《如何向开源社区提问题》](https://github.com/seajs/seajs/issues/545) 和 [《如何有效地报告 Bug》](http://www.chiark.greenend.org.uk/~sgtatham/bugs-cn.html)、[《如何向开源项目提交无法解答的问题》](https://zhuanlan.zhihu.com/p/25795393)，更好的问题更容易获得帮助。
+> 强烈推荐阅读 [《提问的智慧》](https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md)、[《如何向开源社区提问题》](https://github.com/seajs/seajs/issues/545) 和 [《如何有效地报告 Bug》](http://www.chiark.greenend.org.uk/~sgtatham/bugs-cn.html)、[《如何向开源项目提交无法解答的问题》](https://zhuanlan.zhihu.com/p/25795393)，更好的问题更容易获得帮助。
 
 
 <a name="sponsor"></a>
@@ -38,9 +38,9 @@ README: [English](https://github.com/Zongsoft/Zongsoft.Plugins/blob/master/READM
 2. 加入 [**Zongsoft 知识星球号**](https://t.zsxq.com/2nyjqrr)，可以获得在线问答和技术支持；
 3. 如果您的企业需要现场技术支持与辅导，又或者需要特定新功能、即刻的错误修复等请[发邮件](mailto:zongsoft@qq.com)给我。
 
-[![微信公号](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
+[![微信公号](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
 
-[![知识星球](https://raw.githubusercontent.com/Zongsoft/Guidelines/master/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
+[![知识星球](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
 
 
 <a name="license"></a>

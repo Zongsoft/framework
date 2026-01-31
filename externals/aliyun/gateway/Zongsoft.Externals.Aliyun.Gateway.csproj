@@ -6,8 +6,8 @@
 		<Description>This is a library about Aliyun Gateway.</Description>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageProjectUrl>https://github.com/Zongsoft/Framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/Framework/tree/master/externals/aliyun/gateway</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/externals/aliyun/gateway</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>
