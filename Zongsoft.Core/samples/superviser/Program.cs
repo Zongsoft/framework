@@ -35,14 +35,17 @@ internal class Program
 		Terminal.Console.Executor.Command("info", context =>
 		{
 			var content = CommandOutletContent.Create()
-				.AppendLine(CommandOutletColor.Gray, new string('·', 60))
+				.AppendLine(CommandOutletColor.Gray, new string('·', 70))
 				.Append(CommandOutletColor.DarkMagenta, $"Lifecycle: ")
 				.Append(CommandOutletColor.DarkYellow, superviser.Options.Lifecycle)
 				.Append(CommandOutletColor.DarkGray, ",\t")
 				.Append(CommandOutletColor.DarkMagenta, $"Error Limit: ")
 				.Append(CommandOutletColor.DarkYellow, superviser.Options.ErrorLimit)
+				.Append(CommandOutletColor.DarkGray, ",\t")
+				.Append(CommandOutletColor.DarkMagenta, $"Timestamp: ")
+				.Append(CommandOutletColor.DarkYellow, DateTime.Now.ToString("HH:mm:ss.fff"))
 				.AppendLine(CommandOutletColor.DarkGray, ".")
-				.AppendLine(CommandOutletColor.Gray, new string('·', 60));
+				.AppendLine(CommandOutletColor.Gray, new string('·', 70));
 
 			context.Output.Write(content);
 
