@@ -62,10 +62,7 @@ public sealed class FeaturePipelineManager : IFeaturePipelineManager
 		if(features == null || (features.TryGetNonEnumeratedCount(out var count) && count == 0))
 			return null;
 
-		if(identifier == null)
-			return new FeaturePipeline(features);
-
-		return _pipelines.GetOrAdd(identifier, key => new FeaturePipeline(features));
+		return _pipelines.GetOrAdd(identifier ?? string.Empty, key => new FeaturePipeline(features));
 	}
 	#endregion
 

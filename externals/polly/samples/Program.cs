@@ -113,6 +113,9 @@ internal class Program
 			var window = context.Options.GetValue("window", TimeSpan.FromSeconds(1));
 			var handler = context.Options.Switch("handled") ? Handler.Handle<ThrottleArgument>(OnRejected) : null;
 
+			if(context.Arguments.IsEmpty)
+				_features = _features.Throttle(permit, queue, order, null, handler);
+
 			foreach(var argument in context.Arguments)
 			{
 				switch(argument)
