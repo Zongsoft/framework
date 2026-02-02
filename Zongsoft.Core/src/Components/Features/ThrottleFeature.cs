@@ -42,7 +42,7 @@ public class ThrottleFeature : IFeature
 	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null)
 	{
 		this.Enabled = true;
-		this.PermitLimit = permitLimit <= 0 ? 1000 : permitLimit;
+		this.PermitLimit = permitLimit > 0 ? permitLimit : 1000;
 		this.QueueLimit = Math.Max(queueLimit, 0);
 		this.QueueOrder = queueOrder;
 		this.Limiter = limiter;
@@ -83,14 +83,10 @@ public class ThrottleArgument : Argument<ThrottleLease>
 
 public class ThrottleLease : IDisposable
 {
-	public ThrottleLease(bool isLeased, IMetadataCollection metadata)
-	{
-		this.IsLeased = isLeased;
-		this.Metadata = metadata;
-	}
+	protected ThrottleLease() { }
 
-	public bool IsLeased { get; }
-	public IMetadataCollection Metadata { get; }
+	public virtual bool IsLeased { get; }
+	public virtual IMetadataCollection Metadata { get; }
 
 	public void Dispose()
 	{
@@ -120,11 +116,12 @@ public class ThrottleLimiter
 		public TokenBucket(int threshold, TimeSpan period)
 		{
 			this.Threshold = threshold;
-			this.Period = period > TimeSpan.Zero ? period : TimeSpan.FromSeconds(1);
+			this.Period = period;
 		}
 
 		public int Threshold { get; set; }
 		public TimeSpan Period { get; set; }
+		public override string ToString() => $"{nameof(TokenBucket)}({this.Threshold}@{this.Period})";
 	}
 
 	public class FixedWindown : ThrottleLimiter
@@ -132,6 +129,7 @@ public class ThrottleLimiter
 		public FixedWindown(TimeSpan window) => this.Window = window;
 
 		public TimeSpan Window { get; set; }
+		public override string ToString() => $"{nameof(FixedWindown)}({this.Window})";
 	}
 
 	public class SlidingWindown : ThrottleLimiter
@@ -142,7 +140,8 @@ public class ThrottleLimiter
 			this.WindowSize = windowSize;
 		}
 
-		public TimeSpan Window { get; set; }
 		public int WindowSize { get; set; }
+		public TimeSpan Window { get; set; }
+		public override string ToString() => $"{nameof(SlidingWindown)}({this.WindowSize}@{this.Window})";
 	}
 }
