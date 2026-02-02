@@ -28,6 +28,9 @@
  */
 
 using System;
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.RateLimiting;
@@ -201,6 +204,9 @@ internal static class FeatureExtension
 
 		var strategy = new RateLimiterStrategyOptions();
 
+		if(feature.Rejected != null)
+			strategy.OnRejected = arguments => feature.Rejected.HandleAsync(new PollyThrottleArgument(arguments), arguments.Context.CancellationToken);
+
 		if(feature.PermitLimit > 0)
 			strategy.DefaultRateLimiterOptions.PermitLimit = feature.PermitLimit;
 		if(feature.QueueLimit > 0)
@@ -222,6 +228,7 @@ internal static class FeatureExtension
 					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
 					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
 					TokensPerPeriod = limiter.Threshold,
+					ReplenishmentPeriod = limiter.Period,
 				};
 
 				strategy.RateLimiter = argument => (new TokenBucketRateLimiter(tokenOptions)).AcquireAsync(cancellationToken: argument.Context.CancellationToken);
@@ -296,4 +303,26 @@ internal static class FeatureExtension
 		RetryBackoff.Exponential => DelayBackoffType.Exponential,
 		_ => throw new ArgumentOutOfRangeException(nameof(backoff), backoff, null)
 	};
+
+	private sealed class PollyThrottleArgument(OnRateLimiterRejectedArguments arguments) : ThrottleArgument(arguments.Context.OperationKey, new PollyThrottleLease(arguments.Lease))
+	{
+		private sealed class PollyThrottleLease(RateLimitLease lease) : ThrottleLease(lease.IsAcquired, new MetadataCollection(lease))
+		{
+			public sealed class MetadataCollection(RateLimitLease lease) : IMetadataCollection
+			{
+				private readonly RateLimitLease _lease = lease;
+				public int Count => _lease.MetadataNames.Count();
+
+				public bool TryGetValue<T>(string key, out T value) => _lease.TryGetMetadata(new MetadataName<T>(key), out value);
+				public bool TryGetValue(string key, out object value) => _lease.TryGetMetadata(key, out value);
+
+				IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+				public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+				{
+					foreach(var metadata in _lease.GetAllMetadata())
+						yield return new KeyValuePair<string, object>(metadata.Key, metadata.Value);
+				}
+			}
+		}
+	}
 }

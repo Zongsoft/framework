@@ -112,21 +112,28 @@ internal class Program
 			var order = context.Options.GetValue("order", ThrottleQueueOrder.Oldest);
 			var limit = context.Options.GetValue("limit", string.Empty);
 			var window = context.Options.GetValue("window", TimeSpan.FromSeconds(1));
+			var handler = context.Options.Switch("handled") ? Handler.Handle<ThrottleArgument>(OnRejected) : null;
 
 			switch(limit)
 			{
 				case "token":
-					_features = _features.Throttle(permit, queue, order, ThrottleLimiter.Token(context.Options.GetValue("threshold", 0)));
+					_features = _features.Throttle(permit, queue, order, ThrottleLimiter.Token(context.Options.GetValue<int>("threshold"), context.Options.GetValue<TimeSpan>("period")), handler);
 					break;
 				case "fixed":
-					_features = _features.Throttle(permit, queue, order, ThrottleLimiter.Fixed(window));
+					_features = _features.Throttle(permit, queue, order, ThrottleLimiter.Fixed(window), handler);
 					break;
 				case "sliding":
-					_features = _features.Throttle(permit, queue, order, ThrottleLimiter.Sliding(window, context.Options.GetValue("windowSize", 0)));
+					_features = _features.Throttle(permit, queue, order, ThrottleLimiter.Sliding(window, context.Options.GetValue("windowSize", 0)), handler);
 					break;
 				default:
-					_features = _features.Throttle(permit, queue, order);
+					_features = _features.Throttle(permit, queue, order, null, handler);
 					break;
+			}
+
+			static ValueTask OnRejected(ThrottleArgument argument, CancellationToken cancellation)
+			{
+				Terminal.Console.WriteLine($"[OnRejected] {argument.Name}");
+				return ValueTask.CompletedTask;
 			}
 		});
 
