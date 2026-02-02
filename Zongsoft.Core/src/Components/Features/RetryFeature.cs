@@ -83,17 +83,17 @@ public enum RetryBackoff
 public class RetryArgument : Argument
 {
 	#region 构造函数
-	public RetryArgument(int attempts, Exception exception) : base(exception) => this.Attempts = attempts;
-	public RetryArgument(int attempts, object value, Exception exception = null) : base(value, exception) => this.Attempts = attempts;
+	public RetryArgument(int attempted, Exception exception) : base(exception) => this.Attempted = attempted;
+	public RetryArgument(int attempted, object value, Exception exception = null) : base(value, exception) => this.Attempted = attempted;
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取已尝试的次数。</summary>
-	public int Attempts { get; }
+	public int Attempted { get; }
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => $"#{this.Attempts} {base.ToString()}";
+	public override string ToString() => $"#{this.Attempted} {base.ToString()}";
 	#endregion
 }
 
@@ -103,22 +103,22 @@ public class RetryArgument : Argument
 public class RetryArgument<T> : Argument<T>
 {
 	#region 构造函数
-	public RetryArgument(int attempts, Exception exception) : base(exception) => this.Attempts = attempts;
-	public RetryArgument(int attempts, T value, Exception exception = null) : base(value, exception) => this.Attempts = attempts;
+	public RetryArgument(int attempted, Exception exception) : base(exception) => this.Attempted = attempted;
+	public RetryArgument(int attempted, T value, Exception exception = null) : base(value, exception) => this.Attempted = attempted;
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取已尝试的次数。</summary>
-	public int Attempts { get; }
+	public int Attempted { get; }
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => $"#{this.Attempts} {base.ToString()}";
+	public override string ToString() => $"#{this.Attempted} {base.ToString()}";
 	#endregion
 
 	#region 类型转换
-	public static implicit operator RetryArgument(RetryArgument<T> argument) => argument is null ? default : new(argument.Attempts, argument.Value, argument.Exception);
-	public static explicit operator RetryArgument<T>(RetryArgument argument) => argument is null ? default : (argument.Value is T value ? new(argument.Attempts, value, argument.Exception) : throw new InvalidCastException());
+	public static implicit operator RetryArgument(RetryArgument<T> argument) => argument is null ? default : new(argument.Attempted, argument.Value, argument.Exception);
+	public static explicit operator RetryArgument<T>(RetryArgument argument) => argument is null ? default : (argument.Value is T value ? new(argument.Attempted, value, argument.Exception) : throw new InvalidCastException());
 	#endregion
 }
 
