@@ -49,8 +49,8 @@ internal class Program
 
 			context.Output.Write(content);
 
-			foreach(var observable in superviser)
-				context.Output.WriteLine(observable);
+			foreach(var supervisable in Get(superviser, context.Arguments))
+				context.Output.WriteLine(supervisable);
 		});
 
 		Terminal.Console.Executor.Command("reset", context =>
@@ -60,28 +60,12 @@ internal class Program
 
 		Terminal.Console.Executor.Command("open", context =>
 		{
-			if(context.Arguments.IsEmpty)
-			{
-				foreach(var supervisable in superviser)
-					((MySupervisable)supervisable).Open();
-
-				return;
-			}
-
 			foreach(var supervisable in Get(superviser, context.Arguments))
 				supervisable.Open();
 		});
 
 		Terminal.Console.Executor.Command("close", context =>
 		{
-			if(context.Arguments.IsEmpty)
-			{
-				foreach(var supervisable in superviser)
-					((MySupervisable)supervisable).Close();
-
-				return;
-			}
-
 			foreach(var supervisable in Get(superviser, context.Arguments))
 				supervisable.Close();
 		});
@@ -89,17 +73,6 @@ internal class Program
 		Terminal.Console.Executor.Command("error", context =>
 		{
 			var round = context.Options.GetValue("round", 1);
-
-			if(context.Arguments.IsEmpty)
-			{
-				foreach(var supervisable in superviser)
-				{
-					for(int i = 0; i < round; i++)
-						((MySupervisable)supervisable).Error();
-				}
-
-				return;
-			}
 
 			foreach(var supervisable in Get(superviser, context.Arguments))
 			{
@@ -110,28 +83,12 @@ internal class Program
 
 		Terminal.Console.Executor.Command("pause", context =>
 		{
-			if(context.Arguments.IsEmpty)
-			{
-				foreach(var supervisable in superviser)
-					((MySupervisable)supervisable).Pause();
-
-				return;
-			}
-
 			foreach(var supervisable in Get(superviser, context.Arguments))
 				supervisable.Pause();
 		});
 
 		Terminal.Console.Executor.Command("resume", context =>
 		{
-			if(context.Arguments.IsEmpty)
-			{
-				foreach(var supervisable in superviser)
-					((MySupervisable)supervisable).Resume();
-
-				return;
-			}
-
 			foreach(var supervisable in Get(superviser, context.Arguments))
 				supervisable.Resume();
 		});
@@ -162,20 +119,28 @@ internal class Program
 	private static IEnumerable<MySupervisable> Get(MySuperviser superviser, params string[] names)
 	{
 		if(names == null || names.Length == 0)
-			yield break;
-
-		for(int i = 0; i < names.Length; i++)
 		{
-			var observable = superviser[names[i]];
-
-			if(observable == null)
+			foreach(var observable in superviser)
 			{
-				Terminal.WriteLine($"The specified '{names[i]}' supervisable object does not exist.");
-				continue;
+				if(observable is MySupervisable supervisable)
+					yield return supervisable;
 			}
+		}
+		else
+		{
+			for(int i = 0; i < names.Length; i++)
+			{
+				var observable = superviser[names[i]];
 
-			if(observable is MySupervisable supervisable)
-				yield return supervisable;
+				if(observable == null)
+				{
+					Terminal.WriteLine($"The specified '{names[i]}' supervisable object does not exist.");
+					continue;
+				}
+
+				if(observable is MySupervisable supervisable)
+					yield return supervisable;
+			}
 		}
 	}
 }
