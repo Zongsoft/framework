@@ -37,7 +37,7 @@ using Zongsoft.Caching;
 
 namespace Zongsoft.Components;
 
-public partial class Superviser<T> : ISuperviser<T>, IDisposable
+public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>, IDisposable
 {
 	#region 事件声明
 	public event EventHandler<SupervisedEventArgs> Supervised;
@@ -57,6 +57,12 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	private MemoryCache _cache;
 	private MemoryCacheScanner _scanner;
 	private SupervisableOptions _options;
+
+	/*
+	 * 因为 MemoryCache 的 Contains、GetValue、TryGetValue 等方法会更新缓存项的最后访问时间，
+	 * 从而导致被观察对象的生命周期得以顺延，所以这里需要维护一个影子字典用于存储缓存项的引用，以供 Contains 和索引器使用。
+	 */
+	private ConcurrentDictionary<object, Observer> _shadows;
 	#endregion
 
 	#region 构造函数
@@ -69,8 +75,9 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		//确保内存缓存的扫描频率不能过高，因为扫描频率过高可能会导致监测精度不够
 		frequency = TimeSpanUtility.Clamp(frequency, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60));
 
-		_cache = new MemoryCache(frequency);
-		_scanner = new MemoryCacheScanner(_cache);
+		_cache = new(frequency);
+		_scanner = new(_cache);
+		_shadows = new();
 		_cache.Evicted += this.OnEvicted;
 		_scanner.Start();
 	}
@@ -80,7 +87,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	public int Count => _cache?.Count ?? 0;
 	public bool IsDisposed => _disposing == DISPOSED;
 	public bool IsDisposing => _disposing == DISPOSING;
-	public IObservable<T> this[object key] => key != null && _cache.TryGetValue(key, out var value) && value is Observer observer ? observer.Observable : null;
+	public IObservable<T> this[object key] => key != null && _shadows.TryGetValue(key, out var observer) ? observer.Observable : null;
 
 	/// <summary>获取或设置默认的监测选项设置。</summary>
 	public SupervisableOptions Options
@@ -92,7 +99,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 	#region 公共方法
 	public void Clear() => _cache?.Clear();
-	public bool Contains(object key) => key != null && _cache.Contains(key);
+	public bool Contains(object key) => key != null && _shadows.ContainsKey(key);
 
 	public IDisposable Supervise(IObservable<T> observable) => this.Supervise(null, observable);
 	public IDisposable Supervise(object key, IObservable<T> observable)
@@ -119,6 +126,8 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 		//如果初始化成功则表示是第一次监视该被观察对象
 		if(observer.Initialize(this, observable, key))
 		{
+			_shadows.TryAdd(key ?? observable, observer);
+
 			//订阅被观察对象的行为
 			observer.Subscribe();
 
@@ -147,6 +156,8 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	#region 驱逐事件
 	private void OnEvicted(object sender, CacheEvictedEventArgs args)
 	{
+		_shadows?.TryRemove(args.Key, out _);
+
 		if(args.Value is Observer observer)
 		{
 			var reason = args.Reason switch
@@ -201,6 +212,17 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	public override string ToString() => $"[{this.GetType().Name}] {_options}";
 	#endregion
 
+	#region 枚举遍历
+	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<IObservable<T>> GetEnumerator()
+	{
+		var observers = _shadows?.Values ?? throw new ObjectDisposedException(this.GetType().FullName);
+
+		foreach(var observer in observers)
+			yield return observer.Observable;
+	}
+	#endregion
+
 	#region 处置方法
 	public void Dispose()
 	{
@@ -223,6 +245,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	{
 		if(disposing)
 		{
+			_shadows?.Clear();
 			_scanner?.Stop();
 			_cache?.Clear();
 		}
@@ -232,6 +255,7 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 
 		_scanner?.Dispose();
 		_scanner = null;
+		_shadows = null;
 	}
 	#endregion
 
@@ -360,22 +384,3 @@ public partial class Superviser<T> : ISuperviser<T>, IDisposable
 	}
 	#endregion
 }
-
-#if NET9_0_OR_GREATER
-partial class Superviser<T> : IEnumerable<IObservable<T>>
-{
-	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<IObservable<T>> GetEnumerator()
-	{
-		var cache = _cache ?? throw new ObjectDisposedException(this.GetType().FullName);
-
-		foreach(var key in cache.Keys)
-		{
-			if(key is IObservable<T> observable)
-				yield return observable;
-			else if(cache.TryGetValue(key, out var value) && value is Observer observer)
-				yield return observer.Observable;
-		}
-	}
-}
-#endif
