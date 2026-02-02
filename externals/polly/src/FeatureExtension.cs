@@ -47,16 +47,24 @@ internal static partial class FeatureExtension
 		switch(feature)
 		{
 			case RetryFeature retry:
-				builder.AddRetry(retry.ToStrategy());
+				var retryOptions = retry.ToStrategy();
+				if(retryOptions != null)
+					builder.AddRetry(retryOptions);
 				break;
 			case TimeoutFeature timeout:
-				builder.AddTimeout(timeout.ToStrategy());
+				var timeoutOptions = timeout.ToStrategy();
+				if(timeoutOptions != null)
+					builder.AddTimeout(timeoutOptions);
 				break;
 			case ThrottleFeature throttle:
-				builder.AddRateLimiter(throttle.ToStrategy());
+				var throttleOptions = throttle.ToStrategy();
+				if(throttleOptions != null)
+					builder.AddRateLimiter(throttleOptions);
 				break;
 			case BreakerFeature breaker:
-				builder.AddCircuitBreaker(breaker.ToStrategy());
+				var breakerOptions = breaker.ToStrategy();
+				if(breakerOptions != null)
+					builder.AddCircuitBreaker(breakerOptions);
 				break;
 		}
 	}
@@ -69,19 +77,29 @@ internal static partial class FeatureExtension
 		switch(feature)
 		{
 			case RetryFeature retry:
-				builder.AddRetry(retry.ToStrategy<TResult>());
+				var retryOptions = retry.ToStrategy<TResult>();
+				if(retryOptions != null)
+					builder.AddRetry(retryOptions);
 				break;
 			case TimeoutFeature timeout:
-				builder.AddTimeout(timeout.ToStrategy());
+				var timeoutOptions = timeout.ToStrategy();
+				if(timeoutOptions != null)
+					builder.AddTimeout(timeoutOptions);
 				break;
 			case ThrottleFeature throttle:
-				builder.AddRateLimiter(throttle.ToStrategy());
+				var throttleOptions = throttle.ToStrategy();
+				if(throttleOptions != null)
+					builder.AddRateLimiter(throttleOptions);
 				break;
 			case BreakerFeature breaker:
-				builder.AddCircuitBreaker(breaker.ToStrategy<TResult>());
+				var breakerOptions = breaker.ToStrategy<TResult>();
+				if(breakerOptions != null)
+					builder.AddCircuitBreaker(breakerOptions);
 				break;
 			case FallbackFeature<TResult> fallback:
-				builder.AddFallback(fallback.ToStrategy());
+				var fallbackOptions = fallback.ToStrategy();
+				if(fallbackOptions != null)
+					builder.AddFallback(fallbackOptions);
 				break;
 		}
 	}
