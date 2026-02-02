@@ -33,20 +33,20 @@ namespace Zongsoft.Components.Features;
 
 public static class ThrottleFeatureExtension
 {
-	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleLimiter limiter = null) => Throttle(builder, permitLimit, 0, ThrottleQueueOrder.Oldest, limiter);
-	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null) => Throttle(builder, permitLimit, 0, queueOrder, limiter);
-	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleLimiter limiter = null) => Throttle(builder, permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter);
-	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null)
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null) => Throttle(builder, permitLimit, 0, ThrottleQueueOrder.Oldest, limiter, rejected);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null) => Throttle(builder, permitLimit, 0, queueOrder, limiter, rejected);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null) => Throttle(builder, permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter, rejected);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null)
 	{
 		if(builder == null)
-			return new FeatureBuilder(new ThrottleFeature(permitLimit, queueLimit, queueOrder, limiter));
+			return new FeatureBuilder(new ThrottleFeature(permitLimit, queueLimit, queueOrder, limiter, rejected));
 
 		if(builder is FeatureBuilder appender)
 		{
-			appender.Features.Add(new ThrottleFeature(permitLimit, queueLimit, queueOrder, limiter));
+			appender.Features.Add(new ThrottleFeature(permitLimit, queueLimit, queueOrder, limiter, rejected));
 			return appender;
 		}
 
-		return new FeatureBuilder([.. builder.Build(), new ThrottleFeature(permitLimit, queueLimit, queueOrder, limiter)]);
+		return new FeatureBuilder([.. builder.Build(), new ThrottleFeature(permitLimit, queueLimit, queueOrder, limiter, rejected)]);
 	}
 }
