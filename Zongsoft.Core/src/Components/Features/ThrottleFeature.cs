@@ -37,11 +37,12 @@ namespace Zongsoft.Components.Features;
 public class ThrottleFeature : IFeature
 {
 	#region 构造函数
-	public ThrottleFeature(int permitLimit = 0, int queueLimit = 0, ThrottleLimiter limiter = null)
+	public ThrottleFeature(int permitLimit = 0, int queueLimit = 0, ThrottleQueueOrder queueOrder = ThrottleQueueOrder.Oldest, ThrottleLimiter limiter = null)
 	{
 		this.Enabled = true;
 		this.PermitLimit = permitLimit <= 0 ? 1000 : permitLimit;
 		this.QueueLimit = Math.Max(queueLimit, 0);
+		this.QueueOrder = queueOrder;
 		this.Limiter = limiter;
 	}
 	#endregion
@@ -50,8 +51,15 @@ public class ThrottleFeature : IFeature
 	public bool Enabled { get; set; }
 	public int PermitLimit { get; set; }
 	public int QueueLimit { get; set; }
+	public ThrottleQueueOrder QueueOrder { get; set; }
 	public ThrottleLimiter Limiter { get; set; }
 	#endregion
+}
+
+public enum ThrottleQueueOrder
+{
+	Oldest,
+	Newest,
 }
 
 public class ThrottleLimiter

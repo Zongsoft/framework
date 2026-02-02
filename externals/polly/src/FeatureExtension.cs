@@ -206,6 +206,13 @@ internal static class FeatureExtension
 		if(feature.QueueLimit > 0)
 			strategy.DefaultRateLimiterOptions.QueueLimit = feature.QueueLimit;
 
+		strategy.DefaultRateLimiterOptions.QueueProcessingOrder = feature.QueueOrder switch
+		{
+			ThrottleQueueOrder.Oldest => QueueProcessingOrder.OldestFirst,
+			ThrottleQueueOrder.Newest => QueueProcessingOrder.NewestFirst,
+			_ => QueueProcessingOrder.OldestFirst,
+		};
+
 		switch(feature.Limiter)
 		{
 			case ThrottleLimiter.TokenBucket limiter:
@@ -213,6 +220,7 @@ internal static class FeatureExtension
 				{
 					TokenLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
 					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
+					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
 					TokensPerPeriod = limiter.Threshold,
 				};
 
@@ -223,6 +231,7 @@ internal static class FeatureExtension
 				{
 					PermitLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
 					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
+					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
 					Window = limiter.Window,
 				};
 
@@ -233,6 +242,7 @@ internal static class FeatureExtension
 				{
 					PermitLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
 					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
+					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
 					Window = limiter.Window,
 					SegmentsPerWindow = limiter.WindowSize,
 				};
