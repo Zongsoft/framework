@@ -135,7 +135,13 @@ internal class Program
 			static ValueTask OnRejected(ThrottleArgument argument, CancellationToken cancellation)
 			{
 				Console.Beep();
-				Terminal.Console.WriteLine($"[OnRejected] {argument.Name}" + Environment.NewLine + new String('*', 1000));
+
+				var content = CommandOutletContent.Create()
+					.AppendLine(CommandOutletColor.DarkCyan, new String('*', 80))
+					.AppendLine(CommandOutletColor.DarkYellow, $"[OnRejected] {argument.Name}")
+					.AppendLine(CommandOutletColor.DarkCyan, new String('*', 80));
+
+				Terminal.Console.WriteLine(content);
 				return ValueTask.CompletedTask;
 			}
 		});
