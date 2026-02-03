@@ -30,11 +30,14 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
 public interface IFeaturePipeline
 {
+	IEnumerable<IFeature> Features { get; }
+
 	void Execute<TArgument>(Action<TArgument> executor, TArgument argument);
 	void Execute<TArgument>(Action<TArgument, Collections.Parameters> executor, TArgument argument, Collections.Parameters parameters);
 	TResult Execute<TArgument, TResult>(Func<TArgument, TResult> executor, TArgument argument);

@@ -9,13 +9,7 @@ public class FeaturePipelineTest
 	[Fact]
 	public void TestGetPipeline()
 	{
-		var pipeline = FeaturePipelineManager.Instance.GetPipeline(null);
-		Assert.Null(pipeline);
-		pipeline = FeaturePipelineManager.Instance.GetPipeline(null, null);
-		Assert.Null(pipeline);
-		pipeline = FeaturePipelineManager.Instance.GetPipeline([]);
-		Assert.Null(pipeline);
-		pipeline = FeaturePipelineManager.Instance.GetPipeline(null, []);
+		var pipeline = FeaturePipelineBuilder.Instance.Build(null);
 		Assert.Null(pipeline);
 	}
 }

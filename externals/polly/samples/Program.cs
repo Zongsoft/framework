@@ -13,20 +13,17 @@ namespace Zongsoft.Externals.Polly.Samples;
 
 internal class Program
 {
+	private static readonly FeatureBuilder _features = new();
+
 	static void Main(string[] args)
 	{
-		var _features = Executor.Features;
-		Executor.Pipelines = FeaturePipelineManager.Instance;
+		Executor.Pipelines = FeaturePipelineBuilder.Instance;
 
 		Terminal.Console.Executor.Command("info", context =>
 		{
-			if(_features == null)
-				return;
-
 			var index = 0;
-			var features = _features.Build();
 
-			foreach(var feature in features)
+			foreach(var feature in _features)
 			{
 				var content = CommandOutletContent.Create()
 					.Append(CommandOutletColor.DarkGray, "[")
@@ -44,27 +41,24 @@ internal class Program
 
 		Terminal.Console.Executor.Command("reset", context =>
 		{
-			if(_features == null)
-				return;
-
 			if(context.Arguments.IsEmpty)
-				_features = null;
-
-			if(_features is FeatureBuilder builder)
 			{
-				var removables = new HashSet<IFeature>(context.Arguments.Count);
+				_features.Reset();
+				return;
+			}
 
-				foreach(var feature in builder.Features)
-				{
-					if(context.Arguments.Contains(GetFeatureName(feature)))
-						removables.Add(feature);
-				}
+			var removables = new HashSet<IFeature>(context.Arguments.Count);
 
-				if(removables.Count > 0)
-				{
-					foreach(var removable in removables)
-						builder.Features.Remove(removable);
-				}
+			foreach(var feature in _features)
+			{
+				if(context.Arguments.Contains(GetFeatureName(feature)))
+					removables.Add(feature);
+			}
+
+			if(removables.Count > 0)
+			{
+				foreach(var removable in removables)
+					_features.Features.Remove(removable);
 			}
 		});
 
@@ -79,7 +73,7 @@ internal class Program
 			if(delay <= TimeSpan.Zero)
 				delay = TimeSpan.FromSeconds(1);
 
-			_features = _features.Retry(
+			_features.Retry(
 				backoff,
 				new RetryLatency(delay, limit),
 				jitterable,
@@ -95,14 +89,14 @@ internal class Program
 			var period = context.Options.GetValue("period", TimeSpan.Zero);
 			var ratio = context.Options.GetValue("ratio", 0.5);
 
-			_features = _features.Breaker(
+			_features.Breaker(
 				duration, ratio, period, threshold
 			);
 		});
 
 		Terminal.Console.Executor.Command("timeout", context =>
 		{
-			_features = _features.Timeout(context.Arguments.GetValue(0, TimeSpan.FromSeconds(1)));
+			_features.Timeout(context.Arguments.GetValue(0, TimeSpan.FromSeconds(1)));
 		});
 
 		Terminal.Console.Executor.Command("throttle", context =>
@@ -114,23 +108,26 @@ internal class Program
 			var handler = context.Options.Switch("handled") ? Handler.Handle<ThrottleArgument>(OnRejected) : null;
 
 			if(context.Arguments.IsEmpty)
-				_features = _features.Throttle(permit, queue, order, null, handler);
+				_features.Throttle(permit, queue, order, null, handler);
 
 			foreach(var argument in context.Arguments)
 			{
 				switch(argument)
 				{
 					case "token":
-						_features = _features.Throttle(permit, queue, order, ThrottleLimiter.Token(context.Options.GetValue("threshold", 0), context.Options.GetValue("period", TimeSpan.Zero)), handler);
+						_features.Throttle(permit, queue, order, ThrottleLimiter.Token(context.Options.GetValue("threshold", 0), context.Options.GetValue("period", TimeSpan.Zero)), handler);
 						break;
 					case "fixed":
-						_features = _features.Throttle(permit, queue, order, ThrottleLimiter.Fixed(window), handler);
+						_features.Throttle(permit, queue, order, ThrottleLimiter.Fixed(window), handler);
 						break;
 					case "sliding":
-						_features = _features.Throttle(permit, queue, order, ThrottleLimiter.Sliding(window, context.Options.GetValue("windowSize", 0)), handler);
+						_features.Throttle(permit, queue, order, ThrottleLimiter.Sliding(window, context.Options.GetValue("windowSize", 0)), handler);
+						break;
+					case "concurrency":
+						_features.Throttle(permit, queue, order, null, handler);
 						break;
 					default:
-						Terminal.Console.WriteLine(CommandOutletColor.DarkMagenta, $"The specified ‘{argument}’ is an unrecognized limiter.");
+						Terminal.Console.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{argument}' is an unrecognized limiter.");
 						break;
 				}
 			}
@@ -140,9 +137,9 @@ internal class Program
 				Console.Beep();
 
 				var content = CommandOutletContent.Create()
-					.AppendLine(CommandOutletColor.DarkCyan, new String('*', 80))
-					.AppendLine(CommandOutletColor.DarkYellow, $"[OnRejected] {argument.Name}")
-					.AppendLine(CommandOutletColor.DarkCyan, new String('*', 80));
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.DarkYellow, $"[OnRejected] {argument.Name}".Justify(50))
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50));
 
 				Terminal.Console.WriteLine(content);
 				return ValueTask.CompletedTask;
@@ -151,7 +148,7 @@ internal class Program
 
 		Terminal.Console.Executor.Command("fallback", context =>
 		{
-			_features = _features.Fallback<object>(
+			_features.Fallback<object>(
 				OnFallback,
 				Predication.Predicate<object>(argument => true),
 				true);
@@ -159,31 +156,27 @@ internal class Program
 
 		Terminal.Console.Executor.Command("execute", async (context, cancellation) =>
 		{
-			if(_features == null)
-				return;
-
 			var executor = _features.Build<object, object>(OnExecute);
 			var parameters = Parameters
 				.Parameter("delay", context.Options.GetValue("delay", TimeSpan.Zero))
 				.Parameter("throw", context.Options.Switch("throw"))
 				.Parameter("result", context.Options.GetValue<object>("result", null));
 
-			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 			var round = context.Options.GetValue("round", 1);
 
 			if(context.Options.Switch("concurrency"))
 			{
-				Parallel.For(0, round, async i => await ExecuteAsync(executor, parameters, round, i, stopwatch, cancellation));
+				Parallel.For(0, round, async i => await ExecuteAsync(executor, parameters, round, i, cancellation));
 			}
 			else
 			{
 				for(int i = 0; i < round; i++)
-					await ExecuteAsync(executor, parameters, round, i, stopwatch, cancellation);
+					await ExecuteAsync(executor, parameters, round, i, cancellation);
 			}
 
-			static async ValueTask ExecuteAsync(IExecutor executor, Parameters parameters, int round, int index, System.Diagnostics.Stopwatch stopwatch, CancellationToken cancellation)
+			static async ValueTask ExecuteAsync(IExecutor executor, Parameters parameters, int round, int index, CancellationToken cancellation)
 			{
-				stopwatch.Restart();
+				var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 				try
 				{
@@ -199,15 +192,21 @@ internal class Program
 
 				stopwatch.Stop();
 
+				var content = CommandOutletContent.Create();
+
 				if(round > 1)
 				{
-					Terminal.Write(CommandOutletColor.DarkGray, "[");
-					Terminal.Write(CommandOutletColor.Red, $"{index + 1}");
-					Terminal.Write(CommandOutletColor.DarkGray, "] ");
+					content
+						.Append(CommandOutletColor.DarkGray, "[")
+						.Append(CommandOutletColor.Red, $"{index + 1}")
+						.Append(CommandOutletColor.DarkGray, "] ");
 				}
 
-				Terminal.Write(CommandOutletColor.DarkCyan, $"Elapsed: ");
-				Terminal.WriteLine(CommandOutletColor.Green, $"{stopwatch.Elapsed}");
+				content.Last
+					.Append(CommandOutletColor.DarkCyan, $"Elapsed: ")
+					.Append(CommandOutletColor.Green, $"{stopwatch.Elapsed}");
+
+				Terminal.WriteLine(content);
 			}
 		});
 
@@ -270,10 +269,9 @@ internal class Program
 		parameters.TryGetValue<int>("round", out var round);
 		parameters.TryGetValue<int>("index", out var index);
 
-		if(round > 0 && index == 0)
-			Terminal.WriteLine();
+		var content = round > 0 && index == 0 ? CommandOutletContent.Create().AppendLine() : CommandOutletContent.Create();
 
-		var content = CommandOutletContent.Create()
+		content.Last
 			.Append(CommandOutletColor.DarkGray, "[")
 			.Append(CommandOutletColor.Yellow, "OnExecute")
 			.Append(CommandOutletColor.DarkGray, " #")

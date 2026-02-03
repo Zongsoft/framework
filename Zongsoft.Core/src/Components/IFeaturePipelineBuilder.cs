@@ -28,31 +28,11 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public class FeatureBuilder : IFeatureBuilder, IEnumerable<IFeature>
+public interface IFeaturePipelineBuilder
 {
-	#region 构造函数
-	public FeatureBuilder(params IEnumerable<IFeature> features)
-	{
-		this.Features = [..features];
-	}
-	#endregion
-
-	#region 公共属性
-	public List<IFeature> Features { get; }
-	#endregion
-
-	#region 公共方法
-	public void Reset() => this.Features.Clear();
-	#endregion
-
-	#region 显式实现
-	IEnumerable<IFeature> IFeatureBuilder.Build() => this.Features;
-	IEnumerator IEnumerable.GetEnumerator() => this.Features.GetEnumerator();
-	public IEnumerator<IFeature> GetEnumerator() => this.Features.GetEnumerator();
-	#endregion
+	IFeaturePipeline Build(IEnumerable<IFeature> features);
 }
