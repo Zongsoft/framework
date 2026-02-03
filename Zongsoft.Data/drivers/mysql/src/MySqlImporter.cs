@@ -207,7 +207,7 @@ public class MySqlImporter : DataImporterBase
 		FileName = filePath,
 		CharacterSet = "UTF8",
 		LineTerminator = "\n",
-		FieldTerminator = ",",
+		FieldTerminator = "</>",
 		NumberOfLinesToSkip = 1,
 		Local = true,
 		ConflictOption = options.ConstraintIgnored ? MySqlBulkLoaderConflictOption.Ignore : MySqlBulkLoaderConflictOption.None,
