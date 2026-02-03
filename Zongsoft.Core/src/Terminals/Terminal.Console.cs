@@ -58,13 +58,17 @@ partial class Terminal
 		#endregion
 
 		#region 同步变量
+		#if NET9_0_OR_GREATER
+		private readonly System.Threading.Lock _syncRoot;
+		#else
 		private readonly object _syncRoot;
+		#endif
 		#endregion
 
 		#region 私有构造
 		private ConsoleTerminal()
 		{
-			_syncRoot = new object();
+			_syncRoot = new();
 			this.Executor = new ConsoleExecutor(this);
 
 			//if(!System.Diagnostics.Debugger.IsAttached)
@@ -137,8 +141,8 @@ partial class Terminal
 				System.Console.ResetColor();
 		}
 
-		public void Write(string text) => System.Console.Write(text);
-		public void Write<T>(T value) => System.Console.Write($"{value}");
+		public void Write(string text) => Write(text, CommandOutletStyles.None);
+		public void Write<T>(T value) => Write(value, CommandOutletStyles.None);
 		public void Write(CommandOutletContent content) => this.Write(content, false);
 		public void Write<T>(CommandOutletColor foregroundColor, T value) => Write(value, foregroundColor);
 		public void Write<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => Write(value, foregroundColor, backgroundColor);
@@ -147,8 +151,8 @@ partial class Terminal
 		public void Write<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => Write(value, style, foregroundColor, backgroundColor);
 
 		public void WriteLine() => System.Console.WriteLine();
-		public void WriteLine(string text) => System.Console.WriteLine(text);
-		public void WriteLine<T>(T value) => System.Console.WriteLine($"{value}");
+		public void WriteLine(string text) => WriteLine(text, CommandOutletStyles.None);
+		public void WriteLine<T>(T value) => WriteLine(value, CommandOutletStyles.None);
 		public void WriteLine(CommandOutletContent content) => this.Write(content, true);
 		public void WriteLine<T>(CommandOutletColor foregroundColor, T value) => WriteLine(value, foregroundColor);
 		public void WriteLine<T>(CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value) => WriteLine(value, foregroundColor, backgroundColor);
