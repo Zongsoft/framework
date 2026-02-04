@@ -73,39 +73,42 @@ partial class FeatureExtension
 		switch(feature.Limiter)
 		{
 			case ThrottleLimiter.TokenBucket limiter:
-				var tokenOptions = new TokenBucketRateLimiterOptions()
+				var tokenLimiter = new TokenBucketRateLimiter(new()
 				{
 					TokenLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
 					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
 					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
 					TokensPerPeriod = limiter.Threshold > 0 ? limiter.Threshold : TOKEN_THRESHOLD,
 					ReplenishmentPeriod = limiter.Period > TimeSpan.Zero ? limiter.Period : TimeSpan.FromSeconds(WINDOW_SECONDS),
-				};
+				});
 
-				strategy.RateLimiter = argument => (new TokenBucketRateLimiter(tokenOptions)).AcquireAsync(cancellationToken: argument.Context.CancellationToken);
+				strategy.Name = nameof(TokenBucketRateLimiter);
+				strategy.RateLimiter = argument => tokenLimiter.AcquireAsync(1, argument.Context.CancellationToken);
 				break;
 			case ThrottleLimiter.FixedWindown limiter:
-				var fixedOptions = new FixedWindowRateLimiterOptions()
+				var fixedLimiter = new FixedWindowRateLimiter(new()
 				{
 					PermitLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
 					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
 					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
 					Window = limiter.Window > TimeSpan.Zero ? limiter.Window : TimeSpan.FromSeconds(WINDOW_SECONDS),
-				};
+				});
 
-				strategy.RateLimiter = argument => (new FixedWindowRateLimiter(fixedOptions)).AcquireAsync(cancellationToken: argument.Context.CancellationToken);
+				strategy.Name = nameof(FixedWindowRateLimiter);
+				strategy.RateLimiter = argument => fixedLimiter.AcquireAsync(1, argument.Context.CancellationToken);
 				break;
 			case ThrottleLimiter.SlidingWindown limiter:
-				var slidingOptions = new SlidingWindowRateLimiterOptions()
+				var slidingLimiter = new SlidingWindowRateLimiter(new()
 				{
 					PermitLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
 					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
 					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
 					Window = limiter.Window > TimeSpan.Zero ? limiter.Window : TimeSpan.FromSeconds(WINDOW_SECONDS),
 					SegmentsPerWindow = limiter.WindowSize > 0 ? limiter.WindowSize : WINDOW_SIZE,
-				};
+				});
 
-				strategy.RateLimiter = argument => (new SlidingWindowRateLimiter(slidingOptions)).AcquireAsync(cancellationToken: argument.Context.CancellationToken);
+				strategy.Name = nameof(SlidingWindowRateLimiter);
+				strategy.RateLimiter = argument => slidingLimiter.AcquireAsync(1, argument.Context.CancellationToken);
 				break;
 		}
 
