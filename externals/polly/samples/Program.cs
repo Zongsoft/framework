@@ -104,7 +104,6 @@ internal class Program
 			var permit = context.Options.GetValue("permit", 1);
 			var queue = context.Options.GetValue("queue", 0);
 			var order = context.Options.GetValue("order", ThrottleQueueOrder.Oldest);
-			var window = context.Options.GetValue("window", TimeSpan.FromSeconds(1));
 			var handler = context.Options.Switch("handled") ? Handler.Handle<ThrottleArgument>(OnRejected) : null;
 
 			if(context.Arguments.IsEmpty)
@@ -115,13 +114,13 @@ internal class Program
 				switch(argument)
 				{
 					case "token":
-						_features.Throttle(permit, queue, order, ThrottleLimiter.Token(context.Options.GetValue("threshold", 0), context.Options.GetValue("period", TimeSpan.Zero)), handler);
+						_features.Throttle(permit, queue, order, ThrottleLimiter.Token(context.Options.GetValue("value", 0), context.Options.GetValue("period", TimeSpan.Zero)), handler);
 						break;
 					case "fixed":
-						_features.Throttle(permit, queue, order, ThrottleLimiter.Fixed(window), handler);
+						_features.Throttle(permit, queue, order, ThrottleLimiter.Fixed(context.Options.GetValue("window", TimeSpan.Zero)), handler);
 						break;
 					case "sliding":
-						_features.Throttle(permit, queue, order, ThrottleLimiter.Sliding(window, context.Options.GetValue("windowSize", 0)), handler);
+						_features.Throttle(permit, queue, order, ThrottleLimiter.Sliding(context.Options.GetValue("window", TimeSpan.Zero), context.Options.GetValue("segments", 0)), handler);
 						break;
 					case "concurrency":
 						_features.Throttle(permit, queue, order, null, handler);

@@ -105,43 +105,54 @@ public class ThrottleLease : IDisposable
 
 public class ThrottleLimiter
 {
-	public static TokenBucket Token(int threshold, TimeSpan period) => new(threshold, period);
+	public static TokenBucket Token(int value, TimeSpan period) => new(value, period);
 	public static FixedWindown Fixed(TimeSpan window) => new(window);
 	public static FixedWindown Fixed(int window) => new(TimeSpan.FromMilliseconds(window));
-	public static SlidingWindown Sliding(TimeSpan window, int windowSize = 0) => new(window, windowSize);
-	public static SlidingWindown Sliding(int window, int windowSize = 0) => new(TimeSpan.FromMilliseconds(window), windowSize);
+	public static SlidingWindown Sliding(TimeSpan window, int windowSegments = 0) => new(window, windowSegments);
+	public static SlidingWindown Sliding(int window, int windowSegments = 0) => new(TimeSpan.FromMilliseconds(window), windowSegments);
 
+	/// <summary>表示令牌桶限制器。</summary>
 	public class TokenBucket : ThrottleLimiter
 	{
-		public TokenBucket(int threshold, TimeSpan period)
+		public TokenBucket(int value, TimeSpan period)
 		{
-			this.Threshold = threshold;
+			this.Value = value;
 			this.Period = period;
 		}
 
-		public int Threshold { get; set; }
+		/// <summary>获取或设置每个周期补充的令牌数。</summary>
+		public int Value { get; set; }
+		/// <summary>获取或设置令牌补充周期。</summary>
 		public TimeSpan Period { get; set; }
-		public override string ToString() => $"{nameof(TokenBucket)}({this.Threshold}@{this.Period})";
+
+		public override string ToString() => $"{nameof(TokenBucket)}({this.Value}@{this.Period})";
 	}
 
+	/// <summary>表示固定窗口限制器。</summary>
 	public class FixedWindown : ThrottleLimiter
 	{
 		public FixedWindown(TimeSpan window) => this.Window = window;
 
+		/// <summary>获取或设置窗口时长。</summary>
 		public TimeSpan Window { get; set; }
+
 		public override string ToString() => $"{nameof(FixedWindown)}({this.Window})";
 	}
 
+	/// <summary>表示滑动窗口限制器。</summary>
 	public class SlidingWindown : ThrottleLimiter
 	{
-		public SlidingWindown(TimeSpan window, int windowSize = 0)
+		public SlidingWindown(TimeSpan window, int windowSegments = 0)
 		{
 			this.Window = window;
-			this.WindowSize = windowSize;
+			this.WindowSegments = windowSegments;
 		}
 
-		public int WindowSize { get; set; }
+		/// <summary>获取或设置窗口分段数。</summary>
+		public int WindowSegments { get; set; }
+		/// <summary>获取或设置窗口时长。</summary>
 		public TimeSpan Window { get; set; }
-		public override string ToString() => $"{nameof(SlidingWindown)}({this.WindowSize}@{this.Window})";
+
+		public override string ToString() => $"{nameof(SlidingWindown)}({this.WindowSegments}@{this.Window})";
 	}
 }

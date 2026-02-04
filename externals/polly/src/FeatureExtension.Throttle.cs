@@ -43,11 +43,14 @@ namespace Zongsoft.Externals.Polly;
 
 partial class FeatureExtension
 {
+	#region 常量定义
 	private const int PERMIT_LIMIT = 1000;
-	private const int TOKEN_THRESHOLD = 1;
-	private const int WINDOW_SIZE = 1;
+	private const int TOKENS_VALUE = 1;
+	private const int WINDOW_SEGMENTS = 3;
 	private const int WINDOW_SECONDS = 1;
+	#endregion
 
+	#region 公共方法
 	public static RateLimiterStrategyOptions ToStrategy(this ThrottleFeature feature)
 	{
 		if(!feature.Usable())
@@ -78,7 +81,7 @@ partial class FeatureExtension
 					TokenLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
 					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
 					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
-					TokensPerPeriod = limiter.Threshold > 0 ? limiter.Threshold : TOKEN_THRESHOLD,
+					TokensPerPeriod = limiter.Value > 0 ? limiter.Value : TOKENS_VALUE,
 					ReplenishmentPeriod = limiter.Period > TimeSpan.Zero ? limiter.Period : TimeSpan.FromSeconds(WINDOW_SECONDS),
 				});
 
@@ -104,7 +107,7 @@ partial class FeatureExtension
 					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
 					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
 					Window = limiter.Window > TimeSpan.Zero ? limiter.Window : TimeSpan.FromSeconds(WINDOW_SECONDS),
-					SegmentsPerWindow = limiter.WindowSize > 0 ? limiter.WindowSize : WINDOW_SIZE,
+					SegmentsPerWindow = limiter.WindowSegments > 0 ? limiter.WindowSegments : WINDOW_SEGMENTS,
 				});
 
 				strategy.Name = nameof(SlidingWindowRateLimiter);
@@ -114,7 +117,9 @@ partial class FeatureExtension
 
 		return strategy;
 	}
+	#endregion
 
+	#region 嵌套子类
 	private sealed class PollyThrottleArgument(OnRateLimiterRejectedArguments arguments) : ThrottleArgument(arguments.Context.OperationKey, new PollyThrottleLease(arguments.Lease))
 	{
 	}
@@ -150,4 +155,5 @@ partial class FeatureExtension
 			}
 		}
 	}
+	#endregion
 }
