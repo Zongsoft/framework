@@ -44,7 +44,6 @@ namespace Zongsoft.Externals.Polly;
 partial class FeatureExtension
 {
 	#region 常量定义
-	private const int PERMIT_LIMIT = 1000;
 	private const int TOKENS_VALUE = 1;
 	private const int WINDOW_SEGMENTS = 3;
 	private const int WINDOW_SECONDS = 1;
@@ -61,26 +60,14 @@ partial class FeatureExtension
 		if(feature.Rejected != null)
 			strategy.OnRejected = arguments => feature.Rejected.HandleAsync(new PollyThrottleArgument(arguments), arguments.Context.CancellationToken);
 
-		if(feature.PermitLimit > 0)
-			strategy.DefaultRateLimiterOptions.PermitLimit = feature.PermitLimit > 0 ? feature.PermitLimit : PERMIT_LIMIT;
-		if(feature.QueueLimit > 0)
-			strategy.DefaultRateLimiterOptions.QueueLimit = Math.Max(feature.QueueLimit, 0);
-
-		strategy.DefaultRateLimiterOptions.QueueProcessingOrder = feature.QueueOrder switch
-		{
-			ThrottleQueueOrder.Oldest => QueueProcessingOrder.OldestFirst,
-			ThrottleQueueOrder.Newest => QueueProcessingOrder.NewestFirst,
-			_ => QueueProcessingOrder.OldestFirst,
-		};
-
 		switch(feature.Limiter)
 		{
 			case ThrottleLimiter.TokenBucket limiter:
 				var tokenLimiter = new TokenBucketRateLimiter(new()
 				{
-					TokenLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
-					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
-					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
+					TokenLimit = GetPermitLimit(feature),
+					QueueLimit = GetQueueLimit(feature),
+					QueueProcessingOrder = GetQueueOrder(feature.QueueOrder),
 					TokensPerPeriod = limiter.Value > 0 ? limiter.Value : TOKENS_VALUE,
 					ReplenishmentPeriod = limiter.Period > TimeSpan.Zero ? limiter.Period : TimeSpan.FromSeconds(WINDOW_SECONDS),
 				});
@@ -91,9 +78,9 @@ partial class FeatureExtension
 			case ThrottleLimiter.FixedWindown limiter:
 				var fixedLimiter = new FixedWindowRateLimiter(new()
 				{
-					PermitLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
-					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
-					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
+					PermitLimit = GetPermitLimit(feature),
+					QueueLimit = GetQueueLimit(feature),
+					QueueProcessingOrder = GetQueueOrder(feature.QueueOrder),
 					Window = limiter.Window > TimeSpan.Zero ? limiter.Window : TimeSpan.FromSeconds(WINDOW_SECONDS),
 				});
 
@@ -103,9 +90,9 @@ partial class FeatureExtension
 			case ThrottleLimiter.SlidingWindown limiter:
 				var slidingLimiter = new SlidingWindowRateLimiter(new()
 				{
-					PermitLimit = strategy.DefaultRateLimiterOptions.PermitLimit,
-					QueueLimit = strategy.DefaultRateLimiterOptions.QueueLimit,
-					QueueProcessingOrder = strategy.DefaultRateLimiterOptions.QueueProcessingOrder,
+					PermitLimit = GetPermitLimit(feature),
+					QueueLimit = GetQueueLimit(feature),
+					QueueProcessingOrder = GetQueueOrder(feature.QueueOrder),
 					Window = limiter.Window > TimeSpan.Zero ? limiter.Window : TimeSpan.FromSeconds(WINDOW_SECONDS),
 					SegmentsPerWindow = limiter.WindowSegments > 0 ? limiter.WindowSegments : WINDOW_SEGMENTS,
 				});
@@ -113,11 +100,25 @@ partial class FeatureExtension
 				strategy.Name = nameof(SlidingWindowRateLimiter);
 				strategy.RateLimiter = argument => slidingLimiter.AcquireAsync(1, argument.Context.CancellationToken);
 				break;
+			default:
+				strategy.DefaultRateLimiterOptions.PermitLimit = GetPermitLimit(feature);
+				strategy.DefaultRateLimiterOptions.QueueLimit = GetQueueLimit(feature);
+				strategy.DefaultRateLimiterOptions.QueueProcessingOrder = GetQueueOrder(feature.QueueOrder);
+				break;
 		}
 
 		return strategy;
 	}
 	#endregion
+
+	private static int GetPermitLimit(ThrottleFeature feature) => feature != null && feature.PermitLimit > 0 ? feature.PermitLimit : RateLimiterStrategyOptions.PERMIT_LIMIT;
+	private static int GetQueueLimit(ThrottleFeature feature) => feature != null && feature.QueueLimit > 0 ? feature.QueueLimit : RateLimiterStrategyOptions.QUEUE_LIMIT;
+	private static QueueProcessingOrder GetQueueOrder(ThrottleQueueOrder value) => value switch
+	{
+		ThrottleQueueOrder.Oldest => QueueProcessingOrder.OldestFirst,
+		ThrottleQueueOrder.Newest => QueueProcessingOrder.NewestFirst,
+		_ => QueueProcessingOrder.OldestFirst,
+	};
 
 	#region 嵌套子类
 	private sealed class PollyThrottleArgument(OnRateLimiterRejectedArguments arguments) : ThrottleArgument(arguments.Context.OperationKey, new PollyThrottleLease(arguments.Lease))

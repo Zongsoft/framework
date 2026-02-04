@@ -31,11 +31,22 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示某种功能或特性的接口。
-/// </summary>
-public interface IFeature
+[Serializable]
+public class FeatureException : ApplicationException
 {
-	/// <summary>获取或设置一个值，指示是否启用该功能或特性。</summary>
-	bool Enabled { get; set; }
+	#region 构造函数
+	public FeatureException() { }
+	public FeatureException(string message) : this(null, message, null) { }
+	public FeatureException(string message, Exception innerException) : this(null, message, innerException) { }
+	public FeatureException(string identifier, string message) : this(identifier, message, null) { }
+	public FeatureException(string identifier, string message, Exception innerException) : base(message, innerException)
+	{
+		this.Identifier = identifier;
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取功能的标识。</summary>
+	public string Identifier { get; }
+	#endregion
 }

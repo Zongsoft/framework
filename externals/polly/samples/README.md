@@ -1,5 +1,7 @@
 ## 限速限流
 
+> 💡 提示：如果不希望触发 `ThrottleException` 异常，可启用 `throttle` 命令的 `--handled` 选项。
+
 ### 并发限制
 
 依次执行下列命令：

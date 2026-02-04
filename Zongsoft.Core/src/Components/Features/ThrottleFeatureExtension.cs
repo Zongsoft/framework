@@ -33,10 +33,15 @@ namespace Zongsoft.Components.Features;
 
 public static class ThrottleFeatureExtension
 {
-	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null) => Throttle(builder, permitLimit, 0, ThrottleQueueOrder.Oldest, limiter, rejected);
-	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null) => Throttle(builder, permitLimit, 0, queueOrder, limiter, rejected);
-	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null) => Throttle(builder, permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter, rejected);
-	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null)
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, 0, ThrottleQueueOrder.Oldest, null, rejected);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleQueueOrder queueOrder, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, 0, queueOrder, null, rejected);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, queueLimit, ThrottleQueueOrder.Oldest, null, rejected);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, queueLimit, queueOrder, null, rejected);
+
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleLimiter limiter, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, 0, ThrottleQueueOrder.Oldest, limiter, rejected);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, 0, queueOrder, limiter, rejected);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleLimiter limiter, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter, rejected);
+	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter, IHandler<ThrottleArgument, bool> rejected = null)
 	{
 		if(builder == null)
 			return new FeatureBuilder(new ThrottleFeature(permitLimit, queueLimit, queueOrder, limiter, rejected));

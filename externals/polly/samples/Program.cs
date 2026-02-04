@@ -104,7 +104,7 @@ internal class Program
 			var permit = context.Options.GetValue("permit", 1);
 			var queue = context.Options.GetValue("queue", 0);
 			var order = context.Options.GetValue("order", ThrottleQueueOrder.Oldest);
-			var handler = context.Options.Switch("handled") ? Handler.Handle<ThrottleArgument>(OnRejected) : null;
+			var handler = context.Options.Switch("handled") ? Handler.Handle<ThrottleArgument, bool>(OnRejected) : null;
 
 			if(context.Arguments.IsEmpty)
 				_features.Throttle(permit, queue, order, null, handler);
@@ -123,7 +123,7 @@ internal class Program
 						_features.Throttle(permit, queue, order, ThrottleLimiter.Sliding(context.Options.GetValue("window", TimeSpan.Zero), context.Options.GetValue("segments", 0)), handler);
 						break;
 					case "concurrency":
-						_features.Throttle(permit, queue, order, null, handler);
+						_features.Throttle(permit, queue, order, handler);
 						break;
 					default:
 						Terminal.Console.WriteLine(CommandOutletColor.DarkMagenta, $"The specified '{argument}' is an unrecognized limiter.");
@@ -131,7 +131,7 @@ internal class Program
 				}
 			}
 
-			static ValueTask OnRejected(ThrottleArgument argument, CancellationToken cancellation)
+			static ValueTask<bool> OnRejected(ThrottleArgument argument, CancellationToken cancellation)
 			{
 				Console.Beep();
 
@@ -141,7 +141,7 @@ internal class Program
 					.AppendLine(CommandOutletColor.Cyan, new String('·', 50));
 
 				Terminal.Console.WriteLine(content);
-				return ValueTask.CompletedTask;
+				return ValueTask.FromResult(true);
 			}
 		});
 

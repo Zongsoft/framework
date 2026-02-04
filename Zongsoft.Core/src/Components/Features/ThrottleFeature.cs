@@ -38,8 +38,8 @@ namespace Zongsoft.Components.Features;
 public class ThrottleFeature : IFeature
 {
 	#region 构造函数
-	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null) : this(permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter, rejected) { }
-	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument> rejected = null)
+	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument, bool> rejected = null) : this(permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter, rejected) { }
+	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument, bool> rejected = null)
 	{
 		this.Enabled = true;
 		this.PermitLimit = permitLimit > 0 ? permitLimit : 1000;
@@ -56,7 +56,7 @@ public class ThrottleFeature : IFeature
 	public int QueueLimit { get; set; }
 	public ThrottleQueueOrder QueueOrder { get; set; }
 	public ThrottleLimiter Limiter { get; set; }
-	public IHandler<ThrottleArgument> Rejected { get; set; }
+	public IHandler<ThrottleArgument, bool> Rejected { get; set; }
 	#endregion
 }
 

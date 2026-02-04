@@ -59,7 +59,7 @@ internal static partial class FeatureExtension
 			case ThrottleFeature throttle:
 				var throttleOptions = throttle.ToStrategy();
 				if(throttleOptions != null)
-					builder.AddRateLimiter(throttleOptions);
+					builder.AddThrottle(throttleOptions);
 				break;
 			case BreakerFeature breaker:
 				var breakerOptions = breaker.ToStrategy();
@@ -89,7 +89,7 @@ internal static partial class FeatureExtension
 			case ThrottleFeature throttle:
 				var throttleOptions = throttle.ToStrategy();
 				if(throttleOptions != null)
-					builder.AddRateLimiter(throttleOptions);
+					builder.AddThrottle(throttleOptions);
 				break;
 			case BreakerFeature breaker:
 				var breakerOptions = breaker.ToStrategy<TResult>();

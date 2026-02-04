@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.2.0</Version>
+		<Version>0.3.0</Version>
 		<Product>Zongsoft Polly Library</Product>
 		<Description>This is a library about the Polly SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Polly</RootNamespace>
@@ -30,7 +30,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.12.3" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.34.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
