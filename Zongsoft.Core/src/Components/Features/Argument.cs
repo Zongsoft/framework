@@ -31,29 +31,30 @@ using System;
 
 namespace Zongsoft.Components.Features;
 
-public class Argument
+public abstract class ArgumentBase
 {
 	#region 构造函数
-	public Argument(Exception exception)
-	{
-		this.Value = null;
-		this.Exception = exception;
-	}
-
-	public Argument(object value, Exception exception = null)
-	{
-		this.Value = value;
-		this.Exception = exception;
-	}
+	protected ArgumentBase(Exception exception = null) => this.Exception = exception;
 	#endregion
 
 	#region 公共属性
-	public object Value { get; }
 	public Exception Exception { get; }
 	#endregion
 
 	#region 公共方法
 	public bool HasException(out Exception exception) => (exception = this.Exception) is not null;
+	#endregion
+}
+
+public class Argument : ArgumentBase
+{
+	#region 构造函数
+	public Argument(Exception exception) : base(exception) => this.Value = null;
+	public Argument(object value, Exception exception = null) : base(exception) => this.Value = value;
+	#endregion
+
+	#region 公共属性
+	public object Value { get; }
 	#endregion
 
 	#region 重写方法
@@ -61,29 +62,15 @@ public class Argument
 	#endregion
 }
 
-public class Argument<T>
+public class Argument<T> : ArgumentBase
 {
 	#region 构造函数
-	public Argument(Exception exception)
-	{
-		this.Value = default;
-		this.Exception = exception;
-	}
-
-	public Argument(T value, Exception exception = null)
-	{
-		this.Value = value;
-		this.Exception = exception;
-	}
+	public Argument(Exception exception) : base(exception) => this.Value = default;
+	public Argument(T value, Exception exception = null) : base(exception) => this.Value = value;
 	#endregion
 
 	#region 公共属性
 	public T Value { get; }
-	public Exception Exception { get; }
-	#endregion
-
-	#region 公共方法
-	public bool HasException(out Exception exception) => (exception = this.Exception) is not null;
 	#endregion
 
 	#region 重写方法
