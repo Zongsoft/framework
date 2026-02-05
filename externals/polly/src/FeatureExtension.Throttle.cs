@@ -38,6 +38,7 @@ using Polly.RateLimiting;
 
 using Zongsoft.Components;
 using Zongsoft.Components.Features;
+using Zongsoft.Externals.Polly.Strategies;
 
 namespace Zongsoft.Externals.Polly;
 
@@ -50,12 +51,12 @@ partial class FeatureExtension
 	#endregion
 
 	#region 公共方法
-	public static RateLimiterStrategyOptions ToStrategy(this ThrottleFeature feature)
+	public static ThrottleStrategyOptions ToStrategy(this ThrottleFeature feature)
 	{
 		if(!feature.Usable())
 			return null;
 
-		var options = new RateLimiterStrategyOptions();
+		var options = new ThrottleStrategyOptions();
 
 		if(feature.Rejected != null)
 			options.OnRejected = arguments => feature.Rejected.HandleAsync(new PollyThrottleArgument(arguments), arguments.Context.CancellationToken);
@@ -111,14 +112,16 @@ partial class FeatureExtension
 	}
 	#endregion
 
-	private static int GetPermitLimit(ThrottleFeature feature) => feature != null && feature.PermitLimit > 0 ? feature.PermitLimit : RateLimiterStrategyOptions.PERMIT_LIMIT;
-	private static int GetQueueLimit(ThrottleFeature feature) => feature != null && feature.QueueLimit > 0 ? feature.QueueLimit : RateLimiterStrategyOptions.QUEUE_LIMIT;
+	#region 私有方法
+	private static int GetPermitLimit(ThrottleFeature feature) => feature != null && feature.PermitLimit > 0 ? feature.PermitLimit : ThrottleStrategyOptions.PERMIT_LIMIT;
+	private static int GetQueueLimit(ThrottleFeature feature) => feature != null && feature.QueueLimit > 0 ? feature.QueueLimit : ThrottleStrategyOptions.QUEUE_LIMIT;
 	private static QueueProcessingOrder GetQueueOrder(ThrottleQueueOrder value) => value switch
 	{
 		ThrottleQueueOrder.Oldest => QueueProcessingOrder.OldestFirst,
 		ThrottleQueueOrder.Newest => QueueProcessingOrder.NewestFirst,
 		_ => QueueProcessingOrder.OldestFirst,
 	};
+	#endregion
 
 	#region 嵌套子类
 	private sealed class PollyThrottleArgument(OnRateLimiterRejectedArguments arguments) : ThrottleArgument(arguments.Context.OperationKey, new PollyThrottleLease(arguments.Lease))

@@ -34,9 +34,9 @@ using System.Threading.RateLimiting;
 using Polly;
 using Polly.RateLimiting;
 
-namespace Zongsoft.Externals.Polly;
+namespace Zongsoft.Externals.Polly.Strategies;
 
-internal sealed class RateLimiterStrategyOptions : ResilienceStrategyOptions
+internal sealed class ThrottleStrategyOptions : ResilienceStrategyOptions
 {
 	#region 常量定义
 	internal const int QUEUE_LIMIT = 0;
@@ -44,7 +44,7 @@ internal sealed class RateLimiterStrategyOptions : ResilienceStrategyOptions
 	#endregion
 
 	#region 构造函数
-	public RateLimiterStrategyOptions()
+	public ThrottleStrategyOptions()
 	{
 		this.Name = "RateLimiter";
 		this.DefaultRateLimiterOptions = new()

@@ -36,13 +36,13 @@ using Polly;
 using Polly.Telemetry;
 using Polly.RateLimiting;
 
-namespace Zongsoft.Externals.Polly;
+namespace Zongsoft.Externals.Polly.Strategies;
 
-internal sealed class RateLimiterStrategy : ResilienceStrategy, IDisposable, IAsyncDisposable
+internal sealed class ThrottleStrategy : ResilienceStrategy, IDisposable, IAsyncDisposable
 {
 	private readonly ResilienceStrategyTelemetry _telemetry;
 
-	public RateLimiterStrategy(
+	public ThrottleStrategy(
 		Func<RateLimiterArguments, ValueTask<RateLimitLease>> limiter,
 		Func<OnRateLimiterRejectedArguments, ValueTask<bool>> onRejected,
 		ResilienceStrategyTelemetry telemetry, RateLimiter wrapper)
@@ -112,9 +112,9 @@ internal sealed class RateLimiterStrategy : ResilienceStrategy, IDisposable, IAs
 	}
 }
 
-internal static class RateLimiterStrategyExtension
+internal static class ThrottleStrategyExtension
 {
-	public static ResiliencePipelineBuilderBase AddThrottle(this ResiliencePipelineBuilderBase builder, RateLimiterStrategyOptions options)
+	public static ResiliencePipelineBuilderBase AddThrottle(this ResiliencePipelineBuilderBase builder, ThrottleStrategyOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(builder);
 		ArgumentNullException.ThrowIfNull(options);
@@ -131,7 +131,7 @@ internal static class RateLimiterStrategyExtension
 				limiter = args => defaultLimiter.AcquireAsync(1, args.Context.CancellationToken);
 			}
 
-			return new RateLimiterStrategy(
+			return new ThrottleStrategy(
 				limiter,
 				options.OnRejected,
 				context.Telemetry,

@@ -36,7 +36,6 @@ using Polly;
 
 using Zongsoft.Components;
 using Zongsoft.Collections;
-using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Externals.Polly;
 

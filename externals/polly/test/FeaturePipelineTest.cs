@@ -9,7 +9,7 @@ public class FeaturePipelineTest
 	[Fact]
 	public void TestGetPipeline()
 	{
-		var pipeline = FeaturePipelineBuilder.Instance.Build(null);
+		var pipeline = FeaturePipelineBuilder.Instance.Build<object>(null);
 		Assert.Null(pipeline);
 	}
 }
