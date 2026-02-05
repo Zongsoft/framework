@@ -84,36 +84,36 @@ public static class Executor
 	private sealed class ExecutorProxy<TArgument> : ExecutorBase<TArgument>
 	{
 		private readonly IHandler<TArgument> _handler;
-		private readonly IFeaturePipeline _pipeline;
+		private readonly IFeaturePipeline<TArgument> _pipeline;
 
 		public ExecutorProxy(IHandler<TArgument> handler, IEnumerable<IFeature> features)
 		{
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument>(features);
 		}
 
 		public ExecutorProxy(Action<TArgument> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument>(features);
 		}
 
 		public ExecutorProxy(Action<TArgument, Parameters> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, CancellationToken, ValueTask> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, Parameters, CancellationToken, ValueTask> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument>(features);
 		}
 
 		protected override IHandler GetHandler(IExecutorContext<TArgument> context) => _handler;
@@ -124,43 +124,43 @@ public static class Executor
 
 			return pipeline == null ?
 				base.OnExecuteAsync(context, cancellation) :
-				pipeline.ExecuteAsync(base.OnExecuteAsync, context, cancellation);
+				pipeline.ExecuteAsync((_, _, cancellation) => base.OnExecuteAsync(context, cancellation), context.Argument, context.Parameters, cancellation);
 		}
 	}
 
 	private sealed class ExecutorProxy<TArgument, TResult> : ExecutorBase<TArgument, TResult>
 	{
 		private readonly IHandler<TArgument, TResult> _handler;
-		private readonly IFeaturePipeline _pipeline;
+		private readonly IFeaturePipeline<TArgument, TResult> _pipeline;
 
 		public ExecutorProxy(IHandler<TArgument, TResult> handler, IEnumerable<IFeature> features)
 		{
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, TResult> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, Parameters, TResult> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, CancellationToken, ValueTask<TResult>> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build(features);
+			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		protected override IHandler GetHandler(IExecutorContext<TArgument, TResult> context) => _handler;
@@ -171,7 +171,7 @@ public static class Executor
 
 			return pipeline == null ?
 				base.OnExecuteAsync(context, cancellation) :
-				pipeline.ExecuteAsync(base.OnExecuteAsync, context, cancellation);
+				pipeline.ExecuteAsync((_, _, cancellation) => base.OnExecuteAsync(context, cancellation), context.Argument, context.Parameters, cancellation);
 		}
 	}
 	#endregion

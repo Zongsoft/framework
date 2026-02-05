@@ -34,17 +34,24 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-public interface IFeaturePipeline
+public interface IFeaturePipeline<TArgument>
 {
 	IEnumerable<IFeature> Features { get; }
 
-	void Execute<TArgument>(Action<TArgument> executor, TArgument argument);
-	void Execute<TArgument>(Action<TArgument, Collections.Parameters> executor, TArgument argument, Collections.Parameters parameters);
-	TResult Execute<TArgument, TResult>(Func<TArgument, TResult> executor, TArgument argument);
-	TResult Execute<TArgument, TResult>(Func<TArgument, Collections.Parameters, TResult> executor, TArgument argument, Collections.Parameters parameters);
+	void Execute(Action<TArgument> executor, TArgument argument);
+	void Execute(Action<TArgument, Collections.Parameters> executor, TArgument argument, Collections.Parameters parameters);
 
-	ValueTask ExecuteAsync<TArgument>(Func<TArgument, CancellationToken, ValueTask> executor, TArgument argument, CancellationToken cancellation = default);
-	ValueTask ExecuteAsync<TArgument>(Func<TArgument, Collections.Parameters, CancellationToken, ValueTask> executor, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default);
-	ValueTask<TResult> ExecuteAsync<TArgument, TResult>(Func<TArgument, CancellationToken, ValueTask<TResult>> executor, TArgument argument, CancellationToken cancellation = default);
-	ValueTask<TResult> ExecuteAsync<TArgument, TResult>(Func<TArgument, Collections.Parameters, CancellationToken, ValueTask<TResult>> executor, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default);
+	ValueTask ExecuteAsync(Func<TArgument, CancellationToken, ValueTask> executor, TArgument argument, CancellationToken cancellation = default);
+	ValueTask ExecuteAsync(Func<TArgument, Collections.Parameters, CancellationToken, ValueTask> executor, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default);
+}
+
+public interface IFeaturePipeline<TArgument, TResult>
+{
+	IEnumerable<IFeature> Features { get; }
+
+	TResult Execute(Func<TArgument, TResult> executor, TArgument argument);
+	TResult Execute(Func<TArgument, Collections.Parameters, TResult> executor, TArgument argument, Collections.Parameters parameters);
+
+	ValueTask<TResult> ExecuteAsync(Func<TArgument, CancellationToken, ValueTask<TResult>> executor, TArgument argument, CancellationToken cancellation = default);
+	ValueTask<TResult> ExecuteAsync(Func<TArgument, Collections.Parameters, CancellationToken, ValueTask<TResult>> executor, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 }
