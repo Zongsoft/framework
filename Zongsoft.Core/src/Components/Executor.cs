@@ -49,35 +49,35 @@ public static class Executor
 	#endregion
 
 	#region 处理程序
-	public static IExecutor Build<TArgument>(IHandler<TArgument> handler) => new ExecutorProxy<TArgument>(handler, null);
-	public static IExecutor Build<TArgument, TResult>(IHandler<TArgument, TResult> handler) => new ExecutorProxy<TArgument, TResult>(handler, null);
+	public static IExecutor<TArgument> Build<TArgument>(IHandler<TArgument> handler) => new ExecutorProxy<TArgument>(handler, null);
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(IHandler<TArgument, TResult> handler) => new ExecutorProxy<TArgument, TResult>(handler, null);
 
-	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, IHandler<TArgument> handler) => new ExecutorProxy<TArgument>(handler, builder?.Build());
-	public static IExecutor Build<TArgument, TResult>(this IFeatureBuilder builder, IHandler<TArgument, TResult> handler) => new ExecutorProxy<TArgument, TResult>(handler, builder?.Build());
+	public static IExecutor<TArgument> Build<TArgument>(this IFeatureBuilder builder, IHandler<TArgument> handler) => new ExecutorProxy<TArgument>(handler, builder?.Build());
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(this IFeatureBuilder builder, IHandler<TArgument, TResult> handler) => new ExecutorProxy<TArgument, TResult>(handler, builder?.Build());
 	#endregion
 
 	#region 同步执行
-	public static IExecutor Build<TArgument>(Action<TArgument> execute) => new ExecutorProxy<TArgument>(execute, null);
-	public static IExecutor Build<TArgument>(Action<TArgument, Parameters> execute) => new ExecutorProxy<TArgument>(execute, null);
-	public static IExecutor Build<TArgument, TResult>(Func<TArgument, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
-	public static IExecutor Build<TArgument, TResult>(Func<TArgument, Parameters, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
+	public static IExecutor<TArgument> Build<TArgument>(Action<TArgument> execute) => new ExecutorProxy<TArgument>(execute, null);
+	public static IExecutor<TArgument> Build<TArgument>(Action<TArgument, Parameters> execute) => new ExecutorProxy<TArgument>(execute, null);
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(Func<TArgument, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(Func<TArgument, Parameters, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
 
-	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, Action<TArgument> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
-	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, Action<TArgument, Parameters> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
-	public static IExecutor Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
-	public static IExecutor Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, Parameters, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
+	public static IExecutor<TArgument> Build<TArgument>(this IFeatureBuilder builder, Action<TArgument> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
+	public static IExecutor<TArgument> Build<TArgument>(this IFeatureBuilder builder, Action<TArgument, Parameters> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, Parameters, TResult> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
 	#endregion
 
 	#region 异步执行
-	public static IExecutor Build<TArgument>(Func<TArgument, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, null);
-	public static IExecutor Build<TArgument>(Func<TArgument, Parameters, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, null);
-	public static IExecutor Build<TArgument, TResult>(Func<TArgument, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
-	public static IExecutor Build<TArgument, TResult>(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
+	public static IExecutor<TArgument> Build<TArgument>(Func<TArgument, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, null);
+	public static IExecutor<TArgument> Build<TArgument>(Func<TArgument, Parameters, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, null);
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(Func<TArgument, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, null);
 
-	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, Func<TArgument, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
-	public static IExecutor Build<TArgument>(this IFeatureBuilder builder, Func<TArgument, Parameters, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
-	public static IExecutor Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
-	public static IExecutor Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
+	public static IExecutor<TArgument> Build<TArgument>(this IFeatureBuilder builder, Func<TArgument, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
+	public static IExecutor<TArgument> Build<TArgument>(this IFeatureBuilder builder, Func<TArgument, Parameters, CancellationToken, ValueTask> execute) => new ExecutorProxy<TArgument>(execute, builder?.Build());
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
+	public static IExecutor<TArgument, TResult> Build<TArgument, TResult>(this IFeatureBuilder builder, Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> execute) => new ExecutorProxy<TArgument, TResult>(execute, builder?.Build());
 	#endregion
 
 	#region 嵌套子类

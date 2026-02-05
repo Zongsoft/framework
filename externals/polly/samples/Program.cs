@@ -60,6 +60,17 @@ internal class Program
 				foreach(var removable in removables)
 					_features.Features.Remove(removable);
 			}
+
+			static string GetFeatureName(IFeature feature)
+			{
+				const string SUFFIX = "Feature";
+				const int SUFFIX_LENGTH = 7;
+
+				ArgumentNullException.ThrowIfNull(feature);
+
+				var name = feature.GetType().Name;
+				return name.Length > SUFFIX_LENGTH && name.EndsWith(SUFFIX) ? name[..^SUFFIX_LENGTH] : name;
+			}
 		});
 
 		Terminal.Console.Executor.Command("retry", context =>
@@ -107,7 +118,7 @@ internal class Program
 			var handler = context.Options.Switch("handled") ? Handler.Handle<ThrottleArgument, bool>(OnRejected) : null;
 
 			if(context.Arguments.IsEmpty)
-				_features.Throttle(permit, queue, order, null, handler);
+				_features.Throttle(permit, queue, order, handler);
 
 			foreach(var argument in context.Arguments)
 			{
@@ -148,14 +159,14 @@ internal class Program
 		Terminal.Console.Executor.Command("fallback", context =>
 		{
 			_features.Fallback<object>(
-				OnFallback,
+				OnFallbackAsync,
 				Predication.Predicate<object>(argument => true),
 				true);
 		});
 
 		Terminal.Console.Executor.Command("execute", async (context, cancellation) =>
 		{
-			var executor = _features.Build<object, object>(OnExecute);
+			var executor = _features.Build<Argument>(OnExecuteAsync);
 			var parameters = Parameters
 				.Parameter("delay", context.Options.GetValue("delay", TimeSpan.Zero))
 				.Parameter("throw", context.Options.Switch("throw"))
@@ -165,24 +176,21 @@ internal class Program
 
 			if(context.Options.Switch("concurrency"))
 			{
-				Parallel.For(0, round, async i => await ExecuteAsync(executor, parameters, round, i, cancellation));
+				Parallel.For(0, round, async i => await ExecuteAsync(executor, parameters, i, cancellation));
 			}
 			else
 			{
 				for(int i = 0; i < round; i++)
-					await ExecuteAsync(executor, parameters, round, i, cancellation);
+					await ExecuteAsync(executor, parameters, i, cancellation);
 			}
 
-			static async ValueTask ExecuteAsync(IExecutor executor, Parameters parameters, int round, int index, CancellationToken cancellation)
+			static async ValueTask ExecuteAsync(IExecutor<Argument> executor, Parameters parameters, int index, CancellationToken cancellation)
 			{
 				var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 				try
 				{
-					parameters.SetValue("round", index);
-					parameters.SetValue("index", 0);
-
-					await executor.ExecuteAsync(null, parameters, cancellation);
+					await executor.ExecuteAsync(new Argument(index), parameters, cancellation);
 				}
 				catch(Exception ex)
 				{
@@ -191,17 +199,10 @@ internal class Program
 
 				stopwatch.Stop();
 
-				var content = CommandOutletContent.Create();
-
-				if(round > 1)
-				{
-					content
-						.Append(CommandOutletColor.DarkGray, "[")
-						.Append(CommandOutletColor.Red, $"{index + 1}")
-						.Append(CommandOutletColor.DarkGray, "] ");
-				}
-
-				content.Last
+				var content = CommandOutletContent.Create()
+					.Append(CommandOutletColor.DarkGray, "[")
+					.Append(CommandOutletColor.Red, $"{index + 1}")
+					.Append(CommandOutletColor.DarkGray, "] ")
 					.Append(CommandOutletColor.DarkCyan, $"Elapsed: ")
 					.Append(CommandOutletColor.Green, $"{stopwatch.Elapsed}");
 
@@ -222,19 +223,7 @@ internal class Program
 		Terminal.Console.Executor.Run(splash);
 	}
 
-	static string GetFeatureName(IFeature feature)
-	{
-		const string SUFFIX = "Feature";
-		const int SUFFIX_LENGTH = 7;
-
-		ArgumentNullException.ThrowIfNull(feature);
-
-		var name = feature.GetType().Name;
-		return name.Length > SUFFIX_LENGTH &&
-			name.EndsWith(SUFFIX, StringComparison.OrdinalIgnoreCase) ? name[..^SUFFIX_LENGTH] : name;
-	}
-
-	static ValueTask<T> OnFallback<T>(Argument<T> argument, CancellationToken cancellation)
+	static ValueTask<T> OnFallbackAsync<T>(Argument<T> argument, CancellationToken cancellation)
 	{
 		var content = CommandOutletContent.Create()
 			.Append(CommandOutletColor.DarkGray, "[")
@@ -263,36 +252,23 @@ internal class Program
 		return ValueTask.FromResult(argument.Value);
 	}
 
-	static async ValueTask<T> OnExecute<T>(T argument, Parameters parameters, CancellationToken cancellation)
+	static async ValueTask OnExecuteAsync(Argument argument, Parameters parameters, CancellationToken cancellation)
 	{
-		parameters.TryGetValue<int>("round", out var round);
-		parameters.TryGetValue<int>("index", out var index);
-
-		var content = round > 0 && index == 0 ? CommandOutletContent.Create().AppendLine() : CommandOutletContent.Create();
-
-		content.Last
+		Terminal.WriteLine(CommandOutletContent.Create()
 			.Append(CommandOutletColor.DarkGray, "[")
 			.Append(CommandOutletColor.Yellow, "OnExecute")
 			.Append(CommandOutletColor.DarkGray, " #")
-			.Append(CommandOutletColor.Red, $"{round + 1}")
-			.Append(CommandOutletColor.DarkGray, ".")
-			.Append(CommandOutletColor.Cyan, $"{index}")
-			.Append(CommandOutletColor.DarkGray, "] ");
+			.Append(CommandOutletColor.Cyan, $"{argument.Index + 1}")
+			.Append(CommandOutletColor.DarkGray, "] "));
 
-		Terminal.WriteLine(content);
+		if(parameters.TryGetValue<TimeSpan>("delay", out var delay) && delay > TimeSpan.Zero)
+			await Task.Delay(delay, cancellation);
+		if(parameters.TryGetValue<bool>("throw", out var throws) && throws)
+			throw new InvalidOperationException("🚨🚨🚨 This is a simulation of an exception thrown during execution. 🚨🚨🚨");
+	}
 
-		try
-		{
-			if(parameters.TryGetValue<TimeSpan>("delay", out var delay) && delay > TimeSpan.Zero)
-				await Task.Delay(delay, cancellation);
-			if(parameters.TryGetValue<bool>("throw", out var throws) && throws)
-				throw new InvalidOperationException("🚨🚨🚨 This is a simulation of an exception thrown during execution. 🚨🚨🚨");
-
-			return argument ?? (parameters.TryGetValue("result", out T result) ? result : default);
-		}
-		finally
-		{
-			parameters.SetValue("index", index + 1);
-		}
+	readonly struct Argument(int index)
+	{
+		public readonly int Index = index;
 	}
 }
