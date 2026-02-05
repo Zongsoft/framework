@@ -46,7 +46,7 @@ partial class FeatureExtension
 		if(!feature.Usable(feature => feature.Duration > TimeSpan.Zero && feature.Threshold > 0))
 			return null;
 
-		var strategy = new CircuitBreakerStrategyOptions
+		var options = new CircuitBreakerStrategyOptions
 		{
 			BreakDuration = feature.Duration,
 			FailureRatio = feature.FailureRatio,
@@ -55,12 +55,12 @@ partial class FeatureExtension
 		};
 
 		if(feature.DurationFactory != null)
-			strategy.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
+			options.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
 
 		if(feature.Predicator != null)
-			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
 
-		return strategy;
+		return options;
 	}
 
 	public static CircuitBreakerStrategyOptions<TResult> ToStrategy<TResult>(this BreakerFeature feature)
@@ -68,7 +68,7 @@ partial class FeatureExtension
 		if(!feature.Usable(feature => feature.Duration > TimeSpan.Zero && feature.Threshold > 0))
 			return null;
 
-		var strategy = new CircuitBreakerStrategyOptions<TResult>
+		var options = new CircuitBreakerStrategyOptions<TResult>
 		{
 			BreakDuration = feature.Duration,
 			FailureRatio = feature.FailureRatio,
@@ -77,11 +77,11 @@ partial class FeatureExtension
 		};
 
 		if(feature.DurationFactory != null)
-			strategy.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
+			options.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
 
 		if(feature.Predicator != null)
-			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
 
-		return strategy;
+		return options;
 	}
 }

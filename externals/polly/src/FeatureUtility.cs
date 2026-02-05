@@ -28,16 +28,54 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Reflection;
 
+using Polly;
+using Polly.Fallback;
+
+using Zongsoft.Common;
 using Zongsoft.Components;
+using Zongsoft.Components.Features;
 
 namespace Zongsoft.Externals.Polly;
 
-public sealed class FeaturePipelineBuilder : IFeaturePipelineBuilder
+internal static class FeatureUtility
 {
-	public static readonly FeaturePipelineBuilder Instance = new();
+	private static readonly MethodInfo Method;
 
-	public IFeaturePipeline<TArgument> Build<TArgument>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument>(features);
-	public IFeaturePipeline<TArgument, TResult> Build<TArgument, TResult>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument, TResult>(features);
+	static FeatureUtility()
+	{
+		var methods = typeof(FeatureExtension).GetMethods(BindingFlags.Static | BindingFlags.Public);
+
+		for(int i = 0; i < methods.Length; i++)
+		{
+			var method = methods[i];
+
+			if(method.IsGenericMethod && method.Name == nameof(FeatureExtension.AddFallback))
+			{
+				var parameters = method.GetParameters();
+				if(parameters.Length == 2 && parameters[1].ParameterType.IsGenericType && parameters[1].ParameterType.GetGenericTypeDefinition() == typeof(FallbackFeature<>))
+				{
+					Method = method;
+					break;
+				}
+			}
+		}
+	}
+
+	public static ResiliencePipelineBuilder AddFallback(this ResiliencePipelineBuilder builder, IFeature feature)
+	{
+		if(feature == null)
+			return builder;
+
+		var featureType = feature.GetType();
+		if(featureType.IsGenericType && featureType.GetGenericTypeDefinition() == typeof(FallbackFeature<>))
+		{
+			var method = Method.MakeGenericMethod(featureType.GetGenericArguments());
+			method.Invoke(null, [builder, feature]);
+		}
+
+		return builder;
+	}
+
 }

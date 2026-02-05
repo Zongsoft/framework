@@ -66,6 +66,9 @@ internal static partial class FeatureExtension
 				if(breakerOptions != null)
 					builder.AddCircuitBreaker(breakerOptions);
 				break;
+			default:
+				builder.AddFallback(feature);
+				break;
 		}
 	}
 
@@ -104,9 +107,9 @@ internal static partial class FeatureExtension
 		}
 	}
 
-	private static Argument GetArgument(this Outcome<object> outcome) => new(outcome.Result, outcome.Exception.GetException());
-	private static Argument<T> GetArgument<T>(this Outcome<T> outcome) => new(outcome.Result, outcome.Exception.GetException());
-	private static Exception GetException(this Exception exception) => exception switch
+	internal static Argument GetArgument(this Outcome<object> outcome) => new(outcome.Result, outcome.Exception.GetException());
+	internal static Argument<T> GetArgument<T>(this Outcome<T> outcome) => new(outcome.Result, outcome.Exception.GetException());
+	internal static Exception GetException(this Exception exception) => exception switch
 	{
 		TimeoutRejectedException => new TimeoutException(),
 		_ => exception,

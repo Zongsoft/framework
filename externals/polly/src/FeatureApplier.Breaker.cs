@@ -28,58 +28,47 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Polly;
-using Polly.Fallback;
+using Polly.CircuitBreaker;
 
 using Zongsoft.Components;
 using Zongsoft.Components.Features;
 
 namespace Zongsoft.Externals.Polly;
 
-partial class FeatureExtension
+partial class FeatureApplier
 {
-	public static void AddFallback<TResult>(this ResiliencePipelineBuilder builder, FallbackFeature<TResult> feature) => builder.AddFallback(ToStrategy(feature));
-	public static void AddFallback<TResult>(this ResiliencePipelineBuilder builder, FallbackStrategyOptions<TResult> options)
+	public readonly IFeatureApplier Breaker = new BreakerApplier();
+
+	private sealed class BreakerApplier : IFeatureApplier<BreakerFeature>
 	{
-		if(options == null)
-			return;
-
-		var wrapper = new ResiliencePipelineBuilder<TResult>()
+		bool IFeatureApplier.Apply(ResiliencePipelineBuilder builder, IFeature feature) => this.Apply(builder, feature as BreakerFeature);
+		public bool Apply(ResiliencePipelineBuilder builder, BreakerFeature feature)
 		{
-			Name = builder.Name,
-			ContextPool = builder.ContextPool,
-			InstanceName = builder.InstanceName,
-			TimeProvider = builder.TimeProvider,
-		};
+			if(feature == null)
+				return false;
 
-		wrapper.AddFallback(options);
-	}
+			if(!feature.Usable(feature => feature.Duration > TimeSpan.Zero && feature.Threshold > 0))
+				return true;
 
-	public static FallbackStrategyOptions<TResult> ToStrategy<TResult>(this FallbackFeature<TResult> feature)
-	{
-		if(!feature.Usable(feature => feature.Fallback != null))
-			return null;
-
-		var options = new FallbackStrategyOptions<TResult>
-		{
-			FallbackAction = async argument =>
+			var strategy = new CircuitBreakerStrategyOptions
 			{
-				try
-				{
-					var result = await feature.Fallback(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
-					return Outcome.FromResult(result);
-				}
-				catch(Exception ex)
-				{
-					return Outcome.FromException<TResult>(ex);
-				}
-			},
-		};
+				BreakDuration = feature.Duration,
+				FailureRatio = feature.FailureRatio,
+				SamplingDuration = feature.FailurePeriod,
+				MinimumThroughput = feature.Threshold,
+			};
 
-		if(feature.Predicator != null)
-			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			if(feature.DurationFactory != null)
+				strategy.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
 
-		return options;
+			if(feature.Predicator != null)
+				strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+
+			return builder.AddCircuitBreaker(strategy) != null;
+		}
 	}
 }

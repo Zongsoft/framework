@@ -28,58 +28,55 @@
  */
 
 using System;
+using System.Reflection;
 
 using Polly;
 using Polly.Fallback;
 
+using Zongsoft.Common;
 using Zongsoft.Components;
 using Zongsoft.Components.Features;
 
 namespace Zongsoft.Externals.Polly;
 
-partial class FeatureExtension
+partial class FeatureApplier
 {
-	public static void AddFallback<TResult>(this ResiliencePipelineBuilder builder, FallbackFeature<TResult> feature) => builder.AddFallback(ToStrategy(feature));
-	public static void AddFallback<TResult>(this ResiliencePipelineBuilder builder, FallbackStrategyOptions<TResult> options)
+    private sealed class FallbackApplier : IFeatureApplier
 	{
-		if(options == null)
-			return;
-
-		var wrapper = new ResiliencePipelineBuilder<TResult>()
+		public bool Apply(ResiliencePipelineBuilder builder, IFeature feature) => false;
+		public bool Apply<TResult>(ResiliencePipelineBuilder builder, FallbackFeature<TResult> feature)
 		{
-			Name = builder.Name,
-			ContextPool = builder.ContextPool,
-			InstanceName = builder.InstanceName,
-			TimeProvider = builder.TimeProvider,
-		};
+			if(!feature.Usable(feature => feature.Fallback != null))
+				return false;
 
-		wrapper.AddFallback(options);
-	}
-
-	public static FallbackStrategyOptions<TResult> ToStrategy<TResult>(this FallbackFeature<TResult> feature)
-	{
-		if(!feature.Usable(feature => feature.Fallback != null))
-			return null;
-
-		var options = new FallbackStrategyOptions<TResult>
-		{
-			FallbackAction = async argument =>
+			var strategy = new FallbackStrategyOptions<TResult>
 			{
-				try
+				FallbackAction = async argument =>
 				{
-					var result = await feature.Fallback(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
-					return Outcome.FromResult(result);
-				}
-				catch(Exception ex)
-				{
-					return Outcome.FromException<TResult>(ex);
-				}
-			},
-		};
+					try
+					{
+						var result = await feature.Fallback(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+						return Outcome.FromResult(result);
+					}
+					catch(Exception ex)
+					{
+						return Outcome.FromException<TResult>(ex);
+					}
+				},
+			};
 
-		if(feature.Predicator != null)
-			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			if(feature.Predicator != null)
+				strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
 
-		return options;
-	}
+			var b = new ResiliencePipelineBuilder<TResult>()
+			{
+				Name = builder.Name,
+				InstanceName = builder.InstanceName,
+				ContextPool = builder.ContextPool,
+				TimeProvider = builder.TimeProvider,
+			};
+
+			return b.AddFallback(strategy) != null;
+		}
+    }
 }

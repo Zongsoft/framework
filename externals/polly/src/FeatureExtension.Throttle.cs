@@ -55,10 +55,10 @@ partial class FeatureExtension
 		if(!feature.Usable())
 			return null;
 
-		var strategy = new RateLimiterStrategyOptions();
+		var options = new RateLimiterStrategyOptions();
 
 		if(feature.Rejected != null)
-			strategy.OnRejected = arguments => feature.Rejected.HandleAsync(new PollyThrottleArgument(arguments), arguments.Context.CancellationToken);
+			options.OnRejected = arguments => feature.Rejected.HandleAsync(new PollyThrottleArgument(arguments), arguments.Context.CancellationToken);
 
 		switch(feature.Limiter)
 		{
@@ -72,8 +72,8 @@ partial class FeatureExtension
 					ReplenishmentPeriod = limiter.Period > TimeSpan.Zero ? limiter.Period : TimeSpan.FromSeconds(WINDOW_SECONDS),
 				});
 
-				strategy.Name = nameof(TokenBucketRateLimiter);
-				strategy.RateLimiter = argument => tokenLimiter.AcquireAsync(1, argument.Context.CancellationToken);
+				options.Name = nameof(TokenBucketRateLimiter);
+				options.RateLimiter = argument => tokenLimiter.AcquireAsync(1, argument.Context.CancellationToken);
 				break;
 			case ThrottleLimiter.FixedWindown limiter:
 				var fixedLimiter = new FixedWindowRateLimiter(new()
@@ -84,8 +84,8 @@ partial class FeatureExtension
 					Window = limiter.Window > TimeSpan.Zero ? limiter.Window : TimeSpan.FromSeconds(WINDOW_SECONDS),
 				});
 
-				strategy.Name = nameof(FixedWindowRateLimiter);
-				strategy.RateLimiter = argument => fixedLimiter.AcquireAsync(1, argument.Context.CancellationToken);
+				options.Name = nameof(FixedWindowRateLimiter);
+				options.RateLimiter = argument => fixedLimiter.AcquireAsync(1, argument.Context.CancellationToken);
 				break;
 			case ThrottleLimiter.SlidingWindown limiter:
 				var slidingLimiter = new SlidingWindowRateLimiter(new()
@@ -97,17 +97,17 @@ partial class FeatureExtension
 					SegmentsPerWindow = limiter.WindowSegments > 0 ? limiter.WindowSegments : WINDOW_SEGMENTS,
 				});
 
-				strategy.Name = nameof(SlidingWindowRateLimiter);
-				strategy.RateLimiter = argument => slidingLimiter.AcquireAsync(1, argument.Context.CancellationToken);
+				options.Name = nameof(SlidingWindowRateLimiter);
+				options.RateLimiter = argument => slidingLimiter.AcquireAsync(1, argument.Context.CancellationToken);
 				break;
 			default:
-				strategy.DefaultRateLimiterOptions.PermitLimit = GetPermitLimit(feature);
-				strategy.DefaultRateLimiterOptions.QueueLimit = GetQueueLimit(feature);
-				strategy.DefaultRateLimiterOptions.QueueProcessingOrder = GetQueueOrder(feature.QueueOrder);
+				options.DefaultRateLimiterOptions.PermitLimit = GetPermitLimit(feature);
+				options.DefaultRateLimiterOptions.QueueLimit = GetQueueLimit(feature);
+				options.DefaultRateLimiterOptions.QueueProcessingOrder = GetQueueOrder(feature.QueueOrder);
 				break;
 		}
 
-		return strategy;
+		return options;
 	}
 	#endregion
 

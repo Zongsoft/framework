@@ -158,9 +158,9 @@ internal class Program
 
 		Terminal.Console.Executor.Command("fallback", context =>
 		{
-			_features.Fallback<object>(
+			_features.Fallback(
 				OnFallbackAsync,
-				Predication.Predicate<object>(argument => true),
+				Predication.Predicate<Argument<Argument>>(argument => true),
 				true);
 		});
 

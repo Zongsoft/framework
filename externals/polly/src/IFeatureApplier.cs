@@ -28,16 +28,19 @@
  */
 
 using System;
-using System.Collections.Generic;
+
+using Polly;
 
 using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Polly;
 
-public sealed class FeaturePipelineBuilder : IFeaturePipelineBuilder
+public interface IFeatureApplier
 {
-	public static readonly FeaturePipelineBuilder Instance = new();
+	bool Apply(ResiliencePipelineBuilder builder, IFeature feature);
+}
 
-	public IFeaturePipeline<TArgument> Build<TArgument>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument>(features);
-	public IFeaturePipeline<TArgument, TResult> Build<TArgument, TResult>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument, TResult>(features);
+public interface IFeatureApplier<in TFeature> : IFeatureApplier where TFeature : IFeature
+{
+	bool Apply(ResiliencePipelineBuilder builder, TFeature feature);
 }

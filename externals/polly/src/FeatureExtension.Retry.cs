@@ -46,7 +46,7 @@ partial class FeatureExtension
 		if(!feature.Usable(feature => feature.Latency.HasValue))
 			return null;
 
-		var strategy = new RetryStrategyOptions
+		var options = new RetryStrategyOptions
 		{
 			Delay = feature.Latency.Value,
 			MaxDelay = feature.Latency.Limit > TimeSpan.Zero ? feature.Latency.Limit : null,
@@ -56,16 +56,16 @@ partial class FeatureExtension
 		};
 
 		if(feature.Latency.Generator != null)
-			strategy.DelayGenerator = argument =>
+			options.DelayGenerator = argument =>
 			{
 				var result = feature.Latency.Generator(feature, argument.AttemptNumber);
 				return ValueTask.FromResult<TimeSpan?>(result > TimeSpan.Zero ? result : null);
 			};
 
 		if(feature.Predicator != null)
-			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(new RetryArgument(argument.AttemptNumber, argument.Outcome.Result, argument.Outcome.Exception.GetException()), argument.Context.CancellationToken);
+			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(new RetryArgument(argument.AttemptNumber, argument.Outcome.Result, argument.Outcome.Exception.GetException()), argument.Context.CancellationToken);
 
-		return strategy;
+		return options;
 	}
 
 	public static RetryStrategyOptions<TResult> ToStrategy<TResult>(this RetryFeature feature)
@@ -73,7 +73,7 @@ partial class FeatureExtension
 		if(!feature.Usable(feature => feature.Latency.HasValue))
 			return null;
 
-		var strategy = new RetryStrategyOptions<TResult>
+		var options = new RetryStrategyOptions<TResult>
 		{
 			Delay = feature.Latency.Value,
 			MaxDelay = feature.Latency.Limit > TimeSpan.Zero ? feature.Latency.Limit : null,
@@ -83,16 +83,16 @@ partial class FeatureExtension
 		};
 
 		if(feature.Latency.Generator != null)
-			strategy.DelayGenerator = argument =>
+			options.DelayGenerator = argument =>
 			{
 				var result = feature.Latency.Generator(feature, argument.AttemptNumber);
 				return ValueTask.FromResult<TimeSpan?>(result > TimeSpan.Zero ? result : null);
 			};
 
 		if(feature.Predicator != null)
-			strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(new RetryArgument<TResult>(argument.AttemptNumber, argument.Outcome.Result, argument.Outcome.Exception.GetException()), argument.Context.CancellationToken);
+			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(new RetryArgument<TResult>(argument.AttemptNumber, argument.Outcome.Result, argument.Outcome.Exception.GetException()), argument.Context.CancellationToken);
 
-		return strategy;
+		return options;
 	}
 
 	private static DelayBackoffType GetBackoffType(RetryBackoff backoff) => backoff switch
