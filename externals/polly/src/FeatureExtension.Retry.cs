@@ -63,7 +63,7 @@ partial class FeatureExtension
 			};
 
 		if(feature.Predicator != null)
-			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(new RetryArgument(argument.AttemptNumber, argument.Outcome.Result, argument.Outcome.Exception.GetException()), argument.Context.CancellationToken);
+			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(new RetryArgument<object, object>(argument.AttemptNumber, null, argument.Outcome.Result, argument.Outcome.Exception.GetException()), argument.Context.CancellationToken);
 
 		return options;
 	}

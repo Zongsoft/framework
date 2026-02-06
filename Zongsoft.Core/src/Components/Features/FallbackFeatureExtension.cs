@@ -35,18 +35,33 @@ namespace Zongsoft.Components.Features;
 
 public static class FallbackFeatureExtension
 {
-	public static IFeatureBuilder Fallback<TResult>(this IFeatureBuilder builder, Func<Argument<TResult>, CancellationToken, ValueTask<TResult>> fallback, bool enabled = true) => Fallback(builder, fallback, null, enabled);
-	public static IFeatureBuilder Fallback<TResult>(this IFeatureBuilder builder, Func<Argument<TResult>, CancellationToken, ValueTask<TResult>> fallback, Common.IPredication<Argument<TResult>> predicator, bool enabled = true)
+	public static IFeatureBuilder Fallback<T>(this IFeatureBuilder builder, Func<Argument<T>, CancellationToken, ValueTask> fallback, bool enabled = true) => Fallback(builder, fallback, null, enabled);
+	public static IFeatureBuilder Fallback<T>(this IFeatureBuilder builder, Func<Argument<T>, CancellationToken, ValueTask> fallback, Common.IPredication<Argument<T>> predicator, bool enabled = true)
 	{
 		if(builder == null)
-			return new FeatureBuilder(new FallbackFeature<TResult>(fallback, predicator, enabled));
+			return new FeatureBuilder(new FallbackFeature<T>(fallback, predicator, enabled));
 
 		if(builder is FeatureBuilder appender)
 		{
-			appender.Features.Add(new FallbackFeature<TResult>(fallback, predicator, enabled));
+			appender.Features.Add(new FallbackFeature<T>(fallback, predicator, enabled));
 			return appender;
 		}
 
-		return new FeatureBuilder([.. builder.Build(), new FallbackFeature<TResult>(fallback, predicator, enabled)]);
+		return new FeatureBuilder([.. builder.Build(), new FallbackFeature<T>(fallback, predicator, enabled)]);
+	}
+
+	public static IFeatureBuilder Fallback<T, TResult>(this IFeatureBuilder builder, Func<Argument<T, TResult>, CancellationToken, ValueTask<TResult>> fallback, bool enabled = true) => Fallback(builder, fallback, null, enabled);
+	public static IFeatureBuilder Fallback<T, TResult>(this IFeatureBuilder builder, Func<Argument<T, TResult>, CancellationToken, ValueTask<TResult>> fallback, Common.IPredication<Argument<T, TResult>> predicator, bool enabled = true)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new FallbackFeature<T, TResult>(fallback, predicator, enabled));
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(new FallbackFeature<T, TResult>(fallback, predicator, enabled));
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), new FallbackFeature<T, TResult>(fallback, predicator, enabled)]);
 	}
 }

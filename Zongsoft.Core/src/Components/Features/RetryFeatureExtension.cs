@@ -61,4 +61,62 @@ public static class RetryFeatureExtension
 
 		return new FeatureBuilder([.. builder.Build(), new RetryFeature(backoff, latency, jitterable, attempts, predicator)]);
 	}
+
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, Common.IPredication<RetryArgument<T>> predicator, RetryLatency latency, int attempts = 0) =>
+		Retry(builder, RetryBackoff.None, latency, true, attempts, predicator);
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, Common.IPredication<RetryArgument<T>> predicator, RetryLatency latency, bool jitterable, int attempts = 0) =>
+		Retry(builder, RetryBackoff.None, latency, jitterable, attempts, predicator);
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, Common.IPredication<RetryArgument<T>> predicator, RetryBackoff backoff, RetryLatency latency, int attempts = 0) =>
+		Retry(builder, backoff, latency, true, attempts, predicator);
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, Common.IPredication<RetryArgument<T>> predicator, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0) =>
+		Retry(builder, backoff, latency, jitterable, attempts, predicator);
+
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument<T>> predicator = null) =>
+		Retry(builder, RetryBackoff.None, latency, true, attempts, predicator);
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument<T>> predicator = null) =>
+		Retry(builder, RetryBackoff.None, latency, jitterable, attempts, predicator);
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument<T>> predicator = null) =>
+		Retry(builder, backoff, latency, true, attempts, predicator);
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument<T>> predicator = null)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new RetryFeature<T>(backoff, latency, jitterable, attempts, predicator));
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(new RetryFeature<T>(backoff, latency, jitterable, attempts, predicator));
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), new RetryFeature<T>(backoff, latency, jitterable, attempts, predicator)]);
+	}
+
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, Common.IPredication<RetryArgument<T, TResult>> predicator, RetryLatency latency, int attempts = 0) =>
+		Retry(builder, RetryBackoff.None, latency, true, attempts, predicator);
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, Common.IPredication<RetryArgument<T, TResult>> predicator, RetryLatency latency, bool jitterable, int attempts = 0) =>
+		Retry(builder, RetryBackoff.None, latency, jitterable, attempts, predicator);
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, Common.IPredication<RetryArgument<T, TResult>> predicator, RetryBackoff backoff, RetryLatency latency, int attempts = 0) =>
+		Retry(builder, backoff, latency, true, attempts, predicator);
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, Common.IPredication<RetryArgument<T, TResult>> predicator, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0) =>
+		Retry(builder, backoff, latency, jitterable, attempts, predicator);
+
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument<T, TResult>> predicator = null) =>
+		Retry(builder, RetryBackoff.None, latency, true, attempts, predicator);
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument<T, TResult>> predicator = null) =>
+		Retry(builder, RetryBackoff.None, latency, jitterable, attempts, predicator);
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument<T, TResult>> predicator = null) =>
+		Retry(builder, backoff, latency, true, attempts, predicator);
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument<T, TResult>> predicator = null)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new RetryFeature<T, TResult>(backoff, latency, jitterable, attempts, predicator));
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(new RetryFeature<T, TResult>(backoff, latency, jitterable, attempts, predicator));
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), new RetryFeature<T, TResult>(backoff, latency, jitterable, attempts, predicator)]);
+	}
 }

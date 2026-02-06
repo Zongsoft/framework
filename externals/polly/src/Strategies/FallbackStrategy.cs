@@ -28,27 +28,15 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Polly;
+using Polly.Fallback;
+using Polly.Telemetry;
 
-using Zongsoft.Components;
+namespace Zongsoft.Externals.Polly.Strategies;
 
-namespace Zongsoft.Externals.Polly;
-
-public partial class FeatureApplier : IFeatureApplier
+internal sealed class FallbackStrategy
 {
-    public FeatureApplier() => this.Appliers = [this.Breaker];
-
-    public IFeatureApplier[] Appliers { get; }
-
-    public bool Apply(ResiliencePipelineBuilder builder, IFeature feature)
-    {
-        for(int i = 0; i < this.Appliers.Length; i++)
-        {
-            if(this.Appliers[i].Apply(builder, feature))
-                return true;
-        }
-
-        return false;
-    }
 }

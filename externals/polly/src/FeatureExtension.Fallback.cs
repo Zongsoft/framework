@@ -39,8 +39,8 @@ namespace Zongsoft.Externals.Polly;
 
 partial class FeatureExtension
 {
-	public static void AddFallback<TResult>(this ResiliencePipelineBuilder builder, FallbackFeature<TResult> feature) => builder.AddFallback(ToStrategy(feature));
-	public static void AddFallback<TResult>(this ResiliencePipelineBuilder builder, FallbackStrategyOptions<TResult> options)
+	public static void AddFallback<T, TResult>(this ResiliencePipelineBuilder builder, FallbackFeature<T, TResult> feature) => builder.AddFallback<T, TResult>(ToStrategy(feature));
+	public static void AddFallback<T, TResult>(this ResiliencePipelineBuilder builder, FallbackStrategyOptions<TResult> options)
 	{
 		if(options == null)
 			return;
@@ -56,7 +56,7 @@ partial class FeatureExtension
 		wrapper.AddFallback(options);
 	}
 
-	public static FallbackStrategyOptions<TResult> ToStrategy<TResult>(this FallbackFeature<TResult> feature)
+	public static FallbackStrategyOptions<TResult> ToStrategy<T, TResult>(this FallbackFeature<T, TResult> feature)
 	{
 		if(!feature.Usable(feature => feature.Fallback != null))
 			return null;
@@ -67,7 +67,10 @@ partial class FeatureExtension
 			{
 				try
 				{
-					var result = await feature.Fallback(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+					var result = await feature.Fallback(
+						new(default, argument.Outcome.Result, argument.Outcome.Exception.GetException()),
+						argument.Context.CancellationToken);
+
 					return Outcome.FromResult(result);
 				}
 				catch(Exception ex)

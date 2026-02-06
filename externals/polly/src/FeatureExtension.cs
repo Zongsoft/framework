@@ -99,7 +99,7 @@ internal static partial class FeatureExtension
 				if(breakerOptions != null)
 					builder.AddCircuitBreaker(breakerOptions);
 				break;
-			case FallbackFeature<TResult> fallback:
+			case FallbackFeature<object, TResult> fallback:
 				var fallbackOptions = fallback.ToStrategy();
 				if(fallbackOptions != null)
 					builder.AddFallback(fallbackOptions);
@@ -107,7 +107,6 @@ internal static partial class FeatureExtension
 		}
 	}
 
-	internal static Argument GetArgument(this Outcome<object> outcome) => new(outcome.Result, outcome.Exception.GetException());
 	internal static Argument<T> GetArgument<T>(this Outcome<T> outcome) => new(outcome.Result, outcome.Exception.GetException());
 	internal static Exception GetException(this Exception exception) => exception switch
 	{

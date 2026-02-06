@@ -88,8 +88,7 @@ internal class Program
 				backoff,
 				new RetryLatency(delay, limit),
 				jitterable,
-				attempts,
-				Predication.Predicate<RetryArgument>(argument => argument.Value == null || argument.Exception != null)
+				attempts
 			);
 		});
 
@@ -223,14 +222,14 @@ internal class Program
 		Terminal.Console.Executor.Run(splash);
 	}
 
-	static ValueTask<T> OnFallbackAsync<T>(Argument<T> argument, CancellationToken cancellation)
+	static ValueTask OnFallbackAsync<T>(Argument<T> argument, CancellationToken cancellation)
 	{
 		var content = CommandOutletContent.Create()
 			.Append(CommandOutletColor.DarkGray, "[")
 			.Append(CommandOutletColor.Magenta, "Fallback")
 			.Append(CommandOutletColor.DarkGray, "] ");
 
-		if(argument.HasException(out var exception))
+		if(argument.HasError(out var exception))
 		{
 			content.Last
 				.Append(CommandOutletColor.DarkYellow, exception.GetType().Name)
@@ -248,8 +247,7 @@ internal class Program
 		}
 
 		Terminal.WriteLine(content);
-
-		return ValueTask.FromResult(argument.Value);
+		return ValueTask.CompletedTask;
 	}
 
 	static async ValueTask OnExecuteAsync(Argument argument, Parameters parameters, CancellationToken cancellation)

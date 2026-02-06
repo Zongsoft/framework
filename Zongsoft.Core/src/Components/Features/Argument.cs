@@ -31,38 +31,25 @@ using System;
 
 namespace Zongsoft.Components.Features;
 
-public abstract class ArgumentBase
+public class Argument(Exception exception = null)
 {
-	#region 构造函数
-	protected ArgumentBase(Exception exception = null) => this.Exception = exception;
-	#endregion
-
-	#region 公共属性
-	public Exception Exception { get; }
+	#region 成员字段
+	private Exception _exception = exception;
 	#endregion
 
 	#region 公共方法
-	public bool HasException(out Exception exception) => (exception = this.Exception) is not null;
-	#endregion
-}
-
-public class Argument : ArgumentBase
-{
-	#region 构造函数
-	public Argument(Exception exception) : base(exception) => this.Value = null;
-	public Argument(object value, Exception exception = null) : base(exception) => this.Value = value;
-	#endregion
-
-	#region 公共属性
-	public object Value { get; }
+	public void Error(Exception exception) => _exception = exception;
+	public bool HasError<TException>() where TException : Exception => _exception is TException;
+	public bool HasError<TException>(out TException exception) where TException : Exception => (exception = _exception as TException) is not null;
+	public bool HasError(out Exception exception) => (exception = _exception) is not null;
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => this.HasException(out var exception) ? $"[{exception.GetType().Name}] {exception.Message}" : $"{this.Value}";
+	public override string ToString() => this.HasError(out var exception) ? $"[{exception.GetType().Name}] {exception.Message}" : base.ToString();
 	#endregion
 }
 
-public class Argument<T> : ArgumentBase
+public class Argument<T> : Argument
 {
 	#region 构造函数
 	public Argument(Exception exception) : base(exception) => this.Value = default;
@@ -74,11 +61,23 @@ public class Argument<T> : ArgumentBase
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => this.HasException(out var exception) ? $"[{exception.GetType().Name}] {exception.Message}" : $"{this.Value}";
+	public override string ToString() => this.HasError(out var exception) ? $"[{exception.GetType().Name}] {exception.Message}" : $"{this.Value}";
+	#endregion
+}
+
+public class Argument<T, TResult> : Argument<T>
+{
+	#region 构造函数
+	public Argument(Exception exception) : base(exception) => this.Result = default;
+	public Argument(T value, Exception exception = null) : base(value, exception) => this.Result = default;
+	public Argument(T value, TResult result, Exception exception = null) : base(value, exception) => this.Result = result;
 	#endregion
 
-	#region 类型转换
-	public static implicit operator Argument(Argument<T> argument) => argument is null ? default : new(argument.Value, argument.Exception);
-	public static explicit operator Argument<T>(Argument argument) => argument is null ? default : (argument.Value is T value ? new(value, argument.Exception) : throw new InvalidCastException());
+	#region 公共属性
+	public TResult Result { get; set; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => this.HasError(out var exception) ? $"[{exception.GetType().Name}] {exception.Message}" : $"{this.Result}";
 	#endregion
 }

@@ -28,55 +28,25 @@
  */
 
 using System;
-using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Polly;
 using Polly.Fallback;
 
-using Zongsoft.Common;
-using Zongsoft.Components;
 using Zongsoft.Components.Features;
 
-namespace Zongsoft.Externals.Polly;
+namespace Zongsoft.Externals.Polly.Strategies;
 
-partial class FeatureApplier
+internal sealed class FallbackStrategyOptions<TArgument, TResult> : ResilienceStrategyOptions
 {
-    private sealed class FallbackApplier : IFeatureApplier
+	public FallbackStrategyOptions()
 	{
-		public bool Apply(ResiliencePipelineBuilder builder, IFeature feature) => false;
-		public bool Apply<TResult>(ResiliencePipelineBuilder builder, FallbackFeature<TResult> feature)
-		{
-			if(!feature.Usable(feature => feature.Fallback != null))
-				return false;
+		this.Name = "Fallback";
+		this.ShouldHandle = args => new(args.HasError(out var exception) && exception is not OperationCanceledException);
+	}
 
-			var strategy = new FallbackStrategyOptions<TResult>
-			{
-				FallbackAction = async argument =>
-				{
-					try
-					{
-						var result = await feature.Fallback(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
-						return Outcome.FromResult(result);
-					}
-					catch(Exception ex)
-					{
-						return Outcome.FromException<TResult>(ex);
-					}
-				},
-			};
-
-			if(feature.Predicator != null)
-				strategy.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
-
-			var b = new ResiliencePipelineBuilder<TResult>()
-			{
-				Name = builder.Name,
-				InstanceName = builder.InstanceName,
-				ContextPool = builder.ContextPool,
-				TimeProvider = builder.TimeProvider,
-			};
-
-			return b.AddFallback(strategy) != null;
-		}
-    }
+	public Func<Argument<TArgument, TResult>, ValueTask<bool>> ShouldHandle { get; set; }
+	public Func<Argument<TArgument, TResult>, ValueTask> FallbackAction { get; set; }
+	public Func<Argument<TArgument, TResult>, ValueTask> OnFallback { get; set; }
 }
