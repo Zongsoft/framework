@@ -41,7 +41,7 @@ internal static partial class FeatureExtension
 {
 	public static void AddStrategy(this ResiliencePipelineBuilder builder, IFeature feature)
 	{
-		if(builder == null || !feature.Usable())
+		if(builder == null || feature == null)
 			return;
 
 		switch(feature)
@@ -72,15 +72,15 @@ internal static partial class FeatureExtension
 		}
 	}
 
-	public static void AddStrategy<TResult>(this ResiliencePipelineBuilder<TResult> builder, IFeature feature)
+	public static void AddStrategy<TArgument>(this ResiliencePipelineBuilder builder, IFeature feature)
 	{
-		if(builder == null || !feature.Usable())
+		if(builder == null || feature == null)
 			return;
 
 		switch(feature)
 		{
 			case RetryFeature retry:
-				var retryOptions = retry.ToStrategy<TResult>();
+				var retryOptions = retry.ToStrategy<TArgument>();
 				if(retryOptions != null)
 					builder.AddRetry(retryOptions);
 				break;
@@ -99,7 +99,42 @@ internal static partial class FeatureExtension
 				if(breakerOptions != null)
 					builder.AddCircuitBreaker(breakerOptions);
 				break;
-			case FallbackFeature<object, TResult> fallback:
+			case FallbackFeature<TArgument> fallback:
+				var fallbackOptions = fallback.ToStrategy();
+				if(fallbackOptions != null)
+					builder.AddFallback(fallbackOptions);
+				break;
+		}
+	}
+
+	public static void AddStrategy<TArgument, TResult>(this ResiliencePipelineBuilder<TResult> builder, IFeature feature)
+	{
+		if(builder == null || feature == null)
+			return;
+
+		switch(feature)
+		{
+			case RetryFeature retry:
+				var retryOptions = retry.ToStrategy<TArgument, TResult>();
+				if(retryOptions != null)
+					builder.AddRetry(retryOptions);
+				break;
+			case TimeoutFeature timeout:
+				var timeoutOptions = timeout.ToStrategy();
+				if(timeoutOptions != null)
+					builder.AddTimeout(timeoutOptions);
+				break;
+			case ThrottleFeature throttle:
+				var throttleOptions = throttle.ToStrategy();
+				if(throttleOptions != null)
+					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
+				break;
+			case BreakerFeature breaker:
+				var breakerOptions = breaker.ToStrategy<TResult>();
+				if(breakerOptions != null)
+					builder.AddCircuitBreaker(breakerOptions);
+				break;
+			case FallbackFeature<TArgument, TResult> fallback:
 				var fallbackOptions = fallback.ToStrategy();
 				if(fallbackOptions != null)
 					builder.AddFallback(fallbackOptions);

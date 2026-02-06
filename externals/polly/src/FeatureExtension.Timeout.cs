@@ -39,6 +39,45 @@ namespace Zongsoft.Externals.Polly;
 
 partial class FeatureExtension
 {
-	public static TimeoutStrategyOptions ToStrategy(this TimeoutFeature feature) =>
-		feature.Usable(feature => feature.Timeout > TimeSpan.Zero) ? new TimeoutStrategyOptions() { Timeout = feature.Timeout } : null;
+	public static TimeoutStrategyOptions ToStrategy(this TimeoutFeature feature)
+	{
+		if(!feature.Usable())
+			return null;
+
+		var options = new TimeoutStrategyOptions() { Timeout = feature.Timeout };
+		if(feature.TimeoutGenerator != null)
+			options.TimeoutGenerator = args => feature.TimeoutGenerator(default, args.Context.CancellationToken);
+		if(feature.OnTimeout != null)
+			options.OnTimeout = args => feature.OnTimeout(default, args.Context.CancellationToken);
+
+		return options;
+	}
+
+	public static TimeoutStrategyOptions ToStrategy<TArgument>(this TimeoutFeature<TArgument> feature)
+	{
+		if(!feature.Usable())
+			return null;
+
+		var options = new TimeoutStrategyOptions() { Timeout = feature.Timeout };
+		if(feature.TimeoutGenerator != null)
+			options.TimeoutGenerator = args => feature.TimeoutGenerator(default, args.Context.CancellationToken);
+		if(feature.OnTimeout != null)
+			options.OnTimeout = args => feature.OnTimeout(default, args.Context.CancellationToken);
+
+		return options;
+	}
+
+	public static TimeoutStrategyOptions ToStrategy<TArgument, TResult>(this TimeoutFeature<TArgument, TResult> feature)
+	{
+		if(!feature.Usable())
+			return null;
+
+		var options = new TimeoutStrategyOptions() { Timeout = feature.Timeout };
+		if(feature.TimeoutGenerator != null)
+			options.TimeoutGenerator = args => feature.TimeoutGenerator(default, args.Context.CancellationToken);
+		if(feature.OnTimeout != null)
+			options.OnTimeout = args => feature.OnTimeout(default, args.Context.CancellationToken);
+
+		return options;
+	}
 }

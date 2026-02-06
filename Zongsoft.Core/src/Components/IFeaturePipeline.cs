@@ -34,6 +34,17 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
+public interface IFeaturePipeline
+{
+	IEnumerable<IFeature> Features { get; }
+
+	void Execute(Action executor);
+	void Execute(Action<Collections.Parameters> executor, Collections.Parameters parameters);
+
+	ValueTask ExecuteAsync(Func<CancellationToken, ValueTask> executor, CancellationToken cancellation = default);
+	ValueTask ExecuteAsync(Func<Collections.Parameters, CancellationToken, ValueTask> executor, Collections.Parameters parameters, CancellationToken cancellation = default);
+}
+
 public interface IFeaturePipeline<TArgument>
 {
 	IEnumerable<IFeature> Features { get; }

@@ -35,6 +35,21 @@ namespace Zongsoft.Components.Features;
 
 public static class FallbackFeatureExtension
 {
+	public static IFeatureBuilder Fallback(this IFeatureBuilder builder, Func<Argument, CancellationToken, ValueTask> fallback, bool enabled = true) => Fallback(builder, fallback, null, enabled);
+	public static IFeatureBuilder Fallback(this IFeatureBuilder builder, Func<Argument, CancellationToken, ValueTask> fallback, Common.IPredication<Argument> predicator, bool enabled = true)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new FallbackFeature(fallback, predicator, enabled));
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(new FallbackFeature(fallback, predicator, enabled));
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), new FallbackFeature(fallback, predicator, enabled)]);
+	}
+
 	public static IFeatureBuilder Fallback<T>(this IFeatureBuilder builder, Func<Argument<T>, CancellationToken, ValueTask> fallback, bool enabled = true) => Fallback(builder, fallback, null, enabled);
 	public static IFeatureBuilder Fallback<T>(this IFeatureBuilder builder, Func<Argument<T>, CancellationToken, ValueTask> fallback, Common.IPredication<Argument<T>> predicator, bool enabled = true)
 	{

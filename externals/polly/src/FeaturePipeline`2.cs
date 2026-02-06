@@ -39,10 +39,10 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Externals.Polly;
 
-public sealed class FeaturePipeline<TArgument> : IFeaturePipeline<TArgument>
+public sealed class FeaturePipeline<TArgument, TResult> : IFeaturePipeline<TArgument, TResult>
 {
 	#region 成员字段
-	private readonly ResiliencePipeline _pipeline;
+	private readonly ResiliencePipeline<TResult> _pipeline;
 	#endregion
 
 	#region 构造函数
@@ -50,10 +50,10 @@ public sealed class FeaturePipeline<TArgument> : IFeaturePipeline<TArgument>
 	{
 		if(features != null)
 		{
-			var builder = new ResiliencePipelineBuilder();
+			var builder = new ResiliencePipelineBuilder<TResult>();
 
 			foreach(var feature in features)
-				builder.AddStrategy<TArgument>(feature);
+				builder.AddStrategy<TArgument, TResult>(feature);
 
 			_pipeline = builder.Build();
 		}
@@ -67,20 +67,24 @@ public sealed class FeaturePipeline<TArgument> : IFeaturePipeline<TArgument>
 	#endregion
 
 	#region 同步执行
-	public void Execute(Action<TArgument> executor, TArgument argument) => _pipeline?.Execute(executor, argument);
-	public void Execute(Action<TArgument, Parameters> executor, TArgument argument, Parameters parameters)
+	public TResult Execute(Func<TArgument, TResult> executor, TArgument argument)
 	{
-		_pipeline?.Execute(state => executor(state.argument, state.parameters), (argument, parameters));
+		return _pipeline == null ? default : _pipeline.Execute(executor, argument);
+	}
+
+	public TResult Execute(Func<TArgument, Parameters, TResult> executor, TArgument argument, Parameters parameters)
+	{
+		return _pipeline == null ? default : _pipeline.Execute(state => executor(state.argument, state.parameters), (argument, parameters));
 	}
 	#endregion
 
 	#region 异步执行
-	public ValueTask ExecuteAsync(Func<TArgument, CancellationToken, ValueTask> executor, TArgument argument, CancellationToken cancellation = default)
+	public ValueTask<TResult> ExecuteAsync(Func<TArgument, CancellationToken, ValueTask<TResult>> executor, TArgument argument, CancellationToken cancellation = default)
 	{
 		return _pipeline == null ? default : _pipeline.ExecuteAsync(executor, argument, cancellation);
 	}
 
-	public ValueTask ExecuteAsync(Func<TArgument, Parameters, CancellationToken, ValueTask> executor, TArgument argument, Parameters parameters, CancellationToken cancellation = default)
+	public ValueTask<TResult> ExecuteAsync(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> executor, TArgument argument, Parameters parameters, CancellationToken cancellation = default)
 	{
 		return _pipeline == null ? default : _pipeline.ExecuteAsync((state, cancellation) => executor(state.argument, state.parameters, cancellation), (argument, parameters), cancellation);
 	}

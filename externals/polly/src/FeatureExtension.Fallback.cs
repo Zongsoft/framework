@@ -30,7 +30,6 @@
 using System;
 
 using Polly;
-using Polly.Fallback;
 
 using Zongsoft.Components;
 using Zongsoft.Components.Features;
@@ -39,49 +38,74 @@ namespace Zongsoft.Externals.Polly;
 
 partial class FeatureExtension
 {
-	public static void AddFallback<T, TResult>(this ResiliencePipelineBuilder builder, FallbackFeature<T, TResult> feature) => builder.AddFallback<T, TResult>(ToStrategy(feature));
-	public static void AddFallback<T, TResult>(this ResiliencePipelineBuilder builder, FallbackStrategyOptions<TResult> options)
+	public static void AddFallback(this ResiliencePipelineBuilder builder, Strategies.FallbackStrategyOptions options)
 	{
 		if(options == null)
 			return;
 
-		var wrapper = new ResiliencePipelineBuilder<TResult>()
-		{
-			Name = builder.Name,
-			ContextPool = builder.ContextPool,
-			InstanceName = builder.InstanceName,
-			TimeProvider = builder.TimeProvider,
-		};
-
-		wrapper.AddFallback(options);
+		builder.AddStrategy(context => new Strategies.FallbackStrategy(options, context.Telemetry), options);
 	}
 
-	public static FallbackStrategyOptions<TResult> ToStrategy<T, TResult>(this FallbackFeature<T, TResult> feature)
+	public static void AddFallback<T>(this ResiliencePipelineBuilder builder, Strategies.FallbackStrategyOptions<T> options)
+	{
+		if(options == null)
+			return;
+
+		builder.AddStrategy(context => new Strategies.FallbackStrategy<T>(options, context.Telemetry), options);
+	}
+
+	public static void AddFallback<T, TResult>(this ResiliencePipelineBuilder<TResult> builder, Strategies.FallbackStrategyOptions<T, TResult> options)
+	{
+		if(options == null)
+			return;
+
+		builder.AddStrategy(context => new Strategies.FallbackStrategy<T, TResult>(options, context.Telemetry), options);
+	}
+
+	public static Strategies.FallbackStrategyOptions ToStrategy(this FallbackFeature feature)
 	{
 		if(!feature.Usable(feature => feature.Fallback != null))
 			return null;
 
-		var options = new FallbackStrategyOptions<TResult>
+		var options = new Strategies.FallbackStrategyOptions
 		{
-			FallbackAction = async argument =>
-			{
-				try
-				{
-					var result = await feature.Fallback(
-						new(default, argument.Outcome.Result, argument.Outcome.Exception.GetException()),
-						argument.Context.CancellationToken);
-
-					return Outcome.FromResult(result);
-				}
-				catch(Exception ex)
-				{
-					return Outcome.FromException<TResult>(ex);
-				}
-			},
+			Fallback = feature.Fallback,
 		};
 
 		if(feature.Predicator != null)
-			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			options.ShouldHandle = feature.Predicator.PredicateAsync;
+
+		return options;
+	}
+
+	public static Strategies.FallbackStrategyOptions<T> ToStrategy<T>(this FallbackFeature<T> feature)
+	{
+		if(!feature.Usable(feature => feature.Fallback != null))
+			return null;
+
+		var options = new Strategies.FallbackStrategyOptions<T>
+		{
+			Fallback = feature.Fallback,
+		};
+
+		if(feature.Predicator != null)
+			options.ShouldHandle = feature.Predicator.PredicateAsync;
+
+		return options;
+	}
+
+	public static Strategies.FallbackStrategyOptions<T, TResult> ToStrategy<T, TResult>(this FallbackFeature<T, TResult> feature)
+	{
+		if(!feature.Usable(feature => feature.Fallback != null))
+			return null;
+
+		var options = new Strategies.FallbackStrategyOptions<T, TResult>
+		{
+			Fallback = feature.Fallback,
+		};
+
+		if(feature.Predicator != null)
+			options.ShouldHandle = feature.Predicator.PredicateAsync;
 
 		return options;
 	}

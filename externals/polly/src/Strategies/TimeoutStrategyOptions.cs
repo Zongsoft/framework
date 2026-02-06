@@ -28,17 +28,38 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Components;
+using Polly;
+using Polly.Timeout;
 
-namespace Zongsoft.Externals.Polly;
+using Zongsoft.Components.Features;
 
-public sealed class FeaturePipelineBuilder : IFeaturePipelineBuilder
+namespace Zongsoft.Externals.Polly.Strategies;
+
+internal sealed class TimeoutStrategyOptions : ResilienceStrategyOptions
 {
-	public static readonly FeaturePipelineBuilder Instance = new();
+	public TimeoutStrategyOptions()
+	{
+		this.Name = "Timeout";
+		this.Timeout = TimeSpan.FromSeconds(30);
+	}
 
-	public IFeaturePipeline Build(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline(features);
-	public IFeaturePipeline<TArgument> Build<TArgument>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument>(features);
-	public IFeaturePipeline<TArgument, TResult> Build<TArgument, TResult>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument, TResult>(features);
+	public TimeSpan Timeout { get; set; }
+	public Func<Argument, ValueTask<TimeSpan>> TimeoutGenerator { get; set; }
+	public Func<Argument, ValueTask> OnTimeout { get; set; }
+}
+
+internal sealed class TimeoutStrategyOptions<TArgument> : ResilienceStrategyOptions
+{
+	public TimeoutStrategyOptions()
+	{
+		this.Name = "Timeout";
+		this.Timeout = TimeSpan.FromSeconds(30);
+	}
+
+	public TimeSpan Timeout { get; set; }
+	public Func<Argument<TArgument>, ValueTask<TimeSpan>> TimeoutGenerator { get; set; }
+	public Func<Argument<TArgument>, ValueTask> OnTimeout { get; set; }
 }

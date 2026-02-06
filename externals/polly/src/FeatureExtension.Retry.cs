@@ -56,19 +56,46 @@ partial class FeatureExtension
 		};
 
 		if(feature.Latency.Generator != null)
-			options.DelayGenerator = argument =>
+			options.DelayGenerator = args =>
 			{
-				var result = feature.Latency.Generator(feature, argument.AttemptNumber);
+				var result = feature.Latency.Generator(feature, args.AttemptNumber);
 				return ValueTask.FromResult<TimeSpan?>(result > TimeSpan.Zero ? result : null);
 			};
 
 		if(feature.Predicator != null)
-			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(new RetryArgument<object, object>(argument.AttemptNumber, null, argument.Outcome.Result, argument.Outcome.Exception.GetException()), argument.Context.CancellationToken);
+			options.ShouldHandle = args => feature.Predicator.PredicateAsync(new RetryArgument(args.AttemptNumber, args.Outcome.Exception.GetException()), args.Context.CancellationToken);
 
 		return options;
 	}
 
-	public static RetryStrategyOptions<TResult> ToStrategy<TResult>(this RetryFeature feature)
+	public static RetryStrategyOptions ToStrategy<TArgument>(this RetryFeature feature)
+	{
+		if(!feature.Usable(feature => feature.Latency.HasValue))
+			return null;
+
+		var options = new RetryStrategyOptions
+		{
+			Delay = feature.Latency.Value,
+			MaxDelay = feature.Latency.Limit > TimeSpan.Zero ? feature.Latency.Limit : null,
+			MaxRetryAttempts = feature.Attempts > 0 ? feature.Attempts : int.MaxValue,
+			UseJitter = feature.Jitterable,
+			BackoffType = GetBackoffType(feature.Backoff),
+		};
+
+		if(feature.Latency.Generator != null)
+			options.DelayGenerator = args =>
+			{
+				var result = feature.Latency.Generator(feature, args.AttemptNumber);
+				return ValueTask.FromResult<TimeSpan?>(result > TimeSpan.Zero ? result : null);
+			};
+
+		if(feature.Predicator != null)
+			options.ShouldHandle = args => feature.Predicator.PredicateAsync(new RetryArgument<TArgument>(args.AttemptNumber, default, args.Outcome.Exception.GetException()), args.Context.CancellationToken);
+
+		return options;
+	}
+
+	public static RetryStrategyOptions<TResult> ToStrategy<TArgument, TResult>(this RetryFeature feature)
 	{
 		if(!feature.Usable(feature => feature.Latency.HasValue))
 			return null;
@@ -83,9 +110,9 @@ partial class FeatureExtension
 		};
 
 		if(feature.Latency.Generator != null)
-			options.DelayGenerator = argument =>
+			options.DelayGenerator = args =>
 			{
-				var result = feature.Latency.Generator(feature, argument.AttemptNumber);
+				var result = feature.Latency.Generator(feature, args.AttemptNumber);
 				return ValueTask.FromResult<TimeSpan?>(result > TimeSpan.Zero ? result : null);
 			};
 

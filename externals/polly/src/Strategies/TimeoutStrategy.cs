@@ -28,17 +28,18 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Polly;
+using Polly.Timeout;
+using Polly.Telemetry;
 
 using Zongsoft.Components;
+using Zongsoft.Components.Features;
 
-namespace Zongsoft.Externals.Polly;
+namespace Zongsoft.Externals.Polly.Strategies;
 
-public sealed class FeaturePipelineBuilder : IFeaturePipelineBuilder
+internal sealed class TimeoutStrategy
 {
-	public static readonly FeaturePipelineBuilder Instance = new();
-
-	public IFeaturePipeline Build(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline(features);
-	public IFeaturePipeline<TArgument> Build<TArgument>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument>(features);
-	public IFeaturePipeline<TArgument, TResult> Build<TArgument, TResult>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument, TResult>(features);
 }

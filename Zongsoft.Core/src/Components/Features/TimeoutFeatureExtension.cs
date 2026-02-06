@@ -28,23 +28,94 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
 
 public static class TimeoutFeatureExtension
 {
-	public static IFeatureBuilder Timeout(this IFeatureBuilder builder, int timeout) => builder.Timeout(TimeSpan.FromMilliseconds(timeout));
-	public static IFeatureBuilder Timeout(this IFeatureBuilder builder, TimeSpan timeout)
+	public static IFeatureBuilder Timeout(this IFeatureBuilder builder, int timeout, Func<Argument, CancellationToken, ValueTask> onTimeout = null) => builder.Timeout(TimeSpan.FromMilliseconds(timeout), onTimeout);
+	public static IFeatureBuilder Timeout(this IFeatureBuilder builder, TimeSpan timeout, Func<Argument, CancellationToken, ValueTask> onTimeout = null)
 	{
 		if(builder == null)
-			return new FeatureBuilder(new TimeoutFeature(timeout));
+			return new FeatureBuilder(new TimeoutFeature(timeout) { OnTimeout = onTimeout });
 
 		if(builder is FeatureBuilder appender)
 		{
-			appender.Features.Add(new TimeoutFeature(timeout));
+			appender.Features.Add(new TimeoutFeature(timeout) { OnTimeout = onTimeout });
 			return appender;
 		}
 
-		return new FeatureBuilder([.. builder.Build(), new TimeoutFeature(timeout)]);
+		return new FeatureBuilder([.. builder.Build(), new TimeoutFeature(timeout) { OnTimeout = onTimeout }]);
+	}
+	public static IFeatureBuilder Timeout(this IFeatureBuilder builder, Func<Argument, CancellationToken, ValueTask<TimeSpan>> timeout, Func<Argument, CancellationToken, ValueTask> onTimeout = null)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new TimeoutFeature(timeout) { OnTimeout = onTimeout });
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(new TimeoutFeature(timeout) { OnTimeout = onTimeout });
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), new TimeoutFeature(timeout) { OnTimeout = onTimeout }]);
+	}
+
+	public static IFeatureBuilder Timeout<T>(this IFeatureBuilder builder, int timeout, Func<Argument<T>, CancellationToken, ValueTask> onTimeout = null) => builder.Timeout(TimeSpan.FromMilliseconds(timeout), onTimeout);
+	public static IFeatureBuilder Timeout<T>(this IFeatureBuilder builder, TimeSpan timeout, Func<Argument<T>, CancellationToken, ValueTask> onTimeout = null)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new TimeoutFeature<T>(timeout) { OnTimeout = onTimeout });
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(new TimeoutFeature<T>(timeout) { OnTimeout = onTimeout });
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), new TimeoutFeature<T>(timeout) { OnTimeout = onTimeout }]);
+	}
+	public static IFeatureBuilder Timeout<T>(this IFeatureBuilder builder, Func<Argument<T>, CancellationToken, ValueTask<TimeSpan>> timeout, Func<Argument<T>, CancellationToken, ValueTask> onTimeout = null)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new TimeoutFeature<T>(timeout) { OnTimeout = onTimeout });
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(new TimeoutFeature<T>(timeout) { OnTimeout = onTimeout });
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), new TimeoutFeature<T>(timeout) { OnTimeout = onTimeout }]);
+	}
+
+	public static IFeatureBuilder Timeout<T, TResult>(this IFeatureBuilder builder, int timeout, Func<Argument<T, TResult>, CancellationToken, ValueTask> onTimeout = null) => builder.Timeout(TimeSpan.FromMilliseconds(timeout), onTimeout);
+	public static IFeatureBuilder Timeout<T, TResult>(this IFeatureBuilder builder, TimeSpan timeout, Func<Argument<T, TResult>, CancellationToken, ValueTask> onTimeout = null)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new TimeoutFeature<T, TResult>(timeout) { OnTimeout = onTimeout });
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(new TimeoutFeature<T, TResult>(timeout) { OnTimeout = onTimeout });
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), new TimeoutFeature<T, TResult>(timeout) { OnTimeout = onTimeout }]);
+	}
+	public static IFeatureBuilder Timeout<T, TResult>(this IFeatureBuilder builder, Func<Argument<T, TResult>, CancellationToken, ValueTask<TimeSpan>> timeout, Func<Argument<T, TResult>, CancellationToken, ValueTask> onTimeout = null)
+	{
+		if(builder == null)
+			return new FeatureBuilder(new TimeoutFeature<T, TResult>(timeout) { OnTimeout = onTimeout });
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(new TimeoutFeature<T, TResult>(timeout) { OnTimeout = onTimeout });
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), new TimeoutFeature<T, TResult>(timeout) { OnTimeout = onTimeout }]);
 	}
 }

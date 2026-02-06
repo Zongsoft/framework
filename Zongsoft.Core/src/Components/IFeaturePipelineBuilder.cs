@@ -34,6 +34,7 @@ namespace Zongsoft.Components;
 
 public interface IFeaturePipelineBuilder
 {
+	IFeaturePipeline Build(IEnumerable<IFeature> features);
 	IFeaturePipeline<TArgument> Build<TArgument>(IEnumerable<IFeature> features);
 	IFeaturePipeline<TArgument, TResult> Build<TArgument, TResult>(IEnumerable<IFeature> features);
 }

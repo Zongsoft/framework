@@ -39,7 +39,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Externals.Polly;
 
-public sealed class FeaturePipeline<TArgument> : IFeaturePipeline<TArgument>
+public sealed class FeaturePipeline : IFeaturePipeline
 {
 	#region 成员字段
 	private readonly ResiliencePipeline _pipeline;
@@ -67,26 +67,19 @@ public sealed class FeaturePipeline<TArgument> : IFeaturePipeline<TArgument>
 	#endregion
 
 	#region 同步执行
-	public void Execute(Action<TArgument> executor, TArgument argument)
-	{
-		_pipeline?.Execute(state => executor(state), argument);
-	}
-
-	public void Execute(Action<TArgument, Parameters> executor, TArgument argument, Parameters parameters)
-	{
-		_pipeline?.Execute(state => executor(state.argument, state.parameters), (argument, parameters));
-	}
+	public void Execute(Action executor) => _pipeline?.Execute(executor);
+	public void Execute(Action<Parameters> executor, Parameters parameters) => _pipeline?.Execute(executor, parameters);
 	#endregion
 
 	#region 异步执行
-	public ValueTask ExecuteAsync(Func<TArgument, CancellationToken, ValueTask> executor, TArgument argument, CancellationToken cancellation = default)
+	public ValueTask ExecuteAsync(Func<CancellationToken, ValueTask> executor, CancellationToken cancellation = default)
 	{
-		return _pipeline == null ? default : _pipeline.ExecuteAsync((state, cancellation) => executor(state, cancellation), argument, cancellation);
+		return _pipeline == null ? default : _pipeline.ExecuteAsync(executor, cancellation);
 	}
 
-	public ValueTask ExecuteAsync(Func<TArgument, Parameters, CancellationToken, ValueTask> executor, TArgument argument, Parameters parameters, CancellationToken cancellation = default)
+	public ValueTask ExecuteAsync(Func<Parameters, CancellationToken, ValueTask> executor, Parameters parameters, CancellationToken cancellation = default)
 	{
-		return _pipeline == null ? default : _pipeline.ExecuteAsync((state, cancellation) => executor(state.argument, state.parameters, cancellation), (argument, parameters), cancellation);
+		return _pipeline == null ? default : _pipeline.ExecuteAsync(executor, parameters, cancellation);
 	}
 	#endregion
 }

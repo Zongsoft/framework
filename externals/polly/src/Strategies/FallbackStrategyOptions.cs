@@ -32,21 +32,43 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Polly;
-using Polly.Fallback;
 
 using Zongsoft.Components.Features;
 
 namespace Zongsoft.Externals.Polly.Strategies;
+
+internal sealed class FallbackStrategyOptions : ResilienceStrategyOptions
+{
+	public FallbackStrategyOptions()
+	{
+		this.Name = "Fallback";
+		this.ShouldHandle = (args, _) => new(args.HasError(out var exception) && exception is not OperationCanceledException);
+	}
+
+	public Func<Argument, CancellationToken, ValueTask<bool>> ShouldHandle { get; set; }
+	public Func<Argument, CancellationToken, ValueTask> Fallback { get; set; }
+}
+
+internal sealed class FallbackStrategyOptions<TArgument> : ResilienceStrategyOptions
+{
+	public FallbackStrategyOptions()
+	{
+		this.Name = "Fallback";
+		this.ShouldHandle = (args, _) => new(args.HasError(out var exception) && exception is not OperationCanceledException);
+	}
+
+	public Func<Argument<TArgument>, CancellationToken, ValueTask<bool>> ShouldHandle { get; set; }
+	public Func<Argument<TArgument>, CancellationToken, ValueTask> Fallback { get; set; }
+}
 
 internal sealed class FallbackStrategyOptions<TArgument, TResult> : ResilienceStrategyOptions
 {
 	public FallbackStrategyOptions()
 	{
 		this.Name = "Fallback";
-		this.ShouldHandle = args => new(args.HasError(out var exception) && exception is not OperationCanceledException);
+		this.ShouldHandle = (args, _) => new(args.HasError(out var exception) && exception is not OperationCanceledException);
 	}
 
-	public Func<Argument<TArgument, TResult>, ValueTask<bool>> ShouldHandle { get; set; }
-	public Func<Argument<TArgument, TResult>, ValueTask> FallbackAction { get; set; }
-	public Func<Argument<TArgument, TResult>, ValueTask> OnFallback { get; set; }
+	public Func<Argument<TArgument, TResult>, CancellationToken, ValueTask<bool>> ShouldHandle { get; set; }
+	public Func<Argument<TArgument, TResult>, CancellationToken, ValueTask<TResult>> Fallback { get; set; }
 }

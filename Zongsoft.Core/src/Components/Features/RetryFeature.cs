@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
 
@@ -81,6 +83,8 @@ public class RetryFeature : RetryFeatureBase
 	#region 公共属性
 	/// <summary>获取或设置重试断言器。</summary>
 	public Common.IPredication<RetryArgument> Predicator { get; set; }
+	/// <summary>获取或设置重试被触发的回调方法。</summary>
+	public Func<RetryArgument, CancellationToken, ValueTask> OnRetry { get; set; }
 	#endregion
 }
 
@@ -102,6 +106,8 @@ public class RetryFeature<T> : RetryFeatureBase
 	#region 公共属性
 	/// <summary>获取或设置重试断言器。</summary>
 	public Common.IPredication<RetryArgument<T>> Predicator { get; set; }
+	/// <summary>获取或设置重试被触发的回调方法。</summary>
+	public Func<RetryArgument<T>, CancellationToken, ValueTask> OnRetry { get; set; }
 	#endregion
 }
 
@@ -123,6 +129,8 @@ public class RetryFeature<T, TResult> : RetryFeatureBase
 	#region 公共属性
 	/// <summary>获取或设置重试断言器。</summary>
 	public Common.IPredication<RetryArgument<T, TResult>> Predicator { get; set; }
+	/// <summary>获取或设置重试被触发的回调方法。</summary>
+	public Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> OnRetry { get; set; }
 	#endregion
 }
 
