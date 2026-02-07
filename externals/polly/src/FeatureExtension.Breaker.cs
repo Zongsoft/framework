@@ -63,7 +63,29 @@ partial class FeatureExtension
 		return options;
 	}
 
-	public static CircuitBreakerStrategyOptions<TResult> ToStrategy<TResult>(this BreakerFeature feature)
+	public static CircuitBreakerStrategyOptions ToStrategy<T>(this BreakerFeature<T> feature)
+	{
+		if(!feature.Usable(feature => feature.Duration > TimeSpan.Zero && feature.Threshold > 0))
+			return null;
+
+		var options = new CircuitBreakerStrategyOptions
+		{
+			BreakDuration = feature.Duration,
+			FailureRatio = feature.FailureRatio,
+			SamplingDuration = feature.FailurePeriod,
+			MinimumThroughput = feature.Threshold,
+		};
+
+		if(feature.DurationFactory != null)
+			options.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
+
+		if(feature.Predicator != null)
+			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+
+		return options;
+	}
+
+	public static CircuitBreakerStrategyOptions<TResult> ToStrategy<T, TResult>(this BreakerFeature<T, TResult> feature)
 	{
 		if(!feature.Usable(feature => feature.Duration > TimeSpan.Zero && feature.Threshold > 0))
 			return null;

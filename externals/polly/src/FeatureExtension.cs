@@ -79,8 +79,8 @@ internal static partial class FeatureExtension
 
 		switch(feature)
 		{
-			case RetryFeature retry:
-				var retryOptions = retry.ToStrategy<TArgument>();
+			case RetryFeature<TArgument> retry:
+				var retryOptions = retry.ToStrategy();
 				if(retryOptions != null)
 					builder.AddRetry(retryOptions);
 				break;
@@ -94,8 +94,8 @@ internal static partial class FeatureExtension
 				if(throttleOptions != null)
 					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
 				break;
-			case BreakerFeature breaker:
-				var breakerOptions = breaker.ToStrategy<TResult>();
+			case BreakerFeature<TArgument> breaker:
+				var breakerOptions = breaker.ToStrategy();
 				if(breakerOptions != null)
 					builder.AddCircuitBreaker(breakerOptions);
 				break;
@@ -114,8 +114,8 @@ internal static partial class FeatureExtension
 
 		switch(feature)
 		{
-			case RetryFeature retry:
-				var retryOptions = retry.ToStrategy<TArgument, TResult>();
+			case RetryFeature<TArgument, TResult> retry:
+				var retryOptions = retry.ToStrategy();
 				if(retryOptions != null)
 					builder.AddRetry(retryOptions);
 				break;
@@ -129,8 +129,8 @@ internal static partial class FeatureExtension
 				if(throttleOptions != null)
 					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
 				break;
-			case BreakerFeature breaker:
-				var breakerOptions = breaker.ToStrategy<TResult>();
+			case BreakerFeature<TArgument, TResult> breaker:
+				var breakerOptions = breaker.ToStrategy();
 				if(breakerOptions != null)
 					builder.AddCircuitBreaker(breakerOptions);
 				break;

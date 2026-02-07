@@ -35,18 +35,17 @@ namespace Zongsoft.Components.Features;
 /// <summary>
 /// 提供限流(限速)功能的特性类。
 /// </summary>
-public class ThrottleFeature : IFeature
+public abstract class ThrottleFeatureBase : IFeature
 {
 	#region 构造函数
-	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument, bool> rejected = null) : this(permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter, rejected) { }
-	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument, bool> rejected = null)
+	protected ThrottleFeatureBase(int permitLimit, int queueLimit, ThrottleLimiter limiter = null) : this(permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter) { }
+	protected ThrottleFeatureBase(int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null)
 	{
 		this.Enabled = true;
 		this.PermitLimit = permitLimit > 0 ? permitLimit : 1000;
 		this.QueueLimit = Math.Max(queueLimit, 0);
 		this.QueueOrder = queueOrder;
 		this.Limiter = limiter;
-		this.Rejected = rejected;
 	}
 	#endregion
 
@@ -56,7 +55,60 @@ public class ThrottleFeature : IFeature
 	public int QueueLimit { get; set; }
 	public ThrottleQueueOrder QueueOrder { get; set; }
 	public ThrottleLimiter Limiter { get; set; }
+	#endregion
+}
+
+/// <summary>
+/// 提供限流(限速)功能的特性类。
+/// </summary>
+public class ThrottleFeature : ThrottleFeatureBase
+{
+	#region 构造函数
+	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument, bool> rejected = null) : this(permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter, rejected) { }
+	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument, bool> rejected = null) : base(permitLimit, queueLimit, queueOrder, limiter)
+	{
+		this.Rejected = rejected;
+	}
+	#endregion
+
+	#region 公共属性
 	public IHandler<ThrottleArgument, bool> Rejected { get; set; }
+	#endregion
+}
+
+/// <summary>
+/// 提供限流(限速)功能的特性类。
+/// </summary>
+public class ThrottleFeature<T> : ThrottleFeatureBase
+{
+	#region 构造函数
+	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument<T>, bool> rejected = null) : this(permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter, rejected) { }
+	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument<T>, bool> rejected = null) : base(permitLimit, queueLimit, queueOrder, limiter)
+	{
+		this.Rejected = rejected;
+	}
+	#endregion
+
+	#region 公共属性
+	public IHandler<ThrottleArgument<T>, bool> Rejected { get; set; }
+	#endregion
+}
+
+/// <summary>
+/// 提供限流(限速)功能的特性类。
+/// </summary>
+public class ThrottleFeature<T, TResult> : ThrottleFeatureBase
+{
+	#region 构造函数
+	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleLimiter limiter = null, IHandler<ThrottleArgument<T, TResult>, bool> rejected = null) : this(permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter, rejected) { }
+	public ThrottleFeature(int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null, IHandler<ThrottleArgument<T, TResult>, bool> rejected = null) : base(permitLimit, queueLimit, queueOrder, limiter)
+	{
+		this.Rejected = rejected;
+	}
+	#endregion
+
+	#region 公共属性
+	public IHandler<ThrottleArgument<T, TResult>, bool> Rejected { get; set; }
 	#endregion
 }
 
@@ -66,18 +118,81 @@ public enum ThrottleQueueOrder
 	Newest,
 }
 
-public class ThrottleArgument : Argument<ThrottleLease>
+public class ThrottleArgument : Argument
 {
 	#region 构造函数
-	public ThrottleArgument(string name, ThrottleLease lease) : base(lease) => this.Name = name;
+	public ThrottleArgument(string name, ThrottleLease lease, Exception exception = null) : base(exception)
+	{
+		this.Name = name;
+		this.Lease = lease;
+	}
 	#endregion
 
 	#region 公共属性
 	public string Name { get; }
+	public ThrottleLease Lease { get; }
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => this.Name;
+	public override string ToString() => string.IsNullOrEmpty(this.Name) ? base.ToString() : $"{this.Name}|{base.ToString()}";
+	#endregion
+}
+
+public class ThrottleArgument<T> : Argument<T>
+{
+	#region 构造函数
+	public ThrottleArgument(string name, ThrottleLease lease, Exception exception = null) : base(exception)
+	{
+		this.Name = name;
+		this.Lease = lease;
+	}
+
+	public ThrottleArgument(string name, ThrottleLease lease, T value, Exception exception = null) : base(value, exception)
+	{
+		this.Name = name;
+		this.Lease = lease;
+	}
+	#endregion
+
+	#region 公共属性
+	public string Name { get; }
+	public ThrottleLease Lease { get; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => string.IsNullOrEmpty(this.Name) ? base.ToString() : $"{this.Name}|{base.ToString()}";
+	#endregion
+}
+
+public class ThrottleArgument<T, TResult> : Argument<T, TResult>
+{
+	#region 构造函数
+	public ThrottleArgument(string name, ThrottleLease lease, Exception exception = null) : base(exception)
+	{
+		this.Name = name;
+		this.Lease = lease;
+	}
+
+	public ThrottleArgument(string name, ThrottleLease lease, T value, Exception exception = null) : base(value, exception)
+	{
+		this.Name = name;
+		this.Lease = lease;
+	}
+
+	public ThrottleArgument(string name, ThrottleLease lease, T value, TResult result, Exception exception = null) : base(value, result, exception)
+	{
+		this.Name = name;
+		this.Lease = lease;
+	}
+	#endregion
+
+	#region 公共属性
+	public string Name { get; }
+	public ThrottleLease Lease { get; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => string.IsNullOrEmpty(this.Name) ? base.ToString() : $"{this.Name}|{base.ToString()}";
 	#endregion
 }
 
