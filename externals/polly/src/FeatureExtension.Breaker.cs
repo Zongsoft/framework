@@ -52,10 +52,10 @@ partial class FeatureExtension
 		};
 
 		if(feature.DurationFactory != null)
-			options.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
+			options.BreakDurationGenerator = args => ValueTask.FromResult(feature.DurationFactory(feature, args.FailureCount, args.FailureRate));
 
 		if(feature.Predicator != null)
-			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			options.ShouldHandle = args => feature.Predicator.PredicateAsync(args.Outcome.GetArgument(), args.Context.CancellationToken);
 
 		return options;
 	}
@@ -71,10 +71,10 @@ partial class FeatureExtension
 		};
 
 		if(feature.DurationFactory != null)
-			options.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
+			options.BreakDurationGenerator = args => ValueTask.FromResult(feature.DurationFactory(feature, args.FailureCount, args.FailureRate));
 
 		if(feature.Predicator != null)
-			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			options.ShouldHandle = args => feature.Predicator.PredicateAsync(args.Outcome.GetArgument(), args.Context.CancellationToken);
 
 		return options;
 	}
@@ -90,10 +90,10 @@ partial class FeatureExtension
 		};
 
 		if(feature.DurationFactory != null)
-			options.BreakDurationGenerator = argument => ValueTask.FromResult(feature.DurationFactory(feature, argument.FailureCount, argument.FailureRate));
+			options.BreakDurationGenerator = args => ValueTask.FromResult(feature.DurationFactory(feature, args.FailureCount, args.FailureRate));
 
 		if(feature.Predicator != null)
-			options.ShouldHandle = argument => feature.Predicator.PredicateAsync(argument.Outcome.GetArgument(), argument.Context.CancellationToken);
+			options.ShouldHandle = args => feature.Predicator.PredicateAsync(args.Outcome.GetArgument(), args.Context.CancellationToken);
 
 		return options;
 	}
