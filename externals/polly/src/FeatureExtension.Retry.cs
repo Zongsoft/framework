@@ -63,10 +63,10 @@ partial class FeatureExtension
 			};
 
 		if(feature.Predicator != null)
-			options.ShouldHandle = args => feature.Predicator.PredicateAsync(new RetryArgument(args.AttemptNumber, args.Outcome.Exception.GetException()), args.Context.CancellationToken);
+			options.ShouldHandle = args => feature.Predicator.PredicateAsync(new RetryArgument(args.AttemptNumber, args.Outcome.Exception.Wrap()), args.Context.CancellationToken);
 
 		if(feature.OnRetry != null)
-			options.OnRetry = args => feature.OnRetry(new(args.AttemptNumber, args.Outcome.Exception.GetException()), args.Context.CancellationToken);
+			options.OnRetry = args => feature.OnRetry(new(args.AttemptNumber, args.Outcome.Exception.Wrap()), args.Context.CancellationToken);
 
 		return options;
 	}
@@ -93,10 +93,10 @@ partial class FeatureExtension
 			};
 
 		if(feature.Predicator != null)
-			options.ShouldHandle = args => feature.Predicator.PredicateAsync(new RetryArgument<TArgument>(args.AttemptNumber, default, args.Outcome.Exception.GetException()), args.Context.CancellationToken);
+			options.ShouldHandle = args => feature.Predicator.PredicateAsync(new RetryArgument<TArgument>(args.AttemptNumber, default, args.Outcome.Exception.Wrap()), args.Context.CancellationToken);
 
 		if(feature.OnRetry != null)
-			options.OnRetry = args => feature.OnRetry(new(args.AttemptNumber, default, args.Outcome.Exception.GetException()), args.Context.CancellationToken);
+			options.OnRetry = args => feature.OnRetry(new(args.AttemptNumber, default, args.Outcome.Exception.Wrap()), args.Context.CancellationToken);
 
 		return options;
 	}
@@ -123,10 +123,10 @@ partial class FeatureExtension
 			};
 
 		if(feature.Predicator != null)
-			options.ShouldHandle = args => feature.Predicator.PredicateAsync(new RetryArgument<TResult>(args.AttemptNumber, args.Outcome.Result, args.Outcome.Exception.GetException()), args.Context.CancellationToken);
+			options.ShouldHandle = args => feature.Predicator.PredicateAsync(new RetryArgument<TResult>(args.AttemptNumber, args.Outcome.Result, args.Outcome.Exception.Wrap()), args.Context.CancellationToken);
 
 		if(feature.OnRetry != null)
-			options.OnRetry = args => feature.OnRetry(new(args.AttemptNumber, default, args.Outcome.Result, args.Outcome.Exception.GetException()), args.Context.CancellationToken);
+			options.OnRetry = args => feature.OnRetry(new(args.AttemptNumber, default, args.Outcome.Result, args.Outcome.Exception.Wrap()), args.Context.CancellationToken);
 
 		return options;
 	}

@@ -88,8 +88,20 @@ internal class Program
 				backoff,
 				new RetryLatency(delay, limit),
 				jitterable,
-				attempts
+				attempts,
+				null,
+				OnRetry
 			);
+
+			static ValueTask OnRetry(RetryArgument argument, CancellationToken cancellation)
+			{
+				Terminal.Console.WriteLine(CommandOutletContent.Create()
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.DarkYellow, $"[{nameof(OnRetry)}] {argument.Attempted}".Justify(50))
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
+
+				return ValueTask.CompletedTask;
+			}
 		});
 
 		Terminal.Console.Executor.Command("breaker", context =>
@@ -106,7 +118,17 @@ internal class Program
 
 		Terminal.Console.Executor.Command("timeout", context =>
 		{
-			_features.Timeout(context.Arguments.GetValue(0, TimeSpan.FromSeconds(1)));
+			_features.Timeout(context.Arguments.GetValue(0, TimeSpan.FromSeconds(1)), OnTimeout);
+
+			static ValueTask OnTimeout(TimeoutArgument argument, CancellationToken cancellation)
+			{
+				Terminal.Console.WriteLine(CommandOutletContent.Create()
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.DarkYellow, $"[{nameof(OnTimeout)}] {argument.Timeout}".Justify(50))
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
+
+				return ValueTask.CompletedTask;
+			}
 		});
 
 		Terminal.Console.Executor.Command("throttle", context =>
@@ -145,12 +167,11 @@ internal class Program
 			{
 				Console.Beep();
 
-				var content = CommandOutletContent.Create()
+				Terminal.Console.WriteLine(CommandOutletContent.Create()
 					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
-					.AppendLine(CommandOutletColor.DarkYellow, $"[OnRejected] {argument.Name}".Justify(50))
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50));
+					.AppendLine(CommandOutletColor.DarkYellow, $"[{nameof(OnRejected)}] {argument.Name}".Justify(50))
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
 
-				Terminal.Console.WriteLine(content);
 				return ValueTask.FromResult(true);
 			}
 		});
@@ -159,13 +180,13 @@ internal class Program
 		{
 			_features.Fallback(
 				OnFallbackAsync,
-				Predication.Predicate<Argument<Argument>>(argument => true),
+				Predication.Predicate<Argument<int>>(argument => true),
 				true);
 		});
 
 		Terminal.Console.Executor.Command("execute", async (context, cancellation) =>
 		{
-			var executor = _features.Build<Argument>(OnExecuteAsync);
+			var executor = _features.Build<int>(OnExecuteAsync);
 			var parameters = Parameters
 				.Parameter("delay", context.Options.GetValue("delay", TimeSpan.Zero))
 				.Parameter("throw", context.Options.Switch("throw"))
@@ -183,13 +204,13 @@ internal class Program
 					await ExecuteAsync(executor, parameters, i, cancellation);
 			}
 
-			static async ValueTask ExecuteAsync(IExecutor<Argument> executor, Parameters parameters, int index, CancellationToken cancellation)
+			static async ValueTask ExecuteAsync(IExecutor<int> executor, Parameters parameters, int index, CancellationToken cancellation)
 			{
 				var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 				try
 				{
-					await executor.ExecuteAsync(new Argument(index), parameters, cancellation);
+					await executor.ExecuteAsync(index, parameters, cancellation);
 				}
 				catch(Exception ex)
 				{
@@ -250,23 +271,18 @@ internal class Program
 		return ValueTask.CompletedTask;
 	}
 
-	static async ValueTask OnExecuteAsync(Argument argument, Parameters parameters, CancellationToken cancellation)
+	static async ValueTask OnExecuteAsync(int index, Parameters parameters, CancellationToken cancellation)
 	{
 		Terminal.WriteLine(CommandOutletContent.Create()
 			.Append(CommandOutletColor.DarkGray, "[")
 			.Append(CommandOutletColor.Yellow, "OnExecute")
 			.Append(CommandOutletColor.DarkGray, " #")
-			.Append(CommandOutletColor.Cyan, $"{argument.Index + 1}")
+			.Append(CommandOutletColor.Cyan, $"{index + 1}")
 			.Append(CommandOutletColor.DarkGray, "] "));
 
 		if(parameters.TryGetValue<TimeSpan>("delay", out var delay) && delay > TimeSpan.Zero)
 			await Task.Delay(delay, cancellation);
 		if(parameters.TryGetValue<bool>("throw", out var throws) && throws)
 			throw new InvalidOperationException("🚨🚨🚨 This is a simulation of an exception thrown during execution. 🚨🚨🚨");
-	}
-
-	readonly struct Argument(int index)
-	{
-		public readonly int Index = index;
 	}
 }

@@ -46,9 +46,9 @@ partial class FeatureExtension
 
 		var options = new TimeoutStrategyOptions() { Timeout = feature.Timeout };
 		if(feature.TimeoutGenerator != null)
-			options.TimeoutGenerator = args => feature.TimeoutGenerator(default, args.Context.CancellationToken);
+			options.TimeoutGenerator = args => feature.TimeoutGenerator(new(options.Timeout), args.Context.CancellationToken);
 		if(feature.OnTimeout != null)
-			options.OnTimeout = args => feature.OnTimeout(default, args.Context.CancellationToken);
+			options.OnTimeout = args => feature.OnTimeout(new(args.Timeout), args.Context.CancellationToken);
 
 		return options;
 	}
@@ -60,9 +60,9 @@ partial class FeatureExtension
 
 		var options = new TimeoutStrategyOptions() { Timeout = feature.Timeout };
 		if(feature.TimeoutGenerator != null)
-			options.TimeoutGenerator = args => feature.TimeoutGenerator(default, args.Context.CancellationToken);
+			options.TimeoutGenerator = args => feature.TimeoutGenerator(new(options.Timeout), args.Context.CancellationToken);
 		if(feature.OnTimeout != null)
-			options.OnTimeout = args => feature.OnTimeout(default, args.Context.CancellationToken);
+			options.OnTimeout = args => feature.OnTimeout(new(args.Timeout), args.Context.CancellationToken);
 
 		return options;
 	}
@@ -74,9 +74,9 @@ partial class FeatureExtension
 
 		var options = new TimeoutStrategyOptions() { Timeout = feature.Timeout };
 		if(feature.TimeoutGenerator != null)
-			options.TimeoutGenerator = args => feature.TimeoutGenerator(default, args.Context.CancellationToken);
+			options.TimeoutGenerator = args => feature.TimeoutGenerator(new(options.Timeout), args.Context.CancellationToken);
 		if(feature.OnTimeout != null)
-			options.OnTimeout = args => feature.OnTimeout(default, args.Context.CancellationToken);
+			options.OnTimeout = args => feature.OnTimeout(new(args.Timeout), args.Context.CancellationToken);
 
 		return options;
 	}

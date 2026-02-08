@@ -59,8 +59,47 @@ partial class FeatureExtension
 		var options = new ThrottleStrategyOptions();
 
 		if(feature.Rejected != null)
-			options.OnRejected = arguments => feature.Rejected.HandleAsync(new PollyThrottleArgument(arguments), arguments.Context.CancellationToken);
+			options.OnRejected = feature.Rejected.HandleAsync;
 
+		SetLimiter(options, feature);
+
+		return options;
+	}
+
+	public static ThrottleStrategyOptions<T> ToStrategy<T>(this ThrottleFeature<T> feature)
+	{
+		if(!feature.Usable())
+			return null;
+
+		var options = new ThrottleStrategyOptions<T>();
+
+		if(feature.Rejected != null)
+			options.OnRejected = feature.Rejected.HandleAsync;
+
+		SetLimiter(options, feature);
+
+		return options;
+	}
+
+	public static ThrottleStrategyOptions<T, TResult> ToStrategy<T, TResult>(this ThrottleFeature<T, TResult> feature)
+	{
+		if(!feature.Usable())
+			return null;
+
+		var options = new ThrottleStrategyOptions<T, TResult>();
+
+		if(feature.Rejected != null)
+			options.OnRejected = feature.Rejected.HandleAsync;
+
+		SetLimiter(options, feature);
+
+		return options;
+	}
+	#endregion
+
+	#region 私有方法
+	private static void SetLimiter(ThrottleStrategyOptionsBase options, ThrottleFeatureBase feature)
+	{
 		switch(feature.Limiter)
 		{
 			case ThrottleLimiter.TokenBucket limiter:
@@ -107,14 +146,10 @@ partial class FeatureExtension
 				options.DefaultRateLimiterOptions.QueueProcessingOrder = GetQueueOrder(feature.QueueOrder);
 				break;
 		}
-
-		return options;
 	}
-	#endregion
 
-	#region 私有方法
-	private static int GetPermitLimit(ThrottleFeature feature) => feature != null && feature.PermitLimit > 0 ? feature.PermitLimit : ThrottleStrategyOptions.PERMIT_LIMIT;
-	private static int GetQueueLimit(ThrottleFeature feature) => feature != null && feature.QueueLimit > 0 ? feature.QueueLimit : ThrottleStrategyOptions.QUEUE_LIMIT;
+	private static int GetPermitLimit(ThrottleFeatureBase feature) => feature != null && feature.PermitLimit > 0 ? feature.PermitLimit : ThrottleStrategyOptions.PERMIT_LIMIT;
+	private static int GetQueueLimit(ThrottleFeatureBase feature) => feature != null && feature.QueueLimit > 0 ? feature.QueueLimit : ThrottleStrategyOptions.QUEUE_LIMIT;
 	private static QueueProcessingOrder GetQueueOrder(ThrottleQueueOrder value) => value switch
 	{
 		ThrottleQueueOrder.Oldest => QueueProcessingOrder.OldestFirst,

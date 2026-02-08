@@ -34,9 +34,8 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Externals.Polly;
 
-internal static class FeatureUtility
+internal static class FeaturePipelineArgument
 {
-	public static TArgument GetArgument<TState, TArgument>(TState state) => GetArgument<TState, TArgument>(state, out _);
 	public static TArgument GetArgument<TState, TArgument>(TState state, out Parameters parameters)
 	{
 		if(state is null)
@@ -55,17 +54,22 @@ internal static class FeatureUtility
 		{
 			for(int i = 0; i < tuple.Length; i++)
 			{
-				if(tuple[i] is TArgument value)
+				if(tuple[i] is TArgument ax)
 				{
 					parameters = null;
-					return value;
+					return ax;
 				}
 
-				if(tuple[i] is ITuple args && args.Length == 2 &&
-					args[0] is TArgument arg1 && args[1] is Parameters arg2)
+				if(tuple[i] is ITuple args && args.Length == 2 && args[0] is TArgument a1 && args[1] is Parameters ps)
 				{
-					parameters = arg2;
-					return arg1;
+					parameters = ps;
+					return a1;
+				}
+
+				if(tuple[i] is IFeaturePipelineArgument arg)
+				{
+					parameters = arg.Parameters;
+					return arg.Value is TArgument value ? value : default;
 				}
 			}
 		}
@@ -73,4 +77,21 @@ internal static class FeatureUtility
 		parameters = null;
 		return default;
 	}
+}
+
+internal interface IFeaturePipelineArgument
+{
+	object Value { get; }
+	Parameters Parameters { get; }
+}
+
+internal readonly struct FeaturePipelineArgument<T>(T value, Parameters parameters) : IFeaturePipelineArgument
+{
+	public readonly T Value = value;
+	public readonly Parameters Parameters = parameters;
+
+	object IFeaturePipelineArgument.Value => this.Value;
+	Parameters IFeaturePipelineArgument.Parameters => this.Parameters;
+
+	public override string ToString() => this.Value?.ToString();
 }

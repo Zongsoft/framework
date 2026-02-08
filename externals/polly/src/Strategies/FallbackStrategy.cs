@@ -35,7 +35,6 @@ using Polly;
 using Polly.Fallback;
 using Polly.Telemetry;
 
-using Zongsoft.Components;
 using Zongsoft.Components.Features;
 
 namespace Zongsoft.Externals.Polly.Strategies;
@@ -68,7 +67,7 @@ internal sealed class FallbackStrategy : ResilienceStrategy
 			outcome = Outcome.FromException<TResult>(ex);
 		}
 
-		var argument = new Argument(outcome.Exception.GetException());
+		var argument = new Argument(outcome.Exception.Wrap());
 		var predicate = _predicate;
 		if(predicate != null && !await predicate(argument, context.CancellationToken).ConfigureAwait(context.ContinueOnCapturedContext))
 			return outcome;
@@ -116,7 +115,7 @@ internal sealed class FallbackStrategy<TArgument> : ResilienceStrategy
 			outcome = Outcome.FromException<TResult>(ex);
 		}
 
-		var argument = new Argument<TArgument>(state is TArgument value ? value : default, outcome.Exception.GetException());
+		var argument = new Argument<TArgument>(FeatureUtility.GetArgument<TState, TArgument>(state), outcome.Exception.Wrap());
 		var predicate = _predicate;
 		if(predicate != null && !await predicate(argument, context.CancellationToken).ConfigureAwait(context.ContinueOnCapturedContext))
 			return outcome;
@@ -164,7 +163,7 @@ internal sealed class FallbackStrategy<TArgument, TResult> : ResilienceStrategy<
 			outcome = Outcome.FromException<TResult>(ex);
 		}
 
-		var argument = new Argument<TArgument, TResult>(state is TArgument value ? value : default, outcome.Result, outcome.Exception.GetException());
+		var argument = new Argument<TArgument, TResult>(state is TArgument value ? value : default, outcome.Result, outcome.Exception.Wrap());
 		var predicate = _predicate;
 		if(predicate != null && !await predicate(argument, context.CancellationToken).ConfigureAwait(context.ContinueOnCapturedContext))
 			return outcome;
@@ -175,7 +174,7 @@ internal sealed class FallbackStrategy<TArgument, TResult> : ResilienceStrategy<
 		try
 		{
 			var result = await _fallback(argument, context.CancellationToken).ConfigureAwait(context.ContinueOnCapturedContext);
-			return Outcome.FromResult<TResult>(result);
+			return Outcome.FromResult(result);
 		}
 		catch(Exception ex)
 		{

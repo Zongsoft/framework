@@ -28,6 +28,9 @@
  */
 
 using System;
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.RateLimiting;
@@ -36,26 +39,25 @@ using Polly;
 using Polly.Telemetry;
 using Polly.RateLimiting;
 
+using Zongsoft.Components.Features;
+
 namespace Zongsoft.Externals.Polly.Strategies;
 
-internal sealed class ThrottleStrategy : ResilienceStrategy, IDisposable, IAsyncDisposable
+internal abstract class ThrottleStrategyBase : ResilienceStrategy, IDisposable, IAsyncDisposable
 {
 	private readonly ResilienceStrategyTelemetry _telemetry;
 
-	public ThrottleStrategy(
+	protected ThrottleStrategyBase(
 		Func<RateLimiterArguments, ValueTask<RateLimitLease>> limiter,
-		Func<OnRateLimiterRejectedArguments, ValueTask<bool>> onRejected,
 		ResilienceStrategyTelemetry telemetry, RateLimiter wrapper)
 	{
 		this.Limiter = limiter;
 		this.Wrapper = wrapper;
-		this.OnLeaseRejected = onRejected;
 		_telemetry = telemetry;
 	}
 
 	public RateLimiter Wrapper { get; }
 	public Func<RateLimiterArguments, ValueTask<RateLimitLease>> Limiter { get; }
-	public Func<OnRateLimiterRejectedArguments, ValueTask<bool>> OnLeaseRejected { get; }
 
 	public void Dispose() => this.Wrapper?.Dispose();
 	public ValueTask DisposeAsync()
@@ -82,12 +84,9 @@ internal sealed class ThrottleStrategy : ResilienceStrategy, IDisposable, IAsync
 		var args = new OnRateLimiterRejectedArguments(context, lease);
 		_telemetry.Report(new(ResilienceEventSeverity.Error, "OnRateLimiterRejected"), context, args);
 
-		if(this.OnLeaseRejected != null)
-		{
-			var handled = await this.OnLeaseRejected(new OnRateLimiterRejectedArguments(context, lease)).ConfigureAwait(context.ContinueOnCapturedContext);
-			if(handled)
-				return Outcome.FromResult<TResult>(default);
-		}
+		var handled = await this.OnRejected(context.OperationKey, state, lease, retryAfter, context.CancellationToken).ConfigureAwait(context.ContinueOnCapturedContext);
+		if(handled)
+			return Outcome.FromResult<TResult>(default);
 
 		var innerException = retryAfter.HasValue
 			? new RateLimiterRejectedException(retryAfterValue)
@@ -103,6 +102,8 @@ internal sealed class ThrottleStrategy : ResilienceStrategy, IDisposable, IAsync
 		return Outcome.FromException<TResult>(exception);
 	}
 
+	protected abstract ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation);
+
 	private static TException TrySetStackTrace<TException>(TException exception) where TException : Exception
 	{
 		if(string.IsNullOrWhiteSpace(exception.StackTrace))
@@ -112,30 +113,74 @@ internal sealed class ThrottleStrategy : ResilienceStrategy, IDisposable, IAsync
 	}
 }
 
-internal static class ThrottleStrategyExtension
+internal sealed class ThrottleStrategy : ThrottleStrategyBase
 {
-	public static ResiliencePipelineBuilderBase AddThrottle(this ResiliencePipelineBuilderBase builder, ThrottleStrategyOptions options)
+	private readonly Func<ThrottleArgument, CancellationToken, ValueTask<bool>> _rejected;
+
+	public ThrottleStrategy(
+		Func<RateLimiterArguments, ValueTask<RateLimitLease>> limiter,
+		Func<ThrottleArgument, CancellationToken, ValueTask<bool>> rejected,
+		ResilienceStrategyTelemetry telemetry, RateLimiter wrapper) : base(limiter, telemetry, wrapper)
 	{
-		ArgumentNullException.ThrowIfNull(builder);
-		ArgumentNullException.ThrowIfNull(options);
+		_rejected = rejected;
+	}
 
-		return builder.AddStrategy(context =>
+	protected override ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation) =>
+		_rejected(new(name, new ThrottleLeaseWrapper(lease)), cancellation);
+}
+
+internal sealed class ThrottleStrategy<TArgument> : ThrottleStrategyBase
+{
+	private readonly Func<ThrottleArgument<TArgument>, CancellationToken, ValueTask<bool>> _rejected;
+
+	public ThrottleStrategy(
+		Func<RateLimiterArguments, ValueTask<RateLimitLease>> limiter,
+		Func<ThrottleArgument<TArgument>, CancellationToken, ValueTask<bool>> rejected,
+		ResilienceStrategyTelemetry telemetry, RateLimiter wrapper) : base(limiter, telemetry, wrapper)
+	{
+		_rejected = rejected;
+	}
+
+	protected override ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation) =>
+		_rejected(new(name, new ThrottleLeaseWrapper(lease), state is TArgument argument ? argument : default), cancellation);
+}
+
+internal sealed class ThrottleStrategy<TArgument, TResult> : ThrottleStrategyBase
+{
+	private readonly Func<ThrottleArgument<TArgument, TResult>, CancellationToken, ValueTask<bool>> _rejected;
+
+	public ThrottleStrategy(
+		Func<RateLimiterArguments, ValueTask<RateLimitLease>> limiter,
+		Func<ThrottleArgument<TArgument, TResult>, CancellationToken, ValueTask<bool>> rejected,
+		ResilienceStrategyTelemetry telemetry, RateLimiter wrapper) : base(limiter, telemetry, wrapper)
+	{
+		_rejected = rejected;
+	}
+
+	protected override ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation) =>
+		_rejected(new(name, new ThrottleLeaseWrapper(lease), state is TArgument argument ? argument : default), cancellation);
+}
+
+internal sealed class ThrottleLeaseWrapper(RateLimitLease lease) : ThrottleLease
+{
+	private readonly RateLimitLease _lease = lease;
+	private readonly MetadataCollection _metadata = new(lease);
+
+	public override bool IsLeased => _lease.IsAcquired;
+	public override IMetadataCollection Metadata => _metadata;
+	protected override void Dispose(bool disposing) => _lease.Dispose();
+
+	private sealed class MetadataCollection(RateLimitLease lease) : IMetadataCollection
+	{
+		private readonly RateLimitLease _lease = lease;
+		public int Count => _lease.MetadataNames.Count();
+		public bool TryGetValue<T>(string key, out T value) => _lease.TryGetMetadata(new MetadataName<T>(key), out value);
+		public bool TryGetValue(string key, out object value) => _lease.TryGetMetadata(key, out value);
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
-			RateLimiter wrapper = default;
-			var limiter = options.RateLimiter;
-
-			if(limiter is null)
-			{
-				var defaultLimiter = new ConcurrencyLimiter(options.DefaultRateLimiterOptions);
-				wrapper = defaultLimiter;
-				limiter = args => defaultLimiter.AcquireAsync(1, args.Context.CancellationToken);
-			}
-
-			return new ThrottleStrategy(
-				limiter,
-				options.OnRejected,
-				context.Telemetry,
-				wrapper);
-		}, options);
+			foreach(var metadata in _lease.GetAllMetadata())
+				yield return metadata;
+		}
 	}
 }

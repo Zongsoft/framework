@@ -66,8 +66,10 @@ internal static partial class FeatureExtension
 				if(breakerOptions != null)
 					builder.AddCircuitBreaker(breakerOptions);
 				break;
-			default:
-				builder.AddFallback(feature);
+			case FallbackFeature fallback:
+				var fallbackOptions = fallback.ToStrategy();
+				if(fallbackOptions != null)
+					builder.AddFallback(fallbackOptions);
 				break;
 		}
 	}
@@ -84,12 +86,12 @@ internal static partial class FeatureExtension
 				if(retryOptions != null)
 					builder.AddRetry(retryOptions);
 				break;
-			case TimeoutFeature timeout:
+			case TimeoutFeature<TArgument> timeout:
 				var timeoutOptions = timeout.ToStrategy();
 				if(timeoutOptions != null)
 					builder.AddTimeout(timeoutOptions);
 				break;
-			case ThrottleFeature throttle:
+			case ThrottleFeature<TArgument> throttle:
 				var throttleOptions = throttle.ToStrategy();
 				if(throttleOptions != null)
 					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
@@ -103,6 +105,9 @@ internal static partial class FeatureExtension
 				var fallbackOptions = fallback.ToStrategy();
 				if(fallbackOptions != null)
 					builder.AddFallback(fallbackOptions);
+				break;
+			default:
+				AddStrategy(builder, feature);
 				break;
 		}
 	}
@@ -119,12 +124,12 @@ internal static partial class FeatureExtension
 				if(retryOptions != null)
 					builder.AddRetry(retryOptions);
 				break;
-			case TimeoutFeature timeout:
+			case TimeoutFeature<TArgument, TResult> timeout:
 				var timeoutOptions = timeout.ToStrategy();
 				if(timeoutOptions != null)
 					builder.AddTimeout(timeoutOptions);
 				break;
-			case ThrottleFeature throttle:
+			case ThrottleFeature<TArgument, TResult> throttle:
 				var throttleOptions = throttle.ToStrategy();
 				if(throttleOptions != null)
 					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
@@ -142,8 +147,8 @@ internal static partial class FeatureExtension
 		}
 	}
 
-	internal static Argument<T> GetArgument<T>(this Outcome<T> outcome) => new(outcome.Result, outcome.Exception.GetException());
-	internal static Exception GetException(this Exception exception) => exception switch
+	internal static Argument<T> GetArgument<T>(this Outcome<T> outcome) => new(outcome.Result, outcome.Exception.Wrap());
+	internal static Exception Wrap(this Exception exception) => exception switch
 	{
 		TimeoutRejectedException => new TimeoutException(),
 		_ => exception,
