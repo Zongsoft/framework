@@ -41,9 +41,6 @@ partial class FeatureExtension
 {
 	public static TimeoutStrategyOptions ToStrategy(this TimeoutFeature feature)
 	{
-		if(!feature.Usable())
-			return null;
-
 		var options = new TimeoutStrategyOptions() { Timeout = feature.Timeout };
 		if(feature.TimeoutGenerator != null)
 			options.TimeoutGenerator = args => feature.TimeoutGenerator(new(options.Timeout), args.Context.CancellationToken);
@@ -55,9 +52,6 @@ partial class FeatureExtension
 
 	public static TimeoutStrategyOptions ToStrategy<TArgument>(this TimeoutFeature<TArgument> feature)
 	{
-		if(!feature.Usable())
-			return null;
-
 		var options = new TimeoutStrategyOptions() { Timeout = feature.Timeout };
 		if(feature.TimeoutGenerator != null)
 			options.TimeoutGenerator = args => feature.TimeoutGenerator(new(options.Timeout), args.Context.CancellationToken);
@@ -69,9 +63,6 @@ partial class FeatureExtension
 
 	public static TimeoutStrategyOptions ToStrategy<TArgument, TResult>(this TimeoutFeature<TArgument, TResult> feature)
 	{
-		if(!feature.Usable())
-			return null;
-
 		var options = new TimeoutStrategyOptions() { Timeout = feature.Timeout };
 		if(feature.TimeoutGenerator != null)
 			options.TimeoutGenerator = args => feature.TimeoutGenerator(new(options.Timeout), args.Context.CancellationToken);

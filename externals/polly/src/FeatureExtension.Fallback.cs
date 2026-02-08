@@ -64,9 +64,6 @@ partial class FeatureExtension
 
 	public static Strategies.FallbackStrategyOptions ToStrategy(this FallbackFeature feature)
 	{
-		if(!feature.Usable(feature => feature.Fallback != null))
-			return null;
-
 		var options = new Strategies.FallbackStrategyOptions
 		{
 			Fallback = feature.Fallback,
@@ -80,9 +77,6 @@ partial class FeatureExtension
 
 	public static Strategies.FallbackStrategyOptions<T> ToStrategy<T>(this FallbackFeature<T> feature)
 	{
-		if(!feature.Usable(feature => feature.Fallback != null))
-			return null;
-
 		var options = new Strategies.FallbackStrategyOptions<T>
 		{
 			Fallback = feature.Fallback,
@@ -96,9 +90,6 @@ partial class FeatureExtension
 
 	public static Strategies.FallbackStrategyOptions<T, TResult> ToStrategy<T, TResult>(this FallbackFeature<T, TResult> feature)
 	{
-		if(!feature.Usable(feature => feature.Fallback != null))
-			return null;
-
 		var options = new Strategies.FallbackStrategyOptions<T, TResult>
 		{
 			Fallback = feature.Fallback,

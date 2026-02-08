@@ -36,26 +36,33 @@ namespace Zongsoft.Components.Features;
 /// <summary>
 /// 提供超时功能的特性类。
 /// </summary>
-public class TimeoutFeature : IFeature
+public abstract class TimeoutFeatureBase : IFeature
 {
 	#region 构造函数
-	public TimeoutFeature(bool enabled = true) : this(TimeSpan.FromSeconds(30), enabled) { }
-	public TimeoutFeature(TimeSpan timeout, bool enabled = true)
+	protected TimeoutFeatureBase() : this(TimeSpan.Zero) { }
+	protected TimeoutFeatureBase(TimeSpan timeout) => this.Timeout = timeout > TimeSpan.Zero ? timeout : TimeSpan.FromSeconds(30);
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置超时的时长（必须大于零才有效）。</summary>
+	public TimeSpan Timeout { get; set; }
+	#endregion
+}
+
+/// <summary>
+/// 提供超时功能的特性类。
+/// </summary>
+public class TimeoutFeature : TimeoutFeatureBase
+{
+	#region 构造函数
+	public TimeoutFeature(TimeSpan timeout) : base(timeout) { }
+	public TimeoutFeature(Func<TimeoutArgument, CancellationToken, ValueTask<TimeSpan>> timeout)
 	{
-		this.Enabled = enabled;
-		this.Timeout = timeout;
-	}
-	public TimeoutFeature(Func<TimeoutArgument, CancellationToken, ValueTask<TimeSpan>> timeout, bool enabled = true)
-	{
-		this.Enabled = enabled;
 		this.TimeoutGenerator = timeout;
 	}
 	#endregion
 
 	#region 公共属性
-	public bool Enabled { get; set; }
-	/// <summary>获取或设置超时的时长（必须大于零才有效）。</summary>
-	public TimeSpan Timeout { get; set; }
 	/// <summary>获取或设置超时时长的生成方法。</summary>
 	public Func<TimeoutArgument, CancellationToken, ValueTask<TimeSpan>> TimeoutGenerator { get; set; }
 	/// <summary>获取或设置超时被触发的回调方法。</summary>
@@ -66,26 +73,17 @@ public class TimeoutFeature : IFeature
 /// <summary>
 /// 提供超时功能的特性类。
 /// </summary>
-public class TimeoutFeature<T> : IFeature
+public class TimeoutFeature<T> : TimeoutFeatureBase
 {
 	#region 构造函数
-	public TimeoutFeature(bool enabled = true) : this(TimeSpan.FromSeconds(30), enabled) { }
-	public TimeoutFeature(TimeSpan timeout, bool enabled = true)
+	public TimeoutFeature(TimeSpan timeout) : base(timeout) { }
+	public TimeoutFeature(Func<TimeoutArgument<T>, CancellationToken, ValueTask<TimeSpan>> timeout)
 	{
-		this.Enabled = enabled;
-		this.Timeout = timeout;
-	}
-	public TimeoutFeature(Func<TimeoutArgument<T>, CancellationToken, ValueTask<TimeSpan>> timeout, bool enabled = true)
-	{
-		this.Enabled = enabled;
 		this.TimeoutGenerator = timeout;
 	}
 	#endregion
 
 	#region 公共属性
-	public bool Enabled { get; set; }
-	/// <summary>获取或设置超时的时长（必须大于零才有效）。</summary>
-	public TimeSpan Timeout { get; set; }
 	/// <summary>获取或设置超时时长的生成方法。</summary>
 	public Func<TimeoutArgument<T>, CancellationToken, ValueTask<TimeSpan>> TimeoutGenerator { get; set; }
 	/// <summary>获取或设置超时被触发的回调方法。</summary>
@@ -96,26 +94,17 @@ public class TimeoutFeature<T> : IFeature
 /// <summary>
 /// 提供超时功能的特性类。
 /// </summary>
-public class TimeoutFeature<T, TResult> : IFeature
+public class TimeoutFeature<T, TResult> : TimeoutFeatureBase
 {
 	#region 构造函数
-	public TimeoutFeature(bool enabled = true) : this(TimeSpan.FromSeconds(30), enabled) { }
-	public TimeoutFeature(TimeSpan timeout, bool enabled = true)
+	public TimeoutFeature(TimeSpan timeout) : base(timeout) { }
+	public TimeoutFeature(Func<TimeoutArgument<T, TResult>, CancellationToken, ValueTask<TimeSpan>> timeout)
 	{
-		this.Enabled = enabled;
-		this.Timeout = timeout;
-	}
-	public TimeoutFeature(Func<TimeoutArgument<T, TResult>, CancellationToken, ValueTask<TimeSpan>> timeout, bool enabled = true)
-	{
-		this.Enabled = enabled;
 		this.TimeoutGenerator = timeout;
 	}
 	#endregion
 
 	#region 公共属性
-	public bool Enabled { get; set; }
-	/// <summary>获取或设置超时的时长（必须大于零才有效）。</summary>
-	public TimeSpan Timeout { get; set; }
 	/// <summary>获取或设置超时时长的生成方法。</summary>
 	public Func<TimeoutArgument<T, TResult>, CancellationToken, ValueTask<TimeSpan>> TimeoutGenerator { get; set; }
 	/// <summary>获取或设置超时被触发的回调方法。</summary>

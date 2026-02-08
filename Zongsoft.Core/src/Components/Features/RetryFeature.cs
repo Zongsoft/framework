@@ -44,7 +44,6 @@ public abstract class RetryFeatureBase : IFeature
 	protected RetryFeatureBase(RetryBackoff backoff, RetryLatency latency, int attempts = 0) : this(backoff, latency, true, attempts) { }
 	protected RetryFeatureBase(RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0)
 	{
-		this.Enabled = true;
 		this.Backoff = backoff;
 		this.Latency = latency;
 		this.Attempts = attempts;
@@ -53,7 +52,6 @@ public abstract class RetryFeatureBase : IFeature
 	#endregion
 
 	#region 公共属性
-	public bool Enabled { get; set; }
 	/// <summary>获取或设置一个值，指示是否叠加随机延迟量。</summary>
 	public bool Jitterable { get; set; }
 	/// <summary>获取或设置最大重试次数。</summary>

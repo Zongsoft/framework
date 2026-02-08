@@ -43,9 +43,6 @@ partial class FeatureExtension
 {
 	public static RetryStrategyOptions ToStrategy(this RetryFeature feature)
 	{
-		if(!feature.Usable(feature => feature.Latency.HasValue))
-			return null;
-
 		var options = new RetryStrategyOptions
 		{
 			Delay = feature.Latency.Value,
@@ -73,9 +70,6 @@ partial class FeatureExtension
 
 	public static RetryStrategyOptions ToStrategy<TArgument>(this RetryFeature<TArgument> feature)
 	{
-		if(!feature.Usable(feature => feature.Latency.HasValue))
-			return null;
-
 		var options = new RetryStrategyOptions
 		{
 			Delay = feature.Latency.Value,
@@ -103,9 +97,6 @@ partial class FeatureExtension
 
 	public static RetryStrategyOptions<TResult> ToStrategy<TArgument, TResult>(this RetryFeature<TArgument, TResult> feature)
 	{
-		if(!feature.Usable(feature => feature.Latency.HasValue))
-			return null;
-
 		var options = new RetryStrategyOptions<TResult>
 		{
 			Delay = feature.Latency.Value,

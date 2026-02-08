@@ -53,9 +53,6 @@ partial class FeatureExtension
 	#region 公共方法
 	public static ThrottleStrategyOptions ToStrategy(this ThrottleFeature feature)
 	{
-		if(!feature.Usable())
-			return null;
-
 		var options = new ThrottleStrategyOptions();
 
 		if(feature.Rejected != null)
@@ -68,9 +65,6 @@ partial class FeatureExtension
 
 	public static ThrottleStrategyOptions<T> ToStrategy<T>(this ThrottleFeature<T> feature)
 	{
-		if(!feature.Usable())
-			return null;
-
 		var options = new ThrottleStrategyOptions<T>();
 
 		if(feature.Rejected != null)
@@ -83,9 +77,6 @@ partial class FeatureExtension
 
 	public static ThrottleStrategyOptions<T, TResult> ToStrategy<T, TResult>(this ThrottleFeature<T, TResult> feature)
 	{
-		if(!feature.Usable())
-			return null;
-
 		var options = new ThrottleStrategyOptions<T, TResult>();
 
 		if(feature.Rejected != null)

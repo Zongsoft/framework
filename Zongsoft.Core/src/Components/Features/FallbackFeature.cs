@@ -42,14 +42,12 @@ public class FallbackFeature : IFeature
 	public FallbackFeature(Func<Argument, CancellationToken, ValueTask> fallback, bool enabled = true) : this(fallback, null, enabled) { }
 	public FallbackFeature(Func<Argument, CancellationToken, ValueTask> fallback, Common.IPredication<Argument> predicator, bool enabled = true)
 	{
-		this.Enabled = enabled;
 		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
 		this.Predicator = predicator;
 	}
 	#endregion
 
 	#region 公共属性
-	public bool Enabled { get; set; }
 	/// <summary>获取或设置回退断言器。</summary>
 	public Common.IPredication<Argument> Predicator { get; set; }
 	/// <summary>获取或设置回退处理函数。</summary>
@@ -66,14 +64,12 @@ public class FallbackFeature<T> : IFeature
 	public FallbackFeature(Func<Argument<T>, CancellationToken, ValueTask> fallback, bool enabled = true) : this(fallback, null, enabled) { }
 	public FallbackFeature(Func<Argument<T>, CancellationToken, ValueTask> fallback, Common.IPredication<Argument<T>> predicator, bool enabled = true)
 	{
-		this.Enabled = enabled;
 		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
 		this.Predicator = predicator;
 	}
 	#endregion
 
 	#region 公共属性
-	public bool Enabled { get; set; }
 	/// <summary>获取或设置回退断言器。</summary>
 	public Common.IPredication<Argument<T>> Predicator { get; set; }
 	/// <summary>获取或设置回退处理函数。</summary>
@@ -90,14 +86,12 @@ public class FallbackFeature<T, TResult> : IFeature
 	public FallbackFeature(Func<Argument<T, TResult>, CancellationToken, ValueTask<TResult>> fallback, bool enabled = true) : this(fallback, null, enabled) { }
 	public FallbackFeature(Func<Argument<T, TResult>, CancellationToken, ValueTask<TResult>> fallback, Common.IPredication<Argument<T, TResult>> predicator, bool enabled = true)
 	{
-		this.Enabled = enabled;
 		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
 		this.Predicator = predicator;
 	}
 	#endregion
 
 	#region 公共属性
-	public bool Enabled { get; set; }
 	/// <summary>获取或设置回退断言器。</summary>
 	public Common.IPredication<Argument<T, TResult>> Predicator { get; set; }
 	/// <summary>获取或设置回退处理函数。</summary>

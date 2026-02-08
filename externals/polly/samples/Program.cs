@@ -178,10 +178,7 @@ internal class Program
 
 		Terminal.Console.Executor.Command("fallback", context =>
 		{
-			_features.Fallback(
-				OnFallbackAsync,
-				Predication.Predicate<Argument<int>>(argument => true),
-				true);
+			_features.Fallback<int>(OnFallbackAsync);
 		});
 
 		Terminal.Console.Executor.Command("execute", async (context, cancellation) =>

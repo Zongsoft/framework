@@ -41,7 +41,6 @@ public abstract class BreakerFeatureBase : IFeature
 	protected BreakerFeatureBase(TimeSpan duration, double ratio, int threshold = 0) : this(duration, ratio, TimeSpan.Zero, threshold) { }
 	protected BreakerFeatureBase(TimeSpan duration, double ratio, TimeSpan period, int threshold = 0)
 	{
-		this.Enabled = true;
 		this.Duration = duration > TimeSpan.Zero ? duration : TimeSpan.FromSeconds(5);
 		this.FailureRatio = ratio <= 0 ? 0.1 : Math.Clamp(ratio, 0, 1);
 		this.FailurePeriod = period > TimeSpan.Zero ? period : TimeSpan.FromSeconds(30);
@@ -50,7 +49,6 @@ public abstract class BreakerFeatureBase : IFeature
 	#endregion
 
 	#region 公共属性
-	public bool Enabled { get; set; }
 	/// <summary>获取或设置熔断的时长，默认值为 <c>5</c> 秒。</summary>
 	public TimeSpan Duration { get; set; }
 	/// <summary>获取或设置熔断的失败率，范围介于 <c>0</c> 至 <c>1</c> 之间，默认值为 <c>0.1</c>（即<c>10%</c>）。</summary>

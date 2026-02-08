@@ -43,9 +43,6 @@ partial class FeatureExtension
 {
 	public static CircuitBreakerStrategyOptions ToStrategy(this BreakerFeature feature)
 	{
-		if(!feature.Usable(feature => feature.Duration > TimeSpan.Zero && feature.Threshold > 0))
-			return null;
-
 		var options = new CircuitBreakerStrategyOptions
 		{
 			BreakDuration = feature.Duration,
@@ -65,9 +62,6 @@ partial class FeatureExtension
 
 	public static CircuitBreakerStrategyOptions ToStrategy<T>(this BreakerFeature<T> feature)
 	{
-		if(!feature.Usable(feature => feature.Duration > TimeSpan.Zero && feature.Threshold > 0))
-			return null;
-
 		var options = new CircuitBreakerStrategyOptions
 		{
 			BreakDuration = feature.Duration,
@@ -87,9 +81,6 @@ partial class FeatureExtension
 
 	public static CircuitBreakerStrategyOptions<TResult> ToStrategy<T, TResult>(this BreakerFeature<T, TResult> feature)
 	{
-		if(!feature.Usable(feature => feature.Duration > TimeSpan.Zero && feature.Threshold > 0))
-			return null;
-
 		var options = new CircuitBreakerStrategyOptions<TResult>
 		{
 			BreakDuration = feature.Duration,

@@ -41,7 +41,6 @@ public abstract class ThrottleFeatureBase : IFeature
 	protected ThrottleFeatureBase(int permitLimit, int queueLimit, ThrottleLimiter limiter = null) : this(permitLimit, queueLimit, ThrottleQueueOrder.Oldest, limiter) { }
 	protected ThrottleFeatureBase(int permitLimit, int queueLimit, ThrottleQueueOrder queueOrder, ThrottleLimiter limiter = null)
 	{
-		this.Enabled = true;
 		this.PermitLimit = permitLimit > 0 ? permitLimit : 1000;
 		this.QueueLimit = Math.Max(queueLimit, 0);
 		this.QueueOrder = queueOrder;
@@ -50,7 +49,6 @@ public abstract class ThrottleFeatureBase : IFeature
 	#endregion
 
 	#region 公共属性
-	public bool Enabled { get; set; }
 	public int PermitLimit { get; set; }
 	public int QueueLimit { get; set; }
 	public ThrottleQueueOrder QueueOrder { get; set; }
