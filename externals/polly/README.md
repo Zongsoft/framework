@@ -45,7 +45,7 @@
 
 以上三种执行模式分别对应了三种 [执行管线 `IFeaturePipeline`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/IFeaturePipeline.cs)，本插件库的 `FeaturePipeline` _([0](src/FeaturePipeline.cs), [1](src/FeaturePipeline`1.cs), [2](src/FeaturePipeline`2.cs))_ 则依次对应了三种执行管线的实现。
 
-由于 [**P**olly](https://github.com/App-vNext/Polly) 库 _(version 8.6.5)_ 在相应策略回调中并没有包含原始执行参数，所以在 [`BreakerFeature<TArgument>`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/BreakerFeature.cs#L95) 和 [`BreakerFeature<TArgument, TResult>`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/BreakerFeature.cs#L125) 的 `Opened` 回调函数中的，是无法获得对应 `BreakerOpenedArgument<TArgument>.Value` 和 `BreakerOpenedArgument<TArgument, TResult>.Value` 属性值，其 `Closed` 回调函数亦同样如此。
+由于 [**P**olly](https://github.com/App-vNext/Polly) 库 _[`8.6.5` 版本](https://www.nuget.org/packages/Polly.Core/8.6.5)_ 在相应策略回调中并没有包含原始执行参数，所以在 [`BreakerFeature<TArgument>`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/BreakerFeature.cs#L95) 和 [`BreakerFeature<TArgument, TResult>`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/BreakerFeature.cs#L125) 的 `Opened` 回调函数中的，是无法获得对应 `BreakerOpenedArgument<TArgument>.Value` 和 `BreakerOpenedArgument<TArgument, TResult>.Value` 属性值，其 `Closed` 回调函数亦同样如此。
 
 由于本插件库重写了 [限流](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/ThrottleStrategy.cs) 和 [回退](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/FallbackStrategy.cs) 两种策略，因此可以在它们的回调方法中获取到原始执行参数的值，即通过 [`Argument<T>.Value`](https://github.com/Zongsoft/framework/blob/execution/Zongsoft.Core/src/Components/Features/Argument.cs#L60) 或 [`Argument<T, TResult>.Value`](https://github.com/Zongsoft/framework/blob/execution/Zongsoft.Core/src/Components/Features/Argument.cs#L60) 属性。
 
@@ -62,7 +62,7 @@
 - [`FeaturePipeline~1`](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/FeaturePipeline`1.cs) 类的构造函数 与 [`FeatureExtension`](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/FeatureExtension.cs) 类的 <br /> `AddStrategy<TArgument>(ResiliencePipelineBuilder builder, IFeature feature)` 方法。
 - [`FeaturePipeline~2`](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/FeaturePipeline`2.cs) 类的构造函数 与 [`FeatureExtension`](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/FeatureExtension.cs) 类的 <br />`AddStrategy<TArgument, TResult>(ResiliencePipelineBuilder<TResult> builder, IFeature feature)` 方法。
 
-> 💡 **提示：** 根据上述实现，可观察到带返回值的执行模式不兼容无返回值的两种执行模式 _(有参或无参)_；但无返回值的模式中的无参和有参两种模式彼此兼容。
+> 💡 **提示：** 根据上述实现，可观察到带返回值的模式不兼容无返回值的两种执行模式 _(有参或无参)_；但无返回值模式中的无参和有参两种执行模式则彼此兼容。
 
 ## 使用范例
 
