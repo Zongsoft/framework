@@ -112,8 +112,28 @@ internal class Program
 			var ratio = context.Options.GetValue("ratio", 0.5);
 
 			_features.Breaker(
-				duration, ratio, period, threshold
+				duration, ratio, period, threshold, out var breaker
 			);
+
+			breaker.Closed = (argument, cancellation) =>
+			{
+				Terminal.Console.WriteLine(CommandOutletContent.Create()
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.DarkYellow, $"[Breaker.{nameof(breaker.Closed)}]".Justify(50))
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
+
+				return ValueTask.CompletedTask;
+			};
+
+			breaker.Opened = (argument, cancellation) =>
+			{
+				Terminal.Console.WriteLine(CommandOutletContent.Create()
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.DarkYellow, $"[Breaker.{nameof(breaker.Opened)}] {(argument.IsHalf ? "(Half)" : null)}".Justify(50))
+					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
+
+				return ValueTask.CompletedTask;
+			};
 		});
 
 		Terminal.Console.Executor.Command("timeout", context =>
@@ -211,7 +231,10 @@ internal class Program
 				}
 				catch(Exception ex)
 				{
-					Terminal.WriteLine(CommandOutletColor.DarkRed, $"[{ex.GetType().Name}] {ex.Message}");
+					Terminal.WriteLine(CommandOutletContent.Create()
+						.Append(CommandOutletStyles.Bold | CommandOutletStyles.Blinking, CommandOutletColor.Magenta, "Caught:")
+						.Append(CommandOutletColor.Yellow, $"[{ex.GetType().Name}] ")
+						.Append(CommandOutletColor.DarkRed, ex.Message));
 				}
 
 				stopwatch.Stop();

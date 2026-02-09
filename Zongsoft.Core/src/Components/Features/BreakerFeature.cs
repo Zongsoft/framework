@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
 
@@ -37,8 +39,6 @@ namespace Zongsoft.Components.Features;
 public abstract class BreakerFeatureBase : IFeature
 {
 	#region 构造函数
-	protected BreakerFeatureBase(TimeSpan duration, int threshold = 0) : this(duration, 0, TimeSpan.Zero, threshold) { }
-	protected BreakerFeatureBase(TimeSpan duration, double ratio, int threshold = 0) : this(duration, ratio, TimeSpan.Zero, threshold) { }
 	protected BreakerFeatureBase(TimeSpan duration, double ratio, TimeSpan period, int threshold = 0)
 	{
 		this.Duration = duration > TimeSpan.Zero ? duration : TimeSpan.FromSeconds(5);
@@ -66,10 +66,13 @@ public abstract class BreakerFeatureBase : IFeature
 public class BreakerFeature : BreakerFeatureBase
 {
 	#region 构造函数
-	public BreakerFeature(TimeSpan duration, int threshold = 0, Common.IPredication<Argument> predicator = null) : this(duration, 0, TimeSpan.Zero, threshold, predicator) { }
-	public BreakerFeature(TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<Argument> predicator = null) : this(duration, ratio, TimeSpan.Zero, threshold, predicator) { }
 	public BreakerFeature(TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument> predicator = null) : base(duration, ratio, period, threshold)
 	{
+		this.Predicator = predicator;
+	}
+	public BreakerFeature(Func<BreakerFeature, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument> predicator = null) : base(TimeSpan.Zero, ratio, period, threshold)
+	{
+		this.DurationFactory = durationFactory;
 		this.Predicator = predicator;
 	}
 	#endregion
@@ -79,6 +82,10 @@ public class BreakerFeature : BreakerFeatureBase
 	public Func<BreakerFeature, int, double, TimeSpan> DurationFactory { get; set; }
 	/// <summary>获取或设置熔断断言器。</summary>
 	public Common.IPredication<Argument> Predicator { get; set; }
+	/// <summary>获取或设置熔断器被关闭时的回调函数。</summary>
+	public Func<BreakerClosedArgument, CancellationToken, ValueTask> Closed { get; set; }
+	/// <summary>获取或设置熔断器被打开时的回调函数。</summary>
+	public Func<BreakerOpenedArgument, CancellationToken, ValueTask> Opened { get; set; }
 	#endregion
 }
 
@@ -88,10 +95,13 @@ public class BreakerFeature : BreakerFeatureBase
 public class BreakerFeature<T> : BreakerFeatureBase
 {
 	#region 构造函数
-	public BreakerFeature(TimeSpan duration, int threshold = 0, Common.IPredication<Argument<T>> predicator = null) : this(duration, 0, TimeSpan.Zero, threshold, predicator) { }
-	public BreakerFeature(TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<Argument<T>> predicator = null) : this(duration, ratio, TimeSpan.Zero, threshold, predicator) { }
 	public BreakerFeature(TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument<T>> predicator = null) : base(duration, ratio, period, threshold)
 	{
+		this.Predicator = predicator;
+	}
+	public BreakerFeature(Func<BreakerFeature<T>, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument<T>> predicator = null) : base(TimeSpan.Zero, ratio, period, threshold)
+	{
+		this.DurationFactory = durationFactory;
 		this.Predicator = predicator;
 	}
 	#endregion
@@ -101,6 +111,10 @@ public class BreakerFeature<T> : BreakerFeatureBase
 	public Func<BreakerFeature<T>, int, double, TimeSpan> DurationFactory { get; set; }
 	/// <summary>获取或设置熔断断言器。</summary>
 	public Common.IPredication<Argument<T>> Predicator { get; set; }
+	/// <summary>获取或设置熔断器被关闭时的回调函数。</summary>
+	public Func<BreakerClosedArgument<T>, CancellationToken, ValueTask> Closed { get; set; }
+	/// <summary>获取或设置熔断器被打开时的回调函数。</summary>
+	public Func<BreakerOpenedArgument<T>, CancellationToken, ValueTask> Opened { get; set; }
 	#endregion
 }
 
@@ -110,10 +124,13 @@ public class BreakerFeature<T> : BreakerFeatureBase
 public class BreakerFeature<T, TResult> : BreakerFeatureBase
 {
 	#region 构造函数
-	public BreakerFeature(TimeSpan duration, int threshold = 0, Common.IPredication<Argument<T, TResult>> predicator = null) : this(duration, 0, TimeSpan.Zero, threshold, predicator) { }
-	public BreakerFeature(TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<Argument<T, TResult>> predicator = null) : this(duration, ratio, TimeSpan.Zero, threshold, predicator) { }
 	public BreakerFeature(TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument<T, TResult>> predicator = null) : base(duration, ratio, period, threshold)
 	{
+		this.Predicator = predicator;
+	}
+	public BreakerFeature(Func<BreakerFeature<T, TResult>, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument<T, TResult>> predicator = null) : base(TimeSpan.Zero, ratio, period, threshold)
+	{
+		this.DurationFactory = durationFactory;
 		this.Predicator = predicator;
 	}
 	#endregion
@@ -123,5 +140,62 @@ public class BreakerFeature<T, TResult> : BreakerFeatureBase
 	public Func<BreakerFeature<T, TResult>, int, double, TimeSpan> DurationFactory { get; set; }
 	/// <summary>获取或设置熔断断言器。</summary>
 	public Common.IPredication<Argument<T, TResult>> Predicator { get; set; }
+	/// <summary>获取或设置熔断器被关闭时的回调函数。</summary>
+	public Func<BreakerClosedArgument<T, TResult>, CancellationToken, ValueTask> Closed { get; set; }
+	/// <summary>获取或设置熔断器被打开时的回调函数。</summary>
+	public Func<BreakerOpenedArgument<T, TResult>, CancellationToken, ValueTask> Opened { get; set; }
+	#endregion
+}
+
+public class BreakerClosedArgument(Exception exception = null) : Argument(exception)
+{
+}
+
+public class BreakerClosedArgument<T> : Argument<T>
+{
+	#region 构造函数
+	public BreakerClosedArgument(Exception exception = null) : base(exception) { }
+	public BreakerClosedArgument(T value, Exception exception = null) : base(value, exception) { }
+	#endregion
+}
+
+public class BreakerClosedArgument<T, TResult> : Argument<T, TResult>
+{
+	#region 构造函数
+	public BreakerClosedArgument(Exception exception = null) : base(exception) { }
+	public BreakerClosedArgument(T value, Exception exception = null) : base(value, exception) { }
+	public BreakerClosedArgument(T value, TResult result, Exception exception = null) : base(value, result, exception) { }
+	#endregion
+}
+
+public class BreakerOpenedArgument(bool isHalf, Exception exception = null) : Argument(exception)
+{
+	#region 公共属性
+	public bool IsHalf { get; } = isHalf;
+	#endregion
+}
+
+public class BreakerOpenedArgument<T> : Argument<T>
+{
+	#region 构造函数
+	public BreakerOpenedArgument(bool isHalf, Exception exception = null) : base(exception) => this.IsHalf = isHalf;
+	public BreakerOpenedArgument(bool isHalf, T value, Exception exception = null) : base(value, exception) => this.IsHalf = isHalf;
+	#endregion
+
+	#region 公共属性
+	public bool IsHalf { get; }
+	#endregion
+}
+
+public class BreakerOpenedArgument<T, TResult> : Argument<T, TResult>
+{
+	#region 构造函数
+	public BreakerOpenedArgument(bool isHalf, Exception exception = null) : base(exception) => this.IsHalf = isHalf;
+	public BreakerOpenedArgument(bool isHalf, T value, Exception exception = null) : base(value, exception) => this.IsHalf = isHalf;
+	public BreakerOpenedArgument(bool isHalf, T value, TResult result, Exception exception = null) : base(value, result, exception) => this.IsHalf = isHalf;
+	#endregion
+
+	#region 公共属性
+	public bool IsHalf { get; }
 	#endregion
 }

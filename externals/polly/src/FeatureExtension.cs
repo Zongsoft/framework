@@ -147,7 +147,6 @@ internal static partial class FeatureExtension
 		}
 	}
 
-	internal static Argument<T> GetArgument<T>(this Outcome<T> outcome) => new(outcome.Result, outcome.Exception.Wrap());
 	internal static Exception Wrap(this Exception exception) => exception switch
 	{
 		TimeoutRejectedException => new TimeoutException(),

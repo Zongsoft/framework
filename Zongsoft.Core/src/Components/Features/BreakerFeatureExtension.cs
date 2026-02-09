@@ -33,84 +33,99 @@ namespace Zongsoft.Components.Features;
 
 public static class BreakerFeatureExtension
 {
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<Argument> predicator = null) =>
-		Breaker(builder, TimeSpan.Zero, 0, TimeSpan.Zero, 0, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<Argument> predicator, TimeSpan duration, int threshold = 0) =>
-		Breaker(builder, duration, 0, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<Argument> predicator, TimeSpan duration, double ratio, int threshold = 0) =>
-		Breaker(builder, duration, ratio, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Common.IPredication<Argument> predicator, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0) =>
-		Breaker(builder, duration, ratio, period, threshold, predicator);
-
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, int threshold = 0, Common.IPredication<Argument> predicator = null) =>
-		Breaker(builder, duration, 0, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<Argument> predicator = null) =>
-		Breaker(builder, duration, ratio, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument> predicator = null)
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument> predicator = null) => Breaker(builder, duration, ratio, period, threshold, predicator, out _);
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, out BreakerFeature feature) => Breaker(builder, duration, ratio, period, threshold, null, out feature);
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument> predicator, out BreakerFeature feature)
 	{
 		if(builder == null)
-			return new FeatureBuilder(new BreakerFeature(duration, ratio, period, threshold, predicator));
+			return new FeatureBuilder(feature = new BreakerFeature(duration, ratio, period, threshold, predicator));
 
 		if(builder is FeatureBuilder appender)
 		{
-			appender.Features.Add(new BreakerFeature(duration, ratio, period, threshold, predicator));
+			appender.Features.Add(feature = new BreakerFeature(duration, ratio, period, threshold, predicator));
 			return appender;
 		}
 
-		return new FeatureBuilder([.. builder.Build(), new BreakerFeature(duration, ratio, period, threshold, predicator)]);
+		return new FeatureBuilder([.. builder.Build(), feature = new BreakerFeature(duration, ratio, period, threshold, predicator)]);
 	}
 
-	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, Common.IPredication<Argument<T>> predicator = null) =>
-		Breaker(builder, TimeSpan.Zero, 0, TimeSpan.Zero, 0, predicator);
-	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, Common.IPredication<Argument<T>> predicator, TimeSpan duration, int threshold = 0) =>
-		Breaker(builder, duration, 0, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, Common.IPredication<Argument<T>> predicator, TimeSpan duration, double ratio, int threshold = 0) =>
-		Breaker(builder, duration, ratio, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, Common.IPredication<Argument<T>> predicator, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0) =>
-		Breaker(builder, duration, ratio, period, threshold, predicator);
-
-	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, TimeSpan duration, int threshold = 0, Common.IPredication<Argument<T>> predicator = null) =>
-		Breaker(builder, duration, 0, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<Argument<T>> predicator = null) =>
-		Breaker(builder, duration, ratio, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument<T>> predicator = null)
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Func<BreakerFeature, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument> predicator = null) => Breaker(builder, durationFactory, ratio, period, threshold, predicator, out _);
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Func<BreakerFeature, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold, out BreakerFeature feature) => Breaker(builder, durationFactory, ratio, period, threshold, null, out feature);
+	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, Func<BreakerFeature, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument> predicator, out BreakerFeature feature)
 	{
 		if(builder == null)
-			return new FeatureBuilder(new BreakerFeature<T>(duration, ratio, period, threshold, predicator));
+			return new FeatureBuilder(feature = new BreakerFeature(durationFactory, ratio, period, threshold, predicator));
 
 		if(builder is FeatureBuilder appender)
 		{
-			appender.Features.Add(new BreakerFeature<T>(duration, ratio, period, threshold, predicator));
+			appender.Features.Add(feature = new BreakerFeature(durationFactory, ratio, period, threshold, predicator));
 			return appender;
 		}
 
-		return new FeatureBuilder([.. builder.Build(), new BreakerFeature<T>(duration, ratio, period, threshold, predicator)]);
+		return new FeatureBuilder([.. builder.Build(), feature = new BreakerFeature(durationFactory, ratio, period, threshold, predicator)]);
 	}
 
-	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, Common.IPredication<Argument<T, TResult>> predicator = null) =>
-		Breaker(builder, TimeSpan.Zero, 0, TimeSpan.Zero, 0, predicator);
-	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, Common.IPredication<Argument<T, TResult>> predicator, TimeSpan duration, int threshold = 0) =>
-		Breaker(builder, duration, 0, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, Common.IPredication<Argument<T, TResult>> predicator, TimeSpan duration, double ratio, int threshold = 0) =>
-		Breaker(builder, duration, ratio, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, Common.IPredication<Argument<T, TResult>> predicator, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0) =>
-		Breaker(builder, duration, ratio, period, threshold, predicator);
-
-	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, TimeSpan duration, int threshold = 0, Common.IPredication<Argument<T, TResult>> predicator = null) =>
-		Breaker(builder, duration, 0, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, TimeSpan duration, double ratio, int threshold = 0, Common.IPredication<Argument<T, TResult>> predicator = null) =>
-		Breaker(builder, duration, ratio, TimeSpan.Zero, threshold, predicator);
-	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold = 0, Common.IPredication<Argument<T, TResult>> predicator = null)
+	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument<T>> predicator = null) => Breaker<T>(builder, duration, ratio, period, threshold, predicator, out _);
+	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, out BreakerFeature<T> feature) => Breaker<T>(builder, duration, ratio, period, threshold, null, out feature);
+	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument<T>> predicator, out BreakerFeature<T> feature)
 	{
 		if(builder == null)
-			return new FeatureBuilder(new BreakerFeature<T, TResult>(duration, ratio, period, threshold, predicator));
+			return new FeatureBuilder(feature = new BreakerFeature<T>(duration, ratio, period, threshold, predicator));
 
 		if(builder is FeatureBuilder appender)
 		{
-			appender.Features.Add(new BreakerFeature<T, TResult>(duration, ratio, period, threshold, predicator));
+			appender.Features.Add(feature = new BreakerFeature<T>(duration, ratio, period, threshold, predicator));
 			return appender;
 		}
 
-		return new FeatureBuilder([.. builder.Build(), new BreakerFeature<T, TResult>(duration, ratio, period, threshold, predicator)]);
+		return new FeatureBuilder([.. builder.Build(), feature = new BreakerFeature<T>(duration, ratio, period, threshold, predicator)]);
+	}
+
+	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, Func<BreakerFeature<T>, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument<T>> predicator = null) => Breaker<T>(builder, durationFactory, ratio, period, threshold, predicator, out _);
+	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, Func<BreakerFeature<T>, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold, out BreakerFeature<T> feature) => Breaker<T>(builder, durationFactory, ratio, period, threshold, null, out feature);
+	public static IFeatureBuilder Breaker<T>(this IFeatureBuilder builder, Func<BreakerFeature<T>, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument<T>> predicator, out BreakerFeature<T> feature)
+	{
+		if(builder == null)
+			return new FeatureBuilder(feature = new BreakerFeature<T>(durationFactory, ratio, period, threshold, predicator));
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(feature = new BreakerFeature<T>(durationFactory, ratio, period, threshold, predicator));
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), feature = new BreakerFeature<T>(durationFactory, ratio, period, threshold, predicator)]);
+	}
+
+	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument<T, TResult>> predicator) => Breaker<T, TResult>(builder, duration, ratio, period, threshold, predicator, out _);
+	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, out BreakerFeature<T, TResult> feature) => Breaker<T, TResult>(builder, duration, ratio, period, threshold, null, out feature);
+	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument<T, TResult>> predicator, out BreakerFeature<T, TResult> feature)
+	{
+		if(builder == null)
+			return new FeatureBuilder(feature = new BreakerFeature<T, TResult>(duration, ratio, period, threshold, predicator));
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(feature = new BreakerFeature<T, TResult>(duration, ratio, period, threshold, predicator));
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), feature = new BreakerFeature<T, TResult>(duration, ratio, period, threshold, predicator)]);
+	}
+
+	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, Func<BreakerFeature<T, TResult>, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument<T, TResult>> predicator) => Breaker<T, TResult>(builder, durationFactory, ratio, period, threshold, predicator, out _);
+	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, Func<BreakerFeature<T, TResult>, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold, out BreakerFeature<T, TResult> feature) => Breaker<T, TResult>(builder, durationFactory, ratio, period, threshold, null, out feature);
+	public static IFeatureBuilder Breaker<T, TResult>(this IFeatureBuilder builder, Func<BreakerFeature<T, TResult>, int, double, TimeSpan> durationFactory, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument<T, TResult>> predicator, out BreakerFeature<T, TResult> feature)
+	{
+		if(builder == null)
+			return new FeatureBuilder(feature = new BreakerFeature<T, TResult>(durationFactory, ratio, period, threshold, predicator));
+
+		if(builder is FeatureBuilder appender)
+		{
+			appender.Features.Add(feature = new BreakerFeature<T, TResult>(durationFactory, ratio, period, threshold, predicator));
+			return appender;
+		}
+
+		return new FeatureBuilder([.. builder.Build(), feature = new BreakerFeature<T, TResult>(durationFactory, ratio, period, threshold, predicator)]);
 	}
 }
