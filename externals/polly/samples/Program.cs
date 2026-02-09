@@ -69,6 +69,10 @@ internal class Program
 				ArgumentNullException.ThrowIfNull(feature);
 
 				var name = feature.GetType().Name;
+				var index = name.LastIndexOf('`');
+				if(index > 0)
+					name = name[..index];
+
 				return name.Length > SUFFIX_LENGTH && name.EndsWith(SUFFIX) ? name[..^SUFFIX_LENGTH] : name;
 			}
 		});
@@ -153,7 +157,7 @@ internal class Program
 			var permit = context.Options.GetValue("permit", 1);
 			var queue = context.Options.GetValue("queue", 0);
 			var order = context.Options.GetValue("order", ThrottleQueueOrder.Oldest);
-			var handler = context.Options.Switch("handled") ? Handler.Handle<ThrottleArgument, bool>(OnRejected) : null;
+			var handler = context.Options.Switch("handled") ? Handler.Handle<ThrottleArgument<int>, bool>(OnRejected) : null;
 
 			if(context.Arguments.IsEmpty)
 				_features.Throttle(permit, queue, order, handler);
@@ -180,13 +184,13 @@ internal class Program
 				}
 			}
 
-			static ValueTask<bool> OnRejected(ThrottleArgument argument, CancellationToken cancellation)
+			static ValueTask<bool> OnRejected<T>(ThrottleArgument<T> argument, CancellationToken cancellation)
 			{
 				Console.Beep();
 
 				Terminal.Console.WriteLine(CommandOutletContent.Create()
 					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
-					.AppendLine(CommandOutletColor.DarkYellow, $"[{nameof(OnRejected)}] {argument.Name}".Justify(50))
+					.AppendLine(CommandOutletColor.DarkYellow, $"[{nameof(OnRejected)}] {argument.Value}".Justify(50))
 					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
 
 				return ValueTask.FromResult(true);
@@ -224,26 +228,24 @@ internal class Program
 
 				try
 				{
-					await executor.ExecuteAsync(index, parameters, cancellation);
+					await executor.ExecuteAsync(index + 1, parameters, cancellation);
 				}
 				catch(Exception ex)
 				{
 					Terminal.WriteLine(CommandOutletContent.Create()
-						.Append(CommandOutletStyles.Bold | CommandOutletStyles.Blinking, CommandOutletColor.Magenta, "Caught:")
+						.Append(CommandOutletStyles.Blinking, CommandOutletColor.Magenta, "Caught:")
 						.Append(CommandOutletColor.Yellow, $"[{ex.GetType().Name}] ")
 						.Append(CommandOutletColor.DarkRed, ex.Message));
 				}
 
 				stopwatch.Stop();
 
-				var content = CommandOutletContent.Create()
+				Terminal.WriteLine(CommandOutletContent.Create()
 					.Append(CommandOutletColor.DarkGray, "[")
 					.Append(CommandOutletColor.Red, $"{index + 1}")
 					.Append(CommandOutletColor.DarkGray, "] ")
 					.Append(CommandOutletColor.DarkCyan, $"Elapsed: ")
-					.Append(CommandOutletColor.Green, $"{stopwatch.Elapsed}");
-
-				Terminal.WriteLine(content);
+					.Append(CommandOutletColor.Green, $"{stopwatch.Elapsed}"));
 			}
 		});
 
@@ -265,7 +267,8 @@ internal class Program
 		var content = CommandOutletContent.Create()
 			.Append(CommandOutletColor.DarkGray, "[")
 			.Append(CommandOutletColor.Magenta, "Fallback")
-			.Append(CommandOutletColor.DarkGray, "] ");
+			.Append(CommandOutletColor.DarkGray, "] ")
+			.Append(CommandOutletColor.DarkBlue, $"({argument.Value}) ");
 
 		if(argument.HasError(out var exception))
 		{
@@ -294,7 +297,7 @@ internal class Program
 			.Append(CommandOutletColor.DarkGray, "[")
 			.Append(CommandOutletColor.Yellow, "OnExecute")
 			.Append(CommandOutletColor.DarkGray, " #")
-			.Append(CommandOutletColor.Cyan, $"{index + 1}")
+			.Append(CommandOutletColor.Cyan, $"{index}")
 			.Append(CommandOutletColor.DarkGray, "] "));
 
 		if(parameters.TryGetValue<TimeSpan>("delay", out var delay) && delay > TimeSpan.Zero)

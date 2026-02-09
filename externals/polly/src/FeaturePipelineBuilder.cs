@@ -36,9 +36,17 @@ namespace Zongsoft.Externals.Polly;
 
 public sealed class FeaturePipelineBuilder : IFeaturePipelineBuilder
 {
+	#region 单例字段
 	public static readonly FeaturePipelineBuilder Instance = new();
+	#endregion
 
+	#region 私有构造
+	private FeaturePipelineBuilder() { }
+	#endregion
+
+	#region 公共方法
 	public IFeaturePipeline Build(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline(features);
 	public IFeaturePipeline<TArgument> Build<TArgument>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument>(features);
 	public IFeaturePipeline<TArgument, TResult> Build<TArgument, TResult>(IEnumerable<IFeature> features) => features == null ? null : new FeaturePipeline<TArgument, TResult>(features);
+	#endregion
 }

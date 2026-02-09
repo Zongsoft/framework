@@ -47,9 +47,7 @@ internal abstract class ThrottleStrategyBase : ResilienceStrategy, IDisposable, 
 {
 	private readonly ResilienceStrategyTelemetry _telemetry;
 
-	protected ThrottleStrategyBase(
-		Func<RateLimiterArguments, ValueTask<RateLimitLease>> limiter,
-		ResilienceStrategyTelemetry telemetry, RateLimiter wrapper)
+	protected ThrottleStrategyBase(Func<RateLimiterArguments, ValueTask<RateLimitLease>> limiter, ResilienceStrategyTelemetry telemetry, RateLimiter wrapper)
 	{
 		this.Limiter = limiter;
 		this.Wrapper = wrapper;
@@ -142,7 +140,7 @@ internal sealed class ThrottleStrategy<TArgument> : ThrottleStrategyBase
 	}
 
 	protected override ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation) =>
-		_rejected(new(name, new ThrottleLeaseWrapper(lease), state is TArgument argument ? argument : default), cancellation);
+		_rejected(new(name, new ThrottleLeaseWrapper(lease), FeatureUtility.GetArgument<T, TArgument>(state)), cancellation);
 }
 
 internal sealed class ThrottleStrategy<TArgument, TResult> : ThrottleStrategyBase
@@ -158,7 +156,7 @@ internal sealed class ThrottleStrategy<TArgument, TResult> : ThrottleStrategyBas
 	}
 
 	protected override ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation) =>
-		_rejected(new(name, new ThrottleLeaseWrapper(lease), state is TArgument argument ? argument : default), cancellation);
+		_rejected(new(name, new ThrottleLeaseWrapper(lease), FeatureUtility.GetArgument<T, TArgument>(state)), cancellation);
 }
 
 internal sealed class ThrottleLeaseWrapper(RateLimitLease lease) : ThrottleLease

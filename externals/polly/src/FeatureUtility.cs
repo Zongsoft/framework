@@ -55,14 +55,16 @@ internal static class FeatureUtility
 		{
 			for(int i = 0; i < tuple.Length; i++)
 			{
-				if(tuple[i] is TArgument value)
+				var entry = tuple[i];
+
+				if(entry is TArgument value)
 				{
 					parameters = null;
 					return value;
 				}
 
-				if(tuple[i] is ITuple args && args.Length == 2 &&
-					args[0] is TArgument arg1 && args[1] is Parameters arg2)
+				if(entry is ITuple args && args.Length == 2 &&
+				   args[0] is TArgument arg1 && args[1] is Parameters arg2)
 				{
 					parameters = arg2;
 					return arg1;

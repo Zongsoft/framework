@@ -45,9 +45,7 @@ internal sealed class FallbackStrategy : ResilienceStrategy
 	private readonly Func<Argument, CancellationToken, ValueTask<bool>> _predicate;
 	private readonly Func<Argument, CancellationToken, ValueTask> _fallback;
 
-	public FallbackStrategy(
-		FallbackStrategyOptions options,
-		ResilienceStrategyTelemetry telemetry)
+	public FallbackStrategy(FallbackStrategyOptions options, ResilienceStrategyTelemetry telemetry)
 	{
 		_fallback = options.Fallback;
 		_predicate = options.ShouldHandle;
@@ -93,9 +91,7 @@ internal sealed class FallbackStrategy<TArgument> : ResilienceStrategy
 	private readonly Func<Argument<TArgument>, CancellationToken, ValueTask<bool>> _predicate;
 	private readonly Func<Argument<TArgument>, CancellationToken, ValueTask> _fallback;
 
-	public FallbackStrategy(
-		FallbackStrategyOptions<TArgument> options,
-		ResilienceStrategyTelemetry telemetry)
+	public FallbackStrategy(FallbackStrategyOptions<TArgument> options, ResilienceStrategyTelemetry telemetry)
 	{
 		_fallback = options.Fallback;
 		_predicate = options.ShouldHandle;
@@ -141,9 +137,7 @@ internal sealed class FallbackStrategy<TArgument, TResult> : ResilienceStrategy<
 	private readonly Func<Argument<TArgument, TResult>, CancellationToken, ValueTask<bool>> _predicate;
 	private readonly Func<Argument<TArgument, TResult>, CancellationToken, ValueTask<TResult>> _fallback;
 
-	public FallbackStrategy(
-		FallbackStrategyOptions<TArgument, TResult> options,
-		ResilienceStrategyTelemetry telemetry)
+	public FallbackStrategy(FallbackStrategyOptions<TArgument, TResult> options, ResilienceStrategyTelemetry telemetry)
 	{
 		_fallback = options.Fallback;
 		_predicate = options.ShouldHandle;
@@ -163,7 +157,7 @@ internal sealed class FallbackStrategy<TArgument, TResult> : ResilienceStrategy<
 			outcome = Outcome.FromException<TResult>(ex);
 		}
 
-		var argument = new Argument<TArgument, TResult>(state is TArgument value ? value : default, outcome.Result, outcome.Exception.Wrap());
+		var argument = new Argument<TArgument, TResult>(FeatureUtility.GetArgument<TState, TArgument>(state), outcome.Result, outcome.Exception.Wrap());
 		var predicate = _predicate;
 		if(predicate != null && !await predicate(argument, context.CancellationToken).ConfigureAwait(context.ContinueOnCapturedContext))
 			return outcome;

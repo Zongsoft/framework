@@ -56,15 +56,15 @@ internal static partial class FeatureExtension
 				if(timeoutOptions != null)
 					builder.AddTimeout(timeoutOptions);
 				break;
-			case ThrottleFeature throttle:
-				var throttleOptions = throttle.ToStrategy();
-				if(throttleOptions != null)
-					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
-				break;
 			case BreakerFeature breaker:
 				var breakerOptions = breaker.ToStrategy();
 				if(breakerOptions != null)
 					builder.AddCircuitBreaker(breakerOptions);
+				break;
+			case ThrottleFeature throttle:
+				var throttleOptions = throttle.ToStrategy();
+				if(throttleOptions != null)
+					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
 				break;
 			case FallbackFeature fallback:
 				var fallbackOptions = fallback.ToStrategy();
@@ -91,15 +91,15 @@ internal static partial class FeatureExtension
 				if(timeoutOptions != null)
 					builder.AddTimeout(timeoutOptions);
 				break;
-			case ThrottleFeature<TArgument> throttle:
-				var throttleOptions = throttle.ToStrategy();
-				if(throttleOptions != null)
-					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
-				break;
 			case BreakerFeature<TArgument> breaker:
 				var breakerOptions = breaker.ToStrategy();
 				if(breakerOptions != null)
 					builder.AddCircuitBreaker(breakerOptions);
+				break;
+			case ThrottleFeature<TArgument> throttle:
+				var throttleOptions = throttle.ToStrategy();
+				if(throttleOptions != null)
+					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
 				break;
 			case FallbackFeature<TArgument> fallback:
 				var fallbackOptions = fallback.ToStrategy();
@@ -129,15 +129,15 @@ internal static partial class FeatureExtension
 				if(timeoutOptions != null)
 					builder.AddTimeout(timeoutOptions);
 				break;
-			case ThrottleFeature<TArgument, TResult> throttle:
-				var throttleOptions = throttle.ToStrategy();
-				if(throttleOptions != null)
-					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
-				break;
 			case BreakerFeature<TArgument, TResult> breaker:
 				var breakerOptions = breaker.ToStrategy();
 				if(breakerOptions != null)
 					builder.AddCircuitBreaker(breakerOptions);
+				break;
+			case ThrottleFeature<TArgument, TResult> throttle:
+				var throttleOptions = throttle.ToStrategy();
+				if(throttleOptions != null)
+					Strategies.ThrottleStrategyExtension.AddThrottle(builder, throttleOptions);
 				break;
 			case FallbackFeature<TArgument, TResult> fallback:
 				var fallbackOptions = fallback.ToStrategy();
