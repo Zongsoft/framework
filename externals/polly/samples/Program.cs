@@ -89,7 +89,6 @@ internal class Program
 				new RetryLatency(delay, limit),
 				jitterable,
 				attempts,
-				null,
 				OnRetry
 			);
 
@@ -111,9 +110,7 @@ internal class Program
 			var period = context.Options.GetValue("period", TimeSpan.Zero);
 			var ratio = context.Options.GetValue("ratio", 0.5);
 
-			_features.Breaker(
-				duration, ratio, period, threshold, out var breaker
-			);
+			_features.Breaker(duration, ratio, period, threshold, out var breaker);
 
 			breaker.Closed = (argument, cancellation) =>
 			{
