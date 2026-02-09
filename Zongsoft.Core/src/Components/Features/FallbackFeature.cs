@@ -39,8 +39,8 @@ namespace Zongsoft.Components.Features;
 public class FallbackFeature : IFeature
 {
 	#region 构造函数
-	public FallbackFeature(Func<Argument, CancellationToken, ValueTask> fallback, bool enabled = true) : this(fallback, null, enabled) { }
-	public FallbackFeature(Func<Argument, CancellationToken, ValueTask> fallback, Common.IPredication<Argument> predicator, bool enabled = true)
+	public FallbackFeature(Func<Argument, CancellationToken, ValueTask> fallback) : this(fallback, null) { }
+	public FallbackFeature(Func<Argument, CancellationToken, ValueTask> fallback, Common.IPredication<Argument> predicator)
 	{
 		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
 		this.Predicator = predicator;
@@ -61,8 +61,8 @@ public class FallbackFeature : IFeature
 public class FallbackFeature<T> : IFeature
 {
 	#region 构造函数
-	public FallbackFeature(Func<Argument<T>, CancellationToken, ValueTask> fallback, bool enabled = true) : this(fallback, null, enabled) { }
-	public FallbackFeature(Func<Argument<T>, CancellationToken, ValueTask> fallback, Common.IPredication<Argument<T>> predicator, bool enabled = true)
+	public FallbackFeature(Func<Argument<T>, CancellationToken, ValueTask> fallback) : this(fallback, null) { }
+	public FallbackFeature(Func<Argument<T>, CancellationToken, ValueTask> fallback, Common.IPredication<Argument<T>> predicator)
 	{
 		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
 		this.Predicator = predicator;
@@ -83,8 +83,8 @@ public class FallbackFeature<T> : IFeature
 public class FallbackFeature<T, TResult> : IFeature
 {
 	#region 构造函数
-	public FallbackFeature(Func<Argument<T, TResult>, CancellationToken, ValueTask<TResult>> fallback, bool enabled = true) : this(fallback, null, enabled) { }
-	public FallbackFeature(Func<Argument<T, TResult>, CancellationToken, ValueTask<TResult>> fallback, Common.IPredication<Argument<T, TResult>> predicator, bool enabled = true)
+	public FallbackFeature(Func<Argument<T, TResult>, CancellationToken, ValueTask<TResult>> fallback) : this(fallback, null) { }
+	public FallbackFeature(Func<Argument<T, TResult>, CancellationToken, ValueTask<TResult>> fallback, Common.IPredication<Argument<T, TResult>> predicator)
 	{
 		this.Fallback = fallback ?? throw new ArgumentNullException(nameof(fallback));
 		this.Predicator = predicator;
