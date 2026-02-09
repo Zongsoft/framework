@@ -51,9 +51,9 @@ public abstract partial class LoggingBase<TLog> where TLog : ILog
 	public void Log(Type source, LogLevel level, string message, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(level, message, data, this.GetSource(source), action));
 	public void Log(Type source, LogLevel level, string message, Exception exception, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(level, message, exception, data, this.GetSource(source), action));
 
-	public void Log(object source, LogLevel level, Exception exception, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(level, exception, data, this.GetSource(source?.GetType()), action));
-	public void Log(object source, LogLevel level, string message, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(level, message, data, this.GetSource(source?.GetType()), action));
-	public void Log(object source, LogLevel level, string message, Exception exception, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(level, message, exception, data, this.GetSource(source?.GetType()), action));
+	public void Log(object source, LogLevel level, Exception exception, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(level, exception, data, this.GetSource(source), action));
+	public void Log(object source, LogLevel level, string message, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(level, message, data, this.GetSource(source), action));
+	public void Log(object source, LogLevel level, string message, Exception exception, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(level, message, exception, data, this.GetSource(source), action));
 
 	public ValueTask LogAsync(LogLevel level, Exception exception, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, exception, null, null, action), cancellation);
 	public ValueTask LogAsync(LogLevel level, Exception exception, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, exception, data, null, action), cancellation);
@@ -76,15 +76,22 @@ public abstract partial class LoggingBase<TLog> where TLog : ILog
 	public ValueTask LogAsync(Type source, LogLevel level, string message, Exception exception, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, exception, null, this.GetSource(source), action), cancellation);
 	public ValueTask LogAsync(Type source, LogLevel level, string message, Exception exception, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, exception, data, this.GetSource(source), action), cancellation);
 
-	public ValueTask LogAsync(object source, LogLevel level, Exception exception, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, exception, null, this.GetSource(source?.GetType()), action), cancellation);
-	public ValueTask LogAsync(object source, LogLevel level, Exception exception, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, exception, data, this.GetSource(source?.GetType()), action), cancellation);
-	public ValueTask LogAsync(object source, LogLevel level, string message, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, null, this.GetSource(source?.GetType()), action), cancellation);
-	public ValueTask LogAsync(object source, LogLevel level, string message, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, data, this.GetSource(source?.GetType()), action), cancellation);
-	public ValueTask LogAsync(object source, LogLevel level, string message, Exception exception, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, exception, null, this.GetSource(source?.GetType()), action), cancellation);
-	public ValueTask LogAsync(object source, LogLevel level, string message, Exception exception, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, exception, data, this.GetSource(source?.GetType()), action), cancellation);
+	public ValueTask LogAsync(object source, LogLevel level, Exception exception, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, exception, null, this.GetSource(source), action), cancellation);
+	public ValueTask LogAsync(object source, LogLevel level, Exception exception, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, exception, data, this.GetSource(source), action), cancellation);
+	public ValueTask LogAsync(object source, LogLevel level, string message, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, null, this.GetSource(source), action), cancellation);
+	public ValueTask LogAsync(object source, LogLevel level, string message, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, data, this.GetSource(source), action), cancellation);
+	public ValueTask LogAsync(object source, LogLevel level, string message, Exception exception, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, exception, null, this.GetSource(source), action), cancellation);
+	public ValueTask LogAsync(object source, LogLevel level, string message, Exception exception, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(level, message, exception, data, this.GetSource(source), action), cancellation);
 	#endregion
 
 	#region 保护方法
+	protected virtual string GetSource(object target) => target switch
+	{
+		string text => text,
+		Type type => this.GetSource(type),
+		_ => this.GetSource(target?.GetType()),
+	};
+
 	protected virtual string GetSource(Type type)
 	{
 		if(type == null)
