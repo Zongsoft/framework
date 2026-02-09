@@ -1,3 +1,12 @@
+# Zongsoft.Externals.Polly 扩展插件库
+
+![License](https://img.shields.io/github/license/Zongsoft/framework)
+![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Polly)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Externals.Polly)
+![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
+
+-----
+
 ## 概述
 
 该插件库基于 [**P**olly](https://github.com/App-vNext/Polly) 开源库的插件化适配，并针对相关回调方法做了统一的抽象和映射：
