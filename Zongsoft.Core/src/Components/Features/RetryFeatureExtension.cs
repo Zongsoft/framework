@@ -44,13 +44,13 @@ public static class RetryFeatureExtension
 	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, backoff, latency, jitterable, attempts, null, onRetry);
 
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument> predicator = null, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, int attempts, Common.IPredication<RetryArgument> predicator, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, RetryBackoff.None, latency, true, attempts, predicator, onRetry);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument> predicator = null, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts, Common.IPredication<RetryArgument> predicator, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, RetryBackoff.None, latency, jitterable, attempts, predicator, onRetry);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument> predicator = null, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null) =>
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts, Common.IPredication<RetryArgument> predicator, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, backoff, latency, true, attempts, predicator, onRetry);
-	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument> predicator = null, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null)
+	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts, Common.IPredication<RetryArgument> predicator, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null)
 	{
 		if(builder == null)
 			return new FeatureBuilder(new RetryFeature(backoff, latency, jitterable, attempts, predicator) { OnRetry = onRetry });
@@ -73,13 +73,13 @@ public static class RetryFeatureExtension
 	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Func<RetryArgument<T>, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, backoff, latency, jitterable, attempts, null, onRetry);
 
-	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument<T>> predicator = null, Func<RetryArgument<T>, CancellationToken, ValueTask> onRetry = null) =>
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryLatency latency, int attempts, Common.IPredication<RetryArgument<T>> predicator, Func<RetryArgument<T>, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, RetryBackoff.None, latency, true, attempts, predicator, onRetry);
-	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument<T>> predicator = null, Func<RetryArgument<T>, CancellationToken, ValueTask> onRetry = null) =>
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts, Common.IPredication<RetryArgument<T>> predicator, Func<RetryArgument<T>, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, RetryBackoff.None, latency, jitterable, attempts, predicator, onRetry);
-	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument<T>> predicator = null, Func<RetryArgument<T>, CancellationToken, ValueTask> onRetry = null) =>
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts, Common.IPredication<RetryArgument<T>> predicator, Func<RetryArgument<T>, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, backoff, latency, true, attempts, predicator, onRetry);
-	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument<T>> predicator = null, Func<RetryArgument<T>, CancellationToken, ValueTask> onRetry = null)
+	public static IFeatureBuilder Retry<T>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts, Common.IPredication<RetryArgument<T>> predicator, Func<RetryArgument<T>, CancellationToken, ValueTask> onRetry = null)
 	{
 		if(builder == null)
 			return new FeatureBuilder(new RetryFeature<T>(backoff, latency, jitterable, attempts, predicator) { OnRetry = onRetry });
@@ -102,13 +102,13 @@ public static class RetryFeatureExtension
 	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, backoff, latency, jitterable, attempts, null, onRetry);
 
-	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument<T, TResult>> predicator = null, Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> onRetry = null) =>
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryLatency latency, int attempts, Common.IPredication<RetryArgument<T, TResult>> predicator, Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, RetryBackoff.None, latency, true, attempts, predicator, onRetry);
-	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument<T, TResult>> predicator = null, Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> onRetry = null) =>
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts, Common.IPredication<RetryArgument<T, TResult>> predicator, Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, RetryBackoff.None, latency, jitterable, attempts, predicator, onRetry);
-	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts = 0, Common.IPredication<RetryArgument<T, TResult>> predicator = null, Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> onRetry = null) =>
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, int attempts, Common.IPredication<RetryArgument<T, TResult>> predicator, Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, backoff, latency, true, attempts, predicator, onRetry);
-	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts = 0, Common.IPredication<RetryArgument<T, TResult>> predicator = null, Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> onRetry = null)
+	public static IFeatureBuilder Retry<T, TResult>(this IFeatureBuilder builder, RetryBackoff backoff, RetryLatency latency, bool jitterable, int attempts, Common.IPredication<RetryArgument<T, TResult>> predicator, Func<RetryArgument<T, TResult>, CancellationToken, ValueTask> onRetry = null)
 	{
 		if(builder == null)
 			return new FeatureBuilder(new RetryFeature<T, TResult>(backoff, latency, jitterable, attempts, predicator) { OnRetry = onRetry });
