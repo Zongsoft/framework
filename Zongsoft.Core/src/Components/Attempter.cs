@@ -92,19 +92,16 @@ public class Attempter : IAttempter
 		if(this.Cache is not ISequence sequence)
 			throw new InvalidOperationException($"The cache of authentication failover does not support the increment(ISequence) operation.");
 
-		//获取验证失败的阈值和锁定时长
-		this.GetAttempts(out var limit, out var window, out var period);
-
-		if(limit < 1 || window == TimeSpan.Zero)
+		if(!_options.HasLimit(out var limit, out var window, out var period))
 			return false;
 
-		var KEY = GetCacheKey(key);
-		var attempts = await sequence.IncreaseAsync(KEY, cancellation: cancellation);
+		var cacheKey = GetCacheKey(key);
+		var attempts = await sequence.IncreaseAsync(cacheKey, cancellation: cancellation);
 
 		if(attempts < limit)
-			await this.Cache.SetExpiryAsync(KEY, window, cancellation);
+			await this.Cache.SetExpiryAsync(cacheKey, window, cancellation);
 		else if(attempts == limit)
-			await this.Cache.SetExpiryAsync(KEY, period, cancellation);
+			await this.Cache.SetExpiryAsync(cacheKey, period, cancellation);
 
 		return attempts >= limit;
 	}
@@ -112,30 +109,9 @@ public class Attempter : IAttempter
 
 	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private void GetAttempts(out int limit, out TimeSpan window, out TimeSpan period)
-	{
-		limit = 3;
-		window = TimeSpan.FromMinutes(1);
-		period = TimeSpan.FromMinutes(60);
-
-		var option = this.Options;
-
-		if(option != null)
-		{
-			limit = Math.Max(option.Limit, 1);
-
-			if(option.Window > TimeSpan.Zero)
-				window = option.Window;
-
-			if(option.Period > TimeSpan.Zero)
-				period = option.Period;
-		}
-	}
-
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static string GetCacheKey(string key)
 	{
-		const string KEY_PREFIX = "Zongsoft.Security.Attempts";
+		const string KEY_PREFIX = $"Zongsoft.{nameof(Attempter)}";
 		return $"{KEY_PREFIX}:{key.ToLowerInvariant().Trim()}";
 	}
 	#endregion
