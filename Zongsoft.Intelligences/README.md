@@ -1,4 +1,18 @@
-# 人工智能扩展库
+# Zongsoft.Intelligences 插件库
+
+![License](https://img.shields.io/github/license/Zongsoft/framework)
+![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Intelligences)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Intelligences)
+![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
+
+[English](README.md) |
+[简体中文](README-zh_CN.md)
+
+-----
+
+## 概述
+
+[**Z**ongsoft.**I**ntelligences](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Intelligences) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的 _**AI**_ 插件库，提供了 [_**O**llama_](https://ollama.com) 协议栈的 _**AI**_ 接入功能。
 
 ## 安装 _**O**llama_
 

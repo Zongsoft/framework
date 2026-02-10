@@ -1,8 +1,9 @@
 # Zongsoft Framework
 
-[English](README.md) | [简体中文](README-zh.md)
-
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+
+[English](README.md) |
+[简体中文](README-zh.md)
 
 -----
 
@@ -104,13 +105,11 @@ You are welcome to write articles for our open source projects to promote, if yo
 
 We look forward to your support and sponsorship. You can provide us with the necessary financial support in the following ways:
 
-1. Follow the **Zongsoft** WeChat public account and reward our articles;
-2. Join the [**Zongsoft Knowledge Planet**](https://t.zsxq.com/2nyjqrr) to get online Q&A and technical support;
+1. Follow the _**Z**ongsoft_ WeChat public account and reward our articles;
+2. Follow the [_**Z**ongsoft_](https://github.com/Zongsoft) Organization and make a donation to us;
 3. If your organization requires on-site technical support and coaching, or if you need some new features, instant bug fixes, etc., please contact us by [email](mailto:zongsoft@qq.com).
 
 [![Zongsoft's WeChat](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
-
-[![Zongsoft's Knowledge Planet](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
 
 <a name="license"></a>
 ## License

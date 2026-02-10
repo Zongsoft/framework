@@ -1,3 +1,15 @@
+# Zongsoft.Externals.Opc 扩展插件库
+
+![License](https://img.shields.io/github/license/Zongsoft/framework)
+![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Opc)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Externals.Opc)
+![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
+
+[English](README.md) |
+[简体中文](README-zh_CN.md)
+
+-----
+
 ## 证书生成
 
 如果采用 X509 证书进行身份验证，需要使用 [OpenSSL 工具](https://docs.openssl.org) 生成 X509 证书文件。

@@ -1,10 +1,17 @@
 # Zongsoft.Data ORM Framework
 
-![license](https://img.shields.io/github/license/Zongsoft/Framework/Zongsoft.Data) ![download](https://img.shields.io/nuget/dt/Zongsoft.Data) ![version](https://img.shields.io/github/v/release/Zongsoft/Framework/Zongsoft.Data?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Framework/Zongsoft.Data?style=social)
+![License](https://img.shields.io/github/license/Zongsoft/framework)
+![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Data)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Data)
+![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
-README: [English](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/README.md) | [简体中文](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/README-zh_CN.md)
+[English](README.md) |
+[简体中文](README-zh_CN.md)
 
 -----
+
+<a name="abstract"></a>
+## Abstract
 
 The [Zongsoft.Data](https://github.com/Zongsoft/framework/Zongsoft.Data) is a [GraphQL](https://graphql.com)-style **ORM**(**O**bject/**R**elational **M**apping) data access framework.
 
@@ -1122,34 +1129,3 @@ We want to provide the best **overall price/performance ratio** and not compromi
 Thanks to the semantic design concept of “declaratively expressing data structure relationships”, compared with the imperative programming design, the program intention is more focused, and it is natural easier to convert the semantics into a syntax tree to represent SQL scripts of different data providers, and the optimization space of each step is more relaxed and free.
 
 The implementation layer uses **emitting** dynamic compilation technology to pre-heat the model/entity populated, data parameter binding, etc., which can be understood by the [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) class and related classes.
-
-<a name="contribution"></a>
-## Contributing
-
-Please do not submit a **Q**uestion and **D**iscussion in the **I**ssues of the project. **I**ssues are used to report bugs and features. If you wish to participate in the contribution, you are welcome to submit a code merge request([PullRequest](https://github.com/Zongsoft/framework/pulls)) or an [issue](https://github.com/Zongsoft/framework/issues).
-
-For new features, be sure to create a functional feedback([Issue](https://github.com/Zongsoft/framework/issues)) to describe your recommendations in detail so that we can fully discuss them, which will also allow us to better coordinate our work to prevent duplication of development and help you adjust recommendations or requirements to make it successfully accepted into the project.
-
-You are welcome to write articles for our open source projects to promote, if you need to forward your **A**rticles, **B**logs, **V**ideos, etc. on the official website([http://zongsoft.com/blog](http://zongsoft.com/blog)), you can contact us by [**email**](mailto:zongsoft@qq.com).
-
-> If you're new to posting issues, we ask that you read ["How To Ask Questions The Smart Way"](http://www.catb.org/~esr/faqs/smart-questions.html), ["How to Ask a Question in Open Source Community"](https://github.com/seajs/seajs/issues/545) and ["How to Report Bugs Effectively"](http://www.chiark.greenend.org.uk/~sgtatham/bugs.html) prior to posting. Well written bug reports help us help you!
-
-
-<a name="sponsor"></a>
-## Sponsorship
-
-We look forward to your support and sponsorship. You can provide us with the necessary financial support in the following ways:
-
-1. Follow the **Zongsoft** WeChat public account and reward our articles;
-2. Join the [**Zongsoft Knowledge Planet**](https://t.zsxq.com/2nyjqrr) to get online Q&A and technical support;
-3. If your organization requires on-site technical support and coaching, or if you need some new features, instant bug fixes, etc., please contact us by [email](mailto:zongsoft@qq.com).
-
-[![Zongsoft's WeChat](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
-
-[![Zongsoft's Knowledge Planet](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
-
-
-<a name="license"></a>
-## License
-
-Licensed under the [MIT](https://opensource.org/licenses/MIT) license.

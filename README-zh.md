@@ -1,8 +1,9 @@
 # Zongsoft Framework
 
-[English](README.md) | [简体中文](README-zh.md)
-
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT-zh.md)
+
+[English](README.md) |
+[简体中文](README-zh.md)
 
 -----
 
@@ -105,12 +106,10 @@
 非常期待您的支持与赞助，可以通过下面几种方式为我们提供必要的资金支持：
 
 1. 关注 **Zongsoft 微信公众号**，对我们的文章进行打赏；
-2. 加入 [**Zongsoft 知识星球号**](https://t.zsxq.com/2nyjqrr)，可以获得在线问答和技术支持；
+2. 关注 [**Zongsoft 组织账号**](https://github.com/Zongsoft)，向我们捐赠；
 3. 如果您的企业需要现场技术支持与辅导，又或者需要特定新功能、即刻的错误修复等请[发邮件](mailto:zongsoft@qq.com)给我。
 
 [![微信公号](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28wechat%29.png)](http://weixin.qq.com/r/zy-g_GnEWTQmrS2b93rd)
-
-[![知识星球](https://raw.githubusercontent.com/Zongsoft/guidelines/main/zongsoft-qrcode%28zsxq%29.png)](https://t.zsxq.com/2nyjqrr)
 
 <a name="license"></a>
 ## 授权协议

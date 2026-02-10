@@ -35,9 +35,11 @@
 	</Choose>
 
 	<ItemGroup>
+		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="\" />
+		<None Include="..\README-zh_CN.md" Link="README-zh_CN.md" Pack="true" PackagePath="\" />
+		<None Include="..\$(MSBuildProjectName).xsd" Pack="true" PackagePath="\schemas" />
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
-		<None Include="..\$(MSBuildProjectName).xsd" Pack="true" PackagePath="\schemas" />
 	</ItemGroup>
 
 	<ItemGroup>

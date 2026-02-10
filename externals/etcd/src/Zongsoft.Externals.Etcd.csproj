@@ -7,7 +7,6 @@
 		<IsPackable>true</IsPackable>
 		<TargetFrameworks>net8.0;net9.0;</TargetFrameworks>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/externals/etcd</RepositoryUrl>
 	</PropertyGroup>
@@ -37,10 +36,10 @@
 	</Choose>
 
 	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
-		<None Include="..\README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>

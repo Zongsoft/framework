@@ -30,6 +30,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
 			<DesignTime>true</DesignTime>
 			<AutoGen>true</AutoGen>

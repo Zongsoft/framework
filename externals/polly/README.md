@@ -5,6 +5,9 @@
 ![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Externals.Polly)
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
+[English](README.md) |
+[简体中文](README-zh_CN.md)
+
 -----
 
 ## 概述

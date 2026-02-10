@@ -6,7 +6,6 @@
 		<RootNamespace>Zongsoft.Externals.Polly</RootNamespace>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/externals/polly</RepositoryUrl>
 	</PropertyGroup>

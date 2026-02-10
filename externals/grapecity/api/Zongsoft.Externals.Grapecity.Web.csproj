@@ -45,6 +45,7 @@
 	</Choose>
 
 	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>

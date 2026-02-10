@@ -1,5 +1,10 @@
 # OPC.UA 客户端范例
 
+[English](README.md) |
+[简体中文](README-zh_CN.md)
+
+-----
+
 ### 连接命令 `connect`
 
 连接到指定的 OPC.UA 服务器，如果未指定参数则默认为本机。

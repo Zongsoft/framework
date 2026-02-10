@@ -1,3 +1,10 @@
+# Zongsoft.Externals.Polly 扩展插件库范例
+
+[English](README.md) |
+[简体中文](README-zh_CN.md)
+
+-----
+
 💡 **注：** 回退 _(**F**allback)_ 策略应位于最外层（_最先添加到执行管线中_）。
 
 ## 重试
