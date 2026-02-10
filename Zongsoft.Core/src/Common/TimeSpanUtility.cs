@@ -33,6 +33,12 @@ namespace Zongsoft.Common;
 
 public static class TimeSpanUtility
 {
+	extension(TimeSpan)
+	{
+		public static TimeSpan Max(TimeSpan a, TimeSpan b) => a > b ? a : b;
+		public static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
+	}
+
 	public static TimeSpan Clamp(this TimeSpan value, TimeSpan minimum, TimeSpan maximum)
 	{
 		if(minimum > maximum)
