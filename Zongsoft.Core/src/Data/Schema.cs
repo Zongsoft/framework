@@ -199,13 +199,8 @@ public abstract class Schema<T> : ISchemaMemberProvider
 	{
 		text.Append(member.Name);
 
-		if(member.Paging != null && member.Paging.Enabled)
-		{
-			text.Append(':');
-			text.Append(member.Paging.PageIndex.ToString());
-			text.Append('/');
-			text.Append(member.Paging.PageSize.ToString());
-		}
+		if(member.Paging != null && member.Paging.IsPaged(out var index, out var size))
+			text.Append($":{index}/{size}");
 
 		if(member.Sortings != null && member.Sortings.Length > 0)
 		{

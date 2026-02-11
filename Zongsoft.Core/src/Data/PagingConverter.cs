@@ -30,7 +30,6 @@
 using System;
 using System.Globalization;
 using System.ComponentModel;
-using System.Text.RegularExpressions;
 
 namespace Zongsoft.Data;
 
@@ -38,24 +37,26 @@ namespace Zongsoft.Data;
 /// 提供 <see cref="Paging"/> 分页设置的解析功能，关于支持的解析语法请查看备注说明。
 /// </summary>
 /// <remarks>
-/// 支持两种解析格式：
+/// 支持三种解析格式：
 /// <list type="bullet">
 ///		<item>
+///			<term>Limit@Offset</term>
+///			<description>分页条件：<c>限制数</c> 与 <c>偏移量</c> 之间采用“<c>^</c>”符号分隔。</description>
+///		</item>
+///		<item>
 ///			<term>PageIndex|PageSize</term>
-///			<description>分页条件：页号与每页记录数之间采用“|”或“@”符号分隔，其中每页记录数可选（忽略则表示系统默认值）。
-///				<para>如果页号为数字零或“*”星号，则表示不分页（参见：<seealso cref="Paging.Disabled"/>）。</para>
+///			<description>分页条件：<c>页号</c> 与 <c>页大小</c> 之间采用“<c>|</c>”符号分隔，其中 <c>页大小</c> 可选（忽略则表示系统默认值）。
+///				<para>如果 <c>页号</c> 为数字零(<c>0</c>)或星号(<c>*</c>)，则表示不分页（参见：<seealso cref="Paging.Disabled"/>）。</para>
 ///			</description>
 ///		</item>
 ///		<item>
 ///			<term>PageIndex/PageCount(TotalCount)</term>
-///			<description>分页结果：页号与分页数之间采用“/”符号分隔，之后的记录总数(采用圆括号包裹)可选。</description>
+///			<description>分页结果：<c>页号</c> 与 <c>分页数</c> 之间采用“<c>/</c>”符号分隔，之后的 <c>记录总数</c>(采用圆括号包裹)可选。</description>
 ///		</item>
 /// </list>
 /// </remarks>
 public class PagingConverter : TypeConverter
 {
-	private static readonly Regex _regex_ = new(@"^(?<index>\d+)(([|@](?<size>\d+))|(/(?<count>\d+)(\((?<total>\d+)\))?))?$", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000));
-
 	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{
 		return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
@@ -69,32 +70,7 @@ public class PagingConverter : TypeConverter
 	public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
 	{
 		if(value is string text)
-		{
-			if(string.IsNullOrEmpty(text))
-				return Paging.Page(1);
-
-			if(text == "*" || text == "0")
-				return Paging.Disabled;
-
-			var match = _regex_.Match(text);
-
-			if(match.Success && match.Groups["index"].Success)
-			{
-				if(match.Groups["count"].Success)
-				{
-					var total = match.Groups["total"].Success ? long.Parse(match.Groups["total"].Value) : 0;
-
-					if(total > 0)
-						return new Paging(int.Parse(match.Groups["index"].Value), (int)total / int.Parse(match.Groups["count"].Value)) { TotalCount = total };
-					else
-						return new Paging(int.Parse(match.Groups["index"].Value));
-				}
-
-				return match.Groups["size"].Success ?
-				       Paging.Page(int.Parse(match.Groups["index"].Value), int.Parse(match.Groups["size"].Value)) :
-				       Paging.Page(int.Parse(match.Groups["index"].Value));
-			}
-		}
+			return Paging.Parse(text);
 
 		return base.ConvertFrom(context, culture, value);
 	}
@@ -103,9 +79,9 @@ public class PagingConverter : TypeConverter
 	{
 		if(value is Paging paging)
 		{
-			return paging.TotalCount > 0 ?
-				$"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})" :
-				$"{paging.PageIndex}|{paging.PageSize}";
+			return paging.Total > 0 ?
+				$"{paging.Index}/{paging.Count}({paging.Total})" :
+				$"{paging.Index}|{paging.Size}";
 		}
 
 		return base.ConvertTo(context, culture, value, destinationType);

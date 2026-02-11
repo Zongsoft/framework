@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -36,106 +36,164 @@ namespace Zongsoft.Data;
 /// 表示数据分页的设置类。
 /// </summary>
 [TypeConverter(typeof(PagingConverter))]
-public class Paging
+public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging
 {
 	#region 常量定义
 	private const int PAGE_SIZE = 20;
 	#endregion
 
+	#region 事件声明
+	public event PropertyChangedEventHandler PropertyChanged;
+	public event PropertyChangingEventHandler PropertyChanging;
+	#endregion
+
 	#region 静态字段
-	public static readonly Paging Disabled = new(1, 0);
+	public static readonly Paging Disabled = new ImmutablePaging();
 	#endregion
 
 	#region 成员字段
-	private int _pageIndex;
-	private int _pageSize;
-	private long _totalCount;
+	private int _size;
+	private int _index;
+	private long _total;
+	private long _offset;
 	#endregion
 
 	#region 构造函数
-	/// <summary>创建默认的分页设置。<see cref="PageIndex"/>默认值为<c>1</c>（即首页），<see cref="PageSize"/>默认值为<c>20</c>。</summary>
+	/// <summary>创建默认的分页设置。<see cref="Index"/>默认值为<c>1</c>（即首页），<see cref="Size"/>默认值为<c>20</c>。</summary>
 	public Paging() : this(1, PAGE_SIZE) { }
 
-	/// <summary>创建指定页号的分页设置。<see cref="PageSize"/>默认值为<c>20</c>。</summary>
-	/// <param name="pageIndex">指定的页号（从<c>1</c>开始）。</param>
-	public Paging(int pageIndex) : this(pageIndex, PAGE_SIZE) { }
+	/// <summary>创建指定页号的分页设置。<see cref="Size"/>默认值为<c>20</c>。</summary>
+	/// <param name="index">指定的页号（从<c>1</c>开始）。</param>
+	public Paging(int index) : this(index, PAGE_SIZE) { }
 
 	/// <summary>创建指定页号和页大小的分页设置。</summary>
-	/// <param name="pageIndex">指定的页号（从<c>1</c>开始）。</param>
-	/// <param name="pageSize">指定的页大小，如果为零则表示不分页。</param>
-	public Paging(int pageIndex, int pageSize)
+	/// <param name="index">指定的页号（从<c>1</c>开始）。</param>
+	/// <param name="size">指定的页大小，如果为零则表示不分页。</param>
+	public Paging(int index, int size)
 	{
-		_totalCount = -1;
-		this.PageIndex = pageIndex;
-		this.PageSize = pageSize;
+		_total = -1;
+		_size = Math.Max(size, 0);
+		_index = Math.Max(index, 0);
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取一个值，指示是否启用了分页。</summary>
-	public bool Enabled => _pageSize > 0 && _pageIndex > 0;
-
 	/// <summary>获取一个值，指示分页结果是否为空集。</summary>
-	/// <remarks>注意：只有当 <see cref="TotalCount"/> 等于零，本属性才会返回真(<c>True</c>)。</remarks>
-	public bool IsEmpty => _totalCount == 0;
+	/// <remarks>注意：只有当 <see cref="Total"/> 等于零，本属性才会返回真(<c>True</c>)。</remarks>
+	public bool IsEmpty => _total == 0;
 
 	/// <summary>获取或设置页大小，如果该属性值为零则表示不分页。</summary>
-	public int PageSize
+	public int Size
 	{
-		get => _pageSize;
-		set => _pageSize = Math.Max(value, 0);
+		get => _size;
+		set
+		{
+			this.OnPropertyChanging(nameof(this.Size));
+			_size = Math.Max(value, 0);
+			this.OnPropertyChanged(nameof(this.Size));
+		}
 	}
 
 	/// <summary>获取或设置当前查询的页号（从<c>1</c>开始），如果页号为零则表示不分页。</summary>
-	/// <remarks>注意：零表示不分页，仅获取 <see cref="PageSize"/> 属性所指定的记录数。</remarks>
-	public int PageIndex
+	/// <remarks>注意：零表示不分页，仅获取 <see cref="Size"/> 属性所指定的记录数。</remarks>
+	public int Index
 	{
-		get => _pageIndex;
-		set => _pageIndex = Math.Max(value, 0);
+		get => _index;
+		set
+		{
+			this.OnPropertyChanging(nameof(this.Index));
+			_index = Math.Max(value, 0);
+			this.OnPropertyChanged(nameof(this.Index));
+		}
 	}
 
 	/// <summary>获取查询结果的总页数。</summary>
-	public int PageCount
+	public int Count
 	{
 		get
 		{
-			if(_totalCount < 1)
+			if(_total < 1)
 				return 0;
 
-			if(_pageSize < 1)
+			if(_size < 1)
 				return 1;
 
-			return (int)Math.Ceiling((double)_totalCount / _pageSize);
+			return (int)Math.Ceiling((double)_total / _size);
 		}
 	}
 
 	/// <summary>获取或设置查询结果的总记录数。</summary>
 	/// <remarks>如果返回值小于零，则表示尚未进行分页操作。</remarks>
-	public long TotalCount
+	public long Total
 	{
-		get => _totalCount;
-		set => _totalCount = Math.Max(value, -1);
+		get => _total;
+		set
+		{
+			this.OnPropertyChanging(nameof(this.Total));
+			_total = Math.Max(value, -1);
+			this.OnPropertyChanged(nameof(this.Total));
+		}
 	}
 	#endregion
 
+	#region 公共方法
+	/// <summary>判断是否为分页模式。</summary>
+	/// <param name="index">输出参数，表示分页的页号。</param>
+	/// <param name="size">输出参数，表示分页的页大小。</param>
+	/// <returns>如果返回真(<c>True</c>)则表示为分页模式。</returns>
+	public bool IsPaged(out int index, out int size)
+	{
+		size = _size;
+		index = _index;
+		return size > 0 && index > 0;
+	}
+
+	/// <summary>判断是否为限制模式。</summary>
+	/// <param name="count">输出参数，表示限制的记录数。</param>
+	/// <param name="offset">输出参数，表示限制的偏移量。</param>
+	/// <returns>如果返回真(<c>True</c>)则表示为限制模式。</returns>
+	public bool IsLimited(out int count, out long offset)
+	{
+		count = _size;
+		offset = _offset;
+		return count > 0 && _index == 0;
+	}
+	#endregion
+
+	#region 事件触发
+	protected void OnPropertyChanged(string name) => this.OnPropertyChanged(new PropertyChangedEventArgs(name));
+	protected virtual void OnPropertyChanged(PropertyChangedEventArgs args) => this.PropertyChanged?.Invoke(this, args);
+	protected void OnPropertyChanging(string name) => this.OnPropertyChanging(new PropertyChangingEventArgs(name));
+	protected virtual void OnPropertyChanging(PropertyChangingEventArgs args) => this.PropertyChanging?.Invoke(this, args);
+	#endregion
+
 	#region 重写方法
+	public bool Equals(Paging other) => other is not null &&
+		_size == other._size &&
+		_index == other._index &&
+		_total == other._total &&
+		_offset == other._offset;
+
+	public override bool Equals(object obj) => this.Equals(obj as Paging);
+	public override int GetHashCode() => HashCode.Combine(_size, _index, _total, _offset);
 	public override string ToString()
 	{
-		if(_totalCount > 0)
-			return $"{_pageIndex}/{this.PageCount}({_totalCount})";
+		if(_total > 0)
+			return $"{_index}/{this.Count}({_total})";
 
-		if(_pageSize < 1)
-			return $"{_pageIndex}/{this.PageCount}";
+		if(_size < 1)
+			return $"{_index}/{this.Count}";
 		else
-			return $"{_pageIndex}/{this.PageCount}[{_pageSize}]";
+			return $"{_index}/{this.Count}[{_size}]";
 	}
 	#endregion
 
 	#region 静态方法
 	/// <summary>创建指定记录数的限定设置。</summary>
 	/// <param name="count">限定返回的记录数，不能小于<c>1</c>。</param>
+	/// <param name="offset">限定获取记录的偏移量，默认值为<c>0</c>。</param>
 	/// <returns>返回新创建的分页设置对象。</returns>
-	public static Paging Limit(int count = 1) => new(0, Math.Max(count, 1));
+	public static Paging Limit(int count = 1, long offset = 0) => new(0, Math.Max(count, 1)) { _offset = Math.Max(offset, 0) };
 
 	/// <summary>创建指定页大小的首页设置。</summary>
 	/// <param name="size">指定的页大小，不能小于<c>1</c>。</param>
@@ -146,11 +204,15 @@ public class Paging
 	/// <param name="index">指定的页号，默认为<c>1</c>。</param>
 	/// <param name="size">每页的大小，默认为<c>20</c>。</param>
 	/// <returns>返回新创建的分页设置对象。</returns>
-	public static Paging Page(int index = 1, int size = PAGE_SIZE) => new(index, size);
+	public static Paging Page(int index = 1, int size = PAGE_SIZE) => size > 0 ? new(index, size) : Disabled;
+	#endregion
 
-	/// <summary>获取指定的设置项是否禁用了分页。</summary>
-	/// <param name="paging">待判断的分页设置。</param>
-	/// <returns>如果指定的分页设置的页大小于或等于零，则返回真(<c>True</c>)否则返回假(<c>False</c>)。</returns>
-	public static bool IsDisabled(Paging paging) => paging == null || paging.PageSize <= 0;
+	#region 嵌套子类
+	[ImmutableObject(true)]
+	private sealed class ImmutablePaging() : Paging(0, 0)
+	{
+		protected override void OnPropertyChanged(PropertyChangedEventArgs args) => throw new InvalidOperationException();
+		protected override void OnPropertyChanging(PropertyChangingEventArgs args) => throw new InvalidOperationException();
+	}
 	#endregion
 }

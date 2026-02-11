@@ -353,7 +353,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return false;
 				}
 
-				context.Current.Paging.PageSize = 20;
+				context.Current.Paging.Size = 20;
 				context.State = State.Include;
 				return true;
 			case ',':
@@ -363,7 +363,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return false;
 				}
 
-				context.Current.Paging.PageSize = int.Parse(buffer);
+				context.Current.Paging.Size = int.Parse(buffer);
 				context.State = State.None;
 				return true;
 			case '(':
@@ -374,7 +374,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				}
 
 				if(buffer != "?")
-					context.Current.Paging.PageSize = int.Parse(buffer);
+					context.Current.Paging.Size = int.Parse(buffer);
 
 				context.State = State.SortingField;
 				return true;
@@ -386,7 +386,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				}
 
 				if(buffer != "?")
-					context.Current.Paging.PageSize = int.Parse(buffer);
+					context.Current.Paging.Size = int.Parse(buffer);
 
 				context.Push();
 				context.State = State.None;
@@ -714,7 +714,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					var buffer = new string(_buffer, 0, _bufferIndex);
 
 					if(buffer != "?")
-						_current.Paging.PageSize = int.Parse(buffer);
+						_current.Paging.Size = int.Parse(buffer);
 
 					break;
 				default:
