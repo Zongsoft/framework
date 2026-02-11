@@ -138,6 +138,10 @@ public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging
 
 	#region 公共方法
 	/// <summary>判断是否为分页模式。</summary>
+	/// <returns>如果返回真(<c>True</c>)则表示为分页模式。</returns>
+	public bool IsPaged() => _size > 0 && _index > 0;
+
+	/// <summary>判断是否为分页模式。</summary>
 	/// <param name="index">输出参数，表示分页的页号。</param>
 	/// <param name="size">输出参数，表示分页的页大小。</param>
 	/// <returns>如果返回真(<c>True</c>)则表示为分页模式。</returns>
@@ -147,6 +151,10 @@ public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging
 		index = _index;
 		return size > 0 && index > 0;
 	}
+
+	/// <summary>判断是否为限制模式。</summary>
+	/// <returns>如果返回真(<c>True</c>)则表示为限制模式。</returns>
+	public bool IsLimited() => _size > 0 && _index == 0;
 
 	/// <summary>判断是否为限制模式。</summary>
 	/// <param name="count">输出参数，表示限制的记录数。</param>
