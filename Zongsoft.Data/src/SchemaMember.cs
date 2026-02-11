@@ -100,20 +100,12 @@ public class SchemaMember : SchemaMemberBase
 	{
 		var text = this.Name;
 
-		if(this.Paging != null)
-		{
-			if(Paging.IsDisabled(this.Paging))
-				text += ":*";
-			else
-				text += ":" + (this.Paging.PageIndex == 1 ?
-							   this.Paging.PageSize.ToString() :
-							   this.Paging.PageIndex.ToString() + "/" + this.Paging.PageSize.ToString());
-		}
+		if(this.Paging != null && this.Paging.IsPaged(out var page, out var size))
+			text += $":{(page == 1 ? $"{size}" : $"{page}/{size}")}";
 
-		int index;
 		if(this.Sortings != null && this.Sortings.Length > 0)
 		{
-			index = 0;
+			var index = 0;
 			text += "(";
 
 			foreach(var sorting in this.Sortings)
@@ -132,7 +124,7 @@ public class SchemaMember : SchemaMemberBase
 
 		if(_children != null && _children.Count > 0)
 		{
-			index = 0;
+			var index = 0;
 			text += "{";
 
 			foreach(var child in _children)

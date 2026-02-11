@@ -65,7 +65,7 @@ public class SelectStatementVisitor : SelectStatementVisitorBase<SelectStatement
 			context.WriteLine($"/* {statement.Alias} */");
 
 		//如果需要分页，则首先生成分页查询
-		if(statement.Paging != null && statement.Paging.Enabled)
+		if(statement.Paging != null && statement.Paging.IsPaged())
 		{
 			/*
 			 * 注意：有分组子句的分页和没有分组子句的分页查询是不同的。

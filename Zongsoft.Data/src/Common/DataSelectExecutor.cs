@@ -312,7 +312,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		#endregion
 
 		#region 公共属性
-		public bool Suppressed => Paging.IsDisabled(_context.Paging);
+		public bool Suppressed => _context.Paging == null || !_context.Paging.IsPaged();
 		#endregion
 
 		#region 遍历迭代
@@ -322,11 +322,11 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			var reader = _command.ExecuteReader();
 
 			//如果启用了分页，则先获取分页信息
-			if(_paging != null && _paging.Enabled)
+			if(_paging != null && _paging.IsPaged())
 			{
 				//首先执行分页查询
 				if(reader.Read())
-					_paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
+					_paging.Total = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
 
 				//将读取器移到数据查询
 				reader.NextResult();
@@ -343,11 +343,11 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			var reader = await _command.ExecuteReaderAsync(cancellation);
 
 			//如果启用了分页，则先获取分页信息
-			if(_paging != null && _paging.Enabled)
+			if(_paging != null && _paging.IsPaged())
 			{
 				//首先执行分页查询
 				if(await reader.ReadAsync(cancellation))
-					_paging.TotalCount = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
+					_paging.Total = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
 
 				//将读取器移到数据查询
 				await reader.NextResultAsync(cancellation);
