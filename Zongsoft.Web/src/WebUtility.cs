@@ -75,9 +75,9 @@ public static class WebUtility
 			controller.Response.Headers.SetPagination(paging);
 
 			//如果启用了分页并且无结果，则返回一个空集且设置一个零长度的分页头（注：这项特性是因为前端兼容性而临时添加）
-			if(paging != null && paging.Enabled && paging.IsEmpty)
+			if(paging != null && paging.IsPaged() && paging.IsEmpty)
 			{
-				controller.Response.Headers[Headers.Pagination] = $"{paging.PageIndex}/{paging.PageCount}({paging.TotalCount})";
+				controller.Response.Headers[Headers.Pagination] = $"{paging.Index}/{paging.Count}({paging.Total})";
 				return new OkObjectResult(Array.Empty<object>());
 			}
 		}
