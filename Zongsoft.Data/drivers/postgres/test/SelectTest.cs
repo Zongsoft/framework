@@ -35,7 +35,7 @@ public class SelectTest(DatabaseFixture database)
 	}
 
 	[Fact]
-	public async Task SelectWithPageableAsync()
+	public async Task SelectWithPagedAsync()
 	{
 		const int COUNT = 100;
 
@@ -65,6 +65,51 @@ public class SelectTest(DatabaseFixture database)
 		Assert.Equal(COUNT, page.Total);
 		Assert.Equal(1, page.Index);
 		Assert.Equal(5, page.Count);
+
+		await accessor.DeleteAsync<RoleModel>(Condition.GreaterThanEqual(nameof(RoleModel.RoleId), 100));
+	}
+
+	[Fact]
+	public async Task SelectWithLimitedAsync()
+	{
+		const int COUNT = 100;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var models = Model.Build<RoleModel>(COUNT, (model, index) =>
+		{
+			model.RoleId = (uint)(100 + index);
+			model.Name = $"$Role_{model.RoleId}";
+		});
+
+		var count = await accessor.InsertManyAsync(models, DataInsertOptions.SuppressSequence());
+		Assert.Equal(COUNT, count);
+
+		var roles = accessor.SelectAsync<RoleModel>(
+			Condition.GreaterThanEqual(nameof(RoleModel.RoleId), 100),
+			Paging.Limit(10));
+
+		var index = 0;
+		await foreach(var role in roles)
+		{
+			Assert.NotNull(role);
+			Assert.Equal(100 + index++, (int)role.RoleId);
+		}
+		Assert.Equal(10, index);
+
+		roles = accessor.SelectAsync<RoleModel>(
+			Condition.GreaterThanEqual(nameof(RoleModel.RoleId), 100),
+			Paging.Limit(20, 30));
+
+		index = 0;
+		await foreach(var role in roles)
+		{
+			Assert.NotNull(role);
+			Assert.Equal(130 + index++, (int)role.RoleId);
+		}
+		Assert.Equal(20, index);
 
 		await accessor.DeleteAsync<RoleModel>(Condition.GreaterThanEqual(nameof(RoleModel.RoleId), 100));
 	}
