@@ -80,7 +80,7 @@ public class SelectStatementVisitor : SelectStatementVisitorBase<SelectStatement
 			}
 			else
 			{
-				context.WriteLine("SELECT COUNT(0) FROM (");
+				context.WriteLine("SELECT COUNT(*) FROM (");
 				context.WriteLine("SELECT ");
 
 				int index = 0;
