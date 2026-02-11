@@ -58,7 +58,7 @@ partial class Paging
 		//处理只有“页号”的格式
 		if(int.TryParse(text, out var integer))
 		{
-			result = Paging.Page(integer);
+			result = integer > 0 ? Paging.Page(integer) : Paging.Disabled;
 			return true;
 		}
 
