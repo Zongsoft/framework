@@ -48,7 +48,7 @@ public class MsSqlSelectStatementVisitor : SelectStatementVisitor
 	protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 	{
 		//由于分页子句必须依赖于排序(OrderBy)子句，所以在没有指定排序子句的情况下默认以主键进行排序
-		if(statement.Paging != null && statement.Paging.PageSize > 0 && statement.OrderBy == null && statement.Table != null)
+		if(statement.Paging != null && statement.Paging.IsLimited() && statement.OrderBy == null && statement.Table != null)
 		{
 			statement.OrderBy = new OrderByClause();
 
@@ -59,21 +59,18 @@ public class MsSqlSelectStatementVisitor : SelectStatementVisitor
 		//调用基类同名方法
 		base.OnVisit(context, statement);
 
-		if(statement.Paging != null && statement.Paging.PageSize > 0 && statement.OrderBy != null)
-			this.VisitPaging(context, statement.Paging);
+		if(statement.Paging != null && statement.Paging.IsLimited(out var count, out var offset) && statement.OrderBy != null)
+			this.VisitLimit(context, count, offset);
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void VisitPaging(ExpressionVisitorContext context, Paging paging)
+	protected virtual void VisitLimit(ExpressionVisitorContext context, int count, long offset)
 	{
 		if(context.Output.Length > 0)
 			context.WriteLine();
 
-		if(paging.PageIndex > 0)
-			context.Write($"OFFSET {(paging.PageIndex - 1) * paging.PageSize} ROWS FETCH NEXT {paging.PageSize} ROWS ONLY");
-		else
-			context.Write($"OFFSET 0 ROWS FETCH NEXT {paging.PageSize} ROWS ONLY");
+		context.Write($"OFFSET {offset} ROWS FETCH NEXT {count} ROWS ONLY");
 	}
 	#endregion
 }

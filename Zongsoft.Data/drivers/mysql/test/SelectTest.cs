@@ -62,9 +62,9 @@ public class SelectTest(DatabaseFixture database)
 			Assert.NotNull(role);
 		}
 
-		Assert.Equal(COUNT, page.TotalCount);
-		Assert.Equal(1, page.PageIndex);
-		Assert.Equal(5, page.PageCount);
+		Assert.Equal(COUNT, page.Total);
+		Assert.Equal(1, page.Index);
+		Assert.Equal(5, page.Count);
 
 		await accessor.DeleteAsync<RoleModel>(Condition.GreaterThanEqual(nameof(RoleModel.RoleId), 100));
 	}

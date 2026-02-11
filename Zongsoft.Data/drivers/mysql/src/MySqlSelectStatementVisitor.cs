@@ -50,21 +50,21 @@ public class MySqlSelectStatementVisitor : SelectStatementVisitor
 		//调用基类同名方法
 		base.OnVisit(context, statement);
 
-		if(statement.Paging != null && statement.Paging.PageSize > 0)
-			this.VisitPaging(context, statement.Paging);
+		if(statement.Paging != null && statement.Paging.IsLimited(out var count, out var offset))
+			this.VisitLimit(context, count, offset);
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void VisitPaging(ExpressionVisitorContext context, Paging paging)
+	protected virtual void VisitLimit(ExpressionVisitorContext context, int count, long offset)
 	{
 		if(context.Output.Length > 0)
 			context.WriteLine();
 
-		context.Write("LIMIT " + paging.PageSize.ToString());
+		context.Write($"LIMIT {count}");
 
-		if(paging.PageIndex > 1)
-			context.Write(" OFFSET " + ((paging.PageIndex - 1) * paging.PageSize).ToString());
+		if(offset > 0)
+			context.Write($" OFFSET {offset}");
 	}
 	#endregion
 }
