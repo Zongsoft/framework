@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.WeChat library.
  *
@@ -30,10 +30,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 
 using Zongsoft.Web;
 using Zongsoft.Data;
@@ -47,16 +45,12 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 		[HttpGet("{kind}")]
 		public async ValueTask<IActionResult> Get(BankUtility.BankKind kind, [FromQuery]Paging page = null, CancellationToken cancellation = default)
 		{
-			if(page == null)
-				page = Paging.Page(1, 50);
-
+			page ??= Paging.Page(1, 50);
 			var result = await AuthorityUtility.GetAuthority().GetBanksAsync(kind, page, cancellation);
 
-			if(page.TotalCount > 0)
+			if(page.Total > 0)
 			{
-				this.Response.Headers.Append("X-Paging", page.ToString());
-				this.Response.Headers.Append("X-Pagination", page.ToString());
-
+				Zongsoft.Web.Http.HeaderDictionaryExtension.SetPagination(this.Response.Headers, page);
 				return this.Ok(result);
 			}
 
@@ -71,16 +65,12 @@ namespace Zongsoft.Externals.Wechat.Web.Controllers
 			if(string.IsNullOrEmpty(city))
 				return this.BadRequest();
 
-			if(page == null)
-				page = Paging.Page(1, 50);
-
+			page ??= Paging.Page(1, 50);
 			var result = await AuthorityUtility.GetAuthority().GetBranchesAsync(code, city, page, cancellation);
 
-			if(page.TotalCount > 0)
+			if(page.Total > 0)
 			{
-				this.Response.Headers.Append("X-Paging", page.ToString());
-				this.Response.Headers.Append("X-Pagination", page.ToString());
-
+				Zongsoft.Web.Http.HeaderDictionaryExtension.SetPagination(this.Response.Headers, page);
 				return this.Ok(result);
 			}
 
