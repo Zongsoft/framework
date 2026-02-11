@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.WeChat library.
  *
@@ -44,8 +44,19 @@ namespace Zongsoft.Externals.Wechat
 			if(authority == null)
 				throw new ArgumentNullException(nameof(authority));
 
-			var offset = page == null || page.PageIndex < 1 ? 0 : (page.PageIndex - 1) * page.PageSize;
-			var limit = page == null || page.PageSize < 1 ? 100 : page.PageSize;
+			if(!page.IsLimited(out var limit, out var offset))
+			{
+				if(page.IsPaged(out var index, out var size))
+				{
+					limit = size;
+					offset = (index - 1) * size;
+				}
+				else
+				{
+					limit = 100;
+					offset = 0;
+				}
+			}
 
 			var response = kind == BankKind.Personal ?
 				await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/personal-banking?offset={offset}&limit={limit}", cancellation) :
@@ -56,7 +67,7 @@ namespace Zongsoft.Externals.Wechat
 			if(result.HasData)
 			{
 				if(page != null)
-					page.TotalCount = result.Total;
+					page.Total = result.Total;
 
 				return result.Data;
 			}
@@ -69,8 +80,19 @@ namespace Zongsoft.Externals.Wechat
 			if(authority == null)
 				throw new ArgumentNullException(nameof(authority));
 
-			var offset = page == null || page.PageIndex < 1 ? 0 : (page.PageIndex - 1) * page.PageSize;
-			var limit = page == null || page.PageSize < 1 ? 100 : page.PageSize;
+			if(!page.IsLimited(out var limit, out var offset))
+			{
+				if(page.IsPaged(out var index, out var size))
+				{
+					limit = size;
+					offset = (index - 1) * size;
+				}
+				else
+				{
+					limit = 100;
+					offset = 0;
+				}
+			}
 
 			var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/{id}/branches?city_code={city}&offset={offset}&limit={limit}", cancellation);
 			var result = await response.GetResultAsync<Result<BankBranch>>(cancellation);
@@ -78,7 +100,7 @@ namespace Zongsoft.Externals.Wechat
 			if(result.HasData)
 			{
 				if(page != null)
-					page.TotalCount = result.Total;
+					page.Total = result.Total;
 
 				return result.Data;
 			}
