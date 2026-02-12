@@ -35,7 +35,7 @@ namespace Zongsoft.Data;
 partial class Paging
 {
 	#region 私有变量
-	private static readonly Regex _regex_ = new(@"^(?<index>\d+)((/(?<count>\d+)(\((?<total>\d+)\))?))?$",
+	private static readonly Regex _regex_ = new(@"^(?<index>\d+)/(?<count>\d+)\((?<total>\d+)\)$",
 		RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture,
 		TimeSpan.FromMilliseconds(1000));
 	#endregion
@@ -81,23 +81,12 @@ partial class Paging
 		//最后处理“页号”、“页数”和“总记录数”的格式
 		var match = _regex_.Match(text.ToString());
 
-		if(match.Success && match.Groups["index"].Success)
+		if(match.Success &&
+		   int.TryParse(match.Groups["index"].ValueSpan, out index) &&
+		   int.TryParse(match.Groups["count"].ValueSpan, out var count) &&
+		   long.TryParse(match.Groups["total"].ValueSpan, out var total))
 		{
-			if(match.Groups["count"].Success)
-			{
-				var total = match.Groups["total"].Success ? long.Parse(match.Groups["total"].Value) : 0;
-
-				result = total > 0 ?
-					new Paging(int.Parse(match.Groups["index"].Value), (int)total / int.Parse(match.Groups["count"].Value)) { Total = total } :
-					new Paging(int.Parse(match.Groups["index"].Value));
-			}
-			else
-			{
-				result = match.Groups["size"].Success ?
-					   Paging.Page(int.Parse(match.Groups["index"].Value), int.Parse(match.Groups["size"].Value)) :
-					   Paging.Page(int.Parse(match.Groups["index"].Value));
-			}
-
+			result = new(index, (int)(total / count)) { Total = total };
 			return true;
 		}
 
