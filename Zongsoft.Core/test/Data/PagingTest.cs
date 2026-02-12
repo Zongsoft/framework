@@ -11,8 +11,8 @@ public class PagingTest
 	{
 		var page = Paging.Disabled;
 		Assert.NotNull(page);
-		Assert.False(page.IsPaged(out _, out _));
-		Assert.False(page.IsLimited(out _, out _));
+		Assert.False(page.IsPaged());
+		Assert.False(page.IsLimited());
 
 		Assert.Throws<InvalidOperationException>(() => page.Size = 1);
 		Assert.Throws<InvalidOperationException>(() => page.Index = 1);
@@ -23,14 +23,14 @@ public class PagingTest
 	{
 		var page = Paging.Page(10);
 		Assert.NotNull(page);
-		Assert.False(page.IsLimited(out _, out _));
+		Assert.False(page.IsLimited());
 		Assert.True(page.IsPaged(out var index, out var size));
 		Assert.Equal(10, index);
 		Assert.Equal(20, size);
 
 		page = Paging.Page(20, 100);
 		Assert.NotNull(page);
-		Assert.False(page.IsLimited(out _, out _));
+		Assert.False(page.IsLimited());
 		Assert.True(page.IsPaged(out index, out size));
 		Assert.Equal(20, index);
 		Assert.Equal(100, size);
@@ -41,17 +41,38 @@ public class PagingTest
 	{
 		var page = Paging.Limit(100);
 		Assert.NotNull(page);
-		Assert.False(page.IsPaged(out _, out _));
+		Assert.False(page.IsPaged());
 		Assert.True(page.IsLimited(out var limit, out var offset));
 		Assert.Equal(100, limit);
 		Assert.Equal(0, offset);
 
 		page = Paging.Limit(200, 10);
 		Assert.NotNull(page);
-		Assert.False(page.IsPaged(out _, out _));
+		Assert.False(page.IsPaged());
 		Assert.True(page.IsLimited(out limit, out offset));
 		Assert.Equal(200, limit);
 		Assert.Equal(10, offset);
+	}
+
+	[Fact]
+	public void ToLimited()
+	{
+		var page = Paging.First();
+		Assert.NotNull(page);
+		Assert.True(page.IsPaged());
+		Assert.False(page.IsLimited());
+		Assert.NotSame(page, Paging.Disabled);
+
+		var limited = page.ToLimited();
+		Assert.NotNull(limited);
+		Assert.False(limited.IsPaged());
+		Assert.True(limited.IsLimited(out var count, out var offset));
+		Assert.NotSame(limited, Paging.Disabled);
+
+		Assert.Equal(20, count);
+		Assert.Equal(0, offset);
+		Assert.Equal(20, limited.Size);
+		Assert.Equal(0, limited.Index);
 	}
 
 	[Fact]

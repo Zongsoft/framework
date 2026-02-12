@@ -94,7 +94,7 @@ public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging
 		}
 	}
 
-	/// <summary>获取或设置当前查询的页号（从<c>1</c>开始），如果页号为零则表示不分页。</summary>
+	/// <summary>获取或设置分页设置的页号（从<c>1</c>开始），如果页号为零则表示不分页。</summary>
 	/// <remarks>注意：零表示不分页，仅获取 <see cref="Size"/> 属性所指定的记录数。</remarks>
 	public int Index
 	{
@@ -107,7 +107,7 @@ public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging
 		}
 	}
 
-	/// <summary>获取查询结果的总页数。</summary>
+	/// <summary>获取分页结果的总页数。</summary>
 	public int Count
 	{
 		get
@@ -122,7 +122,7 @@ public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging
 		}
 	}
 
-	/// <summary>获取或设置查询结果的总记录数。</summary>
+	/// <summary>获取或设置分页结果的记录总数。</summary>
 	/// <remarks>如果返回值小于零，则表示尚未进行分页操作。</remarks>
 	public long Total
 	{
@@ -166,6 +166,31 @@ public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging
 		offset = _offset;
 		return count > 0 && _index == 0;
 	}
+
+	/// <summary>将当前分页设置转换为限制模式。</summary>
+	/// <param name="count">输出参数，表示限制的记录数。</param>
+	/// <param name="offset">输出参数，表示限制的偏移量。</param>
+	/// <returns>如果返回真(<c>True</c>)则表示为转换成功。</returns>
+	public bool ToLimited(out int count, out long offset)
+	{
+		if(this.IsLimited(out count, out offset))
+			return true;
+
+		if(this.IsPaged(out var index, out var size))
+		{
+			count = size;
+			offset = (index - 1) * size;
+			return true;
+		}
+
+		count = 0;
+		offset = 0;
+		return false;
+	}
+
+	/// <summary>将当前分页设置转换为限制模式的分页设置。</summary>
+	/// <returns>如果转换成功则返回一个限制模式的分页设置，否则返回空(<c>null</c>)。</returns>
+	public Paging ToLimited() => this.ToLimited(out var count, out var offset) ? Limit(count, offset) : null;
 	#endregion
 
 	#region 事件触发
