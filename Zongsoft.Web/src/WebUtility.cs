@@ -64,6 +64,9 @@ public static class WebUtility
 		if(data.GetType().IsValueType && object.Equals(data, Zongsoft.Common.TypeExtension.GetDefaultValue(data.GetType())))
 			return new NoContentResult();
 
+		//设置响应的分页头
+		controller.Response.Headers.SetPagination(paging);
+
 		//如果数据是可分页类型则挂载其分页事件
 		if(data is IPageable pageable)
 		{
@@ -71,9 +74,6 @@ public static class WebUtility
 		}
 		else
 		{
-			//设置响应的分页头
-			controller.Response.Headers.SetPagination(paging);
-
 			//如果启用了分页并且无结果，则返回一个空集且设置一个零长度的分页头（注：这项特性是因为前端兼容性而临时添加）
 			if(paging != null && paging.IsPaged() && paging.IsEmpty)
 			{
