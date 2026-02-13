@@ -28,27 +28,7 @@ public class LockerTest
 	}
 
 	[Fact]
-	public void TryLock()
-	{
-		var count = 0;
-		var failure = 0;
-		var success = 0;
-		var locker = new Locker();
-
-		Parallel.For(0, COUNT, i =>
-		{
-			if(locker.TryLock(() => count++, TimeSpan.FromMilliseconds(100)))
-				Interlocked.Increment(ref success);
-			else
-				Interlocked.Increment(ref failure);
-		});
-
-		Assert.Equal(success, count);
-		Assert.Equal(COUNT, success + failure);
-	}
-
-	[Fact]
-	public async Task LockAsync()
+	public async Task LockAsync1()
 	{
 		var count = 0;
 		var locker = new Locker();
@@ -76,7 +56,7 @@ public class LockerTest
 		{
 			for(int i = 0; i < COUNT; i++)
 			{
-				using(await locker.LockAsync())
+				await using(await locker.LockAsync())
 				{
 					count++;
 				}
@@ -85,50 +65,24 @@ public class LockerTest
 	}
 
 	[Fact]
-	public async Task TryLockAsync()
+	public async Task LockAsync2()
 	{
+		const int TIMES = 50;
+
 		var count = 0;
 		var locker = new Locker();
 
-		var tasks = new Task[]
-		{
-			IncreaseAsync(),
-			IncreaseAsyncWithTimeout(),
-			IncreaseAsync(),
-			IncreaseAsyncWithTimeout(),
-			IncreaseAsync(),
-			IncreaseAsyncWithTimeout(),
-			IncreaseAsync(),
-			IncreaseAsyncWithTimeout(),
-			IncreaseAsync(),
-			IncreaseAsyncWithTimeout(),
-		};
-
-		//确保所有任务都已执行完毕
-		await Task.WhenAll(tasks);
-
-		Assert.Equal(COUNT * tasks.Length, count);
-
-		async Task IncreaseAsync()
+		await Parallel.ForAsync(0, TIMES, async (_, cancellation) =>
 		{
 			for(int i = 0; i < COUNT; i++)
 			{
-				await locker.TryLockAsync(() =>
+				await using(await locker.LockAsync(cancellation))
 				{
 					count++;
-				}, CancellationToken.None);
+				}
 			}
-		}
+		});
 
-		async Task IncreaseAsyncWithTimeout()
-		{
-			for(int i = 0; i < COUNT; i++)
-			{
-				await locker.TryLockAsync(() =>
-				{
-					count++;
-				}, TimeSpan.FromMilliseconds(1000));
-			}
-		}
+		Assert.Equal(COUNT * TIMES, count);
 	}
 }

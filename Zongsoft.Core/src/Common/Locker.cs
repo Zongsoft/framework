@@ -1,391 +1,134 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Runtime.ExceptionServices;
+
+using Microsoft.Extensions.ObjectPool;
 
 namespace Zongsoft.Common;
 
-public sealed class Locker
+/// <summary>
+/// 提供异步操作的同步锁功能。
+/// </summary>
+/// <remarks>
+/// 	<para>注意：本类代码基于 .NET 基础库的内部代码，版权归属 .NET 基金会。</para>
+/// 	<para>源码：https://source.dot.net/#System.ServiceModel.Primitives/Internals/System/Runtime/AsyncLock.cs</para>
+/// </remarks>
+public sealed class Locker : IAsyncDisposable
 {
-	private const int UNLOCKED_ID = 0;
+	private static readonly ObjectPool<SemaphoreSlim> _semaphorePool = new DefaultObjectPool<SemaphoreSlim>(new SemaphoreSlimPooledObjectPolicy(), 100);
+	private AsyncLocal<SemaphoreSlim> _currentSemaphore;
+	private SemaphoreSlim _topmostSemaphore;
+	private bool _isDisposed;
 
-	private SemaphoreSlim _semaphore = new(1, 1);
-	private int _reentrances = 0;
-
-	private SemaphoreSlim _retry = new(0, 1);
-	private long _owningId = UNLOCKED_ID;
-	private int _owningThreadId = UNLOCKED_ID;
-
-	private static long _asyncCounter = 0;
-	private static readonly AsyncLocal<long> _asyncLocal = new();
-	private static int ThreadId => Environment.CurrentManagedThreadId;
-
-	public Task<IDisposable> LockAsync(CancellationToken cancellation = default)
+	public Locker()
 	{
-		var token = new LockToken(this, _asyncLocal.Value, ThreadId);
-		_asyncLocal.Value = Interlocked.Increment(ref _asyncCounter);
-		return token.AcquireLockAsync(cancellation);
+		_topmostSemaphore = _semaphorePool.Get();
+		_currentSemaphore = new AsyncLocal<SemaphoreSlim>();
 	}
 
-	public Task<bool> TryLockAsync(Action callback, TimeSpan timeout)
+	public ValueTask<IAsyncDisposable> LockAsync(CancellationToken cancellation = default)
 	{
-		var token = new LockToken(this, _asyncLocal.Value, ThreadId);
-		_asyncLocal.Value = Interlocked.Increment(ref _asyncCounter);
-		return token.TryAcquireLockAsync(timeout).ContinueWith(task =>
+		ObjectDisposedException.ThrowIf(_isDisposed, this);
+
+		_currentSemaphore.Value ??= _topmostSemaphore;
+		SemaphoreSlim current = _currentSemaphore.Value;
+		var next = _semaphorePool.Get();
+		_currentSemaphore.Value = next;
+		var release = new SemaphoreRelease(current, next, this);
+		return TakeLockCoreAsync(current, release, cancellation);
+
+		static async ValueTask<IAsyncDisposable> TakeLockCoreAsync(SemaphoreSlim currentSemaphore, SemaphoreRelease release, CancellationToken cancellation)
 		{
-			if(task.Exception is AggregateException ex)
-				ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
-
-			var disposable = task.Result;
-			if(disposable is null)
-				return false;
-
-			try
-			{
-				callback();
-			}
-			finally
-			{
-				disposable.Dispose();
-			}
-
-			return true;
-		});
+			await currentSemaphore.WaitAsync(cancellation);
+			return release;
+		}
 	}
 
-	public Task<bool> TryLockAsync(Func<Task> callback, TimeSpan timeout)
+	public IDisposable Lock()
 	{
-		var token = new LockToken(this, _asyncLocal.Value, ThreadId);
-		_asyncLocal.Value = Interlocked.Increment(ref _asyncCounter);
-		return token.TryAcquireLockAsync(timeout).ContinueWith(task =>
-		{
-			if(task.Exception is AggregateException ex)
-				ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
+		ObjectDisposedException.ThrowIf(_isDisposed, this);
 
-			var disposable = task.Result;
-			if(disposable is null)
-				return Task.FromResult(false);
-
-			return callback().ContinueWith((task, state) =>
-			{
-				(state as IDisposable)?.Dispose();
-
-				if(task.Exception is AggregateException ex)
-					ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
-
-				return true;
-			}, disposable, TaskScheduler.Default);
-		}, TaskScheduler.Default).Unwrap();
+		_currentSemaphore.Value ??= _topmostSemaphore;
+		SemaphoreSlim currentSem = _currentSemaphore.Value;
+		currentSem.Wait();
+		var nextSem = _semaphorePool.Get();
+		_currentSemaphore.Value = nextSem;
+		return new SemaphoreRelease(currentSem, nextSem, this);
 	}
 
-	public Task<bool> TryLockAsync(Action callback, CancellationToken cancellation = default)
+	public async ValueTask DisposeAsync()
 	{
-		var token = new LockToken(this, _asyncLocal.Value, ThreadId);
-		_asyncLocal.Value = Interlocked.Increment(ref _asyncCounter);
-		return token.TryAcquireLockAsync(cancellation).ContinueWith(task =>
-		{
-			if(task.Exception is AggregateException ex)
-				ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
+		if(_isDisposed)
+			return;
 
-			var disposable = task.Result;
-			if(disposable is null)
-				return false;
-
-			try
-			{
-				callback();
-			}
-			finally
-			{
-				disposable.Dispose();
-			}
-
-			return true;
-		}, TaskScheduler.Default);
+		_isDisposed = true;
+		// Ensure the lock isn't held. If it is, wait for it to be released
+		// before completing the dispose.
+		await _topmostSemaphore.WaitAsync();
+		_topmostSemaphore.Release();
+		_semaphorePool.Return(_topmostSemaphore);
+		_topmostSemaphore = null;
 	}
 
-	public Task<bool> TryLockAsync(Func<Task> callback, CancellationToken cancellation = default)
+	private struct SemaphoreRelease(SemaphoreSlim currentSemaphore, SemaphoreSlim nextSemaphore, Locker locker) : IAsyncDisposable, IDisposable
 	{
-		var token = new LockToken(this, _asyncLocal.Value, ThreadId);
-		_asyncLocal.Value = Interlocked.Increment(ref _asyncCounter);
-		return token.TryAcquireLockAsync(cancellation).ContinueWith(task =>
+		private SemaphoreSlim _currentSemaphore = currentSemaphore;
+		private SemaphoreSlim _nextSemaphore = nextSemaphore;
+		private Locker _locker = locker;
+
+		public ValueTask DisposeAsync()
 		{
-			if(task.Exception is AggregateException ex)
-				ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
+			System.Diagnostics.Debug.Assert(_nextSemaphore == _locker._currentSemaphore.Value, "_nextSemaphore was expected to by the current semaphore");
 
-			var disposable = task.Result;
-			if(disposable is null)
-				return Task.FromResult(false);
-
-			return callback().ContinueWith((task, state) =>
-			{
-				(state as IDisposable)?.Dispose();
-
-				if(task.Exception is AggregateException ex)
-					ExceptionDispatchInfo.Capture(ex.InnerException!).Throw();
-
-				return true;
-			}, disposable, TaskScheduler.Default);
-		}, TaskScheduler.Default).Unwrap();
-	}
-
-	public IDisposable Lock(CancellationToken cancellation = default)
-	{
-		var token = new LockToken(this, _asyncLocal.Value, ThreadId);
-		_asyncLocal.Value = Interlocked.Increment(ref _asyncCounter);
-		return token.AcquireLock(cancellation);
-	}
-
-	public bool TryLock(Action callback, TimeSpan timeout)
-	{
-		var token = new LockToken(this, _asyncLocal.Value, ThreadId);
-		_asyncLocal.Value = Interlocked.Increment(ref _asyncCounter);
-
-		var disposable = token.TryAcquireLock(timeout);
-		if(disposable is null)
-			return false;
-
-		try
-		{
-			callback();
-		}
-		finally
-		{
-			disposable.Dispose();
-		}
-
-		return true;
-	}
-
-	private readonly struct LockToken : IDisposable
-	{
-		private readonly Locker _parent;
-		private readonly long _asyncId;
-		private readonly int _threadId;
-
-		internal LockToken(Locker parent, long asyncId, int threadId)
-		{
-			_parent = parent;
-			_asyncId = asyncId;
-			_threadId = threadId;
-		}
-
-		internal async Task<IDisposable> AcquireLockAsync(CancellationToken cancellation = default)
-		{
-			while(true)
-			{
-				await _parent._semaphore.WaitAsync(cancellation).ConfigureAwait(false);
-
-				if(this.TryEnter(false))
-					break;
-
-				_parent._semaphore.Release();
-				await _parent._retry.WaitAsync(cancellation).ConfigureAwait(false);
-			}
-
-			_parent._owningThreadId = ThreadId;
-			_parent._semaphore.Release();
-			return this;
-		}
-
-		internal async Task<IDisposable> TryAcquireLockAsync(TimeSpan timeout)
-		{
-			if(timeout == TimeSpan.Zero)
-			{
-				if(_parent._semaphore.Wait(timeout))
-				{
-					if(this.TryEnter(false))
-					{
-						_parent._owningThreadId = ThreadId;
-						_parent._semaphore.Release();
-
-						return this;
-					}
-
-					_parent._semaphore.Release();
-				}
-
-				return null;
-			}
-
-			var now = DateTimeOffset.UtcNow;
-			var last = now;
-			var remainder = timeout;
-
-			while(remainder > TimeSpan.Zero)
-			{
-				await _parent._semaphore.WaitAsync(remainder).ConfigureAwait(false);
-
-				if(this.TryEnter(false))
-				{
-					_parent._owningThreadId = ThreadId;
-					_parent._semaphore.Release();
-
-					return this;
-				}
-
-				now = DateTimeOffset.UtcNow;
-				remainder -= now - last;
-				last = now;
-				if(remainder < TimeSpan.Zero)
-				{
-					_parent._semaphore.Release();
-					return null;
-				}
-
-				_parent._semaphore.Release();
-				if(!await _parent._retry.WaitAsync(remainder).ConfigureAwait(false))
-					return null;
-
-				now = DateTimeOffset.UtcNow;
-				remainder -= now - last;
-				last = now;
-			}
-
-			return null;
-		}
-
-		internal async Task<IDisposable> TryAcquireLockAsync(CancellationToken cancellation = default)
-		{
-			try
-			{
-				while(true)
-				{
-					await _parent._semaphore.WaitAsync(cancellation).ConfigureAwait(false);
-
-					if(this.TryEnter(false))
-						break;
-
-					_parent._semaphore.Release();
-					await _parent._retry.WaitAsync(cancellation).ConfigureAwait(false);
-				}
-			}
-			catch(OperationCanceledException)
-			{
-				return null;
-			}
-
-			_parent._owningThreadId = ThreadId;
-			_parent._semaphore.Release();
-			return this;
-		}
-
-		internal IDisposable AcquireLock(CancellationToken cancellation = default)
-		{
-			while(true)
-			{
-				_parent._semaphore.Wait(cancellation);
-
-				if(this.TryEnter(true))
-				{
-					_parent._semaphore.Release();
-					break;
-				}
-
-				_parent._semaphore.Release();
-				_parent._retry.Wait(cancellation);
-			}
-
-			return this;
-		}
-
-		internal IDisposable TryAcquireLock(TimeSpan timeout)
-		{
-			if(timeout == TimeSpan.Zero)
-			{
-				_parent._semaphore.Wait(timeout);
-
-				if(this.TryEnter(true))
-				{
-					_parent._semaphore.Release();
-					return this;
-				}
-
-				_parent._semaphore.Release();
-				return null;
-			}
-
-			var now = DateTimeOffset.UtcNow;
-			var last = now;
-			var remainder = timeout;
-
-			while(remainder > TimeSpan.Zero)
-			{
-				if(_parent._semaphore.Wait(remainder))
-				{
-					if(this.TryEnter(true))
-					{
-						_parent._semaphore.Release();
-						return this;
-					}
-
-					now = DateTimeOffset.UtcNow;
-					remainder -= now - last;
-					last = now;
-
-					_parent._semaphore.Release();
-					if(remainder > TimeSpan.Zero && !_parent._retry.Wait(remainder))
-						return null;
-				}
-
-				now = DateTimeOffset.UtcNow;
-				remainder -= now - last;
-				last = now;
-			}
-
-			return null;
-		}
-
-		private bool TryEnter(bool synchronous)
-		{
-			if(synchronous)
-			{
-				if(_parent._owningThreadId == UNLOCKED_ID)
-					_parent._owningThreadId = ThreadId;
-				else if(_parent._owningThreadId != ThreadId)
-					return false;
-
-				_parent._owningId = _asyncLocal.Value;
-			}
+			// Update _asyncLock._currentSemaphore in the calling ExecutionContext
+			// and defer any awaits to DisposeCoreAsync(). If this isn't done, the
+			// update will happen in a copy of the ExecutionContext and the caller
+			// won't see the changes.
+			if(_currentSemaphore == _locker._topmostSemaphore)
+				_locker._currentSemaphore.Value = null;
 			else
-			{
-				if(_parent._owningId == UNLOCKED_ID)
-					_parent._owningId = _asyncLocal.Value;
-				else if(_parent._owningId != _asyncId)
-					return false;
-				else
-					_parent._owningId = _asyncLocal.Value; // Nested reentrance
-			}
+				_locker._currentSemaphore.Value = _currentSemaphore;
 
-			_parent._reentrances += 1;
-			return true;
+			return this.DisposeCoreAsync();
+		}
+
+		private async ValueTask DisposeCoreAsync()
+		{
+			await _nextSemaphore.WaitAsync();
+			_currentSemaphore.Release();
+			_nextSemaphore.Release();
+			_semaphorePool.Return(_nextSemaphore);
 		}
 
 		public void Dispose()
 		{
-			var asyncId = _asyncId;
-			var threadId = _threadId;
-			_parent._semaphore.Wait();
+			if(_currentSemaphore == _locker._topmostSemaphore)
+				_locker._currentSemaphore.Value = null;
+			else
+				_locker._currentSemaphore.Value = _currentSemaphore;
 
-			try
+			_nextSemaphore.Wait();
+			_currentSemaphore.Release();
+			_nextSemaphore.Release();
+			_semaphorePool.Return(_nextSemaphore);
+		}
+	}
+
+	private class SemaphoreSlimPooledObjectPolicy : PooledObjectPolicy<SemaphoreSlim>
+	{
+		public override SemaphoreSlim Create() => new(1);
+		public override bool Return(SemaphoreSlim semaphore)
+		{
+			if(semaphore.CurrentCount != 1)
 			{
-				_parent._reentrances -= 1;
-				_parent._owningId = asyncId;
-				_parent._owningThreadId = threadId;
-
-				if(_parent._reentrances == 0)
-				{
-					_parent._owningId = UNLOCKED_ID;
-					_parent._owningThreadId = UNLOCKED_ID;
-				}
-
-				if(_parent._retry.CurrentCount == 0)
-					_parent._retry.Release();
+				System.Diagnostics.Debug.Assert(false, "Shouldn't be returning semaphore with a count != 1");
+				return false;
 			}
-			finally
-			{
-				_parent._semaphore.Release();
-			}
+
+			return true;
 		}
 	}
 }
