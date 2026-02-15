@@ -16,7 +16,11 @@
 		<object name="Help" type="Zongsoft.Commands.HelpCommand, Zongsoft.Commands" />
 		<object name="Echo" type="Zongsoft.Commands.EchoCommand, Zongsoft.Commands" />
 		<object name="Cast" type="Zongsoft.Commands.CastCommand, Zongsoft.Commands" />
+		<object name="Dump" type="Zongsoft.Commands.DumpCommand, Zongsoft.Commands" />
 		<object name="Json" type="Zongsoft.Commands.JsonCommand, Zongsoft.Commands" />
+		<object name="Range" type="Zongsoft.Commands.RangeCommand, Zongsoft.Commands" />
+		<object name="Random" type="Zongsoft.Commands.RandomCommand, Zongsoft.Commands" />
+		<object name="Shuffle" type="Zongsoft.Commands.ShuffleCommand, Zongsoft.Commands" />
 		<object name="Assembly" type="Zongsoft.Commands.AssemblyCommand, Zongsoft.Commands" />
 
 		<object name="Sequence">
