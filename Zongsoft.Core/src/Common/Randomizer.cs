@@ -8,9 +8,8 @@
  *
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
- *   喻星(Xing Yu) <yx@automao.cn>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,7 +28,7 @@
  */
 
 using System;
-using System.Buffers;
+using System.Security.Cryptography;
 
 namespace Zongsoft.Common;
 
@@ -43,120 +42,47 @@ public static class Randomizer
 	private const string CHARACTERS = "0123456789ABCDEFGHJKMNPRSTUVWXYZ";
 	#endregion
 
-	#region 静态字段
-	private static readonly System.Security.Cryptography.RandomNumberGenerator _random = System.Security.Cryptography.RandomNumberGenerator.Create();
-	#endregion
-
 	#region 公共方法
 	public static byte[] Generate(int length)
 	{
-		if(length < 1)
-			throw new ArgumentOutOfRangeException(nameof(length));
-
-		var bytes = new byte[length];
-		_random.GetBytes(bytes);
-		return bytes;
+		ArgumentOutOfRangeException.ThrowIfLessThan(length, 1);
+		return RandomNumberGenerator.GetBytes(length);
 	}
 
 	public static short GenerateInt16()
 	{
-		var bytes = ArrayPool<byte>.Shared.Rent(2);
-
-		try
-		{
-			_random.GetBytes(bytes, 0, 2);
-			return BitConverter.ToInt16(bytes, 0);
-		}
-		finally
-		{
-			if(bytes != null)
-				ArrayPool<byte>.Shared.Return(bytes);
-		}
+		var bytes = RandomNumberGenerator.GetBytes(sizeof(short));
+		return BitConverter.ToInt16(bytes);
 	}
 
 	public static ushort GenerateUInt16()
 	{
-		var bytes = ArrayPool<byte>.Shared.Rent(2);
-
-		try
-		{
-			_random.GetBytes(bytes, 0, 2);
-			return BitConverter.ToUInt16(bytes, 0);
-		}
-		finally
-		{
-			if(bytes != null)
-				ArrayPool<byte>.Shared.Return(bytes);
-		}
+		var bytes = RandomNumberGenerator.GetBytes(sizeof(ushort));
+		return BitConverter.ToUInt16(bytes);
 	}
 
-	public static int GenerateInt32()
-	{
-		var bytes = ArrayPool<byte>.Shared.Rent(4);
-
-		try
-		{
-			_random.GetBytes(bytes, 0, 4);
-			return BitConverter.ToInt32(bytes, 0);
-		}
-		finally
-		{
-			if(bytes != null)
-				ArrayPool<byte>.Shared.Return(bytes);
-		}
-	}
-
+	public static int GenerateInt32() => RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
 	public static uint GenerateUInt32()
 	{
-		var bytes = ArrayPool<byte>.Shared.Rent(4);
-
-		try
-		{
-			_random.GetBytes(bytes, 0, 4);
-			return BitConverter.ToUInt32(bytes, 0);
-		}
-		finally
-		{
-			if(bytes != null)
-				ArrayPool<byte>.Shared.Return(bytes);
-		}
+		var bytes = RandomNumberGenerator.GetBytes(sizeof(uint));
+		return BitConverter.ToUInt32(bytes);
 	}
 
 	public static long GenerateInt64()
 	{
-		var bytes = ArrayPool<byte>.Shared.Rent(8);
-
-		try
-		{
-			_random.GetBytes(bytes, 0, 8);
-			return BitConverter.ToInt64(bytes, 0);
-		}
-		finally
-		{
-			if(bytes != null)
-				ArrayPool<byte>.Shared.Return(bytes);
-		}
+		var bytes = RandomNumberGenerator.GetBytes(sizeof(long));
+		return BitConverter.ToInt64(bytes);
 	}
 
 	public static ulong GenerateUInt64()
 	{
-		var bytes = ArrayPool<byte>.Shared.Rent(8);
-
-		try
-		{
-			_random.GetBytes(bytes, 0, 8);
-			return BitConverter.ToUInt64(bytes, 0);
-		}
-		finally
-		{
-			if(bytes != null)
-				ArrayPool<byte>.Shared.Return(bytes);
-		}
+		var bytes = RandomNumberGenerator.GetBytes(sizeof(ulong));
+		return BitConverter.ToUInt64(bytes);
 	}
 
 	public static string GenerateSecret(int length = 16)
 	{
-		if(length < 1 || length > 1024)
+		if(length < 1 || length > 1024 * 1024)
 			throw new ArgumentOutOfRangeException(nameof(length));
 
 		#if NET8_0_OR_GREATER
@@ -175,7 +101,7 @@ public static class Randomizer
 	public static string GenerateString() => GenerateString(8);
 	public static string GenerateString(int length, bool digitOnly = false)
 	{
-		if(length < 1 || length > 1024)
+		if(length < 1 || length > 1024 * 1024)
 			throw new ArgumentOutOfRangeException(nameof(length));
 
 		#if NET8_0_OR_GREATER
@@ -199,40 +125,6 @@ public static class Randomizer
 
 		return new string(buffer);
 		#endif
-	}
-
-	[Obsolete]
-	public static string GenerateStringEx(int length = 8)
-	{
-		if(length < 1 || length > 1024)
-			throw new ArgumentOutOfRangeException(nameof(length));
-
-		var result = new char[length];
-		var data = new byte[(int)Math.Ceiling((length * 5) / 8.0)];
-
-		_random.GetBytes(data);
-
-		int value;
-
-		for(int i = 0; i < length; i++)
-		{
-			int index = i * 5 / 8;
-			var bitCount = i * 5 % 8;//当前字节中已获取的位数
-			var takeCount = 8 - bitCount;
-
-			if(takeCount < 5)
-			{
-				value = (((byte)(255 << bitCount)) & data[index]) >> bitCount;
-				var count = 8 - (5 - takeCount);
-				value += ((byte)(data[index + 1] << count) >> (count - takeCount));
-			}
-			else
-				value = data[index] & (((255 >> (takeCount - 5)) - (255 >> takeCount)) >> bitCount);
-
-			result[i] = CHARACTERS[value % 32];
-		}
-
-		return new string(result);
 	}
 	#endregion
 }
