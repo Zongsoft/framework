@@ -225,7 +225,10 @@ public class RandomCommand : CommandBase<CommandContext>
 
 				return ValueTask.FromResult<object>((Random.Shared.Next() & 1) == 1);
 			case TypeCode.String:
-				return ValueTask.FromResult<object>(Zongsoft.Common.Randomizer.GenerateString(size));
+				return ValueTask.FromResult<object>(
+					context.Options.Switch(ENHANCED_OPTION) ?
+						Common.Randomizer.GenerateSecret(size):
+						Common.Randomizer.GenerateString(size));
 			default:
 				throw new CommandException($"The '{TYPE_OPTION}' option of this command does not support the specified '{type.Name}' value.");
 		}
