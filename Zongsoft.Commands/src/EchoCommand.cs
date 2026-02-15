@@ -38,25 +38,37 @@ namespace Zongsoft.Commands;
 
 [DisplayName("EchoCommand.Name")]
 [Description("EchoCommand.Description")]
+[CommandOption(QUIET_OPTION, 'q', typeof(bool), false)]
 public class EchoCommand : CommandBase<CommandContext>
 {
+	#region 常量定义
+	const string QUIET_OPTION = "quiet";
+	#endregion
+
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
 		{
-			context.Output.Write(context.Value);
+			if(!context.Options.Switch(QUIET_OPTION))
+				context.Output.Write(CommandOutletDumper.Dump(context.Value));
+
 			return ValueTask.FromResult(context.Value);
 		}
 
 		if(context.Arguments.Count == 1)
 		{
-			context.Output.Write(context.Arguments[0]);
+			if(!context.Options.Switch(QUIET_OPTION))
+				context.Output.Write(context.Arguments[0]);
+
 			return ValueTask.FromResult<object>(context.Arguments[0]);
 		}
 
-		foreach(var argument in context.Arguments)
-			context.Output.WriteLine(argument);
+		if(!context.Options.Switch(QUIET_OPTION))
+		{
+			foreach(var argument in context.Arguments)
+				context.Output.WriteLine(argument);
+		}
 
 		return ValueTask.FromResult<object>(context.Arguments);
 	}
