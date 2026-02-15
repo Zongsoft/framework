@@ -38,8 +38,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Commands;
 
-[DisplayName("Text.SecretCommand.Name")]
-[Description("Text.SecretCommand.Description")]
+[DisplayName("SecretCommand.Name")]
+[Description("SecretCommand.Description")]
 public class SecretCommand : CommandBase<CommandContext>
 {
 	#region 构造函数

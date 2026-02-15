@@ -39,8 +39,8 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Messaging.Commands;
 
-[CommandOption("acknowledgeable", 'a', typeof(bool), true, "Text.QueueSubscribeCommand.Acknowledgeable")]
-[CommandOption("format", 'f', typeof(QueueMessageFormat), QueueMessageFormat.Raw, "Text.QueueSubscribeCommand.Format")]
+[CommandOption("acknowledgeable", 'a', typeof(bool), true, "QueueSubscribeCommand.Acknowledgeable")]
+[CommandOption("format", 'f', typeof(QueueMessageFormat), QueueMessageFormat.Raw, "QueueSubscribeCommand.Format")]
 public class QueueSubscribeCommand : CommandBase<CommandContext>
 {
 	#region 构造函数

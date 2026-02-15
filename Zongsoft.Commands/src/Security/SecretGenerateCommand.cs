@@ -51,10 +51,10 @@ namespace Zongsoft.Security.Commands;
 ///			<item>*{number}，完全等同于?{number}。</item>
 ///		</list>
 /// </remarks>
-[DisplayName("Text.SecretGenerateCommand.Name")]
-[Description("Text.SecretGenerateCommand.Description")]
-[CommandOption(KEY_NAME_OPTION, typeof(string), null, true, "Text.SecretGenerateCommand.Options.Name")]
-[CommandOption(KEY_PATTERN_OPTION, typeof(string), null, false, "Text.SecretGenerateCommand.Options.Pattern")]
+[DisplayName("SecretGenerateCommand.Name")]
+[Description("SecretGenerateCommand.Description")]
+[CommandOption(KEY_NAME_OPTION, typeof(string), null, true, "SecretGenerateCommand.Options.Name")]
+[CommandOption(KEY_PATTERN_OPTION, typeof(string), null, false, "SecretGenerateCommand.Options.Pattern")]
 public class SecretGenerateCommand : CommandBase<CommandContext>
 {
 	#region 常量定义

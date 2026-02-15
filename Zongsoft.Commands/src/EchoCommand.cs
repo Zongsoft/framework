@@ -36,8 +36,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Commands;
 
-[DisplayName("Text.EchoCommand.Name")]
-[Description("Text.EchoCommand.Description")]
+[DisplayName("EchoCommand.Name")]
+[Description("EchoCommand.Description")]
 public class EchoCommand : CommandBase<CommandContext>
 {
 	#region 重写方法

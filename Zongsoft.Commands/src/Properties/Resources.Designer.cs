@@ -92,7 +92,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_Acknowledged {
             get {
-                return ResourceManager.GetString("Text.Acknowledged", resourceCulture);
+                return ResourceManager.GetString("Acknowledged", resourceCulture);
             }
         }
         
@@ -101,7 +101,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_AssemblyCommand_Description {
             get {
-                return ResourceManager.GetString("Text.AssemblyCommand.Description", resourceCulture);
+                return ResourceManager.GetString("AssemblyCommand.Description", resourceCulture);
             }
         }
         
@@ -110,7 +110,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_AssemblyCommand_Name {
             get {
-                return ResourceManager.GetString("Text.AssemblyCommand.Name", resourceCulture);
+                return ResourceManager.GetString("AssemblyCommand.Name", resourceCulture);
             }
         }
         
@@ -119,7 +119,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CannotObtainCommandTarget {
             get {
-                return ResourceManager.GetString("Text.CannotObtainCommandTarget", resourceCulture);
+                return ResourceManager.GetString("CannotObtainCommandTarget", resourceCulture);
             }
         }
         
@@ -128,7 +128,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CastCommand_Description {
             get {
-                return ResourceManager.GetString("Text.CastCommand.Description", resourceCulture);
+                return ResourceManager.GetString("CastCommand.Description", resourceCulture);
             }
         }
         
@@ -137,7 +137,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CastCommand_Name {
             get {
-                return ResourceManager.GetString("Text.CastCommand.Name", resourceCulture);
+                return ResourceManager.GetString("CastCommand.Name", resourceCulture);
             }
         }
         
@@ -146,7 +146,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CastCommand_Options_Count {
             get {
-                return ResourceManager.GetString("Text.CastCommand.Options.Count", resourceCulture);
+                return ResourceManager.GetString("CastCommand.Options.Count", resourceCulture);
             }
         }
         
@@ -155,7 +155,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CastCommand_Options_Encoding {
             get {
-                return ResourceManager.GetString("Text.CastCommand.Options.Encoding", resourceCulture);
+                return ResourceManager.GetString("CastCommand.Options.Encoding", resourceCulture);
             }
         }
         
@@ -164,7 +164,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CastCommand_Options_Offset {
             get {
-                return ResourceManager.GetString("Text.CastCommand.Options.Offset", resourceCulture);
+                return ResourceManager.GetString("CastCommand.Options.Offset", resourceCulture);
             }
         }
         
@@ -173,7 +173,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CastCommand_Options_Type {
             get {
-                return ResourceManager.GetString("Text.CastCommand.Options.Type", resourceCulture);
+                return ResourceManager.GetString("CastCommand.Options.Type", resourceCulture);
             }
         }
         
@@ -182,7 +182,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_Command {
             get {
-                return ResourceManager.GetString("Text.Command", resourceCulture);
+                return ResourceManager.GetString("Command", resourceCulture);
             }
         }
         
@@ -191,7 +191,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_Command_MissingArguments {
             get {
-                return ResourceManager.GetString("Text.Command.MissingArguments", resourceCulture);
+                return ResourceManager.GetString("Command.MissingArguments", resourceCulture);
             }
         }
         
@@ -200,7 +200,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_Command_RequiresCountOfArguments {
             get {
-                return ResourceManager.GetString("Text.Command.RequiresCountOfArguments", resourceCulture);
+                return ResourceManager.GetString("Command.RequiresCountOfArguments", resourceCulture);
             }
         }
         
@@ -209,7 +209,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CommandExecuteFailed {
             get {
-                return ResourceManager.GetString("Text.CommandExecuteFailed", resourceCulture);
+                return ResourceManager.GetString("CommandExecuteFailed", resourceCulture);
             }
         }
         
@@ -218,7 +218,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CommandExecuteSucceed {
             get {
-                return ResourceManager.GetString("Text.CommandExecuteSucceed", resourceCulture);
+                return ResourceManager.GetString("CommandExecuteSucceed", resourceCulture);
             }
         }
         
@@ -227,7 +227,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_CommandUsages {
             get {
-                return ResourceManager.GetString("Text.CommandUsages", resourceCulture);
+                return ResourceManager.GetString("CommandUsages", resourceCulture);
             }
         }
         
@@ -236,7 +236,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ConfigurationCommand_Description {
             get {
-                return ResourceManager.GetString("Text.ConfigurationCommand.Description", resourceCulture);
+                return ResourceManager.GetString("ConfigurationCommand.Description", resourceCulture);
             }
         }
         
@@ -245,7 +245,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ConfigurationCommand_Name {
             get {
-                return ResourceManager.GetString("Text.ConfigurationCommand.Name", resourceCulture);
+                return ResourceManager.GetString("ConfigurationCommand.Name", resourceCulture);
             }
         }
         
@@ -254,7 +254,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ConfigurationCommand_Options_Simplify {
             get {
-                return ResourceManager.GetString("Text.ConfigurationCommand.Options.Simplify", resourceCulture);
+                return ResourceManager.GetString("ConfigurationCommand.Options.Simplify", resourceCulture);
             }
         }
         
@@ -263,7 +263,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ConfigurationGetCommand_Description {
             get {
-                return ResourceManager.GetString("Text.ConfigurationGetCommand.Description", resourceCulture);
+                return ResourceManager.GetString("ConfigurationGetCommand.Description", resourceCulture);
             }
         }
         
@@ -272,7 +272,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ConfigurationGetCommand_Name {
             get {
-                return ResourceManager.GetString("Text.ConfigurationGetCommand.Name", resourceCulture);
+                return ResourceManager.GetString("ConfigurationGetCommand.Name", resourceCulture);
             }
         }
         
@@ -281,7 +281,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_Disabled {
             get {
-                return ResourceManager.GetString("Text.Disabled", resourceCulture);
+                return ResourceManager.GetString("Disabled", resourceCulture);
             }
         }
         
@@ -290,7 +290,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_EchoCommand_Description {
             get {
-                return ResourceManager.GetString("Text.EchoCommand.Description", resourceCulture);
+                return ResourceManager.GetString("EchoCommand.Description", resourceCulture);
             }
         }
         
@@ -299,7 +299,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_EchoCommand_Name {
             get {
-                return ResourceManager.GetString("Text.EchoCommand.Name", resourceCulture);
+                return ResourceManager.GetString("EchoCommand.Name", resourceCulture);
             }
         }
         
@@ -308,7 +308,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_FileDeleteFailed_Message {
             get {
-                return ResourceManager.GetString("Text.FileDeleteFailed.Message", resourceCulture);
+                return ResourceManager.GetString("FileDeleteFailed.Message", resourceCulture);
             }
         }
         
@@ -317,7 +317,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_FileDeleteSucceed_Message {
             get {
-                return ResourceManager.GetString("Text.FileDeleteSucceed.Message", resourceCulture);
+                return ResourceManager.GetString("FileDeleteSucceed.Message", resourceCulture);
             }
         }
         
@@ -326,7 +326,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_FileExisted {
             get {
-                return ResourceManager.GetString("Text.FileExisted", resourceCulture);
+                return ResourceManager.GetString("FileExisted", resourceCulture);
             }
         }
         
@@ -335,7 +335,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_FileNotExisted {
             get {
-                return ResourceManager.GetString("Text.FileNotExisted", resourceCulture);
+                return ResourceManager.GetString("FileNotExisted", resourceCulture);
             }
         }
         
@@ -344,7 +344,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_HelpCommand_Description {
             get {
-                return ResourceManager.GetString("Text.HelpCommand.Description", resourceCulture);
+                return ResourceManager.GetString("HelpCommand.Description", resourceCulture);
             }
         }
         
@@ -353,7 +353,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_HelpCommand_Name {
             get {
-                return ResourceManager.GetString("Text.HelpCommand.Name", resourceCulture);
+                return ResourceManager.GetString("HelpCommand.Name", resourceCulture);
             }
         }
         
@@ -362,7 +362,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_JsonCommand_Description {
             get {
-                return ResourceManager.GetString("Text.JsonCommand.Description", resourceCulture);
+                return ResourceManager.GetString("JsonCommand.Description", resourceCulture);
             }
         }
         
@@ -371,7 +371,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_JsonCommand_Name {
             get {
-                return ResourceManager.GetString("Text.JsonCommand.Name", resourceCulture);
+                return ResourceManager.GetString("JsonCommand.Name", resourceCulture);
             }
         }
         
@@ -380,7 +380,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_JsonCommand_Options_Casing {
             get {
-                return ResourceManager.GetString("Text.JsonCommand.Options.Casing", resourceCulture);
+                return ResourceManager.GetString("JsonCommand.Options.Casing", resourceCulture);
             }
         }
         
@@ -389,7 +389,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_JsonCommand_Options_Depth {
             get {
-                return ResourceManager.GetString("Text.JsonCommand.Options.Depth", resourceCulture);
+                return ResourceManager.GetString("JsonCommand.Options.Depth", resourceCulture);
             }
         }
         
@@ -398,7 +398,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_JsonCommand_Options_Indented {
             get {
-                return ResourceManager.GetString("Text.JsonCommand.Options.Indented", resourceCulture);
+                return ResourceManager.GetString("JsonCommand.Options.Indented", resourceCulture);
             }
         }
         
@@ -407,7 +407,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_JsonCommand_Options_Quiet {
             get {
-                return ResourceManager.GetString("Text.JsonCommand.Options.Quiet", resourceCulture);
+                return ResourceManager.GetString("JsonCommand.Options.Quiet", resourceCulture);
             }
         }
         
@@ -416,7 +416,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_JsonCommand_Options_Typed {
             get {
-                return ResourceManager.GetString("Text.JsonCommand.Options.Typed", resourceCulture);
+                return ResourceManager.GetString("JsonCommand.Options.Typed", resourceCulture);
             }
         }
         
@@ -425,7 +425,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_Message_CommandNotFound {
             get {
-                return ResourceManager.GetString("Text.Message.CommandNotFound", resourceCulture);
+                return ResourceManager.GetString("Message.CommandNotFound", resourceCulture);
             }
         }
         
@@ -434,7 +434,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_NoQueue {
             get {
-                return ResourceManager.GetString("Text.NoQueue", resourceCulture);
+                return ResourceManager.GetString("NoQueue", resourceCulture);
             }
         }
         
@@ -443,7 +443,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_OpenFile_Prompt {
             get {
-                return ResourceManager.GetString("Text.OpenFile.Prompt", resourceCulture);
+                return ResourceManager.GetString("OpenFile.Prompt", resourceCulture);
             }
         }
         
@@ -452,7 +452,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_Optional {
             get {
-                return ResourceManager.GetString("Text.Optional", resourceCulture);
+                return ResourceManager.GetString("Optional", resourceCulture);
             }
         }
         
@@ -461,7 +461,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueClearCommand_Description {
             get {
-                return ResourceManager.GetString("Text.QueueClearCommand.Description", resourceCulture);
+                return ResourceManager.GetString("QueueClearCommand.Description", resourceCulture);
             }
         }
         
@@ -470,7 +470,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueClearCommand_Name {
             get {
-                return ResourceManager.GetString("Text.QueueClearCommand.Name", resourceCulture);
+                return ResourceManager.GetString("QueueClearCommand.Name", resourceCulture);
             }
         }
         
@@ -479,7 +479,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCommand_Description {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.Description", resourceCulture);
+                return ResourceManager.GetString("QueueCommand.Description", resourceCulture);
             }
         }
         
@@ -489,7 +489,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCommand_Message {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.Message", resourceCulture);
+                return ResourceManager.GetString("QueueCommand.Message", resourceCulture);
             }
         }
         
@@ -498,7 +498,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCommand_MissingQueueProvider {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.MissingQueueProvider", resourceCulture);
+                return ResourceManager.GetString("QueueCommand.MissingQueueProvider", resourceCulture);
             }
         }
         
@@ -507,7 +507,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCommand_Name {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.Name", resourceCulture);
+                return ResourceManager.GetString("QueueCommand.Name", resourceCulture);
             }
         }
         
@@ -516,7 +516,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCommand_NotFoundQueue {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.NotFoundQueue", resourceCulture);
+                return ResourceManager.GetString("QueueCommand.NotFoundQueue", resourceCulture);
             }
         }
         
@@ -525,7 +525,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCommand_Options_Count {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.Options.Count", resourceCulture);
+                return ResourceManager.GetString("QueueCommand.Options.Count", resourceCulture);
             }
         }
         
@@ -534,7 +534,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCommand_Options_Name {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.Options.Name", resourceCulture);
+                return ResourceManager.GetString("QueueCommand.Options.Name", resourceCulture);
             }
         }
         
@@ -543,7 +543,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCommand_Options_Queues {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.Options.Queues", resourceCulture);
+                return ResourceManager.GetString("QueueCommand.Options.Queues", resourceCulture);
             }
         }
         
@@ -552,7 +552,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCommand_Options_Round {
             get {
-                return ResourceManager.GetString("Text.QueueCommand.Options.Round", resourceCulture);
+                return ResourceManager.GetString("QueueCommand.Options.Round", resourceCulture);
             }
         }
         
@@ -561,7 +561,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCountCommand_Description {
             get {
-                return ResourceManager.GetString("Text.QueueCountCommand.Description", resourceCulture);
+                return ResourceManager.GetString("QueueCountCommand.Description", resourceCulture);
             }
         }
         
@@ -570,7 +570,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCountCommand_Message {
             get {
-                return ResourceManager.GetString("Text.QueueCountCommand.Message", resourceCulture);
+                return ResourceManager.GetString("QueueCountCommand.Message", resourceCulture);
             }
         }
         
@@ -579,7 +579,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueCountCommand_Name {
             get {
-                return ResourceManager.GetString("Text.QueueCountCommand.Name", resourceCulture);
+                return ResourceManager.GetString("QueueCountCommand.Name", resourceCulture);
             }
         }
         
@@ -588,7 +588,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueInCommand_Description {
             get {
-                return ResourceManager.GetString("Text.QueueInCommand.Description", resourceCulture);
+                return ResourceManager.GetString("QueueInCommand.Description", resourceCulture);
             }
         }
         
@@ -597,7 +597,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueInCommand_Message {
             get {
-                return ResourceManager.GetString("Text.QueueInCommand.Message", resourceCulture);
+                return ResourceManager.GetString("QueueInCommand.Message", resourceCulture);
             }
         }
         
@@ -606,7 +606,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueInCommand_Name {
             get {
-                return ResourceManager.GetString("Text.QueueInCommand.Name", resourceCulture);
+                return ResourceManager.GetString("QueueInCommand.Name", resourceCulture);
             }
         }
         
@@ -615,7 +615,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueIsEmpty {
             get {
-                return ResourceManager.GetString("Text.QueueIsEmpty", resourceCulture);
+                return ResourceManager.GetString("QueueIsEmpty", resourceCulture);
             }
         }
         
@@ -624,7 +624,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueOutCommand_Description {
             get {
-                return ResourceManager.GetString("Text.QueueOutCommand.Description", resourceCulture);
+                return ResourceManager.GetString("QueueOutCommand.Description", resourceCulture);
             }
         }
         
@@ -633,7 +633,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueOutCommand_Message {
             get {
-                return ResourceManager.GetString("Text.QueueOutCommand.Message", resourceCulture);
+                return ResourceManager.GetString("QueueOutCommand.Message", resourceCulture);
             }
         }
         
@@ -642,7 +642,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueOutCommand_Name {
             get {
-                return ResourceManager.GetString("Text.QueueOutCommand.Name", resourceCulture);
+                return ResourceManager.GetString("QueueOutCommand.Name", resourceCulture);
             }
         }
         
@@ -651,7 +651,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueuePeekCommand_Description {
             get {
-                return ResourceManager.GetString("Text.QueuePeekCommand.Description", resourceCulture);
+                return ResourceManager.GetString("QueuePeekCommand.Description", resourceCulture);
             }
         }
         
@@ -660,7 +660,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueuePeekCommand_Name {
             get {
-                return ResourceManager.GetString("Text.QueuePeekCommand.Name", resourceCulture);
+                return ResourceManager.GetString("QueuePeekCommand.Name", resourceCulture);
             }
         }
         
@@ -669,7 +669,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueSubscribeCommand_Acknowledgeable {
             get {
-                return ResourceManager.GetString("Text.QueueSubscribeCommand.Acknowledgeable", resourceCulture);
+                return ResourceManager.GetString("QueueSubscribeCommand.Acknowledgeable", resourceCulture);
             }
         }
         
@@ -678,7 +678,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_QueueSubscribeCommand_Format {
             get {
-                return ResourceManager.GetString("Text.QueueSubscribeCommand.Format", resourceCulture);
+                return ResourceManager.GetString("QueueSubscribeCommand.Format", resourceCulture);
             }
         }
         
@@ -687,7 +687,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_Required {
             get {
-                return ResourceManager.GetString("Text.Required", resourceCulture);
+                return ResourceManager.GetString("Required", resourceCulture);
             }
         }
         
@@ -696,7 +696,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SaveFile_Prompt {
             get {
-                return ResourceManager.GetString("Text.SaveFile.Prompt", resourceCulture);
+                return ResourceManager.GetString("SaveFile.Prompt", resourceCulture);
             }
         }
         
@@ -705,7 +705,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SecretCommand_Description {
             get {
-                return ResourceManager.GetString("Text.SecretCommand.Description", resourceCulture);
+                return ResourceManager.GetString("SecretCommand.Description", resourceCulture);
             }
         }
         
@@ -714,7 +714,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SecretCommand_Name {
             get {
-                return ResourceManager.GetString("Text.SecretCommand.Name", resourceCulture);
+                return ResourceManager.GetString("SecretCommand.Name", resourceCulture);
             }
         }
         
@@ -723,7 +723,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SecretGenerateCommand_Description {
             get {
-                return ResourceManager.GetString("Text.SecretGenerateCommand.Description", resourceCulture);
+                return ResourceManager.GetString("SecretGenerateCommand.Description", resourceCulture);
             }
         }
         
@@ -732,7 +732,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SecretGenerateCommand_Name {
             get {
-                return ResourceManager.GetString("Text.SecretGenerateCommand.Name", resourceCulture);
+                return ResourceManager.GetString("SecretGenerateCommand.Name", resourceCulture);
             }
         }
         
@@ -741,7 +741,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SecretGenerateCommand_Options_Name {
             get {
-                return ResourceManager.GetString("Text.SecretGenerateCommand.Options.Name", resourceCulture);
+                return ResourceManager.GetString("SecretGenerateCommand.Options.Name", resourceCulture);
             }
         }
         
@@ -753,7 +753,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SecretGenerateCommand_Options_Pattern {
             get {
-                return ResourceManager.GetString("Text.SecretGenerateCommand.Options.Pattern", resourceCulture);
+                return ResourceManager.GetString("SecretGenerateCommand.Options.Pattern", resourceCulture);
             }
         }
         
@@ -762,7 +762,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SecretVerifyCommand_Description {
             get {
-                return ResourceManager.GetString("Text.SecretVerifyCommand.Description", resourceCulture);
+                return ResourceManager.GetString("SecretVerifyCommand.Description", resourceCulture);
             }
         }
         
@@ -771,7 +771,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SecretVerifyCommand_Name {
             get {
-                return ResourceManager.GetString("Text.SecretVerifyCommand.Name", resourceCulture);
+                return ResourceManager.GetString("SecretVerifyCommand.Name", resourceCulture);
             }
         }
         
@@ -780,7 +780,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SecretVerifyCommand_Options_Name {
             get {
-                return ResourceManager.GetString("Text.SecretVerifyCommand.Options.Name", resourceCulture);
+                return ResourceManager.GetString("SecretVerifyCommand.Options.Name", resourceCulture);
             }
         }
         
@@ -789,7 +789,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ServerHasBeenStarted {
             get {
-                return ResourceManager.GetString("Text.ServerHasBeenStarted", resourceCulture);
+                return ResourceManager.GetString("ServerHasBeenStarted", resourceCulture);
             }
         }
         
@@ -799,7 +799,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ServicesCommand_Description {
             get {
-                return ResourceManager.GetString("Text.ServicesCommand.Description", resourceCulture);
+                return ResourceManager.GetString("ServicesCommand.Description", resourceCulture);
             }
         }
         
@@ -808,7 +808,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ServicesCommand_Name {
             get {
-                return ResourceManager.GetString("Text.ServicesCommand.Name", resourceCulture);
+                return ResourceManager.GetString("ServicesCommand.Name", resourceCulture);
             }
         }
         
@@ -817,7 +817,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ServicesCommand_NotFoundProvider {
             get {
-                return ResourceManager.GetString("Text.ServicesCommand.NotFoundProvider", resourceCulture);
+                return ResourceManager.GetString("ServicesCommand.NotFoundProvider", resourceCulture);
             }
         }
         
@@ -826,7 +826,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ServicesCommand_Options_Provider {
             get {
-                return ResourceManager.GetString("Text.ServicesCommand.Options.Provider", resourceCulture);
+                return ResourceManager.GetString("ServicesCommand.Options.Provider", resourceCulture);
             }
         }
         
@@ -846,7 +846,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ServicesGetCommand_Description {
             get {
-                return ResourceManager.GetString("Text.ServicesGetCommand.Description", resourceCulture);
+                return ResourceManager.GetString("ServicesGetCommand.Description", resourceCulture);
             }
         }
         
@@ -855,7 +855,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_ServicesGetCommand_Name {
             get {
-                return ResourceManager.GetString("Text.ServicesGetCommand.Name", resourceCulture);
+                return ResourceManager.GetString("ServicesGetCommand.Name", resourceCulture);
             }
         }
         
@@ -864,7 +864,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SortMode {
             get {
-                return ResourceManager.GetString("Text.SortMode", resourceCulture);
+                return ResourceManager.GetString("SortMode", resourceCulture);
             }
         }
         
@@ -873,7 +873,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SortMode_Asc {
             get {
-                return ResourceManager.GetString("Text.SortMode.Asc", resourceCulture);
+                return ResourceManager.GetString("SortMode.Asc", resourceCulture);
             }
         }
         
@@ -882,7 +882,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SortMode_Desc {
             get {
-                return ResourceManager.GetString("Text.SortMode.Desc", resourceCulture);
+                return ResourceManager.GetString("SortMode.Desc", resourceCulture);
             }
         }
         
@@ -891,7 +891,7 @@ namespace Zongsoft.Properties {
         /// </summary>
         internal static string Text_SortMode_None {
             get {
-                return ResourceManager.GetString("Text.SortMode.None", resourceCulture);
+                return ResourceManager.GetString("SortMode.None", resourceCulture);
             }
         }
     }

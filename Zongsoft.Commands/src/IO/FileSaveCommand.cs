@@ -38,10 +38,10 @@ using Zongsoft.Components;
 
 namespace Zongsoft.IO.Commands;
 
-[CommandOption(KEY_MODE_OPTION, typeof(FileMode), FileMode.OpenOrCreate, "Text.FileCommand.Options.Mode")]
-[CommandOption(KEY_SHARE_OPTION, typeof(FileShare), FileShare.Read, "Text.FileCommand.Options.Share")]
-[CommandOption(KEY_ACCESS_OPTION, typeof(FileAccess), FileAccess.ReadWrite, "Text.FileCommand.Options.Access")]
-[CommandOption(KEY_ENCODING_OPTION, typeof(Encoding), null, "Text.FileCommand.Options.Encoding")]
+[CommandOption(KEY_MODE_OPTION, typeof(FileMode), FileMode.OpenOrCreate, "FileCommand.Options.Mode")]
+[CommandOption(KEY_SHARE_OPTION, typeof(FileShare), FileShare.Read, "FileCommand.Options.Share")]
+[CommandOption(KEY_ACCESS_OPTION, typeof(FileAccess), FileAccess.ReadWrite, "FileCommand.Options.Access")]
+[CommandOption(KEY_ENCODING_OPTION, typeof(Encoding), null, "FileCommand.Options.Encoding")]
 public class FileSaveCommand : CommandBase<CommandContext>, ICommandCompletion
 {
 	#region 常量定义

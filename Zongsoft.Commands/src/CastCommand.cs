@@ -39,12 +39,12 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Commands;
 
-[DisplayName("Text.CastCommand.Name")]
-[Description("Text.CastCommand.Description")]
-[CommandOption(KEY_TYPE_OPTION, 't', typeof(CastType), CastType.Raw, "Text.CastCommand.Options.Type")]
-[CommandOption(KEY_ENCODING_OPTION, 'e', typeof(Encoding), null, "Text.CastCommand.Options.Encoding")]
-[CommandOption(KEY_COUNT_OPTION, typeof(int), 0, "Text.CastCommand.Options.Count")]
-[CommandOption(KEY_OFFSET_OPTION, typeof(int), 0, "Text.CastCommand.Options.Offset")]
+[DisplayName("CastCommand.Name")]
+[Description("CastCommand.Description")]
+[CommandOption(KEY_TYPE_OPTION, 't', typeof(CastType), CastType.Raw, "CastCommand.Options.Type")]
+[CommandOption(KEY_ENCODING_OPTION, 'e', typeof(Encoding), null, "CastCommand.Options.Encoding")]
+[CommandOption(KEY_COUNT_OPTION, typeof(int), 0, "CastCommand.Options.Count")]
+[CommandOption(KEY_OFFSET_OPTION, typeof(int), 0, "CastCommand.Options.Offset")]
 public class CastCommand : CommandBase<CommandContext>
 {
 	#region 枚举定义

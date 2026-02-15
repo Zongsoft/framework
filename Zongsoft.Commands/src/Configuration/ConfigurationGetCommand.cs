@@ -45,9 +45,9 @@ namespace Zongsoft.Configuration.Commands;
 ///		<code>[configuration.]get path1 path2 path3...</code>
 ///		<para>通过 arguments 来指定要查找的选项路径。</para>
 /// </remarks>
-[DisplayName("Text.ConfigurationGetCommand.Name")]
-[Description("Text.ConfigurationGetCommand.Description")]
-[CommandOption(SIMPLIFY_OPTION, 's', Description = "Text.ConfigurationCommand.Options.Simplify")]
+[DisplayName("ConfigurationGetCommand.Name")]
+[Description("ConfigurationGetCommand.Description")]
+[CommandOption(SIMPLIFY_OPTION, 's', Description = "ConfigurationCommand.Options.Simplify")]
 public class ConfigurationGetCommand : CommandBase<CommandContext>
 {
 	#region 常量定义

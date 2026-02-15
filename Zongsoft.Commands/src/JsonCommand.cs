@@ -39,13 +39,13 @@ using Zongsoft.Serialization;
 
 namespace Zongsoft.Commands;
 
-[DisplayName("Text.JsonCommand.Name")]
-[Description("Text.JsonCommand.Description")]
+[DisplayName("JsonCommand.Name")]
+[Description("JsonCommand.Description")]
 [CommandOption(QUIET_OPTION, 'q')]
-[CommandOption(DEPTH_OPTION, typeof(int), 3, "Text.JsonCommand.Options.Depth")]
-[CommandOption(TYPED_OPTION, 't', Description = "Text.JsonCommand.Options.Typed")]
-[CommandOption(INDENTED_OPTION, 'i', Description = "Text.JsonCommand.Options.Indented")]
-[CommandOption(CASING_OPTION, typeof(SerializationNamingConvention), SerializationNamingConvention.None, "Text.JsonCommand.Options.Casing")]
+[CommandOption(DEPTH_OPTION, typeof(int), 3, "JsonCommand.Options.Depth")]
+[CommandOption(TYPED_OPTION, 't', Description = "JsonCommand.Options.Typed")]
+[CommandOption(INDENTED_OPTION, 'i', Description = "JsonCommand.Options.Indented")]
+[CommandOption(CASING_OPTION, typeof(SerializationNamingConvention), SerializationNamingConvention.None, "JsonCommand.Options.Casing")]
 public class JsonCommand : CommandBase<CommandContext>
 {
 	#region 常量定义

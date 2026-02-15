@@ -37,9 +37,9 @@ using Zongsoft.Components;
 
 namespace Zongsoft.IO.Commands;
 
-[CommandOption(KEY_MODE_OPTION, typeof(FileMode), FileMode.Open, "Text.FileCommand.Options.Mode")]
-[CommandOption(KEY_SHARE_OPTION, typeof(FileShare), FileShare.Read, "Text.FileCommand.Options.Share")]
-[CommandOption(KEY_ACCESS_OPTION, typeof(FileAccess), FileAccess.Read, "Text.FileCommand.Options.Access")]
+[CommandOption(KEY_MODE_OPTION, typeof(FileMode), FileMode.Open, "FileCommand.Options.Mode")]
+[CommandOption(KEY_SHARE_OPTION, typeof(FileShare), FileShare.Read, "FileCommand.Options.Share")]
+[CommandOption(KEY_ACCESS_OPTION, typeof(FileAccess), FileAccess.Read, "FileCommand.Options.Access")]
 public class FileOpenCommand : CommandBase<CommandContext>, ICommandCompletion
 {
 	#region 常量定义

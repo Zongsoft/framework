@@ -39,8 +39,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Commands;
 
-[DisplayName("Text.AssemblyCommand.Name")]
-[Description("Text.AssemblyCommand.Description")]
+[DisplayName("AssemblyCommand.Name")]
+[Description("AssemblyCommand.Description")]
 [CommandOption("sort", 's', typeof(SortMode), SortMode.None)]
 public class AssemblyCommand : CommandBase<CommandContext>
 {
@@ -137,13 +137,13 @@ public class AssemblyCommand : CommandBase<CommandContext>
 	#region 枚举定义
 	public enum SortMode
 	{
-		[Description("Text.SortMode.None")]
+		[Description("SortMode.None")]
 		None,
 
-		[Description("Text.SortMode.Asc")]
+		[Description("SortMode.Asc")]
 		Asc,
 
-		[Description("Text.SortMode.Desc")]
+		[Description("SortMode.Desc")]
 		Desc,
 	}
 	#endregion

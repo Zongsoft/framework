@@ -37,9 +37,9 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Messaging.Commands;
 
-[DisplayName("Text.QueueCommand.Name")]
-[Description("Text.QueueCommand.Description")]
-[CommandOption("name", typeof(string), Description = "Text.QueueCommand.Options.Name")]
+[DisplayName("QueueCommand.Name")]
+[Description("QueueCommand.Description")]
+[CommandOption("name", typeof(string), Description = "QueueCommand.Options.Name")]
 public class QueueCommand : CommandBase<CommandContext>
 {
 	#region 成员字段

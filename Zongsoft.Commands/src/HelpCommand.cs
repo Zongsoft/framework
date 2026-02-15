@@ -41,8 +41,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Commands;
 
-[DisplayName("Text.HelpCommand.Name")]
-[Description("Text.HelpCommand.Description")]
+[DisplayName("HelpCommand.Name")]
+[Description("HelpCommand.Description")]
 public class HelpCommand : CommandBase<CommandContext>
 {
 	#region 构造函数

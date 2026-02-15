@@ -42,9 +42,9 @@ namespace Zongsoft.Security.Commands;
 /// <example>
 ///		<code>secret.verify -name:'user.email:100' 123456</code>
 /// </example>
-[DisplayName("Text.SecretVerifyCommand.Name")]
-[Description("Text.SecretVerifyCommand.Description")]
-[CommandOption(KEY_NAME_OPTION, typeof(string), null, true, "Text.SecretVerifyCommand.Options.Name")]
+[DisplayName("SecretVerifyCommand.Name")]
+[Description("SecretVerifyCommand.Description")]
+[CommandOption(KEY_NAME_OPTION, typeof(string), null, true, "SecretVerifyCommand.Options.Name")]
 public class SecretVerifyCommand : CommandBase<CommandContext>
 {
 	#region 常量定义

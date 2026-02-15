@@ -39,8 +39,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Configuration.Commands;
 
-[DisplayName("Text.ConfigurationCommand.Name")]
-[Description("Text.ConfigurationCommand.Description")]
+[DisplayName("ConfigurationCommand.Name")]
+[Description("ConfigurationCommand.Description")]
 public class ConfigurationCommand : CommandBase<CommandContext>
 {
 	#region 成员字段

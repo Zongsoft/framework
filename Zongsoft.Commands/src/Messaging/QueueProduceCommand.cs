@@ -40,11 +40,11 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Messaging.Commands;
 
-[DisplayName("Text.QueueInCommand.Name")]
-[Description("Text.QueueInCommand.Description")]
+[DisplayName("QueueInCommand.Name")]
+[Description("QueueInCommand.Description")]
 [CommandOption("type", 't', typeof(ContentType), DefaultValue = ContentType.String)]
 [CommandOption("encoding", 'e', typeof(Encoding), DefaultValue = "utf-8")]
-[CommandOption("round", typeof(int), DefaultValue = 1, Description = "Text.QueueCommand.Options.Round")]
+[CommandOption("round", typeof(int), DefaultValue = 1, Description = "QueueCommand.Options.Round")]
 [CommandOption("topic", typeof(string))]
 [CommandOption("tags", typeof(string))]
 [CommandOption("qos", typeof(MessageReliability))]
