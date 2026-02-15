@@ -43,6 +43,7 @@ public static class Convert
 	{
 		TypeDescriptor.AddAttributes(typeof(Enum), [new TypeConverterAttribute(typeof(Components.Converters.EnumConverter))]);
 		TypeDescriptor.AddAttributes(typeof(Guid), [new TypeConverterAttribute(typeof(Components.Converters.GuidConverter))]);
+		TypeDescriptor.AddAttributes(typeof(bool), [new TypeConverterAttribute(typeof(Components.Converters.BooleanConverter))]);
 		TypeDescriptor.AddAttributes(typeof(TimeSpan), [new TypeConverterAttribute(typeof(Components.Converters.TimeSpanConverter))]);
 		TypeDescriptor.AddAttributes(typeof(Encoding), [new TypeConverterAttribute(typeof(Components.Converters.EncodingConverter))]);
 		TypeDescriptor.AddAttributes(typeof(EndPoint), [new TypeConverterAttribute(typeof(Components.Converters.EndpointConverter))]);
