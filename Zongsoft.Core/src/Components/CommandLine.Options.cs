@@ -126,7 +126,10 @@ partial class CommandLine
 		public bool Contains(string name) => name != null && _options.ContainsKey(name);
 		public bool Switch(string name)
 		{
-			if(name != null && _options.TryGetValue(name, out var value))
+			if(string.IsNullOrEmpty(name))
+				return false;
+
+			if(_options.TryGetValue(name, out var value))
 			{
 				if(value == null)
 					return true;
@@ -142,6 +145,15 @@ partial class CommandLine
 					string.Equals(text, "enable", StringComparison.OrdinalIgnoreCase) ||
 					string.Equals(text, "enabled", StringComparison.OrdinalIgnoreCase)
 				);
+			}
+
+			if(_descriptor.Options.TryGetValue(name, out var option))
+			{
+				if(option.DefaultValue == null)
+					return false;
+
+				if(option.Type == typeof(bool))
+					return Common.Convert.ConvertValue<bool>(option.DefaultValue);
 			}
 
 			return false;

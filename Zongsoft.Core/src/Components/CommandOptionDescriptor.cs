@@ -83,4 +83,20 @@ public class CommandOptionDescriptor
 	#region 公共方法
 	public TypeConverter GetConverter() => this.ConverterType == null ? null : TypeDescriptor.GetConverter(this.ConverterType);
 	#endregion
+
+	#region 重写方法
+	public override string ToString()
+	{
+		var defaultValue = this.DefaultValue;
+
+		if(this.Symbol == '\0')
+			return defaultValue == null ?
+				$"{this.Name}:{Common.TypeAlias.GetAlias(this.Type)}{(this.Required ? "(required)" : null)}":
+				$"{this.Name}:{Common.TypeAlias.GetAlias(this.Type)}={defaultValue}{(this.Required ? "(required)" : null)}";
+		else
+			return defaultValue == null ?
+				$"[{this.Symbol}]{this.Name}:{Common.TypeAlias.GetAlias(this.Type)}{(this.Required ? "(required)" : null)}" :
+				$"[{this.Symbol}]{this.Name}:{Common.TypeAlias.GetAlias(this.Type)}={defaultValue}{(this.Required ? "(required)" : null)}";
+	}
+	#endregion
 }
