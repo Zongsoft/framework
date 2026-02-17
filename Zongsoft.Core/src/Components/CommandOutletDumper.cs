@@ -112,7 +112,14 @@ public static class CommandOutletDumper
 
 				break;
 			case byte[] binary:
-				content.Last.AppendLine(CommandOutletColor.DarkYellow, System.Convert.ToHexString(binary));
+				if(indent == 0)
+					content.Last
+						.Append(CommandOutletColor.DarkYellow, "byte")
+						.Append(CommandOutletColor.DarkGray, '[')
+						.Append(CommandOutletColor.DarkCyan, binary.Length)
+						.Append(CommandOutletColor.DarkGray, "] ");
+
+				content.Last.AppendLine(CommandOutletColor.DarkGreen, System.Convert.ToHexString(binary));
 				break;
 			case string @string:
 				DumpString(content, @string);
