@@ -124,9 +124,13 @@ public static class CommandOutletDumper
 				DumpString(content, builder.ToString());
 				break;
 			case IEnumerable items:
-				content.Last.AppendLine();
+				if(indent > 0)
+					content.Last.AppendLine();
+				else
+					content.Last.AppendLine(CommandOutletColor.DarkYellow, items.GetType().GetAlias());
+
 				content.Last.Indent(options, indent);
-				content.Last.AppendLine(CommandOutletColor.Magenta, "{");
+				content.Last.AppendLine(CommandOutletColor.Magenta, "[");
 
 				foreach(var item in items)
 				{
@@ -143,7 +147,7 @@ public static class CommandOutletDumper
 				}
 
 				content.Last.Indent(options, indent);
-				content.Last.AppendLine(CommandOutletColor.Magenta, "}");
+				content.Last.AppendLine(CommandOutletColor.Magenta, "]");
 				break;
 			case Delegate function:
 				if(function.Target == null)
