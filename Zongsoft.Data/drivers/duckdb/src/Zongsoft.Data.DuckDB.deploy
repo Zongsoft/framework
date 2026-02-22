@@ -1,0 +1,5 @@
+artifacts/Zongsoft.Data.DuckDB.plugin
+lib/$(Framework)/Zongsoft.Data.DuckDB.*
+lib/$(Framework)/*/Zongsoft.Data.DuckDB.resources.*
+
+nuget:DuckDB.NET.Data.Full@1.4.4
