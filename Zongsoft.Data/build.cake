@@ -8,6 +8,7 @@ var providerFiles = drivers == "*" ? new List<string>(
 	@"drivers/mssql/Zongsoft.Data.MsSql.sln",
 	@"drivers/mysql/Zongsoft.Data.MySql.sln",
 	@"drivers/sqlite/Zongsoft.Data.SQLite.sln",
+	@"drivers/duckdb/Zongsoft.Data.DuckDB.sln",
 	@"drivers/influx/Zongsoft.Data.Influx.sln",
 	@"drivers/tdengine/Zongsoft.Data.TDengine.sln",
 	@"drivers/postgres/Zongsoft.Data.PostgreSql.sln",
@@ -30,6 +31,9 @@ if(providerFiles.Count == 0 && !string.IsNullOrEmpty(drivers) && drivers != "non
 				break;
 			case "sqlite":
 				providerFiles.Add(@"drivers/sqlite/Zongsoft.Data.SQLite.sln");
+				break;
+			case "duckdb":
+				providerFiles.Add(@"drivers/duckdb/Zongsoft.Data.DuckDB.sln");
 				break;
 			case "influx":
 				providerFiles.Add(@"drivers/influx/Zongsoft.Data.Influx.sln");
