@@ -2,17 +2,17 @@ var target = Argument("target", "default");
 var edition = Argument("edition", "Debug");
 var drivers = Argument("drivers", "*");
 
-var solutionFile = "Zongsoft.Data.sln";
+var solutionFile = "Zongsoft.Data.slnx";
 var providerFiles = drivers == "*" ? new List<string>(
 [
-	@"drivers/mssql/Zongsoft.Data.MsSql.sln",
-	@"drivers/mysql/Zongsoft.Data.MySql.sln",
-	@"drivers/sqlite/Zongsoft.Data.SQLite.sln",
-	@"drivers/duckdb/Zongsoft.Data.DuckDB.sln",
-	@"drivers/influx/Zongsoft.Data.Influx.sln",
-	@"drivers/tdengine/Zongsoft.Data.TDengine.sln",
-	@"drivers/postgres/Zongsoft.Data.PostgreSql.sln",
-	@"drivers/clickhouse/Zongsoft.Data.ClickHouse.sln",
+	@"drivers/mssql/Zongsoft.Data.MsSql.slnx",
+	@"drivers/mysql/Zongsoft.Data.MySql.slnx",
+	@"drivers/sqlite/Zongsoft.Data.SQLite.slnx",
+	@"drivers/duckdb/Zongsoft.Data.DuckDB.slnx",
+	@"drivers/influx/Zongsoft.Data.Influx.slnx",
+	@"drivers/tdengine/Zongsoft.Data.TDengine.slnx",
+	@"drivers/postgres/Zongsoft.Data.PostgreSql.slnx",
+	@"drivers/clickhouse/Zongsoft.Data.ClickHouse.slnx",
 ]) : [];
 
 if(providerFiles.Count == 0 && !string.IsNullOrEmpty(drivers) && drivers != "none" && drivers != "empty")
@@ -24,28 +24,28 @@ if(providerFiles.Count == 0 && !string.IsNullOrEmpty(drivers) && drivers != "non
 		switch(parts[i].ToLowerInvariant())
 		{
 			case "mssql":
-				providerFiles.Add(@"drivers/mssql/Zongsoft.Data.MsSql.sln");
+				providerFiles.Add(@"drivers/mssql/Zongsoft.Data.MsSql.slnx");
 				break;
 			case "mysql":
-				providerFiles.Add(@"drivers/mysql/Zongsoft.Data.MySql.sln");
+				providerFiles.Add(@"drivers/mysql/Zongsoft.Data.MySql.slnx");
 				break;
 			case "sqlite":
-				providerFiles.Add(@"drivers/sqlite/Zongsoft.Data.SQLite.sln");
+				providerFiles.Add(@"drivers/sqlite/Zongsoft.Data.SQLite.slnx");
 				break;
 			case "duckdb":
-				providerFiles.Add(@"drivers/duckdb/Zongsoft.Data.DuckDB.sln");
+				providerFiles.Add(@"drivers/duckdb/Zongsoft.Data.DuckDB.slnx");
 				break;
 			case "influx":
-				providerFiles.Add(@"drivers/influx/Zongsoft.Data.Influx.sln");
+				providerFiles.Add(@"drivers/influx/Zongsoft.Data.Influx.slnx");
 				break;
 			case "tdengine":
-				providerFiles.Add(@"drivers/tdengine/Zongsoft.Data.TDengine.sln");
+				providerFiles.Add(@"drivers/tdengine/Zongsoft.Data.TDengine.slnx");
 				break;
 			case "postgres":
-				providerFiles.Add(@"drivers/postgres/Zongsoft.Data.PostgreSql.sln");
+				providerFiles.Add(@"drivers/postgres/Zongsoft.Data.PostgreSql.slnx");
 				break;
 			case "clickhouse":
-				providerFiles.Add(@"drivers/clickhouse/Zongsoft.Data.ClickHouse.sln");
+				providerFiles.Add(@"drivers/clickhouse/Zongsoft.Data.ClickHouse.slnx");
 				break;
 		}
 	}

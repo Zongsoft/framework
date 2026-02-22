@@ -1,7 +1,7 @@
 var target = Argument("target", "default");
 var edition = Argument("edition", "Debug");
 
-var solutionFile = "Zongsoft.Messaging.Kafka.sln";
+var solutionFile = "Zongsoft.Messaging.Kafka.slnx";
 
 Task("clean")
 	.Description("清理解决方案")

@@ -1,7 +1,7 @@
 var target = Argument("target", "default");
 var edition = Argument("edition", "Debug");
 
-var solutionFile = "Zongsoft.Messaging.ZeroMQ.sln";
+var solutionFile = "Zongsoft.Messaging.ZeroMQ.slnx";
 
 Task("clean")
 	.Description("清理解决方案")

@@ -1,12 +1,12 @@
 var target = Argument("target", "default");
 var edition = Argument("edition", "Debug");
 
-var solutionFile = "Zongsoft.Externals.Hangfire.sln";
+var solutionFile = "Zongsoft.Externals.Hangfire.slnx";
 var dependents = new []
 {
-	"web/Zongsoft.Externals.Hangfire.Web.sln",
-	"storages/Zongsoft.Externals.Hangfire.Storages.sln",
-	"samples/Zongsoft.Externals.Hangfire.Samples.sln"
+	"web/Zongsoft.Externals.Hangfire.Web.slnx",
+	"storages/Zongsoft.Externals.Hangfire.Storages.slnx",
+	"samples/Zongsoft.Externals.Hangfire.Samples.slnx"
 };
 
 Task("clean")

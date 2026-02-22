@@ -1,7 +1,7 @@
 var target = Argument("target", "default");
 var edition = Argument("edition", "Debug");
 
-var solutionFile = "Zongsoft.Externals.Redis.sln";
+var solutionFile = "Zongsoft.Externals.Redis.slnx";
 
 Task("clean")
 	.Description("清理解决方案")
