@@ -1,0 +1,8 @@
+<Solution>
+	<Folder Name="/Plugins/">
+		<File Path="plugins/Main.plugin" />
+		<File Path="plugins/Terminal.plugin" />
+	</Folder>
+
+	<Project Path="src/Zongsoft.Plugins.csproj" />
+</Solution>

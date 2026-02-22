@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Externals.Python.csproj" />
+	<Project Path="test/Zongsoft.Externals.Python.Tests.csproj" />
+</Solution>

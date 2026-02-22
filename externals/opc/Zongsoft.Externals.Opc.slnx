@@ -1,0 +1,13 @@
+<Solution>
+	<Project Path="src/Zongsoft.Externals.Opc.csproj" />
+	<Project Path="test/Zongsoft.Externals.Opc.Tests.csproj" />
+
+	<Folder Name="/samples/">
+		<Project Path="samples/client/Zongsoft.Externals.Opc.Samples.Client.csproj">
+			<BuildDependency Project="src/Zongsoft.Externals.Opc.csproj" />
+		</Project>
+		<Project Path="samples/server/Zongsoft.Externals.Opc.Samples.Server.csproj">
+			<BuildDependency Project="src/Zongsoft.Externals.Opc.csproj" />
+		</Project>
+	</Folder>
+</Solution>

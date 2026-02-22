@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Data.MySql.csproj" />
+	<Project Path="test/Zongsoft.Data.MySql.Tests.csproj" />
+</Solution>

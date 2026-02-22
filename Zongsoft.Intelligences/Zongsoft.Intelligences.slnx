@@ -1,0 +1,8 @@
+<Solution>
+	<Folder Name="/docs/">
+		<File Path="README.md" />
+	</Folder>
+
+	<Project Path="src/Zongsoft.Intelligences.csproj" />
+	<Project Path="api/Zongsoft.Intelligences.Web.csproj" />
+</Solution>

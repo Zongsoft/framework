@@ -1,0 +1,8 @@
+<Solution>
+	<Folder Name="/schema/">
+		<File Path="Zongsoft.Data.xsd" />
+	</Folder>
+
+	<Project Path="src/Zongsoft.Data.csproj" />
+	<Project Path="test/Zongsoft.Data.Tests.csproj" />
+</Solution>

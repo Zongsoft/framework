@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Data.SQLite.csproj" />
+	<Project Path="test/Zongsoft.Data.SQLite.Tests.csproj" />
+</Solution>

@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Data.PostgreSql.csproj" />
+	<Project Path="test/Zongsoft.Data.PostgreSql.Tests.csproj" />
+</Solution>

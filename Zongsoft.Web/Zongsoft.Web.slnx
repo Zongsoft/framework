@@ -1,0 +1,6 @@
+<Solution>
+	<Project Path="src/Zongsoft.Web.csproj" />
+	<Project Path="test/Zongsoft.Web.Tests.csproj" />
+	<Project Path="grpc/Zongsoft.Web.Grpc.csproj" />
+	<Project Path="openapi/Zongsoft.Web.OpenApi.csproj" />
+</Solution>

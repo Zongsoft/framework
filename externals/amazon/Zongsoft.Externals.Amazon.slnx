@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Externals.Amazon.csproj" />
+	<Project Path="test/Zongsoft.Externals.Amazon.Tests.csproj" />
+</Solution>

@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Data.TDengine.csproj" />
+	<Project Path="test/Zongsoft.Data.TDengine.Tests.csproj" />
+</Solution>

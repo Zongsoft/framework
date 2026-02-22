@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Data.DuckDB.csproj" />
+	<Project Path="test/Zongsoft.Data.DuckDB.Tests.csproj" />
+</Solution>

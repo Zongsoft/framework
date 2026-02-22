@@ -1,0 +1,6 @@
+<Solution>
+	<Project Path="eventexchanger/Zongsoft.Samples.EventExchanger.csproj" />
+	<Project Path="memorycache/Zongsoft.Samples.MemoryCache.csproj" />
+	<Project Path="spooler/Zongsoft.Samples.Spooler.csproj" />
+	<Project Path="superviser/Zongsoft.Samples.Superviser.csproj" />
+</Solution>

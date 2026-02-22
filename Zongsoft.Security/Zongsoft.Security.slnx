@@ -1,0 +1,5 @@
+<Solution>
+	<Project Path="src/Zongsoft.Security.csproj" />
+	<Project Path="api/Zongsoft.Security.Web.csproj" />
+	<Project Path="captcha/Zongsoft.Security.Captcha.csproj" />
+</Solution>

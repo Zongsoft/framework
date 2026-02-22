@@ -1,0 +1,8 @@
+<Solution>
+	<Project Path="src/Zongsoft.Messaging.Mqtt.csproj" />
+	<Project Path="test/Zongsoft.Messaging.Mqtt.Tests.csproj" />
+
+	<Project Path="samples/Zongsoft.Messaging.Mqtt.Samples.csproj">
+		<BuildDependency Project="src/Zongsoft.Messaging.Mqtt.csproj" />
+	</Project>
+</Solution>

@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Externals.Grapecity.csproj" />
+	<Project Path="api/Zongsoft.Externals.Grapecity.Web.csproj" />
+</Solution>

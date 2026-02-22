@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Data.Influx.csproj" />
+	<Project Path="test/Zongsoft.Data.Influx.Tests.csproj" />
+</Solution>

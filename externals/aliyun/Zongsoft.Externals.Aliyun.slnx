@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Externals.Aliyun.csproj" />
+	<Project Path="gateway/Zongsoft.Externals.Aliyun.Gateway.csproj" />
+</Solution>

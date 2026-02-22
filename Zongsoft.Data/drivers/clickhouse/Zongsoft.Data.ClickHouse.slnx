@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Data.ClickHouse.csproj" />
+	<Project Path="test/Zongsoft.Data.ClickHouse.Tests.csproj" />
+</Solution>

@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Externals.ClosedXml.csproj" />
+	<Project Path="test/Zongsoft.Externals.ClosedXml.Tests.csproj" />
+</Solution>

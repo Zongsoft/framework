@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="../src/Zongsoft.Externals.Hangfire.csproj" />
+	<Project Path="Zongsoft.Externals.Hangfire.Web.csproj" />
+</Solution>

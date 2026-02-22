@@ -1,0 +1,10 @@
+<Solution>
+	<Project Path="src/Zongsoft.Externals.Polly.csproj" />
+	<Project Path="test/Zongsoft.Externals.Polly.Tests.csproj" />
+
+	<Folder Name="/samples/">
+		<Project Path="samples/Zongsoft.Externals.Polly.Samples.csproj">
+			<BuildDependency Project="src/Zongsoft.Externals.Polly.csproj" />
+		</Project>
+	</Folder>
+</Solution>
