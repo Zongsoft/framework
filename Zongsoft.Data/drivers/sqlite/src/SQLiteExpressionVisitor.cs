@@ -117,7 +117,7 @@ public class SQLiteExpressionVisitor : ExpressionVisitorBase
 		#region 公共方法
 		public string GetAlias(string alias) => $"'{alias}'";
 		public string GetSymbol(Operator @operator) => null;
-		public string GetIdentifier(string name) => $"`{name}`";
+		public string GetIdentifier(string name) => $"\"{name}\"";
 		public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
 		public string GetIdentifier(ReturningKind kind) => null;
 

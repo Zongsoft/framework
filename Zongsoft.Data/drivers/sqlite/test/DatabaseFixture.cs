@@ -7,7 +7,7 @@ namespace Zongsoft.Data.SQLite.Tests;
 public class DatabaseFixture : IDisposable
 {
 	#region 常量定义
-	private const string CONNECTION_STRING = @"database=test.db;password=";
+	private const string CONNECTION_STRING = @"database=:memory:";
 	#endregion
 
 	#region 私有变量

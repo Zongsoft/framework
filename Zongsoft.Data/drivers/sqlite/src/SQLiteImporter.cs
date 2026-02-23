@@ -153,7 +153,7 @@ public class SQLiteImporter : DataImporterBase
 
 		command.Transaction = connection.BeginTransaction();
 		command.CommandType = System.Data.CommandType.Text;
-		command.CommandText = $"INSERT INTO `{context.Entity.GetTableName()}` ({fields}) VALUES ({values});";
+		command.CommandText = $"INSERT INTO \"{context.Entity.GetTableName()}\" ({fields}) VALUES ({values});";
 
 		return command;
 	}
