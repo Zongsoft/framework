@@ -89,14 +89,14 @@ CREATE TABLE IF NOT EXISTS "Tenant"
 	PRIMARY KEY ("TenantId")
 );
 
-CREATE UNIQUE INDEX "UX_Tenant_TenantNo" ON "Tenant" ("TenantNo");
-CREATE UNIQUE INDEX "UX_Tenant_BusinessLicenseNo" ON "Tenant" ("BusinessLicenseNo");
-CREATE INDEX "IX_Tenant_LegalRepresentativeEmail" ON "Tenant" ("LegalRepresentativeEmail");
-CREATE INDEX "IX_Tenant_LegalRepresentativeIdentityId" ON "Tenant" ("LegalRepresentativeIdentityId");
-CREATE INDEX "IX_Tenant_LegalRepresentativeMobilePhone" ON "Tenant" ("LegalRepresentativeMobilePhone");
-CREATE INDEX "IX_Tenant_ContactEmail" ON "Tenant" ("ContactEmail");
-CREATE INDEX "IX_Tenant_ContactIdentityId" ON "Tenant" ("ContactIdentityId");
-CREATE INDEX "IX_Tenant_ContactMobilePhone" ON "Tenant" ("ContactMobilePhone");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Tenant_TenantNo" ON "Tenant" ("TenantNo");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Tenant_BusinessLicenseNo" ON "Tenant" ("BusinessLicenseNo");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_LegalRepresentativeEmail" ON "Tenant" ("LegalRepresentativeEmail");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_LegalRepresentativeIdentityId" ON "Tenant" ("LegalRepresentativeIdentityId");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_LegalRepresentativeMobilePhone" ON "Tenant" ("LegalRepresentativeMobilePhone");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_ContactEmail" ON "Tenant" ("ContactEmail");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_ContactIdentityId" ON "Tenant" ("ContactIdentityId");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_ContactMobilePhone" ON "Tenant" ("ContactMobilePhone");
 
 /* 分支机构表 */
 CREATE TABLE IF NOT EXISTS "Branch"
@@ -163,9 +163,9 @@ CREATE TABLE IF NOT EXISTS "Branch"
 	PRIMARY KEY ("TenantId", "BranchId")
 );
 
-CREATE UNIQUE INDEX "UX_Branch_BranchNo" ON "Branch" ("TenantId", "BranchNo");
-CREATE UNIQUE INDEX "UX_Branch_BusinessLicenseNo" ON "Branch" ("TenantId", "BusinessLicenseNo");
-CREATE INDEX "IX_Branch_Ordinal" ON "Branch" ("TenantId", "Ordinal");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Branch_BranchNo" ON "Branch" ("TenantId", "BranchNo");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Branch_BusinessLicenseNo" ON "Branch" ("TenantId", "BusinessLicenseNo");
+CREATE INDEX IF NOT EXISTS "IX_Branch_Ordinal" ON "Branch" ("TenantId", "Ordinal");
 
 /* 分支机构成员表 */
 CREATE TABLE IF NOT EXISTS "BranchMember"
@@ -292,12 +292,12 @@ CREATE TABLE IF NOT EXISTS "Employee"
 	PRIMARY KEY ("TenantId", "UserId")
 );
 
-CREATE UNIQUE INDEX "UX_Employee_EmployeeNo" ON "Employee" ("TenantId", "EmployeeNo");
-CREATE UNIQUE INDEX "UX_Employee_IdentityId" ON "Employee" ("TenantId", "IdentityId");
-CREATE INDEX "IX_Employee_Birthdate" ON "Employee" ("TenantId", "Birthdate");
-CREATE INDEX "IX_Employee_EmployeeCode" ON "Employee" ("TenantId", "EmployeeCode");
-CREATE INDEX "IX_Employee_BranchId" ON "Employee" ("UserId", "TenantId", "BranchId");
-CREATE INDEX "IX_Employee_FullName" ON "Employee" ("TenantId", "FullName");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Employee_EmployeeNo" ON "Employee" ("TenantId", "EmployeeNo");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Employee_IdentityId" ON "Employee" ("TenantId", "IdentityId");
+CREATE INDEX IF NOT EXISTS "IX_Employee_Birthdate" ON "Employee" ("TenantId", "Birthdate");
+CREATE INDEX IF NOT EXISTS "IX_Employee_EmployeeCode" ON "Employee" ("TenantId", "EmployeeCode");
+CREATE INDEX IF NOT EXISTS "IX_Employee_BranchId" ON "Employee" ("UserId", "TenantId", "BranchId");
+CREATE INDEX IF NOT EXISTS "IX_Employee_FullName" ON "Employee" ("TenantId", "FullName");
 
 /* 角色表 */
 CREATE TABLE IF NOT EXISTS "Security_Role"
@@ -349,11 +349,11 @@ CREATE TABLE IF NOT EXISTS "Security_Member"
 );
 
 /* 添加系统内置角色 */
-INSERT INTO "Security_Role" ("RoleId", "Name", "Nickname", "Description") VALUES
+INSERT OR IGNORE INTO "Security_Role" ("RoleId", "Name", "Nickname", "Description") VALUES
 	(1, 'Administrators', '系统管理', '系统管理角色(系统内置角色)'),
 	(2, 'Security', '安全管理', '安全管理角色(系统内置角色)');
 
 /* 添加系统内置用户 */
-INSERT INTO "Security_User" ("UserId", "Name", "Nickname", "Description") VALUES
+INSERT OR IGNORE INTO "Security_User" ("UserId", "Name", "Nickname", "Description") VALUES
 	(1, 'Administrator', '系统管理员', '系统管理员(系统内置帐号)'),
 	(2, 'Guest', '来宾', '来宾');
