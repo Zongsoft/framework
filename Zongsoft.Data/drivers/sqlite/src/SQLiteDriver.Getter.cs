@@ -28,30 +28,38 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Data;
 
 using Zongsoft.Data.Common;
-using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.SQLite;
 
-public class SQLiteInsertStatementVisitor : InsertStatementVisitor
+partial class SQLiteDriver
 {
-	#region 单例字段
-	public static readonly SQLiteInsertStatementVisitor Instance = new();
-	#endregion
-
-	#region 构造函数
-	private SQLiteInsertStatementVisitor() { }
-	#endregion
-
-	#region 重写方法
-	protected override void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
+	private sealed class SQLiteGetter : IDataRecordGetter
 	{
-		base.VisitValues(context, statement, values, rounds);
-
-		if(statement.Options.ConstraintIgnored)
-			context.WriteLine(" ON CONFLICT DO NOTHING");
+		public T GetValue<T>(IDataRecord record, int ordinal)
+		{
+			switch(Type.GetTypeCode(typeof(T)))
+			{
+				case TypeCode.Byte:
+					var valueByte = (byte)record.GetInt16(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<byte, T>(ref valueByte);
+				case TypeCode.SByte:
+					var valueSByte = (sbyte)record.GetInt16(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<sbyte, T>(ref valueSByte);
+				case TypeCode.UInt16:
+					var valueUInt16 = (ushort)record.GetInt16(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<ushort, T>(ref valueUInt16);
+				case TypeCode.UInt32:
+					var valueUInt32 = (uint)record.GetInt32(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<uint, T>(ref valueUInt32);
+				case TypeCode.UInt64:
+					var valueUInt64 = (ulong)record.GetInt64(ordinal);
+					return System.Runtime.CompilerServices.Unsafe.As<ulong, T>(ref valueUInt64);
+				default:
+					return record.GetValue<T>(ordinal);
+			}
+		}
 	}
-	#endregion
 }

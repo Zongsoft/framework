@@ -38,7 +38,7 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.SQLite;
 
-public class SQLiteDriver : DataDriverBase
+public partial class SQLiteDriver : DataDriverBase
 {
 	#region 公共常量
 	/// <summary>驱动程序的标识：SQLite。</summary>
@@ -52,6 +52,8 @@ public class SQLiteDriver : DataDriverBase
 	#region 私有构造
 	private SQLiteDriver()
 	{
+		this.Getter = new SQLiteGetter();
+		this.Setter = new SQLiteSetter();
 		this.Features.Add(Feature.Returning);
 	}
 	#endregion
