@@ -49,7 +49,7 @@ public class DuckDBInsertStatementVisitor : InsertStatementVisitor
 	protected override void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
 	{
 		if(statement.Options.ConstraintIgnored)
-			context.Write("INSERT IGNORE INTO ");
+			context.Write("INSERT OR IGNORE INTO ");
 		else
 			context.Write("INSERT INTO ");
 	}

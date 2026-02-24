@@ -46,6 +46,11 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 	#endregion
 
 	#region 重写方法
+	protected override void VisitParameter(ExpressionVisitorContext context, ParameterExpression parameter)
+	{
+		context.Write($"${parameter.Name}");
+	}
+
 	protected override void VisitStatement(ExpressionVisitorContext context, IStatementBase statement)
 	{
 		switch(statement)
@@ -117,7 +122,7 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 		#region 公共方法
 		public string GetAlias(string alias) => $"'{alias}'";
 		public string GetSymbol(Operator @operator) => null;
-		public string GetIdentifier(string name) => $"`{name}`";
+		public string GetIdentifier(string name) => $"\"{name}\"";
 		public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
 		public string GetIdentifier(ReturningKind kind) => null;
 

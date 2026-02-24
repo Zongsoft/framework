@@ -38,7 +38,7 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.DuckDB;
 
-public class DuckDBDriver : DataDriverBase
+public partial class DuckDBDriver : DataDriverBase
 {
 	#region 公共常量
 	/// <summary>驱动程序的标识：DuckDB。</summary>
