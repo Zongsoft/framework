@@ -33,4 +33,42 @@
 		<PackageReference Include="xunit.runner.msbuild" />
 		<PackageReference Include="xunit.runner.visualstudio" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Include="..\..\..\test\SequenceMocker.cs" Link="SequenceMocker.cs" />
+		<Compile Include="..\..\..\test\Models\AddressConditionConverter.cs" Link="Models\AddressConditionConverter.cs" />
+		<Compile Include="..\..\..\test\Models\Branch.cs" Link="Models\Branch.cs" />
+		<Compile Include="..\..\..\test\Models\BranchMember.cs" Link="Models\BranchMember.cs" />
+		<Compile Include="..\..\..\test\Models\BranchStatus.cs" Link="Models\BranchStatus.cs" />
+		<Compile Include="..\..\..\test\Models\BusinessLicenseKind.cs" Link="Models\BusinessLicenseKind.cs" />
+		<Compile Include="..\..\..\test\Models\Department.cs" Link="Models\Department.cs" />
+		<Compile Include="..\..\..\test\Models\DepartmentMember.cs" Link="Models\DepartmentMember.cs" />
+		<Compile Include="..\..\..\test\Models\EducationDegree.cs" Link="Models\EducationDegree.cs" />
+		<Compile Include="..\..\..\test\Models\Email.cs" Link="Models\Email.cs" />
+		<Compile Include="..\..\..\test\Models\Employee.cs" Link="Models\Employee.cs" />
+		<Compile Include="..\..\..\test\Models\EmployeeKind.cs" Link="Models\EmployeeKind.cs" />
+		<Compile Include="..\..\..\test\Models\IdentityKind.cs" Link="Models\IdentityKind.cs" />
+		<Compile Include="..\..\..\test\Models\JobStatus.cs" Link="Models\JobStatus.cs" />
+		<Compile Include="..\..\..\test\Models\Log.cs" Link="Models\Log.cs" />
+		<Compile Include="..\..\..\test\Models\LogSeverity.cs" Link="Models\LogSeverity.cs" />
+		<Compile Include="..\..\..\test\Models\MaritalStatus.cs" Link="Models\MaritalStatus.cs" />
+		<Compile Include="..\..\..\test\Models\MemberModel.cs" Link="Models\MemberModel.cs" />
+		<Compile Include="..\..\..\test\Models\MemberType.cs" Link="Models\MemberType.cs" />
+		<Compile Include="..\..\..\test\Models\RoleModel.cs" Link="Models\RoleModel.cs" />
+		<Compile Include="..\..\..\test\Models\StaffScale.cs" Link="Models\StaffScale.cs" />
+		<Compile Include="..\..\..\test\Models\Team.cs" Link="Models\Team.cs" />
+		<Compile Include="..\..\..\test\Models\TeamMember.cs" Link="Models\TeamMember.cs" />
+		<Compile Include="..\..\..\test\Models\Tenant.cs" Link="Models\Tenant.cs" />
+		<Compile Include="..\..\..\test\Models\TenantStatus.cs" Link="Models\TenantStatus.cs" />
+		<Compile Include="..\..\..\test\Models\UserModel.cs" Link="Models\UserModel.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\..\test\Zongsoft.Data.Tests.mapping" Link="Zongsoft.Data.Tests.mapping">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="..\..\..\test\Zongsoft.Data.Tests-security.mapping" Link="Zongsoft.Data.Tests-security.mapping">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>
