@@ -1,17 +1,17 @@
 CREATE TABLE IF NOT EXISTS "Log"
 (
-    "LogId"       BIGSERIAL     NOT NULL PRIMARY KEY,
-    "UserId"      INTEGER       NOT NULL,
-    "TenantId"    INTEGER       NOT NULL,
-    "BranchId"    INTEGER       NOT NULL,
-    "Domain"      VARCHAR(50)   NOT NULL DEFAULT '_',
-    "Target"      VARCHAR(100),
-    "Action"      VARCHAR(100),
-    "Caption"     VARCHAR(200)  COLLATE "C.utf8",
-    "Content"     TEXT          COLLATE "C.utf8",
-    "Severity"    SMALLINT      NOT NULL DEFAULT 0,
-    "Timestamp"   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "Description" VARCHAR(500)  COLLATE "C.utf8"
+	"LogId"       BIGSERIAL     NOT NULL PRIMARY KEY,
+	"UserId"      INTEGER       NOT NULL,
+	"TenantId"    INTEGER       NOT NULL,
+	"BranchId"    INTEGER       NOT NULL,
+	"Domain"      VARCHAR(50)   NOT NULL DEFAULT '_',
+	"Target"      VARCHAR(100),
+	"Action"      VARCHAR(100),
+	"Caption"     VARCHAR(200)  COLLATE "C.utf8",
+	"Content"     TEXT          COLLATE "C.utf8",
+	"Severity"    SMALLINT      NOT NULL DEFAULT 0,
+	"Timestamp"   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"Description" VARCHAR(500)  COLLATE "C.utf8"
 );
 
 CREATE INDEX IF NOT EXISTS "IX_User" ON "Log" ("UserId", "Domain", "Timestamp", "Severity");
@@ -35,71 +35,71 @@ COMMENT ON COLUMN "Log"."Description" IS '备注说明';
 
 CREATE TABLE IF NOT EXISTS "Tenant"
 (
-    "TenantId"                          INTEGER      NOT NULL,
-    "TenantNo"                          VARCHAR(50)  NOT NULL COLLATE "C",
-    "Name"                              VARCHAR(50)  NOT NULL COLLATE "C.utf8",
-    "Abbr"                              VARCHAR(50)  COLLATE "C.utf8",
-    "Acronym"                           VARCHAR(50)  COLLATE "C",
-    "LogoPath"                          VARCHAR(200) COLLATE "C",
-    "Country"                           INTEGER      NOT NULL DEFAULT 0,
-    "Language"                          CHAR(2)      NOT NULL DEFAULT 'zh',
-    "AddressId"                         INTEGER      NOT NULL DEFAULT 0,
-    "AddressDetail"                     VARCHAR(100) COLLATE "C.utf8",
-    "Longitude"                         DOUBLE PRECISION,
-    "Latitude"                          DOUBLE PRECISION,
-    "TenantTypeId"                      INTEGER,
-    "TenantSubtypeId"                   SMALLINT,
-    "BusinessLicenseNo"                 VARCHAR(50)  COLLATE "C",
-    "BusinessLicenseKind"               SMALLINT     NOT NULL DEFAULT 0,
-    "BusinessLicenseAuthority"          VARCHAR(50)  COLLATE "C.utf8",
-    "BusinessLicensePhotoPath"          VARCHAR(200) COLLATE "C",
-    "BusinessLicenseIssueDate"          DATE,
-    "BusinessLicenseExpiryDate"         DATE,
-    "BusinessLicenseDescription"        VARCHAR(500) COLLATE "C.utf8",
-    "RegisteredCapital"                 INTEGER,
-    "RegisteredAddress"                 VARCHAR(100) COLLATE "C.utf8",
-    "StaffScale"                        SMALLINT     NOT NULL DEFAULT 0,
-    "AdministratorEmail"                VARCHAR(50),
-    "AdministratorPhone"                VARCHAR(50),
-    "AdministratorPassword"             BYTEA,
-    "LegalRepresentativeName"           VARCHAR(50)  COLLATE "C.utf8",
-    "LegalRepresentativeGender"         BOOLEAN,
-    "LegalRepresentativeEmail"          VARCHAR(50)  COLLATE "C",
-    "LegalRepresentativeIdentityId"     VARCHAR(50)  COLLATE "C",
-    "LegalRepresentativeIdentityKind"   SMALLINT     NOT NULL DEFAULT 0,
-    "LegalRepresentativeIdentityIssued" DATE,
-    "LegalRepresentativeIdentityExpiry" DATE,
-    "LegalRepresentativeMobilePhone"    VARCHAR(50)  COLLATE "C",
-    "LegalRepresentativeIdentityPath1"  VARCHAR(200) COLLATE "C",
-    "LegalRepresentativeIdentityPath2"  VARCHAR(200) COLLATE "C",
-    "BankCode"                          VARCHAR(50)  COLLATE "C",
-    "BankName"                          VARCHAR(50)  COLLATE "C.utf8",
-    "BankAccountCode"                   VARCHAR(50)  COLLATE "C",
-    "BankAccountSetting"                VARCHAR(500) COLLATE "C.utf8",
-    "PhoneNumber"                       VARCHAR(50)  COLLATE "C",
-    "WebUrl"                            VARCHAR(100) COLLATE "C",
-    "ContactName"                       VARCHAR(50)  COLLATE "C.utf8",
-    "ContactGender"                     BOOLEAN,
-    "ContactEmail"                      VARCHAR(50)  COLLATE "C",
-    "ContactMobilePhone"                VARCHAR(50)  COLLATE "C",
-    "ContactOfficePhone"                VARCHAR(50)  COLLATE "C",
-    "ContactIdentityId"                 VARCHAR(50)  COLLATE "C",
-    "ContactIdentityKind"               SMALLINT     NOT NULL DEFAULT 0,
-    "ContactIdentityIssued"             DATE,
-    "ContactIdentityExpiry"             DATE,
-    "ContactIdentityPath1"              VARCHAR(200) COLLATE "C",
-    "ContactIdentityPath2"              VARCHAR(200) COLLATE "C",
-    "Flags"                             SMALLINT     NOT NULL DEFAULT 0,
-    "Grade"                             SMALLINT     NOT NULL DEFAULT 0,
-    "Status"                            SMALLINT     NOT NULL DEFAULT 0,
-    "StatusTimestamp"                   TIMESTAMP,
-    "StatusDescription"                 VARCHAR(100) COLLATE "C.utf8",
-    "CreatorId"                         INTEGER      NOT NULL,
-    "CreatedTime"                       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "ModifierId"                        INTEGER,
-    "ModifiedTime"                      TIMESTAMP,
-    "Remark"                            VARCHAR(500) COLLATE "C.utf8",
-    PRIMARY KEY ("TenantId")
+	"TenantId"                          INTEGER      NOT NULL,
+	"TenantNo"                          VARCHAR(50)  NOT NULL COLLATE "C",
+	"Name"                              VARCHAR(50)  NOT NULL COLLATE "C.utf8",
+	"Abbr"                              VARCHAR(50)  COLLATE "C.utf8",
+	"Acronym"                           VARCHAR(50)  COLLATE "C",
+	"LogoPath"                          VARCHAR(200) COLLATE "C",
+	"Country"                           INTEGER      NOT NULL DEFAULT 0,
+	"Language"                          CHAR(2)      NOT NULL DEFAULT 'zh',
+	"AddressId"                         INTEGER      NOT NULL DEFAULT 0,
+	"AddressDetail"                     VARCHAR(100) COLLATE "C.utf8",
+	"Longitude"                         DOUBLE PRECISION,
+	"Latitude"                          DOUBLE PRECISION,
+	"TenantTypeId"                      INTEGER,
+	"TenantSubtypeId"                   SMALLINT,
+	"BusinessLicenseNo"                 VARCHAR(50)  COLLATE "C",
+	"BusinessLicenseKind"               SMALLINT     NOT NULL DEFAULT 0,
+	"BusinessLicenseAuthority"          VARCHAR(50)  COLLATE "C.utf8",
+	"BusinessLicensePhotoPath"          VARCHAR(200) COLLATE "C",
+	"BusinessLicenseIssueDate"          DATE,
+	"BusinessLicenseExpiryDate"         DATE,
+	"BusinessLicenseDescription"        VARCHAR(500) COLLATE "C.utf8",
+	"RegisteredCapital"                 INTEGER,
+	"RegisteredAddress"                 VARCHAR(100) COLLATE "C.utf8",
+	"StaffScale"                        SMALLINT     NOT NULL DEFAULT 0,
+	"AdministratorEmail"                VARCHAR(50),
+	"AdministratorPhone"                VARCHAR(50),
+	"AdministratorPassword"             BYTEA,
+	"LegalRepresentativeName"           VARCHAR(50)  COLLATE "C.utf8",
+	"LegalRepresentativeGender"         BOOLEAN,
+	"LegalRepresentativeEmail"          VARCHAR(50)  COLLATE "C",
+	"LegalRepresentativeIdentityId"     VARCHAR(50)  COLLATE "C",
+	"LegalRepresentativeIdentityKind"   SMALLINT     NOT NULL DEFAULT 0,
+	"LegalRepresentativeIdentityIssued" DATE,
+	"LegalRepresentativeIdentityExpiry" DATE,
+	"LegalRepresentativeMobilePhone"    VARCHAR(50)  COLLATE "C",
+	"LegalRepresentativeIdentityPath1"  VARCHAR(200) COLLATE "C",
+	"LegalRepresentativeIdentityPath2"  VARCHAR(200) COLLATE "C",
+	"BankCode"                          VARCHAR(50)  COLLATE "C",
+	"BankName"                          VARCHAR(50)  COLLATE "C.utf8",
+	"BankAccountCode"                   VARCHAR(50)  COLLATE "C",
+	"BankAccountSetting"                VARCHAR(500) COLLATE "C.utf8",
+	"PhoneNumber"                       VARCHAR(50)  COLLATE "C",
+	"WebUrl"                            VARCHAR(100) COLLATE "C",
+	"ContactName"                       VARCHAR(50)  COLLATE "C.utf8",
+	"ContactGender"                     BOOLEAN,
+	"ContactEmail"                      VARCHAR(50)  COLLATE "C",
+	"ContactMobilePhone"                VARCHAR(50)  COLLATE "C",
+	"ContactOfficePhone"                VARCHAR(50)  COLLATE "C",
+	"ContactIdentityId"                 VARCHAR(50)  COLLATE "C",
+	"ContactIdentityKind"               SMALLINT     NOT NULL DEFAULT 0,
+	"ContactIdentityIssued"             DATE,
+	"ContactIdentityExpiry"             DATE,
+	"ContactIdentityPath1"              VARCHAR(200) COLLATE "C",
+	"ContactIdentityPath2"              VARCHAR(200) COLLATE "C",
+	"Flags"                             SMALLINT     NOT NULL DEFAULT 0,
+	"Grade"                             SMALLINT     NOT NULL DEFAULT 0,
+	"Status"                            SMALLINT     NOT NULL DEFAULT 0,
+	"StatusTimestamp"                   TIMESTAMP,
+	"StatusDescription"                 VARCHAR(100) COLLATE "C.utf8",
+	"CreatorId"                         INTEGER      NOT NULL,
+	"CreatedTime"                       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"ModifierId"                        INTEGER,
+	"ModifiedTime"                      TIMESTAMP,
+	"Remark"                            VARCHAR(500) COLLATE "C.utf8",
+	PRIMARY KEY ("TenantId")
 );
 
 COMMENT ON TABLE "Tenant" IS '租户表';
@@ -168,78 +168,78 @@ COMMENT ON COLUMN "Tenant"."ModifierId"            IS '修改人编号';
 COMMENT ON COLUMN "Tenant"."ModifiedTime"          IS '修改时间';
 COMMENT ON COLUMN "Tenant"."Remark"                IS '备注说明';
 
-CREATE UNIQUE INDEX "UX_Tenant_TenantNo" ON "Tenant" ("TenantNo");
-CREATE UNIQUE INDEX "UX_Tenant_BusinessLicenseNo" ON "Tenant" ("BusinessLicenseNo");
-CREATE INDEX "IX_Tenant_LegalRepresentativeEmail" ON "Tenant" ("LegalRepresentativeEmail");
-CREATE INDEX "IX_Tenant_LegalRepresentativeIdentityId" ON "Tenant" ("LegalRepresentativeIdentityId");
-CREATE INDEX "IX_Tenant_LegalRepresentativeMobilePhone" ON "Tenant" ("LegalRepresentativeMobilePhone");
-CREATE INDEX "IX_Tenant_ContactEmail" ON "Tenant" ("ContactEmail");
-CREATE INDEX "IX_Tenant_ContactIdentityId" ON "Tenant" ("ContactIdentityId");
-CREATE INDEX "IX_Tenant_ContactMobilePhone" ON "Tenant" ("ContactMobilePhone");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Tenant_TenantNo" ON "Tenant" ("TenantNo");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Tenant_BusinessLicenseNo" ON "Tenant" ("BusinessLicenseNo");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_LegalRepresentativeEmail" ON "Tenant" ("LegalRepresentativeEmail");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_LegalRepresentativeIdentityId" ON "Tenant" ("LegalRepresentativeIdentityId");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_LegalRepresentativeMobilePhone" ON "Tenant" ("LegalRepresentativeMobilePhone");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_ContactEmail" ON "Tenant" ("ContactEmail");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_ContactIdentityId" ON "Tenant" ("ContactIdentityId");
+CREATE INDEX IF NOT EXISTS "IX_Tenant_ContactMobilePhone" ON "Tenant" ("ContactMobilePhone");
 
 
 CREATE TABLE IF NOT EXISTS "Branch"
 (
-    "TenantId"                          INTEGER      NOT NULL,
-    "BranchId"                          INTEGER      NOT NULL,
-    "BranchNo"                          VARCHAR(50)  NOT NULL COLLATE "C",
-    "Name"                              VARCHAR(50)  NOT NULL COLLATE "C.utf8",
-    "Abbr"                              VARCHAR(50)  COLLATE "C.utf8",
-    "Acronym"                           VARCHAR(50)  COLLATE "C",
-    "LogoPath"                          VARCHAR(200) COLLATE "C",
-    "Ordinal"                           SMALLINT     NOT NULL DEFAULT 0,
-    "Country"                           SMALLINT     NOT NULL DEFAULT 0,
-    "Language"                          CHAR(2)      NOT NULL DEFAULT 'zh',
-    "AddressId"                         INTEGER      NOT NULL DEFAULT 0,
-    "AddressDetail"                     VARCHAR(100) COLLATE "C.utf8",
-    "Longitude"                         DOUBLE PRECISION,
-    "Latitude"                          DOUBLE PRECISION,
-    "BusinessLicenseNo"                 VARCHAR(50)  COLLATE "C",
-    "BusinessLicenseKind"               SMALLINT     NOT NULL DEFAULT 0,
-    "BusinessLicenseAuthority"          VARCHAR(50)  COLLATE "C.utf8",
-    "BusinessLicensePhotoPath"          VARCHAR(200) COLLATE "C",
-    "BusinessLicenseIssueDate"          DATE,
-    "BusinessLicenseExpiryDate"         DATE,
-    "BusinessLicenseDescription"        VARCHAR(500) COLLATE "C.utf8",
-    "RegisteredCapital"                 SMALLINT,
-    "RegisteredAddress"                 VARCHAR(100) COLLATE "C.utf8",
-    "StaffScale"                        SMALLINT     NOT NULL DEFAULT 0,
-    "LegalRepresentativeName"           VARCHAR(50)  COLLATE "C.utf8",
-    "LegalRepresentativeGender"         BOOLEAN,
-    "LegalRepresentativeEmail"          VARCHAR(50)  COLLATE "C",
-    "LegalRepresentativeIdentityId"     VARCHAR(50)  COLLATE "C",
-    "LegalRepresentativeIdentityKind"   SMALLINT     NOT NULL DEFAULT 0,
-    "LegalRepresentativeIdentityIssued" DATE,
-    "LegalRepresentativeIdentityExpiry" DATE,
-    "LegalRepresentativeMobilePhone"    VARCHAR(50)  COLLATE "C",
-    "LegalRepresentativeIdentityPath1"  VARCHAR(200) COLLATE "C",
-    "LegalRepresentativeIdentityPath2"  VARCHAR(200) COLLATE "C",
-    "BankCode"                          VARCHAR(50)  COLLATE "C",
-    "BankName"                          VARCHAR(50)  COLLATE "C.utf8",
-    "BankAccountCode"                   VARCHAR(50)  COLLATE "C",
-    "BankAccountSetting"                VARCHAR(500) COLLATE "C.utf8",
-    "PhoneNumber"                       VARCHAR(50)  COLLATE "C",
-    "PrincipalId"                       INTEGER,
-    "ContactName"                       VARCHAR(50)  COLLATE "C.utf8",
-    "ContactGender"                     BOOLEAN,
-    "ContactEmail"                      VARCHAR(50)  COLLATE "C",
-    "ContactMobilePhone"                VARCHAR(50)  COLLATE "C",
-    "ContactOfficePhone"                VARCHAR(50)  COLLATE "C",
-    "ContactIdentityId"                 VARCHAR(50)  COLLATE "C",
-    "ContactIdentityKind"               SMALLINT     NOT NULL DEFAULT 0,
-    "ContactIdentityIssued"             DATE,
-    "ContactIdentityExpiry"             DATE,
-    "ContactIdentityPath1"              VARCHAR(200) COLLATE "C",
-    "ContactIdentityPath2"              VARCHAR(200) COLLATE "C",
-    "Status"                            SMALLINT     NOT NULL DEFAULT 0,
-    "StatusTimestamp"                   TIMESTAMP,
-    "StatusDescription"                 VARCHAR(100) COLLATE "C.utf8",
-    "CreatorId"                         INTEGER      NOT NULL,
-    "CreatedTime"                       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "ModifierId"                        INTEGER,
-    "ModifiedTime"                      TIMESTAMP,
-    "Remark"                            VARCHAR(500) COLLATE "C.utf8",
-    PRIMARY KEY ("TenantId", "BranchId")
+	"TenantId"                          INTEGER      NOT NULL,
+	"BranchId"                          INTEGER      NOT NULL,
+	"BranchNo"                          VARCHAR(50)  NOT NULL COLLATE "C",
+	"Name"                              VARCHAR(50)  NOT NULL COLLATE "C.utf8",
+	"Abbr"                              VARCHAR(50)  COLLATE "C.utf8",
+	"Acronym"                           VARCHAR(50)  COLLATE "C",
+	"LogoPath"                          VARCHAR(200) COLLATE "C",
+	"Ordinal"                           SMALLINT     NOT NULL DEFAULT 0,
+	"Country"                           SMALLINT     NOT NULL DEFAULT 0,
+	"Language"                          CHAR(2)      NOT NULL DEFAULT 'zh',
+	"AddressId"                         INTEGER      NOT NULL DEFAULT 0,
+	"AddressDetail"                     VARCHAR(100) COLLATE "C.utf8",
+	"Longitude"                         DOUBLE PRECISION,
+	"Latitude"                          DOUBLE PRECISION,
+	"BusinessLicenseNo"                 VARCHAR(50)  COLLATE "C",
+	"BusinessLicenseKind"               SMALLINT     NOT NULL DEFAULT 0,
+	"BusinessLicenseAuthority"          VARCHAR(50)  COLLATE "C.utf8",
+	"BusinessLicensePhotoPath"          VARCHAR(200) COLLATE "C",
+	"BusinessLicenseIssueDate"          DATE,
+	"BusinessLicenseExpiryDate"         DATE,
+	"BusinessLicenseDescription"        VARCHAR(500) COLLATE "C.utf8",
+	"RegisteredCapital"                 SMALLINT,
+	"RegisteredAddress"                 VARCHAR(100) COLLATE "C.utf8",
+	"StaffScale"                        SMALLINT     NOT NULL DEFAULT 0,
+	"LegalRepresentativeName"           VARCHAR(50)  COLLATE "C.utf8",
+	"LegalRepresentativeGender"         BOOLEAN,
+	"LegalRepresentativeEmail"          VARCHAR(50)  COLLATE "C",
+	"LegalRepresentativeIdentityId"     VARCHAR(50)  COLLATE "C",
+	"LegalRepresentativeIdentityKind"   SMALLINT     NOT NULL DEFAULT 0,
+	"LegalRepresentativeIdentityIssued" DATE,
+	"LegalRepresentativeIdentityExpiry" DATE,
+	"LegalRepresentativeMobilePhone"    VARCHAR(50)  COLLATE "C",
+	"LegalRepresentativeIdentityPath1"  VARCHAR(200) COLLATE "C",
+	"LegalRepresentativeIdentityPath2"  VARCHAR(200) COLLATE "C",
+	"BankCode"                          VARCHAR(50)  COLLATE "C",
+	"BankName"                          VARCHAR(50)  COLLATE "C.utf8",
+	"BankAccountCode"                   VARCHAR(50)  COLLATE "C",
+	"BankAccountSetting"                VARCHAR(500) COLLATE "C.utf8",
+	"PhoneNumber"                       VARCHAR(50)  COLLATE "C",
+	"PrincipalId"                       INTEGER,
+	"ContactName"                       VARCHAR(50)  COLLATE "C.utf8",
+	"ContactGender"                     BOOLEAN,
+	"ContactEmail"                      VARCHAR(50)  COLLATE "C",
+	"ContactMobilePhone"                VARCHAR(50)  COLLATE "C",
+	"ContactOfficePhone"                VARCHAR(50)  COLLATE "C",
+	"ContactIdentityId"                 VARCHAR(50)  COLLATE "C",
+	"ContactIdentityKind"               SMALLINT     NOT NULL DEFAULT 0,
+	"ContactIdentityIssued"             DATE,
+	"ContactIdentityExpiry"             DATE,
+	"ContactIdentityPath1"              VARCHAR(200) COLLATE "C",
+	"ContactIdentityPath2"              VARCHAR(200) COLLATE "C",
+	"Status"                            SMALLINT     NOT NULL DEFAULT 0,
+	"StatusTimestamp"                   TIMESTAMP,
+	"StatusDescription"                 VARCHAR(100) COLLATE "C.utf8",
+	"CreatorId"                         INTEGER      NOT NULL,
+	"CreatedTime"                       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"ModifierId"                        INTEGER,
+	"ModifiedTime"                      TIMESTAMP,
+	"Remark"                            VARCHAR(500) COLLATE "C.utf8",
+	PRIMARY KEY ("TenantId", "BranchId")
 );
 
 COMMENT ON TABLE "Branch" IS '分支机构表';
@@ -303,17 +303,17 @@ COMMENT ON COLUMN "Branch"."ModifierId"            IS '修改人编号';
 COMMENT ON COLUMN "Branch"."ModifiedTime"          IS '修改时间';
 COMMENT ON COLUMN "Branch"."Remark"                IS '备注说明';
 
-CREATE UNIQUE INDEX "UX_Branch_BranchNo" ON "Branch" ("TenantId", "BranchNo");
-CREATE UNIQUE INDEX "UX_Branch_BusinessLicenseNo" ON "Branch" ("TenantId", "BusinessLicenseNo");
-CREATE INDEX "IX_Branch_Ordinal" ON "Branch" ("TenantId", "Ordinal");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Branch_BranchNo" ON "Branch" ("TenantId", "BranchNo");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Branch_BusinessLicenseNo" ON "Branch" ("TenantId", "BusinessLicenseNo");
+CREATE INDEX IF NOT EXISTS "IX_Branch_Ordinal" ON "Branch" ("TenantId", "Ordinal");
 
 
 CREATE TABLE IF NOT EXISTS "BranchMember"
 (
-    "TenantId" integer NOT NULL,
-    "BranchId" integer NOT NULL,
-    "UserId"   integer NOT NULL,
-    PRIMARY KEY ("TenantId", "BranchId", "UserId")
+	"TenantId" INTEGER NOT NULL,
+	"BranchId" INTEGER NOT NULL,
+	"UserId"   INTEGER NOT NULL,
+	PRIMARY KEY ("TenantId", "BranchId", "UserId")
 );
 
 COMMENT ON TABLE "BranchMember" IS '分支机构成员表';
@@ -326,21 +326,21 @@ CREATE INDEX IF NOT EXISTS "IX_BranchMember_User" ON "BranchMember" ("TenantId",
 
 CREATE TABLE IF NOT EXISTS "Department"
 (
-    "TenantId" integer         NOT NULL,
-    "BranchId" integer         NOT NULL,
-    "DepartmentId" smallint    NOT NULL,
-    "ParentId" smallint        NOT NULL,
-    "DepartmentNo" varchar(50) NOT NULL COLLATE "C",
-    "Name" varchar(50)         NOT NULL COLLATE "C.utf8",
-    "Acronym" varchar(50)      COLLATE "C",
-    "Icon" varchar(100)        COLLATE "C.utf8",
-    "PrincipalId" integer,
-    "PhoneNumber" varchar(50)  COLLATE "C",
-    "Address" varchar(100)     COLLATE "C.utf8",
-    "Ordinal" smallint         NOT NULL DEFAULT 0,
-    "Remark" varchar(500)      COLLATE "C.utf8",
-    PRIMARY KEY ("TenantId", "BranchId", "DepartmentId"),
-    CONSTRAINT "UX_DepartmentNo" UNIQUE ("TenantId", "BranchId", "DepartmentNo")
+	"TenantId"     INTEGER      NOT NULL,
+	"BranchId"     INTEGER      NOT NULL,
+	"DepartmentId" SMALLINT     NOT NULL,
+	"ParentId"     SMALLINT     NOT NULL,
+	"DepartmentNo" VARCHAR(50)  NOT NULL COLLATE "C",
+	"Name"         VARCHAR(50)  NOT NULL COLLATE "C.utf8",
+	"Acronym"      VARCHAR(50)  COLLATE "C",
+	"Icon"         VARCHAR(100) COLLATE "C.utf8",
+	"PrincipalId"  INTEGER,
+	"PhoneNumber"  VARCHAR(50)  COLLATE "C",
+	"Address"      VARCHAR(100) COLLATE "C.utf8",
+	"Ordinal"      SMALLINT     NOT NULL DEFAULT 0,
+	"Remark"       VARCHAR(500) COLLATE "C.utf8",
+	PRIMARY KEY ("TenantId", "BranchId", "DepartmentId"),
+	CONSTRAINT "UX_DepartmentNo" UNIQUE ("TenantId", "BranchId", "DepartmentNo")
 );
 
 COMMENT ON TABLE "Department" IS '部门表';
@@ -363,11 +363,11 @@ CREATE INDEX IF NOT EXISTS "IX_Department_Ordinal" ON "Department" ("TenantId", 
 
 CREATE TABLE IF NOT EXISTS "DepartmentMember"
 (
-    "TenantId" integer      NOT NULL,
-    "BranchId" integer      NOT NULL,
-    "DepartmentId" smallint NOT NULL,
-    "UserId" integer        NOT NULL,
-    PRIMARY KEY ("TenantId", "BranchId", "DepartmentId", "UserId")
+	"TenantId"     INTEGER  NOT NULL,
+	"BranchId"     INTEGER  NOT NULL,
+	"DepartmentId" SMALLINT NOT NULL,
+	"UserId"       INTEGER  NOT NULL,
+	PRIMARY KEY ("TenantId", "BranchId", "DepartmentId", "UserId")
 );
 
 COMMENT ON TABLE "DepartmentMember" IS '部门成员表';
@@ -381,20 +381,20 @@ CREATE INDEX IF NOT EXISTS "IX_DepartmentMember_UserId" ON "DepartmentMember" ("
 
 CREATE TABLE IF NOT EXISTS "Team"
 (
-    "TenantId" integer      NOT NULL,
-    "BranchId" integer      NOT NULL,
-    "TeamId" smallint       NOT NULL,
-    "TeamNo" varchar(50)    COLLATE "C" NOT NULL,
-    "Name" varchar(50)      COLLATE "C.utf8" NOT NULL,
-    "Acronym" varchar(50)   COLLATE "C" NULL,
-    "Icon" varchar(100)     COLLATE "C.utf8" NULL,
-    "LeaderId" integer      NULL,
-    "DepartmentId" smallint NULL,
-    "Visible" boolean       NOT NULL DEFAULT true,
-    "Ordinal" smallint      NOT NULL DEFAULT 0,
-    "Remark" varchar(500)   COLLATE "C.utf8" NULL,
-    PRIMARY KEY ("TenantId", "BranchId", "TeamId"),
-    CONSTRAINT "UX_TeamNo" UNIQUE ("TenantId", "BranchId", "TeamNo")
+	"TenantId"     INTEGER      NOT NULL,
+	"BranchId"     INTEGER      NOT NULL,
+	"TeamId"       SMALLINT     NOT NULL,
+	"TeamNo"       VARCHAR(50)  COLLATE "C" NOT NULL,
+	"Name"         VARCHAR(50)  COLLATE "C.utf8" NOT NULL,
+	"Acronym"      VARCHAR(50)  COLLATE "C" NULL,
+	"Icon"         VARCHAR(100) COLLATE "C.utf8" NULL,
+	"LeaderId"     INTEGER      NULL,
+	"DepartmentId" SMALLINT     NULL,
+	"Visible"      BOOLEAN      NOT NULL DEFAULT true,
+	"Ordinal"      SMALLINT     NOT NULL DEFAULT 0,
+	"Remark"       VARCHAR(500) COLLATE "C.utf8" NULL,
+	PRIMARY KEY ("TenantId", "BranchId", "TeamId"),
+	CONSTRAINT "UX_TeamNo" UNIQUE ("TenantId", "BranchId", "TeamNo")
 );
 
 COMMENT ON TABLE "Team" IS '班组表';
@@ -416,11 +416,11 @@ CREATE INDEX IF NOT EXISTS "IX_Team_Ordinal" ON "Team" ("TenantId", "BranchId", 
 
 CREATE TABLE IF NOT EXISTS "TeamMember"
 (
-    "TenantId" integer  NOT NULL,
-    "BranchId" integer  NOT NULL,
-    "TeamId"   smallint NOT NULL,
-    "UserId"   integer  NOT NULL,
-    PRIMARY KEY ("TenantId", "BranchId", "TeamId", "UserId")
+	"TenantId" INTEGER  NOT NULL,
+	"BranchId" INTEGER  NOT NULL,
+	"TeamId"   SMALLINT NOT NULL,
+	"UserId"   INTEGER  NOT NULL,
+	PRIMARY KEY ("TenantId", "BranchId", "TeamId", "UserId")
 );
 
 COMMENT ON TABLE "TeamMember" IS '班组成员表';
@@ -478,12 +478,12 @@ CREATE TABLE IF NOT EXISTS "Employee"
 	PRIMARY KEY ("TenantId", "UserId")
 );
 
-CREATE UNIQUE INDEX "UX_Employee_EmployeeNo" ON "Employee" ("TenantId", "EmployeeNo");
-CREATE UNIQUE INDEX "UX_Employee_IdentityId" ON "Employee" ("TenantId", "IdentityId");
-CREATE INDEX "IX_Employee_Birthdate" ON "Employee" ("TenantId", "Birthdate");
-CREATE INDEX "IX_Employee_EmployeeCode" ON "Employee" ("TenantId", "EmployeeCode");
-CREATE INDEX "IX_Employee_BranchId" ON "Employee" ("UserId", "TenantId", "BranchId");
-CREATE INDEX "IX_Employee_FullName" ON "Employee" ("TenantId", "FullName");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Employee_EmployeeNo" ON "Employee" ("TenantId", "EmployeeNo");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Employee_IdentityId" ON "Employee" ("TenantId", "IdentityId");
+CREATE INDEX IF NOT EXISTS "IX_Employee_Birthdate" ON "Employee" ("TenantId", "Birthdate");
+CREATE INDEX IF NOT EXISTS "IX_Employee_EmployeeCode" ON "Employee" ("TenantId", "EmployeeCode");
+CREATE INDEX IF NOT EXISTS "IX_Employee_BranchId" ON "Employee" ("UserId", "TenantId", "BranchId");
+CREATE INDEX IF NOT EXISTS "IX_Employee_FullName" ON "Employee" ("TenantId", "FullName");
 
 COMMENT ON TABLE "Employee" IS '员工表';
 COMMENT ON COLUMN "Employee"."TenantId"            IS '主键，租户编号';
@@ -529,15 +529,16 @@ COMMENT ON COLUMN "Employee"."ModifiedTime"        IS '修改时间';
 COMMENT ON COLUMN "Employee"."Remark"              IS '备注说明';
 
 
-CREATE TABLE IF NOT EXISTS "Security_Role" (
-    "RoleId"      int          NOT NULL,
-    "Namespace"   varchar(50)  NULL     COLLATE "C",
-    "Name"        varchar(50)  NOT NULL COLLATE "C.utf8",
-    "Avatar"      varchar(100) NULL     COLLATE "C.utf8",
-    "Enabled"     boolean      NOT NULL DEFAULT true,
-    "Nickname"    varchar(50)  NULL     COLLATE "C.utf8",
-    "Description" varchar(500) NULL     COLLATE "C.utf8",
-    PRIMARY KEY ("RoleId")
+CREATE TABLE IF NOT EXISTS "Security_Role"
+(
+	"RoleId"      INT          NOT NULL,
+	"Namespace"   VARCHAR(50)  NULL     COLLATE "C",
+	"Name"        VARCHAR(50)  NOT NULL COLLATE "C.utf8",
+	"Avatar"      VARCHAR(100) NULL     COLLATE "C.utf8",
+	"Enabled"     BOOLEAN      NOT NULL DEFAULT true,
+	"Nickname"    VARCHAR(50)  NULL     COLLATE "C.utf8",
+	"Description" VARCHAR(500) NULL     COLLATE "C.utf8",
+	PRIMARY KEY ("RoleId")
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_Role_Name" ON "Security_Role" ("Namespace", "Name");
@@ -552,23 +553,24 @@ COMMENT ON COLUMN "Security_Role"."Nickname"    IS '角色昵称';
 COMMENT ON COLUMN "Security_Role"."Description" IS '描述信息';
 
 
-CREATE TABLE IF NOT EXISTS "Security_User" (
-    "UserId"            int          NOT NULL,
-    "Namespace"         varchar(50)  NULL     COLLATE "C",
-    "Name"              varchar(50)  NOT NULL COLLATE "C.utf8",
-    "Avatar"            varchar(100) NULL     COLLATE "C.utf8",
-    "Nickname"          varchar(50)  NULL     COLLATE "C.utf8",
-    "Password"          bytea        NULL,
-    "Email"             varchar(50)  NULL     COLLATE "C",
-    "Phone"             varchar(50)  NULL     COLLATE "C",
-    "Gender"            boolean      NULL,
-    "Enabled"           boolean      NOT NULL DEFAULT true,
-    "PasswordQuestion"  varchar(200) NULL     COLLATE "C.utf8",
-    "PasswordAnswer"    bytea        NULL,
-    "Creation"          timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "Modification"      timestamp    NULL,
-    "Description"       varchar(500) NULL     COLLATE "C.utf8",
-    PRIMARY KEY ("UserId")
+CREATE TABLE IF NOT EXISTS "Security_User"
+(
+	"UserId"            INT          NOT NULL,
+	"Namespace"         VARCHAR(50)  NULL     COLLATE "C",
+	"Name"              VARCHAR(50)  NOT NULL COLLATE "C.utf8",
+	"Avatar"            VARCHAR(100) NULL     COLLATE "C.utf8",
+	"Nickname"          VARCHAR(50)  NULL     COLLATE "C.utf8",
+	"Password"          BYTEA        NULL,
+	"Email"             VARCHAR(50)  NULL     COLLATE "C",
+	"Phone"             VARCHAR(50)  NULL     COLLATE "C",
+	"Gender"            BOOLEAN      NULL,
+	"Enabled"           BOOLEAN      NOT NULL DEFAULT true,
+	"PasswordQuestion"  VARCHAR(200) NULL     COLLATE "C.utf8",
+	"PasswordAnswer"    BYTEA        NULL,
+	"Creation"          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"Modification"      TIMESTAMP    NULL,
+	"Description"       VARCHAR(500) NULL     COLLATE "C.utf8",
+	PRIMARY KEY ("UserId")
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_User_Name" ON "Security_User" ("Namespace", "Name");
@@ -592,11 +594,12 @@ COMMENT ON COLUMN "Security_User"."Creation"         IS '创建时间';
 COMMENT ON COLUMN "Security_User"."Modification"     IS '修改时间';
 COMMENT ON COLUMN "Security_User"."Description"      IS '描述信息';
 
-CREATE TABLE IF NOT EXISTS "Security_Member" (
-    "RoleId"     int      NOT NULL,
-    "MemberId"   int      NOT NULL,
-    "MemberType" smallint NOT NULL,
-    PRIMARY KEY ("RoleId", "MemberId", "MemberType")
+CREATE TABLE IF NOT EXISTS "Security_Member"
+(
+	"RoleId"     INT      NOT NULL,
+	"MemberId"   INT      NOT NULL,
+	"MemberType" SMALLINT NOT NULL,
+	PRIMARY KEY ("RoleId", "MemberId", "MemberType")
 );
 
 COMMENT ON TABLE "Security_Member" IS '角色成员表';
@@ -606,10 +609,10 @@ COMMENT ON COLUMN "Security_Member"."MemberType" IS '主键，成员类型';
 
 /* 添加系统内置角色 */
 INSERT INTO "Security_Role" ("RoleId", "Name", "Nickname", "Description") VALUES
-    (1, 'Administrators', '系统管理', '系统管理角色(系统内置角色)'),
-    (2, 'Security', '安全管理', '安全管理角色(系统内置角色)');
+	(1, 'Administrators', '系统管理', '系统管理角色(系统内置角色)'),
+	(2, 'Security', '安全管理', '安全管理角色(系统内置角色)');
 
 /* 添加系统内置用户 */
 INSERT INTO "Security_User" ("UserId", "Name", "Nickname", "Description") VALUES
-    (1, 'Administrator', '系统管理员', '系统管理员(系统内置帐号)'),
-    (2, 'Guest', '来宾', '来宾');
+	(1, 'Administrator', '系统管理员', '系统管理员(系统内置帐号)'),
+	(2, 'Guest', '来宾', '来宾');

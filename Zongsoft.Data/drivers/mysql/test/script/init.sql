@@ -282,7 +282,8 @@ CREATE TABLE IF NOT EXISTS `Employee`
 	INDEX `IX_FullName` (`TenantId`, `FullName`)
 ) ENGINE=InnoDB COMMENT '员工表';
 
-CREATE TABLE IF NOT EXISTS `Security_Role` (
+CREATE TABLE IF NOT EXISTS `Security_Role`
+(
 	`RoleId`      int unsigned NOT NULL COMMENT '主键，角色编号',
 	`Namespace`   varchar(50)  NULL     COMMENT '命名空间，表示应用或组织机构的标识' COLLATE 'ascii_general_ci',
 	`Name`        varchar(50)  NOT NULL COMMENT '角色名称，所属命名空间内具有唯一性' COLLATE 'utf8mb4_0900_ai_ci',
@@ -294,7 +295,8 @@ CREATE TABLE IF NOT EXISTS `Security_Role` (
 	UNIQUE INDEX `UX_Security_Role_Name` (`Namespace`, `Name`)
 ) ENGINE = InnoDB COMMENT='角色表';
 
-CREATE TABLE IF NOT EXISTS `Security_User` (
+CREATE TABLE IF NOT EXISTS `Security_User`
+(
 	`UserId`            int unsigned     NOT NULL COMMENT '主键，用户编号',
 	`Namespace`         varchar(50)      NULL     COMMENT '命名空间，表示应用或组织机构的标识' COLLATE 'ascii_general_ci',
 	`Name`              varchar(50)      NOT NULL COMMENT '用户名称，所属命名空间内具有唯一性' COLLATE 'utf8mb4_0900_ai_ci',
@@ -316,7 +318,8 @@ CREATE TABLE IF NOT EXISTS `Security_User` (
 	UNIQUE INDEX `UX_Security_User_Phone` (`Namespace`, `Phone`)
 ) ENGINE = InnoDB COMMENT='用户表';
 
-CREATE TABLE IF NOT EXISTS `Security_Member` (
+CREATE TABLE IF NOT EXISTS `Security_Member`
+(
 	`RoleId`     int unsigned     NOT NULL COMMENT '主键，角色编号',
 	`MemberId`   int unsigned     NOT NULL COMMENT '主键，成员编号',
 	`MemberType` tinyint unsigned NOT NULL COMMENT '主键，成员类型',
@@ -329,11 +332,11 @@ INSERT IGNORE INTO Tenant
 	(1, 'Zongsoft', 'Zongsoft', 'Zongsoft Studio', 'ZS', 'http://zongsoft.com', 1, '2025-12-05');
 
 /* 添加系统内置角色 */
-INSERT INTO Security_Role (`RoleId`, `Name`, `Nickname`, `Description`) VALUES
+INSERT IGNORE INTO Security_Role (`RoleId`, `Name`, `Nickname`, `Description`) VALUES
 	(1, 'Administrators', '系统管理', '系统管理角色(系统内置角色)'),
 	(2, 'Security', '安全管理', '安全管理角色(系统内置角色)');
 
 /* 添加系统内置用户 */
-INSERT INTO Security_User (`UserId`, `Name`, `Nickname`, `Description`) VALUES
+INSERT IGNORE INTO Security_User (`UserId`, `Name`, `Nickname`, `Description`) VALUES
 	(1, 'Administrator', '系统管理员', '系统管理员(系统内置帐号)'),
 	(2, 'Guest', '来宾', '来宾');
