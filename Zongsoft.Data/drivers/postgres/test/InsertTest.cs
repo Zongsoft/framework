@@ -196,6 +196,9 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			model.FullName = "Unnamed";
 		});
 
+		//必须先释放掉枚举器，否则会因为占用连接而导致后续的插入操作失败
+		await enumerator.DisposeAsync();
+
 		count = await accessor.InsertAsync(model, $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.SuppressSequence());
 		Assert.Equal(1, count);
 		Assert.True(await accessor.ExistsAsync<Employee>(
@@ -255,6 +258,9 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(10U, members[1].RoleId);
 		Assert.Equal(404U, members[1].MemberId);
 		Assert.Equal(MemberType.Role, members[1].MemberType);
+
+		//必须先释放掉枚举器，否则会因为占用连接而导致后续的插入操作失败
+		await enumerator.DisposeAsync();
 
 		model = Model.Build<RoleModel>(model => {
 			model.RoleId = 11;

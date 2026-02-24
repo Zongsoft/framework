@@ -130,6 +130,9 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal("Popeye", employee.User.Name);
 		Assert.Equal("Popeye Zhong", employee.User.Nickname);
 
+		//必须先释放掉枚举器，否则会因为占用连接而导致后续的插入操作失败
+		await enumerator.DisposeAsync();
+
 		model = Model.Build<Employee>(model => {
 			model.TenantId = 1;
 			model.BranchId = 0;
@@ -196,6 +199,9 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(10U, members[1].RoleId);
 		Assert.Equal(404U, members[1].MemberId);
 		Assert.Equal(MemberType.Role, members[1].MemberType);
+
+		//必须先释放掉枚举器，否则会因为占用连接而导致后续的插入操作失败
+		await enumerator.DisposeAsync();
 
 		model = Model.Build<RoleModel>(model => {
 			model.RoleId = 11;
