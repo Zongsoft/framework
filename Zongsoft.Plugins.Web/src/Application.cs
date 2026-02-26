@@ -39,7 +39,7 @@ namespace Zongsoft.Web;
 
 public static class Application
 {
-#if NET7_0_OR_GREATER
+	#if NET7_0_OR_GREATER
 	public static WebApplication Web(Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => Web(null, null, configure);
 	public static WebApplication Web(string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => Web(null, args, configure);
 	public static WebApplication Web(string name, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => Web(name, null, configure);
@@ -80,7 +80,7 @@ public static class Application
 
 		return app;
 	}
-#else
+	#else
 	public static IHost Web(Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(null, null, null, applicate);
 	public static IHost Web(string[] args, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(null, args, null, applicate);
 	public static IHost Web(Action<IHostBuilder> configure, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(null, null, configure, applicate);
@@ -137,5 +137,5 @@ public static class Application
 			}));
 		}
 	}
-#endif
+	#endif
 }
