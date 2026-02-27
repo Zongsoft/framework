@@ -2,5 +2,7 @@ artifacts/Zongsoft.Web.Grpc.plugin
 lib/$(Framework)/Zongsoft.Web.Grpc.*
 lib/$(Framework)/*/Zongsoft.Web.Grpc.resources.*
 
-nuget:Grpc.AspNetCore.Server@2.71.0
-nuget:Grpc.AspNetCore.Server.Reflection@2.71.0
+nuget:Grpc.Core.Api@2.76.0
+nuget:Grpc.Net.Common@2.76.0
+nuget:Grpc.AspNetCore.Server@2.76.0
+nuget:Grpc.AspNetCore.Server.Reflection@2.76.0

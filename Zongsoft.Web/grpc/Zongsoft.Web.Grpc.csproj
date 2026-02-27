@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.1.0</Version>
+		<Version>1.2.0</Version>
 		<Product>Zongsoft gRPC for Web Library</Product>
 		<Description>This is a class library that provides gRPC service infrastructure.</Description>
 		<RootNamespace>Zongsoft.Web.Grpc</RootNamespace>
@@ -13,8 +13,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Grpc.AspNetCore.Server" VersionOverride="2.71.0" />
-		<PackageReference Include="Grpc.AspNetCore.Server.Reflection" VersionOverride="2.71.0" />
+		<PackageReference Include="Grpc.AspNetCore.Server" VersionOverride="2.76.0" />
+		<PackageReference Include="Grpc.AspNetCore.Server.Reflection" VersionOverride="2.76.0" />
 	</ItemGroup>
 
 	<Choose>

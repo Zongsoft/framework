@@ -5,4 +5,4 @@ lib/$(Framework)/*/Zongsoft.Diagnostics.Protocols.Client.resources.*
 nuget:Grpc.Core.Api@2.76.0
 nuget:Grpc.Net.Common@2.76.0
 nuget:Grpc.Net.Client@2.76.0
-nuget:Google.Protobuf@3.33.3
+nuget:Google.Protobuf@3.34.0
