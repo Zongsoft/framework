@@ -39,73 +39,72 @@ using System.Collections.Concurrent;
 
 using Pipelines.Sockets.Unofficial;
 
-namespace Zongsoft.Net
+namespace Zongsoft.Net;
+
+public class TcpServerChannelManager<T> : SocketServer, IReadOnlyCollection<TcpServerChannel<T>>
 {
-	public class TcpServerChannelManager<T> : SocketServer, IReadOnlyCollection<TcpServerChannel<T>>
+	#region 成员字段
+	private readonly ConcurrentBag<TcpServerChannel<T>> _channels;
+	#endregion
+
+	#region 构造函数
+	public TcpServerChannelManager(TcpServer<T> server)
 	{
-		#region 成员字段
-		private readonly ConcurrentBag<TcpServerChannel<T>> _channels;
-		#endregion
-
-		#region 构造函数
-		public TcpServerChannelManager(TcpServer<T> server)
-		{
-			this.Server = server ?? throw new ArgumentNullException(nameof(server));
-			_channels = new ConcurrentBag<TcpServerChannel<T>>();
-		}
-		#endregion
-
-		#region 公共属性
-		public TcpServer<T> Server { get; }
-		public int Count => _channels.Count;
-		#endregion
-
-		#region 连接受理
-		protected override Task OnClientConnectedAsync(in ClientConnection client)
-		{
-			var channel = this.Server.CreateChannel(client.Transport, client.RemoteEndPoint as IPEndPoint);
-			return channel.ReceiveAsync(CancellationToken.None);
-		}
-		#endregion
-
-		#region 数据处理
-		internal void Pack(PipeWriter writer, in T package) => this.Server.Packetizer.Pack(writer, package);
-		internal bool Unpack(ref ReadOnlySequence<byte> data, out T package) => this.Server.Packetizer.Unpack(ref data, out package);
-		internal ValueTask HandleAsync(TcpServerChannel<T> channel, in T package, CancellationToken cancellation) => this.Server.Handler?.HandleAsync(package, cancellation) ?? ValueTask.FromCanceled(cancellation);
-		#endregion
-
-		#region 内部方法
-		internal void Add(TcpServerChannel<T> channel) { if(channel != null) _channels.Add(channel); }
-		internal bool Remove(TcpServerChannel<T> channel) => channel != null && _channels.TryTake(out _);
-		#endregion
-
-		#region 枚举遍历
-		public IEnumerator<TcpServerChannel<T>> GetEnumerator() => _channels.GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => _channels.GetEnumerator();
-		#endregion
-
-		#region 处置方法
-		protected override void Dispose(bool disposing)
-		{
-			while(_channels.TryTake(out var channel))
-			{
-				DisposeAsync(channel);
-			}
-
-			base.Dispose(disposing);
-
-			static async void DisposeAsync(TcpServerChannel<T> channel)
-			{
-				if(channel == null || channel.IsDisposed)
-					return;
-
-				try
-				{
-					await channel.DisposeAsync();
-				}
-				catch { }
-			}
-		}
-		#endregion
+		this.Server = server ?? throw new ArgumentNullException(nameof(server));
+		_channels = new ConcurrentBag<TcpServerChannel<T>>();
 	}
+	#endregion
+
+	#region 公共属性
+	public TcpServer<T> Server { get; }
+	public int Count => _channels.Count;
+	#endregion
+
+	#region 连接受理
+	protected override Task OnClientConnectedAsync(in ClientConnection client)
+	{
+		var channel = this.Server.CreateChannel(client.Transport, client.RemoteEndPoint as IPEndPoint);
+		return channel.ReceiveAsync(CancellationToken.None);
+	}
+	#endregion
+
+	#region 数据处理
+	internal void Pack(PipeWriter writer, in T package) => this.Server.Packetizer.Pack(writer, package);
+	internal bool Unpack(ref ReadOnlySequence<byte> data, out T package) => this.Server.Packetizer.Unpack(ref data, out package);
+	internal ValueTask HandleAsync(TcpServerChannel<T> channel, in T package, CancellationToken cancellation) => this.Server.Handler?.HandleAsync(package, cancellation) ?? ValueTask.FromCanceled(cancellation);
+	#endregion
+
+	#region 内部方法
+	internal void Add(TcpServerChannel<T> channel) { if(channel != null) _channels.Add(channel); }
+	internal bool Remove(TcpServerChannel<T> channel) => channel != null && _channels.TryTake(out _);
+	#endregion
+
+	#region 枚举遍历
+	public IEnumerator<TcpServerChannel<T>> GetEnumerator() => _channels.GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => _channels.GetEnumerator();
+	#endregion
+
+	#region 处置方法
+	protected override void Dispose(bool disposing)
+	{
+		while(_channels.TryTake(out var channel))
+		{
+			DisposeAsync(channel);
+		}
+
+		base.Dispose(disposing);
+
+		static async void DisposeAsync(TcpServerChannel<T> channel)
+		{
+			if(channel == null || channel.IsDisposed)
+				return;
+
+			try
+			{
+				await channel.DisposeAsync();
+			}
+			catch { }
+		}
+	}
+	#endregion
 }

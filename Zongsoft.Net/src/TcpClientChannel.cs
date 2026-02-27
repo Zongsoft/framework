@@ -36,57 +36,56 @@ using System.Threading.Tasks;
 
 using Pipelines.Sockets.Unofficial;
 
-namespace Zongsoft.Net
+namespace Zongsoft.Net;
+
+public class TcpClientChannel<T> : TcpChannelBase<T>
 {
-	public class TcpClientChannel<T> : TcpChannelBase<T>
+	#region 成员字段
+	private readonly TcpClient<T> _client;
+	#endregion
+
+	#region 构造函数
+	public TcpClientChannel(TcpClient<T> client, SocketConnection connection, EndPoint address) : base(connection, address)
 	{
-		#region 成员字段
-		private readonly TcpClient<T> _client;
-		#endregion
+		_client = client ?? throw new ArgumentNullException(nameof(client));
 
-		#region 构造函数
-		public TcpClientChannel(TcpClient<T> client, SocketConnection connection, EndPoint address) : base(connection, address)
-		{
-			_client = client ?? throw new ArgumentNullException(nameof(client));
-
-			this.ReceiveAsync()
-				.ContinueWith(task => GC.KeepAlive(task.Exception), TaskContinuationOptions.OnlyOnFaulted);
-		}
-		#endregion
-
-		#region 公共属性
-		public TcpClient<T> Client => _client;
-		#endregion
-
-		#region 协议解析
-		protected override void Pack(PipeWriter writer, in T package) => _client.Packetizer.Pack(writer, package);
-		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package) => _client.Packetizer.Unpack(ref data, out package);
-		#endregion
-
-		#region 接收数据
-		protected sealed override ValueTask OnReceiveAsync(in T package)
-		{
-			static void DisposeOnCompletion(ValueTask task, in T message)
-			{
-				if(message is IDisposable)
-					task.AsTask().ContinueWith((t, m) => ((IDisposable)m)?.Dispose(), message);
-			}
-
-			try
-			{
-				var pendingAction = _client.OnHandleAsync(package, CancellationToken.None);
-
-				if(!pendingAction.IsCompletedSuccessfully)
-					DisposeOnCompletion(pendingAction, in package);
-			}
-			finally
-			{
-				if(package is IDisposable disposable)
-					disposable.Dispose();
-			}
-
-			return default;
-		}
-		#endregion
+		this.ReceiveAsync()
+			.ContinueWith(task => GC.KeepAlive(task.Exception), TaskContinuationOptions.OnlyOnFaulted);
 	}
+	#endregion
+
+	#region 公共属性
+	public TcpClient<T> Client => _client;
+	#endregion
+
+	#region 协议解析
+	protected override void Pack(PipeWriter writer, in T package) => _client.Packetizer.Pack(writer, package);
+	protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package) => _client.Packetizer.Unpack(ref data, out package);
+	#endregion
+
+	#region 接收数据
+	protected sealed override ValueTask OnReceiveAsync(in T package)
+	{
+		static void DisposeOnCompletion(ValueTask task, in T message)
+		{
+			if(message is IDisposable)
+				task.AsTask().ContinueWith((t, m) => ((IDisposable)m)?.Dispose(), message);
+		}
+
+		try
+		{
+			var pendingAction = _client.OnHandleAsync(package, CancellationToken.None);
+
+			if(!pendingAction.IsCompletedSuccessfully)
+				DisposeOnCompletion(pendingAction, in package);
+		}
+		finally
+		{
+			if(package is IDisposable disposable)
+				disposable.Dispose();
+		}
+
+		return default;
+	}
+	#endregion
 }

@@ -33,113 +33,112 @@ using System.Buffers.Binary;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Net
+namespace Zongsoft.Net;
+
+internal class HeadlessPacketizer : Zongsoft.Communication.IPacketizer<IMemoryOwner<byte>>
 {
-	internal class HeadlessPacketizer : Zongsoft.Communication.IPacketizer<IMemoryOwner<byte>>
+	#region 单例字段
+	public static readonly HeadlessPacketizer Instance = new();
+	#endregion
+
+	#region 私有构造
+	private HeadlessPacketizer() { }
+	#endregion
+
+	#region 公共方法
+	public void Pack(IBufferWriter<byte> writer, in IMemoryOwner<byte> package)
 	{
-		#region 单例字段
-		public static readonly HeadlessPacketizer Instance = new();
-		#endregion
-
-		#region 私有构造
-		private HeadlessPacketizer() { }
-		#endregion
-
-		#region 公共方法
-		public void Pack(IBufferWriter<byte> writer, in IMemoryOwner<byte> package)
-		{
-			if(package != null)
-				writer.Write(package.Memory.Span);
-		}
-
-		public bool Unpack(ref ReadOnlySequence<byte> data, out IMemoryOwner<byte> package)
-		{
-			package = Zongsoft.Common.Buffer.Lease(data);
-			return true;
-		}
-		#endregion
+		if(package != null)
+			writer.Write(package.Memory.Span);
 	}
 
-	internal class HeadedPacketizer : Zongsoft.Communication.IPacketizer<ReadOnlySequence<byte>>
+	public bool Unpack(ref ReadOnlySequence<byte> data, out IMemoryOwner<byte> package)
 	{
-		#region 常量定义
-		private const int HEAD_SIZE = 4;
-		#endregion
-
-		#region 单例字段
-		public static readonly HeadedPacketizer Instance = new();
-		#endregion
-
-		#region 公共属性
-		public string Name => nameof(HeadedPacketizer);
-		#endregion
-
-		#region 打包方法
-		public void Pack(IBufferWriter<byte> writer, in ReadOnlySequence<byte> package)
-		{
-			var header = writer.GetSpan(HEAD_SIZE);
-			BinaryPrimitives.WriteInt32BigEndian(header, (int)package.Length);
-			writer.Advance(HEAD_SIZE);
-
-			foreach(var segment in package)
-				writer.Write(segment.Span);
-		}
-
-		public async ValueTask<System.IO.Pipelines.FlushResult> PackAsync(System.IO.Pipelines.PipeWriter writer, ReadOnlySequence<byte> package, CancellationToken cancellation)
-		{
-			var header = writer.GetMemory(HEAD_SIZE);
-			BinaryPrimitives.WriteInt32BigEndian(header.Span, (int)package.Length);
-			writer.Advance(HEAD_SIZE);
-
-			System.IO.Pipelines.FlushResult result = default;
-
-			foreach(var segment in package)
-			{
-				result = await writer.WriteAsync(segment, cancellation);
-
-				if(result.IsCanceled)
-					return result;
-			}
-
-			return result;
-		}
-		#endregion
-
-		#region 解包方法
-		public bool Unpack(ref ReadOnlySequence<byte> input, out ReadOnlySequence<byte> package)
-		{
-			if(!Zongsoft.Common.Buffer.TryGetUInt32BigEndian(input, out var length))
-			{
-				package = default;
-				return false;
-			}
-
-			if(input.Length < length + HEAD_SIZE)
-			{
-				package = default;
-				return false;
-			}
-
-			package = input.Slice(HEAD_SIZE, length);
-			input = input.Slice(package.End);
-
-			this.OnUnpacked(package);
-
-			return true;
-		}
-
-		protected virtual void OnUnpacked(ReadOnlySequence<byte> result) { }
-
-		private static int UnpackHeader(ReadOnlySpan<byte> input, out PackageHeader header)
-		{
-			var length = BinaryPrimitives.ReadInt32LittleEndian(input);
-			header = default;
-			return length;
-		}
-		#endregion
-
-		#region 包头结构
-		private readonly struct PackageHeader { }
-		#endregion
+		package = Zongsoft.Common.Buffer.Lease(data);
+		return true;
 	}
+	#endregion
+}
+
+internal class HeadedPacketizer : Zongsoft.Communication.IPacketizer<ReadOnlySequence<byte>>
+{
+	#region 常量定义
+	private const int HEAD_SIZE = 4;
+	#endregion
+
+	#region 单例字段
+	public static readonly HeadedPacketizer Instance = new();
+	#endregion
+
+	#region 公共属性
+	public string Name => nameof(HeadedPacketizer);
+	#endregion
+
+	#region 打包方法
+	public void Pack(IBufferWriter<byte> writer, in ReadOnlySequence<byte> package)
+	{
+		var header = writer.GetSpan(HEAD_SIZE);
+		BinaryPrimitives.WriteInt32BigEndian(header, (int)package.Length);
+		writer.Advance(HEAD_SIZE);
+
+		foreach(var segment in package)
+			writer.Write(segment.Span);
+	}
+
+	public async ValueTask<System.IO.Pipelines.FlushResult> PackAsync(System.IO.Pipelines.PipeWriter writer, ReadOnlySequence<byte> package, CancellationToken cancellation)
+	{
+		var header = writer.GetMemory(HEAD_SIZE);
+		BinaryPrimitives.WriteInt32BigEndian(header.Span, (int)package.Length);
+		writer.Advance(HEAD_SIZE);
+
+		System.IO.Pipelines.FlushResult result = default;
+
+		foreach(var segment in package)
+		{
+			result = await writer.WriteAsync(segment, cancellation);
+
+			if(result.IsCanceled)
+				return result;
+		}
+
+		return result;
+	}
+	#endregion
+
+	#region 解包方法
+	public bool Unpack(ref ReadOnlySequence<byte> input, out ReadOnlySequence<byte> package)
+	{
+		if(!Zongsoft.Common.Buffer.TryGetUInt32BigEndian(input, out var length))
+		{
+			package = default;
+			return false;
+		}
+
+		if(input.Length < length + HEAD_SIZE)
+		{
+			package = default;
+			return false;
+		}
+
+		package = input.Slice(HEAD_SIZE, length);
+		input = input.Slice(package.End);
+
+		this.OnUnpacked(package);
+
+		return true;
+	}
+
+	protected virtual void OnUnpacked(ReadOnlySequence<byte> result) { }
+
+	private static int UnpackHeader(ReadOnlySpan<byte> input, out PackageHeader header)
+	{
+		var length = BinaryPrimitives.ReadInt32LittleEndian(input);
+		header = default;
+		return length;
+	}
+	#endregion
+
+	#region 包头结构
+	private readonly struct PackageHeader { }
+	#endregion
 }

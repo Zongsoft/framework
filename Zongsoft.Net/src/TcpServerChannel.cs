@@ -34,70 +34,69 @@ using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Net
+namespace Zongsoft.Net;
+
+public class TcpServerChannel<T> : TcpChannelBase<T>, IEquatable<TcpServerChannel<T>>
 {
-	public class TcpServerChannel<T> : TcpChannelBase<T>, IEquatable<TcpServerChannel<T>>
+	#region 成员字段
+	private readonly TcpServerChannelManager<T> _manager;
+	#endregion
+
+	#region 构造函数
+	public TcpServerChannel(TcpServerChannelManager<T> manager, IDuplexPipe transport, IPEndPoint address) : base(transport, address)
 	{
-		#region 成员字段
-		private readonly TcpServerChannelManager<T> _manager;
-		#endregion
-
-		#region 构造函数
-		public TcpServerChannel(TcpServerChannelManager<T> manager, IDuplexPipe transport, IPEndPoint address) : base(transport, address)
-		{
-			_manager = manager ?? throw new ArgumentNullException(nameof(manager));
-		}
-		#endregion
-
-		#region 保护属性
-		protected TcpServerChannelManager<T> Manager => _manager;
-		#endregion
-
-		#region 开启接收
-		public new Task ReceiveAsync(CancellationToken cancellationToken = default) => base.ReceiveAsync(cancellationToken);
-		#endregion
-
-		#region 协议解析
-		protected override void Pack(PipeWriter writer, in T package) => _manager.Pack(writer, package);
-		protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package) => _manager.Unpack(ref data, out package);
-		#endregion
-
-		#region 接收数据
-		protected override void OnReceiving() => _manager.Add(this);
-		protected sealed override ValueTask OnReceiveAsync(in T package)
-		{
-			static void DisposeOnCompletion(ValueTask task, in T message)
-			{
-				if(message is IDisposable)
-					task.AsTask().ContinueWith((t, m) => ((IDisposable)m)?.Dispose(), message);
-			}
-
-			try
-			{
-				var pendingAction = _manager.HandleAsync(this, package, CancellationToken.None);
-
-				if(!pendingAction.IsCompletedSuccessfully)
-					DisposeOnCompletion(pendingAction, in package);
-			}
-			finally
-			{
-				if(package is IDisposable disposable)
-					disposable.Dispose();
-			}
-
-			return default;
-		}
-		#endregion
-
-		#region 关闭处理
-		protected override void OnClosed() => _manager.Remove(this);
-		#endregion
-
-		#region 重写方法
-		public bool Equals(TcpServerChannel<T> channel) => channel != null && this.Address.Equals(channel.Address);
-		public override bool Equals(object obj) => obj is TcpServerChannel<T> channel && this.Equals(channel);
-		public override int GetHashCode() => this.Address.GetHashCode();
-		public override string ToString() => this.Address.ToString();
-		#endregion
+		_manager = manager ?? throw new ArgumentNullException(nameof(manager));
 	}
+	#endregion
+
+	#region 保护属性
+	protected TcpServerChannelManager<T> Manager => _manager;
+	#endregion
+
+	#region 开启接收
+	public new Task ReceiveAsync(CancellationToken cancellationToken = default) => base.ReceiveAsync(cancellationToken);
+	#endregion
+
+	#region 协议解析
+	protected override void Pack(PipeWriter writer, in T package) => _manager.Pack(writer, package);
+	protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package) => _manager.Unpack(ref data, out package);
+	#endregion
+
+	#region 接收数据
+	protected override void OnReceiving() => _manager.Add(this);
+	protected sealed override ValueTask OnReceiveAsync(in T package)
+	{
+		static void DisposeOnCompletion(ValueTask task, in T message)
+		{
+			if(message is IDisposable)
+				task.AsTask().ContinueWith((t, m) => ((IDisposable)m)?.Dispose(), message);
+		}
+
+		try
+		{
+			var pendingAction = _manager.HandleAsync(this, package, CancellationToken.None);
+
+			if(!pendingAction.IsCompletedSuccessfully)
+				DisposeOnCompletion(pendingAction, in package);
+		}
+		finally
+		{
+			if(package is IDisposable disposable)
+				disposable.Dispose();
+		}
+
+		return default;
+	}
+	#endregion
+
+	#region 关闭处理
+	protected override void OnClosed() => _manager.Remove(this);
+	#endregion
+
+	#region 重写方法
+	public bool Equals(TcpServerChannel<T> channel) => channel != null && this.Address.Equals(channel.Address);
+	public override bool Equals(object obj) => obj is TcpServerChannel<T> channel && this.Equals(channel);
+	public override int GetHashCode() => this.Address.GetHashCode();
+	public override string ToString() => this.Address.ToString();
+	#endregion
 }
