@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.SQLite library.
  *
@@ -74,6 +74,9 @@ public class SQLiteDeleteStatementVisitor : DeleteStatementVisitor
 
 				break;
 		}
+
+		context.WriteLine("WHERE");
+		context.Visit(joining.Conditions);
 	}
 
 	protected override void VisitWhere(ExpressionVisitorContext context, DeleteStatement statement, IExpression where)
