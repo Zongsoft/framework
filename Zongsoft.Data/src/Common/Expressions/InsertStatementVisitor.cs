@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -44,9 +44,7 @@ public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 		if(statement.Fields == null || statement.Fields.Count == 0)
 			throw new DataException("Missing required fields in the insert statment.");
 
-		if(statement.With != null && statement.With.Count > 0)
-			this.VisitWith(context, statement.With);
-
+		this.VisitWith(context, statement, statement.With);
 		this.VisitInsert(context, statement);
 		context.Visit(statement.Table);
 		this.VisitFields(context, statement, statement.Fields);
@@ -69,8 +67,11 @@ public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void VisitWith(ExpressionVisitorContext context, CommonTableExpressionCollection expressions)
+	protected virtual void VisitWith(ExpressionVisitorContext context, InsertStatement statement, CommonTableExpressionCollection expressions)
 	{
+		if(expressions == null || expressions.Count == 0)
+			return;
+
 		context.Write("WITH ");
 		context.Visit(expressions);
 	}

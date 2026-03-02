@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -41,9 +41,7 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 	#region 重写方法
 	protected override void OnVisit(ExpressionVisitorContext context, DeleteStatement statement)
 	{
-		if(statement.With != null && statement.With.Count > 0)
-			this.VisitWith(context, statement.With);
-
+		this.VisitWith(context, statement, statement.With);
 		this.VisitDelete(context, statement);
 		this.VisitTables(context, statement, statement.Tables);
 		this.VisitFrom(context, statement, statement.From);
@@ -66,8 +64,11 @@ public class DeleteStatementVisitor : StatementVisitorBase<DeleteStatement>
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void VisitWith(ExpressionVisitorContext context, CommonTableExpressionCollection expressions)
+	protected virtual void VisitWith(ExpressionVisitorContext context, DeleteStatement statement, CommonTableExpressionCollection expressions)
 	{
+		if(expressions == null || expressions.Count == 0)
+			return;
+
 		context.Write("WITH ");
 		context.Visit(expressions);
 	}

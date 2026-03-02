@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -40,9 +40,7 @@ public class SelectStatementVisitor : SelectStatementVisitorBase<SelectStatement
 	#region 重写方法
 	protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 	{
-		if(statement.With != null && statement.With.Count > 0)
-			this.VisitWith(context, statement.With);
-
+		this.VisitWith(context, statement.With);
 		this.VisitSelect(context, statement.Select);
 		this.VisitInto(context, statement.Into);
 		this.VisitFrom(context, statement.From);
