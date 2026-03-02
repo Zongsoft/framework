@@ -53,7 +53,7 @@ public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
 		var index = 0;
 
 		if(statement.Options.ConstraintIgnored)
-			context.Write("INSERT IGNORE INTO ");
+			context.Write("INSERT OR IGNORE INTO ");
 		else
 			context.Write("INSERT INTO ");
 
@@ -93,9 +93,9 @@ public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
 				context.Write(")");
 		}
 
-		index = 0;
-		context.WriteLine(" ON DUPLICATE KEY UPDATE ");
+		context.WriteLine(" ON CONFLICT DO UPDATE SET ");
 
+		index = 0;
 		if(statement.Updation.Count > 0)
 		{
 			foreach(var item in statement.Updation)
@@ -111,7 +111,13 @@ public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
 				if(parenthesisRequired)
 					context.Write("(");
 
-				context.Visit(item.Value);
+				if(item.Value != null)
+					context.Visit(item.Value);
+				else
+				{
+					context.Write("excluded.");
+					context.Write(context.Dialect.GetIdentifier(item.Field.Name));
+				}
 
 				if(parenthesisRequired)
 					context.Write(")");
@@ -128,10 +134,8 @@ public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
 				if(index++ > 0)
 					context.Write(",");
 
-				context.Write(context.Dialect.GetIdentifier(field.Name));
-				context.Write("=VALUES(");
-				context.Write(context.Dialect.GetIdentifier(field.Name));
-				context.Write(")");
+				var fieldName = context.Dialect.GetIdentifier(field.Name);
+				context.Write($"{fieldName}=excluded.{fieldName}");
 			}
 		}
 
