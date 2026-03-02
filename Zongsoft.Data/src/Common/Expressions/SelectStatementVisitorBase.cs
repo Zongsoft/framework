@@ -41,14 +41,6 @@ public class SelectStatementVisitorBase<TStatement> : StatementVisitorBase<TStat
 	#region 重写方法
 	protected override void OnVisit(ExpressionVisitorContext context, TStatement statement)
 	{
-		if(statement.Select == null || statement.Select.Members.Count == 0)
-		{
-			if(string.IsNullOrEmpty(statement.Alias))
-				throw new DataException("Missing select-members clause in the select statement.");
-			else
-				throw new DataException($"Missing select-members clause in the '{statement.Alias}' select statement.");
-		}
-
 		if(statement.With != null && statement.With.Count > 0)
 			this.VisitWith(context, statement.With);
 
@@ -74,14 +66,19 @@ public class SelectStatementVisitorBase<TStatement> : StatementVisitorBase<TStat
 
 		this.VisitSelectOption(context, clause);
 
-		int index = 0;
-
-		foreach(var member in clause.Members)
+		if(clause == null || clause.Members.Count == 0)
+			context.Write('*');
+		else
 		{
-			if(index++ > 0)
-				context.WriteLine(",");
+			int index = 0;
 
-			context.Visit(member);
+			foreach(var member in clause.Members)
+			{
+				if(index++ > 0)
+					context.WriteLine(",");
+
+				context.Visit(member);
+			}
 		}
 	}
 

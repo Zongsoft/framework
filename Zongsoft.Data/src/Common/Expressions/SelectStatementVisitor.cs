@@ -40,14 +40,6 @@ public class SelectStatementVisitor : SelectStatementVisitorBase<SelectStatement
 	#region 重写方法
 	protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 	{
-		if(statement.Select == null || statement.Select.Members.Count == 0)
-		{
-			if(string.IsNullOrEmpty(statement.Alias))
-				throw new DataException("Missing select-members clause in the select statement.");
-			else
-				throw new DataException($"Missing select-members clause in the '{statement.Alias}' select statement.");
-		}
-
 		if(statement.With != null && statement.With.Count > 0)
 			this.VisitWith(context, statement.With);
 
