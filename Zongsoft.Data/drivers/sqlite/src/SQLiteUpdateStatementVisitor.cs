@@ -48,13 +48,90 @@ public class SQLiteUpdateStatementVisitor : UpdateStatementVisitor
 	#region 重写方法
 	protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 	{
-		if(tables.Count > 1)
-			throw new DataException("The generated Update statement is incorrect, The data engine does not support multi-table updates.");
+		for(int i = 0; i < tables.Count; i++)
+		{
+			if(i > 0)
+				context.Write(",");
 
-		if(string.IsNullOrEmpty(tables[0].Alias))
-			context.Visit(tables[0]);
-		else
-			context.Write(tables[0].Alias);
+			context.Visit(tables[i]);
+		}
+	}
+
+	protected override void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
+	{
+		if(sources.Count <= 1)
+			return;
+
+		context.Write(" FROM ");
+
+		foreach(var source in sources)
+		{
+			switch(source)
+			{
+				case TableIdentifier table:
+					//跳过当前更新表
+					if(table != statement.Table)
+						context.Visit(table);
+
+					break;
+				case SelectStatement subquery:
+					context.Write("(");
+
+					//递归生成子查询语句
+					context.Visit(subquery);
+
+					if(string.IsNullOrEmpty(subquery.Alias))
+						context.Write(")");
+					else
+						context.Write($") AS {subquery.Alias}");
+
+					break;
+				case JoinClause joining:
+					context.VisitJoin(joining);
+					break;
+			}
+		}
+	}
+
+	protected override void VisitFields(ExpressionVisitorContext context, UpdateStatement statement, ICollection<FieldValue> fields)
+	{
+		var index = 0;
+
+		foreach(var field in fields)
+		{
+			if(index++ > 0)
+				context.WriteLine(",");
+
+			//注意：SQLite 不支持 SET 子句中的字段名前附带有表名或表别名
+			context.Write($"{context.Dialect.GetIdentifier(field.Field.Name)}=");
+
+			var parenthesisRequired = field.Value is IStatementBase;
+
+			if(parenthesisRequired)
+				context.Write("(");
+
+			context.Visit(field.Value);
+
+			if(parenthesisRequired)
+				context.Write(")");
+		}
+	}
+
+	protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause)
+	{
+		List<ReturningClause.ReturningMember> removables = [];
+
+		foreach(var member in clause.Members)
+		{
+			if(member.Kind == ReturningKind.Older)
+				removables.Add(member);
+		}
+
+		foreach(var member in removables)
+			clause.Members.Remove(member);
+
+		if(clause.Members.Count > 0)
+			base.OnVisiteReturning(context, clause);
 	}
 	#endregion
 }
