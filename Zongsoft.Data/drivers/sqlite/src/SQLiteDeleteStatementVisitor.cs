@@ -46,9 +46,17 @@ namespace Zongsoft.Data.SQLite;
  *       D.Name LIKE '研发部';
  *
  * 对应的 SQLite 删除语句：
- * WITH D AS (SELECT * FROM Department WHERE DepartmentId = M.DepartmentId)
+ * WITH D AS (SELECT * FROM Department)
  * DELETE FROM DepartmentMember AS M
- * WHERE EXISTS (SELECT * FROM D WHERE D.Name LIKE '研发部' LIMIT 1);
+ * WHERE EXISTS
+ * (
+ *     SELECT *
+ *     FROM D
+ *     WHERE 
+ *         D.DepartmentId = M.DepartmentId AND
+ *         D.Name LIKE '研发部'
+ *     LIMIT 1
+ * );
  */
 public class SQLiteDeleteStatementVisitor : DeleteStatementVisitor
 {
@@ -62,6 +70,8 @@ public class SQLiteDeleteStatementVisitor : DeleteStatementVisitor
 
 	#region 重写方法
 	protected override void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables) { }
+	protected override void VisitJoin(ExpressionVisitorContext context, DeleteStatement statement, JoinClause joining, int index) { }
+
 	protected override void VisitWith(ExpressionVisitorContext context, DeleteStatement statement, CommonTableExpressionCollection expressions)
 	{
 		/*
@@ -71,29 +81,19 @@ public class SQLiteDeleteStatementVisitor : DeleteStatementVisitor
 
 		if(statement.HasFrom)
 		{
-			List<ISource> removables = [];
-
 			foreach(var item in statement.From)
 			{
 				if(item is JoinClause joining)
 				{
 					expressions ??= [];
-					expressions.Add(new(joining.Alias, new SelectStatement(joining.Target, joining.Alias)
-					{ Where = joining.Conditions }));
-
-					removables.Add(joining);
+					expressions.Add(new(joining.Alias, new SelectStatement(joining.Target, joining.Alias)));
 				}
 				else if(item is SelectStatement select)
 				{
 					expressions ??= [];
 					expressions.Add(new(select.Alias, select));
-
-					removables.Add(select);
 				}
 			}
-
-			foreach(var removable in removables)
-				statement.From.Remove(removable);
 		}
 
 		base.VisitWith(context, statement, statement.With = expressions);
@@ -101,6 +101,17 @@ public class SQLiteDeleteStatementVisitor : DeleteStatementVisitor
 
 	protected override void VisitWhere(ExpressionVisitorContext context, DeleteStatement statement, IExpression where)
 	{
+		var conditions = ConditionExpression.And(where);
+
+		if(statement.From.Count > 1)
+		{
+			for(int i = 1; i < statement.From.Count; i++)
+			{
+				if(statement.From[i] is JoinClause joining)
+					conditions.Add(joining.Conditions);
+			}
+		}
+
 		/*
 		 * 注意：SQLite 的删除语句的 WHERE 子句不支持直接引用 WITH 子句定义的表名，而只能通过子查询来引用，
 		 * 因此在这里需要将原 WHERE 条件放在一个新的查询子句中并使用 EXISTS 操作包裹。
@@ -120,13 +131,13 @@ public class SQLiteDeleteStatementVisitor : DeleteStatementVisitor
 				context.Write(item.Name);
 			}
 
-			base.VisitWhere(context, statement, where);
+			base.VisitWhere(context, statement, conditions);
 
 			context.WriteLine(" LIMIT 1)");
 			return;
 		}
 
-		base.VisitWhere(context, statement, where);
+		base.VisitWhere(context, statement, conditions);
 	}
 	#endregion
 }
