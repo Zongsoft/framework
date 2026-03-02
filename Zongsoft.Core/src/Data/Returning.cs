@@ -227,7 +227,7 @@ public class Returning
 			if(index >= 0 && index < this.Values.Length)
 			{
 				value = this.Values[index];
-				return true;
+				return value is not Missing;
 			}
 
 			value = null;
@@ -256,6 +256,8 @@ public class Returning
 			{
 				if(ordinals[i] >= 0)
 					values[i] = record.IsDBNull(ordinals[i]) ? null : record.GetValue(ordinals[i]);
+				else
+					values[i] = Missing.Value;
 			}
 
 			var row = new Row(_columns, values);
@@ -286,6 +288,17 @@ public class Returning
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<Row> GetEnumerator() => _rows.GetEnumerator();
+	}
+
+	private sealed class Missing : IEquatable<Missing>
+	{
+		public static readonly Missing Value = new();
+		private Missing() { }
+
+		public bool Equals(Missing other) => other is not null;
+		public override bool Equals(object obj) => this.Equals(obj as Missing);
+		public override int GetHashCode() => 0;
+		public override string ToString() => nameof(Missing);
 	}
 	#endregion
 }
