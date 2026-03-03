@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -138,8 +139,23 @@ public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
 				context.Write($"{fieldName}=excluded.{fieldName}");
 			}
 		}
+	}
 
-		context.WriteLine(";");
+	protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause)
+	{
+		List<ReturningClause.ReturningMember> removables = [];
+
+		foreach(var member in clause.Members)
+		{
+			if(member.Kind == ReturningKind.Older)
+				removables.Add(member);
+		}
+
+		foreach(var member in removables)
+			clause.Members.Remove(member);
+
+		if(clause.Members.Count > 0)
+			base.OnVisiteReturning(context, clause);
 	}
 	#endregion
 }
