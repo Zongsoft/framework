@@ -32,9 +32,6 @@ using System.Text;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-
-using Microsoft.Data.Sqlite;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
@@ -55,16 +52,19 @@ public class SQLiteImporter : DataImporterBase
 		{
 			command.Connection.Open();
 
+			//开启数据事务
+			command.Transaction = command.Connection.BeginTransaction();
+
 			foreach(var item in context.Data)
 			{
 				var target = item;
 
 				for(int i = 0; i < members.Count; i++)
 				{
-					command.Parameters[i].Value = members[i].GetValue(ref target);
+					command.Parameters[i].Value = members[i].GetValue(ref target) ?? DBNull.Value;
 				}
 
-				command.ExecuteNonQuery();
+				context.Count += command.ExecuteNonQuery();
 			}
 
 			command.Transaction.Commit();
@@ -73,6 +73,8 @@ public class SQLiteImporter : DataImporterBase
 		{
 			if(command.Transaction != null)
 				command.Transaction.Rollback();
+
+			throw;
 		}
 		finally
 		{
@@ -91,16 +93,19 @@ public class SQLiteImporter : DataImporterBase
 		{
 			await command.Connection.OpenAsync(cancellation);
 
+			//开启数据事务
+			command.Transaction = await command.Connection.BeginTransactionAsync(cancellation);
+
 			foreach(var item in context.Data)
 			{
 				var target = item;
 
 				for(int i = 0; i < members.Count; i++)
 				{
-					command.Parameters[i].Value = members[i].GetValue(ref target);
+					command.Parameters[i].Value = members[i].GetValue(ref target) ?? DBNull.Value;
 				}
 
-				await command.ExecuteNonQueryAsync(cancellation);
+				context.Count += await command.ExecuteNonQueryAsync(cancellation);
 			}
 
 			await command.Transaction.CommitAsync(cancellation);
@@ -109,6 +114,8 @@ public class SQLiteImporter : DataImporterBase
 		{
 			if(command.Transaction != null)
 				await command.Transaction.RollbackAsync(cancellation);
+
+			throw;
 		}
 		finally
 		{
@@ -125,7 +132,6 @@ public class SQLiteImporter : DataImporterBase
 
 		var fields = new StringBuilder();
 		var values = new StringBuilder();
-		var parameters = new List<DbParameter>();
 
 		foreach(var member in members)
 		{
@@ -143,15 +149,14 @@ public class SQLiteImporter : DataImporterBase
 			if(values.Length > 0)
 				values.Append(',');
 
-			values.Append($"@p_{member.Name}");
+			values.Append($"@{member.Name}");
 
 			var parameter = command.CreateParameter();
-			parameter.ParameterName = $"@p_{member.Name}";
+			parameter.ParameterName = $"@{member.Name}";
 			parameter.DbType = property.Type;
-			parameters.Add(parameter);
+			command.Parameters.Add(parameter);
 		}
 
-		command.Transaction = connection.BeginTransaction();
 		command.CommandType = System.Data.CommandType.Text;
 		command.CommandText = $"INSERT INTO \"{context.Entity.GetTableName()}\" ({fields}) VALUES ({values});";
 
