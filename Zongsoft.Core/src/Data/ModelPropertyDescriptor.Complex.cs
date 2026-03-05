@@ -38,6 +38,11 @@ partial class ModelPropertyDescriptor
 {
 	public class ComplexPropertyDescriptor : ModelPropertyDescriptor
 	{
+		#region 构造函数
+		public ComplexPropertyDescriptor() { }
+		public ComplexPropertyDescriptor(MemberInfo member) => this.Populate(member);
+		#endregion
+
 		#region 公共属性
 		/// <summary>获取或设置关联目标，通常它是目标实体名，也支持跳跃关联(即关联到一个复合属性)。</summary>
 		/// <remarks>跳跃关联是指关联目标为实体的导航属性，实体与导航属性之间以冒号(<c>:</c>)区隔。</remarks>
@@ -75,25 +80,22 @@ partial class ModelPropertyDescriptor
 		#endregion
 
 		#region 重写方法
-		protected override void OnPropertyChanged(string propertyName)
+		internal protected override void Populate(MemberInfo member)
 		{
-			switch(propertyName)
-			{
-				case nameof(this.Member) when this.Member != null:
-					var attribute = this.Member.GetCustomAttribute<ModelPropertyAttribute>(true);
-
-					if(attribute != null)
-					{
-						this.Port = attribute.Port;
-						this.Behaviors = attribute.Behaviors;
-						this.Multiplicity = attribute.Multiplicity;
-					}
-
-					break;
-			}
-
 			//调用基类同名方法
-			base.OnPropertyChanged(propertyName);
+			base.Populate(member);
+
+			if(member != null)
+			{
+				var attribute = member.GetCustomAttribute<ModelPropertyAttribute>(true);
+
+				if(attribute != null)
+				{
+					this.Port = attribute.Port;
+					this.Behaviors = attribute.Behaviors;
+					this.Multiplicity = attribute.Multiplicity;
+				}
+			}
 		}
 		#endregion
 	}

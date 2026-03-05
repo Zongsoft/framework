@@ -37,6 +37,11 @@ partial class ModelPropertyDescriptor
 {
 	public class SimplexPropertyDescriptor : ModelPropertyDescriptor
 	{
+		#region 构造函数
+		public SimplexPropertyDescriptor() { }
+		public SimplexPropertyDescriptor(MemberInfo member) => this.Populate(member);
+		#endregion
+
 		#region 公共属性
 		/// <summary>获取或设置属性别名。</summary>
 		public string Alias
@@ -52,8 +57,7 @@ partial class ModelPropertyDescriptor
 		/// <summary>获取或设置数据实体属性的数据类型。</summary>
 		public DataType DataType
 		{
-			get;
-			set
+			get; set
 			{
 				this.OnPropertyChanging(nameof(this.DataType));
 				field = value;
@@ -151,30 +155,25 @@ partial class ModelPropertyDescriptor
 		#endregion
 
 		#region 重写方法
-		protected override void OnPropertyChanged(string propertyName)
+		internal protected override void Populate(MemberInfo member)
 		{
-			switch(propertyName)
+			//调用基类同名方法
+			base.Populate(member);
+
+			var type = this.Type;
+			if(type != null)
+				this.Nullable = type.IsInterface || type.IsClass || Common.TypeExtension.IsNullable(type);
+
+			if(member != null && this.DefaultValue == null)
 			{
-				case nameof(this.Type) when this.Type != null:
-					this.Nullable = this.Type.IsInterface || this.Type.IsClass || Common.TypeExtension.IsNullable(this.Type);
-					break;
-				case nameof(this.Member) when this.Member != null:
-					if(this.DefaultValue == null)
-					{
-						var attribute = this.Member.GetCustomAttribute<DefaultValueAttribute>(true);
+				var attribute = member.GetCustomAttribute<DefaultValueAttribute>(true);
 
-						if(attribute != null)
-							this.DefaultValue = Common.Convert.ConvertValue(attribute.Value, this.Type);
-					}
-
-					//设置属性特性映射
-					this.Map(this.Member);
-
-					break;
+				if(attribute != null)
+					this.DefaultValue = Common.Convert.ConvertValue(attribute.Value, this.Type);
 			}
 
-			//调用基类同名方法
-			base.OnPropertyChanged(propertyName);
+			//设置属性特性映射
+			this.Map(member);
 		}
 		#endregion
 
@@ -196,9 +195,14 @@ partial class ModelPropertyDescriptor
 			this.Nullable = attribute.Nullable;
 			this.Sortable = attribute.Sortable;
 			this.Sequence = attribute.Sequence;
-			this.IsPrimaryKey = attribute.IsPrimaryKey;
 
-			if(attribute != null)
+			if(this.IsPrimaryKey = attribute.IsPrimaryKey)
+			{
+				this.Sortable = true;
+				this.Nullable = false;
+			}
+
+			if(attribute.DefaultValue != null)
 				this.DefaultValue = Common.Convert.ConvertValue(attribute.DefaultValue, this.Type);
 		}
 		#endregion

@@ -38,7 +38,7 @@ namespace Zongsoft.Data;
 /// <summary>
 /// 表示数据模型属性元信息的类。
 /// </summary>
-public partial class ModelPropertyDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
+public abstract partial class ModelPropertyDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 {
 	#region 事件定义
 	public event PropertyChangedEventHandler PropertyChanged;
@@ -65,19 +65,6 @@ public partial class ModelPropertyDescriptor : INotifyPropertyChanged, INotifyPr
 			this.OnPropertyChanging(nameof(this.Member));
 			field = value;
 			this.OnPropertyChanged(nameof(this.Member));
-
-			if(value != null)
-			{
-				if(string.IsNullOrEmpty(this.Name))
-					this.Name = value.Name;
-
-				this.Type = value switch
-				{
-					FieldInfo info => info.FieldType,
-					PropertyInfo info => info.PropertyType,
-					_ => throw new ArgumentException($"The specified '{value.Name}' member is not a valid model property member."),
-				};
-			}
 		}
 	}
 
@@ -166,16 +153,40 @@ public partial class ModelPropertyDescriptor : INotifyPropertyChanged, INotifyPr
 	#endregion
 
 	#region 公共方法
+	public bool IsSimplex() => this.IsSimplex(out _);
 	public bool IsSimplex(out SimplexPropertyDescriptor simplex)
 	{
 		simplex = this as SimplexPropertyDescriptor;
 		return simplex != null;
 	}
 
+	public bool IsComplex() => this.IsComplex(out _);
 	public bool IsComplex(out ComplexPropertyDescriptor complex)
 	{
 		complex = this as ComplexPropertyDescriptor;
 		return complex != null;
+	}
+	#endregion
+
+	#region 虚拟方法
+	internal protected virtual void Populate(MemberInfo member)
+	{
+		if(member == null)
+			return;
+
+		this.Member = member;
+		this.Type = GetMemberType(member);
+
+		if(string.IsNullOrEmpty(this.Name))
+			this.Name = member.Name;
+
+		var attribute = member.GetCustomAttribute<ModelPropertyAttribute>(true);
+		if(attribute != null)
+		{
+			this.Role = attribute.Role;
+			this.Hint = attribute.Hint;
+			this.Immutable = attribute.Immutable;
+		}
 	}
 	#endregion
 
@@ -206,7 +217,35 @@ public partial class ModelPropertyDescriptor : INotifyPropertyChanged, INotifyPr
 
 	#region 重写方法
 	public override string ToString() => string.IsNullOrEmpty(this.Role) ?
-		$"{this.Name}@{TypeAlias.GetAlias(this.Type)}" :
-		$"{this.Name}@{TypeAlias.GetAlias(this.Type)}({this.Role})";
+		$"{this.Name}:{TypeAlias.GetAlias(this.Type)}" :
+		$"{this.Name}:{TypeAlias.GetAlias(this.Type)}({this.Role})";
 	#endregion
+}
+
+partial class ModelPropertyDescriptor
+{
+	public static ModelPropertyDescriptor Create(MemberInfo info)
+	{
+		var attribute = info.GetCustomAttribute<ModelPropertyAttribute>(true);
+
+		if(attribute == null)
+			return IsSimplexType(GetMemberType(info)) ?
+				new SimplexPropertyDescriptor(info):
+				new ComplexPropertyDescriptor(info);
+
+		if(attribute.Ignored)
+			return null;
+
+		return string.IsNullOrEmpty(attribute.Port) ?
+			new SimplexPropertyDescriptor(info) :
+			new ComplexPropertyDescriptor(info);
+	}
+
+	private static bool IsSimplexType(Type type) => TypeExtension.IsScalarType(type);
+	private static Type GetMemberType(MemberInfo member) => member switch
+	{
+		FieldInfo info => info.FieldType,
+		PropertyInfo info => info.PropertyType,
+		_ => throw new ArgumentException($"The specified '{member.Name}' member is not a valid model property member."),
+	};
 }

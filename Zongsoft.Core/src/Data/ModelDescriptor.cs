@@ -28,9 +28,11 @@
  */
 
 using System;
+using System.Reflection;
 using System.ComponentModel;
 
 using Zongsoft.Common;
+using Zongsoft.Reflection;
 
 namespace Zongsoft.Data;
 
@@ -46,6 +48,11 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 
 	#region 构造函数
 	public ModelDescriptor() => this.Properties = new(this);
+	public ModelDescriptor(Type type)
+	{
+		this.Properties = new(this);
+		this.Populate(type);
+	}
 	#endregion
 
 	#region 公共属性
@@ -151,6 +158,51 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 	public ModelPropertyDescriptorCollection Properties { get; }
 	#endregion
 
+	#region 公共方法
+	public void Populate(Type type, string alias = null)
+	{
+		if(type == null || type.IsGenericType)
+			return;
+
+		this.Type = type;
+		this.Name = type.Name;
+		this.Namespace = Services.ApplicationModuleAttribute.Find(type)?.Name;
+
+		if(alias != null)
+			this.Alias = alias;
+
+		var attribute = type.GetCustomAttribute<ModelAttribute>(true);
+		if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
+			this.Name = attribute.Name;
+
+		var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
+		for(int i = 0; i < fields.Length; i++)
+		{
+			var field = fields[i];
+			if(field.IsInitOnly)
+				continue;
+
+			if(this.Properties.TryGetValue(field.Name, out var member))
+				member.Populate(field);
+			else
+				this.Properties.Add(ModelPropertyDescriptor.Create(field));
+		}
+
+		var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+		for(int i = 0; i < properties.Length; i++)
+		{
+			var property = properties[i];
+			if(property.IsIndexer() || !property.CanRead || !property.CanWrite)
+				continue;
+
+			if(this.Properties.TryGetValue(property.Name, out var member))
+				member.Populate(property);
+			else
+				this.Properties.Add(ModelPropertyDescriptor.Create(property));
+		}
+	}
+	#endregion
+
 	#region 事件触发
 	protected virtual void OnPropertyChanged(string propertyName) => this.PropertyChanged?.Invoke(this, new(propertyName));
 	protected virtual void OnPropertyChanging(string propertyName) => this.PropertyChanging?.Invoke(this, new(propertyName));
@@ -204,8 +256,8 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 				$"{this.QualifiedName}({this.Alias})";
 		else
 			return string.IsNullOrEmpty(this.Alias) ?
-				$"{this.QualifiedName}@{TypeAlias.GetAlias(this.Type)}" :
-				$"{this.QualifiedName}@{TypeAlias.GetAlias(this.Type)}({this.Alias})";
+				$"{this.QualifiedName}:{TypeAlias.GetAlias(this.Type)}" :
+				$"{this.QualifiedName}:{TypeAlias.GetAlias(this.Type)}({this.Alias})";
 	}
 	#endregion
 }

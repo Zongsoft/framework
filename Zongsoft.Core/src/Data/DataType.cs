@@ -217,6 +217,7 @@ public sealed partial class DataType : IEquatable<DataType>
 		return left.Equals(right);
 	}
 
+	public static explicit operator DataType(string type) => Get(type);
 	public static implicit operator System.Data.DbType(DataType type) => type.DbType;
 	public static implicit operator DataType(System.Data.DbType type) => type switch
 	{

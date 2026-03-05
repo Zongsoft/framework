@@ -288,6 +288,7 @@ public static class TypeExtension
 
 		var result = type.IsPrimitive || type.IsEnum ||
 		             type == typeof(string) || type == typeof(decimal) ||
+		             type == typeof(DateOnly) || type == typeof(TimeOnly) ||
 		             type == typeof(DateTime) || type == typeof(TimeSpan) ||
 		             type == typeof(DateTimeOffset) || type == typeof(Guid) || type == typeof(DBNull);
 

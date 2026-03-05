@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -62,14 +62,15 @@ partial class Model
 		if(modelType == null)
 			throw new ArgumentNullException(nameof(modelType));
 
-		if(modelType.IsPrimitive || modelType.IsEnum || modelType.IsArray)
+		//如果模型类型是基元类型、枚举类型、数组类型或者泛型、静态类，则返回空
+		if(modelType.IsPrimitive || modelType.IsEnum || modelType.IsArray || modelType.IsGenericType || (modelType.IsAbstract && modelType.IsSealed))
 			return null;
 
 		//对动态模型类进行特殊处理
 		while(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType != null)
 			modelType = modelType.BaseType;
 
-		return _descriptors.GetOrAdd(modelType, modelType => new ModelDescriptor());
+		return _descriptors.GetOrAdd(modelType, type => new ModelDescriptor(type));
 	}
 	#endregion
 }

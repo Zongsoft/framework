@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Data;
 
 namespace Zongsoft.Data;
 
@@ -35,12 +36,12 @@ namespace Zongsoft.Data;
 public class ModelPropertyAttribute : Attribute
 {
 	#region 构造函数
-	public ModelPropertyAttribute(DataType type = null, bool nullable = false, object defaultValue = null) : this(null, type, nullable, defaultValue) { }
-	public ModelPropertyAttribute(DataType type, int length, bool nullable = false, object defaultValue = null) : this(null, type, length, nullable, defaultValue) { }
-	public ModelPropertyAttribute(DataType type, byte precision, byte scale, bool nullable = false, object defaultValue = null) : this(null, type, precision, scale, nullable, defaultValue) { }
+	public ModelPropertyAttribute(DbType type, bool nullable = false, object defaultValue = null) : this(null, type, nullable, defaultValue) { }
+	public ModelPropertyAttribute(DbType type, int length, bool nullable = false, object defaultValue = null) : this(null, type, length, nullable, defaultValue) { }
+	public ModelPropertyAttribute(DbType type, byte precision, byte scale, bool nullable = false, object defaultValue = null) : this(null, type, precision, scale, nullable, defaultValue) { }
 
-	public ModelPropertyAttribute(string alias, DataType type = null, bool nullable = false, object defaultValue = null) : this(alias, type, 0, nullable, defaultValue) { }
-	public ModelPropertyAttribute(string alias, DataType type, int length, bool nullable = false, object defaultValue = null)
+	public ModelPropertyAttribute(string alias, DbType type = DbType.Object, bool nullable = false, object defaultValue = null) : this(alias, type, 0, nullable, defaultValue) { }
+	public ModelPropertyAttribute(string alias, DbType type, int length, bool nullable = false, object defaultValue = null)
 	{
 		this.Alias = alias;
 		this.Type = type;
@@ -48,7 +49,7 @@ public class ModelPropertyAttribute : Attribute
 		this.Nullable = nullable;
 		this.DefaultValue = defaultValue;
 	}
-	public ModelPropertyAttribute(string alias, DataType type, byte precision, byte scale, bool nullable = false, object defaultValue = null)
+	public ModelPropertyAttribute(string alias, DbType type, byte precision, byte scale, bool nullable = false, object defaultValue = null)
 	{
 		this.Alias = alias;
 		this.Type = type;
@@ -61,6 +62,7 @@ public class ModelPropertyAttribute : Attribute
 	public ModelPropertyAttribute(string port, Metadata.DataAssociationMultiplicity multiplicity, Metadata.DataEntityComplexPropertyBehaviors behaviors = Metadata.DataEntityComplexPropertyBehaviors.None)
 	{
 		this.Port = port;
+		this.Type = DataType.Object;
 		this.Multiplicity = multiplicity;
 		this.Behaviors = behaviors;
 	}
@@ -99,6 +101,16 @@ public class ModelPropertyAttribute : Attribute
 
 	/// <summary>获取或设置属性的语义角色。</summary>
 	public string Role { get; set; }
+
+	/// <summary>获取数据实体属性的提示。</summary>
+	public string Hint { get; set; }
+
+	/// <summary>获取一个值，指示数据实体属性是否为不可变属性，默认为假(<c>False</c>)。</summary>
+	/// <remarks>
+	/// 	<para>对于不可变简单属性：不能被修改(Update, Upsert)，但是新增(Insert)时可以设置其内容。</para>
+	/// 	<para>对于不可变复合属性：不支持任何写操作(Delete, Insert, Update, Upsert)。</para>
+	/// </remarks>
+	public bool Immutable { get; }
 
 	/// <summary>获取或设置一个值，指示是否忽略该属性。</summary>
 	public bool Ignored { get; set; }
