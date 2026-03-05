@@ -29,6 +29,7 @@
 
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
@@ -37,29 +38,72 @@ namespace Zongsoft.Data;
 /// </summary>
 public static class ModelPropertyRole
 {
+	#region 私有变量
+	private static readonly Lazy<(string alias, string role)[]> _fields = new(() =>
+	{
+		var fields = typeof(ModelPropertyRole).GetFields(BindingFlags.Public | BindingFlags.Static);
+		var result = new List<(string, string)>(fields.Length * 2);
+
+		for(int i = 0; i < fields.Length; i++)
+		{
+			result.Add((fields[i].Name, fields[i].Name));
+
+			var aliases = Components.AliasAttribute.GetAliases(fields[i]);
+			if(aliases != null && aliases.Length > 0)
+			{
+				for(int j = 0; j < aliases.Length; j++)
+				{
+					if(!string.IsNullOrEmpty(aliases[j]))
+						result.Add((aliases[j], fields[i].Name));
+				}
+			}
+		}
+
+		return [.. result];
+	});
+	#endregion
+
 	#region 公共字段
 	/// <summary>代码</summary>
 	[Components.Alias("No")]
 	public static readonly string Code = nameof(Code);
 	/// <summary>名称</summary>
 	public static readonly string Name = nameof(Name);
+	/// <summary>邮箱</summary>
+	public static readonly string Email = nameof(Email);
 	/// <summary>性别</summary>
 	public static readonly string Gender = nameof(Gender);
 	/// <summary>生日</summary>
 	public static readonly string Birthday = nameof(Birthday);
-	/// <summary>邮箱</summary>
-	public static readonly string Email = nameof(Email);
+
 	/// <summary>电话</summary>
+	[Components.Alias("Mobile")]
+	[Components.Alias("Telephone")]
 	[Components.Alias("PhoneNumber")]
 	public static readonly string Phone = nameof(Phone);
+
 	/// <summary>地址</summary>
+	[Components.Alias("City")]
+	[Components.Alias("Contry")]
+	[Components.Alias("Street")]
+	[Components.Alias("Province")]
 	public static readonly string Address = nameof(Address);
+
 	/// <summary>货币</summary>
+	[Components.Alias("Money")]
+	[Components.Alias("Price")]
+	[Components.Alias("Amount")]
 	public static readonly string Currency = nameof(Currency);
+
 	/// <summary>密码</summary>
+	[Components.Alias("Secret")]
 	public static readonly string Password = nameof(Password);
+
 	/// <summary>描述信息</summary>
+	[Components.Alias("Note")]
+	[Components.Alias("Notes")]
 	[Components.Alias("Remark")]
+	[Components.Alias("Remarks")]
 	public static readonly string Description = nameof(Description);
 	#endregion
 
@@ -69,25 +113,13 @@ public static class ModelPropertyRole
 		if(string.IsNullOrEmpty(name))
 			return null;
 
-		var fields = typeof(ModelPropertyRole).GetFields(BindingFlags.Public | BindingFlags.Static);
-
-		for(int i = 0; i < fields.Length; i++)
+		for(int i = 0; i < _fields.Value.Length; i++)
 		{
-			var field = fields[i];
+			var (alias, role) = _fields.Value[i];
 
-			if(name.EndsWith(field.Name, StringComparison.InvariantCultureIgnoreCase))
-				return field.Name;
-
-			var aliases = Components.AliasAttribute.GetAliases(field);
-
-			if(aliases != null && aliases.Length > 0)
-			{
-				for(int j = 0; j < aliases.Length; j++)
-				{
-					if(!string.IsNullOrEmpty(aliases[j]) && name.EndsWith(aliases[j], StringComparison.InvariantCultureIgnoreCase))
-						return field.Name;
-				}
-			}
+			if(name.StartsWith(alias, StringComparison.InvariantCultureIgnoreCase) ||
+			   name.EndsWith(alias, StringComparison.InvariantCultureIgnoreCase))
+				return role;
 		}
 
 		return null;
