@@ -64,7 +64,7 @@ partial class Model
 			throw new ArgumentNullException(nameof(modelType));
 
 		//对动态模型类进行特殊处理
-		if(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType.IsAbstract)
+		while(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType != null)
 			modelType = modelType.BaseType;
 
 		return _descriptors.GetOrAdd(modelType, modelType => new ModelDescriptor(modelType, entity));
