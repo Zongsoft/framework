@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,175 +32,181 @@ using System.Reflection;
 using System.ComponentModel;
 
 using Zongsoft.Common;
-using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data;
 
 /// <summary>
 /// 表示数据模型属性元信息的类。
 /// </summary>
-public class ModelPropertyDescriptor
+public partial class ModelPropertyDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 {
-	#region 成员字段
-	private ModelDescriptor _model;
-	private IDataEntityProperty _field;
-	private readonly MemberInfo _member;
-	private readonly Type _type;
-	private bool _isPrimaryKey;
-	private int _length;
-	private bool _nullable;
-	private bool _immutable;
-	private object _defaultValue;
-	private string _label;
-	private string _description;
+	#region 事件定义
+	public event PropertyChangedEventHandler PropertyChanged;
+	public event PropertyChangingEventHandler PropertyChanging;
 	#endregion
 
 	#region 构造函数
-	internal ModelPropertyDescriptor(MemberInfo member)
-	{
-		_member = member ?? throw new ArgumentNullException(nameof(member));
-
-		_type = member switch
-		{
-			FieldInfo field => field.FieldType,
-			PropertyInfo property => property.PropertyType,
-			_ => throw new ArgumentException($"The specified '{member.Name}' member is not a valid model property member."),
-		};
-
-		_nullable = _type.IsInterface || _type.IsClass || _type.IsNullable();
-
-		//设置默认值
-		var defaultAttribute = member.GetCustomAttribute<DefaultValueAttribute>(true);
-		_defaultValue = defaultAttribute == null ? TypeExtension.GetDefaultValue(_type) : Common.Convert.ConvertValue(defaultAttribute.Value, _type);
-
-		//设置默认的语义角色
-		if(member.Name.EndsWith(nameof(ModelPropertyRole.Code), StringComparison.InvariantCultureIgnoreCase))
-			this.Role = ModelPropertyRole.Code;
-		else if(member.Name.EndsWith(nameof(ModelPropertyRole.Name), StringComparison.InvariantCultureIgnoreCase))
-			this.Role = ModelPropertyRole.Name;
-		else if(member.Name.EndsWith(nameof(ModelPropertyRole.Email), StringComparison.InvariantCultureIgnoreCase))
-			this.Role = ModelPropertyRole.Email;
-		else if(member.Name.EndsWith(nameof(ModelPropertyRole.Phone), StringComparison.InvariantCultureIgnoreCase) || member.Name.EndsWith("PhoneNumber", StringComparison.InvariantCultureIgnoreCase))
-			this.Role = ModelPropertyRole.Phone;
-		else if(member.Name.EndsWith(nameof(ModelPropertyRole.Password), StringComparison.InvariantCultureIgnoreCase))
-			this.Role = ModelPropertyRole.Password;
-		else if(member.Name.EndsWith(nameof(ModelPropertyRole.Description), StringComparison.InvariantCultureIgnoreCase) || member.Name.EndsWith("Remark", StringComparison.InvariantCultureIgnoreCase))
-			this.Role = ModelPropertyRole.Description;
-
-		var propertyAttribute = member.GetCustomAttribute<ModelPropertyAttribute>(true);
-		if(propertyAttribute != null)
-		{
-			if(propertyAttribute.Role.HasValue)
-				this.Role = propertyAttribute.Role.Value;
-
-			if(propertyAttribute.Flags.HasValue)
-				this.Flags = propertyAttribute.Flags.Value;
-		}
-	}
+	protected ModelPropertyDescriptor() { }
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取所属的模型定义。</summary>
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
-	public ModelDescriptor Model => _model;
+	public ModelDescriptor Model { get; internal set; }
 
-	/// <summary>获取对应的数据实体字段定义。</summary>
+	/// <summary>获取或设置属性成员信息。</summary>
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
-	public IDataEntityProperty Field => _field;
+	public MemberInfo Member
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Member));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Member));
 
-	/// <summary>获取属性成员信息。</summary>
-	[System.Text.Json.Serialization.JsonIgnore]
-	[Serialization.SerializationMember(Ignored = true)]
-	public MemberInfo Member => _member;
+			if(value != null)
+			{
+				if(string.IsNullOrEmpty(this.Name))
+					this.Name = value.Name;
 
-	/// <summary>获取属性名称。</summary>
-	public string Name => _member.Name;
+				this.Type = value switch
+				{
+					FieldInfo info => info.FieldType,
+					PropertyInfo info => info.PropertyType,
+					_ => throw new ArgumentException($"The specified '{value.Name}' member is not a valid model property member."),
+				};
+			}
+		}
+	}
 
-	/// <summary>获取属性类型。</summary>
-	public Type Type => _type;
+	/// <summary>获取或设置属性名称。</summary>
+	public string Name
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Name));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Name));
 
-	/// <summary>获取一个值，指示当属性为文本类型时，其允许的最大长度。</summary>
-	public int Length => _length;
+			//设置默认的语义角色
+			if(value != null && string.IsNullOrEmpty(this.Role))
+				this.Role = ModelPropertyRole.Determine(value);
+		}
+	}
 
-	/// <summary>获取一个值，指示属性是否为空。</summary>
-	public bool Nullable => _nullable;
+	/// <summary>获取或设置属性类型。</summary>
+	public Type Type
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Type));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Type));
+		}
+	}
 
-	/// <summary>获取一个值，指示属性是否不可变更。</summary>
-	public bool Immutable => _immutable;
+	/// <summary>获取或设置属性的提示。</summary>
+	public string Hint
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Hint));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Hint));
+		}
+	}
 
-	/// <summary>获取属性的默认值。</summary>
-	public object DefaultValue => _defaultValue;
-
-	/// <summary>获取一个值，指示属性是否为主键或主键成员。</summary>
-	public bool IsPrimaryKey => _isPrimaryKey;
+	/// <summary>获取或设置一个值，指示属性是否不可变更。</summary>
+	public bool Immutable
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Immutable));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Immutable));
+		}
+	}
 
 	/// <summary>获取或设置属性的语义角色。</summary>
-	public ModelPropertyRole Role { get; set; }
-
-	/// <summary>获取或设置属性的标记。</summary>
-	public ModelPropertyFlags Flags { get; set; }
+	public string Role
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Role));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Role));
+		}
+	}
 
 	/// <summary>获取或设置属性的标题。</summary>
 	public string Label
 	{
-		get => string.IsNullOrEmpty(_label) ? GetLabel() : _label;
-		set => _label = value;
+		get => string.IsNullOrEmpty(field) ? this.GetLabel() : field;
+		set
+		{
+			this.OnPropertyChanging(nameof(this.Label));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Label));
+		}
 	}
 
-	/// <summary>获取或设置属性的描述文本。</summary>
+	/// <summary>获取或设置属性的描述。</summary>
 	public string Description
 	{
-		get => string.IsNullOrEmpty(_description) ? GetDescription() : _description;
-		set => _description = value;
-	}
-	#endregion
-
-	#region 内部方法
-	internal void SetModel(ModelDescriptor model)
-	{
-		_model = model;
-
-		if(model == null || model.Entity == null)
-			return;
-
-		_field = _model.Entity.Properties.TryGetValue(this.Name, out var field) ? field : null;
-
-		if(field != null)
+		get => string.IsNullOrEmpty(field) ? this.GetDescription() : field;
+		set
 		{
-			_immutable = field.Immutable;
-
-			if(field.IsSimplex(out var simplex))
-			{
-				_length = simplex.Length;
-				_nullable = simplex.Nullable;
-				_defaultValue = simplex.DefaultValue;
-				_isPrimaryKey = simplex.IsPrimaryKey;
-			}
+			this.OnPropertyChanging(nameof(this.Description));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Description));
 		}
 	}
 	#endregion
 
-	#region 私有方法
-	private string GetLabel() => _model == null ? this.Name : Resources.ResourceUtility.GetResourceString(_model.Type,
-	[
-		$"{_model.Name}.{this.Name}.{nameof(this.Label)}",
-		$"{_model.Name}.{this.Name}",
-		$"{this.Name}.{nameof(this.Label)}",
-		this.Name
-	]);
+	#region 公共方法
+	public bool IsSimplex(out SimplexPropertyDescriptor simplex)
+	{
+		simplex = this as SimplexPropertyDescriptor;
+		return simplex != null;
+	}
 
-	private string GetDescription() => _model == null ? null : Resources.ResourceUtility.GetResourceString(_model.Type,
-	[
-		$"{_model.Name}.{this.Name}.{nameof(this.Description)}",
-		$"{this.Name}.{nameof(this.Description)}"
-	]);
+	public bool IsComplex(out ComplexPropertyDescriptor complex)
+	{
+		complex = this as ComplexPropertyDescriptor;
+		return complex != null;
+	}
+	#endregion
+
+	#region 事件触发
+	protected virtual void OnPropertyChanged(string propertyName) => this.PropertyChanged?.Invoke(this, new(propertyName));
+	protected virtual void OnPropertyChanging(string propertyName) => this.PropertyChanging?.Invoke(this, new(propertyName));
+	#endregion
+
+	#region 私有方法
+	private string GetLabel() => this.Model == null ?
+		this.GetResourceString($"{this.Name}.{nameof(this.Label)}", this.Name):
+		this.GetResourceString(
+			$"{this.Model.QualifiedName}.{this.Name}.{nameof(this.Label)}",
+			$"{this.Model.QualifiedName}.{this.Name}",
+			$"{this.Name}.{nameof(this.Label)}",
+			this.Name);
+
+	private string GetDescription() => this.Model == null ?
+		this.GetResourceString($"{this.Name}.{nameof(this.Description)}"):
+		this.GetResourceString(
+			$"{this.Model.QualifiedName}.{this.Name}.{nameof(this.Description)}",
+			$"{this.Name}.{nameof(this.Description)}");
+
+	private string GetResourceString(params ReadOnlySpan<string> names) => this.Model != null ?
+		this.Model.GetResourceString(names) :
+		Resources.ResourceUtility.GetResourceString(this.Member, names);
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => this.Role == ModelPropertyRole.None ?
+	public override string ToString() => string.IsNullOrEmpty(this.Role) ?
 		$"{this.Name}@{TypeAlias.GetAlias(this.Type)}" :
-		$"{this.Name}({this.Role})@{TypeAlias.GetAlias(this.Type)}";
+		$"{this.Name}@{TypeAlias.GetAlias(this.Type)}({this.Role})";
 	#endregion
 }

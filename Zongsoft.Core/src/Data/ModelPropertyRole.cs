@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,34 +28,69 @@
  */
 
 using System;
+using System.Reflection;
 
 namespace Zongsoft.Data;
 
 /// <summary>
 /// 表示属性的语义角色的枚举。
 /// </summary>
-public enum ModelPropertyRole
+public static class ModelPropertyRole
 {
-	/// <summary>未定义</summary>
-	None = 0,
+	#region 公共字段
 	/// <summary>代码</summary>
-	Code,
+	[Components.Alias("No")]
+	public static readonly string Code = nameof(Code);
 	/// <summary>名称</summary>
-	Name,
+	public static readonly string Name = nameof(Name);
 	/// <summary>性别</summary>
-	Gender,
+	public static readonly string Gender = nameof(Gender);
 	/// <summary>生日</summary>
-	Birthday,
+	public static readonly string Birthday = nameof(Birthday);
 	/// <summary>邮箱</summary>
-	Email,
+	public static readonly string Email = nameof(Email);
 	/// <summary>电话</summary>
-	Phone,
+	[Components.Alias("PhoneNumber")]
+	public static readonly string Phone = nameof(Phone);
 	/// <summary>地址</summary>
-	Address,
+	public static readonly string Address = nameof(Address);
 	/// <summary>货币</summary>
-	Currency,
+	public static readonly string Currency = nameof(Currency);
 	/// <summary>密码</summary>
-	Password,
-	/// <summary>描述文本</summary>
-	Description,
+	public static readonly string Password = nameof(Password);
+	/// <summary>描述信息</summary>
+	[Components.Alias("Remark")]
+	public static readonly string Description = nameof(Description);
+	#endregion
+
+	#region 公共方法
+	public static string Determine(string name)
+	{
+		if(string.IsNullOrEmpty(name))
+			return null;
+
+		var fields = typeof(ModelPropertyRole).GetFields(BindingFlags.Public | BindingFlags.Static);
+
+		for(int i = 0; i < fields.Length; i++)
+		{
+			var field = fields[i];
+
+			if(name.EndsWith(field.Name, StringComparison.InvariantCultureIgnoreCase))
+				return field.Name;
+
+			var aliases = Components.AliasAttribute.GetAliases(field);
+
+			if(aliases != null && aliases.Length > 0)
+			{
+				for(int j = 0; j < aliases.Length; j++)
+				{
+					if(!string.IsNullOrEmpty(aliases[j]) && name.EndsWith(aliases[j], StringComparison.InvariantCultureIgnoreCase))
+						return field.Name;
+				}
+			}
+		}
+
+		return null;
+	}
+	#endregion
 }

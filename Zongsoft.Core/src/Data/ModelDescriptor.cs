@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,143 +28,184 @@
  */
 
 using System;
-using System.Linq;
-using System.Reflection;
+using System.ComponentModel;
 
 using Zongsoft.Common;
-using Zongsoft.Services;
-using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data;
 
 /// <summary>
 /// 表示数据模型元信息的类。
 /// </summary>
-public sealed class ModelDescriptor : IEquatable<ModelDescriptor>
+public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 {
-	#region 成员字段
-	private string _name;
-	private string _namespace;
-	private string _title;
-	private string _description;
-	private IDataEntity _entity;
-	private readonly Type _type;
-	private ModelPropertyDescriptorCollection _properties;
+	#region 事件定义
+	public event PropertyChangedEventHandler PropertyChanged;
+	public event PropertyChangingEventHandler PropertyChanging;
 	#endregion
 
 	#region 构造函数
-	internal ModelDescriptor(Type type, IDataEntity entity = null)
-	{
-		_type = type ?? throw new ArgumentNullException(nameof(type));
-		_entity = entity;
-
-		if(entity == null)
-		{
-			var qualifiedName = Model.Naming.Get(type);
-			var index = qualifiedName.LastIndexOf(Type.Delimiter);
-
-			if(index < 0)
-			{
-				_name = qualifiedName;
-				_namespace = null;
-			}
-			else
-			{
-				_name = qualifiedName[(index + 1)..];
-				_namespace = qualifiedName[..index];
-			}
-		}
-		else
-		{
-			_name = entity.Name;
-			_namespace = entity.Namespace;
-		}
-	}
+	public ModelDescriptor() => this.Properties = new(this);
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取数据实体定义。</summary>
-	[System.Text.Json.Serialization.JsonIgnore]
-	[Serialization.SerializationMember(Ignored = true)]
-	public IDataEntity Entity => _entity ??= Mapping.Entities.TryGetValue(this.QualifiedName, out var entity) ? entity : null;
-
-	/// <summary>获取所属命名空间。</summary>
-	public string Namespace => _namespace;
-
-	/// <summary>获取模型名称。</summary>
-	public string Name => _name;
-
-	/// <summary>获取模型限定名称。</summary>
-	public string QualifiedName => string.IsNullOrEmpty(this.Namespace) ? _name : $"{_namespace}.{_name}";
-
-	/// <summary>获取模型别名。</summary>
-	public string Alias => this.Entity?.Alias;
-
-	/// <summary>获取模型类型。</summary>
-	public Type Type => _type;
-
-	/// <summary>获取模型属性元信息集。</summary>
-	public ModelPropertyDescriptorCollection Properties
+	/// <summary>获取或设置所属命名空间。</summary>
+	public string Namespace
 	{
-		get
+		get; set
 		{
-			if(_properties == null)
+			this.OnPropertyChanging(nameof(this.Namespace));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Namespace));
+		}
+	}
+
+	/// <summary>获取或设置模型名称。</summary>
+	public string Name
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Name));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Name));
+		}
+	}
+
+	/// <summary>获取或设置限定名称。</summary>
+	public string QualifiedName
+	{
+		get => string.IsNullOrEmpty(this.Namespace) ? this.Name : $"{this.Namespace}{Type.Delimiter}{this.Name}";
+		set
+		{
+			this.OnPropertyChanging(nameof(this.QualifiedName));
+			if(string.IsNullOrEmpty(value))
 			{
-				lock(_type)
+				this.Name = string.Empty;
+				this.Namespace = null;
+			}
+			else
+			{
+				var index = value.LastIndexOf(Type.Delimiter);
+				if(index < 0)
 				{
-					_properties ??= this.GetProperties();
+					this.Name = value;
+					this.Namespace = null;
+				}
+				else
+				{
+					this.Name = value[(index + 1)..];
+					this.Namespace = value[..index];
 				}
 			}
+			this.OnPropertyChanged(nameof(this.QualifiedName));
+		}
+	}
 
-			return _properties;
+	/// <summary>获取或设置模型别名。</summary>
+	public string Alias
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Alias));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Alias));
+		}
+	}
+
+	/// <summary>获取或设置模型类型。</summary>
+	public Type Type
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Type));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Type));
 		}
 	}
 
 	/// <summary>获取或设置模型标题。</summary>
 	public string Title
 	{
-		get => string.IsNullOrEmpty(_title) ? this.GetTitle() : _title;
-		set => _title = value;
+		get => string.IsNullOrEmpty(field) ? this.GetTitle() : field;
+		set
+		{
+			this.OnPropertyChanging(nameof(this.Title));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Title));
+		}
 	}
 
 	/// <summary>获取或设置模型描述文本。</summary>
 	public string Description
 	{
-		get => string.IsNullOrEmpty(_description) ? this.GetDescription() : _description;
-		set => _description = value;
+		get => string.IsNullOrEmpty(field) ? this.GetDescription() : field;
+		set
+		{
+			this.OnPropertyChanging(nameof(this.Description));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Description));
+		}
 	}
+
+	/// <summary>获取模型属性信息集。</summary>
+	public ModelPropertyDescriptorCollection Properties { get; }
+	#endregion
+
+	#region 事件触发
+	protected virtual void OnPropertyChanged(string propertyName) => this.PropertyChanged?.Invoke(this, new(propertyName));
+	protected virtual void OnPropertyChanging(string propertyName) => this.PropertyChanging?.Invoke(this, new(propertyName));
 	#endregion
 
 	#region 私有方法
-	private string GetTitle() => Resources.ResourceUtility.GetResourceString(this.Type, [$"{this.Name}.{nameof(this.Title)}", this.Name]) ?? this.Name;
-	private string GetDescription() => Resources.ResourceUtility.GetResourceString(this.Type, $"{this.Name}.{nameof(this.Description)}");
+	private string GetTitle() => this.GetResourceString(
+		$"{this.QualifiedName}.{nameof(this.Title)}",
+		this.QualifiedName,
+		$"{this.QualifiedName}.{nameof(this.Title)}",
+		this.Name);
 
-	private ModelPropertyDescriptorCollection GetProperties()
+	private string GetDescription() => this.GetResourceString(
+		$"{this.QualifiedName}.{nameof(this.Description)}",
+		$"{this.Name}.{nameof(this.Description)}");
+
+	internal string GetResourceString(params ReadOnlySpan<string> names)
 	{
-		var properties = new ModelPropertyDescriptorCollection(this);
+		var type = this.Type;
+		if(type != null)
+			return Resources.ResourceUtility.GetResourceString(type, names);
 
-		//添加模型的属性定义
-		properties.AddRange(
-			_type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-				.Select(property => new ModelPropertyDescriptor(property))
-		);
+		var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-		//添加模型的字段定义
-		properties.AddRange(
-			_type.GetFields(BindingFlags.Instance | BindingFlags.Public)
-				.Select(field => new ModelPropertyDescriptor(field))
-		);
+		for(int i = 0; i < assemblies.Length; i++)
+		{
+			var module = Services.ApplicationModuleAttribute.Find(assemblies[i]);
 
-		return properties;
+			if(module != null && Equals(module.Name, this.Namespace))
+			{
+				var result = Resources.ResourceUtility.GetResourceString(assemblies[i], names);
+
+				if(!string.IsNullOrEmpty(result))
+					return result;
+			}
+		}
+
+		return null;
+
+		static bool Equals(string a, string b, StringComparison comparison = StringComparison.OrdinalIgnoreCase) =>
+			(string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) || string.Equals(a, b, comparison);
 	}
 	#endregion
 
 	#region 重写方法
-	public bool Equals(ModelDescriptor other) => other is not null && this.Type == other.Type;
-	public override bool Equals(object obj) => obj is ModelDescriptor other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(_type);
-	public override string ToString() => string.IsNullOrEmpty(this.Namespace) ?
-		$"{this.Name}@{TypeAlias.GetAlias(this.Type)}" :
-		$"{this.Namespace}:{this.Name}@{TypeAlias.GetAlias(this.Type)}";
+	public override string ToString()
+	{
+		if(this.Type == null)
+			return string.IsNullOrEmpty(this.Alias) ?
+				$"{this.QualifiedName}" :
+				$"{this.QualifiedName}({this.Alias})";
+		else
+			return string.IsNullOrEmpty(this.Alias) ?
+				$"{this.QualifiedName}@{TypeAlias.GetAlias(this.Type)}" :
+				$"{this.QualifiedName}@{TypeAlias.GetAlias(this.Type)}({this.Alias})";
+	}
 	#endregion
 }

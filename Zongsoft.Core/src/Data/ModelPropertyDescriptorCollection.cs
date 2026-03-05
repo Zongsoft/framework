@@ -60,7 +60,7 @@ public class ModelPropertyDescriptorCollection(ModelDescriptor model) : KeyedCol
 		if(item == null)
 			throw new ArgumentNullException(nameof(item));
 
-		item.SetModel(_model);
+		item.Model = _model;
 		base.InsertItem(index, item);
 	}
 
@@ -69,7 +69,7 @@ public class ModelPropertyDescriptorCollection(ModelDescriptor model) : KeyedCol
 		if(item == null)
 			throw new ArgumentNullException(nameof(item));
 
-		item.SetModel(_model);
+		item.Model = _model;
 		base.SetItem(index, item);
 	}
 }

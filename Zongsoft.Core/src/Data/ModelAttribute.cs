@@ -42,4 +42,8 @@ public class ModelAttribute : Attribute
 	/// <summary>获取数据访问的名称。</summary>
 	public string Name { get; }
 	#endregion
+
+	#region 公共属性
+	public override string ToString() => string.IsNullOrEmpty(this.Name) ? base.ToString() : this.Name;
+	#endregion
 }

@@ -42,7 +42,7 @@ public class DataServiceDescriptor<TModel> : Zongsoft.Components.ServiceDescript
 		ArgumentNullException.ThrowIfNull(service);
 		this.Name = service.Name;
 		this.Type = service.GetType();
-		this.Model = model ?? Data.Model.GetDescriptor(Mapping.Entities.TryGetValue(service.Name, out var entity) ? entity : null, typeof(TModel));
+		this.Model = model ?? Data.Model.GetDescriptor(typeof(TModel));
 		this.Operations = new OperationCollection(this);
 	}
 	#endregion

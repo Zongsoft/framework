@@ -39,7 +39,7 @@ partial class Model
 	#endregion
 
 	#region 公共方法
-	public static ModelDescriptor GetDescriptor<TModel>(this IDataService<TModel> service) => GetDescriptor(typeof(TModel));
+	public static ModelDescriptor GetDescriptor<TModel>(this IDataService<TModel> service) => GetDescriptor<TModel>();
 	public static ModelDescriptor GetDescriptor(this IDataService service)
 	{
 		if(service == null)
@@ -56,18 +56,20 @@ partial class Model
 		return null;
 	}
 
-	public static ModelDescriptor GetDescriptor(Type modelType) => GetDescriptor(null, modelType);
-	public static ModelDescriptor GetDescriptor<TModel>(this Metadata.IDataEntity entity) => GetDescriptor(entity, typeof(TModel));
-	public static ModelDescriptor GetDescriptor(this Metadata.IDataEntity entity, Type modelType)
+	public static ModelDescriptor GetDescriptor<TModel>() => GetDescriptor(typeof(TModel));
+	public static ModelDescriptor GetDescriptor(Type modelType)
 	{
 		if(modelType == null)
 			throw new ArgumentNullException(nameof(modelType));
+
+		if(modelType.IsPrimitive || modelType.IsEnum || modelType.IsArray)
+			return null;
 
 		//对动态模型类进行特殊处理
 		while(modelType.IsClass && modelType.Assembly.IsDynamic && modelType.BaseType != null)
 			modelType = modelType.BaseType;
 
-		return _descriptors.GetOrAdd(modelType, modelType => new ModelDescriptor(modelType, entity));
+		return _descriptors.GetOrAdd(modelType, modelType => new ModelDescriptor());
 	}
 	#endregion
 }
