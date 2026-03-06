@@ -38,10 +38,12 @@ public enum SerializationNamingConvention
 {
 	/// <summary>无转换</summary>
 	None,
-
 	/// <summary>驼峰(小驼峰)命名</summary>
 	Camel,
-
+	/// <summary>烤串风格(使用短横线分隔)</summary>
+	Kebab,
+	/// <summary>蛇形风格(使用下划线分隔)</summary>
+	Snake,
 	/// <summary>帕斯卡(大驼峰)命名</summary>
 	Pascal,
 }

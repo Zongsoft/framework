@@ -30,6 +30,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Zongsoft.Serialization;
 
@@ -53,17 +54,15 @@ partial class TextSerializationOptions
 
 	private JsonSerializerOptions ToJsonOptions()
 	{
-		JsonNamingPolicy naming = null;
-
-		switch(_naming)
+		JsonNamingPolicy naming = _naming switch
 		{
-			case SerializationNamingConvention.Camel:
-				naming = JsonNamingPolicy.CamelCase;
-				break;
-			case SerializationNamingConvention.Pascal:
-				naming = Json.NamingConvention.Pascal;
-				break;
-		}
+			SerializationNamingConvention.None => null,
+			SerializationNamingConvention.Camel => JsonNamingPolicy.CamelCase,
+			SerializationNamingConvention.Kebab => JsonNamingPolicy.KebabCaseLower,
+			SerializationNamingConvention.Snake => JsonNamingPolicy.SnakeCaseLower,
+			SerializationNamingConvention.Pascal => Json.NamingConvention.Pascal,
+			_ => null,
+		};
 
 		var ignores = JsonIgnoreCondition.Never;
 
@@ -97,6 +96,27 @@ partial class TextSerializationOptions
 				new Json.Converters.DataDictionaryConverterFactory(),
 				new Json.Converters.DictionaryConverterFactory(this),
 			},
+			TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+			{
+				Modifiers =
+				{
+					static info =>
+					{
+						if(info.Type.IsAbstract)
+						{
+							var attributes = info.Type.GetCustomAttributes(typeof(JsonDerivedTypeAttribute), true);
+
+							if(attributes.Length > 0)
+							{
+								info.PolymorphismOptions ??= new();
+
+								for(int i = 0; i < attributes.Length; i++)
+									SetDerivedType(info.PolymorphismOptions.DerivedTypes, (JsonDerivedTypeAttribute)attributes[i]);
+							}
+						}
+					}
+				}
+			}
 		};
 
 		if(_typified)
@@ -111,6 +131,20 @@ partial class TextSerializationOptions
 		this.Configure?.Invoke(result);
 
 		return result;
+	}
+
+	static void SetDerivedType(System.Collections.Generic.IList<JsonDerivedType> derivedTypes, JsonDerivedTypeAttribute attribute)
+	{
+		for(int i = 0; i < derivedTypes.Count; i++)
+		{
+			if(derivedTypes[i].DerivedType == attribute.DerivedType)
+				return;
+		}
+
+		if(attribute.TypeDiscriminator is string text)
+			derivedTypes.Add(new(attribute.DerivedType, text));
+		else if(attribute.TypeDiscriminator is int id)
+			derivedTypes.Add(new(attribute.DerivedType, id));
 	}
 }
 

@@ -253,3 +253,47 @@ partial class ModelPropertyDescriptor
 		_ => throw new ArgumentException($"The specified '{member.Name}' member is not a valid model property member."),
 	};
 }
+
+//[System.Text.Json.Serialization.JsonPolymorphic(UnknownDerivedTypeHandling = System.Text.Json.Serialization.JsonUnknownDerivedTypeHandling.FailSerialization)]
+[System.Text.Json.Serialization.JsonDerivedType(typeof(SimplexPropertyDescriptor), "simplex")]
+[System.Text.Json.Serialization.JsonDerivedType(typeof(ComplexPropertyDescriptor), "complex")]
+//[System.Text.Json.Serialization.JsonConverter(typeof(JsonConverter))]
+partial class ModelPropertyDescriptor
+{
+	private class JsonConverter : System.Text.Json.Serialization.JsonConverter<ModelPropertyDescriptor>
+	{
+		public override bool CanConvert(Type type) => typeof(ModelPropertyDescriptor).IsAssignableFrom(type);
+		public override ModelPropertyDescriptor Read(ref System.Text.Json.Utf8JsonReader reader, Type type, System.Text.Json.JsonSerializerOptions options)
+		{
+			return null;
+		}
+
+		public override void Write(System.Text.Json.Utf8JsonWriter writer, ModelPropertyDescriptor value, System.Text.Json.JsonSerializerOptions options)
+		{
+			if(writer.CurrentDepth > 2)
+				return;
+
+			writer.WriteStartObject();
+
+			switch(value)
+			{
+				case ModelPropertyDescriptor.SimplexPropertyDescriptor simplex:
+					writer.WriteString("$type", nameof(simplex));
+					writer.WriteStartObject(nameof(simplex));
+					Zongsoft.Serialization.Json.Converters.ObjectConverter.Default.Write(writer, simplex, options);
+					writer.WriteEndObject();
+					break;
+				case ModelPropertyDescriptor.ComplexPropertyDescriptor complex:
+					writer.WriteString("$type", nameof(complex));
+					writer.WriteStartObject(nameof(complex));
+					Zongsoft.Serialization.Json.Converters.ObjectConverter.Default.Write(writer, complex, options);
+					writer.WriteEndObject();
+					break;
+				default:
+					throw new System.Text.Json.JsonException($"Unsupported model property descriptor type: {value.GetType().FullName}");
+			}
+
+			writer.WriteEndObject();
+		}
+	}
+}

@@ -42,8 +42,18 @@ public class ModelConverterFactory : JsonConverterFactory
 	private static readonly ConcurrentDictionary<Type, Type> _mapping = new();
 	private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _properties = new();
 
-	public override bool CanConvert(Type type) => (type.IsInterface || type.IsAbstract) && !Common.TypeExtension.IsEnumerable(type);
 	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => (JsonConverter)Activator.CreateInstance(typeof(ModelConverter<>).MakeGenericType(type));
+	public override bool CanConvert(Type type)
+	{
+		if(Attribute.IsDefined(type, typeof(JsonConverterAttribute), true))
+			return false;
+		if(Attribute.IsDefined(type, typeof(JsonDerivedTypeAttribute), true))
+			return false;
+		if(Attribute.IsDefined(type, typeof(JsonPolymorphicAttribute), true))
+			return false;
+
+		return (type.IsInterface || type.IsAbstract) && !Common.TypeExtension.IsEnumerable(type);
+	}
 
 	private class ModelConverter<T> : JsonConverter<T> where T : class
 	{

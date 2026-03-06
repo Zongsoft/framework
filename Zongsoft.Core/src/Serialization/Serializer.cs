@@ -172,9 +172,7 @@ public static partial class Serializer
 					stream.Position = 0;
 
 				using(var reader = new StreamReader(stream, Encoding.UTF8, false))
-				{
-					return await reader.ReadToEndAsync();
-				}
+					return await reader.ReadToEndAsync(cancellation);
 			}
 		}
 
