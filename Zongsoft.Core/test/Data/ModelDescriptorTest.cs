@@ -87,6 +87,8 @@ public class ModelDescriptorTest
 		Assert.False(simplex.IsPrimaryKey);
 		Assert.False(simplex.Nullable);
 		Assert.Null(simplex.Alias);
+
+		Assert.False(descriptor.Properties.Contains(nameof(Log.IgnoredField)));
 	}
 
 	[Model("Logs")]
@@ -101,6 +103,9 @@ public class ModelDescriptorTest
 		public string Message;
 		[ModelProperty(DbType.String, 0, true)]
 		public string Content;
+
+		[ModelProperty(Ignored = true)]
+		public string IgnoredField;
 
 		[ModelProperty(DbType.DateTime, false)]
 		public DateTime Timestamp;

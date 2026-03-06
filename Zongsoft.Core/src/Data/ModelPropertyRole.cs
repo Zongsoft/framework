@@ -84,8 +84,8 @@ public static class ModelPropertyRole
 
 	/// <summary>地址</summary>
 	[Components.Alias("City")]
-	[Components.Alias("Contry")]
 	[Components.Alias("Street")]
+	[Components.Alias("Country")]
 	[Components.Alias("Province")]
 	public static readonly string Address = nameof(Address);
 

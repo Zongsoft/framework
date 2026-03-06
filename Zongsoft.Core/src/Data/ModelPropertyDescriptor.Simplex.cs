@@ -157,6 +157,9 @@ partial class ModelPropertyDescriptor
 		#region 重写方法
 		internal protected override void Populate(MemberInfo member)
 		{
+			if(member == null)
+				return;
+
 			//调用基类同名方法
 			base.Populate(member);
 
@@ -164,7 +167,7 @@ partial class ModelPropertyDescriptor
 			if(type != null)
 				this.Nullable = type.IsInterface || type.IsClass || Common.TypeExtension.IsNullable(type);
 
-			if(member != null && this.DefaultValue == null)
+			if(this.DefaultValue == null)
 			{
 				var attribute = member.GetCustomAttribute<DefaultValueAttribute>(true);
 
@@ -172,38 +175,34 @@ partial class ModelPropertyDescriptor
 					this.DefaultValue = Common.Convert.ConvertValue(attribute.Value, this.Type);
 			}
 
-			//设置属性特性映射
-			this.Map(member);
+			Populate(this, member);
 		}
 		#endregion
 
 		#region 私有方法
-		private void Map(MemberInfo member)
+		private static void Populate(SimplexPropertyDescriptor simplex, MemberInfo member)
 		{
-			if(member == null)
-				return;
-
 			var attribute = member.GetCustomAttribute<ModelPropertyAttribute>(true);
 			if(attribute == null)
 				return;
 
-			this.Alias = attribute.Alias;
-			this.DataType = attribute.Type;
-			this.Length = attribute.Length;
-			this.Precision = attribute.Precision;
-			this.Scale = attribute.Scale;
-			this.Nullable = attribute.Nullable;
-			this.Sortable = attribute.Sortable;
-			this.Sequence = attribute.Sequence;
+			simplex.Alias = attribute.Alias;
+			simplex.DataType = attribute.Type;
+			simplex.Length = attribute.Length;
+			simplex.Precision = attribute.Precision;
+			simplex.Scale = attribute.Scale;
+			simplex.Nullable = attribute.Nullable;
+			simplex.Sortable = attribute.Sortable;
+			simplex.Sequence = attribute.Sequence;
 
-			if(this.IsPrimaryKey = attribute.IsPrimaryKey)
+			if(simplex.IsPrimaryKey = attribute.IsPrimaryKey)
 			{
-				this.Sortable = true;
-				this.Nullable = false;
+				simplex.Sortable = true;
+				simplex.Nullable = false;
 			}
 
 			if(attribute.DefaultValue != null)
-				this.DefaultValue = Common.Convert.ConvertValue(attribute.DefaultValue, this.Type);
+				simplex.DefaultValue = Common.Convert.ConvertValue(attribute.DefaultValue, simplex.Type);
 		}
 		#endregion
 	}

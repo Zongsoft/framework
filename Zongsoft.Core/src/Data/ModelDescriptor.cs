@@ -182,10 +182,7 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 			if(field.IsInitOnly)
 				continue;
 
-			if(this.Properties.TryGetValue(field.Name, out var member))
-				member.Populate(field);
-			else
-				this.Properties.Add(ModelPropertyDescriptor.Create(field));
+			SetProperty(this, field);
 		}
 
 		var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -195,10 +192,20 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 			if(property.IsIndexer() || !property.CanRead || !property.CanWrite)
 				continue;
 
-			if(this.Properties.TryGetValue(property.Name, out var member))
-				member.Populate(property);
+			SetProperty(this, property);
+		}
+
+		static void SetProperty(ModelDescriptor descriptor, MemberInfo member)
+		{
+			if(descriptor.Properties.TryGetValue(member.Name, out var property))
+				property.Populate(member);
 			else
-				this.Properties.Add(ModelPropertyDescriptor.Create(property));
+			{
+				property = ModelPropertyDescriptor.Create(member);
+
+				if(property != null)
+					descriptor.Properties.Add(property);
+			}
 		}
 	}
 	#endregion

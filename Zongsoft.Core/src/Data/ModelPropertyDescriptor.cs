@@ -76,10 +76,6 @@ public abstract partial class ModelPropertyDescriptor : INotifyPropertyChanged, 
 			this.OnPropertyChanging(nameof(this.Name));
 			field = value;
 			this.OnPropertyChanged(nameof(this.Name));
-
-			//设置默认的语义角色
-			if(value != null && string.IsNullOrEmpty(this.Role))
-				this.Role = ModelPropertyRole.Determine(value);
 		}
 	}
 
@@ -178,12 +174,20 @@ public abstract partial class ModelPropertyDescriptor : INotifyPropertyChanged, 
 		this.Type = GetMemberType(member);
 
 		if(string.IsNullOrEmpty(this.Name))
+		{
 			this.Name = member.Name;
 
+			//设置默认的语义角色
+			if(string.IsNullOrEmpty(this.Role))
+				this.Role = ModelPropertyRole.Determine(member.Name);
+		}
+
 		var attribute = member.GetCustomAttribute<ModelPropertyAttribute>(true);
-		if(attribute != null)
+		if(attribute != null && !attribute.Ignored)
 		{
-			this.Role = attribute.Role;
+			if(attribute.Role != null)
+				this.Role = attribute.Role;
+
 			this.Hint = attribute.Hint;
 			this.Immutable = attribute.Immutable;
 		}

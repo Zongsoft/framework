@@ -36,6 +36,7 @@ namespace Zongsoft.Data;
 public class ModelPropertyAttribute : Attribute
 {
 	#region 构造函数
+	public ModelPropertyAttribute() { }
 	public ModelPropertyAttribute(DbType type, bool nullable = false, object defaultValue = null) : this(null, type, nullable, defaultValue) { }
 	public ModelPropertyAttribute(DbType type, int length, bool nullable = false, object defaultValue = null) : this(null, type, length, nullable, defaultValue) { }
 	public ModelPropertyAttribute(DbType type, byte precision, byte scale, bool nullable = false, object defaultValue = null) : this(null, type, precision, scale, nullable, defaultValue) { }
