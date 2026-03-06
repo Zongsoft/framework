@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -36,6 +37,7 @@ namespace Zongsoft.Data;
 /// <summary>
 /// 表示数据类型（包括字段类型、命令或函数的参数类型）的类。
 /// </summary>
+[TypeConverter(typeof(DataTypeConverter))]
 public sealed partial class DataType : IEquatable<DataType>
 {
 	#region 单例字段
@@ -297,4 +299,29 @@ public sealed partial class DataType : IEquatable<DataType>
 		_ => System.Data.DbType.Object,
 	};
 	#endregion
+}
+
+partial class DataType
+{
+	private class DataTypeConverter : TypeConverter
+	{
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+
+		public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+		{
+			if(value is string text)
+				return DataType.Get(text);
+
+			return base.ConvertFrom(context, culture, value);
+		}
+
+		public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
+		{
+			if(value is DataType type && destinationType == typeof(string))
+				return type.ToString();
+
+			return base.ConvertTo(context, culture, value, destinationType);
+		}
+	}
 }
