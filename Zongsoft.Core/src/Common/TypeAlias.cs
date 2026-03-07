@@ -81,8 +81,16 @@ public static partial class TypeAlias
 					elementType.Name[..(elementType.Name.Length - GetDigits(elementType.GenericTypeArguments.Length) - 1)] :
 					elementType.Name;
 
-				simplified = string.Equals(elementType.Namespace, nameof(System));
-				alias = simplified ? typeName : $"{elementType.Namespace}.{typeName}";
+				if(elementType.IsNested)
+				{
+					var declaringName = GetAlias(elementType.DeclaringType, true);
+					alias = $"{declaringName}+{typeName}";
+				}
+				else
+				{
+					simplified = string.Equals(elementType.Namespace, nameof(System));
+					alias = simplified ? typeName : $"{elementType.Namespace}.{typeName}";
+				}
 			}
 
 			if(elementType.IsGenericType)

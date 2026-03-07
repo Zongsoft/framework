@@ -104,6 +104,19 @@ public class TypeAliasTest
 	}
 
 	[Fact]
+	public void TestParseNested()
+	{
+		Assert.Same(typeof(NestedClass), TypeAlias.Parse("Zongsoft.Common.Tests.TypeAliasTest+NestedClass@Zongsoft.Core.Tests"));
+		Assert.Same(typeof(NestedStruct), TypeAlias.Parse("Zongsoft.Common.Tests.TypeAliasTest+NestedStruct@Zongsoft.Core.Tests"));
+
+		Assert.Same(typeof(NestedClass.DeepenedClass), TypeAlias.Parse("Zongsoft.Common.Tests.TypeAliasTest+NestedClass+DeepenedClass@Zongsoft.Core.Tests"));
+		Assert.Same(typeof(NestedClass.DeepenedStruct), TypeAlias.Parse("Zongsoft.Common.Tests.TypeAliasTest+NestedClass+DeepenedStruct@Zongsoft.Core.Tests"));
+
+		Assert.Same(typeof(NestedStruct.DeepenedClass), TypeAlias.Parse("Zongsoft.Common.Tests.TypeAliasTest+NestedStruct+DeepenedClass@Zongsoft.Core.Tests"));
+		Assert.Same(typeof(NestedStruct.DeepenedStruct), TypeAlias.Parse("Zongsoft.Common.Tests.TypeAliasTest+NestedStruct+DeepenedStruct@Zongsoft.Core.Tests"));
+	}
+
+	[Fact]
 	public void TestGetAlias()
 	{
 		Assert.Equal("object", TypeAlias.GetAlias(typeof(object)), true);
@@ -176,4 +189,31 @@ public class TypeAliasTest
 		tupleAlias += "[]";
 		Assert.Equal(tupleAlias, tupleType.GetAlias());
 	}
+
+	[Fact]
+	public void TestGetAliasNested()
+	{
+		Assert.Equal("Zongsoft.Common.Tests.TypeAliasTest+NestedClass@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(NestedClass)));
+		Assert.Equal("Zongsoft.Common.Tests.TypeAliasTest+NestedStruct@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(NestedStruct)));
+
+		Assert.Equal("Zongsoft.Common.Tests.TypeAliasTest+NestedClass+DeepenedClass@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(NestedClass.DeepenedClass)));
+		Assert.Equal("Zongsoft.Common.Tests.TypeAliasTest+NestedClass+DeepenedStruct@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(NestedClass.DeepenedStruct)));
+
+		Assert.Equal("Zongsoft.Common.Tests.TypeAliasTest+NestedStruct+DeepenedClass@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(NestedStruct.DeepenedClass)));
+		Assert.Equal("Zongsoft.Common.Tests.TypeAliasTest+NestedStruct+DeepenedStruct@Zongsoft.Core.Tests", TypeAlias.GetAlias(typeof(NestedStruct.DeepenedStruct)));
+	}
+
+	#region 嵌套类型
+	private class NestedClass
+	{
+		public class DeepenedClass() { }
+		public struct DeepenedStruct { }
+	}
+
+	private struct NestedStruct
+	{
+		public class DeepenedClass() { }
+		public struct DeepenedStruct { }
+	}
+	#endregion
 }
