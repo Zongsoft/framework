@@ -23,17 +23,20 @@ public class ModelDescriptorTest
 		Assert.True(descriptor.Properties.TryGetValue(nameof(EmployeeBase.EmployeeId), out var property));
 		Assert.Equal(nameof(EmployeeBase.EmployeeId), property.Name);
 		Assert.Equal(typeof(int), property.Type);
-		Assert.True(property.IsSimplex());
+		Assert.True(property.IsSimplex(out var simplex));
+		Assert.Equal(DataType.Int32, simplex.DataType);
 
 		Assert.True(descriptor.Properties.TryGetValue(nameof(EmployeeBase.Name), out property));
 		Assert.Equal(nameof(EmployeeBase.Name), property.Name);
 		Assert.Equal(typeof(string), property.Type);
-		Assert.True(property.IsSimplex());
+		Assert.True(property.IsSimplex(out simplex));
+		Assert.Equal(DataType.String, simplex.DataType);
 
 		Assert.True(descriptor.Properties.TryGetValue(nameof(EmployeeBase.Gender), out property));
 		Assert.Equal(nameof(EmployeeBase.Gender), property.Name);
 		Assert.Equal(typeof(Gender?), property.Type);
-		Assert.True(property.IsSimplex());
+		Assert.True(property.IsSimplex(out simplex));
+		Assert.Equal(DataType.Byte, simplex.DataType);
 	}
 
 	[Fact]

@@ -22,7 +22,7 @@ public class EnumUtilityTest
 		entry = EnumUtility.GetEnumEntry(Gender.Male, true);
 
 		Assert.Equal("Male", entry.Name);
-		Assert.Equal(1, entry.Value); //注意：entry.Value 为枚举项的基元类型
+		Assert.Equal((byte)1, entry.Value); //注意：entry.Value 为枚举项的基元类型
 		Assert.True(entry.HasAlias("M"));
 		Assert.Equal("男士", entry.Description);
 		Assert.Equal("男士", EnumUtility.GetEnumDescription(Gender.Male));

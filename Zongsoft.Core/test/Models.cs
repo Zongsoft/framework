@@ -245,7 +245,7 @@ public abstract class SpecialEmployeeBase : EmployeeBase
 }
 
 [DefaultValue(Female)]
-public enum Gender
+public enum Gender : byte
 {
 	[Zongsoft.Components.Alias("F")]
 	Female,
