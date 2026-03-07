@@ -6,7 +6,6 @@ using Xunit;
 
 using Zongsoft.Data;
 using Zongsoft.Security.Privileges;
-using Zongsoft.Tests;
 
 namespace Zongsoft.Serialization.Tests;
 
@@ -38,22 +37,6 @@ public class JsonSerializerTest
 		var credentialResult = Serializer.Json.Deserialize<Credential>(json);
 		Assert.NotNull(credentialResult);
 		Assert.Equal(credential, credentialResult);
-	}
-
-	[Fact]
-	public void TestSerializeModelDescriptor()
-	{
-		var descriptor = Model.GetDescriptor<EmployeeBase>();
-		var json = Serializer.Json.Serialize(descriptor);
-		Assert.NotEmpty(json);
-
-		var result = Serializer.Json.Deserialize<ModelDescriptor>(json);
-		Assert.NotNull(result);
-
-		//var options = new System.Text.Json.JsonSerializerOptions();
-		//options.Converters.Add(Zongsoft.Serialization.Json.Converters.TypeConverter.Factory);
-		//var result = System.Text.Json.JsonSerializer.Deserialize<ModelDescriptor>(json, options);
-		//Assert.NotNull(result);
 	}
 
 	[Fact]

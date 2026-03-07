@@ -155,6 +155,7 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 	}
 
 	/// <summary>获取模型属性信息集。</summary>
+	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
 	public ModelPropertyDescriptorCollection Properties { get; }
 	#endregion
 

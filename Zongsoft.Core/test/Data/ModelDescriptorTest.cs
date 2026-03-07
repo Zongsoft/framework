@@ -4,6 +4,7 @@ using System.Data;
 using Xunit;
 
 using Zongsoft.Tests;
+using Zongsoft.Serialization;
 
 namespace Zongsoft.Data.Tests;
 
@@ -12,8 +13,29 @@ public class ModelDescriptorTest
 	[Fact]
 	public void TestWithoutMetadata()
 	{
-		var descriptor = Model.GetDescriptor<EmployeeBase>();
+		TestEmployeeModel(Model.GetDescriptor<EmployeeBase>());
+	}
 
+	[Fact]
+	public void TestWithMetadata()
+	{
+		TestLogModel(Model.GetDescriptor<Log>());
+	}
+
+	[Fact]
+	public void TestSerializeWithoutMetadata()
+	{
+		var descriptor = Model.GetDescriptor<EmployeeBase>();
+		var json = Serializer.Json.Serialize(descriptor);
+		Assert.NotEmpty(json);
+
+		var result = Serializer.Json.Deserialize<ModelDescriptor>(json);
+		Assert.NotNull(result);
+		TestEmployeeModel(result);
+	}
+
+	private static void TestEmployeeModel(ModelDescriptor descriptor)
+	{
 		Assert.NotNull(descriptor);
 		Assert.Equal(nameof(EmployeeBase), descriptor.Name);
 		Assert.Equal(typeof(EmployeeBase), descriptor.Type);
@@ -39,11 +61,8 @@ public class ModelDescriptorTest
 		Assert.Equal(DataType.Byte, simplex.DataType);
 	}
 
-	[Fact]
-	public void TestWithMetadata()
+	private static void TestLogModel(ModelDescriptor descriptor)
 	{
-		var descriptor = Model.GetDescriptor<Log>();
-
 		Assert.NotNull(descriptor);
 		Assert.Equal("Logs", descriptor.Name);
 		Assert.Equal(typeof(Log), descriptor.Type);
@@ -65,6 +84,7 @@ public class ModelDescriptorTest
 		Assert.Equal(typeof(string), property.Type);
 		Assert.True(property.IsSimplex(out simplex));
 		Assert.Equal(DataType.AnsiString, simplex.DataType);
+		Assert.Equal(50, simplex.Length);
 		Assert.False(simplex.IsPrimaryKey);
 		Assert.False(simplex.Nullable);
 		Assert.Null(simplex.Alias);
@@ -74,6 +94,7 @@ public class ModelDescriptorTest
 		Assert.Equal(typeof(string), property.Type);
 		Assert.True(property.IsSimplex(out simplex));
 		Assert.Equal(DataType.String, simplex.DataType);
+		Assert.Equal(500, simplex.Length);
 		Assert.False(simplex.IsPrimaryKey);
 		Assert.False(simplex.Nullable);
 		Assert.Null(simplex.Alias);
