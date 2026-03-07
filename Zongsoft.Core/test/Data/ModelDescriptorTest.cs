@@ -11,19 +11,26 @@ namespace Zongsoft.Data.Tests;
 public class ModelDescriptorTest
 {
 	[Fact]
-	public void TestWithoutMetadata()
+	public void Test()
 	{
+		TestLogModel(Model.GetDescriptor<Log>());
 		TestEmployeeModel(Model.GetDescriptor<EmployeeBase>());
 	}
 
 	[Fact]
-	public void TestWithMetadata()
+	public void TestSerialize1()
 	{
-		TestLogModel(Model.GetDescriptor<Log>());
+		var descriptor = Model.GetDescriptor<Log>();
+		var json = Serializer.Json.Serialize(descriptor);
+		Assert.NotEmpty(json);
+
+		var result = Serializer.Json.Deserialize<ModelDescriptor>(json);
+		Assert.NotNull(result);
+		TestLogModel(result);
 	}
 
 	[Fact]
-	public void TestSerializeWithoutMetadata()
+	public void TestSerialize2()
 	{
 		var descriptor = Model.GetDescriptor<EmployeeBase>();
 		var json = Serializer.Json.Serialize(descriptor);
@@ -121,7 +128,7 @@ public class ModelDescriptorTest
 	}
 
 	[Model("Logs")]
-	internal struct Log
+	private struct Log
 	{
 		[ModelProperty("Id", IsPrimaryKey = true)]
 		public long LogId;
