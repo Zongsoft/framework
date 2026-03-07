@@ -45,7 +45,7 @@ public class ModelPropertyAttribute : Attribute
 	public ModelPropertyAttribute(string alias, DbType type, int length, bool nullable = false, object defaultValue = null)
 	{
 		this.Alias = alias;
-		this.Type = type;
+		this.Type = type == DbType.Object ? null : type;
 		this.Length = length;
 		this.Nullable = nullable;
 		this.DefaultValue = defaultValue;
@@ -53,7 +53,7 @@ public class ModelPropertyAttribute : Attribute
 	public ModelPropertyAttribute(string alias, DbType type, byte precision, byte scale, bool nullable = false, object defaultValue = null)
 	{
 		this.Alias = alias;
-		this.Type = type;
+		this.Type = type == DbType.Object ? null : type;
 		this.Precision = precision;
 		this.Scale = scale;
 		this.Nullable = nullable;
@@ -63,7 +63,7 @@ public class ModelPropertyAttribute : Attribute
 	public ModelPropertyAttribute(string port, Metadata.DataAssociationMultiplicity multiplicity, Metadata.DataEntityComplexPropertyBehaviors behaviors = Metadata.DataEntityComplexPropertyBehaviors.None)
 	{
 		this.Port = port;
-		this.Type = DataType.Object;
+		this.Type = null;
 		this.Multiplicity = multiplicity;
 		this.Behaviors = behaviors;
 	}

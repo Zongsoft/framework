@@ -51,6 +51,7 @@ public class ModelDescriptorTest
 		Assert.Equal(nameof(Log.LogId), property.Name);
 		Assert.Equal(typeof(long), property.Type);
 		Assert.True(property.IsSimplex(out var simplex));
+		Assert.Equal(DataType.Int64, simplex.DataType);
 		Assert.True(simplex.IsPrimaryKey);
 		Assert.True(simplex.Sortable);
 		Assert.False(simplex.Nullable);
@@ -60,6 +61,7 @@ public class ModelDescriptorTest
 		Assert.Equal(nameof(Log.Source), property.Name);
 		Assert.Equal(typeof(string), property.Type);
 		Assert.True(property.IsSimplex(out simplex));
+		Assert.Equal(DataType.AnsiString, simplex.DataType);
 		Assert.False(simplex.IsPrimaryKey);
 		Assert.False(simplex.Nullable);
 		Assert.Null(simplex.Alias);
@@ -68,6 +70,7 @@ public class ModelDescriptorTest
 		Assert.Equal(nameof(Log.Message), property.Name);
 		Assert.Equal(typeof(string), property.Type);
 		Assert.True(property.IsSimplex(out simplex));
+		Assert.Equal(DataType.String, simplex.DataType);
 		Assert.False(simplex.IsPrimaryKey);
 		Assert.False(simplex.Nullable);
 		Assert.Null(simplex.Alias);
@@ -76,6 +79,7 @@ public class ModelDescriptorTest
 		Assert.Equal(nameof(Log.Content), property.Name);
 		Assert.Equal(typeof(string), property.Type);
 		Assert.True(property.IsSimplex(out simplex));
+		Assert.Equal(DataType.String, simplex.DataType);
 		Assert.False(simplex.IsPrimaryKey);
 		Assert.True(simplex.Nullable);
 		Assert.Null(simplex.Alias);
@@ -84,6 +88,7 @@ public class ModelDescriptorTest
 		Assert.Equal(nameof(Log.Timestamp), property.Name);
 		Assert.Equal(typeof(DateTime), property.Type);
 		Assert.True(property.IsSimplex(out simplex));
+		Assert.Equal(DataType.DateTime, simplex.DataType);
 		Assert.False(simplex.IsPrimaryKey);
 		Assert.False(simplex.Nullable);
 		Assert.Null(simplex.Alias);

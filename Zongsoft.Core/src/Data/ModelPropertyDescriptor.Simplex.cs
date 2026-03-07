@@ -165,7 +165,10 @@ partial class ModelPropertyDescriptor
 
 			var type = this.Type;
 			if(type != null)
+			{
+				this.DataType = DataType.Get(type);
 				this.Nullable = type.IsInterface || type.IsClass || Common.TypeExtension.IsNullable(type);
+			}
 
 			if(this.DefaultValue == null)
 			{
@@ -187,13 +190,15 @@ partial class ModelPropertyDescriptor
 				return;
 
 			simplex.Alias = attribute.Alias;
-			simplex.DataType = attribute.Type;
 			simplex.Length = attribute.Length;
 			simplex.Precision = attribute.Precision;
 			simplex.Scale = attribute.Scale;
 			simplex.Nullable = attribute.Nullable;
 			simplex.Sortable = attribute.Sortable;
 			simplex.Sequence = attribute.Sequence;
+
+			if(attribute.Type != null)
+				simplex.DataType = attribute.Type;
 
 			if(simplex.IsPrimaryKey = attribute.IsPrimaryKey)
 			{

@@ -200,6 +200,45 @@ public sealed partial class DataType : IEquatable<DataType>
 			return type;
 		}
 	}
+
+	public static DataType Get(Type type)
+	{
+		if(type == null)
+			return null;
+
+		var isArray = type.IsArray;
+		if(isArray)
+			type = type.GetElementType();
+
+		if(Common.TypeExtension.IsNullable(type, out var underlyingType))
+			type = underlyingType;
+
+		var dbType = Type.GetTypeCode(type) switch
+		{
+			TypeCode.Byte => System.Data.DbType.Byte,
+			TypeCode.SByte => System.Data.DbType.SByte,
+			TypeCode.Int16 => System.Data.DbType.Int16,
+			TypeCode.Int32 => System.Data.DbType.Int32,
+			TypeCode.Int64 => System.Data.DbType.Int64,
+			TypeCode.UInt16 => System.Data.DbType.UInt16,
+			TypeCode.UInt32 => System.Data.DbType.UInt32,
+			TypeCode.UInt64 => System.Data.DbType.UInt64,
+			TypeCode.String => System.Data.DbType.String,
+			TypeCode.Double => System.Data.DbType.Double,
+			TypeCode.Single => System.Data.DbType.Single,
+			TypeCode.Decimal => System.Data.DbType.Decimal,
+			TypeCode.Boolean => System.Data.DbType.Boolean,
+			TypeCode.DateTime => System.Data.DbType.DateTime,
+			_ when type == typeof(Guid) => System.Data.DbType.Guid,
+			_ when type == typeof(byte[]) => System.Data.DbType.Binary,
+			_ when type == typeof(DateOnly) => System.Data.DbType.Date,
+			_ when type == typeof(TimeOnly) => System.Data.DbType.Time,
+			_ when type == typeof(DateTimeOffset) => System.Data.DbType.DateTimeOffset,
+			_ => System.Data.DbType.Object,
+		};
+
+		return dbType == System.Data.DbType.Object ? null : new(dbType.ToString(), dbType, isArray);
+	}
 	#endregion
 
 	#region 重写方法
