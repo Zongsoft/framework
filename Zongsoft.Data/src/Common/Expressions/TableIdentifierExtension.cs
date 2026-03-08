@@ -60,7 +60,8 @@ public static class TableIdentifierExtension
 		IDataEntityProperty property = null;
 		ISource token = table;
 		var parts = path.Split('.');
-		var properties = table.Entity.Properties;
+		var entity = table.Entity;
+		var properties = entity.Properties;
 
 		for(int i = 0; i < parts.Length; i++)
 		{
@@ -71,7 +72,7 @@ public static class TableIdentifierExtension
 			if(!properties.TryGetValue(parts[i], out property))
 			{
 				//尝试从父实体中查找指定的属性
-				property = FindBaseProperty(ref properties, parts[i], ref ancestors);
+				property = FindBaseProperty(entity, parts[i], ref ancestors);
 
 				//如果父实体中也不含指定的属性则返回失败
 				if(property == null)
@@ -90,7 +91,7 @@ public static class TableIdentifierExtension
 			if(property.IsSimplex)
 				break;
 			else
-				properties = GetAssociatedProperties((IDataEntityComplexProperty)property, ref ancestors);
+				(entity, properties) = GetAssociatedProperties((IDataEntityComplexProperty)property, ref ancestors);
 		}
 
 		//返回查找到的结果
@@ -99,46 +100,46 @@ public static class TableIdentifierExtension
 	#endregion
 
 	#region 私有方法
-	private static DataEntityPropertyCollection GetAssociatedProperties(IDataEntityComplexProperty property, ref ICollection<IDataEntity> ancestors)
+	private static (IDataEntity, DataEntityPropertyCollection) GetAssociatedProperties(IDataEntityComplexProperty property, ref ICollection<IDataEntity> ancestors)
 	{
 		var index = property.Port.IndexOf(':');
 		var entityName = index < 0 ? property.Port : property.Port.Substring(0, index);
 		var entity = property.Entity.GetEntity(entityName) ?? throw new DataException($"The '{entityName}' target entity associated with the Role in the '{property.Entity.Name}:{property.Name}' complex property does not exist.");
 
 		if(index < 0)
-			return entity.Properties;
+			return (entity, entity.Properties);
 
-		var parts = property.Port.Substring(index + 1).Split('.');
+		var parts = property.Port[(index + 1)..].Split('.');
 		var properties = entity.Properties;
 
 		foreach(var part in parts)
 		{
-			if(properties == null)
-				return null;
+			if(entity == null || properties == null)
+				return default;
 
 			if(!properties.TryGetValue(part, out var found))
 			{
-				found = FindBaseProperty(ref properties, part, ref ancestors);
+				found = FindBaseProperty(entity, part, ref ancestors);
 
 				if(found == null)
-					throw new DataException($"The '{part}' property of '{properties.Entity.Name}' entity does not existed.");
+					throw new DataException($"The '{part}' property of '{entity.Name}' entity does not existed.");
 			}
 
 			if(found.IsSimplex)
-				return null;
+				return default;
 
-			properties = GetAssociatedProperties((IDataEntityComplexProperty)found, ref ancestors);
+			(entity, properties) = GetAssociatedProperties((IDataEntityComplexProperty)found, ref ancestors);
 		}
 
-		return properties;
+		return (entity, properties);
 	}
 
-	private static IDataEntityProperty FindBaseProperty(ref DataEntityPropertyCollection properties, string name, ref ICollection<IDataEntity> ancestors)
+	private static IDataEntityProperty FindBaseProperty(IDataEntity entity, string name, ref ICollection<IDataEntity> ancestors)
 	{
-		if(properties == null)
+		if(entity == null)
 			return null;
 
-		var baseEntity = properties.Entity.GetBaseEntity();
+		var baseEntity = entity.GetBaseEntity();
 
 		if(baseEntity != null)
 			ancestors = [baseEntity];

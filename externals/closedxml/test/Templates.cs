@@ -33,7 +33,7 @@ internal class Templates
 				new(105, "Jack", "Jack Ma"),
 			];
 
-			_entity = new DataEntity(nameof(Models.User));
+			_entity = new DataEntity(null, nameof(Models.User));
 			_entity.Properties.Simplex(nameof(Models.User.UserId), DbType.Int32, false);
 			_entity.Properties.Simplex(nameof(Models.User.Name), DbType.String, 50, false);
 			_entity.Properties.Simplex(nameof(Models.User.Nickname), DbType.String, 100, false);
@@ -44,7 +44,7 @@ internal class Templates
 			_entity.Properties.Simplex(nameof(Models.User.Description), DbType.String, 500, true);
 			_entity.SetKey(nameof(Models.User.UserId));
 
-			this.Descriptor = _entity.GetDescriptor<Models.User>();
+			this.Descriptor = Model.GetDescriptor<Models.User>();
 		}
 
 		public User[] Data { get; }
@@ -55,7 +55,7 @@ internal class Templates
 	{
 		public AssetUsageModel()
 		{
-			var entity = new DataEntity(nameof(Models.AssetUsage));
+			var entity = new DataEntity(null, nameof(Models.AssetUsage));
 			entity.Properties.Simplex(nameof(Models.AssetUsage.AssetId), DbType.Int64, false);
 			entity.Properties.Simplex(nameof(Models.AssetUsage.Date), DbType.Date, false);
 			entity.Properties.Simplex(nameof(Models.AssetUsage.Quantity), DbType.Double, 12, 4, false);
@@ -69,7 +69,7 @@ internal class Templates
 			entity.Properties.Simplex(nameof(Models.AssetUsage.ModifiedTime), DbType.DateTime, true);
 			entity.SetKey(nameof(Models.AssetUsage.AssetId), nameof(Models.AssetUsage.Date));
 
-			this.Descriptor = entity.GetDescriptor<AssetUsage>();
+			this.Descriptor = Model.GetDescriptor<AssetUsage>();
 		}
 
 		public ModelDescriptor Descriptor { get; }

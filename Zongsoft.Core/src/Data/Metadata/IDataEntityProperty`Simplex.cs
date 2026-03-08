@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -45,7 +45,7 @@ public interface IDataEntitySimplexProperty : IDataEntityProperty
 	/// <summary>获取一个值，指示当前属性是否为主键。</summary>
 	bool IsPrimaryKey { get; }
 
-	/// <summary>获取或设置文本或数组属性的最大长度，单位：字节。</summary>
+	/// <summary>获取或设置文本或数组属性的最大长度。</summary>
 	int Length { get; set; }
 
 	/// <summary>获取或设置数值属性的精度。</summary>

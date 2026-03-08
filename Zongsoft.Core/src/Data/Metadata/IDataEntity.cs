@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -60,7 +60,7 @@ public interface IDataEntity : IEquatable<IDataEntity>
 	bool Immutable { get; set; }
 
 	/// <summary>获取一个值，指示该实体是否定义了主键。</summary>
-	bool HasKey => this.Key != null && this.Key.Length > 0;
+	bool HasKey { get; }
 
 	/// <summary>获取数据实体的主键。</summary>
 	IDataEntitySimplexProperty[] Key { get; }

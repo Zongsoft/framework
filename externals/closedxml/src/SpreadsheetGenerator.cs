@@ -228,8 +228,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 				{
 					foreach(var property in model.Properties)
 					{
-						if(property.Field == null || property.Field.IsSimplex)
-							yield return new TableColumn(index++, property);
+						if(property.IsSimplex(out var simplex))
+							yield return new TableColumn(index++, simplex);
 					}
 				}
 				else
@@ -240,8 +240,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		{
 			foreach(var property in model.Properties)
 			{
-				if(property.Field == null || property.Field.IsSimplex)
-					yield return new TableColumn(index++, property);
+				if(property.IsSimplex(out var simplex))
+					yield return new TableColumn(index++, simplex);
 			}
 		}
 	}
@@ -270,23 +270,23 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		//设置特定语义角色的样式
 		switch(property.Role)
 		{
-			case ModelPropertyRole.Code:
-			case ModelPropertyRole.Phone:
-			case ModelPropertyRole.Email:
+			case nameof(ModelPropertyRole.Code):
+			case nameof(ModelPropertyRole.Phone):
+			case nameof(ModelPropertyRole.Email):
 				column.Style.Font.SetFontName(FONT_NAME);
 				column.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
 				break;
-			case ModelPropertyRole.Currency:
+			case nameof(ModelPropertyRole.Currency):
 				column.Style.Font.SetFontName(FONT_NAME);
 				column.Style.NumberFormat.SetFormat("0.00");
 				break;
-			case ModelPropertyRole.Description:
+			case nameof(ModelPropertyRole.Description):
 				column.FirstColumn().WorksheetColumn().Width = 20;
 				break;
 		}
 
 		//设置主键的样式
-		if(property.Field != null && property.Field.IsPrimaryKey())
+		if(property.IsSimplex(out var simplex) && simplex.IsPrimaryKey)
 		{
 			column.Style.Font.SetBold(true);
 			column.Style.Font.SetFontName(FONT_NAME);
@@ -351,7 +351,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 	{
 		private readonly Reflection.Expressions.IMemberExpression _expression;
 
-		public TableColumn(int index, ModelPropertyDescriptor property)
+		public TableColumn(int index, ModelPropertyDescriptor.SimplexPropertyDescriptor property)
 		{
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
@@ -389,21 +389,13 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 						if(expression.Next == null && string.IsNullOrEmpty(this.Description))
 							this.Description = property.Description;
 
-						if(property.Field.IsComplex)
-							model = ((IDataEntityComplexProperty)property.Field).Foreign.GetDescriptor(GetMemberType(property.Member));
+						if(property.IsComplex(out var complex))
+							model = complex.Target;
 					}
 
 					expression = expression.Next;
 				}
 			}
-
-			static Type GetMemberType(MemberInfo member) => member.MemberType switch
-			{
-				MemberTypes.Field => ((FieldInfo)member).FieldType,
-				MemberTypes.Property => ((PropertyInfo)member).PropertyType,
-				MemberTypes.Method => ((MethodInfo)member).ReturnType,
-				_ => null,
-			};
 		}
 
 		public Type Type => this.Property.Type;

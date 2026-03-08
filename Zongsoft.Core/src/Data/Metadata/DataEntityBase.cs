@@ -89,8 +89,8 @@ public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<D
 	public DataEntityPropertyCollection Properties { get; }
 	#endregion
 
-	#region 内部方法
-	internal protected void SetKey(params ReadOnlySpan<string> keys)
+	#region 公共方法
+	public void SetKey(params ReadOnlySpan<string> keys)
 	{
 		if(keys.IsEmpty)
 			return;

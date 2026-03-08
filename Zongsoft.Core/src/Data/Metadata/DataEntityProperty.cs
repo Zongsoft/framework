@@ -50,7 +50,7 @@ public abstract class DataEntityPropertyBase : IDataEntityProperty, IEquatable<I
 
 	#region 公共属性
 	/// <summary>获取所属的数据实体。</summary>
-	public IDataEntity Entity { get; }
+	public IDataEntity Entity { get; set; }
 
 	/// <summary>获取数据实体属性的名称。</summary>
 	public string Name { get; }

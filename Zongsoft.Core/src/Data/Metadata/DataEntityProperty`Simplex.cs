@@ -40,7 +40,6 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	#endregion
 
 	#region 成员字段
-	private int _length;
 	private object _defaultValue;
 	private bool? _isPrimaryKey;
 	#endregion
@@ -77,9 +76,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	{
 		get
 		{
-			var length = _length;
-
-			if(length == 0)
+			if(field == 0)
 			{
 				switch(this.Type.DbType)
 				{
@@ -93,12 +90,9 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 				}
 			}
 
-			return length;
+			return field;
 		}
-		set
-		{
-			_length = Math.Max(value, -1);
-		}
+		set => field = Math.Max(value, -1);
 	}
 
 	/// <summary>获取或设置数值属性的精度。</summary>
@@ -161,7 +155,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 
 			return (_isPrimaryKey = false).Value;
 		}
-	}
+    }
 	#endregion
 
 	#region 重写属性
@@ -214,7 +208,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 			DbType.AnsiString or
 			DbType.AnsiStringFixedLength or
 			DbType.String or
-			DbType.StringFixedLength => $"{this.Name} {this.Type}({_length}) [{nullable}]",
+			DbType.StringFixedLength => $"{this.Name} {this.Type}({this.Length}) [{nullable}]",
 
 			_ => $"{this.Name} {this.Type} [{nullable}]",
 		};

@@ -34,8 +34,8 @@ namespace Zongsoft.Data.Metadata;
 
 public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<string, IDataEntityProperty>(StringComparer.OrdinalIgnoreCase)
 {
-	#region 公共属性
-	public IDataEntity Entity { get; } = entity;
+	#region 成员字段
+	private readonly IDataEntity _entity = entity ?? throw new ArgumentNullException(nameof(entity));
 	#endregion
 
 	#region 重写方法
@@ -45,21 +45,21 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 	#region 公共方法
 	public DataEntitySimplexProperty Simplex(string name, DataType type, bool nullable, bool immutable = false)
 	{
-		var property = new DataEntitySimplexProperty(this.Entity, name, type, nullable, immutable);
+		var property = new DataEntitySimplexProperty(_entity, name, type, nullable, immutable);
 		this.Add(property);
 		return property;
 	}
 
 	public DataEntitySimplexProperty Simplex(string name, DataType type, int length, bool nullable, bool immutable = false)
 	{
-		var property = new DataEntitySimplexProperty(this.Entity, name, type, length, nullable, immutable);
+		var property = new DataEntitySimplexProperty(_entity, name, type, length, nullable, immutable);
 		this.Add(property);
 		return property;
 	}
 
 	public DataEntitySimplexProperty Simplex(string name, DataType type, byte precision, byte scale, bool nullable, bool immutable = false)
 	{
-		var property = new DataEntitySimplexProperty(this.Entity, name, type, precision, scale, nullable, immutable);
+		var property = new DataEntitySimplexProperty(_entity, name, type, precision, scale, nullable, immutable);
 		this.Add(property);
 		return property;
 	}
@@ -67,7 +67,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 	public DataEntityComplexProperty Complex(string name, string port, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) => this.Complex(name, port, true, behaviors);
 	public DataEntityComplexProperty Complex(string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None)
 	{
-		var property = new DataEntityComplexProperty(this.Entity, name, port, immutable, behaviors);
+		var property = new DataEntityComplexProperty(_entity, name, port, immutable, behaviors);
 		this.Add(property);
 		return property;
 	}
@@ -78,7 +78,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 		this.Complex(name, port, true, behaviors, multiplicity, links);
 	public DataEntityComplexProperty Complex(string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links)
 	{
-		var property = new DataEntityComplexProperty(this.Entity, name, port, immutable, behaviors, multiplicity, links);
+		var property = new DataEntityComplexProperty(_entity, name, port, immutable, behaviors, multiplicity, links);
 		this.Add(property);
 		return property;
 	}
