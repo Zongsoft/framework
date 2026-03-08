@@ -105,7 +105,7 @@ public class ApplicationModuleAttribute : Attribute
 
 		return null;
 
-		static ApplicationModuleAttribute Find(string name)
+		static ApplicationModuleAttribute Find(string assemblyName)
 		{
 			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
@@ -114,7 +114,7 @@ public class ApplicationModuleAttribute : Attribute
 				if(assemblies[i].IsDynamic || assemblies[i].ReflectionOnly)
 					continue;
 
-				if(assemblies[i].GetName().Name == name)
+				if(assemblies[i].GetName().Name == assemblyName)
 				{
 					var attribute = assemblies[i].GetCustomAttribute<ApplicationModuleAttribute>();
 
@@ -126,13 +126,13 @@ public class ApplicationModuleAttribute : Attribute
 			return null;
 		}
 
-		static Assembly GetAssembly(AssemblyName name)
+		static Assembly GetAssembly(AssemblyName assemblyName)
 		{
 			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
 			for(int i = 0; i < assemblies.Length; ++i)
 			{
-				if(assemblies[i].GetName().Name == name.Name)
+				if(assemblies[i].GetName().Name == assemblyName.Name)
 					return assemblies[i];
 			}
 
