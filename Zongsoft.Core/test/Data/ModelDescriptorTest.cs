@@ -66,6 +66,13 @@ public class ModelDescriptorTest
 		Assert.Equal(typeof(Gender?), property.Type);
 		Assert.True(property.IsSimplex(out simplex));
 		Assert.Equal(DataType.Byte, simplex.DataType);
+
+		Assert.True(descriptor.Properties.TryGetValue(nameof(EmployeeBase.Department), out property));
+		Assert.Equal(nameof(EmployeeBase.Department), property.Name);
+		Assert.Equal(typeof(Department), property.Type);
+		Assert.True(property.IsComplex(out var complex));
+		Assert.Equal(nameof(Department), complex.Port);
+		Assert.Equal(Metadata.DataAssociationMultiplicity.ZeroOrOne, complex.Multiplicity);
 	}
 
 	private static void TestLogModel(ModelDescriptor descriptor)

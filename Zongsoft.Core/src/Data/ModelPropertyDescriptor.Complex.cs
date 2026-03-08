@@ -56,6 +56,21 @@ partial class ModelPropertyDescriptor
 			}
 		}
 
+		/// <summary>获取关联目标的模型描述器。</summary>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
+		public ModelDescriptor Target
+		{
+			get
+			{
+				if(field != null)
+					return field;
+
+				var type = Common.TypeExtension.GetElementType(this.Type) ?? this.Type;
+				return field = Zongsoft.Data.Model.GetDescriptor(type);
+			}
+		}
+
 		/// <summary>获取或设置属性的特性。</summary>
 		public DataEntityComplexPropertyBehaviors Behaviors
 		{
@@ -82,19 +97,26 @@ partial class ModelPropertyDescriptor
 		#region 重写方法
 		internal protected override void Populate(MemberInfo member)
 		{
+			if(member == null)
+				return;
+
 			//调用基类同名方法
 			base.Populate(member);
 
-			if(member != null)
-			{
-				var attribute = member.GetCustomAttribute<ModelPropertyAttribute>(true);
+			//设置默认的关联端口
+			this.Port = this.Target.QualifiedName;
 
-				if(attribute != null)
-				{
-					this.Port = attribute.Port;
-					this.Behaviors = attribute.Behaviors;
-					this.Multiplicity = attribute.Multiplicity;
-				}
+			//设置默认的关联重复性
+			this.Multiplicity = Zongsoft.Common.TypeExtension.IsEnumerable(this.Type) ?
+				DataAssociationMultiplicity.Many :
+				DataAssociationMultiplicity.ZeroOrOne;
+
+			var attribute = member.GetCustomAttribute<ModelPropertyAttribute>(true);
+			if(attribute != null)
+			{
+				this.Port = attribute.Port;
+				this.Behaviors = attribute.Behaviors;
+				this.Multiplicity = attribute.Multiplicity;
 			}
 		}
 		#endregion
