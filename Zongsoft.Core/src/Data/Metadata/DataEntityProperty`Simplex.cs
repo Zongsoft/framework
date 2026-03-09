@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -45,20 +45,23 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	#endregion
 
 	#region 构造函数
-	public DataEntitySimplexProperty(IDataEntity entity, string name, DataType type, bool nullable, bool immutable = false) : base(entity, name, immutable)
+	public DataEntitySimplexProperty(string name, DataType type, bool nullable, bool immutable = false) : this(null, name, type, nullable, immutable) { }
+	public DataEntitySimplexProperty(DataEntityBase entity, string name, DataType type, bool nullable, bool immutable = false) : base(entity, name, immutable)
 	{
 		this.Type = type;
 		this.Nullable = nullable;
 	}
 
-	public DataEntitySimplexProperty(IDataEntity entity, string name, DataType type, int length, bool nullable, bool immutable = false) : base(entity, name, immutable)
+	public DataEntitySimplexProperty(string name, DataType type, int length, bool nullable, bool immutable = false) : this(null, name, type, length, nullable, immutable) { }
+	public DataEntitySimplexProperty(DataEntityBase entity, string name, DataType type, int length, bool nullable, bool immutable = false) : base(entity, name, immutable)
 	{
 		this.Type = type;
 		this.Length = length;
 		this.Nullable = nullable;
 	}
 
-	public DataEntitySimplexProperty(IDataEntity entity, string name, DataType type, byte precision, byte scale, bool nullable, bool immutable = false) : base(entity, name, immutable)
+	public DataEntitySimplexProperty(string name, DataType type, byte precision, byte scale, bool nullable, bool immutable = false) : this(null, name, type, precision, scale, nullable, immutable) { }
+	public DataEntitySimplexProperty(DataEntityBase entity, string name, DataType type, byte precision, byte scale, bool nullable, bool immutable = false) : base(entity, name, immutable)
 	{
 		this.Type = type;
 		this.Precision = precision;
@@ -155,7 +158,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 
 			return (_isPrimaryKey = false).Value;
 		}
-    }
+	}
 	#endregion
 
 	#region 重写属性

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -37,7 +37,8 @@ namespace Zongsoft.Data.Metadata;
 public abstract class DataEntityPropertyBase : IDataEntityProperty, IEquatable<IDataEntityProperty>
 {
 	#region 构造函数
-	protected DataEntityPropertyBase(IDataEntity entity, string name, bool immutable)
+	protected DataEntityPropertyBase(string name, bool immutable) : this(null, name, immutable) { }
+	protected DataEntityPropertyBase(DataEntityBase entity, string name, bool immutable)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -50,7 +51,8 @@ public abstract class DataEntityPropertyBase : IDataEntityProperty, IEquatable<I
 
 	#region 公共属性
 	/// <summary>获取所属的数据实体。</summary>
-	public IDataEntity Entity { get; set; }
+	public DataEntityBase Entity { get; internal protected set; }
+	IDataEntity IDataEntityProperty.Entity => this.Entity;
 
 	/// <summary>获取数据实体属性的名称。</summary>
 	public string Name { get; }

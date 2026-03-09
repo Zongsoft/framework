@@ -104,10 +104,11 @@ partial class ModelPropertyDescriptor
 			base.Populate(member);
 
 			//设置默认的关联端口
-			this.Port = this.Target.QualifiedName;
+			(var @namespace, var name) = ModelDescriptor.GetQualifiedName(this.Type);
+			this.Port = string.IsNullOrEmpty(@namespace) || string.Equals(this.Model?.Namespace, @namespace) ? name : $"{@namespace}.{name}";
 
 			//设置默认的关联重复性
-			this.Multiplicity = Zongsoft.Common.TypeExtension.IsEnumerable(this.Type) ?
+			this.Multiplicity = Common.TypeExtension.IsEnumerable(this.Type) ?
 				DataAssociationMultiplicity.Many :
 				DataAssociationMultiplicity.ZeroOrOne;
 

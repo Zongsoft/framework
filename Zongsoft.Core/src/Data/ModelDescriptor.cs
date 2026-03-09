@@ -166,15 +166,12 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 			return;
 
 		this.Type = type;
-		this.Name = type.Name;
-		this.Namespace = Services.ApplicationModuleAttribute.Find(type)?.Name;
-
 		if(alias != null)
 			this.Alias = alias;
 
-		var attribute = type.GetCustomAttribute<ModelAttribute>(true);
-		if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
-			this.Name = attribute.Name;
+		(var @namespace, var name) = GetQualifiedName(type);
+		this.Name = name;
+		this.Namespace = @namespace;
 
 		var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
 		for(int i = 0; i < fields.Length; i++)
@@ -208,6 +205,27 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 					descriptor.Properties.Add(property);
 			}
 		}
+	}
+	#endregion
+
+	#region 内部方法
+	internal static (string @namespace, string name) GetQualifiedName(Type type)
+	{
+		if(type == null)
+			return default;
+
+		var elementType = TypeExtension.GetElementType(type);
+		var name = elementType != null ? elementType.Name : type.Name;
+
+		var attribute = type.GetCustomAttribute<ModelAttribute>(true);
+		if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
+			name = attribute.Name;
+
+		var module = Services.ApplicationModuleAttribute.Find(type);
+		if(module == null || string.IsNullOrEmpty(module.Name))
+			return (null, name);
+
+		return (module.Name, name);
 	}
 	#endregion
 

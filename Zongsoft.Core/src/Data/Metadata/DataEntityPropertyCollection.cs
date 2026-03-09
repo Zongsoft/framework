@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -40,26 +40,44 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 
 	#region 重写方法
 	protected override string GetKeyForItem(IDataEntityProperty property) => property.Name;
+	protected override void InsertItem(int index, IDataEntityProperty item)
+	{
+		ArgumentNullException.ThrowIfNull(item);
+
+		if(_entity is DataEntityBase entity && item is DataEntityPropertyBase property)
+			property.Entity = entity;
+
+		base.InsertItem(index, item);
+	}
+	protected override void SetItem(int index, IDataEntityProperty item)
+	{
+		ArgumentNullException.ThrowIfNull(item);
+
+		if(_entity is DataEntityBase entity && item is DataEntityPropertyBase property)
+			property.Entity = entity;
+
+		base.SetItem(index, item);
+	}
 	#endregion
 
 	#region 公共方法
 	public DataEntitySimplexProperty Simplex(string name, DataType type, bool nullable, bool immutable = false)
 	{
-		var property = new DataEntitySimplexProperty(_entity, name, type, nullable, immutable);
+		var property = new DataEntitySimplexProperty(name, type, nullable, immutable);
 		this.Add(property);
 		return property;
 	}
 
 	public DataEntitySimplexProperty Simplex(string name, DataType type, int length, bool nullable, bool immutable = false)
 	{
-		var property = new DataEntitySimplexProperty(_entity, name, type, length, nullable, immutable);
+		var property = new DataEntitySimplexProperty(name, type, length, nullable, immutable);
 		this.Add(property);
 		return property;
 	}
 
 	public DataEntitySimplexProperty Simplex(string name, DataType type, byte precision, byte scale, bool nullable, bool immutable = false)
 	{
-		var property = new DataEntitySimplexProperty(_entity, name, type, precision, scale, nullable, immutable);
+		var property = new DataEntitySimplexProperty(name, type, precision, scale, nullable, immutable);
 		this.Add(property);
 		return property;
 	}
@@ -67,7 +85,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 	public DataEntityComplexProperty Complex(string name, string port, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) => this.Complex(name, port, true, behaviors);
 	public DataEntityComplexProperty Complex(string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None)
 	{
-		var property = new DataEntityComplexProperty(_entity, name, port, immutable, behaviors);
+		var property = new DataEntityComplexProperty(name, port, immutable, behaviors);
 		this.Add(property);
 		return property;
 	}
@@ -78,7 +96,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 		this.Complex(name, port, true, behaviors, multiplicity, links);
 	public DataEntityComplexProperty Complex(string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links)
 	{
-		var property = new DataEntityComplexProperty(_entity, name, port, immutable, behaviors, multiplicity, links);
+		var property = new DataEntityComplexProperty(name, port, immutable, behaviors, multiplicity, links);
 		this.Add(property);
 		return property;
 	}

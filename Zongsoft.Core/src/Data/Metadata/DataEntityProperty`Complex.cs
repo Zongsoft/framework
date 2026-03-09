@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -39,8 +39,14 @@ public class DataEntityComplexProperty : DataEntityPropertyBase, IDataEntityComp
 	#endregion
 
 	#region 构造函数
-	public DataEntityComplexProperty(IDataEntity entity, string name, string port, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) : this(entity, name, port, true, behaviors) { }
-	public DataEntityComplexProperty(IDataEntity entity, string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) : base(entity, name, immutable)
+	public DataEntityComplexProperty(string name, string port, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) : this(null, name, port, true, behaviors) { }
+	public DataEntityComplexProperty(string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) : this(null, name, port, immutable, behaviors) { }
+	public DataEntityComplexProperty(string name, string port, bool immutable, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : this(null, name, port, immutable, DataEntityComplexPropertyBehaviors.None, multiplicity, links) { }
+	public DataEntityComplexProperty(string name, string port, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : this(null, name, port, true, behaviors, multiplicity, links) { }
+	public DataEntityComplexProperty(string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : this(null, name, port, immutable, multiplicity, links) { }
+
+	public DataEntityComplexProperty(DataEntityBase entity, string name, string port, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) : this(entity, name, port, true, behaviors) { }
+	public DataEntityComplexProperty(DataEntityBase entity, string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors = DataEntityComplexPropertyBehaviors.None) : base(entity, name, immutable)
 	{
 		if(string.IsNullOrWhiteSpace(port))
 			throw new ArgumentNullException(nameof(port));
@@ -49,9 +55,9 @@ public class DataEntityComplexProperty : DataEntityPropertyBase, IDataEntityComp
 		this.Behaviors = behaviors;
 	}
 
-	public DataEntityComplexProperty(IDataEntity entity, string name, string port, bool immutable, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : this(entity, name, port, immutable, DataEntityComplexPropertyBehaviors.None, multiplicity, links) { }
-	public DataEntityComplexProperty(IDataEntity entity, string name, string port, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : this(entity, name, port, true, behaviors, multiplicity, links) { }
-	public DataEntityComplexProperty(IDataEntity entity, string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : base(entity, name, immutable)
+	public DataEntityComplexProperty(DataEntityBase entity, string name, string port, bool immutable, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : this(entity, name, port, immutable, DataEntityComplexPropertyBehaviors.None, multiplicity, links) { }
+	public DataEntityComplexProperty(DataEntityBase entity, string name, string port, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : this(entity, name, port, true, behaviors, multiplicity, links) { }
+	public DataEntityComplexProperty(DataEntityBase entity, string name, string port, bool immutable, DataEntityComplexPropertyBehaviors behaviors, DataAssociationMultiplicity multiplicity, params DataAssociationLink[] links) : base(entity, name, immutable)
 	{
 		if(string.IsNullOrWhiteSpace(port))
 			throw new ArgumentNullException(nameof(port));
