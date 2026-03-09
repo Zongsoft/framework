@@ -39,7 +39,7 @@ namespace Zongsoft.Data;
 /// <summary>
 /// 表示数据模型元信息的类。
 /// </summary>
-public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
+public partial class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 {
 	#region 事件定义
 	public event PropertyChangedEventHandler PropertyChanged;
@@ -119,6 +119,17 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 		}
 	}
 
+	/// <summary>获取或设置一个值，指示是否为不可变模型。</summary>
+	public bool Immutable
+	{
+		get; set
+		{
+			this.OnPropertyChanging(nameof(this.Immutable));
+			field = value;
+			this.OnPropertyChanged(nameof(this.Immutable));
+		}
+	}
+
 	/// <summary>获取或设置模型类型。</summary>
 	public Type Type
 	{
@@ -167,10 +178,15 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 
 		this.Type = type;
 
-		(var @namespace, var name) = GetQualifiedName(type, out var alias);
+		(var @namespace, var name) = GetQualifiedName(type, out var attribute);
 		this.Name = name;
-		this.Alias = alias;
 		this.Namespace = @namespace;
+
+		if(attribute != null)
+		{
+			this.Alias = attribute.Alias;
+			this.Immutable = attribute.Immutable;
+		}
 
 		var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
 		for(int i = 0; i < fields.Length; i++)
@@ -206,24 +222,20 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 		}
 	}
 
-	internal static (string @namespace, string name) GetQualifiedName(Type type, out string alias)
+	internal static (string @namespace, string name) GetQualifiedName(Type type, out ModelAttribute attribute)
 	{
-		alias = null;
-
 		if(type == null)
+		{
+			attribute = null;
 			return default;
+		}
 
 		var elementType = TypeExtension.GetElementType(type);
 		var name = elementType != null ? elementType.Name : type.Name;
 
-		var attribute = type.GetCustomAttribute<ModelAttribute>(true);
-		if(attribute != null)
-		{
-			alias = attribute.Alias;
-
-			if(!string.IsNullOrEmpty(attribute.Name))
-				name = attribute.Name;
-		}
+		attribute = type.GetCustomAttribute<ModelAttribute>(true);
+		if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
+			name = attribute.Name;
 
 		var module = Services.ApplicationModuleAttribute.Find(type);
 		if(module == null || string.IsNullOrEmpty(module.Name))
