@@ -35,11 +35,16 @@ namespace Zongsoft.Data;
 public class ModelAttribute : Attribute
 {
 	#region 构造函数
-	public ModelAttribute(string name) => this.Name = name;
+	public ModelAttribute(string name, string alias = null)
+	{
+		this.Name = name;
+		this.Alias = alias;
+	}
 	#endregion
 
 	#region 公共属性
 	public string Name { get; }
+	public string Alias { get; set; }
 	#endregion
 
 	#region 重写方法

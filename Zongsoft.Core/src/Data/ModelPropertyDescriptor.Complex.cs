@@ -104,7 +104,7 @@ partial class ModelPropertyDescriptor
 			base.Populate(member);
 
 			//设置默认的关联端口
-			(var @namespace, var name) = ModelDescriptor.GetQualifiedName(this.Type);
+			(var @namespace, var name) = ModelDescriptor.GetQualifiedName(this.Type, out _);
 			this.Port = string.IsNullOrEmpty(@namespace) || string.Equals(this.Model?.Namespace, @namespace) ? name : $"{@namespace}.{name}";
 
 			//设置默认的关联重复性

@@ -159,18 +159,17 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 	public ModelPropertyDescriptorCollection Properties { get; }
 	#endregion
 
-	#region 公共方法
-	public void Populate(Type type, string alias = null)
+	#region 内部方法
+	private void Populate(Type type)
 	{
 		if(type == null || type.IsGenericType)
 			return;
 
 		this.Type = type;
-		if(alias != null)
-			this.Alias = alias;
 
-		(var @namespace, var name) = GetQualifiedName(type);
+		(var @namespace, var name) = GetQualifiedName(type, out var alias);
 		this.Name = name;
+		this.Alias = alias;
 		this.Namespace = @namespace;
 
 		var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
@@ -206,11 +205,11 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 			}
 		}
 	}
-	#endregion
 
-	#region 内部方法
-	internal static (string @namespace, string name) GetQualifiedName(Type type)
+	internal static (string @namespace, string name) GetQualifiedName(Type type, out string alias)
 	{
+		alias = null;
+
 		if(type == null)
 			return default;
 
@@ -218,8 +217,13 @@ public class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 		var name = elementType != null ? elementType.Name : type.Name;
 
 		var attribute = type.GetCustomAttribute<ModelAttribute>(true);
-		if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
-			name = attribute.Name;
+		if(attribute != null)
+		{
+			alias = attribute.Alias;
+
+			if(!string.IsNullOrEmpty(attribute.Name))
+				name = attribute.Name;
+		}
 
 		var module = Services.ApplicationModuleAttribute.Find(type);
 		if(module == null || string.IsNullOrEmpty(module.Name))
