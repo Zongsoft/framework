@@ -30,6 +30,8 @@
 using System;
 using System.Reflection;
 using System.ComponentModel;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Zongsoft.Data;
 
@@ -110,6 +112,7 @@ partial class ModelPropertyDescriptor
 		}
 
 		/// <summary>获取或设置默认值。</summary>
+		[JsonConverter(typeof(DefaultValueJsonConverterFactory))]
 		public object DefaultValue
 		{
 			get; set
@@ -212,6 +215,104 @@ partial class ModelPropertyDescriptor
 					simplex.DefaultValue = function;
 				else
 					simplex.DefaultValue = Common.Convert.ConvertValue(attribute.DefaultValue, simplex.Type);
+			}
+		}
+		#endregion
+
+		#region 嵌套子类
+		private class DefaultValueJsonConverterFactory : JsonConverterFactory
+		{
+			public override bool CanConvert(Type type) => true;
+			public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => Converter.Instance;
+
+			private class Converter : JsonConverter<object>
+			{
+				public static readonly Converter Instance = new();
+
+				public override object Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
+				{
+					switch(reader.TokenType)
+					{
+						case JsonTokenType.Null:
+							return null;
+						case JsonTokenType.True:
+							return true;
+						case JsonTokenType.False:
+							return false;
+						case JsonTokenType.Number:
+							var text = reader.GetString();
+
+							if(int.TryParse(text, out var int32))
+								return int32;
+							else if(long.TryParse(text, out var int64))
+								return int64;
+							else if(float.TryParse(text, out var @single))
+								return @single;
+							else if(double.TryParse(text, out var @double))
+								return @double;
+
+							return decimal.Parse(text);
+						case JsonTokenType.String:
+							return DataPropertyFunction.TryParse(reader.GetString(), out var function) ? function : reader.GetString();
+						default:
+							return Serialization.Json.Converters.ObjectConverter.Default.Read(ref reader, type, options);
+					}
+				}
+
+				public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options)
+				{
+					if(value == null)
+					{
+						writer.WriteNullValue();
+						return;
+					}
+
+					switch(Type.GetTypeCode(value.GetType()))
+					{
+						case TypeCode.Byte:
+							writer.WriteNumberValue((byte)value);
+							break;
+						case TypeCode.SByte:
+							writer.WriteNumberValue((sbyte)value);
+							break;
+						case TypeCode.Int16:
+							writer.WriteNumberValue((short)value);
+							break;
+						case TypeCode.Int32:
+							writer.WriteNumberValue((int)value);
+							break;
+						case TypeCode.Int64:
+							writer.WriteNumberValue((long)value);
+							break;
+						case TypeCode.UInt16:
+							writer.WriteNumberValue((ushort)value);
+							break;
+						case TypeCode.UInt32:
+							writer.WriteNumberValue((uint)value);
+							break;
+						case TypeCode.UInt64:
+							writer.WriteNumberValue((ulong)value);
+							break;
+						case TypeCode.Single:
+							writer.WriteNumberValue((float)value);
+							break;
+						case TypeCode.Double:
+							writer.WriteNumberValue((double)value);
+							break;
+						case TypeCode.Decimal:
+							writer.WriteNumberValue((decimal)value);
+							break;
+						case TypeCode.Boolean:
+							writer.WriteBooleanValue((bool)value);
+							break;
+						case TypeCode.String:
+							writer.WriteStringValue((string)value);
+							break;
+						default:
+							writer.WriteStringValue(Common.Convert.ConvertValue<string>(value));
+							break;
+					}
+				}
 			}
 		}
 		#endregion
