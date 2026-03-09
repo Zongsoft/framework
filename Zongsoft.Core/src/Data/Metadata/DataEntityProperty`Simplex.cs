@@ -35,10 +35,6 @@ namespace Zongsoft.Data.Metadata;
 
 public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimplexProperty
 {
-	#region 静态变量
-	private static readonly Regex _regex = new(@"(?<name>\w+)\s*\(\s*\)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
-	#endregion
-
 	#region 成员字段
 	private object _defaultValue;
 	#endregion
@@ -106,12 +102,12 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	/// <summary>获取或设置属性的默认值。</summary>
 	public object DefaultValue
 	{
-		get => _defaultValue is Function function ? function.Execute(this) : _defaultValue;
+		get => _defaultValue is DataEntityPropertyFunction function ? function.Execute(this) : _defaultValue;
 		set
 		{
 			if(value is string text)
 			{
-				var function = this.GetFunction(text);
+				var function = DataEntityPropertyFunction.Get(text);
 
 				if(function != null)
 				{
@@ -162,30 +158,6 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	public override bool IsSimplex => true;
 	#endregion
 
-	#region 虚拟方法
-	protected virtual Function GetFunction(string text)
-	{
-		if(string.IsNullOrWhiteSpace(text))
-			return null;
-
-		var match = _regex.Match(text);
-
-		if(match.Success)
-		{
-			return match.Groups["name"].Value switch
-			{
-				"now" => Function.Now,
-				"today" => Function.Today,
-				"guid" or "uuid" => Function.Guid,
-				"random" => Function.Random,
-				_ => throw new DataException($"Unrecognized {match.Groups["name"].Value} function."),
-			};
-		}
-
-		return null;
-	}
-	#endregion
-
 	#region 重写方法
 	public override string ToString()
 	{
@@ -208,42 +180,6 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 
 			_ => $"{this.Name} {this.Type} [{nullable}]",
 		};
-	}
-	#endregion
-
-	#region 嵌套子类
-	protected class Function(string name, Func<IDataEntitySimplexProperty, object> thunk = null)
-	{
-		private readonly Func<IDataEntitySimplexProperty, object> _thunk = thunk;
-		public string Name { get; } = name;
-		public virtual object Execute(IDataEntitySimplexProperty property) => _thunk(property);
-
-		public static readonly Function Now = new(nameof(Now), _ => DateTime.Now);
-		public static readonly Function Today = new(nameof(Today), _ => DateTime.Today);
-		public static readonly Function Guid = new(nameof(Guid), _ => System.Guid.NewGuid());
-		public static readonly Function Random = new(nameof(Random), property => property.Type.DbType switch
-		{
-			DbType.Byte => Zongsoft.Common.Randomizer.Generate(1)[0],
-			DbType.SByte => (sbyte)Zongsoft.Common.Randomizer.Generate(1)[0],
-			DbType.Int16 => BitConverter.ToInt16(Zongsoft.Common.Randomizer.Generate(2), 0),
-			DbType.UInt16 => BitConverter.ToUInt16(Zongsoft.Common.Randomizer.Generate(2), 0),
-			DbType.Int32 => Zongsoft.Common.Randomizer.GenerateInt32(),
-			DbType.UInt32 => (uint)Zongsoft.Common.Randomizer.GenerateInt32(),
-			DbType.Int64 => Zongsoft.Common.Randomizer.GenerateInt64(),
-			DbType.UInt64 => (ulong)Zongsoft.Common.Randomizer.GenerateInt64(),
-			DbType.Single => BitConverter.ToSingle(Zongsoft.Common.Randomizer.Generate(4), 0),
-			DbType.Double => BitConverter.ToDouble(Zongsoft.Common.Randomizer.Generate(8), 0),
-			DbType.Decimal or
-			DbType.Currency => new Decimal(Zongsoft.Common.Randomizer.GenerateInt64()),
-			DbType.Date or
-			DbType.Time or
-			DbType.DateTime or
-			DbType.DateTime2 => new DateTime(Zongsoft.Common.Randomizer.GenerateInt64()),
-			DbType.DateTimeOffset => new DateTimeOffset(Zongsoft.Common.Randomizer.GenerateInt64(), TimeSpan.Zero),
-			DbType.Binary => Zongsoft.Common.Randomizer.Generate(property.Length > 0 ? property.Length : 8),
-			DbType.Guid => System.Guid.NewGuid(),
-			_ => Zongsoft.Common.Randomizer.GenerateString(),
-		});
 	}
 	#endregion
 }

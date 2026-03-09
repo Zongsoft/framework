@@ -138,19 +138,19 @@ public class ModelDescriptorTest
 	private struct Log
 	{
 		[ModelProperty("Id", IsPrimaryKey = true)]
-		public long LogId;
+		public long LogId { get; set; }
 
 		[ModelProperty(DbType.AnsiString, 50, false)]
-		public string Source;
+		public string Source { get; set; }
 		[ModelProperty(DbType.String, 500, false)]
-		public string Message;
+		public string Message { get; set; }
 		[ModelProperty(DbType.String, 0, true)]
-		public string Content;
+		public string Content { get; set; }
 
 		[ModelProperty(Ignored = true)]
-		public string IgnoredField;
+		public string IgnoredField { get; set; }
 
 		[ModelProperty(DbType.DateTime, false)]
-		public DateTime Timestamp;
+		public DateTime Timestamp { get; set; }
 	}
 }
