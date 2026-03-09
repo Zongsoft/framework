@@ -89,28 +89,14 @@ public abstract class DataEntityPropertyFunction
 				return null;
 
 			var name = text[..index].Trim();
-			var arguments = new Span<System.Range>();
-			text.Slice(index + 1, text.Length - index - 2)
-				.Split(arguments, ',', StringSplitOptions.TrimEntries);
+			var arguments = text.Slice(index + 1, text.Length - index - 2).ToString()
+				.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
 			if(Builders.TryGetValue(name.ToString(), out var builder))
-				return builder.Build(GetArguments(arguments));
+				return builder.Build(arguments);
 		}
 
 		throw new DataException($"Unrecognized {text} function.");
-
-		static string[] GetArguments(Span<System.Range> arguments)
-		{
-			if(arguments.IsEmpty)
-				return null;
-
-			var result = new string[arguments.Length];
-
-			for(int i = 0; i < arguments.Length; i++)
-				result[i] = arguments[i].ToString();
-
-			return result;
-		}
 	}
 	#endregion
 
