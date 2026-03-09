@@ -41,7 +41,6 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 
 	#region 成员字段
 	private object _defaultValue;
-	private bool? _isPrimaryKey;
 	#endregion
 
 	#region 构造函数
@@ -139,24 +138,18 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	/// <summary>获取或设置序号器元数据。</summary>
 	public IDataEntityPropertySequence Sequence { get; set; }
 
-	/// <summary>获取一个值，指示当前属性是否为主键。</summary>
+	/// <summary>获取或设置一个值，指示当前属性是否为主键。</summary>
 	public bool IsPrimaryKey
 	{
-		get
+		get; set
 		{
-			if(_isPrimaryKey.HasValue)
-				return _isPrimaryKey.Value;
+			if(field == value)
+				return;
 
-			if(this.Entity.Key == null || this.Entity.Key.Length == 0)
-				return false;
+			field = value;
 
-			for(int i = 0; i < this.Entity.Key.Length; i++)
-			{
-				if(this.Entity.Key[i] == this)
-					return (_isPrimaryKey = true).Value;
-			}
-
-			return (_isPrimaryKey = false).Value;
+			//清除当前实体的主键缓存
+			this.Entity.Key = null;
 		}
 	}
 	#endregion
@@ -221,7 +214,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	#region 嵌套子类
 	protected class Function(string name, Func<IDataEntitySimplexProperty, object> thunk = null)
 	{
-		private Func<IDataEntitySimplexProperty, object> _thunk = thunk;
+		private readonly Func<IDataEntitySimplexProperty, object> _thunk = thunk;
 		public string Name { get; } = name;
 		public virtual object Execute(IDataEntitySimplexProperty property) => _thunk(property);
 

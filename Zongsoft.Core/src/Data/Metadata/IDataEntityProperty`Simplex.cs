@@ -42,8 +42,8 @@ public interface IDataEntitySimplexProperty : IDataEntityProperty
 	/// <summary>获取数据实体属性的数据类型。</summary>
 	DataType Type { get; }
 
-	/// <summary>获取一个值，指示当前属性是否为主键。</summary>
-	bool IsPrimaryKey { get; }
+	/// <summary>获取或设置一个值，指示当前属性是否为主键。</summary>
+	bool IsPrimaryKey { get; set; }
 
 	/// <summary>获取或设置文本或数组属性的最大长度。</summary>
 	int Length { get; set; }

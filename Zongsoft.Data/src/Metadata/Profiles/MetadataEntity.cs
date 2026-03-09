@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata.Profiles;
 
@@ -37,5 +36,4 @@ namespace Zongsoft.Data.Metadata.Profiles;
 /// </summary>
 public class MetadataEntity(string @namespace, string name, string baseName, bool immutable = false) : DataEntityBase(@namespace, name, baseName, immutable)
 {
-	internal void SetKey(IReadOnlyCollection<string> keys) => base.SetKey([..keys]);
 }

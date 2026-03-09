@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata;
 
@@ -82,33 +83,42 @@ public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<D
 	/// <summary>获取一个值，指示该实体是否定义了主键。</summary>
 	public bool HasKey => this.Key != null && this.Key.Length > 0;
 
-	/// <summary>获取或设置数据实体的主键。</summary>
-	public IDataEntitySimplexProperty[] Key { get; protected set; }
+	/// <summary>获取数据实体的主键。</summary>
+	public IDataEntitySimplexProperty[] Key
+	{
+		get => field ??= this.GetKey();
+		internal set;
+	}
 
 	/// <summary>获取数据实体的属性元数据集合。</summary>
 	public DataEntityPropertyCollection Properties { get; }
 	#endregion
 
-	#region 公共方法
+	#region 主键方法
+	private IDataEntitySimplexProperty[] GetKey()
+	{
+		var keys = new List<IDataEntitySimplexProperty>(5);
+
+		foreach(var property in this.Properties)
+		{
+			if(property.IsSimplex(out var simplex) && simplex.IsPrimaryKey)
+				keys.Add(simplex);
+		}
+
+		return [.. keys];
+	}
+
+	public void SetKey(params IEnumerable<string> keys) => this.SetKey([.. keys]);
 	public void SetKey(params ReadOnlySpan<string> keys)
 	{
 		if(keys.IsEmpty)
 			return;
 
-		var index = 0;
-		var array = new IDataEntitySimplexProperty[keys.Length];
-
-		for(int i = 0; i < keys.Length; i++)
+		foreach(var property in this.Properties)
 		{
-			if(!this.Properties.TryGetValue(keys[i], out var property))
-				throw new DataException($"The '{keys[i]}' primary key in the '{this.Name}' entity is undefined.");
-			if(property.IsComplex)
-				throw new DataException($"The '{keys[i]}' primary key in the '{this.Name}' entity cannot be a complex(navigation) property.");
-
-			array[index++] = (IDataEntitySimplexProperty)property;
+			if(property.IsSimplex(out var simplex))
+				simplex.IsPrimaryKey = keys.Contains(property.Name);
 		}
-
-		this.Key = array;
 	}
 	#endregion
 
