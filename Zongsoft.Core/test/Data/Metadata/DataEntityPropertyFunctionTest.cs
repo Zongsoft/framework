@@ -14,11 +14,6 @@ public class DataEntityPropertyFunctionTest
 		function = DataEntityPropertyFunction.Get(string.Empty);
 		Assert.Null(function);
 
-		function = DataEntityPropertyFunction.Get("now");
-		Assert.NotNull(function);
-		Assert.Equal("now", function.Name, true);
-		Assert.False(function.HasArguments);
-
 		function = DataEntityPropertyFunction.Get("now()");
 		Assert.NotNull(function);
 		Assert.Equal("now", function.Name, true);

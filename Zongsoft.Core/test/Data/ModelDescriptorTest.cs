@@ -130,6 +130,9 @@ public class ModelDescriptorTest
 		Assert.False(simplex.IsPrimaryKey);
 		Assert.False(simplex.Nullable);
 		Assert.Null(simplex.Alias);
+		Assert.NotNull(simplex.DefaultValue);
+		Assert.IsType<DataPropertyFunction>(simplex.DefaultValue);
+		Assert.Equal("now()", simplex.DefaultValue.ToString(), true);
 
 		Assert.False(descriptor.Properties.Contains(nameof(Log.IgnoredField)));
 	}
@@ -150,7 +153,7 @@ public class ModelDescriptorTest
 		[ModelProperty(Ignored = true)]
 		public string IgnoredField { get; set; }
 
-		[ModelProperty(DbType.DateTime, false)]
+		[ModelProperty(DbType.DateTime, false, DefaultValue = "now()")]
 		public DateTime Timestamp { get; set; }
 	}
 }

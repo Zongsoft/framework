@@ -207,7 +207,12 @@ partial class ModelPropertyDescriptor
 			}
 
 			if(attribute.DefaultValue != null)
-				simplex.DefaultValue = Common.Convert.ConvertValue(attribute.DefaultValue, simplex.Type);
+			{
+				if(attribute.DefaultValue is string text && DataPropertyFunction.TryParse(text, out var function))
+					simplex.DefaultValue = function;
+				else
+					simplex.DefaultValue = Common.Convert.ConvertValue(attribute.DefaultValue, simplex.Type);
+			}
 		}
 		#endregion
 	}

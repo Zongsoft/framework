@@ -54,14 +54,18 @@ public abstract class DataEntityPropertyFunction
 	#region 构造函数
 	protected DataEntityPropertyFunction(string name, params string[] arguments)
 	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(name);
 		this.Name = name;
 		this.Arguments = arguments;
 	}
 	#endregion
 
 	#region 实例属性
+	/// <summary>获取函数的名称。</summary>
 	public string Name { get; }
+	/// <summary>获取函数的参数集。</summary>
 	public string[] Arguments { get; }
+	/// <summary>获取一个值，指示是否有函数参数。</summary>
 	public bool HasArguments => this.Arguments != null && this.Arguments.Length > 0;
 	#endregion
 
@@ -69,35 +73,27 @@ public abstract class DataEntityPropertyFunction
 	public abstract object Execute(IDataEntitySimplexProperty property);
 	#endregion
 
+	#region 重写方法
+	public override string ToString() => this.HasArguments ? $"{this.Name}({string.Join(',', this.Arguments)})" : $"{this.Name}()";
+	#endregion
+
 	#region 静态方法
-	public static DataEntityPropertyFunction Get(ReadOnlySpan<char> text)
+	public static DataEntityPropertyFunction Get(ReadOnlySpan<char> text) => DataPropertyFunction.TryParse(text, out var function) ? Get(function) : null;
+	public static DataEntityPropertyFunction Get(DataPropertyFunction function)
 	{
-		if(text.IsEmpty)
+		if(string.IsNullOrEmpty(function.Name))
 			return null;
 
-		text = text.Trim();
-		var index = text.IndexOf('(');
+		if(Builders.TryGetValue(function.Name, out var builder))
+			return builder.Build(function.Arguments);
 
-		if(index < 0)
-		{
-			if(Builders.TryGetValue(text.ToString(), out var builder))
-				return builder.Build();
-		}
-		else
-		{
-			if(text[^1] != ')')
-				return null;
-
-			var name = text[..index].Trim();
-			var arguments = text.Slice(index + 1, text.Length - index - 2).ToString()
-				.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-			if(Builders.TryGetValue(name.ToString(), out var builder))
-				return builder.Build(arguments);
-		}
-
-		throw new DataException($"Unrecognized {text} function.");
+		throw new DataException($"Unrecognized {function.Name} function.");
 	}
+	#endregion
+
+	#region 符号重写
+	public static explicit operator DataEntityPropertyFunction(DataPropertyFunction function) => Get(function);
+	public static implicit operator DataPropertyFunction(DataEntityPropertyFunction function) => new(function.Name, function.Arguments);
 	#endregion
 
 	#region 嵌套子类
