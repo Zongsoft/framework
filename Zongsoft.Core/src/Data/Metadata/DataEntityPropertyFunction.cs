@@ -111,7 +111,7 @@ public abstract class DataEntityPropertyFunction
 			if(string.Equals(arguments[0], "utc", StringComparison.OrdinalIgnoreCase))
 				return _utc_;
 
-			return new Now(arguments);
+			throw new NotSupportedException($"The '{this.Name}' function does not support the specified '({string.Join(',', arguments)})' argument(s).");
 		}
 
 		public override object Execute(IDataEntitySimplexProperty property)
