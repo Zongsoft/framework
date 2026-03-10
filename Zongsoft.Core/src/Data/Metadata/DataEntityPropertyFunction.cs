@@ -96,6 +96,11 @@ public abstract class DataEntityPropertyFunction
 	public static implicit operator DataPropertyFunction(DataEntityPropertyFunction function) => new(function.Name, function.Arguments);
 	#endregion
 
+	#region 私有方法
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private static DataException GetNotSupportedArgumentsEexception(string name, string[] arguments) => new($"The '{name}' function does not support the specified '({string.Join(',', arguments)})' argument(s).");
+	#endregion
+
 	#region 嵌套子类
 	private sealed class Now(params string[] arguments) : DataEntityPropertyFunction(nameof(Now), arguments), IDataEntityPropertyFunctionBuilder
 	{
@@ -104,14 +109,14 @@ public abstract class DataEntityPropertyFunction
 		private static readonly Now _now_ = new();
 		private static readonly Now _utc_ = new("utc");
 
-		public DataEntityPropertyFunction Build(params string[] arguments)
+		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments)
 		{
 			if(arguments == null || arguments.Length == 0)
 				return _now_;
 			if(string.Equals(arguments[0], "utc", StringComparison.OrdinalIgnoreCase))
 				return _utc_;
 
-			throw new NotSupportedException($"The '{this.Name}' function does not support the specified '({string.Join(',', arguments)})' argument(s).");
+			throw GetNotSupportedArgumentsEexception(this.Name, arguments);
 		}
 
 		public override object Execute(IDataEntitySimplexProperty property)
@@ -127,7 +132,8 @@ public abstract class DataEntityPropertyFunction
 	{
 		public static readonly Today Instance = new();
 
-		public DataEntityPropertyFunction Build(params string[] arguments) => Instance;
+		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments) =>
+			Common.ArrayExtension.IsEmpty(arguments) ? Instance : throw GetNotSupportedArgumentsEexception(this.Name, arguments);
 		public override object Execute(IDataEntitySimplexProperty property) => DateTime.Today;
 	}
 
@@ -135,7 +141,8 @@ public abstract class DataEntityPropertyFunction
 	{
 		public static readonly Guid Instance = new();
 
-		public DataEntityPropertyFunction Build(params string[] arguments) => Instance;
+		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments) =>
+			Common.ArrayExtension.IsEmpty(arguments) ? Instance : throw GetNotSupportedArgumentsEexception(this.Name, arguments);
 		public override object Execute(IDataEntitySimplexProperty property) => System.Guid.NewGuid();
 	}
 
@@ -143,29 +150,30 @@ public abstract class DataEntityPropertyFunction
 	{
 		public static readonly Random Instance = new();
 
-		public DataEntityPropertyFunction Build(params string[] arguments) => arguments == null || arguments.Length == 0 ? Instance : new Random(arguments);
+		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments) =>
+			Common.ArrayExtension.IsEmpty(arguments) ? Instance : new Random(arguments);
 		public override object Execute(IDataEntitySimplexProperty property) => property.Type.DbType switch
 		{
-			DbType.Byte => Zongsoft.Common.Randomizer.Generate(1)[0],
-			DbType.SByte => (sbyte)Zongsoft.Common.Randomizer.Generate(1)[0],
-			DbType.Int16 => BitConverter.ToInt16(Zongsoft.Common.Randomizer.Generate(2), 0),
-			DbType.UInt16 => BitConverter.ToUInt16(Zongsoft.Common.Randomizer.Generate(2), 0),
-			DbType.Int32 => Zongsoft.Common.Randomizer.GenerateInt32(),
-			DbType.UInt32 => (uint)Zongsoft.Common.Randomizer.GenerateInt32(),
-			DbType.Int64 => Zongsoft.Common.Randomizer.GenerateInt64(),
-			DbType.UInt64 => (ulong)Zongsoft.Common.Randomizer.GenerateInt64(),
-			DbType.Single => BitConverter.ToSingle(Zongsoft.Common.Randomizer.Generate(4), 0),
-			DbType.Double => BitConverter.ToDouble(Zongsoft.Common.Randomizer.Generate(8), 0),
+			DbType.Byte => Common.Randomizer.Generate(1)[0],
+			DbType.SByte => (sbyte)Common.Randomizer.Generate(1)[0],
+			DbType.Int16 => Common.Randomizer.GenerateInt16(),
+			DbType.UInt16 => Common.Randomizer.GenerateUInt16(),
+			DbType.Int32 => Common.Randomizer.GenerateInt32(),
+			DbType.UInt32 => Common.Randomizer.GenerateUInt32(),
+			DbType.Int64 => Common.Randomizer.GenerateInt64(),
+			DbType.UInt64 => Common.Randomizer.GenerateUInt64(),
+			DbType.Single => BitConverter.Int32BitsToSingle(Common.Randomizer.GenerateInt32()),
+			DbType.Double => BitConverter.Int64BitsToDouble(Common.Randomizer.GenerateInt64()),
 			DbType.Decimal or
-			DbType.Currency => new Decimal(Zongsoft.Common.Randomizer.GenerateInt64()),
+			DbType.Currency => new Decimal(Common.Randomizer.GenerateInt64()),
 			DbType.Date or
 			DbType.Time or
 			DbType.DateTime or
-			DbType.DateTime2 => new DateTime(Zongsoft.Common.Randomizer.GenerateInt64()),
-			DbType.DateTimeOffset => new DateTimeOffset(Zongsoft.Common.Randomizer.GenerateInt64(), TimeSpan.Zero),
-			DbType.Binary => Zongsoft.Common.Randomizer.Generate(property.Length > 0 ? property.Length : 8),
+			DbType.DateTime2 => new DateTime(Common.Randomizer.GenerateInt64()),
+			DbType.DateTimeOffset => new DateTimeOffset(Common.Randomizer.GenerateInt64(), TimeSpan.Zero),
+			DbType.Binary => Common.Randomizer.Generate(property.Length > 0 ? property.Length : 8),
 			DbType.Guid => System.Guid.NewGuid(),
-			_ => Zongsoft.Common.Randomizer.GenerateString(),
+			_ => this.HasArguments ? Common.Randomizer.GenerateString() : Common.Randomizer.GenerateString(int.Parse(this.Arguments[0])),
 		};
 	}
 
