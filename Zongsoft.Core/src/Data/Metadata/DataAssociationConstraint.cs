@@ -34,7 +34,7 @@ namespace Zongsoft.Data.Metadata;
 /// <summary>
 /// 表示数据实体关联约束的元数据类。
 /// </summary>
-public struct DataAssociationConstraint
+public readonly struct DataAssociationConstraint
 {
 	#region 构造函数
 	public DataAssociationConstraint(string name, DataAssociationConstraintActor actor, object value)

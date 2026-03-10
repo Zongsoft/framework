@@ -58,16 +58,7 @@ public class DataAssociationLink
 
 	#region 公共属性
 	/// <summary>获取关联元素的外键属性。</summary>
-	public IDataEntitySimplexProperty ForeignKey
-	{
-		get
-		{
-			if(_foreignKey == null)
-				_foreignKey = (IDataEntitySimplexProperty)_owner.Foreign.Properties[_foreign];
-
-			return _foreignKey;
-		}
-	}
+	public IDataEntitySimplexProperty ForeignKey => _foreignKey ??= (IDataEntitySimplexProperty)_owner.Foreign.Properties[_foreign];
 
 	/// <summary>获取关联元素的外键属性名。</summary>
 	public string Foreign => _foreign;
@@ -105,6 +96,6 @@ public class DataAssociationLink
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => _foreign + "=" + _anchor;
+	public override string ToString() => string.IsNullOrEmpty(_anchor) ? _foreign : $"{_anchor}->{_foreign}";
 	#endregion
 }
