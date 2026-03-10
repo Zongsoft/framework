@@ -35,6 +35,9 @@ using System.Text.Json.Serialization;
 
 namespace Zongsoft.Data;
 
+/// <summary>
+/// 表示数据属性函数的结构。
+/// </summary>
 [TypeConverter(typeof(TypeConverter))]
 [JsonConverter(typeof(JsonConverter))]
 public readonly struct DataPropertyFunction : IParsable<DataPropertyFunction>
@@ -54,7 +57,6 @@ public readonly struct DataPropertyFunction : IParsable<DataPropertyFunction>
 	public string[] Arguments { get; }
 
 	/// <summary>获取一个值，指示函数是否有参数。</summary>
-	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
 	public bool HasArguments => this.Arguments != null && this.Arguments.Length > 0;
 	#endregion
@@ -98,6 +100,10 @@ public readonly struct DataPropertyFunction : IParsable<DataPropertyFunction>
 
 		return this.HasArguments ? $"{this.Name}({string.Join(',', this.Arguments)})" : $"{this.Name}()";
 	}
+	#endregion
+
+	#region 符号重写
+	public static implicit operator string(DataPropertyFunction function) => function.ToString();
 	#endregion
 
 	#region 嵌套子类
