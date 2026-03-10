@@ -89,6 +89,24 @@ public abstract class DataEntityPropertyFunction
 
 		throw new DataException($"Unrecognized {function.Name} function.");
 	}
+
+	public static bool TryGet(ReadOnlySpan<char> text, out DataEntityPropertyFunction result)
+	{
+		result = null;
+		return DataPropertyFunction.TryParse(text, out var function) && TryGet(function, out result);
+	}
+
+	public static bool TryGet(DataPropertyFunction function, out DataEntityPropertyFunction result)
+	{
+		if(function.Name != null && Builders.TryGetValue(function.Name, out var builder))
+		{
+			result = builder.Build(function.Arguments);
+			return true;
+		}
+
+		result = null;
+		return false;
+	}
 	#endregion
 
 	#region 符号重写

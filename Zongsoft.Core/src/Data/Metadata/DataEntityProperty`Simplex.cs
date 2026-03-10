@@ -29,7 +29,6 @@
 
 using System;
 using System.Data;
-using System.Text.RegularExpressions;
 
 namespace Zongsoft.Data.Metadata;
 
@@ -105,15 +104,22 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 		get => _defaultValue is DataEntityPropertyFunction function ? function.Execute(this) : _defaultValue;
 		set
 		{
-			if(value is string text)
+			if(value is DataPropertyFunction token)
 			{
-				var function = DataEntityPropertyFunction.Get(text);
+				_defaultValue = DataEntityPropertyFunction.Get(token);
+				return;
+			}
 
-				if(function != null)
-				{
-					_defaultValue = function;
-					return;
-				}
+			if(value is DataEntityPropertyFunction function1)
+			{
+				_defaultValue = function1;
+				return;
+			}
+
+			if(value is string text && DataEntityPropertyFunction.TryGet(text, out var function2))
+			{
+				_defaultValue = function2;
+				return;
 			}
 
 			var type = this.Type.DbType.AsType();
@@ -145,7 +151,7 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 			field = value;
 
 			//清除当前实体的主键缓存
-			this.Entity.Key = null;
+			this.Entity?.Key = null;
 		}
 	}
 	#endregion
