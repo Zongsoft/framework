@@ -43,7 +43,7 @@ public abstract class DataEntityPropertyBase : IDataEntityProperty, IEquatable<I
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
-		this.Entity = entity ?? throw new ArgumentNullException(nameof(entity));
+		this.Entity = entity;
 		this.Name = name.Trim();
 		this.Immutable = immutable;
 	}
