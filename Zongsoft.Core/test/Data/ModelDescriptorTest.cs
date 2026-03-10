@@ -5,6 +5,7 @@ using Xunit;
 
 using Zongsoft.Tests;
 using Zongsoft.Serialization;
+using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Tests;
 
@@ -39,6 +40,35 @@ public class ModelDescriptorTest
 		var result = Serializer.Json.Deserialize<ModelDescriptor>(json);
 		Assert.NotNull(result);
 		TestEmployeeModel(result);
+	}
+
+	[Fact]
+	public void TestToEntity()
+	{
+		var model = Model.GetDescriptor<Log>();
+		Assert.NotNull(model);
+
+		var entity = model.ToEntity();
+		Assert.NotNull(entity);
+		Assert.Equal(model.QualifiedName, entity.QualifiedName, true);
+		Assert.NotNull(entity.Key);
+		Assert.Single(entity.Key);
+		Assert.True(entity.Key[0].IsPrimaryKey);
+		Assert.True(entity.Key[0].Sortable);
+		Assert.False(entity.Key[0].Nullable);
+		Assert.NotNull(entity.Key[0].Sequence);
+		Assert.Equal(DataType.Int64, entity.Key[0].Type);
+
+		Assert.True(entity.Properties.TryGetValue(nameof(Log.Timestamp), out var property));
+		Assert.NotNull(property);
+		Assert.True(property.Immutable);
+		Assert.True(property.IsSimplex);
+		Assert.False(property.IsComplex);
+		Assert.IsType<DataEntitySimplexProperty>(property);
+
+		var simplex = (IDataEntitySimplexProperty)property;
+		Assert.NotNull(simplex.DefaultValue);
+		Assert.IsType<DateTime>(simplex.DefaultValue);
 	}
 
 	private static void TestEmployeeModel(ModelDescriptor descriptor)
@@ -92,6 +122,10 @@ public class ModelDescriptorTest
 		Assert.True(simplex.Sortable);
 		Assert.False(simplex.Nullable);
 		Assert.Equal("Id", simplex.Alias);
+		Assert.Equal("#", simplex.Sequence.Name);
+		Assert.True(simplex.Sequence.IsExternal);
+		Assert.False(simplex.Sequence.IsBuiltin);
+		Assert.False(simplex.Sequence.HasReferences);
 
 		Assert.True(descriptor.Properties.TryGetValue(nameof(Log.Source), out property));
 		Assert.Equal(nameof(Log.Source), property.Name);
@@ -129,6 +163,8 @@ public class ModelDescriptorTest
 		Assert.Equal(DataType.DateTime, simplex.DataType);
 		Assert.False(simplex.IsPrimaryKey);
 		Assert.False(simplex.Nullable);
+		Assert.True(simplex.Immutable);
+		Assert.True(simplex.Sortable);
 		Assert.Null(simplex.Alias);
 		Assert.NotNull(simplex.DefaultValue);
 		Assert.IsType<DataPropertyFunction>(simplex.DefaultValue);
@@ -140,7 +176,7 @@ public class ModelDescriptorTest
 	[Model("Logs")]
 	private struct Log
 	{
-		[ModelProperty("Id", IsPrimaryKey = true)]
+		[ModelProperty("Id", IsPrimaryKey = true, Sequence = "#")]
 		public long LogId { get; set; }
 
 		[ModelProperty(DbType.AnsiString, 50, false)]
@@ -153,7 +189,7 @@ public class ModelDescriptorTest
 		[ModelProperty(Ignored = true)]
 		public string IgnoredField { get; set; }
 
-		[ModelProperty(DbType.DateTime, false, DefaultValue = "now()")]
+		[ModelProperty(DbType.DateTime, false, Sortable = true, Immutable = true, DefaultValue = "now()")]
 		public DateTime Timestamp { get; set; }
 	}
 }
