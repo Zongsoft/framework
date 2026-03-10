@@ -66,6 +66,49 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task InsertDepartmentsAsync()
+	{
+		const int COUNT = 10;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var departments = Model.Build<Department>(COUNT, (department, index) =>
+		{
+			department.TenantId = 1;
+			department.BranchId = 0;
+			department.DepartmentNo = $"No.{index}";
+			department.Name = $"MyDepartment#{index}";
+		}).ToArray();
+
+		var count = await accessor.InsertManyAsync(departments);
+		Assert.Equal(COUNT, count);
+
+		for(int i = 0; i < COUNT; i++)
+			Assert.True(departments[i].DepartmentId > 0);
+
+		var models = accessor.SelectAsync<Department>(
+			Condition.Equal(nameof(Department.TenantId), 1) &
+			Condition.Equal(nameof(Department.BranchId), 0));
+
+		await foreach(var model in models)
+		{
+			Assert.NotNull(model);
+			Assert.Equal(1U, model.TenantId);
+			Assert.Equal(0U, model.BranchId);
+			Assert.True(model.DepartmentId > 0);
+			Assert.StartsWith("No.", model.DepartmentNo);
+			Assert.StartsWith("MyDepartment", model.Name);
+		}
+
+		await accessor.DeleteAsync<Department>(
+			Condition.Equal(nameof(Department.TenantId), 1) &
+			Condition.Equal(nameof(Department.BranchId), 0) &
+			Condition.In(nameof(Department.DepartmentId), departments.Select(department => department.DepartmentId).ToArray()));
+	}
+
+	[Fact]
 	public async Task InsertAsync()
 	{
 		if(!Global.IsTestingEnabled)
