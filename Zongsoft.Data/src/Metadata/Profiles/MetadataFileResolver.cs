@@ -261,7 +261,10 @@ public class MetadataFileResolver
 					try
 					{
 						//设置序号器元数据信息
-						property.Sequence = DataEntityPropertySequence.Parse(property, GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE));
+						var sequence = GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE);
+
+						if(!string.IsNullOrWhiteSpace(sequence))
+							property.Sequence = DataEntityPropertySequence.Create(property, sequence);
 					}
 					catch(Exception ex)
 					{

@@ -260,7 +260,7 @@
 
 			<property name="TenantId" type="uint" nullable="false" immutable="true" />
 			<property name="BranchId" type="uint" nullable="false" immutable="true" />
-			<property name="DepartmentId" type="ushort" nullable="false" sequence="#TenantId,BranchId" />
+			<property name="DepartmentId" type="ushort" nullable="false" sequence="#(TenantId,BranchId)" />
 			<property name="ParentId" type="ushort" nullable="false" />
 			<property name="DepartmentNo" type="varchar" length="50" nullable="false" />
 			<property name="Name" type="nvarchar" length="50" nullable="false" />
@@ -342,7 +342,7 @@
 
 			<property name="TenantId" type="uint" nullable="false" immutable="true" />
 			<property name="BranchId" type="uint" nullable="false" immutable="true" />
-			<property name="TeamId" type="ushort" nullable="false" sequence="#TenantId,BranchId" />
+			<property name="TeamId" type="ushort" nullable="false" sequence="#(TenantId,BranchId)" />
 			<property name="TeamNo" type="varchar" length="50" nullable="false" />
 			<property name="Name" type="nvarchar" length="50" nullable="false" />
 			<property name="Acronym" type="varchar" length="50" nullable="true" />

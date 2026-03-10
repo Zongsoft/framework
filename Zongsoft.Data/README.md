@@ -596,7 +596,7 @@ Especially in a one-to-many relationship, it is often necessary to conditionally
 	</key>
 
 	<property name="SiteId" type="uint" nullable="false" />
-	<property name="ForumId" type="ushort" nullable="false" sequence="#SiteId" />
+	<property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
 	<property name="GroupId" type="ushort" nullable="false" />
 	<property name="Name" type="string" length="50" nullable="false" />
 
