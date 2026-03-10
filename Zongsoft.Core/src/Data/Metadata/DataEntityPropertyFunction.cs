@@ -106,13 +106,13 @@ public abstract class DataEntityPropertyFunction
 	{
 		public static readonly Now Instance = new();
 
-		private static readonly Now _now_ = new();
+		private static readonly Now _local_ = new();
 		private static readonly Now _utc_ = new("utc");
 
 		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments)
 		{
 			if(arguments == null || arguments.Length == 0)
-				return _now_;
+				return _local_;
 			if(string.Equals(arguments[0], "utc", StringComparison.OrdinalIgnoreCase))
 				return _utc_;
 
@@ -132,18 +132,58 @@ public abstract class DataEntityPropertyFunction
 	{
 		public static readonly Today Instance = new();
 
-		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments) =>
-			Common.ArrayExtension.IsEmpty(arguments) ? Instance : throw GetNotSupportedArgumentsEexception(this.Name, arguments);
-		public override object Execute(IDataEntitySimplexProperty property) => DateTime.Today;
+		private static readonly Today _local_ = new();
+		private static readonly Today _utc_ = new("utc");
+
+		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments)
+		{
+			if(arguments == null || arguments.Length == 0)
+				return _local_;
+			if(string.Equals(arguments[0], "utc", StringComparison.OrdinalIgnoreCase))
+				return _utc_;
+
+			throw GetNotSupportedArgumentsEexception(this.Name, arguments);
+		}
+
+		public override object Execute(IDataEntitySimplexProperty property)
+		{
+			if(this.HasArguments && string.Equals(this.Arguments[0], "utc", StringComparison.OrdinalIgnoreCase))
+				return DateTime.UtcNow.Date;
+			else
+				return DateTime.Today;
+		}
 	}
 
 	private sealed class Guid(params string[] arguments) : DataEntityPropertyFunction(nameof(Guid), arguments), IDataEntityPropertyFunctionBuilder
 	{
 		public static readonly Guid Instance = new();
 
-		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments) =>
-			Common.ArrayExtension.IsEmpty(arguments) ? Instance : throw GetNotSupportedArgumentsEexception(this.Name, arguments);
-		public override object Execute(IDataEntitySimplexProperty property) => System.Guid.NewGuid();
+		#if NET9_0_OR_GREATER
+		private static readonly Guid _sequential_ = new("sequential");
+		#endif
+
+		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments)
+		{
+			if(Common.ArrayExtension.IsEmpty(arguments))
+				return Instance;
+
+			#if NET9_0_OR_GREATER
+			if(string.Equals(arguments[0], "sequential", StringComparison.OrdinalIgnoreCase))
+				return _sequential_;
+			#endif
+
+			throw GetNotSupportedArgumentsEexception(this.Name, arguments);
+		}
+
+		public override object Execute(IDataEntitySimplexProperty property)
+		{
+			#if NET9_0_OR_GREATER
+			if(this.HasArguments && string.Equals(this.Arguments[0], "sequential", StringComparison.OrdinalIgnoreCase))
+				return System.Guid.CreateVersion7();
+			#endif
+
+			return System.Guid.NewGuid();
+		}
 	}
 
 	private sealed class Random(params string[] arguments) : DataEntityPropertyFunction(nameof(Random), arguments), IDataEntityPropertyFunctionBuilder
@@ -152,29 +192,40 @@ public abstract class DataEntityPropertyFunction
 
 		DataEntityPropertyFunction IDataEntityPropertyFunctionBuilder.Build(params string[] arguments) =>
 			Common.ArrayExtension.IsEmpty(arguments) ? Instance : new Random(arguments);
-		public override object Execute(IDataEntitySimplexProperty property) => property.Type.DbType switch
+
+		public override object Execute(IDataEntitySimplexProperty property)
 		{
-			DbType.Byte => Common.Randomizer.Generate(1)[0],
-			DbType.SByte => (sbyte)Common.Randomizer.Generate(1)[0],
-			DbType.Int16 => Common.Randomizer.GenerateInt16(),
-			DbType.UInt16 => Common.Randomizer.GenerateUInt16(),
-			DbType.Int32 => Common.Randomizer.GenerateInt32(),
-			DbType.UInt32 => Common.Randomizer.GenerateUInt32(),
-			DbType.Int64 => Common.Randomizer.GenerateInt64(),
-			DbType.UInt64 => Common.Randomizer.GenerateUInt64(),
-			DbType.Single => BitConverter.Int32BitsToSingle(Common.Randomizer.GenerateInt32()),
-			DbType.Double => BitConverter.Int64BitsToDouble(Common.Randomizer.GenerateInt64()),
-			DbType.Decimal or
-			DbType.Currency => new Decimal(Common.Randomizer.GenerateInt64()),
-			DbType.Date or
-			DbType.Time or
-			DbType.DateTime or
-			DbType.DateTime2 => new DateTime(Common.Randomizer.GenerateInt64()),
-			DbType.DateTimeOffset => new DateTimeOffset(Common.Randomizer.GenerateInt64(), TimeSpan.Zero),
-			DbType.Binary => Common.Randomizer.Generate(property.Length > 0 ? property.Length : 8),
-			DbType.Guid => System.Guid.NewGuid(),
-			_ => this.HasArguments ? Common.Randomizer.GenerateString() : Common.Randomizer.GenerateString(int.Parse(this.Arguments[0])),
-		};
+			if(property == null || property.Type == null)
+				return null;
+
+			return property.Type.DbType switch
+			{
+				DbType.Guid => System.Guid.NewGuid(),
+				DbType.Byte => Common.Randomizer.Generate(1)[0],
+				DbType.SByte => (sbyte)Common.Randomizer.Generate(1)[0],
+				DbType.Int16 => Common.Randomizer.GenerateInt16(),
+				DbType.UInt16 => Common.Randomizer.GenerateUInt16(),
+				DbType.Int32 => Common.Randomizer.GenerateInt32(),
+				DbType.UInt32 => Common.Randomizer.GenerateUInt32(),
+				DbType.Int64 => Common.Randomizer.GenerateInt64(),
+				DbType.UInt64 => Common.Randomizer.GenerateUInt64(),
+				DbType.Single => BitConverter.Int32BitsToSingle(Common.Randomizer.GenerateInt32()),
+				DbType.Double => BitConverter.Int64BitsToDouble(Common.Randomizer.GenerateInt64()),
+				DbType.Decimal or
+				DbType.Currency => new Decimal(Common.Randomizer.GenerateInt64()),
+				DbType.Date or
+				DbType.Time or
+				DbType.DateTime or
+				DbType.DateTime2 => new DateTime(Common.Randomizer.GenerateInt64()),
+				DbType.DateTimeOffset => new DateTimeOffset(Common.Randomizer.GenerateInt64(), TimeSpan.Zero),
+				DbType.Binary => this.HasArguments ? Common.Randomizer.Generate(int.Parse(this.Arguments[0])) : Common.Randomizer.Generate(property.Length > 0 ? property.Length : 8),
+				DbType.AnsiString or
+				DbType.AnsiStringFixedLength or
+				DbType.String or
+				DbType.StringFixedLength => this.HasArguments ? Common.Randomizer.GenerateString(int.Parse(this.Arguments[0])) : Common.Randomizer.GenerateString(),
+				_ => null,
+			};
+		}
 	}
 
 	public sealed class BuilderCollection() : KeyedCollection<string, IDataEntityPropertyFunctionBuilder>(StringComparer.OrdinalIgnoreCase)
