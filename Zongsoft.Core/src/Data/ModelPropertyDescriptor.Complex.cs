@@ -56,6 +56,28 @@ partial class ModelPropertyDescriptor
 			}
 		}
 
+		/// <summary>获取或设置关联的连接数组。</summary>
+		public string[] Links
+		{
+			get; set
+			{
+				this.OnPropertyChanging(nameof(this.Links));
+				field = value;
+				this.OnPropertyChanged(nameof(this.Links));
+			}
+		}
+
+		/// <summary>获取或设置关联的约束数组。</summary>
+		public string[] Constraints
+		{
+			get; set
+			{
+				this.OnPropertyChanging(nameof(this.Constraints));
+				field = value;
+				this.OnPropertyChanged(nameof(this.Constraints));
+			}
+		}
+
 		/// <summary>获取关联目标的模型描述器。</summary>
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
@@ -118,6 +140,8 @@ partial class ModelPropertyDescriptor
 				this.Port = attribute.Port;
 				this.Behaviors = attribute.Behaviors;
 				this.Multiplicity = attribute.Multiplicity;
+				this.Links = attribute.Links;
+				this.Constraints = attribute.Constraints;
 			}
 		}
 		#endregion

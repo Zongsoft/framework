@@ -60,12 +60,15 @@ public class ModelPropertyAttribute : Attribute
 		this.DefaultValue = defaultValue;
 	}
 
-	public ModelPropertyAttribute(string port, Metadata.DataAssociationMultiplicity multiplicity, Metadata.DataEntityComplexPropertyBehaviors behaviors = Metadata.DataEntityComplexPropertyBehaviors.None)
+	public ModelPropertyAttribute(string port, Metadata.DataAssociationMultiplicity multiplicity, string[] links = null, string[] constraints = null) : this(port, multiplicity, Metadata.DataEntityComplexPropertyBehaviors.None, links, constraints) { }
+	public ModelPropertyAttribute(string port, Metadata.DataAssociationMultiplicity multiplicity, Metadata.DataEntityComplexPropertyBehaviors behaviors, string[] links = null, string[] constraints = null)
 	{
 		this.Port = port;
 		this.Type = null;
-		this.Multiplicity = multiplicity;
 		this.Behaviors = behaviors;
+		this.Multiplicity = multiplicity;
+		this.Links = links;
+		this.Constraints = constraints;
 	}
 	#endregion
 
@@ -106,12 +109,12 @@ public class ModelPropertyAttribute : Attribute
 	/// <summary>获取数据实体属性的提示。</summary>
 	public string Hint { get; set; }
 
-	/// <summary>获取一个值，指示数据实体属性是否为不可变属性，默认为假(<c>False</c>)。</summary>
+	/// <summary>获取或设置一个值，指示数据实体属性是否为不可变属性，默认为假(<c>False</c>)。</summary>
 	/// <remarks>
 	/// 	<para>对于不可变简单属性：不能被修改(Update, Upsert)，但是新增(Insert)时可以设置其内容。</para>
 	/// 	<para>对于不可变复合属性：不支持任何写操作(Delete, Insert, Update, Upsert)。</para>
 	/// </remarks>
-	public bool Immutable { get; }
+	public bool Immutable { get; set; }
 
 	/// <summary>获取或设置一个值，指示是否忽略该属性。</summary>
 	public bool Ignored { get; set; }
@@ -119,6 +122,12 @@ public class ModelPropertyAttribute : Attribute
 	/// <summary>获取或设置导航属性的关联目标，通常它是目标实体名，也支持跳跃关联(即关联到一个复合属性)。</summary>
 	/// <remarks>跳跃关联是指关联目标为实体的导航属性，实体与导航属性之间以冒号(<c>:</c>)区隔。</remarks>
 	public string Port { get; set; }
+
+	/// <summary>获取或设置导航属性的连接集，有关连接的文本格式参考：<seealso cref="Metadata.DataAssociationLink"/>。</summary>
+	public string[] Links { get; set; }
+
+	/// <summary>获取或设置导航属性的约束集，有关约束的文本格式参考：<seealso cref="Metadata.DataAssociationConstraint"/>。</summary>
+	public string[] Constraints { get; set; }
 
 	/// <summary>获取或设置属性的特性。</summary>
 	public Metadata.DataEntityComplexPropertyBehaviors Behaviors { get; set; }
