@@ -75,13 +75,13 @@ public readonly struct DataPropertySequence : IParsable<DataPropertySequence>
 {
 	#region 静态字段
 	private static readonly Regex _regex = new(@"
-		(?<kind>[\#\*])?
+		^(?<kind>[\#\*])?
 		(?<name>\w+([\:\.\-]\w+)*)?
 		(\(\s*
 			(?<refs>\w+(\s*\,\s*\w+)*)
 		\s*\))?
 		(\@(?<seed>\d+))?
-		(\/(?<interval>\d+))?",
+		(\/(?<interval>\d+))?$",
 		RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 	#endregion
 
