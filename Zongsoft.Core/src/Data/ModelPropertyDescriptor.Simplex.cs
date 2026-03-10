@@ -146,7 +146,7 @@ partial class ModelPropertyDescriptor
 		}
 
 		/// <summary>获取或设置数据序号器元数据。</summary>
-		public string Sequence
+		public DataPropertySequence Sequence
 		{
 			get; set
 			{
@@ -198,7 +198,9 @@ partial class ModelPropertyDescriptor
 			simplex.Scale = attribute.Scale;
 			simplex.Nullable = attribute.Nullable;
 			simplex.Sortable = attribute.Sortable;
-			simplex.Sequence = attribute.Sequence;
+
+			if(!string.IsNullOrWhiteSpace(attribute.Sequence))
+				simplex.Sequence = DataPropertySequence.Parse(attribute.Sequence);
 
 			if(attribute.Type != null)
 				simplex.DataType = attribute.Type;
@@ -253,7 +255,7 @@ partial class ModelPropertyDescriptor
 
 							return decimal.Parse(text);
 						case JsonTokenType.String:
-							return DataPropertyFunction.TryParse(reader.GetString(), out var function) ? function : reader.GetString();
+							return DataPropertyFunction.TryParse(reader.GetString(), out var function) ? (object)function : reader.GetString();
 						default:
 							return Serialization.Json.Converters.ObjectConverter.Default.Read(ref reader, type, options);
 					}
