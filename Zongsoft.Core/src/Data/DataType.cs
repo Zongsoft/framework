@@ -235,7 +235,10 @@ public sealed partial class DataType : IEquatable<DataType>
 			_ => System.Data.DbType.Object,
 		};
 
-		return dbType == System.Data.DbType.Object ? null : new(dbType.ToString(), dbType, isArray);
+		if(dbType == System.Data.DbType.Object)
+			return Common.TypeExtension.IsScalarType(type) ? String : Object;
+		else
+			return new(dbType.ToString(), dbType, isArray);
 	}
 	#endregion
 

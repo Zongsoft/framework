@@ -296,7 +296,11 @@ public static class TypeExtension
 			return result;
 
 		var converter = TypeDescriptor.GetConverter(type);
-		return (converter != null && converter.CanConvertFrom(typeof(string)) && converter.CanConvertTo(typeof(string)));
+
+		return converter != null &&
+			converter.GetType() != typeof(TypeConverter) &&
+			converter.CanConvertFrom(typeof(string)) &&
+			converter.CanConvertTo(typeof(string));
 	}
 
 	public static bool IsInteger(this Type type)
