@@ -50,7 +50,11 @@ public static class ModelDescriptorUtility
 		{
 			if(descriptor.IsSimplex(out var simplex))
 			{
-				var property = entity.Properties.Simplex(simplex.Name, simplex.DataType, simplex.Nullable, simplex.Immutable);
+				var property = entity.Properties.Simplex(
+					simplex.Name,
+					simplex.DataType,
+					simplex.Nullable,
+					simplex.Immutable);
 
 				property.Hint = simplex.Hint;
 				property.Alias = simplex.Alias;
@@ -64,16 +68,51 @@ public static class ModelDescriptorUtility
 				if(!string.IsNullOrWhiteSpace(simplex.Sequence.Name))
 					property.Sequence = DataEntityPropertySequence.Create(property, simplex.Sequence);
 			}
-			else if(descriptor.IsComplex(out var complex))
+			else if(descriptor.IsComplex(out var complex) && complex.Links != null && complex.Links.Length > 0)
 			{
-				if(complex.Links == null || complex.Links.Length == 0)
-					throw new InvalidOperationException($"The '{complex}' property of the '{model}' data model cannot be mapped as a navigation property because it lacks the required association(links) definition.");
+				var property = entity.Properties.Complex(
+					complex.Name,
+					complex.Port,
+					complex.Immutable,
+					complex.Behaviors,
+					complex.Multiplicity);
 
-				var property = entity.Properties.Complex(complex.Name, complex.Port, complex.Immutable, complex.Behaviors, complex.Multiplicity);
 				property.Hint = complex.Hint;
+				property.Links = ToLinks(property, complex.Links);
+				property.Constraints = ToConstraints(complex.Constraints);
 			}
 		}
 
 		return entity;
+	}
+
+	static DataAssociationLink[] ToLinks(IDataEntityComplexProperty property, ModelPropertyDescriptor.ComplexPropertyDescriptor.Link[] links)
+	{
+		if(links == null || links.Length == 0)
+			return null;
+
+		var result = new DataAssociationLink[links.Length];
+		for(int i = 0; i < links.Length; i++)
+			result[i] = new(property, links[i].Port, links[i].Anchor);
+
+		return result;
+	}
+
+	static DataAssociationConstraint[] ToConstraints(ModelPropertyDescriptor.ComplexPropertyDescriptor.Constraint[] constraints)
+	{
+		if(constraints == null || constraints.Length == 0)
+			return null;
+
+		var result = new DataAssociationConstraint[constraints.Length];
+		for(int i = 0; i < constraints.Length; i++)
+		{
+			var actor = string.IsNullOrEmpty(constraints[i].Actor) ?
+				DataAssociationConstraintActor.Foreign :
+				Enum.Parse<DataAssociationConstraintActor>(constraints[i].Actor);
+
+			result[i] = new(constraints[i].Name, actor, constraints[i].Value);
+		}
+
+		return result;
 	}
 }

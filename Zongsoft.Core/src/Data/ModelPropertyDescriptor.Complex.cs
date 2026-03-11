@@ -36,7 +36,7 @@ namespace Zongsoft.Data;
 
 partial class ModelPropertyDescriptor
 {
-	public class ComplexPropertyDescriptor : ModelPropertyDescriptor
+	public partial class ComplexPropertyDescriptor : ModelPropertyDescriptor
 	{
 		#region 构造函数
 		public ComplexPropertyDescriptor() { }
@@ -57,7 +57,7 @@ partial class ModelPropertyDescriptor
 		}
 
 		/// <summary>获取或设置关联的连接数组。</summary>
-		public string[] Links
+		public Link[] Links
 		{
 			get; set
 			{
@@ -68,7 +68,7 @@ partial class ModelPropertyDescriptor
 		}
 
 		/// <summary>获取或设置关联的约束数组。</summary>
-		public string[] Constraints
+		public Constraint[] Constraints
 		{
 			get; set
 			{
@@ -140,9 +140,53 @@ partial class ModelPropertyDescriptor
 				this.Port = attribute.Port;
 				this.Behaviors = attribute.Behaviors;
 				this.Multiplicity = attribute.Multiplicity;
-				this.Links = attribute.Links;
-				this.Constraints = attribute.Constraints;
+				this.Links = GetLinks(member, attribute.Links);
+				this.Constraints = GetConstraints(member, attribute.Constraints);
 			}
+		}
+		#endregion
+
+		#region 私有方法
+		static Link[] GetLinks(MemberInfo member, params string[] array)
+		{
+			if(array == null || array.Length == 0)
+				return null;
+
+			var result = new System.Collections.Generic.List<Link>(array.Length);
+
+			for(int i = 0; i < array.Length; i++)
+			{
+				if(string.IsNullOrWhiteSpace(array[i]))
+					continue;
+
+				if(Link.TryParse(array[i], out var link))
+					result.Add(link);
+				else
+					throw new InvalidOperationException($"The association link '{array[i]}' for the specified '{member.DeclaringType.FullName}.{member.Name}' model property is invalid.");
+			}
+
+			return [.. result];
+		}
+
+		static Constraint[] GetConstraints(MemberInfo member, params string[] array)
+		{
+			if(array == null || array.Length == 0)
+				return null;
+
+			var result = new System.Collections.Generic.List<Constraint>(array.Length);
+
+			for(int i = 0; i < array.Length; i++)
+			{
+				if(string.IsNullOrWhiteSpace(array[i]))
+					continue;
+
+				if(Constraint.TryParse(array[i], out var constraint))
+					result.Add(constraint);
+				else
+					throw new InvalidOperationException($"The association constraint '{array[i]}' for the specified '{member.DeclaringType.FullName}.{member.Name}' model property is invalid.");
+			}
+
+			return [.. result];
 		}
 		#endregion
 	}
