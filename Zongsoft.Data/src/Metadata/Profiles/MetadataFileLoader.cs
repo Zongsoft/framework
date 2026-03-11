@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -40,28 +40,20 @@ public class MetadataFileLoader : Mapping.Loader, IEquatable<MetadataFileLoader>
 	public static readonly MetadataFileLoader Default = new();
 	#endregion
 
-	#region 成员字段
-	private string _path;
-	#endregion
-
 	#region 构造函数
-	private MetadataFileLoader() => _path = Services.ApplicationContext.Current?.ApplicationPath;
-	public MetadataFileLoader(string path) => _path = path;
+	public MetadataFileLoader(string path = null) => this.Path = path;
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取或设置要加载的目录地址，支持“|”竖线符分隔的多个目录。</summary>
-	public string Path
-	{
-		get => _path;
-		set => _path = value;
-	}
+	public string Path { get; set; }
 	#endregion
 
 	#region 加载方法
 	protected override IEnumerable<Result> OnLoad()
 	{
-		var directories = string.IsNullOrEmpty(_path) ? [Services.ApplicationContext.Current?.ApplicationPath] : _path.Split('|');
+		var directories = string.IsNullOrEmpty(this.Path) ?
+			[Services.ApplicationContext.Current?.ApplicationPath] : this.Path.Split('|');
 
 		foreach(var directory in directories)
 		{
@@ -88,9 +80,9 @@ public class MetadataFileLoader : Mapping.Loader, IEquatable<MetadataFileLoader>
 	#endregion
 
 	#region 重写方法
-	public bool Equals(MetadataFileLoader other) => string.Equals(_path, other._path);
+	public bool Equals(MetadataFileLoader other) => string.Equals(this.Path, other.Path);
 	public override bool Equals(object obj) => obj is MetadataFileLoader other && this.Equals(other);
-	public override int GetHashCode() => _path.GetHashCode();
-	public override string ToString() => _path;
+	public override int GetHashCode() => this.Path.GetHashCode();
+	public override string ToString() => this.Path;
 	#endregion
 }
