@@ -35,7 +35,9 @@ namespace Zongsoft.Data;
 public class ModelAttribute : Attribute
 {
 	#region 构造函数
-	public ModelAttribute(string name, string alias = null, bool immutable = false)
+	public ModelAttribute(bool immutable = false) => this.Immutable = immutable;
+	public ModelAttribute(string name, bool immutable = false) : this(name, null, immutable) { }
+	public ModelAttribute(string name, string alias, bool immutable = false)
 	{
 		this.Name = name;
 		this.Alias = alias;
@@ -53,6 +55,14 @@ public class ModelAttribute : Attribute
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => string.IsNullOrEmpty(this.Name) ? base.ToString() : this.Name;
+	public override string ToString()
+	{
+		if(string.IsNullOrEmpty(this.Name))
+			return string.IsNullOrEmpty(this.Alias) ? $"({GetDescription(this.Immutable)})" : $":{this.Alias}({GetDescription(this.Immutable)})";
+		else
+			return string.IsNullOrEmpty(this.Alias) ? $"{this.Name}({GetDescription(this.Immutable)})" : $"{this.Name}:{this.Alias}({GetDescription(this.Immutable)})";
+
+		static string GetDescription(bool immutable) => immutable ? "immutabled" : "mutabled";
+	}
 	#endregion
 }
