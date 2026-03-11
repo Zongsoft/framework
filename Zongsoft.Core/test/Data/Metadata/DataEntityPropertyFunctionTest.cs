@@ -36,7 +36,7 @@ public class DataEntityPropertyFunctionTest
 		Assert.NotNull(value);
 		Assert.IsType<DateTime>(value);
 		Assert.Equal(DateTimeKind.Utc, ((DateTime)value).Kind);
-		Assert.Equal(DateTime.Today, ((DateTime)value).Date);
+		Assert.Equal(DateTime.UtcNow.Date, ((DateTime)value).Date);
 	}
 
 	[Fact]
