@@ -63,8 +63,8 @@ public class DataEntityCollection : ICollection<IDataEntity>
 	public void Clear() => _dictionary.Clear();
 	public bool Remove(string qualifiedName) => _dictionary.TryRemove(qualifiedName, out _);
 	public bool Remove(string name, string @namespace) => _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out _);
-	public bool TryGetValue(string qualifiedName, out IDataEntity result) => _dictionary.TryGetValue(qualifiedName, out result);
-	public bool TryGetValue(string name, string @namespace, out IDataEntity result) => _dictionary.TryGetValue(DataUtility.Qualify(name, @namespace), out result);
+	public bool TryGetValue(string qualifiedName, out IDataEntity entity) => _dictionary.TryGetValue(qualifiedName, out entity);
+	public bool TryGetValue(string name, string @namespace, out IDataEntity entity) => _dictionary.TryGetValue(DataUtility.Qualify(name, @namespace), out entity);
 	#endregion
 
 	#region 显式实现

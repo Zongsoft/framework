@@ -64,8 +64,8 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 	public void Clear() => _dictionary.Clear();
 	public bool Remove(string qualifiedName) => _dictionary.TryRemove(qualifiedName, out _);
 	public bool Remove(string name, string @namespace) => _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out _);
-	public bool TryGetValue(string qualifiedName, out IDataCommand result) => _dictionary.TryGetValue(qualifiedName, out result);
-	public bool TryGetValue(string name, string @namespace, out IDataCommand result) => _dictionary.TryGetValue(DataUtility.Qualify(name, @namespace), out result);
+	public bool TryGetValue(string qualifiedName, out IDataCommand command) => _dictionary.TryGetValue(qualifiedName, out command);
+	public bool TryGetValue(string name, string @namespace, out IDataCommand command) => _dictionary.TryGetValue(DataUtility.Qualify(name, @namespace), out command);
 	#endregion
 
 	#region 公共方法
