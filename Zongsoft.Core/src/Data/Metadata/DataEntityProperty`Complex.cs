@@ -110,17 +110,9 @@ public class DataEntityComplexProperty : DataEntityPropertyBase, IDataEntityComp
 	#region 重写方法
 	public override string ToString()
 	{
-		var text = new System.Text.StringBuilder();
-
-		foreach(var link in this.Links)
-		{
-			if(text.Length > 0)
-				text.Append(" AND ");
-
-			text.Append(link.ToString());
-		}
-
-		return $"{this.Name} -> {this.Port} ({text.ToString()})";
+		return this.Links == null || this.Links.Length == 0 ?
+			$"{this.Name}->{this.Port}" :
+			$"{this.Name}->{this.Port}({string.Join(',', [.. this.Links])})";
 	}
 	#endregion
 
