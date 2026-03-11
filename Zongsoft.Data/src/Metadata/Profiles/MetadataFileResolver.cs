@@ -198,10 +198,10 @@ public class MetadataFileResolver
 	#endregion
 
 	#region 解析方法
-	private static MetadataEntity ResolveEntity(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
+	private static DataEntity ResolveEntity(XmlReader reader, MetadataFile provider, string @namespace, Action unrecognize)
 	{
 		//创建实体元素对象
-		var entity = new MetadataEntity(@namespace,
+		var entity = new DataEntity(@namespace,
 			reader.GetAttribute(XML_NAME_ATTRIBUTE),
 			GetFullName(reader.GetAttribute(XML_INHERITS_ATTRIBUTE), @namespace),
 			GetAttributeValue(reader, XML_IMMUTABLE_ATTRIBUTE, false));
