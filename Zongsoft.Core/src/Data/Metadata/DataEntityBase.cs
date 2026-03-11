@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -50,7 +50,7 @@ public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<D
 		this.Namespace = @namespace;
 		this.Name = name;
 		this.Alias = null;
-		this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.ToLowerInvariant()}";
+		this.QualifiedName = DataUtility.Qualify(this.Name, this.Namespace);
 		this.BaseName = baseName;
 		this.Immutable = immutable;
 		this.Properties = new(this);

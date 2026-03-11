@@ -235,7 +235,13 @@ public partial class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyCh
 
 		attribute = type.GetCustomAttribute<ModelAttribute>(true);
 		if(attribute != null && !string.IsNullOrEmpty(attribute.Name))
-			name = attribute.Name;
+		{
+			(name, var @namespace) = DataUtility.Qualify(attribute.Name);
+
+			//注：如果模型注解的名称为完整限定名则直接使用它
+			if(!string.IsNullOrEmpty(@namespace))
+				return (@namespace, name);
+		}
 
 		var module = Services.ApplicationModuleAttribute.Find(type);
 		if(module == null || string.IsNullOrEmpty(module.Name))

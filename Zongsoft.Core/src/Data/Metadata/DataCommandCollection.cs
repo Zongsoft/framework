@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,49 +29,46 @@
 
 using System;
 using System.Text;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Metadata;
 
-public class DataCommandCollection() : KeyedCollection<string, IDataCommand>(StringComparer.OrdinalIgnoreCase)
+public class DataCommandCollection() : ICollection<IDataCommand>
 {
 	#region 成员字段
-	private readonly Dictionary<string, IDataCommand[]> _aliases = new();
+	private readonly ConcurrentDictionary<string, IDataCommand> _dictionary = new(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
 	#region 公共属性
-	public IDataCommand this[string name, string @namespace = null] => base[GetKey(name, @namespace)];
+	public int Count => _dictionary.Count;
+	public IDataCommand this[string qualifiedName] => _dictionary[qualifiedName];
+	public IDataCommand this[string name, string @namespace] => _dictionary[DataUtility.Qualify(name, @namespace)];
+	#endregion
+
+	#region 集合方法
+	public void Add(IDataCommand command)
+	{
+		ArgumentNullException.ThrowIfNull(command);
+		if(!_dictionary.TryAdd(command.QualifiedName, command))
+			throw new InvalidOperationException($"The specified '{command.QualifiedName}' data command already exists in the collection.");
+	}
+
+	public bool TryAdd(IDataCommand command) => command != null && _dictionary.TryAdd(command.QualifiedName, command);
+	public IDataCommand GetOrAdd(IDataCommand command) => command == null ? null : _dictionary.GetOrAdd(command.QualifiedName, command);
+
+	public bool Contains(string qualifiedName) => qualifiedName != null && _dictionary.ContainsKey(qualifiedName);
+	public bool Contains(string name, string @namespace) => _dictionary.ContainsKey(DataUtility.Qualify(name, @namespace));
+
+	public void Clear() => _dictionary.Clear();
+	public bool Remove(string qualifiedName) => _dictionary.TryRemove(qualifiedName, out _);
+	public bool Remove(string name, string @namespace) => _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out _);
+	public bool TryGetValue(string qualifiedName, out IDataCommand result) => _dictionary.TryGetValue(qualifiedName, out result);
+	public bool TryGetValue(string name, string @namespace, out IDataCommand result) => _dictionary.TryGetValue(DataUtility.Qualify(name, @namespace), out result);
 	#endregion
 
 	#region 公共方法
-	public bool TryAdd(IDataCommand command)
-	{
-		if(command == null)
-			throw new ArgumentNullException(nameof(command));
-
-		if(this.Contains(command))
-			return false;
-
-		this.Add(command);
-		return true;
-	}
-
-	public bool Contains(string name, string @namespace = null) => base.Contains(GetKey(name, @namespace));
-	public bool Remove(string name, string @namespace = null) => base.Remove(GetKey(name, @namespace));
-	public bool TryGetValue(string name, string @namespace, out IDataCommand value) => base.TryGetValue(GetKey(name, @namespace), out value);
-
-	/// <summary>根据别名查找对应的数据命令。</summary>
-	/// <param name="alias">指定要查找的数据命令别名。</param>
-	/// <returns>返回找到的数据命令数组，如果为空则表示查找失败。</returns>
-	public IDataCommand[] Find(string alias)
-	{
-		if(string.IsNullOrEmpty(alias))
-			return null;
-
-		return _aliases.TryGetValue(alias, out var commands) ? commands : base.TryGetValue(alias, out var command) ? [command] : null;
-	}
-
 	/// <summary>定义一个匿名的数据命令并加入到当前命令集中。</summary>
 	/// <param name="driver">指定的数据驱动名。</param>
 	/// <param name="script">指定的数据命令脚本。</param>
@@ -100,90 +97,45 @@ public class DataCommandCollection() : KeyedCollection<string, IDataCommand>(Str
 
 		var key = $"#{Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(Encoding.UTF8.GetBytes($"{driver.ToUpperInvariant()}:{script}")))}";
 
-		if(this.TryGetValue(key, out var command))
+		return _dictionary.GetOrAdd(key, (key, argument) =>
+		{
+			var command = new DataCommand(null, key, argument.mutability).Script(argument.driver, argument.script);
+
+			if(argument.parameters != null)
+			{
+				foreach(var parameter in argument.parameters)
+					command.Parameters.Add(parameter);
+			}
+
 			return command;
-
-		command = new DataCommand(null, key, mutability).Script(driver, script);
-		if(parameters != null)
-		{
-			foreach(var parameter in parameters)
-				command.Parameters.Add(parameter);
-		}
-
-		base.Remove(key);
-		base.Add(command);
-
-		return command;
+		}, (driver, mutability, script, parameters));
 	}
 	#endregion
 
-	#region 重写方法
-	protected override string GetKeyForItem(IDataCommand command) => command.QualifiedName;
-
-	protected override void ClearItems()
+	#region 显式实现
+	bool ICollection<IDataCommand>.IsReadOnly => false;
+	bool ICollection<IDataCommand>.Contains(IDataCommand command) => command != null && _dictionary.ContainsKey(command.QualifiedName);
+	bool ICollection<IDataCommand>.Remove(IDataCommand command) => command != null && _dictionary.TryRemove(command.QualifiedName, out _);
+	void ICollection<IDataCommand>.CopyTo(IDataCommand[] array, int arrayIndex)
 	{
-		base.ClearItems();
-		_aliases.Clear();
-	}
+		ArgumentNullException.ThrowIfNull(array);
+		ArgumentOutOfRangeException.ThrowIfLessThan(arrayIndex, 0);
+		ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(arrayIndex, array.Length);
 
-	protected override void InsertItem(int index, IDataCommand command)
-	{
-		if(command == null)
-			return;
+		using var enumerator = _dictionary.GetEnumerator();
 
-		base.InsertItem(index, command);
-
-		if(!string.IsNullOrEmpty(command.Alias))
+		for(int i = arrayIndex; i < array.Length; i++)
 		{
-			if(!_aliases.TryAdd(command.Alias, [command]))
-			{
-				if(_aliases.TryGetValue(command.Alias, out var entities))
-					_aliases[command.Alias] = [.. entities, command];
-				else
-					_aliases[command.Alias] = [command];
-			}
-		}
-	}
-
-	protected override void RemoveItem(int index)
-	{
-		var item = this.Items[index];
-
-		base.RemoveItem(index);
-
-		if(item != null && !string.IsNullOrEmpty(item.Alias))
-			_aliases.Remove(item.Alias);
-	}
-
-	protected override void SetItem(int index, IDataCommand command)
-	{
-		if(command == null)
-			return;
-
-		if(index >= 0 && index < this.Items.Count)
-		{
-			var item = this.Items[index];
-
-			if(item != null && !string.IsNullOrEmpty(item.Alias))
-				_aliases.Remove(item.Alias);
-		}
-
-		base.SetItem(index, command);
-
-		if(!string.IsNullOrEmpty(command.Alias))
-		{
-			if(!_aliases.TryAdd(command.Alias, [command]))
-			{
-				if(_aliases.TryGetValue(command.Alias, out var entities))
-					_aliases[command.Alias] = [.. entities, command];
-				else
-					_aliases[command.Alias] = [command];
-			}
+			if(enumerator.MoveNext())
+				array[i] = enumerator.Current.Value;
+			else
+				break;
 		}
 	}
 	#endregion
 
-	#region 私有方法
-	private static string GetKey(string name, string @namespace) => string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
+	#region 枚举遍历
+	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<IDataCommand> GetEnumerator() => _dictionary.Values.GetEnumerator();
 	#endregion
 }

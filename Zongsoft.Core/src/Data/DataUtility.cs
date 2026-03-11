@@ -81,12 +81,24 @@ public static class DataUtility
 		_ => false,
 	};
 
-	internal static (string name, string @namespace) ParseQualifiedName(string qualifiedName)
+	/// <summary>组合限定名。</summary>
+	/// <param name="name">指定的名称。</param>
+	/// <param name="namespace">指定的命名空间。</param>
+	/// <returns>返回组合的限定名，如果 <paramref name="namespace"/> 参数为空或全空白字符则忽略它。</returns>
+	public static string Qualify(ReadOnlySpan<char> name, ReadOnlySpan<char> @namespace) =>
+		@namespace.IsEmpty || @namespace.IsWhiteSpace() ? name.Trim().ToString() : $"{@namespace.Trim()}.{name.Trim()}";
+
+	/// <summary>解构限定名。</summary>
+	/// <param name="qualifiedName">指定的限定名。</param>
+	/// <returns>返回解构后的元组（名称,命名空间）。</returns>
+	public static (string name, string @namespace) Qualify(ReadOnlySpan<char> qualifiedName)
 	{
-		ArgumentNullException.ThrowIfNullOrEmpty(qualifiedName);
+		if(qualifiedName.IsEmpty)
+			return default;
+
 		var index = qualifiedName.LastIndexOf('.');
 		return index > 0 ?
-			(qualifiedName[(index + 1)..], qualifiedName[..index]) :
-			(qualifiedName, null);
+			(qualifiedName[(index + 1)..].Trim().ToString(), qualifiedName[..index].Trim().ToString()) :
+			(qualifiedName.Trim().ToString(), null);
 	}
 }

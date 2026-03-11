@@ -51,7 +51,7 @@ public class DataCommandBase<TScriptor> : IDataCommand, IEquatable<IDataCommand>
 		this.Name = name;
 		this.Alias = alias;
 		this.Mutability = mutability;
-		this.QualifiedName = string.IsNullOrEmpty(@namespace) ? name.ToLowerInvariant() : $"{@namespace.ToLowerInvariant()}.{name.ToLowerInvariant()}";
+		this.QualifiedName = DataUtility.Qualify(this.Name, this.Namespace);
 		this.Parameters = new();
 	}
 	#endregion
@@ -92,14 +92,8 @@ public class DataCommandBase<TScriptor> : IDataCommand, IEquatable<IDataCommand>
 	public bool Equals(DataCommandBase<TScriptor> other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
 	public override bool Equals(object obj) => obj is DataCommandBase<TScriptor> other && this.Equals(other);
 	public override int GetHashCode() => HashCode.Combine(this.QualifiedName);
-	public override string ToString()
-	{
-		var qualifiedName = $"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)})";
-
-		if(this.Mutability != DataCommandMutability.None)
-			qualifiedName += $"!{this.Mutability}";
-
-		return qualifiedName;
-	}
+	public override string ToString() => this.Mutability == DataCommandMutability.None ?
+		$"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)})":
+		$"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)}):{this.Mutability}";
 	#endregion
 }

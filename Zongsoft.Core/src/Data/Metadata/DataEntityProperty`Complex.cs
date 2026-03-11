@@ -75,7 +75,7 @@ public class DataEntityComplexProperty : DataEntityPropertyBase, IDataEntityComp
 		get
 		{
 			if(_foreign == null)
-				this.UpdateForeign();
+				this.EnsureForeign();
 
 			return _foreign;
 		}
@@ -86,7 +86,7 @@ public class DataEntityComplexProperty : DataEntityPropertyBase, IDataEntityComp
 		get
 		{
 			if(_foreign == null)
-				this.UpdateForeign();
+				this.EnsureForeign();
 
 			return _foreignProperty;
 		}
@@ -125,18 +125,18 @@ public class DataEntityComplexProperty : DataEntityPropertyBase, IDataEntityComp
 	#endregion
 
 	#region 私有方法
-	private void UpdateForeign()
+	private void EnsureForeign()
 	{
 		var port = this.Port;
 		var index = port.IndexOf(':');
 
 		if(index < 0)
 		{
-			_foreign = this.Entity.GetEntity(port);
+			_foreign = DataEntityUtility.Locate(this.Entity, port);
 		}
 		else
 		{
-			_foreign = this.Entity.GetEntity(port[..index]);
+			_foreign = DataEntityUtility.Locate(this.Entity, port[..index]);
 
 			if(_foreign != null)
 				_foreignProperty = _foreign.Properties[port[(index + 1)..]];

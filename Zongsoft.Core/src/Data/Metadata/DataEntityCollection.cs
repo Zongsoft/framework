@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,117 +28,69 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Metadata;
 
-public class DataEntityCollection() : KeyedCollection<string, IDataEntity>(StringComparer.OrdinalIgnoreCase)
+public class DataEntityCollection : ICollection<IDataEntity>
 {
 	#region 成员字段
-	private readonly Dictionary<string, IDataEntity[]> _aliases = new();
+	private readonly ConcurrentDictionary<string, IDataEntity> _dictionary = new(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
 	#region 公共属性
-	public IDataEntity this[string name, string @namespace = null] => base[GetKey(name, @namespace)];
+	public int Count => _dictionary.Count;
+	public IDataEntity this[string qualifiedName] => _dictionary[qualifiedName];
+	public IDataEntity this[string name, string @namespace] => _dictionary[DataUtility.Qualify(name, @namespace)];
 	#endregion
 
 	#region 公共方法
-	public bool TryAdd(IDataEntity entity)
+	public void Add(IDataEntity entity)
 	{
-		if(entity == null)
-			throw new ArgumentNullException(nameof(entity));
-
-		if(this.Contains(entity))
-			return false;
-
-		this.Add(entity);
-		return true;
+		ArgumentNullException.ThrowIfNull(entity);
+		if(!_dictionary.TryAdd(entity.QualifiedName, entity))
+			throw new InvalidOperationException($"The specified '{entity.QualifiedName}' data entity already exists in the collection.");
 	}
 
-	public bool Contains(string name, string @namespace = null) => base.Contains(GetKey(name, @namespace));
-	public bool Remove(string name, string @namespace = null) => base.Remove(GetKey(name, @namespace));
-	public bool TryGetValue(string name, string @namespace, out IDataEntity value) => base.TryGetValue(GetKey(name, @namespace), out value);
+	public bool TryAdd(IDataEntity entity) => entity != null && _dictionary.TryAdd(entity.QualifiedName, entity);
+	public IDataEntity GetOrAdd(IDataEntity entity) => entity == null ? null : _dictionary.GetOrAdd(entity.QualifiedName, entity);
 
-	/// <summary>根据别名查找对应的数据实体。</summary>
-	/// <param name="alias">指定要查找的数据实体别名。</param>
-	/// <returns>返回找到的数据实体数组，如果为空则表示查找失败。</returns>
-	public IDataEntity[] Find(string alias)
-	{
-		if(string.IsNullOrEmpty(alias))
-			return null;
+	public bool Contains(string qualifiedName) => qualifiedName != null && _dictionary.ContainsKey(qualifiedName);
+	public bool Contains(string name, string @namespace) => _dictionary.ContainsKey(DataUtility.Qualify(name, @namespace));
 
-		return _aliases.TryGetValue(alias, out var entities) ? entities : base.TryGetValue(alias, out var entity) ? [entity] : null;
-	}
+	public void Clear() => _dictionary.Clear();
+	public bool Remove(string qualifiedName) => _dictionary.TryRemove(qualifiedName, out _);
+	public bool Remove(string name, string @namespace) => _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out _);
+	public bool TryGetValue(string qualifiedName, out IDataEntity result) => _dictionary.TryGetValue(qualifiedName, out result);
+	public bool TryGetValue(string name, string @namespace, out IDataEntity result) => _dictionary.TryGetValue(DataUtility.Qualify(name, @namespace), out result);
 	#endregion
 
-	#region 重写方法
-	protected override string GetKeyForItem(IDataEntity entity) => entity.QualifiedName;
-
-	protected override void ClearItems()
+	#region 显式实现
+	bool ICollection<IDataEntity>.IsReadOnly => false;
+	bool ICollection<IDataEntity>.Contains(IDataEntity entity) => entity != null && _dictionary.ContainsKey(entity.QualifiedName);
+	bool ICollection<IDataEntity>.Remove(IDataEntity entity) => entity != null && _dictionary.TryRemove(entity.QualifiedName, out _);
+	void ICollection<IDataEntity>.CopyTo(IDataEntity[] array, int arrayIndex)
 	{
-		base.ClearItems();
-		_aliases.Clear();
-	}
+		ArgumentNullException.ThrowIfNull(array);
+		ArgumentOutOfRangeException.ThrowIfLessThan(arrayIndex, 0);
+		ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(arrayIndex, array.Length);
 
-	protected override void InsertItem(int index, IDataEntity entity)
-	{
-		if(entity == null)
-			return;
+		using var enumerator = _dictionary.GetEnumerator();
 
-		base.InsertItem(index, entity);
-
-		if(!string.IsNullOrEmpty(entity.Alias))
+		for(int i = arrayIndex; i < array.Length; i++)
 		{
-			if(!_aliases.TryAdd(entity.Alias, [entity]))
-			{
-				if(_aliases.TryGetValue(entity.Alias, out var entities))
-					_aliases[entity.Alias] = [.. entities, entity];
-				else
-					_aliases[entity.Alias] = [entity];
-			}
-		}
-	}
-
-	protected override void RemoveItem(int index)
-	{
-		var item = this.Items[index];
-
-		base.RemoveItem(index);
-
-		if(item != null && !string.IsNullOrEmpty(item.Alias))
-			_aliases.Remove(item.Alias);
-	}
-
-	protected override void SetItem(int index, IDataEntity entity)
-	{
-		if(entity == null)
-			return;
-
-		if(index >= 0 && index < this.Items.Count)
-		{
-			var item = this.Items[index];
-
-			if(item != null && !string.IsNullOrEmpty(item.Alias))
-				_aliases.Remove(item.Alias);
-		}
-
-		base.SetItem(index, entity);
-
-		if(!string.IsNullOrEmpty(entity.Alias))
-		{
-			if(!_aliases.TryAdd(entity.Alias, [entity]))
-			{
-				if(_aliases.TryGetValue(entity.Alias, out var entities))
-					_aliases[entity.Alias] = [.. entities, entity];
-				else
-					_aliases[entity.Alias] = [entity];
-			}
+			if(enumerator.MoveNext())
+				array[i] = enumerator.Current.Value;
+			else
+				break;
 		}
 	}
 	#endregion
 
-	#region 私有方法
-	private static string GetKey(string name, string @namespace) => string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}.{name}";
+	#region 枚举遍历
+	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<IDataEntity> GetEnumerator() => _dictionary.Values.GetEnumerator();
 	#endregion
 }

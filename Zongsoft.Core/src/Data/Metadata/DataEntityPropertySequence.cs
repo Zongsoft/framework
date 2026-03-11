@@ -191,7 +191,7 @@ public class DataEntityPropertySequence : IDataEntityPropertySequence
 				{
 					if(_destination == null)
 					{
-						var entity = _host.Entity.GetEntity(_destinationEntity);
+						var entity = DataEntityUtility.Locate(_host.Entity, _destinationEntity);
 
 						if(entity != null && entity.Properties.TryGetValue(_destinationProperty, out var property) && property.IsSimplex)
 						{

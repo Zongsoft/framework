@@ -94,7 +94,7 @@ public static class DataEntityExtension
 		if(entity == null || string.IsNullOrEmpty(entity.BaseName))
 			return null;
 
-		return entity.GetEntity(entity.BaseName) ?? throw new DataException($"The '{entity.BaseName}' base of '{entity.Name}' entity does not exist.");
+		return DataEntityUtility.Locate(entity, entity.BaseName) ?? throw new DataException($"The '{entity.BaseName}' base of '{entity.Name}' entity does not exist.");
 	}
 
 	/// <summary>获取指定实体元素的继承链（所有的继承元素），从最顶级的根元素开始一直到当前元素本身。</summary>

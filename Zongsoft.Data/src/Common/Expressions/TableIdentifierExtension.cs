@@ -104,7 +104,7 @@ public static class TableIdentifierExtension
 	{
 		var index = property.Port.IndexOf(':');
 		var entityName = index < 0 ? property.Port : property.Port.Substring(0, index);
-		var entity = property.Entity.GetEntity(entityName) ?? throw new DataException($"The '{entityName}' target entity associated with the Role in the '{property.Entity.Name}:{property.Name}' complex property does not exist.");
+		var entity = DataEntityUtility.Locate(property.Entity, entityName) ?? throw new DataException($"The '{entityName}' target entity associated with the Role in the '{property.Entity.Name}:{property.Name}' complex property does not exist.");
 
 		if(index < 0)
 			return (entity, entity.Properties);

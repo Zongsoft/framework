@@ -39,7 +39,7 @@ public static class DataCommandExtension
 	public static DataCommand Add(this DataCommandCollection commands, string qualifiedName, DataCommandMutability mutability, DataCommandType type = DataCommandType.Text)
 	{
 		ArgumentNullException.ThrowIfNull(commands);
-		(var name, var @namespace) = DataUtility.ParseQualifiedName(qualifiedName);
+		(var name, var @namespace) = DataUtility.Qualify(qualifiedName);
 		var command = new DataCommand(@namespace, name, mutability)
 		{
 			Type = type,
@@ -52,7 +52,7 @@ public static class DataCommandExtension
 	public static DataCommand Add(this DataCommandCollection commands, string qualifiedName, string alias, DataCommandMutability mutability, DataCommandType type = DataCommandType.Procedure)
 	{
 		ArgumentNullException.ThrowIfNull(commands);
-		(var name, var @namespace) = DataUtility.ParseQualifiedName(qualifiedName);
+		(var name, var @namespace) = DataUtility.Qualify(qualifiedName);
 		var command = new DataCommand(@namespace, name, mutability, alias)
 		{
 			Type = type,
