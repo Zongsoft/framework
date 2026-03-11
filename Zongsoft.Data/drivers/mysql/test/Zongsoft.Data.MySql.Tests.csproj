@@ -50,6 +50,7 @@
 		<Compile Include="..\..\..\test\Models\IdentityKind.cs" Link="Models\IdentityKind.cs" />
 		<Compile Include="..\..\..\test\Models\JobStatus.cs" Link="Models\JobStatus.cs" />
 		<Compile Include="..\..\..\test\Models\Log.cs" Link="Models\Log.cs" />
+		<Compile Include="..\..\..\test\Models\LogModel.cs" Link="Models\LogModel.cs" />
 		<Compile Include="..\..\..\test\Models\LogSeverity.cs" Link="Models\LogSeverity.cs" />
 		<Compile Include="..\..\..\test\Models\MaritalStatus.cs" Link="Models\MaritalStatus.cs" />
 		<Compile Include="..\..\..\test\Models\MemberModel.cs" Link="Models\MemberModel.cs" />

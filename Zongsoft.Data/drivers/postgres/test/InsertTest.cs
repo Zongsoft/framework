@@ -125,6 +125,94 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task InsertLogModelAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		//获取数据模型描述器，然后将其转换成数据实体
+		var entity = Model.GetDescriptor<LogModel>().ToEntity();
+		//尝试将数据实体加入到映射集中
+		Mapping.Entities.TryAdd(entity);
+
+		var accessor = _database.Accessor;
+		var log = Model.Build<LogModel>(log =>
+		{
+			log.UserId = 1;
+			log.Target = "MyTarget";
+			log.Action = "MyAction";
+			log.TenantId = 1;
+			log.BranchId = 0;
+		});
+
+		var count = await accessor.InsertAsync(log);
+		Assert.Equal(1, count);
+		Assert.True(log.LogId > 0);
+
+		var model = accessor.Select<LogModel>(
+			Condition.Equal(nameof(LogModel.LogId), log.LogId),
+			$"*,{nameof(LogModel.User)}{{*}}",
+			Paging.Limit(1)).FirstOrDefault();
+
+		Assert.NotNull(model);
+		Assert.Equal(log.LogId, model.LogId);
+		Assert.Equal(log.UserId, model.UserId);
+		Assert.Equal(log.Target, model.Target);
+		Assert.Equal(log.Action, model.Action);
+		Assert.True(model.Timestamp >= DateTime.Today);
+		Assert.NotNull(model.User);
+		Assert.NotNull(model.User.Name);
+		Assert.NotEmpty(model.User.Name);
+		Assert.Equal(model.UserId, model.User.UserId);
+
+		await accessor.ExecuteAsync("TruncateLog");
+	}
+
+	[Fact]
+	public async Task InsertLogModelsAsync()
+	{
+		const int COUNT = 10;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		//获取数据模型描述器，然后将其转换成数据实体
+		var entity = Model.GetDescriptor<LogModel>().ToEntity();
+		//尝试将数据实体加入到映射集中
+		Mapping.Entities.TryAdd(entity);
+
+		var accessor = _database.Accessor;
+		var logs = Model.Build<LogModel>(COUNT, (log, index) =>
+		{
+			log.UserId = 1;
+			log.Target = $"MyTarget#{index}";
+			log.Action = $"MyAction#{index}";
+			log.TenantId = 1;
+			log.BranchId = 0;
+		}).ToArray();
+
+		var count = await accessor.InsertManyAsync(logs);
+		Assert.Equal(COUNT, count);
+
+		for(int i = 0; i < COUNT; i++)
+			Assert.True(logs[i].LogId > 0);
+
+		var models = accessor.Select<LogModel>(
+			Condition.In(nameof(LogModel.LogId), logs.Select(log => log.LogId)));
+
+		foreach(var model in models)
+		{
+			Assert.NotNull(model);
+			Assert.True(model.LogId > 0);
+			Assert.True(model.Timestamp >= DateTime.Today);
+			Assert.StartsWith("MyTarget", model.Target);
+			Assert.StartsWith("MyAction", model.Action);
+		}
+
+		await accessor.ExecuteAsync("TruncateLog");
+	}
+
+	[Fact]
 	public async Task InsertDepartmentsAsync()
 	{
 		const int COUNT = 10;
