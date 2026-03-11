@@ -34,7 +34,7 @@ namespace Zongsoft.Data.Metadata;
 /// <summary>
 /// 表示数据实体属性的元数据抽象基类。
 /// </summary>
-public abstract class DataEntityPropertyBase : IDataEntityProperty, IEquatable<IDataEntityProperty>
+public abstract class DataEntityPropertyBase : IDataEntityProperty
 {
 	#region 构造函数
 	protected DataEntityPropertyBase(string name, bool immutable) : this(null, name, immutable) { }
@@ -77,12 +77,6 @@ public abstract class DataEntityPropertyBase : IDataEntityProperty, IEquatable<I
 	#endregion
 
 	#region 重写方法
-	public virtual bool Equals(IDataEntityProperty other) =>
-		object.Equals(this.Entity, other.Entity) &&
-		string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
-
-	public override bool Equals(object obj) => obj is IDataEntityProperty other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(this.Entity, this.Name.ToUpperInvariant());
-	public override string ToString() => this.Entity == null ? $"{this.Name}" : $"{this.Name}@{this.Entity.Name}";
+	public override string ToString() => this.Entity == null ? $"{this.Name}" : $"{this.Entity.Name}.{this.Name}";
 	#endregion
 }

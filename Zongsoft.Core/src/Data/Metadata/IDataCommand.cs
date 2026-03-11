@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,14 +28,13 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata;
 
 /// <summary>
 /// 表示数据命令的元数据类。
 /// </summary>
-public interface IDataCommand : IEquatable<IDataCommand>
+public interface IDataCommand
 {
 	/// <summary>获取所属命名空间。</summary>
 	string Namespace { get; }

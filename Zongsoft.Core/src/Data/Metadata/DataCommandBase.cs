@@ -34,7 +34,7 @@ namespace Zongsoft.Data.Metadata;
 /// <summary>
 /// 表示数据命令的元数据类。
 /// </summary>
-public class DataCommandBase<TScriptor> : IDataCommand, IEquatable<IDataCommand>, IEquatable<DataCommandBase<TScriptor>> where TScriptor : IDataCommandScriptor
+public class DataCommandBase<TScriptor> : IDataCommand where TScriptor : IDataCommandScriptor
 {
 	#region 成员字段
 	private string _alias;
@@ -88,10 +88,6 @@ public class DataCommandBase<TScriptor> : IDataCommand, IEquatable<IDataCommand>
 	#endregion
 
 	#region 重写方法
-	public bool Equals(IDataCommand other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
-	public bool Equals(DataCommandBase<TScriptor> other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
-	public override bool Equals(object obj) => obj is DataCommandBase<TScriptor> other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(this.QualifiedName);
 	public override string ToString() => this.Mutability == DataCommandMutability.None ?
 		$"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)})":
 		$"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)}):{this.Mutability}";

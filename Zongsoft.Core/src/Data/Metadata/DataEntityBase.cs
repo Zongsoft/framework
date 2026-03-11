@@ -35,7 +35,7 @@ namespace Zongsoft.Data.Metadata;
 /// <summary>
 /// 表示数据实体的元数据类。
 /// </summary>
-public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<DataEntityBase>
+public class DataEntityBase : IDataEntity
 {
 	#region 成员字段
 	private string _alias;
@@ -123,10 +123,6 @@ public class DataEntityBase : IDataEntity, IEquatable<IDataEntity>, IEquatable<D
 	#endregion
 
 	#region 重写方法
-	public bool Equals(IDataEntity other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
-	public bool Equals(DataEntityBase other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName);
-	public override bool Equals(object obj) => obj is DataEntityBase other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(this.QualifiedName);
 	public override string ToString() => this.Immutable ? $"{this.QualifiedName}(immutability)" : this.QualifiedName;
 	#endregion
 }

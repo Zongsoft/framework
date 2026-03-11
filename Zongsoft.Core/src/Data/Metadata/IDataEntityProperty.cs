@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -34,7 +34,7 @@ namespace Zongsoft.Data.Metadata;
 /// <summary>
 /// 表示数据实体属性的元数据接口。
 /// </summary>
-public interface IDataEntityProperty : IEquatable<IDataEntityProperty>
+public interface IDataEntityProperty
 {
 	#region 属性定义
 	/// <summary>获取所属的数据实体。</summary>

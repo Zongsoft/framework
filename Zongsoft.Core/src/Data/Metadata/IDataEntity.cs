@@ -34,7 +34,7 @@ namespace Zongsoft.Data.Metadata;
 /// <summary>
 /// 表示数据实体的元数据接口。
 /// </summary>
-public interface IDataEntity : IEquatable<IDataEntity>
+public interface IDataEntity
 {
 	#region 属性声明
 	/// <summary>获取所属命名空间。</summary>
