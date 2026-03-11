@@ -173,26 +173,33 @@ public class ExceptionFilter : IExceptionFilter
 		if(actor == null || string.IsNullOrEmpty(actor.Name))
 			return default;
 
-		var entities = Mapping.Entities.Find(actor.Name);
+		var entity = Find(actor.Name);
+		var fields = new List<ConstraintDescriptor.Field>(actor.Fields.Length);
 
-		if(entities == null || entities.Length == 0)
-			return default;
-
-		for(int i = 0; i < entities.Length; i++)
+		for(int i = 0; i < actor.Fields.Length; i++)
 		{
-			var fields = new List<ConstraintDescriptor.Field>(actor.Fields.Length);
-
-			for(int j = 0; j < actor.Fields.Length; j++)
-			{
-				if(entities[i].Properties.TryGetValue(actor.Fields[j], out var property))
-					fields.Add(new ConstraintDescriptor.Field(property.Name, property.GetLabel()));
-			}
-
-			if(fields.Count == actor.Fields.Length)
-				return new ConstraintDescriptor(entities[i].Name, entities[i].GetTitle(), fields);
+			if(entity.Properties.TryGetValue(actor.Fields[i], out var property))
+				fields.Add(new ConstraintDescriptor.Field(property.Name, property.GetLabel()));
 		}
 
+		if(fields.Count == actor.Fields.Length)
+			return new ConstraintDescriptor(entity.Name, entity.GetTitle(), fields);
+
 		return default;
+
+		static IDataEntity Find(string name)
+		{
+			if(Mapping.Entities.TryGetValue(name, out var found))
+				return found;
+
+			foreach(var entity in Mapping.Entities)
+			{
+				if(string.Equals(name, entity.Alias, StringComparison.OrdinalIgnoreCase))
+					return entity;
+			}
+
+			return null;
+		}
 	}
 
 	private readonly struct ConstraintDescriptor
