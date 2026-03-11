@@ -37,12 +37,13 @@ public class ModelPropertyAttribute : Attribute
 {
 	#region 构造函数
 	public ModelPropertyAttribute() { }
-	public ModelPropertyAttribute(DbType type, bool nullable = false, object defaultValue = null) : this(null, type, nullable, defaultValue) { }
-	public ModelPropertyAttribute(DbType type, int length, bool nullable = false, object defaultValue = null) : this(null, type, length, nullable, defaultValue) { }
-	public ModelPropertyAttribute(DbType type, byte precision, byte scale, bool nullable = false, object defaultValue = null) : this(null, type, precision, scale, nullable, defaultValue) { }
+	public ModelPropertyAttribute(DbType type, bool nullable, object defaultValue = null) : this(null, type, nullable, defaultValue) { }
+	public ModelPropertyAttribute(DbType type, int length, bool nullable, object defaultValue = null) : this(null, type, length, nullable, defaultValue) { }
+	public ModelPropertyAttribute(DbType type, byte precision, byte scale, bool nullable, object defaultValue = null) : this(null, type, precision, scale, nullable, defaultValue) { }
 
-	public ModelPropertyAttribute(string alias, DbType type = DbType.Object, bool nullable = false, object defaultValue = null) : this(alias, type, 0, nullable, defaultValue) { }
-	public ModelPropertyAttribute(string alias, DbType type, int length, bool nullable = false, object defaultValue = null)
+	public ModelPropertyAttribute(string alias, object defaultValue = null) : this(alias, DbType.Object, 0, true, defaultValue) { }
+	public ModelPropertyAttribute(string alias, DbType type, bool nullable, object defaultValue = null) : this(alias, type, 0, nullable, defaultValue) { }
+	public ModelPropertyAttribute(string alias, DbType type, int length, bool nullable, object defaultValue = null)
 	{
 		this.Alias = alias;
 		this.Type = type == DbType.Object ? null : type;
@@ -50,7 +51,7 @@ public class ModelPropertyAttribute : Attribute
 		this.Nullable = nullable;
 		this.DefaultValue = defaultValue;
 	}
-	public ModelPropertyAttribute(string alias, DbType type, byte precision, byte scale, bool nullable = false, object defaultValue = null)
+	public ModelPropertyAttribute(string alias, DbType type, byte precision, byte scale, bool nullable, object defaultValue = null)
 	{
 		this.Alias = alias;
 		this.Type = type == DbType.Object ? null : type;
@@ -92,7 +93,7 @@ public class ModelPropertyAttribute : Attribute
 	public byte Scale { get; set; }
 
 	/// <summary>获取或设置属性是否允许为空。</summary>
-	public bool Nullable { get; set; }
+	public bool? Nullable { get; set; }
 
 	/// <summary>获取或设置属性是否可以参与排序。</summary>
 	public bool Sortable { get; set; }

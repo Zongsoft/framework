@@ -173,50 +173,38 @@ partial class ModelPropertyDescriptor
 				this.Nullable = type.IsInterface || type.IsClass || Common.TypeExtension.IsNullable(type);
 			}
 
-			if(this.DefaultValue == null)
-			{
-				var attribute = member.GetCustomAttribute<DefaultValueAttribute>(true);
-
-				if(attribute != null)
-					this.DefaultValue = Common.Convert.ConvertValue(attribute.Value, this.Type);
-			}
-
-			Populate(this, member);
-		}
-		#endregion
-
-		#region 私有方法
-		private static void Populate(SimplexPropertyDescriptor simplex, MemberInfo member)
-		{
 			var attribute = member.GetCustomAttribute<ModelPropertyAttribute>(true);
-			if(attribute == null)
-				return;
 
-			simplex.Alias = attribute.Alias;
-			simplex.Length = attribute.Length;
-			simplex.Precision = attribute.Precision;
-			simplex.Scale = attribute.Scale;
-			simplex.Nullable = attribute.Nullable;
-			simplex.Sortable = attribute.Sortable;
-
-			if(!string.IsNullOrWhiteSpace(attribute.Sequence))
-				simplex.Sequence = DataPropertySequence.Parse(attribute.Sequence);
-
-			if(attribute.Type != null)
-				simplex.DataType = attribute.Type;
-
-			if(simplex.IsPrimaryKey = attribute.IsPrimaryKey)
+			if(attribute != null)
 			{
-				simplex.Sortable = true;
-				simplex.Nullable = false;
-			}
+				this.Alias = attribute.Alias;
+				this.Length = attribute.Length;
+				this.Precision = attribute.Precision;
+				this.Scale = attribute.Scale;
+				this.Sortable = attribute.Sortable;
 
-			if(attribute.DefaultValue != null)
-			{
-				if(attribute.DefaultValue is string text && DataPropertyFunction.TryParse(text, out var function))
-					simplex.DefaultValue = function;
-				else
-					simplex.DefaultValue = Common.Convert.ConvertValue(attribute.DefaultValue, simplex.Type);
+				if(attribute.Nullable.HasValue)
+					this.Nullable = attribute.Nullable.Value;
+
+				if(!string.IsNullOrWhiteSpace(attribute.Sequence))
+					this.Sequence = DataPropertySequence.Parse(attribute.Sequence);
+
+				if(attribute.Type != null)
+					this.DataType = attribute.Type;
+
+				if(this.IsPrimaryKey = attribute.IsPrimaryKey)
+				{
+					this.Sortable = true;
+					this.Nullable = false;
+				}
+
+				if(attribute.DefaultValue != null)
+				{
+					if(attribute.DefaultValue is string text && DataPropertyFunction.TryParse(text, out var function))
+						this.DefaultValue = function;
+					else
+						this.DefaultValue = Common.Convert.ConvertValue(attribute.DefaultValue, this.Type);
+				}
 			}
 		}
 		#endregion
