@@ -46,7 +46,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 
 		if(_entity is DataEntityBase entity && item is DataEntityPropertyBase property)
 			property.Entity = entity;
-		else if(ReferenceEquals(_entity, item.Entity))
+		else if(!ReferenceEquals(_entity, item.Entity))
 			throw new InvalidOperationException($"The entity property cannot be added to the properties because the entity to which this property belongs cannot be set.");
 
 		base.InsertItem(index, item);
@@ -57,7 +57,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 
 		if(_entity is DataEntityBase entity && item is DataEntityPropertyBase property)
 			property.Entity = entity;
-		else if(ReferenceEquals(_entity, item.Entity))
+		else if(!ReferenceEquals(_entity, item.Entity))
 			throw new InvalidOperationException($"The entity property cannot be updated to the properties because the entity to which this property belongs cannot be set.");
 
 		base.SetItem(index, item);
