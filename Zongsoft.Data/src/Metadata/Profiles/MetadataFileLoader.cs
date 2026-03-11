@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -41,7 +41,7 @@ public class MetadataFileLoader : Mapping.Loader, IEquatable<MetadataFileLoader>
 	#endregion
 
 	#region 构造函数
-	public MetadataFileLoader(string path = null) => this.Path = path;
+	public MetadataFileLoader(string path = null) : base(int.MaxValue) => this.Path = path;
 	#endregion
 
 	#region 公共属性

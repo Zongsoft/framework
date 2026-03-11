@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -103,7 +104,7 @@ public static class Mapping
 			//初始化加载器集合
 			this.Initialize();
 
-			foreach(var loader in this.Items)
+			foreach(var loader in this.Items.OrderBy(loader => loader.Priority))
 			{
 				if(loader.IsUnload)
 				{
@@ -182,7 +183,7 @@ public static class Mapping
 		#endregion
 	}
 
-	public abstract class Loader
+	public abstract class Loader(int priority = 0)
 	{
 		#region 常量定义
 		private const int UNLOAD = 0;
@@ -195,6 +196,7 @@ public static class Mapping
 		#endregion
 
 		#region 公共属性
+		public int Priority { get; } = priority;
 		public bool IsUnload => Interlocked.Read(ref _status) == UNLOAD;
 		public bool IsLoaded => Interlocked.Read(ref _status) == LOADED;
 		#endregion
@@ -262,7 +264,7 @@ public static class Mapping
 
 			foreach(var property in entity.Properties)
 			{
-				existed.Properties.Add(property);
+				existed.Properties.Replace(property);
 			}
 
 			if(string.IsNullOrEmpty(existed.Alias))

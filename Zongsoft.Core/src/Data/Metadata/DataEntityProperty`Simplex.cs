@@ -65,8 +65,8 @@ public class DataEntitySimplexProperty : DataEntityPropertyBase, IDataEntitySimp
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取数据实体属性的字段类型。</summary>
-	public DataType Type { get; }
+	/// <summary>获取或设置数据实体属性的字段类型。</summary>
+	public DataType Type { get; set; }
 
 	/// <summary>获取或设置文本或数组属性的最大长度，单位：字节。</summary>
 	public int Length

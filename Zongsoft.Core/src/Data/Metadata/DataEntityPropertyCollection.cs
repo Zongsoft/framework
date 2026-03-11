@@ -61,6 +61,68 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 	#endregion
 
 	#region 公共方法
+	public void Replace(IDataEntityProperty property)
+	{
+		if(property == null)
+			return;
+
+		if(property.IsSimplex(out var simplex))
+			this.Replace(simplex);
+		else if(property.IsComplex(out var complex))
+			this.Replace(complex);
+	}
+
+	public void Replace(IDataEntitySimplexProperty property)
+	{
+		if(property == null || this.TryAdd(property))
+			return;
+
+		if(this[property.Name].IsSimplex)
+		{
+			var simplex = (IDataEntitySimplexProperty)this[property.Name];
+
+			simplex.Type = property.Type;
+			simplex.Hint = property.Hint;
+			simplex.Alias = property.Alias;
+			simplex.Length = property.Length;
+			simplex.Precision = property.Precision;
+			simplex.Scale = property.Scale;
+			simplex.Nullable = property.Nullable;
+			simplex.Sortable = property.Sortable;
+			simplex.Immutable = property.Immutable;
+			simplex.Sequence = property.Sequence;
+			simplex.DefaultValue = property.DefaultValue;
+		}
+	}
+
+	public void Replace(IDataEntityComplexProperty property)
+	{
+		if(property == null || this.TryAdd(property))
+			return;
+
+		if(this[property.Name].IsComplex)
+		{
+			var complex = (IDataEntityComplexProperty)this[property.Name];
+
+			complex.Hint = property.Hint;
+			complex.Immutable = property.Immutable;
+			complex.Behaviors = property.Behaviors;
+			complex.Multiplicity = property.Multiplicity;
+		}
+	}
+
+	public bool TryAdd(IDataEntityProperty property)
+	{
+		if(property == null)
+			return false;
+
+		if(this.Contains(property))
+			return false;
+
+		this.Add(property);
+		return true;
+	}
+
 	public DataEntitySimplexProperty Simplex(string name, DataType type, bool nullable, bool immutable = false)
 	{
 		var property = new DataEntitySimplexProperty(name, type, nullable, immutable);

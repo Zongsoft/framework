@@ -36,11 +36,11 @@ namespace Zongsoft.Data.Metadata;
 /// </summary>
 public interface IDataEntitySimplexProperty : IDataEntityProperty
 {
-	/// <summary>获取数据实体属性的别名（字段名）。</summary>
-	string Alias { get; }
+	/// <summary>获取或设置数据实体属性的别名（字段名）。</summary>
+	string Alias { get; set; }
 
-	/// <summary>获取数据实体属性的数据类型。</summary>
-	DataType Type { get; }
+	/// <summary>获取或设置数据实体属性的数据类型。</summary>
+	DataType Type { get; set; }
 
 	/// <summary>获取或设置一个值，指示当前属性是否为主键。</summary>
 	bool IsPrimaryKey { get; set; }
