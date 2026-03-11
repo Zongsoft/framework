@@ -59,11 +59,13 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 	public IDataCommand GetOrAdd(IDataCommand command) => command == null ? null : _dictionary.GetOrAdd(command.QualifiedName, command);
 
 	public bool Contains(string qualifiedName) => qualifiedName != null && _dictionary.ContainsKey(qualifiedName);
-	public bool Contains(string name, string @namespace) => _dictionary.ContainsKey(DataUtility.Qualify(name, @namespace));
+	public bool Contains(string name, string @namespace) => name != null && _dictionary.ContainsKey(DataUtility.Qualify(name, @namespace));
 
 	public void Clear() => _dictionary.Clear();
-	public bool Remove(string qualifiedName) => _dictionary.TryRemove(qualifiedName, out _);
-	public bool Remove(string name, string @namespace) => _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out _);
+	public bool Remove(string qualifiedName) => qualifiedName != null && _dictionary.TryRemove(qualifiedName, out _);
+	public bool Remove(string name, string @namespace) => name != null && _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out _);
+	public bool Remove(string qualifiedName, out IDataCommand command) => _dictionary.TryRemove(qualifiedName, out command);
+	public bool Remove(string name, string @namespace, out IDataCommand command) => _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out command);
 	public bool TryGetValue(string qualifiedName, out IDataCommand command) => _dictionary.TryGetValue(qualifiedName, out command);
 	public bool TryGetValue(string name, string @namespace, out IDataCommand command) => _dictionary.TryGetValue(DataUtility.Qualify(name, @namespace), out command);
 	#endregion
