@@ -57,11 +57,14 @@ public class SelectTest(DatabaseFixture database)
 			Condition.GreaterThanEqual(nameof(RoleModel.RoleId), 100),
 			page);
 
+		count = 0;
 		await foreach(var role in roles)
 		{
+			count++;
 			Assert.NotNull(role);
 		}
 
+		Assert.Equal(page.Size, count);
 		Assert.Equal(COUNT, page.Total);
 		Assert.Equal(1, page.Index);
 		Assert.Equal(5, page.Count);
