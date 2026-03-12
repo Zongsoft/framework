@@ -134,8 +134,8 @@ partial class OpcServer
 		#endregion
 
 		#region 内部方法
-		internal bool Remove(string id) => id != null && _channels.Remove(id, out _);
 		internal void Clear() => _channels.Clear();
+		internal bool Remove(string id) => id != null && _channels.Remove(id, out _);
 		internal bool Add(ISession session) => _channels.TryAdd(session.Id.ToString(), new Channel(session));
 		internal bool Add(Channel channel) => channel != null && _channels.TryAdd(channel.Identifier, channel);
 		#endregion
