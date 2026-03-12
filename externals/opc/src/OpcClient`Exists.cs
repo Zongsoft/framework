@@ -28,25 +28,21 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Opc.Ua;
 
 namespace Zongsoft.Externals.Opc;
 
 partial class OpcClient
 {
-	public class HeartbeatEventArgs : EventArgs
+	public ValueTask<bool> ExistsAsync(string identifier, CancellationToken cancellation = default)
 	{
-		public HeartbeatEventArgs(string status = null)
-		{
-			this.Status = status;
-		}
+		if(string.IsNullOrEmpty(identifier))
+			throw new ArgumentNullException(nameof(identifier));
 
-		public HeartbeatEventArgs(Failure failure, string status = null)
-		{
-			this.Failure = failure;
-			this.Status = status;
-		}
-
-		public Failure? Failure { get; }
-		public string Status { get; set; }
+		var session = this.GetSession();
+		return session.NodeCache.ExistsAsync(NodeId.Parse(identifier), cancellation);
 	}
 }
