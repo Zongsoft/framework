@@ -28,52 +28,66 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Metadata;
 
-public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<string, IDataEntityProperty>(StringComparer.OrdinalIgnoreCase)
+public class DataEntityPropertyCollection(IDataEntity entity) : ICollection<IDataEntityProperty>
 {
 	#region 成员字段
 	private readonly IDataEntity _entity = entity ?? throw new ArgumentNullException(nameof(entity));
+	private readonly ConcurrentDictionary<string, IDataEntityProperty> _dictionary = new(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
-	#region 重写方法
-	protected override string GetKeyForItem(IDataEntityProperty property) => property.Name;
-	protected override void InsertItem(int index, IDataEntityProperty item)
+	#region 公共属性
+	public int Count => _dictionary.Count;
+	public IDataEntityProperty this[string name] => _dictionary[name];
+	#endregion
+
+	#region 集合方法
+	public void Add(IDataEntityProperty property)
 	{
-		ArgumentNullException.ThrowIfNull(item);
+		ArgumentNullException.ThrowIfNull(property);
 
-		if(_entity is DataEntityBase entity && item is DataEntityPropertyBase property)
-			property.Entity = entity;
-		else if(!ReferenceEquals(_entity, item.Entity))
-			throw new InvalidOperationException($"The entity property cannot be added to the properties because the entity to which this property belongs cannot be set.");
-
-		base.InsertItem(index, item);
+		if(_dictionary.TryAdd(property.Name, property))
+			SetEntity(_entity, property, (property, dictionary) => dictionary.TryRemove(property.Name, out _), _dictionary);
+		else
+			throw new InvalidOperationException($"The specified '{property.Name}' entity property already exists in the properties.");
 	}
-	protected override void SetItem(int index, IDataEntityProperty item)
+
+	public bool TryAdd(IDataEntityProperty property)
 	{
-		ArgumentNullException.ThrowIfNull(item);
+		if(property != null && _dictionary.TryAdd(property.Name, property))
+		{
+			SetEntity(_entity, property, (property, dictionary) => dictionary.TryRemove(property.Name, out _), _dictionary);
+			return true;
+		}
 
-		if(_entity is DataEntityBase entity && item is DataEntityPropertyBase property)
-			property.Entity = entity;
-		else if(!ReferenceEquals(_entity, item.Entity))
-			throw new InvalidOperationException($"The entity property cannot be updated to the properties because the entity to which this property belongs cannot be set.");
-
-		base.SetItem(index, item);
+		return false;
 	}
+
+	public IDataEntityProperty GetOrAdd(IDataEntityProperty property)
+	{
+		if(property == null)
+			return null;
+
+		return _dictionary.GetOrAdd(property.Name, (key, state) =>
+		{
+			SetEntity(state.Entity, state.Property);
+			return state.Property;
+		}, (Entity : _entity, Property : property));
+	}
+
+	public void Clear() => _dictionary.Clear();
+	public bool Contains(string name) => name != null && _dictionary.ContainsKey(name);
+	public bool Remove(string name) => name != null && _dictionary.TryRemove(name, out _);
+	public bool Remove(string name, out IDataEntityProperty property) => _dictionary.TryRemove(name, out property);
+	public bool TryGetValue(string name, out IDataEntityProperty property) => _dictionary.TryGetValue(name, out property);
 	#endregion
 
 	#region 公共方法
-	public bool TryAdd(IDataEntityProperty property)
-	{
-		if(property == null || this.Contains(property))
-			return false;
-
-		this.Add(property);
-		return true;
-	}
-
 	public void Replace(IDataEntityProperty property)
 	{
 		if(property == null)
@@ -163,5 +177,46 @@ public class DataEntityPropertyCollection(IDataEntity entity) : KeyedCollection<
 		this.Add(property);
 		return property;
 	}
+	#endregion
+
+	#region 私有方法
+	private static void SetEntity(IDataEntity entity, IDataEntityProperty property) => SetEntity<object>(entity, property, null, null);
+	private static void SetEntity<T>(IDataEntity entity, IDataEntityProperty property, Action<IDataEntityProperty, T> failure = null, T state = default)
+	{
+		if(entity is DataEntityBase entityBase && property is DataEntityPropertyBase propertyBase)
+			propertyBase.Entity = entityBase;
+		else if(!ReferenceEquals(entity, property.Entity))
+		{
+			failure?.Invoke(property, state);
+			throw new InvalidOperationException($"The entity property cannot be added or updated to the properties because the entity to which this property belongs cannot be set.");
+		}
+	}
+	#endregion
+
+	#region 显式实现
+	bool ICollection<IDataEntityProperty>.IsReadOnly => false;
+	bool ICollection<IDataEntityProperty>.Contains(IDataEntityProperty property) => property != null && _dictionary.ContainsKey(property.Name);
+	bool ICollection<IDataEntityProperty>.Remove(IDataEntityProperty property) => property != null && _dictionary.TryRemove(property.Name, out _);
+	void ICollection<IDataEntityProperty>.CopyTo(IDataEntityProperty[] array, int arrayIndex)
+	{
+		ArgumentNullException.ThrowIfNull(array);
+		ArgumentOutOfRangeException.ThrowIfLessThan(arrayIndex, 0);
+		ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(arrayIndex, array.Length);
+
+		using var enumerator = _dictionary.GetEnumerator();
+
+		for(int i = arrayIndex; i < array.Length; i++)
+		{
+			if(enumerator.MoveNext())
+				array[i] = enumerator.Current.Value;
+			else
+				break;
+		}
+	}
+	#endregion
+
+	#region 枚举遍历
+	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<IDataEntityProperty> GetEnumerator() => _dictionary.Values.GetEnumerator();
 	#endregion
 }
