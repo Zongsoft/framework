@@ -41,7 +41,7 @@ public class MetadataFileLoader : Mapping.Loader, IEquatable<MetadataFileLoader>
 	#endregion
 
 	#region 构造函数
-	public MetadataFileLoader(string path = null) : base(int.MaxValue) => this.Path = path;
+	public MetadataFileLoader(string path = null, int priority = 100) : base(priority) => this.Path = path;
 	#endregion
 
 	#region 公共属性

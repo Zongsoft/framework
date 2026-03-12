@@ -35,6 +35,7 @@ namespace Zongsoft.Data.Metadata;
 
 public class DataCommandParameterCollection() : KeyedCollection<string, IDataCommandParameter>(StringComparer.OrdinalIgnoreCase)
 {
+	#region 公共方法
 	public DataCommandParameter Add(string name, DataType type, ParameterDirection direction = ParameterDirection.Input) => this.Add(name, type, 0, null, direction);
 	public DataCommandParameter Add(string name, DataType type, object value, ParameterDirection direction = ParameterDirection.Input) => this.Add(name, type, 0, value, direction);
 	public DataCommandParameter Add(string name, DataType type, int length, ParameterDirection direction = ParameterDirection.Input) => this.Add(name, type, length, null, direction);
@@ -44,6 +45,9 @@ public class DataCommandParameterCollection() : KeyedCollection<string, IDataCom
 		this.Add(parameter);
 		return parameter;
 	}
+	#endregion
 
+	#region 重写方法
 	protected override string GetKeyForItem(IDataCommandParameter parameter) => parameter.Name;
+	#endregion
 }

@@ -84,7 +84,7 @@ public static class DataUtility
 	/// <summary>组合限定名。</summary>
 	/// <param name="name">指定的名称。</param>
 	/// <param name="namespace">指定的命名空间。</param>
-	/// <returns>返回组合的限定名，如果 <paramref name="namespace"/> 参数为空或全空白字符则忽略它。</returns>
+	/// <returns>返回组合的限定名，如果 <paramref name="namespace"/> 参数为空(<c>null</c>)或全空白字符则忽略它。</returns>
 	public static string Qualify(ReadOnlySpan<char> name, ReadOnlySpan<char> @namespace) =>
 		@namespace.IsEmpty || @namespace.IsWhiteSpace() ? name.Trim().ToString() : $"{@namespace.Trim()}.{name.Trim()}";
 
