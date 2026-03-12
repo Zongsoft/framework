@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.ClosedXml library.
  *
@@ -32,7 +32,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -40,7 +39,6 @@ using ClosedXML;
 using ClosedXML.Excel;
 
 using Zongsoft.Data;
-using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Archiving;
 
 namespace Zongsoft.Externals.ClosedXml;

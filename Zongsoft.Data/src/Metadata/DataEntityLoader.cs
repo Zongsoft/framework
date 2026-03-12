@@ -33,7 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata;
 
-[Services.Service<Mapping.Loader>(Members = nameof(Instance))]
+//[Services.Service<Mapping.Loader>(Members = nameof(Instance))]
 public class DataEntityLoader : Mapping.Loader
 {
 	#region 单例字段
