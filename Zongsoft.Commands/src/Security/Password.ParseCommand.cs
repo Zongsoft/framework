@@ -58,6 +58,6 @@ public class PasswordParseCommand : CommandBase<CommandContext>
 		return ValueTask.FromResult<object>(result);
 	}
 
-	static Password Parse(ReadOnlySpan<char> text) => Password.TryParse(text, out var password) ? password : throw new InvalidOperationException($"");
-	static Password Parse(ReadOnlySpan<byte> data) => Password.TryParse(data, out var password) ? password : throw new InvalidOperationException($"");
+	static Password Parse(ReadOnlySpan<char> text) => Password.TryParse(text, out var password) ? password : throw new InvalidOperationException($"The specified '{text}' text is not a valid password format.");
+	static Password Parse(ReadOnlySpan<byte> data) => Password.TryParse(data, out var password) ? password : throw new InvalidOperationException($"The specified binary data is not a valid password format.");
 }
