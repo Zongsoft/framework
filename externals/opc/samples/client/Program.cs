@@ -19,8 +19,6 @@ internal class Program
 		using var client = new OpcClient();
 		var executor = Terminal.Console.Executor;
 
-		executor.Command("info", Commands.Info, client);
-
 		executor.Command("reset", context =>
 		{
 			if(context.Arguments.IsEmpty)
@@ -280,8 +278,10 @@ internal class Program
 				context.Output.WriteLine(CommandOutletColor.DarkRed, "The variable creation failed.");
 		});
 
-		//添加订阅事件监听命令
-		executor.Root.Children.Add(new Commands.ListenCommand(client));
+		//添加其他命令
+		executor.Root.Children.Add(new InfoCommand(client));
+		executor.Root.Children.Add(new BrowseCommand(client));
+		executor.Root.Children.Add(new ListenCommand(client));
 
 		//设置相关命令的别名
 		executor.Aliaser.Set("subscribe", "sub");

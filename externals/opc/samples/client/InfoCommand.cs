@@ -1,40 +1,40 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Common;
-using Zongsoft.Terminals;
 using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Opc.Samples;
 
-internal partial class Commands
+public sealed class InfoCommand(OpcClient client) : CommandBase<CommandContext>("Info")
 {
-	public static void Info(CommandContext context, OpcClient client)
-	{
-		if(context == null || client == null)
-			return;
+	private readonly OpcClient _client = client ?? throw new ArgumentNullException(nameof(client));
 
-		var content = CommandOutletContent.Create(CommandOutletColor.DarkGreen, client.Name)
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		var content = CommandOutletContent.Create(CommandOutletColor.DarkGreen, _client.Name)
 			.Append(CommandOutletColor.DarkGray, " (")
-			.Append(client.IsConnected ? CommandOutletColor.Green : CommandOutletColor.Magenta, client.IsConnected ? "Connected" : "Unconnect")
+			.Append(_client.IsConnected ? CommandOutletColor.Green : CommandOutletColor.Magenta, _client.IsConnected ? "Connected" : "Unconnect")
 			.Append(CommandOutletColor.DarkGray, "|")
-			.Append(CommandOutletColor.Cyan, $"{client.State}")
+			.Append(CommandOutletColor.Cyan, $"{_client.State}")
 			.AppendLine(CommandOutletColor.DarkGray, ")")
-			.AppendLine(CommandOutletColor.DarkYellow, client.Settings?.ToString());
+			.AppendLine(CommandOutletColor.DarkYellow, _client.Settings?.ToString());
 
 		if(context.Arguments.Count > 0)
 		{
 			for(int i = 0; i < context.Arguments.Count; i++)
 			{
-				if(context.Arguments.TryGetValue<uint>(i, out var id) && client.Subscribers.TryGetValue(id, out var subscriber))
+				if(context.Arguments.TryGetValue<uint>(i, out var id) && _client.Subscribers.TryGetValue(id, out var subscriber))
 					DumpSubscriber(content.Last, subscriber, -1, context.Options.GetValue("detailed", false));
 			}
 		}
-		else if(client.Subscribers.Count > 0)
+		else if(_client.Subscribers.Count > 0)
 		{
 			int index = 0;
 
-			foreach(var subscriber in client.Subscribers)
+			foreach(var subscriber in _client.Subscribers)
 			{
 				if(index > 0)
 					content.Last.AppendLine();
@@ -44,6 +44,7 @@ internal partial class Commands
 		}
 
 		context.Output.Write(content);
+		return default;
 	}
 
 	private static void DumpSubscriber(CommandOutletContent content, Subscriber subscriber, int index, bool detailed)
