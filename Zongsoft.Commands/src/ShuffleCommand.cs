@@ -40,9 +40,7 @@ namespace Zongsoft.Commands;
 
 public class ShuffleCommand : CommandBase<CommandContext>
 {
-	static readonly MethodInfo ShuffleMethod = null;
-
-	static ShuffleCommand()
+	static readonly Lazy<MethodInfo> ShuffleMethod = new(() =>
 	{
 		var methods = typeof(Random).GetMethods(BindingFlags.Public | BindingFlags.Instance);
 
@@ -53,22 +51,21 @@ public class ShuffleCommand : CommandBase<CommandContext>
 				var parameters = methods[i].GetParameters();
 
 				if(parameters.Length == 1 && parameters[0].ParameterType.IsArray)
-				{
-					ShuffleMethod = methods[i];
-					break;
-				}
+					return methods[i];
 			}
 		}
-	}
+
+		return null;
+	}, true);
 
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Value == null)
 			return default;
 
-		if(context.Value.GetType().IsArray)
+		if(context.Value.GetType().IsArray && ShuffleMethod.Value != null)
 		{
-			var method = ShuffleMethod.MakeGenericMethod(context.Value.GetType().GetElementType());
+			var method = ShuffleMethod.Value.MakeGenericMethod(context.Value.GetType().GetElementType());
 			method.Invoke(Random.Shared, [context.Value]);
 			return ValueTask.FromResult(context.Value);
 		}

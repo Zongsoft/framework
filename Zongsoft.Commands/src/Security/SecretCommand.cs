@@ -40,7 +40,7 @@ namespace Zongsoft.Security.Commands;
 
 [DisplayName("SecretCommand.Name")]
 [Description("SecretCommand.Description")]
-public class SecretCommand : CommandBase<CommandContext>
+public partial class SecretCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
 	public SecretCommand() : base("Secret") { }

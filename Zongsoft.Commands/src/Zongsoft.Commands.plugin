@@ -39,8 +39,8 @@
 				<object name="RSA" type="Zongsoft.Security.Commands.RSACommand, Zongsoft.Commands" />
 			</rsa.command>
 
-			<object name="Export" type="Zongsoft.Security.Commands.RSAExportCommand, Zongsoft.Commands" />
-			<object name="Import" type="Zongsoft.Security.Commands.RSAImportCommand, Zongsoft.Commands" />
+			<object name="Export" type="Zongsoft.Security.Commands.RSACommand+ExportCommand, Zongsoft.Commands" />
+			<object name="Import" type="Zongsoft.Security.Commands.RSACommand+ImportCommand, Zongsoft.Commands" />
 		</object>
 
 		<object name="Secret">
@@ -48,8 +48,13 @@
 				<object name="Secret" type="Zongsoft.Security.Commands.SecretCommand, Zongsoft.Commands" />
 			</secret.command>
 
-			<object name="Generate" type="Zongsoft.Security.Commands.SecretGenerateCommand, Zongsoft.Commands" />
-			<object name="Verify" type="Zongsoft.Security.Commands.SecretVerifyCommand, Zongsoft.Commands" />
+			<object name="Generate" type="Zongsoft.Security.Commands.SecretCommand+GenerateCommand, Zongsoft.Commands" />
+			<object name="Verify" type="Zongsoft.Security.Commands.SecretCommand+VerifyCommand, Zongsoft.Commands" />
+		</object>
+
+		<object name="Password">
+			<object name="Parse" type="Zongsoft.Security.Commands.PasswordParseCommand, Zongsoft.Commands" />
+			<object name="Generate" type="Zongsoft.Security.Commands.PasswordGenerateCommand, Zongsoft.Commands" />
 		</object>
 
 		<object name="File">

@@ -37,7 +37,7 @@ using Zongsoft.Components;
 namespace Zongsoft.Security.Commands;
 
 [CommandOption(SIZE_OPTION, typeof(int))]
-public class RSACommand : CommandBase<CommandContext>
+public partial class RSACommand : CommandBase<CommandContext>
 {
 	#region 常量定义
 	private const string SIZE_OPTION = "size";
