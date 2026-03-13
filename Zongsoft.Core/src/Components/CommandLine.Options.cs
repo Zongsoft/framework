@@ -195,8 +195,8 @@ partial class CommandLine
 			if(_options.TryGetValue(name, out var value))
 				return value == null ? defaultValue : Common.Convert.ConvertValue<T>(value, defaultValue);
 
-			if(_descriptor.Options.TryGetValue(name, out var descriptor))
-				return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, descriptor.GetConverter);
+			if(_descriptor.Options.TryGetValue(name, out var descriptor) && descriptor.DefaultValue != null)
+				return Common.Convert.ConvertValue(descriptor.DefaultValue, descriptor.GetConverter, defaultValue);
 
 			return defaultValue;
 		}

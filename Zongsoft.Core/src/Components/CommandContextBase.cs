@@ -78,7 +78,7 @@ public abstract class CommandContextBase : ICommandContext
 	/// <summary>获取当前命令的选项集。</summary>
 	public CommandLine.CmdletOptionCollection Options => _options ??= new CommandLine.CmdletOptionCollection(this.Descriptor, _cmdlet.Options);
 
-	/// <summary>获取当前命令的参数数组。</summary>
+	/// <summary>获取当前命令的参数集。</summary>
 	public CommandArgumentCollection Arguments { get; }
 
 	/// <summary>获取或设置传入的值。</summary>
