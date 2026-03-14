@@ -19,8 +19,22 @@ public sealed class InfoCommand(OpcClient client) : CommandBase<CommandContext>(
 			.Append(_client.IsConnected ? CommandOutletColor.Green : CommandOutletColor.Magenta, _client.IsConnected ? "Connected" : "Unconnect")
 			.Append(CommandOutletColor.DarkGray, "|")
 			.Append(CommandOutletColor.Cyan, $"{_client.State}")
-			.AppendLine(CommandOutletColor.DarkGray, ")")
-			.AppendLine(CommandOutletColor.DarkYellow, _client.Settings?.ToString());
+			.AppendLine(CommandOutletColor.DarkGray, ")");
+
+		if(_client.Settings != null)
+			content.Last.AppendLine(CommandOutletColor.DarkYellow, _client.Settings?.ToString());
+
+		if(_client.Namespaces != null)
+		{
+			content.Last.AppendLine();
+
+			for(int i = 0; i < _client.Namespaces.Length; i++)
+			{
+				content.Last
+					.Append(CommandOutletColor.DarkCyan, $"[{i}] ")
+					.AppendLine(CommandOutletColor.DarkGray, _client.Namespaces[i]);
+			}
+		}
 
 		if(context.Arguments.Count > 0)
 		{
