@@ -48,12 +48,14 @@ public partial class OpcClient : IDisposable
 	private ApplicationConfiguration _configuration;
 	private Configuration.OpcConnectionSettings _settings;
 	private SubscriberCollection _subscribers;
+	private string[] _namespaces;
 	#endregion
 
 	#region 构造函数
 	public OpcClient(string name = null)
 	{
 		this.Name = string.IsNullOrEmpty(name) ? "Zongsoft.OpcClient" : name;
+		_subscribers = new SubscriberCollection();
 
 		_configuration = new ApplicationConfiguration()
 		{
@@ -113,8 +115,6 @@ public partial class OpcClient : IDisposable
 
 		//挂载证书验证事件
 		_configuration.CertificateValidator.CertificateValidation += this.OnCertificateValidation;
-
-		_subscribers = new SubscriberCollection();
 	}
 	#endregion
 
@@ -124,6 +124,7 @@ public partial class OpcClient : IDisposable
 	public bool IsConnected => _session?.Connected ?? false;
 	public OpcClientState State => _state ?? OpcClientState.Empty;
 	public SubscriberCollection Subscribers => _subscribers;
+	public string[] Namespaces => _namespaces ??= _session?.NamespaceUris.ToArray();
 	#endregion
 
 	#region 事件处理

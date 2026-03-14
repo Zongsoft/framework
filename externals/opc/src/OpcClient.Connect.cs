@@ -112,6 +112,9 @@ partial class OpcClient
 		if(!session.Connected)
 			await session.OpenAsync(name, identity, cancellation);
 
+		//置空命名空间集
+		_namespaces = null;
+
 		//保存当前为新建会话
 		_session = session;
 	}
