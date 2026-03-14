@@ -62,8 +62,11 @@ partial class OpcClient
 				foreach(var reference in result.References)
 					yield return reference;
 
-				await foreach(var item in BrowseRecursiveAsync(session, GetNodeIds(result.References), cancellation))
-					yield return item;
+				foreach(var chunk in GetNodeIds(result.References).Chunk(1000))
+				{
+					await foreach(var item in BrowseRecursiveAsync(session, chunk, cancellation))
+						yield return item;
+				}
 			}
 		}
 
