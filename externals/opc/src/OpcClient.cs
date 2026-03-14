@@ -119,11 +119,17 @@ public partial class OpcClient : IDisposable
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取客户端名称。</summary>
 	public string Name { get; }
+	/// <summary>获取客户端的连接设置。</summary>
 	public Configuration.OpcConnectionSettings Settings => _settings;
+	/// <summary>获取一个值，指示客户端是否已经连接。</summary>
 	public bool IsConnected => _session?.Connected ?? false;
+	/// <summary>获取客户端的状态。</summary>
 	public OpcClientState State => _state ?? OpcClientState.Empty;
+	/// <summary>获取订阅者集合。</summary>
 	public SubscriberCollection Subscribers => _subscribers;
+	/// <summary>获取连接的服务器端的命名空间集。</summary>
 	public string[] Namespaces => _namespaces ??= _session?.NamespaceUris.ToArray();
 	#endregion
 
