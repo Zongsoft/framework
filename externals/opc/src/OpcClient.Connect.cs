@@ -119,6 +119,12 @@ partial class OpcClient
 		_session = session;
 	}
 
+	public ValueTask ReconnectAsync(CancellationToken cancellation = default)
+	{
+		var session = _session;
+		return session == null ? ValueTask.CompletedTask : new ValueTask(session.ReconnectAsync(cancellation));
+	}
+
 	public async ValueTask DisconnectAsync(CancellationToken cancellation = default)
 	{
 		var session = _session;

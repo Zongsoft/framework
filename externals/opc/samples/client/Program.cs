@@ -53,6 +53,7 @@ internal class Program
 			return client.ConnectAsync(settings.Contains('=') ? settings : $"Server={settings}", cancellation);
 		});
 
+		executor.Command("reconnect", (context, cancellation) => client.ReconnectAsync(cancellation));
 		executor.Command("disconnect", (context, cancellation) => client.DisconnectAsync(cancellation));
 
 		executor.Command("subscribe", async (context, cancellation) =>
