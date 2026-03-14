@@ -14,7 +14,7 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		IAsyncEnumerable<object>[] result;
+		IAsyncEnumerable<OpcNode>[] result;
 		var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 		if(context.Arguments.IsEmpty)
@@ -23,7 +23,7 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 			result = [_client.BrowseAsync(context.Arguments[0], cancellation)];
 		else
 		{
-			result = new IAsyncEnumerable<object>[context.Arguments.Count];
+			result = new IAsyncEnumerable<OpcNode>[context.Arguments.Count];
 
 			for(int i = 0; i < context.Arguments.Count; i++)
 				result[i] = _client.BrowseAsync(context.Arguments[i], cancellation);
@@ -37,15 +37,17 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 				continue;
 
 			var count = 0;
-			await foreach(var entry in result[i])
+			await foreach(var node in result[i])
 			{
 				++count;
-				context.Output.WriteLine(entry);
+
+				if(!node.IsBuiltin)
+					context.Output.WriteLine(Dump(node));
 			}
 
 			total += count;
 			stopwatch.Stop();
-			context.Output.WriteLine(CommandOutletContent.Create(new string('_', 40) + '\n')
+			context.Output.WriteLine(CommandOutletContent.Create(new string('_', 45) + '\n')
 				.Append(CommandOutletColor.DarkMagenta, $"[{i + 1}] ")
 				.Append(CommandOutletColor.DarkGreen, " Total:")
 				.Append(CommandOutletColor.DarkYellow, count.ToString("#,###0"))
@@ -58,5 +60,28 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 			return null;
 
 		return result.Length == 1 ? result[0] : result;
+	}
+
+	private static CommandOutletContent Dump(OpcNode node)
+	{
+		if(node == null)
+			return null;
+
+		var content = CommandOutletContent.Create()
+			.Append(CommandOutletColor.DarkCyan, $"[{node.Kind}]")
+			.Append(CommandOutletColor.DarkGreen, $" {node.Name}");
+
+		if(!string.IsNullOrEmpty(node.Label))
+			content.Last.Append(CommandOutletColor.DarkGray, $" {node.Label}");
+
+		content.Last
+			.Append(CommandOutletColor.DarkCyan, '(')
+			.Append(CommandOutletColor.DarkYellow, node.Type)
+			.Append(CommandOutletColor.DarkCyan, ')');
+
+		if(!string.IsNullOrEmpty(node.Description) && !string.Equals(node.Label, node.Description))
+			content.Last.Append(CommandOutletColor.DarkGray, $" {node.Description}");
+
+		return content;
 	}
 }

@@ -40,13 +40,13 @@ namespace Zongsoft.Externals.Opc;
 
 partial class OpcClient
 {
-	public IAsyncEnumerable<object> BrowseAsync(CancellationToken cancellation = default) => this.BrowseAsync(null, cancellation);
-	public IAsyncEnumerable<object> BrowseAsync(string path, CancellationToken cancellation = default)
+	public IAsyncEnumerable<OpcNode> BrowseAsync(CancellationToken cancellation = default) => this.BrowseAsync(null, cancellation);
+	public IAsyncEnumerable<OpcNode> BrowseAsync(string path, CancellationToken cancellation = default)
 	{
 		return BrowseRecursiveAsync(this.GetSession(), [ GetNodeId(path) ], cancellation);
 	}
 
-	private static async IAsyncEnumerable<object> BrowseRecursiveAsync(Session session, IEnumerable<NodeId> nodeIds, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
+	private static async IAsyncEnumerable<OpcNode> BrowseRecursiveAsync(Session session, IEnumerable<NodeId> nodeIds, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 	{
 		if(session == null || nodeIds == null)
 			yield break;
@@ -60,12 +60,12 @@ partial class OpcClient
 			if(StatusCode.IsGood(result.StatusCode))
 			{
 				foreach(var reference in result.References)
-					yield return reference;
+					yield return ToNode(reference);
 
 				foreach(var chunk in GetNodeIds(result.References).Chunk(1000))
 				{
-					await foreach(var item in BrowseRecursiveAsync(session, chunk, cancellation))
-						yield return item;
+					await foreach(var node in BrowseRecursiveAsync(session, chunk, cancellation))
+						yield return node;
 				}
 			}
 		}
@@ -111,4 +111,13 @@ partial class OpcClient
 
 		return arguments.Count > 0 ? session.BrowseAsync(default, default, 0, arguments, cancellation) : null;
 	}
+
+	private static OpcNode ToNode(ReferenceDescription reference) => new
+	(
+		(NodeId)reference.NodeId,
+		reference.NodeClass.ToKind(),
+		OpcNodeType.Get(reference.TypeDefinition),
+		reference.BrowseName?.Name,
+		reference.DisplayName?.ToString()
+	);
 }
