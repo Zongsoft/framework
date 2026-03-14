@@ -102,6 +102,9 @@ partial class OpcNodeType
 	internal static OpcNodeType Get(ExpandedNodeId id) => Get((NodeId)id);
 	internal static OpcNodeType Get(NodeId id)
 	{
+		if(id == null || id.IsNullNodeId)
+			return null;
+
 		if(_types.TryGetValue(id, out var type))
 			return type;
 

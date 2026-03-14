@@ -74,10 +74,11 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 		if(!string.IsNullOrEmpty(node.Label))
 			content.Last.Append(CommandOutletColor.DarkGray, $" {node.Label}");
 
-		content.Last
-			.Append(CommandOutletColor.DarkCyan, '(')
-			.Append(CommandOutletColor.DarkYellow, node.Type)
-			.Append(CommandOutletColor.DarkCyan, ')');
+		if(node.Type != null)
+			content.Last
+				.Append(CommandOutletColor.DarkCyan, '(')
+				.Append(CommandOutletColor.DarkYellow, node.Type)
+				.Append(CommandOutletColor.DarkCyan, ')');
 
 		if(!string.IsNullOrEmpty(node.Description) && !string.Equals(node.Label, node.Description))
 			content.Last.Append(CommandOutletColor.DarkGray, $" {node.Description}");
