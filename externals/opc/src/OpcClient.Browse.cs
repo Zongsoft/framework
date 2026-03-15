@@ -96,7 +96,7 @@ partial class OpcClient
 		NodeId = nodeId,
 		BrowseDirection = BrowseDirection.Forward,
 		IncludeSubtypes = includeSubtypes,
-		NodeClassMask = (uint)(NodeClass.Object | NodeClass.Variable | NodeClass.Method),
+		NodeClassMask = (uint)(NodeClass.Object | NodeClass.Variable),
 		ResultMask = (uint)BrowseResultMask.All,
 	};
 
