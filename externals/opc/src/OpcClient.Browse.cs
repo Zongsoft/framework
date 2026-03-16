@@ -93,7 +93,8 @@ partial class OpcClient
 					if(IsIgnored(options, reference))
 						continue;
 
-					var node = ToNode(reference, options.Hierarchically);
+					var type = await GetDataTypeAsync(session, reference, cancellation);
+					var node = ToNode(reference, type, options.Hierarchically);
 
 					if(node.HasChildren(out var nodes))
 					{
@@ -113,11 +114,14 @@ partial class OpcClient
 			{
 				foreach(var reference in result.References)
 				{
-					if(!IsIgnored(options, reference))
-						yield return ToNode(reference, options.Hierarchically);
+					if(IsIgnored(options, reference))
+						continue;
+
+					var type = await GetDataTypeAsync(session, reference, cancellation);
+					yield return ToNode(reference, type, options.Hierarchically);
 				}
 
-				foreach(var chunk in GetNodeIds(result.References).Chunk(1000))
+				foreach(var chunk in GetNodeIds(options, result.References).Chunk(1000))
 				{
 					await foreach(var node in BrowseRecursiveAsync(session, options, chunk, cancellation))
 						yield return node;
@@ -128,8 +132,13 @@ partial class OpcClient
 		static bool IsIgnored(BrowseOptions options, ReferenceDescription reference) =>
 			!options.IncludeBuiltins && reference.NodeId.NamespaceIndex == 0;
 
-		static IEnumerable<NodeId> GetNodeIds(ICollection<ReferenceDescription> references) => references
-			.Where(reference => !reference.NodeId.IsNull)
+		static async ValueTask<OpcNodeType> GetDataTypeAsync(Session session, ReferenceDescription reference, CancellationToken cancellation) =>
+			reference.NodeClass == NodeClass.Variable ?
+			await OpcClient.GetDataTypeAsync(session, (NodeId)reference.NodeId, cancellation) :
+			OpcNodeType.Get(reference.TypeDefinition);
+
+		static IEnumerable<NodeId> GetNodeIds(BrowseOptions options, ICollection<ReferenceDescription> references) => references
+			.Where(reference => !reference.NodeId.IsNull && !IsIgnored(options, reference))
 			.Select(reference => (NodeId)reference.NodeId);
 	}
 
@@ -154,14 +163,14 @@ partial class OpcClient
 		return arguments.Count > 0 ? session.BrowseAsync(default, default, 0, arguments, cancellation) : null;
 	}
 
-	private static OpcNode ToNode(ReferenceDescription reference, bool hierarchically)
+	private static OpcNode ToNode(ReferenceDescription reference, OpcNodeType type, bool hierarchically)
 	{
 		return reference.NodeClass == NodeClass.Variable || !hierarchically ?
 			new
 			(
 				(NodeId)reference.NodeId,
 				reference.NodeClass.ToKind(),
-				OpcNodeType.Get(reference.TypeDefinition),
+				type,
 				reference.BrowseName?.Name,
 				reference.DisplayName?.ToString()
 			) :
@@ -169,7 +178,7 @@ partial class OpcClient
 			(
 				(NodeId)reference.NodeId,
 				reference.NodeClass.ToKind(),
-				OpcNodeType.Get(reference.TypeDefinition),
+				type,
 				reference.BrowseName?.Name,
 				reference.DisplayName?.ToString()
 			);

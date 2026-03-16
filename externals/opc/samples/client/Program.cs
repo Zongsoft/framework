@@ -179,7 +179,7 @@ internal class Program
 				var type = await client.GetDataTypeAsync(context.Arguments[i], cancellation);
 
 				if(type != null)
-					context.Output.WriteLine(CommandOutletColor.DarkGreen, TypeAlias.GetAlias(type));
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, type);
 				else
 					context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"The '{context.Arguments[i]}' node not found.");
 			}
@@ -223,10 +223,9 @@ internal class Program
 
 			object value = null;
 
-			if(type.IsArray)
+			if(type.IsArray(out var elementType))
 			{
-				type = type.GetElementType();
-				value = Array.CreateInstance(type, context.Arguments.Count - 1);
+				value = Array.CreateInstance(elementType, context.Arguments.Count - 1);
 
 				for(int i = 1; i < context.Arguments.Count; i++)
 				{

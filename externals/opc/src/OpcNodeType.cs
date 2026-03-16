@@ -37,19 +37,21 @@ namespace Zongsoft.Externals.Opc;
 public partial class OpcNodeType : IEquatable<OpcNodeType>
 {
 	#region 构造函数
-	internal OpcNodeType(NodeId nodeId, string name = null)
+	internal OpcNodeType(NodeId nodeId, Type type)
 	{
 		this.NodeId = nodeId ?? throw new ArgumentNullException(nameof(nodeId));
 		this.Identifier = nodeId.ToString();
-		this.Name = name;
+		this.Type = type ?? typeof(object);
+		this.Name = Common.TypeAlias.GetAlias(this.Type);
 	}
 
-	public OpcNodeType(string identifier, string name = null)
+	public OpcNodeType(string identifier, Type type)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(identifier);
 		this.NodeId = NodeId.Parse(identifier);
 		this.Identifier = identifier;
-		this.Name = name;
+		this.Type = type ?? typeof(object);
+		this.Name = Common.TypeAlias.GetAlias(this.Type);
 	}
 	#endregion
 
@@ -60,6 +62,21 @@ public partial class OpcNodeType : IEquatable<OpcNodeType>
 	#region 公共属性
 	public string Identifier { get; }
 	public string Name { get; }
+	public Type Type { get; }
+	#endregion
+
+	#region 公共方法
+	public bool IsArray(out Type elementType)
+	{
+		if(this.Type != null && this.Type.IsArray)
+		{
+			elementType = this.Type.GetElementType();
+			return true;
+		}
+
+		elementType = null;
+		return false;
+	}
 	#endregion
 
 	#region 重写方法
@@ -68,52 +85,43 @@ public partial class OpcNodeType : IEquatable<OpcNodeType>
 	public override int GetHashCode() => this.NodeId == null || this.NodeId.IsNullNodeId ? HashCode.Combine(this.Identifier) : this.NodeId.GetHashCode();
 	public override string ToString() => string.IsNullOrEmpty(this.Name) ? this.Identifier : $"{this.Name}|{this.Identifier}";
 	#endregion
+
+	#region 符号重写
+	public static implicit operator Type(OpcNodeType type) => type?.Type;
+	#endregion
 }
 
 partial class OpcNodeType
 {
-	private static readonly Dictionary<NodeId, OpcNodeType> _types = new()
+	private readonly struct Key(NodeId id, int rank = 0) : IEquatable<Key>
 	{
-		{ DataTypeIds.String, new(DataTypeIds.String, nameof(String)) },
-		{ DataTypeIds.Boolean, new(DataTypeIds.Boolean, nameof(Boolean)) },
-		{ DataTypeIds.DateTime, new(DataTypeIds.DateTime, nameof(DateTime)) },
-		{ DataTypeIds.Byte, new(DataTypeIds.Byte, nameof(Byte)) },
-		{ DataTypeIds.SByte, new(DataTypeIds.SByte, nameof(SByte)) },
-		{ DataTypeIds.Int16, new(DataTypeIds.Int16, nameof(Int16)) },
-		{ DataTypeIds.Int32, new(DataTypeIds.Int32, nameof(Int32)) },
-		{ DataTypeIds.Int64, new(DataTypeIds.Int64, nameof(Int64)) },
-		{ DataTypeIds.UInt16, new(DataTypeIds.UInt16, nameof(UInt16)) },
-		{ DataTypeIds.UInt32, new(DataTypeIds.UInt32, nameof(UInt32)) },
-		{ DataTypeIds.UInt64, new(DataTypeIds.UInt64, nameof(UInt64)) },
-		{ DataTypeIds.Float, new(DataTypeIds.Float, nameof(DataTypeIds.Float)) },
-		{ DataTypeIds.Double, new(DataTypeIds.Double, nameof(DataTypeIds.Double)) },
-		{ DataTypeIds.Number, new(DataTypeIds.Number, nameof(DataTypeIds.Number)) },
-		{ DataTypeIds.Decimal, new(DataTypeIds.Decimal, nameof(DataTypeIds.Decimal)) },
+		public readonly NodeId Id = id;
+		public readonly int Rank = rank;
 
-		{ ObjectTypeIds.FolderType, new(ObjectTypeIds.FolderType, "Folder") },
+		public bool Equals(Key other) => this.Id == other.Id && this.Rank == other.Rank;
+		public override bool Equals(object obj) => obj is Key other && this.Equals(other);
+		public override int GetHashCode() => HashCode.Combine(this.Id, this.Rank);
+		public override string ToString() => this.Rank == 0 ? this.Id.ToString() : $"{this.Id}[{this.Rank}]";
+	}
 
-		{ VariableTypeIds.BaseVariableType, new(VariableTypeIds.BaseVariableType, "Variable") },
-		{ VariableTypeIds.BaseDataVariableType, new(VariableTypeIds.BaseDataVariableType, "Scalar") },
-
-		{ ReferenceTypeIds.Organizes, new(ReferenceTypeIds.Organizes, nameof(ReferenceTypeIds.Organizes)) },
-		{ ReferenceTypeIds.References, new(ReferenceTypeIds.References, nameof(ReferenceTypeIds.References)) },
-	};
-
-	internal static OpcNodeType Get(ExpandedNodeId id) => Get((NodeId)id);
-	internal static OpcNodeType Get(NodeId id)
+	private static readonly Dictionary<Key, OpcNodeType> _cache = [];
+	internal static OpcNodeType Get(ExpandedNodeId id, int rank = 0) => Get((NodeId)id, rank);
+	internal static OpcNodeType Get(NodeId id, int rank = 0)
 	{
 		if(id == null || id.IsNullNodeId)
 			return null;
 
-		if(_types.TryGetValue(id, out var type))
-			return type;
+		var key = new Key(id, rank);
 
-		lock(_types)
+		if(_cache.TryGetValue(key, out var result))
+			return result;
+
+		lock(_cache)
 		{
-			if(_types.TryGetValue(id, out type))
-				return type;
+			if(_cache.TryGetValue(key, out result))
+				return result;
 
-			return _types[id] = type = new(id);
+			return _cache[key] = result = new(id, Utility.GetDataType(id, rank));
 		}
 	}
 }

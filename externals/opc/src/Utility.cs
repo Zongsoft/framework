@@ -95,120 +95,6 @@ internal static class Utility
 		}
 	}
 
-	public static Type GetDataType(this DataValue data)
-	{
-		if(data == null || data.Value == null)
-			return null;
-
-		if(data.WrappedValue.TypeInfo.BuiltInType == BuiltInType.NodeId)
-		{
-			var node = data.GetValue<NodeId>(null);
-
-			if(node != null)
-			{
-				var type = Common.Convert.ConvertValue(node.Identifier, BuiltInType.Null);
-				return GetDataType(type, data.WrappedValue.TypeInfo.ValueRank);
-			}
-		}
-
-		return null;
-	}
-
-	public static Type GetDataType(this BuiltInType type, int rank)
-	{
-		if(type == BuiltInType.Null)
-			return null;
-
-		if(rank == ValueRanks.Scalar)
-			return type switch
-			{
-				BuiltInType.Boolean => typeof(bool),
-				BuiltInType.Byte => typeof(byte),
-				BuiltInType.SByte => typeof(sbyte),
-				BuiltInType.Int16 => typeof(short),
-				BuiltInType.Int32 => typeof(int),
-				BuiltInType.Int64 => typeof(long),
-				BuiltInType.UInt16 => typeof(ushort),
-				BuiltInType.UInt32 => typeof(uint),
-				BuiltInType.UInt64 => typeof(ulong),
-				BuiltInType.Float => typeof(float),
-				BuiltInType.Double => typeof(double),
-				BuiltInType.Integer => typeof(int),
-				BuiltInType.UInteger => typeof(uint),
-				BuiltInType.Number => typeof(double),
-				BuiltInType.String => typeof(string),
-				BuiltInType.ByteString => typeof(byte[]),
-				BuiltInType.LocalizedText => typeof(string),
-				BuiltInType.DateTime => typeof(DateTime),
-				BuiltInType.Guid => typeof(Guid),
-				BuiltInType.Enumeration => typeof(Enum),
-				BuiltInType.ExtensionObject => typeof(object),
-				BuiltInType.StatusCode => typeof(string),
-				BuiltInType.XmlElement => typeof(System.Xml.XmlElement),
-				_ => typeof(object),
-			};
-
-		if(rank == ValueRanks.OneDimension)
-			return type switch
-			{
-				BuiltInType.Boolean => typeof(bool[]),
-				BuiltInType.Byte => typeof(byte[]),
-				BuiltInType.SByte => typeof(sbyte[]),
-				BuiltInType.Int16 => typeof(short[]),
-				BuiltInType.Int32 => typeof(int[]),
-				BuiltInType.Int64 => typeof(long[]),
-				BuiltInType.UInt16 => typeof(ushort[]),
-				BuiltInType.UInt32 => typeof(uint[]),
-				BuiltInType.UInt64 => typeof(ulong[]),
-				BuiltInType.Float => typeof(float[]),
-				BuiltInType.Double => typeof(double[]),
-				BuiltInType.Integer => typeof(int[]),
-				BuiltInType.UInteger => typeof(uint[]),
-				BuiltInType.Number => typeof(double[]),
-				BuiltInType.String => typeof(string[]),
-				BuiltInType.ByteString => typeof(byte[][]),
-				BuiltInType.LocalizedText => typeof(string[]),
-				BuiltInType.DateTime => typeof(DateTime[]),
-				BuiltInType.Guid => typeof(Guid[]),
-				BuiltInType.Enumeration => typeof(Enum[]),
-				BuiltInType.ExtensionObject => typeof(object[]),
-				BuiltInType.StatusCode => typeof(string[]),
-				BuiltInType.XmlElement => typeof(System.Xml.XmlElement[]),
-				_ => typeof(Array),
-			};
-
-		if(rank >= ValueRanks.TwoDimensions)
-			return type switch
-			{
-				BuiltInType.Boolean => typeof(bool).MakeArrayType(rank),
-				BuiltInType.Byte => typeof(byte).MakeArrayType(rank),
-				BuiltInType.SByte => typeof(sbyte).MakeArrayType(rank),
-				BuiltInType.Int16 => typeof(short).MakeArrayType(rank),
-				BuiltInType.Int32 => typeof(int).MakeArrayType(rank),
-				BuiltInType.Int64 => typeof(long).MakeArrayType(rank),
-				BuiltInType.UInt16 => typeof(ushort).MakeArrayType(rank),
-				BuiltInType.UInt32 => typeof(uint).MakeArrayType(rank),
-				BuiltInType.UInt64 => typeof(ulong).MakeArrayType(rank),
-				BuiltInType.Float => typeof(float).MakeArrayType(rank),
-				BuiltInType.Double => typeof(double).MakeArrayType(rank),
-				BuiltInType.Integer => typeof(int).MakeArrayType(rank),
-				BuiltInType.UInteger => typeof(uint).MakeArrayType(rank),
-				BuiltInType.Number => typeof(double).MakeArrayType(rank),
-				BuiltInType.String => typeof(string).MakeArrayType(rank),
-				BuiltInType.ByteString => typeof(byte[]).MakeArrayType(rank),
-				BuiltInType.LocalizedText => typeof(string).MakeArrayType(rank),
-				BuiltInType.DateTime => typeof(DateTime).MakeArrayType(rank),
-				BuiltInType.Guid => typeof(Guid).MakeArrayType(rank),
-				BuiltInType.Enumeration => typeof(Enum).MakeArrayType(rank),
-				BuiltInType.ExtensionObject => typeof(object).MakeArrayType(rank),
-				BuiltInType.StatusCode => typeof(string).MakeArrayType(rank),
-				BuiltInType.XmlElement => typeof(System.Xml.XmlElement).MakeArrayType(rank),
-				_ => typeof(object).MakeArrayType(rank),
-			};
-
-		return null;
-	}
-
 	public static Type GetDataType(this NodeId id, int rank)
 	{
 		if(id == null || id.IsNullNodeId)
@@ -263,7 +149,7 @@ internal static class Utility
 		if(id == DataTypeIds.XmlElement)
 			return GetType(typeof(System.Xml.XmlElement), rank);
 
-		if(rank == ValueRanks.Scalar)
+		if(rank == 0 || rank == ValueRanks.Scalar)
 			return typeof(object);
 		if(rank == ValueRanks.OneDimension)
 			return typeof(object[]);

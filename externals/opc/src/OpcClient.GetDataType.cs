@@ -32,26 +32,24 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Opc.Ua;
+using Opc.Ua.Client;
 
 namespace Zongsoft.Externals.Opc;
 
 partial class OpcClient
 {
-	public async ValueTask<Type> GetDataTypeAsync(string identifier, CancellationToken cancellation = default)
+	public ValueTask<OpcNodeType> GetDataTypeAsync(string identifier, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(identifier))
 			throw new ArgumentNullException(nameof(identifier));
 
-		var id = NodeId.Parse(identifier);
-		var session = this.GetSession();
+		return GetDataTypeAsync(this.GetSession(), NodeId.Parse(identifier), cancellation);
+	}
 
-		var request = new RequestHeader()
-		{
-			Timestamp = DateTime.UtcNow,
-		};
-
+	private static async ValueTask<OpcNodeType> GetDataTypeAsync(Session session, NodeId id, CancellationToken cancellation = default)
+	{
 		var response = await session.ReadAsync(
-			request, 0, TimestampsToReturn.Server,
+			default, 0, TimestampsToReturn.Server,
 			[
 				new ReadValueId()
 				{
@@ -71,13 +69,12 @@ partial class OpcClient
 			], cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
-			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to get the data type of the “{identifier}” node.");
+			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to get the data type of the “{id}” node.");
 
 		if(response.Results.Count < 2)
 			return null;
 
-		var elementType = response.Results[0].GetDataType();
 		var rank = response.Results[1].GetValueOrDefault<int>();
-		return rank > 0 ? elementType.MakeArrayType(rank) : elementType;
+		return OpcNodeType.Get((NodeId)response.Results[0].Value, rank);
 	}
 }
