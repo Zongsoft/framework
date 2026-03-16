@@ -44,7 +44,6 @@ public partial class OpcNode
 		this.Type = type;
 		this.Label = label;
 		this.Description = description;
-		this.Nodes = [];
 	}
 
 	public OpcNode(string name, OpcNodeKind kind, OpcNodeType type, string label = null, string description = null)
@@ -56,7 +55,6 @@ public partial class OpcNode
 		this.Type = type;
 		this.Label = label;
 		this.Description = description;
-		this.Nodes = [];
 	}
 	#endregion
 
@@ -70,11 +68,37 @@ public partial class OpcNode
 	public OpcNodeKind Kind { get; set; }
 	public OpcNodeType Type { get; set; }
 	public string Description { get; set; }
-	public OpcNodeCollection Nodes { get; }
 	public bool IsBuiltin => this.Id != null && this.Id.NamespaceIndex == 0;
+	#endregion
+
+	#region 公共方法
+	public bool HasChildren() => this.HasChildren(out _);
+	public virtual bool HasChildren(out OpcNodeCollection children)
+	{
+		children = null;
+		return false;
+	}
 	#endregion
 
 	#region 重写方法
 	public override string ToString() => $"[{this.Kind}]{this.Name}({this.Type})";
+	#endregion
+
+	#region 嵌套子类
+	internal static OpcNode Hierarchy(NodeId id, OpcNodeKind kind, OpcNodeType type, string label = null, string description = null) => new HierarchicalNode(id, kind, type, label, description);
+	internal static OpcNode Hierarchy(string name, OpcNodeKind kind, OpcNodeType type, string label = null, string description = null) => new HierarchicalNode(name, kind, type, label, description);
+
+	private sealed class HierarchicalNode : OpcNode
+	{
+		internal HierarchicalNode(NodeId id, OpcNodeKind kind, OpcNodeType type, string label = null, string description = null) : base(id, kind, type, label, description) => this.Children = [];
+		internal HierarchicalNode(string name, OpcNodeKind kind, OpcNodeType type, string label = null, string description = null) : base(name, kind, type, label, description) => this.Children = [];
+
+		public OpcNodeCollection Children { get; }
+		public override bool HasChildren(out OpcNodeCollection children)
+		{
+			children = this.Children;
+			return children != null;
+		}
+	}
 	#endregion
 }

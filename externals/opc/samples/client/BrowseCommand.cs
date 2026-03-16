@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -8,8 +9,19 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Opc.Samples;
 
+[CommandOption(INCLUDEBUILTINS_OPTION, 'b', typeof(bool))]
+[CommandOption(INCLUDESUBTYPES_OPTION, 's', typeof(bool))]
+[CommandOption(HIERARCHICALLY_OPTION, 'h', typeof(bool), DefaultValue = true)]
+[CommandOption(KIND_OPTION, 'k', typeof(OpcNodeKind), DefaultValue = OpcNodeKind.Object | OpcNodeKind.Variable)]
 internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandContext>("Browse")
 {
+	#region 常量定义
+	private const string KIND_OPTION = "kind";
+	private const string HIERARCHICALLY_OPTION = "hierarchically";
+	private const string INCLUDEBUILTINS_OPTION = "include-builtins";
+	private const string INCLUDESUBTYPES_OPTION = "include-subtypes";
+	#endregion
+
 	private readonly OpcClient _client = client ?? throw new ArgumentNullException(nameof(client));
 
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
@@ -17,16 +29,24 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 		IAsyncEnumerable<OpcNode>[] result;
 		var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
+		var options = new OpcClient.BrowseOptions(
+			context.Options.GetValue<OpcNodeKind>(KIND_OPTION),
+			context.Options.Switch(HIERARCHICALLY_OPTION))
+		{
+			IncludeBuiltins = context.Options.Switch(INCLUDEBUILTINS_OPTION),
+			IncludeSubtypes = context.Options.Switch(INCLUDESUBTYPES_OPTION),
+		};
+
 		if(context.Arguments.IsEmpty)
-			result = [_client.BrowseAsync(cancellation)];
+			result = [_client.BrowseAsync(options, cancellation)];
 		else if(context.Arguments.Count == 1)
-			result = [_client.BrowseAsync(context.Arguments[0], cancellation)];
+			result = [_client.BrowseAsync(context.Arguments[0], options, cancellation)];
 		else
 		{
 			result = new IAsyncEnumerable<OpcNode>[context.Arguments.Count];
 
 			for(int i = 0; i < context.Arguments.Count; i++)
-				result[i] = _client.BrowseAsync(context.Arguments[i], cancellation);
+				result[i] = _client.BrowseAsync(context.Arguments[i], options, cancellation);
 		}
 
 		var total = 0;
@@ -36,13 +56,17 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 			if(result[i] == null)
 				continue;
 
+			#if NET10_0_OR_GREATER
+			var nodes = result[i].OrderBy(node => node.Name);
+			#else
+			var nodes = result[i];
+			#endif
+
 			var count = 0;
-			await foreach(var node in result[i])
+			await foreach(var node in nodes)
 			{
 				++count;
-
-				if(!node.IsBuiltin)
-					context.Output.WriteLine(Dump(node));
+				Dump(context.Output, node);
 			}
 
 			total += count;
@@ -62,27 +86,38 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 		return result.Length == 1 ? result[0] : result;
 	}
 
-	private static CommandOutletContent Dump(OpcNode node)
+	private static void Dump(ICommandOutlet output, OpcNode node, int depth = 0)
 	{
-		if(node == null)
-			return null;
+		output.WriteLine(ToContent(node, depth));
 
-		var content = CommandOutletContent.Create()
-			.Append(CommandOutletColor.DarkCyan, $"[{node.Kind}]")
-			.Append(CommandOutletColor.DarkGreen, $" {node.Name}");
+		if(node.HasChildren(out var children))
+		{
+			foreach(var child in children)
+				Dump(output, child, depth + 1);
+		}
 
-		if(!string.IsNullOrEmpty(node.Label))
-			content.Last.Append(CommandOutletColor.DarkGray, $" {node.Label}");
+		static CommandOutletContent ToContent(OpcNode node, int depth = 0)
+		{
+			if(node == null)
+				return null;
 
-		if(node.Type != null)
-			content.Last
-				.Append(CommandOutletColor.DarkCyan, '(')
-				.Append(CommandOutletColor.DarkYellow, node.Type)
-				.Append(CommandOutletColor.DarkCyan, ')');
+			var content = CommandOutletContent.Create(depth > 0 ? new string('\t', depth) : string.Empty)
+				.Append(CommandOutletColor.DarkCyan, $"[{node.Kind}]")
+				.Append(CommandOutletColor.DarkGreen, $" {node.Name}");
 
-		if(!string.IsNullOrEmpty(node.Description) && !string.Equals(node.Label, node.Description))
-			content.Last.Append(CommandOutletColor.DarkGray, $" {node.Description}");
+			if(!string.IsNullOrEmpty(node.Label))
+				content.Last.Append(CommandOutletColor.DarkGray, $" {node.Label}");
 
-		return content;
+			if(node.Type != null)
+				content.Last
+					.Append(CommandOutletColor.DarkCyan, '(')
+					.Append(CommandOutletColor.DarkYellow, node.Type)
+					.Append(CommandOutletColor.DarkCyan, ')');
+
+			if(!string.IsNullOrEmpty(node.Description) && !string.Equals(node.Label, node.Description))
+				content.Last.Append(CommandOutletColor.DarkGray, $" {node.Description}");
+
+			return content;
+		}
 	}
 }
