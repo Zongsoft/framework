@@ -40,14 +40,33 @@ namespace Zongsoft.Externals.Opc;
 
 partial class OpcClient
 {
+	#region 公共方法
 	public IAsyncEnumerable<OpcNode> BrowseAsync(CancellationToken cancellation = default) => this.BrowseAsync(null, BrowseOptions.Default, cancellation);
 	public IAsyncEnumerable<OpcNode> BrowseAsync(BrowseOptions options, CancellationToken cancellation = default) => this.BrowseAsync(null, options, cancellation);
 	public IAsyncEnumerable<OpcNode> BrowseAsync(string path, CancellationToken cancellation = default) => this.BrowseAsync(path, BrowseOptions.Default, cancellation);
 	public IAsyncEnumerable<OpcNode> BrowseAsync(string path, BrowseOptions options, CancellationToken cancellation = default)
 	{
-		return BrowseRecursiveAsync(this.GetSession(), options, [ GetNodeId(path) ], cancellation);
-	}
+		return BrowseRecursiveAsync(this.GetSession(), options, [GetNodeId(path)], cancellation);
 
+		static NodeId GetNodeId(string path)
+		{
+			if(string.IsNullOrEmpty(path))
+				return ObjectIds.ObjectsFolder;
+			if(path == "/")
+				return ObjectIds.RootFolder;
+			if(path.Equals("/Objects", StringComparison.OrdinalIgnoreCase))
+				return ObjectIds.ObjectsFolder;
+			if(path.Equals("/Types", StringComparison.OrdinalIgnoreCase))
+				return ObjectIds.TypesFolder;
+			if(path.Equals("/Views", StringComparison.OrdinalIgnoreCase))
+				return ObjectIds.ViewsFolder;
+
+			return NodeId.Parse(path);
+		}
+	}
+	#endregion
+
+	#region 私有方法
 	private static async IAsyncEnumerable<OpcNode> BrowseRecursiveAsync(Session session, BrowseOptions options, IEnumerable<NodeId> nodeIds, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 	{
 		if(session == null || nodeIds == null)
@@ -114,22 +133,6 @@ partial class OpcClient
 			.Select(reference => (NodeId)reference.NodeId);
 	}
 
-	private static NodeId GetNodeId(string path)
-	{
-		if(string.IsNullOrEmpty(path))
-			return ObjectIds.ObjectsFolder;
-		if(path == "/")
-			return ObjectIds.RootFolder;
-		if(path.Equals("/Objects", StringComparison.OrdinalIgnoreCase))
-			return ObjectIds.ObjectsFolder;
-		if(path.Equals("/Types", StringComparison.OrdinalIgnoreCase))
-			return ObjectIds.TypesFolder;
-		if(path.Equals("/Views", StringComparison.OrdinalIgnoreCase))
-			return ObjectIds.ViewsFolder;
-
-		return NodeId.Parse(path);
-	}
-
 	private static BrowseDescription GetBrowseArgument(NodeId nodeId, NodeClass @class, bool includeSubtypes = false) => new()
 	{
 		NodeId = nodeId,
@@ -171,6 +174,7 @@ partial class OpcClient
 				reference.DisplayName?.ToString()
 			);
 	}
+	#endregion
 
 	#region 嵌套子类
 	/// <summary>表示浏览选项的类。</summary>
