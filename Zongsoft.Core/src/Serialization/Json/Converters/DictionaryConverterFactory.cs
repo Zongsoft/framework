@@ -51,6 +51,7 @@ public class DictionaryConverterFactory(TextSerializationOptions options) : Json
 		public override IDictionary Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
 			string key = null;
+			var depth = reader.CurrentDepth;
 			IDictionary dictionary = type.IsAbstract ? new Dictionary<string, object>() : (IDictionary)Activator.CreateInstance(type);
 
 			while(reader.Read())
@@ -80,6 +81,10 @@ public class DictionaryConverterFactory(TextSerializationOptions options) : Json
 						dictionary[key] = ObjectConverter.Default.Read(ref reader, typeof(object[]), options);
 						break;
 				}
+
+				//确保不会超读
+				if(reader.TokenType == JsonTokenType.EndObject && reader.CurrentDepth == depth)
+					break;
 			}
 
 			return dictionary;
@@ -131,6 +136,7 @@ public class DictionaryConverterFactory(TextSerializationOptions options) : Json
 		public override IDictionary<TKey, TValue> Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
 			TKey key = default;
+			var depth = reader.CurrentDepth;
 			var dictionary = new Dictionary<TKey, TValue>();
 
 			while(reader.Read())
@@ -163,6 +169,10 @@ public class DictionaryConverterFactory(TextSerializationOptions options) : Json
 						dictionary[key] = Common.Convert.ConvertValue(ObjectConverter.Default.Read(ref reader, typeof(object[]), options), default(TValue));
 						break;
 				}
+
+				//确保不会超读
+				if(reader.TokenType == JsonTokenType.EndObject && reader.CurrentDepth == depth)
+					break;
 			}
 
 			return dictionary;

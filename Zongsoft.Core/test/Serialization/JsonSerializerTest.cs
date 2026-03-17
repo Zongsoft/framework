@@ -17,7 +17,7 @@ public class JsonSerializerTest
 	private const string STRING = nameof(String);
 
 	[Fact]
-	public void TestSerialize()
+	public void TestModel()
 	{
 		var user = CreateUser();
 		var json = Serializer.Json.Serialize(user);
@@ -41,7 +41,7 @@ public class JsonSerializerTest
 	}
 
 	[Fact]
-	public void TestSerializeDataDictionary()
+	public void TestDataDictionary()
 	{
 		var dictionary = DataDictionary.GetDictionary(CreateUser());
 		var json = Serializer.Json.Serialize(dictionary);
@@ -53,7 +53,7 @@ public class JsonSerializerTest
 	}
 
 	[Fact]
-	public void TestSerializeClassicDictionary()
+	public void TestClassicDictionary()
 	{
 		var dictionary = new Hashtable
 		{
@@ -110,7 +110,7 @@ public class JsonSerializerTest
 	}
 
 	[Fact]
-	public void TestSerializeGenericDictionary1()
+	public void TestGenericDictionary1()
 	{
 		var dictionary = new Dictionary<string, object>
 		{
@@ -166,7 +166,7 @@ public class JsonSerializerTest
 	}
 
 	[Fact]
-	public void TestSerializeGenericDictionary2()
+	public void TestGenericDictionary2()
 	{
 		var dictionary = new Dictionary<string, Gender>()
 		{
@@ -189,26 +189,92 @@ public class JsonSerializerTest
 	}
 
 	[Fact]
-	public void TestSerializeTypedGenericDictionary()
+	public void TestTypedGenericDictionary()
 	{
-		var dictionary = new Dictionary<string, Gender>()
+		var source = new Dictionary<string, Gender>()
 		{
 			{ nameof(Gender.Male), Gender.Male },
 			{ nameof(Gender.Female), Gender.Female },
 		};
 
-		var json = Serializer.Json.Serialize(dictionary, Serializer.Json.Options.Typified());
+		var json = Serializer.Json.Serialize(source, Serializer.Json.Options.Typified());
 		Assert.NotNull(json);
 		Assert.NotEmpty(json);
 
-		var result = Serializer.Json.Deserialize<Dictionary<string, Gender>>(json, Serializer.Json.Options.Typified());
-		Assert.NotNull(result);
-		Assert.NotEmpty(result);
-		Assert.Equal(2, result.Count);
-		Assert.True(result.TryGetValue(nameof(Gender.Male), out var male));
+		var target = Serializer.Json.Deserialize<Dictionary<string, Gender>>(json, Serializer.Json.Options.Typified());
+		Assert.NotNull(target);
+		Assert.NotEmpty(target);
+		Assert.Equal(2, target.Count);
+		Assert.True(target.TryGetValue(nameof(Gender.Male), out var male));
 		Assert.Equal(Gender.Male, male);
-		Assert.True(result.TryGetValue(nameof(Gender.Female), out var female));
+		Assert.True(target.TryGetValue(nameof(Gender.Female), out var female));
 		Assert.Equal(Gender.Female, female);
+	}
+
+	[Fact]
+	public void TestWrappedGenericDictionary()
+	{
+		var source = new GenericDictionaryWrapper()
+		{
+			Identifier = 100,
+			Name = $"{nameof(GenericDictionaryWrapper)}.{nameof(GenericDictionaryWrapper.Name)}",
+			Tags = new Dictionary<string, GenericDictionaryWrapper.Tag>()
+			{
+				{ "A", new("default", "Tag#1") },
+				{ "B", new("default", "Tag#2") },
+				{ "C", new("default", "Tag#3") },
+			},
+		};
+
+		var json = Serializer.Json.Serialize(source);
+		Assert.NotNull(json);
+		Assert.NotEmpty(json);
+
+		var target = Serializer.Json.Deserialize<GenericDictionaryWrapper>(json);
+		Assert.NotNull(target);
+		Assert.NotNull(target.Tags);
+		Assert.NotEmpty(target.Tags);
+		Assert.Equal(source.Tags.Count, target.Tags.Count);
+
+		foreach(var entry in source.Tags)
+		{
+			Assert.True(target.Tags.TryGetValue(entry.Key, out var tag));
+			Assert.Equal(entry.Value.Scope, tag.Scope);
+			Assert.Equal(entry.Value.Value, tag.Value);
+		}
+	}
+
+	[Fact]
+	public void TestWrappedTypedGenericDictionary()
+	{
+		var source = new GenericDictionaryWrapper()
+		{
+			Identifier = 100,
+			Name = $"{nameof(GenericDictionaryWrapper)}.{nameof(GenericDictionaryWrapper.Name)}",
+			Tags = new Dictionary<string, GenericDictionaryWrapper.Tag>()
+			{
+				{ "A", new("default", "Tag#1") },
+				{ "B", new("default", "Tag#2") },
+				{ "C", new("default", "Tag#3") },
+			},
+		};
+
+		var json = Serializer.Json.Serialize(source, Serializer.Json.Options.Typified());
+		Assert.NotNull(json);
+		Assert.NotEmpty(json);
+
+		var target = Serializer.Json.Deserialize<GenericDictionaryWrapper>(json, Serializer.Json.Options.Typified());
+		Assert.NotNull(target);
+		Assert.NotNull(target.Tags);
+		Assert.NotEmpty(target.Tags);
+		Assert.Equal(source.Tags.Count, target.Tags.Count);
+
+		foreach(var entry in source.Tags)
+		{
+			Assert.True(target.Tags.TryGetValue(entry.Key, out var tag));
+			Assert.Equal(entry.Value.Scope, tag.Scope);
+			Assert.Equal(entry.Value.Value, tag.Value);
+		}
 	}
 
 	[Fact]
@@ -370,11 +436,11 @@ public class JsonSerializerTest
 		Assert.Null(array[2]);
 	}
 
-	private static IUser CreateUser() => Model.Build<IUser>(p =>
+	private static IUser CreateUser() => Model.Build<IUser>(user =>
 	{
-		p.Identifier = new Zongsoft.Components.Identifier(typeof(IUser), 100);
-		p.Name = "Popeye";
-		p.Nickname = "钟少";
+		user.Identifier = new Zongsoft.Components.Identifier(typeof(IUser), 100);
+		user.Name = "Popeye";
+		user.Nickname = "钟少";
 	});
 
 	private static Credential CreateCredential() => new()
@@ -384,6 +450,26 @@ public class JsonSerializerTest
 		Expiration = TimeSpan.FromHours(4),
 		User = CreateUser(),
 	};
+
+	public class GenericDictionaryWrapper
+	{
+		public int Identifier { get; set; }
+		public string Name { get; set; }
+		public Dictionary<string, Tag> Tags { get; set; }
+
+		public struct Tag
+		{
+			public Tag(string scope, string value)
+			{
+				this.Scope = scope;
+				this.Value = value;
+			}
+
+			public string Scope { get; set; }
+			public string Value { get; set; }
+			public readonly override string ToString() => $"{this.Scope}:{this.Value}";
+		}
+	}
 
 	public class Credential : IEquatable<Credential>
 	{
