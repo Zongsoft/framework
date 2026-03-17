@@ -412,6 +412,63 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task InsertWithDepartmentsAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var model = Model.Build<Branch>(model => {
+			model.TenantId = 1;
+			model.BranchId = 10;
+			model.BranchNo = "B01";
+			model.Name = "My Branch";
+			model.Departments =
+			[
+				Model.Build<Department>(department => {
+					department.TenantId = model.TenantId;
+					department.BranchId = model.BranchId;
+					department.DepartmentNo = "A1";
+					department.Name = "MyDepartment#1";
+				}),
+				Model.Build<Department>(department => {
+					department.TenantId = model.TenantId;
+					department.BranchId = model.BranchId;
+					department.DepartmentNo = "A2";
+					department.Name = "MyDepartment#2";
+				}),
+			];
+		});
+
+		var count = await accessor.InsertAsync(model, $"*,{nameof(model.Departments)}{{*}}", DataInsertOptions.SuppressSequence());
+		Assert.Equal(3, count);
+		Assert.NotNull(model.Departments);
+		Assert.NotEmpty(model.Departments);
+		foreach(var department in model.Departments)
+			Assert.True(department.DepartmentId > 0);
+
+		var departments = accessor.SelectAsync<Department>(
+			Condition.Equal(nameof(Department.TenantId), model.TenantId) &
+			Condition.Equal(nameof(Department.BranchId), model.BranchId));
+
+		await foreach(var department in departments)
+		{
+			Assert.NotNull(department);
+			Assert.True(department.DepartmentId > 0);
+			Assert.Equal(model.TenantId, department.TenantId);
+			Assert.Equal(model.BranchId, department.BranchId);
+			Assert.NotNull(department.DepartmentNo);
+			Assert.NotEmpty(department.DepartmentNo);
+			Assert.NotNull(department.Name);
+			Assert.NotEmpty(department.Name);
+		}
+
+		await accessor.DeleteAsync<Branch>(
+			Condition.Equal(nameof(Department.TenantId), model.TenantId) &
+			Condition.Equal(nameof(Department.BranchId), model.BranchId), nameof(Branch.Departments));
+	}
+
+	[Fact]
 	public async Task InsertManyAsync()
 	{
 		const int COUNT = 100;
@@ -704,6 +761,70 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 
 		await accessor.DeleteAsync<RoleModel>(Condition.Between(nameof(RoleModel.RoleId), ROLE_OFFSET, ROLE_OFFSET + models.Length - 1));
 		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), ROLE_OFFSET, ROLE_OFFSET + models.Length - 1));
+	}
+
+	[Fact]
+	public async Task InsertManyWithDepartmentsAsync()
+	{
+		const int COUNT = 10;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var models = Model.Build<Branch>(COUNT, (model, index) => {
+			model.TenantId = 1;
+			model.BranchId = (uint)(index + 1);
+			model.BranchNo = $"B{index + 1}";
+			model.Name = $"My Branch #{index + 1}";
+			model.Departments =
+			[
+				Model.Build<Department>(department => {
+					department.TenantId = model.TenantId;
+					department.BranchId = model.BranchId;
+					department.DepartmentNo = "A1";
+					department.Name = $"MyDepartment#1@{model.BranchNo}";
+				}),
+				Model.Build<Department>(department => {
+					department.TenantId = model.TenantId;
+					department.BranchId = model.BranchId;
+					department.DepartmentNo = "A2";
+					department.Name = $"MyDepartment#2@{model.BranchNo}";
+				}),
+			];
+		}).ToArray();
+
+		var count = await accessor.InsertManyAsync(models, $"*,{nameof(Branch.Departments)}{{*}}", DataInsertOptions.SuppressSequence());
+		Assert.Equal(3 * COUNT, count);
+
+		foreach(var model in models)
+		{
+			Assert.NotNull(model);
+			Assert.NotNull(model.Departments);
+			Assert.NotEmpty(model.Departments);
+			foreach(var department in model.Departments)
+				Assert.True(department.DepartmentId > 0);
+		}
+
+		var branchIds = models.Select(model => model.BranchId).ToArray();
+
+		var departments = accessor.SelectAsync<Department>(
+			Condition.Equal(nameof(Department.TenantId), 1) &
+			Condition.In(nameof(Department.BranchId), branchIds));
+
+		await foreach(var department in departments)
+		{
+			Assert.NotNull(department);
+			Assert.True(department.DepartmentId > 0);
+			Assert.NotNull(department.DepartmentNo);
+			Assert.NotEmpty(department.DepartmentNo);
+			Assert.NotNull(department.Name);
+			Assert.NotEmpty(department.Name);
+		}
+
+		await accessor.DeleteAsync<Branch>(
+			Condition.Equal(nameof(Department.TenantId), 1) &
+			Condition.In(nameof(Department.BranchId), branchIds), nameof(Branch.Departments));
 	}
 
 	void IDisposable.Dispose()
