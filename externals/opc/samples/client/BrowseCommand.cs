@@ -9,8 +9,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Opc.Samples;
 
-[CommandOption(INCLUDEBUILTINS_OPTION, 'b', typeof(bool))]
-[CommandOption(INCLUDESUBTYPES_OPTION, 's', typeof(bool))]
+[CommandOption(INCLUDE_BUILTINS_OPTION, 'b', typeof(bool))]
+[CommandOption(INCLUDE_SUBTYPES_OPTION, 's', typeof(bool))]
 [CommandOption(HIERARCHICALLY_OPTION, 'h', typeof(bool), DefaultValue = true)]
 [CommandOption(KIND_OPTION, 'k', typeof(OpcNodeKind), DefaultValue = OpcNodeKind.Object | OpcNodeKind.Variable)]
 internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandContext>("Browse")
@@ -18,8 +18,8 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 	#region 常量定义
 	private const string KIND_OPTION = "kind";
 	private const string HIERARCHICALLY_OPTION = "hierarchically";
-	private const string INCLUDEBUILTINS_OPTION = "include-builtins";
-	private const string INCLUDESUBTYPES_OPTION = "include-subtypes";
+	private const string INCLUDE_BUILTINS_OPTION = "include-builtins";
+	private const string INCLUDE_SUBTYPES_OPTION = "include-subtypes";
 	#endregion
 
 	private readonly OpcClient _client = client ?? throw new ArgumentNullException(nameof(client));
@@ -33,8 +33,8 @@ internal sealed class BrowseCommand(OpcClient client) : CommandBase<CommandConte
 			context.Options.GetValue<OpcNodeKind>(KIND_OPTION),
 			context.Options.Switch(HIERARCHICALLY_OPTION))
 		{
-			IncludeBuiltins = context.Options.Switch(INCLUDEBUILTINS_OPTION),
-			IncludeSubtypes = context.Options.Switch(INCLUDESUBTYPES_OPTION),
+			IncludeBuiltins = context.Options.Switch(INCLUDE_BUILTINS_OPTION),
+			IncludeSubtypes = context.Options.Switch(INCLUDE_SUBTYPES_OPTION),
 		};
 
 		if(context.Arguments.IsEmpty)

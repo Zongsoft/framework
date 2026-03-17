@@ -408,7 +408,7 @@ partial class OpcServer
 				SymbolicName = name,
 				BrowseName = new QualifiedName(name, this.NamespaceIndex),
 				DisplayName = name,
-				ReferenceTypeId = type.NodeId,
+				ReferenceTypeId = ReferenceTypeIds.HasComponent,
 				TypeDefinitionId = type.NodeId,
 			};
 
@@ -437,7 +437,7 @@ partial class OpcServer
 					SymbolicName = $"{type.Name}Type",
 					BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
 					DisplayName = $"{type.Namespace}.{type.Name}",
-					SuperTypeId = ReferenceTypeIds.HasSubtype,
+					SuperTypeId = ObjectTypeIds.BaseObjectType,
 				};
 
 				foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
@@ -469,8 +469,8 @@ partial class OpcServer
 				DisplayName = property.Name,
 				DataType = Utility.GetDataType(elementType ?? propertyType, out var rank),
 				ValueRank = rank,
-				AccessLevel = AccessLevels.CurrentRead,
-				UserAccessLevel = AccessLevels.CurrentRead,
+				AccessLevel = AccessLevels.CurrentReadOrWrite,
+				UserAccessLevel = AccessLevels.CurrentReadOrWrite,
 				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
 				OnWriteValue = this.OnWriteValue,
 			};
