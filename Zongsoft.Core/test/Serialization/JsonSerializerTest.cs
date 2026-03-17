@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 using Xunit;
 
+using Zongsoft.Tests;
 using Zongsoft.Data;
 using Zongsoft.Security.Privileges;
 
@@ -109,7 +110,7 @@ public class JsonSerializerTest
 	}
 
 	[Fact]
-	public void TestSerializeGenericDictionary()
+	public void TestSerializeGenericDictionary1()
 	{
 		var dictionary = new Dictionary<string, object>
 		{
@@ -162,6 +163,52 @@ public class JsonSerializerTest
 		Assert.NotNull(result2);
 		Assert.NotEmpty(result2);
 		Assert.Equal(((IModel)model).GetCount(), result2.Count);
+	}
+
+	[Fact]
+	public void TestSerializeGenericDictionary2()
+	{
+		var dictionary = new Dictionary<string, Gender>()
+		{
+			{ nameof(Gender.Male), Gender.Male },
+			{ nameof(Gender.Female), Gender.Female },
+		};
+
+		var json = Serializer.Json.Serialize(dictionary);
+		Assert.NotNull(json);
+		Assert.NotEmpty(json);
+
+		var result = Serializer.Json.Deserialize<Dictionary<string, Gender>>(json);
+		Assert.NotNull(result);
+		Assert.NotEmpty(result);
+		Assert.Equal(2, result.Count);
+		Assert.True(result.TryGetValue(nameof(Gender.Male), out var male));
+		Assert.Equal(Gender.Male, male);
+		Assert.True(result.TryGetValue(nameof(Gender.Female), out var female));
+		Assert.Equal(Gender.Female, female);
+	}
+
+	[Fact]
+	public void TestSerializeTypedGenericDictionary()
+	{
+		var dictionary = new Dictionary<string, Gender>()
+		{
+			{ nameof(Gender.Male), Gender.Male },
+			{ nameof(Gender.Female), Gender.Female },
+		};
+
+		var json = Serializer.Json.Serialize(dictionary, Serializer.Json.Options.Typified());
+		Assert.NotNull(json);
+		Assert.NotEmpty(json);
+
+		var result = Serializer.Json.Deserialize<Dictionary<string, Gender>>(json, Serializer.Json.Options.Typified());
+		Assert.NotNull(result);
+		Assert.NotEmpty(result);
+		Assert.Equal(2, result.Count);
+		Assert.True(result.TryGetValue(nameof(Gender.Male), out var male));
+		Assert.Equal(Gender.Male, male);
+		Assert.True(result.TryGetValue(nameof(Gender.Female), out var female));
+		Assert.Equal(Gender.Female, female);
 	}
 
 	[Fact]

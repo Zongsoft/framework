@@ -96,27 +96,6 @@ partial class TextSerializationOptions
 				new Json.Converters.DataDictionaryConverterFactory(),
 				new Json.Converters.DictionaryConverterFactory(this),
 			},
-			TypeInfoResolver = new DefaultJsonTypeInfoResolver()
-			{
-				Modifiers =
-				{
-					static info =>
-					{
-						if(info.Type.IsAbstract)
-						{
-							var attributes = info.Type.GetCustomAttributes(typeof(JsonDerivedTypeAttribute), true);
-
-							if(attributes.Length > 0)
-							{
-								info.PolymorphismOptions ??= new();
-
-								for(int i = 0; i < attributes.Length; i++)
-									SetDerivedType(info.PolymorphismOptions.DerivedTypes, (JsonDerivedTypeAttribute)attributes[i]);
-							}
-						}
-					}
-				}
-			}
 		};
 
 		if(_typified)

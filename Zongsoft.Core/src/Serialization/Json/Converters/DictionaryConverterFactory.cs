@@ -154,7 +154,10 @@ public class DictionaryConverterFactory(TextSerializationOptions options) : Json
 						key = Common.Convert.ConvertValue(reader.GetString(), default(TKey));
 						break;
 					case JsonTokenType.StartObject:
-						dictionary[key] = _reader(ref reader, options);
+						if(_options.Typified)
+							dictionary[key] = (TValue)ObjectConverter.Default.Read(ref reader, typeof(TValue), options);
+						else
+							dictionary[key] = _reader(ref reader, options);
 						break;
 					case JsonTokenType.StartArray:
 						dictionary[key] = Common.Convert.ConvertValue(ObjectConverter.Default.Read(ref reader, typeof(object[]), options), default(TValue));
