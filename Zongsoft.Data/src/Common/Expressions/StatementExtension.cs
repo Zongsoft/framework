@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -59,12 +59,12 @@ public static class StatementExtension
 			if(lines != null && lines.Length > 0)
 			{
 				var index = 0;
-				var hasSequences = context.Entity.HasSequences();
+				var sequences = GetSequenceFields(statement);
 
 				foreach(var item in items)
 				{
-					if(hasSequences)
-						SetSequenceValue(context, statement, item);
+					if(sequences != null)
+						SetSequenceValue(context, sequences, item);
 
 					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
 				}
@@ -72,8 +72,9 @@ public static class StatementExtension
 		}
 		else
 		{
-			if(context.Entity.HasSequences())
-				SetSequenceValue(context, statement, context.Data);
+			var sequences = GetSequenceFields(statement);
+			if(sequences != null)
+				SetSequenceValue(context, sequences, context.Data);
 
 			Bind(context, command, context.Data, statement.Parameters);
 		}
@@ -96,12 +97,12 @@ public static class StatementExtension
 			if(lines != null && lines.Length > 0)
 			{
 				var index = 0;
-				var hasSequences = context.Entity.HasSequences();
+				var sequences = GetSequenceFields(statement);
 
 				foreach(var item in items)
 				{
-					if(hasSequences)
-						await SetSequenceValueAsync(context, statement, item, cancellation);
+					if(sequences != null)
+						await SetSequenceValueAsync(context, sequences, item, cancellation);
 
 					Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
 				}
@@ -109,8 +110,9 @@ public static class StatementExtension
 		}
 		else
 		{
-			if(context.Entity.HasSequences())
-				await SetSequenceValueAsync(context, statement, context.Data, cancellation);
+			var sequences = GetSequenceFields(statement);
+			if(sequences != null)
+				await SetSequenceValueAsync(context, sequences, context.Data, cancellation);
 
 			Bind(context, command, context.Data, statement.Parameters);
 		}
@@ -241,11 +243,9 @@ public static class StatementExtension
 		return TryGetParameterValue(data, member, dbType, out var value) ? value : ((IDataEntitySimplexProperty)member.Token.Property).DefaultValue;
 	}
 
-	private static void SetSequenceValue(IDataMutateContextBase context, IStatementBase statement, object data)
+	private static List<FieldIdentifier> GetSequenceFields(IStatementBase statement)
 	{
-		if(data == null)
-			return;
-
+		List<FieldIdentifier> result = null;
 		IEnumerable<FieldIdentifier> fields = statement switch
 		{
 			InsertStatement insertion => insertion.Fields,
@@ -254,6 +254,28 @@ public static class StatementExtension
 		};
 
 		foreach(var field in fields)
+		{
+			if(field.Token.Property.IsSimplex(out var simplex))
+			{
+				var sequence = simplex.Sequence;
+
+				if(sequence != null && sequence.IsExternal)
+				{
+					result ??= [];
+					result.Add(field);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	private static void SetSequenceValue(IDataMutateContextBase context, IEnumerable<FieldIdentifier> sequenceFileds , object data)
+	{
+		if(data == null || sequenceFileds == null)
+			return;
+
+		foreach(var field in sequenceFileds)
 		{
 			if(field.Token.Property.IsSimplex(out var simplex))
 			{
@@ -273,19 +295,12 @@ public static class StatementExtension
 		}
 	}
 
-	private static async ValueTask SetSequenceValueAsync(IDataMutateContextBase context, IStatementBase statement, object data, CancellationToken cancellation)
+	private static async ValueTask SetSequenceValueAsync(IDataMutateContextBase context, IEnumerable<FieldIdentifier> sequenceFileds, object data, CancellationToken cancellation)
 	{
-		if(data == null)
+		if(data == null || sequenceFileds == null)
 			return;
 
-		IEnumerable<FieldIdentifier> fields = statement switch
-		{
-			InsertStatement insertion => insertion.Fields,
-			UpsertStatement upsertion => upsertion.Fields,
-			_ => [],
-		};
-
-		foreach(var field in fields)
+		foreach(var field in sequenceFileds)
 		{
 			if(field.Token.Property.IsSimplex(out var simplex))
 			{
