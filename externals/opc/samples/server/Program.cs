@@ -195,7 +195,7 @@ internal static class Program
 		prefabs.Object("Person", typeof(Person), new Person()
 		{
 			Name = "Popeye",
-			Gender = true,
+			Gender = Gender.Male,
 			Birthday = new DateTime(2000, 1, 10),
 			OfficeAddress = new()
 			{
@@ -250,7 +250,7 @@ internal static class Program
 	public class Person
 	{
 		public string Name { get; set; }
-		public bool? Gender { get; set; }
+		public Gender? Gender { get; set; }
 		public DateTime? Birthday { get; set; }
 		public Address? HomeAddress { get; set; }
 		public Address? OfficeAddress { get; set; }
@@ -258,11 +258,17 @@ internal static class Program
 
 	public struct Address
 	{
-		public int Country { get; set; }
+		public int Country;
 		public string Province { get; set; }
 		public string City { get; set; }
 		public string Street { get; set; }
 		public string Detail { get; set; }
 		public string PostalCode { get; set; }
+	}
+
+	public enum Gender : byte
+	{
+		Male = 1,
+		Female = 0,
 	}
 }

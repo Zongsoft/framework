@@ -392,10 +392,10 @@ partial class OpcServer
 			return variable;
 		}
 
-		public BaseObjectState DefineObject(object instance, string name = null) => this.DefineObject(null, null, instance, name);
-		public BaseObjectState DefineObject(NodeState parent, object instance, string name = null) => this.DefineObject(parent, null, instance, name);
-		public BaseObjectState DefineObject(NodeId identifier, object instance, string name = null) => this.DefineObject(null, identifier, instance, name);
-		public BaseObjectState DefineObject(NodeState parent, NodeId identifier, object instance, string name = null)
+		public BaseInstanceState DefineObject(object instance, string name = null) => this.DefineObject(null, null, instance, name);
+		public BaseInstanceState DefineObject(NodeState parent, object instance, string name = null) => this.DefineObject(parent, null, instance, name);
+		public BaseInstanceState DefineObject(NodeId identifier, object instance, string name = null) => this.DefineObject(null, identifier, instance, name);
+		public BaseInstanceState DefineObject(NodeState parent, NodeId identifier, object instance, string name = null)
 		{
 			if(instance == null)
 				return null;
@@ -404,6 +404,24 @@ partial class OpcServer
 				name = instance.GetType().Name;
 
 			var typeDefinition = this.DefineType(instance.GetType());
+
+			if(instance.GetType().IsEnum)
+			{
+				var state = new DataItemState(parent)
+				{
+					NodeId = identifier,
+					SymbolicName = name,
+					BrowseName = new(name, this.NamespaceIndex),
+					DisplayName = name,
+					DataType = typeDefinition.NodeId,
+					TypeDefinitionId = typeDefinition.NodeId,
+					Value = instance,
+					ValueRank = ValueRanks.Scalar,
+				};
+
+				return state;
+			}
+
 			var instanceDefinition = new BaseObjectState(parent)
 			{
 				NodeId = identifier,
@@ -420,71 +438,182 @@ partial class OpcServer
 
 		public BaseTypeState DefineType(Type type)
 		{
+			if(type == null)
+				return null;
+
+			var elementType = TypeExtension.GetElementType(type);
+			type = TypeExtension.IsNullable(elementType ?? type, out var underlyingType) ? underlyingType : (elementType ?? type);
+
 			lock(this.Lock)
 			{
 				if(_types.TryGetValue(type, out var identifer))
 					return this.FindPredefinedNode(identifer, null) as BaseTypeState;
 
 				if(type.IsValueType)
-				{
-					var structure = new StructureDefinition()
-					{
-						BaseDataType = DataTypeIds.Structure,
-						StructureType = StructureType.Structure,
-					};
+					return type.IsEnum ? this.DefineEnumeration(type) : this.DefineDataType(type);
 
-					foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
-					{
-						structure.Fields.Add(new StructureField()
+				return this.DefineObjectType(type);
+			}
+		}
+
+		private DataTypeState DefineEnumeration(Type type)
+		{
+			EnumDefinition enumeration = new EnumDefinition();
+			var entries = EnumUtility.GetEnumEntries(type, true);
+			var enumNames = new LocalizedText[entries.Length];
+			var enumValues = new EnumValueType[entries.Length];
+
+			for(int i = 0; i < entries.Length; i++)
+			{
+				var value = (long)System.Convert.ChangeType(entries[i].Value, typeof(long));
+
+				enumeration.Fields.Add(new()
+				{
+					Name = entries[i].Name,
+					DisplayName = entries[i].Name,
+					Description = entries[i].Description,
+					Value = value,
+				});
+
+				enumNames[i] = new(entries[i].Name);
+				enumValues[i] = new()
+				{
+					Value = value,
+					DisplayName = entries[i].Name,
+					Description = entries[i].Description,
+				};
+			}
+
+			var definition = new DataTypeState()
+			{
+				NodeId = this.GenerateId(),
+				SymbolicName = $"{type.Name}DataType",
+				BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
+				DisplayName = $"{type.Namespace}.{type.Name}",
+				SuperTypeId = DataTypeIds.Enumeration,
+				DataTypeDefinition = new(enumeration),
+			};
+
+			var enumStringsProperty = new PropertyState(definition)
+			{
+				NodeId = this.GenerateId(),
+				BrowseName = new QualifiedName("EnumStrings", 0),
+				DisplayName = "EnumStrings",
+				DataType = DataTypeIds.LocalizedText,
+				ValueRank = ValueRanks.OneDimension,
+				ArrayDimensions = new ReadOnlyList<uint>([(uint)enumNames.Length]),
+				TypeDefinitionId = VariableTypeIds.PropertyType,
+				AccessLevel = AccessLevels.CurrentRead,
+				UserAccessLevel = AccessLevels.CurrentRead,
+				Value = enumNames,
+				MinimumSamplingInterval = 0,
+				Historizing = false
+			};
+
+			definition.AddChild(enumStringsProperty);
+			definition.AddReference(ReferenceTypes.HasProperty, false, enumStringsProperty.NodeId);
+			enumStringsProperty.AddReference(ReferenceTypes.HasProperty, true, definition.NodeId);
+
+			var enumValuesProperty = new PropertyState(definition)
+			{
+				NodeId = this.GenerateId(),
+				BrowseName = new QualifiedName("EnumValues", 0),
+				DisplayName = "EnumValues",
+				DataType = DataTypeIds.EnumValueType,
+				ValueRank = ValueRanks.OneDimension,
+				ArrayDimensions = new ReadOnlyList<uint>([(uint)enumValues.Length]),
+				TypeDefinitionId = VariableTypeIds.PropertyType,
+				AccessLevel = AccessLevels.CurrentRead,
+				UserAccessLevel = AccessLevels.CurrentRead,
+				Value = enumValues,
+				MinimumSamplingInterval = 0,
+				Historizing = false
+			};
+
+			definition.AddChild(enumValuesProperty);
+			definition.AddReference(ReferenceTypes.HasProperty, false, enumValuesProperty.NodeId);
+			enumValuesProperty.AddReference(ReferenceTypes.HasProperty, true, definition.NodeId);
+
+			if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
+				this.AddPredefinedNode(this.SystemContext, definition);
+
+			_types.TryAdd(type, definition.NodeId);
+			return definition;
+		}
+
+		private DataTypeState DefineDataType(Type type)
+		{
+			var structure = new StructureDefinition()
+			{
+				BaseDataType = DataTypeIds.Structure,
+				StructureType = StructureType.Structure,
+			};
+
+			foreach(var member in type.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+			{
+				switch(member)
+				{
+					case FieldInfo field:
+						if(field.IsInitOnly)
+							break;
+
+						structure.Fields.Add(new()
+						{
+							Name = field.Name,
+							DataType = Utility.GetDataType(field.FieldType, out var fieldRank),
+							ValueRank = fieldRank,
+						});
+						break;
+					case PropertyInfo property:
+						structure.Fields.Add(new()
 						{
 							Name = property.Name,
-							DataType = Utility.GetDataType(property.PropertyType, out var rank),
-							ValueRank = rank,
+							DataType = Utility.GetDataType(property.PropertyType, out var propertyRank),
+							ValueRank = propertyRank,
 						});
-					}
-
-					var typeState = new DataTypeState()
-					{
-						NodeId = this.GenerateId(),
-						SymbolicName = $"{type.Name}Type",
-						BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
-						DisplayName = $"{type.Namespace}.{type.Name}",
-						SuperTypeId = DataTypeIds.Structure,
-						DataTypeDefinition = new(structure),
-					};
-
-					typeState.AddReference(ReferenceTypes.Organizes, true, DataTypeIds.Structure);
-
-					if(!this.PredefinedNodes.ContainsKey(typeState.NodeId))
-						this.AddPredefinedNode(this.SystemContext, typeState);
-
-					_types.TryAdd(type, typeState.NodeId);
-					return typeState;
+						break;
 				}
-
-				var definition = new BaseObjectTypeState()
-				{
-					NodeId = this.GenerateId(),
-					IsAbstract = type.IsAbstract,
-					SymbolicName = $"{type.Name}Type",
-					BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
-					DisplayName = $"{type.Namespace}.{type.Name}",
-					SuperTypeId = ObjectTypeIds.BaseObjectType,
-				};
-
-				foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
-				{
-					this.DefineProperty(definition, property);
-				}
-
-				definition.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectTypesFolder);
-
-				if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
-					this.AddPredefinedNode(this.SystemContext, definition);
-
-				_types.TryAdd(type, definition.NodeId);
-				return definition;
 			}
+
+			var definition = new DataTypeState()
+			{
+				NodeId = this.GenerateId(),
+				SymbolicName = $"{type.Name}DataType",
+				BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
+				DisplayName = $"{type.Namespace}.{type.Name}",
+				SuperTypeId = DataTypeIds.Structure,
+				DataTypeDefinition = new(structure),
+			};
+
+			if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
+				this.AddPredefinedNode(this.SystemContext, definition);
+
+			_types.TryAdd(type, definition.NodeId);
+			return definition;
+		}
+
+		private BaseObjectTypeState DefineObjectType(Type type)
+		{
+			var definition = new BaseObjectTypeState()
+			{
+				NodeId = this.GenerateId(),
+				IsAbstract = type.IsAbstract,
+				SymbolicName = $"{type.Name}Type",
+				BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
+				DisplayName = $"{type.Namespace}.{type.Name}",
+				SuperTypeId = ObjectTypeIds.BaseObjectType,
+			};
+
+			foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+			{
+				this.DefineProperty(definition, property);
+			}
+
+			if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
+				this.AddPredefinedNode(this.SystemContext, definition);
+
+			_types.TryAdd(type, definition.NodeId);
+			return definition;
 		}
 
 		private PropertyState DefineProperty(NodeState parent, PropertyInfo property)
@@ -507,7 +636,13 @@ partial class OpcServer
 				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
 			};
 
-			if(propertyState.DataType == DataTypeIds.ObjectTypeNode)
+			if(propertyState.DataType == DataTypeIds.Enumeration)
+			{
+				var typeState = this.DefineType(elementType ?? propertyType);
+				propertyState.DataType = typeState.NodeId;
+				propertyState.TypeDefinitionId = typeState.NodeId;
+			}
+			else if(propertyState.DataType == DataTypeIds.ObjectTypeNode)
 			{
 				var typeState = this.DefineType(elementType ?? propertyType);
 				propertyState.DataType = typeState.NodeId;
@@ -548,6 +683,9 @@ partial class OpcServer
 
 						instanceDefinition.AddChild(propertyState);
 					}
+				}
+				else if(dataType.DataTypeDefinition.Body is EnumDefinition enumeration)
+				{
 				}
 
 				return;
