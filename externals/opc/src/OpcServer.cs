@@ -200,6 +200,15 @@ partial class OpcServer
 		#endregion
 
 		#region 重写方法
+		protected override ServerProperties LoadServerProperties() => new()
+		{
+			ManufacturerName = nameof(Zongsoft),
+			ProductUri = "http://zongsoft.com/externals/opc",
+			ProductName = $"{typeof(OpcServer).Namespace}.{nameof(OpcServer)}",
+			SoftwareVersion = typeof(OpcServer).Assembly.GetName().Version.ToString(),
+			BuildDate = System.IO.File.GetCreationTime(typeof(OpcServer).Assembly.Location),
+		};
+
 		protected override void OnServerStarted(IServerInternal server)
 		{
 			//设置服务器的启动时间
