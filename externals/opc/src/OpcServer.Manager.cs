@@ -49,7 +49,6 @@ partial class OpcServer
 		private volatile uint _nodeId;
 		private OpcServerOptions.StorageOptions _options;
 		private IList<IReference> _objectReferences;
-		private IList<IReference> _serverReferences;
 		private Dictionary<Type, NodeId> _types = new();
 		#endregion
 
@@ -192,6 +191,9 @@ partial class OpcServer
 				AttributeId = Attributes.Value,
 			}).ToArray();
 
+			if(request.Length == 0)
+				yield break;
+
 			var result = new DataValue[request.Length];
 			var errors = new ServiceResult[request.Length];
 
@@ -247,6 +249,9 @@ partial class OpcServer
 				Value = new DataValue(new Variant(entry.Value), StatusCodes.Good),
 			}).ToArray();
 
+			if(request.Length == 0)
+				return [];
+
 			var errors = new ServiceResult[request.Length];
 			this.Write(this.SystemContext.OperationContext, request, errors);
 			return errors.Where(ServiceResult.IsBad).Select(err => Failure.GetFailure(err.StatusCode));
@@ -258,9 +263,6 @@ partial class OpcServer
 		{
 			if(!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out _objectReferences))
 				externalReferences[ObjectIds.ObjectsFolder] = _objectReferences = new List<IReference>();
-
-			if(!externalReferences.TryGetValue(ObjectIds.Server, out _serverReferences))
-				externalReferences[ObjectIds.Server] = _serverReferences = new List<IReference>();
 
 			base.CreateAddressSpace(externalReferences);
 		}
@@ -401,26 +403,26 @@ partial class OpcServer
 			if(string.IsNullOrEmpty(name))
 				name = instance.GetType().Name;
 
-			var type = this.DefineType(instance.GetType());
-			var state = new BaseObjectState(parent)
+			var typeDefinition = this.DefineType(instance.GetType());
+			var instanceDefinition = new BaseObjectState(parent)
 			{
 				NodeId = identifier,
 				SymbolicName = name,
-				BrowseName = new QualifiedName(name, this.NamespaceIndex),
+				BrowseName = new(name, this.NamespaceIndex),
 				DisplayName = name,
+				TypeDefinitionId = typeDefinition.NodeId,
 				ReferenceTypeId = ReferenceTypeIds.HasComponent,
-				TypeDefinitionId = type.NodeId,
 			};
 
 			var children = new List<BaseInstanceState>();
-			type.GetChildren(this.SystemContext, children);
+			typeDefinition.GetChildren(this.SystemContext, children);
 
 			foreach(var child in children)
 			{
-				this.AppendChildren(state, child);
+				this.AppendChildren(instanceDefinition, child);
 			}
 
-			return state;
+			return instanceDefinition;
 		}
 
 		public BaseObjectTypeState DefineType(Type type)
@@ -445,7 +447,9 @@ partial class OpcServer
 					this.DefineProperty(definition, property);
 				}
 
-				definition.AddReference(definition.NodeId, true, ObjectIds.ObjectTypesFolder);
+				//definition.AddReference(definition.NodeId, true, ObjectIds.ObjectTypesFolder);
+				definition.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectTypesFolder);
+
 				if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
 					this.AddPredefinedNode(this.SystemContext, definition);
 
@@ -454,23 +458,23 @@ partial class OpcServer
 			}
 		}
 
-		private PropertyState DefineProperty(BaseObjectTypeState type, PropertyInfo property)
+		private PropertyState DefineProperty(NodeState parent, PropertyInfo property)
 		{
 			var propertyType = TypeExtension.IsNullable(property.PropertyType, out var underlyingType) ? underlyingType : property.PropertyType;
 			var elementType = TypeExtension.GetCollectionElementType(propertyType);
 
-			var propertyState = new PropertyState(type)
+			var propertyState = new PropertyState(parent)
 			{
 				NodeId = this.GenerateId(),
 				ReferenceTypeId = ReferenceTypes.HasProperty,
 				TypeDefinitionId = VariableTypeIds.PropertyType,
 				SymbolicName = property.Name,
-				BrowseName = property.Name,
+				BrowseName = new(property.Name, this.NamespaceIndex),
 				DisplayName = property.Name,
 				DataType = Utility.GetDataType(elementType ?? propertyType, out var rank),
 				ValueRank = rank,
-				AccessLevel = AccessLevels.CurrentReadOrWrite,
-				UserAccessLevel = AccessLevels.CurrentReadOrWrite,
+				AccessLevel = property.CanWrite ? AccessLevels.CurrentReadOrWrite : AccessLevels.CurrentRead,
+				UserAccessLevel = property.CanWrite ? AccessLevels.CurrentReadOrWrite : AccessLevels.CurrentRead,
 				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
 				OnWriteValue = this.OnWriteValue,
 			};
@@ -488,7 +492,8 @@ partial class OpcServer
 					this.AddPredefinedNode(this.SystemContext, definition);
 			}
 
-			type.AddChild(propertyState);
+			propertyState.AddReference(ReferenceTypes.HasModellingRule, false, ObjectIds.ModellingRule_Mandatory);
+			parent.AddChild(propertyState);
 			return propertyState;
 		}
 
@@ -501,6 +506,15 @@ partial class OpcServer
 				instance.BrowseName = child.BrowseName;
 				instance.DisplayName = child.DisplayName;
 				instance.Description = child.Description;
+
+				if(replica is PropertyState property)
+				{
+					property.DataType = ((PropertyState)child).DataType;
+					property.Value = ((PropertyState)child).Value;
+					property.ValueRank = ((PropertyState)child).ValueRank;
+					property.AccessLevel = ((PropertyState)child).AccessLevel;
+					property.UserAccessLevel = ((PropertyState)child).UserAccessLevel;
+				}
 
 				owner.AddChild(instance);
 
@@ -594,7 +608,7 @@ partial class OpcServer
 			if(string.IsNullOrWhiteSpace(identifier))
 			{
 				var result = this.GenerateId(out var id);
-				name = $"{id}";
+				name = id.ToString();
 				return result;
 			}
 
@@ -603,7 +617,7 @@ partial class OpcServer
 				if(identifier.Length == 1)
 				{
 					var result = this.GenerateId(out var id);
-					name = $"{id}";
+					name = id.ToString();
 					return result;
 				}
 
