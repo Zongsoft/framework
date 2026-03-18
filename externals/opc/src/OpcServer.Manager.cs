@@ -414,14 +414,7 @@ partial class OpcServer
 				ReferenceTypeId = ReferenceTypeIds.HasComponent,
 			};
 
-			var children = new List<BaseInstanceState>();
-			typeDefinition.GetChildren(this.SystemContext, children);
-
-			foreach(var child in children)
-			{
-				this.AppendChildren(instanceDefinition, child);
-			}
-
+			this.GenerateProperties(instanceDefinition, instance);
 			return instanceDefinition;
 		}
 
@@ -447,7 +440,6 @@ partial class OpcServer
 					this.DefineProperty(definition, property);
 				}
 
-				//definition.AddReference(definition.NodeId, true, ObjectIds.ObjectTypesFolder);
 				definition.AddReference(ReferenceTypes.Organizes, true, ObjectIds.ObjectTypesFolder);
 
 				if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
@@ -476,20 +468,13 @@ partial class OpcServer
 				AccessLevel = property.CanWrite ? AccessLevels.CurrentReadOrWrite : AccessLevels.CurrentRead,
 				UserAccessLevel = property.CanWrite ? AccessLevels.CurrentReadOrWrite : AccessLevels.CurrentRead,
 				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
-				OnWriteValue = this.OnWriteValue,
 			};
 
 			if(propertyState.DataType == DataTypeIds.ObjectTypeNode)
 			{
 				var definition = this.DefineType(elementType ?? propertyType);
 				propertyState.DataType = definition.NodeId;
-				//propertyState.TypeDefinitionId = definition.NodeId;
-				//propertyState.ReferenceTypeId = definition.NodeId;
-
-				propertyState.AddReference(propertyState.NodeId, true, definition.NodeId);
-
-				if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
-					this.AddPredefinedNode(this.SystemContext, definition);
+				propertyState.TypeDefinitionId = definition.NodeId;
 			}
 
 			propertyState.AddReference(ReferenceTypes.HasModellingRule, false, ObjectIds.ModellingRule_Mandatory);
@@ -497,34 +482,65 @@ partial class OpcServer
 			return propertyState;
 		}
 
-		private void AppendChildren(BaseInstanceState owner, BaseInstanceState child)
+		private void GenerateProperties(BaseObjectState instanceDefinition, object instance)
 		{
-			var replica = child.Clone();
+			var typeDefinition = this.FindPredefinedNode(instanceDefinition.TypeDefinitionId, typeof(BaseObjectTypeState));
+			if(typeDefinition == null)
+				return;
 
-			if(replica is BaseInstanceState instance)
+			var children = new List<BaseInstanceState>();
+			typeDefinition.GetChildren(this.SystemContext, children);
+
+			foreach(var child in children)
 			{
-				instance.BrowseName = child.BrowseName;
-				instance.DisplayName = child.DisplayName;
-				instance.Description = child.Description;
-
-				if(replica is PropertyState property)
+				var propertyState = new PropertyState(instanceDefinition)
 				{
-					property.DataType = ((PropertyState)child).DataType;
-					property.Value = ((PropertyState)child).Value;
-					property.ValueRank = ((PropertyState)child).ValueRank;
-					property.AccessLevel = ((PropertyState)child).AccessLevel;
-					property.UserAccessLevel = ((PropertyState)child).UserAccessLevel;
+					BrowseName = child.BrowseName,
+					DisplayName = child.DisplayName,
+					Description = child.Description,
+					SymbolicName = child.SymbolicName,
+					TypeDefinitionId = child.NodeId,
+					ModellingRuleId = child.ModellingRuleId,
+					ReferenceTypeId = ReferenceTypeIds.HasProperty,
+					WriteMask = child.WriteMask,
+					UserWriteMask = child.UserWriteMask,
+				};
+
+				if(child is BaseVariableState state)
+				{
+					propertyState.DataType = state.DataType;
+					propertyState.ValueRank = state.ValueRank;
+					propertyState.Value = state.Value;
+					propertyState.AccessLevel = state.AccessLevel;
+					propertyState.UserAccessLevel = state.UserAccessLevel;
+					propertyState.Historizing = state.Historizing;
+					propertyState.ArrayDimensions = state.ArrayDimensions;
+					propertyState.IsValueType = state.IsValueType;
+					propertyState.MinimumSamplingInterval = state.MinimumSamplingInterval;
+
+					if(Utility.GetDataType(propertyState.DataType, propertyState.ValueRank) == typeof(object))
+					{
+						var propertyType = this.FindPredefinedNode(propertyState.DataType, typeof(BaseObjectTypeState));
+
+						if(Reflection.Reflector.TryGetValue(ref instance, child.SymbolicName, out var value))
+						{
+							var childInstance = this.DefineObject(instanceDefinition, value);
+
+							if(childInstance != null)
+							{
+								var list = new List<BaseInstanceState>();
+								childInstance.GetChildren(this.SystemContext, list);
+
+								foreach(var item in list)
+									propertyState.AddChild(item);
+							}
+						}
+					}
+					else if(Reflection.Reflector.TryGetValue(ref instance, child.SymbolicName, out var value))
+						propertyState.Value = value;
 				}
 
-				owner.AddChild(instance);
-
-				var children = new List<BaseInstanceState>();
-				child.GetChildren(this.SystemContext, children);
-
-				foreach(var node in children)
-				{
-					this.AppendChildren(instance, node);
-				}
+				instanceDefinition.AddChild(propertyState);
 			}
 		}
 
@@ -578,7 +594,6 @@ partial class OpcServer
 				Value = value,
 				StatusCode = StatusCodes.Good,
 				Timestamp = DateTime.Now,
-				OnWriteValue = this.OnWriteValue
 			};
 
 			if(valueRank == ValueRanks.OneDimension)
@@ -590,9 +605,7 @@ partial class OpcServer
 				variable.ArrayDimensions = new ReadOnlyList<uint>([0, 0]);
 			}
 
-			if(parent != null)
-				parent.AddChild(variable);
-
+			parent?.AddChild(variable);
 			return variable;
 		}
 
@@ -639,21 +652,6 @@ partial class OpcServer
 
 			name = identifier;
 			return new NodeId(identifier, this.NamespaceIndex);
-		}
-		#endregion
-
-		#region 写值处理
-		private ServiceResult OnWriteValue(ISystemContext context, NodeState node, NumericRange indexRange, QualifiedName dataEncoding,
-			ref object value,
-			ref StatusCode statusCode,
-			ref DateTime timestamp)
-		{
-			if(node is BaseVariableState variable)
-			{
-				return ServiceResult.Good;
-			}
-
-			return new ServiceResult(StatusCodes.BadNodeClassInvalid);
 		}
 		#endregion
 	}

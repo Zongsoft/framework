@@ -197,6 +197,13 @@ internal static class Program
 			Name = "Popeye",
 			Gender = true,
 			Birthday = new DateTime(2000, 1, 10),
+			OfficeAddress = new()
+			{
+				Country = 86,
+				City = "Shenzhen",
+				Province = "Guangdong",
+				PostalCode = "518000",
+			}
 		});
 
 		var variables = prefabs.Folder("variables");
