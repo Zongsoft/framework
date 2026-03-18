@@ -418,12 +418,49 @@ partial class OpcServer
 			return instanceDefinition;
 		}
 
-		public BaseObjectTypeState DefineType(Type type)
+		public BaseTypeState DefineType(Type type)
 		{
 			lock(this.Lock)
 			{
 				if(_types.TryGetValue(type, out var identifer))
-					return this.FindPredefinedNode(identifer, null) as BaseObjectTypeState;
+					return this.FindPredefinedNode(identifer, null) as BaseTypeState;
+
+				if(type.IsValueType)
+				{
+					var structure = new StructureDefinition()
+					{
+						BaseDataType = DataTypeIds.Structure,
+						StructureType = StructureType.Structure,
+					};
+
+					foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+					{
+						structure.Fields.Add(new StructureField()
+						{
+							Name = property.Name,
+							DataType = Utility.GetDataType(property.PropertyType, out var rank),
+							ValueRank = rank,
+						});
+					}
+
+					var typeState = new DataTypeState()
+					{
+						NodeId = this.GenerateId(),
+						SymbolicName = $"{type.Name}Type",
+						BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
+						DisplayName = $"{type.Namespace}.{type.Name}",
+						SuperTypeId = DataTypeIds.Structure,
+						DataTypeDefinition = new(structure),
+					};
+
+					typeState.AddReference(ReferenceTypes.Organizes, true, DataTypeIds.Structure);
+
+					if(!this.PredefinedNodes.ContainsKey(typeState.NodeId))
+						this.AddPredefinedNode(this.SystemContext, typeState);
+
+					_types.TryAdd(type, typeState.NodeId);
+					return typeState;
+				}
 
 				var definition = new BaseObjectTypeState()
 				{
@@ -472,9 +509,9 @@ partial class OpcServer
 
 			if(propertyState.DataType == DataTypeIds.ObjectTypeNode)
 			{
-				var definition = this.DefineType(elementType ?? propertyType);
-				propertyState.DataType = definition.NodeId;
-				propertyState.TypeDefinitionId = definition.NodeId;
+				var typeState = this.DefineType(elementType ?? propertyType);
+				propertyState.DataType = typeState.NodeId;
+				propertyState.TypeDefinitionId = typeState.NodeId;
 			}
 
 			propertyState.AddReference(ReferenceTypes.HasModellingRule, false, ObjectIds.ModellingRule_Mandatory);
@@ -484,9 +521,37 @@ partial class OpcServer
 
 		private void GenerateProperties(BaseObjectState instanceDefinition, object instance)
 		{
-			var typeDefinition = this.FindPredefinedNode(instanceDefinition.TypeDefinitionId, typeof(BaseObjectTypeState));
+			var typeDefinition = this.FindPredefinedNode(instanceDefinition.TypeDefinitionId, typeof(BaseTypeState));
 			if(typeDefinition == null)
 				return;
+
+			if(typeDefinition is DataTypeState dataType)
+			{
+				if(dataType.DataTypeDefinition.Body is StructureDefinition structure)
+				{
+					foreach(var field in structure.Fields)
+					{
+						var propertyState = new PropertyState(instanceDefinition)
+						{
+							BrowseName = field.Name,
+							DisplayName = field.Name,
+							Description = field.Description,
+							SymbolicName = field.Name,
+							TypeDefinitionId = (NodeId)field.TypeId,
+							ReferenceTypeId = ReferenceTypeIds.HasProperty,
+							DataType = field.DataType,
+							ValueRank = field.ValueRank,
+						};
+
+						if(Reflection.Reflector.TryGetValue(ref instance, field.Name, out var value))
+							propertyState.Value = value;
+
+						instanceDefinition.AddChild(propertyState);
+					}
+				}
+
+				return;
+			}
 
 			var children = new List<BaseInstanceState>();
 			typeDefinition.GetChildren(this.SystemContext, children);
@@ -520,7 +585,7 @@ partial class OpcServer
 
 					if(Utility.GetDataType(propertyState.DataType, propertyState.ValueRank) == typeof(object))
 					{
-						var propertyType = this.FindPredefinedNode(propertyState.DataType, typeof(BaseObjectTypeState));
+						var propertyType = this.FindPredefinedNode(propertyState.DataType, typeof(BaseTypeState));
 
 						if(Reflection.Reflector.TryGetValue(ref instance, child.SymbolicName, out var value))
 						{
@@ -534,6 +599,8 @@ partial class OpcServer
 								foreach(var item in list)
 									propertyState.AddChild(item);
 							}
+
+							//propertyState.Value = value;
 						}
 					}
 					else if(Reflection.Reflector.TryGetValue(ref instance, child.SymbolicName, out var value))
