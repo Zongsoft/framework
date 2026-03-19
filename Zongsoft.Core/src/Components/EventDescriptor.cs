@@ -33,7 +33,6 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 using Zongsoft.Common;
 using Zongsoft.Collections;
@@ -158,7 +157,7 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 	#region 嵌套子类
 	private sealed class HandlerCollection : ICollection<IHandler>
 	{
-		private readonly ConcurrentDictionary<IHandler, object> _handlers = new();
+		private readonly SynchronizedDictionary<IHandler, object> _handlers = new();
 
 		public int Count => _handlers.Count;
 		bool ICollection<IHandler>.IsReadOnly => false;
@@ -166,7 +165,7 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 		public void Add(IHandler handler) => _handlers.TryAdd(handler ?? throw new ArgumentNullException(nameof(handler)), null);
 		public void Clear() => _handlers.Clear();
 		public bool Contains(IHandler handler) => handler != null && _handlers.ContainsKey(handler);
-		public bool Remove(IHandler handler) => handler != null && _handlers.TryRemove(handler, out _);
+		public bool Remove(IHandler handler) => handler != null && _handlers.Remove(handler);
 		void ICollection<IHandler>.CopyTo(IHandler[] array, int arrayIndex) => _handlers.Keys.CopyTo(array, arrayIndex);
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<IHandler> GetEnumerator() => _handlers.Keys.GetEnumerator();

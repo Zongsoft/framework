@@ -30,7 +30,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Metadata;
 
@@ -38,7 +37,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : ICollection<IDat
 {
 	#region 成员字段
 	private readonly IDataEntity _entity = entity ?? throw new ArgumentNullException(nameof(entity));
-	private readonly ConcurrentDictionary<string, IDataEntityProperty> _dictionary = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Collections.SynchronizedDictionary<string, IDataEntityProperty> _dictionary = new(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
 	#region 公共属性
@@ -52,7 +51,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : ICollection<IDat
 		ArgumentNullException.ThrowIfNull(property);
 
 		if(_dictionary.TryAdd(property.Name, property))
-			SetEntity(_entity, property, (property, dictionary) => dictionary.TryRemove(property.Name, out _), _dictionary);
+			SetEntity(_entity, property, (property, dictionary) => dictionary.Remove(property.Name), _dictionary);
 		else
 			throw new InvalidOperationException($"The specified '{property.Name}' entity property already exists in the properties.");
 	}
@@ -61,7 +60,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : ICollection<IDat
 	{
 		if(property != null && _dictionary.TryAdd(property.Name, property))
 		{
-			SetEntity(_entity, property, (property, dictionary) => dictionary.TryRemove(property.Name, out _), _dictionary);
+			SetEntity(_entity, property, (property, dictionary) => dictionary.Remove(property.Name), _dictionary);
 			return true;
 		}
 
@@ -82,8 +81,8 @@ public class DataEntityPropertyCollection(IDataEntity entity) : ICollection<IDat
 
 	public void Clear() => _dictionary.Clear();
 	public bool Contains(string name) => name != null && _dictionary.ContainsKey(name);
-	public bool Remove(string name) => name != null && _dictionary.TryRemove(name, out _);
-	public bool Remove(string name, out IDataEntityProperty property) => _dictionary.TryRemove(name, out property);
+	public bool Remove(string name) => name != null && _dictionary.Remove(name);
+	public bool Remove(string name, out IDataEntityProperty property) => _dictionary.Remove(name, out property);
 	public bool TryGetValue(string name, out IDataEntityProperty property) => _dictionary.TryGetValue(name, out property);
 	#endregion
 
@@ -196,7 +195,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : ICollection<IDat
 	#region 显式实现
 	bool ICollection<IDataEntityProperty>.IsReadOnly => false;
 	bool ICollection<IDataEntityProperty>.Contains(IDataEntityProperty property) => property != null && _dictionary.ContainsKey(property.Name);
-	bool ICollection<IDataEntityProperty>.Remove(IDataEntityProperty property) => property != null && _dictionary.TryRemove(property.Name, out _);
+	bool ICollection<IDataEntityProperty>.Remove(IDataEntityProperty property) => property != null && _dictionary.Remove(property.Name);
 	void ICollection<IDataEntityProperty>.CopyTo(IDataEntityProperty[] array, int arrayIndex)
 	{
 		ArgumentNullException.ThrowIfNull(array);

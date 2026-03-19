@@ -30,14 +30,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Metadata;
 
 public class DataEntityCollection : ICollection<IDataEntity>
 {
 	#region 成员字段
-	private readonly ConcurrentDictionary<string, IDataEntity> _dictionary = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Collections.SynchronizedDictionary<string, IDataEntity> _dictionary = new(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
 	#region 公共属性
@@ -61,10 +60,10 @@ public class DataEntityCollection : ICollection<IDataEntity>
 	public bool Contains(string name, string @namespace) => name != null && _dictionary.ContainsKey(DataUtility.Qualify(name, @namespace));
 
 	public void Clear() => _dictionary.Clear();
-	public bool Remove(string qualifiedName) => qualifiedName != null && _dictionary.TryRemove(qualifiedName, out _);
-	public bool Remove(string name, string @namespace) => name != null && _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out _);
-	public bool Remove(string qualifiedName, out IDataEntity entity) => _dictionary.TryRemove(qualifiedName, out entity);
-	public bool Remove(string name, string @namespace, out IDataEntity entity) => _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out entity);
+	public bool Remove(string qualifiedName) => qualifiedName != null && _dictionary.Remove(qualifiedName);
+	public bool Remove(string name, string @namespace) => name != null && _dictionary.Remove(DataUtility.Qualify(name, @namespace));
+	public bool Remove(string qualifiedName, out IDataEntity entity) => _dictionary.Remove(qualifiedName, out entity);
+	public bool Remove(string name, string @namespace, out IDataEntity entity) => _dictionary.Remove(DataUtility.Qualify(name, @namespace), out entity);
 	public bool TryGetValue(string qualifiedName, out IDataEntity entity) => _dictionary.TryGetValue(qualifiedName, out entity);
 	public bool TryGetValue(string name, string @namespace, out IDataEntity entity) => _dictionary.TryGetValue(DataUtility.Qualify(name, @namespace), out entity);
 	#endregion
@@ -72,7 +71,7 @@ public class DataEntityCollection : ICollection<IDataEntity>
 	#region 显式实现
 	bool ICollection<IDataEntity>.IsReadOnly => false;
 	bool ICollection<IDataEntity>.Contains(IDataEntity entity) => entity != null && _dictionary.ContainsKey(entity.QualifiedName);
-	bool ICollection<IDataEntity>.Remove(IDataEntity entity) => entity != null && _dictionary.TryRemove(entity.QualifiedName, out _);
+	bool ICollection<IDataEntity>.Remove(IDataEntity entity) => entity != null && _dictionary.Remove(entity.QualifiedName);
 	void ICollection<IDataEntity>.CopyTo(IDataEntity[] array, int arrayIndex)
 	{
 		ArgumentNullException.ThrowIfNull(array);

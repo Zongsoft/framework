@@ -31,14 +31,13 @@ using System;
 using System.Text;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Metadata;
 
 public class DataCommandCollection() : ICollection<IDataCommand>
 {
 	#region 成员字段
-	private readonly ConcurrentDictionary<string, IDataCommand> _dictionary = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Collections.SynchronizedDictionary<string, IDataCommand> _dictionary = new(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
 	#region 公共属性
@@ -62,10 +61,10 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 	public bool Contains(string name, string @namespace) => name != null && _dictionary.ContainsKey(DataUtility.Qualify(name, @namespace));
 
 	public void Clear() => _dictionary.Clear();
-	public bool Remove(string qualifiedName) => qualifiedName != null && _dictionary.TryRemove(qualifiedName, out _);
-	public bool Remove(string name, string @namespace) => name != null && _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out _);
-	public bool Remove(string qualifiedName, out IDataCommand command) => _dictionary.TryRemove(qualifiedName, out command);
-	public bool Remove(string name, string @namespace, out IDataCommand command) => _dictionary.TryRemove(DataUtility.Qualify(name, @namespace), out command);
+	public bool Remove(string qualifiedName) => qualifiedName != null && _dictionary.Remove(qualifiedName);
+	public bool Remove(string name, string @namespace) => name != null && _dictionary.Remove(DataUtility.Qualify(name, @namespace));
+	public bool Remove(string qualifiedName, out IDataCommand command) => _dictionary.Remove(qualifiedName, out command);
+	public bool Remove(string name, string @namespace, out IDataCommand command) => _dictionary.Remove(DataUtility.Qualify(name, @namespace), out command);
 	public bool TryGetValue(string qualifiedName, out IDataCommand command) => _dictionary.TryGetValue(qualifiedName, out command);
 	public bool TryGetValue(string name, string @namespace, out IDataCommand command) => _dictionary.TryGetValue(DataUtility.Qualify(name, @namespace), out command);
 	#endregion
@@ -117,7 +116,7 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 	#region 显式实现
 	bool ICollection<IDataCommand>.IsReadOnly => false;
 	bool ICollection<IDataCommand>.Contains(IDataCommand command) => command != null && _dictionary.ContainsKey(command.QualifiedName);
-	bool ICollection<IDataCommand>.Remove(IDataCommand command) => command != null && _dictionary.TryRemove(command.QualifiedName, out _);
+	bool ICollection<IDataCommand>.Remove(IDataCommand command) => command != null && _dictionary.Remove(command.QualifiedName);
 	void ICollection<IDataCommand>.CopyTo(IDataCommand[] array, int arrayIndex)
 	{
 		ArgumentNullException.ThrowIfNull(array);

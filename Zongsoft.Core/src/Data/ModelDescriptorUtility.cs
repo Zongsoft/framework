@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Metadata;
 
@@ -40,6 +41,7 @@ public static class ModelDescriptorUtility
 		if(model == null)
 			return null;
 
+		var complexes = new List<ModelPropertyDescriptor.ComplexPropertyDescriptor>();
 		var entity = new DataEntity(model.Namespace, model.Name, model.Immutable)
 		{
 			Alias = model.Alias,
@@ -70,17 +72,23 @@ public static class ModelDescriptorUtility
 			}
 			else if(descriptor.IsComplex(out var complex) && complex.Links != null && complex.Links.Length > 0)
 			{
-				var property = entity.Properties.Complex(
-					complex.Name,
-					complex.Port,
-					complex.Immutable,
-					complex.Behaviors,
-					complex.Multiplicity);
-
-				property.Hint = complex.Hint;
-				property.Links = ToLinks(property, complex.Links);
-				property.Constraints = ToConstraints(complex.Constraints);
+				complexes.Add(complex);
 			}
+		}
+
+		//确保在所有单值属性构建完成之后再添加导航属性
+		foreach(var complex in complexes)
+		{
+			var property = entity.Properties.Complex(
+				complex.Name,
+				complex.Port,
+				complex.Immutable,
+				complex.Behaviors,
+				complex.Multiplicity);
+
+			property.Hint = complex.Hint;
+			property.Links = ToLinks(property, complex.Links);
+			property.Constraints = ToConstraints(complex.Constraints);
 		}
 
 		return entity;
