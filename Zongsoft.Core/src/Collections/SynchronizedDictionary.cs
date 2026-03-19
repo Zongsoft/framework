@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
@@ -38,21 +37,61 @@ namespace Zongsoft.Collections;
 public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 {
 	#region 成员字段
-	private ReaderWriterLockSlim _lock = new();
+	private readonly ReaderWriterLockSlim _lock = new();
 	private readonly IDictionary<TKey, TValue> _dictionary;
 	#endregion
 
 	#region 构造函数
-	public SynchronizedDictionary() : this(new Dictionary<TKey, TValue>()) { }
-	public SynchronizedDictionary(int capacity) : this(new Dictionary<TKey, TValue>(capacity)) { }
-	public SynchronizedDictionary(IEqualityComparer<TKey> comparer) : this(new Dictionary<TKey, TValue>(comparer)) { }
-	public SynchronizedDictionary(int capacity, IEqualityComparer<TKey> comparer) : this(new Dictionary<TKey, TValue>(capacity, comparer)) { }
-	internal SynchronizedDictionary(IDictionary<TKey, TValue> dictionary) => _dictionary = dictionary ?? new Dictionary<TKey, TValue>();
+	public SynchronizedDictionary()
+	{
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_dictionary = new Dictionary<TKey, TValue>();
+	}
+	public SynchronizedDictionary(int capacity)
+	{
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_dictionary = new Dictionary<TKey, TValue>(capacity);
+	}
+	public SynchronizedDictionary(IEqualityComparer<TKey> comparer)
+	{
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_dictionary = new Dictionary<TKey, TValue>(comparer);
+	}
+	public SynchronizedDictionary(int capacity, IEqualityComparer<TKey> comparer)
+	{
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
+	}
+	public SynchronizedDictionary(IEnumerable<KeyValuePair<TKey, TValue>> entries)
+	{
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_dictionary = new Dictionary<TKey, TValue>(entries);
+	}
+	public SynchronizedDictionary(IEnumerable<KeyValuePair<TKey, TValue>> entries, IEqualityComparer<TKey> comparer)
+	{
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_dictionary = new Dictionary<TKey, TValue>(entries, comparer);
+	}
+	internal SynchronizedDictionary(IDictionary<TKey, TValue> dictionary)
+	{
+		ArgumentNullException.ThrowIfNull(dictionary);
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_dictionary = dictionary;
+	}
 	#endregion
 
 	#region 公共属性
-	public int Count => _dictionary.Count;
-	bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => _dictionary.IsReadOnly;
+	public int Count
+	{
+		get
+		{
+			_lock.EnterReadLock();
+			try { return _dictionary.Count; }
+			finally { _lock.ExitReadLock(); }
+		}
+	}
+
+	bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
 	public ICollection<TKey> Keys
 	{
@@ -144,21 +183,17 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 	public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
 	{
-		KeyValuePair<TKey, TValue>[] array;
-
 		_lock.EnterReadLock();
-		try { array = _dictionary.ToArray(); }
-		finally { _lock.ExitReadLock(); }
 
-		return Enumerable.GetEnumerator(array);
-	}
-	#endregion
-
-	#region 析构函数
-	~SynchronizedDictionary()
-	{
-		_lock?.Dispose();
-		_lock = null;
+		try
+		{
+			foreach(var entry in _dictionary)
+				yield return entry;
+		}
+		finally
+		{
+			_lock.ExitReadLock();
+		}
 	}
 	#endregion
 }

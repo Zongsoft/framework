@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections;
 using System.Collections.Generic;
 
 using Xunit;
@@ -33,6 +32,38 @@ public class SynchronizedListTest
 					Assert.True(list[i] >= 0);
 				}
 			}
+		});
+
+		Assert.Equal(COUNT, list.Count);
+		var hashset = new HashSet<int>(list);
+		Assert.Equal(COUNT, hashset.Count);
+	}
+
+	[Fact]
+	public async Task TestAsync()
+	{
+		const int COUNT = 10000;
+
+		var list = new SynchronizedList<int>(COUNT);
+
+		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		{
+			list.Add(index);
+
+			if(index % 100 == 0)
+			{
+				foreach(var item in list)
+				{
+					Assert.True(item >= 0);
+				}
+
+				for(int i = 0; i < list.Count; i++)
+				{
+					Assert.True(list[i] >= 0);
+				}
+			}
+
+			return ValueTask.CompletedTask;
 		});
 
 		Assert.Equal(COUNT, list.Count);

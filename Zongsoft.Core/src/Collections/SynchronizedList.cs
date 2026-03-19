@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
@@ -38,19 +37,46 @@ namespace Zongsoft.Collections;
 public class SynchronizedList<T> : IList<T>, ICollection<T>, ICollection
 {
 	#region 成员字段
-	private ReaderWriterLockSlim _lock = new();
 	private readonly IList<T> _list;
+	private readonly ReaderWriterLockSlim _lock;
 	#endregion
 
 	#region 构造函数
-	public SynchronizedList() : this(null) { }
-	public SynchronizedList(int capacity) : this(new List<T>(capacity)) { }
-	internal SynchronizedList(IList<T> list) => _list = list ?? [];
+	public SynchronizedList()
+	{
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_list = new List<T>();
+	}
+	public SynchronizedList(int capacity)
+	{
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_list = new List<T>(capacity);
+	}
+	public SynchronizedList(params IEnumerable<T> items)
+	{
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_list = new List<T>(items);
+	}
+	internal SynchronizedList(IList<T> list)
+	{
+		ArgumentNullException.ThrowIfNull(list);
+		_lock = new(LockRecursionPolicy.SupportsRecursion);
+		_list = list;
+	}
 	#endregion
 
 	#region 公共属性
-	public int Count => _list.Count;
-	bool ICollection<T>.IsReadOnly => _list.IsReadOnly;
+	public int Count
+	{
+		get
+		{
+			_lock.EnterReadLock();
+			try { return _list.Count; }
+			finally { _lock.ExitReadLock(); }
+		}
+	}
+
+	bool ICollection<T>.IsReadOnly => false;
 	bool ICollection.IsSynchronized => true;
 	object ICollection.SyncRoot => _lock;
 
@@ -153,21 +179,17 @@ public class SynchronizedList<T> : IList<T>, ICollection<T>, ICollection
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 	public IEnumerator<T> GetEnumerator()
 	{
-		T[] array;
-
 		_lock.EnterReadLock();
-		try { array = _list.ToArray(); }
-		finally { _lock.ExitReadLock(); }
 
-		return Enumerable.GetEnumerator(array);
-	}
-	#endregion
-
-	#region 析构函数
-	~SynchronizedList()
-	{
-		_lock?.Dispose();
-		_lock = null;
+		try
+		{
+			foreach(var item in _list)
+				yield return item;
+		}
+		finally
+		{
+			_lock.ExitReadLock();
+		}
 	}
 	#endregion
 }
