@@ -48,51 +48,50 @@ internal static class Utility
 		_ => MessageSecurityMode.Invalid,
 	};
 
-	public static NodeId GetDataType(this Type type, out int rank)
+	/// <summary>获取指定类型对应的OPC内置类型的节点编号。</summary>
+	/// <param name="type">指定要获取的类型。</param>
+	/// <param name="rank">输出参数，表示数组类型的维度。</param>
+	/// <returns>如果获取成功则返回对应内置类型的节点编号，否则返回空(<c>null</c>)。</returns>
+	/// <exception cref="ArgumentNullException">如果指定的 <paramref name="type"/> 参数为空(<c>null</c>)。</exception>
+	public static NodeId GetBuiltinType(this Type type, out int rank)
 	{
 		if(type == null)
 			throw new ArgumentNullException(nameof(type));
 
-		if(type.IsArray)
+		return GetBuiltinTypeCore(DiscriminateType(type, out rank));
+	}
+
+	internal static NodeId GetBuiltinTypeCore(Type type)
+	{
+		//注意：枚举类型必须返回空！
+		//因为 Type.GetTypeCode(..) 会返回枚举类型的基元类型
+		if(type == null || type.IsEnum)
+			return null;
+
+		if(type == typeof(Guid))
+			return DataTypeIds.Guid;
+
+		if(type == typeof(DateTimeOffset))
+			return DataTypeIds.DateTime;
+
+		return Type.GetTypeCode(type) switch
 		{
-			rank = type.GetArrayRank();
-			return GetDataType(type.GetElementType());
-		}
-
-		rank = ValueRanks.Scalar;
-		return GetDataType(type);
-
-		static NodeId GetDataType(Type type)
-		{
-			if(Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType))
-				type = underlyingType;
-
-			if(type.IsEnum)
-				return DataTypeIds.Enumeration;
-
-			if(type == typeof(Guid))
-				return DataTypeIds.Guid;
-
-			return Type.GetTypeCode(type) switch
-			{
-				TypeCode.Boolean => DataTypeIds.Boolean,
-				TypeCode.Byte => DataTypeIds.Byte,
-				TypeCode.SByte => DataTypeIds.SByte,
-				TypeCode.Int16 => DataTypeIds.Int16,
-				TypeCode.Int32 => DataTypeIds.Int32,
-				TypeCode.Int64 => DataTypeIds.Int64,
-				TypeCode.UInt16 => DataTypeIds.UInt16,
-				TypeCode.UInt32 => DataTypeIds.UInt32,
-				TypeCode.UInt64 => DataTypeIds.UInt64,
-				TypeCode.Single => DataTypeIds.Float,
-				TypeCode.Double => DataTypeIds.Double,
-				TypeCode.Decimal => DataTypeIds.Decimal,
-				TypeCode.DateTime => DataTypeIds.DateTime,
-				TypeCode.String => DataTypeIds.String,
-				TypeCode.Object => DataTypeIds.ObjectTypeNode,
-				_ => DataTypeIds.ObjectTypeNode,
-			};
-		}
+			TypeCode.Boolean => DataTypeIds.Boolean,
+			TypeCode.Byte => DataTypeIds.Byte,
+			TypeCode.SByte => DataTypeIds.SByte,
+			TypeCode.Int16 => DataTypeIds.Int16,
+			TypeCode.Int32 => DataTypeIds.Int32,
+			TypeCode.Int64 => DataTypeIds.Int64,
+			TypeCode.UInt16 => DataTypeIds.UInt16,
+			TypeCode.UInt32 => DataTypeIds.UInt32,
+			TypeCode.UInt64 => DataTypeIds.UInt64,
+			TypeCode.Single => DataTypeIds.Float,
+			TypeCode.Double => DataTypeIds.Double,
+			TypeCode.Decimal => DataTypeIds.Decimal,
+			TypeCode.DateTime => DataTypeIds.DateTime,
+			TypeCode.String => DataTypeIds.String,
+			_ => null,
+		};
 	}
 
 	public static Type GetDataType(this NodeId id, int rank)
@@ -173,6 +172,49 @@ internal static class Utility
 			return type.MakeArrayType(rank);
 
 		return type;
+	}
+
+	public static Type DiscriminateType(Type type, out int rank)
+	{
+		if(type == null)
+		{
+			rank = 0;
+			return null;
+		}
+
+		if(type == typeof(string))
+		{
+			rank = ValueRanks.Scalar;
+			return type;
+		}
+
+		if(type.IsArray)
+		{
+			rank = type.GetArrayRank();
+			return type.GetElementType();
+		}
+
+		if(Common.TypeExtension.IsNullable(type, out var underlyingType))
+		{
+			rank = ValueRanks.Scalar;
+			return underlyingType;
+		}
+
+		if(type.IsPrimitive)
+		{
+			rank = ValueRanks.Scalar;
+			return type;
+		}
+
+		var elementType = Common.TypeExtension.GetElementType(type);
+		if(elementType == null)
+		{
+			rank = ValueRanks.Scalar;
+			return type;
+		}
+
+		rank = ValueRanks.OneDimension;
+		return Common.TypeExtension.IsNullable(elementType, out underlyingType) ? underlyingType : elementType;
 	}
 
 	public static IUserIdentity GetIdentity(this Configuration.OpcConnectionSettings settings)

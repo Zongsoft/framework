@@ -35,6 +35,7 @@ using Opc.Ua;
 using Opc.Ua.Server;
 
 using Zongsoft.Common;
+using Zongsoft.Reflection;
 
 namespace Zongsoft.Externals.Opc;
 
@@ -55,7 +56,7 @@ partial class OpcServer
 				name,
 				value,
 				label,
-				Utility.GetDataType(type, out var rank),
+				Utility.GetBuiltinType(type, out var rank),
 				rank,
 				description);
 
@@ -63,20 +64,30 @@ partial class OpcServer
 			return variable;
 		}
 
-		public BaseInstanceState DefineObject(object instance, string name = null) => this.DefineObject(null, null, instance, name);
-		public BaseInstanceState DefineObject(NodeState parent, object instance, string name = null) => this.DefineObject(parent, null, instance, name);
-		public BaseInstanceState DefineObject(NodeId identifier, object instance, string name = null) => this.DefineObject(null, identifier, instance, name);
-		public BaseInstanceState DefineObject(NodeState parent, NodeId identifier, object instance, string name = null)
+		public BaseInstanceState DefineValue(object value, string name = null) => this.DefineValue(null, null, value, name);
+		public BaseInstanceState DefineValue(NodeState parent, object value, string name = null) => this.DefineValue(parent, null, value, name);
+		public BaseInstanceState DefineValue(NodeId identifier, object value, string name = null) => this.DefineValue(null, identifier, value, name);
+		public BaseInstanceState DefineValue(NodeState parent, NodeId identifier, object value, string name = null)
 		{
-			if(instance == null)
+			if(value == null)
 				return null;
 
+			if(value is Type type)
+				value = null;
+			else
+				type = value.GetType();
+
+			type = Utility.DiscriminateType(type, out _);
+
+			if(identifier == null || identifier.IsNullNodeId)
+				identifier = this.GenerateId();
+
 			if(string.IsNullOrEmpty(name))
-				name = instance.GetType().Name;
+				name = type.Name;
 
-			var typeDefinition = this.DefineType(instance.GetType());
+			var definition = this.DefineType(type, out var rank);
 
-			if(instance.GetType().IsEnum)
+			if(definition is DataTypeState && definition.SuperTypeId == DataTypeIds.Enumeration)
 			{
 				var state = new DataItemState(parent)
 				{
@@ -84,41 +95,107 @@ partial class OpcServer
 					SymbolicName = name,
 					BrowseName = new(name, this.NamespaceIndex),
 					DisplayName = name,
-					DataType = typeDefinition.NodeId,
-					TypeDefinitionId = typeDefinition.NodeId,
-					Value = instance,
-					ValueRank = ValueRanks.Scalar,
+					DataType = definition.NodeId,
+					TypeDefinitionId = definition.NodeId,
+					Value = value,
+					ValueRank = rank,
 				};
 
 				return state;
 			}
 
-			var instanceDefinition = new BaseObjectState(parent)
-			{
-				NodeId = identifier,
-				SymbolicName = name,
-				BrowseName = new(name, this.NamespaceIndex),
-				DisplayName = name,
-				TypeDefinitionId = typeDefinition.NodeId,
-				ReferenceTypeId = ReferenceTypeIds.HasComponent,
-			};
+			BaseInstanceState instance = parent == null || parent is FolderState ?
+				new BaseObjectState(parent)
+				{
+					NodeId = identifier,
+					SymbolicName = name,
+					BrowseName = new(name, this.NamespaceIndex),
+					DisplayName = name,
+					TypeDefinitionId = definition.NodeId,
+					ReferenceTypeId = ReferenceTypeIds.HasComponent,
+				} :
+				new PropertyState(parent)
+				{
+					NodeId = identifier,
+					SymbolicName = name,
+					BrowseName = new(name, this.NamespaceIndex),
+					DisplayName = name,
+					DataType = definition.NodeId,
+					TypeDefinitionId = VariableTypeIds.PropertyType,
+					ReferenceTypeId = ReferenceTypeIds.HasProperty,
+					ValueRank = rank,
+					Value = value,
+				};
 
-			this.GenerateProperties(instanceDefinition, instance);
-			return instanceDefinition;
+			var children = new List<BaseInstanceState>();
+			definition.GetChildren(this.SystemContext, children);
+
+			if((children == null || children.Count == 0) && definition.SuperTypeId != DataTypeIds.Structure)
+				return instance;
+
+			//if(type.IsPrimitive || type.IsEnum || type == typeof(string) || type.IsScalarType())
+			//{
+			//	if(instance is BaseVariableState state)
+			//		state.Value = value;
+			//	return instance;
+			//}
+
+			foreach(var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+			{
+				if(field.IsInitOnly)
+					continue;
+
+				SetMember(value, instance, new(field));
+			}
+
+			foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+			{
+				if(!property.CanRead || property.IsIndexer())
+					continue;
+
+				SetMember(value, instance, new(property));
+			}
+
+			return instance;
+
+			void SetMember(object target, BaseInstanceState instance, MemberToken member)
+			{
+				var value = target == null ? member.Type : Reflector.GetValue(ref target, member.Name);
+				var state = this.DefineValue(instance, value ?? member.Type, member.Name);
+
+				if(state is BaseVariableState variable)
+				{
+					variable.AccessLevel = variable.UserAccessLevel =
+						member.IsReadOnly ? AccessLevels.CurrentRead : AccessLevels.CurrentReadOrWrite;
+				}
+
+				instance.AddChild(state);
+			}
 		}
 
-		public BaseTypeState DefineType(Type type)
+		public BaseTypeState DefineType(Type type) => this.DefineType(type, out _);
+		public BaseTypeState DefineType(Type type, out int rank)
 		{
 			if(type == null)
+			{
+				rank = 0;
 				return null;
+			}
 
-			var elementType = TypeExtension.GetElementType(type);
-			type = TypeExtension.IsNullable(elementType ?? type, out var underlyingType) ? underlyingType : (elementType ?? type);
+			//鉴别并拆解指定的类型
+			type = Utility.DiscriminateType(type, out rank);
+
+			//获取指定类型对应的内置类型
+			var nodeId = Utility.GetBuiltinTypeCore(type);
+
+			//如果指定类型是内置类型，则获取并返回该内置类型的节点定义
+			if(nodeId != null && this.Server.NodeManager.GetManagerHandle(nodeId, out _) is NodeHandle handle && handle.Node is BaseTypeState result)
+				return result;
 
 			lock(this.Lock)
 			{
-				if(_types.TryGetValue(type, out var identifer))
-					return this.FindPredefinedNode(identifer, null) as BaseTypeState;
+				if(_types.TryGetValue(type, out nodeId))
+					return this.FindPredefinedNode(nodeId, null) as BaseTypeState;
 
 				if(type.IsValueType)
 					return type.IsEnum ? this.DefineEnumeration(type) : this.DefineDataType(type);
@@ -231,7 +308,7 @@ partial class OpcServer
 						structure.Fields.Add(new()
 						{
 							Name = field.Name,
-							DataType = Utility.GetDataType(field.FieldType, out var fieldRank),
+							DataType = Utility.GetBuiltinType(field.FieldType, out var fieldRank),
 							ValueRank = fieldRank,
 						});
 						break;
@@ -239,7 +316,7 @@ partial class OpcServer
 						structure.Fields.Add(new()
 						{
 							Name = property.Name,
-							DataType = Utility.GetDataType(property.PropertyType, out var propertyRank),
+							DataType = Utility.GetBuiltinType(property.PropertyType, out var propertyRank),
 							ValueRank = propertyRank,
 						});
 						break;
@@ -275,9 +352,16 @@ partial class OpcServer
 				SuperTypeId = ObjectTypeIds.BaseObjectType,
 			};
 
+			foreach(var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+			{
+				if(!field.IsInitOnly)
+					this.DefineProperty(definition, new(field));
+			}
+
 			foreach(var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
 			{
-				this.DefineProperty(definition, property);
+				if(property.CanRead)
+					this.DefineProperty(definition, new(property));
 			}
 
 			if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
@@ -287,137 +371,26 @@ partial class OpcServer
 			return definition;
 		}
 
-		private PropertyState DefineProperty(NodeState parent, PropertyInfo property)
+		private PropertyState DefineProperty(NodeState parent, MemberToken member)
 		{
-			var propertyType = TypeExtension.IsNullable(property.PropertyType, out var underlyingType) ? underlyingType : property.PropertyType;
-			var elementType = TypeExtension.GetCollectionElementType(propertyType);
-
-			var propertyState = new PropertyState(parent)
+			var state = new PropertyState(parent)
 			{
 				NodeId = this.GenerateId(),
 				ReferenceTypeId = ReferenceTypes.HasProperty,
 				TypeDefinitionId = VariableTypeIds.PropertyType,
-				SymbolicName = property.Name,
-				BrowseName = new(property.Name, this.NamespaceIndex),
-				DisplayName = property.Name,
-				DataType = Utility.GetDataType(elementType ?? propertyType, out var rank),
+				SymbolicName = member.Name,
+				BrowseName = new(member.Name, this.NamespaceIndex),
+				DisplayName = member.Name,
+				DataType = this.DefineType(member.Type, out var rank).NodeId,
 				ValueRank = rank,
-				AccessLevel = property.CanWrite ? AccessLevels.CurrentReadOrWrite : AccessLevels.CurrentRead,
-				UserAccessLevel = property.CanWrite ? AccessLevels.CurrentReadOrWrite : AccessLevels.CurrentRead,
+				AccessLevel = member.IsReadOnly ? AccessLevels.CurrentRead: AccessLevels.CurrentReadOrWrite,
+				UserAccessLevel = member.IsReadOnly ? AccessLevels.CurrentRead : AccessLevels.CurrentReadOrWrite,
 				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
 			};
 
-			if(propertyState.DataType == DataTypeIds.Enumeration)
-			{
-				var typeState = this.DefineType(elementType ?? propertyType);
-				propertyState.DataType = typeState.NodeId;
-				propertyState.TypeDefinitionId = typeState.NodeId;
-			}
-			else if(propertyState.DataType == DataTypeIds.ObjectTypeNode)
-			{
-				var typeState = this.DefineType(elementType ?? propertyType);
-				propertyState.DataType = typeState.NodeId;
-				propertyState.TypeDefinitionId = typeState.NodeId;
-			}
-
-			propertyState.AddReference(ReferenceTypes.HasModellingRule, false, ObjectIds.ModellingRule_Mandatory);
-			parent.AddChild(propertyState);
-			return propertyState;
-		}
-
-		private void GenerateProperties(BaseObjectState instanceDefinition, object instance)
-		{
-			var typeDefinition = this.FindPredefinedNode(instanceDefinition.TypeDefinitionId, typeof(BaseTypeState));
-			if(typeDefinition == null)
-				return;
-
-			if(typeDefinition is DataTypeState dataType)
-			{
-				if(dataType.DataTypeDefinition.Body is StructureDefinition structure)
-				{
-					foreach(var field in structure.Fields)
-					{
-						var propertyState = new PropertyState(instanceDefinition)
-						{
-							BrowseName = field.Name,
-							DisplayName = field.Name,
-							Description = field.Description,
-							SymbolicName = field.Name,
-							TypeDefinitionId = (NodeId)field.TypeId,
-							ReferenceTypeId = ReferenceTypeIds.HasProperty,
-							DataType = field.DataType,
-							ValueRank = field.ValueRank,
-						};
-
-						if(Reflection.Reflector.TryGetValue(ref instance, field.Name, out var value))
-							propertyState.Value = value;
-
-						instanceDefinition.AddChild(propertyState);
-					}
-				}
-				else if(dataType.DataTypeDefinition.Body is EnumDefinition enumeration)
-				{
-				}
-
-				return;
-			}
-
-			var children = new List<BaseInstanceState>();
-			typeDefinition.GetChildren(this.SystemContext, children);
-
-			foreach(var child in children)
-			{
-				var propertyState = new PropertyState(instanceDefinition)
-				{
-					BrowseName = child.BrowseName,
-					DisplayName = child.DisplayName,
-					Description = child.Description,
-					SymbolicName = child.SymbolicName,
-					TypeDefinitionId = child.NodeId,
-					ModellingRuleId = child.ModellingRuleId,
-					ReferenceTypeId = ReferenceTypeIds.HasProperty,
-					WriteMask = child.WriteMask,
-					UserWriteMask = child.UserWriteMask,
-				};
-
-				if(child is BaseVariableState state)
-				{
-					propertyState.DataType = state.DataType;
-					propertyState.ValueRank = state.ValueRank;
-					propertyState.Value = state.Value;
-					propertyState.AccessLevel = state.AccessLevel;
-					propertyState.UserAccessLevel = state.UserAccessLevel;
-					propertyState.Historizing = state.Historizing;
-					propertyState.ArrayDimensions = state.ArrayDimensions;
-					propertyState.IsValueType = state.IsValueType;
-					propertyState.MinimumSamplingInterval = state.MinimumSamplingInterval;
-
-					if(Utility.GetDataType(propertyState.DataType, propertyState.ValueRank) == typeof(object))
-					{
-						var propertyType = this.FindPredefinedNode(propertyState.DataType, typeof(BaseTypeState));
-
-						if(Reflection.Reflector.TryGetValue(ref instance, child.SymbolicName, out var value))
-						{
-							var childInstance = this.DefineObject(instanceDefinition, value);
-
-							if(childInstance != null)
-							{
-								var list = new List<BaseInstanceState>();
-								childInstance.GetChildren(this.SystemContext, list);
-
-								foreach(var item in list)
-									propertyState.AddChild(item);
-							}
-
-							//propertyState.Value = value;
-						}
-					}
-					else if(Reflection.Reflector.TryGetValue(ref instance, child.SymbolicName, out var value))
-						propertyState.Value = value;
-				}
-
-				instanceDefinition.AddChild(propertyState);
-			}
+			state.AddReference(ReferenceTypes.HasModellingRule, false, ObjectIds.ModellingRule_Mandatory);
+			parent.AddChild(state);
+			return state;
 		}
 
 		private FolderState CreateFolder(NodeState parent, ExpandedNodeId id, string name, string displayName, string description)
@@ -483,6 +456,34 @@ partial class OpcServer
 
 			parent?.AddChild(variable);
 			return variable;
+		}
+
+		private readonly struct MemberToken
+		{
+			public MemberToken(FieldInfo field)
+			{
+				this.Name = field.Name;
+				this.Type = field.FieldType;
+				this.IsReadOnly = false;
+			}
+			public MemberToken(PropertyInfo property)
+			{
+				this.Name = property.Name;
+				this.Type = property.PropertyType;
+				this.IsReadOnly = !property.CanWrite;
+			}
+			public MemberToken(string name, Type type, bool isReadOnly)
+			{
+				this.Name = name;
+				this.Type = type;
+				this.IsReadOnly = isReadOnly;
+			}
+
+			public readonly string Name;
+			public readonly Type Type;
+			public readonly bool IsReadOnly;
+
+			public override string ToString() => $"{this.Name}:{this.Type.FullName}({(this.IsReadOnly ? "ReadOnly" : "Read|Write")})";
 		}
 	}
 }

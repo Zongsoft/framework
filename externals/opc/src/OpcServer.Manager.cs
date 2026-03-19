@@ -348,7 +348,7 @@ partial class OpcServer
 					prefab.Node = this.CreateFolder(folder.Folder?.Node, null, folder.Name, folder.Label, folder.Description);
 					break;
 				case Prefab.ObjectPrefab target:
-					prefab.Node = this.DefineObject(target.Folder?.Node, target.Value, target.Name);
+					prefab.Node = this.DefineValue(target.Folder?.Node, target.Value, target.Name);
 					break;
 				case Prefab.VariablePrefab variable:
 					prefab.Node = this.DefineVariable(variable.Folder?.Node, variable.Name, variable.Type, variable.Value, variable.Label, variable.Description);

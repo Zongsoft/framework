@@ -103,7 +103,7 @@ partial class OpcClient
 			{
 				DisplayName = label,
 				Description = description,
-				DataType = Utility.GetDataType(type, out var rank),
+				DataType = Utility.GetBuiltinType(type, out var rank),
 				ValueRank = rank,
 				ArrayDimensions = [],
 				AccessLevel = AccessLevels.CurrentReadOrWrite,
