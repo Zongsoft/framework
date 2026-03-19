@@ -138,6 +138,163 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		finally { _lock.ExitWriteLock(); }
 	}
 
+	public bool TryAdd(TKey key, TValue value)
+	{
+		_lock.EnterWriteLock();
+		try { return _dictionary.TryAdd(key, value); }
+		finally { _lock.ExitWriteLock(); }
+	}
+
+	public TValue GetOrAdd(TKey key, TValue value)
+	{
+		_lock.EnterUpgradeableReadLock();
+
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existedValue))
+				return existedValue;
+
+			_lock.EnterWriteLock();
+
+			try {
+				return _dictionary.TryGetValue(key, out existedValue) ? existedValue : _dictionary[key] = value;
+			}
+			finally { _lock.ExitWriteLock(); }
+		}
+		finally
+		{
+			_lock.ExitUpgradeableReadLock();
+		}
+	}
+
+	public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
+	{
+		ArgumentNullException.ThrowIfNull(valueFactory);
+		_lock.EnterUpgradeableReadLock();
+
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existedValue))
+				return existedValue;
+
+			_lock.EnterWriteLock();
+
+			try {
+				return _dictionary.TryGetValue(key, out existedValue) ? existedValue :
+					_dictionary[key] = valueFactory(key);
+			}
+			finally { _lock.ExitWriteLock(); }
+		}
+		finally
+		{
+			_lock.ExitUpgradeableReadLock();
+		}
+	}
+
+	public TValue GetOrAdd<TState>(TKey key, Func<TKey, TState, TValue> valueFactory, TState state)
+	{
+		ArgumentNullException.ThrowIfNull(valueFactory);
+		_lock.EnterUpgradeableReadLock();
+
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existedValue))
+				return existedValue;
+
+			_lock.EnterWriteLock();
+
+			try {
+				return _dictionary.TryGetValue(key, out existedValue) ? existedValue :
+					_dictionary[key] = valueFactory(key, state);
+			}
+			finally { _lock.ExitWriteLock(); }
+		}
+		finally
+		{
+			_lock.ExitUpgradeableReadLock();
+		}
+	}
+
+	public TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateFactory)
+	{
+		ArgumentNullException.ThrowIfNull(updateFactory);
+		_lock.EnterUpgradeableReadLock();
+
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existingValue))
+			{
+				_lock.EnterWriteLock();
+				try { return _dictionary[key] = updateFactory(key, existingValue); }
+				finally { _lock.ExitWriteLock(); }
+			}
+			else
+			{
+				_lock.EnterWriteLock();
+				try { return _dictionary[key] = addValue; }
+				finally { _lock.ExitWriteLock(); }
+			}
+		}
+		finally
+		{
+			_lock.ExitUpgradeableReadLock();
+		}
+	}
+
+	public TValue AddOrUpdate(TKey key, Func<TKey, TValue> addFactory, Func<TKey, TValue, TValue> updateFactory)
+	{
+		ArgumentNullException.ThrowIfNull(addFactory);
+		ArgumentNullException.ThrowIfNull(updateFactory);
+
+		_lock.EnterUpgradeableReadLock();
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existingValue))
+			{
+				_lock.EnterWriteLock();
+				try { return _dictionary[key] = updateFactory(key, existingValue); }
+				finally { _lock.ExitWriteLock(); }
+			}
+			else
+			{
+				_lock.EnterWriteLock();
+				try { return _dictionary[key] = addFactory(key); }
+				finally { _lock.ExitWriteLock(); }
+			}
+		}
+		finally
+		{
+			_lock.ExitUpgradeableReadLock();
+		}
+	}
+
+	public TValue AddOrUpdate<TState>(TKey key, Func<TKey, TState, TValue> addFactory, Func<TKey, TValue, TState, TValue> updateFactory, TState state)
+	{
+		ArgumentNullException.ThrowIfNull(addFactory);
+		ArgumentNullException.ThrowIfNull(updateFactory);
+
+		_lock.EnterUpgradeableReadLock();
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existingValue))
+			{
+				_lock.EnterWriteLock();
+				try { return _dictionary[key] = updateFactory(key, existingValue, state); }
+				finally { _lock.ExitWriteLock(); }
+			}
+			else
+			{
+				_lock.EnterWriteLock();
+				try { return _dictionary[key] = addFactory(key, state); }
+				finally { _lock.ExitWriteLock(); }
+			}
+		}
+		finally
+		{
+			_lock.ExitUpgradeableReadLock();
+		}
+	}
+
 	public void Clear()
 	{
 		_lock.EnterWriteLock();
@@ -149,6 +306,13 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	{
 		_lock.EnterWriteLock();
 		try { return _dictionary.Remove(key); }
+		finally { _lock.ExitWriteLock(); }
+	}
+
+	public bool Remove(TKey key, out TValue value)
+	{
+		_lock.EnterWriteLock();
+		try { return _dictionary.Remove(key, out value); }
 		finally { _lock.ExitWriteLock(); }
 	}
 
@@ -164,6 +328,46 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		_lock.EnterReadLock();
 		try { return _dictionary.TryGetValue(key, out value); }
 		finally { _lock.ExitReadLock(); }
+	}
+
+	public bool TryUpdate(TKey key, TValue newValue)
+	{
+		_lock.EnterWriteLock();
+
+		try
+		{
+			if(_dictionary.ContainsKey(key))
+			{
+				_dictionary[key] = newValue;
+				return true;
+			}
+
+			return false;
+		}
+		finally
+		{
+			_lock.ExitWriteLock();
+		}
+	}
+
+	public bool TryUpdate(TKey key, TValue newValue, TValue comparisonValue)
+	{
+		_lock.EnterWriteLock();
+
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existingValue) && EqualityComparer<TValue>.Default.Equals(existingValue, comparisonValue))
+			{
+				_dictionary[key] = newValue;
+				return true;
+			}
+
+			return false;
+		}
+		finally
+		{
+			_lock.ExitWriteLock();
+		}
 	}
 	#endregion
 

@@ -10,9 +10,9 @@ namespace Zongsoft.Collections.Tests;
 public class SynchronizedListTest
 {
 	[Fact]
-	public void Test()
+	public void Add()
 	{
-		const int COUNT = 10000;
+		const int COUNT = 1_0000;
 
 		var list = new SynchronizedList<int>(COUNT);
 
@@ -40,9 +40,9 @@ public class SynchronizedListTest
 	}
 
 	[Fact]
-	public async Task TestAsync()
+	public async Task AddAsync()
 	{
-		const int COUNT = 10000;
+		const int COUNT = 1_0000;
 
 		var list = new SynchronizedList<int>(COUNT);
 
