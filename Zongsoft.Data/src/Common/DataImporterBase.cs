@@ -126,7 +126,7 @@ public abstract class DataImporterBase : IDataImporter
 			if(CanSequence(property.Sequence))
 			{
 				//获取目标的当前属性值，如果获取失败或其值为空或数字零，则递增该字段序号
-				if(!Reflection.Reflector.TryGetValue(this.Info, ref target, out value) || value == null || Zongsoft.Common.Convert.IsZero(value))
+				if(!Reflection.Reflector.TryGetValue(this.Info, ref target, out value) || value == null || Convert.IsDBNull(value) || Zongsoft.Common.Convert.IsZero(value))
 				{
 					//递增当前属性对应的序号
 					var id = _context.DataAccess.Sequencer.Increase(property);

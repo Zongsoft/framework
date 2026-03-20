@@ -270,6 +270,13 @@ public static class StatementExtension
 		return result;
 	}
 
+	private static bool CanSequence(IDataMutateOptions options, object value) => options switch
+	{
+		IDataInsertOptions insertion when insertion.SequenceSuppressed => value == null || Convert.IsDBNull(value),
+		IDataUpsertOptions upsertion when upsertion.SequenceSuppressed => value == null || Convert.IsDBNull(value),
+		_ => value == null || Convert.IsDBNull(value) || Zongsoft.Common.Convert.IsZero(value),
+	};
+
 	private static void SetSequenceValue(IDataMutateContextBase context, IEnumerable<FieldIdentifier> sequenceFileds , object data)
 	{
 		if(data == null || sequenceFileds == null)
@@ -285,7 +292,7 @@ public static class StatementExtension
 				{
 					var value = field.Token.GetValue(data);
 
-					if(value == null || Convert.IsDBNull(value) || object.Equals(value, Zongsoft.Common.TypeExtension.GetDefaultValue(field.Token.MemberType)) || (context.Options is IDataInsertOptions options && !options.SequenceSuppressed))
+					if(CanSequence(context.Options, value))
 					{
 						var id = ((DataAccess)context.DataAccess).Increase(context, sequence, data);
 						field.Token.SetValue(ref data, Convert.ChangeType(id, field.Token.MemberType));
@@ -310,7 +317,7 @@ public static class StatementExtension
 				{
 					var value = field.Token.GetValue(data);
 
-					if(value == null || Convert.IsDBNull(value) || object.Equals(value, Zongsoft.Common.TypeExtension.GetDefaultValue(field.Token.MemberType)) || (context.Options is IDataInsertOptions options && !options.SequenceSuppressed))
+					if(CanSequence(context.Options, value))
 					{
 						var id = await ((DataAccess)context.DataAccess).IncreaseAsync(context, sequence, data, cancellation);
 						field.Token.SetValue(ref data, Convert.ChangeType(id, field.Token.MemberType));
