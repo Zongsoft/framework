@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data;
@@ -52,7 +51,7 @@ partial class DataServiceBase<TModel>
 			#endregion
 
 			#region 静态方法
-			public static Deletion Allow(bool validatorSuppressed = false) => new Deletion(true) { ValidatorSuppressed = validatorSuppressed };
+			public static Deletion Allow(bool validatorSuppressed = false) => new(true) { ValidatorSuppressed = validatorSuppressed };
 			#endregion
 		}
 
@@ -71,8 +70,8 @@ partial class DataServiceBase<TModel>
 			#endregion
 
 			#region 静态方法
-			public static Updation Allow(UpdateBehaviors behaviors = UpdateBehaviors.None) => new Updation(true, behaviors);
-			public static Updation Allow(bool validatorSuppressed, UpdateBehaviors behaviors = UpdateBehaviors.None) => new Updation(true, behaviors) { ValidatorSuppressed = validatorSuppressed };
+			public static Updation Allow(UpdateBehaviors behaviors = UpdateBehaviors.None) => new(true, behaviors);
+			public static Updation Allow(bool validatorSuppressed, UpdateBehaviors behaviors = UpdateBehaviors.None) => new(true, behaviors) { ValidatorSuppressed = validatorSuppressed };
 			#endregion
 		}
 
@@ -90,7 +89,12 @@ partial class DataServiceBase<TModel>
 			#endregion
 
 			#region 静态方法
-			public static Upsertion Allow(bool validatorSuppressed = false) => new Upsertion(true) { ValidatorSuppressed = validatorSuppressed };
+			public static Upsertion Allow(bool validatorSuppressed = false, bool sequenceSuppressed = false, bool sequenceRetrieverSuppressed = false) => new(true)
+			{
+				ValidatorSuppressed = validatorSuppressed,
+				SequenceSuppressed = sequenceSuppressed,
+				SequenceRetrieverSuppressed = sequenceRetrieverSuppressed,
+			};
 			#endregion
 		}
 
@@ -108,11 +112,11 @@ partial class DataServiceBase<TModel>
 			#endregion
 
 			#region 静态方法
-			public static Insertion Allow(bool validatorSuppressed = false, bool sequenceSuppressed = false) =>
-			new Insertion(true)
+			public static Insertion Allow(bool validatorSuppressed = false, bool sequenceSuppressed = false, bool sequenceRetrieverSuppressed = false) => new(true)
 			{
 				ValidatorSuppressed = validatorSuppressed,
 				SequenceSuppressed = sequenceSuppressed,
+				SequenceRetrieverSuppressed = sequenceRetrieverSuppressed,
 			};
 			#endregion
 		}
