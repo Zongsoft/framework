@@ -105,6 +105,29 @@ public class InsertSequenceTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task InsertManyAsync()
+	{
+		const int COUNT = 100;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var models = Model.Build<UserModel>(COUNT, (model, index) =>
+		{
+			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
+		}).ToArray();
+
+		var count = await accessor.InsertManyAsync(models);
+		Assert.Equal(COUNT, count);
+		foreach(var model in models)
+			Assert.True(model.UserId > 0);
+
+		count = await accessor.CountAsync<UserModel>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId)));
+		Assert.Equal(COUNT, count);
+	}
+
+	[Fact]
 	public async Task InsertManyWithSequenceValueAsync()
 	{
 		const int COUNT = 100;
@@ -124,29 +147,6 @@ public class InsertSequenceTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(COUNT, count);
 		for(int i = 0; i < models.Length; i++)
 			Assert.Equal((uint)(OFFSET + i), models[i].UserId);
-
-		count = await accessor.CountAsync<UserModel>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId)));
-		Assert.Equal(COUNT, count);
-	}
-
-	[Fact]
-	public async Task InsertManyAsync()
-	{
-		const int COUNT = 100;
-
-		if(!Global.IsTestingEnabled)
-			return;
-
-		var accessor = _database.Accessor;
-		var models = Model.Build<UserModel>(COUNT, (model, index) =>
-		{
-			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
-		}).ToArray();
-
-		var count = await accessor.InsertManyAsync(models);
-		Assert.Equal(COUNT, count);
-		foreach(var model in models)
-			Assert.True(model.UserId > 0);
 
 		count = await accessor.CountAsync<UserModel>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId)));
 		Assert.Equal(COUNT, count);

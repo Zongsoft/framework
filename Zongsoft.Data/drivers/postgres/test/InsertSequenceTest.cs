@@ -33,6 +33,25 @@ public class InsertSequenceTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task InsertWithSequenceValueAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var model = Model.Build<UserModel>(model =>
+		{
+			model.UserId = 404;
+			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}";
+		});
+
+		var count = await accessor.InsertAsync(model);
+		Assert.Equal(1, count);
+		Assert.Equal(404U, model.UserId);
+		Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), model.UserId)));
+	}
+
+	[Fact]
 	public async Task InsertWithChildrenAsync()
 	{
 		if(!Global.IsTestingEnabled)
@@ -109,6 +128,31 @@ public class InsertSequenceTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task InsertManyWithSequenceValueAsync()
+	{
+		const int COUNT = 100;
+		const int OFFSET = 5000;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var models = Model.Build<UserModel>(COUNT, (model, index) =>
+		{
+			model.UserId = (uint)(OFFSET + index);
+			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
+		}).ToArray();
+
+		var count = await accessor.InsertManyAsync(models);
+		Assert.Equal(COUNT, count);
+		for(int i = 0; i < models.Length; i++)
+			Assert.Equal((uint)(OFFSET + i), models[i].UserId);
+
+		count = await accessor.CountAsync<UserModel>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId)));
+		Assert.Equal(COUNT, count);
+	}
+
+	[Fact]
 	public async Task InsertManyWithChildrenAsync()
 	{
 		const int COUNT = 10;
@@ -133,7 +177,7 @@ public class InsertSequenceTest(DatabaseFixture database) : IDisposable
 			];
 		}).ToArray();
 
-		var count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}");
 		Assert.Equal(3 * COUNT, count);
 
 		for(int i = 0; i < models.Length; i++)

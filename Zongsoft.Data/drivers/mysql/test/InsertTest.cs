@@ -381,7 +381,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			];
 		});
 
-		var count = await accessor.InsertAsync(model, $"*,{nameof(model.Departments)}{{*}}", DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertAsync(model, $"*,{nameof(model.Departments)}{{*}}");
 		Assert.Equal(3, count);
 		Assert.NotNull(model.Departments);
 		Assert.NotEmpty(model.Departments);
@@ -735,7 +735,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			];
 		}).ToArray();
 
-		var count = await accessor.InsertManyAsync(models, $"*,{nameof(Branch.Departments)}{{*}}", DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertManyAsync(models, $"*,{nameof(Branch.Departments)}{{*}}");
 		Assert.Equal(3 * COUNT, count);
 
 		foreach(var model in models)
