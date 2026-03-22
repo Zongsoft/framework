@@ -48,10 +48,18 @@ public static class ArrayExtension
 	/// <returns>返回指定元素类型的空数组。</returns>
 	public static Array Empty(Type type)
 	{
-		if(_empties.TryGetValue(type, out var array))
-			return array;
+		ArgumentNullException.ThrowIfNull(type);
 
-		var element = Array.CreateInstance(type, 0);
-		return _empties.TryAdd(type, element) ? element : _empties[type];
+		if(_empties.TryGetValue(type, out var value))
+			return value;
+
+		lock(_empties)
+		{
+			if(_empties.TryGetValue(type, out value))
+				return value;
+
+			var array = Array.CreateInstance(type, 0);
+			return _empties.TryAdd(type, array) ? array : _empties[type];
+		}
 	}
 }
