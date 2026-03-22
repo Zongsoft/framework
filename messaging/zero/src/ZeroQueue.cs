@@ -148,6 +148,9 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 
 	private void OnQueueReady(object sender, NetMQQueueEventArgs<Packet> e)
 	{
+		if(e.Queue == null || e.Queue.IsDisposed)
+			return;
+
 		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
 		{
 			//如果主题为空则直接发送心跳包
