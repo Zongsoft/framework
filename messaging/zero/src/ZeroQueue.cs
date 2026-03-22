@@ -233,7 +233,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 			publisher.Connect(ZeroUtility.GetTcpAddress(this.Settings.Server, _subscriberPort));
 
-			//将已经连接就绪的发布者保存
+			//保存已经连接就绪的发布者
 			_publisher = publisher;
 
 			//启动网络轮询器
@@ -351,7 +351,6 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 					}
 					break;
 			}
-
 		}
 	}
 
