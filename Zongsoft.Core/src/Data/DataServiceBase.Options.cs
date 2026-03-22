@@ -89,11 +89,11 @@ partial class DataServiceBase<TModel>
 			#endregion
 
 			#region 静态方法
-			public static Upsertion Allow(bool validatorSuppressed = false, bool sequenceSuppressed = false, bool sequenceRetrieverSuppressed = false) => new(true)
+			public static Upsertion Allow(bool validatorSuppressed = false, DataSequenceBehavior sequenceBehavior = DataSequenceBehavior.Auto, bool sequenceRetrievable = true) => new(true)
 			{
 				ValidatorSuppressed = validatorSuppressed,
-				SequenceSuppressed = sequenceSuppressed,
-				SequenceRetrieverSuppressed = sequenceRetrieverSuppressed,
+				SequenceBehavior = sequenceBehavior,
+				SequenceRetrievable = sequenceRetrievable,
 			};
 			#endregion
 		}
@@ -112,11 +112,11 @@ partial class DataServiceBase<TModel>
 			#endregion
 
 			#region 静态方法
-			public static Insertion Allow(bool validatorSuppressed = false, bool sequenceSuppressed = false, bool sequenceRetrieverSuppressed = false) => new(true)
+			public static Insertion Allow(bool validatorSuppressed = false, DataSequenceBehavior sequenceBehavior = DataSequenceBehavior.Auto, bool sequenceRetrievable = true) => new(true)
 			{
 				ValidatorSuppressed = validatorSuppressed,
-				SequenceSuppressed = sequenceSuppressed,
-				SequenceRetrieverSuppressed = sequenceRetrieverSuppressed,
+				SequenceBehavior = sequenceBehavior,
+				SequenceRetrievable = sequenceRetrievable,
 			};
 			#endregion
 		}

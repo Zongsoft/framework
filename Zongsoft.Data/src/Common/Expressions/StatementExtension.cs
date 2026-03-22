@@ -270,12 +270,22 @@ public static class StatementExtension
 		return result;
 	}
 
-	private static bool CanSequence(IDataMutateOptions options, object value) => options switch
+	private static bool CanSequence(IDataMutateOptions options, object value)
 	{
-		IDataInsertOptions insertion when insertion.SequenceSuppressed => value == null || Convert.IsDBNull(value),
-		IDataUpsertOptions upsertion when upsertion.SequenceSuppressed => value == null || Convert.IsDBNull(value),
-		_ => value == null || Convert.IsDBNull(value) || Zongsoft.Common.Convert.IsZero(value),
-	};
+		var behavior = options switch
+		{
+			IDataInsertOptions insertion => insertion.SequenceBehavior,
+			IDataUpsertOptions upsertion => upsertion.SequenceBehavior,
+			_ => DataSequenceBehavior.Never,
+		};
+
+		return behavior switch
+		{
+			DataSequenceBehavior.Alway => true,
+			DataSequenceBehavior.Never => false,
+			_ => value == null || Convert.IsDBNull(value) || Zongsoft.Common.Convert.IsZero(value),
+		};
+	}
 
 	private static void SetSequenceValue(IDataMutateContextBase context, IEnumerable<FieldIdentifier> sequenceFileds , object data)
 	{

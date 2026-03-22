@@ -40,12 +40,10 @@ public interface IDataUpsertOptions : IDataMutateOptions
 {
 	/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
 	bool ConstraintIgnored { get; set; }
-
-	/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
-	bool SequenceSuppressed { get; set; }
-
-	/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
-	bool SequenceRetrieverSuppressed { get; set; }
+	/// <summary>获取或设置序号值的处理方式。</summary>
+	DataSequenceBehavior SequenceBehavior { get; set; }
+	/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认值为真(<c>True</c>)。</summary>
+	bool SequenceRetrievable { get; set; }
 }
 
 /// <summary>
@@ -54,18 +52,15 @@ public interface IDataUpsertOptions : IDataMutateOptions
 public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 {
 	#region 构造函数
-	public DataUpsertOptions() { }
-	public DataUpsertOptions(Collections.Parameters parameters) : base(parameters) { }
-	public DataUpsertOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) { }
+	public DataUpsertOptions() => this.SequenceRetrievable = true;
+	public DataUpsertOptions(Collections.Parameters parameters) : base(parameters) => this.SequenceRetrievable = true;
+	public DataUpsertOptions(IEnumerable<KeyValuePair<string, object>> parameters) : base(parameters) => this.SequenceRetrievable = true;
 	#endregion
 
 	#region 公共属性
-	/// <inheritdoc />
 	public bool ConstraintIgnored { get; set; }
-	/// <inheritdoc />
-	public bool SequenceSuppressed { get; set; }
-	/// <inheritdoc />
-	public bool SequenceRetrieverSuppressed { get; set; }
+	public DataSequenceBehavior SequenceBehavior { get; set; }
+	public bool SequenceRetrievable { get; set; }
 	#endregion
 
 	#region 静态方法
@@ -91,17 +86,13 @@ public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 	public static Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) => new(parameters);
 
+	/// <summary>创建一个指定序号生成方式和是否开启序号返回值获取的新增选项构建器。</summary>
+	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
+	public static Builder Sequence(DataSequenceBehavior behavior, bool retrievable = true) => new(null) { SequenceBehavior = behavior, SequenceRetrievable = retrievable };
+
 	/// <summary>创建一个忽略数据库约束的增改选项构建器。</summary>
 	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 	public static Builder IgnoreConstraint() => new(null) { ConstraintIgnored = true };
-
-	/// <summary>创建一个禁用序号器的增改选项构建器。</summary>
-	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-	public static Builder SuppressSequence() => new(null) { SequenceSuppressed = true };
-
-	/// <summary>创建一个禁用数据库序号器返回值的增改选项构建器。</summary>
-	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
-	public static Builder SuppressSequenceRetriever() => new(null) { SequenceRetrieverSuppressed = true };
 
 	/// <summary>创建一个禁用数据验证器的增改选项构建器。</summary>
 	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
@@ -112,18 +103,20 @@ public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 	public class Builder : DataMutateOptionsBuilder<DataUpsertOptions>
 	{
 		#region 构造函数
-		public Builder(IEnumerable<KeyValuePair<string, object>> parameters) => this.Parameter(parameters);
+		public Builder(IEnumerable<KeyValuePair<string, object>> parameters)
+		{
+			this.SequenceRetrievable = true;
+			this.Parameters.SetValue(parameters);
+		}
 		#endregion
 
 		#region 公共属性
 		/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
 		public bool ConstraintIgnored { get; set; }
-
-		/// <summary>获取或设置一个值，指示是否强制应用新增序号器来生成序号值，默认不强制。</summary>
-		public bool SequenceSuppressed { get; set; }
-
-		/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认为获取。</summary>
-		public bool SequenceRetrieverSuppressed { get; set; }
+		/// <summary>获取或设置序号值的处理方式。</summary>
+		public DataSequenceBehavior SequenceBehavior { get; set; }
+		/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认值为真(<c>True</c>)。</summary>
+		public bool SequenceRetrievable { get; set; }
 		#endregion
 
 		#region 设置方法
@@ -145,12 +138,16 @@ public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 		public Builder Parameter(string name, object value = null) { this.Parameters.SetValue(name, value); return this; }
 		public Builder Parameter(params KeyValuePair<string, object>[] parameters) { this.Parameters.SetValue(parameters); return this; }
 		public Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) { this.Parameters.SetValue(parameters); return this; }
+
+		public Builder Sequence(DataSequenceBehavior behavior, bool retrievable = true)
+		{
+			this.SequenceBehavior = behavior;
+			this.SequenceRetrievable = retrievable;
+			return this;
+		}
+
 		public Builder IgnoreConstraint() { this.ConstraintIgnored = true; return this; }
 		public Builder UnignoreConstraint() { this.ConstraintIgnored = false; return this; }
-		public Builder SuppressSequence() { this.SequenceSuppressed = true; return this; }
-		public Builder UnsuppressSequence() { this.SequenceSuppressed = false; return this; }
-		public Builder SuppressSequenceRetriever() { this.SequenceRetrieverSuppressed = true; return this; }
-		public Builder UnsuppressSequenceRetriever() { this.SequenceRetrieverSuppressed = false; return this; }
 		public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
 		public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
 		#endregion
@@ -160,8 +157,8 @@ public class DataUpsertOptions : DataMutateOptions, IDataUpsertOptions
 		{
 			Returning = this.Returning,
 			ConstraintIgnored = this.ConstraintIgnored,
-			SequenceSuppressed = this.SequenceSuppressed,
-			SequenceRetrieverSuppressed = this.SequenceRetrieverSuppressed,
+			SequenceBehavior = this.SequenceBehavior,
+			SequenceRetrievable = this.SequenceRetrievable,
 			ValidatorSuppressed = this.ValidatorSuppressed,
 		};
 		#endregion

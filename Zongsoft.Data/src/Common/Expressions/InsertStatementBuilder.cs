@@ -51,7 +51,7 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 			throw new ArgumentNullException(nameof(data));
 
 		var inherits = entity.GetInherits();
-		var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
+		var sequenceRetrievable = IsSequenceRetrievable(context);
 		var recordCount = 0;
 
 		if(owner == null)
@@ -104,7 +104,7 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 				{
 					var simplex = (IDataEntitySimplexProperty)schema.Token.Property;
 
-					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
+					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && sequenceRetrievable)
 					{
 						if(context.Source.Features.Support(Feature.Returning))
 						{
@@ -207,7 +207,7 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 		}
 	}
 
-	private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataInsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
+	private static bool IsSequenceRetrievable(IDataMutateContextBase context) => context is DataInsertContextBase ctx && ctx.Options.SequenceRetrievable;
 	#endregion
 
 	#region 虚拟方法

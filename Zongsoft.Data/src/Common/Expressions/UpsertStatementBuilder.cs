@@ -48,7 +48,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 	internal static IEnumerable<UpsertStatement> BuildUpserts(IDataMutateContext context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
 	{
 		var inherits = entity.GetInherits();
-		var sequenceRetrieverSuppressed = IsSequenceRetrieverSuppressed(context);
+		var sequenceRetrievable = IsSequenceRetrievable(context);
 		var recordCount = 0;
 
 		if(owner == null)
@@ -102,7 +102,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 				{
 					var simplex = (IDataEntitySimplexProperty)schema.Token.Property;
 
-					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && !sequenceRetrieverSuppressed)
+					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && sequenceRetrievable)
 					{
 						if(context.Source.Features.Support(Feature.Returning))
 						{
@@ -265,7 +265,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 		}
 	}
 
-	private static bool IsSequenceRetrieverSuppressed(IDataMutateContextBase context) => context is DataUpsertContextBase ctx && ctx.Options.SequenceRetrieverSuppressed;
+	private static bool IsSequenceRetrievable(IDataMutateContextBase context) => context is DataUpsertContextBase ctx && ctx.Options.SequenceRetrievable;
 	#endregion
 
 	#region 虚拟方法
