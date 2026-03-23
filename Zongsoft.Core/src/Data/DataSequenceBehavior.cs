@@ -36,10 +36,10 @@ namespace Zongsoft.Data;
 /// </summary>
 public enum DataSequenceBehavior
 {
-	/// <summary>自动，表示序列字段值为空或等于零则有序列器生成，否则为字段指定值。</summary>
+	/// <summary>自动，表示序列字段值为空或等于零则由序列器生成，否则为字段指定值。</summary>
 	Auto,
 	/// <summary>始终由序列器生成。</summary>
 	Alway,
-	/// <summary>关闭序列器的生成。</summary>
+	/// <summary>禁用序列器的生成。</summary>
 	Never,
 }
