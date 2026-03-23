@@ -1,0 +1,7 @@
+artifacts/Zongsoft.Externals.Velopack.option
+artifacts/Zongsoft.Externals.Velopack.plugin
+lib/$(Framework)/Zongsoft.Externals.Velopack.*
+lib/$(Framework)/*/Zongsoft.Externals.Velopack.resources.*
+
+nuget:Velopack@0.0.1298
+nuget:NuGet.Versioning@7.3.0

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Velopack"
+        title="Zongsoft.Externals.Velopack Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2020-2026. All rights reserved."
+        description="Created Date: 2026-03-20 by Popeye Zhong" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Velopack" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workbench/Startup">
+		<object name="Velopack_Upgrader" type="Zongsoft.Externals.Velopack.Upgrader, Zongsoft.Externals.Velopack" />
+	</extension>
+</plugin>

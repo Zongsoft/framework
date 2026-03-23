@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Version>0.0.1</Version>
+		<Product>Zongsoft Velopack Library</Product>
+		<Description>This is a library about Velopack SDK.</Description>
+		<RootNamespace>Zongsoft.Externals.Velopack</RootNamespace>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/externals/velopack</RepositoryUrl>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Velopack" VersionOverride="0.0.1298" />
+	</ItemGroup>
+
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.39.0" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
+
+	<ItemGroup>
+		<None Update="Zongsoft.Externals.Velopack.ini">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="\" />
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+</Project>
