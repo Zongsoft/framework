@@ -3,8 +3,8 @@
 <options>
 	<option path="/Externals/Velopack">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="local" driver="velopack"
-			                   value="server=127.0.0.1" />
+			<connectionSetting connectionSetting.name="default" driver="velopack"
+			                   value="source=web;url=127.0.0.1;locator=" />
 		</connectionSettings>
 	</option>
 </options>

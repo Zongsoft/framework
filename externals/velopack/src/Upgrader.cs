@@ -31,8 +31,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Diagnostics;
+using Zongsoft.Configuration;
 
 using Velopack;
 
@@ -50,6 +52,14 @@ public sealed class Upgrader : WorkerBase
 
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
+		var settings = ApplicationContext.Current.Configuration.GetConnectionSettings(
+			Configuration.VelopackConnectionSettingsDriver.PATH,
+			ApplicationContext.Current.Name,
+			Configuration.VelopackConnectionSettingsDriver.NAME);
+
+		if(settings.TryGetValue<TimeSpan>("period", out var period) && period.TotalSeconds > 30)
+			_timer.Period = period;
+
 		_manager = new("", new() { }, null);
 		_timer.Start(args, cancellation);
 		return default;

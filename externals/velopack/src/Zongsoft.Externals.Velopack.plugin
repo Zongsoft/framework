@@ -12,6 +12,10 @@
 		</assemblies>
 	</manifest>
 
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="Velopack" value="{static:Zongsoft.Externals.Velopack.Configuration.VelopackConnectionSettingsDriver.Instance, Zongsoft.Externals.Velopack}" />
+	</extension>
+
 	<extension path="/Workbench/Startup">
 		<object name="Velopack_Upgrader" type="Zongsoft.Externals.Velopack.Upgrader, Zongsoft.Externals.Velopack" />
 	</extension>
