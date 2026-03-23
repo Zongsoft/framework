@@ -27,7 +27,7 @@ public class DeleteTest(DatabaseFixture database)
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 
@@ -54,7 +54,7 @@ public class DeleteTest(DatabaseFixture database)
 			});
 		});
 
-		var count = await accessor.InsertAsync(model, $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertAsync(model, $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(2, count);
 		Assert.True(await accessor.ExistsAsync<Employee>(Condition.Equal(nameof(Employee.TenantId), 1) & Condition.Equal(nameof(Employee.UserId), 404)));
 		Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 404)));
@@ -77,7 +77,7 @@ public class DeleteTest(DatabaseFixture database)
 		await accessor.InsertAsync(Model.Build<RoleModel>(model => {
 			model.RoleId = 100;
 			model.Name = "Guests";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
 		{
@@ -108,7 +108,7 @@ public class DeleteTest(DatabaseFixture database)
 			model.BranchId = BranchId;
 			model.BranchNo = "B01";
 			model.Name = "Branch#1";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<Department>(model =>
 		{
@@ -117,7 +117,7 @@ public class DeleteTest(DatabaseFixture database)
 			model.DepartmentId = 1;
 			model.DepartmentNo = "D01";
 			model.Name = "Department#1";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<Team>(model =>
 		{
@@ -126,7 +126,7 @@ public class DeleteTest(DatabaseFixture database)
 			model.TeamId = 1;
 			model.TeamNo = "T01";
 			model.Name = "Team#1";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		var count = await accessor.DeleteAsync<Branch>(
 			Condition.Equal(nameof(Branch.TenantId), TenantId) &
@@ -181,9 +181,9 @@ public class DeleteTest(DatabaseFixture database)
 			];
 		});
 
-		await accessor.InsertAsync(branch, DataInsertOptions.SuppressSequence().IgnoreConstraint());
-		await accessor.InsertAsync(department, $"*,{nameof(Department.Members)}{{*}}", DataInsertOptions.SuppressSequence().IgnoreConstraint());
-		await accessor.InsertAsync(team, $"*,{nameof(Team.Members)}{{*}}", DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		await accessor.InsertAsync(branch, DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
+		await accessor.InsertAsync(department, $"*,{nameof(Department.Members)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
+		await accessor.InsertAsync(team, $"*,{nameof(Team.Members)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		var count = await accessor.DeleteAsync<Branch>(
 			Condition.Equal(nameof(Branch.TenantId), TenantId) &

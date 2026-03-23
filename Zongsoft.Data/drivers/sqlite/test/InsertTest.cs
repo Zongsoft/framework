@@ -212,13 +212,13 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		var count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
-		}), DataInsertOptions.SuppressSequence());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 
 		count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye Zhong";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 		Assert.Equal(0, count);
 	}
 
@@ -241,7 +241,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			});
 		});
 
-		var count = await accessor.InsertAsync(model, $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertAsync(model, $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(2, count);
 
 		var employees = accessor.SelectAsync<Employee>(
@@ -271,7 +271,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		//必须先释放掉枚举器，否则会因为占用连接而导致后续的插入操作失败
 		await enumerator.DisposeAsync();
 
-		count = await accessor.InsertAsync(model, $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.SuppressSequence());
+		count = await accessor.InsertAsync(model, $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 		Assert.True(await accessor.ExistsAsync<Employee>(
 			Condition.Equal(nameof(Employee.TenantId), model.TenantId) &
@@ -301,7 +301,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			];
 		});
 
-		var count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(3, count);
 		Assert.NotNull(model.Children);
 		Assert.NotEmpty(model.Children);
@@ -338,7 +338,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			model.RoleId = 11;
 			model.Name = $"Role#{Random.Shared.Next():X}";
 		});
-		count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 		Assert.True(await accessor.ExistsAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), model.RoleId)));
 
@@ -347,7 +347,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			model.Name = $"Role#{Random.Shared.Next():X}";
 			model.Children = [];
 		});
-		count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 		Assert.True(await accessor.ExistsAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), model.RoleId)));
 	}
@@ -428,7 +428,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		var count = await accessor.InsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) => {
 			model.UserId = (uint)(200 + index);
 			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
-		}), DataInsertOptions.SuppressSequence());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT, count);
 	}
 
@@ -453,7 +453,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 				user.UserId = model.UserId;
 				user.Name = model.FullName;
 			});
-		}), $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.SuppressSequence());
+		}), $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT * 2, count);
 
 		var employees = accessor.SelectAsync<Employee>(
@@ -482,7 +482,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			model.FullName = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
 			model.EmployeeNo = $"A{model.UserId}";
 			model.EmployeeCode = $"X{model.UserId}";
-		}), $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.SuppressSequence());
+		}), $"*,{nameof(Employee.User)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT, count);
 
 		await accessor.DeleteAsync<Employee>(
@@ -516,7 +516,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			];
 		}).ToArray();
 
-		var count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(3 * COUNT, count);
 
 		for(int i = 0; i < models.Length; i++)
@@ -564,7 +564,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			model.RoleId = (uint)(OFFSET + index);
 			model.Name = $"$Role#{(OFFSET + index)}";
 		}).ToArray();
-		count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT, count);
 
 		await accessor.DeleteAsync<RoleModel>(Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT));
@@ -574,7 +574,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			model.Name = $"$Role#{(OFFSET + index)}";
 			model.Children = [];
 		}).ToArray();
-		count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT, count);
 
 		await accessor.DeleteAsync<RoleModel>(Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT));
@@ -653,7 +653,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			}),
 		};
 
-		var count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(10, count);
 
 		for(int i = 1; i < models.Length; i++)

@@ -26,7 +26,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 		var options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
 			.Return(ReturningKind.Older, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
-			.SuppressSequence().Build();
+			.Sequence(DataSequenceBehavior.Never).Build();
 
 		var count = await accessor.UpsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
@@ -51,7 +51,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 		options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
 			.Return(ReturningKind.Older, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
-			.SuppressSequence().Build();
+			.Sequence(DataSequenceBehavior.Never).Build();
 
 		count = await accessor.UpsertAsync<UserModel>(new {
 			UserId = 100,
@@ -101,7 +101,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 		var options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(RoleModel.RoleId), nameof(RoleModel.Name), nameof(RoleModel.Enabled))
 			.Return(ReturningKind.Older, nameof(RoleModel.RoleId), nameof(RoleModel.Name), nameof(RoleModel.Enabled))
-			.SuppressSequence().Build();
+			.Sequence(DataSequenceBehavior.Never).Build();
 
 		var count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", options);
 		Assert.Equal(3, count);
@@ -143,7 +143,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 		options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(RoleModel.RoleId), nameof(RoleModel.Name), nameof(RoleModel.Enabled))
 			.Return(ReturningKind.Older, nameof(RoleModel.RoleId), nameof(RoleModel.Name), nameof(RoleModel.Enabled))
-			.SuppressSequence().Build();
+			.Sequence(DataSequenceBehavior.Never).Build();
 
 		count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", options);
 		Assert.True(count > 0);
@@ -190,7 +190,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 		var options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
 			.Return(ReturningKind.Older, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
-			.SuppressSequence().Build();
+			.Sequence(DataSequenceBehavior.Never).Build();
 
 		var count = await accessor.UpsertManyAsync(models, options);
 		Assert.Equal(COUNT, count);
@@ -223,7 +223,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 		options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
 			.Return(ReturningKind.Older, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
-			.SuppressSequence().Build();
+			.Sequence(DataSequenceBehavior.Never).Build();
 
 		count = await accessor.UpsertManyAsync(models, options);
 		Assert.Equal(COUNT, count);
@@ -281,7 +281,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 		var options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(RoleModel.RoleId), nameof(RoleModel.Name), nameof(RoleModel.Enabled))
 			.Return(ReturningKind.Older, nameof(RoleModel.RoleId), nameof(RoleModel.Name), nameof(RoleModel.Enabled))
-			.SuppressSequence().Build();
+			.Sequence(DataSequenceBehavior.Never).Build();
 
 		var count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", options);
 		Assert.Equal(3 * COUNT, count);
@@ -330,7 +330,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 		options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(RoleModel.RoleId), nameof(RoleModel.Name), nameof(RoleModel.Enabled))
 			.Return(ReturningKind.Older, nameof(RoleModel.RoleId), nameof(RoleModel.Name), nameof(RoleModel.Enabled))
-			.SuppressSequence().Build();
+			.Sequence(DataSequenceBehavior.Never).Build();
 
 		count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", options);
 		Assert.Equal(3 * COUNT, count);

@@ -31,13 +31,13 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		var count = await accessor.UpsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
-		}), DataUpsertOptions.SuppressSequence());
+		}), DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 
 		count = await accessor.UpsertAsync<UserModel>(new {
 			UserId = 100,
 			Name = "Popeye Zhong"
-		}, DataUpsertOptions.SuppressSequence());
+		}, DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.True(count > 0);
 
 		var result = accessor.SelectAsync<string>(
@@ -65,7 +65,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			model.Name = $"Role#{model.RoleId}";
 		});
 
-		var count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		var count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 		Assert.True(await accessor.ExistsAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), model.RoleId)));
 
@@ -76,7 +76,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			model.Children = [];
 		});
 
-		count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 		Assert.True(await accessor.ExistsAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), model.RoleId)));
 	}
@@ -105,7 +105,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			];
 		});
 
-		var count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		var count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(3, count);
 		Assert.NotNull(model.Children);
 		Assert.NotEmpty(model.Children);
@@ -152,7 +152,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			];
 		});
 
-		count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		count = await accessor.UpsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.True(count > 0);
 		Assert.NotNull(model.Children);
 		Assert.NotEmpty(model.Children);
@@ -209,7 +209,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		var count = await accessor.UpsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) => {
 			model.UserId = (uint)(OFFSET + index);
 			model.Name = $"#Unnamed@{OFFSET + index}";
-		}), DataUpsertOptions.SuppressSequence());
+		}), DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT, count);
 
 		var result = accessor.SelectAsync<string>(
@@ -228,7 +228,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		{
 			model.UserId = (uint)(OFFSET + index);
 			model.Name = $"#User@{OFFSET + index}";
-		}), DataUpsertOptions.SuppressSequence());
+		}), DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.True(count > 0);
 
 		result = accessor.SelectAsync<string>(
@@ -270,7 +270,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 
 		static async ValueTask TestAsync(IDataAccess accessor, ICollection<RoleModel> models)
 		{
-			var count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+			var count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 			Assert.Equal(models.Count, count);
 
 			var roles = accessor.SelectAsync<RoleModel>(
@@ -323,7 +323,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			];
 		}).ToArray();
 
-		var count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		var count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(3 * COUNT, count);
 
 		for(int i = 0; i < models.Length; i++)
@@ -380,7 +380,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			];
 		}).ToArray();
 
-		count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.SuppressSequence());
+		count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.True(count > 0);
 
 		for(int i = 0; i < models.Length; i++)

@@ -24,7 +24,7 @@ public class DeleteReturningTest(DatabaseFixture database)
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		var options = DataDeleteOptions.Return(nameof(UserModel.UserId), nameof(UserModel.Name)).Build();
 		var count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100), options);
@@ -47,7 +47,7 @@ public class DeleteReturningTest(DatabaseFixture database)
 		await accessor.InsertAsync(Model.Build<RoleModel>(model => {
 			model.RoleId = 100;
 			model.Name = "Guests";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
 		{

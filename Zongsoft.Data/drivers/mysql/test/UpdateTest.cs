@@ -28,7 +28,7 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 		await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
 			model.Name = "Popeye";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		var count = await accessor.UpdateAsync<UserModel>(new
 		{
@@ -60,7 +60,7 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 			model.UserId = 100;
 			model.Name = "Popeye";
 			model.Nickname = "Popeye Zhong";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 		Assert.Equal(1, count);
 
 		count = await accessor.InsertAsync(Model.Build<Employee>(model => {
@@ -70,7 +70,7 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 			model.FullName = "Popeye Zhong";
 			model.EmployeeNo = "A101";
 			model.EmployeeCode = "X101";
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 		Assert.Equal(1, count);
 
 		count = await accessor.UpdateAsync<Employee>(new

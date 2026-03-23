@@ -27,7 +27,7 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 			nameof(UserModel.UserId),
 			nameof(UserModel.Name),
 			nameof(UserModel.Enabled)
-		).SuppressSequence().Build();
+		).Sequence(DataSequenceBehavior.Never).Build();
 
 		Assert.True(options.HasReturning(out var returning));
 		Assert.Equal(3, returning.Columns.Count);
@@ -55,7 +55,7 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 			nameof(UserModel.UserId),
 			nameof(UserModel.Name),
 			nameof(UserModel.Enabled)
-		).SuppressSequence().IgnoreConstraint().Build();
+		).Sequence(DataSequenceBehavior.Never).IgnoreConstraint().Build();
 
 		count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
 			model.UserId = 100;
@@ -92,7 +92,7 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 			nameof(RoleModel.RoleId),
 			nameof(RoleModel.Name),
 			nameof(RoleModel.Enabled)
-		).SuppressSequence().Build();
+		).Sequence(DataSequenceBehavior.Never).Build();
 
 		var count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", options);
 		Assert.Equal(3, count);
@@ -129,7 +129,7 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 			nameof(UserModel.UserId),
 			nameof(UserModel.Name),
 			nameof(UserModel.Enabled)
-		).SuppressSequence().Build();
+		).Sequence(DataSequenceBehavior.Never).Build();
 
 		var count = await accessor.InsertManyAsync(models, options);
 		Assert.Equal(COUNT, count);
@@ -177,7 +177,7 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 			nameof(RoleModel.RoleId),
 			nameof(RoleModel.Name),
 			nameof(RoleModel.Enabled)
-		).SuppressSequence().Build();
+		).Sequence(DataSequenceBehavior.Never).Build();
 
 		var count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", options);
 		Assert.Equal(3 * COUNT, count);

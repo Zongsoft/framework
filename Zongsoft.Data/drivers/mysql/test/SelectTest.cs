@@ -49,7 +49,7 @@ public class SelectTest(DatabaseFixture database)
 			model.Name = $"$Role_{model.RoleId}";
 		});
 
-		var count = await accessor.InsertManyAsync(models, DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertManyAsync(models, DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT, count);
 
 		var page = Paging.Page(1, 20);
@@ -87,7 +87,7 @@ public class SelectTest(DatabaseFixture database)
 			model.Name = $"$Role_{model.RoleId}";
 		});
 
-		var count = await accessor.InsertManyAsync(models, DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertManyAsync(models, DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT, count);
 
 		var roles = accessor.SelectAsync<RoleModel>(
@@ -141,7 +141,7 @@ public class SelectTest(DatabaseFixture database)
 			];
 		});
 
-		var count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(3, count);
 
 		var members = accessor.SelectAsync<MemberModel>(
@@ -183,7 +183,7 @@ public class SelectTest(DatabaseFixture database)
 			model.UserId = 100;
 			model.Name = "Popeye";
 			model.Email = new Email("Popeye", "zongsoft.com");
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
 		{
@@ -228,7 +228,7 @@ public class SelectTest(DatabaseFixture database)
 			model.UserId = 100;
 			model.Name = "Popeye";
 			model.Email = new Email("Popeye", "zongsoft.com");
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
 		{
@@ -275,7 +275,7 @@ public class SelectTest(DatabaseFixture database)
 			model.UserId = 100;
 			model.Name = "Popeye";
 			model.Email = new Email("Popeye", "zongsoft.com");
-		}), DataInsertOptions.SuppressSequence().IgnoreConstraint());
+		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<MemberModel>(model =>
 		{
@@ -338,10 +338,10 @@ public class SelectTest(DatabaseFixture database)
 			];
 		});
 
-		var count = await accessor.InsertAsync(user, DataInsertOptions.SuppressSequence());
+		var count = await accessor.InsertAsync(user, DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 
-		count = await accessor.InsertAsync(role, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.SuppressSequence());
+		count = await accessor.InsertAsync(role, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(3, count);
 
 		var result = accessor.SelectAsync<RoleModel>(

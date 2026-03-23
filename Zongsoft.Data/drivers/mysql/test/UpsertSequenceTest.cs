@@ -35,7 +35,7 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 		count = await accessor.UpsertAsync<UserModel>(new {
 			UserId = model.UserId,
 			Name = text
-		}, DataUpsertOptions.SuppressSequence());
+		}, DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.True(count >= 1);
 
 		var result = accessor.SelectAsync<string>(
@@ -183,7 +183,7 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 		{
 			model.UserId = models[index].UserId;
 			model.Name = $"$User@{models[index].UserId}";
-		}), DataUpsertOptions.SuppressSequence());
+		}), DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.True(count >= COUNT);
 
 		count = await accessor.CountAsync<UserModel>(Condition.In(nameof(UserModel.UserId), models.Select(model => model.UserId)));
