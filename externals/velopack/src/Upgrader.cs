@@ -77,7 +77,7 @@ public sealed class Upgrader : WorkerBase
 
 		//如果升级检测周期过长则开启一个短延迟的升级操作
 		if(_timer.Period >= TimeSpan.FromMinutes(5))
-			Task.Run(async () => this.UpgradeAsync(TimeSpan.FromSeconds(30), cancellation), cancellation);
+			Task.Run(() => this.UpgradeAsync(TimeSpan.FromSeconds(30), cancellation), cancellation);
 
 		return Task.CompletedTask;
 	}
@@ -106,15 +106,22 @@ public sealed class Upgrader : WorkerBase
 
 		try
 		{
+			//设置升级标志
 			var state = Interlocked.CompareExchange(ref _upgrading, UPGRADING_STATE, IDLE_STATE);
+
+			//如果当前处于升级中则退出
 			if(state == UPGRADING_STATE)
 				return;
 
+			//检查升级更新
 			var info = await manager.CheckForUpdatesAsync();
 			if(info == null)
 				return;
 
+			//下载升级安装包
 			await manager.DownloadUpdatesAsync(info, null, cancellation);
+
+			//应用升级安装并重启程序
 			manager.ApplyUpdatesAndRestart(info);
 		}
 		catch(Exception ex)
