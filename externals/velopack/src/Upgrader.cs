@@ -55,7 +55,7 @@ public sealed class Upgrader : WorkerBase
 	#region 构造函数
 	public Upgrader()
 	{
-		_timer = new(TimeSpan.FromMinutes(1), (_, cancellation) => this.UpgradeAsync(cancellation));
+		_timer = new(TimeSpan.FromMinutes(1), (_, cancellation) => this.UpgradeAsync(TimeSpan.Zero, cancellation));
 	}
 	#endregion
 
@@ -75,8 +75,9 @@ public sealed class Upgrader : WorkerBase
 		_timer.Period = Utility.GetPeriod(settings);
 		_timer.Start(args, cancellation);
 
+		//如果升级检测周期过长则开启一个短延迟的升级操作
 		if(_timer.Period >= TimeSpan.FromMinutes(5))
-			return this.UpgradeAsync(TimeSpan.FromSeconds(30), cancellation).AsTask();
+			Task.Run(async () => this.UpgradeAsync(TimeSpan.FromSeconds(30), cancellation), cancellation);
 
 		return Task.CompletedTask;
 	}
@@ -90,14 +91,17 @@ public sealed class Upgrader : WorkerBase
 	#endregion
 
 	#region 公共方法
-	public ValueTask UpgradeAsync(CancellationToken cancellation) => this.UpgradeAsync(TimeSpan.Zero, cancellation);
 	public async ValueTask UpgradeAsync(TimeSpan delay, CancellationToken cancellation)
 	{
 		if(delay > TimeSpan.Zero)
 			await Task.Delay(delay, cancellation);
 
 		var manager = _manager;
-		if(manager == null || !manager.IsInstalled)
+		if(manager == null)
+			return;
+
+		//如果当前升级程序未运行在安装模式则不支持进行升级
+		if(string.IsNullOrEmpty(manager.AppId) || !manager.IsInstalled)
 			return;
 
 		try
