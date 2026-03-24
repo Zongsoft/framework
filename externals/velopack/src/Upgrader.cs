@@ -104,15 +104,15 @@ public sealed class Upgrader : WorkerBase
 		if(string.IsNullOrEmpty(manager.AppId) || !manager.IsInstalled)
 			return;
 
+		//设置升级标志
+		var state = Interlocked.CompareExchange(ref _upgrading, UPGRADING_STATE, IDLE_STATE);
+
+		//如果当前处于升级中则退出
+		if(state == UPGRADING_STATE)
+			return;
+
 		try
 		{
-			//设置升级标志
-			var state = Interlocked.CompareExchange(ref _upgrading, UPGRADING_STATE, IDLE_STATE);
-
-			//如果当前处于升级中则退出
-			if(state == UPGRADING_STATE)
-				return;
-
 			//检查升级更新
 			var info = await manager.CheckForUpdatesAsync();
 			if(info == null)
