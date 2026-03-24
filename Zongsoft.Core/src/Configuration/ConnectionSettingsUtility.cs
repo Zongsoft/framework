@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -48,11 +48,18 @@ public static class ConnectionSettingsUtility
 	/// <returns>如果查找成功则返回找到的连接配置，否则返回空。</returns>
 	public static IConnectionSettings GetConnectionSettings(this Microsoft.Extensions.Configuration.IConfiguration configuration, string path, string name, string driver = null)
 	{
+		const string CONNECTION_SETTINGS = "/ConnectionSettings";
+
 		if(configuration == null)
 			return null;
 
+		if(string.IsNullOrEmpty(path))
+			path = CONNECTION_SETTINGS;
+		else if(!path.EndsWith(CONNECTION_SETTINGS, StringComparison.OrdinalIgnoreCase))
+			path = path.TrimEnd('/') + CONNECTION_SETTINGS;
+
 		//获取指定路径的连接配置集
-		var settings = configuration.GetOption<ConnectionSettingsCollection>(string.IsNullOrEmpty(path) ? "ConnectionSettings" : path);
+		var settings = configuration.GetOption<ConnectionSettingsCollection>(path);
 		if(settings == null || settings.Count == 0)
 			return null;
 
