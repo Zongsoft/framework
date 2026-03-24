@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 这是工作器的基类。
-/// </summary>
+/// <summary>表示后台工作器的基类。</summary>
 /// <remarks>
 ///		<para>该实现提供了对<see cref="OnStartAsync(string[], CancellationToken)"/>、<see cref="OnStopAsync(string[], CancellationToken)"/>、<see cref="OnPauseAsync"/>、<see cref="OnResumeAsync"/>这四个方法之间的线程重入的隔离。</para>
 ///		<para>对于子类的实现者而言，无需担心这些方法会在多线程中会导致状态的不一致，并确保了它们不会发生线程重入。</para>
@@ -339,7 +337,7 @@ public abstract class WorkerBase : IWorker, IDisposable
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => _enabled ? $"[{_state}] {_name}" : $"[{_state}](Disabled) {_name}";
+	public override string ToString() => _enabled ? $"[{this.State}] {_name}" : $"[{this.State}](Disabled) {_name}";
 	#endregion
 
 	#region 事件激发
