@@ -35,7 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IEquatable<ConnectionSettingsBase>, IEquatable<IConnectionSettings>
+public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IReadOnlyDictionary<string, string>, IEquatable<ConnectionSettingsBase>, IEquatable<IConnectionSettings>
 {
 	#region 成员字段
 	private readonly Dictionary<string, string> _entries;
@@ -88,6 +88,11 @@ public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IEq
 
 	#region 显式实现
 	IConnectionSettingsDriver IConnectionSettings.Driver => this.GetDriver();
+	int IReadOnlyCollection<KeyValuePair<string, string>>.Count => _entries.Count;
+	IEnumerable<string> IReadOnlyDictionary<string, string>.Keys => _entries.Keys;
+	IEnumerable<string> IReadOnlyDictionary<string, string>.Values => _entries.Values;
+	bool IReadOnlyDictionary<string, string>.ContainsKey(string key) => _entries.ContainsKey(key);
+	bool IReadOnlyDictionary<string, string>.TryGetValue(string key, out string value) => _entries.TryGetValue(key, out value);
 	#endregion
 
 	#region 抽象方法

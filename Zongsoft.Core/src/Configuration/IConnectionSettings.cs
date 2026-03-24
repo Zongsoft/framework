@@ -36,7 +36,7 @@ namespace Zongsoft.Configuration;
 /// 表示连接设置的接口。
 /// </summary>
 [Configuration(ResolverType = typeof(ConnectionSettingsResolver))]
-public interface IConnectionSettings : ISetting, IEquatable<IConnectionSettings>, IEnumerable<KeyValuePair<string, string>>
+public interface IConnectionSettings : ISetting, IEquatable<IConnectionSettings>, IReadOnlyDictionary<string, string>
 {
 	#region 属性定义
 	/// <summary>获取连接的驱动。接口实现者应确保该属性值不会为空(<c>null</c>)。</summary>
