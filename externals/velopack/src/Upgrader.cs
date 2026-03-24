@@ -34,7 +34,6 @@ using System.Threading.Tasks;
 using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Diagnostics;
-using Zongsoft.Configuration;
 
 using Velopack;
 
@@ -42,58 +41,86 @@ namespace Zongsoft.Externals.Velopack;
 
 public sealed class Upgrader : WorkerBase
 {
+	#region 常量定义
+	const int IDLE_STATE = 0;
+	const int UPGRADING_STATE = 1;
+	#endregion
+
+	#region 私有字段
+	private volatile int _upgrading;
 	private UpdateManager _manager;
 	private readonly Common.Timer _timer;
+	#endregion
 
+	#region 构造函数
 	public Upgrader()
 	{
-		_timer = new(TimeSpan.FromMinutes(1), this.OnTick);
+		_timer = new(TimeSpan.FromMinutes(1), (_, cancellation) => this.UpgradeAsync(cancellation));
 	}
+	#endregion
 
+	#region 重写方法
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		var settings = ApplicationContext.Current.Configuration.GetConnectionSettings(
-			Configuration.VelopackConnectionSettingsDriver.PATH,
-			ApplicationContext.Current.Name,
-			Configuration.VelopackConnectionSettingsDriver.NAME);
+		var settings = Configuration.VelopackConnectionSettingsDriver.GetConnectionSettings();
+		if(settings == null)
+		{
+			Logging.GetLogging(this).Error($"No upgrade configuration was found for the '{ApplicationContext.Current.Name}' application.");
+			return Task.CompletedTask;
+		}
 
-		if(settings.TryGetValue<TimeSpan>("period", out var period) && period.TotalSeconds > 30)
-			_timer.Period = period;
+		var source = VelopackSourceFactory.Create(settings);
+		_manager = new(source, Utility.GetOptions(settings));
 
-		_manager = new("", new() { }, null);
+		_timer.Period = Utility.GetPeriod(settings);
 		_timer.Start(args, cancellation);
-		return default;
+
+		if(_timer.Period >= TimeSpan.FromMinutes(5))
+			return this.UpgradeAsync(TimeSpan.FromSeconds(30), cancellation).AsTask();
+
+		return Task.CompletedTask;
 	}
 
 	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
 		_timer.Stop();
 		_manager = null;
-		return default;
+		return Task.CompletedTask;
 	}
+	#endregion
 
-	private async ValueTask OnTick(object state, CancellationToken cancellation)
+	#region 公共方法
+	public ValueTask UpgradeAsync(CancellationToken cancellation) => this.UpgradeAsync(TimeSpan.Zero, cancellation);
+	public async ValueTask UpgradeAsync(TimeSpan delay, CancellationToken cancellation)
 	{
+		if(delay > TimeSpan.Zero)
+			await Task.Delay(delay, cancellation);
+
 		var manager = _manager;
-		if(manager == null)
+		if(manager == null || !manager.IsInstalled)
 			return;
 
 		try
 		{
+			var state = Interlocked.CompareExchange(ref _upgrading, UPGRADING_STATE, IDLE_STATE);
+			if(state == UPGRADING_STATE)
+				return;
+
 			var info = await manager.CheckForUpdatesAsync();
 			if(info == null)
 				return;
 
-			await manager.DownloadUpdatesAsync(info, this.OnDownload, cancellation);
+			await manager.DownloadUpdatesAsync(info, null, cancellation);
 			manager.ApplyUpdatesAndRestart(info);
 		}
 		catch(Exception ex)
 		{
 			await Logging.GetLogging<Upgrader>().ErrorAsync(ex, cancellation);
 		}
+		finally
+		{
+			Interlocked.Exchange(ref _upgrading, IDLE_STATE);
+		}
 	}
-
-	private void OnDownload(int progress)
-	{
-	}
+	#endregion
 }

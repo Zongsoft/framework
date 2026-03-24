@@ -2,9 +2,9 @@
 
 <options>
 	<option path="/Externals/Velopack">
-		<connectionSettings>
-			<connectionSetting connectionSetting.name="default" driver="velopack"
-			                   value="source=web;url=127.0.0.1;locator=" />
+		<connectionSettings default="current">
+			<connectionSetting connectionSetting.name="current" driver="velopack"
+			                   value="source=web;url=http://localhost;period=300s" />
 		</connectionSettings>
 	</option>
 </options>

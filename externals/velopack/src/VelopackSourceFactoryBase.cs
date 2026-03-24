@@ -28,17 +28,39 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Velopack;
+using Velopack.Sources;
 
 namespace Zongsoft.Externals.Velopack;
 
-[Zongsoft.Services.Service<IApplicationInitializer>]
-public sealed class Initializer : IApplicationInitializer
+public abstract class VelopackSourceFactoryBase<TSource> : IVelopackSourceFactory where TSource : class, IUpdateSource
 {
-	public void Initialize(IApplicationContext context)
+	#region 构造函数
+	protected VelopackSourceFactoryBase(string name = null)
 	{
-		if(!global::Velopack.Locators.VelopackLocator.IsCurrentSet)
-			global::Velopack.VelopackApp.Build().Run();
+		if(string.IsNullOrEmpty(name))
+		{
+			name = typeof(TSource).Name;
+
+			if(name.Length > 6 && name.EndsWith("Source"))
+				name = name[..^6];
+		}
+
+		this.Name = name;
 	}
+	#endregion
+
+	#region 公共属性
+	public string Name { get; }
+	#endregion
+
+	#region 公共方法
+	IUpdateSource IVelopackSourceFactory.Create(string url, IReadOnlyDictionary<string, string> settings) => this.Create(url, settings);
+	#endregion
+
+	#region 抽象方法
+	protected abstract TSource Create(string url, IReadOnlyDictionary<string, string> settings);
+	#endregion
 }

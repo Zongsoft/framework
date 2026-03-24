@@ -56,13 +56,13 @@ public class VelopackConnectionSettings : ConnectionSettingsBase<VelopackConnect
 		set => this.SetValue(value);
 	}
 
-	public string Locator
+	public string Channel
 	{
 		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 
-	[DefaultValue("30s")]
+	[DefaultValue("60s")]
 	public TimeSpan Timeout
 	{
 		get => this.GetValue<TimeSpan>();
@@ -70,10 +70,16 @@ public class VelopackConnectionSettings : ConnectionSettingsBase<VelopackConnect
 	}
 
 	[Alias("Interval")]
-	[DefaultValue("60s")]
+	[DefaultValue("300s")]
 	public TimeSpan Period
 	{
 		get => this.GetValue<TimeSpan>();
+		set => this.SetValue(value);
+	}
+
+	public string Token
+	{
+		get => this.GetValue<string>();
 		set => this.SetValue(value);
 	}
 

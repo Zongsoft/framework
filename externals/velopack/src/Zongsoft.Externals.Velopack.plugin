@@ -12,6 +12,10 @@
 		</assemblies>
 	</manifest>
 
+	<extension path="/Workbench/Externals/Velopack">
+		<object name="Factories" value="{static:Zongsoft.Externals.Velopack.VelopackSourceFactory.Factories, Zongsoft.Externals.Velopack}" />
+	</extension>
+
 	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
 		<object name="Velopack" value="{static:Zongsoft.Externals.Velopack.Configuration.VelopackConnectionSettingsDriver.Instance, Zongsoft.Externals.Velopack}" />
 	</extension>

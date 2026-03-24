@@ -28,17 +28,15 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-using Zongsoft.Services;
+using Velopack;
+using Velopack.Sources;
 
 namespace Zongsoft.Externals.Velopack;
 
-[Zongsoft.Services.Service<IApplicationInitializer>]
-public sealed class Initializer : IApplicationInitializer
+public interface IVelopackSourceFactory
 {
-	public void Initialize(IApplicationContext context)
-	{
-		if(!global::Velopack.Locators.VelopackLocator.IsCurrentSet)
-			global::Velopack.VelopackApp.Build().Run();
-	}
+	string Name { get; }
+	IUpdateSource Create(string url, IReadOnlyDictionary<string, string> settings);
 }

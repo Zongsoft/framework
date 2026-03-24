@@ -29,7 +29,7 @@
 
 using System;
 
-using Zongsoft.Components;
+using Zongsoft.Services;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Velopack.Configuration;
@@ -47,5 +47,22 @@ public class VelopackConnectionSettingsDriver : ConnectionSettingsDriver<Velopac
 
 	#region 私有构造
 	private VelopackConnectionSettingsDriver() : base(NAME) { }
+	#endregion
+
+	#region 公共方法
+	public static VelopackConnectionSettings GetConnectionSettings(string name = null) => GetConnectionSettings(ApplicationContext.Current?.Configuration, name);
+	public static VelopackConnectionSettings GetConnectionSettings(Microsoft.Extensions.Configuration.IConfiguration configuration, string name = null)
+	{
+		ArgumentNullException.ThrowIfNull(configuration);
+
+		if(string.IsNullOrEmpty(name))
+			name = ApplicationContext.Current?.Name;
+
+		var settings = configuration.GetConnectionSettings(PATH, name, NAME);
+		if(settings == null && !string.IsNullOrEmpty(name))
+			settings = configuration.GetConnectionSettings(PATH, null, NAME);
+
+		return settings?.Driver?.GetSettings(settings.Name, settings.Value) as VelopackConnectionSettings;
+	}
 	#endregion
 }

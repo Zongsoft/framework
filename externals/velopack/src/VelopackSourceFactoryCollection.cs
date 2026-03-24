@@ -28,17 +28,20 @@
  */
 
 using System;
-
-using Zongsoft.Services;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Externals.Velopack;
 
-[Zongsoft.Services.Service<IApplicationInitializer>]
-public sealed class Initializer : IApplicationInitializer
+public sealed class VelopackSourceFactoryCollection : KeyedCollection<string, IVelopackSourceFactory>
 {
-	public void Initialize(IApplicationContext context)
+	public VelopackSourceFactoryCollection() : base(StringComparer.OrdinalIgnoreCase)
 	{
-		if(!global::Velopack.Locators.VelopackLocator.IsCurrentSet)
-			global::Velopack.VelopackApp.Build().Run();
+		this.Add(VelopackSourceFactory.Web);
+		this.Add(VelopackSourceFactory.File);
+		this.Add(VelopackSourceFactory.Gitea);
+		this.Add(VelopackSourceFactory.Github);
+		this.Add(VelopackSourceFactory.Gitlab);
 	}
+
+	protected override string GetKeyForItem(IVelopackSourceFactory factory) => factory.Name;
 }
