@@ -226,7 +226,7 @@ public static class Mapping
 						foreach(var entity in result.Entities)
 						{
 							if(entity != null)
-								SetEntity(entity);
+								SetEntity(result.Identifier, entity);
 						}
 					}
 
@@ -235,7 +235,7 @@ public static class Mapping
 						foreach(var command in result.Commands)
 						{
 							if(command != null)
-								SetCommand(command);
+								SetCommand(result.Identifier, command);
 						}
 					}
 				}
@@ -252,7 +252,7 @@ public static class Mapping
 		#endregion
 
 		#region 私有方法
-		private static void SetEntity(IDataEntity entity)
+		private static void SetEntity(string identifier, IDataEntity entity)
 		{
 			if(entity == null)
 				return;
@@ -275,7 +275,7 @@ public static class Mapping
 				existed.Driver = entity.Driver;
 		}
 
-		private static void SetCommand(IDataCommand command)
+		private static void SetCommand(string identifier, IDataCommand command)
 		{
 			if(command == null)
 				return;
@@ -283,7 +283,7 @@ public static class Mapping
 			if(_commands.TryAdd(command))
 				return;
 
-			throw new DataException($"The specified '{command}' data command mapping cannot be defined repeatedly.");
+			throw new DataException($"The specified '{command}' data command mapping cannot be defined repeatedly, in the '{identifier}' container.");
 		}
 		#endregion
 
@@ -294,20 +294,25 @@ public static class Mapping
 		#region 嵌套结构
 		public readonly struct Result
 		{
-			public Result(IEnumerable<IDataCommand> commands, IEnumerable<IDataEntity> entities)
+			public Result(string identifier, IEnumerable<IDataCommand> commands, IEnumerable<IDataEntity> entities)
 			{
-				this.Commands = commands;
-				this.Entities = entities;
+				this.Identifier = identifier;
+				this.Commands = commands ?? [];
+				this.Entities = entities ?? [];
 			}
 
-			public Result(IEnumerable<IDataEntity> entities, IEnumerable<IDataCommand> commands)
+			public Result(string identifier, IEnumerable<IDataEntity> entities, IEnumerable<IDataCommand> commands)
 			{
-				this.Entities = entities;
-				this.Commands = commands;
+				this.Identifier = identifier;
+				this.Entities = entities ?? [];
+				this.Commands = commands ?? [];
 			}
 
+			public string Identifier { get; }
 			public IEnumerable<IDataEntity> Entities { get; }
 			public IEnumerable<IDataCommand> Commands { get; }
+
+			public override string ToString() => this.Identifier;
 		}
 		#endregion
 	}

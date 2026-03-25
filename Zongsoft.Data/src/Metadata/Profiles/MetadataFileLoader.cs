@@ -73,7 +73,7 @@ public class MetadataFileLoader : Mapping.Loader, IEquatable<MetadataFileLoader>
 				var metadata = MetadataFile.Load(file);
 
 				//遍历返回加载的结果
-				yield return new(metadata.Entities, metadata.Commands);
+				yield return new(file, metadata.Entities, metadata.Commands);
 			}
 		}
 	}

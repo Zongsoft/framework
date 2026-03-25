@@ -47,7 +47,6 @@ public class DataEntityLoader : Mapping.Loader
 	#region 重写方法
 	protected override IEnumerable<Result> OnLoad()
 	{
-		var entities = new List<IDataEntity>();
 		var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
 		for(int i = 0; i < assemblies.Length; i++)
@@ -57,6 +56,8 @@ public class DataEntityLoader : Mapping.Loader
 			if(assembly.IsDynamic)
 				continue;
 
+			var entities = new List<IDataEntity>();
+
 			foreach(var type in GetTypes(assembly))
 			{
 				var entity = GetEntity(type);
@@ -64,9 +65,9 @@ public class DataEntityLoader : Mapping.Loader
 				if(entity != null)
 					entities.Add(entity);
 			}
-		}
 
-		return [new Result(entities, [])];
+			yield return new(assembly.GetName().Name, entities, []);
+		}
 	}
 	#endregion
 
