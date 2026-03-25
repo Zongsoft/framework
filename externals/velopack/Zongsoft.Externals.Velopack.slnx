@@ -1,3 +1,4 @@
 <Solution>
 	<Project Path="src/Zongsoft.Externals.Velopack.csproj" />
+	<Project Path="src/web/Zongsoft.Externals.Velopack.Web.csproj" />
 </Solution>

@@ -36,16 +36,16 @@
 	</Choose>
 
 	<ItemGroup>
-		<None Update="Zongsoft.Externals.Velopack.ini">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="\" />
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="web\**" />
+		<EmbeddedResource Remove="web\**" />
+		<None Remove="web\**" />
 	</ItemGroup>
 
 	<ItemGroup>
