@@ -103,7 +103,7 @@ partial class VelopackSourceFactory
 		ArgumentNullException.ThrowIfNull(settings);
 
 		if(_factories.Value.TryGetValue(string.IsNullOrEmpty(settings.Source) ? nameof(Web) : settings.Source, out var factory))
-			return factory.Create(string.IsNullOrEmpty(settings.Url) ? "http://localhost" : settings.Url, settings);
+			return factory.Create(string.IsNullOrEmpty(settings.Url) ? "http://localhost/velopack/releases" : settings.Url, settings);
 
 		throw new InvalidOperationException($"The specified '{settings.Source}' update source was not found.");
 	}

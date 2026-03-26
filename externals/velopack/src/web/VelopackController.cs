@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
@@ -38,9 +39,25 @@ namespace Zongsoft.Externals.Velopack.Web;
 [Route("{area}/Releases")]
 public class VelopackController : ControllerBase
 {
-	[HttpGet("{name}")]
-	public IActionResult Get(string name, [FromQuery]IDictionary<string, string> arguments)
+	[HttpGet("{name?}")]
+	public IActionResult Get(string name, [FromQuery]IDictionary<string, string> arguments, CancellationToken cancellation = default)
 	{
-		return this.NoContent();
+		var result = VelopackFileScanner.ScanAsync(package => Predicate(package, arguments), cancellation);
+		return this.Ok(result);
+
+		static bool Predicate(global::Velopack.VelopackAsset package, IDictionary<string, string> arguments)
+		{
+			if(arguments == null || arguments.Count == 0)
+				return true;
+
+			if(arguments.TryGetValue("id", out var id) && !string.IsNullOrEmpty(id))
+				return package.PackageId == id;
+			if(arguments.TryGetValue("os", out var os) && !string.IsNullOrEmpty(os))
+				;
+			if(arguments.TryGetValue("arch", out var arch) && !string.IsNullOrEmpty(arch))
+				;
+
+			return true;
+		}
 	}
 }

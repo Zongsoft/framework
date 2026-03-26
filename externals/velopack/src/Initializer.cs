@@ -28,17 +28,28 @@
  */
 
 using System;
+using System.Runtime.InteropServices;
+
+using Velopack;
+using Velopack.Locators;
 
 using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Velopack;
 
-[Zongsoft.Services.Service<IApplicationInitializer>]
+[Service<IApplicationInitializer>]
 public sealed class Initializer : IApplicationInitializer
 {
 	public void Initialize(IApplicationContext context)
 	{
-		if(!global::Velopack.Locators.VelopackLocator.IsCurrentSet)
-			global::Velopack.VelopackApp.Build().Run();
+		IVelopackLocator locator = null;
+
+		if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			locator = new ApplicationLocator();
+		else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+			locator = new ApplicationLocator();
+
+		if(!VelopackLocator.IsCurrentSet)
+			VelopackApp.Build().SetLocator(locator).Run();
 	}
 }
