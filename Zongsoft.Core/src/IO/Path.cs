@@ -159,6 +159,7 @@ public readonly struct Path : IEquatable<Path>
 	#region 符号重写
 	public static bool operator ==(Path left, Path right) => left.Equals(right);
 	public static bool operator !=(Path left, Path right) => !(left == right);
+	public static implicit operator string(Path path) => path.Url;
 	#endregion
 
 	#region 静态方法

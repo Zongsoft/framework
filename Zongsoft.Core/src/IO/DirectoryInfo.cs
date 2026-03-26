@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,12 +28,14 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.IO;
 
 [Serializable]
-public class DirectoryInfo : PathInfo
+public partial class DirectoryInfo : PathInfo
 {
 	#region 构造函数
 	protected DirectoryInfo() { }
@@ -47,4 +49,37 @@ public class DirectoryInfo : PathInfo
 	public override bool IsFile => false;
 	public override bool IsDirectory => true;
 	#endregion
+}
+
+partial class DirectoryInfo
+{
+	public bool Delete() => FileSystem.Directory.Delete(this.Url);
+	public ValueTask<bool> DeleteAsync(CancellationToken cancellation = default) => FileSystem.Directory.DeleteAsync(this.Url, cancellation);
+
+	public void Move(string destination) => FileSystem.Directory.Move(this.Url, destination);
+	public ValueTask MoveAsync(string destination, CancellationToken cancellation = default) => FileSystem.Directory.MoveAsync(this.Url, destination, cancellation);
+
+	public bool Exists() => FileSystem.Directory.Exists(this.Url);
+	public ValueTask<bool> ExistsAsync(CancellationToken cancellation = default) => FileSystem.Directory.ExistsAsync(this.Url, cancellation);
+
+	public IEnumerable<PathInfo> GetChildren() => FileSystem.Directory.GetChildren(this.Url);
+	public IEnumerable<PathInfo> GetChildren(string pattern, bool recursive = false) => FileSystem.Directory.GetChildren(this.Url, pattern, recursive);
+
+	public IAsyncEnumerable<PathInfo> GetChildrenAsync(CancellationToken cancellation = default) => FileSystem.Directory.GetChildrenAsync(this.Url, cancellation);
+	public IAsyncEnumerable<PathInfo> GetChildrenAsync(string pattern, CancellationToken cancellation = default) => FileSystem.Directory.GetChildrenAsync(this.Url, pattern, cancellation);
+	public IAsyncEnumerable<PathInfo> GetChildrenAsync(string pattern, bool recursive, CancellationToken cancellation = default) => FileSystem.Directory.GetChildrenAsync(this.Url, pattern, recursive, cancellation);
+
+	public IEnumerable<DirectoryInfo> GetDirectories() => FileSystem.Directory.GetDirectories(this.Url);
+	public IEnumerable<DirectoryInfo> GetDirectories(string pattern, bool recursive = false) => FileSystem.Directory.GetDirectories(this.Url, pattern, recursive);
+
+	public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(CancellationToken cancellation = default) => FileSystem.Directory.GetDirectoriesAsync(this.Url, cancellation);
+	public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string pattern, CancellationToken cancellation = default) => FileSystem.Directory.GetDirectoriesAsync(this.Url, pattern, cancellation);
+	public IAsyncEnumerable<DirectoryInfo> GetDirectoriesAsync(string pattern, bool recursive, CancellationToken cancellation = default) => FileSystem.Directory.GetDirectoriesAsync(this.Url, pattern, recursive, cancellation);
+
+	public IEnumerable<FileInfo> GetFiles() => FileSystem.Directory.GetFiles(this.Url);
+	public IEnumerable<FileInfo> GetFiles(string pattern, bool recursive = false) => FileSystem.Directory.GetFiles(this.Url, pattern, recursive);
+
+	public IAsyncEnumerable<FileInfo> GetFilesAsync(CancellationToken cancellation = default) => FileSystem.Directory.GetFilesAsync(this.Url, cancellation);
+	public IAsyncEnumerable<FileInfo> GetFilesAsync(string pattern, CancellationToken cancellation = default) => FileSystem.Directory.GetFilesAsync(this.Url, pattern, cancellation);
+	public IAsyncEnumerable<FileInfo> GetFilesAsync(string pattern, bool recursive, CancellationToken cancellation = default) => FileSystem.Directory.GetFilesAsync(this.Url, pattern, recursive, cancellation);
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,12 +28,14 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.IO;
 
 [Serializable]
-public class FileInfo : PathInfo, IEquatable<FileInfo>
+public partial class FileInfo : PathInfo, IEquatable<FileInfo>
 {
 	#region 成员字段
 	private long _size;
@@ -98,4 +100,31 @@ public class FileInfo : PathInfo, IEquatable<FileInfo>
 	public override bool Equals(object obj) => obj is FileInfo info && this.Equals(info);
 	public override int GetHashCode() => HashCode.Combine(base.GetHashCode(), _size);
 	#endregion
+}
+
+partial class FileInfo
+{
+	public bool Delete() => FileSystem.File.Delete(this.Url);
+	public ValueTask<bool> DeleteAsync(CancellationToken cancellation = default) => FileSystem.File.DeleteAsync(this.Url, cancellation);
+
+	public bool Exists() => FileSystem.File.Exists(this.Url);
+	public ValueTask<bool> ExistsAsync(CancellationToken cancellation = default) => FileSystem.File.ExistsAsync(this.Url, cancellation);
+
+	public void Copy(string destination, bool overwrite = true) => FileSystem.File.Copy(this.Url, destination, overwrite);
+	public ValueTask CopyAsync(string destination, CancellationToken cancellation = default) => FileSystem.File.CopyAsync(this.Url, destination, cancellation);
+	public ValueTask CopyAsync(string destination, bool overwrite, CancellationToken cancellation = default) => FileSystem.File.CopyAsync(this.Url, destination, overwrite, cancellation);
+
+	public void Move(string destination) => FileSystem.File.Move(this.Url, destination);
+	public ValueTask MoveAsync(string destination, CancellationToken cancellation = default) => FileSystem.File.MoveAsync(this.Url, destination, cancellation);
+
+	public System.IO.Stream Open(System.IO.FileMode mode, IEnumerable<KeyValuePair<string, string>> properties = null) => FileSystem.File.Open(this.Url, mode, properties);
+	public System.IO.Stream Open(System.IO.FileMode mode, System.IO.FileAccess access, IEnumerable<KeyValuePair<string, string>> properties = null) => FileSystem.File.Open(this.Url, mode, access, properties);
+	public System.IO.Stream Open(System.IO.FileMode mode, System.IO.FileAccess access, System.IO.FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null) => FileSystem.File.Open(this.Url, mode, access, share, properties);
+
+	public ValueTask<System.IO.Stream> OpenAsync(System.IO.FileMode mode, CancellationToken cancellation = default) => FileSystem.File.OpenAsync(this.Url, mode, cancellation);
+	public ValueTask<System.IO.Stream> OpenAsync(System.IO.FileMode mode, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => FileSystem.File.OpenAsync(this.Url, mode, properties, cancellation);
+	public ValueTask<System.IO.Stream> OpenAsync(System.IO.FileMode mode, System.IO.FileAccess access, CancellationToken cancellation = default) => FileSystem.File.OpenAsync(this.Url, mode, access, cancellation);
+	public ValueTask<System.IO.Stream> OpenAsync(System.IO.FileMode mode, System.IO.FileAccess access, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => FileSystem.File.OpenAsync(this.Url, mode, access, properties, cancellation);
+	public ValueTask<System.IO.Stream> OpenAsync(System.IO.FileMode mode, System.IO.FileAccess access, System.IO.FileShare share, CancellationToken cancellation = default) => FileSystem.File.OpenAsync(this.Url, mode, access, share, cancellation);
+	public ValueTask<System.IO.Stream> OpenAsync(System.IO.FileMode mode, System.IO.FileAccess access, System.IO.FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => FileSystem.File.OpenAsync(this.Url, mode, access, share, properties, cancellation);
 }
