@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -57,6 +57,40 @@ public class TextSerializationOptionsBuilder
 
 	#region 公共属性
 	public TextSerializationOptions Default => TextSerializationOptions.Default;
+
+	/// <summary>获取文本序列化的全局转换器列表。</summary>
+	/// <example>
+	/// <code>
+	/// <![CDATA[
+	///	public class VersionConverter : JsonConverter<SemanticVersion>
+	///	{
+	///		public override SemanticVersion Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.TokenType switch
+	///		{
+	///			JsonTokenType.Null => null,
+	///			JsonTokenType.String => SemanticVersion.Parse(reader.GetString()),
+	///			_ => throw new JsonException(),
+	///		};
+	///
+	///		public override void Write(Utf8JsonWriter writer, SemanticVersion value, JsonSerializerOptions options)
+	///		{
+	///			if(value == null)
+	///				writer.WriteNullValue();
+	///			else
+	///				writer.WriteStringValue(value.ToFullString());
+	///		}
+	///
+	///		[Service<IApplicationInitializer>]
+	///		public sealed class Initializer : IApplicationInitializer
+	///		{
+	///			public void Initialize(IApplicationContext context)
+	///			{
+	///				Zongsoft.Serialization.Serializer.Json.Options.Converters.Add(new VersionConverter());
+	///			}
+	///		}
+	///	}
+	/// ]]>
+	/// </code>
+	/// </example>
 	public IList<object> Converters { get; }
 	#endregion
 
