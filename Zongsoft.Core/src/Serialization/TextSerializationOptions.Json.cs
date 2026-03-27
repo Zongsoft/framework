@@ -97,6 +97,9 @@ partial class TextSerializationOptions
 			},
 		};
 
+		//设置全局转换器
+		FillConverters(result);
+
 		if(_typified)
 			result.Converters.Add(Json.Converters.ObjectConverter.Factory);
 
@@ -109,6 +112,15 @@ partial class TextSerializationOptions
 		this.Configure?.Invoke(result);
 
 		return result;
+
+		static void FillConverters(JsonSerializerOptions options)
+		{
+			foreach(var value in Serializer.Json.Options.Converters)
+			{
+				if(value is JsonConverter converter && !options.Converters.Contains(converter))
+					options.Converters.Add(converter);
+			}
+		}
 	}
 }
 

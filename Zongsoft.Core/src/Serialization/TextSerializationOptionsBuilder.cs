@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Serialization;
@@ -47,8 +48,16 @@ public class TextSerializationOptionsBuilder
 	private static readonly ConcurrentDictionary<uint, TextSerializationOptions> _options = new();
 	#endregion
 
+	#region 构造函数
+	public TextSerializationOptionsBuilder(params IEnumerable<object> converters)
+	{
+		this.Converters = [.. converters];
+	}
+	#endregion
+
 	#region 公共属性
 	public TextSerializationOptions Default => TextSerializationOptions.Default;
+	public IList<object> Converters { get; }
 	#endregion
 
 	#region 公共方法
