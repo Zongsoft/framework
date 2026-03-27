@@ -30,7 +30,6 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Zongsoft.Serialization;
 
@@ -110,20 +109,6 @@ partial class TextSerializationOptions
 		this.Configure?.Invoke(result);
 
 		return result;
-	}
-
-	static void SetDerivedType(System.Collections.Generic.IList<JsonDerivedType> derivedTypes, JsonDerivedTypeAttribute attribute)
-	{
-		for(int i = 0; i < derivedTypes.Count; i++)
-		{
-			if(derivedTypes[i].DerivedType == attribute.DerivedType)
-				return;
-		}
-
-		if(attribute.TypeDiscriminator is string text)
-			derivedTypes.Add(new(attribute.DerivedType, text));
-		else if(attribute.TypeDiscriminator is int id)
-			derivedTypes.Add(new(attribute.DerivedType, id));
 	}
 }
 
