@@ -30,8 +30,6 @@
 using System;
 using System.IO;
 
-using NuGet.Versioning;
-
 using Velopack;
 using Velopack.Logging;
 using Velopack.Locators;
@@ -47,8 +45,7 @@ public sealed class ApplicationLocator : VelopackLocator
 	public override string AppContentDir { get; }
 	public override string Channel { get; }
 	public override IVelopackLogger Log { get; }
-	public override uint ProcessId { get; }
-	public override string ProcessExePath { get; }
+	public override IProcessImpl Process { get; }
 	public override SemanticVersion CurrentlyInstalledVersion { get; }
 
 	public ApplicationLocator()
@@ -61,8 +58,7 @@ public sealed class ApplicationLocator : VelopackLocator
 		this.UpdateExePath = Path.Combine(AppContext.BaseDirectory, ".upgrader", "Update.exe");
 		this.Channel = VelopackRuntimeInfo.GetOsShortName(VelopackRuntimeInfo.SystemOs);
 		this.CurrentlyInstalledVersion = new(manifest.Version.Major, manifest.Version.Minor, manifest.Version.Build, manifest.Version.Revision.ToString());
-		this.ProcessId = (uint)Environment.ProcessId;
-		this.ProcessExePath = Environment.ProcessPath;
+		this.Process = new DefaultProcessImpl(NullVelopackLogger.Instance);
 		this.Log = NullVelopackLogger.Instance;
 	}
 }

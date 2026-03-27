@@ -28,38 +28,43 @@
  */
 
 using System;
-using System.Linq;
-using System.Threading;
-using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
-using Microsoft.AspNetCore.Mvc;
+using Velopack;
+
+using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Velopack.Web;
 
-[Area("Velopack")]
-[Route("{area}/Releases")]
-public class VelopackController : ControllerBase
+[Service<IApplicationInitializer>(Members = nameof(Initializer))]
+public class NugetVersionConverter : JsonConverter<SemanticVersion>
 {
-	[HttpGet("{name?}")]
-	public IActionResult Get(string name, [FromQuery]IDictionary<string, string> arguments, CancellationToken cancellation = default)
+	public override SemanticVersion Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 	{
-		var result = VelopackFileScanner.ScanAsync(package => Predicate(package, arguments), cancellation);
-		var assets = Collections.Enumerable.Synchronize(result).ToArray();
-		return this.Ok(new global::Velopack.VelopackAssetFeed() { Assets = assets });
-
-		static bool Predicate(global::Velopack.VelopackAsset package, IDictionary<string, string> arguments)
+		return reader.TokenType switch
 		{
-			if(arguments == null || arguments.Count == 0)
-				return true;
+			JsonTokenType.Null => null,
+			JsonTokenType.String => SemanticVersion.Parse(reader.GetString()),
+			_ => null,
+		};
+	}
 
-			if(arguments.TryGetValue("id", out var id) && !string.IsNullOrEmpty(id))
-				return package.PackageId == id;
-			if(arguments.TryGetValue("os", out var os) && !string.IsNullOrEmpty(os))
-				;
-			if(arguments.TryGetValue("arch", out var arch) && !string.IsNullOrEmpty(arch))
-				;
+	public override void Write(Utf8JsonWriter writer, SemanticVersion value, JsonSerializerOptions options)
+	{
+		if(value == null)
+			writer.WriteNullValue();
+		else
+			writer.WriteStringValue(value.ToFullString());
+	}
 
-			return true;
+	public static readonly IApplicationInitializer Initializer = new JsonInitializer();
+
+	public sealed class JsonInitializer : IApplicationInitializer
+	{
+		public void Initialize(IApplicationContext context)
+		{
+			Serialization.Serializer.Json.Options.Converters.Add(new NugetVersionConverter());
 		}
 	}
 }
