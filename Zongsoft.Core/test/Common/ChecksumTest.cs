@@ -77,4 +77,23 @@ public class ChecksumTest
 		Assert.False(result.IsEmpty);
 		Assert.Equal(checksum, result);
 	}
+
+	[Fact]
+	public void Convert()
+	{
+		var checksum = Checksum.Compute("SHA384", _data);
+		Assert.False(checksum.IsEmpty);
+
+		var result = Common.Convert.ConvertValue<Checksum>(checksum.ToString());
+		Assert.False(result.IsEmpty);
+		Assert.Equal(checksum, result);
+
+		var json = Serialization.Serializer.Json.Serialize(checksum);
+		Assert.NotNull(json);
+		Assert.NotEmpty(json);
+
+		result = Serialization.Serializer.Json.Deserialize<Checksum>(json);
+		Assert.False(result.IsEmpty);
+		Assert.Equal(checksum, result);
+	}
 }
