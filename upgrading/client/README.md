@@ -14,4 +14,4 @@
 
 [**Z**ongsoft.**U**pgrading.**C**lient](https://github.com/Zongsoft/framework/tree/main/upgrading/client/Zongsoft.Upgrading.Client) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的自动升级插件库的应用端。
 
-💡 如果将本插件库部署到 [_终端宿主_](https://github.com/Zongsoft/hosting) 程序中，即可享有自动升级更新之功能。
+💡 如果将本插件库部署到 [_宿主_](https://github.com/Zongsoft/hosting) 程序中，即可享有自动升级更新之功能。

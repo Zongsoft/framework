@@ -1,0 +1,4 @@
+artifacts/Zongsoft.Upgrading.Client.option
+artifacts/Zongsoft.Upgrading.Client.plugin
+lib/$(Framework)/Zongsoft.Upgrading.Client.*
+lib/$(Framework)/*/Zongsoft.Upgrading.Client.resources.*

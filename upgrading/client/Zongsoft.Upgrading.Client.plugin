@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Upgrading.Client"
+        title="Zongsoft Upgrading Client Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2020-2026. All rights reserved."
+        description="Created Date: 2026-03-25 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Upgrading.Client" />
+		</assemblies>
+	</manifest>
+</plugin>
