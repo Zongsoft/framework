@@ -37,7 +37,6 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Velopack.Web;
 
-[Service<IApplicationInitializer>(Members = nameof(Initializer))]
 public class NugetVersionConverter : JsonConverter<SemanticVersion>
 {
 	public override SemanticVersion Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
@@ -46,7 +45,7 @@ public class NugetVersionConverter : JsonConverter<SemanticVersion>
 		{
 			JsonTokenType.Null => null,
 			JsonTokenType.String => SemanticVersion.Parse(reader.GetString()),
-			_ => null,
+			_ => throw new JsonException(),
 		};
 	}
 
@@ -58,9 +57,8 @@ public class NugetVersionConverter : JsonConverter<SemanticVersion>
 			writer.WriteStringValue(value.ToFullString());
 	}
 
-	public static readonly IApplicationInitializer Initializer = new JsonInitializer();
-
-	public sealed class JsonInitializer : IApplicationInitializer
+	[Service<IApplicationInitializer>]
+	public sealed class Initializer : IApplicationInitializer
 	{
 		public void Initialize(IApplicationContext context)
 		{
