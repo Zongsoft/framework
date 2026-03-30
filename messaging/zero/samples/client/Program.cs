@@ -3,118 +3,145 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Common;
+using Zongsoft.Terminals;
 using Zongsoft.Components;
 using Zongsoft.Collections;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.ZeroMQ.Samples;
 
 internal class Program
 {
-	private static ZeroQueue _queue;
-	private static Handler _handler;
-
-	private static volatile int _count;
-
 	static async Task Main(string[] args)
 	{
-		Console.WriteLine("Welcome to the Client.");
-		Console.WriteLine(new string('-', 50));
+		using var queue = new ZeroQueue("ZeroMQ",
+			Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings("ZeroMQ", "server=127.0.0.1;client=Zongsoft.Messaging.ZeroMQ.Sample;Group=Demo;"));
 
-		_queue = new ZeroQueue("ZeroMQ", Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings("ZeroMQ", "server=127.0.0.1;client=Zongsoft.Messaging.ZeroMQ.Sample;Group=Demo;"));
-		_handler = new Handler();
+		var executor = Terminal.Console.Executor;
+		executor.Command("reset", context => Handler.Instance.Reset());
+		executor.Command("close", context => queue.Dispose());
 
-		while(true)
+		executor.Command("info", context =>
 		{
-			var text = Console.ReadLine()?.Trim();
+			context.Output.Write(CommandOutletColor.Cyan, $"[{queue.Instance}]");
+			context.Output.WriteLine(CommandOutletColor.Green, $" {queue.Settings}");
 
-			if(string.IsNullOrEmpty(text))
-				continue;
-
-			var parts = text.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-			switch(parts[0].ToLowerInvariant())
+			if(queue.Subscribers.Count > 0)
 			{
-				case "exit":
-					_queue.Dispose();
-					return;
-				case "info":
-					Console.WriteLine($"[{_queue.Instance}] {_queue.Settings}");
+				int index = 0;
+				context.Output.WriteLine(new string('-', 50));
 
-					if(_queue.Subscribers.Count > 0)
-					{
-						int index = 0;
-						Console.WriteLine(new string('-', 50));
-
-						foreach(var subscriber in _queue.Subscribers)
-						{
-							Console.WriteLine($"[{++index}] {subscriber.Topic}");
-						}
-					}
-					break;
-				case "reset":
-					_count = 0;
-					_handler.Reset();
-					break;
-				case "clear":
-					Console.Clear();
-					break;
-				case "sub":
-				case "subscribe":
-					for(int i = 1; i < parts.Length; i++)
-						await _queue.SubscribeAsync(parts[i], _handler);
-					break;
-				case "unsub":
-				case "unsubscribe":
-					for(int i = 0; i < parts.Length; i++)
-					{
-						if(_queue.Subscribers.TryGetValue(parts[i], out var subscriber))
-							await subscriber.UnsubscribeAsync();
-					}
-					break;
-				case "send":
-				case "produce":
-					if(parts.Length > 1)
-					{
-						var rounded = int.TryParse(parts[1], out var round);
-						var stopwatch = new System.Diagnostics.Stopwatch();
-						stopwatch.Start();
-
-						for(int i = (rounded ? 2 : 1); i < parts.Length; i++)
-							SendAsync(rounded ? Math.Max(round, 1) : 1, parts[i]);
-
-						Console.WriteLine($"Elapsed: {stopwatch.Elapsed}");
-					}
-
-					break;
-				default:
-					break;
+				foreach(var subscriber in queue.Subscribers)
+				{
+					context.Output.WriteLine($"[{++index}] {subscriber.Topic}");
+				}
 			}
-		}
-	}
-
-	private static void SendAsync(int round, string topic = null)
-	{
-		Parallel.For(0, round, async index =>
-		{
-			var count = Interlocked.Increment(ref _count);
-			await _queue.ProduceAsync(topic ?? "*", Encoding.UTF8.GetBytes($"Message#{count}-{index + 1}"));
-			Console.WriteLine($"[{count}-{index + 1}] {topic} Sent.");
 		});
+
+		executor.Command("subscribe", async (context, cancellation) =>
+		{
+			if(context.Arguments.IsEmpty)
+				throw new CommandException("Missing the topics for subscribe.");
+
+			for(int i = 0; i < context.Arguments.Count; i++)
+			{
+				var subscriber = await queue.SubscribeAsync(context.Arguments[i], Handler.Instance, cancellation);
+
+				if(subscriber == null)
+					context.Output.WriteLine(CommandOutletColor.DarkRed, $"Failed to subscribe topic: {context.Arguments[i]}");
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The subscription to the '{subscriber.Topic}' topic was successful.");
+			}
+		});
+
+		executor.Command("unsubscribe", async (context, cancellation) =>
+		{
+			if(context.Arguments.IsEmpty)
+				throw new CommandException("Missing the topics for unsubscribe.");
+
+			for(int i = 0; i < context.Arguments.Count; i++)
+			{
+				if(queue.Subscribers.TryGetValue(context.Arguments[i], out var subscriber))
+					await subscriber.UnsubscribeAsync(cancellation);
+			}
+		});
+
+		executor.Command("produce", async (context, cancellation) =>
+		{
+			var round = context.Options.GetValue<int>("round", 1);
+			var topic = context.Options.GetValue<string>("topic");
+
+			if(string.IsNullOrEmpty(topic))
+				throw new CommandOptionException("topic", "The topic is required.");
+
+			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+			for(int i = 0; i < round; i++)
+			{
+				for(int j = 0; j < context.Arguments.Count; j++)
+				{
+					await queue.ProduceAsync(
+						topic,
+						Encoding.UTF8.GetBytes($"[{i + 1}]{context.Arguments[j]}"),
+						null,
+						cancellation);
+
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, $"[{i + 1}] {topic} Sent.");
+				}
+			}
+
+			stopwatch.Stop();
+			context.Output.WriteLine(CommandOutletColor.Magenta, $"Elapsed: {stopwatch.Elapsed}");
+		});
+
+		//设置相关命令的别名
+		executor.Aliaser.Set("produce", "send");
+		executor.Aliaser.Set("subscribe", "sub");
+		executor.Aliaser.Set("unsubscribe", "unsub");
+
+		var splash = CommandOutletContent.Create()
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50))
+			.AppendLine(CommandOutletColor.Cyan, "Welcome to the ZeroMQ Client.".Justify(50))
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
+
+		//挂载终端命令执行器退出事件，在退出时释放消息队列资源
+		//executor.Exit += (_, _) => queue.Dispose();
+
+		//运行终端命令执行器
+		executor.Run(splash);
 	}
 
 	internal sealed class Handler : HandlerBase<Message>
 	{
+		#region 单例字段
+		public static readonly Handler Instance = new();
+		#endregion
+
+		#region 私有变量
 		private volatile int _count;
+		#endregion
+
+		#region 重置方法
 		public void Reset() => _count = 0;
+		#endregion
+
+		#region 重写方法
 		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 		{
 			if(message.IsEmpty)
 				return ValueTask.CompletedTask;
 
-			var text = Encoding.UTF8.GetString(message.Data);
-			Console.WriteLine($"Received: [{Interlocked.Increment(ref _count)}]{message.Topic}{Environment.NewLine}{text}");
+			var count = Interlocked.Increment(ref _count);
+			var content = CommandOutletContent.Create()
+				.Append(CommandOutletColor.Cyan, "[Received]")
+				.Append(CommandOutletColor.DarkYellow, $"#{count + 1}")
+				.Append(CommandOutletColor.DarkCyan, " Topic:")
+				.AppendLine(CommandOutletColor.DarkGreen, message.Topic)
+				.AppendLine(CommandOutletColor.Gray, Encoding.UTF8.GetString(message.Data));
+
+			Terminal.Console.Executor.Output.Write(content);
 			return ValueTask.CompletedTask;
 		}
+		#endregion
 	}
 }
