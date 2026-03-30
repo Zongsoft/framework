@@ -39,6 +39,7 @@ public class Package
 	public Package()
 	{
 		this.Tags = [];
+		this.Executors = [];
 		this.Creation = DateTime.Now;
 		this.Platform = Utility.Platform;
 		this.Architecture = Utility.Architecture;
@@ -52,6 +53,7 @@ public class Package
 		this.Edition = edition;
 		this.Version = version;
 		this.Tags = tags ?? [];
+		this.Executors = [];
 		this.Creation = DateTime.Now;
 		this.Platform = Utility.Platform;
 		this.Architecture= Utility.Architecture;
@@ -65,6 +67,7 @@ public class Package
 		this.Edition = edition;
 		this.Version = version;
 		this.Tags = tags ?? [];
+		this.Executors = [];
 		this.Creation = DateTime.Now;
 		this.Platform = platform;
 		this.Architecture = architecture;
@@ -102,6 +105,10 @@ public class Package
 	/// <summary>获取或设置描述信息。</summary>
 	public string Description { get; set; }
 
+	/// <summary>获取执行器集合。</summary>
+	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
+	public ICollection<Executor> Executors { get; }
+
 	/// <summary>获取包的扩展属性集。</summary>
 	[System.Text.Json.Serialization.JsonExtensionData]
 	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
@@ -112,5 +119,19 @@ public class Package
 	public override string ToString() => string.IsNullOrEmpty(this.Edition) ?
 		$"{this.Name}@{this.Version}({this.GetRuntimeIdentifier()})":
 		$"{this.Name}|{this.Edition}@{this.Version}({this.GetRuntimeIdentifier()})";
+	#endregion
+
+	#region 嵌套结构
+	public struct Executor(string @event, string command)
+	{
+		#region 公共字段
+		public string Event = @event;
+		public string Command = command;
+		#endregion
+
+		#region 重写方法
+		public readonly override string ToString() => $"[{this.Event}]{this.Command}";
+		#endregion
+	}
 	#endregion
 }

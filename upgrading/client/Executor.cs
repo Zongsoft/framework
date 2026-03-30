@@ -33,6 +33,17 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
-public sealed partial class Fetcher
+public sealed partial class Executor
 {
+	public static async ValueTask ExecuteAsync(Package package, string @event, CancellationToken cancellation = default)
+	{
+		if(package == null || package.Executors == null)
+			return;
+
+		foreach(var executor in package.Executors)
+		{
+			if(executor.Event != null && executor.Event.StartsWith(@event, StringComparison.OrdinalIgnoreCase))
+				await Components.CommandExecutor.Default.ExecuteAsync(executor.Command, package, cancellation);
+		}
+	}
 }
