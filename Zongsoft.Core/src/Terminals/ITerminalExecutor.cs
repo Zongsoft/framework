@@ -35,8 +35,12 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Terminals;
 
+/// <summary>表示终端命令执行器的接口。</summary>
 public interface ITerminalExecutor : ICommandExecutor
 {
+	/// <summary>终端退出事件。</summary>
+	event EventHandler<Terminal.ExitEventArgs> Exit;
+
 	/// <summary>获取所属的终端。</summary>
 	ITerminal Terminal { get; }
 
