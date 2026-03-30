@@ -78,6 +78,7 @@ public class JsonSerializerTest
 			["Boolean.True"] = true,
 			["Boolean.False"] = false,
 			["String"] = typeof(string).Name,
+			["Version"] = new Version(1, 2, 3, 4),
 			["User"] = CreateUser(),
 		};
 
@@ -135,6 +136,7 @@ public class JsonSerializerTest
 			["Boolean.True"] = true,
 			["Boolean.False"] = false,
 			["String"] = typeof(string).Name,
+			["Version"] = new Version(1, 2, 3, 4),
 			["User"] = CreateUser(),
 		};
 
