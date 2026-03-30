@@ -37,7 +37,6 @@ using NetMQ.Sockets;
 
 using Zongsoft.Common;
 using Zongsoft.Components;
-using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
@@ -233,12 +232,20 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 			publisher.Connect(ZeroUtility.GetTcpAddress(this.Settings.Server, _subscriberPort));
 
-			//保存已经连接就绪的发布者
-			_publisher = publisher;
-
 			//启动网络轮询器
 			if(!_poller.IsRunning)
-				_poller.RunAsync();
+			{
+				//确保发布者套接字已经连接就绪
+				//注意：如果发布者未就绪，轮询器将无法正常运行
+				if(!SpinWait.SpinUntil(() => publisher.HasOut, 1000))
+					throw new InvalidOperationException($"Failed to connect to the publisher at '{this.Settings.Server}:{_subscriberPort}'.");
+
+				//启动轮询器
+				_poller.RunAsync($"{nameof(ZeroQueue)}#{this.Instance}.Poller", true);
+			}
+
+			//保存已经连接就绪的发布者
+			_publisher = publisher;
 		}
 
 		static (ushort publisherPort, ushort subscriberPort) GetPorts(Configuration.ZeroConnectionSettings settings)
