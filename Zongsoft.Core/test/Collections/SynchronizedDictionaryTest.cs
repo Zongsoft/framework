@@ -300,6 +300,94 @@ public class SynchronizedDictionaryTest
 	}
 
 	[Fact]
+	public void TryUpdate()
+	{
+		const int COUNT = 1_0000;
+
+		var keys = System.Linq.Enumerable.Range(0, COUNT).ToArray();
+		Random.Shared.Shuffle(keys);
+
+		var dictionary = new SynchronizedDictionary<int, string>(COUNT);
+		for(int i = 0; i < COUNT; i++)
+		{
+			if(i % 2 == 1)
+				dictionary[i] = $"Value#{i}";
+		}
+
+		Assert.Equal(COUNT / 2, dictionary.Count);
+
+		Parallel.For(0, COUNT, index =>
+		{
+			var key = keys[index];
+			var updated = dictionary.TryUpdate(key, (key, value) => $"Updated#{key}({value})");
+
+			if(key % 2 == 0)
+				Assert.False(updated);
+			else
+			{
+				Assert.True(updated);
+				Assert.StartsWith($"Updated#{key}", dictionary[key]);
+			}
+
+			if(index % 100 == 0)
+			{
+				foreach(var item in dictionary)
+				{
+					Assert.True(item.Key >= 0);
+					Assert.True(dictionary.ContainsKey(item.Key));
+				}
+			}
+		});
+
+		Assert.Equal(COUNT / 2, dictionary.Count);
+	}
+
+	[Fact]
+	public async Task TryUpdateAsync()
+	{
+		const int COUNT = 1_0000;
+
+		var keys = System.Linq.Enumerable.Range(0, COUNT).ToArray();
+		Random.Shared.Shuffle(keys);
+
+		var dictionary = new SynchronizedDictionary<int, string>(COUNT);
+		for(int i = 0; i < COUNT; i++)
+		{
+			if(i % 2 == 1)
+				dictionary[i] = $"Value#{i}";
+		}
+
+		Assert.Equal(COUNT / 2, dictionary.Count);
+
+		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		{
+			var key = keys[index];
+			var updated = dictionary.TryUpdate(key, (key, value) => $"Updated#{key}({value})");
+
+			if(key % 2 == 0)
+				Assert.False(updated);
+			else
+			{
+				Assert.True(updated);
+				Assert.StartsWith($"Updated#{key}", dictionary[key]);
+			}
+
+			if(index % 100 == 0)
+			{
+				foreach(var item in dictionary)
+				{
+					Assert.True(item.Key >= 0);
+					Assert.True(dictionary.ContainsKey(item.Key));
+				}
+			}
+
+			return ValueTask.CompletedTask;
+		});
+
+		Assert.Equal(COUNT / 2, dictionary.Count);
+	}
+
+	[Fact]
 	public void Remove()
 	{
 		const int COUNT = 1_0000;

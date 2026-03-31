@@ -332,41 +332,107 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 
 	public bool TryUpdate(TKey key, TValue newValue)
 	{
-		_lock.EnterWriteLock();
+		_lock.EnterUpgradeableReadLock();
 
 		try
 		{
 			if(_dictionary.ContainsKey(key))
 			{
-				_dictionary[key] = newValue;
-				return true;
+				_lock.EnterWriteLock();
+
+				try
+				{
+					_dictionary[key] = newValue;
+					return true;
+				}
+				finally { _lock.ExitWriteLock(); }
 			}
 
 			return false;
 		}
 		finally
 		{
-			_lock.ExitWriteLock();
+			_lock.ExitUpgradeableReadLock();
 		}
 	}
 
 	public bool TryUpdate(TKey key, TValue newValue, TValue comparisonValue)
 	{
-		_lock.EnterWriteLock();
+		_lock.EnterUpgradeableReadLock();
 
 		try
 		{
 			if(_dictionary.TryGetValue(key, out var existingValue) && EqualityComparer<TValue>.Default.Equals(existingValue, comparisonValue))
 			{
-				_dictionary[key] = newValue;
-				return true;
+				_lock.EnterWriteLock();
+
+				try
+				{
+					_dictionary[key] = newValue;
+					return true;
+				}
+				finally { _lock.ExitWriteLock(); }
 			}
 
 			return false;
 		}
 		finally
 		{
-			_lock.ExitWriteLock();
+			_lock.ExitUpgradeableReadLock();
+		}
+	}
+
+	public bool TryUpdate(TKey key, Func<TKey, TValue, TValue> factory)
+	{
+		ArgumentNullException.ThrowIfNull(factory);
+		_lock.EnterUpgradeableReadLock();
+
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existingValue))
+			{
+				_lock.EnterWriteLock();
+
+				try
+				{
+					_dictionary[key] = factory(key, existingValue);
+					return true;
+				}
+				finally { _lock.ExitWriteLock(); }
+			}
+
+			return false;
+		}
+		finally
+		{
+			_lock.ExitUpgradeableReadLock();
+		}
+	}
+
+	public bool TryUpdate<TState>(TKey key, Func<TKey, TValue, TState, TValue> factory, TState state)
+	{
+		ArgumentNullException.ThrowIfNull(factory);
+		_lock.EnterUpgradeableReadLock();
+
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existingValue))
+			{
+				_lock.EnterWriteLock();
+
+				try
+				{
+					_dictionary[key] = factory(key, existingValue, state);
+					return true;
+				}
+				finally { _lock.ExitWriteLock(); }
+			}
+
+			return false;
+		}
+		finally
+		{
+			_lock.ExitUpgradeableReadLock();
 		}
 	}
 
@@ -376,21 +442,27 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		ArgumentNullException.ThrowIfNull(factory);
 		ArgumentNullException.ThrowIfNull(comparer);
 
-		_lock.EnterWriteLock();
+		_lock.EnterUpgradeableReadLock();
 
 		try
 		{
 			if(_dictionary.TryGetValue(key, out var existingValue) && comparer(key, existingValue))
 			{
-				_dictionary[key] = factory(key, existingValue);
-				return true;
+				_lock.EnterWriteLock();
+
+				try
+				{
+					_dictionary[key] = factory(key, existingValue);
+					return true;
+				}
+				finally{ _lock.ExitWriteLock(); }
 			}
 
 			return false;
 		}
 		finally
 		{
-			_lock.ExitWriteLock();
+			_lock.ExitUpgradeableReadLock();
 		}
 	}
 
@@ -400,21 +472,27 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		ArgumentNullException.ThrowIfNull(factory);
 		ArgumentNullException.ThrowIfNull(comparer);
 
-		_lock.EnterWriteLock();
+		_lock.EnterUpgradeableReadLock();
 
 		try
 		{
 			if(_dictionary.TryGetValue(key, out var existingValue) && comparer(key, existingValue, state))
 			{
-				_dictionary[key] = factory(key, existingValue, state);
-				return true;
+				_lock.EnterWriteLock();
+
+				try
+				{
+					_dictionary[key] = factory(key, existingValue, state);
+					return true;
+				}
+				finally { _lock.ExitWriteLock(); }
 			}
 
 			return false;
 		}
 		finally
 		{
-			_lock.ExitWriteLock();
+			_lock.ExitUpgradeableReadLock();
 		}
 	}
 	#endregion
