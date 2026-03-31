@@ -369,6 +369,54 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 			_lock.ExitWriteLock();
 		}
 	}
+
+	public bool TryUpdate(TKey key, Func<TKey, TValue, TValue> factory, TValue comparisonValue) => this.TryUpdate(key, factory, (_, value) => EqualityComparer<TValue>.Default.Equals(value, comparisonValue));
+	public bool TryUpdate(TKey key, Func<TKey, TValue, TValue> factory, Func<TKey, TValue, bool> comparer)
+	{
+		ArgumentNullException.ThrowIfNull(factory);
+		ArgumentNullException.ThrowIfNull(comparer);
+
+		_lock.EnterWriteLock();
+
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existingValue) && comparer(key, existingValue))
+			{
+				_dictionary[key] = factory(key, existingValue);
+				return true;
+			}
+
+			return false;
+		}
+		finally
+		{
+			_lock.ExitWriteLock();
+		}
+	}
+
+	public bool TryUpdate<TState>(TKey key, Func<TKey, TValue, TState, TValue> factory, TValue comparisonValue, TState state) => this.TryUpdate(key, factory, (_, value, state) => EqualityComparer<TValue>.Default.Equals(value, comparisonValue), state);
+	public bool TryUpdate<TState>(TKey key, Func<TKey, TValue, TState, TValue> factory, Func<TKey, TValue, TState, bool> comparer, TState state)
+	{
+		ArgumentNullException.ThrowIfNull(factory);
+		ArgumentNullException.ThrowIfNull(comparer);
+
+		_lock.EnterWriteLock();
+
+		try
+		{
+			if(_dictionary.TryGetValue(key, out var existingValue) && comparer(key, existingValue, state))
+			{
+				_dictionary[key] = factory(key, existingValue, state);
+				return true;
+			}
+
+			return false;
+		}
+		finally
+		{
+			_lock.ExitWriteLock();
+		}
+	}
 	#endregion
 
 	#region 显式实现

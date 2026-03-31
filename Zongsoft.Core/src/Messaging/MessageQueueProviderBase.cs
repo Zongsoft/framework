@@ -32,6 +32,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Zongsoft.Services;
+using Zongsoft.Collections;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging;
@@ -43,7 +44,7 @@ public abstract class MessageQueueProviderBase : IMessageQueueProvider
 	#endregion
 
 	#region 成员字段
-	private readonly Dictionary<string, WeakReference<IMessageQueue>> _queues;
+	private readonly SynchronizedDictionary<string, WeakReference<IMessageQueue>> _queues;
 	#endregion
 
 	#region 构造函数
@@ -53,7 +54,7 @@ public abstract class MessageQueueProviderBase : IMessageQueueProvider
 			throw new ArgumentNullException(nameof(name));
 
 		this.Name = name.Trim();
-		_queues = new Dictionary<string, WeakReference<IMessageQueue>>(StringComparer.OrdinalIgnoreCase);
+		_queues = new(StringComparer.OrdinalIgnoreCase);
 	}
 	#endregion
 
@@ -66,25 +67,27 @@ public abstract class MessageQueueProviderBase : IMessageQueueProvider
 	public IMessageQueue Queue(IEnumerable<KeyValuePair<string, string>> settings = null) => this.Queue(string.Empty, settings);
 	public IMessageQueue Queue(string name, IEnumerable<KeyValuePair<string, string>> settings = null)
 	{
-		if(name == null)
-			name = string.Empty;
+		name ??= string.Empty;
 
-		if(_queues.TryGetValue(name, out var reference) && reference.TryGetTarget(out var queue))
-			return queue;
-
-		lock(_queues)
+		if(_queues.TryGetValue(name, out var reference))
 		{
-			if(_queues.TryGetValue(name, out reference) && reference.TryGetTarget(out queue))
-				return queue;
+			if(reference.TryGetTarget(out var target) && !target.IsDisposed)
+				return target;
 
-			//创建指定名称的消息队列，如果创建失败则抛出异常
-			queue = this.OnCreate(name, settings) ?? throw new InvalidOperationException($"{this.Name}: The specified '{name}' message queue is not defined.");
-
-			//以弱引用的方式
-			_queues[name] = new WeakReference<IMessageQueue>(queue);
+			_queues.TryUpdate(name, (name, value, state) => Create(name, settings), reference, settings);
 		}
 
-		return queue;
+		reference = _queues.GetOrAdd(name, Create, settings);
+		return reference.TryGetTarget(out var queue) ? queue : null;
+
+		WeakReference<IMessageQueue> Create(string name, IEnumerable<KeyValuePair<string, string>> settings)
+		{
+			//创建指定名称的消息队列，如果创建失败则抛出异常
+			var queue = this.OnCreate(name, settings) ?? throw new InvalidOperationException($"{this.Name}: The specified '{name}' message queue is not defined.");
+
+			//以弱引用的方式
+			return new WeakReference<IMessageQueue>(queue);
+		}
 	}
 	#endregion
 

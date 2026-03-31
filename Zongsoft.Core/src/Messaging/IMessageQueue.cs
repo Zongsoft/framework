@@ -43,6 +43,8 @@ public interface IMessageQueue : IMessageProducer, IDisposable
 	#region 属性定义
 	/// <summary>获取消息队列的名称。</summary>
 	string Name { get; }
+	/// <summary>获取一个值，指示消息队列是否已被处置。</summary>
+	bool IsDisposed { get; }
 	#endregion
 
 	#region 订阅方法
