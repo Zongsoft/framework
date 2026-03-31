@@ -237,7 +237,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			{
 				//确保发布者套接字已经连接就绪
 				//注意：如果发布者未就绪，轮询器将无法正常运行
-				if(!SpinWait.SpinUntil(() => publisher.HasOut, 1000))
+				if(!SpinWait.SpinUntil(() => publisher.HasOut && publisher.TrySignalOK(), 1000))
 					throw new InvalidOperationException($"Failed to connect to the publisher at '{this.Settings.Server}:{_subscriberPort}'.");
 
 				//启动轮询器
