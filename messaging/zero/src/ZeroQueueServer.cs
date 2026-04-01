@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.ZeroMQ library.
  *
@@ -34,7 +34,9 @@ using System.Threading.Tasks;
 using NetMQ;
 using NetMQ.Sockets;
 
+using Zongsoft.Services;
 using Zongsoft.Components;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
@@ -94,15 +96,29 @@ public sealed class ZeroQueueServer : WorkerBase
 	{
 		if(!_poller.IsRunning)
 		{
+			(var incoming, var outgoing) = GetPorts(this.Name);
+
 			_responser.Bind($"tcp://*:{_port}");
-			_publisherPort = _publisher.BindRandomPort("tcp://*");
-			_subscriberPort = _subscriber.BindRandomPort("tcp://*");
+			_publisherPort = outgoing > 0 ? outgoing : _publisher.BindRandomPort("tcp://*");
+			_subscriberPort = incoming > 0 ? incoming : _subscriber.BindRandomPort("tcp://*");
 
 			_poller.RunAsync();
 		}
 
 		_proxy.Start();
 		return Task.CompletedTask;
+
+		static (int incoming, int outgoing) GetPorts(string name)
+		{
+			var servers = ApplicationContext.Current?.Configuration.GetOption<Configuration.ServerOptionsCollection>("/Messaging/ZeroMQ/Servers");
+			if(servers == null)
+				return default;
+
+			if(name != null && servers.TryGetValue(name, out var server))
+				return (server.Port.Incoming, server.Port.Outgoing);
+
+			return (servers.Port.Incoming, servers.Port.Outgoing);
+		}
 	}
 
 	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
