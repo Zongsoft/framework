@@ -119,10 +119,12 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#endregion
 
 	#region 发布方法
-	protected override ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
+	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
 		//确保初始化完成
-		this.Initialize();
+		//注意：如果是首次发布则必须等待片刻确保发布者连接就绪
+		if(this.Initialize())
+			await Task.Delay(100, cancellation);
 
 		if(string.IsNullOrEmpty(topic))
 		{
@@ -134,41 +136,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			_queue.Enqueue(new Packet(topic, data, options));
 		}
 
-		return ValueTask.FromResult<string>(null);
-	}
-
-	private void OnElapsed(object sender, NetMQTimerEventArgs e)
-	{
-		if(this.IsDisposed)
-			return;
-
-		_queue.Enqueue(default);
-	}
-
-	private void OnQueueReady(object sender, NetMQQueueEventArgs<Packet> e)
-	{
-		if(e.Queue == null || e.Queue.IsDisposed)
-			return;
-
-		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
-		{
-			//如果主题为空则直接发送心跳包
-			if(string.IsNullOrEmpty(packet.Topic))
-			{
-				//方案一：直接发送空包
-				//_publisher.SendMoreFrameEmpty().SendFrameEmpty();
-
-				//方案二：依次向所有订阅者发送匿名空包
-				foreach(var subscriber in this.Subscribers)
-					_publisher.SendMoreFrame(Packetizer.Pack(subscriber.Topic)).SendFrameEmpty();
-
-				return;
-			}
-
-			var head = Packetizer.Pack(this.Instance, packet.Topic, packet.Data, packet.Options, out var compressor);
-			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
-			_publisher.SendMoreFrame(head).SendFrame(data);
-		}
+		return null;
 	}
 	#endregion
 
@@ -207,16 +175,55 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	}
 	#endregion
 
-	#region 私有方法
-	private void Initialize()
+	#region 事件处理
+	private void OnElapsed(object sender, NetMQTimerEventArgs e)
+	{
+		if(this.IsDisposed)
+			return;
+
+		_queue.Enqueue(default);
+	}
+
+	private void OnQueueReady(object sender, NetMQQueueEventArgs<Packet> e)
+	{
+		if(this.IsDisposed)
+			return;
+
+		if(e.Queue == null || e.Queue.IsDisposed)
+			return;
+
+		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
+		{
+			//如果主题为空则直接发送心跳包
+			if(string.IsNullOrEmpty(packet.Topic))
+			{
+				//方案一：直接发送空包
+				//_publisher.SendMoreFrameEmpty().SendFrameEmpty();
+
+				//方案二：依次向所有订阅者发送匿名空包
+				foreach(var subscriber in this.Subscribers)
+					_publisher.SendMoreFrame(Packetizer.Pack(subscriber.Topic)).SendFrameEmpty();
+
+				return;
+			}
+
+			var head = Packetizer.Pack(this.Instance, packet.Topic, packet.Data, packet.Options, out var compressor);
+			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
+			_publisher.SendMoreFrame(head).SendFrame(data);
+		}
+	}
+	#endregion
+
+	#region 初始方法
+	private bool Initialize()
 	{
 		if(_publisher != null)
-			return;
+			return false;
 
 		lock(_locker)
 		{
 			if(_publisher != null)
-				return;
+				return false;
 
 			//获取队列交换器的发布和订阅端口号
 			(_publisherPort, _subscriberPort) = GetPorts(this.Settings);
@@ -228,7 +235,6 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			//创建一个发布者套接字
 			var publisher = new PublisherSocket();
 
-			publisher.Options.SendHighWatermark = 1000;
 			publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 			publisher.Connect(ZeroUtility.GetTcpAddress(this.Settings.Server, _subscriberPort));
 
@@ -246,6 +252,9 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 
 			//保存已经连接就绪的发布者
 			_publisher = publisher;
+
+			//返回初始化成功
+			return true;
 		}
 
 		static (ushort publisherPort, ushort subscriberPort) GetPorts(Configuration.ZeroConnectionSettings settings)
