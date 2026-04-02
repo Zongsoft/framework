@@ -39,7 +39,7 @@ namespace Zongsoft.Upgrading;
 
 partial class Fetcher
 {
-	internal sealed class WebFetcher : FetcherBase
+	internal sealed class WebFetcher : Fetcher
 	{
 		#region 构造函数
 		public WebFetcher() : base("Web") => this.Downloader = new Downloader.WebDownloader(this);
@@ -52,10 +52,15 @@ partial class Fetcher
 			{
 				if(field == null)
 				{
-					var settings = this.GetSettings();
+					var settings = this.Settings;
 
-					if(settings != null && settings.TryGetValue("server", out var url) && !string.IsNullOrEmpty(url))
-						return field = HttpUtility.CreateHttpClient(url);
+					if(settings != null)
+					{
+						var timeout = settings.TryGetValue("timeout", out var value) && Common.TimeSpanUtility.TryParse(value, out var timespan) ? timespan : TimeSpan.Zero;
+
+						if(settings.TryGetValue("server", out var url) && !string.IsNullOrEmpty(url))
+							return field = HttpUtility.CreateHttpClient(url, timeout);
+					}
 				}
 
 				return field;

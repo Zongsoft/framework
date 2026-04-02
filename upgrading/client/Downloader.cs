@@ -36,22 +36,36 @@ namespace Zongsoft.Upgrading;
 
 public abstract partial class Downloader : IDownloader
 {
+	#region 构造函数
+	protected Downloader() { }
+	#endregion
+
+	#region 公共方法
 	public async ValueTask DownloadAsync(string directory, Package package, CancellationToken cancellation = default)
 	{
 		ArgumentNullException.ThrowIfNull(package);
 		ArgumentNullException.ThrowIfNullOrEmpty(directory);
 
+		//如果指定的目标目录不存在则直接返回
 		if(!Directory.Exists(directory))
 			return;
 
+		//下载升级包文件
 		using var source = await this.DownloadAsync(package, cancellation);
 		if(source == null || !source.CanRead)
 			return;
 
+		//将下载的升级包文件保存到指定目录
 		using var stream = File.OpenWrite(this.GetFilePath(directory, package));
 		await source.CopyToAsync(stream, cancellation);
 	}
+	#endregion
 
+	#region 抽象方法
 	protected abstract ValueTask<Stream> DownloadAsync(Package package, CancellationToken cancellation);
-	protected virtual string GetFilePath(string directory, Package package) => Path.Combine(directory, Path.GetFileName(package.Path));
+	#endregion
+
+	#region 虚拟方法
+	protected virtual string GetFilePath(string directory, Package package) => Path.Combine(directory, "packages", Path.GetFileName(package.Path));
+	#endregion
 }

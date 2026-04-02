@@ -35,7 +35,7 @@ namespace Zongsoft.Upgrading;
 
 internal static class HttpUtility
 {
-	public static HttpClient CreateHttpClient(string baseAddress)
+	public static HttpClient CreateHttpClient(string baseAddress, TimeSpan timeout)
 	{
 		if(string.IsNullOrEmpty(baseAddress))
 			throw new ArgumentNullException(nameof(baseAddress));
@@ -49,7 +49,11 @@ internal static class HttpUtility
 			AutomaticDecompression = DecompressionMethods.All,
 		};
 
-		return new HttpClient(handler) { BaseAddress = new Uri(baseAddress) };
+		return new HttpClient(handler)
+		{
+			BaseAddress = new Uri(baseAddress),
+			Timeout = timeout.Ticks > TimeSpan.TicksPerSecond ? timeout : TimeSpan.FromSeconds(30),
+		};
 	}
 
 	public static System.Text.Encoding GetEncoding(HttpContent content)

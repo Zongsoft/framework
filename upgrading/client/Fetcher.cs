@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -38,7 +39,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Upgrading;
 
-public sealed partial class Fetcher
+public abstract partial class Fetcher
 {
 	#region 私有字段
 	private static readonly Dictionary<string, IFetcher> _fetchers;
@@ -121,5 +122,63 @@ public sealed partial class Fetcher
 		//返回升级清单文件的完整路径
 		return stream.Name;
 	}
+	#endregion
+}
+
+partial class Fetcher : IFetcher
+{
+	#region 构造函数
+	protected Fetcher(string name, IDownloader downloader = null)
+	{
+		this.Name = name ?? throw new ArgumentNullException(nameof(name));
+		this.Downloader = downloader;
+	}
+	#endregion
+
+	#region 保护属性
+	protected string Name { get; }
+	protected IDownloader Downloader { get; set; }
+	protected IConnectionSettings Settings => field ??= ApplicationContext.Current?.Configuration.GetConnectionSettings(nameof(Upgrading), this.Name);
+	#endregion
+
+	#region 显式实现
+	string IFetcher.Name => this.Name;
+	IDownloader IFetcher.Downloader => this.Downloader;
+	async ValueTask<Upgrader.Manifest> IFetcher.FetchAsync(Version version, CancellationToken cancellation)
+	{
+		var baseline = default(Package);
+		var deltas = new List<Package>();
+		var upgradingVersion = version;
+		var currentlyVersion = Utility.ApplicationVersion;
+
+		//获取升级包集合
+		var packages = this.OnFetchAsync(version, cancellation);
+
+		//遍历所有可升级包
+		await foreach(var package in packages)
+		{
+			//筛选出满足要求的升级包：
+			//未废弃的，应用名、平台和架构匹配的，版本号大于当前版本且小于等于升级版本
+			if(!package.Deprecated &&
+			   Utility.Platform == package.Platform &&
+			   Utility.Architecture == package.Architecture &&
+			   string.Equals(Utility.ApplicationName, package.Name, StringComparison.OrdinalIgnoreCase) &&
+			   package.Version > currentlyVersion && (upgradingVersion.IsZero() || package.Version <= upgradingVersion))
+			{
+				if(package.Kind == PackageKind.Delta)
+					deltas.Add(package);
+				else if(baseline == null || package.Version > baseline.Version)
+					baseline = package;
+			}
+		}
+
+		return baseline == null ?
+			new(deltas.OrderBy(delta => delta.Version).ToArray()) :
+			new(baseline, deltas.Where(delta => delta.Version > baseline.Version).OrderBy(delta => delta.Version).ToArray());
+	}
+	#endregion
+
+	#region 抽象方法
+	protected abstract IAsyncEnumerable<Package> OnFetchAsync(Version version, CancellationToken cancellation);
 	#endregion
 }
