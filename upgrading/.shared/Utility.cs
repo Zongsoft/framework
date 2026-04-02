@@ -99,8 +99,21 @@ public static class Utility
 		}
 	}
 
+	/// <summary>判断指定的版本号是否为零。</summary>
+	/// <param name="version">指定的版本。</param>
+	/// <returns>如果版本号为零则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	public static bool IsZero(this Version version) => version == null ||
+	(
+		version.Major == 0 &&
+		version.Minor == 0 &&
+		version.Build == 0 &&
+		version.Revision == 0
+	);
+
 	public static string GetRuntimeIdentifier(this Package package) => package == null ? null : GetRuntimeIdentifier(package.Platform, package.Architecture);
 	public static string GetRuntimeIdentifier(Platform platform, Architecture architecture) => platform == Platform.Windows ?
 		(architecture == Architecture.Other ? "win" : $"win-{architecture.ToString().ToLowerInvariant()}"):
 		(architecture == Architecture.Other ? platform.ToString().ToLowerInvariant() : $"{platform.ToString().ToLowerInvariant}-{architecture.ToString().ToLowerInvariant()}");
+
+	public static DirectoryInfo GetUpgradingDirectory(Version version) => new(Path.Combine(Path.GetTempPath(), Utility.ApplicationName, version.ToString()));
 }

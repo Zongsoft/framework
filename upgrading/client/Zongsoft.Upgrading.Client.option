@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Upgrading">
+		<connectionSettings default="Web">
+			<connectionSetting connectionSetting.name="Web"
+			                   value="server=http://127.0.0.1:7969/Upgrading/Releases" />
+
+			<connectionSetting connectionSetting.name="File" driver="amazon.s3"
+			                   value="server=http://127.0.0.1:9000;region=cn-north-1;accessKey=rustfsadmin;secretKey=rustfsadmin;path=/upgrading/packages" />
+		</connectionSettings>
+	</option>
+</options>

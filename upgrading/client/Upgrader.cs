@@ -33,13 +33,15 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
-public class Upgrader
+public partial class Upgrader
 {
 	public ValueTask UpgradeAsync(CancellationToken cancellation = default)
 	{
+		return default;
 	}
 
 	public ValueTask RestartAsync(CancellationToken cancellation = default)
 	{
+		return default;
 	}
 }

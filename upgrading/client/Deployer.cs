@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.IO;
+using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,4 +37,65 @@ namespace Zongsoft.Upgrading;
 
 public sealed class Deployer
 {
+	/// <summary>执行部署操作。</summary>
+	/// <param name="filePath">指定的升级清单文件路径。</param>
+	/// <param name="cancellation">异步操作的取消标记。</param>
+	/// <returns>如果部署成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
+	public static async ValueTask<bool> DeployAsync(string filePath, CancellationToken cancellation = default)
+	{
+		//如果升级清单文件不存在则返回失败
+		if(string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+			return false;
+
+		//反序列化升级清单文件
+		var manifest = await Serialization.Serializer.Json.DeserializeAsync<Upgrader.Manifest>(File.OpenRead(filePath), cancellation);
+		if(manifest.IsEmpty)
+			return false;
+
+		//获取升级包元数据文件所在目录
+		var directory = Path.GetDirectoryName(filePath);
+		//在升级包元数据文件所在目录下创建一个临时目录用于解压升级包
+		var destination = EnsureDirectory(Path.Combine(directory, ".app"));
+
+		if(manifest.Baseline != null)
+		{
+			//如果全量包存在则删除临时解压目录并重新创建一个空目录用于解压全量包
+			if(destination.Exists)
+			{
+				destination.Delete(true);
+				destination.Create();
+			}
+
+			//获取全量包文件路径
+			var packageFile = Path.Combine(directory, Path.GetFileName(manifest.Baseline.Path));
+			if(!File.Exists(packageFile))
+				return false;
+
+			//将安装包读取为Zip压缩文件
+			using var zip = ZipFile.OpenRead(packageFile);
+			//解压安装包到临时目录
+			zip.ExtractToDirectory(destination.FullName, true);
+		}
+
+		for(int i = 0; i < manifest.Deltas.Length; i++)
+		{
+			var delta = manifest.Deltas[i];
+
+			//获取增量包文件路径
+			var packageFile = Path.Combine(directory, Path.GetFileName(delta.Path));
+			if(!File.Exists(packageFile))
+				return false;
+
+			//将安装包读取为Zip压缩文件
+			using var zip = ZipFile.OpenRead(packageFile);
+
+			//解压安装包到临时目录
+			zip.ExtractToDirectory(destination.FullName, true);
+		}
+
+		//返回部署成功
+		return true;
+	}
+
+	static DirectoryInfo EnsureDirectory(string path) => Directory.Exists(path) ? new DirectoryInfo(path) : Directory.CreateDirectory(path);
 }

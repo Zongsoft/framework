@@ -30,14 +30,20 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
+/// <summary>表示升级获取器的接口。</summary>
 public interface IFetcher
 {
+	/// <summary>获取获取器名称。</summary>
 	string Name { get; }
+	/// <summary>获取下载器对象。</summary>
 	IDownloader Downloader { get; }
 
-	IAsyncEnumerable<Package> FetchAsync(Version version, CancellationToken cancellation = default);
+	/// <summary>获取指定版本的升级信息。</summary>
+	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
+	/// <param name="cancellation">异步操作的取消标记。</param>
+	/// <returns>返回的升级信息结果。</returns>
+	ValueTask<Upgrader.Manifest> FetchAsync(Version version, CancellationToken cancellation = default);
 }

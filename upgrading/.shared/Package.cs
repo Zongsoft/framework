@@ -100,6 +100,8 @@ public class Package
 	public Platform Platform { get; set; }
 	/// <summary>获取或设置体系架构。</summary>
 	public Architecture Architecture { get; set; }
+	/// <summary>获取或设置一个值，指示是否已弃用。</summary>
+	public bool Deprecated { get; set; }
 	/// <summary>获取或设置创建时间。</summary>
 	public DateTime Creation { get; set; }
 	/// <summary>获取或设置描述信息。</summary>
@@ -132,6 +134,19 @@ public class Package
 		#region 重写方法
 		public readonly override string ToString() => $"[{this.Event}]{this.Command}";
 		#endregion
+	}
+
+	public sealed class Comparer : IComparer<Package>
+	{
+		public static readonly Comparer Instance = new();
+
+		public int Compare(Package x, Package y)
+		{
+			if(x == null)
+				return y == null ? 0 : -1;
+			else
+				return y == null ? 1 : x.Version.CompareTo(y.Version);
+		}
 	}
 	#endregion
 }

@@ -28,12 +28,30 @@
  */
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
-public interface IDownloader
+public abstract partial class Downloader : IDownloader
 {
-	ValueTask DownloadAsync(string directory, Package package, CancellationToken cancellation = default);
+	public async ValueTask DownloadAsync(string directory, Package package, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(package);
+		ArgumentNullException.ThrowIfNullOrEmpty(directory);
+
+		if(!Directory.Exists(directory))
+			return;
+
+		using var source = await this.DownloadAsync(package, cancellation);
+		if(source == null || !source.CanRead)
+			return;
+
+		using var stream = File.OpenWrite(this.GetFilePath(directory, package));
+		await source.CopyToAsync(stream, cancellation);
+	}
+
+	protected abstract ValueTask<Stream> DownloadAsync(Package package, CancellationToken cancellation);
+	protected virtual string GetFilePath(string directory, Package package) => Path.Combine(directory, Path.GetFileName(package.Path));
 }

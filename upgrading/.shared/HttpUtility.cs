@@ -28,12 +28,44 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Net;
+using System.Net.Http;
 
 namespace Zongsoft.Upgrading;
 
-public interface IDownloader
+internal static class HttpUtility
 {
-	ValueTask DownloadAsync(string directory, Package package, CancellationToken cancellation = default);
+	public static HttpClient CreateHttpClient(string baseAddress)
+	{
+		if(string.IsNullOrEmpty(baseAddress))
+			throw new ArgumentNullException(nameof(baseAddress));
+
+		if(baseAddress.IndexOf("://") < 0)
+			baseAddress += $"http://{baseAddress}";
+
+		var handler = new HttpClientHandler
+		{
+			AllowAutoRedirect = true,
+			AutomaticDecompression = DecompressionMethods.All,
+		};
+
+		return new HttpClient(handler) { BaseAddress = new Uri(baseAddress) };
+	}
+
+	public static System.Text.Encoding GetEncoding(HttpContent content)
+	{
+		if(content.Headers.ContentType?.CharSet is string charset)
+		{
+			try
+			{
+				if(charset.Length > 2 && charset[0] == '\"' && charset[^1] == '\"')
+					return System.Text.Encoding.GetEncoding(charset[1..^1]);
+				else
+					return System.Text.Encoding.GetEncoding(charset);
+			}
+			catch { }
+		}
+
+		return null;
+	}
 }
