@@ -11,4 +11,8 @@
 			<assembly name="Zongsoft.Upgrading.Client" />
 		</assemblies>
 	</manifest>
+
+	<extension path="/Workbench/Startup">
+		<object name="Upgrader" period="10m" type="Zongsoft.Upgrading.Upgrader, Zongsoft.Upgrading.Client" />
+	</extension>
 </plugin>

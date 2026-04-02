@@ -35,13 +35,92 @@ namespace Zongsoft.Upgrading;
 
 public partial class Upgrader
 {
-	public ValueTask UpgradeAsync(CancellationToken cancellation = default)
+	public static ValueTask<bool> UpgradeAsync(CancellationToken cancellation = default) => UpgradeAsync(null, cancellation);
+	public static async ValueTask<bool> UpgradeAsync(string channel, CancellationToken cancellation = default)
 	{
-		return default;
+		var path = await Fetcher.FetchAsync(channel, cancellation);
+		if(string.IsNullOrEmpty(path))
+			return false;
+
+		return await Deployer.DeployAsync(path, cancellation);
 	}
 
-	public ValueTask RestartAsync(CancellationToken cancellation = default)
+	public static void Restart()
 	{
-		return default;
 	}
+}
+
+partial class Upgrader : Zongsoft.Components.WorkerBase
+{
+	#region 常量定义
+	const int IDLE_FLAG = 0;
+	const int UPGRADING_FLAG = 1;
+	#endregion
+
+	#region 私有字段
+	private volatile int _flag;
+	private readonly Common.Timer _timer;
+	#endregion
+
+	#region 构造函数
+	public Upgrader()
+	{
+		_timer = new(this.Period, (_, cancellation) => this.OnUpgradeAsync(TimeSpan.Zero, cancellation));
+	}
+	#endregion
+
+	#region 公共属性
+	public string Channel { get; set; }
+	public TimeSpan Period { get => field > TimeSpan.Zero ? field : TimeSpan.FromMinutes(10); set; }
+	#endregion
+
+	#region 重写方法
+	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
+	{
+		_timer.Period = this.Period;
+		_timer.Start(args, cancellation);
+
+		//如果升级检测周期过长则开启一个短延迟的升级操作
+		if(_timer.Period >= TimeSpan.FromMinutes(5))
+			Task.Run(() => this.OnUpgradeAsync(TimeSpan.FromSeconds(30), cancellation), cancellation);
+
+		return Task.CompletedTask;
+	}
+
+	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
+	{
+		_timer.Stop();
+		return Task.CompletedTask;
+	}
+	#endregion
+
+	#region 私有方法
+	private async ValueTask OnUpgradeAsync(TimeSpan delay, CancellationToken cancellation)
+	{
+		if(delay > TimeSpan.Zero)
+			await Task.Delay(delay, cancellation);
+
+		//设置升级标志
+		var state = Interlocked.CompareExchange(ref _flag, UPGRADING_FLAG, IDLE_FLAG);
+
+		//如果当前处于升级中则退出
+		if(state == UPGRADING_FLAG)
+			return;
+
+		try
+		{
+			//如果升级成功则重启应用程序
+			if(await UpgradeAsync(this.Channel, cancellation))
+				Restart();
+		}
+		catch(Exception ex)
+		{
+			await Zongsoft.Diagnostics.Logging.GetLogging<Upgrader>().ErrorAsync(ex, cancellation);
+		}
+		finally
+		{
+			Interlocked.Exchange(ref _flag, IDLE_FLAG);
+		}
+	}
+	#endregion
 }

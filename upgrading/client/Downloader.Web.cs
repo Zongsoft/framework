@@ -110,10 +110,18 @@ partial class Downloader
 
 		static async ValueTask<Stream> DownloadAsync(HttpClient client, string url, CancellationToken cancellation)
 		{
-			var response = await client.GetAsync(url, cancellation);
+			try
+			{
+				var response = await client.GetAsync(url, cancellation);
 
-			return response != null && response.IsSuccessStatusCode ?
-				await response.Content.ReadAsStreamAsync(cancellation) : null;
+				return response != null && response.IsSuccessStatusCode ?
+					await response.Content.ReadAsStreamAsync(cancellation) : null;
+			}
+			catch(Exception ex)
+			{
+				await Zongsoft.Diagnostics.Logging.GetLogging<WebDownloader>().ErrorAsync(ex, cancellation);
+				return null;
+			}
 		}
 		#endregion
 	}

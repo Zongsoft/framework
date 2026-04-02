@@ -50,7 +50,7 @@ public abstract partial class Fetcher
 	{
 		_fetchers = new(StringComparer.OrdinalIgnoreCase);
 
-		foreach(var type in typeof(Fetcher).GetNestedTypes())
+		foreach(var type in typeof(Fetcher).GetNestedTypes(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic))
 		{
 			if(typeof(IFetcher).IsAssignableFrom(type))
 			{
@@ -90,7 +90,13 @@ public abstract partial class Fetcher
 	/// <returns>如果获取成功则返回升级清单文件(<seealso cref="Upgrader.Manifest"/>)的完整路径，否则返回空(<c>null</c>)。</returns>
 	public static async ValueTask<string> FetchAsync(string name, Version version, CancellationToken cancellation = default)
 	{
-		ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
+		if(string.IsNullOrEmpty(name))
+		{
+			name = ApplicationContext.Current?.Configuration.GetConnectionSettings(nameof(Upgrading), null)?.Name;
+
+			if(string.IsNullOrEmpty(name))
+				return null;
+		}
 
 		//获取指定名称的获取器
 		if(!_fetchers.TryGetValue(name, out var fetcher))
@@ -113,11 +119,19 @@ public abstract partial class Fetcher
 
 		//下载全量包和增量包到升级目录
 		if(manifest.Baseline != null)
-			await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Baseline, cancellation);
+		{
+			//下载全量包文件，如果失败则直接返回
+			if(!await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Baseline, cancellation))
+				return null;
+		}
 
 		//依次下载增量包到升级目录
 		for(int i = 0; i < manifest.Deltas.Length; i++)
-			await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Deltas[i], cancellation);
+		{
+			//下载增量包文件，如果失败则直接返回
+			if(!await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Deltas[i], cancellation))
+				return null;
+		}
 
 		//返回升级清单文件的完整路径
 		return stream.Name;
