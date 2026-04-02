@@ -59,7 +59,7 @@ partial class Fetcher
 						var timeout = settings.TryGetValue("timeout", out var value) && Common.TimeSpanUtility.TryParse(value, out var timespan) ? timespan : TimeSpan.Zero;
 
 						if(settings.TryGetValue("server", out var url) && !string.IsNullOrEmpty(url))
-							return field = HttpUtility.CreateHttpClient(url, timeout);
+							return field = HttpUtility.CreateClient(url, timeout);
 					}
 				}
 

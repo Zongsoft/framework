@@ -114,6 +114,4 @@ public static class Utility
 	public static string GetRuntimeIdentifier(Platform platform, Architecture architecture) => platform == Platform.Windows ?
 		(architecture == Architecture.Other ? "win" : $"win-{architecture.ToString().ToLowerInvariant()}"):
 		(architecture == Architecture.Other ? platform.ToString().ToLowerInvariant() : $"{platform.ToString().ToLowerInvariant}-{architecture.ToString().ToLowerInvariant()}");
-
-	public static DirectoryInfo GetUpgradingDirectory(Version version) => new(Path.Combine(Path.GetTempPath(), Utility.ApplicationName, version.ToString()));
 }

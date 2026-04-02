@@ -35,7 +35,7 @@ namespace Zongsoft.Upgrading;
 
 internal static class HttpUtility
 {
-	public static HttpClient CreateHttpClient(string baseAddress, TimeSpan timeout)
+	public static HttpClient CreateClient(string baseAddress, TimeSpan timeout)
 	{
 		if(string.IsNullOrEmpty(baseAddress))
 			throw new ArgumentNullException(nameof(baseAddress));
