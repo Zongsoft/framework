@@ -31,9 +31,11 @@ using System;
 using System.IO;
 using System.Globalization;
 using System.ComponentModel;
-using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.Cryptography;
 
 namespace Zongsoft.Common;
 
@@ -118,6 +120,34 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 			"SHA3-256" => new(HashAlgorithmName.SHA3_256.Name, SHA3_256.HashData(data)),
 			"SHA3-384" => new(HashAlgorithmName.SHA3_384.Name, SHA3_384.HashData(data)),
 			"SHA3-512" => new(HashAlgorithmName.SHA3_512.Name, SHA3_512.HashData(data)),
+			_ => throw new InvalidOperationException($"The specified '{name}' is an invalid hash algorithm."),
+		};
+	}
+
+	/// <summary>使用指定哈希算法计算指定数据的校验码。</summary>
+	/// <param name="name">指定的哈希算法名称。</param>
+	/// <param name="data">指定的待计算的数据。</param>
+	/// <param name="cancellation">异步操作的取消标记。</param>
+	/// <returns>返回的校验码。</returns>
+	/// <exception cref="ArgumentNullException">指定的 <paramref name="data"/> 参数值为空(<c>null</c>)。</exception>
+	/// <exception cref="InvalidOperationException">指定的 <paramref name="name"/> 参数值不是一个有效的哈希算法名。</exception>
+	public static async ValueTask<Checksum> ComputeAsync(string name, Stream data, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(data);
+
+		if(string.IsNullOrEmpty(name))
+			return new(HashAlgorithmName.SHA1.Name, await SHA1.HashDataAsync(data, cancellation));
+
+		return name.ToUpperInvariant() switch
+		{
+			"MD5" => new(HashAlgorithmName.MD5.Name, await MD5.HashDataAsync(data, cancellation)),
+			"SHA1" => new(HashAlgorithmName.SHA1.Name, await SHA1.HashDataAsync(data, cancellation)),
+			"SHA256" => new(HashAlgorithmName.SHA256.Name, await SHA256.HashDataAsync(data, cancellation)),
+			"SHA384" => new(HashAlgorithmName.SHA384.Name, await SHA384.HashDataAsync(data, cancellation)),
+			"SHA512" => new(HashAlgorithmName.SHA512.Name, await SHA512.HashDataAsync(data, cancellation)),
+			"SHA3-256" => new(HashAlgorithmName.SHA3_256.Name, await SHA3_256.HashDataAsync(data, cancellation)),
+			"SHA3-384" => new(HashAlgorithmName.SHA3_384.Name, await SHA3_384.HashDataAsync(data, cancellation)),
+			"SHA3-512" => new(HashAlgorithmName.SHA3_512.Name, await SHA3_512.HashDataAsync(data, cancellation)),
 			_ => throw new InvalidOperationException($"The specified '{name}' is an invalid hash algorithm."),
 		};
 	}
