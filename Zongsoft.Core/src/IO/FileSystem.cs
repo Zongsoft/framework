@@ -64,7 +64,7 @@ public static class FileSystem
 	public static IDirectory Directory => _directory;
 
 	/// <summary>获取文件系统提供程序集。</summary>
-	public static ICollection<IFileSystem> Providers => _providers;
+	public static FileSystemCollection Providers => _providers;
 
 	/// <summary>获取文件系统的默认方案。</summary>
 	public static string Scheme
