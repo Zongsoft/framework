@@ -38,8 +38,8 @@ public interface IDownloader
 {
 	/// <summary>下载升级包文件到指定的目录中。</summary>
 	/// <param name="directory">指定的下载目录。</param>
-	/// <param name="package">要下载的升级包信息。</param>
+	/// <param name="release">要下载的升级发布信息。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果下载成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	ValueTask<bool> DownloadAsync(string directory, Package package, CancellationToken cancellation = default);
+	ValueTask<bool> DownloadAsync(string directory, Release release, CancellationToken cancellation = default);
 }

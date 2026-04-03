@@ -31,11 +31,11 @@ using System;
 
 namespace Zongsoft.Upgrading;
 
-/// <summary>表示安装包种类的枚举。</summary>
-public enum PackageKind
+/// <summary>表示发布种类的枚举。</summary>
+public enum ReleaseKind
 {
-	/// <summary>完整</summary>
+	/// <summary>完整发布</summary>
 	Fully,
-	/// <summary>增量</summary>
+	/// <summary>增量发布</summary>
 	Delta,
 }

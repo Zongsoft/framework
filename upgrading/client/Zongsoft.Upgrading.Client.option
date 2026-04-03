@@ -2,12 +2,12 @@
 
 <options>
 	<option path="/Upgrading">
-		<connectionSettings default="Web">
+		<connectionSettings default="File">
 			<connectionSetting connectionSetting.name="Web"
 			                   value="server=http://127.0.0.1:7969/Upgrading/Releases;timeout=30s" />
 
 			<connectionSetting connectionSetting.name="File" driver="amazon.s3"
-			                   value="server=http://127.0.0.1:9000;region=cn-north-1;accessKey=rustfsadmin;secretKey=rustfsadmin;path=/upgrading/packages" />
+			                   value="scheme=zfs.s3;server=http://127.0.0.1:9000;region=cn-north-1;accessKey=rustfsadmin;secretKey=rustfsadmin;path=/upgrading/releases/" />
 		</connectionSettings>
 	</option>
 </options>

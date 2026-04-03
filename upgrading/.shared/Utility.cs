@@ -110,7 +110,7 @@ public static class Utility
 		version.Revision == 0
 	);
 
-	public static string GetRuntimeIdentifier(this Package package) => package == null ? null : GetRuntimeIdentifier(package.Platform, package.Architecture);
+	public static string GetRuntimeIdentifier(this Release release) => release == null ? null : GetRuntimeIdentifier(release.Platform, release.Architecture);
 	public static string GetRuntimeIdentifier(Platform platform, Architecture architecture) => platform == Platform.Windows ?
 		(architecture == Architecture.Other ? "win" : $"win-{architecture.ToString().ToLowerInvariant()}"):
 		(architecture == Architecture.Other ? platform.ToString().ToLowerInvariant() : $"{platform.ToString().ToLowerInvariant}-{architecture.ToString().ToLowerInvariant()}");

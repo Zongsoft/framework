@@ -69,7 +69,7 @@ partial class Fetcher
 		#endregion
 
 		#region 重写方法
-		protected override async IAsyncEnumerable<Package> OnFetchAsync(Version version, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
+		protected override async IAsyncEnumerable<Release> OnFetchAsync(Version version, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 		{
 			var client = this.Client;
 			if(client == null)
@@ -79,7 +79,7 @@ partial class Fetcher
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
-			await foreach(var package in response.Content.ReadFromJsonAsAsyncEnumerable<Package>(cancellation))
+			await foreach(var package in response.Content.ReadFromJsonAsAsyncEnumerable<Release>(cancellation))
 				yield return package;
 
 			static string GetParameters(Version version)
@@ -87,16 +87,16 @@ partial class Fetcher
 				var parameters = version == null ?
 					new KeyValuePair<string, string>[]
 					{
-						new(nameof(Package.Name), Utility.ApplicationName),
-						new(nameof(Package.Platform), Utility.Platform.ToString()),
-						new(nameof(Package.Architecture), Utility.Architecture.ToString()),
+						new(nameof(Release.Name), Utility.ApplicationName),
+						new(nameof(Release.Platform), Utility.Platform.ToString()),
+						new(nameof(Release.Architecture), Utility.Architecture.ToString()),
 						new("CurrentlyVersion", Utility.ApplicationVersion.ToString()),
 					}:
 					new KeyValuePair<string, string>[]
 					{
-						new(nameof(Package.Name), Utility.ApplicationName),
-						new(nameof(Package.Platform), Utility.Platform.ToString()),
-						new(nameof(Package.Architecture), Utility.Architecture.ToString()),
+						new(nameof(Release.Name), Utility.ApplicationName),
+						new(nameof(Release.Platform), Utility.Platform.ToString()),
+						new(nameof(Release.Architecture), Utility.Architecture.ToString()),
 						new("CurrentlyVersion", Utility.ApplicationVersion.ToString()),
 						new("UpgradingVersion", version.ToString()),
 					};

@@ -160,8 +160,8 @@ partial class Fetcher : IFetcher
 	IDownloader IFetcher.Downloader => this.Downloader;
 	async ValueTask<Upgrader.Manifest> IFetcher.FetchAsync(Version version, CancellationToken cancellation)
 	{
-		var baseline = default(Package);
-		var deltas = new List<Package>();
+		var baseline = default(Release);
+		var deltas = new List<Release>();
 		var upgradingVersion = version;
 		var currentlyVersion = Utility.ApplicationVersion;
 
@@ -171,15 +171,19 @@ partial class Fetcher : IFetcher
 		//遍历所有可升级包
 		await foreach(var package in packages)
 		{
+			//跳过废弃和无效版本号的升级包
+			if(package.Deprecated || package.Version.IsZero())
+				continue;
+
 			//筛选出满足要求的升级包：
 			//未废弃的，应用名、平台和架构匹配的，版本号大于当前版本且小于等于升级版本
-			if(!package.Deprecated &&
-			   Utility.Platform == package.Platform &&
+			if(Utility.Platform == package.Platform &&
 			   Utility.Architecture == package.Architecture &&
 			   string.Equals(Utility.ApplicationName, package.Name, StringComparison.OrdinalIgnoreCase) &&
-			   package.Version > currentlyVersion && (upgradingVersion.IsZero() || package.Version <= upgradingVersion))
+			   package.Version > currentlyVersion &&
+			   (upgradingVersion.IsZero() || package.Version <= upgradingVersion))
 			{
-				if(package.Kind == PackageKind.Delta)
+				if(package.Kind == ReleaseKind.Delta)
 					deltas.Add(package);
 				else if(baseline == null || package.Version > baseline.Version)
 					baseline = package;
@@ -193,6 +197,6 @@ partial class Fetcher : IFetcher
 	#endregion
 
 	#region 抽象方法
-	protected abstract IAsyncEnumerable<Package> OnFetchAsync(Version version, CancellationToken cancellation);
+	protected abstract IAsyncEnumerable<Release> OnFetchAsync(Version version, CancellationToken cancellation);
 	#endregion
 }

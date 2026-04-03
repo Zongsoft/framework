@@ -32,11 +32,11 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
-/// <summary>表示升级包的实体类。</summary>
-public class Package
+/// <summary>表示升级发布的实体类。</summary>
+public class Release
 {
 	#region 构造函数
-	public Package()
+	public Release()
 	{
 		this.Tags = [];
 		this.Executors = [];
@@ -46,8 +46,8 @@ public class Package
 		this.Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 	}
 
-	public Package(string name, Version version, string[] tags = null) : this(name, null, version, tags) { }
-	public Package(string name, string edition, Version version, string[] tags = null)
+	public Release(string name, Version version, string[] tags = null) : this(name, null, version, tags) { }
+	public Release(string name, string edition, Version version, string[] tags = null)
 	{
 		this.Name = name;
 		this.Edition = edition;
@@ -60,8 +60,8 @@ public class Package
 		this.Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 	}
 
-	public Package(string name, Version version, Platform platform, Architecture architecture, string[] tags = null) : this(name, null, version, platform, architecture, tags) { }
-	public Package(string name, string edition, Version version, Platform platform, Architecture architecture, string[] tags = null)
+	public Release(string name, Version version, Platform platform, Architecture architecture, string[] tags = null) : this(name, null, version, platform, architecture, tags) { }
+	public Release(string name, string edition, Version version, Platform platform, Architecture architecture, string[] tags = null)
 	{
 		this.Name = name;
 		this.Edition = edition;
@@ -76,33 +76,33 @@ public class Package
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取或设置包的名称。</summary>
+	/// <summary>获取或设置发布名称（应用名称）。</summary>
 	public string Name { get; set; }
-	/// <summary>获取或设置包的标题。</summary>
+	/// <summary>获取或设置发布标题。</summary>
 	public string Title { get; set; }
-	/// <summary>获取或设置包的概述。</summary>
+	/// <summary>获取或设置发布概述。</summary>
 	public string Summary { get; set; }
-	/// <summary>获取或设置版本。</summary>
+	/// <summary>获取或设置发布版本。</summary>
 	public string Edition { get; set; }
-	/// <summary>获取或设置包的种类。</summary>
-	public PackageKind Kind { get; set; }
-	/// <summary>获取或设置包的路径。</summary>
+	/// <summary>获取或设置发布种类。</summary>
+	public ReleaseKind Kind { get; set; }
+	/// <summary>获取或设置发布文件的路径。</summary>
 	public string Path { get; set; }
-	/// <summary>获取或设置包的大小（单位：字节）。</summary>
+	/// <summary>获取或设置发布文件的大小（单位：字节）。</summary>
 	public uint Size { get; set; }
-	/// <summary>获取或设置校验码。</summary>
+	/// <summary>获取或设置发布文件的校验码。</summary>
 	public Common.Checksum Checksum { get; set; }
-	/// <summary>获取或设置包的标签集。</summary>
+	/// <summary>获取或设置发布标签集。</summary>
 	public string[] Tags { get; set; }
-	/// <summary>获取或设置包的版本号。</summary>
+	/// <summary>获取或设置发布版本号。</summary>
 	public Version Version { get; set; }
 	/// <summary>获取或设置系统平台。</summary>
 	public Platform Platform { get; set; }
 	/// <summary>获取或设置体系架构。</summary>
 	public Architecture Architecture { get; set; }
-	/// <summary>获取或设置一个值，指示是否已弃用。</summary>
+	/// <summary>获取或设置一个值，指示本发布是否已弃用。</summary>
 	public bool Deprecated { get; set; }
-	/// <summary>获取或设置创建时间。</summary>
+	/// <summary>获取或设置发布时间。</summary>
 	public DateTime Creation { get; set; }
 	/// <summary>获取或设置描述信息。</summary>
 	public string Description { get; set; }
@@ -111,7 +111,7 @@ public class Package
 	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
 	public ICollection<Executor> Executors { get; }
 
-	/// <summary>获取包的扩展属性集。</summary>
+	/// <summary>获取发布扩展属性集。</summary>
 	[System.Text.Json.Serialization.JsonExtensionData]
 	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
 	public IDictionary<string, string> Properties { get; }
@@ -134,19 +134,6 @@ public class Package
 		#region 重写方法
 		public readonly override string ToString() => $"[{this.Event}]{this.Command}";
 		#endregion
-	}
-
-	public sealed class Comparer : IComparer<Package>
-	{
-		public static readonly Comparer Instance = new();
-
-		public int Compare(Package x, Package y)
-		{
-			if(x == null)
-				return y == null ? 0 : -1;
-			else
-				return y == null ? 1 : x.Version.CompareTo(y.Version);
-		}
 	}
 	#endregion
 }

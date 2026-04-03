@@ -34,7 +34,7 @@ namespace Zongsoft.Upgrading;
 
 partial class Upgrader
 {
-	/// <summary>表示升级信息的清单类。</summary>
+	/// <summary>表示升级发布的清单类。</summary>
 	public sealed class Manifest
 	{
 		#region 常量定义
@@ -44,8 +44,8 @@ partial class Upgrader
 
 		#region 构造函数
 		public Manifest() => this.Deltas = [];
-		public Manifest(Package[] deltas) => this.Deltas = deltas ?? [];
-		public Manifest(Package baseline, Package[] deltas)
+		public Manifest(Release[] deltas) => this.Deltas = deltas ?? [];
+		public Manifest(Release baseline, Release[] deltas)
 		{
 			this.Baseline = baseline;
 			this.Deltas = deltas ?? [];
@@ -53,17 +53,17 @@ partial class Upgrader
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置升级的基线全量包。</summary>
-		public Package Baseline { get; set; }
-		/// <summary>获取或设置升级的增量包集合。</summary>
-		public Package[] Deltas { get; set; }
+		/// <summary>获取或设置升级的基线全量升级包。</summary>
+		public Release Baseline { get; set; }
+		/// <summary>获取或设置升级的增量升级包集合。</summary>
+		public Release[] Deltas { get; set; }
 
-		/// <summary>获取清单名称。</summary>
+		/// <summary>获取发布清单名称。</summary>
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
 		public string Name => this.Baseline != null ? this.Baseline.Name : this.Deltas.Length > 0 ? this.Deltas[0].Name : null;
 
-		/// <summary>获取升级后的版本号。</summary>
+		/// <summary>获取发布清单版本号，即本次升级发布中的最高版本。</summary>
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
 		public Version Version => this.Deltas.Max(delta => delta.Version) ?? this.Baseline?.Version;

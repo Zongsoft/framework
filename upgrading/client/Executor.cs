@@ -35,15 +35,15 @@ namespace Zongsoft.Upgrading;
 
 public sealed partial class Executor
 {
-	public static async ValueTask ExecuteAsync(Package package, string @event, CancellationToken cancellation = default)
+	public static async ValueTask ExecuteAsync(Release release, string @event, CancellationToken cancellation = default)
 	{
-		if(package == null || package.Executors == null)
+		if(release == null || release.Executors == null)
 			return;
 
-		foreach(var executor in package.Executors)
+		foreach(var executor in release.Executors)
 		{
 			if(executor.Event != null && executor.Event.StartsWith(@event, StringComparison.OrdinalIgnoreCase))
-				await Components.CommandExecutor.Default.ExecuteAsync(executor.Command, package, cancellation);
+				await Components.CommandExecutor.Default.ExecuteAsync(executor.Command, release, cancellation);
 		}
 	}
 }

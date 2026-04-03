@@ -41,8 +41,8 @@ partial class Downloader
 	internal sealed class FileDownloader(Fetcher.FileFetcher fetcher) : Downloader
 	{
 		#region 私有字段
-		private Func<IFileSystem, Package, CancellationToken, ValueTask<Stream>> _downloader;
-		private readonly Func<IFileSystem, Package, CancellationToken, ValueTask<Stream>>[] _downloaders =
+		private Func<IFileSystem, Release, CancellationToken, ValueTask<Stream>> _downloader;
+		private readonly Func<IFileSystem, Release, CancellationToken, ValueTask<Stream>>[] _downloaders =
 		[
 			Download1Async,
 			Download2Async,
@@ -54,13 +54,13 @@ partial class Downloader
 		#endregion
 
 		#region 重写方法
-		protected override async ValueTask<Stream> DownloadAsync(Package package, CancellationToken cancellation)
+		protected override async ValueTask<Stream> DownloadAsync(Release release, CancellationToken cancellation)
 		{
 			var provider = _fetcher.Provider;
 			if(provider == null)
 				return null;
 
-			if(package.Properties.TryGetValue("url", out var url) && url != null)
+			if(release.Properties.TryGetValue("url", out var url) && url != null)
 			{
 				var stream = await DownloadAsync(provider, url, cancellation);
 
@@ -68,7 +68,7 @@ partial class Downloader
 					return stream;
 			}
 
-			if(package.Properties.TryGetValue("download", out url) && url != null)
+			if(release.Properties.TryGetValue("download", out url) && url != null)
 			{
 				var stream = await DownloadAsync(provider, url, cancellation);
 
@@ -77,11 +77,11 @@ partial class Downloader
 			}
 
 			if(_downloader != null)
-				return await _downloader(provider, package, cancellation);
+				return await _downloader(provider, release, cancellation);
 
 			for(int i = 0; i < _downloaders.Length; i++)
 			{
-				var stream = await _downloaders[i](provider, package, cancellation);
+				var stream = await _downloaders[i](provider, release, cancellation);
 
 				if(stream != null)
 				{
@@ -95,10 +95,10 @@ partial class Downloader
 		#endregion
 
 		#region 私有方法
-		static ValueTask<Stream> Download1Async(IFileSystem provider, Package package, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{package.Name}/{package.Version}/{package.GetRuntimeIdentifier()}/{System.IO.Path.GetFileName(package.Path)}", cancellation);
-		static ValueTask<Stream> Download2Async(IFileSystem provider, Package package, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{package.Name}/{package.Version}/{System.IO.Path.GetFileName(package.Path)}", cancellation);
-		static ValueTask<Stream> Download3Async(IFileSystem provider, Package package, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{System.IO.Path.GetFileName(package.Path)}", cancellation);
-		static ValueTask<Stream> Download4Async(IFileSystem provider, Package package, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{package.Name}@{package.Version}_{package.GetRuntimeIdentifier()}{System.IO.Path.GetExtension(package.Path)}", cancellation);
+		static ValueTask<Stream> Download1Async(IFileSystem provider, Release release, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{release.Name}/{release.Version}/{release.GetRuntimeIdentifier()}/{System.IO.Path.GetFileName(release.Path)}", cancellation);
+		static ValueTask<Stream> Download2Async(IFileSystem provider, Release release, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{release.Name}/{release.Version}/{System.IO.Path.GetFileName(release.Path)}", cancellation);
+		static ValueTask<Stream> Download3Async(IFileSystem provider, Release release, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{System.IO.Path.GetFileName(release.Path)}", cancellation);
+		static ValueTask<Stream> Download4Async(IFileSystem provider, Release release, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{release.Name}@{release.Version}_{release.GetRuntimeIdentifier()}{System.IO.Path.GetExtension(release.Path)}", cancellation);
 
 		static ValueTask<Stream> DownloadAsync(IFileSystem provider, string url, CancellationToken cancellation)
 		{

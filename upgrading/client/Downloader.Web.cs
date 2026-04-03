@@ -40,8 +40,8 @@ partial class Downloader
 	internal sealed class WebDownloader(Fetcher.WebFetcher fetcher) : Downloader
 	{
 		#region 私有字段
-		private Func<HttpClient, Package, CancellationToken, ValueTask<Stream>> _downloader;
-		private readonly Func<HttpClient, Package, CancellationToken, ValueTask<Stream>>[] _downloaders =
+		private Func<HttpClient, Release, CancellationToken, ValueTask<Stream>> _downloader;
+		private readonly Func<HttpClient, Release, CancellationToken, ValueTask<Stream>>[] _downloaders =
 		[
 			Download1Async,
 			Download2Async,
@@ -55,13 +55,13 @@ partial class Downloader
 		#endregion
 
 		#region 重写方法
-		protected override async ValueTask<Stream> DownloadAsync(Package package, CancellationToken cancellation)
+		protected override async ValueTask<Stream> DownloadAsync(Release release, CancellationToken cancellation)
 		{
 			var client = _fetcher.Client;
 			if(client == null)
 				return null;
 
-			if(package.Properties.TryGetValue("url", out var url) && url != null)
+			if(release.Properties.TryGetValue("url", out var url) && url != null)
 			{
 				var stream = await DownloadAsync(client, url, cancellation);
 
@@ -69,7 +69,7 @@ partial class Downloader
 					return stream;
 			}
 
-			if(package.Properties.TryGetValue("download", out url) && url != null)
+			if(release.Properties.TryGetValue("download", out url) && url != null)
 			{
 				var stream = await DownloadAsync(client, url, cancellation);
 
@@ -78,11 +78,11 @@ partial class Downloader
 			}
 
 			if(_downloader != null)
-				return await _downloader(client, package, cancellation);
+				return await _downloader(client, release, cancellation);
 
 			for(int i = 0; i < _downloaders.Length; i++)
 			{
-				var stream = await _downloaders[i](client, package, cancellation);
+				var stream = await _downloaders[i](client, release, cancellation);
 
 				if(stream != null)
 				{
@@ -96,15 +96,15 @@ partial class Downloader
 		#endregion
 
 		#region 私有方法
-		static ValueTask<Stream> Download1Async(HttpClient client, Package package, CancellationToken cancellation) => DownloadAsync(client, $"Download/{package.Name}/{package.GetRuntimeIdentifier()}", cancellation);
-		static ValueTask<Stream> Download2Async(HttpClient client, Package package, CancellationToken cancellation) => DownloadAsync(client, $"packages/{package.Name}/{package.Version}/{package.GetRuntimeIdentifier()}/{Path.GetFileName(package.Path)}", cancellation);
-		static ValueTask<Stream> Download3Async(HttpClient client, Package package, CancellationToken cancellation) => DownloadAsync(client, $"packages/{package.Name}/{package.Version}/{Path.GetFileName(package.Path)}", cancellation);
-		static ValueTask<Stream> Download4Async(HttpClient client, Package package, CancellationToken cancellation) => DownloadAsync(client, $"packages/{Path.GetFileName(package.Path)}", cancellation);
-		static ValueTask<Stream> Download5Async(HttpClient client, Package package, CancellationToken cancellation) => DownloadAsync(client, $"packages/{package.Name}@{package.Version}_{package.GetRuntimeIdentifier()}{Path.GetExtension(package.Path)}", cancellation);
-		static ValueTask<Stream> Download6Async(HttpClient client, Package package, CancellationToken cancellation)
+		static ValueTask<Stream> Download1Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"Download/{release.Name}/{release.GetRuntimeIdentifier()}", cancellation);
+		static ValueTask<Stream> Download2Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"packages/{release.Name}/{release.Version}/{release.GetRuntimeIdentifier()}/{Path.GetFileName(release.Path)}", cancellation);
+		static ValueTask<Stream> Download3Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"packages/{release.Name}/{release.Version}/{Path.GetFileName(release.Path)}", cancellation);
+		static ValueTask<Stream> Download4Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"packages/{Path.GetFileName(release.Path)}", cancellation);
+		static ValueTask<Stream> Download5Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"packages/{release.Name}@{release.Version}_{release.GetRuntimeIdentifier()}{Path.GetExtension(release.Path)}", cancellation);
+		static ValueTask<Stream> Download6Async(HttpClient client, Release release, CancellationToken cancellation)
 		{
-			var path = Path.IsPathFullyQualified(package.Path) ?
-				Path.GetRelativePath(Path.GetPathRoot(package.Path), package.Path): package.Path;
+			var path = Path.IsPathFullyQualified(release.Path) ?
+				Path.GetRelativePath(Path.GetPathRoot(release.Path), release.Path): release.Path;
 			return DownloadAsync(client, path, cancellation);
 		}
 

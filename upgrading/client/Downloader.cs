@@ -41,9 +41,9 @@ public abstract partial class Downloader : IDownloader
 	#endregion
 
 	#region 公共方法
-	public async ValueTask<bool> DownloadAsync(string directory, Package package, CancellationToken cancellation = default)
+	public async ValueTask<bool> DownloadAsync(string directory, Release release, CancellationToken cancellation = default)
 	{
-		ArgumentNullException.ThrowIfNull(package);
+		ArgumentNullException.ThrowIfNull(release);
 		ArgumentNullException.ThrowIfNullOrEmpty(directory);
 
 		//如果指定的目标目录不存在则直接返回
@@ -51,25 +51,25 @@ public abstract partial class Downloader : IDownloader
 			return false;
 
 		//下载升级包文件
-		using var source = await this.DownloadAsync(package, cancellation);
+		using var source = await this.DownloadAsync(release, cancellation);
 		if(source == null || !source.CanRead)
 			return false;
 
 		//将下载的升级包文件保存到指定目录
-		using var stream = File.OpenWrite(GetFilePath(directory, package));
+		using var stream = File.OpenWrite(GetFilePath(directory, release));
 		await source.CopyToAsync(stream, cancellation);
 
 		stream.Close(); //关闭文件流
 		source.Close(); //关闭下载流
 
 		//如果升级包文件包含校验码则需进行校验
-		if(!package.Checksum.IsEmpty)
+		if(!release.Checksum.IsEmpty)
 		{
 			//计算下载的升级包文件的校验码
-			var checksum = await Common.Checksum.ComputeAsync(package.Checksum.Name, File.OpenRead(stream.Name), cancellation);
+			var checksum = await Common.Checksum.ComputeAsync(release.Checksum.Name, File.OpenRead(stream.Name), cancellation);
 
 			//如果下载的升级包校验码与包元数据中声明的校验码不一致则删除下载的升级包文件
-			if(package.Checksum != checksum)
+			if(release.Checksum != checksum)
 			{
 				File.Delete(stream.Name);
 				return false;
@@ -82,16 +82,16 @@ public abstract partial class Downloader : IDownloader
 	#endregion
 
 	#region 抽象方法
-	protected abstract ValueTask<Stream> DownloadAsync(Package package, CancellationToken cancellation);
+	protected abstract ValueTask<Stream> DownloadAsync(Release release, CancellationToken cancellation);
 	#endregion
 
 	#region 静态方法
-	public static string GetFilePath(string directory, Package package)
+	public static string GetFilePath(string directory, Release release)
 	{
-		var fileName = Path.GetFileNameWithoutExtension(package.Path);
+		var fileName = Path.GetFileNameWithoutExtension(release.Path);
 
-		if(string.Equals(package.Name, fileName, StringComparison.OrdinalIgnoreCase))
-			fileName = $"{package.Name}@{package.Version}{Path.GetExtension(package.Path)}";
+		if(string.Equals(release.Name, fileName, StringComparison.OrdinalIgnoreCase))
+			fileName = $"{release.Name}@{release.Version}{Path.GetExtension(release.Path)}";
 
 		return Path.Combine(directory, "packages", fileName);
 	}

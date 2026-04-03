@@ -56,11 +56,11 @@ partial class Fetcher
 
 					if(settings != null)
 					{
-						foreach(var provider in IO.FileSystem.Providers)
-						{
-							if(string.Equals(provider.Scheme, settings.Driver))
-								return field = provider;
-						}
+						if(settings.Driver != null && FileSystem.Providers.TryGetValue(settings.Driver.Name, out var provider))
+							return field = provider;
+
+						if(settings.TryGetValue(nameof(IFileSystem.Scheme), out var scheme) && FileSystem.Providers.TryGetValue(scheme, out provider))
+							return field = provider;
 					}
 				}
 
@@ -86,18 +86,23 @@ partial class Fetcher
 		#endregion
 
 		#region 重写方法
-		protected override async IAsyncEnumerable<Package> OnFetchAsync(Version version, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
+		protected override async IAsyncEnumerable<Release> OnFetchAsync(Version version, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 		{
 			var provider = this.Provider;
 			if(provider == null)
 				yield break;
 
-			var files = provider.Directory.GetFilesAsync(Path.Combine(this.RootPath), $"*{Upgrader.Manifest.FileName}", cancellation);
+			var extension = System.IO.Path.GetExtension(Upgrader.Manifest.FileName);
+			var files = provider.Directory.GetFilesAsync(Path.Combine(this.RootPath), $"*{extension}", cancellation);
 
 			await foreach(var file in files)
 			{
+				//确保当前文件是清单文件
+				if(!string.Equals(System.IO.Path.GetExtension(file.Name), extension, StringComparison.OrdinalIgnoreCase))
+					continue;
+
 				var stream = await provider.File.OpenAsync(file.Path, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
-				var package = await Serializer.Json.DeserializeAsync<Package>(stream, cancellation);
+				var package = await Serializer.Json.DeserializeAsync<Release>(stream, cancellation);
 
 				if(file.HasProperties)
 				{
