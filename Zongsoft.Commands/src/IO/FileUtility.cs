@@ -49,8 +49,8 @@ internal static class FileUtility
 
 			var filePath = string.Empty;
 			var prompt = (access & FileAccess.Write) == FileAccess.Write ?
-				Properties.Resources.Text_SaveFile_Prompt:
-				Properties.Resources.Text_OpenFile_Prompt;
+				Properties.Resources.SaveFile_Prompt:
+				Properties.Resources.OpenFile_Prompt;
 
 			do
 			{
@@ -71,7 +71,7 @@ internal static class FileUtility
 			}
 
 			if(paths.Count == 0)
-				throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+				throw new CommandException(Properties.Resources.Command_MissingArguments);
 		}
 
 		var streams = new List<Stream>(paths.Count);

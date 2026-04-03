@@ -33,39 +33,41 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
-using Zongsoft.Serialization;
 
 namespace Zongsoft.IO.Commands;
 
-public class FileInfoCommand : CommandBase<CommandContext>
+public class DirectoryExistsCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
-	public FileInfoCommand() : base("Info") { }
-	public FileInfoCommand(string name) : base(name) { }
+	public DirectoryExistsCommand() : base("Exists") { }
+	public DirectoryExistsCommand(string name) : base(name) { }
 	#endregion
 
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException(Properties.Resources.Command_MissingArguments);
-
-		async ValueTask<FileInfo> GetInfoAsync(string path)
 		{
-			var info = await FileSystem.File.GetInfoAsync(path);
+			var path = context.Find<DirectoryCommand>(true)?.Current;
+			return await ExistsAsync(path);
+		}
 
-			if(info == null)
-				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.FileNotExisted, path));
+		async ValueTask<bool> ExistsAsync(string path)
+		{
+			var existed = await FileSystem.Directory.ExistsAsync(path);
+
+			if(existed)
+				context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.DirectoryExisted, path));
 			else
-				context.Output.WriteLine(Serializer.Json.Serialize(info, new TextSerializationOptions() { Indented = true }));
+				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.DirectoryNotExisted, path));
 
-			return info;
+			return existed;
 		}
 
 		if(context.Arguments.Count == 1)
-			return await GetInfoAsync(context.Arguments[0]);
+			return await ExistsAsync(context.Arguments[0]);
 		else
-			return context.Arguments.Select(async path => await GetInfoAsync(path)).ToArray();
+			return context.Arguments.Select(async path => await ExistsAsync(path)).ToArray();
 	}
 	#endregion
 }

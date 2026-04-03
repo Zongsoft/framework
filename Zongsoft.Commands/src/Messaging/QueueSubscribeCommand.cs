@@ -131,7 +131,7 @@ public class QueueSubscribeCommand : CommandBase<CommandContext>
 				await message.AcknowledgeAsync(cancellation);
 
 				//追加“已应答”提示文本
-				_context.Output.WriteLine(CommandOutletColor.Blue, $" ({Properties.Resources.Text_Acknowledged})");
+				_context.Output.WriteLine(CommandOutletColor.Blue, $" ({Properties.Resources.Acknowledged})");
 			}
 			else
 			{

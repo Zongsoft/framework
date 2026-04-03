@@ -89,11 +89,11 @@ public class QueueCommand : CommandBase<CommandContext>
 
 			//根据名称获取对应的消息队列
 			this.Queue = MessageQueueConverter.Resolve(name) ??
-				throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
+				throw new CommandException(string.Format(Properties.Resources.CannotObtainCommandTarget, name));
 		}
 
 		if(this.Queue == null)
-			context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoQueue);
+			context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.NoQueue);
 		else
 			context.Output.WriteLine(CommandOutletColor.Green, this.Queue.ToString());
 

@@ -406,4 +406,19 @@ services.get -contract:assemblyQualifiedName parameter
   <data name="SortMode.None" xml:space="preserve">
     <value>不排序</value>
   </data>
+  <data name="Command.TooManyArguments" xml:space="preserve">
+    <value>指定的命令参数太多了。</value>
+  </data>
+  <data name="DirectoryExisted" xml:space="preserve">
+    <value>指定的“{0}”目录存在。</value>
+  </data>
+  <data name="DirectoryNotExisted" xml:space="preserve">
+    <value>指定的“{0}”目录不存在。</value>
+  </data>
+  <data name="DirectoryDeleteFailed.Message" xml:space="preserve">
+    <value>目录删除失败。</value>
+  </data>
+  <data name="DirectoryDeleteSucceed.Message" xml:space="preserve">
+    <value>目录删除成功。</value>
+  </data>
 </root>

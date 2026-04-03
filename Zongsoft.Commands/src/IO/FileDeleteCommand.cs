@@ -46,15 +46,15 @@ public class FileDeleteCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+			throw new CommandException(Properties.Resources.Command_MissingArguments);
 
 		for(int i=0; i< context.Arguments.Count; i++)
 		{
 			var filePath = context.Arguments[i];
 			var succeed = await FileSystem.File.DeleteAsync(filePath);
 			var message = succeed ?
-				Properties.Resources.Text_FileDeleteSucceed_Message :
-				Properties.Resources.Text_FileDeleteFailed_Message;
+				Properties.Resources.FileDeleteSucceed_Message :
+				Properties.Resources.FileDeleteFailed_Message;
 
 			context.Output.WriteLine((succeed ? CommandOutletColor.Green : CommandOutletColor.Red), $"[{i+1}] `{filePath}` {message}");
 		}

@@ -37,35 +37,38 @@ using Zongsoft.Serialization;
 
 namespace Zongsoft.IO.Commands;
 
-public class FileInfoCommand : CommandBase<CommandContext>
+public class DirectoryInfoCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
-	public FileInfoCommand() : base("Info") { }
-	public FileInfoCommand(string name) : base(name) { }
+	public DirectoryInfoCommand() : base("Info") { }
+	public DirectoryInfoCommand(string name) : base(name) { }
 	#endregion
 
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException(Properties.Resources.Command_MissingArguments);
-
-		async ValueTask<FileInfo> GetInfoAsync(string path)
 		{
-			var info = await FileSystem.File.GetInfoAsync(path);
-
-			if(info == null)
-				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.FileNotExisted, path));
-			else
-				context.Output.WriteLine(Serializer.Json.Serialize(info, new TextSerializationOptions() { Indented = true }));
-
-			return info;
+			var path = context.Find<DirectoryCommand>(true)?.Current;
+			return await GetInfoAsync(path);
 		}
 
 		if(context.Arguments.Count == 1)
 			return await GetInfoAsync(context.Arguments[0]);
 		else
 			return context.Arguments.Select(async path => await GetInfoAsync(path)).ToArray();
+
+		async ValueTask<DirectoryInfo> GetInfoAsync(string path)
+		{
+			var info = await FileSystem.Directory.GetInfoAsync(path);
+
+			if(info == null)
+				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.DirectoryNotExisted, path));
+			else
+				context.Output.WriteLine(Serializer.Json.Serialize(info, new TextSerializationOptions() { Indented = true }));
+
+			return info;
+		}
 	}
 	#endregion
 }

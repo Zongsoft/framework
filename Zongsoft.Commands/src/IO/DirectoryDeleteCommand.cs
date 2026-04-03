@@ -28,20 +28,18 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
-using Zongsoft.Serialization;
 
 namespace Zongsoft.IO.Commands;
 
-public class FileInfoCommand : CommandBase<CommandContext>
+public class DirectoryDeleteCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
-	public FileInfoCommand() : base("Info") { }
-	public FileInfoCommand(string name) : base(name) { }
+	public DirectoryDeleteCommand() : base("Delete") { }
+	public DirectoryDeleteCommand(string name) : base(name) { }
 	#endregion
 
 	#region 重写方法
@@ -50,22 +48,18 @@ public class FileInfoCommand : CommandBase<CommandContext>
 		if(context.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Command_MissingArguments);
 
-		async ValueTask<FileInfo> GetInfoAsync(string path)
+		for(int i=0; i< context.Arguments.Count; i++)
 		{
-			var info = await FileSystem.File.GetInfoAsync(path);
+			var filePath = context.Arguments[i];
+			var succeed = await FileSystem.Directory.DeleteAsync(filePath);
+			var message = succeed ?
+				Properties.Resources.DirectoryDeleteSucceed_Message :
+				Properties.Resources.DirectoryDeleteFailed_Message;
 
-			if(info == null)
-				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.FileNotExisted, path));
-			else
-				context.Output.WriteLine(Serializer.Json.Serialize(info, new TextSerializationOptions() { Indented = true }));
-
-			return info;
+			context.Output.WriteLine((succeed ? CommandOutletColor.Green : CommandOutletColor.Red), $"[{i+1}] `{filePath}` {message}");
 		}
 
-		if(context.Arguments.Count == 1)
-			return await GetInfoAsync(context.Arguments[0]);
-		else
-			return context.Arguments.Select(async path => await GetInfoAsync(path)).ToArray();
+		return null;
 	}
 	#endregion
 }

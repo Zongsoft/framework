@@ -75,7 +75,7 @@ public class HelpCommand : CommandBase<CommandContext>
 
 			if(node == null)
 			{
-				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.Text_Message_CommandNotFound, argument));
+				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.Message_CommandNotFound, argument));
 				continue;
 			}
 
@@ -122,10 +122,10 @@ public class HelpCommand : CommandBase<CommandContext>
 		output.Write(CommandOutletColor.Blue, command.Name + " ");
 
 		if(!command.Enabled)
-			output.Write(CommandOutletColor.DarkGray, $"({Properties.Resources.Text_Disabled})");
+			output.Write(CommandOutletColor.DarkGray, $"({Properties.Resources.Disabled})");
 
 		if(displayName == null || string.IsNullOrWhiteSpace(displayName.DisplayName))
-			output.Write(Properties.Resources.Text_Command);
+			output.Write(Properties.Resources.Command);
 		else
 			output.Write(GetResourceString(displayName.DisplayName, command.GetType().Assembly));
 
@@ -133,7 +133,7 @@ public class HelpCommand : CommandBase<CommandContext>
 
 		if(optionAttributes != null && optionAttributes.Length > 0)
 		{
-			output.WriteLine("," + string.Format(Properties.Resources.Text_CommandUsages, optionAttributes.Length));
+			output.WriteLine("," + string.Format(Properties.Resources.CommandUsages, optionAttributes.Length));
 			output.WriteLine();
 
 			string commandName = command.Name;
@@ -198,9 +198,9 @@ public class HelpCommand : CommandBase<CommandContext>
 				output.Write(" (".PadLeft(optionPadding));
 
 				if(optionAttribute.Required)
-					output.Write(CommandOutletColor.DarkRed, Properties.Resources.Text_Required);
+					output.Write(CommandOutletColor.DarkRed, Properties.Resources.Required);
 				else
-					output.Write(CommandOutletColor.DarkGreen, Properties.Resources.Text_Optional);
+					output.Write(CommandOutletColor.DarkGreen, Properties.Resources.Optional);
 
 				output.Write(") ");
 

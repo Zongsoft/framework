@@ -28,44 +28,35 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
-using Zongsoft.Serialization;
 
 namespace Zongsoft.IO.Commands;
 
-public class FileInfoCommand : CommandBase<CommandContext>
+public class DirectoryCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
-	public FileInfoCommand() : base("Info") { }
-	public FileInfoCommand(string name) : base(name) { }
+	public DirectoryCommand() : base("Directory") { }
+	public DirectoryCommand(string name) : base(name) { }
 	#endregion
 
-	#region 重写方法
+	#region 公共属性
+	public string Current { get => string.IsNullOrEmpty(field) ? "/" : field; set; }
+	#endregion
+
+	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(context.Arguments.IsEmpty)
-			throw new CommandException(Properties.Resources.Command_MissingArguments);
-
-		async ValueTask<FileInfo> GetInfoAsync(string path)
-		{
-			var info = await FileSystem.File.GetInfoAsync(path);
-
-			if(info == null)
-				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.FileNotExisted, path));
-			else
-				context.Output.WriteLine(Serializer.Json.Serialize(info, new TextSerializationOptions() { Indented = true }));
-
-			return info;
-		}
+		if(context.Arguments.Count > 1)
+			throw new CommandException(Properties.Resources.Command_TooManyArguments);
 
 		if(context.Arguments.Count == 1)
-			return await GetInfoAsync(context.Arguments[0]);
-		else
-			return context.Arguments.Select(async path => await GetInfoAsync(path)).ToArray();
+			this.Current = context.Arguments[0];
+
+		context.Output.WriteLine(this.Current);
+		return await FileSystem.Directory.GetInfoAsync(this.Current, cancellation);
 	}
 	#endregion
 }

@@ -65,10 +65,10 @@ public class ConfigurationGetCommand : CommandBase<CommandContext>
 		var configuration = context.Find<ConfigurationCommand>(true)?.Configuration;
 
 		if(configuration == null)
-			throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, "Configuration"));
+			throw new CommandException(string.Format(Properties.Resources.CannotObtainCommandTarget, "Configuration"));
 
 		if(context.Arguments.IsEmpty)
-			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+			throw new CommandException(Properties.Resources.Command_MissingArguments);
 
 		if(context.Arguments.Count == 1)
 		{

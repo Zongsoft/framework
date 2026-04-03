@@ -57,6 +57,18 @@
 			<object name="Generate" type="Zongsoft.Security.Commands.PasswordGenerateCommand, Zongsoft.Commands" />
 		</object>
 
+		<object name="Directory">
+			<directory.command>
+				<object name="Directory" type="Zongsoft.IO.Commands.DirectoryCommand, Zongsoft.Commands" />
+			</directory.command>
+
+			<object name="List" type="Zongsoft.IO.Commands.DirectoryListCommand, Zongsoft.Commands" />
+			<object name="Move" type="Zongsoft.IO.Commands.DirectoryMoveCommand, Zongsoft.Commands" />
+			<object name="Info" type="Zongsoft.IO.Commands.DirectoryInfoCommand, Zongsoft.Commands" />
+			<object name="Exists" type="Zongsoft.IO.Commands.DirectoryExistsCommand, Zongsoft.Commands" />
+			<object name="Delete" type="Zongsoft.IO.Commands.DirectoryDeleteCommand, Zongsoft.Commands" />
+		</object>
+
 		<object name="File">
 			<file.command>
 				<object name="File" type="Zongsoft.IO.Commands.FileCommand, Zongsoft.Commands" />

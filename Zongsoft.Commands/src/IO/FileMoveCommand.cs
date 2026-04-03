@@ -47,7 +47,7 @@ public class FileMoveCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.Count != 2)
-			throw new CommandException(string.Format(Properties.Resources.Text_Command_RequiresCountOfArguments, "2"));
+			throw new CommandException(string.Format(Properties.Resources.Command_RequiresCountOfArguments, "2"));
 
 		await FileSystem.File.MoveAsync(context.Arguments[0], context.Arguments[1]);
 		return null;

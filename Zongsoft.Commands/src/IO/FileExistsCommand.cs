@@ -47,24 +47,24 @@ public class FileExistsCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException(Properties.Resources.Text_Command_MissingArguments);
+			throw new CommandException(Properties.Resources.Command_MissingArguments);
 
-		async ValueTask<bool> DeleteFileAsync(string path)
+		if(context.Arguments.Count == 1)
+			return await ExistsAsync(context.Arguments[0]);
+		else
+			return context.Arguments.Select(async path => await ExistsAsync(path)).ToArray();
+
+		async ValueTask<bool> ExistsAsync(string path)
 		{
 			var existed = await FileSystem.File.ExistsAsync(path);
 
 			if(existed)
-				context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.Text_FileExisted, path));
+				context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.FileExisted, path));
 			else
-				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.Text_FileNotExisted, path));
+				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.FileNotExisted, path));
 
 			return existed;
 		}
-
-		if(context.Arguments.Count == 1)
-			return await DeleteFileAsync(context.Arguments[0]);
-		else
-			return context.Arguments.Select(async path => await DeleteFileAsync(path)).ToArray();
 	}
 	#endregion
 }
