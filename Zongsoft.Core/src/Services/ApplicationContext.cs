@@ -105,7 +105,7 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 
 	public Version Version
 	{
-		get => _version ??= Assembly.GetEntryAssembly()?.GetName().Version ?? Assembly.GetExecutingAssembly().GetName().Version;
+		get => _version ??= this.GetVersion();
 		set => _version = value;
 	}
 
@@ -190,9 +190,46 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#endregion
 
 	#region 虚拟方法
-	protected virtual IApplicationEnvironment CreateEnvironment(IHostEnvironment environment, IDictionary<object, object> properties)
+	protected virtual IApplicationEnvironment CreateEnvironment(IHostEnvironment environment, IDictionary<object, object> properties) => new ApplicationEnvironment(environment, properties);
+	protected virtual Version GetVersion()
 	{
-		return new ApplicationEnvironment(environment, properties);
+		var version = GetVersionFromFile(Path.Combine(this.ApplicationPath, ".version"));
+		if(version != null)
+			return version;
+
+		var assembly = Assembly.GetEntryAssembly();
+		if(assembly != null)
+			return assembly.GetName().Version;
+
+		assembly = Assembly.GetExecutingAssembly();
+		if(assembly != null)
+			return assembly.GetName().Version;
+
+		return null;
+
+		static Version GetVersionFromFile(string filePath)
+		{
+			if(filePath == null || !File.Exists(filePath))
+				return null;
+
+			string text;
+			using var reader = File.OpenText(filePath);
+
+			while((text = reader.ReadLine()) != null)
+			{
+				if(string.IsNullOrEmpty(text))
+					continue;
+
+				var index = text.IndexOf('@');
+
+				if(index < 0)
+					return Version.TryParse(text, out var version) ? version : null;
+				else
+					return Version.TryParse(text.AsSpan()[(index + 1)..], out var version) ? version : null;
+			}
+
+			return null;
+		}
 	}
 	#endregion
 
