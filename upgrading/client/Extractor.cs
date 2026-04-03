@@ -35,17 +35,23 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
-public sealed class Deployer
+public sealed class Extractor
 {
-	/// <summary>执行部署操作。</summary>
+	/// <summary>执行升级包解压提取操作。</summary>
 	/// <param name="filePath">指定的升级清单文件路径。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果部署成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	public static async ValueTask<bool> DeployAsync(string filePath, CancellationToken cancellation = default)
+	public static async ValueTask<bool> ExtractAsync(string filePath, CancellationToken cancellation = default)
 	{
-		//如果升级清单文件不存在则返回失败
-		if(string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+		if(string.IsNullOrEmpty(filePath))
 			return false;
+
+		//如果升级清单文件不存在则返回失败
+		if(!File.Exists(filePath))
+		{
+			Zongsoft.Diagnostics.Logging.GetLogging<Extractor>().Error($"The manifest file '{filePath}' does not exist.");
+			return false;
+		}
 
 		//反序列化升级清单文件
 		var manifest = await Serialization.Serializer.Json.DeserializeAsync<Upgrader.Manifest>(File.OpenRead(filePath), cancellation);
@@ -67,12 +73,12 @@ public sealed class Deployer
 			}
 
 			//获取全量包文件路径
-			var packageFile = Path.Combine(directory, Path.GetFileName(manifest.Baseline.Path));
-			if(!File.Exists(packageFile))
+			var source = Downloader.GetFilePath(directory, manifest.Baseline);
+			if(!File.Exists(source))
 				return false;
 
 			//将安装包读取为Zip压缩文件
-			using var zip = ZipFile.OpenRead(packageFile);
+			using var zip = ZipFile.OpenRead(source);
 			//解压安装包到临时目录
 			zip.ExtractToDirectory(destination.FullName, true);
 		}
@@ -82,16 +88,20 @@ public sealed class Deployer
 			var delta = manifest.Deltas[i];
 
 			//获取增量包文件路径
-			var packageFile = Path.Combine(directory, Path.GetFileName(delta.Path));
-			if(!File.Exists(packageFile))
+			var source = Downloader.GetFilePath(directory, delta);
+			if(!File.Exists(source))
 				return false;
 
 			//将安装包读取为Zip压缩文件
-			using var zip = ZipFile.OpenRead(packageFile);
+			using var zip = ZipFile.OpenRead(source);
 
 			//解压安装包到临时目录
 			zip.ExtractToDirectory(destination.FullName, true);
 		}
+
+		//在目标目录下创建一个版本文件并将版本号写入到该文件中
+		using var writer = File.CreateText(Path.Combine(destination.FullName, ".version"));
+		writer.WriteLine($"{manifest.Name}@{manifest.Version}");
 
 		//返回部署成功
 		return true;

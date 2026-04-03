@@ -42,7 +42,7 @@ public partial class Upgrader
 		if(string.IsNullOrEmpty(path))
 			return false;
 
-		return await Deployer.DeployAsync(path, cancellation);
+		return await Extractor.ExtractAsync(path, cancellation);
 	}
 
 	public static void Restart()
@@ -101,10 +101,10 @@ partial class Upgrader : Zongsoft.Components.WorkerBase
 			await Task.Delay(delay, cancellation);
 
 		//设置升级标志
-		var state = Interlocked.CompareExchange(ref _flag, UPGRADING_FLAG, IDLE_FLAG);
+		var flag = Interlocked.CompareExchange(ref _flag, UPGRADING_FLAG, IDLE_FLAG);
 
 		//如果当前处于升级中则退出
-		if(state == UPGRADING_FLAG)
+		if(flag == UPGRADING_FLAG)
 			return;
 
 		try

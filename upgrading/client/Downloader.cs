@@ -56,7 +56,7 @@ public abstract partial class Downloader : IDownloader
 			return false;
 
 		//将下载的升级包文件保存到指定目录
-		using var stream = File.OpenWrite(this.GetFilePath(directory, package));
+		using var stream = File.OpenWrite(GetFilePath(directory, package));
 		await source.CopyToAsync(stream, cancellation);
 
 		stream.Close(); //关闭文件流
@@ -85,7 +85,15 @@ public abstract partial class Downloader : IDownloader
 	protected abstract ValueTask<Stream> DownloadAsync(Package package, CancellationToken cancellation);
 	#endregion
 
-	#region 虚拟方法
-	protected virtual string GetFilePath(string directory, Package package) => Path.Combine(directory, "packages", Path.GetFileName(package.Path));
+	#region 静态方法
+	public static string GetFilePath(string directory, Package package)
+	{
+		var fileName = Path.GetFileNameWithoutExtension(package.Path);
+
+		if(string.Equals(package.Name, fileName, StringComparison.OrdinalIgnoreCase))
+			fileName = $"{package.Name}@{package.Version}{Path.GetExtension(package.Path)}";
+
+		return Path.Combine(directory, "packages", fileName);
+	}
 	#endregion
 }

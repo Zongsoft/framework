@@ -39,11 +39,11 @@ partial class Upgrader
 	{
 		#region 常量定义
 		/// <summary>清单文件名。</summary>
-		public const string FileName = ".maifest";
+		public const string FileName = ".manifest";
 		#endregion
 
 		#region 构造函数
-		public Manifest() { }
+		public Manifest() => this.Deltas = [];
 		public Manifest(Package[] deltas) => this.Deltas = deltas ?? [];
 		public Manifest(Package baseline, Package[] deltas)
 		{
@@ -58,19 +58,15 @@ partial class Upgrader
 		/// <summary>获取或设置升级的增量包集合。</summary>
 		public Package[] Deltas { get; set; }
 
+		/// <summary>获取清单名称。</summary>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
+		public string Name => this.Baseline != null ? this.Baseline.Name : this.Deltas.Length > 0 ? this.Deltas[0].Name : null;
+
 		/// <summary>获取升级后的版本号。</summary>
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
-		public Version Version
-		{
-			get
-			{
-				if(field.IsZero())
-					return field = this.Deltas.Max(delta => delta.Version) ?? this.Baseline.Version;
-
-				return field;
-			}
-		}
+		public Version Version => this.Deltas.Max(delta => delta.Version) ?? this.Baseline?.Version;
 
 		/// <summary>获取一个值，指示当前升级清单是否为空。</summary>
 		[System.Text.Json.Serialization.JsonIgnore]
@@ -79,9 +75,7 @@ partial class Upgrader
 		#endregion
 
 		#region 重写方法
-		public override string ToString() => this.Baseline == null ?
-			$"[{string.Join(',', this.Deltas.Select(delta => delta.Version.ToString()))}]" :
-			$"{this.Baseline.Name}@{this.Baseline.Version}[{string.Join(',', this.Deltas.Select(delta => delta.Version.ToString()))}]";
+		public override string ToString() => this.IsEmpty ? string.Empty : $"{this.Name}@{this.Version}";
 		#endregion
 	}
 }
