@@ -219,6 +219,7 @@ partial class S3FileSystem
 					response = await client.ListObjectsV2Async(new()
 					{
 						BucketName = bucket,
+						Delimiter = recursive ? null : "/",
 						Prefix = path,
 						ContinuationToken = continuation,
 					}, cancellation);

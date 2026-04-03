@@ -98,7 +98,7 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 		if(index < 0)
 		{
 			region = null;
-			bucket = null;
+			bucket = text[start..].ToString();
 			return null;
 		}
 
