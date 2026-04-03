@@ -75,7 +75,7 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 
 	public Version Version
 	{
-		get => _version ??= this.GetType().Assembly.GetName().Version;
+		get => _version ??= this.GetVersion();
 		set => _version = value;
 	}
 
@@ -106,6 +106,10 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 			return _services;
 		}
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual Version GetVersion() => ApplicationModuleUtility.GetVersion(this);
 	#endregion
 
 	#region 匹配方法
