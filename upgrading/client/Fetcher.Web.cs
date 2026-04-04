@@ -84,8 +84,8 @@ partial class Fetcher
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
-			await foreach(var package in response.Content.ReadFromJsonAsAsyncEnumerable<Release>(cancellation))
-				yield return package;
+			await foreach(var release in response.Content.ReadFromJsonAsAsyncEnumerable<Release>(cancellation))
+				yield return release;
 
 			static string GetParameters(Version version)
 			{

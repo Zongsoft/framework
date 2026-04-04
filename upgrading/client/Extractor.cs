@@ -61,17 +61,10 @@ public sealed class Extractor
 		//获取升级包元数据文件所在目录
 		var directory = Path.GetDirectoryName(filePath);
 		//在升级包元数据文件所在目录下创建一个临时目录用于解压升级包
-		var destination = EnsureDirectory(Path.Combine(directory, ".app"));
+		var destination = CreateDirectory(Path.Combine(directory, ".app"));
 
 		if(manifest.Baseline != null)
 		{
-			//如果全量包存在则删除临时解压目录并重新创建一个空目录用于解压全量包
-			if(destination.Exists)
-			{
-				destination.Delete(true);
-				destination.Create();
-			}
-
 			//获取全量包文件路径
 			var source = Downloader.GetFilePath(directory, manifest.Baseline);
 			if(!File.Exists(source))
@@ -105,7 +98,13 @@ public sealed class Extractor
 
 		//返回部署成功
 		return true;
-	}
 
-	static DirectoryInfo EnsureDirectory(string path) => Directory.Exists(path) ? new DirectoryInfo(path) : Directory.CreateDirectory(path);
+		static DirectoryInfo CreateDirectory(string path)
+		{
+			if(Directory.Exists(path))
+				Directory.Delete(path, true);
+
+			return Directory.CreateDirectory(path);
+		}
+	}
 }

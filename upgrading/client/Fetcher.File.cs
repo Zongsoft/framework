@@ -83,15 +83,15 @@ partial class Fetcher
 					continue;
 
 				var stream = await FileSystem.File.OpenAsync(file.Path.Url, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
-				var package = await Serializer.Json.DeserializeAsync<Release>(stream, cancellation);
+				var release = await Serializer.Json.DeserializeAsync<Release>(stream, cancellation);
 
 				if(file.HasProperties)
 				{
 					foreach(var property in file.Properties)
-						package.Properties[property.Key] = property.Value;
+						release.Properties[property.Key] = property.Value;
 				}
 
-				yield return package;
+				yield return release;
 			}
 		}
 		#endregion

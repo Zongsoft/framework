@@ -108,12 +108,12 @@ public abstract partial class Fetcher
 			return null;
 
 		//获取升级清单文件所在目录
-		var directory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Utility.ApplicationName, manifest.Version.ToString()));
+		var directory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Utility.ApplicationName));
 		if(!directory.Exists)
 			directory.Create();
 
 		//在升级目录下创建升级清单文件并将升级清单信息写入该文件
-		using var stream = File.OpenWrite(Path.Combine(directory.FullName, Upgrader.Manifest.FileName));
+		using var stream = File.Create(Path.Combine(directory.FullName, Upgrader.Manifest.FileName));
 		await Serialization.Serializer.Json.SerializeAsync(stream, manifest, cancellation);
 		stream.Close();
 

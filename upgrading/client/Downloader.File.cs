@@ -41,15 +41,6 @@ partial class Downloader
 	internal sealed class FileDownloader(Fetcher.FileFetcher fetcher) : Downloader
 	{
 		#region 私有字段
-		private Func<string, Release, CancellationToken, ValueTask<Stream>> _downloader;
-		private readonly Func<string, Release, CancellationToken, ValueTask<Stream>>[] _downloaders =
-		[
-			Download1Async,
-			Download2Async,
-			Download3Async,
-			Download4Async,
-		];
-
 		private readonly Fetcher.FileFetcher _fetcher = fetcher ?? throw new ArgumentNullException(nameof(fetcher));
 		#endregion
 
@@ -75,30 +66,11 @@ partial class Downloader
 					return stream;
 			}
 
-			if(_downloader != null)
-				return await _downloader(_fetcher.Url, release, cancellation);
-
-			for(int i = 0; i < _downloaders.Length; i++)
-			{
-				var stream = await _downloaders[i](_fetcher.Url, release, cancellation);
-
-				if(stream != null)
-				{
-					_downloader = _downloaders[i];
-					return stream;
-				}
-			}
-
-			return null;
+			return await DownloadAsync(_fetcher.Url, release.Path, cancellation);
 		}
 		#endregion
 
 		#region 私有方法
-		static ValueTask<Stream> Download1Async(string url, Release release, CancellationToken cancellation) => DownloadAsync(url, $"packages/{release.Name}/{release.Version}/{release.GetRuntimeIdentifier()}/{System.IO.Path.GetFileName(release.Path)}", cancellation);
-		static ValueTask<Stream> Download2Async(string url, Release release, CancellationToken cancellation) => DownloadAsync(url, $"packages/{release.Name}/{release.Version}/{System.IO.Path.GetFileName(release.Path)}", cancellation);
-		static ValueTask<Stream> Download3Async(string url, Release release, CancellationToken cancellation) => DownloadAsync(url, $"packages/{System.IO.Path.GetFileName(release.Path)}", cancellation);
-		static ValueTask<Stream> Download4Async(string url, Release release, CancellationToken cancellation) => DownloadAsync(url, $"packages/{release.Name}@{release.Version}_{release.GetRuntimeIdentifier()}{System.IO.Path.GetExtension(release.Path)}", cancellation);
-
 		static async ValueTask<Stream> DownloadAsync(string url, string path, CancellationToken cancellation)
 		{
 			try
