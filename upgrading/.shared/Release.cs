@@ -43,7 +43,7 @@ public class Release
 		this.Creation = DateTime.Now;
 		this.Platform = Utility.Platform;
 		this.Architecture = Utility.Architecture;
-		this.Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 	}
 
 	public Release(string name, Version version, string[] tags = null) : this(name, null, version, tags) { }
@@ -57,7 +57,7 @@ public class Release
 		this.Creation = DateTime.Now;
 		this.Platform = Utility.Platform;
 		this.Architecture= Utility.Architecture;
-		this.Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 	}
 
 	public Release(string name, Version version, Platform platform, Architecture architecture, string[] tags = null) : this(name, null, version, platform, architecture, tags) { }
@@ -71,7 +71,7 @@ public class Release
 		this.Creation = DateTime.Now;
 		this.Platform = platform;
 		this.Architecture = architecture;
-		this.Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 	}
 	#endregion
 
@@ -114,7 +114,7 @@ public class Release
 	/// <summary>获取发布扩展属性集。</summary>
 	[System.Text.Json.Serialization.JsonExtensionData]
 	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
-	public IDictionary<string, string> Properties { get; }
+	public IDictionary<string, object> Properties { get; }
 	#endregion
 
 	#region 重写方法

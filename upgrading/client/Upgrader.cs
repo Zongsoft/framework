@@ -82,7 +82,7 @@ partial class Upgrader : Zongsoft.Components.WorkerBase
 
 		//如果升级检测周期过长则开启一个短延迟的升级操作
 		if(_timer.Period >= TimeSpan.FromMinutes(5))
-			Task.Run(() => this.OnUpgradeAsync(TimeSpan.FromSeconds(30), cancellation), cancellation);
+			Task.Run(() => this.OnUpgradeAsync(TimeSpan.FromSeconds(10), cancellation), cancellation);
 
 		return Task.CompletedTask;
 	}

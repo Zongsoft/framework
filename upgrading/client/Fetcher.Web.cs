@@ -41,6 +41,11 @@ partial class Fetcher
 {
 	internal sealed class WebFetcher : Fetcher
 	{
+		#region 常量定义
+		private const string URL_SETTING = "url";
+		private const string TIMEOUT_SETTING = "timeout";
+		#endregion
+
 		#region 构造函数
 		public WebFetcher() : base("Web") => this.Downloader = new Downloader.WebDownloader(this);
 		#endregion
@@ -56,9 +61,9 @@ partial class Fetcher
 
 					if(settings != null)
 					{
-						var timeout = settings.TryGetValue("timeout", out var value) && Common.TimeSpanUtility.TryParse(value, out var timespan) ? timespan : TimeSpan.Zero;
+						var timeout = settings.TryGetValue(TIMEOUT_SETTING, out var value) && Common.TimeSpanUtility.TryParse(value, out var timespan) ? timespan : TimeSpan.Zero;
 
-						if(settings.TryGetValue("server", out var url) && !string.IsNullOrEmpty(url))
+						if(settings.TryGetValue(URL_SETTING, out var url) && !string.IsNullOrEmpty(url))
 							return field = HttpUtility.CreateClient(url, timeout);
 					}
 				}

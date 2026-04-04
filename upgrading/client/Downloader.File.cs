@@ -41,8 +41,8 @@ partial class Downloader
 	internal sealed class FileDownloader(Fetcher.FileFetcher fetcher) : Downloader
 	{
 		#region 私有字段
-		private Func<IFileSystem, Release, CancellationToken, ValueTask<Stream>> _downloader;
-		private readonly Func<IFileSystem, Release, CancellationToken, ValueTask<Stream>>[] _downloaders =
+		private Func<string, Release, CancellationToken, ValueTask<Stream>> _downloader;
+		private readonly Func<string, Release, CancellationToken, ValueTask<Stream>>[] _downloaders =
 		[
 			Download1Async,
 			Download2Async,
@@ -56,32 +56,31 @@ partial class Downloader
 		#region 重写方法
 		protected override async ValueTask<Stream> DownloadAsync(Release release, CancellationToken cancellation)
 		{
-			var provider = _fetcher.Provider;
-			if(provider == null)
+			if(string.IsNullOrEmpty(_fetcher.Url))
 				return null;
 
-			if(release.Properties.TryGetValue("url", out var url) && url != null)
+			if(release.Properties.TryGetValue("path", out var path) && path != null)
 			{
-				var stream = await DownloadAsync(provider, url, cancellation);
+				var stream = await DownloadAsync(_fetcher.Url, path.ToString(), cancellation);
 
 				if(stream != null)
 					return stream;
 			}
 
-			if(release.Properties.TryGetValue("download", out url) && url != null)
+			if(release.Properties.TryGetValue("download", out path) && path != null)
 			{
-				var stream = await DownloadAsync(provider, url, cancellation);
+				var stream = await DownloadAsync(_fetcher.Url, path.ToString(), cancellation);
 
 				if(stream != null)
 					return stream;
 			}
 
 			if(_downloader != null)
-				return await _downloader(provider, release, cancellation);
+				return await _downloader(_fetcher.Url, release, cancellation);
 
 			for(int i = 0; i < _downloaders.Length; i++)
 			{
-				var stream = await _downloaders[i](provider, release, cancellation);
+				var stream = await _downloaders[i](_fetcher.Url, release, cancellation);
 
 				if(stream != null)
 				{
@@ -95,21 +94,29 @@ partial class Downloader
 		#endregion
 
 		#region 私有方法
-		static ValueTask<Stream> Download1Async(IFileSystem provider, Release release, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{release.Name}/{release.Version}/{release.GetRuntimeIdentifier()}/{System.IO.Path.GetFileName(release.Path)}", cancellation);
-		static ValueTask<Stream> Download2Async(IFileSystem provider, Release release, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{release.Name}/{release.Version}/{System.IO.Path.GetFileName(release.Path)}", cancellation);
-		static ValueTask<Stream> Download3Async(IFileSystem provider, Release release, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{System.IO.Path.GetFileName(release.Path)}", cancellation);
-		static ValueTask<Stream> Download4Async(IFileSystem provider, Release release, CancellationToken cancellation) => DownloadAsync(provider, $"packages/{release.Name}@{release.Version}_{release.GetRuntimeIdentifier()}{System.IO.Path.GetExtension(release.Path)}", cancellation);
+		static ValueTask<Stream> Download1Async(string url, Release release, CancellationToken cancellation) => DownloadAsync(url, $"packages/{release.Name}/{release.Version}/{release.GetRuntimeIdentifier()}/{System.IO.Path.GetFileName(release.Path)}", cancellation);
+		static ValueTask<Stream> Download2Async(string url, Release release, CancellationToken cancellation) => DownloadAsync(url, $"packages/{release.Name}/{release.Version}/{System.IO.Path.GetFileName(release.Path)}", cancellation);
+		static ValueTask<Stream> Download3Async(string url, Release release, CancellationToken cancellation) => DownloadAsync(url, $"packages/{System.IO.Path.GetFileName(release.Path)}", cancellation);
+		static ValueTask<Stream> Download4Async(string url, Release release, CancellationToken cancellation) => DownloadAsync(url, $"packages/{release.Name}@{release.Version}_{release.GetRuntimeIdentifier()}{System.IO.Path.GetExtension(release.Path)}", cancellation);
 
-		static ValueTask<Stream> DownloadAsync(IFileSystem provider, string url, CancellationToken cancellation)
+		static async ValueTask<Stream> DownloadAsync(string url, string path, CancellationToken cancellation)
 		{
 			try
 			{
-				return provider.File.OpenAsync(url, FileMode.Open, FileAccess.Read, cancellation);
+				url = Zongsoft.IO.Path.Combine(url, path);
+
+				if(string.IsNullOrEmpty(url))
+					return null;
+
+				if(await FileSystem.File.ExistsAsync(url, cancellation))
+					return await FileSystem.File.OpenAsync(url, FileMode.Open, FileAccess.Read, cancellation);
+
+				return null;
 			}
 			catch(Exception ex)
 			{
 				Zongsoft.Diagnostics.Logging.GetLogging<FileDownloader>().Error(ex);
-				return ValueTask.FromResult<Stream>(null);
+				return null;
 			}
 		}
 		#endregion

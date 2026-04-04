@@ -165,28 +165,27 @@ partial class Fetcher : IFetcher
 		var upgradingVersion = version;
 		var currentlyVersion = Utility.ApplicationVersion;
 
-		//获取升级包集合
-		var packages = this.OnFetchAsync(version, cancellation);
+		//获取升级发布集合
+		var releases = this.OnFetchAsync(version, cancellation);
 
-		//遍历所有可升级包
-		await foreach(var package in packages)
+		await foreach(var release in releases)
 		{
-			//跳过废弃和无效版本号的升级包
-			if(package.Deprecated || package.Version.IsZero())
+			//跳过废弃和无效版本号的升级发布
+			if(release.Deprecated || release.Version.IsZero())
 				continue;
 
-			//筛选出满足要求的升级包：
-			//未废弃的，应用名、平台和架构匹配的，版本号大于当前版本且小于等于升级版本
-			if(Utility.Platform == package.Platform &&
-			   Utility.Architecture == package.Architecture &&
-			   string.Equals(Utility.ApplicationName, package.Name, StringComparison.OrdinalIgnoreCase) &&
-			   package.Version > currentlyVersion &&
-			   (upgradingVersion.IsZero() || package.Version <= upgradingVersion))
+			//筛选出满足要求的升级发布：
+			//应用名、平台和架构匹配的，版本号大于当前版本且小于等于升级版本
+			if(Utility.Platform == release.Platform &&
+			   Utility.Architecture == release.Architecture &&
+			   string.Equals(Utility.ApplicationName, release.Name, StringComparison.OrdinalIgnoreCase) &&
+			   release.Version > currentlyVersion &&
+			   (upgradingVersion.IsZero() || release.Version <= upgradingVersion))
 			{
-				if(package.Kind == ReleaseKind.Delta)
-					deltas.Add(package);
-				else if(baseline == null || package.Version > baseline.Version)
-					baseline = package;
+				if(release.Kind == ReleaseKind.Delta)
+					deltas.Add(release);
+				else if(baseline == null || release.Version > baseline.Version)
+					baseline = release;
 			}
 		}
 

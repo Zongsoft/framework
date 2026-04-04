@@ -41,12 +41,16 @@ partial class Fetcher
 {
 	internal sealed class FileFetcher : Fetcher
 	{
+		#region 常量定义
+		private const string URL_SETTING = "url";
+		#endregion
+
 		#region 构造函数
 		public FileFetcher() : base("File") => this.Downloader = new Downloader.FileDownloader(this);
 		#endregion
 
 		#region 公共属性
-		public IFileSystem Provider
+		public string Url
 		{
 			get
 			{
@@ -55,29 +59,7 @@ partial class Fetcher
 					var settings = this.Settings;
 
 					if(settings != null)
-					{
-						if(settings.Driver != null && FileSystem.Providers.TryGetValue(settings.Driver.Name, out var provider))
-							return field = provider;
-
-						if(settings.TryGetValue(nameof(IFileSystem.Scheme), out var scheme) && FileSystem.Providers.TryGetValue(scheme, out provider))
-							return field = provider;
-					}
-				}
-
-				return field;
-			}
-		}
-
-		public string RootPath
-		{
-			get
-			{
-				if(field == null)
-				{
-					var settings = this.Settings;
-
-					if(settings != null)
-						field = settings.TryGetValue("path", out var path) ? path : null;
+						field = settings.TryGetValue(URL_SETTING, out var url) ? url : null;
 				}
 
 				return field;
@@ -88,12 +70,11 @@ partial class Fetcher
 		#region 重写方法
 		protected override async IAsyncEnumerable<Release> OnFetchAsync(Version version, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 		{
-			var provider = this.Provider;
-			if(provider == null)
+			if(string.IsNullOrEmpty(this.Url))
 				yield break;
 
 			var extension = System.IO.Path.GetExtension(Upgrader.Manifest.FileName);
-			var files = provider.Directory.GetFilesAsync(Path.Combine(this.RootPath), $"*{extension}", cancellation);
+			var files = FileSystem.Directory.GetFilesAsync(this.Url, $"*{extension}", cancellation);
 
 			await foreach(var file in files)
 			{
@@ -101,7 +82,7 @@ partial class Fetcher
 				if(!string.Equals(System.IO.Path.GetExtension(file.Name), extension, StringComparison.OrdinalIgnoreCase))
 					continue;
 
-				var stream = await provider.File.OpenAsync(file.Path, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
+				var stream = await FileSystem.File.OpenAsync(file.Path.Url, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
 				var package = await Serializer.Json.DeserializeAsync<Release>(stream, cancellation);
 
 				if(file.HasProperties)
