@@ -81,7 +81,7 @@ internal static class ApplicationModuleUtility
 	public static string GetTitle(this IApplicationModule module)
 	{
 		if(module != null && module.Assembly != null && module.Name != null)
-			return Resources.Resource.GetResource(module.Assembly).TryGetString(module.Name, out var title) ? title : null;
+			return Resources.ResourceUtility.GetResourceString(module.Assembly, [$"{module.Name}.{nameof(module.Title)}", module.Name]);
 
 		return null;
 	}
@@ -89,7 +89,7 @@ internal static class ApplicationModuleUtility
 	public static string GetDescription(this IApplicationModule module)
 	{
 		if(module != null && module.Assembly != null && module.Name != null)
-			return Resources.Resource.GetResource(module.Assembly).TryGetString($"{module.Name}.{nameof(module.Description)}", out var description) ? description : null;
+			return Resources.ResourceUtility.GetResourceString(module.Assembly, $"{module.Name}.{nameof(module.Description)}");
 
 		return null;
 	}
