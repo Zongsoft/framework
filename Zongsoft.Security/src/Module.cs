@@ -47,7 +47,7 @@ public partial class Module : ApplicationModule<Module.EventRegistry>
 	#endregion
 
 	#region 私有构造
-	private Module() : base(NAME, Zongsoft.Security.Properties.Resources.Security_Title, Zongsoft.Security.Properties.Resources.Security_Description) { }
+	private Module() : base(NAME) { }
 	#endregion
 
 	#region 公共属性
