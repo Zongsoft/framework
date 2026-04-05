@@ -65,11 +65,8 @@ public abstract partial class Downloader : IDownloader
 		//如果升级包文件包含校验码则需进行校验
 		if(!release.Checksum.IsEmpty)
 		{
-			//计算下载的升级包文件的校验码
-			var checksum = await Common.Checksum.ComputeAsync(release.Checksum.Name, File.OpenRead(stream.Name), cancellation);
-
 			//如果下载的升级包校验码与包元数据中声明的校验码不一致则删除下载的升级包文件
-			if(release.Checksum != checksum)
+			if(!await release.Checksum.VerifyAsync(File.OpenRead(stream.Name), cancellation))
 			{
 				File.Delete(stream.Name);
 				return false;

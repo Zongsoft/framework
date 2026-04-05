@@ -65,26 +65,22 @@ public abstract partial class Fetcher
 	/// <summary>通过默认通道获取最新版本的升级信息。</summary>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果获取成功则返回升级清单文件(<seealso cref="Upgrader.Manifest"/>)的完整路径，否则返回空(<c>null</c>)。</returns>
-	public static ValueTask<string> FetchAsync(CancellationToken cancellation = default) => FetchAsync((Version)null, cancellation);
+	public static ValueTask<string> FetchAsync(CancellationToken cancellation = default) => FetchAsync(null, null, cancellation);
 
 	/// <summary>通过默认通道获取指定版本的升级信息。</summary>
 	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果获取成功则返回升级清单文件(<seealso cref="Upgrader.Manifest"/>)的完整路径，否则返回空(<c>null</c>)。</returns>
-	public static ValueTask<string> FetchAsync(Version version, CancellationToken cancellation = default)
-	{
-		var settings = ApplicationContext.Current.Configuration.GetConnectionSettings(nameof(Upgrading), null);
-		return settings == null && string.IsNullOrEmpty(settings.Name) ? default : FetchAsync(settings.Name, version, cancellation);
-	}
+	public static ValueTask<string> FetchAsync(Version version, CancellationToken cancellation = default) => FetchAsync(null, version, cancellation);
 
 	/// <summary>通过指定通道获取最新版本的升级信息。</summary>
-	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）。</param>
+	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串(<c>""</c>)，则表示默认通道。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果获取成功则返回升级清单文件(<seealso cref="Upgrader.Manifest"/>)的完整路径，否则返回空(<c>null</c>)。</returns>
 	public static ValueTask<string> FetchAsync(string name, CancellationToken cancellation = default) => FetchAsync(name, null, cancellation);
 
 	/// <summary>通过指定通道获取指定版本的升级信息。</summary>
-	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）。</param>
+	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串(<c>""</c>)，则表示默认通道。</param>
 	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果获取成功则返回升级清单文件(<seealso cref="Upgrader.Manifest"/>)的完整路径，否则返回空(<c>null</c>)。</returns>
