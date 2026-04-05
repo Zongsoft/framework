@@ -79,6 +79,23 @@ public class ChecksumTest
 	}
 
 	[Fact]
+	public void Verify()
+	{
+		var checksum = Checksum.Compute("SHA3-512", _data);
+		Assert.False(checksum.IsEmpty);
+		Assert.NotNull(checksum.Value);
+		Assert.NotEmpty(checksum.Value);
+
+		var data = new byte[_data.Length];
+		Array.Copy(_data, data, data.Length);
+
+		Assert.True(checksum.Verify(data));
+		Assert.True(checksum.Verify(_data));
+		Assert.False(checksum.Verify(Randomizer.Generate(512)));
+		Assert.False(checksum.Verify(Randomizer.Generate(data.Length)));
+	}
+
+	[Fact]
 	public void Convert()
 	{
 		var checksum = Checksum.Compute("SHA384", _data);

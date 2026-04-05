@@ -72,6 +72,12 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 	public bool IsEmpty => string.IsNullOrEmpty(this.Name) || this.Value == null || this.Value.Length == 0;
 	#endregion
 
+	#region 公共方法
+	public bool Verify(ReadOnlySpan<byte> data) => this.IsEmpty ? data.IsEmpty : this.Equals(Compute(this.Name, data));
+	public bool Verify(Stream data) => this.IsEmpty ? data == null : this.Equals(Compute(this.Name, data));
+	public async ValueTask<bool> VerifyAsync(Stream data, CancellationToken cancellation = default) => this.IsEmpty ? data == null : this.Equals(await ComputeAsync(this.Name, data, cancellation));
+	#endregion
+
 	#region 静态方法
 	/// <summary>使用指定哈希算法计算指定数据的校验码。</summary>
 	/// <param name="name">指定的哈希算法名称。</param>
