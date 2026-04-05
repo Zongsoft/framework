@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -76,5 +76,21 @@ internal static class ApplicationModuleUtility
 
 			return null;
 		}
+	}
+
+	public static string GetTitle(this IApplicationModule module)
+	{
+		if(module != null && module.Assembly != null && module.Name != null)
+			return Resources.Resource.GetResource(module.Assembly).TryGetString(module.Name, out var title) ? title : null;
+
+		return null;
+	}
+
+	public static string GetDescription(this IApplicationModule module)
+	{
+		if(module != null && module.Assembly != null && module.Name != null)
+			return Resources.Resource.GetResource(module.Assembly).TryGetString($"{module.Name}.{nameof(module.Description)}", out var description) ? description : null;
+
+		return null;
 	}
 }

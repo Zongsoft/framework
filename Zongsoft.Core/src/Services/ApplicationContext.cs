@@ -58,10 +58,6 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	private volatile int _disposed;
 	private volatile int _initialized;
 
-	private string _title;
-	private string _description;
-	private Version _version;
-
 	private readonly ServiceProvider _services;
 	private readonly List<Components.IWorker> _workers;
 	private List<IApplicationInitializer> _initializers;
@@ -101,33 +97,18 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#endregion
 
 	#region 公共属性
-	public virtual string Name => this.Services.GetService<IHostEnvironment>()?.ApplicationName;
-
-	public Version Version
-	{
-		get => _version ??= this.GetVersion();
-		set => _version = value;
-	}
-
-	public string Title
-	{
-		get => string.IsNullOrWhiteSpace(_title) ? this.Configuration?.GetSection("ApplicationTitle").Value : _title;
-		protected set => _title = value;
-	}
-
-	public string Description
-	{
-		get => string.IsNullOrWhiteSpace(_description) ? this.Configuration?.GetSection("ApplicationDescription").Value : _description;
-		protected set => _description = value;
-	}
+	public virtual string Name => field ??= this.Services.GetService<IHostEnvironment>()?.ApplicationName;
+	public Version Version => field ??= this.GetVersion();
+	public string Title => this.GetTitle();
+	public string Description => this.GetDescription();
 
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
 	public Assembly Assembly => Assembly.GetEntryAssembly();
 
 	public virtual string ApplicationType { get; }
-	public virtual string ApplicationPath => this.Services?.GetService<IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
-	public virtual IConfigurationRoot Configuration => this.Services?.GetService<IConfigurationRoot>() ?? this.Services?.GetService<IConfiguration>() as IConfigurationRoot;
+	public virtual string ApplicationPath => field ??= this.Services?.GetService<IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
+	public virtual IConfigurationRoot Configuration => field ??= this.Services?.GetService<IConfigurationRoot>() ?? this.Services?.GetService<IConfiguration>() as IConfigurationRoot;
 
 	public virtual IApplicationEnvironment Environment
 	{
@@ -192,6 +173,8 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#region 虚拟方法
 	protected virtual IApplicationEnvironment CreateEnvironment(IHostEnvironment environment, IDictionary<object, object> properties) => new ApplicationEnvironment(environment, properties);
 	protected virtual Version GetVersion() => ApplicationModuleUtility.GetVersion(this);
+	protected virtual string GetTitle() => ApplicationModuleUtility.GetTitle(this) ?? this.Configuration?.GetSection("ApplicationTitle")?.Value;
+	protected virtual string GetDescription() => ApplicationModuleUtility.GetDescription(this) ?? this.Configuration?.GetSection("ApplicationDescription")?.Value;
 	#endregion
 
 	#region 初始方法
@@ -285,13 +268,7 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#endregion
 
 	#region 重写方法
-	public override string ToString()
-	{
-		if(string.IsNullOrEmpty(this.Title) || string.Equals(this.Name, this.Title))
-			return this.Name;
-		else
-			return $"[{this.Name}] {this.Title}";
-	}
+	public override string ToString() => $"{this.Name}@{this.Version}";
 	#endregion
 
 	#region 嵌套子类

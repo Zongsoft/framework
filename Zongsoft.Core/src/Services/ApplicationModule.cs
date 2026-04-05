@@ -40,24 +40,12 @@ namespace Zongsoft.Services;
 public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 {
 	#region 成员字段
-	private string _title;
-	private string _description;
-	private Version _version;
 	private ServiceProvider _services;
-	private readonly object _syncRoot = new();
+	private readonly object _locker = new();
 	#endregion
 
 	#region 构造函数
-	public ApplicationModule(string name, string title = null, string description = null)
-	{
-		this.Name = name == null ? string.Empty : name.Trim();
-		this.Title = title;
-		this.Description = description;
-		this.Properties = new Parameters();
-		this.Assembly = this.GetType().Assembly;
-	}
-
-	public ApplicationModule(string name, Assembly assembly)
+	protected ApplicationModule(string name, Assembly assembly = null)
 	{
 		this.Name = name == null ? string.Empty : name.Trim();
 		this.Properties = new Parameters();
@@ -66,30 +54,15 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 	#endregion
 
 	#region 公共属性
-	public string Name { get; protected set; }
-	public Parameters Properties { get; }
+	public string Name { get; }
 
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
 	public Assembly Assembly { get; }
-
-	public Version Version
-	{
-		get => _version ??= this.GetVersion();
-		set => _version = value;
-	}
-
-	public string Title
-	{
-		get => string.IsNullOrEmpty(_title) ? Resources.ResourceUtility.GetResourceString(this.Assembly, [$"{this.Name}.{nameof(this.Title)}", this.Name]) : _title;
-		set => _title = value;
-	}
-
-	public string Description
-	{
-		get => string.IsNullOrEmpty(_description) ? Resources.ResourceUtility.GetResourceString(this.Assembly, $"{this.Name}.{nameof(this.Description)}") : _description;
-		set => _description = value;
-	}
+	public Parameters Properties { get; }
+	public Version Version => field ??= this.GetVersion();
+	public string Title => this.GetTitle();
+	public string Description => this.GetDescription();
 
 	public virtual IServiceProvider Services
 	{
@@ -97,10 +70,8 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 		{
 			if(_services == null)
 			{
-				lock(_syncRoot)
-				{
+				lock(_locker)
 					_services ??= new ServiceProvider(this.Name, ApplicationContext.Current.Services.CreateScope().ServiceProvider);
-				}
 			}
 
 			return _services;
@@ -110,6 +81,8 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 
 	#region 虚拟方法
 	protected virtual Version GetVersion() => ApplicationModuleUtility.GetVersion(this);
+	protected virtual string GetTitle() => ApplicationModuleUtility.GetTitle(this);
+	protected virtual string GetDescription() => ApplicationModuleUtility.GetDescription(this);
 	#endregion
 
 	#region 匹配方法
@@ -127,23 +100,14 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 	#endregion
 
 	#region 重写方法
-	public override string ToString()
-	{
-		if(string.IsNullOrEmpty(this.Title) || string.Equals(this.Name, this.Title))
-			return this.Name;
-		else
-			return $"[{this.Name}]{this.Title}";
-	}
+	public override string ToString() => $"{this.Name}@{this.Version}";
 	#endregion
 }
 
 public class ApplicationModule<TEvents> : ApplicationModule where TEvents : EventRegistryBase, new()
 {
 	#region 构造函数
-	public ApplicationModule(string name, string title = null, string description = null) : base(name, title, description)
-        {
-		this.Events = new TEvents();
-        }
+	protected ApplicationModule(string name, Assembly assembly = null) : base(name, assembly) => this.Events = new TEvents();
 	#endregion
 
 	#region 公共属性
