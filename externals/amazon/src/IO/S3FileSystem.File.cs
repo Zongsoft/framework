@@ -192,17 +192,16 @@ partial class S3FileSystem
 			{
 				IEnumerable<KeyValuePair<string, string>> tags = null;
 				var response = await client.GetObjectAsync(bucket, path, cancellation);
+				if(response == null || !response.HttpStatusCode.IsSucceed())
+					return null;
 
-				if(response.TagCount > 0 || response.Metadata.Keys.Contains("x-amz-meta-x-amz-tagging"))
+				var tagging = await client.GetObjectTaggingAsync(new()
 				{
-					var tagging = await client.GetObjectTaggingAsync(new()
-					{
-						BucketName = bucket,
-						Key = path,
-					}, cancellation);
+					BucketName = bucket,
+					Key = path,
+				}, cancellation);
 
-					tags = tagging.Tagging?.Select(tag => new KeyValuePair<string, string>(tag.Key, tag.Value));
-				}
+				tags = tagging.Tagging?.Select(tag => new KeyValuePair<string, string>(tag.Key, tag.Value));
 
 				string contentType = null;
 
@@ -456,11 +455,16 @@ partial class S3FileSystem
 					argument.ContentType = type;
 
 				if(_properties != null)
-					argument.TagSet = [.. _properties.Select(property => new Tag()
-					{
-						Key = property.Key,
-						Value = property.Value,
-					})];
+				{
+					argument.TagSet ??= [];
+
+					foreach(var property in _properties)
+						argument.TagSet.Add(new()
+						{
+							Key = property.Key,
+							Value = property.Value,
+						});
+				}
 
 				_uploadId = (await _client.InitiateMultipartUploadAsync(argument, cancellation)).UploadId;
 			}

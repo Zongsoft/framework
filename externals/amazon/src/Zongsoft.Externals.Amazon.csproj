@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.0.3</Version>
+		<Version>1.1.0</Version>
 		<Product>Zongsoft Amazon(AWS) Library</Product>
 		<Description>This is a library about Amazon Web Services SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Amazon</RootNamespace>
@@ -15,8 +15,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AWSSDK.Core" VersionOverride="4.0.3.6" />
-		<PackageReference Include="AWSSDK.S3" VersionOverride="4.0.15.2" />
+		<PackageReference Include="AWSSDK.Core" VersionOverride="4.0.3.27" />
+		<PackageReference Include="AWSSDK.S3" VersionOverride="4.0.20.3" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
 	</ItemGroup>
@@ -31,7 +31,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.24.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.41.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

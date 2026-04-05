@@ -78,7 +78,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	public async Task GetChildrenAsync()
 	{
 		const int COUNT = 10;
-		const string DIRECTORY = "zfs.s3:/zongsoft-fs/Directory";
+		const string DIRECTORY = "zfs.s3:/zongsoft-fs/Directory/";
 
 		if(!Global.IsTestingEnabled)
 			return;
@@ -89,7 +89,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 
 		for(int i = 0; i < COUNT; i++)
 		{
-			using(var stream = await FileSystem.File.OpenAsync($"{DIRECTORY}/File-{i:00000}.ext", FileMode.OpenOrCreate))
+			using(var stream = await FileSystem.File.OpenAsync($"{DIRECTORY}/{GetFileName(i)}", FileMode.OpenOrCreate))
 			{
 				Random.Shared.NextBytes(buffer);
 				stream.Write(buffer);
@@ -107,8 +107,17 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 
 		for(int i = 0; i < COUNT; i++)
 		{
-			Assert.Equal($"File-{i:00000}.ext", children[i].Name);
+			Assert.Equal(GetFileName(i), children[i].Name);
 		}
+
+		children = FileSystem.Directory.GetChildrenAsync(DIRECTORY, "*.ext").ToBlockingEnumerable().ToArray();
+		Assert.NotEmpty(children);
+		Assert.Equal(COUNT / 2, children.Length);
+
+		for(int i = 0; i < children.Length; i++)
+			Assert.EndsWith(".ext", children[i].Name);
+
+		static string GetFileName(int index) => index % 2 == 0 ? $"File-{index:00000}.ext" : $"File-{index:00000}.bin";
 	}
 
 	[Fact]

@@ -206,21 +206,26 @@ partial class S3FileSystem
 		public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false) => this.GetChildrenAsync(path, pattern, recursive).ToBlockingEnumerable();
 		public async IAsyncEnumerable<Zongsoft.IO.PathInfo> GetChildrenAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			path = Resolve(path, out var region, out var bucket);
+			var prefix = Resolve(path, out var region, out var bucket);
 			var client = _fileSystem.GetClient(region);
 
 			string continuation = null;
 			ListObjectsV2Response response;
+			var matcher = new Zongsoft.IO.Pattern(pattern, false);
 
 			do
 			{
 				try
 				{
+					//确保过滤路径必须以斜线字符结尾
+					if(!string.IsNullOrEmpty(prefix) && prefix[^1] != '/')
+						prefix = $"{prefix}/";
+
 					response = await client.ListObjectsV2Async(new()
 					{
 						BucketName = bucket,
 						Delimiter = recursive ? null : "/",
-						Prefix = path,
+						Prefix = prefix,
 						ContinuationToken = continuation,
 					}, cancellation);
 
@@ -234,8 +239,19 @@ partial class S3FileSystem
 					yield break;
 				}
 
-				foreach(var item in response.S3Objects)
-					yield return _fileSystem.GetFileInfo(region, bucket, item.Key, item.Size, null, item.LastModified);
+				if(matcher.IsEmpty)
+				{
+					foreach(var item in response.S3Objects)
+						yield return _fileSystem.GetFileInfo(region, bucket, item.Key, item.Size, null, item.LastModified);
+				}
+				else
+				{
+					foreach(var item in response.S3Objects)
+					{
+						if(matcher.Match(System.IO.Path.GetFileName(item.Key)))
+							yield return _fileSystem.GetFileInfo(region, bucket, item.Key, item.Size, null, item.LastModified);
+					}
+				}
 			} while(continuation != null && !cancellation.IsCancellationRequested);
 		}
 
