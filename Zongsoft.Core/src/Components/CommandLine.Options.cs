@@ -77,7 +77,7 @@ partial class CommandLine
 		internal CmdletOptionCollection(CommandDescriptor descriptor, IEnumerable<CmdletOption> options)
 		{
 			_descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
-			_options = options == null ? [] : new Dictionary<string, object>();
+			_options = new Dictionary<string, object>();
 
 			foreach(var option in options)
 			{
@@ -100,11 +100,12 @@ partial class CommandLine
 			{
 				if(_descriptor.Options.TryGetValue(optionName, out var optionDescriptor))
 				{
-					_options[optionDescriptor.Name] = optionValue == null ? null : Common.Convert.ConvertValue(
-						optionValue,
-						optionDescriptor.Type,
-						optionDescriptor.GetConverter,
-						optionDescriptor.DefaultValue);
+					if(optionValue == null)
+						_options[optionDescriptor.Name] = null;
+					else if(Common.Convert.TryConvertValue(optionValue, optionDescriptor.Type, optionDescriptor.GetConverter, out var convertedValue))
+						_options[optionDescriptor.Name] = convertedValue;
+					else
+						throw new CommandOptionValueException(optionName, optionValue);
 
 					if(optionDescriptor.Symbol != '\0')
 						_options[optionDescriptor.Symbol.ToString()] = _options[optionDescriptor.Name];
