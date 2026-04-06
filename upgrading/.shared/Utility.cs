@@ -77,27 +77,9 @@ public static class Utility
 	public static readonly string RuntimeIdentifier;
 	/// <summary>获取当前应用程序名称。</summary>
 	public static string ApplicationName => field ??= ApplicationContext.Current?.Name ?? Assembly.GetEntryAssembly().GetName().Name;
+	public static string ApplicationPath => field ??= ApplicationContext.Current?.ApplicationPath ?? AppContext.BaseDirectory;
 	/// <summary>获取当前应用程序版本。</summary>
-	public static Version ApplicationVersion
-	{
-		get
-		{
-			if(field != null)
-				return field;
-
-			var path = Path.Combine(AppContext.BaseDirectory, ".version");
-
-			if(File.Exists(path))
-			{
-				using var reader = File.OpenText(path);
-
-				if(Version.TryParse(reader.ReadLine(), out var version))
-					return field = version;
-			}
-
-			return field = ApplicationContext.Current?.Version ?? Assembly.GetExecutingAssembly().GetName().Version;
-		}
-	}
+	public static Version ApplicationVersion => field ??= ApplicationContext.Current?.Version ?? GetVersion() ?? Assembly.GetExecutingAssembly().GetName().Version;
 
 	/// <summary>判断指定的版本号是否为零。</summary>
 	/// <param name="version">指定的版本。</param>
@@ -114,4 +96,37 @@ public static class Utility
 	public static string GetRuntimeIdentifier(Platform platform, Architecture architecture) => platform == Platform.Windows ?
 		(architecture == Architecture.Other ? "win" : $"win-{architecture.ToString().ToLowerInvariant()}"):
 		(architecture == Architecture.Other ? platform.ToString().ToLowerInvariant() : $"{platform.ToString().ToLowerInvariant}-{architecture.ToString().ToLowerInvariant()}");
+
+	private static Version GetVersion() => GetVersion(ApplicationName, ApplicationPath);
+	private static Version GetVersion(string name, string path)
+	{
+		if(string.IsNullOrEmpty(name) || string.IsNullOrEmpty(path))
+			return null;
+
+		//定义版本文件信息
+		var info = new FileInfo(Path.Combine(path, ".version"));
+
+		//如果文件不存在或者文件大小超过指定大小，则认为该文件无效
+		if(!info.Exists || info.Length > 1024 * 10)
+			return null;
+
+		string text;
+		using var reader = info.OpenText();
+
+		while((text = reader.ReadLine()) != null)
+		{
+			if(string.IsNullOrEmpty(text))
+				continue;
+
+			var index = text.LastIndexOf('@');
+
+			if(index < 0)
+				return Version.TryParse(text, out var version) ? version : null;
+			else
+				return Version.TryParse(text.AsSpan()[(index + 1)..], out var version) &&
+					   text.AsSpan()[..index].Equals(name.AsSpan(), StringComparison.OrdinalIgnoreCase) ? version : null;
+		}
+
+		return null;
+	}
 }
