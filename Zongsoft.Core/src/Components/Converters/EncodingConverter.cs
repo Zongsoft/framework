@@ -60,11 +60,12 @@ public class EncodingConverter : TypeConverter
 		{
 			return ((string)value).ToLowerInvariant() switch
 			{
-				"utf8" or "utf-8" => Encoding.UTF8,
+				"utf8" or "utf-8" or "" => Encoding.UTF8,
 				"utf7" or "utf-7" => Encoding.UTF7,
-				"utf32" => Encoding.UTF32,
-				"unicode" => Encoding.Unicode,
+				"utf32" or "utf-32" => Encoding.UTF32,
 				"ascii" => Encoding.ASCII,
+				"latin1" => Encoding.Latin1,
+				"unicode" => Encoding.Unicode,
 				"bigend" or "bigendian" => Encoding.BigEndianUnicode,
 				_ => Encoding.GetEncoding((string)value),
 			};
