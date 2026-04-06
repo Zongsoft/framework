@@ -33,28 +33,52 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Zongsoft.Upgrading;
 
 public partial class Upgrader
 {
-	private const string FileName = ".bootstrap";
+	private const string BOOTSTRAP = ".bootstrap";
+
+	internal static bool IsBootstrap() => IsBootstrap(out _);
+	internal static bool IsBootstrap(out FileInfo bootstrap)
+	{
+		bootstrap = new FileInfo(Path.Combine(Utility.ApplicationPath, BOOTSTRAP));
+
+		if(bootstrap.Exists)
+		{
+			using var reader = bootstrap.OpenText();
+			var version = Utility.GetVersion(reader, out var name);
+
+			if(version != null && version > Utility.ApplicationVersion && string.Equals(Utility.ApplicationName, name, StringComparison.OrdinalIgnoreCase))
+				return true;
+		}
+
+		bootstrap = null;
+		return false;
+	}
 
 	public static ValueTask<bool> UpgradeAsync(CancellationToken cancellation = default) => UpgradeAsync(null, cancellation);
 	public static async ValueTask<bool> UpgradeAsync(string channel, CancellationToken cancellation = default)
 	{
-		var bootstrap = new FileInfo(Path.Combine(Utility.ApplicationPath, FileName));
-		if(bootstrap.Exists)
+		//如果当前应用的升级程序正待引导，返回成功
+		if(IsBootstrap())
 			return true;
 
-		var path = await Fetcher.FetchAsync(channel, cancellation);
-		if(string.IsNullOrEmpty(path))
+		//从指定通道获取升级发布信息并下载对应的升级包
+		var info = await Fetcher.FetchAsync(channel, cancellation);
+		if(info == null)
 			return false;
 
-		var version = await Extractor.ExtractAsync(path, cancellation);
+		//从升级信息中提取解压升级包文件
+		var version = await Extractor.ExtractAsync(info.Manifest, info.FilePath, cancellation);
 		if(string.IsNullOrEmpty(version))
 			return false;
 
-		return File.CreateSymbolicLink(bootstrap.FullName, version).Exists;
+		//创建本次升级的引导文件：一个指向展开后的待升级部署目录内的版本号文件
+		return File.CreateSymbolicLink(Path.Combine(Utility.ApplicationPath, BOOTSTRAP), version).Exists;
 	}
 
 	public static void Restart()
@@ -62,8 +86,7 @@ public partial class Upgrader
 		const string LAUNCH = "upgrader.exe";
 
 		//确保升级程序的引导文件存在
-		var bootstrap = new FileInfo(Path.Combine(Utility.ApplicationPath, FileName));
-		if(!bootstrap.Exists)
+		if(!IsBootstrap(out var bootstrap))
 			return;
 
 		//定义升级程序的启动器的路径
@@ -79,38 +102,48 @@ public partial class Upgrader
 			};
 
 			//设置启动器的参数集
-			info.ArgumentList.Add($"host={Environment.ProcessId}");
+			info.ArgumentList.Add($"process={Environment.ProcessId}");
+			info.ArgumentList.Add($"bootstrap={bootstrap.FullName}");
+
+			//以独占锁的方式打开引导文件
+			using var locking = bootstrap.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
 			//启动升级程序启动器
-			Process.Start(info);
-		}
+			var process = Process.Start(info);
 
-		//退出当前进程
-		Exit();
+			//如果升级程序启动器启动成功则退出当前进程
+			if(process != null)
+				Exit(locking);
+		}
 	}
 
-	static void Exit(TimeSpan timeout = default)
+	private static void Exit(FileStream locking, TimeSpan timeout = default)
 	{
 		//确保超时时长有效
 		if(timeout <= TimeSpan.Zero)
-			timeout = TimeSpan.FromSeconds(5);
+			timeout = TimeSpan.FromSeconds(30);
 
-		//获取当前进程
-		using var process = Process.GetCurrentProcess();
+		var host = Services.ApplicationContext.Current?.Services.GetService<IHost>();
 
-		//退出当前应用
-		Environment.Exit(0);
+		try
+		{
+			if(host != null)
+			{
+				host.StopAsync(timeout).Wait();
+				host.WaitForShutdown();
+			}
+		}
+		finally
+		{
+			//释放主机
+			host?.Dispose();
 
-		//等待当前应用体面退出
-		if(SpinWait.SpinUntil(() => process.HasExited, timeout))
-			return;
+			//释放被锁定的文件流
+			locking?.Dispose();
 
-		//关闭当前进程
-		process.Close();
-
-		//等待当前进程关闭，如果未正常关闭则强制关闭
-		if(!process.WaitForExit(timeout))
-			process.Kill(true);
+			//退出当前应用
+			Environment.Exit(0);
+		}
 	}
 }
 

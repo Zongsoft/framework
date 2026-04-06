@@ -64,27 +64,27 @@ public abstract partial class Fetcher
 	#region 静态方法
 	/// <summary>通过默认通道获取最新版本的升级信息。</summary>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>如果获取成功则返回升级清单文件(<seealso cref="Upgrader.Manifest"/>)的完整路径，否则返回空(<c>null</c>)。</returns>
-	public static ValueTask<string> FetchAsync(CancellationToken cancellation = default) => FetchAsync(null, null, cancellation);
+	/// <returns>如果获取成功则返回包含结果升级清单和文件信息的结果对象，否则返回空(<c>null</c>)。</returns>
+	public static ValueTask<Result> FetchAsync(CancellationToken cancellation = default) => FetchAsync(null, null, cancellation);
 
 	/// <summary>通过默认通道获取指定版本的升级信息。</summary>
 	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>如果获取成功则返回升级清单文件(<seealso cref="Upgrader.Manifest"/>)的完整路径，否则返回空(<c>null</c>)。</returns>
-	public static ValueTask<string> FetchAsync(Version version, CancellationToken cancellation = default) => FetchAsync(null, version, cancellation);
+	/// <returns>如果获取成功则返回包含结果升级清单和文件信息的结果对象，否则返回空(<c>null</c>)。</returns>
+	public static ValueTask<Result> FetchAsync(Version version, CancellationToken cancellation = default) => FetchAsync(null, version, cancellation);
 
 	/// <summary>通过指定通道获取最新版本的升级信息。</summary>
 	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串(<c>""</c>)，则表示默认通道。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>如果获取成功则返回升级清单文件(<seealso cref="Upgrader.Manifest"/>)的完整路径，否则返回空(<c>null</c>)。</returns>
-	public static ValueTask<string> FetchAsync(string name, CancellationToken cancellation = default) => FetchAsync(name, null, cancellation);
+	/// <returns>如果获取成功则返回包含结果升级清单和文件信息的结果对象，否则返回空(<c>null</c>)。</returns>
+	public static ValueTask<Result> FetchAsync(string name, CancellationToken cancellation = default) => FetchAsync(name, null, cancellation);
 
 	/// <summary>通过指定通道获取指定版本的升级信息。</summary>
 	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串(<c>""</c>)，则表示默认通道。</param>
 	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>如果获取成功则返回升级清单文件(<seealso cref="Upgrader.Manifest"/>)的完整路径，否则返回空(<c>null</c>)。</returns>
-	public static async ValueTask<string> FetchAsync(string name, Version version, CancellationToken cancellation = default)
+	/// <returns>如果获取成功则返回包含结果升级清单和文件信息的结果对象，否则返回空(<c>null</c>)。</returns>
+	public static async ValueTask<Result> FetchAsync(string name, Version version, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(name))
 		{
@@ -96,12 +96,12 @@ public abstract partial class Fetcher
 
 		//获取指定名称的获取器
 		if(!_fetchers.TryGetValue(name, out var fetcher))
-			return null;
+			return default;
 
 		//获取升级清单信息
 		var manifest = await fetcher.FetchAsync(version, cancellation);
 		if(manifest == null || manifest.IsEmpty)
-			return null;
+			return default;
 
 		//获取升级清单文件所在目录
 		var directory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Utility.ApplicationName));
@@ -117,20 +117,42 @@ public abstract partial class Fetcher
 		if(manifest.Baseline != null)
 		{
 			//下载全量包文件，如果失败则直接返回
-			if(!await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Baseline, cancellation))
-				return null;
+			var filePath = await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Baseline, cancellation);
+
+			if(string.IsNullOrEmpty(filePath))
+				return default;
+
+			//设置下载的安装包文件路径到指定的扩展属性
+			manifest.Baseline.SetFilePath(filePath);
 		}
 
 		//依次下载增量包到升级目录
 		for(int i = 0; i < manifest.Deltas.Length; i++)
 		{
 			//下载增量包文件，如果失败则直接返回
-			if(!await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Deltas[i], cancellation))
-				return null;
+			var filePath = await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Deltas[i], cancellation);
+
+			if(string.IsNullOrEmpty(filePath))
+				return default;
+
+			//设置下载的安装包文件路径到指定的扩展属性
+			manifest.Baseline.SetFilePath(filePath);
 		}
 
 		//返回升级清单文件的完整路径
-		return stream.Name;
+		return new(fetcher, manifest, stream.Name);
+	}
+	#endregion
+
+	#region 嵌套结构
+	public sealed class Result(IFetcher fetcher, Upgrader.Manifest manifest, string filePath)
+	{
+		/// <summary>获取器。</summary>
+		public readonly IFetcher Fetcher = fetcher;
+		/// <summary>升级清单。</summary>
+		public readonly Upgrader.Manifest Manifest = manifest;
+		/// <summary>升级清单文件路径。</summary>
+		public readonly string FilePath = filePath;
 	}
 	#endregion
 }

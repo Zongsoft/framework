@@ -38,24 +38,13 @@ namespace Zongsoft.Upgrading;
 public sealed class Extractor
 {
 	/// <summary>执行升级包解压提取操作。</summary>
+	/// <param name="manifest">指定的升级清单对象。</param>
 	/// <param name="filePath">指定的升级清单文件路径。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果部署成功则返回版本文件的完整路径，否则返回空(<c>null</c>)。</returns>
-	public static async ValueTask<string> ExtractAsync(string filePath, CancellationToken cancellation = default)
+	public static async ValueTask<string> ExtractAsync(Upgrader.Manifest manifest, string filePath, CancellationToken cancellation = default)
 	{
-		if(string.IsNullOrEmpty(filePath))
-			return null;
-
-		//如果升级清单文件不存在则返回失败
-		if(!File.Exists(filePath))
-		{
-			Zongsoft.Diagnostics.Logging.GetLogging<Extractor>().Error($"The manifest file '{filePath}' does not exist.");
-			return null;
-		}
-
-		//反序列化升级清单文件
-		var manifest = await Serialization.Serializer.Json.DeserializeAsync<Upgrader.Manifest>(File.OpenRead(filePath), cancellation);
-		if(manifest.IsEmpty)
+		if(manifest == null || string.IsNullOrEmpty(filePath))
 			return null;
 
 		//获取升级包元数据文件所在目录
@@ -65,9 +54,8 @@ public sealed class Extractor
 
 		if(manifest.Baseline != null)
 		{
-			//获取全量包文件路径
-			var source = Downloader.GetFilePath(directory, manifest.Baseline);
-			if(!File.Exists(source))
+			//获取全量包文件路径，如果不存在则返回失败
+			if(!manifest.Baseline.TryGetFilePath(out var source) || !File.Exists(source))
 				return null;
 
 			//将安装包读取为Zip压缩文件
@@ -80,9 +68,8 @@ public sealed class Extractor
 		{
 			var delta = manifest.Deltas[i];
 
-			//获取增量包文件路径
-			var source = Downloader.GetFilePath(directory, delta);
-			if(!File.Exists(source))
+			//获取增量包文件路径，如果不存在则返回失败
+			if(!delta.TryGetFilePath(out var source) || !File.Exists(source))
 				return null;
 
 			//将安装包读取为Zip压缩文件

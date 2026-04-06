@@ -41,30 +41,30 @@ public abstract partial class Downloader : IDownloader
 	#endregion
 
 	#region 公共方法
-	public async ValueTask<bool> DownloadAsync(string directory, Release release, CancellationToken cancellation = default)
+	public async ValueTask<string> DownloadAsync(string directory, Release release, CancellationToken cancellation = default)
 	{
 		ArgumentNullException.ThrowIfNull(release);
 		ArgumentNullException.ThrowIfNullOrEmpty(directory);
 
 		//如果指定的目标目录不存在则直接返回
 		if(!Directory.Exists(directory))
-			return false;
+			return null;
 
 		//获取下载升级包的保存位置
-		var destination = new FileInfo(GetFilePath(directory, release));
+		var destination = new FileInfo(this.GetFilePath(directory, release));
 
 		//如果待保存的目标文件已存在，且当前发布的校验码不为空并且两者的文件大小必须相同
 		if(destination.Exists && !release.Checksum.IsEmpty && release.Size == destination.Length)
 		{
 			//如果目标文件与当前发布的校验码一致，则说明该文件已下载过，因此可以跳过重新下载
 			if(await ChecksumAsync(release, destination.OpenRead(), cancellation))
-				return true;
+				return destination.FullName;
 		}
 
 		//下载升级包文件
 		using var source = await this.DownloadAsync(release, cancellation);
 		if(source == null || !source.CanRead)
-			return false;
+			return null;
 
 		//将下载的升级包文件保存到指定目录
 		using var stream = new FileStream(destination.FullName, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024);
@@ -86,12 +86,12 @@ public abstract partial class Downloader : IDownloader
 				destination.Delete();
 
 				//返回下载失败
-				return false;
+				return null;
 			}
 		}
 
 		//返回下载成功
-		return true;
+		return destination.FullName;
 
 		static Task<bool> ChecksumAsync(Release release, FileStream stream, CancellationToken cancellation)
 		{
@@ -114,7 +114,7 @@ public abstract partial class Downloader : IDownloader
 	#endregion
 
 	#region 静态方法
-	public static string GetFilePath(string directory, Release release)
+	protected virtual string GetFilePath(string directory, Release release)
 	{
 		var fileName = Path.GetFileNameWithoutExtension(release.Path);
 

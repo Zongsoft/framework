@@ -28,18 +28,35 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
-/// <summary>提供升级包下载功能的接口。</summary>
-public interface IDownloader
+public static class ReleaseUtility
 {
-	/// <summary>下载升级包文件到指定的目录中。</summary>
-	/// <param name="directory">指定的下载目录。</param>
-	/// <param name="release">要下载的升级发布信息。</param>
-	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>如果下载成功则返回下载文件的完整路径，否则返回空(<c>null</c>)。</returns>
-	ValueTask<string> DownloadAsync(string directory, Release release, CancellationToken cancellation = default);
+	#region 私有常量
+	private const string FILE_PATH = "__FILE_PATH__";
+	#endregion
+
+	public static bool TryGetFilePath(this Release release, out string result)
+	{
+		if(release != null && release.Properties.TryGetValue(FILE_PATH, out var value) && value is string text)
+		{
+			result = text;
+			return !string.IsNullOrEmpty(text);
+		}
+
+		result = null;
+		return false;
+	}
+
+	public static void SetFilePath(this Release release, string path)
+	{
+		if(release == null)
+			return;
+
+		if(string.IsNullOrEmpty(path))
+			release.Properties.Remove(FILE_PATH);
+		else
+			release.Properties[FILE_PATH] = path;
+	}
 }
