@@ -96,7 +96,7 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 		GC.SuppressFinalize(this);
 	}
 
-	protected virtual void Dispose(bool disposing) => _services?.Dispose();
+	protected virtual void Dispose(bool disposing) { }
 	#endregion
 
 	#region 重写方法

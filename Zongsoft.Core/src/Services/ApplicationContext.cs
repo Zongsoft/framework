@@ -244,9 +244,6 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 
 			//清空模块集
 			this.Modules.Clear();
-
-			if(_services is IDisposable services)
-				services.Dispose();
 		}
 	}
 	#endregion
