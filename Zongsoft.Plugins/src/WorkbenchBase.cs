@@ -52,7 +52,6 @@ namespace Zongsoft.Plugins
 		private string _title;
 		private WorkbenchStatus _status;
 		private readonly string _startupPath;
-		private AutoResetEvent _semaphore;
 		private int _disposed;
 		#endregion
 
@@ -63,7 +62,6 @@ namespace Zongsoft.Plugins
 			_status = WorkbenchStatus.None;
 			_title = applicationContext.Title;
 			_startupPath = applicationContext.Options.GetStartupMountion();
-			_semaphore = new AutoResetEvent(true);
 		}
 		#endregion
 
@@ -94,20 +92,17 @@ namespace Zongsoft.Plugins
 		#region 公共方法
 		public void Open()
 		{
-			//等待信号
-			_semaphore.WaitOne();
-
-			if(_status != WorkbenchStatus.None)
-				return;
-
-			//设置工作台状态为“Opening”
-			_status = WorkbenchStatus.Opening;
-
 			var mountable = false;
 			PluginTreeNode node = null;
 
 			try
 			{
+				if(_status != WorkbenchStatus.None)
+					return;
+
+				//设置工作台状态为“Opening”
+				_status = WorkbenchStatus.Opening;
+
 				//激发“Opening”事件
 				this.OnOpening(EventArgs.Empty);
 
@@ -140,25 +135,18 @@ namespace Zongsoft.Plugins
 				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
 				throw;
 			}
-			finally
-			{
-				_semaphore.Set();
-			}
 		}
 
 		public void Close()
 		{
-			//等待信号
-			_semaphore.WaitOne();
-
-			if(_status != WorkbenchStatus.Running)
-				return;
-
-			//设置工作台状态为“Closing”
-			_status = WorkbenchStatus.Closing;
-
 			try
 			{
+				if(_status != WorkbenchStatus.Running)
+					return;
+
+				//设置工作台状态为“Closing”
+				_status = WorkbenchStatus.Closing;
+
 				//创建“Closing”事件的参数对象
 				var args = new CancelEventArgs();
 
@@ -188,10 +176,6 @@ namespace Zongsoft.Plugins
 
 				//重抛异常，导致后续的关闭代码不能继续，故而上面代码重置了工作台状态
 				throw;
-			}
-			finally
-			{
-				_semaphore.Set();
 			}
 		}
 		#endregion
@@ -232,7 +216,6 @@ namespace Zongsoft.Plugins
 			if(disposed == 0)
 			{
 				this.Close();
-				_semaphore.Dispose();
 			}
 		}
 		#endregion
