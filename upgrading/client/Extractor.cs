@@ -40,23 +40,23 @@ public sealed class Extractor
 	/// <summary>执行升级包解压提取操作。</summary>
 	/// <param name="filePath">指定的升级清单文件路径。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>如果部署成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	public static async ValueTask<bool> ExtractAsync(string filePath, CancellationToken cancellation = default)
+	/// <returns>如果部署成功则返回版本文件的完整路径，否则返回空(<c>null</c>)。</returns>
+	public static async ValueTask<string> ExtractAsync(string filePath, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(filePath))
-			return false;
+			return null;
 
 		//如果升级清单文件不存在则返回失败
 		if(!File.Exists(filePath))
 		{
 			Zongsoft.Diagnostics.Logging.GetLogging<Extractor>().Error($"The manifest file '{filePath}' does not exist.");
-			return false;
+			return null;
 		}
 
 		//反序列化升级清单文件
 		var manifest = await Serialization.Serializer.Json.DeserializeAsync<Upgrader.Manifest>(File.OpenRead(filePath), cancellation);
 		if(manifest.IsEmpty)
-			return false;
+			return null;
 
 		//获取升级包元数据文件所在目录
 		var directory = Path.GetDirectoryName(filePath);
@@ -68,7 +68,7 @@ public sealed class Extractor
 			//获取全量包文件路径
 			var source = Downloader.GetFilePath(directory, manifest.Baseline);
 			if(!File.Exists(source))
-				return false;
+				return null;
 
 			//将安装包读取为Zip压缩文件
 			using var zip = ZipFile.OpenRead(source);
@@ -83,7 +83,7 @@ public sealed class Extractor
 			//获取增量包文件路径
 			var source = Downloader.GetFilePath(directory, delta);
 			if(!File.Exists(source))
-				return false;
+				return null;
 
 			//将安装包读取为Zip压缩文件
 			using var zip = ZipFile.OpenRead(source);
@@ -93,11 +93,13 @@ public sealed class Extractor
 		}
 
 		//在目标目录下创建一个版本文件并将版本号写入到该文件中
-		using var writer = File.CreateText(Path.Combine(destination.FullName, ".version"));
+		var version = new FileInfo(Path.Combine(destination.FullName, ".version"));
+		using var writer = new StreamWriter(version.OpenWrite());
 		writer.WriteLine($"{manifest.Name}@{manifest.Version}");
+		await writer.DisposeAsync();
 
 		//返回部署成功
-		return true;
+		return version.FullName;
 
 		static DirectoryInfo CreateDirectory(string path)
 		{

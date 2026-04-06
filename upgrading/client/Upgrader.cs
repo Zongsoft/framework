@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.IO;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,18 +37,80 @@ namespace Zongsoft.Upgrading;
 
 public partial class Upgrader
 {
+	private const string FileName = ".bootstrap";
+
 	public static ValueTask<bool> UpgradeAsync(CancellationToken cancellation = default) => UpgradeAsync(null, cancellation);
 	public static async ValueTask<bool> UpgradeAsync(string channel, CancellationToken cancellation = default)
 	{
+		var bootstrap = new FileInfo(Path.Combine(Utility.ApplicationPath, FileName));
+		if(bootstrap.Exists)
+			return true;
+
 		var path = await Fetcher.FetchAsync(channel, cancellation);
 		if(string.IsNullOrEmpty(path))
 			return false;
 
-		return await Extractor.ExtractAsync(path, cancellation);
+		var version = await Extractor.ExtractAsync(path, cancellation);
+		if(string.IsNullOrEmpty(version))
+			return false;
+
+		return File.CreateSymbolicLink(bootstrap.FullName, version).Exists;
 	}
 
 	public static void Restart()
 	{
+		const string LAUNCH = "upgrader.exe";
+
+		//确保升级程序的引导文件存在
+		var bootstrap = new FileInfo(Path.Combine(Utility.ApplicationPath, FileName));
+		if(!bootstrap.Exists)
+			return;
+
+		//定义升级程序的启动器的路径
+		var launcer = Path.Combine(Utility.ApplicationPath, ".upgrader", LAUNCH);
+
+		//确保升级程序的启动器是存在
+		if(File.Exists(launcer))
+		{
+			var info = new ProcessStartInfo(launcer)
+			{
+				WindowStyle = ProcessWindowStyle.Minimized,
+				WorkingDirectory = Utility.ApplicationPath,
+			};
+
+			//设置启动器的参数集
+			info.ArgumentList.Add($"host={Environment.ProcessId}");
+
+			//启动升级程序启动器
+			Process.Start(info);
+		}
+
+		//退出当前进程
+		Exit();
+	}
+
+	static void Exit(TimeSpan timeout = default)
+	{
+		//确保超时时长有效
+		if(timeout <= TimeSpan.Zero)
+			timeout = TimeSpan.FromSeconds(5);
+
+		//获取当前进程
+		using var process = Process.GetCurrentProcess();
+
+		//退出当前应用
+		Environment.Exit(0);
+
+		//等待当前应用体面退出
+		if(SpinWait.SpinUntil(() => process.HasExited, timeout))
+			return;
+
+		//关闭当前进程
+		process.Close();
+
+		//等待当前进程关闭，如果未正常关闭则强制关闭
+		if(!process.WaitForExit(timeout))
+			process.Kill(true);
 	}
 }
 
