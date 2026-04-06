@@ -22,6 +22,7 @@
 		<object name="Random" type="Zongsoft.Commands.RandomCommand, Zongsoft.Commands" />
 		<object name="Shuffle" type="Zongsoft.Commands.ShuffleCommand, Zongsoft.Commands" />
 		<object name="Assembly" type="Zongsoft.Commands.AssemblyCommand, Zongsoft.Commands" />
+		<object name="Checksum" type="Zongsoft.Commands.ChecksumCommand, Zongsoft.Commands" />
 
 		<object name="Sequence">
 			<sequence.command>
