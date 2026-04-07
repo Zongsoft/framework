@@ -1,0 +1,7 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine
+
+RUN apk update && \
+    apk add --no-cache clang lld zlib-dev musl-dev && \
+    rm -rf /var/cache/apk/*
+
+WORKDIR /source

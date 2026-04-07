@@ -30,7 +30,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.41.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.41.2" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
@@ -39,7 +39,6 @@
 		<None Include="README.md" Link="README.md" Pack="true" PackagePath="\" />
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
-		<None Include="Upgrader.Manifest.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

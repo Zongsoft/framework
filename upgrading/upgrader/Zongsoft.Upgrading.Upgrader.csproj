@@ -3,21 +3,24 @@
 		<Version>0.0.1</Version>
 		<OutputType>Exe</OutputType>
 		<PublishAot>true</PublishAot>
+		<IsAotCompatible>true</IsAotCompatible>
+		<StaticExecutable>true</StaticExecutable>
+		<TargetFramework>net10.0</TargetFramework>
 		<InvariantGlobalization>true</InvariantGlobalization>
-		<Product>Zongsoft Upgrading Upgrader</Product>
+		<Product>Zongsoft Upgrader</Product>
 		<Description>This is the local deployer for the automatic upgrade program.</Description>
 		<RootNamespace>Zongsoft.Upgrading</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>false</IsPackable>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/upgrading/upgrader</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Hosting" />
-		<PackageReference Include="Microsoft.Extensions.Primitives" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" VersionOverride="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Primitives" VersionOverride="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" VersionOverride="10.0.0" />
 	</ItemGroup>
 
 	<Choose>
@@ -30,8 +33,17 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.41.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.41.2" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
+
+	<ItemGroup>
+		<Compile Include="..\.shared\Architecture.cs" Link="Architecture.cs" />
+		<Compile Include="..\.shared\Platform.cs" Link="Platform.cs" />
+		<Compile Include="..\.shared\Release.cs" Link="Release.cs" />
+		<Compile Include="..\.shared\ReleaseKind.cs" Link="ReleaseKind.cs" />
+		<Compile Include="..\.shared\ReleaseUtility.cs" Link="ReleaseUtility.cs" />
+		<Compile Include="..\.shared\Utility.cs" Link="Utility.cs" />
+	</ItemGroup>
 </Project>
