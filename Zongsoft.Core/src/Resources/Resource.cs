@@ -124,26 +124,42 @@ public partial class Resource : IResource
 	#region 私有方法
 	private static bool TryGetResourceObject(Dictionary<string, ResourceManager> resources, string location, string name, out object value)
 	{
-		if(location != null && resources.TryGetValue(location, out var resource))
+		try
 		{
-			value = resource.GetObject(name);
-			return value != null;
-		}
+			if(location != null && resources.TryGetValue(location, out var resource))
+			{
+				value = resource.GetObject(name);
+				return value != null;
+			}
 
-		value = null;
-		return false;
+			value = null;
+			return false;
+		}
+		catch
+		{
+			value = null;
+			return false;
+		}
 	}
 
 	private static bool TryGetResourceString(Dictionary<string, ResourceManager> resources, string location, string name, out string value)
 	{
-		if(location != null && resources.TryGetValue(location, out var resource))
+		try
 		{
-			value = resource.GetString(name);
-			return value != null;
-		}
+			if(location != null && resources.TryGetValue(location, out var resource))
+			{
+				value = resource.GetString(name);
+				return value != null;
+			}
 
-		value = null;
-		return false;
+			value = null;
+			return false;
+		}
+		catch
+		{
+			value = null;
+			return false;
+		}
 	}
 	#endregion
 }
