@@ -42,7 +42,7 @@ public sealed class Extractor
 	/// <param name="filePath">指定的升级清单文件路径。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果部署成功则返回版本文件的完整路径，否则返回空(<c>null</c>)。</returns>
-	public static async ValueTask<string> ExtractAsync(Upgrader.Manifest manifest, string filePath, CancellationToken cancellation = default)
+	public static async ValueTask<string> ExtractAsync(Manifest manifest, string filePath, CancellationToken cancellation = default)
 	{
 		if(manifest == null || string.IsNullOrEmpty(filePath))
 			return null;
@@ -52,10 +52,10 @@ public sealed class Extractor
 		//在升级包元数据文件所在目录下创建一个临时目录用于解压升级包
 		var destination = CreateDirectory(Path.Combine(directory, ".app"));
 
-		if(manifest.Baseline != null)
+		if(manifest.Trunk != null)
 		{
 			//获取全量包文件路径，如果不存在则返回失败
-			if(!manifest.Baseline.TryGetFilePath(out var source) || !File.Exists(source))
+			if(!manifest.Trunk.TryGetFilePath(out var source) || !File.Exists(source))
 				return null;
 
 			//将安装包读取为Zip压缩文件

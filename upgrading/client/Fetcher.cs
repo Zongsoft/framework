@@ -109,21 +109,21 @@ public abstract partial class Fetcher
 			directory.Create();
 
 		//在升级目录下创建升级清单文件并将升级清单信息写入该文件
-		using var stream = File.Create(Path.Combine(directory.FullName, Upgrader.Manifest.FileName));
+		using var stream = File.Create(Path.Combine(directory.FullName, Manifest.FileName));
 		await Serialization.Serializer.Json.SerializeAsync(stream, manifest, cancellation);
 		stream.Close();
 
 		//下载全量包和增量包到升级目录
-		if(manifest.Baseline != null)
+		if(manifest.Trunk != null)
 		{
 			//下载全量包文件，如果失败则直接返回
-			var filePath = await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Baseline, cancellation);
+			var filePath = await fetcher.Downloader.DownloadAsync(directory.FullName, manifest.Trunk, cancellation);
 
 			if(string.IsNullOrEmpty(filePath))
 				return default;
 
 			//设置下载的安装包文件路径到指定的扩展属性
-			manifest.Baseline.SetFilePath(filePath);
+			manifest.Trunk.SetFilePath(filePath);
 		}
 
 		//依次下载增量包到升级目录
@@ -136,7 +136,7 @@ public abstract partial class Fetcher
 				return default;
 
 			//设置下载的安装包文件路径到指定的扩展属性
-			manifest.Baseline.SetFilePath(filePath);
+			manifest.Trunk.SetFilePath(filePath);
 		}
 
 		//返回升级清单文件的完整路径
@@ -145,12 +145,12 @@ public abstract partial class Fetcher
 	#endregion
 
 	#region 嵌套结构
-	public sealed class Result(IFetcher fetcher, Upgrader.Manifest manifest, string filePath)
+	public sealed class Result(IFetcher fetcher, Manifest manifest, string filePath)
 	{
 		/// <summary>获取器。</summary>
 		public readonly IFetcher Fetcher = fetcher;
 		/// <summary>升级清单。</summary>
-		public readonly Upgrader.Manifest Manifest = manifest;
+		public readonly Manifest Manifest = manifest;
 		/// <summary>升级清单文件路径。</summary>
 		public readonly string FilePath = filePath;
 	}
@@ -176,7 +176,7 @@ partial class Fetcher : IFetcher
 	#region 显式实现
 	string IFetcher.Name => this.Name;
 	IDownloader IFetcher.Downloader => this.Downloader;
-	async ValueTask<Upgrader.Manifest> IFetcher.FetchAsync(Version version, CancellationToken cancellation)
+	async ValueTask<Manifest> IFetcher.FetchAsync(Version version, CancellationToken cancellation)
 	{
 		var baseline = default(Release);
 		var deltas = new List<Release>();

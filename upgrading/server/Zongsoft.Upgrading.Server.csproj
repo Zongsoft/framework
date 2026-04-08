@@ -43,6 +43,7 @@
 	<ItemGroup>
 		<Compile Include="..\.shared\Architecture.cs" Link="Architecture.cs" />
 		<Compile Include="..\.shared\Platform.cs" Link="Platform.cs" />
+		<Compile Include="..\.shared\Manifest.cs" Link="Manifest.cs" />
 		<Compile Include="..\.shared\Release.cs" Link="Release.cs" />
 		<Compile Include="..\.shared\ReleaseKind.cs" Link="ReleaseKind.cs" />
 		<Compile Include="..\.shared\ReleaseUtility.cs" Link="ReleaseUtility.cs" />

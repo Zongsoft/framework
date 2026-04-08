@@ -45,5 +45,5 @@ public interface IFetcher
 	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>返回的升级信息结果。</returns>
-	ValueTask<Upgrader.Manifest> FetchAsync(Version version, CancellationToken cancellation = default);
+	ValueTask<Manifest> FetchAsync(Version version, CancellationToken cancellation = default);
 }
