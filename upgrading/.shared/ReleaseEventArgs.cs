@@ -31,35 +31,11 @@ using System;
 
 namespace Zongsoft.Upgrading;
 
-public static class ReleaseUtility
+/// <summary>表示发布相关的事件参数类。</summary>
+public class ReleaseEventArgs : EventArgs
 {
-	#region 私有常量
-	private const string FILE_PATH = "__FILE_PATH__";
-	#endregion
+	public ReleaseEventArgs(Release release) => this.Release = release;
 
-	#region 公共方法
-	public static bool TryGetFilePath(this Release release, out string result)
-	{
-		if(release != null && release.Properties.TryGetValue(FILE_PATH, out var value) && value is string text)
-		{
-			result = text;
-			return !string.IsNullOrEmpty(text);
-		}
-
-		result = null;
-		return false;
-	}
-
-	public static string GetFilePath(this Release release) => release != null && release.Properties.TryGetValue(FILE_PATH, out var value) ? value as string : null;
-	public static void SetFilePath(this Release release, string path)
-	{
-		if(release == null)
-			return;
-
-		if(string.IsNullOrEmpty(path))
-			release.Properties.Remove(FILE_PATH);
-		else
-			release.Properties[FILE_PATH] = path;
-	}
-	#endregion
+	/// <summary>获取发布对象。</summary>
+	public Release Release { get; }
 }

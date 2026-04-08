@@ -36,6 +36,11 @@ namespace Zongsoft.Upgrading;
 
 public abstract partial class Downloader : IDownloader
 {
+	#region 事件声明
+	public event EventHandler<DownloadEventArgs> Downloaded;
+	public event EventHandler<DownloadEventArgs> Downloading;
+	#endregion
+
 	#region 构造函数
 	protected Downloader() { }
 	#endregion
@@ -60,6 +65,9 @@ public abstract partial class Downloader : IDownloader
 			if(await ChecksumAsync(release, destination.OpenRead(), cancellation))
 				return destination.FullName;
 		}
+
+		//触发“Downloading”事件
+		this.OnDownloading(release, destination.FullName);
 
 		//下载升级包文件
 		using var source = await this.DownloadAsync(release, cancellation);
@@ -90,6 +98,9 @@ public abstract partial class Downloader : IDownloader
 			}
 		}
 
+		//触发“Downloaded”事件
+		this.OnDownloaded(release, destination.FullName);
+
 		//返回下载成功
 		return destination.FullName;
 
@@ -113,7 +124,7 @@ public abstract partial class Downloader : IDownloader
 	protected abstract ValueTask<Stream> DownloadAsync(Release release, CancellationToken cancellation);
 	#endregion
 
-	#region 静态方法
+	#region 虚拟方法
 	protected virtual string GetFilePath(string directory, Release release)
 	{
 		var fileName = Path.GetFileNameWithoutExtension(release.Path);
@@ -124,6 +135,25 @@ public abstract partial class Downloader : IDownloader
 			fileName = Path.GetFileName(release.Path);
 
 		return Path.Combine(directory, fileName);
+	}
+	#endregion
+
+	#region 触发事件
+	protected virtual void OnDownloaded(Release release, string directory) => this.Downloaded?.Invoke(this, new(release, directory));
+	protected virtual void OnDownloading(Release release, string directory) => this.Downloading?.Invoke(this, new(release, directory));
+	#endregion
+
+	#region 嵌套子类
+	/// <summary>表示下载事件的参数类。</summary>
+	public sealed class DownloadEventArgs : ReleaseEventArgs
+	{
+		public DownloadEventArgs(Release release, string destination) : base(release)
+		{
+			this.Destination = destination;
+		}
+
+		/// <summary>获取下载的目标文件路径。</summary>
+		public string Destination { get; }
 	}
 	#endregion
 }

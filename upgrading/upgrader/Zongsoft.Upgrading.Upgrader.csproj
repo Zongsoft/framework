@@ -46,6 +46,7 @@
 		<Compile Include="..\.shared\Release.cs" Link="Release.cs" />
 		<Compile Include="..\.shared\ReleaseKind.cs" Link="ReleaseKind.cs" />
 		<Compile Include="..\.shared\ReleaseUtility.cs" Link="ReleaseUtility.cs" />
+		<Compile Include="..\.shared\ReleaseEventArgs.cs" Link="ReleaseEventArgs.cs" />
 		<Compile Include="..\.shared\Utility.cs" Link="Utility.cs" />
 	</ItemGroup>
 </Project>

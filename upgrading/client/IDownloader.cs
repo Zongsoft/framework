@@ -36,6 +36,11 @@ namespace Zongsoft.Upgrading;
 /// <summary>提供升级包下载功能的接口。</summary>
 public interface IDownloader
 {
+	/// <summary>表示下载完成的事件。</summary>
+	event EventHandler<Downloader.DownloadEventArgs> Downloaded;
+	/// <summary>表示开始下载的事件。</summary>
+	event EventHandler<Downloader.DownloadEventArgs> Downloading;
+
 	/// <summary>下载升级包文件到指定的目录中。</summary>
 	/// <param name="directory">指定的下载目录。</param>
 	/// <param name="release">要下载的升级发布信息。</param>
