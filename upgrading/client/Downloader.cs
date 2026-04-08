@@ -109,13 +109,16 @@ public abstract partial class Downloader : IDownloader
 			if(release == null || release.Checksum.IsEmpty)
 				return Task.FromResult(true);
 
-			return release.Checksum.VerifyAsync(stream, cancellation)
-				.AsTask()
-				.ContinueWith(task =>
+			var task = release.Checksum.VerifyAsync(stream, cancellation);
+			if(task.IsCompletedSuccessfully)
+				return Task.FromResult(task.Result);
+
+			return task.AsTask()
+				.ContinueWith((task, state) =>
 				{
-					stream.Dispose();
+					((Stream)state).Dispose();
 					return task.Result;
-				}, cancellation);
+				}, stream, cancellation);
 		}
 	}
 	#endregion

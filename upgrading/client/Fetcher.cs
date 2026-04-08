@@ -109,9 +109,7 @@ public abstract partial class Fetcher
 			directory.Create();
 
 		//在升级目录下创建升级清单文件并将升级清单信息写入该文件
-		using var stream = File.Create(Path.Combine(directory.FullName, Manifest.FileName));
-		await Serialization.Serializer.Json.SerializeAsync(stream, manifest, cancellation);
-		stream.Close();
+		var result = await manifest.SaveAsync(directory.FullName, cancellation);
 
 		//下载全量包和增量包到升级目录
 		if(manifest.Trunk != null)
@@ -140,7 +138,7 @@ public abstract partial class Fetcher
 		}
 
 		//返回升级清单文件的完整路径
-		return new(fetcher, manifest, stream.Name);
+		return new(fetcher, manifest, result);
 	}
 	#endregion
 

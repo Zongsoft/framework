@@ -28,7 +28,10 @@
  */
 
 using System;
+using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
@@ -74,5 +77,28 @@ public sealed class Manifest
 
 	#region 重写方法
 	public override string ToString() => this.IsEmpty ? string.Empty : $"{this.Name}@{this.Version}";
+	#endregion
+
+	#region 保存方法
+	public async ValueTask<string> SaveAsync(string directory, CancellationToken cancellation)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(directory);
+		using var stream = File.Create(Path.Combine(directory, FileName));
+		await Serialization.Serializer.Json.SerializeAsync(stream, this, cancellation);
+		return stream.Name;
+	}
+	#endregion
+
+	#region 加载方法
+	public static Manifest Load(string path)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(path);
+
+		if(!File.Exists(path))
+			return null;
+
+		var stream = File.Open(path, FileMode.Open, FileAccess.Read);
+		return Serialization.Serializer.Json.Deserialize<Manifest>(stream);
+	}
 	#endregion
 }

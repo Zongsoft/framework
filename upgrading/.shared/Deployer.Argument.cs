@@ -40,6 +40,12 @@ partial class Deployer
 {
 	internal sealed class Argument(Dictionary<string, string> parameters)
 	{
+		public sealed class Keys
+		{
+			public const string Process = "process";
+			public const string Deployment = "deployment";
+		}
+
 		private readonly Dictionary<string, string> _parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
 
 		public bool TryGetValue(string name, out string value) => _parameters.TryGetValue(name, out value);

@@ -40,31 +40,11 @@ namespace Zongsoft.Upgrading;
 
 public partial class Upgrader
 {
-	private const string BOOTSTRAP = ".bootstrap";
-
-	internal static bool IsBootstrap() => IsBootstrap(out _);
-	internal static bool IsBootstrap(out FileInfo bootstrap)
-	{
-		bootstrap = new FileInfo(Path.Combine(Application.ApplicationPath, BOOTSTRAP));
-
-		if(bootstrap.Exists)
-		{
-			using var reader = bootstrap.OpenText();
-			var version = Utility.GetVersion(reader, out var name);
-
-			if(version != null && version > Application.ApplicationVersion && string.Equals(Application.ApplicationName, name, StringComparison.OrdinalIgnoreCase))
-				return true;
-		}
-
-		bootstrap = null;
-		return false;
-	}
-
 	public static ValueTask<bool> UpgradeAsync(CancellationToken cancellation = default) => UpgradeAsync(null, cancellation);
 	public static async ValueTask<bool> UpgradeAsync(string channel, CancellationToken cancellation = default)
 	{
-		//如果当前应用的升级程序正待引导，返回成功
-		if(IsBootstrap())
+		//如果当前应用的部署器正待部署，返回成功
+		if(Deployer.HasDeployment())
 			return true;
 
 		//从指定通道获取升级发布信息并下载对应的升级包
@@ -77,16 +57,16 @@ public partial class Upgrader
 		if(string.IsNullOrEmpty(version))
 			return false;
 
-		//创建本次升级的引导文件：一个指向展开后的待升级部署目录内的版本号文件
-		return File.CreateSymbolicLink(Path.Combine(Application.ApplicationPath, BOOTSTRAP), version).Exists;
+		//创建本次升级的部署文件引导文件
+		return Deployer.Configurator.Save(info.FilePath, Path.GetDirectoryName(version)) != null;
 	}
 
 	public static void Restart()
 	{
 		const string LAUNCH = "upgrader.exe";
 
-		//确保升级程序的引导文件存在
-		if(!IsBootstrap(out var bootstrap))
+		//确保部署器的引导文件存在
+		if(!Deployer.HasDeployment(out var deployment))
 			return;
 
 		//定义升级程序的启动器的路径
@@ -102,11 +82,11 @@ public partial class Upgrader
 			};
 
 			//设置启动器的参数集
-			info.ArgumentList.Add($"process={Environment.ProcessId}");
-			info.ArgumentList.Add($"bootstrap={bootstrap.FullName}");
+			info.ArgumentList.Add($"{Deployer.Argument.Keys.Process}={Environment.ProcessId}");
+			info.ArgumentList.Add($"{Deployer.Argument.Keys.Deployment}={deployment.FullName}");
 
 			//以独占锁的方式打开引导文件
-			using var locking = bootstrap.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+			using var locking = deployment.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
 			//启动升级程序启动器
 			var process = Process.Start(info);

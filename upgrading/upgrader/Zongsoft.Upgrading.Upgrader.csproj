@@ -43,6 +43,8 @@
 		<Compile Include="..\.shared\Application.cs" Link="Application.cs" />
 		<Compile Include="..\.shared\Architecture.cs" Link="Architecture.cs" />
 		<Compile Include="..\.shared\Platform.cs" Link="Platform.cs" />
+		<Compile Include="..\.shared\Deployer.cs" Link="Deployer.cs" />
+		<Compile Include="..\.shared\Deployer.Argument.cs" Link="Deployer.Argument.cs" />
 		<Compile Include="..\.shared\Executor.cs" Link="Executor.cs" />
 		<Compile Include="..\.shared\Manifest.cs" Link="Manifest.cs" />
 		<Compile Include="..\.shared\Release.cs" Link="Release.cs" />
