@@ -80,7 +80,7 @@ partial class Fetcher
 			if(client == null)
 				yield break;
 
-			using var response = await client.GetAsync($"{Utility.ApplicationName}/{Utility.RuntimeIdentifier}?{GetParameters(version)}", cancellation);
+			using var response = await client.GetAsync($"{Application.ApplicationName}/{Application.RuntimeIdentifier}?{GetParameters(version)}", cancellation);
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
@@ -92,17 +92,17 @@ partial class Fetcher
 				var parameters = version == null ?
 					new KeyValuePair<string, string>[]
 					{
-						new(nameof(Release.Name), Utility.ApplicationName),
-						new(nameof(Release.Platform), Utility.Platform.ToString()),
-						new(nameof(Release.Architecture), Utility.Architecture.ToString()),
-						new("CurrentlyVersion", Utility.ApplicationVersion.ToString()),
+						new(nameof(Release.Name), Application.ApplicationName),
+						new(nameof(Release.Platform), Application.Platform.ToString()),
+						new(nameof(Release.Architecture), Application.Architecture.ToString()),
+						new("CurrentlyVersion", Application.ApplicationVersion.ToString()),
 					}:
 					new KeyValuePair<string, string>[]
 					{
-						new(nameof(Release.Name), Utility.ApplicationName),
-						new(nameof(Release.Platform), Utility.Platform.ToString()),
-						new(nameof(Release.Architecture), Utility.Architecture.ToString()),
-						new("CurrentlyVersion", Utility.ApplicationVersion.ToString()),
+						new(nameof(Release.Name), Application.ApplicationName),
+						new(nameof(Release.Platform), Application.Platform.ToString()),
+						new(nameof(Release.Architecture), Application.Architecture.ToString()),
+						new("CurrentlyVersion", Application.ApplicationVersion.ToString()),
 						new("UpgradingVersion", version.ToString()),
 					};
 

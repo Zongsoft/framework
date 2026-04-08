@@ -41,8 +41,8 @@ public class Release
 		this.Tags = [];
 		this.Executors = [];
 		this.Creation = DateTime.Now;
-		this.Platform = Utility.Platform;
-		this.Architecture = Utility.Architecture;
+		this.Platform = Application.Platform;
+		this.Architecture = Application.Architecture;
 		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 	}
 
@@ -55,8 +55,8 @@ public class Release
 		this.Tags = tags ?? [];
 		this.Executors = [];
 		this.Creation = DateTime.Now;
-		this.Platform = Utility.Platform;
-		this.Architecture= Utility.Architecture;
+		this.Platform = Application.Platform;
+		this.Architecture= Application.Architecture;
 		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 	}
 
@@ -111,9 +111,6 @@ public class Release
 	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
 	public ICollection<Executor> Executors { get; }
 
-	/// <summary>获取或设置排除的文件路径数组。</summary>
-	public string[] Exclusions { get; set; }
-
 	/// <summary>获取发布扩展属性集。</summary>
 	[System.Text.Json.Serialization.JsonExtensionData]
 	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
@@ -127,16 +124,15 @@ public class Release
 	#endregion
 
 	#region 嵌套结构
-	public struct Executor(string name, string @event, string command)
+	public struct Executor(string @event, string command)
 	{
 		#region 公共字段
-		public string Name = name;
 		public string Event = @event;
 		public string Command = command;
 		#endregion
 
 		#region 重写方法
-		public readonly override string ToString() => $"[{this.Name}@{this.Event}]{this.Command}";
+		public readonly override string ToString() => $"[{this.Event}]{this.Command}";
 		#endregion
 	}
 	#endregion

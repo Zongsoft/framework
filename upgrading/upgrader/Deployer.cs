@@ -32,55 +32,84 @@
  */
 
 using System;
+using System.IO;
+using System.Reflection;
+using System.Diagnostics;
 using System.Collections.Generic;
-
-using Zongsoft.Common;
 
 namespace Zongsoft.Upgrading;
 
-internal class Program
+public static partial class Deployer
 {
-	static void Main(string[] args)
+	public static Version Version => field ??= Assembly.GetEntryAssembly().GetName().Version;
+
+	public static void Deploy(Dictionary<string, string> parameters)
 	{
-		//将执行参数数组转换成参数集字典
-		var parameters = GetParameters(args);
-		if(parameters == null || parameters.Count == 0)
+		var argument = new Argument(parameters);
+
+		//等待宿主程序退出
+		if(!WaitHostExit(argument))
 			return;
-
-		//如果执行参数中包含版本号，则通过控制台的标准输出本程序的版本号
-		if(parameters.ContainsKey(nameof(Deployer.Version)))
-			Console.WriteLine(Deployer.Version);
-
-		//执行部署任务
-		Deployer.Deploy(parameters);
 	}
 
-	static Dictionary<string, string> GetParameters(string[] args)
+	private static Manifest GetManifest(Argument argument, out DirectoryInfo directory)
 	{
-		if(args == null || args.Length == 0)
-			return null;
+		directory = null;
 
-		var parameters = new Dictionary<string, string>(args.Length, StringComparer.OrdinalIgnoreCase);
-
-		for(int i = 0; i < args.Length; i++)
+		if(argument.TryGetValue("bootstrap", out var bootstrap))
 		{
-			var arg = args[i].AsSpan();
-			if(arg.IsEmpty)
-				continue;
+			if(!File.Exists(bootstrap))
+				return null;
 
-			if(arg.StartsWith("--"))
-				arg = arg[2..];
-			else if(arg.StartsWith('-') || arg.StartsWith('/'))
-				arg = arg[1..];
-
-			var index = arg.IndexOfAny(['=', ':']);
-
-			if(index > 0)
-				parameters.Add(arg[..index].Trim().ToString(), arg[(index + 1)..].Trim().ToString());
-			else
-				parameters.Add(arg.Trim().ToString(), null);
+			try
+			{
+				directory = new DirectoryInfo(Path.GetDirectoryName(bootstrap));
+				File.Open(bootstrap, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+			}
+			catch
+			{
+				return null;
+			}
 		}
 
-		return parameters;
+		return null;
+	}
+
+	private static bool WaitHostExit(Argument argument, TimeSpan timeout = default)
+	{
+		if(argument.TryGetInt32("process", out var id))
+		{
+			//获取指定编号的进程
+			var process = GetProcess(id);
+
+			//如果进程已退出则返回成功
+			if(HasExited(process))
+				return true;
+
+			try
+			{
+				process.EnableRaisingEvents = true;
+
+				if(timeout > TimeSpan.Zero)
+					return process.WaitForExit(timeout);
+				else
+					return process.WaitForExit(TimeSpan.FromMinutes(1));
+			}
+			catch { return false; }
+		}
+
+		return false;
+
+		static Process GetProcess(int id)
+		{
+			try { return id == 0 ? null : Process.GetProcessById(id); }
+			catch { return null; }
+		}
+
+		static bool HasExited(Process process)
+		{
+			try { return process == null || process.HasExited; }
+			catch { return false; }
+		}
 	}
 }

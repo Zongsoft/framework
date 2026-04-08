@@ -28,22 +28,45 @@
  */
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Upgrading;
+using Zongsoft.Components;
 
-public sealed partial class Executor
+namespace Zongsoft.Upgrading.Commands;
+
+[CommandOption(OVERWRITE_OPTION, 'o', typeof(bool), true)]
+public class MoveCommand : CommandBase<CommandContext>
 {
-	public static async ValueTask ExecuteAsync(Release release, string @event, CancellationToken cancellation = default)
-	{
-		if(release == null || release.Executors == null)
-			return;
+	#region 单例字段
+	public static readonly MoveCommand Instance = new();
+	#endregion
 
-		foreach(var executor in release.Executors)
+	#region 常量定义
+	private const string OVERWRITE_OPTION = "overwrite";
+	#endregion
+
+	#region 构造函数
+	public MoveCommand() : base("Move") { }
+	public MoveCommand(string name) : base(name) { }
+	#endregion
+
+	#region 执行方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		if(context.Arguments.Count == 2)
 		{
-			if(executor.Event != null && executor.Event.StartsWith(@event, StringComparison.OrdinalIgnoreCase))
-				await Components.CommandExecutor.Default.ExecuteAsync(executor.Command, release, cancellation);
+			var source = context.Arguments[0];
+			var destination = context.Arguments[1];
+
+			if(Path.EndsInDirectorySeparator(source))
+				Directory.Move(source, destination);
+			else
+				File.Move(source, destination, context.Options.Switch(OVERWRITE_OPTION));
 		}
+
+		return default;
 	}
+	#endregion
 }

@@ -104,7 +104,7 @@ public abstract partial class Fetcher
 			return default;
 
 		//获取升级清单文件所在目录
-		var directory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Utility.ApplicationName));
+		var directory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Application.ApplicationName));
 		if(!directory.Exists)
 			directory.Create();
 
@@ -181,7 +181,7 @@ partial class Fetcher : IFetcher
 		var baseline = default(Release);
 		var deltas = new List<Release>();
 		var upgradingVersion = version;
-		var currentlyVersion = Utility.ApplicationVersion;
+		var currentlyVersion = Application.ApplicationVersion;
 
 		//获取升级发布集合
 		var releases = this.OnFetchAsync(version, cancellation);
@@ -194,9 +194,9 @@ partial class Fetcher : IFetcher
 
 			//筛选出满足要求的升级发布：
 			//应用名、平台和架构匹配的，版本号大于当前版本且小于等于升级版本
-			if(Utility.Platform == release.Platform &&
-			   Utility.Architecture == release.Architecture &&
-			   string.Equals(Utility.ApplicationName, release.Name, StringComparison.OrdinalIgnoreCase) &&
+			if(Application.Platform == release.Platform &&
+			   Application.Architecture == release.Architecture &&
+			   string.Equals(Application.ApplicationName, release.Name, StringComparison.OrdinalIgnoreCase) &&
 			   release.Version > currentlyVersion &&
 			   (upgradingVersion.IsZero() || release.Version <= upgradingVersion))
 			{

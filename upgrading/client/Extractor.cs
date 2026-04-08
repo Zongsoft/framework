@@ -67,7 +67,7 @@ public sealed class Extractor
 				return null;
 
 			//触发“Extracting”事件
-			OnExtracting(manifest.Trunk, source, destination.FullName);
+			await OnExtractingAsync(manifest.Trunk, source, destination.FullName, cancellation);
 
 			//将安装包读取为Zip压缩文件
 			using var zip = ZipFile.OpenRead(source);
@@ -75,7 +75,7 @@ public sealed class Extractor
 			zip.ExtractToDirectory(destination.FullName, true);
 
 			//触发“Extracted”事件
-			OnExtracted(manifest.Trunk, source, destination.FullName);
+			await OnExtractedAsync(manifest.Trunk, source, destination.FullName, cancellation);
 		}
 
 		for(int i = 0; i < manifest.Deltas.Length; i++)
@@ -87,7 +87,7 @@ public sealed class Extractor
 				return null;
 
 			//触发“Extracting”事件
-			OnExtracting(manifest.Trunk, source, destination.FullName);
+			await OnExtractingAsync(manifest.Trunk, source, destination.FullName, cancellation);
 
 			//将安装包读取为Zip压缩文件
 			using var zip = ZipFile.OpenRead(source);
@@ -96,7 +96,7 @@ public sealed class Extractor
 			zip.ExtractToDirectory(destination.FullName, true);
 
 			//触发“Extracted”事件
-			OnExtracted(manifest.Trunk, source, destination.FullName);
+			await OnExtractedAsync(manifest.Trunk, source, destination.FullName, cancellation);
 		}
 
 		//在目标目录下创建一个版本文件并将版本号写入到该文件中
@@ -119,8 +119,19 @@ public sealed class Extractor
 	#endregion
 
 	#region 触发事件
-	private static void OnExtracted(Release release, string source, string destination) => Extracted?.Invoke(null, new(release, source, destination));
-	private static void OnExtracting(Release release, string source, string destination) => Extracting?.Invoke(null, new(release, source, destination));
+	private static ValueTask OnExtractedAsync(Release release, string source, string destination, CancellationToken cancellation)
+	{
+		var args = new ExtractEventArgs(release, source, destination);
+		Extracted?.Invoke(null, args);
+		return Executor.ExecuteAsync(nameof(Extracted), null, args, cancellation);
+	}
+
+	private static ValueTask OnExtractingAsync(Release release, string source, string destination, CancellationToken cancellation)
+	{
+		var args = new ExtractEventArgs(release, source, destination);
+		Extracting?.Invoke(null, args);
+		return Executor.ExecuteAsync(nameof(Extracting), null, args, cancellation);
+	}
 	#endregion
 
 	#region 嵌套子类

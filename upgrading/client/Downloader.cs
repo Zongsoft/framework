@@ -67,7 +67,7 @@ public abstract partial class Downloader : IDownloader
 		}
 
 		//触发“Downloading”事件
-		this.OnDownloading(release, destination.FullName);
+		await this.OnDownloadingAsync(release, destination.FullName, cancellation);
 
 		//下载升级包文件
 		using var source = await this.DownloadAsync(release, cancellation);
@@ -99,7 +99,7 @@ public abstract partial class Downloader : IDownloader
 		}
 
 		//触发“Downloaded”事件
-		this.OnDownloaded(release, destination.FullName);
+		await this.OnDownloadedAsync(release, destination.FullName, cancellation);
 
 		//返回下载成功
 		return destination.FullName;
@@ -139,8 +139,22 @@ public abstract partial class Downloader : IDownloader
 	#endregion
 
 	#region 触发事件
-	protected virtual void OnDownloaded(Release release, string directory) => this.Downloaded?.Invoke(this, new(release, directory));
-	protected virtual void OnDownloading(Release release, string directory) => this.Downloading?.Invoke(this, new(release, directory));
+	private async ValueTask OnDownloadedAsync(Release release, string directory, CancellationToken cancellation)
+	{
+		var args = new DownloadEventArgs(release, directory);
+		this.OnDownloaded(args);
+		await Executor.ExecuteAsync(nameof(Downloaded), this, args, cancellation);
+	}
+
+	private async ValueTask OnDownloadingAsync(Release release, string directory, CancellationToken cancellation)
+	{
+		var args = new DownloadEventArgs(release, directory);
+		this.OnDownloading(args);
+		await Executor.ExecuteAsync(nameof(Downloading), this, args, cancellation);
+	}
+
+	protected virtual void OnDownloaded(DownloadEventArgs args) => this.Downloaded?.Invoke(this, args);
+	protected virtual void OnDownloading(DownloadEventArgs args) => this.Downloading?.Invoke(this, args);
 	#endregion
 
 	#region 嵌套子类

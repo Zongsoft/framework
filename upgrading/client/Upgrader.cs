@@ -45,14 +45,14 @@ public partial class Upgrader
 	internal static bool IsBootstrap() => IsBootstrap(out _);
 	internal static bool IsBootstrap(out FileInfo bootstrap)
 	{
-		bootstrap = new FileInfo(Path.Combine(Utility.ApplicationPath, BOOTSTRAP));
+		bootstrap = new FileInfo(Path.Combine(Application.ApplicationPath, BOOTSTRAP));
 
 		if(bootstrap.Exists)
 		{
 			using var reader = bootstrap.OpenText();
 			var version = Utility.GetVersion(reader, out var name);
 
-			if(version != null && version > Utility.ApplicationVersion && string.Equals(Utility.ApplicationName, name, StringComparison.OrdinalIgnoreCase))
+			if(version != null && version > Application.ApplicationVersion && string.Equals(Application.ApplicationName, name, StringComparison.OrdinalIgnoreCase))
 				return true;
 		}
 
@@ -78,7 +78,7 @@ public partial class Upgrader
 			return false;
 
 		//创建本次升级的引导文件：一个指向展开后的待升级部署目录内的版本号文件
-		return File.CreateSymbolicLink(Path.Combine(Utility.ApplicationPath, BOOTSTRAP), version).Exists;
+		return File.CreateSymbolicLink(Path.Combine(Application.ApplicationPath, BOOTSTRAP), version).Exists;
 	}
 
 	public static void Restart()
@@ -90,7 +90,7 @@ public partial class Upgrader
 			return;
 
 		//定义升级程序的启动器的路径
-		var launcer = Path.Combine(Utility.ApplicationPath, ".upgrader", LAUNCH);
+		var launcer = Path.Combine(Application.ApplicationPath, ".upgrader", LAUNCH);
 
 		//确保升级程序的启动器是存在
 		if(File.Exists(launcer))
@@ -98,7 +98,7 @@ public partial class Upgrader
 			var info = new ProcessStartInfo(launcer)
 			{
 				WindowStyle = ProcessWindowStyle.Minimized,
-				WorkingDirectory = Utility.ApplicationPath,
+				WorkingDirectory = Application.ApplicationPath,
 			};
 
 			//设置启动器的参数集

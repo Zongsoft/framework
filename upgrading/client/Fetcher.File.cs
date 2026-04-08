@@ -74,7 +74,7 @@ partial class Fetcher
 				yield break;
 
 			var extension = System.IO.Path.GetExtension(Manifest.FileName);
-			var files = FileSystem.Directory.GetFilesAsync(this.Url, $"{Utility.ApplicationName}*{extension}", true, cancellation);
+			var files = FileSystem.Directory.GetFilesAsync(this.Url, $"{Application.ApplicationName}*{extension}", true, cancellation);
 
 			await foreach(var file in files)
 			{

@@ -34,53 +34,38 @@
 using System;
 using System.Collections.Generic;
 
-using Zongsoft.Common;
-
 namespace Zongsoft.Upgrading;
 
-internal class Program
+partial class Deployer
 {
-	static void Main(string[] args)
+	internal sealed class Argument(Dictionary<string, string> parameters)
 	{
-		//将执行参数数组转换成参数集字典
-		var parameters = GetParameters(args);
-		if(parameters == null || parameters.Count == 0)
-			return;
+		private readonly Dictionary<string, string> _parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
 
-		//如果执行参数中包含版本号，则通过控制台的标准输出本程序的版本号
-		if(parameters.ContainsKey(nameof(Deployer.Version)))
-			Console.WriteLine(Deployer.Version);
-
-		//执行部署任务
-		Deployer.Deploy(parameters);
-	}
-
-	static Dictionary<string, string> GetParameters(string[] args)
-	{
-		if(args == null || args.Length == 0)
-			return null;
-
-		var parameters = new Dictionary<string, string>(args.Length, StringComparer.OrdinalIgnoreCase);
-
-		for(int i = 0; i < args.Length; i++)
+		public bool TryGetValue(string name, out string value) => _parameters.TryGetValue(name, out value);
+		public bool TryGetInt16(string name, out short value)
 		{
-			var arg = args[i].AsSpan();
-			if(arg.IsEmpty)
-				continue;
+			if(_parameters.TryGetValue(name, out var text) && text != null)
+				return short.TryParse(text, out value);
 
-			if(arg.StartsWith("--"))
-				arg = arg[2..];
-			else if(arg.StartsWith('-') || arg.StartsWith('/'))
-				arg = arg[1..];
-
-			var index = arg.IndexOfAny(['=', ':']);
-
-			if(index > 0)
-				parameters.Add(arg[..index].Trim().ToString(), arg[(index + 1)..].Trim().ToString());
-			else
-				parameters.Add(arg.Trim().ToString(), null);
+			value = 0;
+			return false;
 		}
+		public bool TryGetInt32(string name, out int value)
+		{
+			if(_parameters.TryGetValue(name, out var text) && text != null)
+				return int.TryParse(text, out value);
 
-		return parameters;
+			value = 0;
+			return false;
+		}
+		public bool TryGetInt64(string name, out long value)
+		{
+			if(_parameters.TryGetValue(name, out var text) && text != null)
+				return long.TryParse(text, out value);
+
+			value = 0;
+			return false;
+		}
 	}
 }
