@@ -37,10 +37,24 @@ using System.Reflection;
 
 namespace Zongsoft.Upgrading;
 
+/// <summary>提供升级部署功能的类，即部署器。</summary>
 public static partial class Deployer
 {
-	public static Version Version => field ??= Assembly.GetEntryAssembly().GetName().Version;
+	#region 公共字段
+	/// <summary>表示部署器程序的目录名。</summary>
+	public static readonly string DIRECTORY = ".deployer";
+	/// <summary>表示部署器程序的文件名。</summary>
+	public static readonly string FILENAME = OperatingSystem.IsWindows() ? "deployer.exe" : "deployer";
+	#endregion
 
+	#region 公共属性
+	/// <summary>获取部署器程序的名称。</summary>
+	public static string Name => field ??= Assembly.GetEntryAssembly()?.GetName().Name;
+	/// <summary>获取部署器程序的版本号。</summary>
+	public static Version Version => field ??= Assembly.GetEntryAssembly().GetName().Version;
+	#endregion
+
+	#region 公共方法
 	public static bool HasDeployment() => HasDeployment(out _);
 	public static bool HasDeployment(out FileInfo file)
 	{
@@ -48,7 +62,7 @@ public static partial class Deployer
 
 		if(file.Exists)
 		{
-			var configurator = Configurator.Load(file.FullName);
+			using var configurator = Configurator.Load(file.FullName, false);
 
 			if(configurator != null)
 			{
@@ -68,16 +82,23 @@ public static partial class Deployer
 		file = null;
 		return false;
 	}
+	#endregion
 
-	public sealed class Configurator
+	/// <summary>提供部署器相关配置功能的类。</summary>
+	public sealed class Configurator : IDisposable
 	{
 		#region 常量定义
 		internal const string FileName = ".deploy";
 		#endregion
 
+		#region 私有变量
+		private FileStream _stream;
+		#endregion
+
 		#region 私有构造
-		private Configurator(string manifest, string packages)
+		private Configurator(FileStream stream, string manifest, string packages)
 		{
+			_stream = stream;
 			this.Manifest = manifest;
 			this.Packages = packages;
 		}
@@ -90,47 +111,64 @@ public static partial class Deployer
 		public string Packages { get; }
 		#endregion
 
-		#region 静态方法
-		public static Configurator Load(string path = null)
+		#region 处置方法
+		public void Dispose()
 		{
-			if(string.IsNullOrEmpty(path))
-				path = Path.Combine(Application.ApplicationPath, FileName);
+			_stream?.Dispose();
+			_stream = null;
+		}
+		#endregion
 
-			if(!File.Exists(path))
+		#region 静态方法
+		public static Configurator Load(string path, bool exclusive)
+		{
+			if(string.IsNullOrEmpty(path) || !File.Exists(path))
 				return null;
 
 			var count = 0;
 			string text, manifest = null, packages = null;
-			using var reader = File.OpenText(path);
 
-			while((text = reader.ReadLine()) != null)
+			var stream = File.Open(path, FileMode.Open, FileAccess.Read, exclusive ? FileShare.None : FileShare.Read);
+			var reader = new StreamReader(stream, leaveOpen: exclusive);
+
+			try
 			{
-				//跳过空行
-				if(string.IsNullOrWhiteSpace(text))
-					continue;
-
-				var index = text.IndexOf('=');
-
-				if(index > 0)
+				while((text = reader.ReadLine()) != null)
 				{
-					var name = text[..index];
+					//跳过空行
+					if(string.IsNullOrWhiteSpace(text))
+						continue;
 
-					if(string.Equals(name, nameof(Manifest), StringComparison.OrdinalIgnoreCase))
-						manifest = text[(index + 1)..];
-					else if(string.Equals(name, nameof(Packages), StringComparison.OrdinalIgnoreCase))
-						packages = text[(index + 1)..];
+					var index = text.IndexOf('=');
+
+					if(index > 0)
+					{
+						var name = text[..index];
+
+						if(string.Equals(name, nameof(Manifest), StringComparison.OrdinalIgnoreCase))
+							manifest = text[(index + 1)..];
+						else if(string.Equals(name, nameof(Packages), StringComparison.OrdinalIgnoreCase))
+							packages = text[(index + 1)..];
+					}
+
+					//如果信息读取完成则退出读取循环
+					if(!string.IsNullOrEmpty(manifest) && !string.IsNullOrEmpty(packages))
+						break;
+
+					//如果超过指定行数则退出读取循环
+					if(++count > 10)
+						break;
 				}
+			}
+			finally
+			{
+				reader.Dispose();
 
-				//如果信息读取完成则退出读取循环
-				if(!string.IsNullOrEmpty(manifest) && !string.IsNullOrEmpty(packages))
-					break;
-
-				//如果超过指定行数则退出读取循环
-				if(++count > 10)
-					break;
+				if(!exclusive)
+					stream.Dispose();
 			}
 
-			return string.IsNullOrEmpty(manifest) || string.IsNullOrEmpty(packages) ? null : new Configurator(manifest, packages);
+			return string.IsNullOrEmpty(manifest) || string.IsNullOrEmpty(packages) ? null : new Configurator(exclusive ? stream : null, manifest, packages);
 		}
 
 		public static string Save(string manifest, string packages, string directory = null)

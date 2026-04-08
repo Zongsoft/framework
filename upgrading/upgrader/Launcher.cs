@@ -32,29 +32,56 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
-internal class Program
+/// <summary>提供宿主应用程序启动功能。</summary>
+public static partial class Launcher
 {
-	static void Main(string[] args)
+	#region 私有字段
+	private static readonly Dictionary<string, ILauncher> _launchers;
+	#endregion
+
+	#region 静态构造
+	static Launcher()
 	{
-		//将执行参数数组转换成参数对象
-		var argument = Deployer.Argument.Create(args);
+		_launchers = new(StringComparer.OrdinalIgnoreCase);
 
-		//如果参数为空则返回
-		if(argument == null)
+		foreach(var type in typeof(Launcher).GetNestedTypes(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic))
 		{
-			Console.WriteLine($"{Deployer.Name}@{Deployer.Version}");
-			Console.WriteLine($"Missing the required command-line arguments({Deployer.Argument.Keys.AppId}, {Deployer.Argument.Keys.AppType}, {Deployer.Argument.Keys.Deployment}, ...)");
-			return;
+			if(typeof(ILauncher).IsAssignableFrom(type))
+			{
+				var launcher = (ILauncher)Activator.CreateInstance(type);
+				_launchers.Add(launcher.Name, launcher);
+			}
 		}
-
-		//如果执行参数中包含版本号，则通过控制台的标准输出本程序的版本号
-		if(argument.Contains(nameof(Deployer.Version)))
-			Console.WriteLine(Deployer.Version);
-
-		//执行部署任务
-		Deployer.Deploy(argument);
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取默认启动器。</summary>
+	public static ILauncher Default => _launchers.TryGetValue(string.Empty, out var launcher) ? launcher : null;
+	#endregion
+
+	#region 公共方法
+	public static bool Launch(string root, Deployer.Argument argument)
+	{
+		if(string.IsNullOrEmpty(root) || argument == null)
+			return false;
+
+		try
+		{
+			if(_launchers.TryGetValue(argument.AppType ?? string.Empty, out var launcher))
+				return launcher.Launch(root, argument);
+			else
+				return Default.Launch(root, argument);
+		}
+		catch(Exception ex)
+		{
+			Zongsoft.Diagnostics.Logging.GetLogging<Program>().Error(ex);
+			return false;
+		}
+	}
+	#endregion
 }

@@ -34,22 +34,20 @@
 using System;
 using System.IO;
 using System.Diagnostics;
-using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
 partial class Deployer
 {
-	public static void Deploy(Dictionary<string, string> parameters)
+	#region 公共方法
+	public static void Deploy(Argument argument)
 	{
-		var argument = new Argument(parameters);
-
 		//等待宿主程序退出
 		if(!WaitHostExit(argument))
 			return;
 
-		//获取部署配置信息和宿主程序的根目录
-		var configurator = GetConfigurator(argument, out var path);
+		//获取部署配置信息并以排他性的锁定部署文件
+		using var configurator = GetConfigurator(argument);
 		if(configurator == null)
 			return;
 
@@ -63,40 +61,34 @@ partial class Deployer
 		if(manifest == null || manifest.IsEmpty)
 			return;
 
+		//获取部署文件所在目录，即为宿主应用程序的根目录
+		var root = Path.GetDirectoryName(argument.Deployment);
+
 		//如果当前部署为全量升级模式则先清空宿主应用目录下的所有文件及子目录
 		if(manifest.Trunk != null && manifest.Trunk.Kind == ReleaseKind.Fully)
-			Clean(path);
+			Helper.Clean(root, argument);
 
 		//将部署包源目录中的所有文件及子目录复制到宿主程序根目录
-		Copy(packages, path);
+		Helper.Replicate(packages, root);
 
 		//启动宿主程序
-		Start(path, manifest);
+		Launcher.Launch(root, argument);
 	}
+	#endregion
 
-	public static void Start(string path, Manifest manifest)
+	#region 私有方法
+	private static Configurator GetConfigurator(Argument argument)
 	{
-	}
+		var deployment = argument.Deployment;
 
-	private static void Clean(string path)
-	{
-	}
-
-	private static void Copy(DirectoryInfo source, string destination)
-	{
-	}
-
-	private static Configurator GetConfigurator(Argument argument, out string path)
-	{
-		if(argument.TryGetValue(Argument.Keys.Deployment, out path))
+		if(!string.IsNullOrEmpty(deployment))
 		{
-			if(string.IsNullOrEmpty(path) || !File.Exists(path))
+			if(!File.Exists(deployment))
 				return null;
 
 			try
 			{
-				path = Path.GetDirectoryName(path);
-				return Configurator.Load(path);
+				return Configurator.Load(deployment, true);
 			}
 			catch(Exception ex)
 			{
@@ -104,16 +96,15 @@ partial class Deployer
 			}
 		}
 
-		path = null;
 		return null;
 	}
 
 	private static bool WaitHostExit(Argument argument, TimeSpan timeout = default)
 	{
-		if(argument.TryGetInt32(Argument.Keys.Process, out var id))
+		if(argument.AppId != 0)
 		{
 			//获取指定编号的进程
-			var process = GetProcess(id);
+			var process = GetProcess(argument.AppId);
 
 			//如果进程已退出则返回成功
 			if(HasExited(process))
@@ -145,4 +136,5 @@ partial class Deployer
 			catch { return false; }
 		}
 	}
+	#endregion
 }

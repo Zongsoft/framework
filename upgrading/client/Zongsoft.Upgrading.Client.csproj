@@ -53,7 +53,6 @@
 		<Compile Include="..\.shared\ReleaseKind.cs" Link="ReleaseKind.cs" />
 		<Compile Include="..\.shared\ReleaseUtility.cs" Link="ReleaseUtility.cs" />
 		<Compile Include="..\.shared\ReleaseEventArgs.cs" Link="ReleaseEventArgs.cs" />
-		<Compile Include="..\.shared\HttpUtility.cs" Link="HttpUtility.cs" />
 		<Compile Include="..\.shared\Utility.cs" Link="Utility.cs" />
 
 		<Compile Include="..\.shared\commands\CopyCommand.cs" Link="Commands\CopyCommand.cs" />

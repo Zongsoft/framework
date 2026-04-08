@@ -32,29 +32,18 @@
  */
 
 using System;
+using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
 
-internal class Program
+partial class Launcher
 {
-	static void Main(string[] args)
+	private sealed class DefaultLauncher : ILauncher
 	{
-		//将执行参数数组转换成参数对象
-		var argument = Deployer.Argument.Create(args);
-
-		//如果参数为空则返回
-		if(argument == null)
+		public string Name => string.Empty;
+		public bool Launch(string root, Deployer.Argument argument)
 		{
-			Console.WriteLine($"{Deployer.Name}@{Deployer.Version}");
-			Console.WriteLine($"Missing the required command-line arguments({Deployer.Argument.Keys.AppId}, {Deployer.Argument.Keys.AppType}, {Deployer.Argument.Keys.Deployment}, ...)");
-			return;
+			return false;
 		}
-
-		//如果执行参数中包含版本号，则通过控制台的标准输出本程序的版本号
-		if(argument.Contains(nameof(Deployer.Version)))
-			Console.WriteLine(Deployer.Version);
-
-		//执行部署任务
-		Deployer.Deploy(argument);
 	}
 }

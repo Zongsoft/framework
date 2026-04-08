@@ -57,41 +57,48 @@ public partial class Upgrader
 		if(string.IsNullOrEmpty(version))
 			return false;
 
-		//创建本次升级的部署文件引导文件
+		//创建本次升级的部署文件文件
 		return Deployer.Configurator.Save(info.FilePath, Path.GetDirectoryName(version)) != null;
 	}
 
-	public static void Restart()
+	public static void Deploy()
 	{
-		const string LAUNCH = "upgrader.exe";
-
-		//确保部署器的引导文件存在
+		//确保升级的部署文件存在
 		if(!Deployer.HasDeployment(out var deployment))
 			return;
 
-		//定义升级程序的启动器的路径
-		var launcer = Path.Combine(Application.ApplicationPath, ".upgrader", LAUNCH);
+		//定义升级部署器程序的路径
+		var deployer = Path.Combine(Application.ApplicationPath, Deployer.DIRECTORY, Deployer.FILENAME);
 
-		//确保升级程序的启动器是存在
-		if(File.Exists(launcer))
+		//确保升级部署器程序是存在的
+		if(File.Exists(deployer))
 		{
-			var info = new ProcessStartInfo(launcer)
+			var info = new ProcessStartInfo(deployer)
 			{
 				WindowStyle = ProcessWindowStyle.Minimized,
 				WorkingDirectory = Application.ApplicationPath,
 			};
 
-			//设置启动器的参数集
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.Process}={Environment.ProcessId}");
+			//设置部署器程序的参数集
+			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppId}={Environment.ProcessId}");
+			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppPath}={Environment.ProcessPath}");
+			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppType}={Application.ApplicationType}");
 			info.ArgumentList.Add($"{Deployer.Argument.Keys.Deployment}={deployment.FullName}");
 
-			//以独占锁的方式打开引导文件
+			//获取当前应用程序的命令行参数
+			var args = Environment.GetCommandLineArgs();
+
+			//依次将当前应用程序命令行参数加入到部署器的命令行参数集中
+			for(int i = 0; i < args.Length; i++)
+				info.ArgumentList.Add($"{Deployer.Argument.Keys.AppArgs}:{i}={args[i]}");
+
+			//以独占锁的方式打开部署文件
 			using var locking = deployment.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-			//启动升级程序启动器
+			//启动升级部署器程序
 			var process = Process.Start(info);
 
-			//如果升级程序启动器启动成功则退出当前进程
+			//如果升级部署器程序启动成功则退出当前进程
 			if(process != null)
 				Exit(locking);
 		}
@@ -99,17 +106,18 @@ public partial class Upgrader
 
 	private static void Exit(FileStream locking, TimeSpan timeout = default)
 	{
-		//确保超时时长有效
+		//确保等待超时有效
 		if(timeout <= TimeSpan.Zero)
 			timeout = TimeSpan.FromSeconds(30);
 
+		//获取当前应用程序的主机接口
 		var host = Services.ApplicationContext.Current?.Services.GetService<IHost>();
 
 		try
 		{
 			if(host != null)
 			{
-				host.StopAsync(timeout).Wait();
+				host.StopAsync(timeout).Wait(timeout);
 				host.WaitForShutdown();
 			}
 		}
@@ -121,7 +129,7 @@ public partial class Upgrader
 			//释放被锁定的文件流
 			locking?.Dispose();
 
-			//退出当前应用
+			//退出当前应用程序
 			Environment.Exit(0);
 		}
 	}
@@ -186,9 +194,9 @@ partial class Upgrader : Zongsoft.Components.WorkerBase
 
 		try
 		{
-			//如果升级成功则重启应用程序
+			//如果升级成功则执行升级部署
 			if(await UpgradeAsync(this.Channel, cancellation))
-				Restart();
+				Deploy();
 		}
 		catch(Exception ex)
 		{

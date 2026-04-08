@@ -38,6 +38,7 @@ namespace Zongsoft.Upgrading;
 
 public static class Application
 {
+	#region 静态构造
 	static Application()
 	{
 		Platform = GetPlatform();
@@ -68,7 +69,9 @@ public static class Application
 			return Platform.Unknown;
 		}
 	}
+	#endregion
 
+	#region 公共属性
 	/// <summary>获取当前系统平台。</summary>
 	public static readonly Platform Platform;
 	/// <summary>获取当前体系架构。</summary>
@@ -77,10 +80,21 @@ public static class Application
 	public static readonly string RuntimeIdentifier;
 	/// <summary>获取当前应用程序名称。</summary>
 	public static string ApplicationName => field ??= ApplicationContext.Current?.Name ?? Assembly.GetEntryAssembly().GetName().Name;
+	/// <summary>获取当前应用程序类型。</summary>
+	public static string ApplicationType => field ??= ApplicationContext.Current?.ApplicationType ?? (IsWebApplication() ? "Web" : string.Empty);
 	public static string ApplicationPath => field ??= ApplicationContext.Current?.ApplicationPath ?? AppContext.BaseDirectory;
 	/// <summary>获取当前应用程序版本。</summary>
 	public static Version ApplicationVersion => field ??= ApplicationContext.Current?.Version ?? GetVersion() ?? Assembly.GetExecutingAssembly().GetName().Version;
+	#endregion
 
+	#region 公共方法
+	public static string GetRuntimeIdentifier(this Release release) => release == null ? null : GetRuntimeIdentifier(release.Platform, release.Architecture);
+	public static string GetRuntimeIdentifier(Platform platform, Architecture architecture) => platform == Platform.Windows ?
+		(architecture == Architecture.Other ? "win" : $"win-{architecture.ToString().ToLowerInvariant()}"):
+		(architecture == Architecture.Other ? platform.ToString().ToLowerInvariant() : $"{platform.ToString().ToLowerInvariant}-{architecture.ToString().ToLowerInvariant()}");
+	#endregion
+
+	#region 私有方法
 	private static Version GetVersion() => GetVersion(ApplicationName, ApplicationPath);
 	private static Version GetVersion(string name, string path)
 	{
@@ -91,8 +105,19 @@ public static class Application
 		return version != null && (string.IsNullOrEmpty(appname) || string.Equals(name, appname, StringComparison.OrdinalIgnoreCase)) ? version : null;
 	}
 
-	public static string GetRuntimeIdentifier(this Release release) => release == null ? null : GetRuntimeIdentifier(release.Platform, release.Architecture);
-	public static string GetRuntimeIdentifier(Platform platform, Architecture architecture) => platform == Platform.Windows ?
-		(architecture == Architecture.Other ? "win" : $"win-{architecture.ToString().ToLowerInvariant()}"):
-		(architecture == Architecture.Other ? platform.ToString().ToLowerInvariant() : $"{platform.ToString().ToLowerInvariant}-{architecture.ToString().ToLowerInvariant()}");
+	private static bool IsWebApplication()
+	{
+		var names = Assembly.GetEntryAssembly()?.GetReferencedAssemblies();
+		if(names == null || names.Length == 0)
+			return false;
+
+		for(int i = 0; i < names.Length; i++)
+		{
+			if(names[i].Name.StartsWith("Microsoft.AspNetCore"))
+				return true;
+		}
+
+		return false;
+	}
+	#endregion
 }
