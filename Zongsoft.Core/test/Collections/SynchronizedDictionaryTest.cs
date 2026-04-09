@@ -454,6 +454,47 @@ public class SynchronizedDictionaryTest
 	}
 
 	[Fact]
+	public void AddAndRemove()
+	{
+		const int COUNT = 1_0000;
+
+		var dictionary = new SynchronizedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		Assert.Empty(dictionary);
+
+		Parallel.For(0, COUNT, index =>
+		{
+			var key = $"Key#{index}";
+			var value = dictionary.GetOrAdd(key, $"Value#{index}");
+			Assert.NotNull(value);
+			Assert.NotEmpty(value);
+			Assert.True(dictionary.Remove(key));
+		});
+
+		Assert.Empty(dictionary);
+	}
+
+	[Fact]
+	public async Task AddAndRemoveAsync()
+	{
+		const int COUNT = 1_0000;
+
+		var dictionary = new SynchronizedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		Assert.Empty(dictionary);
+
+		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		{
+			var key = $"Key#{index}";
+			var value = dictionary.GetOrAdd(key, $"Value#{index}");
+			Assert.NotNull(value);
+			Assert.NotEmpty(value);
+			Assert.True(dictionary.Remove(key));
+			return ValueTask.CompletedTask;
+		});
+
+		Assert.Empty(dictionary);
+	}
+
+	[Fact]
 	public async Task ChaosAsync()
 	{
 		const int COUNT = 1_0000;

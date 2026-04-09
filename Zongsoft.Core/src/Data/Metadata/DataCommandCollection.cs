@@ -101,7 +101,8 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 
 		return _dictionary.GetOrAdd(key, (key, argument) =>
 		{
-			var command = new DataCommand(null, key, argument.mutability).Script(argument.driver, argument.script);
+			var command = new DataCommand(null, key, argument.mutability)
+				.Script(argument.driver, argument.script);
 
 			if(argument.parameters != null)
 			{
