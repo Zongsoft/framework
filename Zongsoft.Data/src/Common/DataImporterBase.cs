@@ -50,9 +50,17 @@ public abstract class DataImporterBase : IDataImporter
 	#region 私有方法
 	private static MemberCollection GetMembers(DataImportContext context)
 	{
-		static MemberInfo GetMemberInfo(Type type, string name) =>
-			(MemberInfo)type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance) ??
-			(MemberInfo)type.GetField(name, BindingFlags.Public | BindingFlags.Instance);
+		static MemberInfo GetMemberInfo(Type type, string name)
+		{
+			if(typeof(System.Collections.IDictionary).IsAssignableFrom(type))
+			{
+				var indexes = type.GetDefaultMembers();
+				return indexes != null && indexes.Length > 0 ? indexes[0] : type.GetProperty("Item", BindingFlags.Public | BindingFlags.Instance);
+			}
+
+			return (MemberInfo)type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance) ??
+				(MemberInfo)type.GetField(name, BindingFlags.Public | BindingFlags.Instance);
+		}
 
 		var members = new MemberCollection();
 
@@ -89,17 +97,53 @@ public abstract class DataImporterBase : IDataImporter
 	#endregion
 
 	#region 嵌套结构
-	public readonly struct Member(DataImportContextBase context, MemberInfo info, Metadata.IDataEntityProperty property)
+	public readonly struct Member
 	{
 		#region 私有变量
-		private readonly DataImportContextBase _context = context ?? throw new ArgumentNullException(nameof(context));
-		private readonly IDataValidator _validator = DataEnvironment.Validators.GetValidator(context);
+		private readonly DataImportContextBase _context;
+		private readonly IDataValidator _validator;
+
+		private readonly Reflection.FieldInfoExtension.Getter _fieldGetter;
+		private readonly Reflection.FieldInfoExtension.Setter _fieldSetter;
+		private readonly Reflection.PropertyInfoExtension.Getter _propertyGetter;
+		private readonly Reflection.PropertyInfoExtension.Setter _propertySetter;
+		private readonly Delegate _getter;
+		private readonly Delegate _setter;
+		private readonly bool _isIndexer;
 		#endregion
 
-		#region 公共属性
-		public string Name => this.Info.Name;
-		public readonly MemberInfo Info = info ?? throw new ArgumentNullException(nameof(info));
-		public readonly Metadata.IDataEntityProperty Property = property ?? throw new ArgumentNullException(nameof(property));
+		#region 构造函数
+		public Member(DataImportContextBase context, MemberInfo info, Metadata.IDataEntityProperty property)
+		{
+			_context = context ?? throw new ArgumentNullException(nameof(context));
+			_validator = DataEnvironment.Validators.GetValidator(context);
+			this.Info = info ?? throw new ArgumentNullException(nameof(info));
+			this.Property = property ?? throw new ArgumentNullException(nameof(property));
+			this.Name = property.Name;
+
+			switch(info)
+			{
+				case FieldInfo fieldInfo:
+					_fieldGetter = Reflection.FieldInfoExtension.GetGetter(fieldInfo);
+					_fieldSetter = Reflection.FieldInfoExtension.GetSetter(fieldInfo);
+					_getter = Reflection.FieldInfoExtension.GetGetter(fieldInfo);
+					_setter = Reflection.FieldInfoExtension.GetSetter(fieldInfo);
+					break;
+				case PropertyInfo propertyInfo:
+					_propertyGetter = Reflection.PropertyInfoExtension.GetGetter(propertyInfo);
+					_propertySetter = Reflection.PropertyInfoExtension.GetSetter(propertyInfo);
+					
+					break;
+				default:
+					throw new ArgumentException($"The specified '{info.Name}' info is invalid member.");
+			}
+		}
+		#endregion
+
+		#region 公共字段
+		public readonly string Name;
+		public readonly MemberInfo Info;
+		public readonly Metadata.IDataEntityProperty Property;
 		#endregion
 
 		#region 公共方法
@@ -126,13 +170,13 @@ public abstract class DataImporterBase : IDataImporter
 			if(CanSequence(property.Sequence))
 			{
 				//获取目标的当前属性值，如果获取失败或其值为空或数字零，则递增该字段序号
-				if(!Reflection.Reflector.TryGetValue(this.Info, ref target, out value) || value == null || Convert.IsDBNull(value) || Zongsoft.Common.Convert.IsZero(value))
+				if(!this.TryGetValue(ref target, out value) || value == null || Convert.IsDBNull(value) || Zongsoft.Common.Convert.IsZero(value))
 				{
 					//递增当前属性对应的序号
 					var id = _context.DataAccess.Sequencer.Increase(property);
 
 					//尝试将递增的序号值写入到目标对象的属性
-					Reflection.Reflector.TrySetValue(this.Info, ref target, type => Zongsoft.Common.Convert.ConvertValue(id, type));
+					this.TrySetValue(ref target, type => Zongsoft.Common.Convert.ConvertValue(id, type));
 
 					//返回最新的序号值
 					return Convert.ChangeType(id, property.Type.DbType.AsType());
@@ -143,13 +187,13 @@ public abstract class DataImporterBase : IDataImporter
 			if(_validator != null && _validator.OnImport(_context, this.Property, out value))
 			{
 				//尝试验证器返回的值写入到目标对象的属性
-				Reflection.Reflector.TrySetValue(this.Info, ref target, value);
+				this.TrySetValue(ref target, value);
 
 				//返回验证后的值
 				return ConvertValue(value, property.Type, property.Length, property.Nullable);
 			}
 
-			if(Reflection.Reflector.TryGetValue(this.Info, ref target, out value))
+			if(this.TryGetValue(ref target, out value))
 				return ConvertValue(value == null || value is string text && string.IsNullOrEmpty(text) ? property.DefaultValue : value, property.Type, property.Length, property.Nullable);
 			else
 				return ConvertValue(property.DefaultValue, property.Type, property.Length, property.Nullable);
@@ -182,6 +226,49 @@ public abstract class DataImporterBase : IDataImporter
 		#endregion
 
 		#region 私有方法
+		private object GetFieldValue(ref object target) => ((Reflection.FieldInfoExtension.Getter)_getter).Invoke(ref target);
+		private void SetFieldValue(ref object target, object value) => ((Reflection.FieldInfoExtension.Setter)_setter).Invoke(ref target, value);
+		private object GetPropertyValue(ref object target) => ((Reflection.PropertyInfoExtension.Getter)_getter).Invoke(ref target);
+
+		private bool TryGetValue(ref object target, out object value)
+		{
+			if(this.Info is PropertyInfo property)
+			{
+				var parameters = property.GetIndexParameters();
+				if(parameters != null && parameters.Length == 1 && parameters[0].ParameterType == typeof(string))
+					return Reflection.Reflector.TryGetValue(property, ref target, [this.Name], out value);
+
+				var getter = Reflection.PropertyInfoExtension.GetGetter(property);
+				getter.Invoke(ref target, this.Name);
+			}
+
+			return Reflection.Reflector.TryGetValue(this.Info, ref target, out value);
+		}
+
+		private bool TrySetValue(ref object target, object value)
+		{
+			if(this.Info is PropertyInfo property)
+			{
+				var parameters = property.GetIndexParameters();
+				if(parameters != null && parameters.Length == 1 && parameters[0].ParameterType == typeof(string))
+					return Reflection.Reflector.TrySetValue(property, ref target, value, this.Name);
+			}
+
+			return Reflection.Reflector.TrySetValue(this.Info, ref target, value);
+		}
+
+		private bool TrySetValue(ref object target, Func<Type, object> valueFactory)
+		{
+			if(this.Info is PropertyInfo property)
+			{
+				var parameters = property.GetIndexParameters();
+				if(parameters != null && parameters.Length == 1 && parameters[0].ParameterType == typeof(string))
+					return Reflection.Reflector.TrySetValue(property, ref target, valueFactory, this.Name);
+			}
+
+			return Reflection.Reflector.TrySetValue(this.Info, ref target, valueFactory);
+		}
+
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static bool CanSequence(Metadata.IDataEntityPropertySequence sequence) =>
 			sequence != null &&
