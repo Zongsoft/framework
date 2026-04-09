@@ -29,6 +29,7 @@
 
 using System;
 using System.Text;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -96,7 +97,7 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 		ArgumentException.ThrowIfNullOrEmpty(driver);
 		ArgumentException.ThrowIfNullOrEmpty(script);
 
-		var key = $"#{Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(Encoding.UTF8.GetBytes($"{driver.ToUpperInvariant()}:{script}")))}";
+		var key = GetKey($"{driver.ToUpperInvariant()}:{script}");
 
 		return _dictionary.GetOrAdd(key, (key, argument) =>
 		{
@@ -110,6 +111,38 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 
 			return command;
 		}, (driver, mutability, script, parameters));
+
+		static string GetKey(string text)
+		{
+			var count = Encoding.UTF8.GetMaxByteCount(text.Length);
+
+			if(count <= 1024)
+			{
+				Span<byte> data = stackalloc byte[count];
+				var size = Encoding.UTF8.GetBytes(text, data);
+				return Hash(data[.. size]);
+			}
+
+			var bytes = ArrayPool<byte>.Shared.Rent(count);
+
+			try
+			{
+				var data = bytes.AsSpan(0, count);
+				var size = Encoding.UTF8.GetBytes(text, data);
+				return Hash(data[.. size]);
+			}
+			finally
+			{
+				ArrayPool<byte>.Shared.Return(bytes);
+			}
+
+			static string Hash(ReadOnlySpan<byte> data)
+			{
+				Span<byte> code = stackalloc byte[System.Security.Cryptography.SHA1.HashSizeInBytes];
+				System.Security.Cryptography.SHA1.HashData(data, code);
+				return $"#{Convert.ToHexString(code)}";
+			}
+		}
 	}
 	#endregion
 
