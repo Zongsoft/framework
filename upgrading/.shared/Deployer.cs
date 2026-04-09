@@ -44,7 +44,7 @@ public static partial class Deployer
 	/// <summary>表示部署器程序的目录名。</summary>
 	public static readonly string DIRECTORY = ".deployer";
 	/// <summary>表示部署器程序的文件名。</summary>
-	public static readonly string FILENAME = OperatingSystem.IsWindows() ? "deployer.exe" : "deployer";
+	public static readonly string FILENAME = OperatingSystem.IsWindows() ? $"Zongsoft.Upgrading.Deployer.exe" : "Zongsoft.Upgrading.Deployer";
 	#endregion
 
 	#region 公共属性
@@ -58,15 +58,15 @@ public static partial class Deployer
 	public static bool HasDeployment() => HasDeployment(out _);
 	public static bool HasDeployment(out FileInfo file)
 	{
-		file = new FileInfo(Path.Combine(Application.ApplicationPath, Configurator.FileName));
+		file = new FileInfo(Path.Combine(Application.ApplicationPath, Deployment.FileName));
 
 		if(file.Exists)
 		{
-			using var configurator = Configurator.Load(file.FullName, false);
+			using var deployment = Deployment.Load(file.FullName, false);
 
-			if(configurator != null)
+			if(deployment != null)
 			{
-				var filePath = Path.Combine(configurator.Packages, ".version");
+				var filePath = Path.Combine(deployment.Packages, ".version");
 
 				if(File.Exists(filePath))
 				{
@@ -85,10 +85,10 @@ public static partial class Deployer
 	#endregion
 
 	/// <summary>提供部署器相关配置功能的类。</summary>
-	public sealed class Configurator : IDisposable
+	public sealed class Deployment : IDisposable
 	{
 		#region 常量定义
-		internal const string FileName = ".deploy";
+		internal const string FileName = ".deployment";
 		#endregion
 
 		#region 私有变量
@@ -96,7 +96,7 @@ public static partial class Deployer
 		#endregion
 
 		#region 私有构造
-		private Configurator(FileStream stream, string manifest, string packages)
+		private Deployment(FileStream stream, string manifest, string packages)
 		{
 			_stream = stream;
 			this.Manifest = manifest;
@@ -120,7 +120,7 @@ public static partial class Deployer
 		#endregion
 
 		#region 静态方法
-		public static Configurator Load(string path, bool exclusive)
+		public static Deployment Load(string path, bool exclusive)
 		{
 			if(string.IsNullOrEmpty(path) || !File.Exists(path))
 				return null;
@@ -168,7 +168,7 @@ public static partial class Deployer
 					stream.Dispose();
 			}
 
-			return string.IsNullOrEmpty(manifest) || string.IsNullOrEmpty(packages) ? null : new Configurator(exclusive ? stream : null, manifest, packages);
+			return string.IsNullOrEmpty(manifest) || string.IsNullOrEmpty(packages) ? null : new Deployment(exclusive ? stream : null, manifest, packages);
 		}
 
 		public static string Save(string manifest, string packages, string directory = null)

@@ -58,7 +58,7 @@ public partial class Upgrader
 			return false;
 
 		//创建本次升级的部署文件文件
-		return Deployer.Configurator.Save(info.FilePath, Path.GetDirectoryName(version)) != null;
+		return Deployer.Deployment.Save(info.FilePath, Path.GetDirectoryName(version)) != null;
 	}
 
 	public static void Deploy()

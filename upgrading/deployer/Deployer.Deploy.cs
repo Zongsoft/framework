@@ -47,17 +47,17 @@ partial class Deployer
 			return;
 
 		//获取部署配置信息并以排他性的锁定部署文件
-		using var configurator = GetConfigurator(argument);
-		if(configurator == null)
+		using var deployment = GetDeployment(argument);
+		if(deployment == null)
 			return;
 
 		//如果部署包源目录不存在则退出
-		var packages = new DirectoryInfo(configurator.Packages);
+		var packages = new DirectoryInfo(deployment.Packages);
 		if(!packages.Exists)
 			return;
 
 		//如果升级清单加载失败则退出
-		var manifest = Manifest.Load(configurator.Manifest);
+		var manifest = Manifest.Load(deployment.Manifest);
 		if(manifest == null || manifest.IsEmpty)
 			return;
 
@@ -77,7 +77,7 @@ partial class Deployer
 	#endregion
 
 	#region 私有方法
-	private static Configurator GetConfigurator(Argument argument)
+	private static Deployment GetDeployment(Argument argument)
 	{
 		var deployment = argument.Deployment;
 
@@ -88,7 +88,7 @@ partial class Deployer
 
 			try
 			{
-				return Configurator.Load(deployment, true);
+				return Deployment.Load(deployment, true);
 			}
 			catch(Exception ex)
 			{
