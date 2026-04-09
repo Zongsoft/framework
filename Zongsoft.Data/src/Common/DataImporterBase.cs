@@ -33,6 +33,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
 
+using Zongsoft.Reflection;
+using Zongsoft.Collections;
+
 namespace Zongsoft.Data.Common;
 
 public abstract class DataImporterBase : IDataImporter
@@ -50,49 +53,76 @@ public abstract class DataImporterBase : IDataImporter
 	#region 私有方法
 	private static MemberCollection GetMembers(DataImportContext context)
 	{
-		static MemberInfo GetMemberInfo(Type type, string name)
-		{
-			if(typeof(System.Collections.IDictionary).IsAssignableFrom(type))
-			{
-				var indexes = type.GetDefaultMembers();
-				return indexes != null && indexes.Length > 0 ? indexes[0] : type.GetProperty("Item", BindingFlags.Public | BindingFlags.Instance);
-			}
-
-			return (MemberInfo)type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance) ??
-				(MemberInfo)type.GetField(name, BindingFlags.Public | BindingFlags.Instance);
-		}
-
 		var members = new MemberCollection();
 
-		if(context.Members == null || context.Members.Length == 0)
-		{
-			foreach(var property in context.Entity.Properties)
-			{
-				if(property.IsComplex)
-					continue;
-
-				var info = GetMemberInfo(context.ModelType, property.Name);
-				if(info != null)
-					members.Add(new Member(context, info, (Metadata.IDataEntitySimplexProperty)property));
-			}
-		}
+		if(typeof(System.Collections.IDictionary).IsAssignableFrom(context.ModelType))
+			GenerateMembersWithoutInfo(context, members);
 		else
+			GenerateMembersWithInfo(context, members);
+
+		return members;
+
+		static MemberInfo GetMemberInfo(Type type, string name) =>
+			(MemberInfo)type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance) ??
+			(MemberInfo)type.GetField(name, BindingFlags.Public | BindingFlags.Instance);
+
+		static void GenerateMembersWithInfo(DataImportContext context, MemberCollection members)
 		{
-			for(int i = 0; i < context.Members.Length; i++)
+			if(context.Members == null || context.Members.Length == 0)
 			{
-				if(context.Entity.Properties.TryGetValue(context.Members[i], out var property))
+				foreach(var property in context.Entity.Properties)
 				{
 					if(property.IsComplex)
-						throw new DataException($"The specified '{property.Name}' property cannot be a navigation property, only scalar field data can be import.");
+						continue;
 
 					var info = GetMemberInfo(context.ModelType, property.Name);
 					if(info != null)
-						members.Add(new Member(context, info, (Metadata.IDataEntitySimplexProperty)property));
+						members.Add(new Member(context, (Metadata.IDataEntitySimplexProperty)property, info));
+				}
+			}
+			else
+			{
+				for(int i = 0; i < context.Members.Length; i++)
+				{
+					if(context.Entity.Properties.TryGetValue(context.Members[i], out var property))
+					{
+						if(property.IsComplex)
+							throw new DataException($"The specified '{property.Name}' property cannot be a navigation property, only scalar field data can be import.");
+
+						var info = GetMemberInfo(context.ModelType, property.Name);
+						if(info != null)
+							members.Add(new Member(context, (Metadata.IDataEntitySimplexProperty)property, info));
+					}
 				}
 			}
 		}
 
-		return members;
+		static void GenerateMembersWithoutInfo(DataImportContext context, MemberCollection members)
+		{
+			if(context.Members == null || context.Members.Length == 0)
+			{
+				foreach(var property in context.Entity.Properties)
+				{
+					if(property.IsComplex)
+						continue;
+
+					members.Add(new Member(context, (Metadata.IDataEntitySimplexProperty)property, null));
+				}
+			}
+			else
+			{
+				for(int i = 0; i < context.Members.Length; i++)
+				{
+					if(context.Entity.Properties.TryGetValue(context.Members[i], out var property))
+					{
+						if(property.IsComplex)
+							throw new DataException($"The specified '{property.Name}' property cannot be a navigation property, only scalar field data can be import.");
+
+						members.Add(new Member(context, (Metadata.IDataEntitySimplexProperty)property, null));
+					}
+				}
+			}
+		}
 	}
 	#endregion
 
@@ -102,47 +132,43 @@ public abstract class DataImporterBase : IDataImporter
 		#region 私有变量
 		private readonly DataImportContextBase _context;
 		private readonly IDataValidator _validator;
-
-		private readonly Reflection.FieldInfoExtension.Getter _fieldGetter;
-		private readonly Reflection.FieldInfoExtension.Setter _fieldSetter;
-		private readonly Reflection.PropertyInfoExtension.Getter _propertyGetter;
-		private readonly Reflection.PropertyInfoExtension.Setter _propertySetter;
 		private readonly Delegate _getter;
 		private readonly Delegate _setter;
 		private readonly bool _isIndexer;
 		#endregion
 
 		#region 构造函数
-		public Member(DataImportContextBase context, MemberInfo info, Metadata.IDataEntityProperty property)
+		public Member(DataImportContextBase context, Metadata.IDataEntityProperty property, MemberInfo member)
 		{
 			_context = context ?? throw new ArgumentNullException(nameof(context));
 			_validator = DataEnvironment.Validators.GetValidator(context);
-			this.Info = info ?? throw new ArgumentNullException(nameof(info));
 			this.Property = property ?? throw new ArgumentNullException(nameof(property));
 			this.Name = property.Name;
 
-			switch(info)
+			switch(member)
 			{
 				case FieldInfo fieldInfo:
-					_fieldGetter = Reflection.FieldInfoExtension.GetGetter(fieldInfo);
-					_fieldSetter = Reflection.FieldInfoExtension.GetSetter(fieldInfo);
-					_getter = Reflection.FieldInfoExtension.GetGetter(fieldInfo);
-					_setter = Reflection.FieldInfoExtension.GetSetter(fieldInfo);
+					this.Type = fieldInfo.FieldType;
+					_getter = fieldInfo.GetGetter();
+					_setter = fieldInfo.GetSetter();
 					break;
 				case PropertyInfo propertyInfo:
-					_propertyGetter = Reflection.PropertyInfoExtension.GetGetter(propertyInfo);
-					_propertySetter = Reflection.PropertyInfoExtension.GetSetter(propertyInfo);
-					
+					this.Type = propertyInfo.PropertyType;
+					_getter = propertyInfo.GetGetter();
+					_setter = propertyInfo.GetSetter();
+					_isIndexer = propertyInfo.GetIndexParameters().Length > 0;
 					break;
 				default:
-					throw new ArgumentException($"The specified '{info.Name}' info is invalid member.");
+					if(member != null)
+						throw new ArgumentException($"The specified '{member.Name}' info is invalid member.");
+					break;
 			}
 		}
 		#endregion
 
 		#region 公共字段
 		public readonly string Name;
-		public readonly MemberInfo Info;
+		public readonly Type Type;
 		public readonly Metadata.IDataEntityProperty Property;
 		#endregion
 
@@ -170,13 +196,13 @@ public abstract class DataImporterBase : IDataImporter
 			if(CanSequence(property.Sequence))
 			{
 				//获取目标的当前属性值，如果获取失败或其值为空或数字零，则递增该字段序号
-				if(!this.TryGetValue(ref target, out value) || value == null || Convert.IsDBNull(value) || Zongsoft.Common.Convert.IsZero(value))
+				if(!this.TryGetMemberValue(ref target, out value) || value == null || Convert.IsDBNull(value) || Zongsoft.Common.Convert.IsZero(value))
 				{
 					//递增当前属性对应的序号
 					var id = _context.DataAccess.Sequencer.Increase(property);
 
 					//尝试将递增的序号值写入到目标对象的属性
-					this.TrySetValue(ref target, type => Zongsoft.Common.Convert.ConvertValue(id, type));
+					this.SetMemberValue(ref target, Zongsoft.Common.Convert.ConvertValue(id, this.Type));
 
 					//返回最新的序号值
 					return Convert.ChangeType(id, property.Type.DbType.AsType());
@@ -187,13 +213,13 @@ public abstract class DataImporterBase : IDataImporter
 			if(_validator != null && _validator.OnImport(_context, this.Property, out value))
 			{
 				//尝试验证器返回的值写入到目标对象的属性
-				this.TrySetValue(ref target, value);
+				this.SetMemberValue(ref target, value);
 
 				//返回验证后的值
 				return ConvertValue(value, property.Type, property.Length, property.Nullable);
 			}
 
-			if(this.TryGetValue(ref target, out value))
+			if(this.TryGetMemberValue(ref target, out value))
 				return ConvertValue(value == null || value is string text && string.IsNullOrEmpty(text) ? property.DefaultValue : value, property.Type, property.Length, property.Nullable);
 			else
 				return ConvertValue(property.DefaultValue, property.Type, property.Length, property.Nullable);
@@ -226,47 +252,32 @@ public abstract class DataImporterBase : IDataImporter
 		#endregion
 
 		#region 私有方法
-		private object GetFieldValue(ref object target) => ((Reflection.FieldInfoExtension.Getter)_getter).Invoke(ref target);
-		private void SetFieldValue(ref object target, object value) => ((Reflection.FieldInfoExtension.Setter)_setter).Invoke(ref target, value);
-		private object GetPropertyValue(ref object target) => ((Reflection.PropertyInfoExtension.Getter)_getter).Invoke(ref target);
-
-		private bool TryGetValue(ref object target, out object value)
+		private bool TryGetMemberValue(ref object target, out object value)
 		{
-			if(this.Info is PropertyInfo property)
-			{
-				var parameters = property.GetIndexParameters();
-				if(parameters != null && parameters.Length == 1 && parameters[0].ParameterType == typeof(string))
-					return Reflection.Reflector.TryGetValue(property, ref target, [this.Name], out value);
+			if(target is System.Collections.IDictionary dictionary)
+				return dictionary.TryGetValue(this.Name, out value);
 
-				var getter = Reflection.PropertyInfoExtension.GetGetter(property);
-				getter.Invoke(ref target, this.Name);
-			}
+			if(_getter is FieldInfoExtension.Getter getter)
+				value = getter.Invoke(ref target);
 
-			return Reflection.Reflector.TryGetValue(this.Info, ref target, out value);
+			value = _isIndexer ?
+				((PropertyInfoExtension.Getter)_getter).Invoke(ref target, this.Name) :
+				((PropertyInfoExtension.Getter)_getter).Invoke(ref target);
+
+			return true;
 		}
 
-		private bool TrySetValue(ref object target, object value)
+		private void SetMemberValue(ref object target, object value)
 		{
-			if(this.Info is PropertyInfo property)
-			{
-				var parameters = property.GetIndexParameters();
-				if(parameters != null && parameters.Length == 1 && parameters[0].ParameterType == typeof(string))
-					return Reflection.Reflector.TrySetValue(property, ref target, value, this.Name);
-			}
+			if(target is System.Collections.IDictionary dictionary)
+				dictionary[this.Name] = value;
 
-			return Reflection.Reflector.TrySetValue(this.Info, ref target, value);
-		}
-
-		private bool TrySetValue(ref object target, Func<Type, object> valueFactory)
-		{
-			if(this.Info is PropertyInfo property)
-			{
-				var parameters = property.GetIndexParameters();
-				if(parameters != null && parameters.Length == 1 && parameters[0].ParameterType == typeof(string))
-					return Reflection.Reflector.TrySetValue(property, ref target, valueFactory, this.Name);
-			}
-
-			return Reflection.Reflector.TrySetValue(this.Info, ref target, valueFactory);
+			if(_setter is FieldInfoExtension.Setter setter)
+				setter.Invoke(ref target, value);
+			else if(_isIndexer)
+				((PropertyInfoExtension.Setter)_setter).Invoke(ref target, value, this.Name);
+			else
+				((PropertyInfoExtension.Setter)_setter).Invoke(ref target, value);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
