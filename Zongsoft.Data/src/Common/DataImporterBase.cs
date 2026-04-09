@@ -259,10 +259,10 @@ public abstract class DataImporterBase : IDataImporter
 
 			if(_getter is FieldInfoExtension.Getter getter)
 				value = getter.Invoke(ref target);
-
-			value = _isIndexer ?
-				((PropertyInfoExtension.Getter)_getter).Invoke(ref target, this.Name) :
-				((PropertyInfoExtension.Getter)_getter).Invoke(ref target);
+			else
+				value = _isIndexer ?
+					((PropertyInfoExtension.Getter)_getter).Invoke(ref target, this.Name) :
+					((PropertyInfoExtension.Getter)_getter).Invoke(ref target);
 
 			return true;
 		}
@@ -270,7 +270,10 @@ public abstract class DataImporterBase : IDataImporter
 		private void SetMemberValue(ref object target, object value)
 		{
 			if(target is System.Collections.IDictionary dictionary)
+			{
 				dictionary[this.Name] = value;
+				return;
+			}
 
 			if(_setter is FieldInfoExtension.Setter setter)
 				setter.Invoke(ref target, value);
