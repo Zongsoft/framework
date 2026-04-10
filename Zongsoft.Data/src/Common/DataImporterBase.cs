@@ -60,7 +60,8 @@ public abstract class DataImporterBase : IDataImporter
 		else
 			GenerateMembersWithInfo(context, members);
 
-		return members;
+		return members.Count > 0 ? members :
+			throw new DataOperationException($"The members of the import operation cannot be determined based on the specified '{context.ModelType}' type.");
 
 		static MemberInfo GetMemberInfo(Type type, string name) =>
 			(MemberInfo)type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance) ??
