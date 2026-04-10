@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -76,6 +76,11 @@ public static class DataRecordExtension
 		RecordGetterTemplate<float>.Get = new Func<IDataRecord, int, float>((record, ordinal) => record.GetFloat(ordinal));
 		RecordGetterTemplate<float?>.Get = new Func<IDataRecord, int, float?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (float?)record.GetFloat(ordinal));
 
+		RecordGetterTemplate<DateOnly>.Get = new Func<IDataRecord, int, DateOnly>((record, ordinal) => DateOnly.FromDateTime(record.GetDateTime(ordinal)));
+		RecordGetterTemplate<DateOnly?>.Get = new Func<IDataRecord, int, DateOnly?>((record, ordinal) => record.IsDBNull(ordinal) ? null : DateOnly.FromDateTime(record.GetDateTime(ordinal)));
+		RecordGetterTemplate<TimeOnly>.Get = new Func<IDataRecord, int, TimeOnly>((record, ordinal) => TimeOnly.FromDateTime(record.GetDateTime(ordinal)));
+		RecordGetterTemplate<TimeOnly?>.Get = new Func<IDataRecord, int, TimeOnly?>((record, ordinal) => record.IsDBNull(ordinal) ? null : TimeOnly.FromDateTime(record.GetDateTime(ordinal)));
+
 		RecordGetterTemplate<DateTime>.Get = new Func<IDataRecord, int, DateTime>((record, ordinal) => record.GetDateTime(ordinal));
 		RecordGetterTemplate<DateTime?>.Get = new Func<IDataRecord, int, DateTime?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (DateTime?)record.GetDateTime(ordinal));
 		RecordGetterTemplate<DateTimeOffset>.Get = new Func<IDataRecord, int, DateTimeOffset>((record, ordinal) => (DateTimeOffset)record.GetDateTime(ordinal));
@@ -90,9 +95,38 @@ public static class DataRecordExtension
 	#endregion
 
 	#region 扩展方法
-	public static T GetValue<T>(this IDataRecord record, int ordinal)
+	public static T GetValue<T>(this IDataRecord record, int ordinal) => RecordGetterTemplate<T>.Get(record, ordinal);
+	public static object GetValue(this IDataRecord record, int ordinal, DbType type, bool nullable = false)
 	{
-		return RecordGetterTemplate<T>.Get(record, ordinal);
+		if(nullable && record.IsDBNull(ordinal))
+			return null;
+
+		return type switch
+		{
+			DbType.String or DbType.AnsiString => record.GetString(ordinal),
+			DbType.StringFixedLength or DbType.AnsiStringFixedLength => record.GetString(ordinal),
+			DbType.Boolean => record.GetValue<bool>(ordinal),
+			DbType.Byte => record.GetValue<byte>(ordinal),
+			DbType.SByte => record.GetValue<sbyte>(ordinal),
+			DbType.Int16 => record.GetValue<short>(ordinal),
+			DbType.Int32 => record.GetValue<int>(ordinal),
+			DbType.Int64 => record.GetValue<long>(ordinal),
+			DbType.UInt16 => record.GetValue<ushort>(ordinal),
+			DbType.UInt32 => record.GetValue<uint>(ordinal),
+			DbType.UInt64 => record.GetValue<ulong>(ordinal),
+			DbType.Single => record.GetValue<float>(ordinal),
+			DbType.Double => record.GetValue<double>(ordinal),
+			DbType.Decimal or DbType.Currency => record.GetValue<decimal>(ordinal),
+			DbType.Date => record.GetValue<DateTime>(ordinal),
+			DbType.Time => record.GetValue<DateTime>(ordinal),
+			DbType.DateTime or DbType.DateTime2 => record.GetValue<DateTime>(ordinal),
+			DbType.DateTimeOffset => record.GetValue<DateTimeOffset>(ordinal),
+			DbType.Binary => record.GetValue<byte[]>(ordinal),
+			DbType.Guid => record.GetValue<Guid>(ordinal),
+			DbType.Xml => record.GetValue<string>(ordinal),
+			DbType.Object => record.GetValue(ordinal),
+			_ => record.GetValue(ordinal),
+		};
 	}
 
 	public static bool TryGetOrdinal(this IDataRecord record, string name, out int ordinal) => TryGetOrdinal(record, name, StringComparison.InvariantCultureIgnoreCase, out ordinal);
