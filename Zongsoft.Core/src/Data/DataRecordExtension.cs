@@ -103,8 +103,11 @@ public static class DataRecordExtension
 
 		return type switch
 		{
-			DbType.String or DbType.AnsiString => record.GetString(ordinal),
-			DbType.StringFixedLength or DbType.AnsiStringFixedLength => record.GetString(ordinal),
+			DbType.String or
+			DbType.AnsiString => record.GetString(ordinal),
+			DbType.StringFixedLength or
+			DbType.AnsiStringFixedLength => record.GetString(ordinal),
+
 			DbType.Boolean => record.GetValue<bool>(ordinal),
 			DbType.Byte => record.GetValue<byte>(ordinal),
 			DbType.SByte => record.GetValue<sbyte>(ordinal),
