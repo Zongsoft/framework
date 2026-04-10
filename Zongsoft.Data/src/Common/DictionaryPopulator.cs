@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -32,21 +32,21 @@ using System.Data;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Data.Metadata;
+
 namespace Zongsoft.Data.Common;
 
 public class DictionaryPopulator : IDataPopulator
 {
 	#region 成员字段
-	private readonly Type _type;
-	private readonly string[] _keys;
 	private readonly Func<int, IDictionary> _creator;
+	private readonly IDataEntityProperty[] _properties;
 	#endregion
 
 	#region 构造函数
-	internal protected DictionaryPopulator(Type type, string[] keys)
+	internal protected DictionaryPopulator(Type type, IDataEntityProperty[] properties)
 	{
-		_type = type ?? throw new ArgumentNullException(nameof(type));
-		_keys = keys ?? throw new ArgumentNullException(nameof(keys));
+		_properties = properties ?? throw new ArgumentNullException(nameof(properties));
 		_creator = this.GetCreator(type);
 	}
 	#endregion
@@ -54,7 +54,7 @@ public class DictionaryPopulator : IDataPopulator
 	#region 公共方法
 	public T Populate<T>(IDataRecord record)
 	{
-		if(record.FieldCount != _keys.Length)
+		if(record.FieldCount != _properties.Length)
 			throw new DataException("The record of populate has failed.");
 
 		//创建一个对应的实体字典
@@ -62,11 +62,20 @@ public class DictionaryPopulator : IDataPopulator
 
 		for(var i = 0; i < record.FieldCount; i++)
 		{
-			if(!record.IsDBNull(i))
-				dictionary[_keys[i]] = record.GetValue(i);
+			if(record.IsDBNull(i))
+				continue;
+
+			var property = _properties[i];
+			if(property == null)
+				continue;
+
+			dictionary[property.Name] = GetValue(record, property, i, false);
 		}
 
 		return dictionary.Count > 0 ? (T)dictionary : default;
+
+		static object GetValue(IDataRecord record, IDataEntityProperty property, int ordinal, bool nullable) =>
+			property.IsSimplex(out var simplex) ? record.GetValue(ordinal, simplex.Type.DbType, nullable) : null;
 	}
 	#endregion
 
