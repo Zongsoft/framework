@@ -128,7 +128,7 @@ public abstract class DataImporterBase : IDataImporter
 	#endregion
 
 	#region 嵌套结构
-	public readonly struct Member
+	public sealed class Member
 	{
 		#region 私有变量
 		private readonly DataImportContextBase _context;
