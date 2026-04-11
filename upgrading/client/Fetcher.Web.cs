@@ -30,7 +30,6 @@
 using System;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -84,7 +83,8 @@ partial class Fetcher
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
-			await foreach(var release in response.Content.ReadFromJsonAsAsyncEnumerable<Release>(cancellation))
+			var releases = Release.LoadAsync(await response.Content.ReadAsStreamAsync(cancellation), cancellation);
+			await foreach(var release in releases)
 				yield return release;
 
 			static string GetParameters(Version version)

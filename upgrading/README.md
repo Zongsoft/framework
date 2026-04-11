@@ -15,21 +15,42 @@
 
 `Zongsoft.Hosting.Terminal@1.1.0_win-x64.manifest` 文件内容如下所示：
 
-```json
-{
-	"name": "Zongsoft.Hosting.Terminal",
-	"kind": "Fully",
-	"title": "Zongsoft Terminal Application",
-	"edition": null,
-	"version": "1.1.0",
-	"size": 123456,
-	"path": "Zongsoft.Hosting.Terminal@1.1.0_win-x64.zip",
-	"checksum": null,
-	"platform": "windows",
-	"architecture": "x64",
-	"deprecated": false,
-	"summary": null,
-	"creation": "2026-04-01T10:30:59",
-	"description": null
-}
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Release
+	Name="Zongsoft.Hosting.Terminal"
+	Kind="Fully"
+	Edition=""
+	Version="1.1.0"
+	Size="123456"
+	Path="Zongsoft.Hosting.Terminal@1.1.0_win-x64"
+	Checksum="SHA1:1234567890ABCDEF"
+	Platform="Windows"
+	Architecture="X64"
+	Deprecated="false"
+	Creation="2026-04-10T10:30:59">
+
+	<Title></Title>
+	<Summary></Summary>
+	<Description></Description>
+
+	<Tags>
+		<Tag></Tag>
+	</Tags>
+
+	<Properties>
+		<Property name="" type="">
+		<![CDATA[
+		]]>
+		</Property>
+	</Properties>
+
+	<Executors>
+		<Executor event="">
+		<![CDATA[
+		]]>
+		</Executor>
+	</Executors>
+</Release>
 ```

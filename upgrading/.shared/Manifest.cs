@@ -80,12 +80,26 @@ public sealed class Manifest
 	#endregion
 
 	#region 保存方法
-	public async ValueTask<string> SaveAsync(string directory, CancellationToken cancellation)
+	public ValueTask<string> SaveAsync(string directory, CancellationToken cancellation = default)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(directory);
+
+		if(this.IsEmpty)
+			return ValueTask.FromResult<string>(null);
+
 		using var stream = File.Create(Path.Combine(directory, FileName));
-		await Serialization.Serializer.Json.SerializeAsync(stream, this, cancellation);
-		return stream.Name;
+
+		if(this.Trunk == null)
+			Release.Save(stream, this.Deltas);
+		else
+		{
+			var releases = new Release[this.Deltas.Length + 1];
+			releases[0] = this.Trunk;
+			this.Deltas.CopyTo(releases, 1);
+			Release.Save(stream, releases);
+		}
+
+		return ValueTask.FromResult(stream.Name);
 	}
 	#endregion
 
@@ -94,11 +108,14 @@ public sealed class Manifest
 	{
 		ArgumentException.ThrowIfNullOrEmpty(path);
 
-		if(!File.Exists(path))
+		var releases = Release.Load(path).ToArray();
+		if(releases.Length == 0)
 			return null;
 
-		var stream = File.Open(path, FileMode.Open, FileAccess.Read);
-		return Serialization.Serializer.Json.Deserialize<Manifest>(stream);
+		if(releases[0].Kind == ReleaseKind.Fully)
+			return new(releases[0], releases[1..]);
+		else
+			return new(releases);
 	}
 	#endregion
 }

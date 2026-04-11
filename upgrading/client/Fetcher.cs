@@ -176,7 +176,7 @@ partial class Fetcher : IFetcher
 	IDownloader IFetcher.Downloader => this.Downloader;
 	async ValueTask<Manifest> IFetcher.FetchAsync(Version version, CancellationToken cancellation)
 	{
-		var baseline = default(Release);
+		var trunk = default(Release);
 		var deltas = new List<Release>();
 		var upgradingVersion = version;
 		var currentlyVersion = Application.ApplicationVersion;
@@ -200,14 +200,14 @@ partial class Fetcher : IFetcher
 			{
 				if(release.Kind == ReleaseKind.Delta)
 					deltas.Add(release);
-				else if(baseline == null || release.Version > baseline.Version)
-					baseline = release;
+				else if(trunk == null || release.Version > trunk.Version)
+					trunk = release;
 			}
 		}
 
-		return baseline == null ?
+		return trunk == null ?
 			new(deltas.OrderBy(delta => delta.Version).ToArray()) :
-			new(baseline, deltas.Where(delta => delta.Version > baseline.Version).OrderBy(delta => delta.Version).ToArray());
+			new(trunk, deltas.Where(delta => delta.Version > trunk.Version).OrderBy(delta => delta.Version).ToArray());
 	}
 	#endregion
 

@@ -51,6 +51,8 @@
 		<Compile Include="..\.shared\Manifest.cs" Link="Manifest.cs" />
 		<Compile Include="..\.shared\Release.cs" Link="Release.cs" />
 		<Compile Include="..\.shared\ReleaseKind.cs" Link="ReleaseKind.cs" />
+		<Compile Include="..\.shared\Release.Reader.cs" Link="Release.Reader.cs" />
+		<Compile Include="..\.shared\Release.Writer.cs" Link="Release.Writer.cs" />
 		<Compile Include="..\.shared\ReleaseUtility.cs" Link="ReleaseUtility.cs" />
 		<Compile Include="..\.shared\ReleaseEventArgs.cs" Link="ReleaseEventArgs.cs" />
 		<Compile Include="..\.shared\Utility.cs" Link="Utility.cs" />

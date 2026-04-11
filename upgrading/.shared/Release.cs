@@ -33,7 +33,7 @@ using System.Collections.Generic;
 namespace Zongsoft.Upgrading;
 
 /// <summary>表示升级发布的实体类。</summary>
-public class Release
+public partial class Release
 {
 	#region 构造函数
 	public Release()

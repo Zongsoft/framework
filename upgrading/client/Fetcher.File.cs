@@ -33,7 +33,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.IO;
-using Zongsoft.Serialization;
 
 namespace Zongsoft.Upgrading;
 
@@ -83,7 +82,7 @@ partial class Fetcher
 					continue;
 
 				var stream = await FileSystem.File.OpenAsync(file.Path.Url, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
-				var release = await Serializer.Json.DeserializeAsync<Release>(stream, cancellation);
+				var release = await Release.ReadAsync(stream, cancellation);
 
 				if(file.HasProperties)
 				{
