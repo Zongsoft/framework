@@ -42,39 +42,39 @@ public static class DataRecordExtension
 	static DataRecordExtension()
 	{
 		RecordGetterTemplate<bool>.Get = new Func<IDataRecord, int, bool>((record, ordinal) => record.GetBoolean(ordinal));
-		RecordGetterTemplate<bool?>.Get = new Func<IDataRecord, int, bool?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (bool?)record.GetBoolean(ordinal));
+		RecordGetterTemplate<bool?>.Get = new Func<IDataRecord, int, bool?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetBoolean(ordinal));
 
 		RecordGetterTemplate<char>.Get = new Func<IDataRecord, int, char>((record, ordinal) => record.GetChar(ordinal));
-		RecordGetterTemplate<char?>.Get = new Func<IDataRecord, int, char?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (char?)record.GetChar(ordinal));
+		RecordGetterTemplate<char?>.Get = new Func<IDataRecord, int, char?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetChar(ordinal));
 		RecordGetterTemplate<char[]>.Get = new Func<IDataRecord, int, char[]>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetValue(ordinal) as char[]);
 		RecordGetterTemplate<IEnumerable<char>>.Get = new Func<IDataRecord, int, IEnumerable<char>>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetValue(ordinal) as IEnumerable<char>);
 
 		RecordGetterTemplate<byte>.Get = new Func<IDataRecord, int, byte>((record, ordinal) => record.GetByte(ordinal));
-		RecordGetterTemplate<byte?>.Get = new Func<IDataRecord, int, byte?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (byte?)record.GetByte(ordinal));
+		RecordGetterTemplate<byte?>.Get = new Func<IDataRecord, int, byte?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetByte(ordinal));
 		RecordGetterTemplate<byte[]>.Get = new Func<IDataRecord, int, byte[]>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetValue(ordinal) as byte[]);
 		RecordGetterTemplate<IEnumerable<byte>>.Get = new Func<IDataRecord, int, IEnumerable<byte>>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetValue(ordinal) as IEnumerable<byte>);
 
-		RecordGetterTemplate<sbyte>.Get = new Func<IDataRecord, int, sbyte>((record, ordinal) => (sbyte)record.GetValue(ordinal));
-		RecordGetterTemplate<sbyte?>.Get = new Func<IDataRecord, int, sbyte?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (sbyte?)record.GetValue(ordinal));
+		RecordGetterTemplate<sbyte>.Get = new Func<IDataRecord, int, sbyte>((record, ordinal) => (sbyte)Convert.ChangeType(record.GetValue(ordinal), typeof(sbyte)));
+		RecordGetterTemplate<sbyte?>.Get = new Func<IDataRecord, int, sbyte?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (sbyte)Convert.ChangeType(record.GetValue(ordinal), typeof(sbyte)));
 		RecordGetterTemplate<short>.Get = new Func<IDataRecord, int, short>((record, ordinal) => record.GetInt16(ordinal));
-		RecordGetterTemplate<short?>.Get = new Func<IDataRecord, int, short?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (short?)record.GetInt16(ordinal));
-		RecordGetterTemplate<ushort>.Get = new Func<IDataRecord, int, ushort>((record, ordinal) => (ushort)record.GetValue(ordinal));
-		RecordGetterTemplate<ushort?>.Get = new Func<IDataRecord, int, ushort?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (ushort?)record.GetValue(ordinal));
+		RecordGetterTemplate<short?>.Get = new Func<IDataRecord, int, short?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetInt16(ordinal));
+		RecordGetterTemplate<ushort>.Get = new Func<IDataRecord, int, ushort>((record, ordinal) => (ushort)Convert.ChangeType(record.GetValue(ordinal), typeof(ushort)));
+		RecordGetterTemplate<ushort?>.Get = new Func<IDataRecord, int, ushort?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (ushort)Convert.ChangeType(record.GetValue(ordinal), typeof(ushort)));
 		RecordGetterTemplate<int>.Get = new Func<IDataRecord, int, int>((record, ordinal) => record.GetInt32(ordinal));
-		RecordGetterTemplate<int?>.Get = new Func<IDataRecord, int, int?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (int?)record.GetInt32(ordinal));
-		RecordGetterTemplate<uint>.Get = new Func<IDataRecord, int, uint>((record, ordinal) => (uint)record.GetValue(ordinal));
-		RecordGetterTemplate<uint?>.Get = new Func<IDataRecord, int, uint?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (uint?)record.GetValue(ordinal));
+		RecordGetterTemplate<int?>.Get = new Func<IDataRecord, int, int?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetInt32(ordinal));
+		RecordGetterTemplate<uint>.Get = new Func<IDataRecord, int, uint>((record, ordinal) => (uint)Convert.ChangeType(record.GetValue(ordinal), typeof(uint)));
+		RecordGetterTemplate<uint?>.Get = new Func<IDataRecord, int, uint?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (uint)Convert.ChangeType(record.GetValue(ordinal), typeof(uint)));
 		RecordGetterTemplate<long>.Get = new Func<IDataRecord, int, long>((record, ordinal) => record.GetInt64(ordinal));
-		RecordGetterTemplate<long?>.Get = new Func<IDataRecord, int, long?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (long?)record.GetInt64(ordinal));
-		RecordGetterTemplate<ulong>.Get = new Func<IDataRecord, int, ulong>((record, ordinal) => (ulong)record.GetValue(ordinal));
-		RecordGetterTemplate<ulong?>.Get = new Func<IDataRecord, int, ulong?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (ulong?)record.GetValue(ordinal));
+		RecordGetterTemplate<long?>.Get = new Func<IDataRecord, int, long?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetInt64(ordinal));
+		RecordGetterTemplate<ulong>.Get = new Func<IDataRecord, int, ulong>((record, ordinal) => (ulong)Convert.ChangeType(record.GetValue(ordinal), typeof(ulong)));
+		RecordGetterTemplate<ulong?>.Get = new Func<IDataRecord, int, ulong?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (ulong)Convert.ChangeType(record.GetValue(ordinal), typeof(ulong)));
 
 		RecordGetterTemplate<decimal>.Get = new Func<IDataRecord, int, decimal>((record, ordinal) => record.GetDecimal(ordinal));
-		RecordGetterTemplate<decimal?>.Get = new Func<IDataRecord, int, decimal?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (decimal?)record.GetDecimal(ordinal));
+		RecordGetterTemplate<decimal?>.Get = new Func<IDataRecord, int, decimal?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetDecimal(ordinal));
 		RecordGetterTemplate<double>.Get = new Func<IDataRecord, int, double>((record, ordinal) => record.GetDouble(ordinal));
-		RecordGetterTemplate<double?>.Get = new Func<IDataRecord, int, double?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (double?)record.GetDouble(ordinal));
+		RecordGetterTemplate<double?>.Get = new Func<IDataRecord, int, double?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetDouble(ordinal));
 		RecordGetterTemplate<float>.Get = new Func<IDataRecord, int, float>((record, ordinal) => record.GetFloat(ordinal));
-		RecordGetterTemplate<float?>.Get = new Func<IDataRecord, int, float?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (float?)record.GetFloat(ordinal));
+		RecordGetterTemplate<float?>.Get = new Func<IDataRecord, int, float?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetFloat(ordinal));
 
 		RecordGetterTemplate<DateOnly>.Get = new Func<IDataRecord, int, DateOnly>((record, ordinal) => DateOnly.FromDateTime(record.GetDateTime(ordinal)));
 		RecordGetterTemplate<DateOnly?>.Get = new Func<IDataRecord, int, DateOnly?>((record, ordinal) => record.IsDBNull(ordinal) ? null : DateOnly.FromDateTime(record.GetDateTime(ordinal)));
@@ -82,12 +82,12 @@ public static class DataRecordExtension
 		RecordGetterTemplate<TimeOnly?>.Get = new Func<IDataRecord, int, TimeOnly?>((record, ordinal) => record.IsDBNull(ordinal) ? null : TimeOnly.FromDateTime(record.GetDateTime(ordinal)));
 
 		RecordGetterTemplate<DateTime>.Get = new Func<IDataRecord, int, DateTime>((record, ordinal) => record.GetDateTime(ordinal));
-		RecordGetterTemplate<DateTime?>.Get = new Func<IDataRecord, int, DateTime?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (DateTime?)record.GetDateTime(ordinal));
+		RecordGetterTemplate<DateTime?>.Get = new Func<IDataRecord, int, DateTime?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetDateTime(ordinal));
 		RecordGetterTemplate<DateTimeOffset>.Get = new Func<IDataRecord, int, DateTimeOffset>((record, ordinal) => (DateTimeOffset)record.GetDateTime(ordinal));
-		RecordGetterTemplate<DateTimeOffset?>.Get = new Func<IDataRecord, int, DateTimeOffset?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (DateTimeOffset?)record.GetDateTime(ordinal));
+		RecordGetterTemplate<DateTimeOffset?>.Get = new Func<IDataRecord, int, DateTimeOffset?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (DateTimeOffset)record.GetDateTime(ordinal));
 
 		RecordGetterTemplate<Guid>.Get = new Func<IDataRecord, int, Guid>((record, ordinal) => record.GetGuid(ordinal));
-		RecordGetterTemplate<Guid?>.Get = new Func<IDataRecord, int, Guid?>((record, ordinal) => record.IsDBNull(ordinal) ? null : (Guid?)record.GetGuid(ordinal));
+		RecordGetterTemplate<Guid?>.Get = new Func<IDataRecord, int, Guid?>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetGuid(ordinal));
 
 		RecordGetterTemplate<string>.Get = new Func<IDataRecord, int, string>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetString(ordinal));
 		RecordGetterTemplate<object>.Get = new Func<IDataRecord, int, object>((record, ordinal) => record.IsDBNull(ordinal) ? null : record.GetValue(ordinal));
@@ -104,7 +104,7 @@ public static class DataRecordExtension
 		return type switch
 		{
 			DbType.String or
-			DbType.AnsiString => record.GetString(ordinal),
+			DbType.AnsiString or
 			DbType.StringFixedLength or
 			DbType.AnsiStringFixedLength => record.GetString(ordinal),
 
