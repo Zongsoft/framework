@@ -49,7 +49,7 @@ public sealed class Extractor
 	/// <param name="manifest">指定的升级清单对象。</param>
 	/// <param name="filePath">指定的升级清单文件路径。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>如果部署成功则返回版本文件的完整路径，否则返回空(<c>null</c>)。</returns>
+	/// <returns>如果部署成功则返回提取(解压)后的目录路径，否则返回空(<c>null</c>)。</returns>
 	public static async ValueTask<string> ExtractAsync(Manifest manifest, string filePath, CancellationToken cancellation = default)
 	{
 		if(manifest == null || string.IsNullOrEmpty(filePath))
@@ -100,13 +100,13 @@ public sealed class Extractor
 		}
 
 		//在目标目录下创建一个版本文件并将版本号写入到该文件中
-		var version = new FileInfo(Path.Combine(destination.FullName, ".version"));
-		using var writer = new StreamWriter(version.OpenWrite());
+		using var stream = File.OpenWrite(Path.Combine(destination.FullName, ".version"));
+		using var writer = new StreamWriter(stream);
 		writer.WriteLine($"{manifest.Name}@{manifest.Version}");
-		await writer.DisposeAsync();
+		await writer.FlushAsync(cancellation);
 
 		//返回部署成功
-		return version.FullName;
+		return destination.FullName;
 
 		static DirectoryInfo CreateDirectory(string path)
 		{

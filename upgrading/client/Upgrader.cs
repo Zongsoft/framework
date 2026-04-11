@@ -53,12 +53,12 @@ public partial class Upgrader
 			return false;
 
 		//从升级信息中提取解压升级包文件
-		var version = await Extractor.ExtractAsync(info.Manifest, info.FilePath, cancellation);
-		if(string.IsNullOrEmpty(version))
+		var directory = await Extractor.ExtractAsync(info.Manifest, info.FilePath, cancellation);
+		if(string.IsNullOrEmpty(directory))
 			return false;
 
 		//创建本次升级的部署文件文件
-		return Deployer.Deployment.Save(info.FilePath, Path.GetDirectoryName(version)) != null;
+		return Deployer.Deployment.Save(info.FilePath, directory) != null;
 	}
 
 	public static void Deploy()

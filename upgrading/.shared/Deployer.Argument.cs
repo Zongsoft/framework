@@ -132,7 +132,7 @@ partial class Deployer
 				else if(arg[0] == '-' || arg[0] == '/')
 					arg = arg[1..];
 
-				var index = arg.IndexOfAny(['=', ':']);
+				var index = arg.IndexOf('=');
 
 				if(index > 0)
 					parameters.Add(arg[..index].Trim().ToString(), arg[(index + 1)..].Trim().ToString());
