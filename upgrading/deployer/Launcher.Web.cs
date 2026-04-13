@@ -32,6 +32,7 @@
  */
 
 using System;
+using System.IO;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
@@ -41,9 +42,8 @@ partial class Launcher
 	private sealed class WebLauncher : ILauncher
 	{
 		public string Name => "Web";
-		public bool Launch(string root, Deployer.Argument argument)
+		public void Launch(Deployer.Argument argument)
 		{
-			return false;
 		}
 	}
 }

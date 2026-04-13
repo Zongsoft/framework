@@ -72,7 +72,7 @@ partial class Deployer
 		Helper.Replicate(packages, root);
 
 		//启动宿主程序
-		Launcher.Launch(root, argument);
+		Launcher.Launch(deployment, argument);
 	}
 	#endregion
 

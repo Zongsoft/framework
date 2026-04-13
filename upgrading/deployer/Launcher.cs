@@ -32,6 +32,7 @@
  */
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
@@ -65,22 +66,29 @@ public static partial class Launcher
 	#endregion
 
 	#region 公共方法
-	public static bool Launch(string root, Deployer.Argument argument)
+	public static void Launch(Deployer.Deployment deployment, Deployer.Argument argument)
 	{
-		if(string.IsNullOrEmpty(root) || argument == null)
-			return false;
+		if(argument == null || deployment == null)
+			return;
 
 		try
 		{
+			//根据宿主应用类型获取对应的启动器
 			if(_launchers.TryGetValue(argument.AppType ?? string.Empty, out var launcher))
-				return launcher.Launch(root, argument);
+				launcher.Launch(argument);
 			else
-				return Default.Launch(root, argument);
+				Default.Launch(argument);
+
+			//释放部署文件(解除排他性锁)
+			deployment.Dispose();
+
+			//删除部署文件
+			if(File.Exists(argument.Deployment))
+				File.Delete(argument.Deployment);
 		}
 		catch(Exception ex)
 		{
 			Zongsoft.Diagnostics.Logging.GetLogging<Program>().Error(ex);
-			return false;
 		}
 	}
 	#endregion

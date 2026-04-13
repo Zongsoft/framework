@@ -42,8 +42,6 @@ public interface ILauncher
 	string Name { get; }
 
 	/// <summary>启动宿主应用程序。</summary>
-	/// <param name="root">宿主应用程序的根目录。</param>
 	/// <param name="argument">部署器的调用参数。</param>
-	/// <returns>如果启动成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	bool Launch(string root, Deployer.Argument argument);
+	void Launch(Deployer.Argument argument);
 }

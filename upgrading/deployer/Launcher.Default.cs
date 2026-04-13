@@ -32,6 +32,7 @@
  */
 
 using System;
+using System.IO;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
@@ -41,9 +42,16 @@ partial class Launcher
 	private sealed class DefaultLauncher : ILauncher
 	{
 		public string Name => string.Empty;
-		public bool Launch(string root, Deployer.Argument argument)
+		public void Launch(Deployer.Argument argument)
 		{
-			return false;
+			var info = new ProcessStartInfo(argument.AppPath)
+			{
+				WindowStyle = ProcessWindowStyle.Normal,
+				WorkingDirectory = Path.GetDirectoryName(argument.AppPath),
+			};
+
+			//启动升级部署器程序
+			Process.Start(info);
 		}
 	}
 }
