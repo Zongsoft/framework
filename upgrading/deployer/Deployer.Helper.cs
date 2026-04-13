@@ -90,7 +90,7 @@ partial class Deployer
 			var files = source.GetFiles();
 			for(int i = 0; i < files.Length; i++)
 			{
-				files[i].CopyTo(destination, true);
+				files[i].CopyTo(Path.Combine(destination, files[i].Name), true);
 			}
 
 			var directories = source.GetDirectories();
