@@ -41,16 +41,31 @@ partial class Release
 	#region 私有常量
 	private const string NAME_ATTRIBUTE = "name";
 	private const string TYPE_ATTRIBUTE = "type";
+	private const string KIND_ATTRIBUTE = "kind";
+	private const string PATH_ATTRIBUTE = "path";
+	private const string SIZE_ATTRIBUTE = "size";
 	private const string EVENT_ATTRIBUTE = "event";
+	private const string TITLE_ATTRIBUTE = "title";
+	private const string EDITION_ATTRIBUTE = "edition";
+	private const string VERSION_ATTRIBUTE = "version";
+	private const string CREATION_ATTRIBUTE = "creation";
+	private const string CHECKSUM_ATTRIBUTE = "checksum";
+	private const string PLATFORM_ATTRIBUTE = "platform";
+	private const string DEPRECATED_ATTRIBUTE = "deprecated";
+	private const string ARCHITECTURE_ATTRIBUTE = "architecture";
 
-	private const string TAG_ELEMENT = "Tag";
-	private const string TAGS_ELEMENT = "Tags";
-	private const string EXECUTOR_ELEMENT = "Executor";
-	private const string EXECUTORS_ELEMENT = "Executors";
-	private const string PROPERTY_ELEMENT = "Property";
-	private const string PROPERTIES_ELEMENT = "Properties";
-	private const string RELEASE_ELEMENT = "Release";
-	private const string RELEASES_ELEMENT = "Releases";
+	private const string TITLE_ELEMENT = "title";
+	private const string SUMMARY_ELEMENT = "summary";
+	private const string DESCRIPTION_ELEMENT = "description";
+
+	private const string TAG_ELEMENT = "tag";
+	private const string TAGS_ELEMENT = "tags";
+	private const string EXECUTOR_ELEMENT = "executor";
+	private const string EXECUTORS_ELEMENT = "executors";
+	private const string PROPERTY_ELEMENT = "property";
+	private const string PROPERTIES_ELEMENT = "properties";
+	private const string RELEASE_ELEMENT = "release";
+	private const string RELEASES_ELEMENT = "releases";
 	#endregion
 
 	#region 实例方法
@@ -91,35 +106,35 @@ partial class Release
 
 		writer.WriteStartElement(RELEASE_ELEMENT);
 
-		writer.WriteAttributeString(nameof(release.Name), release.Name);
-		writer.WriteAttributeString(nameof(release.Kind), release.Kind.ToString());
-		writer.WriteAttributeString(nameof(release.Edition), release.Edition);
-		writer.WriteAttributeString(nameof(release.Version), release.Version.ToString());
-		writer.WriteAttributeString(nameof(release.Size), release.Size.ToString());
-		writer.WriteAttributeString(nameof(release.Path), release.Path);
-		writer.WriteAttributeString(nameof(release.Checksum), release.Checksum.ToString());
-		writer.WriteAttributeString(nameof(release.Platform), release.Platform.ToString());
-		writer.WriteAttributeString(nameof(release.Architecture), release.Architecture.ToString());
-		writer.WriteAttributeString(nameof(release.Deprecated), release.Deprecated.ToString());
-		writer.WriteAttributeString(nameof(release.Creation), release.Creation.ToString());
+		writer.WriteAttributeString(NAME_ATTRIBUTE, release.Name);
+		writer.WriteAttributeString(KIND_ATTRIBUTE, release.Kind.ToString());
+		writer.WriteAttributeString(EDITION_ATTRIBUTE, release.Edition);
+		writer.WriteAttributeString(VERSION_ATTRIBUTE, release.Version.ToString());
+		writer.WriteAttributeString(SIZE_ATTRIBUTE, release.Size.ToString());
+		writer.WriteAttributeString(PATH_ATTRIBUTE, release.Path);
+		writer.WriteAttributeString(CHECKSUM_ATTRIBUTE, release.Checksum.ToString());
+		writer.WriteAttributeString(PLATFORM_ATTRIBUTE, release.Platform.ToString());
+		writer.WriteAttributeString(ARCHITECTURE_ATTRIBUTE, release.Architecture.ToString());
+		writer.WriteAttributeString(DEPRECATED_ATTRIBUTE, release.Deprecated.ToString());
+		writer.WriteAttributeString(CREATION_ATTRIBUTE, release.Creation.ToString());
 
 		if(!string.IsNullOrWhiteSpace(release.Title))
 		{
-			writer.WriteStartElement(nameof(release.Title));
+			writer.WriteStartElement(TITLE_ELEMENT);
 			writer.WriteValue(release.Title);
 			writer.WriteEndElement();
 		}
 
 		if(!string.IsNullOrWhiteSpace(release.Summary))
 		{
-			writer.WriteStartElement(nameof(release.Summary));
+			writer.WriteStartElement(SUMMARY_ELEMENT);
 			writer.WriteValue(release.Summary);
 			writer.WriteEndElement();
 		}
 
 		if(!string.IsNullOrWhiteSpace(release.Description))
 		{
-			writer.WriteStartElement(nameof(release.Description));
+			writer.WriteStartElement(DESCRIPTION_ELEMENT);
 			writer.WriteValue(release.Description);
 			writer.WriteEndElement();
 		}

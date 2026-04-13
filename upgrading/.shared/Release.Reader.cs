@@ -111,6 +111,9 @@ partial class Release
 	{
 		ArgumentNullException.ThrowIfNull(reader);
 
+		if(reader.NodeType == XmlNodeType.None)
+			reader.MoveToContent();
+
 		if(reader.NodeType != XmlNodeType.Element)
 			return null;
 		if(reader.LocalName != RELEASE_ELEMENT)
@@ -126,28 +129,28 @@ partial class Release
 			{
 				switch(reader.LocalName)
 				{
-					case nameof(Release.Title):
-						if(reader.Read() && reader.NodeType == XmlNodeType.Text)
+					case TITLE_ELEMENT:
+						if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
 							release.Title = reader.Value;
 
 						break;
-					case nameof(Release.Summary):
-						if(reader.Read() && reader.NodeType == XmlNodeType.Text)
+					case SUMMARY_ELEMENT:
+						if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
 							release.Summary = reader.Value;
 
 						break;
-					case nameof(Release.Description):
-						if(reader.Read() && reader.NodeType == XmlNodeType.Text)
+					case DESCRIPTION_ELEMENT:
+						if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
 							release.Description = reader.Value;
 
 						break;
-					case nameof(TAGS_ELEMENT):
+					case TAGS_ELEMENT:
 						PopulateTags(release, reader);
 						break;
-					case nameof(EXECUTORS_ELEMENT):
+					case EXECUTORS_ELEMENT:
 						PopulateExecutors(release, reader);
 						break;
-					case nameof(PROPERTIES_ELEMENT):
+					case PROPERTIES_ELEMENT:
 						PopulateProperties(release, reader);
 						break;
 				}
@@ -167,6 +170,9 @@ partial class Release
 	{
 		ArgumentNullException.ThrowIfNull(reader);
 
+		if(reader.NodeType == XmlNodeType.None)
+			await reader.MoveToContentAsync();
+
 		if(reader.NodeType != XmlNodeType.Element)
 			return null;
 		if(reader.LocalName != RELEASE_ELEMENT)
@@ -182,28 +188,28 @@ partial class Release
 			{
 				switch(reader.LocalName)
 				{
-					case nameof(Release.Title):
-						if(await reader.ReadAsync() && reader.NodeType == XmlNodeType.Text)
+					case TITLE_ELEMENT:
+						if(await reader.ReadAsync() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
 							release.Title = reader.Value;
 
 						break;
-					case nameof(Release.Summary):
-						if(await reader.ReadAsync() && reader.NodeType == XmlNodeType.Text)
+					case SUMMARY_ELEMENT:
+						if(await reader.ReadAsync() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
 							release.Summary = reader.Value;
 
 						break;
-					case nameof(Release.Description):
-						if(await reader.ReadAsync() && reader.NodeType == XmlNodeType.Text)
+					case DESCRIPTION_ELEMENT:
+						if(await reader.ReadAsync() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
 							release.Description = reader.Value;
 
 						break;
-					case nameof(TAGS_ELEMENT):
+					case TAGS_ELEMENT:
 						PopulateTags(release, reader);
 						break;
-					case nameof(EXECUTORS_ELEMENT):
+					case EXECUTORS_ELEMENT:
 						PopulateExecutors(release, reader);
 						break;
-					case nameof(PROPERTIES_ELEMENT):
+					case PROPERTIES_ELEMENT:
 						PopulateProperties(release, reader);
 						break;
 				}
@@ -242,7 +248,10 @@ partial class Release
 				var @event = reader.GetAttribute(EVENT_ATTRIBUTE);
 
 				if(string.IsNullOrWhiteSpace(@event))
+				{
 					reader.Skip();
+					continue;
+				}
 
 				if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
 					release.Executors.Add(new(@event, reader.Value));
@@ -261,7 +270,10 @@ partial class Release
 				var name = reader.GetAttribute(NAME_ATTRIBUTE);
 
 				if(string.IsNullOrWhiteSpace(name))
+				{
 					reader.Skip();
+					continue;
+				}
 
 				if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
 				{
@@ -284,44 +296,47 @@ partial class Release
 
 			switch(reader.LocalName)
 			{
-				case nameof(Release.Name):
+				case NAME_ATTRIBUTE:
 					release.Name = reader.Value;
 					break;
-				case nameof(Release.Kind):
+				case KIND_ATTRIBUTE:
 					release.Kind = Common.Convert.ConvertValue<ReleaseKind>(reader.Value);
 					break;
-				case nameof(Release.Title):
+				case TITLE_ATTRIBUTE:
 					release.Title = reader.Value;
 					break;
-				case nameof(Release.Edition):
+				case EDITION_ATTRIBUTE:
 					release.Edition = reader.Value;
 					break;
-				case nameof(Release.Version):
-					release.Version = Version.Parse(reader.Value);
+				case VERSION_ATTRIBUTE:
+					release.Version = Version.TryParse(reader.Value, out var version) ? version : null;
 					break;
-				case nameof(Release.Size):
-					release.Size = uint.Parse(reader.Value);
+				case SIZE_ATTRIBUTE:
+					release.Size = uint.TryParse(reader.Value, out var size) ? size : 0;
 					break;
-				case nameof(Release.Path):
+				case PATH_ATTRIBUTE:
 					release.Path = reader.Value;
 					break;
-				case nameof(Release.Checksum):
+				case CHECKSUM_ATTRIBUTE:
 					release.Checksum = Checksum.Parse(reader.Value);
 					break;
-				case nameof(Release.Platform):
+				case PLATFORM_ATTRIBUTE:
 					release.Platform = Common.Convert.ConvertValue<Platform>(reader.Value);
 					break;
-				case nameof(Release.Architecture):
+				case ARCHITECTURE_ATTRIBUTE:
 					release.Architecture = Common.Convert.ConvertValue<Architecture>(reader.Value);
 					break;
-				case nameof(Release.Deprecated):
-					release.Deprecated = bool.Parse(reader.Value);
+				case DEPRECATED_ATTRIBUTE:
+					release.Deprecated = bool.TryParse(reader.Value, out var deprecated) && deprecated;
 					break;
-				case nameof(Release.Creation):
-					release.Creation = DateTime.Parse(reader.Value);
+				case CREATION_ATTRIBUTE:
+					release.Creation = DateTime.TryParse(reader.Value, out var creation) ? creation : default;
 					break;
 			}
 		}
+
+		if(reader.NodeType == XmlNodeType.Attribute)
+			reader.MoveToElement();
 	}
 
 	private static XmlReaderSettings GetSettings(bool asynchronous) => new()

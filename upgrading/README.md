@@ -18,39 +18,39 @@
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Release
-	Name="Zongsoft.Hosting.Terminal"
-	Kind="Fully"
-	Edition=""
-	Version="1.1.0"
-	Size="123456"
-	Path="Zongsoft.Hosting.Terminal@1.1.0_win-x64"
-	Checksum="SHA1:1234567890ABCDEF"
-	Platform="Windows"
-	Architecture="X64"
-	Deprecated="false"
-	Creation="2026-04-10T10:30:59">
+<release
+	name="Zongsoft.Hosting.Terminal"
+	kind="Fully"
+	edition=""
+	version="1.1.0"
+	size="123456"
+	path="Zongsoft.Hosting.Terminal@1.1.0_win-x64.zip"
+	checksum="SHA1:1234567890ABCDEF"
+	platform="Windows"
+	architecture="X64"
+	deprecated="false"
+	creation="2026-04-10T10:30:59">
 
-	<Title></Title>
-	<Summary></Summary>
-	<Description></Description>
+	<title></title>
+	<summary></summary>
+	<description></description>
 
-	<Tags>
-		<Tag></Tag>
-	</Tags>
+	<tags>
+		<tag></tag>
+	</tags>
 
-	<Properties>
-		<Property name="" type="">
+	<properties>
+		<property name="" type="">
 		<![CDATA[
 		]]>
-		</Property>
-	</Properties>
+		</property>
+	</properties>
 
-	<Executors>
-		<Executor event="">
+	<executors>
+		<executor event="">
 		<![CDATA[
 		]]>
-		</Executor>
-	</Executors>
-</Release>
+		</executor>
+	</executors>
+</release>
 ```
