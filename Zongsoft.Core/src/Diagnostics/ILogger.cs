@@ -36,6 +36,7 @@ namespace Zongsoft.Diagnostics;
 public interface ILogger
 {
 	string Name { get; }
+	ValueTask FlushAsync(CancellationToken cancellation = default);
 	ValueTask LogAsync<TLog>(TLog log, CancellationToken cancellation = default) where TLog : ILog;
 }
 

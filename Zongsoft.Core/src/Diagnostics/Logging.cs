@@ -163,6 +163,19 @@ public sealed class Logging
 	#endregion
 
 	#region 静态日志
+	public static ValueTask FlushAsync(CancellationToken cancellation = default)
+	{
+		if(_loggers.Count == 0)
+			return ((ILogger)TextFileLogger.Default).FlushAsync(cancellation);
+
+		var tasks = new List<Task>(_loggers.Count);
+
+		foreach(var logger in _loggers)
+			tasks.Add(logger.FlushAsync(cancellation).AsTask());
+
+		return new(Task.WhenAll(tasks));
+	}
+
 	public static void Log<TLog>(TLog log) where TLog : ILog => LogAsync(log).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 	public static ValueTask LogAsync<TLog>(TLog log, CancellationToken cancellation = default) where TLog : ILog
 	{

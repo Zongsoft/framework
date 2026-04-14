@@ -90,6 +90,11 @@ public abstract class LoggerBase<TLog> : ILogger<TLog> where TLog : ILog
 	#region 日志方法
 	protected abstract ValueTask OnLogAsync(TLog log, CancellationToken cancellation);
 	#endregion
+
+	#region 刷新方法
+	ValueTask ILogger.FlushAsync(CancellationToken cancellation) => this.OnFlushAsync(cancellation);
+	protected virtual ValueTask OnFlushAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
+	#endregion
 }
 
 public abstract class LoggerBase<TLog, TModel>(string name = null) : LoggerBase<TLog>(name), ILogger<TLog, TModel> where TLog : ILog
