@@ -40,7 +40,7 @@ public sealed class Manifest
 {
 	#region 常量定义
 	/// <summary>清单文件名。</summary>
-	public const string FileName = ".manifest";
+	public const string FILE_NAME = ".manifest";
 	#endregion
 
 	#region 构造函数
@@ -87,7 +87,7 @@ public sealed class Manifest
 		if(this.IsEmpty)
 			return ValueTask.FromResult<string>(null);
 
-		using var stream = File.Create(Path.Combine(directory, FileName));
+		using var stream = File.Create(Path.Combine(directory, FILE_NAME));
 
 		if(this.Trunk == null)
 			Release.Save(stream, this.Deltas);

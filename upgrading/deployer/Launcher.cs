@@ -33,12 +33,13 @@
 
 using System;
 using System.IO;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
 /// <summary>提供宿主应用程序启动功能。</summary>
-public static partial class Launcher
+public abstract partial class Launcher
 {
 	#region 私有字段
 	private static readonly Dictionary<string, ILauncher> _launchers;
@@ -79,7 +80,7 @@ public static partial class Launcher
 			else
 				Default.Launch(argument);
 
-			//释放部署文件(解除排他性锁)
+			//释放部署文件(解除独占锁)
 			deployment.Dispose();
 
 			//删除部署文件
@@ -90,6 +91,95 @@ public static partial class Launcher
 		{
 			Zongsoft.Diagnostics.Logging.GetLogging<Program>().Error(ex);
 		}
+		finally
+		{
+			deployment?.Dispose();
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private static string GetService(Deployer.Argument argument)
+	{
+		//获取宿主应用的根目录
+		var directory = Path.GetDirectoryName(argument.AppPath);
+
+		if(Directory.Exists(directory))
+		{
+			//在宿主应用的根目录中查找“*.service”服务文件
+			var files = Directory.GetFiles(directory, "*.service");
+			if(files.Length == 1)
+				return Path.GetFileName(files[0]);
+
+			for(int i = 0; i < files.Length; i++)
+			{
+				if(Path.GetFileName(files[i]).StartsWith(argument.AppName, StringComparison.OrdinalIgnoreCase))
+					return Path.GetFileName(files[i]);
+			}
+		}
+
+		return argument.AppName;
+	}
+	#endregion
+}
+
+partial class Launcher : ILauncher
+{
+	#region 构造函数
+	protected Launcher(string name)
+	{
+		this.Name = name ?? string.Empty;
+	}
+	#endregion
+
+	#region 保护属性
+	protected string Name { get; }
+	#endregion
+
+	#region 显式实现
+	string ILauncher.Name => this.Name;
+	void ILauncher.Launch(Deployer.Argument argument)
+	{
+		var process = this.OnLaunch(argument);
+		this.OnLaunched(argument, process);
+	}
+	#endregion
+
+	#region 抽象方法
+	protected abstract Process OnLaunch(Deployer.Argument argument);
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void OnLaunched(Deployer.Argument argument, Process process)
+	{
+		if(process == null)
+			return;
+
+		string extra = string.IsNullOrEmpty(process.StartInfo.Verb) ?
+			$"{process.StartInfo.FileName} {process.StartInfo.Arguments}":
+			$"[{process.StartInfo.Verb}]{process.StartInfo.FileName} {process.StartInfo.Arguments}";
+
+		//被重定向的进程则表明为启动命令的中间进程（即非宿主应用进程）
+		if(process.StartInfo.RedirectStandardError || process.StartInfo.RedirectStandardOutput)
+		{
+			//获取启动进程的标准错误信息
+			var text = process.StandardError.ReadToEnd();
+			if(!string.IsNullOrWhiteSpace(text))
+				extra += text;
+
+			//获取启动进程的标准输出信息
+			text = process.StandardOutput.ReadToEnd();
+			if(!string.IsNullOrWhiteSpace(text))
+				extra += text;
+
+			//等待启动命令进程完成
+			process.WaitForExit();
+		}
+
+		if(process.HasExited)
+			Diagnostics.Logging.GetLogging().Error($"The {(string.IsNullOrEmpty(this.Name) ? "default" : this.Name)} launcher has launched successfully.", extra);
+		else
+			Diagnostics.Logging.GetLogging().Error($"The {(string.IsNullOrEmpty(this.Name) ? "default" : this.Name)} launcher successfully launched the '[{process.Id}]{process.ProcessName}' program.", extra);
 	}
 	#endregion
 }

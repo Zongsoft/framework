@@ -187,7 +187,7 @@ partial class Fetcher : IFetcher
 		await foreach(var release in releases)
 		{
 			//跳过废弃和无效版本号的升级发布
-			if(release.Deprecated || release.Version.IsZero())
+			if(release == null || release.Deprecated || release.Version.IsZero())
 				continue;
 
 			//筛选出满足要求的升级发布：

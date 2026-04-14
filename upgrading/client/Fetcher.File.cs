@@ -72,7 +72,7 @@ partial class Fetcher
 			if(string.IsNullOrEmpty(this.Url))
 				yield break;
 
-			var extension = System.IO.Path.GetExtension(Manifest.FileName);
+			var extension = System.IO.Path.GetExtension(Manifest.FILE_NAME);
 			var files = FileSystem.Directory.GetFilesAsync(this.Url, $"{Application.ApplicationName}*{extension}", true, cancellation);
 
 			await foreach(var file in files)

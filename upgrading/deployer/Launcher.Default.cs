@@ -39,19 +39,20 @@ namespace Zongsoft.Upgrading;
 
 partial class Launcher
 {
-	private sealed class DefaultLauncher : ILauncher
+	private sealed class DefaultLauncher() : Launcher(string.Empty)
 	{
-		public string Name => string.Empty;
-		public void Launch(Deployer.Argument argument)
+		protected override Process OnLaunch(Deployer.Argument argument)
 		{
 			var info = new ProcessStartInfo(argument.AppPath)
 			{
+				CreateNoWindow = false,
+				UseShellExecute = false,
 				WindowStyle = ProcessWindowStyle.Normal,
 				WorkingDirectory = Path.GetDirectoryName(argument.AppPath),
 			};
 
 			//启动升级部署器程序
-			Process.Start(info);
+			return Process.Start(info);
 		}
 	}
 }

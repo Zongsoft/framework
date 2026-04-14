@@ -58,7 +58,7 @@ public static partial class Deployer
 	public static bool HasDeployment() => HasDeployment(out _);
 	public static bool HasDeployment(out FileInfo file)
 	{
-		file = new FileInfo(Path.Combine(Application.ApplicationPath, Deployment.FileName));
+		file = new FileInfo(Path.Combine(Application.ApplicationPath, Deployment.FILE_NAME));
 
 		if(file.Exists)
 		{
@@ -88,7 +88,7 @@ public static partial class Deployer
 	public sealed class Deployment : IDisposable
 	{
 		#region 常量定义
-		internal const string FileName = ".deployment";
+		internal const string FILE_NAME = ".deployment";
 		#endregion
 
 		#region 私有变量
@@ -177,7 +177,7 @@ public static partial class Deployer
 				directory = Application.ApplicationPath;
 
 			//定义部署文件路径
-			var path = Path.Combine(Path.Combine(directory, FileName));
+			var path = Path.Combine(Path.Combine(directory, FILE_NAME));
 
 			using var stream = File.OpenWrite(path);
 			using var writer = new StreamWriter(stream);

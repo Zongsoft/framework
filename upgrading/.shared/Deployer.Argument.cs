@@ -48,8 +48,12 @@ partial class Deployer
 		#endregion
 
 		#region 公共属性
+		/// <summary>获取宿主程序的站点标识。</summary>
+		public string Site => this.TryGetValue(Keys.Site, out var value) ? value : null;
 		/// <summary>获取宿主程序的进程编号。</summary>
 		public int AppId => this.TryGetInt32(Keys.AppId, out var value) ? value : 0;
+		/// <summary>获取宿主程序的应用名称。</summary>
+		public string AppName => this.TryGetValue(Keys.AppName, out var value) ? value : null;
 		/// <summary>获取宿主程序的应用类型。</summary>
 		public string AppType => this.TryGetValue(Keys.AppType, out var value) ? value : null;
 		/// <summary>获取宿主程序的完整路径。</summary>
@@ -96,7 +100,7 @@ partial class Deployer
 
 			foreach(var entry in _parameters)
 			{
-				if(entry.Key.StartsWith($"{Keys.AppArgs}:") || entry.Key.StartsWith($"{Keys.AppArgs}#"))
+				if(entry.Key.StartsWith($"{Keys.AppArgs}#") || entry.Key.StartsWith($"{Keys.AppArgs}:"))
 					args.Add(entry.Value);
 			}
 
@@ -147,10 +151,12 @@ partial class Deployer
 		#region 嵌套子类
 		internal sealed class Keys
 		{
+			public const string Site = "site";
 			public const string AppId = "app.id";
-			public const string AppArgs = "app.args";
+			public const string AppName = "app.name";
 			public const string AppType = "app.type";
 			public const string AppPath = "app.path";
+			public const string AppArgs = "app.args";
 			public const string Deployment = "deployment";
 		}
 		#endregion

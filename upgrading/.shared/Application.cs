@@ -78,6 +78,8 @@ public static class Application
 	public static readonly Architecture Architecture;
 	/// <summary>获取当前运行标识，即系统平台与体系架构组合。如：<c>win-x64</c>、<c>linux-x64</c>、<c>linux-arm64</c>。</summary>
 	public static readonly string RuntimeIdentifier;
+	/// <summary>获取当前应用的站点标识。</summary>
+	public static string Site => field ??= ApplicationContext.Current?.Configuration.GetSection("Site")?.Value;
 	/// <summary>获取当前应用程序名称。</summary>
 	public static string ApplicationName => field ??= ApplicationContext.Current?.Name ?? Assembly.GetEntryAssembly().GetName().Name;
 	/// <summary>获取当前应用程序类型。</summary>

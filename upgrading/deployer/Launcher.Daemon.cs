@@ -32,18 +32,43 @@
  */
 
 using System;
-using System.IO;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
 
 partial class Launcher
 {
-	private sealed class DaemonLauncher : ILauncher
+	private sealed class DaemonLauncher() : Launcher("Daemon")
 	{
-		public string Name => "Daemon";
-		public void Launch(Deployer.Argument argument)
+		protected override Process OnLaunch(Deployer.Argument argument)
 		{
+			string command, args;
+
+			if(OperatingSystem.IsWindows())
+			{
+				command = "sc";
+				args = $"start {argument.AppName}";
+			}
+			else if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
+			{
+				command = "systemctl";
+				args = $"start {GetService(argument)}";
+			}
+			else
+			{
+				Zongsoft.Diagnostics.Logging.GetLogging().Error($"The {this.Name} launcher is not supported on {Environment.OSVersion} operating system.");
+				return null;
+			}
+
+			var info = new ProcessStartInfo(command, args)
+			{
+				CreateNoWindow = true,
+				UseShellExecute = false,
+				RedirectStandardError = true,
+				RedirectStandardOutput = true,
+			};
+
+			return Process.Start(info);
 		}
 	}
 }

@@ -32,42 +32,26 @@
  */
 
 using System;
+using System.IO;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
 
 partial class Launcher
 {
-	private sealed class WebLauncher() : Launcher("Web")
+	private sealed class TerminalLauncher() : Launcher("Terminal")
 	{
 		protected override Process OnLaunch(Deployer.Argument argument)
 		{
-			string command, args;
-
-			if(OperatingSystem.IsWindows())
+			var info = new ProcessStartInfo(argument.AppPath)
 			{
-				command = @"%windir%\system32\inetsrv\appcmd";
-				args = $"recycle apppool {argument.AppName}";
-			}
-			else if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
-			{
-				command = "systemctl";
-				args = $"start {GetService(argument)}";
-			}
-			else
-			{
-				Zongsoft.Diagnostics.Logging.GetLogging().Error($"The {this.Name} launcher is not supported on {Environment.OSVersion} operating system.");
-				return null;
-			}
-
-			var info = new ProcessStartInfo(command, args)
-			{
-				CreateNoWindow = true,
-				UseShellExecute = false,
-				RedirectStandardError = true,
-				RedirectStandardOutput = true,
+				CreateNoWindow = false,
+				UseShellExecute = true,
+				WindowStyle = ProcessWindowStyle.Normal,
+				WorkingDirectory = Path.GetDirectoryName(argument.AppPath),
 			};
 
+			//启动升级部署器程序
 			return Process.Start(info);
 		}
 	}
