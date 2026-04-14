@@ -87,10 +87,6 @@ public abstract partial class Launcher
 			if(File.Exists(argument.Deployment))
 				File.Delete(argument.Deployment);
 		}
-		catch(Exception ex)
-		{
-			Zongsoft.Diagnostics.Logging.GetLogging<Program>().Error(ex);
-		}
 		finally
 		{
 			deployment?.Dispose();
@@ -177,9 +173,12 @@ partial class Launcher : ILauncher
 		}
 
 		if(process.HasExited)
-			Diagnostics.Logging.GetLogging().Error($"The {(string.IsNullOrEmpty(this.Name) ? "default" : this.Name)} launcher has launched successfully.", extra);
+			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? "default" : this.Name)} launcher has launched successfully.", extra);
 		else
-			Diagnostics.Logging.GetLogging().Error($"The {(string.IsNullOrEmpty(this.Name) ? "default" : this.Name)} launcher successfully launched the '[{process.Id}]{process.ProcessName}' program.", extra);
+			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? "default" : this.Name)} launcher successfully launched the '[{process.Id}]{process.ProcessName}' program.", extra);
+
+		//确保日志存储器落盘完成
+		Diagnostics.Logging.FlushAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 	}
 	#endregion
 }
