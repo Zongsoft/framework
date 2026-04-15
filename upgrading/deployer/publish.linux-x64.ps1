@@ -10,13 +10,12 @@ podman run --rm `
     -v "${parentDir}:/source" `
     -v "${outputDir}:/output" `
     -w /source/upgrader `
-    upgrader `
+    zongsoft-framework `
     dotnet publish `
         --self-contained `
         --runtime linux-musl-x64 `
         --framework net10.0 `
         --configuration Release `
-        --output /output `
         -p:PublishAot=true `
         -p:NativeLinker=lld `
         -p:PublishAotUsingRuntimePack=true `
