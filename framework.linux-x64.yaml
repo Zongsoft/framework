@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zongsoft
+  labels:
+    app: zongsoft
+spec:
+  containers:
+  - name: framework
+    image: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+    command: ["/bin/sh"]
+    args: 
+    - "-c"
+    - |
+      apk update
+      apk add --no-cache clang lld zlib-dev musl-dev
+      # Keep the container running
+      tail -f /dev/null
+    workingDir: /Zongsoft/framework
+    volumeMounts:
+    - mountPath: /Zongsoft/framework
+      name: framework-volume
+
+  volumes:
+  - name: framework-volume
+    hostPath:
+      path: /mnt/d/Zongsoft/framework
+      type: Directory
