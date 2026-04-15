@@ -34,36 +34,21 @@
 using System;
 using System.IO;
 using System.Diagnostics;
-using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
 /// <summary>提供宿主应用程序启动功能。</summary>
 public abstract partial class Launcher
 {
-	#region 私有字段
-	private static readonly Dictionary<string, ILauncher> _launchers;
-	#endregion
-
-	#region 静态构造
-	static Launcher()
-	{
-		_launchers = new(StringComparer.OrdinalIgnoreCase);
-
-		foreach(var type in typeof(Launcher).GetNestedTypes(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic))
-		{
-			if(typeof(ILauncher).IsAssignableFrom(type))
-			{
-				var launcher = (ILauncher)Activator.CreateInstance(type);
-				_launchers.Add(launcher.Name, launcher);
-			}
-		}
-	}
-	#endregion
-
-	#region 公共属性
-	/// <summary>获取默认启动器。</summary>
-	public static ILauncher Default => _launchers.TryGetValue(string.Empty, out var launcher) ? launcher : null;
+	#region 单例字段
+	/// <summary>表示 Web 网站应用启动器。</summary>
+	public static readonly ILauncher Web = new WebLauncher();
+	/// <summary>表示 Daemon 后台应用启动器。</summary>
+	public static readonly ILauncher Daemon = new DaemonLauncher();
+	/// <summary>表示 Terminal 终端应用启动器。</summary>
+	public static readonly ILauncher Terminal = new TerminalLauncher();
+	/// <summary>表示通用应用启动器。</summary>
+	public static readonly ILauncher Universal = new UniversalLauncher();
 	#endregion
 
 	#region 公共方法
@@ -72,25 +57,32 @@ public abstract partial class Launcher
 		if(argument == null || deployment == null)
 			return;
 
-		try
-		{
-			//根据宿主应用类型获取对应的启动器
-			if(_launchers.TryGetValue(argument.AppType ?? string.Empty, out var launcher))
-				launcher.Launch(argument);
-			else
-				Default.Launch(argument);
+		//释放部署文件(解除独占锁)
+		deployment.Dispose();
 
-			//释放部署文件(解除独占锁)
-			deployment.Dispose();
-
-			//删除部署文件
-			if(File.Exists(argument.Deployment))
-				File.Delete(argument.Deployment);
-		}
-		finally
+		//根据宿主应用类型获取对应的启动器
+		switch(argument.AppType)
 		{
-			deployment?.Dispose();
+			case "web":
+			case WebLauncher.NAME:
+				Web.Launch(argument);
+				break;
+			case "daemon":
+			case DaemonLauncher.NAME:
+				Daemon.Launch(argument);
+				break;
+			case "terminal":
+			case TerminalLauncher.NAME:
+				Terminal.Launch(argument);
+				break;
+			default:
+				Universal.Launch(argument);
+				break;
 		}
+
+		//删除部署文件
+		if(File.Exists(argument.Deployment))
+			File.Delete(argument.Deployment);
 	}
 	#endregion
 

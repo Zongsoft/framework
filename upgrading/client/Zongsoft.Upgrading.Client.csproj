@@ -30,7 +30,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.41.2" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.43.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

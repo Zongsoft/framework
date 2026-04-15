@@ -32,6 +32,7 @@
  */
 
 using System;
+using System.Threading;
 
 namespace Zongsoft.Upgrading;
 
@@ -48,7 +49,8 @@ internal class Program
 			if(argument == null)
 			{
 				Console.WriteLine($"{Deployer.Name}@{Deployer.Version}");
-				Console.WriteLine($"Missing the required command-line arguments({Deployer.Argument.Keys.AppId}, {Deployer.Argument.Keys.AppType}, {Deployer.Argument.Keys.Deployment}, ...)");
+				Console.Error.WriteLine($"Missing the required command-line arguments({Deployer.Argument.Keys.AppId}, {Deployer.Argument.Keys.AppType}, {Deployer.Argument.Keys.Deployment}, ...)");
+				Environment.ExitCode = -1;
 				return;
 			}
 
@@ -63,5 +65,8 @@ internal class Program
 		{
 			Zongsoft.Diagnostics.Logging.GetLogging().Error(ex);
 		}
+
+		//等待后台线程和任务完成
+		Thread.Sleep(500);
 	}
 }

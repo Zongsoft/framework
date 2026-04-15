@@ -39,8 +39,10 @@ namespace Zongsoft.Upgrading;
 
 partial class Launcher
 {
-	private sealed class TerminalLauncher() : Launcher("Terminal")
+	private sealed class TerminalLauncher() : Launcher(NAME)
 	{
+		public const string NAME = "Terminal";
+
 		protected override Process OnLaunch(Deployer.Argument argument)
 		{
 			var info = new ProcessStartInfo(argument.AppPath)

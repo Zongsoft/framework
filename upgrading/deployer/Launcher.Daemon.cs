@@ -38,8 +38,10 @@ namespace Zongsoft.Upgrading;
 
 partial class Launcher
 {
-	private sealed class DaemonLauncher() : Launcher("Daemon")
+	private sealed class DaemonLauncher() : Launcher(NAME)
 	{
+		public const string NAME = "Daemon";
+
 		protected override Process OnLaunch(Deployer.Argument argument)
 		{
 			string command, args;

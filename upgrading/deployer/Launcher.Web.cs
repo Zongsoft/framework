@@ -38,8 +38,10 @@ namespace Zongsoft.Upgrading;
 
 partial class Launcher
 {
-	private sealed class WebLauncher() : Launcher("Web")
+	private sealed class WebLauncher() : Launcher(NAME)
 	{
+		public const string NAME = "Web";
+
 		protected override Process OnLaunch(Deployer.Argument argument)
 		{
 			string command, args;

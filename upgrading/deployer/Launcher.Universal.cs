@@ -39,8 +39,10 @@ namespace Zongsoft.Upgrading;
 
 partial class Launcher
 {
-	private sealed class DefaultLauncher() : Launcher(string.Empty)
+	private sealed class UniversalLauncher() : Launcher(NAME)
 	{
+		public const string NAME = "";
+
 		protected override Process OnLaunch(Deployer.Argument argument)
 		{
 			var info = new ProcessStartInfo(argument.AppPath)
