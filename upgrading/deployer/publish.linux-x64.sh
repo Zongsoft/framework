@@ -6,5 +6,5 @@ dotnet publish \
 	--configuration Release \
 	-p:PublishAot=true \
 	-p:NativeLinker=lld \
-	-p:PublishAotUsingRuntimePack=true \
-	-p:StripSymbols=false
+	-p:StripSymbols=false \
+	-p:PublishAotUsingRuntimePack=true
