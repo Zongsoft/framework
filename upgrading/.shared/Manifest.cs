@@ -60,18 +60,12 @@ public sealed class Manifest
 	public Release[] Deltas { get; set; }
 
 	/// <summary>获取发布清单名称。</summary>
-	[System.Text.Json.Serialization.JsonIgnore]
-	[Serialization.SerializationMember(Ignored = true)]
 	public string Name => this.Trunk != null ? this.Trunk.Name : this.Deltas.Length > 0 ? this.Deltas[0].Name : null;
 
 	/// <summary>获取发布清单版本号，即本次升级发布中的最高版本。</summary>
-	[System.Text.Json.Serialization.JsonIgnore]
-	[Serialization.SerializationMember(Ignored = true)]
 	public Version Version => this.Deltas.Max(delta => delta.Version) ?? this.Trunk?.Version;
 
 	/// <summary>获取一个值，指示当前升级清单是否为空。</summary>
-	[System.Text.Json.Serialization.JsonIgnore]
-	[Serialization.SerializationMember(Ignored = true)]
 	public bool IsEmpty => this.Trunk == null && (this.Deltas == null || this.Deltas.Length == 0);
 	#endregion
 

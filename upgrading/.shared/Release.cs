@@ -108,12 +108,9 @@ public partial class Release
 	public string Description { get; set; }
 
 	/// <summary>获取执行器集合。</summary>
-	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
 	public ICollection<Executor> Executors { get; }
 
 	/// <summary>获取发布扩展属性集。</summary>
-	[System.Text.Json.Serialization.JsonExtensionData]
-	[System.Text.Json.Serialization.JsonObjectCreationHandling(System.Text.Json.Serialization.JsonObjectCreationHandling.Populate)]
 	public IDictionary<string, object> Properties { get; }
 	#endregion
 
