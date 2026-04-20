@@ -67,7 +67,7 @@ partial class Fetcher
 		#endregion
 
 		#region 重写方法
-		protected override async IAsyncEnumerable<Release> OnFetchAsync(Version version, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
+		protected override async IAsyncEnumerable<Release> OnFetchAsync(string edition, Version version, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(this.Url))
 				yield break;

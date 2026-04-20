@@ -100,7 +100,7 @@ public sealed class Extractor
 		}
 
 		//在目标目录中创建一个版本文件（含应用名、版本名、版本号）
-		Services.ApplicationModuleIdentifier.Save(destination.FullName, manifest.Name, manifest.Edition, manifest.Version);
+		Services.ApplicationIdentifier.Save(destination.FullName, manifest.Name, manifest.Edition, manifest.Version);
 
 		//返回部署成功
 		return destination.FullName;

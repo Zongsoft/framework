@@ -65,26 +65,27 @@ public abstract partial class Fetcher
 	/// <summary>通过默认通道获取最新版本的升级信息。</summary>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果获取成功则返回包含结果升级清单和文件信息的结果对象，否则返回空(<c>null</c>)。</returns>
-	public static ValueTask<Result> FetchAsync(CancellationToken cancellation = default) => FetchAsync(null, null, cancellation);
+	public static ValueTask<Result> FetchAsync(CancellationToken cancellation = default) => FetchAsync(null, null, null, cancellation);
 
 	/// <summary>通过默认通道获取指定版本的升级信息。</summary>
 	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果获取成功则返回包含结果升级清单和文件信息的结果对象，否则返回空(<c>null</c>)。</returns>
-	public static ValueTask<Result> FetchAsync(Version version, CancellationToken cancellation = default) => FetchAsync(null, version, cancellation);
+	public static ValueTask<Result> FetchAsync(Version version, CancellationToken cancellation = default) => FetchAsync(null, null, version, cancellation);
 
 	/// <summary>通过指定通道获取最新版本的升级信息。</summary>
 	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串(<c>""</c>)，则表示默认通道。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果获取成功则返回包含结果升级清单和文件信息的结果对象，否则返回空(<c>null</c>)。</returns>
-	public static ValueTask<Result> FetchAsync(string name, CancellationToken cancellation = default) => FetchAsync(name, null, cancellation);
+	public static ValueTask<Result> FetchAsync(string name, CancellationToken cancellation = default) => FetchAsync(name, null, null, cancellation);
 
 	/// <summary>通过指定通道获取指定版本的升级信息。</summary>
 	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串(<c>""</c>)，则表示默认通道。</param>
+	/// <param name="edition">指定要升级的版本名，如果为空(<c>null</c>)或空字符串则表示不限定版本名。</param>
 	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果获取成功则返回包含结果升级清单和文件信息的结果对象，否则返回空(<c>null</c>)。</returns>
-	public static async ValueTask<Result> FetchAsync(string name, Version version, CancellationToken cancellation = default)
+	public static async ValueTask<Result> FetchAsync(string name, string edition, Version version, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(name))
 		{
@@ -99,7 +100,7 @@ public abstract partial class Fetcher
 			return default;
 
 		//获取升级清单信息
-		var manifest = await fetcher.FetchAsync(version, cancellation);
+		var manifest = await fetcher.FetchAsync(edition, version, cancellation);
 		if(manifest == null || manifest.IsEmpty)
 			return default;
 
@@ -174,7 +175,7 @@ partial class Fetcher : IFetcher
 	#region 显式实现
 	string IFetcher.Name => this.Name;
 	IDownloader IFetcher.Downloader => this.Downloader;
-	async ValueTask<Manifest> IFetcher.FetchAsync(Version version, CancellationToken cancellation)
+	async ValueTask<Manifest> IFetcher.FetchAsync(string edition, Version version, CancellationToken cancellation)
 	{
 		var trunk = default(Release);
 		var deltas = new List<Release>();
@@ -182,12 +183,16 @@ partial class Fetcher : IFetcher
 		var currentlyVersion = Application.ApplicationVersion;
 
 		//获取升级发布集合
-		var releases = this.OnFetchAsync(version, cancellation);
+		var releases = this.OnFetchAsync(edition, version, cancellation);
 
 		await foreach(var release in releases)
 		{
 			//跳过废弃和无效版本号的升级发布
 			if(release == null || release.Deprecated || release.Version.IsZero())
+				continue;
+
+			//跳过版本名不匹配的升级发布
+			if(!string.IsNullOrEmpty(edition) && !string.IsNullOrEmpty(release.Edition) && !string.Equals(edition, release.Edition, StringComparison.OrdinalIgnoreCase))
 				continue;
 
 			//筛选出满足要求的升级发布：
@@ -212,6 +217,6 @@ partial class Fetcher : IFetcher
 	#endregion
 
 	#region 抽象方法
-	protected abstract IAsyncEnumerable<Release> OnFetchAsync(Version version, CancellationToken cancellation);
+	protected abstract IAsyncEnumerable<Release> OnFetchAsync(string edition, Version version, CancellationToken cancellation);
 	#endregion
 }

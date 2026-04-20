@@ -66,16 +66,11 @@ public static partial class Deployer
 
 			if(deployment != null)
 			{
-				var filePath = Path.Combine(deployment.Packages, ".version");
+				var identifier = Services.ApplicationIdentifier.Load(deployment.Packages);
 
-				if(File.Exists(filePath))
-				{
-					using var reader = File.OpenText(filePath);
-					var version = Utility.GetVersion(reader, out var name);
-
-					if(version != null && version > Application.ApplicationVersion && string.Equals(Application.ApplicationName, name, StringComparison.OrdinalIgnoreCase))
-						return true;
-				}
+				return identifier.Version != null &&
+					identifier.Version > Application.ApplicationVersion &&
+					string.Equals(Application.ApplicationName, identifier.Name, StringComparison.OrdinalIgnoreCase);
 			}
 		}
 

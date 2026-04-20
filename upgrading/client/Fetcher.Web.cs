@@ -73,7 +73,7 @@ partial class Fetcher
 		#endregion
 
 		#region 重写方法
-		protected override async IAsyncEnumerable<Release> OnFetchAsync(Version version, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
+		protected override async IAsyncEnumerable<Release> OnFetchAsync(string edition, Version version, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 		{
 			var client = this.Client;
 			if(client == null)
@@ -93,6 +93,7 @@ partial class Fetcher
 					new KeyValuePair<string, string>[]
 					{
 						new(nameof(Release.Name), Application.ApplicationName),
+						new(nameof(Release.Edition), Application.ApplicationEdition),
 						new(nameof(Release.Platform), Application.Platform.ToString()),
 						new(nameof(Release.Architecture), Application.Architecture.ToString()),
 						new("CurrentlyVersion", Application.ApplicationVersion.ToString()),
@@ -100,6 +101,7 @@ partial class Fetcher
 					new KeyValuePair<string, string>[]
 					{
 						new(nameof(Release.Name), Application.ApplicationName),
+						new(nameof(Release.Edition), Application.ApplicationEdition),
 						new(nameof(Release.Platform), Application.Platform.ToString()),
 						new(nameof(Release.Architecture), Application.Architecture.ToString()),
 						new("CurrentlyVersion", Application.ApplicationVersion.ToString()),

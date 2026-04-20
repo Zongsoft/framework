@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -86,8 +85,10 @@ public static class Application
 	public static string ApplicationType => field ??= ApplicationContext.Current?.ApplicationType ?? (IsWebApplication() ? "Web" : string.Empty);
 	/// <summary>获取当前应用程序根目录。</summary>
 	public static string ApplicationPath => field ??= ApplicationContext.Current?.ApplicationPath ?? AppContext.BaseDirectory;
+	/// <summary>获取当前应用程序版本名。</summary>
+	public static string ApplicationEdition => field ??= ApplicationContext.Current?.Edition ?? GetIdentifier().Edition;
 	/// <summary>获取当前应用程序版本号。</summary>
-	public static Version ApplicationVersion => field ??= ApplicationContext.Current?.Version ?? GetVersion() ?? Assembly.GetExecutingAssembly().GetName().Version;
+	public static Version ApplicationVersion => field ??= ApplicationContext.Current?.Version ?? GetIdentifier().Version ?? Assembly.GetExecutingAssembly().GetName().Version;
 	#endregion
 
 	#region 公共方法
@@ -98,14 +99,14 @@ public static class Application
 	#endregion
 
 	#region 私有方法
-	private static Version GetVersion() => GetVersion(ApplicationName, ApplicationPath);
-	private static Version GetVersion(string name, string path)
+	private static ApplicationIdentifier GetIdentifier() => GetIdentifier(ApplicationName, ApplicationPath);
+	private static ApplicationIdentifier GetIdentifier(string name, string path)
 	{
 		if(string.IsNullOrEmpty(name) || string.IsNullOrEmpty(path))
-			return null;
+			return default;
 
-		var version = Utility.GetVersion(Path.Combine(path, ".version"), out var appname);
-		return version != null && (string.IsNullOrEmpty(appname) || string.Equals(name, appname, StringComparison.OrdinalIgnoreCase)) ? version : null;
+		var identifier = ApplicationIdentifier.Load(path);
+		return !identifier.IsEmpty && (string.IsNullOrEmpty(identifier.Name) || string.Equals(name, identifier.Name, StringComparison.OrdinalIgnoreCase)) ? identifier : default;
 	}
 
 	private static bool IsWebApplication()

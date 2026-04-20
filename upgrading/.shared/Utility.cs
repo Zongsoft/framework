@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.IO;
 
 namespace Zongsoft.Upgrading;
 
@@ -44,53 +43,4 @@ public static class Utility
 		version.Build == 0 &&
 		version.Revision == 0
 	);
-
-	internal static Version GetVersion(string path, out string name)
-	{
-		if(string.IsNullOrEmpty(path))
-		{
-			name = null;
-			return null;
-		}
-
-		//定义版本文件信息
-		var info = new FileInfo(path);
-
-		//如果文件不存在或者文件大小超过指定大小，则认为该文件无效
-		if(!info.Exists || info.Length > 1024 * 10)
-		{
-			name = null;
-			return null;
-		}
-
-		using var reader = info.OpenText();
-		return GetVersion(reader, out name);
-	}
-
-	internal static Version GetVersion(StreamReader reader, out string name)
-	{
-		string text;
-
-		while((text = reader.ReadLine()) != null)
-		{
-			if(string.IsNullOrEmpty(text))
-				continue;
-
-			var index = text.LastIndexOf('@');
-
-			if(index < 0)
-			{
-				name = null;
-				return Version.TryParse(text, out var version) ? version : null;
-			}
-			else
-			{
-				name = text[..index];
-				return Version.TryParse(text.AsSpan()[(index + 1)..], out var version) ? version : null;
-			}
-		}
-
-		name = null;
-		return null;
-	}
 }
