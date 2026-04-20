@@ -27,57 +27,10 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.IO;
-
 namespace Zongsoft.Services;
 
 internal static class ApplicationModuleUtility
 {
-	public static Version GetVersion(this IApplicationModule module)
-	{
-		if(module == null || module.Assembly == null)
-			return null;
-
-		var version = GetVersionFromFile(module.Name, Path.GetDirectoryName(module.Assembly.Location));
-		if(version != null)
-			return version;
-
-		return module.Assembly.GetName().Version;
-
-		static Version GetVersionFromFile(string name, string path)
-		{
-			if(string.IsNullOrEmpty(name) || string.IsNullOrEmpty(path))
-				return null;
-
-			//定义版本文件信息
-			var info = new FileInfo(Path.Combine(path, ".version"));
-
-			//如果文件不存在或者文件大小超过指定大小，则认为该文件无效
-			if(!info.Exists || info.Length > 1024 * 10)
-				return null;
-
-			string text;
-			using var reader = info.OpenText();
-
-			while((text = reader.ReadLine()) != null)
-			{
-				if(string.IsNullOrEmpty(text))
-					continue;
-
-				var index = text.IndexOf('@');
-
-				if(index < 0)
-					return Version.TryParse(text, out var version) ? version : null;
-				else
-					return Version.TryParse(text.AsSpan()[(index + 1)..], out var version) &&
-						   text.AsSpan()[..index].Equals(name.AsSpan(), StringComparison.OrdinalIgnoreCase) ? version : null;
-			}
-
-			return null;
-		}
-	}
-
 	public static string GetTitle(this IApplicationModule module)
 	{
 		if(module != null && module.Assembly != null && module.Name != null)

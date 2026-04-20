@@ -55,12 +55,13 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 
 	#region 公共属性
 	public string Name { get; }
+	public string Edition => field ??= this.GetEdition();
+	public Version Version => field ??= this.GetVersion();
 
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
 	public Assembly Assembly { get; }
 	public Parameters Properties { get; }
-	public Version Version => field ??= this.GetVersion();
 	public string Title => this.GetTitle();
 	public string Description => this.GetDescription();
 
@@ -80,7 +81,8 @@ public class ApplicationModule : IApplicationModule, IMatchable, IDisposable
 	#endregion
 
 	#region 虚拟方法
-	protected virtual Version GetVersion() => ApplicationModuleUtility.GetVersion(this);
+	protected virtual string GetEdition() => ApplicationModuleIdentifier.Load(this).Edition;
+	protected virtual Version GetVersion() => ApplicationModuleIdentifier.Load(this).Version;
 	protected virtual string GetTitle() => ApplicationModuleUtility.GetTitle(this);
 	protected virtual string GetDescription() => ApplicationModuleUtility.GetDescription(this);
 	#endregion

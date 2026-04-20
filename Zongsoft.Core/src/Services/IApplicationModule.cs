@@ -42,7 +42,10 @@ public interface IApplicationModule
 	/// <summary>获取应用模块名称。</summary>
 	string Name { get; }
 
-	/// <summary>获取应用模块版本。</summary>
+	/// <summary>获取应用模块版本名。</summary>
+	string Edition { get; }
+
+	/// <summary>获取应用模块版本号。</summary>
 	Version Version { get; }
 
 	/// <summary>获取应用模块的标题。</summary>
