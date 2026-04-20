@@ -174,8 +174,8 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#region 虚拟方法
 	protected virtual IApplicationEnvironment CreateEnvironment(IHostEnvironment environment, IDictionary<object, object> properties) => new ApplicationEnvironment(environment, properties);
 	protected virtual string GetName() => this.Services.GetService<IHostEnvironment>()?.ApplicationName ?? Assembly.GetEntryAssembly()?.GetName().Name;
-	protected virtual string GetEdition() => ApplicationModuleIdentifier.Load(this).Edition;
-	protected virtual Version GetVersion() => ApplicationModuleIdentifier.Load(this).Version;
+	protected virtual string GetEdition() => ApplicationIdentifier.Load(this).Edition;
+	protected virtual Version GetVersion() => ApplicationIdentifier.Load(this).Version;
 	protected virtual string GetTitle() => ApplicationModuleUtility.GetTitle(this) ?? this.Configuration?.GetSection("ApplicationTitle")?.Value;
 	protected virtual string GetDescription() => ApplicationModuleUtility.GetDescription(this) ?? this.Configuration?.GetSection("ApplicationDescription")?.Value;
 	#endregion
