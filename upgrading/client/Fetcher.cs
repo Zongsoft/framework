@@ -182,6 +182,10 @@ partial class Fetcher : IFetcher
 		var upgradingVersion = version;
 		var currentlyVersion = Application.ApplicationVersion;
 
+		//如果指定的版本名为空，则取当前应用版本名
+		if(string.IsNullOrEmpty(edition))
+			edition = Application.ApplicationEdition;
+
 		//获取升级发布集合
 		var releases = this.OnFetchAsync(edition, version, cancellation);
 
