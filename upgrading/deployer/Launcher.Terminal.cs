@@ -45,7 +45,17 @@ partial class Launcher
 
 		protected override Process OnLaunch(Deployer.Argument argument)
 		{
-			var info = new ProcessStartInfo(argument.AppPath)
+			var extension = Path.GetExtension(argument.AppPath);
+			var command = string.Equals(extension, ".dll", StringComparison.OrdinalIgnoreCase) ?
+				$"dotnet {argument.AppPath}" : argument.AppPath;
+
+			if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
+			{
+				if(string.Equals(extension, ".exe", StringComparison.OrdinalIgnoreCase))
+					command = $"dotnet {Path.ChangeExtension(argument.AppPath, ".dll")}";
+			}
+
+			var info = new ProcessStartInfo(command, argument.AppArgs)
 			{
 				CreateNoWindow = false,
 				UseShellExecute = true,
