@@ -54,13 +54,16 @@ public sealed class Manifest
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取或设置升级的主干全量升级包。</summary>
-	public Release Trunk { get; set; }
-	/// <summary>获取或设置升级的增量升级包集合。</summary>
-	public Release[] Deltas { get; set; }
+	/// <summary>获取升级的主干全量升级包。</summary>
+	public Release Trunk { get; }
+	/// <summary>获取升级的增量升级包集合。</summary>
+	public Release[] Deltas { get; }
 
 	/// <summary>获取发布清单名称。</summary>
 	public string Name => this.Trunk != null ? this.Trunk.Name : this.Deltas.Length > 0 ? this.Deltas[0].Name : null;
+
+	/// <summary>获取发布清单版本名，即本次升级发布中的最高版本。</summary>
+	public string Edition => this.Deltas.MaxBy(delta => delta.Version)?.Edition ?? this.Trunk?.Edition;
 
 	/// <summary>获取发布清单版本号，即本次升级发布中的最高版本。</summary>
 	public Version Version => this.Deltas.Max(delta => delta.Version) ?? this.Trunk?.Version;

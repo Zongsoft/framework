@@ -99,11 +99,8 @@ public sealed class Extractor
 			await OnExtractedAsync(manifest.Trunk, source, destination.FullName, cancellation);
 		}
 
-		//在目标目录下创建一个版本文件并将版本号写入到该文件中
-		using var stream = File.OpenWrite(Path.Combine(destination.FullName, ".version"));
-		using var writer = new StreamWriter(stream);
-		writer.WriteLine($"{manifest.Name}@{manifest.Version}");
-		await writer.FlushAsync(cancellation);
+		//在目标目录中创建一个版本文件（含应用名、版本名、版本号）
+		Services.ApplicationModuleIdentifier.Save(destination.FullName, manifest.Name, manifest.Edition, manifest.Version);
 
 		//返回部署成功
 		return destination.FullName;

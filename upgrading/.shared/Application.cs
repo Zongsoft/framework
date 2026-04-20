@@ -84,8 +84,9 @@ public static class Application
 	public static string ApplicationName => field ??= ApplicationContext.Current?.Name ?? Assembly.GetEntryAssembly().GetName().Name;
 	/// <summary>获取当前应用程序类型。</summary>
 	public static string ApplicationType => field ??= ApplicationContext.Current?.ApplicationType ?? (IsWebApplication() ? "Web" : string.Empty);
+	/// <summary>获取当前应用程序根目录。</summary>
 	public static string ApplicationPath => field ??= ApplicationContext.Current?.ApplicationPath ?? AppContext.BaseDirectory;
-	/// <summary>获取当前应用程序版本。</summary>
+	/// <summary>获取当前应用程序版本号。</summary>
 	public static Version ApplicationVersion => field ??= ApplicationContext.Current?.Version ?? GetVersion() ?? Assembly.GetExecutingAssembly().GetName().Version;
 	#endregion
 
