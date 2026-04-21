@@ -129,6 +129,15 @@ partial class Launcher : ILauncher
 	void ILauncher.Launch(Deployer.Argument argument)
 	{
 		var process = this.OnLaunch(argument);
+
+		Zongsoft.Diagnostics.Logging.GetLogging().Error(
+			$"[进程已启动]\nid:{process.Id}\n" +
+			$"name:{process.ProcessName}\n" +
+			$"file:{process.StartInfo.FileName}\n" +
+			$"args:{process.StartInfo.Arguments}\n" +
+			$"argList:{string.Join(" | ", process.StartInfo.ArgumentList)}\n" +
+			$"workingDir:{process.StartInfo.WorkingDirectory}\n");
+
 		this.OnLaunched(argument, process);
 	}
 	#endregion
