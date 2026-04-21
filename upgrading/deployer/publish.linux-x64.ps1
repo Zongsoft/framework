@@ -1,6 +1,6 @@
 podman exec `
     -w /Zongsoft/framework/upgrading/deployer `
-    zongsoft-framework           `
+    zongsoft.framework-framework `
     dotnet publish               `
         --self-contained         `
         --runtime linux-musl-x64 `
