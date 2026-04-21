@@ -41,6 +41,7 @@ public readonly struct ApplicationIdentifier
 	#endregion
 
 	#region 构造函数
+	public ApplicationIdentifier(string name, Version version = null) : this(name, null, version) { }
 	public ApplicationIdentifier(string name, string edition, Version version = null)
 	{
 		this.Name = name;
