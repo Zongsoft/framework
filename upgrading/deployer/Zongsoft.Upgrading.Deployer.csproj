@@ -57,6 +57,7 @@
 
 		<Compile Include="..\.shared\commands\CopyCommand.cs" Link="Commands\CopyCommand.cs" />
 		<Compile Include="..\.shared\commands\MoveCommand.cs" Link="Commands\MoveCommand.cs" />
+		<Compile Include="..\.shared\commands\LinkCommand.cs" Link="Commands\LinkCommand.cs" />
 		<Compile Include="..\.shared\commands\DeleteCommand.cs" Link="Commands\DeleteCommand.cs" />
 	</ItemGroup>
 </Project>

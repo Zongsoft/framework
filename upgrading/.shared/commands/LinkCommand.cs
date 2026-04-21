@@ -28,44 +28,42 @@
  */
 
 using System;
+using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
-namespace Zongsoft.Upgrading;
+using Zongsoft.Components;
 
-partial class Executor
+namespace Zongsoft.Upgrading.Commands;
+
+public class LinkCommand : CommandBase<CommandContext>
 {
-	#if NET9_0_OR_GREATER
-	private static readonly Lock _locker = new();
-	#else
-	private static readonly object _locker = new();
-	#endif
+	#region 单例字段
+	public static readonly LinkCommand Instance = new();
+	#endregion
 
-	private static bool _initialized;
-	static partial void Initialize()
+	#region 构造函数
+	public LinkCommand() : base("Link") { }
+	public LinkCommand(string name) : base(name) { }
+	#endregion
+
+	#region 重写方法
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		if(_initialized)
-			return;
+		if(context.Arguments.IsEmpty || context.Arguments.Count % 2 != 0)
+			return default;
 
-		lock(_locker)
+		if(context.Arguments.Count == 2)
+			return ValueTask.FromResult<object>(File.CreateSymbolicLink(context.Arguments[0], context.Arguments[1]));
+
+		var result = new FileSystemInfo[context.Arguments.Count / 2];
+
+		for(int i = 0; i < context.Arguments.Count / 2; i++)
 		{
-			if(_initialized)
-				return;
-
-			if(Components.CommandExecutor.Default.Root.HasChildren)
-			{
-				Components.CommandExecutor.Default.Root.Children.Remove(Commands.CopyCommand.Instance.Name);
-				Components.CommandExecutor.Default.Root.Children.Remove(Commands.MoveCommand.Instance.Name);
-				Components.CommandExecutor.Default.Root.Children.Remove(Commands.LinkCommand.Instance.Name);
-				Components.CommandExecutor.Default.Root.Children.Remove(Commands.DeleteCommand.Instance.Name);
-			}
-
-			Components.CommandExecutor.Default.Root.Children.Add(Commands.CopyCommand.Instance);
-			Components.CommandExecutor.Default.Root.Children.Add(Commands.MoveCommand.Instance);
-			Components.CommandExecutor.Default.Root.Children.Add(Commands.LinkCommand.Instance);
-			Components.CommandExecutor.Default.Root.Children.Add(Commands.DeleteCommand.Instance);
-
-			//设置初始化完成
-			_initialized = true;
+			result[i] = File.CreateSymbolicLink(context.Arguments[i * 2], context.Arguments[(i * 2) + 1]);
 		}
+
+		return ValueTask.FromResult<object>(result);
 	}
+	#endregion
 }
