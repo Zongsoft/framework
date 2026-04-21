@@ -40,6 +40,9 @@ partial class Deployer
 {
 	internal static class Helper
 	{
+		/// <summary>表示文件系统路径的文本比较方式。</summary>
+		internal static readonly StringComparison Comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
 		public static bool Clean(string root, Argument argument)
 		{
 			if(string.IsNullOrEmpty(root) || !Directory.Exists(root))
@@ -47,15 +50,13 @@ partial class Deployer
 
 			//获取部署器程序所在的目录
 			var directory = Path.GetDirectoryName(Environment.ProcessPath);
-			//定义路径匹配的文本比较方式
-			var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
 			try
 			{
 				var directories = Directory.GetDirectories(root);
 				for(int i = 0; i < directories.Length; i++)
 				{
-					if(directories[i].StartsWith(directory, comparison))
+					if(directories[i].StartsWith(directory, Comparison))
 						continue;
 
 					Directory.Delete(directories[i], true);
@@ -64,10 +65,10 @@ partial class Deployer
 				var files = Directory.GetFiles(root);
 				for(int i = 0; i < files.Length; i++)
 				{
-					if(files[i].StartsWith(directory, comparison))
+					if(files[i].StartsWith(directory, Comparison))
 						continue;
 
-					if(string.Equals(files[i], argument.Deployment, comparison))
+					if(string.Equals(files[i], argument.Deployment, Comparison))
 						continue;
 
 					File.Delete(files[i]);
@@ -97,6 +98,10 @@ partial class Deployer
 			for(int i = 0; i < directories.Length; i++)
 			{
 				var directory = EnsureDirectory(Path.Combine(destination, directories[i].Name));
+
+				if(directory.FullName.StartsWith(Path.GetDirectoryName(Environment.ProcessPath), Comparison))
+					continue;
+
 				Replicate(directories[i], directory.FullName);
 			}
 
