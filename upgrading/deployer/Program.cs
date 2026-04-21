@@ -33,12 +33,13 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
 internal class Program
 {
-	static void Main(string[] args)
+	static async Task Main(string[] args)
 	{
 		try
 		{
@@ -59,7 +60,7 @@ internal class Program
 				Console.WriteLine(Deployer.Version);
 
 			//执行部署任务
-			Deployer.Deploy(argument);
+			await Deployer.DeployAsync(argument);
 		}
 		catch(Exception ex)
 		{
@@ -67,6 +68,6 @@ internal class Program
 		}
 
 		//等待后台线程和任务完成
-		Thread.Sleep(500);
+		await Task.Delay(500);
 	}
 }

@@ -33,14 +33,21 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
 
 partial class Deployer
 {
+	#region 事件声明
+	public static event EventHandler<DeployEventArgs> Deployed;
+	public static event EventHandler<DeployEventArgs> Deploying;
+	#endregion
+
 	#region 公共方法
-	public static void Deploy(Argument argument)
+	public static async ValueTask DeployAsync(Argument argument, CancellationToken cancellation = default)
 	{
 		//等待宿主程序退出
 		if(!WaitHostExit(argument))
@@ -68,12 +75,37 @@ partial class Deployer
 		if(manifest.Trunk != null && manifest.Trunk.Kind == ReleaseKind.Fully)
 			Helper.Clean(root, argument);
 
+		//激发“Deploying”事件
+		await OnDeployingAsync(argument, manifest, cancellation);
+
 		//将部署包源目录中的所有文件及子目录复制到宿主程序根目录
 		Helper.Replicate(packages, root);
+
+		//激发“Deployed”事件
+		await OnDeployedAsync(argument, manifest, cancellation);
 
 		//启动宿主程序
 		Launcher.Launch(deployment, argument);
 	}
+	#endregion
+
+	#region 触发事件
+	private static async ValueTask OnDeployedAsync(Argument argument, Manifest manifest, CancellationToken cancellation)
+	{
+		var args = new DeployEventArgs(argument, manifest);
+		OnDeployed(args);
+		await Executor.ExecuteAsync(nameof(Deployed), null, args, cancellation);
+	}
+
+	private static async ValueTask OnDeployingAsync(Argument argument, Manifest manifest, CancellationToken cancellation)
+	{
+		var args = new DeployEventArgs(argument, manifest);
+		OnDeploying(args);
+		await Executor.ExecuteAsync(nameof(Deploying), null, args, cancellation);
+	}
+
+	private static void OnDeployed(DeployEventArgs args) => Deployed?.Invoke(null, args);
+	private static void OnDeploying(DeployEventArgs args) => Deploying?.Invoke(null, args);
 	#endregion
 
 	#region 私有方法
@@ -81,19 +113,19 @@ partial class Deployer
 	{
 		var deployment = argument.Deployment;
 
-		if(!string.IsNullOrEmpty(deployment))
-		{
-			if(!File.Exists(deployment))
-				return null;
+		if(string.IsNullOrEmpty(deployment))
+			return null;
 
-			try
-			{
-				return Deployment.Load(deployment, true);
-			}
-			catch(Exception ex)
-			{
-				Zongsoft.Diagnostics.Logging.GetLogging<Program>().Error(ex);
-			}
+		if(!File.Exists(deployment))
+			return null;
+
+		try
+		{
+			return Deployment.Load(deployment, true);
+		}
+		catch(Exception ex)
+		{
+			Zongsoft.Diagnostics.Logging.GetLogging<Program>().Error(ex);
 		}
 
 		return null;
@@ -135,6 +167,20 @@ partial class Deployer
 			try { return process == null || process.HasExited; }
 			catch { return false; }
 		}
+	}
+	#endregion
+
+	#region 嵌套子类
+	/// <summary>表示部署事件的参数类。</summary>
+	public class DeployEventArgs : ReleaseEventArgs
+	{
+		public DeployEventArgs(Argument argument, Manifest manifest) : base(manifest.Trunk == null ? manifest.Deltas : [manifest.Trunk, ..manifest.Deltas])
+		{
+			this.Argument = argument;
+		}
+
+		/// <summary>获取部署参数对象。</summary>
+		public Argument Argument { get; }
 	}
 	#endregion
 }

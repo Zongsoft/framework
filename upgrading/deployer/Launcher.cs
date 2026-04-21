@@ -165,9 +165,9 @@ partial class Launcher : ILauncher
 		}
 
 		if(process.HasExited)
-			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? "default" : this.Name)} launcher has launched successfully.", extra);
+			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher has launched successfully.", extra);
 		else
-			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? "default" : this.Name)} launcher successfully launched the '[{process.Id}]{process.ProcessName}' program.", extra);
+			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher successfully launched the '[{process.Id}]{process.ProcessName}' program.", extra);
 
 		//确保日志存储器落盘完成
 		Diagnostics.Logging.FlushAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();

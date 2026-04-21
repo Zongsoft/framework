@@ -34,8 +34,20 @@ namespace Zongsoft.Upgrading;
 /// <summary>表示发布相关的事件参数类。</summary>
 public class ReleaseEventArgs : EventArgs
 {
-	public ReleaseEventArgs(Release release) => this.Release = release;
+	#region 构造函数
+	public ReleaseEventArgs(params Release[] releases)
+	{
+		this.Releases = releases ?? [];
 
+		if(releases.Length > 0)
+			this.Release = releases[0];
+	}
+	#endregion
+
+	#region 公共属性
 	/// <summary>获取发布对象。</summary>
 	public Release Release { get; }
+	/// <summary>获取发布对象集。</summary>
+	public Release[] Releases { get; }
+	#endregion
 }
