@@ -24,7 +24,13 @@
 
 ### Linux 平台
 
+#### 容器内发布
+
 1. 运行 [_framework.start_](./../../framework-start.cmd) 脚本启动一个包含 _.NET 10 SDK_ 的 _alpine_ 的 _**L**inux_ 容器；
+	> 先确保该容器已经加载完成：
+	> - `podman ps -a --pod`
+	> - `podman logs zongsoft-framework`
+
 2. 运行下面命令进入名为 `zongsoft-framework` 容器的虚拟机：
 	```cmd
 	podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft-framework sh
@@ -35,3 +41,17 @@
 	```
 4. 发布完成后，通过 `exit` 命令退出虚拟机；
 5. 运行 [_framework.stop_](./../../framework-stop.cmd) 脚本关闭该容器。
+
+
+#### 容器外发布
+
+1. 运行 [_framework.start_](./../../framework-start.cmd) 脚本启动一个包含 _.NET 10 SDK_ 的 _alpine_ 的 _**L**inux_ 容器；
+	> 先确保该容器已经加载完成：
+	> - `podman ps -a --pod`
+	> - `podman logs zongsoft-framework`
+
+2. 运行发布脚本 _(下列脚本二选一)_
+	> - 在 _**P**ower**S**hell_ 中运行 [publish.linux-x64.ps1](./publish.linux-x64.ps1) 脚本；
+	> - 在 _CMD_ 中运行 [publish.linux-x64.cmd](./publish.linux-x64.cmd) 脚本。
+
+3. 运行 [_framework.stop_](./../../framework-stop.cmd) 脚本关闭该容器。
