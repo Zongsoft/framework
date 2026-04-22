@@ -47,12 +47,27 @@ partial class Launcher
 			var info = new ProcessStartInfo(argument.HostPath, argument.HostArgs)
 			{
 				CreateNoWindow = false,
-				UseShellExecute = true,
+				UseShellExecute = OperatingSystem.IsWindows(),
+				RedirectStandardError = false,
+				RedirectStandardInput = false,
+				RedirectStandardOutput = false,
 				WorkingDirectory = argument.AppPath,
 			};
 
 			//启动升级部署器程序
 			return Process.Start(info);
+		}
+
+		protected override void OnLaunched(Deployer.Argument argument, Process process)
+		{
+			//调用基类同名方法
+			base.OnLaunched(argument, process);
+
+			//注意：如果是Linux或Unix系统则需要等待进程退出，否则宿主应用无法读取控制台输入
+			if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
+			{
+				process.WaitForExit();
+			}
 		}
 	}
 }
