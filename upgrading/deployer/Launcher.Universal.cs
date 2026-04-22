@@ -32,7 +32,6 @@
  */
 
 using System;
-using System.IO;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
@@ -45,22 +44,11 @@ partial class Launcher
 
 		protected override Process OnLaunch(Deployer.Argument argument)
 		{
-			var extension = Path.GetExtension(argument.AppPath);
-			var command = string.Equals(extension, ".dll", StringComparison.OrdinalIgnoreCase) ?
-				$"dotnet {argument.AppPath}" : argument.AppPath;
-
-			if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
-			{
-				if(string.Equals(extension, ".exe", StringComparison.OrdinalIgnoreCase))
-					command = $"dotnet {Path.ChangeExtension(argument.AppPath, ".dll")}";
-			}
-
-			var info = new ProcessStartInfo(command, argument.AppArgs)
+			var info = new ProcessStartInfo(argument.HostPath, argument.HostArgs)
 			{
 				CreateNoWindow = false,
 				UseShellExecute = false,
-				WindowStyle = ProcessWindowStyle.Normal,
-				WorkingDirectory = Path.GetDirectoryName(argument.AppPath),
+				WorkingDirectory = argument.AppPath,
 			};
 
 			//启动升级部署器程序

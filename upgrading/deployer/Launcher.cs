@@ -33,6 +33,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
@@ -90,7 +91,7 @@ public abstract partial class Launcher
 	private static string GetService(Deployer.Argument argument)
 	{
 		//获取宿主应用的根目录
-		var directory = Path.GetDirectoryName(argument.AppPath);
+		var directory = argument.AppPath;
 
 		if(Directory.Exists(directory))
 		{
@@ -128,15 +129,17 @@ partial class Launcher : ILauncher
 	string ILauncher.Name => this.Name;
 	void ILauncher.Launch(Deployer.Argument argument)
 	{
+		Zongsoft.Diagnostics.Logging.GetLogging().Info($"[Launching]\n" +
+			string.Join(Environment.NewLine, argument.Select(entry => $"{entry.Key}={entry.Value}")));
+
 		var process = this.OnLaunch(argument);
 
-		Zongsoft.Diagnostics.Logging.GetLogging().Error(
-			$"[进程已启动]\nid:{process.Id}\n" +
-			$"name:{process.ProcessName}\n" +
-			$"file:{process.StartInfo.FileName}\n" +
-			$"args:{process.StartInfo.Arguments}\n" +
-			$"argList:{string.Join(" | ", process.StartInfo.ArgumentList)}\n" +
-			$"workingDir:{process.StartInfo.WorkingDirectory}\n");
+		Zongsoft.Diagnostics.Logging.GetLogging().Info($"[Launched]\n" +
+			$"id: {process.Id}\n" +
+			$"name: {process.ProcessName}\n" +
+			$"file: {process.StartInfo.FileName}\n" +
+			$"args: {string.Join(' ', process.StartInfo.ArgumentList)}\n" +
+			$"working: {process.StartInfo.WorkingDirectory}\n");
 
 		this.OnLaunched(argument, process);
 	}
@@ -153,8 +156,8 @@ partial class Launcher : ILauncher
 			return;
 
 		string extra = string.IsNullOrEmpty(process.StartInfo.Verb) ?
-			$"{process.StartInfo.FileName} {process.StartInfo.Arguments}":
-			$"[{process.StartInfo.Verb}]{process.StartInfo.FileName} {process.StartInfo.Arguments}";
+			$"{process.StartInfo.FileName} {string.Join(' ', process.StartInfo.ArgumentList)}":
+			$"[{process.StartInfo.Verb}]{process.StartInfo.FileName} {string.Join(' ', process.StartInfo.ArgumentList)}";
 
 		//被重定向的进程则表明为启动命令的中间进程（即非宿主应用进程）
 		if(process.StartInfo.RedirectStandardError || process.StartInfo.RedirectStandardOutput)
@@ -162,12 +165,12 @@ partial class Launcher : ILauncher
 			//获取启动进程的标准错误信息
 			var text = process.StandardError.ReadToEnd();
 			if(!string.IsNullOrWhiteSpace(text))
-				extra += text;
+				extra += $"{Environment.NewLine}{text}";
 
 			//获取启动进程的标准输出信息
 			text = process.StandardOutput.ReadToEnd();
 			if(!string.IsNullOrWhiteSpace(text))
-				extra += text;
+				extra += $"{Environment.NewLine}{text}";
 
 			//等待启动命令进程完成
 			process.WaitForExit();

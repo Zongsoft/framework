@@ -32,8 +32,6 @@
  */
 
 using System;
-using System.IO;
-using System.Linq;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
@@ -46,32 +44,12 @@ partial class Launcher
 
 		protected override Process OnLaunch(Deployer.Argument argument)
 		{
-			var extension = Path.GetExtension(argument.AppPath);
-			var command = string.Equals(extension, ".dll", StringComparison.OrdinalIgnoreCase) ?
-				$"dotnet {argument.AppPath}" : argument.AppPath;
-
-			if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
-			{
-				if(string.Equals(extension, ".exe", StringComparison.OrdinalIgnoreCase))
-					command = $"dotnet {Path.ChangeExtension(argument.AppPath, ".dll")}";
-			}
-
-			var text = string.Join('\n', argument.Select(entry => $"  {entry.Key}={entry.Value}"));
-			Zongsoft.Diagnostics.Logging.GetLogging().Error($"参数信息：\n{text}");
-
-			var info = new ProcessStartInfo(command, argument.AppArgs)
+			var info = new ProcessStartInfo(argument.HostPath, argument.HostArgs)
 			{
 				CreateNoWindow = false,
 				UseShellExecute = true,
-				WindowStyle = ProcessWindowStyle.Normal,
-				WorkingDirectory = Path.GetDirectoryName(argument.AppPath),
+				WorkingDirectory = argument.AppPath,
 			};
-
-			Zongsoft.Diagnostics.Logging.GetLogging().Error(
-				$"[准备启动]\nfilename:{info.FileName}\n" +
-				$"arguments:{info.Arguments}\n" +
-				$"argumentList:{string.Join(" | ", info.ArgumentList)}\n" +
-				$"workingDir:{info.WorkingDirectory}\n");
 
 			//启动升级部署器程序
 			return Process.Start(info);

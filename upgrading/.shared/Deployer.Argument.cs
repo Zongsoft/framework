@@ -48,18 +48,22 @@ partial class Deployer
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取宿主程序的站点标识。</summary>
+		/// <summary>获取应用程序的站点标识。</summary>
 		public string Site => this.TryGetValue(Keys.Site, out var value) ? value : null;
-		/// <summary>获取宿主程序的进程编号。</summary>
+		/// <summary>获取应用程序的进程编号。</summary>
 		public int AppId => this.TryGetInt32(Keys.AppId, out var value) ? value : 0;
-		/// <summary>获取宿主程序的应用名称。</summary>
+		/// <summary>获取应用程序的名称。</summary>
 		public string AppName => this.TryGetValue(Keys.AppName, out var value) ? value : null;
-		/// <summary>获取宿主程序的应用类型。</summary>
+		/// <summary>获取应用程序的类型。</summary>
 		public string AppType => this.TryGetValue(Keys.AppType, out var value) ? value : null;
-		/// <summary>获取宿主程序的完整路径。</summary>
+		/// <summary>获取应用程序的根目录。</summary>
 		public string AppPath => this.TryGetValue(Keys.AppPath, out var value) ? value : null;
-		/// <summary>获取宿主程序的命令行参数集。</summary>
-		public string[] AppArgs => field ??= this.GetAppArgs() ?? [];
+
+		/// <summary>获取宿主程序的完整路径。</summary>
+		public string HostPath => this.TryGetValue(Keys.HostPath, out var value) ? value : null;
+		/// <summary>获取宿主程序的命令行参数数组，如果没有参数则返回空数组。</summary>
+		public string[] HostArgs => field ??= this.GetHostArgs() ?? [];
+
 		/// <summary>获取部署器的部署文件完整路径。</summary>
 		public string Deployment => this.TryGetValue(Keys.Deployment, out var value) ? value : null;
 		#endregion
@@ -94,13 +98,13 @@ partial class Deployer
 		#endregion
 
 		#region 私有方法
-		private string[] GetAppArgs()
+		private string[] GetHostArgs()
 		{
 			var args = new List<string>();
 
 			foreach(var entry in _parameters)
 			{
-				if(entry.Key.StartsWith($"{Keys.AppArgs}#") || entry.Key.StartsWith($"{Keys.AppArgs}:"))
+				if(entry.Key.StartsWith($"{Keys.HostArgs}#") || entry.Key.StartsWith($"{Keys.HostArgs}:"))
 					args.Add(entry.Value);
 			}
 
@@ -156,7 +160,8 @@ partial class Deployer
 			public const string AppName = "app.name";
 			public const string AppType = "app.type";
 			public const string AppPath = "app.path";
-			public const string AppArgs = "app.args";
+			public const string HostPath = "host.path";
+			public const string HostArgs = "host.args";
 			public const string Deployment = "deployment";
 		}
 		#endregion

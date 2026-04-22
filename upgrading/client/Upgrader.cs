@@ -84,9 +84,10 @@ public partial class Upgrader
 			//设置部署器程序的参数集
 			info.ArgumentList.Add($"{Deployer.Argument.Keys.Site}={Application.Site}");
 			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppId}={Environment.ProcessId}");
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppPath}={Environment.ProcessPath}");
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppName}={Application.ApplicationName}");
 			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppType}={Application.ApplicationType}");
+			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppName}={Application.ApplicationName}");
+			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppPath}={Application.ApplicationPath}");
+			info.ArgumentList.Add($"{Deployer.Argument.Keys.HostPath}={Environment.ProcessPath}");
 			info.ArgumentList.Add($"{Deployer.Argument.Keys.Deployment}={deployment.FullName}");
 
 			//获取当前应用程序的命令行参数
@@ -94,7 +95,7 @@ public partial class Upgrader
 
 			//依次将当前应用程序命令行参数加入到部署器的命令行参数集中
 			for(int i = 0; i < args.Length; i++)
-				info.ArgumentList.Add($"{Deployer.Argument.Keys.AppArgs}#{i}={args[i]}");
+				info.ArgumentList.Add($"{Deployer.Argument.Keys.HostArgs}#{i}={args[i]}");
 
 			//以独占锁的方式打开部署文件
 			using var locking = deployment.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);

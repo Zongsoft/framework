@@ -68,6 +68,7 @@ partial class Launcher
 				UseShellExecute = false,
 				RedirectStandardError = true,
 				RedirectStandardOutput = true,
+				WorkingDirectory = argument.AppPath,
 			};
 
 			return Process.Start(info);
