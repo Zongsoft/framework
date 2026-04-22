@@ -71,10 +71,14 @@ partial class Terminal
 			_syncRoot = new();
 			this.Executor = new ConsoleExecutor(this);
 
-			//if(!System.Diagnostics.Debugger.IsAttached)
+			try
 			{
 				System.Console.TreatControlCAsInput = false;
 				System.Console.CancelKeyPress += this.Console_CancelKeyPress;
+			}
+			catch(Exception ex)
+			{
+				Zongsoft.Diagnostics.Logging.GetLogging().Error(ex);
 			}
 		}
 		#endregion
@@ -207,10 +211,7 @@ partial class Terminal
 		#endregion
 
 		#region 中断事件
-		private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
-		{
-			e.Cancel = this.OnAborting();
-		}
+		private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e) => e.Cancel = this.OnAborting();
 		#endregion
 
 		#region 私有方法
