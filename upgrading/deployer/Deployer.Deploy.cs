@@ -61,12 +61,18 @@ partial class Deployer
 		//如果部署包源目录不存在则退出
 		var packages = new DirectoryInfo(deployment.Packages);
 		if(!packages.Exists)
+		{
+			await Diagnostics.Logging.GetLogging().ErrorAsync($"The '{packages.FullName}' packages directory specified in the deployment file does not exist.");
 			return;
+		}
 
 		//如果升级清单加载失败则退出
 		var manifest = Manifest.Load(deployment.Manifest);
 		if(manifest == null || manifest.IsEmpty)
+		{
+			await Diagnostics.Logging.GetLogging().ErrorAsync($"The '{deployment.Manifest}' manifest file specified in the deployment file failed to load or is empty.");
 			return;
+		}
 
 		//获取部署文件所在目录，即为宿主应用程序的根目录
 		var root = Path.GetDirectoryName(argument.Deployment);
@@ -85,7 +91,7 @@ partial class Deployer
 		await OnDeployedAsync(argument, manifest, cancellation);
 
 		//启动宿主程序
-		Launcher.Launch(deployment, argument);
+		Launcher.Launch(argument, deployment);
 	}
 	#endregion
 
@@ -113,11 +119,17 @@ partial class Deployer
 	{
 		var deployment = argument.Deployment;
 
-		if(string.IsNullOrEmpty(deployment))
+		if(string.IsNullOrWhiteSpace(deployment))
+		{
+			Diagnostics.Logging.GetLogging<Program>().Error("No deployment file specified.");
 			return null;
+		}
 
 		if(!File.Exists(deployment))
+		{
+			Diagnostics.Logging.GetLogging<Program>().Error($"The specified '{deployment}' deployment file does not exist.");
 			return null;
+		}
 
 		try
 		{
@@ -125,7 +137,7 @@ partial class Deployer
 		}
 		catch(Exception ex)
 		{
-			Zongsoft.Diagnostics.Logging.GetLogging<Program>().Error(ex);
+			Diagnostics.Logging.GetLogging<Program>().Error(ex);
 		}
 
 		return null;
@@ -133,28 +145,26 @@ partial class Deployer
 
 	private static bool WaitHostExit(Argument argument, TimeSpan timeout = default)
 	{
-		if(argument.AppId != 0)
+		if(argument.AppId == 0)
+			return true;
+
+		//获取指定编号的进程
+		var process = GetProcess(argument.AppId);
+
+		//如果进程已退出则返回成功
+		if(HasExited(process))
+			return true;
+
+		try
 		{
-			//获取指定编号的进程
-			var process = GetProcess(argument.AppId);
+			process.EnableRaisingEvents = true;
 
-			//如果进程已退出则返回成功
-			if(HasExited(process))
-				return true;
-
-			try
-			{
-				process.EnableRaisingEvents = true;
-
-				if(timeout > TimeSpan.Zero)
-					return process.WaitForExit(timeout);
-				else
-					return process.WaitForExit(TimeSpan.FromMinutes(1));
-			}
-			catch { return false; }
+			if(timeout > TimeSpan.Zero)
+				return process.WaitForExit(timeout);
+			else
+				return process.WaitForExit(TimeSpan.FromMinutes(1));
 		}
-
-		return false;
+		catch { return false; }
 
 		static Process GetProcess(int id)
 		{

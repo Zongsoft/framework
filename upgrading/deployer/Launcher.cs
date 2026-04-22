@@ -53,7 +53,7 @@ public abstract partial class Launcher
 	#endregion
 
 	#region 公共方法
-	public static void Launch(Deployer.Deployment deployment, Deployer.Argument argument)
+	public static void Launch(Deployer.Argument argument, Deployer.Deployment deployment)
 	{
 		if(argument == null || deployment == null)
 			return;
@@ -129,12 +129,12 @@ partial class Launcher : ILauncher
 	string ILauncher.Name => this.Name;
 	void ILauncher.Launch(Deployer.Argument argument)
 	{
-		Zongsoft.Diagnostics.Logging.GetLogging().Info($"[Launching]\n" +
+		Diagnostics.Logging.GetLogging().Info($"[OnLaunching]\n" +
 			string.Join(Environment.NewLine, argument.Select(entry => $"{entry.Key}={entry.Value}")));
 
 		var process = this.OnLaunch(argument);
 
-		Zongsoft.Diagnostics.Logging.GetLogging().Info($"[Launched]\n" +
+		Diagnostics.Logging.GetLogging().Info($"[OnLaunched]\n" +
 			$"id: {process.Id}\n" +
 			$"name: {process.ProcessName}\n" +
 			$"file: {process.StartInfo.FileName}\n" +
