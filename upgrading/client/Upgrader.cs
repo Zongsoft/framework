@@ -115,6 +115,9 @@ public partial class Upgrader
 		if(timeout <= TimeSpan.Zero)
 			timeout = TimeSpan.FromSeconds(30);
 
+		//确保日志存储器落盘完成
+		Zongsoft.Diagnostics.Logging.FlushAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+
 		//获取当前应用程序的主机接口
 		var host = Services.ApplicationContext.Current?.Services.GetService<IHost>();
 

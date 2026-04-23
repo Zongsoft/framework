@@ -103,6 +103,9 @@ public abstract partial class Launcher
 			}
 		}
 
+		//如果未找到服务文件则记录警告日志
+		Diagnostics.Logging.GetLogging().Warn($"The '.service' files was not found in the application's root directory('{directory}').");
+
 		return argument.AppName;
 	}
 	#endregion
