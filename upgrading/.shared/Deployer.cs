@@ -124,8 +124,8 @@ public static partial class Deployer
 			string text, manifest = null, packages = null;
 
 			var stream = exclusive ?
-				new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, 1024) :
-				new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1024, FileOptions.DeleteOnClose);
+				new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, 1024, FileOptions.DeleteOnClose) :
+				new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1024);
 
 			var reader = new StreamReader(stream, leaveOpen: exclusive);
 

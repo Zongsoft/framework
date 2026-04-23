@@ -48,9 +48,6 @@ partial class Launcher
 			{
 				CreateNoWindow = false,
 				UseShellExecute = OperatingSystem.IsWindows(),
-				RedirectStandardError = false,
-				RedirectStandardInput = false,
-				RedirectStandardOutput = false,
 				WorkingDirectory = argument.AppPath,
 			};
 
@@ -65,9 +62,7 @@ partial class Launcher
 
 			//注意：如果是Linux或Unix系统则需要等待进程退出，否则宿主应用无法读取控制台输入
 			if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
-			{
 				process.WaitForExit();
-			}
 		}
 	}
 }
