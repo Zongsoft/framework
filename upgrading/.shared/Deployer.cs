@@ -123,7 +123,10 @@ public static partial class Deployer
 			var count = 0;
 			string text, manifest = null, packages = null;
 
-			var stream = File.Open(path, FileMode.Open, FileAccess.Read, exclusive ? FileShare.None : FileShare.Read);
+			var stream = exclusive ?
+				new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, 1024) :
+				new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1024, FileOptions.DeleteOnClose);
+
 			var reader = new StreamReader(stream, leaveOpen: exclusive);
 
 			try

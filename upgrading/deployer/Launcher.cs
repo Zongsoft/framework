@@ -151,10 +151,6 @@ partial class Launcher : ILauncher
 		if(process == null)
 			return;
 
-		//删除部署文件
-		if(argument.Deployment != null && File.Exists(argument.Deployment))
-			File.Delete(argument.Deployment);
-
 		string extra = string.IsNullOrEmpty(process.StartInfo.Verb) ?
 			$"{process.StartInfo.FileName} {string.Join(' ', process.StartInfo.ArgumentList)}":
 			$"[{process.StartInfo.Verb}]{process.StartInfo.FileName} {string.Join(' ', process.StartInfo.ArgumentList)}";
