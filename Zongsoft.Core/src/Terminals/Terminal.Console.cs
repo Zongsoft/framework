@@ -59,27 +59,20 @@ partial class Terminal
 
 		#region 同步变量
 		#if NET9_0_OR_GREATER
-		private readonly System.Threading.Lock _syncRoot;
+		private readonly System.Threading.Lock _locker;
 		#else
-		private readonly object _syncRoot;
+		private readonly object _locker;
 		#endif
 		#endregion
 
 		#region 私有构造
 		private ConsoleTerminal()
 		{
-			_syncRoot = new();
+			_locker = new();
 			this.Executor = new ConsoleExecutor(this);
 
-			try
-			{
-				System.Console.TreatControlCAsInput = false;
-				System.Console.CancelKeyPress += this.Console_CancelKeyPress;
-			}
-			catch(Exception ex)
-			{
-				Zongsoft.Diagnostics.Logging.GetLogging().Error(ex);
-			}
+			System.Console.TreatControlCAsInput = false;
+			System.Console.CancelKeyPress += this.Console_CancelKeyPress;
 		}
 		#endregion
 
@@ -285,7 +278,7 @@ partial class Terminal
 		private void Write<T>(T value, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null) => this.Write<T>(value, CommandOutletStyles.None, foregroundColor, backgroundColor);
 		private void Write<T>(T value, CommandOutletStyles style, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null)
 		{
-			lock(_syncRoot)
+			lock(_locker)
 			{
 				if(backgroundColor == null)
 					System.Console.Write($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)}m{value}\u001b[0m");
@@ -297,7 +290,7 @@ partial class Terminal
 		private void WriteLine<T>(T value, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null) => this.WriteLine<T>(value, CommandOutletStyles.None, foregroundColor, backgroundColor);
 		private void WriteLine<T>(T value, CommandOutletStyles style, CommandOutletColor? foregroundColor = null, CommandOutletColor? backgroundColor = null)
 		{
-			lock(_syncRoot)
+			lock(_locker)
 			{
 				if(backgroundColor == null)
 					System.Console.WriteLine($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)}m{value}\u001b[0m");
@@ -316,7 +309,7 @@ partial class Terminal
 				content.First :
 				content.Cursor.Next ?? content.First;
 
-			lock(_syncRoot)
+			lock(_locker)
 			{
 				while(cursor != null)
 				{
