@@ -51,7 +51,10 @@ partial class Deployer
 	{
 		//等待宿主程序退出
 		if(!WaitHostExit(argument))
+		{
+			await Diagnostics.Logging.GetLogging().ErrorAsync($"Failed to wait for the '[{argument.AppId}]{argument.HostPath}({string.Join(',', argument.HostArgs)})' host process to exit, the deployment cannot proceed.", cancellation);
 			return;
+		}
 
 		//获取部署配置信息并以排他性的锁定部署文件
 		using var deployment = GetDeployment(argument);
@@ -62,7 +65,7 @@ partial class Deployer
 		var packages = new DirectoryInfo(deployment.Packages);
 		if(!packages.Exists)
 		{
-			await Diagnostics.Logging.GetLogging().ErrorAsync($"The '{packages.FullName}' packages directory specified in the deployment file does not exist.");
+			await Diagnostics.Logging.GetLogging().ErrorAsync($"The '{packages.FullName}' packages directory specified in the deployment file does not exist.", cancellation);
 			return;
 		}
 
@@ -70,7 +73,7 @@ partial class Deployer
 		var manifest = Manifest.Load(deployment.Manifest);
 		if(manifest == null || manifest.IsEmpty)
 		{
-			await Diagnostics.Logging.GetLogging().ErrorAsync($"The '{deployment.Manifest}' manifest file specified in the deployment file failed to load or is empty.");
+			await Diagnostics.Logging.GetLogging().ErrorAsync($"The '{deployment.Manifest}' manifest file specified in the deployment file failed to load or is empty.", cancellation);
 			return;
 		}
 
@@ -143,7 +146,7 @@ partial class Deployer
 		return null;
 	}
 
-	private static bool WaitHostExit(Argument argument, TimeSpan timeout = default)
+	private static bool WaitHostExit(Argument argument)
 	{
 		if(argument.AppId == 0)
 			return true;
@@ -152,30 +155,40 @@ partial class Deployer
 		var process = GetProcess(argument.AppId);
 
 		//如果进程已退出则返回成功
-		if(HasExited(process))
+		if(Utility.HasExited(process))
 			return true;
 
 		try
 		{
-			process.EnableRaisingEvents = true;
+			var times = 0;
 
-			if(timeout > TimeSpan.Zero)
-				return process.WaitForExit(timeout);
-			else
-				return process.WaitForExit(TimeSpan.FromMinutes(1));
+			//等待进程退出，期间每隔1秒钟检查一次进程状态
+			while(!process.WaitForExit(1000))
+			{
+				//刷新进程状态
+				process.Refresh();
+
+				//如果进程已退出则返回成功
+				if(Utility.HasExited(process))
+					return true;
+
+				//如果等待超时次数过多则返回失败
+				if(times++ > 60)
+					return false;
+			}
+
+			return true;
 		}
-		catch { return false; }
+		catch(Exception ex)
+		{
+			Diagnostics.Logging.GetLogging().Error(ex);
+			return false;
+		}
 
 		static Process GetProcess(int id)
 		{
 			try { return id == 0 ? null : Process.GetProcessById(id); }
 			catch { return null; }
-		}
-
-		static bool HasExited(Process process)
-		{
-			try { return process == null || process.HasExited; }
-			catch { return false; }
 		}
 	}
 	#endregion

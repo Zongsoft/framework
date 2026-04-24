@@ -73,7 +73,7 @@ public static partial class Deployer
 					string.Equals(Application.ApplicationName, identifier.Name, StringComparison.OrdinalIgnoreCase);
 			}
 
-			Zongsoft.Diagnostics.Logging.GetLogging().Warn($"The specified '{file.FullName}' deployment file is invalid. The deployment process cannot proceed.");
+			Diagnostics.Logging.GetLogging().Warn($"The specified '{file.FullName}' deployment file is invalid. The deployment process cannot proceed.");
 		}
 
 		file = null;

@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
 
@@ -43,4 +44,41 @@ public static class Utility
 		version.Build == 0 &&
 		version.Revision == 0
 	);
+
+	public static bool HasExited(this Process process)
+	{
+		try { return process == null || process.HasExited; }
+		catch { return false; }
+	}
+
+	public static string GetProcessInfo(this Process process)
+	{
+		if(process == null)
+			return null;
+
+		if(process.StartInfo == null)
+			return $"[{process.Id}]{process.ProcessName}({(process.HasExited() ? "Exited" : "Running")})";
+
+		var text = new System.Text.StringBuilder();
+		text.AppendLine($"[{process.Id}]{process.ProcessName}({(process.HasExited() ? "Exited" : "Running")})");
+		text.AppendLine("{");
+
+		text.AppendLine($"\t{nameof(process.StartInfo.FileName)}:{process.StartInfo.FileName}");
+		text.AppendLine($"\t{nameof(process.StartInfo.WorkingDirectory)}:{process.StartInfo.WorkingDirectory}");
+
+		if(!string.IsNullOrEmpty(process.StartInfo.Verb))
+			text.AppendLine($"\t{nameof(process.StartInfo.Verb)}:{process.StartInfo.Verb}");
+
+		if(process.StartInfo.Verbs != null && process.StartInfo.Verbs.Length > 0)
+			text.AppendLine($"\t{nameof(process.StartInfo.Verbs)}:[{string.Join(',', process.StartInfo.Verbs)}]");
+
+		if(!string.IsNullOrEmpty(process.StartInfo.Arguments))
+			text.AppendLine($"\t{nameof(process.StartInfo.Arguments)}:{process.StartInfo.Arguments}");
+
+		if(process.StartInfo.ArgumentList != null && process.StartInfo.ArgumentList.Count > 0)
+			text.AppendLine($"\t{nameof(process.StartInfo.ArgumentList)}:[{string.Join(',', process.StartInfo.ArgumentList)}]");
+
+		text.AppendLine("}");
+		return text.ToString();
+	}
 }

@@ -33,7 +33,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
@@ -128,18 +127,7 @@ partial class Launcher : ILauncher
 	string ILauncher.Name => this.Name;
 	void ILauncher.Launch(Deployer.Argument argument)
 	{
-		Diagnostics.Logging.GetLogging().Info($"[OnLaunching]\n" +
-			string.Join(Environment.NewLine, argument.Select(entry => $"{entry.Key}={entry.Value}")));
-
 		var process = this.OnLaunch(argument);
-
-		Diagnostics.Logging.GetLogging().Info($"[OnLaunched]\n" +
-			$"id: {process.Id}\n" +
-			$"name: {process.ProcessName}\n" +
-			$"file: {process.StartInfo.FileName}\n" +
-			$"args: {string.Join(' ', process.StartInfo.ArgumentList)}\n" +
-			$"working: {process.StartInfo.WorkingDirectory}\n");
-
 		this.OnLaunched(argument, process);
 	}
 	#endregion
@@ -154,34 +142,13 @@ partial class Launcher : ILauncher
 		if(process == null)
 			return;
 
-		string extra = string.IsNullOrEmpty(process.StartInfo.Verb) ?
-			$"{process.StartInfo.FileName} {string.Join(' ', process.StartInfo.ArgumentList)}":
-			$"[{process.StartInfo.Verb}]{process.StartInfo.FileName} {string.Join(' ', process.StartInfo.ArgumentList)}";
-
-		//被重定向的进程则表明为启动命令的中间进程（即非宿主应用进程）
-		if(process.StartInfo.RedirectStandardError || process.StartInfo.RedirectStandardOutput)
-		{
-			//获取启动进程的标准错误信息
-			var text = process.StandardError.ReadToEnd();
-			if(!string.IsNullOrWhiteSpace(text))
-				extra += $"{Environment.NewLine}{text}";
-
-			//获取启动进程的标准输出信息
-			text = process.StandardOutput.ReadToEnd();
-			if(!string.IsNullOrWhiteSpace(text))
-				extra += $"{Environment.NewLine}{text}";
-
-			//等待启动命令进程完成
-			process.WaitForExit();
-		}
-
-		if(process.HasExited)
-			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher has launched successfully.", extra);
+		if(process.HasExited())
+			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher has launched successfully.", Utility.GetProcessInfo(process));
 		else
-			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher successfully launched the '[{process.Id}]{process.ProcessName}' program.", extra);
+			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher successfully launched the '[{process.Id}]{process.ProcessName}' program.", Utility.GetProcessInfo(process));
 
 		//确保日志存储器落盘完成
-		Diagnostics.Logging.FlushAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		Diagnostics.Logging.Flush();
 	}
 	#endregion
 }

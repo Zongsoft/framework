@@ -29,7 +29,6 @@
 
 using System;
 using System.IO;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -76,26 +75,31 @@ public partial class Upgrader
 			//以独占锁的方式打开部署文件
 			using var locking = deployment.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-			//获取升级部署器程序的启动信息
-			var info = GetLauncher(deployer, deployment.FullName);
-
 			//启动升级部署器程序
-			var process = Process.Start(info);
+			var process = Launch(deployer, deployment.FullName);
 
 			//如果升级部署器程序启动成功则退出当前进程
 			if(process != null)
-				Exit(locking);
+			{
+				//记录升级部署器程序的启动日志
+				Diagnostics.Logging.GetLogging<Upgrader>().Info(
+					$"The upgrader([{Environment.ProcessId}]{Environment.ProcessPath}) has completed(downloaded and extracted), and the deployer program has been launched.",
+					Utility.GetProcessInfo(process));
+
+				//关闭当前应用程序
+				Shutdown(locking);
+			}
 		}
 	}
 
-	private static void Exit(FileStream locking, TimeSpan timeout = default)
+	private static void Shutdown(FileStream locking, TimeSpan timeout = default)
 	{
 		//确保等待超时有效
 		if(timeout <= TimeSpan.Zero)
 			timeout = TimeSpan.FromSeconds(30);
 
 		//确保日志存储器落盘完成
-		Zongsoft.Diagnostics.Logging.FlushAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		Diagnostics.Logging.Flush();
 
 		//获取当前应用程序的主机接口
 		var host = Services.ApplicationContext.Current?.Services.GetService<IHost>();

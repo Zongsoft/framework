@@ -34,10 +34,10 @@ namespace Zongsoft.Upgrading;
 
 partial class Upgrader
 {
-	internal static ProcessStartInfo GetLauncher(string deployer, string deployment)
+	internal static Process Launch(string deployer, string deployment)
 	{
 		if(OperatingSystem.IsLinux())
-			return GetLauncherForLinux(deployer, deployment);
+			return LaunchOnLinux(deployer, deployment);
 
 		var info = new ProcessStartInfo(deployer)
 		{
@@ -63,10 +63,10 @@ partial class Upgrader
 		for(int i = 0; i < args.Length; i++)
 			info.ArgumentList.Add($"{Deployer.Argument.Keys.HostArgs}#{i}={args[i]}");
 
-		return info;
+		return Process.Start(info);
 	}
 
-	private static ProcessStartInfo GetLauncherForLinux(string deployer, string deployment)
+	private static Process LaunchOnLinux(string deployer, string deployment)
 	{
 		var text = new System.Text.StringBuilder();
 
@@ -86,13 +86,13 @@ partial class Upgrader
 		for(int i = 0; i < args.Length; i++)
 			text.Append($" {Deployer.Argument.Keys.HostArgs}#{i}={args[i]}");
 
-		var info = new ProcessStartInfo("systemd-run")
+		var info = new ProcessStartInfo("systemd-run", text.ToString())
 		{
 			CreateNoWindow = true,
 			UseShellExecute = false,
 			WorkingDirectory = Application.ApplicationPath,
 		};
 
-		return info;
+		return Process.Start(info);
 	}
 }
