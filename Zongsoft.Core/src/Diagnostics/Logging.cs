@@ -163,6 +163,12 @@ public sealed class Logging
 	#endregion
 
 	#region 静态日志
+	/// <summary>将所有日志刷新到持久化存储。</summary>
+	public static void Flush() => FlushAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+
+	/// <summary>将所有日志刷新到持久化存储。</summary>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回的异步任务。</returns>
 	public static ValueTask FlushAsync(CancellationToken cancellation = default)
 	{
 		if(_loggers.Count == 0)

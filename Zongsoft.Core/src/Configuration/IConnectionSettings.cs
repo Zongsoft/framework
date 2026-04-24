@@ -45,7 +45,7 @@ public interface IConnectionSettings : ISetting, IEquatable<IConnectionSettings>
 	/// <summary>获取或设置指定设置项。</summary>
 	/// <param name="name">指定的设置项名称。</param>
 	/// <returns>返回指定名称的设置值。</returns>
-	string this[string name] { get; set; }
+	new string this[string name] { get; set; }
 	#endregion
 
 	#region 默认实现

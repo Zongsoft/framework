@@ -101,11 +101,8 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 		}
 	}
 
-	protected override ValueTask OnFlushAsync(CancellationToken cancellation)
-	{
-		var logging = this.Logging;
-		return logging == null ? default : logging.FlushAsync(cancellation);
-	}
+	protected override ValueTask OnFlushAsync(CancellationToken cancellation) =>
+		this.Logging == null ? default : this.Logging.FlushAsync(cancellation);
 
 	private async ValueTask OnFlushAsync(IEnumerable<TLog> logs, CancellationToken cancellation)
 	{
