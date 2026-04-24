@@ -73,32 +73,11 @@ public partial class Upgrader
 		//确保升级部署器程序是存在的
 		if(File.Exists(deployer))
 		{
-			var info = new ProcessStartInfo(deployer)
-			{
-				Verb = "runas",
-				CreateNoWindow = true,
-				UseShellExecute = false,
-				WorkingDirectory = Application.ApplicationPath,
-			};
-
-			//设置部署器程序的参数集
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.Site}={Application.Site}");
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppId}={Environment.ProcessId}");
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppType}={Application.ApplicationType}");
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppName}={Application.ApplicationName}");
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.AppPath}={Application.ApplicationPath}");
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.HostPath}={Environment.ProcessPath}");
-			info.ArgumentList.Add($"{Deployer.Argument.Keys.Deployment}={deployment.FullName}");
-
-			//获取当前应用程序的命令行参数
-			var args = Environment.GetCommandLineArgs();
-
-			//依次将当前应用程序命令行参数加入到部署器的命令行参数集中
-			for(int i = 0; i < args.Length; i++)
-				info.ArgumentList.Add($"{Deployer.Argument.Keys.HostArgs}#{i}={args[i]}");
-
 			//以独占锁的方式打开部署文件
 			using var locking = deployment.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+			//获取升级部署器程序的启动信息
+			var info = GetLauncher(deployer, deployment.FullName);
 
 			//启动升级部署器程序
 			var process = Process.Start(info);
