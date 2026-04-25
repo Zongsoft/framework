@@ -1,8 +1,8 @@
 # Zongsoft.Upgrading.Upgrader 自动升级插件库
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
-![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Client)
-![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Upgrading.Client)
+![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Upgrader)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Upgrading.Upgrader)
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
