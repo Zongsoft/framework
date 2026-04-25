@@ -1,0 +1,4 @@
+artifacts/Zongsoft.Upgrading.Upgrader.option
+artifacts/Zongsoft.Upgrading.Upgrader.plugin
+lib/$(Framework)/Zongsoft.Upgrading.Upgrader.*
+lib/$(Framework)/*/Zongsoft.Upgrading.Upgrader.resources.*

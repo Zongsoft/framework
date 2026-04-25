@@ -1,0 +1,4 @@
+artifacts/Zongsoft.Upgrading.Web.option
+artifacts/Zongsoft.Upgrading.Web.plugin
+lib/$(Framework)/Zongsoft.Upgrading.Web.*
+lib/$(Framework)/*/Zongsoft.Upgrading.Web.resources.*

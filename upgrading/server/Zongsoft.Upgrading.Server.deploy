@@ -1,4 +1,0 @@
-artifacts/Zongsoft.Upgrading.Server.option
-artifacts/Zongsoft.Upgrading.Server.plugin
-lib/$(Framework)/Zongsoft.Upgrading.Server.*
-lib/$(Framework)/*/Zongsoft.Upgrading.Server.resources.*

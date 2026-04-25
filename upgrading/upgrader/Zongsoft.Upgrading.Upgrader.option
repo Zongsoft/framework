@@ -4,7 +4,7 @@
 	<option path="/Upgrading">
 		<connectionSettings default="File">
 			<connectionSetting connectionSetting.name="Web"
-			                   value="url=http://127.0.0.1:7969/Upgrading/Releases;timeout=30s" />
+			                   value="url=http://127.0.0.1:8069/Upgrading/Releases;timeout=30s" />
 
 			<connectionSetting connectionSetting.name="File"
 			                   value="url=zfs.s3:/upgrading/releases/" />

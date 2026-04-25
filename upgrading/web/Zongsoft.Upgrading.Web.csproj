@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Version>0.0.1</Version>
-		<Product>Zongsoft Upgrading Client</Product>
-		<Description>This is a client library for automatic upgrade.</Description>
+		<Product>Zongsoft Upgrading Web</Product>
+		<Description>This is a web library for automatic upgrading.</Description>
 		<RootNamespace>Zongsoft.Upgrading</RootNamespace>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/upgrading/client</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/upgrading/web</RepositoryUrl>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -16,7 +16,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
 	</ItemGroup>
 
@@ -45,22 +44,13 @@
 		<Compile Include="..\.shared\Application.cs" Link="Application.cs" />
 		<Compile Include="..\.shared\Architecture.cs" Link="Architecture.cs" />
 		<Compile Include="..\.shared\Platform.cs" Link="Platform.cs" />
-		<Compile Include="..\.shared\Deployer.cs" Link="Deployer.cs" />
-		<Compile Include="..\.shared\Deployer.Argument.cs" Link="Deployer.Argument.cs" />
 		<Compile Include="..\.shared\Executor.cs" Link="Executor.cs" />
 		<Compile Include="..\.shared\Manifest.cs" Link="Manifest.cs" />
 		<Compile Include="..\.shared\Release.cs" Link="Release.cs" />
 		<Compile Include="..\.shared\ReleaseKind.cs" Link="ReleaseKind.cs" />
-		<Compile Include="..\.shared\Release.Reader.cs" Link="Release.Reader.cs" />
-		<Compile Include="..\.shared\Release.Writer.cs" Link="Release.Writer.cs" />
 		<Compile Include="..\.shared\ReleaseUtility.cs" Link="ReleaseUtility.cs" />
 		<Compile Include="..\.shared\ReleaseEventArgs.cs" Link="ReleaseEventArgs.cs" />
 		<Compile Include="..\.shared\Utility.cs" Link="Utility.cs" />
-
-		<Compile Include="..\.shared\commands\CopyCommand.cs" Link="Commands\CopyCommand.cs" />
-		<Compile Include="..\.shared\commands\MoveCommand.cs" Link="Commands\MoveCommand.cs" />
-		<Compile Include="..\.shared\commands\LinkCommand.cs" Link="Commands\LinkCommand.cs" />
-		<Compile Include="..\.shared\commands\DeleteCommand.cs" Link="Commands\DeleteCommand.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
