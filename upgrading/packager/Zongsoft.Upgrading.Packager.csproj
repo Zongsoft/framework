@@ -1,0 +1,84 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net8.0;net9.0;net10.0;</TargetFrameworks>
+		<RootNamespace>Zongsoft.Upgrading</RootNamespace>
+		<Version>0.0.1</Version>
+		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
+		<PackAsTool>true</PackAsTool>
+		<ToolCommandName>dotnet-pack</ToolCommandName>
+		<PackageDescription>The Zongsoft Upgrading Packing .NET Tool.</PackageDescription>
+		<Company>Zongsoft Studio</Company>
+		<Product>Zongsoft Upgrading Packager</Product>
+		<Description>Zongsoft Upgrading Packing Tool.</Description>
+		<Copyright>Copyright(C) Zongsoft Studio 2020-2026. All rights reserved.</Copyright>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework/tree/main/upgrading/packager</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/upgrading/packager</RepositoryUrl>
+		<PackageIconUrl>https://github.com/Zongsoft/guidelines/raw/main/zongsoft-logo(48x48).png</PackageIconUrl>
+		<PackageIcon>zongsoft-logo.png</PackageIcon>
+		<ApplicationIcon>..\..\zongsoft-logo.ico</ApplicationIcon>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+	</ItemGroup>
+
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.45.0" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
+
+	<ItemGroup>
+		<None Include="..\..\zongsoft-logo.png" Pack="true" PackagePath="\" Visible="true" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="README-zh_CN.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Include="..\.shared\Application.cs" Link="Application.cs" />
+		<Compile Include="..\.shared\Architecture.cs" Link="Architecture.cs" />
+		<Compile Include="..\.shared\Platform.cs" Link="Platform.cs" />
+		<Compile Include="..\.shared\Deployer.cs" Link="Deployer.cs" />
+		<Compile Include="..\.shared\Deployer.Argument.cs" Link="Deployer.Argument.cs" />
+		<Compile Include="..\.shared\Executor.cs" Link="Executor.cs" />
+		<Compile Include="..\.shared\Manifest.cs" Link="Manifest.cs" />
+		<Compile Include="..\.shared\Release.cs" Link="Release.cs" />
+		<Compile Include="..\.shared\ReleaseKind.cs" Link="ReleaseKind.cs" />
+		<Compile Include="..\.shared\Release.Reader.cs" Link="Release.Reader.cs" />
+		<Compile Include="..\.shared\Release.Writer.cs" Link="Release.Writer.cs" />
+		<Compile Include="..\.shared\ReleaseUtility.cs" Link="ReleaseUtility.cs" />
+		<Compile Include="..\.shared\ReleaseEventArgs.cs" Link="ReleaseEventArgs.cs" />
+		<Compile Include="..\.shared\Utility.cs" Link="Utility.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+</Project>
