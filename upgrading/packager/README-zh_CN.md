@@ -16,36 +16,40 @@
 
 ## 用法
 
-- 终端程序 _(全量)_
+### 打包
+
+- 后台程序 _(全量)_
 
 ```shell
 dotnet pack
-	--name:Zongsoft.Hosting.Terminal
+	--name:Zongsoft.Hosting.Daemon
 	--version:1.1.0
 	--edition:stable
 	--checksum:sha1
-	--framework:net10
+	--framework:net10.0
 	--platform:windows
 	--architecture:x64
 	--kind:fully
 	--source:./
-	--output:./Zongsoft.Hosting.Terminal(stable)@1.1.0_win-x64
+	--output:./Zongsoft.Hosting.Daemon(stable)@1.1.0_win-x64
+	--tags:tag1,tag2,tagX
+	--executor.link:zongsoft.daemon.service:/Zongsoft/hosting/.deploy/default/systemd/zongsoft.daemon.service
 ```
 
-- 终端程序 _(增量)_
+- 后台程序 _(增量)_
 
 ```shell
 dotnet pack
-	--name:Zongsoft.Hosting.Terminal
+	--name:Zongsoft.Hosting.Daemon
 	--version:1.1.0
 	--edition:stable
 	--checksum:sha1
-	--framework:net10
+	--framework:net10.0
 	--platform:windows
 	--architecture:x64
 	--kind:delta
 	--source:./
-	--output:./Zongsoft.Hosting.Terminal(stable)@1.1.0_win-x64
+	--output:./Zongsoft.Hosting.Daemon(stable)@1.1.0_win-x64
 	plugins/upgrading
 	plugins/externals/redis
 	plugins/externals/scriban
@@ -59,19 +63,21 @@ dotnet pack
 	--version:1.1.0
 	--edition:stable
 	--checksum:sha1
-	--framework:net10
+	--framework:net10.0
 	--platform:windows
 	--architecture:x64
 	--kind:fully
 	--source:./
 	--output:./Zongsoft.Hosting.Web(stable)@1.1.0_win-x64
+	--tags:tag1,tag2,tagX
+	--executor.link:zongsoft.web.service:/Zongsoft/hosting/.deploy/default/systemd/zongsoft.web.service
 	mime
 	appsettings.json
 	web.config
 	web.option
 	wwwroot
 	plugins
-	bin/$(edition)/${framework}:~
+	bin/$(compilation)/${framework}:~
 ```
 
 - Web 程序 _(增量)_
@@ -82,33 +88,33 @@ dotnet pack
 	--version:1.1.0
 	--edition:stable
 	--checksum:sha1
-	--framework:net10
+	--framework:net10.0
 	--platform:windows
 	--architecture:x64
 	--kind:delta
 	--source:./
 	--output:./Zongsoft.Hosting.Web(stable)@1.1.0_win-x64
 	web.option
-	bin/$(edition)/${framework}/Zongsoft.Web.*:~
-	bin/$(edition)/${framework}/Zongsoft.Plugins.*:~
+	bin/$(compilation)/${framework}/Zongsoft.Web.*:~
+	bin/$(compilation)/${framework}/Zongsoft.Plugins.*:~
 	plugins/upgrading
 	plugins/externals/redis
 	plugins/externals/scriban
 ```
 
-- 重新校验
+### 重新校验
 
 > 💡 如果手动修改过打包文件的内容，则需要重新计算校验码。
 
 ```shell
-dotnet pack checksum Zongsoft.Hosting.Terminal(stable)@1.1.0_win-x64.zip
+dotnet pack checksum Zongsoft.Hosting.Daemon(stable)@1.1.0_win-x64.zip
 ```
 
-- 打包发布
+### 打包发布
 
 ```shell
 dotnet pack publish
 	--channel:file
-	--destination:zfs.s3:/upgrading/releases/terminal
-	Zongsoft.Hosting.Terminal(stable)@1.1.0_win-x64
+	--destination:zfs.s3:/upgrading/releases/daemon
+	Zongsoft.Hosting.Daemon(stable)@1.1.0_win-x64
 ```
