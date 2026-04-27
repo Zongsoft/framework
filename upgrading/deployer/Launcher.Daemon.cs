@@ -49,12 +49,12 @@ partial class Launcher
 			if(OperatingSystem.IsWindows())
 			{
 				command = "sc";
-				args = $"start {argument.AppName}";
+				args = $"start {GetDaemonName(argument)}";
 			}
 			else if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
 			{
 				command = "systemctl";
-				args = $"start {GetService(argument)}";
+				args = $"start {GetDaemonName(argument)}";
 			}
 			else
 			{

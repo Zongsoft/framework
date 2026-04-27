@@ -83,8 +83,11 @@ public abstract partial class Launcher
 	#endregion
 
 	#region 私有方法
-	private static string GetService(Deployer.Argument argument)
+	private static string GetDaemonName(Deployer.Argument argument)
 	{
+		if(!string.IsNullOrEmpty(argument.Daemon))
+			return argument.Daemon;
+
 		//获取宿主应用的根目录
 		var directory = argument.AppPath;
 
@@ -105,6 +108,7 @@ public abstract partial class Launcher
 		//如果未找到服务文件则记录警告日志
 		Diagnostics.Logging.GetLogging().Warn($"The '.service' files was not found in the application's root directory('{directory}').");
 
+		//最后返回宿主应用的名称作为服务名称
 		return argument.AppName;
 	}
 	#endregion

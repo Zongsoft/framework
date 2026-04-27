@@ -30,6 +30,8 @@
 using System;
 using System.Diagnostics;
 
+using Microsoft.Extensions.Configuration;
+
 namespace Zongsoft.Upgrading;
 
 partial class Upgrader
@@ -55,6 +57,7 @@ partial class Upgrader
 		info.ArgumentList.Add($"{Deployer.Argument.Keys.AppPath}={Application.ApplicationPath}");
 		info.ArgumentList.Add($"{Deployer.Argument.Keys.HostPath}={Environment.ProcessPath}");
 		info.ArgumentList.Add($"{Deployer.Argument.Keys.Deployment}={deployment}");
+		info.ArgumentList.Add($"{Deployer.Argument.Keys.Daemon}={GetConfiguration(Deployer.Argument.Keys.Daemon)}");
 
 		//获取当前应用程序的命令行参数
 		var args = Environment.GetCommandLineArgs();
@@ -78,6 +81,7 @@ partial class Upgrader
 		text.Append($" {Deployer.Argument.Keys.AppPath}={Application.ApplicationPath}");
 		text.Append($" {Deployer.Argument.Keys.HostPath}={Environment.ProcessPath}");
 		text.Append($" {Deployer.Argument.Keys.Deployment}={deployment}");
+		text.Append($" {Deployer.Argument.Keys.Daemon}={GetConfiguration(Deployer.Argument.Keys.Daemon)}");
 
 		//获取当前应用程序的命令行参数
 		var args = Environment.GetCommandLineArgs();
@@ -95,4 +99,7 @@ partial class Upgrader
 
 		return Process.Start(info);
 	}
+
+	private static string GetConfiguration(string key) => GetConfiguration(Services.ApplicationContext.Current?.Configuration, key);
+	private static string GetConfiguration(IConfiguration configuration, string key) => string.IsNullOrEmpty(key) || configuration == null ? null : configuration.GetSection(key)?.Value;
 }

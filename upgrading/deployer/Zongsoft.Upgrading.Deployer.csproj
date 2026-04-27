@@ -8,6 +8,7 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<TargetFrameworks>net10.0</TargetFrameworks>
 		<InvariantGlobalization>true</InvariantGlobalization>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Product>Zongsoft Upgrader</Product>
 		<Description>This is the local deployer for the automatic upgrading.</Description>
 		<RootNamespace>Zongsoft.Upgrading</RootNamespace>

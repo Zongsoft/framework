@@ -51,34 +51,65 @@ public static class Utility
 		catch { return false; }
 	}
 
+	public static bool HasExited(this Process process, out int exitCode)
+	{
+		try
+		{
+			if(process == null)
+			{
+				exitCode = 0;
+				return true;
+			}
+
+			exitCode = process.ExitCode;
+			return process.HasExited;
+		}
+		catch { exitCode = 0; return false; }
+	}
+
 	public static string GetProcessInfo(this Process process)
 	{
 		if(process == null)
 			return null;
 
-		if(process.StartInfo == null)
-			return $"[{process.Id}]{process.ProcessName}({(process.HasExited() ? "Exited" : "Running")})";
+		int exitCode;
+		var info = GetInfo(process);
+
+		if(info == null)
+			return $"[{process.Id}]{GetName(process)}({(process.HasExited(out exitCode) ? $"Exited:{exitCode}" : "Running")})";
 
 		var text = new System.Text.StringBuilder();
-		text.AppendLine($"[{process.Id}]{process.ProcessName}({(process.HasExited() ? "Exited" : "Running")})");
+		text.AppendLine($"[{process.Id}]{GetName(process)}({(process.HasExited(out exitCode) ? $"Exited:{exitCode}" : "Running")})");
 		text.AppendLine("{");
 
-		text.AppendLine($"\t{nameof(process.StartInfo.FileName)}:{process.StartInfo.FileName}");
-		text.AppendLine($"\t{nameof(process.StartInfo.WorkingDirectory)}:{process.StartInfo.WorkingDirectory}");
+		text.AppendLine($"\t{nameof(info.FileName)}:{info.FileName}");
+		text.AppendLine($"\t{nameof(info.WorkingDirectory)}:{info.WorkingDirectory}");
 
-		if(!string.IsNullOrEmpty(process.StartInfo.Verb))
-			text.AppendLine($"\t{nameof(process.StartInfo.Verb)}:{process.StartInfo.Verb}");
+		if(!string.IsNullOrEmpty(info.Verb))
+			text.AppendLine($"\t{nameof(info.Verb)}:{info.Verb}");
 
-		if(process.StartInfo.Verbs != null && process.StartInfo.Verbs.Length > 0)
-			text.AppendLine($"\t{nameof(process.StartInfo.Verbs)}:[{string.Join(',', process.StartInfo.Verbs)}]");
+		if(info.Verbs != null && info.Verbs.Length > 0)
+			text.AppendLine($"\t{nameof(info.Verbs)}:[{string.Join(',', info.Verbs)}]");
 
-		if(!string.IsNullOrEmpty(process.StartInfo.Arguments))
-			text.AppendLine($"\t{nameof(process.StartInfo.Arguments)}:{process.StartInfo.Arguments}");
+		if(!string.IsNullOrEmpty(info.Arguments))
+			text.AppendLine($"\t{nameof(info.Arguments)}:{info.Arguments}");
 
-		if(process.StartInfo.ArgumentList != null && process.StartInfo.ArgumentList.Count > 0)
-			text.AppendLine($"\t{nameof(process.StartInfo.ArgumentList)}:[{string.Join(',', process.StartInfo.ArgumentList)}]");
+		if(info.ArgumentList != null && info.ArgumentList.Count > 0)
+			text.AppendLine($"\t{nameof(info.ArgumentList)}:[{string.Join(',', info.ArgumentList)}]");
 
 		text.AppendLine("}");
 		return text.ToString();
+
+		static string GetName(Process process)
+		{
+			try { return process.ProcessName; }
+			catch { return GetInfo(process).FileName; }
+		}
+
+		static ProcessStartInfo GetInfo(Process process)
+		{
+			try { return process.StartInfo; }
+			catch { return null; }
+		}
 	}
 }

@@ -53,11 +53,13 @@ partial class Executor
 
 			if(Components.CommandExecutor.Default.Root.HasChildren)
 			{
+				Components.CommandExecutor.Default.Root.Children.Remove(Commands.LinkCommand.Instance.Name);
 				Components.CommandExecutor.Default.Root.Children.Remove(Commands.CopyCommand.Instance.Name);
 				Components.CommandExecutor.Default.Root.Children.Remove(Commands.MoveCommand.Instance.Name);
 				Components.CommandExecutor.Default.Root.Children.Remove(Commands.DeleteCommand.Instance.Name);
 			}
 
+			Components.CommandExecutor.Default.Root.Children.Add(Commands.LinkCommand.Instance);
 			Components.CommandExecutor.Default.Root.Children.Add(Commands.CopyCommand.Instance);
 			Components.CommandExecutor.Default.Root.Children.Add(Commands.MoveCommand.Instance);
 			Components.CommandExecutor.Default.Root.Children.Add(Commands.DeleteCommand.Instance);

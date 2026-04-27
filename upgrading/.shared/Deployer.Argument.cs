@@ -50,6 +50,8 @@ partial class Deployer
 		#region 公共属性
 		/// <summary>获取应用程序的站点标识。</summary>
 		public string Site => this.TryGetValue(Keys.Site, out var value) ? value : null;
+		/// <summary>获取应用程序的后台服务名。</summary>
+		public string Daemon => this.TryGetValue(Keys.Daemon, out var value) ? value : null;
 		/// <summary>获取应用程序的进程编号。</summary>
 		public int AppId => this.TryGetInt32(Keys.AppId, out var value) ? value : 0;
 		/// <summary>获取应用程序的名称。</summary>
@@ -162,6 +164,7 @@ partial class Deployer
 			public const string AppPath = "app.path";
 			public const string HostPath = "host.path";
 			public const string HostArgs = "host.args";
+			public const string Daemon = "daemon";
 			public const string Deployment = "deployment";
 		}
 		#endregion

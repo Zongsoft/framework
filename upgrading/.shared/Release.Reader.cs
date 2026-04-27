@@ -230,7 +230,7 @@ partial class Release
 		{
 			if(reader.NodeType == XmlNodeType.Element && reader.LocalName.Equals(TAG_ELEMENT, StringComparison.OrdinalIgnoreCase))
 				if(reader.Read() && reader.NodeType == XmlNodeType.Text && !string.IsNullOrWhiteSpace(reader.Value))
-					tags.Add(reader.Value);
+					tags.Add(reader.Value.Trim());
 		}
 
 		if(tags != null && tags.Count > 0)
@@ -248,13 +248,10 @@ partial class Release
 				var @event = reader.GetAttribute(EVENT_ATTRIBUTE);
 
 				if(string.IsNullOrWhiteSpace(@event))
-				{
-					reader.Skip();
 					continue;
-				}
 
 				if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
-					release.Executors.Add(new(@event, reader.Value));
+					release.Executors.Add(new(@event, reader.Value.Trim()));
 			}
 		}
 	}
@@ -270,19 +267,16 @@ partial class Release
 				var name = reader.GetAttribute(NAME_ATTRIBUTE);
 
 				if(string.IsNullOrWhiteSpace(name))
-				{
-					reader.Skip();
 					continue;
-				}
 
 				if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
 				{
 					var type = reader.GetAttribute(TYPE_ATTRIBUTE);
 
 					if(string.IsNullOrWhiteSpace(type))
-						release.Properties.Add(name, reader.Value);
+						release.Properties.Add(name, reader.Value.Trim());
 					else
-						release.Properties.Add(name, Common.Convert.ConvertValue(reader.Value, TypeAlias.Parse(type)));
+						release.Properties.Add(name, Common.Convert.ConvertValue(reader.Value.Trim(), TypeAlias.Parse(type)));
 				}
 			}
 		}

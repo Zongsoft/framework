@@ -36,10 +36,15 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Upgrading.Commands;
 
+[CommandOption(OVERWRITE_OPTION, 'o', typeof(bool), true)]
 public class LinkCommand : CommandBase<CommandContext>
 {
 	#region 单例字段
 	public static readonly LinkCommand Instance = new();
+	#endregion
+
+	#region 常量定义
+	private const string OVERWRITE_OPTION = "overwrite";
 	#endregion
 
 	#region 构造函数
@@ -54,13 +59,32 @@ public class LinkCommand : CommandBase<CommandContext>
 			return default;
 
 		if(context.Arguments.Count == 2)
-			return ValueTask.FromResult<object>(File.CreateSymbolicLink(context.Arguments[0], context.Arguments[1]));
+		{
+			if(File.Exists(context.Arguments[1]))
+			{
+				if(context.Options.Switch(OVERWRITE_OPTION))
+					File.Delete(context.Arguments[0]);
+
+				return ValueTask.FromResult<object>(File.CreateSymbolicLink(context.Arguments[0], context.Arguments[1]));
+			}
+
+			return default;
+		}
 
 		var result = new FileSystemInfo[context.Arguments.Count / 2];
 
 		for(int i = 0; i < context.Arguments.Count / 2; i++)
 		{
-			result[i] = File.CreateSymbolicLink(context.Arguments[i * 2], context.Arguments[(i * 2) + 1]);
+			var source = context.Arguments[i * 2];
+			var target = context.Arguments[(i * 2) + 1];
+
+			if(File.Exists(target))
+			{
+				if(context.Options.Switch(OVERWRITE_OPTION))
+					File.Delete(source);
+
+				result[i] = File.CreateSymbolicLink(source, target);
+			}
 		}
 
 		return ValueTask.FromResult<object>(result);

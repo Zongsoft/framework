@@ -54,7 +54,7 @@ partial class Launcher
 			else if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
 			{
 				command = "systemctl";
-				args = $"start {GetService(argument)}";
+				args = $"start {GetDaemonName(argument)}";
 			}
 			else
 			{
