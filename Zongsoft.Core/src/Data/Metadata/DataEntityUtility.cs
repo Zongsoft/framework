@@ -135,8 +135,11 @@ public static class DataEntityUtility
 
 		(var name, var @namespace) = DataUtility.Qualify(locator);
 
-		if(string.IsNullOrEmpty(@namespace))
-			@namespace = entity?.Namespace;
+		if(string.IsNullOrEmpty(@namespace) && !string.IsNullOrEmpty(entity?.Namespace) &&
+		   Mapping.Entities.TryGetValue(name, entity.Namespace, out var found))
+		{
+			return found;
+		}
 
 		return Mapping.Entities.TryGetValue(name, @namespace, out var result) ?
 			result : throw new System.Collections.Generic.KeyNotFoundException($"The specified data entity '{locator}' was not found in the mapping.");
