@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,6 +31,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Hosting;
+
 namespace Zongsoft.Components;
 
 /// <summary>表示后台工作器的基类。</summary>
@@ -38,7 +40,7 @@ namespace Zongsoft.Components;
 ///		<para>该实现提供了对<see cref="OnStartAsync(string[], CancellationToken)"/>、<see cref="OnStopAsync(string[], CancellationToken)"/>、<see cref="OnPauseAsync"/>、<see cref="OnResumeAsync"/>这四个方法之间的线程重入的隔离。</para>
 ///		<para>对于子类的实现者而言，无需担心这些方法会在多线程中会导致状态的不一致，并确保了它们不会发生线程重入。</para>
 /// </remarks>
-public abstract class WorkerBase : IWorker, IDisposable
+public abstract class WorkerBase : IWorker, IHostedService, IDisposable
 {
 	#region 常量定义
 	private const int DISPOSED = -1;
@@ -115,6 +117,7 @@ public abstract class WorkerBase : IWorker, IDisposable
 
 	#region 公共方法
 	public void Start(params string[] args) => this.StartAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+	Task IHostedService.StartAsync(CancellationToken cancellation) => this.StartAsync(Environment.GetCommandLineArgs(), cancellation);
 	public async Task StartAsync(string[] args, CancellationToken cancellation = default)
 	{
 		if(this.IsDisposed)
@@ -164,6 +167,7 @@ public abstract class WorkerBase : IWorker, IDisposable
 	}
 
 	public void Stop(params string[] args) => this.StopAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+	Task IHostedService.StopAsync(CancellationToken cancellation) => this.StopAsync(Environment.GetCommandLineArgs(), cancellation);
 	public async Task StopAsync(string[] args, CancellationToken cancellation = default)
 	{
 		if(_state == (int)WorkerState.Stopping || _state == (int)WorkerState.Stopped)

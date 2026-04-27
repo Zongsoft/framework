@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -39,7 +39,7 @@ namespace Zongsoft.Components;
 /// <remarks>
 ///		<para>对于实现者的约定：应支持 <see cref="Start(string[])"/>、<see cref="Stop(string[])"/>、<see cref="Pause"/>、<see cref="Resume"/> 这四个工作方法的线程重入隔离性。</para>
 /// </remarks>
-public interface IWorker
+public interface IWorker : Microsoft.Extensions.Hosting.IHostedService
 {
 	#region 事件定义
 	/// <summary>表示状态发生了改变。</summary>
