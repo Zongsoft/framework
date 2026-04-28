@@ -61,15 +61,7 @@ partial class Downloader
 			if(client == null)
 				return null;
 
-			if(release.Properties.TryGetValue("url", out var url) && url != null)
-			{
-				var stream = await DownloadAsync(client, url.ToString(), cancellation);
-
-				if(stream != null)
-					return stream;
-			}
-
-			if(release.Properties.TryGetValue("download", out url) && url != null)
+			if(release.Properties.TryGetValue(DOWNLOAD_URL, out var url) && url != null)
 			{
 				var stream = await DownloadAsync(client, url.ToString(), cancellation);
 

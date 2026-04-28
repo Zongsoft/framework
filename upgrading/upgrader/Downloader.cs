@@ -36,6 +36,11 @@ namespace Zongsoft.Upgrading;
 
 public abstract partial class Downloader : IDownloader
 {
+	#region 常量定义
+	internal const string DOWNLOAD_URL = "Download.Url";
+	internal const string DOWNLOAD_PATH = "Download.Path";
+	#endregion
+
 	#region 事件声明
 	public event EventHandler<DownloadEventArgs> Downloaded;
 	public event EventHandler<DownloadEventArgs> Downloading;
@@ -72,7 +77,24 @@ public abstract partial class Downloader : IDownloader
 		//下载升级包文件
 		using var source = await this.DownloadAsync(release, cancellation);
 		if(source == null || !source.CanRead)
+		{
+			//记录下载升级包文件失败的日志
+			await Diagnostics.Logging.GetLogging<Downloader>().WarnAsync(
+				$"Failed to download the package file for the '{release.Name}@{release.Version}' release.",
+				new
+				{
+					release.Name,
+					release.Edition,
+					release.Version,
+					release.Checksum,
+					release.Kind,
+					release.Size,
+					release.Path,
+				}, cancellation);
+
+			//返回下载失败
 			return null;
+		}
 
 		//将下载的升级包文件保存到指定目录
 		using var stream = new FileStream(destination.FullName, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024);

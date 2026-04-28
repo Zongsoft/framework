@@ -50,15 +50,7 @@ partial class Downloader
 			if(string.IsNullOrEmpty(_fetcher.Url))
 				return null;
 
-			if(release.Properties.TryGetValue("path", out var path) && path != null)
-			{
-				var stream = await DownloadAsync(_fetcher.Url, path.ToString(), cancellation);
-
-				if(stream != null)
-					return stream;
-			}
-
-			if(release.Properties.TryGetValue("download", out path) && path != null)
+			if(release.Properties.TryGetValue(Downloader.DOWNLOAD_PATH, out var path) && path != null)
 			{
 				var stream = await DownloadAsync(_fetcher.Url, path.ToString(), cancellation);
 
@@ -73,9 +65,15 @@ partial class Downloader
 		#region 私有方法
 		static async ValueTask<Stream> DownloadAsync(string url, string path, CancellationToken cancellation)
 		{
+			if(string.IsNullOrEmpty(url) && string.IsNullOrEmpty(path))
+				return null;
+
 			try
 			{
-				url = Zongsoft.IO.Path.Combine(url, path);
+				if(path.Contains(':'))
+					url = path;
+				else
+					url = IO.Path.Combine(url, path);
 
 				if(string.IsNullOrEmpty(url))
 					return null;
@@ -83,11 +81,15 @@ partial class Downloader
 				if(await FileSystem.File.ExistsAsync(url, cancellation))
 					return await FileSystem.File.OpenAsync(url, FileMode.Open, FileAccess.Read, cancellation);
 
+				//记录下载文件不存在的日志
+				await Diagnostics.Logging.GetLogging<FileDownloader>().WarnAsync($"The file '{url}' does not exist.", cancellation);
+
+				//返回空对象
 				return null;
 			}
 			catch(Exception ex)
 			{
-				Zongsoft.Diagnostics.Logging.GetLogging<FileDownloader>().Error(ex);
+				Diagnostics.Logging.GetLogging<FileDownloader>().Error(ex);
 				return null;
 			}
 		}

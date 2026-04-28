@@ -126,6 +126,10 @@ partial class Fetcher
 							release.Properties[property.Key] = property.Value;
 					}
 
+					//设置当前发布的包文件的下载地址
+					release.Properties[Upgrading.Downloader.DOWNLOAD_PATH] = Path.Combine(file.Path.GetDirectoryUrl(), release.Path);
+					release.Properties[Upgrading.Downloader.DOWNLOAD_URL] = FileSystem.GetUrl(Path.Combine(file.Path.GetDirectoryUrl(), release.Path));
+
 					yield return release;
 				}
 			}
