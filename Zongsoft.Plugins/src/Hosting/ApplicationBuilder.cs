@@ -51,17 +51,26 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 	#endregion
 
 	#region 公共方法
-	public void LoadConfiguration(string applicationName = null)
+	public void LoadConfiguration()
 	{
-		if(string.IsNullOrEmpty(applicationName))
-			applicationName = this.Environment.ApplicationName;
+		this.LoadConfiguration(this.Environment.ApplicationName);
+
+		var assemblyName = Assembly.GetEntryAssembly().GetName().Name;
+		if(!string.Equals(this.Environment.ApplicationName, assemblyName, StringComparison.OrdinalIgnoreCase))
+			this.LoadConfiguration(Assembly.GetEntryAssembly().GetName().Name);
+	}
+
+	public void LoadConfiguration(string name)
+	{
+		if(string.IsNullOrEmpty(name))
+			return;
 
 		//添加宿主配置文件
-		this.Configuration.AddOptionFile($"{applicationName}.option", true);
+		this.Configuration.AddOptionFile($"{name}.option", true);
 
 		//获取宿主附属配置文件
 		var slaves = GetSlaves(
-			applicationName,
+			name,
 			this.Environment.EnvironmentName,
 			this.Configuration.GetSection("host")?.Value,
 			this.Configuration.GetSection("site")?.Value);
