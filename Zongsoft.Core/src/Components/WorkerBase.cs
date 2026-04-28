@@ -112,6 +112,8 @@ public abstract class WorkerBase : IWorker, IHostedService, IDisposable
 
 	/// <summary>获取工作器的状态。</summary>
 	public WorkerState State => (WorkerState)_state;
+
+	/// <summary>获取一个值，指示当前工作器是否已释放。</summary>
 	public bool IsDisposed => _disposing == DISPOSED;
 	#endregion
 
