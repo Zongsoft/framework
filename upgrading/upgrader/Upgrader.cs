@@ -64,31 +64,37 @@ public partial class Upgrader
 	{
 		//确保升级的部署文件存在
 		if(!Deployer.HasDeployment(out var deployment))
+		{
+			Diagnostics.Logging.GetLogging<Upgrader>().Error("The deployment file was not found.");
 			return;
+		}
 
 		//定义升级部署器程序的路径
 		var deployer = Path.Combine(Application.ApplicationPath, Deployer.DIRECTORY, Deployer.FILENAME);
 
 		//确保升级部署器程序是存在的
-		if(File.Exists(deployer))
+		if(!File.Exists(deployer))
 		{
-			//以独占锁的方式打开部署文件
-			using var locking = deployment.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+			Diagnostics.Logging.GetLogging<Upgrader>().Error($"The deployer program '{deployer}' does not exist.");
+			return;
+		}
 
-			//启动升级部署器程序
-			var process = Launch(deployer, deployment.FullName);
+		//以独占锁的方式打开部署文件
+		using var locking = deployment.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-			//如果升级部署器程序启动成功则退出当前进程
-			if(process != null)
-			{
-				//记录升级部署器程序的启动日志
-				Diagnostics.Logging.GetLogging<Upgrader>().Info(
-					$"The upgrader([{Environment.ProcessId}]{Environment.ProcessPath}) has completed(downloaded and extracted), and the deployer program has been launched.",
-					Utility.GetProcessInfo(process));
+		//启动升级部署器程序
+		var process = Launch(deployer, deployment.FullName);
 
-				//关闭当前应用程序
-				Shutdown(locking);
-			}
+		//如果升级部署器程序启动成功则退出当前进程
+		if(process != null)
+		{
+			//记录升级部署器程序的启动日志
+			Diagnostics.Logging.GetLogging<Upgrader>().Info(
+				$"The upgrader([{Environment.ProcessId}]{Environment.ProcessPath}) has completed(downloaded and extracted), and the deployer program has been launched.",
+				Utility.GetProcessInfo(process));
+
+			//关闭当前应用程序
+			Shutdown(locking);
 		}
 	}
 

@@ -93,6 +93,20 @@ public abstract partial class Downloader : IDownloader
 				//删除已下载的目标文件
 				destination.Delete();
 
+				//记录下载文件校验失败的日志
+				await Diagnostics.Logging.GetLogging<Downloader>().WarnAsync(
+					$"The downloaded file '{destination.FullName}' does not match the checksum declared in the release, and has been deleted.",
+					new
+					{
+						release.Name,
+						release.Edition,
+						release.Version,
+						release.Checksum,
+						release.Kind,
+						release.Size,
+						release.Path,
+					}, cancellation);
+
 				//返回下载失败
 				return null;
 			}

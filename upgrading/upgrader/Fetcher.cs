@@ -92,17 +92,27 @@ public abstract partial class Fetcher
 			name = ApplicationContext.Current?.Configuration.GetConnectionSettings(nameof(Upgrading), null)?.Name;
 
 			if(string.IsNullOrEmpty(name))
+			{
+				Diagnostics.Logging.GetLogging<Fetcher>().Warn("No fetcher name specified, and no default fetcher name found in configuration.");
 				return null;
+			}
 		}
 
 		//获取指定名称的获取器
 		if(!_fetchers.TryGetValue(name, out var fetcher))
+		{
+			await Diagnostics.Logging.GetLogging<Fetcher>().WarnAsync($"No fetcher found with the name '{name}'.", cancellation);
 			return default;
+		}
 
 		//获取升级清单信息
 		var manifest = await fetcher.FetchAsync(edition, version, cancellation);
 		if(manifest == null || manifest.IsEmpty)
+		{
+			var app = new ApplicationIdentifier(Application.ApplicationName, string.IsNullOrEmpty(edition) ? Application.ApplicationEdition : edition, Application.ApplicationVersion);
+			await Diagnostics.Logging.GetLogging<Fetcher>().InfoAsync($"The release for the '{app}' application was not found in the {fetcher.Name} channel.", cancellation);
 			return default;
+		}
 
 		//获取升级清单文件所在目录
 		var directory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Application.ApplicationName));
