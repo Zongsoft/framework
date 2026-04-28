@@ -72,25 +72,62 @@ partial class Fetcher
 			if(string.IsNullOrEmpty(this.Url))
 				yield break;
 
+			var name = Application.ApplicationName;
+			var type = Application.ApplicationType?.ToLowerInvariant();
 			var extension = System.IO.Path.GetExtension(Manifest.FILE_NAME);
-			var files = FileSystem.Directory.GetFilesAsync(this.Url, $"{Application.ApplicationName}*{extension}", true, cancellation);
 
-			await foreach(var file in files)
+			//在“应用名”的目录下查找所有清单文件，譬如：zfs.s3:/upgrading/releases/zongsoft.daemon/*.manifest
+			var path = Path.Combine(this.Url, name);
+			if(await FileSystem.Directory.ExistsAsync(path, cancellation))
 			{
-				//确保当前文件是清单文件
-				if(!string.Equals(System.IO.Path.GetExtension(file.Name), extension, StringComparison.OrdinalIgnoreCase))
-					continue;
+				await foreach(var release in EnumerableAsync(GetFilesAsync(path, $"*{extension}", cancellation), extension, cancellation))
+					yield return release;
+			}
 
-				var stream = await FileSystem.File.OpenAsync(file.Path.Url, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
-				var release = await Release.ReadAsync(stream, cancellation);
-
-				if(file.HasProperties)
+			//如果应用类型不为空，则继续尝试应用类型的目录下查找清单文件
+			if(!string.IsNullOrEmpty(type))
+			{
+				//在“应用类型/应用名”的目录下查找所有清单文件，譬如：zfs.s3:/upgrading/releases/daemon/zongsoft.daemon/*.manifest
+				path = Path.Combine(this.Url, type, name);
+				if(await FileSystem.Directory.ExistsAsync(path, cancellation))
 				{
-					foreach(var property in file.Properties)
-						release.Properties[property.Key] = property.Value;
+					await foreach(var release in EnumerableAsync(GetFilesAsync(path, $"*{extension}", cancellation), extension, cancellation))
+						yield return release;
 				}
 
+				//在“应用类型”的目录下查找以应用名打头的清单文件，譬如：zfs.s3:/upgrading/releases/daemon/zongsoft.daemon*.manifest
+				path = Path.Combine(this.Url, type);
+				if(await FileSystem.Directory.ExistsAsync(path, cancellation))
+				{
+					await foreach(var release in EnumerableAsync(GetFilesAsync(path, $"{name}*{extension}", cancellation), extension, cancellation))
+						yield return release;
+				}
+			}
+
+			//在根目录下查找以应用名打头的清单文件，譬如：zfs.s3:/upgrading/releases/zongsoft.daemon*.manifest
+			await foreach(var release in EnumerableAsync(GetFilesAsync(this.Url, $"{name}*{extension}", cancellation), extension, cancellation))
 				yield return release;
+
+			static IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, CancellationToken cancellation) => FileSystem.Directory.GetFilesAsync(path, pattern, false, cancellation);
+			static async IAsyncEnumerable<Release> EnumerableAsync(IAsyncEnumerable<FileInfo> files, string extension, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation)
+			{
+				await foreach(var file in files)
+				{
+					//确保当前文件是清单文件
+					if(!string.Equals(System.IO.Path.GetExtension(file.Name), extension, StringComparison.OrdinalIgnoreCase))
+						continue;
+
+					var stream = await FileSystem.File.OpenAsync(file.Path.Url, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
+					var release = await Release.ReadAsync(stream, cancellation);
+
+					if(file.HasProperties)
+					{
+						foreach(var property in file.Properties)
+							release.Properties[property.Key] = property.Value;
+					}
+
+					yield return release;
+				}
 			}
 		}
 		#endregion
