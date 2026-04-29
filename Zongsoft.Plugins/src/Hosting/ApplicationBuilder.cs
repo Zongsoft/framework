@@ -247,10 +247,6 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 
 		//设置服务提供程序工厂
 		_builder.ConfigureContainer(new Services.ServiceProviderFactory());
-
-		//挂载插件宿主初始化器
-		_builder.Services.AddSingleton<ApplicationServicer>();
-		_builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<ApplicationServicer>());
 	}
 
 	public override IServiceCollection Services => _builder.Services;
@@ -299,10 +295,6 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 
 		//设置服务提供程序工厂
 		_builder.UseServiceProviderFactory(new Zongsoft.Services.ServiceProviderFactory());
-
-		//挂载插件宿主初始化器
-		this.Services.AddSingleton<PluginsHostInitializer>();
-		this.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<PluginsHostInitializer>());
 	}
 
 	public override IServiceCollection Services { get; }

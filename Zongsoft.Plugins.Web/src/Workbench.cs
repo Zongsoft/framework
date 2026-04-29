@@ -36,12 +36,4 @@ public class Workbench : Zongsoft.Plugins.WorkbenchBase
 	#region 构造函数
 	internal Workbench(WebApplicationContext applicationContext) : base(applicationContext) { }
 	#endregion
-
-	#region 重写方法
-	protected override void OnOpen()
-	{
-		//调用基类同名方法，以启动工作台下Startup下的所有工作者
-		base.OnOpen();
-	}
-	#endregion
 }

@@ -34,19 +34,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Plugins.Hosting;
 
-public static class ApplicationInitializer
+public static class ApplicationExtension
 {
 	public static TApplication Initialize<TApplication>(this TApplication app) where TApplication : IHost
 	{
-		if(app is null)
-			return default;
-
-		//获取应用上下文
-		var context = app.Services.GetRequiredService<PluginApplicationContext>();
-		//初始化应用
-		context.Initialize();
-		//打开工作台
-		context.Workbench.Open();
+		//初始化应用上下文
+		app?.Services
+			.GetRequiredService<PluginApplicationContext>()
+			.Initialize();
 
 		return app;
 	}

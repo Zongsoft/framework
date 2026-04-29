@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -132,6 +132,20 @@ namespace Zongsoft.Plugins
 		}
 		#endregion
 
+		#region 重写方法
+		protected override void OnStarted()
+		{
+			this.Workbench.Open();
+			base.OnStarted();
+		}
+
+		protected override void OnStopping()
+		{
+			this.Workbench.Close();
+			base.OnStopping();
+		}
+		#endregion
+
 		#region 处置方法
 		protected override void Dispose(bool disposing)
 		{
@@ -149,8 +163,6 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 激发事件
-		internal void RaiseStarted() => this.OnStarted(EventArgs.Empty);
-		internal void RaiseStopped() => this.OnStopped(EventArgs.Empty);
 		protected virtual void OnWorkbenchCreated(EventArgs args = null) => this.WorkbenchCreated?.Invoke(this, args ?? EventArgs.Empty);
 		#endregion
 

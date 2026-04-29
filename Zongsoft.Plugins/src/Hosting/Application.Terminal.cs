@@ -60,7 +60,7 @@ partial class Application
 			services.AddSingleton(provider => new TerminalApplicationContext(provider, options));
 			services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
 			services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
-			services.Configure<ConsoleLifetimeOptions>(options => options.SuppressStatusMessages = true);
+			services.Configure<ConsoleLifetimeOptions>(options => options.SuppressStatusMessages = false);
 
 			base.RegisterServices(services, options);
 		}
@@ -97,23 +97,28 @@ partial class Application
 		}
 		#endregion
 
-		#region 打开方法
+		#region 重写方法
 		protected override void OnOpen()
 		{
-			var executor = this.Executor ?? throw new InvalidOperationException("Missing the required command executor of the terminal.");
-
-			//调用基类同名方法
+			this.ApplicationContext.Started += this.Run;
 			base.OnOpen();
+		}
 
-			//激发“Opened”事件
-			this.RaiseOpened();
+		protected override void OnClose()
+		{
+			this.ApplicationContext.Started -= this.Run;
+			base.OnClose();
+		}
+		#endregion
 
-			//启动命令运行器
-			executor.Run();
+		#region 私有方法
+		private void Run(object sender, EventArgs e)
+		{
+			if(this.Executor == null)
+				throw new InvalidOperationException("Missing the required command executor of the terminal.");
 
-			//关闭命令执行器
-			//注意：因为基类中的线程同步锁独占机制，因此不能由“开启临界区”直接跳入“关闭临界区”
-			System.Threading.Tasks.Task.Delay(500).ContinueWith(task => this.Close());
+			Environment.ExitCode = this.Executor.Run();
+			this.Close();
 		}
 		#endregion
 	}

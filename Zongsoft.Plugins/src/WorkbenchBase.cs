@@ -36,7 +36,7 @@ using Zongsoft.Components;
 namespace Zongsoft.Plugins
 {
 	/// <summary>
-	/// 提供工作台的基本封装，建议自定义工作台从此类继承。
+	/// 表示工作台的基类。
 	/// </summary>
 	public abstract class WorkbenchBase : IWorkbenchBase, IDisposable
 	{
@@ -70,7 +70,10 @@ namespace Zongsoft.Plugins
 		public PluginApplicationContext ApplicationContext { get; }
 
 		/// <summary>获取工作台的运行状态。</summary>
-		public WorkbenchStatus Status { get => _status; }
+		public WorkbenchStatus Status => _status;
+
+		/// <summary>获取启动的插件树节点。</summary>
+		public PluginTreeNode Startup => field ??= this.ApplicationContext.PluginTree.Find(_startupPath);
 
 		/// <summary>获取或设置工作台的标题。</summary>
 		public virtual string Title
@@ -119,8 +122,11 @@ namespace Zongsoft.Plugins
 				//调用虚拟方法以执行实际启动的操作
 				this.OnOpen();
 
-				//尝试激发“Opened”事件
-				this.RaiseOpened();
+				//设置工作台状态为“Running”
+				_status = WorkbenchStatus.Running;
+
+				//激发“Opened”事件
+				this.OnOpened(EventArgs.Empty);
 			}
 			catch
 			{
@@ -165,8 +171,14 @@ namespace Zongsoft.Plugins
 				//调用虚拟方法以进行实际的关闭操作
 				this.OnClose();
 
-				//尝试激发“Closed”事件
-				this.RaiseClosed();
+				//设置工作台状态为“None”
+				_status = WorkbenchStatus.None;
+
+				//激发“Closed”事件
+				this.OnClosed(EventArgs.Empty);
+
+				//退出应用程序
+				this.ApplicationContext.Exit();
 			}
 			catch
 			{
@@ -181,31 +193,8 @@ namespace Zongsoft.Plugins
 		#endregion
 
 		#region 虚拟方法
-		protected virtual void OnOpen()
-		{
-			if(string.IsNullOrEmpty(_startupPath))
-				return;
-
-			//获取启动路径对应的节点对象
-			PluginTreeNode startupNode = this.ApplicationContext.PluginTree.Find(_startupPath);
-
-			//运行启动路径下的所有工作者
-			if(startupNode != null)
-				this.StartWorkers(startupNode);
-		}
-
-		protected virtual void OnClose()
-		{
-			if(string.IsNullOrEmpty(_startupPath))
-				return;
-
-			//获取启动路径对应的节点对象
-			PluginTreeNode startupNode = this.ApplicationContext.PluginTree.Find(_startupPath);
-
-			//停止启动路径下的所有工作者
-			if(startupNode != null)
-				this.StopWorkers(startupNode);
-		}
+		protected virtual void OnClose() { }
+		protected virtual void OnOpen() => this.LoadWorkers(this.Startup);
 		#endregion
 
 		#region 处置方法
@@ -214,42 +203,20 @@ namespace Zongsoft.Plugins
 			var disposed = Interlocked.CompareExchange(ref _disposed, 1, 0);
 
 			if(disposed == 0)
-			{
 				this.Close();
-			}
 		}
 		#endregion
 
 		#region 事件激发
-		protected void RaiseOpened()
-		{
-			if(this.Status == WorkbenchStatus.Opening)
-			{
-				_status = WorkbenchStatus.Running;
-				this.OnOpened(EventArgs.Empty);
-				this.ApplicationContext.RaiseStarted();
-			}
-		}
-
-		protected void RaiseClosed()
-		{
-			if(this.Status == WorkbenchStatus.Closing)
-			{
-				_status = WorkbenchStatus.None;
-				this.OnClosed(EventArgs.Empty);
-				this.ApplicationContext.RaiseStopped();
-			}
-		}
-
 		protected virtual void OnOpened(EventArgs args) => this.Opened?.Invoke(this, args);
-		public virtual void OnOpening(EventArgs args) => this.Opening?.Invoke(this, args);
+		protected virtual void OnOpening(EventArgs args) => this.Opening?.Invoke(this, args);
 		protected virtual void OnClosed(EventArgs args) => this.Closed?.Invoke(this, args);
 		protected virtual void OnClosing(CancelEventArgs args) => this.Closing?.Invoke(this, args);
 		protected virtual void OnTitleChanged(EventArgs args) => this.TitleChanged?.Invoke(this, args);
 		#endregion
 
 		#region 私有方法
-		private void StartWorkers(PluginTreeNode node)
+		private void LoadWorkers(PluginTreeNode node)
 		{
 			if(node == null)
 				return;
@@ -257,30 +224,10 @@ namespace Zongsoft.Plugins
 			object target = node.UnwrapValue(ObtainMode.Auto);
 
 			if(target is IWorker worker && worker.Enabled)
-			{
-				ThreadPool.QueueUserWorkItem(state => ((IWorker)state).Start(), worker);
 				this.ApplicationContext.Workers.Add(worker);
-			}
 
 			foreach(PluginTreeNode child in node.Children)
-				this.StartWorkers(child);
-		}
-
-		private void StopWorkers(PluginTreeNode node)
-		{
-			if(node == null)
-				return;
-
-			foreach(PluginTreeNode child in node.Children)
-				this.StopWorkers(child);
-
-			object target = node.UnwrapValue(ObtainMode.Never);
-
-			if(target is IWorker worker)
-			{
-				worker.Stop();
-				this.ApplicationContext.Workers.Remove(worker);
-			}
+				this.LoadWorkers(child);
 		}
 		#endregion
 	}

@@ -82,10 +82,6 @@ public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplicati
 
 		//设置服务提供程序工厂
 		_builder.Host.UseServiceProviderFactory(new Services.ServiceProviderFactory());
-
-		//挂载插件宿主初始化器
-		_builder.Services.AddSingleton<ApplicationServicer>();
-		_builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<ApplicationServicer>());
 	}
 
 	public override IServiceCollection Services => _builder.Services;
