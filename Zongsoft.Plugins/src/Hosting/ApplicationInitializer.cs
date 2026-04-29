@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -28,24 +28,26 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Plugins.Hosting;
 
-[Obsolete("Use Application and ApplicationBuilder instead.")]
-public class PluginsHostBuilderContext : HostBuilderContext
+public static class ApplicationInitializer
 {
-	#region 构造函数
-	public PluginsHostBuilderContext(PluginOptions options, IDictionary<object, object> properties) : base(properties)
+	public static TApplication Initialize<TApplication>(this TApplication app) where TApplication : IHost
 	{
-		this.Options = options ?? throw new ArgumentNullException(nameof(options));
-	}
-	#endregion
+		if(app is null)
+			return default;
 
-	#region 公共属性
-	public PluginOptions Options { get; }
-	#endregion
+		//获取应用上下文
+		var context = app.Services.GetRequiredService<PluginApplicationContext>();
+		//初始化应用
+		context.Initialize();
+		//打开工作台
+		context.Workbench.Open();
+
+		return app;
+	}
 }

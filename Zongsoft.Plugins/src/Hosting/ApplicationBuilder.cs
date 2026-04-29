@@ -35,7 +35,6 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Configuration;
@@ -249,8 +248,9 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		//设置服务提供程序工厂
 		_builder.ConfigureContainer(new Services.ServiceProviderFactory());
 
-		//挂载插件宿主生命期
-		_builder.Services.AddSingleton<IHostLifetime, Hosting.PluginsHostLifetime>();
+		//挂载插件宿主初始化器
+		_builder.Services.AddSingleton<ApplicationServicer>();
+		_builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<ApplicationServicer>());
 	}
 
 	public override IServiceCollection Services => _builder.Services;
@@ -264,12 +264,13 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		var options = this.CreateOptions(_builder.Configuration);
 
 		//添加插件配置文件源到配置管理器中
-		((IConfigurationBuilder)_builder.Configuration).Add(new Zongsoft.Configuration.PluginConfigurationSource(options));
+		((IConfigurationBuilder)_builder.Configuration).Add(new PluginConfigurationSource(options));
 
 		//注册插件服务
 		this.RegisterServices(_builder.Services, options);
 
-		return _builder.Build();
+		//创建并初始化宿主
+		return _builder.Build().Initialize();
 	}
 #else
 	private readonly IHostBuilder _builder;
@@ -299,8 +300,9 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		//设置服务提供程序工厂
 		_builder.UseServiceProviderFactory(new Zongsoft.Services.ServiceProviderFactory());
 
-		//挂载插件宿主生命期
-		this.Services.AddSingleton<IHostLifetime, Hosting.PluginsHostLifetime>();
+		//挂载插件宿主初始化器
+		this.Services.AddSingleton<PluginsHostInitializer>();
+		this.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<PluginsHostInitializer>());
 	}
 
 	public override IServiceCollection Services { get; }
@@ -345,7 +347,8 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 				_builder.ConfigureServices(services => services.Add(service));
 		}
 
-		return _builder.Build();
+		//创建并初始化宿主
+		return _builder.Build().Initialize();
 	}
 
 	private sealed class ApplicationEnvironment : Services.IApplicationEnvironment, IHostEnvironment

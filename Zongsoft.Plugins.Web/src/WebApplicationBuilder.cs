@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins.Web library.
  *
@@ -41,12 +41,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-using Zongsoft.Web;
-using Zongsoft.Web.Security;
-using Zongsoft.Plugins;
-using Zongsoft.Plugins.Hosting;
 using Zongsoft.Security;
 using Zongsoft.Services;
+using Zongsoft.Plugins;
+using Zongsoft.Plugins.Hosting;
+using Zongsoft.Web.Security;
 
 namespace Zongsoft.Web;
 
@@ -84,8 +83,9 @@ public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplicati
 		//设置服务提供程序工厂
 		_builder.Host.UseServiceProviderFactory(new Services.ServiceProviderFactory());
 
-		//挂载插件宿主生命期
-		_builder.Services.AddSingleton<IHostLifetime, PluginsHostLifetime>();
+		//挂载插件宿主初始化器
+		_builder.Services.AddSingleton<ApplicationServicer>();
+		_builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<ApplicationServicer>());
 	}
 
 	public override IServiceCollection Services => _builder.Services;
@@ -105,7 +105,8 @@ public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplicati
 		//注册插件服务
 		this.RegisterServices(_builder.Services, options);
 
-		return _builder.Build();
+		//构建并初始化应用
+		return _builder.Build().Initialize();
 	}
 
 	protected override void RegisterServices(IServiceCollection services, PluginOptions options)

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,6 +60,7 @@ partial class Application
 			services.AddSingleton(provider => new TerminalApplicationContext(provider, options));
 			services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
 			services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
+			services.Configure<ConsoleLifetimeOptions>(options => options.SuppressStatusMessages = true);
 
 			base.RegisterServices(services, options);
 		}

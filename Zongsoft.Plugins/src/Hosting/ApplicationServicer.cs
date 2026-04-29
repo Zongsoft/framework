@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -37,101 +37,55 @@ using Microsoft.Extensions.Options;
 
 namespace Zongsoft.Plugins.Hosting;
 
-public class PluginsHostLifetime : IHostLifetime, IDisposable
+public class ApplicationServicer : IHostedService, IDisposable
 {
 	#region 私有变量
-	private CancellationTokenRegistration _applicationStartedRegistration;
 	private readonly PluginApplicationContext _applicationContext;
 	private readonly IHostApplicationLifetime _applicationLifetime;
 	private readonly HostOptions _hostOptions;
 	private readonly ILogger _logger;
 
-	private readonly ManualResetEvent _shutdownBlock = new ManualResetEvent(false);
+	private readonly ManualResetEvent _shutdownBlock = new(false);
 	#endregion
 
 	#region 构造函数
-	public PluginsHostLifetime(PluginApplicationContext applicationContext, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions)
+	public ApplicationServicer(PluginApplicationContext applicationContext, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions)
 		: this(applicationContext, applicationLifetime, hostOptions, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance) { }
 
-	public PluginsHostLifetime(PluginApplicationContext applicationContext, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions, ILoggerFactory loggerFactory)
+	public ApplicationServicer(PluginApplicationContext applicationContext, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions, ILoggerFactory loggerFactory)
 	{
 		_applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
 		_applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
 		_hostOptions = hostOptions?.Value ?? throw new ArgumentNullException(nameof(hostOptions));
 		_logger = loggerFactory.CreateLogger("Zongsoft.Hosting.Lifetime");
+		_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
+		AppDomain.CurrentDomain.ProcessExit += this.OnProcessExit;
 	}
 	#endregion
 
 	#region 公共方法
-	public Task StopAsync(CancellationToken cancellationToken)
+	Task IHostedService.StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+	Task IHostedService.StopAsync(CancellationToken cancellationToken)
 	{
 		if(!cancellationToken.IsCancellationRequested)
 			_applicationContext.Dispose();
 
 		return Task.CompletedTask;
 	}
-
-	public Task WaitForStartAsync(CancellationToken cancellationToken)
-	{
-		cancellationToken.ThrowIfCancellationRequested();
-
-		_applicationStartedRegistration = _applicationLifetime.ApplicationStarted.Register(state =>
-		{
-			((PluginsHostLifetime)state).OnApplicationStarted();
-		}, this);
-
-		AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
-
-#if !DEBUG
-		try
-#endif
-		{
-			_applicationContext.Initialize();
-			_applicationContext.Workbench.Open();
-
-			return Task.CompletedTask;
-		}
-#if !DEBUG
-		catch(Exception ex)
-		{
-			_logger.LogError(ex, $"The {_applicationContext.Name} application failed to initialize.");
-			throw;
-		}
-#endif
-	}
 	#endregion
 
 	#region 事件响应
-	private void OnApplicationStarted()
-	{
-#if DEBUG
-		_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
-		//_applicationContext.Workbench.Open();
-#else
-		try
-		{
-			_applicationContext.Stopped += (_, __) => _applicationLifetime.StopApplication();
-			//_applicationContext.Workbench.Open();
-		}
-		catch(Exception ex)
-		{
-			_logger.LogError(ex, $"The {_applicationContext.Name} application failed to start.");
-			throw;
-		}
-#endif
-	}
-
 	private void OnProcessExit(object sender, EventArgs e)
 	{
 		_applicationLifetime.StopApplication();
 
 		if(!_shutdownBlock.WaitOne(_hostOptions.ShutdownTimeout))
-			_logger.LogInformation("Waiting for the host to be disposed. Ensure all 'IHost' instances are wrapped in 'using' blocks.");
+			_logger.LogWarning("Waiting for the host to be disposed. Ensure all 'IHost' instances are wrapped in 'using' blocks.");
 
 		_shutdownBlock.WaitOne();
 		Environment.ExitCode = 0;
 	}
-#endregion
+	#endregion
 
 	#region 处置方法
 	public void Dispose()
@@ -145,8 +99,7 @@ public class PluginsHostLifetime : IHostLifetime, IDisposable
 		if(disposing)
 		{
 			_shutdownBlock.Set();
-			AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
-			_applicationStartedRegistration.Dispose();
+			AppDomain.CurrentDomain.ProcessExit -= this.OnProcessExit;
 		}
 	}
 	#endregion
