@@ -80,6 +80,7 @@ public class ModelDescriptorTest
 
 		var entity = model.ToEntity();
 		Assert.NotNull(entity);
+		Assert.Equal(model.Alias, entity.Alias);
 		Assert.Equal(model.QualifiedName, entity.QualifiedName, true);
 		Assert.NotNull(entity.Key);
 		Assert.Single(entity.Key);
@@ -242,6 +243,7 @@ public class ModelDescriptorTest
 	{
 		Assert.NotNull(descriptor);
 		Assert.Equal("Logs", descriptor.Name);
+		Assert.Equal("MyLog", descriptor.Alias);
 		Assert.Equal(typeof(Log), descriptor.Type);
 		Assert.NotNull(descriptor.Properties);
 		Assert.NotEmpty(descriptor.Properties);
@@ -306,7 +308,7 @@ public class ModelDescriptorTest
 		Assert.False(descriptor.Properties.Contains(nameof(Log.IgnoredField)));
 	}
 
-	[Model("Logs")]
+	[Model("Logs", "MyLog")]
 	private struct Log
 	{
 		[ModelProperty("Id", IsPrimaryKey = true, Sequence = "#")]
@@ -326,6 +328,7 @@ public class ModelDescriptorTest
 		public DateTime Timestamp { get; set; }
 	}
 
+	[Model(Alias = "MyOrder")]
 	internal abstract class Order
 	{
 		[ModelProperty(IsPrimaryKey = true, Sequence = "#")]
