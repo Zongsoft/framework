@@ -43,6 +43,7 @@ public interface IApplicationContext : IApplicationModule
 	#region 事件定义
 	event EventHandler Started;
 	event EventHandler Stopped;
+	event EventHandler Stopping;
 	#endregion
 
 	#region 属性定义
@@ -76,9 +77,13 @@ public interface IApplicationContext : IApplicationModule
 	#endregion
 
 	#region 方法定义
-	/// <summary>确认指定的当前应用程序的相对目录是否存在，如果不存在则依次创建它们，并返回其对应的完整路径。</summary>
-	/// <param name="relativePath">相对于应用程序根目录的相对路径，可使用'/'或'\'字符作为相对路径的分隔符。</param>
-	/// <returns>如果<paramref name="relativePath"/>参数为空或者全空白字符则返回应用程序根目录(即<see cref="ApplicationPath"/>属性值。)，否则返回其相对路径的完整路径。</returns>
-	string EnsureDirectory(string relativePath);
+	/// <summary>退出当前应用程序。</summary>
+	/// <param name="timeout">等待应用程序停止的超时时间。</param>
+	void Exit(TimeSpan timeout = default);
+
+	/// <summary>退出当前应用程序。</summary>
+	/// <param name="exitCode">退出代码。</param>
+	/// <param name="timeout">等待应用程序停止的超时时间。</param>
+	void Exit(int exitCode, TimeSpan timeout = default);
 	#endregion
 }

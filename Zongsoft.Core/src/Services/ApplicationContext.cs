@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.IO;
 using System.Threading;
 using System.Reflection;
 using System.Security.Claims;
@@ -50,11 +49,10 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#region 事件声明
 	public event EventHandler Started;
 	public event EventHandler Stopped;
+	public event EventHandler Stopping;
 	#endregion
 
 	#region 成员字段
-	private volatile int _started;
-	private volatile int _stopped;
 	private volatile int _disposed;
 	private volatile int _initialized;
 
@@ -64,6 +62,7 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 
 	private readonly CancellationTokenRegistration _applicationStarted;
 	private readonly CancellationTokenRegistration _applicationStopped;
+	private readonly CancellationTokenRegistration _applicationStopping;
 	#endregion
 
 	#region 构造函数
@@ -83,8 +82,9 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 
 		if(lifetime != null)
 		{
-			_applicationStarted = lifetime.ApplicationStarted.Register(() => this.OnStarted(EventArgs.Empty));
-			_applicationStopped = lifetime.ApplicationStopped.Register(() => this.OnStopped(EventArgs.Empty));
+			_applicationStarted = lifetime.ApplicationStarted.Register(this.OnStarted);
+			_applicationStopped = lifetime.ApplicationStopped.Register(this.OnStopped);
+			_applicationStopping = lifetime.ApplicationStopping.Register(this.OnStopping);
 		}
 
 		_current = this;
@@ -146,28 +146,25 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#endregion
 
 	#region 公共方法
-	public string EnsureDirectory(string relativePath)
+	public void Exit(TimeSpan timeout = default) => this.Exit(System.Environment.ExitCode, timeout);
+	public void Exit(int exitCode, TimeSpan timeout = default)
 	{
-		string fullPath = this.ApplicationPath;
+		if(_disposed != 0)
+			return;
 
-		if(string.IsNullOrEmpty(relativePath))
-			return fullPath;
+		var host = _services.Resolve<IHost>();
 
-		var parts = Common.StringExtension.Slice(relativePath, '/', '\\');
-		var illegals = Path.GetInvalidPathChars();
-
-		foreach(var part in parts)
+		if(host != null)
 		{
-			if(part == ".." || part.IndexOfAny(illegals) >= 0)
-				throw new ArgumentException($"The specified '{relativePath}' relative path contains illegal path character(s).");
+			if(timeout > TimeSpan.Zero)
+				host.StopAsync(timeout).GetAwaiter().GetResult();
+			else
+				host.StopAsync().GetAwaiter().GetResult();
 
-			fullPath = Path.Combine(fullPath, part);
-
-			if(!Directory.Exists(fullPath))
-				Directory.CreateDirectory(fullPath);
+			host.WaitForShutdown();
 		}
 
-		return fullPath;
+		System.Environment.Exit(exitCode);
 	}
 	#endregion
 
@@ -183,17 +180,9 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#region 初始方法
 	public virtual bool Initialize()
 	{
-		if(_initialized != 0)
-			return false;
-
-		if(_disposed != 0 || _initializers == null)
-			throw new ObjectDisposedException(this.GetType().FullName);
-
-		if(_started != 0 || _stopped != 0)
-			throw new InvalidOperationException();
+		ObjectDisposedException.ThrowIf(_disposed != 0 || _initializers == null, this);
 
 		var initialized = Interlocked.Exchange(ref _initialized, 1);
-
 		if(initialized != 0)
 			return false;
 
@@ -203,12 +192,47 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 			_initializers.AddRange(services.ResolveAll<IApplicationInitializer>());
 
 		foreach(var initializer in _initializers)
-		{
 			initializer?.Initialize(this);
-		}
 
 		return true;
 	}
+	#endregion
+
+	#region 激发事件
+	protected virtual void OnStarted()
+	{
+		//先启动所有的工作器
+		foreach(var worker in _workers)
+		{
+			if(worker != null && worker.Enabled)
+				ThreadPool.QueueUserWorkItem(state => ((Components.IWorker)state).Start(), worker);
+		}
+
+		//后触发“Started”事件
+		this.Started?.Invoke(this, EventArgs.Empty);
+	}
+
+	protected virtual void OnStopped()
+	{
+		this.Stopped?.Invoke(this, EventArgs.Empty);
+	}
+
+	protected virtual void OnStopping()
+	{
+		//先触发“Stopping”事件
+		this.Stopping?.Invoke(this, EventArgs.Empty);
+
+		//后停止所有的工作器
+		foreach(var worker in _workers)
+		{
+			if(worker != null && worker.Enabled)
+				worker.Stop();
+		}
+	}
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"{this.Name}@{this.Version}";
 	#endregion
 
 	#region 处置方法
@@ -227,6 +251,7 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 		{
 			_applicationStarted.Dispose();
 			_applicationStopped.Dispose();
+			_applicationStopping.Dispose();
 
 			var initializers = Interlocked.Exchange(ref _initializers, null);
 
@@ -249,26 +274,6 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 			this.Modules.Clear();
 		}
 	}
-	#endregion
-
-	#region 激发事件
-	protected virtual void OnStarted(EventArgs args)
-	{
-		//确保“Started”事件只会被触发一次
-		if(Interlocked.CompareExchange(ref _started, 1, 0) == 0)
-			this.Started?.Invoke(this, args);
-	}
-
-	protected virtual void OnStopped(EventArgs args)
-	{
-		//确保“Stopped”事件只会被触发一次
-		if(Interlocked.CompareExchange(ref _stopped, 1, 0) == 0)
-			this.Stopped?.Invoke(this, args);
-	}
-	#endregion
-
-	#region 重写方法
-	public override string ToString() => $"{this.Name}@{this.Version}";
 	#endregion
 
 	#region 嵌套子类
