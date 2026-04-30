@@ -114,7 +114,11 @@ public partial class Upgrader
 		{
 			if(host != null)
 			{
-				host.StopAsync(timeout).Wait(timeout);
+				if(timeout > TimeSpan.Zero)
+					host.StopAsync(timeout).GetAwaiter().GetResult();
+				else
+					host.StopAsync().GetAwaiter().GetResult();
+
 				host.WaitForShutdown();
 			}
 		}
