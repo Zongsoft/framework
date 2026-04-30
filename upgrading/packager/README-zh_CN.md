@@ -22,7 +22,7 @@
 
 ```shell
 dotnet pack
-	--name:Zongsoft.Hosting.Daemon
+	--name:Zongsoft.Daemon
 	--version:1.1.0
 	--edition:stable
 	--checksum:sha1
@@ -31,7 +31,7 @@ dotnet pack
 	--architecture:x64
 	--kind:fully
 	--source:./
-	--output:./Zongsoft.Hosting.Daemon(stable)@1.1.0_win-x64
+	--output:./Zongsoft.Daemon(stable)@1.1.0_win-x64
 	--tags:tag1,tag2,tagX
 	--executor.link:zongsoft.daemon.service:/Zongsoft/hosting/.deploy/default/systemd/zongsoft.daemon.service
 ```
@@ -40,7 +40,7 @@ dotnet pack
 
 ```shell
 dotnet pack
-	--name:Zongsoft.Hosting.Daemon
+	--name:Zongsoft.Daemon
 	--version:1.1.0
 	--edition:stable
 	--checksum:sha1
@@ -49,7 +49,7 @@ dotnet pack
 	--architecture:x64
 	--kind:delta
 	--source:./
-	--output:./Zongsoft.Hosting.Daemon(stable)@1.1.0_win-x64
+	--output:./Zongsoft.Daemon(stable)@1.1.0_win-x64
 	plugins/upgrading
 	plugins/externals/redis
 	plugins/externals/scriban
@@ -107,7 +107,7 @@ dotnet pack
 > 💡 如果手动修改过打包文件的内容，则需要重新计算校验码。
 
 ```shell
-dotnet pack checksum Zongsoft.Hosting.Daemon(stable)@1.1.0_win-x64.zip
+dotnet pack checksum Zongsoft.Daemon(stable)@1.1.0_win-x64.zip
 ```
 
 ### 打包发布
@@ -116,5 +116,5 @@ dotnet pack checksum Zongsoft.Hosting.Daemon(stable)@1.1.0_win-x64.zip
 dotnet pack publish
 	--channel:file
 	--destination:zfs.s3:/upgrading/releases/daemon
-	Zongsoft.Hosting.Daemon(stable)@1.1.0_win-x64
+	Zongsoft.Daemon(stable)@1.1.0_win-x64
 ```

@@ -36,53 +36,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Terminals;
-using Zongsoft.Components;
-
 namespace Zongsoft.Upgrading;
 
-partial class Packager
+internal class Dumper
 {
-	public void Pack()
-	{
-	}
-
-	public sealed class PackCommand : CommandBase<CommandContext>
-	{
-		private const string NAME_OPTION = "name";
-		private const string KIND_OPTION = "kind";
-		private const string TAGS_OPTION = "tags";
-		private const string SOURCE_OPTION = "source";
-		private const string OUTPUT_OPTION = "output";
-		private const string EDITION_OPTION = "edition";
-		private const string VERSION_OPTION = "version";
-		private const string CHECKSUM_OPTION = "checksum";
-		private const string PLATFORM_OPTION = "platform";
-		private const string FRAMEWORK_OPTION = "framework";
-		private const string ARCHITECTURE_OPTION = "architecture";
-
-		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
-		{
-			var source = context.Options.GetValue<string>(SOURCE_OPTION);
-			if(string.IsNullOrEmpty(source) || !Path.IsPathFullyQualified(source))
-				source = Path.Combine(Environment.CurrentDirectory, source);
-
-			var output = context.Options.GetValue<string>(OUTPUT_OPTION);
-			if(string.IsNullOrEmpty(output))
-				output = Path.Combine(Environment.CurrentDirectory, output);
-
-			if(!Directory.Exists(source))
-			{
-				Terminal.WriteLine(CommandOutletColor.Red, $"The source path '{source}' does not exist.");
-				return null;
-			}
-
-			if(context.Arguments.IsEmpty)
-			{
-				System.IO.Compression.ZipFile.CreateFromDirectory(source, output);
-			}
-
-			return null;
-		}
-	}
 }

@@ -46,7 +46,7 @@ internal class Program
 	{
 		try
 		{
-			var cmdlet = CommandLine.Parse($"pack {string.Join(' ', args)}")[0];
+			await Packager.ExecuteAsync(string.Join(' ', args));
 		}
 		catch(Exception ex)
 		{
