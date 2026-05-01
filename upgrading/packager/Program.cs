@@ -42,16 +42,49 @@ namespace Zongsoft.Upgrading;
 
 internal class Program
 {
+	public static ITerminalExecutor Executor => Terminal.Console.Executor;
+
 	public static async Task Main(string[] args)
 	{
+		if(args == null || args.Length == 0)
+		{
+			Terminal.WriteLine(CommandOutletColor.Red, "The command line is empty.");
+			return;
+		}
+
 		try
 		{
-			await Packager.ExecuteAsync(string.Join(' ', args));
+			var expression = GetCommandLine(args);
+			if(string.IsNullOrEmpty(expression))
+				return;
+
+			//初始化
+			Initialize();
+
+			//执行命令
+			await Executor.ExecuteAsync(expression);
 		}
 		catch(Exception ex)
 		{
 			//打印异常消息
 			Terminal.WriteLine(CommandOutletColor.Red, ex.Message + Environment.NewLine + ex.StackTrace);
 		}
+
+		static string GetCommandLine(string[] args)
+		{
+			if(args[0].StartsWith('-'))
+				return $"pack {string.Join(' ', args)}";
+
+			if(Executor.Root.HasChildren && Executor.Root.Children.Contains(args[0]))
+				return string.Join(' ', args);
+
+			Terminal.WriteLine(CommandOutletColor.Red, $"The command '{args[0]}' is not recognized.");
+			return null;
+		}
+	}
+
+	private static void Initialize()
+	{
+		Executor.Root.Children.Add(new Packager.PackCommand());
 	}
 }

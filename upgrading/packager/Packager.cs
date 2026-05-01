@@ -40,11 +40,4 @@ namespace Zongsoft.Upgrading;
 
 public partial class Packager
 {
-	public static ValueTask<object> ExecuteAsync(string expression, CancellationToken cancellation = default)
-	{
-		if(string.IsNullOrWhiteSpace(expression))
-			return default;
-
-		return Zongsoft.Terminals.Terminal.Default.Executor.ExecuteAsync(expression, null, cancellation);
-	}
 }
