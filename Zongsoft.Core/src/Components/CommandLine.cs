@@ -277,7 +277,7 @@ public static partial class CommandLine
 			return true;
 		}
 
-		if(context.IsLetterOrDigitOrUnderscore)
+		if(context.IsLetterOrDigitOrUnderscore || context.Character == '-' || context.Character == '.')
 		{
 			key = null;
 			kind = 0;
