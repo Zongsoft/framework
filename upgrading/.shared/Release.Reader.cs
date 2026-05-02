@@ -73,29 +73,29 @@ partial class Release
 	public static IAsyncEnumerable<Release> LoadAsync(string filePath, CancellationToken cancellation = default)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(filePath);
-		return File.Exists(filePath) ? LoadAsync(File.OpenRead(filePath), cancellation) : default;
+		return File.Exists(filePath) ? LoadAsync(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1024 * 4, true), cancellation) : default;
 	}
 	public static async IAsyncEnumerable<Release> LoadAsync(Stream stream, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
 		ArgumentNullException.ThrowIfNull(stream);
 		using var reader = XmlReader.Create(stream, GetSettings(true));
 
-		if(reader.MoveToContent() == XmlNodeType.Element)
+		if(await reader.MoveToContentAsync() == XmlNodeType.Element)
 		{
 			if(reader.LocalName == RELEASES_ELEMENT)
 			{
 				var depth = reader.Depth;
 
-				while(reader.Read() && reader.Depth > depth)
+				while(await reader.ReadAsync() && reader.Depth > depth)
 				{
-					var release = Read(reader);
+					var release = await ReadAsync(reader, cancellation);
 
 					if(release != null)
 						yield return release;
 				}
 			}
 			else if(reader.LocalName == nameof(RELEASE_ELEMENT))
-				yield return Read(reader);
+				yield return await ReadAsync(reader, cancellation);
 		}
 	}
 	#endregion
