@@ -68,18 +68,27 @@ partial class Release
 	private const string RELEASES_ELEMENT = "releases";
 	#endregion
 
+	#region 私有字段
+	private static readonly XmlWriterSettings WriterSettings = new()
+	{
+		Indent = true,
+		IndentChars = "\t",
+		NewLineOnAttributes = true,
+	};
+	#endregion
+
 	#region 实例方法
 	public void Save(string filePath)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(filePath);
-		using var writer = XmlWriter.Create(filePath);
+		using var writer = XmlWriter.Create(filePath, WriterSettings);
 		Write(writer, this);
 	}
 
 	public void Save(Stream stream)
 	{
 		ArgumentNullException.ThrowIfNull(stream);
-		using var writer = XmlWriter.Create(stream);
+		using var writer = XmlWriter.Create(stream, WriterSettings);
 		Write(writer, this);
 	}
 	#endregion
@@ -90,7 +99,7 @@ partial class Release
 		ArgumentNullException.ThrowIfNull(stream);
 		ArgumentNullException.ThrowIfNull(releases);
 
-		using var writer = XmlWriter.Create(stream);
+		using var writer = XmlWriter.Create(stream, WriterSettings);
 		writer.WriteStartElement(RELEASES_ELEMENT);
 
 		foreach(var release in releases)
@@ -116,7 +125,7 @@ partial class Release
 		writer.WriteAttributeString(PLATFORM_ATTRIBUTE, release.Platform.ToString());
 		writer.WriteAttributeString(ARCHITECTURE_ATTRIBUTE, release.Architecture.ToString());
 		writer.WriteAttributeString(DEPRECATED_ATTRIBUTE, release.Deprecated.ToString());
-		writer.WriteAttributeString(CREATION_ATTRIBUTE, release.Creation.ToString());
+		writer.WriteAttributeString(CREATION_ATTRIBUTE, release.Creation.ToString("yyyy-MM-ddTHH:mm:sszz"));
 
 		if(!string.IsNullOrWhiteSpace(release.Title))
 		{
