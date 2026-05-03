@@ -32,31 +32,18 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 
 namespace Zongsoft.Upgrading;
 
-public partial class Packager
+public static class ZipArchiveUtility
 {
-	#region 常量定义
-	internal const string EXTENSION = ".zip";
-	#endregion
-
-	public static Dictionary<string, string> GetVariables(params IEnumerable<KeyValuePair<string, string>> variables)
+	public static void CreateEntryFromDirectory(this ZipArchive archive, string source, string entryName)
 	{
-		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-		//加载系统环境变量
-		foreach(DictionaryEntry variable in Environment.GetEnvironmentVariables())
-			result[variable.Key.ToString()] = variable.Value?.ToString();
-
-		if(variables != null)
-		{
-			foreach(var variable in variables)
-				result[variable.Key] = variable.Value;
-		}
-
-		return result;
+		foreach(var file in Directory.GetFiles(source))
+			archive.CreateEntryFromFile(file, Path.Combine(entryName, Path.GetFileName(file)));
+		foreach(var directory in Directory.GetDirectories(source))
+			CreateEntryFromDirectory(archive, directory, Path.Combine(entryName, Path.GetFileName(directory)));
 	}
 }

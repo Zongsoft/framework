@@ -59,5 +59,68 @@ namespace Zongsoft.Upgrading.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   查找类似 Checksum the “{0}” package file and update it to the “{1}” manifest file. 的本地化字符串。
+        /// </summary>
+        internal static string ChecksumSuccessfully_Message {
+            get {
+                return ResourceManager.GetString("ChecksumSuccessfully.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The command line is empty. 的本地化字符串。
+        /// </summary>
+        internal static string CommandLineEmpty_Message {
+            get {
+                return ResourceManager.GetString("CommandLineEmpty.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; manifest file generated successfully. 的本地化字符串。
+        /// </summary>
+        internal static string ManifestGeneratedSuccessfully_Message {
+            get {
+                return ResourceManager.GetString("ManifestGeneratedSuccessfully.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Missing the required argument(s). 的本地化字符串。
+        /// </summary>
+        internal static string MissingRequiredArgments {
+            get {
+                return ResourceManager.GetString("MissingRequiredArgments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; package file generated successfully. 的本地化字符串。
+        /// </summary>
+        internal static string PackageGeneratedSuccessfully_Message {
+            get {
+                return ResourceManager.GetString("PackageGeneratedSuccessfully.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The command &apos;{0}&apos; is not recognized. 的本地化字符串。
+        /// </summary>
+        internal static string UnrecognizedCommand_Message {
+            get {
+                return ResourceManager.GetString("UnrecognizedCommand.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The {0} variable in the {1} expression is undefined. 的本地化字符串。
+        /// </summary>
+        internal static string VariableUndefined_Message {
+            get {
+                return ResourceManager.GetString("VariableUndefined.Message", resourceCulture);
+            }
+        }
     }
 }

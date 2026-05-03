@@ -32,12 +32,12 @@
  */
 
 using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+
+using Zongsoft.Terminals;
 
 namespace Zongsoft.Upgrading;
 
 internal class Dumper
 {
+	public static void UndefinedVariable(string variable, string expression) => Terminal.WriteLine(Components.CommandOutletColor.Red, string.Format(Properties.Resources.VariableUndefined_Message, variable, expression));
 }

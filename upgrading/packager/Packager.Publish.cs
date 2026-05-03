@@ -32,15 +32,21 @@
  */
 
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Zongsoft.Terminals;
+using Zongsoft.Components;
 
 namespace Zongsoft.Upgrading;
 
 partial class Packager
 {
-	public void Publish()
+	public sealed class PublishCommand : CommandBase<CommandContext>
 	{
+		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+		{
+			throw new NotSupportedException($"The '{this.Name}' command is not currently supported.");
+		}
 	}
 }

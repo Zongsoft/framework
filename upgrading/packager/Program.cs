@@ -48,18 +48,25 @@ internal class Program
 	{
 		if(args == null || args.Length == 0)
 		{
-			Terminal.WriteLine(CommandOutletColor.Red, "The command line is empty.");
+			Terminal.WriteLine(CommandOutletColor.DarkRed, Properties.Resources.CommandLineEmpty_Message);
+			Environment.ExitCode = -1;
 			return;
 		}
+
+		//初始化
+		Executor.Root.Children.Clear();
+		Executor.Root.Children.Add(new Packager.PackCommand());
+		Executor.Root.Children.Add(new Packager.PublishCommand());
+		Executor.Root.Children.Add(new Packager.ChecksumCommand());
 
 		try
 		{
 			var expression = GetCommandLine(args);
 			if(string.IsNullOrEmpty(expression))
+			{
+				Environment.ExitCode = -2;
 				return;
-
-			//初始化
-			Initialize();
+			}
 
 			//执行命令
 			await Executor.ExecuteAsync(expression);
@@ -67,24 +74,19 @@ internal class Program
 		catch(Exception ex)
 		{
 			//打印异常消息
-			Terminal.WriteLine(CommandOutletColor.Red, ex.Message + Environment.NewLine + ex.StackTrace);
+			Terminal.WriteLine(CommandOutletColor.DarkRed, ex.Message + Environment.NewLine + ex.StackTrace);
 		}
 
 		static string GetCommandLine(string[] args)
 		{
 			if(args[0].StartsWith('-'))
-				return $"pack {string.Join(' ', args)}";
+				return $"pack {CommandLine.Get(args)}";
 
 			if(Executor.Root.HasChildren && Executor.Root.Children.Contains(args[0]))
-				return string.Join(' ', args);
+				return CommandLine.Get(args);
 
-			Terminal.WriteLine(CommandOutletColor.Red, $"The command '{args[0]}' is not recognized.");
+			Terminal.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.UnrecognizedCommand_Message, args[0]));
 			return null;
 		}
-	}
-
-	private static void Initialize()
-	{
-		Executor.Root.Children.Add(new Packager.PackCommand());
 	}
 }

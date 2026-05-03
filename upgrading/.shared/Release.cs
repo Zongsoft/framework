@@ -117,15 +117,15 @@ public partial class Release
 	#region 重写方法
 	public override string ToString() => string.IsNullOrEmpty(this.Edition) ?
 		$"{this.Name}@{this.Version}({this.GetRuntimeIdentifier()})":
-		$"{this.Name}|{this.Edition}@{this.Version}({this.GetRuntimeIdentifier()})";
+		$"{this.Name}:{this.Edition}@{this.Version}({this.GetRuntimeIdentifier()})";
 	#endregion
 
 	#region 嵌套结构
 	public struct Executor(string @event, string command)
 	{
 		#region 公共字段
-		public string Event = @event;
-		public string Command = command;
+		public string Event = @event?.Trim();
+		public string Command = command?.Trim();
 		#endregion
 
 		#region 重写方法
