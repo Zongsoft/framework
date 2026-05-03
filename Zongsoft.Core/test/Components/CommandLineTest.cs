@@ -151,7 +151,7 @@ public class CommandLineTest
 	[Fact]
 	public void TestParse3()
 	{
-		var text = " cmdlet -abc --option-1 --option.2:'value 2' arg1 arg2 ' arg3-:)arg3 ' \" arg 4 \" ";
+		var text = " cmdlet -abc --option-1: --option.2:'value 2' arg1 arg2 ' arg3-:)\\'arg3 ' \" arg 4 \" ";
 		var cmdlets = CommandLine.Parse(text);
 
 		Assert.NotEmpty(cmdlets);
@@ -170,7 +170,7 @@ public class CommandLineTest
 		Assert.Equal(CommandLine.CmdletOptionKind.Fully, cmdlets[0].Options[2].Kind);
 		Assert.Equal("arg1", cmdlets[0].Arguments[0]);
 		Assert.Equal("arg2", cmdlets[0].Arguments[1]);
-		Assert.Equal(" arg3-:)arg3 ", cmdlets[0].Arguments[2]);
+		Assert.Equal(" arg3-:)'arg3 ", cmdlets[0].Arguments[2]);
 		Assert.Equal(" arg 4 ", cmdlets[0].Arguments[3]);
 	}
 }

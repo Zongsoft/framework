@@ -277,7 +277,12 @@ public static partial class CommandLine
 			return true;
 		}
 
-		if(context.IsLetterOrDigitOrUnderscore || context.Character == '-' || context.Character == '.')
+		if(context.IsLetterOrDigitOrUnderscore ||
+		   context.Character == '-' ||
+		   context.Character == '.' ||
+		   context.Character == '@' ||
+		   context.Character == '#' ||
+		   context.Character == '$')
 		{
 			key = null;
 			kind = 0;
@@ -321,6 +326,9 @@ public static partial class CommandLine
 
 		switch(context.Character)
 		{
+			case '-':
+				context.Reset(State.OptionSign);
+				return true;
 			case '"':
 				context.Reset(State.OptionValue, Flags.DoubleQuotation);
 				return true;
