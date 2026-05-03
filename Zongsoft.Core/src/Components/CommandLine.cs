@@ -32,8 +32,53 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
+/// <summary>提供命令行解析相关功能的静态类。</summary>
 public static partial class CommandLine
 {
+	#region 公共方法
+	/// <summary>将参数集转换成命令行表达式文本。</summary>
+	/// <param name="args">指定的命令参数集。</param>
+	/// <returns>返回的命令行表达式文本，如果 <paramref name="args"/> 参数为空集则返回空(<c>null</c>)。</returns>
+	public static string Get(params ReadOnlySpan<string> args)
+	{
+		if(args.Length == 0)
+			return null;
+
+		var text = new System.Text.StringBuilder();
+
+		for(int i = 0; i < args.Length; i++)
+		{
+			var arg = args[i];
+
+			if(string.IsNullOrWhiteSpace(arg))
+				continue;
+
+			if(text.Length > 0)
+				text.Append(' ');
+
+			if(arg.Contains(' ') || arg.Contains('\t'))
+			{
+				if(arg.StartsWith('-'))
+				{
+					var index = arg.IndexOf(':');
+
+					if(index > 0)
+					{
+						text.Append(arg[..index]);
+						text.Append($":'{arg[(index + 1)..]}'");
+					}
+				}
+				else
+					text.Append($"'{arg}'");
+			}
+			else
+				text.Append(arg);
+		}
+
+		return text.ToString();
+	}
+	#endregion
+
 	#region 解析方法
 	public static bool TryParse(ReadOnlySpan<char> text, out IReadOnlyList<Cmdlet> result)
 	{
