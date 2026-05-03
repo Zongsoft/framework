@@ -3,7 +3,7 @@
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net8.0;net9.0;net10.0;</TargetFrameworks>
 		<RootNamespace>Zongsoft.Upgrading</RootNamespace>
-		<Version>0.0.1</Version>
+		<Version>0.0.2</Version>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>dotnet-pack</ToolCommandName>
@@ -45,7 +45,6 @@
 	</Choose>
 
 	<ItemGroup>
-		<None Include="..\..\zongsoft-logo.png" Pack="true" PackagePath="\" Visible="true" />
 		<None Include="README.md" Pack="true" PackagePath="\" />
 		<None Include="README-zh_CN.md" Pack="true" PackagePath="\" />
 	</ItemGroup>

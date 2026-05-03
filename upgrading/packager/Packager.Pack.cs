@@ -99,6 +99,7 @@ partial class Packager
 			//获取当前操作的变量集
 			var variables = GetVariables(context);
 
+			//规范化来源路径
 			if(!Normalizer.Normalize(context.Options.GetValue<string>(SOURCE_OPTION), variables, out var source))
 				return null;
 
@@ -111,6 +112,7 @@ partial class Packager
 				return null;
 			}
 
+			//规范化目标路径
 			if(!Normalizer.Normalize(context.Options.GetValue<string>(OUTPUT_OPTION), variables, out var output))
 				return null;
 
@@ -122,8 +124,9 @@ partial class Packager
 			if(!Path.IsPathFullyQualified(output))
 				output = Path.Combine(source, output);
 
-			//将来源项目的“appsettings.json”配置文件加载到变量集中
-			AppSettingsUtility.Load(variables, source);
+			//修整路径格式
+			source = Path.GetFullPath(source);
+			output = Path.GetFullPath(output);
 
 			//将修整后的源目录和输出文件路径添加到变量集
 			variables[SOURCE_OPTION] = source;
@@ -185,6 +188,10 @@ partial class Packager
 			if(entries == null || entries.Count == 0)
 			{
 				ZipFile.CreateFromDirectory(source, output);
+
+				//输出文件生成成功信息
+				Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.PackageGeneratedSuccessfully_Message, output));
+
 				return;
 			}
 
@@ -298,7 +305,7 @@ partial class Packager
 				Path = file.Name,
 			};
 
-			if(options.TryGetValue<string>(TAGS_OPTION, out var tags))
+			if(options.TryGetValue<string>(TAGS_OPTION, out var tags) && tags != null)
 				release.Tags = tags.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 			if(options.TryGetValue<string>(TITLE_OPTION, out var title))
