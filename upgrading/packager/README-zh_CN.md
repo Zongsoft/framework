@@ -21,7 +21,7 @@
 - 后台程序 _(全量)_
 
 ```shell
-dotnet pack
+dotnet-pack
 	--name:Zongsoft.Daemon
 	--version:1.1.0
 	--edition:stable
@@ -40,7 +40,7 @@ dotnet pack
 - 后台程序 _(增量)_
 
 ```shell
-dotnet pack
+dotnet-pack
 	--name:Zongsoft.Daemon
 	--version:1.1.0
 	--edition:stable
@@ -60,7 +60,7 @@ dotnet pack
 - Web 程序 _(全量)_
 
 ```shell
-dotnet pack
+dotnet-pack
 	--name:Zongsoft.Hosting.Web
 	--version:1.1.0
 	--edition:stable
@@ -86,7 +86,7 @@ dotnet pack
 - Web 程序 _(增量)_
 
 ```shell
-dotnet pack
+dotnet-pack
 	--name:Zongsoft.Hosting.Web
 	--version:1.1.0
 	--edition:stable
@@ -110,7 +110,7 @@ dotnet pack
 > 💡 如果手动修改过打包文件的内容，则需要重新计算校验码。
 
 ```shell
-dotnet pack checksum --algorithm:sha1 Zongsoft.Daemon(stable)@1.1.0_win-x64.zip
+dotnet-pack checksum --algorithm:sha1 Zongsoft.Daemon(stable)@1.1.0_win-x64.zip
 ```
 
 ### 打包发布
@@ -118,7 +118,7 @@ dotnet pack checksum --algorithm:sha1 Zongsoft.Daemon(stable)@1.1.0_win-x64.zip
 - _**A**mazone.**S3**_ 文件系统
 
 ```shell
-dotnet pack publish
+dotnet-pack publish
 	--channel:zfs.s3
 	--server:127.0.0.1
 	--region:cn-north-1
@@ -131,7 +131,7 @@ dotnet pack publish
 - _**W**eb_ 发布站点
 
 ```shell
-dotnet pack publish
+dotnet-pack publish
 	--channel:web
 	--url:localhost:8069/upgrading
 	Zongsoft.Daemon(stable)@1.1.0_win-x64
