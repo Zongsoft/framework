@@ -98,7 +98,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="VariableUndefined.Message" xml:space="preserve">
-    <value>The {0} variable in the {1} expression is undefined.</value>
+    <value>The '{0}' variable in the '{1}' expression is undefined.</value>
   </data>
   <data name="PackageGeneratedSuccessfully.Message" xml:space="preserve">
     <value>The '{0}' package file generated successfully.</value>
@@ -117,5 +117,17 @@
   </data>
   <data name="ChecksumSuccessfully.Message" xml:space="preserve">
     <value>Checksum the “{0}” package file and update it to the “{1}” manifest file.</value>
+  </data>
+  <data name="Packing.Message" xml:space="preserve">
+    <value>Packing in progress, please wait...</value>
+  </data>
+  <data name="PackingConflict.Message" xml:space="preserve">
+    <value>Packing the ‘{0}’ file conflicts with the existing ‘{1}’ file, both located at ‘{2}’ in the package.</value>
+  </data>
+  <data name="PackingConflict.Tip" xml:space="preserve">
+    <value>Tip: Please verify that the contents of the ‘{0}’ file match those of the ‘{1}’ file.</value>
+  </data>
+  <data name="Tip.Label" xml:space="preserve">
+    <value>Tip:</value>
   </data>
 </root>

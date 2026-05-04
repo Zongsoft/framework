@@ -118,24 +118,36 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="VariableUndefined.Message" xml:space="preserve">
-    <value>在 {1} 表达式中的 {0} 变量未定义。</value>
+    <value>在 '{1}' 表达式中的 '{0}' 变量未定义。</value>
   </data>
   <data name="PackageGeneratedSuccessfully.Message" xml:space="preserve">
-    <value>指定的“{0}”包文件生成成功。</value>
+    <value>位于 '{0}' 的包文件生成成功。</value>
   </data>
   <data name="ManifestGeneratedSuccessfully.Message" xml:space="preserve">
-    <value>指定的“{0}”清单文件生成成功。</value>
+    <value>位于 '{0}' 的清单文件生成成功。</value>
   </data>
   <data name="CommandLineEmpty.Message" xml:space="preserve">
     <value>命令行不能空，请输入要执行的命令。</value>
   </data>
   <data name="UnrecognizedCommand.Message" xml:space="preserve">
-    <value>指定的“{0}”是无法识别的命令。</value>
+    <value>指定的 '{0}' 是无法识别的命令。</value>
   </data>
   <data name="MissingRequiredArgments" xml:space="preserve">
     <value>缺少必须的参数。</value>
   </data>
   <data name="ChecksumSuccessfully.Message" xml:space="preserve">
-    <value>为“{0}”包文件重新校验，并更新到“{1}”清单文件。</value>
+    <value>为 '{0}' 包文件重新校验，并更新到 '{1}' 清单文件。</value>
+  </data>
+  <data name="Packing.Message" xml:space="preserve">
+    <value>正在打包中，请稍等片刻……</value>
+  </data>
+  <data name="PackingConflict.Message" xml:space="preserve">
+    <value>打包 '{0}' 文件与已有的 '{1}' 文件冲突，它们均位于包中的 '{2}' 位置。</value>
+  </data>
+  <data name="PackingConflict.Tip" xml:space="preserve">
+    <value>请确认 '{0}' 文件与 '{1}' 文件内容是否一致。</value>
+  </data>
+  <data name="Tip.Label" xml:space="preserve">
+    <value>提示：</value>
   </data>
 </root>

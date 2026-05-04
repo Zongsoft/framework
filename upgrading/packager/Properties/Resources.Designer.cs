@@ -106,6 +106,42 @@ namespace Zongsoft.Upgrading.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Packing in progress, please wait... 的本地化字符串。
+        /// </summary>
+        internal static string Packing_Message {
+            get {
+                return ResourceManager.GetString("Packing.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Packing the ‘{0}’ file conflicts with the existing ‘{1}’ file, both located at ‘{2}’ in the package. 的本地化字符串。
+        /// </summary>
+        internal static string PackingConflict_Message {
+            get {
+                return ResourceManager.GetString("PackingConflict.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Tip: Please verify that the contents of the ‘{0}’ file match those of the ‘{1}’ file. 的本地化字符串。
+        /// </summary>
+        internal static string PackingConflict_Tip {
+            get {
+                return ResourceManager.GetString("PackingConflict.Tip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Tip: 的本地化字符串。
+        /// </summary>
+        internal static string Tip_Label {
+            get {
+                return ResourceManager.GetString("Tip.Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The command &apos;{0}&apos; is not recognized. 的本地化字符串。
         /// </summary>
         internal static string UnrecognizedCommand_Message {
@@ -115,7 +151,7 @@ namespace Zongsoft.Upgrading.Properties {
         }
         
         /// <summary>
-        ///   查找类似 The {0} variable in the {1} expression is undefined. 的本地化字符串。
+        ///   查找类似 The &apos;{0}&apos; variable in the &apos;{1}&apos; expression is undefined. 的本地化字符串。
         /// </summary>
         internal static string VariableUndefined_Message {
             get {

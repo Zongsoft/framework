@@ -132,6 +132,10 @@ partial class Packager
 			variables[SOURCE_OPTION] = source;
 			variables[OUTPUT_OPTION] = output;
 
+			//输出打包中……
+			Terminal.WriteLine(CommandOutletColor.DarkCyan, Properties.Resources.Packing_Message);
+			Terminal.WriteLine();
+
 			//如果需要覆盖目标文件则先将其删除
 			if(context.Options.Switch(OVERWRITE_OPTION))
 			{
@@ -195,7 +199,7 @@ partial class Packager
 				return;
 			}
 
-			using var zip = ZipFile.Open(output, ZipArchiveMode.Create);
+			using var packager = new Packager(output);
 
 			foreach(var entry in entries)
 			{
@@ -216,17 +220,17 @@ partial class Packager
 					var pattern = Path.GetFileName(path);
 
 					foreach(var file in Directory.GetFiles(working, pattern))
-						zip.CreateEntryFromFile(file, Path.Combine(section, Path.GetFileName(file)));
+						packager.PackFile(file, Path.Combine(section, Path.GetFileName(file)));
 
 					foreach(var directory in Directory.GetDirectories(working, pattern))
-						zip.CreateEntryFromDirectory(directory, Path.Combine(section, Path.GetFileName(directory)));
+						packager.PackDirectory(directory, Path.Combine(section, Path.GetFileName(directory)));
 				}
 				else
 				{
 					if(File.Exists(path))
-						zip.CreateEntryFromFile(path, GetFileEntryName(path, text));
+						packager.PackFile(path, GetFileEntryName(path, text));
 					else if(Directory.Exists(path))
-						zip.CreateEntryFromDirectory(path, GetDirectoryEntryName(path, text));
+						packager.PackDirectory(path, GetDirectoryEntryName(path, text));
 					else
 						Terminal.WriteLine(CommandOutletColor.DarkYellow, $"[Warn] The source path '{path}' does not exist.");
 				}

@@ -32,17 +32,86 @@
  */
 
 using System;
+using System.IO;
+using System.IO.Compression;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
-public partial class Packager
+public partial class Packager : IDisposable
 {
 	#region 常量定义
 	internal const string EXTENSION = ".zip";
 	#endregion
 
+	#region 成员字段
+	private ZipArchive _archive;
+	private Dictionary<string, string> _entries;
+	#endregion
+
+	#region 构造函数
+	public Packager(string path)
+	{
+		_archive = ZipFile.Open(path, ZipArchiveMode.Create);
+		_entries = new(StringComparer.OrdinalIgnoreCase);
+	}
+	#endregion
+
+	#region 打包方法
+	internal void PackFile(string source, string entryName)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(source);
+		ArgumentException.ThrowIfNullOrEmpty(entryName);
+
+		entryName = entryName
+			.Trim(Path.DirectorySeparatorChar)
+			.Trim(Path.AltDirectorySeparatorChar);
+
+		if(_entries.TryGetValue(entryName, out var entry))
+		{
+			Terminals.Terminal.WriteLine(Components.CommandOutletColor.Cyan, string.Format(Properties.Resources.PackingConflict_Message, source, entry, entryName));
+			Terminals.Terminal.Write(Components.CommandOutletColor.DarkYellow, Properties.Resources.Tip_Label);
+			Terminals.Terminal.Write(Components.CommandOutletColor.DarkGray, string.Format(Properties.Resources.PackingConflict_Tip, source, entry));
+			Terminals.Terminal.WriteLine(Environment.NewLine);
+
+			return;
+		}
+
+		_archive.CreateEntryFromFile(source, entryName);
+		_entries[entryName] = source;
+	}
+
+	internal void PackDirectory(string source, string entryName)
+	{
+		foreach(var file in Directory.GetFiles(source))
+			this.PackFile(file, Path.Combine(entryName, Path.GetFileName(file)));
+		foreach(var directory in Directory.GetDirectories(source))
+			this.PackDirectory(directory, Path.Combine(entryName, Path.GetFileName(directory)));
+	}
+	#endregion
+
+	#region 释放方法
+	public void Dispose()
+	{
+		this.Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	protected virtual void Dispose(bool disposing)
+	{
+		if(disposing)
+		{
+			_archive?.Dispose();
+			_entries.Clear();
+		}
+
+		_archive = null;
+		_entries = null;
+	}
+	#endregion
+
+	#region 静态方法
 	public static Dictionary<string, string> GetVariables(params IEnumerable<KeyValuePair<string, string>> variables)
 	{
 		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -59,4 +128,5 @@ public partial class Packager
 
 		return result;
 	}
+	#endregion
 }
