@@ -132,7 +132,7 @@ partial class Packager
 			variables[SOURCE_OPTION] = source;
 			variables[OUTPUT_OPTION] = output;
 
-			//输出打包中……
+			//输出打包中的信息
 			Terminal.WriteLine(CommandOutletColor.DarkCyan, Properties.Resources.Packing_Message);
 			Terminal.WriteLine();
 
@@ -207,7 +207,14 @@ partial class Packager
 					continue;
 
 				var index = text.IndexOf(':');
-				var path = index > 0 ? text[..index] : text;
+				var path = index > 0 ? text[..index].Trim() : text;
+				var alias = index > 0 ? text[(index + 1)..].Trim() : null;
+
+				if(alias != null)
+					alias = alias
+						.Trim('~')
+						.Trim(Path.DirectorySeparatorChar)
+						.Trim(Path.AltDirectorySeparatorChar);
 
 				//将相对路径改为绝对路径
 				if(!Path.IsPathFullyQualified(path))
@@ -215,22 +222,27 @@ partial class Packager
 
 				if(path.Contains('*') || path.Contains('?'))
 				{
-					var section = GetDirectoryEntryName(path, text);
 					var working = Path.GetDirectoryName(path);
 					var pattern = Path.GetFileName(path);
 
+					if(alias == null)
+						alias = path[source.Length..];
+
 					foreach(var file in Directory.GetFiles(working, pattern))
-						packager.PackFile(file, Path.Combine(section, Path.GetFileName(file)));
+						packager.PackFile(file, Path.Combine(alias, Path.GetFileName(file)));
 
 					foreach(var directory in Directory.GetDirectories(working, pattern))
-						packager.PackDirectory(directory, Path.Combine(section, Path.GetFileName(directory)));
+						packager.PackDirectory(directory, Path.Combine(alias, Path.GetFileName(directory)));
 				}
 				else
 				{
+					if(alias == null)
+						alias = path[source.Length..];
+
 					if(File.Exists(path))
-						packager.PackFile(path, GetFileEntryName(path, text));
+						packager.PackFile(path, alias);
 					else if(Directory.Exists(path))
-						packager.PackDirectory(path, GetDirectoryEntryName(path, text));
+						packager.PackDirectory(path, alias);
 					else
 						Terminal.WriteLine(CommandOutletColor.DarkYellow, $"[Warn] The source path '{path}' does not exist.");
 				}
