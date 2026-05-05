@@ -113,6 +113,8 @@ dotnet-pack
 	appsettings.json
 	web*.config
 	web*.option
+	"D:/Zongsoft/framework/README.md:docs/README.framework.md"
+	"../README.md"
 	wwwroot
 	plugins
 	bin/$(compilation)/$(framework):~

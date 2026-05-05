@@ -206,102 +206,74 @@ partial class Packager
 				if(!Normalizer.Normalize(entry, variables, out var text))
 					continue;
 
-				var index = text.IndexOf(':');
+				var index = text.LastIndexOf(':');
+
+				//处理 Windows 平台绝对路径中含盘符的情况
+				if(OperatingSystem.IsWindows() && index == 1)
+					index = -1;
+
 				var path = index > 0 ? text[..index].Trim() : text;
 				var alias = index > 0 ? text[(index + 1)..].Trim() : null;
 
-				if(alias != null)
-					alias = alias
-						.Trim('~')
-						.Trim(Path.DirectorySeparatorChar)
-						.Trim(Path.AltDirectorySeparatorChar);
-
-				//将相对路径改为绝对路径
-				if(!Path.IsPathFullyQualified(path))
-					path = Path.Combine(source, path);
-
-				if(path.Contains('*') || path.Contains('?'))
-				{
-					var working = Path.GetDirectoryName(path);
-					var pattern = Path.GetFileName(path);
-
-					if(alias == null)
-						alias = path[source.Length..];
-
-					foreach(var file in Directory.GetFiles(working, pattern))
-						packager.PackFile(file, Path.Combine(alias, Path.GetFileName(file)));
-
-					foreach(var directory in Directory.GetDirectories(working, pattern))
-						packager.PackDirectory(directory, Path.Combine(alias, Path.GetFileName(directory)));
-				}
-				else
-				{
-					if(alias == null)
-						alias = path[source.Length..];
-
-					if(File.Exists(path))
-						packager.PackFile(path, alias);
-					else if(Directory.Exists(path))
-						packager.PackDirectory(path, alias);
-					else
-						Terminal.WriteLine(CommandOutletColor.DarkYellow, $"[Warn] The source path '{path}' does not exist.");
-				}
+				//生成打包条目
+				GeneratePackageEntry(packager, source, path, alias);
 			}
 
 			//输出文件生成成功信息
 			Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.PackageGeneratedSuccessfully_Message, output));
+		}
 
-			static string GetFileEntryName(string path, ReadOnlySpan<char> entry)
-			{
-				if(entry.IsEmpty || entry.IsWhiteSpace())
-					return Path.GetFileName(path);
-
-				var index = entry.IndexOf(':');
-
-				if(index > 0)
-				{
-					var alias = entry[(index + 1)..]
-						.Trim()
-						.TrimStart('~');
-
-					if(alias.IsEmpty)
-						return Path.GetFileName(path);
-
-					var filename = Path.GetFileName(alias);
-
-					return filename.IsEmpty || filename == "." ?
-						Path.Combine(alias.ToString(), Path.GetFileName(path)) :
-						alias.ToString();
-				}
-
-				return entry
+		static void GeneratePackageEntry(Packager packager, string source, string path, string alias)
+		{
+			if(alias != null)
+				alias = alias
+					.Trim('~')
 					.Trim(Path.DirectorySeparatorChar)
-					.Trim(Path.AltDirectorySeparatorChar)
-					.ToString();
+					.Trim(Path.AltDirectorySeparatorChar);
+			else if(IsExternal(source, path))
+				alias = string.Empty;
+
+			if(!Path.IsPathFullyQualified(path))
+				path = Path.Combine(source, path);
+
+			if(path.Contains('*') || path.Contains('?'))
+			{
+				var working = Path.GetDirectoryName(path);
+				var pattern = Path.GetFileName(path);
+
+				alias ??= Path.GetRelativePath(source, working);
+
+				if(alias == "." || alias.StartsWith(".."))
+					alias = string.Empty;
+
+				foreach(var file in Directory.GetFiles(working, pattern))
+					packager.PackFile(file, Path.Combine(alias, Path.GetFileName(file)));
+
+				foreach(var directory in Directory.GetDirectories(working, pattern))
+					packager.PackDirectory(directory, Path.Combine(alias, Path.GetFileName(directory)));
+			}
+			else
+			{
+				alias ??= Path.GetRelativePath(source, path);
+
+				if(alias == "." || alias.StartsWith(".."))
+					alias = string.Empty;
+
+				if(File.Exists(path))
+					packager.PackFile(path, alias);
+				else if(Directory.Exists(path))
+					packager.PackDirectory(path, alias);
+				else
+					Terminal.WriteLine(CommandOutletColor.DarkYellow, $"[Warn] The source path '{path}' does not exist.");
 			}
 
-			static string GetDirectoryEntryName(string path, ReadOnlySpan<char> entry)
+			//判断指定的路径是否为绝对路径且位于源目录之外
+			static bool IsExternal(string source, string path)
 			{
-				if(entry.IsEmpty || entry.IsWhiteSpace())
-					return Path.GetFileName(path);
+				return Path.IsPathFullyQualified(path) &&
+					!Path.GetFullPath(path).StartsWith(source, GetComparison());
 
-				var index = entry.IndexOf(':');
-
-				if(index > 0)
-				{
-					var alias = entry[(index + 1)..]
-						.Trim()
-						.TrimStart('~')
-						.TrimEnd(Path.DirectorySeparatorChar)
-						.TrimEnd(Path.AltDirectorySeparatorChar);
-
-					return alias.ToString();
-				}
-
-				return entry
-					.Trim(Path.DirectorySeparatorChar)
-					.Trim(Path.AltDirectorySeparatorChar)
-					.ToString();
+				static StringComparison GetComparison() => OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 			}
 		}
 

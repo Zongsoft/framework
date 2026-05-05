@@ -62,11 +62,20 @@ public partial class Packager : IDisposable
 	internal void PackFile(string source, string entryName)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(source);
-		ArgumentException.ThrowIfNullOrEmpty(entryName);
 
-		entryName = entryName
-			.Trim(Path.DirectorySeparatorChar)
-			.Trim(Path.AltDirectorySeparatorChar);
+		if(string.IsNullOrEmpty(entryName))
+			entryName = Path.GetFileName(source);
+		else
+		{
+			var filename = Path.GetFileName(entryName);
+
+			if(string.IsNullOrEmpty(filename) || filename == ".")
+				entryName = Path.Combine(Path.GetDirectoryName(entryName), Path.GetFileName(source));
+			else
+				entryName = entryName
+					.Trim(Path.DirectorySeparatorChar)
+					.Trim(Path.AltDirectorySeparatorChar);
+		}
 
 		if(_entries.TryGetValue(entryName, out var entry))
 		{
