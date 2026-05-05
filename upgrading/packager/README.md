@@ -14,9 +14,9 @@
 
 [**Z**ongsoft.**U**pgrading.**P**ackager](https://github.com/Zongsoft/framework/tree/main/upgrading/packager/Zongsoft.Upgrading.Packager) is a packager for the automatic upgrade plugin library of the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework.
 
-## Usage
+## Packing
 
-### Packing
+### Examples
 
 - Daemon program _(fully)_
 
@@ -76,8 +76,8 @@ dotnet-pack
 	--executor.link@deployed:"zongsoft.web.service /Zongsoft/hosting/.deploy/default/systemd/zongsoft.web.service"
 	mime
 	appsettings.json
-	web.config
-	web.option
+	web*.config
+	web*.option
 	wwwroot
 	plugins
 	bin/$(compilation)/$(framework):~
@@ -105,17 +105,21 @@ dotnet-pack
 	plugins/zongsoft/externals/hangfire
 ```
 
-### Rechecksum
+## Checksum
 
 > 💡 If you have manually modified the contents of the packaged file, you will need to recalculate the checksum.
+
+### Examples
 
 ```shell
 dotnet-pack checksum --algorithm:sha1 Zongsoft.Daemon(stable)@1.1.0_win-x64.zip
 ```
 
-### Publish
+## Publish
 
-- _**A**mazone.**S3**_ File System
+### Examples
+
+- _**A**mazon.**S3**_ File System
 
 ```shell
 dotnet-pack publish

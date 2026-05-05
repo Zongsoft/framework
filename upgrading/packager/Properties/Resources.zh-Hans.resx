@@ -139,7 +139,7 @@
     <value>为 '{0}' 包文件重新校验，并更新到 '{1}' 清单文件。</value>
   </data>
   <data name="Packing.Message" xml:space="preserve">
-    <value>正在打包中，请稍等片刻……</value>
+    <value>正在打包中，请稍等片刻…</value>
   </data>
   <data name="PackingConflict.Message" xml:space="preserve">
     <value>打包 '{0}' 文件与已有的 '{1}' 文件冲突，它们均位于包中的 '{2}' 位置。</value>
