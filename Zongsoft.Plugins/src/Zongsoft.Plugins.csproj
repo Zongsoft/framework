@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.15.0</Version>
+		<Version>7.16.0</Version>
 		<Product>Zongsoft Plugins Development Library</Product>
 		<Description>This is a framework about plugin application development.</Description>
 		<RootNamespace>Zongsoft.Plugins</RootNamespace>
@@ -39,7 +39,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.28.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.46.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
