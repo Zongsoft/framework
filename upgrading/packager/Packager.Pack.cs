@@ -53,7 +53,7 @@ partial class Packager
 	[CommandOption(OUTPUT_OPTION, typeof(string))]
 	[CommandOption(EDITION_OPTION, typeof(string))]
 	[CommandOption(VERSION_OPTION, typeof(Version), Required = true)]
-	[CommandOption(CHECKSUM_OPTION, typeof(string))]
+	[CommandOption(CHECKSUM_OPTION, typeof(ChecksumAlgorithm), ChecksumAlgorithm.Sha1)]
 	[CommandOption(OVERWRITE_OPTION, typeof(bool), false)]
 	[CommandOption(PLATFORM_OPTION, typeof(Platform), Required = true)]
 	[CommandOption(FRAMEWORK_OPTION, typeof(string), Required = true)]
