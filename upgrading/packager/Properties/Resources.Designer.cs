@@ -79,11 +79,29 @@ namespace Zongsoft.Upgrading.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The file &apos;{0}&apos; does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string FileNotExist_Message {
+            get {
+                return ResourceManager.GetString("FileNotExist.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The &apos;{0}&apos; manifest file generated successfully. 的本地化字符串。
         /// </summary>
         internal static string ManifestGeneratedSuccessfully_Message {
             get {
                 return ResourceManager.GetString("ManifestGeneratedSuccessfully.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; manifest file published successfully. 的本地化字符串。
+        /// </summary>
+        internal static string ManifestPublishedSuccessfully_Message {
+            get {
+                return ResourceManager.GetString("ManifestPublishedSuccessfully.Message", resourceCulture);
             }
         }
         
@@ -102,6 +120,15 @@ namespace Zongsoft.Upgrading.Properties {
         internal static string PackageGeneratedSuccessfully_Message {
             get {
                 return ResourceManager.GetString("PackageGeneratedSuccessfully.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; package file published successfully. 的本地化字符串。
+        /// </summary>
+        internal static string PackagePublishedSuccessfully_Message {
+            get {
+                return ResourceManager.GetString("PackagePublishedSuccessfully.Message", resourceCulture);
             }
         }
         

@@ -150,4 +150,13 @@
   <data name="Tip.Label" xml:space="preserve">
     <value>提示：</value>
   </data>
+  <data name="FileNotExist.Message" xml:space="preserve">
+    <value>指定的 '{0}' 文件不存在。</value>
+  </data>
+  <data name="PackagePublishedSuccessfully.Message" xml:space="preserve">
+    <value>指定的 '{0}' 的包文件发布成功。</value>
+  </data>
+  <data name="ManifestPublishedSuccessfully.Message" xml:space="preserve">
+    <value>指定的 '{0}' 的清单文件发布成功。</value>
+  </data>
 </root>
