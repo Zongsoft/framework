@@ -56,11 +56,14 @@ partial class Packager
 				return null;
 			}
 
-			switch(context.Options.GetValue<string>(CHANNEL_OPTION)?.ToUpperInvariant())
+			switch(context.Options.GetValue<string>(CHANNEL_OPTION)?.ToLowerInvariant())
 			{
+				case "web":
+					await PublishToWebAsync(context, cancellation);
+					break;
 				case "s3":
 				case "amazon.s3":
-					await this.PublishToAmazonS3Async(context, cancellation);
+					await PublishToAmazonS3Async(context, cancellation);
 					break;
 				default:
 					throw new CommandOptionValueException(CHANNEL_OPTION, context.Options.GetValue<string>(CHANNEL_OPTION));
@@ -69,7 +72,34 @@ partial class Packager
 			return null;
 		}
 
-		private async ValueTask PublishToAmazonS3Async(CommandContext context, CancellationToken cancellation)
+		private static async ValueTask PublishToWebAsync(CommandContext context, CancellationToken cancellation)
+		{
+			const string URL_OPTION = "url";
+
+			if(!context.Options.TryGetValue<string>(URL_OPTION, out var url) || string.IsNullOrWhiteSpace(url))
+				throw new CommandOptionMissingException(URL_OPTION);
+
+			foreach(var argument in context.Arguments)
+			{
+				var packagePath = GetPackagePath(argument);
+				if(!File.Exists(packagePath))
+				{
+					Terminal.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.FileNotExist_Message, packagePath));
+					continue;
+				}
+
+				var manifestPath = GetManifestPath(argument);
+				if(!File.Exists(manifestPath))
+				{
+					Terminal.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.FileNotExist_Message, manifestPath));
+					continue;
+				}
+
+				throw new NotSupportedException($"The web channel is not currently supported.");
+			}
+		}
+
+		private static async ValueTask PublishToAmazonS3Async(CommandContext context, CancellationToken cancellation)
 		{
 			const string SERVER_OPTION = "server";
 			const string REGION_OPTION = "region";
@@ -89,7 +119,8 @@ partial class Packager
 			if(!context.Options.TryGetValue<string>(DESTINATION_OPTION, out var destination) || string.IsNullOrWhiteSpace(destination))
 				throw new CommandOptionMissingException(DESTINATION_OPTION);
 
-			using var client = new AmazonS3(server, access, secret, context.Options.GetValue<string>(REGION_OPTION));
+			destination = destination.Trim('/');
+			using var client = new AmazonS3(server, access, secret, context.Options.GetValue<string>(REGION_OPTION, null));
 
 			foreach(var argument in context.Arguments)
 			{

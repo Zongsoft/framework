@@ -288,8 +288,7 @@ dotnet-pack checksum -a:sha256 package1.zip package2.zip
 ```shell
 dotnet-pack publish
 	--channel:amazon.s3
-	--server:127.0.0.1
-	--region:cn-north-1
+	--server:127.0.0.1:9000
 	--access:rustfsadmin
 	--secret:rustfsadmin
 	--destination:/upgrading/releases/daemon

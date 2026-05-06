@@ -126,8 +126,7 @@ dotnet-pack checksum --algorithm:sha1 Zongsoft.Daemon(stable)@1.1.0_win-x64.zip
 ```shell
 dotnet-pack publish
 	--channel:zfs.s3
-	--server:127.0.0.1
-	--region:cn-north-1
+	--server:127.0.0.1:9000
 	--access:rustfsadmin
 	--secret:rustfsadmin
 	--destination:/upgrading/releases/daemon
