@@ -95,7 +95,7 @@ public static class Application
 	public static string GetRuntimeIdentifier(this Release release) => release == null ? null : GetRuntimeIdentifier(release.Platform, release.Architecture);
 	public static string GetRuntimeIdentifier(Platform platform, Architecture architecture) => platform == Platform.Windows ?
 		(architecture == Architecture.Other ? "win" : $"win-{architecture.ToString().ToLowerInvariant()}"):
-		(architecture == Architecture.Other ? platform.ToString().ToLowerInvariant() : $"{platform.ToString().ToLowerInvariant}-{architecture.ToString().ToLowerInvariant()}");
+		(architecture == Architecture.Other ? platform.ToString().ToLowerInvariant() : $"{platform.ToString().ToLowerInvariant()}-{architecture.ToString().ToLowerInvariant()}");
 	#endregion
 
 	#region 私有方法
