@@ -141,10 +141,7 @@ public class SQLiteImporter : DataImporterBase
 			if(fields.Length > 0)
 				fields.Append(',');
 
-			fields.Append(member.Property.GetFieldName(out var alias));
-
-			if(!string.IsNullOrEmpty(alias))
-				fields.Append($" AS '{alias}'");
+			fields.Append($"\"{member.Property.GetFieldName()}\"");
 
 			if(values.Length > 0)
 				values.Append(',');
