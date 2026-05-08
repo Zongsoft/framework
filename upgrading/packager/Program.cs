@@ -56,6 +56,7 @@ internal class Program
 		//初始化
 		Executor.Root.Children.Clear();
 		Executor.Root.Children.Add(new Packager.PackCommand());
+		Executor.Root.Children.Add(new Packager.InstallCommand());
 		Executor.Root.Children.Add(new Packager.PublishCommand());
 		Executor.Root.Children.Add(new Packager.ChecksumCommand());
 
