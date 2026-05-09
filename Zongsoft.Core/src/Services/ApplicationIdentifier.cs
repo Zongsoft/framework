@@ -112,7 +112,11 @@ public readonly struct ApplicationIdentifier
 			if(identifier.IsEmpty)
 				return default;
 
-			var index = identifier.IndexOf(':');
+			var index = identifier.LastIndexOf(':');
+			if(index > 0)
+				return (identifier[0..index].Trim().ToString(), identifier[(index + 1)..].Trim().ToString());
+
+			index = identifier.LastIndexOf('-');
 			if(index > 0)
 				return (identifier[0..index].Trim().ToString(), identifier[(index + 1)..].Trim().ToString());
 
@@ -142,7 +146,7 @@ public readonly struct ApplicationIdentifier
 		var info = new FileInfo(Path.Combine(directory, FILE_NAME));
 
 		//如果文件不存在或者文件大小超过指定大小，则认为该文件无效
-		if(!info.Exists || info.Length > 1024 * 10)
+		if(!info.Exists || info.Length > 1024 * 16)
 			return default;
 
 		string text;
@@ -223,9 +227,9 @@ public readonly struct ApplicationIdentifier
 			return version?.ToString();
 
 		if(version == null)
-			return string.IsNullOrEmpty(edition) ? $"{name}" : $"{name}({edition})";
+			return string.IsNullOrEmpty(edition) ? $"{name}" : $"{name}-{edition}";
 		else
-			return string.IsNullOrEmpty(edition) ? $"{name}@{version}" : $"{name}({edition})@{version}";
+			return string.IsNullOrEmpty(edition) ? $"{name}@{version}" : $"{name}-{edition}@{version}";
 	}
 	#endregion
 }
