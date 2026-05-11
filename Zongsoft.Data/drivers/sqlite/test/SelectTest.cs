@@ -35,6 +35,27 @@ public class SelectTest(DatabaseFixture database)
 	}
 
 	[Fact]
+	public async Task SelectUpdateAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var users = accessor.SelectAsync<UserModel>();
+		Assert.NotEmpty(users);
+
+		await foreach(var user in users)
+		{
+			var count = await accessor.UpdateAsync<UserModel>(new
+			{
+				Description = $"{user.Name}#{user.UserId}"
+			}, Condition.Equal(nameof(UserModel.UserId), user.UserId));
+
+			Assert.Equal(1, count);
+		}
+	}
+
+	[Fact]
 	public async Task SelectWithPagedAsync()
 	{
 		const int COUNT = 100;

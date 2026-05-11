@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Microsoft.Data.Sqlite;
 
@@ -84,12 +86,81 @@ public partial class SQLiteDriver : DataDriverBase
 		CommandType = commandType,
 	};
 
-	public override DbConnection CreateConnection(string connectionString = null) => new SqliteConnection(connectionString);
+	public override DbConnection CreateConnection(string connectionString = null) => new SqliteConnector(connectionString);
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqliteConnectionStringBuilder(connectionString);
 	#endregion
 
 	#region 保护方法
 	protected override IDataImporter CreateImporter() => new SQLiteImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new SQLiteExpressionVisitor();
+	#endregion
+
+	#region 嵌套子类
+	private sealed class SqliteConnector : SqliteConnection
+	{
+		private static readonly ConcurrentDictionary<string, Pragma[]> _pragmas = new(StringComparer.OrdinalIgnoreCase);
+
+		public SqliteConnector(string connectionString)
+		{
+			if(string.IsNullOrEmpty(connectionString))
+				base.ConnectionString = string.Empty;
+			else
+			{
+				var settings = Configuration.SQLiteConnectionSettingsDriver.Instance.GetSettings(connectionString);
+				this.ConnectionString = settings.GetOptions().ConnectionString;
+
+				if(!_pragmas.ContainsKey(this.ConnectionString))
+					_pragmas.TryAdd(this.ConnectionString, [.. GetPragmas(settings)]);
+			}
+
+			static IEnumerable<Pragma> GetPragmas(Zongsoft.Configuration.IConnectionSettings settings)
+			{
+				const string PRAGMA_PREFIX = "PRAGMA:";
+
+				foreach(var setting in settings)
+				{
+					if(setting.Key.StartsWith(PRAGMA_PREFIX, StringComparison.OrdinalIgnoreCase))
+						yield return new(setting.Key[PRAGMA_PREFIX.Length..], setting.Value);
+				}
+			}
+		}
+
+		protected override void OnStateChange(StateChangeEventArgs args)
+		{
+			if(args.CurrentState == ConnectionState.Open)
+			{
+				if(_pragmas.TryGetValue(this.ConnectionString, out var pragmas) && pragmas != null && pragmas.Length > 0)
+				{
+					var text = new System.Text.StringBuilder();
+
+					foreach(var pragma in pragmas)
+					{
+						if(pragma.HasValue)
+							text.AppendLine($"PRAGMA {pragma.Name}={pragma.Value};");
+						else
+							text.AppendLine($"PRAGMA {pragma.Name};");
+					}
+
+					var command = this.CreateCommand();
+					command.CommandText = text.ToString();
+					command.ExecuteNonQuery();
+
+					//重置已经执行过的 PRAGMA 集连接
+					_pragmas[this.ConnectionString] = default;
+				}
+			}
+
+			base.OnStateChange(args);
+		}
+	}
+
+	private sealed class Pragma(string name, string value = null)
+	{
+		public readonly string Name = name?.Trim();
+		public readonly string Value = value?.Trim();
+
+		public bool HasValue => !string.IsNullOrWhiteSpace(this.Value);
+		public override string ToString() => string.IsNullOrEmpty(this.Value) ? this.Name : $"{this.Name}={this.Value}";
+	}
 	#endregion
 }

@@ -10,7 +10,7 @@ namespace Zongsoft.Data.SQLite.Tests;
 public class DatabaseFixture : IDisposable
 {
 	#region 常量定义
-	private const string CONNECTION_STRING = @"DataSource=file::memory:?cache=shared";
+	private const string CONNECTION_STRING = @"DataSource=test.db;PRAGMA:optimize;PRAGMA:journal_mode=WAL;PRAGMA:synchronous=NORMAL;PRAGMA:temp_store=MEMORY;";
 	#endregion
 
 	#region 私有变量
