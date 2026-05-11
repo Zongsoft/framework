@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -34,11 +34,11 @@ namespace Zongsoft.Data.Common;
 public class Feature : IEquatable<Feature>, IComparable<Feature>
 {
 	#region 单例字段
-	/// <summary>表示多活动结果集(MARS)的特性（注：目前仅 Microsoft SQL Server 2005 及其以上版本支持）。</summary>
+	/// <summary>表示多活动结果集(MARS)的特性（目前仅 Microsoft SQL Server 2005 及其以上版本支持）。</summary>
 	/// <remarks>更多信息请参考微软文档：<see ref="https://docs.microsoft.com/zh-cn/dotnet/framework/data/adonet/sql/multiple-active-result-sets-mars" />。</remarks>
 	public static readonly Feature MultipleActiveResultSets = new(nameof(MultipleActiveResultSets));
 
-	/// <summary>表示“Returning”子句的特性，主流数据库中只有 MySQL 不支持（注：在 Microsoft SQL Server 中被称作 Output 子句）。</summary>
+	/// <summary>表示“Returning”子句的特性，主流数据库中只有 MySQL 不支持（在 Microsoft SQL Server 中被称作 Output 子句）。</summary>
 	public static readonly Feature Returning = new(nameof(Returning));
 
 	/// <summary>表示不支持数据事务功能。</summary>
