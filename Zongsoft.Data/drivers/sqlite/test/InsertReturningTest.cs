@@ -49,7 +49,7 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.Name), out value));
 		Assert.Equal("Popeye", value);
 		Assert.True(returning.Rows[0].TryGetValue(nameof(UserModel.Enabled), out value));
-		Assert.Equal(true, Zongsoft.Common.Convert.ConvertValue<bool>(value));
+		Assert.True(Zongsoft.Common.Convert.ConvertValue<bool>(value));
 
 		options = DataInsertOptions.Return(
 			nameof(UserModel.UserId),

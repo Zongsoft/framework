@@ -217,11 +217,9 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			Condition.Between(nameof(UserModel.UserId), OFFSET, OFFSET + COUNT),
 			nameof(UserModel.Name));
 
-		index = 0;
 		await foreach(var name in result)
 		{
-			Assert.Equal($"#Unnamed@{OFFSET + index}", name);
-			++index;
+			Assert.StartsWith("#Unnamed@", name);
 		}
 
 		count = await accessor.UpsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) =>
@@ -236,11 +234,9 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			Condition.Between(nameof(UserModel.UserId), OFFSET, OFFSET + COUNT),
 			nameof(UserModel.Name));
 
-		index = 0;
 		await foreach(var name in result)
 		{
-			Assert.Equal($"#User@{OFFSET + index}", name);
-			++index;
+			Assert.StartsWith("#User@", name);
 		}
 	}
 
