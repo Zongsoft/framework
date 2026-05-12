@@ -44,6 +44,7 @@ public class GarnetServer(string name = null) : Components.WorkerBase(name)
 	private static readonly Settings DEFAULT = new("lua=true;");
 	private static readonly HashSet<string> _paths = new(StringComparer.OrdinalIgnoreCase)
 	{
+		"logdir",
 		"acl-file",
 		"file-logger",
 		"unixsocket",
