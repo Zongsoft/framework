@@ -98,7 +98,7 @@ public partial class SQLiteDriver : DataDriverBase
 	#region 嵌套子类
 	private sealed class SqliteConnector : SqliteConnection
 	{
-		private static readonly ConcurrentDictionary<string, Pragma[]> _pragmas = new(StringComparer.OrdinalIgnoreCase);
+		private static readonly ConcurrentDictionary<string, Pragma[]> _pragmas = new();
 
 		public SqliteConnector(string connectionString)
 		{
@@ -159,7 +159,7 @@ public partial class SQLiteDriver : DataDriverBase
 		public readonly string Name = name?.Trim();
 		public readonly string Value = value?.Trim();
 
-		public bool HasValue => !string.IsNullOrWhiteSpace(this.Value);
+		public bool HasValue => !string.IsNullOrEmpty(this.Value);
 		public override string ToString() => string.IsNullOrEmpty(this.Value) ? this.Name : $"{this.Name}={this.Value}";
 	}
 	#endregion
