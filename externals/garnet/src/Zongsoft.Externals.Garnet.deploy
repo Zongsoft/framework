@@ -1,0 +1,6 @@
+artifacts/Zongsoft.Externals.Garnet.plugin
+artifacts/Zongsoft.Externals.Garnet.option
+lib/$(Framework)/Zongsoft.Externals.Garnet.*
+lib/$(Framework)/*/Zongsoft.Externals.Garnet.resources.*
+
+nuget:Microsoft.Garnet@1.1.6

@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Externals/Garnet">
+		<server server.name="default" value="port=6379;quiet;auth=Password;password=xxxxxx;lua=true;aof=true;aof-commit-freq=1000;recover=true;checkpointdir=~/.garnet" />
+	</option>
+</options>
