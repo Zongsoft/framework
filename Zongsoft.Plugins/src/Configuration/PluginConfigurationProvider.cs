@@ -42,9 +42,9 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 {
 	#region 成员字段
 	private readonly PluginConfigurationSource _source;
-	private readonly Zongsoft.Plugins.PluginTree _pluginTree;
+	private readonly Plugins.PluginTree _pluginTree;
 	private readonly ConfigurationReloadToken _reloadToken;
-	private readonly ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider> _providers;
+	private readonly ConcurrentDictionary<Plugins.Plugin, CompositeConfigurationProvider> _providers;
 	#endregion
 
 	#region 构造函数
@@ -52,16 +52,16 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 	{
 		_source = source ?? throw new ArgumentNullException(nameof(source));
 		_reloadToken = new ConfigurationReloadToken();
-		_providers = new ConcurrentDictionary<Zongsoft.Plugins.Plugin, CompositeConfigurationProvider>();
+		_providers = new ConcurrentDictionary<Plugins.Plugin, CompositeConfigurationProvider>();
 
-		_pluginTree = Zongsoft.Plugins.PluginTree.Get(source.Options);
-		_pluginTree.Loader.PluginLoaded += PluginLoader_PluginLoaded;
-		_pluginTree.Loader.PluginUnloaded += PluginLoader_PluginUnloaded;
+		_pluginTree = Plugins.PluginTree.Get(source.Options);
+		_pluginTree.Loader.PluginLoaded += this.PluginLoader_PluginLoaded;
+		_pluginTree.Loader.PluginUnloaded += this.PluginLoader_PluginUnloaded;
 	}
 	#endregion
 
 	#region 公共属性
-	public IEnumerable<IConfigurationProvider> Providers { get => _providers.Values; }
+	public IEnumerable<IConfigurationProvider> Providers => _providers.Values;
 	#endregion
 
 	#region 公共方法
@@ -95,30 +95,18 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 		}
 
 		foreach(var plugin in _pluginTree.Plugins)
-		{
 			this.LoadOptionFile(plugin);
-		}
 	}
 
-	public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
-	{
-		return _providers.Values
-			.SelectMany(p => p.GetChildKeys(Enumerable.Empty<string>(), parentPath))
-			.Concat(earlierKeys)
-			.OrderBy(k => k, ConfigurationKeyComparer.Instance);
-	}
-
-	public IChangeToken GetReloadToken()
-	{
-		return _reloadToken;
-	}
+	public IChangeToken GetReloadToken() => _reloadToken;
+	public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath) => _providers.Values
+		.SelectMany(p => p.GetChildKeys([], parentPath))
+		.Concat(earlierKeys)
+		.OrderBy(k => k, ConfigurationKeyComparer.Instance);
 	#endregion
 
 	#region 重写方法
-	public override string ToString()
-	{
-		return string.Join(Environment.NewLine, _providers.Select(provider => provider.ToString()));
-	}
+	public override string ToString() => string.Join(Environment.NewLine, _providers.Select(provider => provider.ToString()));
 	#endregion
 
 	#region 事件处理
@@ -158,7 +146,7 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 	#endregion
 
 	#region 私有方法
-	private bool LoadOptionFile(Zongsoft.Plugins.Plugin plugin)
+	private bool LoadOptionFile(Plugins.Plugin plugin)
 	{
 		if(_providers.ContainsKey(plugin))
 			return false;
@@ -171,8 +159,7 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 		var optionFile = Path.Combine(directory, $"{fileName}.option");
 		if(File.Exists(optionFile))
 		{
-			if(providers == null)
-				providers = new List<IConfigurationProvider>(4);
+			providers ??= new List<IConfigurationProvider>(4);
 
 			providers.Add(new Xml.XmlConfigurationSource()
 			{
@@ -185,8 +172,7 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 		optionFile = Path.Combine(directory, $"{fileName}.{environment}.option");
 		if(File.Exists(optionFile))
 		{
-			if(providers == null)
-				providers = new List<IConfigurationProvider>(4);
+			providers ??= new List<IConfigurationProvider>(4);
 
 			providers.Add(new Xml.XmlConfigurationSource()
 			{
@@ -201,8 +187,7 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 
 		if(slaves != null && slaves.Length > 0)
 		{
-			if(providers == null)
-				providers = new List<IConfigurationProvider>(slaves.Length);
+			providers ??= new List<IConfigurationProvider>(slaves.Length);
 
 			for(int i = 0; i < slaves.Length; i++)
 			{
@@ -220,8 +205,7 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 
 		if(specifics.Length > 0)
 		{
-			if(providers == null)
-				providers = new List<IConfigurationProvider>(specifics.Length);
+			providers ??= new List<IConfigurationProvider>(specifics.Length);
 
 			for(int i = 0; i < specifics.Length; i++)
 			{

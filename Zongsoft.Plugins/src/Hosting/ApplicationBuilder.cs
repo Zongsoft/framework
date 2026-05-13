@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -56,7 +56,7 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 
 		var assemblyName = Assembly.GetEntryAssembly().GetName().Name;
 		if(!string.Equals(this.Environment.ApplicationName, assemblyName, StringComparison.OrdinalIgnoreCase))
-			this.LoadConfiguration(Assembly.GetEntryAssembly().GetName().Name);
+			this.LoadConfiguration(assemblyName);
 	}
 
 	public void LoadConfiguration(string name)
