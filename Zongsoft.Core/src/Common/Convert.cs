@@ -47,6 +47,7 @@ public static class Convert
 		TypeDescriptor.AddAttributes(typeof(TimeSpan), [new TypeConverterAttribute(typeof(Components.Converters.TimeSpanConverter))]);
 		TypeDescriptor.AddAttributes(typeof(Encoding), [new TypeConverterAttribute(typeof(Components.Converters.EncodingConverter))]);
 		TypeDescriptor.AddAttributes(typeof(EndPoint), [new TypeConverterAttribute(typeof(Components.Converters.EndpointConverter))]);
+		TypeDescriptor.AddAttributes(typeof(System.Runtime.InteropServices.Architecture), [new TypeConverterAttribute(typeof(Components.Converters.ArchitectureConverter))]);
 	}
 	#endregion
 
