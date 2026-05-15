@@ -44,6 +44,7 @@ public class CommandExecutorContext : ICommandContext
 		this.Executor = executor ?? throw new ArgumentNullException(nameof(executor));
 		this.Cmdlets = cmdlets ?? throw new ArgumentNullException(nameof(cmdlets));
 		this.Value = value;
+		this.Parameters = new();
 	}
 
 	internal CommandExecutorContext(CommandExecutorContext context, object result = null)

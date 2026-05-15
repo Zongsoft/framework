@@ -360,6 +360,9 @@ externals/grapecity/src/api/Properties/launchSettings.json
 **/src/*.xml
 **/api/*.xml
 
+# C# project of the LSCache(Language Server Cache)
+*.csproj.lscache
+
 # The launchSettings.json file
 **/launchSettings.json
 
