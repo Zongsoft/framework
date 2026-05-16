@@ -53,6 +53,7 @@ public class CommandOptionDescriptorCollection : Collection<CommandOptionDescrip
 	#endregion
 
 	#region 公共方法
+	public bool Contains(string name) => name != null && _dictionary.ContainsKey(name);
 	public bool TryGetValue(string name, out CommandOptionDescriptor value)
 	{
 		if(string.IsNullOrEmpty(name))
