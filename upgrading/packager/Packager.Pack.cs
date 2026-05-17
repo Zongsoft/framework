@@ -37,6 +37,7 @@ using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 using Zongsoft.Terminals;
 using Zongsoft.Components;
@@ -51,6 +52,7 @@ partial class Packager
 	[CommandOption(TITLE_OPTION, typeof(string))]
 	[CommandOption(SOURCE_OPTION, typeof(string))]
 	[CommandOption(OUTPUT_OPTION, typeof(string))]
+	[CommandOption(EXCLUDE_OPTION, typeof(string))]
 	[CommandOption(EDITION_OPTION, typeof(string))]
 	[CommandOption(VERSION_OPTION, typeof(Version), Required = true)]
 	[CommandOption(CHECKSUM_OPTION, typeof(ChecksumAlgorithm), ChecksumAlgorithm.Sha1)]
@@ -69,6 +71,7 @@ partial class Packager
 		private const string TITLE_OPTION = "title";
 		private const string SOURCE_OPTION = "source";
 		private const string OUTPUT_OPTION = "output";
+		private const string EXCLUDE_OPTION = "exclude";
 		private const string EDITION_OPTION = "edition";
 		private const string VERSION_OPTION = "version";
 		private const string CHECKSUM_OPTION = "checksum";
@@ -132,6 +135,11 @@ partial class Packager
 			variables[SOURCE_OPTION] = source;
 			variables[OUTPUT_OPTION] = output;
 
+			//生成排除规则集
+			var exclusions = PackageExclusions.Parse(source, context.Options.GetValue<string>(EXCLUDE_OPTION, null), variables);
+			if(exclusions == null)
+				return null;
+
 			//输出打包中的信息
 			Terminal.WriteLine(CommandOutletColor.DarkCyan, Properties.Resources.Packing_Message);
 			Terminal.WriteLine();
@@ -144,7 +152,7 @@ partial class Packager
 			}
 
 			//生成发布包文件
-			GeneratePackage(source, output, context.Arguments, variables);
+			GeneratePackage(source, output, context.Arguments, variables, exclusions);
 			//生成发布元文件
 			GenerateRelease(name, edition, version, platform, architecture, output, context.Options, variables);
 
@@ -187,11 +195,19 @@ partial class Packager
 			return !string.IsNullOrEmpty(name) && name != "." && name != "..";
 		}
 
-		static void GeneratePackage(string source, string output, IReadOnlyCollection<string> entries, IDictionary<string, string> variables)
+		static void GeneratePackage(string source, string output, IReadOnlyCollection<string> entries, IDictionary<string, string> variables, PackageExclusions exclusions)
 		{
+			Predicate<string> excluded = path => IsGeneratedFile(path, output) || exclusions != null && exclusions.Contains(path);
+
 			if(entries == null || entries.Count == 0)
 			{
-				ZipFile.CreateFromDirectory(source, output);
+				if(exclusions == null || exclusions.IsEmpty)
+					ZipFile.CreateFromDirectory(source, output);
+				else
+				{
+					using var package = new Packager(output);
+					package.PackDirectory(source, string.Empty, excluded);
+				}
 
 				//输出文件生成成功信息
 				Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.PackageGeneratedSuccessfully_Message, output));
@@ -216,14 +232,27 @@ partial class Packager
 				var alias = index > 0 ? text[(index + 1)..].Trim() : null;
 
 				//生成打包条目
-				GeneratePackageEntry(packager, source, path, alias);
+				GeneratePackageEntry(packager, source, path, alias, excluded);
 			}
 
 			//输出文件生成成功信息
 			Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.PackageGeneratedSuccessfully_Message, output));
+
+			static bool IsGeneratedFile(string path, string output)
+			{
+				if(string.IsNullOrEmpty(path) || string.IsNullOrEmpty(output))
+					return false;
+
+				var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+				path = Path.GetFullPath(path);
+				output = Path.GetFullPath(output);
+
+				return string.Equals(path, output, comparison) ||
+					string.Equals(path, Path.ChangeExtension(output, Manifest.FILE_NAME), comparison);
+			}
 		}
 
-		static void GeneratePackageEntry(Packager packager, string source, string path, string alias)
+		static void GeneratePackageEntry(Packager packager, string source, string path, string alias, Predicate<string> excluded)
 		{
 			if(alias != null)
 				alias = alias
@@ -247,10 +276,10 @@ partial class Packager
 					alias = string.Empty;
 
 				foreach(var file in Directory.GetFiles(working, pattern))
-					packager.PackFile(file, Path.Combine(alias, Path.GetFileName(file)));
+					packager.PackFile(file, Path.Combine(alias, Path.GetFileName(file)), excluded);
 
 				foreach(var directory in Directory.GetDirectories(working, pattern))
-					packager.PackDirectory(directory, Path.Combine(alias, Path.GetFileName(directory)));
+					packager.PackDirectory(directory, Path.Combine(alias, Path.GetFileName(directory)), excluded);
 			}
 			else
 			{
@@ -260,9 +289,9 @@ partial class Packager
 					alias = string.Empty;
 
 				if(File.Exists(path))
-					packager.PackFile(path, alias);
+					packager.PackFile(path, alias, excluded);
 				else if(Directory.Exists(path))
-					packager.PackDirectory(path, alias);
+					packager.PackDirectory(path, alias, excluded);
 				else
 					Terminal.WriteLine(CommandOutletColor.DarkYellow, $"[Warn] The source path '{path}' does not exist.");
 			}
@@ -332,6 +361,172 @@ partial class Packager
 
 			//输出文件生成成功信息
 			Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.ManifestGeneratedSuccessfully_Message, Path.ChangeExtension(filePath, Manifest.FILE_NAME)));
+		}
+		#endregion
+
+		#region 嵌套子类
+		sealed class PackageExclusions
+		{
+			private readonly List<Entry> _entries = [];
+			private readonly StringComparison _comparison;
+			private readonly RegexOptions _regexOptions;
+
+			private PackageExclusions()
+			{
+				_comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+				_regexOptions = OperatingSystem.IsWindows() ? RegexOptions.IgnoreCase | RegexOptions.CultureInvariant : RegexOptions.CultureInvariant;
+			}
+
+			public bool IsEmpty => _entries.Count == 0;
+			public bool Contains(string path)
+			{
+				if(string.IsNullOrEmpty(path))
+					return false;
+
+				path = NormalizePath(Path.GetFullPath(path));
+
+				foreach(var entry in _entries)
+				{
+					if(entry.Expression != null)
+					{
+						if(entry.Expression.IsMatch(path))
+							return true;
+					}
+					else if(entry.Directory)
+					{
+						if(string.Equals(path, entry.Path, _comparison) || path.StartsWith(entry.Path + '/', _comparison))
+							return true;
+					}
+					else if(string.Equals(path, entry.Path, _comparison))
+						return true;
+				}
+
+				return false;
+			}
+
+			public static PackageExclusions Parse(string source, string text, IDictionary<string, string> variables)
+			{
+				var exclusions = new PackageExclusions();
+
+				if(string.IsNullOrWhiteSpace(text))
+					return exclusions;
+
+				foreach(var part in text.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+				{
+					if(!Normalizer.TryNormalize(part, variables, out var pattern))
+						return null;
+
+					if(!string.IsNullOrWhiteSpace(pattern))
+						exclusions.Add(source, pattern.Trim());
+				}
+
+				return exclusions;
+			}
+
+			private void Add(string source, string pattern)
+			{
+				pattern = NormalizeSeparators(pattern);
+				var wildcards = ContainsWildcard(pattern);
+				var directory = EndsWithDirectorySeparator(pattern);
+				var path = Path.IsPathFullyQualified(pattern) ? pattern : Path.Combine(source, pattern);
+
+				if(!wildcards)
+				{
+					path = Path.GetFullPath(path);
+					_entries.Add(new Entry(NormalizePath(path), directory || Directory.Exists(path)));
+					return;
+				}
+
+				_entries.Add(new Entry(CreateExpression(source, pattern)));
+			}
+
+			private Regex CreateExpression(string source, string pattern)
+			{
+				var expression = new System.Text.StringBuilder();
+				expression.Append('^');
+
+				if(!Path.IsPathFullyQualified(pattern) && !ContainsDirectorySeparator(pattern))
+				{
+					expression.Append(Regex.Escape(NormalizePath(Path.GetFullPath(source))));
+					expression.Append("(?:/.*/|/)");
+					expression.Append(GetWildcardExpression(NormalizeSeparators(pattern)));
+				}
+				else
+				{
+					var path = Path.IsPathFullyQualified(pattern) ? pattern : Path.Combine(source, pattern);
+					expression.Append(GetWildcardExpression(NormalizePath(Path.GetFullPath(path))));
+				}
+
+				expression.Append("(?:/.*)?$");
+				return new Regex(expression.ToString(), _regexOptions);
+			}
+
+			private static bool ContainsWildcard(string text) => text != null && (text.Contains('*') || text.Contains('?'));
+			private static bool ContainsDirectorySeparator(string text) => text != null && (text.Contains('/') || text.Contains('\\'));
+			private static bool EndsWithDirectorySeparator(string text) => text != null && (text.EndsWith('/') || text.EndsWith('\\'));
+			private static string NormalizeSeparators(string text) => text.Replace('\\', '/');
+
+			private static string NormalizePath(string path)
+			{
+				if(string.IsNullOrEmpty(path))
+					return path;
+
+				var normalized = NormalizeSeparators(path);
+				var root = Path.GetPathRoot(path);
+				var rootLength = string.IsNullOrEmpty(root) ? 0 : NormalizeSeparators(root).Length;
+
+				while(normalized.Length > rootLength && normalized[^1] == '/')
+					normalized = normalized[..^1];
+
+				return normalized;
+			}
+
+			private static string GetWildcardExpression(string pattern)
+			{
+				var expression = new System.Text.StringBuilder();
+
+				foreach(var character in pattern)
+				{
+					switch(character)
+					{
+						case '*':
+							expression.Append("[^/]*");
+							break;
+						case '?':
+							expression.Append("[^/]");
+							break;
+						case '/':
+							expression.Append('/');
+							break;
+						default:
+							expression.Append(Regex.Escape(character.ToString()));
+							break;
+					}
+				}
+
+				return expression.ToString();
+			}
+
+			private readonly struct Entry
+			{
+				public Entry(string path, bool directory = false)
+				{
+					this.Path = path;
+					this.Directory = directory;
+					this.Expression = null;
+				}
+
+				public Entry(Regex expression)
+				{
+					this.Path = null;
+					this.Directory = false;
+					this.Expression = expression;
+				}
+
+				public readonly string Path;
+				public readonly bool Directory;
+				public readonly Regex Expression;
+			}
 		}
 		#endregion
 	}

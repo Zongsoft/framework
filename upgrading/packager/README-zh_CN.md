@@ -45,6 +45,7 @@ dotnet-pack publish [选项] <包文件...>
 `--architecture` | string | - | `x64` | CPU 架构，可选值：`x64`、`x32`、`arm64`、`arm32`
 `--checksum` | string | - | `sha1` | 校验码算法，可选值：`sha1`、`sha256`、`sha384`、`sha512`
 `--output` | string | - | 自动生成 | 输出包文件路径，支持变量替换。默认根据 `name`、`edition`、`version`、`platform`、`architecture` 自动生成名称
+`--exclude` | string | - | 空 | 要排除的文件或目录，以分号分隔；支持变量替换以及 `*` / `?` 通配符
 `--overwrite` | bool | - | `false` | 是否覆盖已存在的目标文件
 `--tags` | string | - | 空 | 标签集合，以逗号或分号分隔
 `--title` | string | - | 空 | 发布标题
@@ -114,6 +115,7 @@ dotnet-pack publish [选项] <包文件...>
 
 - **未指定参数**：将 `--source` 源目录中的所有文件和子目录全部打包。
 - **指定了参数**：只打包参数所指定的目录或文件，支持以下特性：
+- **指定了 `--exclude`**：无论是全量目录打包还是按参数打包，命中的文件和目录都会被跳过。
 
 特性 | 说明
 -----|-----
@@ -121,6 +123,21 @@ dotnet-pack publish [选项] <包文件...>
 **绝对路径** | 支持绝对路径，可以引用源目录之外的文件
 **通配符** | 路径的文件名部分支持 `*` 和 `?` 通配符
 **重命名** | 使用 `:` 冒号分隔源路径与包内目标名称
+
+#### 排除规则
+
+使用 `--exclude` 可指定一个或多个要跳过的文件或目录。多个规则以分号分隔。相对规则按 `--source` 目录解析，绝对规则按绝对路径匹配。支持 `*` 和 `?` 通配符，通配符不会跨目录分隔符匹配。
+
+```shell
+# 排除一个目录和一个文件
+--exclude:"logs;appsettings.Development.json"
+
+# 排除任意层级的 .pdb 文件，以及 wwwroot 下以 temp 开头的目录
+--exclude:"*.pdb;wwwroot/temp*"
+
+# 排除 plugins 下一级子目录中的 debug?.dll
+--exclude:"plugins/*/debug?.dll"
+```
 
 #### 重命名规则
 

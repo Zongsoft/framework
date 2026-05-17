@@ -45,6 +45,7 @@ Option | Type | Required | Default | Description
 `--architecture` | string | - | `x64` | CPU architecture, options: `x64`, `x32`, `arm64`, `arm32`
 `--checksum` | string | - | `sha1` | Checksum algorithm, options: `sha1`, `sha256`, `sha384`, `sha512`
 `--output` | string | - | Auto-generated | Output package file path, supports variable substitution. When not specified, the file name is auto-generated based on `name`, `edition`, `version`, `platform`, and `architecture`
+`--exclude` | string | - | Empty | Files or directories to exclude, separated by semicolons; supports variable substitution and `*` / `?` wildcards
 `--overwrite` | bool | - | `false` | Whether to overwrite an existing target file
 `--tags` | string | - | Empty | Tag collection, separated by commas or semicolons
 `--title` | string | - | Empty | Publish title
@@ -114,6 +115,7 @@ Command arguments are used to precisely control which files and directories are 
 
 - **No arguments specified**: all files and subdirectories in the `--source` directory are packed.
 - **Arguments specified**: only the directories or files specified by the arguments are packed, supporting the following features:
+- **`--exclude` specified**: matching files and directories are skipped in both full-directory and argument-based packing.
 
 Feature | Description
 -----|-----
@@ -121,6 +123,21 @@ Feature | Description
 **Absolute path** | Absolute paths are supported, allowing references to files outside the source directory
 **Wildcards** | The file name part of the path supports `*` and `?` wildcards
 **Rename** | Use `:` colon to separate the source path from the target name inside the package
+
+#### Exclude Rules
+
+Use `--exclude` to specify one or more files or directories to skip. Multiple rules are separated by semicolons. Relative rules are resolved from `--source`; absolute rules are matched by absolute path. The `*` and `?` wildcards are supported and do not cross directory separators.
+
+```shell
+# Exclude one directory and one file
+--exclude:"logs;appsettings.Development.json"
+
+# Exclude all .pdb files at any depth, plus temp directories under wwwroot
+--exclude:"*.pdb;wwwroot/temp*"
+
+# Exclude one-level debug DLLs under plugins
+--exclude:"plugins/*/debug?.dll"
+```
 
 #### Rename Rules
 

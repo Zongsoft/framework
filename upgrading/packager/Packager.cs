@@ -59,9 +59,12 @@ public partial class Packager : IDisposable
 	#endregion
 
 	#region 打包方法
-	internal void PackFile(string source, string entryName)
+	internal void PackFile(string source, string entryName, Predicate<string> excluded = null)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(source);
+
+		if(excluded != null && excluded(source))
+			return;
 
 		if(string.IsNullOrEmpty(entryName))
 			entryName = Path.GetFileName(source);
@@ -91,12 +94,15 @@ public partial class Packager : IDisposable
 		_entries[entryName] = source;
 	}
 
-	internal void PackDirectory(string source, string entryName)
+	internal void PackDirectory(string source, string entryName, Predicate<string> excluded = null)
 	{
+		if(excluded != null && excluded(source))
+			return;
+
 		foreach(var file in Directory.GetFiles(source))
-			this.PackFile(file, Path.Combine(entryName, Path.GetFileName(file)));
+			this.PackFile(file, Path.Combine(entryName, Path.GetFileName(file)), excluded);
 		foreach(var directory in Directory.GetDirectories(source))
-			this.PackDirectory(directory, Path.Combine(entryName, Path.GetFileName(directory)));
+			this.PackDirectory(directory, Path.Combine(entryName, Path.GetFileName(directory)), excluded);
 	}
 	#endregion
 
