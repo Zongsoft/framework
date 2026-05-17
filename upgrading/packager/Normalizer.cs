@@ -48,7 +48,7 @@ public static class Normalizer
 	#endregion
 
 	#region 公共方法
-	public static bool Normalize(string text, IDictionary<string, string> variables, out string result)
+	public static bool TryNormalize(string text, IDictionary<string, string> variables, out string result)
 	{
 		var normalized = Normalize(text, variables);
 		if(normalized)

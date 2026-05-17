@@ -56,7 +56,6 @@ internal class Program
 		//初始化
 		Executor.Root.Children.Clear();
 		Executor.Root.Children.Add(new Packager.PackCommand());
-		Executor.Root.Children.Add(new Packager.InstallCommand());
 		Executor.Root.Children.Add(new Packager.PublishCommand());
 		Executor.Root.Children.Add(new Packager.ChecksumCommand());
 
@@ -80,9 +79,6 @@ internal class Program
 
 		static string GetCommandLine(string[] args)
 		{
-			if(args[0].StartsWith('-'))
-				return $"pack {CommandLine.Get(args)}";
-
 			if(Executor.Root.HasChildren && Executor.Root.Children.Contains(args[0]))
 				return CommandLine.Get(args);
 

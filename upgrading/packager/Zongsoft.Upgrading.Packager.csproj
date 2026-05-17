@@ -3,14 +3,14 @@
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net8.0;net9.0;net10.0;</TargetFrameworks>
 		<RootNamespace>Zongsoft.Upgrading</RootNamespace>
-		<Version>0.0.7</Version>
+		<Version>0.1.0</Version>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<PackAsTool>true</PackAsTool>
-		<ToolCommandName>dotnet-pack</ToolCommandName>
-		<PackageDescription>The Zongsoft Upgrading Packing .NET Tool.</PackageDescription>
+		<ToolCommandName>dotnet-upgrade</ToolCommandName>
+		<PackageDescription>The Zongsoft Upgrading .NET Tool.</PackageDescription>
 		<Company>Zongsoft Studio</Company>
-		<Product>Zongsoft Upgrading Packager</Product>
-		<Description>Zongsoft Upgrading Packing Tool.</Description>
+		<Product>Zongsoft Upgrading Tool</Product>
+		<Description>Zongsoft Upgrading Tool.</Description>
 		<Copyright>Copyright(C) Zongsoft Studio 2020-2026. All rights reserved.</Copyright>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>

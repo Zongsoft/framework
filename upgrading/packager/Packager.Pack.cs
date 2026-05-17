@@ -100,7 +100,7 @@ partial class Packager
 			var variables = GetVariables(context);
 
 			//规范化来源路径
-			if(!Normalizer.Normalize(context.Options.GetValue<string>(SOURCE_OPTION), variables, out var source))
+			if(!Normalizer.TryNormalize(context.Options.GetValue<string>(SOURCE_OPTION), variables, out var source))
 				return null;
 
 			if(string.IsNullOrEmpty(source) || !Path.IsPathFullyQualified(source))
@@ -113,7 +113,7 @@ partial class Packager
 			}
 
 			//规范化目标路径
-			if(!Normalizer.Normalize(context.Options.GetValue<string>(OUTPUT_OPTION), variables, out var output))
+			if(!Normalizer.TryNormalize(context.Options.GetValue<string>(OUTPUT_OPTION), variables, out var output))
 				return null;
 
 			if(!string.IsNullOrEmpty(output) && IsFile(output, out var filename))
@@ -203,7 +203,7 @@ partial class Packager
 
 			foreach(var entry in entries)
 			{
-				if(!Normalizer.Normalize(entry, variables, out var text))
+				if(!Normalizer.TryNormalize(entry, variables, out var text))
 					continue;
 
 				var index = text.LastIndexOf(':');
@@ -322,7 +322,7 @@ partial class Packager
 						continue;
 					}
 
-					if(Normalizer.Normalize(option.Value.ToString(), variables, out var result))
+					if(Normalizer.TryNormalize(option.Value.ToString(), variables, out var result))
 						release.Executors.Add(new(parts[1], $"{parts[0]} {result}"));
 				}
 			}
