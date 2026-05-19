@@ -1,7 +1,7 @@
 var target = Argument("target", "default");
 var edition = Argument("edition", "Debug");
 
-var solutionFile = "Zongsoft.Upgrading.Packager.slnx";
+var solutionFile = "Zongsoft.Tools.Upgrader.slnx";
 
 Task("clean")
 	.Description("清理解决方案")

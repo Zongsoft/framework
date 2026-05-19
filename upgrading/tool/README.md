@@ -1,8 +1,8 @@
 # Automatic Upgrade Packager
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
-![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Packager)
-![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Upgrading.Packager)
+![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Tools.Upgrader)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Tools.Upgrader)
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
@@ -12,19 +12,19 @@
 
 ## Overview
 
-[**Z**ongsoft.**U**pgrading.**P**ackager](https://github.com/Zongsoft/framework/tree/main/upgrading/packager/Zongsoft.Upgrading.Packager) is the automatic upgrade plugin library packager of the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework, providing three subcommands: **pack**, **checksum**, and **publish**.
+[**Z**ongsoft.**T**ools.**U**pgrader](https://github.com/Zongsoft/framework/tree/main/upgrading/tool/Zongsoft.Tools.Upgrader) is the automatic upgrade plugin library packager of the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework, providing three subcommands: **pack**, **checksum**, and **publish**.
 
 ### Basic Usage
 
 ```shell
-# Pack (pack is the default command; you can pass options directly without the command name)
-dotnet-pack [pack] [options...] [arguments...]
+# Pack
+dotnet-upgrade pack [options...] [arguments...]
 
 # Checksum
-dotnet-pack checksum [options] <package-file...>
+dotnet-upgrade checksum [options] <package-file...>
 
 # Publish
-dotnet-pack publish [options] <package-file...>
+dotnet-upgrade publish [options] <package-file...>
 ```
 
 -----
@@ -57,7 +57,7 @@ Option | Type | Required | Default | Description
 When `--output` is not specified or only an output directory is specified, the tool auto-generates the file name according to the following rules:
 
 - **Without `--edition`**: `{name}@{version}_{runtime}`, e.g. `Zongsoft.Daemon@1.1.0_win-x64.zip`
-- **With `--edition`**: `{name}({edition})@{version}_{runtime}`, e.g. `Zongsoft.Daemon(stable)@1.1.0_linux-x64.zip`
+- **With `--edition`**: `{name}({edition})@{version}_{runtime}`, e.g. `Zongsoft.Daemon-stable@1.1.0_linux-x64.zip`
 
 Where `{runtime}` is composed of `platform` and `architecture`, e.g. `win-x64`, `linux-arm64`.
 
@@ -167,7 +167,7 @@ web*.config
 - Daemon program _(full publish)_
 
 ```shell
-dotnet-pack
+dotnet-upgrade pack
 	--name:Zongsoft.Daemon
 	--version:1.1.0
 	--edition:stable
@@ -186,7 +186,7 @@ dotnet-pack
 - Daemon program _(incremental publish)_
 
 ```shell
-dotnet-pack
+dotnet-upgrade pack
 	--name:Zongsoft.Daemon
 	--version:1.1.0
 	--edition:stable
@@ -206,7 +206,7 @@ dotnet-pack
 - Web program _(full publish)_
 
 ```shell
-dotnet-pack
+dotnet-upgrade pack
 	--name:Zongsoft.Hosting.Web
 	--version:1.1.0
 	--edition:stable
@@ -234,7 +234,7 @@ dotnet-pack
 - Web program _(incremental publish)_
 
 ```shell
-dotnet-pack
+dotnet-upgrade pack
 	--name:Zongsoft.Hosting.Web
 	--version:1.1.0
 	--edition:stable
@@ -286,10 +286,10 @@ You can pass any of the following forms:
 
 ```shell
 # Specify algorithm and package file
-dotnet-pack checksum --algorithm:sha1 Zongsoft.Daemon(stable)@1.1.0_win-x64.zip
+dotnet-upgrade checksum --algorithm:sha1 Zongsoft.Daemon-stable@1.1.0_win-x64.zip
 
 # Use short option form to batch-checksum multiple packages
-dotnet-pack checksum -a:sha256 package1.zip package2.zip
+dotnet-upgrade checksum -a:sha256 package1.zip package2.zip
 ```
 
 -----
@@ -303,22 +303,22 @@ Supports two publish channels: `amazon.s3` and `web`.
 - _**A**mazon.**S3**_ File System
 
 ```shell
-dotnet-pack publish
+dotnet-upgrade publish
 	--channel:amazon.s3
 	--server:127.0.0.1:9000
 	--access:rustfsadmin
 	--secret:rustfsadmin
 	--destination:/upgrading/releases/daemon
-	Zongsoft.Daemon(stable)@1.1.0_win-x64
+	Zongsoft.Daemon-stable@1.1.0_win-x64
 ```
 
 - _**W**eb_ publish site
 
 ```shell
-dotnet-pack publish
+dotnet-upgrade publish
 	--channel:web
 	--url:localhost:8069/upgrading
-	Zongsoft.Daemon(stable)@1.1.0_win-x64
+	Zongsoft.Daemon-stable@1.1.0_win-x64
 ```
 
 -----

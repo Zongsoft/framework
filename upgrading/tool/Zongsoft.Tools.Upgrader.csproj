@@ -17,8 +17,8 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<PackageProjectUrl>https://github.com/Zongsoft/framework/tree/main/upgrading/packager</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/upgrading/packager</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework/tree/main/upgrading/tool</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/upgrading/tool</RepositoryUrl>
 		<PackageIconUrl>https://github.com/Zongsoft/guidelines/raw/main/zongsoft-logo(48x48).png</PackageIconUrl>
 		<PackageIcon>zongsoft-logo.png</PackageIcon>
 		<ApplicationIcon>..\..\zongsoft-logo.ico</ApplicationIcon>

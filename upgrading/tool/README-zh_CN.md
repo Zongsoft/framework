@@ -1,8 +1,8 @@
 # 自动升级打包器
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
-![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Packager)
-![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Upgrading.Packager)
+![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Tools.Upgrader)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Tools.Upgrader)
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
@@ -12,19 +12,19 @@
 
 ## 概述
 
-[**Z**ongsoft.**U**pgrading.**P**ackager](https://github.com/Zongsoft/framework/tree/main/upgrading/packager/Zongsoft.Upgrading.Packager) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的自动升级插件库打包器，提供了打包、校验与发布三个子命令。
+[**Z**ongsoft.**T**ools.**U**pgrader](https://github.com/Zongsoft/framework/tree/main/upgrading/tool/Zongsoft.Tools.Upgrader) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的自动升级插件库打包器，提供了打包、校验与发布三个子命令。
 
 ### 基本用法
 
 ```shell
-# 打包（pack 为默认命令，可直接传入选项省略命令名）
-dotnet-pack [pack] [选项...] [参数...]
+# 打包
+dotnet-upgrade pack [选项...] [参数...]
 
 # 校验
-dotnet-pack checksum [选项] <包文件...>
+dotnet-upgrade checksum [选项] <包文件...>
 
 # 发布
-dotnet-pack publish [选项] <包文件...>
+dotnet-upgrade publish [选项] <包文件...>
 ```
 
 -----
@@ -57,7 +57,7 @@ dotnet-pack publish [选项] <包文件...>
 当未指定 `--output` 或仅指定了输出目录时，工具按照以下规则自动生成文件名：
 
 - **未指定 `--edition`**：`{name}@{version}_{runtime}`，如 `Zongsoft.Daemon@1.1.0_win-x64.zip`
-- **指定了 `--edition`**：`{name}({edition})@{version}_{runtime}`，如 `Zongsoft.Daemon(stable)@1.1.0_linux-x64.zip`
+- **指定了 `--edition`**：`{name}({edition})@{version}_{runtime}`，如 `Zongsoft.Daemon-stable@1.1.0_linux-x64.zip`
 
 其中 `{runtime}` 由 `platform` 和 `architecture` 组合而成，如 `win-x64`、`linux-arm64`。
 
@@ -167,7 +167,7 @@ web*.config
 - 后台程序 _（全量发布）_
 
 ```shell
-dotnet-pack
+dotnet-upgrade pack
 	--name:Zongsoft.Daemon
 	--version:1.1.0
 	--edition:stable
@@ -186,7 +186,7 @@ dotnet-pack
 - 后台程序 _（增量发布）_
 
 ```shell
-dotnet-pack
+dotnet-upgrade pack
 	--name:Zongsoft.Daemon
 	--version:1.1.0
 	--edition:stable
@@ -206,7 +206,7 @@ dotnet-pack
 - _Web_ 程序 _（全量发布）_
 
 ```shell
-dotnet-pack
+dotnet-upgrade pack
 	--name:Zongsoft.Hosting.Web
 	--version:1.1.0
 	--edition:stable
@@ -234,7 +234,7 @@ dotnet-pack
 - _Web_ 程序 _（增量发布）_
 
 ```shell
-dotnet-pack
+dotnet-upgrade pack
 	--name:Zongsoft.Hosting.Web
 	--version:1.1.0
 	--edition:stable
@@ -286,10 +286,10 @@ dotnet-pack
 
 ```shell
 # 指定算法和包文件
-dotnet-pack checksum --algorithm:sha1 Zongsoft.Daemon(stable)@1.1.0_win-x64.zip
+dotnet-upgrade checksum --algorithm:sha1 Zongsoft.Daemon-stable@1.1.0_win-x64.zip
 
 # 使用短选项形式，批量校验多个包
-dotnet-pack checksum -a:sha256 package1.zip package2.zip
+dotnet-upgrade checksum -a:sha256 package1.zip package2.zip
 ```
 
 -----
@@ -303,22 +303,22 @@ dotnet-pack checksum -a:sha256 package1.zip package2.zip
 - _Amazon.S3_ 文件系统
 
 ```shell
-dotnet-pack publish
+dotnet-upgrade publish
 	--channel:amazon.s3
 	--server:127.0.0.1:9000
 	--access:rustfsadmin
 	--secret:rustfsadmin
 	--destination:/upgrading/releases/daemon
-	Zongsoft.Daemon(stable)@1.1.0_win-x64
+	Zongsoft.Daemon-stable@1.1.0_win-x64
 ```
 
 - _Web_ 发布站点
 
 ```shell
-dotnet-pack publish
+dotnet-upgrade publish
 	--channel:web
 	--url:localhost:8069/upgrading
-	Zongsoft.Daemon(stable)@1.1.0_win-x64
+	Zongsoft.Daemon-stable@1.1.0_win-x64
 ```
 
 -----
