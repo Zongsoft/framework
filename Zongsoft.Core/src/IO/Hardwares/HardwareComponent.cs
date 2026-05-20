@@ -41,11 +41,26 @@ public class HardwareComponent
 	/// <summary>初始化 <see cref="HardwareComponent"/> 类的新实例。</summary>
 	/// <param name="name">组件名称。</param>
 	/// <param name="code">组件代码。</param>
+	/// <param name="properties">组件属性集。</param>
+	/// <param name="components">子组件集。</param>
+	public HardwareComponent(string name, string code, IEnumerable<HardwareProperty> properties = null, IEnumerable<HardwareComponent> components = null) : this(name, code, null, null, properties, components) { }
+
+	/// <summary>初始化 <see cref="HardwareComponent"/> 类的新实例。</summary>
+	/// <param name="name">组件名称。</param>
+	/// <param name="code">组件代码。</param>
+	/// <param name="type">组件类型。</param>
+	/// <param name="properties">组件属性集。</param>
+	/// <param name="components">子组件集。</param>
+	public HardwareComponent(string name, string code, string type, IEnumerable<HardwareProperty> properties = null, IEnumerable<HardwareComponent> components = null) : this(name, code, type, null, properties, components) { }
+
+	/// <summary>初始化 <see cref="HardwareComponent"/> 类的新实例。</summary>
+	/// <param name="name">组件名称。</param>
+	/// <param name="code">组件代码。</param>
 	/// <param name="type">组件类型。</param>
 	/// <param name="description">组件描述。</param>
 	/// <param name="properties">组件属性集。</param>
 	/// <param name="components">子组件集。</param>
-	public HardwareComponent(string name, string code = null, string type = null, string description = null, IEnumerable<HardwareProperty> properties = null, IEnumerable<HardwareComponent> components = null)
+	public HardwareComponent(string name, string code, string type, string description, IEnumerable<HardwareProperty> properties = null, IEnumerable<HardwareComponent> components = null)
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -67,10 +82,10 @@ public class HardwareComponent
 	public string Code { get; }
 
 	/// <summary>获取组件类型。</summary>
-	public string Type { get; }
+	public string Type { get; init; }
 
 	/// <summary>获取组件描述。</summary>
-	public string Description { get; }
+	public string Description { get; init; }
 
 	/// <summary>获取子组件集。</summary>
 	public HardwareComponentCollection Components { get; }
