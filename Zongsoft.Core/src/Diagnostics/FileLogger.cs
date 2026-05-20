@@ -111,20 +111,27 @@ public abstract class FileLogger<TLog, TModel> : LoggerBase<TLog, TModel> where 
 			if(group.Key.IsEmpty)
 				continue;
 
+			var acquired = false;
 			var semaphore = _semaphores.GetOrAdd(group.Key.Source, key => new(1, 1));
 
 			try
 			{
 				//进入临界区确保同源只有一个写入操作
 				await semaphore.WaitAsync(cancellation);
+
+				//设置信号量获取成功
+				acquired = true;
+
 				//以写模式打开日志文件
 				using var stream = new FileStream(group.Key.FilePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+
 				//批量写入日志文件
 				await this.WriteLogsAsync(stream, group, cancellation);
 			}
 			finally
 			{
-				semaphore.Release();
+				if(acquired)
+					semaphore.Release();
 			}
 		}
 	}
