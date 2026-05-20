@@ -48,6 +48,7 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 	#endregion
 
 	#region 私有变量
+	private int _flushing;
 	private Common.Timer _timer;
 	private Channel<T> _channel;
 	private Func<IEnumerable<T>, CancellationToken, ValueTask> _flusher;
@@ -104,19 +105,37 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 		if(this.GetChannel(out var channel) && channel.Writer.TryWrite(value))
 			return;
 
-		await this.OnFlushAsync(new Iterable(channel.Reader, _limit), cancellation);
+		await this.FlushAsync(cancellation);
 		await channel.Writer.WaitToWriteAsync(cancellation);
 		await channel.Writer.WriteAsync(value, cancellation);
 	}
 
 	public async ValueTask FlushAsync(CancellationToken cancellation = default)
 	{
-		if(this.IsEmpty)
+		if(cancellation.IsCancellationRequested)
 			return;
 
-		var channel = this.GetChannel();
-		await channel.Reader.WaitToReadAsync(cancellation);
-		await this.OnFlushAsync(new Iterable(channel.Reader, _limit), cancellation);
+		while(!this.IsEmpty)
+		{
+			cancellation.ThrowIfCancellationRequested();
+
+			if(Interlocked.CompareExchange(ref _flushing, 1, 0) == 0)
+			{
+				try
+				{
+					if(!this.IsEmpty)
+						await this.OnFlushAsync(new Iterable(this.GetChannel().Reader, _limit), cancellation);
+				}
+				finally
+				{
+					Volatile.Write(ref _flushing, 0);
+				}
+
+				return;
+			}
+
+			await Task.Yield();
+		}
 	}
 	#endregion
 
