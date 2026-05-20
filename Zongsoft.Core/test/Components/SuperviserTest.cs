@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 using Xunit;
 
@@ -90,6 +91,62 @@ public class SuperviserTest
 
 		//确保计数器数值一致
 		Assert.Equal(0, _raises);
+	}
+
+	[Fact]
+	public void TestConcurrentSuperviseSameKey()
+	{
+		const int COUNT = 100;
+		var observables = new MySupervisable[COUNT];
+		var supervised = 0;
+
+		_superviser.Supervised += (_, _) => Interlocked.Increment(ref supervised);
+
+		Parallel.For(0, COUNT, index =>
+		{
+			var observable = new MySupervisable("S");
+			observables[index] = observable;
+			_superviser.Supervise("S", observable);
+		});
+
+		var current = _superviser["S"];
+
+		Assert.Equal(1, _superviser.Count);
+		Assert.Equal(1, supervised);
+		Assert.NotNull(current);
+		Assert.Contains(current, observables);
+
+		Assert.True(_superviser.Unsupervise("S", out var removed));
+		Assert.Same(current, removed);
+		Assert.True(((MySupervisable)removed).IsUnsupervised(TimeSpan.FromSeconds(10)));
+		Assert.False(_superviser.Contains("S"));
+	}
+
+	[Fact]
+	public void TestConcurrentUnsuperviseSameKey()
+	{
+		const int COUNT = 100;
+		var observable = new MySupervisable("S");
+		var removed = new ConcurrentBag<IObservable<string>>();
+		var successes = 0;
+
+		_superviser.Supervise("S", observable);
+
+		Parallel.For(0, COUNT, _ =>
+		{
+			if(_superviser.Unsupervise("S", out var result))
+			{
+				Interlocked.Increment(ref successes);
+				removed.Add(result);
+			}
+		});
+
+		Assert.Equal(1, successes);
+		Assert.Single(removed);
+		Assert.Same(observable, removed.Single());
+		Assert.True(observable.IsUnsupervised(TimeSpan.FromSeconds(10)));
+		Assert.False(_superviser.Contains("S"));
+		Assert.Equal(0, _superviser.Count);
 	}
 
 	#region 事件处理

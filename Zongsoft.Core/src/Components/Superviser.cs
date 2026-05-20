@@ -107,26 +107,17 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 		if(observable == null)
 			throw new ArgumentNullException(nameof(observable));
 
-		//获取或创建一个监视被观察对象的观察者
-		var observer = _cache.GetOrCreate(key ?? observable, key =>
-		{
-			//获取当前被观察对象的生命周期，如果其未设置则应用监测器的默认值
-			var lifecycle = this.GetOptions(observable).Lifecycle;
-
-			//创建观察器对象
-			var observer = new Observer();
-
-			//注意：如果缓存项的有效期为零则不会进行缓存驱逐事件的监听，因此对于无限期的被观察者必须返回对应的缓存期限设置为最大值
-			return (
-				observer,
-				Notification.GetToken(observer.Failure),
-				lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.MaxValue);
-		});
+		var cacheKey = key ?? observable;
+		var observer = _shadows.GetOrAdd(cacheKey, _ => new Observer());
 
 		//如果初始化成功则表示是第一次监视该被观察对象
 		if(observer.Initialize(this, observable, key))
 		{
-			_shadows.TryAdd(key ?? observable, observer);
+			//获取当前被观察对象的生命周期，如果其未设置则应用监测器的默认值
+			var lifecycle = this.GetOptions(observable).Lifecycle;
+
+			//将观察器对象写入缓存，并为其挂载故障通知和生命周期设置
+			_cache.SetValue(cacheKey, observer, Notification.GetToken(observer.Failure), lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.MaxValue);
 
 			//订阅被观察对象的行为
 			observer.Subscribe();
@@ -142,10 +133,18 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 	public bool Unsupervise(object key) => this.Unsupervise(key, out _);
 	public bool Unsupervise(object key, out IObservable<T> observable)
 	{
-		if(key != null && _cache.Remove(key, out var value) && value is Observer observer)
+		if(key == null)
+		{
+			observable = null;
+			return false;
+		}
+
+		if(_shadows.TryGetValue(key, out var observer))
 		{
 			observable = observer.Observable;
-			return true;
+
+			if(observable != null && _cache.Remove(key, out _))
+				return true;
 		}
 
 		observable = null;
