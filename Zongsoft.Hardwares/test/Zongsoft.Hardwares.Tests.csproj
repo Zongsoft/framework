@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+		<RootNamespace>Zongsoft.IO.Hardwares</RootNamespace>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\src\Zongsoft.Hardwares.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="xunit" />
+		<PackageReference Include="xunit.core" />
+		<PackageReference Include="xunit.assert" />
+		<PackageReference Include="xunit.analyzers" />
+		<PackageReference Include="xunit.runner.msbuild" />
+		<PackageReference Include="xunit.runner.visualstudio" />
+	</ItemGroup>
+</Project>

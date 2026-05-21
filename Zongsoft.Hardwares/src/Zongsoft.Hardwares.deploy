@@ -1,0 +1,6 @@
+artifacts/Zongsoft.Hardwares.option
+artifacts/Zongsoft.Hardwares.plugin
+lib/$(Framework)/Zongsoft.Hardwares.*
+lib/$(Framework)/*/Zongsoft.Hardwares.resources.*
+
+nuget:System.Management@10.0.8 <platform:win,windows>

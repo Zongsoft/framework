@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Hardwares.csproj" />
+	<Project Path="test/Zongsoft.Hardwares.Tests.csproj" />
+</Solution>
