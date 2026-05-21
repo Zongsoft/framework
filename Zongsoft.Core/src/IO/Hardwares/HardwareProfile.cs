@@ -30,9 +30,9 @@
 using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -138,11 +138,14 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 
 	#region 静态方法
 	/// <summary>从指定服务容器加载硬件配置档案。</summary>
-	/// <param name="serviceProvider">提供硬件采集器的服务容器。</param>
+	/// <param name="services">提供硬件采集器的服务容器。</param>
 	/// <returns>返回加载得到的硬件配置档案。</returns>
-	public static HardwareProfile Load(IServiceProvider serviceProvider = null)
+	public static HardwareProfile Load(IServiceProvider services = null)
 	{
-		return new HardwareProfile(Collect(serviceProvider));
+		if(services == null)
+			services = Services.ApplicationContext.Current?.Services ?? throw new ArgumentNullException(nameof(services));
+
+		return new HardwareProfile(Collect(services));
 
 		static IEnumerable<IHardware> Collect(IServiceProvider serviceProvider)
 		{
@@ -168,18 +171,17 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 	public static ValueTask<HardwareProfile> LoadAsync(CancellationToken cancellation = default) => LoadAsync(null, cancellation);
 
 	/// <summary>从指定服务容器异步加载硬件配置档案。</summary>
-	/// <param name="serviceProvider">提供硬件采集器的服务容器。</param>
+	/// <param name="services">提供硬件采集器的服务容器。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>返回加载得到的硬件配置档案。</returns>
-	public static async ValueTask<HardwareProfile> LoadAsync(IServiceProvider serviceProvider, CancellationToken cancellation = default)
+	public static async ValueTask<HardwareProfile> LoadAsync(IServiceProvider services, CancellationToken cancellation = default)
 	{
-		if(serviceProvider == null)
-			return new HardwareProfile();
+		if(services == null)
+			services = Services.ApplicationContext.Current?.Services ?? throw new ArgumentNullException(nameof(services));
 
-		serviceProvider ??= Services.ApplicationContext.Current?.Services;
 		var hardwares = new List<IHardware>();
 
-		foreach(var collector in serviceProvider.GetServices<IHardwareCollector>())
+		foreach(var collector in services.GetServices<IHardwareCollector>())
 		{
 			cancellation.ThrowIfCancellationRequested();
 
