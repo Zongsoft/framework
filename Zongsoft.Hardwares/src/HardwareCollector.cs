@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -66,16 +67,18 @@ public sealed partial class HardwareCollector : IO.Hardwares.IHardwareCollector
 	#region 私有方法
 	private static IEnumerable<IO.Hardwares.IHardware> OnCollect()
 	{
+		var networks = GetNetworks();
+
 		if(OperatingSystem.IsWindows())
-			return WindowsGatherer.Gather();
+			return WindowsGatherer.Gather().Concat(networks);
 
 		if(OperatingSystem.IsLinux())
-			return LinuxGatherer.Gather();
+			return LinuxGatherer.Gather().Concat(networks);
 
 		if(OperatingSystem.IsMacOS())
-			return MacosGatherer.Gather();
+			return MacosGatherer.Gather().Concat(networks);
 
-		return [];
+		return networks;
 	}
 	#endregion
 }
