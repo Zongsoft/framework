@@ -15,7 +15,7 @@
 		<NoWarn>$(NoWarn);NU5104;MSB3277;</NoWarn>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(DefineConstants.Contains(&quot;WINDOWS&quot;))' == 'true'">
+	<ItemGroup>
 		<PackageReference Include="System.Management" VersionOverride="10.0.8" />
 	</ItemGroup>
 
@@ -36,6 +36,7 @@
 
 	<ItemGroup>
 		<None Include="..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\README-zh_CN.md" Pack="true" PackagePath="\" />
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
