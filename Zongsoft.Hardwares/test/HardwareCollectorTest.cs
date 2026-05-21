@@ -29,4 +29,17 @@ public class HardwareCollectorTest
 
 		Assert.True(count >= 0);
 	}
+
+	[Fact]
+	public void TestProfileNetworks()
+	{
+		var network = new Zongsoft.IO.Hardwares.Hardware("Network Adapter", "network0", "network", "network/adapter");
+		var storage = new Zongsoft.IO.Hardwares.Hardware("Disk", "disk0", "disk", "storage/disk");
+		var device = new Zongsoft.IO.Hardwares.Hardware("Device", "device0", "device", "device");
+		var profile = new Zongsoft.IO.Hardwares.HardwareProfile([network, storage, device]);
+
+		Assert.Same(network, Assert.Single(profile.Networks));
+		Assert.Same(storage, Assert.Single(profile.Storages));
+		Assert.Same(device, Assert.Single(profile.Devices));
+	}
 }

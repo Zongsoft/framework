@@ -48,13 +48,11 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 	#endregion
 
 	#region 成员字段
-	private readonly IReadOnlyList<IHardware> _hardwares;
+	private readonly IHardware[] _hardwares;
+	private Dictionary<string, IHardware> _mapping;
 	#endregion
 
 	#region 构造函数
-	/// <summary>初始化 <see cref="HardwareProfile"/> 类的新实例。</summary>
-	public HardwareProfile() : this(null) { }
-
 	/// <summary>初始化 <see cref="HardwareProfile"/> 类的新实例。</summary>
 	/// <param name="hardwares">组成档案的硬件设备集。</param>
 	public HardwareProfile(IEnumerable<IHardware> hardwares)
@@ -62,20 +60,78 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 		_hardwares = hardwares == null ? [] : hardwares.Where(hardware => hardware != null).ToArray();
 
 		this.Mainboard = _hardwares.FirstOrDefault(IsMainboard);
+		this.Processors = [.. _hardwares.Where(IsProcessor)];
 		this.Memories = [.. _hardwares.Where(IsMemory)];
 		this.Storages = [.. _hardwares.Where(IsStorage)];
-		this.Processors = [.. _hardwares.Where(IsProcessor)];
+		this.Networks = [.. _hardwares.Where(IsNetwork)];
 		this.Devices = [.. _hardwares.Where(hardware =>
 			!IsMainboard(hardware) &&
 			!IsMemory(hardware) &&
 			!IsStorage(hardware) &&
+			!IsNetwork(hardware) &&
 			!IsProcessor(hardware))
 		];
 	}
 	#endregion
 
+	#region 静态属性
+	/// <summary>获取本机的硬件信息。</summary>
+	public static HardwareProfile Current
+	{
+		get
+		{
+			if(field != null)
+				return field;
+
+			try
+			{
+				field ??= Load();
+			}
+			catch { }
+
+			return field;
+		}
+	}
+	#endregion
+
 	#region 公共属性
-	public int Count => _hardwares.Count;
+	/// <summary>获取配置的硬件数量。</summary>
+	public int Count => _hardwares.Length;
+
+	/// <summary>获取配置的唯一标识。</summary>
+	public string Identifier
+	{
+		get
+		{
+			if(string.IsNullOrEmpty(field))
+			{
+				if(this.Count == 0)
+					return null;
+
+				var data = new List<byte>();
+
+				if(this.Mainboard != null && this.Mainboard.HasUnique(out var id))
+					data.AddRange(System.Text.Encoding.UTF8.GetBytes(id));
+
+				foreach(var processor in this.Processors)
+				{
+					if(processor.HasUnique(out id))
+						data.AddRange(System.Text.Encoding.UTF8.GetBytes(id));
+				}
+
+				foreach(var fireware in this.Find("BIOS"))
+				{
+					if(fireware.HasUnique(out id))
+						data.AddRange(System.Text.Encoding.UTF8.GetBytes(id));
+				}
+
+				if(data != null && data.Count > 0)
+					field = Convert.ToHexString(System.Security.Cryptography.MD5.HashData([..data]));
+			}
+
+			return field;
+		}
+	}
 
 	/// <summary>获取主板设备。</summary>
 	public IHardware Mainboard { get; }
@@ -106,20 +162,32 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 			if(string.IsNullOrEmpty(id))
 				return null;
 
-			foreach(var hardware in _hardwares)
+			if(_mapping == null)
 			{
-				if(hardware.HasUnique(out var identifier) &&
-				   string.Equals(identifier, id, StringComparison.OrdinalIgnoreCase))
-					return hardware;
+				lock(_hardwares)
+				{
+					if(_mapping != null)
+						return _mapping.TryGetValue(id, out var value) ? value : null;
+
+					var mapping = new Dictionary<string, IHardware>(StringComparer.OrdinalIgnoreCase);
+
+					foreach(var hardware in _hardwares)
+					{
+						if(hardware.HasUnique(out var identifier))
+							mapping[identifier] = hardware;
+					}
+
+					foreach(var hardware in _hardwares)
+					{
+						if(!string.IsNullOrWhiteSpace(hardware.Code))
+							mapping.TryAdd(hardware.Code, hardware);
+					}
+
+					_mapping = mapping;
+				}
 			}
 
-			foreach(var hardware in _hardwares)
-			{
-				if(string.Equals(hardware.Code, id, StringComparison.OrdinalIgnoreCase))
-					return hardware;
-			}
-
-			return null;
+			return _mapping.TryGetValue(id, out var found) ? found : null;
 		}
 	}
 	#endregion
@@ -137,6 +205,10 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 
 		return _hardwares.Where(hardware => IsCategory(hardware?.Category, category));
 	}
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"{this.Identifier}({this.Count})";
 	#endregion
 
 	#region 静态方法
@@ -205,9 +277,10 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 
 	#region 私有方法
 	private static bool IsMainboard(IHardware hardware) => IsCategory(hardware?.Category, "mainboard");
+	private static bool IsProcessor(IHardware hardware) => IsCategory(hardware?.Category, "processor") || IsCategory(hardware?.Category, "processors");
 	private static bool IsMemory(IHardware hardware) => IsCategory(hardware?.Category, "memory") || IsCategory(hardware?.Category, "memories");
 	private static bool IsStorage(IHardware hardware) => IsCategory(hardware?.Category, "storage") || IsCategory(hardware?.Category, "storages");
-	private static bool IsProcessor(IHardware hardware) => IsCategory(hardware?.Category, "processor") || IsCategory(hardware?.Category, "processors");
+	private static bool IsNetwork(IHardware hardware) => IsCategory(hardware?.Category, "network") || IsCategory(hardware?.Category, "networks");
 
 	private static bool IsCategory(string category, string path)
 	{
@@ -232,6 +305,10 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 
 	#region 枚举遍历
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<IHardware> GetEnumerator() => _hardwares.GetEnumerator();
+	public IEnumerator<IHardware> GetEnumerator()
+	{
+		for(int i = 0; i < _hardwares.Length; i++)
+			yield return _hardwares[i];
+	}
 	#endregion
 }
