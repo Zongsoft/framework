@@ -71,11 +71,17 @@ internal sealed class WindowsHardwareCollector : HardwareCollectorBase
 			var code = Get(item, "Tag", "Product", "SerialNumber");
 			var serial = Get(item, "SerialNumber");
 
-			yield return new UniqueHardware(serial, name, code, "baseboard", Get(item, "Product"), Get(item, "Version"), "mainboard", properties: properties)
-			{
-				Manufacturer = Get(item, "Manufacturer"),
-				Description = Get(item, "Description"),
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				HardwareUtility.Normalize(serial),
+				name,
+				code,
+				"baseboard",
+				Get(item, "Product"),
+				Get(item, "Version"),
+				"mainboard",
+				Get(item, "Manufacturer"),
+				Get(item, "Description"),
+				properties: properties);
 		}
 	}
 
@@ -90,11 +96,17 @@ internal sealed class WindowsHardwareCollector : HardwareCollectorBase
 			var code = Get(item, "SMBIOSBIOSVersion", "Version", "SerialNumber");
 			var serial = Get(item, "SerialNumber");
 
-			yield return new UniqueHardware(serial, name, code, "firmware", Get(item, "SMBIOSBIOSVersion", "Version"), null, "bios", properties: properties)
-			{
-				Manufacturer = Get(item, "Manufacturer"),
-				Description = Get(item, "Description"),
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				HardwareUtility.Normalize(serial),
+				name,
+				code,
+				"firmware",
+				Get(item, "SMBIOSBIOSVersion", "Version"),
+				null,
+				"bios",
+				Get(item, "Manufacturer"),
+				Get(item, "Description"),
+				properties: properties);
 		}
 	}
 
@@ -109,11 +121,17 @@ internal sealed class WindowsHardwareCollector : HardwareCollectorBase
 			var code = Get(item, "DeviceID", "ProcessorId");
 			var identifier = Get(item, "ProcessorId");
 
-			yield return new UniqueHardware(identifier, name, code, "cpu", Get(item, "Name"), Get(item, "Family"), "processor/cpu", properties: properties)
-			{
-				Manufacturer = Get(item, "Manufacturer"),
-				Description = Get(item, "Description"),
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				HardwareUtility.Normalize(identifier),
+				name,
+				code,
+				"cpu",
+				Get(item, "Name"),
+				Get(item, "Family"),
+				"processor/cpu",
+				Get(item, "Manufacturer"),
+				Get(item, "Description"),
+				properties: properties);
 		}
 	}
 
@@ -129,11 +147,17 @@ internal sealed class WindowsHardwareCollector : HardwareCollectorBase
 			var code = Get(item, "Tag", "DeviceLocator", "BankLabel", "SerialNumber");
 			var serial = Get(item, "SerialNumber");
 
-			yield return new UniqueHardware(serial, name, code, "dimm", Get(item, "PartNumber"), null, "memory/dimm", properties: properties)
-			{
-				Manufacturer = Get(item, "Manufacturer"),
-				Description = "Physical memory module",
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				HardwareUtility.Normalize(serial),
+				name,
+				code,
+				"dimm",
+				Get(item, "PartNumber"),
+				null,
+				"memory/dimm",
+				Get(item, "Manufacturer"),
+				"Physical memory module",
+				properties: properties);
 		}
 	}
 
@@ -148,11 +172,17 @@ internal sealed class WindowsHardwareCollector : HardwareCollectorBase
 			var code = Get(item, "DeviceID", "PNPDeviceID", "SerialNumber");
 			var serial = Get(item, "SerialNumber");
 
-			yield return new UniqueHardware(serial, name, code, "disk", Get(item, "Model"), Get(item, "FirmwareRevision"), "storage/disk", properties: properties)
-			{
-				Manufacturer = Get(item, "Manufacturer"),
-				Description = Get(item, "Description"),
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				HardwareUtility.Normalize(serial),
+				name,
+				code,
+				"disk",
+				Get(item, "Model"),
+				Get(item, "FirmwareRevision"),
+				"storage/disk",
+				Get(item, "Manufacturer"),
+				Get(item, "Description"),
+				properties: properties);
 		}
 	}
 

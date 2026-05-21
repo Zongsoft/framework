@@ -79,11 +79,17 @@ internal sealed class LinuxHardwareCollector : HardwareCollectorBase
 		if(properties.Count == 0 && string.IsNullOrEmpty(manufacturer) && string.IsNullOrEmpty(serial))
 			return null;
 
-		return new UniqueHardware(serial, name, "mainboard", "baseboard", ReadDmi("board_name"), ReadDmi("board_version"), "mainboard", properties: properties)
-		{
-			Manufacturer = manufacturer,
-			Description = "Linux DMI mainboard information",
-		};
+		return IO.Hardwares.Hardware.Unique(
+			HardwareUtility.Normalize(serial),
+			name,
+			"mainboard",
+			"baseboard",
+			ReadDmi("board_name"),
+			ReadDmi("board_version"),
+			"mainboard",
+			manufacturer,
+			"Linux DMI mainboard information",
+			properties: properties);
 	}
 
 	private static IO.Hardwares.IHardware GetBios()
@@ -100,11 +106,17 @@ internal sealed class LinuxHardwareCollector : HardwareCollectorBase
 		if(properties.Count == 0 && string.IsNullOrEmpty(version))
 			return null;
 
-		return new UniqueHardware(version, name, version ?? "bios", "firmware", version, ReadDmi("bios_release"), "bios", properties: properties)
-		{
-			Manufacturer = ReadDmi("bios_vendor"),
-			Description = "Linux DMI BIOS information",
-		};
+		return IO.Hardwares.Hardware.Unique(
+			HardwareUtility.Normalize(version),
+			name,
+			version ?? "bios",
+			"firmware",
+			version,
+			ReadDmi("bios_release"),
+			"bios",
+			ReadDmi("bios_vendor"),
+			"Linux DMI BIOS information",
+			properties: properties);
 	}
 
 	private static IEnumerable<IO.Hardwares.IHardware> GetProcessors()
@@ -122,11 +134,17 @@ internal sealed class LinuxHardwareCollector : HardwareCollectorBase
 				var properties = new List<IO.Hardwares.HardwareProperty>();
 				Add(properties, values, "Architecture", "CPU(s)", "Thread(s) per core", "Core(s) per socket", "Socket(s)", "Vendor ID", "CPU max MHz", "CPU min MHz");
 
-				yield return new UniqueHardware(Get(values, "BIOS Model name"), name, "cpu0", "cpu", name, Get(values, "CPU family"), "processor/cpu", properties: properties)
-				{
-					Manufacturer = Get(values, "Vendor ID"),
-					Description = "Linux CPU information",
-				};
+				yield return IO.Hardwares.Hardware.Unique(
+					HardwareUtility.Normalize(Get(values, "BIOS Model name")),
+					name,
+					"cpu0",
+					"cpu",
+					name,
+					Get(values, "CPU family"),
+					"processor/cpu",
+					Get(values, "Vendor ID"),
+					"Linux CPU information",
+					properties: properties);
 			}
 
 			yield break;
@@ -143,11 +161,17 @@ internal sealed class LinuxHardwareCollector : HardwareCollectorBase
 			var code = "cpu" + index++;
 			var identifier = HardwareUtility.Coalesce(Get(processor, "Serial"), Get(processor, "physical id"), Get(processor, "processor"));
 
-			yield return new UniqueHardware(identifier, name, code, "cpu", name, Get(processor, "cpu family"), "processor/cpu", properties: properties)
-			{
-				Manufacturer = Get(processor, "vendor_id"),
-				Description = "Linux /proc/cpuinfo processor",
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				HardwareUtility.Normalize(identifier),
+				name,
+				code,
+				"cpu",
+				name,
+				Get(processor, "cpu family"),
+				"processor/cpu",
+				Get(processor, "vendor_id"),
+				"Linux /proc/cpuinfo processor",
+				properties: properties);
 		}
 	}
 
@@ -170,10 +194,17 @@ internal sealed class LinuxHardwareCollector : HardwareCollectorBase
 		HardwareUtility.Add(properties, "Source", "/proc/meminfo");
 
 		if(total != null)
-			yield return new UniqueHardware(null, "System Memory", "memory", "memory", null, null, "memory", properties: properties)
-			{
-				Description = "Linux total system memory",
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				null,
+				"System Memory",
+				"memory",
+				"memory",
+				null,
+				null,
+				"memory",
+				null,
+				"Linux total system memory",
+				properties: properties);
 	}
 
 	private static IEnumerable<IO.Hardwares.IHardware> GetDmiMemories()
@@ -198,11 +229,17 @@ internal sealed class LinuxHardwareCollector : HardwareCollectorBase
 			var locator = HardwareUtility.Coalesce(Get(section, "Locator"), Get(section, "Bank Locator"), "DIMM" + index);
 			var serial = Get(section, "Serial Number");
 
-			yield return new UniqueHardware(serial, locator, "memory" + index++, "dimm", Get(section, "Part Number"), null, "memory/dimm", properties: properties)
-			{
-				Manufacturer = Get(section, "Manufacturer"),
-				Description = "Linux DMI memory device",
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				HardwareUtility.Normalize(serial),
+				locator,
+				"memory" + index++,
+				"dimm",
+				Get(section, "Part Number"),
+				null,
+				"memory/dimm",
+				Get(section, "Manufacturer"),
+				"Linux DMI memory device",
+				properties: properties);
 		}
 	}
 
@@ -257,11 +294,17 @@ internal sealed class LinuxHardwareCollector : HardwareCollectorBase
 				var code = HardwareUtility.Coalesce(Get(device, "path"), Get(device, "name"));
 				var serial = Get(device, "serial");
 
-				yield return new UniqueHardware(serial, name, code, "disk", Get(device, "model"), null, "storage/disk", properties: properties)
-				{
-					Manufacturer = Get(device, "vendor"),
-					Description = "Linux block disk",
-				};
+				yield return IO.Hardwares.Hardware.Unique(
+					HardwareUtility.Normalize(serial),
+					name,
+					code,
+					"disk",
+					Get(device, "model"),
+					null,
+					"storage/disk",
+					Get(device, "vendor"),
+					"Linux block disk",
+					properties: properties);
 			}
 		}
 	}
@@ -294,11 +337,17 @@ internal sealed class LinuxHardwareCollector : HardwareCollectorBase
 			if(ulong.TryParse(sectors, out var count))
 				HardwareUtility.Add(properties, "Size", count * 512UL);
 
-			yield return new UniqueHardware(serial, HardwareUtility.Coalesce(model, name), "/dev/" + name, "disk", model, null, "storage/disk", properties: properties)
-			{
-				Manufacturer = vendor,
-				Description = "Linux sysfs block disk",
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				HardwareUtility.Normalize(serial),
+				HardwareUtility.Coalesce(model, name),
+				"/dev/" + name,
+				"disk",
+				model,
+				null,
+				"storage/disk",
+				vendor,
+				"Linux sysfs block disk",
+				properties: properties);
 		}
 	}
 

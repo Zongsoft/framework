@@ -73,11 +73,17 @@ internal sealed class MacHardwareCollector : HardwareCollectorBase
 		var model = Get(profile, "machine_model");
 		var serial = HardwareUtility.Coalesce(Get(profile, "serial_number"), Get(profile, "platform_UUID"));
 
-		return new UniqueHardware(serial, name, model ?? "mainboard", "mainboard", model, null, "mainboard", properties: properties)
-		{
-			Manufacturer = "Apple",
-			Description = "macOS hardware overview",
-		};
+		return IO.Hardwares.Hardware.Unique(
+			HardwareUtility.Normalize(serial),
+			name,
+			model ?? "mainboard",
+			"mainboard",
+			model,
+			null,
+			"mainboard",
+			"Apple",
+			"macOS hardware overview",
+			properties: properties);
 	}
 
 	private static IO.Hardwares.IHardware GetBios(IReadOnlyDictionary<string, string> profile)
@@ -89,11 +95,17 @@ internal sealed class MacHardwareCollector : HardwareCollectorBase
 		if(string.IsNullOrEmpty(version) && properties.Count == 0)
 			return null;
 
-		return new UniqueHardware(version, version ?? "Apple Firmware", version ?? "bios", "firmware", version, null, "bios", properties: properties)
-		{
-			Manufacturer = "Apple",
-			Description = "macOS firmware information",
-		};
+		return IO.Hardwares.Hardware.Unique(
+			HardwareUtility.Normalize(version),
+			version ?? "Apple Firmware",
+			version ?? "bios",
+			"firmware",
+			version,
+			null,
+			"bios",
+			"Apple",
+			"macOS firmware information",
+			properties: properties);
 	}
 
 	private static IO.Hardwares.IHardware GetProcessor(IReadOnlyDictionary<string, string> profile)
@@ -109,11 +121,17 @@ internal sealed class MacHardwareCollector : HardwareCollectorBase
 		HardwareUtility.Add(properties, "hw.physicalcpu", HardwareUtility.Execute("sysctl", "-n hw.physicalcpu").Output);
 		HardwareUtility.Add(properties, "hw.logicalcpu", HardwareUtility.Execute("sysctl", "-n hw.logicalcpu").Output);
 
-		return new UniqueHardware(Get(profile, "platform_UUID"), name, "cpu0", "cpu", name, null, "processor/cpu", properties: properties)
-		{
-			Manufacturer = "Apple",
-			Description = "macOS processor information",
-		};
+		return IO.Hardwares.Hardware.Unique(
+			HardwareUtility.Normalize(Get(profile, "platform_UUID")),
+			name,
+			"cpu0",
+			"cpu",
+			name,
+			null,
+			"processor/cpu",
+			"Apple",
+			"macOS processor information",
+			properties: properties);
 	}
 
 	private static IO.Hardwares.IHardware GetMemory(IReadOnlyDictionary<string, string> profile)
@@ -126,11 +144,17 @@ internal sealed class MacHardwareCollector : HardwareCollectorBase
 		if(properties.Count == 0)
 			return null;
 
-		return new UniqueHardware(null, "System Memory", "memory", "memory", null, null, "memory", properties: properties)
-		{
-			Manufacturer = "Apple",
-			Description = "macOS total system memory",
-		};
+		return IO.Hardwares.Hardware.Unique(
+			null,
+			"System Memory",
+			"memory",
+			"memory",
+			null,
+			null,
+			"memory",
+			"Apple",
+			"macOS total system memory",
+			properties: properties);
 	}
 
 	private static IEnumerable<IO.Hardwares.IHardware> GetDisks()
@@ -153,11 +177,17 @@ internal sealed class MacHardwareCollector : HardwareCollectorBase
 			if(properties.Count == 0)
 				continue;
 
-			yield return new UniqueHardware(serial, name, code, "disk", Get(entry, "device_model"), Get(entry, "spsata_revision"), "storage/disk", properties: properties)
-			{
-				Manufacturer = HardwareUtility.Coalesce(Get(entry, "manufacturer"), "Apple"),
-				Description = "macOS storage device",
-			};
+			yield return IO.Hardwares.Hardware.Unique(
+				HardwareUtility.Normalize(serial),
+				name,
+				code,
+				"disk",
+				Get(entry, "device_model"),
+				Get(entry, "spsata_revision"),
+				"storage/disk",
+				HardwareUtility.Coalesce(Get(entry, "manufacturer"), "Apple"),
+				"macOS storage device",
+				properties: properties);
 
 			index++;
 		}
