@@ -29,8 +29,8 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 using Zongsoft.Services;
 
@@ -39,8 +39,8 @@ namespace Zongsoft.Hardwares;
 /// <summary>
 /// 表示当前机器硬件信息的采集器。
 /// </summary>
-[Service<Zongsoft.IO.Hardwares.IHardwareCollector>(Members = nameof(Instance))]
-public sealed class HardwareCollector : Zongsoft.IO.Hardwares.IHardwareCollector
+[Service<IO.Hardwares.IHardwareCollector>(Members = nameof(Instance))]
+public sealed partial class HardwareCollector : IO.Hardwares.IHardwareCollector
 {
 	#region 单例字段
 	public static readonly HardwareCollector Instance = new();
@@ -51,31 +51,31 @@ public sealed class HardwareCollector : Zongsoft.IO.Hardwares.IHardwareCollector
 	#endregion
 
 	#region 采集方法
-	public IEnumerable<Zongsoft.IO.Hardwares.IHardware> Collect() => GetCollector().Collect();
-	public async IAsyncEnumerable<Zongsoft.IO.Hardwares.IHardware> CollectAsync([EnumeratorCancellation]CancellationToken cancellation = default)
+	public IEnumerable<IO.Hardwares.IHardware> Collect() => OnCollect();
+	public async IAsyncEnumerable<IO.Hardwares.IHardware> CollectAsync([System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
 		foreach(var hardware in this.Collect())
 		{
 			cancellation.ThrowIfCancellationRequested();
 			yield return hardware;
-			await System.Threading.Tasks.Task.Yield();
+			await Task.Yield();
 		}
 	}
 	#endregion
 
 	#region 私有方法
-	private static Zongsoft.IO.Hardwares.IHardwareCollector GetCollector()
+	private static IEnumerable<IO.Hardwares.IHardware> OnCollect()
 	{
 		if(OperatingSystem.IsWindows())
-			return WindowsHardwareCollector.Instance;
+			return WindowsGatherer.Gather();
 
 		if(OperatingSystem.IsLinux())
-			return LinuxHardwareCollector.Instance;
+			return LinuxGatherer.Gather();
 
 		if(OperatingSystem.IsMacOS())
-			return MacHardwareCollector.Instance;
+			return MacosGatherer.Gather();
 
-		return EmptyHardwareCollector.Instance;
+		return [];
 	}
 	#endregion
 }
