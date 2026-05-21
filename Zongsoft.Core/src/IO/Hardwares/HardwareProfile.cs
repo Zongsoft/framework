@@ -83,6 +83,9 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 	/// <summary>获取其他设备集。</summary>
 	public IReadOnlyList<IHardware> Devices { get; }
 
+	/// <summary>获取网络设备集。</summary>
+	public IReadOnlyList<IHardware> Networks { get; }
+
 	/// <summary>获取内存设备集。</summary>
 	public IReadOnlyList<IHardware> Memories { get; }
 
