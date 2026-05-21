@@ -72,8 +72,6 @@ partial class HardwareCollector
 			HardwareUtility.Add(properties, nameof(NetworkInterface.SupportsMulticast), adapter.SupportsMulticast);
 			HardwareUtility.Add(properties, nameof(PhysicalAddress), physicalAddress);
 
-			AddStatistics(properties, adapter);
-
 			var components = GetNetworkComponents(adapter);
 			var name = HardwareUtility.Coalesce(adapter.Name, adapter.Description, "Network Adapter");
 			var code = HardwareUtility.Coalesce(adapter.Id, physicalAddress, adapter.Name, "network" + i);
@@ -132,38 +130,6 @@ partial class HardwareCollector
 		}
 
 		return components;
-	}
-
-	private static void AddStatistics(List<IO.Hardwares.HardwareProperty> properties, NetworkInterface adapter)
-	{
-		IPv4InterfaceStatistics statistics;
-
-		try
-		{
-			statistics = adapter.GetIPv4Statistics();
-		}
-		catch(NetworkInformationException)
-		{
-			return;
-		}
-
-		if(statistics == null)
-			return;
-
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.BytesReceived), statistics.BytesReceived);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.BytesSent), statistics.BytesSent);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.IncomingPacketsDiscarded), statistics.IncomingPacketsDiscarded);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.IncomingPacketsWithErrors), statistics.IncomingPacketsWithErrors);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.IncomingUnknownProtocolPackets), statistics.IncomingUnknownProtocolPackets);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.NonUnicastPacketsReceived), statistics.NonUnicastPacketsReceived);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.NonUnicastPacketsSent), statistics.NonUnicastPacketsSent);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.OutgoingPacketsWithErrors), statistics.OutgoingPacketsWithErrors);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.OutputQueueLength), statistics.OutputQueueLength);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.UnicastPacketsReceived), statistics.UnicastPacketsReceived);
-		HardwareUtility.Add(properties, nameof(IPv4InterfaceStatistics.UnicastPacketsSent), statistics.UnicastPacketsSent);
-
-		if(!OperatingSystem.IsMacOS())
-			HardwareUtility.Add(properties, PropertyNames.OutgoingPacketsDiscarded, statistics.OutgoingPacketsDiscarded);
 	}
 
 	private static IPInterfaceProperties GetIPProperties(NetworkInterface adapter)
