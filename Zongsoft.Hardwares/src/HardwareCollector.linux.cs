@@ -121,9 +121,38 @@ partial class HardwareCollector
 		private static IEnumerable<IO.Hardwares.IHardware> GetProcessors()
 		{
 			var processors = ParseCpuInfo();
+			var dmiProcessors = GetDmiProcessors().ToArray();
 
 			if(processors.Count == 0)
 			{
+				if(dmiProcessors.Length > 0)
+				{
+					var dmiIndex = 0;
+
+					foreach(var processor in dmiProcessors)
+					{
+						var properties = new List<IO.Hardwares.HardwareProperty>();
+						Add(properties, processor, "Socket Designation", "ID", "Serial Number", "Version", "Manufacturer", "Family", "Core Count", "Thread Count", "Max Speed", "Current Speed");
+
+						var name = HardwareUtility.Coalesce(Get(processor, "Version"), Get(processor, "Family"), "Processor");
+						var identifier = HardwareUtility.Coalesce(Get(processor, "Serial Number"), CompactIdentifier(Get(processor, "ID")));
+
+						yield return HardwareUtility.Create(
+							identifier,
+							name,
+							"cpu" + dmiIndex++,
+							"cpu",
+							Get(processor, "Version"),
+							Get(processor, "Family"),
+							"processor/cpu",
+							Get(processor, "Manufacturer"),
+							"Linux DMI processor information",
+							properties: properties);
+					}
+
+					yield break;
+				}
+
 				var result = HardwareUtility.Execute("lscpu", "");
 
 				if(result.Succeeded)
@@ -154,11 +183,13 @@ partial class HardwareCollector
 			foreach(var processor in processors.Values)
 			{
 				var properties = new List<IO.Hardwares.HardwareProperty>();
+				var dmi = index < dmiProcessors.Length ? dmiProcessors[index] : null;
 				Add(properties, processor, "processor", "physical id", "core id", "cpu cores", "siblings", "cpu MHz", "cache size", "cpu family", "model", "stepping", "microcode");
+				Add(properties, dmi, "Socket Designation", "ID", "Serial Number", "Version", "Manufacturer", "Family", "Core Count", "Thread Count", "Max Speed", "Current Speed");
 
-				var name = Get(processor, "model name") ?? Get(processor, "Processor") ?? "Processor";
+				var name = HardwareUtility.Coalesce(Get(processor, "model name"), Get(processor, "Processor"), Get(dmi, "Version"), "Processor");
 				var code = "cpu" + index++;
-				var identifier = Get(processor, "Serial");
+				var identifier = HardwareUtility.Coalesce(Get(processor, "Serial"), Get(dmi, "Serial Number"), CompactIdentifier(Get(dmi, "ID")));
 
 				yield return HardwareUtility.Create(
 					identifier,
@@ -166,13 +197,26 @@ partial class HardwareCollector
 					code,
 					"cpu",
 					name,
-					Get(processor, "cpu family"),
+					HardwareUtility.Coalesce(Get(processor, "cpu family"), Get(dmi, "Family")),
 					"processor/cpu",
-					Get(processor, "vendor_id"),
+					HardwareUtility.Coalesce(Get(processor, "vendor_id"), Get(dmi, "Manufacturer")),
 					"Linux /proc/cpuinfo processor",
 					properties: properties);
 			}
 		}
+
+		private static IEnumerable<Dictionary<string, string>> GetDmiProcessors()
+		{
+			var result = HardwareUtility.Execute("dmidecode", "-t processor", 8000);
+
+			if(!result.Succeeded)
+				yield break;
+
+			foreach(var section in ParseDmidecodeSections(result.Output, "Processor Information"))
+				yield return section;
+		}
+
+		private static string CompactIdentifier(string value) => string.IsNullOrEmpty(value) ? null : new string(value.Where(chr => !char.IsWhiteSpace(chr)).ToArray());
 
 		private static IEnumerable<IO.Hardwares.IHardware> GetMemories()
 		{
