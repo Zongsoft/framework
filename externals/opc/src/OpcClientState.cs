@@ -41,12 +41,12 @@ public sealed class OpcClientState
 	#endregion
 
 	#region 私有字段
-	private readonly Session _session;
+	private readonly ISession _session;
 	#endregion
 
 	#region 构造函数
 	private OpcClientState() { }
-	internal OpcClientState(Session session) => _session = session ?? throw new ArgumentNullException(nameof(session));
+	internal OpcClientState(ISession session) => _session = session ?? throw new ArgumentNullException(nameof(session));
 	#endregion
 
 	#region 公共属性

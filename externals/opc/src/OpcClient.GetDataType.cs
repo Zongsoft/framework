@@ -46,7 +46,7 @@ partial class OpcClient
 		return GetDataTypeAsync(this.GetSession(), NodeId.Parse(identifier), cancellation);
 	}
 
-	private static async ValueTask<OpcNodeType> GetDataTypeAsync(Session session, NodeId id, CancellationToken cancellation = default)
+	private static async ValueTask<OpcNodeType> GetDataTypeAsync(ISession session, NodeId id, CancellationToken cancellation = default)
 	{
 		var response = await session.ReadAsync(
 			default, 0, TimestampsToReturn.Server,

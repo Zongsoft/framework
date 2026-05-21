@@ -67,7 +67,7 @@ partial class OpcClient
 	#endregion
 
 	#region 私有方法
-	private static async IAsyncEnumerable<OpcNode> BrowseRecursiveAsync(Session session, BrowseOptions options, IEnumerable<NodeId> nodeIds, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
+	private static async IAsyncEnumerable<OpcNode> BrowseRecursiveAsync(ISession session, BrowseOptions options, IEnumerable<NodeId> nodeIds, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 	{
 		if(session == null || nodeIds == null)
 			yield break;
@@ -132,7 +132,7 @@ partial class OpcClient
 		static bool IsIgnored(BrowseOptions options, ReferenceDescription reference) =>
 			!options.IncludeBuiltins && reference.NodeId.NamespaceIndex == 0;
 
-		static async ValueTask<OpcNodeType> GetDataTypeAsync(Session session, ReferenceDescription reference, CancellationToken cancellation) =>
+		static async ValueTask<OpcNodeType> GetDataTypeAsync(ISession session, ReferenceDescription reference, CancellationToken cancellation) =>
 			reference.NodeClass == NodeClass.Variable ?
 			await OpcClient.GetDataTypeAsync(session, (NodeId)reference.NodeId, cancellation) :
 			OpcNodeType.Get(reference.TypeDefinition);
@@ -151,7 +151,7 @@ partial class OpcClient
 		ResultMask = (uint)BrowseResultMask.All,
 	};
 
-	private static Task<BrowseResponse> BrowseAsync(Session session, BrowseOptions options, IEnumerable<NodeId> nodeIds, CancellationToken cancellation)
+	private static Task<BrowseResponse> BrowseAsync(ISession session, BrowseOptions options, IEnumerable<NodeId> nodeIds, CancellationToken cancellation)
 	{
 		if(nodeIds == null || !nodeIds.Any())
 			return Task.FromResult<BrowseResponse>(null);

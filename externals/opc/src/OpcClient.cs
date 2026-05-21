@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Opc library.
  *
@@ -43,8 +43,9 @@ public partial class OpcClient : IDisposable
 	#endregion
 
 	#region 成员字段
-	private Session _session;
+	private ISession _session;
 	private OpcClientState _state;
+	private DefaultSessionFactory _sessionFactory;
 	private ApplicationConfiguration _configuration;
 	private Configuration.OpcConnectionSettings _settings;
 	private SubscriberCollection _subscribers;
@@ -56,6 +57,7 @@ public partial class OpcClient : IDisposable
 	{
 		this.Name = string.IsNullOrEmpty(name) ? "Zongsoft.OpcClient" : name;
 		_subscribers = new SubscriberCollection();
+		_sessionFactory = new(null);
 
 		_configuration = new ApplicationConfiguration()
 		{
@@ -173,7 +175,7 @@ public partial class OpcClient : IDisposable
 	#endregion
 
 	#region 私有方法
-	private Session GetSession() => _session ?? throw new InvalidOperationException($"The {nameof(OpcClient)}({this.Name}) is not connected.");
+	private ISession GetSession() => _session ?? throw new InvalidOperationException($"The {nameof(OpcClient)}({this.Name}) is not connected.");
 	#endregion
 
 	#region 处置方法

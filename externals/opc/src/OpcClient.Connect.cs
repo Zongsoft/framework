@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Opc library.
  *
@@ -56,7 +56,7 @@ partial class OpcClient
 		await _configuration.ValidateAsync(ApplicationType.Client, cancellation);
 
 		var endpointConfiguration = EndpointConfiguration.Create(_configuration);
-		var endpointDescription = await CoreClientUtils.SelectEndpointAsync(_configuration, settings.Server, false, 1000 * 10, cancellation);
+		var endpointDescription = await CoreClientUtils.SelectEndpointAsync(_configuration, settings.Server, false, 1000 * 10, null, cancellation);
 
 		endpointDescription.SecurityMode = Utility.GetSecurityMode(settings.SecurityMode);
 		if(endpointDescription.SecurityMode == MessageSecurityMode.Sign || endpointDescription.SecurityMode == MessageSecurityMode.SignAndEncrypt)
@@ -86,9 +86,8 @@ partial class OpcClient
 		await this.DisconnectAsync(cancellation);
 
 		//创建新的会话
-		var session = await Session.CreateAsync(
+		var session = await _sessionFactory.CreateAsync(
 			_configuration,
-			null,
 			endpoint,
 			false,
 			false,

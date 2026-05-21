@@ -60,7 +60,7 @@ partial class OpcClient
 
 		return result.Value;
 
-		static async ValueTask<DataValue> ReadValueAsync(Session session, NodeId id, CancellationToken cancellation)
+		static async ValueTask<DataValue> ReadValueAsync(ISession session, NodeId id, CancellationToken cancellation)
 		{
 			try
 			{
