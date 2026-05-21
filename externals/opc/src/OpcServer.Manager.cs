@@ -61,7 +61,7 @@ partial class OpcServer
 		#region 公共方法
 		public (AddNodesResult result, DiagnosticInfo diagnostic) AddNode(OperationContext context, AddNodesItem node)
 		{
-			var parent = node.ParentNodeId == null || node.ParentNodeId.IsNull ? null : this.FindPredefinedNode((NodeId)node.ParentNodeId, null);
+			var parent = node.ParentNodeId == null || node.ParentNodeId.IsNull ? null : this.FindPredefinedNode<NodeState>((NodeId)node.ParentNodeId);
 
 			if(parent == null)
 			{

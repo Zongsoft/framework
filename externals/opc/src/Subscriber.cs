@@ -48,7 +48,7 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	#region 构造函数
 	internal Subscriber(SubscriberOptions options, Action<Subscriber, Entry, object> consumer = null)
 	{
-		_subscription = new Subscription()
+		_subscription = new Subscription((ITelemetryContext)null)
 		{
 			Handle = this,
 			PublishingEnabled = true,

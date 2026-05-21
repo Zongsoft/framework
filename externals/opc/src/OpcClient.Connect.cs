@@ -63,7 +63,7 @@ partial class OpcClient
 		{
 			endpointDescription.SecurityPolicyUri = $"http://opcfoundation.org/UA/SecurityPolicy#{(string.IsNullOrEmpty(settings.SecurityPolicy) ? "Basic256Sha256" : settings.SecurityPolicy)}";
 
-			var instance = new ApplicationInstance(_configuration)
+			var instance = new ApplicationInstance(_configuration, null)
 			{
 				ApplicationName = _configuration.ApplicationName,
 				ApplicationType = _configuration.ApplicationType,

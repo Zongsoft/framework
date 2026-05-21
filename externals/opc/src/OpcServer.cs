@@ -94,7 +94,7 @@ public partial class OpcServer : WorkerBase
 		await configuration.ValidateAsync(ApplicationType.Server, cancellation);
 
 		//创建应用实例（服务启动器）
-		_launcher = new ApplicationInstance()
+		_launcher = new ApplicationInstance((ITelemetryContext)null)
 		{
 			ApplicationName = this.Name,
 			ApplicationType = ApplicationType.Server,
@@ -111,8 +111,7 @@ public partial class OpcServer : WorkerBase
 
 	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
-		_launcher.Stop();
-		return Task.CompletedTask;
+		return _launcher.StopAsync().AsTask();
 	}
 	#endregion
 
@@ -220,7 +219,7 @@ partial class OpcServer
 			base.OnServerStarted(server);
 		}
 
-		protected override ValueTask OnServerStoppingAsync(CancellationToken cancellationToken)
+		protected override ValueTask OnServerStoppingAsync(CancellationToken cancellation)
 		{
 			//清空所有会话通道
 			_server.Channels.Clear();
@@ -234,7 +233,7 @@ partial class OpcServer
 			_server._started = null;
 
 			//调用基类同名方法
-			return base.OnServerStoppingAsync(cancellationToken);
+			return base.OnServerStoppingAsync(cancellation);
 		}
 
 		protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration)
