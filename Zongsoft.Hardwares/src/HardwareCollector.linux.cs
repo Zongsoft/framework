@@ -78,8 +78,8 @@ partial class HardwareCollector
 			if(properties.Count == 0 && string.IsNullOrEmpty(manufacturer) && string.IsNullOrEmpty(serial))
 				return null;
 
-			return IO.Hardwares.Hardware.Unique(
-				HardwareUtility.Normalize(serial),
+			return HardwareUtility.Create(
+				serial,
 				name,
 				"mainboard",
 				"baseboard",
@@ -105,8 +105,8 @@ partial class HardwareCollector
 			if(properties.Count == 0 && string.IsNullOrEmpty(version))
 				return null;
 
-			return IO.Hardwares.Hardware.Unique(
-				HardwareUtility.Normalize(version),
+			return HardwareUtility.Create(
+				null,
 				name,
 				version ?? "bios",
 				"firmware",
@@ -133,8 +133,8 @@ partial class HardwareCollector
 					var properties = new List<IO.Hardwares.HardwareProperty>();
 					Add(properties, values, "Architecture", "CPU(s)", "Thread(s) per core", "Core(s) per socket", "Socket(s)", "Vendor ID", "CPU max MHz", "CPU min MHz");
 
-					yield return IO.Hardwares.Hardware.Unique(
-						HardwareUtility.Normalize(Get(values, "BIOS Model name")),
+					yield return HardwareUtility.Create(
+						null,
 						name,
 						"cpu0",
 						"cpu",
@@ -158,10 +158,10 @@ partial class HardwareCollector
 
 				var name = Get(processor, "model name") ?? Get(processor, "Processor") ?? "Processor";
 				var code = "cpu" + index++;
-				var identifier = HardwareUtility.Coalesce(Get(processor, "Serial"), Get(processor, "physical id"), Get(processor, "processor"));
+				var identifier = Get(processor, "Serial");
 
-				yield return IO.Hardwares.Hardware.Unique(
-					HardwareUtility.Normalize(identifier),
+				yield return HardwareUtility.Create(
+					identifier,
 					name,
 					code,
 					"cpu",
@@ -193,7 +193,7 @@ partial class HardwareCollector
 			HardwareUtility.Add(properties, "Source", "/proc/meminfo");
 
 			if(total != null)
-				yield return IO.Hardwares.Hardware.Unique(
+				yield return HardwareUtility.Create(
 					null,
 					"System Memory",
 					"memory",
@@ -214,6 +214,8 @@ partial class HardwareCollector
 				yield break;
 
 			var index = 0;
+			var arrays = ParseDmidecodeSections(result.Output, "Physical Memory Array").ToArray();
+			var controllers = ParseDmidecodeSections(result.Output, "Memory Controller Information").ToArray();
 
 			foreach(var section in ParseDmidecodeSections(result.Output, "Memory Device"))
 			{
@@ -227,9 +229,10 @@ partial class HardwareCollector
 
 				var locator = HardwareUtility.Coalesce(Get(section, "Locator"), Get(section, "Bank Locator"), "DIMM" + index);
 				var serial = Get(section, "Serial Number");
+				var components = GetDmiMemoryComponents(arrays, controllers);
 
-				yield return IO.Hardwares.Hardware.Unique(
-					HardwareUtility.Normalize(serial),
+				yield return HardwareUtility.Create(
+					serial,
 					locator,
 					"memory" + index++,
 					"dimm",
@@ -238,7 +241,8 @@ partial class HardwareCollector
 					"memory/dimm",
 					Get(section, "Manufacturer"),
 					"Linux DMI memory device",
-					properties: properties);
+					properties: properties,
+					components: components);
 			}
 		}
 
@@ -260,7 +264,7 @@ partial class HardwareCollector
 
 		private static IEnumerable<IO.Hardwares.IHardware> GetLsblkDisks()
 		{
-			var result = HardwareUtility.Execute("lsblk", "-J -b -d -o NAME,KNAME,PATH,MODEL,SERIAL,SIZE,TYPE,VENDOR,TRAN,ROTA", 8000);
+			var result = HardwareUtility.Execute("lsblk", "-J -b -o NAME,KNAME,PATH,MODEL,SERIAL,SIZE,TYPE,VENDOR,TRAN,ROTA,FSTYPE,MOUNTPOINT,LABEL,UUID,PARTUUID,PARTLABEL", 8000);
 
 			if(!result.Succeeded)
 				yield break;
@@ -292,9 +296,10 @@ partial class HardwareCollector
 					var name = HardwareUtility.Coalesce(Get(device, "model"), Get(device, "path"), Get(device, "name"), "Disk");
 					var code = HardwareUtility.Coalesce(Get(device, "path"), Get(device, "name"));
 					var serial = Get(device, "serial");
+					var components = GetLsblkDiskComponents(device);
 
-					yield return IO.Hardwares.Hardware.Unique(
-						HardwareUtility.Normalize(serial),
+					yield return HardwareUtility.Create(
+						serial,
 						name,
 						code,
 						"disk",
@@ -303,7 +308,8 @@ partial class HardwareCollector
 						"storage/disk",
 						Get(device, "vendor"),
 						"Linux block disk",
-						properties: properties);
+						properties: properties,
+						components: components);
 				}
 			}
 		}
@@ -336,8 +342,10 @@ partial class HardwareCollector
 				if(ulong.TryParse(sectors, out var count))
 					HardwareUtility.Add(properties, "Size", count * 512UL);
 
-				yield return IO.Hardwares.Hardware.Unique(
-					HardwareUtility.Normalize(serial),
+				var components = GetSysfsDiskComponents(directory, name);
+
+				yield return HardwareUtility.Create(
+					serial,
 					HardwareUtility.Coalesce(model, name),
 					"/dev/" + name,
 					"disk",
@@ -346,8 +354,123 @@ partial class HardwareCollector
 					"storage/disk",
 					vendor,
 					"Linux sysfs block disk",
-					properties: properties);
+					properties: properties,
+					components: components);
 			}
+		}
+
+		private static IEnumerable<IO.Hardwares.HardwareComponent> GetLsblkDiskComponents(JsonElement disk)
+		{
+			if(disk.ValueKind != JsonValueKind.Object || !disk.TryGetProperty("children", out var children) || children.ValueKind != JsonValueKind.Array)
+				return [];
+
+			var components = new List<IO.Hardwares.HardwareComponent>();
+
+			foreach(var child in children.EnumerateArray())
+				AddLsblkDiskComponent(components, child);
+
+			return components;
+		}
+
+		private static void AddLsblkDiskComponent(List<IO.Hardwares.HardwareComponent> components, JsonElement element)
+		{
+			if(components == null || element.ValueKind != JsonValueKind.Object)
+				return;
+
+			var type = Get(element, "type");
+
+			if(!string.Equals(type, "part", StringComparison.OrdinalIgnoreCase) &&
+			   !string.Equals(type, "raid", StringComparison.OrdinalIgnoreCase) &&
+			   !string.Equals(type, "crypt", StringComparison.OrdinalIgnoreCase) &&
+			   !string.Equals(type, "lvm", StringComparison.OrdinalIgnoreCase))
+				return;
+
+			var properties = new List<IO.Hardwares.HardwareProperty>();
+			Add(properties, element, "name", "kname", "path", "size", "type", "fstype", "mountpoint", "label", "uuid", "partuuid", "partlabel");
+
+			var children = new List<IO.Hardwares.HardwareComponent>();
+
+			if(element.TryGetProperty("children", out var childElements) && childElements.ValueKind == JsonValueKind.Array)
+			{
+				foreach(var child in childElements.EnumerateArray())
+					AddLsblkDiskComponent(children, child);
+			}
+
+			var name = HardwareUtility.Coalesce(Get(element, "partlabel"), Get(element, "label"), Get(element, "path"), Get(element, "name"), "Partition");
+			var code = HardwareUtility.Coalesce(Get(element, "path"), Get(element, "partuuid"), Get(element, "uuid"), Get(element, "name"));
+
+			components.Add(new IO.Hardwares.HardwareComponent(
+				name,
+				code,
+				"storage/partition",
+				"Disk partition",
+				properties,
+				children));
+		}
+
+		private static IEnumerable<IO.Hardwares.HardwareComponent> GetSysfsDiskComponents(string directory, string disk)
+		{
+			if(string.IsNullOrEmpty(directory) || string.IsNullOrEmpty(disk))
+				return [];
+
+			var components = new List<IO.Hardwares.HardwareComponent>();
+
+			foreach(var partition in Directory.EnumerateDirectories(directory, disk + "*"))
+			{
+				if(!File.Exists(Path.Combine(partition, "partition")))
+					continue;
+
+				var name = Path.GetFileName(partition);
+				var sectors = HardwareUtility.ReadText(Path.Combine(partition, "size"));
+				var start = HardwareUtility.ReadText(Path.Combine(partition, "start"));
+				var properties = new List<IO.Hardwares.HardwareProperty>();
+
+				HardwareUtility.Add(properties, "Name", name);
+				HardwareUtility.Add(properties, "Path", "/dev/" + name);
+				HardwareUtility.Add(properties, "Start", start);
+
+				if(ulong.TryParse(sectors, out var count))
+					HardwareUtility.Add(properties, "Size", count * 512UL);
+
+				components.Add(new IO.Hardwares.HardwareComponent(
+					"/dev/" + name,
+					"/dev/" + name,
+					"storage/partition",
+					"Disk partition",
+					properties));
+			}
+
+			return components;
+		}
+
+		private static IEnumerable<IO.Hardwares.HardwareComponent> GetDmiMemoryComponents(
+			IEnumerable<IReadOnlyDictionary<string, string>> arrays,
+			IEnumerable<IReadOnlyDictionary<string, string>> controllers)
+		{
+			var components = new List<IO.Hardwares.HardwareComponent>();
+			var index = 0;
+
+			foreach(var array in arrays ?? [])
+			{
+				var properties = new List<IO.Hardwares.HardwareProperty>();
+				Add(properties, array, "Location", "Use", "Error Correction Type", "Maximum Capacity", "Number Of Devices");
+
+				if(properties.Count > 0)
+					components.Add(new IO.Hardwares.HardwareComponent("Physical Memory Array", "array" + index++, "memory/array", "Physical memory array", properties));
+			}
+
+			index = 0;
+
+			foreach(var controller in controllers ?? [])
+			{
+				var properties = new List<IO.Hardwares.HardwareProperty>();
+				Add(properties, controller, "Error Detecting Method", "Error Correcting Capabilities", "Supported Interleave", "Current Interleave", "Maximum Memory Module Size", "Maximum Total Memory Size", "Supported Speeds", "Supported Memory Types", "Memory Module Voltage", "Associated Memory Slots");
+
+				if(properties.Count > 0)
+					components.Add(new IO.Hardwares.HardwareComponent("Memory Controller", "controller" + index++, "memory/controller", "Memory controller", properties));
+			}
+
+			return components;
 		}
 
 		private static Dictionary<string, Dictionary<string, string>> ParseCpuInfo()
@@ -395,10 +518,30 @@ partial class HardwareCollector
 		private static IEnumerable<Dictionary<string, string>> ParseDmidecodeSections(string text, string sectionName)
 		{
 			Dictionary<string, string> current = null;
+			var readTitle = false;
 
 			foreach(var line in (text ?? string.Empty).Split('\n'))
 			{
 				var content = line.TrimEnd();
+
+				if(content.StartsWith("Handle ", StringComparison.OrdinalIgnoreCase))
+				{
+					if(current != null)
+						yield return current;
+
+					current = null;
+					readTitle = true;
+					continue;
+				}
+
+				if(readTitle)
+				{
+					if(string.Equals(content.Trim(), sectionName, StringComparison.OrdinalIgnoreCase))
+						current = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+					readTitle = false;
+					continue;
+				}
 
 				if(string.Equals(content.Trim(), sectionName, StringComparison.OrdinalIgnoreCase))
 				{

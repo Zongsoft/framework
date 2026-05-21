@@ -91,6 +91,38 @@ internal static class HardwareUtility
 		return value.ToString();
 	}
 
+	public static string NormalizeIdentifier(object value)
+	{
+		var text = Normalize(value);
+
+		if(string.IsNullOrEmpty(text))
+			return null;
+
+		var compact = new string(text.Where(char.IsLetterOrDigit).ToArray());
+		return compact.Length > 0 && compact.All(chr => chr == '0') ? null : text;
+	}
+
+	public static IO.Hardwares.Hardware Create(
+		string identifier,
+		string name,
+		string code,
+		string type,
+		string model,
+		string serie,
+		string category,
+		string manufacturer,
+		string description,
+		IO.Hardwares.IHardwareDriver driver = null,
+		IEnumerable<IO.Hardwares.HardwareProperty> properties = null,
+		IEnumerable<IO.Hardwares.HardwareComponent> components = null)
+	{
+		identifier = NormalizeIdentifier(identifier);
+
+		return identifier == null ?
+			new IO.Hardwares.Hardware(name, code, type, model, serie, category, manufacturer, description, driver, properties, components) :
+			IO.Hardwares.Hardware.Unique(identifier, name, code, type, model, serie, category, manufacturer, description, driver, properties, components);
+	}
+
 	public static void Add(List<IO.Hardwares.HardwareProperty> properties, string name, object value, string description = null)
 	{
 		if(properties == null || string.IsNullOrEmpty(name))

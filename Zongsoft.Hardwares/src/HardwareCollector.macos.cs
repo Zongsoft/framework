@@ -55,8 +55,7 @@ partial class HardwareCollector
 			if(processor != null)
 				yield return processor;
 
-			var memory = GetMemory(profile);
-			if(memory != null)
+			foreach(var memory in GetMemories(profile))
 				yield return memory;
 
 			foreach(var disk in GetDisks())
@@ -72,8 +71,8 @@ partial class HardwareCollector
 			var model = Get(profile, "machine_model");
 			var serial = HardwareUtility.Coalesce(Get(profile, "serial_number"), Get(profile, "platform_UUID"));
 
-			return IO.Hardwares.Hardware.Unique(
-				HardwareUtility.Normalize(serial),
+			return HardwareUtility.Create(
+				serial,
 				name,
 				model ?? "mainboard",
 				"mainboard",
@@ -94,8 +93,8 @@ partial class HardwareCollector
 			if(string.IsNullOrEmpty(version) && properties.Count == 0)
 				return null;
 
-			return IO.Hardwares.Hardware.Unique(
-				HardwareUtility.Normalize(version),
+			return HardwareUtility.Create(
+				null,
 				version ?? "Apple Firmware",
 				version ?? "bios",
 				"firmware",
@@ -120,8 +119,8 @@ partial class HardwareCollector
 			HardwareUtility.Add(properties, "hw.physicalcpu", HardwareUtility.Execute("sysctl", "-n hw.physicalcpu").Output);
 			HardwareUtility.Add(properties, "hw.logicalcpu", HardwareUtility.Execute("sysctl", "-n hw.logicalcpu").Output);
 
-			return IO.Hardwares.Hardware.Unique(
-				HardwareUtility.Normalize(Get(profile, "platform_UUID")),
+			return HardwareUtility.Create(
+				null,
 				name,
 				"cpu0",
 				"cpu",
@@ -133,7 +132,24 @@ partial class HardwareCollector
 				properties: properties);
 		}
 
-		private static IO.Hardwares.IHardware GetMemory(IReadOnlyDictionary<string, string> profile)
+		private static IEnumerable<IO.Hardwares.IHardware> GetMemories(IReadOnlyDictionary<string, string> profile)
+		{
+			var memories = GetPhysicalMemories().ToArray();
+
+			if(memories.Length > 0)
+			{
+				foreach(var memory in memories)
+					yield return memory;
+
+				yield break;
+			}
+
+			var systemMemory = GetSystemMemory(profile);
+			if(systemMemory != null)
+				yield return systemMemory;
+		}
+
+		private static IO.Hardwares.IHardware GetSystemMemory(IReadOnlyDictionary<string, string> profile)
 		{
 			var bytes = HardwareUtility.ParseBytes(HardwareUtility.Execute("sysctl", "-n hw.memsize").Output);
 			var properties = new List<IO.Hardwares.HardwareProperty>();
@@ -143,7 +159,7 @@ partial class HardwareCollector
 			if(properties.Count == 0)
 				return null;
 
-			return IO.Hardwares.Hardware.Unique(
+			return HardwareUtility.Create(
 				null,
 				"System Memory",
 				"memory",
@@ -156,37 +172,74 @@ partial class HardwareCollector
 				properties: properties);
 		}
 
-		private static IEnumerable<IO.Hardwares.IHardware> GetDisks()
+		private static IEnumerable<IO.Hardwares.IHardware> GetPhysicalMemories()
 		{
-			var storages = GetSystemProfile("SPNVMeDataType", "SPSerialATADataType", "SPStorageDataType");
 			var index = 0;
 
-			foreach(var entry in storages)
+			foreach(var entry in GetSystemProfile("SPMemoryDataType"))
 			{
-				if(IsVolume(entry))
+				if(!IsPhysicalMemory(entry))
 					continue;
 
 				var properties = new List<IO.Hardwares.HardwareProperty>();
-				Add(properties, entry, "_name", "device_model", "bsd_name", "serial_num", "size", "medium_type", "protocol", "removable_media", "smart_status", "spsata_revision");
+				Add(properties, entry, "_name", "dimm_size", "dimm_type", "dimm_speed", "dimm_status", "manufacturer", "part_number", "serial_number");
 
-				var name = HardwareUtility.Coalesce(Get(entry, "device_model"), Get(entry, "_name"), Get(entry, "bsd_name"), "Disk");
-				var serial = Get(entry, "serial_num");
-				var code = HardwareUtility.Coalesce(Get(entry, "bsd_name"), serial, "disk" + index);
+				var locator = Get(entry, "_name");
+				var serial = Get(entry, "serial_number");
+				var partNumber = Get(entry, "part_number");
+				var name = HardwareUtility.Coalesce(partNumber, locator, "Physical Memory");
+				var code = HardwareUtility.Coalesce(locator, serial, "memory" + index);
+				var components = GetMemoryComponents(locator);
+
+				yield return HardwareUtility.Create(
+					serial,
+					name,
+					code,
+					"dimm",
+					partNumber,
+					null,
+					"memory/dimm",
+					HardwareUtility.Coalesce(Get(entry, "manufacturer"), "Apple"),
+					"macOS physical memory module",
+					properties: properties,
+					components: components);
+
+				index++;
+			}
+		}
+
+		private static IEnumerable<IO.Hardwares.IHardware> GetDisks()
+		{
+			var index = 0;
+
+			foreach(var entry in GetStorageEntries(GetSystemProfileEntries("SPNVMeDataType", "SPSerialATADataType", "SPStorageDataType")))
+			{
+				if(IsVolume(entry.Values))
+					continue;
+
+				var properties = new List<IO.Hardwares.HardwareProperty>();
+				Add(properties, entry.Values, "_name", "device_model", "bsd_name", "serial_num", "size", "medium_type", "protocol", "removable_media", "smart_status", "spsata_revision");
+
+				var name = HardwareUtility.Coalesce(Get(entry.Values, "device_model"), Get(entry.Values, "_name"), Get(entry.Values, "bsd_name"), "Disk");
+				var serial = Get(entry.Values, "serial_num");
+				var code = HardwareUtility.Coalesce(Get(entry.Values, "bsd_name"), serial, "disk" + index);
+				var components = GetDiskComponents(entry);
 
 				if(properties.Count == 0)
 					continue;
 
-				yield return IO.Hardwares.Hardware.Unique(
-					HardwareUtility.Normalize(serial),
+				yield return HardwareUtility.Create(
+					serial,
 					name,
 					code,
 					"disk",
-					Get(entry, "device_model"),
-					Get(entry, "spsata_revision"),
+					Get(entry.Values, "device_model"),
+					Get(entry.Values, "spsata_revision"),
 					"storage/disk",
-					HardwareUtility.Coalesce(Get(entry, "manufacturer"), "Apple"),
+					HardwareUtility.Coalesce(Get(entry.Values, "manufacturer"), "Apple"),
 					"macOS storage device",
-					properties: properties);
+					properties: properties,
+					components: components);
 
 				index++;
 			}
@@ -233,6 +286,137 @@ partial class HardwareCollector
 			}
 		}
 
+		private static IEnumerable<ProfileEntry> GetSystemProfileEntries(params string[] dataTypes)
+		{
+			var arguments = string.Join(' ', dataTypes ?? []) + " -json";
+			var result = HardwareUtility.Execute("system_profiler", arguments, 15000);
+
+			if(!result.Succeeded)
+				yield break;
+
+			JsonDocument document;
+
+			try
+			{
+				document = JsonDocument.Parse(result.Output);
+			}
+			catch(JsonException)
+			{
+				yield break;
+			}
+
+			using(document)
+			{
+				foreach(var child in document.RootElement.EnumerateObject())
+				{
+					if(child.Value.ValueKind != JsonValueKind.Array)
+						continue;
+
+					foreach(var item in child.Value.EnumerateArray())
+					{
+						var entry = CreateEntry(item);
+
+						if(entry != null)
+							yield return entry;
+					}
+				}
+			}
+		}
+
+		private static IEnumerable<ProfileEntry> GetStorageEntries(IEnumerable<ProfileEntry> entries)
+		{
+			if(entries == null)
+				yield break;
+
+			foreach(var entry in entries)
+			{
+				if(entry == null)
+					continue;
+
+				if(HasStorageDeviceValues(entry.Values))
+					yield return entry;
+
+				foreach(var child in GetStorageEntries(entry.Children))
+					yield return child;
+			}
+		}
+
+		private static IEnumerable<IO.Hardwares.HardwareComponent> GetDiskComponents(ProfileEntry disk)
+		{
+			if(disk == null)
+				return [];
+
+			var components = new List<IO.Hardwares.HardwareComponent>();
+			AddVolumeComponents(components, disk.Children);
+			return components;
+		}
+
+		private static void AddVolumeComponents(List<IO.Hardwares.HardwareComponent> components, IEnumerable<ProfileEntry> entries)
+		{
+			if(components == null || entries == null)
+				return;
+
+			var index = components.Count;
+
+			foreach(var entry in entries)
+			{
+				if(entry == null)
+					continue;
+
+				if(IsVolume(entry.Values))
+				{
+					var properties = new List<IO.Hardwares.HardwareProperty>();
+					Add(properties, entry.Values, "_name", "bsd_name", "mount_point", "file_system", "size", "free_space_in_bytes", "writable", "volume_uuid");
+
+					var name = HardwareUtility.Coalesce(Get(entry.Values, "_name"), Get(entry.Values, "bsd_name"), "Volume");
+					var code = HardwareUtility.Coalesce(Get(entry.Values, "bsd_name"), Get(entry.Values, "volume_uuid"), "volume" + index);
+
+					components.Add(new IO.Hardwares.HardwareComponent(
+						name,
+						code,
+						"storage/volume",
+						"Disk volume",
+						properties));
+
+					index++;
+				}
+
+				AddVolumeComponents(components, entry.Children);
+			}
+		}
+
+		private static ProfileEntry CreateEntry(JsonElement element)
+		{
+			if(element.ValueKind != JsonValueKind.Object)
+				return null;
+
+			var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			var children = new List<ProfileEntry>();
+
+			foreach(var property in element.EnumerateObject())
+			{
+				if(property.Value.ValueKind == JsonValueKind.Array)
+				{
+					foreach(var item in property.Value.EnumerateArray())
+					{
+						var child = CreateEntry(item);
+
+						if(child != null)
+							children.Add(child);
+					}
+
+					continue;
+				}
+
+				var value = GetValue(property.Value);
+
+				if(!string.IsNullOrEmpty(value))
+					values[property.Name] = value;
+			}
+
+			return values.Count == 0 && children.Count == 0 ? null : new ProfileEntry(values, children);
+		}
+
 		private static IEnumerable<Dictionary<string, string>> Flatten(JsonElement element)
 		{
 			if(element.ValueKind != JsonValueKind.Object)
@@ -268,6 +452,32 @@ partial class HardwareCollector
 		private static bool IsVolume(IReadOnlyDictionary<string, string> values) => values != null &&
 			(values.ContainsKey("mount_point") || values.ContainsKey("file_system") || values.ContainsKey("free_space_in_bytes"));
 
+		private static bool IsPhysicalMemory(IReadOnlyDictionary<string, string> values) => values != null &&
+			(values.ContainsKey("dimm_size") || values.ContainsKey("part_number") || values.ContainsKey("serial_number"));
+
+		private static bool HasStorageDeviceValues(IReadOnlyDictionary<string, string> values) => values != null &&
+			!IsVolume(values) &&
+			(values.ContainsKey("device_model") || values.ContainsKey("serial_num") || values.ContainsKey("smart_status") || values.ContainsKey("medium_type") || values.ContainsKey("spsata_revision"));
+
+		private static IEnumerable<IO.Hardwares.HardwareComponent> GetMemoryComponents(string locator)
+		{
+			if(string.IsNullOrEmpty(locator))
+				return [];
+
+			var components = new List<IO.Hardwares.HardwareComponent>();
+			var parts = locator.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+			for(int i = 0; i < parts.Length; i++)
+			{
+				if(parts[i].StartsWith("BANK", StringComparison.OrdinalIgnoreCase))
+					components.Add(new IO.Hardwares.HardwareComponent(parts[i], parts[i], "memory/bank", "Memory bank"));
+				else if(parts[i].StartsWith("Channel", StringComparison.OrdinalIgnoreCase))
+					components.Add(new IO.Hardwares.HardwareComponent(parts[i], parts[i], "memory/channel", "Memory channel"));
+			}
+
+			return components;
+		}
+
 		private static void Add(List<IO.Hardwares.HardwareProperty> properties, IReadOnlyDictionary<string, string> values, params string[] names)
 		{
 			for(int i = 0; i < names.Length; i++)
@@ -283,5 +493,11 @@ partial class HardwareCollector
 			JsonValueKind.False => bool.FalseString,
 			_ => null,
 		};
+
+		private sealed class ProfileEntry(IReadOnlyDictionary<string, string> values, IReadOnlyList<ProfileEntry> children)
+		{
+			public IReadOnlyDictionary<string, string> Values { get; } = values ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			public IReadOnlyList<ProfileEntry> Children { get; } = children ?? [];
+		}
 	}
 }

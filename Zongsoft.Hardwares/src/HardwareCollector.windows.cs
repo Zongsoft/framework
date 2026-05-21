@@ -68,8 +68,8 @@ partial class HardwareCollector
 				var code = Get(item, "Tag", "Product", "SerialNumber");
 				var serial = Get(item, "SerialNumber");
 
-				yield return IO.Hardwares.Hardware.Unique(
-					HardwareUtility.Normalize(serial),
+				yield return HardwareUtility.Create(
+					serial,
 					name,
 					code,
 					"baseboard",
@@ -93,8 +93,8 @@ partial class HardwareCollector
 				var code = Get(item, "SMBIOSBIOSVersion", "Version", "SerialNumber");
 				var serial = Get(item, "SerialNumber");
 
-				yield return IO.Hardwares.Hardware.Unique(
-					HardwareUtility.Normalize(serial),
+				yield return HardwareUtility.Create(
+					serial,
 					name,
 					code,
 					"firmware",
@@ -118,8 +118,8 @@ partial class HardwareCollector
 				var code = Get(item, "DeviceID", "ProcessorId");
 				var identifier = Get(item, "ProcessorId");
 
-				yield return IO.Hardwares.Hardware.Unique(
-					HardwareUtility.Normalize(identifier),
+				yield return HardwareUtility.Create(
+					identifier,
 					name,
 					code,
 					"cpu",
@@ -140,21 +140,24 @@ partial class HardwareCollector
 				Add(properties, item, "BankLabel", "DeviceLocator", "Capacity", "Speed", "ConfiguredClockSpeed", "MemoryType", "FormFactor", "PartNumber", "SerialNumber", "Tag");
 
 				var locator = Get(item, "DeviceLocator", "BankLabel", "Tag");
-				var name = string.IsNullOrEmpty(locator) ? "Physical Memory" : locator;
+				var partNumber = Get(item, "PartNumber");
+				var name = HardwareUtility.Coalesce(partNumber, Get(item, "Manufacturer"), locator, "Physical Memory");
 				var code = Get(item, "Tag", "DeviceLocator", "BankLabel", "SerialNumber");
 				var serial = Get(item, "SerialNumber");
+				var components = GetMemoryComponents(Get(item, "DeviceLocator"), Get(item, "BankLabel"));
 
-				yield return IO.Hardwares.Hardware.Unique(
-					HardwareUtility.Normalize(serial),
+				yield return HardwareUtility.Create(
+					serial,
 					name,
 					code,
 					"dimm",
-					Get(item, "PartNumber"),
+					partNumber,
 					null,
 					"memory/dimm",
 					Get(item, "Manufacturer"),
 					"Physical memory module",
-					properties: properties);
+					properties: properties,
+					components: components);
 			}
 		}
 
@@ -168,9 +171,10 @@ partial class HardwareCollector
 				var name = Get(item, "Model", "Caption", "Name") ?? "Disk Drive";
 				var code = Get(item, "DeviceID", "PNPDeviceID", "SerialNumber");
 				var serial = Get(item, "SerialNumber");
+				var components = GetDiskComponents(item);
 
-				yield return IO.Hardwares.Hardware.Unique(
-					HardwareUtility.Normalize(serial),
+				yield return HardwareUtility.Create(
+					serial,
 					name,
 					code,
 					"disk",
@@ -179,8 +183,86 @@ partial class HardwareCollector
 					"storage/disk",
 					Get(item, "Manufacturer"),
 					Get(item, "Description"),
-					properties: properties);
+					properties: properties,
+					components: components);
 			}
+		}
+
+		private static IEnumerable<IO.Hardwares.HardwareComponent> GetDiskComponents(ManagementBaseObject disk)
+		{
+			var components = new List<IO.Hardwares.HardwareComponent>();
+			var index = 0;
+
+			foreach(var partition in QueryAssociators(disk, "Win32_DiskDriveToDiskPartition"))
+			{
+				var properties = new List<IO.Hardwares.HardwareProperty>();
+				Add(properties, partition, "DeviceID", "DiskIndex", "Index", "Name", "Size", "StartingOffset", "BootPartition", "PrimaryPartition", "Type");
+
+				var name = Get(partition, "Name", "DeviceID") ?? "Partition";
+				var code = Get(partition, "DeviceID", "Index") ?? "partition" + index;
+				var volumes = GetPartitionComponents(partition);
+
+				components.Add(new IO.Hardwares.HardwareComponent(
+					name,
+					code,
+					"storage/partition",
+					"Disk partition",
+					properties,
+					volumes));
+
+				index++;
+			}
+
+			return components;
+		}
+
+		private static IEnumerable<IO.Hardwares.HardwareComponent> GetPartitionComponents(ManagementBaseObject partition)
+		{
+			var components = new List<IO.Hardwares.HardwareComponent>();
+			var index = 0;
+
+			foreach(var logicalDisk in QueryAssociators(partition, "Win32_LogicalDiskToPartition"))
+			{
+				var properties = new List<IO.Hardwares.HardwareProperty>();
+				Add(properties, logicalDisk, "DeviceID", "VolumeName", "VolumeSerialNumber", "FileSystem", "Size", "FreeSpace", "DriveType", "ProviderName");
+
+				var name = Get(logicalDisk, "VolumeName", "DeviceID") ?? "Logical Disk";
+				var code = Get(logicalDisk, "DeviceID", "VolumeSerialNumber") ?? "volume" + index;
+
+				components.Add(new IO.Hardwares.HardwareComponent(
+					name,
+					code,
+					"storage/volume",
+					"Logical disk volume",
+					properties));
+
+				index++;
+			}
+
+			return components;
+		}
+
+		private static IEnumerable<IO.Hardwares.HardwareComponent> GetMemoryComponents(string locator, string bank)
+		{
+			var components = new List<IO.Hardwares.HardwareComponent>();
+
+			if(!string.IsNullOrEmpty(locator))
+			{
+				var parts = locator.Split('-', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+				for(int i = 0; i < parts.Length; i++)
+				{
+					if(parts[i].StartsWith("Controller", StringComparison.OrdinalIgnoreCase))
+						components.Add(new IO.Hardwares.HardwareComponent(parts[i], parts[i], "memory/controller", "Memory controller"));
+					else if(parts[i].StartsWith("Channel", StringComparison.OrdinalIgnoreCase))
+						components.Add(new IO.Hardwares.HardwareComponent(parts[i], parts[i], "memory/channel", "Memory channel"));
+				}
+			}
+
+			if(!string.IsNullOrEmpty(bank))
+				components.Add(new IO.Hardwares.HardwareComponent(bank, bank, "memory/bank", "Memory bank"));
+
+			return components;
 		}
 
 		private static IEnumerable<ManagementBaseObject> Query(string query)
@@ -213,6 +295,15 @@ partial class HardwareCollector
 				foreach(ManagementBaseObject item in items)
 					yield return item;
 			}
+		}
+
+		private static IEnumerable<ManagementBaseObject> QueryAssociators(ManagementBaseObject source, string association)
+		{
+			if(source is not ManagementObject item || item.Path == null || string.IsNullOrEmpty(item.Path.RelativePath))
+				yield break;
+
+			foreach(var associated in Query($"ASSOCIATORS OF {{{item.Path.RelativePath}}} WHERE AssocClass={association}"))
+				yield return associated;
 		}
 
 		private static void Add(List<IO.Hardwares.HardwareProperty> properties, ManagementBaseObject item, params string[] names)
