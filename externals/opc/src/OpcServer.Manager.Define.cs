@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Opc library.
  *
@@ -189,13 +189,13 @@ partial class OpcServer
 			var nodeId = Utility.GetBuiltinTypeCore(type);
 
 			//如果指定类型是内置类型，则获取并返回该内置类型的节点定义
-			if(nodeId != null && this.Server.NodeManager.GetManagerHandle(nodeId, out _) is NodeHandle handle && handle.Node is BaseTypeState result)
+			if(nodeId != null && this.Server.NodeManager.GetManagerHandle(nodeId, out INodeManager _) is NodeHandle handle && handle.Node is BaseTypeState result)
 				return result;
 
 			lock(this.Lock)
 			{
 				if(_types.TryGetValue(type, out nodeId))
-					return this.FindPredefinedNode(nodeId, null) as BaseTypeState;
+					return this.FindPredefinedNode<BaseTypeState>(nodeId);
 
 				if(type.IsValueType)
 					return type.IsEnum ? this.DefineEnumeration(type) : this.DefineDataType(type);

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.22.0</Version>
+		<Version>0.23.0</Version>
 		<Product>Zongsoft Opc Library</Product>
 		<Description>This is a library about OPC-UA SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Opc</RootNamespace>
@@ -15,13 +15,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Primitives" />
-		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" VersionOverride="1.5.377.22" />
-		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Core" VersionOverride="1.5.377.22" />
-		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" VersionOverride="1.5.377.22" />
-		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Server" VersionOverride="1.5.377.22" />
-		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Configuration" VersionOverride="1.5.377.22" />
-		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Security.Certificates" VersionOverride="1.5.377.22" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" VersionOverride="1.5.378.134" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Core" VersionOverride="1.5.378.134" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" VersionOverride="1.5.378.134" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Server" VersionOverride="1.5.378.134" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Configuration" VersionOverride="1.5.378.134" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Security.Certificates" VersionOverride="1.5.378.134" />
 	</ItemGroup>
 
 	<Choose>

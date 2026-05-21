@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Opc library.
  *
@@ -220,7 +220,7 @@ partial class OpcServer
 			base.OnServerStarted(server);
 		}
 
-		protected override void OnServerStopping()
+		protected override ValueTask OnServerStoppingAsync(CancellationToken cancellationToken)
 		{
 			//清空所有会话通道
 			_server.Channels.Clear();
@@ -234,7 +234,7 @@ partial class OpcServer
 			_server._started = null;
 
 			//调用基类同名方法
-			base.OnServerStopping();
+			return base.OnServerStoppingAsync(cancellationToken);
 		}
 
 		protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration)
@@ -248,9 +248,10 @@ partial class OpcServer
 			return new MasterNodeManager(server, configuration, null, [.. _server.Storages.Select(storage => storage.Manager)]);
 		}
 
-		public override ResponseHeader AddNodes(RequestHeader requestHeader, AddNodesItemCollection nodes, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnostics)
+		[Obsolete("Sync methods are deprecated in this version. Use AddNodesAsync instead.")]
+		public override ResponseHeader AddNodes(SecureChannelContext secureChannelContext, RequestHeader requestHeader, AddNodesItemCollection nodes, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnostics)
 		{
-			var context = this.ValidateRequest(requestHeader, RequestType.AddNodes);
+			var context = this.ValidateRequest(secureChannelContext, requestHeader, RequestType.AddNodes);
 
 			try
 			{

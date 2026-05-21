@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Opc library.
  *
@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Text;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -223,7 +224,7 @@ internal static class Utility
 			return null;
 
 		if(!string.IsNullOrEmpty(settings.UserName))
-			return new UserIdentity(settings.UserName, settings.Password ?? string.Empty);
+			return new UserIdentity(settings.UserName, Encoding.UTF8.GetBytes(settings.Password ?? string.Empty));
 
 		if(!string.IsNullOrEmpty(settings.Certificate))
 			return new UserIdentity(GetCertificate(settings.Certificate, settings.CertificateSecret));
