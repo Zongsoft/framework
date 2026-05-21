@@ -211,8 +211,6 @@ public class Hardware : IHardware
 	#region 嵌套子类
 	private sealed class Uniqueness : Hardware
 	{
-		private readonly string _identifier;
-
 		public Uniqueness(
 			string id,
 			string name,
@@ -221,7 +219,7 @@ public class Hardware : IHardware
 			string category,
 			IHardwareDriver driver = null,
 			IEnumerable<HardwareProperty> properties = null,
-			IEnumerable<HardwareComponent> components = null) : base(name, code, type, category, driver, properties, components) => _identifier = id;
+			IEnumerable<HardwareComponent> components = null) : base(name, code, type, category, driver, properties, components) => this.Identifier = id;
 
 		public Uniqueness(
 			string id,
@@ -233,7 +231,7 @@ public class Hardware : IHardware
 			string category,
 			IHardwareDriver driver = null,
 			IEnumerable<HardwareProperty> properties = null,
-			IEnumerable<HardwareComponent> components = null) : base(name, code, type, model, serie, category, driver, properties, components) => _identifier = id;
+			IEnumerable<HardwareComponent> components = null) : base(name, code, type, model, serie, category, driver, properties, components) => this.Identifier = id;
 
 		public Uniqueness(
 			string id,
@@ -247,15 +245,27 @@ public class Hardware : IHardware
 			string description,
 			IHardwareDriver driver = null,
 			IEnumerable<HardwareProperty> properties = null,
-			IEnumerable<HardwareComponent> components = null) : base(name, code, type, model, serie, category, manufacturer, description, driver, properties, components) => _identifier = id;
+			IEnumerable<HardwareComponent> components = null) : base(name, code, type, model, serie, category, manufacturer, description, driver, properties, components) => this.Identifier = id;
+
+		public string Identifier
+		{
+			get;
+			private init => field = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+		}
 
 		public override bool HasUnique(out string identifier)
 		{
-			identifier = _identifier;
+			identifier = this.Identifier;
 			return identifier != null;
 		}
 
-		public override string ToString() => string.IsNullOrEmpty(this.Code) ? $"({_identifier}){this.Name}" : $"({_identifier}){this.Name}#{this.Code}";
+		public override string ToString()
+		{
+			if(string.IsNullOrEmpty(this.Identifier))
+				return base.ToString();
+
+			return string.IsNullOrEmpty(this.Code) ? $"({this.Identifier}){this.Name}" : $"({this.Identifier}){this.Name}#{this.Code}";
+		}
 	}
 	#endregion
 }
