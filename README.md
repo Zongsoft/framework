@@ -38,6 +38,8 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 	> Provides some commonly used commands, enabling the application layer to execute specific functions via the command line.
 - [_**Z**ongsoft.**D**iagnostics_](Zongsoft.Diagnostics) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Diagnostics)](https://nuget.org/packages/Zongsoft.Diagnostics)
 	> Provides diagnostic capabilities related to the _**O**pen**T**elemetry_ protocol, including reception and processing of the _**O**pen**T**elemetry_ protocol, as well as exporter plugins such as _**C**onsole_, _**P**rometheus_, _**Z**ipkin_, and more.
+- [_**Z**ongsoft.**H**ardwares_](Zongsoft.Hardwares) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Hardwares)](https://nuget.org/packages/Zongsoft.Hardwares)
+	> Provides cross-platform functionality for retrieving hardware information.
 - [_**Z**ongsoft.**I**ntelligences_](Zongsoft.Intelligences) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Intelligences)](https://nuget.org/packages/Zongsoft.Intelligences)
 	> Provides a suite of AI functionalities including **L**arge **L**anguage **M**odels, **A**gents, and **R**etrieval **A**ugmented **G**eneration，implemented as plugins based on libraries such as [**M**icrosoft.**E**xtensions.**AI**](https://www.nuget.org/packages/Microsoft.Extensions.AI) and [**M**icrosoft.**A**gents.**AI**](https://www.nuget.org/packages/Microsoft.Agents.AI).
 - [_**Z**ongsoft.**N**et_](Zongsoft.Net) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Net)](https://nuget.org/packages/Zongsoft.Net)
@@ -66,6 +68,16 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 		> Provides plugin support for the _**M**qtt_ message queues.
 	- [_zero_](messaging/zero/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Messaging.ZeroMQ)](https://nuget.org/packages/Zongsoft.Messaging.ZeroMQ)
 		> Provides plugin support for the _**Z**eroMQ_ message queues.
+
+- [_upgrading_](upgrading/)
+	- [_deployer_](upgrading/deployer/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Deployer)](https://nuget.org/packages/Zongsoft.Upgrading.Deployer)
+		> A local deployer for automatic upgrading, published as a standalone _**N**ative **AOT**_ application.
+	- [_upgrader_](upgrading/upgrader/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Upgrader)](https://nuget.org/packages/Zongsoft.Upgrading.Upgrader)
+		> An upgrader plugin library for automatic upgrading, providing update detection, downloading, and deployment support for host applications.
+	- [_web_](upgrading/web/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Web)](https://nuget.org/packages/Zongsoft.Upgrading.Web)
+		> A _**W**eb_ server-side plugin library for automatic upgrading, providing release package publishing and download service support.
+	- [_tool_](upgrading/tool/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Tools.Upgrader)](https://nuget.org/packages/Zongsoft.Tools.Upgrader)
+		> An automatic upgrade packaging tool, providing the **pack**, **checksum**, and **publish** subcommands.
 
 - [_externals_](externals/)
 	- [_aliyun_](externals/aliyun/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Aliyun)](https://nuget.org/packages/Zongsoft.Externals.Aliyun)

@@ -38,6 +38,8 @@
 	> 提供了一些常用的命令，为应用层提供以命令行方式执行特定功能的能力。
 - [_**Z**ongsoft.**D**iagnostics_](Zongsoft.Diagnostics) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Diagnostics)](https://nuget.org/packages/Zongsoft.Diagnostics)
 	> 提供了 _**O**pen**T**elemetry_ 协议相关的诊断能力，包括 _**O**pen**T**elemetry_ 协议的接收处理，以及 _**C**onsole_、_**P**rometheus_、_**Z**ipkin_ 等输出器插件等。
+- [_**Z**ongsoft.**H**ardwares_](Zongsoft.Hardwares) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Hardwares)](https://nuget.org/packages/Zongsoft.Hardwares)
+	> 提供了跨平台获取硬件信息的功能。
 - [_**Z**ongsoft.**I**ntelligences_](Zongsoft.Intelligences) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Intelligences)](https://nuget.org/packages/Zongsoft.Intelligences)
 	> 提供了大语言模型、智能体、_**R**etrieval **A**ugmented **G**eneration_ 等 _**AI**_ 功能集，基于 [**M**icrosoft.**E**xtensions.**AI**](https://www.nuget.org/packages/Microsoft.Extensions.AI) 及 [**M**icrosoft.**A**gents.**AI**](https://www.nuget.org/packages/Microsoft.Agents.AI) 等相关库的插件化。
 - [_**Z**ongsoft.**N**et_](Zongsoft.Net) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Net)](https://nuget.org/packages/Zongsoft.Net)
@@ -66,6 +68,16 @@
 		> 提供了 _**M**qtt_ 协议的消息队列的插件化支持。
 	- [zero](messaging/zero/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Messaging.ZeroMQ)](https://nuget.org/packages/Zongsoft.Messaging.ZeroMQ)
 		> 提供了 _**Z**eroMQ_ 消息队列的插件化支持。
+
+- [_upgrading_](upgrading/)
+	- [deployer](upgrading/deployer/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Deployer)](https://nuget.org/packages/Zongsoft.Upgrading.Deployer)
+		> 自动升级的本地部署器，是一个以 _**N**ative **AOT**_ 发布的独立程序。
+	- [upgrader](upgrading/upgrader/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Upgrader)](https://nuget.org/packages/Zongsoft.Upgrading.Upgrader)
+		> 自动升级插件库的升级器，为宿主应用提供更新检测、下载与部署支持。
+	- [web](upgrading/web/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Upgrading.Web)](https://nuget.org/packages/Zongsoft.Upgrading.Web)
+		> 自动升级插件库的 _**W**eb_ 服务端，提供发布包的发布与下载服务支持。
+	- [tool](upgrading/tool/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Tools.Upgrader)](https://nuget.org/packages/Zongsoft.Tools.Upgrader)
+		> 自动升级插件库的打包工具，提供打包、校验与发布三个子命令。
 
 - [_externals_](externals/)
 	- [aliyun](externals/aliyun/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Aliyun)](https://nuget.org/packages/Zongsoft.Externals.Aliyun)
