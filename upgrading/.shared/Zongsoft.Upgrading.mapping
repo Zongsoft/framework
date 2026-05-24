@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<schema xmlns="http://schemas.zongsoft.com/data">
+	<container name="Upgrading">
+		<entity name="Application" table="Upgrading_Application">
+			<key>
+				<member name="ApplicationId" />
+			</key>
+
+			<property name="ApplicationId" type="uint" nullable="false" sequence="#" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Title" type="string" length="100" nullable="true" />
+			<property name="Enabled" type="bool" nullable="false" default="true" />
+			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Modification" type="datetime" nullable="true" />
+			<property name="Description" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Editions" port="ApplicationEdition" multiplicity="*" immutable="false">
+				<link port="ApplicationId" />
+			</complexProperty>
+
+			<complexProperty name="Releases" port="Release" multiplicity="*" immutable="false">
+				<link port="ApplicationId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="ApplicationEdition" table="Upgrading_ApplicationEdition">
+			<key>
+				<member name="ApplicationId" />
+				<member name="Name" />
+			</key>
+
+			<property name="ApplicationId" type="uint" nullable="false" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Title" type="string" length="100" nullable="true" />
+			<property name="Enabled" type="bool" nullable="false" default="true" />
+			<property name="Licensed" type="bool" nullable="false" default="false" />
+			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Modification" type="datetime" nullable="true" />
+			<property name="Description" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Application" port="Application" multiplicity="!">
+				<link port="ApplicationId" />
+			</complexProperty>
+
+			<complexProperty name="Releases" port="Release" multiplicity="*" immutable="false">
+				<link port="ApplicationId" />
+				<link port="Edition" anchor="Name" />
+			</complexProperty>
+		</entity>
+
+		<entity name="Instance" table="Upgrading_Instance">
+			<key>
+				<member name="InstanceId" />
+			</key>
+
+			<property name="InstanceId" type="uint" nullable="false" sequence="#" />
+			<property name="InstanceCode" type="string" length="50" nullable="false" />
+			<property name="Name" type="string" length="100" nullable="true" />
+			<property name="Tags" type="string" length="500" nullable="true" />
+			<property name="Profile" type="string" nullable="true" />
+			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Modification" type="datetime" nullable="true" />
+			<property name="Description" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Publishings" port="ReleasePublishing" multiplicity="*" immutable="false">
+				<link port="InstanceId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="Release" table="Upgrading_Release">
+			<key>
+				<member name="ReleaseId" />
+			</key>
+
+			<property name="ReleaseId" type="uint" nullable="false" sequence="#" />
+			<property name="ApplicationId" type="uint" nullable="false" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Edition" type="string" length="50" nullable="false" default="" />
+			<property name="Version" type="string" length="50" nullable="false" />
+			<property name="Kind" type="byte" nullable="false" default="0" />
+			<property name="Mode" type="byte" nullable="false" default="0" />
+			<property name="Platform" type="byte" nullable="false" default="0" />
+			<property name="Architecture" type="byte" nullable="false" default="0" />
+			<property name="Path" type="string" length="200" nullable="true" />
+			<property name="Size" type="ulong" nullable="false" default="0" />
+			<property name="Checksum" type="string" length="100" nullable="true" />
+			<property name="Tags" type="string" length="500" nullable="true" />
+			<property name="Deprecated" type="bool" nullable="false" default="false" />
+			<property name="Published" type="bool" nullable="false" default="false" />
+			<property name="Visible" type="bool" nullable="false" default="true" />
+			<property name="Title" type="string" length="100" nullable="true" />
+			<property name="Summary" type="string" nullable="true" />
+			<property name="FilterName" type="string" length="50" nullable="true" />
+			<property name="FilterData" type="string" length="500" nullable="true" />
+			<property name="FilterSetting" type="string" length="500" nullable="true" />
+			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Modification" type="datetime" nullable="true" />
+			<property name="Description" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Application" port="Application" multiplicity="!">
+				<link port="ApplicationId" />
+			</complexProperty>
+
+			<complexProperty name="ApplicationEdition" port="ApplicationEdition" multiplicity="!">
+				<link port="ApplicationId" />
+				<link port="Name" anchor="Edition" />
+			</complexProperty>
+
+			<complexProperty name="Properties" port="ReleaseProperty" multiplicity="*" immutable="false">
+				<link port="ReleaseId" />
+			</complexProperty>
+
+			<complexProperty name="Executors" port="ReleaseExecutor" multiplicity="*" immutable="false">
+				<link port="ReleaseId" />
+			</complexProperty>
+
+			<complexProperty name="Publishings" port="ReleasePublishing" multiplicity="*" immutable="false">
+				<link port="ReleaseId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="ReleaseProperty" table="Upgrading_ReleaseProperty">
+			<key>
+				<member name="ReleaseId" />
+				<member name="Name" />
+			</key>
+
+			<property name="ReleaseId" type="uint" nullable="false" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Type" type="string" length="100" nullable="true" />
+			<property name="Value" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Release" port="Release" multiplicity="!">
+				<link port="ReleaseId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="ReleaseExecutor" table="Upgrading_ReleaseExecutor">
+			<key>
+				<member name="ReleaseId" />
+				<member name="SerialId" />
+			</key>
+
+			<property name="ReleaseId" type="uint" nullable="false" />
+			<property name="SerialId" type="byte" nullable="false" />
+			<property name="Event" type="string" length="50" nullable="false" />
+			<property name="Command" type="string" length="500" nullable="false" />
+
+			<complexProperty name="Release" port="Release" multiplicity="!">
+				<link port="ReleaseId" />
+			</complexProperty>
+		</entity>
+
+		<entity name="ReleasePublishing" table="Upgrading_ReleasePublishing">
+			<key>
+				<member name="ReleaseId" />
+				<member name="InstanceId" />
+			</key>
+
+			<property name="ReleaseId" type="uint" nullable="false" />
+			<property name="InstanceId" type="uint" nullable="false" />
+			<property name="Status" type="byte" nullable="false" default="0" />
+			<property name="Message" type="string" length="500" nullable="true" />
+			<property name="Timestamp" type="datetime" nullable="false" default="now()" />
+			<property name="Description" type="string" length="500" nullable="true" />
+
+			<complexProperty name="Release" port="Release" multiplicity="!">
+				<link port="ReleaseId" />
+			</complexProperty>
+
+			<complexProperty name="Instance" port="Instance" multiplicity="!">
+				<link port="InstanceId" />
+			</complexProperty>
+		</entity>
+	</container>
+</schema>

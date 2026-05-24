@@ -1,3 +1,4 @@
+artifacts/Zongsoft.Upgrading.mapping
 artifacts/Zongsoft.Upgrading.Web.option
 artifacts/Zongsoft.Upgrading.Web.plugin
 lib/$(Framework)/Zongsoft.Upgrading.Web.*
