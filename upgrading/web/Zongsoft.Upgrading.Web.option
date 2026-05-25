@@ -1,10 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
 <options>
-	<option path="/Upgrading">
-		<settings>
-			<setting setting.name="server" value="storage=zfs.s3:/upgrading/releases" />
-		</settings>
+	<option path="/Upgrading/Settings">
+		<setting setting.name="server" value="storage=zfs.s3:/upgrading/releases" />
 	</option>
 
 	<option path="/Data">

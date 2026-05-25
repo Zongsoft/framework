@@ -27,6 +27,10 @@
  * along with the Zongsoft.Upgrading library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Mvc;
 
 using Zongsoft.Web;
@@ -39,6 +43,21 @@ namespace Zongsoft.Upgrading.Web.Controllers;
 [ControllerName("Releases")]
 public class ReleaseController : ServiceController<Models.Release, ReleaseService>
 {
+	#region 公共方法
+	[HttpPost("{id}/Upload")]
+	[HttpPost("Upload/{id}")]
+	[DisableRequestSizeLimit]
+	public async Task<IActionResult> UploadAsync(uint id, CancellationToken cancellation = default)
+	{
+		var path = await this.DataService.GetFilePathAsync(id, cancellation);
+		if(string.IsNullOrEmpty(path))
+			return this.NotFound();
+
+		var info = await this.UploadAsync(path, (info, cancellation) => this.DataService.SetFilePathAsync(id, info?.Path.Url, info.Size, cancellation), cancellation);
+		return info == null || string.IsNullOrEmpty(info.Url) ? this.NotFound() : this.Ok(info.Url);
+	}
+	#endregion
+
 	#region 嵌套子类
 	[ControllerName("Properties")]
 	public class PropertyController : SubserviceController<ReleaseProperty, ReleaseService.PropertyService>

@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Data;
 using Zongsoft.Upgrading.Models;
@@ -45,6 +47,62 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 	public ExecutorService Executors => this.GetSubservice<ExecutorService>();
 	/// <summary>获取发布状态子服务。</summary>
 	public PublishingService Publishings => this.GetSubservice<PublishingService>();
+	#endregion
+
+	#region 公共方法
+	public async ValueTask<string> GetFilePathAsync(uint releaseId, CancellationToken cancellation = default)
+	{
+		if(releaseId == 0)
+			throw new DataArgumentException(nameof(releaseId));
+
+		if(await this.GetAsync(releaseId, cancellation) is not Models.Release release)
+			return null;
+
+		var path = Settings.Current?["storage"];
+		if(string.IsNullOrEmpty(path))
+			return null;
+
+		var filename = string.IsNullOrWhiteSpace(release.Edition) ?
+			$"{release.Name}@{release.Version}_{Application.GetRuntimeIdentifier(release.Platform, release.Architecture)}" :
+			$"{release.Name}-{release.Edition}@{release.Version}_{Application.GetRuntimeIdentifier(release.Platform, release.Architecture)}";
+
+		return Zongsoft.IO.Path.Combine(path, release.Name.ToLowerInvariant(), filename);
+	}
+
+	public async ValueTask<bool> SetFilePathAsync(uint releaseId, string value, long size, CancellationToken cancellation = default)
+	{
+		try
+		{
+			var count = await this.UpdateAsync(new
+			{
+				Path = value,
+				Size = (ulong)size,
+				Modification = DateTime.Now,
+			}, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation);
+
+			if(count < 1)
+				DeleteFile(value);
+
+			return count > 0;
+		}
+		catch
+		{
+			DeleteFile(value);
+			throw;
+		}
+
+		static void DeleteFile(string path)
+		{
+			if(string.IsNullOrEmpty(path))
+				return;
+
+			try
+			{
+				Zongsoft.IO.FileSystem.File.Delete(path);
+			}
+			catch { }
+		}
+	}
 	#endregion
 
 	#region 嵌套子类
