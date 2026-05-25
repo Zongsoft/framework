@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 
 <plugin name="Zongsoft.Upgrading.Web"
         title="Zongsoft Upgrading Web Plugin"
@@ -11,4 +11,15 @@
 			<assembly name="Zongsoft.Upgrading.Web" />
 		</assemblies>
 	</manifest>
+
+	<extension path="/Workbench/Modules">
+		<object name="Upgrading" value="{static:Zongsoft.Upgrading.Module.Current, Zongsoft.Upgrading.Web}">
+			<expose name="Accessor" value="{path:../@Accessor}">
+				<expose name="Filters" value="{path:../@Filters}" />
+			</expose>
+
+			<expose name="Events" value="{path:../@Events}" />
+			<expose name="Properties" value="{path:../@Properties}" />
+		</object>
+	</extension>
 </plugin>

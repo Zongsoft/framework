@@ -1,5 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
+		<OutputType>Library</OutputType>
 		<Version>0.0.1</Version>
 		<Product>Zongsoft Upgrading Web</Product>
 		<Description>This is a web library for automatic upgrading.</Description>
@@ -14,10 +15,6 @@
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
-	</ItemGroup>
 
 	<Choose>
 		<When Condition="$(Configuration)=='Debug'">
@@ -42,6 +39,7 @@
 		<None Include="README.md" Link="README.md" Pack="true" PackagePath="\" />
 		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
 		<None Include="..\.shared\Zongsoft.Upgrading.mapping" Pack="true" PackagePath="\artifacts" Link="Zongsoft.Upgrading.mapping" />
 	</ItemGroup>
 

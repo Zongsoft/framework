@@ -1,0 +1,122 @@
+### 应用查询
+# @prompt name    应用名称
+# @prompt title   应用标题
+# @prompt enabled 是否启用
+POST /Upgrading/Applications/Query?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+{
+	"Name": "{{name}}",
+	"Title": "{{title}}",
+	"Enabled": {{enabled}}
+}
+
+### 应用列表
+GET /Upgrading/Applications?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 应用详情
+# @prompt applicationId 应用编号
+GET /Upgrading/Applications/{{applicationId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 应用新增
+# @prompt name        应用名称
+# @prompt title       应用标题
+# @prompt description 应用描述
+POST /Upgrading/Applications HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+{
+	"Name": "{{name}}",
+	"Title": "{{title}}",
+	"Enabled": true,
+	"Description": "{{description}}"
+}
+
+### 应用修改
+# @prompt applicationId 应用编号
+# @prompt title         应用标题
+# @prompt enabled       是否启用
+# @prompt description   应用描述
+PATCH /Upgrading/Applications/{{applicationId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+{
+	"Title": "{{title}}",
+	"Enabled": {{enabled}},
+	"Description": "{{description}}"
+}
+
+### 应用删除
+# @prompt applicationId 应用编号
+DELETE /Upgrading/Applications/{{applicationId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 应用数量
+# @prompt enabled 是否启用
+POST /Upgrading/Applications/Count HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+{
+	"Enabled": {{enabled}}
+}
+
+### 应用版本列表
+# @prompt applicationId 应用编号
+GET /Upgrading/Applications/{{applicationId}}/Editions?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 应用版本新增
+# @prompt applicationId 应用编号
+# @prompt edition       版本标识
+# @prompt title         版本标题
+# @prompt description   版本描述
+POST /Upgrading/Applications/{{applicationId}}/Editions HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+[
+	{
+		"Name": "{{edition}}",
+		"Title": "{{title}}",
+		"Enabled": true,
+		"Licensed": false,
+		"Description": "{{description}}"
+	}
+]
+
+### 应用版本修改
+# @prompt applicationId 应用编号
+# @prompt edition       版本标识
+# @prompt title         版本标题
+# @prompt enabled       是否启用
+# @prompt licensed      是否授权
+# @prompt description   版本描述
+PATCH /Upgrading/Applications/{{applicationId}}/Editions HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+[
+	{
+		"Name": "{{edition}}",
+		"Title": "{{title}}",
+		"Enabled": {{enabled}},
+		"Licensed": {{licensed}},
+		"Description": "{{description}}"
+	}
+]

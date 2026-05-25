@@ -30,6 +30,8 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Data;
+
 namespace Zongsoft.Upgrading.Models;
 
 /// <summary>表示应用的实体类。</summary>
@@ -57,5 +59,22 @@ public abstract class Application
 	public abstract ICollection<ApplicationEdition> Editions { get; set; }
 	/// <summary>获取或设置发布集。</summary>
 	public abstract IEnumerable<Release> Releases { get; set; }
+	#endregion
+}
+
+/// <summary>表示应用查询条件的实体类。</summary>
+public abstract class ApplicationCriteria : CriteriaBase
+{
+	#region 公共属性
+	/// <summary>获取或设置应用名称。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string Name { get; set; }
+	/// <summary>获取或设置应用标题。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string Title { get; set; }
+	/// <summary>获取或设置是否启用。</summary>
+	public abstract bool? Enabled { get; set; }
+	/// <summary>获取或设置创建时间范围。</summary>
+	public abstract Range<DateTime>? Creation { get; set; }
 	#endregion
 }

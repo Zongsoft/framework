@@ -30,6 +30,8 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Data;
+
 namespace Zongsoft.Upgrading.Models;
 
 /// <summary>表示发布的实体类。</summary>
@@ -97,5 +99,45 @@ public abstract class Release
 	public abstract ICollection<ReleaseExecutor> Executors { get; set; }
 	/// <summary>获取或设置发布状态集。</summary>
 	public abstract IEnumerable<ReleasePublishing> Publishings { get; set; }
+	#endregion
+}
+
+/// <summary>表示发布查询条件的实体类。</summary>
+public abstract class ReleaseCriteria : CriteriaBase
+{
+	#region 公共属性
+	/// <summary>获取或设置应用编号。</summary>
+	public abstract uint? ApplicationId { get; set; }
+	/// <summary>获取或设置应用名称。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string Name { get; set; }
+	/// <summary>获取或设置版本名。</summary>
+	public abstract string Edition { get; set; }
+	/// <summary>获取或设置版本号。</summary>
+	public abstract string Version { get; set; }
+	/// <summary>获取或设置发布类型。</summary>
+	public abstract ReleaseKind? Kind { get; set; }
+	/// <summary>获取或设置升级部署模式。</summary>
+	public abstract ReleaseMode? Mode { get; set; }
+	/// <summary>获取或设置平台。</summary>
+	public abstract Platform? Platform { get; set; }
+	/// <summary>获取或设置架构。</summary>
+	public abstract Architecture? Architecture { get; set; }
+	/// <summary>获取或设置标签集。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string Tags { get; set; }
+	/// <summary>获取或设置是否废弃。</summary>
+	public abstract bool? Deprecated { get; set; }
+	/// <summary>获取或设置是否已发布。</summary>
+	public abstract bool? Published { get; set; }
+	/// <summary>获取或设置是否可见。</summary>
+	public abstract bool? Visible { get; set; }
+	/// <summary>获取或设置标题。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string Title { get; set; }
+	/// <summary>获取或设置过滤器名称。</summary>
+	public abstract string FilterName { get; set; }
+	/// <summary>获取或设置创建时间范围。</summary>
+	public abstract Range<DateTime>? Creation { get; set; }
 	#endregion
 }

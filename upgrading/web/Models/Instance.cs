@@ -30,6 +30,8 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Data;
+
 namespace Zongsoft.Upgrading.Models;
 
 /// <summary>表示实例的实体类。</summary>
@@ -57,5 +59,23 @@ public abstract class Instance
 	#region 集合属性
 	/// <summary>获取或设置该实例的发布状态集。</summary>
 	public abstract IEnumerable<ReleasePublishing> Publishings { get; set; }
+	#endregion
+}
+
+/// <summary>表示实例查询条件的实体类。</summary>
+public abstract class InstanceCriteria : CriteriaBase
+{
+	#region 公共属性
+	/// <summary>获取或设置实例代号。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string InstanceCode { get; set; }
+	/// <summary>获取或设置实例名称。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string Name { get; set; }
+	/// <summary>获取或设置标签集。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string Tags { get; set; }
+	/// <summary>获取或设置创建时间范围。</summary>
+	public abstract Range<DateTime>? Creation { get; set; }
 	#endregion
 }

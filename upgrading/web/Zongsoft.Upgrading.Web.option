@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="Upgrading" driver="Sqlite"
+			                   value="Database=zongsoft.upgrading.db;PRAGMA:optimize;PRAGMA:journal_mode=WAL;PRAGMA:synchronous=normal;PRAGMA:temp_store=memory;" />
+		</connectionSettings>
+	</option>
+</options>

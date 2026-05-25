@@ -1,0 +1,178 @@
+### 发布查询
+# @prompt applicationId 应用编号
+# @prompt edition       版本标识
+# @prompt version       版本号
+# @prompt published     是否发布
+# @prompt visible       是否可见
+POST /Upgrading/Releases/Query?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+{
+	"ApplicationId": {{applicationId}},
+	"Edition": "{{edition}}",
+	"Version": "{{version}}",
+	"Published": {{published}},
+	"Visible": {{visible}}
+}
+
+### 发布列表
+GET /Upgrading/Releases?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 发布详情
+# @prompt releaseId 发布编号
+GET /Upgrading/Releases/{{releaseId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 发布新增
+# @prompt applicationId 应用编号
+# @prompt name          应用名称
+# @prompt edition       版本标识
+# @prompt version       版本号
+# @prompt path          文件路径
+# @prompt title         发布标题
+# @prompt summary       发布摘要
+# @prompt description   发布描述
+POST /Upgrading/Releases HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+{
+	"ApplicationId": {{applicationId}},
+	"Name": "{{name}}",
+	"Edition": "{{edition}}",
+	"Version": "{{version}}",
+	"Kind": 0,
+	"Mode": 0,
+	"Platform": 0,
+	"Architecture": 0,
+	"Path": "{{path}}",
+	"Size": 0,
+	"Checksum": "",
+	"Tags": "",
+	"Deprecated": false,
+	"Published": false,
+	"Visible": true,
+	"Title": "{{title}}",
+	"Summary": "{{summary}}",
+	"FilterName": "",
+	"FilterData": "",
+	"FilterSetting": "",
+	"Description": "{{description}}"
+}
+
+### 发布修改
+# @prompt releaseId 发布编号
+# @prompt published 是否发布
+# @prompt visible   是否可见
+# @prompt summary   发布摘要
+PATCH /Upgrading/Releases/{{releaseId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+{
+	"Published": {{published}},
+	"Visible": {{visible}},
+	"Summary": "{{summary}}"
+}
+
+### 发布删除
+# @prompt releaseId 发布编号
+DELETE /Upgrading/Releases/{{releaseId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 发布属性列表
+# @prompt releaseId 发布编号
+GET /Upgrading/Releases/{{releaseId}}/Properties?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 发布属性新增
+# @prompt releaseId 发布编号
+# @prompt name      属性名称
+# @prompt type      属性类型
+# @prompt value     属性值
+POST /Upgrading/Releases/{{releaseId}}/Properties HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+[
+	{
+		"Name": "{{name}}",
+		"Type": "{{type}}",
+		"Value": "{{value}}"
+	}
+]
+
+### 发布执行器列表
+# @prompt releaseId 发布编号
+GET /Upgrading/Releases/{{releaseId}}/Executors?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 发布执行器新增
+# @prompt releaseId 发布编号
+# @prompt serialId  执行序号
+# @prompt event     执行事件
+# @prompt command   执行命令
+POST /Upgrading/Releases/{{releaseId}}/Executors HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+[
+	{
+		"SerialId": {{serialId}},
+		"Event": "{{event}}",
+		"Command": "{{command}}"
+	}
+]
+
+### 发布状态查询
+# @prompt releaseId  发布编号
+# @prompt instanceId 实例编号
+# @prompt status     发布状态
+POST /Upgrading/Releases/Publishings/Query?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+{
+	"ReleaseId": {{releaseId}},
+	"InstanceId": {{instanceId}},
+	"Status": {{status}}
+}
+
+### 发布状态列表
+# @prompt releaseId 发布编号
+GET /Upgrading/Releases/{{releaseId}}/Publishings?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+
+### 发布状态新增
+# @prompt releaseId   发布编号
+# @prompt instanceId  实例编号
+# @prompt status      发布状态
+# @prompt message     失败消息
+# @prompt description 状态描述
+POST /Upgrading/Releases/{{releaseId}}/Publishings HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: application/json
+
+[
+	{
+		"InstanceId": {{instanceId}},
+		"Status": {{status}},
+		"Message": "{{message}}",
+		"Description": "{{description}}"
+	}
+]

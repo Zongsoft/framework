@@ -30,6 +30,8 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Data;
+
 namespace Zongsoft.Upgrading.Models;
 
 /// <summary>表示应用版本的实体类。</summary>
@@ -59,5 +61,26 @@ public abstract class ApplicationEdition
 	#region 集合属性
 	/// <summary>获取或设置该版本的发布集。</summary>
 	public abstract IEnumerable<Release> Releases { get; set; }
+	#endregion
+}
+
+/// <summary>表示应用版本查询条件的实体类。</summary>
+public abstract class ApplicationEditionCriteria : CriteriaBase
+{
+	#region 公共属性
+	/// <summary>获取或设置应用编号。</summary>
+	public abstract uint? ApplicationId { get; set; }
+	/// <summary>获取或设置版本标识。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string Name { get; set; }
+	/// <summary>获取或设置版本标题。</summary>
+	[Condition(ConditionOperator.Like)]
+	public abstract string Title { get; set; }
+	/// <summary>获取或设置是否启用。</summary>
+	public abstract bool? Enabled { get; set; }
+	/// <summary>获取或设置是否授权。</summary>
+	public abstract bool? Licensed { get; set; }
+	/// <summary>获取或设置创建时间范围。</summary>
+	public abstract Range<DateTime>? Creation { get; set; }
 	#endregion
 }

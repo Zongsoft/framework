@@ -29,6 +29,8 @@
 
 using System;
 
+using Zongsoft.Data;
+
 namespace Zongsoft.Upgrading.Models;
 
 /// <summary>表示发布实例状态的实体类。</summary>
@@ -51,5 +53,20 @@ public abstract class ReleasePublishing
 	public abstract Release Release { get; set; }
 	/// <summary>获取或设置所属实例。</summary>
 	public abstract Instance Instance { get; set; }
+	#endregion
+}
+
+/// <summary>表示发布实例状态查询条件的实体类。</summary>
+public abstract class ReleasePublishingCriteria : CriteriaBase
+{
+	#region 公共属性
+	/// <summary>获取或设置发布编号。</summary>
+	public abstract uint? ReleaseId { get; set; }
+	/// <summary>获取或设置实例编号。</summary>
+	public abstract uint? InstanceId { get; set; }
+	/// <summary>获取或设置发布状态。</summary>
+	public abstract ReleasePublishingStatus? Status { get; set; }
+	/// <summary>获取或设置更新时间范围。</summary>
+	public abstract Range<DateTime>? Timestamp { get; set; }
 	#endregion
 }
