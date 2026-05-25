@@ -2,7 +2,7 @@
 # @prompt name    应用名称
 # @prompt title   应用标题
 # @prompt enabled 是否启用
-POST /Upgrading/Applications/Query?page={{page}} HTTP/1.1
+POST /Upgrading/Applications/Query?page={{$dotenv page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 Content-Type: application/json
@@ -14,7 +14,7 @@ Content-Type: application/json
 }
 
 ### 应用列表
-GET /Upgrading/Applications?page={{page}} HTTP/1.1
+GET /Upgrading/Applications?page={{$dotenv page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
@@ -75,7 +75,7 @@ Content-Type: application/json
 
 ### 应用版本列表
 # @prompt applicationId 应用编号
-GET /Upgrading/Applications/{{applicationId}}/Editions?page={{page}} HTTP/1.1
+GET /Upgrading/Applications/{{applicationId}}/Editions?page={{$dotenv page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 

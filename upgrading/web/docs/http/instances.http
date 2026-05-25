@@ -2,7 +2,7 @@
 # @prompt instanceCode 实例代号
 # @prompt name         实例名称
 # @prompt tags         标签集
-POST /Upgrading/Instances/Query?page={{page}} HTTP/1.1
+POST /Upgrading/Instances/Query?page={{$dotenv page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 Content-Type: application/json
@@ -14,7 +14,7 @@ Content-Type: application/json
 }
 
 ### 实例列表
-GET /Upgrading/Instances?page={{page}} HTTP/1.1
+GET /Upgrading/Instances?page={{$dotenv page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
@@ -71,7 +71,7 @@ Authorization: Credential {{$dotenv credentialId}}
 # @prompt instanceId 实例编号
 # @prompt releaseId  发布编号
 # @prompt status     发布状态
-POST /Upgrading/Instances/Publishings/Query?page={{page}} HTTP/1.1
+POST /Upgrading/Instances/Publishings/Query?page={{$dotenv page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 Content-Type: application/json
@@ -84,7 +84,7 @@ Content-Type: application/json
 
 ### 实例发布状态列表
 # @prompt instanceId 实例编号
-GET /Upgrading/Instances/{{instanceId}}/Publishings?page={{page}} HTTP/1.1
+GET /Upgrading/Instances/{{instanceId}}/Publishings?page={{$dotenv page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 
