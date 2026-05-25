@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web library.
  *
@@ -29,10 +29,9 @@
 
 using System;
 using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -174,7 +173,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 	#endregion
 
 	#region 上传方法
-	protected async ValueTask<FileInfo> UploadAsync(string path, Func<FileInfo, bool> uploaded = null, CancellationToken cancellation = default)
+	protected async ValueTask<FileInfo> UploadAsync(string path, Func<FileInfo, CancellationToken, ValueTask<bool>> uploaded = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(path))
 			throw new ArgumentNullException(nameof(path));
@@ -185,7 +184,9 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 		//如果上传的内容为空，则返回文件信息的空集
 		if(this.Request.Body == null || this.Request.ContentLength == null || this.Request.ContentLength == 0)
 		{
-			uploaded?.Invoke(null);
+			if(uploaded != null)
+				await uploaded(null, cancellation);
+
 			return null;
 		}
 
@@ -207,7 +208,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 			try
 			{
 				//上传回调方法返回真(True)则将其加入到结果集中，否则删除刚保存的文件
-				if(uploaded == null || uploaded(file))
+				if(uploaded == null || await uploaded(file, cancellation))
 					return file;
 			}
 			catch
@@ -219,8 +220,8 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 		return null;
 	}
 
-	protected IAsyncEnumerable<T> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, CancellationToken cancellation = default) => this.UploadAsync(path, uploaded, 0, cancellation);
-	protected async IAsyncEnumerable<T> UploadAsync<T>(string path, Func<FileInfo, T> uploaded, int limit, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
+	protected IAsyncEnumerable<T> UploadAsync<T>(string path, Func<FileInfo, CancellationToken, ValueTask<T>> uploaded, CancellationToken cancellation = default) => this.UploadAsync(path, uploaded, 0, cancellation);
+	protected async IAsyncEnumerable<T> UploadAsync<T>(string path, Func<FileInfo, CancellationToken, ValueTask<T>> uploaded, int limit, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(path))
 			throw new ArgumentNullException(nameof(path));
@@ -254,7 +255,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 			T entry;
 
 			//如果上传回调方法返回不为空则将其加入到结果集中，否则删除刚保存的文件
-			if((entry = uploaded(file)) != null)
+			if((entry = await uploaded(file, cancellation)) != null)
 				yield return entry;
 			else
 				DeleteFile(file.Path.Url);
