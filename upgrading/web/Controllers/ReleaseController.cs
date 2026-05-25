@@ -37,7 +37,7 @@ namespace Zongsoft.Upgrading.Web.Controllers;
 
 [Area("Upgrading")]
 [ControllerName("Releases")]
-public class ReleaseController : ServiceController<Zongsoft.Upgrading.Models.Release, ReleaseService>
+public class ReleaseController : ServiceController<Models.Release, ReleaseService>
 {
 	#region 嵌套子类
 	[ControllerName("Properties")]

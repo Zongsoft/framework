@@ -3,7 +3,7 @@
 <options>
 	<option path="/Data">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="Upgrading" driver="Sqlite"
+			<connectionSetting connectionSetting.name="Upgrading" driver="SQLite"
 			                   value="Database=zongsoft.upgrading.db;PRAGMA:optimize;PRAGMA:journal_mode=WAL;PRAGMA:synchronous=normal;PRAGMA:temp_store=memory;" />
 		</connectionSettings>
 	</option>

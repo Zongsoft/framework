@@ -37,7 +37,7 @@ namespace Zongsoft.Upgrading.Web.Controllers;
 
 [Area("Upgrading")]
 [ControllerName("Applications")]
-public class ApplicationController : ServiceController<Zongsoft.Upgrading.Models.Application, ApplicationService>
+public class ApplicationController : ServiceController<Models.Application, ApplicationService>
 {
 	#region 嵌套子类
 	[ControllerName("Editions")]

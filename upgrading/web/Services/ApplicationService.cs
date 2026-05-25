@@ -36,7 +36,7 @@ namespace Zongsoft.Upgrading.Services;
 
 /// <summary>表示应用的数据服务基类。</summary>
 [DataService<ApplicationCriteria>]
-public class ApplicationService(IServiceProvider serviceProvider, DataServiceMutability? mutability = null) : DataServiceBase<Models.Application>(serviceProvider, mutability)
+public class ApplicationService(IServiceProvider serviceProvider, DataServiceMutability? mutability = null) : DataServiceBase<Models.Application>(serviceProvider, mutability ?? DataServiceMutability.All)
 {
 	#region 公共属性
 	/// <summary>获取应用版本子服务。</summary>

@@ -10,6 +10,11 @@
 		<assemblies>
 			<assembly name="Zongsoft.Upgrading.Web" />
 		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Data" />
+			<dependency name="Zongsoft.Data.SQLite" />
+		</dependencies>
 	</manifest>
 
 	<extension path="/Workbench/Modules">

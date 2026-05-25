@@ -36,7 +36,7 @@ namespace Zongsoft.Upgrading.Services;
 
 /// <summary>表示实例的数据服务基类。</summary>
 [DataService<InstanceCriteria>]
-public class InstanceService(IServiceProvider serviceProvider, DataServiceMutability? mutability = null) : DataServiceBase<Instance>(serviceProvider, mutability)
+public class InstanceService(IServiceProvider serviceProvider, DataServiceMutability? mutability = null) : DataServiceBase<Instance>(serviceProvider, mutability ?? DataServiceMutability.All)
 {
 	#region 公共属性
 	/// <summary>获取发布状态子服务。</summary>

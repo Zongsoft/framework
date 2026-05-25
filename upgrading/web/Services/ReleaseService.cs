@@ -36,7 +36,7 @@ namespace Zongsoft.Upgrading.Services;
 
 /// <summary>表示发布的数据服务基类。</summary>
 [DataService<ReleaseCriteria>]
-public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutability? mutability = null) : DataServiceBase<Models.Release>(serviceProvider, mutability)
+public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutability? mutability = null) : DataServiceBase<Models.Release>(serviceProvider, mutability ?? DataServiceMutability.All)
 {
 	#region 公共属性
 	/// <summary>获取发布属性子服务。</summary>
