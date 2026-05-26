@@ -25,6 +25,7 @@
 
 			<expose name="Events" value="{path:../@Events}" />
 			<expose name="Properties" value="{path:../@Properties}" />
+			<expose name="Evaluators" value="{path:../@Evaluators}" />
 		</object>
 	</extension>
 </plugin>

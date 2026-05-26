@@ -69,29 +69,29 @@ COMMENT ON COLUMN "Upgrading_Instance"."Modification" IS '修改时间';
 COMMENT ON COLUMN "Upgrading_Instance"."Description"  IS '描述说明';
 
 CREATE TABLE IF NOT EXISTS "Upgrading_Release" (
-	"ReleaseId"     int          NOT NULL,
-	"Name"          varchar(50)  NOT NULL COLLATE "C",
-	"Edition"       varchar(50)  NOT NULL COLLATE "C" DEFAULT '',
-	"Version"       varchar(50)  NOT NULL COLLATE "C",
-	"Kind"          smallint     NOT NULL DEFAULT 0,
-	"Mode"          smallint     NOT NULL DEFAULT 0,
-	"Platform"      smallint     NOT NULL DEFAULT 0,
-	"Architecture"  smallint     NOT NULL DEFAULT 0,
-	"Path"          varchar(200) NULL     COLLATE "C.utf8",
-	"Size"          bigint       NOT NULL DEFAULT 0,
-	"Checksum"      varchar(100) NULL     COLLATE "C",
-	"Tags"          varchar(500) NULL     COLLATE "C.utf8",
-	"Deprecated"    boolean      NOT NULL DEFAULT false,
-	"Published"     boolean      NOT NULL DEFAULT false,
-	"Visible"       boolean      NOT NULL DEFAULT true,
-	"Title"         varchar(100) NULL     COLLATE "C.utf8",
-	"Summary"       text         NULL     COLLATE "C.utf8",
-	"FilterName"    varchar(50)  NULL     COLLATE "C.utf8",
-	"FilterData"    varchar(500) NULL     COLLATE "C.utf8",
-	"FilterSetting" varchar(500) NULL     COLLATE "C.utf8",
-	"Creation"      timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	"Modification"  timestamp    NULL,
-	"Description"   varchar(500) NULL     COLLATE "C.utf8",
+	"ReleaseId"        int          NOT NULL,
+	"Name"             varchar(50)  NOT NULL COLLATE "C",
+	"Edition"          varchar(50)  NOT NULL COLLATE "C" DEFAULT '',
+	"Version"          varchar(50)  NOT NULL COLLATE "C",
+	"Kind"             smallint     NOT NULL DEFAULT 0,
+	"Mode"             smallint     NOT NULL DEFAULT 0,
+	"Platform"         smallint     NOT NULL DEFAULT 0,
+	"Architecture"     smallint     NOT NULL DEFAULT 0,
+	"Path"             varchar(200) NULL     COLLATE "C.utf8",
+	"Size"             int          NOT NULL DEFAULT 0,
+	"Checksum"         varchar(100) NULL     COLLATE "C",
+	"Tags"             varchar(500) NULL     COLLATE "C.utf8",
+	"Deprecated"       boolean      NOT NULL DEFAULT false,
+	"Published"        boolean      NOT NULL DEFAULT false,
+	"Visible"          boolean      NOT NULL DEFAULT true,
+	"Title"            varchar(100) NULL     COLLATE "C.utf8",
+	"Summary"          text         NULL     COLLATE "C.utf8",
+	"EvaluatorName"    varchar(50)  NULL     COLLATE "C.utf8",
+	"EvaluatorData"    varchar(500) NULL     COLLATE "C.utf8",
+	"EvaluatorSetting" varchar(500) NULL     COLLATE "C.utf8",
+	"Creation"         timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"Modification"     timestamp    NULL,
+	"Description"      varchar(500) NULL     COLLATE "C.utf8",
 	PRIMARY KEY ("ReleaseId")
 );
 
@@ -99,30 +99,29 @@ CREATE UNIQUE INDEX IF NOT EXISTS "UX_Upgrading_Release_Key" ON "Upgrading_Relea
 	("Name", "Edition", "Version", "Platform", "Architecture");
 
 COMMENT ON TABLE "Upgrading_Release" IS '发布表';
-COMMENT ON COLUMN "Upgrading_Release"."ReleaseId"     IS '主键，发布编号';
-COMMENT ON COLUMN "Upgrading_Release"."ApplicationId" IS '应用编号';
-COMMENT ON COLUMN "Upgrading_Release"."Name"          IS '应用名称';
-COMMENT ON COLUMN "Upgrading_Release"."Edition"       IS '版本名';
-COMMENT ON COLUMN "Upgrading_Release"."Version"       IS '版本号';
-COMMENT ON COLUMN "Upgrading_Release"."Kind"          IS '发布类型(0:Fully; 1:Delta)';
-COMMENT ON COLUMN "Upgrading_Release"."Mode"          IS '升级模式(0:默认; 1:尽快执行)';
-COMMENT ON COLUMN "Upgrading_Release"."Platform"      IS '平台';
-COMMENT ON COLUMN "Upgrading_Release"."Architecture"  IS '架构';
-COMMENT ON COLUMN "Upgrading_Release"."Path"          IS '文件路径';
-COMMENT ON COLUMN "Upgrading_Release"."Size"          IS '包大小';
-COMMENT ON COLUMN "Upgrading_Release"."Checksum"      IS '校验码';
-COMMENT ON COLUMN "Upgrading_Release"."Tags"          IS '标签集';
-COMMENT ON COLUMN "Upgrading_Release"."Deprecated"    IS '是否废弃';
-COMMENT ON COLUMN "Upgrading_Release"."Published"     IS '是否已发布';
-COMMENT ON COLUMN "Upgrading_Release"."Visible"       IS '是否可见';
-COMMENT ON COLUMN "Upgrading_Release"."Title"         IS '标题';
-COMMENT ON COLUMN "Upgrading_Release"."Summary"       IS '摘要';
-COMMENT ON COLUMN "Upgrading_Release"."FilterName"    IS '过滤器名称';
-COMMENT ON COLUMN "Upgrading_Release"."FilterData"    IS '过滤器数据';
-COMMENT ON COLUMN "Upgrading_Release"."FilterSetting" IS '过滤器设置';
-COMMENT ON COLUMN "Upgrading_Release"."Creation"      IS '创建时间';
-COMMENT ON COLUMN "Upgrading_Release"."Modification"  IS '修改时间';
-COMMENT ON COLUMN "Upgrading_Release"."Description"   IS '描述信息';
+COMMENT ON COLUMN "Upgrading_Release"."ReleaseId"        IS '主键，发布编号';
+COMMENT ON COLUMN "Upgrading_Release"."ApplicationId"    IS '应用编号';
+COMMENT ON COLUMN "Upgrading_Release"."Name"             IS '应用名称';
+COMMENT ON COLUMN "Upgrading_Release"."Edition"          IS '版本名';
+COMMENT ON COLUMN "Upgrading_Release"."Version"          IS '版本号';
+COMMENT ON COLUMN "Upgrading_Release"."Kind"             IS '发布类型(0:Fully; 1:Delta)';
+COMMENT ON COLUMN "Upgrading_Release"."Mode"             IS '升级模式(0:默认; 1:尽快执行)';
+COMMENT ON COLUMN "Upgrading_Release"."Platform"         IS '平台';
+COMMENT ON COLUMN "Upgrading_Release"."Architecture"     IS '架构';
+COMMENT ON COLUMN "Upgrading_Release"."Path"             IS '文件路径';
+COMMENT ON COLUMN "Upgrading_Release"."Size"             IS '包大小';
+COMMENT ON COLUMN "Upgrading_Release"."Checksum"         IS '校验码';
+COMMENT ON COLUMN "Upgrading_Release"."Tags"             IS '标签集';
+COMMENT ON COLUMN "Upgrading_Release"."Deprecated"       IS '是否废弃';
+COMMENT ON COLUMN "Upgrading_Release"."Published"        IS '是否已发布';
+COMMENT ON COLUMN "Upgrading_Release"."Visible"          IS '是否可见';
+COMMENT ON COLUMN "Upgrading_Release"."Title"            IS '发布标题';
+COMMENT ON COLUMN "Upgrading_Release"."Summary"          IS '发布摘要';
+COMMENT ON COLUMN "Upgrading_Release"."EvaluatorName"    IS '评估器名称';
+COMMENT ON COLUMN "Upgrading_Release"."EvaluatorSetting" IS '评估器设置';
+COMMENT ON COLUMN "Upgrading_Release"."Creation"         IS '创建时间';
+COMMENT ON COLUMN "Upgrading_Release"."Modification"     IS '修改时间';
+COMMENT ON COLUMN "Upgrading_Release"."Description"      IS '描述信息';
 
 CREATE TABLE IF NOT EXISTS "Upgrading_ReleaseProperty" (
 	"ReleaseId" int          NOT NULL,

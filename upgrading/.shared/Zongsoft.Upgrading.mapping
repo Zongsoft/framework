@@ -73,7 +73,7 @@
 			<property name="Platform" type="byte" nullable="false" default="0" immutable="true" />
 			<property name="Architecture" type="byte" nullable="false" default="0" immutable="true" />
 			<property name="Path" type="string" length="200" nullable="true" />
-			<property name="Size" type="ulong" nullable="false" default="0" />
+			<property name="Size" type="uint" nullable="false" default="0" />
 			<property name="Checksum" type="string" length="100" nullable="true" />
 			<property name="Tags" type="string" length="500" nullable="true" />
 			<property name="Deprecated" type="bool" nullable="false" default="false" />
@@ -81,9 +81,8 @@
 			<property name="Visible" type="bool" nullable="false" default="true" />
 			<property name="Title" type="string" length="100" nullable="true" />
 			<property name="Summary" type="string" nullable="true" />
-			<property name="FilterName" type="string" length="50" nullable="true" />
-			<property name="FilterData" type="string" length="500" nullable="true" />
-			<property name="FilterSetting" type="string" length="500" nullable="true" />
+			<property name="EvaluatorName" type="string" length="50" nullable="true" />
+			<property name="EvaluatorSetting" type="string" length="500" nullable="true" />
 			<property name="Creation" type="datetime" nullable="false" immutable="true" default="now()" />
 			<property name="Modification" type="datetime" nullable="true" />
 			<property name="Description" type="string" length="500" nullable="true" />

@@ -1,4 +1,4 @@
-/*
+﻿/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -27,46 +27,37 @@
  * along with the Zongsoft.Upgrading library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Zongsoft.Data;
-using Zongsoft.Services;
-using Zongsoft.Components;
-
-[assembly: ApplicationModule(Zongsoft.Upgrading.Module.NAME)]
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
-/// <summary>表示升级模块。</summary>
-public class Module : ApplicationModule<Module.EventRegistry>
+public abstract class EvaluatorBase
 {
-	#region 常量定义
-	/// <summary>表示升级模块的名称常量。</summary>
-	public const string NAME = nameof(Upgrading);
-	#endregion
-
-	#region 单例字段
-	/// <summary>获取升级模块单例实例。</summary>
-	public static readonly Module Current = new();
-	#endregion
-
-	#region 私有构造
-	private Module() : base(NAME) => this.Evaluators = [Evaluator.Default];
-	#endregion
-
-	#region 公共属性
-	/// <summary>获取升级模块的数据访问器。</summary>
-	public IDataAccess Accessor => field ??= this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
-
-	/// <summary>获取升级评估器集合。</summary>
-	public EvaluatorCollection Evaluators { get; }
-	#endregion
-
-	#region 嵌套子类
-	/// <summary>表示升级模块的事件注册表。</summary>
-	public sealed class EventRegistry : EventRegistryBase
+	protected EvaluatorBase(string name)
 	{
-		#region 构造函数
-		public EventRegistry() : base(NAME) { }
-		#endregion
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		this.Name = name;
 	}
-	#endregion
+
+	public string Name { get; }
+	public string Title => Resources.ResourceUtility.GetResourceString(this.GetType(),
+	[
+		$"Evaluator.{this.Name}.{nameof(this.Title)}",
+		$"{this.Name}.{nameof(this.Title)}",
+		$"Evaluator.{this.Name}",
+		this.Name,
+	]);
+
+	public string Description => Resources.ResourceUtility.GetResourceString(this.GetType(),
+	[
+		$"Evaluator.{this.Name}.{nameof(this.Description)}",
+		$"{this.Name}.{nameof(this.Description)}",
+	]);
+
+	public abstract ValueTask<bool> EvaluateAsync(string name, string settings, IDictionary<string, string> parameters, CancellationToken cancellation = default);
 }

@@ -58,7 +58,7 @@ public abstract class Release
 	/// <summary>获取或设置文件路径。</summary>
 	public abstract string Path { get; set; }
 	/// <summary>获取或设置包大小。</summary>
-	public abstract ulong Size { get; set; }
+	public abstract uint Size { get; set; }
 	/// <summary>获取或设置校验码。</summary>
 	public abstract string Checksum { get; set; }
 	/// <summary>获取或设置标签集。</summary>
@@ -73,12 +73,10 @@ public abstract class Release
 	public abstract string Title { get; set; }
 	/// <summary>获取或设置摘要。</summary>
 	public abstract string Summary { get; set; }
-	/// <summary>获取或设置过滤器名称。</summary>
-	public abstract string FilterName { get; set; }
-	/// <summary>获取或设置过滤器数据。</summary>
-	public abstract string FilterData { get; set; }
-	/// <summary>获取或设置过滤器设置。</summary>
-	public abstract string FilterSetting { get; set; }
+	/// <summary>获取或设置评估器名称。</summary>
+	public abstract string EvaluatorName { get; set; }
+	/// <summary>获取或设置评估器设置。</summary>
+	public abstract string EvaluatorSetting { get; set; }
 	/// <summary>获取或设置创建时间。</summary>
 	public abstract DateTime Creation { get; set; }
 	/// <summary>获取或设置修改时间。</summary>

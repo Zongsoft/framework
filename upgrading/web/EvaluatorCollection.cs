@@ -1,4 +1,4 @@
-/*
+﻿/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -27,46 +27,12 @@
  * along with the Zongsoft.Upgrading library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Zongsoft.Data;
-using Zongsoft.Services;
-using Zongsoft.Components;
-
-[assembly: ApplicationModule(Zongsoft.Upgrading.Module.NAME)]
+using System;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Upgrading;
 
-/// <summary>表示升级模块。</summary>
-public class Module : ApplicationModule<Module.EventRegistry>
+public sealed class EvaluatorCollection() : KeyedCollection<string, EvaluatorBase>(StringComparer.OrdinalIgnoreCase)
 {
-	#region 常量定义
-	/// <summary>表示升级模块的名称常量。</summary>
-	public const string NAME = nameof(Upgrading);
-	#endregion
-
-	#region 单例字段
-	/// <summary>获取升级模块单例实例。</summary>
-	public static readonly Module Current = new();
-	#endregion
-
-	#region 私有构造
-	private Module() : base(NAME) => this.Evaluators = [Evaluator.Default];
-	#endregion
-
-	#region 公共属性
-	/// <summary>获取升级模块的数据访问器。</summary>
-	public IDataAccess Accessor => field ??= this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
-
-	/// <summary>获取升级评估器集合。</summary>
-	public EvaluatorCollection Evaluators { get; }
-	#endregion
-
-	#region 嵌套子类
-	/// <summary>表示升级模块的事件注册表。</summary>
-	public sealed class EventRegistry : EventRegistryBase
-	{
-		#region 构造函数
-		public EventRegistry() : base(NAME) { }
-		#endregion
-	}
-	#endregion
+	protected override string GetKeyForItem(EvaluatorBase evaluator) => evaluator.Name;
 }

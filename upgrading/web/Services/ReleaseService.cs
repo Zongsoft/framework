@@ -141,7 +141,37 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 		if(!release.Checksum.IsEmpty)
 			model.Checksum = release.Checksum.ToString();
 
-		return await this.DataAccess.InsertAsync(model, cancellation) > 0 ? model : null;
+		if(release.Executors.Count > 0)
+		{
+			var executors = new List<ReleaseExecutor>(release.Executors.Count);
+
+			foreach(var executor in release.Executors)
+			{
+				var executorModel = Model.Build<ReleaseExecutor>();
+				executorModel.Event = executor.Event;
+				executorModel.Command = executor.Command;
+				executors.Add(executorModel);
+			}
+
+			model.Executors = executors;
+		}
+
+		if(release.Properties.Count > 0)
+		{
+			var properties = new List<ReleaseProperty>(release.Properties.Count);
+
+			foreach(var property in release.Properties)
+			{
+				var propertyModel = Model.Build<ReleaseProperty>();
+				propertyModel.Name = property.Key;
+				propertyModel.Value = Common.Convert.ConvertValue(property.Value, (string)null);
+				properties.Add(propertyModel);
+			}
+
+			model.Properties = properties;
+		}
+
+		return await this.DataAccess.InsertAsync(model, $"*,{nameof(Models.Release.Executors)}{{*}},{nameof(Models.Release.Properties)}{{*}}", cancellation) > 0 ? model : null;
 	}
 	#endregion
 

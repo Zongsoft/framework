@@ -45,29 +45,28 @@ Description  | nvarchar | 500 | ✓ | 描述说明
 
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
-ReleaseId     | int      | 4    | ✗ | 主键，发布编号
-Name          | varchar  | 50   | ✗ | 应用名称
-Edition       | varchar  | 50   | ✗ | 版本名
-Version       | varchar  | 50   | ✗ | 版本号
-Kind          | byte     | 1    | ✗ | 发布类型 _(`0`:Fully; `1`:Delta)_
-Mode          | byte     | 1    | ✗ | 升级部署模式 _(`0`:默认; `1`:尽快执行)_
-Platform      | byte     | 1    | ✗ | 平台
-Architecture  | byte     | 1    | ✗ | 架构
-Path          | varchar  | 200  | ✓ | 文件路径
-Size          | long     | 8    | ✗ | 包大小
-Checksum      | varchar  | 100  | ✓ | 校验码
-Tags          | nvarchar | 500  | ✓ | 标签集
-Deprecated    | bool     | -    | ✗ | 是否废弃
-Published     | bool     | -    | ✗ | 是否已发布
-Visible       | bool     | -    | ✗ | 是否可见
-Title         | nvarchar | 100  | ✓ | 标题
-Summary       | ntext    | -    | ✓ | 摘要
-FilterName    | nvarchar | 50   | ✓ | 过滤器名称
-FilterData    | nvarchar | 500  | ✓ | 过滤器数据
-FilterSetting | nvarchar | 500  | ✓ | 过滤器设置
-Creation      | datetime | -    | ✗ | 创建时间
-Modification  | datetime | -    | ✓ | 修改时间
-Description   | nvarchar | 500  | ✓ | 描述信息
+ReleaseId        | int      | 4    | ✗ | 主键，发布编号
+Name             | varchar  | 50   | ✗ | 应用名称
+Edition          | varchar  | 50   | ✗ | 版本名
+Version          | varchar  | 50   | ✗ | 版本号
+Kind             | byte     | 1    | ✗ | 发布类型 _(`0`:Fully; `1`:Delta)_
+Mode             | byte     | 1    | ✗ | 升级部署模式 _(`0`:默认; `1`:尽快执行)_
+Platform         | byte     | 1    | ✗ | 平台
+Architecture     | byte     | 1    | ✗ | 架构
+Path             | varchar  | 200  | ✓ | 文件路径
+Size             | long     | 8    | ✗ | 包大小
+Checksum         | varchar  | 100  | ✓ | 校验码
+Tags             | nvarchar | 500  | ✓ | 标签集
+Deprecated       | bool     | -    | ✗ | 是否废弃
+Published        | bool     | -    | ✗ | 是否已发布
+Visible          | bool     | -    | ✗ | 是否可见
+Title            | nvarchar | 100  | ✓ | 发布标题
+Summary          | ntext    | -    | ✓ | 发布摘要
+EvaluatorName    | nvarchar | 50   | ✓ | 评估器名称
+EvaluatorSetting | nvarchar | 500  | ✓ | 评估器设置
+Creation         | datetime | -    | ✗ | 创建时间
+Modification     | datetime | -    | ✓ | 修改时间
+Description      | nvarchar | 500  | ✓ | 描述信息
 
 
 ## 发布属性表 `ReleaseProperty`
