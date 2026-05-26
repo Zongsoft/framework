@@ -68,5 +68,14 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("Evaluator.Default", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   查找类似 Provide settings for configuring match evaluation. 的本地化字符串。
+        /// </summary>
+        internal static string Evaluator_Default_Description {
+            get {
+                return ResourceManager.GetString("Evaluator.Default.Description", resourceCulture);
+            }
+        }
     }
 }
