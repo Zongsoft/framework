@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Upgrading.Models;
@@ -74,10 +75,13 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 	{
 		try
 		{
+			var checksum = await ChecksumAsync(value, cancellation);
+
 			var count = await this.UpdateAsync(new
 			{
 				Path = value,
 				Size = (ulong)size,
+				Checksum = checksum,
 				Modification = DateTime.Now,
 			}, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation);
 
@@ -103,10 +107,53 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			}
 			catch { }
 		}
+
+		static async ValueTask<string> ChecksumAsync(string path, CancellationToken cancellation)
+		{
+			if(string.IsNullOrEmpty(path))
+				return null;
+
+			using var stream = await Zongsoft.IO.FileSystem.File.OpenAsync(path, System.IO.FileMode.Open, cancellation);
+			var checksum = await Zongsoft.Common.Checksum.ComputeAsync(null, stream, cancellation);
+			return checksum.ToString();
+		}
+	}
+
+	public async ValueTask<Models.Release> ImportAsync(Release release, CancellationToken cancellation = default)
+	{
+		if(release == null)
+			throw new ArgumentNullException(nameof(release));
+
+		var model = Model.Build<Models.Release>();
+
+		model.Name = release.Name;
+		model.Kind = release.Kind;
+		model.Tags = release.Tags == null ? null : string.Join(',', release.Tags);
+		model.Edition = string.IsNullOrEmpty(release.Edition) ? null : release.Edition;
+		model.Version = release.Version;
+		model.Platform = release.Platform;
+		model.Architecture = release.Architecture;
+		model.Title = release.Title;
+		model.Summary = release.Summary;
+		model.Description = release.Description;
+		model.Deprecated = release.Deprecated;
+
+		if(!release.Checksum.IsEmpty)
+			model.Checksum = release.Checksum.ToString();
+
+		return await this.DataAccess.InsertAsync(model, cancellation) > 0 ? model : null;
 	}
 	#endregion
 
 	#region 重写方法
+	protected override void OnValidate(DataServiceMethod method, ISchema schema, IDataDictionary<Models.Release> data, IDataMutateOptions options)
+	{
+		if(data.TryGetValue(nameof(Models.Release.Edition), out string edition) && string.IsNullOrWhiteSpace(edition))
+			data.SetValue(nameof(Models.Release.Edition), (string)null);
+
+		base.OnValidate(method, schema, data, options);
+	}
+
 	protected override void OnInserted(DataInsertContextBase context)
 	{
 		if(context.Count > 0)

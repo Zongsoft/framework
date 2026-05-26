@@ -32,6 +32,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 using Zongsoft.Web;
 using Zongsoft.Upgrading.Models;
@@ -44,6 +45,29 @@ namespace Zongsoft.Upgrading.Web.Controllers;
 public class ReleaseController : ServiceController<Models.Release, ReleaseService>
 {
 	#region 公共方法
+	public override async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery]string format = null, CancellationToken cancellation = default)
+	{
+		if(file == null || file.Length == 0)
+			return this.BadRequest();
+
+		if(string.Equals(format, "manifest", StringComparison.OrdinalIgnoreCase))
+		{
+			var models = new System.Collections.Generic.List<Models.Release>();
+
+			await foreach(var release in Release.LoadAsync(file.OpenReadStream(), cancellation))
+			{
+				var model = await this.DataService.ImportAsync(release, cancellation);
+
+				if(model != null)
+					models.Add(model);
+			}
+
+			return models != null && models.Count > 0 ? this.Ok(models) : this.NoContent();
+		}
+
+		return await base.ImportAsync(file, format, cancellation);
+	}
+
 	[HttpPost("{id}/Upload")]
 	[HttpPost("Upload/{id}")]
 	[DisableRequestSizeLimit]
