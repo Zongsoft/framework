@@ -57,8 +57,6 @@ public abstract class Application
 	#region 集合属性
 	/// <summary>获取或设置应用版本集。</summary>
 	public abstract ICollection<ApplicationEdition> Editions { get; set; }
-	/// <summary>获取或设置发布集。</summary>
-	public abstract IEnumerable<Release> Releases { get; set; }
 	#endregion
 }
 

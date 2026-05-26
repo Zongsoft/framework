@@ -46,7 +46,6 @@ Description  | nvarchar | 500 | ✓ | 描述说明
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
 ReleaseId     | int      | 4    | ✗ | 主键，发布编号
-ApplicationId | int      | 4    | ✗ | 应用编号
 Name          | varchar  | 50   | ✗ | 应用名称
 Edition       | varchar  | 50   | ✗ | 版本名
 Version       | varchar  | 50   | ✗ | 版本号

@@ -8,18 +8,14 @@
 			</key>
 
 			<property name="ApplicationId" type="uint" nullable="false" sequence="#" />
-			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Name" type="string" length="50" nullable="false" immutable="true" />
 			<property name="Title" type="string" length="100" nullable="true" />
 			<property name="Enabled" type="bool" nullable="false" default="true" />
-			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Creation" type="datetime" nullable="false" immutable="true" default="now()" />
 			<property name="Modification" type="datetime" nullable="true" />
 			<property name="Description" type="string" length="500" nullable="true" />
 
 			<complexProperty name="Editions" port="ApplicationEdition" multiplicity="*" immutable="false">
-				<link port="ApplicationId" />
-			</complexProperty>
-
-			<complexProperty name="Releases" port="Release" multiplicity="*" immutable="false">
 				<link port="ApplicationId" />
 			</complexProperty>
 		</entity>
@@ -31,21 +27,16 @@
 			</key>
 
 			<property name="ApplicationId" type="uint" nullable="false" />
-			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="Name" type="string" length="50" nullable="false" immutable="true" />
 			<property name="Title" type="string" length="100" nullable="true" />
 			<property name="Enabled" type="bool" nullable="false" default="true" />
 			<property name="Licensed" type="bool" nullable="false" default="false" />
-			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Creation" type="datetime" nullable="false" immutable="true" default="now()" />
 			<property name="Modification" type="datetime" nullable="true" />
 			<property name="Description" type="string" length="500" nullable="true" />
 
 			<complexProperty name="Application" port="Application" multiplicity="!">
 				<link port="ApplicationId" />
-			</complexProperty>
-
-			<complexProperty name="Releases" port="Release" multiplicity="*" immutable="false">
-				<link port="ApplicationId" />
-				<link port="Edition" anchor="Name" />
 			</complexProperty>
 		</entity>
 
@@ -55,11 +46,11 @@
 			</key>
 
 			<property name="InstanceId" type="uint" nullable="false" sequence="#" />
-			<property name="InstanceCode" type="string" length="50" nullable="false" />
+			<property name="InstanceCode" type="string" length="50" nullable="false" immutable="true" />
 			<property name="Name" type="string" length="100" nullable="true" />
 			<property name="Tags" type="string" length="500" nullable="true" />
 			<property name="Profile" type="string" nullable="true" />
-			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Creation" type="datetime" nullable="false" immutable="true" default="now()" />
 			<property name="Modification" type="datetime" nullable="true" />
 			<property name="Description" type="string" length="500" nullable="true" />
 
@@ -74,14 +65,13 @@
 			</key>
 
 			<property name="ReleaseId" type="uint" nullable="false" sequence="#" />
-			<property name="ApplicationId" type="uint" nullable="false" />
-			<property name="Name" type="string" length="50" nullable="false" />
-			<property name="Edition" type="string" length="50" nullable="false" default="" />
-			<property name="Version" type="string" length="50" nullable="false" />
+			<property name="Name" type="string" length="50" nullable="false" immutable="true" />
+			<property name="Edition" type="string" length="50" nullable="false" immutable="true" default="_" />
+			<property name="Version" type="string" length="50" nullable="false" immutable="true" />
 			<property name="Kind" type="byte" nullable="false" default="0" />
 			<property name="Mode" type="byte" nullable="false" default="0" />
-			<property name="Platform" type="byte" nullable="false" default="0" />
-			<property name="Architecture" type="byte" nullable="false" default="0" />
+			<property name="Platform" type="byte" nullable="false" default="0" immutable="true" />
+			<property name="Architecture" type="byte" nullable="false" default="0" immutable="true" />
 			<property name="Path" type="string" length="200" nullable="true" />
 			<property name="Size" type="ulong" nullable="false" default="0" />
 			<property name="Checksum" type="string" length="100" nullable="true" />
@@ -94,18 +84,9 @@
 			<property name="FilterName" type="string" length="50" nullable="true" />
 			<property name="FilterData" type="string" length="500" nullable="true" />
 			<property name="FilterSetting" type="string" length="500" nullable="true" />
-			<property name="Creation" type="datetime" nullable="false" default="now()" />
+			<property name="Creation" type="datetime" nullable="false" immutable="true" default="now()" />
 			<property name="Modification" type="datetime" nullable="true" />
 			<property name="Description" type="string" length="500" nullable="true" />
-
-			<complexProperty name="Application" port="Application" multiplicity="!">
-				<link port="ApplicationId" />
-			</complexProperty>
-
-			<complexProperty name="ApplicationEdition" port="ApplicationEdition" multiplicity="!">
-				<link port="ApplicationId" />
-				<link port="Name" anchor="Edition" />
-			</complexProperty>
 
 			<complexProperty name="Properties" port="ReleaseProperty" multiplicity="*" immutable="false">
 				<link port="ReleaseId" />

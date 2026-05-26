@@ -70,7 +70,6 @@ COMMENT ON COLUMN "Upgrading_Instance"."Description"  IS '描述说明';
 
 CREATE TABLE IF NOT EXISTS "Upgrading_Release" (
 	"ReleaseId"     int          NOT NULL,
-	"ApplicationId" int          NOT NULL,
 	"Name"          varchar(50)  NOT NULL COLLATE "C",
 	"Edition"       varchar(50)  NOT NULL COLLATE "C" DEFAULT '',
 	"Version"       varchar(50)  NOT NULL COLLATE "C",
@@ -98,8 +97,6 @@ CREATE TABLE IF NOT EXISTS "Upgrading_Release" (
 
 CREATE UNIQUE INDEX IF NOT EXISTS "UX_Upgrading_Release_Key" ON "Upgrading_Release" USING btree
 	("Name", "Edition", "Version", "Platform", "Architecture");
-CREATE INDEX IF NOT EXISTS "IX_Upgrading_Release_Application" ON "Upgrading_Release" USING btree
-	("ApplicationId");
 
 COMMENT ON TABLE "Upgrading_Release" IS '发布表';
 COMMENT ON COLUMN "Upgrading_Release"."ReleaseId"     IS '主键，发布编号';

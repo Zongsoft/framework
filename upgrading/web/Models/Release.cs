@@ -40,8 +40,6 @@ public abstract class Release
 	#region 公共属性
 	/// <summary>获取或设置发布编号。</summary>
 	public abstract uint ReleaseId { get; set; }
-	/// <summary>获取或设置应用编号。</summary>
-	public abstract uint ApplicationId { get; set; }
 	/// <summary>获取或设置应用名称。</summary>
 	public abstract string Name { get; set; }
 	/// <summary>获取或设置版本名。</summary>
@@ -86,10 +84,6 @@ public abstract class Release
 	public abstract DateTime? Modification { get; set; }
 	/// <summary>获取或设置描述信息。</summary>
 	public abstract string Description { get; set; }
-	/// <summary>获取或设置所属应用。</summary>
-	public abstract Application Application { get; set; }
-	/// <summary>获取或设置所属应用版本。</summary>
-	public abstract ApplicationEdition ApplicationEdition { get; set; }
 	#endregion
 
 	#region 集合属性
@@ -106,8 +100,6 @@ public abstract class Release
 public abstract class ReleaseCriteria : CriteriaBase
 {
 	#region 公共属性
-	/// <summary>获取或设置应用编号。</summary>
-	public abstract uint? ApplicationId { get; set; }
 	/// <summary>获取或设置应用名称。</summary>
 	[Condition(ConditionOperator.Like)]
 	public abstract string Name { get; set; }

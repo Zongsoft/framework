@@ -40,7 +40,6 @@ CREATE TABLE IF NOT EXISTS `Upgrading_Instance` (
 
 CREATE TABLE IF NOT EXISTS `Upgrading_Release` (
 	`ReleaseId`     int unsigned     NOT NULL COMMENT '主键，发布编号',
-	`ApplicationId` int unsigned     NOT NULL COMMENT '应用编号',
 	`Name`          varchar(50)      NOT NULL COMMENT '应用名称' COLLATE 'ascii_general_ci',
 	`Edition`       varchar(50)      NOT NULL COMMENT '版本名' COLLATE 'ascii_general_ci' DEFAULT '',
 	`Version`       varchar(50)      NOT NULL COMMENT '版本号' COLLATE 'ascii_general_ci',
@@ -64,8 +63,7 @@ CREATE TABLE IF NOT EXISTS `Upgrading_Release` (
 	`Modification`  datetime         NULL     COMMENT '修改时间',
 	`Description`   varchar(500)     NULL     COMMENT '描述信息' COLLATE 'utf8mb4_0900_ai_ci',
 	PRIMARY KEY (`ReleaseId`),
-	UNIQUE INDEX `UX_Upgrading_Release_Key` (`Name`, `Edition`, `Version`, `Platform`, `Architecture`),
-	INDEX `IX_Upgrading_Release_Application` (`ApplicationId`)
+	UNIQUE INDEX `UX_Upgrading_Release_Key` (`Name`, `Edition`, `Version`, `Platform`, `Architecture`)
 ) ENGINE = InnoDB COMMENT='发布表';
 
 CREATE TABLE IF NOT EXISTS `Upgrading_ReleaseProperty` (

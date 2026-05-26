@@ -41,7 +41,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS "UX_Upgrading_Instance_Code"
 
 CREATE TABLE IF NOT EXISTS "Upgrading_Release" (
 	"ReleaseId"     INTEGER NOT NULL,
-	"ApplicationId" INTEGER NOT NULL,
 	"Name"          TEXT    NOT NULL,
 	"Edition"       TEXT    NOT NULL DEFAULT '',
 	"Version"       TEXT    NOT NULL,
@@ -69,8 +68,6 @@ CREATE TABLE IF NOT EXISTS "Upgrading_Release" (
 
 CREATE UNIQUE INDEX IF NOT EXISTS "UX_Upgrading_Release_Key"
 	ON "Upgrading_Release" ("Name", "Edition", "Version", "Platform", "Architecture");
-CREATE INDEX IF NOT EXISTS "IX_Upgrading_Release_Application"
-	ON "Upgrading_Release" ("ApplicationId");
 
 CREATE TABLE IF NOT EXISTS "Upgrading_ReleaseProperty" (
 	"ReleaseId" INTEGER NOT NULL,

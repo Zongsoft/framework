@@ -57,11 +57,6 @@ public abstract class ApplicationEdition
 	/// <summary>获取或设置所属应用。</summary>
 	public abstract Application Application { get; set; }
 	#endregion
-
-	#region 集合属性
-	/// <summary>获取或设置该版本的发布集。</summary>
-	public abstract IEnumerable<Release> Releases { get; set; }
-	#endregion
 }
 
 /// <summary>表示应用版本查询条件的实体类。</summary>
