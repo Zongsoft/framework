@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -55,7 +56,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 		if(releaseId == 0)
 			throw new DataArgumentException(nameof(releaseId));
 
-		if(await this.GetAsync(releaseId, cancellation) is not Models.Release release)
+		if(await this.GetAsync(releaseId, null, cancellation) is not Models.Release release)
 			return null;
 
 		var path = Settings.Current?["storage"];
@@ -102,6 +103,68 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			}
 			catch { }
 		}
+	}
+	#endregion
+
+	#region 重写方法
+	protected override void OnInserted(DataInsertContextBase context)
+	{
+		if(context.Count > 0)
+		{
+			if(context.IsMultiple)
+			{
+				foreach(var dictionary in DataDictionary.GetDictionaries<Models.Release>((System.Collections.IEnumerable)context.Data))
+					this.Synchronize(dictionary);
+			}
+			else
+			{
+				this.Synchronize(DataDictionary.GetDictionary<Models.Release>(context.Data));
+			}
+		}
+
+		base.OnInserted(context);
+	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void Synchronize(IDataDictionary<Models.Release> dictionary)
+	{
+		if(dictionary == null || dictionary.IsEmpty)
+			return;
+
+		if(!dictionary.TryGetValue(data => data.Name, out var name) || string.IsNullOrWhiteSpace(name))
+			return;
+
+		//获取应用程序的标识
+		var applicationId = this.DataAccess.Select<uint?>(
+			Model.Naming.Get<Models.Application>(),
+			Condition.Equal(nameof(Models.Application.Name), name),
+			nameof(Models.Application.ApplicationId)).FirstOrDefault();
+
+		if(applicationId.HasValue)
+		{
+			if(dictionary.TryGetValue(data => data.Edition, out var value) && !string.IsNullOrWhiteSpace(value) && value != "_")
+			{
+				var editionModel = Model.Build<ApplicationEdition>();
+				editionModel.ApplicationId = applicationId.Value;
+				editionModel.Name = value;
+				editionModel.Title = value;
+				this.DataAccess.Insert(editionModel, DataInsertOptions.IgnoreConstraint());
+			}
+
+			return;
+		}
+
+		var applicationModel = Model.Build<Models.Application>();
+		applicationModel.Name = name;
+
+		if(dictionary.TryGetValue(data => data.Title, out var title))
+			applicationModel.Title = title;
+
+		if(dictionary.TryGetValue(data => data.Edition, out var edition) && !string.IsNullOrWhiteSpace(edition) && edition != "_")
+			applicationModel.Editions = [Model.Build<ApplicationEdition>(e => e.Name = e.Title = edition)];
+
+		this.DataAccess.Insert(applicationModel, $"*,{nameof(Models.Application.Editions)}{{*}}", DataInsertOptions.IgnoreConstraint());
 	}
 	#endregion
 
