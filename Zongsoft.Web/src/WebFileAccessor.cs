@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web library.
  *
@@ -40,7 +40,6 @@ using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Http.Features;
 
 using Zongsoft.IO;
-using Zongsoft.Collections;
 
 namespace Zongsoft.Web;
 
@@ -203,11 +202,16 @@ public class WebFileAccessor
 			yield break;
 
 		var path = this.GetFilePath(directory);
+		var overwrite = request.Query.TryGetValue("overwrite", out var value) && (string.IsNullOrWhiteSpace(value) || bool.Parse(value));
 
 		for(int i = 0; i < form.Files.Count; i++)
 		{
 			var file = form.Files[i];
-			var args = new WebFileAccessorOptions(file.Name, path, i) { FileName = file.FileName };
+			var args = new WebFileAccessorOptions(file.Name, path, i)
+			{
+				FileName = file.FileName,
+				Overwrite = overwrite,
+			};
 
 			configure?.Invoke(args);
 
