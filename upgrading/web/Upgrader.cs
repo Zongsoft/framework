@@ -43,13 +43,21 @@ public static class Upgrader
 	{
 		const string SCHEMA = $"*, {nameof(Models.Release.Executors)}{{*}}, {nameof(Models.Release.Properties)}{{*}}";
 
+		var currentlyVersion = parameters.TryGetValue("CurrentlyVersion", out var value) && Version.TryParse(value, out var version) ? version : null;
+		if(currentlyVersion == null)
+			yield break;
+
+		var upgradingVersion = parameters.TryGetValue("UpgradingVersion", out value) && Version.TryParse(value, out version) ? version : null;
+
 		var criteria = ConditionCollection.And(
 			Condition.Equal(nameof(Models.Release.Name), name),
 			Condition.Equal(nameof(Models.Release.Visible), true),
 			Condition.Equal(nameof(Models.Release.Published), true),
 			Condition.Equal(nameof(Models.Release.Deprecated), false),
 			Condition.Equal(nameof(Models.Release.Platform), platform),
-			Condition.Equal(nameof(Models.Release.Architecture), architecture)
+			Condition.Equal(nameof(Models.Release.Architecture), architecture),
+			Condition.NotEqual(nameof(Models.Release.Path), null),
+			Condition.GreaterThan(nameof(Models.Release.Size), 0)
 		);
 
 		if(string.IsNullOrWhiteSpace(edition) || edition == "_")
@@ -59,6 +67,9 @@ public static class Upgrader
 
 		await foreach(var model in Module.Current.Accessor.SelectAsync<Models.Release>(criteria, SCHEMA, cancellation))
 		{
+			if(!await ExistsAsync(model.Path, cancellation))
+				break;
+
 			//如果发布模型指定了评估器名称，并且在模块的评估器集合中找到了对应的评估器，则使用该评估器对当前发布进行评估
 			if(model.EvaluatorName != null && Module.Current.Evaluators.TryGetValue(model.EvaluatorName, out var evaluator))
 			{
@@ -68,6 +79,18 @@ public static class Upgrader
 			}
 
 			yield return model.ToRelease();
+		}
+
+		static ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation)
+		{
+			if(string.IsNullOrWhiteSpace(path))
+				return ValueTask.FromResult(false);
+
+			try
+			{
+				return IO.FileSystem.File.ExistsAsync(path, cancellation);
+			}
+			catch { return ValueTask.FromResult(false); }
 		}
 	}
 

@@ -79,7 +79,7 @@ Content-Type: application/json
 {
 	"InstanceId": {{instanceId}},
 	"ReleaseId": {{releaseId}},
-	"Status": {{status}}
+	"Status": "{{status}}"
 }
 
 ### 实例发布状态列表
@@ -102,7 +102,7 @@ Content-Type: application/json
 [
 	{
 		"ReleaseId": {{releaseId}},
-		"Status": {{status}},
+		"Status": "{{status}}",
 		"Message": "{{message}}",
 		"Description": "{{description}}"
 	}

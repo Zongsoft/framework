@@ -1,20 +1,26 @@
 ### 发布查询
-# @prompt applicationId 应用编号
-# @prompt edition       版本标识
-# @prompt version       版本号
-# @prompt published     是否发布
-# @prompt visible       是否可见
+# @prompt name         应用名称
+# @prompt edition      版本标识
+# @prompt version      版本号
+# @prompt platform     平台
+# @prompt architecture 架构
+# @prompt published    是否发布
+# @prompt visible      是否可见
+# @prompt deprecated   是否废弃
 POST /Upgrading/Releases/Query?page={{$dotenv page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
 Content-Type: application/json
 
 {
-	"ApplicationId": {{applicationId}},
+	"Name": "{{name}}",
 	"Edition": "{{edition}}",
 	"Version": "{{version}}",
+	"Platform": "{{platform}}",
+	"Architecture": "{{architecture}}",
 	"Published": {{published}},
-	"Visible": {{visible}}
+	"Visible": {{visible}},
+	"Deprecated": {{deprecated}}
 }
 
 ### 发布列表
@@ -43,13 +49,31 @@ Content-Type: application/zip
 < {{packagePath}}
 ------ZongsoftUpgradingReleasePackage--
 
+### 发布 Manifest 导入
+# @prompt manifestPath Manifest 文件路径
+POST /Upgrading/Releases/Import?format=manifest HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{$dotenv credentialId}}
+Content-Type: multipart/form-data; boundary=----ZongsoftUpgradingReleaseManifest
+
+------ZongsoftUpgradingReleaseManifest
+Content-Disposition: form-data; name="file"; filename="release.manifest"
+Content-Type: application/xml
+
+< {{manifestPath}}
+------ZongsoftUpgradingReleaseManifest--
+
 ### 发布新增
-# @prompt name          应用名称
-# @prompt edition       版本标识
-# @prompt version       版本号
-# @prompt title         发布标题
-# @prompt summary       发布摘要
-# @prompt description   发布描述
+# @prompt name             应用名称
+# @prompt edition          版本标识
+# @prompt version          版本号
+# @prompt platform         平台
+# @prompt architecture     架构
+# @prompt title            发布标题
+# @prompt summary          发布摘要
+# @prompt evaluatorName    评估器名称
+# @prompt evaluatorSetting 评估器设置
+# @prompt description      发布描述
 POST /Upgrading/Releases HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
@@ -60,23 +84,28 @@ Content-Type: application/json
 	"Edition": "{{edition}}",
 	"Version": "{{version}}",
 	"Kind": "Fully",
-	"Mode": 0,
-	"Platform": "windows",
-	"Architecture": "x64",
+	"Mode": "Default",
+	"Platform": "{{platform}}",
+	"Architecture": "{{architecture}}",
 	"Size": 0,
 	"Deprecated": false,
 	"Published": false,
 	"Visible": true,
 	"Title": "{{title}}",
 	"Summary": "{{summary}}",
+	"EvaluatorName": "{{evaluatorName}}",
+	"EvaluatorSetting": "{{evaluatorSetting}}",
 	"Description": "{{description}}"
 }
 
 ### 发布修改
-# @prompt releaseId 发布编号
-# @prompt published 是否发布
-# @prompt visible   是否可见
-# @prompt summary   发布摘要
+# @prompt releaseId        发布编号
+# @prompt published        是否发布
+# @prompt visible          是否可见
+# @prompt deprecated       是否废弃
+# @prompt evaluatorName    评估器名称
+# @prompt evaluatorSetting 评估器设置
+# @prompt summary          发布摘要
 PATCH /Upgrading/Releases/{{releaseId}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}
@@ -85,6 +114,9 @@ Content-Type: application/json
 {
 	"Published": {{published}},
 	"Visible": {{visible}},
+	"Deprecated": {{deprecated}},
+	"EvaluatorName": "{{evaluatorName}}",
+	"EvaluatorSetting": "{{evaluatorSetting}}",
 	"Summary": "{{summary}}"
 }
 
@@ -154,7 +186,7 @@ Content-Type: application/json
 {
 	"ReleaseId": {{releaseId}},
 	"InstanceId": {{instanceId}},
-	"Status": {{status}}
+	"Status": "{{status}}"
 }
 
 ### 发布状态列表
@@ -177,7 +209,7 @@ Content-Type: application/json
 [
 	{
 		"InstanceId": {{instanceId}},
-		"Status": {{status}},
+		"Status": "{{status}}",
 		"Message": "{{message}}",
 		"Description": "{{description}}"
 	}
