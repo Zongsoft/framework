@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -65,7 +65,7 @@ partial class Release
 						yield return release;
 				}
 			}
-			else if(reader.LocalName == nameof(RELEASE_ELEMENT))
+			else if(reader.LocalName == RELEASE_ELEMENT)
 				yield return Read(reader);
 		}
 	}
@@ -94,7 +94,7 @@ partial class Release
 						yield return release;
 				}
 			}
-			else if(reader.LocalName == nameof(RELEASE_ELEMENT))
+			else if(reader.LocalName == RELEASE_ELEMENT)
 				yield return await ReadAsync(reader, cancellation);
 		}
 	}
