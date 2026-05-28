@@ -139,9 +139,9 @@ public readonly struct Version : IEquatable<Version>, IComparable<Version>, IPar
 
 	public static implicit operator long(Version version) => (long)(ulong)version;
 	public static implicit operator ulong(Version version) =>
-		(ulong)(version.Major << (3 * sizeof(ushort) * 8)) +
-		(ulong)(version.Minor << (2 * sizeof(ushort) * 8)) +
-		(ulong)(version.Patch << (1 * sizeof(ushort) * 8)) + version.Revision;
+		((ulong)version.Major << (3 * sizeof(ushort) * 8)) +
+		((ulong)version.Minor << (2 * sizeof(ushort) * 8)) +
+		((ulong)version.Patch << (1 * sizeof(ushort) * 8)) + version.Revision;
 
 	public static implicit operator Version(System.Version version) => version == null ? default : new((ushort)version.Major, (ushort)version.Minor, (ushort)Math.Max(version.Build, 0), (ushort)Math.Max(version.Revision, 0));
 	public static implicit operator System.Version(Version version) => version.Revision == 0 ? new(version.Major, version.Minor, version.Patch) : new(version.Major, version.Minor, version.Patch, version.Revision);

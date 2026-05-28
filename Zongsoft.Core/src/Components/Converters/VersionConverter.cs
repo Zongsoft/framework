@@ -44,6 +44,10 @@ public class VersionConverter : System.ComponentModel.VersionConverter
 			return new Version(int64);
 		if(value is ulong uint64)
 			return new Version(uint64);
+		if(value is string text)
+			return Version.Parse(text, culture);
+		if(value is System.Version version)
+			return (Version)version;
 
 		return base.ConvertFrom(context, culture, value);
 	}
@@ -56,6 +60,10 @@ public class VersionConverter : System.ComponentModel.VersionConverter
 				return (long)version;
 			if(destinationType == typeof(ulong))
 				return (ulong)version;
+			if(destinationType == typeof(string))
+				return version.ToString();
+			if(destinationType == typeof(System.Version))
+				return (System.Version)version;
 		}
 
 		return base.ConvertTo(context, culture, value, destinationType);
