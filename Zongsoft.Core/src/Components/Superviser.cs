@@ -139,12 +139,10 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 			return false;
 		}
 
-		if(_shadows.TryGetValue(key, out var observer))
+		if(_shadows.TryGetValue(key, out var observer) && observer.Unsupervise(out observable))
 		{
-			observable = observer.Observable;
-
-			if(observable != null && _cache.Remove(key, out _))
-				return true;
+			_cache.Remove(key);
+			return true;
 		}
 
 		observable = null;
@@ -159,6 +157,8 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 
 		if(args.Value is Observer observer)
 		{
+			observer.Unsupervise(out _);
+
 			var reason = args.Reason switch
 			{
 				CacheEvictedReason.Expired => SupervisableReason.Inactived,
@@ -273,6 +273,7 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 		#region 私有变量
 		private uint _errors;
 		private object _cachedKey;
+		private int _unsupervising;
 		private Superviser<T> _superviser;
 		private IObservable<T> _observable;
 		private IDisposable _subscriber;
@@ -337,6 +338,14 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 		internal object CachedKey => _cachedKey;
 		internal IObservable<T> Observable => _observable;
 		internal CancellationTokenSource Failure => _failure;
+		#endregion
+
+		#region 取消方法
+		internal bool Unsupervise(out IObservable<T> observable)
+		{
+			observable = _observable;
+			return observable != null && Interlocked.CompareExchange(ref _unsupervising, 1, 0) == 0;
+		}
 		#endregion
 
 		#region 订阅方法
