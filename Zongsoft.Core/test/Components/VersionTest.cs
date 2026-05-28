@@ -106,6 +106,49 @@ public class VersionTest
 	}
 
 	[Fact]
+	public void TestJsonSerialize()
+	{
+		Assert.Equal("\"0.0.0\"", Serialization.Serializer.Json.Serialize(default(Version)));
+		Assert.Equal("\"1.2.3\"", Serialization.Serializer.Json.Serialize(new Version(1, 2, 3)));
+		Assert.Equal("\"1.2.3.4\"", Serialization.Serializer.Json.Serialize(new Version(1, 2, 3, 4)));
+
+		Assert.Equal("\"1.2.3.4\"", System.Text.Json.JsonSerializer.Serialize(new Version(1, 2, 3, 4)));
+		Assert.Equal("{\"Version\":\"1.2.3.4\"}", System.Text.Json.JsonSerializer.Serialize(new VersionEntry()
+		{
+			Version = new Version(1, 2, 3, 4),
+		}));
+	}
+
+	[Theory]
+	[InlineData("\"1.2\"", 1, 2, 0, 0)]
+	[InlineData("\"1.2.3\"", 1, 2, 3, 0)]
+	[InlineData("\"1.2.3.4\"", 1, 2, 3, 4)]
+	[InlineData("281483566841860", 1, 2, 3, 4)]
+	public void TestJsonDeserialize(string json, int major, int minor, int patch, int revision)
+	{
+		var expected = new Version((ushort)major, (ushort)minor, (ushort)patch, (ushort)revision);
+
+		Assert.Equal(expected, Serialization.Serializer.Json.Deserialize<Version>(json));
+		Assert.Equal(expected, System.Text.Json.JsonSerializer.Deserialize<Version>(json));
+	}
+
+	[Fact]
+	public void TestJsonDeserializeObject()
+	{
+		const string JSON = """
+		{
+			"Version" : "1.2.3.4"
+		}
+		""";
+
+		var result = System.Text.Json.JsonSerializer.Deserialize<VersionEntry>(JSON);
+		Assert.Equal(new Version(1, 2, 3, 4), result.Version);
+
+		Assert.True(Serialization.Serializer.Json.Deserialize<Version>("null").IsZero);
+		Assert.Null(Serialization.Serializer.Json.Deserialize<Version?>("null"));
+	}
+
+	[Fact]
 	public void TestNumericConversion()
 	{
 		var version = new Version(1, 2, 3, 4);
@@ -171,5 +214,10 @@ public class VersionTest
 		Assert.True(converter.IsValid(version));
 		Assert.True(converter.IsValid("1.2"));
 		Assert.False(converter.IsValid("1"));
+	}
+
+	private class VersionEntry
+	{
+		public Version Version { get; set; }
 	}
 }

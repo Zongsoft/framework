@@ -29,11 +29,13 @@
 
 using System;
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace Zongsoft.Components;
 
-[TypeConverter(typeof(Converters.VersionConverter))]
-public readonly struct Version : IEquatable<Version>, IComparable<Version>, IParsable<Version>
+[TypeConverter(typeof(TypeConverter))]
+[JsonConverter(typeof(JsonConverter))]
+public readonly partial struct Version : IEquatable<Version>, IComparable<Version>, IParsable<Version>
 {
 	#region 构造函数
 	public Version(long value) : this(unchecked((ulong)value)) { }
