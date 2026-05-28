@@ -43,12 +43,6 @@ public static class Upgrader
 	{
 		const string SCHEMA = $"*, {nameof(Models.Release.Executors)}{{*}}, {nameof(Models.Release.Properties)}{{*}}";
 
-		var currentlyVersion = parameters.TryGetValue("CurrentlyVersion", out var value) && Version.TryParse(value, out var version) ? version : null;
-		if(currentlyVersion == null)
-			yield break;
-
-		var upgradingVersion = parameters.TryGetValue("UpgradingVersion", out value) && Version.TryParse(value, out version) ? version : null;
-
 		var criteria = ConditionCollection.And(
 			Condition.Equal(nameof(Models.Release.Name), name),
 			Condition.Equal(nameof(Models.Release.Visible), true),
@@ -64,6 +58,14 @@ public static class Upgrader
 			criteria.Add(Condition.In(nameof(Models.Release.Edition), string.Empty, "_"));
 		else
 			criteria.Add(Condition.Equal(nameof(Models.Release.Edition), edition));
+
+		var currentlyVersion = parameters.TryGetValue("CurrentlyVersion", out var value) && Components.Version.TryParse(value, out var version) ? version : default;
+		if(!currentlyVersion.IsZero)
+			criteria.Add(Condition.GreaterThan(nameof(Models.Release.Version), currentlyVersion));
+
+		var upgradingVersion = parameters.TryGetValue("UpgradingVersion", out value) && Components.Version.TryParse(value, out version) ? version : default;
+		if(!upgradingVersion.IsZero)
+			criteria.Add(Condition.LessThanEqual(nameof(Models.Release.Version), upgradingVersion));
 
 		await foreach(var model in Module.Current.Accessor.SelectAsync<Models.Release>(criteria, SCHEMA, cancellation))
 		{

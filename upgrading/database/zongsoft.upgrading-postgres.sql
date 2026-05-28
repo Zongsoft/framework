@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS "Upgrading_Release" (
 	"ReleaseId"        int          NOT NULL,
 	"Name"             varchar(50)  NOT NULL COLLATE "C",
 	"Edition"          varchar(50)  NOT NULL COLLATE "C" DEFAULT '',
-	"Version"          varchar(50)  NOT NULL COLLATE "C",
+	"Version"          bigint       NOT NULL DEFAULT 0,
 	"Kind"             smallint     NOT NULL DEFAULT 0,
 	"Mode"             smallint     NOT NULL DEFAULT 0,
 	"Platform"         smallint     NOT NULL DEFAULT 0,

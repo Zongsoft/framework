@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS "Upgrading_Release" (
 	"ReleaseId"        INTEGER NOT NULL,
 	"Name"             TEXT    NOT NULL,
 	"Edition"          TEXT    NOT NULL DEFAULT '',
-	"Version"          TEXT    NOT NULL,
+	"Version"          BIGINT  NOT NULL DEFAULT 0,
 	"Kind"             INTEGER NOT NULL DEFAULT 0,
 	"Mode"             INTEGER NOT NULL DEFAULT 0,
 	"Platform"         INTEGER NOT NULL DEFAULT 0,

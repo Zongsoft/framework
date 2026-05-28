@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `Upgrading_Release` (
 	`ReleaseId`        int unsigned     NOT NULL COMMENT '主键，发布编号',
 	`Name`             varchar(50)      NOT NULL COMMENT '应用名称' COLLATE 'ascii_general_ci',
 	`Edition`          varchar(50)      NOT NULL COMMENT '版本名' COLLATE 'ascii_general_ci' DEFAULT '',
-	`Version`          varchar(50)      NOT NULL COMMENT '版本号' COLLATE 'ascii_general_ci',
+	`Version`          biging unsigned  NOT NULL COMMENT '版本号',
 	`Kind`             tinyint unsigned NOT NULL COMMENT '发布类型(0:Fully; 1:Delta)' DEFAULT 0,
 	`Mode`             tinyint unsigned NOT NULL COMMENT '升级模式(0:默认; 1:尽快执行)' DEFAULT 0,
 	`Platform`         tinyint unsigned NOT NULL COMMENT '平台' DEFAULT 0,

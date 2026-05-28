@@ -48,7 +48,7 @@ Description  | nvarchar | 500 | ✓ | 描述说明
 ReleaseId        | int      | 4    | ✗ | 主键，发布编号
 Name             | varchar  | 50   | ✗ | 应用名称
 Edition          | varchar  | 50   | ✗ | 版本名
-Version          | varchar  | 50   | ✗ | 版本号
+Version          | bigint   | 8    | ✗ | 版本号
 Kind             | byte     | 1    | ✗ | 发布类型 _(`0`:Fully; `1`:Delta)_
 Mode             | byte     | 1    | ✗ | 升级部署模式 _(`0`:默认; `1`:尽快执行)_
 Platform         | byte     | 1    | ✗ | 平台

@@ -67,7 +67,7 @@
 			<property name="ReleaseId" type="uint" nullable="false" sequence="#" />
 			<property name="Name" type="string" length="50" nullable="false" immutable="true" />
 			<property name="Edition" type="string" length="50" nullable="false" immutable="true" default="_" />
-			<property name="Version" type="string" length="50" nullable="false" immutable="true" />
+			<property name="Version" type="ulong" nullable="false" immutable="true" />
 			<property name="Kind" type="byte" nullable="false" default="0" />
 			<property name="Mode" type="byte" nullable="false" default="0" />
 			<property name="Platform" type="byte" nullable="false" default="0" immutable="true" />
