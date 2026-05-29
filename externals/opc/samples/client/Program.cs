@@ -221,7 +221,7 @@ internal class Program
 			var type = await client.GetDataTypeAsync(context.Arguments[0], cancellation) ??
 				throw new CommandException($"The specified '{context.Arguments[0]}' does not exist, or its data type is not available.");
 
-			object value = null;
+			object value = context.Arguments[1];
 
 			if(type.IsArray(out var elementType))
 			{
@@ -229,7 +229,7 @@ internal class Program
 
 				for(int i = 1; i < context.Arguments.Count; i++)
 				{
-					((Array)value).SetValue(Common.Convert.ConvertValue(context.Arguments[i], type), i - 1);
+					((Array)value).SetValue(Common.Convert.ConvertValue(context.Arguments[i], type.Type), i - 1);
 				}
 			}
 			else
@@ -237,7 +237,7 @@ internal class Program
 				if(context.Arguments.Count > 2)
 					throw new CommandException($"Too many command arguments.");
 
-				value = Common.Convert.ConvertValue(context.Arguments[1], type);
+				value = Common.Convert.ConvertValue(context.Arguments[1], type.Type);
 			}
 
 			var succeed = await client.SetValueAsync(context.Arguments[0], value, cancellation);
