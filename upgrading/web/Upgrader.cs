@@ -61,11 +61,11 @@ public static class Upgrader
 
 		var currentlyVersion = parameters.TryGetValue("CurrentlyVersion", out var value) && Components.Version.TryParse(value, out var version) ? version : default;
 		if(!currentlyVersion.IsZero)
-			criteria.Add(Condition.GreaterThan(nameof(Models.Release.Version), currentlyVersion));
+			criteria.Add(Condition.GreaterThan(nameof(Models.Release.Version), (ulong)currentlyVersion));
 
 		var upgradingVersion = parameters.TryGetValue("UpgradingVersion", out value) && Components.Version.TryParse(value, out version) ? version : default;
 		if(!upgradingVersion.IsZero)
-			criteria.Add(Condition.LessThanEqual(nameof(Models.Release.Version), upgradingVersion));
+			criteria.Add(Condition.LessThanEqual(nameof(Models.Release.Version), (ulong)upgradingVersion));
 
 		await foreach(var model in Module.Current.Accessor.SelectAsync<Models.Release>(criteria, SCHEMA, cancellation))
 		{
