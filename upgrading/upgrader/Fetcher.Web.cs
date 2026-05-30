@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -79,7 +78,7 @@ partial class Fetcher
 			if(client == null)
 				yield break;
 
-			using var response = await client.GetAsync($"{Application.ApplicationName}/{Application.RuntimeIdentifier}?{GetParameters(version)}", cancellation);
+			using var response = await client.GetAsync($"{Application.ApplicationName}/{edition}?{GetParameters(version)}", cancellation);
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
@@ -89,26 +88,46 @@ partial class Fetcher
 
 			static string GetParameters(Version version)
 			{
-				var parameters = version == null ?
-					new KeyValuePair<string, string>[]
-					{
-						new(nameof(Release.Name), Application.ApplicationName),
-						new(nameof(Release.Edition), Application.ApplicationEdition),
-						new(nameof(Release.Platform), Application.Platform.ToString()),
-						new(nameof(Release.Architecture), Application.Architecture.ToString()),
-						new("CurrentlyVersion", Application.ApplicationVersion.ToString()),
-					}:
-					new KeyValuePair<string, string>[]
-					{
-						new(nameof(Release.Name), Application.ApplicationName),
-						new(nameof(Release.Edition), Application.ApplicationEdition),
-						new(nameof(Release.Platform), Application.Platform.ToString()),
-						new(nameof(Release.Architecture), Application.Architecture.ToString()),
-						new("CurrentlyVersion", Application.ApplicationVersion.ToString()),
-						new("UpgradingVersion", version.ToString()),
-					};
+				var text = new System.Text.StringBuilder();
 
-				return string.Join('&', parameters.Select(parameter => $"{parameter.Key}={parameter.Value}"));
+				text.Append($"{nameof(Release.Name)}={Application.ApplicationName}&");
+				text.Append($"{nameof(Release.Edition)}={Application.ApplicationEdition}&");
+				text.Append($"{nameof(Release.Platform)}={Application.Platform.ToString()}&");
+				text.Append($"{nameof(Release.Architecture)}={Application.Architecture.ToString()}&");
+				text.Append($"Fingerprint={IO.Hardwares.HardwareProfile.Current.Identifier}&");
+				text.Append($"CurrentlyVersion={Application.ApplicationVersion.ToString()}&");
+
+				if(version != null)
+					text.Append($"UpgradingVersion={version.ToString()}&");
+
+				if(IO.Hardwares.HardwareProfile.Current.Mainboard.HasUnique(out var identifier))
+					text.Append($"Mainboard={identifier}&");
+
+				foreach(var hardware in IO.Hardwares.HardwareProfile.Current.Processors)
+				{
+					if(hardware.HasUnique(out var id))
+						text.Append($"Processor={id}&");
+				}
+
+				foreach(var hardware in IO.Hardwares.HardwareProfile.Current.Networks)
+				{
+					if(hardware.HasUnique(out var id))
+						text.Append($"Network={id}&");
+				}
+
+				foreach(var hardware in IO.Hardwares.HardwareProfile.Current.Memories)
+				{
+					if(hardware.HasUnique(out var id))
+						text.Append($"Memory={id}&");
+				}
+
+				foreach(var hardware in IO.Hardwares.HardwareProfile.Current.Storages)
+				{
+					if(hardware.HasUnique(out var id))
+						text.Append($"Storage={id}&");
+				}
+
+				return text.ToString().TrimEnd('&');
 			}
 		}
 		#endregion
