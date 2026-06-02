@@ -97,6 +97,26 @@ public class VersionTest
 	}
 
 	[Fact]
+	public void TestComparisonOperators()
+	{
+		var lower = new Version(1, 2, 3, 4);
+		var same = new Version(1, 2, 3, 4);
+		var higher = new Version(1, 2, 3, 5);
+
+		Assert.True(lower < higher);
+		Assert.True(lower <= higher);
+		Assert.True(lower <= same);
+		Assert.True(higher > lower);
+		Assert.True(higher >= lower);
+		Assert.True(higher >= same);
+
+		Assert.False(lower > higher);
+		Assert.False(lower >= higher);
+		Assert.False(higher < lower);
+		Assert.False(higher <= lower);
+	}
+
+	[Fact]
 	public void TestToString()
 	{
 		Assert.Equal("0.0.0", default(Version).ToString());

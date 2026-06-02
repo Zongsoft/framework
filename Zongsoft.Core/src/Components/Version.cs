@@ -135,6 +135,10 @@ public readonly partial struct Version : IEquatable<Version>, IComparable<Versio
 	#region 符号重写
 	public static bool operator ==(Version left, Version right) => left.Equals(right);
 	public static bool operator !=(Version left, Version right) => !(left == right);
+	public static bool operator >(Version left, Version right) => left.CompareTo(right) > 0;
+	public static bool operator >=(Version left, Version right) => left.CompareTo(right) >= 0;
+	public static bool operator <(Version left, Version right) => left.CompareTo(right) < 0;
+	public static bool operator <=(Version left, Version right) => left.CompareTo(right) <= 0;
 
 	public static implicit operator Version(long value) => new(value);
 	public static implicit operator Version(ulong value) => new(value);
