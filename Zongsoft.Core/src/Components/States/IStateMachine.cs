@@ -30,22 +30,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Flowing
+namespace Zongsoft.Components.States;
+
+public interface IStateMachine : IDisposable
 {
-	public interface IStateDiagram<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
-	{
-		#region 属性定义
-		StateVector<TValue>[] Vectors { get; }
-		#endregion
+	bool HasParameters { get; }
+	IDictionary<object, object> Parameters { get; }
+	IStateHandlerProvider Handlers { get; set; }
 
-		#region 方法定义
-		bool CanTransfer(StateVector<TValue> state) => this.CanTransfer(state.Source, state.Destination);
-		bool CanTransfer(TValue source, TValue destination);
-		void Transfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler);
-
-		State<TKey, TValue> GetState(TKey key);
-		bool SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters = null);
-		bool SetState(State<TKey, TValue> state, string description, IDictionary<object, object> parameters = null);
-		#endregion
-	}
+	void Run<TKey, TValue>(State<TKey, TValue> state, string description, IEnumerable<KeyValuePair<object, object>> parameters = null) where TKey : struct, IEquatable<TKey> where TValue : struct;
 }

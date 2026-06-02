@@ -28,55 +28,11 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Flowing
+namespace Zongsoft.Components.States;
+
+public interface IStateHandlerProvider
 {
-	public readonly struct StateVector<T> : IEquatable<StateVector<T>> where T : struct
-	{
-		#region 构造函数
-		public StateVector(T source, T destination)
-		{
-			this.Source = source;
-			this.Destination = destination;
-		}
-		#endregion
-
-		#region 公共字段
-		public readonly T Source;
-		public readonly T Destination;
-		#endregion
-
-		#region 公共方法
-		public bool Contains(T value)
-		{
-			return this.Source.Equals(value) || this.Destination.Equals(value);
-		}
-		#endregion
-
-		#region 重写方法
-		public bool Equals(StateVector<T> other)
-		{
-			return this.Source.Equals(other.Source) &&
-			       this.Destination.Equals(other.Destination);
-		}
-
-		public override bool Equals(object obj)
-		{
-			if(obj == null || obj.GetType() != this.GetType())
-				return false;
-
-			return this.Equals((StateVector<T>)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(this.Source, this.Destination);
-		}
-
-		public override string ToString()
-		{
-			return this.Source.ToString() + "->" + this.Destination.ToString();
-		}
-		#endregion
-	}
+	IEnumerable<IStateHandler<TKey, TValue>> GetHandlers<TKey, TValue>() where TKey : struct, IEquatable<TKey> where TValue : struct;
 }

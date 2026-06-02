@@ -28,20 +28,42 @@
  */
 
 using System;
-using System.Collections.Generic;
 
-namespace Zongsoft.Flowing
+namespace Zongsoft.Components.States;
+
+public abstract class StateHandlerBase<TKey, TValue> : IStateHandler<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
 {
-	public interface IStateContext<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
+	#region 构造函数
+	protected StateHandlerBase(IServiceProvider serviceProvider)
 	{
-		IStateMachine Machine { get; }
-		IStateDiagram<TKey, TValue> Diagram { get; }
-		IDictionary<object, object> Parameters { get; }
-
-		TKey Key { get; }
-		StateVector<TValue> State { get; }
-		string Description { get; set; }
-
-		bool SetState(string description = null);
+		this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 	}
+	#endregion
+
+	#region 公共属性
+	public IServiceProvider ServiceProvider { get; }
+	#endregion
+
+	#region 抽象方法
+	protected abstract void OnHandle(StateContext<TKey, TValue> context);
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void OnFinish(StateContext<TKey, TValue> context)
+	{
+		context.SetState();
+	}
+	#endregion
+
+	#region 显式实现
+	void IStateHandler<TKey, TValue>.Handle(IStateContext<TKey, TValue> context)
+	{
+		this.OnHandle(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException($"Invalid type of the state context."));
+	}
+
+	void IStateHandler<TKey, TValue>.Finish(IStateContext<TKey, TValue> context)
+	{
+		this.OnFinish(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException($"Invalid type of the state context."));
+	}
+	#endregion
 }

@@ -28,12 +28,19 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Flowing
+namespace Zongsoft.Components.States;
+
+public interface IStateContext<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
 {
-	public interface IStateHandler<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
-	{
-		void Handle(IStateContext<TKey, TValue> context);
-		void Finish(IStateContext<TKey, TValue> context);
-	}
+	IStateMachine Machine { get; }
+	IStateDiagram<TKey, TValue> Diagram { get; }
+	IDictionary<object, object> Parameters { get; }
+
+	TKey Key { get; }
+	StateVector<TValue> State { get; }
+	string Description { get; set; }
+
+	bool SetState(string description = null);
 }
