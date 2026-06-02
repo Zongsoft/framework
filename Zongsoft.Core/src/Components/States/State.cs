@@ -43,19 +43,13 @@ public abstract class State<TKey, TValue> : IEquatable<State<TKey, TValue>> wher
 	#endregion
 
 	#region 公共属性
-	/// <summary>
-	/// 获取当前状态所属的<see cref="IStateDiagram{TKey, TValue}"/>状态图。
-	/// </summary>
+	/// <summary>获取当前状态所属的<see cref="IStateDiagram{TKey, TValue}"/>状态图。</summary>
 	public IStateDiagram<TKey, TValue> Diagram { get; }
 
-	/// <summary>
-	/// 获取当前状态的键值。
-	/// </summary>
+	/// <summary>获取当前状态的键值。</summary>
 	public TKey Key { get; }
 
-	/// <summary>
-	/// 获取或设置当前状态值。
-	/// </summary>
+	/// <summary>获取或设置当前状态值。</summary>
 	public TValue Value { get; set; }
 	#endregion
 

@@ -43,7 +43,6 @@ public abstract class StateDiagramBase<TKey, TValue> : IStateDiagram<TKey, TValu
 
 	#region 公共属性
 	public IServiceProvider ServiceProvider { get; }
-
 	public StateVector<TValue>[] Vectors { get; protected set; }
 	#endregion
 
@@ -75,18 +74,9 @@ public abstract class StateDiagramBase<TKey, TValue> : IStateDiagram<TKey, TValu
 		return false;
 	}
 
-	protected virtual void OnTransfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler)
-	{
-		handler.Handle(context);
-	}
-
-	protected virtual void OnTransfering(IStateContext<TKey, TValue> context)
-	{
-	}
-
-	protected virtual void OnTransferred(IStateContext<TKey, TValue> context)
-	{
-	}
+	protected virtual void OnTransfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler) => handler.Handle(context);
+	protected virtual void OnTransfering(IStateContext<TKey, TValue> context) { }
+	protected virtual void OnTransferred(IStateContext<TKey, TValue> context) { }
 	#endregion
 
 	#region 抽象方法
@@ -94,34 +84,18 @@ public abstract class StateDiagramBase<TKey, TValue> : IStateDiagram<TKey, TValu
 	protected abstract bool SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters);
 	protected virtual bool SetState(State<TKey, TValue> state, string description, IDictionary<object, object> parameters)
 	{
-		if(state == null)
-			throw new ArgumentNullException(nameof(state));
-
+		ArgumentNullException.ThrowIfNull(state);
 		return this.SetState(state.Key, state.Value, description, parameters);
 	}
 	#endregion
 
 	#region 显式实现
-	bool IStateDiagram<TKey, TValue>.CanTransfer(TValue source, TValue destination)
-	{
-		return this.CanTransfer(source, destination);
-	}
-
-	State<TKey, TValue> IStateDiagram<TKey, TValue>.GetState(TKey key)
-	{
-		return this.GetState(key);
-	}
-
-	bool IStateDiagram<TKey, TValue>.SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters)
-	{
-		return this.SetState(key, value, description, parameters);
-	}
-
+	bool IStateDiagram<TKey, TValue>.CanTransfer(TValue source, TValue destination) => this.CanTransfer(source, destination);
+	State<TKey, TValue> IStateDiagram<TKey, TValue>.GetState(TKey key) => this.GetState(key);
+	bool IStateDiagram<TKey, TValue>.SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters) => this.SetState(key, value, description, parameters);
 	bool IStateDiagram<TKey, TValue>.SetState(State<TKey, TValue> state, string description, IDictionary<object, object> parameters)
 	{
-		if(state == null)
-			throw new ArgumentNullException(nameof(state));
-
+		ArgumentNullException.ThrowIfNull(state);
 		return this.SetState(state, description, parameters);
 	}
 	#endregion

@@ -73,10 +73,7 @@ public class StateContext<TKey, TValue> : IStateContext<TKey, TValue> where TKey
 	#endregion
 
 	#region 公共方法
-	public bool SetState(string description = null)
-	{
-		return this.Diagram.SetState(this.Key, this.State.Destination, description ?? this.Description, this.Parameters);
-	}
+	public bool SetState(string description = null) => this.Diagram.SetState(this.Key, this.State.Destination, description ?? this.Description, this.Parameters);
 	#endregion
 
 	private class ParameterCollection : IDictionary<object, object>

@@ -49,10 +49,7 @@ public abstract class StateHandlerBase<TKey, TValue> : IStateHandler<TKey, TValu
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void OnFinish(StateContext<TKey, TValue> context)
-	{
-		context.SetState();
-	}
+	protected virtual void OnFinish(StateContext<TKey, TValue> context) => context.SetState();
 	#endregion
 
 	#region 显式实现

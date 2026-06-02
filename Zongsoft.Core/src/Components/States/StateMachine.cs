@@ -58,11 +58,7 @@ public class StateMachine : IStateMachine
 	#endregion
 
 	#region 公共属性
-	public bool HasParameters
-	{
-		get => _parameters != null && _parameters.Count > 0;
-	}
-
+	public bool HasParameters => _parameters != null && _parameters.Count > 0;
 	public IDictionary<object, object> Parameters
 	{
 		get
@@ -90,10 +86,8 @@ public class StateMachine : IStateMachine
 	#region 运行方法
 	public void Run<TKey, TValue>(State<TKey, TValue> state, string description, IEnumerable<KeyValuePair<object, object>> parameters = null) where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
-		if(state == null)
-			throw new ArgumentNullException(nameof(state));
-
-		var context = GetContext(state, description);
+		ArgumentNullException.ThrowIfNull(state);
+		var context = this.GetContext(state, description);
 
 		if(context == null)
 			return;
@@ -162,7 +156,7 @@ public class StateMachine : IStateMachine
 	#region 虚拟方法
 	protected virtual IEnumerable<IStateHandler<TKey, TValue>> GetHandlers<TKey, TValue>() where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
-		return _handlers.GetHandlers<TKey, TValue>() ?? Array.Empty<IStateHandler<TKey, TValue>>();
+		return _handlers.GetHandlers<TKey, TValue>() ?? [];
 	}
 	#endregion
 
@@ -180,8 +174,7 @@ public class StateMachine : IStateMachine
 			{
 				if(context.Key.Equals(state.Key))
 				{
-					if(source == null)
-						source = context.State.Destination;
+					source ??= context.State.Destination;
 
 					if(context.State.Contains(state.Value))
 						return true;
@@ -195,12 +188,11 @@ public class StateMachine : IStateMachine
 	private IStateContext<TKey, TValue> GetContext<TKey, TValue>(State<TKey, TValue> destination, string description) where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
 		//如果指定状态实例已经被处理过
-		if(IsTransferred(destination, out var source))
+		if(this.IsTransferred(destination, out var source))
 			return null;
 
 		//获取指定状态实例的当前状态
-		if(source == null)
-			source = destination.Diagram.GetState(destination.Key)?.Value;
+		source ??= destination.Diagram.GetState(destination.Key)?.Value;
 
 		//如果源状态与目的状态相同则返回空
 		if(source == null || source.Value.Equals(destination.Value))
@@ -208,9 +200,7 @@ public class StateMachine : IStateMachine
 
 		//如果流程图定义了当前的流转向量则返回新建的上下文对象
 		if(destination.Diagram.CanTransfer(source.Value, destination.Value))
-		{
 			return this.CreateContext(destination.Diagram, destination.Key, source.Value, destination.Value, description);
-		}
 
 		//返回空对象
 		return null;
