@@ -50,6 +50,198 @@
 | Daemon 升级发布脚本 | `/Zongsoft/hosting/daemon/upgrade.publish.cmd` |
 | Windows Service 默认名称 | `zongsoft.daemon` |
 
+## Windows 实操补充
+
+以下补充来自实际执行本工作流时遇到的问题。下次运行时优先按这些检查点执行，避免重复排查。
+
+### 1. 权限检查必须前置
+
+在执行 `install.cmd`、`uninstall.cmd`、`sc start`、`sc stop`、`sc delete` 前，先确认当前 PowerShell 是否为管理员：
+
+```powershell
+$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+$principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+```
+
+如果结果为 `False`：
+
+- `install.cmd` / `uninstall.cmd` 会尝试弹出提升后的窗口，但当前自动化会话可能无法继续捕获后续输出；
+- `sc start zongsoft.daemon` 可能返回 `OpenService FAILED 5: Access is denied.`；
+- 不能把此前台运行 daemon 的结果当作 Windows Service 验证通过；
+- 如果服务已被提升后的脚本创建或删除，仍需用 `sc query zongsoft.daemon` 和 `sc qc zongsoft.daemon` 复核最终状态。
+
+### 2. 非交互终端运行 Zongsoft CLI 的注意事项
+
+在 Codex/自动化 PowerShell 这类非交互终端中，`dotnet deploy`、`dotnet-upgrade` 可能在初始化 `Zongsoft.Terminals.Terminal.Console` 时失败：
+
+```text
+System.TypeInitializationException: The type initializer for 'ConsoleTerminal' threw an exception.
+System.IO.IOException: 句柄无效。
+at System.ConsolePal.set_TreatControlCAsInput(Boolean value)
+```
+
+如果出现该错误，不要误判为部署或升级包逻辑失败。可改用独立 `cmd.exe` 进程运行命令，并将输出重定向到日志文件，例如：
+
+```powershell
+$log = 'D:\Zongsoft\framework\upgrading\.artifacts\daemon-pack.log'
+$cmd = 'dotnet-upgrade pack --name:Zongsoft.Daemon --kind:fully --version:1.0.0.1 --checksum:sha1 --compilation:Debug --framework:net10.0 --platform:windows --architecture:x64 --source:"D:\Zongsoft\hosting\daemon\bin\Debug\net10.0" --output:"D:\Zongsoft\\" > "' + $log + '" 2>&1'
+$p = Start-Process -FilePath cmd.exe -ArgumentList '/c', $cmd -Wait -PassThru -WindowStyle Hidden
+$p.ExitCode
+Get-Content -LiteralPath $log
+```
+
+注意：`conhost.exe --headless` 曾被验证不能可靠执行子命令，不建议用它绕过该问题。
+
+### 3. PowerShell 中要保护 `$(...)` 占位符
+
+脚本中的 `$(edition)`、`$(framework)`、`$(scheme)` 等是 Zongsoft 部署工具占位符。直接在 PowerShell 中输入时会被 PowerShell 当作子表达式执行。
+
+如果手工运行 `dotnet deploy`，需要用单引号保护这些参数：
+
+```powershell
+dotnet deploy `
+	--verbosity:normal `
+	--overwrite:newest `
+	--host:daemon `
+	--site:daemon `
+	--scheme:default `
+	--environment:development `
+	--debug:on `
+	--edition:Debug `
+	--framework:net10.0 `
+	--platform:windows `
+	--architecture:x64 `
+	'--destination:bin/$(edition)/$(framework)' `
+	.deploy `
+	'../.deploy/$(scheme)/$(host).deploy' `
+	'../.deploy/$(scheme)/$(site).deploy'
+```
+
+### 4. 手工部署 upgrader 与 S3 文件系统插件
+
+如果 `dotnet deploy` 因非交互终端失败，可以手工部署最小验证集。
+
+daemon 输出目录通常为：
+
+```text
+D:\Zongsoft\hosting\daemon\bin\Debug\net10.0
+```
+
+upgrader 插件应包含：
+
+```text
+plugins\zongsoft\upgrader\Zongsoft.Upgrading.Upgrader.plugin
+plugins\zongsoft\upgrader\Zongsoft.Upgrading.Upgrader.option
+plugins\zongsoft\upgrader\Zongsoft.Upgrading.Upgrader.dll
+```
+
+upgrader 默认 `File` 通道使用：
+
+```text
+zfs.s3:/upgrading/releases/
+```
+
+因此 daemon 还必须能加载 `zfs.s3` 文件系统提供程序。至少部署 `Zongsoft.Externals.Amazon` 插件：
+
+```text
+plugins\zongsoft\externals\amazon\Zongsoft.Externals.Amazon.plugin
+plugins\zongsoft\externals\amazon\Zongsoft.Externals.Amazon.option
+plugins\zongsoft\externals\amazon\Zongsoft.Externals.Amazon.dll
+plugins\zongsoft\externals\amazon\AWSSDK.Core.dll
+plugins\zongsoft\externals\amazon\AWSSDK.S3.dll
+```
+
+如果漏掉 `AWSSDK.S3.dll`，Windows 事件日志和 daemon 日志中会出现：
+
+```text
+System.IO.FileNotFoundException: Could not load file or assembly 'AWSSDK.S3'
+```
+
+RustFS 默认连接配置可使用 `/Zongsoft/framework/externals/amazon/src/Zongsoft.Externals.Amazon.option` 中的配置：
+
+```text
+server=http://127.0.0.1:9000;region=cn-north-1;accessKey=rustfsadmin;secretKey=rustfsadmin
+```
+
+### 5. deployer 的固定位置
+
+upgrader 源码通过 `{ApplicationPath}/.deployer/Zongsoft.Upgrading.Deployer.exe` 查找部署器。Windows 下发布命令为：
+
+```cmd
+dotnet publish Zongsoft.Upgrading.Deployer.csproj ^
+	--self-contained ^
+	--runtime win-x64 ^
+	--framework net10.0 ^
+	--configuration Release ^
+	-p:PublishAot=true
+```
+
+发布后将 `bin\Release\net10.0\win-x64\publish\*` 复制到 daemon 输出目录的 `.deployer` 目录。确认存在：
+
+```text
+.deployer\Zongsoft.Upgrading.Deployer.exe
+```
+
+### 6. `dotnet-upgrade pack --output` 的尾斜杠
+
+如果 `--output:"D:\Zongsoft"` 没有尾斜杠，工具可能把它当作文件基名，生成：
+
+```text
+D:\Zongsoft.zip
+D:\Zongsoft.manifest
+```
+
+应使用带尾斜杠的目录：
+
+```text
+--output:"D:\Zongsoft\\"
+```
+
+预期输出类似：
+
+```text
+D:\Zongsoft\Zongsoft.Daemon@1.0.0.1_win-x64.zip
+D:\Zongsoft\Zongsoft.Daemon@1.0.0.1_win-x64.manifest
+```
+
+### 7. 发布后验证 RustFS/S3 对象
+
+如果没有 `aws`、`mc` 等工具，可用本机 NuGet 缓存中的 AWSSDK 程序集在 PowerShell 中列对象：
+
+```powershell
+Add-Type -Path "$env:USERPROFILE\.nuget\packages\awssdk.core\4.0.3.27\lib\net8.0\AWSSDK.Core.dll"
+Add-Type -Path "$env:USERPROFILE\.nuget\packages\awssdk.s3\4.0.20.3\lib\net8.0\AWSSDK.S3.dll"
+
+$config = [Amazon.S3.AmazonS3Config]::new()
+$config.ServiceURL = 'http://127.0.0.1:9000'
+$config.ForcePathStyle = $true
+$config.UseHttp = $true
+
+$client = [Amazon.S3.AmazonS3Client]::new('rustfsadmin', 'rustfsadmin', $config)
+$request = [Amazon.S3.Model.ListObjectsV2Request]::new()
+$request.BucketName = 'upgrading'
+$request.Prefix = 'releases/daemon'
+$response = $client.ListObjectsV2Async($request).GetAwaiter().GetResult()
+$response.S3Objects | Select-Object Key,Size,LastModified
+$client.Dispose()
+```
+
+### 8. 可观测标记和升级版本号
+
+daemon 宿主中的 `Microsoft.Extensions.Logging.ILogger` 输出不一定会进入 Zongsoft 约定的文件日志。为了让 Windows Service 验证更容易观测，临时 marker 建议直接使用 Zongsoft 日志：
+
+```csharp
+Zongsoft.Diagnostics.Logging.GetLogging<UpgradeMarkerService>().Info("Daemon upgrade marker: 1.0.0-test.1");
+```
+
+日志通常位于 daemon 部署目录下：
+
+```text
+logs\yyyyMM\Zongsoft.Hosting.Daemon-*.log
+```
+
+升级包版本必须高于当前运行应用版本，否则 upgrader 会认为没有可用新版本。曾观测到当前 daemon 应用版本为 `1.0.0.0`，因此测试包可使用 `1.0.0.1`，同时 marker 使用 `1.0.0-test.1` 来证明实际代码已替换。
+
 # 阶段一：环境准备
 
 ## 1. 检查依赖服务

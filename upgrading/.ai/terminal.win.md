@@ -43,6 +43,177 @@
 | Deployer 部署目录 | 根据 upgrader 配置、源码或日志确认 |
 | 升级工具 / tool | 在仓库中查找已有 tool 项目或命令入口 |
 
+## Windows 实操补充
+
+以下补充来自实际执行 Windows 升级工作流时遇到的问题。terminal 工作流不涉及 Windows Service 安装，但构建、部署、打包、发布和 S3 通道验证会遇到相同的 Windows 自动化细节。
+
+### 1. 非交互终端运行 Zongsoft CLI 的注意事项
+
+在 Codex/自动化 PowerShell 这类非交互终端中，`dotnet deploy`、`dotnet-upgrade` 可能在初始化 `Zongsoft.Terminals.Terminal.Console` 时失败：
+
+```text
+System.TypeInitializationException: The type initializer for 'ConsoleTerminal' threw an exception.
+System.IO.IOException: 句柄无效。
+at System.ConsolePal.set_TreatControlCAsInput(Boolean value)
+```
+
+如果出现该错误，不要误判为部署、打包或发布逻辑失败。可改用独立 `cmd.exe` 进程运行命令，并将输出重定向到日志文件，例如：
+
+```powershell
+$log = 'D:\Zongsoft\framework\upgrading\.artifacts\terminal-pack.log'
+$cmd = 'dotnet-upgrade pack --name:Zongsoft.Commands --kind:delta --version:1.0.0.1 --checksum:sha1 --compilation:Debug --framework:net10.0 --platform:windows --architecture:x64 --source:"D:\Zongsoft\framework\Zongsoft.Commands\src\bin\Debug\net10.0" --output:"D:\Zongsoft\\" > "' + $log + '" 2>&1'
+$p = Start-Process -FilePath cmd.exe -ArgumentList '/c', $cmd -Wait -PassThru -WindowStyle Hidden
+$p.ExitCode
+Get-Content -LiteralPath $log
+```
+
+注意：`conhost.exe --headless` 曾被验证不能可靠执行子命令，不建议用它绕过该问题。
+
+### 2. PowerShell 中要保护 `$(...)` 占位符
+
+脚本中的 `$(edition)`、`$(framework)`、`$(scheme)` 等是 Zongsoft 部署工具占位符。直接在 PowerShell 中输入时会被 PowerShell 当作子表达式执行。
+
+如果手工运行 `dotnet deploy`，需要用单引号保护这些参数：
+
+```powershell
+dotnet deploy `
+	--verbosity:normal `
+	--overwrite:newest `
+	--host:terminal `
+	--site:terminal `
+	--scheme:default `
+	--environment:development `
+	--debug:on `
+	--edition:Debug `
+	--framework:net10.0 `
+	--platform:windows `
+	--architecture:x64 `
+	'--destination:bin/$(edition)/$(framework)' `
+	.deploy `
+	'../.deploy/$(scheme)/$(host).deploy' `
+	'../.deploy/$(scheme)/$(site).deploy'
+```
+
+### 3. 手工部署 upgrader 与 S3 文件系统插件
+
+如果 `dotnet deploy` 因非交互终端失败，可以手工部署最小验证集。
+
+terminal 输出目录通常为：
+
+```text
+D:\Zongsoft\hosting\terminal\bin\Debug\net10.0
+```
+
+upgrader 插件应包含：
+
+```text
+plugins\zongsoft\upgrader\Zongsoft.Upgrading.Upgrader.plugin
+plugins\zongsoft\upgrader\Zongsoft.Upgrading.Upgrader.option
+plugins\zongsoft\upgrader\Zongsoft.Upgrading.Upgrader.dll
+```
+
+upgrader 默认 `File` 通道使用：
+
+```text
+zfs.s3:/upgrading/releases/
+```
+
+因此 terminal 还必须能加载 `zfs.s3` 文件系统提供程序。至少部署 `Zongsoft.Externals.Amazon` 插件：
+
+```text
+plugins\zongsoft\externals\amazon\Zongsoft.Externals.Amazon.plugin
+plugins\zongsoft\externals\amazon\Zongsoft.Externals.Amazon.option
+plugins\zongsoft\externals\amazon\Zongsoft.Externals.Amazon.dll
+plugins\zongsoft\externals\amazon\AWSSDK.Core.dll
+plugins\zongsoft\externals\amazon\AWSSDK.S3.dll
+```
+
+如果漏掉 `AWSSDK.S3.dll`，Windows 事件日志或 terminal 日志中可能出现：
+
+```text
+System.IO.FileNotFoundException: Could not load file or assembly 'AWSSDK.S3'
+```
+
+RustFS 默认连接配置可使用 `/Zongsoft/framework/externals/amazon/src/Zongsoft.Externals.Amazon.option` 中的配置：
+
+```text
+server=http://127.0.0.1:9000;region=cn-north-1;accessKey=rustfsadmin;secretKey=rustfsadmin
+```
+
+### 4. deployer 的固定位置
+
+upgrader 源码通过 `{ApplicationPath}/.deployer/Zongsoft.Upgrading.Deployer.exe` 查找部署器。Windows 下发布命令为：
+
+```cmd
+dotnet publish Zongsoft.Upgrading.Deployer.csproj ^
+	--self-contained ^
+	--runtime win-x64 ^
+	--framework net10.0 ^
+	--configuration Release ^
+	-p:PublishAot=true
+```
+
+发布后将 `bin\Release\net10.0\win-x64\publish\*` 复制到 terminal 输出目录的 `.deployer` 目录。确认存在：
+
+```text
+.deployer\Zongsoft.Upgrading.Deployer.exe
+```
+
+### 5. `dotnet-upgrade pack --output` 的尾斜杠
+
+如果 `--output:"D:\Zongsoft"` 没有尾斜杠，工具可能把它当作文件基名，生成：
+
+```text
+D:\Zongsoft.zip
+D:\Zongsoft.manifest
+```
+
+应使用带尾斜杠的目录：
+
+```text
+--output:"D:\Zongsoft\\"
+```
+
+预期输出类似：
+
+```text
+D:\Zongsoft\Zongsoft.Commands@1.0.0.1_win-x64.zip
+D:\Zongsoft\Zongsoft.Commands@1.0.0.1_win-x64.manifest
+```
+
+### 6. 发布后验证 RustFS/S3 对象
+
+如果没有 `aws`、`mc` 等工具，可用本机 NuGet 缓存中的 AWSSDK 程序集在 PowerShell 中列对象：
+
+```powershell
+Add-Type -Path "$env:USERPROFILE\.nuget\packages\awssdk.core\4.0.3.27\lib\net8.0\AWSSDK.Core.dll"
+Add-Type -Path "$env:USERPROFILE\.nuget\packages\awssdk.s3\4.0.20.3\lib\net8.0\AWSSDK.S3.dll"
+
+$config = [Amazon.S3.AmazonS3Config]::new()
+$config.ServiceURL = 'http://127.0.0.1:9000'
+$config.ForcePathStyle = $true
+$config.UseHttp = $true
+
+$client = [Amazon.S3.AmazonS3Client]::new('rustfsadmin', 'rustfsadmin', $config)
+$request = [Amazon.S3.Model.ListObjectsV2Request]::new()
+$request.BucketName = 'upgrading'
+$request.Prefix = 'releases'
+$response = $client.ListObjectsV2Async($request).GetAwaiter().GetResult()
+$response.S3Objects | Select-Object Key,Size,LastModified
+$client.Dispose()
+```
+
+### 7. TestCommand 版本号和包版本号
+
+`TestCommand` 输出的模拟版本号用于人工确认升级后的插件确实生效；升级包 `--version` 则用于 upgrader 判断是否存在新版本。两者建议保持同一轮次语义，但 `--version` 应使用升级系统可比较的版本号，例如：
+
+```text
+TestCommand version: 1.0.0-test.1
+--version:1.0.0.1
+```
+
+如果包版本不高于当前已加载插件或应用版本，upgrader 可能会认为没有可用新版本。
+
 # 阶段一：环境准备
 
 ## 1. 检查依赖服务
