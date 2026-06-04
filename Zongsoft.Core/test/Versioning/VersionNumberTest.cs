@@ -5,31 +5,31 @@ using Xunit;
 
 namespace Zongsoft.Versioning;
 
-public class VersionTest
+public class VersionNumberTest
 {
 	[Fact]
 	public void TestConstructors()
 	{
-		var version = new Version(1, 2, 3, 4);
+		var version = new Version.Number(1, 2, 3, 4);
 		Assert.Equal(1, version.Major);
 		Assert.Equal(2, version.Minor);
 		Assert.Equal(3, version.Patch);
 		Assert.Equal(4, version.Revision);
 		Assert.False(version.IsZero);
 
-		version = new Version(0x0001_0002_0003_0004UL);
+		version = new Version.Number(0x0001_0002_0003_0004UL);
 		Assert.Equal(1, version.Major);
 		Assert.Equal(2, version.Minor);
 		Assert.Equal(3, version.Patch);
 		Assert.Equal(4, version.Revision);
 
-		version = new Version(-1);
+		version = new Version.Number(-1);
 		Assert.Equal(ushort.MaxValue, version.Major);
 		Assert.Equal(ushort.MaxValue, version.Minor);
 		Assert.Equal(ushort.MaxValue, version.Patch);
 		Assert.Equal(ushort.MaxValue, version.Revision);
 
-		Assert.True(default(Version).IsZero);
+		Assert.True(default(Version.Number).IsZero);
 	}
 
 	[Theory]
@@ -39,14 +39,14 @@ public class VersionTest
 	[InlineData("65535.65535.65535.65535", 65535, 65535, 65535, 65535)]
 	public void TestParse(string text, int major, int minor, int patch, int revision)
 	{
-		Assert.True(Version.TryParse(text, out var result));
+		Assert.True(Version.Number.TryParse(text, out var result));
 		Assert.Equal((ushort)major, result.Major);
 		Assert.Equal((ushort)minor, result.Minor);
 		Assert.Equal((ushort)patch, result.Patch);
 		Assert.Equal((ushort)revision, result.Revision);
 
-		Assert.Equal(result, Version.Parse(text));
-		Assert.Equal(result, Version.Parse(text, null));
+		Assert.Equal(result, Version.Number.Parse(text));
+		Assert.Equal(result, Version.Number.Parse(text, null));
 	}
 
 	[Theory]
@@ -62,18 +62,18 @@ public class VersionTest
 	[InlineData("65536.0")]
 	public void TestTryParseFailed(string text)
 	{
-		Assert.False(Version.TryParse(text, out var result));
+		Assert.False(Version.Number.TryParse(text, out var result));
 		Assert.True(result.IsZero);
 
-		Assert.Throws<FormatException>(() => Version.Parse(text));
+		Assert.Throws<FormatException>(() => Version.Number.Parse(text));
 	}
 
 	[Fact]
 	public void TestEquality()
 	{
-		var left = new Version(1, 2, 3, 4);
-		var right = new Version(1, 2, 3, 4);
-		var other = new Version(1, 2, 3, 5);
+		var left = new Version.Number(1, 2, 3, 4);
+		var right = new Version.Number(1, 2, 3, 4);
+		var other = new Version.Number(1, 2, 3, 5);
 
 		Assert.True(left.Equals(right));
 		Assert.True(left.Equals((object)right));
@@ -88,20 +88,20 @@ public class VersionTest
 	[Fact]
 	public void TestCompareTo()
 	{
-		Assert.Equal(0, new Version(1, 2, 3, 4).CompareTo(new Version(1, 2, 3, 4)));
-		Assert.True(new Version(1, 2, 3, 4).CompareTo(new Version(2, 0, 0, 0)) < 0);
-		Assert.True(new Version(1, 2, 3, 4).CompareTo(new Version(1, 3, 0, 0)) < 0);
-		Assert.True(new Version(1, 2, 3, 4).CompareTo(new Version(1, 2, 4, 0)) < 0);
-		Assert.True(new Version(1, 2, 3, 4).CompareTo(new Version(1, 2, 3, 5)) < 0);
-		Assert.True(new Version(2, 0, 0, 0).CompareTo(new Version(1, 2, 3, 4)) > 0);
+		Assert.Equal(0, new Version.Number(1, 2, 3, 4).CompareTo(new Version.Number(1, 2, 3, 4)));
+		Assert.True(new Version.Number(1, 2, 3, 4).CompareTo(new Version.Number(2, 0, 0, 0)) < 0);
+		Assert.True(new Version.Number(1, 2, 3, 4).CompareTo(new Version.Number(1, 3, 0, 0)) < 0);
+		Assert.True(new Version.Number(1, 2, 3, 4).CompareTo(new Version.Number(1, 2, 4, 0)) < 0);
+		Assert.True(new Version.Number(1, 2, 3, 4).CompareTo(new Version.Number(1, 2, 3, 5)) < 0);
+		Assert.True(new Version.Number(2, 0, 0, 0).CompareTo(new Version.Number(1, 2, 3, 4)) > 0);
 	}
 
 	[Fact]
 	public void TestComparisonOperators()
 	{
-		var lower = new Version(1, 2, 3, 4);
-		var same = new Version(1, 2, 3, 4);
-		var higher = new Version(1, 2, 3, 5);
+		var lower = new Version.Number(1, 2, 3, 4);
+		var same = new Version.Number(1, 2, 3, 4);
+		var higher = new Version.Number(1, 2, 3, 5);
 
 		Assert.True(lower < higher);
 		Assert.True(lower <= higher);
@@ -119,23 +119,23 @@ public class VersionTest
 	[Fact]
 	public void TestToString()
 	{
-		Assert.Equal("0.0.0", default(Version).ToString());
-		Assert.Equal("1.2.0", new Version(1, 2).ToString());
-		Assert.Equal("1.2.3", new Version(1, 2, 3).ToString());
-		Assert.Equal("1.2.3.4", new Version(1, 2, 3, 4).ToString());
+		Assert.Equal("0.0.0", default(Version.Number).ToString());
+		Assert.Equal("1.2.0", new Version.Number(1, 2).ToString());
+		Assert.Equal("1.2.3", new Version.Number(1, 2, 3).ToString());
+		Assert.Equal("1.2.3.4", new Version.Number(1, 2, 3, 4).ToString());
 	}
 
 	[Fact]
 	public void TestJsonSerialize()
 	{
-		Assert.Equal("\"0.0.0\"", Serialization.Serializer.Json.Serialize(default(Version)));
-		Assert.Equal("\"1.2.3\"", Serialization.Serializer.Json.Serialize(new Version(1, 2, 3)));
-		Assert.Equal("\"1.2.3.4\"", Serialization.Serializer.Json.Serialize(new Version(1, 2, 3, 4)));
+		Assert.Equal("\"0.0.0\"", Serialization.Serializer.Json.Serialize(default(Version.Number)));
+		Assert.Equal("\"1.2.3\"", Serialization.Serializer.Json.Serialize(new Version.Number(1, 2, 3)));
+		Assert.Equal("\"1.2.3.4\"", Serialization.Serializer.Json.Serialize(new Version.Number(1, 2, 3, 4)));
 
-		Assert.Equal("\"1.2.3.4\"", System.Text.Json.JsonSerializer.Serialize(new Version(1, 2, 3, 4)));
+		Assert.Equal("\"1.2.3.4\"", System.Text.Json.JsonSerializer.Serialize(new Version.Number(1, 2, 3, 4)));
 		Assert.Equal("{\"Version\":\"1.2.3.4\"}", System.Text.Json.JsonSerializer.Serialize(new VersionEntry()
 		{
-			Version = new Version(1, 2, 3, 4),
+			Version = new Version.Number(1, 2, 3, 4),
 		}));
 	}
 
@@ -146,10 +146,10 @@ public class VersionTest
 	[InlineData("281483566841860", 1, 2, 3, 4)]
 	public void TestJsonDeserialize(string json, int major, int minor, int patch, int revision)
 	{
-		var expected = new Version((ushort)major, (ushort)minor, (ushort)patch, (ushort)revision);
+		var expected = new Version.Number((ushort)major, (ushort)minor, (ushort)patch, (ushort)revision);
 
-		Assert.Equal(expected, Serialization.Serializer.Json.Deserialize<Version>(json));
-		Assert.Equal(expected, System.Text.Json.JsonSerializer.Deserialize<Version>(json));
+		Assert.Equal(expected, Serialization.Serializer.Json.Deserialize<Version.Number>(json));
+		Assert.Equal(expected, System.Text.Json.JsonSerializer.Deserialize<Version.Number>(json));
 	}
 
 	[Fact]
@@ -162,45 +162,45 @@ public class VersionTest
 		""";
 
 		var result = System.Text.Json.JsonSerializer.Deserialize<VersionEntry>(JSON);
-		Assert.Equal(new Version(1, 2, 3, 4), result.Version);
+		Assert.Equal(new Version.Number(1, 2, 3, 4), result.Version);
 
-		Assert.True(Serialization.Serializer.Json.Deserialize<Version>("null").IsZero);
-		Assert.Null(Serialization.Serializer.Json.Deserialize<Version?>("null"));
+		Assert.True(Serialization.Serializer.Json.Deserialize<Version.Number>("null").IsZero);
+		Assert.Null(Serialization.Serializer.Json.Deserialize<Version.Number?>("null"));
 	}
 
 	[Fact]
 	public void TestNumericConversion()
 	{
-		var version = new Version(1, 2, 3, 4);
+		var version = new Version.Number(1, 2, 3, 4);
 		const ulong Packed = 0x0001_0002_0003_0004UL;
 
 		Assert.Equal(Packed, (ulong)version);
 		Assert.Equal((long)Packed, (long)version);
-		Assert.Equal(version, (Version)Packed);
-		Assert.Equal(version, (Version)(long)Packed);
+		Assert.Equal(version, (Version.Number)Packed);
+		Assert.Equal(version, (Version.Number)(long)Packed);
 
-		version = new Version(ushort.MaxValue, ushort.MaxValue, ushort.MaxValue, ushort.MaxValue);
+		version = new Version.Number(ushort.MaxValue, ushort.MaxValue, ushort.MaxValue, ushort.MaxValue);
 		Assert.Equal(ulong.MaxValue, (ulong)version);
 		Assert.Equal(-1L, (long)version);
-		Assert.Equal(version, (Version)(-1L));
+		Assert.Equal(version, (Version.Number)(-1L));
 	}
 
 	[Fact]
 	public void TestSystemVersionConversion()
 	{
-		Version version = new System.Version(1, 2);
-		Assert.Equal(new Version(1, 2), version);
+		Version.Number version = new System.Version(1, 2);
+		Assert.Equal(new Version.Number(1, 2), version);
 
 		version = new System.Version(1, 2, 3, 4);
-		Assert.Equal(new Version(1, 2, 3, 4), version);
+		Assert.Equal(new Version.Number(1, 2, 3, 4), version);
 
-		System.Version systemVersion = new Version(1, 2, 3);
+		System.Version systemVersion = new Version.Number(1, 2, 3);
 		Assert.Equal(1, systemVersion.Major);
 		Assert.Equal(2, systemVersion.Minor);
 		Assert.Equal(3, systemVersion.Build);
 		Assert.Equal(-1, systemVersion.Revision);
 
-		systemVersion = new Version(1, 2, 3, 4);
+		systemVersion = new Version.Number(1, 2, 3, 4);
 		Assert.Equal(1, systemVersion.Major);
 		Assert.Equal(2, systemVersion.Minor);
 		Assert.Equal(3, systemVersion.Build);
@@ -214,8 +214,8 @@ public class VersionTest
 	[Fact]
 	public void TestTypeConverter()
 	{
-		var converter = TypeDescriptor.GetConverter(typeof(Version));
-		var version = new Version(1, 2, 3, 4);
+		var converter = TypeDescriptor.GetConverter(typeof(Version.Number));
+		var version = new Version.Number(1, 2, 3, 4);
 		const ulong Packed = 0x0001_0002_0003_0004UL;
 
 		Assert.True(converter.CanConvertFrom(typeof(string)));
@@ -238,6 +238,6 @@ public class VersionTest
 
 	private class VersionEntry
 	{
-		public Version Version { get; set; }
+		public Version.Number Version { get; set; }
 	}
 }

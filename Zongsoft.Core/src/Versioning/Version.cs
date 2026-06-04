@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,128 +28,67 @@
  */
 
 using System;
-using System.ComponentModel;
-using System.Text.Json.Serialization;
 
 namespace Zongsoft.Versioning;
 
-[TypeConverter(typeof(TypeConverter))]
-[JsonConverter(typeof(JsonConverter))]
-public readonly partial struct Version : IEquatable<Version>, IComparable<Version>, IParsable<Version>
+/// <summary>表示语义化版本的类，包含主版本号、次版本号、修订号、标签和额外信息等属性。</summary>
+public partial class Version
 {
 	#region 构造函数
-	public Version(long value) : this(unchecked((ulong)value)) { }
-	public Version(ulong value)
-	{
-		this.Major = (ushort)((value & 0xFFFF_0000_0000_0000) >> (3 * sizeof(ushort) * 8));
-		this.Minor = (ushort)((value & 0x0000_FFFF_0000_0000) >> (2 * sizeof(ushort) * 8));
-		this.Patch = (ushort)((value & 0x0000_0000_FFFF_0000) >> (1 * sizeof(ushort) * 8));
-		this.Revision = (ushort)(value & 0x0000_0000_0000_FFFF);
-	}
-
-	public Version(ushort major, ushort minor, ushort patch = 0, ushort revision = 0)
+	public Version(int major, int minor, int patch, string label = null, string extra = null)
 	{
 		this.Major = major;
 		this.Minor = minor;
 		this.Patch = patch;
-		this.Revision = revision;
+		this.Label = string.IsNullOrEmpty(label) ? null : label.Trim();
+		this.Extra = string.IsNullOrEmpty(extra) ? null : extra.Trim();
 	}
-	#endregion
-
-	#region 公共字段
-	public readonly ushort Major;
-	public readonly ushort Minor;
-	public readonly ushort Patch;
-	public readonly ushort Revision;
 	#endregion
 
 	#region 公共属性
-	public bool IsZero => this.Major == 0 && this.Minor == 0 && this.Patch == 0 && this.Revision == 0;
+	/// <summary>获取主版本号。</summary>
+	public int Major { get; }
+	/// <summary>获取次版本号。</summary>
+	public int Minor { get; }
+	/// <summary>获取修订号。</summary>
+	public int Patch { get; }
+	/// <summary>获取标签。</summary>
+	public string Label { get; }
+	/// <summary>获取额外信息。</summary>
+	public string Extra { get; }
+	/// <summary>获取一个值，指示当前版本是否为空。</summary>
+	public bool IsEmpty => this.Major == 0 && this.Minor == 0 && this.Patch == 0 && string.IsNullOrEmpty(this.Label) && string.IsNullOrEmpty(this.Extra);
 	#endregion
 
-	#region 解析方法
-	public static Version Parse(string text, IFormatProvider provider = null) => TryParse(text, provider, out var result) ? result : throw new FormatException();
-	public static bool TryParse(string text, out Version result) => TryParse(text, null, out result);
-	public static bool TryParse(string text, IFormatProvider provider, out Version result)
+	#region 公共方法
+	/// <summary>获取标签。</summary>
+	/// <param name="label">输出参数，用于接收标签值。</param>
+	/// <returns>如果当前版本有标签，则返回 <c>true</c>；否则返回 <c>false</c>。</returns>
+	public bool HasLabel(out string label)
 	{
-		if(string.IsNullOrEmpty(text))
+		if(string.IsNullOrEmpty(this.Label))
 		{
-			result = default;
+			label = null;
 			return false;
 		}
 
-		var parts = text.Split('.');
+		label = this.Label;
+		return true;
+	}
 
-		if(parts.Length > 1 && ushort.TryParse(parts[0], out var major) && ushort.TryParse(parts[1], out var minor))
+	/// <summary>获取额外信息。</summary>
+	/// <param name="extra">输出参数，用于接收额外信息值。</param>
+	/// <returns>如果当前版本有额外信息，则返回 <c>true</c>；否则返回 <c>false</c>。</returns>
+	public bool HasExtra(out string extra)
+	{
+		if(string.IsNullOrEmpty(this.Extra))
 		{
-			if(parts.Length == 2)
-			{
-				result = new(major, minor);
-				return true;
-			}
-
-			if(parts.Length == 3 && ushort.TryParse(parts[2], out var patch))
-			{
-				result = new(major, minor, patch);
-				return true;
-			}
-
-			if(parts.Length == 4 && ushort.TryParse(parts[2], out patch) && ushort.TryParse(parts[3], out var revision))
-			{
-				result = new(major, minor, patch, revision);
-				return true;
-			}
+			extra = null;
+			return false;
 		}
 
-		result = default;
-		return false;
+		extra = this.Extra;
+		return true;
 	}
-	#endregion
-
-	#region 重写方法
-	public bool Equals(Version other) =>
-		this.Major == other.Major &&
-		this.Minor == other.Minor &&
-		this.Patch == other.Patch &&
-		this.Revision == other.Revision;
-
-	public int CompareTo(Version other)
-	{
-		var result = this.Major.CompareTo(other.Major);
-		if(result != 0) return result;
-
-		result = this.Minor.CompareTo(other.Minor);
-		if(result != 0) return result;
-
-		result = this.Patch.CompareTo(other.Patch);
-		if(result != 0) return result;
-
-		return this.Revision.CompareTo(other.Revision);
-	}
-
-	public override bool Equals(object obj) => obj is Version other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(this.Major, this.Minor, this.Patch, this.Revision);
-	public override string ToString() => this.Revision == 0 ? $"{this.Major}.{this.Minor}.{this.Patch}" : $"{this.Major}.{this.Minor}.{this.Patch}.{this.Revision}";
-	#endregion
-
-	#region 符号重写
-	public static bool operator ==(Version left, Version right) => left.Equals(right);
-	public static bool operator !=(Version left, Version right) => !(left == right);
-	public static bool operator >(Version left, Version right) => left.CompareTo(right) > 0;
-	public static bool operator >=(Version left, Version right) => left.CompareTo(right) >= 0;
-	public static bool operator <(Version left, Version right) => left.CompareTo(right) < 0;
-	public static bool operator <=(Version left, Version right) => left.CompareTo(right) <= 0;
-
-	public static implicit operator Version(long value) => new(value);
-	public static implicit operator Version(ulong value) => new(value);
-
-	public static implicit operator long(Version version) => (long)(ulong)version;
-	public static implicit operator ulong(Version version) =>
-		((ulong)version.Major << (3 * sizeof(ushort) * 8)) +
-		((ulong)version.Minor << (2 * sizeof(ushort) * 8)) +
-		((ulong)version.Patch << (1 * sizeof(ushort) * 8)) + version.Revision;
-
-	public static implicit operator Version(System.Version version) => version == null ? default : new((ushort)version.Major, (ushort)version.Minor, (ushort)Math.Max(version.Build, 0), (ushort)Math.Max(version.Revision, 0));
-	public static implicit operator System.Version(Version version) => version.Revision == 0 ? new(version.Major, version.Minor, version.Patch) : new(version.Major, version.Minor, version.Patch, version.Revision);
 	#endregion
 }
