@@ -160,7 +160,7 @@ partial class Packager
 
 			static string GetFileName(string name, string edition, Version version, Platform platform, Architecture architecture) => string.IsNullOrEmpty(edition) ?
 				$"{name}@{version}_{Application.GetRuntimeIdentifier(platform, architecture)}" :
-				$"{name}({edition})@{version}_{Application.GetRuntimeIdentifier(platform, architecture)}";
+				$"{name}-{edition}@{version}_{Application.GetRuntimeIdentifier(platform, architecture)}";
 		}
 		#endregion
 

@@ -45,7 +45,7 @@ public abstract class Release
 	/// <summary>获取或设置版本名。</summary>
 	public abstract string Edition { get; set; }
 	/// <summary>获取或设置版本号。</summary>
-	public abstract Components.Version Version { get; set; }
+	public abstract Versioning.Version.Number Version { get; set; }
 	/// <summary>获取或设置发布类型。</summary>
 	public abstract ReleaseKind Kind { get; set; }
 	/// <summary>获取或设置升级部署模式。</summary>
@@ -104,7 +104,7 @@ public abstract class ReleaseCriteria : CriteriaBase
 	/// <summary>获取或设置版本名。</summary>
 	public abstract string Edition { get; set; }
 	/// <summary>获取或设置版本号。</summary>
-	public abstract Range<Components.Version> Version { get; set; }
+	public abstract Range<Versioning.Version.Number> Version { get; set; }
 	/// <summary>获取或设置发布类型。</summary>
 	public abstract ReleaseKind? Kind { get; set; }
 	/// <summary>获取或设置升级部署模式。</summary>

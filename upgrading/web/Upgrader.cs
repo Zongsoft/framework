@@ -59,11 +59,11 @@ public static class Upgrader
 		else
 			criteria.Add(Condition.Equal(nameof(Models.Release.Edition), edition));
 
-		var currentlyVersion = parameters.TryGetValue("CurrentlyVersion", out var value) && Components.Version.TryParse(value, out var version) ? version : default;
+		var currentlyVersion = parameters.TryGetValue("CurrentlyVersion", out var value) && Versioning.Version.Number.TryParse(value, out var version) ? version : default;
 		if(!currentlyVersion.IsZero)
 			criteria.Add(Condition.GreaterThan(nameof(Models.Release.Version), (ulong)currentlyVersion));
 
-		var upgradingVersion = parameters.TryGetValue("UpgradingVersion", out value) && Components.Version.TryParse(value, out version) ? version : default;
+		var upgradingVersion = parameters.TryGetValue("UpgradingVersion", out value) && Versioning.Version.Number.TryParse(value, out version) ? version : default;
 		if(!upgradingVersion.IsZero)
 			criteria.Add(Condition.LessThanEqual(nameof(Models.Release.Version), (ulong)upgradingVersion));
 
