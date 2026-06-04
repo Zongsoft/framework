@@ -81,9 +81,9 @@ public partial class Version : IFormattable, IComparable, IComparable<Version>, 
 	public int Minor { get; }
 	/// <summary>获取修订号。</summary>
 	public int Patch { get; }
-	/// <summary>获取标签。</summary>
+	/// <summary>获取标签，在某些语义化版本中名为<c>Release</c>。</summary>
 	public string Label { get; }
-	/// <summary>获取额外信息。</summary>
+	/// <summary>获取额外信息，在某些语义化版本中名为<c>Metadata</c>。</summary>
 	public string Extra { get; }
 	/// <summary>获取一个值，指示当前版本是否为空。</summary>
 	public bool IsEmpty => this.Major == 0 && this.Minor == 0 && this.Patch == 0 && string.IsNullOrEmpty(this.Label) && string.IsNullOrEmpty(this.Extra);
@@ -151,6 +151,65 @@ public partial class Version : IFormattable, IComparable, IComparable<Version>, 
 	public virtual bool Equals(Version other) => Comparer.Equals(this, other);
 	public override int GetHashCode() => _hashcode;
 	public override string ToString() => this.ToString("N");
+
+	/// <summary>按指定格式返回当前版本的字符串表示。</summary>
+	/// <param name="format">
+	/// 	指定版本格式字符串。如果为空(<c>null</c>)或空字符串，则等同于 <c>"N"</c>。
+	/// 	格式字符串由一个或多个格式字符组成，每个格式字符会被依次展开；未识别的字符会原样输出，
+	/// 	因此可以使用诸如 <c>"x.y.z"</c>、<c>"V-R"</c>、<c>"F"</c> 这样的组合格式。
+	/// </param>
+	/// <param name="provider">
+	/// 	指定自定义格式提供程序。如果该提供程序能为当前 <see cref="Version"/> 类型返回 <see cref="ICustomFormatter"/>，
+	/// 	则格式化工作会委托给该格式化器；否则使用本类型内置的格式化规则。
+	/// </param>
+	/// <returns>返回按指定格式生成的版本字符串。</returns>
+	/// <remarks>
+	/// 	支持的格式字符如下：
+	/// 	<list type="table">
+	/// 		<listheader>
+	/// 			<term>格式</term>
+	/// 			<description>说明</description>
+	/// 		</listheader>
+	/// 		<item>
+	/// 			<term><c>N</c></term>
+	/// 			<description>规范化版本字符串，包含主版本号、次版本号、修订号以及可选标签，不包含额外信息；例如 <c>1.2.3</c> 或 <c>1.2.3-alpha.1</c>。</description>
+	/// 		</item>
+	/// 		<item>
+	/// 			<term><c>V</c></term>
+	/// 			<description>仅输出数字版本号，即 <c>major.minor.patch</c>；例如 <c>1.2.3</c>。</description>
+	/// 		</item>
+	/// 		<item>
+	/// 			<term><c>F</c></term>
+	/// 			<description>完整版本字符串，等同于 <c>N</c> 加上可选额外信息；例如 <c>1.2.3-alpha.1+build.5</c>。</description>
+	/// 		</item>
+	/// 		<item>
+	/// 			<term><c>R</c> 或 <c>L</c></term>
+	/// 			<description>仅输出标签(<see cref="Label"/>)；没有标签时输出空字符串。</description>
+	/// 		</item>
+	/// 		<item>
+	/// 			<term><c>M</c> 或 <c>E</c></term>
+	/// 			<description>仅输出额外信息(<see cref="Extra"/>)；没有额外信息时输出空字符串。</description>
+	/// 		</item>
+	/// 		<item>
+	/// 			<term><c>x</c></term>
+	/// 			<description>输出主版本号(<see cref="Major"/>)。</description>
+	/// 		</item>
+	/// 		<item>
+	/// 			<term><c>y</c></term>
+	/// 			<description>输出次版本号(<see cref="Minor"/>)。</description>
+	/// 		</item>
+	/// 		<item>
+	/// 			<term><c>z</c></term>
+	/// 			<description>输出修订号(<see cref="Patch"/>)。</description>
+	/// 		</item>
+	/// 		<item>
+	/// 			<term><c>r</c></term>
+	/// 			<description>输出保留的第四段版本号，当前恒为 <c>0</c>。</description>
+	/// 		</item>
+	/// 	</list>
+	/// 	例如：<c>ToString("x.y.z-R+M")</c> 或 <c>ToString("x.y.z-L+E")</c> 会得到类似 <c>1.2.3-alpha+build</c> 的字符串；
+	/// 	如果标签或额外信息为空，对应的 <c>R</c> 或 <c>M</c> 只会展开为空字符串，分隔符仍按格式字符串原样输出。
+	/// </remarks>
 	public virtual string ToString(string format, IFormatProvider provider = null)
 	{
 		if(provider != null && provider.GetFormat(this.GetType()) is ICustomFormatter formatter)
@@ -183,9 +242,11 @@ public partial class Version : IFormattable, IComparable, IComparable<Version>, 
 					AppendExtra();
 					break;
 				case 'R':
+				case 'L':
 					builder.Append(version.Label);
 					break;
 				case 'M':
+				case 'E':
 					builder.Append(version.Extra);
 					break;
 				case 'x':
