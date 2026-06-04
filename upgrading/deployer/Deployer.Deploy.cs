@@ -136,7 +136,17 @@ partial class Deployer
 
 		try
 		{
-			return Deployment.Load(deployment, true);
+			for(int i = 0; i < 40; i++)
+			{
+				try
+				{
+					return Deployment.Load(deployment, true);
+				}
+				catch(IOException) when(i < 39)
+				{
+					Thread.Sleep(250);
+				}
+			}
 		}
 		catch(Exception ex)
 		{
