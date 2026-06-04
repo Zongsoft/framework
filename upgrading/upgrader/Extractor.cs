@@ -87,7 +87,7 @@ public sealed class Extractor
 				return null;
 
 			//触发“Extracting”事件
-			await OnExtractingAsync(manifest.Trunk, source, destination.FullName, cancellation);
+			await OnExtractingAsync(delta, source, destination.FullName, cancellation);
 
 			//将安装包读取为Zip压缩文件
 			using var zip = ZipFile.OpenRead(source);
@@ -96,7 +96,7 @@ public sealed class Extractor
 			zip.ExtractToDirectory(destination.FullName, true);
 
 			//触发“Extracted”事件
-			await OnExtractedAsync(manifest.Trunk, source, destination.FullName, cancellation);
+			await OnExtractedAsync(delta, source, destination.FullName, cancellation);
 		}
 
 		//在目标目录中创建一个版本文件（含应用名、版本名、版本号）

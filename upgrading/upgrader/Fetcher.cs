@@ -145,7 +145,7 @@ public abstract partial class Fetcher
 				return default;
 
 			//设置下载的安装包文件路径到指定的扩展属性
-			manifest.Trunk.SetFilePath(filePath);
+			manifest.Deltas[i].SetFilePath(filePath);
 		}
 
 		//返回升级清单文件的完整路径
