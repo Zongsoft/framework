@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 using Xunit;
 
-namespace Zongsoft.Components.Tests;
+namespace Zongsoft.Versioning;
 
 public class VersionTest
 {

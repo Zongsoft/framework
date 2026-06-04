@@ -31,7 +31,7 @@ using System;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 
-namespace Zongsoft.Components;
+namespace Zongsoft.Versioning;
 
 [TypeConverter(typeof(TypeConverter))]
 [JsonConverter(typeof(JsonConverter))]
