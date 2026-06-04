@@ -33,6 +33,9 @@
 
 using System;
 using System.IO;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -46,8 +49,20 @@ partial class Packager
 	[CommandOption(CHANNEL_OPTION, typeof(string), Required = true)]
 	public sealed class PublishCommand : CommandBase<CommandContext>
 	{
+		#region 常量定义
 		private const string CHANNEL_OPTION = "channel";
+		private const string AUTHORIZATION_OPTION = "authorization";
+		private const string CREDENTIAL_OPTION = "credential";
+		#endregion
 
+		#region 单例字段
+		private static readonly JsonSerializerOptions _jsonOptions = new()
+		{
+			PropertyNameCaseInsensitive = true,
+		};
+		#endregion
+
+		#region 重写方法
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Arguments.IsEmpty)
@@ -71,13 +86,20 @@ partial class Packager
 
 			return null;
 		}
+		#endregion
 
+		#region 发布方法
 		private static async ValueTask PublishToWebAsync(CommandContext context, CancellationToken cancellation)
 		{
 			const string URL_OPTION = "url";
 
 			if(!context.Options.TryGetValue<string>(URL_OPTION, out var url) || string.IsNullOrWhiteSpace(url))
 				throw new CommandOptionMissingException(URL_OPTION);
+
+			using var client = new HttpClient();
+			ConfigureClient(client, context);
+
+			var endpoint = GetReleasesEndpoint(url);
 
 			foreach(var argument in context.Arguments)
 			{
@@ -95,7 +117,19 @@ partial class Packager
 					continue;
 				}
 
-				throw new NotSupportedException($"The web channel is not currently supported.");
+				var releases = await ImportManifestAsync(client, endpoint, manifestPath, cancellation);
+
+				//显示清单文件发布成功
+				Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.ManifestPublishedSuccessfully_Message, Path.GetFileName(manifestPath)));
+
+				foreach(var release in releases)
+					await UploadPackageAsync(client, endpoint, release.ReleaseId, packagePath, cancellation);
+
+				//显示包文件发布成功
+				Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.PackagePublishedSuccessfully_Message, Path.GetFileName(packagePath)));
+
+				foreach(var release in releases)
+					await PublishReleaseAsync(client, endpoint, release.ReleaseId, cancellation);
 			}
 		}
 
@@ -153,6 +187,103 @@ partial class Packager
 				Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.ManifestPublishedSuccessfully_Message, Path.GetFileName(manifestPath)));
 			}
 		}
+		#endregion
+
+		#region 私有方法
+		private static void ConfigureClient(HttpClient client, CommandContext context)
+		{
+			if(context.Options.TryGetValue<string>(AUTHORIZATION_OPTION, out var authorization) && !string.IsNullOrWhiteSpace(authorization))
+				client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", authorization);
+			else if(context.Options.TryGetValue<string>(CREDENTIAL_OPTION, out var credential) && !string.IsNullOrWhiteSpace(credential))
+				client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Credential {credential}");
+		}
+
+		private static async ValueTask<WebRelease[]> ImportManifestAsync(HttpClient client, Uri endpoint, string manifestPath, CancellationToken cancellation)
+		{
+			using var content = new MultipartFormDataContent();
+			using var stream = File.OpenRead(manifestPath);
+			using var file = new StreamContent(stream);
+			file.Headers.ContentType = new("application/xml");
+			content.Add(file, "file", Path.GetFileName(manifestPath));
+
+			using var response = await client.PostAsync(new Uri(endpoint, "Import?format=manifest"), content, cancellation);
+			await EnsureSuccessAsync(response, cancellation);
+
+			if(response.StatusCode == System.Net.HttpStatusCode.NoContent)
+				throw new InvalidOperationException($"The manifest file '{manifestPath}' did not import any release.");
+
+			await using var result = await response.Content.ReadAsStreamAsync(cancellation);
+			var releases = await JsonSerializer.DeserializeAsync<WebRelease[]>(result, _jsonOptions, cancellation);
+
+			if(releases == null || releases.Length == 0)
+				throw new InvalidOperationException($"The manifest file '{manifestPath}' did not import any release.");
+
+			for(int i = 0; i < releases.Length; i++)
+			{
+				if(releases[i].ReleaseId == 0)
+					throw new InvalidOperationException($"The web service returned an invalid release id for manifest file '{manifestPath}'.");
+			}
+
+			return releases;
+		}
+
+		private static async ValueTask UploadPackageAsync(HttpClient client, Uri endpoint, uint releaseId, string packagePath, CancellationToken cancellation)
+		{
+			using var content = new MultipartFormDataContent();
+			using var stream = File.OpenRead(packagePath);
+			using var file = new StreamContent(stream);
+			file.Headers.ContentType = new("application/zip");
+			content.Add(file, "file", Path.GetFileName(packagePath));
+
+			using var response = await client.PostAsync(new Uri(endpoint, $"{releaseId}/Upload?overwrite=true"), content, cancellation);
+			await EnsureSuccessAsync(response, cancellation);
+		}
+
+		private static async ValueTask PublishReleaseAsync(HttpClient client, Uri endpoint, uint releaseId, CancellationToken cancellation)
+		{
+			using var content = new StringContent("{\"Published\":true}", Encoding.UTF8, "application/json");
+			using var response = await client.PatchAsync(new Uri(endpoint, releaseId.ToString()), content, cancellation);
+			await EnsureSuccessAsync(response, cancellation);
+		}
+
+		private static async ValueTask EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellation)
+		{
+			if(response.IsSuccessStatusCode)
+				return;
+
+			var content = response.Content == null ? null : await response.Content.ReadAsStringAsync(cancellation);
+
+			throw new HttpRequestException(string.IsNullOrWhiteSpace(content) ?
+				$"The web service returned {(int)response.StatusCode} ({response.ReasonPhrase})." :
+				$"The web service returned {(int)response.StatusCode} ({response.ReasonPhrase}): {content}");
+		}
+
+		private static Uri GetReleasesEndpoint(string url)
+		{
+			if(!Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
+				throw new UriFormatException($"The specified web publish URL '{url}' is invalid.");
+
+			var builder = new UriBuilder(uri)
+			{
+				Query = null,
+				Fragment = null,
+			};
+
+			var path = builder.Path.TrimEnd('/');
+
+			if(string.IsNullOrEmpty(path) || path == "/")
+				builder.Path = "/Upgrading/Releases/";
+			else if(path.EndsWith("/Releases", StringComparison.OrdinalIgnoreCase))
+				builder.Path = path + "/";
+			else if(path.EndsWith("/Upgrading", StringComparison.OrdinalIgnoreCase))
+				builder.Path = path + "/Releases/";
+			else if(path.EndsWith("/Upgrading/Upgrader", StringComparison.OrdinalIgnoreCase))
+				builder.Path = path[..^"/Upgrader".Length] + "/Releases/";
+			else
+				builder.Path = path + "/Upgrading/Releases/";
+
+			return builder.Uri;
+		}
 
 		static string GetPackagePath(string path)
 		{
@@ -181,5 +312,11 @@ partial class Packager
 
 			return $"{path}{Manifest.FILE_NAME}";
 		}
+
+		private sealed class WebRelease
+		{
+			public uint ReleaseId { get; set; }
+		}
+		#endregion
 	}
 }
