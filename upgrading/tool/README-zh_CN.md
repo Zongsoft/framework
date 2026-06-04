@@ -57,7 +57,7 @@ dotnet-upgrade publish [选项] <包文件...>
 当未指定 `--output` 或仅指定了输出目录时，工具按照以下规则自动生成文件名：
 
 - **未指定 `--edition`**：`{name}@{version}_{runtime}`，如 `Zongsoft.Daemon@1.1.0_win-x64.zip`
-- **指定了 `--edition`**：`{name}({edition})@{version}_{runtime}`，如 `Zongsoft.Daemon-stable@1.1.0_linux-x64.zip`
+- **指定了 `--edition`**：`{name}-{edition}@{version}_{runtime}`，如 `Zongsoft.Daemon-stable@1.1.0_linux-x64.zip`
 
 其中 `{runtime}` 由 `platform` 和 `architecture` 组合而成，如 `win-x64`、`linux-arm64`。
 
@@ -217,7 +217,7 @@ dotnet-upgrade pack
 	--architecture:x64
 	--kind:Fully
 	--source:./
-	--output:./$(name)($(edition))@$(version)_$(runtime).zip
+	--output:./$(name)-$(edition)@$(version)_$(runtime).zip
 	--tags:tag1,tag2,tagX
 	--executor.link@deployed:"zongsoft.web.service /Zongsoft/hosting/.deploy/default/systemd/zongsoft.web.service"
 	mime
@@ -298,6 +298,32 @@ dotnet-upgrade checksum -a:sha256 package1.zip package2.zip
 
 支持 `amazon.s3` 和 `web` 两种发布通道。
 
+### 通用选项
+
+选项 | 类型 | 必填 | 说明
+----|------|:----:|-----
+`--channel` | string | ✓ | 发布通道。支持值：`amazon.s3`、`s3`、`web`
+
+### Amazon S3 选项
+
+选项 | 类型 | 必填 | 说明
+----|------|:----:|-----
+`--server` | string | ✓ | S3 兼容服务端点
+`--access` | string | ✓ | 访问密钥
+`--secret` | string | ✓ | 访问密钥密码
+`--destination` | string | ✓ | 目标存储桶和路径
+`--region` | string | - | 可选 S3 区域
+
+### Web 选项
+
+选项 | 类型 | 必填 | 说明
+----|------|:----:|-----
+`--url` | string | ✓ | Web 服务端包管理器 URL，可指向站点根路径、`/Upgrading`、`/Upgrading/Upgrader` 或 `/Upgrading/Releases`
+`--authorization` | string | - | 原始 `Authorization` 请求头值
+`--credential` | string | - | 凭证令牌。提供该值时，工具会发送 `Authorization: Credential {value}`
+
+Web 发布流程会导入 `.manifest` 清单文件，将匹配的 `.zip` 包上传到每个导入的发布，然后将这些发布标记为已发布。
+
 ### 范例
 
 - _Amazon.S3_ 文件系统
@@ -312,12 +338,13 @@ dotnet-upgrade publish
 	Zongsoft.Daemon-stable@1.1.0_win-x64
 ```
 
-- _Web_ 发布站点
+- _Web_ 服务端包管理器
 
 ```shell
 dotnet-upgrade publish
 	--channel:web
-	--url:localhost:8069/upgrading
+	--url:http://localhost:8069/Upgrading
+	--credential:your-token
 	Zongsoft.Daemon-stable@1.1.0_win-x64
 ```
 

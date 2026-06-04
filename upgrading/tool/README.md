@@ -57,7 +57,7 @@ Option | Type | Required | Default | Description
 When `--output` is not specified or only an output directory is specified, the tool auto-generates the file name according to the following rules:
 
 - **Without `--edition`**: `{name}@{version}_{runtime}`, e.g. `Zongsoft.Daemon@1.1.0_win-x64.zip`
-- **With `--edition`**: `{name}({edition})@{version}_{runtime}`, e.g. `Zongsoft.Daemon-stable@1.1.0_linux-x64.zip`
+- **With `--edition`**: `{name}-{edition}@{version}_{runtime}`, e.g. `Zongsoft.Daemon-stable@1.1.0_linux-x64.zip`
 
 Where `{runtime}` is composed of `platform` and `architecture`, e.g. `win-x64`, `linux-arm64`.
 
@@ -217,7 +217,7 @@ dotnet-upgrade pack
 	--architecture:x64
 	--kind:Fully
 	--source:./
-	--output:./$(name)($(edition))@$(version)_$(runtime).zip
+	--output:./$(name)-$(edition)@$(version)_$(runtime).zip
 	--tags:tag1,tag2,tagX
 	--executor.link@deployed:"zongsoft.web.service /Zongsoft/hosting/.deploy/default/systemd/zongsoft.web.service"
 	mime
@@ -298,6 +298,32 @@ dotnet-upgrade checksum -a:sha256 package1.zip package2.zip
 
 Supports two publish channels: `amazon.s3` and `web`.
 
+### Common Options
+
+Option | Type | Required | Description
+------|------|:--------:|------------
+`--channel` | string | ✓ | Publish channel. Supported values: `amazon.s3`, `s3`, `web`
+
+### Amazon S3 Options
+
+Option | Type | Required | Description
+------|------|:--------:|------------
+`--server` | string | ✓ | S3-compatible service endpoint
+`--access` | string | ✓ | Access key
+`--secret` | string | ✓ | Secret key
+`--destination` | string | ✓ | Destination bucket and path
+`--region` | string | - | Optional S3 region
+
+### Web Options
+
+Option | Type | Required | Description
+------|------|:--------:|------------
+`--url` | string | ✓ | Web package manager URL. It can point to the site root, `/Upgrading`, `/Upgrading/Upgrader`, or `/Upgrading/Releases`
+`--authorization` | string | - | Raw `Authorization` header value
+`--credential` | string | - | Credential token. When provided, the tool sends `Authorization: Credential {value}`
+
+The Web publish flow imports the `.manifest` file, uploads the matching `.zip` package to every imported release, then marks each release as published.
+
 ### Examples
 
 - _**A**mazon.**S3**_ File System
@@ -312,12 +338,13 @@ dotnet-upgrade publish
 	Zongsoft.Daemon-stable@1.1.0_win-x64
 ```
 
-- _**W**eb_ publish site
+- _**W**eb_ package manager
 
 ```shell
 dotnet-upgrade publish
 	--channel:web
-	--url:localhost:8069/upgrading
+	--url:http://localhost:8069/Upgrading
+	--credential:your-token
 	Zongsoft.Daemon-stable@1.1.0_win-x64
 ```
 
