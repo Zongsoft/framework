@@ -37,6 +37,7 @@ namespace Zongsoft.Versioning;
 
 partial class Version
 {
+	/// <summary>表示版本号的结构体，适用于版本号的数值比较和转换。</summary>
 	[TypeConverter(typeof(NumberTypeConverter))]
 	[JsonConverter(typeof(NumberJsonConverter))]
 	public readonly struct Number : IEquatable<Number>, IComparable<Number>, IParsable<Number>
