@@ -16,8 +16,8 @@
 [string]$project_messaging_zeromq = 'messaging/zero/build.cake'
 
 [string]$project_upgrading_deployer = 'upgrading/deployer/build.cake'
-[string]$project_upgrading_packager = 'upgrading/packager/build.cake'
 [string]$project_upgrading_upgrader = 'upgrading/upgrader/build.cake'
+[string]$project_upgrading_tool     = 'upgrading/tool/build.cake'
 [string]$project_upgrading_web      = 'upgrading/web/build.cake'
 
 [string]$project_aliyun           = 'externals/aliyun/build.cake'
@@ -82,11 +82,11 @@ dotnet cake $project_messaging_zeromq $CAKE_ARGS $ARGS
 Write-Host "dotnet cake $project_upgrading_deployer $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_upgrading_deployer $CAKE_ARGS $ARGS
 
-Write-Host "dotnet cake $project_upgrading_packager $CAKE_ARGS $ARGS" -ForegroundColor Magenta
-dotnet cake $project_upgrading_packager $CAKE_ARGS $ARGS
-
 Write-Host "dotnet cake $project_upgrading_upgrader $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_upgrading_upgrader $CAKE_ARGS $ARGS
+
+Write-Host "dotnet cake $project_upgrading_tool $CAKE_ARGS $ARGS" -ForegroundColor Magenta
+dotnet cake $project_upgrading_tool $CAKE_ARGS $ARGS
 
 Write-Host "dotnet cake $project_upgrading_web $CAKE_ARGS $ARGS" -ForegroundColor Magenta
 dotnet cake $project_upgrading_web $CAKE_ARGS $ARGS
