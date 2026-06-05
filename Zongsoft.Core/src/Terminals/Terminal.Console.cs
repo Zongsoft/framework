@@ -71,8 +71,14 @@ partial class Terminal
 			_locker = new();
 			this.Executor = new ConsoleExecutor(this);
 
-			System.Console.TreatControlCAsInput = false;
-			System.Console.CancelKeyPress += this.Console_CancelKeyPress;
+			try
+			{
+				System.Console.TreatControlCAsInput = false;
+			}
+			catch(IOException) { }
+
+			if(!System.Console.TreatControlCAsInput)
+				System.Console.CancelKeyPress += this.Console_CancelKeyPress;
 		}
 		#endregion
 
