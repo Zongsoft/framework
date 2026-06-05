@@ -22,8 +22,8 @@ PROJECT_MESSAGING_RABBIT="messaging/rabbit/build.cake"
 PROJECT_MESSAGING_ZEROMQ="messaging/zero/build.cake"
 
 PROJECT_UPGRADING_DEPLOYER="upgrading/deployer/build.cake"
-PROJECT_UPGRADING_PACKAGER="upgrading/packager/build.cake"
 PROJECT_UPGRADING_UPGRADER="upgrading/upgrader/build.cake"
+PROJECT_UPGRADING_TOOL="upgrading/tool/build.cake"
 PROJECT_UPGRADING_WEB="upgrading/web/build.cake"
 
 PROJECT_ALIYUN="externals/aliyun/build.cake"
@@ -58,8 +58,8 @@ dotnet cake $PROJECT_MESSAGING_RABBIT $CAKE_ARGS "$@"
 dotnet cake $PROJECT_MESSAGING_ZEROMQ $CAKE_ARGS "$@"
 
 dotnet cake $PROJECT_UPGRADING_DEPLOYER $CAKE_ARGS "$@"
-dotnet cake $PROJECT_UPGRADING_PACKAGER $CAKE_ARGS "$@"
 dotnet cake $PROJECT_UPGRADING_UPGRADER $CAKE_ARGS "$@"
+dotnet cake $PROJECT_UPGRADING_TOOL $CAKE_ARGS "$@"
 dotnet cake $PROJECT_UPGRADING_WEB $CAKE_ARGS "$@"
 
 dotnet cake $PROJECT_ALIYUN $CAKE_ARGS "$@"
