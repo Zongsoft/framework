@@ -39,8 +39,23 @@ partial class Upgrader
 	internal static Process Launch(string deployer, string deployment)
 	{
 		if(OperatingSystem.IsLinux())
-			return LaunchOnLinux(deployer, deployment);
+		{
+			if(Application.IsWeb() || Application.IsDaemon())
+			{
+				var process = LaunchWithSystemd(deployer, deployment);
 
+				if(process != null)
+					return process;
+			}
+
+			return LaunchDirect(deployer, deployment);
+		}
+
+		return LaunchDirect(deployer, deployment);
+	}
+
+	private static Process LaunchDirect(string deployer, string deployment)
+	{
 		var info = new ProcessStartInfo(deployer)
 		{
 			CreateNoWindow = true,
@@ -69,7 +84,7 @@ partial class Upgrader
 		return Process.Start(info);
 	}
 
-	private static Process LaunchOnLinux(string deployer, string deployment)
+	private static Process LaunchWithSystemd(string deployer, string deployment)
 	{
 		var text = new System.Text.StringBuilder();
 
@@ -97,7 +112,11 @@ partial class Upgrader
 			WorkingDirectory = Application.ApplicationPath,
 		};
 
-		return Process.Start(info);
+		var process = Process.Start(info);
+		if(process == null)
+			return null;
+
+		return process.WaitForExit(1000) && process.ExitCode != 0 ? null : process;
 	}
 
 	private static string GetConfiguration(string key) => GetConfiguration(Services.ApplicationContext.Current?.Configuration, key);

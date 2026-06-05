@@ -96,6 +96,10 @@ public static class Application
 	public static string GetRuntimeIdentifier(Platform platform, Architecture architecture) => platform == Platform.Windows ?
 		(architecture == Architecture.Other ? "win" : $"win-{architecture.ToString().ToLowerInvariant()}"):
 		(architecture == Architecture.Other ? platform.ToString().ToLowerInvariant() : $"{platform.ToString().ToLowerInvariant()}-{architecture.ToString().ToLowerInvariant()}");
+
+	public static bool IsWeb() => string.Equals(ApplicationType, "web", StringComparison.OrdinalIgnoreCase);
+	public static bool IsDaemon() => string.Equals(ApplicationType, "daemon", StringComparison.OrdinalIgnoreCase);
+	public static bool IsTerminal() => string.Equals(ApplicationType, "terminal", StringComparison.OrdinalIgnoreCase) || string.Equals(ApplicationType, "console", StringComparison.OrdinalIgnoreCase);
 	#endregion
 
 	#region 私有方法
