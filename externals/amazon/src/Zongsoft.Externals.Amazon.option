@@ -4,7 +4,7 @@
 	<option path="/Externals/Amazon">
 		<connectionSettings default="local">
 			<connectionSetting connectionSetting.name="local" driver="amazon.s3"
-			                   value="server=http://127.0.0.1:9000;region=cn-north-1;accessKey=rustfsadmin;secretKey=rustfsadmin" />
+			                   value="server=http://127.0.0.1:9000;region=;accessKey=rustfsadmin;secretKey=rustfsadmin" />
 		</connectionSettings>
 	</option>
 </options>
