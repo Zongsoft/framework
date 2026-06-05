@@ -6,7 +6,7 @@
 
 本次验证的核心目标是确认 daemon 宿主程序在 systemd 托管运行时，能够通过升级系统完成以下流程：
 
-1. 发现 `Zongsoft.Daemon` 宿主程序的新升级包；
+1. 发现 `zongsoft.daemon` 宿主程序的新升级包；
 2. 下载升级包；
 3. 解压升级包；
 4. 调用 `Zongsoft.Upgrading.Deployer` 执行部署；
@@ -48,7 +48,7 @@
 | Upgrader 插件源码 | `/Zongsoft/framework/upgrading/upgrader` |
 | Deployer 程序源码 | `/Zongsoft/framework/upgrading/deployer` |
 | Upgrader 插件部署目录 | daemon 安装目录下的 `plugins/zongsoft/upgrader` |
-| Deployer 部署目录 | 根据 upgrader 配置、源码或日志确认 |
+| Deployer 部署目录 | daemon 部署目录下的 `.deployer` 目录 |
 | 升级工具 / tool | 在仓库中查找已有 tool 项目或命令入口 |
 | Daemon 升级打包脚本 | `/Zongsoft/hosting/daemon/upgrade.pack.cmd` 或等价 Linux 命令 |
 | Daemon 升级发布脚本 | `/Zongsoft/hosting/daemon/upgrade.publish.cmd` 或等价 Linux 命令 |
@@ -146,7 +146,7 @@ D:\Zongsoft\framework\upgrading -> /mnt/d/Zongsoft/framework/upgrading
 
 要求：
 
-- 包名称应为 `Zongsoft.Daemon`，除非源码或脚本显示实际名称不同；
+- 包名称应为 `zongsoft.daemon`，除非源码或脚本显示实际名称不同；
 - 平台参数使用 Linux；
 - 架构参数与当前 WSL 环境一致，例如 `x64` 或 `arm64`；
 - 明确记录打包命令、版本号、输出目录和生成文件名。
@@ -288,7 +288,7 @@ Linux/WSL 下还需要确认：
 首次版本号示例：
 
 ```text
-Daemon upgrade marker: 1.0.0-test.1
+Daemon upgrade marker: 1.0.0.1
 ```
 
 验收标准：
@@ -310,12 +310,12 @@ Daemon upgrade marker: 1.0.0-test.1
 
 ## 3. 制作 daemon 升级包
 
-使用升级 tool 中的 `pack` 命令，或将 `/Zongsoft/hosting/daemon/upgrade.pack.cmd` 转换为等价 Linux shell 命令，为 `Zongsoft.Daemon` 制作升级包。
+使用升级 tool 中的 `pack` 命令，或将 `/Zongsoft/hosting/daemon/upgrade.pack.cmd` 转换为等价 Linux shell 命令，为 `zongsoft.daemon` 制作升级包。
 
 要求：
 
 - 包版本号使用首次模拟版本号；
-- 包名称应为 `Zongsoft.Daemon`，除非源码或脚本显示实际名称不同；
+- 包名称应为 `zongsoft.daemon`，除非源码或脚本显示实际名称不同；
 - 打包模式按 daemon 脚本或升级系统约定执行，现有脚本通常使用 `fully`；
 - 平台参数使用 Linux 对应值；
 - 明确记录 `pack` 命令参数和输出包位置；
@@ -366,7 +366,7 @@ Daemon upgrade marker: 1.0.0-test.1
 - 下载、解压、部署过程无错误；
 - deployer 执行成功；
 - systemd service 最终处于 `active (running)` 状态；
-- 升级后日志或可观测标记显示首次发布版本，例如 `1.0.0-test.1`。
+- 升级后日志或可观测标记显示首次发布版本，例如 `1.0.0.1`。
 
 # 阶段五：再次升级验证
 
@@ -377,14 +377,14 @@ Daemon upgrade marker: 1.0.0-test.1
 修改 daemon 输出的模拟版本号，例如：
 
 ```text
-Daemon upgrade marker: 1.0.0-test.2
+Daemon upgrade marker: 1.0.0.2
 ```
 
 ## 2. 重新构建、打包、发布
 
 重复以下步骤：
 
-1. 构建 `Zongsoft.Daemon`；
+1. 构建 `zongsoft.daemon`；
 2. 使用 `tool pack` 制作新的升级包；
 3. 使用 `tool publish` 发布到同一个 S3 通道；
 4. 验证 S3 中新版本发布成功。
@@ -404,7 +404,7 @@ Daemon upgrade marker: 1.0.0-test.2
 - daemon 发现第二个版本；
 - deployer 再次执行成功；
 - systemd service 最终处于 `active (running)` 状态；
-- 升级后日志或可观测标记显示第二次发布版本，例如 `1.0.0-test.2`。
+- 升级后日志或可观测标记显示第二次发布版本，例如 `1.0.0.2`。
 
 # 清理要求
 

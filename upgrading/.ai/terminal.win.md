@@ -40,7 +40,7 @@
 | Deployer 程序源码 | `/Zongsoft/framework/upgrading/deployer` |
 | 待升级插件项目 | `/Zongsoft/framework/Zongsoft.Commands` |
 | Upgrader 插件部署目录 | terminal 部署目录下的 `plugins/zongsoft/upgrader` |
-| Deployer 部署目录 | 根据 upgrader 配置、源码或日志确认 |
+| Deployer 部署目录 | terminal 部署目录下的 `.deployer` 目录 |
 | 升级工具 / tool | 在仓库中查找已有 tool 项目或命令入口 |
 
 ## Windows 实操补充
@@ -197,7 +197,7 @@ $config.UseHttp = $true
 $client = [Amazon.S3.AmazonS3Client]::new('rustfsadmin', 'rustfsadmin', $config)
 $request = [Amazon.S3.Model.ListObjectsV2Request]::new()
 $request.BucketName = 'upgrading'
-$request.Prefix = 'releases'
+$request.Prefix = 'releases/terminal'
 $response = $client.ListObjectsV2Async($request).GetAwaiter().GetResult()
 $response.S3Objects | Select-Object Key,Size,LastModified
 $client.Dispose()
@@ -208,7 +208,7 @@ $client.Dispose()
 `TestCommand` 输出的模拟版本号用于人工确认升级后的插件确实生效；升级包 `--version` 则用于 upgrader 判断是否存在新版本。两者建议保持同一轮次语义，但 `--version` 应使用升级系统可比较的版本号，例如：
 
 ```text
-TestCommand version: 1.0.0-test.1
+TestCommand version: 1.0.0.1
 --version:1.0.0.1
 ```
 
@@ -304,7 +304,7 @@ plugins/zongsoft/upgrader
 首次版本号示例：
 
 ```text
-TestCommand version: 1.0.0-test.1
+TestCommand version: 1.0.0.1
 ```
 
 验收标准：
@@ -374,7 +374,7 @@ TestCommand version: 1.0.0-test.1
 - terminal 日志显示发现升级包；
 - 下载、解压、部署过程无错误；
 - deployer 执行成功；
-- 升级后运行 `TestCommand`，输出版本号为首次发布版本，例如 `1.0.0-test.1`。
+- 升级后运行 `TestCommand`，输出版本号为首次发布版本，例如 `1.0.0.1`。
 
 # 阶段三：再次升级验证
 
@@ -385,7 +385,7 @@ TestCommand version: 1.0.0-test.1
 修改 `TestCommand` 输出的模拟版本号，例如：
 
 ```text
-TestCommand version: 1.0.0-test.2
+TestCommand version: 1.0.0.2
 ```
 
 ## 2. 重新构建、打包、发布
@@ -411,7 +411,7 @@ TestCommand version: 1.0.0-test.2
 
 - terminal 发现第二个版本；
 - deployer 再次执行成功；
-- 升级后运行 `TestCommand`，输出版本号为第二次发布版本，例如 `1.0.0-test.2`。
+- 升级后运行 `TestCommand`，输出版本号为第二次发布版本，例如 `1.0.0.2`。
 
 # 异常处理要求
 

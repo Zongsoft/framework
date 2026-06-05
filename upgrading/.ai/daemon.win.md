@@ -6,7 +6,7 @@
 
 本次验证的核心目标是确认 daemon 宿主程序在 Windows Service 托管运行时，能够通过升级系统完成以下流程：
 
-1. 发现 `Zongsoft.Daemon` 宿主程序的新升级包；
+1. 发现 `zongsoft.daemon` 宿主程序的新升级包；
 2. 下载升级包；
 3. 解压升级包；
 4. 调用 `Zongsoft.Upgrading.Deployer` 执行部署；
@@ -22,8 +22,8 @@
 
 - 当前平台是 Windows，必须在本机 PowerShell / Windows 环境中执行。
 - 不要使用 WSL。
-- daemon 程序必须以 Windows Service 的方式运行，不能只以前台控制台进程代替验证。
-- 优先调用 `/Zongsoft/hosting/daemon/install.cmd` 将 daemon 宿主程序安装到 Windows Service 托管运行。
+- daemon 程序必须以 Windows Service 的方式运行，不能以控制台进程代替验证。
+- 优先调用 `/Zongsoft/hosting/daemon/install.cmd` 将 daemon 宿主程序安装到 Windows Service 托管运行，执行安装脚本需要等待管理员UAC授权。
 - 测试完成后必须调用 `/Zongsoft/hosting/daemon/uninstall.cmd` 或等价命令卸载测试服务。
 - 保持现有文件的换行符。
 - 新文件使用 CRLF 换行格式。
@@ -44,7 +44,7 @@
 | Upgrader 插件源码 | `/Zongsoft/framework/upgrading/upgrader` |
 | Deployer 程序源码 | `/Zongsoft/framework/upgrading/deployer` |
 | Upgrader 插件部署目录 | daemon 部署目录下的 `plugins/zongsoft/upgrader` |
-| Deployer 部署目录 | 根据 upgrader 配置、源码或日志确认 |
+| Deployer 部署目录 | daemon 部署目录下的 `.deployer` 目录 |
 | 升级工具 / tool | 在仓库中查找已有 tool 项目或命令入口 |
 | Daemon 升级打包脚本 | `/Zongsoft/hosting/daemon/upgrade.pack.cmd` |
 | Daemon 升级发布脚本 | `/Zongsoft/hosting/daemon/upgrade.publish.cmd` |
@@ -65,7 +65,7 @@ $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 如果结果为 `False`：
 
-- `install.cmd` / `uninstall.cmd` 会尝试弹出提升后的窗口，但当前自动化会话可能无法继续捕获后续输出；
+- `install.cmd` / `uninstall.cmd` 会尝试弹出提升后的窗口，要等待用户手动确认后，再继续捕获后续输出；
 - `sc start zongsoft.daemon` 可能返回 `OpenService FAILED 5: Access is denied.`；
 - 不能把此前台运行 daemon 的结果当作 Windows Service 验证通过；
 - 如果服务已被提升后的脚本创建或删除，仍需用 `sc query zongsoft.daemon` 和 `sc qc zongsoft.daemon` 复核最终状态。
@@ -84,7 +84,7 @@ at System.ConsolePal.set_TreatControlCAsInput(Boolean value)
 
 ```powershell
 $log = 'D:\Zongsoft\framework\upgrading\.artifacts\daemon-pack.log'
-$cmd = 'dotnet-upgrade pack --name:Zongsoft.Daemon --kind:fully --version:1.0.0.1 --checksum:sha1 --compilation:Debug --framework:net10.0 --platform:windows --architecture:x64 --source:"D:\Zongsoft\hosting\daemon\bin\Debug\net10.0" --output:"D:\Zongsoft\\" > "' + $log + '" 2>&1'
+$cmd = 'dotnet-upgrade pack --name:zongsoft.daemon --kind:fully --version:1.0.0.1 --checksum:sha1 --compilation:Debug --framework:net10.0 --platform:windows --architecture:x64 --source:"D:\Zongsoft\hosting\daemon\bin\Debug\net10.0" --output:"D:\Zongsoft\\" > "' + $log + '" 2>&1'
 $p = Start-Process -FilePath cmd.exe -ArgumentList '/c', $cmd -Wait -PassThru -WindowStyle Hidden
 $p.ExitCode
 Get-Content -LiteralPath $log
@@ -200,8 +200,8 @@ D:\Zongsoft.manifest
 预期输出类似：
 
 ```text
-D:\Zongsoft\Zongsoft.Daemon@1.0.0.1_win-x64.zip
-D:\Zongsoft\Zongsoft.Daemon@1.0.0.1_win-x64.manifest
+D:\Zongsoft\zongsoft.daemon@1.0.0.1_win-x64.zip
+D:\Zongsoft\zongsoft.daemon@1.0.0.1_win-x64.manifest
 ```
 
 ### 7. 发布后验证 RustFS/S3 对象
@@ -231,7 +231,7 @@ $client.Dispose()
 daemon 宿主中的 `Microsoft.Extensions.Logging.ILogger` 输出不一定会进入 Zongsoft 约定的文件日志。为了让 Windows Service 验证更容易观测，临时 marker 建议直接使用 Zongsoft 日志：
 
 ```csharp
-Zongsoft.Diagnostics.Logging.GetLogging<UpgradeMarkerService>().Info("Daemon upgrade marker: 1.0.0-test.1");
+Zongsoft.Diagnostics.Logging.GetLogging<UpgradeMarkerService>().Info("Daemon upgrade marker: 1.0.0.1");
 ```
 
 日志通常位于 daemon 部署目录下：
@@ -240,7 +240,7 @@ Zongsoft.Diagnostics.Logging.GetLogging<UpgradeMarkerService>().Info("Daemon upg
 logs\yyyyMM\Zongsoft.Hosting.Daemon-*.log
 ```
 
-升级包版本必须高于当前运行应用版本，否则 upgrader 会认为没有可用新版本。曾观测到当前 daemon 应用版本为 `1.0.0.0`，因此测试包可使用 `1.0.0.1`，同时 marker 使用 `1.0.0-test.1` 来证明实际代码已替换。
+升级包版本必须高于当前运行应用版本，否则 upgrader 会认为没有可用新版本。曾观测到当前 daemon 应用版本为 `1.0.0.0`，因此测试包可使用 `1.0.0.1`，同时 marker 使用 `1.0.0.1` 来证明实际代码已替换。
 
 # 阶段一：环境准备
 
@@ -344,7 +344,7 @@ plugins/zongsoft/upgrader
 首次版本号示例：
 
 ```text
-Daemon upgrade marker: 1.0.0-test.1
+Daemon upgrade marker: 1.0.0.1
 ```
 
 验收标准：
@@ -366,12 +366,12 @@ Daemon upgrade marker: 1.0.0-test.1
 
 ## 3. 制作 daemon 升级包
 
-使用升级 tool 中的 `pack` 命令，或 `/Zongsoft/hosting/daemon/upgrade.pack.cmd`，为 `Zongsoft.Daemon` 制作升级包。
+使用升级 tool 中的 `pack` 命令，或 `/Zongsoft/hosting/daemon/upgrade.pack.cmd`，为 `zongsoft.daemon` 制作升级包。
 
 要求：
 
 - 包版本号使用首次模拟版本号；
-- 包名称应为 `Zongsoft.Daemon`，除非源码或脚本显示实际名称不同；
+- 包名称应为 `zongsoft.daemon`，除非源码或脚本显示实际名称不同；
 - 打包模式按 daemon 脚本或升级系统约定执行，现有脚本通常使用 `fully`；
 - 平台参数使用 Windows 对应值；
 - 明确记录 `pack` 命令参数和输出包位置。
@@ -420,7 +420,7 @@ Daemon upgrade marker: 1.0.0-test.1
 - 下载、解压、部署过程无错误；
 - deployer 执行成功；
 - Windows Service 最终处于 `Running` 状态；
-- 升级后日志或可观测标记显示首次发布版本，例如 `1.0.0-test.1`。
+- 升级后日志或可观测标记显示首次发布版本，例如 `1.0.0.1`。
 
 # 阶段三：再次升级验证
 
@@ -431,14 +431,14 @@ Daemon upgrade marker: 1.0.0-test.1
 修改 daemon 输出的模拟版本号，例如：
 
 ```text
-Daemon upgrade marker: 1.0.0-test.2
+Daemon upgrade marker: 1.0.0.2
 ```
 
 ## 2. 重新构建、打包、发布
 
 重复以下步骤：
 
-1. 构建 `Zongsoft.Daemon`；
+1. 构建 `zongsoft.daemon`；
 2. 使用 `tool pack` 或 `upgrade.pack.cmd` 制作新的升级包；
 3. 使用 `tool publish` 或 `upgrade.publish.cmd` 发布到同一个 S3 通道；
 4. 验证 S3 中新版本发布成功。
@@ -458,7 +458,7 @@ Daemon upgrade marker: 1.0.0-test.2
 - daemon 发现第二个版本；
 - deployer 再次执行成功；
 - Windows Service 最终处于 `Running` 状态；
-- 升级后日志或可观测标记显示第二次发布版本，例如 `1.0.0-test.2`。
+- 升级后日志或可观测标记显示第二次发布版本，例如 `1.0.0.2`。
 
 # 清理要求
 

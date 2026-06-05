@@ -53,7 +53,7 @@
 | Upgrader 插件源码 | `/Zongsoft/framework/upgrading/upgrader` |
 | Deployer 程序源码 | `/Zongsoft/framework/upgrading/deployer` |
 | Upgrader 插件部署目录 | Web 安装目录下的 `plugins/zongsoft/upgrader` |
-| Deployer 部署目录 | 根据 upgrader 配置、源码或日志确认 |
+| Deployer 部署目录 | Web 安装目录下的 `.deployer` 目录 |
 | 升级工具 / tool | 在仓库中查找已有 tool 项目或命令入口 |
 | Nginx 配置 | `/etc/nginx/conf.d/zongsoft.web.conf` |
 | Nginx 配置模板 | `/Zongsoft/hosting/.deploy/default/nginx/zongsoft.web.conf` |
@@ -344,7 +344,7 @@ Linux/WSL 下还需要确认：
 首次版本号示例：
 
 ```text
-Web upgrade marker: 1.0.0-test.1
+Web upgrade marker: 1.0.0.1
 ```
 
 验收标准：
@@ -427,7 +427,7 @@ Web upgrade marker: 1.0.0-test.1
 - Web systemd service 最终处于 `active (running)` 状态；
 - Nginx `nginx -t` 通过；
 - 升级后通过 Nginx 代理入口访问成功；
-- 升级后 HTTP 响应、日志或可观测标记显示首次发布版本，例如 `1.0.0-test.1`。
+- 升级后 HTTP 响应、日志或可观测标记显示首次发布版本，例如 `1.0.0.1`。
 
 # 阶段五：再次升级验证
 
@@ -438,7 +438,7 @@ Web upgrade marker: 1.0.0-test.1
 修改 Web 输出的模拟版本号，例如：
 
 ```text
-Web upgrade marker: 1.0.0-test.2
+Web upgrade marker: 1.0.0.2
 ```
 
 ## 2. 重新构建、打包、发布
@@ -466,7 +466,7 @@ Web upgrade marker: 1.0.0-test.2
 - deployer 再次执行成功；
 - Web systemd service 最终处于 `active (running)` 状态；
 - Nginx 代理入口访问成功；
-- 升级后 HTTP 响应、日志或可观测标记显示第二次发布版本，例如 `1.0.0-test.2`。
+- 升级后 HTTP 响应、日志或可观测标记显示第二次发布版本，例如 `1.0.0.2`。
 
 # 清理要求
 

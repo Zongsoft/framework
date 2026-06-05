@@ -41,7 +41,7 @@
 | Deployer 程序源码 | `/Zongsoft/framework/upgrading/deployer` |
 | 待升级插件项目 | `/Zongsoft/framework/Zongsoft.Commands` |
 | Upgrader 插件部署目录 | terminal 部署目录下的 `plugins/zongsoft/upgrader` |
-| Deployer 部署目录 | 根据 upgrader 配置、源码或日志确认 |
+| Deployer 部署目录 | terminal 部署目录下的 `.deployer` 目录 |
 | 升级工具 / tool | 在仓库中查找已有 tool 项目或命令入口 |
 
 如果上述路径在 WSL 中不存在，需要先定位实际路径。常见映射示例：
@@ -180,7 +180,7 @@ Linux/WSL 下还需要确认：
 首次版本号示例：
 
 ```text
-TestCommand version: 1.0.0-test.1
+TestCommand version: 1.0.0.1
 ```
 
 验收标准：
@@ -253,7 +253,7 @@ TestCommand version: 1.0.0-test.1
 - terminal 日志显示发现升级包；
 - 下载、解压、部署过程无错误；
 - deployer 执行成功；
-- 升级后运行 `TestCommand`，输出版本号为首次发布版本，例如 `1.0.0-test.1`。
+- 升级后运行 `TestCommand`，输出版本号为首次发布版本，例如 `1.0.0.1`。
 
 # 阶段三：再次升级验证
 
@@ -264,7 +264,7 @@ TestCommand version: 1.0.0-test.1
 修改 `TestCommand` 输出的模拟版本号，例如：
 
 ```text
-TestCommand version: 1.0.0-test.2
+TestCommand version: 1.0.0.2
 ```
 
 ## 2. 重新构建、打包、发布
@@ -290,7 +290,7 @@ TestCommand version: 1.0.0-test.2
 
 - terminal 发现第二个版本；
 - deployer 再次执行成功；
-- 升级后运行 `TestCommand`，输出版本号为第二次发布版本，例如 `1.0.0-test.2`。
+- 升级后运行 `TestCommand`，输出版本号为第二次发布版本，例如 `1.0.0.2`。
 
 # 异常处理要求
 
