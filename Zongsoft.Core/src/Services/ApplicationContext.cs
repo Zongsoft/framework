@@ -153,15 +153,22 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 			return;
 
 		var host = _services.Resolve<IHost>();
+		var lifetime = _services.GetService<IHostApplicationLifetime>();
 
-		if(host != null)
+		if(host != null && lifetime != null)
 		{
-			if(timeout > TimeSpan.Zero)
-				host.StopAsync(timeout).GetAwaiter().GetResult();
-			else
-				host.StopAsync().GetAwaiter().GetResult();
+			//如果应用程序正在停止或已经停止，则不再执行停止操作，否则会导致死锁
+			var exiting = lifetime.ApplicationStopping.IsCancellationRequested || lifetime.ApplicationStopped.IsCancellationRequested;
 
-			host.WaitForShutdown();
+			if(!exiting)
+			{
+				if(timeout > TimeSpan.Zero)
+					host.StopAsync(timeout).GetAwaiter().GetResult();
+				else
+					host.StopAsync().GetAwaiter().GetResult();
+
+				host.WaitForShutdown();
+			}
 		}
 
 		System.Environment.Exit(exitCode);

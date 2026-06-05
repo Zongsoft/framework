@@ -107,26 +107,13 @@ public partial class Upgrader
 		//确保日志存储器落盘完成
 		Diagnostics.Logging.Flush();
 
-		//获取当前应用程序的主机接口
-		var host = Services.ApplicationContext.Current?.Services.GetService<IHost>();
-
 		try
 		{
-			if(host != null)
-			{
-				if(timeout > TimeSpan.Zero)
-					host.StopAsync(timeout).GetAwaiter().GetResult();
-				else
-					host.StopAsync().GetAwaiter().GetResult();
-
-				host.WaitForShutdown();
-			}
+			//通过当前应用程序上下文安全体面的退出
+			Services.ApplicationContext.Current?.Exit(timeout);
 		}
 		finally
 		{
-			//释放主机
-			host?.Dispose();
-
 			//释放被锁定的文件流
 			locking?.Dispose();
 
