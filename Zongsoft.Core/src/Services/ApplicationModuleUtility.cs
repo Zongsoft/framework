@@ -31,7 +31,12 @@ namespace Zongsoft.Services;
 
 internal static class ApplicationModuleUtility
 {
-	public static string GetTitle(this IApplicationModule module)
+	extension(IApplicationModule module)
+	{
+		public ApplicationIdentifier Identifier => module == null ? default : new(module.Name, module.Edition, module.Version);
+	}
+
+	internal static string GetTitle(this IApplicationModule module)
 	{
 		if(module != null && module.Assembly != null && module.Name != null)
 			return Resources.ResourceUtility.GetResourceString(module.Assembly, [$"{module.Name}.{nameof(module.Title)}", module.Name]);
@@ -39,7 +44,7 @@ internal static class ApplicationModuleUtility
 		return null;
 	}
 
-	public static string GetDescription(this IApplicationModule module)
+	internal static string GetDescription(this IApplicationModule module)
 	{
 		if(module != null && module.Assembly != null && module.Name != null)
 			return Resources.ResourceUtility.GetResourceString(module.Assembly, $"{module.Name}.{nameof(module.Description)}");

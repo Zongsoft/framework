@@ -32,6 +32,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Services;
 using Zongsoft.Components;
 
 namespace Zongsoft.Terminals;
@@ -111,8 +112,17 @@ partial class Terminal
 			//初始化终端文本编码方案
 			_terminal.Encoding = System.Text.Encoding.UTF8;
 
+			//如果未指定闪屏信息，则创建默认的闪屏信息
 			if(splash == null || splash.IsEmpty)
+			{
 				splash = CommandOutletContent.Create(SPLASH);
+
+				if(ApplicationContext.Current != null)
+					splash.Last
+						.AppendLine(CommandOutletColor.Yellow, new string('·', 50))
+						.AppendLine(CommandOutletColor.DarkCyan, Common.StringExtension.Justify(ApplicationContext.Current.Identifier.ToString(), 50))
+						.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
+			}
 
 			//打印闪屏信息
 			_terminal.WriteLine(splash);
