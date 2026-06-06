@@ -70,6 +70,9 @@ dotnet-upgrade publish [options] <package-file...>
 - 使用 `source:target` 在包内重命名或重定位条目。
 - 将空目标、`~` 和 `/` 视为包根目录。
 - 保留重复 ZIP 条目行为：警告并跳过，不要静默覆盖。
+- 在 Windows 自动化中传 `--source`、`--output` 等路径时，优先使用正斜杠或双反斜杠，避免 `\t` 等片段被命令行层解析成转义字符。
+- `--exclude` 是以分号分隔的目录、文件或通配符规则；排除运行中 terminal 的运行数据和日志时使用 `--exclude:".garnet/;logs/;"`，不要假设支持 `**/.garnet/**` 这类 globstar 语法。
+- pack 命令遇到文件锁等错误时可能已创建不完整 zip 且进程退出码仍为 0；验证时必须同时检查目标 `.zip` 和配对 `.manifest` 存在，并查看日志是否出现错误文本。
 
 执行器选项保留 `--executor.<name>@<event>:"command"` 格式。缺少事件名的执行器定义应警告并忽略。保持执行器名称兼容共享 deployer 命令：`Copy`、`Move`、`Link`、`Delete`。
 
@@ -80,6 +83,8 @@ Web 发布时，保持 URL 标准化兼容指向站点根、`/Upgrading`、`/Upg
 Amazon S3 发布时，保持包和 manifest 上传路径兼容配置的 `--destination` 和发布文件名。
 
 不要记录来自 `--secret`、`--access`、`--authorization` 或 `--credential` 的密钥值。
+
+本机没有 `aws` 或 `mc` 时，可复用工具输出目录或 NuGet 缓存中的 `AWSSDK.Core.dll`、`AWSSDK.S3.dll` 做只读 `ListObjectsV2` 验证，确认包和 manifest 都已发布到预期 bucket/prefix。
 
 ## 文档
 

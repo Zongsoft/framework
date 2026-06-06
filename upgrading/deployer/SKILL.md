@@ -55,6 +55,8 @@ description: 处理 upgrading/deployer 下的 Zongsoft.Upgrading.Deployer Native
 - 只在文档化的 `Deploying` 和 `Deployed` 阶段执行 manifest 执行器。
 - 保持启动器行为感知平台：Windows Web 回收 IIS 应用池，Linux 或 FreeBSD 服务使用 `systemctl start`，Windows daemon 服务使用 `sc start`，terminal 或 universal 宿主使用直接进程启动。
 - 将服务重启命令视为运维敏感操作；除非用户明确要求，否则不要在测试中运行它们。
+- Windows terminal 验证时，部署后确认 `.deployer\Zongsoft.Upgrading.Deployer.exe` 仍存在；宿主 clean/deploy 可能清掉手工部署的 `.deployer`，可复用 `bin/Release/net10.0/win-x64/publish` 下已验证的 Native AOT 单文件产物。
+- 验证 deployer 成功时，同时检查 `.deployment` 最终被清理、`.version` 更新为目标应用版本，以及 deployer 日志中出现 Terminal launcher 启动新宿主进程的记录。
 
 ## AOT 单文件发布
 

@@ -75,6 +75,8 @@ description: 处理 upgrading/upgrader 下的 Zongsoft.Upgrading.Upgrader 客户
 - 保持 Linux deployer 启动足够脱离当前进程，使其能在宿主关闭后继续运行。
 - 保留 interlocked 升级标志，避免并发 worker tick 阻塞或重入。
 - 保持 plugin/option/deploy 产物与 NuGet 包布局一致。
+- 发布名称必须匹配运行时 `Application.ApplicationName`。验证宿主升级时，先读部署目录 `.version`、启动代码或 upgrader/deployer 日志中的 `app.name`，不要只依赖打包脚本中的历史默认名称。
+- 全量部署可能清理应用根目录下的 `logs/`，导致 upgrader 发现、下载、解压和启动 deployer 的成功日志在部署后消失；集成验证需要在观察循环中把 upgrader 日志快照复制到外部 `.artifacts`。
 
 ## 常见任务
 

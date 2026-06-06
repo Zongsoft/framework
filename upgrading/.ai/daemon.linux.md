@@ -9,7 +9,7 @@
 - 升级身份：`Zongsoft.Daemon`。
 - 托管方式：必须是 systemd service，不能只用前台进程代替。
 - 安装包调试：必须用 `/Zongsoft/tools/packager` 分别制作并验证 `.deb` 和 `.tar.gz`。
-- 验证轮次：至少两轮，示例版本 `1.0.0.1` -> `1.0.0.2`。
+- 验证轮次：至少两轮，示例版本为基线 `1.0.0` -> 全量 `1.1.0` -> 增量 `1.1.1`。
 
 升级必须证明 daemon service 能发现、下载、解压、调用 `Zongsoft.Upgrading.Deployer`、完成部署，并通过 systemd 重启、日志或可观测标记确认新版本生效。
 
@@ -19,6 +19,7 @@
 
 - WSL 发行版、内核、架构、实际仓库路径、服务名、发布通道、部署目录、安装目录。
 - 包名是否仍为 `Zongsoft.Daemon`；安装包名可沿用仓库约定，例如 `zongsoft.daemon`，它不等同于升级身份。
+- 版本号必须高于当前运行应用版本；第一轮全量包提升 minor 版本号，第二轮增量包只提升 patch（第三部分）版本号。
 - 如果仓库位于 Windows 盘符下，先确认实际挂载路径，例如 `D:\Zongsoft\framework\upgrading` -> `/mnt/d/Zongsoft/framework/upgrading`。
 
 先读：
@@ -60,8 +61,8 @@
 5. 制作并调试 `.tar.gz`：解压到测试安装目录，配置或生成 systemd unit，启动服务并确认 upgrader 可加载。
 6. 部署 upgrader：复制到当前用于升级验证的 daemon 安装目录下 `plugins/zongsoft/upgrader`。
 7. 部署 deployer：按 upgrader 配置或源码确认 `.deployer` 位置；确认可执行入口可由 systemd 服务账号启动。
-8. 第一轮升级：加入 marker `Daemon upgrade marker: 1.0.0.1`；构建、pack、publish，验证 S3 对象存在，观察发现/下载/解压/部署/停止/重启。
-9. 第二轮升级：把 marker 和包版本递增到 `1.0.0.2`，重复构建、打包、发布和观察。
+8. 第一轮升级：加入 marker `Daemon upgrade marker: 1.1.0`；构建 `Fully` 全量包，版本提升 minor，例如 `1.0.x` -> `1.1.0`；publish 后验证 S3 对象存在。观察升级前先停止 systemd service，并删除宿主程序的 `bin` 目录，再重新部署干净基线 daemon、upgrader 和 deployer，确保全量升级测试干净完整；随后观察发现/下载/解压/部署/停止/重启。
+9. 第二轮升级：把 marker 和包版本递增到 patch 版本，例如 `1.1.0` -> `1.1.1`；构建 `Delta` 增量包，重复发布和观察。
 10. 清理：停止、禁用并卸载测试服务；删除 `.tar.gz` 测试目录和手工 unit；执行 `systemctl daemon-reload`；确认无遗留 daemon 进程。
 
 ## 验收重点
@@ -69,6 +70,7 @@
 - `.deb` 和 `.tar.gz` 都由 packager 生成并完成安装调试。
 - daemon systemd service 能启动并保持 `active (running)`。
 - upgrader 正常加载；pack/publish 成功；S3 中存在对应版本对象。
+- 第一轮必须是提升 minor 版本号的 `Fully` 全量包，并在删除宿主 `bin` 目录后完成恢复验证；第二轮必须是只提升 patch 版本号的 `Delta` 增量包。
 - daemon 日志显示发现新版本、下载成功、解压成功、调用 deployer 且 deployer 成功。
 - 升级后 systemd service 最终回到 `active (running)`。
 - 两轮升级后都能观察到对应 marker。

@@ -9,7 +9,7 @@
 - 升级身份：`Zongsoft.Daemon`。
 - 托管方式：必须是 Windows Service，不能用前台控制台进程代替。
 - 默认服务名：优先检查 `zongsoft.daemon`，以安装脚本、服务配置和日志为准。
-- 验证轮次：至少两轮，示例版本 `1.0.0.1` -> `1.0.0.2`。
+- 验证轮次：至少两轮，示例版本为基线 `1.0.0` -> 全量 `1.1.0` -> 增量 `1.1.1`。
 
 升级必须证明 daemon service 能发现、下载、解压、调用 `Zongsoft.Upgrading.Deployer`、完成部署，并通过 Windows Service 重启、日志或可观测标记确认新版本生效。
 
@@ -19,7 +19,7 @@
 
 - 当前仓库路径、目标框架、架构、服务名、服务账号、发布通道、部署目录、是否具备管理员权限。
 - 包名是否仍为 `Zongsoft.Daemon`。
-- 版本号必须高于当前运行应用版本；曾观测 daemon 当前版本为 `1.0.0.0`，测试包可从 `1.0.0.1` 开始。
+- 版本号必须高于当前运行应用版本；第一轮全量包提升 minor 版本号，第二轮增量包只提升 patch（第三部分）版本号。
 
 先读：
 
@@ -50,7 +50,7 @@
 - 临时 marker 建议使用 Zongsoft 日志，避免 `Microsoft.Extensions.Logging.ILogger` 未进入约定文件日志：
 
 ```csharp
-Zongsoft.Diagnostics.Logging.GetLogging<UpgradeMarkerService>().Info("Daemon upgrade marker: 1.0.0.1");
+Zongsoft.Diagnostics.Logging.GetLogging<UpgradeMarkerService>().Info("Daemon upgrade marker: 1.1.0");
 ```
 
 - 日志通常在 daemon 部署目录下的 `logs\yyyyMM\Zongsoft.Hosting.Daemon-*.log`。
@@ -63,8 +63,8 @@ Zongsoft.Diagnostics.Logging.GetLogging<UpgradeMarkerService>().Info("Daemon upg
 3. 部署 upgrader：复制到 `plugins/zongsoft/upgrader`，确认插件和依赖完整。
 4. 部署 deployer：确认 `.deployer\Zongsoft.Upgrading.Deployer.exe` 存在，路径以 upgrader 配置或源码为准。
 5. 安装并启动 Windows Service：执行 `install.cmd` 或等价命令，记录服务名、`binPath`、账号、状态、日志位置。
-6. 第一轮升级：加入 marker `Daemon upgrade marker: 1.0.0.1`；构建、pack、publish，验证 S3 对象存在，观察服务发现/下载/解压/部署/停止/重启。
-7. 第二轮升级：把 marker 和包版本递增到 `1.0.0.2`，重复构建、打包、发布和观察。
+6. 第一轮升级：加入 marker `Daemon upgrade marker: 1.1.0`；构建 `Fully` 全量包，版本提升 minor，例如 `1.0.x` -> `1.1.0`；publish 后验证 S3 对象存在。观察升级前先停止 Windows Service，并删除宿主程序的 `bin` 目录，再重新部署干净基线 daemon、upgrader 和 deployer，确保全量升级测试干净完整；随后观察服务发现/下载/解压/部署/停止/重启。
+7. 第二轮升级：把 marker 和包版本递增到 patch 版本，例如 `1.1.0` -> `1.1.1`；构建 `Delta` 增量包，重复发布和观察。
 8. 清理：执行 `uninstall.cmd` 或 `sc stop` + `sc delete`，确认服务不存在且无遗留 daemon 进程。
 
 ## 验收重点
@@ -72,6 +72,7 @@ Zongsoft.Diagnostics.Logging.GetLogging<UpgradeMarkerService>().Info("Daemon upg
 - Windows Service 创建成功、能启动并保持 `Running`。
 - 服务 `binPath` 指向本次部署目录中的 daemon `.exe`。
 - upgrader 正常加载；pack/publish 成功；S3 中存在对应版本对象。
+- 第一轮必须是提升 minor 版本号的 `Fully` 全量包，并在删除宿主 `bin` 目录后完成恢复验证；第二轮必须是只提升 patch 版本号的 `Delta` 增量包。
 - daemon 日志显示发现新版本、下载成功、解压成功、调用 deployer 且 deployer 成功。
 - 升级后 Windows Service 最终回到 `Running`。
 - 两轮升级后都能观察到对应 marker。

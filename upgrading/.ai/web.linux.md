@@ -9,7 +9,7 @@
 - 升级身份：`Zongsoft.Web`。
 - 托管方式：必须是 systemd service，并通过 Nginx 反向代理访问，不能只访问 Kestrel 后端端口代替。
 - 安装包调试：必须用 `/Zongsoft/tools/packager` 分别制作并验证 `.deb` 和 `.tar.gz`。
-- 验证轮次：至少两轮，示例版本 `1.0.0.1` -> `1.0.0.2`。
+- 验证轮次：至少两轮，示例版本为基线 `1.0.0` -> 全量 `1.1.0` -> 增量 `1.1.1`。
 
 升级必须证明 Web service 能发现、下载、解压、调用 `Zongsoft.Upgrading.Deployer`、完成部署，并通过 systemd 重启、Nginx 入口、HTTP 响应、日志或可观测标记确认新版本生效。
 
@@ -19,6 +19,7 @@
 
 - WSL 发行版、内核、架构、实际仓库路径、服务名、Nginx 入口、Kestrel 后端端口、发布通道、部署目录、安装目录。
 - 包名是否仍为 `Zongsoft.Web`。
+- 版本号必须高于当前运行应用版本；第一轮全量包提升 minor 版本号，第二轮增量包只提升 patch（第三部分）版本号。
 - 如果仓库位于 Windows 盘符下，先确认实际挂载路径，例如 `D:\Zongsoft\framework\upgrading` -> `/mnt/d/Zongsoft/framework/upgrading`。
 
 先读：
@@ -70,8 +71,8 @@
 6. 制作并调试 `.tar.gz`：解压或执行安装脚本，配置 systemd 和 Nginx，启动服务，reload Nginx，分别访问 Kestrel 和 Nginx。
 7. 部署 upgrader：复制到当前用于升级验证的 Web 安装目录下 `plugins/zongsoft/upgrader`。
 8. 部署 deployer：按 upgrader 配置或源码确认 `.deployer` 位置；确认可执行入口可由 systemd 服务账号启动。
-9. 第一轮升级：加入 HTTP 或日志 marker `Web upgrade marker: 1.0.0.1`；构建、pack、publish，验证 S3 对象存在，观察发现/下载/解压/部署/停止/重启，并通过 Nginx 入口确认 marker。
-10. 第二轮升级：把 marker 和包版本递增到 `1.0.0.2`，重复构建、打包、发布和观察。
+9. 第一轮升级：加入 HTTP 或日志 marker `Web upgrade marker: 1.1.0`；构建 `Fully` 全量包，版本提升 minor，例如 `1.0.x` -> `1.1.0`；publish 后验证 S3 对象存在。观察升级前先停止 Web service，并删除宿主程序的 `bin` 目录，再重新部署干净基线 Web、upgrader 和 deployer，确保全量升级测试干净完整；随后观察发现/下载/解压/部署/停止/重启，并通过 Nginx 入口确认 marker。
+10. 第二轮升级：把 marker 和包版本递增到 patch 版本，例如 `1.1.0` -> `1.1.1`；构建 `Delta` 增量包，重复发布和观察。
 11. 清理：停止、禁用并卸载测试服务；删除 `.tar.gz` 测试目录、手工 unit 和测试 Nginx 配置；执行 `systemctl daemon-reload`、`nginx -t`、reload Nginx；确认无遗留 Web 进程。
 
 ## 验收重点
@@ -80,6 +81,7 @@
 - Web systemd service 能启动并保持 `active (running)`。
 - Kestrel 后端端口和 Nginx 代理入口都访问成功。
 - upgrader 正常加载；pack/publish 成功；S3 中存在对应版本对象。
+- 第一轮必须是提升 minor 版本号的 `Fully` 全量包，并在删除宿主 `bin` 目录后完成恢复验证；第二轮必须是只提升 patch 版本号的 `Delta` 增量包。
 - Web 日志显示发现新版本、下载成功、解压成功、调用 deployer 且 deployer 成功。
 - 升级后 systemd service 回到 `active (running)`，`nginx -t` 通过，Nginx 入口可访问。
 - 两轮升级后都能通过 HTTP 响应、日志或 marker 观察到对应版本。

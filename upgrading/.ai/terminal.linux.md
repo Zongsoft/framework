@@ -8,7 +8,7 @@
 - 宿主程序：`/Zongsoft/hosting/terminal`。
 - 升级身份：`Zongsoft.Terminal`。
 - 托管方式：terminal 进程；可用 `tmux`、`screen`、后台进程或项目约定方式保持运行。
-- 验证轮次：至少两轮，示例版本 `1.0.0.1` -> `1.0.0.2`。
+- 验证轮次：至少两轮，示例版本为基线 `1.0.0` -> 全量 `1.1.0` -> 增量 `1.1.1`。
 
 升级必须证明 terminal 能发现、下载、解压、调用 `Zongsoft.Upgrading.Deployer`、完成部署，并通过日志、命令输出或可观测标记确认新版本生效。
 
@@ -18,6 +18,7 @@
 
 - WSL 发行版、内核、架构、实际仓库路径、目标框架、发布通道、部署目录。
 - 包名是否仍为 `Zongsoft.Terminal`；除非源码或配置明确支持插件级升级，不要用 `Zongsoft.Commands` 作为默认发布身份。
+- 版本号必须高于当前运行应用版本；第一轮全量包提升 minor 版本号，第二轮增量包只提升 patch（第三部分）版本号。
 - 如果仓库位于 Windows 盘符下，先确认实际挂载路径，例如 `D:\Zongsoft\framework\upgrading` -> `/mnt/d/Zongsoft/framework/upgrading`。
 
 先读：
@@ -53,13 +54,14 @@
 3. 部署 upgrader：复制到 `plugins/zongsoft/upgrader`，确认依赖完整且大小写匹配。
 4. 部署 deployer：按 upgrader 配置或源码确认 `.deployer` 位置；确认可执行入口可在 Linux/WSL 中启动。
 5. 启动 terminal：保持运行，记录启动命令、工作目录、环境变量和日志位置。
-6. 第一轮升级：加入 marker `Terminal upgrade marker: 1.0.0.1`；构建、pack、publish，验证 S3 对象存在，观察发现/下载/解压/部署/重启或热更新。
-7. 第二轮升级：把 marker 和包版本递增到 `1.0.0.2`，重复构建、打包、发布和观察。
+6. 第一轮升级：加入 marker `Terminal upgrade marker: 1.1.0`；构建 `Fully` 全量包，版本提升 minor，例如 `1.0.x` -> `1.1.0`；publish 后验证 S3 对象存在。观察升级前先停止 terminal，并删除宿主程序的 `bin` 目录，再重新部署干净基线 terminal、upgrader 和 deployer，确保全量升级测试干净完整；随后观察发现/下载/解压/部署/重启或热更新。
+7. 第二轮升级：把 marker 和包版本递增到 patch 版本，例如 `1.1.0` -> `1.1.1`；构建 `Delta` 增量包，重复发布和观察。
 
 ## 验收重点
 
 - terminal 在 Linux/WSL 中正常启动，upgrader 正常加载。
 - pack/publish 成功，包元数据中的名称、版本、模式、平台、架构正确。
+- 第一轮必须是提升 minor 版本号的 `Fully` 全量包，并在删除宿主 `bin` 目录后完成恢复验证；第二轮必须是只提升 patch 版本号的 `Delta` 增量包。
 - terminal 日志显示发现新版本、下载成功、解压成功、调用 deployer 且 deployer 成功。
 - 两轮升级后都能观察到对应 marker。
 
