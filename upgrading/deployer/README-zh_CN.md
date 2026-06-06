@@ -121,12 +121,14 @@ Zongsoft.Upgrading.Deployer \
 在 `deployer` 目录中运行下列命令：
 
 ```cmd
-dotnet publish Zongsoft.Upgrading.Deployer.csproj ^
-	--self-contained ^
-	--runtime win-x64 ^
-	--framework net10.0 ^
-	--configuration Release ^
-	-p:PublishAot=true
+dotnet publish "Zongsoft.Upgrading.Deployer.csproj" ^
+  -c Release ^
+  -f net10.0 ^
+  -r win-x64 ^
+  --self-contained true ^
+  -p:PublishSingleFile=true ^
+  -p:PublishReadyToRun=true ^
+  -p:PublishAot=true
 ```
 
 发布后的可执行文件位于：

@@ -1,56 +1,110 @@
 ---
 name: deployer
-description: Work on the Zongsoft.Upgrading.Deployer component. Use when modifying or reviewing the Native AOT deployment executable, .deployment descriptor handling, full or delta release copy behavior, deployment executor events, service or terminal restart launchers, deployer publishing scripts, or deployer documentation in the upgrading/deployer project.
+description: 处理 upgrading/deployer 下的 Zongsoft.Upgrading.Deployer Native AOT 可执行程序。用于修改或审查 .deployment 描述文件处理、完整/增量文件部署、清理/复制规则、部署执行器事件、服务/Web/终端重启启动器、平台相关发布脚本、Visual Studio 发布配置，或 Zongsoft 自动升级 deployer 文档。
 ---
 
 # Zongsoft Upgrading Deployer
 
-## Start Here
+## 入手位置
 
-Read these local files before changing behavior:
+修改行为前，优先读取最小且有用的文件集合：
 
-- `README.md` for public behavior and command-line contract.
-- `Deployer.Deploy.cs` for deployment sequencing.
-- `Deployer.Helper.cs` for cleanup and copy behavior.
-- `Launcher.cs` plus `Launcher.*.cs` for restart behavior.
-- `Executor.Initializer.cs` for built-in executor command registration.
-- `Program.cs` for command-line parsing and process entry behavior.
-- `publish.linux-x64.*` and the Windows `dotnet publish` command in `README.md` for publish instructions.
+- `README.md`：了解公开行为、参数、重启策略和发布说明。
+- `Program.cs`：进程入口行为和 `key=value` 参数解析。
+- `Deployer.Deploy.cs`：部署顺序和描述文件生命周期。
+- `Deployer.Helper.cs`：清理、保留和复制行为。
+- `Launcher.cs`、`Launcher.*.cs`：重启选择和平台相关启动行为。
+- `ILauncher.cs`：修改启动器契约时读取。
+- `Executor.Initializer.cs`：内置执行器命令注册。
+- `Zongsoft.Upgrading.Deployer.csproj`：Native AOT、目标框架、链接的 `.shared` 文件和打包设置。
+- `publish.linux-x64.*`、`build.cake`、`Properties/PublishProfiles/*.pubxml`：修改发布自动化或 AOT 单文件制作时读取。
+- `../../framework.linux-x64.yaml` 和 `../../framework-start.cmd`：制作 Linux x64 AOT 单文件或调整容器发布流程时读取；从 `upgrading` 目录视角对应 `../framework.linux-x64.yaml` 和 `../framework-start.cmd`。
+- `../.shared/*.cs`：触碰部署描述文件、manifest/release 模型、执行器契约或共享命令时读取。
 
-## Core Contract
+## 核心契约
 
-Preserve this order unless the task explicitly changes deployment semantics:
+除非任务明确要改变部署语义，否则保留以下顺序：
 
-1. Parse `key=value` command-line arguments into `Deployer.Argument`.
-2. Wait for `app.id` to exit, unless it is missing or zero.
-3. Open the `.deployment` descriptor with exclusive access.
-4. Load the manifest referenced by the descriptor.
-5. For `Fully` releases, clean the application root while preserving the deployer directory and deployment descriptor.
-6. Run `Deploying` executors.
-7. Copy extracted package files from `Packages` into the application root.
-8. Run `Deployed` executors.
-9. Release the descriptor lock and restart the host through the launcher selected by `app.type`.
+1. 将 `key=value` 命令行参数解析为 `Deployer.Argument`。
+2. 等待 `app.id` 对应进程退出；如果缺失或为零则跳过。
+3. 以独占方式打开 `.deployment` 描述文件。
+4. 加载描述文件引用的 manifest。
+5. 对 `Fully` 发布，清理应用根目录，同时保留 deployer 目录和部署描述文件。
+6. 执行 `Deploying` 执行器。
+7. 将 `Packages` 中已解压的包文件复制到应用根目录。
+8. 执行 `Deployed` 执行器。
+9. 释放描述文件锁，并通过 `app.type` 选择的启动器重启宿主。
 
-Treat `.deployment` as the hand-off boundary from the upgrader. It contains `Manifest` and `Packages`, is opened exclusively during deployment, and is deleted by the deployment descriptor lifecycle.
+将 `.deployment` 视为 upgrader 向 deployer 交接的边界。它包含 `Manifest` 和 `Packages`，部署期间会被独占打开，并由部署描述文件生命周期删除。
 
-## Implementation Rules
+## 跨项目契约
 
-Keep the deployer suitable for out-of-process upgrade deployment:
+保持 deployer 兼容 `Zongsoft.Upgrading.Upgrader` 写入的 `.deployment` 文件，以及 `Zongsoft.Tools.Upgrader` 创建或 `Zongsoft.Upgrading.Web` 导入的 manifest。
 
-- Avoid dependencies that are hostile to Native AOT or standalone publishing.
-- Do not overwrite or clean the `.deployer` directory during full releases.
-- Keep deployment file locking strict; it prevents the host and deployer from racing.
-- Keep executor names aligned with shared command names: `Copy`, `Move`, `Link`, `Delete`.
-- Keep launcher behavior platform-aware: IIS app pool recycle for Windows Web, `systemctl start` for Linux or FreeBSD services, `sc start` for Windows daemon services, and direct process start for terminal or universal hosts.
-- Treat service restart commands as operationally sensitive; do not run them in tests unless the user explicitly asks.
+修改 `../.shared/Deployer*.cs`、`Manifest`、`Release`、`Executor`、命令实现、`ReleaseKind`、`Platform` 或 `Architecture` 可能影响 upgrader、tool 和 web 包管理器。共享契约变化时检查这些项目。
 
-## Common Tasks
+## 实现规则
 
-When changing cleanup or copy behavior, verify both `Fully` and `Delta` modes and preserve package directory traversal semantics.
+保持 deployer 适合作为进程外升级部署程序：
 
-When changing restart behavior, update the matching launcher file and confirm `Launcher.Launch` still selects by `app.type` values `Web`, `Daemon`, `Terminal`, and fallback.
+- 避免引入不利于 Native AOT、trimming 或独立发布的依赖。
+- 新增 API 时考虑 `PublishAot`、`IsAotCompatible`、`StaticExecutable` 和 `InvariantGlobalization` 假设。
+- 完整发布时不要覆盖或清理 `.deployer` 目录。
+- 保留严格的描述文件锁；它用于避免宿主和 deployer 竞争。
+- 保持执行器名称与共享命令名一致：`Copy`、`Move`、`Link`、`Delete`。
+- 只在文档化的 `Deploying` 和 `Deployed` 阶段执行 manifest 执行器。
+- 保持启动器行为感知平台：Windows Web 回收 IIS 应用池，Linux 或 FreeBSD 服务使用 `systemctl start`，Windows daemon 服务使用 `sc start`，terminal 或 universal 宿主使用直接进程启动。
+- 将服务重启命令视为运维敏感操作；除非用户明确要求，否则不要在测试中运行它们。
 
-When changing command-line arguments, update `README.md` and keep compatibility with arguments produced by the upgrader:
+## AOT 单文件发布
+
+deployer 的发布产物应保持为自包含、单文件、Native AOT 可执行程序。修改发布文档、脚本或配置时，保持 `README.md`、`README-zh_CN.md`、`publish.linux-x64.*`、Visual Studio 发布配置和 `Zongsoft.Upgrading.Deployer.csproj` 的发布属性一致。
+
+Windows x64 发布命令应保持包含这些关键属性：
+
+```cmd
+dotnet publish "Zongsoft.Upgrading.Deployer.csproj" ^
+  -c Release ^
+  -f net10.0 ^
+  -r win-x64 ^
+  --self-contained true ^
+  -p:PublishSingleFile=true ^
+  -p:PublishReadyToRun=true ^
+  -p:PublishAot=true
+```
+
+Linux x64 AOT 单文件制作需要先启动 Podman 容器。优先参考 `README.md` 的 Publishing/Linux 章节，并保留以下流程：
+
+1. 从仓库根目录或 `upgrading` 工作目录启动 `../../framework-start.cmd` 或 `../framework-start.cmd`，它使用 `framework.linux-x64.yaml` 启动 `zongsoft-framework` 容器。
+2. 确认容器已完成加载：
+
+```cmd
+podman ps -a --pod
+podman logs zongsoft-framework
+```
+
+3. 进入容器内发布：
+
+```cmd
+podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft-framework sh
+```
+
+```shell
+./publish.linux-x64.sh
+```
+
+4. 或者在容器运行期间，从宿主执行 `publish.linux-x64.ps1` 或 `publish.linux-x64.cmd`。
+5. 发布完成后按 README 指引停止容器。
+
+不要把 Linux AOT 单文件发布简化为普通宿主机 `dotnet publish`，除非任务明确要求改变构建环境；该流程依赖 Linux Alpine/.NET SDK 容器环境。
+
+## 常见任务
+
+修改清理或复制行为时，验证 `Fully` 和 `Delta` 两种模式，并保留包目录遍历语义。
+
+修改重启行为时，更新匹配的 launcher 文件，并确认 `Launcher.Launch` 仍按 `app.type` 的 `Web`、`Daemon`、`Terminal` 和 fallback 选择。
+
+修改命令行参数时，更新 `README.md`，并保持兼容 upgrader 生成的参数：
 
 ```text
 app.id=12345
@@ -62,23 +116,24 @@ host.args#0=...
 deployment=/opt/zongsoft/terminal/.deployment
 ```
 
-## Validation
+修改发布命令或发布配置时，让 Visual Studio、PowerShell、CMD、shell 脚本、Podman 容器流程和 README 示例在相同 runtime/framework 下保持一致。
 
-Prefer focused validation first:
+## 文档
+
+行为变化时同步更新文档：
+
+- 更新 `README.md` 和 `README-zh_CN.md`，说明公开参数、部署、重启或发布变化。
+- 修改项目发布属性时，同步更新发布脚本/配置。
+- 服务权限等运维要求只写入文档，不作为测试副作用。
+
+## 验证
+
+优先执行聚焦验证：
 
 ```shell
 dotnet build Zongsoft.Upgrading.Deployer.slnx
 ```
 
-For publish-related changes, also inspect or run the relevant `publish.linux-x64.*` script in the intended environment. Avoid actually restarting real services or mutating a live application directory unless the user explicitly requests an integration test.
+发布相关变化时，在目标环境中检查或运行相关发布命令/脚本。Native AOT 敏感变化时，在可行情况下对目标 runtime 执行一次代表性的 `dotnet publish`。
 
-For Windows publish documentation or automation, keep the command-line path compatible with the Native AOT project settings:
-
-```cmd
-dotnet publish Zongsoft.Upgrading.Deployer.csproj ^
-	--self-contained ^
-	--runtime win-x64 ^
-	--framework net10.0 ^
-	--configuration Release ^
-	-p:PublishAot=true
-```
+除非用户明确要求集成测试，否则不要真实重启服务或修改线上应用目录。验证部署行为时使用临时应用目录和描述文件。

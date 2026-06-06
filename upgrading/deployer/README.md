@@ -121,12 +121,14 @@ Release manifest executors are invoked during:
 Run the following command in the `deployer` directory:
 
 ```cmd
-dotnet publish Zongsoft.Upgrading.Deployer.csproj ^
-	--self-contained ^
-	--runtime win-x64 ^
-	--framework net10.0 ^
-	--configuration Release ^
-	-p:PublishAot=true
+dotnet publish "Zongsoft.Upgrading.Deployer.csproj" ^
+  -c Release ^
+  -f net10.0 ^
+  -r win-x64 ^
+  --self-contained true ^
+  -p:PublishSingleFile=true ^
+  -p:PublishReadyToRun=true ^
+  -p:PublishAot=true
 ```
 
 The published executable is written to:
