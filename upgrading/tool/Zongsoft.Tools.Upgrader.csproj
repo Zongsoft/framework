@@ -3,7 +3,7 @@
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net8.0;net9.0;net10.0;</TargetFrameworks>
 		<RootNamespace>Zongsoft.Upgrading</RootNamespace>
-		<Version>0.1.0</Version>
+		<Version>0.1.1</Version>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>dotnet-upgrade</ToolCommandName>
@@ -41,7 +41,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.46.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.48.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
