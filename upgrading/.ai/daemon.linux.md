@@ -6,7 +6,7 @@
 
 本次验证的核心目标是确认 daemon 宿主程序在 systemd 托管运行时，能够通过升级系统完成以下流程：
 
-1. 发现 `zongsoft.daemon` 宿主程序的新升级包；
+1. 发现 `Zongsoft.Daemon` 宿主程序的新升级包；
 2. 下载升级包；
 3. 解压升级包；
 4. 调用 `Zongsoft.Upgrading.Deployer` 执行部署；
@@ -37,6 +37,14 @@
 - 如果需要 Redis 和 RustFS / S3 兼容存储服务，优先使用 `/Zongsoft/hosting` 目录中已有的 Podman 容器文件和脚本启动；如果 WSL 中 Podman 不可用，再查找仓库是否提供 Docker Compose 或其他 Linux 启动方式。
 - 每个关键步骤都需要记录执行命令、执行结果、日志位置和判断结论。
 
+## 工作准则
+
+- 先声明当前假设：实际仓库路径、目标平台/架构、服务名、发布通道、包名、版本号和部署目录。
+- 先读本工作流涉及的 `SKILL.md`：`upgrading/tool/SKILL.md`、`upgrading/upgrader/SKILL.md`、`upgrading/deployer/SKILL.md`；涉及 Web 包管理器时再读 `upgrading/web/SKILL.md`。
+- 保持最小改动：只为验证升级添加可观测标记、必要配置和临时安装产物，不夹带重构。
+- 每一步都要有可验证结果；失败时记录命令、输出、日志和判断，不要跳过失败步骤。
+- 修改共享 manifest、release、executor、runtime、checksum 或 `.deployment` 契约时，同时检查 tool、upgrader、deployer 和 web 子项目。
+
 ## 相关路径
 
 以下路径为预期路径。如果仓库中的实际命令名、项目名或部署路径与本文描述不一致，以源码、项目文件、脚本和日志为准，并在最终报告中说明差异。
@@ -49,7 +57,7 @@
 | Deployer 程序源码 | `/Zongsoft/framework/upgrading/deployer` |
 | Upgrader 插件部署目录 | daemon 安装目录下的 `plugins/zongsoft/upgrader` |
 | Deployer 部署目录 | daemon 部署目录下的 `.deployer` 目录 |
-| 升级工具 / tool | 在仓库中查找已有 tool 项目或命令入口 |
+| 升级工具 / tool | `/Zongsoft/framework/upgrading/tool` |
 | Daemon 升级打包脚本 | `/Zongsoft/hosting/daemon/upgrade.pack.cmd` 或等价 Linux 命令 |
 | Daemon 升级发布脚本 | `/Zongsoft/hosting/daemon/upgrade.publish.cmd` 或等价 Linux 命令 |
 | systemd 服务名称 | 以安装包、unit 文件或日志为准，默认可先检查 `zongsoft.daemon` |
@@ -146,7 +154,7 @@ D:\Zongsoft\framework\upgrading -> /mnt/d/Zongsoft/framework/upgrading
 
 要求：
 
-- 包名称应为 `zongsoft.daemon`，除非源码或脚本显示实际名称不同；
+- 安装包名称可沿用仓库安装包约定，例如 `zongsoft.daemon`；注意这不同于升级包发布身份 `Zongsoft.Daemon`。
 - 平台参数使用 Linux；
 - 架构参数与当前 WSL 环境一致，例如 `x64` 或 `arm64`；
 - 明确记录打包命令、版本号、输出目录和生成文件名。
@@ -235,6 +243,17 @@ plugins/zongsoft/upgrader
 
 构建 `/Zongsoft/framework/upgrading/deployer`，并将生成的 `Zongsoft.Upgrading.Deployer` 程序放到 daemon/upgrader 期望的位置。
 
+deployer 必须按 Native AOT 单文件方式制作。AOT 编译发布耗时较久，Linux x64 AOT 发布通常更慢；如果本次验证没有修改 deployer 相关代码、项目发布属性、发布脚本或目标 runtime，不需要重新编译和发布 AOT 程序，直接复用已验证的发布产物。只有确实需要重新发布时，才预留等待时间并记录开始/结束时间和输出目录。
+
+Linux x64 发布前需要先启动 `framework.linux-x64.yaml` 对应的 Podman 容器：从 `/Zongsoft/framework` 执行 `framework-start.cmd`，或从 `/Zongsoft/framework/upgrading` 视角参考 `../framework-start.cmd`。容器启动后可进入容器执行：
+
+```shell
+podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft-framework sh
+./publish.linux-x64.sh
+```
+
+也可以在容器运行期间从宿主执行 `publish.linux-x64.ps1` 或 `publish.linux-x64.cmd`。更多细节以 `upgrading/deployer/README.md` 的 Publishing/Linux 章节和 `upgrading/deployer/SKILL.md` 为准。
+
 不要猜测目标位置。优先通过以下信息确认：
 
 1. upgrader 配置文件；
@@ -310,12 +329,12 @@ Daemon upgrade marker: 1.0.0.1
 
 ## 3. 制作 daemon 升级包
 
-使用升级 tool 中的 `pack` 命令，或将 `/Zongsoft/hosting/daemon/upgrade.pack.cmd` 转换为等价 Linux shell 命令，为 `zongsoft.daemon` 制作升级包。
+使用升级 tool 中的 `pack` 命令，或将 `/Zongsoft/hosting/daemon/upgrade.pack.cmd` 转换为等价 Linux shell 命令，为 `Zongsoft.Daemon` 制作升级包。
 
 要求：
 
 - 包版本号使用首次模拟版本号；
-- 包名称应为 `zongsoft.daemon`，除非源码或脚本显示实际名称不同；
+- 包名称应为 `Zongsoft.Daemon`，除非源码或脚本显示实际名称不同；
 - 打包模式按 daemon 脚本或升级系统约定执行，现有脚本通常使用 `fully`；
 - 平台参数使用 Linux 对应值；
 - 明确记录 `pack` 命令参数和输出包位置；
@@ -384,7 +403,7 @@ Daemon upgrade marker: 1.0.0.2
 
 重复以下步骤：
 
-1. 构建 `zongsoft.daemon`；
+1. 构建 `Zongsoft.Daemon`；
 2. 使用 `tool pack` 制作新的升级包；
 3. 使用 `tool publish` 发布到同一个 S3 通道；
 4. 验证 S3 中新版本发布成功。

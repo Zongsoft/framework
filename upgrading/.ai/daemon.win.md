@@ -6,7 +6,7 @@
 
 本次验证的核心目标是确认 daemon 宿主程序在 Windows Service 托管运行时，能够通过升级系统完成以下流程：
 
-1. 发现 `zongsoft.daemon` 宿主程序的新升级包；
+1. 发现 `Zongsoft.Daemon` 宿主程序的新升级包；
 2. 下载升级包；
 3. 解压升级包；
 4. 调用 `Zongsoft.Upgrading.Deployer` 执行部署；
@@ -32,6 +32,14 @@
 - 如果需要 Redis 和 RustFS / S3 兼容存储服务，优先使用 `/Zongsoft/hosting` 目录中已有的 Podman 容器文件和脚本启动。
 - 每个关键步骤都需要记录执行命令、执行结果、日志位置和判断结论。
 
+## 工作准则
+
+- 先声明当前假设：目标平台/架构、服务名、发布通道、包名、版本号、部署目录和是否具备管理员权限。
+- 先读本工作流涉及的 `SKILL.md`：`upgrading/tool/SKILL.md`、`upgrading/upgrader/SKILL.md`、`upgrading/deployer/SKILL.md`；涉及 Web 包管理器时再读 `upgrading/web/SKILL.md`。
+- 保持最小改动：只为验证升级添加可观测标记、必要配置和临时安装产物，不夹带重构。
+- 每一步都要有可验证结果；失败时记录命令、输出、日志和判断，不要跳过失败步骤。
+- 修改共享 manifest、release、executor、runtime、checksum 或 `.deployment` 契约时，同时检查 tool、upgrader、deployer 和 web 子项目。
+
 ## 相关路径
 
 以下路径为预期路径。如果仓库中的实际命令名、项目名或部署路径与本文描述不一致，以源码、项目文件、脚本和日志为准，并在最终报告中说明差异。
@@ -45,7 +53,7 @@
 | Deployer 程序源码 | `/Zongsoft/framework/upgrading/deployer` |
 | Upgrader 插件部署目录 | daemon 部署目录下的 `plugins/zongsoft/upgrader` |
 | Deployer 部署目录 | daemon 部署目录下的 `.deployer` 目录 |
-| 升级工具 / tool | 在仓库中查找已有 tool 项目或命令入口 |
+| 升级工具 / tool | `/Zongsoft/framework/upgrading/tool` |
 | Daemon 升级打包脚本 | `/Zongsoft/hosting/daemon/upgrade.pack.cmd` |
 | Daemon 升级发布脚本 | `/Zongsoft/hosting/daemon/upgrade.publish.cmd` |
 | Windows Service 默认名称 | `zongsoft.daemon` |
@@ -84,7 +92,7 @@ at System.ConsolePal.set_TreatControlCAsInput(Boolean value)
 
 ```powershell
 $log = 'D:\Zongsoft\framework\upgrading\.artifacts\daemon-pack.log'
-$cmd = 'dotnet-upgrade pack --name:zongsoft.daemon --kind:fully --version:1.0.0.1 --checksum:sha1 --compilation:Debug --framework:net10.0 --platform:windows --architecture:x64 --source:"D:\Zongsoft\hosting\daemon\bin\Debug\net10.0" --output:"D:\Zongsoft\\" > "' + $log + '" 2>&1'
+$cmd = 'dotnet-upgrade pack --name:Zongsoft.Daemon --kind:fully --version:1.0.0.1 --checksum:sha1 --compilation:Debug --framework:net10.0 --platform:windows --architecture:x64 --source:"D:\Zongsoft\hosting\daemon\bin\Debug\net10.0" --output:"D:\Zongsoft\\" > "' + $log + '" 2>&1'
 $p = Start-Process -FilePath cmd.exe -ArgumentList '/c', $cmd -Wait -PassThru -WindowStyle Hidden
 $p.ExitCode
 Get-Content -LiteralPath $log
@@ -165,14 +173,16 @@ server=http://127.0.0.1:9000;region=cn-north-1;accessKey=rustfsadmin;secretKey=r
 
 ### 5. deployer 的固定位置
 
-upgrader 源码通过 `{ApplicationPath}/.deployer/Zongsoft.Upgrading.Deployer.exe` 查找部署器。Windows 下发布命令为：
+upgrader 源码通过 `{ApplicationPath}/.deployer/Zongsoft.Upgrading.Deployer.exe` 查找部署器。Windows 下按 Native AOT 单文件方式发布：
 
 ```cmd
 dotnet publish Zongsoft.Upgrading.Deployer.csproj ^
-	--self-contained ^
-	--runtime win-x64 ^
-	--framework net10.0 ^
-	--configuration Release ^
+	-c Release ^
+	-f net10.0 ^
+	-r win-x64 ^
+	--self-contained true ^
+	-p:PublishSingleFile=true ^
+	-p:PublishReadyToRun=true ^
 	-p:PublishAot=true
 ```
 
@@ -200,8 +210,8 @@ D:\Zongsoft.manifest
 预期输出类似：
 
 ```text
-D:\Zongsoft\zongsoft.daemon@1.0.0.1_win-x64.zip
-D:\Zongsoft\zongsoft.daemon@1.0.0.1_win-x64.manifest
+D:\Zongsoft\Zongsoft.Daemon@1.0.0.1_win-x64.zip
+D:\Zongsoft\Zongsoft.Daemon@1.0.0.1_win-x64.manifest
 ```
 
 ### 7. 发布后验证 RustFS/S3 对象
@@ -297,6 +307,8 @@ plugins/zongsoft/upgrader
 
 构建 `/Zongsoft/framework/upgrading/deployer`，并将生成的 `Zongsoft.Upgrading.Deployer` 程序放到 daemon/upgrader 期望的位置。
 
+deployer 必须按 `upgrading/deployer/SKILL.md` 和 `upgrading/deployer/README.md` 的 Publishing/Windows 章节制作 Native AOT 单文件，然后复制发布目录内容到 daemon 部署目录下的 `.deployer`。AOT 编译发布耗时较久；如果本次验证没有修改 deployer 相关代码、项目发布属性、发布脚本或目标 runtime，不需要重新编译和发布 AOT 程序，直接复用已验证的发布产物。只有确实需要重新发布时，才记录开始/结束时间和输出目录。
+
 不要猜测目标位置。优先通过以下信息确认：
 
 1. upgrader 配置文件；
@@ -366,12 +378,12 @@ Daemon upgrade marker: 1.0.0.1
 
 ## 3. 制作 daemon 升级包
 
-使用升级 tool 中的 `pack` 命令，或 `/Zongsoft/hosting/daemon/upgrade.pack.cmd`，为 `zongsoft.daemon` 制作升级包。
+使用升级 tool 中的 `pack` 命令，或 `/Zongsoft/hosting/daemon/upgrade.pack.cmd`，为 `Zongsoft.Daemon` 制作升级包。
 
 要求：
 
 - 包版本号使用首次模拟版本号；
-- 包名称应为 `zongsoft.daemon`，除非源码或脚本显示实际名称不同；
+- 包名称应为 `Zongsoft.Daemon`，除非源码或脚本显示实际名称不同；
 - 打包模式按 daemon 脚本或升级系统约定执行，现有脚本通常使用 `fully`；
 - 平台参数使用 Windows 对应值；
 - 明确记录 `pack` 命令参数和输出包位置。
@@ -438,7 +450,7 @@ Daemon upgrade marker: 1.0.0.2
 
 重复以下步骤：
 
-1. 构建 `zongsoft.daemon`；
+1. 构建 `Zongsoft.Daemon`；
 2. 使用 `tool pack` 或 `upgrade.pack.cmd` 制作新的升级包；
 3. 使用 `tool publish` 或 `upgrade.publish.cmd` 发布到同一个 S3 通道；
 4. 验证 S3 中新版本发布成功。

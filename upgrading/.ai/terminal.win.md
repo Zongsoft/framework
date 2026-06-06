@@ -6,17 +6,17 @@
 
 本次验证的核心目标是确认 terminal 宿主程序能够通过升级系统完成以下流程：
 
-1. 发现 `Zongsoft.Commands` 插件的新升级包；
+1. 发现 `Zongsoft.Terminal` 宿主程序的新升级包；
 2. 下载升级包；
 3. 解压升级包；
 4. 调用 `Zongsoft.Upgrading.Deployer` 执行部署；
-5. 完成 terminal 宿主程序或插件的升级；
-6. 验证升级后的 `Zongsoft.Commands` 插件确实生效。
+5. 完成 terminal 宿主程序升级；
+6. 通过日志、命令输出或可观测标记确认升级后的 terminal 确实生效。
 
 验证流程需要完成两轮：
 
 1. 首次升级验证；
-2. 在首次升级成功后，再次修改版本号并重复升级，验证连续升级流程。
+2. 在首次升级成功后，再次修改版本号或可观测标记并重复升级，验证连续升级流程。
 
 ## 执行约束
 
@@ -29,6 +29,14 @@
 - 如果需要 Redis 和 RustFS / S3 兼容存储服务，优先使用 `/Zongsoft/hosting` 目录中已有的 Podman 容器文件和脚本启动。
 - 每个关键步骤都需要记录执行命令、执行结果、日志位置和判断结论。
 
+## 工作准则
+
+- 先声明当前假设：目标平台/架构、发布通道、包名、版本号和部署目录。
+- 先读本工作流涉及的 `SKILL.md`：`upgrading/tool/SKILL.md`、`upgrading/upgrader/SKILL.md`、`upgrading/deployer/SKILL.md`。
+- 保持最小改动：只为验证升级添加可观测标记、必要配置和临时产物，不夹带重构。
+- 每一步都要有可验证结果；失败时记录命令、输出、日志和判断，不要跳过失败步骤。
+- upgrader 会按应用身份过滤发布；除非源码/配置明确支持插件级升级，否则 terminal 工作流使用 `Zongsoft.Terminal` 包名，不使用 `Zongsoft.Commands` 作为发布身份。
+
 ## 相关路径
 
 以下路径为预期路径。如果仓库中的实际命令名、项目名或部署路径与本文描述不一致，以源码、项目文件、脚本和日志为准，并在最终报告中说明差异。
@@ -38,10 +46,11 @@
 | Terminal 宿主程序 | `/Zongsoft/hosting/terminal` |
 | Upgrader 插件源码 | `/Zongsoft/framework/upgrading/upgrader` |
 | Deployer 程序源码 | `/Zongsoft/framework/upgrading/deployer` |
-| 待升级插件项目 | `/Zongsoft/framework/Zongsoft.Commands` |
+| Terminal 升级包名 | `Zongsoft.Terminal` |
 | Upgrader 插件部署目录 | terminal 部署目录下的 `plugins/zongsoft/upgrader` |
 | Deployer 部署目录 | terminal 部署目录下的 `.deployer` 目录 |
-| 升级工具 / tool | 在仓库中查找已有 tool 项目或命令入口 |
+| 升级工具 / tool | `/Zongsoft/framework/upgrading/tool` |
+| 可选命令插件项目 | `/Zongsoft/framework/Zongsoft.Commands`，仅用于额外命令验证，不作为默认发布身份 |
 
 ## Windows 实操补充
 
@@ -61,7 +70,7 @@ at System.ConsolePal.set_TreatControlCAsInput(Boolean value)
 
 ```powershell
 $log = 'D:\Zongsoft\framework\upgrading\.artifacts\terminal-pack.log'
-$cmd = 'dotnet-upgrade pack --name:Zongsoft.Commands --kind:delta --version:1.0.0.1 --checksum:sha1 --compilation:Debug --framework:net10.0 --platform:windows --architecture:x64 --source:"D:\Zongsoft\framework\Zongsoft.Commands\src\bin\Debug\net10.0" --output:"D:\Zongsoft\\" > "' + $log + '" 2>&1'
+$cmd = 'dotnet-upgrade pack --name:Zongsoft.Terminal --kind:fully --version:1.0.0.1 --checksum:sha1 --compilation:Debug --framework:net10.0 --platform:windows --architecture:x64 --source:"D:\Zongsoft\hosting\terminal\bin\Debug\net10.0" --output:"D:\Zongsoft\\" > "' + $log + '" 2>&1'
 $p = Start-Process -FilePath cmd.exe -ArgumentList '/c', $cmd -Wait -PassThru -WindowStyle Hidden
 $p.ExitCode
 Get-Content -LiteralPath $log
@@ -142,14 +151,16 @@ server=http://127.0.0.1:9000;region=cn-north-1;accessKey=rustfsadmin;secretKey=r
 
 ### 4. deployer 的固定位置
 
-upgrader 源码通过 `{ApplicationPath}/.deployer/Zongsoft.Upgrading.Deployer.exe` 查找部署器。Windows 下发布命令为：
+upgrader 源码通过 `{ApplicationPath}/.deployer/Zongsoft.Upgrading.Deployer.exe` 查找部署器。Windows 下按 Native AOT 单文件方式发布：
 
 ```cmd
 dotnet publish Zongsoft.Upgrading.Deployer.csproj ^
-	--self-contained ^
-	--runtime win-x64 ^
-	--framework net10.0 ^
-	--configuration Release ^
+	-c Release ^
+	-f net10.0 ^
+	-r win-x64 ^
+	--self-contained true ^
+	-p:PublishSingleFile=true ^
+	-p:PublishReadyToRun=true ^
 	-p:PublishAot=true
 ```
 
@@ -177,8 +188,8 @@ D:\Zongsoft.manifest
 预期输出类似：
 
 ```text
-D:\Zongsoft\Zongsoft.Commands@1.0.0.1_win-x64.zip
-D:\Zongsoft\Zongsoft.Commands@1.0.0.1_win-x64.manifest
+D:\Zongsoft\Zongsoft.Terminal@1.0.0.1_win-x64.zip
+D:\Zongsoft\Zongsoft.Terminal@1.0.0.1_win-x64.manifest
 ```
 
 ### 6. 发布后验证 RustFS/S3 对象
@@ -203,12 +214,12 @@ $response.S3Objects | Select-Object Key,Size,LastModified
 $client.Dispose()
 ```
 
-### 7. TestCommand 版本号和包版本号
+### 7. 可观测标记和包版本号
 
-`TestCommand` 输出的模拟版本号用于人工确认升级后的插件确实生效；升级包 `--version` 则用于 upgrader 判断是否存在新版本。两者建议保持同一轮次语义，但 `--version` 应使用升级系统可比较的版本号，例如：
+可观测标记用于人工确认升级后的 terminal 确实生效；升级包 `--version` 则用于 upgrader 判断是否存在新版本。两者建议保持同一轮次语义，但 `--version` 应使用升级系统可比较的版本号，例如：
 
 ```text
-TestCommand version: 1.0.0.1
+Terminal upgrade marker: 1.0.0.1
 --version:1.0.0.1
 ```
 
@@ -266,6 +277,8 @@ plugins/zongsoft/upgrader
 
 构建 `/Zongsoft/framework/upgrading/deployer`，并将生成的 `Zongsoft.Upgrading.Deployer` 程序放到 terminal/upgrader 期望的位置。
 
+deployer 必须按 `upgrading/deployer/SKILL.md` 和 `upgrading/deployer/README.md` 的 Publishing/Windows 章节制作 Native AOT 单文件，然后复制发布目录内容到 terminal 部署目录下的 `.deployer`。AOT 编译发布耗时较久；如果本次验证没有修改 deployer 相关代码、项目发布属性、发布脚本或目标 runtime，不需要重新编译和发布 AOT 程序，直接复用已验证的发布产物。只有确实需要重新发布时，才记录开始/结束时间和输出目录。
+
 不要猜测目标位置。优先通过以下信息确认：
 
 1. upgrader 配置文件；
@@ -291,52 +304,54 @@ plugins/zongsoft/upgrader
 
 # 阶段二：首次打包、发布和升级验证
 
-## 1. 修改 Zongsoft.Commands
+## 1. 修改 terminal 可观测版本标记
 
-在 `/Zongsoft/framework/Zongsoft.Commands` 项目中添加一个 `TestCommand` 命令。
+在 `/Zongsoft/hosting/terminal` 中添加或修改一个可观测测试标记，用于证明升级后的 terminal 代码或配置确实生效。
 
 要求：
 
-- 命令可以被 terminal 或命令系统发现；
-- 命令输出一个模拟版本号；
-- 版本号后续用于验证升级是否生效。
+- 标记可以通过 terminal 启动日志、命令输出或配置输出观察到；
+- 标记输出一个模拟版本号；
+- 标记不破坏 terminal 正常启动、停止和升级流程。
 
 首次版本号示例：
 
 ```text
-TestCommand version: 1.0.0.1
+Terminal upgrade marker: 1.0.0.1
 ```
 
 验收标准：
 
 - 项目编译成功；
-- 新命令符合现有命令注册 / 发现机制；
-- 可以通过代码或运行方式确认该命令会被插件加载。
+- 标记能被 Windows 终端、应用日志或约定日志文件观察到；
+- 标记不会破坏 terminal 正常启动、停止和升级流程。
 
-## 2. 构建 Zongsoft.Commands
+## 2. 构建 terminal
 
-编译 `/Zongsoft/framework/Zongsoft.Commands` 项目。
+编译 `/Zongsoft/hosting/terminal` 项目。
 
 验收标准：
 
 - 构建成功；
-- 生成用于打包的插件产物。
+- 生成用于打包的 terminal 产物；
+- 产物中包含首次版本标记。
 
 ## 3. 制作升级包
 
-使用升级 tool 中的 `pack` 命令，为 `Zongsoft.Commands` 制作升级包。
+使用升级 tool 中的 `pack` 命令，或 `/Zongsoft/hosting/terminal/upgrade.pack.cmd`，为 `Zongsoft.Terminal` 制作升级包。
 
 要求：
 
-- 包版本号使用 `TestCommand` 中模拟的版本号；
-- 打包模式使用 `Delta`；
+- 包版本号使用首次模拟版本号；
+- 包名称应为 `Zongsoft.Terminal`，除非源码或脚本显示实际名称不同；
+- 打包模式按 terminal 脚本或升级系统约定执行，现有脚本使用 `fully`；
 - 明确记录 `pack` 命令参数和输出包位置。
 
 验收标准：
 
 - `pack` 命令执行成功；
 - 生成升级包；
-- 包元数据中的应用 / 插件名、版本号、模式、目标通道正确。
+- 包元数据中的应用名、版本号、模式、平台、架构、目标通道正确。
 
 ## 4. 发布升级包到 S3 通道
 
@@ -367,33 +382,33 @@ TestCommand version: 1.0.0.1
 6. 是否调用 `Zongsoft.Upgrading.Deployer`；
 7. deployer 是否执行成功；
 8. terminal 是否完成重启或热更新；
-9. `Zongsoft.Commands` 插件是否升级到新版本。
+9. terminal 是否升级到新版本。
 
 验收标准：
 
 - terminal 日志显示发现升级包；
 - 下载、解压、部署过程无错误；
 - deployer 执行成功；
-- 升级后运行 `TestCommand`，输出版本号为首次发布版本，例如 `1.0.0.1`。
+- 升级后日志或可观测标记显示首次发布版本，例如 `1.0.0.1`。
 
 # 阶段三：再次升级验证
 
 仅当首次升级完整成功后，继续执行本阶段。
 
-## 1. 修改 TestCommand 版本号
+## 1. 修改 terminal 可观测版本标记
 
-修改 `TestCommand` 输出的模拟版本号，例如：
+修改 terminal 输出的模拟版本号，例如：
 
 ```text
-TestCommand version: 1.0.0.2
+Terminal upgrade marker: 1.0.0.2
 ```
 
 ## 2. 重新构建、打包、发布
 
 重复以下步骤：
 
-1. 构建 `Zongsoft.Commands`；
-2. 使用 `tool pack` 制作新的 Delta 升级包；
+1. 构建 `Zongsoft.Terminal`；
+2. 使用 `tool pack` 制作新的升级包；
 3. 使用 `tool publish` 发布到同一个 S3 通道；
 4. 验证 S3 中新版本发布成功。
 
@@ -411,7 +426,7 @@ TestCommand version: 1.0.0.2
 
 - terminal 发现第二个版本；
 - deployer 再次执行成功；
-- 升级后运行 `TestCommand`，输出版本号为第二次发布版本，例如 `1.0.0.2`。
+- 升级后日志或可观测标记显示第二次发布版本，例如 `1.0.0.2`。
 
 # 异常处理要求
 
@@ -458,7 +473,7 @@ TestCommand version: 1.0.0.2
 6. 两次升级包的版本号；
 7. `pack` / `publish` 命令摘要；
 8. terminal 发现、下载、解压、部署、重启或加载的日志结论；
-9. `TestCommand` 两次升级后的输出结果；
+9. terminal 两次升级后的日志或可观测标记结果；
 10. 遇到的问题和解决方案；
 11. 最终结论：升级全流程是否验证通过。
 

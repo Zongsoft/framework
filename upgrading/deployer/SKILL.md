@@ -60,6 +60,8 @@ description: 处理 upgrading/deployer 下的 Zongsoft.Upgrading.Deployer Native
 
 deployer 的发布产物应保持为自包含、单文件、Native AOT 可执行程序。修改发布文档、脚本或配置时，保持 `README.md`、`README-zh_CN.md`、`publish.linux-x64.*`、Visual Studio 发布配置和 `Zongsoft.Upgrading.Deployer.csproj` 的发布属性一致。
 
+Native AOT 编译发布耗时较久，Linux x64 AOT 发布通常更慢。执行发布前先确认确实需要重新发布，预留足够时间，记录开始/结束时间和输出目录；在 `.ai` 工作流验证中，如果没有修改 deployer 相关代码、项目发布属性、发布脚本或目标 runtime，不需要重新编译和发布 AOT 程序，直接复用已验证的发布产物。
+
 Windows x64 发布命令应保持包含这些关键属性：
 
 ```cmd
@@ -134,6 +136,6 @@ deployment=/opt/zongsoft/terminal/.deployment
 dotnet build Zongsoft.Upgrading.Deployer.slnx
 ```
 
-发布相关变化时，在目标环境中检查或运行相关发布命令/脚本。Native AOT 敏感变化时，在可行情况下对目标 runtime 执行一次代表性的 `dotnet publish`。
+发布相关变化时，在目标环境中检查或运行相关发布命令/脚本。Native AOT 敏感变化时，在可行情况下对目标 runtime 执行一次代表性的 `dotnet publish`；该步骤可能耗时较久，尤其 Linux AOT 发布，验证计划中要预留等待时间并记录耗时。
 
 除非用户明确要求集成测试，否则不要真实重启服务或修改线上应用目录。验证部署行为时使用临时应用目录和描述文件。
