@@ -1,7 +1,7 @@
 ### 身份标识登录
 # @name signin
-# @prompt identity 身份标识
-# @prompt password 登录密码
+@identity = {{$input 身份标识 $value:Administrator }}
+@password = {{$password 登录密码 $value: }}
 POST /Security/Authentication/Signin?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 
@@ -10,94 +10,64 @@ Host: {{host}}:{{port}}
     "Password":"{{password}}"
 }
 
-###
-
-@credentialId={{signin.response.body.$.credentialId}}
-@renewalToken={{signin.response.body.$.renewalToken}}
-@userId={{signin.response.body.$.identity.userId}}
-@userName={{signin.response.body.$.identity.name}}
-@namespace={{signin.response.body.$.identity.namespace}}
-@email={{signin.response.body.$.identity.email}}
-@phone={{signin.response.body.$.identity.phone}}
+{{
+	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+}}
 
 ### 验证码登录
 # 注：验证码登录需要先通过 Secret 方法获取身份验证码。
 # @name signin
-# @prompt token  令牌号
-# @prompt secret 验证码
-POST /Security/Authentication/Signin/Secret/{{token}}?scenario={{scenario}} HTTP/1.1
+@secretToken = {{$input 令牌号 $value: }}
+@secretCode = {{$input 验证码 $value: }}
+POST /Security/Authentication/Signin/Secret/{{secretToken}}?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
 
-{{secret}}
+{{secretCode}}
 
-###
-
-@credentialId={{signin.response.body.$.credentialId}}
-@renewalToken={{signin.response.body.$.renewalToken}}
-@userId={{signin.response.body.$.identity.userId}}
-@userName={{signin.response.body.$.identity.name}}
-@namespace={{signin.response.body.$.identity.namespace}}
-@email={{signin.response.body.$.identity.email}}
-@phone={{signin.response.body.$.identity.phone}}
+{{
+	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+}}
 
 ### 支付宝登录
 # @name signin
-# @prompt broker 代理号（支付宝）
-# @prompt token  令牌值
-POST /Security/Authentication/Signin/Alipay/broker:{{broker}}?scenario={{scenario}} HTTP/1.1
+@alipayBroker = {{$input 代理号（支付宝） $value: }}
+@alipayToken = {{$input 令牌值 $value: }}
+POST /Security/Authentication/Signin/Alipay/broker:{{alipayBroker}}?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
 
-{{token}}
+{{alipayToken}}
 
-###
-
-@credentialId={{signin.response.body.$.credentialId}}
-@renewalToken={{signin.response.body.$.renewalToken}}
-@userId={{signin.response.body.$.identity.userId}}
-@userName={{signin.response.body.$.identity.name}}
-@namespace={{signin.response.body.$.identity.namespace}}
-@email={{signin.response.body.$.identity.email}}
-@phone={{signin.response.body.$.identity.phone}}
+{{
+	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+}}
 
 ### 微信小程序登录
-# @prompt applet 小程序编号
-# @prompt token  小程序令牌
-POST /Security/Authentication/Signin/Wechat/applet:{{applet}}?scenario={{scenario}} HTTP/1.1
+@wechatApplet = {{$input 小程序编号 $value: }}
+@wechatAppletToken = {{$input 小程序令牌 $value: }}
+POST /Security/Authentication/Signin/Wechat/applet:{{wechatApplet}}?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
 
-{{token}}
+{{wechatAppletToken}}
 
-###
-
-@credentialId={{signin.response.body.$.credentialId}}
-@renewalToken={{signin.response.body.$.renewalToken}}
-@userId={{signin.response.body.$.identity.userId}}
-@userName={{signin.response.body.$.identity.name}}
-@namespace={{signin.response.body.$.identity.namespace}}
-@email={{signin.response.body.$.identity.email}}
-@phone={{signin.response.body.$.identity.phone}}
+{{
+	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+}}
 
 ### 微信公众号登录
-# @prompt channel 公众号编号
-# @prompt token   公众号令牌
-POST /Security/Authentication/Signin/Wechat/channel:{{channel}}?scenario={{scenario}} HTTP/1.1
+@wechatChannel = {{$input 公众号编号 $value: }}
+@wechatChannelToken = {{$input 公众号令牌 $value: }}
+POST /Security/Authentication/Signin/Wechat/channel:{{wechatChannel}}?scenario={{scenario}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
 
-{{token}}
+{{wechatChannelToken}}
 
-###
-
-@credentialId={{signin.response.body.$.credentialId}}
-@renewalToken={{signin.response.body.$.renewalToken}}
-@userId={{signin.response.body.$.identity.userId}}
-@userName={{signin.response.body.$.identity.name}}
-@namespace={{signin.response.body.$.identity.namespace}}
-@email={{signin.response.body.$.identity.email}}
-@phone={{signin.response.body.$.identity.phone}}
+{{
+	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+}}
 
 ### 续约
 # @name renew
@@ -119,46 +89,46 @@ Host: {{host}}:{{port}}
 
 ### 人机识别验证(验证码)
 # @name captcha
-# @prompt token 验证令牌
-# @prompt code  验证码值
+@captchaToken = {{$input 验证令牌 $value: }}
+@captchaCode = {{$input 验证码值 $value: }}
 POST /Security/Captcha/authencode/Verify HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
 
-{{token}}:{{code}}
+{{captchaToken}}:{{captchaCode}}
 
 
 ### 安全验证（手机）
-### 操作步骤：
-### 1. 通过人机识别接口(Captcha)发起识别；
-### 2. 通过人机识别接口(Captcha/Verify)进行验证；
-### 3. 将人机识别方案(scheme)与验证令牌(即人机识别验证操作的返回结果)以冒号分隔，置于 X-Captcha 请求头。
+# 操作步骤：
+# 1. 通过人机识别接口(Captcha)发起识别；
+# 2. 通过人机识别接口(Captcha/Verify)进行验证；
+# 3. 将人机识别方案(scheme)与验证令牌(即人机识别验证操作的返回结果)以冒号分隔，置于 X-Captcha 请求头。
 # @name secret
-# @prompt phone   手机号码
-# @prompt channel 验证通道(message|voice)
-# @prompt captcha 人机识别(scheme:token)
-POST /Security/Authentication/Secret/phone:{{phone}}?channel={{channel}} HTTP/1.1
+@phoneNumber = {{$input 手机号码 $value: }}
+@messageChannel = {{$input 验证通道(message|voice) $value:message }}
+@phoneCaptcha = {{$input 人机识别(scheme:token) $value: }}
+POST /Security/Authentication/Secret/phone:{{phoneNumber}}?channel={{messageChannel}} HTTP/1.1
 Host: {{host}}:{{port}}
-X-Captcha: {{captcha}}
+X-Captcha: {{phoneCaptcha}}
 
 ### 安全验证（邮箱）
-### 操作步骤：
-### 1. 通过人机识别接口(Captcha)发起识别；
-### 2. 通过人机识别接口(Captcha/Verify)进行验证；
-### 3. 将人机识别方案(scheme)与验证令牌(即人机识别验证操作的返回结果)以冒号分隔，置于 X-Captcha 请求头。
+# 操作步骤：
+# 1. 通过人机识别接口(Captcha)发起识别；
+# 2. 通过人机识别接口(Captcha/Verify)进行验证；
+# 3. 将人机识别方案(scheme)与验证令牌(即人机识别验证操作的返回结果)以冒号分隔，置于 X-Captcha 请求头。
 # @name secret
-# @prompt email   邮箱地址
-# @prompt captcha 人机识别(scheme:token)
-POST /Security/Authentication/Secret/email:{{email}} HTTP/1.1
+@emailAddress = {{$input 邮箱地址 $value: }}
+@emailCaptcha = {{$input 人机识别(scheme:token) $value: }}
+POST /Security/Authentication/Secret/email:{{emailAddress}} HTTP/1.1
 Host: {{host}}:{{port}}
-X-Captcha: {{captcha}}
+X-Captcha: {{emailCaptcha}}
 
 ### 安全校验
 # @name verify
-# @prompt token  验证令牌
-# @prompt code   校验码值
-POST /Security/Authentication/Verify/{{token}} HTTP/1.1
+@verifyToken = {{$input 验证令牌 $value: }}
+@verifyCode = {{$input 校验码值 $value: }}
+POST /Security/Authentication/Verify/{{verifyToken}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
 
-{{code}}
+{{verifyCode}}
