@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -44,7 +45,7 @@ namespace Zongsoft.Upgrading.Web.Controllers;
 public class UpgraderController : ControllerBase
 {
 	[HttpGet("{name:required}/{edition?}")]
-	public IAsyncEnumerable<Release> GetAsync(string name, string edition, [FromQuery]Platform platform, [FromQuery]Architecture architecture, CancellationToken cancellation = default)
+	public async Task<IActionResult> GetAsync(string name, string edition, [FromQuery]Platform platform, [FromQuery]Architecture architecture, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrWhiteSpace(name))
 			throw new BadHttpRequestException($"The '{nameof(name)}' parameter is required.", StatusCodes.Status400BadRequest);
@@ -57,7 +58,9 @@ public class UpgraderController : ControllerBase
 		foreach(var header in this.Request.Headers)
 			parameters[header.Key] = header.Value;
 
-		return Upgrader.GetAsync(name, edition, platform, architecture, parameters, cancellation);
+		using var stream = new MemoryStream();
+		await Release.SaveAsync(stream, Upgrader.GetAsync(name, edition, platform, architecture, parameters, cancellation), cancellation);
+		return this.File(stream.ToArray(), "application/manifest+xml");
 	}
 
 	[HttpGet("Evaluators")]

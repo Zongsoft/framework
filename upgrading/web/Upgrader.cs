@@ -111,6 +111,8 @@ public static class Upgrader
 			Checksum = Checksum.TryParse(model.Checksum, out var checksum) ? checksum : default,
 		};
 
+		release.Properties[nameof(model.ReleaseId)] = model.ReleaseId;
+
 		if(!string.IsNullOrEmpty(model.Path))
 			release.Path = IO.FileSystem.GetUrl(model.Path);
 

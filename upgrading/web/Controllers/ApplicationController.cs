@@ -30,16 +30,22 @@
 using Microsoft.AspNetCore.Mvc;
 
 using Zongsoft.Web;
+using Zongsoft.Web.Security;
 using Zongsoft.Upgrading.Models;
 using Zongsoft.Upgrading.Services;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace Zongsoft.Upgrading.Web.Controllers;
 
+[Authorize]
+[Authorization]
 [Area("Upgrading")]
 [ControllerName("Applications")]
 public class ApplicationController : ServiceController<Models.Application, ApplicationService>
 {
 	#region 嵌套子类
+	[Authorize]
 	[ControllerName("Editions")]
 	public class EditionController : SubserviceController<ApplicationEdition, ApplicationService.EditionService>
 	{

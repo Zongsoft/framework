@@ -30,9 +30,11 @@
 using System;
 using System.IO;
 using System.Xml;
+using System.Threading;
 using System.Collections.Generic;
 
 using Zongsoft.Common;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
@@ -94,6 +96,20 @@ partial class Release
 	#endregion
 
 	#region 静态方法
+	public static async Task SaveAsync(Stream stream, IAsyncEnumerable<Release> releases, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
+		ArgumentNullException.ThrowIfNull(releases);
+
+		using var writer = XmlWriter.Create(stream, WriterSettings);
+		writer.WriteStartElement(RELEASES_ELEMENT);
+
+		await foreach(var release in releases)
+			Write(writer, release);
+
+		writer.WriteEndElement();
+	}
+
 	public static void Save(Stream stream, IEnumerable<Release> releases)
 	{
 		ArgumentNullException.ThrowIfNull(stream);

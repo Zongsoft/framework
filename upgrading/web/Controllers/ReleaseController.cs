@@ -33,6 +33,7 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 
 using Zongsoft.Web;
 using Zongsoft.Upgrading.Models;
@@ -40,6 +41,7 @@ using Zongsoft.Upgrading.Services;
 
 namespace Zongsoft.Upgrading.Web.Controllers;
 
+[Authorize]
 [Area("Upgrading")]
 [ControllerName("Releases")]
 public class ReleaseController : ServiceController<Models.Release, ReleaseService>
@@ -83,16 +85,19 @@ public class ReleaseController : ServiceController<Models.Release, ReleaseServic
 	#endregion
 
 	#region 嵌套子类
+	[Authorize]
 	[ControllerName("Properties")]
 	public class PropertyController : SubserviceController<ReleaseProperty, ReleaseService.PropertyService>
 	{
 	}
 
+	[Authorize]
 	[ControllerName("Executors")]
 	public class ExecutorController : SubserviceController<ReleaseExecutor, ReleaseService.ExecutorService>
 	{
 	}
 
+	[Authorize]
 	[ControllerName("Publishings")]
 	public class PublishingController : SubserviceController<ReleasePublishing, ReleaseService.PublishingService>
 	{
