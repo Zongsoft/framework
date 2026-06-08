@@ -1,15 +1,15 @@
 ### 发布查询
-# @prompt name         应用名称
-# @prompt edition      版本标识
-# @prompt version      版本号
-# @prompt platform     平台
-# @prompt architecture 架构
-# @prompt published    是否发布
-# @prompt visible      是否可见
-# @prompt deprecated   是否废弃
-POST /Upgrading/Releases/Query?page={{$dotenv page}} HTTP/1.1
+@name = {{$input-askonce 应用名称 $value: }}
+@edition = {{$input-askonce 版本标识 $value: }}
+@version = {{$input-askonce 版本号 $value: }}
+@platform = {{$input-askonce 平台 $value:windows }}
+@architecture = {{$input-askonce 架构 $value:x64 }}
+@published = {{$input-askonce 是否发布 $value:true }}
+@visible = {{$input-askonce 是否可见 $value:true }}
+@deprecated = {{$input-askonce 是否废弃 $value:false }}
+POST /Upgrading/Releases/Query?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 {
@@ -24,12 +24,12 @@ Content-Type: application/json
 }
 
 ### 发布列表
-GET /Upgrading/Releases?page={{$dotenv page}} HTTP/1.1
+GET /Upgrading/Releases?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 发布详情
-# @prompt releaseId 发布编号
+@releaseId={{$input-askonce 发布编号 $value: }}
 GET /Upgrading/Releases/{{releaseId}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{$dotenv credentialId}}

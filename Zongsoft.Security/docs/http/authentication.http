@@ -11,7 +11,7 @@ Host: {{host}}:{{port}}
 }
 
 {{
-	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
 }}
 
 ### 验证码登录
@@ -26,7 +26,7 @@ Content-Type: text/plain
 {{secretCode}}
 
 {{
-	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
 }}
 
 ### 支付宝登录
@@ -40,7 +40,7 @@ Content-Type: text/plain
 {{alipayToken}}
 
 {{
-	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
 }}
 
 ### 微信小程序登录
@@ -53,7 +53,7 @@ Content-Type: text/plain
 {{wechatAppletToken}}
 
 {{
-	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
 }}
 
 ### 微信公众号登录
@@ -66,7 +66,7 @@ Content-Type: text/plain
 {{wechatChannelToken}}
 
 {{
-	exports.saveCredentialResult = require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
 }}
 
 ### 续约
