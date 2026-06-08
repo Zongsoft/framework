@@ -229,7 +229,7 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 	public bool Equals(Checksum other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && MemoryExtensions.SequenceEqual(this.Value ?? [], other.Value ?? []);
 	public override bool Equals(object obj) => obj is Checksum other && this.Equals(other);
 	public override int GetHashCode() => _hashcode;
-	public override string ToString() => $"{this.Name}:{System.Convert.ToHexString(this.Value)}";
+	public override string ToString() => this.IsEmpty ? string.Empty : $"{this.Name}:{System.Convert.ToHexString(this.Value)}";
 	#endregion
 
 	#region 符号重写
