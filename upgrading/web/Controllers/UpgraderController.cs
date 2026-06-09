@@ -74,6 +74,27 @@ public class UpgraderController : ControllerBase
 		return evaluators == null || evaluators.Count == 0 ? this.NoContent() : this.Ok(evaluators);
 	}
 
+	[HttpPost("[action/{id}/{phase}]")]
+	public async Task TraceAsync(string id, string phase, CancellationToken cancellation = default)
+	{
+		var message = this.Request.Query.TryGetValue("message", out var value) ? value.ToString() : null;
+
+		if(this.Request.HasTextContentType() && this.Request.ContentLength > 0)
+			message = await this.Request.ReadAsStringAsync(cancellation);
+
+		var properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		foreach(var parameter in this.Request.Query)
+			properties[parameter.Key] = parameter.Value;
+
+		if(this.Request.HasFormContentType)
+		{
+			foreach(var field in this.Request.Form)
+				properties[field.Key] = field.Value;
+		}
+
+		await Upgrader.TraceAsync(id, phase, message, properties, cancellation);
+	}
+
 	internal readonly struct EvaluatorInfo(string name, string title, string description)
 	{
 		public string Name { get; } = name;

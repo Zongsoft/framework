@@ -30,23 +30,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
-/// <summary>表示升级获取器的接口。</summary>
-public interface IFetcher
+public interface ITracer
 {
-	/// <summary>获取获取器名称。</summary>
-	string Name { get; }
-	/// <summary>获取追踪器。</summary>
-	ITracer Tracer { get; }
-	/// <summary>获取下载器对象。</summary>
-	IDownloader Downloader { get; }
-
-	/// <summary>获取指定版本的升级信息。</summary>
-	/// <param name="edition">指定要升级的版本名。</param>
-	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
-	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>返回的升级信息结果。</returns>
-	ValueTask<Manifest> FetchAsync(string edition, Version version, CancellationToken cancellation = default);
+	ValueTask TraceAsync(string phase, IEnumerable<KeyValuePair<string, string>> parameters, CancellationToken cancellation) => this.TraceAsync(phase, null, parameters, cancellation);
+	ValueTask TraceAsync(string phase, string message, IEnumerable<KeyValuePair<string, string>> parameters, CancellationToken cancellation);
 }

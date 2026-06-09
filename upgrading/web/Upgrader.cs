@@ -133,4 +133,8 @@ public static class Upgrader
 
 		return release;
 	}
+
+	public static async ValueTask TraceAsync(string id, string phase, string message, IDictionary<string, string> properties, CancellationToken cancellation = default)
+	{
+	}
 }

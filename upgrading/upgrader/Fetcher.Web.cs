@@ -82,6 +82,9 @@ partial class Fetcher
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
+			if(response.Headers.TryGetValues("X-Upgrading-Trace", out var values) && values != null)
+				this.Tracer = new WebTracer(this, string.Join("-", values));
+
 			var releases = Release.LoadAsync(await response.Content.ReadAsStreamAsync(cancellation), cancellation);
 			await foreach(var release in releases)
 				yield return release;
@@ -128,6 +131,32 @@ partial class Fetcher
 				}
 
 				return text.ToString().TrimEnd('&');
+			}
+		}
+		#endregion
+
+		#region 嵌套子类
+		private sealed class WebTracer(WebFetcher fetcher, string identifier) : ITracer
+		{
+			private readonly WebFetcher _fetcher = fetcher;
+			private readonly string _identifier = identifier;
+
+			public async ValueTask TraceAsync(string phase, string message, IEnumerable<KeyValuePair<string, string>> parameters, CancellationToken cancellation)
+			{
+				try
+				{
+					var content = new FormUrlEncodedContent(new Dictionary<string, string>(parameters) { ["message"] = message });
+					var response = await _fetcher.Client.PostAsync($"Trace/{_identifier}/{phase}", content, cancellation);
+
+					if(response.IsSuccessStatusCode)
+						await Diagnostics.Logging.GetLogging(typeof(WebTracer)).InfoAsync($"Traced the upgrading process with identifier '{_identifier}' and phase '{phase}'.", cancellation);
+					else
+						await Diagnostics.Logging.GetLogging(typeof(WebTracer)).WarnAsync($"Failed to trace the upgrading process with identifier '{_identifier}' and phase '{phase}'. The server responded with status code {response.StatusCode}.", cancellation);
+				}
+				catch(Exception ex)
+				{
+					await Diagnostics.Logging.GetLogging(typeof(WebTracer)).ErrorAsync($"Failed to trace the upgrading process with identifier '{_identifier}'.", ex, cancellation);
+				}
 			}
 		}
 		#endregion

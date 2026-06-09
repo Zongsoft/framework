@@ -32,9 +32,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Zongsoft.Upgrading;
 
 public partial class Upgrader

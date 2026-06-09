@@ -178,12 +178,14 @@ partial class Fetcher : IFetcher
 
 	#region 保护属性
 	protected string Name { get; }
+	protected ITracer Tracer { get; set; }
 	protected IDownloader Downloader { get; set; }
 	protected IConnectionSettings Settings => field ??= ApplicationContext.Current?.Configuration.GetConnectionSettings(nameof(Upgrading), this.Name);
 	#endregion
 
 	#region 显式实现
 	string IFetcher.Name => this.Name;
+	ITracer IFetcher.Tracer => this.Tracer;
 	IDownloader IFetcher.Downloader => this.Downloader;
 	async ValueTask<Manifest> IFetcher.FetchAsync(string edition, Version version, CancellationToken cancellation)
 	{

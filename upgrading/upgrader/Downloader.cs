@@ -181,19 +181,28 @@ public abstract partial class Downloader : IDownloader
 	private async ValueTask OnDownloadedAsync(Release release, string directory, CancellationToken cancellation)
 	{
 		var args = new DownloadEventArgs(release, directory);
-		this.OnDownloaded(args);
+		await this.OnDownloadedAsync(args, cancellation);
 		await Executor.ExecuteAsync(nameof(Downloaded), this, args, cancellation);
 	}
 
 	private async ValueTask OnDownloadingAsync(Release release, string directory, CancellationToken cancellation)
 	{
 		var args = new DownloadEventArgs(release, directory);
-		this.OnDownloading(args);
+		await this.OnDownloadingAsync(args, cancellation);
 		await Executor.ExecuteAsync(nameof(Downloading), this, args, cancellation);
 	}
 
-	protected virtual void OnDownloaded(DownloadEventArgs args) => this.Downloaded?.Invoke(this, args);
-	protected virtual void OnDownloading(DownloadEventArgs args) => this.Downloading?.Invoke(this, args);
+	protected virtual ValueTask OnDownloadedAsync(DownloadEventArgs args, CancellationToken cancellation)
+	{
+		this.Downloaded?.Invoke(this, args);
+		return ValueTask.CompletedTask;
+	}
+
+	protected virtual ValueTask OnDownloadingAsync(DownloadEventArgs args, CancellationToken cancellation)
+	{
+		this.Downloading?.Invoke(this, args);
+		return ValueTask.CompletedTask;
+	}
 	#endregion
 
 	#region 嵌套子类

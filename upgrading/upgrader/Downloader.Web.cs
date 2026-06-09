@@ -32,6 +32,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Upgrading;
 
@@ -68,6 +69,24 @@ partial class Downloader
 
 			return null;
 		}
+
+		protected override ValueTask OnDownloadingAsync(DownloadEventArgs args, CancellationToken cancellation)
+		{
+			var tracer = ((IFetcher)_fetcher).Tracer;
+			if(tracer == null)
+				return default;
+
+			return tracer.TraceAsync("Downloading", GetProperties(args.Release), cancellation);
+		}
+
+		protected override ValueTask OnDownloadedAsync(DownloadEventArgs args, CancellationToken cancellation)
+		{
+			var tracer = ((IFetcher)_fetcher).Tracer;
+			if(tracer == null)
+				return default;
+
+			return tracer.TraceAsync("Downloaded", GetProperties(args.Release), cancellation);
+		}
 		#endregion
 
 		#region 私有方法
@@ -86,6 +105,21 @@ partial class Downloader
 				await Zongsoft.Diagnostics.Logging.GetLogging<WebDownloader>().ErrorAsync(ex, cancellation);
 				return null;
 			}
+		}
+
+		static IEnumerable<KeyValuePair<string, string>> GetProperties(Release release)
+		{
+			if(release == null || release.Properties == null)
+				yield break;
+
+			yield return new(nameof(release.Name), release.Name);
+			yield return new(nameof(release.Edition), release.Edition);
+			yield return new(nameof(release.Version), release.Version.ToString());
+			yield return new(nameof(release.Platform), release.Platform.ToString());
+			yield return new(nameof(release.Architecture), release.Architecture.ToString());
+
+			foreach(var property in release.Properties)
+				yield return new KeyValuePair<string, string>(property.Key, property.Value?.ToString());
 		}
 		#endregion
 	}
