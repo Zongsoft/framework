@@ -1,79 +1,79 @@
 ### 角色列表
 GET /Security/Roles HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 角色详情
-# @prompt id 角色编号
+@id = {{$input 角色编号 $value:100 }}
 GET /Security/Roles/{{id}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 X-Data-Schema: *
 
 ### 角色详情(角色名称)
-# @prompt namespace 命名空间
-# @prompt name      角色名称
+@namespace = {{$input 命名空间 $value: }}
+@name = {{$input 角色名称 $value:Administrators }}
 GET /Security/Roles/{{namespace}}:{{name}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 X-Data-Schema: *
 
 ### 角色存在
-# @prompt id 角色编号
+@id = {{$input 角色编号 $value:100 }}
 GET /Security/Roles/{{id}}/Exists HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 角色存在
-# @prompt namespace 命名空间
-# @prompt identity  角色标识
+@namespace = {{$input 命名空间 $value: }}
+@identity = {{$input 角色标识 $value:Administrators }}
 GET /Security/Roles/{{namespace}}:{{identity}}/Exists HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 启用角色
-# @prompt id 角色标识
+@id = {{$input 角色标识 $value: }}
 POST /Security/Roles/{{id}}/Enable HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 禁用角色
-# @prompt id 角色标识
+@id = {{$input 角色标识 $value: }}
 POST /Security/Roles/{{id}}/Disable HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 角色新增
-# @prompt name 角色名称
+@name = {{$input 角色名称 $value: }}
 POST /Security/Roles HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 {
   "Name":"{{name}}"
 }
 
 ### 删除角色
-# @prompt id 角色编号
+@id = {{$input 角色编号 $value: }}
 DELETE /Security/Roles/{{id}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 删除角色(批量)
 DELETE /Security/Roles HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 404,444
 
 ### 修改角色
-# @prompt id          角色编号
-# @prompt nickname    角色昵称
-# @prompt description 角色备注
+@id = {{$input 角色编号 $value: }}
+@nickname = {{$input 角色昵称 $value: }}
+@description = {{$input 角色备注 $value: }}
 PATCH /Security/Roles/{{id}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 {
   "Nickname":"{{nickname}}",
@@ -81,40 +81,40 @@ Authorization: Credential {{$dotenv credentialId}}
 }
 
 ### 修改角色名称
-# @prompt id   角色编号
-# @prompt name 角色名称
+@id = {{$input 角色编号 $value: }}
+@name = {{$input 角色名称 $value: }}
 PATCH /Security/Roles/{{id}}/Name HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 {{name}}
 
 ### 角色父级角色
-# @prompt id 角色编号
+@id = {{$input 角色编号 $value:100 }}
 GET /Security/Roles/{{id}}/Parents HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 角色祖先角色
-# @prompt id 角色编号
+@id = {{$input 角色编号 $value:100 }}
 GET /Security/Roles/{{id}}/Ancestors HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 角色是否在指定的角色内
-# @prompt id    角色编号
-# @prompt roles 角色名称(以逗号分隔)
+@id = {{$input 角色编号 $value: }}
+@roles = {{$input 角色名称(以逗号分隔) $value: }}
 GET /Security/Roles/{{id}}/In/{{roles}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 设置角色的父级角色
-# @prompt id    角色编号
-# @prompt roles 角色编号(以逗号分隔)
+@id = {{$input 角色编号 $value: }}
+@roles = {{$input 角色编号(以逗号分隔) $value: }}
 PUT /Security/Roles/{{id}}/Parents HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 {{roles}}

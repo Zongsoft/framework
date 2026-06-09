@@ -1,18 +1,18 @@
 ### 升级获取发布集
-# @prompt name              应用名称
-# @prompt edition           版本标识，空版本可填 _
-# @prompt platform          平台
-# @prompt architecture      架构
-# @prompt currentlyVersion  当前版本号
-# @prompt upgradingVersion  目标版本号
+@name = {{$input 应用名称 $value: }}
+@edition = {{$input 版本标识，空版本可填 _ $value: }}
+@platform = {{$input 平台 $value: }}
+@architecture = {{$input 架构 $value: }}
+@currentlyVersion = {{$input 当前版本号 $value: }}
+@upgradingVersion = {{$input 目标版本号 $value: }}
 GET /Upgrading/Upgrader/{{name}}/{{edition}}?Platform={{platform}}&Architecture={{architecture}}&CurrentlyVersion={{currentlyVersion}}&UpgradingVersion={{upgradingVersion}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Accept: application/xml
 
 ### 升级评估器列表
 GET /Upgrading/Upgrader/Evaluators HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Accept: application/json
 Accept-Language: zh-CN,en

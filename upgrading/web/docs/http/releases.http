@@ -1,12 +1,14 @@
-### 发布查询
-@name = {{$input-askonce 应用名称 $value: }}
-@edition = {{$input-askonce 版本标识 $value: }}
-@version = {{$input-askonce 版本号 $value: }}
-@platform = {{$input-askonce 平台 $value:windows }}
-@architecture = {{$input-askonce 架构 $value:x64 }}
-@published = {{$input-askonce 是否发布 $value:true }}
-@visible = {{$input-askonce 是否可见 $value:true }}
-@deprecated = {{$input-askonce 是否废弃 $value:false }}
+### 列表查询
+GET /Upgrading/Releases?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+
+### 复杂查询
+@name = {{$input 应用名称 $value: }}
+@edition = {{$input 版本标识 $value: }}
+@version = {{$input 版本号 $value: }}
+@platform = {{$input 平台 $value:windows }}
+@architecture = {{$input 架构 $value:x64 }}
 POST /Upgrading/Releases/Query?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
@@ -17,66 +19,29 @@ Content-Type: application/json
 	"Edition": "{{edition}}",
 	"Version": "{{version}}",
 	"Platform": "{{platform}}",
-	"Architecture": "{{architecture}}",
-	"Published": {{published}},
-	"Visible": {{visible}},
-	"Deprecated": {{deprecated}}
+	"Architecture": "{{architecture}}"
 }
 
-### 发布列表
-GET /Upgrading/Releases?page={{page}} HTTP/1.1
+### 详情查询(主键)
+@releaseId = {{$input 发布编号 $value: }}
+GET /Upgrading/Releases/{{releaseId}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
-### 发布详情
-@releaseId={{$input-askonce 发布编号 $value: }}
-GET /Upgrading/Releases/{{releaseId}} HTTP/1.1
-Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
-
-### 发布安装包上传
-# @prompt releaseId    发布编号
-# @prompt packagePath  安装包文件路径
-POST /Upgrading/Releases/{{releaseId}}/Upload?overwrite=true HTTP/1.1
-Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
-Content-Type: multipart/form-data; boundary=----ZongsoftUpgradingReleasePackage
-
-------ZongsoftUpgradingReleasePackage
-Content-Disposition: form-data; name="file"; filename="package.zip"
-Content-Type: application/zip
-
-< {{packagePath}}
-------ZongsoftUpgradingReleasePackage--
-
-### 发布 Manifest 导入
-# @prompt manifestPath Manifest 文件路径
-POST /Upgrading/Releases/Import?format=manifest HTTP/1.1
-Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
-Content-Type: multipart/form-data; boundary=----ZongsoftUpgradingReleaseManifest
-
-------ZongsoftUpgradingReleaseManifest
-Content-Disposition: form-data; name="file"; filename="release.manifest"
-Content-Type: application/xml
-
-< {{manifestPath}}
-------ZongsoftUpgradingReleaseManifest--
-
 ### 发布新增
-# @prompt name             应用名称
-# @prompt edition          版本标识
-# @prompt version          版本号
-# @prompt platform         平台
-# @prompt architecture     架构
-# @prompt title            发布标题
-# @prompt summary          发布摘要
-# @prompt evaluatorName    评估器名称
-# @prompt evaluatorSetting 评估器设置
-# @prompt description      发布描述
+@name = {{$input 应用名称 $value: }}
+@edition = {{$input 版本标识 $value: }}
+@version = {{$input 版本号 $value: }}
+@platform = {{$input 平台 $value:Windows }}
+@architecture = {{$input 架构 $value:x64 }}
+@title = {{$input 发布标题 $value: }}
+@summary = {{$input 发布摘要 $value: }}
+@evaluatorName = {{$input 评估器名称 $value: }}
+@evaluatorSetting = {{$input 评估器设置 $value: }}
+@description = {{$input 发布描述 $value: }}
 POST /Upgrading/Releases HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 {
@@ -98,17 +63,46 @@ Content-Type: application/json
 	"Description": "{{description}}"
 }
 
+### 发布安装包上传
+@releaseId = {{$input 发布编号 $value: }}
+@packagePath = {{$input 安装包文件路径 $value: }}
+POST /Upgrading/Releases/{{releaseId}}/Upload?overwrite=true HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+Content-Type: multipart/form-data; boundary=----ZongsoftUpgradingReleasePackage
+
+------ZongsoftUpgradingReleasePackage
+Content-Disposition: form-data; name="file"; filename="package.zip"
+Content-Type: application/zip
+
+< {{packagePath}}
+------ZongsoftUpgradingReleasePackage--
+
+### 发布 Manifest 导入
+@manifestPath = {{$input Manifest 文件路径 $value: }}
+POST /Upgrading/Releases/Import?format=manifest HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+Content-Type: multipart/form-data; boundary=----ZongsoftUpgradingReleaseManifest
+
+------ZongsoftUpgradingReleaseManifest
+Content-Disposition: form-data; name="file"; filename="release.manifest"
+Content-Type: application/xml
+
+< {{manifestPath}}
+------ZongsoftUpgradingReleaseManifest--
+
 ### 发布修改
-# @prompt releaseId        发布编号
-# @prompt published        是否发布
-# @prompt visible          是否可见
-# @prompt deprecated       是否废弃
-# @prompt evaluatorName    评估器名称
-# @prompt evaluatorSetting 评估器设置
-# @prompt summary          发布摘要
+@releaseId = {{$input 发布编号 $value: }}
+@published = {{$input 是否发布 $value: }}
+@visible = {{$input 是否可见 $value: }}
+@deprecated = {{$input 是否废弃 $value: }}
+@evaluatorName = {{$input 评估器名称 $value: }}
+@evaluatorSetting = {{$input 评估器设置 $value: }}
+@summary = {{$input 发布摘要 $value: }}
 PATCH /Upgrading/Releases/{{releaseId}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 {
@@ -121,25 +115,25 @@ Content-Type: application/json
 }
 
 ### 发布删除
-# @prompt releaseId 发布编号
+@releaseId = {{$input 发布编号 $value: }}
 DELETE /Upgrading/Releases/{{releaseId}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 发布属性列表
-# @prompt releaseId 发布编号
-GET /Upgrading/Releases/{{releaseId}}/Properties?page={{$dotenv page}} HTTP/1.1
+@releaseId = {{$input 发布编号 $value: }}
+GET /Upgrading/Releases/{{releaseId}}/Properties?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 发布属性新增
-# @prompt releaseId 发布编号
-# @prompt name      属性名称
-# @prompt type      属性类型
-# @prompt value     属性值
+@releaseId = {{$input 发布编号 $value: }}
+@name = {{$input 属性名称 $value: }}
+@type = {{$input 属性类型 $value: }}
+@value = {{$input 属性值 $value: }}
 POST /Upgrading/Releases/{{releaseId}}/Properties HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 [
@@ -151,19 +145,19 @@ Content-Type: application/json
 ]
 
 ### 发布执行器列表
-# @prompt releaseId 发布编号
-GET /Upgrading/Releases/{{releaseId}}/Executors?page={{$dotenv page}} HTTP/1.1
+@releaseId = {{$input 发布编号 $value: }}
+GET /Upgrading/Releases/{{releaseId}}/Executors?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 发布执行器新增
-# @prompt releaseId 发布编号
-# @prompt serialId  执行序号
-# @prompt event     执行事件
-# @prompt command   执行命令
+@releaseId = {{$input 发布编号 $value: }}
+@serialId = {{$input 执行序号 $value: }}
+@event = {{$input 执行事件 $value: }}
+@command = {{$input 执行命令 $value: }}
 POST /Upgrading/Releases/{{releaseId}}/Executors HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 [
@@ -175,12 +169,12 @@ Content-Type: application/json
 ]
 
 ### 发布状态查询
-# @prompt releaseId  发布编号
-# @prompt instanceId 实例编号
-# @prompt status     发布状态
-POST /Upgrading/Releases/Publishings/Query?page={{$dotenv page}} HTTP/1.1
+@releaseId = {{$input 发布编号 $value: }}
+@instanceId = {{$input 实例编号 $value: }}
+@status = {{$input 发布状态 $value: }}
+POST /Upgrading/Releases/Publishings/Query?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 {
@@ -190,20 +184,20 @@ Content-Type: application/json
 }
 
 ### 发布状态列表
-# @prompt releaseId 发布编号
-GET /Upgrading/Releases/{{releaseId}}/Publishings?page={{$dotenv page}} HTTP/1.1
+@releaseId = {{$input 发布编号 $value: }}
+GET /Upgrading/Releases/{{releaseId}}/Publishings?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 发布状态新增
-# @prompt releaseId   发布编号
-# @prompt instanceId  实例编号
-# @prompt status      发布状态
-# @prompt message     失败消息
-# @prompt description 状态描述
+@releaseId = {{$input 发布编号 $value: }}
+@instanceId = {{$input 实例编号 $value: }}
+@status = {{$input 发布状态 $value: }}
+@message = {{$input 失败消息 $value: }}
+@description = {{$input 状态描述 $value: }}
 POST /Upgrading/Releases/{{releaseId}}/Publishings HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 [

@@ -1,17 +1,17 @@
 ### 权限列表
-# @prompt id 角色编号
+@id = {{$input 角色编号 $value:100 }}
 GET /Security/Roles/{{id}}/Privileges HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 设置权限
-### 提示：如果授权模式为空(null)或撤回(Revoked)，表示删除该授权记录。
-# @prompt id    角色编号
-# @prompt name  权限标识
-# @prompt mode  授权模式(Denied:拒绝,Granted:授予,Revoked:撤回)
+# 提示：如果授权模式为空(null)或撤回(Revoked)，表示删除该授权记录。
+@id = {{$input 角色编号 $value:100 }}
+@name = {{$input 权限标识 $value: }}
+@mode = {{$input 授权模式(Denied:拒绝,Granted:授予,Revoked:撤回) $value: }}
 PUT /Security/Roles/{{id}}/Privileges HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 [
@@ -22,19 +22,19 @@ Content-Type: application/json
 ]
 
 ### 权限过滤列表
-# @prompt id 角色编号
+@id = {{$input 角色编号 $value:100 }}
 GET /Security/Roles/{{id}}/Privileges/Filtering HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 设置权限过滤
-### 提示：如果过滤表达式为空或空字符串，表示删除该授权记录。
-# @prompt id     角色编号
-# @prompt name   权限标识
-# @prompt filter 过滤表达式
+# 提示：如果过滤表达式为空或空字符串，表示删除该授权记录。
+@id = {{$input 角色编号 $value:100 }}
+@name = {{$input 权限标识 $value: }}
+@filter = {{$input 过滤表达式 $value: }}
 PUT /Security/Roles/{{id}}/Privileges/Filtering HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 [

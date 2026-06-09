@@ -1,10 +1,15 @@
-### 应用查询
-# @prompt name    应用名称
-# @prompt title   应用标题
-# @prompt enabled 是否启用
-POST /Upgrading/Applications/Query?page={{$dotenv page}} HTTP/1.1
+### 应用列表
+GET /Upgrading/Applications?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
+
+### 应用查询
+@name = {{$input 应用名称 $value: }}
+@title = {{$input 应用标题 $value: }}
+@enabled = {{$input 是否启用 $value: }}
+POST /Upgrading/Applications/Query?page={{page}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 {
@@ -13,24 +18,19 @@ Content-Type: application/json
 	"Enabled": {{enabled}}
 }
 
-### 应用列表
-GET /Upgrading/Applications?page={{$dotenv page}} HTTP/1.1
-Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
-
 ### 应用详情
-# @prompt applicationId 应用编号
+@applicationId = {{$input 应用编号 $value: }}
 GET /Upgrading/Applications/{{applicationId}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 应用新增
-# @prompt name        应用名称
-# @prompt title       应用标题
-# @prompt description 应用描述
+@name = {{$input 应用名称 $value: }}
+@title = {{$input 应用标题 $value: }}
+@description = {{$input 应用描述 $value: }}
 POST /Upgrading/Applications HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 {
@@ -41,13 +41,13 @@ Content-Type: application/json
 }
 
 ### 应用修改
-# @prompt applicationId 应用编号
-# @prompt title         应用标题
-# @prompt enabled       是否启用
-# @prompt description   应用描述
+@applicationId = {{$input 应用编号 $value: }}
+@title = {{$input 应用标题 $value: }}
+@enabled = {{$input 是否启用 $value: }}
+@description = {{$input 应用描述 $value: }}
 PATCH /Upgrading/Applications/{{applicationId}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 {
@@ -57,16 +57,16 @@ Content-Type: application/json
 }
 
 ### 应用删除
-# @prompt applicationId 应用编号
+@applicationId = {{$input 应用编号 $value: }}
 DELETE /Upgrading/Applications/{{applicationId}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 应用数量
-# @prompt enabled 是否启用
+@enabled = {{$input 是否启用 $value: }}
 POST /Upgrading/Applications/Count HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 {
@@ -74,19 +74,19 @@ Content-Type: application/json
 }
 
 ### 应用版本列表
-# @prompt applicationId 应用编号
-GET /Upgrading/Applications/{{applicationId}}/Editions?page={{$dotenv page}} HTTP/1.1
+@applicationId = {{$input 应用编号 $value: }}
+GET /Upgrading/Applications/{{applicationId}}/Editions?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 应用版本新增
-# @prompt applicationId 应用编号
-# @prompt edition       版本标识
-# @prompt title         版本标题
-# @prompt description   版本描述
+@applicationId = {{$input 应用编号 $value: }}
+@edition = {{$input 版本标识 $value: }}
+@title = {{$input 版本标题 $value: }}
+@description = {{$input 版本描述 $value: }}
 POST /Upgrading/Applications/{{applicationId}}/Editions HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 [
@@ -100,15 +100,15 @@ Content-Type: application/json
 ]
 
 ### 应用版本修改
-# @prompt applicationId 应用编号
-# @prompt edition       版本标识
-# @prompt title         版本标题
-# @prompt enabled       是否启用
-# @prompt licensed      是否授权
-# @prompt description   版本描述
+@applicationId = {{$input 应用编号 $value: }}
+@edition = {{$input 版本标识 $value: }}
+@title = {{$input 版本标题 $value: }}
+@enabled = {{$input 是否启用 $value: }}
+@licensed = {{$input 是否授权 $value: }}
+@description = {{$input 版本描述 $value: }}
 PATCH /Upgrading/Applications/{{applicationId}}/Editions HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 [

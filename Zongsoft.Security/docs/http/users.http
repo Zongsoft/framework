@@ -1,55 +1,55 @@
 ### 用户列表
 GET /Security/Users HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 用户详情
-# @prompt id 用户编号
+@id = {{$input 用户编号 $value:100 }}
 GET /Security/Users/{{id}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 X-Data-Schema: *
 
 ### 用户详情
-# @prompt namespace 命名空间
-# @prompt identity  用户标识
+@namespace = {{$input 命名空间 $value: }}
+@identity = {{$input 用户标识 $value:Administrator }}
 GET /Security/Users/{{namespace}}:{{identity}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 X-Data-Schema: *
 
 ### 用户存在
-# @prompt id 用户编号
+@id = {{$input 用户编号 $value:100 }}
 GET /Security/Users/{{id}}/Exists HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 用户存在
-# @prompt namespace 命名空间
-# @prompt identity  用户标识
+@namespace = {{$input 命名空间 $value: }}
+@identity = {{$input 用户标识 $value: }}
 GET /Security/Users/{{namespace}}:{{identity}}/Exists HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 启用用户
-# @prompt id 用户标识
+@id = {{$input 用户标识 $value: }}
 POST /Security/Users/{{id}}/Enable HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 禁用用户
-# @prompt id 用户标识
+@id = {{$input 用户标识 $value: }}
 POST /Security/Users/{{id}}/Disable HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 用户新增
-# @prompt username 用户名称
-# @prompt password 用户密码
+@username = {{$input 用户名称 $value: }}
+@password = {{$input 用户密码 $value: }}
 POST /Security/Users HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: application/json
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 X-Password: {{password}}
 
 {
@@ -57,9 +57,9 @@ X-Password: {{password}}
 }
 
 ### 用户注册
-# @prompt token    注册令牌
-# @prompt identity 用户标识
-# @prompt password 用户密码
+@token = {{$input 注册令牌 $value: }}
+@identity = {{$input 用户标识 $value: }}
+@password = {{$input 用户密码 $value: }}
 POST /Security/Users/Register?token={{token}} HTTP/1.1
 Host: {{host}}:{{port}}
 X-Password: {{password}}
@@ -70,26 +70,26 @@ X-Password: {{password}}
 }
 
 ### 删除用户
-# @prompt id 用户编号
+@id = {{$input 用户编号 $value:404 }}
 DELETE /Security/Users/{{id}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 删除用户(批量)
 DELETE /Security/Users HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 404,414,424,434,444
 
 ### 修改用户
-# @prompt id          用户编号
-# @prompt nickname    用户昵称
-# @prompt description 用户备注
+@id = {{$input 用户编号 $value: }}
+@nickname = {{$input 用户昵称 $value: }}
+@description = {{$input 用户备注 $value: }}
 PATCH /Security/Users/{{id}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 {
   "Nickname":"{{nickname}}",
@@ -97,61 +97,61 @@ Authorization: Credential {{$dotenv credentialId}}
 }
 
 ### 修改用户名称
-# @prompt id   用户编号
-# @prompt name 用户名称
+@id = {{$input 用户编号 $value: }}
+@name = {{$input 用户名称 $value: }}
 PATCH /Security/Users/{{id}}/Name HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 {{name}}
 
 ### 修改用户邮箱
-# @prompt id    用户编号
-# @prompt email 邮箱地址
+@id = {{$input 用户编号 $value: }}
+@email = {{$input 邮箱地址 $value: }}
 PATCH /Security/Users/{{id}}/Email HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 {{email}}
 
 ### 修改用户电话
-# @prompt id    用户编号
-# @prompt phone 邮箱地址
+@id = {{$input 用户编号 $value: }}
+@phone = {{$input 邮箱地址 $value: }}
 PATCH /Security/Users/{{id}}/Phone HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 {{phone}}
 
 ### 修改用户状态
-# @prompt id     用户编号
-# @prompt status 用户状态
+@id = {{$input 用户编号 $value: }}
+@status = {{$input 用户状态 $value: }}
 PATCH /Security/Users/{{id}}/Status/{{status}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 判断用户是否设置了密码
-# @prompt id     用户编号
+@id = {{$input 用户编号 $value:100 }}
 GET /Security/Users/{{id}}/Password HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 判断用户是否设置了密码(无需登录)
-# @prompt namespace 命名空间
-# @prompt identity  用户标识
+@namespace = {{$input 命名空间 $value: }}
+@identity = {{$input 用户标识 $value:Administrator }}
 GET /Security/Users/{{namespace}}:{{identity}}/Password HTTP/1.1
 Host: {{host}}:{{port}}
 
 ### 修改用户密码
-# @prompt id          用户编号
-# @prompt oldPassword 原有密码
-# @prompt newPassword 新设密码
+@id = {{$input 用户编号 $value: }}
+@oldPassword = {{$input 原有密码 $value: }}
+@newPassword = {{$input 新设密码 $value: }}
 PUT /Security/Users/{{id}}/Password HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 {
   "OldPassword":"{{oldPassword}}",
@@ -159,24 +159,24 @@ Authorization: Credential {{$dotenv credentialId}}
 }
 
 ### 获取用户密码问题
-# @prompt id 用户编号
+@id = {{$input 用户编号 $value:100 }}
 GET /Security/Users/{{id}}/Password/Questions HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 获取用户密码问题
-# @prompt namespace 命名空间
-# @prompt identity  身份标识
+@namespace = {{$input 命名空间 $value: }}
+@identity = {{$input 身份标识 $value: }}
 GET /Security/Users/{{namespace}}:{{identity}}/Password/Questions HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 修改用户密码问答
-# @prompt id       用户编号
-# @prompt password 用户密码
+@id = {{$input 用户编号 $value: }}
+@password = {{$input 用户密码 $value: }}
 PUT /Security/Users/{{id}}/Password/Answers HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: application/json
 
 {
@@ -186,21 +186,21 @@ Content-Type: application/json
 }
 
 ### 忘记密码(通过电话寻回)
-# @prompt namespace 命名空间
-# @prompt phone     手机号码
+@namespace = {{$input 命名空间 $value: }}
+@phone = {{$input 手机号码 $value: }}
 POST /Security/Users/{{namespace}}:{{phone}}/Password/Forget HTTP/1.1
 Host: {{host}}:{{port}}
 
 ### 忘记密码(通过邮箱寻回)
-# @prompt namespace 命名空间
-# @prompt email     邮箱地址
+@namespace = {{$input 命名空间 $value: }}
+@email = {{$input 邮箱地址 $value: }}
 POST /Security/Users/{{namespace}}:{{email}}/Password/Forget HTTP/1.1
 Host: {{host}}:{{port}}
 
 ### 重置密码(通过忘记密码验证码)
-# @prompt token    重置令牌
-# @prompt secret   重置密钥
-# @prompt password 设置密码
+@token = {{$input 重置令牌 $value: }}
+@secret = {{$input 重置密钥 $value: }}
+@password = {{$input 设置密码 $value: }}
 POST /Security/Users/Password/Reset/{{token}}?secret={{secret}} HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: text/plain
@@ -208,12 +208,12 @@ Content-Type: text/plain
 {{password}}
 
 ### 重置密码(通过密码问答)
-# @prompt namespace 命名空间
-# @prompt identity  用户标识
-# @prompt answer1   密码答案1
-# @prompt answer2   密码答案2
-# @prompt answer3   密码答案3
-# @prompt password  设置密码
+@namespace = {{$input 命名空间 $value: }}
+@identity = {{$input 用户标识 $value: }}
+@answer1 = {{$input 密码答案1 $value: }}
+@answer2 = {{$input 密码答案2 $value: }}
+@answer3 = {{$input 密码答案3 $value: }}
+@password = {{$input 设置密码 $value: }}
 POST /Security/Users/{{namespace}}:{{identity}}/Password/Reset HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: application/json
@@ -224,30 +224,30 @@ Content-Type: application/json
 }
 
 ### 用户父级角色
-# @prompt id 用户编号
+@id = {{$input 用户编号 $value:100 }}
 GET /Security/Users/{{id}}/Parents HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 用户祖先角色
-# @prompt id 用户编号
+@id = {{$input 用户编号 $value:100 }}
 GET /Security/Users/{{id}}/Ancestors HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 用户是否在指定的角色内
-# @prompt id    用户编号
-# @prompt roles 角色名称(以逗号分隔)
+@id = {{$input 用户编号 $value: }}
+@roles = {{$input 角色名称(以逗号分隔) $value: }}
 GET /Security/Users/{{id}}/In/{{roles}} HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 
 ### 设置用户的父级角色
-# @prompt id    用户编号
-# @prompt roles 角色编号(以逗号分隔)
+@id = {{$input 用户编号 $value: }}
+@roles = {{$input 角色编号(以逗号分隔) $value: }}
 PUT /Security/Users/{{id}}/Parents HTTP/1.1
 Host: {{host}}:{{port}}
-Authorization: Credential {{$dotenv credentialId}}
+Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 {{roles}}
