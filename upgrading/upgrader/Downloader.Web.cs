@@ -40,17 +40,6 @@ partial class Downloader
 	internal sealed class WebDownloader(Fetcher.WebFetcher fetcher) : Downloader
 	{
 		#region 私有字段
-		private Func<HttpClient, Release, CancellationToken, ValueTask<Stream>> _downloader;
-		private readonly Func<HttpClient, Release, CancellationToken, ValueTask<Stream>>[] _downloaders =
-		[
-			Download1Async,
-			Download2Async,
-			Download3Async,
-			Download4Async,
-			Download5Async,
-			Download6Async,
-		];
-
 		private readonly Fetcher.WebFetcher _fetcher = fetcher ?? throw new ArgumentNullException(nameof(fetcher));
 		#endregion
 
@@ -61,7 +50,7 @@ partial class Downloader
 			if(client == null)
 				return null;
 
-			if(release.Properties.TryGetValue(DOWNLOAD_URL, out var url) && url != null)
+			if(release.Properties.TryGetValue(DOWNLOAD_URL, out var url) && IsWebUrl(url as string))
 			{
 				var stream = await DownloadAsync(client, url.ToString(), cancellation);
 
@@ -69,18 +58,12 @@ partial class Downloader
 					return stream;
 			}
 
-			if(_downloader != null)
-				return await _downloader(client, release, cancellation);
-
-			for(int i = 0; i < _downloaders.Length; i++)
+			if(IsWebUrl(release.Path))
 			{
-				var stream = await _downloaders[i](client, release, cancellation);
+				var stream = await DownloadAsync(client, release.Path, cancellation);
 
 				if(stream != null)
-				{
-					_downloader = _downloaders[i];
 					return stream;
-				}
 			}
 
 			return null;
@@ -88,18 +71,7 @@ partial class Downloader
 		#endregion
 
 		#region 私有方法
-		static ValueTask<Stream> Download1Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"Download/{release.Name}/{release.GetRuntimeIdentifier()}", cancellation);
-		static ValueTask<Stream> Download2Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"packages/{release.Name}/{release.Version}/{release.GetRuntimeIdentifier()}/{Path.GetFileName(release.Path)}", cancellation);
-		static ValueTask<Stream> Download3Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"packages/{release.Name}/{release.Version}/{Path.GetFileName(release.Path)}", cancellation);
-		static ValueTask<Stream> Download4Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"packages/{Path.GetFileName(release.Path)}", cancellation);
-		static ValueTask<Stream> Download5Async(HttpClient client, Release release, CancellationToken cancellation) => DownloadAsync(client, $"packages/{release.Name}@{release.Version}_{release.GetRuntimeIdentifier()}{Path.GetExtension(release.Path)}", cancellation);
-		static ValueTask<Stream> Download6Async(HttpClient client, Release release, CancellationToken cancellation)
-		{
-			var path = Path.IsPathFullyQualified(release.Path) ?
-				Path.GetRelativePath(Path.GetPathRoot(release.Path), release.Path): release.Path;
-			return DownloadAsync(client, path, cancellation);
-		}
-
+		static bool IsWebUrl(string url) => url != null && (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
 		static async ValueTask<Stream> DownloadAsync(HttpClient client, string url, CancellationToken cancellation)
 		{
 			try
