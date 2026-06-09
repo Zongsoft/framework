@@ -22,7 +22,7 @@ Authorization: Credential {{credentialId}}
 ### 设置角色成员集(文本格式，以逗号或换行符分隔)
 @roleId = {{$input 角色编号 $value:100 }}
 @memberId = {{$input 成员编号 $value:100 }}
-@memberType = {{$input 成员类型(0:User,1:Role) $value:0}}
+@memberType = {{$pick 成员类型(0:User,1:Role) $value:User,Role}}
 PUT /Security/Roles/{{roleId}}/Members HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
@@ -47,7 +47,7 @@ Authorization: Credential {{credentialId}}
 ### 删除角色成员集(文本格式，以逗号或换行符分隔)
 @roleId = {{$input 角色编号 $value:100 }}
 @memberId = {{$input 成员编号 $value:100 }}
-@memberType = {{$input 成员类型(0:User,1:Role) $value:0}}
+@memberType = {{$pick 成员类型(0:User,1:Role) $value:User,Role}}
 DELETE /Security/Roles/{{roleId}}/Members HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}

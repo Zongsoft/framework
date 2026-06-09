@@ -8,7 +8,7 @@ Authorization: Credential {{credentialId}}
 # 提示：如果授权模式为空(null)或撤回(Revoked)，表示删除该授权记录。
 @id = {{$input 角色编号 $value:100 }}
 @name = {{$input 权限标识 $value: }}
-@mode = {{$input 授权模式(Denied:拒绝,Granted:授予,Revoked:撤回) $value: }}
+@mode = {{$pick 授权模式(Denied:拒绝,Granted:授予,Revoked:撤回) $value:Denied,Granted,Revoked }}
 PUT /Security/Roles/{{id}}/Privileges HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
