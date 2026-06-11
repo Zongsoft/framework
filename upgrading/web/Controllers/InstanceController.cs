@@ -44,8 +44,8 @@ public class InstanceController : ServiceController<Instance, InstanceService>
 {
 	#region 嵌套子类
 	[Authorize]
-	[ControllerName("Publishings")]
-	public class PublishingController : SubserviceController<ReleasePublishing, InstanceService.PublishingService>
+	[ControllerName("Tracings")]
+	public class TracingController : SubserviceController<ReleaseTracing, InstanceService.TracingService>
 	{
 	}
 	#endregion

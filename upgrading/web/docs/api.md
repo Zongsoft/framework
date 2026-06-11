@@ -21,8 +21,8 @@
 | ReleaseProperty | `/Upgrading/Releases/{releaseId}/Properties` | Release 扩展属性 |
 | ReleaseExecutor | `/Upgrading/Releases/{releaseId}/Executors` | Release 执行器 |
 | Instance | `/Upgrading/Instances` | 客户端安装实例 |
-| ReleasePublishing | `/Upgrading/Releases/{releaseId}/Publishings` | 发布与实例的升级状态关系 |
-| ReleasePublishing | `/Upgrading/Instances/{instanceId}/Publishings` | 实例维度的升级状态关系 |
+| ReleaseTracing | `/Upgrading/Releases/{releaseId}/Tracings` | 发布与实例的升级阶段跟踪 |
+| ReleaseTracing | `/Upgrading/Instances/{instanceId}/Tracings` | 实例维度的升级阶段跟踪 |
 
 标准行为：
 
@@ -166,24 +166,24 @@ PATCH /Upgrading/Releases/{releaseId}/Executors
 DELETE /Upgrading/Releases/{releaseId}/Executors
 ```
 
-发布状态集：
+发布跟踪集：
 
 ```http
-GET /Upgrading/Releases/{releaseId}/Publishings
-POST /Upgrading/Releases/{releaseId}/Publishings
-PUT /Upgrading/Releases/{releaseId}/Publishings
-PATCH /Upgrading/Releases/{releaseId}/Publishings
-DELETE /Upgrading/Releases/{releaseId}/Publishings
+GET /Upgrading/Releases/{releaseId}/Tracings
+POST /Upgrading/Releases/{releaseId}/Tracings
+PUT /Upgrading/Releases/{releaseId}/Tracings
+PATCH /Upgrading/Releases/{releaseId}/Tracings
+DELETE /Upgrading/Releases/{releaseId}/Tracings
 ```
 
-也可以从实例维度维护发布状态：
+也可以从实例维度维护发布跟踪：
 
 ```http
-GET /Upgrading/Instances/{instanceId}/Publishings
-POST /Upgrading/Instances/{instanceId}/Publishings
-PUT /Upgrading/Instances/{instanceId}/Publishings
-PATCH /Upgrading/Instances/{instanceId}/Publishings
-DELETE /Upgrading/Instances/{instanceId}/Publishings
+GET /Upgrading/Instances/{instanceId}/Tracings
+POST /Upgrading/Instances/{instanceId}/Tracings
+PUT /Upgrading/Instances/{instanceId}/Tracings
+PATCH /Upgrading/Instances/{instanceId}/Tracings
+DELETE /Upgrading/Instances/{instanceId}/Tracings
 ```
 
 ## Release 发布动作
@@ -205,12 +205,12 @@ Content-Type: application/json
 }
 ```
 
-## ReleasePublishing 状态
+## ReleaseTracing 跟踪
 
-发布状态记录表示某个发布在某个实例上的升级状态：
+发布跟踪记录表示某个发布在某个实例上的升级阶段：
 
 ```http
-POST /Upgrading/Releases/{releaseId}/Publishings
+POST /Upgrading/Releases/{releaseId}/Tracings
 Content-Type: application/json
 ```
 
@@ -220,7 +220,7 @@ Content-Type: application/json
 [
 	{
 		"InstanceId": 1,
-		"Status": "Downloaded",
+		"Phase": "Downloaded",
 		"Message": "",
 		"Description": "The package has been downloaded."
 	}
@@ -230,7 +230,7 @@ Content-Type: application/json
 也可以按实例写入：
 
 ```http
-POST /Upgrading/Instances/{instanceId}/Publishings
+POST /Upgrading/Instances/{instanceId}/Tracings
 Content-Type: application/json
 ```
 
@@ -238,7 +238,7 @@ Content-Type: application/json
 [
 	{
 		"ReleaseId": 1,
-		"Status": "Downloaded",
+		"Phase": "Downloaded",
 		"Message": "",
 		"Description": "The package has been downloaded."
 	}

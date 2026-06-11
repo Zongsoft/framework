@@ -33,16 +33,16 @@ using Zongsoft.Data;
 
 namespace Zongsoft.Upgrading.Models;
 
-/// <summary>表示发布实例状态的实体类。</summary>
-public abstract class ReleasePublishing
+/// <summary>表示发布实例跟踪的实体类。</summary>
+public abstract class ReleaseTracing
 {
 	#region 公共属性
 	/// <summary>获取或设置发布编号。</summary>
 	public abstract uint ReleaseId { get; set; }
 	/// <summary>获取或设置实例编号。</summary>
 	public abstract uint InstanceId { get; set; }
-	/// <summary>获取或设置发布状态。</summary>
-	public abstract ReleasePublishingStatus Status { get; set; }
+	/// <summary>获取或设置发布阶段。</summary>
+	public abstract string Phase { get; set; }
 	/// <summary>获取或设置失败消息。</summary>
 	public abstract string Message { get; set; }
 	/// <summary>获取或设置更新时间。</summary>
@@ -56,16 +56,16 @@ public abstract class ReleasePublishing
 	#endregion
 }
 
-/// <summary>表示发布实例状态查询条件的实体类。</summary>
-public abstract class ReleasePublishingCriteria : CriteriaBase
+/// <summary>表示发布实例跟踪查询条件的实体类。</summary>
+public abstract class ReleaseTracingCriteria : CriteriaBase
 {
 	#region 公共属性
 	/// <summary>获取或设置发布编号。</summary>
 	public abstract uint? ReleaseId { get; set; }
 	/// <summary>获取或设置实例编号。</summary>
 	public abstract uint? InstanceId { get; set; }
-	/// <summary>获取或设置发布状态。</summary>
-	public abstract ReleasePublishingStatus? Status { get; set; }
+	/// <summary>获取或设置发布阶段。</summary>
+	public abstract string Phase { get; set; }
 	/// <summary>获取或设置更新时间范围。</summary>
 	public abstract Range<DateTime>? Timestamp { get; set; }
 	#endregion

@@ -57,8 +57,8 @@ public abstract class Instance
 	#endregion
 
 	#region 集合属性
-	/// <summary>获取或设置该实例的发布状态集。</summary>
-	public abstract IEnumerable<ReleasePublishing> Publishings { get; set; }
+	/// <summary>获取或设置该实例的发布跟踪集。</summary>
+	public abstract IEnumerable<ReleaseTracing> Tracings { get; set; }
 	#endregion
 }
 

@@ -89,13 +89,13 @@ Event     | varchar  | 50  | ✗ | 执行事件
 Command   | nvarchar | 500 | ✗ | 执行命令
 
 
-## 发布实例状态表 `ReleasePublishing`
+## 发布实例跟踪表 `ReleaseTracing`
 
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
 ReleaseId   | int      | 4   | ✗ | 主键，发布编号
 InstanceId  | int      | 4   | ✗ | 主键，实例编号
-Status      | byte     | 1   | ✗ | 发布状态 _(`Fetch`, `Downloading`, `Downloaded`, `Upgrading`, `Upgraded`, `Completed`)_
+Phase       | varchar  | 50  | ✓ | 发布阶段
 Message     | nvarchar | 500 | ✓ | 失败消息
 Timestamp   | datetime | -   | ✗ | 更新时间
 Description | nvarchar | 500 | ✓ | 更新描述

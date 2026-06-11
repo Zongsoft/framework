@@ -89,8 +89,8 @@ public abstract class Release
 	public abstract ICollection<ReleaseProperty> Properties { get; set; }
 	/// <summary>获取或设置发布执行器集。</summary>
 	public abstract ICollection<ReleaseExecutor> Executors { get; set; }
-	/// <summary>获取或设置发布状态集。</summary>
-	public abstract IEnumerable<ReleasePublishing> Publishings { get; set; }
+	/// <summary>获取或设置发布跟踪集。</summary>
+	public abstract IEnumerable<ReleaseTracing> Tracings { get; set; }
 	#endregion
 }
 

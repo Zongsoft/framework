@@ -170,11 +170,11 @@ Instance 表示安装了应用的客户端实例。
 InstanceCode
 ```
 
-## ReleasePublishing
+## ReleaseTracing
 
-ReleasePublishing 表示某个发布在某个实例上的升级发布状态。
+ReleaseTracing 表示某个发布在某个实例上的升级阶段跟踪。
 
-对应 API 可从发布维度访问 `/Upgrading/Releases/{releaseId}/Publishings`，也可从实例维度访问 `/Upgrading/Instances/{instanceId}/Publishings`。
+对应 API 可从发布维度访问 `/Upgrading/Releases/{releaseId}/Tracings`，也可从实例维度访问 `/Upgrading/Instances/{instanceId}/Tracings`。
 
 字段：
 
@@ -182,7 +182,7 @@ ReleasePublishing 表示某个发布在某个实例上的升级发布状态。
 | --- | --- |
 | ReleaseId | 发布编号，主键 |
 | InstanceId | 实例编号，主键 |
-| Status | 发布状态 |
+| Phase | 发布阶段 |
 | Message | 失败消息 |
 | Timestamp | 更新时间 |
 | Description | 更新描述 |
@@ -193,7 +193,7 @@ ReleasePublishing 表示某个发布在某个实例上的升级发布状态。
 ReleaseId + InstanceId
 ```
 
-`Status` 值：
+`Phase` 值可使用约定阶段名，例如：
 
 - `Fetch`
 - `Downloading`

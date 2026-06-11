@@ -47,8 +47,8 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 	public PropertyService Properties => this.GetSubservice<PropertyService>();
 	/// <summary>获取发布执行器子服务。</summary>
 	public ExecutorService Executors => this.GetSubservice<ExecutorService>();
-	/// <summary>获取发布状态子服务。</summary>
-	public PublishingService Publishings => this.GetSubservice<PublishingService>();
+	/// <summary>获取发布跟踪子服务。</summary>
+	public TracingService Tracings => this.GetSubservice<TracingService>();
 	#endregion
 
 	#region 公共方法
@@ -315,9 +315,9 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 		#endregion
 	}
 
-	/// <summary>表示发布实例状态的数据子服务类。</summary>
-	[DataService<ReleasePublishingCriteria>]
-	public class PublishingService(ReleaseService service, DataServiceMutability? mutability = null) : DataServiceBase<ReleasePublishing>(service, mutability)
+	/// <summary>表示发布实例跟踪的数据子服务类。</summary>
+	[DataService<ReleaseTracingCriteria>]
+	public class TracingService(ReleaseService service, DataServiceMutability? mutability = null) : DataServiceBase<ReleaseTracing>(service, mutability)
 	{
 		#region 重写方法
 		protected override ICondition OnCondition(DataServiceMethod method, object[] values, IDataOptions options, out bool singular)
@@ -326,17 +326,17 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			{
 				case 1:
 					singular = false;
-					return Condition.Equal(nameof(ReleasePublishing.ReleaseId), values[0]);
+					return Condition.Equal(nameof(ReleaseTracing.ReleaseId), values[0]);
 				case 2:
 					singular = true;
-					return Condition.Equal(nameof(ReleasePublishing.ReleaseId), values[0]) &
-					       Condition.Equal(nameof(ReleasePublishing.InstanceId), values[1]);
+					return Condition.Equal(nameof(ReleaseTracing.ReleaseId), values[0]) &
+					       Condition.Equal(nameof(ReleaseTracing.InstanceId), values[1]);
 			}
 
 			return base.OnCondition(method, values, options, out singular);
 		}
 
-		protected override void OnModel(object[] values, IDataDictionary<ReleasePublishing> dictionary, IDataMutateOptions options)
+		protected override void OnModel(object[] values, IDataDictionary<ReleaseTracing> dictionary, IDataMutateOptions options)
 		{
 			if(values.Length != 1)
 				throw new DataArgumentException(nameof(values));

@@ -54,7 +54,7 @@
 			<property name="Modification" type="datetime" nullable="true" />
 			<property name="Description" type="string" length="500" nullable="true" />
 
-			<complexProperty name="Publishings" port="ReleasePublishing" multiplicity="*" immutable="false">
+			<complexProperty name="Tracings" port="ReleaseTracing" multiplicity="*" immutable="false">
 				<link port="InstanceId" />
 			</complexProperty>
 		</entity>
@@ -95,7 +95,7 @@
 				<link port="ReleaseId" />
 			</complexProperty>
 
-			<complexProperty name="Publishings" port="ReleasePublishing" multiplicity="*" immutable="false">
+			<complexProperty name="Tracings" port="ReleaseTracing" multiplicity="*" immutable="false">
 				<link port="ReleaseId" />
 			</complexProperty>
 		</entity>
@@ -132,7 +132,7 @@
 			</complexProperty>
 		</entity>
 
-		<entity name="ReleasePublishing" table="Upgrading_ReleasePublishing">
+		<entity name="ReleaseTracing" table="Upgrading_ReleaseTracing">
 			<key>
 				<member name="ReleaseId" />
 				<member name="InstanceId" />
@@ -140,7 +140,7 @@
 
 			<property name="ReleaseId" type="uint" nullable="false" />
 			<property name="InstanceId" type="uint" nullable="false" />
-			<property name="Status" type="byte" nullable="false" default="0" />
+			<property name="Phase" type="string" length="50" nullable="true" />
 			<property name="Message" type="string" length="500" nullable="true" />
 			<property name="Timestamp" type="datetime" nullable="false" default="now()" />
 			<property name="Description" type="string" length="500" nullable="true" />

@@ -81,12 +81,12 @@ CREATE TABLE IF NOT EXISTS `Upgrading_ReleaseExecutor` (
 	PRIMARY KEY (`ReleaseId`, `SerialId`)
 ) ENGINE = InnoDB COMMENT='发布执行器表';
 
-CREATE TABLE IF NOT EXISTS `Upgrading_ReleasePublishing` (
+CREATE TABLE IF NOT EXISTS `Upgrading_ReleaseTracing` (
 	`ReleaseId`   int unsigned     NOT NULL COMMENT '主键，发布编号',
 	`InstanceId`  int unsigned     NOT NULL COMMENT '主键，实例编号',
-	`Status`      tinyint unsigned NOT NULL COMMENT '发布状态(Fetch, Downloading, Downloaded, Upgrading, Upgraded, Completed)' DEFAULT 0,
+	`Phase`       varchar(50)      NULL     COMMENT '发布阶段' COLLATE 'ascii_general_ci',
 	`Message`     varchar(500)     NULL     COMMENT '失败消息' COLLATE 'utf8mb4_0900_ai_ci',
 	`Timestamp`   datetime         NOT NULL COMMENT '更新时间' DEFAULT CURRENT_TIMESTAMP,
 	`Description` varchar(500)     NULL     COMMENT '更新描述' COLLATE 'utf8mb4_0900_ai_ci',
 	PRIMARY KEY (`ReleaseId`, `InstanceId`)
-) ENGINE = InnoDB COMMENT='发布实例状态表';
+) ENGINE = InnoDB COMMENT='发布实例跟踪表';

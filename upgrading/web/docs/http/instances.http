@@ -67,11 +67,11 @@ DELETE /Upgrading/Instances/{{instanceId}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
-### 实例发布状态查询
+### 实例发布跟踪查询
 @instanceId = {{$input 实例编号 $value: }}
 @releaseId = {{$input 发布编号 $value: }}
-@status = {{$input 发布状态 $value: }}
-POST /Upgrading/Instances/Publishings/Query?page={{page}} HTTP/1.1
+@phase = {{$input 发布阶段 $value: }}
+POST /Upgrading/Instances/Tracings/Query?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 Content-Type: application/json
@@ -79,22 +79,22 @@ Content-Type: application/json
 {
 	"InstanceId": {{instanceId}},
 	"ReleaseId": {{releaseId}},
-	"Status": "{{status}}"
+	"Phase": "{{phase}}"
 }
 
-### 实例发布状态列表
+### 实例发布跟踪列表
 @instanceId = {{$input 实例编号 $value: }}
-GET /Upgrading/Instances/{{instanceId}}/Publishings?page={{page}} HTTP/1.1
+GET /Upgrading/Instances/{{instanceId}}/Tracings?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
-### 实例发布状态新增
+### 实例发布跟踪新增
 @instanceId = {{$input 实例编号 $value: }}
 @releaseId = {{$input 发布编号 $value: }}
-@status = {{$input 发布状态 $value: }}
+@phase = {{$input 发布阶段 $value: }}
 @message = {{$input 失败消息 $value: }}
-@description = {{$input 状态描述 $value: }}
-POST /Upgrading/Instances/{{instanceId}}/Publishings HTTP/1.1
+@description = {{$input 阶段描述 $value: }}
+POST /Upgrading/Instances/{{instanceId}}/Tracings HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 Content-Type: application/json
@@ -102,7 +102,7 @@ Content-Type: application/json
 [
 	{
 		"ReleaseId": {{releaseId}},
-		"Status": "{{status}}",
+		"Phase": "{{phase}}",
 		"Message": "{{message}}",
 		"Description": "{{description}}"
 	}

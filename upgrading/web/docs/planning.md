@@ -18,7 +18,7 @@
 5. 已实现 `ReleaseProperty` 数据服务和 Release 属性父子资源 API。
 6. 已实现 `ReleaseExecutor` 数据服务和 Release 执行器父子资源 API。
 7. 已实现 `Instance` 数据服务和 `/Upgrading/Instances` CRUD API。
-8. 已实现 `ReleasePublishing` 数据服务，并支持 Release 与 Instance 两个访问维度。
+8. 已实现 `ReleaseTracing` 数据服务，并支持 Release 与 Instance 两个访问维度。
 9. Release 数据服务当前使用 `EvaluatorName`、`EvaluatorSetting` 表达升级评估条件。
 
 原则：
@@ -56,10 +56,10 @@
 	- `CurrentlyVersion`
 	- `UpgradingVersion`
 3. QueryString 与 Headers 会合并为评估参数集合。
-4. 候选 Release 当前按发布状态、平台、架构和版本名筛选。
+4. 候选 Release 当前按发布控制、平台、架构和版本名筛选。
 5. 已实现内置 `Default` 评估器，按键值设置匹配请求参数。
 6. 已实现 `GET /Upgrading/Upgrader/Evaluators` 查询可用评估器。
-7. 后续如需 License、Instance 自动登记或 ReleasePublishing 自动更新，可在 Upgrader 流程中继续扩展。
+7. 后续如需 License、Instance 自动登记或 ReleaseTracing 自动更新，可在 Upgrader 流程中继续扩展。
 
 ## 阶段六：Release 子资源
 
@@ -67,12 +67,12 @@
 	- `/Upgrading/Releases/{releaseId}/Properties`
 2. 已实现 Release 执行器集父子资源 API：
 	- `/Upgrading/Releases/{releaseId}/Executors`
-3. 已实现 Release 发布状态父子资源 API：
-	- `/Upgrading/Releases/{releaseId}/Publishings`
-	- `/Upgrading/Releases/Publishings/Query`
-4. 已实现 Instance 发布状态父子资源 API：
-	- `/Upgrading/Instances/{instanceId}/Publishings`
-	- `/Upgrading/Instances/Publishings/Query`
+3. 已实现 Release 发布跟踪父子资源 API：
+	- `/Upgrading/Releases/{releaseId}/Tracings`
+	- `/Upgrading/Releases/Tracings/Query`
+4. 已实现 Instance 发布跟踪父子资源 API：
+	- `/Upgrading/Instances/{instanceId}/Tracings`
+	- `/Upgrading/Instances/Tracings/Query`
 5. ReleaseProperty 写入 Release XML 的 `<properties>` 节点需要通过协议转换持续验证。
 6. ReleaseExecutor 写入 Release XML 的 `<executors>` 节点需要通过协议转换持续验证。
 
@@ -85,7 +85,7 @@
 5. 验证创建 Release 时自动维护 Application。
 6. 验证创建 Release 时自动维护 ApplicationEdition。
 7. 验证 Fetch 可以按 QueryString 和 Header 参数触发 `Default` 评估器。
-8. 验证 ReleasePublishing 可以记录实例上的发布升级状态。
+8. 验证 ReleaseTracing 可以记录实例上的发布升级阶段。
 9. 验证返回 Release 集合包含 `mode` 语义。
 10. 验证客户端能按 `Release.Mode` 执行部署模式。
 
@@ -93,6 +93,6 @@
 
 1. `Release.Path` 与 `Download.Url` 的最终职责边界。
 2. 是否需要在 Upgrader Fetch 中自动维护 Instance。
-3. 是否需要在 Upgrader Fetch 中自动创建或更新 ReleasePublishing。
+3. 是否需要在 Upgrader Fetch 中自动创建或更新 ReleaseTracing。
 4. 是否需要在 Upgrader Fetch 中直接执行 ApplicationEdition.Licensed 的 License 校验。
 5. `dotnet-upgrade publish --channel:web` 是否与第一版同步实现。

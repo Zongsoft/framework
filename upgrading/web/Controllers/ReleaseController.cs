@@ -98,8 +98,8 @@ public class ReleaseController : ServiceController<Models.Release, ReleaseServic
 	}
 
 	[Authorize]
-	[ControllerName("Publishings")]
-	public class PublishingController : SubserviceController<ReleasePublishing, ReleaseService.PublishingService>
+	[ControllerName("Tracings")]
+	public class TracingController : SubserviceController<ReleaseTracing, ReleaseService.TracingService>
 	{
 	}
 	#endregion

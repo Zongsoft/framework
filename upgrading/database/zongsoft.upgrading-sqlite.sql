@@ -84,10 +84,10 @@ CREATE TABLE IF NOT EXISTS "Upgrading_ReleaseExecutor" (
 	PRIMARY KEY ("ReleaseId", "SerialId")
 );
 
-CREATE TABLE IF NOT EXISTS "Upgrading_ReleasePublishing" (
+CREATE TABLE IF NOT EXISTS "Upgrading_ReleaseTracing" (
 	"ReleaseId"   INTEGER NOT NULL,
 	"InstanceId"  INTEGER NOT NULL,
-	"Status"      INTEGER NOT NULL DEFAULT 0,
+	"Phase"       TEXT    NULL,
 	"Message"     TEXT    NULL,
 	"Timestamp"   TEXT    NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"Description" TEXT    NULL,

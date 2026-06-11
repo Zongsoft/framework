@@ -168,11 +168,11 @@ Content-Type: application/json
 	}
 ]
 
-### 发布状态查询
+### 发布跟踪查询
 @releaseId = {{$input 发布编号 $value: }}
 @instanceId = {{$input 实例编号 $value: }}
-@status = {{$input 发布状态 $value: }}
-POST /Upgrading/Releases/Publishings/Query?page={{page}} HTTP/1.1
+@phase = {{$input 发布阶段 $value: }}
+POST /Upgrading/Releases/Tracings/Query?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 Content-Type: application/json
@@ -180,22 +180,22 @@ Content-Type: application/json
 {
 	"ReleaseId": {{releaseId}},
 	"InstanceId": {{instanceId}},
-	"Status": "{{status}}"
+	"Phase": "{{phase}}"
 }
 
-### 发布状态列表
+### 发布跟踪列表
 @releaseId = {{$input 发布编号 $value: }}
-GET /Upgrading/Releases/{{releaseId}}/Publishings?page={{page}} HTTP/1.1
+GET /Upgrading/Releases/{{releaseId}}/Tracings?page={{page}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
-### 发布状态新增
+### 发布跟踪新增
 @releaseId = {{$input 发布编号 $value: }}
 @instanceId = {{$input 实例编号 $value: }}
-@status = {{$input 发布状态 $value: }}
+@phase = {{$input 发布阶段 $value: }}
 @message = {{$input 失败消息 $value: }}
-@description = {{$input 状态描述 $value: }}
-POST /Upgrading/Releases/{{releaseId}}/Publishings HTTP/1.1
+@description = {{$input 阶段描述 $value: }}
+POST /Upgrading/Releases/{{releaseId}}/Tracings HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 Content-Type: application/json
@@ -203,7 +203,7 @@ Content-Type: application/json
 [
 	{
 		"InstanceId": {{instanceId}},
-		"Status": "{{status}}",
+		"Phase": "{{phase}}",
 		"Message": "{{message}}",
 		"Description": "{{description}}"
 	}

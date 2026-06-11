@@ -151,20 +151,20 @@ COMMENT ON COLUMN "Upgrading_ReleaseExecutor"."SerialId"  IS '主键，执行序
 COMMENT ON COLUMN "Upgrading_ReleaseExecutor"."Event"     IS '执行事件';
 COMMENT ON COLUMN "Upgrading_ReleaseExecutor"."Command"   IS '执行命令';
 
-CREATE TABLE IF NOT EXISTS "Upgrading_ReleasePublishing" (
+CREATE TABLE IF NOT EXISTS "Upgrading_ReleaseTracing" (
 	"ReleaseId"   int          NOT NULL,
 	"InstanceId"  int          NOT NULL,
-	"Status"      smallint     NOT NULL DEFAULT 0,
+	"Phase"       varchar(50)  NULL     COLLATE "C",
 	"Message"     varchar(500) NULL     COLLATE "C.utf8",
 	"Timestamp"   timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"Description" varchar(500) NULL     COLLATE "C.utf8",
 	PRIMARY KEY ("ReleaseId", "InstanceId")
 );
 
-COMMENT ON TABLE "Upgrading_ReleasePublishing" IS '发布实例状态表';
-COMMENT ON COLUMN "Upgrading_ReleasePublishing"."ReleaseId"   IS '主键，发布编号';
-COMMENT ON COLUMN "Upgrading_ReleasePublishing"."InstanceId"  IS '主键，实例编号';
-COMMENT ON COLUMN "Upgrading_ReleasePublishing"."Status"      IS '发布状态(Fetch, Downloading, Downloaded, Upgrading, Upgraded, Completed)';
-COMMENT ON COLUMN "Upgrading_ReleasePublishing"."Message"     IS '失败消息';
-COMMENT ON COLUMN "Upgrading_ReleasePublishing"."Timestamp"   IS '更新时间';
-COMMENT ON COLUMN "Upgrading_ReleasePublishing"."Description" IS '更新描述';
+COMMENT ON TABLE "Upgrading_ReleaseTracing" IS '发布实例跟踪表';
+COMMENT ON COLUMN "Upgrading_ReleaseTracing"."ReleaseId"   IS '主键，发布编号';
+COMMENT ON COLUMN "Upgrading_ReleaseTracing"."InstanceId"  IS '主键，实例编号';
+COMMENT ON COLUMN "Upgrading_ReleaseTracing"."Phase"       IS '发布阶段';
+COMMENT ON COLUMN "Upgrading_ReleaseTracing"."Message"     IS '失败消息';
+COMMENT ON COLUMN "Upgrading_ReleaseTracing"."Timestamp"   IS '更新时间';
+COMMENT ON COLUMN "Upgrading_ReleaseTracing"."Description" IS '更新描述';
