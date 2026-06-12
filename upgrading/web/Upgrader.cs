@@ -33,7 +33,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
-using Zongsoft.Common;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Upgrading;
@@ -68,6 +67,9 @@ public static class Upgrader
 		if(!upgradingVersion.IsZero)
 			criteria.Add(Condition.LessThanEqual(nameof(Models.Release.Version), (ulong)upgradingVersion));
 
+		//实例化当前访问的客户端实例对象
+		await InstantiateAsync(parameters, cancellation);
+
 		await foreach(var model in Module.Current.Accessor.SelectAsync<Models.Release>(criteria, SCHEMA, cancellation))
 		{
 			if(!await ExistsAsync(model.Path, cancellation))
@@ -97,50 +99,19 @@ public static class Upgrader
 		}
 	}
 
-	internal static Release ToRelease(this Models.Release model)
-	{
-		var edition = string.IsNullOrEmpty(model.Edition) || model.Edition == "_" ? null : model.Edition;
-		var release = new Release(model.Name, edition, model.Version, model.Platform, model.Architecture)
-		{
-			Kind = model.Kind,
-			Size = model.Size,
-			Title = model.Title,
-			Summary = model.Summary,
-			Creation = model.Creation,
-			Description = model.Description,
-			Deprecated = model.Deprecated || !model.Visible,
-			Checksum = Checksum.TryParse(model.Checksum, out var checksum) ? checksum : default,
-		};
-
-		release.Properties[nameof(model.ReleaseId)] = model.ReleaseId;
-
-		if(!string.IsNullOrEmpty(model.Path))
-			release.Path = IO.FileSystem.GetUrl(model.Path);
-
-		if(!string.IsNullOrEmpty(model.Tags))
-			release.Tags = model.Tags.Split([',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-		if(model.Executors != null && model.Executors.Count > 0)
-		{
-			foreach(var executor in model.Executors)
-				release.Executors.Add(new(executor.Event, executor.Command));
-		}
-
-		if(model.Properties != null && model.Properties.Count > 0)
-		{
-			foreach(var property in model.Properties)
-				release.Properties.Add(new(property.Name, property.Value));
-		}
-
-		return release;
-	}
-
 	public static async ValueTask TraceAsync(string phase, string message, IDictionary<string, string> properties, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrWhiteSpace(phase) || properties == null || properties.Count == 0)
 			return;
 
-		var instance = await InstantiateAsync(properties, cancellation);
+		if(!properties.TryGetValue("Fingerprint", out var fingerprint) || string.IsNullOrEmpty(fingerprint))
+			return;
+
+		var instance = await Module.Current.Accessor.SelectAsync<Models.Instance>(
+			Condition.Equal(nameof(Models.Instance.InstanceCode), fingerprint),
+			Paging.Limit(1),
+			cancellation).FirstOrDefault(cancellation);
+
 		if(instance == null)
 			return;
 
@@ -164,7 +135,7 @@ public static class Upgrader
 		else
 			criteria.Add(Condition.In(nameof(Models.Release.Edition), [null, string.Empty, "_"]));
 
-		var release = await Module.Current.Accessor.SelectAsync<Models.Release>(criteria, Paging.First(), cancellation).FirstOrDefault(cancellation);
+		var release = await Module.Current.Accessor.SelectAsync<Models.Release>(criteria, Paging.Limit(1), cancellation).FirstOrDefault(cancellation);
 
 		if(release == null)
 			return;
@@ -192,7 +163,7 @@ public static class Upgrader
 
 		var instance = await Module.Current.Accessor.SelectAsync<Models.Instance>(
 			Condition.Equal(nameof(Models.Instance.InstanceCode), fingerprint),
-			Paging.First(),
+			Paging.Limit(1),
 			cancellation).FirstOrDefault(cancellation);
 
 		if(instance == null)
@@ -202,7 +173,10 @@ public static class Upgrader
 				model.InstanceCode = fingerprint;
 			});
 
-			await Module.Current.Accessor.UpsertAsync(instance, cancellation);
+			if(properties.TryGetValue(nameof(Environment.MachineName), out var value) && !string.IsNullOrEmpty(value))
+				instance.Name = value;
+
+			await Module.Current.Accessor.InsertAsync(instance, DataInsertOptions.IgnoreConstraint(), cancellation);
 		}
 
 		return instance;
