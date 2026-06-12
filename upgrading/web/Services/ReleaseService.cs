@@ -67,7 +67,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 		if(string.IsNullOrEmpty(path))
 			return null;
 
-		var filename = string.IsNullOrWhiteSpace(release.Edition) ?
+		var filename = string.IsNullOrWhiteSpace(release.Edition) || release.Edition == "_" ?
 			$"{release.Name}@{release.Version}_{Application.GetRuntimeIdentifier(release.Platform, release.Architecture)}" :
 			$"{release.Name}-{release.Edition}@{release.Version}_{Application.GetRuntimeIdentifier(release.Platform, release.Architecture)}";
 
@@ -76,40 +76,24 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 
 	public async ValueTask<bool> SetFilePathAsync(uint releaseId, string value, long size, CancellationToken cancellation = default)
 	{
-		try
+		#if NET10_0_OR_GREATER
+		var path = (await this.SelectAsync(Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), nameof(Models.Release.Path), null, cancellation).FirstOrDefaultAsync(cancellation))?.Path;
+		#else
+		var path = this.SelectAsync(Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), nameof(Models.Release.Path), null, cancellation).ToBlockingEnumerable(cancellation).Select(release => release.Path).FirstOrDefault();
+		#endif
+
+		var count = await this.UpdateAsync(new
 		{
-			var checksum = await ChecksumAsync(value, cancellation);
+			Path = value,
+			Size = (ulong)size,
+			Checksum = await ChecksumAsync(value, cancellation),
+			Modification = DateTime.Now,
+		}, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation);
 
-			var count = await this.UpdateAsync(new
-			{
-				Path = value,
-				Size = (ulong)size,
-				Checksum = checksum,
-				Modification = DateTime.Now,
-			}, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation);
+		if(count > 0)
+			DeleteFile(path);
 
-			if(count < 1)
-				DeleteFile(value);
-
-			return count > 0;
-		}
-		catch
-		{
-			DeleteFile(value);
-			throw;
-		}
-
-		static void DeleteFile(string path)
-		{
-			if(string.IsNullOrEmpty(path))
-				return;
-
-			try
-			{
-				Zongsoft.IO.FileSystem.File.Delete(path);
-			}
-			catch { }
-		}
+		return count > 0;
 
 		static async ValueTask<string> ChecksumAsync(string path, CancellationToken cancellation)
 		{
@@ -204,6 +188,36 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 
 		base.OnInserted(context);
 	}
+
+	protected override int OnDelete(ICondition criteria, ISchema schema, DataDeleteOptions options)
+	{
+		options.Parameters.SetValue("$DELETED", this.Select(criteria, nameof(Models.Release.Path)).Select(p => p.Path).ToArray());
+		return base.OnDelete(criteria, schema, options);
+	}
+
+	protected override async ValueTask<int> OnDeleteAsync(ICondition criteria, ISchema schema, DataDeleteOptions options, CancellationToken cancellation)
+	{
+		var source = this.SelectAsync(criteria, nameof(Models.Release.Path), null, cancellation);
+
+		#if NET10_0_OR_GREATER
+		options.Parameters.SetValue("$DELETED", await source.ToArrayAsync(cancellation));
+		#else
+		options.Parameters.SetValue("$DELETED", source.ToBlockingEnumerable(cancellation).ToArray());
+		#endif
+
+		return await base.OnDeleteAsync(criteria, schema, options, cancellation);
+	}
+
+	protected override void OnDeleted(DataDeleteContextBase context)
+	{
+		if(context.Count > 0 && context.Options.Parameters.TryGetValue("$DELETED", out var value) && value is IEnumerable<string> paths)
+		{
+			foreach(var path in paths)
+				DeleteFile(path);
+		}
+
+		base.OnDeleted(context);
+	}
 	#endregion
 
 	#region 虚拟方法
@@ -245,6 +259,20 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			applicationModel.Editions = [Model.Build<ApplicationEdition>(e => e.Name = e.Title = edition)];
 
 		this.DataAccess.Insert(applicationModel, $"*,{nameof(Models.Application.Editions)}{{*}}", DataInsertOptions.IgnoreConstraint());
+	}
+	#endregion
+
+	#region 私有方法
+	static void DeleteFile(string path)
+	{
+		if(string.IsNullOrEmpty(path))
+			return;
+
+		try
+		{
+			Zongsoft.IO.FileSystem.File.Delete(path);
+		}
+		catch { }
 	}
 	#endregion
 

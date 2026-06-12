@@ -37,11 +37,16 @@ internal static class HttpUtility
 {
 	public static HttpClient CreateClient(string baseAddress, TimeSpan timeout)
 	{
-		if(string.IsNullOrEmpty(baseAddress))
+		if(string.IsNullOrWhiteSpace(baseAddress))
 			throw new ArgumentNullException(nameof(baseAddress));
+
+		baseAddress = baseAddress.Trim();
 
 		if(baseAddress.IndexOf("://") < 0)
 			baseAddress += $"http://{baseAddress}";
+
+		if(!baseAddress.EndsWith('/'))
+			baseAddress += "/" ;
 
 		var handler = new HttpClientHandler
 		{
