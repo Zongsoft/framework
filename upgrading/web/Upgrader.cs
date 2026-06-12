@@ -34,6 +34,7 @@ using System.Collections.Generic;
 
 using Zongsoft.Data;
 using Zongsoft.Common;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Upgrading;
 
@@ -134,7 +135,75 @@ public static class Upgrader
 		return release;
 	}
 
-	public static async ValueTask TraceAsync(string id, string phase, string message, IDictionary<string, string> properties, CancellationToken cancellation = default)
+	public static async ValueTask TraceAsync(string phase, string message, IDictionary<string, string> properties, CancellationToken cancellation = default)
 	{
+		if(string.IsNullOrWhiteSpace(phase) || properties == null || properties.Count == 0)
+			return;
+
+		var instance = await InstantiateAsync(properties, cancellation);
+		if(instance == null)
+			return;
+
+		if(!properties.TryGetValue("name", out var name) || string.IsNullOrEmpty(name))
+			return;
+		if(!properties.TryGetValue("version", out var value) || string.IsNullOrEmpty(value) || !Versioning.Version.TryParse(value, out var version))
+			return;
+		if(!properties.TryGetValue("platform", out value) || string.IsNullOrEmpty(value) || !Enum.TryParse<Platform>(value, true, out var platform))
+			return;
+		if(!properties.TryGetValue("architecture", out value) || string.IsNullOrEmpty(value) || !Enum.TryParse<Architecture>(value, true, out var architecture))
+			return;
+
+		var criteria = Condition.Equal(nameof(Models.Release.Name), name) &
+			Condition.Equal(nameof(Models.Release.Version), version) &
+			Condition.Equal(nameof(Models.Release.Platform), platform) &
+			Condition.Equal(nameof(Models.Release.Architecture), architecture);
+
+		if(properties.TryGetValue("edition", out value) && !string.IsNullOrEmpty(value) && value != "_")
+			criteria.Add(Condition.Equal(nameof(Models.Release.Edition), value));
+		else
+			criteria.Add(Condition.In(nameof(Models.Release.Edition), [null, string.Empty, "_"]));
+
+		var release = await Module.Current.Accessor.SelectAsync<Models.Release>(criteria, Paging.First(), cancellation).FirstOrDefault(cancellation);
+
+		if(release == null)
+			return;
+
+		var tracing = Model.Build<Models.ReleaseTracing>(tracing =>
+		{
+			tracing.ReleaseId = release.ReleaseId;
+			tracing.InstanceId = instance.InstanceId;
+			tracing.Phase = phase;
+			tracing.Timestamp = DateTime.Now;
+			tracing.Message = string.IsNullOrWhiteSpace(message) ? null : message;
+			tracing.Description = properties.TryGetValue(nameof(tracing.Description), out var description) ? description : null;
+		});
+
+		await Module.Current.Accessor.UpsertAsync(tracing, cancellation);
+	}
+
+	private static async ValueTask<Models.Instance> InstantiateAsync(IDictionary<string, string> properties, CancellationToken cancellation = default)
+	{
+		if(properties == null || properties.Count == 0)
+			return null;
+
+		if(!properties.TryGetValue("Fingerprint", out var fingerprint) || string.IsNullOrEmpty(fingerprint))
+			return null;
+
+		var instance = await Module.Current.Accessor.SelectAsync<Models.Instance>(
+			Condition.Equal(nameof(Models.Instance.InstanceCode), fingerprint),
+			Paging.First(),
+			cancellation).FirstOrDefault(cancellation);
+
+		if(instance == null)
+		{
+			instance = Model.Build<Models.Instance>(model =>
+			{
+				model.InstanceCode = fingerprint;
+			});
+
+			await Module.Current.Accessor.UpsertAsync(instance, cancellation);
+		}
+
+		return instance;
 	}
 }

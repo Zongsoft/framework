@@ -47,7 +47,40 @@ namespace Zongsoft.Upgrading.Web.Controllers;
 public class ReleaseController : ServiceController<Models.Release, ReleaseService>
 {
 	#region 公共方法
-	public override async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery]string format = null, CancellationToken cancellation = default)
+	[HttpPost("{id}/[action]")]
+	public async ValueTask<IActionResult> PublishAsync(uint id, CancellationToken cancellation = default)
+	{
+		if(id == 0)
+			return this.BadRequest();
+
+		return await this.DataService.PublishAsync(id, cancellation) ? this.NoContent() : this.NotFound();
+	}
+
+	[HttpPost("{id}/[action]")]
+	public async ValueTask<IActionResult> DeprecateAsync(uint id, CancellationToken cancellation = default)
+	{
+		if(id == 0)
+			return this.BadRequest();
+
+		return await this.DataService.DeprecateAsync(id, cancellation) ? this.NoContent() : this.NotFound();
+	}
+
+	[HttpPost("{id}/Upload")]
+	[HttpPost("Upload/{id}")]
+	[DisableRequestSizeLimit]
+	public async Task<IActionResult> UploadAsync(uint id, CancellationToken cancellation = default)
+	{
+		var path = await this.DataService.GetFilePathAsync(id, cancellation);
+		if(string.IsNullOrEmpty(path))
+			return this.NotFound();
+
+		var info = await this.UploadAsync(path, (info, cancellation) => this.DataService.SetFilePathAsync(id, info?.Path.Url, info.Size, cancellation), cancellation);
+		return info == null || string.IsNullOrEmpty(info.Url) ? this.NotFound() : this.Ok(info.Url);
+	}
+	#endregion
+
+	#region 重写方法
+	public override async ValueTask<IActionResult> ImportAsync(IFormFile file, [FromQuery] string format = null, CancellationToken cancellation = default)
 	{
 		if(file == null || file.Length == 0)
 			return this.BadRequest();
@@ -68,19 +101,6 @@ public class ReleaseController : ServiceController<Models.Release, ReleaseServic
 		}
 
 		return await base.ImportAsync(file, format, cancellation);
-	}
-
-	[HttpPost("{id}/Upload")]
-	[HttpPost("Upload/{id}")]
-	[DisableRequestSizeLimit]
-	public async Task<IActionResult> UploadAsync(uint id, CancellationToken cancellation = default)
-	{
-		var path = await this.DataService.GetFilePathAsync(id, cancellation);
-		if(string.IsNullOrEmpty(path))
-			return this.NotFound();
-
-		var info = await this.UploadAsync(path, (info, cancellation) => this.DataService.SetFilePathAsync(id, info?.Path.Url, info.Size, cancellation), cancellation);
-		return info == null || string.IsNullOrEmpty(info.Url) ? this.NotFound() : this.Ok(info.Url);
 	}
 	#endregion
 

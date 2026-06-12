@@ -52,6 +52,9 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 	#endregion
 
 	#region 公共方法
+	public async ValueTask<bool> PublishAsync(uint releaseId, CancellationToken cancellation = default) => await this.UpdateAsync(new { Published = true }, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation) > 0;
+	public async ValueTask<bool> DeprecateAsync(uint releaseId, CancellationToken cancellation = default) => await this.UpdateAsync(new { Deprecated = true }, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation) > 0;
+
 	public async ValueTask<string> GetFilePathAsync(uint releaseId, CancellationToken cancellation = default)
 	{
 		if(releaseId == 0)

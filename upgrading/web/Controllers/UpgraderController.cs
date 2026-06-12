@@ -74,9 +74,12 @@ public class UpgraderController : ControllerBase
 		return evaluators == null || evaluators.Count == 0 ? this.NoContent() : this.Ok(evaluators);
 	}
 
-	[HttpPost("[action/{id}/{phase}]")]
-	public async Task TraceAsync(string id, string phase, CancellationToken cancellation = default)
+	[HttpPost("[action/{phase}]")]
+	public async Task TraceAsync(string phase, CancellationToken cancellation = default)
 	{
+		if(string.IsNullOrEmpty(phase))
+			throw new BadHttpRequestException($"The '{nameof(phase)}' parameter is required.");
+
 		var message = this.Request.Query.TryGetValue("message", out var value) ? value.ToString() : null;
 
 		if(this.Request.HasTextContentType() && this.Request.ContentLength > 0)
@@ -92,7 +95,7 @@ public class UpgraderController : ControllerBase
 				properties[field.Key] = field.Value;
 		}
 
-		await Upgrader.TraceAsync(id, phase, message, properties, cancellation);
+		await Upgrader.TraceAsync(phase, message, properties, cancellation);
 	}
 
 	internal readonly struct EvaluatorInfo(string name, string title, string description)

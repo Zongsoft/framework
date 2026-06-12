@@ -82,8 +82,8 @@ partial class Fetcher
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
-			if(response.Headers.TryGetValues("X-Upgrading-Trace", out var values) && values != null)
-				this.Tracer = new WebTracer(this, string.Join("-", values));
+			//尝试创建一个跟踪器实例，并将其赋值给当前获取器的跟踪器属性，以便在后续的升级过程中使用
+			this.Tracer ??= new WebTracer(this);
 
 			var releases = Release.LoadAsync(await response.Content.ReadAsStreamAsync(cancellation), cancellation);
 			await foreach(var release in releases)
@@ -97,12 +97,12 @@ partial class Fetcher
 				text.Append($"{nameof(Release.Edition)}={Application.ApplicationEdition}&");
 				text.Append($"{nameof(Release.Platform)}={Application.Platform.ToString()}&");
 				text.Append($"{nameof(Release.Architecture)}={Application.Architecture.ToString()}&");
-				text.Append($"Fingerprint={IO.Hardwares.HardwareProfile.Current.Identifier}&");
 				text.Append($"CurrentlyVersion={Application.ApplicationVersion.ToString()}&");
 
 				if(version != null)
 					text.Append($"UpgradingVersion={version.ToString()}&");
 
+				text.Append($"Fingerprint={IO.Hardwares.HardwareProfile.Current?.Identifier}&");
 				if(IO.Hardwares.HardwareProfile.Current.Mainboard.HasUnique(out var identifier))
 					text.Append($"Mainboard={identifier}&");
 
@@ -136,26 +136,26 @@ partial class Fetcher
 		#endregion
 
 		#region 嵌套子类
-		private sealed class WebTracer(WebFetcher fetcher, string identifier) : ITracer
+		private sealed class WebTracer(WebFetcher fetcher) : ITracer
 		{
 			private readonly WebFetcher _fetcher = fetcher;
-			private readonly string _identifier = identifier;
+			private readonly string _fingerprint = IO.Hardwares.HardwareProfile.Current?.Identifier;
 
 			public async ValueTask TraceAsync(string phase, string message, IEnumerable<KeyValuePair<string, string>> parameters, CancellationToken cancellation)
 			{
 				try
 				{
 					var content = new FormUrlEncodedContent(new Dictionary<string, string>(parameters) { ["message"] = message });
-					var response = await _fetcher.Client.PostAsync($"Trace/{_identifier}/{phase}", content, cancellation);
+					var response = await _fetcher.Client.PostAsync($"Trace/{phase}?fingerprint={_fingerprint}", content, cancellation);
 
 					if(response.IsSuccessStatusCode)
-						await Diagnostics.Logging.GetLogging(typeof(WebTracer)).InfoAsync($"Traced the upgrading process with identifier '{_identifier}' and phase '{phase}'.", cancellation);
+						await Diagnostics.Logging.GetLogging(typeof(WebTracer)).InfoAsync($"Traced the upgrading process with fingerprint '{_fingerprint}' and phase '{phase}'.", cancellation);
 					else
-						await Diagnostics.Logging.GetLogging(typeof(WebTracer)).WarnAsync($"Failed to trace the upgrading process with identifier '{_identifier}' and phase '{phase}'. The server responded with status code {response.StatusCode}.", cancellation);
+						await Diagnostics.Logging.GetLogging(typeof(WebTracer)).WarnAsync($"Failed to trace the upgrading process with fingerprint '{_fingerprint}' and phase '{phase}'. The server responded with status code {response.StatusCode}.", cancellation);
 				}
 				catch(Exception ex)
 				{
-					await Diagnostics.Logging.GetLogging(typeof(WebTracer)).ErrorAsync($"Failed to trace the upgrading process with identifier '{_identifier}'.", ex, cancellation);
+					await Diagnostics.Logging.GetLogging(typeof(WebTracer)).ErrorAsync($"Failed to trace the upgrading process with fingerprint '{_fingerprint}'.", ex, cancellation);
 				}
 			}
 		}
