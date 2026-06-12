@@ -74,7 +74,7 @@ public class UpgraderController : ControllerBase
 		return evaluators == null || evaluators.Count == 0 ? this.NoContent() : this.Ok(evaluators);
 	}
 
-	[HttpPost("[action/{phase}]")]
+	[HttpPost("[action]/{phase}")]
 	public async Task TraceAsync(string phase, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(phase))

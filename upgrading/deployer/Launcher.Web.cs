@@ -44,34 +44,51 @@ partial class Launcher
 
 		protected override Process OnLaunch(Deployer.Argument argument)
 		{
-			string command, args;
+			const string IIS_APP = "iis.app";
 
 			if(OperatingSystem.IsWindows())
-			{
-				command = @"%windir%\system32\inetsrv\appcmd";
-				args = $"recycle apppool {argument.AppName}";
-			}
-			else if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
-			{
-				command = "systemctl";
-				args = $"start {GetDaemonName(argument)}";
-			}
-			else
-			{
-				Zongsoft.Diagnostics.Logging.GetLogging().Error($"The {this.Name} launcher is not supported on {Environment.OSVersion} operating system.");
-				return null;
-			}
+				return argument.TryGetValue(IIS_APP, out var apppool) ? LaunchIIS(argument, apppool) : Launch(argument);
 
+			if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
+				return Launch("systemctl", $"start {GetDaemonName(argument)}", argument.AppPath);
+
+			Zongsoft.Diagnostics.Logging.GetLogging().Error($"The {this.Name} launcher is not supported on {Environment.OSVersion} operating system.");
+			return null;
+		}
+
+		private static Process Launch(Deployer.Argument argument)
+		{
+			var info = new ProcessStartInfo(argument.HostPath, argument.HostArgs)
+			{
+				CreateNoWindow = false,
+				UseShellExecute = false,
+				WorkingDirectory = argument.AppPath,
+			};
+
+			return Process.Start(info);
+		}
+
+		private static Process Launch(string command, string args, string workingDirectory)
+		{
 			var info = new ProcessStartInfo(command, args)
 			{
 				CreateNoWindow = true,
 				UseShellExecute = false,
 				RedirectStandardError = true,
 				RedirectStandardOutput = true,
-				WorkingDirectory = argument.AppPath,
+				WorkingDirectory = workingDirectory,
 			};
 
 			return Process.Start(info);
+		}
+
+		private static Process LaunchIIS(Deployer.Argument argument, string apppool)
+		{
+			if(string.IsNullOrWhiteSpace(apppool) || apppool == "." || apppool == "~")
+				apppool = argument.AppName;
+
+			var command = Environment.ExpandEnvironmentVariables(@"%windir%\system32\inetsrv\appcmd.exe");
+			return Launch(command, $"recycle apppool {apppool}", argument.AppPath);
 		}
 	}
 }

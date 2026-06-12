@@ -2,7 +2,7 @@
 
 <options>
 	<option path="/Upgrading">
-		<connectionSettings default="File">
+		<connectionSettings default="Web">
 			<connectionSetting connectionSetting.name="Web"
 			                   value="url=http://127.0.0.1:8069/Upgrading/Upgrader;timeout=30s" />
 

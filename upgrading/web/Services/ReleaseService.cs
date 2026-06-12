@@ -132,7 +132,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 		model.Name = release.Name;
 		model.Kind = release.Kind;
 		model.Tags = release.Tags == null ? null : string.Join(',', release.Tags);
-		model.Edition = string.IsNullOrEmpty(release.Edition) ? null : release.Edition;
+		model.Edition = string.IsNullOrEmpty(release.Edition) ? "_" : release.Edition;
 		model.Version = release.Version;
 		model.Platform = release.Platform;
 		model.Architecture = release.Architecture;
@@ -182,7 +182,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 	protected override void OnValidate(DataServiceMethod method, ISchema schema, IDataDictionary<Models.Release> data, IDataMutateOptions options)
 	{
 		if(data.TryGetValue(nameof(Models.Release.Edition), out string edition) && string.IsNullOrWhiteSpace(edition))
-			data.SetValue(nameof(Models.Release.Edition), (string)null);
+			data.SetValue(nameof(Models.Release.Edition), "_");
 
 		base.OnValidate(method, schema, data, options);
 	}

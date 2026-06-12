@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -78,7 +78,8 @@ partial class Fetcher
 			if(client == null)
 				yield break;
 
-			using var response = await client.GetAsync($"{Application.ApplicationName}/{edition}?{GetParameters(version)}", cancellation);
+			var segment = string.IsNullOrWhiteSpace(edition) ? "_" : Uri.EscapeDataString(edition);
+			using var response = await client.GetAsync($"{Application.ApplicationName}/{segment}?{GetParameters(version)}", cancellation);
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
@@ -102,32 +103,39 @@ partial class Fetcher
 				if(version != null)
 					text.Append($"UpgradingVersion={version.ToString()}&");
 
-				text.Append($"Fingerprint={IO.Hardwares.HardwareProfile.Current?.Identifier}&");
-				if(IO.Hardwares.HardwareProfile.Current.Mainboard.HasUnique(out var identifier))
-					text.Append($"Mainboard={identifier}&");
+				var profile = IO.Hardwares.HardwareProfile.Current;
 
-				foreach(var hardware in IO.Hardwares.HardwareProfile.Current.Processors)
+				if(profile != null)
 				{
-					if(hardware.HasUnique(out var id))
-						text.Append($"Processor={id}&");
-				}
+					if(!string.IsNullOrEmpty(profile.Identifier))
+						text.Append($"Fingerprint={profile.Identifier}&");
 
-				foreach(var hardware in IO.Hardwares.HardwareProfile.Current.Networks)
-				{
-					if(hardware.HasUnique(out var id))
-						text.Append($"Network={id}&");
-				}
+					if(profile.Mainboard != null && profile.Mainboard.HasUnique(out var identifier))
+						text.Append($"Mainboard={identifier}&");
 
-				foreach(var hardware in IO.Hardwares.HardwareProfile.Current.Memories)
-				{
-					if(hardware.HasUnique(out var id))
-						text.Append($"Memory={id}&");
-				}
+					foreach(var hardware in profile.Processors)
+					{
+						if(hardware.HasUnique(out var id))
+							text.Append($"Processor={id}&");
+					}
 
-				foreach(var hardware in IO.Hardwares.HardwareProfile.Current.Storages)
-				{
-					if(hardware.HasUnique(out var id))
-						text.Append($"Storage={id}&");
+					foreach(var hardware in profile.Networks)
+					{
+						if(hardware.HasUnique(out var id))
+							text.Append($"Network={id}&");
+					}
+
+					foreach(var hardware in profile.Memories)
+					{
+						if(hardware.HasUnique(out var id))
+							text.Append($"Memory={id}&");
+					}
+
+					foreach(var hardware in profile.Storages)
+					{
+						if(hardware.HasUnique(out var id))
+							text.Append($"Storage={id}&");
+					}
 				}
 
 				return text.ToString().TrimEnd('&');
