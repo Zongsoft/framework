@@ -63,12 +63,18 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 		(var region, var bucket) = S3Utility.Resolve(path.Segments[0]);
 		var client = this.GetClient(region);
 
+		/*
+		 * 注意：预签名 URL 有效期设为 7 天。
+		 * 若过期时间过长，AWSSDK 可能回退至 Signature V2 算法，
+		 * 导致 RustFS 等兼容分布式文件系统解析失败，引发文件访问异常。
+		 */
+
 		return client.GetPreSignedURL(new GetPreSignedUrlRequest
 		{
 			BucketName = bucket,
 			Verb = HttpVerb.GET,
 			Protocol = Protocol.HTTP,
-			Expires = DateTime.UtcNow.AddMonths(1),
+			Expires = DateTime.UtcNow.AddDays(7),
 			Key = CombinePath(path.Segments.AsSpan()[1..]),
 		});
 	}
