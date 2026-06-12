@@ -166,14 +166,59 @@ public abstract partial class Downloader : IDownloader
 	#region 虚拟方法
 	protected virtual string GetFilePath(string directory, Release release)
 	{
-		var fileName = Path.GetFileNameWithoutExtension(release.Path);
+		var fileName = GetFileName(release.Path);
+		if(string.IsNullOrEmpty(fileName))
+			fileName = release.Name;
 
-		if(string.Equals(release.Name, fileName, StringComparison.OrdinalIgnoreCase))
-			fileName = $"{release.Name}@{release.Version}{Path.GetExtension(release.Path)}";
-		else
-			fileName = Path.GetFileName(release.Path);
+		var name = Path.GetFileNameWithoutExtension(fileName);
+		if(string.Equals(name, release.Name, StringComparison.OrdinalIgnoreCase))
+		{
+			var extension = Path.GetExtension(fileName);
+			fileName = $"{release.Name}@{release.Version}{extension}";
+		}
 
 		return Path.Combine(directory, fileName);
+
+		static string GetFileName(string path)
+		{
+			if(string.IsNullOrWhiteSpace(path))
+				return null;
+
+			path = path.Trim();
+
+			if(Uri.TryCreate(path, UriKind.Absolute, out var uri))
+				path = uri.IsFile ? uri.LocalPath : uri.GetComponents(UriComponents.Path, UriFormat.UriEscaped);
+			else
+				path = TrimQueryAndFragment(path);
+
+			if(string.IsNullOrEmpty(path))
+				return null;
+
+			path = path.TrimEnd('/', '\\');
+			if(path.Length == 0)
+				return null;
+
+			var index = path.LastIndexOfAny(['/', '\\']);
+			var fileName = index >= 0 ? path[(index + 1)..] : path;
+
+			if(string.IsNullOrEmpty(fileName))
+				return null;
+
+			try
+			{
+				return Uri.UnescapeDataString(fileName);
+			}
+			catch(UriFormatException)
+			{
+				return fileName;
+			}
+
+			static string TrimQueryAndFragment(string path)
+			{
+				var index = path.IndexOfAny(['?', '#']);
+				return index >= 0 ? path[..index] : path;
+			}
+		}
 	}
 	#endregion
 

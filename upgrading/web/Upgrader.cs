@@ -146,7 +146,7 @@ public static class Upgrader
 
 		if(!properties.TryGetValue("name", out var name) || string.IsNullOrEmpty(name))
 			return;
-		if(!properties.TryGetValue("version", out var value) || string.IsNullOrEmpty(value) || !Versioning.Version.TryParse(value, out var version))
+		if(!properties.TryGetValue("version", out var value) || string.IsNullOrEmpty(value) || !Versioning.Version.Number.TryParse(value, out var version))
 			return;
 		if(!properties.TryGetValue("platform", out value) || string.IsNullOrEmpty(value) || !Enum.TryParse<Platform>(value, true, out var platform))
 			return;
@@ -154,7 +154,7 @@ public static class Upgrader
 			return;
 
 		var criteria = Condition.Equal(nameof(Models.Release.Name), name) &
-			Condition.Equal(nameof(Models.Release.Version), version) &
+			Condition.Equal(nameof(Models.Release.Version), (ulong)version) &
 			Condition.Equal(nameof(Models.Release.Platform), platform) &
 			Condition.Equal(nameof(Models.Release.Architecture), architecture);
 

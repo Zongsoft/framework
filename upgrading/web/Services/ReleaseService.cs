@@ -79,7 +79,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 		#if NET10_0_OR_GREATER
 		var path = (await this.SelectAsync(Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), nameof(Models.Release.Path), null, cancellation).FirstOrDefaultAsync(cancellation))?.Path;
 		#else
-		var path = this.SelectAsync(Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), nameof(Models.Release.Path), null, cancellation).ToBlockingEnumerable(cancellation).Select(release => release.Path).FirstOrDefault();
+		var path = this.SelectAsync(Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), nameof(Models.Release.Path), null, cancellation).ToBlockingEnumerable(cancellation).FirstOrDefault()?.Path;
 		#endif
 
 		var count = await this.UpdateAsync(new
@@ -90,7 +90,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			Modification = DateTime.Now,
 		}, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation);
 
-		if(count > 0)
+		if(count > 0 && !string.Equals(path, value, StringComparison.OrdinalIgnoreCase))
 			DeleteFile(path);
 
 		return count > 0;
@@ -158,7 +158,11 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			model.Properties = properties;
 		}
 
-		return await this.DataAccess.InsertAsync(model, $"*,{nameof(Models.Release.Executors)}{{*}},{nameof(Models.Release.Properties)}{{*}}", cancellation) > 0 ? model : null;
+		return await this.InsertAsync(
+			model,
+			$"*,{nameof(Models.Release.Executors)}{{*}},{nameof(Models.Release.Properties)}{{*}}",
+			null,
+			cancellation) > 0 ? model : null;
 	}
 	#endregion
 
@@ -200,9 +204,9 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 		var source = this.SelectAsync(criteria, nameof(Models.Release.Path), null, cancellation);
 
 		#if NET10_0_OR_GREATER
-		options.Parameters.SetValue("$DELETED", await source.ToArrayAsync(cancellation));
+		options.Parameters.SetValue("$DELETED", (await source.ToArrayAsync(cancellation)).Select(release => release.Path).ToArray());
 		#else
-		options.Parameters.SetValue("$DELETED", source.ToBlockingEnumerable(cancellation).ToArray());
+		options.Parameters.SetValue("$DELETED", source.ToBlockingEnumerable(cancellation).Select(release => release.Path).ToArray());
 		#endif
 
 		return await base.OnDeleteAsync(criteria, schema, options, cancellation);
