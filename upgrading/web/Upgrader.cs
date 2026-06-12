@@ -156,7 +156,8 @@ public static class Upgrader
 		var criteria = Condition.Equal(nameof(Models.Release.Name), name) &
 			Condition.Equal(nameof(Models.Release.Version), (ulong)version) &
 			Condition.Equal(nameof(Models.Release.Platform), platform) &
-			Condition.Equal(nameof(Models.Release.Architecture), architecture);
+			Condition.Equal(nameof(Models.Release.Architecture), architecture) &
+			Condition.Equal(nameof(Models.Release.Visible), true);
 
 		if(properties.TryGetValue("edition", out value) && !string.IsNullOrEmpty(value) && value != "_")
 			criteria.Add(Condition.Equal(nameof(Models.Release.Edition), value));

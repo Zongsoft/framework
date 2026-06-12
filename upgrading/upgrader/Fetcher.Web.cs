@@ -78,8 +78,7 @@ partial class Fetcher
 			if(client == null)
 				yield break;
 
-			var segment = string.IsNullOrWhiteSpace(edition) ? "_" : Uri.EscapeDataString(edition);
-			using var response = await client.GetAsync($"{Application.ApplicationName}/{segment}?{GetParameters(version)}", cancellation);
+			using var response = await client.GetAsync($"{Application.ApplicationName}/{edition}?{GetParameters(version)}", cancellation);
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
@@ -98,6 +97,7 @@ partial class Fetcher
 				text.Append($"{nameof(Release.Edition)}={Application.ApplicationEdition}&");
 				text.Append($"{nameof(Release.Platform)}={Application.Platform.ToString()}&");
 				text.Append($"{nameof(Release.Architecture)}={Application.Architecture.ToString()}&");
+				text.Append($"{nameof(Environment.MachineName)}={Environment.MachineName}&");
 				text.Append($"CurrentlyVersion={Application.ApplicationVersion.ToString()}&");
 
 				if(version != null)
