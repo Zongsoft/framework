@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -149,7 +149,7 @@ partial class S3FileSystem
 								SourceBucket = srcBucket,
 								SourceKey = obj.Key,
 								DestinationBucket = destBucket,
-								DestinationKey = System.IO.Path.Combine(destPath, System.IO.Path.GetFileName(obj.Key)),
+								DestinationKey = CombinePath(destPath, System.IO.Path.GetFileName(obj.Key)),
 							}, cancellation);
 
 							count += result.HttpStatusCode.IsSucceed() ? 1 : 0;
@@ -172,7 +172,7 @@ partial class S3FileSystem
 								var putResponse = await destClient.PutObjectAsync(new()
 								{
 									BucketName = destBucket,
-									Key = System.IO.Path.Combine(destPath, System.IO.Path.GetFileName(obj.Key)),
+									Key = CombinePath(destPath, System.IO.Path.GetFileName(obj.Key)),
 									InputStream = getResponse.ResponseStream,
 								}, cancellation);
 

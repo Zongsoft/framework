@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Amazon library.
  *
@@ -69,17 +69,41 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 			Verb = HttpVerb.GET,
 			Protocol = Protocol.HTTP,
 			Expires = DateTime.UtcNow.AddMonths(1),
-			Key = System.IO.Path.Combine(path.Segments.AsSpan()[1..].ToArray()),
+			Key = CombinePath(path.Segments.AsSpan()[1..]),
 		});
 	}
+	#endregion
+
+	#region 内部方法
+	internal string GetPath(string region, string bucket, string path) => string.IsNullOrEmpty(region) ?
+		$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}":
+		$"{this.Scheme}:/{bucket}@{region}/{path?.TrimStart('/')}";
 	#endregion
 
 	#region 私有方法
 	private AmazonS3Client GetClient(string region) => S3ClientFactory.GetClient(this.Configuration, region);
 
-	internal string GetPath(string region, string bucket, string path) => string.IsNullOrEmpty(region) ?
-		$"{this.Scheme}:/{bucket}/{path?.TrimStart('/')}":
-		$"{this.Scheme}:/{bucket}@{region}/{path?.TrimStart('/')}";
+	private static string CombinePath(params ReadOnlySpan<string> segments)
+	{
+		if(segments.IsEmpty)
+			return string.Empty;
+
+		var builder = new System.Text.StringBuilder();
+
+		for(int i = 0; i < segments.Length; i++)
+		{
+			var segment = segments[i]?.Replace('\\', '/').Trim('/');
+			if(string.IsNullOrEmpty(segment))
+				continue;
+
+			if(builder.Length > 0)
+				builder.Append('/');
+
+			builder.Append(segment);
+		}
+
+		return builder.ToString();
+	}
 
 	private static string Resolve(ReadOnlySpan<char> text, out string region, out string bucket)
 	{
