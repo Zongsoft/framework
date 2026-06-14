@@ -13,8 +13,7 @@
 
 仓库约束：
 
-- 保持现有文件换行符；新文件使用 CRLF。
-- 代码文件使用 Tab 缩进。
+- 文本文件使用 CRLF 换行符，代码文件使用 Tab 缩进。
 - 如果修改共享 manifest、release、executor、runtime、checksum 或 `.deployment` 契约，同时检查 tool、upgrader、deployer；涉及 Web 包管理器时再检查 web 子项目。
 
 ## 通用目标
@@ -33,6 +32,7 @@
 - 部署成功。
 - 目标程序重启、热更新或重新加载成功。
 - 通过日志、HTTP 响应、命令输出或 marker 观察到新版本。
+- 如果是 Web 通道，则需要检查 Instance、Release、ReleaseTracing 表的数据。
 
 ## 必读资料
 
@@ -74,9 +74,9 @@ pack 时确认：
 
 publish 时确认：
 
-- 使用的 S3 endpoint、bucket、prefix、账号和 upgrader 配置一致。
-- 发布后能在 RustFS/S3 中看到包和元数据。
+- 发布后能在 RustFS/S3 中看到包文件。
 - 旧版本和新版本不会互相覆盖导致元数据异常。
+- 如果是 Web 通道则需要判断 Release 表的数据。
 
 ## Deployer 规则
 
@@ -112,6 +112,7 @@ publish 时确认：
 - 查找宿主日志、upgrader 日志、deployer 日志、Windows 事件日志或 systemd journal。
 - 判断属于环境、配置、权限、路径、服务账号、运行时、打包参数、发布通道还是代码问题。
 - 优先从失败步骤继续，不要重跑无关阶段。
+- 在相关代码中添加临时的日志记录，然后根据日志来定位问题；定位到问题并修复后要记得将添加的临时日志代码删除。
 - 如果三次小修复仍无法推进，整理日志、已尝试方案和下一步建议，再交给用户决策。
 
 ## 报告模板

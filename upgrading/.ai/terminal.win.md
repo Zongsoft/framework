@@ -45,20 +45,18 @@
 - 对 `dotnet-upgrade pack` 的 `--source`、`--output` 等路径参数，优先使用正斜杠或双反斜杠；单反斜杠路径中的 `\t` 等片段可能被命令行解析成转义字符。
 - `dotnet-upgrade pack` 可能在输出错误后仍返回退出码 0；必须同时检查 `.zip` 和 `.manifest` 是否都存在，不能只看退出码。
 - 在线打包运行中的 terminal 时，排除运行时目录和日志目录，使用 `--exclude:".garnet/;logs/;"` 这类目录规则；不要使用 `**/.garnet/**` 这种 globstar 写法。
-- 如果 `dotnet deploy` 不可用，可手工部署最小插件集：`Zongsoft.Upgrading.Upgrader.*` 和 `Zongsoft.Externals.Amazon.*`，并确认 `AWSSDK.Core.dll`、`AWSSDK.S3.dll` 存在。
 - Deployer 在 Windows 下按 Native AOT 单文件发布，最终确认 `.deployer\Zongsoft.Upgrading.Deployer.exe` 存在；未修改 deployer 相关代码或发布属性时可复用已验证产物。
 - `dotnet-upgrade pack --output` 使用目录时带尾斜杠，例如 `--output:"D:\Zongsoft\\"`，避免生成到 `D:\Zongsoft.zip` 这类错误位置。
-- 没有 `aws` / `mc` 时，可用本机 NuGet 缓存中的 AWSSDK 在 PowerShell 中列 RustFS/S3 对象。
 - 全量升级会清理应用根目录，upgrader 自身的成功日志可能被部署阶段删除；需要证明发现/下载/解压时，可在启动观察期间把 upgrader 日志快照复制到 `.artifacts`。
 
 ## 执行清单
 
-1. 检查 Redis 和 RustFS/S3：优先使用 `/Zongsoft/hosting` 中已有 Podman/compose/脚本；验证 endpoint、bucket、账号和发布通道一致。
+1. 检查 Redis 和 数据库：优先使用 `/Zongsoft/hosting` 中已有 Podman/compose/脚本。
 2. 构建并部署 terminal：进入 `/Zongsoft/hosting/terminal`，构建、部署，记录输出目录；部署后重新确认 upgrader 和 `.deployer`，因为 clean/deploy 可能清掉手工放入的升级组件。
 3. 部署 upgrader：复制到 `plugins/zongsoft/upgrader`，确认插件、`.option`、`.plugin` 和依赖完整，启动日志无加载错误。
 4. 部署 deployer：确认 upgrader 配置或源码中的查找路径，再放入 terminal 部署目录下 `.deployer`；Windows 优先复用 `deployer/bin/Release/net10.0/win-x64/publish/Zongsoft.Upgrading.Deployer.exe` 这类已验证 Native AOT 产物。
 5. 启动 terminal：保持运行并记录启动命令、工作目录、环境变量和日志位置。
-6. 第一轮升级：执行全量升级测试，pack 必须使用 `--kind:Fully`，并提升 minor 版本号，例如 `1.0.x` -> `1.1.0`；第一轮开始前先停止 terminal，并删除宿主程序的 `bin` 目录，然后重新构建和部署一个干净基线宿主，再部署 upgrader 和 deployer。加入可观测标记，例如 `Terminal upgrade marker: 1.1.0`，构建、pack、publish，验证 S3 对象存在，观察发现/下载/解压/部署/重启或热更新，确认全量包能完整恢复宿主部署目录。
+6. 第一轮升级：执行全量升级测试，pack 必须使用 `--kind:Fully`，并提升 minor 版本号，例如 `1.0.x` -> `1.1.0`；第一轮开始前先停止 terminal，并删除宿主程序的 `bin` 目录，然后重新构建和部署一个干净基线宿主，再部署 upgrader 和 deployer。加入可观测标记，例如 `Terminal upgrade marker: 1.1.0`，构建、pack、publish，验证安装包对象存在，观察发现/下载/解压/部署/重启或热更新，确认全量包能完整恢复宿主部署目录。
 7. 第二轮升级：把 marker 和包版本递增到 patch 版本，例如 `1.1.0` -> `1.1.1`；构建 `Delta` 增量包，重复发布和观察。
 
 ## 验收重点
