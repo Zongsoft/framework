@@ -67,7 +67,7 @@ public abstract partial class Downloader : IDownloader
 		if(destination.Exists && !release.Checksum.IsEmpty && release.Size == destination.Length)
 		{
 			//如果目标文件与当前发布的校验码一致，则说明该文件已下载过，因此可以跳过重新下载
-			if(await ChecksumAsync(release, destination.OpenRead(), cancellation))
+			if(await ChecksumAsync(release, destination, cancellation))
 				return destination.FullName;
 		}
 
@@ -110,7 +110,7 @@ public abstract partial class Downloader : IDownloader
 			destination.Refresh();
 
 			//如果下载的升级包校验码与包元数据中声明的校验码不一致则删除下载的升级包文件
-			if(destination.Exists && !await ChecksumAsync(release, destination.OpenRead(), cancellation))
+			if(destination.Exists && !await ChecksumAsync(release, destination, cancellation))
 			{
 				//删除已下载的目标文件
 				destination.Delete();
@@ -140,21 +140,13 @@ public abstract partial class Downloader : IDownloader
 		//返回下载成功
 		return destination.FullName;
 
-		static Task<bool> ChecksumAsync(Release release, FileStream stream, CancellationToken cancellation)
+		static ValueTask<bool> ChecksumAsync(Release release, FileInfo file, CancellationToken cancellation)
 		{
 			if(release == null || release.Checksum.IsEmpty)
-				return Task.FromResult(true);
+				return ValueTask.FromResult(true);
 
-			var task = release.Checksum.VerifyAsync(stream, cancellation);
-			if(task.IsCompletedSuccessfully)
-				return Task.FromResult(task.Result);
-
-			return task.AsTask()
-				.ContinueWith((task, state) =>
-				{
-					((Stream)state).Dispose();
-					return task.Result;
-				}, stream, cancellation);
+			using var stream = file.OpenRead();
+			return release.Checksum.VerifyAsync(stream, cancellation);
 		}
 	}
 	#endregion

@@ -78,7 +78,10 @@ partial class Fetcher
 			if(client == null)
 				yield break;
 
-			using var response = await client.GetAsync($"{Application.ApplicationName}/{edition}?{GetParameters(version)}", cancellation);
+			using var request = new HttpRequestMessage(HttpMethod.Get, $"{Application.ApplicationName}/{edition}?{GetParameters(version, IO.Hardwares.HardwareProfile.Current)}");
+			SetProfileHeader(request, IO.Hardwares.HardwareProfile.Current);
+
+			using var response = await client.SendAsync(request, cancellation);
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
@@ -89,7 +92,7 @@ partial class Fetcher
 			await foreach(var release in releases)
 				yield return release;
 
-			static string GetParameters(Version version)
+			static string GetParameters(Version version, IO.Hardwares.HardwareProfile profile)
 			{
 				var text = new System.Text.StringBuilder();
 
@@ -103,44 +106,164 @@ partial class Fetcher
 				if(version != null)
 					text.Append($"UpgradingVersion={version.ToString()}&");
 
-				var profile = IO.Hardwares.HardwareProfile.Current;
-
-				if(profile != null)
-				{
-					if(!string.IsNullOrEmpty(profile.Identifier))
-						text.Append($"Fingerprint={profile.Identifier}&");
-
-					if(profile.Mainboard != null && profile.Mainboard.HasUnique(out var identifier))
-						text.Append($"Mainboard={identifier}&");
-
-					foreach(var hardware in profile.Processors)
-					{
-						if(hardware.HasUnique(out var id))
-							text.Append($"Processor={id}&");
-					}
-
-					foreach(var hardware in profile.Networks)
-					{
-						if(hardware.HasUnique(out var id))
-							text.Append($"Network={id}&");
-					}
-
-					foreach(var hardware in profile.Memories)
-					{
-						if(hardware.HasUnique(out var id))
-							text.Append($"Memory={id}&");
-					}
-
-					foreach(var hardware in profile.Storages)
-					{
-						if(hardware.HasUnique(out var id))
-							text.Append($"Storage={id}&");
-					}
-				}
+				if(!string.IsNullOrEmpty(profile?.Identifier))
+					text.Append($"Fingerprint={profile.Identifier}&");
 
 				return text.ToString().TrimEnd('&');
 			}
 		}
+		#endregion
+
+		#region 私有方法
+		private static void SetProfileHeader(HttpRequestMessage request, IO.Hardwares.HardwareProfile profile)
+		{
+			if(request == null || profile == null)
+				return;
+
+			var text = new System.Text.StringBuilder();
+
+			AppendProfile(text, "Mainboard", GetHardwareText(profile.Mainboard));
+			AppendProfile(text, "Processor", GetHardwareText(profile.Processors, null));
+			AppendProfile(text, "Memory", GetHardwareText(profile.Memories, ["Capacity", "Size"]));
+			AppendProfile(text, "Storage", GetHardwareText(profile.Storages, ["Size", "Capacity"]));
+			AppendProfile(text, "Network", GetNetworkText(profile.Networks));
+
+			if(text.Length > 0)
+				request.Headers.TryAddWithoutValidation("X-Upgrading-Profile", EncodeHeaderValue(text.ToString()));
+
+			static void AppendProfile(System.Text.StringBuilder text, string name, string value)
+			{
+				if(string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(value))
+					return;
+
+				if(text.Length > 0)
+					text.Append(';');
+
+				text.Append(name);
+				text.Append('=');
+				text.Append(value);
+			}
+		}
+
+		private static string GetHardwareText(IEnumerable<IO.Hardwares.IHardware> hardwares, string[] propertyNames)
+		{
+			if(hardwares == null)
+				return null;
+
+			var text = new System.Text.StringBuilder();
+
+			foreach(var hardware in hardwares)
+				Append(text, GetHardwareText(hardware, propertyNames));
+
+			return text.Length > 0 ? text.ToString() : null;
+		}
+
+		private static string GetHardwareText(IO.Hardwares.IHardware hardware, string[] propertyNames = null)
+		{
+			if(hardware == null)
+				return null;
+
+			var text = new System.Text.StringBuilder();
+
+			if(hardware.HasUnique(out var identifier))
+				AppendPart(text, "Id", identifier);
+
+			AppendPart(text, nameof(hardware.Name), hardware.Name);
+			AppendPart(text, nameof(hardware.Model), hardware.Model);
+			AppendPart(text, nameof(hardware.Manufacturer), hardware.Manufacturer);
+
+			if(propertyNames != null)
+			{
+				for(int i = 0; i < propertyNames.Length; i++)
+					AppendPart(text, propertyNames[i], GetPropertyValue(hardware.Properties, propertyNames[i]));
+			}
+
+			return text.Length > 0 ? text.ToString() : null;
+		}
+
+		private static string GetNetworkText(IEnumerable<IO.Hardwares.IHardware> hardwares)
+		{
+			if(hardwares == null)
+				return null;
+
+			var text = new System.Text.StringBuilder();
+
+			foreach(var hardware in hardwares)
+			{
+				if(hardware == null)
+					continue;
+
+				var item = new System.Text.StringBuilder();
+
+				if(hardware.HasUnique(out var identifier))
+					AppendPart(item, "MacAddr", identifier);
+
+				AppendPart(item, nameof(hardware.Name), hardware.Name);
+				AppendPart(item, "IP", GetIPAddresses(hardware.Components));
+
+				Append(text, item.Length > 0 ? item.ToString() : null);
+			}
+
+			return text.Length > 0 ? text.ToString() : null;
+		}
+
+		private static string GetIPAddresses(IEnumerable<IO.Hardwares.HardwareComponent> components)
+		{
+			if(components == null)
+				return null;
+
+			var text = new System.Text.StringBuilder();
+
+			foreach(var component in components)
+			{
+				if(component == null)
+					continue;
+
+				if(string.Equals(component.Type, "network/ip/unicast", StringComparison.OrdinalIgnoreCase) && component.Properties.Contains("Address"))
+					Append(text, Convert.ToString(component.Properties["Address"].Value), ",");
+
+				var children = GetIPAddresses(component.Components);
+				if(!string.IsNullOrEmpty(children))
+					Append(text, children, ",");
+			}
+
+			return text.Length > 0 ? text.ToString() : null;
+		}
+
+		private static string GetPropertyValue(IO.Hardwares.HardwarePropertyCollection properties, string name)
+		{
+			if(properties == null || string.IsNullOrEmpty(name) || !properties.Contains(name))
+				return null;
+
+			return Convert.ToString(properties[name].Value);
+		}
+
+		private static void Append(System.Text.StringBuilder text, string value, string separator = "|")
+		{
+			if(string.IsNullOrWhiteSpace(value))
+				return;
+
+			if(text.Length > 0)
+				text.Append(separator);
+
+			text.Append(value);
+		}
+
+		private static void AppendPart(System.Text.StringBuilder text, string name, string value)
+		{
+			if(string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(value))
+				return;
+
+			if(text.Length > 0)
+				text.Append(',');
+
+			text.Append(name);
+			text.Append(':');
+			text.Append(Sanitize(value));
+		}
+
+		private static string EncodeHeaderValue(string value) => string.IsNullOrEmpty(value) ? null : $"base64:{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(value))}";
+		private static string Sanitize(string value) => value?.Replace('\r', ' ').Replace('\n', ' ').Replace(';', ',').Replace('=', ':').Trim();
 		#endregion
 
 		#region 嵌套子类

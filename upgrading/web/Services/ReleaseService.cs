@@ -100,7 +100,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			if(string.IsNullOrEmpty(path))
 				return null;
 
-			using var stream = await Zongsoft.IO.FileSystem.File.OpenAsync(path, System.IO.FileMode.Open, cancellation);
+			using var stream = await Zongsoft.IO.FileSystem.File.OpenAsync(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
 			var checksum = await Zongsoft.Common.Checksum.ComputeAsync(null, stream, cancellation);
 			return checksum.ToString();
 		}

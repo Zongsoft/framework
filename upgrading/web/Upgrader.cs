@@ -39,6 +39,8 @@ namespace Zongsoft.Upgrading;
 
 public static class Upgrader
 {
+	private const string PROFILE_HEADER = "X-Upgrading-Profile";
+
 	public static async IAsyncEnumerable<Release> GetAsync(string name, string edition, Platform platform, Architecture architecture, IDictionary<string, string> parameters, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
 		const string SCHEMA = $"*, {nameof(Models.Release.Executors)}{{*}}, {nameof(Models.Release.Properties)}{{*}}";
@@ -104,7 +106,7 @@ public static class Upgrader
 		if(string.IsNullOrWhiteSpace(phase) || properties == null || properties.Count == 0)
 			return;
 
-		if(!properties.TryGetValue("Fingerprint", out var fingerprint) || string.IsNullOrEmpty(fingerprint))
+		if(!TryGetValue(properties, "Fingerprint", out var fingerprint))
 			return;
 
 		var instance = await Module.Current.Accessor.SelectAsync<Models.Instance>(
@@ -158,8 +160,11 @@ public static class Upgrader
 		if(properties == null || properties.Count == 0)
 			return null;
 
-		if(!properties.TryGetValue("Fingerprint", out var fingerprint) || string.IsNullOrEmpty(fingerprint))
+		if(!TryGetValue(properties, "Fingerprint", out var fingerprint))
 			return null;
+
+		var profile = GetProfile(properties);
+		var machineName = TryGetValue(properties, nameof(Environment.MachineName), out var value) ? value : null;
 
 		var instance = await Module.Current.Accessor.SelectAsync<Models.Instance>(
 			Condition.Equal(nameof(Models.Instance.InstanceCode), fingerprint),
@@ -173,12 +178,75 @@ public static class Upgrader
 				model.InstanceCode = fingerprint;
 			});
 
-			if(properties.TryGetValue(nameof(Environment.MachineName), out var value) && !string.IsNullOrEmpty(value))
-				instance.Name = value;
+			if(!string.IsNullOrEmpty(machineName))
+				instance.Name = machineName;
+
+			if(!string.IsNullOrEmpty(profile))
+				instance.Profile = profile;
 
 			await Module.Current.Accessor.InsertAsync(instance, DataInsertOptions.IgnoreConstraint(), cancellation);
+		}
+		else
+		{
+			var data = new Dictionary<string, object>();
+
+			if(string.IsNullOrEmpty(instance.Name) || !string.Equals(instance.Name, machineName, StringComparison.Ordinal))
+				data[nameof(Models.Instance.Name)] = machineName;
+
+			if(string.IsNullOrEmpty(instance.Profile) || !string.Equals(instance.Profile, profile, StringComparison.Ordinal))
+				data[nameof(Models.Instance.Profile)] = profile;
+
+			if(data.Count > 0)
+			{
+				data[nameof(Models.Instance.Modification)] = DateTime.Now;
+
+				await Module.Current.Accessor.UpdateAsync<Models.Instance>(
+					data,
+					Condition.Equal(nameof(Models.Instance.InstanceId), instance.InstanceId),
+					cancellation);
+			}
 		}
 
 		return instance;
 	}
+
+	private static string GetProfile(IDictionary<string, string> properties)
+	{
+		if(properties == null || properties.Count == 0)
+			return null;
+
+		return properties.TryGetValue(PROFILE_HEADER, out var value) && !string.IsNullOrWhiteSpace(value) ?
+			Sanitize(DecodeProfile(value)) : null;
+	}
+
+	private static bool TryGetValue(IDictionary<string, string> properties, string name, out string value)
+	{
+		value = null;
+
+		if(properties == null || string.IsNullOrEmpty(name))
+			return false;
+
+		if(properties.TryGetValue(name, out value) && !string.IsNullOrWhiteSpace(value))
+			return true;
+
+		value = null;
+		return false;
+	}
+
+	private static string DecodeProfile(string value)
+	{
+		if(string.IsNullOrWhiteSpace(value) || !value.StartsWith("base64:", StringComparison.OrdinalIgnoreCase))
+			return value;
+
+		try
+		{
+			return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(value["base64:".Length..]));
+		}
+		catch
+		{
+			return value;
+		}
+	}
+
+	private static string Sanitize(string value) => value?.Replace('\r', ' ').Replace('\n', ' ').Trim();
 }
