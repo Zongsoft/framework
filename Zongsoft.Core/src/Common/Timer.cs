@@ -93,7 +93,6 @@ public class Timer : IDisposable
 
 		var timer = Volatile.Read(ref _timer) ?? throw new ObjectDisposedException(nameof(Timer));
 		var source = cancellation.CanBeCanceled ? CancellationTokenSource.CreateLinkedTokenSource(cancellation) : new();
-		var token = source.Token;
 
 		if(Interlocked.CompareExchange(ref _cancellation, source, null) != null)
 		{
@@ -101,7 +100,7 @@ public class Timer : IDisposable
 			return;
 		}
 
-		_ = Task.Factory.StartNew(static context => RunAsync((Context)context), new Context(this, timer, source, token, state), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
+		_ = this.RunAsync(timer, source, state, source.Token);
 	}
 	#endregion
 
@@ -133,7 +132,6 @@ public class Timer : IDisposable
 		if(disposing)
 		{
 			timer.Dispose();
-			cancellation?.Dispose();
 		}
 
 		_tick = null;
@@ -141,32 +139,23 @@ public class Timer : IDisposable
 	#endregion
 
 	#region 私有方法
-	private static async Task RunAsync(Context context)
+	private async Task RunAsync(PeriodicTimer timer, CancellationTokenSource source, object state, CancellationToken cancellation)
 	{
 		try
 		{
-			while(await context.Timer.WaitForNextTickAsync(context.Cancellation))
+			while(await timer.WaitForNextTickAsync(cancellation))
 			{
-				await context.Owner.OnTickAsync(context.State, context.Cancellation);
+				await this.OnTickAsync(state, cancellation);
 			}
 		}
 		catch(OperationCanceledException) { }
-		catch(ObjectDisposedException) when (context.Cancellation.IsCancellationRequested || Volatile.Read(ref context.Owner._timer) == null) { }
+		catch(ObjectDisposedException) when (cancellation.IsCancellationRequested || Volatile.Read(ref _timer) == null) { }
 		catch(Exception ex) { Zongsoft.Diagnostics.Logging.GetLogging<Timer>().Error(ex); }
 		finally
 		{
-			Interlocked.CompareExchange(ref context.Owner._cancellation, null, context.Source);
-			context.Source.Dispose();
+			Interlocked.CompareExchange(ref _cancellation, null, source);
+			source.Dispose();
 		}
-	}
-
-	private sealed class Context(Timer owner, PeriodicTimer timer, CancellationTokenSource source, CancellationToken cancellation, object state)
-	{
-		public readonly Timer Owner = owner;
-		public readonly PeriodicTimer Timer = timer;
-		public readonly CancellationTokenSource Source = source;
-		public readonly CancellationToken Cancellation = cancellation;
-		public readonly object State = state;
 	}
 	#endregion
 }
