@@ -55,7 +55,7 @@ public class Timer : IDisposable
 	{
 		get
 		{
-			var cancellation = _cancellation;
+			var cancellation = Volatile.Read(ref _cancellation);
 			return cancellation != null && !cancellation.IsCancellationRequested;
 		}
 	}
@@ -64,34 +64,44 @@ public class Timer : IDisposable
 	/// <summary>获取或设置当前计时器的定时周期。</summary>
 	public TimeSpan Period
 	{
-		get => _timer.Period;
-		set => _timer.Period = value;
+		get
+		{
+			var timer = Volatile.Read(ref _timer) ?? throw new ObjectDisposedException(nameof(Timer));
+			return timer.Period;
+		}
+		set
+		{
+			var timer = Volatile.Read(ref _timer) ?? throw new ObjectDisposedException(nameof(Timer));
+			timer.Period = value;
+		}
 	}
 	#endif
 	#endregion
 
 	#region 公共方法
-	public void Stop() => _cancellation?.Cancel();
-	public void Start(CancellationToken cancellation = default) => this.Start(null, cancellation);
-	public async void Start(object state, CancellationToken cancellation = default)
+	public void Stop()
 	{
-		if(cancellation.IsCancellationRequested || this.IsRunning)
+		try { Volatile.Read(ref _cancellation)?.Cancel(); }
+		catch(ObjectDisposedException) { }
+	}
+
+	public void Start(CancellationToken cancellation = default) => this.Start(null, cancellation);
+	public void Start(object state, CancellationToken cancellation = default)
+	{
+		if(cancellation.IsCancellationRequested)
 			return;
 
-		_cancellation = new();
+		var timer = Volatile.Read(ref _timer) ?? throw new ObjectDisposedException(nameof(Timer));
+		var source = cancellation.CanBeCanceled ? CancellationTokenSource.CreateLinkedTokenSource(cancellation) : new();
+		var token = source.Token;
 
-		await Task.Factory.StartNew(async state =>
+		if(Interlocked.CompareExchange(ref _cancellation, source, null) != null)
 		{
-			try
-			{
-				while(await _timer.WaitForNextTickAsync(_cancellation.Token))
-				{
-					await this.OnTickAsync(state, _cancellation.Token);
-				}
-			}
-			catch(OperationCanceledException) { }
-			catch(Exception ex) { Zongsoft.Diagnostics.Logging.GetLogging<Timer>().Error(ex); }
-		}, state, cancellation, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+			source.Dispose();
+			return;
+		}
+
+		_ = Task.Factory.StartNew(static context => RunAsync((Context)context), new Context(this, timer, source, token, state), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
 	}
 	#endregion
 
@@ -112,16 +122,51 @@ public class Timer : IDisposable
 		if(timer == null)
 			return;
 
-		_cancellation?.Cancel();
+		var cancellation = Interlocked.Exchange(ref _cancellation, null);
+
+		try
+		{
+			cancellation?.Cancel();
+		}
+		catch(ObjectDisposedException) { }
 
 		if(disposing)
 		{
 			timer.Dispose();
-			_cancellation?.Dispose();
+			cancellation?.Dispose();
 		}
 
 		_tick = null;
-		_cancellation = null;
+	}
+	#endregion
+
+	#region 私有方法
+	private static async Task RunAsync(Context context)
+	{
+		try
+		{
+			while(await context.Timer.WaitForNextTickAsync(context.Cancellation))
+			{
+				await context.Owner.OnTickAsync(context.State, context.Cancellation);
+			}
+		}
+		catch(OperationCanceledException) { }
+		catch(ObjectDisposedException) when (context.Cancellation.IsCancellationRequested || Volatile.Read(ref context.Owner._timer) == null) { }
+		catch(Exception ex) { Zongsoft.Diagnostics.Logging.GetLogging<Timer>().Error(ex); }
+		finally
+		{
+			Interlocked.CompareExchange(ref context.Owner._cancellation, null, context.Source);
+			context.Source.Dispose();
+		}
+	}
+
+	private sealed class Context(Timer owner, PeriodicTimer timer, CancellationTokenSource source, CancellationToken cancellation, object state)
+	{
+		public readonly Timer Owner = owner;
+		public readonly PeriodicTimer Timer = timer;
+		public readonly CancellationTokenSource Source = source;
+		public readonly CancellationToken Cancellation = cancellation;
+		public readonly object State = state;
 	}
 	#endregion
 }
