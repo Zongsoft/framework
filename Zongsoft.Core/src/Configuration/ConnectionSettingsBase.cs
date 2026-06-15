@@ -306,6 +306,7 @@ public abstract class ConnectionSettingsBase<TDriver, TOptions> : ConnectionSett
 
 	#region 虚拟方法
 	protected virtual TOptions CreateOptions() => Activator.CreateInstance<TOptions>();
+	protected virtual void Populate(ref TOptions options, ConnectionSettingDescriptor descriptor, PropertyInfo property, object value) => Reflection.Reflector.TrySetValue(property, ref options, value);
 	protected virtual void Populate(TOptions options)
 	{
 		if(options is null)
@@ -323,7 +324,7 @@ public abstract class ConnectionSettingsBase<TDriver, TOptions> : ConnectionSett
 				if(descriptor.Populator != null)
 					value = Common.Convert.ConvertValue(value, _properties[i].PropertyType, () => descriptor.Populator);
 
-				Reflection.Reflector.TrySetValue(_properties[i], ref options, value);
+				this.Populate(ref options, descriptor, _properties[i], value);
 			}
 		}
 	}
