@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -50,6 +51,99 @@ public class HardwareProfileTest
 		Assert.Equal("root", component.Name);
 		Assert.Single(component.Components);
 		Assert.Same(child, component.Components[0]);
+	}
+
+	[Fact]
+	public void TestJson()
+	{
+		var cache = new HardwareComponent(
+			"cache",
+			"l3",
+			"cache",
+			"L3 cache",
+			[
+				new HardwareProperty("size", 32, "MB"),
+			]);
+
+		var processor = Hardware.Unique(
+			"cpu-0",
+			"processor",
+			"cpu0",
+			"processor",
+			"Ryzen 9",
+			"9000",
+			"processor/cpu",
+			"AMD",
+			"Main processor",
+			properties:
+			[
+				new HardwareProperty("cores", 16),
+				new HardwareProperty("enabled", true),
+				new HardwareProperty("note", "primary"),
+			],
+			components: [cache]);
+
+		var network = new Hardware("network", "eth0", "adapter", "network/ethernet");
+		var profile = new HardwareProfile([processor, network]);
+		var json = JsonSerializer.Serialize(profile);
+
+		using(var document = JsonDocument.Parse(json))
+		{
+			Assert.Equal(JsonValueKind.Array, document.RootElement.ValueKind);
+			Assert.Equal("cpu-0", document.RootElement[0].GetProperty("Identifier").GetString());
+			Assert.Equal("processor", document.RootElement[0].GetProperty("Name").GetString());
+		}
+
+		var result = JsonSerializer.Deserialize<HardwareProfile>(json);
+
+		Assert.NotNull(result);
+		Assert.Equal(2, result.Count);
+		Assert.Single(result.Processors);
+		Assert.Single(result.Networks);
+
+		var hardware = result["cpu-0"];
+		Assert.NotNull(hardware);
+		Assert.True(hardware.HasUnique(out var identifier));
+		Assert.Equal("cpu-0", identifier);
+		Assert.Equal("AMD", hardware.Manufacturer);
+		Assert.Equal(16, hardware.Properties["cores"].Value);
+		Assert.True((bool)hardware.Properties["enabled"].Value);
+		Assert.Equal("primary", hardware.Properties["note"].Value);
+
+		var component = Assert.Single(hardware.Components);
+		Assert.Equal("cache", component.Name);
+		Assert.Equal(32, component.Properties["size"].Value);
+
+		var properties = JsonSerializer.Deserialize<HardwarePropertyCollection>(JsonSerializer.Serialize(hardware.Properties));
+		Assert.NotNull(properties);
+		Assert.Equal(16, properties["cores"].Value);
+
+		var components = JsonSerializer.Deserialize<HardwareComponentCollection>(JsonSerializer.Serialize(hardware.Components));
+		Assert.NotNull(components);
+		Assert.Equal("cache", Assert.Single(components).Name);
+	}
+
+	[Fact]
+	public void TestJsonWithNamingPolicy()
+	{
+		var options = new JsonSerializerOptions()
+		{
+			PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+		};
+
+		var hardware = Hardware.Unique("disk-0", "disk", "disk0", "disk", "storage/disk");
+		var json = JsonSerializer.Serialize<IHardware>(hardware, options);
+
+		Assert.Contains("\"identifier\"", json);
+		Assert.Contains("\"category\"", json);
+
+		var result = JsonSerializer.Deserialize<IHardware>(json, options);
+
+		Assert.NotNull(result);
+		Assert.True(result.HasUnique(out var identifier));
+		Assert.Equal("disk-0", identifier);
+		Assert.Equal("disk0", result.Code);
+		Assert.Equal("storage/disk", result.Category);
 	}
 
 	[Fact]

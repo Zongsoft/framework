@@ -29,13 +29,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Zongsoft.IO.Hardwares;
 
 /// <summary>
 /// 表示硬件组件。
 /// </summary>
-public class HardwareComponent
+public partial class HardwareComponent
 {
 	#region 构造函数
 	/// <summary>初始化 <see cref="HardwareComponent"/> 类的新实例。</summary>
@@ -99,4 +101,90 @@ public class HardwareComponent
 	/// <returns>返回当前组件的文本表示。</returns>
 	public override string ToString() => string.IsNullOrEmpty(this.Code) ? this.Name : $"{this.Name}({this.Code})";
 	#endregion
+}
+
+[JsonConverter(typeof(JsonConverter))]
+partial class HardwareComponent
+{
+	public sealed class JsonConverter : JsonConverter<HardwareComponent>
+	{
+		public override HardwareComponent Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
+		{
+			if(reader.TokenType == JsonTokenType.Null)
+				return null;
+
+			if(reader.TokenType != JsonTokenType.StartObject)
+				throw new JsonException();
+
+			string name = null;
+			string code = null;
+			string typeName = null;
+			string description = null;
+			HardwarePropertyCollection properties = null;
+			HardwareComponentCollection components = null;
+
+			while(reader.Read())
+			{
+				if(reader.TokenType == JsonTokenType.EndObject)
+					break;
+
+				if(reader.TokenType != JsonTokenType.PropertyName)
+					throw new JsonException();
+
+				var property = reader.GetString();
+
+				if(!reader.Read())
+					throw new JsonException();
+
+				if(string.Equals(property, nameof(HardwareComponent.Name), StringComparison.OrdinalIgnoreCase))
+					name = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+				else if(string.Equals(property, nameof(HardwareComponent.Code), StringComparison.OrdinalIgnoreCase))
+					code = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+				else if(string.Equals(property, nameof(HardwareComponent.Type), StringComparison.OrdinalIgnoreCase))
+					typeName = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+				else if(string.Equals(property, nameof(HardwareComponent.Description), StringComparison.OrdinalIgnoreCase))
+					description = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+				else if(string.Equals(property, nameof(HardwareComponent.Properties), StringComparison.OrdinalIgnoreCase))
+					properties = JsonSerializer.Deserialize<HardwarePropertyCollection>(ref reader, options);
+				else if(string.Equals(property, nameof(HardwareComponent.Components), StringComparison.OrdinalIgnoreCase))
+					components = JsonSerializer.Deserialize<HardwareComponentCollection>(ref reader, options);
+				else
+					reader.Skip();
+			}
+
+			if(string.IsNullOrEmpty(name))
+				throw new JsonException($"The '{nameof(HardwareComponent.Name)}' property is required.");
+
+			return new HardwareComponent(name, code, typeName, description, properties, components);
+		}
+
+		public override void Write(Utf8JsonWriter writer, HardwareComponent value, JsonSerializerOptions options)
+		{
+			if(value == null)
+			{
+				writer.WriteNullValue();
+				return;
+			}
+
+			writer.WriteStartObject();
+			writer.WriteString(HardwareUtility.GetName(options, nameof(HardwareComponent.Name)), value.Name);
+			writer.WriteString(HardwareUtility.GetName(options, nameof(HardwareComponent.Code)), value.Code);
+			writer.WriteString(HardwareUtility.GetName(options, nameof(HardwareComponent.Type)), value.Type);
+			writer.WriteString(HardwareUtility.GetName(options, nameof(HardwareComponent.Description)), value.Description);
+
+			if(value.Properties != null && value.Properties.Count > 0)
+			{
+				writer.WritePropertyName(HardwareUtility.GetName(options, nameof(HardwareComponent.Properties)));
+				JsonSerializer.Serialize(writer, value.Properties, options);
+			}
+
+			if(value.Components != null && value.Components.Count > 0)
+			{
+				writer.WritePropertyName(HardwareUtility.GetName(options, nameof(HardwareComponent.Components)));
+				JsonSerializer.Serialize(writer, value.Components, options);
+			}
+
+			writer.WriteEndObject();
+		}
+	}
 }

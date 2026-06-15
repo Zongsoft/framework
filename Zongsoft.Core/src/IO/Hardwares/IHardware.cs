@@ -32,6 +32,7 @@ namespace Zongsoft.IO.Hardwares;
 /// <summary>
 /// 表示硬件设备。
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Hardware.JsonConverter))]
 public interface IHardware
 {
 	/// <summary>获取标识代码。</summary>

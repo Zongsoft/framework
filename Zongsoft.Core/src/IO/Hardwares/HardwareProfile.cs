@@ -33,6 +33,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -41,7 +43,7 @@ namespace Zongsoft.IO.Hardwares;
 /// <summary>
 /// 表示当前机器的硬件配置档案。
 /// </summary>
-public class HardwareProfile : IReadOnlyCollection<IHardware>
+public partial class HardwareProfile : IReadOnlyCollection<IHardware>
 {
 	#region 常量定义
 	private const char CATEGORY_SEPARATOR = '/';
@@ -311,4 +313,86 @@ public class HardwareProfile : IReadOnlyCollection<IHardware>
 			yield return _hardwares[i];
 	}
 	#endregion
+}
+
+[JsonConverter(typeof(JsonConverter))]
+partial class HardwareProfile
+{
+	private sealed class JsonConverter : JsonConverter<HardwareProfile>
+	{
+		public override HardwareProfile Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
+		{
+			if(reader.TokenType == JsonTokenType.Null)
+				return null;
+
+			if(reader.TokenType == JsonTokenType.StartArray)
+				return new HardwareProfile(ReadHardwares(ref reader, options));
+
+			if(reader.TokenType != JsonTokenType.StartObject)
+				throw new JsonException();
+
+			var hardwares = new List<IHardware>();
+
+			while(reader.Read())
+			{
+				if(reader.TokenType == JsonTokenType.EndObject)
+					break;
+
+				if(reader.TokenType != JsonTokenType.PropertyName)
+					throw new JsonException();
+
+				var name = reader.GetString();
+
+				if(!reader.Read())
+					throw new JsonException();
+
+				if(string.Equals(name, "Hardwares", StringComparison.OrdinalIgnoreCase) || string.Equals(name, "Items", StringComparison.OrdinalIgnoreCase))
+					hardwares = ReadHardwares(ref reader, options);
+				else
+					reader.Skip();
+			}
+
+			return new HardwareProfile(hardwares);
+
+			static List<IHardware> ReadHardwares(ref Utf8JsonReader reader, JsonSerializerOptions options)
+			{
+				if(reader.TokenType == JsonTokenType.Null)
+					return [];
+
+				if(reader.TokenType != JsonTokenType.StartArray)
+					throw new JsonException();
+
+				var hardwares = new List<IHardware>();
+
+				while(reader.Read())
+				{
+					if(reader.TokenType == JsonTokenType.EndArray)
+						break;
+
+					var hardware = JsonSerializer.Deserialize<IHardware>(ref reader, options);
+
+					if(hardware != null)
+						hardwares.Add(hardware);
+				}
+
+				return hardwares;
+			}
+		}
+
+		public override void Write(Utf8JsonWriter writer, HardwareProfile value, JsonSerializerOptions options)
+		{
+			if(value == null)
+			{
+				writer.WriteNullValue();
+				return;
+			}
+
+			writer.WriteStartArray();
+
+			foreach(var hardware in value)
+				JsonSerializer.Serialize<IHardware>(writer, hardware, options);
+
+			writer.WriteEndArray();
+		}
+	}
 }

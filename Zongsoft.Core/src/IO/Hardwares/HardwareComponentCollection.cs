@@ -36,7 +36,7 @@ namespace Zongsoft.IO.Hardwares;
 /// <summary>
 /// 表示硬件组件集。
 /// </summary>
-public class HardwareComponentCollection : IReadOnlyCollection<HardwareComponent>
+public class HardwareComponentCollection : ICollection<HardwareComponent>, IReadOnlyCollection<HardwareComponent>
 {
 	#region 成员字段
 	private readonly List<HardwareComponent> _components;
@@ -93,6 +93,10 @@ public class HardwareComponentCollection : IReadOnlyCollection<HardwareComponent
 	/// <param name="array">目标数组。</param>
 	/// <param name="index">目标数组中的起始索引。</param>
 	public void CopyTo(HardwareComponent[] array, int index) => _components.CopyTo(array, index);
+	#endregion
+
+	#region 显式实现
+	bool ICollection<HardwareComponent>.IsReadOnly => false;
 	#endregion
 
 	#region 枚举遍历

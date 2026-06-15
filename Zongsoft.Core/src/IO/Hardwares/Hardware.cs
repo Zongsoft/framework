@@ -29,13 +29,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Zongsoft.IO.Hardwares;
 
 /// <summary>
 /// 表示一个通用的硬件设备。
 /// </summary>
-public class Hardware : IHardware
+public partial class Hardware : IHardware
 {
 	#region 构造函数
 	/// <summary>初始化 <see cref="Hardware"/> 类的新实例。</summary>
@@ -154,7 +156,10 @@ public class Hardware : IHardware
 	public string Manufacturer { get; init; }
 	public string Description { get; init; }
 	public IHardwareDriver Driver { get; init; }
+
+	[JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
 	public HardwarePropertyCollection Properties { get; }
+	[JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
 	public HardwareComponentCollection Components { get; }
 	#endregion
 
@@ -268,4 +273,129 @@ public class Hardware : IHardware
 		}
 	}
 	#endregion
+}
+
+[JsonConverter(typeof(JsonConverter))]
+partial class Hardware
+{
+	internal sealed class JsonConverter : JsonConverterFactory
+	{
+		public override bool CanConvert(Type type) => type == typeof(IHardware) || type == typeof(Hardware);
+
+		public override System.Text.Json.Serialization.JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => type == typeof(Hardware) ?
+			Converter<Hardware>.Default :
+			Converter<IHardware>.Default;
+
+		private sealed class Converter<T> : JsonConverter<T> where T : class, IHardware
+		{
+			const string Identifier = nameof(Identifier);
+			public static readonly Converter<T> Default = new();
+
+			public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
+			{
+				if(reader.TokenType == JsonTokenType.Null)
+					return null;
+
+				if(reader.TokenType != JsonTokenType.StartObject)
+					throw new JsonException();
+
+				string identifier = null;
+				string name = null;
+				string code = null;
+				string typeName = null;
+				string model = null;
+				string serie = null;
+				string category = null;
+				string manufacturer = null;
+				string description = null;
+				HardwarePropertyCollection properties = null;
+				HardwareComponentCollection components = null;
+
+				while(reader.Read())
+				{
+					if(reader.TokenType == JsonTokenType.EndObject)
+						break;
+
+					if(reader.TokenType != JsonTokenType.PropertyName)
+						throw new JsonException();
+
+					var property = reader.GetString();
+
+					if(!reader.Read())
+						throw new JsonException();
+
+					if(string.Equals(property, Identifier, StringComparison.OrdinalIgnoreCase))
+						identifier = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+					else if(string.Equals(property, nameof(IHardware.Name), StringComparison.OrdinalIgnoreCase))
+						name = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+					else if(string.Equals(property, nameof(IHardware.Code), StringComparison.OrdinalIgnoreCase))
+						code = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+					else if(string.Equals(property, nameof(IHardware.Type), StringComparison.OrdinalIgnoreCase))
+						typeName = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+					else if(string.Equals(property, nameof(IHardware.Model), StringComparison.OrdinalIgnoreCase))
+						model = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+					else if(string.Equals(property, nameof(IHardware.Serie), StringComparison.OrdinalIgnoreCase))
+						serie = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+					else if(string.Equals(property, nameof(IHardware.Category), StringComparison.OrdinalIgnoreCase))
+						category = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+					else if(string.Equals(property, nameof(IHardware.Manufacturer), StringComparison.OrdinalIgnoreCase))
+						manufacturer = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+					else if(string.Equals(property, nameof(IHardware.Description), StringComparison.OrdinalIgnoreCase))
+						description = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
+					else if(string.Equals(property, nameof(IHardware.Properties), StringComparison.OrdinalIgnoreCase))
+						properties = JsonSerializer.Deserialize<HardwarePropertyCollection>(ref reader, options);
+					else if(string.Equals(property, nameof(IHardware.Components), StringComparison.OrdinalIgnoreCase))
+						components = JsonSerializer.Deserialize<HardwareComponentCollection>(ref reader, options);
+					else
+						reader.Skip();
+				}
+
+				if(string.IsNullOrEmpty(name))
+					throw new JsonException($"The '{nameof(IHardware.Name)}' property is required.");
+
+				var hardware = string.IsNullOrWhiteSpace(identifier) ?
+					new Hardware(name, code, typeName, model, serie, category, manufacturer, description, null, properties, components) :
+					Hardware.Unique(identifier, name, code, typeName, model, serie, category, manufacturer, description, null, properties, components);
+
+				return (T)(object)hardware;
+			}
+
+			public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+			{
+				if(value == null)
+				{
+					writer.WriteNullValue();
+					return;
+				}
+
+				writer.WriteStartObject();
+
+				if(value.HasUnique(out var identifier))
+					writer.WriteString(HardwareUtility.GetName(options, Identifier), identifier);
+
+				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Name)), value.Name);
+				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Code)), value.Code);
+				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Type)), value.Type);
+				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Model)), value.Model);
+				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Serie)), value.Serie);
+				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Category)), value.Category);
+				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Manufacturer)), value.Manufacturer);
+				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Description)), value.Description);
+
+				if(value.Properties != null && value.Properties.Count > 0)
+				{
+					writer.WritePropertyName(HardwareUtility.GetName(options, nameof(IHardware.Properties)));
+					JsonSerializer.Serialize(writer, value.Properties, options);
+				}
+
+				if(value.Components != null && value.Components.Count > 0)
+				{
+					writer.WritePropertyName(HardwareUtility.GetName(options, nameof(IHardware.Components)));
+					JsonSerializer.Serialize(writer, value.Components, options);
+				}
+
+				writer.WriteEndObject();
+			}
+		}
+	}
 }
