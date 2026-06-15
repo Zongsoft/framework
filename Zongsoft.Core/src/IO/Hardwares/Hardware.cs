@@ -288,7 +288,7 @@ partial class Hardware
 
 		private sealed class Converter<T> : JsonConverter<T> where T : class, IHardware
 		{
-			const string Identifier = nameof(Identifier);
+			const string IDENTIFIER_PROPERTY = "$UniqueIdentifier";
 			public static readonly Converter<T> Default = new();
 
 			public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
@@ -324,7 +324,7 @@ partial class Hardware
 					if(!reader.Read())
 						throw new JsonException();
 
-					if(string.Equals(property, Identifier, StringComparison.OrdinalIgnoreCase))
+					if(string.Equals(property, IDENTIFIER_PROPERTY, StringComparison.OrdinalIgnoreCase))
 						identifier = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
 					else if(string.Equals(property, nameof(IHardware.Name), StringComparison.OrdinalIgnoreCase))
 						name = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
@@ -371,7 +371,7 @@ partial class Hardware
 				writer.WriteStartObject();
 
 				if(value.HasUnique(out var identifier))
-					writer.WriteString(HardwareUtility.GetName(options, Identifier), identifier);
+					writer.WriteString(HardwareUtility.GetName(options, IDENTIFIER_PROPERTY), identifier);
 
 				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Name)), value.Name);
 				writer.WriteString(HardwareUtility.GetName(options, nameof(IHardware.Code)), value.Code);
