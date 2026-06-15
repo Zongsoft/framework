@@ -90,7 +90,7 @@ public class HardwareProfileTest
 		using(var document = JsonDocument.Parse(json))
 		{
 			Assert.Equal(JsonValueKind.Array, document.RootElement.ValueKind);
-			Assert.Equal("cpu-0", document.RootElement[0].GetProperty("Identifier").GetString());
+			Assert.Equal("cpu-0", document.RootElement[0].GetProperty("$UniqueIdentifier").GetString());
 			Assert.Equal("processor", document.RootElement[0].GetProperty("Name").GetString());
 		}
 
@@ -134,7 +134,7 @@ public class HardwareProfileTest
 		var hardware = Hardware.Unique("disk-0", "disk", "disk0", "disk", "storage/disk");
 		var json = JsonSerializer.Serialize<IHardware>(hardware, options);
 
-		Assert.Contains("\"identifier\"", json);
+		Assert.Contains("\"$UniqueIdentifier\"", json);
 		Assert.Contains("\"category\"", json);
 
 		var result = JsonSerializer.Deserialize<IHardware>(json, options);
