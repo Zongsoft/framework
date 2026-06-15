@@ -32,11 +32,11 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-public interface ISettings : IReadOnlyCollection<KeyValuePair<string, string>>, IEquatable<ISettings>
+public interface ISettings : IReadOnlyDictionary<string, string>, IEquatable<ISettings>
 {
 	string Name { get; }
 	string Value { get; set; }
 	bool IsEmpty { get; }
 	bool HasValue { get; }
-	string this[string key] { get; set; }
+	new string this[string key] { get; set; }
 }

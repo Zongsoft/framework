@@ -40,7 +40,7 @@ namespace Zongsoft.Configuration;
 /// <example>
 /// key1=value1;key2=;key3='contains whitespaces or other escape characters(e.g. :=;"\t\r\n\').'
 /// </example>
-public partial class Settings : ISettings, IEquatable<Settings>
+public partial class Settings : ISettings, IReadOnlyDictionary<string, string>, IEquatable<Settings>
 {
 	#region 成员字段
 	private string _value;
@@ -116,8 +116,19 @@ public partial class Settings : ISettings, IEquatable<Settings>
 	}
 	#endregion
 
+	#region 显式实现
+	IEnumerable<string> IReadOnlyDictionary<string, string>.Keys => _entries.Keys;
+	IEnumerable<string> IReadOnlyDictionary<string, string>.Values => _entries.Values;
+	#endregion
+
 	#region 保护属性
 	protected IDictionary<string, string> Entries => _entries;
+	#endregion
+
+	#region 公共方法
+	public bool Contains(string key) => key != null && _entries.ContainsKey(key);
+	public bool ContainsKey(string key) => key != null && _entries.ContainsKey(key);
+	public bool TryGetValue(string key, out string value) => _entries.TryGetValue(key, out value);
 	#endregion
 
 	#region 虚拟方法
