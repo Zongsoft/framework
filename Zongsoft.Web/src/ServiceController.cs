@@ -108,7 +108,7 @@ public class ServiceController<TModel, TService> : ServiceControllerBase<TModel,
 
 			if(parts != null && parts.Any())
 			{
-				using(var transaction = new Zongsoft.Transactions.Transaction())
+				using(var transaction = new Transaction())
 				{
 					foreach(var part in parts)
 						count += await this.OnDeleteAsync(part, null, cancellation);
@@ -292,7 +292,7 @@ public class SubserviceController<TModel, TService> : ServiceControllerBase<TMod
 
 			if(parts != null && parts.Any())
 			{
-				using(var transaction = new Zongsoft.Transactions.Transaction())
+				using(var transaction = new Transaction())
 				{
 					foreach(var part in parts)
 						count += await this.OnDeleteAsync(part, this.GetParameters(), cancellation);

@@ -119,7 +119,7 @@ public class StateMachine : IStateMachine
 
 		var frames = _stack.Reverse().ToArray();
 
-		using(var transaction = new Transactions.Transaction())
+		using(var transaction = new Data.Transaction())
 		{
 			for(int i = 0; i < frames.Length; i++)
 			{

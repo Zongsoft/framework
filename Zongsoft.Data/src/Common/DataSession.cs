@@ -63,11 +63,11 @@ public class DataSession : IDisposable, IAsyncDisposable
 	private readonly IDataSource _source;
 	private volatile DbConnection _connection;
 	private volatile DbTransaction _transaction;
-	private readonly Transactions.Transaction _ambient;
+	private readonly Transaction _ambient;
 	#endregion
 
 	#region 构造函数
-	public DataSession(IDataSource source, Zongsoft.Transactions.Transaction ambient = null)
+	public DataSession(IDataSource source, Transaction ambient = null)
 	{
 		_source = source ?? throw new ArgumentNullException(nameof(source));
 		_ambient = ambient;
@@ -489,30 +489,17 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private IsolationLevel GetIsolationLevel()
-	{
-		if(_ambient == null)
-			return IsolationLevel.Unspecified;
-
-		return _ambient.IsolationLevel switch
-		{
-			Transactions.IsolationLevel.ReadCommitted => IsolationLevel.ReadCommitted,
-			Transactions.IsolationLevel.ReadUncommitted => IsolationLevel.ReadUncommitted,
-			Transactions.IsolationLevel.RepeatableRead => IsolationLevel.RepeatableRead,
-			Transactions.IsolationLevel.Serializable => IsolationLevel.Serializable,
-			_ => IsolationLevel.Unspecified,
-		};
-	}
+	private IsolationLevel GetIsolationLevel() => _ambient?.IsolationLevel ?? IsolationLevel.Unspecified;
 	#endregion
 
 	#region 嵌套子类
-	private class Enlistment(DataSession session) : Zongsoft.Transactions.IEnlistment
+	private class Enlistment(DataSession session) : Transactions.IEnlistment
 	{
 		private readonly DataSession _session = session;
 
-		public void OnEnlist(Zongsoft.Transactions.EnlistmentContext context)
+		public void OnEnlist(Transactions.EnlistmentContext context)
 		{
-			if(context.Phase == Zongsoft.Transactions.EnlistmentPhase.Prepare)
+			if(context.Phase == Transactions.EnlistmentPhase.Prepare)
 				return;
 
 			bool? commit = null;

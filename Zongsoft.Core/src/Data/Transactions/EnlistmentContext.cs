@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Transactions;
+namespace Zongsoft.Data.Transactions;
 
 public class EnlistmentContext
 {
@@ -54,29 +54,5 @@ public class EnlistmentContext
 	public EnlistmentPhase Phase => _phase;
 	/// <summary>获取当前的事务对象。</summary>
 	public Transaction Transaction => _transaction;
-	#endregion
-
-	#region 公共方法
-	/// <summary>将当前事务更改为跟随父事务。</summary>
-	/// <returns>如果执行成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	public bool Follow()
-	{
-		var parent = _transaction.Parent;
-
-		if(parent == null)
-			return false;
-
-		switch(this.Phase)
-		{
-			case EnlistmentPhase.Abort:
-				parent.Operation = Transaction.OPERATION_ABORT;
-				break;
-			case EnlistmentPhase.Rollback:
-				parent.Operation = Transaction.OPERATION_ROLLBACK;
-				break;
-		}
-
-		return true;
-	}
 	#endregion
 }

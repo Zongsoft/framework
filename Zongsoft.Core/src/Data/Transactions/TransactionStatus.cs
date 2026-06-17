@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,15 +29,22 @@
 
 using System;
 
-namespace Zongsoft.Transactions;
+namespace Zongsoft.Data.Transactions;
 
 /// <summary>
-/// 表示事务的传播行为(范围)的枚举。
+/// 表示事务状态的枚举。
 /// </summary>
-public enum TransactionBehavior
+public enum TransactionStatus
 {
-	Followed,
-	Required,
-	RequiresNew,
-	Suppress,
+	/// <summary>事务活动中。</summary>
+	Active,
+
+	/// <summary>事务已回滚。</summary>
+	Aborted,
+
+	/// <summary>事务已提交。</summary>
+	Committed,
+
+	/// <summary>事务的状态未知。</summary>
+	Undetermined
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,7 +30,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace Zongsoft.Transactions;
+namespace Zongsoft.Data.Transactions;
 
 public class TransactionInformation
 {
@@ -55,9 +55,6 @@ public class TransactionInformation
 
 	/// <summary>获取当前事务对象的父事务，如果当前事务是根事务则返回空(<c>null</c>)。</summary>
 	public Transaction Parent => this.Transaction.Parent;
-
-	/// <summary>获取当前事务的行为特性。</summary>
-	public TransactionBehavior Behavior => this.Transaction.Behavior;
 
 	/// <summary>获取当前事务的状态。</summary>
 	public TransactionStatus Status => this.Transaction.Status;

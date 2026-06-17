@@ -296,7 +296,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		var total = 0;
 
 		//创建事务
-		using var transaction = new Zongsoft.Transactions.Transaction();
+		using var transaction = new Transaction();
 
 		foreach(var identifier in identifiers)
 		{

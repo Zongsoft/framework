@@ -349,7 +349,7 @@ internal static class DataAccessContextUtility
 	#region 公共方法
 	public static DataSession GetSession(Func<IDataSource> sourceFactory)
 	{
-		var ambient = Zongsoft.Transactions.Transaction.Current;
+		var ambient = Transaction.Current;
 
 		if(ambient == null || ambient.IsCompleted)
 			return new DataSession(sourceFactory());

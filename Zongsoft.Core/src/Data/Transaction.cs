@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,17 +28,20 @@
  */
 
 using System;
+using System.Data;
 using System.Threading;
 using System.Collections.Generic;
 
-namespace Zongsoft.Transactions;
+using Zongsoft.Data.Transactions;
+
+namespace Zongsoft.Data;
 
 public class Transaction : IDisposable, IEquatable<Transaction>
 {
 	#region 常量定义
-	internal const int OPERATION_NONE = 0;
-	internal const int OPERATION_ROLLBACK = 1;
-	internal const int OPERATION_ABORT = 2;
+	private const int OPERATION_NONE = 0;
+	private const int OPERATION_ROLLBACK = 1;
+	private const int OPERATION_ABORT = 2;
 	#endregion
 
 	#region 静态字段
@@ -53,41 +56,23 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	#region 成员字段
 	private volatile int _isCompleted;
 	private Transaction _parent;
-	private TransactionBehavior _behavior;
 	private IsolationLevel _isolationLevel;
 	private TransactionStatus _status;
 	private TransactionInformation _information;
 	#endregion
 
 	#region 构造函数
-	public Transaction() : this(TransactionBehavior.Followed, IsolationLevel.ReadCommitted) { }
-	public Transaction(IsolationLevel isolationLevel) : this(TransactionBehavior.Followed, isolationLevel) { }
-	public Transaction(TransactionBehavior behavior) : this(behavior, IsolationLevel.ReadCommitted) { }
-	public Transaction(TransactionBehavior behavior, IsolationLevel isolationLevel)
+	public Transaction() : this(IsolationLevel.ReadCommitted) { }
+	public Transaction(IsolationLevel isolationLevel)
 	{
 		_status = TransactionStatus.Active;
-		_behavior = behavior;
 		_isolationLevel = isolationLevel;
 
-		switch(behavior)
-		{
-			case TransactionBehavior.Followed:
-			case TransactionBehavior.Required:
-				//如果当前环境事务为空，则将当前事务置为环境事务
-				if(_current == null)
-					_current = new() { Value = this };
-				else
-					_parent = _current.Value;
-
-				break;
-			case TransactionBehavior.RequiresNew:
-				//始终将当前事务置为环境事务
-				_current = new() { Value = this };
-
-				break;
-			case TransactionBehavior.Suppress:
-				throw new NotSupportedException();
-		}
+		//如果当前环境事务为空，则将当前事务置为环境事务
+		if(_current == null)
+			_current = new() { Value = this };
+		else
+			_parent = _current.Value;
 
 		//首先设置当前事务的父事务
 		_information = new TransactionInformation(this);
@@ -121,15 +106,16 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	}
 
 	internal Transaction Parent => _parent;
-	internal TransactionBehavior Behavior => _behavior;
 	internal TransactionStatus Status => _status;
 	#endregion
 
 	#region 静态方法
-	public static Transaction ReadUncommitted(TransactionBehavior behavior = TransactionBehavior.Followed) => new(behavior, IsolationLevel.ReadUncommitted);
-	public static Transaction ReadCommitted(TransactionBehavior behavior = TransactionBehavior.Followed) => new(behavior, IsolationLevel.ReadCommitted);
-	public static Transaction RepeatableRead(TransactionBehavior behavior = TransactionBehavior.Followed) => new(behavior, IsolationLevel.RepeatableRead);
-	public static Transaction Serializable(TransactionBehavior behavior = TransactionBehavior.Followed) => new(behavior, IsolationLevel.Serializable);
+	public static Transaction ReadUncommitted() => new(IsolationLevel.ReadUncommitted);
+	public static Transaction ReadCommitted() => new(IsolationLevel.ReadCommitted);
+	public static Transaction RepeatableRead() => new(IsolationLevel.RepeatableRead);
+	public static Transaction Serializable() => new(IsolationLevel.Serializable);
+	public static Transaction Snapshot() => new(IsolationLevel.Snapshot);
+	public static Transaction Chaos() => new(IsolationLevel.Chaos);
 	#endregion
 
 	#region 公共方法
@@ -169,8 +155,8 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 		if(isCompleted != 0)
 			return;
 
-		//如果当前事务是跟随模式，并且具有父事务则当前事务不用通知投票者(订阅者)，而是交由父事务处理
-		if(_behavior == TransactionBehavior.Followed && _parent != null)
+		//如果具有父事务则当前事务不用通知投票者(订阅者)，而是交由父事务处理
+		if(_parent != null)
 		{
 			//switch(phase)
 			//{

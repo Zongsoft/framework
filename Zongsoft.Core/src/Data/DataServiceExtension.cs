@@ -97,7 +97,7 @@ public static partial class DataServiceExtension
 		if(items == null)
 			return 0;
 
-		var transaction = new Zongsoft.Transactions.Transaction();
+		var transaction = new Transaction();
 
 		try
 		{
@@ -130,7 +130,7 @@ public static partial class DataServiceExtension
 		if(items == null)
 			return 0;
 
-		var transaction = new Zongsoft.Transactions.Transaction();
+		var transaction = new Transaction();
 
 		try
 		{

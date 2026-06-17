@@ -194,7 +194,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		var total = 0;
 
 		//创建事务
-		using var transaction = new Zongsoft.Transactions.Transaction();
+		using var transaction = new Transaction();
 
 		foreach(var identifier in identifiers)
 		{

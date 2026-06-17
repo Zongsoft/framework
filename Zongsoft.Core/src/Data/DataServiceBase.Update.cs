@@ -50,7 +50,7 @@ partial class DataServiceBase<TModel>
 		this.EnsureUpdate(options);
 
 		//创建事务
-		var transaction = new Zongsoft.Transactions.Transaction();
+		var transaction = new Transaction();
 
 		try
 		{
@@ -215,7 +215,7 @@ partial class DataServiceBase<TModel>
 		this.EnsureUpdate(options);
 
 		//创建事务
-		var transaction = new Zongsoft.Transactions.Transaction();
+		var transaction = new Transaction();
 
 		try
 		{
