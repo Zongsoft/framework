@@ -28,44 +28,40 @@
  */
 
 using System;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Transactions;
 
 public class TransactionInformation
 {
 	#region 成员字段
-	private ConcurrentDictionary<string, object> _parameters;
+	private Collections.SynchronizedDictionary<string, object> _parameters;
 	#endregion
 
 	#region 构造函数
 	public TransactionInformation(Transaction transaction)
 	{
 		this.Transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
-		this.TransactionId = Guid.NewGuid();
+		this.Identifier = $"{Guid.NewGuid():N}";
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取当前事务的唯一编号。</summary>
-	public Guid TransactionId { get; }
+	/// <summary>获取当前事务的标识。</summary>
+	public string Identifier { get; }
 
 	/// <summary>获取当前的事务对象。</summary>
 	public Transaction Transaction { get; }
 
-	/// <summary>获取当前事务对象的父事务，如果当前事务是根事务则返回空(<c>null</c>)。</summary>
+	/// <summary>获取当前事务对象的父事务，如果返回空(<c>null</c>)则表示当前事务是根事务。</summary>
 	public Transaction Parent => this.Transaction.Parent;
 
-	/// <summary>获取当前事务的状态。</summary>
-	public TransactionStatus Status => this.Transaction.Status;
-
 	/// <summary>获取当前事务的环境参数。</summary>
-	public ConcurrentDictionary<string, object> Parameters
+	public Collections.SynchronizedDictionary<string, object> Parameters
 	{
 		get
 		{
 			if(_parameters == null)
-				System.Threading.Interlocked.CompareExchange(ref _parameters, new ConcurrentDictionary<string, object>(StringComparer.OrdinalIgnoreCase), null);
+				System.Threading.Interlocked.CompareExchange(ref _parameters, new(StringComparer.OrdinalIgnoreCase), null);
 
 			return _parameters;
 		}

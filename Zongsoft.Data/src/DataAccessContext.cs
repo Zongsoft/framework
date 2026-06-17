@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -349,12 +349,26 @@ internal static class DataAccessContextUtility
 	#region 公共方法
 	public static DataSession GetSession(Func<IDataSource> sourceFactory)
 	{
-		var ambient = Transaction.Current;
+		var ambient = GetAmbient(Transaction.Current);
 
-		if(ambient == null || ambient.IsCompleted)
+		if(ambient == null)
 			return new DataSession(sourceFactory());
 
 		return (DataSession)ambient.Information.Parameters.GetOrAdd("Zongsoft.Data:DataSession", _ => new DataSession(sourceFactory(), ambient));
+
+		static Transaction GetAmbient(Transaction transaction)
+		{
+			while(transaction != null && transaction.IsCompleted)
+				transaction = transaction.Information.Parent;
+
+			if(transaction == null)
+				return null;
+
+			while(transaction.Information.Parent != null && !transaction.Information.Parent.IsCompleted)
+				transaction = transaction.Information.Parent;
+
+			return transaction;
+		}
 	}
 	#endregion
 }

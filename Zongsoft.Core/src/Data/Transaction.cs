@@ -45,7 +45,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	#endregion
 
 	#region 静态字段
-	private static AsyncLocal<Transaction> _current;
+	private static readonly AsyncLocal<Transaction> _current = new();
 	#endregion
 
 	#region 私有变量
@@ -68,11 +68,8 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 		_status = TransactionStatus.Active;
 		_isolationLevel = isolationLevel;
 
-		//如果当前环境事务为空，则将当前事务置为环境事务
-		if(_current == null)
-			_current = new() { Value = this };
-		else
-			_parent = _current.Value;
+		_parent = _current.Value;
+		_current.Value = this;
 
 		//首先设置当前事务的父事务
 		_information = new TransactionInformation(this);
@@ -84,7 +81,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 
 	#region 静态属性
 	/// <summary>获取当前环境事务。</summary>
-	public static Transaction Current => _current?.Value;
+	public static Transaction Current => _current.Value;
 	#endregion
 
 	#region 公共属性
@@ -99,12 +96,6 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	#endregion
 
 	#region 内部属性
-	internal int Operation
-	{
-		get => _operation;
-		set => _operation = value;
-	}
-
 	internal Transaction Parent => _parent;
 	internal TransactionStatus Status => _status;
 	#endregion
@@ -145,6 +136,12 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	public void Commit() => this.DoEnlistment(EnlistmentPhase.Commit);
 	/// <summary>回滚事务。</summary>
 	public void Rollback() => this.DoEnlistment(EnlistmentPhase.Rollback);
+	#endregion
+
+	#region 重写方法
+	public bool Equals(Transaction other) => other is not null && object.ReferenceEquals(this, other);
+	public override bool Equals(object obj) => this.Equals(obj as Transaction);
+	public override int GetHashCode() => _information.Identifier.GetHashCode();
 	#endregion
 
 	#region 私有方法
@@ -214,25 +211,19 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	#endregion
 
 	#region 处置方法
-	protected virtual void Dispose(bool disposing)
-	{
-		this.Rollback();
-
-		//如果结束的是环境事务则置空环境事务的指针
-		if(object.ReferenceEquals(_current?.Value, this))
-			_current = null;
-	}
-
 	public void Dispose()
 	{
 		this.Dispose(true);
 		GC.SuppressFinalize(this);
 	}
-	#endregion
 
-	#region 重写方法
-	bool IEquatable<Transaction>.Equals(Transaction other) => other is not null && object.ReferenceEquals(this, other);
-	public override bool Equals(object obj) => this.Equals(obj as Transaction);
-	public override int GetHashCode() => _information.TransactionId.GetHashCode();
+	protected virtual void Dispose(bool disposing)
+	{
+		this.Rollback();
+
+		//如果结束的是环境事务则恢复到父级环境事务
+		if(object.ReferenceEquals(_current?.Value, this))
+			_current.Value = _parent;
+	}
 	#endregion
 }
