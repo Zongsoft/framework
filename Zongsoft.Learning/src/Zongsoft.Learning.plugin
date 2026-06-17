@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Learning"
+        title="Zongsoft Learning Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2025-2026. All rights reserved."
+        description="Created Date: 2026-06-15 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Learning" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+	</extension>
+</plugin>

@@ -1,0 +1,12 @@
+artifacts/Zongsoft.Learning.option
+artifacts/Zongsoft.Learning.plugin
+lib/$(Framework)/Zongsoft.Learning.*
+lib/$(Framework)/*/Zongsoft.Learning.resources.*
+
+nuget:Microsoft.ML@5.0.0
+nuget:Microsoft.ML.LightGbm@5.0.0
+nuget:Microsoft.ML.TimeSeries@5.0.0
+nuget:Microsoft.ML.OnnxRuntime@1.26.0
+nuget:Microsoft.ML.OnnxTransformer@5.0.0
+nuget:Microsoft.ML.OnnxRuntime.Managed@1.26.0
+nuget:Microsoft.ML.OnnxRuntime.Extensions@0.14.0
