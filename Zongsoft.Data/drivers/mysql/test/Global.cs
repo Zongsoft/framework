@@ -14,8 +14,8 @@ public static class Global
 		var value = Environment.GetEnvironmentVariable(name);
 
 		return string.Equals(value, "1", StringComparison.OrdinalIgnoreCase) ||
-		       string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ||
-		       string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
+		       string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase) ||
+		       string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
 	}
 	#endregion
 }
