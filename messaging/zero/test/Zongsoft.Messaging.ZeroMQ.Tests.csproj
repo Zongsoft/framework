@@ -2,6 +2,8 @@
 	<PropertyGroup>
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
+		<!-- NetMQ 集成测试会启动真实 sockets/pollers；跨 TFM 并行运行会互相干扰端口和全局 NetMQ 状态。 -->
+		<TestTfmsInParallel>false</TestTfmsInParallel>
 	</PropertyGroup>
 
 	<ItemGroup>

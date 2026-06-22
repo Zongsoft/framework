@@ -42,6 +42,10 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configuration.ZeroConnectionSettings>
 {
+	#region 常量定义
+	private const int BATCH_SIZE = 1024;
+	#endregion
+
 	#region 私有变量
 	private ushort _publisherPort;
 	private ushort _subscriberPort;
@@ -195,24 +199,17 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		if(e.Queue == null || e.Queue.IsDisposed)
 			return;
 
-		if(e.Queue.TryDequeue(out var packet, TimeSpan.Zero))
+		//轮询器回调可能与 Dispose() 交叉执行，后续发送必须固定到同一个局部发布者实例。
+		var publisher = _publisher;
+
+		if(publisher == null || publisher.IsDisposed)
+			return;
+
+		//一次回调最多处理一批消息，降低突发发布时的 poller 唤醒成本，同时避免长时间独占 poller 线程。
+		for(int i = 0; i < BATCH_SIZE && e.Queue.TryDequeue(out var packet, TimeSpan.Zero); i++)
 		{
-			//如果主题为空则直接发送心跳包
-			if(string.IsNullOrEmpty(packet.Topic))
-			{
-				//方案一：直接发送空包
-				//_publisher.SendMoreFrameEmpty().SendFrameEmpty();
-
-				//方案二：依次向所有订阅者发送匿名空包
-				foreach(var subscriber in this.Subscribers)
-					_publisher.SendMoreFrame(Packetizer.Pack(subscriber.Topic)).SendFrameEmpty();
-
+			if(!this.Send(publisher, packet))
 				return;
-			}
-
-			var head = Packetizer.Pack(this.Instance, packet.Topic, packet.Data, packet.Options, out var compressor);
-			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
-			_publisher.SendMoreFrame(head).SendFrame(data);
 		}
 	}
 	#endregion
@@ -235,26 +232,49 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			if(_publisherPort == 0 || _subscriberPort == 0)
 				throw new InvalidOperationException($"Failed to acquire queue exchange information from the '{this.Settings.Server}:{this.Settings.Port}' server.");
 
-			//创建一个发布者套接字
-			var publisher = new PublisherSocket();
+			//publisher 在成功交给字段前由本方法负责释放，避免初始化中途失败时泄漏 NetMQ socket。
+			PublisherSocket publisher = null;
+			var assigned = false;
 
-			publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
-			publisher.Connect(ZeroUtility.GetTcpAddress(this.Settings.Server, _subscriberPort));
-
-			//启动网络轮询器
-			if(!_poller.IsRunning)
+			try
 			{
+				//创建一个发布者套接字
+				publisher = new PublisherSocket();
+
+				publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
+				publisher.Connect(ZeroUtility.GetTcpAddress(this.Settings.Server, _subscriberPort));
+
 				//确保发布者套接字已经连接就绪
 				//注意：如果发布者未就绪，轮询器将无法正常运行
 				if(!SpinWait.SpinUntil(() => publisher.HasOut && publisher.TrySignalOK(), 1000))
 					throw new InvalidOperationException($"Failed to connect to the publisher at '{this.Settings.Server}:{_subscriberPort}'.");
 
-				//启动轮询器
-				_poller.RunAsync($"{nameof(ZeroQueue)}#{this.Instance}.Poller", true);
-			}
+				//先保存已经连接就绪的发布者，避免轮询器启动后定时器回调看到空发布者。
+				_publisher = publisher;
+				publisher = null;
+				assigned = true;
 
-			//保存已经连接就绪的发布者
-			_publisher = publisher;
+				//启动网络轮询器
+				if(!_poller.IsRunning)
+					_poller.RunAsync($"{nameof(ZeroQueue)}#{this.Instance}.Poller", true);
+			}
+			catch
+			{
+				//如果 RunAsync() 或后续初始化失败，需要回滚已经发布给字段的 socket。
+				if(assigned)
+				{
+					var assignedPublisher = _publisher;
+					_publisher = null;
+
+					if(assignedPublisher != null && !assignedPublisher.IsDisposed)
+						assignedPublisher.Dispose();
+				}
+
+				if(publisher != null && !publisher.IsDisposed)
+					publisher.Dispose();
+
+				throw;
+			}
 
 			//返回初始化成功
 			return true;
@@ -370,6 +390,49 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 					}
 					break;
 			}
+		}
+	}
+
+	private bool Send(PublisherSocket publisher, in Packet packet)
+	{
+		if(publisher == null || publisher.IsDisposed)
+			return false;
+
+		try
+		{
+			//如果主题为空则直接发送心跳包
+			if(string.IsNullOrEmpty(packet.Topic))
+			{
+				//方案一：直接发送空包
+				//publisher.SendMoreFrameEmpty().SendFrameEmpty();
+
+				//方案二：依次向所有订阅者发送匿名空包
+				foreach(var subscriber in this.Subscribers)
+				{
+					if(publisher.IsDisposed)
+						return false;
+
+					publisher.SendMoreFrame(Packetizer.Pack(subscriber.Topic)).SendFrameEmpty();
+				}
+
+				return true;
+			}
+
+			var head = Packetizer.Pack(this.Instance, packet.Topic, packet.Data, packet.Options, out var compressor);
+			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
+			publisher.SendMoreFrame(head).SendFrame(data);
+
+			return true;
+		}
+		catch(ObjectDisposedException)
+		{
+			//Dispose() 可能与 poller 发送回调并发，停止本批发送即可。
+			return false;
+		}
+		catch(TerminatingException)
+		{
+			//NetMQ 上下文终止时不再继续使用当前 socket。
+			return false;
 		}
 	}
 

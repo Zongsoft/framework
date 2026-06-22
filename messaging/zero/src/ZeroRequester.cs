@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.ZeroMQ library.
  *
@@ -47,13 +47,14 @@ public class ZeroRequester : IRequester
 	#region 常量定义
 	//表示待删除令牌的缓存过期时长
 	private static readonly TimeSpan PENDING_EXPIRATION = TimeSpan.FromSeconds(600);
+	private static readonly TimeSpan SUBSCRIPTION_DELAY = TimeSpan.FromMilliseconds(100);
 	#endregion
 
 	#region 私有字段
 	private ZeroQueue _queue;
 	private readonly Adapter _adapter;
 	private readonly ConcurrentDictionary<string, Token> _tokens;
-	private readonly ConcurrentDictionary<string, byte> _subscriptions;
+	private readonly ConcurrentDictionary<string, Task> _subscriptions;
 	private readonly MemoryCache _pending;
 	#endregion
 
@@ -62,7 +63,7 @@ public class ZeroRequester : IRequester
 	{
 		_adapter = new Adapter(this);
 		_tokens = new ConcurrentDictionary<string, Token>();
-		_subscriptions = new ConcurrentDictionary<string, byte>();
+		_subscriptions = new ConcurrentDictionary<string, Task>();
 		this.Handlers = new List<IHandler>();
 
 		_pending = new MemoryCache();
@@ -75,7 +76,11 @@ public class ZeroRequester : IRequester
 	public ZeroQueue Queue
 	{
 		get => _queue;
-		set => _queue = value ?? throw new ArgumentNullException(nameof(value));
+		set
+		{
+			_queue = value ?? throw new ArgumentNullException(nameof(value));
+			_subscriptions.Clear();
+		}
 	}
 
 	public ICollection<IHandler> Handlers { get; }
@@ -90,27 +95,22 @@ public class ZeroRequester : IRequester
 
 		var request = new ZeroRequest(url, data);
 		var reply = url + "/reply";
-		var first = _subscriptions.TryAdd(reply, 0);
+		var token = new Token(request, request => this.Remove(request.Identifier));
+
+		if(!_tokens.TryAdd(request.Identifier, token))
+			return null;
 
 		try
 		{
-			await queue.SubscribeAsync(reply, _adapter, cancellation);
-
-			if(first)
-				await Task.Delay(100, cancellation);
-
+			await this.SubscribeAsync(queue, reply, cancellation);
 			await queue.ProduceAsync(url, request.Pack(), null, cancellation);
+			return token;
 		}
 		catch
 		{
-			if(first)
-				_subscriptions.TryRemove(reply, out _);
-
+			token.Dispose();
 			throw;
 		}
-
-		var token = new Token(request, request => this.Remove(request.Identifier));
-		return _tokens.TryAdd(request.Identifier, token) ? token : null;
 	}
 
 	ValueTask IRequester.OnRespondedAsync(IResponse response, CancellationToken cancellation) => this.OnRespondedAsync(response as ZeroResponse, cancellation);
@@ -138,6 +138,41 @@ public class ZeroRequester : IRequester
 	#endregion
 
 	#region 私有方法
+	private async ValueTask SubscribeAsync(ZeroQueue queue, string topic, CancellationToken cancellation)
+	{
+		var task = _subscriptions.GetOrAdd(topic, topic =>
+		{
+			var task = SubscribeAsync(queue, topic, _adapter, cancellation);
+
+			//首次订阅任务被取消或失败后不能永久缓存，否则后续请求无法重新订阅该回复主题。
+			_ = task.ContinueWith(task =>
+			{
+				if(task.IsCanceled || task.IsFaulted)
+					_subscriptions.TryRemove(new KeyValuePair<string, Task>(topic, task));
+			}, TaskScheduler.Default);
+
+			return task;
+		});
+
+		try
+		{
+			await task.WaitAsync(cancellation);
+		}
+		catch
+		{
+			if(task.IsFaulted || task.IsCanceled)
+				_subscriptions.TryRemove(new KeyValuePair<string, Task>(topic, task));
+
+			throw;
+		}
+
+		static async Task SubscribeAsync(ZeroQueue queue, string topic, IHandler<Message> handler, CancellationToken cancellation)
+		{
+			await queue.SubscribeAsync(topic, handler, cancellation);
+			await Task.Delay(SUBSCRIPTION_DELAY, cancellation);
+		}
+	}
+
 	private void Remove(string identifier)
 	{
 		if(identifier != null)
@@ -146,6 +181,7 @@ public class ZeroRequester : IRequester
 			_tokens.Remove(identifier, out _);
 		}
 	}
+
 	private void OnEvicted(object sender, CacheEvictedEventArgs args) => this.Remove(args.Key as string);
 	private ZeroRequest GetRequest(string identifier) => identifier != null && _tokens.TryGetValue(identifier, out var token) ? token.Request : null;
 	#endregion

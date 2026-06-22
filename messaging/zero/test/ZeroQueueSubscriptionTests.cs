@@ -2,6 +2,9 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 
+using NetMQ;
+using NetMQ.Sockets;
+
 using Xunit;
 
 namespace Zongsoft.Messaging.ZeroMQ.Tests;
@@ -23,7 +26,7 @@ public class ZeroQueueSubscriptionTests
 		}
 
 		await subscriber.SubscribeAsync("topic/repeat", handler);
-		await Task.Delay(300);
+		await Task.Delay(750);
 
 		await publisher.ProduceAsync("topic/repeat", Encoding.UTF8.GetBytes("ready"));
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
@@ -45,12 +48,48 @@ public class ZeroQueueSubscriptionTests
 
 		var handler = new MessageCollector();
 		await subscriber.SubscribeAsync("topic/live", handler);
-		await Task.Delay(300);
+		await Task.Delay(750);
 
 		await publisher.ProduceAsync("topic/live", Encoding.UTF8.GetBytes("live"));
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
 		Assert.False(message.IsEmpty);
 		Assert.Equal("live", Encoding.UTF8.GetString(message.Data));
+	}
+
+	[Fact]
+	public async Task SubscriberDrainsMalformedMultipartBeforeNextMessage()
+	{
+		using var server = await ZeroServerScope.StartAsync();
+		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
+		using var handler = new MessageBuffer();
+		var topic = "topic/malformed";
+
+		await subscriber.SubscribeAsync(topic, handler);
+		await Task.Delay(750);
+
+		var ports = ZeroTestUtility.GetServerPorts(server.Port);
+		using var publisher = new PublisherSocket();
+		publisher.Connect($"tcp://127.0.0.1:{ports.Subscriber}");
+		await Task.Delay(500);
+
+		//先发送一个合法头帧但带额外尾帧的畸形 multipart，验证 subscriber 不会把尾帧当作新消息。
+		publisher
+			.SendMoreFrame($"{topic}@{subscriber.Instance}")
+			.SendMoreFrame("ignored")
+			.SendMoreFrame("fake-topic")
+			.SendFrame(Encoding.UTF8.GetBytes("fake-data"));
+
+		var unexpected = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(500));
+		Assert.Null(unexpected);
+
+		//再发送一条合法外部消息，验证前一条畸形消息不会破坏后续消息边界。
+		publisher
+			.SendMoreFrame($"{topic}@external")
+			.SendFrame(Encoding.UTF8.GetBytes("valid"));
+
+		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+		Assert.Equal(topic, message.Topic);
+		Assert.Equal("valid", Encoding.UTF8.GetString(message.Data));
 	}
 }

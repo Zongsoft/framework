@@ -103,7 +103,11 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 
 			//如果是空帧则忽略
 			if(string.IsNullOrEmpty(header))
+			{
+				//外部客户端可能发送多帧空头消息，必须清掉剩余帧，避免下一轮把数据帧误当成头帧。
+				SkipRemainingFrames(args.Socket, more);
 				continue;
+			}
 
 			//解包收到的首帧消息
 			var identifier = Packetizer.Unpack(header, out var topic, out var options);
@@ -111,7 +115,8 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			//如果接收到的消息需要排除则跳过后续数据帧
 			if(!this.Queue.Validate(identifier))
 			{
-				args.Socket.TrySkipFrame();
+				//被过滤的消息仍然可能有多帧载荷，只跳一帧会污染后续消息边界。
+				SkipRemainingFrames(args.Socket, more);
 				continue;
 			}
 
@@ -121,17 +126,30 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 
 			//如果是匿名消息并且数据帧内容为空则当作心跳消息处理（即忽略它）
 			if(string.IsNullOrEmpty(identifier) && data == null || data.Length == 0)
+			{
+				//保持原有心跳判断不变，仅确保异常多帧心跳不会留下尾帧。
+				SkipRemainingFrames(args.Socket, more);
 				continue;
+			}
 
 			//如果接收到的首帧消息包含压缩选项，则必须对收到的消息内容进行解压
 			if(Packetizer.Options.TryGetValue(options, Packetizer.Options.Compressor, out var compressor))
 				data = Zongsoft.IO.Compression.Compressor.Decompress(compressor, data);
 
+			//本库发送的是两帧消息，但外部 ZeroMQ 发布者可能附加更多帧；处理首个数据帧后丢弃尾帧。
+			SkipRemainingFrames(args.Socket, more);
+
 			//调用处理器进行消息处理
 			FireAndForget(Task.Run(() => this.Handler.HandleAsync(new Message(topic, data))));
 
-			if(!more)
+			if(!args.Socket.HasIn)
 				break;
+		}
+
+		static void SkipRemainingFrames(NetMQSocket socket, bool more)
+		{
+			//NetMQ 的 more 标记描述当前 multipart 消息是否还有后续帧。
+			while(more && socket.TrySkipFrame(out more)) { }
 		}
 
 		static async void FireAndForget(Task task)
