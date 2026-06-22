@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -66,13 +66,6 @@ public sealed class ZeroQueueServer : WorkerBase
 	{
 		//设置默认的端口号
 		_port = PORT;
-
-		_responser = new ResponseSocket();
-		_responser.ReceiveReady += this.Responser_ReceiveReady;
-		_publisher = new XPublisherSocket();
-		_subscriber = new XSubscriberSocket();
-		_poller = new NetMQPoller() { _responser, _subscriber, _publisher };
-		_proxy = new Proxy(_subscriber, _publisher, null, null, _poller);
 	}
 	#endregion
 
@@ -94,6 +87,8 @@ public sealed class ZeroQueueServer : WorkerBase
 	#region 重写方法
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
+		this.Initialize();
+
 		if(!_poller.IsRunning)
 		{
 			(var incoming, var outgoing) = GetPorts(this.Name);
@@ -123,7 +118,7 @@ public sealed class ZeroQueueServer : WorkerBase
 
 	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
-		_proxy.Stop();
+		this.Release();
 		return Task.CompletedTask;
 	}
 	#endregion
@@ -148,21 +143,78 @@ public sealed class ZeroQueueServer : WorkerBase
 	}
 	#endregion
 
+	#region 私有方法
+	private void Initialize()
+	{
+		if(_poller != null && !_poller.IsDisposed)
+			return;
+
+		_responser = new ResponseSocket();
+		_responser.ReceiveReady += this.Responser_ReceiveReady;
+
+		_publisher = new XPublisherSocket();
+		_subscriber = new XSubscriberSocket();
+		_poller = new NetMQPoller() { _responser, _subscriber, _publisher };
+		_proxy = new Proxy(_subscriber, _publisher, null, null, _poller);
+	}
+
+	private void Release()
+	{
+		var proxy = _proxy;
+		if(proxy != null)
+		{
+			try { proxy.Stop(); }
+			catch(InvalidOperationException) { }
+		}
+
+		var poller = _poller;
+		if(poller != null && !poller.IsDisposed)
+		{
+			if(poller.IsRunning)
+				poller.Stop();
+
+			poller.Dispose();
+		}
+
+		var responser = _responser;
+		if(responser != null)
+		{
+			responser.ReceiveReady -= this.Responser_ReceiveReady;
+
+			if(!responser.IsDisposed)
+				responser.Dispose();
+		}
+
+		var publisher = _publisher;
+		if(publisher != null && !publisher.IsDisposed)
+			publisher.Dispose();
+
+		var subscriber = _subscriber;
+		if(subscriber != null && !subscriber.IsDisposed)
+			subscriber.Dispose();
+
+		_proxy = null;
+		_poller = null;
+		_responser = null;
+		_publisher = null;
+		_subscriber = null;
+		_publisherPort = 0;
+		_subscriberPort = 0;
+	}
+	#endregion
+
 	#region 处置方法
 	protected override void Dispose(bool disposing)
 	{
 		if(disposing)
 		{
 			base.Dispose(disposing);
-
-			_poller.Dispose();
-			_publisher.Dispose();
-			_subscriber.Dispose();
-
-			NetMQConfig.Cleanup(false);
+			this.Release();
 		}
 
 		_proxy = null;
+		_poller = null;
+		_responser = null;
 		_publisher = null;
 		_subscriber = null;
 	}

@@ -1,5 +1,6 @@
 <Solution>
 	<Project Path="src/Zongsoft.Messaging.ZeroMQ.csproj" />
+	<Project Path="test/Zongsoft.Messaging.ZeroMQ.Tests.csproj" />
 
 	<Folder Name="/samples/">
 		<Project Path="samples/client/Zongsoft.Messaging.ZeroMQ.Samples.Client.csproj" />

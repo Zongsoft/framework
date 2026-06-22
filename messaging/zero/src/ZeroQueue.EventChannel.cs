@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -79,10 +79,11 @@ partial class ZeroQueue
 		#endregion
 
 		#region 重写方法
-		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => _subscriber.CloseAsync(cancellation);
+		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => _subscriber == null ? ValueTask.CompletedTask : _subscriber.CloseAsync(cancellation);
 		protected override ValueTask DisposeAsync(bool disposing)
 		{
 			_queue = null;
+			_subscriber = null;
 			return base.DisposeAsync(disposing);
 		}
 

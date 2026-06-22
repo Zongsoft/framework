@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -53,6 +53,7 @@ public class ZeroRequester : IRequester
 	private ZeroQueue _queue;
 	private readonly Adapter _adapter;
 	private readonly ConcurrentDictionary<string, Token> _tokens;
+	private readonly ConcurrentDictionary<string, byte> _subscriptions;
 	private readonly MemoryCache _pending;
 	#endregion
 
@@ -61,6 +62,7 @@ public class ZeroRequester : IRequester
 	{
 		_adapter = new Adapter(this);
 		_tokens = new ConcurrentDictionary<string, Token>();
+		_subscriptions = new ConcurrentDictionary<string, byte>();
 		this.Handlers = new List<IHandler>();
 
 		_pending = new MemoryCache();
@@ -87,9 +89,25 @@ public class ZeroRequester : IRequester
 			return null;
 
 		var request = new ZeroRequest(url, data);
+		var reply = url + "/reply";
+		var first = _subscriptions.TryAdd(reply, 0);
 
-		await queue.SubscribeAsync(url + "/reply", _adapter, cancellation);
-		await queue.ProduceAsync(url, request.Pack(), null, cancellation);
+		try
+		{
+			await queue.SubscribeAsync(reply, _adapter, cancellation);
+
+			if(first)
+				await Task.Delay(100, cancellation);
+
+			await queue.ProduceAsync(url, request.Pack(), null, cancellation);
+		}
+		catch
+		{
+			if(first)
+				_subscriptions.TryRemove(reply, out _);
+
+			throw;
+		}
 
 		var token = new Token(request, request => this.Remove(request.Identifier));
 		return _tokens.TryAdd(request.Identifier, token) ? token : null;
@@ -179,8 +197,10 @@ public class ZeroRequester : IRequester
 		#region 内部方法
 		internal void Response(ZeroResponse response)
 		{
-			if(response != null)
-				_responses.Add(response);
+			var responses = _responses;
+
+			if(response != null && responses != null)
+				responses.Add(response);
 		}
 		#endregion
 
@@ -191,24 +211,46 @@ public class ZeroRequester : IRequester
 			if(cancellation.IsCancellationRequested)
 				yield break;
 
-			_cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+			var source = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+			var original = Interlocked.Exchange(ref _cancellation, source);
+			original?.Dispose();
 
-			if(timeout > TimeSpan.Zero)
+			try
 			{
-				_cancellation.CancelAfter(timeout);
-
-				while(!_cancellation.IsCancellationRequested)
+				if(timeout > TimeSpan.Zero)
 				{
-					if(_responses.TryTake(out var response))
+					source.CancelAfter(timeout);
+
+					while(!source.IsCancellationRequested)
+					{
+						var responses = _responses;
+
+						if(responses == null)
+							yield break;
+
+						if(responses.TryTake(out var response))
+							yield return response;
+						else
+							SpinWait.SpinUntil(() => !responses.IsEmpty || source.IsCancellationRequested, 1);
+					}
+				}
+				else
+				{
+					while(!source.IsCancellationRequested)
+					{
+						var responses = _responses;
+
+						if(responses == null || !responses.TryTake(out var response))
+							yield break;
+
 						yield return response;
-					else
-						SpinWait.SpinUntil(() => !_responses.IsEmpty, 1);
+					}
 				}
 			}
-			else
+			finally
 			{
-				while(!_cancellation.IsCancellationRequested && _responses.TryTake(out var response))
-					yield return response;
+				if(Interlocked.CompareExchange(ref _cancellation, null, source) == source)
+					source.Dispose();
 			}
 		}
 		#endregion
@@ -222,13 +264,13 @@ public class ZeroRequester : IRequester
 			{
 				cancellation.Cancel();
 				cancellation.Dispose();
-
-				_responses?.Clear();
-				_responses = null;
-
-				_disposed?.Invoke(this.Request);
-				_disposed = null;
 			}
+
+			var responses = Interlocked.Exchange(ref _responses, null);
+			responses?.Clear();
+
+			var disposed = Interlocked.Exchange(ref _disposed, null);
+			disposed?.Invoke(this.Request);
 		}
 		#endregion
 	}

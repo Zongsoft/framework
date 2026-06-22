@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -153,12 +153,15 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	{
 		if(channel != null && !channel.IsDisposed)
 		{
-			//将指定的通道从轮询器中删除
-			_poller.Remove(channel);
+			var poller = _poller;
 
-			//注意：由于上述操作内部为异步，因此可能需要稍等一会确保其删除操作已完成
-			if(_poller.ContainsAsync(channel).Result)
-				Thread.Sleep(10);
+			if(poller == null || poller.IsDisposed)
+				channel.Dispose();
+			else
+			{
+				//将指定的通道从轮询器中移除并由轮询器负责释放
+				poller.RemoveAndDispose(channel);
+			}
 		}
 	}
 	#endregion
@@ -409,8 +412,6 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			var publisher = _publisher;
 			if(publisher != null && !publisher.IsDisposed)
 				publisher.Dispose();
-
-			NetMQConfig.Cleanup(false);
 		}
 
 		_timer = null;

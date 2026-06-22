@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -75,19 +75,15 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 	#region 取消订阅
 	protected override ValueTask OnCloseAsync(CancellationToken cancellation)
 	{
-		var orginal = _channel;
-
 		//将当前通道对应设置为空
 		var channel = Interlocked.Exchange(ref _channel, null);
 
 		if(channel != null && !channel.IsDisposed)
 		{
-			//必须先通过队列的注销方法将当前订阅的通道从轮询器中移除
-			this.Queue.Unregister(orginal);
-
 			channel.ReceiveReady -= this.OnReceiveReady;
-			channel.Unsubscribe(this.Topic);
-			channel.Dispose();
+
+			//必须通过队列的注销方法将当前订阅的通道从轮询器中移除并释放
+			this.Queue.Unregister(channel);
 		}
 
 		return ValueTask.CompletedTask;
@@ -97,7 +93,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 	#region 事件处理
 	private void OnReceiveReady(object sender, NetMQSocketEventArgs args)
 	{
-		var round = Math.Max(_channel.Options.ReceiveHighWatermark, 100);
+		var round = Math.Max(args.Socket.Options.ReceiveHighWatermark, 100);
 
 		for(int i = 0; i < round; i++)
 		{

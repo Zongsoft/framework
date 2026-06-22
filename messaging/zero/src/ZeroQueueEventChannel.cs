@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -38,6 +38,8 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 public class ZeroQueueEventChannel : IEventChannel
 {
+	public event EventHandler Closed;
+
 	private ZeroQueue _queue;
 	private IEventChannel _channel;
 
@@ -58,14 +60,15 @@ public class ZeroQueueEventChannel : IEventChannel
 		}
 	}
 
-	public bool IsClosed => _channel.IsClosed;
-	public bool IsDisposed => _channel.IsDisposed;
+	public bool IsClosed => this.Channel.IsClosed;
+	public bool IsDisposed => this.Channel.IsDisposed;
 
-	public event EventHandler Closed;
+	private IEventChannel Channel => _channel ?? throw new InvalidOperationException($"The {nameof(this.Queue)} property is not configured.");
+
+	public ValueTask CloseAsync(CancellationToken cancellation = default) => this.Channel.CloseAsync(cancellation);
+	public ValueTask DisposeAsync() => this.Channel.DisposeAsync();
+	public ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default) => this.Channel.OpenAsync(exchanger, cancellation);
+	public ValueTask SendAsync(EventContext data, CancellationToken cancellation = default) => this.Channel.SendAsync(data, cancellation);
+
 	private void Channel_Closed(object sender, EventArgs e) => this.Closed?.Invoke(this, e);
-
-	public ValueTask CloseAsync(CancellationToken cancellation = default) => _channel.CloseAsync();
-	public ValueTask DisposeAsync() => _channel.DisposeAsync();
-	public ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default) => _channel.OpenAsync(exchanger, cancellation);
-	public ValueTask SendAsync(EventContext data, CancellationToken cancellation = default) => _channel.SendAsync(data, cancellation);
 }
