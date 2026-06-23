@@ -49,14 +49,21 @@ public class ZeroQueueEventChannel : IEventChannel
 		get => _queue;
 		set
 		{
-			if(value is ZeroQueue queue)
-			{
-				_queue = queue;
-				_channel = queue.Channel;
+			if(value == null)
+				throw new ArgumentNullException(nameof(value));
 
-				if(queue.Channel != null)
-					queue.Channel.Closed += this.Channel_Closed;
-			}
+			if(value is not ZeroQueue queue)
+				throw new ArgumentException($"The specified queue must be a {nameof(ZeroQueue)} instance.", nameof(value));
+
+			//切换底层队列时必须解除旧通道事件，否则旧队列关闭会误触发当前包装通道的关闭事件。
+			if(_channel != null)
+				_channel.Closed -= this.Channel_Closed;
+
+			_queue = queue;
+			_channel = queue.Channel;
+
+			if(_channel != null)
+				_channel.Closed += this.Channel_Closed;
 		}
 	}
 
@@ -66,7 +73,13 @@ public class ZeroQueueEventChannel : IEventChannel
 	private IEventChannel Channel => _channel ?? throw new InvalidOperationException($"The {nameof(this.Queue)} property is not configured.");
 
 	public ValueTask CloseAsync(CancellationToken cancellation = default) => this.Channel.CloseAsync(cancellation);
-	public ValueTask DisposeAsync() => this.Channel.DisposeAsync();
+	public async ValueTask DisposeAsync()
+	{
+		var channel = this.Channel;
+		//包装器释放后不再转发底层通道事件，避免外部继续收到已释放包装器的事件。
+		channel.Closed -= this.Channel_Closed;
+		await channel.DisposeAsync();
+	}
 	public ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default) => this.Channel.OpenAsync(exchanger, cancellation);
 	public ValueTask SendAsync(EventContext data, CancellationToken cancellation = default) => this.Channel.SendAsync(data, cancellation);
 

@@ -29,11 +29,26 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-internal class ZeroUtility
+internal static class ZeroUtility
 {
 	public static string GetTcpAddress(string server, ushort port) => port == 0 ? $"tcp://{server}" : $"tcp://{server}:{port}";
 	public static string GetTcpAddress(string server, string port) => string.IsNullOrEmpty(port) ? $"tcp://{server}" : $"tcp://{server}:{port}";
+
+	public static void FireAndForget<TArgument>(this Components.IHandler<TArgument> handler, TArgument argument, CancellationToken cancellation = default) => FireAndForget(handler, argument, null, cancellation);
+	public static void FireAndForget<TArgument>(this Components.IHandler<TArgument> handler, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
+	{
+		_ = Task.Run(async () =>
+		{
+			try
+			{
+				await handler.HandleAsync(argument, parameters, cancellation).ConfigureAwait(false);
+			}
+			catch(OperationCanceledException) when(cancellation.IsCancellationRequested) { }
+			catch(Exception ex) { Diagnostics.Logging.GetLogging(handler).Error(ex); }
+		}, CancellationToken.None);
+	}
 }

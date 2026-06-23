@@ -140,7 +140,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			SkipRemainingFrames(args.Socket, more);
 
 			//调用处理器进行消息处理
-			FireAndForget(Task.Run(() => this.Handler.HandleAsync(new Message(topic, data))));
+			this.Handler.FireAndForget(new Message(topic, data));
 
 			if(!args.Socket.HasIn)
 				break;
@@ -148,13 +148,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 
 		static void SkipRemainingFrames(NetMQSocket socket, bool more)
 		{
-			//NetMQ 的 more 标记描述当前 multipart 消息是否还有后续帧。
 			while(more && socket.TrySkipFrame(out more)) { }
-		}
-
-		static async void FireAndForget(Task task)
-		{
-			try { await task; } catch { }
 		}
 	}
 	#endregion

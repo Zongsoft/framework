@@ -86,19 +86,21 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		_queue.ReceiveReady += this.OnQueueReady;
 		_poller = new NetMQPoller() { _queue };
 
-		//如果没有指定心跳间隔则默认为心跳时间为10秒，如果显式指定了心跳间隔小于等于零则表示不启用心跳
-		_timer = new NetMQTimer(settings.Heartbeat > TimeSpan.Zero ? settings.Heartbeat : TimeSpan.FromSeconds(10));
-		_timer.Elapsed += this.OnElapsed;
-		_poller.Add(_timer);
+		//如果没有指定心跳间隔则采用配置默认值(10秒)，如果显式指定了心跳间隔小于等于零则表示不启用心跳
+		if(settings.Heartbeat > TimeSpan.Zero)
+		{
+			_timer = new NetMQTimer(settings.Heartbeat);
+			_timer.Elapsed += this.OnElapsed;
+			_poller.Add(_timer);
+		}
 	}
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取当前队列的实例标识。</summary>
 	public string Instance { get; }
-	#endregion
 
-	#region 公共方法
+	/// <summary>获取将当前队列作为事件通道对象的属性。</summary>
 	public IEventChannel Channel => this.IsDisposed ? null : _channel ??= new EventChannel(this);
 	#endregion
 

@@ -87,21 +87,30 @@ public sealed class ZeroQueueServer : WorkerBase
 	#region 重写方法
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		this.Initialize();
-
-		if(!_poller.IsRunning)
+		try
 		{
-			(var incoming, var outgoing) = GetPorts(this.Name);
+			this.Initialize();
 
-			_responser.Bind($"tcp://*:{_port}");
-			_publisherPort = outgoing > 0 ? outgoing : _publisher.BindRandomPort("tcp://*");
-			_subscriberPort = incoming > 0 ? incoming : _subscriber.BindRandomPort("tcp://*");
+			if(!_poller.IsRunning)
+			{
+				(var incoming, var outgoing) = GetPorts(this.Name);
 
-			_poller.RunAsync();
+				_responser.Bind($"tcp://*:{_port}");
+				_publisherPort = outgoing > 0 ? outgoing : _publisher.BindRandomPort("tcp://*");
+				_subscriberPort = incoming > 0 ? incoming : _subscriber.BindRandomPort("tcp://*");
+
+				_poller.RunAsync();
+			}
+
+			_proxy.Start();
+			return Task.CompletedTask;
 		}
-
-		_proxy.Start();
-		return Task.CompletedTask;
+		catch
+		{
+			//任意端口绑定或 proxy 启动失败都必须释放已创建的 socket，否则后续重试会继续占用端口。
+			this.Release();
+			throw;
+		}
 
 		static (int incoming, int outgoing) GetPorts(string name)
 		{

@@ -74,36 +74,56 @@ public class ZeroResponder : WorkerBase, IResponder
 		if(queue == null)
 			return;
 
-		_adapter = new Adapter(this);
-		_subscribers = new List<ZeroSubscriber>();
+		var adapter = new Adapter(this);
+		var subscribers = new List<ZeroSubscriber>();
 
-		foreach(var handler in this.Handlers)
+		try
 		{
-			var urls = handler.GetUrls();
-
-			if(urls == null || urls.Length == 0)
-				continue;
-
-			for(int i = 0; i < urls.Length; i++)
+			foreach(var handler in this.Handlers)
 			{
-				var subscriber = await queue.SubscribeAsync(urls[i], _adapter, cancellation);
-				if(subscriber != null)
-					_subscribers.Add(subscriber);
+				var urls = handler.GetUrls();
+
+				if(urls == null || urls.Length == 0)
+					continue;
+
+				for(int i = 0; i < urls.Length; i++)
+				{
+					var subscriber = await queue.SubscribeAsync(urls[i], adapter, cancellation);
+					if(subscriber != null)
+						subscribers.Add(subscriber);
+				}
 			}
+
+			//全部订阅成功后再发布到实例字段，避免失败启动留下半初始化状态。
+			_adapter = adapter;
+			_subscribers = subscribers;
+		}
+		catch
+		{
+			//启动中途失败时回滚已经建立的订阅，防止队列中残留无主 subscriber。
+			await UnsubscribeAsync(subscribers, CancellationToken.None);
+			throw;
 		}
 	}
 
 	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
-		if(_subscribers == null || _subscribers.Count == 0)
+		var subscribers = _subscribers;
+		_subscribers = null;
+		_adapter = null;
+
+		await UnsubscribeAsync(subscribers, cancellation);
+	}
+
+	private static async ValueTask UnsubscribeAsync(List<ZeroSubscriber> subscribers, CancellationToken cancellation)
+	{
+		if(subscribers == null || subscribers.Count == 0)
 			return;
 
-		foreach(var subscriber in _subscribers)
-		{
+		foreach(var subscriber in subscribers)
 			await subscriber.UnsubscribeAsync(cancellation);
-		}
 
-		_subscribers.Clear();
+		subscribers.Clear();
 	}
 	#endregion
 

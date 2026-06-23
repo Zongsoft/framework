@@ -28,7 +28,7 @@ public class ZeroQueueSubscriptionTests
 		await subscriber.SubscribeAsync("topic/repeat", handler);
 		await Task.Delay(750);
 
-		await publisher.ProduceAsync("topic/repeat", Encoding.UTF8.GetBytes("ready"));
+		await PublishRepeatedlyAsync(publisher, "topic/repeat", "ready");
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
 		Assert.False(message.IsEmpty);
@@ -50,7 +50,7 @@ public class ZeroQueueSubscriptionTests
 		await subscriber.SubscribeAsync("topic/live", handler);
 		await Task.Delay(750);
 
-		await publisher.ProduceAsync("topic/live", Encoding.UTF8.GetBytes("live"));
+		await PublishRepeatedlyAsync(publisher, "topic/live", "live");
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
 		Assert.False(message.IsEmpty);
@@ -71,7 +71,7 @@ public class ZeroQueueSubscriptionTests
 		var ports = ZeroTestUtility.GetServerPorts(server.Port);
 		using var publisher = new PublisherSocket();
 		publisher.Connect($"tcp://127.0.0.1:{ports.Subscriber}");
-		await Task.Delay(500);
+		await Task.Delay(1000);
 
 		//先发送一个合法头帧但带额外尾帧的畸形 multipart，验证 subscriber 不会把尾帧当作新消息。
 		publisher
@@ -83,13 +83,28 @@ public class ZeroQueueSubscriptionTests
 		var unexpected = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(500));
 		Assert.Null(unexpected);
 
-		//再发送一条合法外部消息，验证前一条畸形消息不会破坏后续消息边界。
-		publisher
-			.SendMoreFrame($"{topic}@external")
-			.SendFrame(Encoding.UTF8.GetBytes("valid"));
+		//再发送合法外部消息，验证前一条畸形消息不会破坏后续消息边界。
+		for(int i = 0; i < 3; i++)
+		{
+			publisher
+				.SendMoreFrame($"{topic}@external")
+				.SendFrame(Encoding.UTF8.GetBytes("valid"));
+
+			await Task.Delay(100);
+		}
 
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 		Assert.Equal(topic, message.Topic);
 		Assert.Equal("valid", Encoding.UTF8.GetString(message.Data));
+	}
+
+	private static async Task PublishRepeatedlyAsync(ZeroQueue publisher, string topic, string text)
+	{
+		// NetMQ PUB/SUB 在订阅刚建立时仍可能处于 slow-joiner 窗口，测试通过短重试避免把时序抖动误判为功能失败。
+		for(int i = 0; i < 3; i++)
+		{
+			await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes(text));
+			await Task.Delay(100);
+		}
 	}
 }
