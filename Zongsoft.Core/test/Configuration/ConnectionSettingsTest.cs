@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Linq;
+using System.Globalization;
 using System.ComponentModel;
 using System.Collections.Generic;
 
@@ -13,7 +14,7 @@ namespace Zongsoft.Configuration.Tests;
 public class ConnectionSettingsTest
 {
 	private static readonly DateTime DATE = new(1979, 5, 15);
-	private static readonly string ConnectionString = $" ;; server=192.168.0.1:8080, localhost:8088  ; Integer=100 ; enabled ; double= 1.23; ;  boolean= true ; text= MyString; dateTime={DATE:yyyy-M-d}; ;";
+	private static readonly string ConnectionString = $" ;; server=192.168.0.1:8080, localhost:8088  ; Integer=100 ; enabled ; double= 1.23; ;  boolean= true ; text= MyString; dateTime={DATE:yyyy-M-d}; ; mapping=s1:t1,s2 = t2, same ";
 
 	[Fact]
 	public void TestConnectionDescriptor()
@@ -21,7 +22,7 @@ public class ConnectionSettingsTest
 		var descriptors = MyDriver.Instance.Descriptors;
 		Assert.NotNull(descriptors);
 		Assert.NotEmpty(descriptors);
-		Assert.Equal(14, descriptors.Count);
+		Assert.Equal(15, descriptors.Count);
 
 		ConnectionSettingDescriptor descriptor = null;
 		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.Port), out descriptor));
@@ -84,7 +85,7 @@ public class ConnectionSettingsTest
 		Assert.NotEmpty(settings);
 		Assert.NotNull(settings.Value);
 		Assert.NotEmpty(settings.Value);
-		Assert.Equal(7, settings.Count());
+		Assert.Equal(8, settings.Count());
 
 		Assert.Equal(100, settings.GetValue<int>("integer"));
 		Assert.Equal(1.23, settings.GetValue<double>("double"));
@@ -96,7 +97,7 @@ public class ConnectionSettingsTest
 		Assert.True(settings.SetValue("enabled", true));
 		Assert.True(settings.GetValue<bool>("enabled"));
 		Assert.True(settings.SetValue("enabled", string.Empty));
-		Assert.Equal(6, settings.Count());
+		Assert.Equal(7, settings.Count());
 
 		Assert.True(settings.SetValue("NewKey", "NewValue"));
 		Assert.Equal("NewValue", settings.GetValue<string>("NewKey"));
@@ -125,6 +126,16 @@ public class ConnectionSettingsTest
 		Assert.Equal("MyString", settings.Text, true);
 		Assert.Equal(DATE, settings.Birthday);
 		Assert.Equal(DateTime.Today.Year - DATE.Year, settings.Age);
+
+		Assert.NotNull(settings.Mapping);
+		Assert.NotEmpty(settings.Mapping);
+		Assert.Equal(3, settings.Mapping.Length);
+		Assert.Equal("s1", settings.Mapping[0].Source, true);
+		Assert.Equal("t1", settings.Mapping[0].Target, true);
+		Assert.Equal("s2", settings.Mapping[1].Source, true);
+		Assert.Equal("t2", settings.Mapping[1].Target, true);
+		Assert.Equal("same", settings.Mapping[2].Source, true);
+		Assert.Equal("same", settings.Mapping[2].Target, true);
 
 		Assert.NotNull(settings.Server);
 		Assert.NotEmpty(settings.Server);
@@ -419,7 +430,54 @@ public class ConnectionSettingsTest
 			set => this.SetValue(value);
 		}
 
+		//[TypeConverter(typeof(Components.Converters.CollectionConverter<MappingEntryConverter>))]
+		[ConnectionSetting(typeof(Components.Converters.CollectionConverter<MappingEntryConverter>))]
+		public MappingEntry[] Mapping
+		{
+			get => this.GetValue<MappingEntry[]>();
+			set => this.SetValue(value);
+		}
+
 		public short Age => (short)(DateTime.Today.Year - this.Birthday.Year);
+	}
+
+	public readonly struct MappingEntry(string source, string target = null)
+	{
+		public readonly string Source = source ?? target;
+		public readonly string Target = target ?? source;
+
+		public override string ToString() => string.Equals(this.Source, this.Target) ? this.Source : $"{this.Source}:{this.Target}";
+	}
+
+	public sealed class MappingEntryConverter : TypeConverter
+	{
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+		{
+			if(value is string text)
+			{
+				if(string.IsNullOrEmpty(text))
+					return default(MappingEntry);
+
+				var index = text.IndexOfAny([':', '=']);
+
+				return index < 0 ?
+					new MappingEntry(text.Trim()) :
+					new MappingEntry(text[..index].Trim(), text[(index + 1)..].Trim());
+			}
+
+			return base.ConvertFrom(context, culture, value);
+		}
+
+		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+		{
+			if(destinationType == typeof(string) && value is MappingEntry entry)
+				return string.IsNullOrEmpty(entry.Source) && string.IsNullOrEmpty(entry.Target) ? null : entry.ToString();
+
+			return base.ConvertTo(context, culture, value, destinationType);
+		}
 	}
 
 	public class MyConnectionOptions

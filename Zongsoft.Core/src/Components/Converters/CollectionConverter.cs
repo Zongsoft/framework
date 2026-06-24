@@ -78,6 +78,10 @@ public class CollectionConverter : TypeConverter
 	}
 	#endregion
 
+	#region 虚拟方法
+	protected virtual TypeConverter GetElementConverter(Type elementType) => null;
+	#endregion
+
 	#region 私有方法
 	private string Convert(object value)
 	{
@@ -107,12 +111,14 @@ public class CollectionConverter : TypeConverter
 		if(parts.Length == 0)
 			return null;
 
+		var elementConverter = this.GetElementConverter(elementType);
+
 		if(conversionType.IsArray)
 		{
 			var array = Array.CreateInstance(elementType, parts.Length);
 
 			for(var i = 0; i < parts.Length; i++)
-				array.SetValue(Common.Convert.ConvertValue(parts[i], elementType), i);
+				array.SetValue(Common.Convert.ConvertValue(parts[i], elementType, () => elementConverter), i);
 
 			return array;
 		}
@@ -122,9 +128,21 @@ public class CollectionConverter : TypeConverter
 			Activator.CreateInstance(conversionType);
 
 		for(var i = 0; i < parts.Length; i++)
-			Collections.CollectionUtility.TryAdd(result, Common.Convert.ConvertValue(parts[i], elementType));
+			Collections.CollectionUtility.TryAdd(result, Common.Convert.ConvertValue(parts[i], elementType, () => elementConverter));
 
 		return result;
 	}
+	#endregion
+}
+
+public sealed class CollectionConverter<TElementConverter> : CollectionConverter where TElementConverter : TypeConverter
+{
+	#region 构造函数
+	public CollectionConverter() { }
+	public CollectionConverter(char[] separators) : base(separators) { }
+	#endregion
+
+	#region 重写方法
+	protected override TypeConverter GetElementConverter(Type elementType) => Activator.CreateInstance<TElementConverter>();
 	#endregion
 }
