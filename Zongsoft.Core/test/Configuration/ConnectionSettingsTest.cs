@@ -22,7 +22,7 @@ public class ConnectionSettingsTest
 		var descriptors = MyDriver.Instance.Descriptors;
 		Assert.NotNull(descriptors);
 		Assert.NotEmpty(descriptors);
-		Assert.Equal(15, descriptors.Count);
+		Assert.Equal(16, descriptors.Count);
 
 		ConnectionSettingDescriptor descriptor = null;
 		Assert.True(descriptors.TryGetValue(nameof(MyConnectionSettings.Port), out descriptor));
@@ -172,6 +172,17 @@ public class ConnectionSettingsTest
 		var date = DateTime.Today.AddDays(3);
 		settings.Birthday = date;
 		Assert.Equal(date, settings.Birthday);
+	}
+
+	[Fact]
+	public void TestConnectionSettingsCompositeProperty()
+	{
+		var settings = MyDriver.Instance.GetSettings("a.b.c=none;cluster.address=192.168.0.100;nothing.property=none;cluster.heartbeat=30s");
+		Assert.NotNull(settings);
+
+		Assert.False(settings.Cluster.IsEmpty);
+		Assert.Equal("192.168.0.100", settings.Cluster.Address);
+		Assert.Equal(TimeSpan.FromSeconds(30), settings.Cluster.Heartbeat);
 	}
 
 	[Fact]
@@ -440,6 +451,12 @@ public class ConnectionSettingsTest
 			set => this.SetValue(value);
 		}
 
+		public ClusterSettings Cluster
+		{
+			get => this.GetValue<ClusterSettings>();
+			set => this.SetValue(value);
+		}
+
 		[TypeConverter(typeof(Components.Converters.CollectionConverter<MappingEntryConverter>))]
 		public MappingEntry[] Mapping
 		{
@@ -497,6 +514,14 @@ public class ConnectionSettingsTest
 		public TimeSpan ExecutionTimeout { get; set; }
 		public int Seconds { get; set; }
 		public MappingEntry[] Mapping { get; set; }
+	}
+
+	public struct ClusterSettings
+	{
+		public string Address { get; set; }
+		public TimeSpan Heartbeat { get; set; }
+		public readonly bool IsEmpty => string.IsNullOrEmpty(this.Address);
+		public override readonly string ToString() => this.Address;
 	}
 
 	public enum AuthenticationMode

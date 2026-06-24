@@ -33,6 +33,9 @@ using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Reflection;
+using Zongsoft.Reflection.Expressions;
+
 namespace Zongsoft.Configuration;
 
 public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IReadOnlyDictionary<string, string>, IEquatable<ConnectionSettingsBase>, IEquatable<IConnectionSettings>
@@ -110,6 +113,9 @@ public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IRe
 		if(_entries.TryGetValue(descriptor.Name, out var text) && Common.Convert.TryConvertValue<T>(text, () => descriptor.Converter, out var value))
 			return value;
 
+		if(Composer.Compose(_entries, descriptor, out var result))
+			return (T)result;
+
 		return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, () => descriptor.Converter);
 	}
 
@@ -117,6 +123,9 @@ public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IRe
 	{
 		if(_entries.TryGetValue(descriptor.Name, out var text) && Common.Convert.TryConvertValue(text, descriptor.Type, () => descriptor.Converter, out var value))
 			return value;
+
+		if(Composer.Compose(_entries, descriptor, out var result))
+			return result;
 
 		return Common.Convert.ConvertValue(descriptor.DefaultValue, descriptor.Type, () => descriptor.Converter);
 	}
@@ -137,6 +146,122 @@ public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IRe
 		}
 
 		return false;
+	}
+	#endregion
+
+	#region 嵌套子类
+	private static class Composer
+	{
+		public static bool Compose(IEnumerable<KeyValuePair<string, string>> entries, ConnectionSettingDescriptor descriptor, out object value)
+		{
+			var prefix = descriptor.Name + ".";
+			var populated = false;
+			value = null;
+
+			foreach(var entry in entries)
+			{
+				//调用方已优先处理直接键名，这里只组装形如 "Cluster.Address" 的复合键。
+				if(!entry.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || entry.Key.Length == prefix.Length)
+					continue;
+
+				var result = value;
+				if(result == null && !TryCreateValue(descriptor.Type, out result))
+					return false;
+
+				if(SetMemberValue(ref result, MemberExpression.Parse(entry.Key.AsSpan(prefix.Length)), entry.Value))
+				{
+					value = result;
+					populated = true;
+				}
+			}
+
+			return populated;
+		}
+
+		private static bool TryCreateValue(Type type, out object value)
+		{
+			value = null;
+
+			if(type == null || type.IsAbstract || type.IsInterface)
+				return false;
+
+			try
+			{
+				value = Activator.CreateInstance(type);
+				return value != null;
+			}
+			catch
+			{
+				return false;
+			}
+		}
+
+		private static bool SetMemberValue(ref object target, IMemberExpression expression, string text)
+		{
+			if(target == null || expression == null)
+				return false;
+
+			var member = GetMember(target, expression, out var parameters);
+			if(member == null)
+				return false;
+
+			if(expression.Next == null)
+			{
+				var memberType = member.GetMemberType();
+				var value = Common.Convert.ConvertValue(text, memberType, () => Common.Convert.GetTypeConverter(member));
+				return Reflection.Reflector.TrySetValue(member, ref target, value, parameters);
+			}
+
+			var result = Reflection.Reflector.GetValue(member, ref target, parameters);
+			if(result == null && !TryCreateValue(member.GetMemberType(), out result))
+				return false;
+
+			if(!SetMemberValue(ref result, expression.Next, text))
+				return false;
+
+			//子成员可能是结构体，递归赋值完成后必须写回父成员才能保留变更。
+			return Reflection.Reflector.TrySetValue(member, ref target, result, parameters);
+		}
+
+		private static MemberInfo GetMember(object target, IMemberExpression expression, out object[] parameters)
+		{
+			parameters = expression is IndexerExpression indexer && indexer.HasArguments ? GetArguments(target, indexer.Arguments) : null;
+
+			var name = expression switch
+			{
+				IdentifierExpression identifier => identifier.Name,
+				IndexerExpression => string.Empty,
+				_ => null,
+			};
+
+			if(name == null)
+				return null;
+
+			var type = (target as Type) ?? target.GetType();
+			var members = string.IsNullOrEmpty(name) ?
+				type.GetDefaultMembers() :
+				type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
+
+			return members == null || members.Length == 0 ? null : members[0];
+		}
+
+		private static object[] GetArguments(object target, IList<IMemberExpression> arguments)
+		{
+			if(arguments == null || arguments.Count == 0)
+				return null;
+
+			var result = new object[arguments.Count];
+
+			for(int i = 0; i < arguments.Count; i++)
+			{
+				//索引器参数支持常量，也支持相对于当前对象的成员表达式。
+				result[i] = arguments[i] is ConstantExpression constant ?
+					constant.Value :
+					MemberExpressionEvaluator.Default.GetValue(arguments[i], target);
+			}
+
+			return result;
+		}
 	}
 	#endregion
 
