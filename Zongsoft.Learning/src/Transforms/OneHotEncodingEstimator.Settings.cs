@@ -66,7 +66,7 @@ public class OneHotEncodingEstimatorSettings : ConnectionSettingsBase<OneHotEnco
 		set => this.SetValue(value);
 	}
 
-	[ConnectionSetting(typeof(InputOutputColumnPairConverter))]
+	[TypeConverter(typeof(Components.Converters.CollectionConverter<InputOutputColumnPairConverter>))]
 	public Microsoft.ML.InputOutputColumnPair[] Columns
 	{
 		get => this.GetValue<Microsoft.ML.InputOutputColumnPair[]>();

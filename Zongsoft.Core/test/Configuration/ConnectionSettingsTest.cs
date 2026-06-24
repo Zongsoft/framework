@@ -209,6 +209,16 @@ public class ConnectionSettingsTest
 		Assert.Equal(timeout, options.ExecutionTimeout);
 		Assert.Equal(seconds, options.Seconds);
 
+		Assert.NotNull(options.Mapping);
+		Assert.NotEmpty(options.Mapping);
+		Assert.Equal(settings.Mapping.Length, options.Mapping.Length);
+
+		for(int i = 0; i < settings.Mapping.Length; i++)
+		{
+			Assert.Equal(settings.Mapping[i].Source, options.Mapping[i].Source);
+			Assert.Equal(settings.Mapping[i].Target, options.Mapping[i].Target);
+		}
+
 		options = ConnectionSettingsUtility.GetOptions<MyConnectionOptions>(settings);
 		Assert.NotNull(options);
 		Assert.Equal(date, options.DateTime);
@@ -430,8 +440,7 @@ public class ConnectionSettingsTest
 			set => this.SetValue(value);
 		}
 
-		//[TypeConverter(typeof(Components.Converters.CollectionConverter<MappingEntryConverter>))]
-		[ConnectionSetting(typeof(Components.Converters.CollectionConverter<MappingEntryConverter>))]
+		[TypeConverter(typeof(Components.Converters.CollectionConverter<MappingEntryConverter>))]
 		public MappingEntry[] Mapping
 		{
 			get => this.GetValue<MappingEntry[]>();
@@ -487,6 +496,7 @@ public class ConnectionSettingsTest
 		public TimeSpan ConnectionTimeout { get; set; }
 		public TimeSpan ExecutionTimeout { get; set; }
 		public int Seconds { get; set; }
+		public MappingEntry[] Mapping { get; set; }
 	}
 
 	public enum AuthenticationMode
