@@ -29,43 +29,19 @@
 
 using System;
 
-using Zongsoft.Configuration;
+using Microsoft.ML;
 
-namespace Zongsoft.Learning;
+namespace Zongsoft.Learning.Trainers;
 
-public class ConcatenatingEstimatorSettings : ConnectionSettingsBase<ConcatenatingEstimatorSettingsDriver>
+public class LightGbmRegressionTrainer : IEstimatorBuilder<LightGbmRegressionTrainerSettings>
 {
-	#region 构造函数
-	public ConcatenatingEstimatorSettings(ConcatenatingEstimatorSettingsDriver driver, string settings) : base(driver, settings) { }
-	public ConcatenatingEstimatorSettings(ConcatenatingEstimatorSettingsDriver driver, string name, string settings) : base(driver, name, settings) { }
-	#endregion
-
-	#region 公共属性
-	public string Output
+	public string Name => "LightGbm";
+	public IEstimator<ITransformer> Build(MLContext context, LightGbmRegressionTrainerSettings settings)
 	{
-		get => this.GetValue<string>();
-		set => this.SetValue(value);
+		if(settings == null)
+			throw new ArgumentNullException(nameof(settings));
+
+		var options = settings.GetOptions();
+		return context.Regression.Trainers.LightGbm(options);
 	}
-
-	public string[] Inputs
-	{
-		get => this.GetValue<string[]>();
-		set => this.SetValue(value);
-	}
-	#endregion
-}
-
-public class ConcatenatingEstimatorSettingsDriver : ConnectionSettingsDriver<ConcatenatingEstimatorSettings>
-{
-	#region 常量定义
-	internal const string NAME = "ML.Concatenating";
-	#endregion
-
-	#region 单例字段
-	public static readonly ConcatenatingEstimatorSettingsDriver Instance = new();
-	#endregion
-
-	#region 私有构造
-	private ConcatenatingEstimatorSettingsDriver() : base(NAME) { }
-	#endregion
 }

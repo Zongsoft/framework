@@ -31,7 +31,7 @@ using System;
 
 using Microsoft.ML;
 
-namespace Zongsoft.Learning;
+namespace Zongsoft.Learning.Transforms;
 
 public class ConcatenatingEstimator : IEstimatorBuilder<ConcatenatingEstimatorSettings>
 {

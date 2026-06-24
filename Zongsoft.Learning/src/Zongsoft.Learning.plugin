@@ -13,5 +13,12 @@
 	</manifest>
 
 	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="ML-TextFile" value="{static:Zongsoft.Learning.Data.TextFileBuilderSettingsDriver.Instance, Zongsoft.Learning}" />
+
+		<object name="ML-Concatenating" value="{static:Zongsoft.Learning.Transforms.ConcatenatingEstimatorSettingsDriver.Instance, Zongsoft.Learning}" />
+		<object name="ML-OneHotEncoding" value="{static:Zongsoft.Learning.Transforms.OneHotEncodingEstimatorSettingsDriver.Instance, Zongsoft.Learning}" />
+		<object name="ML-OneHotHashEncoding" value="{static:Zongsoft.Learning.Transforms.OneHotHashEncodingEstimatorSettingsDriver.Instance, Zongsoft.Learning}" />
+
+		<object name="ML-LightGbm" value="{static:Zongsoft.Learning.Trainers.LightGbmRegressionTrainerSettingsDriver.Instance, Zongsoft.Learning}" />
 	</extension>
 </plugin>
