@@ -28,23 +28,29 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 
-using Microsoft.ML;
+using Zongsoft.Configuration;
 
-namespace Zongsoft.Learning.Data;
+namespace Zongsoft.Learning;
 
-public class TextFileBuilder : IDataBuilder<TextFileBuilderSettings>
+public class Trainer
 {
-	public string Name => "TextFile";
-
-	public IDataView Build(MLContext context, TextFileBuilderSettings settings)
+	public Trainer(string name, string description = null)
 	{
-		var options = settings.GetOptions();
-
-		if(string.IsNullOrEmpty(settings?.FilePath))
-			throw new ArgumentException("Missing the data source file path.", nameof(settings.FilePath));
-
-		var source = new FileSource(settings.FilePath);
-		return context.Data.CreateTextLoader(options, source).Load(source);
+		ArgumentException.ThrowIfNullOrEmpty(name);
+		this.Name = name;
+		this.Description = description;
 	}
+
+	public string Name { get; }
+	public string Title { get; set; }
+	public string Description { get; set; }
+	public ITrainerBuilder Builder { get; }
+	public IConnectionSettingsDriver Driver { get; }
+}
+
+public class TrainerCollection() : KeyedCollection<string, Trainer>(StringComparer.OrdinalIgnoreCase)
+{
+	protected override string GetKeyForItem(Trainer trainer) => trainer.Name;
 }

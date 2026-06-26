@@ -31,24 +31,21 @@ using System;
 
 using Microsoft.ML;
 
-namespace Zongsoft.Learning.Transforms;
+namespace Zongsoft.Learning.Data;
 
-public class OneHotEncodingEstimator : ITrainerBuilder
+public class TextFileLoader : IDatasetLoader
 {
-	public string Name => "OneHotEncoding";
-
-	public IEstimator<ITransformer> Build(MLContext context, ITrainer trainer)
+	public IDataView Load(MLContext context, IDataset dataset)
 	{
-		ArgumentNullException.ThrowIfNull(trainer);
+		ArgumentNullException.ThrowIfNull(dataset);
 
-		var settings = OneHotEncodingEstimatorSettingsDriver.Instance.GetSettings(trainer.Settings);
-		if(settings.Columns == null || settings.Columns.Length == 0)
-			return null;
+		var settings = TextFileLoaderSettingsDriver.Instance.GetSettings(dataset.Settings);
+		var options = settings.GetOptions();
 
-		return context.Transforms.Categorical.OneHotEncoding(
-			settings.Columns,
-			settings.Kind,
-			settings.MaximumKeys,
-			settings.Ordinality);
+		if(string.IsNullOrEmpty(settings?.FilePath))
+			throw new ArgumentException("Missing the data source file path.", nameof(settings.FilePath));
+
+		var source = new FileSource(settings.FilePath);
+		return context.Data.CreateTextLoader(options, source).Load(source);
 	}
 }

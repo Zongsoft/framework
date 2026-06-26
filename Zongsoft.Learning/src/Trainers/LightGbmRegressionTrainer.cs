@@ -33,14 +33,15 @@ using Microsoft.ML;
 
 namespace Zongsoft.Learning.Trainers;
 
-public class LightGbmRegressionTrainer : IEstimatorBuilder<LightGbmRegressionTrainerSettings>
+public class LightGbmRegressionTrainer : ITrainerBuilder
 {
 	public string Name => "LightGbm";
-	public IEstimator<ITransformer> Build(MLContext context, LightGbmRegressionTrainerSettings settings)
-	{
-		if(settings == null)
-			throw new ArgumentNullException(nameof(settings));
 
+	public IEstimator<ITransformer> Build(MLContext context, ITrainer trainer)
+	{
+		ArgumentNullException.ThrowIfNull(trainer);
+
+		var settings = LightGbmRegressionTrainerSettingsDriver.Instance.GetSettings(trainer.Settings);
 		var options = settings.GetOptions();
 		return context.Regression.Trainers.LightGbm(options);
 	}

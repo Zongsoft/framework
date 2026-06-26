@@ -33,14 +33,15 @@ using Microsoft.ML;
 
 namespace Zongsoft.Learning.Transforms;
 
-public class OneHotHashEncodingEstimator : IEstimatorBuilder<OneHotHashEncodingEstimatorSettings>
+public class OneHotHashEncodingEstimator : ITrainerBuilder
 {
 	public string Name => "OneHotHashEncoding";
-	public IEstimator<ITransformer> Build(MLContext context, OneHotHashEncodingEstimatorSettings settings)
-	{
-		if(settings == null)
-			throw new ArgumentNullException(nameof(settings));
 
+	public IEstimator<ITransformer> Build(MLContext context, ITrainer trainer)
+	{
+		ArgumentNullException.ThrowIfNull(trainer);
+
+		var settings = OneHotHashEncodingEstimatorSettingsDriver.Instance.GetSettings(trainer.Settings);
 		if(settings.Columns == null || settings.Columns.Length == 0)
 			return null;
 

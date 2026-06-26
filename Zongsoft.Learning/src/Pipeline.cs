@@ -31,24 +31,33 @@ using System;
 
 using Microsoft.ML;
 
-namespace Zongsoft.Learning.Transforms;
+namespace Zongsoft.Learning;
 
-public class OneHotEncodingEstimator : ITrainerBuilder
+public class Pipeline : IPipelineBuilder
 {
-	public string Name => "OneHotEncoding";
+	public static readonly TrainerCatelogCollection Catalogs = new(null);
 
-	public IEstimator<ITransformer> Build(MLContext context, ITrainer trainer)
+	public IEstimator<ITransformer> Build(IPipeline pipeline) => this.Build(new MLContext(), pipeline);
+	public IEstimator<ITransformer> Build(MLContext context, IPipeline pipeline)
 	{
-		ArgumentNullException.ThrowIfNull(trainer);
+		ArgumentNullException.ThrowIfNull(context);
+		ArgumentNullException.ThrowIfNull(pipeline);
 
-		var settings = OneHotEncodingEstimatorSettingsDriver.Instance.GetSettings(trainer.Settings);
-		if(settings.Columns == null || settings.Columns.Length == 0)
-			return null;
+		IEstimator<ITransformer> result = null;
 
-		return context.Transforms.Categorical.OneHotEncoding(
-			settings.Columns,
-			settings.Kind,
-			settings.MaximumKeys,
-			settings.Ordinality);
+		foreach(var trainer in pipeline.Trainers)
+		{
+			var descriptor = Find(trainer.Name);
+			var estimator = descriptor.Builder.Build(context, trainer);
+
+			if(result == null)
+				result = estimator;
+			else
+				estimator.Append(estimator);
+		}
+
+		return result;
+
+		static Trainer Find(string name) => null;
 	}
 }

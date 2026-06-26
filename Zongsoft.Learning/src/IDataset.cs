@@ -29,12 +29,13 @@
 
 using System;
 
-using Microsoft.ML;
-
 namespace Zongsoft.Learning;
 
-public interface IDataBuilder<in TSettings> where TSettings : Zongsoft.Configuration.IConnectionSettings
+public interface IDataset
 {
 	string Name { get; }
-	IDataView Build(MLContext context, TSettings settings);
+	string Title { get; set; }
+	string Settings { get; set; }
+	string Description { get; set; }
+	DatasetFieldCollection Fields { get; }
 }

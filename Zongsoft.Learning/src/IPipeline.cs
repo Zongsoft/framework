@@ -28,27 +28,17 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-using Microsoft.ML;
+namespace Zongsoft.Learning;
 
-namespace Zongsoft.Learning.Transforms;
-
-public class OneHotEncodingEstimator : ITrainerBuilder
+public interface IPipeline
 {
-	public string Name => "OneHotEncoding";
+	string Name { get; }
+	string Title { get; set; }
+	string Settings { get; set; }
+	string Description { get; set; }
 
-	public IEstimator<ITransformer> Build(MLContext context, ITrainer trainer)
-	{
-		ArgumentNullException.ThrowIfNull(trainer);
-
-		var settings = OneHotEncodingEstimatorSettingsDriver.Instance.GetSettings(trainer.Settings);
-		if(settings.Columns == null || settings.Columns.Length == 0)
-			return null;
-
-		return context.Transforms.Categorical.OneHotEncoding(
-			settings.Columns,
-			settings.Kind,
-			settings.MaximumKeys,
-			settings.Ordinality);
-	}
+	IDataset Dataset { get; }
+	IEnumerable<ITrainer> Trainers { get; }
 }

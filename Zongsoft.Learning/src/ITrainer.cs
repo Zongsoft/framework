@@ -29,26 +29,12 @@
 
 using System;
 
-using Microsoft.ML;
+namespace Zongsoft.Learning;
 
-namespace Zongsoft.Learning.Transforms;
-
-public class OneHotEncodingEstimator : ITrainerBuilder
+public interface ITrainer
 {
-	public string Name => "OneHotEncoding";
-
-	public IEstimator<ITransformer> Build(MLContext context, ITrainer trainer)
-	{
-		ArgumentNullException.ThrowIfNull(trainer);
-
-		var settings = OneHotEncodingEstimatorSettingsDriver.Instance.GetSettings(trainer.Settings);
-		if(settings.Columns == null || settings.Columns.Length == 0)
-			return null;
-
-		return context.Transforms.Categorical.OneHotEncoding(
-			settings.Columns,
-			settings.Kind,
-			settings.MaximumKeys,
-			settings.Ordinality);
-	}
+	string Name { get; }
+	string Title { get; set; }
+	string Settings { get; set; }
+	string Description { get; set; }
 }

@@ -248,7 +248,7 @@ public class LightGbmRegressionTrainerSettings : ConnectionSettingsBase<LightGbm
 
 		public Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase GetOptions()
 		{
-			Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase options = this.Name switch
+			Microsoft.ML.Trainers.LightGbm.BoosterParameterBase.OptionsBase options = this.Name?.ToLowerInvariant() switch
 			{
 				"dart" => new Microsoft.ML.Trainers.LightGbm.DartBooster.Options(),
 				"goss" => new Microsoft.ML.Trainers.LightGbm.GossBooster.Options(),

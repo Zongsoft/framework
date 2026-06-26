@@ -33,8 +33,8 @@ using Microsoft.ML;
 
 namespace Zongsoft.Learning;
 
-public interface IEstimatorBuilder<in TSettings> where TSettings : Zongsoft.Configuration.IConnectionSettings
+public interface ITrainerBuilder
 {
 	string Name { get; }
-	IEstimator<ITransformer> Build(MLContext context, TSettings settings);
+	IEstimator<ITransformer> Build(MLContext context, ITrainer trainer);
 }

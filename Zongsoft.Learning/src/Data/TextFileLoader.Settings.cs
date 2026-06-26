@@ -38,11 +38,11 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Learning.Data;
 
-public class TextFileBuilderSettings : ConnectionSettingsBase<TextFileBuilderSettingsDriver, TextLoader.Options>
+public class TextFileLoaderSettings : ConnectionSettingsBase<TextFileLoaderSettingsDriver, TextLoader.Options>
 {
 	#region 构造函数
-	public TextFileBuilderSettings(TextFileBuilderSettingsDriver driver, string settings) : base(driver, settings) { }
-	public TextFileBuilderSettings(TextFileBuilderSettingsDriver driver, string name, string settings) : base(driver, name, settings) { }
+	public TextFileLoaderSettings(TextFileLoaderSettingsDriver driver, string settings) : base(driver, settings) { }
+	public TextFileLoaderSettings(TextFileLoaderSettingsDriver driver, string name, string settings) : base(driver, name, settings) { }
 	#endregion
 
 	#region 公共属性
@@ -160,17 +160,17 @@ public class TextFileBuilderSettings : ConnectionSettingsBase<TextFileBuilderSet
 	#endregion
 }
 
-public class TextFileBuilderSettingsDriver : ConnectionSettingsDriver<TextFileBuilderSettings>
+public class TextFileLoaderSettingsDriver : ConnectionSettingsDriver<TextFileLoaderSettings>
 {
 	#region 常量定义
 	internal const string NAME = "ML.TextFile";
 	#endregion
 
 	#region 单例字段
-	public static readonly TextFileBuilderSettingsDriver Instance = new();
+	public static readonly TextFileLoaderSettingsDriver Instance = new();
 	#endregion
 
 	#region 私有构造
-	private TextFileBuilderSettingsDriver() : base(NAME) { }
+	private TextFileLoaderSettingsDriver() : base(NAME) { }
 	#endregion
 }
