@@ -150,11 +150,54 @@ sorting ::=
 
 我们提供 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 这个 XML Schema 文件，用于给手写映射文件提供智能提示和校验。
 
+映射文件的根节点是 `schema`，每个 `container` 表示一个元数据命名空间。一般一个业务模块定义一个容器，其 `name` 与模块名保持一致。
+
+```xml
+<schema xmlns="http://schemas.zongsoft.com/data">
+    <container name="Discussions">
+        <entity name="Forum" table="Discussions_Forum">
+            <key>
+                <member name="SiteId" />
+                <member name="ForumId" />
+            </key>
+            <property name="SiteId" type="uint" nullable="false" />
+            <property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
+            <property name="GroupId" type="ushort" nullable="false" sortable="true" />
+            <property name="Name" type="string" length="50" nullable="false" />
+            <complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
+                <link port="SiteId" />
+                <link port="ForumId" />
+            </complexProperty>
+        </entity>
+    </container>
+</schema>
+```
+
+常用映射元素如下：
+
+- `entity` 定义实体到数据表的映射。`table` 是物理表名，`inherits` 指向父实体，`driver` 将实体限定到指定数据驱动，`immutable="true"` 表示除新增外不允许变更。
+- `property` 定义简单属性到字段的映射。常用属性包括 `type`、`field`、`nullable`、`length`、`precision`、`scale`、`default`、`sequence`、`sortable`、`immutable`。
+- `sequence="*"` 表示使用数据库内置自增或序列；`sequence="#"` 表示使用 Zongsoft 默认外部序号器；`sequence="#Name"` 表示指定名称的外部序号器；`sequence="#(ParentId)"` 表示按指定引用属性分组的外部序号器。
+- `complexProperty` 定义导航属性。`port` 指向目标实体，也可以指向目标实体的导航属性，譬如 `ForumUser:User`。`multiplicity` 支持 `?`、`!`、`*`；`link` 定义外键属性与当前实体的关联，`constraints` 可添加固定的导航过滤条件。
+- `command` 定义命名 SQL 命令或存储过程，可通过 `Execute`、`Execute<T>`、`ExecuteScalar` 调用。
+
+```xml
+<command name="Forum.GetStatistics" type="Text" mutability="None">
+    <parameter name="SiteId" type="uint" />
+    <parameter name="ForumId" type="ushort" />
+    <script driver="MySql"><![CDATA[
+        SELECT TotalThreads, TotalPosts
+        FROM Discussions_Forum
+        WHERE SiteId=@SiteId AND ForumId=@ForumId
+    ]]></script>
+</command>
+```
+
 
 > **启用映射文件的XML智能提示：**
-> 
+>
 > **方法一：** 在**业务模块**项目中添加一个名为“`{业务模块}.mapping`”的 XML 文件（譬如：[`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) 或 [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)）。打开该映射文件后，点击 **V**isual **S**tudio 的“XML”-“架构”菜单，在弹出的对话框中点击“添加”，选择 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 文件即可。
-> 
+>
 > **方法二：** 将 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 拷贝到 **V**isual **S**tudio 的 XML Schemas 模板目录中，譬如：
 > - **V**isual **S**tudio 2019 _(Enterprise Edition)_ <br />
 > 	`C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Xml\Schemas`
@@ -210,8 +253,10 @@ sorting ::=
 所有数据操作都通过[核心库](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 接口完成，支持下列操作：
 
 - 计数操作： `int Count(...)` 
+- 聚合操作： `TValue? Aggregate(...)`
 - 存在操作： `bool Exists(...)` 
 - 执行存储过程： `IEnumerable<T> Execute<T>(...)` `object ExecuteScalar(...)` 
+- 导入操作： `int Import(...)`
 - 删除操作： `int Delete(...)` 
 - 新增操作： `int Insert(...)` `int InsertMany(...)` 
 - 更新操作： `int Update(...)` `int UpdateMany(...)` 
@@ -377,6 +422,45 @@ this.DataAccess.Update<Order>(
 );
 ```
 
+<a name="condition"></a>
+### 条件
+
+`Condition` 是 `Select`、`Exists`、`Aggregate`、`Delete`、`Update`、`Upsert` 通用的条件表达对象。它支持等值、比较、`Like`、`Between`、`In`、`NotIn`、`Exists`、`NotExists` 等条件，可用 `&` 和 `|` 组合多个条件。
+
+```csharp
+var criteria =
+    Condition.Equal("SiteId", this.User.SiteId) &
+    Condition.Like("Title", "%Zongsoft%") &
+    Condition.Between("CreatedTime", Range.Create(DateTime.Today.AddDays(-7), DateTime.Today)) &
+    (
+        Condition.Equal("IsPinned", true) |
+        Condition.Equal("IsValued", true)
+    );
+
+var threads = this.DataAccess.Select<Thread>(criteria, "ThreadId,Title,CreatedTime");
+```
+
+对于搜索条件 DTO，可使用 `Criteria.Transform(...)` 将模型中已变更的成员转换成查询条件。`ConditionAttribute` 可用于重命名目标成员、指定运算符、忽略空值，或接入自定义条件转换器。
+
+```csharp
+public abstract class ThreadCriteria : CriteriaBase
+{
+    public abstract uint? SiteId { get; set; }
+
+    [Condition(ConditionOperator.Like)]
+    public abstract string Title { get; set; }
+
+    [Condition(ConditionOperator.Between, nameof(Thread.CreatedTime))]
+    public abstract Range<DateTime>? CreatedTime { get; set; }
+}
+
+var criteria = Criteria.Transform<ThreadCriteria>(
+    "siteId:1+title:%Zongsoft%+createdTime:(2026-01-01,2026-12-31)"
+);
+
+var threads = this.DataAccess.Select<Thread>(criteria);
+```
+
 <a name="usage-query"></a>
 ### 查询操作
 
@@ -398,6 +482,24 @@ var forum = this.DataAccess.Select<Forum>(
     Condition.Equal("SiteId", this.User.SiteId) &
     Condition.Equal("ForumId", 100),
     "SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
+```
+
+<a name="usage-query-exists"></a>
+#### 存在与聚合查询
+
+只需要判断记录是否存在时使用 `Exists`。只需要聚合值时，可使用 `Count`、`Sum`、`Average`、`Maximum`、`Minimum`、`Median`、`Deviation`、`Variance` 等扩展方法。
+
+```csharp
+var exists = this.DataAccess.Exists<Thread>(
+    Condition.Equal(nameof(Thread.ThreadId), threadId) &
+    Condition.Equal(nameof(Thread.Visible), true));
+
+var totalThreads = this.DataAccess.Count<Thread>(
+    Condition.Equal(nameof(Thread.ForumId), forumId));
+
+var totalViews = this.DataAccess.Sum<Thread, long>(
+    nameof(Thread.TotalViews),
+    Condition.Equal(nameof(Thread.ForumId), forumId));
 ```
 
 <a name="usage-query-2"></a>
@@ -582,7 +684,7 @@ var groups = this.DataAccess.Select<ForumGroup>(
 一对多导航属性经常需要过滤子集合，这类过滤就是导航约束。
 
 > 论坛(`Forum`)与论坛成员(`ForumUser`)是一对多关系，版主是论坛成员的一个子集。这个子集通过映射文件中的 `complexProperty/constraints` 表达。
-> 
+>
 > 在下面的示例中，[Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 实体的 `Users` 导航属性表示全部论坛成员，`Moderators` 导航属性只表示 `IsModerator` 为 `true` 的成员。
 
 ```xml
@@ -641,7 +743,7 @@ var groups = this.DataAccess.Select<ForumGroup>(
 2. 通过 `constraint` 约束筛选要包含的关联行。
 
 > 说明：版主列表并不需要暴露论坛成员的 `Permission` 字段，直接返回 [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) 会更简洁，也避免调用方再通过 `ForumUser.User` 跳转。因此 `Moderators` 设置为 `port="ForumUser:User"`。
-> 
+>
 > 对照上面的映射片段，可以看到 [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 类中 `Users` 和 `Moderators` 的属性类型不同：
 
 ```csharp
@@ -763,7 +865,7 @@ var histories = this.DataAccess.Select<History>(
     Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
     (
         Condition.Between("FirstViewedTime", DateTime.Today.AddDays(-30), DateTime.Now) |
-        Condition.Between("MostRecentViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
+        Condition.Between("LastViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
     )
 );
 
@@ -772,7 +874,7 @@ var histories = this.DataAccess.Select<History>(
     Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
     (
         Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
-        Condition.Between("MostRecentViewedTime", Range.Timing.Last(30, 'D'))
+        Condition.Between("LastViewedTime", Range.Timing.Last(30, 'D'))
     )
 );
 ```
@@ -787,7 +889,7 @@ FROM History h
 WHERE t.IsValued = @p1 AND
     (
         h.FirstViewedTime BETWEEN @p2 AND @p3 OR
-        h.MostRecentViewedTime BETWEEN @p4 AND @p5
+        h.LastViewedTime BETWEEN @p4 AND @p5
     );
 ```
 
@@ -846,6 +948,54 @@ WHERE
 当数据库字段类型无法直接转换为实体属性类型时，需要使用类型转换器。
 
 譬如 `Thread` 表的 `Tags` 字段类型是 `nvarchar`，而 [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) 实体的 `Tags` 属性是字符串数组。读写这个属性时就需要自定义转换。具体实现请参考 [TagsConverter](https://github.com/Zongsoft/discussions/blob/main/src/Models/TagsConverter.cs) 以及 [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) 中的 `Tags` 属性定义。
+
+<a name="usage-execute"></a>
+### 执行操作
+
+`Execute` 用于执行映射文件中定义的命名 `command`。适合 SQL 语句、存储过程，以及无法自然归入某个实体 CRUD 操作的命令。`mutability="None"` 会被视为只读命令；`Insert`、`Update`、`Delete`、`Upsert` 会被视为写命令，并参与读写数据源选择。
+
+```csharp
+public sealed class ForumStatistics
+{
+    public int TotalThreads { get; set; }
+    public int TotalPosts { get; set; }
+}
+
+var rows = this.DataAccess.Execute<ForumStatistics>(
+    "Forum.GetStatistics",
+    new []
+    {
+        new Parameter("SiteId", this.User.SiteId),
+        new Parameter("ForumId", forumId),
+    });
+
+var statistics = rows.FirstOrDefault();
+```
+
+如果是存储过程，请在映射文件中设置 `type="Procedure"`。输出参数和返回参数会在命令执行后写回传入的 `Parameter` 对象。
+
+```xml
+<command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="Procedure" mutability="Update">
+    <parameter name="SiteId" type="uint" />
+    <parameter name="ForumId" type="uint" />
+    <parameter name="Total" type="int" direction="out" />
+</command>
+```
+
+```csharp
+var total = Parameter.Output("Total");
+
+this.DataAccess.Execute(
+    "Forum.RefreshStatistics",
+    new []
+    {
+        new Parameter("SiteId", this.User.SiteId),
+        new Parameter("ForumId", forumId),
+        total,
+    });
+
+var totalValue = total.Value;
+```
 
 <a name="usage-delete"></a>
 ### 删除操作
@@ -943,6 +1093,24 @@ INSERT INTO Forum (SiteId,ForumId,GroupId,Name,...) VALUES (@p1,@p2,@p3,@p4,...)
 
 /* 子表插入语句按集合项执行多次。 */
 INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (@p1,@p2,@p3,@p4,@p5);
+```
+
+<a name="usage-import"></a>
+### 导入操作
+
+`Import` 用于批量导入数据。调用时传入目标实体名、数据集合，以及需要导入的成员列表。
+
+```csharp
+var users = new []
+{
+    new { SiteId = this.User.SiteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
+    new { SiteId = this.User.SiteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
+};
+
+var count = this.DataAccess.Import(
+    "ForumUser",
+    users,
+    "SiteId,ForumId,UserId,Permission".Split(','));
 ```
 
 <a name="usage-update"></a>
@@ -1084,7 +1252,7 @@ this.DataAccess.Upsert<History>(
         UserId = 100,
         ThreadId = 2001,
         ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-        MostRecentViewedTime = DateTime.Now,
+        LastViewedTime = DateTime.Now,
     }
 );
 ```
@@ -1093,17 +1261,81 @@ this.DataAccess.Upsert<History>(
 
 ```sql
 /* MySQL 语法 */
-INSERT INTO History (UserId,ThreadId,ViewedCount,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4)
-ON DUPLICATE KEY UPDATE ViewedCount=ViewedCount + @p3, MostRecentViewedTime=@p4;
+INSERT INTO History (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4)
+ON DUPLICATE KEY UPDATE ViewedCount=ViewedCount + @p3, LastViewedTime=@p4;
 
 /* SQL Server 或 PostgreSQL 支持 MERGE 语句的数据库语法 */
 MERGE History AS target
-USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,MostRecentViewedTime)
+USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,LastViewedTime)
 ON (target.UserId=source.UserId AND target.ThreadId=source.ThreadId)
 WHEN MATCHED THEN
-    UPDATE SET target.ViewedCount=target.ViewedCount+@p3, MostRecentViewedTime=@p4
+    UPDATE SET target.ViewedCount=target.ViewedCount+@p3, LastViewedTime=@p4
 WHEN NOT MATCHED THEN
-    INSERT (UserId,ThreadId,ViewedCount,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4);
+    INSERT (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4);
+```
+
+<a name="usage-returning"></a>
+### 返回写入值
+
+新增、更新、增改选项可以向数据库提供程序请求返回值。它适合获取自增值、生成值、更新后的计数值等。该能力只有在当前驱动支持返回值时才可用。
+
+```csharp
+var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
+
+this.DataAccess.Update<Thread>(
+    new {
+        TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
+    },
+    Condition.Equal(nameof(Thread.ThreadId), threadId),
+    options);
+
+if(options.Returning.Rows.Count > 0 &&
+   options.Returning.Rows[0].TryGetValue(nameof(Thread.TotalViews), ReturningKind.Newer, out var value))
+{
+    var totalViews = Convert.ToInt64(value);
+}
+```
+
+对于简单计数器，可直接使用 `Increase` 和 `Decrease` 辅助方法：
+
+```csharp
+var totalViews = this.DataAccess.Increase<Thread>(
+    nameof(Thread.TotalViews),
+    Condition.Equal(nameof(Thread.ThreadId), threadId));
+```
+
+<a name="usage-options"></a>
+### 选项、事件与事务
+
+每类操作都有对应的选项对象。查询选项可设置 `Distinct`，或抑制延迟加载、验证器；写入选项可抑制验证器、忽略新增或增改约束、设置序号器行为，以及请求返回写入值。
+
+```csharp
+var threads = this.DataAccess.Select<Thread>(
+    Condition.Equal(nameof(Thread.ForumId), forumId),
+    "ThreadId,Title",
+    DataSelectOptions.Distinct());
+```
+
+每类操作也都有前后回调和对应的 `IDataAccess` 事件，譬如 `Selecting`/`Selected`、`Inserting`/`Inserted`、`Executing`/`Executed`。注册到 `IDataAccess.Filters` 的过滤器会在前置事件之后、数据提供程序执行之前运行，适合承载通用横切逻辑。
+
+当多个操作必须共享同一个环境数据会话，并一起提交或回滚时，可使用 `Transaction`。
+
+```csharp
+using var transaction = Transaction.ReadCommitted();
+
+this.DataAccess.Update<Thread>(
+    new { Approved = true, ApprovedTime = DateTime.Now },
+    Condition.Equal(nameof(Thread.ThreadId), threadId));
+
+this.DataAccess.Upsert<History>(new {
+    UserId = this.User.UserId,
+    ThreadId = threadId,
+    ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
+    FirstViewedTime = DateTime.Now,
+    LastViewedTime = DateTime.Now,
+});
+
+transaction.Commit();
 ```
 
 <a name="usage-other"></a>

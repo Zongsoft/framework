@@ -150,18 +150,61 @@ A data mapping file is an XML file with the `.mapping` extension. It defines the
 
 The [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) XML Schema file provides IntelliSense and validation for hand-written mapping files.
 
+The mapping file root is `schema`, and each `container` represents one metadata namespace. Most business modules have one container whose `name` matches the module name.
+
+```xml
+<schema xmlns="http://schemas.zongsoft.com/data">
+    <container name="Discussions">
+        <entity name="Forum" table="Discussions_Forum">
+            <key>
+                <member name="SiteId" />
+                <member name="ForumId" />
+            </key>
+            <property name="SiteId" type="uint" nullable="false" />
+            <property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
+            <property name="GroupId" type="ushort" nullable="false" sortable="true" />
+            <property name="Name" type="string" length="50" nullable="false" />
+            <complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
+                <link port="SiteId" />
+                <link port="ForumId" />
+            </complexProperty>
+        </entity>
+    </container>
+</schema>
+```
+
+Common mapping elements:
+
+- `entity` maps an application entity to a table. `table` is the physical table name, `inherits` points to a parent entity, `driver` limits the entity to a specific data driver, and `immutable="true"` makes the entity read-only except for insert operations.
+- `property` maps a scalar member to a field. Important attributes include `type`, `field`, `nullable`, `length`, `precision`, `scale`, `default`, `sequence`, `sortable`, and `immutable`.
+- `sequence="*"` means the database built-in identity/sequence is used. `sequence="#"` means the Zongsoft default external sequencer is used. `sequence="#Name"` means a named external sequencer. `sequence="#(ParentId)"` means an external sequencer grouped by the specified reference property.
+- `complexProperty` defines a navigation property. Its `port` points to the target entity, or to a target entity's navigation property such as `ForumUser:User`. `multiplicity` supports `?`, `!`, and `*`; `link` maps foreign key properties to the current entity, and `constraints` add fixed navigation filters.
+- `command` defines a named SQL command or stored procedure. Commands are executed through `Execute`, `Execute<T>`, or `ExecuteScalar`.
+
+```xml
+<command name="Forum.GetStatistics" type="Text" mutability="None">
+    <parameter name="SiteId" type="uint" />
+    <parameter name="ForumId" type="ushort" />
+    <script driver="MySql"><![CDATA[
+        SELECT TotalThreads, TotalPosts
+        FROM Discussions_Forum
+        WHERE SiteId=@SiteId AND ForumId=@ForumId
+    ]]></script>
+</command>
+```
+
 
 > **Enable XML IntelliSense for mapping files:**
-> 
+>
 > **Method 1：** Add an XML file named "`{module}.mapping`" to the business module project(for example: [`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) or [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)). Open the mapping file in **V**isual **S**tudio, choose "XML" -> "Schemas", click "Add", and select [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd).
-> 
+>
 > **Method 2：** Copy [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) to the XML Schemas template directory in Visual Studio, for example:
 > - **V**isual **S**tudio 2019 _(Enterprise Edition)_ <br />
 > 	`C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Xml\Schemas`
 
 
 > Although some developers like generating mapping files, we recommend writing them by hand:
-> 
+>
 > - Data structures and relationships are the foundation of a system. Database tables are their physical form, and mapping files describe how application entities match those tables.
 > - Mapping files should be maintained by the system architect or module owner. Settings such as `inherits`, `immutable`, `sortable`, `sequence`, and navigation properties directly affect application code.
 
@@ -211,8 +254,10 @@ The connection setting name must match the `DataAccess` name. One `DataAccess` c
 All data operations go through the [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) interface in [Zongsoft.Core](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core). It supports these operations:
 
 - `int Count(...)`
+- `TValue? Aggregate(...)`
 - `bool Exists(...)`
 - `IEnumerable<T> Execute<T>(...)` `object ExecuteScalar(...)`
+- `int Import(...)`
 - `int Delete(...)`
 - `int Insert(...)` `int InsertMany(...)`
 - `int Update(...)` `int UpdateMany(...)`
@@ -377,6 +422,45 @@ this.DataAccess.Update<Order>(
 );
 ```
 
+<a name="condition"></a>
+### Condition
+
+`Condition` is the common expression object used by `Select`, `Exists`, `Aggregate`, `Delete`, `Update`, and `Upsert`. It supports equality, comparison, `Like`, `Between`, `In`, `NotIn`, `Exists`, and `NotExists`. Use `&` and `|` to combine conditions.
+
+```csharp
+var criteria =
+    Condition.Equal("SiteId", this.User.SiteId) &
+    Condition.Like("Title", "%Zongsoft%") &
+    Condition.Between("CreatedTime", Range.Create(DateTime.Today.AddDays(-7), DateTime.Today)) &
+    (
+        Condition.Equal("IsPinned", true) |
+        Condition.Equal("IsValued", true)
+    );
+
+var threads = this.DataAccess.Select<Thread>(criteria, "ThreadId,Title,CreatedTime");
+```
+
+For search DTOs, use `Criteria.Transform(...)` to turn changed model members into conditions. `ConditionAttribute` can rename the target member, force an operator, ignore empty values, or plug in a custom converter.
+
+```csharp
+public abstract class ThreadCriteria : CriteriaBase
+{
+    public abstract uint? SiteId { get; set; }
+
+    [Condition(ConditionOperator.Like)]
+    public abstract string Title { get; set; }
+
+    [Condition(ConditionOperator.Between, nameof(Thread.CreatedTime))]
+    public abstract Range<DateTime>? CreatedTime { get; set; }
+}
+
+var criteria = Criteria.Transform<ThreadCriteria>(
+    "siteId:1+title:%Zongsoft%+createdTime:(2026-01-01,2026-12-31)"
+);
+
+var threads = this.DataAccess.Select<Thread>(criteria);
+```
+
 <a name="usage-query"></a>
 ### Query operation
 
@@ -399,6 +483,24 @@ var forum = this.DataAccess.Select<Forum>(
     Condition.Equal("SiteId", this.User.SiteId) &
     Condition.Equal("ForumId", 100),
     "SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
+```
+
+<a name="usage-query-exists"></a>
+#### Exists and aggregate query
+
+Use `Exists` when you only need to know whether a row exists. Use `Count`, `Sum`, `Average`, `Maximum`, `Minimum`, `Median`, `Deviation`, or `Variance` extension methods when you only need aggregate values.
+
+```csharp
+var exists = this.DataAccess.Exists<Thread>(
+    Condition.Equal(nameof(Thread.ThreadId), threadId) &
+    Condition.Equal(nameof(Thread.Visible), true));
+
+var totalThreads = this.DataAccess.Count<Thread>(
+    Condition.Equal(nameof(Thread.ForumId), forumId));
+
+var totalViews = this.DataAccess.Sum<Thread, long>(
+    nameof(Thread.TotalViews),
+    Condition.Equal(nameof(Thread.ForumId), forumId));
 ```
 
 <a name="usage-query-2"></a>
@@ -584,7 +686,7 @@ var groups = this.DataAccess.Select<ForumGroup>(
 For one-to-many navigation properties, you often need to filter the child collection. This is called a navigation constraint.
 
 > A forum(`Forum`) has many forum members(`ForumUser`). Moderators are a subset of those forum members, and this subset is defined with `complexProperty/constraints` in the mapping file.
-> 
+>
 > In the example below, the `Users` navigation property of [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) represents all forum members, while `Moderators` represents only the members whose `IsModerator` field is `true`.
 
 ```xml
@@ -644,7 +746,7 @@ Sometimes a navigation property should return the target of another navigation p
 2. Add constraints to decide which associated rows are included.
 
 > Note: A moderator does not need to expose the forum member's `Permission` field. Returning [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) is simpler than returning `ForumUser` and then reading `ForumUser.User`. Therefore `Moderators` uses `port="ForumUser:User"`.
-> 
+>
 > Compare the `Users` and `Moderators` property types in the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) class:
 
 ```csharp
@@ -765,7 +867,7 @@ var histories = this.DataAccess.Select<History>(
     Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
     (
         Condition.Between("FirstViewedTime", DateTime.Today.AddDays(-30), DateTime.Now) |
-        Condition.Between("MostRecentViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
+        Condition.Between("LastViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
     )
 );
 
@@ -774,7 +876,7 @@ var histories = this.DataAccess.Select<History>(
     Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
     (
         Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
-        Condition.Between("MostRecentViewedTime", Range.Timing.Last(30, 'D'))
+        Condition.Between("LastViewedTime", Range.Timing.Last(30, 'D'))
     )
 );
 ```
@@ -789,7 +891,7 @@ FROM History h
 WHERE t.IsValued = @p1 AND
     (
         h.FirstViewedTime BETWEEN @p2 AND @p3 OR
-        h.MostRecentViewedTime BETWEEN @p4 AND @p5
+        h.LastViewedTime BETWEEN @p4 AND @p5
     );
 ```
 
@@ -849,6 +951,54 @@ Use a type converter when a database field type cannot be directly converted to 
 
 For example, the `Tags` field in the `Thread` table is `nvarchar`, but the `Tags` property of the [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) model is a **string array**. Reading and writing this property requires custom conversion. See [TagsConverter](https://github.com/Zongsoft/discussions/blob/main/src/Models/TagsConverter.cs) and the `Tags` property on [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs).
 
+
+<a name="usage-execute"></a>
+### Execute operation
+
+`Execute` runs a named `command` defined in a mapping file. Use it for SQL statements, stored procedures, and commands that do not naturally map to one entity operation. `mutability="None"` is treated as read-only, while `Insert`, `Update`, `Delete`, and `Upsert` are treated as write commands and participate in read/write source selection.
+
+```csharp
+public sealed class ForumStatistics
+{
+    public int TotalThreads { get; set; }
+    public int TotalPosts { get; set; }
+}
+
+var rows = this.DataAccess.Execute<ForumStatistics>(
+    "Forum.GetStatistics",
+    new []
+    {
+        new Parameter("SiteId", this.User.SiteId),
+        new Parameter("ForumId", forumId),
+    });
+
+var statistics = rows.FirstOrDefault();
+```
+
+For stored procedures, define `type="Procedure"` in the mapping file. Output and return parameters are written back to the supplied `Parameter` objects after execution.
+
+```xml
+<command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="Procedure" mutability="Update">
+    <parameter name="SiteId" type="uint" />
+    <parameter name="ForumId" type="uint" />
+    <parameter name="Total" type="int" direction="out" />
+</command>
+```
+
+```csharp
+var total = Parameter.Output("Total");
+
+this.DataAccess.Execute(
+    "Forum.RefreshStatistics",
+    new []
+    {
+        new Parameter("SiteId", this.User.SiteId),
+        new Parameter("ForumId", forumId),
+        total,
+    });
+
+var totalValue = total.Value;
+```
 
 <a name="usage-delete"></a>
 ### Delete operation
@@ -945,6 +1095,24 @@ INSERT INTO Forum (SiteId,ForumId,GroupId,Name,...) VALUES (@p1,@p2,@p3,@p4,...)
 
 /* Insert child rows multiple times. */
 INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (@p1,@p2,@p3,@p4,@p5);
+```
+
+<a name="usage-import"></a>
+### Import operation
+
+`Import` is used for bulk data import. Pass the target entity name, the data collection, and the member list that should be imported.
+
+```csharp
+var users = new []
+{
+    new { SiteId = this.User.SiteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
+    new { SiteId = this.User.SiteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
+};
+
+var count = this.DataAccess.Import(
+    "ForumUser",
+    users,
+    "SiteId,ForumId,UserId,Permission".Split(','));
 ```
 
 <a name="usage-update"></a>
@@ -1086,7 +1254,7 @@ this.DataAccess.Upsert<History>(
         UserId = 100,
         ThreadId = 2001,
         ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-        MostRecentViewedTime = DateTime.Now,
+        LastViewedTime = DateTime.Now,
     }
 );
 ```
@@ -1095,17 +1263,81 @@ The upsert above roughly generates SQL like this:
 
 ```sql
 /* MySQL syntax */
-INSERT INTO History (UserId,ThreadId,ViewedCount,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4)
-ON DUPLICATE KEY UPDATE ViewedCount=ViewedCount + @p3, MostRecentViewedTime=@p4;
+INSERT INTO History (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4)
+ON DUPLICATE KEY UPDATE ViewedCount=ViewedCount + @p3, LastViewedTime=@p4;
 
 /* SQL syntax for SQL Server or PostgreSQL support for MERGE statement */
 MERGE History AS target
-USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,MostRecentViewedTime)
+USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,LastViewedTime)
 ON (target.UserId=source.UserId AND target.ThreadId=source.ThreadId)
 WHEN MATCHED THEN
-    UPDATE SET target.ViewedCount=target.ViewedCount+@p3, MostRecentViewedTime=@p4
+    UPDATE SET target.ViewedCount=target.ViewedCount+@p3, LastViewedTime=@p4
 WHEN NOT MATCHED THEN
-    INSERT (UserId,ThreadId,ViewedCount,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4);
+    INSERT (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4);
+```
+
+<a name="usage-returning"></a>
+### Returning values
+
+Insert, update, and upsert options can request returned values from the database provider. This is useful for identity values, generated values, and updated counters. The feature is available only when the current driver supports returning values.
+
+```csharp
+var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
+
+this.DataAccess.Update<Thread>(
+    new {
+        TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
+    },
+    Condition.Equal(nameof(Thread.ThreadId), threadId),
+    options);
+
+if(options.Returning.Rows.Count > 0 &&
+   options.Returning.Rows[0].TryGetValue(nameof(Thread.TotalViews), ReturningKind.Newer, out var value))
+{
+    var totalViews = Convert.ToInt64(value);
+}
+```
+
+For simple counters, the `Increase` and `Decrease` helpers wrap this pattern:
+
+```csharp
+var totalViews = this.DataAccess.Increase<Thread>(
+    nameof(Thread.TotalViews),
+    Condition.Equal(nameof(Thread.ThreadId), threadId));
+```
+
+<a name="usage-options"></a>
+### Options, events, and transactions
+
+All operations have option objects. Select options can enable `Distinct` or suppress lazy loading/validation. Mutation options can suppress validation, ignore insert/upsert constraints, configure sequence handling, and request returned values.
+
+```csharp
+var threads = this.DataAccess.Select<Thread>(
+    Condition.Equal(nameof(Thread.ForumId), forumId),
+    "ThreadId,Title",
+    DataSelectOptions.Distinct());
+```
+
+Every operation also has before/after callbacks and matching `IDataAccess` events, such as `Selecting`/`Selected`, `Inserting`/`Inserted`, and `Executing`/`Executed`. Filters registered in `IDataAccess.Filters` run between the before event and the provider execution, which is the common place for cross-cutting behaviors.
+
+Use `Transaction` when several operations must share one ambient data session and commit or rollback together.
+
+```csharp
+using var transaction = Transaction.ReadCommitted();
+
+this.DataAccess.Update<Thread>(
+    new { Approved = true, ApprovedTime = DateTime.Now },
+    Condition.Equal(nameof(Thread.ThreadId), threadId));
+
+this.DataAccess.Upsert<History>(new {
+    UserId = this.User.UserId,
+    ThreadId = threadId,
+    ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
+    FirstViewedTime = DateTime.Now,
+    LastViewedTime = DateTime.Now,
+});
+
+transaction.Commit();
 ```
 
 <a name="usage-other"></a>
