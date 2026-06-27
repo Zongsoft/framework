@@ -39,7 +39,8 @@ SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/main/Zo
 PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
 SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
 DuckDB | [/drivers/duckdb](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/duckdb) | _**A**vailable_ |
-InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _Planning_ |
+ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/clickhouse) | _**A**vailable_ |
+InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _**A**vailable_ |
 TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
 > 提示：如果需要未实现的驱动或商业技术支持，请联系我们([zongsoft@qq.com](mailto:zongsoft@qq.com))。
@@ -48,8 +49,9 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 <a name="environment"></a>
 ### 开发环境
 
-- .NET Framework 4.6+
-- .NET Standard 2.0+<br />
+- .NET 8.0
+- .NET 9.0
+- .NET 10.0<br />
 
 <a name="download"></a>
 ## 下载
@@ -130,7 +132,7 @@ sorting ::=
 ```graphql
 *, Users:1{*}
 ```
-> 表示所有简单(标量)属性和`Users`导航属性集 _（一对多）_，对该属性集进行分页（第1页/每页大小为默认值）
+> 表示所有简单(标量)属性和`Users`导航属性集 _（一对多）_，对该属性集进行分页（第1页/每页1条）。如果要表示第1页且使用默认页大小，请写作 `Users:1/?{*}`。
 
 ```graphql
 *, Users:1/20{*}
@@ -168,7 +170,7 @@ sorting ::=
 <a name="connection"></a>
 ## 连接配置
 
-数据连接配置项的名称与 `DataAccess` 的名称相匹配；一个 `DataAccess` 可同时具有多个数据源，不同数据源的连接配置项的名称以冒号`:`分隔，冒号左边为 `DataAccess` 的名称，冒号右边即为不同的数据源标识，这主要应用于读写分离的方案中。
+数据连接配置项的名称与 `DataAccess` 的名称相匹配；一个 `DataAccess` 可同时具有多个数据源，不同数据源的连接配置项的名称以井号 `#` 分隔，井号左边为 `DataAccess` 的名称，井号右边即为不同的数据源标识，这主要应用于读写分离的方案中。
 
 > - **MySQL** 连接字符串的参考：https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
 > - **ADO.NET** 连接字符串的语法：https://docs.microsoft.com/zh-cn/dotnet/framework/data/adonet/connection-string-syntax
@@ -177,9 +179,9 @@ sorting ::=
 ```xml
 <configuration>
     <option path="/Data">
-        <connectionSettings default="Automao">
-            <connectionSetting connectionSetting.name="Automao" driver="MySql"
-                               value="server=127.0.0.1;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+        <connectionSettings default="Discussions">
+            <connectionSetting connectionSetting.name="Discussions" driver="MySql"
+                               value="server=127.0.0.1;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
         </connectionSettings>
     </option>
 </configuration>
@@ -190,14 +192,14 @@ sorting ::=
 <configuration>
     <option path="/Data">
         <connectionSettings>
-            <connectionSetting connectionSetting.name="Automao:master" driver="MySql" mode="WriteOnly"
-                               value="server=192.168.0.10;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Automao:slave_1" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.11;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Automao:slave_2" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.12;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Automao:slave_3" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.13;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Discussions#master" driver="MySql" mode="WriteOnly"
+                               value="server=192.168.0.10;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Discussions#slave_1" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.11;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Discussions#slave_2" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.12;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Discussions#slave_3" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.13;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
         </connectionSettings>
     </option>
 </configuration>
@@ -414,7 +416,7 @@ var forum = this.DataAccess.Select<Forum>(
 ```csharp
 var email = this.DataAccess.Select<string>("UserProfile",
     Condition.Equal("UserId", this.User.UserId),
-    "Email" // 通过 schmea 参数显式指定只获取“Email”字段值，该字段为字符串类型
+    "Email" // 通过 schema 参数显式指定只获取“Email”字段值，该字段为字符串类型
 ).FirstOrDefault();
 
 /* 返回标量集(IEnumerable<int>) */
@@ -438,7 +440,7 @@ struct UserToken
 
 /*
  * 注：该方法的 schema 参数可以省略或为空，实际效果一样。
- * 因为查询方法的返回字段集默认取 schmea 与返回实体类型的属性和字段集的交集。
+ * 因为查询方法的返回字段集默认取 schema 与返回实体类型的属性和字段集的交集。
  */
 var tokens = this.DataAccess.Select<UserToken>(
     "UserProfile",
@@ -468,7 +470,7 @@ var tokens = this.DataAccess.Select<UserToken>(
 ```csharp
 /*
  * 1) 通过泛型参数指定返回实体类型为字典。
- * 2) 通过 shcmea 参数显式指定返回的字段集，如果省略或者为星号(*)则默认返回所有字段。
+ * 2) 通过 schema 参数显式指定返回的字段集，如果省略或者为星号(*)则默认返回所有字段。
  */
 var items = this.DataAccess.Select<IDictionary<string, object>>(
     "UserProfile",
@@ -516,8 +518,8 @@ var threads = this.DataAccess.Select<Thread>(
 
 /*
  * 查询方法调用后，paging 变量即为分页结果：
- * paging.PageCount 表示满足条件的总页数
- * paging.TotalCount 表示满足条件的总记录数
+ * paging.Count 表示满足条件的总页数
+ * paging.Total 表示满足条件的总记录数
  */
 ```
 
@@ -530,7 +532,7 @@ var threads = this.DataAccess.Select<Thread>(
 var threads = this.DataAccess.Select<Thread>(
     Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
     Condition.Equal(nameof(Thread.ForumId), 100),
-    Paging.Disable, /* 此处显式指定为不分页（当然你也可以指定为分页） */
+    Paging.Disabled, /* 此处显式指定为不分页（当然你也可以指定为分页） */
     Sorting.Descending("TotalViews"),   // 1.倒序：累计阅读数
     Sorting.Descending("TotalReplies"), // 2.倒序：累计回帖数
     Sorting.Ascending("CreatedTime")    // 3.正序：创建时间
@@ -586,7 +588,7 @@ var groups = this.DataAccess.Select<ForumGroup>(
 > 如下面代码所示， [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 实体的 `Users` 导航属性表示论坛成员的全集，而 `Moderators` 导航属性为论坛成员的一个子集，它们均关联到 `ForumUser` 实体。
 
 ```xml
-<entity name="Forum" table="Community_Forum">
+<entity name="Forum" table="Discussions_Forum">
 	<key>
 		<member name="SiteId" />
 		<member name="ForumId" />
@@ -597,14 +599,14 @@ var groups = this.DataAccess.Select<ForumGroup>(
 	<property name="GroupId" type="ushort" nullable="false" />
 	<property name="Name" type="string" length="50" nullable="false" />
 
-	<complexProperty name="Users" role="ForumUser" multiplicity="*" immutable="false">
-		<link name="SiteId" role="SiteId" />
-		<link name="ForumId" role="ForumId" />
+	<complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
+		<link port="SiteId" />
+		<link port="ForumId" />
 	</complexProperty>
 
-	<complexProperty name="Moderators" role="ForumUser:User" multiplicity="*">
-		<link name="SiteId" role="SiteId" />
-		<link name="ForumId" role="ForumId" />
+	<complexProperty name="Moderators" port="ForumUser:User" multiplicity="*">
+		<link port="SiteId" />
+		<link port="ForumId" />
 
 		<!-- 导航属性的约束集 -->
 		<constraints>
@@ -613,7 +615,7 @@ var groups = this.DataAccess.Select<ForumGroup>(
 	</complexProperty>
 </entity>
 
-<entity name="ForumUser" table="Community_ForumUser">
+<entity name="ForumUser" table="Discussions_ForumUser">
 	<key>
 		<member name="SiteId" />
 		<member name="ForumId" />
@@ -626,8 +628,8 @@ var groups = this.DataAccess.Select<ForumGroup>(
 	<property name="Permission" type="byte" nullable="false" />
 	<property name="IsModerator" type="bool" nullable="false" />
 
-	<complexProperty name="User" role="UserProfile" multiplicity="!">
-		<link name="UserId" role="UserId" />
+	<complexProperty name="User" port="UserProfile" multiplicity="!">
+		<link port="UserId" />
 	</complexProperty>
 </entity>
 ```
@@ -637,10 +639,10 @@ var groups = this.DataAccess.Select<ForumGroup>(
 
 即指向关联实体中的另一个导航属性，它通常需要搭配使用导航约束进行过滤。以上面映射文件中的 `Forum` 实体的 `Moderators` 导航(复合)属性为例：
 
-1. 指定该复合属性的 `role` 特性的冒号语法：冒号左边为关联的实体名，冒号右边为对应的目标导航属性。
+1. 指定该复合属性的 `port` 特性的冒号语法：冒号左边为关联的实体名，冒号右边为对应的目标导航属性。
 2. 定义该复合属性的 `constraint` 约束条件。
 
-> 说明：由于版主不受论坛成员的 `Permission` 限制，所以定义版主的实体类型为 [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) 会更加简洁易用（避免了再通过 `ForumUser.User` 进行跳转导航），故而设置 `Moderators` 导航属性的 `role` 为 _`"ForumUser:User"`_ 即可表达这种需求。
+> 说明：由于版主不受论坛成员的 `Permission` 限制，所以定义版主的实体类型为 [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) 会更加简洁易用（避免了再通过 `ForumUser.User` 进行跳转导航），故而设置 `Moderators` 导航属性的 `port="ForumUser:User"` 即可表达这种需求。
 > 
 > 以上面的数据映射片段为例，感受下 [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 类的 `Users` 和 `Moderators` 属性类型的不同。
 
@@ -796,12 +798,12 @@ WHERE t.IsValued = @p1 AND
 
 一对多的导航属性的条件过滤对应为SQL的子查询，使用 `Exists` 运算符进行表达。
 
-> 下面代码表示获取当前用户所属站点下，论坛可见性为“站内用户(**I**nternal)”或“所有用户(**P**ublic)”的论坛集，如果论坛可见性为“指定用户(**S**pecified)”的话，则判断当前用户是否为版主或具有论坛成员权限。
+> 下面代码表示获取当前用户所属站点下，论坛可见性为“站内用户(**I**nternal)”或“所有用户(**A**ll)”的论坛集，如果论坛可见性为“指定用户(**S**pecified)”的话，则判断当前用户是否为版主或具有论坛成员权限。
 
 ```csharp
 var forums = this.DataAccess.Select<Forum>(
     Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.In("Visibility", Visibility.Internal, Visibility.Public) |
+    Condition.In("Visibility", Visibility.Internal, Visibility.All) |
     (
         Condition.Equal("Visibility", Visibility.Specified) &
         Condition.Exists("Users",
@@ -992,7 +994,7 @@ this.DataAccess.Update<UserProfile>(
 
 ```csharp
 /*
- * 通过 schmea 参数显式指定只修改 Name, Gender 两个字段，
+ * 通过 schema 参数显式指定只修改 Name, Gender 两个字段，
  * 其他字段不管有没有发生更改都不予修改。
  */
 this.DataAccess.Update<UserProfile>(
@@ -1001,7 +1003,7 @@ this.DataAccess.Update<UserProfile>(
 );
 
 /*
- * 通过 schmea 参数指定可以修改所有字段，但是 CreatorId 和 CreatedTime 两个字段不予修改，
+ * 通过 schema 参数指定可以修改所有字段，但是 CreatorId 和 CreatedTime 两个字段不予修改，
  * 就算 user 变量指向的实体对象包含并更改了这两个属性值，也不会生成它们的设置子句。
  */
 this.DataAccess.Update<UserProfile>(
@@ -1050,21 +1052,21 @@ UPDATE T SET
     T.[Approved]=@p1,
     T.[ApprovedTime]=@p2
 OUTPUT DELETED.PostId INTO #TMP
-FROM [Community_Thread] AS T
-    LEFT JOIN [Community_Forum] AS T1 ON /* Forum */
+FROM [Discussions_Thread] AS T
+    LEFT JOIN [Discussions_Forum] AS T1 ON /* Forum */
         T1.[SiteId]=T.[SiteId] AND
         T1.[ForumId]=T.[ForumId]
 WHERE
     T.[ThreadId]=@p3 AND
     T.[Approved]=@p4 AND
     T.[SiteId]=@p5 AND EXISTS (
-        SELECT [SiteId],[ForumId] FROM [Community_ForumUser]
+        SELECT [SiteId],[ForumId] FROM [Discussions_ForumUser]
         WHERE [SiteId]=T1.[SiteId] AND [ForumId]=T1.[ForumId] AND [UserId]=@p6 AND [IsModerator]=@p7
     );
 
 UPDATE T SET
     T.[Approved]=@p1
-FROM [Community_Post] AS T
+FROM [Discussions_Post] AS T
 WHERE EXISTS (
     SELECT [PostId]
     FROM #TMP
@@ -1076,14 +1078,14 @@ WHERE EXISTS (
 
 新增更新操作(**Upsert**)对应于SQL中的单条元语，提供了更高的性能和一致性，为应用层提供了非常简洁的语法支撑。
 
-> 修改 `History` 表，当指定主键值（即 `UserId=100` 并且 `ThreadId=2001` ）的记录存在，则 `Count` 字段值；否则新增一条记录，其 `Count` 字段值为 `1`。
+> 修改 `History` 表，当指定主键值（即 `UserId=100` 并且 `ThreadId=2001` ）的记录存在，则递增 `ViewedCount` 字段值；否则新增一条记录，其 `ViewedCount` 字段值为 `1`。
 
 ```csharp
 this.DataAccess.Upsert<History>(
     new {
         UserId = 100,
         ThreadId = 2001,
-        Count = (Interval)1;
+        ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
         MostRecentViewedTime = DateTime.Now,
     }
 );
@@ -1093,17 +1095,17 @@ this.DataAccess.Upsert<History>(
 
 ```sql
 /* MySQL 语法 */
-INSERT INTO History (UserId,ThreadId,Count,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4)
-ON DUPLICATE KEY UPDATE Count=Count + @p3, MostRecentViewedTime=@p4;
+INSERT INTO History (UserId,ThreadId,ViewedCount,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4)
+ON DUPLICATE KEY UPDATE ViewedCount=ViewedCount + @p3, MostRecentViewedTime=@p4;
 
-/* SQL Server 或其他(PostgreSQL/Oracle)支持 MERGE 语句的数据库语法 */
+/* SQL Server 或 PostgreSQL 支持 MERGE 语句的数据库语法 */
 MERGE History AS target
-USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,[Count],MostRecentViewedTime)
+USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,MostRecentViewedTime)
 ON (target.UserId=source.UserId AND target.ThreadId=source.ThreadId)
 WHEN MATCHED THEN
-    UPDATE SET target.Count=target.Count+@p3, MostRecentViewedTime=@p4
+    UPDATE SET target.ViewedCount=target.ViewedCount+@p3, MostRecentViewedTime=@p4
 WHEN NOT MATCHED THEN
-    INSERT (UserId,ThreadId,Count,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4);
+    INSERT (UserId,ThreadId,ViewedCount,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4);
 ```
 
 <a name="usage-other"></a>

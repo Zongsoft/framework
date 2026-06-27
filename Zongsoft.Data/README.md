@@ -39,7 +39,8 @@ SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/main/Zo
 PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
 SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
 DuckDB | [/drivers/duckdb](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/duckdb) | _**A**vailable_ |
-InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _Planning_ |
+ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/clickhouse) | _**A**vailable_ |
+InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _**A**vailable_ |
 TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
 > Tip: If you need unimplemented drivers or commercial technical support, please contact us.([zongsoft@qq.com](mailto:zongsoft@qq.com))。
@@ -48,8 +49,9 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 <a name="environment"></a>
 ### Environment
 
-- .NET Framework 4.6+
-- .NET Standard 2.0+
+- .NET 8.0
+- .NET 9.0
+- .NET 10.0
 
 <a name="download"></a>
 ## Download
@@ -130,7 +132,7 @@ sorting ::=
 ```graphql
 *, Users:1{*}
 ```
-> **Note:** All simplex/_scalar_ properties and `Users` complex property _(one-to-many)_, Paginate the results of this collection property (page 1 / page size is the default).
+> **Note:** All simplex/_scalar_ properties and `Users` complex property _(one-to-many)_, Paginate the results of this collection property (page 1 / page size is 1). Use `Users:1/?{*}` if you want page 1 with the default page size.
 
 ```graphql
 *, Users:1/20{*}
@@ -169,7 +171,7 @@ We provide the [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/ma
 <a name="connection"></a>
 ## Connection Settings
 
-The name of the data connection configuration item matches the name of `DataAccess`; a `DataAccess` can have multiple data sources, and the names of these data source connection configuration items are separated by a colon `:`, with the name of the `DataAccess` to the left of the colon, the right side of the colon is the identification of different data sources, which is mainly used in the solution of read-write separation.
+The name of the data connection configuration item matches the name of `DataAccess`; a `DataAccess` can have multiple data sources, and the names of these data source connection configuration items are separated by a number sign `#`, with the name of the `DataAccess` to the left of the number sign, the right side of the number sign is the identification of different data sources, which is mainly used in the solution of read-write separation.
 
 > - The **MySQL** connection string reference：https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
 > - The **ADO.NET** connection string reference：https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax
@@ -178,9 +180,9 @@ The name of the data connection configuration item matches the name of `DataAcce
 ```xml
 <configuration>
     <option path="/Data">
-        <connectionSettings default="Automao">
-            <connectionSetting connectionSetting.name="Automao" driver="MySql"
-                               value="server=127.0.0.1;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+        <connectionSettings default="Discussions">
+            <connectionSetting connectionSetting.name="Discussions" driver="MySql"
+                               value="server=127.0.0.1;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
         </connectionSettings>
     </option>
 </configuration>
@@ -191,14 +193,14 @@ The name of the data connection configuration item matches the name of `DataAcce
 <configuration>
     <option path="/Data">
         <connectionSettings>
-            <connectionSetting connectionSetting.name="Automao:master" driver="MySql" mode="WriteOnly"
-                               value="server=192.168.0.10;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Automao:slave_1" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.11;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Automao:slave_2" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.12;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Automao:slave_3" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.13;user=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Discussions#master" driver="MySql" mode="WriteOnly"
+                               value="server=192.168.0.10;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Discussions#slave_1" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.11;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Discussions#slave_2" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.12;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+            <connectionSetting connectionSetting.name="Discussions#slave_3" driver="MySql" mode="ReadOnly"
+                               value="server=192.168.0.13;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
         </connectionSettings>
     </option>
 </configuration>
@@ -517,8 +519,8 @@ var threads = this.DataAccess.Select<Thread>(
 
 /*
  * After the query method is called, the paging variable is the paging result:
- * paging.PageCount indicates the total number of pages that satisfy the condition
- * paging.TotalCount indicates the total number of records that satisfy the condition
+ * paging.Count indicates the total number of pages that satisfy the condition
+ * paging.Total indicates the total number of records that satisfy the condition
  */
 ```
 
@@ -531,7 +533,7 @@ Specify the `sortings` argument in the [`Select`](https://github.com/Zongsoft/fr
 var threads = this.DataAccess.Select<Thread>(
     Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
     Condition.Equal(nameof(Thread.ForumId), 100),
-    Paging.Disable, /* It is explicitly specified here to disable paging(you can also specify a paging setting) */
+    Paging.Disabled, /* It is explicitly specified here to disable paging(you can also specify a paging setting) */
     Sorting.Descending("TotalViews"),   // 1.Descending for TotalViews
     Sorting.Descending("TotalReplies"), // 2.Descending for TotalReplies
     Sorting.Ascending("CreatedTime")    // 3.Ascending for CreatedTime
@@ -589,7 +591,7 @@ Especially in a one-to-many relationship, it is often necessary to conditionally
 > As shown in the following code, the `Users` navigation property of the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) entity represents the full set of forum members, and the `Moderators` navigation property is a subset of the forum members, which are all associated with the `ForumUser` entity.
 
 ```xml
-<entity name="Forum" table="Community_Forum">
+<entity name="Forum" table="Discussions_Forum">
 	<key>
 		<member name="SiteId" />
 		<member name="ForumId" />
@@ -600,14 +602,14 @@ Especially in a one-to-many relationship, it is often necessary to conditionally
 	<property name="GroupId" type="ushort" nullable="false" />
 	<property name="Name" type="string" length="50" nullable="false" />
 
-	<complexProperty name="Users" role="ForumUser" multiplicity="*" immutable="false">
-		<link name="SiteId" role="SiteId" />
-		<link name="ForumId" role="ForumId" />
+	<complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
+		<link port="SiteId" />
+		<link port="ForumId" />
 	</complexProperty>
 
-	<complexProperty name="Moderators" role="ForumUser:User" multiplicity="*">
-		<link name="SiteId" role="SiteId" />
-		<link name="ForumId" role="ForumId" />
+	<complexProperty name="Moderators" port="ForumUser:User" multiplicity="*">
+		<link port="SiteId" />
+		<link port="ForumId" />
 
 		<!-- Constraints of navigation property -->
 		<constraints>
@@ -616,7 +618,7 @@ Especially in a one-to-many relationship, it is often necessary to conditionally
 	</complexProperty>
 </entity>
 
-<entity name="ForumUser" table="Community_ForumUser">
+<entity name="ForumUser" table="Discussions_ForumUser">
 	<key>
 		<member name="SiteId" />
 		<member name="ForumId" />
@@ -629,8 +631,8 @@ Especially in a one-to-many relationship, it is often necessary to conditionally
 	<property name="Permission" type="byte" nullable="false" />
 	<property name="IsModerator" type="bool" nullable="false" />
 
-	<complexProperty name="User" role="UserProfile" multiplicity="!">
-		<link name="UserId" role="UserId" />
+	<complexProperty name="User" port="UserProfile" multiplicity="!">
+		<link port="UserId" />
 	</complexProperty>
 </entity>
 ```
@@ -640,11 +642,11 @@ Especially in a one-to-many relationship, it is often necessary to conditionally
 
 Point to another navigation property in the associated entity, which usually needs to be filtered with the use of navigation constraints. Take the `Moderators` navigation(complex) property of the `Forum` entity in the above mapping file as an example:
 
-1. Specify the colon syntax of the `role` attribute of the navigation(complex) property: the left side of the colon is the associated entity name, and the right side of the colon is the corresponding target navigation property.
+1. Specify the colon syntax of the `port` attribute of the navigation(complex) property: the left side of the colon is the associated entity name, and the right side of the colon is the corresponding target navigation property.
 
 2. Define the `constraint` constraint for this navigation(complex) property.
 
-> Note: Since the moderator is not restricted by the forum member's `Permission` field, the definition of the moderator's entity type is [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) will be more concise and easy to use(avoid the jump navigation through `ForumUser.User`), so set `role` attribute of the `Moderators` navigation property is _`"ForumUser:User"`_ to express this requirement.
+> Note: Since the moderator is not restricted by the forum member's `Permission` field, the definition of the moderator's entity type is [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) will be more concise and easy to use(avoid the jump navigation through `ForumUser.User`), so set `port="ForumUser:User"` of the `Moderators` navigation property to express this requirement.
 > 
 > Take the above data mapping fragment as an example, and feel the difference between the `Users` and `Moderators` property types of the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) class.
 
@@ -801,12 +803,12 @@ WHERE t.IsValued = @p1 AND
 
 The conditional filtering of a one-to-many navigation property corresponds to a subquery of SQL, expressed using the `Exists` operator.
 
-> The following code indicates that the forum **visibility** is "`Internal`" or "`Public`" under the site to which the current user belongs. If the forum **visibility** is "`Specified`", then it is determined whether the current user is a moderator or has forum member permissions.
+> The following code indicates that the forum **visibility** is "`Internal`" or "`All`" under the site to which the current user belongs. If the forum **visibility** is "`Specified`", then it is determined whether the current user is a moderator or has forum member permissions.
 
 ```csharp
 var forums = this.DataAccess.Select<Forum>(
     Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.In("Visibility", Visibility.Internal, Visibility.Public) |
+    Condition.In("Visibility", Visibility.Internal, Visibility.All) |
     (
         Condition.Equal("Visibility", Visibility.Specified) &
         Condition.Exists("Users",
@@ -1055,21 +1057,21 @@ UPDATE T SET
     T.[Approved]=@p1,
     T.[ApprovedTime]=@p2
 OUTPUT DELETED.PostId INTO #TMP
-FROM [Community_Thread] AS T
-    LEFT JOIN [Community_Forum] AS T1 ON /* Forum */
+FROM [Discussions_Thread] AS T
+    LEFT JOIN [Discussions_Forum] AS T1 ON /* Forum */
         T1.[SiteId]=T.[SiteId] AND
         T1.[ForumId]=T.[ForumId]
 WHERE
     T.[ThreadId]=@p3 AND
     T.[Approved]=@p4 AND
     T.[SiteId]=@p5 AND EXISTS (
-        SELECT [SiteId],[ForumId] FROM [Community_ForumUser]
+        SELECT [SiteId],[ForumId] FROM [Discussions_ForumUser]
         WHERE [SiteId]=T1.[SiteId] AND [ForumId]=T1.[ForumId] AND [UserId]=@p6 AND [IsModerator]=@p7
     );
 
 UPDATE T SET
     T.[Approved]=@p1
-FROM [Community_Post] AS T
+FROM [Discussions_Post] AS T
 WHERE EXISTS (
     SELECT [PostId]
     FROM #TMP
@@ -1081,14 +1083,14 @@ WHERE EXISTS (
 
 The **Upsert** operation corresponds to a single primitive language in SQL, providing higher performance and consistency, and provides very simple syntax support for the application layer.
 
-> Modify the `History` table, When the record specifying the primary key value(ie `UserId=100` and `ThreadId=2001`) exists, then increment the `Count` field value; otherwise, a new record is added, and the the `Count` field value is `1`.
+> Modify the `History` table, When the record specifying the primary key value(ie `UserId=100` and `ThreadId=2001`) exists, then increment the `ViewedCount` field value; otherwise, a new record is added, and the the `ViewedCount` field value is `1`.
 
 ```csharp
 this.DataAccess.Upsert<History>(
     new {
         UserId = 100,
         ThreadId = 2001,
-        Count = (Interval)1;
+        ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
         MostRecentViewedTime = DateTime.Now,
     }
 );
@@ -1098,17 +1100,17 @@ The above upsert method call will be roughly generated as the following SQL scri
 
 ```sql
 /* MySQL syntax */
-INSERT INTO History (UserId,ThreadId,Count,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4)
-ON DUPLICATE KEY UPDATE Count=Count + @p3, MostRecentViewedTime=@p4;
+INSERT INTO History (UserId,ThreadId,ViewedCount,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4)
+ON DUPLICATE KEY UPDATE ViewedCount=ViewedCount + @p3, MostRecentViewedTime=@p4;
 
-/* SQL syntax for SQL Server or other(PostgreSQL/Oracle) support for MERGE statement */
+/* SQL syntax for SQL Server or PostgreSQL support for MERGE statement */
 MERGE History AS target
-USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,[Count],MostRecentViewedTime)
+USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,MostRecentViewedTime)
 ON (target.UserId=source.UserId AND target.ThreadId=source.ThreadId)
 WHEN MATCHED THEN
-    UPDATE SET target.Count=target.Count+@p3, MostRecentViewedTime=@p4
+    UPDATE SET target.ViewedCount=target.ViewedCount+@p3, MostRecentViewedTime=@p4
 WHEN NOT MATCHED THEN
-    INSERT (UserId,ThreadId,Count,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4);
+    INSERT (UserId,ThreadId,ViewedCount,MostRecentViewedTime) VALUES (@p1,@p2,@p3,@p4);
 ```
 
 <a name="usage-other"></a>
