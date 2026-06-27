@@ -13,21 +13,21 @@
 <a name="abstract"></a>
 ## 概述
 
-[Zongsoft.Data](https://github.com/Zongsoft/framework/Zongsoft.Data) 是一个类 [GraphQL](https://graphql.cn) 风格的 **ORM**(**O**bject/**R**elational **M**apping) 数据访问框架。
+[Zongsoft.Data](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data) 是一个类 [GraphQL](https://graphql.cn/) 风格的 **ORM**(**O**bject/**R**elational **M**apping) 数据访问框架。
 
-它的设计理念是以声明方式来表达数据结构关系以及去SQL脚本化 _（即不需要手写任何SQL或类SQL语法结构即可完成数据访问和导航）_，使得访问数据变得更加容易、应用代码更简洁，并提供最佳的综合性价比。
+它的核心思路很简单：用声明式写法描述要访问的数据形状和实体关系，由数据引擎生成 SQL。这样，大多数查询、写入和导航访问都不需要手写 SQL 或类 SQL 字符串。
 
 <a name="feature"></a>
 ## 特性
 
-- 支持严格的POCO对象，无任何注解(**A**ttribute/**A**nnotation)依赖；
-- 支持读写分离的数据访问；
-- 支持表继承的各种数据操作；
-- 支持业务模块的映射隔离及完备的扩展机制；
-- 无SQL脚本即可完成复杂的数据导航、过滤、分页、分组、聚合运算等；
-- 符合面向对象开发人员的普遍直觉，易于理解、开箱即用；
-- 提供优异的综合性价比及完整的解决方案；
-- 最小实现依赖，通常仅需要ADO.NET和原生ADO.NET驱动或更少。
+- 支持严格的 POCO 对象，不依赖特性或注解；
+- 支持读写分离；
+- 支持继承表的数据操作；
+- 支持按业务模块隔离映射，并提供扩展机制；
+- 无需手写 SQL，即可完成导航、过滤、分页、分组和聚合；
+- 符合面向对象开发习惯，容易理解和上手；
+- 兼顾性能、可维护性和易用性；
+- 依赖很少，通常只需要 ADO.NET 和对应的原生 ADO.NET 驱动。
 
 <a name="driver"></a>
 ## 驱动
@@ -43,7 +43,7 @@ ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/ma
 InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _**A**vailable_ |
 TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
-> 提示：如果需要未实现的驱动或商业技术支持，请联系我们([zongsoft@qq.com](mailto:zongsoft@qq.com))。
+> 提示：如果需要未列出的驱动或商业技术支持，请联系我们（[zongsoft@qq.com](mailto:zongsoft@qq.com)）。
 
 
 <a name="environment"></a>
@@ -58,14 +58,14 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 
 - **源码编译方式**
 
-建议在硬盘的非系统分区中建立一个 **_Zongsoft_** 目录，分别将 [Guidelines](https://github.com/Zongsoft/guidelines)、[Zongsoft.Core](https://github.com/Zongsoft/framework/Zongsoft.Core) 以及 [Zongsoft.Data](https://github.com/Zongsoft/framework/Zongsoft.Data) 等项目克隆到该目录中。
+源码编译时，建议在非系统分区建立一个 **_Zongsoft_** 目录，并将 [Guidelines](https://github.com/Zongsoft/guidelines)、[Zongsoft.Core](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core) 和 [Zongsoft.Data](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data) 克隆到该目录中。
 
 <a name="schema"></a>
 ## 数据模式
 
-数据模式(**S**chema)是一种 DSL(**D**omain **S**pecific **L**anguage)，用以描述要查询或写入 _(**D**elete/**I**nsert/**U**pdate/**U**psert)_ 的数据形状，表现形式有点类似于 [GraphQL](https://graphql.cn) 但不需要预先定义，通过它来定义要获取和写入的数据字段、级联删除的范围等。
+数据模式(**S**chema)是一种 DSL(**D**omain **S**pecific **L**anguage)，用来描述查询或写入 _(**D**elete/**I**nsert/**U**pdate/**U**psert)_ 时要处理哪些字段。它的写法类似 [GraphQL](https://graphql.cn/)，但不需要预先定义服务端 GraphQL 类型。它可用于选择字段、包含导航属性、控制级联范围等。
 
-在数据访问方法中的 `schema` 参数即为数据模式，[ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) 接口为解析后的模式表达式。
+数据访问方法中的 `schema` 参数就是数据模式文本，[ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) 接口表示解析后的模式表达式。
 
 <a name="schema-syntax"></a>
 ### 语法定义
@@ -100,10 +100,8 @@ sorting ::=
 <a name="schema-overview"></a>
 #### 说明
 
-- 星号(`*`)：表示包含所有简单属性（不含导航属性），如果要包含导航属性必须显式指定。
-- 叹号(`!`)：表示排除，单个叹号表示排除之前的定义， `叹号+属性` 则表示排除指定名称的属性。
-
-> **注：** 后期还会对数据模式做进一步语法增强，譬如导航属性的限定条件、非确定性导航属性的类型指定 等。
+- 星号(`*`)：表示包含所有简单属性，不包含导航属性；如果要包含导航属性，必须显式写出。
+- 叹号(`!`)：表示排除。单个 `!` 排除前面的定义，`!名称` 排除指定名称的属性。
 
 
 <a name="schema-sample"></a>
@@ -112,68 +110,68 @@ sorting ::=
 ```graphql
 *, !CreatorId, !CreatedTime
 ```
-> 表示所有简单(标量)属性但是排除`CreatorId`和`CreatedTime`属性
+> 表示所有简单属性，但排除 `CreatorId` 和 `CreatedTime`。
 
 ```graphql
 *, Creator{*}
 ```
-> 表示所有简单(标量)属性和`Creator`导航属性（含该导航属性的所有简单属性）
+> 表示所有简单属性，并包含 `Creator` 导航属性的所有简单属性。
 
 ```graphql
 *, Creator{Name,FullName}
 ```
-> 表示所有简单(标量)属性和`Creator`导航属性（仅含该导航属性的`Name`和`FullName`两个属性）
+> 表示所有简单属性，并且只加载 `Creator` 导航属性的 `Name` 和 `FullName`。
 
 ```graphql
 *, Users{*}
 ```
-> 表示所有简单(标量)属性和`Users`导航属性集 _（一对多）_，属性集无排序、无分页
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合不排序也不分页。
 
 ```graphql
 *, Users:1{*}
 ```
-> 表示所有简单(标量)属性和`Users`导航属性集 _（一对多）_，对该属性集进行分页（第1页/每页1条）。如果要表示第1页且使用默认页大小，请写作 `Users:1/?{*}`。
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合分页为第 1 页、每页 1 条。如果要表示第 1 页且使用默认页大小，请写作 `Users:1/?{*}`。
 
 ```graphql
 *, Users:1/20{*}
 ```
-> 表示所有简单(标量)属性和`Users`导航属性集 _（一对多）_，对该属性集进行分页（第1页/每页20条）
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合分页为第 1 页、每页 20 条。
 
 ```graphql
 *, Users:1/20(Grade,~CreatedTime){*}
 ```
-> 表示所有简单(标量)属性和`Users`导航属性集 _（一对多）_，对该属性集进行排序分页（`Grade`正序、`CreatedTime`倒序；第1页/每页20条）
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `Grade` 正序、`CreatedTime` 倒序排序，再分页为第 1 页、每页 20 条。
 
 
 <a name="mapping"></a>
 ## 映射文件
 
-数据映射文件是扩展名为 `.mapping` 的XML文件，它是定义实体结构关系的元数据。**不要**将一个大应用内的元数据都写在一个映射文件内，应为每个业务模块单独定义映射文件，以确保模块的隔离性。
+数据映射文件是扩展名为 `.mapping` 的 XML 文件，用来定义实体、表、字段、主键和导航关系等元数据。**不要**把大型应用的所有元数据都写在一个映射文件里；应按业务模块分别定义映射文件，以保持模块隔离。
 
-我们提供 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 这个 XML Schema 文件，大大方便了手写映射文件并消除了手写出错的机会。
+我们提供 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 这个 XML Schema 文件，用于给手写映射文件提供智能提示和校验。
 
 
 > **启用映射文件的XML智能提示：**
 > 
-> **方法一：** 在**业务模块**项目中添加一个名为“`{业务模块}.mapping`”的XML文件（譬如：[`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) 或 [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)），打开该映射文件后点击 **V**isual **S**tudio 的“XML”-“架构”菜单项，在弹出的对话框中点击右上角的“添加”按钮，找到 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 文件即可。
+> **方法一：** 在**业务模块**项目中添加一个名为“`{业务模块}.mapping`”的 XML 文件（譬如：[`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) 或 [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)）。打开该映射文件后，点击 **V**isual **S**tudio 的“XML”-“架构”菜单，在弹出的对话框中点击“添加”，选择 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 文件即可。
 > 
-> **方法二：** 将 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 拷贝到 **V**isual **S**tudio 的 XML Shemas 模板目录中，譬如：
+> **方法二：** 将 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 拷贝到 **V**isual **S**tudio 的 XML Schemas 模板目录中，譬如：
 > - **V**isual **S**tudio 2019 _(Enterprise Edition)_ <br />
 > 	`C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Xml\Schemas`
 
 
-> 尽管有些程序员习惯利用工具来生成映射文件，但我们还是建议手写：
-> - 数据结构与关系对于任何一个系统而言都是毋庸置疑的最底层的基础结构，数据库表结构就是这种结构关系的具体表现形式，映射文件正是定义上层实体与下层表的结构关系的“藏宝图”。
-> - 映射文件应该由系统架构师或模块开发负责人统一更新，映射中的 `inherits`, `immutable`, `sortable`, `sequence` 以及导航属性的设置对业务层开发有至关影响，必须仔细认真的对待。
+> 虽然可以用工具生成映射文件，但我们仍建议手写：
+> - 数据结构和关系是系统的基础。数据库表是这种关系的物理形式，映射文件则描述上层实体如何对应到底层表。
+> - 映射文件应由系统架构师或模块负责人统一维护。`inherits`、`immutable`、`sortable`、`sequence` 以及导航属性等设置，会直接影响应用层代码。
 
 
 <a name="connection"></a>
 ## 连接配置
 
-数据连接配置项的名称与 `DataAccess` 的名称相匹配；一个 `DataAccess` 可同时具有多个数据源，不同数据源的连接配置项的名称以井号 `#` 分隔，井号左边为 `DataAccess` 的名称，井号右边即为不同的数据源标识，这主要应用于读写分离的方案中。
+数据连接配置项的名称必须与 `DataAccess` 的名称匹配。一个 `DataAccess` 可以配置多个数据源，使用井号 `#` 分隔 `DataAccess` 名称和数据源名称，譬如 `Discussions#master`、`Discussions#slave_1`。这种写法主要用于读写分离。
 
-> - **MySQL** 连接字符串的参考：https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
-> - **ADO.NET** 连接字符串的语法：https://docs.microsoft.com/zh-cn/dotnet/framework/data/adonet/connection-string-syntax
+> - **MySQL** 连接字符串参考：https://mysqlconnector.net/connection-options/
+> - **ADO.NET** 连接字符串语法：https://learn.microsoft.com/zh-cn/dotnet/framework/data/adonet/connection-string-syntax
 
 - 单数据源的配置：
 ```xml
@@ -209,7 +207,7 @@ sorting ::=
 <a name="usage"></a>
 ## 使用
 
-所有数据操作均通过[数据访问接口](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs)(位于[核心库](https://github.com/Zongsoft/framework/Zongsoft.Core)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 接口)进行，支持下列数据访问操作：
+所有数据操作都通过[核心库](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 接口完成，支持下列操作：
 
 - 计数操作： `int Count(...)` 
 - 存在操作： `bool Exists(...)` 
@@ -221,29 +219,29 @@ sorting ::=
 - 查询操作： `IEnumerable<T> Select<T>(...)` 
 
 **提醒：**
-> 下面的范例均基于 [Zongsoft.Discussions](https://github.com/Zongsoft/discussions) 开源项目，该项目是一个完整的论坛社区的后台程序。建议你在阅读范例之前，务必先查阅该项目的[数据库表结构](https://github.com/Zongsoft/discussions/blob/main/database/Zongsoft.Discussions.md)设计文档以了解相关数据结构关系。
+> 下面的范例均基于 [Zongsoft.Discussions](https://github.com/Zongsoft/discussions) 开源项目。它是一个完整的论坛社区后台程序。阅读范例前，建议先查看该项目的[数据库表结构设计文档](https://github.com/Zongsoft/discussions/blob/main/database/Zongsoft.Discussions.md)，这样更容易理解实体之间的关系。
 
 <a name="operand"></a>
 ### 操作元
 
-操作元(`Operand`)可用于条件(`Condition`)和写入的数据字段，有以下几种操作元：
+操作元(`Operand`)可用于条件(`Condition`)和写入字段的值，主要包括：
 - 常量操作元 `ConstantOperand<T>`
 - 字段操作元 `FieldOperand`
 - 函数操作元 `FunctionOperand`
 - 聚合操作元 `AggregateOperand`
-- 一元操作元 `UnaryOperand`，包括以下三种：
-> - `!` 表示逻辑非
-> - `~` 表示按位取反
-> - `-` 表示算术负号
-- 二元操作元 `BinaryOperand`，包括以下几种：
-> - `+` 表示`加法`运算
-> - `-` 表示`减法`运算
-> - `*` 表示`乘法`运算
-> - `/` 表示`除法`运算
-> - `%` 表示`取模`运算
-> - `&` 表示`逻辑与`或者`按位与`运算
-> - `|` 表示`逻辑或`或者`按位或`运算
-> - `^` 表示`异或`运算
+- 一元操作元 `UnaryOperand`，包括：
+> - `!` 逻辑非
+> - `~` 按位取反
+> - `-` 算术负号
+- 二元操作元 `BinaryOperand`，包括：
+> - `+` 加法
+> - `-` 减法
+> - `*` 乘法
+> - `/` 除法
+> - `%` 取模
+> - `&` 逻辑与或按位与
+> - `|` 逻辑或或按位或
+> - `^` 异或
 
 #### 范例
 
@@ -257,18 +255,18 @@ var forums = this.DataAccess.Select<Forum>(
 
 - 常量操作
 ```csharp
-/* 以下两种方式的效果完全一致 */
+/* 以下两种写法等价 */
 this.DataAccess.Update<OrderDetail>(
     new {
         Discount = Operand.Constant(10)
-    }
+    },
     Condition.Between("Quantity", Range.Create(100, 200))
 );
 
 this.DataAccess.Update<OrderDetail>(
     new {
         Discount = 10
-    }
+    },
     Condition.Between("Quantity", 100, 200)
 );
 ```
@@ -294,7 +292,7 @@ this.DataAccess.Update<Thread>(
 
 - 二元运算
 ```csharp
-/* 递增递增 */
+/* 递增 */
 this.DataAccess.Update<Thread>(
     new {
         TotalReplies = Operand.Field("TotalReplies") + 1
@@ -329,7 +327,7 @@ this.DataAccess.Update<OrderDetail>(
 
 - 聚合运算
 ```csharp
-/* 以下两种方式的效果完全一致 */
+/* 以下两种写法等价 */
 this.DataAccess.Update<Order>(
     new {
         Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
@@ -346,7 +344,7 @@ this.DataAccess.Update<Order>(
 ```
 
 ```csharp
-/* 以下三种方式的效果完全一致 */
+/* 以下三种写法等价 */
 this.DataAccess.Update<Order>(
     new {
         Amount = Operand.Function("COALESCE",
@@ -385,51 +383,51 @@ this.DataAccess.Update<Order>(
 <a name="usage-query-1"></a>
 #### 简单查询
 
-- 默认返回全部简单(标量)字段，可通过 `schema` 参数来显式指定返回的字段集。
-- 查询结果为延迟加载，遍历结果集或调用 Linq 的 `ToList()`, `First()` 等扩展方法即可触发数据访问。
-- **注意：** 因为查询默认未进行分页，所以应避免使用 Linq 的 `ToList()`, `ToArray()` 等扩展方法将结果集全部加载到内存中，以免不必要的数据访问和浪费内存空间。
+- 默认返回全部简单字段，可通过 `schema` 参数显式指定返回哪些字段。
+- 查询结果是延迟加载的，遍历结果集或调用 LINQ 的 `ToList()`、`First()` 等方法时才会真正访问数据库。
+- **注意：** 查询默认不分页。面对大结果集时，不要随意调用 `ToList()`、`ToArray()` 把全部数据加载到内存。
 
 ```csharp
-// 获取指定条件的所有简单(标量)字段的实体集（延迟加载）
+// 查询满足条件的实体集，默认加载全部简单字段（延迟加载）。
 var threads = this.DataAccess.Select<Thread>(
     Condition.Equal("SiteId", this.User.SiteId) &
     Condition.Equal("Visible", true));
 
-// 获取指定条件的单个实体对象（只包含特定字段）
+// 查询单个实体，并只加载指定字段。
 var forum = this.DataAccess.Select<Forum>(
     Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("ForumId", 100)
+    Condition.Equal("ForumId", 100),
     "SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
 ```
 
 <a name="usage-query-2"></a>
 #### 标量查询
 
-查询单个字段的值，可避免返回不需要的字段并避免组装实体类带来的性能损失，同时也让业务代码更简洁。
+标量查询只返回单个字段的值，可避免读取无用字段，也避免组装完整实体的开销。
 
 **调用说明：**
 
-1. 泛型参数指定为返回单个字段的类型或字段的可转换类型；
-1. 必须显式指定查询的实体名（即方法的 `name` 参数）；
-1. 必须显式指定查询的属性名（即方法的 `schema` 参数指定为一个具体的属性名）。
+1. 泛型参数指定为字段类型，或字段可转换到的类型；
+1. 通过方法的 `name` 参数显式指定实体名；
+1. 通过方法的 `schema` 参数显式指定一个具体属性名。
 
 ```csharp
 var email = this.DataAccess.Select<string>("UserProfile",
     Condition.Equal("UserId", this.User.UserId),
-    "Email" // 通过 schema 参数显式指定只获取“Email”字段值，该字段为字符串类型
+    "Email" // 只获取 Email 字段，该字段为字符串类型
 ).FirstOrDefault();
 
-/* 返回标量集(IEnumerable<int>) */
-var counts = this.DataAccess.Select<int>("History",
+/* 返回标量集(IEnumerable<uint>) */
+var counts = this.DataAccess.Select<uint>("History",
     Condition.Equal("UserId", this.User.UserId),
-    "Count" // 通过 schema 参数显式指定值获取“Count”字段值，该字段为整数类型
+    "ViewedCount" // 只获取 ViewedCount 字段
 );
 ```
 
 <a name="usage-query-3"></a>
 #### 多列查询
 
-查询多个字段的值，支持返回任意实体类型，包括类、接口、结构、动态类(`ExpandoObject`)、字典。
+多列查询可返回多个字段，并支持多种目标类型：类、接口、结构、动态对象(`ExpandoObject`)和字典。
 
 ```csharp
 struct UserToken
@@ -439,8 +437,8 @@ struct UserToken
 }
 
 /*
- * 注：该方法的 schema 参数可以省略或为空，实际效果一样。
- * 因为查询方法的返回字段集默认取 schema 与返回实体类型的属性和字段集的交集。
+ * 注：这里可以省略 schema 参数，或将其设为空。
+ * 引擎会取实体元数据与目标类型成员的交集作为返回字段。
  */
 var tokens = this.DataAccess.Select<UserToken>(
     "UserProfile",
@@ -451,8 +449,8 @@ var tokens = this.DataAccess.Select<UserToken>(
 
 ```csharp
 /*
- * 当要访问的实体与泛型参数类型不同时，
- * 可通过 ModelAttribute 标注实体类(结构、接口)来确定其映射实体名。
+ * 当目标类型名与实体名不一致时，
+ * 可通过 ModelAttribute 指定它对应的映射实体名。
  */
 [Zongsoft.Data.Model("UserProfile")]
 struct UserToken
@@ -461,7 +459,7 @@ struct UserToken
     public string Name;
 }
 
-// 因为返回的实体类(结构、接口)标注了映射实体名所以可缺省 name 参数，代码可简化如下所示：
+// 因为目标类型已声明映射实体名，所以可省略 name 参数：
 var tokens = this.DataAccess.Select<UserToken>(
     Condition.Equal("SiteId", this.User.SiteId)
 );
@@ -469,8 +467,8 @@ var tokens = this.DataAccess.Select<UserToken>(
 
 ```csharp
 /*
- * 1) 通过泛型参数指定返回实体类型为字典。
- * 2) 通过 schema 参数显式指定返回的字段集，如果省略或者为星号(*)则默认返回所有字段。
+ * 1) 泛型参数指定每行以字典形式返回。
+ * 2) schema 参数指定返回字段；省略或写为星号(*)时，默认返回所有字段。
  */
 var items = this.DataAccess.Select<IDictionary<string, object>>(
     "UserProfile",
@@ -489,7 +487,7 @@ foreach(var item in items)
 
 ```csharp
 /*
- * 通过泛型参数指定返回实体类型为 ExpandoObject，之后通过动态方式访问实体对象。
+ * 泛型参数指定为 ExpandoObject 后，可用动态方式访问返回对象。
  */
 var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("UserProfile");
 
@@ -504,10 +502,10 @@ foreach(dynamic item in items)
 <a name="usage-query-4"></a>
 #### 分页查询
 
-通过指定 [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法中的 `paging` 参数来进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs) 分页设置类。
+向 [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法传入 `paging` 参数即可进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs)。
 
 ```csharp
-// 定义查询的分页设置（譬如：第2页，每页25条）
+// 第 2 页，每页 25 条。
 var paging = Paging.Page(2, 25);
 
 var threads = this.DataAccess.Select<Thread>(
@@ -517,22 +515,22 @@ var threads = this.DataAccess.Select<Thread>(
 );
 
 /*
- * 查询方法调用后，paging 变量即为分页结果：
- * paging.Count 表示满足条件的总页数
- * paging.Total 表示满足条件的总记录数
+ * 查询返回后，paging 对象会包含分页结果摘要：
+ * paging.Count 表示总页数。
+ * paging.Total 表示总记录数。
  */
 ```
 
 <a name="usage-query-5"></a>
 #### 排序查询
 
-通过指定 [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法中的 `sortings` 参数来进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs) 排序设置类。
+向 [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法传入 `Sorting` 即可进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs)。
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
     Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
     Condition.Equal(nameof(Thread.ForumId), 100),
-    Paging.Disabled, /* 此处显式指定为不分页（当然你也可以指定为分页） */
+    Paging.Disabled, /* 此处指定不分页；也可以传入具体的分页设置。 */
     Sorting.Descending("TotalViews"),   // 1.倒序：累计阅读数
     Sorting.Descending("TotalReplies"), // 2.倒序：累计回帖数
     Sorting.Ascending("CreatedTime")    // 3.正序：创建时间
@@ -542,18 +540,18 @@ var threads = this.DataAccess.Select<Thread>(
 <a name="usage-query-6"></a>
 #### 导航属性
 
-通过 `schema` 参数显式指定导航属性(复合属性)，支持“一对一(零)”、“一对多”的导航关系，并且支持任意层次的嵌套。更多内容请参考 **S**chema 数据模式的语法说明。
+通过 `schema` 参数显式指定导航属性(复合属性)。它支持一对一、一对零或一、一对多关系，也支持多层嵌套。
 
 <a name="usage-query-7"></a>
 ##### 一对一
 
 ```csharp
 /*
- * 1) Thread实体的Post导航属性（关联到Post实体）的结构关系为一对一，
- * 即在映射文件(.mapping)中的 multiplicity="!"，因此它对应的SQL关联为INNER JOIN
+ * 1) Thread.Post 是关联到 Post 的一对一导航属性，
+ *    在映射文件(.mapping)中为 multiplicity="!"，因此生成的 SQL 使用 INNER JOIN。
  *
- * 2) Thread实体的MostRecentPost导航属性（关联到Post实体）的结构关系是一对零或一（默认值），
- * 即在映射文件(.mapping)中的 multiplicity="?"，因此它对应的SQL关联为LEFT JOIN
+ * 2) Thread.MostRecentPost 是关联到 Post 的一对零或一导航属性，
+ *    在映射文件(.mapping)中为 multiplicity="?"，因此生成的 SQL 使用 LEFT JOIN。
  */
 var thread = this.DataAccess.Select<Thread>(
     Condition.Equal("ThreadId", 100001),
@@ -566,11 +564,11 @@ var thread = this.DataAccess.Select<Thread>(
 
 ```csharp
 /*
- * 1) 论坛组(ForumGroup)的Forums导航属性的结构关系为一对多，
- * 即在映射文件(.mapping)中的 multiplicity="*"，从SQL的角度看它对应一条新的查询语句。
+ * 1) ForumGroup.Forums 是一对多导航属性，
+ *    在映射文件(.mapping)中为 multiplicity="*"，因此它会通过单独的 SQL 查询加载。
  *
- * 2) 导航属性的任意嵌套，无论是“一对一”还是“一对多”导航属性，它们均支持任意嵌套。
- * 注意：星号(*)表示所有简单属性，不含任何导航属性，所以导航属性必须显式指定。
+ * 2) 一对一和一对多导航属性都支持嵌套。
+ * 注意：星号(*)只表示所有简单属性，不包含导航属性；导航属性必须显式指定。
  */
 var groups = this.DataAccess.Select<ForumGroup>(
     Condition.Equal("SiteId", this.User.SiteId),
@@ -581,11 +579,11 @@ var groups = this.DataAccess.Select<ForumGroup>(
 <a name="usage-query-9"></a>
 ##### 导航约束
 
-尤其在“一对多”的关系中，时常需要针对导航属性的结果集进行条件约束，这就是导航约束。
+一对多导航属性经常需要过滤子集合，这类过滤就是导航约束。
 
-> 论坛(`Forum`)与论坛成员(`ForumUser`)之间是一对多的结构关系，版主(`Moderator`)是论坛成员(`ForumUser`)的一个子集，那么这样的结构关系就是通过数据映射文件中的 `complexProperty/constraints` 来表达的。
+> 论坛(`Forum`)与论坛成员(`ForumUser`)是一对多关系，版主是论坛成员的一个子集。这个子集通过映射文件中的 `complexProperty/constraints` 表达。
 > 
-> 如下面代码所示， [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 实体的 `Users` 导航属性表示论坛成员的全集，而 `Moderators` 导航属性为论坛成员的一个子集，它们均关联到 `ForumUser` 实体。
+> 在下面的示例中，[Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 实体的 `Users` 导航属性表示全部论坛成员，`Moderators` 导航属性只表示 `IsModerator` 为 `true` 的成员。
 
 ```xml
 <entity name="Forum" table="Discussions_Forum">
@@ -637,14 +635,14 @@ var groups = this.DataAccess.Select<ForumGroup>(
 <a name="usage-query-10"></a>
 ##### 导航跳板
 
-即指向关联实体中的另一个导航属性，它通常需要搭配使用导航约束进行过滤。以上面映射文件中的 `Forum` 实体的 `Moderators` 导航(复合)属性为例：
+导航跳板表示：当前导航属性并不直接返回关联实体，而是返回关联实体上的另一个导航属性。以上面 `Forum.Moderators` 为例：
 
-1. 指定该复合属性的 `port` 特性的冒号语法：冒号左边为关联的实体名，冒号右边为对应的目标导航属性。
-2. 定义该复合属性的 `constraint` 约束条件。
+1. 在 `port` 特性中使用冒号语法：冒号左边是关联实体名，右边是要跳转到的目标导航属性。
+2. 通过 `constraint` 约束筛选要包含的关联行。
 
-> 说明：由于版主不受论坛成员的 `Permission` 限制，所以定义版主的实体类型为 [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) 会更加简洁易用（避免了再通过 `ForumUser.User` 进行跳转导航），故而设置 `Moderators` 导航属性的 `port="ForumUser:User"` 即可表达这种需求。
+> 说明：版主列表并不需要暴露论坛成员的 `Permission` 字段，直接返回 [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) 会更简洁，也避免调用方再通过 `ForumUser.User` 跳转。因此 `Moderators` 设置为 `port="ForumUser:User"`。
 > 
-> 以上面的数据映射片段为例，感受下 [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 类的 `Users` 和 `Moderators` 属性类型的不同。
+> 对照上面的映射片段，可以看到 [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 类中 `Users` 和 `Moderators` 的属性类型不同：
 
 ```csharp
 public abstract class Forum
@@ -678,7 +676,7 @@ var forum = this.DataAccess.Select<Forum>(
   "*, Users{*}, Moderators{*, User{*}}"
 ).FirstOrDefault();
 
-// The type of moderator variable is UserProfile.
+// moderator 的类型是 UserProfile。
 foreach(var moderator in forum.Moderators)
 {
   Console.Write(moderator.Name);
@@ -686,7 +684,7 @@ foreach(var moderator in forum.Moderators)
   Console.Write(moderator.Avatar);
 }
 
-// The type of member variable is ForumUser.
+// member 的类型是 ForumUser。
 foreach(var member in forum.Users)
 {
   Console.Write(member.Permission);
@@ -700,7 +698,7 @@ foreach(var member in forum.Users)
 <a name="usage-query-11"></a>
 #### 分组查询
 
-分组查询支持关系型数据库的聚合函数，可见的未来还会针对时序数据库增加更多的统计函数。
+分组查询支持关系型数据库的聚合函数。
 
 ```csharp
 struct ForumStatistic
@@ -726,7 +724,7 @@ var statistics = this.DataAccess.Select<ForumStatistic>(
 );
 ```
 
-上述查询方法调用大致生成如下SQL脚本：
+上述查询大致生成如下 SQL：
 
 ```sql
 SELECT
@@ -753,13 +751,13 @@ FROM
 <a name="usage-query-12"></a>
 ### 导航条件
 
-对导航属性关联的实体进行条件过滤。
+导航条件用于按关联实体的字段进行过滤。
 
 ```csharp
 /*
- * 查询条件：
- * 1) 浏览记录(History)表关联的精华主题(Thread.IsValued=true)，并且
- * 2) 浏览时间（首次或最后浏览时间）位于最近30天内的。
+ * 查询浏览记录：
+ * 1) 关联的主题为精华主题(Thread.IsValued=true)；
+ * 2) 首次或最后浏览时间位于最近 30 天内。
  */
 var histories = this.DataAccess.Select<History>(
     Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
@@ -769,7 +767,7 @@ var histories = this.DataAccess.Select<History>(
     )
 );
 
-/* 以下代码与上面代码的效果完全一致，只是时间范围参数的构建方式不同 */
+/* 与上面的查询等价，只是改用 Range.Timing 构造时间范围。 */
 var histories = this.DataAccess.Select<History>(
     Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
     (
@@ -779,7 +777,7 @@ var histories = this.DataAccess.Select<History>(
 );
 ```
 
-上述查询方法调用大致生成如下SQL脚本：
+上述查询大致生成如下 SQL：
 
 ```sql
 SELECT h.*
@@ -796,9 +794,9 @@ WHERE t.IsValued = @p1 AND
 <a name="usage-query-13"></a>
 #### 子查询过滤
 
-一对多的导航属性的条件过滤对应为SQL的子查询，使用 `Exists` 运算符进行表达。
+一对多导航属性的条件过滤可用 `Exists` 运算符表达，生成 SQL 时对应为子查询。
 
-> 下面代码表示获取当前用户所属站点下，论坛可见性为“站内用户(**I**nternal)”或“所有用户(**A**ll)”的论坛集，如果论坛可见性为“指定用户(**S**pecified)”的话，则判断当前用户是否为版主或具有论坛成员权限。
+> 下面的查询获取当前用户所属站点下的论坛：`Internal` 和 `All` 可见性的论坛直接返回；如果可见性为 `Specified`，则要求当前用户是版主或拥有论坛成员权限。
 
 ```csharp
 var forums = this.DataAccess.Select<Forum>(
@@ -817,7 +815,7 @@ var forums = this.DataAccess.Select<Forum>(
 );
 ```
 
-上述查询方法调用大致生成如下SQL脚本：
+上述查询大致生成如下 SQL：
 
 ```sql
 SELECT t.*
@@ -845,9 +843,9 @@ WHERE
 <a name="usage-query-14"></a>
 #### 类型转换
 
-当数据库字段类型与之对应的实体属性类型不匹配 _（无法直接转换）_，而需要引入自定义转换逻辑的类型转换器。
+当数据库字段类型无法直接转换为实体属性类型时，需要使用类型转换器。
 
-譬如 Thread 表的 Tags 字段类型是 `nvarchar`，但是 [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) 实体类的 Tags 属性的类型是字符串数组，所以数据读写操作需要对这两种类型进行自定义转换。具体实现请参考 [TagsConverter](https://github.com/Zongsoft/discussions/blob/main/src/Models/TagsConverter.cs) 类及 [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) 实体类的 Tags 属性定义。
+譬如 `Thread` 表的 `Tags` 字段类型是 `nvarchar`，而 [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) 实体的 `Tags` 属性是字符串数组。读写这个属性时就需要自定义转换。具体实现请参考 [TagsConverter](https://github.com/Zongsoft/discussions/blob/main/src/Models/TagsConverter.cs) 以及 [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) 中的 `Tags` 属性定义。
 
 <a name="usage-delete"></a>
 ### 删除操作
@@ -859,7 +857,7 @@ this.DataAccess.Delete<Post>(
 );
 ```
 
-上述删除操作大致生成如下SQL脚本：
+上述删除大致生成如下 SQL：
 
 ```sql
 DELETE t
@@ -873,7 +871,7 @@ WHERE t.Visible=0 AND
 <a name="usage-delete-cascade"></a>
 #### 级联删除
 
-支持删除“一对一(零)”或“一对多”的导航属性关联的子表记录。
+级联删除可删除通过一对零或一、一对一、一对多导航属性关联的子表记录。
 ```csharp
 this.DataAccess.Delete<Post>(
     Condition.Equal("PostId", 100023),
@@ -881,7 +879,7 @@ this.DataAccess.Delete<Post>(
 );
 ```
 
-上述删除操作大致生成如下SQL脚本（_SQL Server_）：
+上述删除大致生成如下 SQL（_SQL Server_）：
 
 ```sql
 CREATE TABLE #TMP
@@ -889,12 +887,12 @@ CREATE TABLE #TMP
     PostId bigint
 );
 
-/* 删除主表，并将一对多导航属性的关联字段值导出到临时表 */
+/* 删除主表记录，并将关联键值写入临时表。 */
 DELETE FROM Post
 OUTPUT DELETED.PostId INTO #TMP
 WHERE PostId=@p1;
 
-/* 删除从表记录，条件为已删除主表的子集 */
+/* 根据临时表中的键值删除从表记录。 */
 DELETE FROM PostVoting
 WHERE PostId IN
 (
@@ -916,7 +914,7 @@ this.DataAccess.Insert("Forum", new {
 <a name="usage-insert-complex"></a>
 #### 关联新增
 
-支持“一对一”或“一对多”的导航属性同时插入。
+一对一和一对多导航属性可以随主实体一起插入。
 
 ```csharp
 var forum = Model.Build<Forum>();
@@ -935,15 +933,15 @@ forum.Users = new ForumUser[]
 this.DataAccess.Insert(forum, "*, Users{*}");
 ```
 
-上述新增方法调用大致生成如下SQL脚本：
+上述新增大致生成如下 SQL：
 
 ```sql
-/* 注：该SQL以MySQL驱动为例 */
+/* 注：该 SQL 以 MySQL 驱动为例。 */
 
-/* 主表插入语句，执行一次 */
+/* 主表插入语句执行一次。 */
 INSERT INTO Forum (SiteId,ForumId,GroupId,Name,...) VALUES (@p1,@p2,@p3,@p4,...);
 
-/* 子表插入语句，执行多次 */
+/* 子表插入语句按集合项执行多次。 */
 INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (@p1,@p2,@p3,@p4,@p5);
 ```
 
@@ -961,10 +959,10 @@ user.Gender = Gender.Male;
 this.DataAccess.Update(user);
 ```
 
-上述更新操作大致生成如下SQL脚本：
+上述更新大致生成如下 SQL：
 
 ```sql
-/* 注：没有修改的属性不会被生成到SET子句 */
+/* 注：未修改的属性不会生成到 SET 子句。 */
 
 UPDATE UserProfile SET
 Name=@p1, FullName=@p2, Gender=@p3
@@ -974,7 +972,7 @@ WHERE UserId=@p4;
 <a name="usage-update-dynamic"></a>
 #### 匿名类
 
-写入的数据可以是匿名类、动态类 _(`ExpandoObject`)_、字典 _(`IDictionary`, `IDictionary<string, object>`)_ 等。
+写入的数据可以是匿名对象、动态对象 _(`ExpandoObject`)_ 或字典 _(`IDictionary`, `IDictionary<string, object>`)_。
 
 ```csharp
 this.DataAccess.Update<UserProfile>(
@@ -990,12 +988,12 @@ this.DataAccess.Update<UserProfile>(
 <a name="usage-update-schema"></a>
 #### 排除字段
 
-显式指定的字段，或排除某些字段。
+通过 `schema` 可指定要更新的字段，也可排除某些字段。
 
 ```csharp
 /*
- * 通过 schema 参数显式指定只修改 Name, Gender 两个字段，
- * 其他字段不管有没有发生更改都不予修改。
+ * 只更新 Name、Gender 两个字段。
+ * 其他字段即使发生变化，也不会被写入。
  */
 this.DataAccess.Update<UserProfile>(
     user,
@@ -1003,8 +1001,8 @@ this.DataAccess.Update<UserProfile>(
 );
 
 /*
- * 通过 schema 参数指定可以修改所有字段，但是 CreatorId 和 CreatedTime 两个字段不予修改，
- * 就算 user 变量指向的实体对象包含并更改了这两个属性值，也不会生成它们的设置子句。
+ * 星号(*)表示允许更新所有字段，但 CreatorId 和 CreatedTime 被排除。
+ * 即使 user 对象中包含这两个属性值，也不会为它们生成 SET 子句。
  */
 this.DataAccess.Update<UserProfile>(
     user,
@@ -1015,7 +1013,7 @@ this.DataAccess.Update<UserProfile>(
 <a name="usage-update-complex"></a>
 #### 关联更新
 
-支持“一对一”或“一对多”的导航属性**同时写入**，对于“一对多”的导航属性，还能确保该属性值 _(集合类型)_ 以 **UPSERT** 模式进行写入。
+一对一和一对多导航属性可以和主实体**一起写入**。对于一对多集合，子记录会按 **UPSERT** 语义写入。
 
 ```csharp
 public bool Approve(ulong threadId)
@@ -1040,7 +1038,7 @@ public bool Approve(ulong threadId)
 }
 ```
 
-上述更新方法调用大致生成如下SQL脚本(_SQL Server_)：
+上述更新大致生成如下 SQL(_SQL Server_)：
 
 ```sql
 CREATE TABLE #TMP
@@ -1076,9 +1074,9 @@ WHERE EXISTS (
 <a name="usage-upsert"></a>
 ### 新增更新
 
-新增更新操作(**Upsert**)对应于SQL中的单条元语，提供了更高的性能和一致性，为应用层提供了非常简洁的语法支撑。
+新增更新(**Upsert**)表示：记录不存在时插入，记录已存在时更新。数据引擎会尽量使用数据库提供的原生 upsert 能力。
 
-> 修改 `History` 表，当指定主键值（即 `UserId=100` 并且 `ThreadId=2001` ）的记录存在，则递增 `ViewedCount` 字段值；否则新增一条记录，其 `ViewedCount` 字段值为 `1`。
+> 在下面的例子中，如果 `History` 表中已存在 `UserId=100` 且 `ThreadId=2001` 的记录，则递增 `ViewedCount`；否则新增一条记录，并将 `ViewedCount` 设为 `1`。
 
 ```csharp
 this.DataAccess.Upsert<History>(
@@ -1091,7 +1089,7 @@ this.DataAccess.Upsert<History>(
 );
 ```
 
-上述写入操作大致生成如下SQL脚本：
+上述写入大致生成如下 SQL：
 
 ```sql
 /* MySQL 语法 */
@@ -1111,19 +1109,19 @@ WHEN NOT MATCHED THEN
 <a name="usage-other"></a>
 ### 其他
 
-更多详细内容（譬如：读写分离、继承表、数据模式、映射文件、过滤器、验证器、类型转换、数据隔离）请查阅相关文档。
+更多内容，譬如读写分离、继承表、数据模式、映射文件、过滤器、验证器、类型转换、数据隔离等，请查阅相关文档。
 
-如果你认同我们的设计理念，请**关注**(Watch&Fork)、**点赞**(Star)这个项目。
+如果这个项目对你有帮助，欢迎 **Watch**、**Fork** 或 **Star**。
 
 <a name="performance"></a>
 ## 性能
 
-我们希望提供最佳的**综合性价比**，不会为了某些单项测评分值而妥协设计目标。我们认为对于一个ORM数据访问引擎来说，性能的关注点主要(不限)有这几个要素：
+Zongsoft.Data 追求的是性能、可维护性和易用性的平衡，而不是为了某个单项基准测试牺牲设计目标。对于 ORM 数据访问引擎来说，性能主要取决于：
 
-1. 生成简洁高效的SQL脚本，并尽可能利用特定数据库的最新SQL语法；
-2. 数据查询结果的实体组装(**P**opulate)过程必须高效；
-3. 避免反射，有效的语法树缓存。
+1. 生成简洁高效的 SQL，并在合适时使用特定数据库的语法；
+2. 高效地将查询结果组装(**P**opulate)为实体对象；
+3. 在热点路径避免反射，并缓存已解析的表达式树。
 
-得益于 __“以声明方式来表达数据结构关系”__ 的语义化设计理念，相对于命令式设计而言，它将程序意图更加聚焦，天然地更容易将语义转换为语法树进而表示成不同数据提供程序的SQL脚本，并且各个步骤的优化空间也更宽松和自由。
+由于数据结构关系是声明式表达的，引擎可以把调用意图转换为表达式树，再生成不同数据提供程序的 SQL。应用代码更聚焦，数据提供程序也有更多优化空间。
 
-实现层面采用 **E**mitting 动态编译技术对实体组装(**P**opulate)、数据参数绑定等进行预热处理，可通过 [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) 等相关类了解。
+实现层面使用 **E**mitting 和动态编译技术，提前准备实体组装(**P**opulate)、参数绑定等路径。可通过 [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) 等相关类了解细节。

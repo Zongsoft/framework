@@ -13,26 +13,26 @@
 <a name="abstract"></a>
 ## Abstract
 
-The [Zongsoft.Data](https://github.com/Zongsoft/framework/Zongsoft.Data) is a [GraphQL](https://graphql.com)-style **ORM**(**O**bject/**R**elational **M**apping) data access framework.
+The [Zongsoft.Data](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data) is a [GraphQL](https://graphql.org/)-style **ORM**(**O**bject/**R**elational **M**apping) data access framework.
 
-Its design philosophy is to represent the data structure relationship in a declarative way and de-scripting _(i.e. data access and navigation without writing any SQL or SQL-like syntax structure)_, making access to data easier, application code cleaner, and providing the best comprehensive price/performance ratio.
+Its core idea is simple: describe the data shape and entity relationships declaratively, and let the engine generate the SQL. Most application code can query, write, and navigate data without hand-written SQL or SQL-like strings.
 
 <a name="feature"></a>
 ## Features
 
-- Support for strict POCO/POJO objects without any annotation(Attribute) dependency;
-- Support for read and write separate data access;
-- Support various data operations of table inheritance;
-- Support mapping isolation of business modules and complete extension mechanism;
-- Data navigation, filtering, paging, grouping, aggregation operations, etc. without SQL scripts;
-- Universal intuition for object-oriented developers, easy to understand, out of the box;
-- Provide excellent overall cost performance and complete solutions;
-- Minimal implementation dependencies, usually only require ADO.NET and native ADO.NET drivers or less.
+- Supports strict POCO objects without attribute or annotation dependencies;
+- Supports read/write splitting;
+- Supports data operations on inherited tables;
+- Keeps mappings isolated by business module and provides extension points;
+- Supports navigation, filtering, paging, grouping, and aggregation without hand-written SQL;
+- Fits common object-oriented programming habits and is easy to start with;
+- Focuses on balanced performance, maintainability, and ease of use;
+- Keeps dependencies small, usually only ADO.NET plus the native ADO.NET driver.
 
 <a name="driver"></a>
 ## Drivers
 
-| **Deriver** | **Project Path** | **State** |
+| **Driver** | **Project Path** | **State** |
 | --- | --- | :---: |
 MySQL | [/drivers/mysql](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/mysql) | _**A**vailable_ |
 SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/mssql) | _**A**vailable_ |
@@ -43,7 +43,7 @@ ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/ma
 InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _**A**vailable_ |
 TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
-> Tip: If you need unimplemented drivers or commercial technical support, please contact us.([zongsoft@qq.com](mailto:zongsoft@qq.com))。
+> Tip: If you need a driver that is not listed here or commercial support, please contact us ([zongsoft@qq.com](mailto:zongsoft@qq.com)).
 
 
 <a name="environment"></a>
@@ -58,14 +58,14 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 
 ### Source code compilation
 
-It is recommended to create a **_Zongsoft_** directory in the non-system partition of the hard disk and clone the items such as [Guidelines](https://github.com/Zongsoft/guidelines), [Zongsoft.Core](https://github.com/Zongsoft/framework/Zongsoft.Core) and [Zongsoft.Data](https://github.com/Zongsoft/framework/Zongsoft.Data), etc. into this directory.
+For source builds, we recommend creating a **_Zongsoft_** directory outside the system partition and cloning [Guidelines](https://github.com/Zongsoft/guidelines), [Zongsoft.Core](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core), and [Zongsoft.Data](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data) into it.
 
 <a name="schema"></a>
 ## The data schema
 
-The data **schema** is a DSL(**D**omain **S**pecific **L**anguage) that describes the shape of the data to be query or write _(**D**elete/**I**nsert/**U**pdate/**U**psert)_, The representation is somewhat like [GraphQL](https://graphql.com) but does not require to predefined. It is used to define the data fields to be fetched and written, scopes for cascading deletes, etc.
+The data **schema** is a DSL(**D**omain **S**pecific **L**anguage) that describes which fields are queried or written _(**D**elete/**I**nsert/**U**pdate/**U**psert)_. It looks similar to [GraphQL](https://graphql.org/), but it does not need a server-side GraphQL definition. It is used to choose fields, include navigation properties, and control cascade scopes.
 
-The `schema` argumment in the data access method is the data schema, and the [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) interface is the parsed schema expression.
+The `schema` argument in a data access method is the schema text. The [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) interface represents the parsed schema expression.
 
 <a name="schema-syntax"></a>
 ### Schema Syntax
@@ -100,11 +100,9 @@ sorting ::=
 <a name="schema-overview"></a>
 #### Schema Overview
 
-- Asterisk(`*`): Indicates that all simplex/scalar properties (without navigation/complex properties) are included, and must be explicitly specified if you want to include navigation properties.
+- Asterisk(`*`): includes all scalar properties. Navigation properties are not included unless you name them explicitly.
 
-- Exclamation(`!`): for exclusion, a single exclamation mark indicates the exclusion of the previous definition, and `Exclamation + Property` indicate a property that excludes the specified name.
-
-> **Note:** The data schema will be further grammatically enhanced later, such as the qualification of navigation properties, the type specification of non-deterministic navigation properties, and so on.
+- Exclamation(`!`): excludes fields. A single `!` excludes the previous definition; `!Name` excludes the named property.
 
 <a name="schema-sample"></a>
 ### Sample description
@@ -112,69 +110,69 @@ sorting ::=
 ```graphql
 *, !CreatorId, !CreatedTime
 ```
-> **Note:** All simplex/_scalar_ properties without `CreatorId` and `CreatedTime` properties.
+> **Note:** All scalar properties except `CreatorId` and `CreatedTime`.
 
 ```graphql
 *, Creator{*}
 ```
-> **Note:** All simplex/_scalar_ properties and `Creator` complex property(all simplex properties of this complex property).
+> **Note:** All scalar properties plus the `Creator` navigation property, including all scalar properties of `Creator`.
 
 ```graphql
 *, Creator{Name,FullName}
 ```
-> **Note:** All simplex/_scalar_ properties and `Creator` complex property(Include only the `Name` and `FullName` properties of the navigation property).
+> **Note:** All scalar properties plus the `Creator` navigation property, but only `Name` and `FullName` are loaded for `Creator`.
 
 ```graphql
 *, Users{*}
 ```
-> **Note:** All simplex/_scalar_ properties and `Users` complex property _(one-to-many)_, The collection property has no sorting, no paging.
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, without sorting or paging.
 
 ```graphql
 *, Users:1{*}
 ```
-> **Note:** All simplex/_scalar_ properties and `Users` complex property _(one-to-many)_, Paginate the results of this collection property (page 1 / page size is 1). Use `Users:1/?{*}` if you want page 1 with the default page size.
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, paged as page 1 with page size 1. Use `Users:1/?{*}` for page 1 with the default page size.
 
 ```graphql
 *, Users:1/20{*}
 ```
-> **Note:** All simplex/_scalar_ properties and `Users` complex property _(one-to-many)_, Paginate the results of this collection property (page 1 / 20 per page).
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, paged as page 1 with 20 rows per page.
 
 ```graphql
 *, Users:1/20(Grade,~CreatedTime){*}
 ```
-> **Note:** All simplex/_scalar_ properties and `Users` complex property _(one-to-many)_, Sorting and paginate the results of this collection property (`Grade` ascending and `CreatedTime` descending, page 1 / 20 per page).
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `Grade` ascending and `CreatedTime` descending, then paged as page 1 with 20 rows per page.
 
 
 <a name="mapping"></a>
 ## Mapping file
 
-A data map file is an XML file with a `.mapping` extension that is metadata that defines the relationship of the entity structure. **Do not** write metadata in a large application in a mapping file. A mapping file should be defined separately for each business module to ensure the isolation of the module.
+A data mapping file is an XML file with the `.mapping` extension. It defines the metadata for entities, tables, fields, keys, and navigation relationships. **Do not** put all metadata for a large application into one file; each business module should have its own mapping file.
 
-We provide the [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) XML Schema file, It makes it easy for you to handwrite mapping files and eliminate the chance of errors.
+The [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) XML Schema file provides IntelliSense and validation for hand-written mapping files.
 
 
 > **Enable XML IntelliSense for mapping files:**
 > 
-> **Method 1：** Add new an XML file called "`{module}.mapping`" to the business module project(for example: [`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) or [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)), open the mapping file and click "XML" -> "Architecture" menu item in the **V**isual **S**tudio, in the pop-up dialog box, click the "Add" button in the upper right corner to find the [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) file.
+> **Method 1：** Add an XML file named "`{module}.mapping`" to the business module project(for example: [`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) or [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)). Open the mapping file in **V**isual **S**tudio, choose "XML" -> "Schemas", click "Add", and select [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd).
 > 
-> **Method 2：** Copy [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) to the XML Shemas template directory in Visual Studio, for example:
+> **Method 2：** Copy [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) to the XML Schemas template directory in Visual Studio, for example:
 > - **V**isual **S**tudio 2019 _(Enterprise Edition)_ <br />
 > 	`C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Xml\Schemas`
 
 
-> Although some programmers are used to using tools to generate mapping files, we still recommend handwriting:
+> Although some developers like generating mapping files, we recommend writing them by hand:
 > 
-> - Data structure and relationship are undoubtedly the lowest level of infrastructure for any system. The database table structure is the concrete manifestation of this structure relationship. The mapping file is the "treasure map" about definition of the structural relationship between the upper layer entities and the lower tables.
-> - The mapping file should be uniformly updated by the system architect or the module development leader. The settings of `inherits`, `immutable`, `sortable`, `sequence` and navigation properties in the mapping have a crucial impact on the development of the application layer. so care must be taken carefully.
+> - Data structures and relationships are the foundation of a system. Database tables are their physical form, and mapping files describe how application entities match those tables.
+> - Mapping files should be maintained by the system architect or module owner. Settings such as `inherits`, `immutable`, `sortable`, `sequence`, and navigation properties directly affect application code.
 
 
 <a name="connection"></a>
 ## Connection Settings
 
-The name of the data connection configuration item matches the name of `DataAccess`; a `DataAccess` can have multiple data sources, and the names of these data source connection configuration items are separated by a number sign `#`, with the name of the `DataAccess` to the left of the number sign, the right side of the number sign is the identification of different data sources, which is mainly used in the solution of read-write separation.
+The connection setting name must match the `DataAccess` name. One `DataAccess` can have multiple data sources. Use `#` to separate the `DataAccess` name from the data source name; for example, `Discussions#master` and `Discussions#slave_1`. This is mainly used for read/write splitting.
 
-> - The **MySQL** connection string reference：https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
-> - The **ADO.NET** connection string reference：https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax
+> - **MySQL** connection string reference: https://mysqlconnector.net/connection-options/
+> - **ADO.NET** connection string reference: https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax
 
 - Configuration for a single data source:
 ```xml
@@ -210,7 +208,7 @@ The name of the data connection configuration item matches the name of `DataAcce
 <a name="usage"></a>
 ## Usages
 
-All data operations are performed through the data access interface (located on the [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) interface in the [Zongsoft.Core](https://github.com/Zongsoft/framework/Zongsoft.Core)) and support the following data access operations:
+All data operations go through the [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) interface in [Zongsoft.Core](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core). It supports these operations:
 
 - `int Count(...)`
 - `bool Exists(...)`
@@ -221,35 +219,35 @@ All data operations are performed through the data access interface (located on 
 - `int Upsert(...)` `int UpsertMany(...)`
 - `IEnumerable<T> Select<T>(...)`
 
-**Remind:**
-> The following examples are based on the [Zongsoft.Discussions](https://github.com/Zongsoft/discussions) open source project, which is a complete community forum .NET backend project. It is recommended that you read [the database table structure design document](https://github.com/Zongsoft/discussions/blob/main/database/Zongsoft.Discussions-Tables.md) of the project to understand the relevant data structure relationship before reading following samples.
+**Reminder:**
+> The following examples are based on the [Zongsoft.Discussions](https://github.com/Zongsoft/discussions) open source project, a complete .NET backend for a community forum. Before reading the examples, it is helpful to read its [database table design document](https://github.com/Zongsoft/discussions/blob/main/database/Zongsoft.Discussions.md).
 
 
 <a name="operand"></a>
 ### Operand
 
-The operands can be used for conditions (`Condition`) and written data fields. There are the following operands:
+Operands can be used in conditions (`Condition`) and in values written to fields. The main operand types are:
 - Constant operand `ConstantOperand<T>`
 - Field operand `FieldOperand`
 - Function operand `FunctionOperand`
 - Aggregation operand `AggregateOperand`
-- Unary operand `UnaryOperand`, Includes:
-> - `!` Means logical `NOT` operator
-> - `~` Means bitwise `NOT` operator
-> - `-` Means arithmetic negative operator
-- Binary operand `BinaryOperand`, Includes:
-> - `+` Means arithmetic `Addition` operation
-> - `-` Means arithmetic `Subtraction` operation
-> - `*` Means arithmetic `Multiplication` operation
-> - `/` Means arithmetic `Division` operation
-> - `%` Means arithmetic `Remainder` operation
-> - `&` Means bitwise or logical `AND` operation
-> - `|` Means bitwise or logical `OR` operation
-> - `^` Means bitwise or logical `XOR` operation
+- Unary operand `UnaryOperand`, including:
+> - `!` logical `NOT`
+> - `~` bitwise `NOT`
+> - `-` arithmetic negation
+- Binary operand `BinaryOperand`, including:
+> - `+` addition
+> - `-` subtraction
+> - `*` multiplication
+> - `/` division
+> - `%` remainder
+> - `&` bitwise or logical `AND`
+> - `|` bitwise or logical `OR`
+> - `^` bitwise or logical `XOR`
 
 #### Examples
 
-- The field reference:
+- Field reference:
 ```csharp
 var forums = this.DataAccess.Select<Forum>(
     Condition.Equal("SiteId", this.User.SiteId) &
@@ -257,25 +255,25 @@ var forums = this.DataAccess.Select<Forum>(
 );
 ```
 
-- The constant operations:
+- Constant value:
 ```csharp
-/* The effect of the following two methods is exactly the same */
+/* The following two calls are equivalent. */
 this.DataAccess.Update<OrderDetail>(
     new {
         Discount = Operand.Constant(10)
-    }
+    },
     Condition.Between("Quantity", Range.Create(100, 200))
 );
 
 this.DataAccess.Update<OrderDetail>(
     new {
         Discount = 10
-    }
+    },
     Condition.Between("Quantity", 100, 200)
 );
 ```
 
-- The unary operations:
+- Unary operators:
 ```csharp
 this.DataAccess.Update<OrderDetail>(
     new {
@@ -292,9 +290,9 @@ this.DataAccess.Update<Thread>(
 );
 ```
 
-- The binary operations:
+- Binary operators:
 ```csharp
-/* increment|decrement */
+/* Increment */
 this.DataAccess.Update<Thread>(
     new {
         TotalReplies = Operand.Field("TotalReplies") + 1
@@ -302,7 +300,7 @@ this.DataAccess.Update<Thread>(
     Condition.Equal("ThreadId", 404)
 );
 
-/* arithmetic operations */
+/* Arithmetic */
 this.DataAccess.Update<OrderDetail>(
     new {
         Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
@@ -310,13 +308,13 @@ this.DataAccess.Update<OrderDetail>(
     Condition.Equal("OrderId", 404)
 );
 
-/* bitwise AND operation */
+/* Bitwise AND */
 this.DataAccess.Select<User>(
     Condition.Equal(Operand.Field("Flags") & 0x74, 0x74)
 );
 ```
 
-- The function operations:
+- Function call:
 ```csharp
 this.DataAccess.Update<OrderDetail>(
     new {
@@ -327,9 +325,9 @@ this.DataAccess.Update<OrderDetail>(
 );
 ```
 
-- The aggregation operations:
+- Aggregate value:
 ```csharp
-/* The effect of the following two methods is exactly the same */
+/* The following two calls are equivalent. */
 this.DataAccess.Update<Order>(
     new {
         Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
@@ -346,7 +344,7 @@ this.DataAccess.Update<Order>(
 ```
 
 ```csharp
-/* The effect of the following three methods is exactly the same */
+/* The following three calls are equivalent. */
 this.DataAccess.Update<Order>(
     new {
         Amount = Operand.Function("COALESCE",
@@ -385,18 +383,18 @@ this.DataAccess.Update<Order>(
 <a name="usage-query-1"></a>
 #### Basic query
 
-- Returns all scalar fields by default, which can be explicitly specified by the `schema` argument.
-- The result of the query is lazy loading, traversing the result set or calling Linq's `ToList()`, `First()` extension methods to trigger actual data access.
+- By default, all scalar fields are returned. Use the `schema` argument to choose a smaller field set.
+- Query results are lazy. Actual data access starts when you enumerate the result or call LINQ methods such as `ToList()` or `First()`.
 
-**Note:** Because the query is not paged by default, you should avoid using Linq's `ToList()`, `ToArray()` extension methods to load the result set into memory, so as to avoid unnecessary data access and wasted memory space.
+**Note:** Queries are not paged by default. Avoid calling `ToList()` or `ToArray()` on a large result set unless you really need all rows in memory.
 
 ```csharp
-// Gets the entities of all scalar fields of the specified criteria(lazy loading)
+// Query all scalar fields that match the condition(lazy loading).
 var threads = this.DataAccess.Select<Thread>(
     Condition.Equal("SiteId", this.User.SiteId) &
     Condition.Equal("Visible", true));
 
-// Get a single entity with the specified criteria(only specific fields)
+// Query one entity and load only selected fields.
 var forum = this.DataAccess.Select<Forum>(
     Condition.Equal("SiteId", this.User.SiteId) &
     Condition.Equal("ForumId", 100),
@@ -406,31 +404,31 @@ var forum = this.DataAccess.Select<Forum>(
 <a name="usage-query-2"></a>
 #### Scalar value query
 
-Querying the value of a scalar avoids returning unwanted fields and avoids the performance penalty of populate the entity, while also making the business code more concise.
+Scalar queries return a single field value. They avoid loading unused fields and avoid the cost of populating a full entity.
 
 **Call description:**
 
-1. A generic parameter is specified as a type that returns a scalar value or a convertible type of a field;
-2. Must explicitly specify the entity name of the query(by the method's `name` argument);
-3. Must explicitly specify the property name of the returned(by the method's `schema` argument).
+1. Set the generic type to the field type, or to a type that the field can be converted to;
+2. Specify the entity name with the method's `name` argument;
+3. Specify exactly one property name with the method's `schema` argument.
 
 ```csharp
 var email = this.DataAccess.Select<string>("UserProfile",
     Condition.Equal("UserId", this.User.UserId),
-    "Email" //Explicitly specify only the value of the "Email" field by the schema argument, which is a string type
+    "Email" // Load only the Email field, which is a string.
 ).FirstOrDefault();
 
-/* Return a scalar value set(IEnumerable<int>) */
-var counts = this.DataAccess.Select<int>("History",
+/* Return a scalar value set(IEnumerable<uint>) */
+var counts = this.DataAccess.Select<uint>("History",
     Condition.Equal("UserId", this.User.UserId),
-    "Count" //Explicitly specify only the value of the "Count" field by the schema argument, which is an integer type
+    "ViewedCount" // Load only the ViewedCount field.
 );
 ```
 
 <a name="usage-query-3"></a>
 #### Multi-field query
 
-Query the values of multiple fields, and support returning any entity type, including class, interface, structure, dynamic class(`ExpandoObject`), and dictionary.
+Multi-field queries load several fields and can return many target shapes: class, interface, struct, dynamic object(`ExpandoObject`), or dictionary.
 
 ```csharp
 struct UserToken
@@ -440,8 +438,8 @@ struct UserToken
 }
 
 /*
- * Note: The schema argument of this method can be missing or empty, and the actual effect is the same.
- * Because the return fields of the query method defaults to the intersection of schema and the properties and fields of the returned entity type.
+ * Note: The schema argument can be omitted or left empty here.
+ * The engine uses the intersection between the entity metadata and the target type members.
  */
 var tokens = this.DataAccess.Select<UserToken>(
     "UserProfile",
@@ -452,8 +450,8 @@ var tokens = this.DataAccess.Select<UserToken>(
 
 ```csharp
 /*
- * When the entity to be accessed is different from the generic parameter type,
- * The entity class(structure, interface) can be annotated with ModelAttribute to determine its mapped entity name.
+ * When the target type name differs from the entity name,
+ * use ModelAttribute to specify the mapped entity name.
  */
 [Zongsoft.Data.Model("UserProfile")]
 struct UserToken
@@ -462,7 +460,7 @@ struct UserToken
     public string Name;
 }
 
-// Because the returned entity class(structure, interface) is annotated with the mapped entity name, the name argument is missing, and the code can be simplified as follows:
+// Because the target type declares the mapped entity name, the name argument can be omitted.
 var tokens = this.DataAccess.Select<UserToken>(
     Condition.Equal("SiteId", this.User.SiteId)
 );
@@ -470,8 +468,8 @@ var tokens = this.DataAccess.Select<UserToken>(
 
 ```csharp
 /*
- * 1)The return result type is specified as a dictionary by a generic parameter.
- * 2)Explicitly specify the returned fields via the schema argument. If this argument is missing or an asterisk(*), all fields are returned by default.
+ * 1) The generic type specifies that each row is returned as a dictionary.
+ * 2) The schema argument selects the returned fields. If omitted or set to *, all fields are returned.
  */
 var items = this.DataAccess.Select<IDictionary<string, object>>(
     "UserProfile",
@@ -490,7 +488,7 @@ foreach(var item in items)
 
 ```csharp
 /*
- * The result type specified by the generic parameter is ExpandoObject, which is then accessed dynamically.
+ * The generic type specifies ExpandoObject, so each row can be accessed dynamically.
  */
 var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("UserProfile");
 
@@ -505,10 +503,10 @@ foreach(dynamic item in items)
 <a name="usage-query-4"></a>
 #### Paging query
 
-Specify the `paging` argument in the [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) method for paging queries. For details, see the [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs) settings class.
+Pass a `paging` argument to [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) to run a paged query. See [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs) for the available options.
 
 ```csharp
-// Define the paging settings for the query(page 2, 25 per page)
+// Page 2, 25 rows per page.
 var paging = Paging.Page(2, 25);
 
 var threads = this.DataAccess.Select<Thread>(
@@ -518,22 +516,22 @@ var threads = this.DataAccess.Select<Thread>(
 );
 
 /*
- * After the query method is called, the paging variable is the paging result:
- * paging.Count indicates the total number of pages that satisfy the condition
- * paging.Total indicates the total number of records that satisfy the condition
+ * After the query returns, the paging object contains the result summary:
+ * paging.Count is the total page count.
+ * paging.Total is the total row count.
  */
 ```
 
 <a name="usage-query-5"></a>
 #### Sorting query
 
-Specify the `sortings` argument in the [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) method to sort the query. For details, please refer to the [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs) settings class.
+Pass `Sorting` values to [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) to order the result. See [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs) for details.
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
     Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
     Condition.Equal(nameof(Thread.ForumId), 100),
-    Paging.Disabled, /* It is explicitly specified here to disable paging(you can also specify a paging setting) */
+    Paging.Disabled, /* Disable paging for this query. You can pass a Paging object instead. */
     Sorting.Descending("TotalViews"),   // 1.Descending for TotalViews
     Sorting.Descending("TotalReplies"), // 2.Descending for TotalReplies
     Sorting.Ascending("CreatedTime")    // 3.Ascending for CreatedTime
@@ -543,18 +541,18 @@ var threads = this.DataAccess.Select<Thread>(
 <a name="usage-query-6"></a>
 #### Navigation properties
 
-The navigation(complex) property is explicitly specified by the `schema` argument, which supports one-to-one(zero), one-to-many navigation relationships, and supports nesting at any level. See the syntax description of the **Schema** for more details.
+Navigation(complex) properties are included through the `schema` argument. They support one-to-one, one-to-zero-or-one, and one-to-many relationships, and can be nested.
 
 <a name="usage-query-7"></a>
 ##### One-to-One
 
 ```csharp
 /*
- * 1) The structural relationship of the Thread entity's Post navigation property(associated to the Post entity) is one-to-one,
- *    that is, multiplicity="!" in the mapping file(.mapping), so its corresponding SQL association is INNER JOIN.
+ * 1) Thread.Post is a one-to-one navigation property associated with Post.
+ *    In the mapping file this is multiplicity="!", so the generated SQL uses INNER JOIN.
  *
- * 2) The structure relationship of the Thread entity's MostRecentPost navigation property(associated to the Post entity) is one-to-one/zero(the default value),
- *    that is, multiplicity="?" in the mapping file(.mapping), so its corresponding SQL association is LEFT JOIN.
+ * 2) Thread.MostRecentPost is a zero-or-one navigation property associated with Post.
+ *    In the mapping file this is multiplicity="?", so the generated SQL uses LEFT JOIN.
  */
 var thread = this.DataAccess.Select<Thread>(
     Condition.Equal("ThreadId", 100001),
@@ -567,13 +565,12 @@ var thread = this.DataAccess.Select<Thread>(
 
 ```csharp
 /*
- * 1) The forum group(ForumGroup) Forums navigation property structure is one-to-many,
- *    that is, multiplicity="*" in the mapping file(.mapping), the navigation property will correspond to a new SQL query statement.
+ * 1) ForumGroup.Forums is a one-to-many navigation property.
+ *    In the mapping file this is multiplicity="*", so the navigation property is loaded by a separate SQL query.
  *
- * 2) Whether it's a "one-on-one" or "one-to-many" navigation property, they all support arbitrary nesting.
+ * 2) Both one-to-one and one-to-many navigation properties can be nested.
  *
- * Note: The asterisk(*) indicates all scalar(simplex) properties without any navigation properties,
- *       so the navigation properties must be explicitly specified.
+ * Note: * means all scalar properties only. Navigation properties must be named explicitly.
  */
 var groups = this.DataAccess.Select<ForumGroup>(
     Condition.Equal("SiteId", this.User.SiteId),
@@ -584,11 +581,11 @@ var groups = this.DataAccess.Select<ForumGroup>(
 <a name="usage-query-9"></a>
 ##### Navigation constraint
 
-Especially in a one-to-many relationship, it is often necessary to conditionally constrain the result set of the navigation property, which is the navigation constraint.
+For one-to-many navigation properties, you often need to filter the child collection. This is called a navigation constraint.
 
-> There is a one-to-many relationship between the forum(`Forum`) and the forum members(`ForumUser`). The moderators(`Moderator`) is a subset of the forum members(`ForumUser`), then the structural relationship is Expressed by `complexProperty/constraints` in the data mapping file.
+> A forum(`Forum`) has many forum members(`ForumUser`). Moderators are a subset of those forum members, and this subset is defined with `complexProperty/constraints` in the mapping file.
 > 
-> As shown in the following code, the `Users` navigation property of the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) entity represents the full set of forum members, and the `Moderators` navigation property is a subset of the forum members, which are all associated with the `ForumUser` entity.
+> In the example below, the `Users` navigation property of [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) represents all forum members, while `Moderators` represents only the members whose `IsModerator` field is `true`.
 
 ```xml
 <entity name="Forum" table="Discussions_Forum">
@@ -640,15 +637,15 @@ Especially in a one-to-many relationship, it is often necessary to conditionally
 <a name="usage-query-10"></a>
 ##### Navigation springboard
 
-Point to another navigation property in the associated entity, which usually needs to be filtered with the use of navigation constraints. Take the `Moderators` navigation(complex) property of the `Forum` entity in the above mapping file as an example:
+Sometimes a navigation property should return the target of another navigation property on the associated entity. The `Moderators` property above is such a case:
 
-1. Specify the colon syntax of the `port` attribute of the navigation(complex) property: the left side of the colon is the associated entity name, and the right side of the colon is the corresponding target navigation property.
+1. Use the colon syntax in the `port` attribute. The left side is the associated entity name, and the right side is the navigation property to jump to.
 
-2. Define the `constraint` constraint for this navigation(complex) property.
+2. Add constraints to decide which associated rows are included.
 
-> Note: Since the moderator is not restricted by the forum member's `Permission` field, the definition of the moderator's entity type is [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) will be more concise and easy to use(avoid the jump navigation through `ForumUser.User`), so set `port="ForumUser:User"` of the `Moderators` navigation property to express this requirement.
+> Note: A moderator does not need to expose the forum member's `Permission` field. Returning [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) is simpler than returning `ForumUser` and then reading `ForumUser.User`. Therefore `Moderators` uses `port="ForumUser:User"`.
 > 
-> Take the above data mapping fragment as an example, and feel the difference between the `Users` and `Moderators` property types of the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) class.
+> Compare the `Users` and `Moderators` property types in the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) class:
 
 ```csharp
 public abstract class Forum
@@ -682,7 +679,7 @@ var forum = this.DataAccess.Select<Forum>(
     "*, Users{*}, Moderators{*, User{*}}"
 ).FirstOrDefault();
 
-// The type of moderator variable is UserProfile.
+// moderator is UserProfile.
 foreach(var moderator in forum.Moderators)
 {
     Console.Write(moderator.Name);
@@ -690,7 +687,7 @@ foreach(var moderator in forum.Moderators)
     Console.Write(moderator.Avatar);
 }
 
-// The type of member variable is ForumUser.
+// member is ForumUser.
 foreach(var member in forum.Users)
 {
     Console.Write(member.Permission);
@@ -704,7 +701,7 @@ foreach(var member in forum.Users)
 <a name="usage-query-11"></a>
 #### Group query
 
-Grouping queries support aggregate functions for relational databases, and in the future it will add more statistical functions to the time series database.
+Grouping queries support aggregate functions for relational databases.
 
 ```csharp
 struct ForumStatistic
@@ -730,7 +727,7 @@ var statistics = this.DataAccess.Select<ForumStatistic>(
 );
 ```
 
-The above query method call will be roughly generated as the following SQL script:
+The query above roughly generates SQL like this:
 
 ```sql
 SELECT
@@ -757,26 +754,24 @@ FROM
 <a name="usage-query-12"></a>
 ### Navigation condition
 
-Conditional filtering of entities associated with navigation properties.
+Navigation conditions filter by fields on associated entities.
 
 ```csharp
 /*
- * The query condition description:
- * 1) The most valuable thread associated with the History table(Thread.IsValued=true), and
- * 2) The viewing time(first or last) is within the last 30 days.
+ * Query history records whose related thread is valued,
+ * and whose first or most recent view time is within the last 30 days.
  */
 var histories = this.DataAccess.Select<History>(
-    Condition.Equal("Thread.IsValued", true) & /* The navigation condition */
+    Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
     (
         Condition.Between("FirstViewedTime", DateTime.Today.AddDays(-30), DateTime.Now) |
         Condition.Between("MostRecentViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
     )
 );
 
-/* The following code is exactly the same as the execution effect of the above code,
-   just the time range parameter is constructed differently. */
+/* Same query, using Range.Timing to build the time range. */
 var histories = this.DataAccess.Select<History>(
-    Condition.Equal("Thread.IsValued", true) & /* The navigation condition */
+    Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
     (
         Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
         Condition.Between("MostRecentViewedTime", Range.Timing.Last(30, 'D'))
@@ -784,7 +779,7 @@ var histories = this.DataAccess.Select<History>(
 );
 ```
 
-The above query method call will be roughly generated as the following SQL script:
+The query above roughly generates SQL like this:
 
 ```sql
 SELECT h.*
@@ -801,9 +796,9 @@ WHERE t.IsValued = @p1 AND
 <a name="usage-query-13"></a>
 #### Subquery filtering
 
-The conditional filtering of a one-to-many navigation property corresponds to a subquery of SQL, expressed using the `Exists` operator.
+Filtering a one-to-many navigation property is expressed with the `Exists` operator and becomes a SQL subquery.
 
-> The following code indicates that the forum **visibility** is "`Internal`" or "`All`" under the site to which the current user belongs. If the forum **visibility** is "`Specified`", then it is determined whether the current user is a moderator or has forum member permissions.
+> The following query gets forums in the current user's site. `Internal` and `All` forums are included directly. For `Specified` forums, the current user must be a moderator or have member permissions.
 
 ```csharp
 var forums = this.DataAccess.Select<Forum>(
@@ -822,7 +817,7 @@ var forums = this.DataAccess.Select<Forum>(
 );
 ```
 
-The above query method call will be roughly generated as the following SQL script:
+The query above roughly generates SQL like this:
 
 ```sql
 SELECT t.*
@@ -850,9 +845,9 @@ WHERE
 <a name="usage-query-14"></a>
 #### Type conversion
 
-When the database field type does not match the corresponding entity property type _(cannot be converted directly)_, you need to introduce a type converter for custom conversion logic.
+Use a type converter when a database field type cannot be directly converted to the entity property type.
 
-For example, the `Tags` field type of the `Thread` table is `nvarchar`, but the type of the `Tags` property of the [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) model class is a **string array**, so data read and write operations require custom conversion of these two types. For specific implementations, please refer to the [TagsConverter](https://github.com/Zongsoft/discussions/blob/main/src/Models/TagsConverter.cs) class, and the `Tags` property definition of the [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) model class.
+For example, the `Tags` field in the `Thread` table is `nvarchar`, but the `Tags` property of the [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs) model is a **string array**. Reading and writing this property requires custom conversion. See [TagsConverter](https://github.com/Zongsoft/discussions/blob/main/src/Models/TagsConverter.cs) and the `Tags` property on [Thread](https://github.com/Zongsoft/discussions/blob/main/src/Models/Thread.cs).
 
 
 <a name="usage-delete"></a>
@@ -865,7 +860,7 @@ this.DataAccess.Delete<Post>(
 );
 ```
 
-The above delete method call will be roughly generated as the following SQL script:
+The delete above roughly generates SQL like this:
 
 ```sql
 DELETE t
@@ -879,7 +874,7 @@ WHERE t.Visible=0 AND
 <a name="usage-delete-cascade"></a>
 #### Cascade deletion
 
-Support for deleting sub-table records associated with "one-to-one(zero)" or "one-to-many" navigation properties.
+Cascade deletion can delete child records associated through zero-or-one, one-to-one, or one-to-many navigation properties.
 
 ```csharp
 this.DataAccess.Delete<Post>(
@@ -888,7 +883,7 @@ this.DataAccess.Delete<Post>(
 );
 ```
 
-The above delete method call will be roughly generated as the following SQL script(_SQL Server_):
+The delete above roughly generates SQL like this(_SQL Server_):
 
 ```sql
 CREATE TABLE #TMP
@@ -896,12 +891,12 @@ CREATE TABLE #TMP
     PostId bigint
 );
 
-/* Delete the master table and export the associated field values of the one-to-many navigation property to the temporary table */
+/* Delete the master row and write the associated key values to a temporary table. */
 DELETE FROM Post
 OUTPUT DELETED.PostId INTO #TMP
 WHERE PostId=@p1;
 
-/* Delete dependent table records, with the condition that a subset of the master table has been deleted */
+/* Delete child rows by using the keys captured from the deleted master row. */
 DELETE FROM PostVoting
 WHERE PostId IN
 (
@@ -923,7 +918,7 @@ this.DataAccess.Insert("Forum", new {
 <a name="usage-insert-complex"></a>
 #### Associated insertion
 
-Support "one-to-one" or "one-to-many" navigation properties to be inserted at the same time.
+Related one-to-one and one-to-many navigation values can be inserted together.
 
 ```csharp
 var forum = Model.Build<Forum>();
@@ -942,13 +937,13 @@ forum.Users = new ForumUser[]
 this.DataAccess.Insert(forum, "*, Users{*}");
 ```
 
-The above insert method call will be roughly generated as the following SQL script(_MySQL_):
+The insert above roughly generates SQL like this(_MySQL_):
 
 ```sql
-/* The master table insert statement, only once */
+/* Insert the master row once. */
 INSERT INTO Forum (SiteId,ForumId,GroupId,Name,...) VALUES (@p1,@p2,@p3,@p4,...);
 
-/* Subtable insert statement, multiple executions */
+/* Insert child rows multiple times. */
 INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (@p1,@p2,@p3,@p4,@p5);
 ```
 
@@ -966,10 +961,10 @@ user.Gender = Gender.Male;
 this.DataAccess.Update(user);
 ```
 
-The above update method call will be roughly generated as the following SQL script:
+The update above roughly generates SQL like this:
 
 ```sql
-/* Note: Unmodified properties will not be generated as SET clause */
+/* Unmodified properties are not generated into the SET clause. */
 
 UPDATE UserProfile SET
 Name=@p1, FullName=@p2, Gender=@p3
@@ -979,7 +974,7 @@ WHERE UserId=@p4;
 <a name="usage-update-dynamic"></a>
 #### Anonymous class
 
-The data written can be an anonymous class, dynamic class _(`ExpandoObject`)_, dictionary _(`IDictionary`, `IDictionary<string, object>`)_, and the like.
+The value to write can be an anonymous object, dynamic object _(`ExpandoObject`)_, or dictionary _(`IDictionary`, `IDictionary<string, object>`)_.
 
 ```csharp
 this.DataAccess.Update<UserProfile>(
@@ -995,12 +990,12 @@ this.DataAccess.Update<UserProfile>(
 <a name="usage-update-schema"></a>
 #### Exclude fields
 
-Explicitly specify fields, or exclude some fields.
+Use `schema` to choose the fields to update, or to exclude fields.
 
 ```csharp
 /*
- * Explicitly specify only the Name, Gender fields by using the schema argument,
- * Other fields are not modified regardless of whether they have changed.
+ * Only Name and Gender are updated.
+ * Other fields are ignored even if their values changed.
  */
 this.DataAccess.Update<UserProfile>(
     user,
@@ -1008,8 +1003,8 @@ this.DataAccess.Update<UserProfile>(
 );
 
 /*
- * All fields can be updated by specifying the schema argument, but the CreatorId and CreatedTime are excluded,
- * Even if the model object pointed to by the user variable contains and changes the values of these two properties, their SET clauses will not be generated.
+ * * allows all fields, but CreatorId and CreatedTime are excluded.
+ * Even if user contains values for these two properties, no SET clauses are generated for them.
  */
 this.DataAccess.Update<UserProfile>(
     user,
@@ -1020,7 +1015,7 @@ this.DataAccess.Update<UserProfile>(
 <a name="usage-update-complex"></a>
 #### Associated update
 
-Supports "one-to-one" or "one-to-many" navigation properties to be written at the **same time**. For "one-to-many" navigation properties, it also ensures that the property value _(collection type)_ is written in **UPSERT** mode.
+Related one-to-one and one-to-many navigation values can be written **together**. For one-to-many collections, child rows are written with **UPSERT** semantics.
 
 ```csharp
 public bool Approve(ulong threadId)
@@ -1045,7 +1040,7 @@ public bool Approve(ulong threadId)
 }
 ```
 
-The above update method call will be roughly generated as the following SQL script(_SQL Server_):
+The update above roughly generates SQL like this(_SQL Server_):
 
 ```sql
 CREATE TABLE #TMP
@@ -1081,9 +1076,9 @@ WHERE EXISTS (
 <a name="usage-upsert"></a>
 ### Upsert operation
 
-The **Upsert** operation corresponds to a single primitive language in SQL, providing higher performance and consistency, and provides very simple syntax support for the application layer.
+**Upsert** inserts a row when it does not exist, or updates it when it already exists. It maps to the database provider's native upsert support where possible.
 
-> Modify the `History` table, When the record specifying the primary key value(ie `UserId=100` and `ThreadId=2001`) exists, then increment the `ViewedCount` field value; otherwise, a new record is added, and the the `ViewedCount` field value is `1`.
+> In this example, if a `History` row with `UserId=100` and `ThreadId=2001` exists, `ViewedCount` is incremented. Otherwise, a new row is inserted with `ViewedCount` set to `1`.
 
 ```csharp
 this.DataAccess.Upsert<History>(
@@ -1096,7 +1091,7 @@ this.DataAccess.Upsert<History>(
 );
 ```
 
-The above upsert method call will be roughly generated as the following SQL script:
+The upsert above roughly generates SQL like this:
 
 ```sql
 /* MySQL syntax */
@@ -1116,19 +1111,19 @@ WHEN NOT MATCHED THEN
 <a name="usage-other"></a>
 ### Other
 
-For more details(such as read-write separation, inheritance tables, data schema, mapping files, filters, validators, type conversions, data isolation), please consult the related documentation.
+For more details, see the related documentation for read/write splitting, inherited tables, schemas, mapping files, filters, validators, type conversion, and data isolation.
 
-If you agree with our design philosophy(ideas), please pay attention to the(**W**atch & **F**ork) and **S**tar(Like) this project.
+If this project is useful to you, please **Watch**, **Fork**, or **Star** it.
 
 <a name="performance"></a>
 ## Performance
 
-We want to provide the best **overall price/performance ratio** and not compromise our design goals for some of benchmarking. We believe that for an ORM data access engine, performance concerns are mainly(unlimited) with these elements:
+Zongsoft.Data aims for balanced performance, maintainability, and usability instead of optimizing for a single benchmark. For an ORM data access engine, performance mainly depends on:
 
-1. Generate clean and efficient SQL scripts and make the best use of the latest SQL syntax of the specified database;
-2. The model/entity populate process of the data query results must be efficient;
-3. Avoid reflections, a valid syntax tree cache.
+1. Generating clean and efficient SQL, using database-specific syntax when it helps;
+2. Populating models/entities efficiently from query results;
+3. Avoiding reflection on hot paths and caching parsed expression trees.
 
-Thanks to the semantic design concept of “declaratively expressing data structure relationships”, compared with the imperative programming design, the program intention is more focused, and it is natural easier to convert the semantics into a syntax tree to represent SQL scripts of different data providers, and the optimization space of each step is more relaxed and free.
+Because data relationships are described declaratively, the engine can turn user intent into expression trees and then into provider-specific SQL. This keeps application code focused and leaves more room for provider-level optimization.
 
-The implementation layer uses **emitting** dynamic compilation technology to pre-heat the model/entity populated, data parameter binding, etc., which can be understood by the [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) class and related classes.
+The implementation uses **emitting** and dynamic compilation to prepare model population and parameter binding paths ahead of time. See [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) and related classes for details.
