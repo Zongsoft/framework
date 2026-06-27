@@ -1065,6 +1065,53 @@ this.DataAccess.Insert("Forum", new {
 });
 ```
 
+<a name="usage-insert-options"></a>
+#### Insert options
+
+`DataInsertOptions` controls insert-only behaviors:
+
+- `IgnoreConstraint()` ignores database constraint conflicts, such as duplicate primary keys or unique keys. The failed row is skipped instead of throwing a conflict exception.
+- `Sequence(...)` controls how sequence fields are generated. Use `DataSequenceBehavior.Never` when the value is supplied by the caller and should not be generated.
+- `Return(...)` asks the database to return generated values when the current driver supports returning values.
+- `SuppressValidator()` disables validators registered for this insert operation.
+
+```csharp
+var count = this.DataAccess.Insert<ForumUser>(
+    new {
+        SiteId = this.User.SiteId,
+        ForumId = 100,
+        UserId = 100,
+        Permission = Permission.Read,
+    },
+    DataInsertOptions.IgnoreConstraint());
+```
+
+The insert above roughly generates SQL like this:
+
+```sql
+/* MySQL, ClickHouse */
+INSERT IGNORE INTO ForumUser (SiteId,ForumId,UserId,Permission) VALUES (@p1,@p2,@p3,@p4);
+
+/* PostgreSQL, SQLite */
+INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission) VALUES (@p1,@p2,@p3,@p4)
+ON CONFLICT DO NOTHING;
+```
+
+If you also provide a value for a sequence field, chain the sequence option:
+
+```csharp
+var options = DataInsertOptions
+    .Sequence(DataSequenceBehavior.Never)
+    .IgnoreConstraint();
+
+this.DataAccess.Insert<Forum>(new {
+    SiteId = this.User.SiteId,
+    ForumId = 100,
+    GroupId = 10,
+    Name = "General",
+}, options);
+```
+
 <a name="usage-insert-complex"></a>
 #### Associated insertion
 
@@ -1113,6 +1160,20 @@ var count = this.DataAccess.Import(
     "ForumUser",
     users,
     "SiteId,ForumId,UserId,Permission".Split(','));
+```
+
+Use `DataImportOptions.IgnoreConstraint()` when duplicated rows should be skipped during import. It can be chained with `Parameter(...)` when filters or services need operation-level flags:
+
+```csharp
+var options = DataImportOptions
+    .Parameter("SkipSynchronization")
+    .IgnoreConstraint();
+
+var count = this.DataAccess.Import(
+    "ForumUser",
+    users,
+    "SiteId,ForumId,UserId,Permission".Split(','),
+    options);
 ```
 
 <a name="usage-update"></a>
@@ -1279,7 +1340,7 @@ WHEN NOT MATCHED THEN
 <a name="usage-returning"></a>
 ### Returning values
 
-Insert, update, and upsert options can request returned values from the database provider. This is useful for identity values, generated values, and updated counters. The feature is available only when the current driver supports returning values.
+Delete, insert, update, and upsert options can request returned values from the database provider. This is useful for deleted file paths, identity values, generated values, and updated counters. The feature is available only when the current driver supports returning values.
 
 ```csharp
 var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
@@ -1306,16 +1367,131 @@ var totalViews = this.DataAccess.Increase<Thread>(
     Condition.Equal(nameof(Thread.ThreadId), threadId));
 ```
 
+The delete option returns older values:
+
+```csharp
+var options = DataDeleteOptions.Return(nameof(PostAttachment.AttachmentId));
+
+this.DataAccess.Delete<PostAttachment>(
+    Condition.Equal(nameof(PostAttachment.PostId), postId),
+    options);
+
+foreach(var row in options.Returning.Rows)
+{
+    if(row.TryGetValue(nameof(PostAttachment.AttachmentId), out var value))
+        DeletePhysicalAttachment(Convert.ToUInt64(value));
+}
+```
+
 <a name="usage-options"></a>
 ### Options, events, and transactions
 
-All operations have option objects. Select options can enable `Distinct` or suppress lazy loading/validation. Mutation options can suppress validation, ignore insert/upsert constraints, configure sequence handling, and request returned values.
+Every data access method accepts an option object. Options are intentionally small, but they are important because validators, filters, events, and service hooks all receive the same option instance.
+
+Common option members:
+
+| Option member | Applies to | Description |
+| --- | --- | --- |
+| `Parameter(...)` / `new DataXxxOptions(parameters)` | All option types | Adds operation-level parameters. These parameters are for validators, filters, callbacks, and service hooks. They are not SQL parameters; mapped commands use `IEnumerable<Parameter>` for SQL/stored procedure parameters. |
+| `SuppressValidator()` | Select, Exists, Aggregate, Delete, Insert, Update, Upsert | Skips registered data validators for this operation. Use it only when the caller has already enforced the scope or the operation is an internal maintenance operation. |
+| `Return(...)` | Delete, Insert, Update, Upsert | Requests returned values. Insert returns newer values; delete returns older values; update/upsert can request `ReturningKind.Newer` or `ReturningKind.Older`. |
+| `IgnoreConstraint()` | Insert, Import, Upsert | Skips rows that conflict with database constraints when the driver supports it. |
+| `Sequence(...)` | Insert, Upsert | Controls sequence generation for sequence fields. |
+
+Read option members:
+
+| Option | Description |
+| --- | --- |
+| `DataSelectOptions.Distinct()` | Generates a distinct query. It is especially useful for scalar or small projection queries. |
+| `DataSelectOptions.SuppressLazy(false)` | Suppresses lazy loading of navigation collections. Pass `true` when the query should also be distinct. |
+| `DataExistsOptions.SuppressValidator()` | Runs an existence check without validators. |
+| `DataAggregateOptions.SuppressValidator()` | Runs a count/sum/aggregate query without validators. |
+
+Write option members:
+
+| Option | Description |
+| --- | --- |
+| `DataInsertOptions.Sequence(DataSequenceBehavior.Auto)` | Uses the provided sequence value when present; otherwise generates one. This is the default behavior. |
+| `DataInsertOptions.Sequence(DataSequenceBehavior.Alway)` | Always lets the sequencer generate the value. |
+| `DataInsertOptions.Sequence(DataSequenceBehavior.Never)` | Never generates the sequence value; use the value supplied by the caller. |
+| `DataUpdateOptions.SuppressValidator(UpdateBehaviors.PrimaryKey)` | Allows primary key fields to be included in an update. This is for repair or migration code, not normal business updates. |
+| `DataUpsertOptions.IgnoreConstraint()` | Applies the same conflict-ignore intent to upsert statements. |
+
+`Parameter(...)` is commonly used to pass transient state to validators, filters, or service overrides. For example, a synchronization filter can skip its side effect when the caller sets a flag:
 
 ```csharp
-var threads = this.DataAccess.Select<Thread>(
+var options = DataUpdateOptions
+    .Parameter("SkipSynchronization")
+    .SuppressValidator();
+
+this.DataAccess.Update<Thread>(
+    new { TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1 },
+    Condition.Equal(nameof(Thread.ThreadId), threadId),
+    options);
+```
+
+The filter or service hook reads the flag from the operation context:
+
+```csharp
+if(context.Options.Parameters.Contains("SkipSynchronization"))
+    return;
+```
+
+`Parameter(...)` can also carry an object needed by a service hook:
+
+```csharp
+var options = DataInsertOptions.Parameter("Thread", thread);
+
+this.DataAccess.Insert<Post>(
+    new {
+        ThreadId = thread.ThreadId,
+        CreatorId = this.User.UserId,
+        Content = content,
+    },
+    options);
+```
+
+For mapped commands, keep SQL or stored procedure parameters in the `Execute` argument. Put only operation-context flags in `DataExecuteOptions`:
+
+```csharp
+var options = DataExecuteOptions.Parameter("SkipAudit");
+
+this.DataAccess.Execute(
+    "Forum.RefreshStatistics",
+    new []
+    {
+        new Parameter("SiteId", this.User.SiteId),
+        new Parameter("ForumId", forumId),
+    },
+    options);
+```
+
+Use `Distinct()` for scalar lookups:
+
+```csharp
+var creatorIds = this.DataAccess.Select<uint>(
+    nameof(Thread),
     Condition.Equal(nameof(Thread.ForumId), forumId),
-    "ThreadId,Title",
+    nameof(Thread.CreatorId),
     DataSelectOptions.Distinct());
+```
+
+Use `SuppressValidator()` when an internal operation intentionally bypasses normal validator rules:
+
+```csharp
+var exists = this.DataAccess.Exists<UserProfile>(
+    Condition.Equal(nameof(UserProfile.UserId), userId),
+    DataExistsOptions.SuppressValidator());
+```
+
+Use `UpdateBehaviors.PrimaryKey` only when a primary key must be repaired:
+
+```csharp
+this.DataAccess.Update<UserProfile>(
+    new { UserId = newUserId },
+    Condition.Equal(nameof(UserProfile.UserId), oldUserId),
+    nameof(UserProfile.UserId),
+    new DataUpdateOptions(UpdateBehaviors.PrimaryKey));
 ```
 
 Every operation also has before/after callbacks and matching `IDataAccess` events, such as `Selecting`/`Selected`, `Inserting`/`Inserted`, and `Executing`/`Executed`. Filters registered in `IDataAccess.Filters` run between the before event and the provider execution, which is the common place for cross-cutting behaviors.

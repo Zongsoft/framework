@@ -1061,6 +1061,53 @@ this.DataAccess.Insert("Forum", new {
 });
 ```
 
+<a name="usage-insert-options"></a>
+#### 新增选项
+
+`DataInsertOptions` 用来控制新增操作的专用行为：
+
+- `IgnoreConstraint()` 忽略数据库约束冲突，譬如主键或唯一键重复。发生冲突的记录会被跳过，而不是抛出冲突异常。
+- `Sequence(...)` 控制序号字段如何生成。如果序号值由调用方提供，不希望数据引擎生成，请使用 `DataSequenceBehavior.Never`。
+- `Return(...)` 在当前驱动支持返回值时，请求数据库返回生成值。
+- `SuppressValidator()` 禁用本次新增操作注册的数据验证器。
+
+```csharp
+var count = this.DataAccess.Insert<ForumUser>(
+    new {
+        SiteId = this.User.SiteId,
+        ForumId = 100,
+        UserId = 100,
+        Permission = Permission.Read,
+    },
+    DataInsertOptions.IgnoreConstraint());
+```
+
+上述新增大致生成如下 SQL：
+
+```sql
+/* MySQL、ClickHouse */
+INSERT IGNORE INTO ForumUser (SiteId,ForumId,UserId,Permission) VALUES (@p1,@p2,@p3,@p4);
+
+/* PostgreSQL、SQLite */
+INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission) VALUES (@p1,@p2,@p3,@p4)
+ON CONFLICT DO NOTHING;
+```
+
+如果同时显式提供了序号字段的值，可链式设置序号选项：
+
+```csharp
+var options = DataInsertOptions
+    .Sequence(DataSequenceBehavior.Never)
+    .IgnoreConstraint();
+
+this.DataAccess.Insert<Forum>(new {
+    SiteId = this.User.SiteId,
+    ForumId = 100,
+    GroupId = 10,
+    Name = "General",
+}, options);
+```
+
 <a name="usage-insert-complex"></a>
 #### 关联新增
 
@@ -1111,6 +1158,20 @@ var count = this.DataAccess.Import(
     "ForumUser",
     users,
     "SiteId,ForumId,UserId,Permission".Split(','));
+```
+
+如果导入时希望跳过重复记录，可使用 `DataImportOptions.IgnoreConstraint()`。如果过滤器或服务还需要读取本次操作的上下文标记，也可以继续链式设置 `Parameter(...)`：
+
+```csharp
+var options = DataImportOptions
+    .Parameter("SkipSynchronization")
+    .IgnoreConstraint();
+
+var count = this.DataAccess.Import(
+    "ForumUser",
+    users,
+    "SiteId,ForumId,UserId,Permission".Split(','),
+    options);
 ```
 
 <a name="usage-update"></a>
@@ -1277,7 +1338,7 @@ WHEN NOT MATCHED THEN
 <a name="usage-returning"></a>
 ### 返回写入值
 
-新增、更新、增改选项可以向数据库提供程序请求返回值。它适合获取自增值、生成值、更新后的计数值等。该能力只有在当前驱动支持返回值时才可用。
+删除、新增、更新、增改选项可以向数据库提供程序请求返回值。它适合获取被删除的文件编号、自增值、生成值、更新后的计数值等。该能力只有在当前驱动支持返回值时才可用。
 
 ```csharp
 var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
@@ -1304,16 +1365,131 @@ var totalViews = this.DataAccess.Increase<Thread>(
     Condition.Equal(nameof(Thread.ThreadId), threadId));
 ```
 
+删除选项返回的是删除前的值：
+
+```csharp
+var options = DataDeleteOptions.Return(nameof(PostAttachment.AttachmentId));
+
+this.DataAccess.Delete<PostAttachment>(
+    Condition.Equal(nameof(PostAttachment.PostId), postId),
+    options);
+
+foreach(var row in options.Returning.Rows)
+{
+    if(row.TryGetValue(nameof(PostAttachment.AttachmentId), out var value))
+        DeletePhysicalAttachment(Convert.ToUInt64(value));
+}
+```
+
 <a name="usage-options"></a>
 ### 选项、事件与事务
 
-每类操作都有对应的选项对象。查询选项可设置 `Distinct`，或抑制延迟加载、验证器；写入选项可抑制验证器、忽略新增或增改约束、设置序号器行为，以及请求返回写入值。
+每类数据访问操作都有对应的选项对象。选项对象本身很小，但很重要，因为验证器、过滤器、事件以及服务钩子都会拿到同一个选项实例。
+
+常用选项成员如下：
+
+| 选项成员 | 适用操作 | 说明 |
+| --- | --- | --- |
+| `Parameter(...)` / `new DataXxxOptions(parameters)` | 所有选项类型 | 添加本次操作的附加参数。这些参数用于验证器、过滤器、回调和服务钩子，不是 SQL 参数；映射命令的 SQL 或存储过程参数使用 `IEnumerable<Parameter>` 传入。 |
+| `SuppressValidator()` | Select、Exists、Aggregate、Delete、Insert、Update、Upsert | 跳过本次操作注册的数据验证器。通常只用于调用方已经完成约束检查，或内部维护操作需要绕开常规验证规则的场景。 |
+| `Return(...)` | Delete、Insert、Update、Upsert | 请求返回值。新增返回新增后的值，删除返回删除前的值，更新和增改可指定返回 `ReturningKind.Newer` 或 `ReturningKind.Older`。 |
+| `IgnoreConstraint()` | Insert、Import、Upsert | 在驱动支持时，跳过与数据库约束冲突的记录。 |
+| `Sequence(...)` | Insert、Upsert | 控制序号字段的生成行为。 |
+
+读取类选项：
+
+| 选项 | 说明 |
+| --- | --- |
+| `DataSelectOptions.Distinct()` | 生成去重查询，常用于标量或小投影查询。 |
+| `DataSelectOptions.SuppressLazy(false)` | 禁用导航子集的延迟加载；如果同时需要去重，可传入 `true`。 |
+| `DataExistsOptions.SuppressValidator()` | 在不执行验证器的情况下进行存在性判断。 |
+| `DataAggregateOptions.SuppressValidator()` | 在不执行验证器的情况下进行计数、求和等聚合查询。 |
+
+写入类选项：
+
+| 选项 | 说明 |
+| --- | --- |
+| `DataInsertOptions.Sequence(DataSequenceBehavior.Auto)` | 如果调用方提供了序号值则使用该值，否则由序号器生成。这是默认行为。 |
+| `DataInsertOptions.Sequence(DataSequenceBehavior.Alway)` | 总是由序号器生成序号值。 |
+| `DataInsertOptions.Sequence(DataSequenceBehavior.Never)` | 不生成序号值，直接使用调用方提供的值。 |
+| `DataUpdateOptions.SuppressValidator(UpdateBehaviors.PrimaryKey)` | 允许更新语句包含主键字段。它只适合修复或迁移数据，不适合普通业务更新。 |
+| `DataUpsertOptions.IgnoreConstraint()` | 对增改语句表达同样的忽略约束冲突意图。 |
+
+`Parameter(...)` 常用于把临时状态传给验证器、过滤器或服务重写方法。譬如，某个同步过滤器在调用方设置标记时跳过副作用：
 
 ```csharp
-var threads = this.DataAccess.Select<Thread>(
+var options = DataUpdateOptions
+    .Parameter("SkipSynchronization")
+    .SuppressValidator();
+
+this.DataAccess.Update<Thread>(
+    new { TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1 },
+    Condition.Equal(nameof(Thread.ThreadId), threadId),
+    options);
+```
+
+过滤器或服务钩子可从操作上下文读取该标记：
+
+```csharp
+if(context.Options.Parameters.Contains("SkipSynchronization"))
+    return;
+```
+
+`Parameter(...)` 也可以携带服务钩子需要的对象：
+
+```csharp
+var options = DataInsertOptions.Parameter("Thread", thread);
+
+this.DataAccess.Insert<Post>(
+    new {
+        ThreadId = thread.ThreadId,
+        CreatorId = this.User.UserId,
+        Content = content,
+    },
+    options);
+```
+
+对于映射命令，SQL 或存储过程参数仍然放在 `Execute` 参数中；`DataExecuteOptions` 只放操作上下文标记：
+
+```csharp
+var options = DataExecuteOptions.Parameter("SkipAudit");
+
+this.DataAccess.Execute(
+    "Forum.RefreshStatistics",
+    new []
+    {
+        new Parameter("SiteId", this.User.SiteId),
+        new Parameter("ForumId", forumId),
+    },
+    options);
+```
+
+`Distinct()` 适合标量查询：
+
+```csharp
+var creatorIds = this.DataAccess.Select<uint>(
+    nameof(Thread),
     Condition.Equal(nameof(Thread.ForumId), forumId),
-    "ThreadId,Title",
+    nameof(Thread.CreatorId),
     DataSelectOptions.Distinct());
+```
+
+内部操作明确需要绕开普通验证规则时，可使用 `SuppressValidator()`：
+
+```csharp
+var exists = this.DataAccess.Exists<UserProfile>(
+    Condition.Equal(nameof(UserProfile.UserId), userId),
+    DataExistsOptions.SuppressValidator());
+```
+
+只有在必须修复主键时，才使用 `UpdateBehaviors.PrimaryKey`：
+
+```csharp
+this.DataAccess.Update<UserProfile>(
+    new { UserId = newUserId },
+    Condition.Equal(nameof(UserProfile.UserId), oldUserId),
+    nameof(UserProfile.UserId),
+    new DataUpdateOptions(UpdateBehaviors.PrimaryKey));
 ```
 
 每类操作也都有前后回调和对应的 `IDataAccess` 事件，譬如 `Selecting`/`Selected`、`Inserting`/`Inserted`、`Executing`/`Executed`。注册到 `IDataAccess.Filters` 的过滤器会在前置事件之后、数据提供程序执行之前运行，适合承载通用横切逻辑。
