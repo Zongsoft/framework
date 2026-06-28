@@ -1,4 +1,12 @@
 <Solution>
 	<Project Path="src/Zongsoft.Externals.Redis.csproj" />
 	<Project Path="test/Zongsoft.Externals.Redis.Tests.csproj" />
+
+	<Folder Name="/samples/" />
+	<Folder Name="/samples/distributed-lock/">
+		<File Path="samples/DistributedLock/README.md" />
+		<File Path="samples/DistributedLock/README-zh_CN.md" />
+		<Project Path="samples/DistributedLock/master/Zongsoft.Externals.Redis.DistributedLock.Master.csproj" />
+		<Project Path="samples/DistributedLock/slaver/Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj" />
+	</Folder>
 </Solution>
