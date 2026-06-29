@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.ZeroMQ library.
  *
@@ -47,6 +47,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#endregion
 
 	#region 私有变量
+	private int _refreshing;
 	private ushort _publisherPort;
 	private ushort _subscriberPort;
 	private readonly object _locker;
@@ -191,6 +192,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			return;
 
 		_queue.Enqueue(default);
+		this.RefreshExchangeAsync();
 	}
 
 	private void OnQueueReady(object sender, NetMQQueueEventArgs<Packet> e)
@@ -228,13 +230,12 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 				return false;
 
 			//获取队列交换器的发布和订阅端口号
-			(_publisherPort, _subscriberPort) = GetPorts(this.Settings);
+			(_publisherPort, _subscriberPort) = GetExchangePorts(this.Settings);
 
 			//如果队列交换器的端口信息获取失败则抛出异常
 			if(_publisherPort == 0 || _subscriberPort == 0)
 				throw new InvalidOperationException($"Failed to acquire queue exchange information from the '{this.Settings.Server}:{this.Settings.Port}' server.");
 
-			//publisher 在成功交给字段前由本方法负责释放，避免初始化中途失败时泄漏 NetMQ socket。
 			PublisherSocket publisher = null;
 			var assigned = false;
 
@@ -281,57 +282,170 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			//返回初始化成功
 			return true;
 		}
+	}
 
-		static (ushort publisherPort, ushort subscriberPort) GetPorts(Configuration.ZeroConnectionSettings settings)
+	private void RefreshExchangeAsync()
+	{
+		if(_publisher == null || this.IsDisposed)
+			return;
+
+		if(Interlocked.CompareExchange(ref _refreshing, 1, 0) != 0)
+			return;
+
+		_ = Task.Run(() =>
 		{
-			using var requester = new RequestSocket(ZeroUtility.GetTcpAddress(settings.Server, settings.Port));
-
-			//发送请求获取交换器端口号
-			requester.SendFrameEmpty();
-
-			//获取连接超时
-			var timeout = settings.Timeout > TimeSpan.Zero ? settings.Timeout : TimeSpan.FromSeconds(10);
-
-			//定义请求的响应内容
-			string response = null;
-
-			//接收返回的请求响应信息
-			//注意：TryReceiveFrame(...) 方法并不会等待指定的超时，因此需要通过 SpinWait 轮询响应内容
-			SpinWait.SpinUntil(() => requester.TryReceiveFrameString(timeout, out response), timeout);
-
-			//如果请求的响应内容为空则返回失败
-			if(string.IsNullOrEmpty(response))
-				return default;
-
-			ushort publisherPort = 0, subscriberPort = 0;
-			var entries = response.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-			foreach(var entry in entries)
+			try
 			{
-				int index = entry.IndexOf('=');
+				this.RefreshExchange();
+			}
+			catch(ObjectDisposedException) { }
+			catch(TerminatingException) { }
+			catch(Exception ex)
+			{
+				Diagnostics.Logging.GetLogging(this).Warn(ex);
+			}
+			finally
+			{
+				Volatile.Write(ref _refreshing, 0);
+			}
+		}, CancellationToken.None);
+	}
 
-				if(index > 0 && index < entry.Length - 1)
+	private void RefreshExchange()
+	{
+		if(this.IsDisposed || _publisher == null)
+			return;
+
+		var (publisherPort, subscriberPort) = GetExchangePorts(this.Settings);
+
+		//控制端口不可达时保留现有 socket，等待下一次心跳探测。
+		if(publisherPort == 0 || subscriberPort == 0)
+			return;
+
+		if(publisherPort == _publisherPort && subscriberPort == _subscriberPort)
+			return;
+
+		PublisherSocket publisher = null;
+
+		try
+		{
+			publisher = CreatePublisher(this.Settings, subscriberPort);
+
+			lock(_locker)
+			{
+				if(this.IsDisposed || _publisher == null)
+					return;
+
+				if(publisherPort == _publisherPort && subscriberPort == _subscriberPort)
+					return;
+
+				var previous = _publisher;
+				_publisher = publisher;
+				publisher = null;
+
+				_publisherPort = publisherPort;
+				_subscriberPort = subscriberPort;
+
+				if(previous != null && !previous.IsDisposed)
+					previous.Dispose();
+
+				var address = ZeroUtility.GetTcpAddress(this.Settings.Server, _publisherPort);
+
+				foreach(var subscriber in this.Subscribers)
 				{
-					var span = entry.AsSpan();
+					if(subscriber.IsClosed)
+						continue;
 
-					switch(span[..index])
-					{
-						case "publisher":
-						case "Publisher":
-							if(ushort.TryParse(span[(index + 1)..], out var port1))
-								publisherPort = port1;
-							break;
-						case "subscriber":
-						case "Subscriber":
-							if(ushort.TryParse(span[(index + 1)..], out var port2))
-								subscriberPort = port2;
-							break;
-					}
+					var channel = subscriber.Resubscribe(address);
+
+					if(channel != null && _poller != null && !_poller.IsDisposed)
+						_poller.Add(channel);
 				}
 			}
-
-			return (publisherPort, subscriberPort);
 		}
+		finally
+		{
+			if(publisher != null && !publisher.IsDisposed)
+				publisher.Dispose();
+		}
+	}
+
+	private static PublisherSocket CreatePublisher(Configuration.ZeroConnectionSettings settings, ushort subscriberPort)
+	{
+		PublisherSocket publisher = null;
+
+		try
+		{
+			publisher = new PublisherSocket();
+			publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
+			publisher.Connect(ZeroUtility.GetTcpAddress(settings.Server, subscriberPort));
+
+			//确保发布者套接字已经连接就绪
+			//注意：如果发布者未就绪，轮询器将无法正常运行
+			if(!SpinWait.SpinUntil(() => publisher.HasOut && publisher.TrySignalOK(), 1000))
+				throw new InvalidOperationException($"Failed to connect to the publisher at '{settings.Server}:{subscriberPort}'.");
+
+			var result = publisher;
+			publisher = null;
+
+			return result;
+		}
+		finally
+		{
+			if(publisher != null && !publisher.IsDisposed)
+				publisher.Dispose();
+		}
+	}
+
+	private static (ushort publisherPort, ushort subscriberPort) GetExchangePorts(Configuration.ZeroConnectionSettings settings)
+	{
+		using var requester = new RequestSocket(ZeroUtility.GetTcpAddress(settings.Server, settings.Port));
+
+		//发送请求获取交换器端口号
+		requester.SendFrameEmpty();
+
+		//获取连接超时
+		var timeout = settings.Timeout > TimeSpan.Zero ? settings.Timeout : TimeSpan.FromSeconds(10);
+
+		//定义请求的响应内容
+		string response = null;
+
+		//接收返回的请求响应信息
+		//注意：TryReceiveFrame(...) 方法并不会等待指定的超时，因此需要通过 SpinWait 轮询响应内容
+		SpinWait.SpinUntil(() => requester.TryReceiveFrameString(timeout, out response), timeout);
+
+		//如果请求的响应内容为空则返回失败
+		if(string.IsNullOrEmpty(response))
+			return default;
+
+		ushort publisherPort = 0, subscriberPort = 0;
+		var entries = response.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+		foreach(var entry in entries)
+		{
+			int index = entry.IndexOf('=');
+
+			if(index > 0 && index < entry.Length - 1)
+			{
+				var span = entry.AsSpan();
+
+				switch(span[..index])
+				{
+					case "publisher":
+					case "Publisher":
+						if(ushort.TryParse(span[(index + 1)..], out var port1))
+							publisherPort = port1;
+						break;
+					case "subscriber":
+					case "Subscriber":
+						if(ushort.TryParse(span[(index + 1)..], out var port2))
+							subscriberPort = port2;
+						break;
+				}
+			}
+		}
+
+		return (publisherPort, subscriberPort);
 	}
 
 	private void SetFilter(string filter, string instance)

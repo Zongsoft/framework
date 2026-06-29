@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.ZeroMQ library.
  *
@@ -57,7 +57,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 
 		lock(this)
 		{
-			if(_channel == null)
+			if(_channel == null || _channel.IsDisposed)
 			{
 				var channel = _channel = new SubscriberSocket();
 				channel.Options.ReceiveHighWatermark = 1000;
@@ -68,6 +68,22 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			}
 
 			return _channel;
+		}
+	}
+
+	internal SubscriberSocket Resubscribe(string address)
+	{
+		lock(this)
+		{
+			var channel = Interlocked.Exchange(ref _channel, null);
+
+			if(channel != null && !channel.IsDisposed)
+			{
+				channel.ReceiveReady -= this.OnReceiveReady;
+				this.Queue.Unregister(channel);
+			}
+
+			return this.Subscribe(address);
 		}
 	}
 	#endregion

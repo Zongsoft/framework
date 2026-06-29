@@ -58,6 +58,53 @@ public class ZeroQueueSubscriptionTests
 	}
 
 	[Fact]
+	public async Task SubscribersReconnectAfterQueueServerRestartsWithNewExchangePorts()
+	{
+		var port = ZeroTestUtility.GetFreePort();
+		var topic = "topic/restart";
+		var server = new ZeroQueueServer { Port = port };
+
+		try
+		{
+			await server.StartAsync([]);
+			var original = ZeroTestUtility.GetServerPorts(port);
+
+			using var publisher = CreateRestartQueue(port, "publisher");
+			using var subscriber = CreateRestartQueue(port, "subscriber");
+			using var handler = new MessageBuffer();
+
+			await subscriber.SubscribeAsync(topic, handler);
+			await Task.Delay(750);
+
+			await PublishRepeatedlyAsync(publisher, topic, "before");
+			var before = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+
+			Assert.Equal("before", Encoding.UTF8.GetString(before.Data));
+
+			await server.StopAsync([]);
+			Assert.True(await ZeroTestUtility.WaitUntilAsync(() => !ZeroTestUtility.CanQueryServer(port), TimeSpan.FromSeconds(5)));
+
+			using var publisherBlocker = new ResponseSocket();
+			using var subscriberBlocker = new ResponseSocket();
+			publisherBlocker.Bind($"tcp://*:{original.Publisher}");
+			subscriberBlocker.Bind($"tcp://*:{original.Subscriber}");
+
+			await server.StartAsync([]);
+			var restarted = ZeroTestUtility.GetServerPorts(port);
+
+			Assert.NotEqual(original, restarted);
+
+			var after = await PublishUntilReceivedAsync(publisher, handler, topic, "after-restart", TimeSpan.FromSeconds(10));
+			Assert.Equal("after-restart", Encoding.UTF8.GetString(after.Data));
+		}
+		finally
+		{
+			await server.StopAsync([]);
+			((IDisposable)server).Dispose();
+		}
+	}
+
+	[Fact]
 	public async Task SubscriberDrainsMalformedMultipartBeforeNextMessage()
 	{
 		using var server = await ZeroServerScope.StartAsync();
@@ -106,5 +153,29 @@ public class ZeroQueueSubscriptionTests
 			await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes(text));
 			await Task.Delay(100);
 		}
+	}
+
+	private static ZeroQueue CreateRestartQueue(ushort serverPort, string client) =>
+		ZeroTestUtility.CreateQueue(serverPort, client, settings =>
+		{
+			settings.Timeout = TimeSpan.FromMilliseconds(500);
+			settings.Heartbeat = TimeSpan.FromMilliseconds(200);
+		});
+
+	private static async Task<Message> PublishUntilReceivedAsync(ZeroQueue publisher, MessageBuffer handler, string topic, string text, TimeSpan timeout)
+	{
+		var deadline = DateTime.UtcNow + timeout;
+
+		do
+		{
+			await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes(text));
+
+			var message = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(250));
+			if(message.HasValue && !message.Value.IsEmpty && Encoding.UTF8.GetString(message.Value.Data) == text)
+				return message.Value;
+		}
+		while(DateTime.UtcNow < deadline);
+
+		throw new TimeoutException($"Timed out waiting for message '{text}' on topic '{topic}'.");
 	}
 }
