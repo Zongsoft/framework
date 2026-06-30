@@ -58,16 +58,22 @@ public class ZeroQueueSubscriptionTests
 	}
 
 	[Fact]
-	public async Task SubscribersReconnectAfterQueueServerRestartsWithNewExchangePorts()
+	public async Task SubscribersReconnectAfterQueueServerRestartsWithFixedExchangePorts()
 	{
 		var port = ZeroTestUtility.GetFreePort();
+		var incoming = ZeroTestUtility.GetFreePort();
+		var outgoing = ZeroTestUtility.GetFreePort();
+		var args = new[] { $"--incoming:{incoming}", $"--outgoing:{outgoing}" };
 		var topic = "topic/restart";
 		var server = new ZeroQueueServer { Port = port };
 
 		try
 		{
-			await server.StartAsync([]);
+			await server.StartAsync(args);
 			var original = ZeroTestUtility.GetServerPorts(port);
+
+			Assert.Equal(outgoing, original.Publisher);
+			Assert.Equal(incoming, original.Subscriber);
 
 			using var publisher = CreateRestartQueue(port, "publisher");
 			using var subscriber = CreateRestartQueue(port, "subscriber");
@@ -84,15 +90,10 @@ public class ZeroQueueSubscriptionTests
 			await server.StopAsync([]);
 			Assert.True(await ZeroTestUtility.WaitUntilAsync(() => !ZeroTestUtility.CanQueryServer(port), TimeSpan.FromSeconds(5)));
 
-			using var publisherBlocker = new ResponseSocket();
-			using var subscriberBlocker = new ResponseSocket();
-			publisherBlocker.Bind($"tcp://*:{original.Publisher}");
-			subscriberBlocker.Bind($"tcp://*:{original.Subscriber}");
-
-			await server.StartAsync([]);
+			await server.StartAsync(args);
 			var restarted = ZeroTestUtility.GetServerPorts(port);
 
-			Assert.NotEqual(original, restarted);
+			Assert.Equal(original, restarted);
 
 			var after = await PublishUntilReceivedAsync(publisher, handler, topic, "after-restart", TimeSpan.FromSeconds(10));
 			Assert.Equal("after-restart", Encoding.UTF8.GetString(after.Data));

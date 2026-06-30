@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -34,6 +35,47 @@ public class ZeroQueueServerTests
 		}
 		finally
 		{
+			((IDisposable)server).Dispose();
+		}
+	}
+
+	[Fact]
+	public async Task QueueServerStartWithExplicitExchangePortsBindsAndForwardsMessages()
+	{
+		var port = ZeroTestUtility.GetFreePort();
+		var incoming = ZeroTestUtility.GetFreePort();
+		var outgoing = ZeroTestUtility.GetFreePort();
+		var server = new ZeroQueueServer { Port = port };
+
+		try
+		{
+			await server.StartAsync([$"--incoming:{incoming}", $"--outgoing:{outgoing}"]);
+
+			var ports = ZeroTestUtility.GetServerPorts(port);
+			Assert.Equal(outgoing, ports.Publisher);
+			Assert.Equal(incoming, ports.Subscriber);
+			Assert.False(ZeroTestUtility.CanBindZeroMq(incoming));
+			Assert.False(ZeroTestUtility.CanBindZeroMq(outgoing));
+
+			using var publisher = ZeroTestUtility.CreateQueue(port, "publisher");
+			using var subscriber = ZeroTestUtility.CreateQueue(port, "subscriber");
+			using var handler = new MessageBuffer();
+
+			await subscriber.SubscribeAsync("topic/explicit", handler);
+			await Task.Delay(750);
+
+			for(int i = 0; i < 3; i++)
+			{
+				await publisher.ProduceAsync("topic/explicit", Encoding.UTF8.GetBytes("explicit"));
+				await Task.Delay(100);
+			}
+
+			var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+			Assert.Equal("explicit", Encoding.UTF8.GetString(message.Data));
+		}
+		finally
+		{
+			await server.StopAsync([]);
 			((IDisposable)server).Dispose();
 		}
 	}

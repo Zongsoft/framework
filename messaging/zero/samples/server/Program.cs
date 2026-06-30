@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Terminals;
@@ -13,11 +14,11 @@ internal class Program
 	static async Task Main(string[] args)
 	{
 		using var server = new ZeroQueueServer();
-		await server.StartAsync(args);
+		await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
 
 		var executor = Terminal.Console.Executor;
-		executor.Command("start", async (context, cancellation) => await server.StartAsync(args, cancellation));
-		executor.Command("stop", async (context, cancellation) => await server.StopAsync(args, cancellation));
+		executor.Command("start", async (context, cancellation) => await server.StartAsync([.. GetArgs(context)], cancellation));
+		executor.Command("stop", async (context, cancellation) => await server.StopAsync([.. GetArgs(context)], cancellation));
 
 		executor.Command("info", context =>
 		{
@@ -34,5 +35,19 @@ internal class Program
 
 		//运行终端命令执行器
 		await executor.RunAsync(splash);
+	}
+
+	static IEnumerable<string> GetArgs(CommandContextBase context)
+	{
+		foreach(var option in context.Options)
+		{
+			if(option.Key.Length == 1)
+				yield return option.Value == null ? $"-{option.Key}" : $"-{option.Key}:{option.Value}";
+			else
+				yield return option.Value == null ? $"--{option.Key}" : $"--{option.Key}:{option.Value}";
+		}
+
+		foreach(var argument in context.Arguments)
+			yield return argument;
 	}
 }

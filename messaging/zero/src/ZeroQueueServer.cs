@@ -93,11 +93,11 @@ public sealed class ZeroQueueServer : WorkerBase
 
 			if(!_poller.IsRunning)
 			{
-				(var incoming, var outgoing) = GetPorts(this.Name);
+				(var incoming, var outgoing) = GetPorts(this.Name, args);
 
 				_responser.Bind($"tcp://*:{_port}");
-				_publisherPort = outgoing > 0 ? outgoing : _publisher.BindRandomPort("tcp://*");
-				_subscriberPort = incoming > 0 ? incoming : _subscriber.BindRandomPort("tcp://*");
+				_publisherPort = Bind(_publisher, outgoing);
+				_subscriberPort = Bind(_subscriber, incoming);
 
 				_poller.RunAsync();
 			}
@@ -107,13 +107,38 @@ public sealed class ZeroQueueServer : WorkerBase
 		}
 		catch
 		{
-			//任意端口绑定或 proxy 启动失败都必须释放已创建的 socket，否则后续重试会继续占用端口。
+			//任意端口绑定或 proxy 启动失败都必须释放已创建的 socket，否则后续重试会继续占用端口
 			this.Release();
 			throw;
 		}
 
-		static (int incoming, int outgoing) GetPorts(string name)
+		static (int incoming, int outgoing) GetPorts(string name, string[] args)
 		{
+			if(args != null && args.Length > 0)
+			{
+				var incoming = 0;
+				var outgoing = 0;
+
+				for(int i = 0; i < args.Length; i++)
+				{
+					var parts = args[i].Split(['=', ':'], StringSplitOptions.TrimEntries);
+
+					if(parts.Length == 2)
+					{
+						if(parts[0].StartsWith("--"))
+							parts[0] = parts[0][2..];
+
+						if(parts[0].StartsWith("incoming", StringComparison.OrdinalIgnoreCase))
+							incoming = int.Parse(parts[1]);
+						else if(parts[0].StartsWith("outgoing", StringComparison.OrdinalIgnoreCase))
+							outgoing = int.Parse(parts[1]);
+					}
+				}
+
+				if(incoming > 0 && outgoing > 0)
+					return (incoming, outgoing);
+			}
+
 			var servers = ApplicationContext.Current?.Configuration.GetOption<Configuration.ServerOptionsCollection>("/Messaging/ZeroMQ/Servers");
 			if(servers == null)
 				return default;
@@ -122,6 +147,17 @@ public sealed class ZeroQueueServer : WorkerBase
 				return (server.Port.Incoming, server.Port.Outgoing);
 
 			return (servers.Port.Incoming, servers.Port.Outgoing);
+		}
+
+		static int Bind(NetMQSocket socket, int port)
+		{
+			if(port > 0)
+			{
+				socket.Bind($"tcp://*:{port}");
+				return port;
+			}
+
+			return socket.BindRandomPort("tcp://*");
 		}
 	}
 
