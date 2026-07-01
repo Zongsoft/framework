@@ -35,6 +35,8 @@ namespace Zongsoft.Learning.Transforms;
 
 public class OneHotHashEncodingEstimator : ITrainerBuilder
 {
+	public static readonly OneHotHashEncodingEstimator Instance = new();
+
 	public string Name => "OneHotHashEncoding";
 
 	public IEstimator<ITransformer> Build(MLContext context, ITrainer trainer)

@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<Version>1.0.0</Version>
+		<Product>Zongsoft Machine-Learning Web Library</Product>
+		<Description>This is a web class library about machine learning development.</Description>
+		<RootNamespace>Zongsoft.Learning.Web</RootNamespace>
+		<IncludeSymbols>true</IncludeSymbols>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Learning/api</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\src\Zongsoft.Learning.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+	</ItemGroup>
+
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+				<Reference Include="Zongsoft.Web">
+					<HintPath>..\..\Zongsoft.Web\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Web.dll</HintPath>
+				</Reference>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.50.0" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="7.15.0" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
+</Project>

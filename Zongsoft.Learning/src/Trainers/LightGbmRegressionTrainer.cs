@@ -35,6 +35,8 @@ namespace Zongsoft.Learning.Trainers;
 
 public class LightGbmRegressionTrainer : ITrainerBuilder
 {
+	public static readonly LightGbmRegressionTrainer Instance = new();
+
 	public string Name => "LightGbm";
 
 	public IEstimator<ITransformer> Build(MLContext context, ITrainer trainer)

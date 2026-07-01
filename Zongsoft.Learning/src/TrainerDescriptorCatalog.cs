@@ -35,10 +35,10 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Learning;
 
-public class TrainerCatalog : CategoryBase<TrainerCatalog>, IDiscriminator
+public class TrainerDescriptorCatalog : CategoryBase<TrainerDescriptorCatalog>, IDiscriminator
 {
 	#region 内部构造
-	internal TrainerCatalog()
+	internal TrainerDescriptorCatalog()
 	{
 		this.Trainers = new();
 		this.Catalogs = new(this);
@@ -46,8 +46,8 @@ public class TrainerCatalog : CategoryBase<TrainerCatalog>, IDiscriminator
 	#endregion
 
 	#region 公共构造
-	public TrainerCatalog(string name, string title = null, string description = null) : this(null, name, title, description) { }
-	public TrainerCatalog(IResource resource, string name, string title = null, string description = null) : base(resource, name, title, description)
+	public TrainerDescriptorCatalog(string name, string title = null, string description = null) : this(null, name, title, description) { }
+	public TrainerDescriptorCatalog(IResource resource, string name, string title = null, string description = null) : base(resource, name, title, description)
 	{
 		this.Trainers = new();
 		this.Catalogs = new(this);
@@ -55,13 +55,13 @@ public class TrainerCatalog : CategoryBase<TrainerCatalog>, IDiscriminator
 	#endregion
 
 	#region 公共属性
-	public TrainerCollection Trainers { get; }
-	public TrainerCatelogCollection Catalogs { get; }
-	public Trainer this[string name] => this.Trainers[name];
+	public TrainerDescriptorCollection Trainers { get; }
+	public TrainerDescriptorCatalogCollection Catalogs { get; }
+	public TrainerDescriptor this[string name] => this.Trainers[name];
 	#endregion
 
 	#region 重写方法
-	protected override IHierarchicalNodeCollection<TrainerCatalog> Nodes => this.Catalogs;
+	protected override IHierarchicalNodeCollection<TrainerDescriptorCatalog> Nodes => this.Catalogs;
 
 	/// <summary>获取权限类别的本地化标题。</summary>
 	/// <returns>返回本地化标题文本，如果失败则返回空(<c>null</c>)。</returns>
@@ -89,14 +89,14 @@ public class TrainerCatalog : CategoryBase<TrainerCatalog>, IDiscriminator
 	/// </remarks>
 	protected override string GetTitle() => this.Resource.GetString(
 	[
-		$"{nameof(Trainer)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Title)}",
-		$"{nameof(Trainer)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}",
-		$"{nameof(Trainer)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Title)}",
-		$"{nameof(Trainer)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}",
-		$"{nameof(Trainer)}.{this.Name}.{nameof(Category)}.{nameof(this.Title)}",
-		$"{nameof(Trainer)}.{this.Name}.{nameof(Category)}",
-		$"{nameof(Trainer)}.{this.Name}.{nameof(this.Title)}",
-		$"{nameof(Trainer)}.{this.Name}",
+		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Title)}",
+		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}",
+		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Title)}",
+		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}",
+		$"Trainer.{this.Name}.{nameof(Category)}.{nameof(this.Title)}",
+		$"Trainer.{this.Name}.{nameof(Category)}",
+		$"Trainer.{this.Name}.{nameof(this.Title)}",
+		$"Trainer.{this.Name}",
 	]) ?? base.GetTitle();
 
 	/// <summary>获取权限类别的本地化描述。</summary>
@@ -117,10 +117,10 @@ public class TrainerCatalog : CategoryBase<TrainerCatalog>, IDiscriminator
 	/// </remarks>
 	protected override string GetDescription() => this.Resource.GetString(
 	[
-		$"{nameof(Trainer)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Description)}",
-		$"{nameof(Trainer)}.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Description)}",
-		$"{nameof(Trainer)}.{this.Name}.{nameof(Category)}.{nameof(this.Description)}",
-		$"{nameof(Trainer)}.{this.Name}.{nameof(this.Description)}",
+		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Description)}",
+		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Description)}",
+		$"Trainer.{this.Name}.{nameof(Category)}.{nameof(this.Description)}",
+		$"Trainer.{this.Name}.{nameof(this.Description)}",
 	]) ?? base.GetDescription();
 	#endregion
 
@@ -130,16 +130,16 @@ public class TrainerCatalog : CategoryBase<TrainerCatalog>, IDiscriminator
 		switch(argument)
 		{
 			case string type:
-				if(string.IsNullOrEmpty(type) || string.Equals(type, nameof(Category), StringComparison.OrdinalIgnoreCase))
+				if(string.IsNullOrEmpty(type) || type.Equals("catalog", StringComparison.OrdinalIgnoreCase) || type.Equals(nameof(Category), StringComparison.OrdinalIgnoreCase))
 					return this.Catalogs;
 
-				if(string.Equals(type, nameof(Trainer), StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(type, "trainer", StringComparison.OrdinalIgnoreCase))
 					return this.Trainers;
 
 				break;
-			case Trainer:
+			case TrainerDescriptor:
 				return this.Trainers;
-			case TrainerCatalog:
+			case TrainerDescriptorCatalog:
 				return this.Catalogs;
 		}
 
@@ -148,7 +148,7 @@ public class TrainerCatalog : CategoryBase<TrainerCatalog>, IDiscriminator
 	#endregion
 }
 
-public sealed class TrainerCatelogCollection : CategoryCollectionBase<TrainerCatalog>
+public sealed class TrainerDescriptorCatalogCollection : CategoryCollectionBase<TrainerDescriptorCatalog>
 {
-	internal TrainerCatelogCollection(TrainerCatalog owner) : base(owner) { }
+	internal TrainerDescriptorCatalogCollection(TrainerDescriptorCatalog owner) : base(owner) { }
 }

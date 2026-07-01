@@ -35,5 +35,6 @@ namespace Zongsoft.Learning;
 
 public interface IDatasetLoader
 {
+	string Name { get; }
 	IDataView Load(MLContext context, IDataset dataset);
 }

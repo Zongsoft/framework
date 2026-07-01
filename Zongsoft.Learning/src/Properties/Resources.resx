@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<!-- 
+  <!-- 
 		Microsoft ResX Schema
 
 		Version 1.3
@@ -58,44 +58,121 @@
 			: using a System.ComponentModel.TypeConverter
 			: and then encoded with base64 encoding.
 	-->
-	
-	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-		<xsd:element name="root" msdata:IsDataSet="true">
-			<xsd:complexType>
-				<xsd:choice maxOccurs="unbounded">
-					<xsd:element name="data">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-							</xsd:sequence>
-							<xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
-							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-						</xsd:complexType>
-					</xsd:element>
-					<xsd:element name="resheader">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-							</xsd:sequence>
-							<xsd:attribute name="name" type="xsd:string" use="required" />
-						</xsd:complexType>
-					</xsd:element>
-				</xsd:choice>
-			</xsd:complexType>
-		</xsd:element>
-	</xsd:schema>
-	<resheader name="resmimetype">
-		<value>text/microsoft-resx</value>
-	</resheader>
-	<resheader name="version">
-		<value>1.3</value>
-	</resheader>
-	<resheader name="reader">
-		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<resheader name="writer">
-		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AnomalyDetection.Category" xml:space="preserve">
+    <value>Anomaly Detection</value>
+  </data>
+  <data name="AnomalyDetection.Category.Description" xml:space="preserve">
+    <value>Trainers and tasks specific to anomaly detection problems.</value>
+  </data>
+  <data name="BinaryClassification.Category" xml:space="preserve">
+    <value>Binary Classification</value>
+  </data>
+  <data name="BinaryClassification.Category.Description" xml:space="preserve">
+    <value>Trainers and tasks specific to binary classification problems.</value>
+  </data>
+  <data name="MulticlassClassification.Category" xml:space="preserve">
+    <value>Multiclass Classification</value>
+  </data>
+  <data name="MulticlassClassification.Category.Description" xml:space="preserve">
+    <value>Trainers and tasks specific to multiclass classification problems.</value>
+  </data>
+  <data name="Regression.Category" xml:space="preserve">
+    <value>Regression</value>
+  </data>
+  <data name="Regression.Category.Description" xml:space="preserve">
+    <value>Trainers and tasks specific to regression problems.</value>
+  </data>
+  <data name="Clustering.Category" xml:space="preserve">
+    <value>Clustering</value>
+  </data>
+  <data name="Clustering.Category.Description" xml:space="preserve">
+    <value>Trainers and tasks specific to clustering problems.</value>
+  </data>
+  <data name="Forecasting.Category" xml:space="preserve">
+    <value>Forecasting</value>
+  </data>
+  <data name="Forecasting.Category.Description" xml:space="preserve">
+    <value>Trainers and tasks specific to forecasting problems.</value>
+  </data>
+  <data name="Ranking.Category" xml:space="preserve">
+    <value>Ranking</value>
+  </data>
+  <data name="Ranking.Category.Description" xml:space="preserve">
+    <value>Trainers and tasks specific to ranking problems.</value>
+  </data>
+  <data name="Components.Category" xml:space="preserve">
+    <value>Components</value>
+  </data>
+  <data name="Components.Category.Description" xml:space="preserve">
+    <value>The catalog of components that will be used for model loading.</value>
+  </data>
+  <data name="Transforms.Category" xml:space="preserve">
+    <value>Transforms</value>
+  </data>
+  <data name="Transforms.Category.Description" xml:space="preserve">
+    <value>The data processing operations.</value>
+  </data>
+  <data name="Transforms.Categorical.Category" xml:space="preserve">
+    <value>Categorical</value>
+  </data>
+  <data name="Transforms.Categorical.Category.Description" xml:space="preserve">
+    <value>The list of operations over categorical data.</value>
+  </data>
+  <data name="Transforms.Conversion.Category" xml:space="preserve">
+    <value>Conversion</value>
+  </data>
+  <data name="Transforms.Conversion.Category.Description" xml:space="preserve">
+    <value>The list of operations for data type conversion.</value>
+  </data>
+  <data name="Transforms.Features.Category" xml:space="preserve">
+    <value>Feature Selection</value>
+  </data>
+  <data name="Transforms.Features.Category.Description" xml:space="preserve">
+    <value>The list of operations for selecting features based on some criteria.</value>
+  </data>
+  <data name="Transforms.Text.Category" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="Transforms.Text.Category.Description" xml:space="preserve">
+    <value>The list of operations for processing text data.</value>
+  </data>
 </root>

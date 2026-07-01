@@ -1,3 +1,4 @@
 <Solution>
 	<Project Path="src/Zongsoft.Learning.csproj" />
+	<Project Path="api/Zongsoft.Learning.Web.csproj" />
 </Solution>

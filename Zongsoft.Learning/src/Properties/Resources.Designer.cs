@@ -59,5 +59,239 @@ namespace Zongsoft.Learning.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   查找类似 Anomaly Detection 的本地化字符串。
+        /// </summary>
+        internal static string AnomalyDetection_Category {
+            get {
+                return ResourceManager.GetString("AnomalyDetection.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Trainers and tasks specific to anomaly detection problems. 的本地化字符串。
+        /// </summary>
+        internal static string AnomalyDetection_Category_Description {
+            get {
+                return ResourceManager.GetString("AnomalyDetection.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Binary Classification 的本地化字符串。
+        /// </summary>
+        internal static string BinaryClassification_Category {
+            get {
+                return ResourceManager.GetString("BinaryClassification.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Trainers and tasks specific to binary classification problems. 的本地化字符串。
+        /// </summary>
+        internal static string BinaryClassification_Category_Description {
+            get {
+                return ResourceManager.GetString("BinaryClassification.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Clustering 的本地化字符串。
+        /// </summary>
+        internal static string Clustering_Category {
+            get {
+                return ResourceManager.GetString("Clustering.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Trainers and tasks specific to clustering problems. 的本地化字符串。
+        /// </summary>
+        internal static string Clustering_Category_Description {
+            get {
+                return ResourceManager.GetString("Clustering.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Components 的本地化字符串。
+        /// </summary>
+        internal static string Components_Category {
+            get {
+                return ResourceManager.GetString("Components.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The catalog of components that will be used for model loading. 的本地化字符串。
+        /// </summary>
+        internal static string Components_Category_Description {
+            get {
+                return ResourceManager.GetString("Components.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Forecasting 的本地化字符串。
+        /// </summary>
+        internal static string Forecasting_Category {
+            get {
+                return ResourceManager.GetString("Forecasting.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Trainers and tasks specific to forecasting problems. 的本地化字符串。
+        /// </summary>
+        internal static string Forecasting_Category_Description {
+            get {
+                return ResourceManager.GetString("Forecasting.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Multiclass Classification 的本地化字符串。
+        /// </summary>
+        internal static string MulticlassClassification_Category {
+            get {
+                return ResourceManager.GetString("MulticlassClassification.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Trainers and tasks specific to multiclass classification problems. 的本地化字符串。
+        /// </summary>
+        internal static string MulticlassClassification_Category_Description {
+            get {
+                return ResourceManager.GetString("MulticlassClassification.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Ranking 的本地化字符串。
+        /// </summary>
+        internal static string Ranking_Category {
+            get {
+                return ResourceManager.GetString("Ranking.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Trainers and tasks specific to ranking problems. 的本地化字符串。
+        /// </summary>
+        internal static string Ranking_Category_Description {
+            get {
+                return ResourceManager.GetString("Ranking.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Regression 的本地化字符串。
+        /// </summary>
+        internal static string Regression_Category {
+            get {
+                return ResourceManager.GetString("Regression.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Trainers and tasks specific to regression problems. 的本地化字符串。
+        /// </summary>
+        internal static string Regression_Category_Description {
+            get {
+                return ResourceManager.GetString("Regression.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Categorical 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Categorical_Category {
+            get {
+                return ResourceManager.GetString("Transforms.Categorical.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The list of operations over categorical data. 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Categorical_Category_Description {
+            get {
+                return ResourceManager.GetString("Transforms.Categorical.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Transforms 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Category {
+            get {
+                return ResourceManager.GetString("Transforms.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The data processing operations. 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Category_Description {
+            get {
+                return ResourceManager.GetString("Transforms.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Conversion 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Conversion_Category {
+            get {
+                return ResourceManager.GetString("Transforms.Conversion.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The list of operations for data type conversion. 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Conversion_Category_Description {
+            get {
+                return ResourceManager.GetString("Transforms.Conversion.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Feature Selection 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Features_Category {
+            get {
+                return ResourceManager.GetString("Transforms.Features.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The list of operations for selecting features based on some criteria. 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Features_Category_Description {
+            get {
+                return ResourceManager.GetString("Transforms.Features.Category.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Text 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Text_Category {
+            get {
+                return ResourceManager.GetString("Transforms.Text.Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The list of operations for processing text data. 的本地化字符串。
+        /// </summary>
+        internal static string Transforms_Text_Category_Description {
+            get {
+                return ResourceManager.GetString("Transforms.Text.Category.Description", resourceCulture);
+            }
+        }
     }
 }

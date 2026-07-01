@@ -28,29 +28,19 @@
  */
 
 using System;
-using System.Collections.ObjectModel;
 
-using Zongsoft.Configuration;
+using Zongsoft.Services;
 
 namespace Zongsoft.Learning;
 
-public class Trainer
+public static class DatasetLoader
 {
-	public Trainer(string name, string description = null)
+	public static IDatasetLoader GetLoader(this IServiceProvider services, string name)
 	{
-		ArgumentException.ThrowIfNullOrEmpty(name);
-		this.Name = name;
-		this.Description = description;
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		services ??= ApplicationContext.Current?.Services;
+		return services?.Find<IDatasetLoader>(name);
 	}
-
-	public string Name { get; }
-	public string Title { get; set; }
-	public string Description { get; set; }
-	public ITrainerBuilder Builder { get; }
-	public IConnectionSettingsDriver Driver { get; }
-}
-
-public class TrainerCollection() : KeyedCollection<string, Trainer>(StringComparer.OrdinalIgnoreCase)
-{
-	protected override string GetKeyForItem(Trainer trainer) => trainer.Name;
 }

@@ -33,12 +33,12 @@ using Microsoft.ML;
 
 namespace Zongsoft.Learning;
 
-public class Pipeline : IPipelineBuilder
+public static class Pipeline
 {
-	public static readonly TrainerCatelogCollection Catalogs = new(null);
+	public static readonly TrainerDescriptorCatalog Catalog = new(null);
 
-	public IEstimator<ITransformer> Build(IPipeline pipeline) => this.Build(new MLContext(), pipeline);
-	public IEstimator<ITransformer> Build(MLContext context, IPipeline pipeline)
+	public static IEstimator<ITransformer> Build(this IPipeline pipeline) => Build(pipeline, new MLContext());
+	public static IEstimator<ITransformer> Build(this IPipeline pipeline, MLContext context)
 	{
 		ArgumentNullException.ThrowIfNull(context);
 		ArgumentNullException.ThrowIfNull(pipeline);
@@ -47,7 +47,7 @@ public class Pipeline : IPipelineBuilder
 
 		foreach(var trainer in pipeline.Trainers)
 		{
-			var descriptor = Find(trainer.Name);
+			var descriptor = Find(trainer.Name, Catalog);
 			var estimator = descriptor.Builder.Build(context, trainer);
 
 			if(result == null)
@@ -58,6 +58,23 @@ public class Pipeline : IPipelineBuilder
 
 		return result;
 
-		static Trainer Find(string name) => null;
+		static TrainerDescriptor Find(string name, TrainerDescriptorCatalog catalog)
+		{
+			if(name == null || catalog == null)
+				return null;
+
+			if(catalog.Trainers.TryGetValue(name, out var trainer))
+				return trainer;
+
+			foreach(var child in catalog.Catalogs)
+			{
+				trainer = Find(name, child);
+
+				if(trainer != null)
+					return trainer;
+			}
+
+			return null;
+		}
 	}
 }

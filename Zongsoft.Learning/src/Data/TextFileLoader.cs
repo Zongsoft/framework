@@ -33,8 +33,12 @@ using Microsoft.ML;
 
 namespace Zongsoft.Learning.Data;
 
-public class TextFileLoader : IDatasetLoader
+[Services.Service<IDatasetLoader>(Tags = NAME)]
+public class TextFileLoader : IDatasetLoader, Services.IMatchable<string>
 {
+	const string NAME = "TextFile";
+	public string Name => NAME;
+
 	public IDataView Load(MLContext context, IDataset dataset)
 	{
 		ArgumentNullException.ThrowIfNull(dataset);
@@ -48,4 +52,6 @@ public class TextFileLoader : IDatasetLoader
 		var source = new FileSource(settings.FilePath);
 		return context.Data.CreateTextLoader(options, source).Load(source);
 	}
+
+	bool Services.IMatchable<string>.Match(string argument) => string.Equals(argument, NAME, StringComparison.OrdinalIgnoreCase);
 }

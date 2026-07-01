@@ -21,4 +21,38 @@
 
 		<object name="ML-LightGbm" value="{static:Zongsoft.Learning.Trainers.LightGbmRegressionTrainerSettingsDriver.Instance, Zongsoft.Learning}" />
 	</extension>
+
+	<extension path="/Workbench/MachineLearning">
+		<object name="Pipeline" value="{static:Zongsoft.Learning.Pipeline.Catalog, Zongsoft.Learning}" />
+	</extension>
+
+	<extension path="/Workbench/MachineLearning/Pipeline">
+		<object name="AnomalyDetection" type="catalog" />
+		<object name="BinaryClassification" type="catalog" />
+		<object name="MulticlassClassification" type="catalog" />
+		<object name="Regression" type="catalog" />
+		<object name="Clustering" type="catalog" />
+		<object name="Forecasting" type="catalog" />
+		<object name="Ranking" type="catalog" />
+		<object name="Components" type="catalog" />
+		<object name="Transforms" type="catalog">
+			<object name="Categorical" type="catalog" />
+			<object name="Conversion" type="catalog" />
+			<object name="Features" type="catalog" />
+			<object name="Text" type="catalog" />
+		</object>
+	</extension>
+
+	<extension path="/Workbench/MachineLearning/Pipeline/Regression">
+		<object name="LightGbm" type="trainer" builder="{static:Zongsoft.Learning.Trainers.LightGbmRegressionTrainer.Instance, Zongsoft.Learning}" />
+	</extension>
+
+	<extension path="/Workbench/MachineLearning/Pipeline/Transforms">
+		<object name="Concatenating" type="trainer" builder="{static:Zongsoft.Learning.Transforms.ConcatenatingEstimator.Instance, Zongsoft.Learning}" />
+	</extension>
+
+	<extension path="/Workbench/MachineLearning/Pipeline/Transforms/Categorical">
+		<object name="OneHotEncoding" type="trainer" builder="{static:Zongsoft.Learning.Transforms.OneHotEncodingEstimator.Instance, Zongsoft.Learning}" />
+		<object name="OneHotHashEncoding" type="trainer" builder="{static:Zongsoft.Learning.Transforms.OneHotHashEncodingEstimator.Instance, Zongsoft.Learning}" />
+	</extension>
 </plugin>
