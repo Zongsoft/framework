@@ -1,3 +1,10 @@
+# Operating Instruction
+
+[English](README.md) |
+[简体中文](README.zh-Hans.md)
+
+-----
+
 ## Test Scenarios
 
 ### Test the Supervised Object Lifecycle
