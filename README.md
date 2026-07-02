@@ -3,7 +3,7 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 [English](README.md) |
-[简体中文](README-zh.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 

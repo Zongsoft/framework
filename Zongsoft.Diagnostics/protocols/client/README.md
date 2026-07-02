@@ -1,4 +1,4 @@
-# Zongsoft.Diagnostics.Protocols.Client 客户端插件库
+# Zongsoft.Diagnostics.Protocols.Client Client Plugin Library
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Diagnostics.Protocols.Client)
@@ -6,10 +6,10 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-## 概述
+## Overview
 
-[**Z**ongsoft.**D**iagnosticss.**P**rotocols.**C**lient](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Diagnostics/protocols/client) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的诊断遥测的 [_**g**RPC_](https://grpc.io) 客户端插件库，提供了基于 [_**O**pen**T**elemetry_](https://opentelemetry.io) 诊断遥测的 [_**g**RPC_](https://grpc.io) 客户端功能集。
+[**Z**ongsoft.**D**iagnostics.**P**rotocols.**C**lient](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Diagnostics/protocols/client) is the [_**g**RPC_](https://grpc.io) client plugin library for diagnostics and telemetry in the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides [_**g**RPC_](https://grpc.io) client features for diagnostics and telemetry based on [_**O**pen**T**elemetry_](https://opentelemetry.io).

@@ -1,4 +1,4 @@
-# Zongsoft.Externals.Velopack 扩展插件库
+# Zongsoft.Externals.Velopack Extension Plugin Library
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Velopack)
@@ -6,17 +6,17 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-## 参考资料
+## References
 
-《Velopack 文档》
+Velopack documentation
 > https://docs.velopack.io
 
-《Velopack 参考》
+Velopack reference
 > https://docs.velopack.io/reference
 
-《Velopack 源码》
+Velopack source code
 > https://github.com/velopack/velopack

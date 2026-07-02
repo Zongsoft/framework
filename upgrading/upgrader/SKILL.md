@@ -92,7 +92,7 @@ description: 处理 upgrading/upgrader 下的 Zongsoft.Upgrading.Upgrader 客户
 
 行为变化时同步更新文档：
 
-- 更新 `README.md` 和 `README-zh_CN.md`，说明公开工作流、配置、通道或交接变化。
+- 更新 `README.md` 和 `README.zh-Hans.md`，说明公开工作流、配置、通道或交接变化。
 - 包安装行为变化时，更新 option/plugin/deploy 产物。
 - 如果请求形状、查询名称或硬件评估器输入变化，同步更新 Web 文档。
 

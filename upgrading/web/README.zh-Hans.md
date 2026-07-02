@@ -6,7 +6,7 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
@@ -144,7 +144,7 @@ zfs.s3:/upgrading/releases/zongsoft.daemon/Zongsoft.Daemon-stable@1.1.0_win-x64
 
 ## 典型流程
 
-1. 使用 [Zongsoft.Tools.Upgrader](../tool/README-zh_CN.md) 制作应用发布包。
+1. 使用 [Zongsoft.Tools.Upgrader](../tool/README.zh-Hans.md) 制作应用发布包。
 2. 将生成的 `.manifest` 清单文件导入 Web 服务端包管理器。
 3. 为导入的发布上传对应包文件。
 4. 通过管理 API 或数据服务将发布标记为可见且已发布。

@@ -90,7 +90,7 @@ Amazon S3 发布时，保持包和 manifest 上传路径兼容配置的 `--desti
 
 命令行为变化时同步更新文档：
 
-- 更新 `README.md` 和 `README-zh_CN.md`，说明公开命令语法、选项语义、示例或发布行为。
+- 更新 `README.md` 和 `README.zh-Hans.md`，说明公开命令语法、选项语义、示例或发布行为。
 - 修改面向用户的消息时，同时更新 `Properties/Resources.resx` 和本地化资源文件。
 - 保持示例兼容 `Zongsoft.Tools.Upgrader.csproj` 支持的目标框架。
 

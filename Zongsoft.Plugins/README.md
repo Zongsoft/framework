@@ -1,4 +1,4 @@
-# Zongsoft.Plugins 插件框架
+# Zongsoft.Plugins Plugin Framework
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Plugins)
@@ -7,18 +7,18 @@
 
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-## 概述
+## Overview
 
-[**Z**ongsoft.**P**lugins](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Plugins) 是一个无侵入的插件化开发框架库，无论终端程序、富客户端、后台服务程序还是 **W**eb 应用程序，都不需要引用 _**Z**ongsoft.**P**lugins_ 即可被改造成一个插件化的应用。
-
-
-**_文档正在撰写中，请关注我们的微信公号和知识星球以获得最新进展和通知！_**
+[**Z**ongsoft.**P**lugins](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Plugins) is a non-invasive plugin development framework. Terminal programs, rich clients, background services, and **W**eb applications can all be turned into plugin-based applications without referencing _**Z**ongsoft.**P**lugins_.
 
 
-## 其他
+**_Documentation is being written. Follow our WeChat official account and Knowledge Planet for the latest progress and announcements._**
 
-这个框架创建于2010年4月份，实现代码历经迭代和重构，但整体设计思想未有大的变更。
+
+## Other
+
+This framework was created in April 2010. Its implementation has gone through many iterations and refactorings, but the overall design philosophy has remained largely unchanged.

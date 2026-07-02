@@ -1,4 +1,4 @@
-# Zongsoft.Commands 命令插件库
+# Zongsoft.Commands Command Plugin Library
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Commands)
@@ -6,24 +6,24 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-## 概述
+## Overview
 
-[**Z**ongsoft.**C**ommands](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Commands) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的命令插件库，提供了一套开箱即用的常用命令，便于通过命令模式执行特定功能。
+[**Z**ongsoft.**C**ommands](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Commands) is a command plugin library for the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides a set of common commands out of the box, making it easier to execute specific functionality through the command pattern.
 
-> 通过命令模式实现调用者与执行者的解耦，旨在提升应用程序的可扩展性与可维护性。譬如：
+> The command pattern decouples callers from executors and improves application extensibility and maintainability. For example:
 > ```csharp
 > var phoneNumber = "+8618012345678";
 > var template    = "authencode";
 > 
-> // 发送验证码通知短信
+> // Send an SMS verification-code notification
 > CommandExecutor.Execute($"phone.send {phoneNumber} --template:{template}", { code = "1234" });
 > 
-> // 拨打验证码通知语音电话
+> // Make a voice call for verification-code notification
 > CommandExecutor.Execute($"phone.call {phoneNumber} --template:{template}", { code = "1234" });
 > ```
 
-💡 如果将本插件库部署到 [_终端宿主_](https://github.com/Zongsoft/hosting/tree/main/terminal) 程序中，即可通过命令行调用本库提供的各种命令。
+💡 Deploy this plugin library to the [_terminal host_](https://github.com/Zongsoft/hosting/tree/main/terminal) to call the commands provided by this library from the command line.

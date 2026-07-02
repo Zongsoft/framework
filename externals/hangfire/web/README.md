@@ -1,4 +1,4 @@
-# Zongsoft.Externals.Hangfire.Web 扩展插件库
+# Zongsoft.Externals.Hangfire.Web Extension Plugin Library
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Hangfire.Web)
@@ -6,6 +6,6 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----

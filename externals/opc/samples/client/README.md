@@ -1,101 +1,100 @@
-# OPC.UA 客户端范例
+# OPC.UA Client Sample
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-### 连接命令 `connect`
+### Connect Command `connect`
 
-连接到指定的 OPC.UA 服务器，如果未指定参数则默认为本机。
+Connects to the specified OPC.UA server. If no argument is specified, it connects to the local machine by default.
 
-- 以匿名用户连接到指定的服务器：
+- Connect to a server anonymously:
 
 ```bash
 connect 'opc.tcp://192.168.2.74:49320'
 ```
 
-- 以指定用户连接到指定的服务器：
+- Connect to a server with a specified user:
 ```bash
 connect 'server=opc.tcp://192.168.2.74:49320;username=admin;password=xxxxxx'
 ```
 
-- 以指定证书文件连接到指定的服务器：
+- Connect to a server with a specified certificate file:
 ```bash
 connect 'server=opc.tcp://192.168.2.74:49320;Certificate=zfs.local:./certificates/certificate.pfx;CertificateSecret=xxxxxx'
 ```
 
-### 断开连接 `disconnect`
+### Disconnect Command `disconnect`
 
-断开当前连接，无参数。
+Disconnects the current connection. This command has no arguments.
 
 ```bash
 disconnect
 ```
 
-### 显示信息 `info`
+### Info Command `info`
 
-显示当前客户端信息，包括：
+Shows current client information, including:
 
-- 客户端名称
-- 当前连接状态
-- 最后心跳时间
-- 连接设置
-- 订阅者信息
-	- 订阅者标识
-	- 订阅者状态
-	- 订阅者统计
-	- 订阅指标集
-	- 内部对象信息(需要打开 `detailed` 选项)
+- Client name
+- Current connection state
+- Last heartbeat time
+- Connection settings
+- Subscriber information
+	- Subscriber ID
+	- Subscriber state
+	- Subscriber statistics
+	- Subscribed metric set
+	- Internal object information, when the `detailed` option is enabled
 
-- 显示所有订阅者信息：
+- Show information for all subscribers:
 
 ```bash
 info
 ```
 
-- 显示指定订阅者信息，通过参数指定要显示的订阅者编号：
+- Show information for specified subscribers by passing subscriber IDs as arguments:
 
 ```bash
 info 11 12 13
 ```
 
-### 重置 `reset`
+### Reset Command `reset`
 
-重置订阅者的统计信息。
+Resets subscriber statistics.
 
-- 重置所有订阅统计信息：
+- Reset statistics for all subscriptions:
 
 ```bash
 reset
 ```
 
-- 重置指定订阅者的统计信息，通过参数指定一个或多个 _(使用空格分隔)_ 订阅者编号：
+- Reset statistics for specified subscribers by passing one or more subscriber IDs separated by spaces:
 
 ```bash
 reset 11 12 13
 ```
 
-> 注：订阅者编号可通过 `info` 命令查看。
+> Note: subscriber IDs can be found with the `info` command.
 
+### Subscribe Command `subscribe`
 
-### 订阅 `subscribe`
+Subscribes to the specified metric data. This command has the alias `sub`.
 
-订阅指定的指标数据，该命令别名为：`sub`。
-
-- 订阅指定的指标，一个或多个 _(使用空格分隔)_：
+- Subscribe to one or more specified metrics separated by spaces:
 
 ```bash
 subscribe ns=2;s=variable1 ns=2;i=1001 ns=2;g=E9DBF5F2-0AAB-49C0-AEE4-E1251A2CDCEA
 ```
 
-- 在指定的订阅者上添加新的订阅项：
+- Add new subscription items to the specified subscriber:
 
 ```bash
 subscribe -subscriber:11 ns=2;s=variable1 ns=2;i=1001 ns=2;g=E9DBF5F2-0AAB-49C0-AEE4-E1251A2CDCEA
 ```
 
-- 从文件中获取订阅指标进行大批量订阅：
+- Load subscription metrics from files for bulk subscription:
 
 ```bash
 subscribe -directory
@@ -103,47 +102,46 @@ subscribe -directory        filename1.txt filename2.txt filenameN.txt
 subscribe -directory:subdir filename1.txt filename2.txt filenameN.txt
 ```
 
-> - 如果上述命令未指定 `directory` 选项，则该选项值默认为：`subscription`；
-> - 如果上述命令未指定参数（即文件名），则默认加载该子目录中的所有 `.txt` 文件。
+> - If the `directory` option is not specified, its value defaults to `subscription`.
+> - If no file names are specified, all `.txt` files in that subdirectory are loaded by default.
 
-### 取消订阅 `unsubscribe`
+### Unsubscribe Command `unsubscribe`
 
-取消订阅，该命令别名为：`unsub`。
+Unsubscribes from subscriptions. This command has the alias `unsub`.
 
-- 取消指定的订阅者，通过参数指定一个或多个 _(使用空格分隔)_ 订阅者编号：
+- Unsubscribe specified subscribers by passing one or more subscriber IDs separated by spaces:
 
 ```bash
 unsubscribe 11 12 13
 ```
 
-> 注：订阅者编号可通过 `info` 命令查看。
+> Note: subscriber IDs can be found with the `info` command.
 
-- 取消所有订阅：
+- Unsubscribe all subscriptions:
 
 ```bash
 unsubscribe
 ```
 
-### 监听 `listen`
+### Listen Command `listen`
 
-监听已经订阅的指标数据，进入监听模式后，可同时按压 `Ctrl` 和字母 `C` 键退出监听模式。
-该命令可通过参数指定要监听的订阅者编号，如果未指定参数则监听所有订阅信息。
+Listens to subscribed metric data. After entering listening mode, press `Ctrl` + `C` to exit. You can pass subscriber IDs as arguments; if no arguments are specified, all subscriptions are listened to.
 
-通过 `spooling` 选项开启缓冲监听模式，缓冲模式还支持如下选项进行相关的缓冲设置：
+Use the `spooling` option to enable buffered listening mode. Buffered mode also supports the following options:
 
-> - limit 选项：表示缓冲数量限制，默认值为 `1000`；
-> - period 选项：表示缓冲周期时长 _(毫秒)_，默认值为 `1000`；
-> - distinct 选项：表示是否启用去重处理，默认不去重。
+> - `limit`: the buffer item limit. The default value is `1000`.
+> - `period`: the buffer period in milliseconds. The default value is `1000`.
+> - `distinct`: enables de-duplication. De-duplication is disabled by default.
 
-- 监听
+- Listen:
 
-> 注意：普通监听可能会因为订阅的数量过多而无法跟上数据的刷新频率，而导致积压。
+> Note: normal listening can fall behind the data refresh rate when there are too many subscriptions, causing backlog.
 
 ```bash
 listen
 ```
 
-- 缓冲监听
+- Buffered listening:
 
 ```bash
 listen -spooling -limit:10000

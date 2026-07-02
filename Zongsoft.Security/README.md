@@ -1,4 +1,4 @@
-# Zongsoft.Security 安全插件库
+# Zongsoft.Security Security Plugin Library
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Security)
@@ -6,10 +6,10 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-## 概述
+## Overview
 
-[**Z**ongsoft.**S**ecurity](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Security) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的安全插件库，提供了用户角色、身份验证、授权管理等安全领域的基础功能。
+[**Z**ongsoft.**S**ecurity](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Security) is the security plugin library for the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides foundational security features such as user roles, authentication, and authorization management.

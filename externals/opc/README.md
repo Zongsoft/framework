@@ -1,4 +1,4 @@
-# Zongsoft.Externals.Opc 扩展插件库
+# Zongsoft.Externals.Opc Extension Plugin Library
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Opc)
@@ -6,56 +6,56 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-## 证书生成
+## Certificate Generation
 
-如果采用 X509 证书进行身份验证，需要使用 [OpenSSL 工具](https://docs.openssl.org) 生成 X509 证书文件。
+If X509 certificates are used for authentication, use [OpenSSL](https://docs.openssl.org) to generate the X509 certificate files.
 
-> 💡 **注意：** 请根据需要调整命令中的相应参数值。
+> 💡 **Note:** adjust the command parameter values as needed.
 
-### 生成私钥
+### Generate a Private Key
 
-- 使用 [`openssl genpkey`](https://docs.openssl.org/master/man1/openssl-genpkey) 命令生成未加密的私钥文件。
+- Use the [`openssl genpkey`](https://docs.openssl.org/master/man1/openssl-genpkey) command to generate an unencrypted private key file.
 
 ```bash
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out certificate.private.pem -outform PEM
 ```
 
-- 使用 [`openssl genpkey`](https://docs.openssl.org/master/man1/openssl-genpkey) 命令生成加密的私钥文件，密码由 `-pass` 参数指定。
+- Use the [`openssl genpkey`](https://docs.openssl.org/master/man1/openssl-genpkey) command to generate an encrypted private key file. Specify the password with the `-pass` parameter.
 
 ```bash
 openssl genpkey -algorithm RSA -aes256 -pkeyopt rsa_keygen_bits:2048 -out certificate.private.pem -outform PEM -pass pass:"password"
 ```
 
-### 创建自签名证书
+### Create a Self-Signed Certificate
 
-命令的 `-subj` 参数包含的字段：
-> - CN = 公共名称
-> - C  = 国家地区
-> - ST = 省/州/邦
-> - L  = 城市 _(**L**ocality)_
-> - O  = 组织机构
-> - OU = 分支机构 _(部门)_
+The `-subj` parameter contains these fields:
+> - CN = Common Name
+> - C  = Country or region
+> - ST = State or province
+> - L  = Locality or city
+> - O  = Organization
+> - OU = Organizational unit or department
 
-- 使用 [`openssl req`](https://docs.openssl.org/master/man1/openssl-req) 命令创建自签名证书，私钥为未加密。
+- Use the [`openssl req`](https://docs.openssl.org/master/man1/openssl-req) command to create a self-signed certificate with an unencrypted private key.
 
 ```bash
 openssl req -new -x509 -key certificate.private.pem -days 3650 -out certificate.der -outform DER -subj "/C=CN/ST=Province|State/L=City/O=Organization/OU=Branch|Department/CN=Common Name/emailAddress=certificate@zongsoft.com"
 ```
 
-- 使用 [`openssl req`](https://docs.openssl.org/master/man1/openssl-req) 命令创建自签名证书，指定的私钥为已加密，私钥密码由 `-passin` 参数指定。
+- Use the [`openssl req`](https://docs.openssl.org/master/man1/openssl-req) command to create a self-signed certificate with an encrypted private key. Specify the private-key password with the `-passin` parameter.
 
 ```bash
 openssl req -new -x509 -key certificate.private.pem -passin pass:"password" -days 3650 -out certificate.der -outform DER -subj "/C=CN/ST=Province|State/L=City/O=Organization/OU=Branch|Department/CN=Common Name/emailAddress=certificate@zongsoft.com"
 ```
 
-### 合并为 PKCS#12 文件
+### Merge into a PKCS#12 File
 
-- 使用 [`openssl pkcs12`](https://docs.openssl.org/master/man1/openssl-pkcs12) 命令合并无密码的证书文件。
-	> 注：如果私钥为加密格式，则使用 `-passin` 参数指定该私钥密码。
+- Use the [`openssl pkcs12`](https://docs.openssl.org/master/man1/openssl-pkcs12) command to merge a certificate file without a password.
+	> Note: if the private key is encrypted, specify its password with the `-passin` parameter.
 
 ```bash
 openssl pkcs12 -inkey certificate.private.pem -in certificate.der -export -out certificate.pfx -passout pass:"" -name "FriendlyName"
@@ -65,8 +65,8 @@ openssl pkcs12 -inkey certificate.private.pem -in certificate.der -export -out c
 openssl pkcs12 -inkey certificate.private.pem -passin pass:"password" -in certificate.der -export -out certificate.pfx -passout pass:"" -name "FriendlyName"
 ```
 
-- 使用 [`openssl pkcs12`](https://docs.openssl.org/master/man1/openssl-pkcs12) 命令合并含密码的证书文件，证书文件密码由 `-passout` 参数指定。
-	> 注：如果私钥为加密格式，则使用 `-passin` 参数指定该私钥密码。
+- Use the [`openssl pkcs12`](https://docs.openssl.org/master/man1/openssl-pkcs12) command to merge a certificate file with a password. Specify the certificate-file password with the `-passout` parameter.
+	> Note: if the private key is encrypted, specify its password with the `-passin` parameter.
 
 ```bash
 openssl pkcs12 -inkey certificate.private.pem -in certificate.der -export -out certificate.pfx -passout pass:"password" -name "FriendlyName"

@@ -48,7 +48,7 @@
 
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
-		<None Include="README-zh_CN.md" Pack="true" PackagePath="\" />
+		<None Include="README.zh-Hans.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,4 +1,4 @@
-# Zongsoft.Externals.Wechat 扩展插件库
+# Zongsoft.Externals.Wechat Extension Plugin Library
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Wechat)
@@ -6,59 +6,59 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-## 微信第三方平台
+## WeChat Third-Party Platform
 
-### 相关概念
+### Concepts
 
-- 第三方平台应用 `component_appid`
-- 第三方平台口令 `component_appsecret`
-- 加解密钥 `symmetric_key`, `AESEncodingKey`
+- Third-party platform application `component_appid`
+- Third-party platform secret `component_appsecret`
+- Encryption and decryption keys `symmetric_key`, `AESEncodingKey`
 
-- 平台访问令牌 `component_access_token`
-	> - 第三方平台接口的调用凭据，令牌的有效期为 `2` 小时，在令牌快过期时 _(譬如 `1` 小时 `50` 分)_，需调用接口重新获取。
-	> - 参考文档：https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/component_access_token.html
+- Platform access token `component_access_token`
+	> - The credential used to call third-party platform APIs. The token is valid for `2` hours. Refresh it before it expires, for example at about `1` hour and `50` minutes.
+	> - Reference: https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/component_access_token.html
 
-- 平台验证票据 `component_verify_ticket`
-	> - 当第三方平台创建审核通过后，微信服务器会向其“授权事件接收URL”每隔10分钟以`POST`的方式推送验证票据，第三方平台接收到该请求后，只需直接返回字符串`success`即可。
-	> - 参考文档：https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/component_verify_ticket.html
+- Platform verify ticket `component_verify_ticket`
+	> - After a third-party platform is created and approved, the WeChat server sends the verify ticket to its authorization event receiving URL by `POST` every 10 minutes. The third-party platform only needs to return the string `success`.
+	> - Reference: https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/component_verify_ticket.html
 
-### 授权流程
+### Authorization Flow
 
-1. 坐等微信推送的票据验证回调 `component_verify_ticket`
-2. 获取或异步更新平台访问令牌 `component_access_token`
-3. 通过平台访问令牌来预授权码 `pre_auth_code`
-4. 根据预授权码来生成两种授权页面地址
-	1. 扫描页面：https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=xxxx&pre_auth_code=xxxxx&redirect_uri=xxxx&auth_type=xxx
-	2. 微信分享：https://mp.weixin.qq.com/safe/bindcomponent?action=bindcomponent&no_scan=1&component_appid=xxxx&pre_auth_code=xxxxx&redirect_uri=xxxx&auth_type=xxx&biz_appid=xxxx#wechat_redirect
-5. 用户授权完成，微信推送回调，在回调中获取授权绑定信息
-	> 通过 https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/authorization_info.html 获取授权者的 `authorizer_appid`, `authorizer_access_token`, `authorizer_refresh_token`
-6. 定时更新授权者的访问凭证
+1. Wait for the `component_verify_ticket` callback pushed by WeChat.
+2. Get or asynchronously refresh the platform access token `component_access_token`.
+3. Use the platform access token to get the pre-authorization code `pre_auth_code`.
+4. Generate two authorization page URLs from the pre-authorization code.
+	1. Scan page: https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=xxxx&pre_auth_code=xxxxx&redirect_uri=xxxx&auth_type=xxx
+	2. WeChat share: https://mp.weixin.qq.com/safe/bindcomponent?action=bindcomponent&no_scan=1&component_appid=xxxx&pre_auth_code=xxxxx&redirect_uri=xxxx&auth_type=xxx&biz_appid=xxxx#wechat_redirect
+5. After the user authorizes, WeChat pushes a callback. Read the authorization binding information in that callback.
+	> Use https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/authorization_info.html to obtain `authorizer_appid`, `authorizer_access_token`, and `authorizer_refresh_token`.
+6. Periodically refresh the authorizer access credential.
 
-### 引用
+### References
 
-- 普通商户文档中心
+- Regular merchant documentation center
 	> https://pay.weixin.qq.com/wiki/doc/apiv3/wxpay/pages/index.shtml
 
-- 服务商文档中心
+- Service provider documentation center
 	> https://pay.weixin.qq.com/wiki/doc/apiv3_partner/pages/index.shtml
 
-- Gitbook
+- GitBook
 	> https://wechatpay-api.gitbook.io/wechatpay-api-v3
 
-- API 证书
+- API certificate
 	> https://kf.qq.com/faq/161222NneAJf161222U7fARv.html
 
-### 工具
+### Tools
 
-- 微信支付：接口验证脚本(Postman)
+- WeChat Pay API verification script for Postman
 	> https://github.com/wechatpay-apiv3/wechatpay-postman-script
 
-- 微信支付：签名/验签/加密/解密工具下载
+- WeChat Pay signing, signature verification, encryption, and decryption tools
 	> https://pay.weixin.qq.com/wiki/doc/apiv3/wechatpay/download/Product_5.zip
 
-- 微信支付：证书工具下载
+- WeChat Pay certificate tool
 	> https://wx.gtimg.com/mch/files/WXCertUtil.exe

@@ -1,4 +1,4 @@
-# Zongsoft.Web.OpenApi Open-API 插件库
+# Zongsoft.Web.OpenApi OpenAPI Plugin Library
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Web.OpenApi)
@@ -6,10 +6,10 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-## 概述
+## Overview
 
-[**Z**ongsoft.**W**eb.**O**pen**A**pi](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Web/openapi) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架中的 [_**O**pen **API**_](https://www.openapis.org) 插件库，为 [_ASP.NET_](https://learn.microsoft.com/zh-cn/aspnet) 应用提供了开箱即用的 [_**O**pen **API**_](https://www.openapis.org) 相关功能。
+[**Z**ongsoft.**W**eb.**O**pen**A**pi](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Web/openapi) is the [_**O**pen **API**_](https://www.openapis.org) plugin library in the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides out-of-the-box [_**O**pen **API**_](https://www.openapis.org) features for [_ASP.NET_](https://learn.microsoft.com/aspnet) applications.

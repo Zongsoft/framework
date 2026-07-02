@@ -60,7 +60,7 @@ description: 处理 upgrading/deployer 下的 Zongsoft.Upgrading.Deployer Native
 
 ## AOT 单文件发布
 
-deployer 的发布产物应保持为自包含、单文件、Native AOT 可执行程序。修改发布文档、脚本或配置时，保持 `README.md`、`README-zh_CN.md`、`publish.linux-x64.*`、Visual Studio 发布配置和 `Zongsoft.Upgrading.Deployer.csproj` 的发布属性一致。
+deployer 的发布产物应保持为自包含、单文件、Native AOT 可执行程序。修改发布文档、脚本或配置时，保持 `README.md`、`README.zh-Hans.md`、`publish.linux-x64.*`、Visual Studio 发布配置和 `Zongsoft.Upgrading.Deployer.csproj` 的发布属性一致。
 
 Native AOT 编译发布耗时较久，Linux x64 AOT 发布通常更慢。执行发布前先确认确实需要重新发布，预留足够时间，记录开始/结束时间和输出目录；在 `.ai` 工作流验证中，如果没有修改 deployer 相关代码、项目发布属性、发布脚本或目标 runtime，不需要重新编译和发布 AOT 程序，直接复用已验证的发布产物。
 
@@ -126,7 +126,7 @@ deployment=/opt/zongsoft/terminal/.deployment
 
 行为变化时同步更新文档：
 
-- 更新 `README.md` 和 `README-zh_CN.md`，说明公开参数、部署、重启或发布变化。
+- 更新 `README.md` 和 `README.zh-Hans.md`，说明公开参数、部署、重启或发布变化。
 - 修改项目发布属性时，同步更新发布脚本/配置。
 - 服务权限等运维要求只写入文档，不作为测试副作用。
 

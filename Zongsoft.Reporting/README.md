@@ -1,4 +1,4 @@
-# Zongsoft.Reporting 报表插件库
+# Zongsoft.Reporting Reporting Plugin Library
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Reporting)
@@ -6,10 +6,10 @@
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/framework?style=social)
 
 [English](README.md) |
-[简体中文](README-zh_CN.md)
+[简体中文](README.zh-Hans.md)
 
 -----
 
-## 概述
+## Overview
 
-[**Z**ongsoft.**R**eporting](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Reporting) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的报表插件库，提供了报表开发的基础结构。
+[**Z**ongsoft.**R**eporting](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Reporting) is the reporting plugin library for the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides the infrastructure required for report development.
