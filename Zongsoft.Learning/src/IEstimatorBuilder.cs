@@ -33,48 +33,8 @@ using Microsoft.ML;
 
 namespace Zongsoft.Learning;
 
-public static class Pipeline
+public interface IEstimatorBuilder
 {
-	public static readonly EstimatorDescriptorCatalog Catalog = new(null);
-
-	public static IEstimator<ITransformer> Build(this IPipeline pipeline) => Build(pipeline, new MLContext());
-	public static IEstimator<ITransformer> Build(this IPipeline pipeline, MLContext context)
-	{
-		ArgumentNullException.ThrowIfNull(context);
-		ArgumentNullException.ThrowIfNull(pipeline);
-
-		IEstimator<ITransformer> result = null;
-
-		foreach(var trainer in pipeline.Trainers)
-		{
-			var descriptor = Find(trainer.Name, Catalog);
-			var estimator = descriptor.Builder.Build(context, trainer);
-
-			if(result == null)
-				result = estimator;
-			else
-				estimator.Append(estimator);
-		}
-
-		return result;
-
-		static EstimatorDescriptor Find(string name, EstimatorDescriptorCatalog catalog)
-		{
-			if(name == null || catalog == null)
-				return null;
-
-			if(catalog.Estimators.TryGetValue(name, out var trainer))
-				return trainer;
-
-			foreach(var child in catalog.Catalogs)
-			{
-				trainer = Find(name, child);
-
-				if(trainer != null)
-					return trainer;
-			}
-
-			return null;
-		}
-	}
+	string Name { get; }
+	IEstimator<ITransformer> Build(MLContext context, IEstimator trainer);
 }

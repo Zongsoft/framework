@@ -48,11 +48,11 @@
 	</extension>
 
 	<extension path="/Workbench/MachineLearning/Pipeline/Transforms">
-		<object name="Concatenating" type="trainer" builder="{static:Zongsoft.Learning.Transforms.ConcatenatingEstimator.Instance, Zongsoft.Learning}" />
+		<object name="Concatenating" type="estimator" builder="{static:Zongsoft.Learning.Transforms.ConcatenatingEstimator.Instance, Zongsoft.Learning}" />
 	</extension>
 
 	<extension path="/Workbench/MachineLearning/Pipeline/Transforms/Categorical">
-		<object name="OneHotEncoding" type="trainer" builder="{static:Zongsoft.Learning.Transforms.OneHotEncodingEstimator.Instance, Zongsoft.Learning}" />
-		<object name="OneHotHashEncoding" type="trainer" builder="{static:Zongsoft.Learning.Transforms.OneHotHashEncodingEstimator.Instance, Zongsoft.Learning}" />
+		<object name="OneHotEncoding" type="estimator" builder="{static:Zongsoft.Learning.Transforms.OneHotEncodingEstimator.Instance, Zongsoft.Learning}" />
+		<object name="OneHotHashEncoding" type="estimator" builder="{static:Zongsoft.Learning.Transforms.OneHotHashEncodingEstimator.Instance, Zongsoft.Learning}" />
 	</extension>
 </plugin>

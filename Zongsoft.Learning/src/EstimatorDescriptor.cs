@@ -35,10 +35,10 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Learning;
 
-public class TrainerDescriptor
+public class EstimatorDescriptor
 {
 	#region 构造函数
-	public TrainerDescriptor(string name, string title = null, string description = null)
+	public EstimatorDescriptor(string name, string title = null, string description = null)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(name);
 		this.Name = name;
@@ -52,7 +52,7 @@ public class TrainerDescriptor
 	public string Title { get => field ?? this.GetTitle(); set; }
 	public string Description { get => field ?? this.GetDescription(); set; }
 
-	public ITrainerBuilder Builder { get; set; }
+	public IEstimatorBuilder Builder { get; set; }
 	public IConnectionSettingsDriver Driver
 	{
 		get => field ??= ConnectionSettings.Drivers.TryGetValue($"ML.{this.Name}", out var driver) ? driver : null;
@@ -66,17 +66,17 @@ public class TrainerDescriptor
 	/// <remarks>
 	///		<para>对应的资源键按优先顺序，依次如下：</para>
 	///		<list type="number">
-	///			<item>Trainer.{name}.Title</item>
+	///			<item>Estimator.{name}.Title</item>
 	///			<item>{name}.Title</item>
-	///			<item>Trainer.{name}</item>
+	///			<item>Estimator.{name}</item>
 	///			<item>{name}</item>
 	///		</list>
 	/// </remarks>
 	private string GetTitle() => ResourceUtility.GetResourceString(this.GetResourceLocator(),
 	[
-		$"Trainer.{this.Name}.{nameof(this.Title)}",
+		$"Estimator.{this.Name}.{nameof(this.Title)}",
 		$"{this.Name}.{nameof(this.Title)}",
-		$"Trainer.{this.Name}",
+		$"Estimator.{this.Name}",
 		this.Name,
 	]);
 
@@ -85,13 +85,13 @@ public class TrainerDescriptor
 	/// <remarks>
 	///		<para>对应的资源键按优先顺序，依次如下：</para>
 	///		<list type="number">
-	///			<item>Trainer.{name}.Description</item>
+	///			<item>Estimator.{name}.Description</item>
 	///			<item>{name}.Description</item>
 	///		</list>
 	/// </remarks>
 	private string GetDescription() => ResourceUtility.GetResourceString(this.GetResourceLocator(),
 	[
-		$"Trainer.{this.Name}.{nameof(this.Description)}",
+		$"Estimator.{this.Name}.{nameof(this.Description)}",
 		$"{this.Name}.{nameof(this.Description)}",
 	]);
 
@@ -107,7 +107,7 @@ public class TrainerDescriptor
 	#endregion
 }
 
-public class TrainerDescriptorCollection() : KeyedCollection<string, TrainerDescriptor>(StringComparer.OrdinalIgnoreCase)
+public class EstimatorDescriptorCollection() : KeyedCollection<string, EstimatorDescriptor>(StringComparer.OrdinalIgnoreCase)
 {
-	protected override string GetKeyForItem(TrainerDescriptor trainer) => trainer.Name;
+	protected override string GetKeyForItem(EstimatorDescriptor descriptor) => descriptor.Name;
 }

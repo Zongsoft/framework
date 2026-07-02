@@ -33,13 +33,13 @@ using Microsoft.ML;
 
 namespace Zongsoft.Learning.Transforms;
 
-public class ConcatenatingEstimator : ITrainerBuilder
+public class ConcatenatingEstimator : IEstimatorBuilder
 {
 	public static readonly ConcatenatingEstimator Instance = new();
 
 	public string Name => "Concatenating";
 
-	public IEstimator<ITransformer> Build(MLContext context, ITrainer trainer)
+	public IEstimator<ITransformer> Build(MLContext context, IEstimator trainer)
 	{
 		ArgumentNullException.ThrowIfNull(trainer);
 

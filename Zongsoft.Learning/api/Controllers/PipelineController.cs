@@ -13,7 +13,7 @@ public class PipelineController : ControllerBase
 		return this.Ok(new
 		{
 			Pipeline.Catalog.Catalogs,
-			Pipeline.Catalog.Trainers,
+			Pipeline.Catalog.Estimators,
 		});
 	}
 }

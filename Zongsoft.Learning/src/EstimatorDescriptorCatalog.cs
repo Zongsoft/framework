@@ -35,48 +35,48 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Learning;
 
-public class TrainerDescriptorCatalog : CategoryBase<TrainerDescriptorCatalog>, IDiscriminator
+public class EstimatorDescriptorCatalog : CategoryBase<EstimatorDescriptorCatalog>, IDiscriminator
 {
 	#region 内部构造
-	internal TrainerDescriptorCatalog()
+	internal EstimatorDescriptorCatalog()
 	{
-		this.Trainers = new();
+		this.Estimators = new();
 		this.Catalogs = new(this);
 	}
 	#endregion
 
 	#region 公共构造
-	public TrainerDescriptorCatalog(string name, string title = null, string description = null) : this(null, name, title, description) { }
-	public TrainerDescriptorCatalog(IResource resource, string name, string title = null, string description = null) : base(resource, name, title, description)
+	public EstimatorDescriptorCatalog(string name, string title = null, string description = null) : this(null, name, title, description) { }
+	public EstimatorDescriptorCatalog(IResource resource, string name, string title = null, string description = null) : base(resource, name, title, description)
 	{
-		this.Trainers = new();
+		this.Estimators = new();
 		this.Catalogs = new(this);
 	}
 	#endregion
 
 	#region 公共属性
-	public TrainerDescriptorCollection Trainers { get; }
-	public TrainerDescriptorCatalogCollection Catalogs { get; }
-	public TrainerDescriptor this[string name] => this.Trainers[name];
+	public EstimatorDescriptorCollection Estimators { get; }
+	public EstimatorDescriptorCatalogCollection Catalogs { get; }
+	public EstimatorDescriptor this[string name] => this.Estimators[name];
 	#endregion
 
 	#region 重写方法
-	protected override IHierarchicalNodeCollection<TrainerDescriptorCatalog> Nodes => this.Catalogs;
+	protected override IHierarchicalNodeCollection<EstimatorDescriptorCatalog> Nodes => this.Catalogs;
 
-	/// <summary>获取权限类别的本地化标题。</summary>
+	/// <summary>获取类别的本地化标题。</summary>
 	/// <returns>返回本地化标题文本，如果失败则返回空(<c>null</c>)。</returns>
 	/// <remarks>
 	///		<para>标题对应的资源键按优先顺序，依次如下：</para>
 	///		<para>提示：其 <c>{name}</c> 表示 <see cref="HierarchicalNode.Name"/> 属性的值；<c>{path}</c> 表示 <see cref="HierarchicalNode.FullPath"/> 属性的值。</para>
 	///		<list type="number">
-	///			<item>Trainer.{path}.Category.Title</item>
-	///			<item>Trainer.{path}.Category</item>
-	///			<item>Trainer.{path}.Title</item>
-	///			<item>Trainer.{path}</item>
-	///			<item>Trainer.{name}.Category.Title</item>
-	///			<item>Trainer.{name}.Category</item>
-	///			<item>Trainer.{name}.Title</item>
-	///			<item>Trainer.{name}</item>
+	///			<item>Estimator.{path}.Category.Title</item>
+	///			<item>Estimator.{path}.Category</item>
+	///			<item>Estimator.{path}.Title</item>
+	///			<item>Estimator.{path}</item>
+	///			<item>Estimator.{name}.Category.Title</item>
+	///			<item>Estimator.{name}.Category</item>
+	///			<item>Estimator.{name}.Title</item>
+	///			<item>Estimator.{name}</item>
 	///			<item>{path}.Category.Title</item>
 	///			<item>{path}.Category</item>
 	///			<item>{path}.Title</item>
@@ -89,26 +89,26 @@ public class TrainerDescriptorCatalog : CategoryBase<TrainerDescriptorCatalog>, 
 	/// </remarks>
 	protected override string GetTitle() => this.Resource.GetString(
 	[
-		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Title)}",
-		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}",
-		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Title)}",
-		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}",
-		$"Trainer.{this.Name}.{nameof(Category)}.{nameof(this.Title)}",
-		$"Trainer.{this.Name}.{nameof(Category)}",
-		$"Trainer.{this.Name}.{nameof(this.Title)}",
-		$"Trainer.{this.Name}",
+		$"Estimator.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Title)}",
+		$"Estimator.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}",
+		$"Estimator.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Title)}",
+		$"Estimator.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}",
+		$"Estimator.{this.Name}.{nameof(Category)}.{nameof(this.Title)}",
+		$"Estimator.{this.Name}.{nameof(Category)}",
+		$"Estimator.{this.Name}.{nameof(this.Title)}",
+		$"Estimator.{this.Name}",
 	]) ?? base.GetTitle();
 
-	/// <summary>获取权限类别的本地化描述。</summary>
+	/// <summary>获取类别的本地化描述。</summary>
 	/// <returns>返回本地化描述文本，如果失败则返回空(<c>null</c>)。</returns>
 	/// <remarks>
 	///		<para>对应的资源键按优先顺序，依次如下：</para>
 	///		<para>提示：其 <c>{name}</c> 表示 <see cref="HierarchicalNode.Name"/> 属性的值；<c>{path}</c> 表示 <see cref="HierarchicalNode.FullPath"/> 属性的值。</para>
 	///		<list type="number">
-	///			<item>Trainer.{path}.Category.Description</item>
-	///			<item>Trainer.{path}.Description</item>
-	///			<item>Trainer.{name}.Category.Description</item>
-	///			<item>Trainer.{name}.Description</item>
+	///			<item>Estimator.{path}.Category.Description</item>
+	///			<item>Estimator.{path}.Description</item>
+	///			<item>Estimator.{name}.Category.Description</item>
+	///			<item>Estimator.{name}.Description</item>
 	///			<item>{path}.Category.Description</item>
 	///			<item>{path}.Description</item>
 	///			<item>{name}.Category.Description</item>
@@ -117,10 +117,10 @@ public class TrainerDescriptorCatalog : CategoryBase<TrainerDescriptorCatalog>, 
 	/// </remarks>
 	protected override string GetDescription() => this.Resource.GetString(
 	[
-		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Description)}",
-		$"Trainer.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Description)}",
-		$"Trainer.{this.Name}.{nameof(Category)}.{nameof(this.Description)}",
-		$"Trainer.{this.Name}.{nameof(this.Description)}",
+		$"Estimator.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(Category)}.{nameof(this.Description)}",
+		$"Estimator.{this.FullPath.Trim(PathSeparator).Replace(PathSeparator, '.')}.{nameof(this.Description)}",
+		$"Estimator.{this.Name}.{nameof(Category)}.{nameof(this.Description)}",
+		$"Estimator.{this.Name}.{nameof(this.Description)}",
 	]) ?? base.GetDescription();
 	#endregion
 
@@ -133,13 +133,13 @@ public class TrainerDescriptorCatalog : CategoryBase<TrainerDescriptorCatalog>, 
 				if(string.IsNullOrEmpty(type) || type.Equals("catalog", StringComparison.OrdinalIgnoreCase) || type.Equals(nameof(Category), StringComparison.OrdinalIgnoreCase))
 					return this.Catalogs;
 
-				if(string.Equals(type, "trainer", StringComparison.OrdinalIgnoreCase))
-					return this.Trainers;
+				if(string.Equals(type, "estimator", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "trainer", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "transformer", StringComparison.OrdinalIgnoreCase))
+					return this.Estimators;
 
 				break;
-			case TrainerDescriptor:
-				return this.Trainers;
-			case TrainerDescriptorCatalog:
+			case EstimatorDescriptor:
+				return this.Estimators;
+			case EstimatorDescriptorCatalog:
 				return this.Catalogs;
 		}
 
@@ -148,7 +148,7 @@ public class TrainerDescriptorCatalog : CategoryBase<TrainerDescriptorCatalog>, 
 	#endregion
 }
 
-public sealed class TrainerDescriptorCatalogCollection : CategoryCollectionBase<TrainerDescriptorCatalog>
+public sealed class EstimatorDescriptorCatalogCollection : CategoryCollectionBase<EstimatorDescriptorCatalog>
 {
-	internal TrainerDescriptorCatalogCollection(TrainerDescriptorCatalog owner) : base(owner) { }
+	internal EstimatorDescriptorCatalogCollection(EstimatorDescriptorCatalog owner) : base(owner) { }
 }

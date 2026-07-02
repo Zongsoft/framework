@@ -35,19 +35,19 @@ namespace Zongsoft.Learning;
 public class DatasetField
 {
 	#region 构造函数
-	public DatasetField(string name, Type type, int ordinal = -1, DatasetFieldRole role = DatasetFieldRole.None)
+	public DatasetField(string name, Type type, int ordinal = -1, DatasetFieldKind kind = DatasetFieldKind.None)
 	{
 		this.Name = name;
 		this.Type = type;
-		this.Role = role;
+		this.Kind = kind;
 		this.Ordinal = ordinal;
 	}
 
-	public DatasetField(string name, Type type, string alias, int ordinal = -1, DatasetFieldRole role = DatasetFieldRole.None)
+	public DatasetField(string name, Type type, string alias, int ordinal = -1, DatasetFieldKind kind = DatasetFieldKind.None)
 	{
 		this.Name = name;
 		this.Type = type;
-		this.Role = role;
+		this.Kind = kind;
 		this.Alias = alias;
 		this.Ordinal = ordinal;
 	}
@@ -58,7 +58,7 @@ public class DatasetField
 	public Type Type { get; set; }
 	public int Ordinal { get; set; }
 	public string Alias { get; set; }
-	public DatasetFieldRole Role { get; set; }
+	public DatasetFieldKind Kind { get; set; }
 	#endregion
 
 	#region 重写方法
@@ -66,22 +66,14 @@ public class DatasetField
 	{
 		if(this.Ordinal < 0)
 			return string.IsNullOrEmpty(this.Alias) ?
-				$"{this.Name}:{Common.TypeAlias.GetAlias(this.Type, true)}({this.Role})" :
-				$"{this.Name}:{Common.TypeAlias.GetAlias(this.Type, true)}@{this.Alias}({this.Role})";
+				$"{this.Name}:{Common.TypeAlias.GetAlias(this.Type, true)}({this.Kind})" :
+				$"{this.Name}:{Common.TypeAlias.GetAlias(this.Type, true)}@{this.Alias}({this.Kind})";
 		else
 			return string.IsNullOrEmpty(this.Alias) ?
-				$"[{this.Ordinal}]{this.Name}:{Common.TypeAlias.GetAlias(this.Type, true)}({this.Role})" :
-				$"[{this.Ordinal}]{this.Name}:{Common.TypeAlias.GetAlias(this.Type, true)}@{this.Alias}({this.Role})";
+				$"[{this.Ordinal}]{this.Name}:{Common.TypeAlias.GetAlias(this.Type, true)}({this.Kind})" :
+				$"[{this.Ordinal}]{this.Name}:{Common.TypeAlias.GetAlias(this.Type, true)}@{this.Alias}({this.Kind})";
 	}
 	#endregion
-}
-
-public enum DatasetFieldRole
-{
-	None,
-	Key,
-	Label,
-	Feature,
 }
 
 public class DatasetFieldCollection() : KeyedCollection<string, DatasetField>(StringComparer.OrdinalIgnoreCase)

@@ -31,10 +31,10 @@ using System;
 
 namespace Zongsoft.Learning;
 
-public interface ITrainer
+public enum DatasetFieldKind
 {
-	string Name { get; }
-	string Title { get; set; }
-	string Settings { get; set; }
-	string Description { get; set; }
+	None,
+	Key,
+	Label,
+	Feature,
 }

@@ -29,12 +29,12 @@
 
 using System;
 
-using Microsoft.ML;
-
 namespace Zongsoft.Learning;
 
-public interface ITrainerBuilder
+public interface IEstimator
 {
 	string Name { get; }
-	IEstimator<ITransformer> Build(MLContext context, ITrainer trainer);
+	string Title { get; set; }
+	string Settings { get; set; }
+	string Description { get; set; }
 }

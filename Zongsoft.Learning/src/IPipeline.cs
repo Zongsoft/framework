@@ -40,5 +40,5 @@ public interface IPipeline
 	string Description { get; set; }
 
 	IDataset Dataset { get; }
-	IEnumerable<ITrainer> Trainers { get; }
+	IEnumerable<IEstimator> Trainers { get; }
 }
