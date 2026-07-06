@@ -25,23 +25,36 @@ dotnet add package Zongsoft.Core
 
 The package is intentionally broad: it is the common layer that higher-level _**Z**ongsoft_ packages build on. The main areas are:
 
-| Area | Namespaces | Description |
-| --- | --- | --- |
-| Common utilities | `Zongsoft.Common` | Conversion helpers, random generation, sequences, predicates, timers, bit vectors, string/type/URI extensions, timestamps, locking helpers, and validation contracts. |
-| Collections | `Zongsoft.Collections` | Hierarchical nodes, category trees, parameter bags, synchronized collections, queues, object pools, and collection/dictionary extensions. |
-| Components | `Zongsoft.Components` | Command infrastructure, command-line parsing, event exchange, feature pipelines, retry/fallback/breaker/throttle/timeout features, state machines, workers, supervisors, handlers, executors, filters, converters, and identifiers. |
-| Configuration | `Zongsoft.Configuration` | Settings and connection settings, configuration binding and recognition, XML configuration providers, model-backed configuration, profile/INI parsing, and options integration with `Microsoft.Extensions.Options`. |
-| Data abstractions | `Zongsoft.Data` | Query criteria, conditions, ranges, paging, sorting, operands, model descriptors, data access/service contracts, operation options and events, metadata models, archiving contracts, and transaction primitives. |
-| Services | `Zongsoft.Services` | Application context and modules, service registration/discovery helpers, dependency metadata, modular services, service accessors, and distributed-lock abstractions. |
-| Caching | `Zongsoft.Caching` | In-memory cache wrappers, eviction/change events, cache scanner, distributed-cache contract, and the `Spooler<T>` batching helper. |
-| Communication and messaging | `Zongsoft.Communication`, `Zongsoft.Messaging` | Channel, listener, sender, receiver, requester/responder, transmitter, packetizer, notifier, message queue, producer/consumer, poller, and queue option abstractions. |
-| Diagnostics and telemetry | `Zongsoft.Diagnostics` | Logging contracts, console/text/XML loggers and formatters, diagnostic configuration, telemetry meters, metric descriptors, and exporter launcher contracts. |
-| IO and hardware | `Zongsoft.IO` | Virtual file-system contracts and local implementation, path parsing, MIME helpers, compression helpers, binary/text reader extensions, and hardware profile models. |
-| Security | `Zongsoft.Security` | Claims helpers, credentials, certificates, secret/signature contracts, password utilities, authentication/authorization flows, users, roles, privileges, and privilege evaluators. |
-| Serialization | `Zongsoft.Serialization` | Serializer contracts, JSON serializer helpers, serialization options, naming conventions, member attributes, and System.Text.Json converters. |
-| Expressions and text | `Zongsoft.Expressions`, `Zongsoft.Text` | Lexer/tokenizer infrastructure, expression evaluator contracts, syntax exceptions, regular-text processing, and template contracts. |
-| Reflection | `Zongsoft.Reflection` | High-performance reflection helpers and member-expression parsing/evaluation. |
-| Runtime helpers | `Zongsoft.Resources`, `Zongsoft.Scheduling`, `Zongsoft.Versioning`, `Zongsoft.Terminals` | Resource lookup, trigger abstractions, semantic version parsing, and terminal/console command execution. |
+- **Common utilities** _(`Zongsoft.Common`)_
+  > Conversion helpers, random generation, sequences, predicates, timers, bit vectors, string/type/URI extensions, timestamps, locking helpers, and validation contracts.
+- **Collections** _(`Zongsoft.Collections`)_
+  > Hierarchical nodes, category trees, parameter bags, synchronized collections, queues, object pools, and collection/dictionary extensions.
+- **Components** _(`Zongsoft.Components`)_
+  > Command infrastructure, command-line parsing, event exchange, feature pipelines, retry/fallback/breaker/throttle/timeout features, state machines, workers, supervisors, handlers, executors, filters, converters, and identifiers.
+- **Configuration** _(`Zongsoft.Configuration`)_
+  > Settings and connection settings, configuration binding and recognition, XML configuration providers, model-backed configuration, profile/INI parsing, and options integration with `Microsoft.Extensions.Options`.
+- **Data abstractions** _(`Zongsoft.Data`)_
+  > Query criteria, conditions, ranges, paging, sorting, operands, model descriptors, data access/service contracts, operation options and events, metadata models, archiving contracts, and transaction primitives.
+- **Services** _(`Zongsoft.Services`)_
+  > Application context and modules, service registration/discovery helpers, dependency metadata, modular services, service accessors, and distributed-lock abstractions.
+- **Caching** _(`Zongsoft.Caching`)_
+  > In-memory cache wrappers, eviction/change events, cache scanner, distributed-cache contract, and the `Spooler<T>` batching helper.
+- **Communication and messaging** _(`Zongsoft.Communication`, `Zongsoft.Messaging`)_
+  > Channel, listener, sender, receiver, requester/responder, transmitter, packetizer, notifier, message queue, producer/consumer, poller, and queue option abstractions.
+- **Diagnostics and telemetry** _(`Zongsoft.Diagnostics`)_
+  > Logging contracts, console/text/XML loggers and formatters, diagnostic configuration, telemetry meters, metric descriptors, and exporter launcher contracts.
+- **IO and hardware** _(`Zongsoft.IO`)_
+  > Virtual file-system contracts and local implementation, path parsing, MIME helpers, compression helpers, binary/text reader extensions, and hardware profile models.
+- **Security** _(`Zongsoft.Security`)_
+  > Claims helpers, credentials, certificates, secret/signature contracts, password utilities, authentication/authorization flows, users, roles, privileges, and privilege evaluators.
+- **Serialization** _(`Zongsoft.Serialization`)_
+  > Serializer contracts, JSON serializer helpers, serialization options, naming conventions, member attributes, and System.Text.Json converters.
+- **Expressions and text** _(`Zongsoft.Expressions`, `Zongsoft.Text`)_
+  > Lexer/tokenizer infrastructure, expression evaluator contracts, syntax exceptions, regular-text processing, and template contracts.
+- **Reflection** _(`Zongsoft.Reflection`)_
+  > High-performance reflection helpers and member-expression parsing/evaluation.
+- **Runtime helpers** _(`Zongsoft.Resources`, `Zongsoft.Scheduling`, `Zongsoft.Versioning`, `Zongsoft.Terminals`)_
+  > Resource lookup, trigger abstractions, semantic version parsing, and terminal/console command execution.
 
 ## Repository Layout
 
@@ -71,12 +84,14 @@ dotnet cake build.cake --target=test --edition=Release
 
 The `samples` directory contains small console applications that exercise real APIs from this package:
 
-| Sample | Focus |
-| --- | --- |
-| `samples/memorycache` | `MemoryCache`, expiration scanning, limit handling, and terminal output. |
-| `samples/spooler` | `Spooler<T>` batching under high write volume. |
-| `samples/superviser` | `Superviser`, `Supervisable`, worker state reporting, and terminal commands. |
-| `samples/eventexchanger` | `EventExchanger` channels and application context integration. |
+- `memorycache`
+  > `MemoryCache`, expiration scanning, limit handling, and terminal output.
+- `spooler`
+  > `Spooler<T>` batching under high write volume.
+- `superviser`
+  > `Superviser`, `Supervisable`, worker state reporting, and terminal commands.
+- `eventexchanger`
+  > `EventExchanger` channels and application context integration.
 
 ## License
 
