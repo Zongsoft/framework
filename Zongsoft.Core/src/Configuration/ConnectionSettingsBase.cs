@@ -409,10 +409,16 @@ public abstract class ConnectionSettingsBase<TDriver> : ConnectionSettingsBase, 
 public abstract class ConnectionSettingsBase<TDriver, TOptions> : ConnectionSettingsBase<TDriver> where TDriver : IConnectionSettingsDriver
 {
 	#region 静态成员
-	private static readonly PropertyInfo[] _properties = typeof(TOptions)
-		.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-		.Where(property => property.CanWrite && property.SetMethod.IsPublic)
-		.ToArray();
+	private static readonly MemberInfo[] _members;
+	#endregion
+
+	#region 静态构造
+	static ConnectionSettingsBase()
+	{
+		var properties = typeof(TOptions).GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.CanWrite && property.SetMethod.IsPublic);
+		var fields = typeof(TOptions).GetFields(BindingFlags.Public | BindingFlags.Instance).Where(field => !field.IsInitOnly);
+		_members = [.. properties.Cast<MemberInfo>().Concat(fields.Cast<MemberInfo>())];
+	}
 	#endregion
 
 	#region 构造函数
@@ -431,25 +437,25 @@ public abstract class ConnectionSettingsBase<TDriver, TOptions> : ConnectionSett
 
 	#region 虚拟方法
 	protected virtual TOptions CreateOptions() => Activator.CreateInstance<TOptions>();
-	protected virtual void Populate(ref TOptions options, ConnectionSettingDescriptor descriptor, PropertyInfo property, object value) => Reflection.Reflector.TrySetValue(property, ref options, value);
+	protected virtual void Populate(ref TOptions options, ConnectionSettingDescriptor descriptor, MemberInfo member, object value) => Reflector.TrySetValue(member, ref options, value);
 	protected virtual void Populate(TOptions options)
 	{
 		if(options is null)
 			throw new ArgumentNullException(nameof(options));
 
-		for(int i = 0; i < _properties.Length; i++)
+		for(int i = 0; i < _members.Length; i++)
 		{
 			//获取当前属性对应的设置项描述器，如果获取成功并且该属性不为忽略项则进行属性设置
-			if(this.Driver.Descriptors.TryGetValue(_properties[i].Name, out var descriptor) && !descriptor.Ignored)
+			if(this.Driver.Descriptors.TryGetValue(_members[i].Name, out var descriptor) && !descriptor.Ignored)
 			{
 				//获取当前属性对应的设置项值
 				var value = this.GetValue(descriptor);
 
 				//如果设置项指定了组装器，则必须将解析后的值再通过组装器转换为目标属性的类型
 				if(descriptor.Populator != null)
-					value = Common.Convert.ConvertValue(value, _properties[i].PropertyType, () => descriptor.Populator);
+					value = Common.Convert.ConvertValue(value, _members[i].GetMemberType(), () => descriptor.Populator);
 
-				this.Populate(ref options, descriptor, _properties[i], value);
+				this.Populate(ref options, descriptor, _members[i], value);
 			}
 		}
 	}
