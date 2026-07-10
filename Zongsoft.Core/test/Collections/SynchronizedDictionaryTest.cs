@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,7 +38,7 @@ public class SynchronizedDictionaryTest
 		const int COUNT = 1_0000;
 		var dictionary = new SynchronizedDictionary<int, string>(COUNT);
 
-		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, (index, _) =>
 		{
 			dictionary[index] = index.ToString();
 
@@ -100,7 +100,7 @@ public class SynchronizedDictionaryTest
 		const int COUNT = 1_0000;
 		var dictionary = new SynchronizedDictionary<int, string>(COUNT);
 
-		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, (index, _) =>
 		{
 			Assert.True(dictionary.TryAdd(index, $"Value#{index}"));
 
@@ -118,7 +118,7 @@ public class SynchronizedDictionaryTest
 
 		Assert.Equal(COUNT, dictionary.Count);
 
-		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, (index, _) =>
 		{
 			Assert.False(dictionary.TryAdd(index, $"Value#{index}"));
 
@@ -192,7 +192,7 @@ public class SynchronizedDictionaryTest
 
 		Assert.Equal(COUNT / 2, dictionary.Count);
 
-		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, (index, _) =>
 		{
 			var key = keys[index];
 			var value = dictionary.GetOrAdd(key, key => $"Added#{key}");
@@ -274,7 +274,7 @@ public class SynchronizedDictionaryTest
 
 		Assert.Equal(COUNT / 2, dictionary.Count);
 
-		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, (index, _) =>
 		{
 			var key = keys[index];
 			var value = dictionary.AddOrUpdate(key, key => $"Added#{key}", (key, value) => $"Updated#{key}");
@@ -359,7 +359,7 @@ public class SynchronizedDictionaryTest
 
 		Assert.Equal(COUNT / 2, dictionary.Count);
 
-		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, (index, _) =>
 		{
 			var key = keys[index];
 			var updated = dictionary.TryUpdate(key, (key, value) => $"Updated#{key}({value})");
@@ -433,7 +433,7 @@ public class SynchronizedDictionaryTest
 
 		Assert.Equal(COUNT, dictionary.Count);
 
-		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, (index, _) =>
 		{
 			Assert.True(dictionary.Remove(keys[index]));
 			Assert.False(dictionary.ContainsKey(keys[index]));
@@ -481,7 +481,7 @@ public class SynchronizedDictionaryTest
 		var dictionary = new SynchronizedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		Assert.Empty(dictionary);
 
-		await Parallel.ForAsync(0, COUNT, (index, _) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, (index, _) =>
 		{
 			var key = $"Key#{index}";
 			var value = dictionary.GetOrAdd(key, $"Value#{index}");
@@ -500,16 +500,17 @@ public class SynchronizedDictionaryTest
 		const int COUNT = 1_0000;
 
 		var dictionary = new SynchronizedDictionary<int, string>(COUNT);
+		var cancellationToken = TestContext.Current.CancellationToken;
 		var tasks = new Task[]
 		{
-			Task.Factory.StartNew(Run, dictionary),
-			Task.Factory.StartNew(Run, dictionary),
-			Task.Factory.StartNew(Run, dictionary),
-			Task.Factory.StartNew(Run, dictionary),
-			Task.Factory.StartNew(Run, dictionary),
+			Task.Factory.StartNew(Run, dictionary, cancellationToken),
+			Task.Factory.StartNew(Run, dictionary, cancellationToken),
+			Task.Factory.StartNew(Run, dictionary, cancellationToken),
+			Task.Factory.StartNew(Run, dictionary, cancellationToken),
+			Task.Factory.StartNew(Run, dictionary, cancellationToken),
 		};
 
-		await Task.WhenAll(tasks);
+		await Task.WhenAll(tasks).WaitAsync(cancellationToken);
 		Assert.Equal(COUNT, dictionary.Count);
 
 		static void Run(object state)

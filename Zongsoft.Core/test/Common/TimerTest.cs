@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,7 +26,7 @@ public class TimerTest
 	public void Test()
 	{
 		Assert.False(_timer.IsRunning);
-		_timer.Start();
+		_timer.Start(TestContext.Current.CancellationToken);
 		Assert.True(_timer.IsRunning);
 
 		SpinWait.SpinUntil(() => _count >= LIMIT, 1000 * 2);

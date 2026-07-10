@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,9 +17,9 @@ public class SpoolerTest
 		using var spooler = new Spooler<string>((_, __) => ValueTask.CompletedTask, TimeSpan.FromSeconds(10));
 		Assert.True(spooler.IsEmpty);
 
-		await spooler.PutAsync("A");
-		await spooler.PutAsync("B");
-		await spooler.PutAsync("C");
+		await spooler.PutAsync("A", TestContext.Current.CancellationToken);
+		await spooler.PutAsync("B", TestContext.Current.CancellationToken);
+		await spooler.PutAsync("C", TestContext.Current.CancellationToken);
 		Assert.Equal(3, spooler.Count);
 
 		spooler.Clear();
@@ -36,20 +36,20 @@ public class SpoolerTest
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
-		await spooler.FlushAsync();
+		await spooler.FlushAsync(TestContext.Current.CancellationToken);
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
 		#if NET8_0_OR_GREATER
-		await Parallel.ForAsync(0, COUNT, async (index, cancellation) => await spooler.PutAsync($"Value#{index}", cancellation));
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, async (index, cancellation) => await spooler.PutAsync($"Value#{index}", cancellation));
 		#else
 		for(int i = 0; i < COUNT; i++)
-			await spooler.PutAsync($"Value#${i}");
+			await spooler.PutAsync($"Value#${i}", TestContext.Current.CancellationToken);
 		#endif
 
 		Assert.Equal(COUNT, spooler.Count);
 
-		await spooler.FlushAsync();
+		await spooler.FlushAsync(TestContext.Current.CancellationToken);
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(COUNT, flusher.Count);
 	}
@@ -62,14 +62,14 @@ public class SpoolerTest
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
-		await spooler.PutAsync("A");
-		await spooler.PutAsync("B");
-		await spooler.PutAsync("C");
+		await spooler.PutAsync("A", TestContext.Current.CancellationToken);
+		await spooler.PutAsync("B", TestContext.Current.CancellationToken);
+		await spooler.PutAsync("C", TestContext.Current.CancellationToken);
 		Assert.Equal(3, spooler.Count);
 		Assert.Equal(0, flusher.Count);
 
 		//触发数量限制
-		await spooler.PutAsync("D");
+		await spooler.PutAsync("D", TestContext.Current.CancellationToken);
 
 		Assert.False(spooler.IsEmpty);
 		Assert.Equal(1, spooler.Count);
@@ -84,9 +84,9 @@ public class SpoolerTest
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
-		await spooler.PutAsync("A");
-		await spooler.PutAsync("B");
-		await spooler.PutAsync("C");
+		await spooler.PutAsync("A", TestContext.Current.CancellationToken);
+		await spooler.PutAsync("B", TestContext.Current.CancellationToken);
+		await spooler.PutAsync("C", TestContext.Current.CancellationToken);
 		Assert.Equal(3, spooler.Count);
 		Assert.Equal(0, flusher.Count);
 
@@ -111,9 +111,9 @@ public class SpoolerTest
 		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10));
 
 		for(int i = 0; i < COUNT; i++)
-			await spooler.PutAsync(i);
+			await spooler.PutAsync(i, TestContext.Current.CancellationToken);
 
-		var tasks = Enumerable.Range(0, CONCURRENCY).Select(_ => spooler.FlushAsync().AsTask()).ToArray();
+		var tasks = Enumerable.Range(0, CONCURRENCY).Select(_ => spooler.FlushAsync(TestContext.Current.CancellationToken).AsTask()).ToArray();
 		await Task.WhenAll(tasks);
 
 		Assert.True(spooler.IsEmpty);
@@ -132,8 +132,8 @@ public class SpoolerTest
 		var flusher = new RecordingFlusher<int>(TimeSpan.FromMilliseconds(1));
 		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), LIMIT);
 
-		await Parallel.ForAsync(0, COUNT, spooler.PutAsync);
-		await spooler.FlushAsync();
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, spooler.PutAsync);
+		await spooler.FlushAsync(TestContext.Current.CancellationToken);
 
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(1, flusher.MaximumConcurrency);

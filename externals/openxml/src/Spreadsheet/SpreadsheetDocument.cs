@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -64,7 +64,7 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 
 		#region 公共方法
 		public void Save() => _document?.Save();
-		public void Close() => _document?.Close();
+		public void Close() => _document?.Dispose();
 		#endregion
 
 		#region 静态方法

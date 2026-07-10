@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,12 +17,12 @@ public class TextFileLoggerTest
 		using var context = new LoggerContext();
 		using var logger = context.CreateLogger(16);
 
-		await Parallel.ForAsync(0, COUNT, async (index, cancellation) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, async (index, cancellation) =>
 		{
 			await logger.LogAsync(new LogEntry(LogLevel.Info, "ConcurrentInfo", GetMessage(index)), cancellation);
 		});
 
-		await logger.FlushAsync();
+		await logger.FlushAsync(TestContext.Current.CancellationToken);
 
 		var content = context.ReadAllText();
 		AssertMessages(content, COUNT);
@@ -36,7 +36,7 @@ public class TextFileLoggerTest
 		using var context = new LoggerContext();
 		using var logger = context.CreateLogger(16);
 
-		await Parallel.ForAsync(0, COUNT, async (index, cancellation) =>
+		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, async (index, cancellation) =>
 		{
 			await logger.LogAsync(new LogEntry(LogLevel.Error, "ConcurrentError", GetMessage(index)), cancellation);
 		});

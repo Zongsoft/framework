@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 using Xunit;
@@ -13,7 +13,7 @@ namespace Zongsoft.Externals.OpenXml.Tests
 		[Fact]
 		public void TestCreateDocumentViaFile()
 		{
-			var filePath = Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\files\", "temp.xlsx");
+			var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
 			var document = SpreadsheetDocument.Create(filePath);
 
 			Assert.NotNull(document);

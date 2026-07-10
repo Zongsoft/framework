@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -40,20 +40,20 @@ public class SequenceTest
 	{
 		var mocker = new SequenceMocker();
 
-		Parallel.For(0, 1000, async _ => await mocker.IncreaseAsync("Integer", 1, 1));
-		Assert.Equal(1001, await mocker.IncreaseAsync("Integer", 1));
+		await Parallel.ForAsync(0, 1000, TestContext.Current.CancellationToken, async (_, cancellation) => await mocker.IncreaseAsync("Integer", 1, 1, cancellation));
+		Assert.Equal(1001, await mocker.IncreaseAsync("Integer", 1, cancellation: TestContext.Current.CancellationToken));
 
 		mocker.Latency = TimeSpan.FromMilliseconds(100);
 		var sequence = mocker.Variate();
-		Assert.Equal(1, await sequence.IncreaseAsync("Var"));
+		Assert.Equal(1, await sequence.IncreaseAsync("Var", cancellation: TestContext.Current.CancellationToken));
 
 		var statistics = sequence.GetStatistics("Var");
 		Assert.NotNull(statistics);
 		Assert.Equal(statistics.Threshold, mocker.GetValue("Var"));
 
 		#if NET8_0_OR_GREATER
-		await Parallel.ForAsync(1, 1000, async (_, cancellation) => await sequence.IncreaseAsync("Var", cancellation: cancellation));
-		Assert.Equal(1001, await sequence.IncreaseAsync("Var"));
+		await Parallel.ForAsync(1, 1000, TestContext.Current.CancellationToken, async (_, cancellation) => await sequence.IncreaseAsync("Var", cancellation: cancellation));
+		Assert.Equal(1001, await sequence.IncreaseAsync("Var", cancellation: TestContext.Current.CancellationToken));
 		Assert.Equal(statistics.Threshold, mocker.GetValue("Var"));
 		#endif
 

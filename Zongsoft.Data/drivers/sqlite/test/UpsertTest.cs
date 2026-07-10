@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -198,7 +198,6 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var index = 0;
 		var accessor = _database.Accessor;
 		Assert.Equal(0, await accessor.UpsertManyAsync<UserModel>(null));
 		Assert.Equal(0, await accessor.UpsertManyAsync(Array.Empty<UserModel>()));

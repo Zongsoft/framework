@@ -166,7 +166,7 @@ public class HardwareProfileTest
 		Assert.Single(profile.Storages);
 		Assert.Empty(profile.Processors);
 
-		profile = await HardwareProfile.LoadAsync(provider);
+		profile = await HardwareProfile.LoadAsync(provider, TestContext.Current.CancellationToken);
 		Assert.Equal(3, profile.Count);
 	}
 
