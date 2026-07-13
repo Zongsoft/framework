@@ -36,6 +36,16 @@ public class SequenceTest
 	}
 
 	[Fact]
+	public void TestIncreaseBeyondGrowthUpper()
+	{
+		var mocker = new SequenceMocker();
+		var sequence = mocker.Variate(Sequence.VariatorOptions.Default);
+		var interval = sequence.Options.GrowthUpper + 1;
+
+		Assert.Equal(interval, sequence.Increase("Large", interval));
+	}
+
+	[Fact]
 	public async Task TestIncreaseAsync()
 	{
 		var mocker = new SequenceMocker();
@@ -61,6 +71,16 @@ public class SequenceTest
 		Assert.Equal(1, sequence.Increase("Var"));
 		Assert.Equal(2, sequence.Increase("Var"));
 		Assert.Equal(3, sequence.Increase("Var"));
+	}
+
+	[Fact]
+	public async Task TestIncreaseAsyncBeyondGrowthUpper()
+	{
+		var mocker = new SequenceMocker();
+		var sequence = mocker.Variate(Sequence.VariatorOptions.Default);
+		var interval = sequence.Options.GrowthUpper + 1;
+
+		Assert.Equal(interval, await sequence.IncreaseAsync("LargeAsync", interval, cancellation: TestContext.Current.CancellationToken));
 	}
 
 	#region 嵌套子类

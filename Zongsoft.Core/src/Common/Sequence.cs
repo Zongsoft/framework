@@ -270,8 +270,9 @@ public static class Sequence
 					Interlocked.Increment(ref _count);
 					var length = this.GetAcquireInterval(interval);
 
-					//确保请求递增的步长在限定范围内
+					//增长上限只限制预取长度，实际申请量不能小于本次请求的步长
 					length = ClampInterval(length, _options.Initiate, _options.GrowthUpper);
+					length = interval > 0 ? Math.Max(length, interval) : Math.Min(length, interval);
 
 					_threshold = _sequence.Increase(_name, length, seed);
 					_value = _threshold == seed ? seed : _threshold - length;
@@ -301,8 +302,9 @@ public static class Sequence
 					Interlocked.Increment(ref _count);
 					var length = this.GetAcquireInterval(interval);
 
-					//确保请求递增的步长在限定范围内
+					//增长上限只限制预取长度，实际申请量不能小于本次请求的步长
 					length = ClampInterval(length, _options.Initiate, _options.GrowthUpper);
+					length = interval > 0 ? Math.Max(length, interval) : Math.Min(length, interval);
 
 					_threshold = await _sequence.IncreaseAsync(_name, length, seed, cancellation);
 					_value = _threshold == seed ? seed : _threshold - length;
