@@ -37,7 +37,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Components;
 
-public static class Events
+public static partial class Events
 {
 	#region 私有变量
 	private static readonly ConcurrentDictionary<IApplicationModule, Func<IApplicationModule, EventRegistryBase>> _accessors = new();
