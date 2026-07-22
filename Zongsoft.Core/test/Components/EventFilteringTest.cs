@@ -77,11 +77,11 @@ public class EventFilteringTest
 	[Fact]
 	public void Entry_ParseRecognizesKindAndWildcard()
 	{
-		var entry = EventFiltering.Entry.Parse("excluded:ModuleA.*");
+		var entry = EventFiltering.Entry.Parse("!ModuleA.*");
 
 		Assert.Equal(EventFiltering.EntryKind.Exclusive, entry.Kind);
 		Assert.Equal("ModuleA", entry.RegistryName);
-		Assert.Equal("*", entry.EventName);
+		Assert.Null(entry.EventName);
 		Assert.Equal("!ModuleA.*", entry.ToString());
 
 		Assert.True(EventFiltering.Entry.TryParse("*", out entry));
@@ -92,8 +92,8 @@ public class EventFilteringTest
 	}
 
 	[Theory]
-	[InlineData("!", "", null)]
-	[InlineData("!ModuleA.*", "ModuleA", "*")]
+	[InlineData("!", null, null)]
+	[InlineData("!ModuleA.*", "ModuleA", null)]
 	public void Entry_ParseExclamationPrefixCreatesExclusiveEntry(string text, string expectedRegistryName, string expectedEventName)
 	{
 		Assert.True(EventFiltering.Entry.TryParse(text, out var entry));

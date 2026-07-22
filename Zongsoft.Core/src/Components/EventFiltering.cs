@@ -104,13 +104,21 @@ public class EventFiltering : IPredication<EventContext>, IList<EventFiltering.E
 	}
 
 	[TypeConverter(typeof(EntryConverter))]
-	public readonly struct Entry(EntryKind kind, string registry, string name) : IEquatable<Entry>, IParsable<Entry>
+	public readonly struct Entry : IEquatable<Entry>, IParsable<Entry>
 	{
 		internal const string ALL = "*";
 
-		public readonly EntryKind Kind = kind;
-		public readonly string RegistryName = registry;
-		public readonly string EventName = name;
+		public readonly EntryKind Kind;
+		public readonly string RegistryName;
+		public readonly string EventName;
+
+		public Entry(EntryKind kind, string registry, string name)
+		{
+			this.Kind = kind;
+			this.RegistryName = Normalize(registry);
+			this.EventName = Normalize(name);
+			static string Normalize(string name) => string.IsNullOrEmpty(name) || name == ALL ? null : name;
+		}
 
 		public bool Equals(Entry other) => this.Kind == other.Kind &&
 			string.Equals(this.RegistryName, other.RegistryName, StringComparison.OrdinalIgnoreCase) &&
@@ -121,7 +129,7 @@ public class EventFiltering : IPredication<EventContext>, IList<EventFiltering.E
 		public override string ToString()
 		{
 			if(IsEmpty(this.RegistryName) && IsEmpty(this.EventName))
-				return this.Kind == EntryKind.Exclusive ? "!" : "*";
+				return this.Kind == EntryKind.Exclusive ? "!" : ALL;
 
 			var registry = string.IsNullOrEmpty(this.RegistryName) ? ALL : this.RegistryName;
 			var eventName = string.IsNullOrEmpty(this.EventName) ? ALL : this.EventName;
@@ -150,7 +158,7 @@ public class EventFiltering : IPredication<EventContext>, IList<EventFiltering.E
 				return false;
 			}
 
-			if(text == "*")
+			if(text == ALL)
 			{
 				result = default;
 				return true;
@@ -160,34 +168,6 @@ public class EventFiltering : IPredication<EventContext>, IList<EventFiltering.E
 
 			if(kind == EntryKind.Exclusive)
 				text = text[1..].Trim();
-
-			if(kind == EntryKind.Inclusive)
-			{
-				var position = text.IndexOf(':');
-
-				if(position > 0)
-				{
-					switch(text[..position].ToLowerInvariant())
-					{
-						case "include":
-						case "included":
-						case "inclusion":
-						case "inclusive":
-							break;
-						case "exclude":
-						case "excluded":
-						case "exclusion":
-						case "exclusive":
-							kind = EntryKind.Exclusive;
-							break;
-						default:
-							result = default;
-							return false;
-					}
-
-					text = text[(position + 1)..].Trim();
-				}
-			}
 
 			var index = text.LastIndexOf('.');
 			result = index < 0 ?
