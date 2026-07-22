@@ -39,6 +39,8 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 partial class ZeroQueue
 {
+	[System.Reflection.DefaultMember(nameof(Filtering))]
+	[System.ComponentModel.DefaultProperty(nameof(Filtering))]
 	private class EventChannel : ChannelBase, IEventChannel
 	{
 		#region 常量定义
@@ -57,7 +59,12 @@ partial class ZeroQueue
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
 			_options = new MessageEnqueueOptions();
 			_options.Properties[Packetizer.Options.Compressive] = 4 * 1024; //开启压缩的阈值(4KB)
+			this.Filtering = new();
 		}
+		#endregion
+
+		#region 公共属性
+		public EventFiltering Filtering { get; }
 		#endregion
 
 		#region 公共方法
@@ -74,7 +81,8 @@ partial class ZeroQueue
 			if(_queue == null)
 				throw new ObjectDisposedException(this.GetType().Name);
 
-			await _queue.ProduceAsync($"{TOPIC}/{context.QualifiedName}", Events.Marshaler.Marshal(context), _options, cancellation);
+			if(await this.Filtering.PredicateAsync(context, cancellation))
+				await _queue.ProduceAsync($"{TOPIC}/{context.QualifiedName}", Events.Marshaler.Marshal(context), _options, cancellation);
 		}
 		#endregion
 
