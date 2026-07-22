@@ -38,19 +38,8 @@ namespace Zongsoft.Data;
 
 public class Transaction : IDisposable, IEquatable<Transaction>
 {
-	#region 常量定义
-	private const int OPERATION_NONE = 0;
-	private const int OPERATION_ROLLBACK = 1;
-	private const int OPERATION_ABORT = 2;
-	#endregion
-
 	#region 静态字段
 	private static readonly AsyncLocal<Transaction> _current = new();
-	#endregion
-
-	#region 私有变量
-	private int _operation;
-	private Queue<IEnlistment> _enlistments;
 	#endregion
 
 	#region 成员字段
@@ -59,6 +48,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	private IsolationLevel _isolationLevel;
 	private TransactionStatus _status;
 	private TransactionInformation _information;
+	private static Queue<IEnlistment> _enlistments;
 	#endregion
 
 	#region 构造函数
@@ -155,31 +145,11 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 		//如果具有父事务则当前事务不用通知投票者(订阅者)，而是交由父事务处理
 		if(_parent != null)
 		{
-			//switch(phase)
-			//{
-			//	case EnlistmentPhase.Abort:
-			//		_parent._operation = OPERATION_ABORT;
-			//		break;
-			//	case EnlistmentPhase.Rollback:
-			//		_parent._operation = OPERATION_ROLLBACK;
-			//		break;
-			//}
-
 			//更新当前事务的状态
-			this.UpdateStatus(phase);
+			_status = ToStatus(phase);
 
 			//退出当前子事务
 			return;
-		}
-
-		switch(_operation)
-		{
-			case OPERATION_ABORT:
-				phase = EnlistmentPhase.Abort;
-				break;
-			case OPERATION_ROLLBACK:
-				phase = EnlistmentPhase.Rollback;
-				break;
 		}
 
 		while(_enlistments.Count > 0)
@@ -189,24 +159,14 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 		}
 
 		//更新当前事务的状态
-		this.UpdateStatus(phase);
-	}
+		_status = ToStatus(phase);
 
-	private void UpdateStatus(EnlistmentPhase phase)
-	{
-		switch(phase)
+		static TransactionStatus ToStatus(EnlistmentPhase phase) => phase switch
 		{
-			case EnlistmentPhase.Abort:
-			case EnlistmentPhase.Rollback:
-				_status = TransactionStatus.Aborted;
-				break;
-			case EnlistmentPhase.Commit:
-				_status = TransactionStatus.Committed;
-				break;
-			default:
-				_status = TransactionStatus.Undetermined;
-				break;
-		}
+			EnlistmentPhase.Abort or EnlistmentPhase.Rollback => TransactionStatus.Aborted,
+			EnlistmentPhase.Commit => TransactionStatus.Committed,
+			_ => TransactionStatus.Undetermined,
+		};
 	}
 	#endregion
 
