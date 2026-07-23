@@ -28,60 +28,111 @@
  */
 
 using System;
-using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
+using Zongsoft.Collections;
+using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-public class ZeroQueueEventChannel : IEventChannel
+[System.Reflection.DefaultMember(nameof(Filtering))]
+[System.ComponentModel.DefaultProperty(nameof(Filtering))]
+public class ZeroQueueEventChannel : ChannelBase, IEventChannel
 {
-	public event EventHandler Closed;
+	#region 常量定义
+	private const string TOPIC = "Events";
+	#endregion
 
-	private ZeroQueue _queue;
-	private IEventChannel _channel;
+	#region 成员字段
+	private IMessageQueue _queue;
+	private IMessageConsumer _subscriber;
+	#endregion
 
-	[TypeConverter(typeof(MessageQueueConverter))]
+	#region 构造函数
+	public ZeroQueueEventChannel(MessageEnqueueOptions options = null) : this(null, options) { }
+	public ZeroQueueEventChannel(IMessageQueue queue, MessageEnqueueOptions options = null)
+	{
+		_queue = queue;
+
+		if(options == null)
+		{
+			options = new MessageEnqueueOptions();
+			options.Properties[Packetizer.Options.Compressive] = 4 * 1024; //开启压缩的阈值(4KB)
+		}
+
+		this.Options = options;
+		this.Filtering = new();
+	}
+	#endregion
+
+	#region 公共属性
+	[System.ComponentModel.TypeConverter(typeof(MessageQueueConverter))]
 	public IMessageQueue Queue
 	{
 		get => _queue;
-		set
-		{
-			if(value == null)
-				throw new ArgumentNullException(nameof(value));
-
-			if(value is not ZeroQueue queue)
-				throw new ArgumentException($"The specified queue must be a {nameof(ZeroQueue)} instance.", nameof(value));
-
-			//切换底层队列时必须解除旧通道事件，否则旧队列关闭会误触发当前包装通道的关闭事件。
-			if(_channel != null)
-				_channel.Closed -= this.Channel_Closed;
-
-			_queue = queue;
-			_channel = queue.Channel;
-
-			if(_channel != null)
-				_channel.Closed += this.Channel_Closed;
-		}
+		set => _queue = value ?? throw new ArgumentNullException(nameof(value));
 	}
 
-	public bool IsClosed => this.Channel.IsClosed;
-	public bool IsDisposed => this.Channel.IsDisposed;
+	public EventFiltering Filtering { get; }
+	public MessageEnqueueOptions Options { get; set; }
+	#endregion
 
-	private IEventChannel Channel => _channel ?? throw new InvalidOperationException($"The {nameof(this.Queue)} property is not configured.");
-
-	public ValueTask CloseAsync(CancellationToken cancellation = default) => this.Channel.CloseAsync(cancellation);
-	public async ValueTask DisposeAsync()
+	#region 公共方法
+	public async ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default)
 	{
-		var channel = this.Channel;
-		//包装器释放后不再转发底层通道事件，避免外部继续收到已释放包装器的事件。
-		channel.Closed -= this.Channel_Closed;
-		await channel.DisposeAsync();
-	}
-	public ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default) => this.Channel.OpenAsync(exchanger, cancellation);
-	public ValueTask SendAsync(EventContext data, CancellationToken cancellation = default) => this.Channel.SendAsync(data, cancellation);
+		if(_queue == null)
+			throw new InvalidOperationException();
 
-	private void Channel_Closed(object sender, EventArgs e) => this.Closed?.Invoke(this, e);
+		_subscriber = await _queue.SubscribeAsync(TOPIC, new Handler(exchanger), cancellation);
+	}
+
+	public async ValueTask SendAsync(EventContext context, CancellationToken cancellation = default)
+	{
+		if(_queue == null)
+			throw new InvalidOperationException();
+
+		if(await this.Filtering.PredicateAsync(context, cancellation))
+			await _queue.ProduceAsync($"{TOPIC}/{context.QualifiedName}", Events.Marshaler.Marshal(context), this.Options, cancellation);
+	}
+	#endregion
+
+	#region 重写方法
+	protected override ValueTask OnCloseAsync(CancellationToken cancellation) => _subscriber == null ? ValueTask.CompletedTask : _subscriber.CloseAsync(cancellation);
+	protected override ValueTask DisposeAsync(bool disposing)
+	{
+		_queue = null;
+		_subscriber = null;
+		return base.DisposeAsync(disposing);
+	}
+
+	public override string ToString() => _queue == null ? $"{nameof(ZeroQueueEventChannel)}" : $"{nameof(ZeroQueueEventChannel)}:{_queue}";
+	#endregion
+
+	#region 嵌套子类
+	private sealed class Handler(EventExchanger exchanger) : HandlerBase<Message>()
+	{
+		private readonly EventExchanger _exchanger = exchanger ?? throw new ArgumentNullException(nameof(exchanger));
+
+		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
+		{
+			if(message.IsEmpty)
+				return ValueTask.CompletedTask;
+
+			//从主题中提取所属的事件名称(完整限定名)
+			var name = GetEventName(message.Topic);
+			if(string.IsNullOrEmpty(name))
+				return ValueTask.CompletedTask;
+
+			//将消息内容还原成事件参数对象
+			(var argument, parameters) = Events.Marshaler.Unmarshal(name, message.Data);
+
+			//通过事件交换器重放接收到事件
+			return _exchanger.RaiseAsync(name, argument, parameters, cancellation);
+		}
+
+		private static string GetEventName(string topic) => topic != null && topic.Length > TOPIC.Length + 1 && topic.StartsWith(TOPIC) ? topic[(TOPIC.Length + 1)..] : null;
+	}
+	#endregion
 }

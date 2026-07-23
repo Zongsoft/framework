@@ -50,21 +50,27 @@ partial class ZeroQueue
 		#region 成员字段
 		private ZeroQueue _queue;
 		private ZeroSubscriber _subscriber;
-		private readonly MessageEnqueueOptions _options;
 		#endregion
 
 		#region 构造函数
-		internal EventChannel(ZeroQueue queue)
+		internal EventChannel(ZeroQueue queue, MessageEnqueueOptions options)
 		{
 			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
-			_options = new MessageEnqueueOptions();
-			_options.Properties[Packetizer.Options.Compressive] = 4 * 1024; //开启压缩的阈值(4KB)
+
+			if(options == null)
+			{
+				options = new MessageEnqueueOptions();
+				options.Properties[Packetizer.Options.Compressive] = 4 * 1024; //开启压缩的阈值(4KB)
+			}
+
+			this.Options = options;
 			this.Filtering = new();
 		}
 		#endregion
 
 		#region 公共属性
 		public EventFiltering Filtering { get; }
+		public MessageEnqueueOptions Options { get; set; }
 		#endregion
 
 		#region 公共方法
@@ -82,7 +88,7 @@ partial class ZeroQueue
 				throw new ObjectDisposedException(this.GetType().Name);
 
 			if(await this.Filtering.PredicateAsync(context, cancellation))
-				await _queue.ProduceAsync($"{TOPIC}/{context.QualifiedName}", Events.Marshaler.Marshal(context), _options, cancellation);
+				await _queue.ProduceAsync($"{TOPIC}/{context.QualifiedName}", Events.Marshaler.Marshal(context), this.Options, cancellation);
 		}
 		#endregion
 

@@ -59,7 +59,6 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	private NetMQPoller _poller;
 	private NetMQQueue<Packet> _queue;
 	private PublisherSocket _publisher;
-	private EventChannel _channel;
 	#endregion
 
 	#region 构造函数
@@ -99,9 +98,6 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#region 公共属性
 	/// <summary>获取当前队列的实例标识。</summary>
 	public string Instance { get; }
-
-	/// <summary>获取将当前队列作为事件通道对象的属性。</summary>
-	public IEventChannel Channel => this.IsDisposed ? null : _channel ??= new EventChannel(this);
 	#endregion
 
 	#region 订阅方法
@@ -481,7 +477,6 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		_timer = null;
 		_queue = null;
 		_poller = null;
-		_channel = null;
 		_publisher = null;
 	}
 	#endregion
