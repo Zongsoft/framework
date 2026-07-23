@@ -101,7 +101,7 @@ partial class Events
 			return base.DisposeAsync(disposing);
 		}
 
-		public override string ToString() => _queue == null ? $"{this.GetType().Name}(Disposed)" : _queue.ToString();
+		public override string ToString() => _queue == null ? $"{nameof(MessageQueueEventChannel)}(disposed)" : $"{nameof(MessageQueueEventChannel)}:{_queue}";
 		#endregion
 
 		#region 嵌套子类
