@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Linq;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Xunit;
 
+using Zongsoft.Data.Common;
 using Zongsoft.Data.Tests.Models;
 
 namespace Zongsoft.Data.PostgreSql.Tests;
@@ -253,6 +255,133 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		Assert.True(await ExistsLogAsync(accessor, target, action));
 	}
 
+	[Fact]
+	public async Task DisposeAfterDeferredCommitPreservesCommitAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var target = GetTarget();
+		var action = "Reader.Commit.Dispose";
+
+		using(var transaction = new Transaction())
+		{
+			await InsertLogAsync(accessor, target, action);
+			var session = GetSession(transaction);
+			var logs = accessor.SelectAsync<Log>(
+				Condition.Equal(nameof(Log.Target), target) &
+				Condition.Equal(nameof(Log.Action), action));
+
+			await using(var enumerator = logs.GetAsyncEnumerator())
+			{
+				Assert.True(await enumerator.MoveNextAsync());
+
+				transaction.Commit();
+				Assert.True(session.IsCompleted);
+				Assert.True(session.IsReading);
+
+				session.Dispose();
+			}
+
+			AssertSessionReleased(session);
+		}
+
+		Assert.True(await ExistsLogAsync(accessor, target, action));
+	}
+
+	[Fact]
+	public async Task CommitReleasesTwoOpenReadersAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var target = GetTarget();
+		var action = "Reader.Multiple";
+
+		using(var transaction = new Transaction())
+		{
+			await InsertLogAsync(accessor, target, action);
+			var session = GetSession(transaction);
+			Assert.NotNull(session.Transaction);
+
+			await using var first = accessor.SelectAsync<UserModel>().GetAsyncEnumerator();
+			Assert.True(await first.MoveNextAsync());
+
+			await using var second = accessor.SelectAsync<UserModel>().GetAsyncEnumerator();
+			Assert.True(await second.MoveNextAsync());
+			Assert.True(session.IsReading);
+
+			await second.DisposeAsync();
+			await first.DisposeAsync();
+
+			Assert.False(session.IsReading);
+			transaction.Commit();
+			AssertSessionReleased(session);
+		}
+
+		Assert.True(await ExistsLogAsync(accessor, target, action));
+	}
+
+	[Fact]
+	public async Task CommitReleasesReaderAfterExecutionFailureAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var target = GetTarget();
+		var action = "Reader.Failure";
+		var command = Mapping.Commands.Script(PostgreSqlDriver.NAME, "SELECT * FROM `__Zongsoft_Missing_Table__`");
+
+		using(var transaction = new Transaction())
+		{
+			await InsertLogAsync(accessor, target, action);
+			var session = GetSession(transaction);
+			Assert.NotNull(session.Transaction);
+
+			await using var enumerator = accessor.ExecuteAsync<Log>(command.QualifiedName).GetAsyncEnumerator();
+			await Assert.ThrowsAnyAsync<DbException>(() => enumerator.MoveNextAsync().AsTask());
+
+			Assert.False(session.IsReading);
+			transaction.Commit();
+			AssertSessionReleased(session);
+		}
+
+		Assert.True(await ExistsLogAsync(accessor, target, action));
+	}
+
+	[Fact]
+	public async Task CommitReleasesReaderAfterCancellationAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var target = GetTarget();
+		var action = "Reader.Cancellation";
+
+		using(var transaction = new Transaction())
+		{
+			await InsertLogAsync(accessor, target, action);
+			var session = GetSession(transaction);
+			Assert.NotNull(session.Transaction);
+
+			using var cancellation = new CancellationTokenSource();
+			cancellation.Cancel();
+
+			await using var enumerator = accessor.SelectAsync<UserModel>().GetAsyncEnumerator(cancellation.Token);
+			await Assert.ThrowsAnyAsync<OperationCanceledException>(() => enumerator.MoveNextAsync().AsTask());
+
+			Assert.False(session.IsReading);
+			transaction.Commit();
+			AssertSessionReleased(session);
+		}
+
+		Assert.True(await ExistsLogAsync(accessor, target, action));
+	}
+
 	private static async Task InsertLogAsync(DataAccess accessor, string target, string action)
 	{
 		var log = Model.Build<Log>(log =>
@@ -272,10 +401,19 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 	}
 
 	private static string GetTarget() => $"{nameof(TransactionTest)}:{Guid.NewGuid():N}-{Environment.TickCount64:X}";
+	private static DataSession GetSession(Transaction transaction) => Assert.IsType<DataSession>(transaction.Information.Parameters["Zongsoft.Data:DataSession"]);
 	private static ValueTask<bool> ExistsLogAsync(DataAccess accessor, string target, string action) =>
 		accessor.ExistsAsync<Log>(
 			Condition.Equal(nameof(Log.Target), target) &
 			Condition.Equal(nameof(Log.Action), action));
+
+	private static void AssertSessionReleased(DataSession session)
+	{
+		Assert.True(session.IsCompleted);
+		Assert.False(session.IsReading);
+		Assert.Null(session.Transaction);
+		Assert.Null(session.Connection);
+	}
 
 	void IDisposable.Dispose()
 	{

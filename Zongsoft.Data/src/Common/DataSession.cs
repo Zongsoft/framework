@@ -54,8 +54,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 	private readonly bool ShareConnectionSupported;
 
 	private volatile int _reading;    //表示当前会话已经打开的数据读取器的数量
-	private volatile int _destroyed;  //表示当前会话的事务及连接资源是否已被释放
 	private volatile int _completion; //表示当前会话是否已经结束(提交或回滚)的标记
+	private TaskCompletionSource _destruction; //表示当前会话的事务及连接资源释放操作及其结果（为空则尚未开始）
 	private readonly AutoResetEvent _semaphore; //表示当前会话结束与连接操作的同步信号量
 	private readonly ConcurrentBag<IDbCommand> _commands; //表示待关联事务的命令对象集
 	#endregion
@@ -199,75 +199,6 @@ public class DataSession : IDisposable, IAsyncDisposable
 				_semaphore.Dispose();
 			}
 		}
-	}
-
-	/// <summary>完成当前数据会话。</summary>
-	/// <param name="committing">指定是否提交当前数据事务。</param>
-	/// <returns>如果当前会话已经完成了则返回假(False)，否则返回真(True)。</returns>
-	private bool Complete(bool committing)
-	{
-		//设置完成标记
-		var completed = Interlocked.Exchange(ref _completion, committing ? COMPLETION_COMMIT : COMPLETION_ROLLBACK);
-
-		//如果已经完成过则返回
-		if(completed != COMPLETION_NONE)
-			return false;
-
-		//等待信号量
-		_semaphore.WaitOne();
-
-		try
-		{
-			//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
-			if(this.IsReading)
-				return true;
-
-			//执行事务提交和释放资源
-			this.Destroy();
-		}
-		finally
-		{
-			//释放当前持有的信号
-			_semaphore.Set();
-		}
-
-		//返回完成成功
-		return true;
-	}
-
-	/// <summary>完成当前数据会话。</summary>
-	/// <param name="committing">指定是否提交当前数据事务。</param>
-	/// <param name="cancellation">指定的异步操作的取消标记。</param>
-	/// <returns>如果当前会话已经完成了则返回假(False)，否则返回真(True)。</returns>
-	private async ValueTask<bool> CompleteAsync(bool committing, CancellationToken cancellation)
-	{
-		//设置完成标记
-		var completed = Interlocked.Exchange(ref _completion, committing ? COMPLETION_COMMIT : COMPLETION_ROLLBACK);
-
-		//如果已经完成过则返回
-		if(completed != COMPLETION_NONE)
-			return false;
-
-		//等待信号量
-		_semaphore.WaitOne();
-
-		try
-		{
-			//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
-			if(this.IsReading)
-				return true;
-
-			//执行事务提交和释放资源
-			await this.DestroyAsync(cancellation);
-		}
-		finally
-		{
-			//释放当前持有的信号
-			_semaphore.Set();
-		}
-
-		//返回完成成功
-		return true;
 	}
 	#endregion
 
@@ -414,12 +345,156 @@ public class DataSession : IDisposable, IAsyncDisposable
 		else
 			return ValueTask.CompletedTask;
 	}
+	#endregion
+
+	#region 连接事件
+	private void Connection_StateChange(object sender, StateChangeEventArgs e)
+	{
+		var connection = (DbConnection)sender;
+
+		switch(e.CurrentState)
+		{
+			case ConnectionState.Open:
+				//连接完成则开启一个事务
+				_transaction = connection.BeginTransaction(this.GetIsolationLevel());
+
+				//依次设置待绑定命令的事务
+				while(_commands.TryTake(out var command))
+				{
+					command.Transaction = _transaction;
+				}
+
+				break;
+			case ConnectionState.Closed:
+				_transaction = null;
+				break;
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private IsolationLevel GetIsolationLevel() => _ambient?.IsolationLevel ?? IsolationLevel.Unspecified;
+
+	/// <summary>完成当前数据会话。</summary>
+	/// <param name="committing">指定是否提交当前数据事务。</param>
+	/// <returns>如果当前会话已经完成了则返回假(False)，否则返回真(True)。</returns>
+	private bool Complete(bool committing)
+	{
+		//设置完成标记
+		var completed = Interlocked.CompareExchange(ref _completion, committing ? COMPLETION_COMMIT : COMPLETION_ROLLBACK, COMPLETION_NONE);
+
+		//如果已经完成过则返回
+		if(completed != COMPLETION_NONE)
+			return false;
+
+		//等待信号量
+		_semaphore.WaitOne();
+
+		try
+		{
+			//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
+			if(this.IsReading)
+				return true;
+
+			//执行事务提交和释放资源
+			this.Destroy();
+		}
+		finally
+		{
+			//释放当前持有的信号
+			_semaphore.Set();
+		}
+
+		//返回完成成功
+		return true;
+	}
+
+	/// <summary>完成当前数据会话。</summary>
+	/// <param name="committing">指定是否提交当前数据事务。</param>
+	/// <param name="cancellation">指定的异步操作的取消标记。</param>
+	/// <returns>如果当前会话已经完成了则返回假(False)，否则返回真(True)。</returns>
+	private async ValueTask<bool> CompleteAsync(bool committing, CancellationToken cancellation)
+	{
+		//设置完成标记
+		var completed = Interlocked.CompareExchange(ref _completion, committing ? COMPLETION_COMMIT : COMPLETION_ROLLBACK, COMPLETION_NONE);
+
+		//如果已经完成过则返回
+		if(completed != COMPLETION_NONE)
+			return false;
+
+		//等待信号量
+		_semaphore.WaitOne();
+
+		try
+		{
+			//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
+			if(this.IsReading)
+				return true;
+
+			//执行事务提交和释放资源
+			await this.DestroyAsync(cancellation);
+		}
+		finally
+		{
+			//释放当前持有的信号
+			_semaphore.Set();
+		}
+
+		//返回完成成功
+		return true;
+	}
 
 	private void Destroy()
 	{
-		if(Interlocked.Exchange(ref _destroyed, 1) != 0)
-			return;
+		var destruction = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var current = Interlocked.CompareExchange(ref _destruction, destruction, null);
 
+		if(current != null)
+		{
+			current.Task.GetAwaiter().GetResult();
+			return;
+		}
+
+		try
+		{
+			this.DestroyCore();
+			destruction.TrySetResult();
+		}
+		catch(Exception exception)
+		{
+			destruction.TrySetException(exception);
+			_ = destruction.Task.Exception;
+			throw;
+		}
+	}
+
+	private async ValueTask DestroyAsync(CancellationToken cancellation)
+	{
+		var destruction = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var current = Interlocked.CompareExchange(ref _destruction, destruction, null);
+
+		if(current != null)
+		{
+			await current.Task.ConfigureAwait(false);
+			return;
+		}
+
+		try
+		{
+			await this.DestroyCoreAsync(cancellation).ConfigureAwait(false);
+			destruction.TrySetResult();
+		}
+		catch(Exception exception)
+		{
+			destruction.TrySetException(exception);
+			_ = destruction.Task.Exception;
+			throw;
+		}
+	}
+
+	private void DestroyCore()
+	{
 		//获取并将事务对象置空
 		var transaction = Interlocked.Exchange(ref _transaction, null);
 
@@ -462,11 +537,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 		}
 	}
 
-	private async ValueTask DestroyAsync(CancellationToken cancellation)
+	private async ValueTask DestroyCoreAsync(CancellationToken cancellation)
 	{
-		if(Interlocked.Exchange(ref _destroyed, 1) != 0)
-			return;
-
 		//获取并将事务对象置空
 		var transaction = Interlocked.Exchange(ref _transaction, null);
 
@@ -480,16 +552,16 @@ public class DataSession : IDisposable, IAsyncDisposable
 					switch(_completion)
 					{
 						case COMPLETION_COMMIT:
-							await transaction.CommitAsync(cancellation);
+							await transaction.CommitAsync(cancellation).ConfigureAwait(false);
 							break;
 						case COMPLETION_ROLLBACK:
-							await transaction.RollbackAsync(cancellation);
+							await transaction.RollbackAsync(cancellation).ConfigureAwait(false);
 							break;
 					}
 				}
 				finally
 				{
-					await transaction.DisposeAsync();
+					await transaction.DisposeAsync().ConfigureAwait(false);
 				}
 			}
 		}
@@ -504,40 +576,10 @@ public class DataSession : IDisposable, IAsyncDisposable
 				connection.StateChange -= this.Connection_StateChange;
 
 				//释放主数据连接
-				await connection.DisposeAsync();
+				await connection.DisposeAsync().ConfigureAwait(false);
 			}
 		}
 	}
-	#endregion
-
-	#region 连接事件
-	private void Connection_StateChange(object sender, StateChangeEventArgs e)
-	{
-		var connection = (DbConnection)sender;
-
-		switch(e.CurrentState)
-		{
-			case ConnectionState.Open:
-				//连接完成则开启一个事务
-				_transaction = connection.BeginTransaction(this.GetIsolationLevel());
-
-				//依次设置待绑定命令的事务
-				while(_commands.TryTake(out var command))
-				{
-					command.Transaction = _transaction;
-				}
-
-				break;
-			case ConnectionState.Closed:
-				_transaction = null;
-				break;
-		}
-	}
-	#endregion
-
-	#region 私有方法
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private IsolationLevel GetIsolationLevel() => _ambient?.IsolationLevel ?? IsolationLevel.Unspecified;
 	#endregion
 
 	#region 嵌套子类

@@ -256,6 +256,41 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task DisposeAfterDeferredCommitPreservesCommitAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var target = GetTarget();
+		var action = "Reader.Commit.Dispose";
+
+		using(var transaction = new Transaction())
+		{
+			await InsertLogAsync(accessor, target, action);
+			var session = GetSession(transaction);
+			var logs = accessor.SelectAsync<Log>(
+				Condition.Equal(nameof(Log.Target), target) &
+				Condition.Equal(nameof(Log.Action), action));
+
+			await using(var enumerator = logs.GetAsyncEnumerator())
+			{
+				Assert.True(await enumerator.MoveNextAsync());
+
+				transaction.Commit();
+				Assert.True(session.IsCompleted);
+				Assert.True(session.IsReading);
+
+				session.Dispose();
+			}
+
+			AssertSessionReleased(session);
+		}
+
+		Assert.True(await ExistsLogAsync(accessor, target, action));
+	}
+
+	[Fact]
 	public async Task CommitReleasesTwoOpenReadersAsync()
 	{
 		if(!Global.IsTestingEnabled)
