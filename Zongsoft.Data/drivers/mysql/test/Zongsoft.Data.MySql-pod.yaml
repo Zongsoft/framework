@@ -16,6 +16,8 @@ spec:
   containers:
     - name: mysql
       image: mysql:8.4.8
+      args:
+        - --local-infile=ON
       ports:
         - containerPort: 3306
           protocol: TCP
