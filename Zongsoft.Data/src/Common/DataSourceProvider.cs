@@ -39,46 +39,41 @@ namespace Zongsoft.Data.Common;
 public class DataSourceProvider : IDataSourceProvider
 {
 	#region 成员字段
-	private readonly List<IDataSource> _sources;
+	private readonly IDataSource[] _sources;
 	#endregion
 
 	#region 构造函数
 	public DataSourceProvider(IEnumerable<IConnectionSettings> settings)
 	{
 		if(settings == null)
-			_sources = new();
+			_sources = [];
 		else
-			_sources = new(settings.Select(setting => new DataSource(setting)));
+			_sources = [.. settings.Select(setting => new DataSource(setting))];
 	}
 	#endregion
 
 	#region 公共方法
 	public IEnumerable<IDataSource> GetSources(string name)
 	{
-		if(_sources == null || _sources.Count == 0)
-		{
-			var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Data/ConnectionSettings");
+		if(_sources != null && _sources.Length > 0)
+			return _sources;
 
-			if(connectionSettings == null || connectionSettings.Count == 0)
-				return [];
+		var connectionSettings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Data/ConnectionSettings");
+		if(connectionSettings == null || connectionSettings.Count == 0)
+			return [];
+
+		if(string.IsNullOrEmpty(name))
+		{
+			name = connectionSettings.Default;
 
 			if(string.IsNullOrEmpty(name))
-			{
-				name = connectionSettings.Default;
-
-				if(string.IsNullOrEmpty(name))
-					return [];
-			}
-
-			foreach(var connectionSetting in connectionSettings)
-			{
-				if(string.Equals(connectionSetting.Name, name, StringComparison.OrdinalIgnoreCase) ||
-				   connectionSetting.Name.StartsWith(name + DataSource.SEPARATOR, StringComparison.OrdinalIgnoreCase))
-					_sources.Add(new DataSource(connectionSetting));
-			}
+				return [];
 		}
 
-		return _sources;
+		return connectionSettings
+			.Where(setting => string.Equals(setting.Name, name, StringComparison.OrdinalIgnoreCase) ||
+			                  setting.Name.StartsWith($"{name}{DataSource.SEPARATOR}", StringComparison.OrdinalIgnoreCase))
+			.Select(setting => new DataSource(setting));
 	}
 	#endregion
 }

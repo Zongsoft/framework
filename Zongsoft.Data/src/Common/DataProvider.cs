@@ -52,16 +52,27 @@ public class DataProvider : IDataProvider
 	#endregion
 
 	#region 构造函数
-	public DataProvider(string name, IEnumerable<IConnectionSettings> settings)
+	public DataProvider(string name, IEnumerable<IConnectionSettings> settings) : this(name, new DataSourceProvider(settings)) { }
+	private DataProvider(string name, IDataSourceProvider sourceProvider)
 	{
 		if(string.IsNullOrWhiteSpace(name))
 			throw new ArgumentNullException(nameof(name));
+		if(sourceProvider == null)
+			throw new ArgumentNullException(nameof(sourceProvider));
 
 		this.Name = name.Trim();
 
 		_executor = DataExecutor.Instance;
-		_multiplexer = new DataMultiplexer(this.Name, settings);
+		_multiplexer = new DataMultiplexer(this.Name, sourceProvider);
 	}
+	#endregion
+
+	#region 静态方法
+	/// <summary>使用指定的数据源提供程序创建数据提供程序。</summary>
+	/// <param name="name">指定数据提供程序的名称。</param>
+	/// <param name="sourceProvider">指定的数据源提供程序。</param>
+	/// <returns>返回创建的数据提供程序。</returns>
+	public static DataProvider Create(string name, IDataSourceProvider sourceProvider) => new(name, sourceProvider);
 	#endregion
 
 	#region 公共属性
@@ -336,38 +347,63 @@ public class DataProvider : IDataProvider
 	{
 		#region 成员字段
 		private readonly string _name;
-		private IDataSourceSelector _selector;
-		private IDataSourceProvider _provider;
+		private readonly IDataSourceProvider _provider;
+		private Lazy<IDataSourceSelector> _selector;
 		#endregion
 
 		#region 构造函数
-		public DataMultiplexer(string name, IEnumerable<IConnectionSettings> settings)
+		public DataMultiplexer(string name, IDataSourceProvider sourceProvider)
 		{
 			_name = name;
-			_provider = new DataSourceProvider(settings);
+			_provider = sourceProvider;
+			_selector = this.CreateSelector();
 		}
 		#endregion
 
 		#region 公共属性
 		public IDataSourceProvider Provider => _provider;
-		public IDataSourceSelector Selector => _selector;
+		public IDataSourceSelector Selector
+		{
+			get
+			{
+				//尚未完成初始化时不应由该属性触发数据源解析。
+				var selector = Volatile.Read(ref _selector);
+				return selector.IsValueCreated ? selector.Value : null;
+			}
+		}
 		#endregion
 
 		#region 公共方法
 		public IDataSource GetSource(IDataAccessContextBase context)
 		{
-			if(_selector == null)
+			var initializer = Volatile.Read(ref _selector);
+			IDataSourceSelector selector;
+
+			try
 			{
-				var sources = this.Provider.GetSources(_name);
-
-				if(sources == null || !sources.Any())
-					throw new DataException($"No data sources for the '{_name}' data provider was found.");
-
-				_selector = new DataSourceSelector(sources);
+				selector = initializer.Value;
+			}
+			catch
+			{
+				//Lazy<T>会缓存初始化异常，故替换失败的实例以允许后续调用重试。
+				Interlocked.CompareExchange(ref _selector, this.CreateSelector(), initializer);
+				throw;
 			}
 
-			return _selector.GetSource(context) ?? throw new DataException("No matched data source for this data operation.");
+			return selector.GetSource(context) ?? throw new DataException("No matched data source for this data operation.");
 		}
+		#endregion
+
+		#region 私有方法
+		private Lazy<IDataSourceSelector> CreateSelector() => new(() =>
+		{
+			var sources = this.Provider.GetSources(_name).ToArray();
+
+			if(sources == null || sources.Length == 0)
+				throw new DataException($"No data sources for the '{_name}' data provider was found.");
+
+			return new DataSourceSelector(sources);
+		}, LazyThreadSafetyMode.ExecutionAndPublication);
 		#endregion
 	}
 	#endregion

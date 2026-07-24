@@ -41,7 +41,7 @@ public class DataSourceSelector : IDataSourceSelector
 	#endregion
 
 	#region 私有构造
-	public DataSourceSelector(IEnumerable<IDataSource> sources)
+	public DataSourceSelector(IReadOnlyCollection<IDataSource> sources)
 	{
 		if(sources == null)
 			throw new ArgumentNullException(nameof(sources));
