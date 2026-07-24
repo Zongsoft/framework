@@ -44,11 +44,11 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 
 	#region 成员字段
 	private volatile int _isCompleted;
-	private Transaction _parent;
-	private IsolationLevel _isolationLevel;
 	private TransactionStatus _status;
-	private TransactionInformation _information;
-	private static Queue<IEnlistment> _enlistments;
+	private readonly Transaction _parent;
+	private readonly IsolationLevel _isolationLevel;
+	private readonly TransactionInformation _information;
+	private readonly Queue<IEnlistment> _enlistments;
 	#endregion
 
 	#region 构造函数
@@ -103,23 +103,26 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	/// <summary>向当前事务登记一个事务处理过程的回调。</summary>
 	/// <param name="enlistment">指定的事务处理过程的回调接口。</param>
 	/// <returns>如果注册成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
 	public bool Enlist(IEnlistment enlistment)
 	{
 		if(enlistment == null)
 			throw new ArgumentNullException(nameof(enlistment));
 
-		//如果指定的事务处理程序已经被登记过则返回
-		if(_enlistments.Contains(enlistment))
-			return false;
+		lock(_enlistments)
+		{
+			//如果当前事务已经结束则无法再登记事务处理程序
+			if(_isCompleted != 0)
+				return false;
 
-		//将指定的事务处理程序加入到列表中
-		_enlistments.Enqueue(enlistment);
+			//如果指定的事务处理程序已经被登记过则返回
+			if(_enlistments.Contains(enlistment))
+				return false;
 
-		//通知事务处理程序进入事务准备阶段
-		//enlistment.OnEnlist(new EnlistmentContext(this, EnlistmentPhase.Prepare));
+			//将指定的事务处理程序加入到列表中
+			_enlistments.Enqueue(enlistment);
 
-		return true;
+			return true;
+		}
 	}
 
 	/// <summary>提交事务。</summary>
@@ -137,26 +140,31 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	#region 私有方法
 	private void DoEnlistment(EnlistmentPhase phase)
 	{
-		var isCompleted = Interlocked.Exchange(ref _isCompleted, 1);
+		IEnlistment[] enlistments;
 
-		if(isCompleted != 0)
-			return;
-
-		//如果具有父事务则当前事务不用通知投票者(订阅者)，而是交由父事务处理
-		if(_parent != null)
+		lock(_enlistments)
 		{
-			//更新当前事务的状态
-			_status = ToStatus(phase);
+			if(_isCompleted != 0)
+				return;
 
-			//退出当前子事务
-			return;
+			_isCompleted = 1;
+
+			//如果具有父事务则当前事务不用通知投票者(订阅者)，而是交由父事务处理
+			if(_parent != null)
+			{
+				//更新当前事务的状态
+				_status = ToStatus(phase);
+
+				//退出当前子事务
+				return;
+			}
+
+			enlistments = [.. _enlistments];
+			_enlistments.Clear();
 		}
 
-		while(_enlistments.Count > 0)
-		{
-			var enlistment = _enlistments.Dequeue();
+		foreach(var enlistment in enlistments)
 			enlistment.OnEnlist(new EnlistmentContext(this, phase));
-		}
 
 		//更新当前事务的状态
 		_status = ToStatus(phase);
