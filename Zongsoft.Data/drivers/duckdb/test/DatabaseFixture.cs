@@ -10,7 +10,7 @@ namespace Zongsoft.Data.DuckDB.Tests;
 public class DatabaseFixture : IDisposable
 {
 	#region 常量定义
-	private const string CONNECTION_STRING = @"DataSource=:memory:?cache=shared";
+	private const string CONNECTION_STRING = @"DataSource=test.db";
 	#endregion
 
 	#region 私有变量

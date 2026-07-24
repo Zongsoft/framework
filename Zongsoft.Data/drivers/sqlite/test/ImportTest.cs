@@ -52,6 +52,78 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task ImportConstraintIgnoredAsync()
+	{
+		const uint USER_ID = 900002;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		IDataAccess accessor = _database.Accessor;
+		var condition = Condition.Equal(nameof(UserModel.UserId), USER_ID);
+		var originalName = $"{PREFIX}Constraint:Original";
+		var duplicateName = $"{PREFIX}Constraint:Duplicate";
+		await accessor.DeleteAsync<UserModel>(condition);
+
+		try
+		{
+			var original = Model.Build<UserModel>(model =>
+			{
+				model.UserId = USER_ID;
+				model.Name = originalName;
+			});
+
+			Assert.Equal(1, await accessor.ImportAsync([original]));
+
+			var duplicate = Model.Build<UserModel>(model =>
+			{
+				model.UserId = USER_ID;
+				model.Name = duplicateName;
+			});
+
+			Assert.Equal(0, await accessor.ImportAsync([duplicate], DataImportOptions.IgnoreConstraint()));
+
+			await using var enumerator = accessor.SelectAsync<UserModel>(condition).GetAsyncEnumerator();
+			Assert.True(await enumerator.MoveNextAsync());
+			Assert.Equal(USER_ID, enumerator.Current.UserId);
+			Assert.Equal(originalName, enumerator.Current.Name);
+			Assert.False(await enumerator.MoveNextAsync());
+		}
+		finally
+		{
+			await accessor.DeleteAsync<UserModel>(condition);
+		}
+	}
+
+	[Fact]
+	public async Task ImportedRowsPersistAfterAmbientRollbackAsync()
+	{
+		const uint USER_ID = 900001;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		IDataAccess accessor = _database.Accessor;
+		var name = $"{PREFIX}Transaction:{Guid.NewGuid():N}";
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID));
+
+		using(var transaction = new Transaction())
+		{
+			var user = Model.Build<UserModel>(model =>
+			{
+				model.UserId = USER_ID;
+				model.Name = name;
+			});
+
+			Assert.Equal(1, await accessor.ImportAsync([user]));
+			Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID)));
+			transaction.Rollback();
+		}
+
+		Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID)));
+	}
+
+	[Fact]
 	public async Task ImportModelSequenceAsync()
 	{
 		const int COUNT = 100;

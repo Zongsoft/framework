@@ -52,6 +52,34 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task ImportedRowsPersistAfterAmbientRollbackAsync()
+	{
+		const uint USER_ID = 900001;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		IDataAccess accessor = _database.Accessor;
+		var name = $"{PREFIX}Transaction:{Guid.NewGuid():N}";
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID));
+
+		using(var transaction = new Transaction())
+		{
+			var user = Model.Build<UserModel>(model =>
+			{
+				model.UserId = USER_ID;
+				model.Name = name;
+			});
+
+			Assert.Equal(1, await accessor.ImportAsync([user]));
+			Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID)));
+			transaction.Rollback();
+		}
+
+		Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID)));
+	}
+
+	[Fact]
 	public async Task ImportModelSequenceAsync()
 	{
 		const int COUNT = 100;

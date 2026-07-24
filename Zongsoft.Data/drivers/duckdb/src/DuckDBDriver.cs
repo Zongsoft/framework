@@ -82,12 +82,20 @@ public partial class DuckDBDriver : DataDriverBase
 		CommandType = commandType,
 	};
 
-	public override DbConnection CreateConnection(string connectionString = null) => new DuckDBConnection(connectionString);
+	public override DbConnection CreateConnection(string connectionString = null) => new DuckDBConnectionAdapter(connectionString);
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new DuckDBConnectionStringBuilder() { ConnectionString = connectionString };
 	#endregion
 
 	#region 保护方法
 	protected override IDataImporter CreateImporter() => new DuckDBImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new DuckDBExpressionVisitor();
+	#endregion
+
+	#region 嵌套子类
+	private sealed class DuckDBConnectionAdapter(string connectionString) : DuckDBConnection(connectionString)
+	{
+		//DuckDB仅支持单一事务隔离模式，其驱动不接受显式指定的ADO.NET隔离级别
+		protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => base.BeginTransaction();
+	}
 	#endregion
 }

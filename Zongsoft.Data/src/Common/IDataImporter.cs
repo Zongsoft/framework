@@ -33,6 +33,8 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common;
 
+/// <summary>表示数据导入器的接口。</summary>
+/// <remarks>注意：数据导入即不参与环境事务也不支持数据事务。</remarks>
 public interface IDataImporter
 {
 	void Import(DataImportContext context);

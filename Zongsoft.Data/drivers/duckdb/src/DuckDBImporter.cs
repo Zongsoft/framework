@@ -32,9 +32,6 @@ using System.Text;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-
-using DuckDB.NET.Data;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
@@ -46,86 +43,76 @@ public class DuckDBImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		var command = GetCommand(context, members);
+		using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		using var command = GetCommand(context, members, connection);
 
-		if(command == null || command.Connection == null)
-			return;
+		connection.Open();
+		using var transaction = connection.BeginTransaction();
+		command.Transaction = transaction;
 
 		try
 		{
-			command.Connection.Open();
-
 			foreach(var item in context.Data)
 			{
 				var target = item;
 
 				for(int i = 0; i < members.Count; i++)
 				{
-					command.Parameters[i].Value = members[i].GetValue(ref target);
+					command.Parameters[i].Value = members[i].GetValue(ref target) ?? DBNull.Value;
 				}
 
-				command.ExecuteNonQuery();
+				context.Count += command.ExecuteNonQuery();
 			}
 
-			command.Transaction.Commit();
+			transaction.Commit();
 		}
 		catch
 		{
-			if(command.Transaction != null)
-				command.Transaction.Rollback();
-		}
-		finally
-		{
-			command.Connection.Dispose();
+			transaction.Rollback();
+			throw;
 		}
 	}
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		var command = GetCommand(context, members);
+		await using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		await using var command = GetCommand(context, members, connection);
 
-		if(command == null || command.Connection == null)
-			return;
+		await connection.OpenAsync(cancellation);
+		await using var transaction = await connection.BeginTransactionAsync(cancellation);
+		command.Transaction = transaction;
 
 		try
 		{
-			await command.Connection.OpenAsync(cancellation);
-
 			foreach(var item in context.Data)
 			{
 				var target = item;
 
 				for(int i = 0; i < members.Count; i++)
 				{
-					command.Parameters[i].Value = members[i].GetValue(ref target);
+					command.Parameters[i].Value = members[i].GetValue(ref target) ?? DBNull.Value;
 				}
 
-				await command.ExecuteNonQueryAsync(cancellation);
+				context.Count += await command.ExecuteNonQueryAsync(cancellation);
 			}
 
-			await command.Transaction.CommitAsync(cancellation);
+			await transaction.CommitAsync(cancellation);
 		}
 		catch
 		{
-			if(command.Transaction != null)
-				await command.Transaction.RollbackAsync(cancellation);
-		}
-		finally
-		{
-			await command.Connection.DisposeAsync();
+			await transaction.RollbackAsync(CancellationToken.None);
+			throw;
 		}
 	}
 	#endregion
 
 	#region 私有方法
-	private static DbCommand GetCommand(DataImportContext context, MemberCollection members)
+	private static DbCommand GetCommand(DataImportContext context, MemberCollection members, DbConnection connection)
 	{
-		var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 		var command = connection.CreateCommand();
 
 		var fields = new StringBuilder();
 		var values = new StringBuilder();
-		var parameters = new List<DbParameter>();
 
 		foreach(var member in members)
 		{
@@ -135,25 +122,21 @@ public class DuckDBImporter : DataImporterBase
 			if(fields.Length > 0)
 				fields.Append(',');
 
-			fields.Append(member.Property.GetFieldName(out var alias));
-
-			if(!string.IsNullOrEmpty(alias))
-				fields.Append($" AS '{alias}'");
+			fields.Append($"\"{member.Property.GetFieldName()}\"");
 
 			if(values.Length > 0)
 				values.Append(',');
 
-			values.Append($"@p_{member.Name}");
+			values.Append('?');
 
 			var parameter = command.CreateParameter();
-			parameter.ParameterName = $"@p_{member.Name}";
 			parameter.DbType = property.Type;
-			parameters.Add(parameter);
+			command.Parameters.Add(parameter);
 		}
 
-		command.Transaction = connection.BeginTransaction();
 		command.CommandType = System.Data.CommandType.Text;
-		command.CommandText = $"INSERT INTO `{context.Entity.GetTableName()}` ({fields}) VALUES ({values});";
+		var keyword = context.Options.ConstraintIgnored ? "INSERT OR IGNORE" : "INSERT";
+		command.CommandText = $"{keyword} INTO \"{context.Entity.GetTableName()}\" ({fields}) VALUES ({values});";
 
 		return command;
 	}

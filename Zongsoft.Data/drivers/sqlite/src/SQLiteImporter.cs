@@ -43,18 +43,15 @@ public class SQLiteImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		var command = GetCommand(context, members);
+		using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		using var command = GetCommand(context, members, connection);
 
-		if(command == null || command.Connection == null)
-			return;
+		connection.Open();
+		using var transaction = connection.BeginTransaction();
+		command.Transaction = transaction;
 
 		try
 		{
-			command.Connection.Open();
-
-			//开启数据事务
-			command.Transaction = command.Connection.BeginTransaction();
-
 			foreach(var item in context.Data)
 			{
 				var target = item;
@@ -67,35 +64,26 @@ public class SQLiteImporter : DataImporterBase
 				context.Count += command.ExecuteNonQuery();
 			}
 
-			command.Transaction.Commit();
+			transaction.Commit();
 		}
 		catch
 		{
-			if(command.Transaction != null)
-				command.Transaction.Rollback();
-
+			transaction.Rollback();
 			throw;
-		}
-		finally
-		{
-			command.Connection.Dispose();
 		}
 	}
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		var command = GetCommand(context, members);
+		await using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		await using var command = GetCommand(context, members, connection);
 
-		if(command == null || command.Connection == null)
-			return;
+		await connection.OpenAsync(cancellation);
+		await using var transaction = await connection.BeginTransactionAsync(cancellation);
+		command.Transaction = transaction;
 
 		try
 		{
-			await command.Connection.OpenAsync(cancellation);
-
-			//开启数据事务
-			command.Transaction = await command.Connection.BeginTransactionAsync(cancellation);
-
 			foreach(var item in context.Data)
 			{
 				var target = item;
@@ -108,26 +96,19 @@ public class SQLiteImporter : DataImporterBase
 				context.Count += await command.ExecuteNonQueryAsync(cancellation);
 			}
 
-			await command.Transaction.CommitAsync(cancellation);
+			await transaction.CommitAsync(cancellation);
 		}
 		catch
 		{
-			if(command.Transaction != null)
-				await command.Transaction.RollbackAsync(cancellation);
-
+			await transaction.RollbackAsync(CancellationToken.None);
 			throw;
-		}
-		finally
-		{
-			await command.Connection.DisposeAsync();
 		}
 	}
 	#endregion
 
 	#region 私有方法
-	private static DbCommand GetCommand(DataImportContext context, MemberCollection members)
+	private static DbCommand GetCommand(DataImportContext context, MemberCollection members, DbConnection connection)
 	{
-		var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 		var command = connection.CreateCommand();
 
 		var fields = new StringBuilder();
@@ -155,7 +136,8 @@ public class SQLiteImporter : DataImporterBase
 		}
 
 		command.CommandType = System.Data.CommandType.Text;
-		command.CommandText = $"INSERT INTO \"{context.Entity.GetTableName()}\" ({fields}) VALUES ({values});";
+		var keyword = context.Options.ConstraintIgnored ? "INSERT OR IGNORE" : "INSERT";
+		command.CommandText = $"{keyword} INTO \"{context.Entity.GetTableName()}\" ({fields}) VALUES ({values});";
 
 		return command;
 	}
