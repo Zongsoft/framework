@@ -321,45 +321,65 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		{
 			var reader = _command.ExecuteReader();
 
-			//如果启用了分页，则先获取分页信息
-			if(_paging != null && _paging.IsPaged())
+			try
 			{
-				//首先执行分页查询
-				if(reader.Read())
-					_paging.Total = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
+				//如果启用了分页，则先获取分页信息
+				if(_paging != null && _paging.IsPaged())
+				{
+					//首先执行分页查询
+					if(reader.Read())
+						_paging.Total = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
 
-				//将读取器移到数据查询
-				reader.NextResult();
+					//将读取器移到数据查询
+					reader.NextResult();
 
-				//激发分页完成事件
-				this.Paginated?.Invoke(this, new PagingEventArgs(_context.Name, _paging));
+					//激发分页完成事件
+					this.Paginated?.Invoke(this, new PagingEventArgs(_context.Name, _paging));
+				}
+
+				return new LazyIterator(_context, _statement, reader, _skip);
 			}
-
-			return new LazyIterator(_context, _statement, reader, _skip);
+			catch
+			{
+				reader.Dispose();
+				throw;
+			}
 		}
 
 		public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
 		{
 			var reader = await _command.ExecuteReaderAsync(cancellation);
+			LazyIterator iterator;
 
-			//如果启用了分页，则先获取分页信息
-			if(_paging != null && _paging.IsPaged())
+			try
 			{
-				//首先执行分页查询
-				if(await reader.ReadAsync(cancellation))
-					_paging.Total = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
+				//如果启用了分页，则先获取分页信息
+				if(_paging != null && _paging.IsPaged())
+				{
+					//首先执行分页查询
+					if(await reader.ReadAsync(cancellation))
+						_paging.Total = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
 
-				//将读取器移到数据查询
-				await reader.NextResultAsync(cancellation);
+					//将读取器移到数据查询
+					await reader.NextResultAsync(cancellation);
 
-				//激发分页完成事件
-				this.Paginated?.Invoke(this, new PagingEventArgs(_context.Name, _paging));
+					//激发分页完成事件
+					this.Paginated?.Invoke(this, new PagingEventArgs(_context.Name, _paging));
+				}
+
+				iterator = new LazyIterator(_context, _statement, reader, _skip);
+			}
+			catch
+			{
+				await reader.DisposeAsync();
+				throw;
 			}
 
-			await using var iterator = new LazyIterator(_context, _statement, reader, _skip);
-
-			while(await iterator.MoveNextAsync())
-				yield return iterator.Current;
+			await using(iterator)
+			{
+				while(await iterator.MoveNextAsync())
+					yield return iterator.Current;
+			}
 		}
 		#endregion
 

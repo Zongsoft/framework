@@ -42,11 +42,22 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	private static readonly AsyncLocal<Transaction> _current = new();
 	#endregion
 
-	#region 成员字段
+	#region 状态变量
+	/*
+	 * 表示事务是否已进入完成流程：零表示尚未完成，非零表示已开始提交或回滚。
+	 * 该标记用于阻止后续登记并确保完成流程只执行一次，不表示事务的最终结果。
+	 */
 	private volatile int _isCompleted;
-	private TransactionStatus _status;
+
+	/*
+	 * 表示事务是否只允许回滚：零表示仍可提交，非零表示必须回滚。
+	 * 子事务回滚会将该标记传播给所有父事务；被标记的父事务仍可能尚未完成。
+	 */
+	private volatile int _isRollbackOnly;
+	#endregion
+
+	#region 成员字段
 	private readonly Transaction _parent;
-	private readonly IsolationLevel _isolationLevel;
 	private readonly TransactionInformation _information;
 	private readonly Queue<IEnlistment> _enlistments;
 	#endregion
@@ -55,8 +66,8 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	public Transaction() : this(IsolationLevel.ReadCommitted) { }
 	public Transaction(IsolationLevel isolationLevel)
 	{
-		_status = TransactionStatus.Active;
-		_isolationLevel = isolationLevel;
+		this.Status = TransactionStatus.Active;
+		this.IsolationLevel = isolationLevel;
 
 		_parent = _current.Value;
 		_current.Value = this;
@@ -76,7 +87,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 
 	#region 公共属性
 	/// <summary>获取当前事务的隔离级别。</summary>
-	public IsolationLevel IsolationLevel => _isolationLevel;
+	public IsolationLevel IsolationLevel { get; }
 
 	/// <summary>获取当前事务是否已终结。</summary>
 	public bool IsCompleted => _isCompleted != 0;
@@ -87,7 +98,7 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 
 	#region 内部属性
 	internal Transaction Parent => _parent;
-	internal TransactionStatus Status => _status;
+	internal TransactionStatus Status { get; private set; }
 	#endregion
 
 	#region 静态方法
@@ -152,22 +163,46 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 			//如果具有父事务则当前事务不用通知投票者(订阅者)，而是交由父事务处理
 			if(_parent != null)
 			{
+				//子事务的回滚会使整个事务成为只能回滚的事务
+				if(phase is EnlistmentPhase.Abort or EnlistmentPhase.Rollback)
+					this.RequireRollback();
+
 				//更新当前事务的状态
-				_status = ToStatus(phase);
+				this.Status = ToStatus(phase);
 
 				//退出当前子事务
 				return;
 			}
 
+			//根事务一旦被任何子事务中止，就不能再提交
+			if(phase == EnlistmentPhase.Commit && _isRollbackOnly != 0)
+				phase = EnlistmentPhase.Rollback;
+
 			enlistments = [.. _enlistments];
 			_enlistments.Clear();
 		}
 
+		List<Exception> exceptions = null;
+
 		foreach(var enlistment in enlistments)
-			enlistment.OnEnlist(new EnlistmentContext(this, phase));
+		{
+			try
+			{
+				enlistment.OnEnlist(new EnlistmentContext(this, phase));
+			}
+			catch(Exception exception)
+			{
+				(exceptions ??= []).Add(exception);
+			}
+		}
 
 		//更新当前事务的状态
-		_status = ToStatus(phase);
+		this.Status = exceptions == null ? ToStatus(phase) : TransactionStatus.Undetermined;
+
+		if(exceptions?.Count == 1)
+			System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exceptions[0]).Throw();
+		if(exceptions?.Count > 1)
+			throw new AggregateException(exceptions);
 
 		static TransactionStatus ToStatus(EnlistmentPhase phase) => phase switch
 		{
@@ -175,6 +210,12 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 			EnlistmentPhase.Commit => TransactionStatus.Committed,
 			_ => TransactionStatus.Undetermined,
 		};
+	}
+
+	private void RequireRollback()
+	{
+		_isRollbackOnly = 1;
+		_parent?.RequireRollback();
 	}
 	#endregion
 

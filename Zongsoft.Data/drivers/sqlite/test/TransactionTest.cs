@@ -108,6 +108,29 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task NestedRollbackMakesRootTransactionAbortOnlyAsync()
+	{
+		var accessor = _database.Accessor;
+		var target = GetTarget();
+
+		using(var outer = new Transaction())
+		{
+			await InsertLogAsync(accessor, target, "Nested.Abort.Outer");
+
+			using(var inner = new Transaction())
+			{
+				await InsertLogAsync(accessor, target, "Nested.Abort.Inner");
+				inner.Rollback();
+			}
+
+			outer.Commit();
+		}
+
+		Assert.False(await ExistsLogAsync(accessor, target, "Nested.Abort.Outer"));
+		Assert.False(await ExistsLogAsync(accessor, target, "Nested.Abort.Inner"));
+	}
+
+	[Fact]
 	public async Task MultipleTransactionCallsAsync()
 	{
 		if(!Global.IsTestingEnabled)
@@ -381,6 +404,89 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		Assert.True(await ExistsLogAsync(accessor, target, action));
 	}
 
+	[Fact]
+	public async Task ExecuteResultEarlyBreakReleasesReaderAsync()
+	{
+		var accessor = _database.Accessor;
+		var command = Mapping.Commands.Script(SQLiteDriver.NAME, "SELECT 1 UNION ALL SELECT 2");
+
+		using var transaction = new Transaction();
+		var results = accessor.ExecuteAsync<int>(command.QualifiedName);
+
+		await foreach(var result in results)
+		{
+			Assert.Equal(1, result);
+			break;
+		}
+
+		var session = GetSession(transaction);
+		var reading = session.IsReading;
+		CleanupLeakedReader(transaction, session);
+
+		Assert.False(reading);
+	}
+
+	[Fact]
+	public async Task ExecuteResultCancellationReleasesReaderAsync()
+	{
+		var accessor = _database.Accessor;
+		var command = Mapping.Commands.Script(SQLiteDriver.NAME, "SELECT 1 UNION ALL SELECT 2");
+		using var cancellation = new CancellationTokenSource();
+		using var transaction = new Transaction();
+
+		var enumerator = accessor.ExecuteAsync<int>(command.QualifiedName).GetAsyncEnumerator(cancellation.Token);
+		Assert.True(await enumerator.MoveNextAsync());
+		cancellation.Cancel();
+
+		var exception = await Record.ExceptionAsync(() => enumerator.MoveNextAsync().AsTask());
+		await enumerator.DisposeAsync();
+
+		var session = GetSession(transaction);
+		var reading = session.IsReading;
+		CleanupLeakedReader(transaction, session);
+
+		Assert.IsAssignableFrom<OperationCanceledException>(exception);
+		Assert.False(reading);
+	}
+
+	[Fact]
+	public async Task ExecuteResultPopulationFailureReleasesReaderAsync()
+	{
+		var accessor = _database.Accessor;
+		var command = Mapping.Commands.Script(SQLiteDriver.NAME, "SELECT 1 AS Value");
+		using var transaction = new Transaction();
+
+		var enumerator = accessor.ExecuteAsync<ThrowingResult>(command.QualifiedName).GetAsyncEnumerator();
+		var exception = await Record.ExceptionAsync(() => enumerator.MoveNextAsync().AsTask());
+
+		var session = GetSession(transaction);
+		var reading = session.IsReading;
+		CleanupLeakedReader(transaction, session);
+
+		Assert.IsType<InvalidOperationException>(exception);
+		Assert.False(reading);
+	}
+
+	[Fact]
+	public async Task PaginatedHandlerFailureReleasesReaderAsync()
+	{
+		var accessor = _database.Accessor;
+		using var transaction = new Transaction();
+		var users = accessor.SelectAsync<UserModel>(null, Paging.Page(1, 1));
+		var pageable = Assert.IsAssignableFrom<IPageable>(users);
+		pageable.Paginated += (_, _) => throw new InvalidOperationException("Expected pagination callback failure.");
+
+		var enumerator = users.GetAsyncEnumerator();
+		var exception = await Record.ExceptionAsync(() => enumerator.MoveNextAsync().AsTask());
+
+		var session = GetSession(transaction);
+		var reading = session.IsReading;
+		CleanupLeakedReader(transaction, session);
+
+		Assert.IsType<InvalidOperationException>(exception);
+		Assert.False(reading);
+	}
+
 	private static async Task InsertLogAsync(DataAccess accessor, string target, string action)
 	{
 		var log = Model.Build<Log>(log =>
@@ -401,6 +507,28 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 
 	private static string GetTarget() => $"{nameof(TransactionTest)}:{Guid.NewGuid():N}-{Environment.TickCount64:X}";
 	private static DataSession GetSession(Transaction transaction) => Assert.IsType<DataSession>(transaction.Information.Parameters["Zongsoft.Data:DataSession"]);
+	private sealed class ThrowingResult
+	{
+		public int Value
+		{
+			get => 0;
+			set => throw new InvalidOperationException("Expected population failure.");
+		}
+	}
+
+	private static void CleanupLeakedReader(Transaction transaction, DataSession session)
+	{
+		transaction.Rollback();
+		session.Connection?.Close();
+
+		if(session.IsReading)
+		{
+			var field = typeof(DataSession).GetField("_reading", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+			Assert.NotNull(field);
+			field.SetValue(session, 0);
+		}
+	}
+
 	private static ValueTask<bool> ExistsLogAsync(DataAccess accessor, string target, string action) =>
 		accessor.ExistsAsync<Log>(
 			Condition.Equal(nameof(Log.Target), target) &

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Data.Common;
 using System.Threading;
@@ -105,6 +105,32 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		Assert.True(await ExistsLogAsync(accessor, target, "Nested.Outer"));
 		Assert.True(await ExistsLogAsync(accessor, target, "Nested.Middle"));
 		Assert.True(await ExistsLogAsync(accessor, target, "Nested.Inner"));
+	}
+
+	[Fact]
+	public async Task NestedRollbackMakesRootTransactionAbortOnlyAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var target = GetTarget();
+
+		using(var outer = new Transaction())
+		{
+			await InsertLogAsync(accessor, target, "Nested.Abort.Outer");
+
+			using(var inner = new Transaction())
+			{
+				await InsertLogAsync(accessor, target, "Nested.Abort.Inner");
+				inner.Rollback();
+			}
+
+			outer.Commit();
+		}
+
+		Assert.False(await ExistsLogAsync(accessor, target, "Nested.Abort.Outer"));
+		Assert.False(await ExistsLogAsync(accessor, target, "Nested.Abort.Inner"));
 	}
 
 	[Fact]
@@ -382,6 +408,31 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		Assert.True(await ExistsLogAsync(accessor, target, action));
 	}
 
+	[Fact]
+	public async Task ExecuteResultEarlyBreakReleasesReaderAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var command = Mapping.Commands.Script(MySqlDriver.NAME, "SELECT 1 UNION ALL SELECT 2");
+
+		using var transaction = new Transaction();
+		var results = accessor.ExecuteAsync<int>(command.QualifiedName);
+
+		await foreach(var result in results)
+		{
+			Assert.Equal(1, result);
+			break;
+		}
+
+		var session = GetSession(transaction);
+		var reading = session.IsReading;
+		CleanupLeakedReader(transaction, session);
+
+		Assert.False(reading);
+	}
+
 	private static async Task InsertLogAsync(DataAccess accessor, string target, string action)
 	{
 		var log = Model.Build<Log>(log =>
@@ -402,6 +453,19 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 
 	private static string GetTarget() => $"{nameof(TransactionTest)}:{Guid.NewGuid():N}-{Environment.TickCount64:X}";
 	private static DataSession GetSession(Transaction transaction) => Assert.IsType<DataSession>(transaction.Information.Parameters["Zongsoft.Data:DataSession"]);
+	private static void CleanupLeakedReader(Transaction transaction, DataSession session)
+	{
+		transaction.Rollback();
+		session.Connection?.Close();
+
+		if(session.IsReading)
+		{
+			var field = typeof(DataSession).GetField("_reading", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+			Assert.NotNull(field);
+			field.SetValue(session, 0);
+		}
+	}
+
 	private static ValueTask<bool> ExistsLogAsync(DataAccess accessor, string target, string action) =>
 		accessor.ExistsAsync<Log>(
 			Condition.Equal(nameof(Log.Target), target) &

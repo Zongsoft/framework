@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -87,11 +87,32 @@ public class TransactionTest
 		}
 	}
 
+	[Fact]
+	public void CompletionContinuesAfterEnlistmentThrows()
+	{
+		using var transaction = new Transaction();
+		var following = new Recorder();
+
+		Assert.True(transaction.Enlist(new ThrowingEnlistment()));
+		Assert.True(transaction.Enlist(following));
+
+		Assert.Throws<InvalidOperationException>(transaction.Commit);
+
+		var context = Assert.Single(following.Contexts);
+		Assert.Same(transaction, context.Transaction);
+		Assert.Equal(EnlistmentPhase.Commit, context.Phase);
+	}
+
 	private sealed class Recorder : IEnlistment
 	{
 		private readonly System.Collections.Concurrent.ConcurrentQueue<EnlistmentContext> _contexts = new();
 		public System.Collections.Generic.IReadOnlyCollection<EnlistmentContext> Contexts => _contexts.ToArray();
 
 		public void OnEnlist(EnlistmentContext context) => _contexts.Enqueue(context);
+	}
+
+	private sealed class ThrowingEnlistment : IEnlistment
+	{
+		public void OnEnlist(EnlistmentContext context) => throw new InvalidOperationException("Expected enlistment failure.");
 	}
 }

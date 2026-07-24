@@ -167,7 +167,7 @@ public class DataProvider : IDataProvider
 		catch(Exception ex)
 		{
 			//尝试回滚当前数据会话
-			await context.Session.RollbackAsync(cancellation);
+			await context.Session.RollbackAsync(CancellationToken.None);
 
 			//激发“Error”事件
 			var handledException = this.OnError(context, ex);

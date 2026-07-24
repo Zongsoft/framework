@@ -160,7 +160,7 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 		#region 遍历迭代
 		public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
 		{
-			var iterator = new ResultIterator(_driver, await _command.ExecuteReaderAsync(cancellation));
+			await using var iterator = new ResultIterator(_driver, await _command.ExecuteReaderAsync(cancellation), cancellation);
 
 			while(await iterator.MoveNextAsync())
 				yield return iterator.Current;
@@ -175,11 +175,22 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 		{
 			private readonly DbDataReader _reader;
 			private readonly IDataPopulator _populator;
+			private readonly CancellationToken _cancellation;
 
-			public ResultIterator(IDataDriver driver, DbDataReader reader)
+			public ResultIterator(IDataDriver driver, DbDataReader reader, CancellationToken cancellation = default)
 			{
-				_reader = reader;
-				_populator = DataEnvironment.Populators.GetPopulator(driver, typeof(T), _reader);
+				_reader = reader ?? throw new ArgumentNullException(nameof(reader));
+				_cancellation = cancellation;
+
+				try
+				{
+					_populator = DataEnvironment.Populators.GetPopulator(driver, typeof(T), _reader);
+				}
+				catch
+				{
+					_reader.Dispose();
+					throw;
+				}
 			}
 
 			public T Current { get => _populator.Populate<T>(_reader); }
@@ -195,7 +206,7 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 
 			public async ValueTask<bool> MoveNextAsync()
 			{
-				if(await _reader.ReadAsync())
+				if(await _reader.ReadAsync(_cancellation))
 					return true;
 
 				await this.DisposeAsync();

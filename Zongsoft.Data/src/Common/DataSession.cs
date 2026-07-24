@@ -757,10 +757,16 @@ public class DataSession : IDisposable, IAsyncDisposable
 				{
 					var connection = _command.Connection;
 					_command.Connection = null;
-					connection?.Dispose();
 
-					if(tracked)
-						_session.ReleaseReader();
+					try
+					{
+						connection?.Dispose();
+					}
+					finally
+					{
+						if(tracked)
+							_session.ReleaseReader();
+					}
 
 					throw;
 				}
@@ -805,11 +811,16 @@ public class DataSession : IDisposable, IAsyncDisposable
 					var connection = _command.Connection;
 					_command.Connection = null;
 
-					if(connection != null)
-						await connection.DisposeAsync();
-
-					if(tracked)
-						await _session.ReleaseReaderAsync();
+					try
+					{
+						if(connection != null)
+							await connection.DisposeAsync();
+					}
+					finally
+					{
+						if(tracked)
+							await _session.ReleaseReaderAsync();
+					}
 
 					throw;
 				}
