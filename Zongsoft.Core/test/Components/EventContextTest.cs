@@ -20,12 +20,16 @@ public class EventContextTest
 		Assert.NotNull(argument);
 		Assert.IsType<string>(argument);
 		Assert.Equal("MyString", argument);
+		Assert.Equal("MyEvent", stringContext.Name);
+		Assert.Equal($"{MyEventRegistry.Instance.Name}:MyEvent", stringContext.QualifiedName);
 
 		var integerContext = new EventContext<int>(MyEventRegistry.Instance, "MyEvent", 100);
 		argument = EventContextUtility.GetArgument(integerContext);
 		Assert.NotNull(argument);
 		Assert.IsType<int>(argument);
 		Assert.Equal(100, argument);
+		Assert.Equal("MyEvent", integerContext.Name);
+		Assert.Equal($"{MyEventRegistry.Instance.Name}:MyEvent", integerContext.QualifiedName);
 	}
 
 	internal class MyEventRegistry() : EventRegistryBase("MyEventRegistry")

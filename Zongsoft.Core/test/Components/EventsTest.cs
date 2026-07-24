@@ -47,6 +47,7 @@ public class EventsTest
 		Assert.NotNull(descriptor);
 		Assert.Same(ModuleB.EventRegistry.Target1Event.Created, descriptor);
 		Assert.Equal("Target1.Created", descriptor.Name);
+		Assert.Equal("ModuleB:Target1.Created", descriptor.QualifiedName);
 		Assert.Equal(Properties.Resources.Target1_Created, descriptor.Title);
 		Assert.Equal(Properties.Resources.Target1_Created_Description, descriptor.Description);
 
@@ -54,6 +55,7 @@ public class EventsTest
 		Assert.NotNull(descriptor);
 		Assert.Same(ModuleB.EventRegistry.Target1Event.StatusChanged, descriptor);
 		Assert.Equal("Target1.StatusChanged", descriptor.Name);
+		Assert.Equal("ModuleB:Target1.StatusChanged", descriptor.QualifiedName);
 		Assert.Equal(Properties.Resources.Target1_StatusChanged, descriptor.Title);
 		Assert.Equal(Properties.Resources.Target1_StatusChanged_Description, descriptor.Description);
 	}
@@ -64,6 +66,8 @@ public class EventsTest
 		var createdHandler = new CreatedHandler();
 		var descriptor = Events.GetEvent("ModuleB:Target1.Created");
 		Assert.NotNull(descriptor);
+		Assert.Equal("Target1.Created", descriptor.Name);
+		Assert.Equal("ModuleB:Target1.Created", descriptor.QualifiedName);
 		descriptor.Handlers.Add(createdHandler);
 		Assert.Contains(createdHandler, descriptor.Handlers);
 		Assert.Throws<NotImplementedException>(OnCreate);
@@ -73,6 +77,8 @@ public class EventsTest
 		var changedHandler = new StatusChangedHandler();
 		descriptor = Events.GetEvent("ModuleB:Target1.StatusChanged");
 		Assert.NotNull(descriptor);
+		Assert.Equal("Target1.StatusChanged", descriptor.Name);
+		Assert.Equal("ModuleB:Target1.StatusChanged", descriptor.QualifiedName);
 		descriptor.Handlers.Add(changedHandler);
 		Assert.Contains(changedHandler, descriptor.Handlers);
 		Assert.Throws<NotImplementedException>(OnStatusChanged);

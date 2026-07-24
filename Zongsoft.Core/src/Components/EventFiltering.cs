@@ -136,9 +136,9 @@ public class EventFiltering : IPredication<EventContext>, IList<EventFiltering.E
 
 			return this.Kind switch
 			{
-				EntryKind.Inclusive => $"{registry}.{eventName}",
-				EntryKind.Exclusive => $"!{registry}.{eventName}",
-				_ => $"{registry}.{eventName}",
+				EntryKind.Inclusive => $"{registry}:{eventName}",
+				EntryKind.Exclusive => $"!{registry}:{eventName}",
+				_ => $"{registry}:{eventName}",
 			};
 
 			static bool IsEmpty(string name) => string.IsNullOrEmpty(name) || name == ALL;
@@ -169,12 +169,29 @@ public class EventFiltering : IPredication<EventContext>, IList<EventFiltering.E
 			if(kind == EntryKind.Exclusive)
 				text = text[1..].Trim();
 
-			var index = text.LastIndexOf('.');
-			result = index < 0 ?
-				new(kind, text, null) :
-				new(kind, text[..index], text[(index + 1)..]);
+			if(string.IsNullOrEmpty(text) || text == ALL)
+			{
+				result = new(kind, null, null);
+				return true;
+			}
+
+			var index = text.LastIndexOf(':');
+
+			if(index < 0)
+			{
+				result = text.EndsWith($".{ALL}", StringComparison.Ordinal) ?
+					new(kind, Normalize(text[..^2]), null) :
+					new(kind, Normalize(text), null);
+			}
+			else
+			{
+				result = new(kind, Normalize(text[..index]),
+					index < text.Length - 1 ? Normalize(text[(index + 1)..]) : null);
+			}
 
 			return true;
+
+			static string Normalize(string value) => string.IsNullOrEmpty(value) || value == ALL ? null : value;
 		}
 	}
 

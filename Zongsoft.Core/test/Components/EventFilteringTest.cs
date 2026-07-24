@@ -66,7 +66,7 @@ public class EventFilteringTest
 	{
 		var filtering = new EventFiltering
 		{
-			EventFiltering.Entry.Parse("!ModuleA.*"),
+			EventFiltering.Entry.Parse("!ModuleA:*"),
 		};
 
 		var context = CreateContext("ModuleA", "Target.Created");
@@ -75,14 +75,27 @@ public class EventFilteringTest
 	}
 
 	[Fact]
+	public async Task PredicateAsync_ParsedQualifiedEventNameMatchesContext_ReturnsFalse()
+	{
+		var filtering = new EventFiltering
+		{
+			EventFiltering.Entry.Parse("!ModuleB:Target1.Created"),
+		};
+
+		var context = CreateContext("ModuleB", "Target1.Created");
+
+		Assert.False(await filtering.PredicateAsync(context));
+	}
+
+	[Fact]
 	public void Entry_ParseRecognizesKindAndWildcard()
 	{
-		var entry = EventFiltering.Entry.Parse("!ModuleA.*");
+		var entry = EventFiltering.Entry.Parse("!ModuleA:*");
 
 		Assert.Equal(EventFiltering.EntryKind.Exclusive, entry.Kind);
 		Assert.Equal("ModuleA", entry.RegistryName);
 		Assert.Null(entry.EventName);
-		Assert.Equal("!ModuleA.*", entry.ToString());
+		Assert.Equal("!ModuleA:*", entry.ToString());
 
 		Assert.True(EventFiltering.Entry.TryParse("*", out entry));
 		Assert.Equal(EventFiltering.EntryKind.Inclusive, entry.Kind);
@@ -93,7 +106,8 @@ public class EventFilteringTest
 
 	[Theory]
 	[InlineData("!", null, null)]
-	[InlineData("!ModuleA.*", "ModuleA", null)]
+	[InlineData("!ModuleA:*", "ModuleA", null)]
+	[InlineData("!ModuleA:Target.Created", "ModuleA", "Target.Created")]
 	public void Entry_ParseExclamationPrefixCreatesExclusiveEntry(string text, string expectedRegistryName, string expectedEventName)
 	{
 		Assert.True(EventFiltering.Entry.TryParse(text, out var entry));
@@ -106,12 +120,12 @@ public class EventFilteringTest
 	[InlineData(EventFiltering.EntryKind.Inclusive, null, null, "*")]
 	[InlineData(EventFiltering.EntryKind.Inclusive, "", "", "*")]
 	[InlineData(EventFiltering.EntryKind.Inclusive, "*", "*", "*")]
-	[InlineData(EventFiltering.EntryKind.Inclusive, "ModuleA", null, "ModuleA.*")]
-	[InlineData(EventFiltering.EntryKind.Inclusive, null, "Target.Created", "*.Target.Created")]
+	[InlineData(EventFiltering.EntryKind.Inclusive, "ModuleA", null, "ModuleA:*")]
+	[InlineData(EventFiltering.EntryKind.Inclusive, null, "Target.Created", "*:Target.Created")]
 	[InlineData(EventFiltering.EntryKind.Exclusive, null, null, "!")]
 	[InlineData(EventFiltering.EntryKind.Exclusive, "*", "*", "!")]
-	[InlineData(EventFiltering.EntryKind.Exclusive, "ModuleA", "*", "!ModuleA.*")]
-	[InlineData(EventFiltering.EntryKind.Exclusive, "ModuleA", "Target.Created", "!ModuleA.Target.Created")]
+	[InlineData(EventFiltering.EntryKind.Exclusive, "ModuleA", "*", "!ModuleA:*")]
+	[InlineData(EventFiltering.EntryKind.Exclusive, "ModuleA", "Target.Created", "!ModuleA:Target.Created")]
 	public void Entry_ToStringFormatsEntries(EventFiltering.EntryKind kind, string registryName, string eventName, string expected)
 	{
 		var entry = new EventFiltering.Entry(kind, registryName, eventName);
