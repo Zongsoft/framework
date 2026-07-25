@@ -20,6 +20,10 @@ public class DatabaseFixture : IDisposable
 	#region 构造函数
 	public DatabaseFixture()
 	{
+		File.Delete("test.db");
+		File.Delete("test.db-wal");
+		File.Delete("test.db-shm");
+
 		Mapping.Commands
 			.Add("TruncateLog", DataCommandMutability.Delete)
 			.Script(SQLiteDriver.NAME, "DELETE FROM \"Log\"; DELETE FROM sqlite_sequence WHERE name='Log';");
