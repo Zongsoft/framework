@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zongsoft.data
+  labels:
+    app: zongsoft.data
+spec:
+  volumes:
+    - name: mssql-config-volume
+      configMap:
+        name: mssql-config
+    - name: init-script
+      hostPath:
+        path: /mnt/d/Zongsoft/framework/Zongsoft.Data/drivers/mssql/test/script/init.sql
+        type: File
+  containers:
+    - name: mssql
+      image: mcr.microsoft.com/mssql/server:2025-latest
+      command:
+        - /bin/bash
+        - -c
+      args:
+        - |
+          set -e
+
+          /opt/mssql/bin/sqlservr &
+          process=$!
+
+          cleanup()
+          {
+            kill "$process" 2>/dev/null || true
+            wait "$process" 2>/dev/null || true
+          }
+
+          trap cleanup EXIT TERM INT
+
+          until /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" >/dev/null 2>&1
+          do
+            kill -0 "$process" 2>/dev/null
+            sleep 1
+          done
+
+          /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -b -i /docker-entrypoint-initdb.d/config/bootstrap.sql
+          cat /docker-entrypoint-initdb.d/config/session.sql /docker-entrypoint-initdb.d/init.sql |
+            /opt/mssql-tools18/bin/sqlcmd -S localhost -d zongsoft -U sa -P "$MSSQL_SA_PASSWORD" -C -b
+
+          wait "$process"
+      ports:
+        - containerPort: 1433
+          protocol: TCP
+          hostPort: 1433
+      env:
+        - name: ACCEPT_EULA
+          value: "Y"
+        - name: MSSQL_PID
+          value: Developer
+        - name: MSSQL_SA_PASSWORD
+          value: "Zongsoft#2026"
+      volumeMounts:
+        - name: mssql-config-volume
+          mountPath: /docker-entrypoint-initdb.d/config
+          readOnly: true
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d/init.sql
+          readOnly: true
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mssql-config
+data:
+  bootstrap.sql: |
+    /* 创建测试数据库 */
+    IF DB_ID(N'zongsoft') IS NULL
+      EXEC(N'CREATE DATABASE [zongsoft]');
+    GO
+
+    /* 创建测试登录 */
+    IF SUSER_ID(N'program') IS NULL
+    BEGIN
+      CREATE LOGIN [program]
+        WITH PASSWORD=N'xxxxxx', CHECK_POLICY=OFF, CHECK_EXPIRATION=OFF;
+    END;
+    ELSE
+    BEGIN
+      ALTER LOGIN [program]
+        WITH PASSWORD=N'xxxxxx', CHECK_POLICY=OFF, CHECK_EXPIRATION=OFF;
+    END;
+    GO
+
+    ALTER LOGIN [program] WITH DEFAULT_DATABASE=[zongsoft];
+    GO
+
+    /* 创建测试用户并授权 */
+    USE [zongsoft];
+    GO
+
+    IF USER_ID(N'program') IS NULL
+      CREATE USER [program] FOR LOGIN [program];
+    GO
+
+    IF IS_ROLEMEMBER(N'db_owner', N'program') <> 1
+      ALTER ROLE [db_owner] ADD MEMBER [program];
+    GO
+
+  session.sql: |
+    /* 创建筛选索引所需的会话参数 */
+    SET ANSI_NULLS ON;
+    SET ANSI_PADDING ON;
+    SET ANSI_WARNINGS ON;
+    SET ARITHABORT ON;
+    SET CONCAT_NULL_YIELDS_NULL ON;
+    SET QUOTED_IDENTIFIER ON;
+    SET NUMERIC_ROUNDABORT OFF;
