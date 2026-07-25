@@ -76,8 +76,8 @@ public partial class DuckDBDriver : DataDriverBase
 		return exception;
 	}
 
-	public override DbCommand CreateCommand() => new DuckDBCommand();
-	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new DuckDBCommand(text)
+	public override DbCommand CreateCommand() => new DuckDBCommandAdapter();
+	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new DuckDBCommandAdapter(text)
 	{
 		CommandType = commandType,
 	};

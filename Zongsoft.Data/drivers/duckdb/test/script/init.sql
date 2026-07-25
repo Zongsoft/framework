@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS "Tenant"
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "UX_Tenant_TenantNo" ON "Tenant" ("TenantNo");
-CREATE UNIQUE INDEX IF NOT EXISTS "UX_Tenant_BusinessLicenseNo" ON "Tenant" ("BusinessLicenseNo");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Tenant_BusinessLicenseNo" ON "Tenant" ("BusinessLicenseNo", (CASE WHEN "BusinessLicenseNo" IS NULL THEN "TenantId" ELSE 0 END));
 CREATE INDEX IF NOT EXISTS "IX_Tenant_LegalRepresentativeEmail" ON "Tenant" ("LegalRepresentativeEmail");
 CREATE INDEX IF NOT EXISTS "IX_Tenant_LegalRepresentativeIdentityId" ON "Tenant" ("LegalRepresentativeIdentityId");
 CREATE INDEX IF NOT EXISTS "IX_Tenant_LegalRepresentativeMobilePhone" ON "Tenant" ("LegalRepresentativeMobilePhone");
@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS "Branch"
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "UX_Branch_BranchNo" ON "Branch" ("TenantId", "BranchNo");
-CREATE UNIQUE INDEX IF NOT EXISTS "UX_Branch_BusinessLicenseNo" ON "Branch" ("TenantId", "BusinessLicenseNo");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Branch_BusinessLicenseNo" ON "Branch" ("TenantId", "BusinessLicenseNo", (CASE WHEN "BusinessLicenseNo" IS NULL THEN "BranchId" ELSE 0 END));
 CREATE INDEX IF NOT EXISTS "IX_Branch_Ordinal" ON "Branch" ("TenantId", "Ordinal");
 
 /* 分支机构成员表 */
@@ -295,8 +295,8 @@ CREATE TABLE IF NOT EXISTS "Employee"
 	PRIMARY KEY ("TenantId", "UserId")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "UX_Employee_EmployeeNo" ON "Employee" ("TenantId", "EmployeeNo");
-CREATE UNIQUE INDEX IF NOT EXISTS "UX_Employee_IdentityId" ON "Employee" ("TenantId", "IdentityId");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Employee_EmployeeNo" ON "Employee" ("TenantId", "EmployeeNo", (CASE WHEN "EmployeeNo" IS NULL THEN "UserId" ELSE 0 END));
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Employee_IdentityId" ON "Employee" ("TenantId", "IdentityId", (CASE WHEN "IdentityId" IS NULL THEN "UserId" ELSE 0 END));
 CREATE INDEX IF NOT EXISTS "IX_Employee_Birthdate" ON "Employee" ("TenantId", "Birthdate");
 CREATE INDEX IF NOT EXISTS "IX_Employee_EmployeeCode" ON "Employee" ("TenantId", "EmployeeCode");
 CREATE INDEX IF NOT EXISTS "IX_Employee_BranchId" ON "Employee" ("UserId", "TenantId", "BranchId");
@@ -315,7 +315,7 @@ CREATE TABLE IF NOT EXISTS "Security_Role"
 	PRIMARY KEY ("RoleId")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_Role_Name" ON "Security_Role" ("Namespace", "Name");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_Role_Name" ON "Security_Role" ("Namespace", "Name", (CASE WHEN "Namespace" IS NULL OR "Name" IS NULL THEN "RoleId" ELSE 0 END));
 
 /* 用户表 */
 CREATE TABLE IF NOT EXISTS "Security_User"
@@ -338,9 +338,9 @@ CREATE TABLE IF NOT EXISTS "Security_User"
 	PRIMARY KEY ("UserId")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_User_Name" ON "Security_User" ("Namespace", "Name");
-CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_User_Email" ON "Security_User" ("Namespace", "Email");
-CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_User_Phone" ON "Security_User" ("Namespace", "Phone");
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_User_Name" ON "Security_User" ("Namespace", "Name", (CASE WHEN "Namespace" IS NULL OR "Name" IS NULL THEN "UserId" ELSE 0 END));
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_User_Email" ON "Security_User" ("Namespace", "Email", (CASE WHEN "Namespace" IS NULL OR "Email" IS NULL THEN "UserId" ELSE 0 END));
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_Security_User_Phone" ON "Security_User" ("Namespace", "Phone", (CASE WHEN "Namespace" IS NULL OR "Phone" IS NULL THEN "UserId" ELSE 0 END));
 
 /* 角色成员表 */
 CREATE TABLE IF NOT EXISTS "Security_Member"

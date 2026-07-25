@@ -20,6 +20,9 @@ public class DatabaseFixture : IDisposable
 	#region 构造函数
 	public DatabaseFixture()
 	{
+		File.Delete("test.db");
+		File.Delete("test.db.wal");
+
 		Mapping.Commands
 			.Add("TruncateLog", DataCommandMutability.Delete)
 			.Script(DuckDBDriver.NAME, "TRUNCATE TABLE \"Log\"");

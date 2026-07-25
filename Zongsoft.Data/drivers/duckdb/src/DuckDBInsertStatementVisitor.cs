@@ -46,12 +46,12 @@ public class DuckDBInsertStatementVisitor : InsertStatementVisitor
 	#endregion
 
 	#region 重写方法
-	protected override void VisitInsert(ExpressionVisitorContext context, InsertStatement statement)
+	protected override void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
 	{
+		base.VisitValues(context, statement, values, rounds);
+
 		if(statement.Options.ConstraintIgnored)
-			context.Write("INSERT OR IGNORE INTO ");
-		else
-			context.Write("INSERT INTO ");
+			context.WriteLine(" ON CONFLICT DO NOTHING");
 	}
 	#endregion
 }

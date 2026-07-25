@@ -35,6 +35,34 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(1, count);
 		Assert.True(log.LogId > 0);
 
+		log = Model.Build<Log>(log =>
+		{
+			log.UserId = 1;
+			log.Target = "Target";
+			log.Action = "Action";
+			log.TenantId = 1;
+			log.BranchId = 0;
+			log.Timestamp = Zongsoft.Common.DateTimeExtension.Reset(DateTime.UtcNow, Zongsoft.Common.DateTimePart.Millisecond);
+		});
+
+		var options = DataInsertOptions.Return(nameof(Log.LogId), nameof(Log.Timestamp)).Build();
+		Assert.True(options.HasReturning(out var returning));
+		Assert.Equal(2, returning.Columns.Count);
+		Assert.Equal(nameof(Log.LogId), returning.Columns[0].Name);
+		Assert.Equal(ReturningKind.Newer, returning.Columns[0].Kind);
+		Assert.Equal(nameof(Log.Timestamp), returning.Columns[1].Name);
+		Assert.Equal(ReturningKind.Newer, returning.Columns[1].Kind);
+
+		count = await accessor.InsertAsync(log, options);
+		Assert.Equal(1, count);
+		Assert.True(log.LogId > 0);
+
+		Assert.Single(returning.Rows);
+		Assert.True(returning.Rows[0].TryGetValue(nameof(Log.LogId), out var value));
+		Assert.Equal(log.LogId, Convert.ChangeType(value, typeof(ulong)));
+		Assert.True(returning.Rows[0].TryGetValue(nameof(Log.Timestamp), out value));
+		Assert.Equal(log.Timestamp, value);
+
 		await accessor.ExecuteAsync("TruncateLog");
 	}
 
@@ -61,6 +89,36 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 
 		for(int i = 0; i < COUNT; i++)
 			Assert.True(logs[i].LogId > 0);
+
+		logs = Model.Build<Log>(COUNT, (log, index) =>
+		{
+			log.UserId = 1;
+			log.Target = $"Target#{index}";
+			log.Action = $"Action#{index}";
+			log.TenantId = 1;
+			log.BranchId = 0;
+			log.Timestamp = Zongsoft.Common.DateTimeExtension.Reset(DateTime.UtcNow, Zongsoft.Common.DateTimePart.Millisecond);
+		}).ToArray();
+
+		var options = DataInsertOptions.Return(nameof(Log.LogId), nameof(Log.Timestamp)).Build();
+		count = await accessor.InsertManyAsync(logs, options);
+		Assert.Equal(COUNT, count);
+
+		for(int i = 0; i < COUNT; i++)
+			Assert.True(logs[i].LogId > 0);
+
+		Assert.True(options.HasReturning(out var returning));
+		Assert.Equal(COUNT, returning.Rows.Count);
+
+		for(int i = 0; i < COUNT; i++)
+		{
+			var log = logs[i];
+
+			Assert.True(returning.Rows[i].TryGetValue(nameof(Log.LogId), out var value));
+			Assert.Equal(log.LogId, Convert.ChangeType(value, typeof(ulong)));
+			Assert.True(returning.Rows[i].TryGetValue(nameof(Log.Timestamp), out value));
+			Assert.Equal(log.Timestamp, value);
+		}
 
 		await accessor.ExecuteAsync("TruncateLog");
 	}
@@ -774,10 +832,10 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		//accessor.Delete<Employee>(Condition.In(nameof(Employee.UserId), [100, 404]));
-		//accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
-		//accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
-		//accessor.Delete<RoleModel>(Condition.In(nameof(RoleModel.RoleId), [10, 11, 12]));
-		//accessor.Delete<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
+		accessor.Delete<Employee>(Condition.In(nameof(Employee.UserId), [100, 404]));
+		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
+		accessor.Delete<RoleModel>(Condition.In(nameof(RoleModel.RoleId), [10, 11, 12]));
+		accessor.Delete<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
 	}
 }

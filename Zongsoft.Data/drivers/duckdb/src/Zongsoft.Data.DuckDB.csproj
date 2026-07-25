@@ -12,7 +12,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="DuckDB.NET.Data.Full" VersionOverride="1.4.4" />
+		<PackageReference Include="DuckDB.NET.Data.Full" VersionOverride="1.5.3" />
 	</ItemGroup>
 
 	<ItemGroup>

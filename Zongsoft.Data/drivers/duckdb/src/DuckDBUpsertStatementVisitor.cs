@@ -28,8 +28,9 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-using Zongsoft.Data.Common;
+using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.DuckDB;
@@ -52,11 +53,7 @@ public class DuckDBUpsertStatementVisitor : UpsertStatementVisitor
 
 		var index = 0;
 
-		if(statement.Options.ConstraintIgnored)
-			context.Write("INSERT IGNORE INTO ");
-		else
-			context.Write("INSERT INTO ");
-
+		context.Write("INSERT INTO ");
 		context.Write(context.Dialect.GetIdentifier(statement.Table));
 		context.Write(" (");
 
@@ -93,9 +90,27 @@ public class DuckDBUpsertStatementVisitor : UpsertStatementVisitor
 				context.Write(")");
 		}
 
-		index = 0;
-		context.WriteLine(" ON DUPLICATE KEY UPDATE ");
+		context.Write(" ON CONFLICT ");
 
+		if(statement.Options.ConstraintIgnored || !statement.Table.Entity.HasKey)
+		{
+			context.WriteLine("DO NOTHING");
+			return;
+		}
+
+		context.Write("(");
+
+		for(int i = 0; i < statement.Table.Entity.Key.Length; i++)
+		{
+			if(i > 0)
+				context.Write(',');
+
+			context.Write(context.Dialect.GetIdentifier(statement.Table.Entity.Key[i].GetFieldName()));
+		}
+
+		context.WriteLine(") DO UPDATE SET");
+
+		index = 0;
 		if(statement.Updation.Count > 0)
 		{
 			foreach(var item in statement.Updation)
@@ -111,7 +126,13 @@ public class DuckDBUpsertStatementVisitor : UpsertStatementVisitor
 				if(parenthesisRequired)
 					context.Write("(");
 
-				context.Visit(item.Value);
+				if(item.Value != null)
+					context.Visit(item.Value);
+				else
+				{
+					context.Write("EXCLUDED.");
+					context.Write(context.Dialect.GetIdentifier(item.Field.Name));
+				}
 
 				if(parenthesisRequired)
 					context.Write(")");
@@ -128,14 +149,27 @@ public class DuckDBUpsertStatementVisitor : UpsertStatementVisitor
 				if(index++ > 0)
 					context.Write(",");
 
-				context.Write(context.Dialect.GetIdentifier(field.Name));
-				context.Write("=VALUES(");
-				context.Write(context.Dialect.GetIdentifier(field.Name));
-				context.Write(")");
+				var fieldName = context.Dialect.GetIdentifier(field.Name);
+				context.Write($"{fieldName}=EXCLUDED.{fieldName}");
 			}
 		}
+	}
 
-		context.WriteLine(";");
+	protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause)
+	{
+		List<ReturningClause.ReturningMember> removables = [];
+
+		foreach(var member in clause.Members)
+		{
+			if(member.Kind == ReturningKind.Older)
+				removables.Add(member);
+		}
+
+		foreach(var member in removables)
+			clause.Members.Remove(member);
+
+		if(clause.Members.Count > 0)
+			base.OnVisiteReturning(context, clause);
 	}
 	#endregion
 }

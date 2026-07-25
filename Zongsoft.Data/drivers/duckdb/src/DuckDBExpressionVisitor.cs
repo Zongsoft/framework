@@ -89,15 +89,30 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 
 	protected override void VisitFunction(ExpressionVisitorContext context, MethodExpression expression)
 	{
-		if(expression is CastFunctionExpression casting)
+		switch(expression)
 		{
-			context.Write("CONVERT(");
-			this.OnVisit(context, casting.Value);
-			context.Write(",");
-			context.Write(this.Dialect.GetDataType(casting.Type, casting.Length, casting.Precision, casting.Scale));
-			context.Write(")");
+			case CastFunctionExpression casting:
+				context.Write("CAST(");
+				this.OnVisit(context, casting.Value);
+				context.Write(" AS ");
+				context.Write(this.Dialect.GetDataType(casting.Type, casting.Length, casting.Precision, casting.Scale));
+				context.Write(")");
+				return;
+			case SequenceExpression sequence:
+				var serial = sequence.Arguments != null && sequence.Arguments.Count > 0 ? sequence.Arguments[0]?.ToString() : null;
+				var text = sequence.Method switch
+				{
+					SequenceMethod.Current => $"currval('{serial ?? sequence.Name}')",
+					SequenceMethod.Next => $"nextval('{serial ?? sequence.Name}')",
+					_ => throw new NotSupportedException($"Invalid '{sequence.Method}' sequence method."),
+				};
 
-			return;
+				context.Write(text);
+
+				if(!string.IsNullOrEmpty(expression.Alias))
+					context.Write(" AS " + this.Dialect.GetAlias(expression.Alias));
+
+				return;
 		}
 
 		base.VisitFunction(context, expression);
@@ -120,7 +135,7 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 		#endregion
 
 		#region 公共方法
-		public string GetAlias(string alias) => $"'{alias}'";
+		public string GetAlias(string alias) => $"\"{alias}\"";
 		public string GetSymbol(Operator @operator) => null;
 		public string GetIdentifier(string name) => $"\"{name}\"";
 		public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
@@ -130,30 +145,30 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 		{
 			DbType.AnsiString => length > 0 ? $"varchar({length})" : "text",
 			DbType.AnsiStringFixedLength => length > 0 ? $"char({length})" : "text",
-			DbType.String => length > 0 ? $"nvarchar({length})" : "text",
-			DbType.StringFixedLength => length > 0 ? $"nchar({length})" : "text",
-			DbType.Binary => length > 0 ? $"varbinary({length})" : "blob",
-			DbType.Boolean => "tinyint(1)",
-			DbType.Byte => "unsigned tinyint",
+			DbType.String => length > 0 ? $"varchar({length})" : "text",
+			DbType.StringFixedLength => length > 0 ? $"char({length})" : "text",
+			DbType.Binary => "blob",
+			DbType.Boolean => "boolean",
+			DbType.Byte => "utinyint",
 			DbType.SByte => "tinyint",
 			DbType.Date => "date",
-			DbType.DateTime => "datetime",
-			DbType.DateTime2 => "datetime",
-			DbType.DateTimeOffset => "datetime",
-			DbType.Guid => "binary(16)",
+			DbType.DateTime => "timestamp",
+			DbType.DateTime2 => "timestamp",
+			DbType.DateTimeOffset => "timestamp with time zone",
+			DbType.Guid => "uuid",
 			DbType.Int16 => "smallint",
-			DbType.Int32 => "int",
+			DbType.Int32 => "integer",
 			DbType.Int64 => "bigint",
 			DbType.Time => "time",
-			DbType.UInt16 => "unsigned smallint",
-			DbType.UInt32 => "unsigned int",
-			DbType.UInt64 => "unsigned bigint",
+			DbType.UInt16 => "usmallint",
+			DbType.UInt32 => "uinteger",
+			DbType.UInt64 => "ubigint",
 			DbType.Currency => precision > 0 ? $"decimal({precision},{scale})" : "decimal(12,2)",
-			DbType.Decimal => $"decimal({precision},{scale})",
-			DbType.Double => $"double({precision},{scale})",
-			DbType.Single => $"float({precision},{scale})",
-			DbType.VarNumeric => $"numeric({precision},{scale})",
-			DbType.Xml => "text",
+			DbType.Decimal => precision > 0 ? $"decimal({precision},{scale})" : "decimal",
+			DbType.Double => "double",
+			DbType.Single => "real",
+			DbType.VarNumeric => precision > 0 ? $"numeric({precision},{scale})" : "numeric",
+			DbType.Xml => "varchar",
 			DbType.Object => type.ToString(),
 			_ => throw new DataException($"Unsupported '{type}' data type."),
 		};
@@ -173,14 +188,13 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 			if(method.Name.Equals(Functions.TrimStart, StringComparison.OrdinalIgnoreCase))
 				return "LTRIM";
 			if(method.Name.Equals(Functions.Random, StringComparison.OrdinalIgnoreCase))
-				return "RAND";
+				return "RANDOM";
 			if(method.Name.Equals(Functions.Guid, StringComparison.OrdinalIgnoreCase))
 				return "UUID";
 
 			return method switch
 			{
 				AggregateExpression aggregate => GetAggregateName(aggregate.Function),
-				SequenceExpression sequence => GetSequenceName(sequence),
 				_ => method.Name,
 			};
 		}
@@ -202,14 +216,6 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 			_ => throw new NotSupportedException($"Invalid '{function}' aggregate method."),
 		};
 
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetSequenceName(SequenceExpression sequence)
-		{
-			if(sequence.Method != SequenceMethod.Current)
-				throw new DataException($"The DuckDB driver does not support the '{sequence.Method.ToString()}' sequence function.");
-
-			return "LAST_INSERT_ID";
-		}
 		#endregion
 	}
 
