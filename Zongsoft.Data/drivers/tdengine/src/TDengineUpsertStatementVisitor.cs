@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.TDengine library.
  *
@@ -27,41 +27,25 @@
  * along with the Zongsoft.Data.TDengine library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using System.Collections.Generic;
-
-using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.TDengine;
 
-public sealed class TDengineStatementSlotEvaluator : StatementSlotEvaluatorBase
+public class TDengineUpsertStatementVisitor : UpsertStatementVisitor
 {
-	public static readonly TDengineStatementSlotEvaluator Instance = new();
+	#region 单例字段
+	public static readonly TDengineUpsertStatementVisitor Instance = new();
+	#endregion
 
-	public override string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot)
-	{
-		if(slot == null || slot.Value == null)
-			return null;
+	#region 构造函数
+	private TDengineUpsertStatementVisitor() { }
+	#endregion
 
-		if(context is IDataMutateContextBase ctx)
-		{
-			var data = ctx.Data;
-			var values = slot.Value switch
-			{
-				IEnumerable<IDataEntityProperty> properties => properties.Select(property => Reflection.Reflector.GetValue(ref data, property.Name)).ToArray(),
-				IEnumerable<DataEntityPropertyToken> tokens => tokens.Select(token => token.GetValue(data)).ToArray(),
-				_ => null,
-			};
+	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
+		=> TDengineInsertStatementVisitor.Visit(context, statement, statement.Fields, statement.Values, "upsert");
 
-			return slot.Place switch
-			{
-				"Table" when values != null => TDengineUtility.GetTableName(statement.Table.Entity.GetTableName(), values),
-				_ => base.Evaluate(context, statement, slot),
-			};
-		}
-
-		return null;
-	}
+	protected override void OnVisiting(ExpressionVisitorContext context, UpsertStatement statement) { }
+	protected override void OnVisited(ExpressionVisitorContext context, UpsertStatement statement) { }
+	#endregion
 }

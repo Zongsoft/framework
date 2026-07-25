@@ -28,12 +28,74 @@
  */
 
 using System;
+using System.Data;
+using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.TDengine;
 
 public class TDengineDeleteStatementBuilder : DeleteStatementBuilder
 {
+	#region 重写方法
+	protected override IEnumerable<IStatementBase> BuildComplexity(DataDeleteContext context)
+	{
+		foreach(var statement in base.BuildComplexity(context))
+		{
+			if(statement is DeleteStatement deletion)
+				Validate(deletion);
+
+			yield return statement;
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private static void Validate(DeleteStatement statement)
+	{
+		if(statement.Entity == null || statement.Entity.Key == null || statement.Entity.Key.Length == 0 ||
+		   statement.Entity.Key[0] is not IDataEntitySimplexProperty property ||
+		   !IsTimestamp(property.Type.DbType))
+			throw new NotSupportedException("TDengine DELETE requires an entity whose first column is the primary timestamp.");
+
+		if(statement.Where != null)
+			Validate(statement.Where, property.GetFieldName());
+	}
+
+	private static bool IsTimestamp(DbType type) => type is
+		DbType.Date or
+		DbType.DateTime or
+		DbType.DateTime2 or
+		DbType.DateTimeOffset or
+		DbType.Time;
+
+	private static void Validate(IExpression expression, string timestamp)
+	{
+		switch(expression)
+		{
+			case FieldIdentifier field when !string.Equals(field.Name, timestamp, StringComparison.OrdinalIgnoreCase):
+				throw new NotSupportedException($"TDengine DELETE conditions may only reference the primary timestamp field '{timestamp}'.");
+			case BinaryExpression binary:
+				Validate(binary.Left, timestamp);
+				Validate(binary.Right, timestamp);
+				break;
+			case UnaryExpression unary:
+				Validate(unary.Operand, timestamp);
+				break;
+			case CastFunctionExpression casting:
+				Validate(casting.Value, timestamp);
+				break;
+			case MethodExpression method when method.Arguments != null:
+				foreach(var argument in method.Arguments)
+					Validate(argument, timestamp);
+				break;
+			case IEnumerable<IExpression> expressions:
+				foreach(var item in expressions)
+					Validate(item, timestamp);
+				break;
+		}
+	}
+	#endregion
 }

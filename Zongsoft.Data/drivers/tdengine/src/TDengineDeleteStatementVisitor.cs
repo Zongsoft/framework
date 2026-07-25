@@ -45,6 +45,21 @@ public class TDengineDeleteStatementVisitor : DeleteStatementVisitor
 	#endregion
 
 	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, DeleteStatement statement)
+	{
+		var alias = statement.Table.Alias;
+
+		try
+		{
+			statement.Table.Alias = null;
+			base.OnVisit(context, statement);
+		}
+		finally
+		{
+			statement.Table.Alias = alias;
+		}
+	}
+
 	protected override void VisitTables(ExpressionVisitorContext context, DeleteStatement statement, IList<TableIdentifier> tables) { }
 	protected override void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
 	{

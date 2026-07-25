@@ -29,6 +29,7 @@
 
 using System;
 using System.Data;
+using System.Globalization;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -48,15 +49,19 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 	#region 重写方法
 	protected override void VisitParameter(ExpressionVisitorContext context, ParameterExpression parameter)
 	{
+		if(context.Find<DeleteStatement>() != null)
+		{
+			WriteDeleteValue(context, parameter);
+			return;
+		}
+
 		/*
 		 * 注意：TDengine 对参数名的首字符有不同的含义：
 		 *    $ 打头表示标签字段对应的参数；
 		 *    @ 打头表示数据字段对应的参数。
 		 */
-		if(parameter.Field.IsTagField())
-			parameter.Name = '$' + parameter.Name;
-		else
-			parameter.Name = '@' + parameter.Name;
+		var prefix = parameter.Field.IsTagField() ? '$' : '@';
+		parameter.Name = prefix + parameter.Name.TrimStart('$', '@');
 
 		context.Write('?');
 	}
@@ -78,9 +83,10 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 				TDengineInsertStatementVisitor.Instance.Visit(context, insert);
 				break;
 			case UpdateStatement:
-				throw new NotSupportedException();
-			case UpsertStatement:
-				throw new NotSupportedException();
+				throw new NotSupportedException("TDengine does not support UPDATE statements; insert a row with the same primary timestamp to replace its values.");
+			case UpsertStatement upsert:
+				TDengineUpsertStatementVisitor.Instance.Visit(context, upsert);
+				break;
 			case AggregateStatement aggregate:
 				TDengineAggregateStatementVisitor.Instance.Visit(context, aggregate);
 				break;
@@ -109,6 +115,39 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 		}
 
 		base.VisitFunction(context, expression);
+	}
+	#endregion
+
+	#region 私有方法
+	private static void WriteDeleteValue(ExpressionVisitorContext context, ParameterExpression parameter)
+	{
+		if(!parameter.IsChanged)
+			throw new DataException($"The TDengine DELETE parameter '{parameter.Name}' does not contain a value.");
+
+		switch(parameter.Value)
+		{
+			case null:
+				context.Write("NULL");
+				break;
+			case DateTime datetime:
+				context.Write($"'{datetime.ToUniversalTime():yyyy-MM-ddTHH:mm:ss.fffZ}'");
+				break;
+			case DateTimeOffset datetime:
+				context.Write($"'{datetime.UtcDateTime:yyyy-MM-ddTHH:mm:ss.fffZ}'");
+				break;
+			case string text:
+				context.Write($"'{text.Replace("'", "''")}'");
+				break;
+			case bool boolean:
+				context.Write(boolean ? "TRUE" : "FALSE");
+				break;
+			case IFormattable formattable:
+				context.Write(formattable.ToString(null, CultureInfo.InvariantCulture));
+				break;
+			default:
+				context.Write($"'{parameter.Value.ToString().Replace("'", "''")}'");
+				break;
+		}
 	}
 	#endregion
 

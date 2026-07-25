@@ -48,8 +48,8 @@ public class TDengineStatementBuilder : StatementBuilderBase
 	protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new TDengineSelectStatementBuilder();
 	protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new TDengineDeleteStatementBuilder();
 	protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new TDengineInsertStatementBuilder();
-	protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => throw new NotSupportedException();
-	protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => throw new NotSupportedException();
+	protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => throw new NotSupportedException("TDengine does not support UPDATE statements; insert a row with the same primary timestamp to replace its values.");
+	protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new TDengineUpsertStatementBuilder();
 	protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new TDengineAggregateStatementBuilder();
 	protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new TDengineExistStatementBuilder();
 	protected override IStatementBuilder<DataExecuteContext> CreateExecutionStatementBuilder() => new TDengineExecutionStatementBuilder();

@@ -28,7 +28,10 @@
  */
 
 using System;
+using System.Text;
+using System.Globalization;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
@@ -37,17 +40,34 @@ namespace Zongsoft.Data.TDengine;
 
 internal static class TDengineUtility
 {
-	public static string GetTableName(string text) => string.IsNullOrEmpty(text) ? null : $"T{text.ToLowerInvariant()}";
 	public static string GetTableName(string name, ICollection<object> values)
 	{
 		if(values == null || values.Count == 0)
 			return null;
 
-		var hashcode = new HashCode();
-		foreach(var value in values)
-			hashcode.Add(value);
+		var text = new StringBuilder(name);
 
-		return $"`{name}:#{hashcode.ToHashCode():X}`";
+		foreach(var value in values)
+		{
+			var content = GetText(value);
+			text.Append('|');
+			text.Append(content?.Length ?? -1);
+			text.Append(':');
+			text.Append(content);
+		}
+
+		var hash = SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString()));
+		return $"T{System.Convert.ToHexString(hash.AsSpan(0, 12))}";
+
+		static string GetText(object value) => value switch
+		{
+			null => null,
+			DateTime datetime => datetime.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+			DateTimeOffset datetime => datetime.UtcDateTime.ToString("O", CultureInfo.InvariantCulture),
+			byte[] bytes => System.Convert.ToHexString(bytes),
+			IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+			_ => value.ToString(),
+		};
 	}
 
 	public static bool IsTagField(this FieldIdentifier field) => field != null && IsTagField(field.Token.Property);

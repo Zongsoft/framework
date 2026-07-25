@@ -5,6 +5,7 @@ using Xunit;
 namespace Zongsoft.Data.TDengine.Tests;
 
 [Collection("Database")]
+[Trait("Category", "Unit")]
 public class ConnectionSettingsTest(DatabaseFixture database)
 {
 	private readonly DatabaseFixture _database = database;

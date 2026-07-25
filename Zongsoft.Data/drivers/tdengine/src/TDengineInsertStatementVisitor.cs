@@ -48,11 +48,17 @@ public class TDengineInsertStatementVisitor : InsertStatementVisitor
 
 	#region 重写方法
 	protected override void OnVisit(ExpressionVisitorContext context, InsertStatement statement)
-	{
-		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException("Missing required fields in the insert statment.");
+		=> Visit(context, statement, statement.Fields, statement.Values, "insert");
 
-		(var tags, var fields) = GetSettings(statement);
+	internal static void Visit(ExpressionVisitorContext context, IStatementBase statement, IList<FieldIdentifier> fields, IList<IExpression> values, string operation)
+	{
+		if(fields == null || fields.Count == 0)
+			throw new DataException($"Missing required fields in the {operation} statement.");
+
+		if(values == null || values.Count != fields.Count)
+			throw new NotSupportedException($"TDengine {operation.ToUpperInvariant()} statements support one record at a time; use the data importer for bulk writes.");
+
+		(var tags, var data) = GetSettings(fields, values);
 
 		var slot = GenerateSlot(tags);
 		statement.Slots.Add(slot);
@@ -60,22 +66,22 @@ public class TDengineInsertStatementVisitor : InsertStatementVisitor
 		context.Visit(statement.Table);
 
 		GenerateTags(context, tags);
-		GenerateFields(context, fields);
+		GenerateFields(context, data);
 
 		context.WriteLine(";");
 	}
 	#endregion
 
 	#region 私有方法
-	private static (Setting tags, Setting fields) GetSettings(InsertStatement statement)
+	private static (Setting tags, Setting fields) GetSettings(IList<FieldIdentifier> sourceFields, IList<IExpression> sourceValues)
 	{
 		var tags = new Setting();
 		var fields = new Setting();
 
-		for(int i = 0; i < statement.Fields.Count; i++)
+		for(int i = 0; i < sourceFields.Count; i++)
 		{
-			var field = statement.Fields[i];
-			var value = statement.Values[i];
+			var field = sourceFields[i];
+			var value = sourceValues[i];
 
 			if(field.IsTagField())
 			{

@@ -12,7 +12,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="TDengine.Connector" VersionOverride="3.1.9" />
+		<PackageReference Include="TDengine.Connector" VersionOverride="3.2.1" />
 	</ItemGroup>
 
 	<ItemGroup>

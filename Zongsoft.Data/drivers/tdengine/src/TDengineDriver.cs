@@ -78,8 +78,8 @@ public partial class TDengineDriver : DataDriverBase
 		return exception;
 	}
 
-	public override DbCommand CreateCommand() => new TDengineCommand();
-	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new TDengineCommand()
+	public override DbCommand CreateCommand() => new TDengineCommandAdapter();
+	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new TDengineCommandAdapter()
 	{
 		CommandText = text,
 		CommandType = commandType,
@@ -98,5 +98,22 @@ public partial class TDengineDriver : DataDriverBase
 	protected override IDataImporter CreateImporter() => new TDengineImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new TDengineExpressionVisitor();
 	protected override StatementSlotter CreateSlotter() => new() { Evaluator = TDengineStatementSlotEvaluator.Instance };
+	#endregion
+
+	#region 嵌套子类
+	private sealed class TDengineCommandAdapter : TDengineCommand
+	{
+		public override int ExecuteNonQuery()
+		{
+			if(!this.CommandText.AsSpan().TrimStart().StartsWith("DELETE", StringComparison.OrdinalIgnoreCase))
+				return base.ExecuteNonQuery();
+
+			if(this.Connection is not TDengineConnection connection)
+				throw new InvalidOperationException("The TDengine command requires a TDengine connection.");
+
+			using var client = global::TDengine.Driver.Client.DbDriver.Open(connection.ConnectionStringBuilder);
+			return (int)Math.Clamp(client.Exec(this.CommandText), int.MinValue, int.MaxValue);
+		}
+	}
 	#endregion
 }

@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
     - name: tdengine
-      image: tdengine/tsdb:latest
+      image: tdengine/tsdb:3.4.2.2
       ports:
         - containerPort: 6030
           hostPort: 6030
@@ -30,7 +30,7 @@ spec:
       lifecycle:
         postStart:
           exec:
-            command: ["sh", "-c", "taos -f '/docker-entrypoint-initdb.d/tables.sql'"]
+            command: ["sh", "-c", "taos -f '/docker-entrypoint-initdb.d/init.sql'"]
   volumes:
     - name: init-script
       hostPath:
