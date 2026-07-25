@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="MsSql.Settings.Server" xml:space="preserve">
+    <value>服务地址</value>
+  </data>
+  <data name="MsSql.Settings.Client" xml:space="preserve">
+    <value>客户端名</value>
+  </data>
+  <data name="MsSql.Settings.Database" xml:space="preserve">
+    <value>数据库名</value>
+  </data>
+  <data name="MsSql.Settings.UserName" xml:space="preserve">
+    <value>用户名称</value>
+  </data>
+  <data name="MsSql.Settings.Password" xml:space="preserve">
+    <value>用户密码</value>
+  </data>
+  <data name="MsSql.Settings.IntegratedSecurity" xml:space="preserve">
+    <value>集成安全</value>
+  </data>
+  <data name="MsSql.Settings.TrustServerCertificate" xml:space="preserve">
+    <value>信任服务器证书</value>
+  </data>
+  <data name="MsSql.Settings.Language" xml:space="preserve">
+    <value>会话语言</value>
+  </data>
+  <data name="MsSql.Settings.ServerCertificate" xml:space="preserve">
+    <value>服务器证书</value>
+  </data>
+  <data name="MsSql.Settings.HostNameInCertificate" xml:space="preserve">
+    <value>证书主机名</value>
+  </data>
+  <data name="MsSql.Settings.Enlist" xml:space="preserve">
+    <value>事务登记</value>
+  </data>
+  <data name="MsSql.Settings.Replication" xml:space="preserve">
+    <value>启用副本</value>
+  </data>
+  <data name="MsSql.Settings.Timeout" xml:space="preserve">
+    <value>超时时长</value>
+  </data>
+  <data name="MsSql.Settings.LoadBalanceTimeout" xml:space="preserve">
+    <value>负载均衡超时</value>
+  </data>
+  <data name="MsSql.Settings.ConnectRetryCount" xml:space="preserve">
+    <value>连接重试次数</value>
+  </data>
+  <data name="MsSql.Settings.ConnectRetryInterval" xml:space="preserve">
+    <value>连接重试间隔</value>
+  </data>
+  <data name="MsSql.Settings.Pooling" xml:space="preserve">
+    <value>启用连接池</value>
+  </data>
+  <data name="MsSql.Settings.MaximumPoolSize" xml:space="preserve">
+    <value>最大池量</value>
+  </data>
+  <data name="MsSql.Settings.MinimumPoolSize" xml:space="preserve">
+    <value>最小池量</value>
+  </data>
+  <data name="MsSql.Settings.MultipleActiveResultSets" xml:space="preserve">
+    <value>多活动结果集</value>
+  </data>
+  <data name="MsSql.Settings.WorkstationId" xml:space="preserve">
+    <value>工作站标识</value>
+  </data>
+</root>

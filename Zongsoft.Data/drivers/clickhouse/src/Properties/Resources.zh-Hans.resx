@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ClickHouse.Settings.Server" xml:space="preserve">
+    <value>服务地址</value>
+  </data>
+  <data name="ClickHouse.Settings.Port" xml:space="preserve">
+    <value>端口号</value>
+  </data>
+  <data name="ClickHouse.Settings.Path" xml:space="preserve">
+    <value>服务路径</value>
+  </data>
+  <data name="ClickHouse.Settings.Protocol" xml:space="preserve">
+    <value>连接协议</value>
+  </data>
+  <data name="ClickHouse.Settings.Database" xml:space="preserve">
+    <value>数据库名</value>
+  </data>
+  <data name="ClickHouse.Settings.UserName" xml:space="preserve">
+    <value>用户名称</value>
+  </data>
+  <data name="ClickHouse.Settings.Password" xml:space="preserve">
+    <value>用户密码</value>
+  </data>
+  <data name="ClickHouse.Settings.Compression" xml:space="preserve">
+    <value>启用压缩</value>
+  </data>
+  <data name="ClickHouse.Settings.UseSession" xml:space="preserve">
+    <value>启用会话</value>
+  </data>
+  <data name="ClickHouse.Settings.SessionId" xml:space="preserve">
+    <value>会话标识</value>
+  </data>
+  <data name="ClickHouse.Settings.Timeout" xml:space="preserve">
+    <value>超时时长</value>
+  </data>
+  <data name="ClickHouse.Settings.UseServerTimezone" xml:space="preserve">
+    <value>使用服务器时区</value>
+  </data>
+  <data name="ClickHouse.Settings.UseCustomDecimals" xml:space="preserve">
+    <value>使用自定义小数</value>
+  </data>
+</root>

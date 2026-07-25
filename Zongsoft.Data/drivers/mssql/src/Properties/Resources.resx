@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="MsSql.Settings.Server" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="MsSql.Settings.Client" xml:space="preserve">
+    <value>Client</value>
+  </data>
+  <data name="MsSql.Settings.Database" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="MsSql.Settings.UserName" xml:space="preserve">
+    <value>User Name</value>
+  </data>
+  <data name="MsSql.Settings.Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="MsSql.Settings.IntegratedSecurity" xml:space="preserve">
+    <value>Integrated Security</value>
+  </data>
+  <data name="MsSql.Settings.TrustServerCertificate" xml:space="preserve">
+    <value>Trust Server Certificate</value>
+  </data>
+  <data name="MsSql.Settings.Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="MsSql.Settings.ServerCertificate" xml:space="preserve">
+    <value>Server Certificate</value>
+  </data>
+  <data name="MsSql.Settings.HostNameInCertificate" xml:space="preserve">
+    <value>Host Name in Certificate</value>
+  </data>
+  <data name="MsSql.Settings.Enlist" xml:space="preserve">
+    <value>Enlist</value>
+  </data>
+  <data name="MsSql.Settings.Replication" xml:space="preserve">
+    <value>Replication</value>
+  </data>
+  <data name="MsSql.Settings.Timeout" xml:space="preserve">
+    <value>Timeout</value>
+  </data>
+  <data name="MsSql.Settings.LoadBalanceTimeout" xml:space="preserve">
+    <value>Load Balance Timeout</value>
+  </data>
+  <data name="MsSql.Settings.ConnectRetryCount" xml:space="preserve">
+    <value>Connect Retry Count</value>
+  </data>
+  <data name="MsSql.Settings.ConnectRetryInterval" xml:space="preserve">
+    <value>Connect Retry Interval</value>
+  </data>
+  <data name="MsSql.Settings.Pooling" xml:space="preserve">
+    <value>Pooling</value>
+  </data>
+  <data name="MsSql.Settings.MaximumPoolSize" xml:space="preserve">
+    <value>Maximum Pool Size</value>
+  </data>
+  <data name="MsSql.Settings.MinimumPoolSize" xml:space="preserve">
+    <value>Minimum Pool Size</value>
+  </data>
+  <data name="MsSql.Settings.MultipleActiveResultSets" xml:space="preserve">
+    <value>Multiple Active Result Sets</value>
+  </data>
+  <data name="MsSql.Settings.WorkstationId" xml:space="preserve">
+    <value>Workstation ID</value>
+  </data>
+</root>

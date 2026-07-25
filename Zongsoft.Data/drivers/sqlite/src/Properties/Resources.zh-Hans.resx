@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SQLite.Settings.Database" xml:space="preserve">
+    <value>数据库文件</value>
+  </data>
+  <data name="SQLite.Settings.Password" xml:space="preserve">
+    <value>数据库密码</value>
+  </data>
+  <data name="SQLite.Settings.Mode" xml:space="preserve">
+    <value>打开模式</value>
+  </data>
+  <data name="SQLite.Settings.Cache" xml:space="preserve">
+    <value>缓存模式</value>
+  </data>
+  <data name="SQLite.Settings.ForeignKeys" xml:space="preserve">
+    <value>启用外键</value>
+  </data>
+  <data name="SQLite.Settings.RecursiveTriggers" xml:space="preserve">
+    <value>启用递归触发器</value>
+  </data>
+  <data name="SQLite.Settings.Timeout" xml:space="preserve">
+    <value>超时时长</value>
+  </data>
+  <data name="SQLite.Settings.Pooling" xml:space="preserve">
+    <value>启用连接池</value>
+  </data>
+</root>
