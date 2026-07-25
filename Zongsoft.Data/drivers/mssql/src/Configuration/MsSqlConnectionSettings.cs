@@ -96,6 +96,15 @@ public sealed class MsSqlConnectionSettings : ConnectionSettingsBase<MsSqlConnec
 		set => this.SetValue(value);
 	}
 
+	[Category("Connection")]
+	[DefaultValue(false)]
+	[Alias(nameof(SqlConnectionStringBuilder.TrustServerCertificate))]
+	public bool TrustServerCertificate
+	{
+		get => this.GetValue<bool>();
+		set => this.SetValue(value);
+	}
+
 	[Category("Other")]
 	[Alias(nameof(SqlConnectionStringBuilder.CurrentLanguage))]
 	public string Language

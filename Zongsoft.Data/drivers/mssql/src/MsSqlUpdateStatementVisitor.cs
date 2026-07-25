@@ -60,7 +60,8 @@ public class MsSqlUpdateStatementVisitor : UpdateStatementVisitor
 	protected override void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
 	{
 		//生成OUTPUT(RETURNING)子句
-		this.VisitReturning(context, statement.Returning);
+		if(statement.Returning != null)
+			this.VisitReturning(context, statement.Returning);
 
 		//调用基类同名方法
 		base.VisitFrom(context, statement, sources);

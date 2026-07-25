@@ -48,9 +48,11 @@ public class MsSqlSelectStatementVisitor : SelectStatementVisitor
 	protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 	{
 		//由于分页子句必须依赖于排序(OrderBy)子句，所以在没有指定排序子句的情况下默认以主键进行排序
-		if(statement.Paging != null && statement.Paging.IsLimited() && statement.OrderBy == null && statement.Table != null)
+		if(statement.Paging != null && (statement.Paging.IsPaged() || statement.Paging.IsLimited()) &&
+		   (statement.OrderBy == null || statement.OrderBy.Members.Count == 0) &&
+		   statement.Table != null)
 		{
-			statement.OrderBy = new OrderByClause();
+			statement.OrderBy ??= new OrderByClause();
 
 			foreach(var key in statement.Table.Entity.Key)
 				statement.OrderBy.Add(statement.Table.CreateField(key));
@@ -63,7 +65,7 @@ public class MsSqlSelectStatementVisitor : SelectStatementVisitor
 		{
 			if(statement.Paging.IsPaged(out var index, out var size))
 				this.VisitPage(context, index, size);
-			if(statement.Paging.IsLimited(out var count, out var offset))
+			else if(statement.Paging.IsLimited(out var count, out var offset))
 				this.VisitLimit(context, count, offset);
 		}
 	}

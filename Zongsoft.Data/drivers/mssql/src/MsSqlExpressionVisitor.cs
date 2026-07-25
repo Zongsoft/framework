@@ -148,9 +148,9 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 		public string GetIdentifier(IIdentifier identifier)
 		{
 			if(identifier is TableDefinition tableDefinition && tableDefinition.IsTemporary)
-				return "#" + tableDefinition.Name;
+				return "##" + tableDefinition.Name;
 			if(identifier is TableIdentifier tableIdentifier && tableIdentifier.IsTemporary)
-				return "#" + tableIdentifier.Name;
+				return "##" + tableIdentifier.Name;
 
 			return this.GetIdentifier(identifier.Name);
 		}
@@ -189,6 +189,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 			DbType.Single => $"float({precision},{scale})",
 			DbType.VarNumeric => $"numeric({precision},{scale})",
 			DbType.Xml => "xml",
+			DbType.Object when type.Name.Equals("text", StringComparison.OrdinalIgnoreCase) => "nvarchar(MAX)",
 			DbType.Object => "sql_variant",
 			_ => throw new DataException($"Unsupported '{type}' data type."),
 		};
@@ -244,7 +245,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 		protected override void OnVisit(ExpressionVisitorContext context, TableDefinition statement)
 		{
 			if(statement.IsTemporary)
-				context.WriteLine($"CREATE TABLE #{statement.Name} (");
+				context.WriteLine($"CREATE TABLE ##{statement.Name} (");
 			else
 				context.WriteLine($"CREATE TABLE {statement.Name} (");
 

@@ -46,10 +46,97 @@ public class MsSqlInsertStatementVisitor : InsertStatementVisitor
 	#endregion
 
 	#region 重写方法
+	protected override void OnVisit(ExpressionVisitorContext context, InsertStatement statement)
+	{
+		if(!statement.Options.ConstraintIgnored)
+		{
+			base.OnVisit(context, statement);
+			return;
+		}
+
+		const string TARGET_ALIAS = "T";
+		const string SOURCE_ALIAS = "SRC";
+
+		if(statement.Fields == null || statement.Fields.Count == 0)
+			throw new DataException("Missing required fields in the insert statment.");
+		if(!statement.Entity.HasKey)
+			throw new DataException($"The '{statement.Entity.Name}' entity must have a key to ignore insert conflicts.");
+
+		context.Write("MERGE INTO ");
+		context.Visit(statement.Table);
+		context.WriteLine(" AS " + TARGET_ALIAS);
+		context.WriteLine("USING (VALUES");
+
+		for(int i = 0; i < statement.Values.Count; i++)
+		{
+			if(i > 0)
+				context.Write(",");
+
+			if(i % statement.Fields.Count == 0)
+				context.Write("(");
+
+			context.Visit(statement.Values[i]);
+
+			if(i % statement.Fields.Count == statement.Fields.Count - 1)
+				context.Write(")");
+		}
+
+		context.WriteLine(") AS " + SOURCE_ALIAS + " (");
+
+		for(int i = 0; i < statement.Fields.Count; i++)
+		{
+			if(i > 0)
+				context.Write(",");
+
+			context.Write(context.Dialect.GetIdentifier(statement.Fields[i].Name));
+		}
+
+		context.WriteLine(") ON");
+
+		for(int i = 0; i < statement.Entity.Key.Length; i++)
+		{
+			var field = Metadata.DataEntityPropertyExtension.GetFieldName(statement.Entity.Key[i], out _);
+
+			if(i > 0)
+				context.Write(" AND ");
+
+			context.Write($"{TARGET_ALIAS}.[{field}]={SOURCE_ALIAS}.[{field}]");
+		}
+
+		context.WriteLine();
+		context.WriteLine("WHEN NOT MATCHED THEN");
+		context.Write("\tINSERT (");
+
+		for(int i = 0; i < statement.Fields.Count; i++)
+		{
+			if(i > 0)
+				context.Write(",");
+
+			context.Write(context.Dialect.GetIdentifier(statement.Fields[i]));
+		}
+
+		context.Write(") VALUES (");
+
+		for(int i = 0; i < statement.Fields.Count; i++)
+		{
+			if(i > 0)
+				context.Write(",");
+
+			context.Write(SOURCE_ALIAS + ".");
+			context.Write(context.Dialect.GetIdentifier(statement.Fields[i].Name));
+		}
+
+		context.Write(")");
+
+		if(statement.Returning != null)
+			this.VisitReturning(context, statement.Returning);
+	}
+
 	protected override void VisitValues(ExpressionVisitorContext context, InsertStatement statement, ICollection<IExpression> values, int rounds)
 	{
 		//生成OUTPUT(RETURNING)子句
-		this.VisitReturning(context, statement.Returning);
+		if(statement.Returning != null)
+			this.VisitReturning(context, statement.Returning);
 
 		//调用基类同名方法
 		base.VisitValues(context, statement, values, rounds);

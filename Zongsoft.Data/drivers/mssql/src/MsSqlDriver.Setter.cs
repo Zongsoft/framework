@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.MsSql library.
  *
@@ -28,35 +28,42 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 
 using Zongsoft.Data.Common;
-using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MsSql;
 
-public class MsSqlDeleteStatementVisitor : DeleteStatementVisitor
+partial class MsSqlDriver
 {
-	#region 单例字段
-	public static readonly MsSqlDeleteStatementVisitor Instance = new();
-	#endregion
-
-	#region 构造函数
-	private MsSqlDeleteStatementVisitor() { }
-	#endregion
-
-	#region 重写方法
-	protected override void VisitFrom(ExpressionVisitorContext context, DeleteStatement statement, ICollection<ISource> sources)
+	private sealed class MsSqlSetter : IDataParameterSetter
 	{
-		//生成OUTPUT(RETURNING)子句
-		if(statement.Returning != null)
-			this.VisitReturning(context, statement.Returning);
+		public void SetValue(DbParameter parameter, object value, DataType type = null)
+		{
+			var dbType = type == null ? parameter.DbType : type.DbType;
 
-		//调用基类同名方法
-		base.VisitFrom(context, statement, sources);
+			if(dbType == DbType.Object && type != null && type.Name.Equals("text", StringComparison.OrdinalIgnoreCase))
+				dbType = DbType.String;
+
+			dbType = dbType switch
+			{
+				DbType.SByte => DbType.Byte,
+				DbType.UInt16 => DbType.Int16,
+				DbType.UInt32 => DbType.Int32,
+				DbType.UInt64 => DbType.Int64,
+				_ => dbType,
+			};
+
+			parameter.DbType = dbType;
+
+			if(value == null || Convert.IsDBNull(value))
+			{
+				parameter.Value = DBNull.Value;
+				return;
+			}
+
+			parameter.Value = Zongsoft.Common.Convert.ConvertValue(value, DataUtility.AsType(dbType));
+		}
 	}
-
-	protected override void OnVisited(ExpressionVisitorContext context, DeleteStatement statement) => context.WriteLine(";");
-	protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause) => context.WriteLine(" OUTPUT");
-	#endregion
 }

@@ -47,6 +47,7 @@ public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 	#region 重写方法
 	protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 	{
+		const string TARGET_ALIAS = "T";
 		const string SOURCE_ALIAS = "SRC";
 
 		if(statement.Fields == null || statement.Fields.Count == 0)
@@ -54,15 +55,21 @@ public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 
 		context.Write("MERGE INTO ");
 		context.Visit(statement.Table);
-		//visitor.Output.Append(" AS " + TARGET_ALIAS);
-		context.WriteLine(" USING (SELECT ");
+		context.WriteLine(" AS " + TARGET_ALIAS);
+		context.WriteLine("USING (VALUES");
 
 		for(int i = 0; i < statement.Values.Count; i++)
 		{
 			if(i > 0)
 				context.Write(",");
 
+			if(i % statement.Fields.Count == 0)
+				context.Write("(");
+
 			context.Visit(statement.Values[i]);
+
+			if(i % statement.Fields.Count == statement.Fields.Count - 1)
+				context.Write(")");
 		}
 
 		context.WriteLine(") AS " + SOURCE_ALIAS + " (");
@@ -84,10 +91,7 @@ public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 			if(i > 0)
 				context.Write(" AND ");
 
-			if(string.IsNullOrEmpty(statement.Table.Alias))
-				context.Write($"[{field}]={SOURCE_ALIAS}.[{field}]");
-			else
-				context.Write($"{statement.Table.Alias}.[{field}]={SOURCE_ALIAS}.[{field}]");
+			context.Write($"{TARGET_ALIAS}.[{field}]={SOURCE_ALIAS}.[{field}]");
 		}
 
 		if(statement.Updation.Count > 0)
@@ -111,7 +115,7 @@ public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 				if(index++ > 0)
 					context.Write(",");
 
-				context.Visit(item.Field);
+				context.Write(context.Dialect.GetIdentifier(item.Field));
 				context.Write("=");
 
 				var parenthesisRequired = item.Value is IStatementBase;
@@ -119,10 +123,38 @@ public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 				if(parenthesisRequired)
 					context.Write("(");
 
-				context.Visit(item.Value);
+				if(item.Value != null)
+					context.Visit(item.Value);
+				else
+				{
+					context.Write(SOURCE_ALIAS + ".");
+					context.Write(context.Dialect.GetIdentifier(item.Field.Name));
+				}
 
 				if(parenthesisRequired)
 					context.Write(")");
+			}
+		}
+		else
+		{
+			var index = 0;
+
+			foreach(var field in statement.Fields)
+			{
+				if(field.Token.Property is Metadata.IDataEntitySimplexProperty simplex && simplex.Sequence != null)
+					continue;
+
+				if(index++ == 0)
+				{
+					context.WriteLine();
+					context.WriteLine("WHEN MATCHED THEN");
+					context.Write("\tUPDATE SET ");
+				}
+				else
+					context.Write(",");
+
+				var fieldName = context.Dialect.GetIdentifier(field.Name);
+				context.Write($"{fieldName}={SOURCE_ALIAS}.{fieldName}");
 			}
 		}
 
@@ -151,7 +183,8 @@ public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 		context.Write(")");
 
 		//生成OUTPUT(RETURNING)子句
-		this.VisitReturning(context, statement.Returning);
+		if(statement.Returning != null)
+			this.VisitReturning(context, statement.Returning);
 
 		context.WriteLine(";");
 	}

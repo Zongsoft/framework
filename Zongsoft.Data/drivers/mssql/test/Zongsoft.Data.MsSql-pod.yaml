@@ -77,6 +77,10 @@ data:
       EXEC(N'CREATE DATABASE [zongsoft]');
     GO
 
+    /* 使用行版本控制，避免读取器等待尚未完成的写事务 */
+    ALTER DATABASE [zongsoft] SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+    GO
+
     /* 创建测试登录 */
     IF SUSER_ID(N'program') IS NULL
     BEGIN

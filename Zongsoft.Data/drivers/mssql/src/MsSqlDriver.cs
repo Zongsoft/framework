@@ -38,7 +38,7 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MsSql;
 
-public class MsSqlDriver : DataDriverBase
+public partial class MsSqlDriver : DataDriverBase
 {
 	#region 公共常量
 	/// <summary>驱动程序的标识：MsSql。</summary>
@@ -53,6 +53,7 @@ public class MsSqlDriver : DataDriverBase
 	private MsSqlDriver()
 	{
 		this.Features.Add(Feature.Returning);
+		this.Setter = new MsSqlSetter();
 	}
 	#endregion
 
@@ -86,8 +87,10 @@ public class MsSqlDriver : DataDriverBase
 		CommandType = commandType,
 	};
 
-	public override DbConnection CreateConnection(string connectionString = null) => new SqlConnection(connectionString);
-	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqlConnectionStringBuilder(connectionString);
+	public override DbConnection CreateConnection(string connectionString = null) =>
+		new SqlConnection(Configuration.MsSqlConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions().ConnectionString);
+	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
+		Configuration.MsSqlConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
 	#endregion
 
 	#region 保护方法
@@ -95,12 +98,15 @@ public class MsSqlDriver : DataDriverBase
 	protected override ExpressionVisitorBase CreateVisitor() => new MsSqlExpressionVisitor();
 	protected override void SetParameter(DbParameter parameter, ParameterExpression expression)
 	{
+		base.SetParameter(parameter, expression);
+
 		parameter.DbType = expression.Type.DbType switch
 		{
 			DbType.SByte => DbType.Byte,
 			DbType.UInt16 => DbType.Int16,
 			DbType.UInt32 => DbType.Int32,
 			DbType.UInt64 => DbType.Int64,
+			DbType.Object when expression.Type.Name.Equals("text", StringComparison.OrdinalIgnoreCase) => DbType.String,
 			_ => expression.Type,
 		};
 
