@@ -121,8 +121,10 @@ public class MySqlDriver : DataDriverBase
 		CommandType = commandType,
 	};
 
-	public override DbConnection CreateConnection(string connectionString = null) => new MySqlConnection(connectionString);
-	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new MySqlConnectionStringBuilder(connectionString);
+	public override DbConnection CreateConnection(string connectionString = null) =>
+		new MySqlConnection(Configuration.MySqlConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions().ConnectionString);
+	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
+		Configuration.MySqlConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
 	#endregion
 
 	#region 保护方法

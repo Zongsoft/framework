@@ -87,7 +87,8 @@ public partial class SQLiteDriver : DataDriverBase
 	};
 
 	public override DbConnection CreateConnection(string connectionString = null) => new SqliteConnector(connectionString);
-	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new SqliteConnectionStringBuilder(connectionString);
+	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
+		Configuration.SQLiteConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
 	#endregion
 
 	#region 保护方法

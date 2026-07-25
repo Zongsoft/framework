@@ -82,8 +82,10 @@ public partial class DuckDBDriver : DataDriverBase
 		CommandType = commandType,
 	};
 
-	public override DbConnection CreateConnection(string connectionString = null) => new DuckDBConnectionAdapter(connectionString);
-	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new DuckDBConnectionStringBuilder() { ConnectionString = connectionString };
+	public override DbConnection CreateConnection(string connectionString = null) =>
+		new DuckDBConnectionAdapter(Configuration.DuckDBConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions().ConnectionString);
+	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
+		Configuration.DuckDBConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
 	#endregion
 
 	#region 保护方法

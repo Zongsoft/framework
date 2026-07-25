@@ -72,7 +72,8 @@ public class InfluxDriver : DataDriverBase
 		CommandType = commandType,
 	};
 
-	public override DbConnection CreateConnection(string connectionString = null) => new Common.InfluxConnection(connectionString ?? string.Empty);
+	public override DbConnection CreateConnection(string connectionString = null) =>
+		new Common.InfluxConnection(Configuration.InfluxConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions().ConnectionString);
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
 		Configuration.InfluxConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
 	#endregion

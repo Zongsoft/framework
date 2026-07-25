@@ -77,8 +77,10 @@ public class ClickHouseDriver : DataDriverBase
 	public override DbCommand CreateCommand() => new ClickHouseCommand();
 	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new ClickHouseCommand { CommandText = text, CommandType = commandType };
 
-	public override DbConnection CreateConnection(string connectionString = null) => new ClickHouseConnection(connectionString);
-	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new ClickHouseConnectionStringBuilder(connectionString);
+	public override DbConnection CreateConnection(string connectionString = null) =>
+		new ClickHouseConnection(Configuration.ClickHouseConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions().ConnectionString);
+	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
+		Configuration.ClickHouseConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
 	#endregion
 
 	#region 保护方法

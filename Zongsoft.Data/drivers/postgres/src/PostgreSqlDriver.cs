@@ -122,8 +122,10 @@ public partial class PostgreSqlDriver : DataDriverBase
 		CommandType = commandType,
 	};
 
-	public override DbConnection CreateConnection(string connectionString = null) => new NpgsqlConnection(connectionString);
-	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new NpgsqlConnectionStringBuilder(connectionString);
+	public override DbConnection CreateConnection(string connectionString = null) =>
+		new NpgsqlConnection(Configuration.PostgreSqlConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions().ConnectionString);
+	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
+		Configuration.PostgreSqlConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();
 	#endregion
 
 	#region 保护方法
