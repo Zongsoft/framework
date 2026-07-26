@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: zongsoft.data
+  name: zongsoft.data.mysql
   labels:
-    app: zongsoft.data
+    app: zongsoft.data.mysql
 spec:
   volumes:
     - name: mysql-config-volume
