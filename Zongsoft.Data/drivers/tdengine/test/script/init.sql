@@ -1,8 +1,7 @@
 CREATE DATABASE IF NOT EXISTS zongsoft;
-
-/*
- * 注意：TDengine 初始化脚本内的SQL语句不支持换行！
- */
-
 CREATE STABLE IF NOT EXISTS zongsoft.`GatewayHistory`(`Timestamp` timestamp, `Value` double, `Text` varchar(100), `FailureCode` int, `FailureMessage` nchar(500)) TAGS (`GatewayId` int unsigned, `MetricId` bigint unsigned);
 CREATE STABLE IF NOT EXISTS zongsoft.`DeviceHistory`(`Timestamp` timestamp, `Value` double, `Text` varchar(100), `FailureCode` int, `FailureMessage` nchar(500)) TAGS (`DeviceId` bigint unsigned, `MetricId` bigint unsigned);
+CREATE STABLE IF NOT EXISTS zongsoft.`PowerMeterReading`(`Timestamp` timestamp, `Current` float, `Voltage` int, `Phase` float) TAGS (`MeterId` varchar(32), `Location` varchar(64), `GroupId` int);
+CREATE STABLE IF NOT EXISTS zongsoft.`VehicleTelemetry`(`Timestamp` timestamp, `Longitude` double, `Latitude` double, `Altitude` int, `Direction` int, `Speed` int) TAGS (`PlateNumber` varchar(20), `Model` varchar(32), `Vin` varchar(32));
+CREATE STABLE IF NOT EXISTS zongsoft.`EnvironmentObservation`(`Timestamp` timestamp, `Temperature` float, `Humidity` float, `WindDirection` smallint, `WindSpeed` float, `Raining` bool, `Description` nchar(100)) TAGS (`StationCode` varchar(32), `Region` nchar(64));
+CREATE STABLE IF NOT EXISTS zongsoft.`MotorWaveform`(`Timestamp` timestamp, `Values` varchar(16000), `SampleRate` int, `Length` int, `Ratio` int) TAGS (`LineId` varchar(20), `SiteId` varchar(20), `ElevatorCode` varchar(20), `MeasuringId` varchar(20));

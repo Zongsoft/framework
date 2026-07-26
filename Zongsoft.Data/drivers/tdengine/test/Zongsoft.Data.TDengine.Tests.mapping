@@ -29,5 +29,67 @@
 			<property name="FailureMessage" type="nvarchar" length="500" nullable="true" />
 			<property name="Timestamp" type="timestamp" nullable="false" default="now()" />
 		</entity>
+
+		<entity name="PowerMeterReading" table="PowerMeterReading" driver="TDengine">
+			<key>
+				<member name="Timestamp"/>
+			</key>
+
+			<property name="MeterId" type="varchar" length="32" nullable="false" hint="tag" />
+			<property name="Location" type="varchar" length="64" nullable="false" hint="tag" />
+			<property name="GroupId" type="int" nullable="false" hint="tag" />
+			<property name="Current" type="float" nullable="false" />
+			<property name="Voltage" type="int" nullable="false" />
+			<property name="Phase" type="float" nullable="false" />
+			<property name="Timestamp" type="timestamp" nullable="false" />
+		</entity>
+
+		<entity name="VehicleTelemetry" table="VehicleTelemetry" driver="TDengine">
+			<key>
+				<member name="Timestamp"/>
+			</key>
+
+			<property name="PlateNumber" type="varchar" length="20" nullable="false" hint="tag" />
+			<property name="Model" type="varchar" length="32" nullable="false" hint="tag" />
+			<property name="Vin" type="varchar" length="32" nullable="false" hint="tag" />
+			<property name="Longitude" type="double" nullable="false" />
+			<property name="Latitude" type="double" nullable="false" />
+			<property name="Altitude" type="int" nullable="true" />
+			<property name="Direction" type="int" nullable="false" />
+			<property name="Speed" type="int" nullable="false" />
+			<property name="Timestamp" type="timestamp" nullable="false" />
+		</entity>
+
+		<entity name="EnvironmentObservation" table="EnvironmentObservation" driver="TDengine">
+			<key>
+				<member name="Timestamp"/>
+			</key>
+
+			<property name="StationCode" type="varchar" length="32" nullable="false" hint="tag" />
+			<property name="Region" type="nvarchar" length="64" nullable="false" hint="tag" />
+			<property name="Temperature" type="float" nullable="true" />
+			<property name="Humidity" type="float" nullable="true" />
+			<property name="WindDirection" type="short" nullable="true" />
+			<property name="WindSpeed" type="float" nullable="true" />
+			<property name="Raining" type="bool" nullable="false" />
+			<property name="Description" type="nvarchar" length="100" nullable="true" />
+			<property name="Timestamp" type="timestamp" nullable="false" />
+		</entity>
+
+		<entity name="MotorWaveform" table="MotorWaveform" driver="TDengine">
+			<key>
+				<member name="Timestamp"/>
+			</key>
+
+			<property name="LineId" type="varchar" length="20" nullable="false" hint="tag" />
+			<property name="SiteId" type="varchar" length="20" nullable="false" hint="tag" />
+			<property name="ElevatorCode" type="varchar" length="20" nullable="false" hint="tag" />
+			<property name="MeasuringId" type="varchar" length="20" nullable="false" hint="tag" />
+			<property name="Values" type="varchar" length="16000" nullable="false" />
+			<property name="SampleRate" type="int" nullable="false" />
+			<property name="Length" type="int" nullable="false" />
+			<property name="Ratio" type="int" nullable="false" />
+			<property name="Timestamp" type="timestamp" nullable="false" />
+		</entity>
 	</container>
 </schema>

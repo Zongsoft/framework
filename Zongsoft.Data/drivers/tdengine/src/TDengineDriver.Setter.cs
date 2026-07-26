@@ -43,6 +43,13 @@ partial class TDengineDriver
 		{
 			var dbType = type == null ? parameter.DbType : type.DbType;
 
+			if(value == null || System.Convert.IsDBNull(value))
+			{
+				parameter.DbType = dbType;
+				parameter.Value = DBNull.Value;
+				return;
+			}
+
 			switch(dbType)
 			{
 				case DbType.DateTime:

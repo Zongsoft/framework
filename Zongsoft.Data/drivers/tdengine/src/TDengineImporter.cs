@@ -120,27 +120,18 @@ public class TDengineImporter : DataImporterBase
 		#region 公共方法
 		public long Execute(IStmt statement)
 		{
-			var chunk = 1;
 			var count = 0L;
 
-			statement.SetTableName(this.Name);
-			statement.SetTags(_tags);
-
-			for(int i = 0; i < _rows.Count; i++)
+			for(int index = 0; index < _rows.Count; index += CHUNK_SIZE)
 			{
-				statement.BindRow(_rows[i]);
+				statement.SetTableName(this.Name);
+				statement.SetTags(_tags);
 
-				if(i == (chunk * CHUNK_SIZE) - 1)
-				{
-					chunk++;
-					statement.AddBatch();
-					statement.Exec();
-					count += statement.Affected();
-				}
-			}
+				var length = Math.Min(CHUNK_SIZE, _rows.Count - index);
 
-			if(_rows.Count % CHUNK_SIZE > 0)
-			{
+				for(int offset = 0; offset < length; offset++)
+					statement.BindRow(_rows[index + offset]);
+
 				statement.AddBatch();
 				statement.Exec();
 				count += statement.Affected();
