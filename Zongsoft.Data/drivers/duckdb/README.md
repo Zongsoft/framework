@@ -13,3 +13,12 @@
 ## Overview
 
 [**Z**ongsoft.**D**ata.**D**uckDB](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/duckdb) is a low-level data engine driver in the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides access to [_**D**uckDB_](https://duckdb.org) and is transparent to upper-layer applications; deploy this plugin library to the application plugin directory to enable it.
+
+## Importer Implementation
+
+The DuckDB importer uses two writing strategies:
+
+1. For regular data types, it uses the [DuckDB.NET Appender](https://duckdb.net/docs/standard-appender.html) for bulk loading. The standard Appender requires values to match all physical table columns exactly in count, order, and type, while the Zongsoft data engine supports importing any selected subset of fields. The importer therefore creates a connection-local temporary table containing only the selected fields, bulk-appends the input rows to it, and then executes one `INSERT ... SELECT` statement to write them to the target table. This preserves field mapping and target-table defaults; when `IDataImportOptions.ConstraintIgnored` is enabled, the final statement uses `INSERT OR IGNORE`.
+2. For database-specific custom types represented by `DbType.Object`, the concrete DuckDB type cannot be determined safely at runtime for the Appender. The importer falls back to parameterized row-by-row `INSERT` statements so that DuckDB.NET can perform its normal parameter binding and conversion.
+
+Both strategies use an independent connection and do not enlist in an ambient Zongsoft data transaction. Their internal transaction only makes the current import batch atomic and ensures that a failed batch is rolled back completely.

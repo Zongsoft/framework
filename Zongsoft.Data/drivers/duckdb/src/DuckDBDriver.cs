@@ -28,8 +28,12 @@
  */
 
 using System;
+using System.IO;
 using System.Data;
 using System.Data.Common;
+using System.Collections;
+using System.Threading;
+using System.Threading.Tasks;
 
 using DuckDB.NET.Data;
 
@@ -94,6 +98,106 @@ public partial class DuckDBDriver : DataDriverBase
 	#endregion
 
 	#region 嵌套子类
+	private sealed class DuckDBCommandAdapter : DuckDBCommand
+	{
+		public DuckDBCommandAdapter() { }
+		public DuckDBCommandAdapter(string text) : base(text) { }
+
+		protected override DbParameter CreateDbParameter() => new Parameter();
+
+		public override object ExecuteScalar()
+		{
+			using var reader = base.ExecuteDbDataReader(CommandBehavior.SingleResult | CommandBehavior.SingleRow);
+			return reader.Read() && reader.FieldCount > 0 ? reader.GetValue(0) : null;
+		}
+
+		protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => new DataReader(base.ExecuteDbDataReader(behavior));
+
+		private sealed class Parameter : DuckDBParameter
+		{
+			public override string ParameterName
+			{
+				get => base.ParameterName;
+				set => base.ParameterName = string.IsNullOrEmpty(value) || value[0] is not ('@' or '$') ? value : value[1..];
+			}
+		}
+
+		private sealed class DataReader(DbDataReader reader) : DbDataReader
+		{
+			private readonly DbDataReader _reader = reader ?? throw new ArgumentNullException(nameof(reader));
+			private int _count;
+
+			public override object this[int ordinal] => _reader[ordinal];
+			public override object this[string name] => _reader[name];
+			public override int Depth => _reader.Depth;
+			public override int FieldCount => _reader.FieldCount;
+			public override bool HasRows => _reader.HasRows;
+			public override bool IsClosed => _reader.IsClosed;
+			public override int RecordsAffected => _reader.RecordsAffected < 0 ? _count : _reader.RecordsAffected;
+			public override int VisibleFieldCount => _reader.VisibleFieldCount;
+
+			public override bool GetBoolean(int ordinal) => _reader.GetBoolean(ordinal);
+			public override byte GetByte(int ordinal) => _reader.GetByte(ordinal);
+			public override long GetBytes(int ordinal, long offset, byte[] buffer, int bufferOffset, int length) => _reader.GetBytes(ordinal, offset, buffer, bufferOffset, length);
+			public override char GetChar(int ordinal) => _reader.GetChar(ordinal);
+			public override long GetChars(int ordinal, long offset, char[] buffer, int bufferOffset, int length) => _reader.GetChars(ordinal, offset, buffer, bufferOffset, length);
+			public override DateTime GetDateTime(int ordinal) => _reader.GetDateTime(ordinal);
+			public override decimal GetDecimal(int ordinal) => _reader.GetDecimal(ordinal);
+			public override double GetDouble(int ordinal) => _reader.GetDouble(ordinal);
+			public override float GetFloat(int ordinal) => _reader.GetFloat(ordinal);
+			public override Guid GetGuid(int ordinal) => _reader.GetGuid(ordinal);
+			public override short GetInt16(int ordinal) => _reader.GetInt16(ordinal);
+			public override int GetInt32(int ordinal) => _reader.GetInt32(ordinal);
+			public override long GetInt64(int ordinal) => _reader.GetInt64(ordinal);
+			public override string GetString(int ordinal) => _reader.GetString(ordinal);
+			public override Stream GetStream(int ordinal) => _reader.GetStream(ordinal);
+			public override object GetValue(int ordinal) => _reader.GetValue(ordinal);
+			public override int GetValues(object[] values) => _reader.GetValues(values);
+			public override string GetName(int ordinal) => _reader.GetName(ordinal);
+			public override int GetOrdinal(string name) => _reader.GetOrdinal(name);
+			public override string GetDataTypeName(int ordinal) => _reader.GetDataTypeName(ordinal);
+			public override Type GetFieldType(int ordinal) => _reader.GetFieldType(ordinal);
+			public override T GetFieldValue<T>(int ordinal) => _reader.GetFieldValue<T>(ordinal);
+			public override Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellation) => _reader.GetFieldValueAsync<T>(ordinal, cancellation);
+			public override TextReader GetTextReader(int ordinal) => _reader.GetTextReader(ordinal);
+			public override IEnumerator GetEnumerator() => new DbEnumerator(this, false);
+			public override DataTable GetSchemaTable() => _reader.GetSchemaTable();
+			public override bool IsDBNull(int ordinal) => _reader.IsDBNull(ordinal);
+			public override Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellation) => _reader.IsDBNullAsync(ordinal, cancellation);
+
+			public override bool NextResult() => _reader.NextResult();
+			public override Task<bool> NextResultAsync(CancellationToken cancellation) => _reader.NextResultAsync(cancellation);
+
+			public override bool Read()
+			{
+				if(!_reader.Read())
+					return false;
+
+				_count++;
+				return true;
+			}
+
+			public override async Task<bool> ReadAsync(CancellationToken cancellation)
+			{
+				if(!await _reader.ReadAsync(cancellation).ConfigureAwait(false))
+					return false;
+
+				_count++;
+				return true;
+			}
+
+			public override void Close() => _reader.Close();
+			public override Task CloseAsync() => _reader.CloseAsync();
+			protected override void Dispose(bool disposing)
+			{
+				if(disposing)
+					_reader.Dispose();
+
+				base.Dispose(disposing);
+			}
+		}
+	}
+
 	private sealed class DuckDBConnectionAdapter(string connectionString) : DuckDBConnection(connectionString)
 	{
 		//DuckDB仅支持单一事务隔离模式，其驱动不接受显式指定的ADO.NET隔离级别
