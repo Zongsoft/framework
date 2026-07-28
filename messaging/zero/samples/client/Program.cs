@@ -134,7 +134,7 @@ internal class Program
 			var count = Interlocked.Increment(ref _count);
 			var content = CommandOutletContent.Create()
 				.Append(CommandOutletColor.Cyan, "[Received]")
-				.Append(CommandOutletColor.DarkYellow, $"#{count + 1}")
+				.Append(CommandOutletColor.DarkYellow, $"#{count}")
 				.Append(CommandOutletColor.DarkCyan, " Topic:")
 				.AppendLine(CommandOutletColor.DarkGreen, message.Topic)
 				.AppendLine(CommandOutletColor.Gray, Encoding.UTF8.GetString(message.Data));
