@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.0.1</Version>
+		<Version>0.1.0</Version>
 		<Product>Zongsoft Data Driver for DuckDB</Product>
 		<Description>This is a data driver for DuckDB of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.DuckDB</RootNamespace>
@@ -35,8 +35,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.40.0" />
-				<PackageReference Include="Zongsoft.Data" VersionOverride="7.20.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.50.5" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="7.22.2" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
