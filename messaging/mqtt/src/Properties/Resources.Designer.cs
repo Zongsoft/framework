@@ -124,6 +124,15 @@ namespace Zongsoft.Messaging.Mqtt.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Reconnect Interval 的本地化字符串。
+        /// </summary>
+        internal static string Mqtt_Settings_ReconnectInterval {
+            get {
+                return ResourceManager.GetString("Mqtt.Settings.ReconnectInterval", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Server 的本地化字符串。
         /// </summary>
         internal static string Mqtt_Settings_Server {

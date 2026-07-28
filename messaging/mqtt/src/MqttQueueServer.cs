@@ -1,0 +1,194 @@
+/*
+ *   _____                                ______
+ *  /_   /  ____  ____  ____  _________  / __/ /_
+ *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
+ *   / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
+ *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
+ *                   /____/
+ *
+ * Authors:
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
+ *
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
+ *
+ * This file is part of Zongsoft.Messaging.Mqtt library.
+ *
+ * The Zongsoft.Messaging.Mqtt is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3.0 of the License,
+ * or (at your option) any later version.
+ *
+ * The Zongsoft.Messaging.Mqtt is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the Zongsoft.Messaging.Mqtt library. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Buffers;
+using System.Threading;
+using System.Threading.Tasks;
+
+using MQTTnet.Server;
+using MQTTnet.Diagnostics.Logger;
+
+using Zongsoft.Components;
+
+namespace Zongsoft.Messaging.Mqtt;
+
+public partial class MqttQueueServer : WorkerBase
+{
+	#region 常量定义
+	/// <summary>MQTT Broker 的默认侦听端口号。</summary>
+	public const ushort PORT = 1883;
+	#endregion
+
+	#region 成员字段
+	private ushort _port;
+	private MqttServer _server;
+	#endregion
+
+	#region 构造函数
+	public MqttQueueServer(string name = null) : base(name)
+	{
+		_port = PORT;
+		this.Channels = new ChannelCollection();
+		this.Sessions = new SessionCollection();
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置服务器侦听的端口号，默认值为：<see cref="PORT"/>。</summary>
+	public ushort Port
+	{
+		get => _port;
+		set
+		{
+			if(this.State != WorkerState.Stopped)
+				throw new InvalidOperationException();
+
+			_port = value > 0 ? value : PORT;
+		}
+	}
+
+	/// <summary>获取一个值，指示是否启用 MQTTnet 内部日志。</summary>
+	public bool Logable { get; set; }
+
+	/// <summary>获取当前连接到服务器的客户端通道集合。</summary>
+	public ChannelCollection Channels { get; }
+
+	/// <summary>获取服务器中的 MQTT 会话集合。</summary>
+	public SessionCollection Sessions { get; }
+	#endregion
+
+	#region 保护属性
+	/// <summary>获取当前运行的 MQTTnet Broker 实例。</summary>
+	protected MqttServer Server => _server;
+	#endregion
+
+	#region 公共方法
+	/// <summary>获取指定主题的 MQTT 保留消息。</summary>
+	/// <param name="topic">指定要获取的消息主题。</param>
+	/// <returns>返回对应的保留消息；如果主题为空、服务器未启动或保留消息不存在则返回空消息。</returns>
+	public async ValueTask<Message> GetRetainedMessageAsync(string topic = null)
+	{
+		if(string.IsNullOrEmpty(topic))
+			return default;
+
+		var server = _server;
+		if(server == null || !server.IsStarted)
+			return default;
+
+		var message = await server.GetRetainedMessageAsync(topic);
+		return message == null ? default : new Message(message.Topic, message.Payload.ToArray());
+	}
+
+	/// <summary>获取服务器中的所有 MQTT 保留消息。</summary>
+	/// <returns>返回转换后的保留消息数组；如果服务器未启动或没有保留消息则返回空数组。</returns>
+	public async ValueTask<Message[]> GetRetainedMessagesAsync()
+	{
+		var server = _server;
+		if(server == null || !server.IsStarted)
+			return [];
+
+		var messages = await server.GetRetainedMessagesAsync();
+		if(messages == null || messages.Count == 0)
+			return [];
+
+		var result = new Message[messages.Count];
+
+		for(int i = 0; i < messages.Count; i++)
+		{
+			var message = messages[i];
+			result[i] = message == null ? default : new Message(message.Topic, message.Payload.ToArray());
+		}
+
+		return result;
+	}
+	#endregion
+
+	#region 重写方法
+	protected override async Task OnStartAsync(string[] args, CancellationToken cancellation)
+	{
+		var factory = new MqttServerFactory(this.Logable ? MqttLogger.Instance : MqttNetNullLogger.Instance);
+		var options = factory.CreateServerOptionsBuilder()
+			.WithDefaultEndpoint()
+			.WithDefaultEndpointPort(_port)
+			.Build();
+
+		var server = factory.CreateMqttServer(options);
+
+		try
+		{
+			await server.StartAsync().WaitAsync(cancellation);
+			_server = server;
+			await this.Channels.BindAsync(server);
+			await this.Sessions.BindAsync(server);
+		}
+		catch
+		{
+			_server = null;
+			await this.Channels.BindAsync(null);
+			await this.Sessions.BindAsync(null);
+			server.Dispose();
+			throw;
+		}
+	}
+
+	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
+	{
+		var server = Interlocked.Exchange(ref _server, null);
+
+		await this.Channels.BindAsync(null);
+		await this.Sessions.BindAsync(null);
+
+		if(server == null)
+			return;
+
+		try
+		{
+			await server.StopAsync().WaitAsync(cancellation);
+		}
+		finally
+		{
+			server.Dispose();
+		}
+	}
+	#endregion
+
+	#region 处置方法
+	protected override void Dispose(bool disposing)
+	{
+		if(disposing)
+		{
+			base.Dispose(disposing);
+			this.Channels.BindAsync(null).GetAwaiter().GetResult();
+			this.Sessions.BindAsync(null).GetAwaiter().GetResult();
+			Interlocked.Exchange(ref _server, null)?.Dispose();
+		}
+	}
+	#endregion
+}

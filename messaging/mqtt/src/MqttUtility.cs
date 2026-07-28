@@ -30,7 +30,6 @@
 using System;
 
 using MQTTnet;
-using MQTTnet.Client;
 using MQTTnet.Protocol;
 
 namespace Zongsoft.Messaging.Mqtt;
@@ -44,4 +43,20 @@ internal static class MqttUtility
 		MessageReliability.ExactlyOnce => MqttQualityOfServiceLevel.ExactlyOnce,
 		_ => MqttQualityOfServiceLevel.AtMostOnce,
 	};
+
+	public static bool IsSuccessful(this MqttClientSubscribeResult result)
+	{
+		const int ERROR_CODE = 0x80; //MqttClientSubscribeResultCode.UnspecifiedError
+
+		if(result?.Items == null || result.Items.Count == 0)
+			return false;
+
+		foreach(var item in result.Items)
+		{
+			if((byte)item.ResultCode >= ERROR_CODE)
+				return false;
+		}
+
+		return true;
+	}
 }

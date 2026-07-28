@@ -32,7 +32,6 @@ using System.Text;
 using System.ComponentModel;
 
 using MQTTnet;
-using MQTTnet.Client;
 using MQTTnet.Formatter;
 
 using Zongsoft.Components;
@@ -91,6 +90,14 @@ public sealed class MqttConnectionSettings : ConnectionSettingsBase<MqttConnecti
 
 	[DefaultValue("60s")]
 	public TimeSpan Timeout
+	{
+		get => this.GetValue<TimeSpan>();
+		set => this.SetValue(value);
+	}
+
+	[DefaultValue("2s")]
+	[ConnectionSetting(Ignored = true)]
+	public TimeSpan ReconnectInterval
 	{
 		get => this.GetValue<TimeSpan>();
 		set => this.SetValue(value);

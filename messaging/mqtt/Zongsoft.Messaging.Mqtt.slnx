@@ -2,7 +2,8 @@
 	<Project Path="src/Zongsoft.Messaging.Mqtt.csproj" />
 	<Project Path="test/Zongsoft.Messaging.Mqtt.Tests.csproj" />
 
-	<Project Path="samples/Zongsoft.Messaging.Mqtt.Samples.csproj">
-		<BuildDependency Project="src/Zongsoft.Messaging.Mqtt.csproj" />
-	</Project>
+	<Folder Name="/samples/">
+		<Project Path="samples/client/Zongsoft.Messaging.Mqtt.Samples.Client.csproj" />
+		<Project Path="samples/server/Zongsoft.Messaging.Mqtt.Samples.Server.csproj" />
+	</Folder>
 </Solution>

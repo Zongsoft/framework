@@ -115,6 +115,9 @@
   <data name="Mqtt.Settings.Timeout" xml:space="preserve">
     <value>Timeout</value>
   </data>
+  <data name="Mqtt.Settings.ReconnectInterval" xml:space="preserve">
+    <value>Reconnect Interval</value>
+  </data>
   <data name="Mqtt.Settings.KeepAlive" xml:space="preserve">
     <value>KeepAlive</value>
   </data>

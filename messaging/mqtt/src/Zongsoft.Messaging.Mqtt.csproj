@@ -16,8 +16,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MQTTnet" VersionOverride="4.3.7.1207" />
-		<PackageReference Include="MQTTnet.Extensions.ManagedClient" VersionOverride="4.3.7.1207" />
+		<PackageReference Include="MQTTnet" VersionOverride="5.2.0.1603" />
+		<PackageReference Include="MQTTnet.Server" VersionOverride="5.2.0.1603" />
 	</ItemGroup>
 
 	<Choose>

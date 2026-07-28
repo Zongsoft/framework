@@ -32,7 +32,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using MQTTnet;
-using MQTTnet.Client;
 
 using Zongsoft.Components;
 
@@ -52,7 +51,7 @@ public class MqttSubscriber : MessageConsumerBase<MqttQueue>, IEquatable<MqttSub
 	#endregion
 
 	#region 取消订阅
-	protected override ValueTask OnCloseAsync(CancellationToken cancellation) => this.Queue.UnsubscribeAsync(this);
+	protected override ValueTask OnCloseAsync(CancellationToken cancellation) => this.Queue.UnsubscribeAsync(this, cancellation);
 	#endregion
 
 	#region 重写方法

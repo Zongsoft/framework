@@ -31,8 +31,8 @@ using System;
 
 using Zongsoft.Diagnostics;
 
-using MQTTnet.Client;
-using MQTTnet.Diagnostics;
+using MQTTnet;
+using MQTTnet.Diagnostics.Logger;
 
 namespace Zongsoft.Messaging.Mqtt;
 
