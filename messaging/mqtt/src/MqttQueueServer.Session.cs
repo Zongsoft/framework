@@ -28,10 +28,10 @@
  */
 
 using System;
-using System.Collections;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -65,7 +65,7 @@ public partial class MqttQueueServer
 		#region 公共方法
 		/// <summary>废弃并删除当前 MQTT 会话。</summary>
 		/// <returns>返回删除会话的异步任务。</returns>
-		public Task Abandon() => _status.DeleteAsync();
+		public ValueTask AbandonAsync() => new(_status.DeleteAsync());
 		#endregion
 
 		#region 内部方法

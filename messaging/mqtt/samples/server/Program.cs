@@ -1,10 +1,12 @@
 using System;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Terminals;
 using Zongsoft.Components;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Messaging.Mqtt.Samples;
 
@@ -12,7 +14,7 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var server = new MqttQueueServer();
+		using var server = new MqttQueueServer() { Handler = Handler.Instance };
 		await server.StartAsync([]);
 
 		var executor = Terminal.Console.Executor;
@@ -89,5 +91,27 @@ internal class Program
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
 
 		await executor.RunAsync(splash);
+	}
+
+	internal sealed class Handler : HandlerBase<Message>
+	{
+		#region 单例字段
+		public static readonly Handler Instance = new();
+		#endregion
+
+		#region 重写方法
+		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
+		{
+			var content = CommandOutletContent.Create()
+				.Append(CommandOutletColor.Cyan, "[Received]")
+				.Append(CommandOutletColor.DarkYellow, $" {message.Identity ?? "N/A"}")
+				.Append(CommandOutletColor.DarkCyan, " Topic:")
+				.AppendLine(CommandOutletColor.DarkGreen, message.Topic)
+				.AppendLine(CommandOutletColor.Gray, Encoding.UTF8.GetString(message.Data));
+
+			Terminal.Console.Executor.Output.Write(content);
+			return ValueTask.CompletedTask;
+		}
+		#endregion
 	}
 }

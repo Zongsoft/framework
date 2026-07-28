@@ -28,16 +28,16 @@
  */
 
 using System;
-using System.Collections;
 using System.Net;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-using MQTTnet.Formatter;
 using MQTTnet.Server;
+using MQTTnet.Formatter;
 
 using Zongsoft.Communication;
 

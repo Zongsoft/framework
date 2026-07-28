@@ -8,6 +8,7 @@ using MQTTnet;
 using MQTTnet.Server;
 
 using Zongsoft.Components;
+using Zongsoft.Communication;
 
 using Xunit;
 
@@ -142,7 +143,7 @@ public class MqttQueueServerTests
 				() => server.Sessions.Contains(client), TimeSpan.FromSeconds(5)));
 
 			var sessions = server.Sessions;
-			await sessions[client].Abandon();
+			await sessions[client].AbandonAsync();
 
 			Assert.True(await MqttTestUtility.WaitUntilAsync(
 				() => !server.Sessions.Contains(client), TimeSpan.FromSeconds(5)));
@@ -151,6 +152,32 @@ public class MqttQueueServerTests
 		{
 			queue.Dispose();
 		}
+	}
+
+	[Fact]
+	public async Task ServerImplementsListenerAndHandlesPublishedMessages()
+	{
+		var port = MqttTestUtility.GetFreePort();
+		using var server = new MqttQueueServer { Port = port };
+		var listener = Assert.IsAssignableFrom<IListener<Message>>(server);
+		var messages = new MqttMessageBuffer();
+		server.Handler = messages;
+
+		await server.StartAsync([]);
+		Assert.True(listener.IsListening);
+
+		using var queue = MqttTestUtility.CreateQueue(port, "server-listener");
+		var topic = $"tests/listener/{Guid.NewGuid():N}";
+		var payload = Encoding.UTF8.GetBytes("listener");
+		await queue.ProduceAsync(topic, payload);
+
+		var message = await messages.ReceiveAsync(TimeSpan.FromSeconds(5));
+		Assert.Equal(topic, message.Topic);
+		Assert.Equal(payload, message.Data);
+		Assert.Equal(queue.Settings.Client, message.Identity);
+
+		await server.StopAsync([]);
+		Assert.False(listener.IsListening);
 	}
 
 	private sealed class TestMqttQueueServer : MqttQueueServer

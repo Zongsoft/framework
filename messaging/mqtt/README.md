@@ -39,6 +39,7 @@ dotnet run --project messaging/mqtt/samples/server/Zongsoft.Messaging.Mqtt.Sampl
 ```
 
 The Broker starts automatically on port `1883`. Enter `info` at the interactive prompt to confirm its state and inspect connected channels and sessions.
+The sample also assigns an `IHandler<Message>` to the Broker, so every message published by a client is displayed in the Broker terminal.
 
 | Command | Description |
 | --- | --- |
@@ -115,6 +116,15 @@ if(!retained.IsEmpty)
 ```
 
 `ChannelCollection` and `SessionCollection` are keyed by ClientId/SessionId. The Broker keeps both long-lived collections synchronized as clients connect or disconnect and sessions are created or deleted; callers do not need to refresh them. `GetRetainedMessagesAsync()` returns an empty array when the Broker is stopped or has no retained messages. Querying an empty topic, a stopped server, or a topic without a retained message through `GetRetainedMessageAsync()` returns `Message.Empty`.
+
+`MqttQueueServer` derives from `ListenerBase<Message>`. Assign its `Handler` property to process every message entering the Broker:
+
+```csharp
+server.Handler = new MyMessageHandler();
+await server.StartAsync([]);
+```
+
+The received `Message.Identity` contains the MQTT ClientId and `Message.Topic` contains the published topic. If no handler is assigned, the server continues to operate as a regular MQTT Broker.
 
 ### Batch and concurrency verification
 

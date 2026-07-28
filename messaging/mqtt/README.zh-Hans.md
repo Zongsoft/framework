@@ -39,6 +39,7 @@ dotnet run --project messaging/mqtt/samples/server/Zongsoft.Messaging.Mqtt.Sampl
 ```
 
 Broker 会自动监听 `1883` 端口。在交互式命令行中输入 `info`，可以确认运行状态并查看当前客户端通道和会话。
+该范例还为 Broker 设置了一个 `IHandler<Message>`，因此客户端发布的每条消息都会显示在 Broker 终端中。
 
 | 命令 | 说明 |
 | --- | --- |
@@ -115,6 +116,15 @@ if(!retained.IsEmpty)
 ```
 
 `ChannelCollection` 和 `SessionCollection` 分别以 ClientId、SessionId 作为集合键。Broker 会在客户端连接、断开以及会话创建、删除时自动同步这两个长生命周期集合，调用方无需刷新集合。Broker 未启动或没有保留消息时，`GetRetainedMessagesAsync()` 返回空数组；通过 `GetRetainedMessageAsync()` 查询空主题、已停止的服务器或没有保留消息的主题时，返回 `Message.Empty`。
+
+`MqttQueueServer` 继承自 `ListenerBase<Message>`，可以通过设置 `Handler` 属性处理所有进入 Broker 的消息：
+
+```csharp
+server.Handler = new MyMessageHandler();
+await server.StartAsync([]);
+```
+
+接收到的 `Message.Identity` 为 MQTT ClientId，`Message.Topic` 为发布主题。未设置处理器时，服务器仍会作为普通 MQTT Broker 正常工作。
 
 ### 批量及并发验证
 

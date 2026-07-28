@@ -36,10 +36,11 @@ using MQTTnet.Server;
 using MQTTnet.Diagnostics.Logger;
 
 using Zongsoft.Components;
+using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging.Mqtt;
 
-public partial class MqttQueueServer : WorkerBase
+public partial class MqttQueueServer : ListenerBase<Message>
 {
 	#region 常量定义
 	/// <summary>MQTT Broker 的默认侦听端口号。</summary>
@@ -140,6 +141,7 @@ public partial class MqttQueueServer : WorkerBase
 			.Build();
 
 		var server = factory.CreateMqttServer(options);
+		server.InterceptingPublishAsync += this.OnMessageReceivedAsync;
 
 		try
 		{
@@ -151,6 +153,7 @@ public partial class MqttQueueServer : WorkerBase
 		catch
 		{
 			_server = null;
+			server.InterceptingPublishAsync -= this.OnMessageReceivedAsync;
 			await this.Channels.BindAsync(null);
 			await this.Sessions.BindAsync(null);
 			server.Dispose();
@@ -170,6 +173,7 @@ public partial class MqttQueueServer : WorkerBase
 
 		try
 		{
+			server.InterceptingPublishAsync -= this.OnMessageReceivedAsync;
 			await server.StopAsync().WaitAsync(cancellation);
 		}
 		finally
@@ -179,15 +183,53 @@ public partial class MqttQueueServer : WorkerBase
 	}
 	#endregion
 
+	#region 消息处理
+	private async Task OnMessageReceivedAsync(InterceptingPublishEventArgs args)
+	{
+		if(args?.ApplicationMessage == null)
+			return;
+
+		var message = new Message(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload.ToArray())
+		{
+			Identity = args.ClientId,
+		};
+
+		try
+		{
+			await this.OnHandleAsync(message, args.CancellationToken);
+		}
+		catch(OperationCanceledException) when(args.CancellationToken.IsCancellationRequested)
+		{
+		}
+		catch(Exception ex)
+		{
+			await Zongsoft.Diagnostics.Logging.GetLogging<MqttQueueServer>().ErrorAsync(ex);
+		}
+	}
+
+	protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation)
+	{
+		var handler = this.Handler;
+		return handler == null ? ValueTask.CompletedTask : handler.HandleAsync(message, cancellation);
+	}
+	#endregion
+
 	#region 处置方法
 	protected override void Dispose(bool disposing)
 	{
 		if(disposing)
 		{
+			this.Stop();
 			base.Dispose(disposing);
 			this.Channels.BindAsync(null).GetAwaiter().GetResult();
 			this.Sessions.BindAsync(null).GetAwaiter().GetResult();
-			Interlocked.Exchange(ref _server, null)?.Dispose();
+
+			var server = Interlocked.Exchange(ref _server, null);
+			if(server != null)
+			{
+				server.InterceptingPublishAsync -= this.OnMessageReceivedAsync;
+				server.Dispose();
+			}
 		}
 	}
 	#endregion
