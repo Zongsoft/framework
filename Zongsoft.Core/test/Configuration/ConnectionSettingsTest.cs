@@ -183,6 +183,8 @@ public class ConnectionSettingsTest
 		Assert.False(settings.Cluster.IsEmpty);
 		Assert.Equal("192.168.0.100", settings.Cluster.Address);
 		Assert.Equal(TimeSpan.FromSeconds(30), settings.Cluster.Heartbeat);
+		Assert.Equal("none", settings.Properties["a.b.c"]);
+		Assert.Equal("none", settings.Properties["nothing.property"]);
 	}
 
 	[Fact]

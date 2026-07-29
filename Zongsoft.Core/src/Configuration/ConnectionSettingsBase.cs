@@ -108,6 +108,8 @@ public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IRe
 	#endregion
 
 	#region 保护方法
+	protected virtual void OnUnrecognized(string name, string value) => _entries[name] = value;
+
 	protected virtual T GetValue<T>(ConnectionSettingDescriptor descriptor)
 	{
 		if(_entries.TryGetValue(descriptor.Name, out var text) && Common.Convert.TryConvertValue<T>(text, () => descriptor.Converter, out var value))
@@ -147,6 +149,67 @@ public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IRe
 
 		return false;
 	}
+	#endregion
+
+	#region 参数解析
+	protected override void OnValueChanged(string value)
+	{
+		if(string.IsNullOrEmpty(value))
+		{
+			_entries.Clear();
+			return;
+		}
+
+		var driver = this.GetDriver();
+		var parts = value.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+		for(int i = 0; i < parts.Length; i++)
+		{
+			var part = parts[i];
+			var index = part.IndexOf('=');
+
+			if(index < 0)
+			{
+				var key = part.Trim();
+
+				if(driver.Descriptors.TryGetValue(key, out var descriptor))
+					_entries[descriptor.Name] = null;
+				else
+					this.OnUnrecognized(key, null);
+			}
+			else if(index == part.Length - 1)
+			{
+				var key = part[0..^1].Trim();
+
+				if(driver.Descriptors.TryGetValue(key, out var descriptor))
+					_entries[descriptor.Name] = null;
+				else
+					this.OnUnrecognized(key, null);
+			}
+			else if(index > 0 && index < part.Length - 1)
+			{
+				var key = part[..index].Trim();
+
+				if(driver.Descriptors.TryGetValue(key, out var descriptor))
+					_entries[descriptor.Name] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
+				else
+					this.OnUnrecognized(key, string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim());
+			}
+		}
+	}
+	#endregion
+
+	#region 重写方法
+	public bool Equals(IConnectionSettings settings) => settings is not null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
+	public bool Equals(ConnectionSettingsBase settings) => settings is not null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.GetDriver());
+	public override bool Equals(object obj) => obj is IConnectionSettings settings && this.Equals(settings);
+	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.GetDriver().Name.ToLowerInvariant());
+	public override string ToString() => $"[{this.Name}@{this.GetDriver()}]{this.Value}";
+	#endregion
+
+	#region 枚举遍历
+	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _entries.GetEnumerator();
 	#endregion
 
 	#region 嵌套子类
@@ -264,67 +327,6 @@ public abstract class ConnectionSettingsBase : Setting, IConnectionSettings, IRe
 		}
 	}
 	#endregion
-
-	#region 参数解析
-	protected override void OnValueChanged(string value)
-	{
-		if(string.IsNullOrEmpty(value))
-		{
-			_entries.Clear();
-			return;
-		}
-
-		var driver = this.GetDriver();
-		var parts = value.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-		for(int i = 0; i < parts.Length; i++)
-		{
-			var part = parts[i];
-			var index = part.IndexOf('=');
-
-			if(index < 0)
-			{
-				var key = part.Trim();
-
-				if(driver.Descriptors.TryGetValue(key, out var descriptor))
-					_entries[descriptor.Name] = null;
-				else
-					_entries[key] = null;
-			}
-			else if(index == part.Length - 1)
-			{
-				var key = part[0..^1].Trim();
-
-				if(driver.Descriptors.TryGetValue(key, out var descriptor))
-					_entries[descriptor.Name] = null;
-				else
-					_entries[key] = null;
-			}
-			else if(index > 0 && index < part.Length - 1)
-			{
-				var key = part[..index].Trim();
-
-				if(driver.Descriptors.TryGetValue(key, out var descriptor))
-					_entries[descriptor.Name] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
-				else
-					_entries[key] = string.IsNullOrWhiteSpace(part[(index + 1)..]) ? null : part[(index + 1)..].Trim();
-			}
-		}
-	}
-	#endregion
-
-	#region 重写方法
-	public bool Equals(IConnectionSettings settings) => settings is not null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.Driver);
-	public bool Equals(ConnectionSettingsBase settings) => settings is not null && string.Equals(this.Name, settings.Name, StringComparison.OrdinalIgnoreCase) && this.IsDriver(settings.GetDriver());
-	public override bool Equals(object obj) => obj is IConnectionSettings settings && this.Equals(settings);
-	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), this.GetDriver().Name.ToLowerInvariant());
-	public override string ToString() => $"[{this.Name}@{this.GetDriver()}]{this.Value}";
-	#endregion
-
-	#region 枚举遍历
-	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _entries.GetEnumerator();
-	#endregion
 }
 
 public abstract class ConnectionSettingsBase<TDriver> : ConnectionSettingsBase, IEquatable<ConnectionSettingsBase<TDriver>> where TDriver : IConnectionSettingsDriver
@@ -436,6 +438,19 @@ public abstract class ConnectionSettingsBase<TDriver, TOptions> : ConnectionSett
 	#endregion
 
 	#region 虚拟方法
+	protected override void OnUnrecognized(string name, string value)
+	{
+		var index = name.IndexOf('.');
+
+		if(index > 0 && this.Driver.Descriptors.TryGetValue(name[..index], out var descriptor))
+		{
+			this.Entries[$"{descriptor.Name}{name[index..]}"] = value;
+			return;
+		}
+
+		this.Properties[name] = value;
+	}
+
 	protected virtual TOptions CreateOptions() => Activator.CreateInstance<TOptions>();
 	protected virtual void Populate(ref TOptions options, ConnectionSettingDescriptor descriptor, MemberInfo member, object value) => Reflector.TrySetValue(member, ref options, value);
 	protected virtual void Populate(TOptions options)
