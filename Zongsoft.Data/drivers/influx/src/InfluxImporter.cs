@@ -47,7 +47,7 @@ public class InfluxImporter : DataImporterBase
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
 		var connection = (Common.InfluxConnection)context.Session.Source.Driver.CreateConnection(context.Session.Source.ConnectionString);
-		connection.Open();
+		context.Session.CircuitBreaker.Execute(connection.Open);
 		WritePoints(connection, GetPoints(context, members, connection.Configuration.WriteOptions.Precision));
 
 		static async void WritePoints(Common.InfluxConnection connection, IEnumerable<PointData> points)
@@ -64,7 +64,7 @@ public class InfluxImporter : DataImporterBase
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
 		using var connection = (Common.InfluxConnection)context.Session.Source.Driver.CreateConnection(context.Session.Source.ConnectionString);
-		await connection.OpenAsync(cancellation);
+		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
 		await connection.Client.WritePointsAsync(GetPoints(context, members, connection.Configuration.WriteOptions.Precision), null, null, null, cancellation);
 	}
 	#endregion

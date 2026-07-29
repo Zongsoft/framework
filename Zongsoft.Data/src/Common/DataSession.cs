@@ -94,6 +94,9 @@ public class DataSession : IDisposable, IAsyncDisposable
 	/// <summary>获取当前数据会话的数据源对象。</summary>
 	public IDataSource Source => _source;
 
+	/// <summary>获取当前数据会话关联的数据连接熔断器。</summary>
+	public ICircuitBreaker CircuitBreaker => _source.Driver?.CircuitBreaker?.GetBreaker(_source);
+
 	/// <summary>获取当前数据会话的主连接对象。</summary>
 	public IDbConnection Connection => _connection;
 
@@ -722,10 +725,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
 		{
-			bool tracked;
-
 			//准备读取器，返回真则表示该会话支持多活动结果集(MARS)，或者当前命令关联的是会话主连接(即会话事务)
-			if(_session.PrepareReader(_command, out tracked))
+			if(_session.PrepareReader(_command, out var tracked))
 			{
 				try
 				{
@@ -775,10 +776,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellation)
 		{
-			bool tracked;
-
 			//准备读取器，返回真则表示该会话支持多活动结果集(MARS)，或者当前命令关联的是会话主连接(即会话事务)
-			if(_session.PrepareReader(_command, out tracked))
+			if(_session.PrepareReader(_command, out var tracked))
 			{
 				try
 				{
@@ -836,7 +835,14 @@ public class DataSession : IDisposable, IAsyncDisposable
 				_session.Bind(_command);
 
 			if(_command.Connection.State == ConnectionState.Closed || _command.Connection.State == ConnectionState.Broken)
-				_command.Connection.Open();
+			{
+				var circuitBreaker = _session.CircuitBreaker;
+
+				if(circuitBreaker == null)
+					_command.Connection.Open();
+				else
+					circuitBreaker.Execute(_command.Connection.Open);
+			}
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -846,7 +852,12 @@ public class DataSession : IDisposable, IAsyncDisposable
 				_session.Bind(_command);
 
 			if(_command.Connection.State == ConnectionState.Closed || _command.Connection.State == ConnectionState.Broken)
-				return _command.Connection.OpenAsync(cancellation);
+			{
+				var circuitBreaker = _session.CircuitBreaker;
+				return circuitBreaker == null ?
+					_command.Connection.OpenAsync(cancellation) :
+					circuitBreaker.ExecuteAsync(_command.Connection.OpenAsync, cancellation);
+			}
 
 			return Task.CompletedTask;
 		}

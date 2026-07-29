@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -28,10 +28,15 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Zongsoft.Data.Common.Expressions;
+namespace Zongsoft.Data.Common;
 
-public interface IStatementSlotEvaluator
+public interface ICircuitBreaker
 {
-	string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot);
+	void Execute(Action operation);
+	TResult Execute<TResult>(Func<TResult> operation);
+	Task ExecuteAsync(Func<CancellationToken, Task> operation, CancellationToken cancellation = default);
+	Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> operation, CancellationToken cancellation = default);
 }

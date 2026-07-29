@@ -52,8 +52,7 @@ public class DataExistExecutor : IDataExecutor<ExistStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		//执行命令
 		var result = command.ExecuteScalar();
@@ -82,8 +81,7 @@ public class DataExistExecutor : IDataExecutor<ExistStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		//执行命令
 		var result = await command.ExecuteScalarAsync(cancellation);

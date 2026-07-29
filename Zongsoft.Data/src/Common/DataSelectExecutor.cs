@@ -64,8 +64,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		context.Result = CreateResults(context.ModelType, context, statement, command, 0, context.Paging);
 		return false;
@@ -77,8 +76,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		//绑定命令参数
 		statement.Bind(context, command);
@@ -113,8 +111,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		//绑定命令参数
 		statement.Bind(context, command);
@@ -166,8 +163,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		context.Result = CreateResults(context.ModelType, context, statement, command, 0, context.Paging);
 		return ValueTask.FromResult(false);
@@ -179,8 +175,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		//绑定命令参数
 		await statement.BindAsync(context, command, cancellation);
@@ -215,8 +210,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		//绑定命令参数
 		await statement.BindAsync(context, command, cancellation);

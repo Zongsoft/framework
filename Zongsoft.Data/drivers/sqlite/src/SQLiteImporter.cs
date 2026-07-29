@@ -46,7 +46,7 @@ public class SQLiteImporter : DataImporterBase
 		using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 		using var command = GetCommand(context, members, connection);
 
-		connection.Open();
+		context.Session.CircuitBreaker.Execute(connection.Open);
 		using var transaction = connection.BeginTransaction();
 		command.Transaction = transaction;
 
@@ -78,7 +78,7 @@ public class SQLiteImporter : DataImporterBase
 		await using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 		await using var command = GetCommand(context, members, connection);
 
-		await connection.OpenAsync(cancellation);
+		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
 		await using var transaction = await connection.BeginTransactionAsync(cancellation);
 		command.Transaction = transaction;
 

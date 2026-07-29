@@ -320,8 +320,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		//绑定命令参数
 		statement.Bind(context, command);
@@ -364,8 +363,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
-		if(context.Source.Driver is DataDriverBase driver)
-			driver.Slotter?.Evaluate(context, statement, command);
+		StatementSlotter.Evaluate(context, statement, command);
 
 		//绑定命令参数
 		await statement.BindAsync(context, command, cancellation);

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -38,6 +38,10 @@ public abstract class DataDriverBase : IDataDriver
 	#region 构造函数
 	protected DataDriverBase()
 	{
+		//创建数据连接熔断管理器
+		this.CircuitBreaker = new();
+		//创建语句参数绑定器
+		this.Binder = this.CreateBinder();
 		//创建表达式访问器
 		this.Visitor = this.CreateVisitor();
 		//创建语句插槽管理器
@@ -58,9 +62,15 @@ public abstract class DataDriverBase : IDataDriver
 	public IDataRecordGetter Getter { get; protected set; }
 	public IDataParameterSetter Setter { get; protected set; }
 	public IDataImporter Importer { get; }
-	public Expressions.StatementSlotter Slotter { get; }
+	public Expressions.IStatementBinder Binder { get; }
+	public Expressions.IStatementSlotEvaluator Slotter { get; }
 	public Expressions.ExpressionVisitorBase Visitor { get; }
 	public abstract Expressions.IStatementBuilder Builder { get; }
+	public DataConnectionCircuitBreakerManager CircuitBreaker { get; }
+	#endregion
+
+	#region 显式实现
+	ICircuitBreakerManager IDataDriver.CircuitBreaker => this.CircuitBreaker;
 	#endregion
 
 	#region 公共方法
@@ -102,7 +112,8 @@ public abstract class DataDriverBase : IDataDriver
 	#region 保护方法
 	protected abstract IDataImporter CreateImporter();
 	protected abstract Expressions.ExpressionVisitorBase CreateVisitor();
-	protected virtual Expressions.StatementSlotter CreateSlotter() => new();
+	protected virtual Expressions.IStatementSlotEvaluator CreateSlotter() => null;
+	protected virtual Expressions.IStatementBinder CreateBinder() => Expressions.StatementBinder.Default;
 	protected virtual void SetParameter(DbParameter parameter, Expressions.ParameterExpression expression)
 	{
 		if(this.Setter != null)

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -28,10 +28,15 @@
  */
 
 using System;
+using System.Data;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-public interface IStatementSlotEvaluator
+public interface IStatementBinder
 {
-	string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot);
+	void Bind(IDataMutateContextBase context, IStatementBase statement, DbCommand command);
+	ValueTask BindAsync(IDataMutateContextBase context, IStatementBase statement, DbCommand command, CancellationToken cancellation = default);
 }

@@ -45,6 +45,7 @@ public class PostgreSqlImporter : DataImporterBase
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
 		using var connection = (NpgsqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		context.Session.CircuitBreaker.Execute(connection.Open);
 
 		using var bulker = GetBulker(
 			context.Entity.GetTableName(),
@@ -83,6 +84,7 @@ public class PostgreSqlImporter : DataImporterBase
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
 		using var connection = (NpgsqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
 
 		using var bulker = await GetBulkerAsync(
 			context.Entity.GetTableName(),
@@ -124,18 +126,12 @@ public class PostgreSqlImporter : DataImporterBase
 	{
 		var fields = string.Join(',', members.Select(member => $"\"{member.Name}\""));
 
-		if(connection.State == System.Data.ConnectionState.Closed)
-			connection.Open();
-
 		return connection.BeginBinaryImport($"COPY \"{name}\" ({fields}) FROM STDIN (FORMAT Binary)");
 	}
 
 	private static async Task<NpgsqlBinaryImporter> GetBulkerAsync(string name, MemberCollection members, NpgsqlConnection connection, IDataImportOptions options, CancellationToken cancellation)
 	{
 		var fields = string.Join(',', members.Select(member => $"\"{member.Name}\""));
-
-		if(connection.State == System.Data.ConnectionState.Closed)
-			await connection.OpenAsync(cancellation);
 
 		return await connection.BeginBinaryImportAsync($"COPY \"{name}\" ({fields}) FROM STDIN (FORMAT Binary)", cancellation);
 	}

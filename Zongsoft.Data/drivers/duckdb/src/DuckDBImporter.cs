@@ -66,7 +66,7 @@ public class DuckDBImporter : DataImporterBase
 
 		using var connection = (DuckDBConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 
-		connection.Open();
+		context.Session.CircuitBreaker.Execute(connection.Open);
 		using var transaction = connection.BeginTransaction();
 
 		try
@@ -121,7 +121,7 @@ public class DuckDBImporter : DataImporterBase
 
 		await using var connection = (DuckDBConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 
-		await connection.OpenAsync(cancellation);
+		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
 		await using var transaction = await connection.BeginTransactionAsync(cancellation);
 
 		try
@@ -298,7 +298,7 @@ public class DuckDBImporter : DataImporterBase
 		using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 		using var command = GetInsertCommand(context, members, connection);
 
-		connection.Open();
+		context.Session.CircuitBreaker.Execute(connection.Open);
 		using var transaction = connection.BeginTransaction();
 		command.Transaction = transaction;
 
@@ -328,7 +328,7 @@ public class DuckDBImporter : DataImporterBase
 		await using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 		await using var command = GetInsertCommand(context, members, connection);
 
-		await connection.OpenAsync(cancellation);
+		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
 		await using var transaction = await connection.BeginTransactionAsync(cancellation);
 		command.Transaction = transaction;
 

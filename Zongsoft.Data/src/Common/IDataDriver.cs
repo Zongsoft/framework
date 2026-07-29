@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -54,8 +54,17 @@ public interface IDataDriver
 	/// <summary>获取数据导入器。</summary>
 	IDataImporter Importer { get; }
 
+	/// <summary>获取数据语句绑定器。</summary>
+	Expressions.IStatementBinder Binder { get; }
+
 	/// <summary>获取数据语句构建器。</summary>
 	Expressions.IStatementBuilder Builder { get; }
+
+	/// <summary>获取数据语句插槽评估器。</summary>
+	Expressions.IStatementSlotEvaluator Slotter { get; }
+
+	/// <summary>获取数据连接熔断管理器。</summary>
+	ICircuitBreakerManager CircuitBreaker { get; }
 	#endregion
 
 	#region 方法定义

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -27,11 +27,10 @@
  * along with the Zongsoft.Data library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
+namespace Zongsoft.Data.Common;
 
-namespace Zongsoft.Data.Common.Expressions;
-
-public interface IStatementSlotEvaluator
+public interface ICircuitBreakerManager
 {
-	string Evaluate(IDataAccessContext context, IStatementBase statement, StatementSlot slot);
+	bool Enabled { get; set; }
+	ICircuitBreaker GetBreaker(IDataSource source);
 }

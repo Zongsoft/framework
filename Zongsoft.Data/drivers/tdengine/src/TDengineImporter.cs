@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data.TDengine library.
  *
@@ -77,7 +77,7 @@ public class TDengineImporter : DataImporterBase
 			$"({string.Join(',', tags.Select(member => '`' + member.Property.GetFieldName() + '`'))}) TAGS({string.Join(',', Enumerable.Repeat('?', tags.Length))})\n" +
 			$"({string.Join(',', fields.Select(member => '`' + member.Property.GetFieldName() + '`'))}) VALUES ({string.Join(',', Enumerable.Repeat('?', fields.Length))})";
 
-		using var client = GetClient(context.Source.ConnectionString);
+		using var client = GetClient(context);
 		using var statement = client.StmtInit();
 		statement.Prepare(script);
 
@@ -95,7 +95,8 @@ public class TDengineImporter : DataImporterBase
 	#endregion
 
 	#region 私有方法
-	private static ITDengineClient GetClient(string connectionString) => DbDriver.Open((ConnectionStringBuilder)TDengineDriver.Instance.CreateConnectionBuilder(connectionString));
+	private static ITDengineClient GetClient(DataImportContext context) => context.Session.CircuitBreaker.Execute(
+		() => DbDriver.Open((ConnectionStringBuilder)TDengineDriver.Instance.CreateConnectionBuilder(context.Source.ConnectionString)));
 	#endregion
 
 	#region 嵌套子类

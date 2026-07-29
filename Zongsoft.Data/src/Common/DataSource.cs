@@ -177,7 +177,14 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 			try
 			{
 				if(connection.State == ConnectionState.Closed)
-					connection.Open();
+				{
+					var circuitBreaker = this.Driver.CircuitBreaker?.GetBreaker(this);
+
+					if(circuitBreaker == null)
+						connection.Open();
+					else
+						circuitBreaker.Execute(connection.Open);
+				}
 
 				return string.IsNullOrEmpty(name) ?
 					connection.GetSchema() :

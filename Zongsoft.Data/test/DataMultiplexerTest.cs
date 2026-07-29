@@ -106,9 +106,12 @@ public class DataMultiplexerTest
 	{
 		public string Name => "Mock";
 		public FeatureCollection Features => null;
+		public ICircuitBreakerManager CircuitBreaker { get; } = new DataConnectionCircuitBreakerManager();
 		public IDataRecordGetter Getter => null;
 		public IDataParameterSetter Setter => null;
 		public IDataImporter Importer => null;
+		public IStatementBinder Binder => StatementBinder.Default;
+		public IStatementSlotEvaluator Slotter => null;
 		public IStatementBuilder Builder => null;
 
 		public Exception OnError(IDataAccessContext context, Exception exception) => exception;

@@ -50,7 +50,7 @@ public class MsSqlImporter : DataImporterBase
 		using var connection = (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 		using var bulker = GetBulker(table, connection);
 
-		connection.Open();
+		context.Session.CircuitBreaker.Execute(connection.Open);
 		bulker.WriteToServer(table);
 
 		//设置返回值
@@ -64,7 +64,7 @@ public class MsSqlImporter : DataImporterBase
 		await using var connection = (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
 		using var bulker = GetBulker(table, connection);
 
-		await connection.OpenAsync(cancellation);
+		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
 		await bulker.WriteToServerAsync(table, cancellation);
 
 		//设置返回值

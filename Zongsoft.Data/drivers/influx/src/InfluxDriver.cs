@@ -81,6 +81,6 @@ public class InfluxDriver : DataDriverBase
 	#region 保护方法
 	protected override IDataImporter CreateImporter() => new InfluxImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new InfluxExpressionVisitor();
-	protected override StatementSlotter CreateSlotter() => new() { Evaluator = InfluxStatementSlotEvaluator.Instance };
+	protected override IStatementSlotEvaluator CreateSlotter() => InfluxStatementSlotEvaluator.Instance;
 	#endregion
 }

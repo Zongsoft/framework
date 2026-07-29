@@ -45,10 +45,13 @@ public class MySqlImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
+		using var connection = (MySqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		context.Session.CircuitBreaker.Execute(connection.Open);
+
 		var bulker = GetBulker(
 			context.Entity.GetTableName(),
 			Path.GetTempFileName(),
-			(MySqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString),
+			connection,
 			context.Options);
 
 		//添加导入的列名（注：待 MySql.Data 修复后可去掉对字段名的反引号`标注）
@@ -123,10 +126,13 @@ public class MySqlImporter : DataImporterBase
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
+		await using var connection = (MySqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
+
 		var bulker = GetBulker(
 			context.Entity.GetTableName(),
 			Path.GetTempFileName(),
-			(MySqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString),
+			connection,
 			context.Options);
 
 		//添加导入的列名（注：待 MySql.Data 修复后可去掉对字段名的反引号`标注）
