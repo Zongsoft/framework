@@ -193,7 +193,7 @@ public sealed class MsSqlConnectionSettings : ConnectionSettingsBase<MsSqlConnec
 	}
 
 	[Category("Pooling")]
-	[DefaultValue(500)]
+	[DefaultValue(100)]
 	[ConnectionSetting(Visible = false)]
 	[Alias(nameof(SqlConnectionStringBuilder.MaxPoolSize))]
 	public uint MaximumPoolSize

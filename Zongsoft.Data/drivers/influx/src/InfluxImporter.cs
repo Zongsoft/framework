@@ -46,8 +46,7 @@ public class InfluxImporter : DataImporterBase
 	#region 重写方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		var connection = (Common.InfluxConnection)context.Session.Source.Driver.CreateConnection(context.Session.Source.ConnectionString);
-		context.Session.CircuitBreaker.Execute(connection.Open);
+		var connection = (Common.InfluxConnection)context.Session.Connector.Connect();
 		WritePoints(connection, GetPoints(context, members, connection.Configuration.WriteOptions.Precision));
 
 		static async void WritePoints(Common.InfluxConnection connection, IEnumerable<PointData> points)
@@ -63,8 +62,7 @@ public class InfluxImporter : DataImporterBase
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		using var connection = (Common.InfluxConnection)context.Session.Source.Driver.CreateConnection(context.Session.Source.ConnectionString);
-		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
+		await using var connection = (Common.InfluxConnection)await context.Session.Connector.ConnectAsync(cancellation);
 		await connection.Client.WritePointsAsync(GetPoints(context, members, connection.Configuration.WriteOptions.Precision), null, null, null, cancellation);
 	}
 	#endregion

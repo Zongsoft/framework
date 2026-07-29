@@ -179,7 +179,7 @@ public sealed class MySqlConnectionSettings : ConnectionSettingsBase<MySqlConnec
 	}
 
 	[Category("Pooling")]
-	[DefaultValue(500)]
+	[DefaultValue(100)]
 	[ConnectionSetting(Visible = false)]
 	[Alias(nameof(MySqlConnectionStringBuilder.MaximumPoolSize))]
 	public uint MaximumPoolSize

@@ -44,8 +44,7 @@ public class PostgreSqlImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		using var connection = (NpgsqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-		context.Session.CircuitBreaker.Execute(connection.Open);
+		using var connection = (NpgsqlConnection)context.Session.Connector.Connect();
 
 		using var bulker = GetBulker(
 			context.Entity.GetTableName(),
@@ -83,8 +82,7 @@ public class PostgreSqlImporter : DataImporterBase
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		using var connection = (NpgsqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
+		await using var connection = (NpgsqlConnection)await context.Session.Connector.ConnectAsync(cancellation);
 
 		using var bulker = await GetBulkerAsync(
 			context.Entity.GetTableName(),

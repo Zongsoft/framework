@@ -45,8 +45,7 @@ public class MySqlImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		using var connection = (MySqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-		context.Session.CircuitBreaker.Execute(connection.Open);
+		using var connection = (MySqlConnection)context.Session.Connector.Connect();
 
 		var bulker = GetBulker(
 			context.Entity.GetTableName(),
@@ -126,8 +125,7 @@ public class MySqlImporter : DataImporterBase
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		await using var connection = (MySqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
+		await using var connection = (MySqlConnection)await context.Session.Connector.ConnectAsync(cancellation);
 
 		var bulker = GetBulker(
 			context.Entity.GetTableName(),

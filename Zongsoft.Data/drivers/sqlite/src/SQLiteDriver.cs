@@ -54,7 +54,6 @@ public partial class SQLiteDriver : DataDriverBase
 	#region 私有构造
 	private SQLiteDriver()
 	{
-		this.CircuitBreaker.Enabled = false;
 		this.Getter = new SQLiteGetter();
 		this.Setter = new SQLiteSetter();
 		this.Features.Add(Feature.Returning);

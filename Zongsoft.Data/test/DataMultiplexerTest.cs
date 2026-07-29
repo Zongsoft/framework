@@ -106,7 +106,6 @@ public class DataMultiplexerTest
 	{
 		public string Name => "Mock";
 		public FeatureCollection Features => null;
-		public ICircuitBreakerManager CircuitBreaker { get; } = new DataConnectionCircuitBreakerManager();
 		public IDataRecordGetter Getter => null;
 		public IDataParameterSetter Setter => null;
 		public IDataImporter Importer => null;

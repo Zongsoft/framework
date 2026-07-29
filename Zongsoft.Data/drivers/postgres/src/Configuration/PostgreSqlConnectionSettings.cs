@@ -218,7 +218,7 @@ public sealed class PostgreSqlConnectionSettings : ConnectionSettingsBase<Postgr
 	}
 
 	[Category("Pooling")]
-	[DefaultValue(500)]
+	[DefaultValue(100)]
 	[ConnectionSetting(Visible = false)]
 	[Alias(nameof(NpgsqlConnectionStringBuilder.MaxPoolSize))]
 	public uint MaximumPoolSize

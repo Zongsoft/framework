@@ -47,10 +47,9 @@ public class MsSqlImporter : DataImporterBase
 	{
 		//将数据填充到数据表中
 		var table = GetTable(context.Entity.GetTableName(), context.Data, members);
-		using var connection = (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		using var connection = (SqlConnection)context.Session.Connector.Connect();
 		using var bulker = GetBulker(table, connection);
 
-		context.Session.CircuitBreaker.Execute(connection.Open);
 		bulker.WriteToServer(table);
 
 		//设置返回值
@@ -61,10 +60,9 @@ public class MsSqlImporter : DataImporterBase
 	{
 		//将数据填充到数据表中
 		var table = GetTable(context.Entity.GetTableName(), context.Data, members);
-		await using var connection = (SqlConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		await using var connection = (SqlConnection)await context.Session.Connector.ConnectAsync(cancellation);
 		using var bulker = GetBulker(table, connection);
 
-		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
 		await bulker.WriteToServerAsync(table, cancellation);
 
 		//设置返回值

@@ -64,9 +64,7 @@ public class DuckDBImporter : DataImporterBase
 			return;
 		}
 
-		using var connection = (DuckDBConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-
-		context.Session.CircuitBreaker.Execute(connection.Open);
+		using var connection = (DuckDBConnection)context.Session.Connector.Connect();
 		using var transaction = connection.BeginTransaction();
 
 		try
@@ -119,9 +117,7 @@ public class DuckDBImporter : DataImporterBase
 			return;
 		}
 
-		await using var connection = (DuckDBConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-
-		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
+		await using var connection = (DuckDBConnection)await context.Session.Connector.ConnectAsync(cancellation);
 		await using var transaction = await connection.BeginTransactionAsync(cancellation);
 
 		try
@@ -295,10 +291,9 @@ public class DuckDBImporter : DataImporterBase
 
 	private static void Insert(DataImportContext context, MemberCollection members)
 	{
-		using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		using var connection = context.Session.Connector.Connect();
 		using var command = GetInsertCommand(context, members, connection);
 
-		context.Session.CircuitBreaker.Execute(connection.Open);
 		using var transaction = connection.BeginTransaction();
 		command.Transaction = transaction;
 
@@ -325,10 +320,9 @@ public class DuckDBImporter : DataImporterBase
 
 	private static async ValueTask InsertAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation)
 	{
-		await using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		await using var connection = await context.Session.Connector.ConnectAsync(cancellation);
 		await using var command = GetInsertCommand(context, members, connection);
 
-		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
 		await using var transaction = await connection.BeginTransactionAsync(cancellation);
 		command.Transaction = transaction;
 

@@ -45,7 +45,7 @@
 		<PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="9.0.2" />
-		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.13" />
+		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.2" />

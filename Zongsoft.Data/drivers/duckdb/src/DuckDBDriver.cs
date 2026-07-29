@@ -56,7 +56,6 @@ public partial class DuckDBDriver : DataDriverBase
 	#region 私有构造
 	private DuckDBDriver()
 	{
-		this.CircuitBreaker.Enabled = false;
 		this.Features.Add(Feature.Returning);
 	}
 	#endregion

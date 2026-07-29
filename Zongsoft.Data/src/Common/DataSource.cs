@@ -29,6 +29,7 @@
 
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -41,7 +42,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 	#endregion
 
 	#region 私有常量
-	private static readonly Regex MARS_FEATURE = new Regex(@"\bMultipleActiveResultSets\s*=\s*True\b", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+	private static readonly Regex MARS_FEATURE = new(@"\bMultipleActiveResultSets\s*=\s*True\b", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 	#endregion
 
 	#region 成员字段
@@ -77,7 +78,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 				{
 					"r" or "read" or "readonly" => DataAccessMode.ReadOnly,
 					"w" or "write" or "writeonly" => DataAccessMode.WriteOnly,
-					"*" or "all" or "none" or "both" or "read+write" or "write+read" => DataAccessMode.All,
+					"*" or "all" or "both" or "read+write" or "write+read" => DataAccessMode.All,
 					_ => throw new Configuration.ConfigurationException($"Invalid '{mode}' mode value of the ConnectionString configuration."),
 				};
 			}
@@ -172,23 +173,12 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 
 		DataTable GetSchemaFromDatabase(string name)
 		{
-			var connection = this.Driver.CreateConnection(_connectionString);
+			DbConnection connection = null;
 
 			try
 			{
-				if(connection.State == ConnectionState.Closed)
-				{
-					var circuitBreaker = this.Driver.CircuitBreaker?.GetBreaker(this);
-
-					if(circuitBreaker == null)
-						connection.Open();
-					else
-						circuitBreaker.Execute(connection.Open);
-				}
-
-				return string.IsNullOrEmpty(name) ?
-					connection.GetSchema() :
-					connection.GetSchema(name);
+				connection = DataConnectorManager.GetConnector(this).Connect();
+				return string.IsNullOrEmpty(name) ? connection.GetSchema() : connection.GetSchema(name);
 			}
 			catch { return null; }
 			finally { connection?.Dispose(); }
@@ -201,7 +191,6 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 	public bool Equals(DataSource other) => other is not null && string.Equals(_name, other.Name, StringComparison.OrdinalIgnoreCase) && this.Mode == other.Mode;
 	public override bool Equals(object obj) => obj is IDataSource other && this.Equals(other);
 	public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant(), this.Mode);
-
 	public override string ToString() => string.IsNullOrEmpty(_driverName) ?
 		$"{_name} <{_connectionString}>" :
 		$"[{_driverName}]{_name} <{_connectionString}>";

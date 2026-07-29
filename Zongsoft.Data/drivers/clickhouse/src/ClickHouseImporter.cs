@@ -48,37 +48,30 @@ public class ClickHouseImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		var bulker = GetBulker(context);
-		if(bulker == null)
-			return;
-
 		var records = GetRecords(context, members);
 		if(records == null)
 			return;
 
+		using var connection = (ClickHouseConnection)context.Session.Connector.Connect();
+		var bulker = GetBulker(context, connection);
 		bulker.WriteToServerAsync(records).ConfigureAwait(false).GetAwaiter().GetResult();
 	}
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		var bulker = GetBulker(context);
-		if(bulker == null)
-			return;
-
 		var records = GetRecords(context, members);
 		if(records == null)
 			return;
 
+		await using var connection = (ClickHouseConnection)await context.Session.Connector.ConnectAsync(cancellation);
+		var bulker = GetBulker(context, connection);
 		await bulker.WriteToServerAsync(records, cancellation);
 	}
 	#endregion
 
 	#region 私有方法
-	private static ClickHouseConnection GetConnection(DataImportContext context) => (ClickHouseConnection)context.Source.Driver.CreateConnection(context.Source.ConnectionString);
-
-	private static ClickHouseBulkCopy GetBulker(DataImportContext context)
+	private static ClickHouseBulkCopy GetBulker(DataImportContext context, ClickHouseConnection connection)
 	{
-		var connection = GetConnection(context);
 		var bulker = new ClickHouseBulkCopy(connection)
 		{
 			DestinationTableName = context.Entity.GetTableName(),

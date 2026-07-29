@@ -28,15 +28,31 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common;
 
-public interface ICircuitBreaker
+public sealed class DataConnectionException : DataException
 {
-	void Execute(Action operation);
-	TResult Execute<TResult>(Func<TResult> operation);
-	Task ExecuteAsync(Func<CancellationToken, Task> operation, CancellationToken cancellation = default);
-	Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> operation, CancellationToken cancellation = default);
+	internal DataConnectionException(
+		IDataSource source,
+		DateTimeOffset? retryAt,
+		TimeSpan retryAfter,
+		Exception innerException) : base(GetMessage(source, retryAt), innerException)
+	{
+		this.SourceName = source?.Name;
+		this.DriverName = source?.Driver?.Name;
+		this.RetryAt = retryAt;
+		this.RetryAfter = retryAfter > TimeSpan.Zero ? retryAfter : TimeSpan.Zero;
+	}
+
+	public string SourceName { get; }
+	public string DriverName { get; }
+	public DateTimeOffset? RetryAt { get; }
+	public TimeSpan RetryAfter { get; }
+
+	private static string GetMessage(IDataSource source, DateTimeOffset? retryAt)
+	{
+		var message = $"The '{source?.Name}' data source is temporarily unavailable.";
+		return retryAt.HasValue ? $"{message} Retry after {retryAt.Value:O}." : message;
+	}
 }

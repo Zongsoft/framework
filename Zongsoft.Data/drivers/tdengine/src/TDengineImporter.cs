@@ -95,7 +95,7 @@ public class TDengineImporter : DataImporterBase
 	#endregion
 
 	#region 私有方法
-	private static ITDengineClient GetClient(DataImportContext context) => context.Session.CircuitBreaker.Execute(
+	private static ITDengineClient GetClient(DataImportContext context) => context.Session.Connector.Connect(
 		() => DbDriver.Open((ConnectionStringBuilder)TDengineDriver.Instance.CreateConnectionBuilder(context.Source.ConnectionString)));
 	#endregion
 

@@ -62,6 +62,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 	#region 成员字段
 	private readonly IDataSource _source;
+	private readonly DataConnector _connector;
 	private volatile DbConnection _connection;
 	private volatile DbTransaction _transaction;
 	private readonly Transaction _ambient;
@@ -71,6 +72,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 	public DataSession(IDataSource source, Transaction ambient = null)
 	{
 		_source = source ?? throw new ArgumentNullException(nameof(source));
+		_connector = DataConnectorManager.GetConnector(source);
 		_ambient = ambient;
 
 		_semaphore = new AutoResetEvent(true);
@@ -94,8 +96,9 @@ public class DataSession : IDisposable, IAsyncDisposable
 	/// <summary>获取当前数据会话的数据源对象。</summary>
 	public IDataSource Source => _source;
 
-	/// <summary>获取当前数据会话关联的数据连接熔断器。</summary>
-	public ICircuitBreaker CircuitBreaker => _source.Driver?.CircuitBreaker?.GetBreaker(_source);
+	/// <summary>获取当前数据会话所属数据源的共享连接器。</summary>
+	/// <remarks>注意：通过该连接器建立的连接为独立连接，不会自动加入当前数据会话的事务，也不属于当前数据会话的生命周期。</remarks>
+	public DataConnector Connector => _connector;
 
 	/// <summary>获取当前数据会话的主连接对象。</summary>
 	public IDbConnection Connection => _connection;
@@ -225,7 +228,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 					if(_connection == null)
 					{
 						//创建一个数据连接对象
-						_connection = _source.Driver.CreateConnection(_source.ConnectionString);
+						_connection = _connector.CreateConnection();
 
 						//绑定命令关联的连接对象
 						command.Connection = _connection;
@@ -281,7 +284,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 			tracked = false;
 
 			//设置命令连接为新建连接
-			command.Connection = _source.Driver.CreateConnection(_source.ConnectionString);
+			command.Connection = _connector.CreateConnection();
 
 			//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
 			if(this.TransactionSupported)
@@ -306,7 +309,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 			if(reading > 1)
 			{
 				//设置命令连接为新建连接
-				command.Connection = _source.Driver.CreateConnection(_source.ConnectionString);
+				command.Connection = _connector.CreateConnection();
 
 				//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
 				if(this.TransactionSupported)
@@ -835,14 +838,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 				_session.Bind(_command);
 
 			if(_command.Connection.State == ConnectionState.Closed || _command.Connection.State == ConnectionState.Broken)
-			{
-				var circuitBreaker = _session.CircuitBreaker;
-
-				if(circuitBreaker == null)
-					_command.Connection.Open();
-				else
-					circuitBreaker.Execute(_command.Connection.Open);
-			}
+				_session._connector.Open(_command.Connection);
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -852,12 +848,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 				_session.Bind(_command);
 
 			if(_command.Connection.State == ConnectionState.Closed || _command.Connection.State == ConnectionState.Broken)
-			{
-				var circuitBreaker = _session.CircuitBreaker;
-				return circuitBreaker == null ?
-					_command.Connection.OpenAsync(cancellation) :
-					circuitBreaker.ExecuteAsync(_command.Connection.OpenAsync, cancellation);
-			}
+				return _session._connector.OpenAsync(_command.Connection, cancellation);
 
 			return Task.CompletedTask;
 		}

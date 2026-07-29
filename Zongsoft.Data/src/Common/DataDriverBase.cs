@@ -38,8 +38,6 @@ public abstract class DataDriverBase : IDataDriver
 	#region 构造函数
 	protected DataDriverBase()
 	{
-		//创建数据连接熔断管理器
-		this.CircuitBreaker = new();
 		//创建语句参数绑定器
 		this.Binder = this.CreateBinder();
 		//创建表达式访问器
@@ -66,11 +64,6 @@ public abstract class DataDriverBase : IDataDriver
 	public Expressions.IStatementSlotEvaluator Slotter { get; }
 	public Expressions.ExpressionVisitorBase Visitor { get; }
 	public abstract Expressions.IStatementBuilder Builder { get; }
-	public DataConnectionCircuitBreakerManager CircuitBreaker { get; }
-	#endregion
-
-	#region 显式实现
-	ICircuitBreakerManager IDataDriver.CircuitBreaker => this.CircuitBreaker;
 	#endregion
 
 	#region 公共方法

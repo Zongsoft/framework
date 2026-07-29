@@ -63,8 +63,6 @@ public interface IDataDriver
 	/// <summary>获取数据语句插槽评估器。</summary>
 	Expressions.IStatementSlotEvaluator Slotter { get; }
 
-	/// <summary>获取数据连接熔断管理器。</summary>
-	ICircuitBreakerManager CircuitBreaker { get; }
 	#endregion
 
 	#region 方法定义

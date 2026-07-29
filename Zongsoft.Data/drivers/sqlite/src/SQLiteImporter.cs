@@ -43,10 +43,9 @@ public class SQLiteImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		using var connection = context.Session.Connector.Connect();
 		using var command = GetCommand(context, members, connection);
 
-		context.Session.CircuitBreaker.Execute(connection.Open);
 		using var transaction = connection.BeginTransaction();
 		command.Transaction = transaction;
 
@@ -75,10 +74,9 @@ public class SQLiteImporter : DataImporterBase
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		await using var connection = context.Source.Driver.CreateConnection(context.Source.ConnectionString);
+		await using var connection = await context.Session.Connector.ConnectAsync(cancellation);
 		await using var command = GetCommand(context, members, connection);
 
-		await context.Session.CircuitBreaker.ExecuteAsync(connection.OpenAsync, cancellation);
 		await using var transaction = await connection.BeginTransactionAsync(cancellation);
 		command.Transaction = transaction;
 
