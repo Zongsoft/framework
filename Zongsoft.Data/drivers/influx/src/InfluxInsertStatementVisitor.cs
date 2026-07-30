@@ -50,7 +50,7 @@ public class InfluxInsertStatementVisitor : InsertStatementVisitor
 	protected override void OnVisit(ExpressionVisitorContext context, InsertStatement statement)
 	{
 		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException("Missing required fields in the insert statment.");
+			throw new DataException(Properties.Resources.ResourceManager.GetString("InsertStatement.MissingFields.Message"));
 
 		(var tags, var fields) = GetSettings(statement);
 

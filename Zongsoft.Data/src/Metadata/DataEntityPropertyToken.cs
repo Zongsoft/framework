@@ -135,7 +135,7 @@ public readonly struct DataEntityPropertyToken
 		if(this.Member != null)
 			return this.ConvertValue(Reflection.Reflector.GetValue(this.Member, ref target), conversionType);
 
-		throw new InvalidOperationException($"Obtaining the value of the '{this.Property.Name}' property from the specified '{target.GetType().FullName}' target type is not supported.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.DataEntityProperty_GetValueUnsupported_Message, this.Property.Name, target.GetType().FullName));
 	}
 
 	public void SetValue(ref object target, object value)
@@ -150,7 +150,7 @@ public readonly struct DataEntityPropertyToken
 		else if(this.Member != null)
 			Reflection.Reflector.SetValue(this.Member, ref target, value);
 		else
-			throw new InvalidOperationException($"Setting the value of the '{this.Property.Name}' property from the specified '{target.GetType().FullName}' target type is not supported.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DataEntityProperty_SetValueUnsupported_Message, this.Property.Name, target.GetType().FullName));
 	}
 	#endregion
 

@@ -85,12 +85,12 @@ public class MySqlUpdateStatementVisitor : UpdateStatementVisitor
 						}
 						else
 						{
-							throw new DataException($"The {MySqlDriver.NAME} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{join.Target.GetType().Name}'.");
+							throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("UpdateStatement.JoinTargetUnsupported.Message"), MySqlDriver.NAME, join.Target.GetType().Name));
 						}
 
 						break;
 					default:
-						throw new NotSupportedException($"The {MySqlDriver.NAME} driver does not support the FROM clause of the UPDATE statement contain an expression of type '{source.GetType().Name}'.");
+						throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("UpdateStatement.SourceUnsupported.Message"), MySqlDriver.NAME, source.GetType().Name));
 				}
 			}
 		}

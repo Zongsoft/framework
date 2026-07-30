@@ -178,4 +178,25 @@
   <data name="MySql.Settings.ConvertZeroDateTime" xml:space="preserve">
     <value>Convert Zero DateTime</value>
   </data>
+	<data name="ExpressionVisitor.StatementUnsupported.Message" xml:space="preserve">
+		<value>Not supported &apos;{0}&apos; statement.</value>
+	</data>
+	<data name="ExpressionVisitor.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>Unsupported &apos;{0}&apos; data type.</value>
+	</data>
+	<data name="ExpressionVisitor.AggregateInvalid.Message" xml:space="preserve">
+		<value>Invalid &apos;{0}&apos; aggregate method.</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceUnsupported.Message" xml:space="preserve">
+		<value>The {0} driver does not support the &apos;{1}&apos; sequence function.</value>
+	</data>
+	<data name="UpdateStatement.JoinTargetUnsupported.Message" xml:space="preserve">
+		<value>The {0} driver does not support a FROM clause in an UPDATE statement that contains an expression of type &apos;{1}&apos;.</value>
+	</data>
+	<data name="UpdateStatement.SourceUnsupported.Message" xml:space="preserve">
+		<value>The {0} driver does not support a FROM clause in an UPDATE statement that contains an expression of type &apos;{1}&apos;.</value>
+	</data>
+	<data name="UpsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>Missing required fields in the upsert statement.</value>
+	</data>
 </root>

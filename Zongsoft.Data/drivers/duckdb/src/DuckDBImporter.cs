@@ -269,7 +269,7 @@ public class DuckDBImporter : DataImporterBase
 				row.AppendValue(Zongsoft.Common.Convert.ConvertValue<float>(value));
 				break;
 			default:
-				throw new DataException($"Unsupported '{property.Type}' data type.");
+				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), property.Type));
 		}
 
 		static DateOnly GetDate(object value) => value switch

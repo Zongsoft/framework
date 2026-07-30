@@ -149,10 +149,10 @@ public class ModelPopulatorProvider : IDataPopulatorProvider
 		else
 		{
 			if(!populator.Entity.Properties.TryGetValue(member.Name, out var property))
-				throw new DataException($"The property named '{member.Name}' is undefined in the '{populator.Entity}' data entity mapping.");
+				throw new DataException(string.Format(Properties.Resources.ModelPopulator_PropertyUndefined_Message, member.Name, populator.Entity));
 
 			if(property.IsSimplex)
-				throw new DataException($"The '{member.Name}' property of '{populator.Entity}' entity is not a complex(navigation) property.");
+				throw new DataException(string.Format(Properties.Resources.ModelPopulator_PropertyNotComplex_Message, member.Name, populator.Entity));
 
 			result = (IDataPopulator)Activator.CreateInstance(typeof(ModelPopulator<>).MakeGenericType(member.Type), [((IDataEntityComplexProperty)property).Foreign]);
 		}

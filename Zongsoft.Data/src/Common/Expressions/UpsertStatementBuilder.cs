@@ -186,10 +186,10 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 				{
 					//不可变复合属性不支持任何写操作，即在增改操作中不能包含不可变复合属性
 					if(schema.Token.Property.Immutable)
-						throw new DataException($"The '{schema.FullPath}' is an immutable complex(navigation) property and does not support the upsert operation.");
+						throw new DataException(string.Format(Properties.Resources.UpsertStatement_ImmutableProperty_Message, schema.FullPath));
 
 					if(!schema.HasChildren)
-						throw new DataException($"Missing members that does not specify '{schema.FullPath}' complex property.");
+						throw new DataException(string.Format(Properties.Resources.Statement_MissingComplexPropertyMembers_Message, schema.FullPath));
 
 					var complex = (IDataEntityComplexProperty)schema.Token.Property;
 					var slaves = BuildUpserts(

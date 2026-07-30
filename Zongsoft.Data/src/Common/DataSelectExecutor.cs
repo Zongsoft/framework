@@ -55,7 +55,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 				return this.OnExecute(upsertion, statement);
 		}
 
-		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
 	}
 
 	protected virtual bool OnExecute(DataSelectContext context, SelectStatement statement)
@@ -154,7 +154,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 				return this.OnExecuteAsync(upsertion, statement, cancellation);
 		}
 
-		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
 	}
 
 	protected virtual ValueTask<bool> OnExecuteAsync(DataSelectContext context, SelectStatement statement, CancellationToken cancellation)

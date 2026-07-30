@@ -65,7 +65,7 @@ public abstract class StatementBuilderBase : IStatementBuilder
 		DataAccessMethod.Exists => this.GetBuilder(ref _exist, this.CreateExistStatementBuilder).Build((DataExistContext)context),
 		DataAccessMethod.Execute => this.GetBuilder(ref _execution, this.CreateExecutionStatementBuilder).Build((DataExecuteContext)context),
 		DataAccessMethod.Aggregate => this.GetBuilder(ref _aggregate, this.CreateAggregateStatementBuilder).Build((DataAggregateContext)context),
-		_ => throw new DataException($"Unsupported data access '{context.Method}' operation."),
+		_ => throw new DataException(string.Format(Properties.Resources.DataAccess_OperationUnsupported_Message, context.Method)),
 	};
 	#endregion
 

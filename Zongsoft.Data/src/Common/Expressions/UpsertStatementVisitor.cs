@@ -43,7 +43,7 @@ public class UpsertStatementVisitor : StatementVisitorBase<UpsertStatement>
 		const string SOURCE_ALIAS = "SRC";
 
 		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException("Missing required fields in the upsert statment.");
+			throw new DataException(Properties.Resources.UpsertStatement_MissingFields_Message);
 
 		this.VisitWith(context, statement, statement.With);
 

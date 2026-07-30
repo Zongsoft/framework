@@ -47,7 +47,7 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 		if(context is DataExecuteContext ctx)
 			return this.OnExecute(ctx, statement);
 
-		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
 	}
 
 	protected virtual bool OnExecute(DataExecuteContext context, ExecutionStatement statement)
@@ -78,7 +78,7 @@ public class DataExecuteExecutor : IDataExecutor<ExecutionStatement>
 		if(context is DataExecuteContext ctx)
 			return this.OnExecuteAsync(ctx, statement, cancellation);
 
-		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
 	}
 
 	protected virtual async ValueTask<bool> OnExecuteAsync(DataExecuteContext context, ExecutionStatement statement, CancellationToken cancellation)

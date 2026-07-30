@@ -240,4 +240,19 @@ This is useful in clustered configurations to force load balancing between a run
   <data name="PostgreSql.Settings.Multiplexing.Description" xml:space="preserve">
     <value>Enables multiplexing, which allows more efficient use of connections.</value>
   </data>
+	<data name="ExpressionVisitor.StatementUnsupported.Message" xml:space="preserve">
+		<value>Not supported &apos;{0}&apos; statement.</value>
+	</data>
+	<data name="ExpressionVisitor.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>Unsupported &apos;{0}&apos; data type.</value>
+	</data>
+	<data name="ExpressionVisitor.AggregateInvalid.Message" xml:space="preserve">
+		<value>Invalid &apos;{0}&apos; aggregate method.</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceInvalid.Message" xml:space="preserve">
+		<value>Invalid &apos;{0}&apos; sequence method.</value>
+	</data>
+	<data name="UpsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>Missing required fields in the upsert statement.</value>
+	</data>
 </root>

@@ -81,7 +81,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 		if(_ambient != null && !_ambient.Enlist(new Enlistment(this)))
 		{
 			_semaphore.Dispose();
-			throw new DataException("The ambient transaction has already been completed.");
+			throw new DataException(Properties.Resources.DataSession_AmbientTransactionCompleted_Message);
 		}
 
 		this.TransactionSupported = !source.Features.Support(Feature.TransactionSuppressed);
@@ -219,7 +219,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 		try
 		{
 			if(this.IsCompleted)
-				throw new DataException("The data session has already been completed.");
+				throw new DataException(Properties.Resources.DataSession_Completed_Message);
 
 			if(_connection == null)
 			{

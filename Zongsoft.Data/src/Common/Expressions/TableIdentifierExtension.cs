@@ -51,7 +51,7 @@ public static class TableIdentifierExtension
 			throw new ArgumentNullException(nameof(table));
 
 		if(table.Entity == null)
-			throw new DataException($"The '{table}' table cannot be expanded.");
+			throw new DataException(string.Format(Properties.Resources.Table_ExpansionUnsupported_Message, table));
 
 		if(string.IsNullOrEmpty(path))
 			return ReduceResult.Failure(table);
@@ -104,7 +104,7 @@ public static class TableIdentifierExtension
 	{
 		var index = property.Port.IndexOf(':');
 		var entityName = index < 0 ? property.Port : property.Port.Substring(0, index);
-		var entity = DataEntityUtility.Locate(property.Entity, entityName) ?? throw new DataException($"The '{entityName}' target entity associated with the Role in the '{property.Entity.Name}:{property.Name}' complex property does not exist.");
+		var entity = DataEntityUtility.Locate(property.Entity, entityName) ?? throw new DataException(string.Format(Properties.Resources.DataEntity_RoleTargetNotFound_Message, entityName, property.Entity.Name, property.Name));
 
 		if(index < 0)
 			return (entity, entity.Properties);
@@ -122,7 +122,7 @@ public static class TableIdentifierExtension
 				found = FindBaseProperty(entity, part, ref ancestors);
 
 				if(found == null)
-					throw new DataException($"The '{part}' property of '{entity.Name}' entity does not existed.");
+					throw new DataException(string.Format(Properties.Resources.DataEntity_PropertyNotFound_Message, part, entity.Name));
 			}
 
 			if(found.IsSimplex)

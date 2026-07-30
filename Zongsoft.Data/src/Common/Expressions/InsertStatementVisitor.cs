@@ -42,7 +42,7 @@ public class InsertStatementVisitor : StatementVisitorBase<InsertStatement>
 	protected override void OnVisit(ExpressionVisitorContext context, InsertStatement statement)
 	{
 		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException("Missing required fields in the insert statment.");
+			throw new DataException(Properties.Resources.InsertStatement_MissingFields_Message);
 
 		this.VisitWith(context, statement, statement.With);
 		this.VisitInsert(context, statement);

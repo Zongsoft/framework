@@ -78,7 +78,7 @@ public class TDengineDeleteStatementVisitor : DeleteStatementVisitor
 			if(source is TableIdentifier table)
 				context.Write(context.Dialect.GetIdentifier(table.Name));
 			else
-				throw new DataAccessException(TDengineDriver.NAME, -1, $"The ‘{source.GetType().FullName}’ type expression is not supported within the FROM clause.");
+				throw new DataAccessException(TDengineDriver.NAME, -1, string.Format(Properties.Resources.ResourceManager.GetString("DeleteStatement.SourceUnsupported.Message"), source.GetType().FullName));
 		}
 	}
 	#endregion

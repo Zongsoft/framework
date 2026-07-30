@@ -137,7 +137,7 @@ public sealed partial class DataConnector
 			_options = (options ?? new CircuitBreakerOptions()).Clone();
 
 			if(_options.MaximumDuration < _options.Duration)
-				throw new ArgumentException("The maximum break duration cannot be less than the break duration.", nameof(options));
+				throw new ArgumentException(Properties.Resources.CircuitBreaker_InvalidMaximumDuration_Message, nameof(options));
 
 			_timeProvider = timeProvider ?? TimeProvider.System;
 		}

@@ -83,7 +83,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 				TDengineInsertStatementVisitor.Instance.Visit(context, insert);
 				break;
 			case UpdateStatement:
-				throw new NotSupportedException("TDengine does not support UPDATE statements; insert a row with the same primary timestamp to replace its values.");
+				throw new NotSupportedException(Properties.Resources.ResourceManager.GetString("Statement.UpdateUnsupported.Message"));
 			case UpsertStatement upsert:
 				TDengineUpsertStatementVisitor.Instance.Visit(context, upsert);
 				break;
@@ -97,7 +97,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 				TDengineExecutionStatementVisitor.Instance.Visit(context, execution);
 				break;
 			default:
-				throw new DataException($"Not supported '{statement}' statement.");
+				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message"), statement));
 		}
 	}
 
@@ -122,7 +122,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 	private static void WriteDeleteValue(ExpressionVisitorContext context, ParameterExpression parameter)
 	{
 		if(!parameter.IsChanged)
-			throw new DataException($"The TDengine DELETE parameter '{parameter.Name}' does not contain a value.");
+			throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("DeleteStatement.ParameterValueMissing.Message"), parameter.Name));
 
 		switch(parameter.Value)
 		{
@@ -202,7 +202,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 			DbType.Single => "float",
 			DbType.VarNumeric => "double",
 			DbType.Xml => "nchar(4096)",
-			_ => throw new DataException($"Unsupported '{type}' data type."),
+			_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), type)),
 		};
 
 		public string GetMethodName(MethodExpression method)
@@ -246,11 +246,11 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.DeviationPopulation => "STDEV_POP",
 			DataAggregateFunction.Variance => "VARIANCE",
 			DataAggregateFunction.VariancePopulation => "VAR_POP",
-			_ => throw new NotSupportedException($"Invalid '{function}' aggregate method."),
+			_ => throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message"), function)),
 		};
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetSequenceName(SequenceExpression sequence) => throw new DataException($"The TDengine driver does not support the '{sequence.Method}' sequence function.");
+		private static string GetSequenceName(SequenceExpression sequence) => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceUnsupported.Message"), sequence.Method));
 		#endregion
 	}
 

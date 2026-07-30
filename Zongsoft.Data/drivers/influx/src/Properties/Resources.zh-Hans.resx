@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -135,4 +135,19 @@
   <data name="Influx.Settings.Precision" xml:space="preserve">
     <value>时间精度</value>
   </data>
+	<data name="ExpressionVisitor.StatementUnsupported.Message" xml:space="preserve">
+		<value>不支持“{0}”语句。</value>
+	</data>
+	<data name="ExpressionVisitor.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>不支持数据类型“{0}”。</value>
+	</data>
+	<data name="ExpressionVisitor.AggregateInvalid.Message" xml:space="preserve">
+		<value>聚合方法“{0}”无效。</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceUnsupported.Message" xml:space="preserve">
+		<value>Influx 驱动不支持序列函数“{0}”。</value>
+	</data>
+	<data name="InsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>新增语句缺少必需字段。</value>
+	</data>
 </root>

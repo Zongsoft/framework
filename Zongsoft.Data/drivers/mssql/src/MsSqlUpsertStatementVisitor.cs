@@ -51,7 +51,7 @@ public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 		const string SOURCE_ALIAS = "SRC";
 
 		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException("Missing required fields in the upsert statment.");
+			throw new DataException(Properties.Resources.ResourceManager.GetString("UpsertStatement.MissingFields.Message"));
 
 		context.Write("MERGE INTO ");
 		context.Visit(statement.Table);

@@ -52,7 +52,10 @@ public sealed class DataConnectionException : DataException
 
 	private static string GetMessage(IDataSource source, DateTimeOffset? retryAt)
 	{
-		var message = $"The '{source?.Name}' data source is temporarily unavailable.";
-		return retryAt.HasValue ? $"{message} Retry after {retryAt.Value:O}." : message;
+		var message = string.Format(Properties.Resources.DataConnectionException_Unavailable_Message, source?.Name);
+
+		return retryAt.HasValue ?
+			string.Format(Properties.Resources.DataConnectionException_RetryAfter_Message, message, retryAt.Value.ToLocalTime()) :
+			message;
 	}
 }

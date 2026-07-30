@@ -226,6 +226,9 @@ public class DataConnectorTest
 			Assert.DoesNotContain("Password", entry.Message, StringComparison.OrdinalIgnoreCase);
 			Assert.DoesNotContain("secret", entry.Message, StringComparison.OrdinalIgnoreCase);
 
+			var unavailable = Assert.Throws<DataConnectionException>(() => connector.Connect(() => 100));
+			Assert.StartsWith("The 'Test' data source is temporarily unavailable.", unavailable.Message);
+
 			var handled = CreateConnector(new DataSourceMocker(), timeProvider);
 			Assert.Throws<InvalidOperationException>(() =>
 				handled.Connect<object>(() => throw new InvalidOperationException("Handled database failure.")));
@@ -243,6 +246,9 @@ public class DataConnectorTest
 			Assert.Contains("数据源“Test”", entry.Message);
 			Assert.Contains(timeProvider.GetUtcNow().AddSeconds(1).ToLocalTime().ToString("HH:mm:sszz"), entry.Message);
 			Assert.DoesNotContain("secret", entry.Message, StringComparison.OrdinalIgnoreCase);
+
+			unavailable = Assert.Throws<DataConnectionException>(() => localized.Connect(() => 100));
+			Assert.StartsWith("数据源“Test”暂时不可用。", unavailable.Message);
 		}
 		finally
 		{

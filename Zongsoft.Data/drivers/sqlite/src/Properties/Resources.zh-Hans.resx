@@ -36,4 +36,19 @@
   <data name="SQLite.Settings.Pooling" xml:space="preserve">
     <value>启用连接池</value>
   </data>
+	<data name="ExpressionVisitor.StatementUnsupported.Message" xml:space="preserve">
+		<value>不支持“{0}”语句。</value>
+	</data>
+	<data name="ExpressionVisitor.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>不支持数据类型“{0}”。</value>
+	</data>
+	<data name="ExpressionVisitor.AggregateInvalid.Message" xml:space="preserve">
+		<value>聚合方法“{0}”无效。</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceUnsupported.Message" xml:space="preserve">
+		<value>SQLite 驱动不支持序列函数“{0}”。</value>
+	</data>
+	<data name="UpsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>增改语句缺少必需字段。</value>
+	</data>
 </root>

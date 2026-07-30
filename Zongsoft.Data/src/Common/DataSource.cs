@@ -61,7 +61,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 			throw new ArgumentNullException(nameof(connectionSettings));
 
 		if(connectionSettings.Driver == null || string.IsNullOrWhiteSpace(connectionSettings.Driver.Name))
-			throw new DataException($"The required driver is not specified in the database connection settings.");
+			throw new DataException(Zongsoft.Data.Properties.Resources.DataSource_DriverUnspecified_Message);
 
 		_name = connectionSettings.Name;
 		_connectionString = connectionSettings.Value;
@@ -79,7 +79,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 					"r" or "read" or "readonly" => DataAccessMode.ReadOnly,
 					"w" or "write" or "writeonly" => DataAccessMode.WriteOnly,
 					"*" or "all" or "both" or "read+write" or "write+read" => DataAccessMode.All,
-					_ => throw new Configuration.ConfigurationException($"Invalid '{mode}' mode value of the ConnectionString configuration."),
+					_ => throw new Configuration.ConfigurationException(string.Format(Zongsoft.Data.Properties.Resources.DataSource_InvalidAccessMode_Message, mode)),
 				};
 			}
 
@@ -118,7 +118,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 		get
 		{
 			if(_driver == null && !string.IsNullOrEmpty(_driverName))
-				_driver = DataEnvironment.Drivers.TryGetValue(_driverName, out var driver) ? driver : throw new DataException($"The '{_driverName}' data driver does not exist.");
+				_driver = DataEnvironment.Drivers.TryGetValue(_driverName, out var driver) ? driver : throw new DataException(string.Format(Zongsoft.Data.Properties.Resources.DataSource_DriverNotFound_Message, _driverName));
 
 			return _driver;
 		}

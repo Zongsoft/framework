@@ -107,7 +107,7 @@ public class TableIdentifier : Expression, IIdentifier, ISource, IEquatable<Tabl
 	{
 		var simplex = token.Property.IsSimplex ?
 			(IDataEntitySimplexProperty)token.Property :
-			throw new ArgumentException($"The specified '{token.Property.Name}' property is not a simplex property, so you cannot create a field identifier for it.");
+			throw new ArgumentException(string.Format(Properties.Resources.TableIdentifier_FieldRequiresSimplex_Message, token.Property.Name));
 
 		if(string.IsNullOrEmpty(simplex.Alias))
 			return new FieldIdentifier(this, simplex.Name, alias) { Token = token };

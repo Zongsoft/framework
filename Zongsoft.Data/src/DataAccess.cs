@@ -172,7 +172,7 @@ public class DataAccess : DataAccessBase
 	internal long Increase(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data)
 	{
 		if(this.Sequencer == null)
-			throw new InvalidOperationException($"Missing required sequencer of the '{this.Name}' DataAccess.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DataAccess_MissingSequencer_Message, this.Name));
 
 		return ((DataSequencer)this.Sequencer).Increase(context, sequence, data);
 	}
@@ -180,7 +180,7 @@ public class DataAccess : DataAccessBase
 	internal ValueTask<long> IncreaseAsync(IDataMutateContextBase context, IDataEntityPropertySequence sequence, object data, CancellationToken cancellation)
 	{
 		if(this.Sequencer == null)
-			throw new InvalidOperationException($"Missing required sequencer of the '{this.Name}' DataAccess.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DataAccess_MissingSequencer_Message, this.Name));
 
 		return ((DataSequencer)this.Sequencer).IncreaseAsync(context, sequence, data, cancellation);
 	}
@@ -217,7 +217,7 @@ public class DataAccess : DataAccessBase
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			var sequence = property.Sequence ?? throw new InvalidOperationException($"The specified '{property.Entity.Name}.{property.Name}' property does not define a sequence.");
+			var sequence = property.Sequence ?? throw new InvalidOperationException(string.Format(Properties.Resources.Sequence_Undefined_Message, property.Entity.Name, property.Name));
 			if(sequence.IsBuiltin)
 				return 0L;
 
@@ -232,7 +232,7 @@ public class DataAccess : DataAccessBase
 			if(property == null)
 				throw new ArgumentNullException(nameof(property));
 
-			var sequence = property.Sequence ?? throw new InvalidOperationException($"The specified '{property.Entity.Name}.{property.Name}' property does not define a sequence.");
+			var sequence = property.Sequence ?? throw new InvalidOperationException(string.Format(Properties.Resources.Sequence_Undefined_Message, property.Entity.Name, property.Name));
 			if(sequence.IsBuiltin)
 				return ValueTask.FromResult(0L);
 
@@ -336,18 +336,18 @@ public class DataAccess : DataAccessBase
 			}
 
 			if(index < 0)
-				throw new ArgumentException($"Invalid sequence key, the sequence key must separate the entity name and property name with a colon or a dot.");
+				throw new ArgumentException(Properties.Resources.Sequence_InvalidKey_Message);
 
 			if(!Mapping.Entities.TryGetValue(key[..index], out var entity))
-				throw new ArgumentException($"The '{key[..index]}' entity specified in the sequence key does not exist.");
+				throw new ArgumentException(string.Format(Properties.Resources.Sequence_EntityNotFound_Message, key[..index]));
 
 			if(!entity.Properties.TryGetValue(key[(index + 1)..], out var found) || found.IsComplex)
-				throw new ArgumentException($"The '{key[(index + 1)..]}' property specified in the sequence key does not exist or is not a simplex property.");
+				throw new ArgumentException(string.Format(Properties.Resources.Sequence_PropertyNotFound_Message, key[(index + 1)..]));
 
 			sequence = ((IDataEntitySimplexProperty)found).Sequence;
 
 			if(sequence == null)
-				throw new ArgumentException($"The '{found.Name}' property specified in the sequence key is undefined.");
+				throw new ArgumentException(string.Format(Properties.Resources.Sequence_PropertyUndefined_Message, found.Name));
 
 			return GetSequenceKey(null, sequence, data);
 		}
@@ -360,7 +360,7 @@ public class DataAccess : DataAccessBase
 			if(sequence.References != null && sequence.References.Length > 0)
 			{
 				if(data == null)
-					throw new InvalidOperationException($"Missing required references data for the '{sequence.Name}' sequence.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Sequence_MissingReferences_Message, sequence.Name));
 
 				var index = 0;
 				object value = null;
@@ -371,31 +371,31 @@ public class DataAccess : DataAccessBase
 					{
 						case IModel model:
 							if(!model.TryGetValue(reference.Name, out value) && !GetRequiredValue(context, reference, out value))
-								throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
+								throw new InvalidOperationException(string.Format(Properties.Resources.Sequence_ReferenceMissing_Message, reference.Name));
 
 							break;
 						case IDictionary<string, object> genericDictionary:
 							if(!genericDictionary.TryGetValue(reference.Name, out value) && !GetRequiredValue(context, reference, out value))
-								throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
+								throw new InvalidOperationException(string.Format(Properties.Resources.Sequence_ReferenceMissing_Message, reference.Name));
 
 							break;
 						case IDictionary classicDictionary:
 							if(!classicDictionary.Contains(reference.Name) && !GetRequiredValue(context, reference, out value))
-								throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
+								throw new InvalidOperationException(string.Format(Properties.Resources.Sequence_ReferenceMissing_Message, reference.Name));
 
 							break;
 						default:
 							if(Zongsoft.Common.TypeExtension.IsScalarType(data.GetType()))
 							{
 								if(data.GetType().IsArray)
-									value = ((Array)data).GetValue(index) ?? throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
+									value = ((Array)data).GetValue(index) ?? throw new InvalidOperationException(string.Format(Properties.Resources.Sequence_ReferenceMissing_Message, reference.Name));
 								else
 									value = data.ToString();
 							}
 							else
 							{
 								if(Reflection.Reflector.GetValue(ref data, reference.Name) == null && !GetRequiredValue(context, reference, out value))
-									throw new InvalidOperationException($"The required '{reference.Name}' reference of sequence is not included in the data.");
+									throw new InvalidOperationException(string.Format(Properties.Resources.Sequence_ReferenceMissing_Message, reference.Name));
 							}
 
 							break;

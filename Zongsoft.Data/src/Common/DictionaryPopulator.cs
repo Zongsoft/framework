@@ -55,7 +55,7 @@ public class DictionaryPopulator : IDataPopulator
 	public T Populate<T>(IDataRecord record)
 	{
 		if(record.FieldCount != _properties.Length)
-			throw new DataException("The record of populate has failed.");
+			throw new DataException(Properties.Resources.DataPopulator_Failed_Message);
 
 		//创建一个对应的实体字典
 		var dictionary = _creator(record.FieldCount);
@@ -94,10 +94,10 @@ public class DictionaryPopulator : IDataPopulator
 		}
 
 		if(type.IsAbstract)
-			throw new InvalidOperationException($"The specified '{type.FullName}' type is an abstract class that the dictionary populator cannot to populate.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DictionaryPopulator_AbstractTypeUnsupported_Message, type.FullName));
 
 		if(!typeof(IDictionary).IsAssignableFrom(type))
-			throw new InvalidOperationException($"The specified '{type.FullName}' type does not implement the {nameof(IDictionary)} interface that the dictionary populator cannot to populate.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DictionaryPopulator_InterfaceRequired_Message, type.FullName, nameof(IDictionary)));
 
 		return capacity => (IDictionary)System.Activator.CreateInstance(type);
 	}

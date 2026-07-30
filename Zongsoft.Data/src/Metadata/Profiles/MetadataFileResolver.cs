@@ -133,11 +133,11 @@ public class MetadataFileResolver
 			if(ex is MetadataFileException)
 				throw;
 
-			throw new MetadataFileException($"Invalid '{filePath}' mapping file.", ex);
+			throw new MetadataFileException(string.Format(Properties.Resources.MetadataFile_InvalidFile_Message, filePath), ex);
 		}
 
 		if(reader.LocalName != XML_SCHEMA_ELEMENT && reader.LocalName != XML_MAPPING_ELEMENT)
-			throw new MetadataFileException($"The root element must be '<{XML_SCHEMA_ELEMENT}>' in this '{filePath}' file.");
+			throw new MetadataFileException(string.Format(Properties.Resources.MetadataFile_InvalidRootElement_Message, XML_SCHEMA_ELEMENT, filePath));
 
 		//获取映射文件所属的应用名
 		var applicationName = reader.GetAttribute(XML_NAME_ATTRIBUTE);
@@ -255,7 +255,7 @@ public class MetadataFileResolver
 					}
 					catch(Exception ex)
 					{
-						throw new MetadataFileException($"The default value ‘{GetAttributeValue<string>(reader, XML_DEFAULT_ATTRIBUTE)}’ for the ‘{property.Name}’ property of the ‘{entity}’ entity is invalid and is located in the file: {provider.FilePath}.", ex);
+						throw new MetadataFileException(string.Format(Properties.Resources.MetadataFile_InvalidDefaultValue_Message, GetAttributeValue<string>(reader, XML_DEFAULT_ATTRIBUTE), property.Name, entity, provider.FilePath), ex);
 					}
 
 					try
@@ -268,7 +268,7 @@ public class MetadataFileResolver
 					}
 					catch(Exception ex)
 					{
-						throw new MetadataFileException($"The sequence ‘{GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE)}’ for the ‘{property.Name}’ property of the ‘{entity}’ entity is invalid and is located in the file: {provider.FilePath}.", ex);
+						throw new MetadataFileException(string.Format(Properties.Resources.MetadataFile_InvalidSequence_Message, GetAttributeValue<string>(reader, XML_SEQUENCE_ATTRIBUTE), property.Name, entity, provider.FilePath), ex);
 					}
 
 					//将解析成功的属性元素加入到实体的属性集合
@@ -294,7 +294,7 @@ public class MetadataFileResolver
 							"*" => DataAssociationMultiplicity.Many,
 							"1" or "!" => DataAssociationMultiplicity.One,
 							"?" or "0..1" => DataAssociationMultiplicity.ZeroOrOne,
-							_ => throw new DataException($"Invalid '{multiplicity}' value of the multiplicity attribute."),
+							_ => throw new DataException(string.Format(Properties.Resources.MetadataFile_InvalidMultiplicity_Message, multiplicity)),
 						};
 					}
 
@@ -349,7 +349,7 @@ public class MetadataFileResolver
 					}
 
 					if(links == null || links.Count == 0)
-						throw new DataException($"Missing links of the '{complexProperty.Name}' complex property in the '{provider.FilePath}' mapping file.");
+						throw new DataException(string.Format(Properties.Resources.MetadataFile_MissingComplexPropertyLinks_Message, complexProperty.Name, provider.FilePath));
 
 					//设置复合属性的链接集属性
 					complexProperty.Links = links.ToArray();
@@ -436,7 +436,7 @@ public class MetadataFileResolver
 				"both" => System.Data.ParameterDirection.InputOutput,
 				"result" => System.Data.ParameterDirection.ReturnValue,
 				"return" => System.Data.ParameterDirection.ReturnValue,
-				_ => throw new MetadataFileException($"Invalid value '{value}' of '{XML_DIRECTION_ATTRIBUTE}' attribute in '{XML_PARAMETER_ELEMENT}' element."),
+				_ => throw new MetadataFileException(string.Format(Properties.Resources.MetadataFile_InvalidAttributeValue_Message, value, XML_DIRECTION_ATTRIBUTE, XML_PARAMETER_ELEMENT)),
 			};
 		}
 
@@ -493,7 +493,7 @@ public class MetadataFileResolver
 
 			//为指定名称的特性值做类型转换，如果转换失败则抛出异常
 			if(!Zongsoft.Common.Convert.TryConvertValue<T>(attributeValue, out var result))
-				throw new MetadataFileException($"Invalid value '{attributeValue}' of '{name}' attribute in '{elementName}' element.");
+				throw new MetadataFileException(string.Format(Properties.Resources.MetadataFile_InvalidAttributeValue_Message, attributeValue, name, elementName));
 
 			return result;
 		}
@@ -539,9 +539,9 @@ public class MetadataFileResolver
 			var filePath = file != null ? file.FilePath : string.Empty;
 
 			if(string.IsNullOrWhiteSpace(elementName))
-				throw new MetadataFileException($"Contains unrecognized element(s) in the '{filePath}' file.");
+				throw new MetadataFileException(string.Format(Properties.Resources.MetadataFile_UnrecognizedElements_Message, filePath));
 			else
-				throw new MetadataFileException($"Found a unrecognized '{elementName}' element in the '{filePath}' file.");
+				throw new MetadataFileException(string.Format(Properties.Resources.MetadataFile_UnrecognizedElement_Message, elementName, filePath));
 		}
 	}
 

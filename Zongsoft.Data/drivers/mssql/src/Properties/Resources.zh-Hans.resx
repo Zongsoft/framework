@@ -121,4 +121,31 @@
   <data name="MsSql.Settings.WorkstationId" xml:space="preserve">
     <value>工作站标识</value>
   </data>
+	<data name="ExpressionVisitor.StatementUnsupported.Message" xml:space="preserve">
+		<value>不支持“{0}”语句。</value>
+	</data>
+	<data name="ExpressionVisitor.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>不支持数据类型“{0}”。</value>
+	</data>
+	<data name="ExpressionVisitor.AggregateInvalid.Message" xml:space="preserve">
+		<value>聚合方法“{0}”无效。</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceWithoutNameUnsupported.Message" xml:space="preserve">
+		<value>SQL Server 驱动不支持未提供名称参数的序列函数“{0}”。</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceWithNameUnsupported.Message" xml:space="preserve">
+		<value>SQL Server 驱动不支持提供名称参数的序列函数“{0}”。</value>
+	</data>
+	<data name="InsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>新增语句缺少必需字段。</value>
+	</data>
+	<data name="InsertStatement.EntityKeyRequired.Message" xml:space="preserve">
+		<value>实体“{0}”必须定义键，才能忽略新增冲突。</value>
+	</data>
+	<data name="UpdateStatement.MultiTableUnsupported.Message" xml:space="preserve">
+		<value>生成的 UPDATE 语句无效，因为数据引擎不支持多表更新。</value>
+	</data>
+	<data name="UpsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>增改语句缺少必需字段。</value>
+	</data>
 </root>

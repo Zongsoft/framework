@@ -15,4 +15,19 @@
   <data name="DuckDB.Settings.Database" xml:space="preserve">
     <value>数据库文件</value>
   </data>
+	<data name="ExpressionVisitor.StatementUnsupported.Message" xml:space="preserve">
+		<value>不支持“{0}”语句。</value>
+	</data>
+	<data name="ExpressionVisitor.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>不支持数据类型“{0}”。</value>
+	</data>
+	<data name="ExpressionVisitor.AggregateInvalid.Message" xml:space="preserve">
+		<value>聚合方法“{0}”无效。</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceInvalid.Message" xml:space="preserve">
+		<value>序列方法“{0}”无效。</value>
+	</data>
+	<data name="UpsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>增改语句缺少必需字段。</value>
+	</data>
 </root>

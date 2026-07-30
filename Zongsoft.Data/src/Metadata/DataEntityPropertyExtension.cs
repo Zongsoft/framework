@@ -62,7 +62,7 @@ public static class DataEntityPropertyExtension
 
 		var simplex = property.IsSimplex ?
 			(IDataEntitySimplexProperty)property :
-			throw new ArgumentException($"The specified '{property.Name}' property is not a simplex property, so it has no field name(alias).");
+			throw new ArgumentException(string.Format(Properties.Resources.DataEntity_FieldAliasRequiresSimplex_Message, property.Name));
 
 		if(string.IsNullOrEmpty(simplex.Alias))
 		{
@@ -97,11 +97,11 @@ public static class DataEntityPropertyExtension
 
 		//获取指定导航属性的关联属性
 		if(!entity.Properties.TryGetValue(constraint.Name, out var constraintProperty))
-			throw new DataException($"The specified '{constraint.Name}' constraint does not exist in the '{property.Entity.Name}.{property.Name}' navigation property.");
+			throw new DataException(string.Format(Properties.Resources.Constraint_NotFound_Message, constraint.Name, property.Entity.Name, property.Name));
 
 		//如果约束项的关联属性不是简单属性则抛出异常
 		if(!constraintProperty.IsSimplex)
-			throw new DataException($"The specified '{constraint.Name}' constraint association property is not a simplex property.");
+			throw new DataException(string.Format(Properties.Resources.Constraint_AssociationPropertyNotSimplex_Message, constraint.Name));
 
 		//返回约束项值转换成关联属性数据类型的常量表达式
 		return Expression.Constant(Zongsoft.Common.Convert.ConvertValue(constraint.Value, ((IDataEntitySimplexProperty)constraintProperty).Type.DbType.AsType()));

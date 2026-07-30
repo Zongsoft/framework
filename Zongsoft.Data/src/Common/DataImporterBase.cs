@@ -61,7 +61,7 @@ public abstract class DataImporterBase : IDataImporter
 			GenerateMembersWithInfo(context, members);
 
 		return members.Count > 0 ? members :
-			throw new DataOperationException($"The members of the import operation cannot be determined based on the specified '{context.ModelType}' type.");
+			throw new DataOperationException(string.Format(Properties.Resources.DataImporter_MembersUndetermined_Message, context.ModelType));
 
 		static MemberInfo GetMemberInfo(Type type, string name) =>
 			(MemberInfo)type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance) ??
@@ -88,7 +88,7 @@ public abstract class DataImporterBase : IDataImporter
 					if(context.Entity.Properties.TryGetValue(context.Members[i], out var property))
 					{
 						if(property.IsComplex)
-							throw new DataException($"The specified '{property.Name}' property cannot be a navigation property, only scalar field data can be import.");
+							throw new DataException(string.Format(Properties.Resources.DataImporter_NavigationPropertyUnsupported_Message, property.Name));
 
 						var info = GetMemberInfo(context.ModelType, property.Name);
 						if(info != null)
@@ -117,7 +117,7 @@ public abstract class DataImporterBase : IDataImporter
 					if(context.Entity.Properties.TryGetValue(context.Members[i], out var property))
 					{
 						if(property.IsComplex)
-							throw new DataException($"The specified '{property.Name}' property cannot be a navigation property, only scalar field data can be import.");
+							throw new DataException(string.Format(Properties.Resources.DataImporter_NavigationPropertyUnsupported_Message, property.Name));
 
 						members.Add(new Member(context, (Metadata.IDataEntitySimplexProperty)property, null));
 					}
@@ -161,7 +161,7 @@ public abstract class DataImporterBase : IDataImporter
 					break;
 				default:
 					if(member != null)
-						throw new ArgumentException($"The specified '{member.Name}' info is invalid member.");
+						throw new ArgumentException(string.Format(Properties.Resources.DataImporter_InvalidMember_Message, member.Name));
 					break;
 			}
 		}

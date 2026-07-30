@@ -80,7 +80,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			statement.Where = ConditionExpression.And(statement.Where, Where(context, statement));
 
 		if(statement.Fields.Count == 0)
-			throw new DataException($"The update statement is missing a required set clause.");
+			throw new DataException(Properties.Resources.UpdateStatement_MissingSetClause_Message);
 
 		if(context.Options.HasReturning(out var returning))
 		{
@@ -169,7 +169,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 		{
 			//不可变复合属性不支持任何写操作，即在修改操作中不能包含不可变复合属性
 			if(member.Token.Property.Immutable)
-				throw new DataException($"The '{member.FullPath}' is an immutable complex(navigation) property and does not support the update operation.");
+				throw new DataException(string.Format(Properties.Resources.UpdateStatement_ImmutableProperty_Message, member.FullPath));
 
 			var complex = (IDataEntityComplexProperty)member.Token.Property;
 
@@ -323,7 +323,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			foreach(var key in statement.Entity.Key)
 			{
 				if(!statement.Entity.GetTokens(context.ModelType).TryGetValue(key.Name, out var token))
-					throw new DataException($"No required primary key field values were specified for the updation '{statement.Entity.Name}' entity data.");
+					throw new DataException(string.Format(Properties.Resources.UpdateStatement_MissingPrimaryKeyValues_Message, statement.Entity.Name));
 
 				var field = statement.Table.CreateField(key);
 				var parameter = Expression.Parameter(field, new SchemaMember(token));
@@ -354,7 +354,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			if(property.IsSimplex)
 				return statement.Table.CreateField(property);
 
-			throw new DataException($"The specified '{name}' property is not a simplex property, so it cannot participate in the simple operations.");
+			throw new DataException(string.Format(Properties.Resources.DataEntity_SimpleOperationRequiresSimplex_Message, name));
 		}
 
 		protected override IExpression GetValue(DataUpdateContext context, IStatementBase statement, object value)
@@ -371,7 +371,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			if(property.IsSimplex)
 				return ((IDataEntitySimplexProperty)property).Type.DbType.AsType();
 
-			throw new DataException($"The specified '{name}' property is not a simplex property, so its data type cannot be confirmed.");
+			throw new DataException(string.Format(Properties.Resources.DataEntity_TypeRequiresSimplex_Message, name));
 		}
 
 		protected override IDataEntity GetEntity(DataUpdateContext context) => context.Entity;

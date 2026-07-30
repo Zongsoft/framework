@@ -43,7 +43,7 @@ public class DataExistExecutor : IDataExecutor<ExistStatement>
 		if(context is DataExistContext ctx)
 			return this.OnExecute(ctx, statement);
 
-		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
 	}
 
 	protected virtual bool OnExecute(DataExistContext context, ExistStatement statement)
@@ -72,7 +72,7 @@ public class DataExistExecutor : IDataExecutor<ExistStatement>
 		if(context is DataExistContext ctx)
 			return this.OnExecuteAsync(ctx, statement, cancellation);
 
-		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
 	}
 
 	protected virtual async ValueTask<bool> OnExecuteAsync(DataExistContext context, ExistStatement statement, CancellationToken cancellation)

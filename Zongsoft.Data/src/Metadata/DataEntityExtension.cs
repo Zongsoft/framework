@@ -72,9 +72,9 @@ public static class DataEntityExtension
 			else
 			{
 				if(property == null)
-					throw new InvalidOperationException($"The specified '{path}' member does not exist in the '{entity}' entity.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.DataEntity_MemberNotFound_Message, path, entity));
 				else
-					throw new InvalidOperationException($"The specified '{path}' member does not exist in the '{entity}' entity.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.DataEntity_MemberNotFound_Message, path, entity));
 			}
 
 			last = index;
@@ -83,7 +83,7 @@ public static class DataEntityExtension
 		if(properties.TryGetValue(path.Substring(GetLast(last)), out property))
 			return property;
 
-		throw new InvalidOperationException($"The specified '{path}' member does not exist in the '{entity}' entity.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.DataEntity_MemberNotFound_Message, path, entity));
 	}
 
 	/// <summary>查找指定实体元素继承的父实体元素。</summary>
@@ -94,7 +94,7 @@ public static class DataEntityExtension
 		if(entity == null || string.IsNullOrEmpty(entity.BaseName))
 			return null;
 
-		return DataEntityUtility.Locate(entity, entity.BaseName) ?? throw new DataException($"The '{entity.BaseName}' base of '{entity.Name}' entity does not exist.");
+		return DataEntityUtility.Locate(entity, entity.BaseName) ?? throw new DataException(string.Format(Properties.Resources.DataEntity_BaseNotFound_Message, entity.BaseName, entity.Name));
 	}
 
 	/// <summary>获取指定实体元素的继承链（所有的继承元素），从最顶级的根元素开始一直到当前元素本身。</summary>

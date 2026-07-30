@@ -58,9 +58,9 @@ public class MsSqlInsertStatementVisitor : InsertStatementVisitor
 		const string SOURCE_ALIAS = "SRC";
 
 		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException("Missing required fields in the insert statment.");
+			throw new DataException(Properties.Resources.ResourceManager.GetString("InsertStatement.MissingFields.Message"));
 		if(!statement.Entity.HasKey)
-			throw new DataException($"The '{statement.Entity.Name}' entity must have a key to ignore insert conflicts.");
+			throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("InsertStatement.EntityKeyRequired.Message"), statement.Entity.Name));
 
 		context.Write("MERGE INTO ");
 		context.Visit(statement.Table);

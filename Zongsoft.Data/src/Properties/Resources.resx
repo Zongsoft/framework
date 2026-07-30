@@ -123,4 +123,289 @@
   <data name="DataConnector.ConnectionFailed+Suspended.Message" xml:space="preserve">
     <value>The connection to the '{0}' data source by the '{1}' driver failed {2} consecutive time(s). Connection attempts are suspended until {3:HH:mm:sszz}.</value>
   </data>
+  <data name="DataConnectionException.RetryAfter.Message" xml:space="preserve">
+    <value>{0} Retry after {1:O}.</value>
+  </data>
+  <data name="Operator.InvalidOperandConversion.Message" xml:space="preserve">
+    <value>Cannot convert the {0} operand to operator.</value>
+  </data>
+  <data name="MetadataFile.UnrecognizedElements.Message" xml:space="preserve">
+    <value>Contains unrecognized element(s) in the &apos;{0}&apos; file.</value>
+  </data>
+  <data name="DataExecutor.UnsupportedContext.Message" xml:space="preserve">
+    <value>Data Engine Error: The &apos;{0}&apos; executor does not support execution of &apos;{1}&apos; context.</value>
+  </data>
+  <data name="MetadataFile.UnrecognizedElement.Message" xml:space="preserve">
+    <value>Found a unrecognized &apos;{0}&apos; element in the &apos;{1}&apos; file.</value>
+  </data>
+  <data name="Condition.InvalidRangeValue.Message" xml:space="preserve">
+    <value>Illegal range condition value.</value>
+  </data>
+  <data name="MetadataFile.InvalidFile.Message" xml:space="preserve">
+    <value>Invalid &apos;{0}&apos; mapping file.</value>
+  </data>
+  <data name="DataSource.InvalidAccessMode.Message" xml:space="preserve">
+    <value>Invalid &apos;{0}&apos; mode value of the ConnectionString configuration.</value>
+  </data>
+  <data name="MetadataFile.InvalidMultiplicity.Message" xml:space="preserve">
+    <value>Invalid &apos;{0}&apos; value of the multiplicity attribute.</value>
+  </data>
+  <data name="Aggregate.InvalidNavigationDepth.Message" xml:space="preserve">
+    <value>Invalid aggregate member ‘{0}’ because its navigation level is too deep.</value>
+  </data>
+  <data name="Schema.InvalidMemberKind.Message" xml:space="preserve">
+    <value>Invalid kind of &apos;{0}&apos; member.</value>
+  </data>
+  <data name="Sequence.InvalidKey.Message" xml:space="preserve">
+    <value>Invalid sequence key, the sequence key must separate the entity name and property name with a colon or a dot.</value>
+  </data>
+  <data name="MetadataFile.InvalidAttributeValue.Message" xml:space="preserve">
+    <value>Invalid value &apos;{0}&apos; of &apos;{1}&apos; attribute in &apos;{2}&apos; element.</value>
+  </data>
+  <data name="MetadataFile.MissingComplexPropertyLinks.Message" xml:space="preserve">
+    <value>Missing links of the &apos;{0}&apos; complex property in the &apos;{1}&apos; mapping file.</value>
+  </data>
+  <data name="Statement.MissingComplexPropertyMembers.Message" xml:space="preserve">
+    <value>Missing members that does not specify &apos;{0}&apos; complex property.</value>
+  </data>
+  <data name="InsertStatement.MissingFields.Message" xml:space="preserve">
+    <value>Missing required fields in the insert statment.</value>
+  </data>
+  <data name="UpdateStatement.MissingFields.Message" xml:space="preserve">
+    <value>Missing required fields in the update statment.</value>
+  </data>
+  <data name="UpsertStatement.MissingFields.Message" xml:space="preserve">
+    <value>Missing required fields in the upsert statment.</value>
+  </data>
+  <data name="Sequence.MissingReferences.Message" xml:space="preserve">
+    <value>Missing required references data for the &apos;{0}&apos; sequence.</value>
+  </data>
+  <data name="DataAccess.MissingSequencer.Message" xml:space="preserve">
+    <value>Missing required sequencer of the &apos;{0}&apos; DataAccess.</value>
+  </data>
+  <data name="UpdateStatement.MissingTables.Message" xml:space="preserve">
+    <value>Missing required tables in the update statement.</value>
+  </data>
+  <data name="DataProvider.SourcesNotFound.Message" xml:space="preserve">
+    <value>No data sources for the &apos;{0}&apos; data provider was found.</value>
+  </data>
+  <data name="DataPopulator.ProviderNotFound.Message" xml:space="preserve">
+    <value>No found data populator provider for the &apos;{0}&apos; type.</value>
+  </data>
+  <data name="DataProvider.SourceNotMatched.Message" xml:space="preserve">
+    <value>No matched data source for this data operation.</value>
+  </data>
+  <data name="UpdateStatement.MissingPrimaryKeyValues.Message" xml:space="preserve">
+    <value>No required primary key field values were specified for the updation &apos;{0}&apos; entity data.</value>
+  </data>
+  <data name="DataEntityProperty.GetValueUnsupported.Message" xml:space="preserve">
+    <value>Obtaining the value of the &apos;{0}&apos; property from the specified &apos;{1}&apos; target type is not supported.</value>
+  </data>
+  <data name="DataEntityProperty.SetValueUnsupported.Message" xml:space="preserve">
+    <value>Setting the value of the &apos;{0}&apos; property from the specified &apos;{1}&apos; target type is not supported.</value>
+  </data>
+  <data name="DataEntity.BaseNotFound.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; base of &apos;{1}&apos; entity does not exist.</value>
+  </data>
+  <data name="DataSource.DriverNotFound.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; data driver does not exist.</value>
+  </data>
+  <data name="DataConnectionException.Unavailable.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; data source is temporarily unavailable.</value>
+  </data>
+  <data name="Sequence.EntityNotFound.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; entity specified in the sequence key does not exist.</value>
+  </data>
+  <data name="DeleteStatement.ImmutableProperty.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; is an immutable complex(navigation) property and does not support the delete operation.</value>
+  </data>
+  <data name="InsertStatement.ImmutableProperty.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; is an immutable complex(navigation) property and does not support the insert operation.</value>
+  </data>
+  <data name="UpdateStatement.ImmutableProperty.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; is an immutable complex(navigation) property and does not support the update operation.</value>
+  </data>
+  <data name="UpsertStatement.ImmutableProperty.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; is an immutable complex(navigation) property and does not support the upsert operation.</value>
+  </data>
+  <data name="DataEntity.Immutable.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; is an immutable entity and does not support {1} operation.</value>
+  </data>
+  <data name="Mutation.MultiLevelLinkAnchorUnsupported.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; multi-level link anchors are not supported in mutate operation.</value>
+  </data>
+  <data name="DataEntity.PropertyNotFound.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; property of &apos;{1}&apos; entity does not existed.</value>
+  </data>
+  <data name="ModelPopulator.PropertyNotComplex.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; property of &apos;{1}&apos; entity is not a complex(navigation) property.</value>
+  </data>
+  <data name="Sequence.PropertyNotFound.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; property specified in the sequence key does not exist or is not a simplex property.</value>
+  </data>
+  <data name="Sequence.PropertyUndefined.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; property specified in the sequence key is undefined.</value>
+  </data>
+  <data name="Table.ExpansionUnsupported.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; table cannot be expanded.</value>
+  </data>
+  <data name="DataEntity.RoleTargetNotFound.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; target entity associated with the Role in the &apos;{1}:{2}&apos; complex property does not exist.</value>
+  </data>
+  <data name="Condition.TypeUnsupported.Message" xml:space="preserve">
+    <value>The &apos;{0}&apos; type is an unsupported condition type.</value>
+  </data>
+  <data name="DataSession.AmbientTransactionCompleted.Message" xml:space="preserve">
+    <value>The ambient transaction has already been completed.</value>
+  </data>
+  <data name="Constraint.InvalidActor.Message" xml:space="preserve">
+    <value>The constraint actor &apos;{0}&apos; is an invalid value.</value>
+  </data>
+  <data name="DataSession.Completed.Message" xml:space="preserve">
+    <value>The data session has already been completed.</value>
+  </data>
+  <data name="MetadataFile.InvalidDefaultValue.Message" xml:space="preserve">
+    <value>The default value ‘{0}’ for the ‘{1}’ property of the ‘{2}’ entity is invalid and is located in the file: {3}.</value>
+  </data>
+  <data name="TableIdentifier.MissingEntityProperty.Message" xml:space="preserve">
+    <value>The entity property of the &apos;{0}&apos; table identifier is null.</value>
+  </data>
+  <data name="Aggregate.ComplexFieldUnsupported.Message" xml:space="preserve">
+    <value>The field &apos;{0}&apos; of aggregate function can not be a complex property.</value>
+  </data>
+  <data name="Grouping.ComplexKeyUnsupported.Message" xml:space="preserve">
+    <value>The grouping key &apos;{0}&apos; can not be a complex property.</value>
+  </data>
+  <data name="CircuitBreaker.InvalidMaximumDuration.Message" xml:space="preserve">
+    <value>The maximum break duration cannot be less than the break duration.</value>
+  </data>
+  <data name="DataImporter.MembersUndetermined.Message" xml:space="preserve">
+    <value>The members of the import operation cannot be determined based on the specified &apos;{0}&apos; type.</value>
+  </data>
+  <data name="ModelPopulator.PropertyUndefined.Message" xml:space="preserve">
+    <value>The property named &apos;{0}&apos; is undefined in the &apos;{1}&apos; data entity mapping.</value>
+  </data>
+  <data name="DataPopulator.Failed.Message" xml:space="preserve">
+    <value>The record of populate has failed.</value>
+  </data>
+  <data name="Sequence.ReferenceMissing.Message" xml:space="preserve">
+    <value>The required &apos;{0}&apos; reference of sequence is not included in the data.</value>
+  </data>
+  <data name="DataSource.DriverUnspecified.Message" xml:space="preserve">
+    <value>The required driver is not specified in the database connection settings.</value>
+  </data>
+  <data name="MetadataFile.InvalidRootElement.Message" xml:space="preserve">
+    <value>The root element must be &apos;&lt;{0}&gt;&apos; in this &apos;{1}&apos; file.</value>
+  </data>
+  <data name="MetadataFile.InvalidSequence.Message" xml:space="preserve">
+    <value>The sequence ‘{0}’ for the ‘{1}’ property of the ‘{2}’ entity is invalid and is located in the file: {3}.</value>
+  </data>
+  <data name="Sorting.ComplexPropertyUnsupported.Message" xml:space="preserve">
+    <value>The specified &apos;{0}.{1}&apos; is a composite(navigation) property that is not sortable.</value>
+  </data>
+  <data name="Sequence.Undefined.Message" xml:space="preserve">
+    <value>The specified &apos;{0}.{1}&apos; property does not define a sequence.</value>
+  </data>
+  <data name="Sorting.PropertyDisabled.Message" xml:space="preserve">
+    <value>The specified &apos;{0}.{1}&apos; property is not sortable and must be enabled for sorting before it can be sorted.</value>
+  </data>
+  <data name="Constraint.AssociationPropertyNotSimplex.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; constraint association property is not a simplex property.</value>
+  </data>
+  <data name="Constraint.NotFound.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; constraint does not exist in the &apos;{1}.{2}&apos; navigation property.</value>
+  </data>
+  <data name="DataEntity.FieldNotFound.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; field does not exist in the &apos;{1}&apos; entity.</value>
+  </data>
+  <data name="Field.ComplexOperationUnsupported.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; field is associated with a composite(navigation) property and cannot perform arithmetic or logical operations on it.</value>
+  </data>
+  <data name="Field.SubqueryUnsupported.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; field is associated with a one-to-many composite(navigation) property and a subquery cannot be generated.</value>
+  </data>
+  <data name="DataImporter.InvalidMember.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; info is invalid member.</value>
+  </data>
+  <data name="DataEntity.SimplePropertyNavigation.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; is a simple property and cannot be navigated.</value>
+  </data>
+  <data name="DataEntity.InheritedMemberNotFound.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; member does not exist in the &apos;{1}&apos; entity and it&apos;s inherits.</value>
+  </data>
+  <data name="DataEntity.MemberNotFound.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; member does not exist in the &apos;{1}&apos; entity.</value>
+  </data>
+  <data name="Sorting.OneToManyMemberUnsupported.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; member is a one-to-many composite(navigation) property that cannot appear in the sorting and specific condition clauses.</value>
+  </data>
+  <data name="ModelPopulator.DuplicateMember.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; member is duplicated.</value>
+  </data>
+  <data name="Condition.NullParameterValue.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; parameter value of the type {1} condition is null.</value>
+  </data>
+  <data name="DataImporter.NavigationPropertyUnsupported.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; property cannot be a navigation property, only scalar field data can be import.</value>
+  </data>
+  <data name="Schema.PropertyNotFound.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; property does not exist in the &apos;{1}&apos; entity.</value>
+  </data>
+  <data name="DataEntity.SimpleOperationRequiresSimplex.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; property is not a simplex property, so it cannot participate in the simple operations.</value>
+  </data>
+  <data name="DataEntity.FieldAliasRequiresSimplex.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; property is not a simplex property, so it has no field name(alias).</value>
+  </data>
+  <data name="DataEntity.TypeRequiresSimplex.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; property is not a simplex property, so its data type cannot be confirmed.</value>
+  </data>
+  <data name="TableIdentifier.FieldRequiresSimplex.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; property is not a simplex property, so you cannot create a field identifier for it.</value>
+  </data>
+  <data name="JoinClause.SourceTableNotFound.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; source does not have a corresponding table, so you cannot create an inheritance table association based on it.</value>
+  </data>
+  <data name="DataConverter.ConversionUnsupported.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; type converter does not support conversion from the &apos;{1}&apos; source type nor does it support conversion to the &apos;{2}&apos; target type.</value>
+  </data>
+  <data name="DictionaryPopulator.InterfaceRequired.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; type does not implement the {1} interface that the dictionary populator cannot to populate.</value>
+  </data>
+  <data name="DataConverter.NotFound.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; type has no type converter.</value>
+  </data>
+  <data name="DictionaryPopulator.AbstractTypeUnsupported.Message" xml:space="preserve">
+    <value>The specified &apos;{0}&apos; type is an abstract class that the dictionary populator cannot to populate.</value>
+  </data>
+  <data name="Schema.ComplexPropertyRequired.Message" xml:space="preserve">
+    <value>The specified {0} schema does not correspond to a complex property, so its child elements cannot be defined.</value>
+  </data>
+  <data name="UpdateStatement.MissingSetClause.Message" xml:space="preserve">
+    <value>The update statement is missing a required set clause.</value>
+  </data>
+  <data name="Subquery.BuildFailed.Message" xml:space="preserve">
+    <value>Unable to build a subquery corresponding to the specified &apos;{0}&apos; parameter({1}).</value>
+  </data>
+  <data name="Condition.OperatorUnsupported.Message" xml:space="preserve">
+    <value>Unsupported &apos;{0}&apos; condition operation.</value>
+  </data>
+  <data name="DataType.Unsupported.Message" xml:space="preserve">
+    <value>Unsupported &apos;{0}&apos; data type.</value>
+  </data>
+  <data name="Operand.Unsupported.Message" xml:space="preserve">
+    <value>Unsupported &apos;{0}&apos; operand type.</value>
+  </data>
+  <data name="Operator.Unsupported.Message" xml:space="preserve">
+    <value>Unsupported &apos;{0}&apos; operator.</value>
+  </data>
+  <data name="Operand.TypeUnsupported.Message" xml:space="preserve">
+    <value>Unsupported {0} operand type.</value>
+  </data>
+  <data name="DataAccess.OperationUnsupported.Message" xml:space="preserve">
+    <value>Unsupported data access &apos;{0}&apos; operation.</value>
+  </data>
+  <data name="DataProvider.ExecutionFailed.Message" xml:space="preserve">
+    <value>The data execution error has occurred.</value>
+  </data>
 </root>

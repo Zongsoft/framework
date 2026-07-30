@@ -127,4 +127,37 @@
   <data name="TDengine.Settings.Compressible" xml:space="preserve">
     <value>Compression Enabled</value>
   </data>
+	<data name="ExpressionVisitor.StatementUnsupported.Message" xml:space="preserve">
+		<value>Not supported &apos;{0}&apos; statement.</value>
+	</data>
+	<data name="ExpressionVisitor.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>Unsupported &apos;{0}&apos; data type.</value>
+	</data>
+	<data name="ExpressionVisitor.AggregateInvalid.Message" xml:space="preserve">
+		<value>Invalid &apos;{0}&apos; aggregate method.</value>
+	</data>
+	<data name="Statement.UpdateUnsupported.Message" xml:space="preserve">
+		<value>TDengine does not support UPDATE statements; insert a row with the same primary timestamp to replace its values.</value>
+	</data>
+	<data name="DeleteStatement.TimestampRequired.Message" xml:space="preserve">
+		<value>TDengine DELETE requires an entity whose first column is the primary timestamp.</value>
+	</data>
+	<data name="DeleteStatement.TimestampConditionOnly.Message" xml:space="preserve">
+		<value>TDengine DELETE conditions may only reference the primary timestamp field &apos;{0}&apos;.</value>
+	</data>
+	<data name="DeleteStatement.SourceUnsupported.Message" xml:space="preserve">
+		<value>The ‘{0}’ type expression is not supported within the FROM clause.</value>
+	</data>
+	<data name="InsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>Missing required fields in the {0} statement.</value>
+	</data>
+	<data name="InsertStatement.SingleRecordOnly.Message" xml:space="preserve">
+		<value>TDengine {0} statements support one record at a time; use the data importer for bulk writes.</value>
+	</data>
+	<data name="DeleteStatement.ParameterValueMissing.Message" xml:space="preserve">
+		<value>The TDengine DELETE parameter &apos;{0}&apos; does not contain a value.</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceUnsupported.Message" xml:space="preserve">
+		<value>The TDengine driver does not support the &apos;{0}&apos; sequence function.</value>
+	</data>
 </root>

@@ -86,7 +86,7 @@ public abstract class OperandConverter<TContext> where TContext : IDataAccessCon
 		if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Operand.ConstantOperand<>))
 			return this.GetValue(context, statement, operand.GetType().GetMethod("ToObject").Invoke(operand, null));
 
-		throw new DataException($"Unsupported {operand.GetType().FullName} operand type.");
+		throw new DataException(string.Format(Properties.Resources.Operand_TypeUnsupported_Message, operand.GetType().FullName));
 	}
 	#endregion
 
@@ -144,7 +144,7 @@ public abstract class OperandConverter<TContext> where TContext : IDataAccessCon
 		{
 			case 1:
 				if(!entity.Properties.TryGetValue(parts[0], out property))
-					throw new DataException($"The specified '{parts[0]}' field does not exist in the '{entity.Name}' entity.");
+					throw new DataException(string.Format(Properties.Resources.DataEntity_FieldNotFound_Message, parts[0], entity.Name));
 
 				selection = new SelectStatement(entity);
 				field = selection.Table.CreateField(property);
@@ -153,10 +153,10 @@ public abstract class OperandConverter<TContext> where TContext : IDataAccessCon
 				break;
 			case 2:
 				if(!entity.Properties.TryGetValue(parts[0], out property))
-					throw new DataException($"The specified '{parts[0]}' field does not exist in the '{entity.Name}' entity.");
+					throw new DataException(string.Format(Properties.Resources.DataEntity_FieldNotFound_Message, parts[0], entity.Name));
 
 				if(property.IsSimplex)
-					throw new DataException($"The specified '{parts[0]}' is a simple property and cannot be navigated.");
+					throw new DataException(string.Format(Properties.Resources.DataEntity_SimplePropertyNavigation_Message, parts[0]));
 
 				var complex = (IDataEntityComplexProperty)property;
 
@@ -186,7 +186,7 @@ public abstract class OperandConverter<TContext> where TContext : IDataAccessCon
 				selection.Where = conditions;
 				break;
 			default:
-				throw new DataException($"Invalid aggregate member ‘{aggregate.Member}’ because its navigation level is too deep.");
+				throw new DataException(string.Format(Properties.Resources.Aggregate_InvalidNavigationDepth_Message, aggregate.Member));
 		}
 
 		if(aggregate.Filter != null)

@@ -61,6 +61,132 @@ namespace Zongsoft.Data.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The field &apos;{0}&apos; of aggregate function can not be a complex property. 的本地化字符串。
+        /// </summary>
+        internal static string Aggregate_ComplexFieldUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Aggregate.ComplexFieldUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Invalid aggregate member ‘{0}’ because its navigation level is too deep. 的本地化字符串。
+        /// </summary>
+        internal static string Aggregate_InvalidNavigationDepth_Message {
+            get {
+                return ResourceManager.GetString("Aggregate.InvalidNavigationDepth.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The maximum break duration cannot be less than the break duration. 的本地化字符串。
+        /// </summary>
+        internal static string CircuitBreaker_InvalidMaximumDuration_Message {
+            get {
+                return ResourceManager.GetString("CircuitBreaker.InvalidMaximumDuration.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Illegal range condition value. 的本地化字符串。
+        /// </summary>
+        internal static string Condition_InvalidRangeValue_Message {
+            get {
+                return ResourceManager.GetString("Condition.InvalidRangeValue.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; parameter value of the type {1} condition is null. 的本地化字符串。
+        /// </summary>
+        internal static string Condition_NullParameterValue_Message {
+            get {
+                return ResourceManager.GetString("Condition.NullParameterValue.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; condition operation. 的本地化字符串。
+        /// </summary>
+        internal static string Condition_OperatorUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Condition.OperatorUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; type is an unsupported condition type. 的本地化字符串。
+        /// </summary>
+        internal static string Condition_TypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Condition.TypeUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; constraint association property is not a simplex property. 的本地化字符串。
+        /// </summary>
+        internal static string Constraint_AssociationPropertyNotSimplex_Message {
+            get {
+                return ResourceManager.GetString("Constraint.AssociationPropertyNotSimplex.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The constraint actor &apos;{0}&apos; is an invalid value. 的本地化字符串。
+        /// </summary>
+        internal static string Constraint_InvalidActor_Message {
+            get {
+                return ResourceManager.GetString("Constraint.InvalidActor.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; constraint does not exist in the &apos;{1}.{2}&apos; navigation property. 的本地化字符串。
+        /// </summary>
+        internal static string Constraint_NotFound_Message {
+            get {
+                return ResourceManager.GetString("Constraint.NotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Missing required sequencer of the &apos;{0}&apos; DataAccess. 的本地化字符串。
+        /// </summary>
+        internal static string DataAccess_MissingSequencer_Message {
+            get {
+                return ResourceManager.GetString("DataAccess.MissingSequencer.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Unsupported data access &apos;{0}&apos; operation. 的本地化字符串。
+        /// </summary>
+        internal static string DataAccess_OperationUnsupported_Message {
+            get {
+                return ResourceManager.GetString("DataAccess.OperationUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 {0} Retry after {1:O}. 的本地化字符串。
+        /// </summary>
+        internal static string DataConnectionException_RetryAfter_Message {
+            get {
+                return ResourceManager.GetString("DataConnectionException.RetryAfter.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; data source is temporarily unavailable. 的本地化字符串。
+        /// </summary>
+        internal static string DataConnectionException_Unavailable_Message {
+            get {
+                return ResourceManager.GetString("DataConnectionException.Unavailable.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The connection to the &apos;{0}&apos; data source by the &apos;{1}&apos; driver failed {2} consecutive time(s). 的本地化字符串。
         /// </summary>
         internal static string DataConnector_ConnectionFailed_Message {
@@ -75,6 +201,735 @@ namespace Zongsoft.Data.Properties {
         internal static string DataConnector_ConnectionFailed_Suspended_Message {
             get {
                 return ResourceManager.GetString("DataConnector.ConnectionFailed+Suspended.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; type converter does not support conversion from the &apos;{1}&apos; source type nor does it support conversion to the &apos;{2}&apos; target type. 的本地化字符串。
+        /// </summary>
+        internal static string DataConverter_ConversionUnsupported_Message {
+            get {
+                return ResourceManager.GetString("DataConverter.ConversionUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; type has no type converter. 的本地化字符串。
+        /// </summary>
+        internal static string DataConverter_NotFound_Message {
+            get {
+                return ResourceManager.GetString("DataConverter.NotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; base of &apos;{1}&apos; entity does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_BaseNotFound_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.BaseNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; property is not a simplex property, so it has no field name(alias). 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_FieldAliasRequiresSimplex_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.FieldAliasRequiresSimplex.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; field does not exist in the &apos;{1}&apos; entity. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_FieldNotFound_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.FieldNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; is an immutable entity and does not support {1} operation. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_Immutable_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.Immutable.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; member does not exist in the &apos;{1}&apos; entity and it&apos;s inherits. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_InheritedMemberNotFound_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.InheritedMemberNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; member does not exist in the &apos;{1}&apos; entity. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_MemberNotFound_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.MemberNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; property of &apos;{1}&apos; entity does not existed. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_PropertyNotFound_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.PropertyNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; target entity associated with the Role in the &apos;{1}:{2}&apos; complex property does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_RoleTargetNotFound_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.RoleTargetNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; property is not a simplex property, so it cannot participate in the simple operations. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_SimpleOperationRequiresSimplex_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.SimpleOperationRequiresSimplex.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; is a simple property and cannot be navigated. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_SimplePropertyNavigation_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.SimplePropertyNavigation.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; property is not a simplex property, so its data type cannot be confirmed. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntity_TypeRequiresSimplex_Message {
+            get {
+                return ResourceManager.GetString("DataEntity.TypeRequiresSimplex.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Obtaining the value of the &apos;{0}&apos; property from the specified &apos;{1}&apos; target type is not supported. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntityProperty_GetValueUnsupported_Message {
+            get {
+                return ResourceManager.GetString("DataEntityProperty.GetValueUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Setting the value of the &apos;{0}&apos; property from the specified &apos;{1}&apos; target type is not supported. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntityProperty_SetValueUnsupported_Message {
+            get {
+                return ResourceManager.GetString("DataEntityProperty.SetValueUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Data Engine Error: The &apos;{0}&apos; executor does not support execution of &apos;{1}&apos; context. 的本地化字符串。
+        /// </summary>
+        internal static string DataExecutor_UnsupportedContext_Message {
+            get {
+                return ResourceManager.GetString("DataExecutor.UnsupportedContext.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; info is invalid member. 的本地化字符串。
+        /// </summary>
+        internal static string DataImporter_InvalidMember_Message {
+            get {
+                return ResourceManager.GetString("DataImporter.InvalidMember.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The members of the import operation cannot be determined based on the specified &apos;{0}&apos; type. 的本地化字符串。
+        /// </summary>
+        internal static string DataImporter_MembersUndetermined_Message {
+            get {
+                return ResourceManager.GetString("DataImporter.MembersUndetermined.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; property cannot be a navigation property, only scalar field data can be import. 的本地化字符串。
+        /// </summary>
+        internal static string DataImporter_NavigationPropertyUnsupported_Message {
+            get {
+                return ResourceManager.GetString("DataImporter.NavigationPropertyUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The record of populate has failed. 的本地化字符串。
+        /// </summary>
+        internal static string DataPopulator_Failed_Message {
+            get {
+                return ResourceManager.GetString("DataPopulator.Failed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 No found data populator provider for the &apos;{0}&apos; type. 的本地化字符串。
+        /// </summary>
+        internal static string DataPopulator_ProviderNotFound_Message {
+            get {
+                return ResourceManager.GetString("DataPopulator.ProviderNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The data execution error has occurred. 的本地化字符串。
+        /// </summary>
+        internal static string DataProvider_ExecutionFailed_Message {
+            get {
+                return ResourceManager.GetString("DataProvider.ExecutionFailed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 No matched data source for this data operation. 的本地化字符串。
+        /// </summary>
+        internal static string DataProvider_SourceNotMatched_Message {
+            get {
+                return ResourceManager.GetString("DataProvider.SourceNotMatched.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 No data sources for the &apos;{0}&apos; data provider was found. 的本地化字符串。
+        /// </summary>
+        internal static string DataProvider_SourcesNotFound_Message {
+            get {
+                return ResourceManager.GetString("DataProvider.SourcesNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The ambient transaction has already been completed. 的本地化字符串。
+        /// </summary>
+        internal static string DataSession_AmbientTransactionCompleted_Message {
+            get {
+                return ResourceManager.GetString("DataSession.AmbientTransactionCompleted.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The data session has already been completed. 的本地化字符串。
+        /// </summary>
+        internal static string DataSession_Completed_Message {
+            get {
+                return ResourceManager.GetString("DataSession.Completed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; data driver does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string DataSource_DriverNotFound_Message {
+            get {
+                return ResourceManager.GetString("DataSource.DriverNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The required driver is not specified in the database connection settings. 的本地化字符串。
+        /// </summary>
+        internal static string DataSource_DriverUnspecified_Message {
+            get {
+                return ResourceManager.GetString("DataSource.DriverUnspecified.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; mode value of the ConnectionString configuration. 的本地化字符串。
+        /// </summary>
+        internal static string DataSource_InvalidAccessMode_Message {
+            get {
+                return ResourceManager.GetString("DataSource.InvalidAccessMode.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; data type. 的本地化字符串。
+        /// </summary>
+        internal static string DataType_Unsupported_Message {
+            get {
+                return ResourceManager.GetString("DataType.Unsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; is an immutable complex(navigation) property and does not support the delete operation. 的本地化字符串。
+        /// </summary>
+        internal static string DeleteStatement_ImmutableProperty_Message {
+            get {
+                return ResourceManager.GetString("DeleteStatement.ImmutableProperty.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; type is an abstract class that the dictionary populator cannot to populate. 的本地化字符串。
+        /// </summary>
+        internal static string DictionaryPopulator_AbstractTypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("DictionaryPopulator.AbstractTypeUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; type does not implement the {1} interface that the dictionary populator cannot to populate. 的本地化字符串。
+        /// </summary>
+        internal static string DictionaryPopulator_InterfaceRequired_Message {
+            get {
+                return ResourceManager.GetString("DictionaryPopulator.InterfaceRequired.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; field is associated with a composite(navigation) property and cannot perform arithmetic or logical operations on it. 的本地化字符串。
+        /// </summary>
+        internal static string Field_ComplexOperationUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Field.ComplexOperationUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; field is associated with a one-to-many composite(navigation) property and a subquery cannot be generated. 的本地化字符串。
+        /// </summary>
+        internal static string Field_SubqueryUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Field.SubqueryUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The grouping key &apos;{0}&apos; can not be a complex property. 的本地化字符串。
+        /// </summary>
+        internal static string Grouping_ComplexKeyUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Grouping.ComplexKeyUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; is an immutable complex(navigation) property and does not support the insert operation. 的本地化字符串。
+        /// </summary>
+        internal static string InsertStatement_ImmutableProperty_Message {
+            get {
+                return ResourceManager.GetString("InsertStatement.ImmutableProperty.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Missing required fields in the insert statment. 的本地化字符串。
+        /// </summary>
+        internal static string InsertStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("InsertStatement.MissingFields.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; source does not have a corresponding table, so you cannot create an inheritance table association based on it. 的本地化字符串。
+        /// </summary>
+        internal static string JoinClause_SourceTableNotFound_Message {
+            get {
+                return ResourceManager.GetString("JoinClause.SourceTableNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Invalid value &apos;{0}&apos; of &apos;{1}&apos; attribute in &apos;{2}&apos; element. 的本地化字符串。
+        /// </summary>
+        internal static string MetadataFile_InvalidAttributeValue_Message {
+            get {
+                return ResourceManager.GetString("MetadataFile.InvalidAttributeValue.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The default value ‘{0}’ for the ‘{1}’ property of the ‘{2}’ entity is invalid and is located in the file: {3}. 的本地化字符串。
+        /// </summary>
+        internal static string MetadataFile_InvalidDefaultValue_Message {
+            get {
+                return ResourceManager.GetString("MetadataFile.InvalidDefaultValue.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; mapping file. 的本地化字符串。
+        /// </summary>
+        internal static string MetadataFile_InvalidFile_Message {
+            get {
+                return ResourceManager.GetString("MetadataFile.InvalidFile.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; value of the multiplicity attribute. 的本地化字符串。
+        /// </summary>
+        internal static string MetadataFile_InvalidMultiplicity_Message {
+            get {
+                return ResourceManager.GetString("MetadataFile.InvalidMultiplicity.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The root element must be &apos;&lt;{0}&gt;&apos; in this &apos;{1}&apos; file. 的本地化字符串。
+        /// </summary>
+        internal static string MetadataFile_InvalidRootElement_Message {
+            get {
+                return ResourceManager.GetString("MetadataFile.InvalidRootElement.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The sequence ‘{0}’ for the ‘{1}’ property of the ‘{2}’ entity is invalid and is located in the file: {3}. 的本地化字符串。
+        /// </summary>
+        internal static string MetadataFile_InvalidSequence_Message {
+            get {
+                return ResourceManager.GetString("MetadataFile.InvalidSequence.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Missing links of the &apos;{0}&apos; complex property in the &apos;{1}&apos; mapping file. 的本地化字符串。
+        /// </summary>
+        internal static string MetadataFile_MissingComplexPropertyLinks_Message {
+            get {
+                return ResourceManager.GetString("MetadataFile.MissingComplexPropertyLinks.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Found a unrecognized &apos;{0}&apos; element in the &apos;{1}&apos; file. 的本地化字符串。
+        /// </summary>
+        internal static string MetadataFile_UnrecognizedElement_Message {
+            get {
+                return ResourceManager.GetString("MetadataFile.UnrecognizedElement.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Contains unrecognized element(s) in the &apos;{0}&apos; file. 的本地化字符串。
+        /// </summary>
+        internal static string MetadataFile_UnrecognizedElements_Message {
+            get {
+                return ResourceManager.GetString("MetadataFile.UnrecognizedElements.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; member is duplicated. 的本地化字符串。
+        /// </summary>
+        internal static string ModelPopulator_DuplicateMember_Message {
+            get {
+                return ResourceManager.GetString("ModelPopulator.DuplicateMember.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; property of &apos;{1}&apos; entity is not a complex(navigation) property. 的本地化字符串。
+        /// </summary>
+        internal static string ModelPopulator_PropertyNotComplex_Message {
+            get {
+                return ResourceManager.GetString("ModelPopulator.PropertyNotComplex.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The property named &apos;{0}&apos; is undefined in the &apos;{1}&apos; data entity mapping. 的本地化字符串。
+        /// </summary>
+        internal static string ModelPopulator_PropertyUndefined_Message {
+            get {
+                return ResourceManager.GetString("ModelPopulator.PropertyUndefined.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; multi-level link anchors are not supported in mutate operation. 的本地化字符串。
+        /// </summary>
+        internal static string Mutation_MultiLevelLinkAnchorUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Mutation.MultiLevelLinkAnchorUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Unsupported {0} operand type. 的本地化字符串。
+        /// </summary>
+        internal static string Operand_TypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Operand.TypeUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; operand type. 的本地化字符串。
+        /// </summary>
+        internal static string Operand_Unsupported_Message {
+            get {
+                return ResourceManager.GetString("Operand.Unsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Cannot convert the {0} operand to operator. 的本地化字符串。
+        /// </summary>
+        internal static string Operator_InvalidOperandConversion_Message {
+            get {
+                return ResourceManager.GetString("Operator.InvalidOperandConversion.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; operator. 的本地化字符串。
+        /// </summary>
+        internal static string Operator_Unsupported_Message {
+            get {
+                return ResourceManager.GetString("Operator.Unsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified {0} schema does not correspond to a complex property, so its child elements cannot be defined. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_ComplexPropertyRequired_Message {
+            get {
+                return ResourceManager.GetString("Schema.ComplexPropertyRequired.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Invalid kind of &apos;{0}&apos; member. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_InvalidMemberKind_Message {
+            get {
+                return ResourceManager.GetString("Schema.InvalidMemberKind.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; property does not exist in the &apos;{1}&apos; entity. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_PropertyNotFound_Message {
+            get {
+                return ResourceManager.GetString("Schema.PropertyNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; entity specified in the sequence key does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_EntityNotFound_Message {
+            get {
+                return ResourceManager.GetString("Sequence.EntityNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Invalid sequence key, the sequence key must separate the entity name and property name with a colon or a dot. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_InvalidKey_Message {
+            get {
+                return ResourceManager.GetString("Sequence.InvalidKey.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Missing required references data for the &apos;{0}&apos; sequence. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_MissingReferences_Message {
+            get {
+                return ResourceManager.GetString("Sequence.MissingReferences.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; property specified in the sequence key does not exist or is not a simplex property. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_PropertyNotFound_Message {
+            get {
+                return ResourceManager.GetString("Sequence.PropertyNotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; property specified in the sequence key is undefined. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_PropertyUndefined_Message {
+            get {
+                return ResourceManager.GetString("Sequence.PropertyUndefined.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The required &apos;{0}&apos; reference of sequence is not included in the data. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_ReferenceMissing_Message {
+            get {
+                return ResourceManager.GetString("Sequence.ReferenceMissing.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}.{1}&apos; property does not define a sequence. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_Undefined_Message {
+            get {
+                return ResourceManager.GetString("Sequence.Undefined.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}.{1}&apos; is a composite(navigation) property that is not sortable. 的本地化字符串。
+        /// </summary>
+        internal static string Sorting_ComplexPropertyUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Sorting.ComplexPropertyUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; member is a one-to-many composite(navigation) property that cannot appear in the sorting and specific condition clauses. 的本地化字符串。
+        /// </summary>
+        internal static string Sorting_OneToManyMemberUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Sorting.OneToManyMemberUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}.{1}&apos; property is not sortable and must be enabled for sorting before it can be sorted. 的本地化字符串。
+        /// </summary>
+        internal static string Sorting_PropertyDisabled_Message {
+            get {
+                return ResourceManager.GetString("Sorting.PropertyDisabled.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Missing members that does not specify &apos;{0}&apos; complex property. 的本地化字符串。
+        /// </summary>
+        internal static string Statement_MissingComplexPropertyMembers_Message {
+            get {
+                return ResourceManager.GetString("Statement.MissingComplexPropertyMembers.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Unable to build a subquery corresponding to the specified &apos;{0}&apos; parameter({1}). 的本地化字符串。
+        /// </summary>
+        internal static string Subquery_BuildFailed_Message {
+            get {
+                return ResourceManager.GetString("Subquery.BuildFailed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; table cannot be expanded. 的本地化字符串。
+        /// </summary>
+        internal static string Table_ExpansionUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Table.ExpansionUnsupported.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; property is not a simplex property, so you cannot create a field identifier for it. 的本地化字符串。
+        /// </summary>
+        internal static string TableIdentifier_FieldRequiresSimplex_Message {
+            get {
+                return ResourceManager.GetString("TableIdentifier.FieldRequiresSimplex.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The entity property of the &apos;{0}&apos; table identifier is null. 的本地化字符串。
+        /// </summary>
+        internal static string TableIdentifier_MissingEntityProperty_Message {
+            get {
+                return ResourceManager.GetString("TableIdentifier.MissingEntityProperty.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; is an immutable complex(navigation) property and does not support the update operation. 的本地化字符串。
+        /// </summary>
+        internal static string UpdateStatement_ImmutableProperty_Message {
+            get {
+                return ResourceManager.GetString("UpdateStatement.ImmutableProperty.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Missing required fields in the update statment. 的本地化字符串。
+        /// </summary>
+        internal static string UpdateStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("UpdateStatement.MissingFields.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 No required primary key field values were specified for the updation &apos;{0}&apos; entity data. 的本地化字符串。
+        /// </summary>
+        internal static string UpdateStatement_MissingPrimaryKeyValues_Message {
+            get {
+                return ResourceManager.GetString("UpdateStatement.MissingPrimaryKeyValues.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The update statement is missing a required set clause. 的本地化字符串。
+        /// </summary>
+        internal static string UpdateStatement_MissingSetClause_Message {
+            get {
+                return ResourceManager.GetString("UpdateStatement.MissingSetClause.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Missing required tables in the update statement. 的本地化字符串。
+        /// </summary>
+        internal static string UpdateStatement_MissingTables_Message {
+            get {
+                return ResourceManager.GetString("UpdateStatement.MissingTables.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; is an immutable complex(navigation) property and does not support the upsert operation. 的本地化字符串。
+        /// </summary>
+        internal static string UpsertStatement_ImmutableProperty_Message {
+            get {
+                return ResourceManager.GetString("UpsertStatement.ImmutableProperty.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Missing required fields in the upsert statment. 的本地化字符串。
+        /// </summary>
+        internal static string UpsertStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("UpsertStatement.MissingFields.Message", resourceCulture);
             }
         }
     }

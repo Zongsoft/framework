@@ -121,4 +121,31 @@
   <data name="MsSql.Settings.WorkstationId" xml:space="preserve">
     <value>Workstation ID</value>
   </data>
+	<data name="ExpressionVisitor.StatementUnsupported.Message" xml:space="preserve">
+		<value>Not supported &apos;{0}&apos; statement.</value>
+	</data>
+	<data name="ExpressionVisitor.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>Unsupported &apos;{0}&apos; data type.</value>
+	</data>
+	<data name="ExpressionVisitor.AggregateInvalid.Message" xml:space="preserve">
+		<value>Invalid &apos;{0}&apos; aggregate method.</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceWithoutNameUnsupported.Message" xml:space="preserve">
+		<value>The SQL Server driver does not support the &apos;{0}&apos; sequence function without a name argument.</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceWithNameUnsupported.Message" xml:space="preserve">
+		<value>The SQL Server driver does not support the &apos;{0}&apos; sequence function with a name argument.</value>
+	</data>
+	<data name="InsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>Missing required fields in the insert statement.</value>
+	</data>
+	<data name="InsertStatement.EntityKeyRequired.Message" xml:space="preserve">
+		<value>The &apos;{0}&apos; entity must have a key to ignore insert conflicts.</value>
+	</data>
+	<data name="UpdateStatement.MultiTableUnsupported.Message" xml:space="preserve">
+		<value>The generated UPDATE statement is invalid because the data engine does not support multi-table updates.</value>
+	</data>
+	<data name="UpsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>Missing required fields in the upsert statement.</value>
+	</data>
 </root>

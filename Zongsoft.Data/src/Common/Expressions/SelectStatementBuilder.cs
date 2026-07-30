@@ -99,7 +99,7 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 				var source = statement.From(key.Name, aliaser, null, out var property);
 
 				if(property.IsComplex)
-					throw new DataException($"The grouping key '{property.Name}' can not be a complex property.");
+					throw new DataException(string.Format(Properties.Resources.Grouping_ComplexKeyUnsupported_Message, property.Name));
 
 				statement.GroupBy.Keys.Add(source.CreateField(property));
 				statement.Select.Members.Add(source.CreateField(property.GetFieldName(out var alias), key.Alias ?? alias));
@@ -123,7 +123,7 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 				var source = statement.From(aggregate.Name, aliaser, null, out var property);
 
 				if(property.IsComplex)
-					throw new DataException($"The field '{property.Name}' of aggregate function can not be a complex property.");
+					throw new DataException(string.Format(Properties.Resources.Aggregate_ComplexFieldUnsupported_Message, property.Name));
 
 				statement.Select.Members.Add(
 					new AggregateExpression(aggregate, source.CreateField(property)));
@@ -147,12 +147,12 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 
 			var simplex = property.IsSimplex ?
 				(IDataEntitySimplexProperty)property :
-				throw new DataException($"The specified '{property.Entity.Name}.{property.Name}' is a composite(navigation) property that is not sortable.");
+				throw new DataException(string.Format(Properties.Resources.Sorting_ComplexPropertyUnsupported_Message, property.Entity.Name, property.Name));
 
 			if(simplex.IsPrimaryKey || simplex.Sortable)
 				statement.OrderBy.Add(source.CreateField(property), sorting.Mode);
 			else
-				throw new DataException($"The specified '{property.Entity.Name}.{property.Name}' property is not sortable and must be enabled for sorting before it can be sorted.");
+				throw new DataException(string.Format(Properties.Resources.Sorting_PropertyDisabled_Message, property.Entity.Name, property.Name));
 		}
 	}
 
@@ -221,7 +221,7 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 						{
 							DataAssociationConstraintActor.Principal => statement.Table,
 							DataAssociationConstraintActor.Foreign => slave.Table,
-							_ => throw new DataException($"The constraint actor '{constraint.Actor}' is an invalid value.")
+							_ => throw new DataException(string.Format(Properties.Resources.Constraint_InvalidActor_Message, constraint.Actor))
 						};
 
 						slave.Where = Expression.AndAlso(slave.Where,

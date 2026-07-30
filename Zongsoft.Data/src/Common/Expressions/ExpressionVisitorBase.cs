@@ -577,7 +577,7 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 			DbType.VarNumeric => $"numeric({precision},{scale})",
 			DbType.Xml => "xml",
 			DbType.Object => type.ToString(),
-			_ => throw new DataException($"Unsupported '{type}' data type."),
+			_ => throw new DataException(string.Format(Properties.Resources.DataType_Unsupported_Message, type)),
 		};
 
 		public string GetSymbol(Operator @operator) => @operator switch
@@ -612,7 +612,7 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 			Operator.LessThanOrEqual => "<=",
 			Operator.GreaterThan => ">",
 			Operator.GreaterThanOrEqual => ">=",
-			_ => throw new DataException($"Unsupported '{@operator}' operator."),
+			_ => throw new DataException(string.Format(Properties.Resources.Operator_Unsupported_Message, @operator)),
 		};
 
 		public string GetAlias(string alias) => $"'{alias}'";

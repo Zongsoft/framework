@@ -123,4 +123,289 @@
   <data name="DataConnector.ConnectionFailed+Suspended.Message" xml:space="preserve">
     <value>数据源“{0}”通过“{1}”驱动建立连接已连续失败 {2} 次。已暂停新的连接尝试，将于 {3:HH:mm:sszz} 恢复。</value>
   </data>
+  <data name="DataConnectionException.RetryAfter.Message" xml:space="preserve">
+    <value>{0} 请在 {1:O} 后重试。</value>
+  </data>
+  <data name="Operator.InvalidOperandConversion.Message" xml:space="preserve">
+    <value>无法将 {0} 操作数转换为运算符。</value>
+  </data>
+  <data name="MetadataFile.UnrecognizedElements.Message" xml:space="preserve">
+    <value>映射文件“{0}”中包含无法识别的元素。</value>
+  </data>
+  <data name="DataExecutor.UnsupportedContext.Message" xml:space="preserve">
+    <value>数据引擎错误：“{0}”执行器不支持执行“{1}”上下文。</value>
+  </data>
+  <data name="MetadataFile.UnrecognizedElement.Message" xml:space="preserve">
+    <value>在文件“{1}”中发现无法识别的“{0}”元素。</value>
+  </data>
+  <data name="Condition.InvalidRangeValue.Message" xml:space="preserve">
+    <value>范围条件值无效。</value>
+  </data>
+  <data name="MetadataFile.InvalidFile.Message" xml:space="preserve">
+    <value>映射文件“{0}”无效。</value>
+  </data>
+  <data name="DataSource.InvalidAccessMode.Message" xml:space="preserve">
+    <value>连接字符串配置中的访问模式值“{0}”无效。</value>
+  </data>
+  <data name="MetadataFile.InvalidMultiplicity.Message" xml:space="preserve">
+    <value>多重性特性的值“{0}”无效。</value>
+  </data>
+  <data name="Aggregate.InvalidNavigationDepth.Message" xml:space="preserve">
+    <value>聚合成员“{0}”的导航层级过深。</value>
+  </data>
+  <data name="Schema.InvalidMemberKind.Message" xml:space="preserve">
+    <value>成员“{0}”的类型无效。</value>
+  </data>
+  <data name="Sequence.InvalidKey.Message" xml:space="preserve">
+    <value>序列键无效，实体名和属性名必须用冒号或点号分隔。</value>
+  </data>
+  <data name="MetadataFile.InvalidAttributeValue.Message" xml:space="preserve">
+    <value>元素“{2}”中特性“{1}”的值“{0}”无效。</value>
+  </data>
+  <data name="MetadataFile.MissingComplexPropertyLinks.Message" xml:space="preserve">
+    <value>映射文件“{1}”中的复合属性“{0}”缺少链接定义。</value>
+  </data>
+  <data name="Statement.MissingComplexPropertyMembers.Message" xml:space="preserve">
+    <value>缺少用于指定复合属性“{0}”的成员。</value>
+  </data>
+  <data name="InsertStatement.MissingFields.Message" xml:space="preserve">
+    <value>新增语句缺少必需字段。</value>
+  </data>
+  <data name="UpdateStatement.MissingFields.Message" xml:space="preserve">
+    <value>更新语句缺少必需字段。</value>
+  </data>
+  <data name="UpsertStatement.MissingFields.Message" xml:space="preserve">
+    <value>增改语句缺少必需字段。</value>
+  </data>
+  <data name="Sequence.MissingReferences.Message" xml:space="preserve">
+    <value>序列“{0}”缺少必需的引用数据。</value>
+  </data>
+  <data name="DataAccess.MissingSequencer.Message" xml:space="preserve">
+    <value>数据访问器“{0}”缺少必需的序列器。</value>
+  </data>
+  <data name="UpdateStatement.MissingTables.Message" xml:space="preserve">
+    <value>更新语句缺少必需的数据表。</value>
+  </data>
+  <data name="DataProvider.SourcesNotFound.Message" xml:space="preserve">
+    <value>未找到数据提供程序“{0}”的数据源。</value>
+  </data>
+  <data name="DataPopulator.ProviderNotFound.Message" xml:space="preserve">
+    <value>未找到适用于“{0}”类型的数据填充提供程序。</value>
+  </data>
+  <data name="DataProvider.SourceNotMatched.Message" xml:space="preserve">
+    <value>没有与本次数据操作匹配的数据源。</value>
+  </data>
+  <data name="UpdateStatement.MissingPrimaryKeyValues.Message" xml:space="preserve">
+    <value>更新实体“{0}”的数据时未指定必需的主键字段值。</value>
+  </data>
+  <data name="DataEntityProperty.GetValueUnsupported.Message" xml:space="preserve">
+    <value>不支持从目标类型“{1}”获取属性“{0}”的值。</value>
+  </data>
+  <data name="DataEntityProperty.SetValueUnsupported.Message" xml:space="preserve">
+    <value>不支持为目标类型“{1}”设置属性“{0}”的值。</value>
+  </data>
+  <data name="DataEntity.BaseNotFound.Message" xml:space="preserve">
+    <value>实体“{1}”的基实体“{0}”不存在。</value>
+  </data>
+  <data name="DataSource.DriverNotFound.Message" xml:space="preserve">
+    <value>数据驱动程序“{0}”不存在。</value>
+  </data>
+  <data name="DataConnectionException.Unavailable.Message" xml:space="preserve">
+    <value>数据源“{0}”暂时不可用。</value>
+  </data>
+  <data name="Sequence.EntityNotFound.Message" xml:space="preserve">
+    <value>序列键中指定的实体“{0}”不存在。</value>
+  </data>
+  <data name="DeleteStatement.ImmutableProperty.Message" xml:space="preserve">
+    <value>“{0}”是不可变的复合（导航）属性，不支持删除操作。</value>
+  </data>
+  <data name="InsertStatement.ImmutableProperty.Message" xml:space="preserve">
+    <value>“{0}”是不可变的复合（导航）属性，不支持新增操作。</value>
+  </data>
+  <data name="UpdateStatement.ImmutableProperty.Message" xml:space="preserve">
+    <value>“{0}”是不可变的复合（导航）属性，不支持更新操作。</value>
+  </data>
+  <data name="UpsertStatement.ImmutableProperty.Message" xml:space="preserve">
+    <value>“{0}”是不可变的复合（导航）属性，不支持增改操作。</value>
+  </data>
+  <data name="DataEntity.Immutable.Message" xml:space="preserve">
+    <value>“{0}”是不可变实体，不支持 {1} 操作。</value>
+  </data>
+  <data name="Mutation.MultiLevelLinkAnchorUnsupported.Message" xml:space="preserve">
+    <value>变更操作不支持“{0}”的多级链接锚点。</value>
+  </data>
+  <data name="DataEntity.PropertyNotFound.Message" xml:space="preserve">
+    <value>实体“{1}”的属性“{0}”不存在。</value>
+  </data>
+  <data name="ModelPopulator.PropertyNotComplex.Message" xml:space="preserve">
+    <value>实体“{1}”的属性“{0}”不是复合（导航）属性。</value>
+  </data>
+  <data name="Sequence.PropertyNotFound.Message" xml:space="preserve">
+    <value>序列键中指定的属性“{0}”不存在或不是单值属性。</value>
+  </data>
+  <data name="Sequence.PropertyUndefined.Message" xml:space="preserve">
+    <value>序列键中指定的属性“{0}”未定义。</value>
+  </data>
+  <data name="Table.ExpansionUnsupported.Message" xml:space="preserve">
+    <value>无法展开数据表“{0}”。</value>
+  </data>
+  <data name="DataEntity.RoleTargetNotFound.Message" xml:space="preserve">
+    <value>复合属性“{1}:{2}”中与角色关联的目标实体“{0}”不存在。</value>
+  </data>
+  <data name="Condition.TypeUnsupported.Message" xml:space="preserve">
+    <value>不支持“{0}”条件类型。</value>
+  </data>
+  <data name="DataSession.AmbientTransactionCompleted.Message" xml:space="preserve">
+    <value>环境事务已经完成。</value>
+  </data>
+  <data name="Constraint.InvalidActor.Message" xml:space="preserve">
+    <value>约束参与者“{0}”的值无效。</value>
+  </data>
+  <data name="DataSession.Completed.Message" xml:space="preserve">
+    <value>数据会话已经完成。</value>
+  </data>
+  <data name="MetadataFile.InvalidDefaultValue.Message" xml:space="preserve">
+    <value>实体“{2}”的属性“{1}”所定义的默认值“{0}”无效，所在文件：{3}。</value>
+  </data>
+  <data name="TableIdentifier.MissingEntityProperty.Message" xml:space="preserve">
+    <value>数据表标识符“{0}”的实体属性为空。</value>
+  </data>
+  <data name="Aggregate.ComplexFieldUnsupported.Message" xml:space="preserve">
+    <value>聚合函数的字段“{0}”不能是复合属性。</value>
+  </data>
+  <data name="Grouping.ComplexKeyUnsupported.Message" xml:space="preserve">
+    <value>分组键“{0}”不能是复合属性。</value>
+  </data>
+  <data name="CircuitBreaker.InvalidMaximumDuration.Message" xml:space="preserve">
+    <value>最大熔断时长不能小于熔断时长。</value>
+  </data>
+  <data name="DataImporter.MembersUndetermined.Message" xml:space="preserve">
+    <value>无法根据指定类型“{0}”确定导入操作的成员。</value>
+  </data>
+  <data name="ModelPopulator.PropertyUndefined.Message" xml:space="preserve">
+    <value>数据实体映射“{1}”中未定义名为“{0}”的属性。</value>
+  </data>
+  <data name="DataPopulator.Failed.Message" xml:space="preserve">
+    <value>填充数据记录失败。</value>
+  </data>
+  <data name="Sequence.ReferenceMissing.Message" xml:space="preserve">
+    <value>数据中未包含序列所需的引用“{0}”。</value>
+  </data>
+  <data name="DataSource.DriverUnspecified.Message" xml:space="preserve">
+    <value>数据库连接设置中未指定必需的数据驱动程序。</value>
+  </data>
+  <data name="MetadataFile.InvalidRootElement.Message" xml:space="preserve">
+    <value>文件“{1}”的根元素必须是“&lt;{0}&gt;”。</value>
+  </data>
+  <data name="MetadataFile.InvalidSequence.Message" xml:space="preserve">
+    <value>实体“{2}”的属性“{1}”所定义的序列“{0}”无效，所在文件：{3}。</value>
+  </data>
+  <data name="Sorting.ComplexPropertyUnsupported.Message" xml:space="preserve">
+    <value>指定的“{0}.{1}”是不可排序的复合（导航）属性。</value>
+  </data>
+  <data name="Sequence.Undefined.Message" xml:space="preserve">
+    <value>指定的属性“{0}.{1}”未定义序列。</value>
+  </data>
+  <data name="Sorting.PropertyDisabled.Message" xml:space="preserve">
+    <value>指定的属性“{0}.{1}”不可排序，必须先启用其排序功能。</value>
+  </data>
+  <data name="Constraint.AssociationPropertyNotSimplex.Message" xml:space="preserve">
+    <value>指定约束“{0}”的关联属性不是单值属性。</value>
+  </data>
+  <data name="Constraint.NotFound.Message" xml:space="preserve">
+    <value>导航属性“{1}.{2}”中不存在指定的约束“{0}”。</value>
+  </data>
+  <data name="DataEntity.FieldNotFound.Message" xml:space="preserve">
+    <value>实体“{1}”中不存在指定字段“{0}”。</value>
+  </data>
+  <data name="Field.ComplexOperationUnsupported.Message" xml:space="preserve">
+    <value>指定字段“{0}”关联了复合（导航）属性，不能对其执行算术或逻辑运算。</value>
+  </data>
+  <data name="Field.SubqueryUnsupported.Message" xml:space="preserve">
+    <value>指定字段“{0}”关联了一对多复合（导航）属性，无法生成子查询。</value>
+  </data>
+  <data name="DataImporter.InvalidMember.Message" xml:space="preserve">
+    <value>指定的成员信息“{0}”无效。</value>
+  </data>
+  <data name="DataEntity.SimplePropertyNavigation.Message" xml:space="preserve">
+    <value>指定的“{0}”是单值属性，无法继续导航。</value>
+  </data>
+  <data name="DataEntity.InheritedMemberNotFound.Message" xml:space="preserve">
+    <value>实体“{1}”及其继承层次中不存在指定成员“{0}”。</value>
+  </data>
+  <data name="DataEntity.MemberNotFound.Message" xml:space="preserve">
+    <value>实体“{1}”中不存在指定成员“{0}”。</value>
+  </data>
+  <data name="Sorting.OneToManyMemberUnsupported.Message" xml:space="preserve">
+    <value>指定成员“{0}”是一对多复合（导航）属性，不能出现在排序或特定条件子句中。</value>
+  </data>
+  <data name="ModelPopulator.DuplicateMember.Message" xml:space="preserve">
+    <value>指定成员“{0}”重复。</value>
+  </data>
+  <data name="Condition.NullParameterValue.Message" xml:space="preserve">
+    <value>“{1}”条件中指定参数“{0}”的值为空。</value>
+  </data>
+  <data name="DataImporter.NavigationPropertyUnsupported.Message" xml:space="preserve">
+    <value>指定属性“{0}”不能是导航属性，只能导入标量字段数据。</value>
+  </data>
+  <data name="Schema.PropertyNotFound.Message" xml:space="preserve">
+    <value>实体“{1}”中不存在指定属性“{0}”。</value>
+  </data>
+  <data name="DataEntity.SimpleOperationRequiresSimplex.Message" xml:space="preserve">
+    <value>指定属性“{0}”不是单值属性，不能参与简单操作。</value>
+  </data>
+  <data name="DataEntity.FieldAliasRequiresSimplex.Message" xml:space="preserve">
+    <value>指定属性“{0}”不是单值属性，因此没有字段名（别名）。</value>
+  </data>
+  <data name="DataEntity.TypeRequiresSimplex.Message" xml:space="preserve">
+    <value>指定属性“{0}”不是单值属性，无法确定其数据类型。</value>
+  </data>
+  <data name="TableIdentifier.FieldRequiresSimplex.Message" xml:space="preserve">
+    <value>指定属性“{0}”不是单值属性，无法为其创建字段标识符。</value>
+  </data>
+  <data name="JoinClause.SourceTableNotFound.Message" xml:space="preserve">
+    <value>指定源“{0}”没有对应的数据表，无法基于它创建继承表关联。</value>
+  </data>
+  <data name="DataConverter.ConversionUnsupported.Message" xml:space="preserve">
+    <value>类型转换器“{0}”既不支持从源类型“{1}”转换，也不支持向目标类型“{2}”转换。</value>
+  </data>
+  <data name="DictionaryPopulator.InterfaceRequired.Message" xml:space="preserve">
+    <value>指定类型“{0}”未实现 {1} 接口，字典填充器无法填充该类型。</value>
+  </data>
+  <data name="DataConverter.NotFound.Message" xml:space="preserve">
+    <value>指定类型“{0}”没有类型转换器。</value>
+  </data>
+  <data name="DictionaryPopulator.AbstractTypeUnsupported.Message" xml:space="preserve">
+    <value>指定类型“{0}”是抽象类，字典填充器无法填充该类型。</value>
+  </data>
+  <data name="Schema.ComplexPropertyRequired.Message" xml:space="preserve">
+    <value>指定的 {0} 架构不对应复合属性，因此不能定义其子元素。</value>
+  </data>
+  <data name="UpdateStatement.MissingSetClause.Message" xml:space="preserve">
+    <value>更新语句缺少必需的 SET 子句。</value>
+  </data>
+  <data name="Subquery.BuildFailed.Message" xml:space="preserve">
+    <value>无法为指定参数“{0}”（{1}）构建对应的子查询。</value>
+  </data>
+  <data name="Condition.OperatorUnsupported.Message" xml:space="preserve">
+    <value>不支持条件操作“{0}”。</value>
+  </data>
+  <data name="DataType.Unsupported.Message" xml:space="preserve">
+    <value>不支持数据类型“{0}”。</value>
+  </data>
+  <data name="Operand.Unsupported.Message" xml:space="preserve">
+    <value>不支持操作数类型“{0}”。</value>
+  </data>
+  <data name="Operator.Unsupported.Message" xml:space="preserve">
+    <value>不支持运算符“{0}”。</value>
+  </data>
+  <data name="Operand.TypeUnsupported.Message" xml:space="preserve">
+    <value>不支持 {0} 操作数类型。</value>
+  </data>
+  <data name="DataAccess.OperationUnsupported.Message" xml:space="preserve">
+    <value>不支持数据访问操作“{0}”。</value>
+  </data>
+  <data name="DataProvider.ExecutionFailed.Message" xml:space="preserve">
+    <value>执行数据操作时发生错误。</value>
+  </data>
 </root>

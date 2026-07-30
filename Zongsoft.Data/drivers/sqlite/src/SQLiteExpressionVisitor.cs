@@ -78,7 +78,7 @@ public class SQLiteExpressionVisitor : ExpressionVisitorBase
 				SQLiteExecutionStatementVisitor.Instance.Visit(context, execution);
 				break;
 			default:
-				throw new DataException($"Not supported '{statement}' statement.");
+				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message"), statement));
 		}
 	}
 
@@ -150,7 +150,7 @@ public class SQLiteExpressionVisitor : ExpressionVisitorBase
 			DbType.VarNumeric => $"numeric({precision},{scale})",
 			DbType.Xml => "text",
 			DbType.Object => type.ToString(),
-			_ => throw new DataException($"Unsupported '{type}' data type."),
+			_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), type)),
 		};
 
 		public string GetMethodName(MethodExpression method)
@@ -194,14 +194,14 @@ public class SQLiteExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.DeviationPopulation => "STDEV_POP",
 			DataAggregateFunction.Variance => "VARIANCE",
 			DataAggregateFunction.VariancePopulation => "VAR_POP",
-			_ => throw new NotSupportedException($"Invalid '{function}' aggregate method."),
+			_ => throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message"), function)),
 		};
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static string GetSequenceName(SequenceExpression sequence)
 		{
 			if(sequence.Method != SequenceMethod.Current)
-				throw new DataException($"The SQLite driver does not support the '{sequence.Method.ToString()}' sequence function.");
+				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceUnsupported.Message"), sequence.Method.ToString()));
 
 			return "LAST_INSERT_ID";
 		}

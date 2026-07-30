@@ -131,7 +131,7 @@ public class JoinClause : ISource
 	internal static JoinClause Create(TableIdentifier table, string fullPath, Func<string, JoinClause> targetFinder, Func<IDataEntity, TableIdentifier> targetCreator)
 	{
 		if(table.Entity == null)
-			throw new DataException($"The entity property of the '{table}' table identifier is null.");
+			throw new DataException(string.Format(Properties.Resources.TableIdentifier_MissingEntityProperty_Message, table));
 
 		//获取指定表的父实体
 		var super = table.Entity.GetBaseEntity();
@@ -188,7 +188,9 @@ public class JoinClause : ISource
 				return result;
 		}
 
-		var sourceTable = GetTable(source) ?? throw new ArgumentNullException($"The specified '{source}' source does not have a corresponding table, so you cannot create an inheritance table association based on it.");
+		var sourceTable = GetTable(source) ?? throw new ArgumentNullException(
+			nameof(source),
+			string.Format(Properties.Resources.JoinClause_SourceTableNotFound_Message, source));
 		var targetTable = targetCreator(target);
 		var joining = new JoinClause(name, targetTable, JoinType.Left);
 

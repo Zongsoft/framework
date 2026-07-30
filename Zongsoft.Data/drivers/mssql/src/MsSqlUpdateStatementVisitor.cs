@@ -49,7 +49,7 @@ public class MsSqlUpdateStatementVisitor : UpdateStatementVisitor
 	protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 	{
 		if(tables.Count > 1)
-			throw new DataException("The generated Update statement is incorrect, The data engine does not support multi-table updates.");
+			throw new DataException(Properties.Resources.ResourceManager.GetString("UpdateStatement.MultiTableUnsupported.Message"));
 
 		if(string.IsNullOrEmpty(tables[0].Alias))
 			context.Visit(tables[0]);

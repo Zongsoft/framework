@@ -75,7 +75,7 @@ public static class StatementExtension
 						return subqueryFactory(source, complex);
 
 					//如果不允许一对多的子查询则抛出异常
-					throw new DataException($"The specified '{ctx.FullPath}' member is a one-to-many composite(navigation) property that cannot appear in the sorting and specific condition clauses.");
+					throw new DataException(string.Format(Properties.Resources.Sorting_OneToManyMemberUnsupported_Message, ctx.FullPath));
 				}
 
 				source = statement.Join(aliaser, source, complex, ctx.FullPath);
@@ -85,7 +85,7 @@ public static class StatementExtension
 		});
 
 		if(found.IsFailed)
-			throw new DataException($"The specified '{memberPath}' member does not exist in the '{origin.Entity?.Name}' entity and it's inherits.");
+			throw new DataException(string.Format(Properties.Resources.DataEntity_InheritedMemberNotFound_Message, memberPath, origin.Entity?.Name));
 
 		//输出找到的属性元素
 		property = found.Property;
@@ -105,7 +105,7 @@ public static class StatementExtension
 		if(criteria is ConditionCollection cc)
 			return GetConditionExpression(statement, aliaser, cc, fieldExpending);
 
-		throw new NotSupportedException($"The '{criteria.GetType().FullName}' type is an unsupported condition type.");
+		throw new NotSupportedException(string.Format(Properties.Resources.Condition_TypeUnsupported_Message, criteria.GetType().FullName));
 	}
 
 	private static ConditionExpression GetConditionExpression(IStatement statement, Aliaser aliaser, ConditionCollection conditions, bool fieldExpending)
@@ -159,7 +159,7 @@ public static class StatementExtension
 					Expression.NotExists((IExpression)subquery);
 			}
 
-			throw new DataException($"Unable to build a subquery corresponding to the specified '{condition.Name}' parameter({condition.Operator}).");
+			throw new DataException(string.Format(Properties.Resources.Subquery_BuildFailed_Message, condition.Name, condition.Operator));
 		}
 
 		var field = statement.GetOperandExpression(aliaser, condition.Field, fieldExpending, out var dbType);
@@ -174,7 +174,7 @@ public static class StatementExtension
 				ConditionOperator.Like => Expression.Equal(field, null),
 				ConditionOperator.Equal => Expression.Equal(field, null),
 				ConditionOperator.NotEqual => Expression.NotEqual(field, null),
-				_ => throw new DataException($"The specified '{condition.Name}' parameter value of the type {condition.Operator} condition is null."),
+				_ => throw new DataException(string.Format(Properties.Resources.Condition_NullParameterValue_Message, condition.Name, condition.Operator)),
 			};
 		}
 
@@ -197,7 +197,7 @@ public static class StatementExtension
 						   Expression.Between(field, statement.Parameters.AddParameter(minimum), statement.Parameters.AddParameter(maximum));
 				}
 
-				throw new DataException($"Illegal range condition value.");
+				throw new DataException(Properties.Resources.Condition_InvalidRangeValue_Message);
 			case ConditionOperator.Like:
 				return Expression.Like(field, GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending));
 			case ConditionOperator.In:
@@ -235,7 +235,7 @@ public static class StatementExtension
 			case ConditionOperator.LessThanEqual:
 				return Expression.LessThanOrEqual(field, GetConditionValue(statement, aliaser, condition.Operator, condition.Value, dbType, fieldExpending));
 			default:
-				throw new NotSupportedException($"Unsupported '{condition.Operator}' condition operation.");
+				throw new NotSupportedException(string.Format(Properties.Resources.Condition_OperatorUnsupported_Message, condition.Operator));
 		}
 
 		static int GetCollectionCount(object value)
@@ -328,7 +328,7 @@ public static class StatementExtension
 			case OperandType.Xor:
 				return GetBinaryExpression(statement, aliaser, operand, Expression.Xor, fieldExpending, out type);
 			default:
-				throw new DataException($"Unsupported '{operand.Type}' operand type.");
+				throw new DataException(string.Format(Properties.Resources.Operand_Unsupported_Message, operand.Type));
 		}
 
 		static IExpression GetBinaryExpression(IStatement host, Aliaser aliaser, Operand opd, Func<IExpression, IExpression, IExpression> generator, bool fieldExpending, out DataType type)
@@ -351,7 +351,7 @@ public static class StatementExtension
 			return source.CreateField(property);
 		}
 
-		throw new DataException($"The specified '{name}' field is associated with a composite(navigation) property and cannot perform arithmetic or logical operations on it.");
+		throw new DataException(string.Format(Properties.Resources.Field_ComplexOperationUnsupported_Message, name));
 	}
 
 	private static ISource GetSubquery(this IStatement statement, string name, Aliaser aliaser, ICondition filter)
@@ -361,7 +361,7 @@ public static class StatementExtension
 		if(property.IsComplex && ((IDataEntityComplexProperty)property).Multiplicity == DataAssociationMultiplicity.Many)
 			return subquery;
 
-		throw new DataException($"The specified '{name}' field is associated with a one-to-many composite(navigation) property and a subquery cannot be generated.");
+		throw new DataException(string.Format(Properties.Resources.Field_SubqueryUnsupported_Message, name));
 	}
 
 	private static ISource CreateSubquery(IStatement host, Aliaser aliaser, ISource source, IDataEntityComplexProperty complex, ICondition criteria)

@@ -49,13 +49,13 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		if(context is IDataMutateContext ctx)
 			return this.OnExecute(ctx, statement);
 
-		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
 	}
 
 	protected virtual bool OnExecute(IDataMutateContext context, TStatement statement)
 	{
 		if(context.Method != DataAccessMethod.Insert && context.Entity.Immutable)
-			throw new DataException($"The '{context.Entity.Name}' is an immutable entity and does not support {context.Method} operation.");
+			throw new DataException(string.Format(Properties.Resources.DataEntity_Immutable_Message, context.Entity.Name, context.Method));
 
 		var data = context.Data;
 
@@ -79,13 +79,13 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		if(context is IDataMutateContext ctx)
 			return this.OnExecuteAsync(ctx, statement, cancellation);
 
-		throw new DataException($"Data Engine Error: The '{this.GetType().Name}' executor does not support execution of '{context.GetType().Name}' context.");
+		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
 	}
 
 	protected virtual async ValueTask<bool> OnExecuteAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
 	{
 		if(context.Method != DataAccessMethod.Insert && context.Entity.Immutable)
-			throw new DataException($"The '{context.Entity.Name}' is an immutable entity and does not support {context.Method} operation.");
+			throw new DataException(string.Format(Properties.Resources.DataEntity_Immutable_Message, context.Entity.Name, context.Method));
 
 		var data = context.Data;
 
@@ -494,7 +494,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 			var anchors = link.GetAnchors();
 
 			if(anchors.Length > 1)
-				throw new DataException($"The '{member.FullPath}' multi-level link anchors are not supported in mutate operation.");
+				throw new DataException(string.Format(Properties.Resources.Mutation_MultiLevelLinkAnchorUnsupported_Message, member.FullPath));
 
 			if(Utility.TryGetMemberValue(ref data, anchors[0].Name, out var value))
 				tokens[i] = new LinkToken(link.ForeignKey, value);

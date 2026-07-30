@@ -49,7 +49,7 @@ public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
 	protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 	{
 		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException("Missing required fields in the upsert statment.");
+			throw new DataException(Properties.Resources.ResourceManager.GetString("UpsertStatement.MissingFields.Message"));
 
 		var index = 0;
 

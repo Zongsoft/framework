@@ -78,7 +78,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 				MsSqlExecutionStatementVisitor.Instance.Visit(context, execution);
 				break;
 			default:
-				throw new DataException($"Not supported '{statement}' statement.");
+				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message"), statement));
 		}
 	}
 
@@ -103,7 +103,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 					if(sequence.Method == SequenceMethod.Current)
 						context.Write("SCOPE_IDENTITY()");
 					else
-						throw new DataException($"The SQL Server driver does not support the '{sequence.Method}' sequence function without a name argument.");
+						throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceWithoutNameUnsupported.Message"), sequence.Method));
 
 					return;
 				}
@@ -111,7 +111,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 				var text = sequence.Method switch
 				{
 					SequenceMethod.Next => "NEXT VALUE FOR " + sequence.Name,
-					_ => throw new DataException($"The SQL Server driver does not support the '{sequence.Method}' sequence function with a name argument."),
+					_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceWithNameUnsupported.Message"), sequence.Method)),
 				};
 
 				context.Write(text);
@@ -191,7 +191,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 			DbType.Xml => "xml",
 			DbType.Object when type.Name.Equals("text", StringComparison.OrdinalIgnoreCase) => "nvarchar(MAX)",
 			DbType.Object => "sql_variant",
-			_ => throw new DataException($"Unsupported '{type}' data type."),
+			_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), type)),
 		};
 
 		public string GetMethodName(MethodExpression method)
@@ -226,7 +226,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.DeviationPopulation => "STDEVP",
 			DataAggregateFunction.Variance => "VAR",
 			DataAggregateFunction.VariancePopulation => "VARP",
-			_ => throw new NotSupportedException($"Invalid '{function}' aggregate method."),
+			_ => throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message"), function)),
 		};
 		#endregion
 	}

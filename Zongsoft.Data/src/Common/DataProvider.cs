@@ -133,7 +133,7 @@ public class DataProvider : IDataProvider
 				throw;
 
 			throw handledException is DataException ? handledException :
-			      new DataException("The data execution error has occurred.", handledException);
+			      new DataException(Properties.Resources.DataProvider_ExecutionFailed_Message, handledException);
 		}
 
 		//激发“Executed”事件
@@ -181,7 +181,7 @@ public class DataProvider : IDataProvider
 				throw;
 
 			throw handledException is DataException ? handledException :
-				  new DataException("The data execution error has occurred.", handledException);
+				  new DataException(Properties.Resources.DataProvider_ExecutionFailed_Message, handledException);
 		}
 
 		//激发“Executed”事件
@@ -390,7 +390,7 @@ public class DataProvider : IDataProvider
 				throw;
 			}
 
-			return selector.GetSource(context) ?? throw new DataException("No matched data source for this data operation.");
+			return selector.GetSource(context) ?? throw new DataException(Properties.Resources.DataProvider_SourceNotMatched_Message);
 		}
 		#endregion
 
@@ -400,7 +400,7 @@ public class DataProvider : IDataProvider
 			var sources = this.Provider.GetSources(_name).ToArray();
 
 			if(sources == null || sources.Length == 0)
-				throw new DataException($"No data sources for the '{_name}' data provider was found.");
+				throw new DataException(string.Format(Properties.Resources.DataProvider_SourcesNotFound_Message, _name));
 
 			return new DataSourceSelector(sources);
 		}, LazyThreadSafetyMode.ExecutionAndPublication);

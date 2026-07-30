@@ -64,7 +64,7 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 			var parent = token.Parent;
 
 			if(parent.Token.Property.IsSimplex)
-				throw new DataArgumentException("schema", $"The specified {parent} schema does not correspond to a complex property, so its child elements cannot be defined.");
+				throw new DataArgumentException("schema", string.Format(Properties.Resources.Schema_ComplexPropertyRequired_Message, parent));
 
 			var complex = (IDataEntityComplexProperty)parent.Token.Property;
 			data.Entity = complex.Foreign;
@@ -92,7 +92,7 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 						                  ((MethodInfo)parent.Token.Member).ReturnType;
 						break;
 					default:
-						throw new DataArgumentException("schema", $"Invalid kind of '{parent.Token.Member}' member.");
+						throw new DataArgumentException("schema", string.Format(Properties.Resources.Schema_InvalidMemberKind_Message, parent.Token.Member));
 				}
 			}
 		}
@@ -139,7 +139,7 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 				ancestors.Add(current);
 		}
 
-		throw new DataArgumentException("schema", $"The specified '{token.Name}' property does not exist in the '{data.Entity.Name}' entity.");
+		throw new DataArgumentException("schema", string.Format(Properties.Resources.Schema_PropertyNotFound_Message, token.Name, data.Entity.Name));
 	}
 	#endregion
 

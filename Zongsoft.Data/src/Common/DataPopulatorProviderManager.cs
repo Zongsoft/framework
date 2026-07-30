@@ -70,7 +70,7 @@ public sealed class DataPopulatorProviderManager : IEnumerable<IDataPopulatorPro
 				return provider;
 		}
 
-		throw new DataException($"No found data populator provider for the '{type.FullName}' type.");
+		throw new DataException(string.Format(Properties.Resources.DataPopulator_ProviderNotFound_Message, type.FullName));
 	}
 
 	public IDataPopulator GetPopulator(IDataDriver driver, Type type, IDataRecord record, Metadata.IDataEntity entity = null)

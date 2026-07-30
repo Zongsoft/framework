@@ -148,7 +148,7 @@ public class ModelPopulator<TModel> : IDataPopulator, IDataPopulator<TModel>
 		protected override void InsertItem(int index, MemberMapping item)
 		{
 			if(this.Contains(item.Token.Name))
-				throw new DataException($"The specified '{item.Token.Name}' member is duplicated.");
+				throw new DataException(string.Format(Properties.Resources.ModelPopulator_DuplicateMember_Message, item.Token.Name));
 
 			base.InsertItem(index, item);
 		}

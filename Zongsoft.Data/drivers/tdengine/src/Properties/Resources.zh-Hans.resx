@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -147,4 +147,37 @@
   <data name="TDengine.Settings.Compressible" xml:space="preserve">
     <value>启用压缩</value>
   </data>
+	<data name="ExpressionVisitor.StatementUnsupported.Message" xml:space="preserve">
+		<value>不支持“{0}”语句。</value>
+	</data>
+	<data name="ExpressionVisitor.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>不支持数据类型“{0}”。</value>
+	</data>
+	<data name="ExpressionVisitor.AggregateInvalid.Message" xml:space="preserve">
+		<value>聚合方法“{0}”无效。</value>
+	</data>
+	<data name="Statement.UpdateUnsupported.Message" xml:space="preserve">
+		<value>TDengine 不支持 UPDATE 语句；请新增一条具有相同主时间戳的记录来替换其值。</value>
+	</data>
+	<data name="DeleteStatement.TimestampRequired.Message" xml:space="preserve">
+		<value>TDengine DELETE 要求实体的第一列为主时间戳。</value>
+	</data>
+	<data name="DeleteStatement.TimestampConditionOnly.Message" xml:space="preserve">
+		<value>TDengine DELETE 条件只能引用主时间戳字段“{0}”。</value>
+	</data>
+	<data name="DeleteStatement.SourceUnsupported.Message" xml:space="preserve">
+		<value>FROM 子句不支持“{0}”类型的表达式。</value>
+	</data>
+	<data name="InsertStatement.MissingFields.Message" xml:space="preserve">
+		<value>{0} 语句缺少必需字段。</value>
+	</data>
+	<data name="InsertStatement.SingleRecordOnly.Message" xml:space="preserve">
+		<value>TDengine {0} 语句每次只支持一条记录；批量写入请使用数据导入器。</value>
+	</data>
+	<data name="DeleteStatement.ParameterValueMissing.Message" xml:space="preserve">
+		<value>TDengine DELETE 参数“{0}”没有值。</value>
+	</data>
+	<data name="ExpressionVisitor.SequenceUnsupported.Message" xml:space="preserve">
+		<value>TDengine 驱动不支持序列函数“{0}”。</value>
+	</data>
 </root>

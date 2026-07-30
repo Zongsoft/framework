@@ -131,7 +131,7 @@ public class ScalarPopulatorProvider : IDataPopulatorProvider
 		#region 构造函数
 		public ConverterPopulater()
 		{
-			_converter = Zongsoft.Common.Convert.GetTypeConverter(typeof(T)) ?? throw new InvalidOperationException($"The specified '{typeof(T).FullName}' type has no type converter.");
+			_converter = Zongsoft.Common.Convert.GetTypeConverter(typeof(T)) ?? throw new InvalidOperationException(string.Format(Properties.Resources.DataConverter_NotFound_Message, typeof(T).FullName));
 		}
 		#endregion
 
@@ -147,7 +147,7 @@ public class ScalarPopulatorProvider : IDataPopulatorProvider
 			if(Zongsoft.Common.Convert.TryConvertValue<TResult>(value, () => _converter, out var result))
 				return result;
 
-			throw new InvalidOperationException($"The specified '{_converter.GetType().FullName}' type converter does not support conversion from the '{record.GetFieldType(0)?.FullName}' source type nor does it support conversion to the '{typeof(TResult).FullName}' target type.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DataConverter_ConversionUnsupported_Message, _converter.GetType().FullName, record.GetFieldType(0)?.FullName, typeof(TResult).FullName));
 		}
 		#endregion
 	}

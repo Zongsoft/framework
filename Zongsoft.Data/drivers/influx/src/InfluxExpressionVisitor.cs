@@ -91,7 +91,7 @@ public class InfluxExpressionVisitor : ExpressionVisitorBase
 				InfluxExecutionStatementVisitor.Instance.Visit(context, execution);
 				break;
 			default:
-				throw new DataException($"Not supported '{statement}' statement.");
+				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message"), statement));
 		}
 	}
 
@@ -163,7 +163,7 @@ public class InfluxExpressionVisitor : ExpressionVisitorBase
 			DbType.VarNumeric => "double",
 			DbType.Xml => "nchar(4096)",
 			DbType.Object => type.ToString(),
-			_ => throw new DataException($"Unsupported '{type}' data type."),
+			_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), type)),
 		};
 
 		public string GetMethodName(MethodExpression method)
@@ -207,11 +207,11 @@ public class InfluxExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.DeviationPopulation => "STDEV_POP",
 			DataAggregateFunction.Variance => "VARIANCE",
 			DataAggregateFunction.VariancePopulation => "VAR_POP",
-			_ => throw new NotSupportedException($"Invalid '{function}' aggregate method."),
+			_ => throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message"), function)),
 		};
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetSequenceName(SequenceExpression sequence) => throw new DataException($"The Influx driver does not support the '{sequence.Method}' sequence function.");
+		private static string GetSequenceName(SequenceExpression sequence) => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceUnsupported.Message"), sequence.Method));
 		#endregion
 	}
 

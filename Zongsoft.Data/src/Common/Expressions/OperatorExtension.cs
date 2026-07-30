@@ -72,6 +72,6 @@ public static class OperatorExtension
 		OperandType.And => type == typeof(bool) ? Operator.AndAlso : Operator.And,
 		OperandType.Or => type == typeof(bool) ? Operator.OrElse : Operator.Or,
 		OperandType.Xor => Operator.Xor,
-		_ => throw new InvalidOperationException($"Cannot convert the {operandType} operand to operator."),
+		_ => throw new InvalidOperationException(string.Format(Properties.Resources.Operator_InvalidOperandConversion_Message, operandType)),
 	};
 }

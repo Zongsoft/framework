@@ -42,10 +42,10 @@ public class UpdateStatementVisitor : StatementVisitorBase<UpdateStatement>
 	protected override void OnVisit(ExpressionVisitorContext context, UpdateStatement statement)
 	{
 		if(statement.Tables == null || statement.Tables.Count == 0)
-			throw new DataException("Missing required tables in the update statement.");
+			throw new DataException(Properties.Resources.UpdateStatement_MissingTables_Message);
 
 		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException("Missing required fields in the update statment.");
+			throw new DataException(Properties.Resources.UpdateStatement_MissingFields_Message);
 
 		this.VisitWith(context, statement, statement.With);
 		this.VisitUpdate(context, statement);
