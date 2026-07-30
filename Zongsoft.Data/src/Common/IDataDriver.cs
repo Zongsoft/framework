@@ -45,14 +45,14 @@ public interface IDataDriver
 	/// <summary>获取支持的功能特性集。</summary>
 	FeatureCollection Features { get; }
 
+	/// <summary>获取数据导入器。</summary>
+	IDataImporter Importer { get; }
+
 	/// <summary>获取数据记录读取器。</summary>
 	IDataRecordGetter Getter { get; }
 
 	/// <summary>获取数据参数设置器。</summary>
 	IDataParameterSetter Setter { get; }
-
-	/// <summary>获取数据导入器。</summary>
-	IDataImporter Importer { get; }
 
 	/// <summary>获取数据语句绑定器。</summary>
 	Expressions.IStatementBinder Binder { get; }
@@ -62,7 +62,6 @@ public interface IDataDriver
 
 	/// <summary>获取数据语句插槽评估器。</summary>
 	Expressions.IStatementSlotEvaluator Slotter { get; }
-
 	#endregion
 
 	#region 方法定义

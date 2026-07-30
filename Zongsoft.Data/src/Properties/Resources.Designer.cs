@@ -19,7 +19,7 @@ namespace Zongsoft.Data.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -47,8 +47,8 @@ namespace Zongsoft.Data.Properties {
         }
         
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性
-        ///   重写当前线程的 CurrentUICulture 属性。
+        ///   重写当前线程的 CurrentUICulture 属性，对
+        ///   使用此强类型资源类的所有资源查找执行重写。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -57,6 +57,24 @@ namespace Zongsoft.Data.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The connection to the &apos;{0}&apos; data source by the &apos;{1}&apos; driver failed {2} consecutive time(s). 的本地化字符串。
+        /// </summary>
+        internal static string DataConnector_ConnectionFailed_Message {
+            get {
+                return ResourceManager.GetString("DataConnector.ConnectionFailed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The connection to the &apos;{0}&apos; data source by the &apos;{1}&apos; driver failed {2} consecutive time(s). Connection attempts are suspended until {3:HH:mm:sszz}. 的本地化字符串。
+        /// </summary>
+        internal static string DataConnector_ConnectionFailed_Suspended_Message {
+            get {
+                return ResourceManager.GetString("DataConnector.ConnectionFailed+Suspended.Message", resourceCulture);
             }
         }
     }

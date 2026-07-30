@@ -38,10 +38,16 @@ namespace Zongsoft.Data.Common;
 /// <summary>管理指定数据源的数据连接及其连接故障保护。</summary>
 public sealed partial class DataConnector
 {
+	#region 公共事件
+	/// <summary>当真实物理连接建立失败时发生。</summary>
+	/// <remarks>熔断期间被快速拒绝的连接请求不会重复触发该事件。</remarks>
+	public event EventHandler<DataConnectionFailureEventArgs> Failed;
+	#endregion
+
 	#region 成员字段
 	private readonly IDataSource _source;
-	private readonly SemaphoreSlim _semaphore;
 	private readonly CircuitBreaker _breaker;
+	private readonly SemaphoreSlim _semaphore;
 	#endregion
 
 	#region 构造函数
@@ -49,6 +55,7 @@ public sealed partial class DataConnector
 	{
 		_source = source ?? throw new ArgumentNullException(nameof(source));
 		_breaker = new CircuitBreaker(source, options, timeProvider);
+		_breaker.Failed += this.OnFailed;
 
 		/*
 		 * 数据源发生故障时，高并发请求可能在首个失败结果返回前同时进入底层提供程序，
@@ -206,6 +213,51 @@ public sealed partial class DataConnector
 			await connection.OpenAsync(token).ConfigureAwait(false);
 			return connection;
 		}, cancellation).ConfigureAwait(false);
+	}
+	#endregion
+
+	#region 私有方法
+	private void OnFailed(object sender, DataConnectionFailureEventArgs failure)
+	{
+		var handlers = this.Failed;
+
+		if(handlers != null)
+		{
+			foreach(EventHandler<DataConnectionFailureEventArgs> handler in handlers.GetInvocationList())
+			{
+				try
+				{
+					handler(this, failure);
+				}
+				catch
+				{
+					//连接故障订阅者不能影响数据连接操作
+				}
+			}
+		}
+
+		if(failure.ExceptionHandled)
+			return;
+
+		try
+		{
+			var format = failure.IsSuspended ?
+				Properties.Resources.DataConnector_ConnectionFailed_Suspended_Message :
+				Properties.Resources.DataConnector_ConnectionFailed_Message;
+
+			var message = string.Format(
+				format,
+				failure.Source.Name,
+				failure.Source.Driver?.Name,
+				failure.FailureCount,
+				failure.RetryAt?.ToLocalTime());
+
+			Zongsoft.Diagnostics.Logging.GetLogging<DataConnector>().Error(message, failure.Exception);
+		}
+		catch
+		{
+			//默认日志处理不能掩盖原始连接异常
+		}
 	}
 	#endregion
 }

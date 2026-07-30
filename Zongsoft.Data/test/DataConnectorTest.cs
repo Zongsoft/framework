@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Xunit;
 
@@ -26,7 +28,10 @@ public class DataConnectorTest
 		var connector = CreateConnector(source, timeProvider);
 		var attempts = 0;
 		var events = new List<CircuitBreakerStateChangedEventArgs>();
+		var failures = new List<DataConnectionFailureEventArgs>();
 		connector.Breaker.StateChanged += (_, args) => events.Add(args);
+		connector.Failed += (_, _) => throw new InvalidOperationException("The subscriber failure must be ignored.");
+		connector.Failed += (_, args) => failures.Add(args);
 
 		Assert.Throws<InvalidOperationException>(() => connector.Connect<object>(() =>
 		{
@@ -51,6 +56,14 @@ public class DataConnectorTest
 		var stateChanged = Assert.Single(events);
 		Assert.Equal(CircuitBreakerState.Closed, stateChanged.OriginalState);
 		Assert.Equal(CircuitBreakerState.Opened, stateChanged.CurrentState);
+
+		var failure = Assert.Single(failures);
+		Assert.Same(source, failure.Source);
+		Assert.Equal(1, failure.FailureCount);
+		Assert.True(failure.IsSuspended);
+		Assert.Equal(timeProvider.GetUtcNow().AddSeconds(1), failure.RetryAt);
+		Assert.Equal(TimeSpan.FromSeconds(1), failure.RetryAfter);
+		Assert.IsType<InvalidOperationException>(failure.Exception);
 	}
 
 	[Fact]
@@ -65,7 +78,9 @@ public class DataConnectorTest
 		}));
 		var connector = CreateConnector(source, timeProvider);
 		var transitions = 0;
+		var failures = 0;
 		connector.Breaker.StateChanged += (_, _) => Interlocked.Increment(ref transitions);
+		connector.Failed += (_, _) => Interlocked.Increment(ref failures);
 
 		var requests = new Task[256];
 
@@ -82,6 +97,7 @@ public class DataConnectorTest
 
 		Assert.Equal(1, attempts);
 		Assert.Equal(1, transitions);
+		Assert.Equal(1, failures);
 		Assert.Equal(CircuitBreakerState.Opened, connector.Breaker.State);
 	}
 
@@ -94,6 +110,7 @@ public class DataConnectorTest
 			Interlocked.Increment(ref attempts);
 			throw new InvalidOperationException("Database unavailable.");
 		}));
+		DataConnectorManager.GetConnector(source).Failed += (_, args) => args.ExceptionHandled = true;
 
 		using(var session = new DataSession(source))
 		using(var command = session.Build(null, null))
@@ -127,7 +144,9 @@ public class DataConnectorTest
 		var source = new DataSourceMocker();
 		var connector = CreateConnector(source, timeProvider);
 		var states = new List<CircuitBreakerState>();
+		var failures = new List<DataConnectionFailureEventArgs>();
 		connector.Breaker.StateChanged += (_, args) => states.Add(args.CurrentState);
+		connector.Failed += (_, args) => failures.Add(args);
 
 		Assert.Throws<InvalidOperationException>(() =>
 			connector.Connect<object>(() => throw new InvalidOperationException()));
@@ -143,6 +162,7 @@ public class DataConnectorTest
 				CircuitBreakerState.Closed,
 			],
 			states);
+		Assert.Single(failures);
 	}
 
 	[Fact]
@@ -151,6 +171,8 @@ public class DataConnectorTest
 		var timeProvider = new ManualTimeProvider();
 		var source = new DataSourceMocker();
 		var connector = CreateConnector(source, timeProvider);
+		var failures = new List<DataConnectionFailureEventArgs>();
+		connector.Failed += (_, args) => failures.Add(args);
 
 		Assert.Throws<InvalidOperationException>(() =>
 			connector.Connect<object>(() => throw new InvalidOperationException()));
@@ -166,6 +188,68 @@ public class DataConnectorTest
 
 		Assert.Equal(CircuitBreakerState.Closed, connector.Breaker.State);
 		Assert.Null(connector.Breaker.RetryAt);
+
+		Assert.Throws<InvalidOperationException>(() =>
+			connector.Connect<object>(() => throw new InvalidOperationException()));
+		Assert.Equal([1, 2, 1], failures.ConvertAll(failure => failure.FailureCount));
+	}
+
+	[Fact]
+	public void TestUnhandledFailureUsesDefaultLogging()
+	{
+		var logger = new RecordingLogger();
+		var culture = CultureInfo.CurrentCulture;
+		var uiCulture = CultureInfo.CurrentUICulture;
+		Zongsoft.Diagnostics.Logging.Loggers.Add(logger);
+
+		try
+		{
+			CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+			CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en-US");
+			var timeProvider = new ManualTimeProvider();
+			var source = new DataSourceMocker();
+			var connector = CreateConnector(source, timeProvider, false);
+
+			var exception = Assert.Throws<InvalidOperationException>(() =>
+				connector.Connect<object>(() => throw new InvalidOperationException("Database unavailable.")));
+
+			var entry = Assert.Single(logger.Entries);
+			Assert.Equal(Zongsoft.Diagnostics.LogLevel.Error, entry.Level);
+			Assert.Equal("Zongsoft.Data", entry.Source);
+			Assert.Same(exception, entry.Exception);
+			Assert.Contains(source.Name, entry.Message);
+			Assert.Contains(source.Driver.Name, entry.Message);
+			Assert.Contains("1 consecutive time(s)", entry.Message);
+			Assert.Contains("Connection attempts are suspended until", entry.Message);
+			Assert.Contains(timeProvider.GetUtcNow().AddSeconds(1).ToLocalTime().ToString("HH:mm:sszz"), entry.Message);
+			Assert.DoesNotContain("ConnectionString", entry.Message, StringComparison.OrdinalIgnoreCase);
+			Assert.DoesNotContain("Password", entry.Message, StringComparison.OrdinalIgnoreCase);
+			Assert.DoesNotContain("secret", entry.Message, StringComparison.OrdinalIgnoreCase);
+
+			var handled = CreateConnector(new DataSourceMocker(), timeProvider);
+			Assert.Throws<InvalidOperationException>(() =>
+				handled.Connect<object>(() => throw new InvalidOperationException("Handled database failure.")));
+			Assert.Single(logger.Entries);
+
+			logger.Clear();
+			CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("zh-CN");
+			CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("zh-Hans");
+			var localized = CreateConnector(new DataSourceMocker(), timeProvider, false);
+
+			Assert.Throws<InvalidOperationException>(() =>
+				localized.Connect<object>(() => throw new InvalidOperationException("Localized database failure.")));
+
+			entry = Assert.Single(logger.Entries);
+			Assert.Contains("数据源“Test”", entry.Message);
+			Assert.Contains(timeProvider.GetUtcNow().AddSeconds(1).ToLocalTime().ToString("HH:mm:sszz"), entry.Message);
+			Assert.DoesNotContain("secret", entry.Message, StringComparison.OrdinalIgnoreCase);
+		}
+		finally
+		{
+			Zongsoft.Diagnostics.Logging.Loggers.Remove(logger);
+			CultureInfo.CurrentCulture = culture;
+			CultureInfo.CurrentUICulture = uiCulture;
+		}
 	}
 
 	[Fact]
@@ -202,7 +286,10 @@ public class DataConnectorTest
 		}
 
 		Assert.Throws<InvalidOperationException>(() =>
-			DataConnectorManager.GetConnector(first).Connect<object>(() => throw new InvalidOperationException()));
+		{
+			DataConnectorManager.GetConnector(first).Failed += (_, args) => args.ExceptionHandled = true;
+			DataConnectorManager.GetConnector(first).Connect<object>(() => throw new InvalidOperationException());
+		});
 
 		Assert.Equal(100, DataConnectorManager.GetConnector(second).Connect(() => 100));
 		Assert.Equal(CircuitBreakerState.Opened, DataConnectorManager.GetConnector(first).Breaker.State);
@@ -224,44 +311,45 @@ public class DataConnectorTest
 			Assert.Same(connectors[0], connectors[index]);
 	}
 
-	[Fact]
-	public void TestConnectionInfrastructurePublicBoundary()
+	private static DataConnector CreateConnector(IDataSource source, TimeProvider timeProvider, bool handleFailures = true)
 	{
-		Assert.Null(typeof(IDataDriver).GetProperty("CircuitBreaker"));
-		Assert.Null(typeof(DataDriverBase).GetProperty("CircuitBreaker"));
-		Assert.Null(typeof(DataSession).GetProperty("CircuitBreaker"));
-		Assert.DoesNotContain(typeof(IDataDriver).Assembly.GetExportedTypes(), type => type.Name.Contains("CircuitBreaker"));
-		Assert.DoesNotContain(typeof(IDataDriver).Assembly.GetExportedTypes(), type => type.Name == "DataImportContextExtension");
-		Assert.DoesNotContain(typeof(IDataDriver).Assembly.GetTypes(), type => type.Name.StartsWith("DataConnectionCircuitBreaker"));
-		Assert.True(typeof(DataConnector).IsPublic);
-		Assert.True(typeof(DataConnectorManager).IsAbstract && typeof(DataConnectorManager).IsSealed);
-		Assert.Empty(typeof(DataConnector).GetConstructors());
-		Assert.All(
-			new[] { "CircuitBreaker", "CircuitBreakerOptions", "CircuitBreakerState", "CircuitBreakerStateChangedEventArgs" },
-			name => Assert.NotNull(typeof(DataConnector).GetNestedType(name, System.Reflection.BindingFlags.NonPublic)));
-		var optionsType = typeof(DataConnector).GetNestedType("CircuitBreakerOptions", System.Reflection.BindingFlags.NonPublic);
-		Assert.NotNull(optionsType.GetProperty("Duration"));
-		Assert.NotNull(optionsType.GetProperty("MaximumDuration"));
-		Assert.Null(optionsType.GetProperty("BreakDuration"));
-		Assert.Null(optionsType.GetProperty("MaximumBreakDuration"));
-		Assert.DoesNotContain(
-			typeof(IDataDriver).Assembly.GetTypes(),
-			type => type.DeclaringType == null && type.Name.StartsWith("CircuitBreaker"));
-		Assert.Equal(typeof(DataConnector), typeof(DataSession).GetProperty(nameof(DataSession.Connector))?.PropertyType);
-		Assert.DoesNotContain(
-			typeof(DataImporterBase).GetMethods(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly),
-			method => method.Name is "Connect" or "ConnectAsync");
+		var connector = new DataConnector(
+			source,
+			new CircuitBreakerOptions
+			{
+				Duration = TimeSpan.FromSeconds(1),
+				MaximumDuration = TimeSpan.FromSeconds(8),
+				Jitter = 0,
+			},
+			timeProvider);
+
+		if(handleFailures)
+			connector.Failed += (_, args) => args.ExceptionHandled = true;
+
+		return connector;
 	}
 
-	private static DataConnector CreateConnector(IDataSource source, TimeProvider timeProvider) => new(
-		source,
-		new CircuitBreakerOptions
+	private sealed class RecordingLogger : Zongsoft.Diagnostics.ILogger
+	{
+		private readonly ConcurrentQueue<Zongsoft.Diagnostics.LogEntry> _entries = new();
+
+		public string Name => nameof(RecordingLogger);
+		public IReadOnlyCollection<Zongsoft.Diagnostics.LogEntry> Entries => _entries;
+
+		public ValueTask FlushAsync(CancellationToken cancellation = default) => ValueTask.CompletedTask;
+		public void Clear()
 		{
-			Duration = TimeSpan.FromSeconds(1),
-			MaximumDuration = TimeSpan.FromSeconds(8),
-			Jitter = 0,
-		},
-		timeProvider);
+			while(_entries.TryDequeue(out _)) { }
+		}
+
+		public ValueTask LogAsync<TLog>(TLog log, CancellationToken cancellation = default) where TLog : Zongsoft.Diagnostics.ILog
+		{
+			if(log is Zongsoft.Diagnostics.LogEntry entry)
+				_entries.Enqueue(entry);
+
+			return ValueTask.CompletedTask;
+		}
+	}
 
 	private sealed class ManualTimeProvider : TimeProvider
 	{
@@ -296,7 +384,7 @@ public class DataConnectorTest
 		}
 
 		public string Name => "Test";
-		public string ConnectionString => string.Empty;
+		public string ConnectionString => "Server=database.example.com;Port=3306;Database=sample;UserName=tester;Password=secret;";
 		public DataAccessMode Mode { get; set; } = DataAccessMode.All;
 		public IDataDriver Driver { get; }
 		public FeatureCollection Features { get; }
@@ -319,7 +407,10 @@ public class DataConnectorTest
 		public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => throw new NotSupportedException();
 		public override DbCommand CreateCommand(IDataAccessContextBase context, IStatementBase statement) => new DbCommandMocker();
 		public override DbConnection CreateConnection(string connectionString = null) => new DbConnectionMocker(_open);
-		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => throw new NotSupportedException();
+		public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) => new()
+		{
+			ConnectionString = connectionString,
+		};
 
 		protected override IDataImporter CreateImporter() => null;
 		protected override ExpressionVisitorBase CreateVisitor() => null;

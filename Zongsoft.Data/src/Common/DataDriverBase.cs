@@ -56,10 +56,10 @@ public abstract class DataDriverBase : IDataDriver
 
 	#region 公共属性
 	public abstract string Name { get; }
+	public IDataImporter Importer { get; }
 	public FeatureCollection Features { get; }
 	public IDataRecordGetter Getter { get; protected set; }
 	public IDataParameterSetter Setter { get; protected set; }
-	public IDataImporter Importer { get; }
 	public Expressions.IStatementBinder Binder { get; }
 	public Expressions.IStatementSlotEvaluator Slotter { get; }
 	public Expressions.ExpressionVisitorBase Visitor { get; }

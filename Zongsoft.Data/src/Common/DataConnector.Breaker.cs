@@ -144,6 +144,7 @@ public sealed partial class DataConnector
 		#endregion
 
 		#region 公共事件
+		public event EventHandler<DataConnectionFailureEventArgs> Failed;
 		public event EventHandler<CircuitBreakerStateChangedEventArgs> StateChanged;
 		#endregion
 
@@ -390,6 +391,7 @@ public sealed partial class DataConnector
 		private void Fail(Permit permit, Exception exception)
 		{
 			CircuitBreakerStateChangedEventArgs args = null;
+			DataConnectionFailureEventArgs failure = null;
 
 			lock(_sync)
 			{
@@ -397,13 +399,18 @@ public sealed partial class DataConnector
 					return;
 
 				_lastException = exception;
+				_failures++;
 
 				if(permit.Probe && _state == CircuitBreakerState.HalfOpen)
 					args = this.Trip(CircuitBreakerState.HalfOpen, exception);
-				else if(_state == CircuitBreakerState.Closed && ++_failures >= _options.FailureThreshold)
+				else if(_state == CircuitBreakerState.Closed && _failures >= _options.FailureThreshold)
 					args = this.Trip(CircuitBreakerState.Closed, exception);
+
+				var now = _timeProvider.GetUtcNow();
+				failure = new(this.Source, exception, _failures, _retryAt, _retryAt.HasValue ? _retryAt.Value - now : TimeSpan.Zero);
 			}
 
+			this.OnFailed(failure);
 			this.OnStateChanged(args);
 		}
 
@@ -450,6 +457,26 @@ public sealed partial class DataConnector
 		}
 
 		private DataConnectionException CreateUnavailableException(DateTimeOffset now) => new(this.Source, _retryAt, _retryAt.HasValue ? _retryAt.Value - now : TimeSpan.Zero, _lastException);
+
+		private void OnFailed(DataConnectionFailureEventArgs args)
+		{
+			var handlers = this.Failed;
+
+			if(args == null || handlers == null)
+				return;
+
+			foreach(EventHandler<DataConnectionFailureEventArgs> handler in handlers.GetInvocationList())
+			{
+				try
+				{
+					handler(this, args);
+				}
+				catch
+				{
+					//连接故障订阅者不能影响熔断状态
+				}
+			}
+		}
 
 		private void OnStateChanged(CircuitBreakerStateChangedEventArgs args)
 		{
