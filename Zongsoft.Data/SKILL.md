@@ -1,11 +1,87 @@
 ---
-name: zongsoft-data-mapping
-description: 创建、编辑或审查 Zongsoft.Data `.mapping` XML 数据映射文件。当 Codex 需要定义 Zongsoft 数据实体、属性、组合键、导航/复合属性、命令脚本，或根据 `Zongsoft.Data.xsd` 以及相关项目中的约定校验 `.mapping` 文件时使用。
+name: zongsoft-data
+description: 开发、重构、测试或审查 Zongsoft.Data ORM 数据引擎及其数据库驱动，并创建、编辑或校验 `.mapping` XML 数据映射文件。当 Codex 需要处理驱动扩展点、语句构建/绑定/插槽、数据连接与连接故障保护、数据导入、驱动单元测试及 Podman 数据库测试环境，或依据 `Zongsoft.Data.xsd` 建模实体和命令时使用。
 ---
 
-# Zongsoft 数据映射
+# Zongsoft.Data 数据引擎
 
-## 工作流程
+## 基本原则
+
+- 先判断问题属于数据引擎通用能力还是特定数据库行为。不要为了单一驱动的小需求轻易扩充 `IDataDriver` 等通用接口。
+- 优先通过已有的专用扩展点解决驱动差异；只有多个驱动共享相同语义时才考虑提升到公共抽象。
+- 修改文本文件时保持 CRLF 换行，修改代码和 XML 时使用 Tab 缩进。
+- 保留工作区中与当前任务无关的用户修改，不要重置或覆盖脏工作树。
+
+## 驱动与语句扩展点
+
+`IDataDriver` 当前公开 `Binder`、`Builder` 和 `Slotter`：
+
+- 使用 `IStatementBuilder` 构建数据库方言语句。
+- 使用 `IStatementBinder` 在命令参数创建完成后绑定数据。`StatementExtension.Bind(...)` 根据当前数据访问上下文取得 `context.Source.Driver.Binder`，没有驱动绑定器时回退到 `StatementBinder.Default`。
+- 需要在通用绑定完成后整理命令时，继承 `StatementBinder` 并重写绑定完成回调；不要把单一驱动的命令整理需求加入 `IDataDriver`。
+- TDengine DELETE 会由表达式访问器把条件参数安全内联到 SQL，但参数对象仍会由通用命令创建过程生成。`TDengineStatementBinder` 必须等参数绑定完成后再清除这些已不被 SQL 引用的参数；不要在命令创建或绑定之前清空参数。
+- 保持 `IStatementSlotEvaluator` 只负责评估单个 `StatementSlot`。`StatementSlotter` 是静态协调类，它通过 `context.Source.Driver.Slotter` 获取当前评估器并替换命令文本中的插槽。
+
+在 `DataDriverBase` 中通过 `CreateBinder()`、`CreateSlotter()`、`CreateVisitor()` 和 `CreateImporter()` 提供驱动实现。除非需求确实具有通用语义，否则优先重写这些工厂或对应实现类。
+
+## 数据连接与故障保护
+
+连接路径统一为：
+
+```text
+DataSession
+  → DataConnectorManager.GetConnector(IDataSource)
+  → DataConnector
+  → DbConnection.Open/OpenAsync
+```
+
+- `DataSession.Connector` 是驱动层建立独立连接的公共入口。普通命令和数据导入都应通过该 Connector 打开连接，不要直接重复实现连接保护。
+- `DataConnectorManager` 是公共静态管理器，使用 `ConditionalWeakTable<IDataSource, DataConnector>` 为每个数据源共享 Connector。
+- `DataConnector` 是公共类，但熔断器、状态、选项和状态变更事件均为内部实现，不要通过 `IDataDriver`、`DataSession` 或 Feature 暴露熔断器。
+- Connector 使用信号量串行化同一数据源的物理连接建立。首次失败会打开内部熔断器，等待者及后续请求在恢复时间到达前快速抛出 `DataConnectionException`，避免连接池和线程池被失败连接风暴耗尽。
+- `DataConnector.Failed` 只在真实物理连接失败时通知业务层，熔断期间的快速拒绝不会重复触发，避免形成通知或日志风暴。事件参数 `DataConnectionFailureEventArgs` 提供数据源、连续失败次数、下次重试时间和 `ExceptionHandled`；业务订阅者可将 `ExceptionHandled` 设为 `true` 以接管默认处理。
+- 未被业务层处理的连接失败默认调用 `Zongsoft.Diagnostics.Logging.GetLogging<DataConnector>().Error(...)` 写入错误日志。日志消息从资源文件读取，并可包含数据源名、驱动名、服务器地址、数据库名、用户名、连续失败次数和重试时间；不要记录完整连接字符串、密码或其他凭据。
+- `DataConnectionException` 提供 `SourceName`、`DriverName`、`RetryAt` 和 `RetryAfter`。首次物理连接失败仍抛出提供程序原始异常；熔断后的快速拒绝才抛出该异常。
+- 熔断配置从数据源 `Properties` 读取：`CircuitBreaker.FailureThreshold`、`CircuitBreaker.Duration`、`CircuitBreaker.MaximumDuration` 和 `CircuitBreaker.Jitter`。
+- 类型化 `ConnectionSettingsBase<TDriver, TOptions>` 遇到未定义连接字符串项时，通过 `OnUnrecognized` 将其放入 `Properties`；已定义的复合属性仍保留在内部设置项中。因此熔断配置应直接写入连接字符串，并验证它们出现在 `settings.Properties`。
+- SQLite 和 DuckDB 当前也经过相同 Connector、信号量和熔断路径，并没有自动跳过。现有基准显示：DuckDB 没有可见退化；SQLite 默认池化连接在 16 路并发打开时每连接增加约 3 微秒，顺序打开没有稳定差异。该绝对成本不足以支持增加禁用机制，因此保持统一保护；Connector 实现或典型负载发生明显变化后再重新测量。不要在核心中硬编码驱动名称。
+
+驱动导入器需要独立连接时，使用：
+
+```csharp
+using var connection = context.Session.Connector.Connect();
+await using var connection = await context.Session.Connector.ConnectAsync(cancellation);
+```
+
+对于提供原生连接函数的驱动，使用 Connector 对应的泛型同步或异步重载。
+
+## 驱动测试
+
+先在驱动目录中查找测试项目及容器声明：
+
+```powershell
+rg --files Zongsoft.Data/drivers | rg -- "-pod\.yaml$|Tests\.csproj$"
+```
+
+- SQLite 和 DuckDB 是进程内数据库，运行其单元测试不需要启动数据库服务器容器。
+- 其他驱动的测试目录中如果存在 `*-pod.yaml`，表示测试依赖由 Podman pod 托管的数据库服务器。运行测试前先检查对应 pod/容器是否已经存在并处于运行状态；如果尚未启动，则根据该 YAML 启动 pod，并等待数据库服务真正就绪后再运行测试。Pod 处于 Running 不一定表示数据库已经接受连接。
+- 当前仓库中的 MSSQL、MySQL、PostgreSQL 和 TDengine 测试目录包含 `*-pod.yaml`；仍应每次动态扫描，不要把该列表视为永久不变。
+- 使用本机 Pod 容器的数据库进行测试，可以在源代码文件中的连接字符串中包含用户名和密码，测试输出摘要或提交记录。
+- 先运行与改动直接相关的测试，再运行对应驱动项目的完整测试。使用 `--blame-hang` 和合理的 `--blame-hang-timeout` 防止连接失败测试无限挂起。
+- 多目标框架项目按 `net8.0`、`net9.0`、`net10.0` 分别还原和测试。中央包版本按目标框架定义；发生 NU1605 时先检查 `Directory.Packages.props` 与数据库提供程序的传递依赖约束。
+- MSSQL 测试项目在 net9.0 下不要直接固定 `Microsoft.Extensions.Caching.Memory` 9.0.2，因为 `Microsoft.Data.SqlClient 7.0.2` 要求至少 9.0.13；net8.0 和 net10.0 仍需要各自匹配的直接运行时依赖。
+
+连接故障韧性测试至少验证：
+
+1. 使用不可达端点和较小连接池触发一次真实物理连接失败。
+2. 首次失败保留提供程序原始异常，下一次请求得到 `DataConnectionException`。
+3. 并发执行查询、新增和数据导入，并在明确时限内全部快速拒绝。
+4. 并发完成后运行线程池哨兵任务，确认进程仍能调度工作。
+5. 将 `CircuitBreaker.Duration` 等设置写入连接字符串，并断言未知设置已进入 `settings.Properties`。
+
+## 数据映射
+
+### 工作流程
 
 以 `Zongsoft.Data.xsd` 作为 schema 权威。项目中的 `.mapping` 文件只用于推断命名和建模约定；不要复制不符合 schema 的历史误写属性。
 
@@ -15,7 +91,7 @@ description: 创建、编辑或审查 Zongsoft.Data `.mapping` XML 数据映射�
 4. 只有普通实体 CRUD 无法表达的自定义 SQL 或存储过程操作才添加命令。
 5. 在可用时使用 XML 校验器按 XSD 校验结构；否则也要按 XSD 规则进行人工核对。
 
-## 文件结构
+### 文件结构
 
 从以下带命名空间的结构开始：
 
@@ -39,7 +115,7 @@ description: 创建、编辑或审查 Zongsoft.Data `.mapping` XML 数据映射�
 
 顶层允许的内容是 `schema/container/entity` 和 `schema/container/command`。同一容器内的实体名和命令名必须唯一。
 
-## 实体
+### 实体
 
 为每个数据聚合或表模型使用一个 `entity`。
 
@@ -59,7 +135,7 @@ description: 创建、编辑或审查 Zongsoft.Data `.mapping` XML 数据映射�
 </key>
 ```
 
-## 标量属性
+### 标量属性
 
 使用 `property` 定义标量列。必填属性是 `name` 和 `type`；项目文件中几乎总是显式指定 `nullable`，所以要有意识地设置它。
 
@@ -85,7 +161,7 @@ description: 创建、编辑或审查 Zongsoft.Data `.mapping` XML 数据映射�
 <property name="Amount" type="decimal" precision="18" scale="2" nullable="false" default="0" />
 ```
 
-## 复合属性
+### 复合属性
 
 使用 `complexProperty` 定义导航属性。必填属性是 `name` 和 `port`。
 
@@ -124,7 +200,7 @@ description: 创建、编辑或审查 Zongsoft.Data `.mapping` XML 数据映射�
 </constraints>
 ```
 
-## 命令
+### 命令
 
 使用 `command` 定义命名 SQL 或存储过程操作。命令应放在其操作实体所在的同一容器内。
 
@@ -150,7 +226,7 @@ description: 创建、编辑或审查 Zongsoft.Data `.mapping` XML 数据映射�
 </command>
 ```
 
-## 审查清单
+### 审查清单
 
 完成 `.mapping` 修改前：
 
