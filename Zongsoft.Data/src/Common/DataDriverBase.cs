@@ -40,10 +40,10 @@ public abstract class DataDriverBase : IDataDriver
 	{
 		//创建语句参数绑定器
 		this.Binder = this.CreateBinder();
-		//创建表达式访问器
-		this.Visitor = this.CreateVisitor();
 		//创建语句插槽管理器
 		this.Slotter = this.CreateSlotter();
+		//创建表达式访问器
+		this.Visitor = this.CreateVisitor();
 		//创建数据导入器
 		this.Importer = this.CreateImporter();
 

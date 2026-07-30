@@ -107,7 +107,7 @@ public class ConfigurationResolver : IConfigurationResolver
 				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, property.PropertyType));
 			}
 
-			this.OnUnrecognize(instance, properties, section, options);
+			this.OnUnrecognized(instance, properties, section, options);
 		}
 		else
 		{
@@ -125,7 +125,7 @@ public class ConfigurationResolver : IConfigurationResolver
 			else
 			{
 				if(!this.ResolveCollection(instance, section, properties, options))
-					this.OnUnrecognize(instance, properties, section, options);
+					this.OnUnrecognized(instance, properties, section, options);
 			}
 		}
 	}
@@ -367,7 +367,7 @@ public class ConfigurationResolver : IConfigurationResolver
 		return properties;
 	}
 
-	protected virtual void OnUnrecognize(object target, IDictionary<string, PropertyToken> properties, IConfigurationSection configuration, ConfigurationBinderOptions options)
+	protected virtual void OnUnrecognized(object target, IDictionary<string, PropertyToken> properties, IConfigurationSection configuration, ConfigurationBinderOptions options)
 	{
 		var unrecognizedProperty = ConfigurationRecognizerProvider.GetUnrecognizedProperty(target.GetType());
 

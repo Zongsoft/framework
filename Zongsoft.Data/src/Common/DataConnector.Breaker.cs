@@ -144,13 +144,13 @@ public sealed partial class DataConnector
 		#endregion
 
 		#region 公共事件
-		internal event EventHandler<CircuitBreakerStateChangedEventArgs> StateChanged;
+		public event EventHandler<CircuitBreakerStateChangedEventArgs> StateChanged;
 		#endregion
 
 		#region 公共属性
-		internal IDataSource Source { get; }
+		public IDataSource Source { get; }
 
-		internal int Failures
+		public int Failures
 		{
 			get
 			{
@@ -159,7 +159,7 @@ public sealed partial class DataConnector
 			}
 		}
 
-		internal CircuitBreakerState State
+		public CircuitBreakerState State
 		{
 			get
 			{
@@ -168,7 +168,7 @@ public sealed partial class DataConnector
 			}
 		}
 
-		internal DateTimeOffset? RetryAt
+		public DateTimeOffset? RetryAt
 		{
 			get
 			{
@@ -179,7 +179,7 @@ public sealed partial class DataConnector
 		#endregion
 
 		#region 公共方法
-		internal void Execute(Action operation)
+		public void Execute(Action operation)
 		{
 			if(operation == null)
 				throw new ArgumentNullException(nameof(operation));
@@ -198,7 +198,7 @@ public sealed partial class DataConnector
 			}
 		}
 
-		internal TResult Execute<TResult>(Func<TResult> operation)
+		public TResult Execute<TResult>(Func<TResult> operation)
 		{
 			if(operation == null)
 				throw new ArgumentNullException(nameof(operation));
@@ -218,7 +218,7 @@ public sealed partial class DataConnector
 			}
 		}
 
-		internal async Task ExecuteAsync(Func<CancellationToken, Task> operation, CancellationToken cancellation = default)
+		public async Task ExecuteAsync(Func<CancellationToken, Task> operation, CancellationToken cancellation = default)
 		{
 			if(operation == null)
 				throw new ArgumentNullException(nameof(operation));
@@ -242,7 +242,7 @@ public sealed partial class DataConnector
 			}
 		}
 
-		internal async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> operation, CancellationToken cancellation = default)
+		public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> operation, CancellationToken cancellation = default)
 		{
 			if(operation == null)
 				throw new ArgumentNullException(nameof(operation));
@@ -267,7 +267,7 @@ public sealed partial class DataConnector
 			}
 		}
 
-		internal void Reset() => this.Reset(true);
+		public void Reset() => this.Reset(true);
 		#endregion
 
 		#region 内部方法
@@ -466,7 +466,7 @@ public sealed partial class DataConnector
 				}
 				catch
 				{
-					//状态事件订阅者不能影响数据连接操作。
+					//状态事件订阅者不能影响数据连接操作
 				}
 			}
 		}
