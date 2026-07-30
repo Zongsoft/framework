@@ -9,8 +9,9 @@ namespace Zongsoft.Data.DuckDB.Tests;
 
 public class DatabaseFixture : IDisposable
 {
-	#region 常量定义
-	private const string CONNECTION_STRING = @"DataSource=test.db";
+	#region 静态字段
+	private static readonly string DATABASE_FILE = Path.Combine(AppContext.BaseDirectory, "test.db");
+	private static readonly string CONNECTION_STRING = $"DataSource={DATABASE_FILE}";
 	#endregion
 
 	#region 私有变量
@@ -20,8 +21,8 @@ public class DatabaseFixture : IDisposable
 	#region 构造函数
 	public DatabaseFixture()
 	{
-		File.Delete("test.db");
-		File.Delete("test.db.wal");
+		File.Delete(DATABASE_FILE);
+		File.Delete($"{DATABASE_FILE}.wal");
 
 		Mapping.Commands
 			.Add("TruncateLog", DataCommandMutability.Delete)

@@ -118,7 +118,7 @@ public partial class SQLiteDriver : DataDriverBase
 			{
 				const string PRAGMA_PREFIX = "PRAGMA:";
 
-				foreach(var setting in settings)
+				foreach(var setting in settings.Properties)
 				{
 					if(setting.Key.StartsWith(PRAGMA_PREFIX, StringComparison.OrdinalIgnoreCase))
 						yield return new(setting.Key[PRAGMA_PREFIX.Length..], setting.Value);

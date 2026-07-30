@@ -9,8 +9,9 @@ namespace Zongsoft.Data.SQLite.Tests;
 
 public class DatabaseFixture : IDisposable
 {
-	#region 常量定义
-	private const string CONNECTION_STRING = @"DataSource=test.db;PRAGMA:optimize;PRAGMA:journal_mode=WAL;PRAGMA:synchronous=NORMAL;PRAGMA:temp_store=MEMORY;";
+	#region 静态字段
+	private static readonly string DATABASE_FILE = Path.Combine(AppContext.BaseDirectory, "test.db");
+	private static readonly string CONNECTION_STRING = $"DataSource={DATABASE_FILE};PRAGMA:optimize;PRAGMA:journal_mode=WAL;PRAGMA:synchronous=NORMAL;PRAGMA:temp_store=MEMORY;";
 	#endregion
 
 	#region 私有变量
@@ -20,9 +21,9 @@ public class DatabaseFixture : IDisposable
 	#region 构造函数
 	public DatabaseFixture()
 	{
-		File.Delete("test.db");
-		File.Delete("test.db-wal");
-		File.Delete("test.db-shm");
+		File.Delete(DATABASE_FILE);
+		File.Delete($"{DATABASE_FILE}-wal");
+		File.Delete($"{DATABASE_FILE}-shm");
 
 		Mapping.Commands
 			.Add("TruncateLog", DataCommandMutability.Delete)
