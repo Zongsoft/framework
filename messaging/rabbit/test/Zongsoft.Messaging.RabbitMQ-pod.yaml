@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zongsoft.messaging.rabbitmq
+  labels:
+    app: zongsoft.messaging.rabbitmq
+spec:
+  containers:
+    - name: rabbitmq
+      image: rabbitmq:4.3.4-management
+      ports:
+        - containerPort: 5672
+          protocol: TCP
+          hostPort: 5672
+        - containerPort: 15672
+          protocol: TCP
+          hostPort: 15672
+      env:
+        - name: RABBITMQ_DEFAULT_USER
+          value: program
+        - name: RABBITMQ_DEFAULT_PASS
+          value: xxxxxx

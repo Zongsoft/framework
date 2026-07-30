@@ -1,7 +1,12 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Zongsoft.Common;
+using Zongsoft.Terminals;
+using Zongsoft.Components;
+using Zongsoft.Collections;
 
 namespace Zongsoft.Messaging.Kafka.Samples;
 
@@ -9,33 +14,126 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		Console.WriteLine("Press the Enter key to exit.");
-		Console.WriteLine("____________________________");
-		Console.WriteLine();
+		using var queue = new KafkaQueue("Kafka",
+			Configuration.KafkaConnectionSettingsDriver.Instance.GetSettings("Kafka", $"server=127.0.0.1:9092;client=Zongsoft.Messaging.Kafka.Sample-{Guid.NewGuid():N};"));
 
-		var settings = Configuration.KafkaConnectionSettingsDriver.Instance.GetSettings($"Server=192.168.2.19:9092;Client=Zongsoft.Messaing.Kafka.Sample;");
-		var queue = new KafkaQueue("Kafka", settings);
+		var executor = Terminal.Console.Executor;
+		executor.Command("reset", context => Handler.Instance.Reset());
+		executor.Command("close", context => queue.Dispose());
 
-		var subscriber = await queue.SubscribeAsync("TopicX", async message =>
+		executor.Command("info", context =>
 		{
-			if(string.IsNullOrEmpty(message.Identifier))
-				Console.WriteLine($"Received: [{message.Topic}] {Encoding.UTF8.GetString(message.Data)}");
-			else
-				Console.WriteLine($"Received: [{message.Topic}] {Encoding.UTF8.GetString(message.Data)}\t<{message.Identifier}>");
+			context.Output.WriteLine(CommandOutletColor.Green, queue.ToString());
 
-			await message.AcknowledgeAsync();
+			if(queue.Subscribers.Count > 0)
+			{
+				int index = 0;
+				context.Output.WriteLine(new string('-', 50));
+
+				foreach(var subscriber in queue.Subscribers)
+					context.Output.WriteLine($"[{++index}] {subscriber.Topic}");
+			}
 		});
 
-		Parallel.For(0, 200, async index =>
+		executor.Command("subscribe", async (context, cancellation) =>
 		{
-			var topic = $"TopicX";
-			var message = $"Message:#{(index + 1):000}";
+			if(context.Arguments.IsEmpty)
+				throw new CommandException("Missing the topics for subscribe.");
 
-			var identifier = await queue.ProduceAsync(topic, Encoding.UTF8.GetBytes(message), MessageEnqueueOptions.Default);
+			for(int i = 0; i < context.Arguments.Count; i++)
+			{
+				var subscriber = await queue.SubscribeAsync(context.Arguments[i], Handler.Instance, cancellation);
 
-			Console.WriteLine($"Sent: [{topic}] {message}\t<{identifier}>");
+				if(subscriber == null)
+					context.Output.WriteLine(CommandOutletColor.DarkRed, $"Failed to subscribe topic: {context.Arguments[i]}");
+				else
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, $"The subscription to the '{subscriber.Topic}' topic was successful.");
+			}
 		});
 
-		Console.ReadLine();
+		executor.Command("unsubscribe", async (context, cancellation) =>
+		{
+			if(context.Arguments.IsEmpty)
+				throw new CommandException("Missing the topics for unsubscribe.");
+
+			for(int i = 0; i < context.Arguments.Count; i++)
+			{
+				if(queue.Subscribers.TryGetValue(context.Arguments[i], out var subscriber))
+					await subscriber.UnsubscribeAsync(cancellation);
+			}
+		});
+
+		executor.Command("produce", async (context, cancellation) =>
+		{
+			var round = context.Options.GetValue<int>("round", 1);
+			var topic = context.Options.GetValue<string>("topic");
+
+			if(string.IsNullOrEmpty(topic))
+				throw new CommandOptionException("topic", "The topic is required.");
+
+			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+			for(int i = 0; i < round; i++)
+			{
+				for(int j = 0; j < context.Arguments.Count; j++)
+				{
+					var identifier = await queue.ProduceAsync(
+						topic,
+						Encoding.UTF8.GetBytes($"[{i + 1}]{context.Arguments[j]}"),
+						null,
+						cancellation);
+
+					context.Output.WriteLine(CommandOutletColor.DarkGreen, $"[{i + 1}] {topic} Sent. (Identifier:{identifier ?? "N/A"})");
+				}
+			}
+
+			stopwatch.Stop();
+			context.Output.WriteLine(CommandOutletColor.Magenta, $"Elapsed: {stopwatch.Elapsed}");
+		});
+
+		executor.Aliaser.Set("produce", "send");
+		executor.Aliaser.Set("subscribe", "sub");
+		executor.Aliaser.Set("unsubscribe", "unsub");
+
+		var splash = CommandOutletContent.Create()
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50))
+			.AppendLine(CommandOutletColor.Cyan, "Welcome to the Kafka Client.".Justify(50))
+			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
+
+		await executor.RunAsync(splash);
+	}
+
+	internal sealed class Handler : HandlerBase<Message>
+	{
+		#region 单例字段
+		public static readonly Handler Instance = new();
+		#endregion
+
+		#region 私有变量
+		private volatile int _count;
+		#endregion
+
+		#region 重置方法
+		public void Reset() => _count = 0;
+		#endregion
+
+		#region 重写方法
+		protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
+		{
+			if(message.IsEmpty)
+				return;
+
+			var count = Interlocked.Increment(ref _count);
+			var content = CommandOutletContent.Create()
+				.Append(CommandOutletColor.Cyan, "[Received]")
+				.Append(CommandOutletColor.DarkYellow, $"#{count}")
+				.Append(CommandOutletColor.DarkCyan, " Topic:")
+				.AppendLine(CommandOutletColor.DarkGreen, message.Topic)
+				.AppendLine(CommandOutletColor.Gray, Encoding.UTF8.GetString(message.Data));
+
+			Terminal.Console.Executor.Output.Write(content);
+			await message.AcknowledgeAsync(cancellation);
+		}
+		#endregion
 	}
 }

@@ -37,6 +37,11 @@ namespace Zongsoft.Messaging.Kafka;
 
 public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 {
+	#region 私有变量
+	private readonly object _syncRoot = new();
+	private int _closed = 1;
+	#endregion
+
 	#region 成员字段
 	private Poller _poller;
 	private IConsumer<string, byte[]> _consumer;
@@ -45,7 +50,6 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 	#region 构造函数
 	public KafkaSubscriber(KafkaQueue queue, string topic, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
 	{
-		_consumer = new ConsumerBuilder<string, byte[]>(queue.Settings.GetConsumerOptions()).Build();
 		_poller = new Poller(this);
 	}
 	#endregion
@@ -53,8 +57,14 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 	#region 重写方法
 	protected override ValueTask OnCloseAsync(CancellationToken cancellation)
 	{
-		_consumer.Close();
-		_poller.Stop();
+		_poller?.Stop();
+
+		if(Interlocked.Exchange(ref _closed, 1) == 0)
+		{
+			lock(_syncRoot)
+				_consumer?.Close();
+		}
+
 		return ValueTask.CompletedTask;
 	}
 	#endregion
@@ -62,54 +72,92 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 	#region 内部方法
 	internal void Subscribe(IConsumer<string, byte[]> consumer)
 	{
-		_consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
-		_consumer.Subscribe(this.Topic);
+		if(consumer == null)
+			throw new ArgumentNullException(nameof(consumer));
+
+		lock(_syncRoot)
+		{
+			if(_consumer != null)
+				throw new InvalidOperationException($"The message queue topic has already been subscribed.");
+
+			try
+			{
+				consumer.Subscribe(this.Topic);
+				_consumer = consumer;
+				_closed = 0;
+			}
+			catch
+			{
+				consumer.Dispose();
+				throw;
+			}
+		}
+
 		_poller.Start();
 	}
 
 	internal Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
 	{
-		if(_consumer == null)
-			throw new InvalidOperationException($"The message queue topic to consume is not yet subscribed.");
-
+		CancellationTokenSource source = null;
 		ConsumeResult<string, byte[]> result = null;
 
 		if(options.Timeout > TimeSpan.Zero)
-			cancellation = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(options.Timeout).Token, cancellation).Token;
+		{
+			source = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+			source.CancelAfter(options.Timeout);
+			cancellation = source.Token;
+		}
 
 		try
 		{
 			//同步方式从消息队列中拉取消息(堵塞当前线程)
-			result = _consumer.Consume(cancellation);
+			lock(_syncRoot)
+			{
+				if(_consumer == null)
+					throw new InvalidOperationException($"The message queue topic to consume is not yet subscribed.");
+
+				result = _consumer.Consume(cancellation);
+			}
 		}
 		catch(OperationCanceledException)
 		{
 			return Message.Empty;
+		}
+		finally
+		{
+			source?.Dispose();
 		}
 
 		if(result.IsPartitionEOF)
 			return Message.Empty;
 
 		//构建接收到的消息
-		return new Message(result.Message.Key, result.Topic, result.Message.Value, cancellation => _consumer.Commit(result))
+		return new Message(result.Message.Key, result.Topic, result.Message.Value, () => this.Commit(result))
 		{
 			Timestamp = result.Message.Timestamp.UtcDateTime,
 		};
 	}
+
+	private void Commit(ConsumeResult<string, byte[]> result)
+	{
+		lock(_syncRoot)
+			_consumer?.Commit(result);
+	}
 	#endregion
 
 	#region 处置方法
-	protected override ValueTask DisposeAsync(bool disposing)
+	protected override async ValueTask DisposeAsync(bool disposing)
 	{
-		var consumer = Interlocked.Exchange(ref _consumer, null);
-		if(consumer != null)
-			consumer.Dispose();
+		await base.DisposeAsync(disposing);
 
 		var poller = Interlocked.Exchange(ref _poller, null);
-		if(poller != null)
-			poller.Dispose();
+		poller?.Dispose();
 
-		return base.DisposeAsync(disposing);
+		lock(_syncRoot)
+		{
+			var consumer = Interlocked.Exchange(ref _consumer, null);
+			consumer?.Dispose();
+		}
 	}
 	#endregion
 

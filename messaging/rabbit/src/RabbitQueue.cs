@@ -52,6 +52,8 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 
 	#region 成员字段
 	private readonly IConnectionFactory _connectionFactory;
+	private readonly SemaphoreSlim _initializing = new(1, 1);
+	private readonly SemaphoreSlim _publishing = new(1, 1);
 	private IConnection _connection;
 	private IChannel _channel;
 	#endregion
@@ -108,8 +110,17 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 			}
 		}
 
-		//发送消息
-		await _channel.BasicPublishAsync(this.Exchanger, topic, false, properties, data, cancellation);
+		await _publishing.WaitAsync(cancellation);
+
+		try
+		{
+			//发送消息
+			await _channel.BasicPublishAsync(this.Exchanger, topic, false, properties, data, cancellation);
+		}
+		finally
+		{
+			_publishing.Release();
+		}
 
 		//返回消息编号
 		return properties.MessageId;
@@ -119,49 +130,75 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 	#region 订阅方法
 	protected override async ValueTask<bool> OnSubscribeAsync(RabbitSubscriber subscriber, CancellationToken cancellation = default)
 	{
-		var identifier = await subscriber.SubscribeAsync(this.QueueName, cancellation);
+		var identifier = await subscriber.SubscribeAsync(cancellation);
 		return !string.IsNullOrEmpty(identifier);
 	}
 
 	protected override async ValueTask<RabbitSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
 	{
-		//确保主题格式正确
-		topic = string.IsNullOrEmpty(topic) ? "#" : topic.Replace('/', '.');
+		//确保路由键格式正确，但保留原订阅主题以便退订时从订阅集合中移除
+		var routingKey = string.IsNullOrEmpty(topic) ? "#" : topic.Replace('/', '.');
 
 		//尝试初始化环境
 		await this.InitializeAsync(cancellation);
 
-		//绑定队列订阅主题
-		await _channel.QueueBindAsync(_channel.CurrentQueue, this.Exchanger, topic, null, false, cancellation);
+		IChannel channel = null;
 
-		//返回创建的订阅者
-		return new RabbitSubscriber(this, _channel, topic, tags, handler, options);
+		try
+		{
+			//每个订阅者使用独立通道，避免退订时影响消息发布和其他订阅者
+			channel = await _connection.CreateChannelAsync(new CreateChannelOptions(false, false), cancellation);
+			await channel.ExchangeDeclareAsync(this.Exchanger, ExchangeType.Topic, true, false, null, false, cancellation);
+
+			var queue = string.IsNullOrEmpty(this.QueueName) ?
+				await channel.QueueDeclareAsync(cancellationToken: cancellation) :
+				await channel.QueueDeclareAsync(this.QueueName, true, false, false, null, false, cancellation);
+
+			//绑定队列订阅主题
+			await channel.QueueBindAsync(queue.QueueName, this.Exchanger, routingKey, null, false, cancellation);
+
+			//返回创建的订阅者
+			return new RabbitSubscriber(this, channel, queue.QueueName, topic, tags, handler, options);
+		}
+		catch
+		{
+			channel?.Dispose();
+			throw;
+		}
 	}
 	#endregion
 
 	#region 初始方法
 	private async ValueTask InitializeAsync(CancellationToken cancellation)
 	{
-		if(_channel != null && _channel.IsOpen)
+		if(_connection != null && _connection.IsOpen && _channel != null && _channel.IsOpen)
 			return;
 
-		if(_connection == null || !_connection.IsOpen)
-			_connection = await _connectionFactory.CreateConnectionAsync(GetClient(this.Settings), cancellation);
+		await _initializing.WaitAsync(cancellation);
 
-		if(_channel == null || _channel.IsClosed)
+		try
 		{
-			_channel = await _connection.CreateChannelAsync(new CreateChannelOptions(false, false), cancellation);
+			if(_connection == null || !_connection.IsOpen)
+			{
+				_channel?.Dispose();
+				_channel = null;
 
-			//通过QoS开启工作者模式
-			//await _channel.BasicQosAsync(0, 1, false, cancellation);
+				_connection?.Dispose();
+				_connection = await _connectionFactory.CreateConnectionAsync(GetClient(this.Settings), cancellation);
+			}
 
-			//定义消息交换器
-			await _channel.ExchangeDeclareAsync(this.Exchanger, ExchangeType.Topic, true, false, null, false, cancellation);
+			if(_channel == null || _channel.IsClosed)
+			{
+				_channel?.Dispose();
+				_channel = await _connection.CreateChannelAsync(new CreateChannelOptions(false, false), cancellation);
 
-			//定义消息队列
-			var queue = string.IsNullOrEmpty(this.QueueName) ?
-				await _channel.QueueDeclareAsync(cancellationToken: cancellation) :
-				await _channel.QueueDeclareAsync(this.QueueName, true, false, false, null, false, cancellation);
+				//定义消息交换器
+				await _channel.ExchangeDeclareAsync(this.Exchanger, ExchangeType.Topic, true, false, null, false, cancellation);
+			}
+		}
+		finally
+		{
+			_initializing.Release();
 		}
 
 		static string GetClient(Configuration.RabbitConnectionSettings settings) => string.IsNullOrEmpty(settings.Client) ? $"Zongsoft.RabbitMQ:{Common.Randomizer.GenerateString()}" : settings.Client;
@@ -173,11 +210,17 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 	{
 		if(disposing)
 		{
+			foreach(var subscriber in this.Subscribers)
+				subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
+
 			var channel = Interlocked.Exchange(ref _channel, null);
 			channel?.Dispose();
 
 			var connection = Interlocked.Exchange(ref _connection, null);
 			connection?.Dispose();
+
+			_initializing.Dispose();
+			_publishing.Dispose();
 		}
 
 		_channel = null;

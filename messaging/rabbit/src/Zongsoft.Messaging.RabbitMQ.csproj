@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.0.1</Version>
+		<Version>1.1.0</Version>
 		<Product>Zongsoft RabbitMQ Library</Product>
 		<Description>This is a library about the RabbitMQ messaging development.</Description>
 		<RootNamespace>Zongsoft.Messaging.RabbitMQ</RootNamespace>
@@ -16,7 +16,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="RabbitMQ.Client" VersionOverride="7.0.0" />
+		<PackageReference Include="RabbitMQ.Client" VersionOverride="7.2.1" />
 	</ItemGroup>
 
 	<Choose>
@@ -29,7 +29,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.51.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

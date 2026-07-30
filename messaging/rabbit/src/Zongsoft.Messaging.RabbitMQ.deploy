@@ -3,5 +3,4 @@ artifacts/Zongsoft.Messaging.RabbitMQ.option
 lib/$(Framework)/Zongsoft.Messaging.RabbitMQ.*
 lib/$(Framework)/*/Zongsoft.Messaging.RabbitMQ.resources.*
 
-nuget:RabbitMQ.Client@7.0.0
-nuget:System.Threading.RateLimiting@8.0.0
+nuget:RabbitMQ.Client@7.2.1

@@ -150,8 +150,12 @@ public sealed class RabbitConnectionSettings : ConnectionSettingsBase<RabbitConn
 	{
 		base.Populate(options);
 
-		if(string.IsNullOrEmpty(this.Client))
-			options.ClientProvidedName = $"C{Common.Randomizer.GenerateString()}";
+		options.ClientProvidedName = string.IsNullOrEmpty(this.Client) ?
+			$"C{Common.Randomizer.GenerateString()}" :
+			this.Client;
+
+		if(!string.IsNullOrEmpty(this.Certificate))
+			options.Ssl.CertPath = this.Certificate;
 
 		options.Port = this.Port == 0 ? -1 : this.Port;
 

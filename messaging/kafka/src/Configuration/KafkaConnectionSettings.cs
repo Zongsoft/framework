@@ -160,6 +160,8 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 	{
 		var options = new ConsumerConfig();
 		base.Populate(options);
+		options.SaslUsername = this.UserName;
+		options.SaslPassword = this.Password;
 
 		if(string.IsNullOrEmpty(options.ClientId))
 			options.ClientId = $"C{Common.Randomizer.GenerateString()}";
@@ -167,6 +169,7 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 		//手动设置消费者配置属性
 		options.GroupId = string.IsNullOrEmpty(this.Group) ? $"G{Common.Randomizer.GenerateString()}" : this.Group;
 		options.GroupProtocol = this.GroupProtocol;
+		options.IsolationLevel = this.IsolationLevel;
 
 		if(this.Heartbeat > TimeSpan.Zero)
 			options.HeartbeatIntervalMs = (int)this.Heartbeat.TotalMilliseconds;
@@ -180,11 +183,15 @@ public sealed class KafkaConnectionSettings : ConnectionSettingsBase<KafkaConnec
 	{
 		var options = new ProducerConfig();
 		base.Populate(options);
+		options.SaslUsername = this.UserName;
+		options.SaslPassword = this.Password;
 
 		if(string.IsNullOrEmpty(options.ClientId))
 			options.ClientId = $"C{Common.Randomizer.GenerateString()}";
 
 		//手动设置生产者配置属性
+		options.CompressionType = this.CompressionType;
+		options.CompressionLevel = this.CompressionLevel;
 		options.TransactionalId = this.TransactionId;
 
 		if(this.TransactionTimeout > TimeSpan.Zero)

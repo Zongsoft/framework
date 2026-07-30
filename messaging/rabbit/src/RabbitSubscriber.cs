@@ -39,13 +39,17 @@ namespace Zongsoft.Messaging.RabbitMQ;
 public class RabbitSubscriber : MessageConsumerBase<RabbitQueue>, IAsyncBasicConsumer
 {
 	#region 成员字段
+	private string _consumerTag;
+	private readonly string _queue;
 	private IChannel _channel;
 	#endregion
 
 	#region 构造函数
-	public RabbitSubscriber(RabbitQueue queue, IChannel channel, string topic, string tags, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, tags, handler, options)
+	public RabbitSubscriber(RabbitQueue queue, IChannel channel, string topic, string tags, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : this(queue, channel, queue?.QueueName, topic, tags, handler, options) { }
+	internal RabbitSubscriber(RabbitQueue queue, IChannel channel, string queueName, string topic, string tags, Components.IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, tags, handler, options)
 	{
 		_channel = channel ?? throw new ArgumentNullException(nameof(channel));
+		_queue = queueName ?? string.Empty;
 	}
 	#endregion
 
@@ -54,13 +58,33 @@ public class RabbitSubscriber : MessageConsumerBase<RabbitQueue>, IAsyncBasicCon
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask OnCloseAsync(CancellationToken cancellation) => new (_channel.CloseAsync(cancellation));
+	protected override async ValueTask OnCloseAsync(CancellationToken cancellation)
+	{
+		var channel = _channel;
+		if(channel == null || channel.IsClosed)
+			return;
+
+		var consumerTag = Interlocked.Exchange(ref _consumerTag, null);
+
+		try
+		{
+			if(!string.IsNullOrEmpty(consumerTag))
+				await channel.BasicCancelAsync(consumerTag, false, cancellation);
+		}
+		finally
+		{
+			if(channel.IsOpen)
+				await channel.CloseAsync(cancellation);
+		}
+	}
 	#endregion
 
 	#region 内部方法
-	internal Task<string> SubscribeAsync(string queue, CancellationToken cancellation)
+	internal async Task<string> SubscribeAsync(CancellationToken cancellation)
 	{
-		return _channel.BasicConsumeAsync(queue, false, string.Join(',', this.Tags), this, cancellation);
+		var consumerTag = await _channel.BasicConsumeAsync(_queue, false, string.Join(',', this.Tags), this, cancellation);
+		_consumerTag = consumerTag;
+		return consumerTag;
 	}
 	#endregion
 
@@ -71,39 +95,49 @@ public class RabbitSubscriber : MessageConsumerBase<RabbitQueue>, IAsyncBasicCon
 	}
 	Task IAsyncBasicConsumer.HandleBasicCancelAsync(string tag, CancellationToken cancellation)
 	{
+		Interlocked.CompareExchange(ref _consumerTag, null, tag);
 		return Task.CompletedTask;
 	}
 	Task IAsyncBasicConsumer.HandleBasicCancelOkAsync(string tag, CancellationToken cancellation)
 	{
+		Interlocked.CompareExchange(ref _consumerTag, null, tag);
 		return Task.CompletedTask;
 	}
 	Task IAsyncBasicConsumer.HandleBasicConsumeOkAsync(string tag, CancellationToken cancellation)
 	{
+		_consumerTag = tag;
 		return Task.CompletedTask;
 	}
 
 	async Task IAsyncBasicConsumer.HandleBasicDeliverAsync(string tag, ulong delivery, bool redelivered, string exchange, string topic, IReadOnlyBasicProperties properties, ReadOnlyMemory<byte> data, CancellationToken cancellation)
 	{
+		var channel = _channel;
+		if(channel == null)
+			return;
+
 		var message = properties == null || string.IsNullOrEmpty(properties.MessageId) ?
-			new Message(topic, data.ToArray(), cancellation => _channel.BasicAckAsync(delivery, false, cancellation)) :
-			new Message(properties.MessageId, topic, data.ToArray(), cancellation => _channel.BasicAckAsync(delivery, false, cancellation));
+			new Message(topic, data.ToArray(), cancellation => channel.BasicAckAsync(delivery, false, cancellation)) :
+			new Message(properties.MessageId, topic, data.ToArray(), cancellation => channel.BasicAckAsync(delivery, false, cancellation));
 
 		await this.Handler.HandleAsync(message, cancellation);
 	}
 	#endregion
 
 	#region 处置方法
-	protected override ValueTask DisposeAsync(bool disposing)
+	protected override async ValueTask DisposeAsync(bool disposing)
 	{
-		var channel = Interlocked.Exchange(ref _channel, null);
-
-		if(disposing)
+		try
 		{
-			channel?.CloseAsync();
-			channel?.Dispose();
+			await base.DisposeAsync(disposing);
 		}
-
-		return base.DisposeAsync(disposing);
+		finally
+		{
+			if(disposing)
+			{
+				var channel = Interlocked.Exchange(ref _channel, null);
+				channel?.Dispose();
+			}
+		}
 	}
 	#endregion
 }

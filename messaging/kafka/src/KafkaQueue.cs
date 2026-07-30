@@ -80,6 +80,12 @@ public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaC
 	#region 资源释放
 	protected override void Dispose(bool disposing)
 	{
+		if(disposing)
+		{
+			foreach(var subscriber in this.Subscribers)
+				subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		}
+
 		var producer = Interlocked.Exchange(ref _producer, null);
 		if(producer != null)
 			producer.Dispose();

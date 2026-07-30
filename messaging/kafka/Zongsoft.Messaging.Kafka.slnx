@@ -8,6 +8,8 @@
 		<Platform Solution="*|x64" Project="x64" />
 	</Project>
 
+	<Project Path="test/Zongsoft.Messaging.Kafka.Tests.csproj" />
+
 	<Project Path="samples/Zongsoft.Messaging.Kafka.Samples.csproj">
 		<BuildDependency Project="src/Zongsoft.Messaging.Kafka.csproj" />
 	</Project>

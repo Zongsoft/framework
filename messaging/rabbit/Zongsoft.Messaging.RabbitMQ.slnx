@@ -1,5 +1,6 @@
 <Solution>
 	<Project Path="src/Zongsoft.Messaging.RabbitMQ.csproj" />
+	<Project Path="test/Zongsoft.Messaging.RabbitMQ.Tests.csproj" />
 
 	<Project Path="samples/Zongsoft.Messaging.RabbitMQ.Samples.csproj">
 		<BuildDependency Project="src/Zongsoft.Messaging.RabbitMQ.csproj" />
