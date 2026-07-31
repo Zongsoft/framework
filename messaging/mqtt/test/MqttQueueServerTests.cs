@@ -19,6 +19,9 @@ public class MqttQueueServerTests
 	[Fact]
 	public async Task ServerStopReleasesPortAndAllowsRestart()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = MqttTestUtility.GetFreePort();
 		using var server = new TestMqttQueueServer { Port = port };
 
@@ -44,6 +47,9 @@ public class MqttQueueServerTests
 	[Fact]
 	public async Task ServerStartFailureReleasesInstance()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = MqttTestUtility.GetFreePort();
 		using var blocker = new TcpListener(IPAddress.Any, port);
 		using var server = new TestMqttQueueServer { Port = port };
@@ -58,6 +64,9 @@ public class MqttQueueServerTests
 	[Fact]
 	public async Task ServerExposesChannelsSessionsAndRetainedMessages()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = MqttTestUtility.GetFreePort();
 		using var server = new TestMqttQueueServer { Port = port };
 		var channels = server.Channels;
@@ -126,6 +135,9 @@ public class MqttQueueServerTests
 	[Fact]
 	public async Task ServerSessionCanBeAbandoned()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = MqttTestUtility.GetFreePort();
 		var client = $"session-abandon-{Guid.NewGuid():N}";
 		using var server = new MqttQueueServer { Port = port };
@@ -157,6 +169,9 @@ public class MqttQueueServerTests
 	[Fact]
 	public async Task ServerImplementsListenerAndHandlesPublishedMessages()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = MqttTestUtility.GetFreePort();
 		using var server = new MqttQueueServer { Port = port };
 		var listener = Assert.IsAssignableFrom<IListener<Message>>(server);

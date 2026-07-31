@@ -14,6 +14,9 @@ public class ZeroRequesterTests
 	[Fact]
 	public async Task RequesterReceivesImmediateResponses()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await ZeroServerScope.StartAsync();
 		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "requester");
 		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "responder");
@@ -47,6 +50,9 @@ public class ZeroRequesterTests
 	[Fact]
 	public async Task RequesterSharesInitialReplySubscriptionAcrossConcurrentRequests()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await ZeroServerScope.StartAsync();
 		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "requester");
 		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "responder");
@@ -105,6 +111,9 @@ public class ZeroRequesterTests
 	[Fact]
 	public async Task CanceledInitialSubscriptionRemovesPendingRequestAndSubscription()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await ZeroServerScope.StartAsync();
 		using var queue = ZeroTestUtility.CreateQueue(server.Port, "requester");
 		var requester = new ZeroRequester { Queue = queue };

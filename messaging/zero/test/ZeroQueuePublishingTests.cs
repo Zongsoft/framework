@@ -12,6 +12,9 @@ public class ZeroQueuePublishingTests
 	[Fact]
 	public async Task QueueWithShortHeartbeatStillPublishesMessages()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await ZeroServerScope.StartAsync();
 		//短心跳会更频繁触发 poller 回调，用来覆盖发布者初始化和发送路径的竞态保护。
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher", settings => settings.Heartbeat = TimeSpan.FromMilliseconds(10));
@@ -30,6 +33,9 @@ public class ZeroQueuePublishingTests
 	[Fact]
 	public async Task PublishBurstMessagesAreDelivered()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");

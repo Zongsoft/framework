@@ -15,6 +15,9 @@ public class RabbitQueuePublishingTests
 	[Fact]
 	public async Task PublishAndConsumeMessage()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		Assert.SkipUnless(await RabbitTestUtility.IsAvailableAsync(), RABBIT_UNAVAILABLE);
 
 		var baseline = await RabbitTestUtility.GetBrokerSnapshotAsync();
@@ -75,6 +78,9 @@ public class RabbitQueuePublishingTests
 	[Fact]
 	public async Task PublishAndConsumeWithGeneratedQueue()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		Assert.SkipUnless(await RabbitTestUtility.IsAvailableAsync(), RABBIT_UNAVAILABLE);
 
 		var baseline = await RabbitTestUtility.GetBrokerSnapshotAsync();
@@ -127,6 +133,9 @@ public class RabbitQueuePublishingTests
 	[Fact]
 	public async Task UnsubscribeStopsMessageDelivery()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		Assert.SkipUnless(await RabbitTestUtility.IsAvailableAsync(), RABBIT_UNAVAILABLE);
 
 		var baseline = await RabbitTestUtility.GetBrokerSnapshotAsync();

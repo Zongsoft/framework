@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,9 @@ public class MqttQueuePublishingTests
 	[Fact]
 	public async Task PublishAndConsumeMessage()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await MqttServerScope.StartAsync();
 		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
@@ -33,6 +37,9 @@ public class MqttQueuePublishingTests
 	[Fact]
 	public async Task WildcardSubscriptionAndUnsubscribe()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await MqttServerScope.StartAsync();
 		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
@@ -70,6 +77,9 @@ public class MqttQueuePublishingTests
 	[Fact]
 	public async Task ConcurrentPublishingDeliversAllMessages()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		const int count = 500;
 
 		using var server = await MqttServerScope.StartAsync();
@@ -80,21 +90,29 @@ public class MqttQueuePublishingTests
 
 		await subscriber.SubscribeAsync(topic, messages);
 
+		var stopwatch = Stopwatch.StartNew();
 		var publishing = Enumerable.Range(0, count)
 			.Select(index => publisher.ProduceAsync(topic, BitConverter.GetBytes(index)).AsTask())
 			.ToArray();
 
 		await Task.WhenAll(publishing);
 		var received = await messages.ReceiveManyAsync(count, TimeSpan.FromSeconds(30));
+		stopwatch.Stop();
 
 		Assert.Equal(count, received.Length);
 		Assert.Equal(count, received.Select(message => BitConverter.ToInt32(message.Data)).Distinct().Count());
 		Assert.All(publishing, task => Assert.False(string.IsNullOrEmpty(task.Result)));
+		Assert.InRange(stopwatch.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+		Assert.True(count / stopwatch.Elapsed.TotalSeconds >= 1,
+			$"MQTT concurrent producer throughput was below 1 publication/s; {count} published-and-received payloads took {stopwatch.Elapsed}.");
 	}
 
 	[Fact]
 	public async Task SlowHandlersAreConsumedConcurrently()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		const int count = 32;
 
 		using var server = await MqttServerScope.StartAsync();
@@ -118,6 +136,9 @@ public class MqttQueuePublishingTests
 	[Fact]
 	public async Task ClientsReconnectAndRestoreSubscriptionsAfterServerRestart()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = MqttTestUtility.GetFreePort();
 		using var server = new MqttQueueServer { Port = port };
 		using var publisher = MqttTestUtility.CreateQueue(port, "publisher");

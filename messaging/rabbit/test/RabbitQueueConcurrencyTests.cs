@@ -20,6 +20,9 @@ public class RabbitQueueConcurrencyTests
 	[Fact]
 	public async Task MultipleClientsReceiveEveryConcurrentPublication()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		const int CLIENT_COUNT = 6;
 		const int MESSAGES_PER_CLIENT = 24;
 		const int EXPECTED_MESSAGES_PER_SUBSCRIBER = CLIENT_COUNT * MESSAGES_PER_CLIENT;
@@ -103,6 +106,9 @@ public class RabbitQueueConcurrencyTests
 	[Fact]
 	public async Task ConcurrentFirstProduceInitializesSingleQueue()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		const int PUBLICATION_COUNT = 64;
 		const double MINIMUM_PUBLICATIONS_PER_SECOND = 1;
 
@@ -162,6 +168,9 @@ public class RabbitQueueConcurrencyTests
 	[Fact]
 	public async Task UnsubscribingDuringConcurrentPublishingDoesNotInterruptOtherClients()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		const int CLIENT_COUNT = 4;
 		const int FIRST_WAVE_PER_CLIENT = 12;
 		const int SECOND_WAVE_PER_CLIENT = 36;

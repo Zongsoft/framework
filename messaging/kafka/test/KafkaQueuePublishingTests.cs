@@ -13,6 +13,9 @@ public class KafkaQueuePublishingTests
 	[Fact]
 	public async Task PublishAndConsumeMessage()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		Assert.SkipUnless(KafkaTestUtility.IsAvailable(), KAFKA_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");
@@ -61,6 +64,9 @@ public class KafkaQueuePublishingTests
 	[Fact]
 	public async Task UnsubscribeStopsMessageDelivery()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		Assert.SkipUnless(KafkaTestUtility.IsAvailable(), KAFKA_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");

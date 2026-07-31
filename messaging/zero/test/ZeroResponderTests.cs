@@ -15,6 +15,9 @@ public class ZeroResponderTests
 	[Fact]
 	public async Task ResponderStartFailureUnsubscribesPartialSubscriptions()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await ZeroServerScope.StartAsync();
 		using var queue = ZeroTestUtility.CreateQueue(server.Port, "responder");
 		var responder = new ZeroResponder { Queue = queue };

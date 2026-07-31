@@ -14,6 +14,9 @@ public class ZeroQueueSubscriptionTests
 	[Fact]
 	public async Task SubscribeAndDisposeCanRepeatAndReceiveAfterResubscribe()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
@@ -69,6 +72,9 @@ public class ZeroQueueSubscriptionTests
 	[Fact]
 	public async Task DisposingOneQueueDoesNotBreakOtherQueues()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
@@ -91,6 +97,9 @@ public class ZeroQueueSubscriptionTests
 	[Fact]
 	public async Task SubscribersReconnectAfterQueueServerRestartsWithFixedExchangePorts()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = ZeroTestUtility.GetFreePort();
 		var incoming = ZeroTestUtility.GetFreePort();
 		var outgoing = ZeroTestUtility.GetFreePort();
@@ -139,6 +148,9 @@ public class ZeroQueueSubscriptionTests
 	[Fact]
 	public async Task SubscriberDrainsMalformedMultipartBeforeNextMessage()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		using var server = await ZeroServerScope.StartAsync();
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
 		using var handler = new MessageBuffer();

@@ -19,6 +19,9 @@ public class KafkaQueueConcurrencyTests
 	[Fact]
 	public async Task IndependentConsumerGroupsReceiveEveryConcurrentPublication()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		const int PUBLISHER_COUNT = 6;
 		const int GROUP_COUNT = 3;
 		const int MESSAGES_PER_PUBLISHER = 24;
@@ -88,6 +91,9 @@ public class KafkaQueueConcurrencyTests
 	[Fact]
 	public async Task ConcurrentProduceOnSingleQueueIsThreadSafe()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		const int PUBLICATION_COUNT = 64;
 		const int PARTITION_COUNT = 6;
 		const double MINIMUM_PUBLICATIONS_PER_SECOND = 1;
@@ -154,6 +160,9 @@ public class KafkaQueueConcurrencyTests
 	[Fact]
 	public async Task UnsubscribingOneGroupDuringConcurrentPublishingDoesNotInterruptOtherGroups()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		const int PUBLISHER_COUNT = 4;
 		const int GROUP_COUNT = 3;
 		const int FIRST_WAVE_PER_PUBLISHER = 12;

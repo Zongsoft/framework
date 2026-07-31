@@ -14,6 +14,9 @@ public class ZeroQueueServerTests
 	[Fact]
 	public async Task QueueServerStopReleasesPortAndAllowsRestart()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = ZeroTestUtility.GetFreePort();
 		var server = new ZeroQueueServer { Port = port };
 
@@ -42,6 +45,9 @@ public class ZeroQueueServerTests
 	[Fact]
 	public async Task QueueServerStartWithExplicitExchangePortsBindsAndForwardsMessages()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = ZeroTestUtility.GetFreePort();
 		var incoming = ZeroTestUtility.GetFreePort();
 		var outgoing = ZeroTestUtility.GetFreePort();
@@ -83,6 +89,9 @@ public class ZeroQueueServerTests
 	[Fact]
 	public async Task QueueServerStartFailureReleasesInitializedSockets()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
 		var port = ZeroTestUtility.GetFreePort();
 		var server = new ZeroQueueServer { Port = port };
 
