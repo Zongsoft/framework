@@ -43,8 +43,13 @@ namespace Zongsoft.Messaging.ZeroMQ;
 public sealed class ZeroQueueServer : WorkerBase
 {
 	#region 常量定义
-	/// <summary>消息队列服务器的默认侦听端口号。</summary>
+	/// <summary>消息队列交换器的默认监听端口号。</summary>
 	public const ushort PORT = 7969;
+
+	/// <summary>表示队列交换协议的版本号。</summary>
+	internal const string PROTOCOL_VERSION = "1.0";
+	/// <summary>消息队列交换协议的欢迎消息。</summary>
+	internal const string WELCOME_MESSAGE = $"\0Zongsoft.Messaging.ZeroMQ\nProtocol-Version:{PROTOCOL_VERSION}\0";
 	#endregion
 
 	#region 私有变量
@@ -198,6 +203,7 @@ public sealed class ZeroQueueServer : WorkerBase
 		_responser.ReceiveReady += this.Responser_ReceiveReady;
 
 		_publisher = new XPublisherSocket();
+		_publisher.SetWelcomeMessage(WELCOME_MESSAGE);
 		_subscriber = new XSubscriberSocket();
 		_poller = new NetMQPoller() { _responser, _subscriber, _publisher };
 		_proxy = new Proxy(_subscriber, _publisher, null, null, _poller);

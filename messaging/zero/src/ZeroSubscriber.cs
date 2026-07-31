@@ -43,6 +43,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 {
 	#region 成员字段
 	private volatile SubscriberSocket _channel;
+	private TaskCompletionSource _synchronization;
 	#endregion
 
 	#region 内部属性
@@ -59,12 +60,16 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 		{
 			if(_channel == null || _channel.IsDisposed)
 			{
-				var channel = _channel = new SubscriberSocket();
+				var channel = new SubscriberSocket();
 				channel.Options.ReceiveHighWatermark = 1000;
 				channel.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 				channel.ReceiveReady += this.OnReceiveReady;
-				channel.Connect(address);
 				channel.Subscribe(this.Topic);
+				channel.Subscribe(ZeroQueueServer.WELCOME_MESSAGE);
+				channel.Connect(address);
+
+				_synchronization = new(TaskCreationOptions.RunContinuationsAsynchronously);
+				_channel = channel;
 			}
 
 			return _channel;
@@ -88,9 +93,24 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 	}
 	#endregion
 
+	#region 同步方法
+	/// <summary>等待服务器欢迎消息，以确认当前订阅通道已经连接就绪。</summary>
+	/// <param name="timeout">等待订阅通道就绪的超时时长。</param>
+	/// <param name="cancellation">用于取消等待操作的凭证。</param>
+	internal async ValueTask SynchronizeAsync(TimeSpan timeout, CancellationToken cancellation)
+	{
+		var synchronization = _synchronization;
+		if(synchronization != null)
+			await synchronization.Task.WaitAsync(timeout, cancellation);
+	}
+	#endregion
+
 	#region 取消订阅
 	protected override ValueTask OnCloseAsync(CancellationToken cancellation)
 	{
+		//取消订阅同步信号
+		Interlocked.Exchange(ref _synchronization, null)?.TrySetCanceled(cancellation);
+
 		//将当前通道对应设置为空
 		var channel = Interlocked.Exchange(ref _channel, null);
 
@@ -120,8 +140,16 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			//如果是空帧则忽略
 			if(string.IsNullOrEmpty(header))
 			{
-				//外部客户端可能发送多帧空头消息，必须清掉剩余帧，避免下一轮把数据帧误当成头帧。
+				//外部客户端可能发送多帧空头消息，必须清掉剩余帧，避免下一轮把数据帧误当成头帧
 				SkipRemainingFrames(args.Socket, more);
+				continue;
+			}
+
+			//欢迎消息是单帧协议控制消息，必须同时校验帧边界，避免将同内容的多帧业务消息误判为订阅同步信号
+			if(!more && header == ZeroQueueServer.WELCOME_MESSAGE)
+			{
+				//尝试设置订阅同步信号为完成
+				Interlocked.Exchange(ref _synchronization, null)?.TrySetResult();
 				continue;
 			}
 
@@ -131,7 +159,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			//如果接收到的消息需要排除则跳过后续数据帧
 			if(!this.Queue.Validate(identifier))
 			{
-				//被过滤的消息仍然可能有多帧载荷，只跳一帧会污染后续消息边界。
+				//被过滤的消息仍然可能有多帧载荷，只跳一帧会污染后续消息边界
 				SkipRemainingFrames(args.Socket, more);
 				continue;
 			}
@@ -143,7 +171,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			//如果是匿名消息并且数据帧内容为空则当作心跳消息处理（即忽略它）
 			if(string.IsNullOrEmpty(identifier) && data == null || data.Length == 0)
 			{
-				//保持原有心跳判断不变，仅确保异常多帧心跳不会留下尾帧。
+				//保持原有心跳判断不变，仅确保异常多帧心跳不会留下尾帧
 				SkipRemainingFrames(args.Socket, more);
 				continue;
 			}
@@ -152,7 +180,7 @@ public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Messa
 			if(Packetizer.Options.TryGetValue(options, Packetizer.Options.Compressor, out var compressor))
 				data = Zongsoft.IO.Compression.Compressor.Decompress(compressor, data);
 
-			//本库发送的是两帧消息，但外部 ZeroMQ 发布者可能附加更多帧；处理首个数据帧后丢弃尾帧。
+			//本库发送的是两帧消息，但外部 ZeroMQ 发布者可能附加更多帧；处理首个数据帧后丢弃尾帧
 			SkipRemainingFrames(args.Socket, more);
 
 			//调用处理器进行消息处理

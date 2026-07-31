@@ -102,7 +102,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 
 	#region 订阅方法
 	protected override ValueTask<ZeroSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => ValueTask.FromResult(new ZeroSubscriber(this, topic, handler, options));
-	protected override ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default)
+	protected override async ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default)
 	{
 		//确保初始化完成
 		this.Initialize();
@@ -114,7 +114,10 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		if(channel != null)
 			_poller.Add(channel);
 
-		return ValueTask.FromResult(true);
+		var timeout = this.Settings.Timeout > TimeSpan.Zero ? this.Settings.Timeout : TimeSpan.FromSeconds(10);
+		await subscriber.SynchronizeAsync(timeout, cancellation);
+
+		return true;
 	}
 
 	protected override void OnUnsubscribed(ZeroSubscriber subscriber) => this.Unregister(subscriber.Channel);
