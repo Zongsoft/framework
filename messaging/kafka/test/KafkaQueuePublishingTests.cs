@@ -17,24 +17,45 @@ public class KafkaQueuePublishingTests
 
 		var identity = Guid.NewGuid().ToString("N");
 		var topic = $"tests-basic-{identity}";
-		await KafkaTestUtility.CreateTopicAsync(topic);
+		var group = $"tests-subscriber-{identity}";
+		var before = await KafkaTestUtility.GetResourcesAsync(topic, [group]);
+		Assert.False(before.TopicExists);
+		Assert.Empty(before.Groups);
 
-		using var publisher = KafkaTestUtility.CreateQueue($"publisher-{identity}", $"publisher-{identity}");
-		using var subscriber = KafkaTestUtility.CreateQueue($"subscriber-{identity}", $"subscriber-{identity}");
+		var publisher = KafkaTestUtility.CreateQueue($"publisher-{identity}", $"tests-unused-publisher-{identity}");
+		var subscriber = KafkaTestUtility.CreateQueue($"subscriber-{identity}", group);
 		using var messages = new KafkaMessageBuffer();
+		KafkaSubscriber consumer = null;
+		KafkaBrokerResources restored = default;
 
-		var consumer = await subscriber.SubscribeAsync(topic, messages);
-		Assert.NotNull(consumer);
+		try
+		{
+			await KafkaTestUtility.CreateTopicAsync(topic);
+			consumer = await subscriber.SubscribeAsync(topic, messages);
+			Assert.NotNull(consumer);
 
-		var delivery = await KafkaTestUtility.ProduceAndReceiveAsync(
-			publisher, topic, "Hello Apache Kafka", messages, TimeSpan.FromSeconds(15));
+			var delivery = await KafkaTestUtility.ProduceAndReceiveAsync(
+				publisher, topic, "Hello Apache Kafka", messages, TimeSpan.FromSeconds(15));
 
-		Assert.False(string.IsNullOrEmpty(delivery.Identifier));
-		Assert.False(delivery.Message.IsEmpty);
-		Assert.Equal(topic, delivery.Message.Topic);
-		Assert.Equal("Hello Apache Kafka", Encoding.UTF8.GetString(delivery.Message.Data));
-		Assert.NotEqual(default, delivery.Message.Timestamp);
-		Assert.True(messages.AcknowledgementCount > 0);
+			Assert.False(string.IsNullOrEmpty(delivery.Identifier));
+			Assert.False(delivery.Message.IsEmpty);
+			Assert.Equal(topic, delivery.Message.Topic);
+			Assert.Equal("Hello Apache Kafka", Encoding.UTF8.GetString(delivery.Message.Data));
+			Assert.NotEqual(default, delivery.Message.Timestamp);
+			Assert.True(messages.AcknowledgementCount > 0);
+		}
+		finally
+		{
+			if(consumer != null)
+				await consumer.DisposeAsync();
+			subscriber.Dispose();
+			publisher.Dispose();
+			restored = await KafkaTestUtility.DeleteResourcesAsync(topic, [group], TimeSpan.FromSeconds(45));
+		}
+
+		AssertReleased(publisher, subscriber, consumer);
+		Assert.False(restored.TopicExists);
+		Assert.Empty(restored.Groups);
 	}
 
 	[Fact]
@@ -44,24 +65,63 @@ public class KafkaQueuePublishingTests
 
 		var identity = Guid.NewGuid().ToString("N");
 		var topic = $"tests-unsubscribe-{identity}";
-		await KafkaTestUtility.CreateTopicAsync(topic);
+		var group = $"tests-subscriber-{identity}";
+		var before = await KafkaTestUtility.GetResourcesAsync(topic, [group]);
+		Assert.False(before.TopicExists);
+		Assert.Empty(before.Groups);
 
-		using var publisher = KafkaTestUtility.CreateQueue($"publisher-{identity}", $"publisher-{identity}");
-		using var subscriber = KafkaTestUtility.CreateQueue($"subscriber-{identity}", $"subscriber-{identity}");
+		var publisher = KafkaTestUtility.CreateQueue($"publisher-{identity}", $"tests-unused-publisher-{identity}");
+		var subscriber = KafkaTestUtility.CreateQueue($"subscriber-{identity}", group);
 		using var messages = new KafkaMessageBuffer();
+		KafkaSubscriber consumer = null;
+		KafkaBrokerResources restored = default;
 
-		var consumer = await subscriber.SubscribeAsync(topic, messages);
-		var first = await KafkaTestUtility.ProduceAndReceiveAsync(
-			publisher, topic, "before", messages, TimeSpan.FromSeconds(15));
-		Assert.Equal("before", Encoding.UTF8.GetString(first.Message.Data));
+		try
+		{
+			await KafkaTestUtility.CreateTopicAsync(topic);
+			consumer = await subscriber.SubscribeAsync(topic, messages);
+			var first = await KafkaTestUtility.ProduceAndReceiveAsync(
+				publisher, topic, "before", messages, TimeSpan.FromSeconds(15));
+			Assert.Equal("before", Encoding.UTF8.GetString(first.Message.Data));
 
-		await consumer.UnsubscribeAsync();
-		await messages.DrainAsync(TimeSpan.FromMilliseconds(500));
-		var acknowledgements = messages.AcknowledgementCount;
+			await consumer.UnsubscribeAsync();
+			await messages.DrainAsync(TimeSpan.FromMilliseconds(500));
+			var acknowledgements = messages.AcknowledgementCount;
 
-		var identifier = await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes("after"));
-		Assert.False(string.IsNullOrEmpty(identifier));
-		Assert.Null(await messages.TryReceiveAsync(TimeSpan.FromSeconds(2)));
-		Assert.Equal(acknowledgements, messages.AcknowledgementCount);
+			var identifier = await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes("after"));
+			Assert.False(string.IsNullOrEmpty(identifier));
+			Assert.Null(await messages.TryReceiveAsync(TimeSpan.FromSeconds(2)));
+			Assert.Equal(acknowledgements, messages.AcknowledgementCount);
+		}
+		finally
+		{
+			if(consumer != null)
+				await consumer.DisposeAsync();
+			subscriber.Dispose();
+			publisher.Dispose();
+			restored = await KafkaTestUtility.DeleteResourcesAsync(topic, [group], TimeSpan.FromSeconds(45));
+		}
+
+		AssertReleased(publisher, subscriber, consumer);
+		Assert.False(restored.TopicExists);
+		Assert.Empty(restored.Groups);
+	}
+
+	private static void AssertReleased(KafkaQueue publisher, KafkaQueue subscriber, KafkaSubscriber consumer)
+	{
+		Assert.True(publisher.IsDisposed);
+		Assert.True(subscriber.IsDisposed);
+		Assert.Empty(publisher.Subscribers);
+		Assert.Empty(subscriber.Subscribers);
+		Assert.True(KafkaTestUtility.IsQueueTransportReleased(publisher));
+		Assert.True(KafkaTestUtility.IsQueueTransportReleased(subscriber));
+
+		if(consumer != null)
+		{
+			Assert.True(consumer.IsClosed);
+			Assert.True(consumer.IsDisposed);
+			Assert.Null(consumer.Handler);
+			Assert.True(KafkaTestUtility.IsSubscriberTransportReleased(consumer));
+		}
 	}
 }

@@ -12,7 +12,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Tests;
 public class ZeroQueueSubscriptionTests
 {
 	[Fact]
-	public async Task SubscribeAndUnsubscribeCanRepeatAndReceiveAfterResubscribe()
+	public async Task SubscribeAndDisposeCanRepeatAndReceiveAfterResubscribe()
 	{
 		using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
@@ -22,10 +22,23 @@ public class ZeroQueueSubscriptionTests
 		for(int i = 0; i < 10; i++)
 		{
 			var consumer = await subscriber.SubscribeAsync("topic/repeat", handler);
-			await consumer.UnsubscribeAsync();
+			var channel = consumer.Channel;
+			Assert.NotNull(channel);
+			Assert.False(channel.IsDisposed);
+
+			await consumer.DisposeAsync();
+
+			Assert.True(consumer.IsClosed);
+			Assert.True(consumer.IsDisposed);
+			Assert.Null(consumer.Handler);
+			Assert.Null(consumer.Channel);
+			Assert.True(await ZeroTestUtility.WaitUntilAsync(() => channel.IsDisposed, TimeSpan.FromSeconds(5)));
+			Assert.Empty(subscriber.Subscribers);
 		}
 
-		await subscriber.SubscribeAsync("topic/repeat", handler);
+		var finalConsumer = await subscriber.SubscribeAsync("topic/repeat", handler);
+		var finalChannel = finalConsumer.Channel;
+		Assert.NotNull(finalChannel);
 		await Task.Delay(750);
 
 		await PublishRepeatedlyAsync(publisher, "topic/repeat", "ready");
@@ -33,6 +46,24 @@ public class ZeroQueueSubscriptionTests
 
 		Assert.False(message.IsEmpty);
 		Assert.Equal("ready", Encoding.UTF8.GetString(message.Data));
+
+		await finalConsumer.DisposeAsync();
+		Assert.True(finalConsumer.IsClosed);
+		Assert.True(finalConsumer.IsDisposed);
+		Assert.Null(finalConsumer.Handler);
+		Assert.Null(finalConsumer.Channel);
+		Assert.True(await ZeroTestUtility.WaitUntilAsync(() => finalChannel.IsDisposed, TimeSpan.FromSeconds(5)));
+		Assert.Empty(subscriber.Subscribers);
+
+		var poller = ZeroTestUtility.GetPoller(subscriber);
+		Assert.NotNull(poller);
+		Assert.False(poller.IsDisposed);
+
+		subscriber.Dispose();
+		Assert.True(subscriber.IsDisposed);
+		Assert.Empty(subscriber.Subscribers);
+		Assert.True(poller.IsDisposed);
+		Assert.True(ZeroTestUtility.IsQueueTransportReleased(subscriber));
 	}
 
 	[Fact]

@@ -1,9 +1,12 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+
+using MQTTnet;
 
 using Xunit;
 
@@ -87,6 +90,23 @@ internal static class MqttTestUtility
 
 		return await predicate();
 	}
+
+	public static IMqttClient GetClient(MqttQueue queue)
+	{
+		var connection = GetField(queue, "_connection");
+		return GetField(connection, "_client") as IMqttClient;
+	}
+
+	public static bool IsQueueTransportReleased(MqttQueue queue)
+	{
+		var connection = GetField(queue, "_connection");
+		return connection != null &&
+			(int)(GetField(connection, "_disposed") ?? 0) == 1 &&
+			GetField(connection, "_client") == null;
+	}
+
+	private static object GetField(object target, string name) =>
+		target?.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(target);
 }
 
 internal sealed class MqttServerScope : IDisposable

@@ -117,6 +117,7 @@ public class RabbitSubscriberTests
 		await ((IAsyncDisposable)subscriber).DisposeAsync();
 
 		Assert.True(subscriber.IsClosed);
+		Assert.True(subscriber.IsDisposed);
 		Assert.Equal(1, proxy.CloseCount);
 		Assert.True(proxy.Disposed);
 	}

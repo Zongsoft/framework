@@ -42,15 +42,29 @@ public class MqttQueuePublishingTests
 		var topic = $"{prefix}/temperature";
 
 		var consumer = await subscriber.SubscribeAsync(filter, messages);
+		var client = MqttTestUtility.GetClient(subscriber);
+		Assert.NotNull(client);
+		Assert.True(client.IsConnected);
 		await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes("21.5"));
 
 		var message = await messages.ReceiveAsync(TimeSpan.FromSeconds(5));
 		Assert.Equal(topic, message.Topic);
 
-		await consumer.UnsubscribeAsync();
+		await consumer.DisposeAsync();
+		Assert.True(consumer.IsClosed);
+		Assert.True(consumer.IsDisposed);
+		Assert.Null(consumer.Handler);
+		Assert.Empty(subscriber.Subscribers);
+
 		await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes("22.0"));
 
 		Assert.Null(await messages.TryReceiveAsync(TimeSpan.FromMilliseconds(500)));
+
+		subscriber.Dispose();
+		Assert.True(subscriber.IsDisposed);
+		Assert.Empty(subscriber.Subscribers);
+		Assert.False(client.IsConnected);
+		Assert.True(MqttTestUtility.IsQueueTransportReleased(subscriber));
 	}
 
 	[Fact]

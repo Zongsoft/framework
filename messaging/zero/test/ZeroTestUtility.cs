@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
@@ -118,6 +119,17 @@ internal static class ZeroTestUtility
 
 		return predicate();
 	}
+
+	public static NetMQPoller GetPoller(ZeroQueue queue) => GetField(queue, "_poller") as NetMQPoller;
+
+	public static bool IsQueueTransportReleased(ZeroQueue queue) =>
+		GetField(queue, "_timer") == null &&
+		GetField(queue, "_poller") == null &&
+		GetField(queue, "_queue") == null &&
+		GetField(queue, "_publisher") == null;
+
+	private static object GetField(object target, string name) =>
+		target?.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(target);
 }
 
 internal sealed class ZeroServerScope : IDisposable
