@@ -77,7 +77,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 				new ArgumentException(string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.Name), nameof(model)));
 
 		using var workbook = new XLWorkbook();
-		var worksheet = workbook.AddWorksheet(model.Title ?? model.Name);
+		var caption = string.IsNullOrWhiteSpace(model.Title) ? model.Name : model.Title;
+		var worksheet = workbook.AddWorksheet(caption);
 		worksheet.Style.Font.SetFontSize(11);
 		worksheet.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
 
@@ -85,7 +86,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			worksheet.PageSetup.SetPageOrientation(XLPageOrientation.Landscape);
 
 		//生成数据文件标题
-		worksheet.Cell(1, 1).SetValue(model.Title);
+		worksheet.Cell(1, 1).SetValue(caption);
 		worksheet.Row(1).Height = 45;
 		worksheet.Row(1).Style.Font.SetFontSize(18);
 		worksheet.Row(1).Style.Font.SetBold(true);
@@ -186,15 +187,15 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			GenerateRow(worksheet, row, data, columns, options);
 		}
 
+		if(row > 4)
+			row--;
+
 		//设置数据区各列的样式
 		foreach(var column in columns)
 		{
 			range = worksheet.Range(4, column.Index, row, column.Index);
 			SetDataColumnStyle(range, column.Property);
 		}
-
-		if(row > 4)
-			row--;
 
 		//创建模型数据表（包含字段标题行）
 		try
@@ -279,18 +280,29 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 	private static void SetDataColumnStyle(IXLRange column, ModelPropertyDescriptor property)
 	{
 		//如果是特定类型则调整其样式
-		if(!Common.TypeExtension.IsNullable(property.Type, out var type))
+		var nullable = Common.TypeExtension.IsNullable(property.Type, out var type);
+		if(!nullable)
 			type = property.Type;
+
+		//为枚举类型设置下拉列表
+		if(type.IsEnum)
+		{
+			var entries = Common.EnumUtility.GetEnumEntries(property.Type, false);
+			var validation = column.CreateDataValidation();
+			validation.List($"\"{string.Join(',', entries.Select(entry => entry.Name))}\"");
+			validation.IgnoreBlanks = nullable;
+		}
 
 		//设置特定类型的字体
 		if(type.IsEnum || Common.TypeExtension.IsNumeric(type) || type == typeof(Guid) ||
-		   type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
+		   type == typeof(DateOnly) || type == typeof(TimeOnly) || type == typeof(TimeSpan) ||
+		   type == typeof(DateTime) || type == typeof(DateTimeOffset))
 		{
 			column.Style.Font.SetFontName(FONT_NAME);
 		}
 
 		//特定类型则设置其水平居中
-		if(type.IsEnum || type == typeof(byte) || type == typeof(Guid) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
+		if(type.IsEnum || type == typeof(byte) || type == typeof(Guid) || type == typeof(DateOnly) || type == typeof(TimeOnly) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
 			column.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
 
 		//设置日期时间类型的格式
@@ -345,6 +357,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			{
 				if(value.GetType().IsEnum)
 					cell.SetCellValue(value.ToString());
+				else if(value is DateTime date && date.Year < 1900)
+					cell.SetCellValue(date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
 				else
 					cell.SetCellValue(value);
 			}

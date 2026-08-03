@@ -48,28 +48,99 @@ public class SpreadsheetGeneratorTest
 	}
 
 	[Fact]
-	public async Task GenerateAsync_SelectedFieldsAndSingleRecord_CreatesProjectedTable()
+	public async Task GenerateAsync_SelectedFieldsWithHistoricalAndModernDates_PreservesSemanticTypes()
 	{
 		using var output = new MemoryStream();
-		var user = new User(501, "Ada", "Countess", Gender.Female, new DateTime(1815, 12, 10));
+		User[] users =
+		[
+			new(501, "Ada", "Countess", Gender.Female, new DateTime(1815, 12, 10)),
+			new(502, "Eve", "Last Historical Date", Gender.Female, new DateTime(1899, 12, 31)),
+			new(503, "Dawn", "First Excel Date", Gender.Female, new DateTime(1900, 1, 1)),
+			new(504, "Grape", "Grape Liu", Gender.Female, new DateTime(1983, 1, 23)),
+		];
 		var options = new DataArchiveGeneratorOptions(nameof(User.Name), nameof(User.Birthday));
 
-		await _generator.GenerateAsync(output, Templates.User.Descriptor, user, options);
+		await _generator.GenerateAsync(output, Templates.User.Descriptor, users, options);
 
 		output.Position = 0;
 		using var workbook = new XLWorkbook(output);
 		var table = GetTable(workbook, Templates.User.Descriptor.Name);
 		var worksheet = table.Worksheet;
+		var historicalBirthday = worksheet.Cell(4, 2);
+		var lastHistoricalBirthday = worksheet.Cell(5, 2);
+		var firstExcelBirthday = worksheet.Cell(6, 2);
+		var modernBirthday = worksheet.Cell(7, 2);
 
 		Assert.Equal(3, table.RangeAddress.FirstAddress.RowNumber);
-		Assert.Equal(4, table.RangeAddress.LastAddress.RowNumber);
-		Assert.Equal(1, table.DataRange.RowCount());
+		Assert.Equal(7, table.RangeAddress.LastAddress.RowNumber);
+		Assert.Equal(4, table.DataRange.RowCount());
 		Assert.Equal(2, table.ColumnCount());
 		Assert.Equal(Templates.User.Descriptor.Properties[nameof(User.Name)].Label, worksheet.Cell(3, 1).GetString());
 		Assert.Equal(Templates.User.Descriptor.Properties[nameof(User.Birthday)].Label, worksheet.Cell(3, 2).GetString());
 		Assert.Equal("Ada", worksheet.Cell(4, 1).GetString());
-		Assert.Equal(new DateTime(1815, 12, 10), worksheet.Cell(4, 2).GetDateTime());
+		Assert.Equal(XLDataType.Text, historicalBirthday.DataType);
+		Assert.Equal("1815-12-10", historicalBirthday.GetString());
+		Assert.Equal("1815-12-10", historicalBirthday.GetFormattedString());
+		Assert.Equal(XLDataType.Text, lastHistoricalBirthday.DataType);
+		Assert.Equal("1899-12-31", lastHistoricalBirthday.GetString());
+		Assert.Equal(XLDataType.DateTime, firstExcelBirthday.DataType);
+		Assert.Equal(new DateTime(1900, 1, 1), firstExcelBirthday.GetDateTime());
+		Assert.Equal("Grape", worksheet.Cell(7, 1).GetString());
+		Assert.Equal(XLDataType.DateTime, modernBirthday.DataType);
+		Assert.Equal(new DateTime(1983, 1, 23), modernBirthday.GetDateTime());
+		Assert.Equal("yyyy-MM-dd", modernBirthday.Style.DateFormat.Format);
 		Assert.False(worksheet.DefinedNames.TryGetValue(nameof(User.UserId), out _));
+	}
+
+	[Fact]
+	public async Task GenerateAsync_EnumColumns_CreatesNullabilityAwareDropdownValidations()
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(EnumValidationRecord)) { Title = "Enum Validations" };
+		var record = new EnumValidationRecord
+		{
+			RequiredGender = Gender.Male,
+		};
+
+		await _generator.GenerateAsync(output, model, record);
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var requiredCell = table.Worksheet.Cell(4, GetColumnNumber(table, model, nameof(EnumValidationRecord.RequiredGender)));
+		var optionalCell = table.Worksheet.Cell(4, GetColumnNumber(table, model, nameof(EnumValidationRecord.OptionalGender)));
+		var requiredItems = GetValidationItems(requiredCell, false);
+		var optionalItems = GetValidationItems(optionalCell, true);
+		var enumNames = Enum.GetNames<Gender>();
+
+		Assert.Equal(nameof(Gender.Male), requiredCell.GetString());
+		Assert.True(optionalCell.IsEmpty());
+		Assert.Equal(enumNames, requiredItems);
+		Assert.DoesNotContain(requiredItems, string.IsNullOrEmpty);
+		Assert.Equal(enumNames, optionalItems.Where(item => !string.IsNullOrEmpty(item)));
+		Assert.Single(optionalItems, string.IsNullOrEmpty);
+	}
+
+	[Fact]
+	public async Task GenerateAsync_EmptyTitle_UsesModelNameAsDocumentTitle()
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(User))
+		{
+			Name = "UntitledUsers",
+			Title = string.Empty,
+		};
+
+		await _generator.GenerateAsync(output, model, Templates.User.Data[0]);
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var worksheet = Assert.Single(workbook.Worksheets);
+		var title = worksheet.Cell(1, 1).GetString();
+
+		Assert.Equal(model.Name, worksheet.Name);
+		Assert.Equal(model.Name, title);
+		Assert.False(string.IsNullOrWhiteSpace(title));
 	}
 
 	[Theory]
@@ -113,9 +184,34 @@ public class SpreadsheetGeneratorTest
 	private static int GetColumnNumber(IXLTable table, ModelDescriptor model, string name)
 	{
 		var label = model.Properties[name].Label;
+		if(string.IsNullOrEmpty(label))
+			label = name;
+
 		return Assert.Single(table.HeadersRow().Cells(cell => cell.GetString() == label)).Address.ColumnNumber;
+	}
+
+	private static string[] GetValidationItems(IXLCell cell, bool ignoreBlanks)
+	{
+		Assert.True(cell.HasDataValidation);
+		var validation = cell.GetDataValidation();
+
+		Assert.Equal(XLAllowedValues.List, validation.AllowedValues);
+		Assert.True(validation.InCellDropdown);
+		Assert.Equal(ignoreBlanks, validation.IgnoreBlanks);
+
+		var value = validation.Value;
+		if(value.Length >= 2 && value[0] == '"' && value[^1] == '"')
+			value = value[1..^1];
+
+		return value.Split(',', StringSplitOptions.None);
 	}
 
 	private static IXLTable GetTable(XLWorkbook workbook, string name) =>
 		Assert.Single(workbook.Worksheets.SelectMany(worksheet => worksheet.Tables), table => string.Equals(table.Name, name, StringComparison.OrdinalIgnoreCase));
+
+	private sealed class EnumValidationRecord
+	{
+		public Gender RequiredGender { get; set; }
+		public Gender? OptionalGender { get; set; }
+	}
 }
