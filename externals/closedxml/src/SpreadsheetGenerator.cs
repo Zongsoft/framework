@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -38,6 +38,7 @@ using System.Collections.Generic;
 using ClosedXML;
 using ClosedXML.Excel;
 
+using Zongsoft.Common;
 using Zongsoft.Data;
 using Zongsoft.Data.Archiving;
 
@@ -69,6 +70,11 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 
 		if(columns == null || columns.Length == 0)
 			return ValueTask.CompletedTask;
+
+		if(!VerifyTableName(model.Name))
+			throw OperationException.Argument(
+				string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.Name),
+				new ArgumentException(string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.Name), nameof(model)));
 
 		using var workbook = new XLWorkbook();
 		var worksheet = workbook.AddWorksheet(model.Title ?? model.Name);
@@ -190,11 +196,19 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		if(row > 4)
 			row--;
 
-		//创建数据区域范围
-		var table = worksheet.Range(4, 1, row, columns.Length)
-			.AddToNamed(model.Name, XLScope.Worksheet, model.Title);
+		//创建模型数据表（包含字段标题行）
+		try
+		{
+			worksheet.Range(3, 1, row, columns.Length)
+				.CreateTable(model.Name)
+				.Theme = XLTableTheme.None;
+		}
+		catch(ArgumentException exception)
+		{
+			throw OperationException.Argument(string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.Name), exception);
+		}
 
-		//设置数据取悦的外边框
+		//设置数据区域的外边框
 		range = worksheet.Range(1, 1, row, columns.Length);
 		range.Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
 		range.Style.Border.OutsideBorderColor = XLColor.CoolBlack;
@@ -210,6 +224,24 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 	#endregion
 
 	#region 私有方法
+	private static bool VerifyTableName(string name)
+	{
+		if(string.IsNullOrWhiteSpace(name) || name.Length > 255 ||
+		   (!char.IsLetter(name[0]) && name[0] != '_' && name[0] != '\\') ||
+		   string.Equals(name, "C", StringComparison.OrdinalIgnoreCase) ||
+		   string.Equals(name, "R", StringComparison.OrdinalIgnoreCase) ||
+		   XLHelper.IsValidA1Address(name) || XLHelper.IsValidRCAddress(name))
+			return false;
+
+		for(int index = 1; index < name.Length; index++)
+		{
+			if(!char.IsLetterOrDigit(name[index]) && name[index] != '_' && name[index] != '.')
+				return false;
+		}
+
+		return true;
+	}
+
 	private static IEnumerable<TableColumn> GetColumns(ModelDescriptor model, DataArchiveField[] fields)
 	{
 		int index = 1;

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="SpreadsheetExtractor.FieldNotFound.Message" xml:space="preserve">
+		<value>指定的“{0}”Excel 列不存在。</value>
+	</data>
+	<data name="SpreadsheetExtractor.FieldsNotFound.Message" xml:space="preserve">
+		<value>Excel 数据表“{0}”没有定义任何模型字段。</value>
+	</data>
+	<data name="SpreadsheetExtractor.ModelRequired.Message" xml:space="preserve">
+		<value>提取 Excel 数据必须提供模型元数据。</value>
+	</data>
+	<data name="SpreadsheetExtractor.TableNotFound.Message" xml:space="preserve">
+		<value>找不到 Excel 数据表“{0}”。</value>
+	</data>
+	<data name="SpreadsheetExtractor.WorksheetNotFound.Message" xml:space="preserve">
+		<value>找不到 Excel 工作表“{0}”。</value>
+	</data>
+	<data name="SpreadsheetGenerator.InvalidTableName.Message" xml:space="preserve">
+		<value>模型名称“{0}”不能用作 Excel 数据表名称。</value>
+	</data>
+</root>

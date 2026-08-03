@@ -1,4 +1,7 @@
 <Solution>
 	<Project Path="src/Zongsoft.Externals.ClosedXml.csproj" />
 	<Project Path="test/Zongsoft.Externals.ClosedXml.Tests.csproj" />
+	<Project Path="samples/Zongsoft.Externals.ClosedXml.Samples.csproj">
+		<BuildDependency Project="src/Zongsoft.Externals.ClosedXml.csproj" />
+	</Project>
 </Solution>

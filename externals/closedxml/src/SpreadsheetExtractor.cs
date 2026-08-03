@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -29,7 +29,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
@@ -37,6 +36,7 @@ using System.Collections.Generic;
 using ClosedXML;
 using ClosedXML.Excel;
 
+using Zongsoft.Common;
 using Zongsoft.Data;
 using Zongsoft.Data.Archiving;
 
@@ -52,27 +52,68 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 			throw new ArgumentNullException(nameof(input));
 		if(options == null)
 			throw new ArgumentNullException(nameof(options));
+		if(options.Model == null)
+			throw new ArgumentException(Properties.Resources.SpreadsheetExtractor_ModelRequired_Message, nameof(options));
 
 		var workbook = new XLWorkbook(input);
-		if(workbook.Worksheets.Count == 0)
-			return null;
 
-		var worksheet = workbook.Worksheets.TryGetWorksheet(options?.Source is string key ? key : options.Model.Name, out var sheet) ? sheet : workbook.Worksheet(1);
+		try
+		{
+			var table = GetTable(workbook, options.Model.Name, options.Source as string);
+			return new DataArchiveReader(table, options.Model, GetLastRow(table));
+		}
+		catch
+		{
+			workbook.Dispose();
+			throw;
+		}
+	}
+	#endregion
 
-		//根据模型名获取指定的数据区引用
-		if(!worksheet.DefinedNames.TryGetValue(options.Model.Name, out var reference) &&
-		   !worksheet.Workbook.DefinedNames.TryGetValue(options.Model.Name, out reference))
-			return null;
+	#region 私有方法
+	private static IXLTable GetTable(XLWorkbook workbook, string name, string source)
+	{
+		if(!string.IsNullOrEmpty(source))
+		{
+			if(!workbook.Worksheets.TryGetWorksheet(source, out var worksheet))
+				throw OperationException.Unprocessed(string.Format(Properties.Resources.SpreadsheetExtractor_WorksheetNotFound_Message, source));
 
-		if(!reference.IsValid)
-			return null;
+			if(worksheet.Tables.TryGetTable(name, out var table))
+				return table;
+		}
+		else
+		{
+			foreach(var worksheet in workbook.Worksheets)
+			{
+				if(worksheet.Tables.TryGetTable(name, out var table))
+					return table;
+			}
+		}
 
-		//获取数据内容区
-		var dataRange = worksheet.Range(reference.RefersTo);
-		if(dataRange == null || dataRange.IsEmpty())
-			return null;
+		throw OperationException.Unprocessed(string.Format(Properties.Resources.SpreadsheetExtractor_TableNotFound_Message, name));
+	}
 
-		return new DataArchiveReader(worksheet, dataRange);
+	private static int GetLastRow(IXLTable table)
+	{
+		var header = table.HeadersRow();
+		var lastRow = table.DataRange?.LastRow().RowNumber() ?? header.RowNumber();
+
+		//总计行表示用户已经明确限定了表格边界，不再自动扩展数据区域
+		if(table.ShowTotalsRow)
+			return lastRow;
+
+		var firstColumn = table.RangeAddress.FirstAddress.ColumnNumber;
+		var lastColumn = table.RangeAddress.LastAddress.ColumnNumber;
+
+		//仅沿表格列向下扩展，以修复用户编辑后表范围没有随数据增长的问题
+		for(int column = firstColumn; column <= lastColumn; column++)
+		{
+			var cell = table.Worksheet.Column(column).LastCellUsed(XLCellsUsedOptions.Contents);
+			if(cell != null && cell.Address.RowNumber > lastRow)
+				lastRow = cell.Address.RowNumber;
+		}
+
+		return lastRow;
 	}
 	#endregion
 
@@ -80,34 +121,51 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 	private sealed class DataArchiveReader : IDataArchiveReader
 	{
 		private IXLWorksheet _worksheet;
-		private IXLRange _data;
-		private int _row;
-		private readonly int _rows;
+		private readonly int _headerRow;
+		private readonly int _lastRow;
+		private readonly int _firstColumn;
 		private readonly DataArchiveFieldCollection _fields;
+		private int _row;
 
-		public DataArchiveReader(IXLWorksheet worksheet, IXLRange data)
+		public DataArchiveReader(IXLTable table, ModelDescriptor model, int lastRow)
 		{
-			_worksheet = worksheet;
-			_data = data;
-			_rows = data.RowCount();
-			_fields = new DataArchiveFieldCollection(data.ColumnCount());
+			_worksheet = table.Worksheet;
+			_headerRow = table.HeadersRow().RowNumber();
+			_lastRow = lastRow;
+			_firstColumn = table.RangeAddress.FirstAddress.ColumnNumber;
+			_row = _headerRow;
+			_fields = new DataArchiveFieldCollection(table.ColumnCount());
 
-			foreach(var reference in worksheet.Workbook.DefinedNames.ValidNamedRanges().Concat(worksheet.DefinedNames.ValidNamedRanges()))
+			foreach(var reference in _worksheet.DefinedNames.ValidNamedRanges())
 			{
-				var range = worksheet.Range(reference.RefersTo);
-
-				if(range.RowCount() == 1 && range.ColumnCount() == 1)
+				foreach(var range in reference.Ranges)
 				{
-					var index = range.FirstColumn().ColumnNumber();
+					if(range.Worksheet != _worksheet || range.RowCount() != 1 || range.ColumnCount() != 1 || range.FirstRow().RowNumber() != _headerRow)
+						continue;
 
-					if(index >= data.FirstColumn().ColumnNumber() && index <= data.LastColumn().ColumnNumber())
-						_fields.Add(reference.Name, index - 1);
+					var index = range.FirstColumn().ColumnNumber() - _firstColumn;
+					if(index >= 0 && index < _fields.Capacity)
+						_fields.Add(reference.Name, index);
 				}
 			}
+
+			//允许以模型属性名作为表头，以支持不包含字段命名引用的手工数据表。
+			for(int index = 0; index < _fields.Capacity; index++)
+			{
+				if(_fields[index] == null)
+				{
+					var name = _worksheet.Cell(_headerRow, _firstColumn + index).GetString();
+					if(model.Properties.TryGetValue(name, out var property))
+						_fields.Add(property.Name, index);
+				}
+			}
+
+			if(_fields.Count == 0)
+				throw OperationException.Unprocessed(string.Format(Properties.Resources.SpreadsheetExtractor_FieldsNotFound_Message, table.Name));
 		}
 
-		public bool IsEmpty => _data.IsEmpty();
-		public int FieldCount => _data.ColumnCount();
+		public bool IsEmpty => _lastRow <= _headerRow;
+		public int FieldCount => _fields.Capacity;
 
 		public object this[int ordinal] => this.GetValue(ordinal);
 		public object this[string name] => this.GetValue(_fields[name].Index);
@@ -116,8 +174,7 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 		public object GetValue(string name) => this.GetValue(_fields[name].Index);
 		public object GetValue(int ordinal)
 		{
-			var row = _data.Row(_row);
-			var cell = row.Cell(ordinal + 1);
+			var cell = _worksheet.Cell(_row, _firstColumn + ordinal);
 
 			if(cell == null || cell.Value.IsBlank || cell.Value.IsError || cell.IsEmpty())
 				return null;
@@ -134,22 +191,15 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 
 		public bool Read()
 		{
-			while(_row < _rows && _data.Row(_row + 1).IsEmpty())
-			{
-				_row++;
-			}
-
-			return _row++ < _rows;
+			while(++_row <= _lastRow && _worksheet.Range(_row, _firstColumn, _row, _firstColumn + _fields.Capacity - 1).IsEmpty(XLCellsUsedOptions.Contents)) { }
+			return _row <= _lastRow;
 		}
 
 		public void Dispose()
 		{
 			var worksheet = Interlocked.Exchange(ref _worksheet, null);
 			if(worksheet != null)
-			{
-				_data = null;
 				worksheet.Workbook?.Dispose();
-			}
 		}
 	}
 
@@ -178,13 +228,15 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 		public DataArchiveFieldCollection(int count)
 		{
 			_fields = new DataArchiveField[count];
-			_names = new Dictionary<string, int>(count);
+			_names = new Dictionary<string, int>(count, StringComparer.OrdinalIgnoreCase);
 		}
 		#endregion
 
 		#region 公共属性
+		public int Count => _names.Count;
+		public int Capacity => _fields.Length;
 		public DataArchiveField this[int index] => index >= 0 && index < _fields.Length ? _fields[index] : throw new ArgumentOutOfRangeException(nameof(index));
-		public DataArchiveField this[string name] => _names.TryGetValue(name, out var index) ? _fields[index] : throw new KeyNotFoundException($"The specified '{name}' column name does not exist.");
+		public DataArchiveField this[string name] => _names.TryGetValue(name, out var index) ? _fields[index] : throw new KeyNotFoundException(string.Format(Properties.Resources.SpreadsheetExtractor_FieldNotFound_Message, name));
 		#endregion
 
 		#region 公共方法
