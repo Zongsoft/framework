@@ -64,7 +64,7 @@ public class SpreadsheetRenderer : IDataTemplateRenderer, Services.IMatchable
 			throw new InvalidOperationException($"Unsupported template format: '{template.Format}'.");
 
 		//确保指定的渲染格式是受支持的电子表格类型
-		if(!string.IsNullOrEmpty(format) && Spreadsheet.Format.Equals(format))
+		if(!string.IsNullOrEmpty(format) && !Spreadsheet.Format.Equals(format))
 			throw new InvalidOperationException($"Unsupported rendering format: '{format}'.");
 
 		using var stream = template.Open();

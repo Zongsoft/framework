@@ -60,8 +60,11 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 		var worksheet = workbook.Worksheets.TryGetWorksheet(options?.Source is string key ? key : options.Model.Name, out var sheet) ? sheet : workbook.Worksheet(1);
 
 		//根据模型名获取指定的数据区引用
-		var reference = worksheet.NamedRange(options.Model.Name) ?? worksheet.Workbook.NamedRange(options.Model.Name);
-		if(reference == null || !reference.IsValid)
+		if(!worksheet.DefinedNames.TryGetValue(options.Model.Name, out var reference) &&
+		   !worksheet.Workbook.DefinedNames.TryGetValue(options.Model.Name, out reference))
+			return null;
+
+		if(!reference.IsValid)
 			return null;
 
 		//获取数据内容区
@@ -89,7 +92,7 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 			_rows = data.RowCount();
 			_fields = new DataArchiveFieldCollection(data.ColumnCount());
 
-			foreach(var reference in worksheet.Workbook.NamedRanges.ValidNamedRanges().Concat(worksheet.NamedRanges.ValidNamedRanges()))
+			foreach(var reference in worksheet.Workbook.DefinedNames.ValidNamedRanges().Concat(worksheet.DefinedNames.ValidNamedRanges()))
 			{
 				var range = worksheet.Range(reference.RefersTo);
 

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Zongsoft.Externals.ClosedXml.Tests.Models;
+﻿namespace Zongsoft.Externals.ClosedXml.Tests.Models;
 
 public class Park
 {
