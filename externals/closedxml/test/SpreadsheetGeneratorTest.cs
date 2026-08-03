@@ -1,3 +1,5 @@
+using System.Data;
+
 using Zongsoft.Externals.ClosedXml.Tests.Models;
 
 namespace Zongsoft.Externals.ClosedXml.Tests;
@@ -143,6 +145,58 @@ public class SpreadsheetGeneratorTest
 		Assert.False(string.IsNullOrWhiteSpace(title));
 	}
 
+	[Fact]
+	public async Task GenerateAsync_SimplexMetadata_SetsPersistedDataTypeRoleAndLengthWidths()
+	{
+		using var output = new MemoryStream();
+		var model = CreateColumnStyleModel();
+		var records = CreateColumnStyleRecords();
+
+		await _generator.GenerateAsync(output, model, records);
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var shortWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.ShortText));
+		var mediumWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.MediumText));
+		var oversizedWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.OversizedText));
+		var integerWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.Quantity));
+		var descriptionWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.DescriptionText));
+
+		Assert.InRange(shortWidth, 9.99, 10.01);
+		Assert.InRange(mediumWidth, 49.99, 50.01);
+		Assert.InRange(oversizedWidth, 49.99, 50.01);
+		Assert.InRange(integerWidth, 11.99, 12.01);
+		Assert.InRange(descriptionWidth, 49.99, 50.01);
+		Assert.True(shortWidth < mediumWidth);
+		Assert.Equal(mediumWidth, oversizedWidth, 2);
+		Assert.All(new[] { shortWidth, mediumWidth, oversizedWidth, integerWidth, descriptionWidth },
+			width => Assert.InRange(width, 8, 50));
+	}
+
+	[Fact]
+	public async Task GenerateAsync_PrimaryKey_StylesEveryPersistedDataCell()
+	{
+		using var output = new MemoryStream();
+		var model = CreateColumnStyleModel();
+
+		await _generator.GenerateAsync(output, model, CreateColumnStyleRecords());
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var keyColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.RecordId));
+		var keyCells = table.DataRange.Column(keyColumn).Cells().ToArray();
+
+		Assert.Equal(2, keyCells.Length);
+		Assert.All(keyCells, cell =>
+		{
+			Assert.Equal(XLAlignmentHorizontalValues.Center, cell.Style.Alignment.Horizontal);
+			Assert.True(cell.Style.Font.Bold);
+			Assert.Equal(XLColor.Maroon, cell.Style.Font.FontColor);
+		});
+	}
+
 	[Theory]
 	[InlineData("en-US", "The 'A1' model name cannot be used as an Excel table name.")]
 	[InlineData("zh-Hans", "模型名称“A1”不能用作 Excel 数据表名称。")]
@@ -190,6 +244,27 @@ public class SpreadsheetGeneratorTest
 		return Assert.Single(table.HeadersRow().Cells(cell => cell.GetString() == label)).Address.ColumnNumber;
 	}
 
+	private static double GetColumnWidth(IXLTable table, ModelDescriptor model, string name) =>
+		table.Worksheet.Column(GetColumnNumber(table, model, name)).Width;
+
+	private static ModelDescriptor CreateColumnStyleModel()
+	{
+		var model = new ModelDescriptor(typeof(ColumnStyleRecord)) { Title = "Column Styles" };
+		model.Properties[nameof(ColumnStyleRecord.RecordId)].Label = "K";
+		model.Properties[nameof(ColumnStyleRecord.ShortText)].Label = "S";
+		model.Properties[nameof(ColumnStyleRecord.MediumText)].Label = "M";
+		model.Properties[nameof(ColumnStyleRecord.OversizedText)].Label = "L";
+		model.Properties[nameof(ColumnStyleRecord.Quantity)].Label = "I";
+		model.Properties[nameof(ColumnStyleRecord.DescriptionText)].Label = "D";
+		return model;
+	}
+
+	private static ColumnStyleRecord[] CreateColumnStyleRecords() =>
+	[
+		new() { RecordId = 101, ShortText = "x", MediumText = "x", OversizedText = "x", Quantity = 1, DescriptionText = "x" },
+		new() { RecordId = 102, ShortText = "y", MediumText = "y", OversizedText = "y", Quantity = 2, DescriptionText = "y" },
+	];
+
 	private static string[] GetValidationItems(IXLCell cell, bool ignoreBlanks)
 	{
 		Assert.True(cell.HasDataValidation);
@@ -213,5 +288,26 @@ public class SpreadsheetGeneratorTest
 	{
 		public Gender RequiredGender { get; set; }
 		public Gender? OptionalGender { get; set; }
+	}
+
+	private sealed class ColumnStyleRecord
+	{
+		[ModelProperty(DbType.Int32, false, IsPrimaryKey = true)]
+		public int RecordId { get; set; }
+
+		[ModelProperty(DbType.AnsiString, 8, false)]
+		public string ShortText { get; set; }
+
+		[ModelProperty(DbType.AnsiString, 64, false)]
+		public string MediumText { get; set; }
+
+		[ModelProperty(DbType.AnsiString, 4096, false)]
+		public string OversizedText { get; set; }
+
+		[ModelProperty(DbType.Int32, false)]
+		public int Quantity { get; set; }
+
+		[ModelProperty(DbType.AnsiString, 8, false, Role = nameof(ModelPropertyRole.Description))]
+		public string DescriptionText { get; set; }
 	}
 }

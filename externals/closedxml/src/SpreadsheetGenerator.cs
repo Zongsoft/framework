@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.ClosedXml library.
  *
@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,6 +50,10 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 {
 	#region 常量定义
 	private const string FONT_NAME = "Arial Narrow"; //偏爱的字体：适用于主键、代号、枚举、电话号码、邮箱地址等
+	private const double COLUMN_MIN_WIDTH = 8;
+	private const double COLUMN_MAX_WIDTH = 50;
+	private const double TEXT_COLUMN_MIN_WIDTH = 10;
+	private const double TEXT_COLUMN_DEFAULT_WIDTH = 20;
 	#endregion
 
 	#region 公共属性
@@ -190,6 +195,9 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		if(row > 4)
 			row--;
 
+		//根据内容预先调整各个字段列宽，随后由模型元数据覆盖
+		worksheet.ColumnsUsed().AdjustToContents();
+
 		//设置数据区各列的样式
 		foreach(var column in columns)
 		{
@@ -213,9 +221,6 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		range = worksheet.Range(1, 1, row, columns.Length);
 		range.Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
 		range.Style.Border.OutsideBorderColor = XLColor.CoolBlack;
-
-		//调整各个字段列宽
-		worksheet.ColumnsUsed().AdjustToContents();
 
 		//写入到输出流
 		workbook.SaveAs(output);
@@ -279,6 +284,9 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 
 	private static void SetDataColumnStyle(IXLRange column, ModelPropertyDescriptor property)
 	{
+		if(property is ModelPropertyDescriptor.SimplexPropertyDescriptor descriptor)
+			column.FirstColumn().WorksheetColumn().Width = GetColumnWidth(descriptor);
+
 		//如果是特定类型则调整其样式
 		var nullable = Common.TypeExtension.IsNullable(property.Type, out var type);
 		if(!nullable)
@@ -322,9 +330,6 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 				column.Style.Font.SetFontName(FONT_NAME);
 				column.Style.NumberFormat.SetFormat("0.00");
 				break;
-			case nameof(ModelPropertyRole.Description):
-				column.FirstColumn().WorksheetColumn().Width = 20;
-				break;
 		}
 
 		//设置主键的样式
@@ -332,9 +337,47 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		{
 			column.Style.Font.SetBold(true);
 			column.Style.Font.SetFontName(FONT_NAME);
-			column.Style.Font.SetFontColor(XLColor.Navy);
+			column.Style.Font.SetFontColor(XLColor.Maroon);
 			column.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
 		}
+	}
+
+	private static double GetColumnWidth(ModelPropertyDescriptor.SimplexPropertyDescriptor property)
+	{
+		var width = property.DataType == null ? TEXT_COLUMN_DEFAULT_WIDTH : property.DataType.IsArray ? COLUMN_MAX_WIDTH : property.DataType.DbType switch
+		{
+			DbType.AnsiString or DbType.AnsiStringFixedLength or DbType.String or DbType.StringFixedLength =>
+				property.Length > 0 ? Math.Clamp(property.Length + 2d, TEXT_COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH) : TEXT_COLUMN_DEFAULT_WIDTH,
+			DbType.Boolean or DbType.Byte or DbType.SByte => 8,
+			DbType.Int16 or DbType.UInt16 => 10,
+			DbType.Int32 or DbType.UInt32 => 12,
+			DbType.Int64 or DbType.UInt64 => 18,
+			DbType.Currency or DbType.Decimal or DbType.Double or DbType.Single or DbType.VarNumeric => 16,
+			DbType.Date or DbType.Time => 12,
+			DbType.DateTime or DbType.DateTime2 => 20,
+			DbType.DateTimeOffset => 26,
+			DbType.Guid => 38,
+			DbType.Xml => COLUMN_MAX_WIDTH,
+			DbType.Binary or DbType.Object => TEXT_COLUMN_DEFAULT_WIDTH,
+			_ => TEXT_COLUMN_DEFAULT_WIDTH,
+		};
+
+		width = property.Role switch
+		{
+			nameof(ModelPropertyRole.Code) => 18,
+			nameof(ModelPropertyRole.Name) => 20,
+			nameof(ModelPropertyRole.Email) => 32,
+			nameof(ModelPropertyRole.Gender) => 10,
+			nameof(ModelPropertyRole.Birthday) => 12,
+			nameof(ModelPropertyRole.Phone) => 18,
+			nameof(ModelPropertyRole.Address) => 40,
+			nameof(ModelPropertyRole.Currency) => 16,
+			nameof(ModelPropertyRole.Password) => 24,
+			nameof(ModelPropertyRole.Description) => COLUMN_MAX_WIDTH,
+			_ => width,
+		};
+
+		return Math.Clamp(width, COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH);
 	}
 
 	private static void GenerateRow(IXLWorksheet worksheet, int row, object record, TableColumn[] columns, IDataArchiveGeneratorOptions options)
