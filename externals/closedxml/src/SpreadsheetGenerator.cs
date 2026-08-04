@@ -65,6 +65,9 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 	public ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, CancellationToken cancellation = default) => this.GenerateAsync(output, model, data, null, cancellation);
 	public ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, IDataArchiveGeneratorOptions options, CancellationToken cancellation = default)
 	{
+		const int DATA_RANGE_FIRST_ROW = 4;
+		const int DATA_RANGE_MINIMUM_ROWS = 10;
+
 		if(output == null)
 			throw new ArgumentNullException(nameof(output));
 		if(model == null)
@@ -183,7 +186,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		range.Style.Border.BottomBorderColor = XLColor.DarkRed;
 
 		//数据区起始行号
-		var row = 4;
+		var row = DATA_RANGE_FIRST_ROW;
 
 		//处理 IAsynEnumerable 异步可枚举接口类型
 		var items = Collections.Enumerable.IsAsyncEnumerable(data, out var elementType) ?
@@ -200,8 +203,11 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			GenerateRow(worksheet, row, data, columns, options);
 		}
 
-		if(row > 4)
+		if(row > DATA_RANGE_FIRST_ROW)
 			row--;
+
+		//获取数据区的最后一行号（保证数据区不少于最小行数）
+		var lastRow = Math.Max(row, DATA_RANGE_FIRST_ROW + DATA_RANGE_MINIMUM_ROWS - 1);
 
 		//根据内容预先调整各个字段列宽，随后由模型元数据覆盖
 		worksheet.ColumnsUsed().AdjustToContents();
@@ -209,16 +215,15 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		//设置数据区各列的样式
 		foreach(var column in columns)
 		{
-			range = worksheet.Range(4, column.Index, row, column.Index);
+			range = worksheet.Range(DATA_RANGE_FIRST_ROW, column.Index, lastRow, column.Index);
 			SetDataColumnStyle(range, column.Property);
 		}
 
-		//创建模型数据表（包含字段标题行）
 		try
 		{
-			var table = worksheet.Range(3, 1, row, columns.Length).CreateTable(model.Name);
+			//创建模型数据表（包含字段标题行）
+			var table = worksheet.Range(DATA_RANGE_FIRST_ROW - 1, 1, lastRow, columns.Length).CreateTable(model.Name);
 			table.Theme = XLTableTheme.None;
-			table.ShowRowStripes = false;
 			SetDataRangeStyle(table.DataRange);
 		}
 		catch(ArgumentException exception)
