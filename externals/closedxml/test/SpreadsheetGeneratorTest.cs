@@ -18,7 +18,7 @@ public class SpreadsheetGeneratorTest
 
 		output.Position = 0;
 		using var workbook = new XLWorkbook(output);
-		var worksheet = Assert.Single(workbook.Worksheets);
+		var worksheet = Assert.Single(workbook.Worksheets, worksheet => worksheet.Visibility == XLWorksheetVisibility.Visible);
 		var table = GetTable(workbook, Templates.User.Descriptor.Name);
 
 		Assert.Equal(Templates.User.Descriptor.Name, table.Name);
@@ -111,16 +111,18 @@ public class SpreadsheetGeneratorTest
 		var table = GetTable(workbook, model.Name);
 		var requiredCell = table.Worksheet.Cell(4, GetColumnNumber(table, model, nameof(EnumValidationRecord.RequiredGender)));
 		var optionalCell = table.Worksheet.Cell(4, GetColumnNumber(table, model, nameof(EnumValidationRecord.OptionalGender)));
-		var requiredItems = GetValidationItems(requiredCell, false);
-		var optionalItems = GetValidationItems(optionalCell, true);
+		var requiredItems = GetValidationItems(workbook, requiredCell, false, false);
+		var optionalItems = GetValidationItems(workbook, optionalCell, true, true);
 		var enumNames = Enum.GetNames<Gender>();
 
 		Assert.Equal(nameof(Gender.Male), requiredCell.GetString());
 		Assert.True(optionalCell.IsEmpty());
-		Assert.Equal(enumNames, requiredItems);
-		Assert.DoesNotContain(requiredItems, string.IsNullOrEmpty);
-		Assert.Equal(enumNames, optionalItems.Where(item => !string.IsNullOrEmpty(item)));
-		Assert.Single(optionalItems, string.IsNullOrEmpty);
+		Assert.Equal(table.ColumnCount(), table.Worksheet.LastColumnUsed().ColumnNumber());
+		Assert.Equal(enumNames, requiredItems.Select(item => item.GetText()));
+		Assert.DoesNotContain(requiredItems, item => item.IsBlank);
+		Assert.Equal(enumNames, optionalItems.Where(item => !item.IsBlank).Select(item => item.GetText()));
+		Assert.Single(optionalItems, item => item.IsBlank);
+		Assert.All(optionalItems.Where(item => !item.IsBlank), item => Assert.True(item.IsText));
 	}
 
 	[Fact]
@@ -143,12 +145,12 @@ public class SpreadsheetGeneratorTest
 		var optionalColumn = GetColumnNumber(table, model, nameof(BooleanRecord.OptionalValue));
 		var requiredCells = table.DataRange.Column(requiredColumn).Cells().ToArray();
 		var optionalCells = table.DataRange.Column(optionalColumn).Cells().ToArray();
-		var requiredItems = GetValidationItems(requiredCells[0], false);
-		var optionalItems = GetValidationItems(optionalCells[0], true);
-		string[] expected = ["TRUE", "FALSE"];
+		var requiredItems = GetValidationItems(workbook, requiredCells[0], false, true);
+		var optionalItems = GetValidationItems(workbook, optionalCells[0], true, true);
 
 		Assert.Equal(2, requiredCells.Length);
 		Assert.Equal(2, optionalCells.Length);
+		Assert.Equal(table.ColumnCount(), table.Worksheet.LastColumnUsed().ColumnNumber());
 		Assert.All(requiredCells, cell => Assert.True(cell.HasDataValidation));
 		Assert.All(optionalCells, cell => Assert.True(cell.HasDataValidation));
 		Assert.Equal(XLDataType.Boolean, requiredCells[0].DataType);
@@ -156,10 +158,13 @@ public class SpreadsheetGeneratorTest
 		Assert.False(requiredCells[1].GetBoolean());
 		Assert.True(optionalCells[0].IsEmpty());
 		Assert.True(optionalCells[1].GetBoolean());
-		Assert.Equal(expected, requiredItems);
-		Assert.DoesNotContain(requiredItems, string.IsNullOrEmpty);
-		Assert.Equal(expected, optionalItems.Where(item => !string.IsNullOrEmpty(item)));
-		Assert.Single(optionalItems, string.IsNullOrEmpty);
+		Assert.Collection(requiredItems,
+			item => { Assert.True(item.IsBoolean); Assert.True(item.GetBoolean()); },
+			item => { Assert.True(item.IsBoolean); Assert.False(item.GetBoolean()); });
+		Assert.Collection(optionalItems,
+			item => { Assert.True(item.IsBoolean); Assert.True(item.GetBoolean()); },
+			item => { Assert.True(item.IsBoolean); Assert.False(item.GetBoolean()); },
+			item => Assert.True(item.IsBlank));
 	}
 
 	[Fact]
@@ -176,7 +181,7 @@ public class SpreadsheetGeneratorTest
 
 		output.Position = 0;
 		using var workbook = new XLWorkbook(output);
-		var worksheet = Assert.Single(workbook.Worksheets);
+		var worksheet = Assert.Single(workbook.Worksheets, worksheet => worksheet.Visibility == XLWorksheetVisibility.Visible);
 		var title = worksheet.Cell(1, 1).GetString();
 
 		Assert.Equal(model.Name, worksheet.Name);
@@ -328,7 +333,7 @@ public class SpreadsheetGeneratorTest
 		new() { RecordId = 102, ShortText = "y", MediumText = "y", OversizedText = "y", Quantity = 2, DescriptionText = "y", Balance = -12.25m },
 	];
 
-	private static string[] GetValidationItems(IXLCell cell, bool ignoreBlanks)
+	private static XLCellValue[] GetValidationItems(XLWorkbook workbook, IXLCell cell, bool ignoreBlanks, bool rangeSource)
 	{
 		Assert.True(cell.HasDataValidation);
 		var validation = cell.GetDataValidation();
@@ -338,10 +343,22 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal(ignoreBlanks, validation.IgnoreBlanks);
 
 		var value = validation.Value;
-		if(value.Length >= 2 && value[0] == '"' && value[^1] == '"')
-			value = value[1..^1];
+		var inlineSource = value.Length >= 2 && value[0] == '"' && value[^1] == '"';
+		Assert.Equal(!rangeSource, inlineSource);
 
-		return value.Split(',', StringSplitOptions.None);
+		if(inlineSource)
+			return value[1..^1].Split(',', StringSplitOptions.None).Select(item => (XLCellValue)item).ToArray();
+
+		Assert.Contains('!', value);
+		Assert.Empty(workbook.DefinedNames);
+		var source = workbook.Range(value);
+		Assert.NotNull(source);
+		Assert.NotEqual(cell.Worksheet.Name, source.Worksheet.Name);
+		Assert.Equal(XLWorksheetVisibility.VeryHidden, source.Worksheet.Visibility);
+
+		return source.Cells()
+			.Select(cell => cell.Value)
+			.ToArray();
 	}
 
 	private static IXLTable GetTable(XLWorkbook workbook, string name) =>

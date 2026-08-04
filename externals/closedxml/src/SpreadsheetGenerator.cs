@@ -152,10 +152,12 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 					if(!string.IsNullOrEmpty(comment.Text))
 						comment.AddNewLine();
 
-					if(string.IsNullOrEmpty(entries[i].Description))
-						comment.AddText($"[{entries[i].Value}] {entries[i].Name}");
-					else
-						comment.AddText($"[{entries[i].Value}] {entries[i].Name}:{entries[i].Description}");
+					comment.AddText($"[{entries[i].Value}] {entries[i].Name}");
+					if(!string.IsNullOrWhiteSpace(entries[i].Description))
+					{
+						comment.AddNewLine();
+						comment.AddText(entries[i].Description);
+					}
 				}
 			}
 		}
@@ -297,11 +299,11 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		//为枚举类型设置下拉列表
 		if(type.IsEnum)
 		{
-			var entries = Common.EnumUtility.GetEnumEntries(property.Type, false);
-			SetListValidation(column, entries.Select(entry => entry.Name), nullable);
+			var entries = Common.EnumUtility.GetEnumEntries(type, false);
+			SetColumnSuggestion(column, entries.Select(entry => (XLCellValue)entry.Name), nullable);
 		}
 		else if(type == typeof(bool))
-			SetListValidation(column, nullable ? ["TRUE", "FALSE", string.Empty] : ["TRUE", "FALSE"], nullable);
+			SetColumnSuggestion(column, [true, false], nullable);
 
 		//设置特定类型的字体
 		if(type.IsEnum || type == typeof(bool) || Common.TypeExtension.IsNumeric(type) || type == typeof(Guid) ||
@@ -344,10 +346,43 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		}
 	}
 
-	private static void SetListValidation(IXLRange column, IEnumerable<string> entries, bool nullable)
+	private static void SetColumnSuggestion(IXLRange column, IEnumerable<XLCellValue> entries, bool nullable)
 	{
+		const string SUGGESTION_SHEET_NAME = "__Suggestion_Sheet__";
+
+		var items = entries.ToArray();
 		var validation = column.CreateDataValidation();
-		validation.List($"\"{string.Join(',', entries)}\"");
+
+		if(nullable || items.Any(item => !item.IsText))
+		{
+			var workbook = column.FirstCell().Worksheet.Workbook;
+			var worksheet = workbook.Worksheets.FirstOrDefault(worksheet =>
+				worksheet.Visibility == XLWorksheetVisibility.VeryHidden &&
+				worksheet.Name.StartsWith(SUGGESTION_SHEET_NAME, StringComparison.Ordinal));
+
+			if(worksheet == null)
+			{
+				var index = 0;
+				var worksheetName = SUGGESTION_SHEET_NAME;
+
+				while(workbook.Worksheets.TryGetWorksheet(worksheetName, out _))
+					worksheetName = $"{SUGGESTION_SHEET_NAME}{++index}";
+
+				worksheet = workbook.AddWorksheet(worksheetName);
+				worksheet.Visibility = XLWorksheetVisibility.VeryHidden;
+			}
+
+			var sourceColumn = (worksheet.LastColumnUsed()?.ColumnNumber() ?? 0) + 1;
+			var source = worksheet.Range(1, sourceColumn, items.Length + (nullable ? 1 : 0), sourceColumn);
+
+			for(int index = 0; index < items.Length; index++)
+				source.Cell(index + 1, 1).SetValue(items[index]);
+
+			validation.List(source);
+		}
+		else
+			validation.List($"\"{string.Join(',', items.Select(item => item.GetText()))}\"");
+
 		validation.IgnoreBlanks = nullable;
 	}
 
