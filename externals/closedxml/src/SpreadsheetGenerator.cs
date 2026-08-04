@@ -87,6 +87,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		using var workbook = new XLWorkbook();
 		var caption = string.IsNullOrWhiteSpace(model.Title) ? model.Name : model.Title;
 		var worksheet = workbook.AddWorksheet(caption);
+		worksheet.RowHeight = 20;
 		worksheet.Style.Font.SetFontSize(11);
 		worksheet.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
 
@@ -209,8 +210,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		//获取数据区的最后一行号（保证数据区不少于最小行数）
 		var lastRow = Math.Max(row, DATA_RANGE_FIRST_ROW + DATA_RANGE_MINIMUM_ROWS - 1);
 
-		//设置数据区各行的高度
-		worksheet.Rows(DATA_RANGE_FIRST_ROW, lastRow).Height = 20;
+		//固定当前数据区行高；工作表默认行高负责未来扩展行
+		worksheet.Rows(DATA_RANGE_FIRST_ROW, lastRow).Height = worksheet.RowHeight;
 
 		//根据内容预先调整各个字段列宽，随后由模型元数据覆盖
 		worksheet.ColumnsUsed().AdjustToContents();
