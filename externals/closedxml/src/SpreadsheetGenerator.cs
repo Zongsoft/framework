@@ -209,6 +209,9 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		//获取数据区的最后一行号（保证数据区不少于最小行数）
 		var lastRow = Math.Max(row, DATA_RANGE_FIRST_ROW + DATA_RANGE_MINIMUM_ROWS - 1);
 
+		//设置数据区各行的高度
+		worksheet.Rows(DATA_RANGE_FIRST_ROW, lastRow).Height = 20;
+
 		//根据内容预先调整各个字段列宽，随后由模型元数据覆盖
 		worksheet.ColumnsUsed().AdjustToContents();
 
@@ -476,8 +479,6 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 					cell.SetCellValue(value);
 			}
 		}
-
-		worksheet.Row(row).Height = 20;
 
 		static object GetValue(ref object target, TableColumn column, IDataArchiveGeneratorOptions options) =>
 			options?.Formatter != null ? options.Formatter.Format(target, column.Property) : column.GetValue(ref target);
