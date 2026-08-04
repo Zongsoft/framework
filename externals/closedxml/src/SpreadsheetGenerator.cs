@@ -101,6 +101,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		range.Style.Fill.SetPatternType(XLFillPatternValues.Gray125);
 		range.Style.Fill.SetPatternColor(XLColor.Green);
 		range.Style.Fill.SetBackgroundColor(XLColor.TeaGreen);
+		range.Style.Border.TopBorder = XLBorderStyleValues.Medium;
+		range.Style.Border.TopBorderColor = XLColor.Green;
 		range.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
 		range.Style.Border.BottomBorderColor = XLColor.Green;
 		range.Merge();
@@ -118,8 +120,6 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		range.Style.Fill.SetPatternType(XLFillPatternValues.Gray0625);
 		range.Style.Fill.SetPatternColor(XLColor.White);
 		range.Style.Fill.SetBackgroundColor(XLColor.FromArgb(230, 230, 230));
-		range.Style.Border.BottomBorder = XLBorderStyleValues.Thick;
-		range.Style.Border.BottomBorderColor = XLColor.CoolBlack;
 		range.Merge();
 
 		var index = 1;
@@ -177,6 +177,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		range.Style.Fill.SetPatternType(XLFillPatternValues.Gray0625);
 		range.Style.Fill.SetPatternColor(XLColor.Orange);
 		range.Style.Fill.SetBackgroundColor(XLColor.FromArgb(252, 213, 180));
+		range.Style.Border.TopBorder = XLBorderStyleValues.Medium;
+		range.Style.Border.TopBorderColor = XLColor.DarkRed;
 		range.Style.Border.BottomBorder = XLBorderStyleValues.Double;
 		range.Style.Border.BottomBorderColor = XLColor.DarkRed;
 
@@ -214,19 +216,15 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		//创建模型数据表（包含字段标题行）
 		try
 		{
-			worksheet.Range(3, 1, row, columns.Length)
-				.CreateTable(model.Name)
-				.Theme = XLTableTheme.None;
+			var table = worksheet.Range(3, 1, row, columns.Length).CreateTable(model.Name);
+			table.Theme = XLTableTheme.None;
+			table.ShowRowStripes = false;
+			SetDataRangeStyle(table.DataRange);
 		}
 		catch(ArgumentException exception)
 		{
 			throw OperationException.Argument(string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.Name), exception);
 		}
-
-		//设置数据区域的外边框
-		range = worksheet.Range(1, 1, row, columns.Length);
-		range.Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
-		range.Style.Border.OutsideBorderColor = XLColor.CoolBlack;
 
 		//写入到输出流
 		workbook.SaveAs(output);
@@ -288,6 +286,18 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		}
 	}
 
+	private static void SetDataRangeStyle(IXLRange range)
+	{
+		var style = range.AddConditionalFormat().WhenIsTrue("MOD(ROW(),2)=1");
+		style.Fill.SetPatternType(XLFillPatternValues.Gray0625);
+		style.Fill.SetPatternColor(XLColor.LightGray);
+		style.Fill.SetBackgroundColor(XLColor.FromArgb(240, 240, 240));
+
+		style = range.AddConditionalFormat().WhenIsTrue("TRUE");
+		style.Border.BottomBorder = XLBorderStyleValues.Thin;
+		style.Border.BottomBorderColor = XLColor.LightGray;
+	}
+
 	private static void SetDataColumnStyle(IXLRange column, ModelPropertyDescriptor property)
 	{
 		const int CURRENCY_FORMAT_ID = 7;
@@ -319,7 +329,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 
 		//特定类型则设置其水平居中
 		if(type.IsEnum || type == typeof(bool) || type == typeof(byte) || type == typeof(Guid) || type == typeof(DateOnly) || type == typeof(TimeOnly) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
-			column.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			SetHorizontalAlignment(column, XLAlignmentHorizontalValues.Center);
 
 		//设置日期时间类型的格式
 		if(type == typeof(DateTime) || type == typeof(DateTimeOffset))
@@ -332,7 +342,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			case nameof(ModelPropertyRole.Phone):
 			case nameof(ModelPropertyRole.Email):
 				column.Style.Font.SetFontName(FONT_NAME);
-				column.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+				SetHorizontalAlignment(column, XLAlignmentHorizontalValues.Center);
 				break;
 			case nameof(ModelPropertyRole.Currency):
 				column.Style.Font.SetFontName(FONT_NAME);
@@ -346,7 +356,13 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			column.Style.Font.SetBold(true);
 			column.Style.Font.SetFontName(FONT_NAME);
 			column.Style.Font.SetFontColor(XLColor.Maroon);
-			column.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			SetHorizontalAlignment(column, XLAlignmentHorizontalValues.Center);
+		}
+
+		static void SetHorizontalAlignment(IXLRange column, XLAlignmentHorizontalValues alignment)
+		{
+			column.Style.Alignment.SetHorizontal(alignment);
+			column.FirstColumn().WorksheetColumn().Style.Alignment.SetHorizontal(alignment);
 		}
 	}
 
@@ -457,16 +473,6 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		}
 
 		worksheet.Row(row).Height = 20;
-		var range = worksheet.Range(row, 1, row, columns.Length);
-		range.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-		range.Style.Border.BottomBorderColor = XLColor.LightGray;
-
-		if(row % 2 == 1)
-		{
-			range.Style.Fill.SetPatternType(XLFillPatternValues.Gray0625);
-			range.Style.Fill.SetPatternColor(XLColor.LightGray);
-			range.Style.Fill.SetBackgroundColor(XLColor.FromArgb(240, 240, 240));
-		}
 
 		static object GetValue(ref object target, TableColumn column, IDataArchiveGeneratorOptions options) =>
 			options?.Formatter != null ? options.Formatter.Format(target, column.Property) : column.GetValue(ref target);
