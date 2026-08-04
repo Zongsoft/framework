@@ -156,10 +156,14 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 					if(!string.IsNullOrWhiteSpace(entries[i].Description))
 					{
 						comment.AddNewLine();
-						comment.AddText(entries[i].Description);
+						comment.AddText(entries[i].Description).SetItalic().SetFontColor(XLColor.Gray);
 					}
 				}
 			}
+
+			//自动调整批注的尺寸以适配其文本内容
+			if(cell.HasComment)
+				cell.GetComment().Style.Size.SetAutomaticSize();
 		}
 
 		//设置数据字段标题行样式

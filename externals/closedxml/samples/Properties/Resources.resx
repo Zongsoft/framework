@@ -60,6 +60,15 @@
 	<data name="User.Status.Description" xml:space="preserve">
 		<value>The user status; blank means unspecified.</value>
 	</data>
+	<data name="UserStatus.Inactive.Description" xml:space="preserve">
+		<value>The user is inactive.</value>
+	</data>
+	<data name="UserStatus.Active.Description" xml:space="preserve">
+		<value>The user is active.</value>
+	</data>
+	<data name="UserStatus.Suspended.Description" xml:space="preserve">
+		<value>The user is suspended.</value>
+	</data>
 	<data name="User.Balance.Label" xml:space="preserve">
 		<value>Balance</value>
 	</data>
