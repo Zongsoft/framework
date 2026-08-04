@@ -99,6 +99,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		worksheet.Row(1).Height = 45;
 		worksheet.Row(1).Style.Font.SetFontSize(18);
 		worksheet.Row(1).Style.Font.SetBold(true);
+		worksheet.Row(1).Style.Font.FontColor = XLColor.DarkSlateGray;
 		worksheet.Row(1).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
 		worksheet.Row(1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
 		var range = worksheet.Range(1, 1, 1, columns.Length);
