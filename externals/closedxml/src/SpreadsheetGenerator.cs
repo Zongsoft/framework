@@ -284,6 +284,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 
 	private static void SetDataColumnStyle(IXLRange column, ModelPropertyDescriptor property)
 	{
+		const int CURRENCY_FORMAT_ID = 7;
+
 		if(property is ModelPropertyDescriptor.SimplexPropertyDescriptor descriptor)
 			column.FirstColumn().WorksheetColumn().Width = GetColumnWidth(descriptor);
 
@@ -296,13 +298,13 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		if(type.IsEnum)
 		{
 			var entries = Common.EnumUtility.GetEnumEntries(property.Type, false);
-			var validation = column.CreateDataValidation();
-			validation.List($"\"{string.Join(',', entries.Select(entry => entry.Name))}\"");
-			validation.IgnoreBlanks = nullable;
+			SetListValidation(column, entries.Select(entry => entry.Name), nullable);
 		}
+		else if(type == typeof(bool))
+			SetListValidation(column, nullable ? ["TRUE", "FALSE", string.Empty] : ["TRUE", "FALSE"], nullable);
 
 		//设置特定类型的字体
-		if(type.IsEnum || Common.TypeExtension.IsNumeric(type) || type == typeof(Guid) ||
+		if(type.IsEnum || type == typeof(bool) || Common.TypeExtension.IsNumeric(type) || type == typeof(Guid) ||
 		   type == typeof(DateOnly) || type == typeof(TimeOnly) || type == typeof(TimeSpan) ||
 		   type == typeof(DateTime) || type == typeof(DateTimeOffset))
 		{
@@ -310,7 +312,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		}
 
 		//特定类型则设置其水平居中
-		if(type.IsEnum || type == typeof(byte) || type == typeof(Guid) || type == typeof(DateOnly) || type == typeof(TimeOnly) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
+		if(type.IsEnum || type == typeof(bool) || type == typeof(byte) || type == typeof(Guid) || type == typeof(DateOnly) || type == typeof(TimeOnly) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
 			column.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
 
 		//设置日期时间类型的格式
@@ -328,7 +330,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 				break;
 			case nameof(ModelPropertyRole.Currency):
 				column.Style.Font.SetFontName(FONT_NAME);
-				column.Style.NumberFormat.SetFormat("0.00");
+				column.Style.NumberFormat.SetNumberFormatId(CURRENCY_FORMAT_ID);
 				break;
 		}
 
@@ -342,16 +344,24 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		}
 	}
 
+	private static void SetListValidation(IXLRange column, IEnumerable<string> entries, bool nullable)
+	{
+		var validation = column.CreateDataValidation();
+		validation.List($"\"{string.Join(',', entries)}\"");
+		validation.IgnoreBlanks = nullable;
+	}
+
 	private static double GetColumnWidth(ModelPropertyDescriptor.SimplexPropertyDescriptor property)
 	{
 		var width = property.DataType == null ? TEXT_COLUMN_DEFAULT_WIDTH : property.DataType.IsArray ? COLUMN_MAX_WIDTH : property.DataType.DbType switch
 		{
-			DbType.AnsiString or DbType.AnsiStringFixedLength or DbType.String or DbType.StringFixedLength =>
+			DbType.AnsiString or DbType.AnsiStringFixedLength or
+			DbType.String or DbType.StringFixedLength =>
 				property.Length > 0 ? Math.Clamp(property.Length + 2d, TEXT_COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH) : TEXT_COLUMN_DEFAULT_WIDTH,
 			DbType.Boolean or DbType.Byte or DbType.SByte => 8,
 			DbType.Int16 or DbType.UInt16 => 10,
 			DbType.Int32 or DbType.UInt32 => 12,
-			DbType.Int64 or DbType.UInt64 => 18,
+			DbType.Int64 or DbType.UInt64 => 14,
 			DbType.Currency or DbType.Decimal or DbType.Double or DbType.Single or DbType.VarNumeric => 16,
 			DbType.Date or DbType.Time => 12,
 			DbType.DateTime or DbType.DateTime2 => 20,

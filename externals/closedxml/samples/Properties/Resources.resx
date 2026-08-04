@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="User.Title" xml:space="preserve">
+		<value>Users</value>
+	</data>
+	<data name="User.Description" xml:space="preserve">
+		<value>Users for demonstrating spreadsheet export and import.</value>
+	</data>
+	<data name="User.UserId.Label" xml:space="preserve">
+		<value>User ID</value>
+	</data>
+	<data name="User.UserId.Description" xml:space="preserve">
+		<value>The unique identifier of the user.</value>
+	</data>
+	<data name="User.Name.Label" xml:space="preserve">
+		<value>Name</value>
+	</data>
+	<data name="User.Name.Description" xml:space="preserve">
+		<value>The display name of the user.</value>
+	</data>
+	<data name="User.Gender.Label" xml:space="preserve">
+		<value>Gender</value>
+	</data>
+	<data name="User.Gender.Description" xml:space="preserve">
+		<value>The gender of the user.</value>
+	</data>
+	<data name="User.Birthday.Label" xml:space="preserve">
+		<value>Birthday</value>
+	</data>
+	<data name="User.Birthday.Description" xml:space="preserve">
+		<value>The birthday of the user.</value>
+	</data>
+	<data name="User.Email.Label" xml:space="preserve">
+		<value>Email</value>
+	</data>
+	<data name="User.Email.Description" xml:space="preserve">
+		<value>The email address of the user.</value>
+	</data>
+	<data name="User.IsActive.Label" xml:space="preserve">
+		<value>Active</value>
+	</data>
+	<data name="User.IsActive.Description" xml:space="preserve">
+		<value>Whether the user is active; blank means unspecified.</value>
+	</data>
+	<data name="User.Status.Label" xml:space="preserve">
+		<value>Status</value>
+	</data>
+	<data name="User.Status.Description" xml:space="preserve">
+		<value>The user status; blank means unspecified.</value>
+	</data>
+	<data name="User.Balance.Label" xml:space="preserve">
+		<value>Balance</value>
+	</data>
+	<data name="User.Balance.Description" xml:space="preserve">
+		<value>The account balance; blank means unspecified.</value>
+	</data>
+</root>

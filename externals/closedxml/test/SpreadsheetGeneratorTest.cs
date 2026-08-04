@@ -124,6 +124,45 @@ public class SpreadsheetGeneratorTest
 	}
 
 	[Fact]
+	public async Task GenerateAsync_BooleanColumns_CreatesNullabilityAwareDropdownValidations()
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(BooleanRecord)) { Title = "Boolean Validations" };
+		BooleanRecord[] records =
+		[
+			new() { RecordId = 1, RequiredValue = true, OptionalValue = null },
+			new() { RecordId = 2, RequiredValue = false, OptionalValue = true },
+		];
+
+		await _generator.GenerateAsync(output, model, records);
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var requiredColumn = GetColumnNumber(table, model, nameof(BooleanRecord.RequiredValue));
+		var optionalColumn = GetColumnNumber(table, model, nameof(BooleanRecord.OptionalValue));
+		var requiredCells = table.DataRange.Column(requiredColumn).Cells().ToArray();
+		var optionalCells = table.DataRange.Column(optionalColumn).Cells().ToArray();
+		var requiredItems = GetValidationItems(requiredCells[0], false);
+		var optionalItems = GetValidationItems(optionalCells[0], true);
+		string[] expected = ["TRUE", "FALSE"];
+
+		Assert.Equal(2, requiredCells.Length);
+		Assert.Equal(2, optionalCells.Length);
+		Assert.All(requiredCells, cell => Assert.True(cell.HasDataValidation));
+		Assert.All(optionalCells, cell => Assert.True(cell.HasDataValidation));
+		Assert.Equal(XLDataType.Boolean, requiredCells[0].DataType);
+		Assert.True(requiredCells[0].GetBoolean());
+		Assert.False(requiredCells[1].GetBoolean());
+		Assert.True(optionalCells[0].IsEmpty());
+		Assert.True(optionalCells[1].GetBoolean());
+		Assert.Equal(expected, requiredItems);
+		Assert.DoesNotContain(requiredItems, string.IsNullOrEmpty);
+		Assert.Equal(expected, optionalItems.Where(item => !string.IsNullOrEmpty(item)));
+		Assert.Single(optionalItems, string.IsNullOrEmpty);
+	}
+
+	[Fact]
 	public async Task GenerateAsync_EmptyTitle_UsesModelNameAsDocumentTitle()
 	{
 		using var output = new MemoryStream();
@@ -172,6 +211,30 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal(mediumWidth, oversizedWidth, 2);
 		Assert.All(new[] { shortWidth, mediumWidth, oversizedWidth, integerWidth, descriptionWidth },
 			width => Assert.InRange(width, 8, 50));
+	}
+
+	[Fact]
+	public async Task GenerateAsync_CurrencyRole_UsesPersistedCurrencyNumberFormat()
+	{
+		using var output = new MemoryStream();
+		var model = CreateColumnStyleModel();
+
+		await _generator.GenerateAsync(output, model, CreateColumnStyleRecords());
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var balanceColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Balance));
+		var balanceCells = table.DataRange.Column(balanceColumn).Cells().ToArray();
+
+		Assert.Equal(2, balanceCells.Length);
+		Assert.Equal(128.5, balanceCells[0].GetDouble());
+		Assert.Equal(-12.25, balanceCells[1].GetDouble());
+		Assert.All(balanceCells, cell =>
+		{
+			Assert.Equal(XLDataType.Number, cell.DataType);
+			Assert.Equal(7, cell.Style.NumberFormat.NumberFormatId);
+		});
 	}
 
 	[Fact]
@@ -261,8 +324,8 @@ public class SpreadsheetGeneratorTest
 
 	private static ColumnStyleRecord[] CreateColumnStyleRecords() =>
 	[
-		new() { RecordId = 101, ShortText = "x", MediumText = "x", OversizedText = "x", Quantity = 1, DescriptionText = "x" },
-		new() { RecordId = 102, ShortText = "y", MediumText = "y", OversizedText = "y", Quantity = 2, DescriptionText = "y" },
+		new() { RecordId = 101, ShortText = "x", MediumText = "x", OversizedText = "x", Quantity = 1, DescriptionText = "x", Balance = 128.5m },
+		new() { RecordId = 102, ShortText = "y", MediumText = "y", OversizedText = "y", Quantity = 2, DescriptionText = "y", Balance = -12.25m },
 	];
 
 	private static string[] GetValidationItems(IXLCell cell, bool ignoreBlanks)
@@ -309,5 +372,8 @@ public class SpreadsheetGeneratorTest
 
 		[ModelProperty(DbType.AnsiString, 8, false, Role = nameof(ModelPropertyRole.Description))]
 		public string DescriptionText { get; set; }
+
+		[ModelProperty(DbType.Decimal, false, Role = nameof(ModelPropertyRole.Currency))]
+		public decimal Balance { get; set; }
 	}
 }

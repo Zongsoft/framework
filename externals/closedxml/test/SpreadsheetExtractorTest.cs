@@ -34,6 +34,91 @@ public class SpreadsheetExtractorTest
 	}
 
 	[Fact]
+	public async Task ExtractAsync_GeneratedBooleanTable_RestoresTrueFalseAndNull()
+	{
+		using var stream = new MemoryStream();
+		var model = new ModelDescriptor(typeof(BooleanRecord)) { Title = "Boolean Records" };
+		BooleanRecord[] records =
+		[
+			new() { RecordId = 1, RequiredValue = true, OptionalValue = null },
+			new() { RecordId = 2, RequiredValue = false, OptionalValue = true },
+			new() { RecordId = 3, RequiredValue = true, OptionalValue = false },
+		];
+		await _generator.GenerateAsync(stream, model, records);
+		stream.Position = 0;
+
+		var result = _extractor.ExtractAsync<BooleanRecord>(stream, new DataArchiveExtractorOptions(model))
+			.Synchronize()
+			.ToArray();
+
+		Assert.Collection(result,
+			first =>
+			{
+				Assert.Equal(1, first.RecordId);
+				Assert.True(first.RequiredValue);
+				Assert.Null(first.OptionalValue);
+			},
+			second =>
+			{
+				Assert.Equal(2, second.RecordId);
+				Assert.False(second.RequiredValue);
+				Assert.True(second.OptionalValue);
+			},
+			third =>
+			{
+				Assert.Equal(3, third.RecordId);
+				Assert.True(third.RequiredValue);
+				Assert.False(third.OptionalValue);
+			});
+	}
+
+	[Fact]
+	public void ExtractAsync_BooleanTextTable_ConvertsTrueFalseAndNull()
+	{
+		var model = new ModelDescriptor(typeof(BooleanRecord));
+		using var stream = CreateWorkbook(workbook =>
+		{
+			var worksheet = workbook.AddWorksheet("Booleans");
+			worksheet.Cell("A1").SetValue(nameof(BooleanRecord.RecordId));
+			worksheet.Cell("B1").SetValue(nameof(BooleanRecord.RequiredValue));
+			worksheet.Cell("C1").SetValue(nameof(BooleanRecord.OptionalValue));
+			worksheet.Cell("A2").SetValue(1);
+			worksheet.Cell("B2").SetValue("TRUE");
+			worksheet.Cell("A3").SetValue(2);
+			worksheet.Cell("B3").SetValue("FALSE");
+			worksheet.Cell("C3").SetValue("TRUE");
+			worksheet.Cell("A4").SetValue(3);
+			worksheet.Cell("B4").SetValue("TRUE");
+			worksheet.Cell("C4").SetValue("FALSE");
+			worksheet.Range("A1:C4").CreateTable(model.Name);
+		});
+
+		var result = _extractor.ExtractAsync<BooleanRecord>(stream, new DataArchiveExtractorOptions(model))
+			.Synchronize()
+			.ToArray();
+
+		Assert.Collection(result,
+			first =>
+			{
+				Assert.Equal(1, first.RecordId);
+				Assert.True(first.RequiredValue);
+				Assert.Null(first.OptionalValue);
+			},
+			second =>
+			{
+				Assert.Equal(2, second.RecordId);
+				Assert.False(second.RequiredValue);
+				Assert.True(second.OptionalValue);
+			},
+			third =>
+			{
+				Assert.Equal(3, third.RecordId);
+				Assert.True(third.RequiredValue);
+				Assert.False(third.OptionalValue);
+			});
+	}
+
+	[Fact]
 	public void ExtractAsync_ModelNamedTableWithReorderedColumnsAndTrailingRows_MapsFieldsAndSkipsEmptyRows()
 	{
 		using var stream = CreateImportTableWorkbook();

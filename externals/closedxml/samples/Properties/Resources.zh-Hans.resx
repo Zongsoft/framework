@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="User.Title" xml:space="preserve">
+		<value>用户</value>
+	</data>
+	<data name="User.Description" xml:space="preserve">
+		<value>用于演示电子表格导出和导入的用户。</value>
+	</data>
+	<data name="User.UserId.Label" xml:space="preserve">
+		<value>用户编号</value>
+	</data>
+	<data name="User.UserId.Description" xml:space="preserve">
+		<value>用户的唯一编号。</value>
+	</data>
+	<data name="User.Name.Label" xml:space="preserve">
+		<value>姓名</value>
+	</data>
+	<data name="User.Name.Description" xml:space="preserve">
+		<value>用户的显示名称。</value>
+	</data>
+	<data name="User.Gender.Label" xml:space="preserve">
+		<value>性别</value>
+	</data>
+	<data name="User.Gender.Description" xml:space="preserve">
+		<value>用户的性别。</value>
+	</data>
+	<data name="User.Birthday.Label" xml:space="preserve">
+		<value>生日</value>
+	</data>
+	<data name="User.Birthday.Description" xml:space="preserve">
+		<value>用户的出生日期。</value>
+	</data>
+	<data name="User.Email.Label" xml:space="preserve">
+		<value>电子邮箱</value>
+	</data>
+	<data name="User.Email.Description" xml:space="preserve">
+		<value>用户的电子邮箱地址。</value>
+	</data>
+	<data name="User.IsActive.Label" xml:space="preserve">
+		<value>是否有效</value>
+	</data>
+	<data name="User.IsActive.Description" xml:space="preserve">
+		<value>用户是否有效，空白表示未指定。</value>
+	</data>
+	<data name="User.Status.Label" xml:space="preserve">
+		<value>状态</value>
+	</data>
+	<data name="User.Status.Description" xml:space="preserve">
+		<value>用户状态，空白表示未指定。</value>
+	</data>
+	<data name="User.Balance.Label" xml:space="preserve">
+		<value>余额</value>
+	</data>
+	<data name="User.Balance.Description" xml:space="preserve">
+		<value>账户余额，空白表示未指定。</value>
+	</data>
+</root>
