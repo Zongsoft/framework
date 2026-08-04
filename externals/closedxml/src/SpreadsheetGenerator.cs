@@ -312,7 +312,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 	{
 		const int CURRENCY_FORMAT_ID = 7;
 
-		if(property is ModelPropertyDescriptor.SimplexPropertyDescriptor descriptor)
+		var descriptor = property as ModelPropertyDescriptor.SimplexPropertyDescriptor;
+		if(descriptor != null)
 			column.FirstColumn().WorksheetColumn().Width = GetColumnWidth(descriptor);
 
 		//如果是特定类型则调整其样式
@@ -324,10 +325,12 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		if(type.IsEnum)
 		{
 			var entries = Common.EnumUtility.GetEnumEntries(type, false);
-			SetColumnSuggestion(column, entries.Select(entry => (XLCellValue)entry.Name), nullable);
+			SetColumnSuggestion(column, entries.Select(entry => (XLCellValue)entry.Name), nullable, property);
 		}
 		else if(type == typeof(bool))
-			SetColumnSuggestion(column, [true, false], nullable);
+			SetColumnSuggestion(column, [true, false], nullable, property);
+		else if(descriptor != null)
+			SetColumnValidation(column, descriptor);
 
 		//设置特定类型的字体
 		if(type.IsEnum || type == typeof(bool) || Common.TypeExtension.IsNumeric(type) || type == typeof(Guid) ||
@@ -374,9 +377,48 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			column.Style.Alignment.SetHorizontal(alignment);
 			column.FirstColumn().WorksheetColumn().Style.Alignment.SetHorizontal(alignment);
 		}
+
+		static double GetColumnWidth(ModelPropertyDescriptor.SimplexPropertyDescriptor property)
+		{
+			var width = property.DataType == null ? TEXT_COLUMN_DEFAULT_WIDTH : property.DataType.IsArray ? COLUMN_MAX_WIDTH : property.DataType.DbType switch
+			{
+				DbType.AnsiString or DbType.AnsiStringFixedLength or
+				DbType.String or DbType.StringFixedLength =>
+					property.Length > 0 ? Math.Clamp(property.Length + 2d, TEXT_COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH) : TEXT_COLUMN_DEFAULT_WIDTH,
+				DbType.Boolean or DbType.Byte or DbType.SByte => 8,
+				DbType.Int16 or DbType.UInt16 => 10,
+				DbType.Int32 or DbType.UInt32 => 12,
+				DbType.Int64 or DbType.UInt64 => 14,
+				DbType.Currency or DbType.Decimal or DbType.Double or DbType.Single or DbType.VarNumeric => 16,
+				DbType.Date or DbType.Time => 12,
+				DbType.DateTime or DbType.DateTime2 => 20,
+				DbType.DateTimeOffset => 26,
+				DbType.Guid => 38,
+				DbType.Xml => COLUMN_MAX_WIDTH,
+				DbType.Binary or DbType.Object => TEXT_COLUMN_DEFAULT_WIDTH,
+				_ => TEXT_COLUMN_DEFAULT_WIDTH,
+			};
+
+			width = property.Role switch
+			{
+				nameof(ModelPropertyRole.Code) => 18,
+				nameof(ModelPropertyRole.Name) => 20,
+				nameof(ModelPropertyRole.Email) => 32,
+				nameof(ModelPropertyRole.Gender) => 10,
+				nameof(ModelPropertyRole.Birthday) => 12,
+				nameof(ModelPropertyRole.Phone) => 18,
+				nameof(ModelPropertyRole.Address) => 40,
+				nameof(ModelPropertyRole.Currency) => 16,
+				nameof(ModelPropertyRole.Password) => 24,
+				nameof(ModelPropertyRole.Description) => COLUMN_MAX_WIDTH,
+				_ => width,
+			};
+
+			return Math.Clamp(width, COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH);
+		}
 	}
 
-	private static void SetColumnSuggestion(IXLRange column, IEnumerable<XLCellValue> entries, bool nullable)
+	private static void SetColumnSuggestion(IXLRange column, IEnumerable<XLCellValue> entries, bool nullable, ModelPropertyDescriptor property)
 	{
 		const string SUGGESTION_SHEET_NAME = "__Suggestion_Sheet__";
 
@@ -413,46 +455,83 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		else
 			validation.List($"\"{string.Join(',', items.Select(item => item.GetText()))}\"");
 
-		validation.IgnoreBlanks = nullable;
+		var label = string.IsNullOrEmpty(property.Label) ? property.Name : property.Label;
+		SetValidationError(validation, nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_List_Message, label));
 	}
 
-	private static double GetColumnWidth(ModelPropertyDescriptor.SimplexPropertyDescriptor property)
+	private static void SetColumnValidation(IXLRange column, ModelPropertyDescriptor.SimplexPropertyDescriptor property)
 	{
-		var width = property.DataType == null ? TEXT_COLUMN_DEFAULT_WIDTH : property.DataType.IsArray ? COLUMN_MAX_WIDTH : property.DataType.DbType switch
+		var label = string.IsNullOrEmpty(property.Label) ? property.Name : property.Label;
+		var type = property.DataType?.DbType;
+		var nullable = Common.TypeExtension.IsNullable(property.Type, out var propertyType);
+		if(!nullable)
+			propertyType = property.Type;
+
+		if(propertyType == typeof(DateTime))
 		{
-			DbType.AnsiString or DbType.AnsiStringFixedLength or
-			DbType.String or DbType.StringFixedLength =>
-				property.Length > 0 ? Math.Clamp(property.Length + 2d, TEXT_COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH) : TEXT_COLUMN_DEFAULT_WIDTH,
-			DbType.Boolean or DbType.Byte or DbType.SByte => 8,
-			DbType.Int16 or DbType.UInt16 => 10,
-			DbType.Int32 or DbType.UInt32 => 12,
-			DbType.Int64 or DbType.UInt64 => 14,
-			DbType.Currency or DbType.Decimal or DbType.Double or DbType.Single or DbType.VarNumeric => 16,
-			DbType.Date or DbType.Time => 12,
-			DbType.DateTime or DbType.DateTime2 => 20,
-			DbType.DateTimeOffset => 26,
-			DbType.Guid => 38,
-			DbType.Xml => COLUMN_MAX_WIDTH,
-			DbType.Binary or DbType.Object => TEXT_COLUMN_DEFAULT_WIDTH,
-			_ => TEXT_COLUMN_DEFAULT_WIDTH,
+			var validation = column.CreateDataValidation();
+			//ClosedXML 以 OLE 自动化日期保存验证边界，而序号 1 对应 Excel 的 1900-01-01。
+			validation.Date.Between(DateTime.FromOADate(1), DateTime.MaxValue.Date);
+			SetValidationError(validation, property.Nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_Date_Message, label));
+			return;
+		}
+
+		if(type is DbType.AnsiString or DbType.AnsiStringFixedLength or DbType.String or DbType.StringFixedLength)
+		{
+			if(property.Length <= 0)
+				return;
+
+			var validation = column.CreateDataValidation();
+			validation.TextLength.EqualOrLessThan(property.Length);
+			SetValidationError(validation, property.Nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_TextLength_Message, label, property.Length));
+			return;
+		}
+
+		(string Minimum, string Maximum) integerRange = type switch
+		{
+			DbType.Byte => ("0", byte.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+			DbType.SByte => (sbyte.MinValue.ToString(System.Globalization.CultureInfo.InvariantCulture), sbyte.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+			DbType.Int16 => (short.MinValue.ToString(System.Globalization.CultureInfo.InvariantCulture), short.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+			DbType.UInt16 => ("0", ushort.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+			DbType.Int32 => (int.MinValue.ToString(System.Globalization.CultureInfo.InvariantCulture), int.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+			DbType.UInt32 => ("0", uint.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+			_ => (null, null),
 		};
 
-		width = property.Role switch
+		if(integerRange.Minimum != null)
 		{
-			nameof(ModelPropertyRole.Code) => 18,
-			nameof(ModelPropertyRole.Name) => 20,
-			nameof(ModelPropertyRole.Email) => 32,
-			nameof(ModelPropertyRole.Gender) => 10,
-			nameof(ModelPropertyRole.Birthday) => 12,
-			nameof(ModelPropertyRole.Phone) => 18,
-			nameof(ModelPropertyRole.Address) => 40,
-			nameof(ModelPropertyRole.Currency) => 16,
-			nameof(ModelPropertyRole.Password) => 24,
-			nameof(ModelPropertyRole.Description) => COLUMN_MAX_WIDTH,
-			_ => width,
+			var validation = column.CreateDataValidation();
+			validation.AllowedValues = XLAllowedValues.WholeNumber;
+			validation.Operator = XLOperator.Between;
+			validation.MinValue = integerRange.Minimum;
+			validation.MaxValue = integerRange.Maximum;
+			SetValidationError(validation, property.Nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_Integer_Message, label, integerRange.Minimum, integerRange.Maximum));
+			return;
+		}
+
+		(double Minimum, double Maximum) numericRange = type switch
+		{
+			DbType.Currency or DbType.Decimal or DbType.VarNumeric => ((double)decimal.MinValue, (double)decimal.MaxValue),
+			DbType.Single => (-(double)float.MaxValue, (double)float.MaxValue),
+			DbType.Double => (-1E+307, 1E+307),
+			_ => (0d, 0d),
 		};
 
-		return Math.Clamp(width, COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH);
+		if(numericRange != default)
+		{
+			var validation = column.CreateDataValidation();
+			validation.Decimal.Between(numericRange.Minimum, numericRange.Maximum);
+			SetValidationError(validation, property.Nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_Number_Message, label));
+		}
+	}
+
+	private static void SetValidationError(IXLDataValidation validation, bool nullable, string message)
+	{
+		validation.IgnoreBlanks = nullable;
+		validation.ShowErrorMessage = true;
+		validation.ErrorStyle = XLErrorStyle.Stop;
+		validation.ErrorTitle = Properties.Resources.SpreadsheetGenerator_ValidationError_Title;
+		validation.ErrorMessage = message;
 	}
 
 	private static void GenerateRow(IXLWorksheet worksheet, int row, object record, TableColumn[] columns, IDataArchiveGeneratorOptions options)

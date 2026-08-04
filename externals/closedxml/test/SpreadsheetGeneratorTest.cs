@@ -23,8 +23,8 @@ public class SpreadsheetGeneratorTest
 
 		Assert.Equal(Templates.User.Descriptor.Name, table.Name);
 		Assert.Equal(3, table.RangeAddress.FirstAddress.RowNumber);
-		Assert.Equal(3 + Templates.User.Data.Length, table.RangeAddress.LastAddress.RowNumber);
-		Assert.Equal(Templates.User.Data.Length, table.DataRange.RowCount());
+		Assert.Equal(13, table.RangeAddress.LastAddress.RowNumber);
+		Assert.Equal(10, table.DataRange.RowCount());
 		Assert.Equal(Templates.User.Descriptor.Properties.Count, table.ColumnCount());
 		Assert.True(table.ShowHeaderRow);
 		Assert.False(table.ShowTotalsRow);
@@ -74,8 +74,8 @@ public class SpreadsheetGeneratorTest
 		var modernBirthday = worksheet.Cell(7, 2);
 
 		Assert.Equal(3, table.RangeAddress.FirstAddress.RowNumber);
-		Assert.Equal(7, table.RangeAddress.LastAddress.RowNumber);
-		Assert.Equal(4, table.DataRange.RowCount());
+		Assert.Equal(13, table.RangeAddress.LastAddress.RowNumber);
+		Assert.Equal(10, table.DataRange.RowCount());
 		Assert.Equal(2, table.ColumnCount());
 		Assert.Equal(Templates.User.Descriptor.Properties[nameof(User.Name)].Label, worksheet.Cell(3, 1).GetString());
 		Assert.Equal(Templates.User.Descriptor.Properties[nameof(User.Birthday)].Label, worksheet.Cell(3, 2).GetString());
@@ -83,6 +83,7 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal(XLDataType.Text, historicalBirthday.DataType);
 		Assert.Equal("1815-12-10", historicalBirthday.GetString());
 		Assert.Equal("1815-12-10", historicalBirthday.GetFormattedString());
+		Assert.True(historicalBirthday.HasDataValidation);
 		Assert.Equal(XLDataType.Text, lastHistoricalBirthday.DataType);
 		Assert.Equal("1899-12-31", lastHistoricalBirthday.GetString());
 		Assert.Equal(XLDataType.DateTime, firstExcelBirthday.DataType);
@@ -91,7 +92,49 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal(XLDataType.DateTime, modernBirthday.DataType);
 		Assert.Equal(new DateTime(1983, 1, 23), modernBirthday.GetDateTime());
 		Assert.Equal("yyyy-MM-dd", modernBirthday.Style.DateFormat.Format);
+		Assert.True(modernBirthday.HasDataValidation);
 		Assert.False(worksheet.DefinedNames.TryGetValue(nameof(User.UserId), out _));
+	}
+
+	[Theory]
+	[InlineData("en-US", "Invalid value", "The value of 'Birthday' must be a valid date between 1900-01-01 and 9999-12-31.")]
+	[InlineData("zh-Hans", "输入值无效", "“Birthday”必须是 1900-01-01 到 9999-12-31 之间的有效日期。")]
+	public async Task GenerateAsync_DateColumns_CreatesLocalizedNativeValidation(string cultureName, string errorTitle, string errorMessage)
+	{
+		using var culture = new CultureScope(cultureName);
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(DateValidationRecord)) { Title = "Date Validation" };
+		model.Properties[nameof(DateValidationRecord.Birthday)].Label = "Birthday";
+		DateValidationRecord[] records =
+		[
+			new() { Birthday = new DateTime(1900, 1, 1) },
+			new() { Birthday = new DateTime(2024, 2, 29) },
+		];
+
+		await _generator.GenerateAsync(output, model, records);
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var cells = table.DataRange.FirstColumn().Cells().ToArray();
+
+		Assert.Equal(10, cells.Length);
+		Assert.All(cells, cell => Assert.True(cell.HasDataValidation));
+		var validation = cells[0].GetDataValidation();
+		Assert.Equal(XLDataType.DateTime, cells[0].DataType);
+		Assert.Equal(new DateTime(1900, 1, 1), cells[0].GetDateTime());
+		Assert.Equal(XLDataType.DateTime, cells[1].DataType);
+		Assert.Equal(new DateTime(2024, 2, 29), cells[1].GetDateTime());
+		Assert.Equal(XLAllowedValues.Date, validation.AllowedValues);
+		Assert.Equal(XLOperator.Between, validation.Operator);
+		Assert.Equal("1", validation.MinValue);
+		Assert.Equal(DateTime.MaxValue.Date.ToOADate().ToString(System.Globalization.CultureInfo.InvariantCulture), validation.MaxValue);
+		Assert.Equal(table.DataRange.RangeAddress, Assert.Single(validation.Ranges).RangeAddress);
+		Assert.True(validation.IgnoreBlanks);
+		Assert.True(validation.ShowErrorMessage);
+		Assert.Equal(XLErrorStyle.Stop, validation.ErrorStyle);
+		Assert.Equal(errorTitle, validation.ErrorTitle);
+		Assert.Equal(errorMessage, validation.ErrorMessage);
 	}
 
 	[Fact]
@@ -148,8 +191,8 @@ public class SpreadsheetGeneratorTest
 		var requiredItems = GetValidationItems(workbook, requiredCells[0], false, true);
 		var optionalItems = GetValidationItems(workbook, optionalCells[0], true, true);
 
-		Assert.Equal(2, requiredCells.Length);
-		Assert.Equal(2, optionalCells.Length);
+		Assert.Equal(10, requiredCells.Length);
+		Assert.Equal(10, optionalCells.Length);
 		Assert.Equal(table.ColumnCount(), table.Worksheet.LastColumnUsed().ColumnNumber());
 		Assert.All(requiredCells, cell => Assert.True(cell.HasDataValidation));
 		Assert.All(optionalCells, cell => Assert.True(cell.HasDataValidation));
@@ -218,6 +261,72 @@ public class SpreadsheetGeneratorTest
 			width => Assert.InRange(width, 8, 50));
 	}
 
+	[Theory]
+	[InlineData("en-US", "Invalid value", "The value of 'S' cannot exceed 8 characters.", "The value of 'I' must be a whole number between -2147483648 and 2147483647.", "The value of 'B' must be a number.")]
+	[InlineData("zh-Hans", "输入值无效", "“S”的内容不能超过 8 个字符。", "“I”必须是 -2147483648 到 2147483647 之间的整数。", "“B”必须是数值。")]
+	public async Task GenerateAsync_SimplexDataTypes_CreatesLocalizedInputValidations(
+		string cultureName,
+		string errorTitle,
+		string textError,
+		string integerError,
+		string numberError)
+	{
+		using var culture = new CultureScope(cultureName);
+		using var output = new MemoryStream();
+		var model = CreateColumnStyleModel();
+
+		await _generator.GenerateAsync(output, model, CreateColumnStyleRecords());
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var shortTextColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.ShortText));
+		var quantityColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Quantity));
+		var balanceColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Balance));
+		var textValidation = GetValidation(table, shortTextColumn);
+		var integerValidation = GetValidation(table, quantityColumn);
+		var numberValidation = GetValidation(table, balanceColumn);
+
+		Assert.Equal(XLAllowedValues.TextLength, textValidation.AllowedValues);
+		Assert.Equal(XLOperator.EqualOrLessThan, textValidation.Operator);
+		Assert.Equal("8", textValidation.MinValue);
+		AssertValidation(textValidation, table.DataRange.Column(shortTextColumn).RangeAddress, false, errorTitle, textError);
+
+		Assert.Equal(XLAllowedValues.WholeNumber, integerValidation.AllowedValues);
+		Assert.Equal(XLOperator.Between, integerValidation.Operator);
+		Assert.Equal(int.MinValue.ToString(System.Globalization.CultureInfo.InvariantCulture), integerValidation.MinValue);
+		Assert.Equal(int.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture), integerValidation.MaxValue);
+		AssertValidation(integerValidation, table.DataRange.Column(quantityColumn).RangeAddress, false, errorTitle, integerError);
+
+		Assert.Equal(XLAllowedValues.Decimal, numberValidation.AllowedValues);
+		Assert.Equal(XLOperator.Between, numberValidation.Operator);
+		Assert.True(double.Parse(numberValidation.MinValue, System.Globalization.CultureInfo.InvariantCulture) < 0);
+		Assert.True(double.Parse(numberValidation.MaxValue, System.Globalization.CultureInfo.InvariantCulture) > 0);
+		AssertValidation(numberValidation, table.DataRange.Column(balanceColumn).RangeAddress, true, errorTitle, numberError);
+
+		static IXLDataValidation GetValidation(IXLTable table, int columnNumber)
+		{
+			var cell = table.DataRange.FirstRow().Cell(columnNumber);
+			Assert.True(cell.HasDataValidation);
+			return cell.GetDataValidation();
+		}
+
+		static void AssertValidation(
+			IXLDataValidation validation,
+			IXLRangeAddress expectedRange,
+			bool ignoreBlanks,
+			string errorTitle,
+			string errorMessage)
+		{
+			Assert.Equal(expectedRange, Assert.Single(validation.Ranges).RangeAddress);
+			Assert.Equal(ignoreBlanks, validation.IgnoreBlanks);
+			Assert.True(validation.ShowErrorMessage);
+			Assert.Equal(XLErrorStyle.Stop, validation.ErrorStyle);
+			Assert.Equal(errorTitle, validation.ErrorTitle);
+			Assert.Equal(errorMessage, validation.ErrorMessage);
+		}
+	}
+
 	[Fact]
 	public async Task GenerateAsync_CurrencyRole_UsesPersistedCurrencyNumberFormat()
 	{
@@ -232,14 +341,15 @@ public class SpreadsheetGeneratorTest
 		var balanceColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Balance));
 		var balanceCells = table.DataRange.Column(balanceColumn).Cells().ToArray();
 
-		Assert.Equal(2, balanceCells.Length);
+		Assert.Equal(10, balanceCells.Length);
 		Assert.Equal(128.5, balanceCells[0].GetDouble());
 		Assert.Equal(-12.25, balanceCells[1].GetDouble());
 		Assert.All(balanceCells, cell =>
 		{
-			Assert.Equal(XLDataType.Number, cell.DataType);
 			Assert.Equal(7, cell.Style.NumberFormat.NumberFormatId);
 		});
+		Assert.All(balanceCells.Take(2), cell => Assert.Equal(XLDataType.Number, cell.DataType));
+		Assert.All(balanceCells.Skip(2), cell => Assert.True(cell.IsEmpty()));
 	}
 
 	[Fact]
@@ -256,7 +366,7 @@ public class SpreadsheetGeneratorTest
 		var keyColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.RecordId));
 		var keyCells = table.DataRange.Column(keyColumn).Cells().ToArray();
 
-		Assert.Equal(2, keyCells.Length);
+		Assert.Equal(10, keyCells.Length);
 		Assert.All(keyCells, cell =>
 		{
 			Assert.Equal(XLAlignmentHorizontalValues.Center, cell.Style.Alignment.Horizontal);
@@ -324,6 +434,7 @@ public class SpreadsheetGeneratorTest
 		model.Properties[nameof(ColumnStyleRecord.OversizedText)].Label = "L";
 		model.Properties[nameof(ColumnStyleRecord.Quantity)].Label = "I";
 		model.Properties[nameof(ColumnStyleRecord.DescriptionText)].Label = "D";
+		model.Properties[nameof(ColumnStyleRecord.Balance)].Label = "B";
 		return model;
 	}
 
@@ -341,6 +452,10 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal(XLAllowedValues.List, validation.AllowedValues);
 		Assert.True(validation.InCellDropdown);
 		Assert.Equal(ignoreBlanks, validation.IgnoreBlanks);
+		Assert.True(validation.ShowErrorMessage);
+		Assert.Equal(XLErrorStyle.Stop, validation.ErrorStyle);
+		Assert.False(string.IsNullOrWhiteSpace(validation.ErrorTitle));
+		Assert.False(string.IsNullOrWhiteSpace(validation.ErrorMessage));
 
 		var value = validation.Value;
 		var inlineSource = value.Length >= 2 && value[0] == '"' && value[^1] == '"';
@@ -390,7 +505,13 @@ public class SpreadsheetGeneratorTest
 		[ModelProperty(DbType.AnsiString, 8, false, Role = nameof(ModelPropertyRole.Description))]
 		public string DescriptionText { get; set; }
 
-		[ModelProperty(DbType.Decimal, false, Role = nameof(ModelPropertyRole.Currency))]
-		public decimal Balance { get; set; }
+		[ModelProperty(DbType.Decimal, true, Role = nameof(ModelPropertyRole.Currency))]
+		public decimal? Balance { get; set; }
+	}
+
+	private sealed class DateValidationRecord
+	{
+		[ModelProperty(DbType.DateTime, true)]
+		public DateTime? Birthday { get; set; }
 	}
 }

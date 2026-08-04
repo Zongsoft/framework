@@ -30,4 +30,22 @@
 	<data name="SpreadsheetGenerator.InvalidTableName.Message" xml:space="preserve">
 		<value>模型名称“{0}”不能用作 Excel 数据表名称。</value>
 	</data>
+	<data name="SpreadsheetGenerator.ValidationError.Title" xml:space="preserve">
+		<value>输入值无效</value>
+	</data>
+	<data name="SpreadsheetGenerator.ValidationError.List.Message" xml:space="preserve">
+		<value>“{0}”的值必须从下拉列表中选择。</value>
+	</data>
+	<data name="SpreadsheetGenerator.ValidationError.TextLength.Message" xml:space="preserve">
+		<value>“{0}”的内容不能超过 {1} 个字符。</value>
+	</data>
+	<data name="SpreadsheetGenerator.ValidationError.Integer.Message" xml:space="preserve">
+		<value>“{0}”必须是 {1} 到 {2} 之间的整数。</value>
+	</data>
+	<data name="SpreadsheetGenerator.ValidationError.Number.Message" xml:space="preserve">
+		<value>“{0}”必须是数值。</value>
+	</data>
+	<data name="SpreadsheetGenerator.ValidationError.Date.Message" xml:space="preserve">
+		<value>“{0}”必须是 1900-01-01 到 9999-12-31 之间的有效日期。</value>
+	</data>
 </root>

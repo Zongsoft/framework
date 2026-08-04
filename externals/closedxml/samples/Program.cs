@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Data;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -161,19 +162,21 @@ internal class Program
 		public static readonly User[] Data =
 		[
 			new() { UserId = 101, Name = "Popeye", Gender = Gender.Male, Email = "zongsoft@qq.com", IsActive = true, Status = UserStatus.Active, Balance = 128.50m },
-			new() { UserId = 102, Name = "Ada", Gender = Gender.Female, Birthday = new DateTime(1815, 12, 10), Email = "ada@example.com", IsActive = false, Status = UserStatus.Inactive, Balance = -12.25m },
+			new() { UserId = 102, Name = "Ada", Gender = Gender.Female, Birthday = new DateTime(1985, 12, 10), Email = "ada@example.com", IsActive = false, Status = UserStatus.Inactive, Balance = -12.25m },
 			new() { UserId = 103, Name = "Grace", Gender = Gender.Female, Birthday = new DateTime(1906, 12, 9), Email = "grace@example.com" },
 		];
 
-		[ModelProperty(IsPrimaryKey = true)]
+		[ModelProperty(DbType.Int32, false, IsPrimaryKey = true)]
 		public int UserId { get; set; }
+		[ModelProperty(DbType.String, 50, false)]
 		public string Name { get; set; }
 		public Gender Gender { get; set; }
 		public DateTime? Birthday { get; set; }
+		[ModelProperty(DbType.AnsiString, 100, true)]
 		public string Email { get; set; }
 		public bool? IsActive { get; set; }
 		public UserStatus? Status { get; set; }
-		[ModelProperty(Role = nameof(ModelPropertyRole.Currency))]
+		[ModelProperty(DbType.Decimal, true, Role = nameof(ModelPropertyRole.Currency))]
 		public decimal? Balance { get; set; }
 	}
 

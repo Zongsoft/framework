@@ -113,5 +113,59 @@ namespace Zongsoft.Externals.ClosedXml.Properties {
 	            return ResourceManager.GetString("SpreadsheetGenerator.InvalidTableName.Message", resourceCulture);
 	        }
 	    }
+
+	    /// <summary>
+	    ///   查找类似 The value of &apos;{0}&apos; must be a valid date between 1900-01-01 and 9999-12-31. 的本地化字符串。
+	    /// </summary>
+	    internal static string SpreadsheetGenerator_ValidationError_Date_Message {
+	        get {
+	            return ResourceManager.GetString("SpreadsheetGenerator.ValidationError.Date.Message", resourceCulture);
+	        }
+	    }
+
+	    /// <summary>
+	    ///   查找类似 The value of &apos;{0}&apos; must be a whole number between {1} and {2}. 的本地化字符串。
+	    /// </summary>
+	    internal static string SpreadsheetGenerator_ValidationError_Integer_Message {
+	        get {
+	            return ResourceManager.GetString("SpreadsheetGenerator.ValidationError.Integer.Message", resourceCulture);
+	        }
+	    }
+
+	    /// <summary>
+	    ///   查找类似 The value of &apos;{0}&apos; must be selected from its drop-down list. 的本地化字符串。
+	    /// </summary>
+	    internal static string SpreadsheetGenerator_ValidationError_List_Message {
+	        get {
+	            return ResourceManager.GetString("SpreadsheetGenerator.ValidationError.List.Message", resourceCulture);
+	        }
+	    }
+
+	    /// <summary>
+	    ///   查找类似 The value of &apos;{0}&apos; must be a number. 的本地化字符串。
+	    /// </summary>
+	    internal static string SpreadsheetGenerator_ValidationError_Number_Message {
+	        get {
+	            return ResourceManager.GetString("SpreadsheetGenerator.ValidationError.Number.Message", resourceCulture);
+	        }
+	    }
+
+	    /// <summary>
+	    ///   查找类似 The value of &apos;{0}&apos; cannot exceed {1} characters. 的本地化字符串。
+	    /// </summary>
+	    internal static string SpreadsheetGenerator_ValidationError_TextLength_Message {
+	        get {
+	            return ResourceManager.GetString("SpreadsheetGenerator.ValidationError.TextLength.Message", resourceCulture);
+	        }
+	    }
+
+	    /// <summary>
+	    ///   查找类似 Invalid value 的本地化字符串。
+	    /// </summary>
+	    internal static string SpreadsheetGenerator_ValidationError_Title {
+	        get {
+	            return ResourceManager.GetString("SpreadsheetGenerator.ValidationError.Title", resourceCulture);
+	        }
+	    }
 	}
 }
