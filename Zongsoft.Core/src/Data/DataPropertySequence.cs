@@ -106,6 +106,8 @@ public readonly struct DataPropertySequence : IParsable<DataPropertySequence>
 	/// <summary>获取引用成员标识数组。</summary>
 	public string[] References { get; }
 
+	/// <summary>获取一个值，指示序列是否为空。</summary>
+	public bool IsEmpty => string.IsNullOrEmpty(this.Name);
 	/// <summary>获取一个值，指示是否为数据库内置序列器。</summary>
 	public bool IsBuiltin => this.Name != null && this.Name.Length > 0 && this.Name[0] == '*';
 	/// <summary>获取一个值，指示是否为外部序列器。</summary>
