@@ -1,79 +1,69 @@
 #!/bin/sh
 
-set -x
+set -u
 
-CAKE_ARGS="--verbosity=normal"
+SCRIPT_DIRECTORY=$(CDPATH= cd "$(dirname "$0")" && pwd)
+PROJECT_MANIFEST="$SCRIPT_DIRECTORY/cake.projects"
+PROJECT_ADMINISTRATIVES="$SCRIPT_DIRECTORY/../Administratives/build.cake"
+FAILED_PROJECTS=""
 
-PROJECT_CORE="Zongsoft.Core/build.cake"
-PROJECT_DATA="Zongsoft.Data/build.cake"
-PROJECT_NET="Zongsoft.Net/build.cake"
-PROJECT_WEB="Zongsoft.Web/build.cake"
-PROJECT_DIAGNOSTICS="Zongsoft.Diagnostics/build.cake"
-PROJECT_INTELLIGENCES="Zongsoft.Intelligences/build.cake"
-PROJECT_PLUGINS="Zongsoft.Plugins/build.cake"
-PROJECT_PLUGINS_WEB="Zongsoft.Plugins.Web/build.cake"
-PROJECT_SECURITY="Zongsoft.Security/build.cake"
-PROJECT_COMMANDS="Zongsoft.Commands/build.cake"
-PROJECT_REPORTING="Zongsoft.Reporting/build.cake"
+if ! command -v dotnet >/dev/null 2>&1; then
+	printf '%s\n' "The dotnet command was not found." >&2
+	exit 127
+fi
 
-PROJECT_MESSAGING_MQTT="messaging/mqtt/build.cake"
-PROJECT_MESSAGING_KAFKA="messaging/kafka/build.cake"
-PROJECT_MESSAGING_RABBIT="messaging/rabbit/build.cake"
-PROJECT_MESSAGING_ZEROMQ="messaging/zero/build.cake"
+if [ ! -f "$PROJECT_MANIFEST" ]; then
+	printf 'The Cake project manifest was not found: %s\n' "$PROJECT_MANIFEST" >&2
+	exit 1
+fi
 
-PROJECT_UPGRADING_DEPLOYER="upgrading/deployer/build.cake"
-PROJECT_UPGRADING_UPGRADER="upgrading/upgrader/build.cake"
-PROJECT_UPGRADING_TOOL="upgrading/tool/build.cake"
-PROJECT_UPGRADING_WEB="upgrading/web/build.cake"
+cd "$SCRIPT_DIRECTORY"
 
-PROJECT_ALIYUN="externals/aliyun/build.cake"
-PROJECT_AMAZON="externals/amazon/build.cake"
-PROJECT_REDIS="externals/redis/build.cake"
-PROJECT_POLLY="externals/polly/build.cake"
-PROJECT_WECHAT="externals/wechat/build.cake"
-PROJECT_CLOSEDXML="externals/closedxml/build.cake"
-PROJECT_HANGFIRE="externals/hangfire/build.cake"
-PROJECT_SCRIBAN="externals/scriban/build.cake"
-PROJECT_PYTHON="externals/python/build.cake"
-PROJECT_LUA="externals/lua/build.cake"
-PROJECT_OPC="externals/opc/build.cake"
+run_project()
+{
+	project="$1"
+	shift
 
-PROJECT_ADMINISTRATIVES="../Administratives/build.cake"
+	printf '\n==> dotnet cake %s\n' "$project"
 
-dotnet cake $PROJECT_CORE $CAKE_ARGS "$@"
-dotnet cake $PROJECT_DATA $CAKE_ARGS "$@"
-dotnet cake $PROJECT_NET $CAKE_ARGS "$@"
-dotnet cake $PROJECT_WEB $CAKE_ARGS "$@"
-dotnet cake $PROJECT_DIAGNOSTICS $CAKE_ARGS "$@"
-dotnet cake $PROJECT_INTELLIGENCES $CAKE_ARGS "$@"
-dotnet cake $PROJECT_PLUGINS $CAKE_ARGS "$@"
-dotnet cake $PROJECT_PLUGINS_WEB $CAKE_ARGS "$@"
-dotnet cake $PROJECT_SECURITY $CAKE_ARGS "$@"
-dotnet cake $PROJECT_COMMANDS $CAKE_ARGS "$@"
-dotnet cake $PROJECT_REPORTING $CAKE_ARGS "$@"
+	if dotnet cake "$project" --verbosity=normal "$@"; then
+		return 0
+	else
+		status=$?
+		FAILED_PROJECTS="${FAILED_PROJECTS}${FAILED_PROJECTS:+ }${project}"
+		printf '<== Failed (%s): %s\n' "$status" "$project" >&2
+		return "$status"
+	fi
+}
 
-dotnet cake $PROJECT_MESSAGING_MQTT $CAKE_ARGS "$@"
-dotnet cake $PROJECT_MESSAGING_KAFKA $CAKE_ARGS "$@"
-dotnet cake $PROJECT_MESSAGING_RABBIT $CAKE_ARGS "$@"
-dotnet cake $PROJECT_MESSAGING_ZEROMQ $CAKE_ARGS "$@"
+while IFS= read -r project || [ -n "$project" ]; do
+	project=$(printf '%s' "$project" | tr -d '\r')
 
-dotnet cake $PROJECT_UPGRADING_DEPLOYER $CAKE_ARGS "$@"
-dotnet cake $PROJECT_UPGRADING_UPGRADER $CAKE_ARGS "$@"
-dotnet cake $PROJECT_UPGRADING_TOOL $CAKE_ARGS "$@"
-dotnet cake $PROJECT_UPGRADING_WEB $CAKE_ARGS "$@"
+	case "$project" in
+		''|'#'*)
+			continue
+			;;
+	esac
 
-dotnet cake $PROJECT_ALIYUN $CAKE_ARGS "$@"
-dotnet cake $PROJECT_AMAZON $CAKE_ARGS "$@"
-dotnet cake $PROJECT_REDIS $CAKE_ARGS "$@"
-dotnet cake $PROJECT_POLLY $CAKE_ARGS "$@"
-dotnet cake $PROJECT_WECHAT $CAKE_ARGS "$@"
-dotnet cake $PROJECT_CLOSEDXML $CAKE_ARGS "$@"
-dotnet cake $PROJECT_HANGFIRE $CAKE_ARGS "$@"
-dotnet cake $PROJECT_SCRIBAN $CAKE_ARGS "$@"
-dotnet cake $PROJECT_PYTHON $CAKE_ARGS "$@"
-dotnet cake $PROJECT_LUA $CAKE_ARGS "$@"
-dotnet cake $PROJECT_OPC $CAKE_ARGS "$@"
+	if run_project "$project" "$@"; then
+		:
+	fi
+done < "$PROJECT_MANIFEST"
 
 if [ -f "$PROJECT_ADMINISTRATIVES" ]; then
-	dotnet cake $PROJECT_ADMINISTRATIVES $CAKE_ARGS "$@"
+	if run_project "$PROJECT_ADMINISTRATIVES" "$@"; then
+		:
+	fi
 fi
+
+if [ -n "$FAILED_PROJECTS" ]; then
+	printf '\nThe following Cake projects failed:\n' >&2
+
+	for project in $FAILED_PROJECTS; do
+		printf ' - %s\n' "$project" >&2
+	done
+
+	exit 1
+fi
+
+printf '\nAll Cake projects completed successfully.\n'

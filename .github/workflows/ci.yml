@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     services:
       postgres:
@@ -26,26 +34,24 @@ jobs:
           --health-retries 5
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
-    - name: Install .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: | 
-          8.0.x
-          9.0.x
-          10.0.x
+      - name: Install .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
-    - name: Install Zongsoft.Tools.Deployer
-      run: dotnet tool install -g Zongsoft.Tools.Deployer
+      - name: Restore .NET tools
+        run: dotnet tool restore
 
-    - name: Install Cake.Tool
-      run: dotnet tool install -g Cake.Tool
+      - name: Make Cake script executable
+        run: chmod +x ./cake.sh
 
-    - name: Make cake executable
-      run: chmod +x ./cake.sh
-
-    - name: Build & Test
-      run: ./cake.sh
+      - name: Build and test
+        run: ./cake.sh

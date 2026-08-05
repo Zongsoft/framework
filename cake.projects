@@ -1,0 +1,37 @@
+# Infrastructures
+Zongsoft.Core/build.cake
+Zongsoft.Data/build.cake
+Zongsoft.Net/build.cake
+Zongsoft.Web/build.cake
+Zongsoft.Plugins/build.cake
+Zongsoft.Plugins.Web/build.cake
+Zongsoft.Commands/build.cake
+Zongsoft.Security/build.cake
+Zongsoft.Reporting/build.cake
+Zongsoft.Diagnostics/build.cake
+Zongsoft.Intelligences/build.cake
+
+# Messaging libraries
+messaging/zero/build.cake
+messaging/mqtt/build.cake
+messaging/kafka/build.cake
+messaging/rabbit/build.cake
+
+# Upgrading libraries
+upgrading/deployer/build.cake
+upgrading/upgrader/build.cake
+upgrading/tool/build.cake
+upgrading/web/build.cake
+
+# External libraries
+externals/aliyun/build.cake
+externals/amazon/build.cake
+externals/redis/build.cake
+externals/polly/build.cake
+externals/wechat/build.cake
+externals/closedxml/build.cake
+externals/hangfire/build.cake
+externals/scriban/build.cake
+externals/python/build.cake
+externals/lua/build.cake
+externals/opc/build.cake
