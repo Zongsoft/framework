@@ -103,7 +103,7 @@ internal class Program
 		for(int index = 0; index < users.Count; index++)
 		{
 			var user = users[index];
-			output.WriteLine($"[{index + 1}] Id={user.UserId}, Name={user.Name}, Gender={user.Gender}, Birthday={user.Birthday:yyyy-MM-dd}, Email={user.Email}, Active={user.IsActive?.ToString() ?? "<null>"}, Status={user.Status?.ToString() ?? "<null>"}, Balance={user.Balance?.ToString("0.00") ?? "<null>"}");
+			output.WriteLine($"[{index + 1}] Id={user.UserId}, Name={user.Name}, Gender={user.Gender}, Birthday={user.Birthday:yyyy-MM-dd}, Email={user.Email}, Active={user.IsActive?.ToString() ?? "<null>"}, Status={user.Status?.ToString() ?? "<null>"}, Balance={user.Balance?.ToString("0.00") ?? "<null>"}, Creation={user.Creation:yyyy-MM-dd HH:mm:ss}");
 		}
 	}
 
@@ -161,9 +161,9 @@ internal class Program
 	{
 		public static readonly User[] Data =
 		[
-			new() { UserId = 101, Name = "Popeye", Gender = Gender.Male, Email = "zongsoft@qq.com", IsActive = true, Status = UserStatus.Active, Balance = 128.50m },
-			new() { UserId = 102, Name = "Ada", Gender = Gender.Female, Birthday = new DateTime(1985, 12, 10), Email = "ada@example.com", IsActive = false, Status = UserStatus.Inactive, Balance = -12.25m },
-			new() { UserId = 103, Name = "Grace", Gender = Gender.Female, Birthday = new DateTime(1906, 12, 9), Email = "grace@example.com" },
+			new() { UserId = 101, Name = "Popeye", Gender = Gender.Male, Email = "zongsoft@qq.com", IsActive = true, Status = UserStatus.Active, Balance = 128.50m, Creation = new DateTime(2024, 1, 15, 9, 30, 0) },
+			new() { UserId = 102, Name = "Ada", Gender = Gender.Female, Birthday = new DateTime(1985, 12, 10), Email = "ada@example.com", IsActive = false, Status = UserStatus.Inactive, Balance = -12.25m, Creation = new DateTime(2024, 2, 20, 10, 15, 0) },
+			new() { UserId = 103, Name = "Grace", Gender = Gender.Female, Birthday = new DateTime(1906, 12, 9), Email = "grace@example.com", Creation = new DateTime(2024, 3, 25, 14, 45, 0) },
 		];
 
 		[ModelProperty(DbType.Int32, false, IsPrimaryKey = true)]
@@ -178,6 +178,8 @@ internal class Program
 		public UserStatus? Status { get; set; }
 		[ModelProperty(DbType.Decimal, true, Role = nameof(ModelPropertyRole.Currency))]
 		public decimal? Balance { get; set; }
+		[ModelProperty(DbType.DateTime, false, DefaultValue = "now()")]
+		public DateTime Creation { get; set; }
 	}
 
 	private enum Gender : byte

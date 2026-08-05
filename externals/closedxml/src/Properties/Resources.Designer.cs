@@ -151,6 +151,15 @@ namespace Zongsoft.Externals.ClosedXml.Properties {
 	    }
 
 	    /// <summary>
+	    ///   查找类似 The value of &apos;{0}&apos; is required and cannot exceed {1} characters. 的本地化字符串。
+	    /// </summary>
+	    internal static string SpreadsheetGenerator_ValidationError_RequiredTextLength_Message {
+	        get {
+	            return ResourceManager.GetString("SpreadsheetGenerator.ValidationError.RequiredTextLength.Message", resourceCulture);
+	        }
+	    }
+
+	    /// <summary>
 	    ///   查找类似 The value of &apos;{0}&apos; cannot exceed {1} characters. 的本地化字符串。
 	    /// </summary>
 	    internal static string SpreadsheetGenerator_ValidationError_TextLength_Message {

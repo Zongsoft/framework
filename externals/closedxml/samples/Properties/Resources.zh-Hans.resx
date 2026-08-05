@@ -75,4 +75,10 @@
 	<data name="User.Balance.Description" xml:space="preserve">
 		<value>账户余额，空白表示未指定。</value>
 	</data>
+	<data name="User.Creation.Label" xml:space="preserve">
+		<value>新增时间</value>
+	</data>
+	<data name="User.Creation.Description" xml:space="preserve">
+		<value>用户的新增时间，留空则使用当前时间。</value>
+	</data>
 </root>

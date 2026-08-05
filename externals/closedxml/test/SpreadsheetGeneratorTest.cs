@@ -262,12 +262,13 @@ public class SpreadsheetGeneratorTest
 	}
 
 	[Theory]
-	[InlineData("en-US", "Invalid value", "The value of 'S' cannot exceed 8 characters.", "The value of 'I' must be a whole number between -2147483648 and 2147483647.", "The value of 'B' must be a number.")]
-	[InlineData("zh-Hans", "输入值无效", "“S”的内容不能超过 8 个字符。", "“I”必须是 -2147483648 到 2147483647 之间的整数。", "“B”必须是数值。")]
+	[InlineData("en-US", "Invalid value", "The value of 'S' is required and cannot exceed 8 characters.", "The value of 'O' cannot exceed 8 characters.", "The value of 'I' must be a whole number between -2147483648 and 2147483647.", "The value of 'B' must be a number.")]
+	[InlineData("zh-Hans", "输入值无效", "“S”不能为空且不能超过 8 个字符。", "“O”的内容不能超过 8 个字符。", "“I”必须是 -2147483648 到 2147483647 之间的整数。", "“B”必须是数值。")]
 	public async Task GenerateAsync_SimplexDataTypes_CreatesLocalizedInputValidations(
 		string cultureName,
 		string errorTitle,
-		string textError,
+		string requiredTextError,
+		string optionalTextError,
 		string integerError,
 		string numberError)
 	{
@@ -281,16 +282,24 @@ public class SpreadsheetGeneratorTest
 		using var workbook = new XLWorkbook(output);
 		var table = GetTable(workbook, model.Name);
 		var shortTextColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.ShortText));
+		var optionalTextColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.OptionalText));
 		var quantityColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Quantity));
 		var balanceColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Balance));
-		var textValidation = GetValidation(table, shortTextColumn);
+		var requiredTextValidation = GetValidation(table, shortTextColumn);
+		var optionalTextValidation = GetValidation(table, optionalTextColumn);
 		var integerValidation = GetValidation(table, quantityColumn);
 		var numberValidation = GetValidation(table, balanceColumn);
 
-		Assert.Equal(XLAllowedValues.TextLength, textValidation.AllowedValues);
-		Assert.Equal(XLOperator.EqualOrLessThan, textValidation.Operator);
-		Assert.Equal("8", textValidation.MinValue);
-		AssertValidation(textValidation, table.DataRange.Column(shortTextColumn).RangeAddress, false, errorTitle, textError);
+		Assert.Equal(XLAllowedValues.TextLength, requiredTextValidation.AllowedValues);
+		Assert.Equal(XLOperator.Between, requiredTextValidation.Operator);
+		Assert.Equal("1", requiredTextValidation.MinValue);
+		Assert.Equal("8", requiredTextValidation.MaxValue);
+		AssertValidation(requiredTextValidation, table.DataRange.Column(shortTextColumn).RangeAddress, false, errorTitle, requiredTextError);
+
+		Assert.Equal(XLAllowedValues.TextLength, optionalTextValidation.AllowedValues);
+		Assert.Equal(XLOperator.EqualOrLessThan, optionalTextValidation.Operator);
+		Assert.Equal("8", optionalTextValidation.MinValue);
+		AssertValidation(optionalTextValidation, table.DataRange.Column(optionalTextColumn).RangeAddress, true, errorTitle, optionalTextError);
 
 		Assert.Equal(XLAllowedValues.WholeNumber, integerValidation.AllowedValues);
 		Assert.Equal(XLOperator.Between, integerValidation.Operator);
@@ -328,7 +337,94 @@ public class SpreadsheetGeneratorTest
 	}
 
 	[Fact]
-	public async Task GenerateAsync_CurrencyRole_UsesPersistedCurrencyNumberFormat()
+	public async Task GenerateAsync_ClrNullableDataTypes_UseCombinedNullability()
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(ClrNullableValidationRecord)) { Title = "CLR Nullable Validation" };
+
+		await _generator.GenerateAsync(output, model, new ClrNullableValidationRecord[] { new() });
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var dateValidation = GetValidation(nameof(ClrNullableValidationRecord.Date));
+		var integerValidation = GetValidation(nameof(ClrNullableValidationRecord.Integer));
+		var numberValidation = GetValidation(nameof(ClrNullableValidationRecord.Number));
+
+		Assert.Equal(XLAllowedValues.Date, dateValidation.AllowedValues);
+		Assert.Equal(XLOperator.Between, dateValidation.Operator);
+		Assert.Equal("1", dateValidation.MinValue);
+		Assert.True(dateValidation.IgnoreBlanks);
+
+		Assert.Equal(XLAllowedValues.WholeNumber, integerValidation.AllowedValues);
+		Assert.Equal(XLOperator.Between, integerValidation.Operator);
+		Assert.Equal(int.MinValue.ToString(System.Globalization.CultureInfo.InvariantCulture), integerValidation.MinValue);
+		Assert.Equal(int.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture), integerValidation.MaxValue);
+		Assert.True(integerValidation.IgnoreBlanks);
+
+		Assert.Equal(XLAllowedValues.Decimal, numberValidation.AllowedValues);
+		Assert.Equal(XLOperator.Between, numberValidation.Operator);
+		Assert.True(numberValidation.IgnoreBlanks);
+
+		IXLDataValidation GetValidation(string name)
+		{
+			var column = GetColumnNumber(table, model, name);
+			var cell = table.DataRange.FirstRow().Cell(column);
+			Assert.True(cell.HasDataValidation);
+			var validation = cell.GetDataValidation();
+			Assert.Equal(table.DataRange.Column(column).RangeAddress, Assert.Single(validation.Ranges).RangeAddress);
+			return validation;
+		}
+	}
+
+	[Fact]
+	public async Task GenerateAsync_GeneratedOrDefaultedProperties_AllowBlankInput()
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(GeneratedOrDefaultedValidationRecord)) { Title = "Optional Validation" };
+		var dbNullProperty = Assert.IsType<ModelPropertyDescriptor.SimplexPropertyDescriptor>(model.Properties[nameof(GeneratedOrDefaultedValidationRecord.DbNullValue)]);
+		dbNullProperty.DefaultValue = DBNull.Value;
+
+		await _generator.GenerateAsync(output, model, new GeneratedOrDefaultedValidationRecord[] { new() { Creation = new DateTime(2024, 1, 15) } });
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+
+		AssertIntegerValidation(nameof(GeneratedOrDefaultedValidationRecord.SequenceValue), true);
+		AssertIntegerValidation(nameof(GeneratedOrDefaultedValidationRecord.DefaultValue), true);
+		AssertIntegerValidation(nameof(GeneratedOrDefaultedValidationRecord.DbNullValue), true);
+		AssertIntegerValidation(nameof(GeneratedOrDefaultedValidationRecord.RequiredValue), false);
+		AssertIntegerValidation(nameof(GeneratedOrDefaultedValidationRecord.RequiredPrimaryKey), false);
+
+		var creationValidation = GetValidation(nameof(GeneratedOrDefaultedValidationRecord.Creation));
+		Assert.Equal(XLAllowedValues.Date, creationValidation.AllowedValues);
+		Assert.Equal(XLOperator.Between, creationValidation.Operator);
+		Assert.True(creationValidation.IgnoreBlanks);
+
+		void AssertIntegerValidation(string name, bool ignoreBlanks)
+		{
+			var validation = GetValidation(name);
+			Assert.Equal(XLAllowedValues.WholeNumber, validation.AllowedValues);
+			Assert.Equal(XLOperator.Between, validation.Operator);
+			Assert.Equal(ignoreBlanks, validation.IgnoreBlanks);
+		}
+
+		IXLDataValidation GetValidation(string name)
+		{
+			var column = GetColumnNumber(table, model, name);
+			var cell = table.DataRange.FirstRow().Cell(column);
+			Assert.True(cell.HasDataValidation);
+			var validation = cell.GetDataValidation();
+			Assert.Equal(table.DataRange.Column(column).RangeAddress, Assert.Single(validation.Ranges).RangeAddress);
+			Assert.True(validation.ShowErrorMessage);
+			Assert.Equal(XLErrorStyle.Stop, validation.ErrorStyle);
+			return validation;
+		}
+	}
+
+	[Fact]
+	public async Task GenerateAsync_CurrencyRole_UsesPersistedCurrencyFormatWithRedNegatives()
 	{
 		using var output = new MemoryStream();
 		var model = CreateColumnStyleModel();
@@ -336,10 +432,26 @@ public class SpreadsheetGeneratorTest
 		await _generator.GenerateAsync(output, model, CreateColumnStyleRecords());
 
 		output.Position = 0;
+		using(var archive = new System.IO.Compression.ZipArchive(output, System.IO.Compression.ZipArchiveMode.Read, true))
+		{
+			var entry = archive.GetEntry("xl/styles.xml");
+			Assert.NotNull(entry);
+			using var stream = entry.Open();
+			var styles = System.Xml.Linq.XDocument.Load(stream);
+			var schema = styles.Root.Name.Namespace;
+			var differentialNumberFormats = styles.Descendants(schema + "dxf").SelectMany(element => element.Elements(schema + "numFmt"));
+			Assert.All(differentialNumberFormats, format => Assert.NotNull(format.Attribute("formatCode")));
+		}
+
+		output.Position = 0;
 		using var workbook = new XLWorkbook(output);
 		var table = GetTable(workbook, model.Name);
 		var balanceColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Balance));
 		var balanceCells = table.DataRange.Column(balanceColumn).Cells().ToArray();
+		var balanceRange = table.DataRange.Column(balanceColumn).RangeAddress;
+		var negativeFormat = Assert.Single(table.Worksheet.ConditionalFormats, format =>
+			format.ConditionalFormatType == XLConditionalFormatType.CellIs &&
+			format.Operator == XLCFOperator.LessThan);
 
 		Assert.Equal(10, balanceCells.Length);
 		Assert.Equal(128.5, balanceCells[0].GetDouble());
@@ -348,6 +460,9 @@ public class SpreadsheetGeneratorTest
 		{
 			Assert.Equal(7, cell.Style.NumberFormat.NumberFormatId);
 		});
+		Assert.Equal("0", negativeFormat.Values[1].Value);
+		Assert.Equal(XLColor.Red, negativeFormat.Style.Font.FontColor);
+		Assert.Equal(balanceRange, Assert.Single(negativeFormat.Ranges).RangeAddress);
 		Assert.All(balanceCells.Take(2), cell => Assert.Equal(XLDataType.Number, cell.DataType));
 		Assert.All(balanceCells.Skip(2), cell => Assert.True(cell.IsEmpty()));
 	}
@@ -430,6 +545,7 @@ public class SpreadsheetGeneratorTest
 		var model = new ModelDescriptor(typeof(ColumnStyleRecord)) { Title = "Column Styles" };
 		model.Properties[nameof(ColumnStyleRecord.RecordId)].Label = "K";
 		model.Properties[nameof(ColumnStyleRecord.ShortText)].Label = "S";
+		model.Properties[nameof(ColumnStyleRecord.OptionalText)].Label = "O";
 		model.Properties[nameof(ColumnStyleRecord.MediumText)].Label = "M";
 		model.Properties[nameof(ColumnStyleRecord.OversizedText)].Label = "L";
 		model.Properties[nameof(ColumnStyleRecord.Quantity)].Label = "I";
@@ -441,7 +557,7 @@ public class SpreadsheetGeneratorTest
 	private static ColumnStyleRecord[] CreateColumnStyleRecords() =>
 	[
 		new() { RecordId = 101, ShortText = "x", MediumText = "x", OversizedText = "x", Quantity = 1, DescriptionText = "x", Balance = 128.5m },
-		new() { RecordId = 102, ShortText = "y", MediumText = "y", OversizedText = "y", Quantity = 2, DescriptionText = "y", Balance = -12.25m },
+		new() { RecordId = 102, ShortText = "y", OptionalText = "z", MediumText = "y", OversizedText = "y", Quantity = 2, DescriptionText = "y", Balance = -12.25m },
 	];
 
 	private static XLCellValue[] GetValidationItems(XLWorkbook workbook, IXLCell cell, bool ignoreBlanks, bool rangeSource)
@@ -493,6 +609,9 @@ public class SpreadsheetGeneratorTest
 		[ModelProperty(DbType.AnsiString, 8, false)]
 		public string ShortText { get; set; }
 
+		[ModelProperty(DbType.AnsiString, 8, true)]
+		public string OptionalText { get; set; }
+
 		[ModelProperty(DbType.AnsiString, 64, false)]
 		public string MediumText { get; set; }
 
@@ -513,5 +632,38 @@ public class SpreadsheetGeneratorTest
 	{
 		[ModelProperty(DbType.DateTime, true)]
 		public DateTime? Birthday { get; set; }
+	}
+
+	private sealed class ClrNullableValidationRecord
+	{
+		[ModelProperty(DbType.Date, false)]
+		public DateOnly? Date { get; set; }
+
+		[ModelProperty(DbType.Int32, false)]
+		public int? Integer { get; set; }
+
+		[ModelProperty(DbType.Decimal, false)]
+		public decimal? Number { get; set; }
+	}
+
+	private sealed class GeneratedOrDefaultedValidationRecord
+	{
+		[ModelProperty(DbType.Int32, false, Sequence = "#")]
+		public int SequenceValue { get; set; }
+
+		[ModelProperty(DbType.Int32, false, 7)]
+		public int DefaultValue { get; set; }
+
+		[ModelProperty(DbType.Int32, false)]
+		public int DbNullValue { get; set; }
+
+		[ModelProperty(DbType.Int32, false)]
+		public int RequiredValue { get; set; }
+
+		[ModelProperty(DbType.Int32, false, IsPrimaryKey = true)]
+		public int RequiredPrimaryKey { get; set; }
+
+		[ModelProperty(DbType.DateTime, false, DefaultValue = "now()")]
+		public DateTime Creation { get; set; }
 	}
 }

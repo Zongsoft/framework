@@ -125,6 +125,9 @@
 	<data name="SpreadsheetGenerator.ValidationError.TextLength.Message" xml:space="preserve">
 		<value>The value of '{0}' cannot exceed {1} characters.</value>
 	</data>
+	<data name="SpreadsheetGenerator.ValidationError.RequiredTextLength.Message" xml:space="preserve">
+		<value>The value of '{0}' is required and cannot exceed {1} characters.</value>
+	</data>
 	<data name="SpreadsheetGenerator.ValidationError.Integer.Message" xml:space="preserve">
 		<value>The value of '{0}' must be a whole number between {1} and {2}.</value>
 	</data>

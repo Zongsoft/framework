@@ -75,4 +75,10 @@
 	<data name="User.Balance.Description" xml:space="preserve">
 		<value>The account balance; blank means unspecified.</value>
 	</data>
+	<data name="User.Creation.Label" xml:space="preserve">
+		<value>Created At</value>
+	</data>
+	<data name="User.Creation.Description" xml:space="preserve">
+		<value>The time when the user was created; blank uses the current time.</value>
+	</data>
 </root>

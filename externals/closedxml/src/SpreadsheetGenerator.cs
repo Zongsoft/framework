@@ -346,21 +346,33 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 
 		//设置日期时间类型的格式
 		if(type == typeof(DateTime) || type == typeof(DateTimeOffset))
+		{
+			if(property.Role == ModelPropertyRole.Birthday)
+				column.Style.DateFormat.SetFormat("yyyy-MM-dd");
+			else
+				column.Style.DateFormat.SetFormat("yyyy-MM-dd HH:mm:ss");
+		}
+		else if(type == typeof(DateOnly))
 			column.Style.DateFormat.SetFormat("yyyy-MM-dd");
+		else if(type == typeof(TimeOnly))
+			column.Style.DateFormat.SetFormat("HH:mm:ss");
 
 		//设置特定语义角色的样式
-		switch(property.Role)
+		if(property.Role == ModelPropertyRole.Code ||
+		   property.Role == ModelPropertyRole.Phone ||
+		   property.Role == ModelPropertyRole.Email ||
+		   property.Role == ModelPropertyRole.Status ||
+		   property.Role == ModelPropertyRole.Identifier ||
+		   property.Role == ModelPropertyRole.PostalCode)
 		{
-			case nameof(ModelPropertyRole.Code):
-			case nameof(ModelPropertyRole.Phone):
-			case nameof(ModelPropertyRole.Email):
-				column.Style.Font.SetFontName(FONT_NAME);
-				SetHorizontalAlignment(column, XLAlignmentHorizontalValues.Center);
-				break;
-			case nameof(ModelPropertyRole.Currency):
-				column.Style.Font.SetFontName(FONT_NAME);
-				column.Style.NumberFormat.SetNumberFormatId(CURRENCY_FORMAT_ID);
-				break;
+			column.Style.Font.SetFontName(FONT_NAME);
+			SetHorizontalAlignment(column, XLAlignmentHorizontalValues.Center);
+		}
+		else if(property.Role == ModelPropertyRole.Currency)
+		{
+			column.Style.Font.SetFontName(FONT_NAME);
+			column.Style.NumberFormat.SetNumberFormatId(CURRENCY_FORMAT_ID);
+			column.AddConditionalFormat().WhenLessThan(0).Font.SetFontColor(XLColor.Red);
 		}
 
 		//设置主键的样式
@@ -399,20 +411,26 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 				_ => TEXT_COLUMN_DEFAULT_WIDTH,
 			};
 
-			width = property.Role switch
-			{
-				nameof(ModelPropertyRole.Code) => 18,
-				nameof(ModelPropertyRole.Name) => 20,
-				nameof(ModelPropertyRole.Email) => 32,
-				nameof(ModelPropertyRole.Gender) => 10,
-				nameof(ModelPropertyRole.Birthday) => 12,
-				nameof(ModelPropertyRole.Phone) => 18,
-				nameof(ModelPropertyRole.Address) => 40,
-				nameof(ModelPropertyRole.Currency) => 16,
-				nameof(ModelPropertyRole.Password) => 24,
-				nameof(ModelPropertyRole.Description) => COLUMN_MAX_WIDTH,
-				_ => width,
-			};
+			if(property.Role == ModelPropertyRole.Code || property.Role == ModelPropertyRole.Identifier)
+				width = 16;
+			else if(property.Role == ModelPropertyRole.Name)
+				width = 20;
+			else if(property.Role == ModelPropertyRole.Email)
+				width = 32;
+			else if(property.Role == ModelPropertyRole.Gender)
+				width = 10;
+			else if(property.Role == ModelPropertyRole.Birthday)
+				width = 12;
+			else if(property.Role == ModelPropertyRole.Phone)
+				width = 18;
+			else if(property.Role == ModelPropertyRole.Address)
+				width = 40;
+			else if(property.Role == ModelPropertyRole.Currency)
+				width = 16;
+			else if(property.Role == ModelPropertyRole.Password)
+				width = 24;
+			else if(property.Role == ModelPropertyRole.Description)
+				width = COLUMN_MAX_WIDTH;
 
 			return Math.Clamp(width, COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH);
 		}
@@ -463,16 +481,17 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 	{
 		var label = string.IsNullOrEmpty(property.Label) ? property.Name : property.Label;
 		var type = property.DataType?.DbType;
-		var nullable = Common.TypeExtension.IsNullable(property.Type, out var propertyType);
-		if(!nullable)
-			propertyType = property.Type;
+		var nullable = property.Nullable ||
+			Common.TypeExtension.IsNullable(property.Type) ||
+			!property.Sequence.IsEmpty ||
+			property.DefaultValue != null;
 
-		if(propertyType == typeof(DateTime))
+		if(type == DbType.Date || type == DbType.DateTime || type == DbType.DateTime2)
 		{
 			var validation = column.CreateDataValidation();
 			//ClosedXML 以 OLE 自动化日期保存验证边界，而序号 1 对应 Excel 的 1900-01-01。
 			validation.Date.Between(DateTime.FromOADate(1), DateTime.MaxValue.Date);
-			SetValidationError(validation, property.Nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_Date_Message, label));
+			SetValidationError(validation, nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_Date_Message, label));
 			return;
 		}
 
@@ -482,8 +501,17 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 				return;
 
 			var validation = column.CreateDataValidation();
-			validation.TextLength.EqualOrLessThan(property.Length);
-			SetValidationError(validation, property.Nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_TextLength_Message, label, property.Length));
+
+			if(nullable)
+				validation.TextLength.EqualOrLessThan(property.Length);
+			else
+				validation.TextLength.Between(1, property.Length);
+
+			var message = nullable ?
+				Properties.Resources.SpreadsheetGenerator_ValidationError_TextLength_Message :
+				Properties.Resources.SpreadsheetGenerator_ValidationError_RequiredTextLength_Message;
+			SetValidationError(validation, nullable, string.Format(message, label, property.Length));
+
 			return;
 		}
 
@@ -505,7 +533,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			validation.Operator = XLOperator.Between;
 			validation.MinValue = integerRange.Minimum;
 			validation.MaxValue = integerRange.Maximum;
-			SetValidationError(validation, property.Nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_Integer_Message, label, integerRange.Minimum, integerRange.Maximum));
+			SetValidationError(validation, nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_Integer_Message, label, integerRange.Minimum, integerRange.Maximum));
 			return;
 		}
 
@@ -521,7 +549,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		{
 			var validation = column.CreateDataValidation();
 			validation.Decimal.Between(numericRange.Minimum, numericRange.Maximum);
-			SetValidationError(validation, property.Nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_Number_Message, label));
+			SetValidationError(validation, nullable, string.Format(Properties.Resources.SpreadsheetGenerator_ValidationError_Number_Message, label));
 		}
 	}
 
