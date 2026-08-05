@@ -115,7 +115,7 @@ public abstract partial class ModelPropertyDescriptor : INotifyPropertyChanged, 
 	}
 
 	/// <summary>获取或设置属性的语义角色。</summary>
-	public string Role
+	public ModelPropertyRole Role
 	{
 		get; set
 		{
@@ -180,7 +180,7 @@ public abstract partial class ModelPropertyDescriptor : INotifyPropertyChanged, 
 			this.Name = member.Name;
 
 			//设置默认的语义角色
-			if(string.IsNullOrEmpty(this.Role))
+			if(this.Role.IsEmpty)
 				this.Role = ModelPropertyRole.Determine(member.Name);
 		}
 
@@ -222,7 +222,7 @@ public abstract partial class ModelPropertyDescriptor : INotifyPropertyChanged, 
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => string.IsNullOrEmpty(this.Role) ?
+	public override string ToString() => this.Role.IsEmpty ?
 		$"{this.Name}:{TypeAlias.GetAlias(this.Type)}" :
 		$"{this.Name}:{TypeAlias.GetAlias(this.Type)}({this.Role})";
 	#endregion
