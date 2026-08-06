@@ -407,7 +407,8 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 				DbType.AnsiString or DbType.AnsiStringFixedLength or
 				DbType.String or DbType.StringFixedLength =>
 					property.Length > 0 ? Math.Clamp(property.Length + 2d, TEXT_COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH) : TEXT_COLUMN_DEFAULT_WIDTH,
-				DbType.Boolean or DbType.Byte or DbType.SByte => 8,
+				DbType.Boolean => 12,
+				DbType.Byte or DbType.SByte => 10,
 				DbType.Int16 or DbType.UInt16 => 10,
 				DbType.Int32 or DbType.UInt32 => 12,
 				DbType.Int64 or DbType.UInt64 => 14,
