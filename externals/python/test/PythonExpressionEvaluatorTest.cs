@@ -95,6 +95,27 @@ public class PythonExpressionEvaluatorTest
 	}
 
 	[Fact]
+	public void TestEvaluateOutputDoesNotLeakAcrossCallsOrEvaluators()
+	{
+		const string PRINT_MESSAGE = "First evaluator output";
+		using var evaluator = new PythonExpressionEvaluator();
+
+		using(var output = new StringWriter())
+		{
+			evaluator.Evaluate($"print('{PRINT_MESSAGE}')", ExpressionEvaluatorOptions.Out(output));
+			Assert.Equal(PRINT_MESSAGE, output.ToString());
+		}
+
+		var result = evaluator.Evaluate("print('Subsequent call output'); result=41");
+		Assert.Equal(41, Zongsoft.Common.Convert.ConvertValue<int>(result));
+
+		using var subsequentEvaluator = new PythonExpressionEvaluator();
+		result = subsequentEvaluator.Evaluate("print('Second evaluator output'); result=42");
+
+		Assert.Equal(42, Zongsoft.Common.Convert.ConvertValue<int>(result));
+	}
+
+	[Fact]
 	public void TestEvaluateSerializeJson()
 	{
 		using var evaluator = new PythonExpressionEvaluator();

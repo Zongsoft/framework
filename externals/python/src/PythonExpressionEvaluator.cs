@@ -48,18 +48,19 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 	internal const string NAME = "Python";
 	#endregion
 
-	#region 静态字段
-	private static readonly Lazy<ScriptEngine> _engine = new(() => IronPython.Hosting.Python.CreateEngine());
+	#region 成员字段
+	private readonly ScriptEngine _engine;
 	#endregion
 
 	#region 构造函数
 	public PythonExpressionEvaluator() : base(NAME)
 	{
-		this.Global = new Variables(_engine.Value.Runtime.Globals);
+		_engine = IronPython.Hosting.Python.CreateEngine();
+		this.Global = new Variables(_engine.Runtime.Globals);
 
-		_engine.Value.Runtime.Globals.SetVariable(nameof(Json), new Json());
-		_engine.Value.Runtime.Globals.SetVariable("error", (Delegate)Error);
-		_engine.Value.Runtime.Globals.SetVariable("print", (Delegate)Print);
+		_engine.Runtime.Globals.SetVariable(nameof(Json), new Json());
+		_engine.Runtime.Globals.SetVariable("error", (Delegate)Error);
+		_engine.Runtime.Globals.SetVariable("print", (Delegate)Print);
 	}
 	#endregion
 
@@ -69,20 +70,35 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 		if(string.IsNullOrEmpty(expression))
 			return null;
 
-		var engine = _engine.Value;
+		var engine = _engine;
+		var io = engine.Runtime.IO;
+		var input = (io.InputStream, io.InputReader, io.InputEncoding);
+		var output = (io.OutputStream, io.OutputWriter);
+		var error = (io.ErrorStream, io.ErrorWriter);
 
-		SetEnginePath(engine);
-		SetOptions(engine, this.Options);
-		SetOptions(engine, options);
+		try
+		{
+			SetEnginePath(engine);
+			SetOptions(engine, this.Options);
 
-		if(variables == null)
-			return engine.Execute(expression, engine.Runtime.Globals) ?? engine.GetResult();
+			if(!ReferenceEquals(options, this.Options))
+				SetOptions(engine, options);
 
-		foreach(var variable in this.Global)
-			variables.TryAdd(variable.Key, variable.Value);
+			if(variables == null)
+				return engine.Execute(expression, engine.Runtime.Globals) ?? engine.GetResult();
 
-		var scope = engine.CreateScope(variables);
-		return engine.Execute(expression, scope) ?? scope.GetResult();
+			foreach(var variable in this.Global)
+				variables.TryAdd(variable.Key, variable.Value);
+
+			var scope = engine.CreateScope(variables);
+			return engine.Execute(expression, scope) ?? scope.GetResult();
+		}
+		finally
+		{
+			io.SetInput(input.InputStream, input.InputReader, input.InputEncoding);
+			io.SetOutput(output.OutputStream, output.OutputWriter);
+			io.SetErrorOutput(error.ErrorStream, error.ErrorWriter);
+		}
 
 		static void SetOptions(ScriptEngine engine, IExpressionEvaluatorOptions options)
 		{
@@ -101,6 +117,16 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 	}
 	#endregion
 
+	#region 释放资源
+	protected override void Dispose(bool disposing)
+	{
+		base.Dispose(disposing);
+
+		if(disposing)
+			_engine.Runtime.Shutdown();
+	}
+	#endregion
+
 	#region 私有方法
 	private static void SetEnginePath(ScriptEngine engine)
 	{
@@ -113,12 +139,12 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 		engine.SetSearchPaths(paths);
 	}
 
-	private static void Print(params object[] args)
+	private void Print(params object[] args)
 	{
 		if(args == null || args.Length == 0)
 			return;
 
-		var output = _engine.Value.Runtime.IO.OutputWriter;
+		var output = _engine.Runtime.IO.OutputWriter;
 		if(output == null)
 			return;
 
@@ -128,12 +154,12 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 		output.Flush();
 	}
 
-	private static void Error(params object[] args)
+	private void Error(params object[] args)
 	{
 		if(args == null || args.Length == 0)
 			return;
 
-		var error = _engine.Value.Runtime.IO.ErrorWriter;
+		var error = _engine.Runtime.IO.ErrorWriter;
 		if(error == null)
 			return;
 
