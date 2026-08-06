@@ -423,9 +423,14 @@ public class SpreadsheetGeneratorTest
 		}
 	}
 
-	[Fact]
-	public async Task GenerateAsync_CurrencyRole_UsesPersistedCurrencyFormatWithRedNegatives()
+	[Theory]
+	[InlineData("en-US", "$")]
+	[InlineData("zh-Hans", "¥")]
+	public async Task GenerateAsync_CurrencyRole_UsesExpandableLocalizedRedNegativeFormat(string cultureName, string currencySymbol)
 	{
+		using var culture = new CultureScope(cultureName);
+		var currencyFormat = $"\"{currencySymbol}\"#,##0.00;[Red]\"{currencySymbol}\"-#,##0.00";
+
 		using var output = new MemoryStream();
 		var model = CreateColumnStyleModel();
 
@@ -441,6 +446,7 @@ public class SpreadsheetGeneratorTest
 			var schema = styles.Root.Name.Namespace;
 			var differentialNumberFormats = styles.Descendants(schema + "dxf").SelectMany(element => element.Elements(schema + "numFmt"));
 			Assert.All(differentialNumberFormats, format => Assert.NotNull(format.Attribute("formatCode")));
+			Assert.Contains(styles.Descendants(schema + "numFmt"), format => (string)format.Attribute("formatCode") == currencyFormat);
 		}
 
 		output.Position = 0;
@@ -448,21 +454,14 @@ public class SpreadsheetGeneratorTest
 		var table = GetTable(workbook, model.Name);
 		var balanceColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Balance));
 		var balanceCells = table.DataRange.Column(balanceColumn).Cells().ToArray();
-		var balanceRange = table.DataRange.Column(balanceColumn).RangeAddress;
-		var negativeFormat = Assert.Single(table.Worksheet.ConditionalFormats, format =>
-			format.ConditionalFormatType == XLConditionalFormatType.CellIs &&
-			format.Operator == XLCFOperator.LessThan);
 
 		Assert.Equal(10, balanceCells.Length);
 		Assert.Equal(128.5, balanceCells[0].GetDouble());
 		Assert.Equal(-12.25, balanceCells[1].GetDouble());
-		Assert.All(balanceCells, cell =>
-		{
-			Assert.Equal(7, cell.Style.NumberFormat.NumberFormatId);
-		});
-		Assert.Equal("0", negativeFormat.Values[1].Value);
-		Assert.Equal(XLColor.Red, negativeFormat.Style.Font.FontColor);
-		Assert.Equal(balanceRange, Assert.Single(negativeFormat.Ranges).RangeAddress);
+		Assert.All(balanceCells, cell => Assert.Equal(currencyFormat, cell.Style.NumberFormat.Format));
+		Assert.DoesNotContain(table.Worksheet.ConditionalFormats, format =>
+			format.ConditionalFormatType == XLConditionalFormatType.CellIs &&
+			format.Operator == XLCFOperator.LessThan);
 		Assert.All(balanceCells.Take(2), cell => Assert.Equal(XLDataType.Number, cell.DataType));
 		Assert.All(balanceCells.Skip(2), cell => Assert.True(cell.IsEmpty()));
 	}

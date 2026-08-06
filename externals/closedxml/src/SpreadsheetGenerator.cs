@@ -310,8 +310,6 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 
 	private static void SetDataColumnStyle(IXLRange column, ModelPropertyDescriptor property)
 	{
-		const int CURRENCY_FORMAT_ID = 7;
-
 		var descriptor = property as ModelPropertyDescriptor.SimplexPropertyDescriptor;
 		if(descriptor != null)
 			column.FirstColumn().WorksheetColumn().Width = GetColumnWidth(descriptor);
@@ -371,8 +369,10 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		else if(property.Role == ModelPropertyRole.Currency)
 		{
 			column.Style.Font.SetFontName(FONT_NAME);
-			column.Style.NumberFormat.SetNumberFormatId(CURRENCY_FORMAT_ID);
-			column.AddConditionalFormat().WhenLessThan(0).Font.SetFontColor(XLColor.Red);
+
+			//货币格式随当前文化显示货币符号；负数标红，且负号置于货币符号之后（如：$1.23、$-1.23、€1.23、￥-1.23）
+			//但 ClosedXML 使用符合要求的 8 号内置格式模板时会在差异样式中丢失必需的 formatCode，导致 Excel 加载样式表失败，故改用等效的自定义格式
+			column.Style.NumberFormat.SetFormat(GetCurrencyFormat());
 		}
 
 		//设置主键的样式
@@ -388,6 +388,16 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		{
 			column.Style.Alignment.SetHorizontal(alignment);
 			column.FirstColumn().WorksheetColumn().Style.Alignment.SetHorizontal(alignment);
+		}
+
+		static string GetCurrencyFormat()
+		{
+			var culture = System.Globalization.CultureInfo.CurrentCulture;
+			if(culture.IsNeutralCulture)
+				culture = System.Globalization.CultureInfo.CreateSpecificCulture(culture.Name);
+
+			var symbol = culture.NumberFormat.CurrencySymbol;
+			return $"\"{symbol}\"#,##0.00;[Red]\"{symbol}\"-#,##0.00";
 		}
 
 		static double GetColumnWidth(ModelPropertyDescriptor.SimplexPropertyDescriptor property)
