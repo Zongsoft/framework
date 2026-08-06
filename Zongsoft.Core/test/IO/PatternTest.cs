@@ -69,10 +69,10 @@ public class PatternTest
 
 		Assert.True(pattern.Match("app."));
 		Assert.True(pattern.Match("app.ext"));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\app.")));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\app.ext")));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\dir\app.")));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\dir\app.ext")));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "app."))));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "app.ext"))));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "dir", "app."))));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "dir", "app.ext"))));
 	}
 
 	[Fact]
@@ -135,10 +135,10 @@ public class PatternTest
 
 		Assert.True(pattern.Match("app.a"));
 		Assert.True(pattern.Match("app._"));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\app.a")));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\app.b")));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\dir\app.c")));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\dir\app.d")));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "app.a"))));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "app.b"))));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "dir", "app.c"))));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "dir", "app.d"))));
 	}
 
 	[Fact]
@@ -201,10 +201,10 @@ public class PatternTest
 
 		Assert.True(pattern.Match("app.aa"));
 		Assert.True(pattern.Match("app.__"));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\app.aa")));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\app.bb")));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\dir\app.12")));
-		Assert.True(pattern.Match(System.IO.Path.GetFileName(@"D:\dir\app.34")));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "app.aa"))));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "app.bb"))));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "dir", "app.12"))));
+		Assert.True(pattern.Match(System.IO.Path.GetFileName(System.IO.Path.Combine("root", "dir", "app.34"))));
 	}
 
 	[Fact]
