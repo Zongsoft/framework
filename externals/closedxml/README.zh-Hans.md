@@ -92,6 +92,35 @@ var options = new DataArchiveGeneratorOptions(nameof(User.UserId), nameof(User.N
 await generator.GenerateAsync(output, model, users, options);
 ```
 
+如果要显式控制列的显示方式，可传入 `DataArchiveField`。宽度统一使用排版点（1/72 英寸），零表示未指定；字体大小同样约定零表示未指定。颜色使用 `Zongsoft.Components.Color` 提供的技术无关 ARGB 值，空值表示未指定颜色；`Format` 是 .NET 格式说明符，而不是 Excel 数字格式代码：
+
+```csharp
+using Zongsoft.Components;
+using Zongsoft.Data.Archiving;
+
+var options = new DataArchiveGeneratorOptions(
+	new DataArchiveField(nameof(User.UserId))
+	{
+		Width = 72,
+		Alignment = DataArchiveFieldAlignment.Center,
+		FontStyle = DataArchiveFontStyle.Bold,
+		ForegroundColor = Color.Maroon,
+	},
+	new DataArchiveField(nameof(User.Balance))
+	{
+		Width = 90,
+		Alignment = DataArchiveFieldAlignment.Right,
+		Format = "N2",
+	},
+	new DataArchiveField(nameof(User.Email))
+	{
+		Width = 180,
+		TextMode = DataArchiveFieldTextMode.Wrap,
+	});
+```
+
+未指定的选项继续使用根据模型元数据推导的样式。`None`、`Wrap` 和 `Shrink` 分别对应 Excel 原生的不换行、自动换行和缩小字体行为。由于 Excel 单元格无法在不改变实际值的情况下原生显示末尾省略号，因此不提供省略号模式。
+
 由于模型名会成为 Excel 表格名，因此必须满足 Excel 的表格命名规则。如果名称无效，生成器会报告本地化的验证错误。
 
 ## 提取数据

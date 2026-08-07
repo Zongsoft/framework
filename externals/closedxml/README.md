@@ -92,6 +92,35 @@ var options = new DataArchiveGeneratorOptions(nameof(User.UserId), nameof(User.N
 await generator.GenerateAsync(output, model, users, options);
 ```
 
+For explicit column presentation, pass `DataArchiveField` instances. Widths use typographic points (1/72 inch), with zero meaning unspecified; font sizes follow the same zero-as-unspecified convention. Colors are technology-neutral ARGB values from `Zongsoft.Components.Color`, while a null color means unspecified; and `Format` is a .NET format specifier rather than an Excel number-format code:
+
+```csharp
+using Zongsoft.Components;
+using Zongsoft.Data.Archiving;
+
+var options = new DataArchiveGeneratorOptions(
+	new DataArchiveField(nameof(User.UserId))
+	{
+		Width = 72,
+		Alignment = DataArchiveFieldAlignment.Center,
+		FontStyle = DataArchiveFontStyle.Bold,
+		ForegroundColor = Color.Maroon,
+	},
+	new DataArchiveField(nameof(User.Balance))
+	{
+		Width = 90,
+		Alignment = DataArchiveFieldAlignment.Right,
+		Format = "N2",
+	},
+	new DataArchiveField(nameof(User.Email))
+	{
+		Width = 180,
+		TextMode = DataArchiveFieldTextMode.Wrap,
+	});
+```
+
+Unspecified options continue to use styles inferred from model metadata. `None`, `Wrap`, and `Shrink` map to Excel's native text-display behaviors. An ellipsis mode is intentionally absent because Excel cells cannot display a native trailing ellipsis without changing the stored value.
+
 Because the model name becomes an Excel Table name, it must satisfy Excel's table-name rules. The generator reports a localized validation error when it does not.
 
 ## Extracting Data

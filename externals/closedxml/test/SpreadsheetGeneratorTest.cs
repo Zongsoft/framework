@@ -125,6 +125,92 @@ public class SpreadsheetGeneratorTest
 		Assert.False(worksheet.DefinedNames.TryGetValue(nameof(User.UserId), out _));
 	}
 
+	[Fact]
+	public async Task GenerateAsync_FieldOptions_ProjectFormatAndApplyTextModes()
+	{
+		using var culture = new CultureScope("en-US");
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(FieldOptionsRecord)) { Title = "Field Options" };
+		var record = new FieldOptionsRecord
+		{
+			Value = 1234.5m,
+			WrappedText = "wrapped",
+			PlainText = "plain",
+			ShrunkText = "shrunk",
+		};
+		DataArchiveField[] fields =
+		[
+			new(nameof(FieldOptionsRecord.WrappedText), "Wrapped") { TextMode = DataArchiveFieldTextMode.Wrap },
+			new(nameof(FieldOptionsRecord.Value), "Formatted") { Format = "N2" },
+			new(nameof(FieldOptionsRecord.ShrunkText), "Shrunk") { TextMode = DataArchiveFieldTextMode.Shrink },
+			new(nameof(FieldOptionsRecord.PlainText), "Plain") { TextMode = DataArchiveFieldTextMode.None },
+		];
+		var options = new DataArchiveGeneratorOptions(fields);
+
+		await _generator.GenerateAsync(output, model, record, options);
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var worksheet = table.Worksheet;
+		var row = table.DataRange.FirstRow();
+
+		Assert.Equal(new[] { "Wrapped", "Formatted", "Shrunk", "Plain" }, table.HeadersRow().Cells().Select(cell => cell.GetString()));
+		Assert.Equal("wrapped", row.Cell(1).GetString());
+		Assert.Equal("1,234.50", row.Cell(2).GetString());
+		Assert.Equal(XLDataType.Text, row.Cell(2).DataType);
+		Assert.NotEqual("N2", row.Cell(2).Style.NumberFormat.Format);
+		Assert.Equal("shrunk", row.Cell(3).GetString());
+		Assert.Equal("plain", row.Cell(4).GetString());
+
+		AssertTextMode(row.Cell(1), true, false);
+		AssertTextMode(row.Cell(3), false, true);
+		AssertTextMode(row.Cell(4), false, false);
+
+		var futureRow = table.RangeAddress.LastAddress.RowNumber + 1;
+		AssertTextMode(worksheet.Cell(futureRow, 1), true, false);
+		AssertTextMode(worksheet.Cell(futureRow, 3), false, true);
+		AssertTextMode(worksheet.Cell(futureRow, 4), false, false);
+
+		static void AssertTextMode(IXLCell cell, bool wrap, bool shrink)
+		{
+			Assert.Equal(wrap, cell.Style.Alignment.WrapText);
+			Assert.Equal(shrink, cell.Style.Alignment.ShrinkToFit);
+		}
+	}
+
+	[Fact]
+	public async Task GenerateAsync_DescriptionRole_DefaultWrapAndExplicitNonePersistToCellsAndColumns()
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(DescriptionTextModeRecord)) { Title = "Description Text Modes" };
+		var record = new DescriptionTextModeRecord
+		{
+			DefaultDescription = "wrapped by role",
+			PlainDescription = "not wrapped by field",
+		};
+		DataArchiveField[] fields =
+		[
+			new(nameof(DescriptionTextModeRecord.DefaultDescription)),
+			new(nameof(DescriptionTextModeRecord.PlainDescription)) { TextMode = DataArchiveFieldTextMode.None },
+		];
+
+		await _generator.GenerateAsync(output, model, record, new DataArchiveGeneratorOptions(fields));
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var worksheet = table.Worksheet;
+		var row = table.DataRange.FirstRow();
+
+		Assert.Equal(record.DefaultDescription, row.Cell(1).GetString());
+		Assert.Equal(record.PlainDescription, row.Cell(2).GetString());
+		Assert.True(row.Cell(1).Style.Alignment.WrapText);
+		Assert.True(worksheet.Column(1).Style.Alignment.WrapText);
+		Assert.False(row.Cell(2).Style.Alignment.WrapText);
+		Assert.False(worksheet.Column(2).Style.Alignment.WrapText);
+	}
+
 	[Theory]
 	[InlineData("en-US", "Invalid value", "The value of 'Birthday' must be a valid date between 1900-01-01 and 9999-12-31.")]
 	[InlineData("zh-Hans", "输入值无效", "“Birthday”必须是 1900-01-01 到 9999-12-31 之间的有效日期。")]
@@ -580,5 +666,22 @@ public class SpreadsheetGeneratorTest
 
 		[ModelProperty(DbType.DateTime, false, DefaultValue = "now()")]
 		public DateTime Creation { get; set; }
+	}
+
+	private sealed class FieldOptionsRecord
+	{
+		public decimal Value { get; set; }
+		public string WrappedText { get; set; }
+		public string PlainText { get; set; }
+		public string ShrunkText { get; set; }
+	}
+
+	private sealed class DescriptionTextModeRecord
+	{
+		[ModelProperty(DbType.String, true, Role = nameof(ModelPropertyRole.Description))]
+		public string DefaultDescription { get; set; }
+
+		[ModelProperty(DbType.String, true, Role = nameof(ModelPropertyRole.Description))]
+		public string PlainDescription { get; set; }
 	}
 }

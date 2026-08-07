@@ -90,6 +90,14 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		worksheet.RowHeight = 20;
 		worksheet.Style.Font.SetFontSize(11);
 		worksheet.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+		worksheet.PageSetup.PaperSize = XLPaperSize.A4Paper;
+		worksheet.PageSetup.Margins
+			.SetLeft(0.25)
+			.SetRight(0.25)
+			.SetTop(0.75)
+			.SetBottom(0.75)
+			.SetHeader(0.3)
+			.SetFooter(0.3);
 
 		if(columns.Length > 5)
 			worksheet.PageSetup.SetPageOrientation(XLPageOrientation.Landscape);
@@ -215,10 +223,24 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		worksheet.ColumnsUsed().AdjustToContents();
 
 		//设置数据区各列的样式
+		var hasWrappedText = false;
 		foreach(var column in columns)
 		{
 			range = worksheet.Range(DATA_RANGE_FIRST_ROW, column.Index, lastRow, column.Index);
-			SetDataColumnStyle(range, column.Property);
+			SetDataColumnStyle(range, column);
+			hasWrappedText |= range.Style.Alignment.WrapText;
+		}
+
+		//自动调整包含换行文本的数据行高度，并保持默认行高为下限
+		if(hasWrappedText)
+		{
+			for(int i = DATA_RANGE_FIRST_ROW; i <= lastRow; i++)
+			{
+				worksheet.Row(i).AdjustToContents(1, columns.Length);
+
+				if(worksheet.Row(i).Height < worksheet.RowHeight)
+					worksheet.Row(i).Height = worksheet.RowHeight;
+			}
 		}
 
 		try
@@ -226,7 +248,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			//创建模型数据表（包含字段标题行）
 			var table = worksheet.Range(DATA_RANGE_FIRST_ROW - 1, 1, lastRow, columns.Length).CreateTable(model.Name);
 			table.Theme = XLTableTheme.None;
-			SetDataRangeStyle(table.DataRange);
+			SetDataRangeStyle(table.DataRange, columns);
 		}
 		catch(ArgumentException exception)
 		{
@@ -293,14 +315,20 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		}
 	}
 
-	private static void SetDataRangeStyle(IXLRange range)
+	private static void SetDataRangeStyle(IXLRange range, TableColumn[] columns)
 	{
-		var style = range.AddConditionalFormat().WhenIsTrue("MOD(ROW(),2)=1");
-		style.Fill.SetPatternType(XLFillPatternValues.Gray0625);
-		style.Fill.SetPatternColor(XLColor.LightGray);
-		style.Fill.SetBackgroundColor(XLColor.FromArgb(240, 240, 240));
+		for(int i = 1; i <= range.ColumnCount(); i++)
+		{
+			if(columns[i - 1].Field?.BackgroundColor.HasValue == true)
+				continue;
 
-		style = range.AddConditionalFormat().WhenIsTrue("TRUE");
+			var stripe = range.Column(i).AddConditionalFormat().WhenIsTrue("MOD(ROW(),2)=1");
+			stripe.Fill.SetPatternType(XLFillPatternValues.Gray0625);
+			stripe.Fill.SetPatternColor(XLColor.LightGray);
+			stripe.Fill.SetBackgroundColor(XLColor.FromArgb(240, 240, 240));
+		}
+
+		var style = range.AddConditionalFormat().WhenIsTrue("TRUE");
 		style.Border.BottomBorder = XLBorderStyleValues.Thin;
 		style.Border.BottomBorderColor = XLColor.LightGray;
 
@@ -312,11 +340,15 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		}
 	}
 
-	private static void SetDataColumnStyle(IXLRange column, ModelPropertyDescriptor property)
+	private static void SetDataColumnStyle(IXLRange range, TableColumn column)
 	{
-		var descriptor = property as ModelPropertyDescriptor.SimplexPropertyDescriptor;
-		if(descriptor != null)
-			column.FirstColumn().WorksheetColumn().Width = GetColumnWidth(descriptor);
+		var property = column.Property;
+		var simplex = property as ModelPropertyDescriptor.SimplexPropertyDescriptor;
+
+		if(column.Field?.Width > 0)
+			range.FirstColumn().WorksheetColumn().Width = Utility.GetColumnWidth(range.Worksheet, column.Field.Width);
+		else if(simplex != null)
+			range.FirstColumn().WorksheetColumn().Width = GetColumnWidth(simplex);
 
 		//如果是特定类型则调整其样式
 		var nullable = Common.TypeExtension.IsNullable(property.Type, out var type);
@@ -327,37 +359,37 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		if(type.IsEnum)
 		{
 			var entries = Common.EnumUtility.GetEnumEntries(type, false);
-			SetColumnSuggestion(column, entries.Select(entry => (XLCellValue)entry.Name), nullable, property);
+			SetColumnSuggestion(range, entries.Select(entry => (XLCellValue)entry.Name), nullable, property);
 		}
 		else if(type == typeof(bool))
-			SetColumnSuggestion(column, [true, false], nullable, property);
-		else if(descriptor != null)
-			SetColumnValidation(column, descriptor);
+			SetColumnSuggestion(range, [true, false], nullable, property);
+		else if(simplex != null)
+			SetColumnValidation(range, simplex);
 
 		//设置特定类型的字体
 		if(type.IsEnum || type == typeof(bool) || Common.TypeExtension.IsNumeric(type) || type == typeof(Guid) ||
 		   type == typeof(DateOnly) || type == typeof(TimeOnly) || type == typeof(TimeSpan) ||
 		   type == typeof(DateTime) || type == typeof(DateTimeOffset))
 		{
-			column.Style.Font.SetFontName(FONT_NAME);
+			range.Style.Font.SetFontName(FONT_NAME);
 		}
 
 		//特定类型则设置其水平居中
 		if(type.IsEnum || type == typeof(bool) || type == typeof(byte) || type == typeof(Guid) || type == typeof(DateOnly) || type == typeof(TimeOnly) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
-			SetHorizontalAlignment(column, XLAlignmentHorizontalValues.Center);
+			SetHorizontalAlignment(range, XLAlignmentHorizontalValues.Center);
 
 		//设置日期时间类型的格式
 		if(type == typeof(DateTime) || type == typeof(DateTimeOffset))
 		{
 			if(property.Role == ModelPropertyRole.Birthday)
-				column.Style.DateFormat.SetFormat("yyyy-MM-dd");
+				range.Style.DateFormat.SetFormat("yyyy-MM-dd");
 			else
-				column.Style.DateFormat.SetFormat("yyyy-MM-dd HH:mm:ss");
+				range.Style.DateFormat.SetFormat("yyyy-MM-dd HH:mm:ss");
 		}
 		else if(type == typeof(DateOnly))
-			column.Style.DateFormat.SetFormat("yyyy-MM-dd");
+			range.Style.DateFormat.SetFormat("yyyy-MM-dd");
 		else if(type == typeof(TimeOnly))
-			column.Style.DateFormat.SetFormat("HH:mm:ss");
+			range.Style.DateFormat.SetFormat("HH:mm:ss");
 
 		//设置特定语义角色的样式
 		if(property.Role == ModelPropertyRole.Code ||
@@ -367,32 +399,40 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		   property.Role == ModelPropertyRole.Identifier ||
 		   property.Role == ModelPropertyRole.PostalCode)
 		{
-			column.Style.Font.SetFontName(FONT_NAME);
-			SetHorizontalAlignment(column, XLAlignmentHorizontalValues.Center);
+			range.Style.Font.SetFontName(FONT_NAME);
+			SetHorizontalAlignment(range, XLAlignmentHorizontalValues.Center);
 		}
 		else if(property.Role == ModelPropertyRole.Currency)
 		{
-			column.Style.Font.SetFontName(FONT_NAME);
+			range.Style.Font.SetFontName(FONT_NAME);
 
 			//货币格式随当前文化显示货币符号；负数标红，且负号置于货币符号之后（如：$1.23、$-1.23、€1.23、￥-1.23）
 			//但 ClosedXML 使用符合要求的 8 号内置格式模板时会在差异样式中丢失必需的 formatCode，导致 Excel 加载样式表失败，故改用等效的自定义格式
-			column.Style.NumberFormat.SetFormat(GetCurrencyFormat());
+			range.Style.NumberFormat.SetFormat(GetCurrencyFormat());
 		}
 
 		//设置主键的样式
-		if(property.IsSimplex(out var simplex) && simplex.IsPrimaryKey)
+		if(simplex.IsPrimaryKey)
 		{
-			column.Style.Font.SetBold(true);
-			column.Style.Font.SetFontName(FONT_NAME);
-			column.Style.Font.SetFontColor(XLColor.Maroon);
-			SetHorizontalAlignment(column, XLAlignmentHorizontalValues.Center);
+			range.Style.Font.SetBold(true);
+			range.Style.Font.SetFontName(FONT_NAME);
+			range.Style.Font.SetFontColor(XLColor.Maroon);
+			SetHorizontalAlignment(range, XLAlignmentHorizontalValues.Center);
 		}
 
-		static void SetHorizontalAlignment(IXLRange column, XLAlignmentHorizontalValues alignment)
-		{
-			column.Style.Alignment.SetHorizontal(alignment);
-			column.FirstColumn().WorksheetColumn().Style.Alignment.SetHorizontal(alignment);
-		}
+		//显式字段选项的优先级高于模型元数据推导的样式
+		if(column.Field != null)
+			SetFieldStyle(range, column.Field);
+
+		var textMode = column.Field?.TextMode;
+
+		//如果是描述字段且未显式设置文本模式，则默认启用自动换行
+		if(!textMode.HasValue && property.Role == ModelPropertyRole.Description)
+			textMode = DataArchiveFieldTextMode.Wrap;
+
+		//设置文本模式（换行或缩小字体以适应单元格）
+		if(textMode.HasValue)
+			SetTextMode(range, textMode.Value);
 
 		static string GetCurrencyFormat()
 		{
@@ -448,6 +488,87 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 				width = COLUMN_MAX_WIDTH;
 
 			return Math.Clamp(width, COLUMN_MIN_WIDTH, COLUMN_MAX_WIDTH);
+		}
+
+		static void SetHorizontalAlignment(IXLRange column, XLAlignmentHorizontalValues alignment)
+		{
+			column.Style.Alignment.SetHorizontal(alignment);
+			column.FirstColumn().WorksheetColumn().Style.Alignment.SetHorizontal(alignment);
+		}
+
+		static void SetTextMode(IXLRange column, DataArchiveFieldTextMode textMode)
+		{
+			var wrap = textMode == DataArchiveFieldTextMode.Wrap;
+			var shrink = textMode == DataArchiveFieldTextMode.Shrink;
+			var worksheetStyle = column.FirstColumn().WorksheetColumn().Style;
+
+			column.Style.Alignment.SetWrapText(wrap).Alignment.SetShrinkToFit(shrink);
+			worksheetStyle.Alignment.SetWrapText(wrap).Alignment.SetShrinkToFit(shrink);
+		}
+
+		static void SetFieldStyle(IXLRange column, DataArchiveField field)
+		{
+			var worksheetStyle = column.FirstColumn().WorksheetColumn().Style;
+
+			if(field.Alignment.HasValue)
+			{
+				var alignment = field.Alignment.Value switch
+				{
+					DataArchiveFieldAlignment.Left => XLAlignmentHorizontalValues.Left,
+					DataArchiveFieldAlignment.Center => XLAlignmentHorizontalValues.Center,
+					DataArchiveFieldAlignment.Right => XLAlignmentHorizontalValues.Right,
+					_ => XLAlignmentHorizontalValues.General,
+				};
+
+				column.Style.Alignment.SetHorizontal(alignment);
+				worksheetStyle.Alignment.SetHorizontal(alignment);
+			}
+
+			if(!string.IsNullOrWhiteSpace(field.FontName))
+			{
+				column.Style.Font.SetFontName(field.FontName);
+				worksheetStyle.Font.SetFontName(field.FontName);
+			}
+
+			if(field.FontSize > 0)
+			{
+				column.Style.Font.SetFontSize(field.FontSize);
+				worksheetStyle.Font.SetFontSize(field.FontSize);
+			}
+
+			if(field.FontStyle.HasValue)
+			{
+				SetFontStyle(column.Style.Font, field.FontStyle.Value);
+				SetFontStyle(worksheetStyle.Font, field.FontStyle.Value);
+			}
+
+			if(field.ForegroundColor.HasValue)
+			{
+				var color = GetColor(field.ForegroundColor.Value);
+				column.Style.Font.SetFontColor(color);
+				worksheetStyle.Font.SetFontColor(color);
+			}
+
+			if(field.BackgroundColor.HasValue)
+			{
+				var color = GetColor(field.BackgroundColor.Value);
+				column.Style.Fill.SetBackgroundColor(color);
+				worksheetStyle.Fill.SetBackgroundColor(color);
+			}
+
+			static XLColor GetColor(Components.Color color)
+			{
+				color.GetRgb(out var red, out var green, out var blue);
+				return XLColor.FromArgb(color.Alpha, red, green, blue);
+			}
+
+			static void SetFontStyle(IXLFont font, DataArchiveFontStyle style)
+			{
+				font.SetBold((style & DataArchiveFontStyle.Bold) != 0);
+				font.SetItalic((style & DataArchiveFontStyle.Italic) != 0);
+				font.SetUnderline((style & DataArchiveFontStyle.Underline) != 0 ? XLFontUnderlineValues.Single : XLFontUnderlineValues.None);
+				font.SetStrikethrough((style & DataArchiveFontStyle.Strikeout) != 0);
+			}
 		}
 	}
 
@@ -595,7 +716,9 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			//设置字段内容
 			if(value != null)
 			{
-				if(value.GetType().IsEnum)
+				if(!string.IsNullOrEmpty(column.Format))
+					cell.SetCellValue(string.Format(System.Globalization.CultureInfo.CurrentCulture, $"{{0:{column.Format}}}", value));
+				else if(value.GetType().IsEnum)
 					cell.SetCellValue(value.ToString());
 				else if(value is DateTime date && date.Year < 1900)
 					cell.SetCellValue(date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
@@ -632,6 +755,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			this.Label = property.Label;
 			this.Description = property.Description;
 			this.Property = property;
+			this.Field = null;
 		}
 
 		public TableColumn(int index, ModelDescriptor model, DataArchiveField descriptor)
@@ -644,6 +768,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			this.Index = index > 0 ? index : throw new ArgumentOutOfRangeException(nameof(index));
 			this.Label = descriptor?.Label;
 			this.Description = descriptor?.Description;
+			this.Field = descriptor;
 
 			if(Reflection.Expressions.MemberExpression.TryParse(descriptor.Name, out var expression))
 			{
@@ -672,10 +797,12 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 
 		public Type Type => this.Property.Type;
 		public string Name => this.Property.Name;
+		public string Format => this.Field?.Format;
 		public readonly int Index;
 		public readonly string Label;
 		public readonly string Description;
 		public readonly ModelPropertyDescriptor Property;
+		public readonly DataArchiveField Field;
 
 		public object GetValue(ref object target)
 		{

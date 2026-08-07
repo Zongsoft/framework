@@ -98,6 +98,7 @@ internal class Program
 				Status = faker.Random.Bool(0.8f) ? (UserStatus)faker.Random.Int(0, 2) : null,
 				Balance = faker.Random.Bool(0.8f) ? decimal.Round(faker.Random.Decimal(-10000, 10000), 2) : null,
 				Creation = faker.Date.Recent(730),
+				Description = faker.Random.Int(0, 1) == 0 ? faker.Lorem.Sentence(3, 0) : faker.Lorem.Paragraphs(2),
 			};
 		}
 
@@ -134,7 +135,7 @@ internal class Program
 		for(int index = 0; index < users.Count; index++)
 		{
 			var user = users[index];
-			output.WriteLine($"[{index + 1}] Id={user.UserId}, Name={user.Name}, Gender={user.Gender}, Birthday={user.Birthday:yyyy-MM-dd}, Email={user.Email}, Active={user.IsActive?.ToString() ?? "<null>"}, Status={user.Status?.ToString() ?? "<null>"}, Balance={user.Balance?.ToString("0.00") ?? "<null>"}, Creation={user.Creation:yyyy-MM-dd HH:mm:ss}");
+			output.WriteLine($"[{index + 1}] Id={user.UserId}, Name={user.Name}, Gender={user.Gender}, Birthday={user.Birthday:yyyy-MM-dd}, Email={user.Email}, Active={user.IsActive?.ToString() ?? "<null>"}, Status={user.Status?.ToString() ?? "<null>"}, Balance={user.Balance?.ToString("0.00") ?? "<null>"}, Description={user.Description}, Creation={user.Creation:yyyy-MM-dd HH:mm:ss}");
 		}
 	}
 
@@ -230,6 +231,8 @@ internal class Program
 		public decimal? Balance { get; set; }
 		[ModelProperty(DbType.DateTime, false, DefaultValue = "now()")]
 		public DateTime Creation { get; set; }
+		[ModelProperty(DbType.String, 500, true, Role = nameof(ModelPropertyRole.Description))]
+		public string Description { get; set; }
 	}
 
 	private enum Gender : byte

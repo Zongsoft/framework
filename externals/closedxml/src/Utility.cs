@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -31,6 +31,7 @@ using System;
 
 using ClosedXML;
 using ClosedXML.Excel;
+using ClosedXML.Graphics;
 
 using Zongsoft.Data;
 
@@ -38,6 +39,21 @@ namespace Zongsoft.Externals.ClosedXml;
 
 public static class Utility
 {
+	/// <summary>将以排版点表示的宽度换算为 ClosedXML 工作表列宽。</summary>
+	/// <param name="worksheet">用于获取默认字体度量信息的工作表。</param>
+	/// <param name="points">以排版点（1/72 英寸）为单位的宽度。</param>
+	/// <returns>换算后的 ClosedXML 列宽，取值范围为 0 到 255。</returns>
+	public static double GetColumnWidth(IXLWorksheet worksheet, double points)
+	{
+		const double POINTS_PER_INCH = 72;
+		const double PIXELS_PER_INCH = 96;
+
+		var pixels = Math.Max(1, (int)Math.Round(points * PIXELS_PER_INCH / POINTS_PER_INCH));
+		var digitWidth = Math.Max(1, (int)Math.Round(DefaultGraphicEngine.Instance.Value.GetMaxDigitWidth(worksheet.Style.Font, PIXELS_PER_INCH)));
+		var width = pixels >= digitWidth + 5 ? (pixels - 5d) / digitWidth : (double)pixels / (digitWidth + 5d);
+		return Math.Clamp(width, 0, 255);
+	}
+
 	public static object GetCellValue(this IXLCell cell, ModelPropertyDescriptor property)
 	{
 		if(cell == null || cell.IsEmpty() || cell.Value.IsBlank || cell.Value.IsError)
