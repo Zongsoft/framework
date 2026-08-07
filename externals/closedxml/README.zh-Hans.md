@@ -48,7 +48,7 @@ dotnet add package Zongsoft.Externals.ClosedXml
 | 3 | Excel 表格标题行 |
 | 4 及以后 | 数据记录 |
 
-生成的表格始终至少包含 10 个数据行。导出的记录少于 10 条时，其余行保持为空以便人工录入；提取器会忽略这些全空行。
+导出数据非空时，生成的表格严格包含实际导出的记录；没有任何导出记录时，则保留一个或多个空数据行以便人工录入，提取器会忽略这些全空行。
 
 每个生成的标题单元格还会带有与模型字段同名的工作表级名称。提取器通过这些字段名稳定地映射列；对于人工创建的表格，也可以使用属性名作为标题进行后备匹配。
 
@@ -156,7 +156,7 @@ await new SpreadsheetRenderer().RenderAsync(output, template, invoice, parameter
 
 ## 范例
 
-交互式[范例项目](samples/Program.cs)会导出数据、重新导入数据，并显示工作簿结构和提取结果，便于人工校验。
+交互式[范例项目](samples/Program.cs)使用 [Bogus](https://github.com/bchavez/Bogus) 生成与语言文化匹配的用户假数据，随后导出、重新导入并显示工作簿结构和提取结果，便于人工校验。
 
 在仓库根目录运行：
 
@@ -168,13 +168,13 @@ dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Sa
 
 | 命令 | 说明 |
 | --- | --- |
-| `export [--culture:<name>\|-c:<name>] [file]` | 使用可选的资源文化导出范例用户，并显示生成的工作表、表格、范围、列数和行数。例如 `export -c:en-US users.xlsx`。 |
+| `export [--count:<number>\|-c:<number>] [--culture:<name>\|-l:<name>] [file]` | 生成并导出用户假数据，然后显示生成的工作表、表格、范围、列数和行数。例如 `export -c:20 -l:zh-Hans users.xlsx`。 |
 | `import [file]` | 导入工作簿，并显示其结构和提取到的用户。 |
-| `verify [file]` | 导出后立即导入工作簿，完成端到端检查。 |
+| `verify [options] [file]` | 导出后立即导入工作簿，完成端到端检查；支持与 `export` 相同的记录数和语言文化选项。 |
 
-默认文件为 `users.xlsx`。`out` 和 `in` 分别是 `export` 和 `import` 的别名。
+`export` 或 `verify` 未指定文件参数时，默认文件名会包含实际生效的语言文化和记录数，譬如 `users.zh-CN(10).xlsx` 或 `users.en(0).xlsx`。默认生成 10 条记录；记录数为零时，会创建供人工录入的空白行。`import` 仍默认使用 `users.xlsx`。`out` 和 `in` 分别是 `export` 和 `import` 的别名。
 
-例如，`export --culture:en-US users.en.xlsx` 会生成英文标题和标签，`export -c:zh-Hans users.zh-Hans.xlsx` 会生成简体中文标题和标签。指定的文化仅对当次导出命令生效。
+例如，`export --count:20 --culture:en-US users.en.xlsx` 会生成英文标题、标签和用户假数据，`export -c:20 -l:zh-Hans users.zh-Hans.xlsx` 则会生成简体中文内容。指定的文化仅对当次命令生效。
 
 ## 构建和测试
 

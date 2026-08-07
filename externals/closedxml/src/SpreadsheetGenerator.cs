@@ -66,7 +66,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 	public ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, IDataArchiveGeneratorOptions options, CancellationToken cancellation = default)
 	{
 		const int DATA_RANGE_FIRST_ROW = 4;
-		const int DATA_RANGE_EMPTY_ROWS = 5;
+		const int DATA_RANGE_EMPTY_ROWS = 2;
 
 		if(output == null)
 			throw new ArgumentNullException(nameof(output));
@@ -104,7 +104,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		worksheet.Row(1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
 		var range = worksheet.Range(1, 1, 1, columns.Length);
 		range.Style.Fill.SetPatternType(XLFillPatternValues.Gray125);
-		range.Style.Fill.SetPatternColor(XLColor.Green);
+		range.Style.Fill.SetPatternColor(XLColor.LightGreen);
 		range.Style.Fill.SetBackgroundColor(XLColor.TeaGreen);
 		range.Style.Border.TopBorder = XLBorderStyleValues.Medium;
 		range.Style.Border.TopBorderColor = XLColor.Green;
@@ -205,7 +205,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			GenerateRow(worksheet, row++, data, columns, options);
 		}
 
-		//有数据时按实际记录数确定范围；没有数据时保留五行空记录供用户录入
+		//有数据时按实际记录数确定范围；没有数据时保留空记录供用户录入
 		var lastRow = row > DATA_RANGE_FIRST_ROW ? row - 1 : DATA_RANGE_FIRST_ROW + DATA_RANGE_EMPTY_ROWS - 1;
 
 		//固定当前数据区行高；工作表默认行高负责未来扩展行

@@ -5,6 +5,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Bogus" VersionOverride="35.6.5" />
 		<ProjectReference Include="..\src\Zongsoft.Externals.ClosedXml.csproj" />
 	</ItemGroup>
 

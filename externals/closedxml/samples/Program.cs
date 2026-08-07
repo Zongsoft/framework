@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Bogus;
 using ClosedXML.Excel;
 
 using Zongsoft.Common;
@@ -29,11 +30,12 @@ internal class Program
 		executor.Command("export", async (context, cancellation) =>
 		{
 			var culture = GetCulture(context);
-			var path = GetPath(context);
+			var count = GetCount(context);
+			var path = GetExportPath(context, culture, count);
 
 			using var scope = new CultureScope(culture);
-			await ExportAsync(path, cancellation);
-			context.Output.WriteLine(CommandOutletColor.DarkGreen, $"Exported: {path}");
+			await ExportAsync(path, count, culture, cancellation);
+			context.Output.WriteLine(CommandOutletColor.DarkGreen, $"Exported {count} records: {path}");
 			DisplayWorkbook(context.Output, path);
 		});
 
@@ -47,8 +49,12 @@ internal class Program
 
 		executor.Command("verify", async (context, cancellation) =>
 		{
-			var path = GetPath(context);
-			await ExportAsync(path, cancellation);
+			var culture = GetCulture(context);
+			var count = GetCount(context);
+			var path = GetExportPath(context, culture, count);
+
+			using var scope = new CultureScope(culture);
+			await ExportAsync(path, count, culture, cancellation);
 			var users = await ImportAsync(path, cancellation);
 			DisplayWorkbook(context.Output, path);
 			DisplayData(context.Output, users);
@@ -60,17 +66,42 @@ internal class Program
 		var splash = CommandOutletContent.Create()
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 64))
 			.AppendLine(CommandOutletColor.Cyan, "ClosedXML Import and Export Sample".Justify(64))
-			.AppendLine(CommandOutletColor.DarkGray, "export [--culture:<name>|-c:<name>] [file]".Justify(64))
-			.AppendLine(CommandOutletColor.DarkGray, "import [file]  verify [file]".Justify(64))
+			.AppendLine(CommandOutletColor.DarkGray, "export [--count:<number>|-c:<number>] [--culture:<name>|-l:<name>] [file]".Justify(64))
+			.AppendLine(CommandOutletColor.DarkGray, "import [file]  verify [options] [file]".Justify(64))
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 64));
 
 		await executor.RunAsync(splash);
 	}
 
-	private static async ValueTask ExportAsync(string path, CancellationToken cancellation)
+	private static async ValueTask ExportAsync(string path, int count, CultureInfo culture, CancellationToken cancellation)
 	{
 		await using var stream = File.Create(path);
-		await Generator.GenerateAsync(stream, Model, User.Data, cancellation);
+		await Generator.GenerateAsync(stream, Model, GenerateUsers(count, culture), cancellation);
+	}
+
+	private static User[] GenerateUsers(int count, CultureInfo culture)
+	{
+		var current = culture ?? CultureInfo.CurrentUICulture;
+		var faker = new Faker(string.Equals(current.TwoLetterISOLanguageName, "zh", StringComparison.OrdinalIgnoreCase) ? "zh_CN" : "en_US");
+		var users = new User[count];
+
+		for(int index = 0; index < users.Length; index++)
+		{
+			users[index] = new User
+			{
+				UserId = index + 1,
+				Name = faker.Name.FullName(),
+				Gender = (Gender)faker.Random.Int(0, 1),
+				Birthday = faker.Random.Bool(0.8f) ? faker.Date.Past(70, DateTime.Today.AddYears(-18)).Date : null,
+				Email = faker.Internet.Email(),
+				IsActive = faker.Random.Bool(0.8f) ? faker.Random.Bool() : null,
+				Status = faker.Random.Bool(0.8f) ? (UserStatus)faker.Random.Int(0, 2) : null,
+				Balance = faker.Random.Bool(0.8f) ? decimal.Round(faker.Random.Decimal(-10000, 10000), 2) : null,
+				Creation = faker.Date.Recent(730),
+			};
+		}
+
+		return users;
 	}
 
 	private static async ValueTask<IReadOnlyList<User>> ImportAsync(string path, CancellationToken cancellation)
@@ -112,7 +143,7 @@ internal class Program
 		var specified = context.Options.TryGetValue<string>("culture", out var cultureName);
 
 		if(!specified)
-			specified = context.Options.TryGetValue<string>("c", out cultureName);
+			specified = context.Options.TryGetValue<string>("l", out cultureName);
 
 		if(!specified)
 			return null;
@@ -127,10 +158,36 @@ internal class Program
 		}
 	}
 
+	private static int GetCount(CommandContext context)
+	{
+		const int DEFAULT_COUNT = 10;
+
+		if(!context.Options.TryGetValue<int>("count", out var count) &&
+		   !context.Options.TryGetValue<int>("c", out count))
+			return DEFAULT_COUNT;
+
+		if(count < 0)
+			throw new CommandOptionValueException("count", count.ToString(CultureInfo.InvariantCulture));
+
+		return count;
+	}
+
 	private static string GetPath(CommandContext context)
 	{
 		var path = context.Arguments.IsEmpty ? "users.xlsx" : context.Arguments[0];
 		return Path.GetFullPath(path);
+	}
+
+	private static string GetExportPath(CommandContext context, CultureInfo culture, int count)
+	{
+		if(!context.Arguments.IsEmpty)
+			return Path.GetFullPath(context.Arguments[0]);
+
+		var cultureName = (culture ?? CultureInfo.CurrentUICulture).Name;
+		if(string.IsNullOrEmpty(cultureName))
+			cultureName = "en";
+
+		return Path.GetFullPath($"users.{cultureName}({count.ToString(CultureInfo.InvariantCulture)}).xlsx");
 	}
 
 	private sealed class CultureScope : IDisposable
@@ -159,13 +216,6 @@ internal class Program
 
 	private sealed class User
 	{
-		public static readonly User[] Data =
-		[
-			new() { UserId = 101, Name = "Popeye", Gender = Gender.Male, Email = "zongsoft@qq.com", IsActive = true, Status = UserStatus.Active, Balance = 128.50m, Creation = new DateTime(2024, 1, 15, 9, 30, 0) },
-			new() { UserId = 102, Name = "Ada", Gender = Gender.Female, Birthday = new DateTime(1985, 12, 10), Email = "ada@example.com", IsActive = false, Status = UserStatus.Inactive, Balance = -12.25m, Creation = new DateTime(2024, 2, 20, 10, 15, 0) },
-			new() { UserId = 103, Name = "Grace", Gender = Gender.Female, Birthday = new DateTime(1906, 12, 9), Email = "grace@example.com", Creation = new DateTime(2024, 3, 25, 14, 45, 0) },
-		];
-
 		[ModelProperty(DbType.Int32, false, IsPrimaryKey = true)]
 		public int UserId { get; set; }
 		[ModelProperty(DbType.String, 50, false)]

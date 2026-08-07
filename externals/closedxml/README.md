@@ -48,7 +48,7 @@ The generated layout is:
 | 3 | Excel Table header |
 | 4 and below | Data records |
 
-The generated Table always contains at least 10 data rows. When fewer than 10 records are exported, the remaining rows are left blank for manual entry; the extractor ignores those completely empty rows.
+For non-empty exports, the generated Table contains exactly the exported records. When no records are exported, it contains one or more blank data rows for manual entry; the extractor ignores those completely empty rows.
 
 Each generated header cell also has a worksheet-scoped Defined Name matching its model field. The extractor uses these field names for stable column mapping and accepts property-name headers as a fallback for manually created tables.
 
@@ -156,7 +156,7 @@ English is the neutral resource language, and Simplified Chinese resources are p
 
 ## Sample
 
-The interactive [sample project](samples/Program.cs) exports data, imports it again, and displays the workbook structure and extracted records for manual verification.
+The interactive [sample project](samples/Program.cs) uses [Bogus](https://github.com/bchavez/Bogus) to generate locale-aware fake users, exports data, imports it again, and displays the workbook structure and extracted records for manual verification.
 
 Run it from the repository root:
 
@@ -168,13 +168,13 @@ Available commands:
 
 | Command | Description |
 | --- | --- |
-| `export [--culture:<name>\|-c:<name>] [file]` | Export sample users with an optional resource culture, then display the generated worksheet, table, range, columns, and rows. For example, `export -c:en-US users.xlsx`. |
+| `export [--count:<number>\|-c:<number>] [--culture:<name>\|-l:<name>] [file]` | Generate and export fake users, then display the generated worksheet, table, range, columns, and rows. For example, `export -c:20 -l:en-US users.xlsx`. |
 | `import [file]` | Import a workbook and display its structure and extracted users. |
-| `verify [file]` | Export and immediately import a workbook for an end-to-end check. |
+| `verify [options] [file]` | Export and immediately import a workbook for an end-to-end check; it accepts the same count and culture options as `export`. |
 
-The default file is `users.xlsx`. `out` and `in` are aliases for `export` and `import`.
+When `export` or `verify` has no file argument, its default name includes the effective culture and record count, such as `users.zh-CN(10).xlsx` or `users.en(0).xlsx`. The default generated record count is 10; a count of zero creates the generator's blank entry rows. `import` still defaults to `users.xlsx`. `out` and `in` are aliases for `export` and `import`.
 
-For example, `export --culture:en-US users.en.xlsx` generates English titles and labels, while `export -c:zh-Hans users.zh-Hans.xlsx` generates Simplified Chinese ones. The selected culture applies only to that export command.
+For example, `export --count:20 --culture:en-US users.en.xlsx` generates English titles, labels, and fake user names, while `export -c:20 -l:zh-Hans users.zh-Hans.xlsx` generates Simplified Chinese content. The selected culture applies only to that command.
 
 ## Build and Test
 

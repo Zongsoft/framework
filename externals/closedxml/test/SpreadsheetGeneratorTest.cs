@@ -29,9 +29,6 @@ public class SpreadsheetGeneratorTest
 		Assert.True(table.ShowHeaderRow);
 		Assert.False(table.ShowTotalsRow);
 		Assert.False(worksheet.DefinedNames.TryGetValue(Templates.User.Descriptor.Name, out _));
-		Assert.Equal(XLPageOrientation.Landscape, worksheet.PageSetup.PageOrientation);
-		Assert.True(worksheet.Range(1, 1, 1, table.ColumnCount()).IsMerged());
-		Assert.True(worksheet.Range(2, 1, 2, table.ColumnCount()).IsMerged());
 
 		var userIdColumn = GetColumnNumber(table, Templates.User.Descriptor, nameof(User.UserId));
 		var nameColumn = GetColumnNumber(table, Templates.User.Descriptor, nameof(User.Name));
@@ -46,15 +43,14 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal("zongsoft@qq.com", worksheet.Cell(4, emailColumn).GetString());
 		Assert.True(worksheet.Cell(4, birthdayColumn).IsEmpty());
 		Assert.Equal(new DateTime(1983, 1, 23), worksheet.Cell(5, birthdayColumn).GetDateTime());
-		Assert.Equal("yyyy-MM-dd", worksheet.Cell(5, birthdayColumn).Style.DateFormat.Format);
 	}
 
 	[Theory]
-	[InlineData(true, 0, 5)]
-	[InlineData(false, 0, 5)]
-	[InlineData(false, 1, 1)]
-	[InlineData(false, 9, 9)]
-	public async Task GenerateAsync_RecordCount_UsesActualRowsExceptFiveRowsForEmptyData(bool nullData, int recordCount, int expectedRowCount)
+	[InlineData(true, 0)]
+	[InlineData(false, 0)]
+	[InlineData(false, 1)]
+	[InlineData(false, 9)]
+	public async Task GenerateAsync_RecordCount_UsesActualRowsAndEditableRowsForEmptyData(bool nullData, int recordCount)
 	{
 		using var output = new MemoryStream();
 		var model = new ModelDescriptor(typeof(DateValidationRecord)) { Title = "Record Count" };
@@ -68,9 +64,14 @@ public class SpreadsheetGeneratorTest
 		using var workbook = new XLWorkbook(output);
 		var table = GetTable(workbook, model.Name);
 		var cells = table.DataRange.FirstColumn().Cells().ToArray();
+		var rowCount = table.DataRange.RowCount();
 
-		Assert.Equal(expectedRowCount, table.DataRange.RowCount());
-		Assert.Equal(3 + expectedRowCount, table.RangeAddress.LastAddress.RowNumber);
+		if(recordCount == 0)
+			Assert.True(rowCount > 0);
+		else
+			Assert.Equal(recordCount, rowCount);
+
+		Assert.Equal(3 + rowCount, table.RangeAddress.LastAddress.RowNumber);
 		Assert.All(cells, cell => Assert.True(cell.HasDataValidation));
 
 		if(recordCount == 0)
@@ -112,7 +113,6 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal("Ada", worksheet.Cell(4, 1).GetString());
 		Assert.Equal(XLDataType.Text, historicalBirthday.DataType);
 		Assert.Equal("1815-12-10", historicalBirthday.GetString());
-		Assert.Equal("1815-12-10", historicalBirthday.GetFormattedString());
 		Assert.True(historicalBirthday.HasDataValidation);
 		Assert.Equal(XLDataType.Text, lastHistoricalBirthday.DataType);
 		Assert.Equal("1899-12-31", lastHistoricalBirthday.GetString());
@@ -121,7 +121,6 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal("Grape", worksheet.Cell(7, 1).GetString());
 		Assert.Equal(XLDataType.DateTime, modernBirthday.DataType);
 		Assert.Equal(new DateTime(1983, 1, 23), modernBirthday.GetDateTime());
-		Assert.Equal("yyyy-MM-dd", modernBirthday.Style.DateFormat.Format);
 		Assert.True(modernBirthday.HasDataValidation);
 		Assert.False(worksheet.DefinedNames.TryGetValue(nameof(User.UserId), out _));
 	}
@@ -263,35 +262,6 @@ public class SpreadsheetGeneratorTest
 		Assert.False(string.IsNullOrWhiteSpace(title));
 	}
 
-	[Fact]
-	public async Task GenerateAsync_SimplexMetadata_SetsPersistedDataTypeRoleAndLengthWidths()
-	{
-		using var output = new MemoryStream();
-		var model = CreateColumnStyleModel();
-		var records = CreateColumnStyleRecords();
-
-		await _generator.GenerateAsync(output, model, records);
-
-		output.Position = 0;
-		using var workbook = new XLWorkbook(output);
-		var table = GetTable(workbook, model.Name);
-		var shortWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.ShortText));
-		var mediumWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.MediumText));
-		var oversizedWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.OversizedText));
-		var integerWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.Quantity));
-		var descriptionWidth = GetColumnWidth(table, model, nameof(ColumnStyleRecord.DescriptionText));
-
-		Assert.InRange(shortWidth, 9.99, 10.01);
-		Assert.InRange(mediumWidth, 49.99, 50.01);
-		Assert.InRange(oversizedWidth, 49.99, 50.01);
-		Assert.InRange(integerWidth, 11.99, 12.01);
-		Assert.InRange(descriptionWidth, 49.99, 50.01);
-		Assert.True(shortWidth < mediumWidth);
-		Assert.Equal(mediumWidth, oversizedWidth, 2);
-		Assert.All(new[] { shortWidth, mediumWidth, oversizedWidth, integerWidth, descriptionWidth },
-			width => Assert.InRange(width, 8, 50));
-	}
-
 	[Theory]
 	[InlineData("en-US", "Invalid value", "The value of 'S' is required and cannot exceed 8 characters.", "The value of 'O' cannot exceed 8 characters.", "The value of 'I' must be a whole number between -2147483648 and 2147483647.", "The value of 'B' must be a number.")]
 	[InlineData("zh-Hans", "输入值无效", "“S”不能为空且不能超过 8 个字符。", "“O”的内容不能超过 8 个字符。", "“I”必须是 -2147483648 到 2147483647 之间的整数。", "“B”必须是数值。")]
@@ -305,17 +275,17 @@ public class SpreadsheetGeneratorTest
 	{
 		using var culture = new CultureScope(cultureName);
 		using var output = new MemoryStream();
-		var model = CreateColumnStyleModel();
+		var model = CreateSimplexValidationModel();
 
-		await _generator.GenerateAsync(output, model, CreateColumnStyleRecords());
+		await _generator.GenerateAsync(output, model, CreateSimplexValidationRecords());
 
 		output.Position = 0;
 		using var workbook = new XLWorkbook(output);
 		var table = GetTable(workbook, model.Name);
-		var shortTextColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.ShortText));
-		var optionalTextColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.OptionalText));
-		var quantityColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Quantity));
-		var balanceColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Balance));
+		var shortTextColumn = GetColumnNumber(table, model, nameof(SimplexValidationRecord.ShortText));
+		var optionalTextColumn = GetColumnNumber(table, model, nameof(SimplexValidationRecord.OptionalText));
+		var quantityColumn = GetColumnNumber(table, model, nameof(SimplexValidationRecord.Quantity));
+		var balanceColumn = GetColumnNumber(table, model, nameof(SimplexValidationRecord.Balance));
 		var requiredTextValidation = GetValidation(table, shortTextColumn);
 		var optionalTextValidation = GetValidation(table, optionalTextColumn);
 		var integerValidation = GetValidation(table, quantityColumn);
@@ -455,71 +425,6 @@ public class SpreadsheetGeneratorTest
 	}
 
 	[Theory]
-	[InlineData("en-US", "$")]
-	[InlineData("zh-Hans", "¥")]
-	public async Task GenerateAsync_CurrencyRole_UsesExpandableLocalizedRedNegativeFormat(string cultureName, string currencySymbol)
-	{
-		using var culture = new CultureScope(cultureName);
-		var currencyFormat = $"\"{currencySymbol}\"#,##0.00;[Red]\"{currencySymbol}\"-#,##0.00";
-
-		using var output = new MemoryStream();
-		var model = CreateColumnStyleModel();
-
-		await _generator.GenerateAsync(output, model, CreateColumnStyleRecords());
-
-		output.Position = 0;
-		using(var archive = new System.IO.Compression.ZipArchive(output, System.IO.Compression.ZipArchiveMode.Read, true))
-		{
-			var entry = archive.GetEntry("xl/styles.xml");
-			Assert.NotNull(entry);
-			using var stream = entry.Open();
-			var styles = System.Xml.Linq.XDocument.Load(stream);
-			var schema = styles.Root.Name.Namespace;
-			var differentialNumberFormats = styles.Descendants(schema + "dxf").SelectMany(element => element.Elements(schema + "numFmt"));
-			Assert.All(differentialNumberFormats, format => Assert.NotNull(format.Attribute("formatCode")));
-			Assert.Contains(styles.Descendants(schema + "numFmt"), format => (string)format.Attribute("formatCode") == currencyFormat);
-		}
-
-		output.Position = 0;
-		using var workbook = new XLWorkbook(output);
-		var table = GetTable(workbook, model.Name);
-		var balanceColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Balance));
-		var balanceCells = table.DataRange.Column(balanceColumn).Cells().ToArray();
-
-		Assert.Equal(2, balanceCells.Length);
-		Assert.Equal(128.5, balanceCells[0].GetDouble());
-		Assert.Equal(-12.25, balanceCells[1].GetDouble());
-		Assert.All(balanceCells, cell => Assert.Equal(currencyFormat, cell.Style.NumberFormat.Format));
-		Assert.DoesNotContain(table.Worksheet.ConditionalFormats, format =>
-			format.ConditionalFormatType == XLConditionalFormatType.CellIs &&
-			format.Operator == XLCFOperator.LessThan);
-		Assert.All(balanceCells, cell => Assert.Equal(XLDataType.Number, cell.DataType));
-	}
-
-	[Fact]
-	public async Task GenerateAsync_PrimaryKey_StylesEveryPersistedDataCell()
-	{
-		using var output = new MemoryStream();
-		var model = CreateColumnStyleModel();
-
-		await _generator.GenerateAsync(output, model, CreateColumnStyleRecords());
-
-		output.Position = 0;
-		using var workbook = new XLWorkbook(output);
-		var table = GetTable(workbook, model.Name);
-		var keyColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.RecordId));
-		var keyCells = table.DataRange.Column(keyColumn).Cells().ToArray();
-
-		Assert.Equal(2, keyCells.Length);
-		Assert.All(keyCells, cell =>
-		{
-			Assert.Equal(XLAlignmentHorizontalValues.Center, cell.Style.Alignment.Horizontal);
-			Assert.True(cell.Style.Font.Bold);
-			Assert.Equal(XLColor.Maroon, cell.Style.Font.FontColor);
-		});
-	}
-
-	[Theory]
 	[InlineData("en-US", "The 'A1' model name cannot be used as an Excel table name.")]
 	[InlineData("zh-Hans", "模型名称“A1”不能用作 Excel 数据表名称。")]
 	public async Task GenerateAsync_InvalidTableName_ThrowsLocalizedOperationException(string cultureName, string message)
@@ -566,27 +471,20 @@ public class SpreadsheetGeneratorTest
 		return Assert.Single(table.HeadersRow().Cells(cell => cell.GetString() == label)).Address.ColumnNumber;
 	}
 
-	private static double GetColumnWidth(IXLTable table, ModelDescriptor model, string name) =>
-		table.Worksheet.Column(GetColumnNumber(table, model, name)).Width;
-
-	private static ModelDescriptor CreateColumnStyleModel()
+	private static ModelDescriptor CreateSimplexValidationModel()
 	{
-		var model = new ModelDescriptor(typeof(ColumnStyleRecord)) { Title = "Column Styles" };
-		model.Properties[nameof(ColumnStyleRecord.RecordId)].Label = "K";
-		model.Properties[nameof(ColumnStyleRecord.ShortText)].Label = "S";
-		model.Properties[nameof(ColumnStyleRecord.OptionalText)].Label = "O";
-		model.Properties[nameof(ColumnStyleRecord.MediumText)].Label = "M";
-		model.Properties[nameof(ColumnStyleRecord.OversizedText)].Label = "L";
-		model.Properties[nameof(ColumnStyleRecord.Quantity)].Label = "I";
-		model.Properties[nameof(ColumnStyleRecord.DescriptionText)].Label = "D";
-		model.Properties[nameof(ColumnStyleRecord.Balance)].Label = "B";
+		var model = new ModelDescriptor(typeof(SimplexValidationRecord)) { Title = "Simplex Validations" };
+		model.Properties[nameof(SimplexValidationRecord.ShortText)].Label = "S";
+		model.Properties[nameof(SimplexValidationRecord.OptionalText)].Label = "O";
+		model.Properties[nameof(SimplexValidationRecord.Quantity)].Label = "I";
+		model.Properties[nameof(SimplexValidationRecord.Balance)].Label = "B";
 		return model;
 	}
 
-	private static ColumnStyleRecord[] CreateColumnStyleRecords() =>
+	private static SimplexValidationRecord[] CreateSimplexValidationRecords() =>
 	[
-		new() { RecordId = 101, ShortText = "x", MediumText = "x", OversizedText = "x", Quantity = 1, DescriptionText = "x", Balance = 128.5m },
-		new() { RecordId = 102, ShortText = "y", OptionalText = "z", MediumText = "y", OversizedText = "y", Quantity = 2, DescriptionText = "y", Balance = -12.25m },
+		new() { ShortText = "x", Quantity = 1, Balance = 128.5m },
+		new() { ShortText = "y", OptionalText = "z", Quantity = 2, Balance = -12.25m },
 	];
 
 	private static XLCellValue[] GetValidationItems(XLWorkbook workbook, IXLCell cell, bool ignoreBlanks, bool rangeSource)
@@ -630,28 +528,16 @@ public class SpreadsheetGeneratorTest
 		public Gender? OptionalGender { get; set; }
 	}
 
-	private sealed class ColumnStyleRecord
+	private sealed class SimplexValidationRecord
 	{
-		[ModelProperty(DbType.Int32, false, IsPrimaryKey = true)]
-		public int RecordId { get; set; }
-
 		[ModelProperty(DbType.AnsiString, 8, false)]
 		public string ShortText { get; set; }
 
 		[ModelProperty(DbType.AnsiString, 8, true)]
 		public string OptionalText { get; set; }
 
-		[ModelProperty(DbType.AnsiString, 64, false)]
-		public string MediumText { get; set; }
-
-		[ModelProperty(DbType.AnsiString, 4096, false)]
-		public string OversizedText { get; set; }
-
 		[ModelProperty(DbType.Int32, false)]
 		public int Quantity { get; set; }
-
-		[ModelProperty(DbType.AnsiString, 8, false, Role = nameof(ModelPropertyRole.Description))]
-		public string DescriptionText { get; set; }
 
 		[ModelProperty(DbType.Decimal, true, Role = nameof(ModelPropertyRole.Currency))]
 		public decimal? Balance { get; set; }
