@@ -306,6 +306,13 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		style = range.AddConditionalFormat().WhenIsTrue("TRUE");
 		style.Border.BottomBorder = XLBorderStyleValues.Thin;
 		style.Border.BottomBorderColor = XLColor.LightGray;
+
+		for(int i = 2; i <= range.ColumnCount(); i++)
+		{
+			var column = range.Column(i);
+			column.Style.Border.LeftBorder = XLBorderStyleValues.Thin;
+			column.Style.Border.LeftBorderColor = XLColor.LightGray;
+		}
 	}
 
 	private static void SetDataColumnStyle(IXLRange column, ModelPropertyDescriptor property)
