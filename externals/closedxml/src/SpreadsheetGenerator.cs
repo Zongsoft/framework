@@ -66,7 +66,7 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 	public ValueTask GenerateAsync(Stream output, ModelDescriptor model, object data, IDataArchiveGeneratorOptions options, CancellationToken cancellation = default)
 	{
 		const int DATA_RANGE_FIRST_ROW = 4;
-		const int DATA_RANGE_MINIMUM_ROWS = 10;
+		const int DATA_RANGE_EMPTY_ROWS = 5;
 
 		if(output == null)
 			throw new ArgumentNullException(nameof(output));
@@ -200,16 +200,13 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			foreach(var item in items)
 				GenerateRow(worksheet, row++, item, columns, options);
 		}
-		else
+		else if(data != null)
 		{
-			GenerateRow(worksheet, row, data, columns, options);
+			GenerateRow(worksheet, row++, data, columns, options);
 		}
 
-		if(row > DATA_RANGE_FIRST_ROW)
-			row--;
-
-		//获取数据区的最后一行号（保证数据区不少于最小行数）
-		var lastRow = Math.Max(row, DATA_RANGE_FIRST_ROW + DATA_RANGE_MINIMUM_ROWS - 1);
+		//有数据时按实际记录数确定范围；没有数据时保留五行空记录供用户录入
+		var lastRow = row > DATA_RANGE_FIRST_ROW ? row - 1 : DATA_RANGE_FIRST_ROW + DATA_RANGE_EMPTY_ROWS - 1;
 
 		//固定当前数据区行高；工作表默认行高负责未来扩展行
 		worksheet.Rows(DATA_RANGE_FIRST_ROW, lastRow).Height = worksheet.RowHeight;

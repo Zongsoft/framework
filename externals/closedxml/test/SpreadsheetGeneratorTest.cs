@@ -23,8 +23,8 @@ public class SpreadsheetGeneratorTest
 
 		Assert.Equal(Templates.User.Descriptor.Name, table.Name);
 		Assert.Equal(3, table.RangeAddress.FirstAddress.RowNumber);
-		Assert.Equal(13, table.RangeAddress.LastAddress.RowNumber);
-		Assert.Equal(10, table.DataRange.RowCount());
+		Assert.Equal(8, table.RangeAddress.LastAddress.RowNumber);
+		Assert.Equal(Templates.User.Data.Length, table.DataRange.RowCount());
 		Assert.Equal(Templates.User.Descriptor.Properties.Count, table.ColumnCount());
 		Assert.True(table.ShowHeaderRow);
 		Assert.False(table.ShowTotalsRow);
@@ -47,6 +47,36 @@ public class SpreadsheetGeneratorTest
 		Assert.True(worksheet.Cell(4, birthdayColumn).IsEmpty());
 		Assert.Equal(new DateTime(1983, 1, 23), worksheet.Cell(5, birthdayColumn).GetDateTime());
 		Assert.Equal("yyyy-MM-dd", worksheet.Cell(5, birthdayColumn).Style.DateFormat.Format);
+	}
+
+	[Theory]
+	[InlineData(true, 0, 5)]
+	[InlineData(false, 0, 5)]
+	[InlineData(false, 1, 1)]
+	[InlineData(false, 9, 9)]
+	public async Task GenerateAsync_RecordCount_UsesActualRowsExceptFiveRowsForEmptyData(bool nullData, int recordCount, int expectedRowCount)
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(DateValidationRecord)) { Title = "Record Count" };
+		var records = System.Linq.Enumerable.Range(0, recordCount)
+			.Select(index => new DateValidationRecord { Birthday = new DateTime(2024, 1, 1).AddDays(index) })
+			.ToArray();
+
+		await _generator.GenerateAsync(output, model, nullData ? null : records);
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		var cells = table.DataRange.FirstColumn().Cells().ToArray();
+
+		Assert.Equal(expectedRowCount, table.DataRange.RowCount());
+		Assert.Equal(3 + expectedRowCount, table.RangeAddress.LastAddress.RowNumber);
+		Assert.All(cells, cell => Assert.True(cell.HasDataValidation));
+
+		if(recordCount == 0)
+			Assert.All(cells, cell => Assert.True(cell.IsEmpty()));
+		else
+			Assert.Equal(records.Select(record => record.Birthday.Value), cells.Select(cell => cell.GetDateTime()));
 	}
 
 	[Fact]
@@ -74,8 +104,8 @@ public class SpreadsheetGeneratorTest
 		var modernBirthday = worksheet.Cell(7, 2);
 
 		Assert.Equal(3, table.RangeAddress.FirstAddress.RowNumber);
-		Assert.Equal(13, table.RangeAddress.LastAddress.RowNumber);
-		Assert.Equal(10, table.DataRange.RowCount());
+		Assert.Equal(7, table.RangeAddress.LastAddress.RowNumber);
+		Assert.Equal(users.Length, table.DataRange.RowCount());
 		Assert.Equal(2, table.ColumnCount());
 		Assert.Equal(Templates.User.Descriptor.Properties[nameof(User.Name)].Label, worksheet.Cell(3, 1).GetString());
 		Assert.Equal(Templates.User.Descriptor.Properties[nameof(User.Birthday)].Label, worksheet.Cell(3, 2).GetString());
@@ -118,7 +148,7 @@ public class SpreadsheetGeneratorTest
 		var table = GetTable(workbook, model.Name);
 		var cells = table.DataRange.FirstColumn().Cells().ToArray();
 
-		Assert.Equal(10, cells.Length);
+		Assert.Equal(records.Length, cells.Length);
 		Assert.All(cells, cell => Assert.True(cell.HasDataValidation));
 		var validation = cells[0].GetDataValidation();
 		Assert.Equal(XLDataType.DateTime, cells[0].DataType);
@@ -158,6 +188,7 @@ public class SpreadsheetGeneratorTest
 		var optionalItems = GetValidationItems(workbook, optionalCell, true, true);
 		var enumNames = Enum.GetNames<Gender>();
 
+		Assert.Equal(1, table.DataRange.RowCount());
 		Assert.Equal(nameof(Gender.Male), requiredCell.GetString());
 		Assert.True(optionalCell.IsEmpty());
 		Assert.Equal(table.ColumnCount(), table.Worksheet.LastColumnUsed().ColumnNumber());
@@ -191,8 +222,8 @@ public class SpreadsheetGeneratorTest
 		var requiredItems = GetValidationItems(workbook, requiredCells[0], false, true);
 		var optionalItems = GetValidationItems(workbook, optionalCells[0], true, true);
 
-		Assert.Equal(10, requiredCells.Length);
-		Assert.Equal(10, optionalCells.Length);
+		Assert.Equal(records.Length, requiredCells.Length);
+		Assert.Equal(records.Length, optionalCells.Length);
 		Assert.Equal(table.ColumnCount(), table.Worksheet.LastColumnUsed().ColumnNumber());
 		Assert.All(requiredCells, cell => Assert.True(cell.HasDataValidation));
 		Assert.All(optionalCells, cell => Assert.True(cell.HasDataValidation));
@@ -455,15 +486,14 @@ public class SpreadsheetGeneratorTest
 		var balanceColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.Balance));
 		var balanceCells = table.DataRange.Column(balanceColumn).Cells().ToArray();
 
-		Assert.Equal(10, balanceCells.Length);
+		Assert.Equal(2, balanceCells.Length);
 		Assert.Equal(128.5, balanceCells[0].GetDouble());
 		Assert.Equal(-12.25, balanceCells[1].GetDouble());
 		Assert.All(balanceCells, cell => Assert.Equal(currencyFormat, cell.Style.NumberFormat.Format));
 		Assert.DoesNotContain(table.Worksheet.ConditionalFormats, format =>
 			format.ConditionalFormatType == XLConditionalFormatType.CellIs &&
 			format.Operator == XLCFOperator.LessThan);
-		Assert.All(balanceCells.Take(2), cell => Assert.Equal(XLDataType.Number, cell.DataType));
-		Assert.All(balanceCells.Skip(2), cell => Assert.True(cell.IsEmpty()));
+		Assert.All(balanceCells, cell => Assert.Equal(XLDataType.Number, cell.DataType));
 	}
 
 	[Fact]
@@ -480,7 +510,7 @@ public class SpreadsheetGeneratorTest
 		var keyColumn = GetColumnNumber(table, model, nameof(ColumnStyleRecord.RecordId));
 		var keyCells = table.DataRange.Column(keyColumn).Cells().ToArray();
 
-		Assert.Equal(10, keyCells.Length);
+		Assert.Equal(2, keyCells.Length);
 		Assert.All(keyCells, cell =>
 		{
 			Assert.Equal(XLAlignmentHorizontalValues.Center, cell.Style.Alignment.Horizontal);
