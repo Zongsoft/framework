@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.24.0</Version>
+		<Version>7.25.0</Version>
 		<Product>Zongsoft Data Library</Product>
 		<Description>This is an Object/Relational Mapping(ORM) data engine.</Description>
 		<RootNamespace>Zongsoft.Data</RootNamespace>
@@ -30,7 +30,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.51.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.53.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
