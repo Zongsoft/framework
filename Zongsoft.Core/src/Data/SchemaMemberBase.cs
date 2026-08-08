@@ -89,6 +89,7 @@ public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 
 	public Paging Paging { get; internal set; }
 	public Sorting[] Sortings => _sortingArray;
+	public virtual Metadata.IDataEntityProperty Property => null;
 	public abstract bool HasChildren { get; }
 	#endregion
 
@@ -120,7 +121,7 @@ public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 	#region 重写方法
 	public bool Equals(SchemaMemberBase other) => other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj is SchemaMemberBase other && this.Equals(other);
-	public override int GetHashCode() => this.Name.ToUpperInvariant().GetHashCode();
+	public override int GetHashCode() => this.Name == null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(this.Name);
 	public override string ToString() => this.FullPath;
 	#endregion
 

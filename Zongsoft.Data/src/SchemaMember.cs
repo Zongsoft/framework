@@ -58,6 +58,7 @@ public class SchemaMember : SchemaMemberBase
 
 	#region 公共属性
 	public override string Name => this.Token.Property.Name;
+	public override IDataEntityProperty Property => this.Token.Property;
 	public DataEntityPropertyToken Token { get; }
 	public SchemaMember Parent => _parent;
 	public IEnumerable<IDataEntity> Ancestors { get; }
