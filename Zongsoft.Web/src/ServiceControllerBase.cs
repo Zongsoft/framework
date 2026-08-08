@@ -47,7 +47,7 @@ namespace Zongsoft.Web;
 public abstract class ServiceControllerBase<TModel, TService> : ControllerBase where TService : class, IDataService<TModel>
 {
 	#region 单例字段
-	private static readonly WebFileAccessor _accessor = new WebFileAccessor();
+	private static readonly WebFileAccessor _accessor = new();
 	#endregion
 
 	#region 成员字段
@@ -101,12 +101,17 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 	[HttpGet("{key}/[action]")]
 	public virtual async ValueTask<IActionResult> ExportAsync(string key, [FromQuery] string format = null, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 	{
+		if(string.IsNullOrWhiteSpace(format))
+			return this.BadRequest();
+
 		if(!this.CanExport)
 			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
 		if(this.DataService is IDataExportable exportable)
 		{
-			var data = await this.OnGetAsync(key, page ??= Paging.First(), sort, null, cancellation);
+			var data = string.IsNullOrEmpty(key) ? null : await this.OnGetAsync(key, page ??= Paging.First(), sort, null, cancellation);
+			if(!string.IsNullOrEmpty(key) && data == null)
+				return this.NotFound();
 
 			//设置响应分页头
 			this.Response.Headers.SetPagination(page);
@@ -121,6 +126,9 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 	[HttpPost("[action]")]
 	public virtual async ValueTask<IActionResult> ExportAsync([FromQuery] string format = null, [FromQuery] Paging page = null, [FromQuery][ModelBinder(typeof(Binders.SortingBinder))] Sorting[] sort = null, CancellationToken cancellation = default)
 	{
+		if(string.IsNullOrWhiteSpace(format))
+			return this.BadRequest();
+
 		if(!this.CanExport)
 			return this.StatusCode(StatusCodes.Status405MethodNotAllowed);
 
@@ -333,7 +341,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 		var output = new System.IO.MemoryStream();
 		var result = await exportable.ExportAsync(output, data, this.GetExportFields(), format, this.OptionsBuilder.Export(), cancellation);
 		output.Seek(0, System.IO.SeekOrigin.Begin);
-		return this.File(output, result.Type, this.DataService.Name + result.Extension);
+		return this.File(output, result.Type, $"{this.DataService.Name}{result.Extension}");
 	}
 
 	protected virtual async ValueTask<IActionResult> OnExportAsync(IDataExportable exportable, string template, object argument, string format, CancellationToken cancellation)
