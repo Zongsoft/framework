@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
@@ -59,8 +60,8 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 
 		try
 		{
-			var table = GetTable(workbook, options.Model.Name, options.Source as string);
-			return new DataArchiveReader(table, options.Model, GetLastRow(table));
+			var table = GetTable(workbook, Spreadsheet.GetTableName(options.Model), options.Model.QualifiedName, options.Source as string);
+			return new DataArchiveReader(table, options.Model, GetLastRow(table), options.Members);
 		}
 		catch
 		{
@@ -71,7 +72,7 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 	#endregion
 
 	#region 私有方法
-	private static IXLTable GetTable(XLWorkbook workbook, string name, string source)
+	private static IXLTable GetTable(XLWorkbook workbook, string name, string model, string source)
 	{
 		if(!string.IsNullOrEmpty(source))
 		{
@@ -90,7 +91,7 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 			}
 		}
 
-		throw OperationException.Unprocessed(string.Format(Properties.Resources.SpreadsheetExtractor_TableNotFound_Message, name));
+		throw OperationException.Unprocessed(string.Format(Properties.Resources.SpreadsheetExtractor_TableNotFound_Message, model));
 	}
 
 	private static int GetLastRow(IXLTable table)
@@ -127,7 +128,7 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 		private readonly DataArchiveFieldCollection _fields;
 		private int _row;
 
-		public DataArchiveReader(IXLTable table, ModelDescriptor model, int lastRow)
+		public DataArchiveReader(IXLTable table, ModelDescriptor model, int lastRow, string[] members)
 		{
 			_worksheet = table.Worksheet;
 			_headerRow = table.HeadersRow().RowNumber();
@@ -135,9 +136,13 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 			_firstColumn = table.RangeAddress.FirstAddress.ColumnNumber;
 			_row = _headerRow;
 			_fields = new DataArchiveFieldCollection(table.ColumnCount());
+			var required = GetRequiredMembers(model, members);
 
 			foreach(var reference in _worksheet.DefinedNames.ValidNamedRanges())
 			{
+				if(!model.Properties.TryGetValue(reference.Name, out var property) || required != null && !required.ContainsKey(property.Name))
+					continue;
+
 				foreach(var range in reference.Ranges)
 				{
 					if(range.Worksheet != _worksheet || range.RowCount() != 1 || range.ColumnCount() != 1 || range.FirstRow().RowNumber() != _headerRow)
@@ -145,24 +150,60 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 
 					var index = range.FirstColumn().ColumnNumber() - _firstColumn;
 					if(index >= 0 && index < _fields.Capacity)
-						_fields.Add(reference.Name, index);
+					{
+						_fields.Add(property.Name, index);
+						required?.Remove(property.Name);
+					}
 				}
 			}
 
-			//允许以模型属性名作为表头，以支持不包含字段命名引用的手工数据表。
+			//允许以模型属性名作为表头，以支持不包含字段命名引用的手工数据表
 			for(int index = 0; index < _fields.Capacity; index++)
 			{
 				if(_fields[index] == null)
 				{
 					var name = _worksheet.Cell(_headerRow, _firstColumn + index).GetString();
-					if(model.Properties.TryGetValue(name, out var property))
+					if(model.Properties.TryGetValue(name, out var property) && (required == null || required.ContainsKey(property.Name)))
+					{
 						_fields.Add(property.Name, index);
+						required?.Remove(property.Name);
+					}
 				}
 			}
 
+			if(required?.Count > 0)
+			{
+				var modelName = GetDisplayName(model.QualifiedName, model.Title);
+				var names = string.Join(", ", required.Select(entry => GetDisplayName(entry.Key, entry.Value?.Label)));
+				throw OperationException.Unprocessed(string.Format(Properties.Resources.SpreadsheetExtractor_MembersNotFound_Message, modelName, names));
+			}
+
 			if(_fields.Count == 0)
-				throw OperationException.Unprocessed(string.Format(Properties.Resources.SpreadsheetExtractor_FieldsNotFound_Message, table.Name));
+				throw OperationException.Unprocessed(string.Format(Properties.Resources.SpreadsheetExtractor_FieldsNotFound_Message, model.QualifiedName));
 		}
+
+		private static Dictionary<string, ModelPropertyDescriptor> GetRequiredMembers(ModelDescriptor model, string[] members)
+		{
+			if(members == null || members.Length == 0)
+				return null;
+
+			var result = new Dictionary<string, ModelPropertyDescriptor>(members.Length, StringComparer.OrdinalIgnoreCase);
+
+			foreach(var member in members)
+			{
+				if(!string.IsNullOrWhiteSpace(member))
+				{
+					var name = member.Trim();
+					var property = model.Properties.TryGetValue(name, out var value) ? value : null;
+					result.TryAdd(property?.Name ?? name, property);
+				}
+			}
+
+			return result.Count == 0 ? null : result;
+		}
+
+		private static string GetDisplayName(string name, string title) =>
+			string.IsNullOrWhiteSpace(title) || string.Equals(name, title, StringComparison.OrdinalIgnoreCase) ? name : $"{name}({title})";
 
 		public bool IsEmpty => _lastRow <= _headerRow;
 		public int FieldCount => _fields.Capacity;

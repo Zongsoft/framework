@@ -33,5 +33,11 @@ namespace Zongsoft.Externals.ClosedXml;
 
 public static class Spreadsheet
 {
+	#region 静态字段
 	public static readonly Data.Archiving.DataArchiveFormat Format = new("Spreadsheet", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
+	#endregion
+
+	#region 内部方法
+	internal static string GetTableName(Data.ModelDescriptor model) => $"__{model.QualifiedName}__";
+	#endregion
 }

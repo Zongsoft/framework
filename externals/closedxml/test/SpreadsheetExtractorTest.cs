@@ -90,7 +90,7 @@ public class SpreadsheetExtractorTest
 			worksheet.Cell("A4").SetValue(3);
 			worksheet.Cell("B4").SetValue("TRUE");
 			worksheet.Cell("C4").SetValue("FALSE");
-			worksheet.Range("A1:C4").CreateTable(model.Name);
+			worksheet.Range("A1:C4").CreateTable(GetTableName(model));
 		});
 
 		var result = _extractor.ExtractAsync<BooleanRecord>(stream, new DataArchiveExtractorOptions(model))
@@ -143,8 +143,8 @@ public class SpreadsheetExtractorTest
 	}
 
 	[Theory]
-	[InlineData("en-US", "The 'User' Excel table was not found.")]
-	[InlineData("zh-Hans", "找不到 Excel 数据表“User”。")]
+	[InlineData("en-US", "The data table 'User' was not found in the import file.")]
+	[InlineData("zh-Hans", "找不到导入文件中的数据表“User”。")]
 	public void ExtractAsync_MissingTable_ThrowsLocalizedOperationException(string cultureName, string message)
 	{
 		using var culture = new CultureScope(cultureName);
@@ -167,12 +167,12 @@ public class SpreadsheetExtractorTest
 			_extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(Templates.User.Descriptor)));
 
 		Assert.Equal(nameof(OperationException.Unprocessed), exception.Reason);
-		Assert.Equal("The 'User' Excel table was not found.", exception.Message);
+		Assert.Equal("The data table 'User' was not found in the import file.", exception.Message);
 	}
 
 	[Theory]
-	[InlineData("en-US", "The 'User' Excel table does not define any model fields.")]
-	[InlineData("zh-Hans", "Excel 数据表“User”没有定义任何模型字段。")]
+	[InlineData("en-US", "The 'User' data table does not define any model fields.")]
+	[InlineData("zh-Hans", "数据表“User”没有定义任何模型字段。")]
 	public void ExtractAsync_UnrecognizedTableFields_ThrowsLocalizedOperationException(string cultureName, string message)
 	{
 		using var culture = new CultureScope(cultureName);
@@ -183,7 +183,7 @@ public class SpreadsheetExtractorTest
 			worksheet.Cell("B1").SetValue("DisplayName");
 			worksheet.Cell("A2").SetValue(901);
 			worksheet.Cell("B2").SetValue("Unknown");
-			worksheet.Range("A1:B2").CreateTable(Templates.User.Descriptor.Name);
+			worksheet.Range("A1:B2").CreateTable(GetTableName(Templates.User.Descriptor));
 		});
 
 		var exception = Assert.Throws<OperationException>(() =>
@@ -202,14 +202,14 @@ public class SpreadsheetExtractorTest
 			var worksheet = workbook.AddWorksheet("Data");
 			worksheet.Cell("A1").SetValue(nameof(User.UserId));
 			worksheet.Cell("A2").SetValue(801);
-			worksheet.Range("A1:A2").CreateTable(Templates.User.Descriptor.Name);
+			worksheet.Range("A1:A2").CreateTable(GetTableName(Templates.User.Descriptor));
 		});
 		var options = new DataArchiveExtractorOptions(Templates.User.Descriptor) { Source = "Missing" };
 
 		var exception = Assert.Throws<OperationException>(() => _extractor.ExtractAsync<User>(stream, options));
 
 		Assert.Equal(nameof(OperationException.Unprocessed), exception.Reason);
-		Assert.Equal("The 'Missing' Excel worksheet was not found.", exception.Message);
+		Assert.Equal("The worksheet 'Missing' was not found in the spreadsheet.", exception.Message);
 	}
 
 	[Fact]
@@ -243,7 +243,7 @@ public class SpreadsheetExtractorTest
 			worksheet.Cell("B3").SetValue(new DateTime(1906, 12, 9));
 			worksheet.Cell("C3").SetValue("Grace");
 			worksheet.Cell("D3").SetValue(701);
-			worksheet.Range("B2:D3").CreateTable(Templates.User.Descriptor.Name);
+			worksheet.Range("B2:D3").CreateTable(GetTableName(Templates.User.Descriptor));
 
 			// Row 4 is deliberately empty and row 5 lies outside the table's saved range.
 			worksheet.Cell("C5").SetValue("Linus");
@@ -274,4 +274,73 @@ public class SpreadsheetExtractorTest
 		stream.Position = 0;
 		return stream;
 	}
+
+	[Fact]
+	public async Task ExtractAsync_QualifiedModel_LocatesQualifiedTable()
+	{
+		using var stream = new MemoryStream();
+		var model = new ModelDescriptor(typeof(User)) { Namespace = "Automao.Security" };
+		await _generator.GenerateAsync(stream, model, Templates.User.Data);
+		stream.Position = 0;
+
+		var result = _extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(model))
+			.Synchronize()
+			.ToArray();
+
+		Assert.Equal(Templates.User.Data.Length, result.Length);
+	}
+
+	[Fact]
+	public async Task ExtractAsync_RenamedHeaderText_UsesVisibleDefinedNames()
+	{
+		using var generated = new MemoryStream();
+		await _generator.GenerateAsync(generated, Templates.User.Descriptor, Templates.User.Data);
+		generated.Position = 0;
+
+		using var edited = new MemoryStream();
+		using(var workbook = new XLWorkbook(generated))
+		{
+			var table = Assert.Single(workbook.Worksheets.SelectMany(worksheet => worksheet.Tables));
+			foreach(var cell in table.HeadersRow().Cells())
+				cell.SetValue($"自定义表头{cell.Address.ColumnNumber}");
+
+			workbook.SaveAs(edited);
+		}
+
+		edited.Position = 0;
+		var options = new DataArchiveExtractorOptions(Templates.User.Descriptor) { Members = [nameof(User.Name), nameof(User.Birthday)] };
+		var result = _extractor.ExtractAsync<User>(edited, options).Synchronize().ToArray();
+
+		Assert.Equal(Templates.User.Data.Length, result.Length);
+		Assert.Equal(Templates.User.Data.Select(user => user.Name), result.Select(user => user.Name));
+		Assert.Equal(Templates.User.Data.Select(user => user.Birthday), result.Select(user => user.Birthday));
+		Assert.All(result, user => Assert.Equal(0, user.UserId));
+	}
+
+	[Theory]
+	[InlineData("en-US", "The data table 'User(用户)' is missing the specified fields: Name(名称), Birthday(出生日期).")]
+	[InlineData("zh-Hans", "数据表“User(用户)”缺少指定字段：Name(名称), Birthday(出生日期)。")]
+	public void ExtractAsync_ExplicitMissingMembers_ThrowsLocalizedOperationException(string cultureName, string message)
+	{
+		using var culture = new CultureScope(cultureName);
+		var model = new ModelDescriptor(typeof(User)) { Title = "用户" };
+		model.Properties[nameof(User.Name)].Label = "名称";
+		model.Properties[nameof(User.Birthday)].Label = "出生日期";
+		using var stream = CreateWorkbook(workbook =>
+		{
+			var worksheet = workbook.AddWorksheet("Users");
+			worksheet.Cell("A1").SetValue("姓名");
+			worksheet.Cell("B1").SetValue("生日");
+			worksheet.Cell("A2").SetValue("Ada");
+			worksheet.Range("A1:B2").CreateTable(GetTableName(model));
+		});
+		var options = new DataArchiveExtractorOptions(model) { Members = [nameof(User.Name), nameof(User.Birthday)] };
+
+		var exception = Assert.Throws<OperationException>(() => _extractor.ExtractAsync<User>(stream, options));
+
+		Assert.Equal(nameof(OperationException.Unprocessed), exception.Reason);
+		Assert.Equal(message, exception.Message);
+	}
+
+	private static string GetTableName(ModelDescriptor model) => $"__{model.QualifiedName}__";
 }

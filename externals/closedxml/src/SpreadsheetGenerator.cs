@@ -73,16 +73,20 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		if(model == null)
 			throw new ArgumentNullException(nameof(model));
 
-		//获取要导出的数据列
-		var columns = GetColumns(model, options?.Fields).ToArray();
+		/*
+		 * 参数 data 为空表示生成供后续数据导入使用的空模板，因此需要按导入语义筛选字段：
+		 * 带 Sequence 的主键由数据层负责生成，不应让用户在模板中填写，否则导入时可能造成主键冲突。
+		 */
+		var columns = GetColumns(model, options?.Fields, data == null).ToArray();
+		var tableName = Spreadsheet.GetTableName(model);
 
 		if(columns == null || columns.Length == 0)
 			return ValueTask.CompletedTask;
 
-		if(!VerifyTableName(model.Name))
+		if(!VerifyTableName(tableName))
 			throw OperationException.Argument(
-				string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.Name),
-				new ArgumentException(string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.Name), nameof(model)));
+				string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.QualifiedName),
+				new ArgumentException(string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.QualifiedName), nameof(model)));
 
 		using var workbook = new XLWorkbook();
 		var caption = string.IsNullOrWhiteSpace(model.Title) ? model.Name : model.Title;
@@ -246,13 +250,13 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		try
 		{
 			//创建模型数据表（包含字段标题行）
-			var table = worksheet.Range(DATA_RANGE_FIRST_ROW - 1, 1, lastRow, columns.Length).CreateTable(model.Name);
+			var table = worksheet.Range(DATA_RANGE_FIRST_ROW - 1, 1, lastRow, columns.Length).CreateTable(tableName);
 			table.Theme = XLTableTheme.None;
 			SetDataRangeStyle(table.DataRange, columns);
 		}
 		catch(ArgumentException exception)
 		{
-			throw OperationException.Argument(string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.Name), exception);
+			throw OperationException.Argument(string.Format(Properties.Resources.SpreadsheetGenerator_InvalidTableName_Message, model.QualifiedName), exception);
 		}
 
 		//写入到输出流
@@ -281,8 +285,14 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		return true;
 	}
 
-	private static IEnumerable<TableColumn> GetColumns(ModelDescriptor model, DataArchiveField[] fields)
+	private static IEnumerable<TableColumn> GetColumns(ModelDescriptor model, DataArchiveField[] fields, bool importing)
 	{
+		/*
+		 * 参数 importing 为真表示当前正在生成导入模板（即 GenerateAsync 的 data 参数为空）。
+		 * 导入模板必须忽略带 Sequence 的主键，因为该类主键应在数据写入时由数据层生成；
+		 * 自然主键以及不带 Sequence 的复合主键仍须保留，以便用户提供标识数据所需的键值。
+		 * 空集合表示普通的零记录导出，不适用上述字段过滤规则。
+		 */
 		int index = 1;
 
 		if(fields != null && fields.Length > 0)
@@ -297,11 +307,11 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 				{
 					foreach(var property in model.Properties)
 					{
-						if(property.IsSimplex(out var simplex))
+						if(property.IsSimplex(out var simplex) && (!importing || !IsGeneratedPrimaryKeyCore(simplex)))
 							yield return new TableColumn(index++, simplex);
 					}
 				}
-				else
+				else if(!importing || !IsGeneratedPrimaryKey(model, field.Name))
 					yield return new TableColumn(index++, model, field);
 			}
 		}
@@ -309,10 +319,20 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 		{
 			foreach(var property in model.Properties)
 			{
-				if(property.IsSimplex(out var simplex))
+				if(property.IsSimplex(out var simplex) && (!importing || !IsGeneratedPrimaryKeyCore(simplex)))
 					yield return new TableColumn(index++, simplex);
 			}
 		}
+
+		//只有同时为主键且定义了 Sequence 的字段才属于应从导入模板中排除的自动生成主键
+		static bool IsGeneratedPrimaryKey(ModelDescriptor model, string name) =>
+			model.Properties.TryGetValue(name, out var property) &&
+			property.IsSimplex(out var simplex) &&
+			IsGeneratedPrimaryKeyCore(simplex);
+
+		//只有同时为主键且定义了 Sequence 的字段才属于应从导入模板中排除的自动生成主键。
+		static bool IsGeneratedPrimaryKeyCore(ModelPropertyDescriptor.SimplexPropertyDescriptor property) =>
+			property.IsPrimaryKey && !property.Sequence.IsEmpty;
 	}
 
 	private static void SetDataRangeStyle(IXLRange range, TableColumn[] columns)

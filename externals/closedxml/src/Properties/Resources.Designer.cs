@@ -61,7 +61,7 @@ namespace Zongsoft.Externals.ClosedXml.Properties {
 	    }
 
 	    /// <summary>
-	    ///   查找类似 The specified &apos;{0}&apos; Excel column does not exist. 的本地化字符串。
+	    ///   查找类似 The specified &apos;{0}&apos; spreadsheet column does not exist. 的本地化字符串。
 	    /// </summary>
 	    internal static string SpreadsheetExtractor_FieldNotFound_Message {
 	        get {
@@ -70,7 +70,7 @@ namespace Zongsoft.Externals.ClosedXml.Properties {
 	    }
 
 	    /// <summary>
-	    ///   查找类似 The &apos;{0}&apos; Excel table does not define any model fields. 的本地化字符串。
+	    ///   查找类似 The &apos;{0}&apos; data table does not define any model fields. 的本地化字符串。
 	    /// </summary>
 	    internal static string SpreadsheetExtractor_FieldsNotFound_Message {
 	        get {
@@ -79,7 +79,7 @@ namespace Zongsoft.Externals.ClosedXml.Properties {
 	    }
 
 	    /// <summary>
-	    ///   查找类似 The model metadata is required to extract Excel data. 的本地化字符串。
+	    ///   查找类似 The model metadata is required to extract spreadsheet data. 的本地化字符串。
 	    /// </summary>
 	    internal static string SpreadsheetExtractor_ModelRequired_Message {
 	        get {
@@ -88,7 +88,16 @@ namespace Zongsoft.Externals.ClosedXml.Properties {
 	    }
 
 	    /// <summary>
-	    ///   查找类似 The &apos;{0}&apos; Excel table was not found. 的本地化字符串。
+	    ///   查找类似 The data table &apos;{0}&apos; is missing the specified fields: {1}. 的本地化字符串。
+	    /// </summary>
+	    internal static string SpreadsheetExtractor_MembersNotFound_Message {
+	        get {
+	            return ResourceManager.GetString("SpreadsheetExtractor.MembersNotFound.Message", resourceCulture);
+	        }
+	    }
+
+	    /// <summary>
+	    ///   查找类似 The data table &apos;{0}&apos; was not found in the import file. 的本地化字符串。
 	    /// </summary>
 	    internal static string SpreadsheetExtractor_TableNotFound_Message {
 	        get {
@@ -97,7 +106,7 @@ namespace Zongsoft.Externals.ClosedXml.Properties {
 	    }
 
 	    /// <summary>
-	    ///   查找类似 The &apos;{0}&apos; Excel worksheet was not found. 的本地化字符串。
+	    ///   查找类似 The worksheet &apos;{0}&apos; was not found in the spreadsheet. 的本地化字符串。
 	    /// </summary>
 	    internal static string SpreadsheetExtractor_WorksheetNotFound_Message {
 	        get {
@@ -106,7 +115,7 @@ namespace Zongsoft.Externals.ClosedXml.Properties {
 	    }
 
 	    /// <summary>
-	    ///   查找类似 The &apos;{0}&apos; model name cannot be used as an Excel table name. 的本地化字符串。
+	    ///   查找类似 The &apos;{0}&apos; model name cannot be used as a spreadsheet table name. 的本地化字符串。
 	    /// </summary>
 	    internal static string SpreadsheetGenerator_InvalidTableName_Message {
 	        get {

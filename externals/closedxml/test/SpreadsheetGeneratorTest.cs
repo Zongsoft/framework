@@ -21,7 +21,7 @@ public class SpreadsheetGeneratorTest
 		var worksheet = Assert.Single(workbook.Worksheets, worksheet => worksheet.Visibility == XLWorksheetVisibility.Visible);
 		var table = GetTable(workbook, Templates.User.Descriptor.Name);
 
-		Assert.Equal(Templates.User.Descriptor.Name, table.Name);
+		Assert.Equal(GetTableName(Templates.User.Descriptor.QualifiedName), table.Name);
 		Assert.Equal(3, table.RangeAddress.FirstAddress.RowNumber);
 		Assert.Equal(8, table.RangeAddress.LastAddress.RowNumber);
 		Assert.Equal(Templates.User.Data.Length, table.DataRange.RowCount());
@@ -29,6 +29,7 @@ public class SpreadsheetGeneratorTest
 		Assert.True(table.ShowHeaderRow);
 		Assert.False(table.ShowTotalsRow);
 		Assert.False(worksheet.DefinedNames.TryGetValue(Templates.User.Descriptor.Name, out _));
+		Assert.All(worksheet.DefinedNames.ValidNamedRanges(), reference => Assert.True(reference.Visible));
 
 		var userIdColumn = GetColumnNumber(table, Templates.User.Descriptor, nameof(User.UserId));
 		var nameColumn = GetColumnNumber(table, Templates.User.Descriptor, nameof(User.Name));
@@ -78,6 +79,56 @@ public class SpreadsheetGeneratorTest
 			Assert.All(cells, cell => Assert.True(cell.IsEmpty()));
 		else
 			Assert.Equal(records.Select(record => record.Birthday.Value), cells.Select(cell => cell.GetDateTime()));
+	}
+
+	[Fact]
+	public async Task GenerateAsync_QualifiedModel_UsesQualifiedTableName()
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(User)) { Namespace = "Automao.Security" };
+
+		await _generator.GenerateAsync(output, model, Templates.User.Data);
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = Assert.Single(workbook.Worksheets.SelectMany(worksheet => worksheet.Tables));
+		Assert.Equal("__Automao.Security.User__", table.Name);
+	}
+
+	[Theory]
+	[InlineData(null, 2)]
+	[InlineData("*", 2)]
+	[InlineData(nameof(GeneratedPrimaryKeyRecord.RecordId) + "," + nameof(GeneratedPrimaryKeyRecord.Name), 1)]
+	public async Task GenerateAsync_NullData_OmitsGeneratedPrimaryKey(string fields, int columnCount)
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(GeneratedPrimaryKeyRecord)) { Title = "Import Records" };
+		var options = fields == null ? null : new DataArchiveGeneratorOptions(fields.Split(','));
+
+		await _generator.GenerateAsync(output, model, null, options);
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		Assert.Equal(columnCount, table.ColumnCount());
+		Assert.True(table.Worksheet.DefinedNames.TryGetValue(nameof(GeneratedPrimaryKeyRecord.Name), out _));
+		Assert.False(table.Worksheet.DefinedNames.TryGetValue(nameof(GeneratedPrimaryKeyRecord.RecordId), out _));
+		Assert.Equal(columnCount > 1, table.Worksheet.DefinedNames.TryGetValue(nameof(GeneratedPrimaryKeyRecord.NaturalKey), out _));
+	}
+
+	[Fact]
+	public async Task GenerateAsync_EmptyData_KeepsGeneratedPrimaryKeyForOrdinaryExport()
+	{
+		using var output = new MemoryStream();
+		var model = new ModelDescriptor(typeof(GeneratedPrimaryKeyRecord)) { Title = "Export Records" };
+
+		await _generator.GenerateAsync(output, model, Array.Empty<GeneratedPrimaryKeyRecord>());
+
+		output.Position = 0;
+		using var workbook = new XLWorkbook(output);
+		var table = GetTable(workbook, model.Name);
+		Assert.Equal(3, table.ColumnCount());
+		Assert.True(table.Worksheet.DefinedNames.TryGetValue(nameof(GeneratedPrimaryKeyRecord.RecordId), out _));
 	}
 
 	[Fact]
@@ -511,15 +562,15 @@ public class SpreadsheetGeneratorTest
 	}
 
 	[Theory]
-	[InlineData("en-US", "The 'A1' model name cannot be used as an Excel table name.")]
-	[InlineData("zh-Hans", "模型名称“A1”不能用作 Excel 数据表名称。")]
+	[InlineData("en-US", "The 'Invalid-Name' model name cannot be used as a spreadsheet table name.")]
+	[InlineData("zh-Hans", "模型名称“Invalid-Name”不能用作电子表格的数据表名称。")]
 	public async Task GenerateAsync_InvalidTableName_ThrowsLocalizedOperationException(string cultureName, string message)
 	{
 		using var culture = new CultureScope(cultureName);
 		using var output = new MemoryStream();
 		var model = new ModelDescriptor(typeof(User))
 		{
-			Name = "A1",
+			Name = "Invalid-Name",
 			Title = "Users",
 		};
 
@@ -605,8 +656,10 @@ public class SpreadsheetGeneratorTest
 			.ToArray();
 	}
 
+	private static string GetTableName(string qualifiedName) => $"__{qualifiedName}__";
+
 	private static IXLTable GetTable(XLWorkbook workbook, string name) =>
-		Assert.Single(workbook.Worksheets.SelectMany(worksheet => worksheet.Tables), table => string.Equals(table.Name, name, StringComparison.OrdinalIgnoreCase));
+		Assert.Single(workbook.Worksheets.SelectMany(worksheet => worksheet.Tables), table => string.Equals(table.Name, GetTableName(name), StringComparison.OrdinalIgnoreCase));
 
 	private sealed class EnumValidationRecord
 	{
@@ -666,6 +719,18 @@ public class SpreadsheetGeneratorTest
 
 		[ModelProperty(DbType.DateTime, false, DefaultValue = "now()")]
 		public DateTime Creation { get; set; }
+	}
+
+	private sealed class GeneratedPrimaryKeyRecord
+	{
+		[ModelProperty(DbType.Int32, false, IsPrimaryKey = true, Sequence = "#")]
+		public int RecordId { get; set; }
+
+		[ModelProperty(DbType.String, 32, false, IsPrimaryKey = true)]
+		public string NaturalKey { get; set; }
+
+		[ModelProperty(DbType.String, false)]
+		public string Name { get; set; }
 	}
 
 	private sealed class FieldOptionsRecord
