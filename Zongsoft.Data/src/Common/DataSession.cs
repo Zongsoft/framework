@@ -36,6 +36,8 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Data;
+
 namespace Zongsoft.Data.Common;
 
 /// <summary>
@@ -65,11 +67,11 @@ public class DataSession : IDisposable, IAsyncDisposable
 	private readonly DataConnector _connector;
 	private volatile DbConnection _connection;
 	private volatile DbTransaction _transaction;
-	private readonly Transaction _ambient;
+	private readonly TransactionContext _ambient;
 	#endregion
 
 	#region 构造函数
-	public DataSession(IDataSource source, Transaction ambient = null)
+	public DataSession(IDataSource source, TransactionContext ambient = null)
 	{
 		_source = source ?? throw new ArgumentNullException(nameof(source));
 		_connector = DataConnectorManager.GetConnector(source);

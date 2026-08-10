@@ -81,13 +81,13 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			using(var middle = new Transaction())
 			{
 				Assert.Same(middle, Transaction.Current);
-				Assert.Same(outer, middle.Information.Parent);
+				Assert.Same(outer.Context, middle.Context.Parent);
 				await InsertLogAsync(accessor, target, "Nested.Middle");
 
 				using(var inner = new Transaction())
 				{
 					Assert.Same(inner, Transaction.Current);
-					Assert.Same(middle, inner.Information.Parent);
+					Assert.Same(middle.Context, inner.Context.Parent);
 					await InsertLogAsync(accessor, target, "Nested.Inner");
 
 					inner.Commit();
@@ -506,7 +506,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 	}
 
 	private static string GetTarget() => $"{nameof(TransactionTest)}:{Guid.NewGuid():N}-{Environment.TickCount64:X}";
-	private static DataSession GetSession(Transaction transaction) => Assert.IsType<DataSession>(transaction.Information.Parameters["Zongsoft.Data:DataSession"]);
+	private static DataSession GetSession(Transaction transaction) => Assert.IsType<DataSession>(transaction.Context.Parameters["Zongsoft.Data:DataSession"]);
 	private sealed class ThrowingResult
 	{
 		public int Value

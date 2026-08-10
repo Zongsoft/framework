@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Xunit;
 
@@ -12,6 +14,49 @@ namespace Zongsoft.Collections.Tests;
 
 public class ParametersTest
 {
+	[Fact]
+	public async Task GetOrAdd_ConcurrentSameName_CreatesSingleValueAsync()
+	{
+		const int COUNT = 64;
+		var parameters = new Parameters();
+		var factoryCalls = 0;
+		var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var tasks = new Task<object>[COUNT];
+
+		for(var index = 0; index < tasks.Length; index++)
+		{
+			tasks[index] = Task.Run(async () =>
+			{
+				await start.Task;
+				return parameters.GetOrAdd("Shared", _ =>
+				{
+					Interlocked.Increment(ref factoryCalls);
+					return new object();
+				});
+			});
+		}
+
+		start.SetResult();
+		var results = await Task.WhenAll(tasks);
+
+		Assert.Equal(1, factoryCalls);
+		Assert.Single(parameters);
+		Assert.Same(results[0], parameters.GetValue("shared"));
+		Assert.All(results, result => Assert.Same(results[0], result));
+	}
+
+	[Fact]
+	public void GetOrAdd_TypeKey_ReusesExistingValueWithoutCallingFactory()
+	{
+		var parameters = new Parameters();
+		var expected = parameters.GetOrAdd(() => new ParameterMarker());
+
+		var actual = parameters.GetOrAdd<ParameterMarker>(() => throw new InvalidOperationException("The existing value must win."));
+
+		Assert.Same(expected, actual);
+		Assert.Same(expected, parameters.GetValue<ParameterMarker>());
+	}
+
 	[Fact]
 	public void TestJson()
 	{
@@ -124,4 +169,6 @@ public class ParametersTest
 		Assert.Equal(personGender, person.Gender);
 		Assert.Equal(personBirthdate, person.Birthdate);
 	}
+
+	private sealed class ParameterMarker { }
 }

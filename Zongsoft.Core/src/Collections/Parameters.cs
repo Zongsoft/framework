@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -38,7 +38,7 @@ namespace Zongsoft.Collections;
 public partial class Parameters : IDictionary<object, object>
 {
 	#region 成员字段
-	private volatile Dictionary<object, object> _cache;
+	private volatile SynchronizedDictionary<object, object> _cache;
 	#endregion
 
 	#region 构造函数
@@ -113,7 +113,7 @@ public partial class Parameters : IDictionary<object, object>
 	public bool Contains(Type type) => this.Contains((object)type);
 	public bool Contains(string name) => this.Contains((object)(name ?? string.Empty));
 	public bool Contains<TValue>(string name, TValue value, IEqualityComparer<TValue> comparer = null) =>
-		_cache.TryGetValue(name ?? string.Empty, out var result) &&
+		_cache != null && _cache.TryGetValue(name ?? string.Empty, out var result) &&
 		Common.Convert.TryConvertValue<TValue>(result, out var convertedValue) &&
 		(comparer ?? EqualityComparer<TValue>.Default).Equals(convertedValue, value);
 
@@ -122,6 +122,22 @@ public partial class Parameters : IDictionary<object, object>
 	public object GetValue(Type type) => this.GetValue((object)type);
 	public object GetValue(string name) => this.GetValue((object)name);
 	public T GetValue<T>(T defaultValue = default) => (T)(this.GetValue((object)typeof(T)) ?? defaultValue);
+
+	/// <summary>获取指定类型的参数，如果不存在则原子地创建并加入该参数。</summary>
+	public T GetOrAdd<T>(Func<T> valueFactory)
+	{
+		ArgumentNullException.ThrowIfNull(valueFactory);
+		return (T)this.GetCache().GetOrAdd(typeof(T), _ => valueFactory());
+	}
+
+	/// <summary>获取指定名称的参数，如果不存在则原子地创建并加入该参数。</summary>
+	public TValue GetOrAdd<TValue>(string name, Func<string, TValue> valueFactory)
+	{
+		ArgumentNullException.ThrowIfNull(valueFactory);
+		name ??= string.Empty;
+		return (TValue)this.GetCache().GetOrAdd(name, key => valueFactory((string)key));
+	}
+
 	private object GetValue(object key)
 	{
 		var parameters = _cache;
@@ -200,10 +216,7 @@ public partial class Parameters : IDictionary<object, object>
 		if(key == null)
 			throw new ArgumentNullException(nameof(key));
 
-		if(_cache == null)
-			Interlocked.CompareExchange(ref _cache, new(Comparer.Instance), null);
-
-		_cache[key] = value;
+		this.GetCache()[key] = value;
 	}
 
 	public void SetValue(IEnumerable<KeyValuePair<string, object>> values)
@@ -278,6 +291,14 @@ public partial class Parameters : IDictionary<object, object>
 	#endregion
 
 	#region 私有方法
+	private SynchronizedDictionary<object, object> GetCache()
+	{
+		if(_cache == null)
+			Interlocked.CompareExchange(ref _cache, new(Comparer.Instance), null);
+
+		return _cache;
+	}
+
 	private object Find(Type type) => this.Find(type, out var value) ? value : null;
 	private bool Find(Type type, out object value)
 	{
