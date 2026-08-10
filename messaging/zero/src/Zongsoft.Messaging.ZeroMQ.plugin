@@ -16,6 +16,13 @@
 		<object name="ZeroMQ" value="{static:Zongsoft.Messaging.ZeroMQ.Configuration.ZeroConnectionSettingsDriver.Instance, Zongsoft.Messaging.ZeroMQ}" />
 	</extension>
 
+	<!-- 挂载跨进程事件交换通道 -->
+	<extension path="/Workbench/Events/Exchanger/Channels">
+		<object name="ZeroMQ" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueEventChannel, Zongsoft.Messaging.ZeroMQ" queue="zeromq@zeromq">
+			<expose name="Filtering" value="{path:../@Filtering}" />
+		</object>
+	</extension>
+
 	<extension path="/Workbench/Messaging/Zero">
 		<object name="Requester" type="Zongsoft.Messaging.ZeroMQ.ZeroRequester, Zongsoft.Messaging.ZeroMQ">
 			<expose name="Handlers" value="{path:../@Handlers}" />

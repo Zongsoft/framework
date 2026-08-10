@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Messaging.ZeroMQ.Daemon"
+        title="Zongsoft.Messaging.ZeroMQ.Daemon Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2026. All rights reserved."
+        description="Created Date: 2026-08-10 by Popeye Zhong" >
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Messaging.ZeroMQ" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Messaging.ZeroMQ"/>
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Startup">
+		<object name="ZeroExchanger" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueServer, Zongsoft.Messaging.ZeroMQ" />
+	</extension>
+</plugin>
