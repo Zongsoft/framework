@@ -367,8 +367,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 				Assert.True(await enumerator.MoveNextAsync());
 
 				transaction.Commit();
-				Assert.True(session.IsCompleted);
-				Assert.True(session.IsReading);
+				AssertSessionCompleted(session);
 
 				session.Dispose();
 				Assert.Same(connection, session.Connection);
@@ -403,12 +402,10 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 
 			await using var second = accessor.SelectAsync<UserModel>().GetAsyncEnumerator();
 			Assert.True(await second.MoveNextAsync());
-			Assert.True(session.IsReading);
 
 			await second.DisposeAsync();
 			await first.DisposeAsync();
 
-			Assert.False(session.IsReading);
 			transaction.Commit();
 			AssertSessionReleased(session);
 		}
@@ -436,7 +433,6 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			await using var enumerator = accessor.ExecuteAsync<Log>(command.QualifiedName).GetAsyncEnumerator();
 			await Assert.ThrowsAnyAsync<DbException>(() => enumerator.MoveNextAsync().AsTask());
 
-			Assert.False(session.IsReading);
 			transaction.Commit();
 			AssertSessionReleased(session);
 		}
@@ -466,7 +462,6 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			await using var enumerator = accessor.SelectAsync<UserModel>().GetAsyncEnumerator(cancellation.Token);
 			await Assert.ThrowsAnyAsync<OperationCanceledException>(() => enumerator.MoveNextAsync().AsTask());
 
-			Assert.False(session.IsReading);
 			transaction.Commit();
 			AssertSessionReleased(session);
 		}
@@ -493,10 +488,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		}
 
 		var session = GetSession(transaction);
-		var reading = session.IsReading;
-		CleanupLeakedReader(transaction, session);
-
-		Assert.False(reading);
+		RollbackAndAssertSessionReleased(transaction, session);
 	}
 
 	private static async Task InsertLogAsync(DataAccess accessor, string target, string action)
@@ -519,16 +511,17 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 
 	private static string GetTarget() => $"{nameof(TransactionTest)}:{Guid.NewGuid():N}-{Environment.TickCount64:X}";
 	private static DataSession GetSession(Transaction transaction) => Assert.IsType<DataSession>(transaction.Context.Parameters["Zongsoft.Data:DataSession"]);
-	private static void CleanupLeakedReader(Transaction transaction, DataSession session)
+	private static void RollbackAndAssertSessionReleased(Transaction transaction, DataSession session)
 	{
 		transaction.Rollback();
-		session.Connection?.Close();
 
-		if(session.IsReading)
+		try
 		{
-			var field = typeof(DataSession).GetField("_reading", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-			Assert.NotNull(field);
-			field.SetValue(session, 0);
+			AssertSessionReleased(session);
+		}
+		finally
+		{
+			session.Connection?.Close();
 		}
 	}
 
@@ -539,10 +532,15 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 
 	private static void AssertSessionReleased(DataSession session)
 	{
-		Assert.True(session.IsCompleted);
-		Assert.False(session.IsReading);
+		AssertSessionCompleted(session);
 		Assert.Null(session.Transaction);
 		Assert.Null(session.Connection);
+	}
+
+	private static void AssertSessionCompleted(DataSession session)
+	{
+		Assert.True(session.IsCompleted);
+		Assert.Throws<DataException>(() => session.AcquireLease());
 	}
 
 	void IDisposable.Dispose()
