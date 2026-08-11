@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Linq;
 using System.Data.Common;
 using System.Threading;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using Xunit;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Tests.Models;
 
 namespace Zongsoft.Data.DuckDB.Tests;
@@ -61,6 +63,66 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		}
 
 		Assert.Null(Transaction.Current);
+		Assert.False(await ExistsLogAsync(accessor, target, action));
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task SessionCommandScalarAndNonQuery_EnlistInAmbientTransaction(bool asynchronous)
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var target = GetTarget();
+		var action = $"Command.{(asynchronous ? "Async" : "Sync")}";
+		var commandName = $"{nameof(SessionCommandScalarAndNonQuery_EnlistInAmbientTransaction)}.{Guid.NewGuid():N}";
+		var insert = Mapping.Commands.Add($"{commandName}.Insert", DataCommandMutability.Insert).Script(DuckDBDriver.NAME,
+			"INSERT INTO \"Log\" (\"UserId\", \"Target\", \"Action\", \"TenantId\", \"BranchId\", \"Severity\", \"Timestamp\") VALUES ($UserId, $Target, $Action, $TenantId, $BranchId, $Severity, $Timestamp)")
+			.Parameter("@UserId", DataType.UInt32)
+			.Parameter("@Target", DataType.AnsiString, 100)
+			.Parameter("@Action", DataType.AnsiString, 100)
+			.Parameter("@TenantId", DataType.UInt32)
+			.Parameter("@BranchId", DataType.UInt32)
+			.Parameter("@Severity", DataType.Byte)
+			.Parameter("@Timestamp", DataType.DateTime);
+		var count = Mapping.Commands.Add($"{commandName}.Count").Script(DuckDBDriver.NAME,
+			"SELECT COUNT(*) FROM \"Log\" WHERE \"Target\"=$Target AND \"Action\"=$Action")
+			.Parameter("@Target", DataType.AnsiString, 100)
+			.Parameter("@Action", DataType.AnsiString, 100);
+		var parameters = new Parameter[]
+		{
+			new("@UserId", 1U),
+			new("@Target", target),
+			new("@Action", action),
+			new("@TenantId", 1U),
+			new("@BranchId", 0U),
+			new("@Severity", LogSeverity.Info),
+			new("@Timestamp", DateTime.Now),
+		};
+		var criteria = new Parameter[]
+		{
+			new("@Target", target),
+			new("@Action", action),
+		};
+
+		using(var transaction = new Transaction())
+		{
+			var affected = asynchronous ?
+				await accessor.ExecuteAsync(insert.QualifiedName, parameters) :
+				accessor.Execute(insert.QualifiedName, parameters);
+			Assert.Equal(1, affected);
+
+			var scalar = asynchronous ?
+				await accessor.ExecuteScalarAsync(count.QualifiedName, criteria) :
+				accessor.ExecuteScalar(count.QualifiedName, criteria);
+			Assert.Equal(1L, Convert.ToInt64(scalar));
+			Assert.NotNull(GetSession(transaction).Transaction);
+
+			transaction.Rollback();
+		}
+
 		Assert.False(await ExistsLogAsync(accessor, target, action));
 	}
 
@@ -295,6 +357,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		{
 			await InsertLogAsync(accessor, target, action);
 			var session = GetSession(transaction);
+			var connection = Assert.IsAssignableFrom<DbConnection>(session.Connection);
 			var logs = accessor.SelectAsync<Log>(
 				Condition.Equal(nameof(Log.Target), target) &
 				Condition.Equal(nameof(Log.Action), action));
@@ -308,9 +371,12 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 				Assert.True(session.IsReading);
 
 				session.Dispose();
+				Assert.Same(connection, session.Connection);
+				Assert.NotEqual(ConnectionState.Closed, connection.State);
 			}
 
 			AssertSessionReleased(session);
+			Assert.Equal(ConnectionState.Closed, connection.State);
 		}
 
 		Assert.True(await ExistsLogAsync(accessor, target, action));

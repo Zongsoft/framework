@@ -52,8 +52,8 @@ public class ClickHouseImporter : DataImporterBase
 		if(records == null)
 			return;
 
-		using var connection = (ClickHouseConnection)context.Session.Connector.Connect();
-		var bulker = GetBulker(context, connection);
+		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
+		var bulker = GetBulker(context, (ClickHouseConnection)lease.Connection);
 		bulker.WriteToServerAsync(records).ConfigureAwait(false).GetAwaiter().GetResult();
 	}
 
@@ -63,8 +63,8 @@ public class ClickHouseImporter : DataImporterBase
 		if(records == null)
 			return;
 
-		await using var connection = (ClickHouseConnection)await context.Session.Connector.ConnectAsync(cancellation);
-		var bulker = GetBulker(context, connection);
+		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
+		var bulker = GetBulker(context, (ClickHouseConnection)lease.Connection);
 		await bulker.WriteToServerAsync(records, cancellation);
 	}
 	#endregion

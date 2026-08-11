@@ -44,12 +44,12 @@ public class PostgreSqlImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		using var connection = (NpgsqlConnection)context.Session.Connector.Connect();
+		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
 
 		using var bulker = GetBulker(
 			context.Entity.GetTableName(),
 			members,
-			connection,
+			(NpgsqlConnection)lease.Connection,
 			context.Options);
 
 		foreach(var item in context.Data)
@@ -82,12 +82,12 @@ public class PostgreSqlImporter : DataImporterBase
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		await using var connection = (NpgsqlConnection)await context.Session.Connector.ConnectAsync(cancellation);
+		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
 
 		using var bulker = await GetBulkerAsync(
 			context.Entity.GetTableName(),
 			members,
-			connection,
+			(NpgsqlConnection)lease.Connection,
 			context.Options, cancellation);
 
 		foreach(var item in context.Data)

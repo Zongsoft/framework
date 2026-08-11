@@ -51,7 +51,7 @@ public class ClickHouseDriver : DataDriverBase
 	#endregion
 
 	#region 私有构造
-	private ClickHouseDriver() { }
+	private ClickHouseDriver() => this.Features.Add(Common.Feature.TransactionSuppressed);
 	#endregion
 
 	#region 公共属性

@@ -43,11 +43,11 @@ public class SQLiteImporter : DataImporterBase
 	#region 公共方法
 	protected override void OnImport(DataImportContext context, MemberCollection members)
 	{
-		using var connection = context.Session.Connector.Connect();
-		using var command = GetCommand(context, members, connection);
+		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
+		using var command = GetCommand(context, members, lease.Connection);
 
-		using var transaction = connection.BeginTransaction();
-		command.Transaction = transaction;
+		using var transaction = lease.Transaction == null ? lease.Connection.BeginTransaction() : null;
+		command.Transaction = lease.Transaction ?? transaction;
 
 		try
 		{
@@ -63,22 +63,22 @@ public class SQLiteImporter : DataImporterBase
 				context.Count += command.ExecuteNonQuery();
 			}
 
-			transaction.Commit();
+			transaction?.Commit();
 		}
 		catch
 		{
-			transaction.Rollback();
+			transaction?.Rollback();
 			throw;
 		}
 	}
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		await using var connection = await context.Session.Connector.ConnectAsync(cancellation);
-		await using var command = GetCommand(context, members, connection);
+		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
+		await using var command = GetCommand(context, members, lease.Connection);
 
-		await using var transaction = await connection.BeginTransactionAsync(cancellation);
-		command.Transaction = transaction;
+		await using var transaction = lease.Transaction == null ? await lease.Connection.BeginTransactionAsync(cancellation) : null;
+		command.Transaction = lease.Transaction ?? transaction;
 
 		try
 		{
@@ -94,11 +94,14 @@ public class SQLiteImporter : DataImporterBase
 				context.Count += await command.ExecuteNonQueryAsync(cancellation);
 			}
 
-			await transaction.CommitAsync(cancellation);
+			if(transaction != null)
+				await transaction.CommitAsync(cancellation);
 		}
 		catch
 		{
-			await transaction.RollbackAsync(CancellationToken.None);
+			if(transaction != null)
+				await transaction.RollbackAsync(CancellationToken.None);
+
 			throw;
 		}
 	}

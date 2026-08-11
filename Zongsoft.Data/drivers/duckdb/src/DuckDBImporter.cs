@@ -51,7 +51,8 @@ namespace Zongsoft.Data.DuckDB;
 /// </para>
 /// <para>对于 <see cref="DbType.Object"/> 表示的数据库自定义类型，运行时无法安全确定 Appender 所需的具体 DuckDB 类型，
 /// 因此回退为参数化的逐行 <c>INSERT</c>，由 DuckDB.NET 的参数绑定机制完成自定义类型转换。</para>
-/// <para>两种方式均使用独立连接，不会加入环境事务；内部事务仅用于保证当前导入批次在失败时能够完整回滚。</para>
+/// <para>两种方式默认关联当前环境事务，通过导入选项可以禁用该关联；不在环境事务中或禁用关联时，
+/// 使用独立连接及内部事务保证当前导入批次在失败时能够完整回滚。</para>
 /// </remarks>
 public class DuckDBImporter : DataImporterBase
 {
@@ -64,8 +65,10 @@ public class DuckDBImporter : DataImporterBase
 			return;
 		}
 
-		using var connection = (DuckDBConnection)context.Session.Connector.Connect();
-		using var transaction = connection.BeginTransaction();
+		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
+		var connection = (DuckDBConnection)lease.Connection;
+		using var transaction = lease.Transaction == null ? connection.BeginTransaction() : null;
+		var current = lease.Transaction ?? transaction;
 
 		try
 		{
@@ -74,7 +77,7 @@ public class DuckDBImporter : DataImporterBase
 
 			using(var command = connection.CreateCommand())
 			{
-				command.Transaction = transaction;
+				command.Transaction = current;
 				command.CommandText = $"CREATE TEMP TABLE \"{temporary}\" AS SELECT {fields} FROM \"{context.Entity.GetTableName()}\" WHERE false;";
 				command.ExecuteNonQuery();
 			}
@@ -95,16 +98,16 @@ public class DuckDBImporter : DataImporterBase
 
 			using(var command = connection.CreateCommand())
 			{
-				command.Transaction = transaction;
+				command.Transaction = current;
 				command.CommandText = $"{(context.Options.ConstraintIgnored ? "INSERT OR IGNORE" : "INSERT")} INTO \"{context.Entity.GetTableName()}\" ({fields}) SELECT {fields} FROM \"{temporary}\";";
 				context.Count += command.ExecuteNonQuery();
 			}
 
-			transaction.Commit();
+			transaction?.Commit();
 		}
 		catch
 		{
-			transaction.Rollback();
+			transaction?.Rollback();
 			throw;
 		}
 	}
@@ -117,8 +120,10 @@ public class DuckDBImporter : DataImporterBase
 			return;
 		}
 
-		await using var connection = (DuckDBConnection)await context.Session.Connector.ConnectAsync(cancellation);
-		await using var transaction = await connection.BeginTransactionAsync(cancellation);
+		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
+		var connection = (DuckDBConnection)lease.Connection;
+		await using var transaction = lease.Transaction == null ? await connection.BeginTransactionAsync(cancellation) : null;
+		var current = lease.Transaction ?? transaction;
 
 		try
 		{
@@ -127,7 +132,7 @@ public class DuckDBImporter : DataImporterBase
 
 			await using(var command = connection.CreateCommand())
 			{
-				command.Transaction = transaction;
+				command.Transaction = current;
 				command.CommandText = $"CREATE TEMP TABLE \"{temporary}\" AS SELECT {fields} FROM \"{context.Entity.GetTableName()}\" WHERE false;";
 				await command.ExecuteNonQueryAsync(cancellation);
 			}
@@ -150,16 +155,19 @@ public class DuckDBImporter : DataImporterBase
 
 			using(var command = connection.CreateCommand())
 			{
-				command.Transaction = transaction;
+				command.Transaction = current;
 				command.CommandText = $"{(context.Options.ConstraintIgnored ? "INSERT OR IGNORE" : "INSERT")} INTO \"{context.Entity.GetTableName()}\" ({fields}) SELECT {fields} FROM \"{temporary}\";";
 				context.Count += await command.ExecuteNonQueryAsync(cancellation);
 			}
 
-			await transaction.CommitAsync(cancellation);
+			if(transaction != null)
+				await transaction.CommitAsync(cancellation);
 		}
 		catch
 		{
-			await transaction.RollbackAsync(CancellationToken.None);
+			if(transaction != null)
+				await transaction.RollbackAsync(CancellationToken.None);
+
 			throw;
 		}
 	}
@@ -291,11 +299,11 @@ public class DuckDBImporter : DataImporterBase
 
 	private static void Insert(DataImportContext context, MemberCollection members)
 	{
-		using var connection = context.Session.Connector.Connect();
-		using var command = GetInsertCommand(context, members, connection);
+		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
+		using var command = GetInsertCommand(context, members, lease.Connection);
 
-		using var transaction = connection.BeginTransaction();
-		command.Transaction = transaction;
+		using var transaction = lease.Transaction == null ? lease.Connection.BeginTransaction() : null;
+		command.Transaction = lease.Transaction ?? transaction;
 
 		try
 		{
@@ -309,22 +317,22 @@ public class DuckDBImporter : DataImporterBase
 				context.Count += command.ExecuteNonQuery();
 			}
 
-			transaction.Commit();
+			transaction?.Commit();
 		}
 		catch
 		{
-			transaction.Rollback();
+			transaction?.Rollback();
 			throw;
 		}
 	}
 
 	private static async ValueTask InsertAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation)
 	{
-		await using var connection = await context.Session.Connector.ConnectAsync(cancellation);
-		await using var command = GetInsertCommand(context, members, connection);
+		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
+		await using var command = GetInsertCommand(context, members, lease.Connection);
 
-		await using var transaction = await connection.BeginTransactionAsync(cancellation);
-		command.Transaction = transaction;
+		await using var transaction = lease.Transaction == null ? await lease.Connection.BeginTransactionAsync(cancellation) : null;
+		command.Transaction = lease.Transaction ?? transaction;
 
 		try
 		{
@@ -338,11 +346,14 @@ public class DuckDBImporter : DataImporterBase
 				context.Count += await command.ExecuteNonQueryAsync(cancellation);
 			}
 
-			await transaction.CommitAsync(cancellation);
+			if(transaction != null)
+				await transaction.CommitAsync(cancellation);
 		}
 		catch
 		{
-			await transaction.RollbackAsync(CancellationToken.None);
+			if(transaction != null)
+				await transaction.RollbackAsync(CancellationToken.None);
+
 			throw;
 		}
 	}

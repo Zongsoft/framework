@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -51,8 +51,10 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(COUNT, count);
 	}
 
-	[Fact]
-	public async Task ImportedRowsPersistAfterAmbientRollbackAsync()
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task ImportDefaultOptions_EnlistsInAmbientTransaction(bool asynchronous)
 	{
 		const uint USER_ID = 900001;
 
@@ -63,20 +65,160 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 		var name = $"{PREFIX}Transaction:{Guid.NewGuid():N}";
 		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID));
 
-		using(var transaction = new Transaction())
+		try
 		{
-			var user = Model.Build<UserModel>(model =>
+			using(var transaction = new Transaction())
 			{
-				model.UserId = USER_ID;
-				model.Name = name;
+				var user = Model.Build<UserModel>(model =>
+				{
+					model.UserId = USER_ID;
+					model.Name = name;
+				});
+
+				Assert.Same(transaction, Transaction.Current);
+				var count = asynchronous ?
+					await accessor.ImportAsync([user]) :
+					accessor.Import([user]);
+
+				Assert.Equal(1, count);
+				Assert.Same(transaction, Transaction.Current);
+				Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID)));
+				transaction.Rollback();
+			}
+
+			Assert.Null(Transaction.Current);
+			Assert.False(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID)));
+		}
+		finally
+		{
+			await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID));
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task ImportTransactionSuppressed_DoesNotEnlistInAmbientTransaction(bool asynchronous)
+	{
+		const uint USER_ID = 900003;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		IDataAccess accessor = _database.Accessor;
+		var name = $"{PREFIX}TransactionSuppressed:{Guid.NewGuid():N}";
+		var condition = Condition.Equal(nameof(UserModel.UserId), USER_ID);
+		await accessor.DeleteAsync<UserModel>(condition);
+
+		try
+		{
+			using(var transaction = new Transaction())
+			{
+				var user = Model.Build<UserModel>(model =>
+				{
+					model.UserId = USER_ID;
+					model.Name = name;
+				});
+
+				Assert.Same(transaction, Transaction.Current);
+				var options = DataImportOptions.SuppressTransaction().Build();
+				var count = asynchronous ?
+					await accessor.ImportAsync([user], options) :
+					accessor.Import([user], options);
+
+				Assert.Equal(1, count);
+				Assert.Same(transaction, Transaction.Current);
+				transaction.Rollback();
+			}
+
+			Assert.Null(Transaction.Current);
+			Assert.True(await accessor.ExistsAsync<UserModel>(condition));
+		}
+		finally
+		{
+			await accessor.DeleteAsync<UserModel>(condition);
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task ImportWithoutAmbientTransaction_Commits(bool asynchronous)
+	{
+		const uint FIRST_USER_ID = 900010;
+		const uint SECOND_USER_ID = 900011;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		IDataAccess accessor = _database.Accessor;
+		var condition = Condition.In(nameof(UserModel.UserId), [FIRST_USER_ID, SECOND_USER_ID]);
+		await accessor.DeleteAsync<UserModel>(condition);
+
+		try
+		{
+			var users = Model.Build<UserModel>(2, (model, index) =>
+			{
+				model.UserId = index == 0 ? FIRST_USER_ID : SECOND_USER_ID;
+				model.Name = $"{PREFIX}LocalCommit:{(asynchronous ? "Async" : "Sync")}:{index}";
 			});
 
-			Assert.Equal(1, await accessor.ImportAsync([user]));
-			Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID)));
-			transaction.Rollback();
-		}
+			Assert.Null(Transaction.Current);
 
-		Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID)));
+			var count = asynchronous ?
+				await accessor.ImportAsync(users) :
+				accessor.Import(users);
+
+			Assert.Equal(2, count);
+			Assert.Null(Transaction.Current);
+			Assert.Equal(2, await accessor.CountAsync<UserModel>(condition));
+		}
+		finally
+		{
+			await accessor.DeleteAsync<UserModel>(condition);
+		}
+	}
+
+	[Theory]
+	[InlineData(false, false)]
+	[InlineData(false, true)]
+	[InlineData(true, false)]
+	[InlineData(true, true)]
+	public async Task ImportFailureWithoutAmbientTransaction_RollsBackEntireBatch(bool asynchronous, bool transactionSuppressed)
+	{
+		const uint FIRST_USER_ID = 900012;
+		const uint SECOND_USER_ID = 900013;
+
+		if(!Global.IsTestingEnabled)
+			return;
+
+		IDataAccess accessor = _database.Accessor;
+		var condition = Condition.In(nameof(UserModel.UserId), [FIRST_USER_ID, SECOND_USER_ID]);
+		await accessor.DeleteAsync<UserModel>(condition);
+
+		try
+		{
+			var users = Model.Build<UserModel>(3, (model, index) =>
+			{
+				model.UserId = index == 0 ? FIRST_USER_ID : SECOND_USER_ID;
+				model.Name = $"{PREFIX}LocalRollback:{index}";
+			});
+			var options = transactionSuppressed ? DataImportOptions.SuppressTransaction().Build() : null;
+
+			Assert.Null(Transaction.Current);
+
+			var exception = asynchronous ?
+				await Record.ExceptionAsync(async () => await accessor.ImportAsync(users, options)) :
+				Record.Exception(() => accessor.Import(users, options));
+
+			Assert.NotNull(exception);
+			Assert.Null(Transaction.Current);
+			Assert.Equal(0, await accessor.CountAsync<UserModel>(condition));
+		}
+		finally
+		{
+			await accessor.DeleteAsync<UserModel>(condition);
+		}
 	}
 
 	[Fact]

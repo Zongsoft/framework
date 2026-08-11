@@ -47,8 +47,8 @@ public class MsSqlImporter : DataImporterBase
 	{
 		//将数据填充到数据表中
 		var table = GetTable(context.Entity.GetTableName(), context.Data, members);
-		using var connection = (SqlConnection)context.Session.Connector.Connect();
-		using var bulker = GetBulker(table, connection);
+		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
+		using var bulker = GetBulker(table, (SqlConnection)lease.Connection, (SqlTransaction)lease.Transaction);
 
 		bulker.WriteToServer(table);
 
@@ -60,8 +60,8 @@ public class MsSqlImporter : DataImporterBase
 	{
 		//将数据填充到数据表中
 		var table = GetTable(context.Entity.GetTableName(), context.Data, members);
-		await using var connection = (SqlConnection)await context.Session.Connector.ConnectAsync(cancellation);
-		using var bulker = GetBulker(table, connection);
+		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
+		using var bulker = GetBulker(table, (SqlConnection)lease.Connection, (SqlTransaction)lease.Transaction);
 
 		await bulker.WriteToServerAsync(table, cancellation);
 
@@ -71,9 +71,9 @@ public class MsSqlImporter : DataImporterBase
 	#endregion
 
 	#region 私有方法
-	private static SqlBulkCopy GetBulker(DataTable table, SqlConnection connection)
+	private static SqlBulkCopy GetBulker(DataTable table, SqlConnection connection, SqlTransaction transaction)
 	{
-		var bulker = new SqlBulkCopy(connection)
+		var bulker = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, transaction)
 		{
 			DestinationTableName = table.TableName,
 		};

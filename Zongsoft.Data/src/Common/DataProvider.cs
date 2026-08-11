@@ -192,12 +192,74 @@ public class DataProvider : IDataProvider
 	#region 导入方法
 	public void Import(DataImportContext context)
 	{
-		context.Source.Driver.Importer.Import(context);
+		//激发“Executing”事件
+		this.OnExecuting(context);
+
+		try
+		{
+			context.Source.Driver.Importer.Import(context);
+
+			//尝试提交当前数据会话
+			context.Session.Commit();
+		}
+		catch(Exception ex)
+		{
+			//尝试回滚当前数据会话
+			context.Session.Rollback();
+
+			//激发“Error”事件
+			var handledException = this.OnError(context, ex);
+
+			//如果“Error”事件处理完异常则退出
+			if(handledException == null)
+				return;
+
+			//如果“Error”事件没有处理异常，则重抛以尽量避免异常过多嵌套
+			if(object.ReferenceEquals(ex, handledException))
+				throw;
+
+			throw handledException is DataException ? handledException :
+				  new DataException(Properties.Resources.DataProvider_ExecutionFailed_Message, handledException);
+		}
+
+		//激发“Executed”事件
+		this.OnExecuted(context);
 	}
 
-	public ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation)
+	public async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation)
 	{
-		return context.Source.Driver.Importer.ImportAsync(context, cancellation);
+		//激发“Executing”事件
+		this.OnExecuting(context);
+
+		try
+		{
+			await context.Source.Driver.Importer.ImportAsync(context, cancellation);
+
+			//尝试提交当前数据会话
+			await context.Session.CommitAsync(cancellation);
+		}
+		catch(Exception ex)
+		{
+			//尝试回滚当前数据会话
+			await context.Session.RollbackAsync(CancellationToken.None);
+
+			//激发“Error”事件
+			var handledException = this.OnError(context, ex);
+
+			//如果“Error”事件处理完异常则退出
+			if(handledException == null)
+				return;
+
+			//如果“Error”事件没有处理异常，则重抛以尽量避免异常过多嵌套
+			if(object.ReferenceEquals(ex, handledException))
+				throw;
+
+			throw handledException is DataException ? handledException :
+				  new DataException(Properties.Resources.DataProvider_ExecutionFailed_Message, handledException);
+		}
+
+		//激发“Executed”事件
+		this.OnExecuted(context);
 	}
 	#endregion
 

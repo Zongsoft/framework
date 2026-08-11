@@ -36,8 +36,6 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Data;
-
 namespace Zongsoft.Data.Common;
 
 /// <summary>
@@ -56,6 +54,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 	private readonly bool ShareConnectionSupported;
 
 	private volatile int _reading;    //表示当前会话已经打开的数据读取器的数量
+	private volatile int _leasing;    //表示当前会话尚未释放的主连接租约数量
 	private volatile int _completion; //表示当前会话是否已经结束(提交或回滚)的标记
 	private TaskCompletionSource _destruction; //表示当前会话的事务及连接资源释放操作及其结果（为空则尚未开始）
 	private readonly AutoResetEvent _semaphore; //表示当前会话结束与连接操作的同步信号量
@@ -92,9 +91,6 @@ public class DataSession : IDisposable, IAsyncDisposable
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取一个值，指示当前数据会话是否位于环境事务中。</summary>
-	public bool InAmbient => _ambient != null;
-
 	/// <summary>获取当前数据会话的数据源对象。</summary>
 	public IDataSource Source => _source;
 
@@ -108,11 +104,17 @@ public class DataSession : IDisposable, IAsyncDisposable
 	/// <summary>获取当前数据会话关联的数据事务。</summary>
 	public IDbTransaction Transaction => _transaction;
 
+	/// <summary>获取一个值，指示当前数据会话是否位于环境事务中。</summary>
+	public bool InTransaction => _ambient != null;
+
 	/// <summary>获取一个值，指示当前会话是否已经完成(提交或回滚)。</summary>
 	public bool IsCompleted => _completion != COMPLETION_NONE;
 
 	/// <summary>获取一个值，指示当前会话是否还有“读取中或待读取”的读取器。</summary>
 	public bool IsReading => _reading > 0;
+
+	/// <summary>获取一个值，指示当前会话是否还有尚未释放的主连接租约。</summary>
+	public bool IsLeasing => _leasing > 0;
 	#endregion
 
 	#region 公共方法
@@ -123,6 +125,51 @@ public class DataSession : IDisposable, IAsyncDisposable
 	public DbCommand Build(IDataAccessContextBase context, Expressions.IStatementBase statement)
 	{
 		return new SessionCommand(this, _source.Driver.CreateCommand(context, statement));
+	}
+
+	/// <summary>获取当前数据会话的数据连接租约。</summary>
+	/// <param name="transactionSuppressed">指示是否禁止关联当前环境事务。</param>
+	/// <returns>返回获取的数据连接租约。</returns>
+	public ConnectionLease AcquireLease(bool transactionSuppressed = false)
+	{
+		if(!this.TransactionSupported || (this.InTransaction && transactionSuppressed))
+			return new ConnectionLease(this, _connector.Connect(), null, LeaseBehavior.OwnsConnection);
+
+		var connection = this.RetainConnection();
+
+		try
+		{
+			this.OpenConnection(connection);
+			return new ConnectionLease(this, connection, _transaction, LeaseBehavior.RetainsSession);
+		}
+		catch
+		{
+			this.ReleaseLease();
+			throw;
+		}
+	}
+
+	/// <summary>异步获取当前数据会话的数据连接租约。</summary>
+	/// <param name="transactionSuppressed">指示是否禁止关联当前环境事务。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回获取的数据连接租约。</returns>
+	public async ValueTask<ConnectionLease> AcquireLeaseAsync(bool transactionSuppressed = false, CancellationToken cancellation = default)
+	{
+		if(!this.TransactionSupported || (this.InTransaction && transactionSuppressed))
+			return new ConnectionLease(this, await _connector.ConnectAsync(cancellation).ConfigureAwait(false), null, LeaseBehavior.OwnsConnection);
+
+		var connection = this.RetainConnection();
+
+		try
+		{
+			await this.OpenConnectionAsync(connection, cancellation).ConfigureAwait(false);
+			return new ConnectionLease(this, connection, _transaction, LeaseBehavior.RetainsSession);
+		}
+		catch
+		{
+			await this.ReleaseLeaseAsync().ConfigureAwait(false);
+			throw;
+		}
 	}
 
 	/// <summary>提交当前会话事务。</summary>
@@ -210,10 +257,13 @@ public class DataSession : IDisposable, IAsyncDisposable
 	}
 	#endregion
 
-	#region 内部方法
+	#region 连接准备
 	/// <summary>绑定指定命令的数据连接，并关联命令的数据事务。</summary>
 	/// <param name="command">指定要绑定的命令对象。</param>
-	internal void Bind(IDbCommand command)
+	/// <param name="retain">指示是否保留当前会话的主连接。</param>
+	/// <param name="force">指示是否强制将指定命令绑定到当前会话的主连接。</param>
+	/// <returns>如果指定命令绑定到当前会话的主连接则返回真，否则返回假。</returns>
+	private bool Bind(IDbCommand command, bool retain, bool force)
 	{
 		//等待信号量
 		_semaphore.WaitOne();
@@ -223,38 +273,12 @@ public class DataSession : IDisposable, IAsyncDisposable
 			if(this.IsCompleted)
 				throw new DataException(Properties.Resources.DataSession_Completed_Message);
 
-			if(_connection == null)
-			{
-				lock(this)
-				{
-					if(_connection == null)
-					{
-						//创建一个数据连接对象
-						_connection = _connector.CreateConnection();
-
-						//绑定命令关联的连接对象
-						command.Connection = _connection;
-
-						//如果驱动支持事务则进行相关事务处理
-						if(TransactionSupported)
-						{
-							//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
-							command.Transaction = null;
-
-							//挂载连接状态变更事件，以进行事务绑定
-							_connection.StateChange += this.Connection_StateChange;
-
-							//将命令加入到待绑定事务的命令集中
-							_commands.Add(command);
-						}
-
-						return;
-					}
-				}
-			}
+			//如果不强制绑定并且当前命令已关联外部连接，则保持原有连接不变
+			if(!force && command.Connection != null && !object.ReferenceEquals(command.Connection, _connection))
+				return false;
 
 			//设置当前命令的连接为当前会话的主连接
-			command.Connection = _connection;
+			command.Connection = this.EnsureConnection();
 
 			//如果驱动支持事务则进行相关事务处理
 			if(TransactionSupported)
@@ -270,6 +294,11 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 				command.Transaction = _transaction;
 			}
+
+			if(retain)
+				Interlocked.Increment(ref _leasing);
+
+			return true;
 		}
 		finally
 		{
@@ -278,80 +307,232 @@ public class DataSession : IDisposable, IAsyncDisposable
 		}
 	}
 
-	internal bool PrepareReader(IDbCommand command, out bool tracked)
+	/// <summary>准备指定命令的数据连接及其关联事务。</summary>
+	/// <param name="command">指定的数据命令。</param>
+	/// <returns>返回指定命令的数据连接租约。</returns>
+	private ConnectionLease PrepareCommand(DbCommand command)
 	{
-		//如果当前会话已经完成，则数据读取器应构建独属的连接
-		if(this.IsCompleted)
-		{
-			tracked = false;
+		if(command == null)
+			throw new ArgumentNullException(nameof(command));
 
-			//设置命令连接为新建连接
-			command.Connection = _connector.CreateConnection();
-
-			//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
-			if(this.TransactionSupported)
-				command.Transaction = null;
-
-			return false;
-		}
-
-		//递增“执行中”的数据读取器数量
-		var reading = Interlocked.Increment(ref _reading);
-		tracked = true;
+		var retained = this.Bind(command, retain: true, force: false);
 
 		try
 		{
-			if(ShareConnectionSupported)
-			{
-				this.Bind(command);
-				return true;
-			}
-
-			//如果当前会话的主连接已经被其他读取器占用则只能创建新的连接
-			if(reading > 1)
-			{
-				//设置命令连接为新建连接
-				command.Connection = _connector.CreateConnection();
-
-				//重置命令原来的事务对象，因为之前的事务无法与新建连接关联
-				if(this.TransactionSupported)
-					command.Transaction = null;
-
-				return false;
-			}
-			else
-			{
-				this.Bind(command);
-				return true;
-			}
+			this.OpenConnection(command.Connection);
+			return new ConnectionLease(this, command.Connection, command.Transaction, retained ? LeaseBehavior.RetainsSession : LeaseBehavior.None);
 		}
 		catch
 		{
-			this.ReleaseReader();
+			if(retained)
+				this.ReleaseLease();
+
 			throw;
 		}
 	}
 
-	internal void ReleaseReader()
+	/// <summary>异步准备指定命令的数据连接及其关联事务。</summary>
+	/// <param name="command">指定的数据命令。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回指定命令的数据连接租约。</returns>
+	private async ValueTask<ConnectionLease> PrepareCommandAsync(DbCommand command, CancellationToken cancellation = default)
+	{
+		if(command == null)
+			throw new ArgumentNullException(nameof(command));
+
+		var retained = this.Bind(command, retain: true, force: false);
+
+		try
+		{
+			await this.OpenConnectionAsync(command.Connection, cancellation).ConfigureAwait(false);
+			return new ConnectionLease(this, command.Connection, command.Transaction, retained ? LeaseBehavior.RetainsSession : LeaseBehavior.None);
+		}
+		catch
+		{
+			if(retained)
+				await this.ReleaseLeaseAsync().ConfigureAwait(false);
+
+			throw;
+		}
+	}
+
+	/// <summary>准备指定读取命令的数据连接及其关联事务。</summary>
+	/// <param name="command">指定的数据读取命令。</param>
+	/// <returns>返回指定读取命令的数据连接租约。</returns>
+	private ConnectionLease PrepareReader(DbCommand command)
+	{
+		if(command == null)
+			throw new ArgumentNullException(nameof(command));
+
+		ConnectionLease lease = null;
+		var tracked = this.TryRetainReader(out var reading);
+
+		try
+		{
+			//如果当前会话已经完成，则数据读取器应构建独属的连接
+			if(!tracked)
+				return AcquireIndependent(command, LeaseBehavior.OwnsConnection);
+
+			//如果当前会话不支持多活动结果集且主连接已被其他读取器占用，则只能创建新的连接
+			if(!ShareConnectionSupported && reading > 1)
+				return AcquireIndependent(command, LeaseBehavior.OwnsConnection | LeaseBehavior.TracksReader);
+
+			this.Bind(command, retain: false, force: true);
+			this.OpenConnection(command.Connection);
+			return new ConnectionLease(this, command.Connection, command.Transaction, LeaseBehavior.TracksReader);
+		}
+		catch
+		{
+			if(lease != null)
+				lease.Dispose();
+			else if(tracked)
+				this.ReleaseReader();
+
+			throw;
+		}
+
+		ConnectionLease AcquireIndependent(DbCommand command, LeaseBehavior behavior)
+		{
+			var connection = _connector.CreateConnection();
+			command.Connection = connection;
+			command.Transaction = null;
+
+			try
+			{
+				this.OpenConnection(connection);
+				lease = new ConnectionLease(this, connection, null, behavior);
+				return lease;
+			}
+			catch
+			{
+				command.Connection = null;
+				connection.Dispose();
+				throw;
+			}
+		}
+	}
+
+	/// <summary>异步准备指定读取命令的数据连接及其关联事务。</summary>
+	/// <param name="command">指定的数据读取命令。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回指定读取命令的数据连接租约。</returns>
+	private async ValueTask<ConnectionLease> PrepareReaderAsync(DbCommand command, CancellationToken cancellation = default)
+	{
+		if(command == null)
+			throw new ArgumentNullException(nameof(command));
+
+		ConnectionLease lease = null;
+		var tracked = this.TryRetainReader(out var reading);
+
+		try
+		{
+			//如果当前会话已经完成，则数据读取器应构建独属的连接
+			if(!tracked)
+				return await AcquireIndependentAsync(command, LeaseBehavior.OwnsConnection, cancellation).ConfigureAwait(false);
+
+			//如果当前会话不支持多活动结果集且主连接已被其他读取器占用，则只能创建新的连接
+			if(!ShareConnectionSupported && reading > 1)
+				return await AcquireIndependentAsync(command, LeaseBehavior.OwnsConnection | LeaseBehavior.TracksReader, cancellation).ConfigureAwait(false);
+
+			this.Bind(command, retain: false, force: true);
+			await this.OpenConnectionAsync(command.Connection, cancellation).ConfigureAwait(false);
+			return new ConnectionLease(this, command.Connection, command.Transaction, LeaseBehavior.TracksReader);
+		}
+		catch
+		{
+			if(lease != null)
+				await lease.DisposeAsync().ConfigureAwait(false);
+			else if(tracked)
+				await this.ReleaseReaderAsync().ConfigureAwait(false);
+
+			throw;
+		}
+
+		async ValueTask<ConnectionLease> AcquireIndependentAsync(DbCommand command, LeaseBehavior behavior, CancellationToken cancellation)
+		{
+			var connection = _connector.CreateConnection();
+			command.Connection = connection;
+			command.Transaction = null;
+
+			try
+			{
+				await this.OpenConnectionAsync(connection, cancellation).ConfigureAwait(false);
+				lease = new ConnectionLease(this, connection, null, behavior);
+				return lease;
+			}
+			catch
+			{
+				command.Connection = null;
+				await connection.DisposeAsync().ConfigureAwait(false);
+				throw;
+			}
+		}
+	}
+
+	private bool TryRetainReader(out int reading)
+	{
+		//已完成会话的读取器使用独立连接，不再参与会话跟踪
+		if(this.IsCompleted)
+		{
+			reading = 0;
+			return false;
+		}
+
+		_semaphore.WaitOne();
+
+		try
+		{
+			if(this.IsCompleted)
+			{
+				reading = 0;
+				return false;
+			}
+
+			reading = Interlocked.Increment(ref _reading);
+			return true;
+		}
+		finally
+		{
+			_semaphore.Set();
+		}
+	}
+
+	private void ReleaseReader()
 	{
 		//递减“执行中”的数据读取器数量
 		var reading = Interlocked.Decrement(ref _reading);
 
 		//只有当“执行中”的数据读取器都没有了，并且当前会话已经结束才能提交事务及释放所有资源
-		if(reading <= 0 && this.IsCompleted)
+		if(reading <= 0 && !this.IsLeasing && this.IsCompleted)
 			this.Destroy();
 	}
 
-	internal ValueTask ReleaseReaderAsync(CancellationToken cancellation = default)
+	private ValueTask ReleaseReaderAsync(CancellationToken cancellation = default)
 	{
 		//递减“执行中”的数据读取器数量
 		var reading = Interlocked.Decrement(ref _reading);
 
 		//只有当“执行中”的数据读取器都没有了，并且当前会话已经结束才能提交事务及释放所有资源
-		if(reading <= 0 && this.IsCompleted)
+		if(reading <= 0 && !this.IsLeasing && this.IsCompleted)
 			return this.DestroyAsync(cancellation);
 		else
 			return ValueTask.CompletedTask;
+	}
+
+	private void ReleaseLease()
+	{
+		var leasing = Interlocked.Decrement(ref _leasing);
+
+		if(leasing <= 0 && !this.IsReading && this.IsCompleted)
+			this.Destroy();
+	}
+
+	private ValueTask ReleaseLeaseAsync(CancellationToken cancellation = default)
+	{
+		var leasing = Interlocked.Decrement(ref _leasing);
+
+		return leasing <= 0 && !this.IsReading && this.IsCompleted ?
+			this.DestroyAsync(cancellation) : ValueTask.CompletedTask;
 	}
 	#endregion
 
@@ -364,7 +545,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 		{
 			case ConnectionState.Open:
 				//连接完成则开启一个事务
-				_transaction = connection.BeginTransaction(this.GetIsolationLevel());
+				_transaction = connection.BeginTransaction(_ambient?.IsolationLevel ?? IsolationLevel.Unspecified);
 
 				//依次设置待绑定命令的事务
 				while(_commands.TryTake(out var command))
@@ -382,7 +563,58 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private IsolationLevel GetIsolationLevel() => _ambient?.IsolationLevel ?? IsolationLevel.Unspecified;
+	private void OpenConnection(DbConnection connection)
+	{
+		if(connection.State == ConnectionState.Closed || connection.State == ConnectionState.Broken)
+			_connector.Open(connection);
+	}
+
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private Task OpenConnectionAsync(DbConnection connection, CancellationToken cancellation)
+	{
+		return connection.State == ConnectionState.Closed || connection.State == ConnectionState.Broken ?
+			_connector.OpenAsync(connection, cancellation) : Task.CompletedTask;
+	}
+
+	private DbConnection RetainConnection()
+	{
+		//等待信号量
+		_semaphore.WaitOne();
+
+		try
+		{
+			if(this.IsCompleted)
+				throw new DataException(Properties.Resources.DataSession_Completed_Message);
+
+			var connection = this.EnsureConnection();
+			Interlocked.Increment(ref _leasing);
+			return connection;
+		}
+		finally
+		{
+			//释放当前持有的信号
+			_semaphore.Set();
+		}
+	}
+
+	private DbConnection EnsureConnection()
+	{
+		if(_connection != null)
+			return _connection;
+
+		lock(this)
+		{
+			if(_connection == null)
+			{
+				_connection = _connector.CreateConnection();
+
+				if(this.TransactionSupported)
+					_connection.StateChange += this.Connection_StateChange;
+			}
+		}
+
+		return _connection;
+	}
 
 	/// <summary>完成当前数据会话。</summary>
 	/// <param name="committing">指定是否提交当前数据事务。</param>
@@ -401,8 +633,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		try
 		{
-			//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
-			if(this.IsReading)
+			//如果还有活动的读取器或主连接租约则不能提交事务及释放资源
+			if(this.IsReading || this.IsLeasing)
 				return true;
 
 			//执行事务提交和释放资源
@@ -436,8 +668,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		try
 		{
-			//如果还有“待执行”或“执行中”的数据读取器则不能提交事务及释放资源
-			if(this.IsReading)
+			//如果还有活动的读取器或主连接租约则不能提交事务及释放资源
+			if(this.IsReading || this.IsLeasing)
 				return true;
 
 			//执行事务提交和释放资源
@@ -591,6 +823,86 @@ public class DataSession : IDisposable, IAsyncDisposable
 	#endregion
 
 	#region 嵌套子类
+	[Flags]
+	internal enum LeaseBehavior : byte
+	{
+		None = 0,
+		OwnsConnection = 1,
+		RetainsSession = 2,
+		TracksReader = 4,
+	}
+
+	/// <summary>表示一次数据操作实际使用的数据连接及其关联事务的租约。</summary>
+	/// <remarks>释放租约会归还其独占连接以及关联的会话或读取器生命周期令牌。</remarks>
+	public sealed class ConnectionLease : IDisposable, IAsyncDisposable
+	{
+		#region 私有变量
+		private int _disposed;
+		private readonly DataSession _session;
+		private readonly LeaseBehavior _behavior;
+		#endregion
+
+		#region 构造函数
+		internal ConnectionLease(DataSession session, DbConnection connection, DbTransaction transaction, LeaseBehavior behavior)
+		{
+			_session = session ?? throw new ArgumentNullException(nameof(session));
+			this.Connection = connection ?? throw new ArgumentNullException(nameof(connection));
+			this.Transaction = transaction;
+			_behavior = behavior;
+		}
+		#endregion
+
+		#region 公共属性
+		/// <summary>获取本次数据操作实际使用的数据连接。</summary>
+		public DbConnection Connection { get; }
+
+		/// <summary>获取本次数据操作关联的数据事务。</summary>
+		public DbTransaction Transaction { get; }
+		#endregion
+
+		#region 处置方法
+		public void Dispose()
+		{
+			if(Interlocked.Exchange(ref _disposed, 1) != 0)
+				return;
+
+			try
+			{
+				if((_behavior & LeaseBehavior.OwnsConnection) != 0)
+					this.Connection.Dispose();
+			}
+			finally
+			{
+				if((_behavior & LeaseBehavior.TracksReader) != 0)
+					_session.ReleaseReader();
+
+				if((_behavior & LeaseBehavior.RetainsSession) != 0)
+					_session.ReleaseLease();
+			}
+		}
+
+		public async ValueTask DisposeAsync()
+		{
+			if(Interlocked.Exchange(ref _disposed, 1) != 0)
+				return;
+
+			try
+			{
+				if((_behavior & LeaseBehavior.OwnsConnection) != 0)
+					await this.Connection.DisposeAsync().ConfigureAwait(false);
+			}
+			finally
+			{
+				if((_behavior & LeaseBehavior.TracksReader) != 0)
+					await _session.ReleaseReaderAsync().ConfigureAwait(false);
+
+				if((_behavior & LeaseBehavior.RetainsSession) != 0)
+					await _session.ReleaseLeaseAsync().ConfigureAwait(false);
+			}
+		}
+		#endregion
+	}
+
 	private class Enlistment(DataSession session) : Transactions.IEnlistment
 	{
 		private readonly DataSession _session = session;
@@ -694,8 +1006,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		public override object ExecuteScalar()
 		{
-			//确认数据连接已打开
-			this.EnsureConnect();
+			//获取当前命令的数据连接租约
+			using var lease = _session.PrepareCommand(_command);
 
 			//返回数据命令执行结果
 			return _command.ExecuteScalar();
@@ -703,8 +1015,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		public override async Task<object> ExecuteScalarAsync(CancellationToken cancellation)
 		{
-			//确认数据连接已打开
-			await this.EnsureConnectAsync(cancellation);
+			//获取当前命令的数据连接租约
+			await using var lease = await _session.PrepareCommandAsync(_command, cancellation);
 
 			//返回数据命令执行结果
 			return await _command.ExecuteScalarAsync(cancellation);
@@ -712,8 +1024,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		public override int ExecuteNonQuery()
 		{
-			//确认数据连接已打开
-			this.EnsureConnect();
+			//获取当前命令的数据连接租约
+			using var lease = _session.PrepareCommand(_command);
 
 			//返回数据命令执行结果
 			return _command.ExecuteNonQuery();
@@ -721,8 +1033,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellation)
 		{
-			//确认数据连接已打开
-			await this.EnsureConnectAsync(cancellation);
+			//获取当前命令的数据连接租约
+			await using var lease = await _session.PrepareCommandAsync(_command, cancellation);
 
 			//返回数据命令执行结果
 			return await _command.ExecuteNonQueryAsync(cancellation);
@@ -730,129 +1042,38 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
 		{
-			//准备读取器，返回真则表示该会话支持多活动结果集(MARS)，或者当前命令关联的是会话主连接(即会话事务)
-			if(_session.PrepareReader(_command, out var tracked))
+			//获取当前读取命令的数据连接租约
+			var lease = _session.PrepareReader(_command);
+
+			try
 			{
-				try
-				{
-					//确认数据连接已打开
-					this.EnsureConnect();
-
-					//构建会话数据读取器，注意：该读取器关联的连接为非独享连接
-					return new SessionReader(_session, _command.ExecuteReader(behavior & ~CommandBehavior.CloseConnection), tracked: tracked);
-				}
-				catch
-				{
-					if(tracked)
-						_session.ReleaseReader();
-
-					throw;
-				}
+				//构建会话数据读取器，由读取器接管连接租约
+				var reader = _command.ExecuteReader(behavior & ~CommandBehavior.CloseConnection);
+				return new SessionReader(reader, lease);
 			}
-			else
+			catch
 			{
-				try
-				{
-					//确认数据连接已打开
-					this.EnsureConnect();
-
-					//构建会话数据读取器，并设置读取器关联的连接为该命令对象的独享连接
-					return new SessionReader(_session, _command.ExecuteReader(behavior | CommandBehavior.CloseConnection), _command.Connection, tracked);
-				}
-				catch
-				{
-					var connection = _command.Connection;
-					_command.Connection = null;
-
-					try
-					{
-						connection?.Dispose();
-					}
-					finally
-					{
-						if(tracked)
-							_session.ReleaseReader();
-					}
-
-					throw;
-				}
+				lease.Dispose();
+				throw;
 			}
 		}
 
 		protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellation)
 		{
-			//准备读取器，返回真则表示该会话支持多活动结果集(MARS)，或者当前命令关联的是会话主连接(即会话事务)
-			if(_session.PrepareReader(_command, out var tracked))
+			//获取当前读取命令的数据连接租约
+			var lease = await _session.PrepareReaderAsync(_command, cancellation);
+
+			try
 			{
-				try
-				{
-					//确认数据连接已打开
-					await this.EnsureConnectAsync(cancellation);
-
-					//构建会话数据读取器，注意：该读取器关联的连接为非独享连接
-					return new SessionReader(_session, await _command.ExecuteReaderAsync(behavior & ~CommandBehavior.CloseConnection, cancellation), tracked: tracked);
-				}
-				catch
-				{
-					if(tracked)
-						await _session.ReleaseReaderAsync();
-
-					throw;
-				}
+				//构建会话数据读取器，由读取器接管连接租约
+				var reader = await _command.ExecuteReaderAsync(behavior & ~CommandBehavior.CloseConnection, cancellation);
+				return new SessionReader(reader, lease);
 			}
-			else
+			catch
 			{
-				try
-				{
-					//确认数据连接已打开
-					await this.EnsureConnectAsync(cancellation);
-
-					//构建会话数据读取器，并设置读取器关联的连接为该命令对象的独享连接
-					return new SessionReader(_session, await _command.ExecuteReaderAsync(behavior | CommandBehavior.CloseConnection, cancellation), _command.Connection, tracked);
-				}
-				catch
-				{
-					var connection = _command.Connection;
-					_command.Connection = null;
-
-					try
-					{
-						if(connection != null)
-							await connection.DisposeAsync();
-					}
-					finally
-					{
-						if(tracked)
-							await _session.ReleaseReaderAsync();
-					}
-
-					throw;
-				}
+				await lease.DisposeAsync().ConfigureAwait(false);
+				throw;
 			}
-		}
-		#endregion
-
-		#region 私有方法
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private void EnsureConnect()
-		{
-			if(_command.Connection == null)
-				_session.Bind(_command);
-
-			if(_command.Connection.State == ConnectionState.Closed || _command.Connection.State == ConnectionState.Broken)
-				_session._connector.Open(_command.Connection);
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private Task EnsureConnectAsync(CancellationToken cancellation)
-		{
-			if(_command.Connection == null)
-				_session.Bind(_command);
-
-			if(_command.Connection.State == ConnectionState.Closed || _command.Connection.State == ConnectionState.Broken)
-				return _session._connector.OpenAsync(_command.Connection, cancellation);
-
-			return Task.CompletedTask;
 		}
 		#endregion
 	}
@@ -860,20 +1081,16 @@ public class DataSession : IDisposable, IAsyncDisposable
 	private class SessionReader : DbDataReader
 	{
 		#region 成员字段
-		private readonly DataSession _session;
 		private readonly DbDataReader _reader;
-		private readonly bool _tracked;
 		private int _closed;
-		private DbConnection _connection; //表示当前数据读取器的独享连接，如果为空则表示采用当前会话的主连接
+		private ConnectionLease _lease;
 		#endregion
 
 		#region 构造函数
-		internal SessionReader(DataSession session, DbDataReader reader, DbConnection connection = null, bool tracked = true)
+		internal SessionReader(DbDataReader reader, ConnectionLease lease)
 		{
-			_session = session ?? throw new ArgumentNullException(nameof(session));
 			_reader = reader ?? throw new ArgumentNullException(nameof(reader));
-			_connection = connection;
-			_tracked = tracked;
+			_lease = lease ?? throw new ArgumentNullException(nameof(lease));
 		}
 		#endregion
 
@@ -933,19 +1150,11 @@ public class DataSession : IDisposable, IAsyncDisposable
 			}
 			finally
 			{
-				//设置当前读取器的独享连接置空
-				var connection = Interlocked.Exchange(ref _connection, null);
+				//获取并清空当前读取器持有的数据连接租约
+				var lease = Interlocked.Exchange(ref _lease, null);
 
-				try
-				{
-					//如果当前读取器有独享连接，则手动处置该连接
-					connection?.Dispose();
-				}
-				finally
-				{
-					if(_tracked)
-						_session.ReleaseReader(); //通知当前会话释放读取器
-				}
+				//释放当前读取器持有的数据连接租约
+				lease?.Dispose();
 			}
 		}
 
@@ -962,20 +1171,12 @@ public class DataSession : IDisposable, IAsyncDisposable
 			}
 			finally
 			{
-				//设置当前读取器的独享连接置空
-				var connection = Interlocked.Exchange(ref _connection, null);
+				//获取并清空当前读取器持有的数据连接租约
+				var lease = Interlocked.Exchange(ref _lease, null);
 
-				try
-				{
-					//如果当前读取器有独享连接，则手动处置该连接
-					if(connection != null)
-						await connection.DisposeAsync();
-				}
-				finally
-				{
-					if(_tracked)
-						await _session.ReleaseReaderAsync(); //通知当前会话释放读取器
-				}
+				//释放当前读取器持有的数据连接租约
+				if(lease != null)
+					await lease.DisposeAsync().ConfigureAwait(false);
 			}
 		}
 		#endregion
