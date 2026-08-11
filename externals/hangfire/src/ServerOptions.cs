@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Hangfire library.
  *
@@ -28,33 +28,19 @@
  */
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
-using Zongsoft.Services;
-using Zongsoft.Components;
-using Zongsoft.Scheduling;
+namespace Zongsoft.Externals.Hangfire;
 
-namespace Zongsoft.Externals.Hangfire.Commands
+public class ServerOptions
 {
-	public class SchedulerCommand : CommandBase<CommandContext>
-	{
-		#region 公共属性
-		public IScheduler Scheduler { get; set; }
-		#endregion
+	internal const string PATH = "Externals/Hangfire/Server";
 
-		#region 重写方法
-		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
-		{
-			if(context.Arguments.Count > 0)
-				this.Scheduler = ApplicationContext.Current.Services.Find<IScheduler>(context.Arguments[0]);
-			else if(context.Value is string name)
-				this.Scheduler = ApplicationContext.Current.Services.Find<IScheduler>(name);
-			else if(context.Value is IScheduler scheduler)
-				this.Scheduler = scheduler;
-
-			return ValueTask.FromResult<object>(this.Scheduler);
-		}
-		#endregion
-	}
+	public string[] Queues { get; set; }
+	public int WorkerCount { get; set; }
+	public TimeSpan StopTimeout { get; set; }
+	public TimeSpan ShutdownTimeout { get; set; }
+	public TimeSpan ScheduleInterval { get; set; }
+	public TimeSpan HeartbeatInterval { get; set; }
+	public TimeSpan CheckInterval { get; set; }
+	public TimeSpan ServerTimeout { get; set; }
 }

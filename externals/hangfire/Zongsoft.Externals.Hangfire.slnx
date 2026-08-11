@@ -1,5 +1,6 @@
 <Solution>
 	<Project Path="src/Zongsoft.Externals.Hangfire.csproj" />
+	<Project Path="test/Zongsoft.Externals.Hangfire.Tests.csproj" />
 	<Folder Name="/storages/">
 		<Project Path="storages/redis/Zongsoft.Externals.Hangfire.Storages.Redis.csproj" />
 	</Folder>

@@ -39,70 +39,69 @@ using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Scheduling;
 
-namespace Zongsoft.Externals.Hangfire
+namespace Zongsoft.Externals.Hangfire;
+
+[Service<IScheduler, IScheduler<TriggerOptions.Cron>>(Members = $"{nameof(Cron)}")]
+[Service<IScheduler, IScheduler<TriggerOptions.Latency>>(Members = $"{nameof(Latency)}")]
+public partial class Scheduler
 {
-	[Service<IScheduler, IScheduler<TriggerOptions.Cron>>(Members = $"{nameof(Cron)}")]
-	[Service<IScheduler, IScheduler<TriggerOptions.Latency>>(Members = $"{nameof(Latency)}")]
-	public partial class Scheduler
+	private static readonly Lazy<CronScheduler> _cron = new(() => new CronScheduler(), LazyThreadSafetyMode.PublicationOnly);
+	private static readonly Lazy<LatencyScheduler> _latency = new(() => new LatencyScheduler(), LazyThreadSafetyMode.PublicationOnly);
+	private static readonly Lazy<JobStorage> _storageFactory = new(() => ApplicationContext.Current.Services.Resolve<JobStorage>() ?? JobStorage.Current, LazyThreadSafetyMode.PublicationOnly);
+
+	private static JobStorage _storage;
+	public static JobStorage Storage
 	{
-		private static readonly Lazy<CronScheduler> _cron = new(() => new CronScheduler(), LazyThreadSafetyMode.PublicationOnly);
-		private static readonly Lazy<LatencyScheduler> _latency = new(() => new LatencyScheduler(), LazyThreadSafetyMode.PublicationOnly);
-		private static readonly Lazy<JobStorage> _storageFactory = new(() => ApplicationContext.Current.Services.Resolve<JobStorage>() ?? JobStorage.Current, LazyThreadSafetyMode.PublicationOnly);
-
-		private static JobStorage _storage;
-		public static JobStorage Storage
-		{
-			get => _storage ??= _storageFactory.Value;
-			set => _storage = value ?? throw new ArgumentNullException(nameof(value));
-		}
-
-		public static IScheduler<TriggerOptions.Cron> Cron => _cron.Value;
-		public static IScheduler<TriggerOptions.Latency> Latency => _latency.Value;
-
-		#region 嵌套子类
-		internal static class HandlerFactory
-		{
-			public static Job GetJob(string name, CancellationToken cancellation) => Job.FromExpression(() => HandleAsync(name, cancellation));
-			public static Job GetJob<TArgument>(string name, TArgument argument, CancellationToken cancellation) => Job.FromExpression(() => HandleAsync(name, argument, cancellation));
-
-			public static async Task HandleAsync(string name, CancellationToken cancellation)
-			{
-				var count = 0L;
-
-				foreach(var server in ApplicationContext.Current.Workers.OfType<Server>())
-				{
-					if(server.Handlers.TryGetValue(name, out var handler) && handler != null)
-					{
-						count++;
-						await handler.HandleAsync(null, cancellation);
-					}
-				}
-
-				if(count < 1)
-					Zongsoft.Diagnostics.Logging.GetLogging(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
-			}
-
-			public static async Task HandleAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation)
-			{
-				var count = 0L;
-
-				foreach(var server in ApplicationContext.Current.Workers.OfType<Server>())
-				{
-					if(server.Handlers.TryGetValue(name, out var handler) && handler != null)
-					{
-						count++;
-
-						if(handler is IHandler<TArgument> strong)
-							await strong.HandleAsync(argument, cancellation);
-						else
-							await handler.HandleAsync(argument, cancellation);
-					}
-				}
-
-				if(count < 1)
-					Zongsoft.Diagnostics.Logging.GetLogging(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
-			}
-		}
-		#endregion
+		get => _storage ??= _storageFactory.Value;
+		set => _storage = value ?? throw new ArgumentNullException(nameof(value));
 	}
+
+	public static IScheduler<TriggerOptions.Cron> Cron => _cron.Value;
+	public static IScheduler<TriggerOptions.Latency> Latency => _latency.Value;
+
+	#region 嵌套子类
+	internal static class HandlerFactory
+	{
+		public static Job GetJob(string name, CancellationToken cancellation) => Job.FromExpression(() => HandleAsync(name, cancellation));
+		public static Job GetJob<TArgument>(string name, TArgument argument, CancellationToken cancellation) => Job.FromExpression(() => HandleAsync(name, argument, cancellation));
+
+		public static async Task HandleAsync(string name, CancellationToken cancellation)
+		{
+			var count = 0L;
+
+			foreach(var server in ApplicationContext.Current.Workers.OfType<Server>())
+			{
+				if(server.Handlers.TryGetValue(name, out var handler) && handler != null)
+				{
+					count++;
+					await handler.HandleAsync(null, cancellation);
+				}
+			}
+
+			if(count < 1)
+				Zongsoft.Diagnostics.Logging.GetLogging(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
+		}
+
+		public static async Task HandleAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation)
+		{
+			var count = 0L;
+
+			foreach(var server in ApplicationContext.Current.Workers.OfType<Server>())
+			{
+				if(server.Handlers.TryGetValue(name, out var handler) && handler != null)
+				{
+					count++;
+
+					if(handler is IHandler<TArgument> strong)
+						await strong.HandleAsync(argument, cancellation);
+					else
+						await handler.HandleAsync(argument, cancellation);
+				}
+			}
+
+			if(count < 1)
+				Zongsoft.Diagnostics.Logging.GetLogging(typeof(HandlerFactory)).Warn($"No matching handlers found for job named '{name}'.");
+		}
+	}
+	#endregion
 }

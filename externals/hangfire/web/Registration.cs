@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Hangfire library.
  *
@@ -37,13 +37,12 @@ using Hangfire.AspNetCore;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Externals.Hangfire.Web
+namespace Zongsoft.Externals.Hangfire.Web;
+
+public class Registration : IServiceRegistration
 {
-	public class Registration : IServiceRegistration
+	public void Register(IServiceCollection services, IConfiguration configuration)
 	{
-		public void Register(IServiceCollection services, IConfiguration configuration)
-		{
-			services.AddHangfire(configuration => { });
-		}
+		services.AddHangfire(configuration => { });
 	}
 }

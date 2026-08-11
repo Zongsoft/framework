@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>3.1.0</Version>
+		<Version>3.1.1</Version>
 		<Product>Zongsoft Hangfire Storage for Redis</Product>
 		<Description>This is a storage for Redis of the Hangfire.</Description>
 		<RootNamespace>Zongsoft.Externals.Hangfire.Storages.Redis</RootNamespace>
@@ -15,7 +15,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.22" />
+		<PackageReference Include="Hangfire.Core" VersionOverride="1.8.24" />
 		<PackageReference Include="Hangfire.Redis.StackExchange" VersionOverride="1.12.0" />
 	</ItemGroup>
 

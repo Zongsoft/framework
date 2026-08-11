@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2022 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Hangfire library.
  *
@@ -37,14 +37,13 @@ using Hangfire;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Externals.Hangfire.Web
+namespace Zongsoft.Externals.Hangfire.Web;
+
+[Service<IApplicationInitializer<IApplicationBuilder>>]
+public class Initializer : IApplicationInitializer<IApplicationBuilder>
 {
-	[Service<IApplicationInitializer<IApplicationBuilder>>]
-	public class Initializer : IApplicationInitializer<IApplicationBuilder>
+	public void Initialize(IApplicationBuilder builder)
 	{
-		public void Initialize(IApplicationBuilder builder)
-		{
-			builder.UseHangfireDashboard();
-		}
+		builder.UseHangfireDashboard();
 	}
 }

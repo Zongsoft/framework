@@ -1,6 +1,8 @@
+artifacts/Zongsoft.Externals.Hangfire.option
 artifacts/Zongsoft.Externals.Hangfire.plugin
-artifacts/Zongsoft.Externals.Hangfire-daemon.plugin    <site:daemon>
+artifacts/Zongsoft.Externals.Hangfire-$(site).plugin
+
 lib/$(Framework)/Zongsoft.Externals.Hangfire.*
 lib/$(Framework)/*/Zongsoft.Externals.Hangfire.resources.*
 
-nuget:Hangfire.Core@1.8.22
+nuget:Hangfire.Core@1.8.24
