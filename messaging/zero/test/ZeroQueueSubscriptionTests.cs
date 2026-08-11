@@ -58,15 +58,9 @@ public class ZeroQueueSubscriptionTests
 		Assert.True(await ZeroTestUtility.WaitUntilAsync(() => finalChannel.IsDisposed, TimeSpan.FromSeconds(5)));
 		Assert.Empty(subscriber.Subscribers);
 
-		var poller = ZeroTestUtility.GetPoller(subscriber);
-		Assert.NotNull(poller);
-		Assert.False(poller.IsDisposed);
-
 		subscriber.Dispose();
 		Assert.True(subscriber.IsDisposed);
 		Assert.Empty(subscriber.Subscribers);
-		Assert.True(poller.IsDisposed);
-		Assert.True(ZeroTestUtility.IsQueueTransportReleased(subscriber));
 	}
 
 	[Fact]

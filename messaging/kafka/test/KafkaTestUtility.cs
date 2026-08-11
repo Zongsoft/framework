@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -165,12 +164,6 @@ internal static class KafkaTestUtility
 		throw new XunitException($"Kafka resources were not removed within {timeout}. TopicExists={resources.TopicExists}; Groups=[{string.Join(',', resources.Groups)}]. LastError={failure?.Message}");
 	}
 
-	public static bool IsQueueTransportReleased(KafkaQueue queue) =>
-		GetField(queue, "_producer") == null && GetField(queue, "_builder") == null;
-
-	public static bool IsSubscriberTransportReleased(KafkaSubscriber subscriber) =>
-		GetField(subscriber, "_consumer") == null && GetField(subscriber, "_poller") == null;
-
 	public static async Task<(string Identifier, Message Message)> ProduceAndReceiveAsync(
 		KafkaQueue publisher, string topic, string text, KafkaMessageBuffer messages, TimeSpan timeout)
 	{
@@ -195,8 +188,6 @@ internal static class KafkaTestUtility
 		SocketTimeoutMs = 10000,
 	}).Build();
 
-	private static object GetField(object target, string name) =>
-		target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(target);
 }
 
 internal readonly record struct KafkaBrokerResources(bool TopicExists, string[] Groups);

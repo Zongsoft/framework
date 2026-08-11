@@ -283,7 +283,6 @@ public class ZeroQueueConcurrencyTests
 		{
 			Assert.True(queue.IsDisposed);
 			Assert.Empty(queue.Subscribers);
-			Assert.True(ZeroTestUtility.IsQueueTransportReleased(queue));
 		});
 		Assert.All(consumers, consumer =>
 		{

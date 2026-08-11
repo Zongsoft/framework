@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Reflection;
 using System.Collections.Concurrent;
 
 using RabbitMQ.Client;
@@ -58,9 +57,6 @@ internal static class RabbitTestUtility
 			return false;
 		}
 	}
-
-	public static IConnection GetConnection(RabbitQueue queue) => GetField<IConnection>(queue, "_connection");
-	public static IChannel GetPublishingChannel(RabbitQueue queue) => GetField<IChannel>(queue, "_channel");
 
 	public static async Task DeleteTestQueueAsync(string queueName)
 	{
@@ -164,11 +160,6 @@ internal static class RabbitTestUtility
 		return client;
 	}
 
-	private static T GetField<T>(object target, string name) where T : class
-	{
-		var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
-		return field?.GetValue(target) as T;
-	}
 }
 
 internal readonly record struct RabbitBrokerSnapshot(int Connections, int Channels, int Queues, int Exchanges, long MessagesReady)

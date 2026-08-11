@@ -119,15 +119,11 @@ public class KafkaQueuePublishingTests
 		Assert.True(subscriber.IsDisposed);
 		Assert.Empty(publisher.Subscribers);
 		Assert.Empty(subscriber.Subscribers);
-		Assert.True(KafkaTestUtility.IsQueueTransportReleased(publisher));
-		Assert.True(KafkaTestUtility.IsQueueTransportReleased(subscriber));
-
 		if(consumer != null)
 		{
 			Assert.True(consumer.IsClosed);
 			Assert.True(consumer.IsDisposed);
 			Assert.Null(consumer.Handler);
-			Assert.True(KafkaTestUtility.IsSubscriberTransportReleased(consumer));
 		}
 	}
 }

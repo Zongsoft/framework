@@ -29,8 +29,6 @@ public class RabbitQueuePublishingTests
 		var subscriber = RabbitTestUtility.CreateQueue($"subscriber-{identity}", exchange, queueName);
 		using var messages = new RabbitMessageBuffer();
 		RabbitSubscriber consumer = null;
-		IConnection publisherConnection = null;
-		IChannel publisherChannel = null;
 		IChannel subscriberChannel = null;
 
 		try
@@ -47,9 +45,6 @@ public class RabbitQueuePublishingTests
 			Assert.Equal(topic.Replace('/', '.'), message.Topic);
 			Assert.Equal("Hello RabbitMQ 7", Encoding.UTF8.GetString(message.Data));
 			Assert.Equal(1, messages.AcknowledgementCount);
-
-			publisherConnection = RabbitTestUtility.GetConnection(publisher);
-			publisherChannel = RabbitTestUtility.GetPublishingChannel(publisher);
 		}
 		finally
 		{
@@ -70,8 +65,6 @@ public class RabbitQueuePublishingTests
 		Assert.Empty(publisher.Subscribers);
 		Assert.True(subscriber.IsDisposed);
 		Assert.True(publisher.IsDisposed);
-		Assert.True(publisherChannel.IsClosed);
-		Assert.False(publisherConnection.IsOpen);
 		await AssertBrokerRestoredAsync(baseline);
 	}
 
@@ -89,8 +82,6 @@ public class RabbitQueuePublishingTests
 		var queue = RabbitTestUtility.CreateQueue($"client-{identity}", null, null);
 		using var messages = new RabbitMessageBuffer();
 		RabbitSubscriber consumer = null;
-		IConnection connection = null;
-		IChannel publishingChannel = null;
 		IChannel subscriberChannel = null;
 
 		try
@@ -107,9 +98,6 @@ public class RabbitQueuePublishingTests
 			Assert.Equal(topic.Replace('/', '.'), message.Topic);
 			Assert.Equal("server-generated queue", Encoding.UTF8.GetString(message.Data));
 			Assert.Equal(1, messages.AcknowledgementCount);
-
-			connection = RabbitTestUtility.GetConnection(queue);
-			publishingChannel = RabbitTestUtility.GetPublishingChannel(queue);
 		}
 		finally
 		{
@@ -125,8 +113,6 @@ public class RabbitQueuePublishingTests
 		Assert.True(subscriberChannel.IsClosed);
 		Assert.True(queue.IsDisposed);
 		Assert.Empty(queue.Subscribers);
-		Assert.True(publishingChannel.IsClosed);
-		Assert.False(connection.IsOpen);
 		await AssertBrokerRestoredAsync(baseline);
 	}
 

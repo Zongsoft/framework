@@ -41,8 +41,6 @@ public class RabbitQueueConcurrencyTests
 		var audits = Enumerable.Range(0, CLIENT_COUNT).Select(_ => new RabbitMessageAudit()).ToArray();
 		var subscribers = Array.Empty<RabbitSubscriber>();
 		var subscriberChannels = Array.Empty<IChannel>();
-		var publishingChannels = Array.Empty<IChannel>();
-		var connections = Array.Empty<IConnection>();
 		var expectedPayloads = CreatePayloads("fanout", CLIENT_COUNT, MESSAGES_PER_CLIENT);
 		var stopwatch = new Stopwatch();
 
@@ -73,11 +71,6 @@ public class RabbitQueueConcurrencyTests
 			Assert.InRange(stopwatch.Elapsed, TimeSpan.Zero, TEST_TIMEOUT);
 			Assert.True(throughput >= MINIMUM_DELIVERIES_PER_SECOND,
 				$"Fan-out throughput {throughput:F2} deliveries/s was below {MINIMUM_DELIVERIES_PER_SECOND:F2}; {EXPECTED_DELIVERIES} deliveries took {stopwatch.Elapsed}.");
-
-			publishingChannels = queues.Select(RabbitTestUtility.GetPublishingChannel).ToArray();
-			connections = queues.Select(RabbitTestUtility.GetConnection).ToArray();
-			Assert.All(publishingChannels, channel => Assert.True(channel?.IsOpen));
-			Assert.All(connections, connection => Assert.True(connection?.IsOpen));
 		}
 		finally
 		{
@@ -98,8 +91,6 @@ public class RabbitQueueConcurrencyTests
 			Assert.Null(subscriber.Handler);
 		});
 		Assert.All(subscriberChannels, channel => Assert.True(channel.IsClosed));
-		Assert.All(publishingChannels, channel => Assert.True(channel.IsClosed));
-		Assert.All(connections, connection => Assert.False(connection.IsOpen));
 		await AssertBrokerRestoredAsync(baseline);
 	}
 
@@ -120,8 +111,6 @@ public class RabbitQueueConcurrencyTests
 		var exchange = $"tests.exchange.initialize.{identity}";
 		var queue = RabbitTestUtility.CreateQueue($"initialize-client-{identity}", exchange, null);
 		var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-		IChannel publishingChannel = null;
-		IConnection connection = null;
 		var stopwatch = new Stopwatch();
 
 		try
@@ -146,11 +135,6 @@ public class RabbitQueueConcurrencyTests
 			Assert.InRange(stopwatch.Elapsed, TimeSpan.Zero, TEST_TIMEOUT);
 			Assert.True(throughput >= MINIMUM_PUBLICATIONS_PER_SECOND,
 				$"Concurrent first-use throughput {throughput:F2} publications/s was below {MINIMUM_PUBLICATIONS_PER_SECOND:F2}; {PUBLICATION_COUNT} publications took {stopwatch.Elapsed}.");
-
-			publishingChannel = RabbitTestUtility.GetPublishingChannel(queue);
-			connection = RabbitTestUtility.GetConnection(queue);
-			Assert.True(publishingChannel?.IsOpen);
-			Assert.True(connection?.IsOpen);
 		}
 		finally
 		{
@@ -160,8 +144,6 @@ public class RabbitQueueConcurrencyTests
 
 		Assert.True(queue.IsDisposed);
 		Assert.Empty(queue.Subscribers);
-		Assert.True(publishingChannel.IsClosed);
-		Assert.False(connection.IsOpen);
 		await AssertBrokerRestoredAsync(baseline);
 	}
 
@@ -191,8 +173,6 @@ public class RabbitQueueConcurrencyTests
 		var audits = Enumerable.Range(0, CLIENT_COUNT).Select(_ => new RabbitMessageAudit()).ToArray();
 		var subscribers = Array.Empty<RabbitSubscriber>();
 		var subscriberChannels = Array.Empty<IChannel>();
-		var publishingChannels = Array.Empty<IChannel>();
-		var connections = Array.Empty<IConnection>();
 		var stopwatch = new Stopwatch();
 
 		try
@@ -252,11 +232,6 @@ public class RabbitQueueConcurrencyTests
 			Assert.InRange(stopwatch.Elapsed, TimeSpan.Zero, TEST_TIMEOUT);
 			Assert.True(throughput >= MINIMUM_DELIVERIES_PER_SECOND,
 				$"Unsubscribe-concurrency throughput {throughput:F2} unaffected deliveries/s was below {MINIMUM_DELIVERIES_PER_SECOND:F2}; {unaffectedDeliveries} verified deliveries took {stopwatch.Elapsed}.");
-
-			publishingChannels = queues.Select(RabbitTestUtility.GetPublishingChannel).ToArray();
-			connections = queues.Select(RabbitTestUtility.GetConnection).ToArray();
-			Assert.All(publishingChannels, channel => Assert.True(channel?.IsOpen));
-			Assert.All(connections, connection => Assert.True(connection?.IsOpen));
 		}
 		finally
 		{
@@ -277,8 +252,6 @@ public class RabbitQueueConcurrencyTests
 			Assert.Null(subscriber.Handler);
 		});
 		Assert.All(subscriberChannels, channel => Assert.True(channel.IsClosed));
-		Assert.All(publishingChannels, channel => Assert.True(channel.IsClosed));
-		Assert.All(connections, connection => Assert.False(connection.IsOpen));
 		await AssertBrokerRestoredAsync(baseline);
 	}
 

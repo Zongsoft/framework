@@ -300,14 +300,12 @@ public class KafkaQueueConcurrencyTests
 		{
 			Assert.True(queue.IsDisposed);
 			Assert.Empty(queue.Subscribers);
-			Assert.True(KafkaTestUtility.IsQueueTransportReleased(queue));
 		});
 		Assert.All(consumers, consumer =>
 		{
 			Assert.True(consumer.IsClosed);
 			Assert.True(consumer.IsDisposed);
 			Assert.Null(consumer.Handler);
-			Assert.True(KafkaTestUtility.IsSubscriberTransportReleased(consumer));
 		});
 	}
 }

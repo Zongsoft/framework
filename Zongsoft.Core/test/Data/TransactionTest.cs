@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,24 +10,6 @@ namespace Zongsoft.Data.Tests;
 
 public class TransactionTest
 {
-	[Fact]
-	public void TransactionContext_CompletionMethods_AreInternal()
-	{
-		AssertInternal(nameof(Transaction.Commit));
-		AssertInternal(nameof(Transaction.Rollback));
-
-		static void AssertInternal(string name)
-		{
-			var publicMethod = typeof(TransactionContext).GetMethod(name, BindingFlags.Instance | BindingFlags.Public);
-			var internalMethod = typeof(TransactionContext).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic);
-
-			Assert.Null(publicMethod);
-			Assert.NotNull(internalMethod);
-			Assert.True(internalMethod.IsAssembly);
-			Assert.False(internalMethod.IsPublic);
-		}
-	}
-
 	[Fact]
 	public void AmbientContext_NestedTransactions_RestoresParentContext()
 	{

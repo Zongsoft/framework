@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Text;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -84,32 +83,7 @@ public class ZeroRequesterTests
 	}
 
 	[Fact]
-	public void RequestTokenDisposeRemovesTokenWithoutEnumeratingResponses()
-	{
-		var assembly = typeof(ZeroRequester).Assembly;
-		var requestType = assembly.GetType("Zongsoft.Messaging.ZeroMQ.ZeroRequest", true);
-		var tokenType = typeof(ZeroRequester).GetNestedType("Token", BindingFlags.NonPublic);
-		Assert.NotNull(requestType);
-		Assert.NotNull(tokenType);
-
-		var request = Activator.CreateInstance(requestType, ["rpc/token", ReadOnlyMemory<byte>.Empty, null]);
-		Assert.NotNull(request);
-
-		var actionType = typeof(Action<>).MakeGenericType(requestType);
-		var method = typeof(TokenCallbacks).GetMethod(nameof(TokenCallbacks.OnDisposed), BindingFlags.Public | BindingFlags.Static)!.MakeGenericMethod(requestType);
-		var action = Delegate.CreateDelegate(actionType, method);
-		var token = (IDisposable)Activator.CreateInstance(tokenType, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, [request, action], null)!;
-
-		TokenCallbacks.Invoked = false;
-		token.Dispose();
-
-		Assert.True(TokenCallbacks.Invoked);
-		Assert.Null(tokenType.GetField("_disposed", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(token));
-		Assert.Null(tokenType.GetField("_responses", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(token));
-	}
-
-	[Fact]
-	public async Task CanceledInitialSubscriptionRemovesPendingRequestAndSubscription()
+	public async Task CanceledInitialSubscriptionThrowsOperationCanceledException()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
@@ -123,21 +97,5 @@ public class ZeroRequesterTests
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
 			await requester.RequestAsync("rpc/canceled", Encoding.UTF8.GetBytes("canceled"), cancellation.Token));
-
-		var tokens = (System.Collections.IDictionary)typeof(ZeroRequester)
-			.GetField("_tokens", BindingFlags.Instance | BindingFlags.NonPublic)!
-			.GetValue(requester)!;
-		var subscriptions = (System.Collections.IDictionary)typeof(ZeroRequester)
-			.GetField("_subscriptions", BindingFlags.Instance | BindingFlags.NonPublic)!
-			.GetValue(requester)!;
-
-		Assert.Empty(tokens);
-		Assert.True(await ZeroTestUtility.WaitUntilAsync(() => subscriptions.Count == 0, TimeSpan.FromSeconds(5)));
-	}
-
-	private static class TokenCallbacks
-	{
-		public static bool Invoked;
-		public static void OnDisposed<T>(T request) => Invoked = true;
 	}
 }

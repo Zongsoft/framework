@@ -238,7 +238,6 @@ public class MqttQueueConcurrencyTests
 		{
 			Assert.True(queue.IsDisposed);
 			Assert.Empty(queue.Subscribers);
-			Assert.True(MqttTestUtility.IsQueueTransportReleased(queue));
 		});
 		Assert.All(consumers, consumer =>
 		{

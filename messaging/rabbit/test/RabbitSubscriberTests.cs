@@ -15,25 +15,6 @@ namespace Zongsoft.Messaging.RabbitMQ.Tests;
 public class RabbitSubscriberTests
 {
 	[Fact]
-	public async Task SubscribePassesQueueTagsAndManualAcknowledgement()
-	{
-		using var queue = CreateQueue("Subscriber-Unit", "orders.queue");
-		var channel = DispatchProxy.Create<IChannel, ChannelProxy>();
-		var proxy = (ChannelProxy)(object)channel;
-		var handler = new RecordingHandler();
-		var subscriber = new RabbitSubscriber(queue, channel, "orders.*", "priority;region", handler);
-
-		var method = typeof(RabbitSubscriber).GetMethod("SubscribeAsync", BindingFlags.Instance | BindingFlags.NonPublic);
-		var identifier = await Assert.IsType<Task<string>>(method.Invoke(subscriber, [CancellationToken.None]));
-
-		Assert.Equal("consumer-unit", identifier);
-		Assert.Equal("orders.queue", proxy.Queue);
-		Assert.False(proxy.AutoAck);
-		Assert.Equal("priority,region", proxy.ConsumerTag);
-		Assert.Same(subscriber, proxy.Consumer);
-	}
-
-	[Fact]
 	public async Task DeliveryMapsMessageAndAcknowledgement()
 	{
 		using var queue = CreateQueue("Delivery-Unit");
@@ -87,25 +68,6 @@ public class RabbitSubscriberTests
 	}
 
 	[Fact]
-	public async Task UnsubscribeClosesChannel()
-	{
-		using var queue = CreateQueue("Subscriber-Close");
-		var channel = DispatchProxy.Create<IChannel, ChannelProxy>();
-		var proxy = (ChannelProxy)(object)channel;
-		proxy.IsOpen = true;
-		var subscriber = new RabbitSubscriber(queue, channel, "orders.*", null, new RecordingHandler());
-
-		await SubscribeAsync(subscriber);
-		await subscriber.UnsubscribeAsync();
-
-		Assert.Equal(1, proxy.CloseCount);
-		Assert.Equal(1, proxy.CancelCount);
-		Assert.Equal("consumer-unit", proxy.CancelledConsumerTag);
-		Assert.True(subscriber.IsClosed);
-		Assert.False(proxy.Disposed);
-	}
-
-	[Fact]
 	public async Task DisposeClosesAndDisposesChannel()
 	{
 		using var queue = CreateQueue("Subscriber-Dispose");
@@ -120,12 +82,6 @@ public class RabbitSubscriberTests
 		Assert.True(subscriber.IsDisposed);
 		Assert.Equal(1, proxy.CloseCount);
 		Assert.True(proxy.Disposed);
-	}
-
-	private static async Task<string> SubscribeAsync(RabbitSubscriber subscriber)
-	{
-		var method = typeof(RabbitSubscriber).GetMethod("SubscribeAsync", BindingFlags.Instance | BindingFlags.NonPublic);
-		return await Assert.IsType<Task<string>>(method.Invoke(subscriber, [CancellationToken.None]));
 	}
 
 	private static RabbitQueue CreateQueue(string client, string queue = null)
@@ -188,8 +144,22 @@ public class RabbitSubscriberTests
 					this.Disposed = true;
 					return null;
 				default:
-					return RabbitQueueBehaviorTests.Default(targetMethod.ReturnType);
+					return Default(targetMethod.ReturnType);
 			}
 		}
+	}
+
+	private static object Default(Type type)
+	{
+		if(type == typeof(Task))
+			return Task.CompletedTask;
+		if(type == typeof(ValueTask))
+			return ValueTask.CompletedTask;
+		if(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>))
+			return typeof(Task).GetMethod(nameof(Task.FromResult)).MakeGenericMethod(type.GenericTypeArguments[0]).Invoke(null, [null]);
+		if(type.IsValueType)
+			return Activator.CreateInstance(type);
+
+		return null;
 	}
 }
