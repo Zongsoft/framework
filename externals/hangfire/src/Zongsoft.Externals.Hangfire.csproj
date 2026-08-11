@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>2.9.0</Version>
+		<Version>2.9.1</Version>
 		<Product>Zongsoft Hangfire Library</Product>
 		<Description>This is a library about Hangfire SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Hangfire</RootNamespace>

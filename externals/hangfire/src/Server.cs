@@ -99,6 +99,9 @@ public class Server : WorkerBase
 			SchedulePollingInterval = TimeSpan.FromSeconds(10),
 		};
 
+		if(options == null)
+			return result;
+
 		if(options.Queues != null && options.Queues.Length > 0)
 			result.Queues = options.Queues;
 		if(options.WorkerCount > 0)
